@@ -1,3 +1,4 @@
+import { SelectableValue } from '@grafana/data';
 import { InlineField, Input, Select } from '@grafana/ui';
 import React, { ComponentProps, FunctionComponent } from 'react';
 import { useDispatch } from '../../ElasticsearchQueryContext';
@@ -9,7 +10,7 @@ const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 16,
 };
 
-// TODO: Move the following somewhere else
+// TODO: Move the following somewhere else, maybe?
 const orderOptions = [
   { label: 'Top', value: 'desc' },
   { label: 'Bottom', value: 'asc' },
@@ -30,6 +31,34 @@ const orderByOptions = [
   { label: 'Doc Count', value: '_count' },
   { label: 'Term value', value: '_term' },
 ];
+
+const intervalOptions = [
+  { label: 'auto', value: 'auto' },
+  { label: '10s', value: '10s' },
+  { label: '1m', value: '1m' },
+  { label: '5m', value: '5m' },
+  { label: '10m', value: '10m' },
+  { label: '20m', value: '20m' },
+  { label: '1h', value: '1h' },
+  { label: '1d', value: '1d' },
+];
+
+const selectDefaultValue = (options: SelectableValue[], value?: string | SelectableValue): SelectableValue => {
+  if (!value) {
+    return options[0];
+  }
+
+  const option = options.find(o => o.value === value);
+  if (option) {
+    return option;
+  }
+
+  if (typeof value === 'string') {
+    return { value, label: value };
+  }
+
+  return value;
+};
 
 interface Props {
   bucketAgg: BucketAggregation;
@@ -91,6 +120,45 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
             defaultValue={bucketAgg.settings?.precision ?? '3'}
           />
         </InlineField>
+      )}
+
+      {bucketAgg.type === 'date_histogram' && (
+        <>
+          <InlineField label="Interval" {...inlineFieldProps}>
+            <Select
+              onChange={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'interval', e.value!))}
+              options={intervalOptions}
+              // TODO: Not sure we have a better way of handling custom values
+              defaultValue={selectDefaultValue(intervalOptions, bucketAgg.settings?.interval)}
+              allowCustomValue
+            />
+          </InlineField>
+
+          <InlineField label="Min Doc Count" {...inlineFieldProps}>
+            <Input
+              onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
+              defaultValue={bucketAgg.settings?.min_doc_count ?? '0'}
+            />
+          </InlineField>
+
+          <InlineField label="Trim Edges" {...inlineFieldProps} tooltip="Trim the edges on the timeseries datapoints">
+            <Input
+              onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'trimEdges', e.target.value!))}
+              defaultValue={bucketAgg.settings?.trimEdges}
+            />
+          </InlineField>
+
+          <InlineField
+            label="Offset"
+            {...inlineFieldProps}
+            tooltip="Change the start value of each bucket by the specified positive (+) or negative offset (-) duration, such as 1h for an hour, or 1d for a day"
+          >
+            <Input
+              onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'offset', e.target.value!))}
+              defaultValue={bucketAgg.settings?.offset}
+            />
+          </InlineField>
+        </>
       )}
     </SettingsEditorContainer>
   );

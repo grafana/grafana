@@ -47,17 +47,6 @@ export const extendedStats: ExtendedStat[] = [
   { text: 'Std Dev Lower', value: 'std_deviation_bounds_lower', default: true },
 ];
 
-export const intervalOptions = [
-  { text: 'auto', value: 'auto' },
-  { text: '10s', value: '10s' },
-  { text: '1m', value: '1m' },
-  { text: '5m', value: '5m' },
-  { text: '10m', value: '10m' },
-  { text: '20m', value: '20m' },
-  { text: '1h', value: '1h' },
-  { text: '1d', value: '1d' },
-];
-
 export const movingAvgModelOptions: MovingAverageModelOption[] = [
   { label: 'Simple', value: 'simple' },
   { label: 'Linear', value: 'linear' },
