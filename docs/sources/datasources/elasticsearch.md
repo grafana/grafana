@@ -125,7 +125,8 @@ Some metric aggregations are called Pipeline aggregations, for example, *Moving 
 
 ## Scripting Language
 
-From Elasticsearch v5.0 and above, the default scripting language changed to *Painless*. For this scripting language, variables are referenced using params.<var>. For Elasticsearch version before v5.0, the default scripting language is *Groovy*, and variables are referenced using <var>. 
+Elasticsearch v5.0 and above uses *Painless* as the default scripting language. Variables are referenced using params.<var>. 
+Elasticsearch pre-v5.0 uses *Groovy* as the default scripting language if not changed. For *Groovy*, <var> is used to reference a variable.
 
 ## Templating
 
