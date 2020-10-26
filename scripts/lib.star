@@ -9,12 +9,18 @@ wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
 windows_build_image = 'grafana/ci-build-windows:0.1.5'
 
-test_backend_cmds = [
-    # First execute non-integration tests in parallel, since it should be safe
-    './bin/grabpl test-backend',
-    # Then execute integration tests in serial
-    './bin/grabpl integration-tests',
-]
+def test_backend_cmds(windows=False):
+    if windows:
+        cmd = r'.\grabpl'
+    else:
+        cmd = './bin/grabpl'
+
+    return [
+        # First execute non-integration tests in parallel, since it should be safe
+        '{} test-backend'.format(cmd),
+        # Then execute integration tests in serial
+        '{} integration-tests'.format(cmd),
+    ]
 
 def pipeline(
     name, edition, trigger, steps, ver_mode, services=[], platform='linux', depends_on=[],
@@ -444,7 +450,7 @@ def test_backend_step():
             'initialize',
             'lint-backend',
         ],
-        'commands': test_backend_cmds,
+        'commands': test_backend_cmds(),
     }
 
 def test_frontend_step():
@@ -861,7 +867,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         {
             'name': 'test-backend',
             'image': windows_build_image,
-            'commands': test_backend_cmds,
+            'commands': test_backend_cmds(windows=True),
             'depends_on': ['initialize',],
         },
     ]

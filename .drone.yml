@@ -255,8 +255,8 @@ steps:
 - name: test-backend
   image: grafana/ci-build-windows:0.1.5
   commands:
-  - ./bin/grabpl test-backend
-  - ./bin/grabpl integration-tests
+  - .\grabpl test-backend
+  - .\grabpl integration-tests
   depends_on:
   - initialize
 
@@ -619,8 +619,8 @@ steps:
 - name: test-backend
   image: grafana/ci-build-windows:0.1.5
   commands:
-  - ./bin/grabpl test-backend
-  - ./bin/grabpl integration-tests
+  - .\grabpl test-backend
+  - .\grabpl integration-tests
   depends_on:
   - initialize
 
@@ -1045,8 +1045,8 @@ steps:
 - name: test-backend
   image: grafana/ci-build-windows:0.1.5
   commands:
-  - ./bin/grabpl test-backend
-  - ./bin/grabpl integration-tests
+  - .\grabpl test-backend
+  - .\grabpl integration-tests
   depends_on:
   - initialize
 
@@ -1404,8 +1404,8 @@ steps:
 - name: test-backend
   image: grafana/ci-build-windows:0.1.5
   commands:
-  - ./bin/grabpl test-backend
-  - ./bin/grabpl integration-tests
+  - .\grabpl test-backend
+  - .\grabpl integration-tests
   depends_on:
   - initialize
 
@@ -1820,8 +1820,8 @@ steps:
 - name: test-backend
   image: grafana/ci-build-windows:0.1.5
   commands:
-  - ./bin/grabpl test-backend
-  - ./bin/grabpl integration-tests
+  - .\grabpl test-backend
+  - .\grabpl integration-tests
   depends_on:
   - initialize
 
@@ -2173,8 +2173,8 @@ steps:
 - name: test-backend
   image: grafana/ci-build-windows:0.1.5
   commands:
-  - ./bin/grabpl test-backend
-  - ./bin/grabpl integration-tests
+  - .\grabpl test-backend
+  - .\grabpl integration-tests
   depends_on:
   - initialize
 
@@ -2552,8 +2552,8 @@ steps:
 - name: test-backend
   image: grafana/ci-build-windows:0.1.5
   commands:
-  - ./bin/grabpl test-backend
-  - ./bin/grabpl integration-tests
+  - .\grabpl test-backend
+  - .\grabpl integration-tests
   depends_on:
   - initialize
 
@@ -2883,8 +2883,8 @@ steps:
 - name: test-backend
   image: grafana/ci-build-windows:0.1.5
   commands:
-  - ./bin/grabpl test-backend
-  - ./bin/grabpl integration-tests
+  - .\grabpl test-backend
+  - .\grabpl integration-tests
   depends_on:
   - initialize
 
