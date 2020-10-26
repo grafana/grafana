@@ -58,7 +58,7 @@ In the search view, you can sort dashboards using these insights data. It helps 
 
 ## Data source insights
 
-Data source insight gives you information about how much a data source has been used and how many errors it has returned. It shows thirty days of data.
+Data source insights gives you information about how much a data source has been used and how many errors it has returned. It shows the last thirty days of data.
 
 To find data source insights, go to:
 1. Data source list view
@@ -67,3 +67,5 @@ To find data source insights, go to:
 
 
 <!-- image here -->
+
+> Only available in Grafana Enterprise v7.3+.
