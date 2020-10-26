@@ -19,10 +19,11 @@ import { selectors } from '@grafana/e2e-selectors';
 import { setTimeSrv } from '../dashboard/services/TimeSrv';
 import { from, Observable } from 'rxjs';
 import { updateLocation } from '../../core/reducers/location';
-import Mock = jest.Mock;
 import { LokiDatasource } from '../../plugins/datasource/loki/datasource';
 import { LokiQuery } from '../../plugins/datasource/loki/types';
 import { fromPairs } from 'lodash';
+
+type Mock = jest.Mock;
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
@@ -34,7 +35,8 @@ jest.mock('react-virtualized-auto-sizer', () => {
 describe('Wrapper', () => {
   it('shows warning if there are no data sources', async () => {
     setup({ datasources: [] });
-    expect(screen.getByText(/Explore requires at least one data source/i)).toBeDefined();
+    // Will throw if isn't found
+    screen.getByText(/Explore requires at least one data source/i);
   });
 
   it('inits url and renders editor but does not call query on empty url', async () => {
@@ -281,10 +283,7 @@ async function changeDatasource(name: string) {
   const datasourcePicker = await screen.findByLabelText(selectors.components.DataSourcePicker.container);
   // Bit awkward here but we need to fire the event on some child component that we don't have any label for.
   // We do not have label because we do not simulate proper element width and so we are using small styles where
-  // label is missing.
-  screen.debug(datasourcePicker.children[0].children[0].children[0], 20000);
-
-  // The select uses mouseDown for opening
+  // label is missing. Also the select uses mouseDown for opening.
   fireEvent.mouseDown(datasourcePicker.children[0].children[0]);
   const elasticOption = await screen.findByText(name);
   fireEvent.click(elasticOption);
