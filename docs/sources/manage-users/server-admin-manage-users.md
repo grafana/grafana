@@ -18,6 +18,7 @@ See a complete list of users with accounts on your Grafana server.
 
 1. Hover your cursor over the **Server Admin** (shield) icon until a menu appears.
 1. Click **Users**.
+{{< docs/shared "manage-users/view-user-list" >}}
 
 Grafana displays all user accounts on the server, listed in alphabetical order by user name. The following information is displayed:
 - **Login -** The value in the **Username** field of the account.
@@ -69,7 +70,7 @@ Create a new user account at the server level.
    - **Password -** Required.
 1. Click **Create user**.
 
-The user can change all this information after they log in. For instructions, refer to [Change your information](broken-link.md) and [Change your password](broken.link.md).
+The user can change all this information after they log in. For instructions, refer to [Change your information](NEED LINK) and [Change your password](NEED Link).
 
 ## Edit a user account
 
