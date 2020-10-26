@@ -55,7 +55,7 @@ func (fp *FrontendPluginBase) setPathsBasedOnApp(app *AppPlugin) {
 func (fp *FrontendPluginBase) handleModuleDefaults() {
 	if isExternalPlugin(fp.PluginDir) {
 		fp.Module = filepath.Join("plugins", fp.Id, "module")
-		fp.BaseUrl = filepath.Join("public/plugins", fp.Id)
+		fp.BaseUrl = path.Join("public/plugins", fp.Id)
 		return
 	}
 
@@ -67,7 +67,7 @@ func (fp *FrontendPluginBase) handleModuleDefaults() {
 	// use path package for the following statements
 	// because these are not file paths
 	fp.Module = filepath.Join("app/plugins", fp.Type, currentDir, "module")
-	fp.BaseUrl = filepath.Join("public/app/plugins", fp.Type, currentDir)
+	fp.BaseUrl = path.Join("public/app/plugins", fp.Type, currentDir)
 }
 
 func isExternalPlugin(pluginDir string) bool {
