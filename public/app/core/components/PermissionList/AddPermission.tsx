@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TeamPicker, Team } from 'app/core/components/Select/TeamPicker';
-import { LegacyForms, Icon } from '@grafana/ui';
+import { Button, Form, InlineField, InlineFieldRow, Icon, Select } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { User } from 'app/types';
 import {
@@ -12,7 +12,6 @@ import {
   NewDashboardAclItem,
   OrgRole,
 } from 'app/types/acl';
-const { Select } = LegacyForms;
 
 export interface Props {
   onAddPermission: (item: NewDashboardAclItem) => void;
@@ -38,8 +37,8 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     };
   }
 
-  onTypeChanged = (evt: any) => {
-    const type = evt.target.value as AclTarget;
+  onTypeChanged = (item: any) => {
+    const type = item.value as AclTarget;
 
     switch (type) {
       case AclTarget.User:
@@ -64,11 +63,11 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
   };
 
   onPermissionChanged = (permission: SelectableValue<PermissionLevel>) => {
+    console.log(permission);
     this.setState({ permission: permission.value! });
   };
 
-  onSubmit = async (evt: React.SyntheticEvent) => {
-    evt.preventDefault();
+  onSubmit = async () => {
     await this.props.onAddPermission(this.state);
     this.setState(this.getCleanState());
   };
@@ -88,56 +87,53 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     const newItem = this.state;
     const pickerClassName = 'min-width-20';
     const isValid = this.isValid();
+    console.log(newItem);
     return (
-      <div className="gf-form-inline cta-form">
+      <div className="cta-form">
         <button className="cta-form__close btn btn-transparent" onClick={onCancel}>
           <Icon name="times" />
         </button>
-        <form name="addPermission" onSubmit={this.onSubmit}>
-          <h5>Add Permission For</h5>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <div className="gf-form-select-wrapper">
-                <select className="gf-form-input gf-size-auto" value={newItem.type} onChange={this.onTypeChanged}>
-                  {dashboardAclTargets.map((option, idx) => {
-                    return (
-                      <option key={idx} value={option.value}>
-                        {option.text}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-            </div>
+        <h5>Add Permission For</h5>
+        <Form maxWidth="none" onSubmit={this.onSubmit}>
+          {() => (
+            <InlineFieldRow>
+              <InlineField>
+                <Select
+                  isSearchable={false}
+                  value={this.state.type}
+                  options={dashboardAclTargets}
+                  onChange={this.onTypeChanged}
+                />
+              </InlineField>
 
-            {newItem.type === AclTarget.User ? (
-              <div className="gf-form">
-                <UserPicker onSelected={this.onUserSelected} className={pickerClassName} />
-              </div>
-            ) : null}
+              {newItem.type === AclTarget.User ? (
+                <InlineField>
+                  <UserPicker onSelected={this.onUserSelected} className={pickerClassName} />
+                </InlineField>
+              ) : null}
 
-            {newItem.type === AclTarget.Team ? (
-              <div className="gf-form">
-                <TeamPicker onSelected={this.onTeamSelected} className={pickerClassName} />
-              </div>
-            ) : null}
+              {newItem.type === AclTarget.Team ? (
+                <InlineField>
+                  <TeamPicker onSelected={this.onTeamSelected} className={pickerClassName} />
+                </InlineField>
+              ) : null}
 
-            <div className="gf-form">
-              <Select
-                isSearchable={false}
-                options={dashboardPermissionLevels}
-                onChange={this.onPermissionChanged}
-                className="gf-form-select-box__control--menu-right"
-              />
-            </div>
-
-            <div className="gf-form">
-              <button data-save-permission className="btn btn-primary" type="submit" disabled={!isValid}>
+              <InlineField>
+                <Select
+                  isSearchable={false}
+                  value={this.state.permission}
+                  options={dashboardPermissionLevels}
+                  onChange={this.onPermissionChanged}
+                  isOpen
+                  width={25}
+                />
+              </InlineField>
+              <Button data-save-permission type="submit" disabled={!isValid}>
                 Save
-              </button>
-            </div>
-          </div>
-        </form>
+              </Button>
+            </InlineFieldRow>
+          )}
+        </Form>
       </div>
     );
   }
