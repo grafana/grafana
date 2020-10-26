@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
-import { LegacyForms, Icon } from '@grafana/ui';
+import { Select, Icon } from '@grafana/ui';
 import { dashboardPermissionLevels } from 'app/types/acl';
-const { Select } = LegacyForms;
 
 export interface Props {
   item: any;
@@ -28,7 +27,7 @@ export default class DisabledPermissionListItem extends Component<Props, any> {
             <Select
               options={dashboardPermissionLevels}
               onChange={() => {}}
-              isDisabled={true}
+              disabled={true}
               className="gf-form-select-box__control--menu-right"
               value={currentPermissionLevel}
             />
