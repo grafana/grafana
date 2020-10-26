@@ -687,6 +687,7 @@ func TestLoginPostSendLoginLog(t *testing.T) {
 
 			cmd := testReceiver.cmd
 			assert.Equal(t, c.cmd.LogAction, cmd.LogAction)
+			assert.Equal(t, c.cmd.LoginUser, "admin")
 			assert.Equal(t, c.cmd.HTTPStatus, cmd.HTTPStatus)
 			assert.Equal(t, c.cmd.Error, cmd.Error)
 

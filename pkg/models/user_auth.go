@@ -70,6 +70,7 @@ type SendLoginLogCommand struct {
 	LogAction    string
 	User         *User
 	ExternalUser *ExternalUserInfo
+	LoginUser    string
 	HTTPStatus   int
 	Error        error
 }

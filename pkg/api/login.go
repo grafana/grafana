@@ -181,6 +181,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 			ReqContext: c,
 			LogAction:  action,
 			User:       user,
+			LoginUser:  cmd.User,
 			HTTPStatus: response.status,
 			Error:      err,
 		})
