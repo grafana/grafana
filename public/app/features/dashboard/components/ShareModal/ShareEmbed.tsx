@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
-import { LegacyForms, Icon } from '@grafana/ui';
-const { Select, Switch } = LegacyForms;
+import { Select, Switch, Icon, InlineField } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { buildIframeHtml } from './utils';
@@ -81,24 +80,15 @@ export class ShareEmbed extends PureComponent<Props, State> {
         <div className="share-modal-header">
           <Icon name="link" className="share-modal-big-icon" size="xxl" />
           <div className="share-modal-content">
-            <div className="gf-form-group">
-              <Switch
-                labelClass="width-12"
-                label="Current time range"
-                checked={useCurrentTimeRange}
-                onChange={this.onUseCurrentTimeRangeChange}
-              />
-              <Switch
-                labelClass="width-12"
-                label="Template variables"
-                checked={includeTemplateVars}
-                onChange={this.onIncludeTemplateVarsChange}
-              />
-              <div className="gf-form">
-                <label className="gf-form-label width-12">Theme</label>
-                <Select width={10} options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
-              </div>
-            </div>
+            <InlineField labelWidth={24} label="Current time range">
+              <Switch value={useCurrentTimeRange} onChange={this.onUseCurrentTimeRangeChange} />
+            </InlineField>
+            <InlineField labelWidth={24} label="Template variables">
+              <Switch value={includeTemplateVars} onChange={this.onIncludeTemplateVarsChange} />
+            </InlineField>
+            <InlineField labelWidth={24} label="Theme">
+              <Select width={10} options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
+            </InlineField>
 
             <p className="share-modal-info-text">
               The html code below can be pasted and included in another web page. Unless anonymous access is enabled,
