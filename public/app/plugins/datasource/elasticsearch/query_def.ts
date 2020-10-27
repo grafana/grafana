@@ -11,30 +11,7 @@ import {
   MetricAggregationType,
 } from './components/MetricAggregationsEditor/state/types';
 import { metricAggregationConfig, pipelineOptions } from './components/MetricAggregationsEditor/utils';
-import { BucketsConfiguration, ElasticsearchQuery } from './types';
-
-export const bucketAggregationConfig: BucketsConfiguration = {
-  terms: {
-    label: 'Terms',
-    requiresField: true,
-  },
-  filters: {
-    label: 'Filters',
-    requiresField: false,
-  },
-  geohash_grid: {
-    label: 'Geo Hash Grid',
-    requiresField: true,
-  },
-  date_histogram: {
-    label: 'Date Histogram',
-    requiresField: true,
-  },
-  histogram: {
-    label: 'Histogram',
-    requiresField: true,
-  },
-};
+import { ElasticsearchQuery } from './types';
 
 export const extendedStats: ExtendedStat[] = [
   { text: 'Avg', value: 'avg', default: false },

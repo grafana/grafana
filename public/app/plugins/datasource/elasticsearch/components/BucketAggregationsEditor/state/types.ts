@@ -1,6 +1,6 @@
 import { Action } from '../../../hooks/useReducerCallback';
-import { bucketAggregationConfig } from '../../../query_def';
 import { SettingKeyOf } from '../../types';
+import { bucketAggregationConfig } from '../utils';
 
 export const ADD_BUCKET_AGG = '@bucketAggs/add';
 export const REMOVE_BUCKET_AGG = '@bucketAggs/remove';
