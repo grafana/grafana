@@ -65,7 +65,6 @@ To find data source insights, go to:
 1. Click on a data source
 1. Click the insights tab
 
-
-<!-- image here -->
+{{< docs-imagebox img="/img/docs/enterprise/datasource_insights.png" max-width="650px" class="docs-image--no-shadow" >}}
 
 > Only available in Grafana Enterprise v7.3+.
