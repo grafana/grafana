@@ -157,18 +157,18 @@ func (e *cloudWatchExecutor) sendLiveQueriesToChannel(queryContext *tsdb.TsdbQue
 	}
 }
 
-func (e *cloudWatchExecutor) getQueue(region string) (chan bool, error) {
+func (e *cloudWatchExecutor) getQueue(queueKey string) (chan bool, error) {
 	e.logsService.queueLock.Lock()
 	defer e.logsService.queueLock.Unlock()
 
-	if queue, ok := e.logsService.queuesByRegion[region]; ok {
+	if queue, ok := e.logsService.queues[queueKey]; ok {
 		return queue, nil
 	}
 
-	concurrentQueriesQuota := e.fetchConcurrentQueriesQuota(region)
+	concurrentQueriesQuota := e.fetchConcurrentQueriesQuota(queueKey)
 
 	queueChannel := make(chan bool, concurrentQueriesQuota)
-	e.logsService.queuesByRegion[region] = queueChannel
+	e.logsService.queues[queueKey] = queueChannel
 
 	return queueChannel, nil
 }
@@ -223,7 +223,7 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 		return err
 	}
 
-	queue, err := e.getQueue(region)
+	queue, err := e.getQueue(fmt.Sprintf("%s-%d", region, e.DataSource.Id))
 	if err != nil {
 		return err
 	}
