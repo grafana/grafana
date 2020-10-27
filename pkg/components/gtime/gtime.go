@@ -10,18 +10,39 @@ import (
 var dateUnitPattern = regexp.MustCompile(`^(\d+)([dwMy])$`)
 
 // ParseInterval parses an interval with support for all units that Grafana uses.
-func ParseInterval(interval string) (time.Duration, error) {
-	result := dateUnitPattern.FindSubmatch([]byte(interval))
-
-	if len(result) != 3 {
-		return time.ParseDuration(interval)
-	}
-
-	num, err := strconv.Atoi(string(result[1]))
+func ParseInterval(inp string) (time.Duration, error) {
+	num, period, err := parse(inp)
 	if err != nil {
 		return 0, err
 	}
-	period := string(result[2])
+	if period == "" {
+		return time.Duration(num), nil
+	}
+
+	now := time.Now()
+	switch period {
+	case "d":
+		return now.Sub(now.AddDate(0, 0, -num)), nil
+	case "w":
+		return now.Sub(now.AddDate(0, 0, -num*7)), nil
+	case "M":
+		return now.Sub(now.AddDate(0, -num, 0)), nil
+	case "y":
+		return now.Sub(now.AddDate(-num, 0, 0)), nil
+	}
+
+	return 0, fmt.Errorf("invalid duration %q", inp)
+}
+
+// ParseDuration parses a duration with support for all units that Grafana uses.
+func ParseDuration(inp string) (time.Duration, error) {
+	num, period, err := parse(inp)
+	if err != nil {
+		return 0, err
+	}
+	if period == "" {
+		return time.Duration(num), nil
+	}
 
 	switch period {
 	case "d":
@@ -29,10 +50,25 @@ func ParseInterval(interval string) (time.Duration, error) {
 	case "w":
 		return time.Duration(num*24*7) * time.Hour, nil
 	case "M":
-		return time.Duration(num*24*7*4) * time.Hour, nil
+		return time.Duration(int64(float64(num*24*7)*(365.25/12))) * time.Hour, nil
 	case "y":
-		return time.Duration(num*24*7*4*12) * time.Hour, nil
+		return time.Duration(int64(float64(num*24*7)*365.25)) * time.Hour, nil
 	}
 
-	return 0, fmt.Errorf("ParseInterval: invalid duration %q", interval)
+	return 0, fmt.Errorf("invalid duration %q", inp)
+}
+
+func parse(inp string) (int, string, error) {
+	result := dateUnitPattern.FindSubmatch([]byte(inp))
+	if len(result) != 3 {
+		dur, err := time.ParseDuration(inp)
+		return int(dur), "", err
+	}
+
+	num, err := strconv.Atoi(string(result[1]))
+	if err != nil {
+		return 0, "", err
+	}
+
+	return num, string(result[2]), nil
 }
