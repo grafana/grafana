@@ -63,7 +63,7 @@ type GrafanaLive struct {
 func (g *GrafanaLive) Init() error {
 	logger.Debug("GrafanaLive initing")
 
-	if !g.Cfg.IsLiveEnabled() {
+	if !g.IsEnabled() {
 		logger.Debug("GrafanaLive feature not enabled, skipping initialization")
 		return nil
 	}
