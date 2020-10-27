@@ -13,8 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
+	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+type UpdateHandler interface {
+	OnUpdate(dsInfo *models.DataSource, cmd *models.UpdateDataSourceCommand) error
+}
 
 var datasourcesLogger = log.New("datasources")
 
@@ -169,6 +174,26 @@ func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Respon
 	})
 }
 
+func callDataSourceUpdateHandler(cmd *models.UpdateDataSourceCommand) error {
+	ds, err := getRawDataSourceById(cmd.Id, cmd.OrgId)
+	if err != nil {
+		return err
+	}
+
+	if ds.ReadOnly {
+		return models.ErrDatasourceIsReadOnly
+	}
+
+	endpoint, err := tsdb.GetTsdbQueryEndpointFor(ds)
+	if err == nil {
+		if e, ok := endpoint.(UpdateHandler); ok {
+			return e.OnUpdate(ds, cmd)
+		}
+	}
+
+	return nil
+}
+
 func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) Response {
 	datasourcesLogger.Debug("Received command to update data source", "url", cmd.Url)
 	cmd.OrgId = c.OrgId
@@ -181,6 +206,8 @@ func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) 
 	if err != nil {
 		return Error(500, "Failed to update datasource", err)
 	}
+
+	callDataSourceUpdateHandler(&cmd)
 
 	err = bus.Dispatch(&cmd)
 	if err != nil {

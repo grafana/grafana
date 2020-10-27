@@ -19,7 +19,7 @@ func init() {
 	registry = make(map[string]GetTsdbQueryEndpointFn)
 }
 
-func getTsdbQueryEndpointFor(dsInfo *models.DataSource) (TsdbQueryEndpoint, error) {
+func GetTsdbQueryEndpointFor(dsInfo *models.DataSource) (TsdbQueryEndpoint, error) {
 	if fn, exists := registry[dsInfo.Type]; exists {
 		executor, err := fn(dsInfo)
 		if err != nil {

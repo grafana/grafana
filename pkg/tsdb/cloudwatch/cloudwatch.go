@@ -24,6 +24,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2/ec2iface"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi/resourcegroupstaggingapiiface"
+	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -73,6 +74,23 @@ type cloudWatchExecutor struct {
 	rgtaClient          resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
 	logsClientsByRegion map[string]cloudwatchlogsiface.CloudWatchLogsAPI
 	mtx                 sync.Mutex
+}
+
+func (e *cloudWatchExecutor) OnUpdate(dsInfo *models.DataSource, cmd *models.UpdateDataSourceCommand) error {
+	e.DataSource = dsInfo
+	client, err := e.getSTSClient(defaultRegion)
+	if err != nil {
+		return err
+	}
+
+	input := &sts.GetCallerIdentityInput{}
+	result, err := client.GetCallerIdentity(input)
+	if err != nil {
+		return err
+	}
+
+	cmd.JsonData.Set("accountID", *result.Account)
+	return nil
 }
 
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
@@ -184,6 +202,16 @@ func (e *cloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWa
 		return nil, err
 	}
 	return newCWClient(sess), nil
+}
+
+func (e *cloudWatchExecutor) getSTSClient(region string) (*sts.STS, error) {
+	sess, err := e.newSession(region)
+	if err != nil {
+		return nil, err
+	}
+
+	client := sts.New(sess)
+	return client, nil
 }
 
 func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
