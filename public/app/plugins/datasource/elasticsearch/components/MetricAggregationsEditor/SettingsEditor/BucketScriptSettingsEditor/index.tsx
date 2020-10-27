@@ -64,9 +64,6 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
                   onChange={e => dispatch(changePipelineVariableMetric(e.value!.id, index))}
                   options={previousMetrics}
                   value={pipelineVar.pipelineAgg}
-                  className={css`
-                    white-space: nowrap;
-                  `}
                 />
               </div>
 
