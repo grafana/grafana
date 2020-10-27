@@ -67,13 +67,15 @@ func (ng *AlertNG) SaveAlertDefinition(cmd *SaveAlertDefinitionCommand) error {
 			Data:      cmd.Condition.QueriesAndExpressions,
 		}
 
-		err := ng.validate(alertDefinition, cmd.SignedInUser, cmd.SkipCache)
-		if err != nil {
+		if err := ng.validateAlertDefinition(alertDefinition, cmd.SignedInUser, cmd.SkipCache); err != nil {
 			return err
 		}
 
-		_, err = sess.Insert(alertDefinition)
-		if err != nil {
+		if err := alertDefinition.preSave(); err != nil {
+			return err
+		}
+
+		if _, err := sess.Insert(alertDefinition); err != nil {
 			return err
 		}
 
@@ -92,8 +94,11 @@ func (ng *AlertNG) UpdateAlertDefinition(cmd *UpdateAlertDefinitionCommand) erro
 			Data:      cmd.Condition.QueriesAndExpressions,
 		}
 
-		err := ng.validate(alertDefinition, cmd.SignedInUser, cmd.SkipCache)
-		if err != nil {
+		if err := ng.validateAlertDefinition(alertDefinition, cmd.SignedInUser, cmd.SkipCache); err != nil {
+			return err
+		}
+
+		if err := alertDefinition.preSave(); err != nil {
 			return err
 		}
 

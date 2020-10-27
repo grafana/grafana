@@ -1,8 +1,7 @@
 package ngalert
 
 import (
-	"encoding/json"
-	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 
@@ -85,35 +84,14 @@ func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64, signedInUser *mod
 	}
 	alertDefinition := getAlertDefinitionByIDQuery.Result
 
-	condition := eval.Condition{RefID: alertDefinition.Condition}
-
-	err := ng.validate(alertDefinition, signedInUser, skipCache)
+	err := ng.validateAlertDefinition(alertDefinition, signedInUser, skipCache)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, query := range alertDefinition.Data {
-		model := make(map[string]interface{})
-		err := json.Unmarshal(query.JSON, &model)
-		if err != nil {
-			return nil, fmt.Errorf("failed to unmarshal query model %w", err)
-		}
-
-		i, ok := model["orgId"] // GEL requires orgID inside the query JSON
-		if !ok {
-			model["orgId"] = alertDefinition.OrgId
-		} else {
-			orgID, ok := i.(int64)
-			if !ok || orgID == 0 {
-				model["orgId"] = alertDefinition.OrgId
-			}
-		}
-
-		if query.JSON, err = json.Marshal(model); err != nil {
-			return nil, fmt.Errorf("unable to marshal query model %w", err)
-		}
-		condition.QueriesAndExpressions = append(condition.QueriesAndExpressions, query)
+	condition, err := alertDefinition.GetEvalCondition(time.Now())
+	if err != nil {
+		return nil, err
 	}
-
-	return &condition, nil
+	return condition, nil
 }
