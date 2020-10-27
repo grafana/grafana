@@ -115,7 +115,11 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 // executeLiveLogQuery executes a CloudWatch Logs query with live updates over WebSocket.
 // A WebSocket channel is created, which goroutines send responses over.
 func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	responseChannelName := uuid.Must(uuid.NewV4()).String()
+	id, err := uuid.NewV4()
+	if err != nil {
+		return nil, err
+	}
+	responseChannelName := id.String()
 	responseChannel := make(chan *tsdb.Response)
 	if err := e.logsService.AddResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel); err != nil {
 		close(responseChannel)
