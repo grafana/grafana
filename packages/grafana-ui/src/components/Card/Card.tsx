@@ -7,7 +7,7 @@ import { OnTagClick } from '../Tags/Tag';
 import { TagList } from '../Tags/TagList';
 
 /**
- * @public
+ * @alpha
  */
 export interface ContainerProps extends HTMLAttributes<HTMLOrSVGElement> {
   /** Content for the card's tooltip */
@@ -25,7 +25,7 @@ const CardContainer: FC<ContainerProps> = ({ children, tooltip, ...props }) => {
 };
 
 /**
- * @public
+ * @alpha
  */
 export interface CardInnerProps {
   href?: string;
@@ -44,7 +44,7 @@ const CardInner: FC<CardInnerProps> = ({ children, href }) => {
 };
 
 /**
- * @public
+ * @alpha
  */
 export interface Props extends ContainerProps {
   /** Main heading for the Card **/
@@ -74,7 +74,7 @@ export interface Props extends ContainerProps {
 /**
  * Generic card component
  *
- * @public
+ * @alpha
  */
 export const Card: FC<Props> = ({
   heading,
@@ -147,7 +147,7 @@ export const Card: FC<Props> = ({
 };
 
 /**
- * @public
+ * @alpha
  */
 export const getCardStyles = stylesFactory((theme: GrafanaTheme, disabled = false, disableHover = false) => {
   return {
