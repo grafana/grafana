@@ -68,12 +68,8 @@ type CloudWatchService struct {
 func (s *CloudWatchService) Init() error {
 	plog.Debug("initing")
 
-	var globalExecutor *cloudWatchExecutor
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		if globalExecutor == nil {
-			globalExecutor = newExecutor(s.LogsService)
-		}
-		return globalExecutor, nil
+		return newExecutor(s.LogsService), nil
 	})
 
 	return nil
