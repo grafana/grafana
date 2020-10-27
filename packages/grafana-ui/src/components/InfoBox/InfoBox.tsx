@@ -7,13 +7,22 @@ import { IconButton } from '../IconButton/IconButton';
 import { HorizontalGroup } from '../Layout/Layout';
 import panelArtDark from './panelArt_dark.svg';
 import panelArtLight from './panelArt_light.svg';
+import { AlertVariant } from '../Alert/Alert';
+import { getColorsFromSeverity } from '../../utils/colors';
 
 export interface InfoBoxProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   children: React.ReactNode;
+  /** Title of the box */
   title?: string | JSX.Element;
+  /** Url of the read more link */
   url?: string;
+  /** Text of the read more link */
   urlTitle?: string;
+  /** Indicates whether or not box should be rendered with Grafana branding background */
   branded?: boolean;
+  /** Color variant of the box */
+  severity?: AlertVariant;
+  /** Call back to be performed when box is dismissed */
   onDismiss?: () => void;
 }
 
@@ -24,9 +33,9 @@ export interface InfoBoxProps extends Omit<React.HTMLAttributes<HTMLDivElement>,
  */
 export const InfoBox = React.memo(
   React.forwardRef<HTMLDivElement, InfoBoxProps>(
-    ({ title, className, children, branded, url, urlTitle, onDismiss, ...otherProps }, ref) => {
+    ({ title, className, children, branded, url, urlTitle, onDismiss, severity = 'info', ...otherProps }, ref) => {
       const theme = useTheme();
-      const styles = getInfoBoxStyles(theme);
+      const styles = getInfoBoxStyles(theme, severity);
       const wrapperClassName = branded ? cx(styles.wrapperBranded, className) : cx(styles.wrapper, className);
 
       return (
@@ -49,18 +58,15 @@ export const InfoBox = React.memo(
   )
 );
 
-const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme, severity: AlertVariant) => ({
   wrapper: css`
     position: relative;
     padding: ${theme.spacing.md};
     background-color: ${theme.colors.bg2};
-    border-top: 3px solid ${theme.palette.blue80};
+    border-top: 3px solid ${getColorsFromSeverity(severity, theme)[0]};
     margin-bottom: ${theme.spacing.md};
     flex-grow: 1;
-
-    ul {
-      padding-left: ${theme.spacing.lg};
-    }
+    color: ${theme.colors.textSemiWeak};
 
     code {
       @include font-family-monospace();
@@ -109,5 +115,6 @@ const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme) => ({
     display: inline-block;
     margin-top: ${theme.spacing.md};
     font-size: ${theme.typography.size.sm};
+    color: ${theme.colors.textSemiWeak};
   `,
 }));
