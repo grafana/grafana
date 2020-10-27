@@ -151,9 +151,6 @@ func (s *Server) init(cfg *Config) error {
 		}
 	}
 
-	// After services are initialized, it should be safe to register all routes
-	s.HTTPServer.RegisterRoutes()
-
 	return nil
 }
 

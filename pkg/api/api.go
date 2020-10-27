@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-// RegisterRoutes registers all API HTTP routes.
-func (hs *HTTPServer) RegisterRoutes() {
+// registerRoutes registers all API HTTP routes.
+func (hs *HTTPServer) registerRoutes() {
 	reqSignedIn := middleware.ReqSignedIn
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
 	reqEditorRole := middleware.ReqEditorRole
