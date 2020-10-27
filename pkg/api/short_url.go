@@ -3,7 +3,6 @@ package api
 import (
 	"errors"
 	"fmt"
-	"net/url"
 	"path"
 	"strings"
 
@@ -18,9 +17,6 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
 
 	cmd.Path = strings.TrimSpace(cmd.Path)
-
-	u, err := url.Parse(cmd.Path)
-	hs.log.Info("Parsed url", "path", cmd.Path, "u", u, "err", err)
 
 	if path.IsAbs(cmd.Path) {
 		hs.log.Error("Invalid short URL path", "path", cmd.Path)
