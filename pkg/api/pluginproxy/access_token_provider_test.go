@@ -34,6 +34,9 @@ func TestAccessToken(t *testing.T) {
 					"https://www.testapi.com/auth/monitoring.read",
 					"https://www.testapi.com/auth/cloudplatformprojects.readonly",
 				},
+				Headers: []plugins.AppPluginRouteHeader{
+					{Name: "x-header", Content: "my {{ .JsonData.test_header }}"},
+				},
 				Params: map[string]string{
 					"token_uri":    "{{.JsonData.tokenUri}}",
 					"client_email": "{{.JsonData.clientEmail}}",
@@ -46,6 +49,7 @@ func TestAccessToken(t *testing.T) {
 			JsonData: map[string]interface{}{
 				"clientEmail": "test@test.com",
 				"tokenUri":    "login.url.com/token",
+				"test_header": "test header",
 			},
 			SecureJsonData: map[string]string{
 				"privateKey": "testkey",
@@ -143,6 +147,9 @@ func TestAccessToken(t *testing.T) {
 
 		var authCalls int
 		apiHandler.HandleFunc("/oauth/token", func(w http.ResponseWriter, req *http.Request) {
+			Convey("Should render header template", t, func() {
+				So(req.Header.Get("x-header"), ShouldEqual, "my test header")
+			})
 			err := json.NewEncoder(w).Encode(token)
 			require.NoError(t, err)
 			authCalls++
