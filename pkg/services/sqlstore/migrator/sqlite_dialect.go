@@ -3,6 +3,7 @@ package migrator
 import (
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/mattn/go-sqlite3"
 	"xorm.io/xorm"
 )
@@ -11,7 +12,7 @@ type Sqlite3 struct {
 	BaseDialect
 }
 
-func NewSqlite3Dialect(engine *xorm.Engine) *Sqlite3 {
+func NewSqlite3Dialect(engine *xorm.Engine) Dialect {
 	d := Sqlite3{}
 	d.BaseDialect.dialect = &d
 	d.BaseDialect.engine = engine
@@ -76,12 +77,45 @@ func (db *Sqlite3) IndexCheckSql(tableName, indexName string) (string, []interfa
 
 func (db *Sqlite3) DropIndexSql(tableName string, index *Index) string {
 	quote := db.Quote
-	//var unique string
+	// var unique string
 	idxName := index.XName(tableName)
 	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
 }
 
 func (db *Sqlite3) CleanDB() error {
+	return nil
+}
+
+// TruncateDBTables deletes all data from all the tables and resets the sequences.
+// A special case is the dashboard_acl table where we keep the default permissions.
+func (db *Sqlite3) TruncateDBTables() error {
+	tables, err := db.engine.DBMetas()
+	if err != nil {
+		return err
+	}
+
+	sess := db.engine.NewSession()
+	defer sess.Close()
+
+	for _, table := range tables {
+		switch table.Name {
+		case "dashboard_acl":
+			// keep default dashboard permissions
+			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %q WHERE dashboard_id != -1 AND org_id != -1;", table.Name)); err != nil {
+				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
+			}
+			if _, err := sess.Exec("UPDATE sqlite_sequence SET seq = 2 WHERE name = '%s';", table.Name); err != nil {
+				return errutil.Wrapf(err, "failed to cleanup sqlite_sequence")
+			}
+		default:
+			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %s;", table.Name)); err != nil {
+				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
+			}
+		}
+	}
+	if _, err := sess.Exec("UPDATE sqlite_sequence SET seq = 0 WHERE name != 'dashboard_acl';"); err != nil {
+		return errutil.Wrapf(err, "failed to cleanup sqlite_sequence")
+	}
 	return nil
 }
 

@@ -130,6 +130,12 @@ export interface FieldState {
    * Appropriate values for templating
    */
   scopedVars?: ScopedVars;
+
+  /**
+   * Series index is index for this field in a larger data set that can span multiple DataFrames
+   * Useful for assigning color to series by looking up a color in a palette using this index
+   */
+  seriesIndex?: number;
 }
 
 export interface DataFrame extends QueryResultBase {

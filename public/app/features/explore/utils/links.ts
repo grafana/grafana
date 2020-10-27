@@ -1,7 +1,6 @@
 import { splitOpen } from '../state/actions';
-import { Field, LinkModel, TimeRange } from '@grafana/data';
+import { Field, LinkModel, TimeRange, mapInternalLinkToExplore } from '@grafana/data';
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
-import { mapInternalLinkToExplore } from '@grafana/data/src/utils/dataLinks';
 import { getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 
 /**

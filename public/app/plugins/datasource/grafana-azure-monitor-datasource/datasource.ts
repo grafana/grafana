@@ -2,19 +2,21 @@ import _ from 'lodash';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
-import { AzureMonitorQuery, AzureDataSourceJsonData, AzureQueryType, InsightsAnalyticsQuery } from './types';
+import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, InsightsAnalyticsQuery } from './types';
 import {
-  DataSourceApi,
+  DataFrame,
   DataQueryRequest,
+  DataQueryResponse,
+  DataSourceApi,
   DataSourceInstanceSettings,
-  DataQueryResponseData,
   LoadingState,
   ScopedVars,
 } from '@grafana/data';
-import { Observable, of, from } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
 import { migrateMetricsDimensionFilters } from './query_ctrl';
+import { map } from 'rxjs/operators';
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
@@ -47,7 +49,7 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     this.optionsKey = optionsKey;
   }
 
-  query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponseData> {
+  query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
     const byType: Record<AzureQueryType, DataQueryRequest<AzureMonitorQuery>> = ({} as unknown) as Record<
       AzureQueryType,
       DataQueryRequest<AzureMonitorQuery>
@@ -78,10 +80,11 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
         continue;
       }
 
-      // Initalize the list of queries
+      // Initialize the list of queries
       let q = byType[target.queryType];
       if (!q) {
         q = _.cloneDeep(options);
+        q.requestId = `${q.requestId}-${target.refId}`;
         q.targets = [];
         byType[target.queryType] = q;
       }
@@ -97,17 +100,23 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
     if (obs.length === 1) {
       return obs[0];
     }
+
     if (obs.length > 1) {
-      // Not accurate, but simple and works
-      // should likely be more like the mixed data source
-      const promises = obs.map(o => o.toPromise());
-      return from(
-        Promise.all(promises).then(results => {
-          return { data: _.flatten(results) };
+      return forkJoin(obs).pipe(
+        map((results: DataQueryResponse[]) => {
+          const data: DataFrame[] = [];
+          for (const result of results) {
+            for (const frame of result.data) {
+              data.push(frame);
+            }
+          }
+
+          return { state: LoadingState.Done, data };
         })
       );
     }
-    return of({ state: LoadingState.Done });
+
+    return of({ state: LoadingState.Done, data: [] });
   }
 
   async annotationQuery(options: any) {

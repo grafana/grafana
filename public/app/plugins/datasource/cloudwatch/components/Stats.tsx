@@ -14,7 +14,7 @@ const removeText = '-- remove stat --';
 const removeOption: SelectableValue<string> = { label: removeText, value: removeText };
 
 export const Stats: FunctionComponent<Props> = ({ stats, values, onChange, variableOptionGroup }) => (
-  <>
+  <div data-testid="stats">
     {values &&
       values.map((value, index) => (
         <Segment
@@ -41,5 +41,5 @@ export const Stats: FunctionComponent<Props> = ({ stats, values, onChange, varia
       onChange={({ value }) => onChange([...values, value!])}
       options={[...stats.filter(({ value }) => !values.includes(value!)), variableOptionGroup]}
     />
-  </>
+  </div>
 );

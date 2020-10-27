@@ -24,14 +24,14 @@ export const StringValueEditor: React.FC<FieldConfigEditorProps<string, StringFi
         onChange(evt.currentTarget.value.trim() === '' ? undefined : evt.currentTarget.value);
       }
     },
-    [onChange]
+    [item.settings?.useTextarea, onChange]
   );
 
   return (
     <Component
       placeholder={item.settings?.placeholder}
       defaultValue={value || ''}
-      rows={item.settings?.useTextarea && item.settings.rows}
+      rows={(item.settings?.useTextarea && item.settings.rows) || 5}
       onBlur={onValueChange}
       onKeyDown={onValueChange}
     />

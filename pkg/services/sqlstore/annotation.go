@@ -23,9 +23,7 @@ func validateTimeRange(item *annotations.Item) error {
 		item.Epoch = item.EpochEnd
 	}
 	if item.EpochEnd < item.Epoch {
-		tmp := item.Epoch
-		item.Epoch = item.EpochEnd
-		item.EpochEnd = tmp
+		item.Epoch, item.EpochEnd = item.EpochEnd, item.Epoch
 	}
 	return nil
 }
@@ -37,7 +35,7 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 	return inTransaction(func(sess *DBSession) error {
 		tags := models.ParseTagPairs(item.Tags)
 		item.Tags = models.JoinTagPairs(tags)
-		item.Created = time.Now().UnixNano() / int64(time.Millisecond)
+		item.Created = timeNow().UnixNano() / int64(time.Millisecond)
 		item.Updated = item.Created
 		if item.Epoch == 0 {
 			item.Epoch = item.Created
@@ -83,7 +81,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 			return errors.New("Annotation not found")
 		}
 
-		existing.Updated = time.Now().UnixNano() / int64(time.Millisecond)
+		existing.Updated = timeNow().UnixNano() / int64(time.Millisecond)
 		existing.Text = item.Text
 
 		if item.Epoch != 0 {

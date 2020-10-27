@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"time"
 
@@ -36,6 +36,8 @@ var (
 	GrafanaLatestVersion string
 	GrafanaHasUpdate     bool
 	plog                 log.Logger
+
+	pluginScanningErrors map[string]*PluginError
 )
 
 type PluginScanner struct {
@@ -45,6 +47,7 @@ type PluginScanner struct {
 	cfg                  *setting.Cfg
 	requireSigned        bool
 	log                  log.Logger
+	plugins              map[string]*PluginBase
 }
 
 type PluginManager struct {
@@ -74,10 +77,11 @@ func (pm *PluginManager) Init() error {
 		"renderer":   RendererPlugin{},
 		"transform":  TransformPlugin{},
 	}
+	pluginScanningErrors = map[string]*PluginError{}
 
 	pm.log.Info("Starting plugin search")
 
-	plugDir := path.Join(setting.StaticRootPath, "app/plugins")
+	plugDir := filepath.Join(setting.StaticRootPath, "app/plugins")
 	pm.log.Debug("Scanning core plugin directory", "dir", plugDir)
 	if err := pm.scan(plugDir, false); err != nil {
 		return errutil.Wrapf(err, "failed to scan core plugin directory '%s'", plugDir)
@@ -114,8 +118,7 @@ func (pm *PluginManager) Init() error {
 		}
 	}
 
-	// check plugin paths defined in config
-	if err := pm.checkPluginPaths(); err != nil {
+	if err := pm.scanPluginPaths(); err != nil {
 		return err
 	}
 
@@ -139,7 +142,6 @@ func (pm *PluginManager) Init() error {
 		if p.IsCorePlugin {
 			p.Signature = PluginSignatureInternal
 		} else {
-			p.Signature = getPluginSignatureState(pm.log, p)
 			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
 		}
 	}
@@ -166,7 +168,8 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (pm *PluginManager) checkPluginPaths() error {
+// scanPluginPaths scans configured plugin paths.
+func (pm *PluginManager) scanPluginPaths() error {
 	for pluginID, settings := range pm.Cfg.PluginSettings {
 		path, exists := settings["path"]
 		if !exists || path == "" {
@@ -189,8 +192,10 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		cfg:                  pm.Cfg,
 		requireSigned:        requireSigned,
 		log:                  pm.log,
+		plugins:              map[string]*PluginBase{},
 	}
 
+	// 1st pass: Scan plugins, also mapping plugins to their respective directories
 	if err := util.Walk(pluginDir, true, true, scanner.walker); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			pm.log.Debug("Couldn't scan directory since it doesn't exist", "pluginDir", pluginDir)
@@ -204,6 +209,80 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 			pm.log.Warn("Could not scan dir", "pluginDir", pluginDir, "err", err)
 		}
 		return err
+	}
+
+	pm.log.Debug("Initial plugin loading done")
+
+	// 2nd pass: Validate and register plugins
+	for dpath, plugin := range scanner.plugins {
+		// Try to find any root plugin
+		ancestors := strings.Split(dpath, string(filepath.Separator))
+		ancestors = ancestors[0 : len(ancestors)-1]
+		aPath := ""
+		if runtime.GOOS != "windows" && filepath.IsAbs(dpath) {
+			aPath = "/"
+		}
+		for _, a := range ancestors {
+			aPath = filepath.Join(aPath, a)
+			if root, ok := scanner.plugins[aPath]; ok {
+				plugin.Root = root
+				break
+			}
+		}
+
+		pm.log.Debug("Found plugin", "id", plugin.Id, "signature", plugin.Signature, "hasRoot", plugin.Root != nil)
+		signingError := scanner.validateSignature(plugin)
+		if signingError != nil {
+			pm.log.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.Id,
+				"signature", plugin.Signature, "status", signingError.ErrorCode)
+			pluginScanningErrors[plugin.Id] = signingError
+			continue
+		}
+
+		pm.log.Debug("Attempting to add plugin", "id", plugin.Id)
+
+		pluginGoType, exists := PluginTypes[plugin.Type]
+		if !exists {
+			return fmt.Errorf("unknown plugin type %q", plugin.Type)
+		}
+
+		jsonFPath := filepath.Join(plugin.PluginDir, "plugin.json")
+
+		// External plugins need a module.js file for SystemJS to load
+		if !strings.HasPrefix(jsonFPath, setting.StaticRootPath) && !scanner.IsBackendOnlyPlugin(plugin.Type) {
+			module := filepath.Join(plugin.PluginDir, "module.js")
+			exists, err := fs.Exists(module)
+			if err != nil {
+				return err
+			}
+			if !exists {
+				scanner.log.Warn("Plugin missing module.js",
+					"name", plugin.Name,
+					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.",
+					"path", module)
+			}
+		}
+
+		reader, err := os.Open(jsonFPath)
+		if err != nil {
+			return err
+		}
+		defer reader.Close()
+
+		jsonParser := json.NewDecoder(reader)
+
+		loader := reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
+
+		// Load the full plugin, and add it to manager
+		if err := loader.Load(jsonParser, plugin, scanner.backendPluginManager); err != nil {
+			if errors.Is(err, duplicatePluginError{}) {
+				pm.log.Warn("Plugin is duplicate", "error", err)
+				scanner.errors = append(scanner.errors, err)
+				continue
+			}
+			return err
+		}
+		pm.log.Debug("Successfully added plugin", "id", plugin.Id)
 	}
 
 	if len(scanner.errors) > 0 {
@@ -239,23 +318,25 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 		return nil
 	}
 
-	if f.Name() == "plugin.json" {
-		err := scanner.loadPlugin(currentPath)
-		if err != nil {
-			scanner.log.Error("Failed to load plugin", "error", err, "pluginPath", filepath.Dir(currentPath))
-			scanner.errors = append(scanner.errors, err)
-		}
+	if f.Name() != "plugin.json" {
+		return nil
 	}
+
+	if err := scanner.loadPlugin(currentPath); err != nil {
+		scanner.log.Error("Failed to load plugin", "error", err, "pluginPath", filepath.Dir(currentPath))
+		scanner.errors = append(scanner.errors, err)
+	}
+
 	return nil
 }
 
-func (scanner *PluginScanner) loadPlugin(pluginJsonFilePath string) error {
-	currentDir := filepath.Dir(pluginJsonFilePath)
-	reader, err := os.Open(pluginJsonFilePath)
+func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
+	s.log.Debug("Loading plugin", "path", pluginJSONFilePath)
+	currentDir := filepath.Dir(pluginJSONFilePath)
+	reader, err := os.Open(pluginJSONFilePath)
 	if err != nil {
 		return err
 	}
-
 	defer reader.Close()
 
 	jsonParser := json.NewDecoder(reader)
@@ -270,77 +351,104 @@ func (scanner *PluginScanner) loadPlugin(pluginJsonFilePath string) error {
 
 	// The expressions feature toggle corresponds to transform plug-ins.
 	if pluginCommon.Type == "transform" {
-		isEnabled := scanner.cfg.IsExpressionsEnabled()
+		isEnabled := s.cfg.IsExpressionsEnabled()
 		if !isEnabled {
-			scanner.log.Debug("Transform plugin is disabled since the expressions feature toggle is not enabled",
+			s.log.Debug("Transform plugin is disabled since the expressions feature toggle is not enabled",
 				"pluginID", pluginCommon.Id)
 			return nil
 		}
 	}
 
-	pluginCommon.PluginDir = filepath.Dir(pluginJsonFilePath)
+	pluginCommon.PluginDir = filepath.Dir(pluginJSONFilePath)
+	pluginCommon.Signature = getPluginSignatureState(s.log, &pluginCommon)
 
-	// For the time being, we choose to only require back-end plugins to be signed
-	// NOTE: the state is calculated again when setting metadata on the object
-	if pluginCommon.Backend && scanner.requireSigned {
-		sig := getPluginSignatureState(scanner.log, &pluginCommon)
-		if sig != PluginSignatureValid {
-			scanner.log.Debug("Invalid Plugin Signature", "pluginID", pluginCommon.Id, "pluginDir", pluginCommon.PluginDir, "state", sig)
-			if sig == PluginSignatureUnsigned {
-				allowUnsigned := false
-				for _, plug := range scanner.cfg.PluginsAllowUnsigned {
-					if plug == pluginCommon.Id {
-						allowUnsigned = true
-						break
-					}
-				}
-				if setting.Env != setting.DEV && !allowUnsigned {
-					return fmt.Errorf("plugin %q is unsigned", pluginCommon.Id)
-				}
-				scanner.log.Warn("Running an unsigned backend plugin", "pluginID", pluginCommon.Id, "pluginDir", pluginCommon.PluginDir)
-			} else {
-				switch sig {
-				case PluginSignatureInvalid:
-					return fmt.Errorf("plugin %q has an invalid signature", pluginCommon.Id)
-				case PluginSignatureModified:
-					return fmt.Errorf("plugin %q's signature has been modified", pluginCommon.Id)
-				default:
-					return fmt.Errorf("unrecognized plugin signature state %v", sig)
-				}
-			}
-		}
-	}
+	s.plugins[currentDir] = &pluginCommon
 
-	pluginGoType, exists := PluginTypes[pluginCommon.Type]
-	if !exists {
-		return fmt.Errorf("unknown plugin type %q", pluginCommon.Type)
-	}
-	loader := reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
-
-	// External plugins need a module.js file for SystemJS to load
-	if !strings.HasPrefix(pluginJsonFilePath, setting.StaticRootPath) && !scanner.IsBackendOnlyPlugin(pluginCommon.Type) {
-		module := filepath.Join(filepath.Dir(pluginJsonFilePath), "module.js")
-		exists, err := fs.Exists(module)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			scanner.log.Warn("Plugin missing module.js",
-				"name", pluginCommon.Name,
-				"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.",
-				"path", module)
-		}
-	}
-
-	if _, err := reader.Seek(0, 0); err != nil {
-		return err
-	}
-
-	return loader.Load(jsonParser, currentDir, scanner.backendPluginManager)
+	return nil
 }
 
 func (scanner *PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
 	return pluginType == "renderer" || pluginType == "transform"
+}
+
+// validateSignature validates a plugin's signature.
+func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
+	// For the time being, we choose to only require back-end plugins to be signed
+	// NOTE: the state is calculated again when setting metadata on the object
+	if !plugin.Backend || !s.requireSigned {
+		return nil
+	}
+
+	if plugin.Signature == PluginSignatureValid {
+		s.log.Debug("Plugin has valid signature", "id", plugin.Id)
+		return nil
+	}
+
+	if plugin.Root != nil {
+		// If a descendant plugin with invalid signature, set signature to that of root
+		if plugin.IsCorePlugin || plugin.Signature == PluginSignatureInternal {
+			s.log.Debug("Not setting descendant plugin's signature to that of root since it's core or internal",
+				"plugin", plugin.Id, "signature", plugin.Signature, "isCore", plugin.IsCorePlugin)
+		} else {
+			s.log.Debug("Setting descendant plugin's signature to that of root", "plugin", plugin.Id,
+				"root", plugin.Root.Id, "signature", plugin.Signature, "rootSignature", plugin.Root.Signature)
+			plugin.Signature = plugin.Root.Signature
+			if plugin.Signature == PluginSignatureValid {
+				s.log.Debug("Plugin has valid signature (inherited from root)", "id", plugin.Id)
+				return nil
+			}
+		}
+	} else {
+		s.log.Debug("Non-valid plugin Signature", "pluginID", plugin.Id, "pluginDir", plugin.PluginDir,
+			"state", plugin.Signature)
+	}
+
+	switch plugin.Signature {
+	case PluginSignatureUnsigned:
+		allowUnsigned := false
+		for _, plug := range s.cfg.PluginsAllowUnsigned {
+			if plug == plugin.Id {
+				allowUnsigned = true
+				break
+			}
+		}
+		if setting.Env != setting.Dev && !allowUnsigned {
+			s.log.Debug("Plugin is unsigned", "id", plugin.Id)
+			s.errors = append(s.errors, fmt.Errorf("plugin %q is unsigned", plugin.Id))
+			return &PluginError{
+				ErrorCode: signatureMissing,
+			}
+		}
+
+		s.log.Warn("Running an unsigned backend plugin", "pluginID", plugin.Id, "pluginDir",
+			plugin.PluginDir)
+		return nil
+	case PluginSignatureInvalid:
+		s.log.Debug("Plugin %q has an invalid signature", plugin.Id)
+		s.errors = append(s.errors, fmt.Errorf("plugin %q has an invalid signature", plugin.Id))
+		return &PluginError{
+			ErrorCode: signatureInvalid,
+		}
+	case PluginSignatureModified:
+		s.log.Debug("Plugin %q has a modified signature", plugin.Id)
+		s.errors = append(s.errors, fmt.Errorf("plugin %q's signature has been modified", plugin.Id))
+		return &PluginError{
+			ErrorCode: signatureModified,
+		}
+	default:
+		panic(fmt.Sprintf("Plugin %q has unrecognized plugin signature state %q", plugin.Id, plugin.Signature))
+	}
+}
+
+func ScanningErrors() []PluginError {
+	scanningErrs := make([]PluginError, 0)
+	for id, e := range pluginScanningErrors {
+		scanningErrs = append(scanningErrs, PluginError{
+			ErrorCode: e.ErrorCode,
+			PluginID:  id,
+		})
+	}
+	return scanningErrs
 }
 
 func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {

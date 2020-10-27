@@ -153,7 +153,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 
 		target = params.Encode()
 
-		if setting.Env == setting.DEV {
+		if setting.Env == setting.Dev {
 			azlog.Debug("Azuremonitor request", "params", params)
 		}
 
@@ -288,7 +288,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 			labels[md.Name.LocalizedValue] = md.Value
 		}
 
-		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeFloat64)
+		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeNullableFloat64)
 		frame.RefID = query.RefID
 		dataField := frame.Fields[1]
 		dataField.Name = amr.Value[0].Name.LocalizedValue
@@ -314,7 +314,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 		requestedAgg := query.Params.Get("aggregation")
 
 		for i, point := range series.Data {
-			var value float64
+			var value *float64
 			switch requestedAgg {
 			case "Average":
 				value = point.Average

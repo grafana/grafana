@@ -3,9 +3,9 @@ title = "Advanced variable format options"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
 type = "docs"
 [menu.docs]
-name = "advanced-variable-format-options"
+identifier = "advanced-variables-formats"
 parent = "variables"
-weight = 300
+weight = 600
 +++
 
 # Advanced variable format options
@@ -142,4 +142,14 @@ Formats single- and multi-valued variables into a comma-separated string, escape
 servers = ["test'1", "test2"]
 String to interpolate: '${servers:sqlstring}'
 Interpolation result: "'test''1','test2'"
+```
+
+## Text
+
+Formats single- and multi-valued variables into their text representation. For a single variable it will just return the text representation. For multi-valued variables it will return the text representation combined with `+`.
+
+```bash
+servers = ["test1", "test2"]
+String to interpolate: '${servers:text}'
+Interpolation result: "test1 + test2"
 ```

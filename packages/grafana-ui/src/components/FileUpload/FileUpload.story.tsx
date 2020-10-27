@@ -16,7 +16,7 @@ export default {
   },
 };
 
-export const single = () => {
+export const Single = () => {
   const size = useSize();
   return (
     <FileUpload

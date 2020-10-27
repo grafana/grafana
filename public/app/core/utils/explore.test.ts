@@ -11,9 +11,10 @@ import {
   updateHistory,
   getExploreUrl,
   GetExploreUrlArguments,
+  getTimeRangeFromUrl,
 } from './explore';
 import store from 'app/core/store';
-import { DataQueryError, dateTime, LogsDedupStrategy, ExploreUrlState, LogsSortOrder } from '@grafana/data';
+import { DataQueryError, dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 
@@ -21,12 +22,6 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   datasource: '',
   queries: [],
   range: DEFAULT_RANGE,
-  ui: {
-    showingGraph: true,
-    showingTable: true,
-    showingLogs: true,
-    dedupStrategy: LogsDedupStrategy.none,
-  },
   originPanelId: undefined,
 };
 
@@ -103,8 +98,7 @@ describe('state functions', () => {
 
       expect(serializeStateToUrlParam(state)).toBe(
         '{"datasource":"foo","queries":[{"expr":"metric{test=\\"a/b\\"}"},' +
-          '{"expr":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"},' +
-          '"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true,"dedupStrategy":"none"}}'
+          '{"expr":"super{foo=\\"x/z\\"}"}],"range":{"from":"now-5h","to":"now"}}'
       );
     });
 
@@ -126,7 +120,7 @@ describe('state functions', () => {
         },
       };
       expect(serializeStateToUrlParam(state, true)).toBe(
-        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"},{"ui":[true,true,true,"none"]}]'
+        '["now-5h","now","foo",{"expr":"metric{test=\\"a/b\\"}"},{"expr":"super{foo=\\"x/z\\"}"}]'
       );
     });
   });
@@ -283,6 +277,43 @@ describe('hasRefId', () => {
 
       expect(result).toBe(input.data[3].series[3]);
     });
+  });
+});
+
+describe('getTimeRangeFromUrl', () => {
+  it('should parse moment date', () => {
+    // convert date strings to moment object
+    const range = { from: dateTime('2020-10-22T10:44:33.615Z'), to: dateTime('2020-10-22T10:49:33.615Z') };
+    const result = getTimeRangeFromUrl(range, 'browser');
+    expect(result.raw).toEqual(range);
+  });
+
+  it('should parse epoch strings', () => {
+    const range = {
+      from: dateTime('2020-10-22T10:00:00Z')
+        .valueOf()
+        .toString(),
+      to: dateTime('2020-10-22T11:00:00Z')
+        .valueOf()
+        .toString(),
+    };
+    const result = getTimeRangeFromUrl(range, 'browser');
+    expect(result.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
+    expect(result.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
+    expect(result.raw.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
+    expect(result.raw.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
+  });
+
+  it('should parse ISO strings', () => {
+    const range = {
+      from: dateTime('2020-10-22T10:00:00Z').toISOString(),
+      to: dateTime('2020-10-22T11:00:00Z').toISOString(),
+    };
+    const result = getTimeRangeFromUrl(range, 'browser');
+    expect(result.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
+    expect(result.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
+    expect(result.raw.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
+    expect(result.raw.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
   });
 });
 

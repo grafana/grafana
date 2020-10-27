@@ -40,6 +40,8 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
         <LogLabels labels={value} />
       </span>
     );
+  } else if (kind === LogsMetaKind.Error) {
+    return <span className="logs-meta-item__error">{value}</span>;
   }
   return value;
 }
@@ -266,8 +268,6 @@ export class Logs extends PureComponent<Props, State> {
             absoluteRange={visibleRange || absoluteRange}
             isStacked={true}
             showPanel={false}
-            showingGraph={true}
-            showingTable={true}
             timeZone={timeZone}
             showBars={true}
             showLines={false}

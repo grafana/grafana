@@ -6,7 +6,7 @@ import { DataQuery } from './datasource';
  */
 export interface DataLinkClickEvent<T = any> {
   origin: T;
-  scopedVars: ScopedVars;
+  scopedVars?: ScopedVars;
   e?: any; // mouse|react event
 }
 

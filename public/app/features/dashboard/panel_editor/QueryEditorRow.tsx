@@ -37,7 +37,6 @@ interface Props {
   index: number;
   onAddQuery: (query?: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
-  onMoveQuery: (query: DataQuery, direction: number) => void;
   onChange: (query: DataQuery) => void;
 }
 
@@ -232,7 +231,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     const isDisabled = query.hide;
 
     return (
-      <HorizontalGroup>
+      <HorizontalGroup width="auto">
         {hasTextEditMode && (
           <QueryOperationAction
             title="Toggle text edit mode"
@@ -242,13 +241,6 @@ export class QueryEditorRow extends PureComponent<Props, State> {
             }}
           />
         )}
-        <QueryOperationAction
-          title="Move query down"
-          icon="arrow-down"
-          onClick={() => this.props.onMoveQuery(query, 1)}
-        />
-        <QueryOperationAction title="Move query up" icon="arrow-up" onClick={() => this.props.onMoveQuery(query, -1)} />
-
         <QueryOperationAction title="Duplicate query" icon="copy" onClick={this.onCopyQuery} />
         <QueryOperationAction
           title="Disable/enable query"
@@ -297,6 +289,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       <div aria-label={selectors.components.QueryEditorRows.rows}>
         <QueryOperationRow
           id={id}
+          draggable={true}
           index={index}
           title={this.renderTitle}
           actions={this.renderActions}
