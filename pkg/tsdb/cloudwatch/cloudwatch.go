@@ -3,7 +3,6 @@ package cloudwatch
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"regexp"
 	"strings"
 	"sync"
@@ -73,7 +72,7 @@ func (s *CloudWatchService) Init() error {
 	var globalExecutor *cloudWatchExecutor
 	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 		if globalExecutor == nil {
-			globalExecutor = newExecutor2(s.LogsService)
+			globalExecutor = newExecutor(s.LogsService)
 		}
 		return globalExecutor, nil
 	})
@@ -81,24 +80,7 @@ func (s *CloudWatchService) Init() error {
 	return nil
 }
 
-func newExecutor2(logsService *LogsService) *cloudWatchExecutor {
-	return &cloudWatchExecutor{
-		queuesByRegion: map[string]chan bool{},
-		logsService:    logsService,
-	}
-}
-
-func newExecutor() *cloudWatchExecutor {
-	var logsService *LogsService
-	name := reflect.TypeOf(&LogsService{}).Elem().Name()
-	for _, svc := range registry.GetServices() {
-		if svc.Name == name {
-			logsService = svc.Instance.(*LogsService)
-		}
-	}
-	if logsService == nil {
-		panic(fmt.Sprintf("Couldn't get %s from registry", name))
-	}
+func newExecutor(logsService *LogsService) *cloudWatchExecutor {
 	return &cloudWatchExecutor{
 		queuesByRegion: map[string]chan bool{},
 		logsService:    logsService,
