@@ -37,10 +37,10 @@ When creating or updating a data link, press Cmd+Space or Ctrl+Space on your key
 ## Update a data link
 
 1. On the Field tab, find the link that you want to make changes to.
-2. Click the Edit (pencil) icon to open the Edit link window.
-3. Make any necessary changes.
-4. Click **Save** to save changes and close the window.
-5. Click **Save** in the upper right to save your changes to the dashboard.
+1. Click the Edit (pencil) icon to open the Edit link window.
+1. Make any necessary changes.
+1. Click **Save** to save changes and close the window.
+1. Click **Save** in the upper right to save your changes to the dashboard.
 
 ## Delete a data link
 
