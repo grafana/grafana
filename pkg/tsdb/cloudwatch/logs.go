@@ -16,14 +16,14 @@ func init() {
 type LogsService struct {
 	channelMu        sync.Mutex
 	responseChannels map[string]chan *tsdb.Response
-	queuesByRegion   map[string](chan bool)
+	queues           map[string](chan bool)
 	queueLock        sync.Mutex
 }
 
 // Init is called by the DI framework to initialize the instance.
 func (s *LogsService) Init() error {
 	s.responseChannels = make(map[string]chan *tsdb.Response)
-	s.queuesByRegion = make(map[string](chan bool))
+	s.queues = make(map[string](chan bool))
 	return nil
 }
 
