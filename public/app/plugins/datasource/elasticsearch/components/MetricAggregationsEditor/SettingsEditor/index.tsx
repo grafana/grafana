@@ -90,12 +90,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
       )}
 
       {metric.type === 'cardinality' && (
-        <InlineField label="Precision Threshold" {...inlineFieldProps}>
-          <Input
-            onBlur={e => dispatch(changeMetricSetting(metric, 'precision_threshold', e.target.value))}
-            defaultValue={metric.settings?.precision_threshold ?? ''}
-          />
-        </InlineField>
+        <SettingField label="Precision Threshold" metric={metric} settingName="precision_threshold" />
       )}
 
       {metric.type === 'extended_stats' && (
@@ -132,6 +127,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
           label="Missing"
           metric={metric}
           settingName="missing"
+          // TODO: This should be better formatted.
           tooltip="The missing parameter defines how documents that are missing a value should be treated. By default
             they will be ignored but it is also possible to treat them as if they had a value"
         />
