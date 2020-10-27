@@ -58,12 +58,12 @@ In the search view, you can sort dashboards using these insights data. It helps 
 
 ## Data source insights
 
-Data source insights gives you information about how much a data source has been used and how many errors it has returned. It shows the last thirty days of data.
+Data source insights give you information about how much of the data source has been used and how many errors it has returned. It shows the last thirty days of data.
 
 To find data source insights, go to:
 1. Data source list view
-2. Click on a data source
-3. Click the insights tab
+1. Click on a data source
+1. Click the insights tab
 
 
 <!-- image here -->
