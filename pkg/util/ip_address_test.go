@@ -36,7 +36,7 @@ func TestParseIPAddress_Invalid(t *testing.T) {
 		},
 		{
 			input: "::1]",
-			err:   "failed to split network address \"::1]\" by host and port: net.SplitHostPort failed for '::1]': address ::1]: too many colons in address",
+			err:   "failed to split network address \"::1]\" by host and port: Malformed IPv6 address: '::1]'",
 		},
 		{
 			input: "",
@@ -63,6 +63,7 @@ func TestSplitHostPortDefault_Valid(t *testing.T) {
 		{input: "192.168.0.140", defaultHost: "", defaultPort: "123", host: "192.168.0.140", port: "123"},
 		{input: "[::1]:456", defaultHost: "", defaultPort: "", host: "::1", port: "456"},
 		{input: "[::1]", defaultHost: "", defaultPort: "123", host: "::1", port: "123"},
+		{input: "2001:608:0:a00::102d", host: "2001:608:0:a00::102d", port: ""},
 		{input: ":456", defaultHost: "1.2.3.4", defaultPort: "", host: "1.2.3.4", port: "456"},
 		{input: "xyz.rds.amazonaws.com", defaultHost: "", defaultPort: "123", host: "xyz.rds.amazonaws.com", port: "123"},
 		{input: "xyz.rds.amazonaws.com:123", defaultHost: "", defaultPort: "", host: "xyz.rds.amazonaws.com", port: "123"},
@@ -87,6 +88,7 @@ func TestSplitHostPort_Valid(t *testing.T) {
 		{input: "192.168.0.140", host: "192.168.0.140", port: ""},
 		{input: "[::1]:456", host: "::1", port: "456"},
 		{input: "[::1]", host: "::1", port: ""},
+		{input: "2001:608:0:a00::102d", host: "2001:608:0:a00::102d", port: ""},
 		{input: ":456", host: "", port: "456"},
 		{input: "xyz.rds.amazonaws.com", host: "xyz.rds.amazonaws.com", port: ""},
 		{input: "xyz.rds.amazonaws.com:123", host: "xyz.rds.amazonaws.com", port: "123"},

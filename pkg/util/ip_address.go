@@ -43,25 +43,28 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string) (NetworkAddres
 		Host: defaultHost,
 		Port: defaultPort,
 	}
+
 	if len(input) == 0 {
 		return addr, nil
 	}
 
-	start := 0
-	// Determine if IPv6 address, in which case IP address will be enclosed in square brackets
-	if strings.Index(input, "[") == 0 {
-		addrEnd := strings.LastIndex(input, "]")
-		if addrEnd < 0 {
-			// Malformed address
-			return addr, fmt.Errorf("Malformed IPv6 address: '%s'", input)
-		}
-
-		start = addrEnd
+	// validate brackets for IPv6
+	hasLeftBracket := strings.Index(input, "[") == 0
+	hasRightBracket := strings.Contains(input, "]")
+	if (hasLeftBracket && !hasRightBracket) || (!hasLeftBracket && hasRightBracket) {
+		return addr, fmt.Errorf("Malformed IPv6 address: '%s'", input)
 	}
-	if strings.LastIndex(input[start:], ":") < 0 {
-		// There's no port section of the input
-		// It's still useful to call net.SplitHostPort though, since it removes IPv6
-		// square brackets from the address
+
+	// add port and brackets to IPv6
+	isIPv6WithoutBracketsAndPort := (strings.Count(input, ":") > 1) && !hasRightBracket
+	if isIPv6WithoutBracketsAndPort {
+		input = fmt.Sprintf("[%s]:%s", input, defaultPort)
+	}
+
+	// add port to IPv4/IPv6 with brackets
+	isIPv4WithoutPort := strings.Contains(input, ".") && !strings.Contains(input, ":")
+	isIPv6WithBracketsAndWithoutPort := hasLeftBracket && (strings.LastIndex(input, "]") == len(input)-1)
+	if isIPv4WithoutPort || isIPv6WithBracketsAndWithoutPort {
 		input = fmt.Sprintf("%s:%s", input, defaultPort)
 	}
 
@@ -70,6 +73,7 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string) (NetworkAddres
 		return addr, errutil.Wrapf(err, "net.SplitHostPort failed for '%s'", input)
 	}
 
+	// use host/port from input if a non-empty host/port as input
 	if len(host) > 0 {
 		addr.Host = host
 	}
