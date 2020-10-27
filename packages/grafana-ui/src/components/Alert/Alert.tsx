@@ -5,6 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useTheme } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types/icon';
+import { getColorsFromSeverity } from '../../utils/colors';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -76,21 +77,11 @@ export const Alert: FC<Props> = ({
 };
 
 const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean) => {
-  const { redBase, redShade, greenBase, greenShade, blue80, blue77, white } = theme.palette;
-  const backgrounds = {
-    error: css`
-      background: linear-gradient(90deg, ${redBase}, ${redShade});
-    `,
-    warning: css`
-      background: linear-gradient(90deg, ${redBase}, ${redShade});
-    `,
-    info: css`
-      background: linear-gradient(100deg, ${blue80}, ${blue77});
-    `,
-    success: css`
-      background: linear-gradient(100deg, ${greenBase}, ${greenShade});
-    `,
-  };
+  const { white } = theme.palette;
+  const severityColors = getColorsFromSeverity(severity, theme);
+  const background = css`
+    background: linear-gradient(90deg, ${severityColors[0]}, ${severityColors[0]});
+  `;
 
   return {
     container: css`
@@ -106,7 +97,7 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
       display: flex;
       flex-direction: row;
       align-items: center;
-      ${backgrounds[severity]}
+      ${background}
     `,
     icon: css`
       padding: 0 ${theme.spacing.md} 0 0;
