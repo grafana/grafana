@@ -1,6 +1,6 @@
 import { EventBusSrv } from './EventBus';
 import { BusEventWithPayload } from './types';
-import { eventFactory } from './legacy';
+import { eventFactory } from './eventFactory';
 
 interface LoginEventPayload {
   logins: number;
