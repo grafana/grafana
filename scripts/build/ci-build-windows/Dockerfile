@@ -7,8 +7,8 @@ RUN powershell Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
 RUN powershell Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
 # Scoop first of all needs git to update itself
 # Run Scoop under PowerShell since it can otherwise fail
-RUN powershell -Command scoop install git@2.28.0.windows.1
-RUN powershell -Command scoop install go@1.15.2 unzip@6.00
+RUN powershell -Command scoop install git@2.29.1.windows.1
+RUN powershell -Command scoop install go@1.15.3 unzip@6.00 gcc@9.3.0-2
 
 # Install diffutils, in case we need them
 RUN powershell (New-Object Net.WebClient).DownloadFile(\
