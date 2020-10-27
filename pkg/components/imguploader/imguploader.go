@@ -6,13 +6,14 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/imguploader/gcs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
-	pngExt                         = ".png"
-	defaultSGcsSignedUrlExpiration = 7 * 24 * time.Hour // 7 days
+	pngExt                        = ".png"
+	defaultGCSSignedURLExpiration = 7 * 24 * time.Hour // 7 days
 )
 
 type ImageUploader interface {
@@ -87,9 +88,18 @@ func NewImageUploader() (ImageUploader, error) {
 		bucketName := gcssec.Key("bucket").MustString("")
 		path := gcssec.Key("path").MustString("")
 		enableSignedURLs := gcssec.Key("enable_signed_urls").MustBool(false)
-		signedURLExpiration := gcssec.Key("signed_url_expiration").MustString(defaultSGcsSignedUrlExpiration.String())
+		exp := gcssec.Key("signed_url_expiration").MustString("")
+		var suExp time.Duration
+		if exp != "" {
+			suExp, err = time.ParseDuration(exp)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			suExp = defaultGCSSignedURLExpiration
+		}
 
-		return NewGCSUploader(keyFile, bucketName, path, enableSignedURLs, signedURLExpiration)
+		return gcs.NewUploader(keyFile, bucketName, path, enableSignedURLs, suExp)
 	case "azure_blob":
 		azureBlobSec, err := setting.Raw.GetSection("external_image_storage.azure_blob")
 		if err != nil {
