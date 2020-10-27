@@ -482,6 +482,10 @@ func doBuild(binaryName, pkg string, tags []string) {
 		rmr(binary, binary+".md5")
 	}
 	args := []string{"build", "-ldflags", ldflags()}
+	if goos == windows {
+		// Work around a linking error on Windows: "export ordinal too large"
+		args = append(args, "-buildmode=exe")
+	}
 	if len(tags) > 0 {
 		args = append(args, "-tags", strings.Join(tags, ","))
 	}
