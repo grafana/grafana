@@ -13,7 +13,7 @@ import { initDashboard } from '../state/initDashboard';
 import { StoreState, DashboardRouteInfo } from 'app/types';
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 
-interface Props {
+export interface Props {
   urlPanelId: string;
   urlUid?: string;
   urlSlug?: string;
@@ -25,7 +25,7 @@ interface Props {
   dashboard: DashboardModel | null;
 }
 
-interface State {
+export interface State {
   panel: PanelModel | null;
   notFound: boolean;
 }
