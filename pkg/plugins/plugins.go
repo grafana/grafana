@@ -29,7 +29,6 @@ var (
 	StaticRoutes []*PluginStaticRoute
 	Apps         map[string]*AppPlugin
 	Plugins      map[string]*PluginBase
-	Errors       map[string]*PluginError
 	PluginTypes  map[string]interface{}
 	Renderer     *RendererPlugin
 	Transform    *TransformPlugin
@@ -71,7 +70,6 @@ func (pm *PluginManager) Init() error {
 	Panels = map[string]*PanelPlugin{}
 	Apps = map[string]*AppPlugin{}
 	Plugins = map[string]*PluginBase{}
-	Errors = map[string]*PluginError{}
 	PluginTypes = map[string]interface{}{
 		"panel":      PanelPlugin{},
 		"datasource": DataSourcePlugin{},
