@@ -10,6 +10,7 @@ import (
 var dateUnitPattern = regexp.MustCompile(`^(\d+)([dwMy])$`)
 
 // ParseInterval parses an interval with support for all units that Grafana uses.
+// An interval is relative the current wall time.
 func ParseInterval(inp string) (time.Duration, error) {
 	num, period, err := parse(inp)
 	if err != nil {
@@ -31,7 +32,7 @@ func ParseInterval(inp string) (time.Duration, error) {
 		return now.Sub(now.AddDate(-num, 0, 0)), nil
 	}
 
-	return 0, fmt.Errorf("invalid duration %q", inp)
+	return 0, fmt.Errorf("invalid interval %q", inp)
 }
 
 // ParseDuration parses a duration with support for all units that Grafana uses.
@@ -44,15 +45,18 @@ func ParseDuration(inp string) (time.Duration, error) {
 		return time.Duration(num), nil
 	}
 
+	// The average number of days in a year, using the Julian calendar
+	const daysInAYear = 365.25
+
 	switch period {
 	case "d":
 		return time.Duration(num*24) * time.Hour, nil
 	case "w":
 		return time.Duration(num*24*7) * time.Hour, nil
 	case "M":
-		return time.Duration(int64(float64(num*24*7)*(365.25/12))) * time.Hour, nil
+		return time.Duration(int64(float64(num*24)*(daysInAYear/12))) * time.Hour, nil
 	case "y":
-		return time.Duration(int64(float64(num*24*7)*365.25)) * time.Hour, nil
+		return time.Duration(int64(float64(num*24)*daysInAYear)) * time.Hour, nil
 	}
 
 	return 0, fmt.Errorf("invalid duration %q", inp)
