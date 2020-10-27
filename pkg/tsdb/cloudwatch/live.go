@@ -228,6 +228,7 @@ func (e *cloudWatchExecutor) startLiveQuery(ctx context.Context, responseChannel
 		return err
 	}
 
+	// Wait until there are no more active workers than the concurrent queries quota
 	queue <- true
 	defer func() { <-queue }()
 
