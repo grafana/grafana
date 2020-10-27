@@ -57,8 +57,8 @@ export class SoloPanelPage extends Component<Props, State> {
       return;
     }
 
-    // we just got the dashboard!
-    if (!prevProps.dashboard) {
+    // we just got a new dashboard
+    if (!prevProps.dashboard || prevProps.dashboard.uid !== dashboard.uid) {
       const panelId = parseInt(urlPanelId, 10);
 
       // need to expand parent row if this panel is inside a row
