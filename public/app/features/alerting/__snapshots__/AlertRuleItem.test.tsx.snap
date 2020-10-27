@@ -7,30 +7,20 @@ exports[`Render should render component 1`] = `
   <Component
     actions={
       Array [
-        <Unknown
-          content="Pausing an alert rule prevents it from executing"
-          placement="bottom"
+        <Button
+          icon="pause"
+          onClick={[MockFunction]}
+          variant="secondary"
         >
-          <Button
-            icon="pause"
-            onClick={[MockFunction]}
-            variant="secondary"
-          >
-            Pause
-          </Button>
-        </Unknown>,
-        <Unknown
-          content="Edit alert rule"
-          placement="right"
+          Pause
+        </Button>,
+        <LinkButton
+          href="https://something.something.darkside?editPanel=1&tab=alert"
+          icon="cog"
+          variant="secondary"
         >
-          <LinkButton
-            href="https://something.something.darkside?editPanel=1&tab=alert"
-            icon="cog"
-            variant="secondary"
-          >
-            Edit alert
-          </LinkButton>
-        </Unknown>,
+          Edit alert
+        </LinkButton>,
       ]
     }
     heading={

@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 // @ts-ignore
 import Highlighter from 'react-highlight-words';
 import { css } from 'emotion';
-import { Icon, IconName, Button, Tooltip, LinkButton, Card } from '@grafana/ui';
+import { Icon, IconName, Button, LinkButton, Card } from '@grafana/ui';
 import { AlertRule } from '../../types';
 
 export interface Props {
@@ -46,16 +46,12 @@ const AlertRuleItem = ({ rule, search, onTogglePause }: Props) => {
           rule.info ? renderText(rule.info) : null,
         ]}
         actions={[
-          <Tooltip key="pause" placement="bottom" content="Pausing an alert rule prevents it from executing">
-            <Button variant="secondary" icon={rule.state === 'paused' ? 'play' : 'pause'} onClick={onTogglePause}>
-              {rule.state === 'paused' ? 'Resume' : 'Pause'}
-            </Button>
-          </Tooltip>,
-          <Tooltip key="settings" placement="right" content="Edit alert rule">
-            <LinkButton variant="secondary" href={ruleUrl} icon="cog">
-              Edit alert
-            </LinkButton>
-          </Tooltip>,
+          <Button variant="secondary" icon={rule.state === 'paused' ? 'play' : 'pause'} onClick={onTogglePause}>
+            {rule.state === 'paused' ? 'Resume' : 'Pause'}
+          </Button>,
+          <LinkButton variant="secondary" href={ruleUrl} icon="cog">
+            Edit alert
+          </LinkButton>,
         ]}
       />
     </li>
