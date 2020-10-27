@@ -104,7 +104,10 @@ export function getTextColorForBackground(color: string) {
 
 export let sortedColors = sortColorsByHue(colors);
 
-/** Returns colors used for severity color coding. Use for single color retrievel(0 index) or gradient definition */
+/**
+ * Returns colors used for severity color coding. Use for single color retrievel(0 index) or gradient definition
+ * @internal
+ **/
 export function getColorsFromSeverity(severity: AlertVariant, theme: GrafanaTheme): [string, string] {
   switch (severity) {
     case 'error':
