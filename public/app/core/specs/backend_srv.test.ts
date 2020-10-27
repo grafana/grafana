@@ -37,7 +37,7 @@ const getTestContext = (overides?: object) => {
 
   const appEventsMock: EventBusExtended = ({
     emit: jest.fn(),
-  } as any) as Emitter;
+  } as any) as EventBusExtended;
 
   const user: User = ({
     isSignedIn: props.isSignedIn,
