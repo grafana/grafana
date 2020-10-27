@@ -47,7 +47,7 @@ func (s ShortURLService) GetShortURLByUID(ctx context.Context, user *models.Sign
 func (s ShortURLService) UpdateLastSeenAt(ctx context.Context, shortURL *models.ShortUrl) error {
 	shortURL.LastSeenAt = getTime().Unix()
 	return s.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		_, err := dbSession.Id(shortURL.Id).Update(shortURL)
+		_, err := dbSession.ID(shortURL.Id).Update(shortURL)
 		if err != nil {
 			return err
 		}
