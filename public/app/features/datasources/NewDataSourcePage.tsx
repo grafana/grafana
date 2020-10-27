@@ -104,8 +104,8 @@ class NewDataSourcePage extends PureComponent<Props> {
               <>
                 <br />
                 <p>
-                  Note that <strong>unsigned front-end datasource plugins</strong> are still usable, but this is
-                  subject to change in the upcoming releases of Grafana
+                  Note that <strong>unsigned front-end datasource plugins</strong> are still usable, but this is subject
+                  to change in the upcoming releases of Grafana
                 </p>
               </>
             </PluginsErrorsInfo>
