@@ -9,6 +9,7 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
     { id: 'sql', title: 'SQL', plugins: [] },
     { id: 'cloud', title: 'Cloud', plugins: [] },
     { id: 'enterprise', title: 'Enterprise plugins', plugins: [] },
+    { id: 'iot', title: 'Industrial & IoT', plugins: [] },
     { id: 'other', title: 'Others', plugins: [] },
   ].filter(item => item);
 
@@ -23,7 +24,7 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
 
   for (const plugin of plugins) {
     // Force category for enterprise plugins
-    if (enterprisePlugins.find(item => item.id === plugin.id)) {
+    if (plugin.enterprise || enterprisePlugins.find(item => item.id === plugin.id)) {
       plugin.category = 'enterprise';
     }
 
@@ -58,7 +59,8 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
     sortPlugins(category.plugins);
   }
 
-  return categories;
+  // Only show categories with plugins
+  return categories.filter(c => c.plugins.length > 0);
 }
 
 function sortPlugins(plugins: DataSourcePluginMeta[]) {
