@@ -66,6 +66,14 @@ Shows value formatted as code. If a value is an object the JSON view allowing br
 
 {{< docs-imagebox img="/img/docs/tables/json-view.png" max-width="500px" caption="JSON view" class="docs-image--no-shadow" >}}
 
+### Image 
+
+> Only available in Grafana 7.3+
+
+If you have a field value that is an image URL or a base64 encoded image you can configure the table to display it as an image.
+
+{{< figure src="/img/docs/v73/table_hover.gif" max-width="900px" caption="Table hover" >}}
+
 ## Column filter
 
 > **Note:** This feature is available in Grafana 7.2+.

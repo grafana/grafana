@@ -37,6 +37,8 @@ var (
 	GrafanaLatestVersion string
 	GrafanaHasUpdate     bool
 	plog                 log.Logger
+
+	pluginScanningErrors map[string]*PluginError
 )
 
 type PluginScanner struct {
@@ -77,6 +79,7 @@ func (pm *PluginManager) Init() error {
 		"renderer":   RendererPlugin{},
 		"transform":  TransformPlugin{},
 	}
+	pluginScanningErrors = map[string]*PluginError{}
 
 	pm.log.Info("Starting plugin search")
 
@@ -232,9 +235,9 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		pm.log.Debug("Found plugin", "id", plugin.Id, "signature", plugin.Signature, "hasRoot", plugin.Root != nil)
 		signingError := scanner.validateSignature(plugin)
 		if signingError != nil {
-			pm.log.Warn("Plugin has signature errors", "id", plugin.Id,
-				"signature", plugin.Signature, "status", signingError.ErrorCode.String())
-			Errors[plugin.Id] = signingError
+			pm.log.Debug("Failed to validate plugin signature. Will skip loading", "id", plugin.Id,
+				"signature", plugin.Signature, "status", signingError.ErrorCode)
+			pluginScanningErrors[plugin.Id] = signingError
 			continue
 		}
 
@@ -270,25 +273,18 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 		jsonParser := json.NewDecoder(reader)
 
-		if signingError != nil {
-			phantomLoader := &PhantomPlugin{*plugin}
-			if err := phantomLoader.Load(jsonParser, plugin, nil); err != nil {
-				return err
-			}
-		} else {
-			loader := reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
+		loader := reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
 
-			// Load the full plugin, and add it to manager
-			if err := loader.Load(jsonParser, plugin, scanner.backendPluginManager); err != nil {
-				if errors.Is(err, duplicatePluginError{}) {
-					pm.log.Warn("Plugin is duplicate", "error", err)
-					scanner.errors = append(scanner.errors, err)
-					continue
-				}
-				return err
+		// Load the full plugin, and add it to manager
+		if err := loader.Load(jsonParser, plugin, scanner.backendPluginManager); err != nil {
+			if errors.Is(err, duplicatePluginError{}) {
+				pm.log.Warn("Plugin is duplicate", "error", err)
+				scanner.errors = append(scanner.errors, err)
+				continue
 			}
-			pm.log.Debug("Successfully added plugin", "id", plugin.Id)
+			return err
 		}
+		pm.log.Debug("Successfully added plugin", "id", plugin.Id)
 	}
 
 	if len(scanner.errors) > 0 {
@@ -444,6 +440,17 @@ func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
 	default:
 		panic(fmt.Sprintf("Plugin %q has unrecognized plugin signature state %q", plugin.Id, plugin.Signature))
 	}
+}
+
+func ScanningErrors() []PluginError {
+	scanningErrs := make([]PluginError, 0)
+	for id, e := range pluginScanningErrors {
+		scanningErrs = append(scanningErrs, PluginError{
+			ErrorCode: e.ErrorCode,
+			PluginID:  id,
+		})
+	}
+	return scanningErrs
 }
 
 func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
