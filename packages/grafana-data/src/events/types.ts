@@ -55,12 +55,12 @@ export interface EventBus {
   /**
    * Emit single vent
    */
-  $emit<T extends BusEvent>(event: T): void;
+  publish<T extends BusEvent>(event: T): void;
 
   /**
    * Subscribe to single event
    */
-  $on<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
+  subscribe<T extends BusEvent>(eventType: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable;
 
   /**
    * Get observable of events

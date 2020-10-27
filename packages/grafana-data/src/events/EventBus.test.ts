@@ -35,12 +35,12 @@ describe('EventBus', () => {
     const bus = new EventBusSrv();
     const events: LoginEvent[] = [];
 
-    bus.$on(LoginEvent, event => {
+    bus.subscribe(LoginEvent, event => {
       events.push(event);
     });
 
-    bus.$emit(new LoginEvent({ logins: 10 }));
-    bus.$emit(new HelloEvent({ hellos: 10 }));
+    bus.publish(new LoginEvent({ logins: 10 }));
+    bus.publish(new HelloEvent({ hellos: 10 }));
 
     expect(events[0].payload.logins).toBe(10);
     expect(events.length).toBe(1);
@@ -73,12 +73,12 @@ describe('EventBus', () => {
         legacyEvents.push(event);
       });
 
-      bus.$on(AlertSuccessEvent, event => {
+      bus.subscribe(AlertSuccessEvent, event => {
         newEvents.push(event);
       });
 
       bus.emit(legacyEvent, ['legacy', 'params']);
-      bus.$emit(new AlertSuccessEvent(['new', 'event']));
+      bus.publish(new AlertSuccessEvent(['new', 'event']));
 
       expect(legacyEvents).toEqual([
         ['legacy', 'params'],
@@ -160,12 +160,12 @@ describe('EventBus', () => {
       const bus = new EventBusSrv();
       const events: LoginEvent[] = [];
 
-      bus.$on(LoginEvent, event => {
+      bus.subscribe(LoginEvent, event => {
         events.push(event);
       });
 
       bus.removeAllListeners();
-      bus.$emit(new LoginEvent({ logins: 10 }));
+      bus.publish(new LoginEvent({ logins: 10 }));
 
       expect(events.length).toBe(0);
     });

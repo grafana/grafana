@@ -1,7 +1,7 @@
 // Libraries
 import React, { PureComponent } from 'react';
 import { debounce } from 'lodash';
-import { LegacyGraphHoverEvent, PanelProps, renderMarkdown, textUtil } from '@grafana/data';
+import { PanelProps, renderMarkdown, textUtil } from '@grafana/data';
 // Utils
 import config from 'app/core/config';
 // Types
@@ -34,16 +34,6 @@ export class TextPanel extends PureComponent<Props, State> {
       this.setState({ html });
     }
   }, 150);
-
-  componentDidMount() {
-    this.eventSub = this.props.eventBus.$on(LegacyGraphHoverEvent, event => {
-      console.log('grap hover event', event);
-    });
-  }
-
-  componentWillUnmount() {
-    this.eventSub?.unsubscribe();
-  }
 
   componentDidUpdate(prevProps: Props) {
     // Since any change could be referenced in a template variable,

@@ -10,11 +10,11 @@ export class EventBusSrv implements EventBus, LegacyEmitter {
     this.emitter = new EventEmitter();
   }
 
-  $emit<T extends BusEvent>(event: T): void {
+  publish<T extends BusEvent>(event: T): void {
     this.emitter.emit(event.type, event);
   }
 
-  $on<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
+  subscribe<T extends BusEvent>(typeFilter: BusEventType<T>, handler: BusEventHandler<T>): Unsubscribable {
     return this.getStream(typeFilter).subscribe({ next: handler });
   }
 
