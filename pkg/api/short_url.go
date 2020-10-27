@@ -3,6 +3,7 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"path"
 	"strings"
 
@@ -17,6 +18,9 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 	hs.log.Debug("Received request to create short URL", "path", cmd.Path)
 
 	cmd.Path = strings.TrimSpace(cmd.Path)
+
+	u, err := url.Parse(cmd.Path)
+	hs.log.Info("Parsed url", "path", cmd.Path, "u", u, "err", err)
 
 	if path.IsAbs(cmd.Path) {
 		hs.log.Error("Invalid short URL path", "path", cmd.Path)
@@ -55,6 +59,11 @@ func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
 
 		hs.log.Error("Short URL redirection error", "err", err)
 		return
+	}
+
+	// Failure to update last seen at should still allow to redirect
+	if err := hs.ShortURLService.UpdateLastSeenAt(c.Req.Context(), shortURL); err != nil {
+		hs.log.Error("Failed to update short URL last seen at", "error", err)
 	}
 
 	hs.log.Debug("Redirecting short URL", "path", shortURL.Path)
