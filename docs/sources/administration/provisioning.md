@@ -175,6 +175,11 @@ Since not all datasources have the same configuration settings we only have the 
 | maxOpenConns            | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of open connections to the database (Grafana v5.4+)                          |
 | maxIdleConns            | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of connections in the idle connection pool (Grafana v5.4+)                   |
 | connMaxLifetime         | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum amount of time in seconds a connection may be reused (Grafana v5.4+)                |
+| sigV4AuthType                | string  | Elasticsearch                                                       | SigV4 auth provider. default/credentials/keys                                                     |
+| sigV4ExternalId              | string  | Elasticsearch                                                       | Optional SigV4 External ID                                                                         |
+| sigV4AssumeRoleArn           | string  | Elasticsearch                                                       | Optional SigV4 ARN role to assume                                                                 |
+| sigV4Region           | string  | Elasticsearch                                                       | SigV4 AWS region                                                                 |
+| sigV4Profile                 | string  | Elasticsearch                                                       | Optional SigV4  credentials profile                                                                |
 
 #### Secure Json Data
 
@@ -191,6 +196,8 @@ Secure json data is a map of settings that will be encrypted with [secret key]({
 | basicAuthPassword | string | _All_      | password for basic authentication       |
 | accessKey         | string | Cloudwatch | Access key for connecting to Cloudwatch |
 | secretKey         | string | Cloudwatch | Secret key for connecting to Cloudwatch |
+| sigV4AccessKey     | string | Elasticsearch | SigV4 access key. Required when using keys auth provider |
+| sigV4SecretKey    | string | Elasticsearch | SigV4 secret key. Required when using keys auth provider |
 
 #### Custom HTTP headers for datasources
 
