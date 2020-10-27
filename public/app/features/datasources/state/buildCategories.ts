@@ -127,6 +127,24 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       imgUrl: 'public/img/plugins/newrelic.svg',
     }),
     getPhantomPlugin({
+      id: 'grafana-mongodb-datasource',
+      description: 'MongoDB integration & data source',
+      name: 'MongoDB',
+      imgUrl: 'public/img/plugins/mongodb.svg',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-snowflake-datasource',
+      description: 'Snowflake integration & data source',
+      name: 'Snowflake',
+      imgUrl: 'public/img/plugins/snowflake.svg',
+    }),
+    getPhantomPlugin({
+      id: 'grafana-wavefront-datasource',
+      description: 'Wavefront integration & data source',
+      name: 'Wavefront',
+      imgUrl: 'public/img/plugins/wavefront.svg',
+    }),
+    getPhantomPlugin({
       id: 'dlopes7-appdynamics-datasource',
       description: 'AppDynamics integration & data source',
       name: 'AppDynamics',
