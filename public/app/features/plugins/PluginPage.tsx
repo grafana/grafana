@@ -314,7 +314,7 @@ class PluginPage extends PureComponent<Props, State> {
         aria-label={selectors.pages.PluginPage.signatureInfo}
         severity={plugin.meta.signature !== PluginSignatureStatus.valid ? 'warning' : 'info'}
         urlTitle="Read more about plugins signing"
-        url="TODO"
+        url="https://grafana.com/docs/grafana/latest/plugins/plugin-signature-verification/"
       >
         <p>
           <PluginSignatureBadge
