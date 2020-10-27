@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -77,8 +76,7 @@ func newExecutor() *cloudWatchExecutor {
 		panic(fmt.Sprintf("Couldn't get %s from registry", name))
 	}
 	return &cloudWatchExecutor{
-		queuesByRegion: map[string]chan bool{},
-		logsService:    logsService,
+		logsService: logsService,
 	}
 }
 
@@ -88,9 +86,6 @@ type cloudWatchExecutor struct {
 
 	ec2Client  ec2iface.EC2API
 	rgtaClient resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-
-	queuesByRegion map[string](chan bool)
-	queueLock      sync.Mutex
 
 	logsService *LogsService
 }
