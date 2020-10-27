@@ -14,13 +14,13 @@ import (
 	"github.com/aws/aws-sdk-go/service/servicequotas"
 	"github.com/aws/aws-sdk-go/service/servicequotas/servicequotasiface"
 	"github.com/centrifugal/centrifuge"
+	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util/retryer"
-	uuid "github.com/satori/go.uuid"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -115,11 +115,7 @@ func (r *logQueryRunner) publishResults(channelName string) error {
 // executeLiveLogQuery executes a CloudWatch Logs query with live updates over WebSocket.
 // A WebSocket channel is created, which goroutines send responses over.
 func (e *cloudWatchExecutor) executeLiveLogQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
-	id, err := uuid.NewV4()
-	if err != nil {
-		return nil, err
-	}
-	responseChannelName := id.String()
+	responseChannelName := uuid.New().String()
 	responseChannel := make(chan *tsdb.Response)
 	if err := e.logsService.AddResponseChannel("plugin/cloudwatch/"+responseChannelName, responseChannel); err != nil {
 		close(responseChannel)
