@@ -2,12 +2,14 @@ import { ComponentClass } from 'react';
 import { KeyValue } from './data';
 import { LiveChannelSupport } from './live';
 
+/** Describes plugins life cycle status */
 export enum PluginState {
-  alpha = 'alpha', // Only included it `enable_alpha` is true
+  alpha = 'alpha', // Only included if `enable_alpha` config option is true
   beta = 'beta', // Will show a warning banner
   deprecated = 'deprecated', // Will continue to work -- but not show up in the options to add
 }
 
+/** Describes {@link https://grafana.com/docs/grafana/latest/plugins | type of plugin} */
 export enum PluginType {
   panel = 'panel',
   datasource = 'datasource',
@@ -15,12 +17,26 @@ export enum PluginType {
   renderer = 'renderer',
 }
 
+/** Describes status of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signature-verification/ | plugin signature} */
 export enum PluginSignatureStatus {
   internal = 'internal', // core plugin, no signature
   valid = 'valid', // signed and accurate MANIFEST
   invalid = 'invalid', // invalid signature
   modified = 'modified', // valid signature, but content mismatch
-  unsigned = 'unsigned', // no MANIFEST file
+  missing = 'missing', // missing signature file
+}
+
+/** Describes error code returned from Grafana plugins API call */
+export enum PluginErrorCode {
+  missingSignature = 'signatureMissing',
+  invalidSignature = 'signatureInvalid',
+  modifiedSignature = 'signatureModified',
+}
+
+/** Describes error returned from Grafana plugins API call */
+export interface PluginError {
+  errorCode: PluginErrorCode;
+  pluginId: string;
 }
 
 export interface PluginMeta<T extends KeyValue = {}> {
