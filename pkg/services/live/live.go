@@ -7,11 +7,13 @@ import (
 	"sync"
 
 	"github.com/centrifugal/centrifuge"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/live/features"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 )
 
@@ -19,6 +21,16 @@ var (
 	logger   = log.New("live")
 	loggerCF = log.New("live.centrifuge")
 )
+
+func init() {
+	registry.RegisterService(&GrafanaLive{
+		channels:   make(map[string]models.ChannelHandler),
+		channelsMu: sync.RWMutex{},
+		GrafanaScope: CoreGrafanaScope{
+			Features: make(map[string]models.ChannelHandlerFactory),
+		},
+	})
+}
 
 // CoreGrafanaScope list of core features
 type CoreGrafanaScope struct {
@@ -30,7 +42,10 @@ type CoreGrafanaScope struct {
 
 // GrafanaLive pretends to be the server
 type GrafanaLive struct {
-	node *centrifuge.Node
+	Cfg           *setting.Cfg            `inject:""`
+	RouteRegister routing.RouteRegister   `inject:""`
+	LogsService   *cloudwatch.LogsService `inject:""`
+	node          *centrifuge.Node
 
 	// The websocket handler
 	WebsocketHandler interface{}
@@ -41,26 +56,18 @@ type GrafanaLive struct {
 
 	// The core internal features
 	GrafanaScope CoreGrafanaScope
-
-	LogsService *cloudwatch.LogsService `inject:""`
-}
-
-// Register registers GrafanaLive with the service registry.
-func Register() {
-	glive := &GrafanaLive{
-		channels:   make(map[string]models.ChannelHandler),
-		channelsMu: sync.RWMutex{},
-		GrafanaScope: CoreGrafanaScope{
-			Features: make(map[string]models.ChannelHandlerFactory),
-		},
-	}
-	registry.RegisterService(glive)
 }
 
 // Init initializes the instance.
 // Required to implement the registry.Service interface.
 func (g *GrafanaLive) Init() error {
 	logger.Debug("GrafanaLive initing")
+
+	if !g.Cfg.IsLiveEnabled() {
+		logger.Debug("GrafanaLive feature not enabled, skipping initialization")
+		return nil
+	}
+
 	// We use default config here as starting point. Default config contains
 	// reasonable values for available options.
 	cfg := centrifuge.DefaultConfig
@@ -234,6 +241,8 @@ func (g *GrafanaLive) Init() error {
 		ctx.Resp.WriteHeader(404)
 	}
 
+	g.RouteRegister.Any("/live/*", g.WebsocketHandler)
+
 	return nil
 }
 
@@ -316,6 +325,11 @@ func (g *GrafanaLive) GetChannelHandlerFactory(scope string, name string) (model
 func (g *GrafanaLive) Publish(channel string, data []byte) error {
 	_, err := g.node.Publish(channel, data)
 	return err
+}
+
+// IsEnabled returns true if the Grafana Live feature is enabled.
+func (g *GrafanaLive) IsEnabled() bool {
+	return g.Cfg.IsLiveEnabled()
 }
 
 // Write to the standard log15 logger

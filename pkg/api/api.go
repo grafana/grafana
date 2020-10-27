@@ -436,11 +436,6 @@ func (hs *HTTPServer) RegisterRoutes() {
 	avatarCacheServer := avatar.NewCacheServer()
 	r.Get("/avatar/:hash", avatarCacheServer.Handler)
 
-	// Live streaming
-	if hs.Cfg.IsLiveEnabled() {
-		r.Any("/live/*", hs.Live.WebsocketHandler)
-	}
-
 	// Snapshots
 	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, bind(models.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
 	r.Get("/api/snapshot/shared-options/", reqSignedIn, GetSharingOptions)

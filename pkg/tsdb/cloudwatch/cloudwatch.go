@@ -3,7 +3,6 @@ package cloudwatch
 import (
 	"context"
 	"fmt"
-	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -55,26 +54,32 @@ var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
 func init() {
-	var globalExecutor *cloudWatchExecutor
-	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		if globalExecutor == nil {
-			globalExecutor = newExecutor()
-		}
-		return globalExecutor, nil
+	registry.Register(&registry.Descriptor{
+		Name:         "CloudWatchService",
+		InitPriority: registry.Low,
+		Instance:     &CloudWatchService{},
 	})
 }
 
-func newExecutor() *cloudWatchExecutor {
-	var logsService *LogsService
-	name := reflect.TypeOf(&LogsService{}).Elem().Name()
-	for _, svc := range registry.GetServices() {
-		if svc.Name == name {
-			logsService = svc.Instance.(*LogsService)
+type CloudWatchService struct {
+	LogsService *LogsService `inject:""`
+}
+
+func (s *CloudWatchService) Init() error {
+	plog.Debug("initing")
+
+	var globalExecutor *cloudWatchExecutor
+	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+		if globalExecutor == nil {
+			globalExecutor = newExecutor(s.LogsService)
 		}
-	}
-	if logsService == nil {
-		panic(fmt.Sprintf("Couldn't get %s from registry", name))
-	}
+		return globalExecutor, nil
+	})
+
+	return nil
+}
+
+func newExecutor(logsService *LogsService) *cloudWatchExecutor {
 	return &cloudWatchExecutor{
 		logsService: logsService,
 	}
