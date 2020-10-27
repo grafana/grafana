@@ -78,7 +78,8 @@ When you log in for the first time, Grafana asks you to change your password.
 
 The Grafana backend includes SQLite which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download). Eventually, if you use [Scoop](https://scoop.sh), you can install GCC through that.
 
-Unlike on Unix, unless you use a Unix shell (f.ex. Git Bash), you shouldn't use Make on Windows. Instead build the back-end as follows: `go run build.go build`. The Grafana binaries will be in bin\\windows-amd64.
+In order to use the `make` command above, you need to install [Make for Windows](http://gnuwin32.sourceforge.net/packages/make.htm) and use it in a Unix shell (f.ex. Git Bash). 
+If you don't want to install these and just want to build the back-end, you can do it as follows: `go run build.go build`. The Grafana binaries will be in bin\\windows-amd64.
 
 ## Test Grafana
 
