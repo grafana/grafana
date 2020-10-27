@@ -1,8 +1,8 @@
 import React, { Fragment, FunctionComponent } from 'react';
-import { Input, InlineField, InlineLabel } from '@grafana/ui';
+import { Input, InlineLabel } from '@grafana/ui';
 import { useDispatch } from '../../../ElasticsearchQueryContext';
 import { BucketScript, MetricAggregation, MetricAggregationAction } from '../../state/types';
-import { changeMetricAttribute, changeMetricSetting } from '../../state/actions';
+import { changeMetricAttribute } from '../../state/actions';
 import { css } from 'emotion';
 import { AddRemove } from '../../../AddRemove';
 import { useReducerCallback } from '../../../../hooks/useReducerCallback';
@@ -15,6 +15,7 @@ import {
   renamePipelineVariable,
   changePipelineVariableMetric,
 } from './state/action';
+import { SettingField } from '../SettingField';
 
 interface Props {
   value: BucketScript;
@@ -78,18 +79,14 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
         </div>
       </div>
 
-      <InlineField
-        labelWidth={16}
+      <SettingField
         label="Script"
-        tooltip="Elasticsearch v5.0 and above: Scripting language is Painless. Use params.<var> to reference a variable.
-Elasticsearch pre-v5.0: Scripting language is per default Groovy if not changed. For Groovy use <var> to reference a variable. "
-      >
-        <Input
-          placeholder="params.var1 / params.var2"
-          onBlur={e => upperStateDispatch(changeMetricSetting(value, 'script', e.target.value))}
-          defaultValue={value.settings?.script}
-        />
-      </InlineField>
+        metric={value}
+        settingName="script"
+        // TODO: This should be better formatted.
+        tooltip="Elasticsearch v5.0 and above: Scripting language is Painless. Use params.<var> to reference a variable. Elasticsearch pre-v5.0: Scripting language is per default Groovy if not changed. For Groovy use <var> to reference a variable."
+        placeholder="params.var1 / params.var2"
+      />
     </>
   );
 };
