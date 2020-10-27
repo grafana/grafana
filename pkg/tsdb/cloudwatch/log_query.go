@@ -18,7 +18,6 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 
 	nonEmptyRows := make([][]*cloudwatchlogs.ResultField, 0)
 	for _, row := range response.Results {
-		plog.Debug("Got log query result row", "row", row)
 		// Sometimes CloudWatch can send empty rows
 		if len(row) == 0 {
 			continue
@@ -36,7 +35,6 @@ func logsResultsToDataframes(response *cloudwatchlogs.GetQueryResultsOutput) (*d
 	}
 
 	rowCount := len(nonEmptyRows)
-	plog.Debug("Got log query result rows", "num", rowCount)
 
 	fieldValues := make(map[string]interface{})
 
