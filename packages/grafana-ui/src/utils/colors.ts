@@ -9,13 +9,36 @@ import darkTheme from '../themes/dark';
 import { GrafanaTheme } from '@grafana/data';
 import { AlertVariant } from '../components/Alert/Alert';
 
-export const PALETTE_ROWS = 4;
-export const PALETTE_COLUMNS = 14;
+const PALETTE_ROWS = 4;
+
+/**
+ * @alpha
+ */
 export const DEFAULT_ANNOTATION_COLOR = 'rgba(0, 211, 255, 1)';
+
+/**
+ * @alpha
+ */
 export const OK_COLOR = 'rgba(11, 237, 50, 1)';
+
+/**
+ * @alpha
+ */
 export const ALERTING_COLOR = 'rgba(237, 46, 24, 1)';
+
+/**
+ * @alpha
+ */
 export const NO_DATA_COLOR = 'rgba(150, 150, 150, 1)';
+
+/**
+ * @alpha
+ */
 export const PENDING_COLOR = 'rgba(247, 149, 32, 1)';
+
+/**
+ * @alpha
+ */
 export const REGION_FILL_ALPHA = 0.09;
 export const colors = [
   '#7EB26D', // 0: pale green
