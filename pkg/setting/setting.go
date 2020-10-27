@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -16,6 +17,7 @@ import (
 	"time"
 
 	"github.com/go-macaron/session"
+	"github.com/prometheus/common/model"
 	ini "gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/components/gtime"
@@ -266,17 +268,20 @@ type Cfg struct {
 	CookieSameSiteDisabled           bool
 	CookieSameSiteMode               http.SameSite
 
-	TempDataLifetime                 time.Duration
+	TempDataLifetime         time.Duration
+	PluginsEnableAlpha       bool
+	PluginsAppsSkipVerifyTLS bool
+	PluginSettings           PluginSettings
+	PluginsAllowUnsigned     []string
+	DisableSanitizeHtml      bool
+	EnterpriseLicensePath    string
+
+	// Metrics
 	MetricsEndpointEnabled           bool
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
 	MetricsEndpointDisableTotalStats bool
-	PluginsEnableAlpha               bool
-	PluginsAppsSkipVerifyTLS         bool
-	PluginSettings                   PluginSettings
-	PluginsAllowUnsigned             []string
-	DisableSanitizeHtml              bool
-	EnterpriseLicensePath            string
+	MetricsGrafanaEnvironmentInfo    map[string]string
 
 	// Dashboards
 	DefaultHomeDashboardPath string
@@ -311,6 +316,9 @@ type Cfg struct {
 
 	DateFormats DateFormats
 
+	// User
+	UserInviteMaxLifetime time.Duration
+
 	// Annotations
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
@@ -330,6 +338,14 @@ func (c Cfg) IsLiveEnabled() bool {
 // IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
 func (c Cfg) IsNgAlertEnabled() bool {
 	return c.FeatureToggles["ngalert"]
+}
+
+func (c Cfg) IsDatabaseMetricsEnabled() bool {
+	return c.FeatureToggles["database_metrics"]
+}
+
+func (c Cfg) IsHTTPRequestHistogramEnabled() bool {
+	return c.FeatureToggles["http_request_histogram"]
 }
 
 type CommandLineArgs struct {
@@ -402,6 +418,29 @@ func applyEnvVariableOverrides(file *ini.File) error {
 				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, envValue))
 			}
 		}
+	}
+
+	return nil
+}
+
+func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
+	environmentMetricsSection := cfg.Raw.Section("metrics.environment_info")
+	keys := environmentMetricsSection.Keys()
+	cfg.MetricsGrafanaEnvironmentInfo = make(map[string]string, len(keys))
+
+	for _, key := range keys {
+		labelName := model.LabelName(key.Name())
+		labelValue := model.LabelValue(key.Value())
+
+		if !labelName.IsValid() {
+			return fmt.Errorf("invalid label name in [metrics.environment_info] configuration. name %q", labelName)
+		}
+
+		if !labelValue.IsValid() {
+			return fmt.Errorf("invalid label value in [metrics.environment_info] configuration. name %q value %q", labelName, labelValue)
+		}
+
+		cfg.MetricsGrafanaEnvironmentInfo[string(labelName)] = string(labelValue)
 	}
 
 	return nil
@@ -777,6 +816,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
 	cfg.readAnnotationSettings()
+	if err := cfg.readGrafanaEnvironmentMetrics(); err != nil {
+		return err
+	}
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		log.Warnf("require_email_validation is enabled but smtp is disabled")
@@ -1077,6 +1119,17 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 
 	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
+
+	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
+	userInviteMaxLifetimeDuration, err := gtime.ParseInterval(userInviteMaxLifetimeVal)
+	if err != nil {
+		return err
+	}
+
+	cfg.UserInviteMaxLifetime = userInviteMaxLifetimeDuration
+	if cfg.UserInviteMaxLifetime < time.Minute*15 {
+		return errors.New("the minimum supported value for the `user_invite_max_lifetime_duration` configuration is 15m (15 minutes)")
+	}
 
 	return nil
 }

@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 // Types
 import { StoreState } from 'app/types';
 import { AppEvents, AppPlugin, AppPluginMeta, NavModel, PluginType, UrlQueryMap } from '@grafana/data';
+import { createHtmlPortalNode, InPortal, OutPortal, HtmlPortalNode } from 'react-reverse-portal';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
@@ -22,6 +23,7 @@ interface Props {
 
 interface State {
   loading: boolean;
+  portalNode: HtmlPortalNode;
   plugin?: AppPlugin | null;
   nav?: NavModel;
 }
@@ -44,6 +46,7 @@ class AppRootPage extends Component<Props, State> {
     super(props);
     this.state = {
       loading: true,
+      portalNode: createHtmlPortalNode(),
     };
   }
 
@@ -76,29 +79,33 @@ class AppRootPage extends Component<Props, State> {
 
   render() {
     const { path, query } = this.props;
-    const { loading, plugin, nav } = this.state;
+    const { loading, plugin, nav, portalNode } = this.state;
 
     if (plugin && !plugin.root) {
       // TODO? redirect to plugin page?
       return <div>No Root App</div>;
     }
 
-    // When no naviagion is set, give full control to the app plugin
-    if (!nav) {
-      if (plugin && plugin.root) {
-        return <plugin.root meta={plugin.meta} query={query} path={path} onNavChanged={this.onNavChanged} />;
-      }
-      return <PageLoader />;
-    }
-
     return (
-      <Page navModel={nav}>
-        <Page.Contents isLoading={loading}>
+      <>
+        <InPortal node={portalNode}>
           {plugin && plugin.root && (
             <plugin.root meta={plugin.meta} query={query} path={path} onNavChanged={this.onNavChanged} />
           )}
-        </Page.Contents>
-      </Page>
+        </InPortal>
+        {nav ? (
+          <Page navModel={nav}>
+            <Page.Contents isLoading={loading}>
+              <OutPortal node={portalNode} />
+            </Page.Contents>
+          </Page>
+        ) : (
+          <>
+            <OutPortal node={portalNode} />
+            {loading && <PageLoader />}
+          </>
+        )}
+      </>
     );
   }
 }

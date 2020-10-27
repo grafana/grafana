@@ -1,4 +1,5 @@
 import { AnnotationQuery, DataQuery } from '@grafana/data';
+import { MeasurementsQuery } from '@grafana/runtime';
 
 //----------------------------------------------
 // Query
@@ -6,12 +7,13 @@ import { AnnotationQuery, DataQuery } from '@grafana/data';
 
 export enum GrafanaQueryType {
   RandomWalk = 'randomWalk',
-  RandomStream = 'randomStream',
-  HostMetrics = 'hostmetrics',
+  LiveMeasurements = 'measurements',
 }
 
 export interface GrafanaQuery extends DataQuery {
   queryType: GrafanaQueryType; // RandomWalk by default
+  channel?: string;
+  measurements?: MeasurementsQuery;
 }
 
 export const defaultQuery: GrafanaQuery = {

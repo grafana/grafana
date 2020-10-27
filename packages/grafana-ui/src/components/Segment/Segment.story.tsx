@@ -131,3 +131,21 @@ export const CustomLabelField = () => {
     </SegmentFrame>
   );
 };
+
+export const HtmlAttributes = () => {
+  const [value, setValue] = useState<any>(options[0]);
+  return (
+    <SegmentFrame options={options}>
+      <Segment
+        data-testid="segment-test"
+        id="segment-id"
+        value={value}
+        options={groupedOptions}
+        onChange={({ value }) => {
+          setValue(value);
+          action('Segment value changed')(value);
+        }}
+      />
+    </SegmentFrame>
+  );
+};

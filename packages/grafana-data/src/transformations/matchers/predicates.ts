@@ -1,4 +1,4 @@
-import { Field, DataFrame } from '../../types/dataFrame';
+import { Field, DataFrame, FieldType } from '../../types/dataFrame';
 import { MatcherID } from './ids';
 import { getFieldMatcher, fieldMatchers, getFrameMatchers, frameMatchers } from '../matchers';
 import { FieldMatcherInfo, MatcherConfig, FrameMatcherInfo } from '../../types/transformations';
@@ -189,6 +189,10 @@ export const alwaysFrameMatcher = (frame: DataFrame) => {
 
 export const neverFieldMatcher = (field: Field) => {
   return false;
+};
+
+export const notTimeFieldMatcher = (field: Field) => {
+  return field.type !== FieldType.time;
 };
 
 export const neverFrameMatcher = (frame: DataFrame) => {

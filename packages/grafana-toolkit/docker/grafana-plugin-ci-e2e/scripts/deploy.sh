@@ -44,7 +44,7 @@ get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-l
     "b4138199aa755ebfe171b57cc46910b13258ace5fbc4eaa099c42607cd0bff32"
 chmod 755 /usr/local/bin/cc-test-reporter
 
-wget -O /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.16/grabpl"
+wget -O /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.20/grabpl"
 chmod +x /usr/local/bin/grabpl
 
 # Install Mage
@@ -56,11 +56,10 @@ mv $HOME/go/bin/mage /usr/local/bin
 /bin/rm -rf /tmp/mage
 /bin/rm -rf $HOME/go
 
-# Install grafana-toolkit deps
-pushd /usr/local/grafana-toolkit
-yarn install
-ln -s /usr/local/grafana-toolkit/bin/grafana-toolkit.js /usr/local/bin/grafana-toolkit
-popd
+# add cypress
+yarn global add cypress
+# verify cypress install
+cypress verify
 
 # Get the size down
 /bin/rm -rf /var/lib/apt/lists

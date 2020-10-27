@@ -81,6 +81,13 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
+	urlParams := c.Req.URL.Query()
+	if _, disableAutoLogin := urlParams["disableAutoLogin"]; disableAutoLogin {
+		hs.log.Debug("Auto login manually disabled")
+		c.HTML(200, getViewIndex(), viewData)
+		return
+	}
+
 	enabledOAuths := make(map[string]interface{})
 	for key, oauth := range setting.OAuthService.OAuthInfos {
 		enabledOAuths[key] = map[string]string{"name": oauth.Name}
@@ -171,11 +178,12 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 			err = errors.New(response.errMessage)
 		}
 		hs.SendLoginLog(&models.SendLoginLogCommand{
-			ReqContext: c,
-			LogAction:  action,
-			User:       user,
-			HTTPStatus: response.status,
-			Error:      err,
+			ReqContext:    c,
+			LogAction:     action,
+			User:          user,
+			LoginUsername: cmd.User,
+			HTTPStatus:    response.status,
+			Error:         err,
 		})
 	}()
 

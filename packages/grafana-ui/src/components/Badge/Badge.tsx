@@ -4,7 +4,7 @@ import { useTheme } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { IconName } from '../../types';
 import { Tooltip } from '../Tooltip/Tooltip';
-import { getColorFromHexRgbOrName, GrafanaTheme } from '@grafana/data';
+import { getColorForTheme, GrafanaTheme } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import { css } from 'emotion';
 import { HorizontalGroup } from '..';
@@ -42,7 +42,7 @@ export const Badge = React.memo<BadgeProps>(({ icon, color, text, tooltip }) => 
 Badge.displayName = 'Badge';
 
 const getStyles = stylesFactory((theme: GrafanaTheme, color: BadgeColor) => {
-  let sourceColor = getColorFromHexRgbOrName(color);
+  let sourceColor = getColorForTheme(color, theme);
   let borderColor = '';
   let bgColor = '';
   let textColor = '';

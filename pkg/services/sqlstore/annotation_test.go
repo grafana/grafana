@@ -1,3 +1,5 @@
+// +build integration
+
 package sqlstore
 
 import (
@@ -9,6 +11,8 @@ import (
 )
 
 func TestAnnotations(t *testing.T) {
+	mockTimeNow()
+	defer resetTimeNow()
 	InitTestDB(t)
 
 	Convey("Testing annotation saving/loading", t, func() {

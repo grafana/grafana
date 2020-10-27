@@ -47,13 +47,12 @@ export interface Props {
 
 interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}>, UseFiltersState<{}> {}
 
-function useTableStateReducer(props: Props) {
+function useTableStateReducer({ onColumnResize, onSortByChange, data }: Props) {
   return useCallback(
     (newState: ReactTableInternalState, action: any) => {
       switch (action.type) {
         case 'columnDoneResizing':
-          if (props.onColumnResize) {
-            const { data } = props;
+          if (onColumnResize) {
             const info = (newState.columnResizing.headerIdWidths as any)[0];
             const columnIdString = info[0];
             const fieldIndex = parseInt(columnIdString, 10);
@@ -65,11 +64,10 @@ function useTableStateReducer(props: Props) {
             }
 
             const fieldDisplayName = getFieldDisplayName(field, data);
-            props.onColumnResize(fieldDisplayName, width);
+            onColumnResize(fieldDisplayName, width);
           }
         case 'toggleSortBy':
-          if (props.onSortByChange) {
-            const { data } = props;
+          if (onSortByChange) {
             const sortByFields: TableSortByFieldState[] = [];
 
             for (const sortItem of newState.sortBy) {
@@ -84,24 +82,24 @@ function useTableStateReducer(props: Props) {
               });
             }
 
-            props.onSortByChange(sortByFields);
+            onSortByChange(sortByFields);
           }
           break;
       }
 
       return newState;
     },
-    [props.onColumnResize, props.onSortByChange, props.data]
+    [data, onColumnResize, onSortByChange]
   );
 }
 
-function getInitialState(props: Props, columns: Column[]): Partial<ReactTableInternalState> {
+function getInitialState(initialSortBy: Props['initialSortBy'], columns: Column[]): Partial<ReactTableInternalState> {
   const state: Partial<ReactTableInternalState> = {};
 
-  if (props.initialSortBy) {
+  if (initialSortBy) {
     state.sortBy = [];
 
-    for (const sortBy of props.initialSortBy) {
+    for (const sortBy of initialSortBy) {
       for (const col of columns) {
         if (col.Header === sortBy.displayName) {
           state.sortBy.push({ id: col.id as string, desc: sortBy.desc });
@@ -123,6 +121,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     columnMinWidth = COLUMN_MIN_WIDTH,
     noHeader,
     resizable = true,
+    initialSortBy,
   } = props;
   const theme = useTheme();
   const tableStyles = getTableStyles(theme);
@@ -151,9 +150,9 @@ export const Table: FC<Props> = memo((props: Props) => {
       data: memoizedData,
       disableResizing: !resizable,
       stateReducer: stateReducer,
-      initialState: getInitialState(props, memoizedColumns),
+      initialState: getInitialState(initialSortBy, memoizedColumns),
     }),
-    [memoizedColumns, memoizedData, stateReducer, resizable]
+    [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer]
   );
 
   const { getTableProps, headerGroups, rows, prepareRow, totalColumnsWidth } = useTable(
@@ -164,6 +163,8 @@ export const Table: FC<Props> = memo((props: Props) => {
     useResizeColumns
   );
 
+  const { fields } = data;
+
   const RenderRow = React.useCallback(
     ({ index, style }) => {
       const row = rows[index];
@@ -173,7 +174,7 @@ export const Table: FC<Props> = memo((props: Props) => {
           {row.cells.map((cell: Cell, index: number) => (
             <TableCell
               key={index}
-              field={data.fields[index]}
+              field={fields[index]}
               tableStyles={tableStyles}
               cell={cell}
               onCellFilterAdded={onCellFilterAdded}
@@ -182,7 +183,7 @@ export const Table: FC<Props> = memo((props: Props) => {
         </div>
       );
     },
-    [prepareRow, rows]
+    [fields, onCellFilterAdded, prepareRow, rows, tableStyles]
   );
 
   const headerHeight = noHeader ? 0 : tableStyles.cellHeight;
