@@ -22,7 +22,7 @@ import { InfluxQueryBuilder } from './query_builder';
 import { InfluxQuery, InfluxOptions, InfluxVersion } from './types';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getBackendSrv, DataSourceWithBackend, frameToMetricFindValue } from '@grafana/runtime';
-import { Observable, from, throwError, of } from 'rxjs';
+import { Observable, throwError, of } from 'rxjs';
 import { FluxQueryEditor } from './components/FluxQueryEditor';
 import { catchError, map } from 'rxjs/operators';
 
@@ -77,7 +77,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     }
 
     // Fallback to classic query support
-    return from(this.classicQuery(request));
+    return this.classicQuery(request);
   }
 
   getQueryDisplayText(query: InfluxQuery) {
@@ -110,7 +110,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
   /**
    * The unchanged pre 7.1 query implementation
    */
-  async classicQuery(options: any): Promise<DataQueryResponse> {
+  classicQuery(options: any): Observable<DataQueryResponse> {
     let timeFilter = this.getTimeFilter(options);
     const scopedVars = options.scopedVars;
     const targets = _.cloneDeep(options.targets);
@@ -137,7 +137,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     });
 
     if (allQueries === '') {
-      return Promise.resolve({ data: [] });
+      return of({ data: [] });
     }
 
     // add global adhoc filters to timeFilter
@@ -153,11 +153,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // replace templated variables
     allQueries = this.templateSrv.replace(allQueries, scopedVars);
 
-    return this._seriesQuery(allQueries, options)
-      .toPromise()
-      .then((data: any): any => {
+    return this._seriesQuery(allQueries, options).pipe(
+      map((data: any) => {
         if (!data || !data.results) {
-          return [];
+          return { data: [] };
         }
 
         const seriesList = [];
@@ -202,7 +201,8 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         }
 
         return { data: seriesList };
-      });
+      })
+    );
   }
 
   async annotationQuery(options: AnnotationQueryRequest<any>): Promise<AnnotationEvent[]> {
@@ -274,14 +274,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
         }
 
         if (query.tags) {
-          const expandedTags = query.tags.map(tag => {
-            const expandedTag = {
+          expandedQuery.tags = query.tags.map(tag => {
+            return {
               ...tag,
               value: this.templateSrv.replace(tag.value, undefined, 'regex'),
             };
-            return expandedTag;
           });
-          expandedQuery.tags = expandedTags;
         }
         return expandedQuery;
       });
@@ -478,12 +476,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
               const errors = result.data.results.filter((elem: any) => elem.error);
 
               if (errors.length > 0) {
-                return throwError(
-                  this.handleErrors({
-                    message: 'InfluxDB Error: ' + errors[0].error,
-                    data,
-                  })
-                );
+                throw {
+                  message: 'InfluxDB Error: ' + errors[0].error,
+                  data,
+                };
               }
             }
           }
@@ -501,7 +497,10 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
 
   handleErrors(err: any) {
     const error: DataQueryError = {
-      message: (err && err.status) || 'Unknown error during query transaction. Please check JS console logs.',
+      message:
+        (err && err.status) ||
+        (err && err.message) ||
+        'Unknown error during query transaction. Please check JS console logs.',
     };
 
     if ((Number.isInteger(err.status) && err.status !== 0) || err.status >= 300) {
