@@ -30,7 +30,9 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
         ? tinycolor(from)
             .darken(5)
             .toString()
-        : theme.palette.gray05;
+        : tinycolor(from)
+            .lighten(4)
+            .toString();
       return {
         borderColor: theme.isLight ? theme.palette.gray85 : theme.palette.gray25,
         background: buttonVariantStyles(from, to, theme.isLight ? theme.palette.gray25 : theme.palette.gray4),
