@@ -50,7 +50,8 @@ export const changeBucketAggregationField = (
 export const changeBucketAggregationSetting = <T extends BucketAggregation, K extends SettingKeyOf<T>>(
   bucketAgg: T,
   settingName: K,
-  newValue: string | string[]
+  // This could be inferred from T, but it's causing some troubles
+  newValue: string | string[] | any
 ): ChangeBucketAggregationSettingAction<T> => ({
   type: CHANGE_BUCKET_AGG_SETTING,
   payload: {

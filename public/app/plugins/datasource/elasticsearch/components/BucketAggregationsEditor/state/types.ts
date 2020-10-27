@@ -55,10 +55,14 @@ interface Terms extends BucketAggregationWithField {
   };
 }
 
-interface Filters extends BaseBucketAggregation {
+export type Filter = {
+  query: string;
+  label: string;
+};
+export interface Filters extends BaseBucketAggregation {
   type: 'filters';
   settings?: {
-    filters?: Array<{ query?: string; label?: string }>;
+    filters?: Filter[];
   };
 }
 

@@ -88,7 +88,7 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
 Elasticsearch pre-v5.0: Scripting language is per default Groovy if not changed. For Groovy use <var> to reference a variable. "
       >
         <Input
-          placeholder="pars.var1 / params.var2"
+          placeholder="params.var1 / params.var2"
           onBlur={e => upperStateDispatch(changeMetricSetting(value, 'script', e.target.value))}
           defaultValue={value.settings?.script}
         />

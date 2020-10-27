@@ -5,6 +5,7 @@ import { useDispatch } from '../../ElasticsearchQueryContext';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { BucketAggregation } from '../state/types';
+import { FiltersSettingsEditor } from './TermsSettingsEditor';
 
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 16,
@@ -181,6 +182,8 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
           </InlineField>
         </>
       )}
+
+      {bucketAgg.type === 'filters' && <FiltersSettingsEditor value={bucketAgg} />}
     </SettingsEditorContainer>
   );
 };
