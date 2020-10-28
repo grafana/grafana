@@ -3,6 +3,9 @@ import { Unsubscribable, Observable } from 'rxjs';
 import { AppEvent } from './types';
 import { EventBus, LegacyEmitter, BusEventHandler, BusEventType, LegacyEventHandler, BusEvent } from './types';
 
+/**
+ * @alpha
+ */
 export class EventBusSrv implements EventBus, LegacyEmitter {
   private emitter: EventEmitter;
 
