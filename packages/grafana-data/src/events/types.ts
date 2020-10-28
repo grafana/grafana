@@ -53,7 +53,7 @@ export interface BusEventHandler<T extends BusEvent> {
  */
 export interface EventBus {
   /**
-   * Emit single vent
+   * Publish single vent
    */
   publish<T extends BusEvent>(event: T): void;
 
