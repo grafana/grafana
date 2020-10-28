@@ -155,6 +155,10 @@ Along with metrics, Explore allows you to investigate your logs with the followi
 - [InfluxDB](../datasources/influxdb)
 - [Elasticsearch](../datasources/elasticsearch)
 
+### Logs visualization
+
+Results of log queries are shown as histograms in the graph and individual logs are displayed below. If the data source does not send histogram data for the requested time range, the logs model computes a time series based on the log row counts bucketed by an automatically calculated time interval and the start of the histogram is then anchored by the first log row's timestamp from the result. The end of the time series is anchored to the time picker's **To** range.
+
 ### Visualization options
 
 You can customize how logs are displayed and select which columns are shown.
