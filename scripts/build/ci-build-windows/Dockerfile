@@ -21,12 +21,12 @@ RUN mkdir -p "C:\Program Files (x86)\GnuWin32"
 RUN cd "C:\Program Files (x86)\GnuWin32" && unzip C:\App\diffutils-dep.zip && unzip C:\App\diffutils-bin.zip
 
 RUN powershell (New-Object Net.WebClient).DownloadFile(\
-  \"https://github.com/golangci/golangci-lint/releases/download/v1.31.0/golangci-lint-1.31.0-windows-amd64.zip\", \
+  \"https://github.com/golangci/golangci-lint/releases/download/v1.32.0/golangci-lint-1.32.0-windows-amd64.zip\", \
   \"golangci-lint.zip\")
 RUN powershell (Get-FileHash golangci-lint.zip -Algorithm SHA256).Hash -eq \
-  \"6CE6B1D3207A63256D82FBBAC80BB9E85D7705EC1A408F005DFE324457C54966\"
+  \"97a69c2a153cd4285b7000b327aa6e77b694534e7463cbd1b77481c22b6113cf\"
 RUN unzip golangci-lint.zip
-RUN powershell -Command mv golangci-lint-1.31.0-windows-amd64\golangci-lint.exe .
+RUN powershell -Command mv golangci-lint-1.32.0-windows-amd64\golangci-lint.exe .
 
 RUN powershell -Command scoop cache rm '*'
 
