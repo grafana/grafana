@@ -70,7 +70,6 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
           transition: transform 0.2s cubic-bezier(0.19, 1, 0.22, 1);
         }
       }
-    }
     `,
   };
 });
@@ -103,3 +102,5 @@ export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
     );
   }
 );
+
+Switch.displayName = 'Switch';
