@@ -68,7 +68,8 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       color: ${colors.text};
       cursor: pointer;
 
-      svg {
+      svg,
+      i.fa {
         margin-right: ${theme.spacing.sm};
       }
 
