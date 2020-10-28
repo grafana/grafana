@@ -11,14 +11,14 @@ import { MutableDataFrame, toDataFrame } from '../dataframe';
 import {
   DataFrame,
   Field,
+  FieldColorModeId,
   FieldConfig,
   FieldConfigPropertyItem,
   FieldConfigSource,
   FieldType,
   InterpolateFunction,
-  ThresholdsMode,
-  FieldColorModeId,
   ScopedVars,
+  ThresholdsMode,
 } from '../types';
 import { locationUtil, Registry } from '../utils';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
@@ -86,6 +86,21 @@ describe('Global MinMax', () => {
     const minmax = findNumericFieldMinMax([f0]);
     expect(minmax.min).toEqual(-20);
     expect(minmax.max).toEqual(1234);
+  });
+
+  describe('when value is null', () => {
+    it('then global min max should be null', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1] },
+          { name: 'Value', type: FieldType.number, values: [null] },
+        ],
+      });
+      const { min, max } = findNumericFieldMinMax([frame]);
+
+      expect(min).toBeNull();
+      expect(max).toBeNull();
+    });
   });
 });
 
