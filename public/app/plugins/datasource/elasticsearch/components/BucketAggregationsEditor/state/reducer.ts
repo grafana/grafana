@@ -18,6 +18,7 @@ export const reducer = (
 ): ElasticsearchQuery['bucketAggs'] => {
   switch (action.type) {
     case ADD_BUCKET_AGG:
+      // TODO: if last is date histogram add it before
       const nextId = parseInt(state[state.length - 1].id, 10) + 1;
       return [...state, defaultBucketAgg(nextId.toString())];
 

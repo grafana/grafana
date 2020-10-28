@@ -48,7 +48,7 @@ interface Terms extends BucketAggregationWithField {
   type: 'terms';
   settings?: {
     order?: TermsOrder;
-    size?: number;
+    size?: string;
     min_doc_count?: string;
     orderBy?: string;
     missing?: string;

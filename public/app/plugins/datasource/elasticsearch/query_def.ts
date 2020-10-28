@@ -1,8 +1,8 @@
 import _ from 'lodash';
 import { BucketAggregation } from './components/BucketAggregationsEditor/state/types';
+import { orderByOptions } from './components/BucketAggregationsEditor/utils';
 import {
   ExtendedStat,
-  isMetricAggregationWithField,
   isPipelineAggregation,
   MetricAggregation,
   MovingAverageModelOption,
@@ -12,6 +12,7 @@ import {
 } from './components/MetricAggregationsEditor/state/types';
 import { metricAggregationConfig, pipelineOptions } from './components/MetricAggregationsEditor/utils';
 import { ElasticsearchQuery } from './types';
+import { describeMetric } from './utils';
 
 export const extendedStats: ExtendedStat[] = [
   { text: 'Avg', value: 'avg', default: false },
@@ -115,31 +116,6 @@ export function getOrderByOptions(target: any) {
   });
 
   return orderByOptions.concat(metricRefs);
-}
-
-export function describeOrder(order: string) {
-  const def: any = _.find(orderOptions, { value: order });
-  return def.text;
-}
-
-export function describeMetric(metric: MetricAggregation) {
-  if (!isMetricAggregationWithField(metric) && !isPipelineAggregation(metric)) {
-    return metricAggregationConfig[metric.type].label;
-  }
-  return metricAggregationConfig[metric.type].label + ' ' + metric.field;
-}
-
-export function describeOrderBy(orderBy: any, target: any) {
-  const def: any = _.find(orderByOptions, { value: orderBy });
-  if (def) {
-    return def.text;
-  }
-  const metric: any = _.find(target.metrics, { id: orderBy });
-  if (metric) {
-    return describeMetric(metric);
-  } else {
-    return 'metric not found';
-  }
 }
 
 export function defaultMetricAgg(id = '1'): MetricAggregation {

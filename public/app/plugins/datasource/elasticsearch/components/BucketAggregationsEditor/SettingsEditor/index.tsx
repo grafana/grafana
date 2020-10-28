@@ -7,6 +7,7 @@ import { changeBucketAggregationSetting } from '../state/actions';
 import { BucketAggregation } from '../state/types';
 import { intervalOptions, orderByOptions, orderOptions, sizeOptions } from '../utils';
 import { FiltersSettingsEditor } from './TermsSettingsEditor';
+import { useDescription } from './useDescription';
 
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 16,
@@ -35,9 +36,10 @@ interface Props {
 
 export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
   const dispatch = useDispatch();
+  const settingsDescription = useDescription(bucketAgg);
 
   return (
-    <SettingsEditorContainer label="Settings">
+    <SettingsEditorContainer label={settingsDescription}>
       {bucketAgg.type === 'terms' && (
         <>
           <InlineField label="Order" {...inlineFieldProps}>

@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
 import { MetricAggregationType } from './components/MetricAggregationsEditor/state/types';
+import { describeMetric } from './utils';
 
 export class ElasticResponse {
   constructor(private targets: ElasticsearchQuery[], private response: any) {
@@ -288,7 +289,7 @@ export class ElasticResponse {
           for (const pv of agg.pipelineVariables) {
             const appliedAgg: any = _.find(target.metrics, { id: pv.pipelineAgg });
             if (appliedAgg) {
-              metricName = metricName.replace('params.' + pv.name, queryDef.describeMetric(appliedAgg));
+              metricName = metricName.replace('params.' + pv.name, describeMetric(appliedAgg));
             }
           }
         } else {
@@ -297,7 +298,7 @@ export class ElasticResponse {
       } else {
         const appliedAgg: any = _.find(target.metrics, { id: series.field });
         if (appliedAgg) {
-          metricName += ' ' + queryDef.describeMetric(appliedAgg);
+          metricName += ' ' + describeMetric(appliedAgg);
         } else {
           metricName = 'Unset';
         }

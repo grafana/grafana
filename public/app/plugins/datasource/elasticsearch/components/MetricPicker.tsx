@@ -3,13 +3,11 @@ import { css, cx } from 'emotion';
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 import { MetricAggregation } from './MetricAggregationsEditor/state/types';
-import { metricAggregationConfig } from './MetricAggregationsEditor/utils';
+import { describeMetric } from '../utils';
 
 const noWrap = css`
   white-space: nowrap;
 `;
-
-const describeMetric = (metric: MetricAggregation) => `${metricAggregationConfig[metric.type].label} ${metric.id}`;
 
 const toOption = (metric: MetricAggregation) => ({
   label: describeMetric(metric),
