@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -49,6 +49,17 @@ func (tw *DatasourcePluginWrapperV2) Query(ctx context.Context, ds *models.DataS
 	instanceSettings, err := ModelToInstanceSettings(ds)
 	if err != nil {
 		return nil, err
+	}
+
+	if query.Headers == nil {
+		query.Headers = make(map[string]string)
+	}
+
+	if oauthtoken.IsOAuthPassThruEnabled(ds) {
+		if token := oauthtoken.GetCurrentOAuthToken(ctx, query.User); token != nil {
+			delete(query.Headers, "Authorization")
+			query.Headers["Authorization"] = fmt.Sprintf("%s %s", token.Type(), token.AccessToken)
+		}
 	}
 
 	pbQuery := &pluginv2.QueryDataRequest{

@@ -32,7 +32,7 @@ If you don't have the knowledge or time to code, consider helping with triage. T
        |       |                                            |
 +------+-------+-------------+                 +------------+---------+        +----------------------------+
 |                            |                 |                      |        |                            |
-| label: needs more details  |                 | Needs investigation? +--YES---+ label: needs investigation |
+| label: needs more info     |                 | Needs investigation? +--YES---+ label: needs investigation |
 |                            |                 |                      |        |                            |
 +----------------------------+                 +----------------+-----+        +--------------+-------------+
                                                              NO |                             |
@@ -82,7 +82,7 @@ Before triaging an issue very far, make sure that the issue's author provided th
 
 Given a certain [issue template]([template](https://github.com/grafana/grafana/issues/new/choose)) have been used by the issue author or depending how the issue is perceived by the issue triage responsible, the following should help you understand what standard issue information that must be included.
 
-#### Bug report?
+#### Bug reports
 
 Should explain what happened, what was expected and how to reproduce it together with any additional information that may help giving a complete picture of what happened such as screenshots, [query inspector](https://community.grafana.com/t/using-grafanas-query-inspector-to-troubleshoot-issues/2630) output and any environment related information that's applicable and/or maybe related to the reported problem:
 - Grafana version
@@ -96,15 +96,15 @@ Should explain what happened, what was expected and how to reproduce it together
 - Non-default configuration settings
 - Development environment like Go and Node versions, if applicable
 
-#### Enhancement request?
+#### Enhancement requests
 
 Should explain what enhancement or feature that the author wants to be added and why that is needed.
 
-#### Accessibility issue?
+#### Accessibility issues
 
 This is a mix between a bug report and enhancement request but focused on accessibility issues to help make Grafana improve keyboard navigation, screen-reader support and being accessible to everyone. The report should include relevant WCAG criteria, if applicable.
 
-#### Support request?
+#### Support requests
 
 In general, if the issue description and title is perceived as a question no more information is needed.
 
@@ -150,16 +150,15 @@ An issue can have multiple of the following labels. Typically, a properly catego
 | `area/*`                 | Subject is related to a functional area of interest or component.         |
 | `datasource/*`           | Subject is related to a core data source plugin.                          |
 
-### Duplicate issue?
+### Duplicate issues
 
 Make sure it's not a duplicate by searching existing issues using related terms from the issue title and description. If you think you know there is an existing issue, but can't find it, please reach out to one of the maintainers and ask for help. If you identify that the issue is a duplicate of an existing issue:
 
-1. Add a comment `Duplicate of #<issue number>`. GitHub will recognize this and add some additional context to the issue activity.
-2. Close the issue and label it with `type/duplicate`.
+1. Add a comment `/duplicate of #<issue number>`. GitHub will recognize this and add some additional context to the issue activity.
+2. The Grafana bot will do the rest, adding the correct label and closing comment
 3. Optionally add any related `area/*` or `datasource/*` labels.
-4. If applicable, add a comment with additional information.
 
-### Bug report?
+### Bug reports
 
 If it's not perfectly clear that it's an actual bug, quickly try to reproduce it.
 
@@ -204,11 +203,11 @@ There's a minor typo/error/lack of information that adds a lot of confusion for 
 1. Label the issue with `help wanted` and `beginner friendly`, if applicable, to signal that we find this important to fix and we would appreciate any help we can get from the community.
 2. Move on to [prioritizing the issue](#4-prioritization-of-issues).
 
-### Accessibility issue?
+### Accessibility issues
 
 1. Label the issue `type/accessibility` and at least one `area/*` or `datasource/*` label.
 
-### Support request?
+### Support requests
 
 1. Kindly and politely direct the issue author to the [community site](https://community.grafana.com/) and explain that GitHub is mainly used for tracking bugs and feature requests. If possible, it's usually a good idea to add some pointers to the issue author's question.
 2. Close the issue and label it with `type/question`.
@@ -233,7 +232,7 @@ In case there is an uncertainty around the prioritization of an issue, please as
 | `priority/awaiting-more-evidence` | Lowest priority. Possibly useful, but not yet enough interest in it.                                                     |
 | `priority/unscheduled`            | Something to look into before and to be discussed during the planning of the next (upcoming) major/minor stable release. |
 
-**Critical bug?**
+**Critical bugs**
 
 1. If a bug has been categorized and any of the following criteria apply, the bug should be labeled as critical and must be actively worked on as someone's top priority right now.
 
@@ -248,7 +247,7 @@ In case there is an uncertainty around the prioritization of an issue, please as
 5. Escalate the problem to the maintainers.
 6. Assign or ask a maintainer for help assigning someone to make this issue their top priority right now.
 
-**Important short-term?**
+**Important short-term**
 
 1. Label the issue `priority/important-soon`.
 2. If applicable, label the issue `priority/support-subscription`.
@@ -256,12 +255,12 @@ In case there is an uncertainty around the prioritization of an issue, please as
 4. Make sure to add the issue to a suitable backlog of a GitHub project and prioritize it or assign someone to work on it now or very soon.
 5. Consider requesting [help from the community](#5-requesting-help-from-the-community), even though it may be problematic given a short amount of time until it should be released.
 
-**Important long-term?**
+**Important long-term**
 
 1. Label the issue `priority/important-longterm`.
 2. Consider requesting [help from the community](#5-requesting-help-from-the-community).
 
-**Nice to have?**
+**Nice to have**
 
 1. Label the issue `priority/nice-to-have`.
 2. Consider requesting [help from the community](#5-requesting-help-from-the-community).
@@ -299,6 +298,13 @@ Investigating issues can be a very time consuming task, especially for the maint
 For some other combinations it may not be possible at all for a maintainer to setup a proper test environment to investigate the issue. In these cases we really appreciate any help we can get from the community. Otherwise the issue is highly likely to be closed.
 
 Even if you don't have the time or knowledge to investigate an issue we highly recommend that you [upvote](https://help.github.com/en/articles/about-conversations-on-github#reacting-to-ideas-in-comments) the issue if you happen to have the same problem. If you have further details that may help investigating the issue please provide as much information as possible.
+
+## Automation 
+
+We have some automation that triggers on comments or labels being added to issues. Many of these automated behaviors are defined in [commands.json](https://github.com/grafana/grafana/blob/master/.github/commands.json). Or in other [GitHub Actions](https://github.com/grafana/grafana/tree/master/.github/workflows)
+
+* Add /duplicate `#<issue number>`  to have Grafana label & close issue with an appropriate message. 
+* Add `type/question` and the bot will close it with an appropriate message. 
 
 ## External PRs
 

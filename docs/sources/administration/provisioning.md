@@ -140,7 +140,7 @@ Please refer to each datasource documentation for specific provisioning examples
 | ------------- | ---------------------------------------------------------------------------------- |
 | Elasticsearch | Elasticsearch uses the `database` property to configure the index for a datasource |
 
-#### Json Data
+#### JSON Data
 
 Since not all datasources have the same configuration settings we only have the most common ones as fields. The rest should be stored as a json blob in the `jsonData` field. Here are the most common settings that the core datasources use.
 
@@ -157,11 +157,17 @@ Since not all datasources have the same configuration settings we only have the 
 | interval                | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |
 | logMessageField         | string  | Elasticsearch                                                    | Which field should be used as the log message                                               |
 | logLevelField           | string  | Elasticsearch                                                    | Which field should be used to indicate the priority of the log message                      |
-| authType                | string  | Cloudwatch                                                       | Auth provider. keys/credentials/arn                                                         |
-| assumeRoleArn           | string  | Cloudwatch                                                       | ARN of Assume Role                                                                          |
-| defaultRegion           | string  | Cloudwatch                                                       | AWS region                                                                                  |
+| sigV4AuthType                | string  | Elasticsearch                                                       | SigV4 auth provider. default/credentials/keys                                                     |
+| sigV4ExternalId              | string  | Elasticsearch                                                       | Optional SigV4 External ID                                                                         |
+| sigV4AssumeRoleArn           | string  | Elasticsearch                                                       | Optional SigV4 ARN role to assume                                                                 |
+| sigV4Region           | string  | Elasticsearch                                                       | SigV4 AWS region                                                                 |
+| sigV4Profile                 | string  | Elasticsearch                                                       | Optional SigV4  credentials profile                                                                |
+| authType                | string  | Cloudwatch                                                       | Auth provider. default/credentials/keys                                                     |
+| externalId              | string  | Cloudwatch                                                       | Optional External ID                                                                        |
+| assumeRoleArn           | string  | Cloudwatch                                                       | Optional ARN role to assume                                                                 |
+| defaultRegion           | string  | Cloudwatch                                                       | Optional default AWS region                                                                 |
 | customMetricsNamespaces | string  | Cloudwatch                                                       | Namespaces of Custom Metrics                                                                |
-| profile                 | string  | Cloudwatch                                                       | Custom credentials profile                                                                  |
+| profile                 | string  | Cloudwatch                                                       | Optional credentials profile                                                                |
 | tsdbVersion             | string  | OpenTSDB                                                         | Version                                                                                     |
 | tsdbResolution          | string  | OpenTSDB                                                         | Resolution                                                                                  |
 | sslmode                 | string  | PostgreSQL                                                       | SSLmode. 'disable', 'require', 'verify-ca' or 'verify-full'                                 |
@@ -190,6 +196,8 @@ Secure json data is a map of settings that will be encrypted with [secret key]({
 | basicAuthPassword | string | _All_      | password for basic authentication       |
 | accessKey         | string | Cloudwatch | Access key for connecting to Cloudwatch |
 | secretKey         | string | Cloudwatch | Secret key for connecting to Cloudwatch |
+| sigV4AccessKey     | string | Elasticsearch | SigV4 access key. Required when using keys auth provider |
+| sigV4SecretKey    | string | Elasticsearch | SigV4 secret key. Required when using keys auth provider |
 
 #### Custom HTTP headers for datasources
 

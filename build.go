@@ -451,7 +451,12 @@ func gruntBuildArg(task string) []string {
 }
 
 func setup() {
-	runPrint("go", "install", "-v", "./pkg/cmd/grafana-server")
+	args := []string{"install", "-v"}
+	if goos == windows {
+		args = append(args, "-buildmode=exe")
+	}
+	args = append(args, "./pkg/cmd/grafana-server")
+	runPrint("go", args...)
 }
 
 func printGeneratedVersion() {
@@ -460,7 +465,12 @@ func printGeneratedVersion() {
 
 func test(pkg string) {
 	setBuildEnv()
-	runPrint("go", "test", "-short", "-timeout", "60s", pkg)
+	args := []string{"test", "-short", "-timeout", "60s"}
+	if goos == windows {
+		args = append(args, "-buildmode=exe")
+	}
+	args = append(args, pkg)
+	runPrint("go", args...)
 }
 
 func doBuild(binaryName, pkg string, tags []string) {
@@ -482,6 +492,10 @@ func doBuild(binaryName, pkg string, tags []string) {
 		rmr(binary, binary+".md5")
 	}
 	args := []string{"build", "-ldflags", ldflags()}
+	if goos == windows {
+		// Work around a linking error on Windows: "export ordinal too large"
+		args = append(args, "-buildmode=exe")
+	}
 	if len(tags) > 0 {
 		args = append(args, "-tags", strings.Join(tags, ","))
 	}

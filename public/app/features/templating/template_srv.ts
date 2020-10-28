@@ -112,6 +112,15 @@ export class TemplateSrv implements BaseTemplateSrv {
     // for some scopedVars there is no variable
     variable = variable || {};
 
+    if (value === null || value === undefined) {
+      return '';
+    }
+
+    // if it's an object transform value to string
+    if (!Array.isArray(value) && typeof value === 'object') {
+      value = `${value}`;
+    }
+
     if (typeof format === 'function') {
       return format(value, variable, this.formatValue);
     }

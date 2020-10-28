@@ -5,17 +5,16 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/session"
-
-	"github.com/aws/aws-sdk-go/aws/defaults"
-
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
+	"github.com/aws/aws-sdk-go/aws/defaults"
+	"github.com/aws/aws-sdk-go/aws/session"
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
+	"github.com/aws/aws-sdk-go/private/protocol/rest"
 )
 
 type AuthType string
@@ -35,6 +34,8 @@ type Config struct {
 	AuthType string
 
 	Profile string
+
+	DatasourceType string
 
 	AccessKey string
 	SecretKey string
@@ -63,15 +64,29 @@ func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
 		return nil, err
 	}
 
-	if req.Body != nil {
-		// consume entire request body so that the signer can generate a hash from the contents
-		body, err := ioutil.ReadAll(req.Body)
-		if err != nil {
-			return nil, err
-		}
-		return signer.Sign(req, bytes.NewReader(body), "grafana", m.Config.Region, time.Now().UTC())
+	body, err := replaceBody(req)
+	if err != nil {
+		return nil, err
 	}
-	return signer.Sign(req, nil, "grafana", m.Config.Region, time.Now().UTC())
+
+	if strings.Contains(req.URL.RawPath, "%2C") {
+		req.URL.RawPath = rest.EscapePath(req.URL.RawPath, false)
+	}
+
+	// if X-Forwarded-For header is present, omit during signing step as it breaks AWS request verification
+	forwardHeader := req.Header.Get("X-Forwarded-For")
+	if forwardHeader != "" {
+		req.Header.Del("X-Forwarded-For")
+
+		header, err := signer.Sign(req, bytes.NewReader(body), awsServiceNamespace(m.Config.DatasourceType), m.Config.Region, time.Now().UTC())
+
+		// reset pre-existing X-Forwarded-For header value
+		req.Header.Set("X-Forwarded-For", forwardHeader)
+
+		return header, err
+	}
+
+	return signer.Sign(req, bytes.NewReader(body), awsServiceNamespace(m.Config.DatasourceType), m.Config.Region, time.Now().UTC())
 }
 
 func (m *SigV4Middleware) signer() (*v4.Signer, error) {
@@ -107,4 +122,27 @@ func (m *SigV4Middleware) credentials() (*credentials.Credentials, error) {
 	}
 
 	return nil, fmt.Errorf("unrecognized authType: %s", authType)
+}
+
+func replaceBody(req *http.Request) ([]byte, error) {
+	if req.Body == nil {
+		return []byte{}, nil
+	}
+	payload, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		return nil, err
+	}
+	req.Body = ioutil.NopCloser(bytes.NewReader(payload))
+	return payload, nil
+}
+
+func awsServiceNamespace(dsType string) string {
+	switch dsType {
+	case DS_ES:
+		return "es"
+	case DS_PROMETHEUS:
+		return "aps"
+	default:
+		panic(fmt.Sprintf("Unsupported datasource %s", dsType))
+	}
 }

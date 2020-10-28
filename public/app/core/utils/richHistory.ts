@@ -170,15 +170,6 @@ export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => 
   return array.sort(sortFunc);
 };
 
-export const copyStringToClipboard = (string: string) => {
-  const el = document.createElement('textarea');
-  el.value = string;
-  document.body.appendChild(el);
-  el.select();
-  document.execCommand('copy');
-  document.body.removeChild(el);
-};
-
 export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
   const exploreState: ExploreUrlState = {
     /* Default range, as we are not saving timerange in rich history */
