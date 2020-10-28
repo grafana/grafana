@@ -1,4 +1,4 @@
-import { dateTime, TimeRange, EventBusExtended } from '@grafana/data';
+import { dateTime, TimeRange } from '@grafana/data';
 
 import { TemplateSrv } from '../../templating/template_srv';
 import { onTimeRangeUpdated, OnTimeRangeUpdatedDependencies, setOptionAsCurrent } from './actions';
