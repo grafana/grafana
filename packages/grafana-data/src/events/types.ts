@@ -1,14 +1,16 @@
 import { Unsubscribable, Observable } from 'rxjs';
 
-/*
- * Event interface
+/**
+ * @alpha
+ * internal interface
  */
 export interface BusEvent {
   readonly type: string;
   readonly payload?: any;
 }
 
-/*
+/**
+ * @alpha
  * Base event type
  */
 export abstract class BusEventBase implements BusEvent {
@@ -21,7 +23,8 @@ export abstract class BusEventBase implements BusEvent {
   }
 }
 
-/*
+/**
+ * @alpha
  * Base event type with payload
  */
 export abstract class BusEventWithPayload<T> extends BusEventBase {
@@ -41,7 +44,8 @@ export interface BusEventType<T extends BusEvent> {
   new (...args: any[]): T;
 }
 
-/*
+/**
+ * @alpha
  * Event callback/handler type
  */
 export interface BusEventHandler<T extends BusEvent> {
@@ -49,6 +53,7 @@ export interface BusEventHandler<T extends BusEvent> {
 }
 
 /**
+ * @alpha
  * Main minimal interface
  */
 export interface EventBus {
@@ -74,6 +79,7 @@ export interface EventBus {
 }
 
 /**
+ * @public
  * @deprecated event type
  */
 export interface AppEvent<T> {
@@ -81,9 +87,7 @@ export interface AppEvent<T> {
   payload?: T;
 }
 
-/**
- * Legacy functions
- */
+/** @public */
 export interface LegacyEmitter {
   /**
    * @deprecated use $emit
@@ -101,9 +105,11 @@ export interface LegacyEmitter {
   off<T>(event: AppEvent<T> | string, handler: (payload?: T | any) => void): void;
 }
 
+/** @public */
 export interface LegacyEventHandler<T> {
   (payload: T): void;
   wrapper?: (event: BusEvent) => void;
 }
 
+/** @alpha */
 export interface EventBusExtended extends EventBus, LegacyEmitter {}

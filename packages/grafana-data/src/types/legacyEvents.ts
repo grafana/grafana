@@ -28,6 +28,7 @@ export const PanelEvents = {
   render: eventFactory<any>('render'),
 };
 
+/** @public */
 export interface LegacyGraphHoverEventPayload {
   pos: any;
   panel: {
@@ -35,10 +36,12 @@ export interface LegacyGraphHoverEventPayload {
   };
 }
 
+/** @alpha */
 export class LegacyGraphHoverEvent extends BusEventWithPayload<LegacyGraphHoverEventPayload> {
   static type = 'graph-hover';
 }
 
+/** @alpha */
 export class LegacyGraphHoverClearEvent extends BusEventBase {
   static type = 'graph-hover-clear';
 }
