@@ -28,7 +28,6 @@ export default class DisabledPermissionListItem extends Component<Props, any> {
               options={dashboardPermissionLevels}
               onChange={() => {}}
               disabled={true}
-              className="gf-form-select-box__control--menu-right"
               value={currentPermissionLevel}
             />
           </div>
