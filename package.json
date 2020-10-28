@@ -41,7 +41,7 @@
     "typecheck": "tsc --noEmit",
     "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
     "watch": "yarn start -d watch,start core:start --watchTheme",
-    "ci:test-frontend": "yarn run prettier:check && yarn run packages:typecheck && yarn run typecheck && yarn run test:ci"
+    "ci:test-frontend": "yarn run prettier:check && yarn run packages:typecheck && yarn run typecheck && yarn grunt no-only-tests && yarn run test:ci"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/latest/guides/whats-new-in-v7-3/",
