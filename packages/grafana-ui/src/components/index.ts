@@ -126,11 +126,13 @@ export { default as Chart } from './Chart';
 export { TooltipContainer } from './Chart/TooltipContainer';
 export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
+export { RangeSlider } from './Slider/RangeSlider';
 
 // TODO: namespace!!
 export { StringValueEditor } from './OptionsUI/string';
 export { StringArrayEditor } from './OptionsUI/strings';
 export { NumberValueEditor } from './OptionsUI/number';
+export { SliderValueEditor } from './OptionsUI/slider';
 export { SelectValueEditor } from './OptionsUI/select';
 export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
 
