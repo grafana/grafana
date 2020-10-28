@@ -106,7 +106,7 @@ export class ElasticMetricAggCtrl {
           break;
         }
         case 'moving_fn': {
-                  const movingFunctionOptions = queryDef.getPipelineOptions($scope.agg);
+          const movingFunctionOptions = queryDef.getPipelineOptions($scope.agg);
           _.each(movingFunctionOptions, opt => {
             $scope.agg.settings[opt.text] = $scope.agg.settings[opt.text] || opt.default;
           });
