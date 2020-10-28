@@ -92,7 +92,7 @@ export class ShareExport extends PureComponent<Props, State> {
         <div className="share-modal-header">
           <Icon name="cloud-upload" size="xxl" className="share-modal-big-icon" />
           <div className="share-modal-content">
-            <InlineField labelWidth={16} label="Export for sharing externally">
+            <InlineField labelWidth={32} label="Export for sharing externally">
               <Switch value={shareExternally} onChange={this.onShareExternallyChange} />
             </InlineField>
             <div className="gf-form-button-row">

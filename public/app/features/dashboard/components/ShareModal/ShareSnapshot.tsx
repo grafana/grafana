@@ -1,13 +1,11 @@
 import React, { PureComponent } from 'react';
-import { Button, ClipboardButton, Icon, Spinner, LegacyForms, LinkButton } from '@grafana/ui';
+import { Button, ClipboardButton, Icon, Spinner, Select, Input, LinkButton, InlineField } from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { appEvents } from 'app/core/core';
 import { VariableRefresh } from '../../../variables/types';
-
-const { Select, Input } = LegacyForms;
 
 const snapshotApiUrl = '/api/snapshots';
 
@@ -222,14 +220,12 @@ export class ShareSnapshot extends PureComponent<Props, State> {
           </p>
         </div>
         <div className="gf-form-group share-modal-options">
-          <div className="gf-form" ng-if="step === 1">
-            <label className="gf-form-label width-12">Snapshot name</label>
-            <Input width={15} value={snapshotName} onChange={this.onSnapshotNameChange} />
-          </div>
-          <div className="gf-form" ng-if="step === 1">
-            <label className="gf-form-label width-12">Expire</label>
-            <Select width={15} options={expireOptions} value={selectedExpireOption} onChange={this.onExpireChange} />
-          </div>
+          <InlineField labelWidth={24} label="Snapshot name">
+            <Input width={30} value={snapshotName} onChange={this.onSnapshotNameChange} />
+          </InlineField>
+          <InlineField labelWidth={24} label="Expire">
+            <Select width={30} options={expireOptions} value={selectedExpireOption} onChange={this.onExpireChange} />
+          </InlineField>
         </div>
 
         <p className="share-modal-info-text">
@@ -237,10 +233,9 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         </p>
 
         <div className="gf-form-group share-modal-options">
-          <div className="gf-form">
-            <span className="gf-form-label width-12">Timeout (seconds)</span>
-            <Input type="number" width={15} value={timeoutSeconds} onChange={this.onTimeoutChange} />
-          </div>
+          <InlineField labelWidth={24} label="Timeout (seconds)">
+            <Input type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} />
+          </InlineField>
         </div>
 
         <div className="gf-form-button-row">
