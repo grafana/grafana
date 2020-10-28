@@ -157,6 +157,11 @@ Since not all datasources have the same configuration settings we only have the 
 | interval                | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |
 | logMessageField         | string  | Elasticsearch                                                    | Which field should be used as the log message                                               |
 | logLevelField           | string  | Elasticsearch                                                    | Which field should be used to indicate the priority of the log message                      |
+| sigV4AuthType                | string  | Elasticsearch                                                       | SigV4 auth provider. default/credentials/keys                                                     |
+| sigV4ExternalId              | string  | Elasticsearch                                                       | Optional SigV4 External ID                                                                         |
+| sigV4AssumeRoleArn           | string  | Elasticsearch                                                       | Optional SigV4 ARN role to assume                                                                 |
+| sigV4Region           | string  | Elasticsearch                                                       | SigV4 AWS region                                                                 |
+| sigV4Profile                 | string  | Elasticsearch                                                       | Optional SigV4  credentials profile                                                                |
 | authType                | string  | Cloudwatch                                                       | Auth provider. default/credentials/keys                                                     |
 | externalId              | string  | Cloudwatch                                                       | Optional External ID                                                                        |
 | assumeRoleArn           | string  | Cloudwatch                                                       | Optional ARN role to assume                                                                 |
@@ -175,11 +180,6 @@ Since not all datasources have the same configuration settings we only have the 
 | maxOpenConns            | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of open connections to the database (Grafana v5.4+)                          |
 | maxIdleConns            | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum number of connections in the idle connection pool (Grafana v5.4+)                   |
 | connMaxLifetime         | number  | MySQL, PostgreSQL and MSSQL                                      | Maximum amount of time in seconds a connection may be reused (Grafana v5.4+)                |
-| sigV4AuthType                | string  | Elasticsearch                                                       | SigV4 auth provider. default/credentials/keys                                                     |
-| sigV4ExternalId              | string  | Elasticsearch                                                       | Optional SigV4 External ID                                                                         |
-| sigV4AssumeRoleArn           | string  | Elasticsearch                                                       | Optional SigV4 ARN role to assume                                                                 |
-| sigV4Region           | string  | Elasticsearch                                                       | SigV4 AWS region                                                                 |
-| sigV4Profile                 | string  | Elasticsearch                                                       | Optional SigV4  credentials profile                                                                |
 
 #### Secure Json Data
 
