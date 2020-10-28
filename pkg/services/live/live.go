@@ -7,16 +7,30 @@ import (
 	"sync"
 
 	"github.com/centrifugal/centrifuge"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/live/features"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 )
 
 var (
 	logger   = log.New("live")
 	loggerCF = log.New("live.centrifuge")
 )
+
+func init() {
+	registry.RegisterService(&GrafanaLive{
+		channels:   make(map[string]models.ChannelHandler),
+		channelsMu: sync.RWMutex{},
+		GrafanaScope: CoreGrafanaScope{
+			Features: make(map[string]models.ChannelHandlerFactory),
+		},
+	})
+}
 
 // CoreGrafanaScope list of core features
 type CoreGrafanaScope struct {
@@ -28,7 +42,10 @@ type CoreGrafanaScope struct {
 
 // GrafanaLive pretends to be the server
 type GrafanaLive struct {
-	node *centrifuge.Node
+	Cfg           *setting.Cfg            `inject:""`
+	RouteRegister routing.RouteRegister   `inject:""`
+	LogsService   *cloudwatch.LogsService `inject:""`
+	node          *centrifuge.Node
 
 	// The websocket handler
 	WebsocketHandler interface{}
@@ -41,14 +58,14 @@ type GrafanaLive struct {
 	GrafanaScope CoreGrafanaScope
 }
 
-// InitializeBroker initializes the broker and starts listening for requests.
-func InitializeBroker() (*GrafanaLive, error) {
-	glive := &GrafanaLive{
-		channels:   make(map[string]models.ChannelHandler),
-		channelsMu: sync.RWMutex{},
-		GrafanaScope: CoreGrafanaScope{
-			Features: make(map[string]models.ChannelHandlerFactory),
-		},
+// Init initializes the instance.
+// Required to implement the registry.Service interface.
+func (g *GrafanaLive) Init() error {
+	logger.Debug("GrafanaLive initing")
+
+	if !g.IsEnabled() {
+		logger.Debug("GrafanaLive feature not enabled, skipping initialization")
+		return nil
 	}
 
 	// We use default config here as starting point. Default config contains
@@ -60,7 +77,7 @@ func InitializeBroker() (*GrafanaLive, error) {
 
 	// This function is called fast and often -- it must be sychronized
 	cfg.ChannelOptionsFunc = func(channel string) (centrifuge.ChannelOptions, bool, error) {
-		handler, err := glive.GetChannelHandler(channel)
+		handler, err := g.GetChannelHandler(channel)
 		if err != nil {
 			logger.Error("ChannelOptionsFunc", "channel", channel, "err", err)
 			if err.Error() == "404" { // ????
@@ -78,22 +95,22 @@ func InitializeBroker() (*GrafanaLive, error) {
 	// only from client side.
 	node, err := centrifuge.New(cfg)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	glive.node = node
+	g.node = node
 
 	// Initialize the main features
 	dash := &features.DashboardHandler{
-		Publisher: glive.Publish,
+		Publisher: g.Publish,
 	}
 
-	glive.GrafanaScope.Dashboards = dash
-	glive.GrafanaScope.Features["dashboard"] = dash
-	glive.GrafanaScope.Features["testdata"] = &features.TestDataSupplier{
-		Publisher: glive.Publish,
+	g.GrafanaScope.Dashboards = dash
+	g.GrafanaScope.Features["dashboard"] = dash
+	g.GrafanaScope.Features["testdata"] = &features.TestDataSupplier{
+		Publisher: g.Publish,
 	}
-	glive.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{}
-	glive.GrafanaScope.Features["measurements"] = &features.MeasurementsRunner{}
+	g.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{}
+	g.GrafanaScope.Features["measurements"] = &features.MeasurementsRunner{}
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
@@ -121,7 +138,7 @@ func InitializeBroker() (*GrafanaLive, error) {
 	node.OnSubscribe(func(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
 		reply := centrifuge.SubscribeReply{}
 
-		handler, err := glive.GetChannelHandler(e.Channel)
+		handler, err := g.GetChannelHandler(e.Channel)
 		if err != nil {
 			return reply, err
 		}
@@ -141,7 +158,7 @@ func InitializeBroker() (*GrafanaLive, error) {
 	// Called when something is written to the websocket
 	node.OnPublish(func(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
 		reply := centrifuge.PublishReply{}
-		handler, err := glive.GetChannelHandler(e.Channel)
+		handler, err := g.GetChannelHandler(e.Channel)
 		if err != nil {
 			return reply, err
 		}
@@ -158,7 +175,7 @@ func InitializeBroker() (*GrafanaLive, error) {
 
 	// Run node. This method does not block.
 	if err := node.Run(); err != nil {
-		return nil, err
+		return err
 	}
 
 	// SockJS will find the best protocol possible for the browser
@@ -175,7 +192,7 @@ func InitializeBroker() (*GrafanaLive, error) {
 		WriteBufferSize: 1024,
 	})
 
-	glive.WebsocketHandler = func(ctx *models.ReqContext) {
+	g.WebsocketHandler = func(ctx *models.ReqContext) {
 		user := ctx.SignedInUser
 		if user == nil {
 			ctx.Resp.WriteHeader(401)
@@ -223,7 +240,10 @@ func InitializeBroker() (*GrafanaLive, error) {
 		// Unknown path
 		ctx.Resp.WriteHeader(404)
 	}
-	return glive, nil
+
+	g.RouteRegister.Any("/live/*", g.WebsocketHandler)
+
+	return nil
 }
 
 // GetChannelHandler gives threadsafe access to the channel
@@ -280,6 +300,14 @@ func (g *GrafanaLive) GetChannelHandlerFactory(scope string, name string) (model
 	}
 
 	if scope == "plugin" {
+		// Temporary hack until we have a more generic solution later on
+		if name == "cloudwatch" {
+			return &cloudwatch.LogQueryRunnerSupplier{
+				Publisher: g.Publish,
+				Service:   g.LogsService,
+			}, nil
+		}
+
 		p, ok := plugins.Plugins[name]
 		if ok {
 			h := &PluginHandler{
@@ -297,6 +325,11 @@ func (g *GrafanaLive) GetChannelHandlerFactory(scope string, name string) (model
 func (g *GrafanaLive) Publish(channel string, data []byte) error {
 	_, err := g.node.Publish(channel, data)
 	return err
+}
+
+// IsEnabled returns true if the Grafana Live feature is enabled.
+func (g *GrafanaLive) IsEnabled() bool {
+	return g.Cfg.IsLiveEnabled()
 }
 
 // Write to the standard log15 logger
