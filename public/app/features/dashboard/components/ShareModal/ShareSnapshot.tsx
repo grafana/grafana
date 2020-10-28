@@ -272,7 +272,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
           </div>
         </div>
 
-        <div className="pull-right" ng-if="step === 2" style={{ padding: '5px' }}>
+        <div className="pull-right" style={{ padding: '5px' }}>
           Did you make a mistake?{' '}
           <LinkButton variant="link" target="_blank" onClick={this.deleteSnapshot}>
             delete snapshot.
@@ -286,8 +286,8 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     return (
       <div className="share-modal-header">
         <p className="share-modal-info-text">
-          The snapshot has now been deleted. If it you have already accessed it once, It might take up to an hour before
-          it is removed from browser caches or CDN caches.
+          The snapshot has now been deleted. If you have already accessed it once, it might take up to an hour before it
+          is removed from browser caches or CDN caches.
         </p>
       </div>
     );
