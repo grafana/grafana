@@ -1,8 +1,10 @@
 import React, { Component } from 'react';
+import { css } from 'emotion';
+import config from 'app/core/config';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TeamPicker, Team } from 'app/core/components/Select/TeamPicker';
-import { Button, Form, InlineField, InlineFieldRow, Icon, Select } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import { Button, Form, HorizontalGroup, Icon, Select, stylesFactory } from '@grafana/ui';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { User } from 'app/types';
 import {
   dashboardPermissionLevels,
@@ -86,6 +88,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     const newItem = this.state;
     const pickerClassName = 'min-width-20';
     const isValid = this.isValid();
+    const styles = getStyles(config.theme);
 
     return (
       <div className="cta-form">
@@ -95,46 +98,47 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
         <h5>Add Permission For</h5>
         <Form maxWidth="none" onSubmit={this.onSubmit}>
           {() => (
-            <InlineFieldRow>
-              <InlineField>
-                <Select
-                  isSearchable={false}
-                  value={this.state.type}
-                  options={dashboardAclTargets}
-                  onChange={this.onTypeChanged}
-                />
-              </InlineField>
+            <HorizontalGroup>
+              <Select
+                isSearchable={false}
+                value={this.state.type}
+                options={dashboardAclTargets}
+                onChange={this.onTypeChanged}
+              />
 
               {newItem.type === AclTarget.User ? (
-                <InlineField>
-                  <UserPicker onSelected={this.onUserSelected} className={pickerClassName} />
-                </InlineField>
+                <UserPicker onSelected={this.onUserSelected} className={pickerClassName} />
               ) : null}
 
               {newItem.type === AclTarget.Team ? (
-                <InlineField>
-                  <TeamPicker onSelected={this.onTeamSelected} className={pickerClassName} />
-                </InlineField>
+                <TeamPicker onSelected={this.onTeamSelected} className={pickerClassName} />
               ) : null}
 
-              <InlineField>
-                <Select
-                  isSearchable={false}
-                  value={this.state.permission}
-                  options={dashboardPermissionLevels}
-                  onChange={this.onPermissionChanged}
-                  width={25}
-                />
-              </InlineField>
+              <span className={styles.label}>Can</span>
+
+              <Select
+                isSearchable={false}
+                value={this.state.permission}
+                options={dashboardPermissionLevels}
+                onChange={this.onPermissionChanged}
+                width={25}
+              />
               <Button data-save-permission type="submit" disabled={!isValid}>
                 Save
               </Button>
-            </InlineFieldRow>
+            </HorizontalGroup>
           )}
         </Form>
       </div>
     );
   }
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  label: css`
+    color: ${theme.colors.textBlue};
+    font-weight: bold;
+  `,
+}));
 
 export default AddPermissions;
