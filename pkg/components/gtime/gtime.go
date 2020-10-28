@@ -12,13 +12,15 @@ var dateUnitPattern = regexp.MustCompile(`^(\d+)([dwMy])$`)
 // ParseInterval parses an interval with support for all units that Grafana uses.
 // An interval is relative the current wall time.
 func ParseInterval(inp string) (time.Duration, error) {
-	num, period, err := parse(inp)
+	dur, period, err := parse(inp)
 	if err != nil {
 		return 0, err
 	}
 	if period == "" {
-		return time.Duration(num), nil
+		return dur, nil
 	}
+
+	num := int(dur)
 
 	now := time.Now()
 	switch period {
@@ -37,36 +39,40 @@ func ParseInterval(inp string) (time.Duration, error) {
 
 // ParseDuration parses a duration with support for all units that Grafana uses.
 func ParseDuration(inp string) (time.Duration, error) {
-	num, period, err := parse(inp)
+	dur, period, err := parse(inp)
 	if err != nil {
 		return 0, err
 	}
 	if period == "" {
-		return time.Duration(num), nil
+		return dur, nil
 	}
 
 	// The average number of days in a year, using the Julian calendar
 	const daysInAYear = 365.25
+	const day = 24 * time.Hour
+	const week = 7 * day
+	const year = time.Duration(float64(day) * daysInAYear)
+	const month = time.Duration(float64(year) / 12)
 
 	switch period {
 	case "d":
-		return time.Duration(num*24) * time.Hour, nil
+		return dur * day, nil
 	case "w":
-		return time.Duration(num*24*7) * time.Hour, nil
+		return dur * week, nil
 	case "M":
-		return time.Duration(int64(float64(num*24)*(daysInAYear/12))) * time.Hour, nil
+		return dur * month, nil
 	case "y":
-		return time.Duration(int64(float64(num*24)*daysInAYear)) * time.Hour, nil
+		return dur * year, nil
 	}
 
 	return 0, fmt.Errorf("invalid duration %q", inp)
 }
 
-func parse(inp string) (int, string, error) {
+func parse(inp string) (time.Duration, string, error) {
 	result := dateUnitPattern.FindSubmatch([]byte(inp))
 	if len(result) != 3 {
 		dur, err := time.ParseDuration(inp)
-		return int(dur), "", err
+		return dur, "", err
 	}
 
 	num, err := strconv.Atoi(string(result[1]))
@@ -74,5 +80,5 @@ func parse(inp string) (int, string, error) {
 		return 0, "", err
 	}
 
-	return num, string(result[2]), nil
+	return time.Duration(num), string(result[2]), nil
 }
