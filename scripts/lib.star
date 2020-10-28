@@ -7,7 +7,7 @@ windows_image = 'mcr.microsoft.com/windows:1809'
 dockerize_version = '0.6.1'
 wix_image = 'grafana/ci-wix:0.1.1'
 test_release_ver = 'v7.3.0-test'
-windows_build_image = 'grafana/ci-build-windows:0.1.5'
+windows_build_image = 'grafana/ci-build-windows:0.1.6'
 
 def test_backend_cmds(windows=False):
     if windows:

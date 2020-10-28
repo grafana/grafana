@@ -253,7 +253,7 @@ steps:
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.20/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: test-backend
-  image: grafana/ci-build-windows:0.1.5
+  image: grafana/ci-build-windows:0.1.6
   commands:
   - .\grabpl test-backend
   - .\grabpl integration-tests
@@ -617,7 +617,7 @@ steps:
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.20/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: test-backend
-  image: grafana/ci-build-windows:0.1.5
+  image: grafana/ci-build-windows:0.1.6
   commands:
   - .\grabpl test-backend
   - .\grabpl integration-tests
@@ -1043,7 +1043,7 @@ steps:
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.20/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: test-backend
-  image: grafana/ci-build-windows:0.1.5
+  image: grafana/ci-build-windows:0.1.6
   commands:
   - .\grabpl test-backend
   - .\grabpl integration-tests
@@ -1402,7 +1402,7 @@ steps:
   - clone
 
 - name: test-backend
-  image: grafana/ci-build-windows:0.1.5
+  image: grafana/ci-build-windows:0.1.6
   commands:
   - .\grabpl test-backend
   - .\grabpl integration-tests
@@ -1818,7 +1818,7 @@ steps:
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.20/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: test-backend
-  image: grafana/ci-build-windows:0.1.5
+  image: grafana/ci-build-windows:0.1.6
   commands:
   - .\grabpl test-backend
   - .\grabpl integration-tests
@@ -2171,7 +2171,7 @@ steps:
   - clone
 
 - name: test-backend
-  image: grafana/ci-build-windows:0.1.5
+  image: grafana/ci-build-windows:0.1.6
   commands:
   - .\grabpl test-backend
   - .\grabpl integration-tests
@@ -2550,7 +2550,7 @@ steps:
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.20/windows/grabpl.exe -OutFile grabpl.exe
 
 - name: test-backend
-  image: grafana/ci-build-windows:0.1.5
+  image: grafana/ci-build-windows:0.1.6
   commands:
   - .\grabpl test-backend
   - .\grabpl integration-tests
@@ -2881,7 +2881,7 @@ steps:
   - clone
 
 - name: test-backend
-  image: grafana/ci-build-windows:0.1.5
+  image: grafana/ci-build-windows:0.1.6
   commands:
   - .\grabpl test-backend
   - .\grabpl integration-tests
