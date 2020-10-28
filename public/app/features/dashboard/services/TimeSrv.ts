@@ -323,17 +323,17 @@ export class TimeSrv {
   }
 
   private validateTimeBack(time: RawTimeRange) {
-    const { maxTimeBack } = this.dashboard?.timepicker ?? { maxTimeBack: undefined };
-    if (!maxTimeBack) {
+    const { timeRangeStartLimit } = this.dashboard?.timepicker ?? { timeRangeStartLimit: undefined };
+    if (!timeRangeStartLimit) {
       return;
     }
 
-    const maxTimeBackRawRange = {
-      from: 'now-' + maxTimeBack,
+    const timeRangeStartLimitRawRange = {
+      from: 'now-' + timeRangeStartLimit,
       to: 'now',
     };
-    const maxTimeBackRange = rangeUtil.convertRawToRange(maxTimeBackRawRange);
-    const maxTimeBackSpan = maxTimeBackRange.to.valueOf() - maxTimeBackRange.from.valueOf();
+    const timeRangeStartLimitRange = rangeUtil.convertRawToRange(timeRangeStartLimitRawRange);
+    const timeRangeStartLimitSpan = timeRangeStartLimitRange.to.valueOf() - timeRangeStartLimitRange.from.valueOf();
 
     const timeBackRawRange = {
       from: time.from,
@@ -342,10 +342,10 @@ export class TimeSrv {
     const timeBackRange = rangeUtil.convertRawToRange(timeBackRawRange);
     const timeBackSpan = timeBackRange.to.valueOf() - timeBackRange.from.valueOf();
 
-    // Add 1 to maxTimeBackBack to allow for rounding errors
-    const exceededMaxTimeBack = timeBackSpan > maxTimeBackSpan + 1;
-    if (exceededMaxTimeBack) {
-      throw new Error(`Time range start point exceeds maximum of ${maxTimeBack} back`);
+    // Add 1 to timeRangeStartLimitBack to allow for rounding errors
+    const exceededTimeRangeStartLimit = timeBackSpan > timeRangeStartLimitSpan + 1;
+    if (exceededTimeRangeStartLimit) {
+      throw new Error(`Time range start exceeds limit of ${timeRangeStartLimit} in the past`);
     }
   }
 
@@ -353,7 +353,7 @@ export class TimeSrv {
     const { maxTimeSpan } = this.dashboard?.timepicker ?? { maxTimeSpan: undefined };
     const timeRange = rangeUtil.convertRawToRange(time);
     const timeSpan = timeRange.to.valueOf() - timeRange.from.valueOf();
-    // Add 1 to maxTimeBackSpan to allow for rounding errors
+    // Add 1 to timeRangeStartLimitSpan to allow for rounding errors
     const exceededMaxTimeSpan = maxTimeSpan && timeSpan > rangeUtil.intervalToMs(maxTimeSpan) + 1;
     if (exceededMaxTimeSpan) {
       throw new Error(`Time range exceeds maximum time span of ${maxTimeSpan}`);

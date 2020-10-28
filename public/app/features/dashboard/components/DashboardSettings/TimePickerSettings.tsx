@@ -16,26 +16,26 @@ interface Props {
   onTimeZoneChange: (timeZone: TimeZone) => void;
   onRefreshIntervalChange: (interval: string[]) => void;
   onNowDelayChange: (nowDelay: string) => void;
-  onMaxTimeSpanChange: (MaxTimeSpan: string) => void;
+  onMaxTimeSpanChange: (maxTimeSpan: string) => void;
   onHideTimePickerChange: (hide: boolean) => void;
-  onMaxTimeBackChange: (maxTimeBack: string) => void;
+  onTimeRangeStartLimitChange: (timeRangeStartLimit: string) => void;
   renderCount: number; // hack to make sure Angular changes are propagated properly, please remove when DashboardSettings are migrated to React
   refreshIntervals: string[];
   timePickerHidden: boolean;
   nowDelay: string;
-  maxTimeBack: string;
+  timeRangeStartLimit: string;
   maxTimeSpan: string;
   timezone: TimeZone;
 }
 
 interface State {
   isNowDelayValid: boolean;
-  isMaxTimeBackValid: boolean;
+  isTimeRangeStartLimitValid: boolean;
   isMaxTimeSpanValid: boolean;
 }
 
 export class TimePickerSettings extends PureComponent<Props, State> {
-  state: State = { isNowDelayValid: true, isMaxTimeBackValid: true, isMaxTimeSpanValid: true };
+  state: State = { isNowDelayValid: true, isTimeRangeStartLimitValid: true, isMaxTimeSpanValid: true };
 
   onNowDelayChange = (event: React.FormEvent<HTMLInputElement>) => {
     const value = event.currentTarget.value;
@@ -53,14 +53,14 @@ export class TimePickerSettings extends PureComponent<Props, State> {
     this.setState({ isNowDelayValid: false });
   };
 
-  onMaxTimeBackChange = (event: React.FormEvent<HTMLInputElement>) => {
+  onTimeRangeStartLimitChange = (event: React.FormEvent<HTMLInputElement>) => {
     const value = event.currentTarget.value;
 
     if (isValidTimeSpanInput(value)) {
-      this.setState({ isMaxTimeBackValid: true });
-      this.props.onMaxTimeBackChange(value.trimRight());
+      this.setState({ isTimeRangeStartLimitValid: true });
+      this.props.onTimeRangeStartLimitChange(value.trimRight());
     } else {
-      this.setState({ isMaxTimeBackValid: false });
+      this.setState({ isTimeRangeStartLimitValid: false });
     }
   };
 
@@ -125,9 +125,9 @@ export class TimePickerSettings extends PureComponent<Props, State> {
             <Tooltip placement="right" content={'Enter the maximum time users can go back'}>
               <Input
                 width={60}
-                invalid={!this.state.isMaxTimeBackValid}
-                onChange={this.onMaxTimeBackChange}
-                defaultValue={this.props.maxTimeBack}
+                invalid={!this.state.isTimeRangeStartLimitValid}
+                onChange={this.onTimeRangeStartLimitChange}
+                defaultValue={this.props.timeRangeStartLimit}
               />
             </Tooltip>
           </div>

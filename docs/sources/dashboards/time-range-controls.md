@@ -103,8 +103,8 @@ To access the dashboard time settings, click the **Dashboard settings** (gear) i
   - Standard [ISO 8601 time zones](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones), including UTC.
 - **Auto-refresh -** Customize the options displayed for relative time and the auto-refresh options. Entries are comma separated and accept any valid time unit.
 - **Now delay now- -** Override the `now` value by entering a time delay. Most commonly, this feature is used to accommodate known delays in data aggregation to avoid null values.
-- **Max time back -** Prevents the users from setting the dashboard `from time` to a value past the max time back. By default, the max time back is not set. The input should be the relative time back value, followed by a unit suffix (ms, s, m, h, d, w, M, y), e.g. `1y`. This will be interpreted as `now-1y` by Grafana.
-- **Max time span -** Prevents the users from setting the dashboard time range to an interval greater than the max time span. By default, the max time span is not set. The input should be the max span value, followed by a unit suffix (ms, s, m, h, d, w, M, y), e.g. `5y`.
+- **Time range start limit -** Prevents the user from setting the dashboard time range start to a value earlier than the set amount of time in the past. By default, the time range start limit is not set. The input should be the relative time back value, followed by a unit suffix (ms, s, m, h, d, w, M, y), e.g. `1y`. This will be interpreted as `now-1y` by Grafana.
+- **Max time span -** Prevents the user from setting the dashboard time range to an interval that is greater than the max time span. By default, the max time span is not set. The input should be the max span value, followed by a unit suffix (ms, s, m, h, d, w, M, y), e.g. `5y`.
 - **Hide time picker -** Select this option if you do not want Grafana to display the time picker.
 
 ## Panel time overrides and timeshift

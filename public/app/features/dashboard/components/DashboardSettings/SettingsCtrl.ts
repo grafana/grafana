@@ -273,8 +273,8 @@ export class SettingsCtrl {
     this.renderCount++;
   };
 
-  onMaxTimeBackChange = (maxTimeBack: string) => {
-    this.dashboard.timepicker.maxTimeBack = maxTimeBack;
+  onTimeRangeStartLimitChange = (timeRangeStartLimit: string) => {
+    this.dashboard.timepicker.timeRangeStartLimit = timeRangeStartLimit;
     this.renderCount++;
   };
 
