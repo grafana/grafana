@@ -58,8 +58,14 @@ In the search view, you can sort dashboards using these insights data. It helps 
 
 ## Data source insights
 
-Data source insights give you information about how much of the data source has been used and how many errors it has returned. It shows the last thirty days of data.
+> Only available in Grafana Enterprise v7.3+.
 
+Data source insights give you information about how a data source has been used in the last thirty days.
+
+- Queries per day
+- Errors per day
+- Average load duration per day (ms)
+ 
 To find data source insights, go to:
 1. Data source list view
 1. Click on a data source
@@ -67,4 +73,3 @@ To find data source insights, go to:
 
 {{< docs-imagebox img="/img/docs/enterprise/datasource_insights.png" max-width="650px" class="docs-image--no-shadow" >}}
 
-> Only available in Grafana Enterprise v7.3+.
