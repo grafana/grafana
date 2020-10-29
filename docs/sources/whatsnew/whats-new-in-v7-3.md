@@ -22,6 +22,7 @@ The main highlights are:
 - [**Table improvements and new image cell mode**]({{< relref "#table-improvements-and-new-image-cell-mode" >}})
 - [**New color scheme option**]({{< relref "#new-color-scheme-option" >}})
 - [**SigV4 Authentication for Amazon Elasticsearch Service**]({{< relref "#sigv4-authentication-for-aws-users" >}})
+- [**CSV exports for Excel**]({{< relref "#csv-exports-for-excel" >}})
 
 ## Table improvements and new image cell mode
 
@@ -59,6 +60,11 @@ As this new option is a standard field option it works in every panel. Here is a
 
 {{< figure src="/img/docs/v73/bar_gauge_gradient_color_scheme.png" max-width="900px" caption="bar gauge color scheme" >}}
 
+## CSV exports for Excel
+
+In v7.0, we introduced a new table panel and inspect mode with Download CSV enabled. However, CSV export to Excel was removed. Due to a large number of inquiries and requests, this [community contribution from tomdaly](https://github.com/grafana/grafana/pull/27284) brought the feature back.
+
+For more information, refer to [Download raw query results as CSV]({{< relref "../panels/inspect-panel/#download-raw-query-results-as-csv" >}}) in the Grafana documentation.
 
 ## Google Cloud monitoring out-of-the-box dashboards
 
