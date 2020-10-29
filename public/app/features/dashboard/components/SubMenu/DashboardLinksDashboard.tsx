@@ -62,7 +62,7 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
           resolvedLinks.map((resolvedLink, index) => {
             const linkElement = (
               <a
-                className="gf-form-label"
+                className="gf-form-label && gf-form-label--dashlink"
                 href={resolvedLink.url}
                 target={link.targetBlank ? '_blank' : '_self'}
                 aria-label={selectors.components.DashboardLinks.link}
@@ -88,12 +88,12 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
     const linkElement = (
       <>
         <a
-          className="gf-form-label pointer"
+          className="gf-form-label gf-form-label--dashlink"
           onClick={this.searchForDashboards}
           data-placement="bottom"
           data-toggle="dropdown"
         >
-          <Icon name="bars" />
+          <Icon name="bars" style={{ marginRight: '4px' }} />
           <span>{linkInfo.title}</span>
         </a>
         <ul
