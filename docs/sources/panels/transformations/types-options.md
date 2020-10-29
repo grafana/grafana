@@ -60,7 +60,7 @@ the result would be
 | Errors  | 15      | 5       |
 
 
-**Reduce fields** will keep the existing frame structure, but collapse each field into a single value.  For example with the calculation *last*,
+The **Reduce fields** with the **Last** calculation,
 results in two frames, each with one row:
 
 Query A:
