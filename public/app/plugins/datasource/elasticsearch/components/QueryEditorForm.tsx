@@ -1,12 +1,8 @@
-import React, { ComponentProps, FunctionComponent, memo } from 'react';
+import React, { FunctionComponent, memo } from 'react';
 import { InlineField, InlineFieldRow, Input, QueryField } from '@grafana/ui';
 import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { ElasticsearchQuery } from '../types';
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
-
-const labelsProps: Partial<ComponentProps<typeof InlineField>> = {
-  labelWidth: 15,
-};
 
 interface Props {
   value: ElasticsearchQuery;
@@ -16,7 +12,7 @@ export const QueryEditorForm: FunctionComponent<Props> = memo(({ value }) => {
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Query" {...labelsProps} grow>
+        <InlineField label="Query" labelWidth={15} grow>
           <QueryField
             query={value.query}
             // onChange={onQueryChange}
@@ -25,7 +21,7 @@ export const QueryEditorForm: FunctionComponent<Props> = memo(({ value }) => {
             portalOrigin="elasticsearch"
           />
         </InlineField>
-        <InlineField label="Alias" {...labelsProps}>
+        <InlineField label="Alias" labelWidth={15}>
           <Input
             placeholder="Alias Pattern"
             id="elastic-alias"

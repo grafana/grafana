@@ -21,6 +21,13 @@ import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
+import { metricAggregationConfig } from './components/MetricAggregationsEditor/utils';
+import {
+  isMetricAggregationWithField,
+  isPipelineAggregationWithMultipleBucketPaths,
+} from './components/MetricAggregationsEditor/state/types';
+import { bucketAggregationConfig } from './components/BucketAggregationsEditor/utils';
+import { isBucketAggregationWithField } from './components/BucketAggregationsEditor/state/types';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -372,6 +379,57 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     }
 
     return angular.toJson(queryHeader);
+  }
+
+  getQueryDisplayText(query: ElasticsearchQuery) {
+    // TODO: This might be refactored a bit.
+    const metricAggs = query.metrics;
+    const bucketAggs = query.bucketAggs;
+    let text = '';
+
+    if (query.query) {
+      text += 'Query: ' + query.query + ', ';
+    }
+
+    text += 'Metrics: ';
+
+    text += metricAggs?.reduce((acc, metric) => {
+      const metricConfig = metricAggregationConfig[metric.type];
+
+      let text = metricConfig.label + '(';
+
+      if (isMetricAggregationWithField(metric)) {
+        text += metric.field;
+      }
+      if (isPipelineAggregationWithMultipleBucketPaths(metric)) {
+        text += metric.settings?.script?.replace(new RegExp('params.', 'g'), '');
+      }
+      text += '), ';
+
+      return `${acc} ${text}`;
+    }, '');
+
+    text += bucketAggs?.reduce((acc, bucketAgg, index) => {
+      const bucketConfig = bucketAggregationConfig[bucketAgg.type];
+
+      let text = '';
+      if (index === 0) {
+        text += ' Group by: ';
+      }
+
+      text += bucketConfig.label + '(';
+      if (isBucketAggregationWithField(bucketAgg)) {
+        text += bucketAgg.field;
+      }
+
+      return `${acc} ${text}), `;
+    }, '');
+
+    if (query.alias) {
+      text += 'Alias: ' + query.alias;
+    }
+
+    return text;
   }
 
   query(options: DataQueryRequest<ElasticsearchQuery>): Promise<DataQueryResponse> {
