@@ -61,7 +61,7 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
           resolvedLinks.map((resolvedLink, index) => {
             const linkElement = (
               <a
-                className="gf-form-label && gf-form-label--dashlink"
+                className="gf-form-label gf-form-label--dashlink"
                 href={resolvedLink.url}
                 target={link.targetBlank ? '_blank' : '_self'}
                 aria-label={selectors.components.DashboardLinks.link}
