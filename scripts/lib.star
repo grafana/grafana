@@ -852,7 +852,14 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
     sfx = ''
     if edition == 'enterprise':
         sfx = '-enterprise'
-    init_cmds = []
+    init_cmds = [
+        # Work around Git being configured to convert to Windows line endings by default
+        'git config --system core.autocrlf false',
+        'git reset --hard',
+        'git config -l',
+        'dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json',
+        'git status',
+    ]
     if edition != 'enterprise':
         init_cmds.extend([
             '$$ProgressPreference = "SilentlyContinue"',

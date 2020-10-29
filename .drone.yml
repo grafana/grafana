@@ -249,6 +249,11 @@ steps:
 - name: initialize
   image: grafana/ci-wix:0.1.1
   commands:
+  - git config --system core.autocrlf false
+  - git reset --hard
+  - git config -l
+  - dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json
+  - git status
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.22/windows/grabpl.exe -OutFile grabpl.exe
 
@@ -613,6 +618,11 @@ steps:
 - name: initialize
   image: grafana/ci-wix:0.1.1
   commands:
+  - git config --system core.autocrlf false
+  - git reset --hard
+  - git config -l
+  - dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json
+  - git status
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.22/windows/grabpl.exe -OutFile grabpl.exe
 
@@ -1039,6 +1049,11 @@ steps:
 - name: initialize
   image: grafana/ci-wix:0.1.1
   commands:
+  - git config --system core.autocrlf false
+  - git reset --hard
+  - git config -l
+  - dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json
+  - git status
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.22/windows/grabpl.exe -OutFile grabpl.exe
 
@@ -1392,6 +1407,11 @@ steps:
 - name: initialize
   image: grafana/ci-wix:0.1.1
   commands:
+  - git config --system core.autocrlf false
+  - git reset --hard
+  - git config -l
+  - dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json
+  - git status
   - cp -r grafana-enterprise C:\App\grafana-enterprise
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
@@ -1814,6 +1834,11 @@ steps:
 - name: initialize
   image: grafana/ci-wix:0.1.1
   commands:
+  - git config --system core.autocrlf false
+  - git reset --hard
+  - git config -l
+  - dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json
+  - git status
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.22/windows/grabpl.exe -OutFile grabpl.exe
 
@@ -2161,6 +2186,11 @@ steps:
 - name: initialize
   image: grafana/ci-wix:0.1.1
   commands:
+  - git config --system core.autocrlf false
+  - git reset --hard
+  - git config -l
+  - dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json
+  - git status
   - cp -r grafana-enterprise C:\App\grafana-enterprise
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
@@ -2546,6 +2576,11 @@ steps:
 - name: initialize
   image: grafana/ci-wix:0.1.1
   commands:
+  - git config --system core.autocrlf false
+  - git reset --hard
+  - git config -l
+  - dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json
+  - git status
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.22/windows/grabpl.exe -OutFile grabpl.exe
 
@@ -2871,6 +2906,11 @@ steps:
 - name: initialize
   image: grafana/ci-wix:0.1.1
   commands:
+  - git config --system core.autocrlf false
+  - git reset --hard
+  - git config -l
+  - dos2unix pkg/plugins/testdata/behind-feature-flag/gel/plugin.json
+  - git status
   - cp -r grafana-enterprise C:\App\grafana-enterprise
   - rm -r -force grafana-enterprise
   - cp grabpl.exe C:\App\grabpl.exe
