@@ -61,7 +61,7 @@ the result would be
 
 
 **Reduce fields** will keep the existing frame structure, but collapse each field into a single value.  For example with the calculation *last*,
-the result would still be two frames, each with one row:
+results in two frames, each with one row:
 
 Query A:
 
