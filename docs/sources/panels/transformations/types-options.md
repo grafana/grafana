@@ -287,7 +287,6 @@ This transformation allows you to extract some key information out of your time 
 
 This transformation will combine all fields from all frames into one result.  Consider:
 
-
 Query A:
 
 | Temp    | Uptime  |
