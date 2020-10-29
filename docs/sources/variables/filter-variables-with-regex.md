@@ -79,4 +79,30 @@ demo.robustperception.io:9090
 demo.robustperception.io:9093
 demo.robustperception.io:9100
 ```
+
+## Filter and use named text and value capture groups
+
+This can be useful if the display text should differ from the value.
+
+List of options:
+
+```text
+kube_pod_labels{label_description="a-descriptive-name-for-pod1",namespace="default",pod="pod1"}
+kube_pod_labels{label_description="the-second-pod",namespace="default",pod="pod2"}
+kube_pod_labels{label_description="a-special-pod",namespace="default",pod="pod3"}
+```
+
+Regex:
+
+```regex
+/pod="(?<value>[^"]+)|label_description="(?<text>[^"]+)/g
+```
+
+Result:
+
+```text
+value   text
+pod1    a-descriptive-name-for-pod1
+pod2    the-second-pod
+pod3    a-sepcial-pod
 ```

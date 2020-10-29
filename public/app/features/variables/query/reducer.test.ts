@@ -141,6 +141,84 @@ describe('queryVariableReducer', () => {
     });
   });
 
+  describe('when updateVariableOptions is dispatched and includeAll is false and regex is set and uses capture groups', () => {
+    it('normal regex should capture in order matches', () => {
+      const regex = '/somelabel="(?<text>[^"]+).*somevalue="(?<value>[^"]+)/i';
+      const { initialState } = getVariableTestContext(adapter, { includeAll: false, regex });
+      const metrics = [createMetric('A{somelabel="atext",somevalue="avalue"}'), createMetric('B')];
+      const update = { results: metrics, templatedRegex: regex };
+      const payload = toVariablePayload({ id: '0', type: 'query' }, update);
+
+      reducerTester<VariablesState>()
+        .givenReducer(queryVariableReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateVariableOptions(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '0': ({
+            ...initialState[0],
+            options: [{ text: 'atext', value: 'avalue', selected: false }],
+          } as unknown) as QueryVariableModel,
+        });
+    });
+
+    it('global regex should capture out of order matches', () => {
+      const regex = '/somevalue="(?<value>[^"]+)|somelabel="(?<text>[^"]+)/gi';
+      const { initialState } = getVariableTestContext(adapter, { includeAll: false, regex });
+      const metrics = [createMetric('A{somelabel="atext",somevalue="avalue"}'), createMetric('B')];
+      const update = { results: metrics, templatedRegex: regex };
+      const payload = toVariablePayload({ id: '0', type: 'query' }, update);
+
+      reducerTester<VariablesState>()
+        .givenReducer(queryVariableReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateVariableOptions(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '0': ({
+            ...initialState[0],
+            options: [{ text: 'atext', value: 'avalue', selected: false }],
+          } as unknown) as QueryVariableModel,
+        });
+    });
+
+    it('unmatched text capture will use value capture', () => {
+      const regex = '/somevalue="(?<value>[^"]+)|somelabel="(?<text>[^"]+)/gi';
+      const { initialState } = getVariableTestContext(adapter, { includeAll: false, regex });
+      const metrics = [createMetric('A{somename="atext",somevalue="avalue"}'), createMetric('B')];
+      const update = { results: metrics, templatedRegex: regex };
+      const payload = toVariablePayload({ id: '0', type: 'query' }, update);
+
+      reducerTester<VariablesState>()
+        .givenReducer(queryVariableReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateVariableOptions(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '0': ({
+            ...initialState[0],
+            options: [{ text: 'avalue', value: 'avalue', selected: false }],
+          } as unknown) as QueryVariableModel,
+        });
+    });
+
+    it('unmatached value capture returns empty state', () => {
+      const regex = '/somevalue="(?<value>[^"]+)|somelabel="(?<text>[^"]+)/gi';
+      const { initialState } = getVariableTestContext(adapter, { includeAll: false, regex });
+      const metrics = [createMetric('A{somelabel="atext",something="avalue"}'), createMetric('B')];
+      const update = { results: metrics, templatedRegex: regex };
+      const payload = toVariablePayload({ id: '0', type: 'query' }, update);
+
+      reducerTester<VariablesState>()
+        .givenReducer(queryVariableReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateVariableOptions(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '0': ({
+            ...initialState[0],
+            options: [{ text: 'None', value: '', selected: false, isNone: true }],
+          } as unknown) as QueryVariableModel,
+        });
+    });
+  });
+
   describe('when updateVariableTags is dispatched', () => {
     it('then state should be correct', () => {
       const { initialState } = getVariableTestContext(adapter);
