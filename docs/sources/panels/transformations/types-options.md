@@ -19,6 +19,7 @@ Grafana comes with the following transformations:
   - [Series to rows](#series-to-rows)
   - [Add field from calculation](#add-field-from-calculation)
   - [Labels to fields](#labels-to-fields)
+  - [Concatenate fields](#concatenate-fields)
   - [Group by](#group-by)
   - [Merge](#merge)
 
@@ -26,19 +27,55 @@ Keep reading for detailed descriptions of each type of transformation and the op
 
 ## Reduce
 
-Apply a _Reduce_ transformation when you want to simplify your results down to one value. Reduce removes the time component. If visualized as a table, it reduces a column down to one row (value).
+The _Reduce_ transformation will apply a calculation to each field in the frame and return a single value.  Time fields are removed when applying
+this transformation.  
 
-In the **Calculations** field, enter one or more calculation types. Click to see a list of calculation choices. For information about available calculations, refer to the [Calculation list]({{< relref "../calculations-list.md" >}}).
+Consider the input:
 
-Once you select at least one calculation, Grafana reduces the results down to one value using the calculation you select. If you select more than one calculation, then more than one value is displayed.
+Query A:
 
-Here's an example of a table with time series data. Before I apply the transformation, you can see all the data organized by time.
+| Time                | Temp    | Uptime  |
+| ------------------- | ------- | ------- |
+| 2020-07-07 11:34:20 | 12.3    | 256122  |
+| 2020-07-07 11:24:20 | 15.4    | 1230233 |
 
-{{< docs-imagebox img="/img/docs/transformations/reduce-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+Query B:
 
-After I apply the transformation, there is no time value and each column has been reduced to one row showing the results of the calculations that I chose.
+| Time                | AQI     | Errors |
+| ------------------- | ------- | ------ |
+| 2020-07-07 11:34:20 | 6.5     | 15     |
+| 2020-07-07 11:24:20 | 3.2     | 5      |
 
-{{< docs-imagebox img="/img/docs/transformations/reduce-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+The reduce transformer has two modes.
+
+
+**Series to rows** will create a row for each field, and a column for each calculation.  For example using the *first* and *last* calculation, 
+the result would be
+
+| Field   | First   | Last    | 
+| ------- | ------- | ------- | 
+| Temp    | 12.3    | 15.4    |
+| Uptime  | 256122  | 1230233 |
+| AQI     | 6.5     | 3.2     |
+| Errors  | 15      | 5       |
+
+
+**Reduce fields** will keep the existing frame structure, but collapse each field into a single value.  For example with the calculation *last*,
+the result would still be two frames, each with one row:
+
+Query A:
+
+| Temp    | Uptime  |
+| ------- | ------- |
+| 15.4    | 1230233 |
+
+Query B:
+
+| AQI     | Errors |
+| ------- | ------ |
+| 3.2     | 5      |
+
+
 
 ## Merge
 
@@ -243,6 +280,34 @@ We would then get :
 | server 3  | 59.6                   | 62                     | 2020-07-07 11:34:20 | OK                   |
 
 This transformation allows you to extract some key information out of your time series and display them in a convenient way.
+
+## Concatenate fields
+
+> **Note:** This transformation is only available in Grafana 7.3+.
+
+This transformation will combine all fields from all frames into one result.  Consider:
+
+
+Query A:
+
+| Temp    | Uptime  |
+| ------- | ------- |
+| 15.4    | 1230233 |
+
+Query B:
+
+| AQI     | Errors |
+| ------- | ------ |
+| 3.2     | 5      |
+
+
+The result would be:
+
+| Temp    | Uptime  | AQI     | Errors |
+| ------- | ------- | ------- | ------ |
+| 15.4    | 1230233 | 3.2     | 5      |
+
+
 
 ## Series to rows
 
