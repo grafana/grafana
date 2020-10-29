@@ -19,7 +19,6 @@ interface State {
 
 export class DashboardLinksDashboard extends PureComponent<Props, State> {
   state: State = { resolvedLinks: [] };
-  wrapperRef = createRef<HTMLDivElement>();
   listItemRef = createRef<HTMLUListElement>();
 
   componentDidMount() {
@@ -45,7 +44,7 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
     const { link } = this.props;
 
     return (
-      <div className="gf-form" key={key} aria-label={selector} ref={this.wrapperRef}>
+      <div className="gf-form" key={key} aria-label={selector}>
         {link.tooltip && <Tooltip content={link.tooltip}>{linkElement}</Tooltip>}
         {!link.tooltip && <>{linkElement}</>}
       </div>
