@@ -326,8 +326,9 @@ class PluginPage extends PureComponent<Props, State> {
         </p>
         <p>
           Grafana Labs checks each plugin to verify that it has a valid digital signature. Plugin signature verification
-          is part of our security measure to ensure plugins are safe and trustworthy. Grafana Labs can’t guarantee the
-          integrity of this unsigned plugin. Ask the plugin author to request it to be signed.
+          is part of our security measures to ensure plugins are safe and trustworthy.
+          {plugin.meta.signature !== PluginSignatureStatus.valid &&
+            'Grafana Labs can’t guarantee the integrity of this unsigned plugin. Ask the plugin author to request it to be signed.'}
         </p>
       </InfoBox>
     );
