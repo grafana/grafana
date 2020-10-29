@@ -613,7 +613,6 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
           return {
             error: error || queryResult.error ? { message: queryResult.error } : null,
             data: [
-              ...data,
               ...dataframes.map(frame => {
                 if (link) {
                   for (const field of frame.fields) {
