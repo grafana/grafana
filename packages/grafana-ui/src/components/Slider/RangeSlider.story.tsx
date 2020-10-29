@@ -1,10 +1,10 @@
 import React from 'react';
-import { Slider } from '@grafana/ui';
+import { RangeSlider } from '@grafana/ui';
 import { select, number, boolean } from '@storybook/addon-knobs';
 
 export default {
-  title: 'Forms/Slider',
-  component: Slider,
+  title: 'Forms/Slider/Range',
+  component: RangeSlider,
 };
 
 const getKnobs = () => {
@@ -22,7 +22,7 @@ const SliderWrapper = () => {
   const stepValue = step ? 10 : undefined;
   return (
     <div style={{ width: '200px', height: '200px' }}>
-      <Slider min={min} max={max} step={stepValue} orientation={orientation} value={10} reverse={reverse} />
+      <RangeSlider min={min} max={max} step={stepValue} orientation={orientation} value={[10, 20]} reverse={reverse} />
     </div>
   );
 };

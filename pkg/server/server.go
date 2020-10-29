@@ -293,7 +293,7 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 
 	// Resolve services and their dependencies.
 	if err := serviceGraph.Populate(); err != nil {
-		return errutil.Wrapf(err, "Failed to populate service dependency")
+		return errutil.Wrapf(err, "Failed to populate service dependencies")
 	}
 
 	return nil
