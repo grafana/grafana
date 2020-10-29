@@ -285,7 +285,7 @@ This transformation allows you to extract some key information out of your time 
 
 > **Note:** This transformation is only available in Grafana 7.3+.
 
-This transformation will combine all fields from all frames into one result.  Consider:
+This transformation combines all fields from all frames into one result.  Consider:
 
 Query A:
 
