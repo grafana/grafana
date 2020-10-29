@@ -707,22 +707,21 @@ describe('logSeriesToLogsModel', () => {
           {
             name: 'ts',
             type: FieldType.time,
-            values: ['1970-01-01T00:00:01Z'],
+            values: ['1970-01-01T00:00:01Z', '1970-02-01T00:00:01Z', '1970-03-01T00:00:01Z'],
           },
           {
             name: 'line',
             type: FieldType.string,
-            values: ['WARN boooo'],
+            values: ['WARN boooo 0', 'WARN boooo 1', 'WARN boooo 2'],
             labels: {
               foo: 'bar',
-              baz: '1',
               level: 'dbug',
             },
           },
           {
             name: 'id',
             type: FieldType.string,
-            values: ['0'],
+            values: ['0', '1', '2'],
           },
         ],
         refId: 'A',
@@ -734,7 +733,7 @@ describe('logSeriesToLogsModel', () => {
           preferredVisualisationType: 'logs',
         },
       }),
-      {
+      toDataFrame({
         fields: [],
         length: 0,
         refId: 'B',
@@ -745,14 +744,32 @@ describe('logSeriesToLogsModel', () => {
           custom: { lokiQueryStatKey: 'Summary: total bytes processed' },
           preferredVisualisationType: 'logs',
         },
-      },
+      }),
     ];
 
     const logsModel = dataFrameToLogsModel(logSeries, 0, 'utc');
     expect(logsModel.meta).toMatchObject([
-      { kind: 2, label: 'Common labels', value: { baz: '1', foo: 'bar', level: 'dbug' } },
-      { kind: 1, label: 'Limit', value: '2000 (1 returned)' },
+      { kind: 2, label: 'Common labels', value: { foo: 'bar', level: 'dbug' } },
+      { kind: 1, label: 'Limit', value: '2000 (3 returned)' },
       { kind: 1, label: 'Total bytes processed', value: '194  kB' },
+    ]);
+    expect(logsModel.rows).toHaveLength(3);
+    expect(logsModel.rows).toMatchObject([
+      {
+        entry: 'WARN boooo 0',
+        labels: { foo: 'bar' },
+        logLevel: LogLevel.debug,
+      },
+      {
+        entry: 'WARN boooo 1',
+        labels: { foo: 'bar' },
+        logLevel: LogLevel.debug,
+      },
+      {
+        entry: 'WARN boooo 2',
+        labels: { foo: 'bar' },
+        logLevel: LogLevel.debug,
+      },
     ]);
   });
 });
