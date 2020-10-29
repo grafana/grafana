@@ -84,6 +84,10 @@ You can now configure your Elasticsearch data source to access your Amazon Elast
 
 For more details, refer to the [Elasticsearch docs]({{<relref "../datasources/elasticsearch/#aws-signature-version-4-authentication">}}).
 
+## Chaining pipeline aggregation in Elasticsearch
+
+Thanks to a contribution from a community member, it's now possible to chain multiple pipeline aggregations together and use the results of one pipeline aggregation as the input of another. This unleashes the full power of Elasticsearch's pipeline aggregations in Grafana, allowing users to perform high order derivatives or use a pipeline aggregation result as a variable for a Bucket Script Aggregation.
+
 ## Grafana Enterprise features
 
 These features are included in the Grafana Enterprise edition software.
