@@ -37,7 +37,7 @@ var (
 	libc    string
 	pkgArch string
 	version string = "v1"
-	buildTags []string = []string{}
+	buildTags []string
 	// deb & rpm does not support semver so have to handle their version a little differently
 	linuxPackageVersion   string = "v1"
 	linuxPackageIteration string = ""
