@@ -47,7 +47,7 @@ export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = props => {
   );
 };
 
-export function getDropdownLocationCssClass(element: HTMLElement | null) {
+function getDropdownLocationCssClass(element: HTMLElement | null) {
   if (!element) {
     return 'invisible';
   }
