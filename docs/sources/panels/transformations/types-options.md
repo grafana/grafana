@@ -49,7 +49,7 @@ Query B:
 The reduce transformer has two modes.
 
 
-**Series to rows** will create a row for each field, and a column for each calculation.  For example using the *first* and *last* calculation, 
+For example, if you used the **First** and **Last** calculation with a **Series to rows** transformation, then 
 the result would be
 
 | Field   | First   | Last    | 
