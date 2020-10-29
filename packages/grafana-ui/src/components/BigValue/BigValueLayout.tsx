@@ -63,6 +63,8 @@ export abstract class BigValueLayout {
       fontSize: this.valueFontSize,
       fontWeight: 500,
       lineHeight: LINE_HEIGHT,
+      position: 'relative',
+      zIndex: 1,
     };
 
     switch (this.props.colorMode) {
