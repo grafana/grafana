@@ -46,7 +46,9 @@ Query B:
 | 2020-07-07 11:34:20 | 6.5     | 15     |
 | 2020-07-07 11:24:20 | 3.2     | 5      |
 
-The reduce transformer has two modes.
+The reduce transformer has two modes:
+- **Series to rows -** Creates a row for each field and a column for each calculation.
+- **Reduce fields -** Keeps the existing frame structure, but collapses each field into a single value.
 
 
 For example, if you used the **First** and **Last** calculation with a **Series to rows** transformation, then 
