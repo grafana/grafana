@@ -19,7 +19,6 @@ interface State {
 
 export class DashboardLinksDashboard extends PureComponent<Props, State> {
   state: State = { resolvedLinks: [] };
-  wrapperRef = createRef<HTMLDivElement>();
   listItemRef = createRef<HTMLUListElement>();
 
   componentDidMount() {
@@ -45,7 +44,7 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
     const { link } = this.props;
 
     return (
-      <div className="gf-form" key={key} aria-label={selector} ref={this.wrapperRef}>
+      <div className="gf-form" key={key} aria-label={selector}>
         {link.tooltip && <Tooltip content={link.tooltip}>{linkElement}</Tooltip>}
         {!link.tooltip && <>{linkElement}</>}
       </div>
@@ -62,7 +61,7 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
           resolvedLinks.map((resolvedLink, index) => {
             const linkElement = (
               <a
-                className="gf-form-label"
+                className="gf-form-label gf-form-label--dashlink"
                 href={resolvedLink.url}
                 target={link.targetBlank ? '_blank' : '_self'}
                 aria-label={selectors.components.DashboardLinks.link}
@@ -81,32 +80,26 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
     );
   };
 
-  getDropdownLocationCssClass = (): string => {
-    const [pullLeftCssClass, pullRightCssClass] = ['pull-left', 'pull-right'];
-    const wrapper = this.wrapperRef.current;
-    const list = this.listItemRef.current;
-    if (!wrapper || !list) {
-      return pullRightCssClass;
-    }
-    return wrapper.offsetLeft > list.offsetWidth - wrapper.offsetWidth ? pullRightCssClass : pullLeftCssClass;
-  };
-
-  renderDropdown = () => {
+  renderDropdown() {
     const { link, linkInfo } = this.props;
     const { resolvedLinks } = this.state;
 
     const linkElement = (
       <>
         <a
-          className="gf-form-label pointer"
+          className="gf-form-label gf-form-label--dashlink"
           onClick={this.searchForDashboards}
           data-placement="bottom"
           data-toggle="dropdown"
         >
-          <Icon name="bars" />
+          <Icon name="bars" style={{ marginRight: '4px' }} />
           <span>{linkInfo.title}</span>
         </a>
-        <ul className={'dropdown-menu ' + this.getDropdownLocationCssClass()} role="menu" ref={this.listItemRef}>
+        <ul
+          className={`dropdown-menu ${getDropdownLocationCssClass(this.listItemRef.current)}`}
+          role="menu"
+          ref={this.listItemRef}
+        >
           {resolvedLinks.length > 0 &&
             resolvedLinks.map((resolvedLink, index) => {
               return (
@@ -126,7 +119,7 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
     );
 
     return this.renderElement(linkElement, 'dashlinks-dropdown', selectors.components.DashboardLinks.dropDown);
-  };
+  }
 
   render() {
     if (this.props.link.asDropdown) {
@@ -173,4 +166,23 @@ export function resolveLinks(
 
       return { id, title, url };
     });
+}
+
+function getDropdownLocationCssClass(element: HTMLElement | null) {
+  if (!element) {
+    return 'invisible';
+  }
+
+  const wrapperPos = element.parentElement!.getBoundingClientRect();
+  const pos = element.getBoundingClientRect();
+
+  if (pos.width === 0) {
+    return 'invisible';
+  }
+
+  if (wrapperPos.left + pos.width + 10 > window.innerWidth) {
+    return 'pull-left';
+  } else {
+    return 'pull-right';
+  }
 }
