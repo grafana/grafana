@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
 import { DataLink, LoadingState, PanelData, PanelMenuItem, QueryResultMetaNotice, ScopedVars } from '@grafana/data';
-import { AngularComponent, getTemplateSrv } from '@grafana/runtime';
+import { AngularComponent, config, getTemplateSrv } from '@grafana/runtime';
 import { ClickOutsideWrapper, Icon, IconName, Tooltip } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -14,6 +14,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { getPanelMenu } from 'app/features/dashboard/utils/getPanelMenu';
 import { updateLocation } from 'app/core/actions';
+import { css } from 'emotion';
 
 export interface Props {
   panel: PanelModel;
@@ -90,14 +91,32 @@ export class PanelHeader extends Component<Props, State> {
     this.props.panel.getQueryRunner().cancelQuery();
   };
 
-  private renderLoadingState(): JSX.Element {
-    return (
-      <div className="panel-loading" onClick={this.onCancelQuery}>
-        <Tooltip content="Cancel query">
-          <Icon className="panel-loading__spinner spin-clockwise" name="sync" />
-        </Tooltip>
-      </div>
-    );
+  private renderLoadingState(state: LoadingState): JSX.Element | undefined {
+    if (state === LoadingState.Loading) {
+      return (
+        <div className="panel-loading" onClick={this.onCancelQuery}>
+          <Tooltip content="Cancel query">
+            <Icon className="panel-loading__spinner spin-clockwise" name="sync" />
+          </Tooltip>
+        </div>
+      );
+    }
+    if (state === LoadingState.Streaming) {
+      return (
+        <div className="panel-loading" onClick={this.onCancelQuery}>
+          <Tooltip content="Streaming (unsubscribe)">
+            <Icon
+              name="circle"
+              type="mono"
+              className={css`
+                color: ${config.theme.colors.textFaint};
+              `}
+            />
+          </Tooltip>
+        </div>
+      );
+    }
+    return;
   }
 
   openInspect = (e: React.SyntheticEvent, tab: string) => {
@@ -156,7 +175,7 @@ export class PanelHeader extends Component<Props, State> {
 
     return (
       <>
-        {data.state === LoadingState.Loading && this.renderLoadingState()}
+        {this.renderLoadingState(data.state)}
         <div className={panelHeaderClass}>
           <PanelHeaderCorner
             panel={panel}
