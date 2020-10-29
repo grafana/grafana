@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+// registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
 	reqSignedIn := middleware.ReqSignedIn
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
@@ -434,11 +435,6 @@ func (hs *HTTPServer) registerRoutes() {
 	// Gravatar service.
 	avatarCacheServer := avatar.NewCacheServer()
 	r.Get("/avatar/:hash", avatarCacheServer.Handler)
-
-	// Live streaming
-	if hs.Live != nil {
-		r.Any("/live/*", hs.Live.WebsocketHandler)
-	}
 
 	// Snapshots
 	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, bind(models.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)

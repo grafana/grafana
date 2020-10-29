@@ -44,7 +44,7 @@ func TestQuery_Metrics(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor()
+		executor := newExecutor(nil)
 		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			Queries: []*tsdb.Query{
 				{
@@ -101,7 +101,7 @@ func TestQuery_Metrics(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor()
+		executor := newExecutor(nil)
 		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			Queries: []*tsdb.Query{
 				{
@@ -163,7 +163,7 @@ func TestQuery_Regions(t *testing.T) {
 		cli = fakeEC2Client{
 			regions: []string{regionName},
 		}
-		executor := newExecutor()
+		executor := newExecutor(nil)
 		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			Queries: []*tsdb.Query{
 				{
@@ -245,7 +245,7 @@ func TestQuery_InstanceAttributes(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor()
+		executor := newExecutor(nil)
 		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			Queries: []*tsdb.Query{
 				{
@@ -348,7 +348,7 @@ func TestQuery_EBSVolumeIDs(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor()
+		executor := newExecutor(nil)
 		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			Queries: []*tsdb.Query{
 				{
@@ -448,7 +448,7 @@ func TestQuery_ResourceARNs(t *testing.T) {
 				},
 			},
 		}
-		executor := newExecutor()
+		executor := newExecutor(nil)
 		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			Queries: []*tsdb.Query{
 				{

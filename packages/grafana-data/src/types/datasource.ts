@@ -499,6 +499,7 @@ export interface QueryHint {
 
 export interface MetricFindValue {
   text: string;
+  value?: string | number;
   expandable?: boolean;
 }
 

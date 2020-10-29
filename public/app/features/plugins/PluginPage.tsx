@@ -14,11 +14,12 @@ import {
   PluginIncludeType,
   PluginMeta,
   PluginMetaInfo,
+  PluginSignatureStatus,
   PluginType,
   UrlQueryMap,
 } from '@grafana/data';
 import { AppNotificationSeverity, CoreEvents, StoreState } from 'app/types';
-import { Alert, Tooltip } from '@grafana/ui';
+import { Alert, InfoBox, Tooltip } from '@grafana/ui';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
@@ -30,6 +31,9 @@ import { PluginDashboards } from './PluginDashboards';
 import { appEvents } from 'app/core/core';
 import { config } from 'app/core/config';
 import { ContextSrv } from '../../core/services/context_srv';
+import { css } from 'emotion';
+import { PluginSignatureBadge } from './PluginSignatureBadge';
+import { selectors } from '@grafana/e2e-selectors';
 
 export function getLoadingNav(): NavModel {
   const node = {
@@ -102,6 +106,7 @@ class PluginPage extends PureComponent<Props, State> {
     const { appSubUrl } = config;
 
     const plugin = await loadPlugin(pluginId);
+
     if (!plugin) {
       this.setState({
         loading: false,
@@ -293,13 +298,49 @@ class PluginPage extends PureComponent<Props, State> {
     );
   }
 
+  renderPluginNotice() {
+    const { plugin } = this.state;
+
+    if (!plugin) {
+      return null;
+    }
+
+    if (plugin.meta.signature === PluginSignatureStatus.internal) {
+      return null;
+    }
+
+    return (
+      <InfoBox
+        aria-label={selectors.pages.PluginPage.signatureInfo}
+        severity={plugin.meta.signature !== PluginSignatureStatus.valid ? 'warning' : 'info'}
+        urlTitle="Read more about plugins signing"
+        url="https://grafana.com/docs/grafana/latest/plugins/plugin-signature-verification/"
+      >
+        <p>
+          <PluginSignatureBadge
+            status={plugin.meta.signature}
+            className={css`
+              margin-top: 0;
+            `}
+          />
+        </p>
+        <p>
+          Grafana Labs checks each plugin to verify that it has a valid digital signature. Plugin signature verification
+          is part of our security measures to ensure plugins are safe and trustworthy.
+          {plugin.meta.signature !== PluginSignatureStatus.valid &&
+            'Grafana Labs can’t guarantee the integrity of this unsigned plugin. Ask the plugin author to request it to be signed.'}
+        </p>
+      </InfoBox>
+    );
+  }
+
   render() {
     const { loading, nav, plugin } = this.state;
     const { $contextSrv } = this.props;
     const isAdmin = $contextSrv.hasRole('Admin');
 
     return (
-      <Page navModel={nav}>
+      <Page navModel={nav} aria-label={selectors.pages.PluginPage.page}>
         <Page.Contents isLoading={loading}>
           {plugin && (
             <div className="sidebar-container">
@@ -316,6 +357,7 @@ class PluginPage extends PureComponent<Props, State> {
                     }
                   />
                 )}
+                {this.renderPluginNotice()}
                 {this.renderBody()}
               </div>
               <aside className="page-sidebar">
