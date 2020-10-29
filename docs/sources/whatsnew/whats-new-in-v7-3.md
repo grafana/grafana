@@ -62,7 +62,7 @@ As this new option is a standard field option it works in every panel. Here is a
 
 ## CSV exports for Excel
 
-In v7.0, we introduced a new table panel and inspect mode with Download CSV enabled. However, CSV export to Excel was removed. As it turns out, Grafana users love their Excel! After many requests, this [community contribution from tomdaly](https://github.com/grafana/grafana/pull/27284) brought it back.
+In v7.0, we introduced a new table panel and inspect mode with Download CSV enabled. However, CSV export to Excel was removed. Due to a large number of inquiries and requests, this [community contribution from tomdaly](https://github.com/grafana/grafana/pull/27284) brought the feature back.
 
 For more information, refer to [Download raw query results as CSV](https://grafana.com/docs/grafana/latest/panels/inspect-panel/#download-raw-query-results-as-csv) in the Grafana documentation.
 
