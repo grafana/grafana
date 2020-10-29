@@ -15,14 +15,14 @@ import { ElasticsearchQuery } from './types';
 import { describeMetric } from './utils';
 
 export const extendedStats: ExtendedStat[] = [
-  { text: 'Avg', value: 'avg', default: false },
-  { text: 'Min', value: 'min', default: false },
-  { text: 'Max', value: 'max', default: false },
-  { text: 'Sum', value: 'sum', default: false },
-  { text: 'Count', value: 'count', default: false },
-  { text: 'Std Dev', value: 'std_deviation', default: false },
-  { text: 'Std Dev Upper', value: 'std_deviation_bounds_upper', default: true },
-  { text: 'Std Dev Lower', value: 'std_deviation_bounds_lower', default: true },
+  { label: 'Avg', value: 'avg', default: false },
+  { label: 'Min', value: 'min', default: false },
+  { label: 'Max', value: 'max', default: false },
+  { label: 'Sum', value: 'sum', default: false },
+  { label: 'Count', value: 'count', default: false },
+  { label: 'Std Dev', value: 'std_deviation', default: false },
+  { label: 'Std Dev Upper', value: 'std_deviation_bounds_upper', default: true },
+  { label: 'Std Dev Lower', value: 'std_deviation_bounds_lower', default: true },
 ];
 
 export const movingAvgModelOptions: MovingAverageModelOption[] = [

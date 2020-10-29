@@ -53,8 +53,10 @@ export const useDescription = (bucketAgg: BucketAggregation): string => {
 
       return `Interval: ${interval}${minDocCount > 0 ? `, Min Doc Count: ${minDocCount}` : ''}`;
     }
+
     case 'filters': {
       // TODO: Check if this was intentional, as the previous version has some unused logic.
+      // TODO: Also, this default should get applied
       const filters = bucketAgg.settings?.filters || [{ query: '*', label: '' }];
       return `Filter Queries (${filters.length})`;
     }

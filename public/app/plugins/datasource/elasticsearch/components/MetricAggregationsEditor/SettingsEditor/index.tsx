@@ -12,6 +12,7 @@ import { isValidNumber } from '../utils';
 import { BucketScriptSettingsEditor } from './BucketScriptSettingsEditor';
 import { SettingField } from './SettingField';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
+import { useDescription } from './useDescription';
 
 // TODO" Move this somewhere and share it with BucketsAggregation Editor
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
@@ -25,9 +26,10 @@ interface Props {
 
 export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetrics }) => {
   const dispatch = useDispatch();
+  const description = useDescription(metric);
 
   return (
-    <SettingsEditorContainer label="Settings">
+    <SettingsEditorContainer label={description}>
       {metric.type === 'derivative' && <SettingField label="Unit" metric={metric} settingName="unit" />}
 
       {metric.type === 'cumulative_sum' && <SettingField label="Format" metric={metric} settingName="format" />}
@@ -96,7 +98,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
       {metric.type === 'extended_stats' && (
         <>
           {extendedStats.map(stat => (
-            <InlineField label={stat.text} {...inlineFieldProps} key={stat.value}>
+            <InlineField label={stat.label} {...inlineFieldProps} key={stat.value}>
               <Switch
                 onChange={e => dispatch(changeMetricMeta(metric, stat.value, (e.target as any).checked))}
                 value={metric.meta?.[stat.value] ?? stat.default}

@@ -189,6 +189,7 @@ export const pipelineOptions: PipelineOptions = {
     { label: 'predict' },
     { label: 'minimize', default: false },
   ],
+  moving_fn: [{ label: 'window', default: 5 }, { label: 'script' }],
   derivative: [{ label: 'unit' }],
   cumulative_sum: [{ label: 'format' }],
   bucket_script: [],
