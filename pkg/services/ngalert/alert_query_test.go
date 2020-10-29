@@ -25,6 +25,7 @@ func TestAlertQuery(t *testing.T) {
 				RefID: "A",
 				Model: json.RawMessage(`{
 					"datasource": "__expr__",
+					"queryType": "metricQuery",
 					"extraParam": "some text"
 				}`),
 			},
@@ -41,6 +42,7 @@ func TestAlertQuery(t *testing.T) {
 				Model: json.RawMessage(`{
 					"datasource": "my datasource",
 					"datasourceId": 1,
+					"queryType": "metricQuery",
 					"extraParam": "some text"
 				}`),
 			},
@@ -57,6 +59,7 @@ func TestAlertQuery(t *testing.T) {
 				Model: json.RawMessage(`{
 					"datasource": "my datasource",
 					"datasourceId": 1,
+					"queryType": "metricQuery",
 					"maxDataPoints": 200,
 					"extraParam": "some text"
 				}`),
@@ -74,6 +77,7 @@ func TestAlertQuery(t *testing.T) {
 				Model: json.RawMessage(`{
 					"datasource": "my datasource",
 					"datasourceId": 1,
+					"queryType": "metricQuery",
 					"maxDataPoints": "invalid",
 					"extraParam": "some text"
 				}`),
@@ -91,6 +95,7 @@ func TestAlertQuery(t *testing.T) {
 				Model: json.RawMessage(`{
 					"datasource": "my datasource",
 					"datasourceId": 1,
+					"queryType": "metricQuery",
 					"maxDataPoints": 0,
 					"extraParam": "some text"
 				}`),
@@ -108,6 +113,7 @@ func TestAlertQuery(t *testing.T) {
 				Model: json.RawMessage(`{
 					"datasource": "my datasource",
 					"datasourceId": 1,
+					"queryType": "metricQuery",
 					"intervalMs": 2000,
 					"extraParam": "some text"
 				}`),
@@ -125,6 +131,7 @@ func TestAlertQuery(t *testing.T) {
 				Model: json.RawMessage(`{
 					"datasource": "my datasource",
 					"datasourceId": 1,
+					"queryType": "metricQuery",
 					"intevalMs": "invalid",
 					"extraParam": "some text"	
 				}`),
@@ -142,6 +149,7 @@ func TestAlertQuery(t *testing.T) {
 				Model: json.RawMessage(`{
 					"datasource": "my datasource",
 					"datasourceId": 1,
+					"queryType": "metricQuery",
 					"intevalMs": 0,
 					"extraParam": "some text"
 				}`),
@@ -166,6 +174,12 @@ func TestAlertQuery(t *testing.T) {
 				err := tc.alertQuery.setDatasource()
 				require.NoError(t, err)
 				require.Equal(t, tc.alertQuery.DatasourceID, tc.expectedDatasourceID)
+			})
+
+			t.Run("can set queryType for expression", func(t *testing.T) {
+				err := tc.alertQuery.setQueryType()
+				require.NoError(t, err)
+				require.Equal(t, tc.alertQuery.QueryType, "metricQuery")
 			})
 
 			t.Run("can update model maxDataPoints (if missing)", func(t *testing.T) {

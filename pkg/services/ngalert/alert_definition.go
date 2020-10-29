@@ -41,12 +41,18 @@ func (alertDefinition *AlertDefinition) GetEvalCondition(now time.Time) (*eval.C
 		if err != nil {
 			return nil, fmt.Errorf("failed to retrieve maxDatapoints from the model %w", err)
 		}
+
+		err = aq.setQueryType()
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve queryType from the model %w", err)
+		}
+
 		condition.QueriesAndExpressions = append(condition.QueriesAndExpressions, backend.DataQuery{
 			JSON:          model,
 			Interval:      time.Duration(intervalMs) * time.Millisecond,
 			RefID:         aq.RefID,
 			MaxDataPoints: maxDatapoints,
-			QueryType:     "",
+			QueryType:     aq.QueryType,
 			TimeRange:     aq.RelativeTimeRange.toTimeRange(now),
 		})
 	}
@@ -59,6 +65,11 @@ func (alertDefinition *AlertDefinition) preSave() error {
 		if err := q.setDatasource(); err != nil {
 			return err
 		}
+
+		if err := q.setQueryType(); err != nil {
+			return err
+		}
+
 		// override model
 		model, err := q.getModel()
 		if err != nil {

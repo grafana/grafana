@@ -69,6 +69,10 @@ type AlertQuery struct {
 	// RefID is the unique identifier of the query, set by the frontend call.
 	RefID string `json:"refId"`
 
+	// QueryType is an optional identifier for the type of query.
+	// It can be used to distinguish different types of queries.
+	QueryType string `json:"queryType"`
+
 	// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
 	RelativeTimeRange RelativeTimeRange `json:"relativeTimeRange"`
 
@@ -234,5 +238,26 @@ func (aq *AlertQuery) setOrgID(orgID int64) error {
 	}
 
 	aq.modelProps["orgId"] = orgID
+	return nil
+}
+
+func (aq *AlertQuery) setQueryType() error {
+	if aq.modelProps == nil {
+		err := aq.setModelProps()
+		if err != nil {
+			return err
+		}
+	}
+	i, ok := aq.modelProps["queryType"]
+	if !ok {
+		return nil
+	}
+
+	queryType, ok := i.(string)
+	if !ok {
+		return fmt.Errorf("failed to get queryType from query model")
+	}
+
+	aq.QueryType = queryType
 	return nil
 }
