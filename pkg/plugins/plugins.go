@@ -373,6 +373,11 @@ func (scanner *PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
 
 // validateSignature validates a plugin's signature.
 func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
+	if plugin.Signature == PluginSignatureValid {
+		s.log.Debug("Plugin has valid signature", "id", plugin.Id)
+		return nil
+	}
+
 	if plugin.Root != nil {
 		// If a descendant plugin with invalid signature, set signature to that of root
 		if plugin.IsCorePlugin || plugin.Signature == PluginSignatureInternal {
@@ -395,11 +400,6 @@ func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
 	// For the time being, we choose to only require back-end plugins to be signed
 	// NOTE: the state is calculated again when setting metadata on the object
 	if !plugin.Backend || !s.requireSigned {
-		return nil
-	}
-
-	if plugin.Signature == PluginSignatureValid {
-		s.log.Debug("Plugin has valid signature", "id", plugin.Id)
 		return nil
 	}
 
