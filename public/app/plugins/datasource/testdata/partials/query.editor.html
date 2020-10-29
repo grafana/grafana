@@ -1,0 +1,324 @@
+<query-editor-row query-ctrl="ctrl" has-text-edit-mode="false">
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">Scenario</label>
+			<div class="gf-form-select-wrapper width-15">
+				<select class="gf-form-input" ng-model="ctrl.target.scenarioId" ng-options="v.id as v.name for v in ctrl.scenarioList" ng-change="ctrl.scenarioChanged()" aria-label={{ctrl.selectors.scenarioSelect}}></select>
+			</div>
+		</div>
+		<div class="gf-form gf-form gf-form--grow" ng-if="ctrl.scenario.stringInput">
+			<label class="gf-form-label query-keyword">String Input</label>
+      <input type="text" class="gf-form-input" placeholder="{{ctrl.scenario.stringInput}}" ng-model="ctrl.target.stringInput" ng-change="ctrl.refresh()" ng-model-onblur>
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">Alias</label>
+			<input type="text" class="gf-form-input width-14" placeholder="optional" ng-model="ctrl.target.alias" ng-model-onblur ng-change="ctrl.refresh()" pattern='[^<>&\\"]+'>
+		</div>
+		<div ng-if="ctrl.showLabels" class="gf-form gf-form--grow">
+			<label class="gf-form-label query-keyword width-7">
+				Labels
+				<info-popover mode="right-normal">
+					Set labels using a key=value syntax:<br/>
+					{key="value", key2="value"}<br/>
+					key="value", key2="value"<br/>
+					key=value, key2=value<br/>
+				</info-popover>
+			</label>
+			<input type="text" class="gf-form-input gf-form--grow" placeholder='key=value, key2=value2' ng-model="ctrl.target.labels" ng-change="ctrl.refresh()" ng-model-onblur>
+		</div>
+		<div ng-if="!ctrl.showLabels" class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'manual_entry'">
+		<div class="gf-form gf-form">
+			<label class="gf-form-label query-keyword width-7">New value</label>
+      <input type="number" class="gf-form-input width-15" placeholder="value" ng-model="ctrl.newPointValue">
+			<label class="gf-form-label query-keyword">Time</label>
+      <input type="string" class="gf-form-input width-12" placeholder="time" ng-model="ctrl.newPointTime">
+			<button class="btn btn-secondary gf-form-btn" ng-click="ctrl.addPoint()">Add</button>
+			<label class="gf-form-label query-keyword">All values</label>
+			<gf-form-dropdown css-class="width-12" model="ctrl.selectedPoint" get-options="ctrl.getPoints()" on-change="ctrl.pointSelected($option)">
+			</gf-form-dropdown>
+		</div>
+		<div class="gf-form gf-form" ng-if="ctrl.selectedPoint.value !== null">
+			<button class="btn btn-danger gf-form-btn" ng-click="ctrl.deletePoint()">Delete</button>
+		</div>
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+  <div class="gf-form-inline" ng-if="ctrl.scenario.id === 'random_walk'">
+    <div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">Series count</label>
+			<input type="number"
+				class="gf-form-input width-15"
+				placeholder="1"
+				ng-model="ctrl.target.seriesCount"
+				min="1"
+				step="1"
+				ng-change="ctrl.refresh()"
+				aria-label="{{::ctrl.selectors.seriesCount}}"
+			/>
+		</div>
+    <div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">Start value</label>
+			<input type="number"
+				class="gf-form-input width-14"
+				placeholder="auto"
+				ng-model="ctrl.target.startValue"
+				step="1"
+				ng-change="ctrl.refresh()"
+				aria-label="{{::ctrl.selectors.startValue}}"
+			/>
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">Spread</label>
+			<input type="number"
+				class="gf-form-input width-6"
+				placeholder="1"
+				ng-model="ctrl.target.spread"
+				min="0.5"
+				step="0.1"
+				ng-change="ctrl.refresh()"
+				aria-label="{{::ctrl.selectors.spread}}"
+			/>
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">Noise</label>
+			<input type="number"
+				class="gf-form-input width-6"
+				placeholder="0"
+				ng-model="ctrl.target.noise"
+				min="0"
+				step="0.1"
+				ng-change="ctrl.refresh()"
+				aria-label="{{::ctrl.selectors.noise}}"
+			/>
+		</div>
+    <div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">Min</label>
+			<input type="number"
+				class="gf-form-input width-15"
+				placeholder="none"
+				ng-model="ctrl.target.min"
+				step="0.1"
+				ng-change="ctrl.refresh()"
+				aria-label="{{::ctrl.selectors.min}}"
+			/>
+		</div>
+    <div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">Max</label>
+			<input type="number"
+				class="gf-form-input width-15"
+				placeholder="none"
+				ng-model="ctrl.target.max"
+				step="0.1"
+				ng-change="ctrl.refresh()"
+				aria-label="{{::ctrl.selectors.max}}"
+			/>
+		</div>
+  </div>
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'streaming_client'">
+		<div class="gf-form gf-form">
+			<label class="gf-form-label query-keyword width-7">Type</label>
+			<div class="gf-form-select-wrapper">
+				<select
+				  ng-model="ctrl.target.stream.type"
+				  class="gf-form-input"
+				  ng-options="type for type in ['signal','logs', 'fetch']"
+				  ng-change="ctrl.streamChanged()" ></select>
+			</div>
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword">Speed (ms)</label>
+			<input type="number"
+				class="gf-form-input width-5"
+				placeholder="value"
+				ng-model="ctrl.target.stream.speed"
+				min="10"
+				step="10"
+				ng-change="ctrl.streamChanged()"
+				/>
+		</div>
+		<div class="gf-form" ng-if="ctrl.target.stream.type === 'signal'">
+			<label class="gf-form-label query-keyword">Spread</label>
+			<input type="number"
+				class="gf-form-input width-5"
+				placeholder="value"
+				ng-model="ctrl.target.stream.spread"
+				min="0.5"
+				step="0.1"
+				ng-change="ctrl.streamChanged()" />
+		</div>
+		<div class="gf-form" ng-if="ctrl.target.stream.type === 'signal'">
+			<label class="gf-form-label query-keyword">Noise</label>
+			<input type="number"
+				class="gf-form-input width-5"
+				placeholder="value"
+				ng-model="ctrl.target.stream.noise"
+				min="0"
+				step="0.1"
+				ng-change="ctrl.streamChanged()" />
+		</div>
+		<div class="gf-form" ng-if="ctrl.target.stream.type === 'signal'">
+			<label class="gf-form-label query-keyword">Bands</label>
+			<input type="number"
+				class="gf-form-input width-5"
+				placeholder="bands"
+				ng-model="ctrl.target.stream.bands"
+				min="0"
+				step="1"
+				ng-change="ctrl.streamChanged()" />
+		</div>
+		<div class="gf-form gf-form--grow" ng-if="ctrl.target.stream.type === 'fetch'">
+			<label class="gf-form-label query-keyword">URL</label>
+			<input type="string"
+				class="gf-form-input gf-form-label--grow"
+				placeholder="Fetch URL"
+				ng-model="ctrl.target.stream.url"
+				ng-change="ctrl.streamChanged()"
+				ng-model-onblur />
+		</div>
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'logs'">
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword">Lines</label>
+			<input type="number"
+				class="gf-form-input width-5"
+				placeholder="10"
+				ng-model="ctrl.target.lines"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+		<div class="gf-form">
+			<gf-form-switch class="gf-form" label="Level" label-class="query-keyword width-5" checked="ctrl.target.levelColumn" switch-class="max-width-6" on-change="ctrl.refresh()"></gf-form-switch>
+		</div>
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'grafana_api'">
+		<div class="gf-form gf-form">
+			<label class="gf-form-label query-keyword width-7">Endpoint</label>
+			<div class="gf-form-select-wrapper">
+				<select
+				  ng-model="ctrl.target.stringInput"
+				  class="gf-form-input"
+				  ng-options="type for type in ['datasources', 'search', 'annotations']"
+				  ng-change="ctrl.refresh()">
+				</select>
+			</div>
+		</div>
+	</div>
+
+
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'arrow'">
+		<div class="gf-form" style="width: 100%;">
+			<textarea type="string"
+				class="gf-form-input"
+				rows="10"
+				placeholder="copy base64 text data from query result"
+				ng-model="ctrl.target.stringInput"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur ></textarea>
+		</div>
+	</div>
+
+	<!-- Predictable Pulse Scenario Options Form -->
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'predictable_pulse'">
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">
+				Step
+				<info-popover mode="right-normal">The number of seconds between datapoints.</info-popover>
+			</label>
+				<input type="number"
+				class="gf-form-input width-5"
+				placeholder="60"
+				ng-model="ctrl.target.pulseWave.timeStep"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">
+				On Count
+				<info-popover mode="right-normal">The number of values within a cycle, at the start of the cycle, that should have the onValue.</info-popover>
+			</label>
+			<input type="number"
+				class="gf-form-input width-3"
+				placeholder="3"
+				ng-model="ctrl.target.pulseWave.onCount"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">
+				Off Count
+				<info-popover mode="right-normal">The number of offValues within the cycle.</info-popover>
+			</label>
+			<input type="number"
+				class="gf-form-input width-3"
+				placeholder="6"
+				ng-model="ctrl.target.pulseWave.offCount"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">
+				On Value
+				<info-popover mode="right-normal">The value for "on values", may be a int, float, or null.</info-popover>
+			</label>
+			<input type="string"
+				class="gf-form-input width-5"
+				placeholder="1"
+				ng-model="ctrl.target.pulseWave.onValue"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-7">
+				Off Value
+				<info-popover mode="right-normal">The value for "off values", may be a int, float, or null.</info-popover>
+			</label>
+			<input type="string"
+				class="gf-form-input width-5"
+				placeholder="1"
+				ng-model="ctrl.target.pulseWave.offValue"
+				ng-change="ctrl.refresh()"
+				ng-model-onblur />
+		</div>
+	</div>
+
+	<!-- Predictable CSV Wave Scenario Options Form -->
+	<div class="gf-form-inline" ng-if="ctrl.scenario.id === 'predictable_csv_wave'">
+			<div class="gf-form">
+				<label class="gf-form-label query-keyword width-7">
+					Step
+					<info-popover mode="right-normal">The number of seconds between datapoints.</info-popover>
+				</label>
+					<input type="number"
+					class="gf-form-input width-5"
+					placeholder="60"
+					ng-model="ctrl.target.csvWave.timeStep"
+					ng-change="ctrl.refresh()"
+					ng-model-onblur />
+			</div>
+			<div class="gf-form gf-form--grow">
+					<label class="gf-form-label query-keyword width-10">
+							CSV Values
+							<info-popover mode="right-normal">Comma separated values. Each value may be an int, float, or null and must not be empty. Whitespace and trailing commas are removed.</info-popover>
+						</label>
+					<input type="string"
+						class="gf-form-input gf-form-label--grow"
+						placeholder="1,2,3,2"
+						ng-model="ctrl.target.csvWave.valuesCSV"
+						ng-change="ctrl.refresh()"
+						ng-model-onblur />
+				</div>
+		</div>
+</query-editor-row>
