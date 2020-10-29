@@ -308,7 +308,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   let allSeries: LogFields[] = [];
 
   // We are sometimes passing data frames with no fields because we want to calculate correct meta stats.
-  // Therefore we need to filer out series with no fields. These series are used only for meta stats calculation.
+  // Therefore we need to filter out series with no fields. These series are used only for meta stats calculation.
   const seriesWithFields = logSeries.filter(series => series.fields.length);
 
   if (seriesWithFields.length) {
