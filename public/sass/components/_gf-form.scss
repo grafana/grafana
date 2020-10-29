@@ -148,6 +148,11 @@ $input-border: 1px solid $input-border-color;
     border: $panel-border;
   }
 
+  &--dashlink {
+    background: $panel-bg;
+    border: $panel-border;
+  }
+
   &--justify-left {
     justify-content: left;
   }
