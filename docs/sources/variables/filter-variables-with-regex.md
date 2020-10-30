@@ -80,29 +80,34 @@ demo.robustperception.io:9093
 demo.robustperception.io:9100
 ```
 
-## Filter and use named text and value capture groups
+## Filter and modify using named text and value capture groups
 
-This can be useful if the display text should differ from the value.
+Using named capture groups it is possible to capture separate 'text' and 'value' parts from the options returned by the variable query. This allows the variable dropdown to contain a friendly name for each value that can be selected.
 
-List of options:
+For example, when querying the `node_hwmon_chip_names` prometheus metric the `chip_name` is a lot friendlier that the `chip` value. So the following variable query result:
 
 ```text
-kube_pod_labels{label_description="a-descriptive-name-for-pod1",namespace="default",pod="pod1"}
-kube_pod_labels{label_description="the-second-pod",namespace="default",pod="pod2"}
-kube_pod_labels{label_description="a-special-pod",namespace="default",pod="pod3"}
+node_hwmon_chip_names{chip="0000:d7:00_0_0000:d8:00_0",chip_name="enp216s0f0np0"} 1
+node_hwmon_chip_names{chip="0000:d7:00_0_0000:d8:00_1",chip_name="enp216s0f0np1"} 1
+node_hwmon_chip_names{chip="0000:d7:00_0_0000:d8:00_2",chip_name="enp216s0f0np2"} 1
+node_hwmon_chip_names{chip="0000:d7:00_0_0000:d8:00_3",chip_name="enp216s0f0np3"} 1
 ```
 
-Regex:
+Passed through the following Regex:
 
 ```regex
-/pod="(?<value>[^"]+)|label_description="(?<text>[^"]+)/g
+/chip_name="(?<text>[^"]+)|chip="(?<value>[^"]+)/g
 ```
 
-Result:
+Would produce the following dropdown:
 
 ```text
-value   text
-pod1    a-descriptive-name-for-pod1
-pod2    the-second-pod
-pod3    a-sepcial-pod
+Display Name          Value
+------------          -------------------------
+enp216s0f0np0         0000:d7:00_0_0000:d8:00_0
+enp216s0f0np1         0000:d7:00_0_0000:d8:00_1
+enp216s0f0np2         0000:d7:00_0_0000:d8:00_2
+enp216s0f0np3         0000:d7:00_0_0000:d8:00_3
 ```
+
+**NOTE:** only `text` and `value` capture group names are supported.
