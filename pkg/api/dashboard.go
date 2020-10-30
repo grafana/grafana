@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -263,7 +262,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	// Tell everyone listening that the dashboard changed
-	if hs.Live != nil {
+	if hs.Live.IsEnabled() {
 		err := hs.Live.GrafanaScope.Dashboards.DashboardSaved(
 			dashboard.Uid,
 			c.UserId,
@@ -338,7 +337,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 
 	filePath := hs.Cfg.DefaultHomeDashboardPath
 	if filePath == "" {
-		filePath = path.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
+		filePath = filepath.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
 	}
 
 	file, err := os.Open(filePath)

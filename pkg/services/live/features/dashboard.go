@@ -17,14 +17,7 @@ type dashboardEvent struct {
 
 // DashboardHandler manages all the `grafana/dashboard/*` channels
 type DashboardHandler struct {
-	publisher models.ChannelPublisher
-}
-
-// CreateDashboardHandler Initialize a dashboard handler
-func CreateDashboardHandler(p models.ChannelPublisher) DashboardHandler {
-	return DashboardHandler{
-		publisher: p,
-	}
+	Publisher models.ChannelPublisher
 }
 
 // GetHandlerForPath called on init
@@ -58,7 +51,7 @@ func (g *DashboardHandler) publish(event dashboardEvent) error {
 	if err != nil {
 		return err
 	}
-	return g.publisher("grafana/dashboard/"+event.UID, msg)
+	return g.Publisher("grafana/dashboard/"+event.UID, msg)
 }
 
 // DashboardSaved will broadcast to all connected dashboards

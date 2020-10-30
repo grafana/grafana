@@ -54,6 +54,7 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
         <div className={styles.optionBody}>
           <span>{renderOptionLabel ? renderOptionLabel(data) : children}</span>
           {data.description && <div className={styles.optionDescription}>{data.description}</div>}
+          {data.component && <data.component />}
         </div>
         {isSelected && (
           <span>

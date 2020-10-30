@@ -1,7 +1,10 @@
+// +build integration
+
 package sqlstore
 
 import (
 	"context"
+	"errors"
 	"regexp"
 	"testing"
 	"time"
@@ -382,7 +385,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 				err := ss.GetAlertNotificationUidWithId(query)
 				So(query.Result, ShouldEqual, "")
 				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldEqual, "Alert notification [ Id: -1, OrgId: 100 ] not found")
+				So(errors.Is(err, models.ErrAlertNotificationFailedTranslateUniqueID), ShouldBeTrue)
 
 				cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
 				result, found := ss.CacheService.Get(cacheKey)

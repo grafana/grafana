@@ -3,6 +3,7 @@ import { GrafanaTheme, PanelPluginMeta, PluginState } from '@grafana/data';
 import { Badge, BadgeProps, styleMixins, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
+import { isUnsignedPluginSignature, PluginSignatureBadge } from '../../plugins/PluginSignatureBadge';
 
 interface Props {
   isCurrent: boolean;
@@ -134,6 +135,10 @@ interface PanelPluginBadgeProps {
 }
 const PanelPluginBadge: React.FC<PanelPluginBadgeProps> = ({ plugin }) => {
   const display = getPanelStateBadgeDisplayModel(plugin);
+
+  if (isUnsignedPluginSignature(plugin.signature)) {
+    return <PluginSignatureBadge status={plugin.signature} />;
+  }
 
   if (plugin.state !== PluginState.deprecated && plugin.state !== PluginState.alpha) {
     return null;

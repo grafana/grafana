@@ -6,7 +6,7 @@ aliases = ["/docs/grafana/latest/plugins/developing/auth-for-datasources/",  "/d
 
 # Add authentication for data source plugins
 
-This page explains how to use the Grafana data source proxy to authenticate against an third-party API from a data source plugin.
+This page explains how to use the Grafana data source proxy to authenticate against a third-party API from a data source plugin.
 
 When a user saves a password or any other sensitive data as a data source option, Grafana encrypts the data and stores it in the Grafana database. Any encrypted data source options can only be decrypted on the Grafana server. This means that any data source that makes authenticated queries needs to request the decrypted data to be sent to the browser.
 

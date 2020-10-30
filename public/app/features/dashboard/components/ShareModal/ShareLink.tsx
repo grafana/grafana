@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { LegacyForms, ClipboardButton, Icon, InfoBox } from '@grafana/ui';
+import { LegacyForms, ClipboardButton, Icon, InfoBox, Input } from '@grafana/ui';
 const { Select, Switch } = LegacyForms;
 import { SelectableValue, PanelModel, AppEvents } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
@@ -22,6 +22,7 @@ export interface Props {
 export interface State {
   useCurrentTimeRange: boolean;
   includeTemplateVars: boolean;
+  useShortUrl: boolean;
   selectedTheme: SelectableValue<string>;
   shareUrl: string;
   imageUrl: string;
@@ -33,6 +34,7 @@ export class ShareLink extends PureComponent<Props, State> {
     this.state = {
       useCurrentTimeRange: true,
       includeTemplateVars: true,
+      useShortUrl: false,
       selectedTheme: themeOptions[0],
       shareUrl: '',
       imageUrl: '',
@@ -44,22 +46,30 @@ export class ShareLink extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    const { useCurrentTimeRange, includeTemplateVars, selectedTheme } = this.state;
+    const { useCurrentTimeRange, includeTemplateVars, useShortUrl, selectedTheme } = this.state;
     if (
       prevState.useCurrentTimeRange !== useCurrentTimeRange ||
       prevState.includeTemplateVars !== includeTemplateVars ||
-      prevState.selectedTheme.value !== selectedTheme.value
+      prevState.selectedTheme.value !== selectedTheme.value ||
+      prevState.useShortUrl !== useShortUrl
     ) {
       this.buildUrl();
     }
   }
 
-  buildUrl = () => {
+  buildUrl = async () => {
     const { panel } = this.props;
-    const { useCurrentTimeRange, includeTemplateVars, selectedTheme } = this.state;
+    const { useCurrentTimeRange, includeTemplateVars, useShortUrl, selectedTheme } = this.state;
 
-    const shareUrl = buildShareUrl(useCurrentTimeRange, includeTemplateVars, selectedTheme.value, panel);
+    const shareUrl = await buildShareUrl(
+      useCurrentTimeRange,
+      includeTemplateVars,
+      selectedTheme.value,
+      panel,
+      useShortUrl
+    );
     const imageUrl = buildImageUrl(useCurrentTimeRange, includeTemplateVars, selectedTheme.value, panel);
+
     this.setState({ shareUrl, imageUrl });
   };
 
@@ -69,6 +79,10 @@ export class ShareLink extends PureComponent<Props, State> {
 
   onIncludeTemplateVarsChange = () => {
     this.setState({ includeTemplateVars: !this.state.includeTemplateVars });
+  };
+
+  onUrlShorten = () => {
+    this.setState({ useShortUrl: !this.state.useShortUrl });
   };
 
   onThemeChange = (value: SelectableValue<string>) => {
@@ -85,7 +99,7 @@ export class ShareLink extends PureComponent<Props, State> {
 
   render() {
     const { panel } = this.props;
-    const { useCurrentTimeRange, includeTemplateVars, selectedTheme, shareUrl, imageUrl } = this.state;
+    const { useCurrentTimeRange, includeTemplateVars, useShortUrl, selectedTheme, shareUrl, imageUrl } = this.state;
     const selectors = e2eSelectors.pages.SharePanelModal;
 
     return (
@@ -113,17 +127,25 @@ export class ShareLink extends PureComponent<Props, State> {
                 <label className="gf-form-label width-12">Theme</label>
                 <Select width={10} options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
               </div>
+              <Switch labelClass="width-12" label="Shorten URL" checked={useShortUrl} onChange={this.onUrlShorten} />
             </div>
             <div>
               <div className="gf-form-group">
                 <div className="gf-form-inline">
                   <div className="gf-form gf-form--grow">
-                    <input type="text" className="gf-form-input" defaultValue={shareUrl} />
-                  </div>
-                  <div className="gf-form">
-                    <ClipboardButton variant="primary" getText={this.getShareUrl} onClipboardCopy={this.onShareUrlCopy}>
-                      Copy
-                    </ClipboardButton>
+                    <Input
+                      value={shareUrl}
+                      readOnly
+                      addonAfter={
+                        <ClipboardButton
+                          variant="primary"
+                          getText={this.getShareUrl}
+                          onClipboardCopy={this.onShareUrlCopy}
+                        >
+                          <Icon name="copy" /> Copy
+                        </ClipboardButton>
+                      }
+                    />
                   </div>
                 </div>
               </div>

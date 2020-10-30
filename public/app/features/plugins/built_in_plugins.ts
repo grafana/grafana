@@ -35,6 +35,8 @@ const azureMonitorPlugin = async () =>
   await import(
     /* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/grafana-azure-monitor-datasource/module'
   );
+const tempoPlugin = async () =>
+  await import(/* webpackChunkName: "tempoPlugin" */ 'app/plugins/datasource/tempo/module');
 
 import * as textPanel from 'app/plugins/panel/text/module';
 import * as graph2Panel from 'app/plugins/panel/graph2/module';
@@ -55,6 +57,7 @@ import * as pieChartPanel from 'app/plugins/panel/piechart/module';
 import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
 import * as newsPanel from 'app/plugins/panel/news/module';
+import * as livePanel from 'app/plugins/panel/live/module';
 import * as homeLinksPanel from 'app/plugins/panel/homelinks/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 
@@ -77,6 +80,7 @@ const builtInPlugins: any = {
   'app/plugins/datasource/testdata/module': testDataDSPlugin,
   'app/plugins/datasource/cloud-monitoring/module': cloudMonitoringPlugin,
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
+  'app/plugins/datasource/tempo/module': tempoPlugin,
 
   'app/plugins/panel/text/module': textPanel,
   'app/plugins/panel/graph2/module': graph2Panel,
@@ -90,6 +94,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/table/module': tablePanel,
   'app/plugins/panel/table-old/module': oldTablePanel,
   'app/plugins/panel/news/module': newsPanel,
+  'app/plugins/panel/live/module': livePanel,
   'app/plugins/panel/singlestat/module': singlestatPanel,
   'app/plugins/panel/stat/module': singlestatPanel2,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,

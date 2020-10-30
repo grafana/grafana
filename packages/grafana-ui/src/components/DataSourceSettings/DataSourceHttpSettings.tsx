@@ -37,9 +37,9 @@ const HttpAccessHelp = () => (
     <p>
       Access mode controls how requests to the data source will be handled.
       <strong>
-        <i>Server</i>
+        &nbsp<i>Server</i>
       </strong>{' '}
-      should be the preferred way if nothing else stated.
+      should be the preferred way if nothing else is stated.
     </p>
     <div className="alert-title">Server access mode (Default):</div>
     <p>
@@ -68,7 +68,7 @@ export const DataSourceHttpSettings: React.FC<HttpSettingsProps> = props => {
         ...change,
       });
     },
-    [dataSourceConfig]
+    [dataSourceConfig, onChange]
   );
 
   switch (dataSourceConfig.access) {

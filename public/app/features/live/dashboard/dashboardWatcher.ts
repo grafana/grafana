@@ -23,6 +23,7 @@ class DashboardWatcher {
   uid?: string;
   ignoreSave?: boolean;
   editing = false;
+  lastEditing?: DashboardEvent;
 
   setEditingState(state: boolean) {
     const changed = (this.editing = state);
@@ -42,7 +43,8 @@ class DashboardWatcher {
       sessionId,
       uid: this.uid!,
       action: this.editing ? DashboardEventAction.EditingStarted : DashboardEventAction.EditingCanceled,
-      message: 'user (name)',
+      message: (window as any).grafanaBootData?.user?.name,
+      timestamp: Date.now(),
     };
     this.channel!.publish!(msg);
   }
@@ -77,6 +79,16 @@ class DashboardWatcher {
 
   ignoreNextSave() {
     this.ignoreSave = true;
+  }
+
+  getRecentEditingEvent() {
+    if (this.lastEditing && this.lastEditing.timestamp) {
+      const elapsed = Date.now() - this.lastEditing.timestamp;
+      if (elapsed > 5000) {
+        this.lastEditing = undefined;
+      }
+    }
+    return this.lastEditing;
   }
 
   observer = {
@@ -121,10 +133,15 @@ class DashboardWatcher {
               }
             } else if (showPopup) {
               if (action === DashboardEventAction.EditingStarted) {
-                appEvents.emit(AppEvents.alertWarning, [
-                  'Another session is editing this dashboard',
-                  event.message.message,
-                ]);
+                const editingEvent = event.message;
+                const recent = this.getRecentEditingEvent();
+                if (!recent || recent.message !== editingEvent.message) {
+                  appEvents.emit(AppEvents.alertWarning, [
+                    'Another session is editing this dashboard',
+                    editingEvent.message,
+                  ]);
+                }
+                this.lastEditing = editingEvent;
               }
             }
             return;
@@ -151,7 +168,6 @@ export function getDashboardChannelsFeature(): CoreGrafanaLiveFeature {
   const dashboardConfig: LiveChannelConfig = {
     path: '${uid}',
     description: 'Dashboard change events',
-    variables: [{ value: 'uid', label: '${uid}', description: 'unique id for a dashboard' }],
     hasPresence: true,
     canPublish: () => true,
   };
