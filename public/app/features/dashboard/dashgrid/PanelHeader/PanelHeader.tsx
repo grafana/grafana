@@ -226,11 +226,11 @@ export const getStyles = stylesFactory(() => {
       width: 10px;
       height: 10px;
       background: ${config.theme.palette.greenBase};
-      box-shadow: 0 0 5px ${config.theme.palette.greenShade};
+      box-shadow: 0 0 2px ${config.theme.palette.greenShade};
       border-radius: 50%;
       position: relative;
-      top: 5px;
-      right: 2px;
+      top: 6px;
+      right: 1px;
     `,
   };
 });
