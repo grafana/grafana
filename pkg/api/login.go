@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
@@ -251,7 +252,13 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 		return errors.New("could not login user")
 	}
 
-	userToken, err := hs.AuthTokenService.CreateToken(c.Req.Context(), user.Id, c.RemoteAddr(), c.Req.UserAgent())
+	addr := c.RemoteAddr()
+	ip, err := network.GetIPFromAddress(addr)
+	if err != nil {
+		hs.log.Debug("Failed to get IP from client address", "addr", addr)
+		ip = nil
+	}
+	userToken, err := hs.AuthTokenService.CreateToken(c.Req.Context(), user.Id, ip, c.Req.UserAgent())
 	if err != nil {
 		return errutil.Wrap("failed to create auth token", err)
 	}

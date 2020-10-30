@@ -64,7 +64,16 @@ type FakeLogger struct {
 	log.Logger
 }
 
-func (stub *FakeLogger) Info(testMessage string, ctx ...interface{}) {
+func (fl *FakeLogger) Debug(testMessage string, ctx ...interface{}) {
+}
+
+func (fl *FakeLogger) Info(testMessage string, ctx ...interface{}) {
+}
+
+func (fl *FakeLogger) Warn(testMessage string, ctx ...interface{}) {
+}
+
+func (fl *FakeLogger) Error(testMessage string, ctx ...interface{}) {
 }
 
 type redirectCase struct {

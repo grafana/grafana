@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"net"
 	"strings"
 	"time"
 
@@ -53,12 +54,7 @@ func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, err
 	return count, err
 }
 
-func (s *UserAuthTokenService) CreateToken(ctx context.Context, userId int64, clientAddr, userAgent string) (*models.UserToken, error) {
-	clientIP, err := util.ParseIPAddress(clientAddr)
-	if err != nil {
-		s.log.Debug("Failed to parse client IP address", "clientAddr", clientAddr, "err", err)
-		clientIP = ""
-	}
+func (s *UserAuthTokenService) CreateToken(ctx context.Context, userId int64, clientIP net.IP, userAgent string) (*models.UserToken, error) {
 	token, err := util.RandomHex(16)
 	if err != nil {
 		return nil, err
@@ -72,7 +68,7 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, userId int64, cl
 		UserId:        userId,
 		AuthToken:     hashedToken,
 		PrevAuthToken: hashedToken,
-		ClientIp:      clientIP,
+		ClientIp:      clientIP.String(),
 		UserAgent:     userAgent,
 		RotatedAt:     now,
 		CreatedAt:     now,
@@ -193,7 +189,7 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 }
 
 func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models.UserToken,
-	clientAddr, userAgent string) (bool, error) {
+	clientIP net.IP, userAgent string) (bool, error) {
 	if token == nil {
 		return false, nil
 	}
@@ -219,12 +215,6 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models
 
 	s.log.Debug("token needs rotation", "tokenId", model.Id, "authTokenSeen", model.AuthTokenSeen, "rotatedAt", rotatedAt)
 
-	clientIP, err := util.ParseIPAddress(clientAddr)
-	if err != nil {
-		s.log.Debug("Failed to parse client IP address", "clientAddr", clientAddr, "err", err)
-		clientIP = ""
-	}
-
 	newToken, err := util.RandomHex(16)
 	if err != nil {
 		return false, err
@@ -246,7 +236,9 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models
 
 	var affected int64
 	err = s.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		res, err := dbSession.Exec(sql, userAgent, clientIP, s.SQLStore.Dialect.BooleanStr(true), hashedToken, s.SQLStore.Dialect.BooleanStr(false), now.Unix(), model.Id, s.SQLStore.Dialect.BooleanStr(true), now.Add(-30*time.Second).Unix())
+		res, err := dbSession.Exec(sql, userAgent, clientIP.String(), s.SQLStore.Dialect.BooleanStr(true), hashedToken,
+			s.SQLStore.Dialect.BooleanStr(false), now.Unix(), model.Id, s.SQLStore.Dialect.BooleanStr(true),
+			now.Add(-30*time.Second).Unix())
 		if err != nil {
 			return err
 		}
