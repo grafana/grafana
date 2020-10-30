@@ -136,7 +136,7 @@ ProxyPassMatch "^/(api/datasources/proxy/\d+/loki/api/v1/tail)" "ws://127.0.0.1:
 ```
 Example below shows basic NGINX proxy configuration. This example assumes that the Grafana server is available at `http://localhost:3000/`, Loki server is running locally without proxy, and your external site uses HTTPS. If you also host Loki behind NGINX proxy, then you might want to repeat the following configuration for Loki as well.
 
-In `http` section of NGINX configuration, add the following map definition:
+In the `http` section of NGINX configuration, add the following map definition:
 ```
   map $http_upgrade $connection_upgrade {
     default upgrade;
