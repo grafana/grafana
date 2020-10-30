@@ -120,4 +120,4 @@ compilation-stats.json
 /report.*.json
 
 # auto generated front end docs
-/docs/sources/packages_api/*
+/docs/sources/packages_api
