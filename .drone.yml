@@ -233,32 +233,6 @@ trigger:
 ---
 kind: pipeline
 type: docker
-name: windows-pr
-
-platform:
-  os: windows
-  arch: amd64
-  version: 1809
-
-steps:
-- name: identify-runner
-  image: mcr.microsoft.com/windows:1809
-  commands:
-  - echo $env:DRONE_RUNNER_NAME
-
-- name: initialize
-  image: grafana/ci-wix:0.1.1
-  commands:
-  - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.20/windows/grabpl.exe -OutFile grabpl.exe
-
-trigger:
-  event:
-  - pull_request
-
----
-kind: pipeline
-type: docker
 name: build-master
 
 platform:
