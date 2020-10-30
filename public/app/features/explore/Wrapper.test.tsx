@@ -127,6 +127,7 @@ describe('Wrapper', () => {
     // Wait for rendering the editor
     await screen.findByText(/Editor/i);
     await changeDatasource('elastic');
+
     await screen.findByText('elastic Editor input:');
     expect(datasources.elastic.query).not.toBeCalled();
   });
@@ -280,11 +281,8 @@ function makeMetricsQueryResponse(): Observable<DataQueryResponse> {
 }
 
 async function changeDatasource(name: string) {
-  const datasourcePicker = await screen.findByLabelText(selectors.components.DataSourcePicker.container);
-  // Bit awkward here but we need to fire the event on some child component that we don't have any label for.
-  // We do not have label because we do not simulate proper element width and so we are using small styles where
-  // label is missing. Also the select uses mouseDown for opening.
-  fireEvent.mouseDown(datasourcePicker.children[0].children[0]);
-  const elasticOption = await screen.findByText(name);
-  fireEvent.click(elasticOption);
+  const datasourcePicker = (await screen.findByLabelText(selectors.components.DataSourcePicker.container)).children[0];
+  fireEvent.keyDown(datasourcePicker, { keyCode: 40 });
+  const option = screen.getByText(name);
+  fireEvent.click(option);
 }
