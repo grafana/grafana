@@ -211,6 +211,9 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
 
   setTimeSrv({
     init() {},
+    getValidIntervals(intervals: string[]): string[] {
+      return intervals;
+    },
   } as any);
 
   configureStore();
