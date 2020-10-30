@@ -110,4 +110,4 @@ enp216s0f0np2         0000:d7:00_0_0000:d8:00_2
 enp216s0f0np3         0000:d7:00_0_0000:d8:00_3
 ```
 
-**NOTE:** only `text` and `value` capture group names are supported.
+**Note:** Only `text` and `value` capture group names are supported.
