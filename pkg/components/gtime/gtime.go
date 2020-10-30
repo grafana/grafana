@@ -38,6 +38,7 @@ func ParseInterval(inp string) (time.Duration, error) {
 }
 
 // ParseDuration parses a duration with support for all units that Grafana uses.
+// Durations are independent of wall time.
 func ParseDuration(inp string) (time.Duration, error) {
 	dur, period, err := parse(inp)
 	if err != nil {
