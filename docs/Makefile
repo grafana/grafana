@@ -1,6 +1,6 @@
 .PHONY: docs docs-no-pull docs-test
 
-IMAGE = grafana/docs-devenv:latest
+IMAGE = grafana/grafana-docs-dev:latest
 
 docs:
 	docker pull $(IMAGE)
