@@ -10,7 +10,20 @@ draft = "true"
 
 # Share a panel
 
-Click a panel title to open the panel menu, then click share in the panel menu to open the Share Panel dialog. Here you have access to a link that will take you to exactly this panel with the current time range and selected template variables. Below are ways to share a panel.
+To share a panel
+
+1. Click a panel title to open the panel menu.
+1. Click share in the panel menu to open the Share Panel dialog.
+
+ Here you have access to a link that will take you to exactly this panel with the current time range and selected template variables. Here are some of the ways you can share a panel.
+
+## Publish snapshots
+
+You can publish snapshots to your local instance or to [snapshot.raintank.io](http://snapshot.raintank.io). The latter is a free service provided by [Raintank](http://raintank.io), that allows you to publish dashboard snapshots to an external Grafana instance.
+
+Anyone with the link can view it. You can optionally set an expiration time if you want the snapshot to be removed after a certain time period.
+
+{{< docs-imagebox img="/img/docs/panels/Share_a_panel.png" max-width="700px" >}}
 
 ## Direct Link Rendered Image
 
