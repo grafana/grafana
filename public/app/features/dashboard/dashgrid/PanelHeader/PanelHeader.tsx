@@ -225,8 +225,8 @@ export const getStyles = stylesFactory(() => {
     streamIndicator: css`
       width: 10px;
       height: 10px;
-      background: ${config.theme.palette.greenBase};
-      box-shadow: 0 0 2px ${config.theme.palette.greenShade};
+      background: ${config.theme.colors.textFaint};
+      box-shadow: 0 0 2px ${config.theme.colors.textFaint};
       border-radius: 50%;
       position: relative;
       top: 6px;
