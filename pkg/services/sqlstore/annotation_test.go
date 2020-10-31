@@ -20,9 +20,9 @@ func TestAnnotations(t *testing.T) {
 	t.Run("Testing annotation create, read, update and delete", func(t *testing.T) {
 		t.Cleanup(func() {
 			_, err := x.Exec("DELETE FROM annotation WHERE 1=1")
-			require.NoError(t, err)
+			assert.NoError(t, err)
 			_, err = x.Exec("DELETE FROM annotation_tag WHERE 1=1")
-			require.NoError(t, err)
+			assert.NoError(t, err)
 		})
 
 		annotation := &annotations.Item{
