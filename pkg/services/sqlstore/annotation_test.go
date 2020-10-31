@@ -115,7 +115,7 @@ func TestAnnotations(t *testing.T) {
 				To:          15,
 			})
 			require.NoError(t, err)
-			assert.Len(t, items, 0)
+			assert.Empty(t, items)
 		})
 
 		t.Run("Should not find one when tag filter does not match", func(t *testing.T) {
@@ -127,7 +127,7 @@ func TestAnnotations(t *testing.T) {
 				Tags:        []string{"asd"},
 			})
 			require.NoError(t, err)
-			assert.Len(t, items, 0)
+			assert.Empty(t, items)
 		})
 
 		t.Run("Should not find one when type filter does not match", func(t *testing.T) {
@@ -139,7 +139,7 @@ func TestAnnotations(t *testing.T) {
 				Type:        "alert",
 			})
 			require.NoError(t, err)
-			assert.Len(t, items, 0)
+			assert.Empty(t, items)
 		})
 
 		t.Run("Should find one when all tag filters does match", func(t *testing.T) {
@@ -201,7 +201,7 @@ func TestAnnotations(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Equal(t, annotationId, items[0].Id)
-			assert.Len(t, items[0].Tags, 0)
+			assert.Empty(t, items[0].Tags)
 			assert.Equal(t, "something new", items[0].Text)
 		})
 
@@ -249,7 +249,7 @@ func TestAnnotations(t *testing.T) {
 
 			items, err = repo.Find(query)
 			require.NoError(t, err)
-			assert.Len(t, items, 0)
+			assert.Empty(t, items)
 		})
 	})
 }
