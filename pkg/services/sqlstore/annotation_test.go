@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/annotations"
 )
@@ -19,9 +20,9 @@ func TestAnnotations(t *testing.T) {
 	t.Run("Testing annotation create, read, update and delete", func(t *testing.T) {
 		t.Cleanup(func() {
 			_, err := x.Exec("DELETE FROM annotation WHERE 1=1")
-			assert.Nil(t, err)
+			require.NoError(t, err)
 			_, err = x.Exec("DELETE FROM annotation_tag WHERE 1=1")
-			assert.Nil(t, err)
+			require.NoError(t, err)
 		})
 
 		annotation := &annotations.Item{
@@ -34,7 +35,7 @@ func TestAnnotations(t *testing.T) {
 			Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
 		}
 		err := repo.Save(annotation)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.Greater(t, annotation.Id, int64(0))
 		assert.Equal(t, annotation.Epoch, annotation.EpochEnd)
 
@@ -49,7 +50,7 @@ func TestAnnotations(t *testing.T) {
 			Tags:        []string{"outage", "error", "type:outage", "server:server-1"},
 		}
 		err = repo.Save(annotation2)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.Greater(t, annotation2.Id, int64(0))
 		assert.Equal(t, int64(20), annotation2.Epoch)
 		assert.Equal(t, int64(21), annotation2.EpochEnd)
@@ -63,7 +64,7 @@ func TestAnnotations(t *testing.T) {
 			Tags:   []string{"deploy"},
 		}
 		err = repo.Save(globalAnnotation1)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.Greater(t, globalAnnotation1.Id, int64(0))
 
 		globalAnnotation2 := &annotations.Item{
@@ -75,7 +76,7 @@ func TestAnnotations(t *testing.T) {
 			Tags:   []string{"rollback"},
 		}
 		err = repo.Save(globalAnnotation2)
-		assert.Nil(t, err)
+		require.NoError(t, err)
 		assert.Greater(t, globalAnnotation2.Id, int64(0))
 
 		t.Run("Can query for annotation by dashboard id", func(t *testing.T) {
@@ -86,7 +87,7 @@ func TestAnnotations(t *testing.T) {
 				To:          15,
 			})
 
-			assert.Nil(t, err)
+			require.NoError(t, err)
 			assert.Len(t, items, 1)
 
 			assert.Equal(t, []string{"outage", "error", "type:outage", "server:server-1"}, items[0].Tags)
@@ -101,7 +102,7 @@ func TestAnnotations(t *testing.T) {
 				OrgId:        1,
 				AnnotationId: annotation2.Id,
 			})
-			assert.Nil(t, err)
+			require.NoError(t, err)
 			assert.Len(t, items, 1)
 			assert.Equal(t, annotation2.Id, items[0].Id)
 		})
@@ -113,7 +114,7 @@ func TestAnnotations(t *testing.T) {
 				From:        12,
 				To:          15,
 			})
-			assert.Nil(t, err)
+			require.NoError(t, err)
 			assert.Len(t, items, 0)
 		})
 
@@ -125,7 +126,7 @@ func TestAnnotations(t *testing.T) {
 				To:          15,
 				Tags:        []string{"asd"},
 			})
-			assert.Nil(t, err)
+			require.NoError(t, err)
 			assert.Len(t, items, 0)
 		})
 
@@ -137,7 +138,7 @@ func TestAnnotations(t *testing.T) {
 				To:          15,
 				Type:        "alert",
 			})
-			assert.Nil(t, err)
+			require.NoError(t, err)
 			assert.Len(t, items, 0)
 		})
 
@@ -149,7 +150,7 @@ func TestAnnotations(t *testing.T) {
 				To:          15, // this will exclude the second test annotation
 				Tags:        []string{"outage", "error"},
 			})
-			assert.Nil(t, err)
+			require.NoError(t, err)
 			assert.Len(t, items, 1)
 		})
 
@@ -161,7 +162,7 @@ func TestAnnotations(t *testing.T) {
 				MatchAny: true,
 				Tags:     []string{"rollback", "deploy"},
 			})
-			assert.Nil(t, err)
+			require.NoError(t, err)
 			assert.Len(t, items, 2)
 		})
 
@@ -173,7 +174,7 @@ func TestAnnotations(t *testing.T) {
 				To:          15,
 				Tags:        []string{"type:outage", "server:server-1"},
 			})
-			assert.Nil(t, err)
+			require.NoError(t, err)
 			assert.Len(t, items, 1)
 		})
 
@@ -185,7 +186,7 @@ func TestAnnotations(t *testing.T) {
 				To:          15,
 			}
 			items, err := repo.Find(query)
-			assert.Nil(t, err)
+			require.NoError(t, err)
 
 			annotationId := items[0].Id
 			err = repo.Update(&annotations.Item{
@@ -194,10 +195,10 @@ func TestAnnotations(t *testing.T) {
 				Text:  "something new",
 				Tags:  []string{},
 			})
-			assert.Nil(t, err)
+			require.NoError(t, err)
 
 			items, err = repo.Find(query)
-			assert.Nil(t, err)
+			require.NoError(t, err)
 
 			assert.Equal(t, annotationId, items[0].Id)
 			assert.Len(t, items[0].Tags, 0)
@@ -212,7 +213,7 @@ func TestAnnotations(t *testing.T) {
 				To:          15,
 			}
 			items, err := repo.Find(query)
-			assert.Nil(t, err)
+			require.NoError(t, err)
 
 			annotationId := items[0].Id
 			err = repo.Update(&annotations.Item{
@@ -221,10 +222,10 @@ func TestAnnotations(t *testing.T) {
 				Text:  "something new",
 				Tags:  []string{"newtag1", "newtag2"},
 			})
-			assert.Nil(t, err)
+			require.NoError(t, err)
 
 			items, err = repo.Find(query)
-			assert.Nil(t, err)
+			require.NoError(t, err)
 
 			assert.Equal(t, annotationId, items[0].Id)
 			assert.Equal(t, []string{"newtag1", "newtag2"}, items[0].Tags)
@@ -240,14 +241,14 @@ func TestAnnotations(t *testing.T) {
 				To:          15,
 			}
 			items, err := repo.Find(query)
-			assert.Nil(t, err)
+			require.NoError(t, err)
 
 			annotationId := items[0].Id
 			err = repo.Delete(&annotations.DeleteParams{Id: annotationId, OrgId: 1})
-			assert.Nil(t, err)
+			require.NoError(t, err)
 
 			items, err = repo.Find(query)
-			assert.Nil(t, err)
+			require.NoError(t, err)
 			assert.Len(t, items, 0)
 		})
 	})
