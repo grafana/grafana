@@ -336,10 +336,10 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 	}
 
 	filePath := hs.Cfg.DefaultHomeDashboardPath
-	var use_default_path bool = false
+	useDefaultPath := false
 	if filePath == "" {
 		filePath = filepath.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
-		use_default_path = true
+		useDefaultPath = true
 	}
 
 	file, err := os.Open(filePath)
@@ -358,7 +358,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 		return Error(500, "Failed to load home dashboard", err)
 	}
 
-	if use_default_path && c.HasUserRole(models.ROLE_ADMIN) && !c.HasHelpFlag(models.HelpFlagGettingStartedPanelDismissed) {
+	if useDefaultPath && c.HasUserRole(models.ROLE_ADMIN) && !c.HasHelpFlag(models.HelpFlagGettingStartedPanelDismissed) {
 		addGettingStartedPanelToHomeDashboard(dash.Dashboard)
 	}
 
