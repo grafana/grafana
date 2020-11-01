@@ -52,6 +52,15 @@ export class GrafanaCtrl {
     angularLoader: AngularLoader,
     $injector: auto.IInjectorService
   ) {
+    $injector.oldInvoke = $injector.invoke;
+    $injector.invoke = (fn: any, self: any, locals: any, serviceName: any) => {
+      if (locals?.$scope?.$parent?.panel) {
+        self.panel = locals.$scope.$parent.panel;
+        self.dashboard = locals.$scope.$parent.dashboard;
+      }
+      return $injector.oldInvoke(fn, self, locals, serviceName);
+    };
+
     // make angular loader service available to react components
     setAngularLoader(angularLoader);
     setBackendSrv(backendSrv);

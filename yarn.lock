@@ -5835,17 +5835,22 @@
     react-input-autosize "^2.2.2"
     react-transition-group "^4.3.0"
 
-"@types/angular-route@1.7.0":
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/@types/angular-route/-/angular-route-1.7.0.tgz#ba12d09df1aac3c88e3684500001daedfc97fb69"
-  integrity sha512-gctkSXUY7hDwFeW8il7f3+sdMmds0JaMnHvrZmqX79DHXf2D72+SHxJHIt5i6+0BrhoqdWdpgziSxuKnkAUAQw==
+"@types/angular-route@1.7.1":
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/@types/angular-route/-/angular-route-1.7.1.tgz#0f545189ff51afc74afbcdde17b56a277963d51b"
+  integrity sha512-5N5nfUYTEf5InmrhGU5qtvBOHOq6uvv1olJR5fd6Eq5YFT+cdjrr0nklBaFfulAsF0Cd8y7IQipgaUSwWsATYQ==
   dependencies:
     "@types/angular" "*"
 
-"@types/angular@*", "@types/angular@1.6.56":
+"@types/angular@*":
   version "1.6.56"
   resolved "https://registry.yarnpkg.com/@types/angular/-/angular-1.6.56.tgz#20124077bd44061e018c7283c0bb83f4b00322dd"
   integrity sha512-HxtqilvklZ7i6XOaiP7uIJIrFXEVEhfbSY45nfv2DeBRngncI58Y4ZOUMiUkcT8sqgLL1ablmbfylChUg7A3GA==
+
+"@types/angular@1.7.4":
+  version "1.7.4"
+  resolved "https://registry.yarnpkg.com/@types/angular/-/angular-1.7.4.tgz#f50ed06e2ddb3437ec8c730e6a3189fbd59125e5"
+  integrity sha512-ZcBdve7BszuzwtgDiaYuHhEGPkA0gKhBRMckGZVfZ6M4L8Jt/rqQTV4I3koQg8ZPf9sdDExs3xx9GpZIkAyyjg==
 
 "@types/antlr4@^4.7.1":
   version "4.7.1"
@@ -7751,20 +7756,20 @@ angular-native-dragdrop@1.2.2:
   resolved "https://registry.yarnpkg.com/angular-native-dragdrop/-/angular-native-dragdrop-1.2.2.tgz#d646c6b75b131c48073c3f6e36a225b2726d8bae"
   integrity sha1-1kbGt1sTHEgHPD9uNqIlsnJti64=
 
-angular-route@1.6.6:
-  version "1.6.6"
-  resolved "https://registry.yarnpkg.com/angular-route/-/angular-route-1.6.6.tgz#8c11748aa195c717b1b615a7e746442bfc7c61f4"
-  integrity sha1-jBF0iqGVxxexthWn50ZEK/x8YfQ=
+angular-route@1.8.2:
+  version "1.8.2"
+  resolved "https://registry.yarnpkg.com/angular-route/-/angular-route-1.8.2.tgz#d482bf05a8c9e448300acd8f9989c635d31b5077"
+  integrity sha512-49LJYxuaQ/ZDiu9dD2xo1LkazqObkGjw0a7dUF7UKCT8EELgBsMd6QrI6aEVGtI62ppkiFkxqmiV8fcwYdXpug==
 
-angular-sanitize@1.6.6:
-  version "1.6.6"
-  resolved "https://registry.yarnpkg.com/angular-sanitize/-/angular-sanitize-1.6.6.tgz#0fd065a19931517fbece66596d325d72b6e06041"
-  integrity sha1-D9BloZkxUX++zmZZbTJdcrbgYEE=
+angular-sanitize@1.8.2:
+  version "1.8.2"
+  resolved "https://registry.yarnpkg.com/angular-sanitize/-/angular-sanitize-1.8.2.tgz#ae78040f00c5e2ce1c63780bcc47fa14a1698296"
+  integrity sha512-OB6Goa+QN3byf5asQ7XRl7DKZejm/F/ZOqa9z1skqYVOWA2hoBxoCmt9E7+i7T/TbxZP5zYzKxNZVVJNu860Hg==
 
-angular@1.6.9:
-  version "1.6.9"
-  resolved "https://registry.yarnpkg.com/angular/-/angular-1.6.9.tgz#bc812932e18909038412d594a5990f4bb66c0619"
-  integrity sha512-6igWH2GIsxV+J38wNWCh8oyjaZsrIPIDO35twloIUyjlF2Yit6UyLAWujHP05ma/LFxTsx4NtYibRoMNBXPR1A==
+angular@1.8.2:
+  version "1.8.2"
+  resolved "https://registry.yarnpkg.com/angular/-/angular-1.8.2.tgz#5983bbb5a9fa63e213cb7749199e0d352de3a2f1"
+  integrity sha512-IauMOej2xEe7/7Ennahkbb5qd/HFADiNuLSESz9Q27inmi32zB0lnAsFeLEWcox3Gd1F6YhNd1CP7/9IukJ0Gw==
 
 ansi-align@^2.0.0:
   version "2.0.0"

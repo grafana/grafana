@@ -114,7 +114,7 @@ export class GrafanaApp {
         $provide: angular.auto.IProvideService
       ) => {
         // pre assign bindings before constructor calls
-        $compileProvider.preAssignBindingsEnabled(true);
+        // $compileProvider.preAssignBindingsEnabled(true);
 
         if (config.buildInfo.env !== 'development') {
           $compileProvider.debugInfoEnabled(false);
@@ -172,7 +172,9 @@ export class GrafanaApp {
     $.fn.tooltip.defaults.animation = false;
 
     // bootstrap the app
-    angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
+    const injector = angular.bootstrap(document, this.ngModuleDependencies);
+
+    injector.invoke(() => {
       _.each(this.preBootModules, (module: angular.IModule) => {
         _.extend(module, this.registerFunctions);
       });
