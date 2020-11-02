@@ -9,6 +9,8 @@ import {
   FrameMatcherInfo,
   FieldMatcher,
   FrameMatcher,
+  ValueMatcherInfo,
+  ValueMatcher,
 } from '../types/transformations';
 import { Registry } from '../utils/Registry';
 
@@ -28,10 +30,14 @@ export const frameMatchers = new Registry<FrameMatcherInfo>(() => {
   ];
 });
 
+export const valueMatchers = new Registry<ValueMatcherInfo>(() => {
+  return [];
+});
+
 export function getFieldMatcher(config: MatcherConfig): FieldMatcher {
   const info = fieldMatchers.get(config.id);
   if (!info) {
-    throw new Error('Unknown Matcher: ' + config.id);
+    throw new Error('Unknown field matcher: ' + config.id);
   }
   return info.get(config.options);
 }
@@ -39,7 +45,15 @@ export function getFieldMatcher(config: MatcherConfig): FieldMatcher {
 export function getFrameMatchers(config: MatcherConfig): FrameMatcher {
   const info = frameMatchers.get(config.id);
   if (!info) {
-    throw new Error('Unknown Matcher: ' + config.id);
+    throw new Error('Unknown frame matcher: ' + config.id);
+  }
+  return info.get(config.options);
+}
+
+export function getValueMatchers(config: MatcherConfig): ValueMatcher {
+  const info = valueMatchers.get(config.id);
+  if (!info) {
+    throw new Error('Unknown value matcher: ' + config.id);
   }
   return info.get(config.options);
 }
