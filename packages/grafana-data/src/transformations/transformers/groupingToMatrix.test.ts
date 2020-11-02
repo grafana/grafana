@@ -4,7 +4,7 @@ import { DataTransformerID } from './ids';
 import { toDataFrame } from '../../dataframe';
 import { transformDataFrame } from '../transformDataFrame';
 import { ArrayVector } from '../../vector';
-import { groupingToMatrixTransformer, groupingToMatrixTransformerOptions } from './groupingToMatrix';
+import { groupingToMatrixTransformer, GroupingToMatrixTransformerOptions } from './groupingToMatrix';
 
 describe('Grouping to Matrix', () => {
   beforeAll(() => {
@@ -55,7 +55,7 @@ describe('Grouping to Matrix', () => {
       ],
     });
 
-    const result = transformDataFrame([cfg], [seriesA, seriesB]);
+    const result = transformDataFrame([cfg], [seriesA]);
     const expected: Field[] = [
       createField('Row\\Column', FieldType.string, []),
       createField('C1', FieldType.number, [1, 4, '']),
@@ -84,7 +84,7 @@ describe('Grouping to Matrix', () => {
       ],
     });
 
-    const result = transformDataFrame([cfg], [seriesA, seriesB]);
+    const result = transformDataFrame([cfg], [seriesA]);
     const expected: Field[] = [
       createField('Row\\Column', FieldType.string, []),
       createField('C1', FieldType.number, [1, 4, ''], { units: 'celsius' }),
