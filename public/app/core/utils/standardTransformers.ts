@@ -10,6 +10,7 @@ import { groupByTransformRegistryItem } from '../components/TransformersUI/Group
 import { mergeTransformerRegistryItem } from '../components/TransformersUI/MergeTransformerEditor';
 import { seriesToRowsTransformerRegistryItem } from '../components/TransformersUI/SeriesToRowsTransformerEditor';
 import { concatenateTransformRegistryItem } from '../components/TransformersUI/ConcatenateTransformerEditor';
+import { groupingToMatrixTransformerRegistryItem } from '../components/TransformersUI/GroupingToMatrixTransformerEditor';
 
 export const getStandardTransformers = (): Array<TransformerRegistyItem<any>> => {
   return [
@@ -24,5 +25,6 @@ export const getStandardTransformers = (): Array<TransformerRegistyItem<any>> =>
     labelsToFieldsTransformerRegistryItem,
     groupByTransformRegistryItem,
     mergeTransformerRegistryItem,
+    groupingToMatrixTransformerRegistryItem,
   ];
 };
