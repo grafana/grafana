@@ -1,5 +1,5 @@
 import { merge, Observable, of, Subject, throwError, Unsubscribable } from 'rxjs';
-import { catchError, filter, finalize, first, takeUntil } from 'rxjs/operators';
+import { catchError, filter, finalize, first, mergeMap, takeUntil } from 'rxjs/operators';
 import {
   CoreApp,
   DataQuery,
@@ -124,6 +124,13 @@ export class VariableQueryRunner {
             return beforeUid === afterUid;
           }),
           first(data => data.state === LoadingState.Done || data.state === LoadingState.Error),
+          mergeMap(data => {
+            if (data.state === LoadingState.Error) {
+              return throwError(data.error);
+            }
+
+            return of(data);
+          }),
           toMetricFindValues(),
           updateOptionsState({ variable, dispatch, getTemplatedRegexFunc }),
           runUpdateTagsRequest({ variable, datasource, searchFilter }),
