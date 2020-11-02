@@ -19,6 +19,16 @@ export interface DataSourceSrv {
    * Returns metadata based on UID.
    */
   getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined;
+
+  /**
+   * Get all data sources
+   */
+  getAll(): DataSourceInstanceSettings[];
+
+  /**
+   * Get all data sources except for internal ones that usually should not be listed like mixed data source.
+   */
+  getExternal(): DataSourceInstanceSettings[];
 }
 
 let singletonInstance: DataSourceSrv;

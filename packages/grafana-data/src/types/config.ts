@@ -34,14 +34,15 @@ export interface BuildInfo {
 export interface FeatureToggles {
   live: boolean;
   expressions: boolean;
+  ngalert: boolean;
+  // Just for demo at the moment
+  traceToLogs: boolean;
 
   /**
    * @remarks
    * Available only in Grafana Enterprise
    */
   meta: boolean;
-  datasourceInsights: boolean;
-  reportGrid: boolean;
 }
 
 /**
@@ -83,6 +84,7 @@ export interface GrafanaConfig {
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
   ldapEnabled: boolean;
+  sigV4AuthEnabled: boolean;
   samlEnabled: boolean;
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;

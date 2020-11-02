@@ -185,7 +185,7 @@ func getAlertNotificationUidInternal(query *models.GetAlertNotificationUidQuery,
 	}
 
 	if len(results) == 0 {
-		return fmt.Errorf("Alert notification [ Id: %v, OrgId: %v ] not found", query.Id, query.OrgId)
+		return models.ErrAlertNotificationFailedTranslateUniqueID
 	}
 
 	query.Result = results[0]
@@ -299,7 +299,7 @@ func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) 
 		}
 
 		if existingQuery.Result != nil {
-			return fmt.Errorf("Alert notification uid %s already exists", cmd.Uid)
+			return models.ErrAlertNotificationWithSameUIDExists
 		}
 
 		// check if name exists
@@ -309,7 +309,7 @@ func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) 
 		}
 
 		if sameNameQuery.Result != nil {
-			return fmt.Errorf("Alert notification name %s already exists", cmd.Name)
+			return models.ErrAlertNotificationWithSameNameExists
 		}
 
 		var frequency time.Duration

@@ -11,7 +11,7 @@ interface FormProps<T> extends Omit<HTMLProps<HTMLFormElement>, 'onSubmit'> {
   onSubmit: OnSubmit<T>;
   children: (api: FormAPI<T>) => React.ReactNode;
   /** Sets max-width for container. Use it instead of setting individual widths on inputs.*/
-  maxWidth?: number;
+  maxWidth?: number | 'none';
 }
 
 export function Form<T>({
@@ -33,12 +33,12 @@ export function Form<T>({
     if (validateOnMount) {
       triggerValidation(validateFieldsOnMount);
     }
-  }, []);
+  }, [triggerValidation, validateFieldsOnMount, validateOnMount]);
 
   return (
     <form
       className={css`
-        max-width: ${maxWidth}px;
+        max-width: ${maxWidth !== 'none' ? maxWidth + 'px' : maxWidth};
         width: 100%;
       `}
       onSubmit={handleSubmit(onSubmit)}

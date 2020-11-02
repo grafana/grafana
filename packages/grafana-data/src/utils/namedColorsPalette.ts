@@ -1,6 +1,6 @@
 import flatten from 'lodash/flatten';
 import tinycolor from 'tinycolor2';
-import { GrafanaThemeType } from '../types/theme';
+import { GrafanaTheme, GrafanaThemeType } from '../types/theme';
 
 type Hue = 'green' | 'yellow' | 'red' | 'blue' | 'orange' | 'purple';
 
@@ -34,7 +34,8 @@ export type Color =
   | 'dark-purple'
   | 'semi-dark-purple'
   | 'light-purple'
-  | 'super-light-purple';
+  | 'super-light-purple'
+  | 'panel-bg';
 
 type ThemeVariants = {
   dark: string;
@@ -49,6 +50,8 @@ export type ColorDefinition = {
 };
 
 let colorsPaletteInstance: Map<Hue, ColorDefinition[]>;
+let colorsMap: Record<Color, string> | undefined;
+let colorsMapTheme: GrafanaTheme | undefined;
 
 const buildColorDefinition = (
   hue: Hue,
@@ -65,61 +68,79 @@ const buildColorDefinition = (
   isPrimary: !!isPrimary,
 });
 
-export const getColorDefinitionByName = (name: Color): ColorDefinition => {
+export function getColorDefinitionByName(name: Color): ColorDefinition {
   return flatten(Array.from(getNamedColorPalette().values())).filter(definition => definition.name === name)[0];
-};
+}
 
-export const getColorDefinition = (hex: string, theme: GrafanaThemeType): ColorDefinition | undefined => {
-  return flatten(Array.from(getNamedColorPalette().values())).filter(
-    definition => definition.variants[theme] === hex
-  )[0];
-};
+export function buildColorsMapForTheme(theme: GrafanaTheme): Record<Color, string> {
+  theme = theme ?? GrafanaThemeType.Dark;
 
-const isHex = (color: string) => {
-  const hexRegex = /^((0x){0,1}|#{0,1})([0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{3})$/gi;
-  return hexRegex.test(color);
-};
+  colorsMap = {} as Record<Color, string>;
 
-export const getColorName = (color?: string, theme?: GrafanaThemeType): Color | undefined => {
+  for (const def of getNamedColorPalette().values()) {
+    for (const c of def) {
+      colorsMap[c.name] = c.variants[theme.type];
+    }
+  }
+
+  colorsMap['panel-bg'] = theme.colors.panelBg;
+
+  return colorsMap;
+}
+
+export function getColorForTheme(color: string, theme: GrafanaTheme): string {
   if (!color) {
-    return undefined;
+    return 'gray';
+  }
+
+  // check if we need to rebuild cache
+  if (!colorsMap || colorsMapTheme !== theme) {
+    colorsMap = buildColorsMapForTheme(theme);
+    colorsMapTheme = theme;
+  }
+
+  let realColor = colorsMap[color as Color];
+  if (realColor) {
+    return realColor;
+  }
+
+  if (color[0] === '#') {
+    return (colorsMap[color as Color] = color);
   }
 
   if (color.indexOf('rgb') > -1) {
-    return undefined;
-  }
-  if (isHex(color)) {
-    const definition = getColorDefinition(color, theme || GrafanaThemeType.Dark);
-    return definition ? definition.name : undefined;
+    return (colorsMap[color as Color] = color);
   }
 
-  return color as Color;
-};
+  return (colorsMap[color as Color] = tinycolor(color).toHexString());
+}
 
-export const getColorByName = (colorName: string) => {
-  const definition = flatten(Array.from(getNamedColorPalette().values())).filter(
-    definition => definition.name === colorName
-  );
-  return definition.length > 0 ? definition[0] : undefined;
-};
+/**
+ * @deprecated use getColorForTheme
+ */
+export function getColorFromHexRgbOrName(color: string, type?: GrafanaThemeType): string {
+  const themeType = type ?? GrafanaThemeType.Dark;
 
-export const getColorFromHexRgbOrName = (color: string, theme?: GrafanaThemeType): string => {
-  if (color.indexOf('rgb') > -1 || isHex(color)) {
-    return color;
+  if (themeType === GrafanaThemeType.Dark) {
+    const darkTheme = ({
+      type: themeType,
+      colors: {
+        panelBg: '#141619',
+      },
+    } as unknown) as GrafanaTheme;
+
+    return getColorForTheme(color, darkTheme);
   }
 
-  const colorDefinition = getColorByName(color);
+  const lightTheme = ({
+    type: themeType,
+    colors: {
+      panelBg: '#000000',
+    },
+  } as unknown) as GrafanaTheme;
 
-  if (!colorDefinition) {
-    return new tinycolor(color).toHexString();
-  }
-
-  return theme ? colorDefinition.variants[theme] : colorDefinition.variants.dark;
-};
-
-export const getColorForTheme = (color: ColorDefinition, theme?: GrafanaThemeType) => {
-  return theme ? color.variants[theme] : color.variants.dark;
-};
+  return getColorForTheme(color, lightTheme);
+}
 
 const buildNamedColorsPalette = () => {
   const palette = new Map<Hue, ColorDefinition[]>();
@@ -185,3 +206,62 @@ export const getNamedColorPalette = () => {
   colorsPaletteInstance = buildNamedColorsPalette();
   return colorsPaletteInstance;
 };
+
+export const classicColors = [
+  '#7EB26D', // 0: pale green
+  '#EAB839', // 1: mustard
+  '#6ED0E0', // 2: light blue
+  '#EF843C', // 3: orange
+  '#E24D42', // 4: red
+  '#1F78C1', // 5: ocean
+  '#BA43A9', // 6: purple
+  '#705DA0', // 7: violet
+  '#508642', // 8: dark green
+  '#CCA300', // 9: dark sand
+  '#447EBC',
+  '#C15C17',
+  '#890F02',
+  '#0A437C',
+  '#6D1F62',
+  '#584477',
+  '#B7DBAB',
+  '#F4D598',
+  '#70DBED',
+  '#F9BA8F',
+  '#F29191',
+  '#82B5D8',
+  '#E5A8E2',
+  '#AEA2E0',
+  '#629E51',
+  '#E5AC0E',
+  '#64B0C8',
+  '#E0752D',
+  '#BF1B00',
+  '#0A50A1',
+  '#962D82',
+  '#614D93',
+  '#9AC48A',
+  '#F2C96D',
+  '#65C5DB',
+  '#F9934E',
+  '#EA6460',
+  '#5195CE',
+  '#D683CE',
+  '#806EB7',
+  '#3F6833',
+  '#967302',
+  '#2F575E',
+  '#99440A',
+  '#58140C',
+  '#052B51',
+  '#511749',
+  '#3F2B5B',
+  '#E0F9D7',
+  '#FCEACA',
+  '#CFFAFF',
+  '#F9E2D2',
+  '#FCE2DE',
+  '#BADFF4',
+  '#F9D9F9',
+  '#DEDAF7',
+];

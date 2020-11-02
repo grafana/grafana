@@ -1,4 +1,4 @@
-import React, { FC } from 'react';
+import React, { FC, useState } from 'react';
 import { css } from 'emotion';
 import { PanelMenuItem } from '@grafana/data';
 import { Icon, IconName, useTheme } from '@grafana/ui';
@@ -9,6 +9,7 @@ interface Props {
 }
 
 export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = props => {
+  const [ref, setRef] = useState<HTMLLIElement | null>(null);
   const isSubMenu = props.type === 'submenu';
   const isDivider = props.type === 'divider';
   const theme = useTheme();
@@ -24,10 +25,11 @@ export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = props => {
     right: ${theme.spacing.xs};
     color: ${theme.colors.textWeak};
   `;
+
   return isDivider ? (
     <li className="divider" />
   ) : (
-    <li className={isSubMenu ? 'dropdown-submenu' : undefined}>
+    <li className={isSubMenu ? `dropdown-submenu ${getDropdownLocationCssClass(ref)}` : undefined} ref={setRef}>
       <a onClick={props.onClick} href={props.href}>
         {props.iconClassName && <Icon name={props.iconClassName as IconName} className={menuIconClassName} />}
         <span className="dropdown-item-text" aria-label={selectors.components.Panels.Panel.headerItems(props.text)}>
@@ -44,3 +46,22 @@ export const PanelHeaderMenuItem: FC<Props & PanelMenuItem> = props => {
     </li>
   );
 };
+
+function getDropdownLocationCssClass(element: HTMLElement | null) {
+  if (!element) {
+    return 'invisible';
+  }
+
+  const wrapperPos = element.parentElement!.getBoundingClientRect();
+  const pos = element.getBoundingClientRect();
+
+  if (pos.width === 0) {
+    return 'invisible';
+  }
+
+  if (wrapperPos.right + pos.width + 10 > window.innerWidth) {
+    return 'pull-left';
+  } else {
+    return 'pull-right';
+  }
+}

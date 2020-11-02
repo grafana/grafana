@@ -1,10 +1,11 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { PluginMeta, PanelPlugin } from '@grafana/data';
+import { PluginMeta, PanelPlugin, PluginError } from '@grafana/data';
 import { PluginsState } from 'app/types';
 import { PluginDashboard } from '../../../types/plugins';
 
 export const initialState: PluginsState = {
   plugins: [],
+  errors: [],
   searchQuery: '',
   hasFetched: false,
   dashboards: [],
@@ -19,6 +20,9 @@ const pluginsSlice = createSlice({
     pluginsLoaded: (state, action: PayloadAction<PluginMeta[]>) => {
       state.hasFetched = true;
       state.plugins = action.payload;
+    },
+    pluginsErrorsLoaded: (state, action: PayloadAction<PluginError[]>) => {
+      state.errors = action.payload;
     },
     setPluginsSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
@@ -39,6 +43,7 @@ const pluginsSlice = createSlice({
 
 export const {
   pluginsLoaded,
+  pluginsErrorsLoaded,
   pluginDashboardsLoad,
   pluginDashboardsLoaded,
   setPluginsSearchQuery,

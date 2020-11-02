@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import uPlot from 'uplot';
 import { usePrevious } from 'react-use';
 import { buildPlotContext, PlotContext } from './context';
-import { pluginLog, preparePlotData, shouldReinitialisePlot } from './utils';
+import { pluginLog, preparePlotData, shouldInitialisePlot } from './utils';
 import { usePlotConfig } from './hooks';
 import { PlotProps } from './types';
 
@@ -13,6 +13,7 @@ import { PlotProps } from './types';
 export const UPlotChart: React.FC<PlotProps> = props => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [plotInstance, setPlotInstance] = useState<uPlot>();
+  const plotData = useRef<uPlot.AlignedData>();
 
   // uPlot config API
   const { currentConfig, addSeries, addAxis, addScale, registerPlugin } = usePlotConfig(
@@ -20,29 +21,29 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     props.height,
     props.timeZone
   );
-
   const prevConfig = usePrevious(currentConfig);
 
-  // Main function initialising uPlot. If final config is not settled it will do nothing
-  const initPlot = () => {
-    if (!currentConfig || !canvasRef.current) {
-      return null;
+  const getPlotInstance = useCallback(() => {
+    if (!plotInstance) {
+      throw new Error("Plot hasn't initialised yet");
     }
-    const data = preparePlotData(props.data);
-    pluginLog('uPlot core', false, 'initialized with', data, currentConfig);
-    return new uPlot(currentConfig, data, canvasRef.current);
-  };
+
+    return plotInstance;
+  }, [plotInstance]);
 
   // Callback executed when there was no change in plot config
   const updateData = useCallback(() => {
-    if (!plotInstance) {
+    if (!plotInstance || !plotData.current) {
       return;
     }
-    const data = preparePlotData(props.data);
-    pluginLog('uPlot core', false, 'updating plot data(throttled log!)');
+    pluginLog('uPlot core', false, 'updating plot data(throttled log!)', plotData.current);
     // If config hasn't changed just update uPlot's data
-    plotInstance.setData(data);
-  }, [plotInstance, props.data]);
+    plotInstance.setData(plotData.current);
+
+    if (props.onDataUpdate) {
+      props.onDataUpdate(plotData.current);
+    }
+  }, [plotInstance, props.onDataUpdate]);
 
   // Destroys previous plot instance when plot re-initialised
   useEffect(() => {
@@ -52,22 +53,38 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     };
   }, [plotInstance]);
 
+  useLayoutEffect(() => {
+    plotData.current = preparePlotData(props.data);
+  }, [props.data]);
+
   // Decides if plot should update data or re-initialise
-  useEffect(() => {
-    if (!currentConfig) {
+  useLayoutEffect(() => {
+    // Make sure everything is ready before proceeding
+    if (!currentConfig || !plotData.current) {
       return;
     }
 
-    if (shouldReinitialisePlot(prevConfig, currentConfig)) {
-      const instance = initPlot();
-      if (!instance) {
-        return;
+    // Do nothing if there is data vs series config mismatch. This may happen when the data was updated and made this
+    // effect fire before the config update triggered the effect.
+    if (currentConfig.series.length !== plotData.current.length) {
+      return;
+    }
+
+    if (shouldInitialisePlot(prevConfig, currentConfig)) {
+      if (!canvasRef.current) {
+        throw new Error('Missing Canvas component as a child of the plot.');
       }
+      const instance = initPlot(plotData.current, currentConfig, canvasRef.current);
+
+      if (props.onPlotInit) {
+        props.onPlotInit();
+      }
+
       setPlotInstance(instance);
     } else {
       updateData();
     }
-  }, [props.data, props.timeRange, props.timeZone, currentConfig, setPlotInstance]);
+  }, [currentConfig, updateData, setPlotInstance, props.onPlotInit]);
 
   // When size props changed update plot size synchronously
   useLayoutEffect(() => {
@@ -81,8 +98,17 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 
   // Memoize plot context
   const plotCtx = useMemo(() => {
-    return buildPlotContext(registerPlugin, addSeries, addAxis, addScale, canvasRef, props.data, plotInstance);
-  }, [registerPlugin, canvasRef, props.data, plotInstance, addSeries, addAxis, addScale]);
+    return buildPlotContext(
+      Boolean(plotInstance),
+      canvasRef,
+      props.data,
+      registerPlugin,
+      addSeries,
+      addAxis,
+      addScale,
+      getPlotInstance
+    );
+  }, [plotInstance, canvasRef, props.data, registerPlugin, addSeries, addAxis, addScale, getPlotInstance]);
 
   return (
     <PlotContext.Provider value={plotCtx}>
@@ -98,3 +124,9 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     </PlotContext.Provider>
   );
 };
+
+// Main function initialising uPlot. If final config is not settled it will do nothing
+function initPlot(data: uPlot.AlignedData, config: uPlot.Options, ref: HTMLDivElement) {
+  pluginLog('uPlot core', false, 'initialized with', data, config);
+  return new uPlot(config, data, ref);
+}

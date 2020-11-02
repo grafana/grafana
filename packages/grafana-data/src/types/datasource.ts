@@ -291,7 +291,7 @@ export abstract class DataSourceApi<
    *
    * Note: `plugin.json` must also define `live: true`
    *
-   * @experimental
+   * @alpha -- experimental
    */
   channelSupport?: LiveChannelSupport;
 }
@@ -499,6 +499,7 @@ export interface QueryHint {
 
 export interface MetricFindValue {
   text: string;
+  value?: string | number;
   expandable?: boolean;
 }
 
@@ -599,6 +600,6 @@ export abstract class LanguageProvider {
    * Returns startTask that resolves with a task list when main syntax is loaded.
    * Task list consists of secondary promises that load more detailed language features.
    */
-  abstract start: () => Promise<any[]>;
+  abstract start: () => Promise<Array<Promise<any>>>;
   startTask?: Promise<any[]>;
 }

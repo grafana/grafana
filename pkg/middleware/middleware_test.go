@@ -44,7 +44,7 @@ func resetGetTime() {
 }
 
 func TestMiddleWareSecurityHeaders(t *testing.T) {
-	setting.ERR_TEMPLATE_NAME = errorTemplate
+	setting.ErrTemplateName = errorTemplate
 
 	Convey("Given the grafana middleware", t, func() {
 		middlewareScenario(t, "middleware should get correct x-xss-protection header", func(sc *scenarioContext) {
@@ -61,7 +61,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 
 		middlewareScenario(t, "middleware should add correct Strict-Transport-Security header", func(sc *scenarioContext) {
 			setting.StrictTransportSecurity = true
-			setting.Protocol = setting.HTTPS
+			setting.Protocol = setting.HTTPSScheme
 			setting.StrictTransportSecurityMaxAge = 64000
 			sc.fakeReq("GET", "/api/").exec()
 			So(sc.resp.Header().Get("Strict-Transport-Security"), ShouldEqual, "max-age=64000")
@@ -76,7 +76,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 }
 
 func TestMiddlewareContext(t *testing.T) {
-	setting.ERR_TEMPLATE_NAME = errorTemplate
+	setting.ErrTemplateName = errorTemplate
 
 	Convey("Given the grafana middleware", t, func() {
 		middlewareScenario(t, "middleware should add context to injector", func(sc *scenarioContext) {
@@ -546,7 +546,9 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 		defer bus.ClearBusHandlers()
 
 		setting.LoginCookieName = "grafana_session"
-		setting.LoginMaxLifetime, _ = gtime.ParseInterval("30d")
+		var err error
+		setting.LoginMaxLifetime, err = gtime.ParseDuration("30d")
+		require.NoError(t, err)
 
 		sc := &scenarioContext{}
 
@@ -637,7 +639,11 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 
 func initTokenRotationTest(ctx context.Context) (*models.ReqContext, *httptest.ResponseRecorder, error) {
 	setting.LoginCookieName = "login_token"
-	setting.LoginMaxLifetime, _ = gtime.ParseInterval("7d")
+	var err error
+	setting.LoginMaxLifetime, err = gtime.ParseDuration("7d")
+	if err != nil {
+		return nil, nil, err
+	}
 
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequestWithContext(ctx, "", "", nil)

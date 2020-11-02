@@ -44,7 +44,7 @@ export const DashboardLinks: FC<Props> = ({ dashboard, links }) => {
 
         const linkElement = (
           <a
-            className="gf-form-label"
+            className="gf-form-label gf-form-label--dashlink"
             href={sanitizeUrl(linkInfo.href)}
             target={link.targetBlank ? '_blank' : '_self'}
             aria-label={selectors.components.DashboardLinks.link}

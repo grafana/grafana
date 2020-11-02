@@ -16,8 +16,9 @@ This visualization is the most-used in the Grafana ecosystem. It can render as a
 
 Graph visualizations allow you to apply:
 
-- [Data transformations]({{< relref "../transformations/_index.md" >}})
 - [Alerts]({{< relref "../../alerting/alerts-overview.md" >}}) - This is the only type of visualization that allows you to set alerts.
+- [Data transformations]({{< relref "../transformations/_index.md" >}})
+- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options

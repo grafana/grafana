@@ -22,7 +22,7 @@ Thank you for sending a pull request! Here are some tips:
 
 <!--
 
-* Automatically closes linked issue when the Pull Request is merged.
+- Automatically closes linked issue when the Pull Request is merged.
 
 Usage: "Fixes #<issue number>", or "Fixes (paste link of issue)"
 
