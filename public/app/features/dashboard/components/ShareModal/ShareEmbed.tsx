@@ -80,16 +80,17 @@ export class ShareEmbed extends PureComponent<Props, State> {
         <div className="share-modal-header">
           <Icon name="link" className="share-modal-big-icon" size="xxl" />
           <div className="share-modal-content">
-            <InlineField labelWidth={24} label="Current time range">
-              <Switch value={useCurrentTimeRange} onChange={this.onUseCurrentTimeRangeChange} />
-            </InlineField>
-            <InlineField labelWidth={24} label="Template variables">
-              <Switch value={includeTemplateVars} onChange={this.onIncludeTemplateVarsChange} />
-            </InlineField>
-            <InlineField labelWidth={24} label="Theme">
-              <Select width={10} options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
-            </InlineField>
-
+            <div className="gf-form-group">
+              <InlineField labelWidth={24} label="Current time range">
+                <Switch value={useCurrentTimeRange} onChange={this.onUseCurrentTimeRangeChange} />
+              </InlineField>
+              <InlineField labelWidth={24} label="Template variables">
+                <Switch value={includeTemplateVars} onChange={this.onIncludeTemplateVarsChange} />
+              </InlineField>
+              <InlineField labelWidth={24} label="Theme">
+                <Select width={20} options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
+              </InlineField>
+            </div>
             <p className="share-modal-info-text">
               The html code below can be pasted and included in another web page. Unless anonymous access is enabled,
               the user viewing that page need to be signed into grafana for the graph to load.
