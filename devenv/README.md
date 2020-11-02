@@ -47,3 +47,11 @@ The grafana block is pre-configured with the dev-datasources and dashboards.
 
 #### Jaeger
 Jaeger block runs both Jaeger and Loki container. Loki container sends traces to Jaeger and also logs its own logs into itself so it is possible to setup derived field for traceID from Loki to Jaeger. You need to install a docker plugin for the self logging to work, without it the container won't start. See https://github.com/grafana/loki/tree/master/cmd/docker-driver#plugin-installation for installation instructions.
+
+### Troubleshooting
+
+#### Containers fail to start
+
+`ERROR: for <service_name>  Cannot start service <service_name>: OCI runtime create failed: container_linux.go:349`
+
+If running Mac OSX certain docker containers mount `/var/log/` for logging purposes. When first run this causes Docker to try to create the folder `/var/log/grafana` however by default Docker for Mac does not have permission to create folders at this location as it runs as the current user. To solve this issue manually create the folder `/var/log/grafana` and give your user write permissions.
