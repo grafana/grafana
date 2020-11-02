@@ -19,8 +19,11 @@ import {
   ConstantVariableModel,
   QueryVariableModel,
   VariableModel,
+  VariableQueryEditorType,
   VariableWithMultiSupport,
 } from './types';
+import { VariableQueryProps } from '../../types';
+import { LEGACY_VARIABLE_QUERY_EDITOR_NAME } from './editor/LegacyVariableQueryEditor';
 
 export const isQuery = (model: VariableModel): model is QueryVariableModel => {
   return model.type === 'query';
@@ -142,3 +145,36 @@ export const hasDatasourceVariableSupport = <
 
   return datasource.variables.type === 'datasource';
 };
+
+export function isLegacyQueryEditor<
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
+>(
+  component: VariableQueryEditorType,
+  datasource: DataSourceApi<TQuery, TOptions>
+): component is ComponentType<VariableQueryProps> {
+  if (!component) {
+    return false;
+  }
+
+  return component.displayName === LEGACY_VARIABLE_QUERY_EDITOR_NAME || hasLegacyVariableSupport(datasource);
+}
+
+export function isQueryEditor<
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
+>(
+  component: VariableQueryEditorType,
+  datasource: DataSourceApi<TQuery, TOptions>
+): component is ComponentType<QueryEditorProps<any>> {
+  if (!component) {
+    return false;
+  }
+
+  return (
+    component.displayName !== LEGACY_VARIABLE_QUERY_EDITOR_NAME &&
+    (hasDatasourceVariableSupport(datasource) ||
+      hasStandardVariableSupport(datasource) ||
+      hasCustomVariableSupport(datasource))
+  );
+}

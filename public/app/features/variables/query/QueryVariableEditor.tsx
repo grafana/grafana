@@ -1,21 +1,22 @@
 import React, { ChangeEvent, PureComponent } from 'react';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { InlineFormLabel, LegacyForms } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
+import { getTemplateSrv } from '@grafana/runtime';
+import { LoadingState } from '@grafana/data';
+
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
 import { QueryVariableEditorState } from './reducer';
 import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
 import { VariableEditorState } from '../editor/reducer';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../types';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { toVariableIdentifier } from '../state/types';
 import { changeVariableMultiValue } from '../state/actions';
-import { isLegacyQueryEditor, isQueryEditor } from '../editor/factories';
-import { getTemplateSrv } from '@grafana/runtime';
-import { LoadingState } from '@grafana/data';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
+import { isLegacyQueryEditor, isQueryEditor } from '../guard';
 
 const { Switch } = LegacyForms;
 

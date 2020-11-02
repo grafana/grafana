@@ -6,6 +6,7 @@ import {
   initialVariableModelState,
   QueryVariableModel,
   VariableOption,
+  VariableQueryEditorType,
   VariableRefresh,
   VariableSort,
   VariableTag,
@@ -20,7 +21,6 @@ import {
   VariablePayload,
 } from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
-import { VariableQueryEditorType } from '../editor/factories';
 
 interface VariableOptionsUpdate {
   templatedRegex: string;

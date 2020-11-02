@@ -3,7 +3,11 @@ import {
   hasDatasourceVariableSupport,
   hasLegacyVariableSupport,
   hasStandardVariableSupport,
+  isLegacyQueryEditor,
+  isQueryEditor,
 } from './guard';
+import { LegacyVariableQueryEditor } from './editor/LegacyVariableQueryEditor';
+import { StandardVariableQueryEditor } from './editor/getVariableQueryEditor';
 
 describe('type guards', () => {
   describe('hasLegacyVariableSupport', () => {
@@ -122,6 +126,108 @@ describe('type guards', () => {
       it('should return false', () => {
         const datasource: any = { metricFindQuery: () => undefined };
         expect(hasDatasourceVariableSupport(datasource)).toBe(false);
+      });
+    });
+  });
+});
+
+describe('isLegacyQueryEditor', () => {
+  describe('happy cases', () => {
+    describe('when called with a legacy query editor but without a legacy data source', () => {
+      it('then is should return true', () => {
+        const component: any = LegacyVariableQueryEditor;
+        const datasource: any = {};
+
+        expect(isLegacyQueryEditor(component, datasource)).toBe(true);
+      });
+    });
+
+    describe('when called with a legacy data source but without a legacy query editor', () => {
+      it('then is should return true', () => {
+        const component: any = StandardVariableQueryEditor;
+        const datasource: any = { metricFindQuery: () => undefined };
+
+        expect(isLegacyQueryEditor(component, datasource)).toBe(true);
+      });
+    });
+  });
+
+  describe('negative cases', () => {
+    describe('when called without component', () => {
+      it('then is should return false', () => {
+        const component: any = null;
+        const datasource: any = { metricFindQuery: () => undefined };
+
+        expect(isLegacyQueryEditor(component, datasource)).toBe(false);
+      });
+    });
+
+    describe('when called without a legacy query editor and without a legacy data source', () => {
+      it('then is should return false', () => {
+        const component: any = StandardVariableQueryEditor;
+        const datasource: any = {};
+
+        expect(isLegacyQueryEditor(component, datasource)).toBe(false);
+      });
+    });
+  });
+});
+
+describe('isQueryEditor', () => {
+  describe('happy cases', () => {
+    describe('when called without a legacy editor and with a data source with standard variable support', () => {
+      it('then is should return true', () => {
+        const component: any = StandardVariableQueryEditor;
+        const datasource: any = { variables: { type: 'standard', toDataQuery: () => undefined } };
+
+        expect(isQueryEditor(component, datasource)).toBe(true);
+      });
+    });
+
+    describe('when called without a legacy editor and with a data source with custom variable support', () => {
+      it('then is should return true', () => {
+        const component: any = StandardVariableQueryEditor;
+        const datasource: any = { variables: { type: 'custom', query: () => undefined, editor: {} } };
+
+        expect(isQueryEditor(component, datasource)).toBe(true);
+      });
+    });
+
+    describe('when called without a legacy editor and with a data source with datasource variable support', () => {
+      it('then is should return true', () => {
+        const component: any = StandardVariableQueryEditor;
+        const datasource: any = { variables: { type: 'datasource' } };
+
+        expect(isQueryEditor(component, datasource)).toBe(true);
+      });
+    });
+  });
+
+  describe('negative cases', () => {
+    describe('when called without component', () => {
+      it('then is should return false', () => {
+        const component: any = null;
+        const datasource: any = { metricFindQuery: () => undefined };
+
+        expect(isQueryEditor(component, datasource)).toBe(false);
+      });
+    });
+
+    describe('when called with a legacy query editor', () => {
+      it('then is should return false', () => {
+        const component: any = LegacyVariableQueryEditor;
+        const datasource: any = { variables: { type: 'datasource' } };
+
+        expect(isQueryEditor(component, datasource)).toBe(false);
+      });
+    });
+
+    describe('when called without a legacy query editor but with a legacy data source', () => {
+      it('then is should return false', () => {
+        const component: any = StandardVariableQueryEditor;
+        const datasource: any = { metricFindQuery: () => undefined };
+
+        expect(isQueryEditor(component, datasource)).toBe(false);
       });
     });
   });

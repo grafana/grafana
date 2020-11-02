@@ -10,7 +10,7 @@ import { addVariableEditorError, changeVariableEditorExtended, removeVariableEdi
 import { changeVariableProp } from '../state/sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { hasLegacyVariableSupport, hasStandardVariableSupport } from '../guard';
-import { getVariableQueryEditor } from '../editor/factories';
+import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
 import { Subscription } from 'rxjs';
 import { getVariableQueryRunner } from './variableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
