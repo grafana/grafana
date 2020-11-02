@@ -38,6 +38,7 @@ type PluginListItem struct {
 	Category      string                  `json:"category"`
 	State         plugins.PluginState     `json:"state"`
 	Signature     plugins.PluginSignature `json:"signature"`
+	Unlicensed    bool                    `json:"unlicensed"`
 }
 
 type PluginList []PluginListItem

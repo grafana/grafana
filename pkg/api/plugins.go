@@ -115,6 +115,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
 			listItem.Enabled = pluginSetting.Enabled
 			listItem.Pinned = pluginSetting.Pinned
+			listItem.Unlicensed = listItem.Category == "" && !hs.License.HasValidLicense()
 		}
 
 		if listItem.DefaultNavUrl == "" || !listItem.Enabled {
