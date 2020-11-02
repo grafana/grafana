@@ -12,50 +12,76 @@ import {
   QueryEditorProps,
 } from './datasource';
 
-export type VariableSupportType = 'standard' | 'custom' | 'datasource';
-
 /**
- * Implement this interface in a data source plugin to use the standard query editor for Query variables
+ * Enum with the different variable support types
  *
  * @alpha -- experimental
  */
-export interface StandardVariableSupport<
+export enum VariableSupportType {
+  Legacy = 'legacy',
+  Standard = 'standard',
+  Custom = 'custom',
+  Datasource = 'datasource',
+}
+
+abstract class VariableSupportBase<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
   TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
 > {
-  type: VariableSupportType;
-  toDataQuery: (query: StandardVariableQuery) => TQuery;
-  query?: (request: DataQueryRequest<TQuery>) => Observable<DataQueryResponse>;
+  abstract getType(): VariableSupportType;
 }
 
 /**
- * Implement this interface in a data source plugin to use a customized query editor for Query variables
+ * Extend this class in a data source plugin to use the standard query editor for Query variables
  *
  * @alpha -- experimental
  */
-export interface CustomVariableSupport<
+export abstract class StandardVariableSupport<
+  DSType extends DataSourceApi<TQuery, TOptions>,
+  TQuery extends DataQuery = DataSourceQueryType<DSType>,
+  TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
+> extends VariableSupportBase<DSType, TQuery, TOptions> {
+  getType(): VariableSupportType {
+    return VariableSupportType.Standard;
+  }
+
+  abstract toDataQuery(query: StandardVariableQuery): TQuery;
+  query?(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse>;
+}
+
+/**
+ * Extend this class in a data source plugin to use a customized query editor for Query variables
+ *
+ * @alpha -- experimental
+ */
+export abstract class CustomVariableSupport<
   DSType extends DataSourceApi<TQuery, TOptions>,
   VariableQuery extends DataQuery = any,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
   TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
-> {
-  type: VariableSupportType;
-  editor: ComponentType<QueryEditorProps<DSType, TQuery, TOptions, VariableQuery>>;
-  query: (request: DataQueryRequest<VariableQuery>) => Observable<DataQueryResponse>;
+> extends VariableSupportBase<DSType, TQuery, TOptions> {
+  getType(): VariableSupportType {
+    return VariableSupportType.Custom;
+  }
+
+  abstract editor: ComponentType<QueryEditorProps<DSType, TQuery, TOptions, VariableQuery>>;
+  abstract query(request: DataQueryRequest<VariableQuery>): Observable<DataQueryResponse>;
 }
 
 /**
- * Implement this interface in a data source plugin to use the query editor in the data source plugin for Query variables
+ * Extend this class in a data source plugin to use the query editor in the data source plugin for Query variables
  *
  * @alpha -- experimental
  */
-export interface DataSourceVariableSupport<
+export abstract class DataSourceVariableSupport<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
   TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
-> {
-  type: VariableSupportType;
+> extends VariableSupportBase<DSType, TQuery, TOptions> {
+  getType(): VariableSupportType {
+    return VariableSupportType.Datasource;
+  }
 }
 
 /**

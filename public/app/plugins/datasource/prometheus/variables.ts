@@ -6,7 +6,6 @@ import {
   rangeUtil,
   StandardVariableQuery,
   StandardVariableSupport,
-  VariableSupportType,
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
@@ -15,16 +14,15 @@ import { PromQuery } from './types';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getTimeSrv, TimeSrv } from '../../../features/dashboard/services/TimeSrv';
 
-export class PrometheusVariableSupport implements StandardVariableSupport<PrometheusDatasource> {
+export class PrometheusVariableSupport extends StandardVariableSupport<PrometheusDatasource> {
   constructor(
     private readonly datasource: PrometheusDatasource,
     private readonly templateSrv: TemplateSrv = getTemplateSrv(),
     private readonly timeSrv: TimeSrv = getTimeSrv()
   ) {
+    super();
     this.query = this.query.bind(this);
   }
-
-  type: VariableSupportType = 'standard';
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     const query = request.targets[0].expr;

@@ -55,9 +55,9 @@ interface DataSourceWithStandardVariableSupport<
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
   variables: {
-    type: VariableSupportType;
-    toDataQuery: (query: StandardVariableQuery) => TQuery;
-    query?: (request: DataQueryRequest<TQuery>) => Observable<DataQueryResponse>;
+    getType(): VariableSupportType;
+    toDataQuery(query: StandardVariableQuery): TQuery;
+    query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse>;
   };
 }
 
@@ -67,9 +67,9 @@ interface DataSourceWithCustomVariableSupport<
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
   variables: {
-    type: VariableSupportType;
+    getType(): VariableSupportType;
     editor: ComponentType<QueryEditorProps<any, TQuery, TOptions, VariableQuery>>;
-    query: (request: DataQueryRequest<TQuery>) => Observable<DataQueryResponse>;
+    query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse>;
   };
 }
 
@@ -78,7 +78,7 @@ interface DataSourceWithDatasourceVariableSupport<
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
   variables: {
-    type: VariableSupportType;
+    getType(): VariableSupportType;
   };
 }
 
@@ -105,7 +105,7 @@ export const hasStandardVariableSupport = <
     return false;
   }
 
-  if (datasource.variables.type !== 'standard') {
+  if (datasource.variables.getType() !== VariableSupportType.Standard) {
     return false;
   }
 
@@ -124,7 +124,7 @@ export const hasCustomVariableSupport = <
     return false;
   }
 
-  if (datasource.variables.type !== 'custom') {
+  if (datasource.variables.getType() !== VariableSupportType.Custom) {
     return false;
   }
 
@@ -143,7 +143,7 @@ export const hasDatasourceVariableSupport = <
     return false;
   }
 
-  return datasource.variables.type === 'datasource';
+  return datasource.variables.getType() === VariableSupportType.Datasource;
 };
 
 export function isLegacyQueryEditor<

@@ -1,6 +1,14 @@
 import { from, Observable, of } from 'rxjs';
 import { mergeMap } from 'rxjs/operators';
-import { DataQuery, DataQueryRequest, DataSourceApi, DefaultTimeRange, LoadingState, PanelData } from '@grafana/data';
+import {
+  DataQuery,
+  DataQueryRequest,
+  DataSourceApi,
+  DefaultTimeRange,
+  LoadingState,
+  PanelData,
+  VariableSupportType,
+} from '@grafana/data';
 
 import { QueryVariableModel } from '../types';
 import {
@@ -24,11 +32,10 @@ export interface RunnerArgs {
   searchFilter?: string;
 }
 
-type QueryRunnerType = 'legacy' | 'standard' | 'custom' | 'datasource';
 type GetTargetArgs = { datasource: DataSourceApi; variable: QueryVariableModel };
 
 export interface QueryRunner {
-  type: QueryRunnerType;
+  type: VariableSupportType;
   canRun: (dataSource: DataSourceApi) => boolean;
   getTarget: (args: GetTargetArgs) => DataQuery;
   runRequest: (args: RunnerArgs, request: DataQueryRequest) => Observable<PanelData>;
@@ -56,7 +63,7 @@ export class QueryRunners {
 }
 
 class LegacyQueryRunner implements QueryRunner {
-  type: QueryRunnerType = 'legacy';
+  type = VariableSupportType.Legacy;
 
   canRun(dataSource: DataSourceApi) {
     return hasLegacyVariableSupport(dataSource);
@@ -91,7 +98,7 @@ class LegacyQueryRunner implements QueryRunner {
 }
 
 class StandardQueryRunner implements QueryRunner {
-  type: QueryRunnerType = 'standard';
+  type = VariableSupportType.Standard;
 
   canRun(dataSource: DataSourceApi) {
     return hasStandardVariableSupport(dataSource);
@@ -119,7 +126,7 @@ class StandardQueryRunner implements QueryRunner {
 }
 
 class CustomQueryRunner implements QueryRunner {
-  type: QueryRunnerType = 'custom';
+  type = VariableSupportType.Custom;
 
   canRun(dataSource: DataSourceApi) {
     return hasCustomVariableSupport(dataSource);
@@ -143,7 +150,7 @@ class CustomQueryRunner implements QueryRunner {
 }
 
 class DatasourceQueryRunner implements QueryRunner {
-  type: QueryRunnerType = 'datasource';
+  type = VariableSupportType.Datasource;
 
   canRun(dataSource: DataSourceApi) {
     return hasDatasourceVariableSupport(dataSource);

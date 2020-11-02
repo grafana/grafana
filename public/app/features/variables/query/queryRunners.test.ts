@@ -1,5 +1,5 @@
 import { QueryRunners } from './queryRunners';
-import { DefaultTimeRange, observableTester } from '@grafana/data';
+import { DefaultTimeRange, observableTester, VariableSupportType } from '@grafana/data';
 import { VariableRefresh } from '../types';
 import { of } from 'rxjs';
 
@@ -22,7 +22,7 @@ describe('QueryRunners', () => {
     describe('and calling getRunnerForDatasource', () => {
       it('then it should return LegacyQueryRunner', () => {
         const { runner } = getLegacyTestContext();
-        expect(runner!.type).toEqual('legacy');
+        expect(runner!.type).toEqual(VariableSupportType.Legacy);
       });
     });
 
@@ -123,7 +123,10 @@ describe('QueryRunners', () => {
       const variable: any = { query: { refId: 'A', query: 'A query' } };
       const timeSrv = {};
       datasource = datasource ?? {
-        variables: { type: 'standard', toDataQuery: (query: any) => ({ ...query, extra: 'extra' }) },
+        variables: {
+          getType: () => VariableSupportType.Standard,
+          toDataQuery: (query: any) => ({ ...query, extra: 'extra' }),
+        },
       };
       const runner = new QueryRunners().getRunnerForDatasource(datasource);
       const runRequest = jest.fn().mockReturnValue(of({}));
@@ -136,7 +139,7 @@ describe('QueryRunners', () => {
     describe('and calling getRunnerForDatasource', () => {
       it('then it should return StandardQueryRunner', () => {
         const { runner } = getStandardTestContext();
-        expect(runner!.type).toEqual('standard');
+        expect(runner!.type).toEqual(VariableSupportType.Standard);
       });
     });
 
@@ -150,7 +153,11 @@ describe('QueryRunners', () => {
 
     describe('and calling runRequest with a datasource that uses a custom query', () => {
       const { runner, request, runnerArgs, runRequest, datasource } = getStandardTestContext({
-        variables: { type: 'standard', toDataQuery: () => undefined, query: () => undefined },
+        variables: {
+          getType: () => VariableSupportType.Standard,
+          toDataQuery: () => undefined,
+          query: () => undefined,
+        },
       });
       const observable = runner.runRequest(runnerArgs, request);
 
@@ -172,7 +179,7 @@ describe('QueryRunners', () => {
 
     describe('and calling runRequest with a datasource that has no custom query', () => {
       const { runner, request, runnerArgs, runRequest, datasource } = getStandardTestContext({
-        variables: { type: 'standard', toDataQuery: () => undefined },
+        variables: { getType: () => VariableSupportType.Standard, toDataQuery: () => undefined },
       });
       const observable = runner.runRequest(runnerArgs, request);
 
@@ -198,7 +205,7 @@ describe('QueryRunners', () => {
       const variable: any = { query: { refId: 'A', query: 'A query' } };
       const timeSrv = {};
       const datasource: any = {
-        variables: { type: 'custom', query: () => undefined, editor: {} },
+        variables: { getType: () => VariableSupportType.Custom, query: () => undefined, editor: {} },
       };
       const runner = new QueryRunners().getRunnerForDatasource(datasource);
       const runRequest = jest.fn().mockReturnValue(of({}));
@@ -211,7 +218,7 @@ describe('QueryRunners', () => {
     describe('and calling getRunnerForDatasource', () => {
       it('then it should return CustomQueryRunner', () => {
         const { runner } = getCustomTestContext();
-        expect(runner!.type).toEqual('custom');
+        expect(runner!.type).toEqual(VariableSupportType.Custom);
       });
     });
 
@@ -249,7 +256,7 @@ describe('QueryRunners', () => {
       const variable: any = { query: { refId: 'A', query: 'A query' } };
       const timeSrv = {};
       const datasource: any = {
-        variables: { type: 'datasource' },
+        variables: { getType: () => VariableSupportType.Datasource },
       };
       const runner = new QueryRunners().getRunnerForDatasource(datasource);
       const runRequest = jest.fn().mockReturnValue(of({}));
@@ -262,7 +269,7 @@ describe('QueryRunners', () => {
     describe('and calling getRunnerForDatasource', () => {
       it('then it should return DatasourceQueryRunner', () => {
         const { runner } = getDatasourceTestContext();
-        expect(runner!.type).toEqual('datasource');
+        expect(runner!.type).toEqual(VariableSupportType.Datasource);
       });
     });
 

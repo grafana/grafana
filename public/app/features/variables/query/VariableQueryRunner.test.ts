@@ -1,5 +1,5 @@
 import { of, throwError } from 'rxjs';
-import { DefaultTimeRange, LoadingState } from '@grafana/data';
+import { DefaultTimeRange, LoadingState, VariableSupportType } from '@grafana/data';
 import { delay } from 'rxjs/operators';
 
 import { UpdateOptionsResults, VariableQueryRunner } from './VariableQueryRunner';
@@ -64,7 +64,7 @@ function getTestContext(variable?: QueryVariableModel) {
     },
   });
   const queryRunner: QueryRunner = {
-    type: 'standard',
+    type: VariableSupportType.Standard,
     canRun: jest.fn().mockReturnValue(true),
     getTarget: jest.fn().mockReturnValue({ refId: 'A', query: 'A query' }),
     runRequest: jest.fn().mockReturnValue(of({ series: [], state: LoadingState.Done })),

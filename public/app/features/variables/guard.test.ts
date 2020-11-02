@@ -8,6 +8,7 @@ import {
 } from './guard';
 import { LegacyVariableQueryEditor } from './editor/LegacyVariableQueryEditor';
 import { StandardVariableQueryEditor } from './editor/getVariableQueryEditor';
+import { VariableSupportType } from '@grafana/data';
 
 describe('type guards', () => {
   describe('hasLegacyVariableSupport', () => {
@@ -38,7 +39,7 @@ describe('type guards', () => {
       it('should return true', () => {
         const datasource: any = {
           metricFindQuery: () => undefined,
-          variables: { type: 'standard', toDataQuery: () => undefined },
+          variables: { getType: () => VariableSupportType.Standard, toDataQuery: () => undefined },
         };
         expect(hasStandardVariableSupport(datasource)).toBe(true);
       });
@@ -47,7 +48,11 @@ describe('type guards', () => {
         it('should return true', () => {
           const datasource: any = {
             metricFindQuery: () => undefined,
-            variables: { type: 'standard', toDataQuery: () => undefined, query: () => undefined },
+            variables: {
+              getType: () => VariableSupportType.Standard,
+              toDataQuery: () => undefined,
+              query: () => undefined,
+            },
           };
           expect(hasStandardVariableSupport(datasource)).toBe(true);
         });
@@ -58,7 +63,7 @@ describe('type guards', () => {
       it('should return false', () => {
         const datasource: any = {
           metricFindQuery: () => undefined,
-          variables: { type: 'standard', query: () => undefined },
+          variables: { getType: () => VariableSupportType.Standard, query: () => undefined },
         };
         expect(hasStandardVariableSupport(datasource)).toBe(false);
       });
@@ -77,7 +82,7 @@ describe('type guards', () => {
       it('should return true', () => {
         const datasource: any = {
           metricFindQuery: () => undefined,
-          variables: { type: 'custom', query: () => undefined, editor: {} },
+          variables: { getType: () => VariableSupportType.Custom, query: () => undefined, editor: {} },
         };
         expect(hasCustomVariableSupport(datasource)).toBe(true);
       });
@@ -87,7 +92,7 @@ describe('type guards', () => {
       it('should return false', () => {
         const datasource: any = {
           metricFindQuery: () => undefined,
-          variables: { type: 'custom', query: () => undefined },
+          variables: { getType: () => VariableSupportType.Custom, query: () => undefined },
         };
         expect(hasCustomVariableSupport(datasource)).toBe(false);
       });
@@ -97,7 +102,7 @@ describe('type guards', () => {
       it('should return false', () => {
         const datasource: any = {
           metricFindQuery: () => undefined,
-          variables: { type: 'custom', editor: {} },
+          variables: { getType: () => VariableSupportType.Custom, editor: {} },
         };
         expect(hasCustomVariableSupport(datasource)).toBe(false);
       });
@@ -116,7 +121,7 @@ describe('type guards', () => {
       it('should return true', () => {
         const datasource: any = {
           metricFindQuery: () => undefined,
-          variables: { type: 'datasource' },
+          variables: { getType: () => VariableSupportType.Datasource },
         };
         expect(hasDatasourceVariableSupport(datasource)).toBe(true);
       });
@@ -178,7 +183,9 @@ describe('isQueryEditor', () => {
     describe('when called without a legacy editor and with a data source with standard variable support', () => {
       it('then is should return true', () => {
         const component: any = StandardVariableQueryEditor;
-        const datasource: any = { variables: { type: 'standard', toDataQuery: () => undefined } };
+        const datasource: any = {
+          variables: { getType: () => VariableSupportType.Standard, toDataQuery: () => undefined },
+        };
 
         expect(isQueryEditor(component, datasource)).toBe(true);
       });
@@ -187,7 +194,9 @@ describe('isQueryEditor', () => {
     describe('when called without a legacy editor and with a data source with custom variable support', () => {
       it('then is should return true', () => {
         const component: any = StandardVariableQueryEditor;
-        const datasource: any = { variables: { type: 'custom', query: () => undefined, editor: {} } };
+        const datasource: any = {
+          variables: { getType: () => VariableSupportType.Custom, query: () => undefined, editor: {} },
+        };
 
         expect(isQueryEditor(component, datasource)).toBe(true);
       });
@@ -196,7 +205,7 @@ describe('isQueryEditor', () => {
     describe('when called without a legacy editor and with a data source with datasource variable support', () => {
       it('then is should return true', () => {
         const component: any = StandardVariableQueryEditor;
-        const datasource: any = { variables: { type: 'datasource' } };
+        const datasource: any = { variables: { getType: () => VariableSupportType.Datasource } };
 
         expect(isQueryEditor(component, datasource)).toBe(true);
       });
@@ -216,7 +225,7 @@ describe('isQueryEditor', () => {
     describe('when called with a legacy query editor', () => {
       it('then is should return false', () => {
         const component: any = LegacyVariableQueryEditor;
-        const datasource: any = { variables: { type: 'datasource' } };
+        const datasource: any = { variables: { getType: () => VariableSupportType.Datasource } };
 
         expect(isQueryEditor(component, datasource)).toBe(false);
       });

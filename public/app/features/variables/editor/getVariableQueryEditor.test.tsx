@@ -1,3 +1,4 @@
+import { VariableSupportType } from '@grafana/data';
 import { getVariableQueryEditor, StandardVariableQueryEditor } from './getVariableQueryEditor';
 import { LegacyVariableQueryEditor } from './LegacyVariableQueryEditor';
 
@@ -6,7 +7,9 @@ describe('getVariableQueryEditor', () => {
     describe('when called with a data source with custom variable support', () => {
       it('then it should return correct editor', async () => {
         const editor: any = StandardVariableQueryEditor;
-        const datasource: any = { variables: { type: 'custom', query: () => undefined, editor } };
+        const datasource: any = {
+          variables: { getType: () => VariableSupportType.Custom, query: () => undefined, editor },
+        };
 
         const result = await getVariableQueryEditor(datasource);
 
@@ -17,7 +20,9 @@ describe('getVariableQueryEditor', () => {
     describe('when called with a data source with standard variable support', () => {
       it('then it should return correct editor', async () => {
         const editor: any = StandardVariableQueryEditor;
-        const datasource: any = { variables: { type: 'standard', toDataQuery: () => undefined } };
+        const datasource: any = {
+          variables: { getType: () => VariableSupportType.Standard, toDataQuery: () => undefined },
+        };
 
         const result = await getVariableQueryEditor(datasource);
 
@@ -30,7 +35,7 @@ describe('getVariableQueryEditor', () => {
         const editor: any = StandardVariableQueryEditor;
         const plugin = { components: { QueryEditor: editor } };
         const importDataSourcePluginFunc = jest.fn().mockResolvedValue(plugin);
-        const datasource: any = { variables: { type: 'datasource' }, meta: {} };
+        const datasource: any = { variables: { getType: () => VariableSupportType.Datasource }, meta: {} };
 
         const result = await getVariableQueryEditor(datasource, importDataSourcePluginFunc);
 
@@ -71,7 +76,7 @@ describe('getVariableQueryEditor', () => {
       it('then it should return throw', async () => {
         const plugin = { components: {} };
         const importDataSourcePluginFunc = jest.fn().mockResolvedValue(plugin);
-        const datasource: any = { variables: { type: 'datasource' }, meta: {} };
+        const datasource: any = { variables: { getType: () => VariableSupportType.Datasource }, meta: {} };
 
         await expect(getVariableQueryEditor(datasource, importDataSourcePluginFunc)).rejects.toThrow(
           new Error('Missing QueryEditor in plugin definition.')
