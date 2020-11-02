@@ -19,7 +19,7 @@ import { TablePanel } from '../table/TablePanel';
 import { LivePanelOptions, MessageDisplayMode } from './types';
 import { config, getGrafanaLiveSrv, MeasurementCollector } from '@grafana/runtime';
 import { css, cx } from 'emotion';
-import CodeEditor from '@grafana/ui/src/components/Monaco/CodeEditor';
+import { CodeEditor } from '@grafana/ui';
 
 interface Props extends PanelProps<LivePanelOptions> {}
 

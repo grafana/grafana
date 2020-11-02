@@ -25,6 +25,7 @@ import {
 import { Switch } from '../components/Switch/Switch';
 import {
   NumberValueEditor,
+  SliderValueEditor,
   RadioButtonGroup,
   StringValueEditor,
   StringArrayEditor,
@@ -229,6 +230,13 @@ export const getStandardOptionEditors = () => {
     editor: NumberValueEditor as any,
   };
 
+  const slider: StandardEditorsRegistryItem<number> = {
+    id: 'slider',
+    name: 'Slider',
+    description: 'Allows numeric values input',
+    editor: SliderValueEditor as any,
+  };
+
   const text: StandardEditorsRegistryItem<string> = {
     id: 'text',
     name: 'Text',
@@ -323,6 +331,7 @@ export const getStandardOptionEditors = () => {
   return [
     text,
     number,
+    slider,
     boolean,
     radio,
     select,

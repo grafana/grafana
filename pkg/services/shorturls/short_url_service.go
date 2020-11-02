@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var getTime = time.Now
+
 func init() {
 	registry.RegisterService(&ShortURLService{})
 }
@@ -40,6 +42,18 @@ func (s ShortURLService) GetShortURLByUID(ctx context.Context, user *models.Sign
 	}
 
 	return &shortURL, nil
+}
+
+func (s ShortURLService) UpdateLastSeenAt(ctx context.Context, shortURL *models.ShortUrl) error {
+	shortURL.LastSeenAt = getTime().Unix()
+	return s.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+		_, err := dbSession.ID(shortURL.Id).Update(shortURL)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 func (s ShortURLService) CreateShortURL(ctx context.Context, user *models.SignedInUser, path string) (*models.ShortUrl, error) {

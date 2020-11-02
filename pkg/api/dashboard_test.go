@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -1129,6 +1130,7 @@ func postDashboardScenario(desc string, url string, routePattern string, mock *d
 			Bus:                 bus.GetBus(),
 			Cfg:                 setting.NewCfg(),
 			ProvisioningService: provisioning.NewProvisioningServiceMock(),
+			Live:                &live.GrafanaLive{Cfg: setting.NewCfg()},
 		}
 
 		sc := setupScenarioContext(url)
@@ -1188,6 +1190,7 @@ func restoreDashboardVersionScenario(desc string, url string, routePattern strin
 			Cfg:                 setting.NewCfg(),
 			Bus:                 bus.GetBus(),
 			ProvisioningService: provisioning.NewProvisioningServiceMock(),
+			Live:                &live.GrafanaLive{Cfg: setting.NewCfg()},
 		}
 
 		sc := setupScenarioContext(url)
