@@ -24,7 +24,7 @@ export const isBucketAggregationWithField = (
   bucketAgg: BucketAggregation | BucketAggregationWithField
 ): bucketAgg is BucketAggregationWithField => bucketAggregationConfig[bucketAgg.type].requiresField;
 
-interface DateHistogram extends BucketAggregationWithField {
+export interface DateHistogram extends BucketAggregationWithField {
   type: 'date_histogram';
   settings?: {
     interval?: string;
@@ -34,7 +34,7 @@ interface DateHistogram extends BucketAggregationWithField {
   };
 }
 
-interface Histogram extends BucketAggregationWithField {
+export interface Histogram extends BucketAggregationWithField {
   type: 'histogram';
   settings?: {
     interval?: string;
@@ -44,7 +44,7 @@ interface Histogram extends BucketAggregationWithField {
 
 type TermsOrder = 'desc' | 'asc';
 
-interface Terms extends BucketAggregationWithField {
+export interface Terms extends BucketAggregationWithField {
   type: 'terms';
   settings?: {
     order?: TermsOrder;

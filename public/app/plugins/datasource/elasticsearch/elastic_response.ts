@@ -11,8 +11,14 @@ import {
   PreferredVisualisationType,
 } from '@grafana/data';
 import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
-import { MetricAggregationType } from './components/MetricAggregationsEditor/state/types';
+import {
+  ExtendedStatMetaType,
+  isMetricAggregationType,
+  isMetricAggregationWithField,
+  MetricAggregationType,
+} from './components/MetricAggregationsEditor/state/types';
 import { describeMetric } from './utils';
+import { metricAggregationConfig } from './components/MetricAggregationsEditor/utils';
 
 export class ElasticResponse {
   constructor(private targets: ElasticsearchQuery[], private response: any) {
@@ -68,7 +74,7 @@ export class ElasticResponse {
         }
         case 'extended_stats': {
           for (const statName in metric.meta) {
-            if (!metric.meta[statName]) {
+            if (!metric.meta[statName as ExtendedStatMetaType]) {
               continue;
             }
 
@@ -99,7 +105,7 @@ export class ElasticResponse {
           newSeries = {
             datapoints: [],
             metric: metric.type,
-            field: metric.field,
+            field: isMetricAggregationWithField(metric) ? metric.field : undefined,
             metricId: metric.id,
             props: props,
           };
@@ -153,7 +159,7 @@ export class ElasticResponse {
       // add bucket key (value)
       values.push(bucket.key);
 
-      for (const metric of target.metrics) {
+      for (const metric of target.metrics || []) {
         switch (metric.type) {
           case 'count': {
             addMetricValue(values, this.getMetricName(metric.type), bucket.doc_count);
@@ -161,7 +167,7 @@ export class ElasticResponse {
           }
           case 'extended_stats': {
             for (const statName in metric.meta) {
-              if (!metric.meta[statName]) {
+              if (!metric.meta[statName as ExtendedStatMetaType]) {
                 continue;
               }
 
@@ -170,7 +176,7 @@ export class ElasticResponse {
               stats.std_deviation_bounds_upper = stats.std_deviation_bounds.upper;
               stats.std_deviation_bounds_lower = stats.std_deviation_bounds.lower;
 
-              addMetricValue(values, this.getMetricName(statName), stats[statName]);
+              addMetricValue(values, this.getMetricName(statName as ExtendedStatMetaType), stats[statName]);
             }
             break;
           }
@@ -188,10 +194,13 @@ export class ElasticResponse {
 
             // if more of the same metric type include field field name in property
             if (otherMetrics.length > 1) {
-              metricName += ' ' + metric.field;
+              if (isMetricAggregationWithField(metric)) {
+                metricName += ' ' + metric.field;
+              }
+
               if (metric.type === 'bucket_script') {
                 //Use the formula in the column name
-                metricName = metric.settings.script;
+                metricName = metric.settings?.script || '';
               }
             }
 
@@ -243,15 +252,12 @@ export class ElasticResponse {
     }
   }
 
-  private getMetricName(metric: MetricAggregationType): string {
-    // return metricAggregationConfig[metric].label;
-
-    let metricDef: any = _.find(queryDef.metricAggTypes, { value: metric });
-    if (!metricDef) {
-      metricDef = _.find(queryDef.extendedStats, { value: metric });
+  private getMetricName(metricType: MetricAggregationType | ExtendedStatMetaType): string {
+    if (isMetricAggregationType(metricType)) {
+      return metricAggregationConfig[metricType].label;
     }
 
-    return metricDef ? metricDef.text : metric;
+    return queryDef.extendedStats.find(stat => stat.value === metricType)!.label;
   }
 
   private getSeriesName(series: any, target: ElasticsearchQuery, metricTypeCount: any) {

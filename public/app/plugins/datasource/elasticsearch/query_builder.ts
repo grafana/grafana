@@ -1,9 +1,12 @@
+import { Filters, Histogram, DateHistogram, Terms } from './components/BucketAggregationsEditor/state/types';
 import {
+  isMetricAggregationWithField,
+  isMetricAggregationWithSettings,
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/MetricAggregationsEditor/state/types';
 import * as queryDef from './query_def';
-import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
+import { ElasticsearchQuery } from './types';
 
 export class ElasticQueryBuilder {
   timeField: string;
@@ -25,15 +28,18 @@ export class ElasticQueryBuilder {
     return filter;
   }
 
-  buildTermsAgg(aggDef: ElasticsearchAggregation, queryNode: { terms?: any; aggs?: any }, target: { metrics: any[] }) {
-    let metricRef, metric, y;
+  buildTermsAgg(aggDef: Terms, queryNode: { terms?: any; aggs?: any }, target: ElasticsearchQuery) {
+    let metricRef;
     queryNode.terms = { field: aggDef.field };
 
     if (!aggDef.settings) {
       return queryNode;
     }
 
-    queryNode.terms.size = parseInt(aggDef.settings.size, 10) === 0 ? 500 : parseInt(aggDef.settings.size, 10);
+    // TODO: This default should be somewhere else together with the one used in the UI
+    const size = aggDef.settings?.size ? parseInt(aggDef.settings.size, 10) : 500;
+    queryNode.terms.size = size === 0 ? 500 : size;
+
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
       if (aggDef.settings.orderBy === '_term' && this.esVersion >= 60) {
@@ -45,12 +51,13 @@ export class ElasticQueryBuilder {
       // if metric ref, look it up and add it to this agg level
       metricRef = parseInt(aggDef.settings.orderBy, 10);
       if (!isNaN(metricRef)) {
-        for (y = 0; y < target.metrics.length; y++) {
-          metric = target.metrics[y];
+        for (let metric of target.metrics || []) {
           if (metric.id === aggDef.settings.orderBy) {
             queryNode.aggs = {};
             queryNode.aggs[metric.id] = {};
-            queryNode.aggs[metric.id][metric.type] = { field: metric.field };
+            if (isMetricAggregationWithField(metric)) {
+              queryNode.aggs[metric.id][metric.type] = { field: metric.field };
+            }
             break;
           }
         }
@@ -72,7 +79,7 @@ export class ElasticQueryBuilder {
     return queryNode;
   }
 
-  getDateHistogramAgg(aggDef: ElasticsearchAggregation) {
+  getDateHistogramAgg(aggDef: DateHistogram) {
     const esAgg: any = {};
     const settings = aggDef.settings || {};
     esAgg.interval = settings.interval;
@@ -89,33 +96,34 @@ export class ElasticQueryBuilder {
       esAgg.interval = '$__interval';
     }
 
-    if (settings.missing) {
-      esAgg.missing = settings.missing;
-    }
+    // FIXME: Accroding to this, Histogram bucket agregation has missing support, but the previous editor didn't implement it
+    // if (settings.missing) {
+    //   esAgg.missing = settings.missing;
+    // }
 
     return esAgg;
   }
 
-  getHistogramAgg(aggDef: ElasticsearchAggregation) {
+  getHistogramAgg(aggDef: Histogram) {
     const esAgg: any = {};
     const settings = aggDef.settings || {};
     esAgg.interval = settings.interval;
     esAgg.field = aggDef.field;
     esAgg.min_doc_count = settings.min_doc_count || 0;
 
-    if (settings.missing) {
-      esAgg.missing = settings.missing;
-    }
+    // FIXME: Accroding to this, Histogram bucket agregation has missing support, but the previous editor didn't implement it
+    // if (settings.missing) {
+    //   esAgg.missing = settings.missing;
+    // }
+
     return esAgg;
   }
 
-  getFiltersAgg(aggDef: ElasticsearchAggregation) {
-    const filterObj: any = {};
-    for (let i = 0; i < aggDef.settings.filters.length; i++) {
-      const query = aggDef.settings.filters[i].query;
-      let label = aggDef.settings.filters[i].label;
-      label = label === '' || label === undefined ? query : label;
-      filterObj[label] = {
+  getFiltersAgg(aggDef: Filters) {
+    const filterObj: Record<string, { query_string: { query: string; analyze_wildcard: boolean } }> = {};
+
+    for (let { query, label } of aggDef.settings?.filters || []) {
+      filterObj[label || query] = {
         query_string: {
           query: query,
           analyze_wildcard: true,
@@ -228,14 +236,17 @@ export class ElasticQueryBuilder {
      */
     if (target.metrics?.[0]?.type === 'raw_document' || target.metrics?.[0]?.type === 'raw_data') {
       metric = target.metrics[0];
-      const size = (metric.settings && metric.settings.size !== 0 && metric.settings.size) || 500;
-      return this.documentQuery(query, size);
+
+      // TODO: This default should be somewhere else together with the one used in the UI
+      const size = metric.settings?.size ? parseInt(metric.settings.size, 10) : 500;
+
+      return this.documentQuery(query, size || 500);
     }
 
     nestedAggs = query;
 
     for (i = 0; i < target.bucketAggs.length; i++) {
-      const aggDef: any = target.bucketAggs[i];
+      const aggDef = target.bucketAggs[i];
       const esAgg: any = {};
 
       switch (aggDef.type) {
@@ -258,7 +269,7 @@ export class ElasticQueryBuilder {
         case 'geohash_grid': {
           esAgg['geohash_grid'] = {
             field: aggDef.field,
-            precision: aggDef.settings.precision,
+            precision: aggDef.settings?.precision,
           };
           break;
         }
@@ -318,15 +329,14 @@ export class ElasticQueryBuilder {
             continue;
           }
         }
-      } else {
+      } else if (isMetricAggregationWithField(metric)) {
         metricAgg = { field: metric.field };
       }
 
-      for (const prop in metric.settings) {
-        if (metric.settings.hasOwnProperty(prop) && metric.settings[prop] !== null) {
-          metricAgg[prop] = metric.settings[prop];
-        }
-      }
+      metricAgg = {
+        ...metricAgg,
+        ...(isMetricAggregationWithSettings(metric) && metric.settings),
+      };
 
       aggField[metric.type] = metricAgg;
       nestedAggs.aggs[metric.id] = aggField;

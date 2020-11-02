@@ -21,6 +21,11 @@ const bucketAggOptions: Array<SelectableValue<BucketAggregationType>> = Object.e
   })
 );
 
+const toSelectableValue = (value: string): SelectableValue<string> => ({
+  label: value,
+  value,
+});
+
 const toOption = (bucketAgg: BucketAggregation) => ({
   label: bucketAggregationConfig[bucketAgg.type].label,
   value: bucketAgg.type,
@@ -35,16 +40,20 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
   const datasource = useDatasource();
   const dispatch = useDispatch<BucketAggregationAction>();
 
-  // TODO: Move this in a hook
-  const getFields = () => {
-    switch (value.type) {
-      case 'date_histogram':
-        return datasource.getFields('date');
-      case 'geohash_grid':
-        return datasource.getFields('geo_point');
-      default:
-        return datasource.getFields();
-    }
+  // TODO: Move this in a separate hook (and be simplified)
+  const getFields = async () => {
+    const get = () => {
+      switch (value.type) {
+        case 'date_histogram':
+          return datasource.getFields('date');
+        case 'geohash_grid':
+          return datasource.getFields('geo_point');
+        default:
+          return datasource.getFields();
+      }
+    };
+
+    return (await get()).map(toSelectableValue);
   };
 
   return (

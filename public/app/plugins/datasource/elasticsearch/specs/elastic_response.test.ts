@@ -1,9 +1,10 @@
 import { DataFrameView, FieldCache, KeyValue, MutableDataFrame } from '@grafana/data';
 import { ElasticResponse } from '../elastic_response';
 import flatten from 'app/core/utils/flatten';
+import { ElasticsearchQuery } from '../types';
 
 describe('ElasticResponse', () => {
-  let targets;
+  let targets: ElasticsearchQuery[];
   let response: any;
   let result: any;
 
@@ -229,7 +230,7 @@ describe('ElasticResponse', () => {
       targets = [
         {
           refId: 'A',
-          metrics: [{ type: 'percentiles', settings: { percents: [75, 90] }, id: '1' }],
+          metrics: [{ type: 'percentiles', settings: { percents: ['75', '90'] }, id: '1', field: '@value' }],
           bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
         },
       ];
@@ -282,6 +283,7 @@ describe('ElasticResponse', () => {
               type: 'extended_stats',
               meta: { max: true, std_deviation_bounds_upper: true },
               id: '1',
+              field: '@value',
             },
           ],
           bucketAggs: [
@@ -468,6 +470,7 @@ describe('ElasticResponse', () => {
               id: '2',
               type: 'filters',
               settings: {
+                // TODO: Check if label is required
                 filters: [{ query: '@metric:cpu' }, { query: '@metric:logins.count' }],
               },
             },
@@ -520,13 +523,16 @@ describe('ElasticResponse', () => {
       targets = [
         {
           refId: 'A',
-          metrics: [{ type: 'avg', id: '1' }, { type: 'count' }],
+          metrics: [
+            { type: 'avg', id: '1', field: '@value' },
+            { type: 'count', id: '3' },
+          ],
           bucketAggs: [
             {
               id: '2',
               type: 'date_histogram',
               field: 'host',
-              settings: { trimEdges: 1 },
+              settings: { trimEdges: '1' },
             },
           ],
         },
@@ -574,7 +580,10 @@ describe('ElasticResponse', () => {
       targets = [
         {
           refId: 'A',
-          metrics: [{ type: 'avg', id: '1' }, { type: 'count' }],
+          metrics: [
+            { type: 'avg', id: '1', field: '@value' },
+            { type: 'count', id: '3' },
+          ],
           bucketAggs: [{ id: '2', type: 'terms', field: 'host' }],
         },
       ];
@@ -625,7 +634,7 @@ describe('ElasticResponse', () => {
       targets = [
         {
           refId: 'A',
-          metrics: [{ type: 'percentiles', field: 'value', settings: { percents: [75, 90] }, id: '1' }],
+          metrics: [{ type: 'percentiles', field: 'value', settings: { percents: ['75', '90'] }, id: '1' }],
           bucketAggs: [{ type: 'term', field: 'id', id: '3' }],
         },
       ];
@@ -770,7 +779,6 @@ describe('ElasticResponse', () => {
             { id: '3', type: 'max', field: '@value' },
             {
               id: '4',
-              field: 'select field',
               pipelineVariables: [
                 { name: 'var1', pipelineAgg: '1' },
                 { name: 'var2', pipelineAgg: '3' },
@@ -838,7 +846,6 @@ describe('ElasticResponse', () => {
             { id: '3', type: 'max', field: '@value' },
             {
               id: '4',
-              field: 'select field',
               pipelineVariables: [
                 { name: 'var1', pipelineAgg: '1' },
                 { name: 'var2', pipelineAgg: '3' },
@@ -848,7 +855,6 @@ describe('ElasticResponse', () => {
             },
             {
               id: '5',
-              field: 'select field',
               pipelineVariables: [
                 { name: 'var1', pipelineAgg: '1' },
                 { name: 'var2', pipelineAgg: '3' },

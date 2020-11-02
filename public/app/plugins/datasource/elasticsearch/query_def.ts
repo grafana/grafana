@@ -11,7 +11,6 @@ import {
   MetricAggregationType,
 } from './components/MetricAggregationsEditor/state/types';
 import { metricAggregationConfig, pipelineOptions } from './components/MetricAggregationsEditor/utils';
-import { ElasticsearchQuery } from './types';
 import { describeMetric } from './utils';
 
 export const extendedStats: ExtendedStat[] = [
@@ -52,46 +51,12 @@ export const movingAvgModelSettings: Record<MovingAverageModel, MovingAverageSet
   ],
 };
 
-export function getMetricAggTypes(esVersion: number) {
-  return _.filter(metricAggTypes, f => {
-    if (f.minVersion || f.maxVersion) {
-      const minVersion = f.minVersion || 0;
-      const maxVersion = f.maxVersion || esVersion;
-      return esVersion >= minVersion && esVersion <= maxVersion;
-    } else {
-      return true;
-    }
-  });
-}
-
 export function getPipelineOptions(metric: MetricAggregation) {
   if (!isPipelineAggregation(metric)) {
     return [];
   }
 
   return pipelineOptions[metric.type];
-}
-
-export function getAncestors(target: ElasticsearchQuery, metric?: MetricAggregation) {
-  const { metrics } = target;
-  if (!metrics) {
-    return (metric && [metric.id]) || [];
-  }
-  const initialAncestors = metric != null ? [metric.id] : ([] as string[]);
-  return metrics.reduce((acc: string[], metric) => {
-    const includedInField = (metric.field && acc.includes(metric.field)) || false;
-    const includedInVariables = metric.pipelineVariables?.some(pv => acc.includes(pv.pipelineAgg ?? ''));
-    return includedInField || includedInVariables ? [...acc, metric.id] : acc;
-  }, initialAncestors);
-}
-
-export function getPipelineAggOptions(target: ElasticsearchQuery, metric?: MetricAggregation) {
-  const { metrics } = target;
-  if (!metrics) {
-    return [];
-  }
-  const ancestors = getAncestors(target, metric);
-  return metrics.filter(m => !ancestors.includes(m.id)).map(m => ({ text: describeMetric(m), value: m.id }));
 }
 
 export function getMovingAvgSettings(model: MovingAverageModel, filtered: boolean) {

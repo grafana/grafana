@@ -38,11 +38,6 @@ describe('ElasticDatasource', function(this: any) {
     jest.clearAllMocks();
   });
 
-  const $rootScope = {
-    $on: jest.fn(),
-    appEvent: jest.fn(),
-  };
-
   const templateSrv: any = {
     replace: jest.fn(text => {
       if (text.startsWith('$')) {
@@ -56,9 +51,9 @@ describe('ElasticDatasource', function(this: any) {
 
   const timeSrv: any = createTimeSrv('now-1h');
 
-  const ctx = {
-    $rootScope,
-  } as any;
+  const ctx: {
+    ds: ElasticDatasource;
+  } = {};
 
   function createTimeSrv(from: string) {
     const srv: any = {
@@ -430,11 +425,8 @@ describe('ElasticDatasource', function(this: any) {
     });
 
     it('should return nested fields', async () => {
-      const fieldObjects = await ctx.ds.getFields({
-        find: 'fields',
-        query: '*',
-      });
-      const fields = _.map(fieldObjects, 'text');
+      const fields = await ctx.ds.getFields();
+
       expect(fields).toEqual([
         '@timestamp',
         '__timestamp',
@@ -449,24 +441,14 @@ describe('ElasticDatasource', function(this: any) {
     });
 
     it('should return number fields', async () => {
-      const fieldObjects = await ctx.ds.getFields({
-        find: 'fields',
-        query: '*',
-        type: 'number',
-      });
+      const fields = await ctx.ds.getFields('number');
 
-      const fields = _.map(fieldObjects, 'text');
       expect(fields).toEqual(['system.cpu.system', 'system.cpu.user', 'system.process.cpu.total']);
     });
 
     it('should return date fields', async () => {
-      const fieldObjects = await ctx.ds.getFields({
-        find: 'fields',
-        query: '*',
-        type: 'date',
-      });
+      const fields = await ctx.ds.getFields('date');
 
-      const fields = _.map(fieldObjects, 'text');
       expect(fields).toEqual(['@timestamp', '__timestamp']);
     });
   });
@@ -538,11 +520,7 @@ describe('ElasticDatasource', function(this: any) {
         return Promise.reject({ status: 404 });
       });
 
-      const fieldObjects = await ctx.ds.getFields({
-        find: 'fields',
-        query: '*',
-      });
-      const fields = _.map(fieldObjects, 'text');
+      const fields = await ctx.ds.getFields();
       expect(fields).toEqual(['@timestamp', 'beat.hostname']);
     });
 
@@ -560,10 +538,7 @@ describe('ElasticDatasource', function(this: any) {
 
       expect.assertions(2);
       try {
-        await ctx.ds.getFields({
-          find: 'fields',
-          query: '*',
-        });
+        await ctx.ds.getFields();
       } catch (e) {
         expect(e).toStrictEqual({ status: 500 });
         expect(datasourceRequestMock).toBeCalledTimes(1);
@@ -577,10 +552,7 @@ describe('ElasticDatasource', function(this: any) {
 
       expect.assertions(2);
       try {
-        await ctx.ds.getFields({
-          find: 'fields',
-          query: '*',
-        });
+        await ctx.ds.getFields();
       } catch (e) {
         expect(e).toStrictEqual({ status: 404 });
         expect(datasourceRequestMock).toBeCalledTimes(7);
@@ -685,12 +657,8 @@ describe('ElasticDatasource', function(this: any) {
     });
 
     it('should return nested fields', async () => {
-      const fieldObjects = await ctx.ds.getFields({
-        find: 'fields',
-        query: '*',
-      });
+      const fields = await ctx.ds.getFields();
 
-      const fields = _.map(fieldObjects, 'text');
       expect(fields).toEqual([
         '@timestamp_millis',
         'classification_terms',
@@ -710,13 +678,8 @@ describe('ElasticDatasource', function(this: any) {
     });
 
     it('should return number fields', async () => {
-      const fieldObjects = await ctx.ds.getFields({
-        find: 'fields',
-        query: '*',
-        type: 'number',
-      });
+      const fields = await ctx.ds.getFields('number');
 
-      const fields = _.map(fieldObjects, 'text');
       expect(fields).toEqual([
         'justification_blob.overall_vote_score',
         'justification_blob.shallow.jsi.sdb.dsel2.bootlegged-gille.botness',
@@ -728,13 +691,8 @@ describe('ElasticDatasource', function(this: any) {
     });
 
     it('should return date fields', async () => {
-      const fieldObjects = await ctx.ds.getFields({
-        find: 'fields',
-        query: '*',
-        type: 'date',
-      });
+      const fields = await ctx.ds.getFields('date');
 
-      const fields = _.map(fieldObjects, 'text');
       expect(fields).toEqual(['@timestamp_millis']);
     });
   });

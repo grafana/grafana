@@ -505,7 +505,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   // TODO: instead of being a string, this could be a custom type representing all the elastic types
-  async getFields(type?: string) {
+  async getFields(type?: string): Promise<string[]> {
+    // FIXME: This can be simplified a lot as we are performing unnecessary transformations
     const configuredEsVersion = this.esVersion;
     return this.get('/_mapping').then((result: any) => {
       const typeMap: any = {
@@ -585,7 +586,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       }
 
       // transform to array
-      return Object.values(fields).map(({ text }) => ({ label: text, value: text }));
+      return Object.values(fields).map(({ text }) => text);
     });
   }
 
