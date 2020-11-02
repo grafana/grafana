@@ -50,8 +50,10 @@ Jaeger block runs both Jaeger and Loki container. Loki container sends traces to
 
 ### Troubleshooting
 
-#### Containers fail to start
+#### Containers fail to start (Mac OS)
 
 `ERROR: for <service_name>  Cannot start service <service_name>: OCI runtime create failed: container_linux.go:349`
 
-If running Mac OSX certain docker containers mount `/var/log/` for logging purposes. When first run this causes Docker to try to create the folder `/var/log/grafana` however by default Docker for Mac does not have permission to create folders at this location as it runs as the current user. To solve this issue manually create the folder `/var/log/grafana` and give your user write permissions.
+If running Mac OSX certain docker containers mount `/var/log/` for logging purposes. When first run this causes Docker to try to create the folder `/var/log/grafana` however by default Docker for Mac does not have permission to create folders at this location as it runs as the current user. 
+
+To solve this issue manually create the folder `/var/log/grafana` and give your user write permissions.
