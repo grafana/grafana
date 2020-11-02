@@ -14,7 +14,7 @@ import {
   QueryFixAction,
   TimeRange,
 } from '@grafana/data';
-import { ExploreId, ExploreItemState, ExplorePanelData } from 'app/types/explore';
+import { ExploreId, ExplorePanelData } from 'app/types/explore';
 
 export interface AddQueryRowPayload {
   exploreId: ExploreId;
@@ -112,18 +112,6 @@ export interface SetQueriesPayload {
   queries: DataQuery[];
 }
 
-export interface SplitCloseActionPayload {
-  itemId: ExploreId;
-}
-
-export interface SplitOpenPayload {
-  itemState: ExploreItemState;
-}
-
-export interface SyncTimesPayload {
-  syncedTimes: boolean;
-}
-
 export interface UpdateDatasourceInstancePayload {
   exploreId: ExploreId;
   datasourceInstance: DataSourceApi;
@@ -157,10 +145,6 @@ export interface ChangeLoadingStatePayload {
 export interface SetPausedStatePayload {
   exploreId: ExploreId;
   isPaused: boolean;
-}
-
-export interface ResetExplorePayload {
-  force?: boolean;
 }
 
 export interface ChangeDedupStrategyPayload {
@@ -272,22 +256,6 @@ export const scanStopAction = createAction<ScanStopPayload>('explore/scanStop');
 export const setQueriesAction = createAction<SetQueriesPayload>('explore/setQueries');
 
 /**
- * Close the split view and save URL state.
- */
-export const splitCloseAction = createAction<SplitCloseActionPayload>('explore/splitClose');
-
-/**
- * Open the split view and copy the left state to be the right state.
- * The right state is automatically initialized.
- * The copy keeps all query modifications but wipes the query results.
- */
-export const splitOpenAction = createAction<SplitOpenPayload>('explore/splitOpen');
-
-export const syncTimesAction = createAction<SyncTimesPayload>('explore/syncTimes');
-
-export const richHistoryUpdatedAction = createAction<any>('explore/richHistoryUpdated');
-
-/**
  * Updates datasource instance before datasouce loading has started
  */
 export const updateDatasourceInstanceAction = createAction<UpdateDatasourceInstancePayload>(
@@ -296,10 +264,6 @@ export const updateDatasourceInstanceAction = createAction<UpdateDatasourceInsta
 
 export const toggleLogLevelAction = createAction<ToggleLogLevelPayload>('explore/toggleLogLevel');
 
-/**
- * Resets state for explore.
- */
-export const resetExploreAction = createAction<ResetExplorePayload>('explore/resetExplore');
 export const queriesImportedAction = createAction<QueriesImportedPayload>('explore/queriesImported');
 
 export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore/historyUpdated');

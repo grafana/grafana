@@ -14,7 +14,7 @@ import {
   setQueriesAction,
 } from './actionTypes';
 import { Emitter } from 'app/core/core';
-import { makeInitialUpdateState } from './reducers';
+import { makeInitialUpdateState } from './exploreItem';
 import { PanelModel } from 'app/features/dashboard/state';
 import { updateLocation } from '../../../core/actions';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';

@@ -16,7 +16,7 @@ import {
   itemReducer,
   makeExploreItemState,
   makeInitialUpdateState,
-} from './reducers';
+} from './exploreItem';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import {

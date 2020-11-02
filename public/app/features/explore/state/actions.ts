@@ -72,14 +72,10 @@ import {
   queriesImportedAction,
   queryStoreSubscriptionAction,
   queryStreamUpdatedAction,
-  richHistoryUpdatedAction,
   scanStartAction,
   scanStopAction,
   setQueriesAction,
   setUrlReplacedAction,
-  splitCloseAction,
-  splitOpenAction,
-  syncTimesAction,
   updateDatasourceInstanceAction,
 } from './actionTypes';
 import { getTimeZone } from 'app/features/profile/state/selectors';
@@ -97,6 +93,7 @@ import {
   decorateWithTableResult,
 } from '../utils/decorators';
 import { createErrorNotification } from '../../../core/copy/appNotification';
+import { richHistoryUpdatedAction, splitCloseAction, splitOpenAction, syncTimesAction } from './main';
 
 /**
  * Adds a query row after the row with the given index.

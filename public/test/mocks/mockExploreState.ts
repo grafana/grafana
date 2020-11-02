@@ -1,5 +1,5 @@
 import { ExploreId, ExploreItemState, ExploreState, RichHistoryQuery } from 'app/types/explore';
-import { makeExploreItemState } from 'app/features/explore/state/reducers';
+import { makeExploreItemState } from 'app/features/explore/state/exploreItem';
 import { StoreState, UserState } from 'app/types';
 import { TimeRange, dateTime, DataSourceApi } from '@grafana/data';
 
