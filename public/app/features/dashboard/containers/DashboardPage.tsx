@@ -145,6 +145,7 @@ export class DashboardPage extends PureComponent<Props, State> {
         this.setState({
           viewPanel: panel,
           rememberScrollTop: this.state.scrollTop,
+          updateScrollTop: 0,
         });
       });
     }
