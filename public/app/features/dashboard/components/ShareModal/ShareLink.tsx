@@ -111,16 +111,24 @@ export class ShareLink extends PureComponent<Props, State> {
             </p>
             <div className="gf-form-group">
               <InlineField labelWidth={24} label="Current time range">
-                <Switch value={useCurrentTimeRange} onChange={this.onUseCurrentTimeRangeChange} />
+                <Switch
+                  id="share-current-time-range"
+                  value={useCurrentTimeRange}
+                  onChange={this.onUseCurrentTimeRangeChange}
+                />
               </InlineField>
               <InlineField labelWidth={24} label="Template variables">
-                <Switch value={includeTemplateVars} onChange={this.onIncludeTemplateVarsChange} />
+                <Switch
+                  id="share-template-vars"
+                  value={includeTemplateVars}
+                  onChange={this.onIncludeTemplateVarsChange}
+                />
               </InlineField>
               <InlineField labelWidth={24} label="Theme">
                 <Select width={20} options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
               </InlineField>
               <InlineField labelWidth={24} label="Shorten URL">
-                <Switch value={useShortUrl} onChange={this.onUrlShorten} />
+                <Switch id="share-shorten-url" value={useShortUrl} onChange={this.onUrlShorten} />
               </InlineField>
             </div>
             <div>

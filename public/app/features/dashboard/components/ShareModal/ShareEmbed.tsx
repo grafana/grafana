@@ -82,10 +82,18 @@ export class ShareEmbed extends PureComponent<Props, State> {
           <div className="share-modal-content">
             <div className="gf-form-group">
               <InlineField labelWidth={24} label="Current time range">
-                <Switch value={useCurrentTimeRange} onChange={this.onUseCurrentTimeRangeChange} />
+                <Switch
+                  id="share-current-time-range"
+                  value={useCurrentTimeRange}
+                  onChange={this.onUseCurrentTimeRangeChange}
+                />
               </InlineField>
               <InlineField labelWidth={24} label="Template variables">
-                <Switch value={includeTemplateVars} onChange={this.onIncludeTemplateVarsChange} />
+                <Switch
+                  id="share-template-variables"
+                  value={includeTemplateVars}
+                  onChange={this.onIncludeTemplateVarsChange}
+                />
               </InlineField>
               <InlineField labelWidth={24} label="Theme">
                 <Select width={20} options={themeOptions} value={selectedTheme} onChange={this.onThemeChange} />
