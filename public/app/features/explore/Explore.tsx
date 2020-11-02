@@ -28,17 +28,7 @@ import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
-import {
-  addQueryRow,
-  changeSize,
-  initializeExplore,
-  modifyQueries,
-  refreshExplore,
-  scanStart,
-  setQueries,
-  updateTimeRange,
-  splitOpen,
-} from './state/actions';
+import { changeSize, initializeExplore, refreshExplore, scanStart, updateTimeRange, splitOpen } from './state/actions';
 
 import { ExploreId, ExploreItemState, ExploreUpdateState } from 'app/types/explore';
 import { StoreState } from 'app/types';
@@ -61,6 +51,7 @@ import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
+import { addQueryRow, modifyQueries, setQueries } from './state/query';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {

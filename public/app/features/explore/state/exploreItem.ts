@@ -1,57 +1,31 @@
 import { AnyAction } from 'redux';
-import { PayloadAction } from '@reduxjs/toolkit';
-import {
-  DataQuery,
-  DataQueryErrorType,
-  DefaultTimeRange,
-  LoadingState,
-  LogsDedupStrategy,
-  PanelData,
-  PanelEvents,
-  sortLogsResult,
-  toLegacyResponseData,
-} from '@grafana/data';
+import { DefaultTimeRange, LoadingState, LogsDedupStrategy, PanelData, sortLogsResult } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 
-import {
-  ensureQueries,
-  generateNewKeyAndAddRefIdIfMissing,
-  getQueryKeys,
-  refreshIntervalToSortOrder,
-  stopQueryState,
-} from 'app/core/utils/explore';
+import { getQueryKeys, refreshIntervalToSortOrder, stopQueryState } from 'app/core/utils/explore';
 import { ExploreItemState, ExploreUpdateState } from 'app/types/explore';
 import {
-  addQueryRowAction,
-  cancelQueriesAction,
   changeDedupStrategyAction,
   changeLoadingStateAction,
-  changeQueryAction,
   changeRangeAction,
   changeRefreshIntervalAction,
   changeSizeAction,
-  clearQueriesAction,
   highlightLogsExpressionAction,
   historyUpdatedAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
-  modifyQueriesAction,
   queriesImportedAction,
-  QueryEndedPayload,
-  queryStoreSubscriptionAction,
-  queryStreamUpdatedAction,
-  removeQueryRowAction,
   scanStartAction,
   scanStopAction,
   setPausedStateAction,
-  setQueriesAction,
   setUrlReplacedAction,
   toggleLogLevelAction,
   updateDatasourceInstanceAction,
 } from './actionTypes';
 import { Emitter } from 'app/core/core';
+import { queryReducer } from './query';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -123,36 +97,7 @@ export const initialExploreItemState = makeExploreItemState();
 // the frozen state.
 // https://github.com/reduxjs/redux-toolkit/issues/242
 export const itemReducer = (state: ExploreItemState = makeExploreItemState(), action: AnyAction): ExploreItemState => {
-  if (addQueryRowAction.match(action)) {
-    const { queries } = state;
-    const { index, query } = action.payload;
-
-    // Add to queries, which will cause a new row to be rendered
-    const nextQueries = [...queries.slice(0, index + 1), { ...query }, ...queries.slice(index + 1)];
-
-    return {
-      ...state,
-      queries: nextQueries,
-      logsHighlighterExpressions: undefined,
-      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
-    };
-  }
-
-  if (changeQueryAction.match(action)) {
-    const { queries } = state;
-    const { query, index } = action.payload;
-
-    // Override path: queries are completely reset
-    const nextQuery: DataQuery = generateNewKeyAndAddRefIdIfMissing(query, queries, index);
-    const nextQueries = [...queries];
-    nextQueries[index] = nextQuery;
-
-    return {
-      ...state,
-      queries: nextQueries,
-      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
-    };
-  }
+  state = queryReducer(state, action);
 
   if (changeSizeAction.match(action)) {
     const containerWidth = action.payload.width;
@@ -180,30 +125,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       isPaused: live ? false : state.isPaused,
       loading: live,
       logsResult,
-    };
-  }
-
-  if (clearQueriesAction.match(action)) {
-    const queries = ensureQueries();
-    stopQueryState(state.querySubscription);
-    return {
-      ...state,
-      queries: queries.slice(),
-      graphResult: null,
-      tableResult: null,
-      logsResult: null,
-      queryKeys: getQueryKeys(queries, state.datasourceInstance),
-      queryResponse: createEmptyQueryResponse(),
-      loading: false,
-    };
-  }
-
-  if (cancelQueriesAction.match(action)) {
-    stopQueryState(state.querySubscription);
-
-    return {
-      ...state,
-      loading: false,
     };
   }
 
@@ -284,63 +205,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
     };
   }
 
-  if (modifyQueriesAction.match(action)) {
-    const { queries } = state;
-    const { modification, index, modifier } = action.payload;
-    let nextQueries: DataQuery[];
-    if (index === undefined) {
-      // Modify all queries
-      nextQueries = queries.map((query, i) => {
-        const nextQuery = modifier({ ...query }, modification);
-        return generateNewKeyAndAddRefIdIfMissing(nextQuery, queries, i);
-      });
-    } else {
-      // Modify query only at index
-      nextQueries = queries.map((query, i) => {
-        if (i === index) {
-          const nextQuery = modifier({ ...query }, modification);
-          return generateNewKeyAndAddRefIdIfMissing(nextQuery, queries, i);
-        }
-
-        return query;
-      });
-    }
-    return {
-      ...state,
-      queries: nextQueries,
-      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
-    };
-  }
-
-  if (removeQueryRowAction.match(action)) {
-    const { queries } = state;
-    const { index } = action.payload;
-
-    if (queries.length <= 1) {
-      return state;
-    }
-
-    // removes a query under a given index and reassigns query keys and refIds to keep everything in order
-    const queriesAfterRemoval: DataQuery[] = [...queries.slice(0, index), ...queries.slice(index + 1)].map(query => {
-      return { ...query, refId: '' };
-    });
-
-    const nextQueries: DataQuery[] = [];
-
-    queriesAfterRemoval.forEach((query, i) => {
-      nextQueries.push(generateNewKeyAndAddRefIdIfMissing(query, nextQueries, i));
-    });
-
-    const nextQueryKeys: string[] = nextQueries.map(query => query.key!);
-
-    return {
-      ...state,
-      queries: nextQueries,
-      logsHighlighterExpressions: undefined,
-      queryKeys: nextQueryKeys,
-    };
-  }
-
   if (scanStartAction.match(action)) {
     return { ...state, scanning: true };
   }
@@ -351,15 +215,6 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
       scanning: false,
       scanRange: undefined,
       update: makeInitialUpdateState(),
-    };
-  }
-
-  if (setQueriesAction.match(action)) {
-    const { queries } = action.payload;
-    return {
-      ...state,
-      queries: queries.slice(),
-      queryKeys: getQueryKeys(queries, state.datasourceInstance),
     };
   }
 
@@ -424,78 +279,5 @@ export const itemReducer = (state: ExploreItemState = makeExploreItemState(), ac
     };
   }
 
-  if (queryStoreSubscriptionAction.match(action)) {
-    const { querySubscription } = action.payload;
-    return {
-      ...state,
-      querySubscription,
-    };
-  }
-
-  if (queryStreamUpdatedAction.match(action)) {
-    return processQueryResponse(state, action);
-  }
-
   return state;
-};
-
-export const processQueryResponse = (
-  state: ExploreItemState,
-  action: PayloadAction<QueryEndedPayload>
-): ExploreItemState => {
-  const { response } = action.payload;
-  const { request, state: loadingState, series, error, graphResult, logsResult, tableResult, traceFrames } = response;
-
-  if (error) {
-    if (error.type === DataQueryErrorType.Timeout) {
-      return {
-        ...state,
-        queryResponse: response,
-        loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
-      };
-    } else if (error.type === DataQueryErrorType.Cancelled) {
-      return state;
-    }
-
-    // For Angular editors
-    state.eventBridge.emit(PanelEvents.dataError, error);
-
-    return {
-      ...state,
-      loading: false,
-      queryResponse: response,
-      graphResult: null,
-      tableResult: null,
-      logsResult: null,
-      update: makeInitialUpdateState(),
-    };
-  }
-
-  if (!request) {
-    return { ...state };
-  }
-
-  const latency = request.endTime ? request.endTime - request.startTime : 0;
-
-  // Send legacy data to Angular editors
-  if (state.datasourceInstance?.components?.QueryCtrl) {
-    const legacy = series.map(v => toLegacyResponseData(v));
-
-    state.eventBridge.emit(PanelEvents.dataReceived, legacy);
-  }
-
-  return {
-    ...state,
-    latency,
-    queryResponse: response,
-    graphResult,
-    tableResult,
-    logsResult,
-    loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
-    update: makeInitialUpdateState(),
-    showLogs: !!logsResult,
-    showMetrics: !!graphResult,
-    showTable: !!tableResult,
-    showTrace: !!traceFrames.length,
-  };
 };

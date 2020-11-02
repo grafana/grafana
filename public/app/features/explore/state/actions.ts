@@ -1,6 +1,4 @@
 // Libraries
-import { map, mergeMap, throttleTime } from 'rxjs/operators';
-import { identity } from 'rxjs';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { DataSourceSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
@@ -11,10 +9,7 @@ import {
   dateTimeForTimeZone,
   ExploreUrlState,
   isDateTime,
-  LoadingState,
   LogsDedupStrategy,
-  PanelData,
-  QueryFixAction,
   RawTimeRange,
   TimeRange,
 } from '@grafana/data';
@@ -23,22 +18,16 @@ import store from 'app/core/store';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { Emitter } from 'app/core/core';
 import {
-  buildQueryTransaction,
   clearQueryKeys,
   ensureQueries,
-  generateEmptyQuery,
   generateNewKeyAndAddRefIdIfMissing,
   GetExploreUrlArguments,
   getTimeRange,
   getTimeRangeFromUrl,
-  hasNonEmptyQuery,
   lastUsedDatasourceKeyForOrgId,
   parseUrlState,
-  stopQueryState,
-  updateHistory,
 } from 'app/core/utils/explore';
 import {
-  addToRichHistory,
   deleteAllFromRichHistory,
   deleteQueryInRichHistory,
   getRichHistory,
@@ -48,64 +37,33 @@ import {
 // Types
 import { ThunkResult } from 'app/types';
 
-import { ExploreId, ExploreItemState, QueryOptions } from 'app/types/explore';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
 import {
-  addQueryRowAction,
-  cancelQueriesAction,
   changeDedupStrategyAction,
   ChangeDedupStrategyPayload,
-  changeLoadingStateAction,
-  changeQueryAction,
   changeRangeAction,
   changeRefreshIntervalAction,
   ChangeRefreshIntervalPayload,
   changeSizeAction,
   ChangeSizePayload,
-  clearQueriesAction,
-  historyUpdatedAction,
   initializeExploreAction,
   loadDatasourceMissingAction,
   loadDatasourcePendingAction,
   loadDatasourceReadyAction,
   LoadDatasourceReadyPayload,
-  modifyQueriesAction,
-  queriesImportedAction,
-  queryStoreSubscriptionAction,
-  queryStreamUpdatedAction,
   scanStartAction,
-  scanStopAction,
-  setQueriesAction,
   setUrlReplacedAction,
   updateDatasourceInstanceAction,
 } from './actionTypes';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
-import { notifyApp, updateLocation } from '../../../core/actions';
+import { updateLocation } from '../../../core/actions';
 import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
-import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getExploreDatasources } from './selectors';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
-import {
-  decorateWithGraphLogsTraceAndTable,
-  decorateWithGraphResult,
-  decorateWithLogsResult,
-  decorateWithTableResult,
-} from '../utils/decorators';
-import { createErrorNotification } from '../../../core/copy/appNotification';
 import { richHistoryUpdatedAction, splitCloseAction, splitOpenAction, syncTimesAction } from './main';
-
-/**
- * Adds a query row after the row with the given index.
- */
-export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {
-  return (dispatch, getState) => {
-    const queries = getState().explore[exploreId].queries;
-    const query = generateEmptyQuery(queries, index);
-
-    dispatch(addQueryRowAction({ exploreId, index, query }));
-  };
-}
+import { importQueries, runQueries, setQueriesAction } from './query';
 
 /**
  * Loads a new datasource identified by the given name.
@@ -147,31 +105,6 @@ export function changeDatasource(
 
     // Exception - we only want to run queries on data source change, if the queries were imported
     if (options?.importQueries) {
-      dispatch(runQueries(exploreId));
-    }
-  };
-}
-
-/**
- * Query change handler for the query row with the given index.
- * If `override` is reset the query modifications and run the queries. Use this to set queries via a link.
- */
-export function changeQuery(
-  exploreId: ExploreId,
-  query: DataQuery,
-  index: number,
-  override = false
-): ThunkResult<void> {
-  return (dispatch, getState) => {
-    // Null query means reset
-    if (query === null) {
-      const queries = getState().explore[exploreId].queries;
-      const { refId, key } = queries[index];
-      query = generateNewKeyAndAddRefIdIfMissing({ refId, key }, queries, index);
-    }
-
-    dispatch(changeQueryAction({ exploreId, query, index, override }));
-    if (override) {
       dispatch(runQueries(exploreId));
     }
   };
@@ -225,28 +158,6 @@ export const changeDedupStrategy = (
 ): PayloadAction<ChangeDedupStrategyPayload> => {
   return changeDedupStrategyAction({ exploreId, dedupStrategy });
 };
-
-/**
- * Clear all queries and results.
- */
-export function clearQueries(exploreId: ExploreId): ThunkResult<void> {
-  return dispatch => {
-    dispatch(scanStopAction({ exploreId }));
-    dispatch(clearQueriesAction({ exploreId }));
-    dispatch(stateSave());
-  };
-}
-
-/**
- * Cancel running queries
- */
-export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
-  return dispatch => {
-    dispatch(scanStopAction({ exploreId }));
-    dispatch(cancelQueriesAction({ exploreId }));
-    dispatch(stateSave());
-  };
-}
 
 /**
  * Loads all explore data sources and sets the chosen datasource.
@@ -319,46 +230,6 @@ export const loadDatasourceReady = (
 };
 
 /**
- * Import queries from previous datasource if possible eg Loki and Prometheus have similar query language so the
- * labels part can be reused to get similar data.
- * @param exploreId
- * @param queries
- * @param sourceDataSource
- * @param targetDataSource
- */
-export const importQueries = (
-  exploreId: ExploreId,
-  queries: DataQuery[],
-  sourceDataSource: DataSourceApi | undefined | null,
-  targetDataSource: DataSourceApi
-): ThunkResult<void> => {
-  return async dispatch => {
-    if (!sourceDataSource) {
-      // explore not initialized
-      dispatch(queriesImportedAction({ exploreId, queries }));
-      return;
-    }
-
-    let importedQueries = queries;
-    // Check if queries can be imported from previously selected datasource
-    if (sourceDataSource.meta?.id === targetDataSource.meta?.id) {
-      // Keep same queries if same type of datasource
-      importedQueries = [...queries];
-    } else if (targetDataSource.importQueries) {
-      // Datasource-specific importers
-      importedQueries = await targetDataSource.importQueries(queries, sourceDataSource.meta);
-    } else {
-      // Default is blank queries
-      importedQueries = ensureQueries();
-    }
-
-    const nextQueries = ensureQueries(importedQueries);
-
-    dispatch(queriesImportedAction({ exploreId, queries: nextQueries }));
-  };
-};
-
-/**
  * Main action to asynchronously load a datasource. Dispatches lots of smaller actions for feedback.
  */
 export const loadDatasource = (exploreId: ExploreId, instance: DataSourceApi, orgId: number): ThunkResult<void> => {
@@ -382,147 +253,6 @@ export const loadDatasource = (exploreId: ExploreId, instance: DataSourceApi, or
     }
 
     dispatch(loadDatasourceReady(exploreId, instance, orgId));
-  };
-};
-
-/**
- * Action to modify a query given a datasource-specific modifier action.
- * @param exploreId Explore area
- * @param modification Action object with a type, e.g., ADD_FILTER
- * @param index Optional query row index. If omitted, the modification is applied to all query rows.
- * @param modifier Function that executes the modification, typically `datasourceInstance.modifyQueries`.
- */
-export function modifyQueries(
-  exploreId: ExploreId,
-  modification: QueryFixAction,
-  modifier: any,
-  index?: number
-): ThunkResult<void> {
-  return dispatch => {
-    dispatch(modifyQueriesAction({ exploreId, modification, index, modifier }));
-    if (!modification.preventSubmit) {
-      dispatch(runQueries(exploreId));
-    }
-  };
-}
-
-/**
- * Main action to run queries and dispatches sub-actions based on which result viewers are active
- */
-export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    dispatch(updateTime({ exploreId }));
-
-    const richHistory = getState().explore.richHistory;
-    const exploreItemState = getState().explore[exploreId];
-    const {
-      datasourceInstance,
-      queries,
-      containerWidth,
-      isLive: live,
-      range,
-      scanning,
-      queryResponse,
-      querySubscription,
-      history,
-      refreshInterval,
-      absoluteRange,
-    } = exploreItemState;
-
-    if (!hasNonEmptyQuery(queries)) {
-      dispatch(clearQueriesAction({ exploreId }));
-      dispatch(stateSave()); // Remember to save to state and update location
-      return;
-    }
-
-    if (!datasourceInstance) {
-      return;
-    }
-
-    // Some datasource's query builders allow per-query interval limits,
-    // but we're using the datasource interval limit for now
-    const minInterval = datasourceInstance?.interval;
-
-    stopQueryState(querySubscription);
-
-    const datasourceId = datasourceInstance?.meta.id;
-
-    const queryOptions: QueryOptions = {
-      minInterval,
-      // maxDataPoints is used in:
-      // Loki - used for logs streaming for buffer size, with undefined it falls back to datasource config if it supports that.
-      // Elastic - limits the number of datapoints for the counts query and for logs it has hardcoded limit.
-      // Influx - used to correctly display logs in graph
-      // TODO:unification
-      // maxDataPoints: mode === ExploreMode.Logs && datasourceId === 'loki' ? undefined : containerWidth,
-      maxDataPoints: containerWidth,
-      liveStreaming: live,
-    };
-
-    const datasourceName = exploreItemState.requestedDatasourceName;
-    const timeZone = getTimeZone(getState().user);
-    const transaction = buildQueryTransaction(queries, queryOptions, range, scanning, timeZone);
-
-    let firstResponse = true;
-    dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Loading }));
-
-    const newQuerySub = runRequest(datasourceInstance, transaction.request)
-      .pipe(
-        // Simple throttle for live tailing, in case of > 1000 rows per interval we spend about 200ms on processing and
-        // rendering. In case this is optimized this can be tweaked, but also it should be only as fast as user
-        // actually can see what is happening.
-        live ? throttleTime(500) : identity,
-        map((data: PanelData) => preProcessPanelData(data, queryResponse)),
-        map(decorateWithGraphLogsTraceAndTable),
-        map(decorateWithGraphResult),
-        map(decorateWithLogsResult({ absoluteRange, refreshInterval })),
-        mergeMap(decorateWithTableResult)
-      )
-      .subscribe(
-        data => {
-          if (!data.error && firstResponse) {
-            // Side-effect: Saving history in localstorage
-            const nextHistory = updateHistory(history, datasourceId, queries);
-            const nextRichHistory = addToRichHistory(
-              richHistory || [],
-              datasourceId,
-              datasourceName,
-              queries,
-              false,
-              '',
-              ''
-            );
-            dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
-            dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
-
-            // We save queries to the URL here so that only successfully run queries change the URL.
-            dispatch(stateSave());
-          }
-
-          firstResponse = false;
-
-          dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
-
-          // Keep scanning for results if this was the last scanning transaction
-          if (getState().explore[exploreId].scanning) {
-            if (data.state === LoadingState.Done && data.series.length === 0) {
-              const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
-              dispatch(updateTime({ exploreId, absoluteRange: range }));
-              dispatch(runQueries(exploreId));
-            } else {
-              // We can stop scanning if we have a result
-              dispatch(scanStopAction({ exploreId }));
-            }
-          }
-        },
-        error => {
-          dispatch(notifyApp(createErrorNotification('Query processing error', error)));
-          dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
-          console.error(error);
-        }
-      );
-
-    dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
   };
 };
 
@@ -651,20 +381,6 @@ export function scanStart(exploreId: ExploreId): ThunkResult<void> {
     const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
     // Set the new range to be displayed
     dispatch(updateTime({ exploreId, absoluteRange: range }));
-    dispatch(runQueries(exploreId));
-  };
-}
-
-/**
- * Reset queries to the given queries. Any modifications will be discarded.
- * Use this action for clicks on query examples. Triggers a query run.
- */
-export function setQueries(exploreId: ExploreId, rawQueries: DataQuery[]): ThunkResult<void> {
-  return (dispatch, getState) => {
-    // Inject react keys into query objects
-    const queries = getState().explore[exploreId].queries;
-    const nextQueries = rawQueries.map((query, index) => generateNewKeyAndAddRefIdIfMissing(query, queries, index));
-    dispatch(setQueriesAction({ exploreId, queries: nextQueries }));
     dispatch(runQueries(exploreId));
   };
 }

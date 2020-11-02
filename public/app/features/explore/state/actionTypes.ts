@@ -1,5 +1,4 @@
 // Types
-import { Unsubscribable } from 'rxjs';
 import { createAction } from '@reduxjs/toolkit';
 
 import { Emitter } from 'app/core/core';
@@ -11,23 +10,9 @@ import {
   LoadingState,
   LogLevel,
   LogsDedupStrategy,
-  QueryFixAction,
   TimeRange,
 } from '@grafana/data';
-import { ExploreId, ExplorePanelData } from 'app/types/explore';
-
-export interface AddQueryRowPayload {
-  exploreId: ExploreId;
-  index: number;
-  query: DataQuery;
-}
-
-export interface ChangeQueryPayload {
-  exploreId: ExploreId;
-  query: DataQuery;
-  index: number;
-  override: boolean;
-}
+import { ExploreId } from 'app/types/explore';
 
 export interface ChangeSizePayload {
   exploreId: ExploreId;
@@ -38,10 +23,6 @@ export interface ChangeSizePayload {
 export interface ChangeRefreshIntervalPayload {
   exploreId: ExploreId;
   refreshInterval: string;
-}
-
-export interface ClearQueriesPayload {
-  exploreId: ExploreId;
 }
 
 export interface HighlightLogsExpressionPayload {
@@ -72,31 +53,9 @@ export interface LoadDatasourceReadyPayload {
   history: HistoryItem[];
 }
 
-export interface ModifyQueriesPayload {
-  exploreId: ExploreId;
-  modification: QueryFixAction;
-  index?: number;
-  modifier: (query: DataQuery, modification: QueryFixAction) => DataQuery;
-}
-
-export interface QueryEndedPayload {
-  exploreId: ExploreId;
-  response: ExplorePanelData;
-}
-
-export interface QueryStoreSubscriptionPayload {
-  exploreId: ExploreId;
-  querySubscription: Unsubscribable;
-}
-
 export interface HistoryUpdatedPayload {
   exploreId: ExploreId;
   history: HistoryItem[];
-}
-
-export interface RemoveQueryRowPayload {
-  exploreId: ExploreId;
-  index: number;
 }
 
 export interface ScanStartPayload {
@@ -105,11 +64,6 @@ export interface ScanStartPayload {
 
 export interface ScanStopPayload {
   exploreId: ExploreId;
-}
-
-export interface SetQueriesPayload {
-  exploreId: ExploreId;
-  queries: DataQuery[];
 }
 
 export interface UpdateDatasourceInstancePayload {
@@ -153,17 +107,6 @@ export interface ChangeDedupStrategyPayload {
 }
 
 /**
- * Adds a query row after the row with the given index.
- */
-export const addQueryRowAction = createAction<AddQueryRowPayload>('explore/addQueryRow');
-
-/**
- * Query change handler for the query row with the given index.
- * If `override` is reset the query modifications and run the queries. Use this to set queries via a link.
- */
-export const changeQueryAction = createAction<ChangeQueryPayload>('explore/changeQuery');
-
-/**
  * Keep track of the Explore container size, in particular the width.
  * The width will be used to calculate graph intervals (number of datapoints).
  */
@@ -178,16 +121,6 @@ export const changeRefreshIntervalAction = createAction<ChangeRefreshIntervalPay
  * Change deduplication strategy for logs.
  */
 export const changeDedupStrategyAction = createAction<ChangeDedupStrategyPayload>('explore/changeDedupStrategyAction');
-
-/**
- * Clear all queries and results.
- */
-export const clearQueriesAction = createAction<ClearQueriesPayload>('explore/clearQueries');
-
-/**
- * Cancel running queries.
- */
-export const cancelQueriesAction = createAction<ClearQueriesPayload>('explore/cancelQueries');
 
 /**
  * Highlight expressions in the log results
@@ -218,26 +151,6 @@ export const loadDatasourcePendingAction = createAction<LoadDatasourcePendingPay
 export const loadDatasourceReadyAction = createAction<LoadDatasourceReadyPayload>('explore/loadDatasourceReady');
 
 /**
- * Action to modify a query given a datasource-specific modifier action.
- * @param exploreId Explore area
- * @param modification Action object with a type, e.g., ADD_FILTER
- * @param index Optional query row index. If omitted, the modification is applied to all query rows.
- * @param modifier Function that executes the modification, typically `datasourceInstance.modifyQueries`.
- */
-export const modifyQueriesAction = createAction<ModifyQueriesPayload>('explore/modifyQueries');
-
-export const queryStreamUpdatedAction = createAction<QueryEndedPayload>('explore/queryStreamUpdated');
-
-export const queryStoreSubscriptionAction = createAction<QueryStoreSubscriptionPayload>(
-  'explore/queryStoreSubscription'
-);
-
-/**
- * Remove query row of the given index, as well as associated query results.
- */
-export const removeQueryRowAction = createAction<RemoveQueryRowPayload>('explore/removeQueryRow');
-
-/**
  * Start a scan for more results using the given scanner.
  * @param exploreId Explore area
  * @param scanner Function that a) returns a new time range and b) triggers a query run for the new range
@@ -248,12 +161,6 @@ export const scanStartAction = createAction<ScanStartPayload>('explore/scanStart
  * Stop any scanning for more results.
  */
 export const scanStopAction = createAction<ScanStopPayload>('explore/scanStop');
-
-/**
- * Reset queries to the given queries. Any modifications will be discarded.
- * Use this action for clicks on query examples. Triggers a query run.
- */
-export const setQueriesAction = createAction<SetQueriesPayload>('explore/setQueries');
 
 /**
  * Updates datasource instance before datasouce loading has started
