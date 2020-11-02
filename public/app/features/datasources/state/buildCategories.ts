@@ -1,5 +1,6 @@
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { DataSourcePluginCategory } from 'app/types';
+import { config } from '../../../core/config';
 
 export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePluginCategory[] {
   const categories: DataSourcePluginCategory[] = [
@@ -23,9 +24,11 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
   }
 
   for (const plugin of plugins) {
+    const enterprisePlugin = enterprisePlugins.find(item => item.id === plugin.id);
     // Force category for enterprise plugins
-    if (plugin.enterprise || enterprisePlugins.find(item => item.id === plugin.id)) {
+    if (plugin.enterprise || enterprisePlugin) {
       plugin.category = 'enterprise';
+      plugin.info.links = enterprisePlugin?.info?.links || plugin.info.links;
     }
 
     // Fix link name
@@ -197,7 +200,7 @@ function getPhantomPlugin(options: GetPhantomPluginOptions): DataSourcePluginMet
       author: { name: 'Grafana Labs' },
       links: [
         {
-          url: 'https://grafana.com/grafana/plugins/' + options.id,
+          url: config.marketPlaceUrl + options.id,
           name: 'Install now',
         },
       ],

@@ -130,7 +130,6 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
   const { plugin, onLearnMoreClick } = props;
   const isPhantom = plugin.module === 'phantom';
   const onClick = !isPhantom && !plugin.unlicensed ? props.onClick : () => {};
-
   // find first plugin info link
   const learnMoreLink = plugin.info?.links?.length > 0 ? plugin.info.links[0] : null;
 
