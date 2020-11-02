@@ -68,6 +68,11 @@ export async function variableQueryEditorFactory<
     return StandardVariableQueryEditor;
   }
 
+  if (hasLegacyVariableSupport(datasource)) {
+    const dsPlugin = await importDataSourcePlugin(datasource.meta!);
+    return dsPlugin.components.VariableQueryEditor ?? LegacyVariableQueryEditor;
+  }
+
   return null;
 }
 

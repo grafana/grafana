@@ -10,8 +10,6 @@ import { addVariableEditorError, changeVariableEditorExtended, removeVariableEdi
 import { changeVariableProp } from '../state/sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { hasLegacyVariableSupport, hasStandardVariableSupport } from '../guard';
-import { importDataSourcePlugin } from '../../plugins/plugin_loader';
-import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
 import { variableQueryEditorFactory } from '../editor/factories';
 import { Subscription } from 'rxjs';
 import { getVariableQueryRunner } from './variableQueryRunner';
@@ -80,13 +78,6 @@ export const changeQueryVariableDataSource = (
     try {
       const dataSource = await getDatasourceSrv().get(name ?? '');
       dispatch(changeVariableEditorExtended({ propName: 'dataSource', propValue: dataSource }));
-
-      if (hasLegacyVariableSupport(dataSource)) {
-        const dsPlugin = await importDataSourcePlugin(dataSource.meta!);
-        const VariableQueryEditor = dsPlugin.components.VariableQueryEditor ?? LegacyVariableQueryEditor;
-        dispatch(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: VariableQueryEditor }));
-        return;
-      }
 
       const VariableQueryEditor = await variableQueryEditorFactory(dataSource);
       dispatch(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: VariableQueryEditor }));
