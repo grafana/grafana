@@ -75,22 +75,22 @@ describe('Table utils', () => {
     describe('happy path', () => {
       const field: any = { values: new ArrayVector(['a', 'aa', 'ab', 'b', 'ba', 'bb', 'c']) };
       const rows: any = [
-        { id: 0, values: { 0: 'a' } },
-        { id: 1, values: { 0: 'aa' } },
-        { id: 2, values: { 0: 'ab' } },
-        { id: 3, values: { 0: 'b' } },
-        { id: 4, values: { 0: 'ba' } },
-        { id: 5, values: { 0: 'bb' } },
-        { id: 6, values: { 0: 'c' } },
+        { index: 0, values: { 0: 'a' } },
+        { index: 1, values: { 0: 'aa' } },
+        { index: 2, values: { 0: 'ab' } },
+        { index: 3, values: { 0: 'b' } },
+        { index: 4, values: { 0: 'ba' } },
+        { index: 5, values: { 0: 'bb' } },
+        { index: 6, values: { 0: 'c' } },
       ];
       const filterValues = [{ value: 'a' }, { value: 'b' }, { value: 'c' }];
 
       const result = filterByValue(field)(rows, '0', filterValues);
 
       expect(result).toEqual([
-        { id: 0, values: { 0: 'a' } },
-        { id: 3, values: { 0: 'b' } },
-        { id: 6, values: { 0: 'c' } },
+        { index: 0, values: { 0: 'a' } },
+        { index: 3, values: { 0: 'b' } },
+        { index: 6, values: { 0: 'c' } },
       ]);
     });
 
@@ -135,9 +135,9 @@ describe('Table utils', () => {
         it('should return rows', () => {
           const field: any = { values: new ArrayVector(['a', 'b', 'c']) };
           const rows: any = [
-            { id: 0, values: { 0: 'a' } },
-            { id: 1, values: { 0: 'b' } },
-            { id: 2, values: { 0: 'c' } },
+            { index: 0, values: { 0: 'a' } },
+            { index: 1, values: { 0: 'b' } },
+            { index: 2, values: { 0: 'c' } },
           ];
           const filterValues = [{ value: 'a' }, { value: 'b' }, { value: 'c' }];
 
@@ -153,7 +153,7 @@ describe('Table utils', () => {
     describe('when called without field', () => {
       it('then it should return an empty object', () => {
         const field = undefined;
-        const rows = [{ id: 0 }];
+        const rows = [{ index: 0 }];
 
         const result = calculateUniqueFieldValues(rows, field);
 
@@ -203,7 +203,7 @@ describe('Table utils', () => {
             text: `${value}.0`,
           })),
         };
-        const rows: any[] = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+        const rows: any[] = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }, { index: 4 }];
 
         const result = calculateUniqueFieldValues(rows, field);
 
@@ -224,7 +224,7 @@ describe('Table utils', () => {
           name: 'value',
           type: FieldType.number,
         };
-        const rows: any[] = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+        const rows: any[] = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }, { index: 4 }];
 
         const result = calculateUniqueFieldValues(rows, field);
 
@@ -243,7 +243,7 @@ describe('Table utils', () => {
             name: 'value',
             type: FieldType.number,
           };
-          const rows: any[] = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+          const rows: any[] = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }, { index: 4 }];
 
           const result = calculateUniqueFieldValues(rows, field);
 
@@ -261,7 +261,7 @@ describe('Table utils', () => {
     describe('happy paths', () => {
       describe('field without field display', () => {
         const field: any = { values: new ArrayVector(['a', 'b', 'c']) };
-        const row = { id: 1 };
+        const row = { index: 1 };
 
         const result = rowToFieldValue(row, field);
 
@@ -282,7 +282,7 @@ describe('Table utils', () => {
             text: `${value}.0`,
           })),
         };
-        const row = { id: 4 };
+        const row = { index: 4 };
 
         const result = rowToFieldValue(row, field);
 
@@ -293,7 +293,7 @@ describe('Table utils', () => {
     describe('quick exist paths', () => {
       describe('field is missing', () => {
         const field = undefined;
-        const row = { id: 0 };
+        const row = { index: 0 };
 
         const result = rowToFieldValue(row, field);
 

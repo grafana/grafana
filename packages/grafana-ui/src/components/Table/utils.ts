@@ -160,8 +160,7 @@ export function rowToFieldValue(row: any, field?: Field): string {
     return '';
   }
 
-  const index = parseInt(row.id, 10);
-  const fieldValue = field.values.get(index);
+  const fieldValue = field.values.get(row.index);
   const displayValue = field.display ? field.display(fieldValue) : fieldValue;
   const value = field.display ? formattedValueToString(displayValue) : displayValue;
 
