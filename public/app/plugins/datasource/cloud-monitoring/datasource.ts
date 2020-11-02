@@ -30,8 +30,7 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.api = new API(`${instanceSettings.url!}/cloudmonitoring/v3/projects/`);
 
-    const custom = new CloudMonitoringVariableSupport(this);
-    this.variables = { custom };
+    this.variables = new CloudMonitoringVariableSupport(this);
   }
 
   getVariables() {

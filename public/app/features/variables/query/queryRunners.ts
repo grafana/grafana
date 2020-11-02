@@ -99,7 +99,7 @@ class StandardQueryRunner implements QueryRunner {
 
   getTarget({ datasource, variable }: GetTargetArgs) {
     if (hasStandardVariableSupport(datasource)) {
-      return datasource.variables.standard.toDataQuery(variable.query);
+      return datasource.variables.toDataQuery(variable.query);
     }
 
     throw new Error("Couldn't create a target with supplied arguments.");
@@ -110,11 +110,11 @@ class StandardQueryRunner implements QueryRunner {
       return getEmptyMetricFindValueObservable();
     }
 
-    if (!datasource.variables.standard.query) {
+    if (!datasource.variables.query) {
       return runRequest(datasource, request);
     }
 
-    return runRequest(datasource, request, datasource.variables.standard.query);
+    return runRequest(datasource, request, datasource.variables.query);
   }
 }
 
@@ -138,7 +138,7 @@ class CustomQueryRunner implements QueryRunner {
       return getEmptyMetricFindValueObservable();
     }
 
-    return runRequest(datasource, request, datasource.variables.custom.query);
+    return runRequest(datasource, request, datasource.variables.query);
   }
 }
 

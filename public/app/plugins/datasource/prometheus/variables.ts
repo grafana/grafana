@@ -6,6 +6,7 @@ import {
   rangeUtil,
   StandardVariableQuery,
   StandardVariableSupport,
+  VariableSupportType,
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 
@@ -22,6 +23,8 @@ export class PrometheusVariableSupport implements StandardVariableSupport<Promet
   ) {
     this.query = this.query.bind(this);
   }
+
+  type: VariableSupportType = 'standard';
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     const query = request.targets[0].expr;

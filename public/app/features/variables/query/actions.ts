@@ -88,7 +88,7 @@ export const changeQueryVariableDataSource = (
         return;
       }
 
-      const VariableQueryEditor = variableQueryEditorFactory(dataSource);
+      const VariableQueryEditor = await variableQueryEditorFactory(dataSource);
       dispatch(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: VariableQueryEditor }));
     } catch (err) {
       console.error(err);

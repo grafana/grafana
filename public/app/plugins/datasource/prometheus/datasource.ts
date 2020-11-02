@@ -80,8 +80,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
 
-    const standard = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
-    this.variables = { standard };
+    this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
   }
 
   init = () => {

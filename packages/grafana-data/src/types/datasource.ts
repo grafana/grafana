@@ -10,7 +10,7 @@ import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
 import { CoreApp } from './app';
 import { LiveChannelSupport } from './live';
-import { VariableSupport } from './variables';
+import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -303,7 +303,10 @@ export abstract class DataSourceApi<
    * Defines new variable support
    * @alpha -- experimental
    */
-  variables?: VariableSupport<DataSourceApi<TQuery, TOptions>>;
+  variables?:
+    | StandardVariableSupport<DataSourceApi<TQuery, TOptions>>
+    | CustomVariableSupport<DataSourceApi<TQuery, TOptions>>
+    | DataSourceVariableSupport<DataSourceApi<TQuery, TOptions>>;
 }
 
 export interface MetadataInspectorProps<

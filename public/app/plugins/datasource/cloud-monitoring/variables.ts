@@ -1,6 +1,6 @@
 import { from, Observable } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
-import { CustomVariableSupport, DataQueryRequest, DataQueryResponse } from '@grafana/data';
+import { CustomVariableSupport, DataQueryRequest, DataQueryResponse, VariableSupportType } from '@grafana/data';
 
 import CloudMonitoringDatasource from './datasource';
 import { CloudMonitoringVariableQuery } from './types';
@@ -15,6 +15,8 @@ export class CloudMonitoringVariableSupport
     this.metricFindQuery = new CloudMonitoringMetricFindQuery(datasource);
     this.query = this.query.bind(this);
   }
+
+  type: VariableSupportType = 'custom';
 
   editor = CloudMonitoringVariableQueryEditor;
 

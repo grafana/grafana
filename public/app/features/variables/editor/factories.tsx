@@ -10,6 +10,7 @@ import {
   hasStandardVariableSupport,
 } from '../guard';
 import { VariableQueryProps } from '../../../types';
+import { importDataSourcePlugin } from '../../plugins/plugin_loader';
 
 export type VariableQueryEditorType<
   TQuery extends DataQuery = DataQuery,
@@ -49,17 +50,18 @@ export function isQueryEditor<
   );
 }
 
-export function variableQueryEditorFactory<
+export async function variableQueryEditorFactory<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
   VariableQuery extends DataQuery = TQuery
->(datasource: DataSourceApi<TQuery, TOptions>): VariableQueryEditorType {
+>(datasource: DataSourceApi<TQuery, TOptions>): Promise<VariableQueryEditorType> {
   if (hasCustomVariableSupport(datasource)) {
-    return datasource.variables.custom.editor;
+    return datasource.variables.editor;
   }
 
   if (hasDatasourceVariableSupport(datasource)) {
-    return datasource.variables.datasource.editor;
+    const dsPlugin = await importDataSourcePlugin(datasource.meta!);
+    return dsPlugin.components.QueryEditor ?? null;
   }
 
   if (hasStandardVariableSupport(datasource)) {

@@ -1,6 +1,7 @@
 import { ComponentType } from 'react';
 import { Observable } from 'rxjs';
 import {
+  CustomVariableSupport,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
@@ -9,6 +10,8 @@ import {
   MetricFindValue,
   QueryEditorProps,
   StandardVariableQuery,
+  StandardVariableSupport,
+  VariableSupportType,
 } from '@grafana/data';
 
 import {
@@ -49,12 +52,9 @@ interface DataSourceWithStandardVariableSupport<
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
   variables: {
-    standard: {
-      toDataQuery: (query: StandardVariableQuery) => TQuery;
-      query?: (request: DataQueryRequest<TQuery>) => Observable<DataQueryResponse>;
-    };
-    custom: undefined;
-    datasource: undefined;
+    type: VariableSupportType;
+    toDataQuery: (query: StandardVariableQuery) => TQuery;
+    query?: (request: DataQueryRequest<TQuery>) => Observable<DataQueryResponse>;
   };
 }
 
@@ -64,12 +64,9 @@ interface DataSourceWithCustomVariableSupport<
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
   variables: {
-    standard: undefined;
-    custom: {
-      editor: ComponentType<QueryEditorProps<any, TQuery, TOptions, VariableQuery>>;
-      query: (request: DataQueryRequest<TQuery>) => Observable<DataQueryResponse>;
-    };
-    datasource: undefined;
+    type: VariableSupportType;
+    editor: ComponentType<QueryEditorProps<any, TQuery, TOptions, VariableQuery>>;
+    query: (request: DataQueryRequest<TQuery>) => Observable<DataQueryResponse>;
   };
 }
 
@@ -78,11 +75,7 @@ interface DataSourceWithDatasourceVariableSupport<
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > extends DataSourceApi<TQuery, TOptions> {
   variables: {
-    standard: undefined;
-    custom: undefined;
-    datasource: {
-      editor: ComponentType<QueryEditorProps<any, TQuery, TOptions, TQuery>>;
-    };
+    type: VariableSupportType;
   };
 }
 
@@ -105,12 +98,17 @@ export const hasStandardVariableSupport = <
 >(
   datasource: DataSourceApi<TQuery, TOptions>
 ): datasource is DataSourceWithStandardVariableSupport<TQuery, TOptions> => {
-  return (
-    Boolean(datasource.variables?.standard) &&
-    Boolean(datasource.variables?.standard?.toDataQuery) &&
-    !Boolean(datasource.variables?.custom) &&
-    !Boolean(datasource.variables?.datasource)
-  );
+  if (!datasource.variables) {
+    return false;
+  }
+
+  if (datasource.variables.type !== 'standard') {
+    return false;
+  }
+
+  const variableSupport = datasource.variables as StandardVariableSupport<DataSourceApi<TQuery, TOptions>>;
+
+  return Boolean(variableSupport.toDataQuery);
 };
 
 export const hasCustomVariableSupport = <
@@ -119,13 +117,17 @@ export const hasCustomVariableSupport = <
 >(
   datasource: DataSourceApi<TQuery, TOptions>
 ): datasource is DataSourceWithCustomVariableSupport<any, TQuery, TOptions> => {
-  return (
-    Boolean(datasource.variables?.custom) &&
-    Boolean(datasource.variables?.custom?.query) &&
-    Boolean(datasource.variables?.custom?.editor) &&
-    !Boolean(datasource.variables?.standard) &&
-    !Boolean(datasource.variables?.datasource)
-  );
+  if (!datasource.variables) {
+    return false;
+  }
+
+  if (datasource.variables.type !== 'custom') {
+    return false;
+  }
+
+  const variableSupport = datasource.variables as CustomVariableSupport<DataSourceApi<TQuery, TOptions>>;
+
+  return Boolean(variableSupport.query) && Boolean(variableSupport.editor);
 };
 
 export const hasDatasourceVariableSupport = <
@@ -134,10 +136,9 @@ export const hasDatasourceVariableSupport = <
 >(
   datasource: DataSourceApi<TQuery, TOptions>
 ): datasource is DataSourceWithDatasourceVariableSupport<TQuery, TOptions> => {
-  return (
-    Boolean(datasource.variables?.datasource) &&
-    Boolean(datasource.variables?.datasource?.editor) &&
-    !Boolean(datasource.variables?.standard) &&
-    !Boolean(datasource.variables?.custom)
-  );
+  if (!datasource.variables) {
+    return false;
+  }
+
+  return datasource.variables.type === 'datasource';
 };

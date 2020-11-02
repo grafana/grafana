@@ -12,34 +12,7 @@ import {
   QueryEditorProps,
 } from './datasource';
 
-/**
- * Defines new variable support
- *
- * Use one of the properties standard | custom | datasource to define the kind of query editor and query support you want to use in the Variable system
- *
- * @alpha -- experimental
- */
-export interface VariableSupport<
-  DSType extends DataSourceApi<TQuery, TOptions>,
-  TQuery extends DataQuery = DataSourceQueryType<DSType>,
-  TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>,
-  VariableQuery extends DataQuery = any
-> {
-  /**
-   * Use this property if you want to use the standard query editor supplied in the Variable system
-   */
-  standard?: StandardVariableSupport<DSType, TQuery, TOptions>;
-
-  /**
-   * Use this property if you want to use a custom query and query editor
-   */
-  custom?: CustomVariableSupport<DSType, VariableQuery, TQuery, TOptions>;
-
-  /**
-   * Use this property if you want to use the same query editor as the data source
-   */
-  datasource?: DataSourceVariableSupport<DSType, TQuery, TOptions>;
-}
+export type VariableSupportType = 'standard' | 'custom' | 'datasource';
 
 /**
  * Implement this interface in a data source plugin to use the standard query editor for Query variables
@@ -51,6 +24,7 @@ export interface StandardVariableSupport<
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
   TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
 > {
+  type: VariableSupportType;
   toDataQuery: (query: StandardVariableQuery) => TQuery;
   query?: (request: DataQueryRequest<TQuery>) => Observable<DataQueryResponse>;
 }
@@ -66,6 +40,7 @@ export interface CustomVariableSupport<
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
   TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
 > {
+  type: VariableSupportType;
   editor: ComponentType<QueryEditorProps<DSType, TQuery, TOptions, VariableQuery>>;
   query: (request: DataQueryRequest<VariableQuery>) => Observable<DataQueryResponse>;
 }
@@ -80,7 +55,7 @@ export interface DataSourceVariableSupport<
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
   TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
 > {
-  editor: ComponentType<QueryEditorProps<DSType, TQuery, TOptions, TQuery>>;
+  type: VariableSupportType;
 }
 
 /**

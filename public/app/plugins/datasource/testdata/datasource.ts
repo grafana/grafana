@@ -23,10 +23,10 @@ import {
 import { Scenario, TestDataQuery } from './types';
 import {
   getBackendSrv,
+  getLiveMeasurementsObserver,
   getTemplateSrv,
   TemplateSrv,
   toDataQueryError,
-  getLiveMeasurementsObserver,
 } from '@grafana/runtime';
 import { queryMetricTree } from './metricTree';
 import { runStream } from './runStreams';
@@ -43,7 +43,7 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
     private readonly templateSrv: TemplateSrv = getTemplateSrv()
   ) {
     super(instanceSettings);
-    this.variables = { standard: new TestDataVariableSupport() };
+    this.variables = new TestDataVariableSupport();
   }
 
   query(options: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {

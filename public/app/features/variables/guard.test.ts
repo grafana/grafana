@@ -34,7 +34,7 @@ describe('type guards', () => {
       it('should return true', () => {
         const datasource: any = {
           metricFindQuery: () => undefined,
-          variables: { standard: { toDataQuery: () => undefined } },
+          variables: { type: 'standard', toDataQuery: () => undefined },
         };
         expect(hasStandardVariableSupport(datasource)).toBe(true);
       });
@@ -43,7 +43,7 @@ describe('type guards', () => {
         it('should return true', () => {
           const datasource: any = {
             metricFindQuery: () => undefined,
-            variables: { standard: { toDataQuery: () => undefined, query: () => undefined } },
+            variables: { type: 'standard', toDataQuery: () => undefined, query: () => undefined },
           };
           expect(hasStandardVariableSupport(datasource)).toBe(true);
         });
@@ -54,7 +54,7 @@ describe('type guards', () => {
       it('should return false', () => {
         const datasource: any = {
           metricFindQuery: () => undefined,
-          variables: { standard: { query: () => undefined } },
+          variables: { type: 'standard', query: () => undefined },
         };
         expect(hasStandardVariableSupport(datasource)).toBe(false);
       });
@@ -66,33 +66,6 @@ describe('type guards', () => {
         expect(hasStandardVariableSupport(datasource)).toBe(false);
       });
     });
-
-    describe('when called with a data source with standard variable support and datasource variable support', () => {
-      it('should return false', () => {
-        const datasource: any = {
-          variables: { standard: { toDataQuery: () => undefined }, datasource: {} },
-        };
-        expect(hasStandardVariableSupport(datasource)).toBe(false);
-      });
-    });
-
-    describe('when called with a data source source with standard variable support and custom variable support', () => {
-      it('should return false', () => {
-        const datasource: any = {
-          variables: { standard: { toDataQuery: () => undefined }, custom: {} },
-        };
-        expect(hasStandardVariableSupport(datasource)).toBe(false);
-      });
-    });
-
-    describe('when called with a data source source with standard variable support, datasource variable support and custom variable support', () => {
-      it('should return false', () => {
-        const datasource: any = {
-          variables: { standard: { toDataQuery: () => undefined }, datasource: {}, custom: {} },
-        };
-        expect(hasStandardVariableSupport(datasource)).toBe(false);
-      });
-    });
   });
 
   describe('hasCustomVariableSupport', () => {
@@ -100,7 +73,7 @@ describe('type guards', () => {
       it('should return true', () => {
         const datasource: any = {
           metricFindQuery: () => undefined,
-          variables: { custom: { query: () => undefined, editor: {} } },
+          variables: { type: 'custom', query: () => undefined, editor: {} },
         };
         expect(hasCustomVariableSupport(datasource)).toBe(true);
       });
@@ -110,7 +83,7 @@ describe('type guards', () => {
       it('should return false', () => {
         const datasource: any = {
           metricFindQuery: () => undefined,
-          variables: { custom: { query: () => undefined } },
+          variables: { type: 'custom', query: () => undefined },
         };
         expect(hasCustomVariableSupport(datasource)).toBe(false);
       });
@@ -120,7 +93,7 @@ describe('type guards', () => {
       it('should return false', () => {
         const datasource: any = {
           metricFindQuery: () => undefined,
-          variables: { custom: { editor: {} } },
+          variables: { type: 'custom', editor: {} },
         };
         expect(hasCustomVariableSupport(datasource)).toBe(false);
       });
@@ -132,33 +105,6 @@ describe('type guards', () => {
         expect(hasCustomVariableSupport(datasource)).toBe(false);
       });
     });
-
-    describe('when called with a data source with custom variable support and datasource variable support', () => {
-      it('should return false', () => {
-        const datasource: any = {
-          variables: { custom: { query: () => undefined, editor: {} }, datasource: {} },
-        };
-        expect(hasCustomVariableSupport(datasource)).toBe(false);
-      });
-    });
-
-    describe('when called with a data source source with custom variable support and standard variable support', () => {
-      it('should return false', () => {
-        const datasource: any = {
-          variables: { custom: { query: () => undefined, editor: {} }, standard: {} },
-        };
-        expect(hasCustomVariableSupport(datasource)).toBe(false);
-      });
-    });
-
-    describe('when called with a data source source with custom variable support, datasource variable support and standard variable support', () => {
-      it('should return false', () => {
-        const datasource: any = {
-          variables: { custom: { query: () => undefined, editor: {} }, datasource: {}, standard: {} },
-        };
-        expect(hasCustomVariableSupport(datasource)).toBe(false);
-      });
-    });
   });
 
   describe('hasDatasourceVariableSupport', () => {
@@ -166,52 +112,15 @@ describe('type guards', () => {
       it('should return true', () => {
         const datasource: any = {
           metricFindQuery: () => undefined,
-          variables: { datasource: { editor: {} } },
+          variables: { type: 'datasource' },
         };
         expect(hasDatasourceVariableSupport(datasource)).toBe(true);
-      });
-    });
-
-    describe('when called with a data source with datasource variable support but without editor', () => {
-      it('should return false', () => {
-        const datasource: any = {
-          metricFindQuery: () => undefined,
-          variables: { datasource: {} },
-        };
-        expect(hasDatasourceVariableSupport(datasource)).toBe(false);
       });
     });
 
     describe('when called with a data source without datasource variable support', () => {
       it('should return false', () => {
         const datasource: any = { metricFindQuery: () => undefined };
-        expect(hasDatasourceVariableSupport(datasource)).toBe(false);
-      });
-    });
-
-    describe('when called with a data source with datasource variable support and custom variable support', () => {
-      it('should return false', () => {
-        const datasource: any = {
-          variables: { datasource: { editor: {} }, custom: { query: () => undefined, editor: {} } },
-        };
-        expect(hasDatasourceVariableSupport(datasource)).toBe(false);
-      });
-    });
-
-    describe('when called with a data source source with datasource variable support and standard variable support', () => {
-      it('should return false', () => {
-        const datasource: any = {
-          variables: { datasource: { editor: {} }, standard: {} },
-        };
-        expect(hasDatasourceVariableSupport(datasource)).toBe(false);
-      });
-    });
-
-    describe('when called with a data source source with datasource variable support, custom variable support and standard variable support', () => {
-      it('should return false', () => {
-        const datasource: any = {
-          variables: { datasource: { editor: {} }, custom: { query: () => undefined, editor: {} }, standard: {} },
-        };
         expect(hasDatasourceVariableSupport(datasource)).toBe(false);
       });
     });
