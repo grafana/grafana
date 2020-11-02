@@ -172,7 +172,7 @@ export class GrafanaApp {
     $.fn.tooltip.defaults.animation = false;
 
     // bootstrap the app
-    const injector = angular.bootstrap(document, this.ngModuleDependencies);
+    const injector: any = angular.bootstrap(document, this.ngModuleDependencies);
 
     injector.invoke(() => {
       _.each(this.preBootModules, (module: angular.IModule) => {
@@ -190,6 +190,20 @@ export class GrafanaApp {
         }, 1000);
       }
     });
+
+    injector.oldInvoke = injector.invoke;
+    injector.invoke = (fn: any, self: any, locals: any, serviceName: any) => {
+      if (locals?.$scope?.$parent?.panel) {
+        self.panel = locals.$scope.$parent.panel;
+      }
+      if (locals?.$scope?.$parent?.dashboard) {
+        self.dashboard = locals.$scope.$parent.dashboard;
+      }
+      if (locals?.$scope?.ctrl) {
+        self.panelCtrl = locals.$scope.$parent.ctrl;
+      }
+      return injector.oldInvoke(fn, self, locals, serviceName);
+    };
 
     // Preload selected app plugins
     for (const modulePath of config.pluginsToPreload) {
