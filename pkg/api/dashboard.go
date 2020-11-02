@@ -362,7 +362,8 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 }
 
 func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext, dash *simplejson.Json) {
-	// We only add this getting startewd panel for Admins who have not dismissed it or if a custom default home dashboard has been configured
+	// We only add this getting started panel for Admins who have not dismissed it
+	// Or if a custom default home dashboard has been configured
 	if !c.HasUserRole(models.ROLE_ADMIN) ||
 		c.HasHelpFlag(models.HelpFlagGettingStartedPanelDismissed) ||
 		hs.Cfg.DefaultHomeDashboardPath != "" {
