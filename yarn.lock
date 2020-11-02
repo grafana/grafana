@@ -6254,10 +6254,10 @@
   resolved "https://registry.yarnpkg.com/@types/deep-freeze/-/deep-freeze-0.1.2.tgz#68e5379291910e82c2f0d1629732163c2aa662cc"
   integrity sha512-M6x29Vk4681dght4IMnPIcF1SNmeEm0c4uatlTFhp+++H1oDK1THEIzuCC2WeCBVhX+gU0NndsseDS3zaCtlcQ==
 
-"@types/enzyme-adapter-react-15@1.0.6":
+"@types/enzyme-adapter-react-16@1.0.6":
   version "1.0.6"
-  resolved "https://registry.yarnpkg.com/@types/enzyme-adapter-react-15/-/enzyme-adapter-react-15-1.0.6.tgz#e99f4af1c59f5941735799bbd472d2d533401cd0"
-  integrity sha512-GY36+W/rPlFpqn3quKMaOZOQyRX/F+aVotj3oh2nDCDoD94L2qD1L9drqfclBdfq4hDV3amKg6qZ5jTvZms2Zg==
+  resolved "https://registry.yarnpkg.com/@types/enzyme-adapter-react-16/-/enzyme-adapter-react-16-1.0.6.tgz#8aca7ae2fd6c7137d869b6616e696d21bb8b0cec"
+  integrity sha512-VonDkZ15jzqDWL8mPFIQnnLtjwebuL9YnDkqeCDYnB4IVgwUm0mwKkqhrxLL6mb05xm7qqa3IE95m8CZE9imCg==
   dependencies:
     "@types/enzyme" "*"
 
