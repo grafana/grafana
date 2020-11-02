@@ -12,7 +12,7 @@ import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../
 import { hasLegacyVariableSupport, hasStandardVariableSupport } from '../guard';
 import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
 import { Subscription } from 'rxjs';
-import { getVariableQueryRunner } from './variableQueryRunner';
+import { getVariableQueryRunner } from './VariableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
 
 export const updateQueryVariableOptions = (

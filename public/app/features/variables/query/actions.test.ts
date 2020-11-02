@@ -34,7 +34,7 @@ import { updateOptions } from '../state/actions';
 import { notifyApp } from '../../../core/reducers/appNotification';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
-import { setVariableQueryRunner, VariableQueryRunner } from './variableQueryRunner';
+import { setVariableQueryRunner, VariableQueryRunner } from './VariableQueryRunner';
 
 const mocks: Record<string, any> = {
   datasource: {

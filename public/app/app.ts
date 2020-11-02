@@ -51,7 +51,7 @@ import { getScrollbarWidth, getStandardFieldConfigs, getStandardOptionEditors } 
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
-import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/variableQueryRunner';
+import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore

@@ -1,6 +1,7 @@
 import { Observer, Subscription } from 'rxjs';
-import { UpdateOptionsResults } from './variableQueryRunner';
 import { LoadingState } from '@grafana/data';
+
+import { UpdateOptionsResults } from './VariableQueryRunner';
 
 export function variableQueryObserver(
   resolve: (value?: any) => void,

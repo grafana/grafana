@@ -2,7 +2,7 @@ import { of, throwError } from 'rxjs';
 import { DefaultTimeRange, LoadingState } from '@grafana/data';
 import { delay } from 'rxjs/operators';
 
-import { UpdateOptionsResults, VariableQueryRunner } from './variableQueryRunner';
+import { UpdateOptionsResults, VariableQueryRunner } from './VariableQueryRunner';
 import { queryBuilder } from '../shared/testing/builders';
 import { QueryRunner, QueryRunners } from './queryRunners';
 import { toVariableIdentifier, VariableIdentifier } from '../state/types';

@@ -1,7 +1,7 @@
 import { variableQueryObserver } from './variableQueryObserver';
 import { LoadingState } from '@grafana/data';
 import { VariableIdentifier } from '../state/types';
-import { UpdateOptionsResults } from './variableQueryRunner';
+import { UpdateOptionsResults } from './VariableQueryRunner';
 
 function getTestContext(args: { next?: UpdateOptionsResults; error?: any; complete?: boolean }) {
   const { next, error, complete } = args;
