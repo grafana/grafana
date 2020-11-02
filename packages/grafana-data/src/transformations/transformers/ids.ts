@@ -19,4 +19,5 @@ export enum DataTransformerID {
   noop = 'noop',
   ensureColumns = 'ensureColumns',
   groupBy = 'groupBy',
+  groupingToMatrix = 'groupingToMatrix',
 }
