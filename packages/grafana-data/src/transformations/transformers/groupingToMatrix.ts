@@ -1,3 +1,5 @@
+import { map } from 'rxjs/operators';
+
 import { DataFrame, DataTransformerInfo, Field, FieldType } from '../../types';
 import { DataTransformerID } from './ids';
 import { MutableDataFrame } from '../../dataframe';
@@ -22,76 +24,71 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
     rowField: DEFAULT_ROW_FIELD,
     valueField: DEFAULT_VALUE_FIELD,
   },
-  transformer: options => (data: DataFrame[]) => {
-    const columnFieldMatch = options.columnField || DEFAULT_COLUMN_FIELD;
-    const rowFieldMatch = options.rowField || DEFAULT_ROW_FIELD;
-    const valueFieldMatch = options.valueField || DEFAULT_VALUE_FIELD;
+  operator: options => source =>
+    source.pipe(
+      map(data => {
+        const columnFieldMatch = options.columnField || DEFAULT_COLUMN_FIELD;
+        const rowFieldMatch = options.rowField || DEFAULT_ROW_FIELD;
+        const valueFieldMatch = options.valueField || DEFAULT_VALUE_FIELD;
 
-    // Accept only single queries
-    if (data.length !== 1) {
-      return data;
-    }
+        // Accept only single queries
+        if (data.length !== 1) {
+          return data;
+        }
 
-    const frame = data[0];
-    const keyColumnField = findKeyField(frame, columnFieldMatch);
-    const keyRowField = findKeyField(frame, rowFieldMatch);
-    const valueField = findKeyField(frame, valueFieldMatch);
-    const rowColumnField = `${rowFieldMatch}\\${columnFieldMatch}`;
+        const frame = data[0];
+        const keyColumnField = findKeyField(frame, columnFieldMatch);
+        const keyRowField = findKeyField(frame, rowFieldMatch);
+        const valueField = findKeyField(frame, valueFieldMatch);
+        const rowColumnField = `${rowFieldMatch}\\${columnFieldMatch}`;
 
-    if (!keyColumnField || !keyRowField || !valueField) {
-      return data;
-    }
+        if (!keyColumnField || !keyRowField || !valueField) {
+          return data;
+        }
 
-    const columnValues = [...new Set(keyColumnField.values.toArray())];
-    const rowValues = [...new Set(keyRowField.values.toArray())];
+        const columnValues = [...new Set(keyColumnField.values.toArray())];
+        const rowValues = [...new Set(keyRowField.values.toArray())];
 
-    const matrixValues: { [key: string]: { [key: string]: any } } = {};
+        const matrixValues: { [key: string]: { [key: string]: any } } = {};
 
-    for (let index = 0; index < valueField.values.length; index++) {
-      const columnName = keyColumnField.values.get(index);
-      const rowName = keyRowField.values.get(index);
-      const value = valueField.values.get(index);
+        for (let index = 0; index < valueField.values.length; index++) {
+          const columnName = keyColumnField.values.get(index);
+          const rowName = keyRowField.values.get(index);
+          const value = valueField.values.get(index);
 
-      if (!matrixValues[columnName]) {
-        matrixValues[columnName] = {};
-      }
+          if (!matrixValues[columnName]) {
+            matrixValues[columnName] = {};
+          }
 
-      matrixValues[columnName][rowName] = value;
-    }
+          matrixValues[columnName][rowName] = value;
+        }
 
-    // FIELDS TO ADD
-    // FIELD[0]:
-    //  NAME: ROW/COLUMN
-    //  VALUES: FIELD[ROW] -> VALUES
-    // FIELD[1..N]:
-    //  NAME: FIELD[COLUMN] -> VALUES[N]
-    //  VALUES: FIELD[ROW][COLUMN] -> VALUE
+        const resultFrame = new MutableDataFrame();
 
-    const resultFrame = new MutableDataFrame();
+        resultFrame.addField({
+          name: rowColumnField,
+          values: rowValues,
+          type: FieldType.string,
+        });
 
-    resultFrame.addField({
-      name: rowColumnField,
-      values: rowValues,
-      type: FieldType.string,
-    });
+        for (const columnName of columnValues) {
+          let values = [];
+          for (const rowName of rowValues) {
+            const value = matrixValues[columnName][rowName] ?? '';
+            values.push(value);
+          }
 
-    for (const columnName of columnValues) {
-      let values = [];
-      for (const rowName of rowValues) {
-        const value = matrixValues[columnName][rowName] ?? '';
-        values.push(value);
-      }
+          resultFrame.addField({
+            name: columnName.toString(),
+            values: values,
+            config: valueField.config,
+            type: valueField.type,
+          });
+        }
 
-      resultFrame.addField({
-        name: columnName,
-        values: values,
-        config: valueField.config,
-        type: valueField.type,
-      });
-    }
-
-    return [resultFrame];
-  },
+        return [resultFrame];
+      })
+    ),
 };
 
 function findKeyField(frame: DataFrame, matchTitle: string): Field | null {
