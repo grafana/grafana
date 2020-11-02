@@ -141,6 +141,8 @@ steps:
   image: grafana/build-container:1.2.28
   commands:
   - yarn storybook:build
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
 
@@ -410,6 +412,8 @@ steps:
   image: grafana/build-container:1.2.28
   commands:
   - yarn storybook:build
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
 
@@ -846,6 +850,8 @@ steps:
   image: grafana/build-container:1.2.28
   commands:
   - yarn storybook:build
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
 
@@ -1615,6 +1621,8 @@ steps:
   image: grafana/build-container:1.2.28
   commands:
   - yarn storybook:build
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
 
@@ -2373,6 +2381,8 @@ steps:
   image: grafana/build-container:1.2.28
   commands:
   - yarn storybook:build
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
 
@@ -2675,6 +2685,8 @@ steps:
   image: grafana/build-container:1.2.28
   commands:
   - yarn storybook:build
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
 
