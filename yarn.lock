@@ -5835,22 +5835,17 @@
     react-input-autosize "^2.2.2"
     react-transition-group "^4.3.0"
 
-"@types/angular-route@1.7.1":
-  version "1.7.1"
-  resolved "https://registry.yarnpkg.com/@types/angular-route/-/angular-route-1.7.1.tgz#0f545189ff51afc74afbcdde17b56a277963d51b"
-  integrity sha512-5N5nfUYTEf5InmrhGU5qtvBOHOq6uvv1olJR5fd6Eq5YFT+cdjrr0nklBaFfulAsF0Cd8y7IQipgaUSwWsATYQ==
+"@types/angular-route@1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@types/angular-route/-/angular-route-1.7.0.tgz#ba12d09df1aac3c88e3684500001daedfc97fb69"
+  integrity sha512-gctkSXUY7hDwFeW8il7f3+sdMmds0JaMnHvrZmqX79DHXf2D72+SHxJHIt5i6+0BrhoqdWdpgziSxuKnkAUAQw==
   dependencies:
     "@types/angular" "*"
 
-"@types/angular@*":
+"@types/angular@*", "@types/angular@1.6.56":
   version "1.6.56"
   resolved "https://registry.yarnpkg.com/@types/angular/-/angular-1.6.56.tgz#20124077bd44061e018c7283c0bb83f4b00322dd"
   integrity sha512-HxtqilvklZ7i6XOaiP7uIJIrFXEVEhfbSY45nfv2DeBRngncI58Y4ZOUMiUkcT8sqgLL1ablmbfylChUg7A3GA==
-
-"@types/angular@1.7.4":
-  version "1.7.4"
-  resolved "https://registry.yarnpkg.com/@types/angular/-/angular-1.7.4.tgz#f50ed06e2ddb3437ec8c730e6a3189fbd59125e5"
-  integrity sha512-ZcBdve7BszuzwtgDiaYuHhEGPkA0gKhBRMckGZVfZ6M4L8Jt/rqQTV4I3koQg8ZPf9sdDExs3xx9GpZIkAyyjg==
 
 "@types/antlr4@^4.7.1":
   version "4.7.1"
@@ -6259,10 +6254,10 @@
   resolved "https://registry.yarnpkg.com/@types/deep-freeze/-/deep-freeze-0.1.2.tgz#68e5379291910e82c2f0d1629732163c2aa662cc"
   integrity sha512-M6x29Vk4681dght4IMnPIcF1SNmeEm0c4uatlTFhp+++H1oDK1THEIzuCC2WeCBVhX+gU0NndsseDS3zaCtlcQ==
 
-"@types/enzyme-adapter-react-16@1.0.6":
+"@types/enzyme-adapter-react-15@1.0.6":
   version "1.0.6"
-  resolved "https://registry.yarnpkg.com/@types/enzyme-adapter-react-16/-/enzyme-adapter-react-16-1.0.6.tgz#8aca7ae2fd6c7137d869b6616e696d21bb8b0cec"
-  integrity sha512-VonDkZ15jzqDWL8mPFIQnnLtjwebuL9YnDkqeCDYnB4IVgwUm0mwKkqhrxLL6mb05xm7qqa3IE95m8CZE9imCg==
+  resolved "https://registry.yarnpkg.com/@types/enzyme-adapter-react-15/-/enzyme-adapter-react-15-1.0.6.tgz#e99f4af1c59f5941735799bbd472d2d533401cd0"
+  integrity sha512-GY36+W/rPlFpqn3quKMaOZOQyRX/F+aVotj3oh2nDCDoD94L2qD1L9drqfclBdfq4hDV3amKg6qZ5jTvZms2Zg==
   dependencies:
     "@types/enzyme" "*"
 

@@ -51,6 +51,7 @@ import { getStandardFieldConfigs, getStandardOptionEditors, getScrollbarWidth } 
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
+import { monkeyPatchInjectorWithPreAssignedBindings } from './core/injectorMonkeyPatch';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -191,19 +192,7 @@ export class GrafanaApp {
       }
     });
 
-    injector.oldInvoke = injector.invoke;
-    injector.invoke = (fn: any, self: any, locals: any, serviceName: any) => {
-      if (locals?.$scope?.$parent?.panel) {
-        self.panel = locals.$scope.$parent.panel;
-      }
-      if (locals?.$scope?.$parent?.dashboard) {
-        self.dashboard = locals.$scope.$parent.dashboard;
-      }
-      if (locals?.$scope?.ctrl) {
-        self.panelCtrl = locals.$scope.$parent.ctrl;
-      }
-      return injector.oldInvoke(fn, self, locals, serviceName);
-    };
+    monkeyPatchInjectorWithPreAssignedBindings(injector);
 
     // Preload selected app plugins
     for (const modulePath of config.pluginsToPreload) {
