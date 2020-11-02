@@ -26,6 +26,9 @@ export interface InfoBoxProps extends Omit<React.HTMLAttributes<HTMLDivElement>,
   onDismiss?: () => void;
 }
 
+/**
+  @public
+ */
 export const InfoBox = React.memo(
   React.forwardRef<HTMLDivElement, InfoBoxProps>(
     ({ title, className, children, branded, url, urlTitle, onDismiss, severity = 'info', ...otherProps }, ref) => {
