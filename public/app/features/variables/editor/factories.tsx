@@ -50,17 +50,25 @@ export function isQueryEditor<
   );
 }
 
-export async function variableQueryEditorFactory<
+export async function getVariableQueryEditor<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
   VariableQuery extends DataQuery = TQuery
->(datasource: DataSourceApi<TQuery, TOptions>): Promise<VariableQueryEditorType> {
+>(
+  datasource: DataSourceApi<TQuery, TOptions>,
+  importDataSourcePluginFunc = importDataSourcePlugin
+): Promise<VariableQueryEditorType> {
   if (hasCustomVariableSupport(datasource)) {
     return datasource.variables.editor;
   }
 
   if (hasDatasourceVariableSupport(datasource)) {
-    const dsPlugin = await importDataSourcePlugin(datasource.meta!);
+    const dsPlugin = await importDataSourcePluginFunc(datasource.meta!);
+
+    if (!dsPlugin.components.QueryEditor) {
+      throw new Error('Missing QueryEditor in plugin definition.');
+    }
+
     return dsPlugin.components.QueryEditor ?? null;
   }
 
@@ -69,14 +77,14 @@ export async function variableQueryEditorFactory<
   }
 
   if (hasLegacyVariableSupport(datasource)) {
-    const dsPlugin = await importDataSourcePlugin(datasource.meta!);
+    const dsPlugin = await importDataSourcePluginFunc(datasource.meta!);
     return dsPlugin.components.VariableQueryEditor ?? LegacyVariableQueryEditor;
   }
 
   return null;
 }
 
-function StandardVariableQueryEditor<
+export function StandardVariableQueryEditor<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 >({

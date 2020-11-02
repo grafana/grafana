@@ -10,7 +10,7 @@ import { addVariableEditorError, changeVariableEditorExtended, removeVariableEdi
 import { changeVariableProp } from '../state/sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { hasLegacyVariableSupport, hasStandardVariableSupport } from '../guard';
-import { variableQueryEditorFactory } from '../editor/factories';
+import { getVariableQueryEditor } from '../editor/factories';
 import { Subscription } from 'rxjs';
 import { getVariableQueryRunner } from './variableQueryRunner';
 import { variableQueryObserver } from './variableQueryObserver';
@@ -79,7 +79,7 @@ export const changeQueryVariableDataSource = (
       const dataSource = await getDatasourceSrv().get(name ?? '');
       dispatch(changeVariableEditorExtended({ propName: 'dataSource', propValue: dataSource }));
 
-      const VariableQueryEditor = await variableQueryEditorFactory(dataSource);
+      const VariableQueryEditor = await getVariableQueryEditor(dataSource);
       dispatch(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: VariableQueryEditor }));
     } catch (err) {
       console.error(err);
