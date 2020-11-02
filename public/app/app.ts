@@ -152,7 +152,6 @@ export class GrafanaApp {
       'ngRoute',
       'ngSanitize',
       '$strap.directives',
-      'ang-drag-drop',
       'grafana',
       'pasvaz.bindonce',
       'react',
