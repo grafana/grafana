@@ -88,7 +88,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
 
           <div className="gf-form">
             <InlineField labelWidth={14} label="Hide time picker">
-              <Switch value={this.props.timePickerHidden ?? false} onChange={this.onHideTimePickerChange} />
+              <Switch value={!!this.props.timePickerHidden} onChange={this.onHideTimePickerChange} />
             </InlineField>
           </div>
         </div>
