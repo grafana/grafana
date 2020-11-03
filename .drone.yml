@@ -427,7 +427,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   depends_on:
-  - build-storybook
+  - verify-storybook
 
 - name: build-frontend-docs
   image: grafana/build-container:1.2.28
@@ -962,7 +962,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   depends_on:
-  - build-storybook
+  - verify-storybook
 
 services:
 - name: postgres
@@ -1723,7 +1723,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   depends_on:
-  - build-storybook
+  - verify-storybook
 
 services:
 - name: postgres
@@ -2385,6 +2385,13 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
+
+- name: verify-storybook
+  image: grafana/build-container:1.2.28
+  commands:
+    - ./bin/grabpl verify-storybook
+  depends_on:
+    - build-storybook
 
 - name: copy-packages-for-docker
   image: grafana/build-container:1.2.28
