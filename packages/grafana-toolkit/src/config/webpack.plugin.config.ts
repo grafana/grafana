@@ -18,8 +18,11 @@ import { getStyleLoaders, getStylesheetEntries, getFileLoaders } from './webpack
 export interface WebpackConfigurationOptions {
   watch?: boolean;
   production?: boolean;
+  preserveConsole?: boolean;
 }
+
 type WebpackConfigurationGetter = (options: WebpackConfigurationOptions) => Promise<webpack.Configuration>;
+
 export type CustomWebpackConfigurationGetter = (
   originalConfig: webpack.Configuration,
   options: WebpackConfigurationOptions
@@ -138,7 +141,11 @@ const getBaseWebpackConfig: WebpackConfigurationGetter = async options => {
   const optimization: { [key: string]: any } = {};
 
   if (options.production) {
-    optimization.minimizer = [new TerserPlugin({ sourceMap: true }), new OptimizeCssAssetsPlugin()];
+    const compressOptions = { drop_console: !options.preserveConsole, drop_debugger: true };
+    optimization.minimizer = [
+      new TerserPlugin({ sourceMap: true, terserOptions: { compress: compressOptions } }),
+      new OptimizeCssAssetsPlugin(),
+    ];
   } else if (options.watch) {
     plugins.push(new HtmlWebpackPlugin());
   }
