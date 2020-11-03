@@ -3,7 +3,7 @@ title = "HTTP API"
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "overview"]
 aliases = ["/docs/grafana/latest/overview"]
-weight = 9
+weight = 170
 +++
 
 

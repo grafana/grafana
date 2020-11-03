@@ -1,7 +1,6 @@
 +++
 title = "What's new in Grafana"
 aliases = ["/docs/grafana/latest/guides/"]
-weight = 140
 +++
 
 # What's new

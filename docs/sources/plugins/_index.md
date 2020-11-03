@@ -1,6 +1,6 @@
 +++
 title = "Plugins"
-weight = 1
+weight = 160
 +++
 
 # Plugins

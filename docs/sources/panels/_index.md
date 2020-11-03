@@ -1,6 +1,6 @@
 +++
 title = "Panels"
-weight = 4
+weight = 70
 +++
 
 # Panel overview

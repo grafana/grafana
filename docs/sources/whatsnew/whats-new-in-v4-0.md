@@ -3,7 +3,7 @@ title = "What's new in Grafana v4.0"
 description = "Feature and improvement highlights for Grafana v4.0"
 keywords = ["grafana", "new", "documentation", "4.0", "release notes"]
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v4/"]
-weight = 4
+weight = -7
 +++
 
 # What's new in Grafana v4.0
@@ -33,7 +33,7 @@ on but will be not ready for v4 release.
 
 {{< imgbox max-width="40%" img="/img/docs/v4/alerting_conditions.png" caption="Alerting Conditions" >}}
 
-The rule config allows you to specify a name, how often the rule should be evaluated and a series
+The rule configuration allows you to specify a name, how often the rule should be evaluated and a series
 of conditions that all need to be true for the alert to fire.
 
 Currently the only condition type that exists is a `Query` condition that allows you to

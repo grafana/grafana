@@ -1,7 +1,7 @@
 +++
 title = "Administration"
 description = "Administration"
-weight = 20
+weight = 40
 +++
 
 # Administration
