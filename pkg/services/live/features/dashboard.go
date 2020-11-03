@@ -40,8 +40,9 @@ func (g *DashboardHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscr
 }
 
 // AllowBroadcast checks if a message from the websocket can be broadcast on this channel
+// currently messages are sent when a dashboard starts editing
 func (g *DashboardHandler) AllowBroadcast(c *centrifuge.Client, e centrifuge.PublishEvent) error {
-	return nil // tell other panels it is editing
+	return nil
 }
 
 // DashboardSaved should broadcast to the appropriate stream

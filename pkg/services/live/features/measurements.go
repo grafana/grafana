@@ -34,7 +34,7 @@ func (m *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subs
 }
 
 // AllowBroadcast checks if a message from the websocket can be broadcast on this channel
+// Currently this sends measurements over websocket -- should be replaced with the HTTP interface
 func (m *MeasurementsRunner) AllowBroadcast(c *centrifuge.Client, e centrifuge.PublishEvent) error {
-	// currently allows anything... should replace with HTTP interface
 	return nil
 }
