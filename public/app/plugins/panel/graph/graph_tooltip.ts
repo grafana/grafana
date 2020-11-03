@@ -157,7 +157,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         plot.unhighlight();
       }
     }
-    dashboard.events.$emit(new LegacyGraphHoverClearEvent());
+    dashboard.events.publish(new LegacyGraphHoverClearEvent());
   });
 
   elem.bind('plothover', (event: any, pos: { panelRelY: number; pageY: number }, item: any) => {
@@ -165,7 +165,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
 
     // broadcast to other graph panels that we are hovering!
     pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
-    dashboard.events.$emit(new LegacyGraphHoverEvent({ pos: pos, panel: panel }));
+    dashboard.events.publish(new LegacyGraphHoverEvent({ pos: pos, panel: panel }));
   });
 
   elem.bind('plotclick', (event: any, pos: any, item: any) => {
