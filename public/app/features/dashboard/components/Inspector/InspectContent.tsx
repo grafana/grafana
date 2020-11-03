@@ -61,7 +61,7 @@ export const InspectContent: React.FC<Props> = ({
 
   return (
     <Drawer
-      title={`Inspect: ${title || 'Panel'}`
+      title={`Inspect: ${title || 'Panel'}`}
       subtitle={
         <InspectSubtitle
           tabs={tabs}
