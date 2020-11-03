@@ -1,13 +1,13 @@
 import React from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, useTheme } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 import { HorizontalGroup } from '../Layout/Layout';
+import { AlertVariant } from '../Alert/Alert';
 import panelArtDark from './panelArt_dark.svg';
 import panelArtLight from './panelArt_light.svg';
-import { AlertVariant } from '../Alert/Alert';
+import { stylesFactory, useTheme } from '../../themes';
 import { getColorsFromSeverity } from '../../utils/colors';
 
 export interface InfoBoxProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
@@ -27,9 +27,7 @@ export interface InfoBoxProps extends Omit<React.HTMLAttributes<HTMLDivElement>,
 }
 
 /**
- * This is a simple InfoBox component, the api is not considered stable yet and will likely see breaking changes
- * in future minor releases.
- * @Alpha
+  @public
  */
 export const InfoBox = React.memo(
   React.forwardRef<HTMLDivElement, InfoBoxProps>(
