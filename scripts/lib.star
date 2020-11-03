@@ -278,6 +278,9 @@ def build_storybook_step(edition, ver_mode):
             # Best to ensure that this step doesn't mess with what's getting built and packaged
             'package',
         ],
+        'environment': {
+            'NODE_OPTIONS': '--max_old_space_size=4096',
+        },
         'commands': [
             'yarn storybook:build',
         ],

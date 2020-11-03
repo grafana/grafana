@@ -7746,11 +7746,6 @@ angular-mocks@1.6.6:
   resolved "https://registry.yarnpkg.com/angular-mocks/-/angular-mocks-1.6.6.tgz#c93018e7838c6dc5ceaf1a6bcf9be13c830ea515"
   integrity sha1-yTAY54OMbcXOrxprz5vhPIMOpRU=
 
-angular-native-dragdrop@1.2.2:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/angular-native-dragdrop/-/angular-native-dragdrop-1.2.2.tgz#d646c6b75b131c48073c3f6e36a225b2726d8bae"
-  integrity sha1-1kbGt1sTHEgHPD9uNqIlsnJti64=
-
 angular-route@1.6.6:
   version "1.6.6"
   resolved "https://registry.yarnpkg.com/angular-route/-/angular-route-1.6.6.tgz#8c11748aa195c717b1b615a7e746442bfc7c61f4"
