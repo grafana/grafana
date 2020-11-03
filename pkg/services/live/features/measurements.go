@@ -33,7 +33,7 @@ func (m *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subs
 	return nil
 }
 
-// OnPublish is called when an event is received from the websocket.
+// AllowBroadcast checks if a message from the websocket can be broadcast on this channel
 func (m *MeasurementsRunner) AllowBroadcast(c *centrifuge.Client, e centrifuge.PublishEvent) error {
 	// currently allows anything... should replace with HTTP interface
 	return nil

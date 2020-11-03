@@ -80,7 +80,7 @@ func (r *logQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscrib
 	return nil
 }
 
-// AllowBroadcast is called when an event is received from the websocket.
+// AllowBroadcast checks if a message from the websocket can be broadcast on this channel
 func (r *logQueryRunner) AllowBroadcast(c *centrifuge.Client, e centrifuge.PublishEvent) error {
 	return fmt.Errorf("can not publish")
 }

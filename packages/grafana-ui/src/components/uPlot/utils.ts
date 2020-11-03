@@ -157,3 +157,19 @@ export const pluginLog = (id: string, throttle = false, ...t: any[]) => {
   const fn = throttle ? throttledLog : console.log;
   fn(`[Plugin: ${id}]: `, ...t);
 };
+
+function dataFrameToAlignedData(
+  frame: DataFrame
+): { data: uPlot.AlignedData; xLabels: string[]; seriesLabels: string[] } {
+  const name = frame.fields.find(f => f.name === 'name');
+  const min = frame.fields.find(f => f.name === 'min');
+  const max = frame.fields.find(f => f.name === 'max');
+  if (!min || !max || !name) {
+    throw 'expects a frame with names...';
+  }
+  return {
+    data: [[]],
+    xLabels: name.values.toArray(),
+    seriesLabels: frame.fields.map(f => f.name),
+  };
+}

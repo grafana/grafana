@@ -26,7 +26,7 @@ func (b *BroadcastRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscri
 	return nil
 }
 
-// OnPublish called when an event is received from the websocket
+// AllowBroadcast checks if a message can be broadcast on this channel
 func (b *BroadcastRunner) AllowBroadcast(c *centrifuge.Client, e centrifuge.PublishEvent) error {
 	return nil
 }

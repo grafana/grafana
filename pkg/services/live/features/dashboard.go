@@ -39,7 +39,7 @@ func (g *DashboardHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscr
 	return nil
 }
 
-// OnPublish called when an event is received from the websocket
+// AllowBroadcast checks if a message from the websocket can be broadcast on this channel
 func (g *DashboardHandler) AllowBroadcast(c *centrifuge.Client, e centrifuge.PublishEvent) error {
 	return nil // tell other panels it is editing
 }
