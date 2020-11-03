@@ -4,7 +4,7 @@ type = "docs"
 aliases = ["/docs/grafana/latest/developers/plugins/share-a-plugin/"]
 +++
 
-# Packaging plugins
+# Package a plugin
 
 You've just built your first plugin, and now you want to share it with the world. In this guide, you'll learn how to package and share your plugin with others.
 
@@ -16,11 +16,7 @@ When loading your plugin, Grafana only cares about the plugin assets. Specifical
 1. If a `plugin.json` was found, try to load the plugin assets from a `dist` directory in the same directory as the `plugin.json` file.
 1. If there's no `dist` directory, try to load the plugin assets from the same directory as the `plugin.json` file.
 
-## Package the plugin
-
-Now that you know what Grafana needs to load your plugin, let's see how you can package and share the plugin with other users.
-
-### 1. Build the plugin
+Now that you know what Grafana needs to load your plugin, let's see how to package it.
 
 1. Install dependencies.
 
@@ -40,27 +36,14 @@ Now that you know what Grafana needs to load your plugin, let's see how you can 
    mage
    ```
 
-### 2. Sign the plugin
+1. [Sign the plugin]({{< relref "sign-a-plugin.md" >}}).
 
-1. [Create an account on Grafana.com](https://grafana.com/signup) and generate an API key with the `PluginPublisher` role.
-
-1. Sign the plugin with the API key you just created.
+1. To create the final package, create a ZIP archive of the `dist` directory.
 
    ```
-   export GRAFANA_API_KEY=<YOUR_API_KEY>
-   npx @grafana/toolkit plugin:sign
+   mv dist/ myorg-simple-panel
+   zip myorg-simple-panel-1.0.0.zip myorg-simple-panel -r
    ```
-
-> **Important:** Future versions of Grafana will require all plugins to be signed. For more information, refer to [Sign a plugin]({{ relref "sign-a-plugin.md" }}).
-
-### 3. Create archive
-
-To create the final package, create a ZIP archive of the `dist` directory.
-
-```
-mv dist/ myorg-simple-panel
-zip myorg-simple-panel-1.0.0.zip myorg-simple-panel -r
-```
 
 ## Publish your plugin on Grafana.com
 
