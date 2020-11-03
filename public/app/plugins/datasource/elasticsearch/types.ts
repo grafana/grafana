@@ -1,6 +1,6 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
 import { BucketAggregation, BucketAggregationType } from './components/BucketAggregationsEditor/state/types';
-import { MetricAggregation, MetricAggregationType } from './components/MetricAggregationsEditor/state/types';
+import { MetricAggregation, MetricAggregationType } from './components/MetricAggregationsEditor/aggregations';
 
 export interface ElasticsearchOptions extends DataSourceJsonData {
   timeField: string;
@@ -22,7 +22,7 @@ interface MetricConfiguration {
   isPipelineAgg: boolean;
   minVersion?: number;
   maxVersion?: number;
-  supportsMultipleBucketPaths?: boolean;
+  supportsMultipleBucketPaths: boolean;
   isSingleMetric?: boolean;
   // TODO: this can probably be inferred from other settings
   hasSettings: boolean;

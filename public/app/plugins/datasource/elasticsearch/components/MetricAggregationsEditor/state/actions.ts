@@ -1,23 +1,21 @@
 import { SettingKeyOf } from '../../types';
+import { MetricAggregation, MetricAggregationWithMeta, MetricAggregationWithSettings } from '../aggregations';
 import {
   ADD_METRIC,
   CHANGE_METRIC_FIELD,
   CHANGE_METRIC_TYPE,
   REMOVE_METRIC,
   TOGGLE_METRIC_VISIBILITY,
-  MetricAggregation,
-  MetricAggregationAction,
   CHANGE_METRIC_SETTING,
-  MetricAggregationWithSettings,
-  MetricAggregationWithMeta,
   CHANGE_METRIC_META,
   CHANGE_METRIC_ATTRIBUTE,
+  MetricAggregationAction,
   ChangeMetricAttributeAction,
   ChangeMetricSettingAction,
   ChangeMetricMetaAction,
 } from './types';
 
-export const addMetric = (metricType: MetricAggregation['type']): MetricAggregationAction => ({
+export const addMetric = (metricType: MetricAggregation['type'] = 'count'): MetricAggregationAction => ({
   type: ADD_METRIC,
   payload: {
     metricType,

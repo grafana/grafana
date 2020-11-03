@@ -9,7 +9,7 @@ import {
   MovingAverageSettingDefinition,
   MovingAverageModel,
   MetricAggregationType,
-} from './components/MetricAggregationsEditor/state/types';
+} from './components/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig, pipelineOptions } from './components/MetricAggregationsEditor/utils';
 import { describeMetric } from './utils';
 

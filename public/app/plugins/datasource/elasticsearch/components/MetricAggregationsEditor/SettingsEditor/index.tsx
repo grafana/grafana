@@ -4,10 +4,10 @@ import { extendedStats, movingAvgModelOptions, movingAvgModelSettings } from '..
 import { useDispatch } from '../../ElasticsearchQueryContext';
 import { changeMetricMeta, changeMetricSetting } from '../state/actions';
 import {
-  isMetricAggregationWithInlineScript,
   MetricAggregation,
+  isMetricAggregationWithInlineScript,
   isMetricAggregationWithMissingSupport,
-} from '../state/types';
+} from '../aggregations';
 import { isValidNumber } from '../utils';
 import { BucketScriptSettingsEditor } from './BucketScriptSettingsEditor';
 import { SettingField } from './SettingField';

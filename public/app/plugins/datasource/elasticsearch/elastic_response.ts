@@ -16,7 +16,7 @@ import {
   isMetricAggregationType,
   isMetricAggregationWithField,
   MetricAggregationType,
-} from './components/MetricAggregationsEditor/state/types';
+} from './components/MetricAggregationsEditor/aggregations';
 import { describeMetric } from './utils';
 import { metricAggregationConfig } from './components/MetricAggregationsEditor/utils';
 

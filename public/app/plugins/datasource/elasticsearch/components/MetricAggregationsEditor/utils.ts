@@ -4,7 +4,7 @@ import {
   isPipelineAggregationWithMultipleBucketPaths,
   MetricAggregation,
   PipelineMetricAggregationType,
-} from './state/types';
+} from './aggregations';
 
 // We can probably split Pipeline Aggregations from here.
 // TODO: hasSettings can probably be removed as it can be inferred
@@ -101,9 +101,15 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasMeta: false,
   },
   moving_fn: {
+    // TODO: Check this
     label: 'Moving Function',
-    requiresField: false,
+    requiresField: true,
     isPipelineAgg: true,
+    supportsMultipleBucketPaths: false,
+    supportsInlineScript: false,
+    supportsMissing: false,
+    hasMeta: false,
+    hasSettings: true,
     minVersion: 70,
   },
   derivative: {

@@ -1,4 +1,4 @@
-import { PipelineVariable } from '../../../state/types';
+import { PipelineVariable } from '../../../aggregations';
 import { defaultPipelineVariable } from '../utils';
 import {
   PipelineVariablesAction,

@@ -2,8 +2,8 @@ import React, { FunctionComponent } from 'react';
 import { css, cx } from 'emotion';
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
-import { MetricAggregation } from './MetricAggregationsEditor/state/types';
 import { describeMetric } from '../utils';
+import { MetricAggregation } from './MetricAggregationsEditor/aggregations';
 
 const noWrap = css`
   white-space: nowrap;
@@ -20,7 +20,7 @@ interface Props {
   options: MetricAggregation[];
   onChange: (e: SelectableValue<MetricAggregation>) => void;
   className?: string;
-  value: string;
+  value?: string;
 }
 
 export const MetricPicker: FunctionComponent<Props> = ({ options, onChange, className, value }) => (

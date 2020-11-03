@@ -4,7 +4,7 @@ import {
   isMetricAggregationWithSettings,
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
-} from './components/MetricAggregationsEditor/state/types';
+} from './components/MetricAggregationsEditor/aggregations';
 import * as queryDef from './query_def';
 import { ElasticsearchQuery } from './types';
 

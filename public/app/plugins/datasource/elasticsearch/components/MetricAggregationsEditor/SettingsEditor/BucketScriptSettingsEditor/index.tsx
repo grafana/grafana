@@ -1,7 +1,7 @@
 import React, { Fragment, FunctionComponent } from 'react';
 import { Input, InlineLabel } from '@grafana/ui';
 import { useDispatch } from '../../../ElasticsearchQueryContext';
-import { BucketScript, MetricAggregation, MetricAggregationAction } from '../../state/types';
+import { MetricAggregationAction } from '../../state/types';
 import { changeMetricAttribute } from '../../state/actions';
 import { css } from 'emotion';
 import { AddRemove } from '../../../AddRemove';
@@ -16,6 +16,7 @@ import {
   changePipelineVariableMetric,
 } from './state/action';
 import { SettingField } from '../SettingField';
+import { BucketScript, MetricAggregation } from '../../aggregations';
 
 interface Props {
   value: BucketScript;

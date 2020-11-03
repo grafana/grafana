@@ -7,19 +7,19 @@ import { getStyles } from './styles';
 import { marginZero } from '../styles';
 import { ToggleVisibilityButton } from '../ToggleVisibilityButton';
 import { SettingsEditor } from './SettingsEditor';
+import { MetricAggregationAction } from './state/types';
+import { metricAggregationConfig } from './utils';
+import { changeMetricField, changeMetricType, toggleMetricVisibility } from './state/actions';
+import { MetricPicker } from '../MetricPicker';
+import { QueryEditorRow } from '../QueryEditorRow';
 import {
   isMetricAggregationWithField,
   isMetricAggregationWithSettings,
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
   MetricAggregation,
-  MetricAggregationAction,
   MetricAggregationType,
-} from './state/types';
-import { metricAggregationConfig } from './utils';
-import { changeMetricField, changeMetricType, toggleMetricVisibility } from './state/actions';
-import { MetricPicker } from '../MetricPicker';
-import { QueryEditorRow } from '../QueryEditorRow';
+} from './aggregations';
 
 const toOption = (metric: MetricAggregation) => ({
   label: metricAggregationConfig[metric.type].label,

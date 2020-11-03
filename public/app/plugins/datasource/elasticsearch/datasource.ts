@@ -25,7 +25,7 @@ import { metricAggregationConfig } from './components/MetricAggregationsEditor/u
 import {
   isMetricAggregationWithField,
   isPipelineAggregationWithMultipleBucketPaths,
-} from './components/MetricAggregationsEditor/state/types';
+} from './components/MetricAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/BucketAggregationsEditor/utils';
 import { isBucketAggregationWithField } from './components/BucketAggregationsEditor/state/types';
 
