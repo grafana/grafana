@@ -55,7 +55,7 @@ func (alertDefinition *AlertDefinition) GetEvalCondition(now time.Time) (*eval.C
 	return condition, nil
 }
 
-// preSave set datasource and loads the updated model for each alert query.
+// preSave sets datasource and loads the updated model for each alert query.
 func (alertDefinition *AlertDefinition) preSave() error {
 	for i, q := range alertDefinition.Data {
 		if err := q.setDatasource(); err != nil {
