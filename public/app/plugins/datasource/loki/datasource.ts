@@ -29,7 +29,12 @@ import { getTemplateSrv, TemplateSrv, BackendSrvRequest, FetchError, getBackendS
 import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
-import { lokiResultsToTableModel, lokiStreamResultToDataFrame, processRangeQueryResponse } from './result_transformer';
+import {
+  lokiResultsToTableModel,
+  lokiStreamResultToDataFrame,
+  lokiStreamsToDataFrames,
+  processRangeQueryResponse,
+} from './result_transformer';
 import { getHighlighterExpressionsFromQuery } from './query_utils';
 
 import {
@@ -127,12 +132,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     responseListLength: number
   ): Observable<DataQueryResponse> => {
     const timeNs = this.getTime(options.range.to, true);
+    const queryLimit = isMetricsQuery(target.expr) ? options.maxDataPoints : target.maxLines;
     const query = {
       query: target.expr,
       time: `${timeNs + (1e9 - (timeNs % 1e9))}`,
-      limit: Math.min(options.maxDataPoints || Infinity, this.maxLines),
+      limit: Math.min(queryLimit || Infinity, this.maxLines),
     };
-    /** Show results of Loki instant queries only in table */
+
+    /** Used only for results of metrics instant queries */
     const meta: QueryResultMeta = {
       preferredVisualisationType: 'table',
     };
@@ -141,7 +148,9 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       map((response: { data: LokiResponse }) => {
         if (response.data.data.resultType === LokiResultType.Stream) {
           return {
-            data: response.data ? response.data.data.result.map(stream => lokiStreamResultToDataFrame(stream)) : [],
+            data: response.data
+              ? lokiStreamsToDataFrames(response.data as LokiStreamResponse, target, query.limit, {})
+              : [],
             key: `${target.refId}_instant`,
           };
         }
