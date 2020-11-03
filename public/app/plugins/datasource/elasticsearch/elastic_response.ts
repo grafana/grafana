@@ -346,6 +346,7 @@ export class ElasticResponse {
         _id: hit._id,
         _type: hit._type,
         _index: hit._index,
+        sort: hit.sort,
       };
 
       if (hit._source) {
@@ -525,6 +526,7 @@ type Doc = {
   _type: string;
   _index: string;
   _source?: any;
+  sort?: Array<string | number>;
 };
 
 /**
@@ -545,6 +547,7 @@ const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames
       _id: hit._id,
       _type: hit._type,
       _index: hit._index,
+      sort: hit.sort,
       _source: { ...flattened },
       ...flattened,
     };
