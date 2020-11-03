@@ -96,7 +96,7 @@ func (pb *PluginBase) registerPlugin(base *PluginBase) error {
 	}
 
 	if !strings.HasPrefix(base.PluginDir, setting.StaticRootPath) {
-		plog.Info("Registering plugin", "name", pb.Name)
+		plog.Info("Registering plugin", "id", pb.Id)
 	}
 
 	if len(pb.Dependencies.Plugins) == 0 {

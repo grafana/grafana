@@ -135,4 +135,14 @@ export const Pages = {
   SoloPanel: {
     url: (page: string) => `/d-solo/${page}`,
   },
+  PluginsList: {
+    page: 'Plugins list page',
+    list: 'Plugins list',
+    listItem: 'Plugins list item',
+    signatureErrorNotice: 'Unsigned plugins notice',
+  },
+  PluginPage: {
+    page: 'Plugin page',
+    signatureInfo: 'Plugin signature info',
+  },
 };

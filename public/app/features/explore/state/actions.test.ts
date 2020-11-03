@@ -1,5 +1,5 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { DataQuery, DefaultTimeZone, toUtc, ExploreUrlState } from '@grafana/data';
+import { DataQuery, DefaultTimeZone, toUtc, ExploreUrlState, EventBusExtended } from '@grafana/data';
 
 import { cancelQueries, loadDatasource, navigateToExplore, refreshExplore } from './actions';
 import { ExploreId, ExploreUpdateState } from 'app/types';
@@ -13,7 +13,6 @@ import {
   scanStopAction,
   setQueriesAction,
 } from './actionTypes';
-import { Emitter } from 'app/core/core';
 import { makeInitialUpdateState } from './reducers';
 import { PanelModel } from 'app/features/dashboard/state';
 import { updateLocation } from '../../../core/actions';
@@ -61,7 +60,7 @@ jest.mock('app/core/utils/explore', () => ({
 const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
   const exploreId = ExploreId.left;
   const containerWidth = 1920;
-  const eventBridge = {} as Emitter;
+  const eventBridge = {} as EventBusExtended;
   const timeZone = DefaultTimeZone;
   const range = testRange;
   const urlState: ExploreUrlState = {

@@ -1,7 +1,7 @@
-import React, { useContext, useRef, useState, useLayoutEffect } from 'react';
+import React, { useRef, useState, useLayoutEffect } from 'react';
 import { css, cx } from 'emotion';
 import useClickAway from 'react-use/lib/useClickAway';
-import { selectThemeVariant, ThemeContext } from '../../index';
+import { useTheme } from '../../index';
 import { GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { Portal, List } from '../index';
@@ -22,120 +22,86 @@ export interface ContextMenuGroup {
   label?: string;
   items: ContextMenuItem[];
 }
+
 export interface ContextMenuProps {
+  /** Starting horizontal position for the menu */
   x: number;
+  /** Starting vertical position for the menu */
   y: number;
+  /** Callback for closing the menu */
   onClose: () => void;
+  /** List of the menu items to display */
   items?: ContextMenuGroup[];
+  /** A function that returns header element */
   renderHeader?: () => React.ReactNode;
 }
 
 const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
-  const linkColor = selectThemeVariant(
-    {
-      light: theme.palette.dark2,
-      dark: theme.colors.text,
-    },
-    theme.type
-  );
-  const linkColorHover = selectThemeVariant(
-    {
-      light: theme.colors.link,
-      dark: theme.palette.white,
-    },
-    theme.type
-  );
-  const wrapperBg = selectThemeVariant(
-    {
-      light: theme.palette.gray7,
-      dark: theme.palette.dark2,
-    },
-    theme.type
-  );
-  const wrapperShadow = selectThemeVariant(
-    {
-      light: theme.palette.gray3,
-      dark: theme.palette.black,
-    },
-    theme.type
-  );
-  const itemColor = selectThemeVariant(
-    {
-      light: theme.palette.black,
-      dark: theme.palette.white,
-    },
-    theme.type
-  );
+  const { white, black, dark1, dark2, dark7, gray1, gray3, gray5, gray7 } = theme.palette;
+  const lightThemeStyles = {
+    linkColor: dark2,
+    linkColorHover: theme.colors.link,
+    wrapperBg: gray7,
+    wrapperShadow: gray3,
+    itemColor: black,
+    groupLabelColor: gray1,
+    itemBgHover: gray5,
+    headerBg: white,
+    headerSeparator: white,
+  };
+  const darkThemeStyles = {
+    linkColor: theme.colors.text,
+    linkColorHover: white,
+    wrapperBg: dark2,
+    wrapperShadow: black,
+    itemColor: white,
+    groupLabelColor: theme.colors.textWeak,
+    itemBgHover: dark7,
+    headerBg: dark1,
+    headerSeparator: dark7,
+  };
 
-  const groupLabelColor = selectThemeVariant(
-    {
-      light: theme.palette.gray1,
-      dark: theme.colors.textWeak,
-    },
-    theme.type
-  );
-
-  const itemBgHover = selectThemeVariant(
-    {
-      light: theme.palette.gray5,
-      dark: theme.palette.dark7,
-    },
-    theme.type
-  );
-  const headerBg = selectThemeVariant(
-    {
-      light: theme.palette.white,
-      dark: theme.palette.dark1,
-    },
-    theme.type
-  );
-  const headerSeparator = selectThemeVariant(
-    {
-      light: theme.palette.white,
-      dark: theme.palette.dark7,
-    },
-    theme.type
-  );
+  const styles = theme.isDark ? darkThemeStyles : lightThemeStyles;
 
   return {
     header: css`
       padding: 4px;
-      border-bottom: 1px solid ${headerSeparator};
-      background: ${headerBg};
+      border-bottom: 1px solid ${styles.headerSeparator};
+      background: ${styles.headerBg};
       margin-bottom: ${theme.spacing.xs};
       border-radius: ${theme.border.radius.sm} ${theme.border.radius.sm} 0 0;
     `,
     wrapper: css`
-      background: ${wrapperBg};
+      background: ${styles.wrapperBg};
       z-index: 1;
-      box-shadow: 0 2px 5px 0 ${wrapperShadow};
+      box-shadow: 0 2px 5px 0 ${styles.wrapperShadow};
       min-width: 200px;
       display: inline-block;
       border-radius: ${theme.border.radius.sm};
     `,
     link: css`
-      color: ${linkColor};
+      color: ${styles.linkColor};
       display: flex;
       cursor: pointer;
       &:hover {
-        color: ${linkColorHover};
+        color: ${styles.linkColorHover};
         text-decoration: none;
       }
     `,
     item: css`
       background: none;
       padding: 4px 8px;
-      color: ${itemColor};
+      color: ${styles.itemColor};
       border-left: 2px solid transparent;
       cursor: pointer;
       &:hover {
-        background: ${itemBgHover};
+        background: ${styles.itemBgHover};
         border-image: linear-gradient(#f05a28 30%, #fbca0a 99%);
         border-image-slice: 1;
       }
     `,
     groupLabel: css`
-      color: ${groupLabelColor};
+      color: ${styles.groupLabelColor};
       font-size: ${theme.typography.size.sm};
       line-height: ${theme.typography.lineHeight.md};
       padding: ${theme.spacing.xs} ${theme.spacing.sm};
@@ -149,7 +115,7 @@ const getContextMenuStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClose, items, renderHeader }) => {
-  const theme = useContext(ThemeContext);
+  const theme = useTheme();
   const menuRef = useRef<HTMLDivElement>(null);
   const [positionStyles, setPositionStyles] = useState({});
 
@@ -186,11 +152,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = React.memo(({ x, y, onClo
         <List
           items={items || []}
           renderItem={(item, index) => {
-            return (
-              <>
-                <ContextMenuGroupComponent group={item} onClick={onClose} />
-              </>
-            );
+            return <ContextMenuGroupComponent group={item} onClick={onClose} />;
           }}
         />
       </div>
@@ -209,7 +171,7 @@ interface ContextMenuItemProps {
 
 const ContextMenuItemComponent: React.FC<ContextMenuItemProps> = React.memo(
   ({ url, icon, label, target, onClick, className }) => {
-    const theme = useContext(ThemeContext);
+    const theme = useTheme();
     const styles = getContextMenuStyles(theme);
     return (
       <div className={styles.item}>
@@ -236,7 +198,7 @@ interface ContextMenuGroupProps {
 }
 
 const ContextMenuGroupComponent: React.FC<ContextMenuGroupProps> = ({ group, onClick }) => {
-  const theme = useContext(ThemeContext);
+  const theme = useTheme();
   const styles = getContextMenuStyles(theme);
 
   if (group.items.length === 0) {
