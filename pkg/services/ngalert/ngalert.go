@@ -35,7 +35,6 @@ func (ng *AlertNG) Init() error {
 	ng.log = log.New("ngalert")
 
 	ng.registerAPIEndpoints()
-	ng.registerBusHandlers()
 
 	return nil
 }

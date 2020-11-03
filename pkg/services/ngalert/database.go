@@ -6,14 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func (ng *AlertNG) registerBusHandlers() {
-	ng.Bus.AddHandler(ng.DeleteAlertDefinitionByID)
-	ng.Bus.AddHandler(ng.SaveAlertDefinition)
-	ng.Bus.AddHandler(ng.UpdateAlertDefinition)
-	ng.Bus.AddHandler(ng.GetAlertDefinitionByID)
-	ng.Bus.AddHandler(ng.GetAlertDefinitions)
-}
-
 func getAlertDefinitionByID(alertDefinitionID int64, sess *sqlstore.DBSession) (*AlertDefinition, error) {
 	alertDefinition := AlertDefinition{}
 	has, err := sess.ID(alertDefinitionID).Get(&alertDefinition)

@@ -138,7 +138,7 @@ func (ng *AlertNG) DeleteAlertDefinitionEndpoint(c *models.ReqContext) api.Respo
 		OrgID: c.SignedInUser.OrgId,
 	}
 
-	if err := ng.Bus.Dispatch(&query); err != nil {
+	if err := ng.DeleteAlertDefinitionByID(&query); err != nil {
 		return api.Error(500, "Failed to delete alert definition", err)
 	}
 
@@ -151,7 +151,7 @@ func (ng *AlertNG) UpdateAlertDefinitionEndpoint(c *models.ReqContext, cmd Updat
 	cmd.SignedInUser = c.SignedInUser
 	cmd.SkipCache = c.SkipCache
 
-	if err := ng.Bus.Dispatch(&cmd); err != nil {
+	if err := ng.UpdateAlertDefinition(&cmd); err != nil {
 		return api.Error(500, "Failed to update alert definition", err)
 	}
 
@@ -164,7 +164,7 @@ func (ng *AlertNG) CreateAlertDefinitionEndpoint(c *models.ReqContext, cmd SaveA
 	cmd.SignedInUser = c.SignedInUser
 	cmd.SkipCache = c.SkipCache
 
-	if err := ng.Bus.Dispatch(&cmd); err != nil {
+	if err := ng.SaveAlertDefinition(&cmd); err != nil {
 		return api.Error(500, "Failed to create alert definition", err)
 	}
 
@@ -175,7 +175,7 @@ func (ng *AlertNG) CreateAlertDefinitionEndpoint(c *models.ReqContext, cmd SaveA
 func (ng *AlertNG) ListAlertDefinitions(c *models.ReqContext) api.Response {
 	cmd := ListAlertDefinitionsCommand{OrgID: c.SignedInUser.OrgId}
 
-	if err := ng.Bus.Dispatch(&cmd); err != nil {
+	if err := ng.GetAlertDefinitions(&cmd); err != nil {
 		return api.Error(500, "Failed to list alert definitions", err)
 	}
 
