@@ -50,6 +50,7 @@ import { getStandardFieldConfigs, getStandardOptionEditors, getScrollbarWidth } 
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
+import { monkeyPatchInjectorWithPreAssignedBindings } from './core/injectorMonkeyPatch';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -112,9 +113,6 @@ export class GrafanaApp {
         $httpProvider: angular.IHttpProvider,
         $provide: angular.auto.IProvideService
       ) => {
-        // pre assign bindings before constructor calls
-        $compileProvider.preAssignBindingsEnabled(true);
-
         if (config.buildInfo.env !== 'development') {
           $compileProvider.debugInfoEnabled(false);
         }
@@ -170,7 +168,9 @@ export class GrafanaApp {
     $.fn.tooltip.defaults.animation = false;
 
     // bootstrap the app
-    angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
+    const injector: any = angular.bootstrap(document, this.ngModuleDependencies);
+
+    injector.invoke(() => {
       _.each(this.preBootModules, (module: angular.IModule) => {
         _.extend(module, this.registerFunctions);
       });
@@ -186,6 +186,8 @@ export class GrafanaApp {
         }, 1000);
       }
     });
+
+    monkeyPatchInjectorWithPreAssignedBindings(injector);
 
     // Preload selected app plugins
     for (const modulePath of config.pluginsToPreload) {
