@@ -74,7 +74,7 @@ type UpdateAlertDefinitionCommand struct {
 	Result       *AlertDefinition
 }
 
-// IsValid validates a UpdateAlertDefinitionCommand.
+// IsValid validates an UpdateAlertDefinitionCommand.
 // Always returns true.
 func (cmd *UpdateAlertDefinitionCommand) IsValid() bool {
 	return true
