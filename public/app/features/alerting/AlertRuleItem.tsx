@@ -46,10 +46,15 @@ const AlertRuleItem = ({ rule, search, onTogglePause }: Props) => {
           rule.info ? renderText(rule.info) : null,
         ]}
         actions={[
-          <Button variant="secondary" icon={rule.state === 'paused' ? 'play' : 'pause'} onClick={onTogglePause}>
+          <Button
+            key="play"
+            variant="secondary"
+            icon={rule.state === 'paused' ? 'play' : 'pause'}
+            onClick={onTogglePause}
+          >
             {rule.state === 'paused' ? 'Resume' : 'Pause'}
           </Button>,
-          <LinkButton variant="secondary" href={ruleUrl} icon="cog">
+          <LinkButton key="edit" variant="secondary" href={ruleUrl} icon="cog">
             Edit alert
           </LinkButton>,
         ]}

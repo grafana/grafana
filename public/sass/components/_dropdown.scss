@@ -59,7 +59,7 @@
   text-align: left;
 
   // Aligns the dropdown menu to right
-  &.pull-right {
+  &.pull-left {
     right: 0;
     left: auto;
   }
@@ -238,6 +238,7 @@
 .dropdown-submenu {
   position: relative;
 }
+
 // Default dropdowns
 .dropdown-submenu > .dropdown-menu {
   top: 0;
@@ -277,14 +278,19 @@
 .dropdown-submenu.pull-left {
   // Undo the float
   // Yes, this is awkward since .pull-left adds a float, but it sticks to our conventions elsewhere.
-  float: none;
+  float: none !important;
 
   // Positioning the submenu
   > .dropdown-menu {
     left: -100%;
-    margin-left: 10px;
+    width: 100%;
+    margin-left: 2px;
     @include border-radius(6px 0 6px 6px);
   }
+}
+
+.dropdown-submenu.pull-right {
+  float: none !important;
 }
 
 // Tweak nav headers

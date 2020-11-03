@@ -223,14 +223,14 @@ Do not hyphenate when it is used as a noun. For example: _Open source is the bes
 
 Two words if used as a verb, one word if used as a noun.
 
+**Examples**
+
+- Set up the workspace.
+- Initial setup might take five minutes.
+
 ### node_exporter, windows_exporter
 
 When referencing the Prometheus data source exporters, always use "node_exporter" and "windows_exporter" when referring to those tools.
 
 **Correct:** node_exporter, windows_exporter
-**Incorrect:** Node Exporter, node exporter, Windows Exporter, Windows exporter, windows exporter 
-
-**Examples**
-
-- Set up the workspace.
-- Initial setup might take five minutes.
+**Incorrect:** Node Exporter, node exporter, Windows Exporter, Windows exporter, windows exporter.
