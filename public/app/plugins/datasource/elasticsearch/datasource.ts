@@ -11,7 +11,6 @@ import {
   PluginMeta,
   DataQuery,
   LogRowModel,
-  TimeRange,
 } from '@grafana/data';
 import LanguageProvider from './language_provider';
 import { ElasticResponse } from './elastic_response';
