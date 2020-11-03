@@ -80,9 +80,9 @@ func (r *logQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscrib
 	return nil
 }
 
-// OnPublish is called when an event is received from the websocket.
-func (r *logQueryRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
-	return nil, fmt.Errorf("can not publish")
+// AllowBroadcast checks if a message from the websocket can be broadcast on this channel
+func (r *logQueryRunner) AllowBroadcast(c *centrifuge.Client, e centrifuge.PublishEvent) error {
+	return fmt.Errorf("can not publish")
 }
 
 func (r *logQueryRunner) publishResults(channelName string) error {
