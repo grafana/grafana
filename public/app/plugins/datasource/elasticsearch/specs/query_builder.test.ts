@@ -224,12 +224,7 @@ describe('ElasticQueryBuilder', () => {
               ],
             },
           },
-          sort: {
-            '@timestamp': {
-              order: 'desc',
-              unmapped_type: 'boolean',
-            },
-          },
+          sort: [{ '@timestamp': { order: 'desc', unmapped_type: 'boolean' } }, { _doc: { order: 'desc' } }],
           script_fields: {},
         });
       });
@@ -552,7 +547,10 @@ describe('ElasticQueryBuilder', () => {
           };
           expect(query.query).toEqual(expectedQuery);
 
-          expect(query.sort).toEqual({ '@timestamp': { order: 'desc', unmapped_type: 'boolean' } });
+          expect(query.sort).toEqual([
+            { '@timestamp': { order: 'desc', unmapped_type: 'boolean' } },
+            { _doc: { order: 'desc' } },
+          ]);
 
           const expectedAggs = {
             2: {
