@@ -27,6 +27,6 @@ func (g *PluginHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscribe
 }
 
 // OnPublish called when an event is received from the websocket
-func (g *PluginHandler) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
-	return e.Data, nil // broadcast any event
+func (g *PluginHandler) AllowBroadcast(c *centrifuge.Client, e centrifuge.PublishEvent) error {
+	return nil // broadcast any event
 }

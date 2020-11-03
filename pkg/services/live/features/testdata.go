@@ -74,8 +74,8 @@ func (g *testDataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscrib
 }
 
 // OnPublish is called when an event is received from the websocket.
-func (g *testDataRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
-	return nil, fmt.Errorf("can not publish to testdata")
+func (g *testDataRunner) AllowBroadcast(c *centrifuge.Client, e centrifuge.PublishEvent) error {
+	return fmt.Errorf("can not publish to testdata")
 }
 
 // runRandomCSV is just for an example.

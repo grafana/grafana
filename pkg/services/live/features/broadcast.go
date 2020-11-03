@@ -27,7 +27,6 @@ func (b *BroadcastRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscri
 }
 
 // OnPublish called when an event is received from the websocket
-func (b *BroadcastRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
-	// expect the data to be the right shape?
-	return e.Data, nil
+func (b *BroadcastRunner) AllowBroadcast(c *centrifuge.Client, e centrifuge.PublishEvent) error {
+	return nil
 }

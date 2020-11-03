@@ -1,7 +1,6 @@
 package live
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -155,7 +154,9 @@ func (g *GrafanaLive) Init() error {
 		logger.Debug("unsubscribe from channel", "channel", e.Channel, "user", c.UserID())
 	})
 
-	// Called when something is written to the websocket
+	// Called when a client writes to the websocket channel.
+	// In general, we should prefer writing to the HTTP API, but this
+	// allows some simple prototypes to work quickly
 	node.OnPublish(func(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
 		reply := centrifuge.PublishReply{}
 		handler, err := g.GetChannelHandler(e.Channel)
@@ -163,14 +164,8 @@ func (g *GrafanaLive) Init() error {
 			return reply, err
 		}
 
-		data, err := handler.OnPublish(c, e)
-		if err != nil {
-			return reply, err
-		}
-		if len(data) > 0 {
-			_, err = node.Publish(e.Channel, e.Data)
-		}
-		return centrifuge.PublishReply{}, err // returns an error if it could not publish
+		err = handler.AllowBroadcast(c, e)
+		return centrifuge.PublishReply{}, err
 	})
 
 	// Run node. This method does not block.
@@ -199,26 +194,8 @@ func (g *GrafanaLive) Init() error {
 			return
 		}
 
-		dto := models.UserProfileDTO{
-			Id:             user.UserId,
-			Name:           user.Name,
-			Email:          user.Email,
-			Login:          user.Login,
-			IsGrafanaAdmin: user.IsGrafanaAdmin,
-			OrgId:          user.OrgId,
-		}
-
-		jsonData, err := json.Marshal(dto)
-		if err != nil {
-			logger.Debug("error reading user", "dto", dto)
-			ctx.Resp.WriteHeader(404)
-			return
-		}
-		logger.Info("Logged in user", "user", user)
-
 		cred := &centrifuge.Credentials{
 			UserID: fmt.Sprintf("%d", user.UserId),
-			Info:   jsonData,
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
 
