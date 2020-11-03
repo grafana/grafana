@@ -369,7 +369,6 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
-    console.log(row, options);
     const sortField = row.dataFrame.fields.find(f => f.name === 'sort');
     const searchAfter = (sortField && sortField.values.get(row.rowIndex)) || [row.timeEpochMs];
     const range = this.timeSrv.timeRange();
