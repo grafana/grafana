@@ -546,7 +546,9 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 		defer bus.ClearBusHandlers()
 
 		setting.LoginCookieName = "grafana_session"
-		setting.LoginMaxLifetime, _ = gtime.ParseInterval("30d")
+		var err error
+		setting.LoginMaxLifetime, err = gtime.ParseDuration("30d")
+		require.NoError(t, err)
 
 		sc := &scenarioContext{}
 
@@ -637,7 +639,11 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 
 func initTokenRotationTest(ctx context.Context) (*models.ReqContext, *httptest.ResponseRecorder, error) {
 	setting.LoginCookieName = "login_token"
-	setting.LoginMaxLifetime, _ = gtime.ParseInterval("7d")
+	var err error
+	setting.LoginMaxLifetime, err = gtime.ParseDuration("7d")
+	if err != nil {
+		return nil, nil, err
+	}
 
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequestWithContext(ctx, "", "", nil)
