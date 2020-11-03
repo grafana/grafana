@@ -75,7 +75,7 @@ export function LokiExploreQueryEditor(props: Props) {
           queryType={query.range === query.instant ? 'both' : query.instant ? 'instant' : 'range'}
           lineLimitValue={query?.maxLines?.toString() || ''}
           onQueryTypeChange={onQueryTypeChange}
-          onLimitChange={onMaxLinesChange}
+          onLineLimitChange={onMaxLinesChange}
           onKeyDownFunc={onReturnKeyDown}
         />
       }

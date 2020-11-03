@@ -8,13 +8,13 @@ import { InlineFormLabel, RadioButtonGroup } from '@grafana/ui';
 export interface LokiExploreExtraFieldProps {
   lineLimitValue: string;
   queryType: string;
-  onLimitChange: (e: React.SyntheticEvent<HTMLInputElement>) => void;
+  onLineLimitChange: (e: React.SyntheticEvent<HTMLInputElement>) => void;
   onKeyDownFunc: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onQueryTypeChange: (value: string) => void;
 }
 
 export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
-  const { onLimitChange, onKeyDownFunc, lineLimitValue, queryType, onQueryTypeChange } = props;
+  const { onLineLimitChange, onKeyDownFunc, lineLimitValue, queryType, onQueryTypeChange } = props;
 
   const rangeOptions = [
     { value: 'range', label: 'Range' },
@@ -24,7 +24,7 @@ export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
 
   return (
     <div aria-label="Loki extra field" className="gf-form-inline">
-      {/*QueryTypeField */}
+      {/*Query type field*/}
       <div
         data-testid="queryTypeField"
         className={cx(
@@ -41,6 +41,7 @@ export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
       </div>
       {/*Line limit field*/}
       <div
+        data-testid="lineLimitField"
         className={cx(
           'gf-form',
           css`
@@ -55,7 +56,7 @@ export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
           className="gf-form-input width-4"
           placeholder={'auto'}
           min={0}
-          onChange={onLimitChange}
+          onChange={onLineLimitChange}
           onKeyDown={onKeyDownFunc}
           value={lineLimitValue}
         />
