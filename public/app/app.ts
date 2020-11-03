@@ -106,7 +106,6 @@ export class GrafanaApp {
 
     app.config(
       (
-        $locationProvider: angular.ILocationProvider,
         $controllerProvider: angular.IControllerProvider,
         $compileProvider: angular.ICompileProvider,
         $filterProvider: angular.IFilterProvider,
