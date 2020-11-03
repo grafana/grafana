@@ -43,7 +43,8 @@ export class TextPanel extends PureComponent<Props, State> {
   }
 
   prepareMarkdown(content: string): string {
-    return renderMarkdown(this.interpolateAndSanitizeString(content));
+    // Sanitize is disabled here as we handle that after variable interpolation
+    return renderMarkdown(this.interpolateAndSanitizeString(content), { noSanitize: true });
   }
 
   interpolateAndSanitizeString(content: string): string {

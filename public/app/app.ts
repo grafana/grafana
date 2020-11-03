@@ -97,8 +97,6 @@ export class GrafanaApp {
     setLocale(config.bootData.user.locale);
     setTimeZoneResolver(() => config.bootData.user.timezone);
 
-    setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
-
     standardEditorsRegistry.setInit(getStandardOptionEditors);
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
     standardTransformersRegistry.setInit(getStandardTransformers);
