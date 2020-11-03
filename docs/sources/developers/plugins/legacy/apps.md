@@ -15,7 +15,7 @@ Data source and panel plugins will show up like normal plugins. The app pages wi
 
 ## Enabling app plugins
 
-After installing an app, it has to be enabled before it shows up as a data source or panel. You can do that on the app page in the config tab.
+After installing an app, it has to be enabled before it shows up as a data source or panel. You can do that on the app page in the configuration tab.
 
 ## Developing an App Plugin
 

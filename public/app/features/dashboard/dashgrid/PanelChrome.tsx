@@ -52,8 +52,9 @@ export interface State {
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
-  timeSrv: TimeSrv = getTimeSrv();
-  querySubscription: Unsubscribable;
+  readonly timeSrv: TimeSrv = getTimeSrv();
+
+  querySubscription?: Unsubscribable;
 
   constructor(props: Props) {
     super(props);
@@ -73,6 +74,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   componentDidMount() {
     const { panel, dashboard } = this.props;
 
+    // Subscribe to panel events
     panel.events.on(PanelEvents.refresh, this.onRefresh);
     panel.events.on(PanelEvents.render, this.onRender);
 
@@ -244,7 +246,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   }
 
   renderPanel(width: number, height: number) {
-    const { panel, plugin } = this.props;
+    const { panel, plugin, dashboard } = this.props;
     const { renderCounter, data, isFirstLoad } = this.state;
     const { theme } = config;
     const { state: loadingState } = data;
@@ -291,6 +293,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             onOptionsChange={this.onOptionsChange}
             onFieldConfigChange={this.onFieldConfigChange}
             onChangeTimeRange={this.onChangeTimeRange}
+            eventBus={dashboard.events}
           />
         </div>
       </>
