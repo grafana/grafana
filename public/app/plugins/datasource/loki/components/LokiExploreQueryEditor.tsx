@@ -20,6 +20,19 @@ export function LokiExploreQueryEditor(props: Props) {
     onChange(nextQuery);
   }
 
+  function onQueryTypeChange(value: string) {
+    const { query, onChange } = props;
+    let nextQuery;
+    if (value === 'instant') {
+      nextQuery = { ...query, instant: true, range: false };
+    } else if (value === 'range') {
+      nextQuery = { ...query, instant: false, range: true };
+    } else {
+      nextQuery = { ...query, instant: true, range: true };
+    }
+    onChange(nextQuery);
+  }
+
   function preprocessMaxLines(value: string): number {
     if (value.length === 0) {
       // empty input - falls back to dataSource.maxLines limit
@@ -58,12 +71,12 @@ export function LokiExploreQueryEditor(props: Props) {
       range={range}
       ExtraFieldElement={
         <LokiExploreExtraField
-          label={'Line limit'}
-          onChangeFunc={onMaxLinesChange}
+          // If query doesn't have range and instant parameter, then it is old query and we set it to "both"
+          queryType={query.range === query.instant ? 'both' : query.instant ? 'instant' : 'range'}
+          lineLimitValue={query?.maxLines?.toString() || ''}
+          onQueryTypeChange={onQueryTypeChange}
+          onLimitChange={onMaxLinesChange}
           onKeyDownFunc={onReturnKeyDown}
-          value={query?.maxLines?.toString() || ''}
-          type={'number'}
-          min={0}
         />
       }
     />

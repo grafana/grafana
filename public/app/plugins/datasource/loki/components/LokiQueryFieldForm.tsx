@@ -150,7 +150,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
     return (
       <>
         <div className="gf-form-inline gf-form-inline--xs-view-flex-column flex-grow-1">
-          <div className="gf-form flex-shrink-0">
+          <div className="gf-form flex-shrink-0 min-width-5">
             <ButtonCascader
               options={logLabelOptions || []}
               disabled={buttonDisabled}
@@ -161,7 +161,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               {chooserText}
             </ButtonCascader>
           </div>
-          <div className="gf-form gf-form--grow flex-shrink-1 min-width-15 explore-input-margin">
+          <div className="gf-form gf-form--grow flex-shrink-1 min-width-15">
             <QueryField
               additionalPlugins={this.plugins}
               cleanText={cleanText}
@@ -176,8 +176,8 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               syntaxLoaded={syntaxLoaded}
             />
           </div>
-          {ExtraFieldElement}
         </div>
+        {ExtraFieldElement}
       </>
     );
   }

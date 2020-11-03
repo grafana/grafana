@@ -1,33 +1,63 @@
 // Libraries
 import React, { memo } from 'react';
+import { css, cx } from 'emotion';
 
 // Types
-import { InlineFormLabel } from '@grafana/ui';
+import { InlineFormLabel, RadioButtonGroup } from '@grafana/ui';
 
 export interface LokiExploreExtraFieldProps {
-  label: string;
-  onChangeFunc: (e: React.SyntheticEvent<HTMLInputElement>) => void;
+  lineLimitValue: string;
+  queryType: string;
+  onLimitChange: (e: React.SyntheticEvent<HTMLInputElement>) => void;
   onKeyDownFunc: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-  value: string;
-  type?: string;
-  min?: number;
+  onQueryTypeChange: (value: string) => void;
 }
 
 export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
-  const { label, onChangeFunc, onKeyDownFunc, value, type, min } = props;
+  const { onLimitChange, onKeyDownFunc, lineLimitValue, queryType, onQueryTypeChange } = props;
+
+  const rangeOptions = [
+    { value: 'range', label: 'Range' },
+    { value: 'instant', label: 'Instant' },
+    { value: 'both', label: 'Both' },
+  ];
 
   return (
-    <div className="gf-form-inline">
-      <div className="gf-form">
-        <InlineFormLabel width={5}>{label}</InlineFormLabel>
+    <div aria-label="Loki extra field" className="gf-form-inline">
+      {/*QueryTypeField */}
+      <div
+        data-testid="queryTypeField"
+        className={cx(
+          'gf-form explore-input-margin',
+          css`
+            flex-wrap: nowrap;
+          `
+        )}
+        aria-label="Query type field"
+      >
+        <InlineFormLabel width={5}>Query type</InlineFormLabel>
+
+        <RadioButtonGroup options={rangeOptions} value={queryType} onChange={onQueryTypeChange} />
+      </div>
+      {/*Line limit field*/}
+      <div
+        className={cx(
+          'gf-form',
+          css`
+            flex-wrap: nowrap;
+          `
+        )}
+        aria-label="Line limit field"
+      >
+        <InlineFormLabel width={5}>Line limit</InlineFormLabel>
         <input
-          type={type}
+          type="number"
           className="gf-form-input width-4"
           placeholder={'auto'}
-          onChange={onChangeFunc}
+          min={0}
+          onChange={onLimitChange}
           onKeyDown={onKeyDownFunc}
-          min={min}
-          value={value}
+          value={lineLimitValue}
         />
       </div>
     </div>
