@@ -56,19 +56,6 @@ export interface DataSourceResponse<T> {
 
 type DataSourceResponsePayload = DataSourceResponse<any>;
 
-export interface SaveDashboardPayload {
-  overwrite?: boolean;
-  folderId?: number;
-  makeEditable?: boolean;
-}
-
-export interface GraphHoverPayload {
-  pos: any;
-  panel: {
-    id: number;
-  };
-}
-
 export interface ToggleKioskModePayload {
   exit?: boolean;
 }
@@ -97,15 +84,9 @@ export interface PanelChangeViewPayload {}
  */
 
 export const dashLinksUpdated = eventFactory('dash-links-updated');
-export const saveDashboard = eventFactory<SaveDashboardPayload>('save-dashboard');
-export const dashboardFetchStart = eventFactory('dashboard-fetch-start');
 export const dashboardSaved = eventFactory<DashboardModel>('dashboard-saved');
 export const removePanel = eventFactory<number>('remove-panel');
-
 export const searchQuery = eventFactory('search-query');
-
-export const timepickerOpen = eventFactory('timepickerOpen');
-export const timepickerClosed = eventFactory('timepickerClosed');
 
 export const showModal = eventFactory<ShowModalPayload>('show-modal');
 export const showConfirmModal = eventFactory<ShowConfirmModalPayload>('confirm-modal');
@@ -141,12 +122,6 @@ export const zoomOut = eventFactory<number>('zoom-out');
 export const shiftTime = eventFactory<number>('shift-time');
 
 export const elasticQueryUpdated = eventFactory('elastic-query-updated');
-
-export const layoutModeChanged = eventFactory<string>('layout-mode-changed');
-
-export const jsonDiffReady = eventFactory('json-diff-ready');
-
-export const closeTimepicker = eventFactory('closeTimepicker');
 
 export const routeUpdated = eventFactory('$routeUpdate');
 
