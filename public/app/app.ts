@@ -13,7 +13,6 @@ import 'jquery';
 import 'angular';
 import 'angular-route';
 import 'angular-sanitize';
-import 'angular-native-dragdrop';
 import 'angular-bindonce';
 import 'react';
 import 'react-dom';
@@ -153,7 +152,6 @@ export class GrafanaApp {
       'ngRoute',
       'ngSanitize',
       '$strap.directives',
-      'ang-drag-drop',
       'grafana',
       'pasvaz.bindonce',
       'react',
