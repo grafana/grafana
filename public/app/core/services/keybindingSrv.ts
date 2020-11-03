@@ -2,7 +2,7 @@ import _ from 'lodash';
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
 import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
-import { locationUtil } from '@grafana/data';
+import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
 
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
@@ -197,7 +197,7 @@ export class KeybindingSrv {
   setupDashboardBindings(scope: IRootScopeService & AppEventEmitter, dashboard: DashboardModel) {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
-      appEvents.emit(CoreEvents.graphHoverClear);
+      dashboard.events.publish(new LegacyGraphHoverClearEvent());
       dashboard.startRefresh();
     });
 
