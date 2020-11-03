@@ -24,7 +24,6 @@ import {
   QueryResultMeta,
   ScopedVars,
   TimeRange,
-  CoreApp,
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv, BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
@@ -99,12 +98,16 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       }));
 
     for (const target of filteredTargets) {
-      // In explore we want to show result of metrics instant query in a table under the graph panel to mimic behaviour of prometheus.
-      // We don't want to do that in dashboards though as user would have to pick the correct data frame.
-      if (options.app === CoreApp.Explore && isMetricsQuery(target.expr)) {
-        subQueries.push(this.runInstantQuery(target, options, filteredTargets.length));
+      if (target.instant || target.range) {
+        if (target.instant) {
+          subQueries.push(this.runInstantQuery(target, options, filteredTargets.length));
+        }
+        if (target.range) {
+          subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
+        }
+      } else {
+        subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
       }
-      subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
     }
 
     // No valid targets, return the empty result to save a round trip.
@@ -138,7 +141,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       map((response: { data: LokiResponse }) => {
         if (response.data.data.resultType === LokiResultType.Stream) {
           return {
-            data: [],
+            data: response.data ? response.data.data.result.map(stream => lokiStreamResultToDataFrame(stream)) : [],
             key: `${target.refId}_instant`,
           };
         }
