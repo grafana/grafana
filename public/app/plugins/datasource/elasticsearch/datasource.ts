@@ -365,7 +365,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   showContextToggle(): boolean {
-    return true;
+    return this.esVersion > 5;
   }
 
   getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
