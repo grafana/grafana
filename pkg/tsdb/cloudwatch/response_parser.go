@@ -160,11 +160,11 @@ func parseMetricResults(results map[string]*cloudwatch.MetricDataResult, labels 
 				points = append(points, val)
 			}
 
-			timeField := data.NewField("timestamp", nil, timestamps)
+			timeField := data.NewField("Time", nil, timestamps)
 			timeField.SetConfig(&data.FieldConfig{DisplayName: "Time"})
 
 			frameName := formatAlias(query, query.Stats, tags, label)
-			valueField := data.NewField("value", tags, points)
+			valueField := data.NewField("Value", tags, points)
 			valueField.SetConfig(&data.FieldConfig{DisplayName: frameName})
 
 			frame := data.Frame{

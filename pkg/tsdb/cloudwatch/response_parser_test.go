@@ -316,5 +316,6 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		assert.Nil(t, frame.Fields[1].At(2))
 		assert.Equal(t, 30.0, *frame.Fields[1].At(3).(*float64))
 		assert.Equal(t, "Value", frame.Fields[1].Name)
+		assert.Equal(t, nil, frame.Fields[1].Config.DisplayName)
 	})
 }
