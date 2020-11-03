@@ -56,7 +56,7 @@ type SaveAlertDefinitionCommand struct {
 }
 
 // IsValid validates a SaveAlertDefinitionCommand.
-// Returns always true.
+// Always returns true.
 func (cmd *SaveAlertDefinitionCommand) IsValid() bool {
 	return true
 }
@@ -75,7 +75,7 @@ type UpdateAlertDefinitionCommand struct {
 }
 
 // IsValid validates a UpdateAlertDefinitionCommand.
-// Returns always true.
+// Always returns true.
 func (cmd *UpdateAlertDefinitionCommand) IsValid() bool {
 	return true
 }

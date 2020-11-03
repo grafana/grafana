@@ -9,7 +9,7 @@ import (
 )
 
 const defaultMaxDataPoints float64 = 100
-const defaultIntervalMs float64 = 1000
+const defaultIntervalMS float64 = 1000
 const defaultExprDatasourceID = -100
 
 type duration time.Duration
@@ -39,7 +39,7 @@ type RelativeTimeRange struct {
 	To   duration
 }
 
-// IsValid check that From duration is greater than To duration.
+// IsValid checks that From duration is greater than To duration.
 func (rtr *RelativeTimeRange) IsValid() bool {
 	return rtr.From > rtr.To
 }
@@ -53,11 +53,6 @@ func (rtr *RelativeTimeRange) toTimeRange(now time.Time) backend.TimeRange {
 
 // AlertQuery represents a single query associated with an alert definition.
 type AlertQuery struct {
-	/*
-		// AlertDefinitionID is the unique identifier of the alert definition associated with the query.
-		AlertDefinitionID int64 `json:"-"`
-	*/
-
 	// RefID is the unique identifier of the query, set by the frontend call.
 	RefID string `json:"refId"`
 
@@ -80,7 +75,7 @@ func (aq *AlertQuery) setModelProps() error {
 	aq.modelProps = make(map[string]interface{})
 	err := json.Unmarshal(aq.Model, &aq.modelProps)
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal query model %w", err)
+		return fmt.Errorf("failed to unmarshal query model: %w", err)
 	}
 
 	return nil
@@ -111,13 +106,13 @@ func (aq *AlertQuery) setDatasource() error {
 	}
 	dsID, ok := i.(float64)
 	if !ok {
-		return fmt.Errorf("failed to cast datasourceId to float64")
+		return fmt.Errorf("failed to cast datasourceId to float64: %v", i)
 	}
 	aq.DatasourceID = int64(dsID)
 	return nil
 }
 
-// IsExpression returns true is the alert query is an expression.
+// IsExpression returns true if the alert query is an expression.
 func (aq *AlertQuery) IsExpression() (bool, error) {
 	err := aq.setDatasource()
 	if err != nil {
@@ -153,13 +148,13 @@ func (aq *AlertQuery) getMaxDatapoints() (int64, error) {
 
 	maxDataPoints, ok := aq.modelProps["maxDataPoints"].(float64)
 	if !ok {
-		return 0, fmt.Errorf("Failed to cast maxDataPoints to float64")
+		return 0, fmt.Errorf("failed to cast maxDataPoints to float64: %v", aq.modelProps["maxDataPoints"])
 	}
 	return int64(maxDataPoints), nil
 }
 
-// setIntervalMs sets the model IntervalMs if it's missing or invalid
-func (aq *AlertQuery) setIntervalMs() error {
+// setIntervalMS sets the model IntervalMs if it's missing or invalid
+func (aq *AlertQuery) setIntervalMS() error {
 	if aq.modelProps == nil {
 		err := aq.setModelProps()
 		if err != nil {
@@ -168,24 +163,24 @@ func (aq *AlertQuery) setIntervalMs() error {
 	}
 	i, ok := aq.modelProps["intervalMs"] // GEL requires intervalMs inside the query JSON
 	if !ok {
-		aq.modelProps["intervalMs"] = defaultIntervalMs
+		aq.modelProps["intervalMs"] = defaultIntervalMS
 	}
 	intervalMs, ok := i.(float64)
 	if !ok || intervalMs == 0 {
-		aq.modelProps["intervalMs"] = defaultIntervalMs
+		aq.modelProps["intervalMs"] = defaultIntervalMS
 	}
 	return nil
 }
 
-func (aq *AlertQuery) getIntervalMs() (int64, error) {
-	err := aq.setIntervalMs()
+func (aq *AlertQuery) getIntervalMS() (int64, error) {
+	err := aq.setIntervalMS()
 	if err != nil {
 		return 0, err
 	}
 
 	intervalMs, ok := aq.modelProps["intervalMs"].(float64)
 	if !ok {
-		return 0, fmt.Errorf("Failed to cast intervalMs to float64")
+		return 0, fmt.Errorf("failed to cast intervalMs to float64: %v", aq.modelProps["intervalMs"])
 	}
 	return int64(intervalMs), nil
 }
@@ -209,14 +204,14 @@ func (aq *AlertQuery) getModel() ([]byte, error) {
 		return nil, err
 	}
 
-	err = aq.setIntervalMs()
+	err = aq.setIntervalMS()
 	if err != nil {
 		return nil, err
 	}
 
 	model, err := json.Marshal(aq.modelProps)
 	if err != nil {
-		return nil, fmt.Errorf("unable to marshal query model %w", err)
+		return nil, fmt.Errorf("unable to marshal query model: %w", err)
 	}
 	return model, nil
 }
@@ -247,7 +242,7 @@ func (aq *AlertQuery) setQueryType() error {
 
 	queryType, ok := i.(string)
 	if !ok {
-		return fmt.Errorf("failed to get queryType from query model")
+		return fmt.Errorf("failed to get queryType from query model: %v", i)
 	}
 
 	aq.QueryType = queryType

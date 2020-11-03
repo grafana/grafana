@@ -18,7 +18,7 @@ import (
 
 func (ng *AlertNG) registerAPIEndpoints() {
 	ng.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
-		alertDefinitions.Get("", middleware.ReqSignedIn, api.Wrap(ng.ListAlertDefinition))
+		alertDefinitions.Get("", middleware.ReqSignedIn, api.Wrap(ng.ListAlertDefinitions))
 		alertDefinitions.Get("/eval/:alertDefinitionId", validateOrgAlertDefinition, api.Wrap(ng.AlertDefinitionEval))
 		alertDefinitions.Post("/eval", middleware.ReqSignedIn, binding.Bind(EvalAlertConditionCommand{}), api.Wrap(ng.ConditionEval))
 		alertDefinitions.Get("/:alertDefinitionId", validateOrgAlertDefinition, api.Wrap(ng.GetAlertDefinitionEndpoint))
@@ -28,7 +28,7 @@ func (ng *AlertNG) registerAPIEndpoints() {
 	})
 }
 
-// POST /api/alert-definitions/eval
+// ConditionEval handles POST /api/alert-definitions/eval.
 func (ng *AlertNG) ConditionEval(c *models.ReqContext, dto EvalAlertConditionCommand) api.Response {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	defer cancelFn()
@@ -67,7 +67,7 @@ func (ng *AlertNG) ConditionEval(c *models.ReqContext, dto EvalAlertConditionCom
 	})
 }
 
-// GET /api/alert-definitions/eval/:dashboardId/:panelId/:refId"
+// §AlertDefinitionEval handles GET /api/alert-definitions/eval/:dashboardId/:panelId/:refId".
 func (ng *AlertNG) AlertDefinitionEval(c *models.ReqContext) api.Response {
 	alertDefinitionID := c.ParamsInt64(":alertDefinitionId")
 
@@ -114,7 +114,7 @@ func (ng *AlertNG) AlertDefinitionEval(c *models.ReqContext) api.Response {
 	})
 }
 
-// GET /api/alert-definitions/:alertDefinitionId
+// GetAlertDefinitionEndpoint handles GET /api/alert-definitions/:alertDefinitionId.
 func (ng *AlertNG) GetAlertDefinitionEndpoint(c *models.ReqContext) api.Response {
 	alertDefinitionID := c.ParamsInt64(":alertDefinitionId")
 
@@ -129,7 +129,7 @@ func (ng *AlertNG) GetAlertDefinitionEndpoint(c *models.ReqContext) api.Response
 	return api.JSON(200, &query.Result)
 }
 
-// DELETE /api/alert-definitions/:alertDefinitionId
+// DeleteAlertDefinitionEndpoint handles DELETE /api/alert-definitions/:alertDefinitionId.
 func (ng *AlertNG) DeleteAlertDefinitionEndpoint(c *models.ReqContext) api.Response {
 	alertDefinitionID := c.ParamsInt64(":alertDefinitionId")
 
@@ -145,7 +145,7 @@ func (ng *AlertNG) DeleteAlertDefinitionEndpoint(c *models.ReqContext) api.Respo
 	return api.JSON(200, util.DynMap{"affectedRows": query.RowsAffected})
 }
 
-// PUT /api/alert-definitions/:alertDefinitionId
+// UpdateAlertDefinitionEndpoint handles PUT /api/alert-definitions/:alertDefinitionId.
 func (ng *AlertNG) UpdateAlertDefinitionEndpoint(c *models.ReqContext, cmd UpdateAlertDefinitionCommand) api.Response {
 	cmd.ID = c.ParamsInt64(":alertDefinitionId")
 	cmd.SignedInUser = c.SignedInUser
@@ -158,7 +158,7 @@ func (ng *AlertNG) UpdateAlertDefinitionEndpoint(c *models.ReqContext, cmd Updat
 	return api.JSON(200, util.DynMap{"affectedRows": cmd.RowsAffected, "id": cmd.Result.Id})
 }
 
-// POST /api/alert-definitions
+// CreateAlertDefinitionEndpoint handles POST /api/alert-definitions.
 func (ng *AlertNG) CreateAlertDefinitionEndpoint(c *models.ReqContext, cmd SaveAlertDefinitionCommand) api.Response {
 	cmd.OrgID = c.SignedInUser.OrgId
 	cmd.SignedInUser = c.SignedInUser
@@ -171,8 +171,8 @@ func (ng *AlertNG) CreateAlertDefinitionEndpoint(c *models.ReqContext, cmd SaveA
 	return api.JSON(200, util.DynMap{"id": cmd.Result.Id})
 }
 
-// GET /api/alert-definitions
-func (ng *AlertNG) ListAlertDefinition(c *models.ReqContext) api.Response {
+// ListAlertDefinitions handles GET /api/alert-definitions.
+func (ng *AlertNG) ListAlertDefinitions(c *models.ReqContext) api.Response {
 	cmd := ListAlertDefinitionsCommand{OrgID: c.SignedInUser.OrgId}
 
 	if err := ng.Bus.Dispatch(&cmd); err != nil {

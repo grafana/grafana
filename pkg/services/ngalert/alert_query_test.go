@@ -18,7 +18,7 @@ func TestAlertQuery(t *testing.T) {
 		expectedDatasource   string
 		expectedDatasourceID int64
 		expectedMaxPoints    int64
-		expectedIntervalMs   int64
+		expectedIntervalMS   int64
 		err                  error
 	}{
 		{
@@ -35,7 +35,7 @@ func TestAlertQuery(t *testing.T) {
 			expectedDatasource:   "__expr__",
 			expectedDatasourceID: int64(defaultExprDatasourceID),
 			expectedMaxPoints:    int64(defaultMaxDataPoints),
-			expectedIntervalMs:   int64(defaultIntervalMs),
+			expectedIntervalMS:   int64(defaultIntervalMS),
 		},
 		{
 			desc: "given a query",
@@ -52,7 +52,7 @@ func TestAlertQuery(t *testing.T) {
 			expectedDatasource:   "my datasource",
 			expectedDatasourceID: 1,
 			expectedMaxPoints:    int64(defaultMaxDataPoints),
-			expectedIntervalMs:   int64(defaultIntervalMs),
+			expectedIntervalMS:   int64(defaultIntervalMS),
 		},
 		{
 			desc: "given a query with valid maxDataPoints",
@@ -70,7 +70,7 @@ func TestAlertQuery(t *testing.T) {
 			expectedDatasource:   "my datasource",
 			expectedDatasourceID: 1,
 			expectedMaxPoints:    200,
-			expectedIntervalMs:   int64(defaultIntervalMs),
+			expectedIntervalMS:   int64(defaultIntervalMS),
 		},
 		{
 			desc: "given a query with invalid maxDataPoints",
@@ -88,7 +88,7 @@ func TestAlertQuery(t *testing.T) {
 			expectedDatasource:   "my datasource",
 			expectedDatasourceID: 1,
 			expectedMaxPoints:    int64(defaultMaxDataPoints),
-			expectedIntervalMs:   int64(defaultIntervalMs),
+			expectedIntervalMS:   int64(defaultIntervalMS),
 		},
 		{
 			desc: "given a query with zero maxDataPoints",
@@ -106,10 +106,10 @@ func TestAlertQuery(t *testing.T) {
 			expectedDatasource:   "my datasource",
 			expectedDatasourceID: 1,
 			expectedMaxPoints:    int64(defaultMaxDataPoints),
-			expectedIntervalMs:   int64(defaultIntervalMs),
+			expectedIntervalMS:   int64(defaultIntervalMS),
 		},
 		{
-			desc: "given a query with valid intevalMs",
+			desc: "given a query with valid intervalMs",
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
@@ -124,17 +124,17 @@ func TestAlertQuery(t *testing.T) {
 			expectedDatasource:   "my datasource",
 			expectedDatasourceID: 1,
 			expectedMaxPoints:    int64(defaultMaxDataPoints),
-			expectedIntervalMs:   2000,
+			expectedIntervalMS:   2000,
 		},
 		{
-			desc: "given a query with invalid intevalMs",
+			desc: "given a query with invalid intervalMs",
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
 					"datasource": "my datasource",
 					"datasourceId": 1,
 					"queryType": "metricQuery",
-					"intevalMs": "invalid",
+					"intervalMs": "invalid",
 					"extraParam": "some text"	
 				}`),
 			},
@@ -142,17 +142,17 @@ func TestAlertQuery(t *testing.T) {
 			expectedDatasource:   "my datasource",
 			expectedDatasourceID: 1,
 			expectedMaxPoints:    int64(defaultMaxDataPoints),
-			expectedIntervalMs:   int64(defaultIntervalMs),
+			expectedIntervalMS:   int64(defaultIntervalMS),
 		},
 		{
-			desc: "given a query with invalid intevalMs",
+			desc: "given a query with invalid intervalMs",
 			alertQuery: AlertQuery{
 				RefID: "A",
 				Model: json.RawMessage(`{
 					"datasource": "my datasource",
 					"datasourceId": 1,
 					"queryType": "metricQuery",
-					"intevalMs": 0,
+					"intervalMs": 0,
 					"extraParam": "some text"
 				}`),
 			},
@@ -160,13 +160,13 @@ func TestAlertQuery(t *testing.T) {
 			expectedDatasource:   "my datasource",
 			expectedDatasourceID: 1,
 			expectedMaxPoints:    int64(defaultMaxDataPoints),
-			expectedIntervalMs:   int64(defaultIntervalMs),
+			expectedIntervalMS:   int64(defaultIntervalMS),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-			t.Run("can recongnize if it's an expression", func(t *testing.T) {
+			t.Run("can recognize if it's an expression", func(t *testing.T) {
 				isExpression, err := tc.alertQuery.IsExpression()
 				require.NoError(t, err)
 				assert.Equal(t, tc.expectedIsExpression, isExpression)
@@ -175,25 +175,25 @@ func TestAlertQuery(t *testing.T) {
 			t.Run("can set datasource for expression", func(t *testing.T) {
 				err := tc.alertQuery.setDatasource()
 				require.NoError(t, err)
-				require.Equal(t, tc.alertQuery.DatasourceID, tc.expectedDatasourceID)
+				require.Equal(t, tc.expectedDatasourceID, tc.alertQuery.DatasourceID)
 			})
 
 			t.Run("can set queryType for expression", func(t *testing.T) {
 				err := tc.alertQuery.setQueryType()
 				require.NoError(t, err)
-				require.Equal(t, tc.alertQuery.QueryType, "metricQuery")
+				require.Equal(t, "metricQuery", tc.alertQuery.QueryType)
 			})
 
 			t.Run("can update model maxDataPoints (if missing)", func(t *testing.T) {
 				maxDataPoints, err := tc.alertQuery.getMaxDatapoints()
 				require.NoError(t, err)
-				require.Equal(t, maxDataPoints, tc.expectedMaxPoints)
+				require.Equal(t, tc.expectedMaxPoints, maxDataPoints)
 			})
 
 			t.Run("can update model intervalMs (if missing)", func(t *testing.T) {
-				intervalMs, err := tc.alertQuery.getIntervalMs()
+				intervalMS, err := tc.alertQuery.getIntervalMS()
 				require.NoError(t, err)
-				require.Equal(t, intervalMs, tc.expectedIntervalMs)
+				require.Equal(t, intervalMS, tc.expectedIntervalMS)
 			})
 
 			t.Run("can get the updated model with the default properties (if missing)", func(t *testing.T) {
@@ -225,7 +225,7 @@ func TestAlertQuery(t *testing.T) {
 				require.True(t, ok)
 				intervalMs, ok := i.(float64)
 				require.True(t, ok)
-				require.Equal(t, tc.expectedIntervalMs, int64(intervalMs))
+				require.Equal(t, tc.expectedIntervalMS, int64(intervalMs))
 
 				i, ok = model["extraParam"]
 				require.True(t, ok)
@@ -287,7 +287,7 @@ func TestAlertQueryMarshalling(t *testing.T) {
 	for _, tc := range testCases {
 		var aq AlertQuery
 		err := json.Unmarshal([]byte(tc.blob), &aq)
-		assert.Equal(t, tc.err, err)
+		require.Equal(t, tc.err, err)
 		if tc.err == nil {
 			assert.Equal(t, tc.expectedFrom, aq.RelativeTimeRange.From)
 			assert.Equal(t, tc.expectedTo, aq.RelativeTimeRange.To)

@@ -9,12 +9,8 @@ import (
 )
 
 // GetEvalCondition returns a condition suitable for execution
-// based on the saved AlertDefinition
+// based on the saved AlertDefinition.
 func (alertDefinition *AlertDefinition) GetEvalCondition(now time.Time) (*eval.Condition, error) {
-	// Copy Properties backend.DataQuery
-	// Turn RelativeTimeRange into a time Range
-	// Copy the AlertQuery's Model, update model in DataQuery as needed
-
 	condition := &eval.Condition{
 		RefID: alertDefinition.Condition,
 	}
@@ -24,32 +20,32 @@ func (alertDefinition *AlertDefinition) GetEvalCondition(now time.Time) (*eval.C
 		// or organisation of the signed in user???
 		err := aq.setOrgID(alertDefinition.OrgId)
 		if err != nil {
-			return nil, fmt.Errorf("failed to set orgId query model %w", err)
+			return nil, fmt.Errorf("failed to set orgId query model: %w", err)
 		}
 
 		model, err := aq.getModel()
 		if err != nil {
-			return nil, fmt.Errorf("failed to get query model %w", err)
+			return nil, fmt.Errorf("failed to get query model: %w", err)
 		}
 
-		intervalMs, err := aq.getIntervalMs()
+		intervalMS, err := aq.getIntervalMS()
 		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve intervalMs from the model %w", err)
+			return nil, fmt.Errorf("failed to retrieve intervalMs from the model: %w", err)
 		}
 
 		maxDatapoints, err := aq.getMaxDatapoints()
 		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve maxDatapoints from the model %w", err)
+			return nil, fmt.Errorf("failed to retrieve maxDatapoints from the model: %w", err)
 		}
 
 		err = aq.setQueryType()
 		if err != nil {
-			return nil, fmt.Errorf("failed to retrieve queryType from the model %w", err)
+			return nil, fmt.Errorf("failed to retrieve queryType from the model: %w", err)
 		}
 
 		condition.QueriesAndExpressions = append(condition.QueriesAndExpressions, backend.DataQuery{
 			JSON:          model,
-			Interval:      time.Duration(intervalMs) * time.Millisecond,
+			Interval:      time.Duration(intervalMS) * time.Millisecond,
 			RefID:         aq.RefID,
 			MaxDataPoints: maxDatapoints,
 			QueryType:     aq.QueryType,
@@ -59,7 +55,7 @@ func (alertDefinition *AlertDefinition) GetEvalCondition(now time.Time) (*eval.C
 	return condition, nil
 }
 
-// prerSave set datasource and loads the updated model for each alert query
+// preSave set datasource and loads the updated model for each alert query.
 func (alertDefinition *AlertDefinition) preSave() error {
 	for i, q := range alertDefinition.Data {
 		if err := q.setDatasource(); err != nil {
