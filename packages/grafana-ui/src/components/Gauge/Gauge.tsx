@@ -25,8 +25,6 @@ export interface Props extends Themeable {
   className?: string;
 }
 
-const FONT_SCALE = 1;
-
 export class Gauge extends PureComponent<Props> {
   canvasElement: any;
 
