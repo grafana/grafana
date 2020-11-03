@@ -95,13 +95,6 @@ export class Gauge extends PureComponent<Props> {
     return formatted;
   }
 
-  getFontScale(length: number): number {
-    if (length > 12) {
-      return FONT_SCALE - (length * 5) / 110;
-    }
-    return FONT_SCALE - (length * 5) / 101;
-  }
-
   draw() {
     const { field, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
 
@@ -112,7 +105,14 @@ export class Gauge extends PureComponent<Props> {
     const gaugeWidth = Math.min(dimension / 5.5, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
     const text = formattedValueToString(value);
-    const fontSize = calculateFontSize(text, dimension - gaugeWidth * 3, dimension, 1, 48);
+    const valueWidthBase = Math.min(width, dimension * 1.3) * 0.9;
+    const fontSize = calculateFontSize(
+      text,
+      valueWidthBase - ((gaugeWidth + (showThresholdMarkers ? thresholdMarkersWidth : 0)) * 2 + 10),
+      dimension,
+      1,
+      48
+    );
     const thresholdLabelFontSize = fontSize / 2.5;
 
     let min = field.min!;
