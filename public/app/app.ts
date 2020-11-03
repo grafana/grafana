@@ -28,7 +28,6 @@ import _ from 'lodash';
 import {
   AppEvents,
   setLocale,
-  setMarkdownOptions,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
