@@ -4,8 +4,8 @@ Schema description documents for [Grafana Dashboard
 JSON](https://grafana.com/docs/grafana/latest/reference/dashboard/) and core
 panels.
 
-_*This directory is experimental. The schemas are not currently implemented or
-enforced in Grafana.*_
+> **Note:** This directory is experimental. The schemas are not currently
+> implemented or enforced in Grafana.
 
 Schemas are defined in [Cue](https://cuelang.org/). Cue was chosen because it
 strongly facilitates our primary use cases - [schema
