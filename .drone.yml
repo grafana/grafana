@@ -141,6 +141,7 @@ steps:
   image: grafana/build-container:1.2.28
   commands:
   - yarn storybook:build
+  - ./bin/grabpl verify-storybook
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
@@ -412,17 +413,11 @@ steps:
   image: grafana/build-container:1.2.28
   commands:
   - yarn storybook:build
+  - ./bin/grabpl verify-storybook
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
-
-- name: verify-storybook
-  image: grafana/build-container:1.2.28
-  commands:
-  - ./bin/grabpl verify-storybook
-  depends_on:
-  - build_storybook
 
 - name: publish-storybook
   image: grafana/grafana-ci-deploy:1.2.6
@@ -857,6 +852,7 @@ steps:
   image: grafana/build-container:1.2.28
   commands:
   - yarn storybook:build
+  - ./bin/grabpl verify-storybook
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
@@ -957,13 +953,6 @@ steps:
       from_secret: npm_token
   depends_on:
   - end-to-end-tests
-
-- name: verify-storybook
-  image: grafana/build-container:1.2.28
-  commands:
-  - ./bin/grabpl verify-storybook
-  depends_on:
-  - build_storybook
 
 - name: publish-storybook
   image: grafana/grafana-ci-deploy:1.2.6
@@ -1635,6 +1624,7 @@ steps:
   image: grafana/build-container:1.2.28
   commands:
   - yarn storybook:build
+  - ./bin/grabpl verify-storybook
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
@@ -1728,13 +1718,6 @@ steps:
       from_secret: npm_token
   depends_on:
   - end-to-end-tests
-
-- name: verify-storybook
-  image: grafana/build-container:1.2.28
-  commands:
-  - ./bin/grabpl verify-storybook
-  depends_on:
-  - build_storybook
 
 - name: publish-storybook
   image: grafana/grafana-ci-deploy:1.2.6
@@ -2402,6 +2385,7 @@ steps:
   image: grafana/build-container:1.2.28
   commands:
   - yarn storybook:build
+  - ./bin/grabpl verify-storybook
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
@@ -2706,6 +2690,7 @@ steps:
   image: grafana/build-container:1.2.28
   commands:
   - yarn storybook:build
+  - ./bin/grabpl verify-storybook
   environment:
     NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
