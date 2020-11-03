@@ -310,6 +310,7 @@ func TestCloudWatchResponseParser(t *testing.T) {
 		frame := frames[0]
 		assert.False(t, partialData)
 		assert.Equal(t, "AWS/ApplicationELB_TargetResponseTime_Average", frame.Name)
+		assert.Equal(t, "Time", frame.Fields[0].Name)
 		assert.Equal(t, "lb", frame.Fields[1].Labels["LoadBalancer"])
 		assert.Equal(t, 10.0, *frame.Fields[1].At(0).(*float64))
 		assert.Equal(t, 20.0, *frame.Fields[1].At(1).(*float64))
