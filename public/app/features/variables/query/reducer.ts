@@ -87,18 +87,14 @@ const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
 };
 
 const getAllMatches = (str: string, regex: RegExp): any => {
-  let results = {};
+    const results = {};
   let matches;
 
-  if (regex.global) {
-    while ((matches = regex.exec(str))) {
-      _.merge(results, matches);
-    }
-  } else {
-    if ((matches = regex.exec(str))) {
-      _.merge(results, matches);
-    }
-  }
+  do {
+    matches = regex.exec(str);
+    _.merge(results, matches);
+  } while (regex.global && matches);
+
   return results;
 };
 

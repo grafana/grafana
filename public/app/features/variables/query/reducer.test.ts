@@ -199,7 +199,7 @@ describe('queryVariableReducer', () => {
         });
     });
 
-    it('unmatached value capture returns empty state', () => {
+    it('unmatched value capture returns empty state', () => {
       const regex = '/somevalue="(?<value>[^"]+)|somelabel="(?<text>[^"]+)/gi';
       const { initialState } = getVariableTestContext(adapter, { includeAll: false, regex });
       const metrics = [createMetric('A{somelabel="atext",something="avalue"}'), createMetric('B')];
