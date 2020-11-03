@@ -2,7 +2,6 @@ package ngalert
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"time"
 
@@ -16,7 +15,7 @@ const defaultExprDatasourceID = -100
 type duration time.Duration
 
 func (d duration) MarshalJSON() ([]byte, error) {
-	return json.Marshal(time.Duration(d).String())
+	return json.Marshal(time.Duration(d).Seconds())
 }
 
 func (d *duration) UnmarshalJSON(b []byte) error {
@@ -26,17 +25,10 @@ func (d *duration) UnmarshalJSON(b []byte) error {
 	}
 	switch value := v.(type) {
 	case float64:
-		*d = duration(time.Duration(value))
-		return nil
-	case string:
-		tmp, err := time.ParseDuration(value)
-		if err != nil {
-			return err
-		}
-		*d = duration(tmp)
+		*d = duration(time.Duration(value) * time.Second)
 		return nil
 	default:
-		return errors.New("invalid duration")
+		return fmt.Errorf("invalid duration %v", v)
 	}
 }
 

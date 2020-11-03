@@ -2,7 +2,9 @@ package ngalert
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -232,5 +234,63 @@ func TestAlertQuery(t *testing.T) {
 				require.Equal(t, "some text", extraParam)
 			})
 		})
+	}
+}
+
+func TestAlertQueryMarshalling(t *testing.T) {
+	testCases := []struct {
+		desc         string
+		blob         string
+		err          error
+		expectedFrom duration
+		expectedTo   duration
+	}{
+		{
+			desc: "unmarshalling successfully when input is correct",
+			blob: `{
+				"refId": "B",
+				"relativeTimeRange": {
+					"from": 18000,
+					"to": 10800
+				},
+				"model": {}
+			}`,
+			expectedFrom: duration(5 * time.Hour),
+			expectedTo:   duration(3 * time.Hour),
+		},
+		{
+			desc: "failing unmarshalling gracefully when from is incorrect",
+			blob: `{
+				"refId": "B",
+				"relativeTimeRange": {
+					"from": "5h10m",
+					"to": 18000
+				},
+				"model": {}
+			}`,
+			err: fmt.Errorf("invalid duration 5h10m"),
+		},
+		{
+			desc: "failing unmarshalling gracefully when to is incorrect",
+			blob: `{
+				"refId": "B",
+				"relativeTimeRange": {
+					"from": 18000,
+					"to": "5h10m"
+				},
+				"model": {}
+			}`,
+			err: fmt.Errorf("invalid duration 5h10m"),
+		},
+	}
+
+	for _, tc := range testCases {
+		var aq AlertQuery
+		err := json.Unmarshal([]byte(tc.blob), &aq)
+		assert.Equal(t, tc.err, err)
+		if tc.err == nil {
+			assert.Equal(t, tc.expectedFrom, aq.RelativeTimeRange.From)
+			assert.Equal(t, tc.expectedTo, aq.RelativeTimeRange.To)
+		}
 	}
 }
