@@ -29,7 +29,14 @@ const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCs
               // TODO: Rename hideFromTabs => hideFromNav
               return null;
             }
-            return <PanelHeaderMenuItem iconClassName={navItem.icon} text={navItem.text} href={navItem.url} />;
+            return (
+              <PanelHeaderMenuItem
+                key={navItem.url}
+                iconClassName={navItem.icon}
+                text={navItem.text}
+                href={navItem.url}
+              />
+            );
           })}
         </ul>
       </div>
