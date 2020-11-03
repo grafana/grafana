@@ -417,6 +417,13 @@ steps:
   depends_on:
   - package
 
+- name: verify-storybook
+  image: grafana/build-container:1.2.28
+  commands:
+  - ./bin/grabpl verify-storybook
+  depends_on:
+  - build_storybook
+
 - name: publish-storybook
   image: grafana/grafana-ci-deploy:1.2.6
   commands:
@@ -950,6 +957,13 @@ steps:
       from_secret: npm_token
   depends_on:
   - end-to-end-tests
+
+- name: verify-storybook
+  image: grafana/build-container:1.2.28
+  commands:
+  - ./bin/grabpl verify-storybook
+  depends_on:
+  - build_storybook
 
 - name: publish-storybook
   image: grafana/grafana-ci-deploy:1.2.6
@@ -1715,6 +1729,13 @@ steps:
   depends_on:
   - end-to-end-tests
 
+- name: verify-storybook
+  image: grafana/build-container:1.2.28
+  commands:
+  - ./bin/grabpl verify-storybook
+  depends_on:
+  - build_storybook
+
 - name: publish-storybook
   image: grafana/grafana-ci-deploy:1.2.6
   commands:
@@ -2385,13 +2406,6 @@ steps:
     NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
-
-- name: verify-storybook
-  image: grafana/build-container:1.2.28
-  commands:
-    - ./bin/grabpl verify-storybook
-  depends_on:
-    - build-storybook
 
 - name: copy-packages-for-docker
   image: grafana/build-container:1.2.28

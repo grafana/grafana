@@ -272,6 +272,23 @@ def build_storybook_step(edition, ver_mode):
         ],
     }
 
+def verify_storybook_step(edition, ver_mode):
+    if edition == 'enterprise' and ver_mode in ('release', 'test-release'):
+        return None
+
+    return {
+        'name': 'verify-storybook',
+        'image': build_image,
+        'depends_on': [
+            # Best to ensure that this step doesn't mess with what's getting built and packaged
+            'build_storybook',
+        ],
+        'commands': [
+            './bin/grabpl verify-storybook',
+        ],
+    }
+
+
 def publish_storybook_step(edition, ver_mode):
     if edition == 'enterprise':
         return None
@@ -298,7 +315,7 @@ def publish_storybook_step(edition, ver_mode):
         'name': 'publish-storybook',
         'image': publish_image,
         'depends_on': [
-            'build-storybook',
+            'verify-storybook',
         ],
         'environment': {
             'GCP_KEY': {

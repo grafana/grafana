@@ -16,6 +16,7 @@ load(
     'e2e_tests_server_step',
     'e2e_tests_step',
     'build_storybook_step',
+    'verify_storybook_step',
     'copy_packages_for_docker_step',
     'build_docker_images_step',
     'postgres_integration_tests_step',
@@ -80,6 +81,7 @@ def get_steps(edition, ver_mode, publish):
         steps.extend([
             upload_packages_step(edition=edition, ver_mode=ver_mode),
             release_npm_packages_step(edition=edition, ver_mode=ver_mode),
+            verify_storybook_step(edition=edition, ver_mode=ver_mode),
             publish_storybook_step(edition=edition, ver_mode=ver_mode),
         ])
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
