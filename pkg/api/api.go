@@ -26,6 +26,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r := hs.RouteRegister
 
 	// not logged in views
+	r.Get("/", reqSignedIn, hs.Index)
 	r.Get("/logout", hs.Logout)
 	r.Post("/login", quota("session"), bind(dtos.LoginCommand{}), Wrap(hs.LoginPost))
 	r.Get("/login/:name", quota("session"), hs.OAuthLogin)
@@ -35,6 +36,7 @@ func (hs *HTTPServer) registerRoutes() {
 	// authed views
 	r.Get("/profile/", reqSignedIn, hs.Index)
 	r.Get("/profile/password", reqSignedIn, hs.Index)
+	r.Get("/.well-known/change-password", RedirectToChangePassword)
 	r.Get("/profile/switch-org/:id", reqSignedIn, hs.ChangeActiveOrgAndRedirectToHome)
 	r.Get("/org/", reqOrgAdmin, hs.Index)
 	r.Get("/org/new", reqGrafanaAdmin, hs.Index)
@@ -442,6 +444,4 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", Wrap(GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, Wrap(DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
-
-	r.Get("/*", reqSignedIn, hs.Index)
 }
