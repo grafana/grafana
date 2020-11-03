@@ -299,7 +299,7 @@ def publish_storybook_step(edition, ver_mode):
         'name': 'publish-storybook',
         'image': publish_image,
         'depends_on': [
-            'verify-storybook',
+            'build-storybook',
         ],
         'environment': {
             'GCP_KEY': {

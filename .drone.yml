@@ -429,7 +429,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   depends_on:
-  - verify-storybook
+  - build-storybook
 
 - name: build-frontend-docs
   image: grafana/build-container:1.2.28
@@ -965,7 +965,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   depends_on:
-  - verify-storybook
+  - build-storybook
 
 services:
 - name: postgres
@@ -1727,7 +1727,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   depends_on:
-  - verify-storybook
+  - build-storybook
 
 services:
 - name: postgres
