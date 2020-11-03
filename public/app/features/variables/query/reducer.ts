@@ -87,7 +87,7 @@ const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
 };
 
 const getAllMatches = (str: string, regex: RegExp): any => {
-    const results = {};
+  const results = {};
   let matches;
 
   do {
@@ -127,18 +127,17 @@ const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, 
         continue;
       }
 
-      if (matches.groups && matches.groups.value) {
+      if (matches.groups && matches.groups.value && matches.groups.text) {
         value = matches.groups.value;
-      } else if (matches.groups && matches.groups.hasOwnProperty('value')) {
-        continue;
+        text = matches.groups.text;
+      } else if (matches.groups && matches.groups.value) {
+        value = matches.groups.value;
+        text = value;
+      } else if (matches.groups && matches.groups.text) {
+        text = matches.groups.text;
+        value = text;
       } else if (matches['1']) {
         value = matches['1'];
-      }
-
-      if (matches.groups && matches.groups.text) {
-        text = matches.groups.text;
-      } else {
-        text = value;
       }
     }
 

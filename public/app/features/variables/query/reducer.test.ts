@@ -199,10 +199,29 @@ describe('queryVariableReducer', () => {
         });
     });
 
-    it('unmatched value capture returns empty state', () => {
+    it('unmatched value capture will use text capture', () => {
       const regex = '/somevalue="(?<value>[^"]+)|somelabel="(?<text>[^"]+)/gi';
       const { initialState } = getVariableTestContext(adapter, { includeAll: false, regex });
-      const metrics = [createMetric('A{somelabel="atext",something="avalue"}'), createMetric('B')];
+      const metrics = [createMetric('A{somelabel="atext",somename="avalue"}'), createMetric('B')];
+      const update = { results: metrics, templatedRegex: regex };
+      const payload = toVariablePayload({ id: '0', type: 'query' }, update);
+
+      reducerTester<VariablesState>()
+        .givenReducer(queryVariableReducer, cloneDeep(initialState))
+        .whenActionIsDispatched(updateVariableOptions(payload))
+        .thenStateShouldEqual({
+          ...initialState,
+          '0': ({
+            ...initialState[0],
+            options: [{ text: 'atext', value: 'atext', selected: false }],
+          } as unknown) as QueryVariableModel,
+        });
+    });
+
+    it('unmatched text capture and unmatched value capture returns empty state', () => {
+      const regex = '/somevalue="(?<value>[^"]+)|somelabel="(?<text>[^"]+)/gi';
+      const { initialState } = getVariableTestContext(adapter, { includeAll: false, regex });
+      const metrics = [createMetric('A{someother="atext",something="avalue"}'), createMetric('B')];
       const update = { results: metrics, templatedRegex: regex };
       const payload = toVariablePayload({ id: '0', type: 'query' }, update);
 
