@@ -11,6 +11,7 @@ import {
   PluginMeta,
   DataQuery,
   LogRowModel,
+  Field,
 } from '@grafana/data';
 import LanguageProvider from './language_provider';
 import { ElasticResponse } from './elastic_response';
@@ -409,9 +410,9 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
      * be properly displayed. This code just copies the fields based on this.timeField
      * and this.logMessageField and recreates the dataFrame so it works.
      */
-    const timestampField = dataFrame.fields.find(f => f.name === this.timeField);
-    const lineField = dataFrame.fields.find(f => f.name === this.logMessageField);
-    if (timestampField) {
+    const timestampField = dataFrame.fields.find((f: Field) => f.name === this.timeField);
+    const lineField = dataFrame.fields.find((f: Field) => f.name === this.logMessageField);
+    if (timestampField && lineField) {
       return {
         data: [
           {
