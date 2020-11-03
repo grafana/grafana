@@ -11,7 +11,6 @@ import { DashboardSearchHit } from 'app/features/search/types';
 import { FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
-import { Emitter } from '../utils/emitter';
 import { parseInitFromOptions, parseUrlFromOptions } from '../utils/fetch';
 import { isDataQuery, isLocalUrl } from '../utils/query';
 import { FetchQueue } from './FetchQueue';
@@ -22,7 +21,7 @@ const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
 export interface BackendSrvDependencies {
   fromFetch: (input: string | Request, init?: RequestInit) => Observable<Response>;
-  appEvents: Emitter;
+  appEvents: typeof appEvents;
   contextSrv: ContextSrv;
   logout: () => void;
 }
