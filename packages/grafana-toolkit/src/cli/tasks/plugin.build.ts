@@ -103,13 +103,19 @@ export const lintPlugin = ({ fix }: Fixable = {}) =>
     }
 
     const { errorCount, results, warningCount } = report;
+    const formatter = cli.getFormatter();
 
-    if (errorCount > 0 || warningCount > 0) {
-      const formatter = cli.getFormatter();
+    if (warningCount > 0) {
       console.log('\n');
       console.log(formatter(results));
       console.log('\n');
-      throw new Error(`${errorCount + warningCount} linting errors found in ${results.length} files`);
+    }
+
+    if (errorCount > 0) {
+      console.log('\n');
+      console.log(formatter(results));
+      console.log('\n');
+      throw new Error(`${errorCount} linting errors found in ${results.length} files`);
     }
   });
 
