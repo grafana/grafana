@@ -3,12 +3,12 @@ package api
 import (
 	"encoding/json"
 	"errors"
-	"github.com/grafana/grafana/pkg/services/licensing"
 	"net/http"
 	"sort"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/services/licensing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
