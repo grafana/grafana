@@ -77,14 +77,14 @@ export const getCategories = (): ValueFormatCategory[] => [
   {
     name: 'Computation',
     formats: [
-      { name: 'FLOP/s', id: 'flops', fn: SIPrefix('FLOP/s') },
-      { name: 'MFLOP/s', id: 'mflops', fn: SIPrefix('FLOP/s', 2) },
-      { name: 'GFLOP/s', id: 'gflops', fn: SIPrefix('FLOP/s', 3) },
-      { name: 'TFLOP/s', id: 'tflops', fn: SIPrefix('FLOP/s', 4) },
-      { name: 'PFLOP/s', id: 'pflops', fn: SIPrefix('FLOP/s', 5) },
-      { name: 'EFLOP/s', id: 'eflops', fn: SIPrefix('FLOP/s', 6) },
-      { name: 'ZFLOP/s', id: 'zflops', fn: SIPrefix('FLOP/s', 7) },
-      { name: 'YFLOP/s', id: 'yflops', fn: SIPrefix('FLOP/s', 8) },
+      { name: 'FLOP/s', id: 'flops', fn: SIPrefix('FLOPS') },
+      { name: 'MFLOP/s', id: 'mflops', fn: SIPrefix('FLOPS', 2) },
+      { name: 'GFLOP/s', id: 'gflops', fn: SIPrefix('FLOPS', 3) },
+      { name: 'TFLOP/s', id: 'tflops', fn: SIPrefix('FLOPS', 4) },
+      { name: 'PFLOP/s', id: 'pflops', fn: SIPrefix('FLOPS', 5) },
+      { name: 'EFLOP/s', id: 'eflops', fn: SIPrefix('FLOPS', 6) },
+      { name: 'ZFLOP/s', id: 'zflops', fn: SIPrefix('FLOPS', 7) },
+      { name: 'YFLOP/s', id: 'yflops', fn: SIPrefix('FLOPS', 8) },
     ],
   },
   {
