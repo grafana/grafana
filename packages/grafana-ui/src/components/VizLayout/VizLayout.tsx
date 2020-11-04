@@ -2,6 +2,9 @@ import React, { FC, CSSProperties, ComponentType } from 'react';
 import { useMeasure } from 'react-use';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 
+/**
+ * @beta
+ */
 export interface Props {
   width: number;
   height: number;
@@ -9,10 +12,16 @@ export interface Props {
   children: (width: number, height: number) => React.ReactNode;
 }
 
+/**
+ * @beta
+ */
 export interface VizLayoutType extends FC<Props> {
   Legend: ComponentType<VizLayoutLegendProps>;
 }
 
+/**
+ * @beta
+ */
 export const VizLayout: VizLayoutType = ({ width, height, legend, children }) => {
   const containerStyle: CSSProperties = {
     display: 'flex',
@@ -75,6 +84,9 @@ interface VizSize {
   height: number;
 }
 
+/**
+ * @beta
+ */
 export interface VizLayoutLegendProps {
   position?: 'bottom' | 'right' | 'auto';
   maxHeight?: string;
@@ -82,6 +94,9 @@ export interface VizLayoutLegendProps {
   children: React.ReactNode;
 }
 
+/**
+ * @beta
+ */
 export const VizLayoutLegend: FC<VizLayoutLegendProps> = ({ children }) => {
   return <>{children}</>;
 };
