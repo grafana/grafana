@@ -10,6 +10,7 @@ import {
   QueryFixAction,
   toLegacyResponseData,
 } from '@grafana/data';
+
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -22,9 +23,7 @@ import {
 } from 'app/core/utils/explore';
 import { addToRichHistory } from 'app/core/utils/richHistory';
 import { ExploreItemState, ExplorePanelData, ThunkResult } from 'app/types';
-
 import { ExploreId, QueryOptions } from 'app/types/explore';
-import { changeLoadingStateAction, historyUpdatedAction, queriesImportedAction, scanStopAction } from './actionTypes';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { notifyApp } from '../../../core/actions';
@@ -37,9 +36,11 @@ import {
 } from '../utils/decorators';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { richHistoryUpdatedAction } from './main';
-import { stateSave, updateTime } from './actions';
+import { stateSave } from './exploreItem';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
-import { createEmptyQueryResponse, makeInitialUpdateState } from './exploreItem';
+import { updateTime } from './time';
+import { historyUpdatedAction } from './history';
+import { createEmptyQueryResponse, makeInitialUpdateState } from './utils';
 
 /**
  * Adds a query row after the row with the given index.
@@ -50,6 +51,15 @@ export interface AddQueryRowPayload {
   query: DataQuery;
 }
 export const addQueryRowAction = createAction<AddQueryRowPayload>('explore/addQueryRow');
+
+/**
+ * Remove query row of the given index, as well as associated query results.
+ */
+export interface RemoveQueryRowPayload {
+  exploreId: ExploreId;
+  index: number;
+}
+export const removeQueryRowAction = createAction<RemoveQueryRowPayload>('explore/removeQueryRow');
 
 /**
  * Query change handler for the query row with the given index.
@@ -75,6 +85,12 @@ export const clearQueriesAction = createAction<ClearQueriesPayload>('explore/cle
  * Cancel running queries.
  */
 export const cancelQueriesAction = createAction<ClearQueriesPayload>('explore/cancelQueries');
+
+export interface QueriesImportedPayload {
+  exploreId: ExploreId;
+  queries: DataQuery[];
+}
+export const queriesImportedAction = createAction<QueriesImportedPayload>('explore/queriesImported');
 
 /**
  * Action to modify a query given a datasource-specific modifier action.
@@ -115,14 +131,35 @@ export interface SetQueriesPayload {
 }
 export const setQueriesAction = createAction<SetQueriesPayload>('explore/setQueries');
 
-/**
- * Remove query row of the given index, as well as associated query results.
- */
-export interface RemoveQueryRowPayload {
+export interface ChangeLoadingStatePayload {
   exploreId: ExploreId;
-  index: number;
+  loadingState: LoadingState;
 }
-export const removeQueryRowAction = createAction<RemoveQueryRowPayload>('explore/removeQueryRow');
+export const changeLoadingStateAction = createAction<ChangeLoadingStatePayload>('changeLoadingState');
+
+export interface SetPausedStatePayload {
+  exploreId: ExploreId;
+  isPaused: boolean;
+}
+export const setPausedStateAction = createAction<SetPausedStatePayload>('explore/setPausedState');
+
+/**
+ * Start a scan for more results using the given scanner.
+ * @param exploreId Explore area
+ * @param scanner Function that a) returns a new time range and b) triggers a query run for the new range
+ */
+export interface ScanStartPayload {
+  exploreId: ExploreId;
+}
+export const scanStartAction = createAction<ScanStartPayload>('explore/scanStart');
+
+/**
+ * Stop any scanning for more results.
+ */
+export interface ScanStopPayload {
+  exploreId: ExploreId;
+}
+export const scanStopAction = createAction<ScanStopPayload>('explore/scanStop');
 
 //
 // Action creators
@@ -382,6 +419,23 @@ export function setQueries(exploreId: ExploreId, rawQueries: DataQuery[]): Thunk
   };
 }
 
+/**
+ * Start a scan for more results using the given scanner.
+ * @param exploreId Explore area
+ * @param scanner Function that a) returns a new time range and b) triggers a query run for the new range
+ */
+export function scanStart(exploreId: ExploreId): ThunkResult<void> {
+  return (dispatch, getState) => {
+    // Register the scanner
+    dispatch(scanStartAction({ exploreId }));
+    // Scanning must trigger query run, and return the new range
+    const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
+    // Set the new range to be displayed
+    dispatch(updateTime({ exploreId, absoluteRange: range }));
+    dispatch(runQueries(exploreId));
+  };
+}
+
 //
 // Reducer
 //
@@ -532,6 +586,48 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
 
   if (queryStreamUpdatedAction.match(action)) {
     return processQueryResponse(state, action);
+  }
+
+  if (queriesImportedAction.match(action)) {
+    const { queries } = action.payload;
+    return {
+      ...state,
+      queries,
+      queryKeys: getQueryKeys(queries, state.datasourceInstance),
+    };
+  }
+
+  if (changeLoadingStateAction.match(action)) {
+    const { loadingState } = action.payload;
+    return {
+      ...state,
+      queryResponse: {
+        ...state.queryResponse,
+        state: loadingState,
+      },
+      loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
+    };
+  }
+
+  if (setPausedStateAction.match(action)) {
+    const { isPaused } = action.payload;
+    return {
+      ...state,
+      isPaused: isPaused,
+    };
+  }
+
+  if (scanStartAction.match(action)) {
+    return { ...state, scanning: true };
+  }
+
+  if (scanStopAction.match(action)) {
+    return {
+      ...state,
+      scanning: false,
+      scanRange: undefined,
+      update: makeInitialUpdateState(),
+    };
   }
 
   return state;

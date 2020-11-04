@@ -23,7 +23,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { ExploreItemState, ExploreId } from 'app/types/explore';
 import { Emitter } from 'app/core/utils/emitter';
-import { highlightLogsExpressionAction } from './state/actionTypes';
+import { highlightLogsExpressionAction } from './state/exploreItem';
 import { ErrorContainer } from './ErrorContainer';
 import { changeQuery, modifyQueries, removeQueryRowAction, runQueries } from './state/query';
 

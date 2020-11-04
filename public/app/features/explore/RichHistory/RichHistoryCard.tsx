@@ -12,7 +12,8 @@ import { copyStringToClipboard } from 'app/core/utils/explore';
 import appEvents from 'app/core/app_events';
 import { StoreState, CoreEvents } from 'app/types';
 
-import { changeDatasource, updateRichHistory } from '../state/actions';
+import { updateRichHistory } from '../state/history';
+import { changeDatasource } from '../state/datasource';
 import { setQueries } from '../state/query';
 
 export interface Props {

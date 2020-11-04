@@ -1,12 +1,20 @@
 import _ from 'lodash';
 import { AnyAction } from 'redux';
-import { LocationUpdate } from '@grafana/runtime';
+import { DataSourceSrv, LocationUpdate } from '@grafana/runtime';
 
-import { stopQueryState, parseUrlState, DEFAULT_RANGE } from 'app/core/utils/explore';
+import { stopQueryState, parseUrlState, DEFAULT_RANGE, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { updateLocation } from '../../../core/actions';
-import { initialExploreItemState, itemReducer } from './exploreItem';
+import { itemReducer, stateSave } from './exploreItem';
 import { createAction } from '@reduxjs/toolkit';
+import { makeExploreItemState } from './utils';
+import { DataQuery, TimeRange } from '@grafana/data';
+import { ThunkResult } from '../../../types';
+import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import { changeDatasource } from './datasource';
+import { runQueries, setQueriesAction } from './query';
+import { TimeSrv } from '../../dashboard/services/TimeSrv';
+import { PanelModel } from 'app/features/dashboard/state';
 
 /**
  * Close the split view and save URL state.
@@ -41,6 +49,124 @@ export interface ResetExplorePayload {
 }
 export const resetExploreAction = createAction<ResetExplorePayload>('explore/resetExplore');
 
+//
+// Action creators
+//
+
+/**
+ * Open the split view and the right state is automatically initialized.
+ * If options are specified it initializes that pane with the datasource and query from options.
+ * Otherwise it copies the left state to be the right state. The copy keeps all query modifications but wipes the query
+ * results.
+ */
+export function splitOpen<T extends DataQuery = any>(options?: {
+  datasourceUid: string;
+  query: T;
+  // Don't use right now. It's used for Traces to Logs interaction but is hacky in how the range is actually handled.
+  range?: TimeRange;
+}): ThunkResult<void> {
+  return async (dispatch, getState) => {
+    // Clone left state to become the right state
+    const leftState: ExploreItemState = getState().explore[ExploreId.left];
+    const rightState: ExploreItemState = {
+      ...leftState,
+    };
+    const queryState = getState().location.query[ExploreId.left] as string;
+    const urlState = parseUrlState(queryState);
+
+    if (options) {
+      rightState.queries = [];
+      rightState.graphResult = null;
+      rightState.logsResult = null;
+      rightState.tableResult = null;
+      rightState.queryKeys = [];
+      urlState.queries = [];
+      rightState.urlState = urlState;
+      if (options.range) {
+        urlState.range = options.range.raw;
+        // This is super hacky. In traces to logs we want to create a link but also internally open split window.
+        // We use the same range object but the raw part is treated differently because it's parsed differently during
+        // init depending on whether we open split or new window.
+        rightState.range = {
+          ...options.range,
+          raw: {
+            from: options.range.from.utc().toISOString(),
+            to: options.range.to.utc().toISOString(),
+          },
+        };
+      }
+
+      dispatch(splitOpenAction({ itemState: rightState }));
+
+      const queries = [
+        {
+          ...options.query,
+          refId: 'A',
+        } as DataQuery,
+      ];
+
+      const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.datasourceUid);
+
+      await dispatch(changeDatasource(ExploreId.right, dataSourceSettings!.name));
+      await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
+      await dispatch(runQueries(ExploreId.right));
+    } else {
+      rightState.queries = leftState.queries.slice();
+      rightState.urlState = urlState;
+      dispatch(splitOpenAction({ itemState: rightState }));
+    }
+
+    dispatch(stateSave());
+  };
+}
+
+/**
+ * Close the split view and save URL state.
+ */
+export function splitClose(itemId: ExploreId): ThunkResult<void> {
+  return dispatch => {
+    dispatch(splitCloseAction({ itemId }));
+    dispatch(stateSave());
+  };
+}
+
+export interface NavigateToExploreDependencies {
+  getDataSourceSrv: () => DataSourceSrv;
+  getTimeSrv: () => TimeSrv;
+  getExploreUrl: (args: GetExploreUrlArguments) => Promise<string | undefined>;
+  openInNewWindow?: (url: string) => void;
+}
+
+export const navigateToExplore = (
+  panel: PanelModel,
+  dependencies: NavigateToExploreDependencies
+): ThunkResult<void> => {
+  return async dispatch => {
+    const { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow } = dependencies;
+    const datasourceSrv = getDataSourceSrv();
+    const datasource = await datasourceSrv.get(panel.datasource);
+    const path = await getExploreUrl({
+      panel,
+      panelTargets: panel.targets,
+      panelDatasource: datasource,
+      datasourceSrv,
+      timeSrv: getTimeSrv(),
+    });
+
+    if (openInNewWindow && path) {
+      openInNewWindow(path);
+      return;
+    }
+
+    const query = {}; // strips any angular query param
+    dispatch(updateLocation({ path, query }));
+  };
+};
+
+/**
+ * Global Explore state that handles multiple Explore areas and the split state
+ */
+const initialExploreItemState = makeExploreItemState();
 export const initialExploreState: ExploreState = {
   split: false,
   syncedTimes: false,

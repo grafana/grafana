@@ -28,8 +28,10 @@ import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
-import { changeSize, initializeExplore, refreshExplore, scanStart, updateTimeRange, splitOpen } from './state/actions';
-
+import { splitOpen } from './state/main';
+import { changeSize, initializeExplore, refreshExplore } from './state/exploreItem';
+import { updateTimeRange } from './state/time';
+import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart } from './state/query';
 import { ExploreId, ExploreItemState, ExploreUpdateState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
@@ -45,13 +47,11 @@ import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
-import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 //TODO:unification
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
-import { addQueryRow, modifyQueries, setQueries } from './state/query';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
