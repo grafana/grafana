@@ -203,7 +203,6 @@ describe('MSSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery', () => {
-    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
