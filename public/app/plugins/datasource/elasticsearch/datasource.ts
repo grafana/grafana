@@ -37,7 +37,6 @@ const ELASTIC_META_FIELDS = [
   '_ignored',
   '_routing',
   '_meta',
-  'sort',
 ];
 
 export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, ElasticsearchOptions> {
