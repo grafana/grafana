@@ -23,11 +23,14 @@ export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePlug
     categoryIndex[category.id] = category;
   }
 
+  const { edition, hasValidLicense } = config.licenseInfo;
+
   for (const plugin of plugins) {
     const enterprisePlugin = enterprisePlugins.find(item => item.id === plugin.id);
     // Force category for enterprise plugins
     if (plugin.enterprise || enterprisePlugin) {
       plugin.category = 'enterprise';
+      plugin.unlicensed = edition !== 'Open Source' && !hasValidLicense;
       plugin.info.links = enterprisePlugin?.info?.links || plugin.info.links;
     }
 
