@@ -364,6 +364,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return angular.toJson(queryHeader);
   }
 
+  /**
+   * This method checks to ensure the user is running a 5.0+ cluster. This is
+   * necessary bacause the query being used for the getLogRowContext relies on the
+   * search_after feature.
+   */
   showContextToggle(): boolean {
     return this.esVersion > 5;
   }
