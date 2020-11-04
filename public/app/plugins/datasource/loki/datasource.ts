@@ -149,7 +149,12 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
         if (response.data.data.resultType === LokiResultType.Stream) {
           return {
             data: response.data
-              ? lokiStreamsToDataFrames(response.data as LokiStreamResponse, target, query.limit, {})
+              ? lokiStreamsToDataFrames(
+                  response.data as LokiStreamResponse,
+                  target,
+                  query.limit,
+                  this.instanceSettings.jsonData
+                )
               : [],
             key: `${target.refId}_instant`,
           };

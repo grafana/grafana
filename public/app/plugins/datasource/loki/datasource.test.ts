@@ -178,10 +178,10 @@ describe('LokiDatasource', () => {
   });
 
   describe('when querying', () => {
-    function setup(expr: string, app: CoreApp) {
+    function setup(expr: string, app: CoreApp, instant?: boolean, range?: boolean) {
       const ds = createLokiDSForTests();
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr, refId: 'B' }],
+        targets: [{ expr, refId: 'B', instant, range }],
         app,
       });
       ds.runInstantQuery = jest.fn(() => of({ data: [] }));
@@ -189,15 +189,15 @@ describe('LokiDatasource', () => {
       return { ds, options };
     }
 
-    it('should run range and instant query in Explore if running metric query', async () => {
-      const { ds, options } = setup('rate({job="grafana"}[10m])', CoreApp.Explore);
+    it('should run range and instant if both are selected', async () => {
+      const { ds, options } = setup('rate({job="grafana"}[10m])', CoreApp.Explore, true, true);
       await ds.query(options).toPromise();
       expect(ds.runInstantQuery).toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
-    it('should run only range query in Explore if running logs query', async () => {
-      const { ds, options } = setup('{job="grafana"}', CoreApp.Explore);
+    it('should run only range query if only range selectd', async () => {
+      const { ds, options } = setup('{job="grafana"}', CoreApp.Explore, false, true);
       await ds.query(options).toPromise();
       expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
@@ -210,20 +210,23 @@ describe('LokiDatasource', () => {
       expect(ds.runRangeQuery).toBeCalled();
     });
 
-    it('should return series data for both queries in Explore if metrics query', done => {
+    it('should return series data for both queries in Explore if both run', done => {
       const ds = createLokiDSForTests();
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: 'rate({job="grafana"} |= "foo" [10m])', refId: 'B' }],
+        targets: [{ expr: '{job="grafana"} |= "foo"', refId: 'B', range: true, instant: true }],
         app: CoreApp.Explore,
       });
 
       observableTester().subscribeAndExpectOnNext<DataQueryResponse>({
         observable: ds.query(options).pipe(first()), // first result always comes from runInstantQuery
         expect: res => {
-          expect(res).toEqual({
-            data: [],
-            key: 'B_instant',
-          });
+          const dataFrame = res.data[0] as DataFrame;
+          const fieldCache = new FieldCache(dataFrame);
+          console.log(dataFrame);
+          expect(fieldCache.getFieldByName('line')?.values.get(0)).toBe('hello');
+          expect(dataFrame.meta?.limit).toBe(20);
+          expect(dataFrame.meta?.limit).toBe(20);
+          expect(dataFrame.meta?.searchWords).toEqual(['foo']);
         },
         done,
       });
