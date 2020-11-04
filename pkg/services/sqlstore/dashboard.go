@@ -374,23 +374,47 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 		"DELETE FROM dashboard_version WHERE dashboard_id = ?",
 		"DELETE FROM annotation WHERE dashboard_id = ?",
 		"DELETE FROM dashboard_provisioning WHERE dashboard_id = ?",
+		"DELETE FROM dashboard_acl WHERE dashboard_id = ?",
 	}
 
 	if dashboard.IsFolder {
-		deletes = append(deletes, "DELETE FROM dashboard_provisioning WHERE dashboard_id in (select id from dashboard where folder_id = ?)")
 		deletes = append(deletes, "DELETE FROM dashboard WHERE folder_id = ?")
 
 		dashIds := []struct {
 			Id int64
 		}{}
-		err := sess.SQL("select id from dashboard where folder_id = ?", dashboard.Id).Find(&dashIds)
+		err := sess.SQL("SELECT id FROM dashboard WHERE folder_id = ?", dashboard.Id).Find(&dashIds)
 		if err != nil {
 			return err
 		}
 
-		for _, id := range dashIds {
+		dashIdsArray := make([]interface{}, len(dashIds))
+		queryEnd := "("
+		for i, id := range dashIds {
 			if err := deleteAlertDefinition(id.Id, sess); err != nil {
 				return err
+			}
+			dashIdsArray[i] = id.Id
+			queryEnd += "?,"
+		}
+		queryEnd = queryEnd[:len(queryEnd)-1] + ")"
+
+		if len(dashIds) > 0 {
+			childrenDeletes := []string{
+				"DELETE FROM dashboard_tag WHERE dashboard_id IN ",
+				"DELETE FROM star WHERE dashboard_id IN ",
+				"DELETE FROM dashboard_version WHERE dashboard_id IN ",
+				"DELETE FROM annotation WHERE dashboard_id IN ",
+				"DELETE FROM dashboard_provisioning WHERE dashboard_id IN ",
+				"DELETE FROM dashboard_acl WHERE dashboard_id IN ",
+			}
+			for _, sql := range childrenDeletes {
+				sqlOrArgs := append([]interface{}{sql + queryEnd}, dashIdsArray...)
+				_, err := sess.Exec(sqlOrArgs...)
+
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}

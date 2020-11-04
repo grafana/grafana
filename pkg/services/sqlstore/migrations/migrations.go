@@ -68,4 +68,7 @@ func addStarMigrations(mg *Migrator) {
 
 	mg.AddMigration("create star table", NewAddTableMigration(starV1))
 	mg.AddMigration("add unique index star.user_id_dashboard_id", NewAddIndexMigration(starV1, starV1.Indices[0]))
+
+	mg.AddMigration("delete stars for deleted dashboards", NewRawSqlMigration(
+		"DELETE FROM star WHERE dashboard_id NOT IN (SELECT id FROM dashboard)"))
 }
