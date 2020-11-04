@@ -1,19 +1,27 @@
 import { sleep, check, group } from 'k6';
-import { createClient, createBasicAuthClient } from './modules/client.js';
+import { createClient, createBasicAuthClient, createBearerAuthClient } from './modules/client.js';
 import { createTestOrgIfNotExists, createTestdataDatasourceIfNotExists } from './modules/util.js';
+
 
 export let options = {
   noCookiesReset: true,
 };
 
 let endpoint = __ENV.URL || 'http://localhost:3000';
-const client = createClient(endpoint);
+
+let apiKey = __ENV.API_KEY;
+if (!apiKey) {
+  throw new Error('This script requires the API key argument -k to be defined.')
+}
+const client = createBearerAuthClient(endpoint, apiKey);
 
 export const setup = () => {
-  const basicAuthClient = createBasicAuthClient(endpoint, 'admin', 'admin');
-  const orgId = createTestOrgIfNotExists(basicAuthClient);
-  basicAuthClient.withOrgId(orgId);
-  const datasourceId = createTestdataDatasourceIfNotExists(basicAuthClient);
+  let authClient = createBearerAuthClient(endpoint, apiKey)
+
+  const orgId = createTestOrgIfNotExists(authClient);
+  authClient.withOrgId(orgId);
+  const datasourceId = createTestdataDatasourceIfNotExists(authClient);
+
   return {
     orgId,
     datasourceId,
@@ -21,23 +29,21 @@ export const setup = () => {
 };
 
 export default data => {
-  client.withOrgId(data.orgId)
+  client.withOrgId(data.orgId);
 
-  group('annotation by tag test', () => {
+  group('API key test', () => {
     if (__ITER === 0) {
-      group('user authenticates through ui with username and password', () => {
-        let res = client.ui.login('admin', 'admin');
+      group('user can access grafana instance with APIKey', () => {
+        let res = client.datasources.getAll();
 
         check(res, {
           'response status is 200': r => r.status === 200,
-          "response has cookie 'grafana_session' with 32 characters": r =>
-            r.cookies.grafana_session[0].value.length === 32,
         });
       });
     }
 
     if (__ITER !== 0) {
-      group('batch tsdb requests with annotations by tag', () => {
+      group('batch tsdb requests', () => {
         const batchCount = 20;
         const requests = [];
         const payload = {
@@ -54,7 +60,7 @@ export default data => {
           ],
         };
 
-        requests.push({ method: 'GET', url: '/api/annotations?from=1580825186534&to=1580846786535' });
+        requests.push({ method: 'GET', url: '/api/annotations?dashboardId=2074&from=1548078832772&to=1548082432772' });
 
         for (let n = 0; n < batchCount; n++) {
           requests.push({ method: 'POST', url: '/api/tsdb/query', body: payload });

@@ -17,6 +17,10 @@ export const DatasourcesEndpoint = class DatasourcesEndpoint {
     this.httpClient = httpClient;
   }
 
+  getAll() {
+    return this.httpClient.get('/datasources');
+  }
+
   getById(id) {
     return this.httpClient.get(`/datasources/${id}`);
   }
@@ -177,6 +181,25 @@ export class BasicAuthClient extends BaseClient {
   }
 }
 
+export class BearerAuthClient extends BaseClient {
+  constructor(url, subUrl, token) {
+    super(url, subUrl);
+    this.token = token;
+  }
+
+  withUrl(subUrl) {
+    let c = new BearerAuthClient(this.url, subUrl, this.token);
+    c.onBeforeRequest = this.onBeforeRequest;
+    return c;
+  }
+
+  beforeRequest(params) {
+    params = params || {};
+    params.headers = params.headers || {};
+    params.headers['Authorization']  = `Bearer ${this.token}`;
+  }
+}
+
 export const createClient = url => {
   return new GrafanaClient(new BaseClient(url, ''));
 };
@@ -184,3 +207,7 @@ export const createClient = url => {
 export const createBasicAuthClient = (url, username, password) => {
   return new GrafanaClient(new BasicAuthClient(url, '', username, password));
 };
+
+export const createBearerAuthClient = (url, token) => {
+  return new GrafanaClient(new BearerAuthClient(url, '', token));
+}

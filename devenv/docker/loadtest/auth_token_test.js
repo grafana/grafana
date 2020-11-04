@@ -2,6 +2,7 @@ import { sleep, check, group } from 'k6';
 import { createClient, createBasicAuthClient } from './modules/client.js';
 import { createTestOrgIfNotExists, createTestdataDatasourceIfNotExists } from './modules/util.js';
 
+
 export let options = {
   noCookiesReset: true,
 };
@@ -12,15 +13,19 @@ const client = createClient(endpoint);
 export const setup = () => {
   const basicAuthClient = createBasicAuthClient(endpoint, 'admin', 'admin');
   const orgId = createTestOrgIfNotExists(basicAuthClient);
+  basicAuthClient.withOrgId(orgId);
   const datasourceId = createTestdataDatasourceIfNotExists(basicAuthClient);
-  client.withOrgId(orgId);
+
   return {
-    orgId: orgId,
-    datasourceId: datasourceId,
+    orgId,
+    datasourceId,
   };
 };
 
+
 export default data => {
+  client.withOrgId(data.orgId);
+
   group('user auth token test', () => {
     if (__ITER === 0) {
       group('user authenticates through ui with username and password', () => {

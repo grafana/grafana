@@ -53,6 +53,12 @@ Run auth proxy test:
 $ ./run.sh -c auth_proxy_test
 ```
 
+Run API key test (option `-k` must be a valid `admin` API key)
+
+```bash
+$ ./run.sh -c auth_token_test -k "<api key here>"
+```
+
 
 Example output:
 
