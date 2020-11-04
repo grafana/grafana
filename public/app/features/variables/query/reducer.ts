@@ -86,6 +86,18 @@ const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   return options;
 };
 
+const getAllMatches = (str: string, regex: RegExp): any => {
+  const results = {};
+  let matches;
+
+  do {
+    matches = regex.exec(str);
+    _.merge(results, matches);
+  } while (regex.global && matches);
+
+  return results;
+};
+
 const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, metricNames: any[]) => {
   let regex, i, matches;
   let options: VariableOption[] = [];
@@ -109,13 +121,23 @@ const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, 
     }
 
     if (regex) {
-      matches = regex.exec(value);
-      if (!matches) {
+      matches = getAllMatches(value, regex);
+
+      if (_.isEmpty(matches)) {
         continue;
       }
-      if (matches.length > 1) {
-        value = matches[1];
-        text = matches[1];
+
+      if (matches.groups && matches.groups.value && matches.groups.text) {
+        value = matches.groups.value;
+        text = matches.groups.text;
+      } else if (matches.groups && matches.groups.value) {
+        value = matches.groups.value;
+        text = value;
+      } else if (matches.groups && matches.groups.text) {
+        text = matches.groups.text;
+        value = text;
+      } else if (matches['1']) {
+        value = matches['1'];
       }
     }
 
