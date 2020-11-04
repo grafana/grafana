@@ -3,7 +3,7 @@ import { ScopedVars } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { ALL_VARIABLE_TEXT } from './state/types';
-import { QueryVariableModel, VariableRefresh } from './types';
+import { QueryVariableModel, VariableModel, VariableRefresh } from './types';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 
 /*
@@ -127,4 +127,22 @@ export function getLegacyQueryOptions(variable: QueryVariableModel, searchFilter
   }
 
   return queryOptions;
+}
+
+export function getVariableRefresh(variable: VariableModel): VariableRefresh {
+  if (!variable || !variable.hasOwnProperty('refresh')) {
+    return VariableRefresh.never;
+  }
+
+  const queryVariable = variable as QueryVariableModel;
+
+  if (
+    queryVariable.refresh !== VariableRefresh.onTimeRangeChanged &&
+    queryVariable.refresh !== VariableRefresh.onDashboardLoad &&
+    queryVariable.refresh !== VariableRefresh.never
+  ) {
+    return VariableRefresh.never;
+  }
+
+  return queryVariable.refresh;
 }
