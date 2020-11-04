@@ -7,8 +7,6 @@ type = "docs"
 
 Signing a plugin allows Grafana to verify the authenticity of the plugin with [signature verification]({{< relref "../../plugins/plugin-signatures.md" >}}). This gives users a way to make sure plugins haven't been tampered with. All Grafana Labs-authored backend plugins, including Enterprise plugins, are signed.
 
-Plugin signature verification (signing) is a security measure to make sure plugins haven't been tampered with. Upon loading, Grafana checks to see if a plugin is signed or unsigned when inspecting and verifying its digital signature.
-
 > **Important:** Future versions of Grafana will require all plugins to be signed.
 
 ## Sign your plugin using Grafana Toolkit
@@ -21,7 +19,7 @@ You can sign your plugin as a _public_ or a _private_ plugin. In both cases, you
 
 Plugins signed under the community or commercial signature level are considered _public plugins_. Public plugins are published on [Grafana Plugin](https://grafana.com/plugins). For more information about installing public plugins, refer to [Install Grafana plugins]({{< relref "../../plugins/installation.md" >}}).
 
-1. Request a plugin signature level by sending an email to [XXX@grafana.com](mailto:XXX@grafana.com).
+1. Request a plugin signature level by sending an email to [plugins@grafana.com](mailto:plugins@grafana.com).
 
 1. Sign the plugin with the API key you just created. Grafana Toolkit creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
 
@@ -55,6 +53,10 @@ You can sign your plugin under three different _signature levels_.
 |Community|No;<br>Free of charge|<p>You can create, sign and distribute plugins at no charge, provided that all dependent technologies are open source and not for profit.</p><p>Community Plugins are published in the official Grafana catalog, and are available to the Grafana community.</p>|
 |Commercial|Yes;<br>Commercial Plugin Subscription required|<p>You can create, sign and distribute plugins with dependent technologies that are closed source or commercially backed, by entering into a Commercial Plugin Subscription with Grafana Labs.</p><p>Commercial Plugins are published on the official Grafana catalog, and are available to the Grafana community.</p>|
 
+For instructions on how to sign a plugin under the Community and Commercial signature level, refer to [Sign a public plugin](#sign-a-public-plugin).
+
+For instructions on how to sign a plugin under the Private signature level, refer to [Sign a private plugin](#sign-a-private-plugin).
+
 ## Plugin manifest
 
 For Grafana to verify the digital signature of a plugin, the plugin must include a signed manifest file, _MANIFEST.txt_. The signed manifest file contains two sections:
@@ -65,33 +67,35 @@ For Grafana to verify the digital signature of a plugin, the plugin must include
 **Example manifest file:**
 
 ```txt
-// MANIFEST.txt
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA512
 
 {
-  "plugin": "grafana-test-plugin",
+  "manifestVersion": "2.0.0",
+  "signatureType": "community",
+  "signedByOrg": "myorgid",
+  "signedByOrgName": "My Org",
+  "plugin": "myorgid-simple-panel",
   "version": "1.0.0",
+  "time": 1602753404133,
+  "keyId": "7e4d0c6a708866e7",
   "files": {
-    "LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
-    "README.md": "5bfefcdce6eafce3388d1fb200f3b10954cfeac6c7a45fd7dec42687e01ac75d",
-    "module.js": "3c07596a6a4796c65ef10ba2bc0805e7f3bc9e4e8fc9970a1307b97e29db1c0a",
-    "module.js.LICENSE.txt": "fdbc28c10f3d21976b4bc16464ad7c630538c0c3101347b5fd44af9066f7022b",
-    "module.js.map": "c3ac1e8aa98d83c54fd13e43b65e1cf4182a924d2eb23a2f1a6fe40b7785a1bb",
-    "plugin.json": "cf26a3afb7c10cd9ae40b5296d04172b5dac927d69a51082e6d085b34341ccc3"
-  },
-  "time": 1589558058070,
-  "keyId": "7e4d0c6a708866e7"
+    "LICENSE": "12ab7a0961275f5ce7a428e662279cf49bab887d12b2ff7bfde738346178c28c",
+    "module.js.LICENSE.txt": "0d8f66cd4afb566cb5b7e1540c68f43b939d3eba12ace290f18abc4f4cb53ed0",
+    "module.js.map": "8a4ede5b5847dec1c6c30008d07bef8a049408d2b1e862841e30357f82e0fa19",
+    "plugin.json": "13be5f2fd55bee787c5413b5ba6a1fae2dfe8d2df6c867dadc4657b98f821f90",
+    "README.md": "2d90145b28f22348d4f50a81695e888c68ebd4f8baec731fdf2d79c8b187a27f",
+    "module.js": "b4b6945bbf3332b08e5e1cb214a5b85c82557b292577eb58c8eb1703bc8e4577"
+  }
 }
 -----BEGIN PGP SIGNATURE-----
 Version: OpenPGP.js v4.10.1
 Comment: https://openpgpjs.org
 
-wqAEARMKAAYFAl6+uyoACgkQfk0ManCIZuc0+QIHdWC0dp7GRRFu3Hgk9tnl
-FJnPwM6Y2tTdq7AkpVTTAb3RTFadA8dRmLfajxgHxmDf5yUv9M2M6sa1eTSG
-8kJtOlwCB096dXOKsH1IOGQMCY+/xM2081FqbMTvWgN81xrxMoxftQn8z6VC
-2nA2Rmt1VStppFVCCUXaq6Y4sFGHQF/yq5oi
-=vqUQ
+wqEEARMKAAYFAl+IE3wACgkQfk0ManCIZudpdwIHTCqjVzfm7DechTa7BTbd
++dNIQtwh8Tv2Q9HksgN6c6M9nbQTP0xNHwxSxHOI8EL3euz/OagzWoiIWulG
+7AQo7FYCCQGucaLPPK3tsWaeFqVKy+JtQhrJJui23DAZLSYQYZlKQ+nFqc9x
+T6scfmuhWC/TOcm83EVoCzIV3R5dOTKHqkjIUg==
+=GdNq
 -----END PGP SIGNATURE-----
-
 ```
