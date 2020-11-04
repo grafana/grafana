@@ -5,12 +5,12 @@ import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 export interface Props {
   width: number;
   height: number;
-  legend?: React.ReactElement<VizLayoutSlotProps>;
+  legend?: React.ReactElement<VizLayoutLegendProps>;
   children: (width: number, height: number) => React.ReactNode;
 }
 
 export interface VizLayoutType extends FC<Props> {
-  Slot: ComponentType<VizLayoutSlotProps>;
+  Legend: ComponentType<VizLayoutLegendProps>;
 }
 
 export const VizLayout: VizLayoutType = ({ width, height, legend, children }) => {
@@ -77,15 +77,15 @@ interface VizSize {
   height: number;
 }
 
-export interface VizLayoutSlotProps {
+export interface VizLayoutLegendProps {
   position?: 'bottom' | 'right' | 'auto';
   maxHeight?: string;
   maxWidth?: string;
   children: React.ReactNode;
 }
 
-export const VizLayoutSlot: FC<VizLayoutSlotProps> = ({ children }) => {
+export const VizLayoutLegend: FC<VizLayoutLegendProps> = ({ children }) => {
   return <>{children}</>;
 };
 
-VizLayout.Slot = VizLayoutSlot;
+VizLayout.Legend = VizLayoutLegend;
