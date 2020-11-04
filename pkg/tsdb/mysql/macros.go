@@ -96,7 +96,7 @@ func (m *mySqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 	case "__timeGroupAlias":
 		tg, err := m.evaluateMacro("__timeGroup", args)
 		if err == nil {
-			return tg + " AS \"time\"", err
+			return tg + " AS \"time\"", nil
 		}
 		return "", err
 	case "__unixEpochFilter":
@@ -131,7 +131,7 @@ func (m *mySqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 	case "__unixEpochGroupAlias":
 		tg, err := m.evaluateMacro("__unixEpochGroup", args)
 		if err == nil {
-			return tg + " AS \"time\"", err
+			return tg + " AS \"time\"", nil
 		}
 		return "", err
 	default:

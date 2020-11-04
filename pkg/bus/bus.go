@@ -3,6 +3,7 @@ package bus
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -143,9 +144,12 @@ func (b *InProcBus) Publish(msg Msg) error {
 
 	for _, listenerHandler := range listeners {
 		ret := reflect.ValueOf(listenerHandler).Call(params)
-		err := ret[0].Interface()
+		err, ok := ret[0].Interface().(error)
 		if err != nil {
-			return err.(error)
+			if ok {
+				return err
+			}
+			return fmt.Errorf("expected listener to return an error, got '%v'", reflect.TypeOf(ret[0].Interface()))
 		}
 	}
 

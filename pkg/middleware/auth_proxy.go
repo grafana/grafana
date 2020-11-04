@@ -15,11 +15,11 @@ var header = setting.AuthProxyHeaderName
 func logUserIn(auth *authproxy.AuthProxy, username string, logger log.Logger, ignoreCache bool) (int64, *authproxy.Error) {
 	logger.Debug("Trying to log user in", "username", username, "ignoreCache", ignoreCache)
 	// Try to log in user via various providers
-	id, err := auth.Login(logger, ignoreCache)
-	if err != nil {
-		logger.Error("Failed to login", "username", username, "message", err.Error(), "error", err.DetailsError,
+	id, e := auth.Login(logger, ignoreCache)
+	if e != nil {
+		logger.Error("Failed to login", "username", username, "message", e.Error(), "error", e.DetailsError,
 			"ignoreCache", ignoreCache)
-		return 0, err
+		return 0, e
 	}
 	return id, nil
 }
@@ -55,16 +55,16 @@ func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *models.ReqCon
 		return true
 	}
 
-	id, err := logUserIn(auth, username, logger, false)
-	if err != nil {
-		ctx.Handle(407, err.Error(), err.DetailsError)
+	id, e := logUserIn(auth, username, logger, false)
+	if e != nil {
+		ctx.Handle(407, e.Error(), e.DetailsError)
 		return true
 	}
 
 	logger.Debug("Got user ID, getting full user info", "userID", id)
 
-	user, err := auth.GetSignedUser(id)
-	if err != nil {
+	user, e := auth.GetSignedUser(id)
+	if e != nil {
 		// The reason we couldn't find the user corresponding to the ID might be that the ID was found from a stale
 		// cache entry. For example, if a user is deleted via the API, corresponding cache entries aren't invalidated
 		// because cache keys are computed from request header values and not just the user ID. Meaning that
@@ -76,15 +76,15 @@ func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *models.ReqCon
 				logger.Error("Got unexpected error when removing user from auth cache", "error", err)
 			}
 		}
-		id, err = logUserIn(auth, username, logger, true)
-		if err != nil {
-			ctx.Handle(407, err.Error(), err.DetailsError)
+		id, e = logUserIn(auth, username, logger, true)
+		if e != nil {
+			ctx.Handle(407, e.Error(), e.DetailsError)
 			return true
 		}
 
-		user, err = auth.GetSignedUser(id)
-		if err != nil {
-			ctx.Handle(407, err.Error(), err.DetailsError)
+		user, e = auth.GetSignedUser(id)
+		if e != nil {
+			ctx.Handle(407, e.Error(), e.DetailsError)
 			return true
 		}
 	}
@@ -96,14 +96,14 @@ func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *models.ReqCon
 	ctx.IsSignedIn = true
 
 	// Remember user data in cache
-	if err := auth.Remember(id); err != nil {
+	if e := auth.Remember(id); e != nil {
 		logger.Error(
 			"Failed to store user in cache",
 			"username", username,
-			"message", err.Error(),
-			"error", err.DetailsError,
+			"message", e.Error(),
+			"error", e.DetailsError,
 		)
-		ctx.Handle(500, err.Error(), err.DetailsError)
+		ctx.Handle(500, e.Error(), e.DetailsError)
 		return true
 	}
 
