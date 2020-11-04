@@ -1,7 +1,6 @@
-import { DefaultTimeRange, LoadingState, LogsDedupStrategy, PanelData } from '@grafana/data';
+import { EventBusExtended, DefaultTimeRange, LoadingState, LogsDedupStrategy, PanelData } from '@grafana/data';
 
 import { ExploreItemState, ExploreUpdateState } from 'app/types/explore';
-import { Emitter } from 'app/core/core';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -50,7 +49,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   graphResult: null,
   logsResult: null,
   dedupStrategy: LogsDedupStrategy.none,
-  eventBridge: (null as unknown) as Emitter,
+  eventBridge: (null as unknown) as EventBusExtended,
 });
 
 export const createEmptyQueryResponse = (): PanelData => ({
