@@ -24,7 +24,12 @@ export enum VariableSupportType {
   Datasource = 'datasource',
 }
 
-abstract class VariableSupportBase<
+/**
+ * Base class for VariableSupport classes
+ *
+ * @internal -- experimental
+ */
+export abstract class VariableSupportBase<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataSourceQueryType<DSType>,
   TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
