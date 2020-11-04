@@ -45,12 +45,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
     flexGrow: 1,
   };
 
-  let positionWithAuto = position ?? 'auto';
-  if (position === 'auto') {
-    positionWithAuto = width > height ? 'right' : 'bottom';
-  }
-
-  switch (positionWithAuto) {
+  switch (position) {
     case 'bottom':
       containerStyle.flexDirection = 'column';
       legendStyle.maxHeight = maxHeight;
@@ -88,7 +83,7 @@ interface VizSize {
  * @beta
  */
 export interface VizLayoutLegendProps {
-  position?: 'bottom' | 'right' | 'auto';
+  position: 'bottom' | 'right';
   maxHeight?: string;
   maxWidth?: string;
   children: React.ReactNode;
