@@ -3,6 +3,7 @@ package shorturls
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -27,6 +28,25 @@ func TestShortURLService(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, existingShortURL)
 		require.Equal(t, refPath, existingShortURL.Path)
+
+		t.Run("and update last seen at", func(t *testing.T) {
+			origGetTime := getTime
+			t.Cleanup(func() {
+				getTime = origGetTime
+			})
+
+			expectedTime := time.Date(2020, time.November, 27, 6, 5, 1, 0, time.UTC)
+			getTime = func() time.Time {
+				return expectedTime
+			}
+
+			err := service.UpdateLastSeenAt(context.Background(), existingShortURL)
+			require.NoError(t, err)
+
+			updatedShortURL, err := service.GetShortURLByUID(context.Background(), user, existingShortURL.Uid)
+			require.NoError(t, err)
+			require.Equal(t, expectedTime.Unix(), updatedShortURL.LastSeenAt)
+		})
 	})
 
 	t.Run("User cannot look up nonexistent short URLs", func(t *testing.T) {

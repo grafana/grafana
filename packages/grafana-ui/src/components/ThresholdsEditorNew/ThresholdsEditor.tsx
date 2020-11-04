@@ -38,6 +38,8 @@ interface State {
 }
 
 export class ThresholdsEditor extends PureComponent<Props, State> {
+  private latestThresholdInputRef: React.RefObject<HTMLInputElement>;
+
   constructor(props: Props) {
     super(props);
 
@@ -45,6 +47,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     steps[0].value = -Infinity;
 
     this.state = { steps };
+    this.latestThresholdInputRef = React.createRef();
   }
 
   onAddThreshold = () => {
@@ -67,7 +70,12 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     const newThresholds = [...steps, add];
     sortThresholds(newThresholds);
 
-    this.setState({ steps: newThresholds }, this.onChange);
+    this.setState({ steps: newThresholds }, () => {
+      if (this.latestThresholdInputRef.current) {
+        this.latestThresholdInputRef.current.focus();
+      }
+      this.onChange();
+    });
   };
 
   onRemoveThreshold = (threshold: ThresholdWithKey) => {
@@ -136,7 +144,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     });
   };
 
-  renderInput(threshold: ThresholdWithKey, styles: ThresholdStyles) {
+  renderInput(threshold: ThresholdWithKey, styles: ThresholdStyles, idx: number) {
     const isPercent = this.props.thresholds.mode === ThresholdsMode.Percentage;
 
     if (!isFinite(threshold.value)) {
@@ -167,6 +175,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
         key={isPercent.toString()}
         onChange={(event: ChangeEvent<HTMLInputElement>) => this.onChangeThresholdValue(event, threshold)}
         value={threshold.value}
+        ref={idx === 0 ? this.latestThresholdInputRef : null}
         onBlur={this.onBlur}
         prefix={
           <div className={styles.inputPrefix}>
@@ -208,13 +217,11 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                 {steps
                   .slice(0)
                   .reverse()
-                  .map(threshold => {
-                    return (
-                      <div className={styles.item} key={`${threshold.key}`}>
-                        {this.renderInput(threshold, styles)}
-                      </div>
-                    );
-                  })}
+                  .map((threshold, idx) => (
+                    <div className={styles.item} key={`${threshold.key}`}>
+                      {this.renderInput(threshold, styles, idx)}
+                    </div>
+                  ))}
               </div>
 
               <div>
@@ -279,7 +286,6 @@ const getStyles = stylesFactory(
       wrapper: css`
         display: flex;
         flex-direction: column;
-        // margin-bottom: -${theme.spacing.formSpacingBase * 2}px;
       `,
       thresholds: css`
         display: flex;

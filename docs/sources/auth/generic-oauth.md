@@ -21,7 +21,7 @@ You can configure many different OAuth2 authentication services with Grafana usi
   - [JMESPath examples](#jmespath-examples)
     - [Role mapping](#role-mapping)
 
-This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
+This callback URL must match the full HTTP address that you use in your browser to access Grafana, but with the suffixed path of `/login/generic_oauth`.
 
 You may have to set the `root_url` option of `[server]` for the callback URL to be
 correct. For example in case you are serving Grafana behind a proxy.

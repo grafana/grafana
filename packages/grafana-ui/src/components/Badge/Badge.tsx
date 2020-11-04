@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { HTMLAttributes } from 'react';
 import { Icon } from '../Icon/Icon';
 import { useTheme } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
@@ -6,23 +6,23 @@ import { IconName } from '../../types';
 import { Tooltip } from '../Tooltip/Tooltip';
 import { getColorForTheme, GrafanaTheme } from '@grafana/data';
 import tinycolor from 'tinycolor2';
-import { css } from 'emotion';
-import { HorizontalGroup } from '..';
+import { css, cx } from 'emotion';
+import { HorizontalGroup } from '../Layout/Layout';
 
 export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple';
 
-export interface BadgeProps {
+export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
   text: string;
   color: BadgeColor;
   icon?: IconName;
   tooltip?: string;
 }
 
-export const Badge = React.memo<BadgeProps>(({ icon, color, text, tooltip }) => {
+export const Badge = React.memo<BadgeProps>(({ icon, color, text, tooltip, className, ...otherProps }) => {
   const theme = useTheme();
   const styles = getStyles(theme, color);
   const badge = (
-    <div className={styles.wrapper}>
+    <div className={cx(styles.wrapper, className)} {...otherProps}>
       <HorizontalGroup align="center" spacing="xs">
         {icon && <Icon name={icon} size="sm" />}
         <span>{text}</span>
