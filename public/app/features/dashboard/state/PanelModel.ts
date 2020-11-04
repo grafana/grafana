@@ -2,7 +2,6 @@
 import _ from 'lodash';
 // Utils
 import { getTemplateSrv } from '@grafana/runtime';
-import { Emitter } from 'app/core/utils/emitter';
 import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
 import {
@@ -19,6 +18,8 @@ import {
   ScopedVars,
   ThresholdsConfig,
   ThresholdsMode,
+  EventBusExtended,
+  EventBusSrv,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
@@ -145,7 +146,7 @@ export class PanelModel implements DataConfigSource {
   isInView: boolean;
 
   hasRefreshed: boolean;
-  events: Emitter;
+  events: EventBusExtended;
   cacheTimeout?: any;
   cachedPluginOptions?: any;
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
@@ -154,7 +155,7 @@ export class PanelModel implements DataConfigSource {
   private queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
-    this.events = new Emitter();
+    this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
   }

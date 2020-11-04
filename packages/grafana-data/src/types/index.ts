@@ -7,7 +7,6 @@ export * from './navModel';
 export * from './select';
 export * from './time';
 export * from './thresholds';
-export * from './utils';
 export * from './valueMapping';
 export * from './displayValue';
 export * from './graph';
@@ -27,14 +26,8 @@ export * from './orgs';
 export * from './flot';
 export * from './trace';
 export * from './explore';
+export * from './legacyEvents';
 export * from './live';
 export * from './variables';
 
-import * as AppEvents from './appEvents';
-import { AppEvent } from './appEvents';
-import * as PanelEvents from './panelEvents';
-
-export { AppEvent, AppEvents };
-
-export { PanelEvents };
 export { GrafanaConfig, BuildInfo, FeatureToggles, LicenseInfo } from './config';

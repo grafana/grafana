@@ -1,43 +1,44 @@
 import React from 'react';
-import { number } from '@storybook/addon-knobs';
-import { InfoBox, FeatureInfoBox } from '@grafana/ui';
+import { number, select, text } from '@storybook/addon-knobs';
 import { FeatureState } from '@grafana/data';
+import { InfoBox, FeatureInfoBox } from '@grafana/ui';
+import mdx from './InfoBox.mdx';
 
 export default {
   title: 'Layout/InfoBox',
   component: InfoBox,
   decorators: [],
   parameters: {
-    docs: {},
+    docs: {
+      page: mdx,
+    },
   },
 };
 
 const getKnobs = () => {
-  const CONTAINER_GROUP = 'Container options';
-  // ---
-  const containerWidth = number(
-    'Container width',
-    800,
-    {
-      range: true,
-      min: 100,
-      max: 1500,
-      step: 100,
-    },
-    CONTAINER_GROUP
-  );
+  const containerWidth = number('Container width', 800, {
+    range: true,
+    min: 100,
+    max: 1500,
+    step: 100,
+  });
 
-  return { containerWidth };
+  const title = text('Title', 'User permission');
+  const url = text('Url', 'http://docs.grafana.org/features/datasources/mysql/');
+  const severity = select('Severity', ['success', 'warning', 'error', 'info'], 'info');
+
+  return { containerWidth, severity, title, url };
 };
 
 export const basic = () => {
-  const { containerWidth } = getKnobs();
+  const { containerWidth, severity, title, url } = getKnobs();
 
   return (
     <div style={{ width: containerWidth }}>
       <InfoBox
-        title="User Permission"
-        url={'http://docs.grafana.org/features/datasources/mysql/'}
+        title={title}
+        url={url}
+        severity={severity}
         onDismiss={() => {
           alert('onDismiss clicked');
         }}
