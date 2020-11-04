@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"errors"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"net/http"
 	"sort"
 	"time"
@@ -115,7 +116,12 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
 			listItem.Enabled = pluginSetting.Enabled
 			listItem.Pinned = pluginSetting.Pinned
-			listItem.Unlicensed = listItem.Category == "" && !hs.License.HasValidLicense()
+
+			// Makes it possible for us to recognize in the UI that there are plugins that requires a license
+			// but doesn't have access to one. Only works in Enterprise. We want a more permanent fix for this.
+			if hs.License.Edition() != licensing.OpenSource {
+				listItem.Unlicensed = listItem.Category == "" && !hs.License.HasValidLicense()
+			}
 		}
 
 		if listItem.DefaultNavUrl == "" || !listItem.Enabled {
