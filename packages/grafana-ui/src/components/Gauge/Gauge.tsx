@@ -105,15 +105,10 @@ export class Gauge extends PureComponent<Props> {
     const text = formattedValueToString(value);
     // This not 100% accurate as I am unsure of flot's calculations here
     const valueWidthBase = Math.min(width, dimension * 1.3) * 0.9;
-    const fontSize = calculateFontSize(
-      text,
-      // remove gauge & marker width (on left and right side)
-      // and 10px is some padding that flot adds to the outer canvas
-      valueWidthBase - ((gaugeWidth + (showThresholdMarkers ? thresholdMarkersWidth : 0)) * 2 + 10),
-      dimension,
-      1,
-      48
-    );
+    // remove gauge & marker width (on left and right side)
+    // and 10px is some padding that flot adds to the outer canvas
+    const valueWidth = valueWidthBase - ((gaugeWidth + (showThresholdMarkers ? thresholdMarkersWidth : 0)) * 2 + 10);
+    const fontSize = calculateFontSize(text, valueWidth, dimension, 1, 48);
     const thresholdLabelFontSize = fontSize / 2.5;
 
     let min = field.min!;
