@@ -61,6 +61,7 @@ import { cleanVariables } from './variablesReducer';
 import { expect } from '../../../../test/lib/common';
 import { VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
+import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -179,6 +180,7 @@ describe('shared actions', () => {
 
     // Fix for https://github.com/grafana/grafana/issues/28791
     it('fix for https://github.com/grafana/grafana/issues/28791', async () => {
+      setVariableQueryRunner(new VariableQueryRunner());
       const stats = queryBuilder()
         .withId('stats')
         .withName('stats')
@@ -203,7 +205,6 @@ describe('shared actions', () => {
       const query = { orgId: '1', 'var-stats': 'response', 'var-substats': ALL_VARIABLE_TEXT };
       const tester = await reduxTester<{ templating: TemplatingState; location: { query: UrlQueryMap } }>({
         preloadedState: { templating: ({} as unknown) as TemplatingState, location: { query } },
-        debug: true,
       })
         .givenRootReducer(getTemplatingAndLocationRootReducer())
         .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
