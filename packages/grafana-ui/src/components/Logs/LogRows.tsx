@@ -34,7 +34,7 @@ export interface Props extends Themeable {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  showParsedFields?: string[];
+  showDetectedFields?: string[];
   onClickShowParsedField?: (key: string) => void;
   onClickHideParsedField?: (key: string) => void;
 }
@@ -102,7 +102,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       getFieldLinks,
       disableCustomHorizontalScroll,
       logsSortOrder,
-      showParsedFields,
+      showDetectedFields,
       onClickShowParsedField,
       onClickHideParsedField,
     } = this.props;
@@ -146,7 +146,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   showDuplicates={showDuplicates}
                   showLabels={showLabels}
                   showTime={showTime}
-                  showParsedFields={showParsedFields}
+                  showDetectedFields={showDetectedFields}
                   wrapLogMessage={wrapLogMessage}
                   timeZone={timeZone}
                   allowDetails={allowDetails}
@@ -170,7 +170,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   showDuplicates={showDuplicates}
                   showLabels={showLabels}
                   showTime={showTime}
-                  showParsedFields={showParsedFields}
+                  showDetectedFields={showDetectedFields}
                   wrapLogMessage={wrapLogMessage}
                   timeZone={timeZone}
                   allowDetails={allowDetails}

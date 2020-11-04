@@ -20,7 +20,7 @@ export interface Props extends Themeable {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
-  showParsedFields?: string[];
+  showDetectedFields?: string[];
   onClickShowParsedField?: (key: string) => void;
   onClickHideParsedField?: (key: string) => void;
 }
@@ -107,12 +107,12 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   }
 
   render() {
-    const { theme, parsedKey, parsedValue, isLabel, links, showParsedFields } = this.props;
+    const { theme, parsedKey, parsedValue, isLabel, links, showDetectedFields } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
     const toggleFieldButton =
-      !isLabel && showParsedFields && showParsedFields.includes(parsedKey) ? (
+      !isLabel && showDetectedFields && showDetectedFields.includes(parsedKey) ? (
         <IconButton name="eye" className={styles.showingField} title="Hide this field" onClick={this.hideField} />
       ) : (
         <IconButton name="eye" title="Show this field instead of the message" onClick={this.showField} />

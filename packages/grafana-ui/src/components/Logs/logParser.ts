@@ -49,8 +49,8 @@ const parseMessage = memoizeOne((rowEntry): FieldDef[] => {
     return [];
   }
   // Use parser to highlight detected fields
-  const parsedFields = parser.getFields(rowEntry);
-  const fields = parsedFields.map(field => {
+  const detectedFields = parser.getFields(rowEntry);
+  const fields = detectedFields.map(field => {
     const key = parser.getLabelFromField(field);
     const value = parser.getValueFromField(field);
     return { key, value };

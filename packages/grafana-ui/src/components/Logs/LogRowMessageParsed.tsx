@@ -8,16 +8,16 @@ import { getAllFields } from './logParser';
 
 export interface Props extends Themeable {
   row: LogRowModel;
-  showParsedFields: string[];
+  showDetectedFields: string[];
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
 class UnThemedLogRowMessageParsed extends PureComponent<Props> {
   render() {
-    const { row, showParsedFields, getFieldLinks } = this.props;
+    const { row, showDetectedFields, getFieldLinks } = this.props;
     const fields = getAllFields(row, getFieldLinks);
 
-    const line = showParsedFields
+    const line = showDetectedFields
       .map(parsedKey => {
         const field = fields.find(field => {
           const { key } = field;

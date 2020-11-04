@@ -50,7 +50,7 @@ interface Props extends Themeable {
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
-  showParsedFields?: string[];
+  showDetectedFields?: string[];
   onClickShowParsedField?: (key: string) => void;
   onClickHideParsedField?: (key: string) => void;
 }
@@ -158,7 +158,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       showContextToggle,
       showLabels,
       showTime,
-      showParsedFields,
+      showDetectedFields,
       wrapLogMessage,
       theme,
       getFieldLinks,
@@ -198,8 +198,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               <LogLabels labels={row.uniqueLabels} />
             </td>
           )}
-          {showParsedFields && showParsedFields.length > 0 ? (
-            <LogRowMessageParsed row={row} showParsedFields={showParsedFields!} getFieldLinks={getFieldLinks} />
+          {showDetectedFields && showDetectedFields.length > 0 ? (
+            <LogRowMessageParsed row={row} showDetectedFields={showDetectedFields!} getFieldLinks={getFieldLinks} />
           ) : (
             <LogRowMessage
               highlighterExpressions={highlighterExpressions}
@@ -230,7 +230,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             getRows={getRows}
             row={row}
             hasError={hasError}
-            showParsedFields={showParsedFields}
+            showDetectedFields={showDetectedFields}
           />
         )}
       </>

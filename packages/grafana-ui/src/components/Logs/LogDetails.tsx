@@ -34,7 +34,7 @@ export interface Props extends Themeable {
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  showParsedFields?: string[];
+  showDetectedFields?: string[];
   onClickShowParsedField?: (key: string) => void;
   onClickHideParsedField?: (key: string) => void;
 }
@@ -81,7 +81,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
       onMouseLeave,
       onClickShowParsedField,
       onClickHideParsedField,
-      showParsedFields,
+      showDetectedFields,
       getFieldLinks,
     } = this.props;
     const style = getLogRowStyles(theme, row.logLevel);
@@ -89,7 +89,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const labels = row.labels ? row.labels : {};
     const labelsAvailable = Object.keys(labels).length > 0;
     const fields = getAllFields(row, getFieldLinks);
-    const parsedFieldsAvailable = fields && fields.length > 0;
+    const detectedFieldsAvailable = fields && fields.length > 0;
     // If logs with error, we are not showing the level color
     const levelClassName = cx(!hasError && [style.logsRowLevel, styles.logsRowLevelDetails]);
 
@@ -108,7 +108,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                 {labelsAvailable && (
                   <tr>
                     <td colSpan={5} className={style.logDetailsHeading} aria-label="Log Labels">
-                      Log Labels:
+                      Log labels:
                     </td>
                   </tr>
                 )}
@@ -127,10 +127,10 @@ class UnThemedLogDetails extends PureComponent<Props> {
                   );
                 })}
 
-                {parsedFieldsAvailable && (
+                {detectedFieldsAvailable && (
                   <tr>
-                    <td colSpan={5} className={style.logDetailsHeading} aria-label="Parsed Fields">
-                      Parsed Fields:
+                    <td colSpan={5} className={style.logDetailsHeading} aria-label="Detected fields">
+                      Detected fields:
                     </td>
                   </tr>
                 )}
@@ -149,11 +149,11 @@ class UnThemedLogDetails extends PureComponent<Props> {
                           ? this.getStatsForParsedField(key)
                           : calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())
                       }
-                      showParsedFields={showParsedFields}
+                      showDetectedFields={showDetectedFields}
                     />
                   );
                 })}
-                {!parsedFieldsAvailable && !labelsAvailable && (
+                {!detectedFieldsAvailable && !labelsAvailable && (
                   <tr>
                     <td colSpan={5} aria-label="No details">
                       No details available
