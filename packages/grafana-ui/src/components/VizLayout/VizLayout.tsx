@@ -5,7 +5,7 @@ import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 /**
  * @beta
  */
-export interface Props {
+export interface VizLayoutProps {
   width: number;
   height: number;
   legend?: React.ReactElement<VizLayoutLegendProps>;
@@ -15,7 +15,7 @@ export interface Props {
 /**
  * @beta
  */
-export interface VizLayoutComponentType extends FC<Props> {
+export interface VizLayoutComponentType extends FC<VizLayoutProps> {
   Legend: ComponentType<VizLayoutLegendProps>;
 }
 
