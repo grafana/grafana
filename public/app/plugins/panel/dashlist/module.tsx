@@ -61,6 +61,8 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
   })
   .setMigrationHandler((panel: PanelModel<DashListOptions> & Record<string, any>) => ({
     showStarred: panel.options.showStarred ?? panel.starred,
+    showRecentlyViewed: panel.options.showRecentlyViewed ?? panel.recent,
+    showSearch: panel.options.showSearch ?? panel.search,
     showHeadings: panel.options.showHeadings ?? panel.headings,
     maxItems: panel.options.maxItems ?? panel.limit,
     query: panel.options.query ?? panel.query,
