@@ -7,7 +7,7 @@ type ChannelPublisher func(channel string, data []byte) error
 
 // ChannelHandler defines the core channel behavior
 type ChannelHandler interface {
-	// Called when a client wants to subscribe to a channel
+	// OnSubscribe is called when a client wants to subscribe to a channel
 	OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error)
 
 	// OnPublish is called when a client writes a message to the channel websocket.
