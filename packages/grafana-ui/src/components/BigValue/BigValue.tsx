@@ -26,6 +26,10 @@ export enum BigValueGraphMode {
   Line = 'line',
   Area = 'area',
 }
+export enum BigValueShowGraphMode {
+  Adaptive = 'adaptive',
+  Always = 'always',
+}
 
 export enum BigValueJustifyMode {
   Auto = 'auto',
@@ -60,6 +64,8 @@ export interface Props extends Themeable {
   colorMode: BigValueColorMode;
   /** Show a graph behind/under the value */
   graphMode: BigValueGraphMode;
+  /** Show a graph */
+  showGraphMode: BigValueShowGraphMode;
   /** Auto justify value and text or center it */
   justifyMode?: BigValueJustifyMode;
   /** Factors that should influence the positioning of the text  */

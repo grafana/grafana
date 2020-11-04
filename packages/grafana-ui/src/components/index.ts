@@ -65,6 +65,7 @@ export {
   BigValueColorMode,
   BigValueSparkline,
   BigValueGraphMode,
+  BigValueShowGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
 } from './BigValue/BigValue';

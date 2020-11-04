@@ -53,6 +53,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         sparkline={sparkline}
         colorMode={options.colorMode}
         graphMode={options.graphMode}
+        showGraphMode={options.showGraphMode}
         justifyMode={options.justifyMode}
         textMode={this.getTextMode()}
         alignmentFactors={alignmentFactors}

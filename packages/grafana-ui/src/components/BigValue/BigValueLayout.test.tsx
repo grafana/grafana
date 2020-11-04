@@ -1,5 +1,11 @@
-import { Props, BigValueColorMode, BigValueGraphMode } from './BigValue';
-import { buildLayout, StackedWithChartLayout, WideWithChartLayout } from './BigValueLayout';
+import { BigValueColorMode, BigValueGraphMode, BigValueShowGraphMode, Props } from './BigValue';
+import {
+  buildLayout,
+  StackedWithChartLayout,
+  StackedWithNoChartLayout,
+  WideNoChartLayout,
+  WideWithChartLayout,
+} from './BigValueLayout';
 import { getTheme } from '../../themes';
 
 function getProps(propOverrides?: Partial<Props>): Props {
@@ -47,6 +53,54 @@ describe('BigValueLayout', () => {
         })
       );
       expect(layout).toBeInstanceOf(WideWithChartLayout);
+    });
+  });
+
+  describe('when rendering small layout', () => {
+    describe('when show graph adaptive mode on', () => {
+      it('should auto select to stacked layout', () => {
+        const layout = buildLayout(
+          getProps({
+            width: 200,
+            height: 90,
+          })
+        );
+        expect(layout).toBeInstanceOf(StackedWithNoChartLayout);
+      });
+
+      it('should auto select to wide layout', () => {
+        const layout = buildLayout(
+          getProps({
+            width: 300,
+            height: 40,
+          })
+        );
+        expect(layout).toBeInstanceOf(WideNoChartLayout);
+      });
+    });
+
+    describe('when show graph always mode on', () => {
+      it('should auto select to stacked layout', () => {
+        const layout = buildLayout(
+          getProps({
+            showGraphMode: BigValueShowGraphMode.Always,
+            width: 200,
+            height: 90,
+          })
+        );
+        expect(layout).toBeInstanceOf(StackedWithChartLayout);
+      });
+
+      it('should auto select to wide layout', () => {
+        const layout = buildLayout(
+          getProps({
+            showGraphMode: BigValueShowGraphMode.Always,
+            width: 300,
+            height: 40,
+          })
+        );
+        expect(layout).toBeInstanceOf(WideWithChartLayout);
+      });
     });
   });
 });

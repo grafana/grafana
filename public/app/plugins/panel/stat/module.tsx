@@ -51,6 +51,18 @@ export const plugin = new PanelPlugin<StatPanelOptions>(StatPanel)
         },
       })
       .addRadio({
+        path: 'showGraphMode',
+        name: 'Show graph',
+        description: 'Control if the graph should be always visible or hide when there is not enough space',
+        defaultValue: 'adaptive',
+        settings: {
+          options: [
+            { value: 'adaptive', label: 'Adaptive' },
+            { value: 'always', label: 'Always' },
+          ],
+        },
+      })
+      .addRadio({
         path: 'justifyMode',
         name: 'Alignment mode',
         description: 'Value & title posititioning',

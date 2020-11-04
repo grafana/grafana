@@ -4,6 +4,7 @@ import {
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
+  BigValueShowGraphMode,
 } from '@grafana/ui';
 import {
   ReducerID,
@@ -17,6 +18,7 @@ import { PanelOptionsEditorBuilder } from '@grafana/data';
 // Structure copied from angular
 export interface StatPanelOptions extends SingleStatBaseOptions {
   graphMode: BigValueGraphMode;
+  showGraphMode: BigValueShowGraphMode;
   colorMode: BigValueColorMode;
   justifyMode: BigValueJustifyMode;
   textMode: BigValueTextMode;

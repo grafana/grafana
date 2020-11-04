@@ -4,11 +4,11 @@ import tinycolor from 'tinycolor2';
 import { Chart, Geom } from 'bizcharts';
 
 // Utils
-import { formattedValueToString, DisplayValue, getColorForTheme } from '@grafana/data';
+import { DisplayValue, formattedValueToString, getColorForTheme } from '@grafana/data';
 import { calculateFontSize } from '../../utils/measureText';
 
 // Types
-import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
+import { BigValueColorMode, BigValueJustifyMode, BigValueShowGraphMode, BigValueTextMode, Props } from './BigValue';
 import { getTextColorForBackground } from '../../utils';
 
 const LINE_HEIGHT = 1.2;
@@ -432,11 +432,11 @@ export class StackedWithNoChartLayout extends BigValueLayout {
 }
 
 export function buildLayout(props: Props): BigValueLayout {
-  const { width, height, sparkline } = props;
+  const { width, height, sparkline, showGraphMode } = props;
   const useWideLayout = width / height > 2.5;
 
   if (useWideLayout) {
-    if (height > 50 && !!sparkline) {
+    if (showGraphMode === BigValueShowGraphMode.Always || (height > 50 && !!sparkline)) {
       return new WideWithChartLayout(props);
     } else {
       return new WideNoChartLayout(props);
@@ -444,7 +444,7 @@ export function buildLayout(props: Props): BigValueLayout {
   }
 
   // stacked layouts
-  if (height > 100 && !!sparkline) {
+  if (showGraphMode === BigValueShowGraphMode.Always || (height > 100 && !!sparkline)) {
     return new StackedWithChartLayout(props);
   } else {
     return new StackedWithNoChartLayout(props);
