@@ -36,7 +36,7 @@ export const VizLayout: VizLayoutType = ({ width, height, legend, children }) =>
     flexGrow: 1,
   };
 
-  let positionWithAuto = position;
+  let positionWithAuto = position ?? 'auto';
   if (position === 'auto') {
     positionWithAuto = width > height ? 'right' : 'bottom';
   }
@@ -78,7 +78,7 @@ interface VizSize {
 }
 
 export interface VizLayoutSlotProps {
-  position?: string;
+  position?: 'bottom' | 'right' | 'auto';
   maxHeight?: string;
   maxWidth?: string;
   children: React.ReactNode;
