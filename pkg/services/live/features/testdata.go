@@ -54,14 +54,8 @@ func (g *TestDataSupplier) GetHandlerForPath(path string) (models.ChannelHandler
 	return nil, fmt.Errorf("unknown channel")
 }
 
-// GetChannelOptions gets channel options.
-// Called fast and often.
-func (g *testDataRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
-	return centrifuge.ChannelOptions{}
-}
-
-// OnSubscribe for now allows anyone to subscribe to any dashboard.
-func (g *testDataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
+// OnSubscribe will let anyone connect to the path
+func (g *testDataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
 	if !g.running {
 		g.running = true
 
@@ -69,13 +63,12 @@ func (g *testDataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscrib
 		go g.runRandomCSV()
 	}
 
-	// TODO? check authentication
-	return nil
+	return centrifuge.SubscribeReply{}, nil
 }
 
-// AllowBroadcast checks if a message from the websocket can be broadcast on this channel
-func (g *testDataRunner) AllowBroadcast(c *centrifuge.Client, e centrifuge.PublishEvent) error {
-	return fmt.Errorf("can not publish to testdata")
+// OnPublish checks if a message from the websocket can be broadcast on this channel
+func (b *testDataRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
+	return centrifuge.PublishReply{}, fmt.Errorf("can not publish to testdata")
 }
 
 // runRandomCSV is just for an example.

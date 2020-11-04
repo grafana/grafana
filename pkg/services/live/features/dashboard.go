@@ -25,24 +25,21 @@ func (g *DashboardHandler) GetHandlerForPath(path string) (models.ChannelHandler
 	return g, nil // all dashboards share the same handler
 }
 
-// GetChannelOptions called fast and often
-func (g *DashboardHandler) GetChannelOptions(id string) centrifuge.ChannelOptions {
-	return centrifuge.ChannelOptions{
-		Presence:  true,
-		JoinLeave: true, // if enterprise?
-	}
-}
-
 // OnSubscribe for now allows anyone to subscribe to any dashboard
-func (g *DashboardHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
-	// TODO? check authentication
-	return nil
+func (g *DashboardHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
+	return centrifuge.SubscribeReply{
+		Options: centrifuge.SubscribeOptions{
+			Presence:  true,
+			JoinLeave: true,
+		},
+	}, nil
 }
 
-// AllowBroadcast checks if a message from the websocket can be broadcast on this channel
-// currently messages are sent when a dashboard starts editing
-func (g *DashboardHandler) AllowBroadcast(c *centrifuge.Client, e centrifuge.PublishEvent) error {
-	return nil
+// OnPublish is called when someone begins to edit a dashoard
+func (b *DashboardHandler) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
+	return centrifuge.PublishReply{
+		Options: centrifuge.PublishOptions{},
+	}, nil
 }
 
 // DashboardSaved should broadcast to the appropriate stream
