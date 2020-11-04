@@ -61,7 +61,7 @@ You can also specify mappings between LDAP group memberships and Grafana Organiz
 ### Basic Auth Support
 You can now authenticate against the Grafana API utilizing a simple username and password with basic HTTP authentication.
 
-> **Note:** This can be useful for provisioning and config management systems that need
+> **Note:** This can be useful for provisioning and configuring management systems that need
 > to utilize the API without having to create an API key.
 
 
@@ -129,4 +129,3 @@ string values.
 ### Changelog
 For a detailed list and link to github issues for everything included in the 2.1 release please
 view the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file.
-
