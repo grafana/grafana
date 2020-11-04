@@ -5,8 +5,8 @@ package eval
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/grafana/grafana/pkg/models"
@@ -19,7 +19,7 @@ import (
 type Condition struct {
 	RefID string `json:"refId"`
 
-	QueriesAndExpressions []backend.DataQuery `json:"queriesAndExpressions"`
+	QueriesAndExpressions []AlertQuery `json:"queriesAndExpressions"`
 }
 
 // ExecutionResults contains the unevaluated results from executing
@@ -33,29 +33,29 @@ type ExecutionResults struct {
 }
 
 // Results is a slice of evaluated alert instances states.
-type Results []Result
+type Results []result
 
-// Result contains the evaluated state of an alert instance
+// result contains the evaluated state of an alert instance
 // identified by its labels.
-type Result struct {
+type result struct {
 	Instance data.Labels
-	State    State // Enum
+	State    state // Enum
 }
 
-// State is an enum of the evaluation state for an alert instance.
-type State int
+// state is an enum of the evaluation state for an alert instance.
+type state int
 
 const (
 	// Normal is the eval state for an alert instance condition
 	// that evaluated to false.
-	Normal State = iota
+	Normal state = iota
 
 	// Alerting is the eval state for an alert instance condition
 	// that evaluated to false.
 	Alerting
 )
 
-func (s State) String() string {
+func (s state) String() string {
 	return [...]string{"Normal", "Alerting"}[s]
 }
 
@@ -86,18 +86,30 @@ func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*Execution
 		},
 		Queries: []*pluginv2.DataQuery{},
 	}
+
 	for i := range c.QueriesAndExpressions {
 		q := c.QueriesAndExpressions[i]
+		model, err := q.getModel()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get query model: %w", err)
+		}
+		intervalMS, err := q.getIntervalMS()
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve intervalMs from the model: %w", err)
+		}
+
+		maxDatapoints, err := q.getMaxDatapoints()
+		if err != nil {
+			return nil, fmt.Errorf("failed to retrieve maxDatapoints from the model: %w", err)
+		}
+
 		pbQuery.Queries = append(pbQuery.Queries, &pluginv2.DataQuery{
-			Json:          q.JSON,
-			IntervalMS:    q.Interval.Milliseconds(),
+			Json:          model,
+			IntervalMS:    intervalMS,
 			RefId:         q.RefID,
-			MaxDataPoints: q.MaxDataPoints,
+			MaxDataPoints: maxDatapoints,
 			QueryType:     q.QueryType,
-			TimeRange: &pluginv2.TimeRange{
-				FromEpochMS: q.TimeRange.From.UnixNano() / 1e6,
-				ToEpochMS:   q.TimeRange.To.UnixNano() / 1e6,
-			},
+			TimeRange:     q.RelativeTimeRange.toTimeRange(time.Now()),
 		})
 	}
 
@@ -131,7 +143,7 @@ func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*Execution
 // EvaluateExecutionResult takes the ExecutionResult, and returns a frame where
 // each column is a string type that holds a string representing its state.
 func EvaluateExecutionResult(results *ExecutionResults) (Results, error) {
-	evalResults := make([]Result, 0)
+	evalResults := make([]result, 0)
 	labels := make(map[string]bool)
 	for _, f := range results.Results {
 		rowLen, err := f.RowLen()
@@ -163,7 +175,7 @@ func EvaluateExecutionResult(results *ExecutionResults) (Results, error) {
 			state = Alerting
 		}
 
-		evalResults = append(evalResults, Result{
+		evalResults = append(evalResults, result{
 			Instance: f.Fields[0].Labels,
 			State:    state,
 		})

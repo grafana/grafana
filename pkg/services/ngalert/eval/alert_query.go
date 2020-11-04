@@ -1,16 +1,18 @@
-package ngalert
+package eval
 
 import (
 	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 )
 
 const defaultMaxDataPoints float64 = 100
 const defaultIntervalMS float64 = 1000
-const defaultExprDatasourceID = -100
+
+// DefaultExprDatasourceID is the datasource identifier for expressions.:w
+const DefaultExprDatasourceID = -100
 
 type duration time.Duration
 
@@ -32,22 +34,22 @@ func (d *duration) UnmarshalJSON(b []byte) error {
 	}
 }
 
-// RelativeTimeRange is the per query start and end time
+// relativeTimeRange is the per query start and end time
 // for requests.
-type RelativeTimeRange struct {
+type relativeTimeRange struct {
 	From duration
 	To   duration
 }
 
-// IsValid checks that From duration is greater than To duration.
-func (rtr *RelativeTimeRange) IsValid() bool {
+// isValid checks that From duration is greater than To duration.
+func (rtr *relativeTimeRange) isValid() bool {
 	return rtr.From > rtr.To
 }
 
-func (rtr *RelativeTimeRange) toTimeRange(now time.Time) backend.TimeRange {
-	return backend.TimeRange{
-		From: now.Add(-time.Duration(rtr.From)),
-		To:   now.Add(-time.Duration(rtr.To)),
+func (rtr *relativeTimeRange) toTimeRange(now time.Time) *pluginv2.TimeRange {
+	return &pluginv2.TimeRange{
+		FromEpochMS: now.Add(-time.Duration(rtr.From)).UnixNano() / 1e6,
+		ToEpochMS:   now.Add(-time.Duration(rtr.To)).UnixNano() / 1e6,
 	}
 }
 
@@ -61,7 +63,7 @@ type AlertQuery struct {
 	QueryType string `json:"queryType"`
 
 	// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
-	RelativeTimeRange RelativeTimeRange `json:"relativeTimeRange"`
+	RelativeTimeRange relativeTimeRange `json:"relativeTimeRange"`
 
 	DatasourceID int64 `json:"-"`
 
@@ -81,6 +83,8 @@ func (aq *AlertQuery) setModelProps() error {
 	return nil
 }
 
+// setDatasource sets DatasourceID.
+// If it's an expression sets DefaultExprDatasourceID.
 func (aq *AlertQuery) setDatasource() error {
 	if aq.modelProps == nil {
 		err := aq.setModelProps()
@@ -95,8 +99,8 @@ func (aq *AlertQuery) setDatasource() error {
 	}
 
 	if dsName == "__expr__" {
-		aq.DatasourceID = defaultExprDatasourceID
-		aq.modelProps["datasourceId"] = defaultExprDatasourceID
+		aq.DatasourceID = DefaultExprDatasourceID
+		aq.modelProps["datasourceId"] = DefaultExprDatasourceID
 		return nil
 	}
 
@@ -118,7 +122,7 @@ func (aq *AlertQuery) IsExpression() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return aq.DatasourceID == defaultExprDatasourceID, nil
+	return aq.DatasourceID == DefaultExprDatasourceID, nil
 }
 
 // setMaxDatapoints sets the model maxDataPoints if it's missing or invalid
@@ -185,7 +189,8 @@ func (aq *AlertQuery) getIntervalMS() (int64, error) {
 	return int64(intervalMs), nil
 }
 
-func (aq *AlertQuery) getDatasource() (int64, error) {
+// GetDatasource returns the query datasource identifier.
+func (aq *AlertQuery) GetDatasource() (int64, error) {
 	err := aq.setDatasource()
 	if err != nil {
 		return 0, err
@@ -246,5 +251,34 @@ func (aq *AlertQuery) setQueryType() error {
 	}
 
 	aq.QueryType = queryType
+	return nil
+}
+
+// PreSave sets queries properties.
+// It should be called before being saved.
+func (aq *AlertQuery) PreSave(orgID int64) error {
+	err := aq.setOrgID(orgID)
+	if err != nil {
+		return fmt.Errorf("failed to set orgId to query model: %w", err)
+	}
+
+	if err := aq.setDatasource(); err != nil {
+		return fmt.Errorf("failed to set datasource to query model: %w", err)
+	}
+
+	if err := aq.setQueryType(); err != nil {
+		return fmt.Errorf("failed to set query type to query model: %w", err)
+	}
+
+	// override model
+	model, err := aq.getModel()
+	if err != nil {
+		return err
+	}
+	aq.Model = model
+
+	if ok := aq.RelativeTimeRange.isValid(); !ok {
+		return fmt.Errorf("invalid ")
+	}
 	return nil
 }

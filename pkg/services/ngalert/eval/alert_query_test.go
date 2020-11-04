@@ -1,4 +1,4 @@
-package ngalert
+package eval
 
 import (
 	"encoding/json"
@@ -33,7 +33,7 @@ func TestAlertQuery(t *testing.T) {
 			},
 			expectedIsExpression: true,
 			expectedDatasource:   "__expr__",
-			expectedDatasourceID: int64(defaultExprDatasourceID),
+			expectedDatasourceID: int64(DefaultExprDatasourceID),
 			expectedMaxPoints:    int64(defaultMaxDataPoints),
 			expectedIntervalMS:   int64(defaultIntervalMS),
 		},

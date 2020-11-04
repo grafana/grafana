@@ -1,15 +1,14 @@
 package ngalert
 
 import (
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func validateOrgAlertDefinition(c *models.ReqContext) {
+func (ng *AlertNG) validateOrgAlertDefinition(c *models.ReqContext) {
 	id := c.ParamsInt64(":alertDefinitionId")
-	query := GetAlertDefinitionByIDQuery{ID: id}
+	query := getAlertDefinitionByIDQuery{ID: id}
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err := ng.getAlertDefinitionByID(&query); err != nil {
 		c.JsonApiErr(404, "Alert definition not found", nil)
 		return
 	}

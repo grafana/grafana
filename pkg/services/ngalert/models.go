@@ -14,23 +14,23 @@ type AlertDefinition struct {
 	OrgId     int64
 	Name      string
 	Condition string
-	Data      []AlertQuery
+	Data      []eval.AlertQuery
 }
 
 var (
-	// ErrAlertDefinitionNotFound is an error for an unknown alert definition.
-	ErrAlertDefinitionNotFound = fmt.Errorf("could not find alert definition")
+	// errAlertDefinitionNotFound is an error for an unknown alert definition.
+	errAlertDefinitionNotFound = fmt.Errorf("could not find alert definition")
 )
 
-// GetAlertDefinitionByIDQuery is the query for retrieving/deleting an alert definition by ID.
-type GetAlertDefinitionByIDQuery struct {
+// getAlertDefinitionByIDQuery is the query for retrieving/deleting an alert definition by ID.
+type getAlertDefinitionByIDQuery struct {
 	ID    int64
 	OrgID int64
 
 	Result *AlertDefinition
 }
 
-type DeleteAlertDefinitionByIDQuery struct {
+type deleteAlertDefinitionByIDQuery struct {
 	ID    int64
 	OrgID int64
 
@@ -38,17 +38,17 @@ type DeleteAlertDefinitionByIDQuery struct {
 }
 
 // Condition is the structure used by storing/updating alert definition commmands
-type Condition struct {
+type condition struct {
 	RefID string `json:"refId"`
 
-	QueriesAndExpressions []AlertQuery `json:"queriesAndExpressions"`
+	QueriesAndExpressions []eval.AlertQuery `json:"queriesAndExpressions"`
 }
 
-// SaveAlertDefinitionCommand is the query for saving a new alert definition.
-type SaveAlertDefinitionCommand struct {
+// saveAlertDefinitionCommand is the query for saving a new alert definition.
+type saveAlertDefinitionCommand struct {
 	Name         string               `json:"name"`
 	OrgID        int64                `json:"-"`
-	Condition    Condition            `json:"condition"`
+	Condition    condition            `json:"condition"`
 	SignedInUser *models.SignedInUser `json:"-"`
 	SkipCache    bool                 `json:"-"`
 
@@ -57,16 +57,16 @@ type SaveAlertDefinitionCommand struct {
 
 // IsValid validates a SaveAlertDefinitionCommand.
 // Always returns true.
-func (cmd *SaveAlertDefinitionCommand) IsValid() bool {
+func (cmd *saveAlertDefinitionCommand) IsValid() bool {
 	return true
 }
 
-// UpdateAlertDefinitionCommand is the query for updating an existing alert definition.
-type UpdateAlertDefinitionCommand struct {
+// updateAlertDefinitionCommand is the query for updating an existing alert definition.
+type updateAlertDefinitionCommand struct {
 	ID           int64                `json:"-"`
 	Name         string               `json:"name"`
 	OrgID        int64                `json:"-"`
-	Condition    Condition            `json:"condition"`
+	Condition    condition            `json:"condition"`
 	SignedInUser *models.SignedInUser `json:"-"`
 	SkipCache    bool                 `json:"-"`
 
@@ -76,16 +76,16 @@ type UpdateAlertDefinitionCommand struct {
 
 // IsValid validates an UpdateAlertDefinitionCommand.
 // Always returns true.
-func (cmd *UpdateAlertDefinitionCommand) IsValid() bool {
+func (cmd *updateAlertDefinitionCommand) IsValid() bool {
 	return true
 }
 
-type EvalAlertConditionCommand struct {
+type evalAlertConditionCommand struct {
 	Condition eval.Condition `json:"condition"`
 	Now       time.Time      `json:"now"`
 }
 
-type ListAlertDefinitionsCommand struct {
+type listAlertDefinitionsCommand struct {
 	OrgID int64 `json:"-"`
 
 	Result []*AlertDefinition

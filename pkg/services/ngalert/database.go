@@ -10,7 +10,7 @@ func getAlertDefinitionByID(alertDefinitionID int64, sess *sqlstore.DBSession) (
 	alertDefinition := AlertDefinition{}
 	has, err := sess.ID(alertDefinitionID).Get(&alertDefinition)
 	if !has {
-		return nil, ErrAlertDefinitionNotFound
+		return nil, errAlertDefinitionNotFound
 	}
 	if err != nil {
 		return nil, err
@@ -18,9 +18,9 @@ func getAlertDefinitionByID(alertDefinitionID int64, sess *sqlstore.DBSession) (
 	return &alertDefinition, nil
 }
 
-// DeleteAlertDefinitionByID is a handler for deleting an alert definition.
+// deleteAlertDefinitionByID is a handler for deleting an alert definition.
 // It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
-func (ng *AlertNG) DeleteAlertDefinitionByID(query *DeleteAlertDefinitionByIDQuery) error {
+func (ng *AlertNG) deleteAlertDefinitionByID(query *deleteAlertDefinitionByIDQuery) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		res, err := sess.Exec("DELETE FROM alert_definition WHERE id = ?", query.ID)
 		if err != nil {
@@ -36,9 +36,9 @@ func (ng *AlertNG) DeleteAlertDefinitionByID(query *DeleteAlertDefinitionByIDQue
 	})
 }
 
-// GetAlertDefinitionByID is a handler for retrieving an alert definition from that database by its ID.
+// getAlertDefinitionByID is a handler for retrieving an alert definition from that database by its ID.
 // It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
-func (ng *AlertNG) GetAlertDefinitionByID(query *GetAlertDefinitionByIDQuery) error {
+func (ng *AlertNG) getAlertDefinitionByID(query *getAlertDefinitionByIDQuery) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertDefinition, err := getAlertDefinitionByID(query.ID, sess)
 		if err != nil {
@@ -49,8 +49,8 @@ func (ng *AlertNG) GetAlertDefinitionByID(query *GetAlertDefinitionByIDQuery) er
 	})
 }
 
-// SaveAlertDefinition is a handler for saving a new alert definition.
-func (ng *AlertNG) SaveAlertDefinition(cmd *SaveAlertDefinitionCommand) error {
+// saveAlertDefinition is a handler for saving a new alert definition.
+func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertDefinition := &AlertDefinition{
 			OrgId:     cmd.OrgID,
@@ -76,9 +76,9 @@ func (ng *AlertNG) SaveAlertDefinition(cmd *SaveAlertDefinitionCommand) error {
 	})
 }
 
-// UpdateAlertDefinition is a handler for updating an existing alert definition.
+// updateAlertDefinition is a handler for updating an existing alert definition.
 // It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
-func (ng *AlertNG) UpdateAlertDefinition(cmd *UpdateAlertDefinitionCommand) error {
+func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertDefinition := &AlertDefinition{
 			Name:      cmd.Name,
@@ -105,8 +105,8 @@ func (ng *AlertNG) UpdateAlertDefinition(cmd *UpdateAlertDefinitionCommand) erro
 	})
 }
 
-// GetAlertDefinitions is a handler for retrieving alert definitions of specific organisation.
-func (ng *AlertNG) GetAlertDefinitions(cmd *ListAlertDefinitionsCommand) error {
+// getAlertDefinitions is a handler for retrieving alert definitions of specific organisation.
+func (ng *AlertNG) getAlertDefinitions(cmd *listAlertDefinitionsCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertDefinitions := make([]*AlertDefinition, 0)
 		q := "SELECT * FROM alert_definition WHERE org_id = ?"

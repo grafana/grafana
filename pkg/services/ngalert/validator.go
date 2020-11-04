@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
 // validateAlertDefinition validates that the alert definition contains at least one alert query
@@ -14,12 +15,12 @@ func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, sig
 	}
 
 	for _, query := range alertDefinition.Data {
-		datasourceID, err := query.getDatasource()
+		datasourceID, err := query.GetDatasource()
 		if err != nil {
 			return err
 		}
 
-		if datasourceID == defaultExprDatasourceID {
+		if datasourceID == eval.DefaultExprDatasourceID {
 			return nil
 		}
 

@@ -18,18 +18,18 @@ import (
 
 func (ng *AlertNG) registerAPIEndpoints() {
 	ng.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
-		alertDefinitions.Get("", middleware.ReqSignedIn, api.Wrap(ng.ListAlertDefinitions))
-		alertDefinitions.Get("/eval/:alertDefinitionId", validateOrgAlertDefinition, api.Wrap(ng.AlertDefinitionEval))
-		alertDefinitions.Post("/eval", middleware.ReqSignedIn, binding.Bind(EvalAlertConditionCommand{}), api.Wrap(ng.ConditionEval))
-		alertDefinitions.Get("/:alertDefinitionId", validateOrgAlertDefinition, api.Wrap(ng.GetAlertDefinitionEndpoint))
-		alertDefinitions.Delete("/:alertDefinitionId", validateOrgAlertDefinition, api.Wrap(ng.DeleteAlertDefinitionEndpoint))
-		alertDefinitions.Post("/", middleware.ReqSignedIn, binding.Bind(SaveAlertDefinitionCommand{}), api.Wrap(ng.CreateAlertDefinitionEndpoint))
-		alertDefinitions.Put("/:alertDefinitionId", validateOrgAlertDefinition, binding.Bind(UpdateAlertDefinitionCommand{}), api.Wrap(ng.UpdateAlertDefinitionEndpoint))
+		alertDefinitions.Get("", middleware.ReqSignedIn, api.Wrap(ng.listAlertDefinitions))
+		alertDefinitions.Get("/eval/:alertDefinitionId", ng.validateOrgAlertDefinition, api.Wrap(ng.alertDefinitionEval))
+		alertDefinitions.Post("/eval", middleware.ReqSignedIn, binding.Bind(evalAlertConditionCommand{}), api.Wrap(ng.conditionEval))
+		alertDefinitions.Get("/:alertDefinitionId", ng.validateOrgAlertDefinition, api.Wrap(ng.getAlertDefinitionEndpoint))
+		alertDefinitions.Delete("/:alertDefinitionId", ng.validateOrgAlertDefinition, api.Wrap(ng.deleteAlertDefinitionEndpoint))
+		alertDefinitions.Post("/", middleware.ReqSignedIn, binding.Bind(saveAlertDefinitionCommand{}), api.Wrap(ng.createAlertDefinitionEndpoint))
+		alertDefinitions.Put("/:alertDefinitionId", ng.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionCommand{}), api.Wrap(ng.updateAlertDefinitionEndpoint))
 	})
 }
 
-// ConditionEval handles POST /api/alert-definitions/eval.
-func (ng *AlertNG) ConditionEval(c *models.ReqContext, dto EvalAlertConditionCommand) api.Response {
+// conditionEval handles POST /api/alert-definitions/eval.
+func (ng *AlertNG) conditionEval(c *models.ReqContext, dto evalAlertConditionCommand) api.Response {
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	defer cancelFn()
 
@@ -67,8 +67,8 @@ func (ng *AlertNG) ConditionEval(c *models.ReqContext, dto EvalAlertConditionCom
 	})
 }
 
-// §AlertDefinitionEval handles GET /api/alert-definitions/eval/:dashboardId/:panelId/:refId".
-func (ng *AlertNG) AlertDefinitionEval(c *models.ReqContext) api.Response {
+// alertDefinitionEval handles GET /api/alert-definitions/eval/:dashboardId/:panelId/:refId".
+func (ng *AlertNG) alertDefinitionEval(c *models.ReqContext) api.Response {
 	alertDefinitionID := c.ParamsInt64(":alertDefinitionId")
 
 	fromStr := c.Query("from")
@@ -114,68 +114,68 @@ func (ng *AlertNG) AlertDefinitionEval(c *models.ReqContext) api.Response {
 	})
 }
 
-// GetAlertDefinitionEndpoint handles GET /api/alert-definitions/:alertDefinitionId.
-func (ng *AlertNG) GetAlertDefinitionEndpoint(c *models.ReqContext) api.Response {
+// getAlertDefinitionEndpoint handles GET /api/alert-definitions/:alertDefinitionId.
+func (ng *AlertNG) getAlertDefinitionEndpoint(c *models.ReqContext) api.Response {
 	alertDefinitionID := c.ParamsInt64(":alertDefinitionId")
 
-	query := GetAlertDefinitionByIDQuery{
+	query := getAlertDefinitionByIDQuery{
 		ID: alertDefinitionID,
 	}
 
-	if err := ng.Bus.Dispatch(&query); err != nil {
+	if err := ng.getAlertDefinitionByID(&query); err != nil {
 		return api.Error(500, "Failed to get alert definition", err)
 	}
 
 	return api.JSON(200, &query.Result)
 }
 
-// DeleteAlertDefinitionEndpoint handles DELETE /api/alert-definitions/:alertDefinitionId.
-func (ng *AlertNG) DeleteAlertDefinitionEndpoint(c *models.ReqContext) api.Response {
+// deleteAlertDefinitionEndpoint handles DELETE /api/alert-definitions/:alertDefinitionId.
+func (ng *AlertNG) deleteAlertDefinitionEndpoint(c *models.ReqContext) api.Response {
 	alertDefinitionID := c.ParamsInt64(":alertDefinitionId")
 
-	query := DeleteAlertDefinitionByIDQuery{
+	query := deleteAlertDefinitionByIDQuery{
 		ID:    alertDefinitionID,
 		OrgID: c.SignedInUser.OrgId,
 	}
 
-	if err := ng.DeleteAlertDefinitionByID(&query); err != nil {
+	if err := ng.deleteAlertDefinitionByID(&query); err != nil {
 		return api.Error(500, "Failed to delete alert definition", err)
 	}
 
 	return api.JSON(200, util.DynMap{"affectedRows": query.RowsAffected})
 }
 
-// UpdateAlertDefinitionEndpoint handles PUT /api/alert-definitions/:alertDefinitionId.
-func (ng *AlertNG) UpdateAlertDefinitionEndpoint(c *models.ReqContext, cmd UpdateAlertDefinitionCommand) api.Response {
+// updateAlertDefinitionEndpoint handles PUT /api/alert-definitions/:alertDefinitionId.
+func (ng *AlertNG) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd updateAlertDefinitionCommand) api.Response {
 	cmd.ID = c.ParamsInt64(":alertDefinitionId")
 	cmd.SignedInUser = c.SignedInUser
 	cmd.SkipCache = c.SkipCache
 
-	if err := ng.UpdateAlertDefinition(&cmd); err != nil {
+	if err := ng.updateAlertDefinition(&cmd); err != nil {
 		return api.Error(500, "Failed to update alert definition", err)
 	}
 
 	return api.JSON(200, util.DynMap{"affectedRows": cmd.RowsAffected, "id": cmd.Result.Id})
 }
 
-// CreateAlertDefinitionEndpoint handles POST /api/alert-definitions.
-func (ng *AlertNG) CreateAlertDefinitionEndpoint(c *models.ReqContext, cmd SaveAlertDefinitionCommand) api.Response {
+// createAlertDefinitionEndpoint handles POST /api/alert-definitions.
+func (ng *AlertNG) createAlertDefinitionEndpoint(c *models.ReqContext, cmd saveAlertDefinitionCommand) api.Response {
 	cmd.OrgID = c.SignedInUser.OrgId
 	cmd.SignedInUser = c.SignedInUser
 	cmd.SkipCache = c.SkipCache
 
-	if err := ng.SaveAlertDefinition(&cmd); err != nil {
+	if err := ng.saveAlertDefinition(&cmd); err != nil {
 		return api.Error(500, "Failed to create alert definition", err)
 	}
 
 	return api.JSON(200, util.DynMap{"id": cmd.Result.Id})
 }
 
-// ListAlertDefinitions handles GET /api/alert-definitions.
-func (ng *AlertNG) ListAlertDefinitions(c *models.ReqContext) api.Response {
-	cmd := ListAlertDefinitionsCommand{OrgID: c.SignedInUser.OrgId}
+// listAlertDefinitions handles GET /api/alert-definitions.
+func (ng *AlertNG) listAlertDefinitions(c *models.ReqContext) api.Response {
+	cmd := listAlertDefinitionsCommand{OrgID: c.SignedInUser.OrgId}
 
-	if err := ng.GetAlertDefinitions(&cmd); err != nil {
+	if err := ng.getAlertDefinitions(&cmd); err != nil {
 		return api.Error(500, "Failed to list alert definitions", err)
 	}
 
