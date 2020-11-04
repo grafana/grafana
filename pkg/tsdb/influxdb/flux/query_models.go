@@ -66,14 +66,15 @@ func getQueryModelTSDB(query *tsdb.Query, timeRange *tsdb.TimeRange, dsInfo *mod
 	if model.Options.Organization == "" {
 		model.Options.Organization = dsInfo.JsonData.Get("organization").MustString("")
 	}
+
 	startTime, err := timeRange.ParseFrom()
-	if err != nil {
-		return nil, err
+	if err != nil && timeRange.From != "" {
+		return nil, fmt.Errorf("error reading startTime: %w", err)
 	}
 
 	endTime, err := timeRange.ParseTo()
-	if err != nil {
-		return nil, err
+	if err != nil && timeRange.To != "" {
+		return nil, fmt.Errorf("error reading endTime: %w", err)
 	}
 
 	// Copy directly from the well typed query
@@ -82,6 +83,12 @@ func getQueryModelTSDB(query *tsdb.Query, timeRange *tsdb.TimeRange, dsInfo *mod
 		To:   endTime,
 	}
 	model.MaxDataPoints = query.MaxDataPoints
+	if model.MaxDataPoints == 0 {
+		model.MaxDataPoints = 10000 // 10k/series should be a reasonable place to abort!
+	}
 	model.Interval = time.Millisecond * time.Duration(query.IntervalMs)
+	if model.Interval.Milliseconds() == 0 {
+		model.Interval = time.Millisecond // 1ms
+	}
 	return model, nil
 }

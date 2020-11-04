@@ -65,6 +65,16 @@ type DeleteAuthInfoCommand struct {
 	UserAuth *UserAuth
 }
 
+type SendLoginLogCommand struct {
+	ReqContext    *ReqContext
+	LogAction     string
+	User          *User
+	ExternalUser  *ExternalUserInfo
+	LoginUsername string
+	HTTPStatus    int
+	Error         error
+}
+
 // ----------------------
 // QUERIES
 
@@ -74,6 +84,7 @@ type LoginUserQuery struct {
 	Password   string
 	User       *User
 	IpAddress  string
+	AuthModule string
 }
 
 type GetUserByAuthInfoQuery struct {

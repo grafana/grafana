@@ -2,13 +2,12 @@ import React, { Component } from 'react';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
 import { DataLink, LoadingState, PanelData, PanelMenuItem, QueryResultMetaNotice, ScopedVars } from '@grafana/data';
-import { AngularComponent } from '@grafana/runtime';
-import { ClickOutsideWrapper, Icon, Tooltip } from '@grafana/ui';
+import { AngularComponent, getTemplateSrv } from '@grafana/runtime';
+import { ClickOutsideWrapper, Icon, IconName, Tooltip } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
-import templateSrv from 'app/features/templating/template_srv';
 
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
@@ -112,16 +111,22 @@ export class PanelHeader extends Component<Props, State> {
     });
   };
 
+  // This will show one icon for each severity
   renderNotice = (notice: QueryResultMetaNotice) => {
+    let iconName: IconName = 'info-circle';
+    if (notice.severity === 'error' || notice.severity === 'warning') {
+      iconName = 'exclamation-triangle';
+    }
+
     return (
       <Tooltip content={notice.text} key={notice.severity}>
         {notice.inspect ? (
           <div className="panel-info-notice pointer" onClick={e => this.openInspect(e, notice.inspect!)}>
-            <Icon name="info-circle" style={{ marginRight: '8px' }} />
+            <Icon name={iconName} style={{ marginRight: '8px' }} />
           </div>
         ) : (
           <a className="panel-info-notice" href={notice.link} target="_blank">
-            <Icon name="info-circle" style={{ marginRight: '8px' }} />
+            <Icon name={iconName} style={{ marginRight: '8px' }} />
           </a>
         )}
       </Tooltip>
@@ -131,7 +136,7 @@ export class PanelHeader extends Component<Props, State> {
   render() {
     const { panel, scopedVars, error, isViewing, isEditing, data, alertState } = this.props;
     const { menuItems } = this.state;
-    const title = templateSrv.replaceWithText(panel.title, scopedVars);
+    const title = getTemplateSrv().replace(panel.title, scopedVars, 'text');
 
     const panelHeaderClass = classNames({
       'panel-header': true,

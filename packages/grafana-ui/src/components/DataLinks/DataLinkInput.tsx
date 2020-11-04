@@ -82,7 +82,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     stateRef.current = { showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange };
 
     // SelectionReference is used to position the variables suggestion relatively to current DOM selection
-    const selectionRef = useMemo(() => new SelectionReference(), [setShowingSuggestions, linkUrl]);
+    const selectionRef = useMemo(() => new SelectionReference(), []);
 
     const onKeyDown = React.useCallback((event: KeyboardEvent, next: () => any) => {
       if (!stateRef.current.showingSuggestions) {

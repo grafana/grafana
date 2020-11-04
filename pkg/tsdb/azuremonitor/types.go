@@ -42,11 +42,11 @@ type AzureMonitorResponse struct {
 			} `json:"metadatavalues"`
 			Data []struct {
 				TimeStamp time.Time `json:"timeStamp"`
-				Average   float64   `json:"average,omitempty"`
-				Total     float64   `json:"total,omitempty"`
-				Count     float64   `json:"count,omitempty"`
-				Maximum   float64   `json:"maximum,omitempty"`
-				Minimum   float64   `json:"minimum,omitempty"`
+				Average   *float64  `json:"average,omitempty"`
+				Total     *float64  `json:"total,omitempty"`
+				Count     *float64  `json:"count,omitempty"`
+				Maximum   *float64  `json:"maximum,omitempty"`
+				Minimum   *float64  `json:"minimum,omitempty"`
 			} `json:"data"`
 		} `json:"timeseries"`
 	} `json:"value"`
@@ -54,7 +54,7 @@ type AzureMonitorResponse struct {
 	Resourceregion string `json:"resourceregion"`
 }
 
-//ApplicationInsightsQueryResponse is the json response from the Application Insights API
+// ApplicationInsightsQueryResponse is the json response from the Application Insights API
 type ApplicationInsightsQueryResponse struct {
 	Tables []struct {
 		Name    string `json:"name"`
@@ -71,7 +71,7 @@ type AzureLogAnalyticsResponse struct {
 	Tables []AzureLogAnalyticsTable `json:"tables"`
 }
 
-//AzureLogAnalyticsTable is the table format for Log Analytics responses
+// AzureLogAnalyticsTable is the table format for Log Analytics responses
 type AzureLogAnalyticsTable struct {
 	Name    string `json:"name"`
 	Columns []struct {
@@ -98,7 +98,7 @@ type azureMonitorJSONQuery struct {
 		TimeGrain           string  `json:"timeGrain"`
 		Top                 string  `json:"top"`
 
-		DimensionsFilters []azureMonitorDimensionFilter `json:"dimensionsFilters"` // new model
+		DimensionFilters []azureMonitorDimensionFilter `json:"dimensionFilters"` // new model
 	} `json:"azureMonitor"`
 	Subscription string `json:"subscription"`
 }
@@ -112,7 +112,11 @@ type azureMonitorDimensionFilter struct {
 }
 
 func (a azureMonitorDimensionFilter) String() string {
-	return fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, a.Filter)
+	filter := "*"
+	if a.Filter != "" {
+		filter = a.Filter
+	}
+	return fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter)
 }
 
 // insightsJSONQuery is the frontend JSON query model for an Azure Application Insights query.
@@ -166,7 +170,14 @@ func (s *InsightsDimensions) UnmarshalJSON(data []byte) error {
 		if err != nil {
 			return err
 		}
-		*s = InsightsDimensions(sa)
+		dimensions := []string{}
+		for _, v := range sa {
+			if v == "none" || v == "None" {
+				continue
+			}
+			dimensions = append(dimensions, v)
+		}
+		*s = InsightsDimensions(dimensions)
 		return nil
 	}
 

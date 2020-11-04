@@ -43,9 +43,9 @@ func (m *LDAPMock) User(login string) (*models.ExternalUserInfo, ldap.ServerConf
 	return userSearchResult, userSearchConfig, userSearchError
 }
 
-//***
+// ***
 // GetUserFromLDAP tests
-//***
+// ***
 
 func getUserFromLDAPContext(t *testing.T, requestURL string) *scenarioContext {
 	t.Helper()
@@ -311,9 +311,9 @@ func TestGetUserFromLDAPApiEndpoint_WithTeamHandler(t *testing.T) {
 	assert.JSONEq(t, expected, sc.resp.Body.String())
 }
 
-//***
+// ***
 // GetLDAPStatus tests
-//***
+// ***
 
 func getLDAPStatusContext(t *testing.T) *scenarioContext {
 	t.Helper()
@@ -371,9 +371,9 @@ func TestGetLDAPStatusApiEndpoint(t *testing.T) {
 	assert.JSONEq(t, expected, sc.resp.Body.String())
 }
 
-//***
+// ***
 // PostSyncUserWithLDAP tests
-//***
+// ***
 
 func postSyncUserWithLDAPContext(t *testing.T, requestURL string) *scenarioContext {
 	t.Helper()

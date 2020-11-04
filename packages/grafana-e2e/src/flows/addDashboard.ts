@@ -6,33 +6,40 @@ import { v4 as uuidv4 } from 'uuid';
 
 export interface AddAnnotationConfig {
   dataSource: string;
+  dataSourceForm?: () => void;
   name: string;
-  sources?: string;
-  tags?: string;
 }
 
 export interface AddDashboardConfig {
   annotations: AddAnnotationConfig[];
   timeRange: TimeRangeConfig;
   title: string;
-  variables: Array<Partial<AddVariableConfig>>;
+  variables: PartialAddVariableConfig[];
 }
 
-export interface AddVariableConfig {
-  constantValue?: string;
-  dataSource?: string;
+interface AddVariableDefault {
   hide: string;
-  label?: string;
-  name: string;
-  query?: string;
-  regex?: string;
   type: string;
 }
 
-// @todo improve config input/output: https://stackoverflow.com/a/63507459/923745
-// @todo this actually returns type `Cypress.Chainable`
-export const addDashboard = (config?: Partial<AddDashboardConfig>): any => {
-  const fullConfig = {
+interface AddVariableOptional {
+  constantValue?: string;
+  dataSource?: string;
+  label?: string;
+  query?: string;
+  regex?: string;
+}
+
+interface AddVariableRequired {
+  name: string;
+}
+
+export type PartialAddVariableConfig = Partial<AddVariableDefault> & AddVariableOptional & AddVariableRequired;
+export type AddVariableConfig = AddVariableDefault & AddVariableOptional & AddVariableRequired;
+
+// @todo this actually returns type `Cypress.Chainable<AddDashboardConfig>`
+export const addDashboard = (config?: Partial<AddDashboardConfig>) => {
+  const fullConfig: AddDashboardConfig = {
     annotations: [],
     title: `e2e-${uuidv4()}`,
     variables: [],
@@ -43,7 +50,7 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>): any => {
       zone: 'Coordinated Universal Time',
       ...config?.timeRange,
     },
-  } as AddDashboardConfig;
+  };
 
   const { annotations, timeRange, title, variables } = fullConfig;
 
@@ -54,7 +61,9 @@ export const addDashboard = (config?: Partial<AddDashboardConfig>): any => {
   if (annotations.length > 0 || variables.length > 0) {
     e2e.pages.Dashboard.Toolbar.toolbarItems('Dashboard settings').click();
     addAnnotations(annotations);
-    addVariables(variables);
+
+    fullConfig.variables = addVariables(variables);
+
     e2e.components.BackButton.backArrow().click();
   }
 
@@ -101,7 +110,7 @@ const addAnnotation = (config: AddAnnotationConfig, isFirst: boolean) => {
       .click();
   }
 
-  const { dataSource, name, sources, tags } = config;
+  const { dataSource, dataSourceForm, name } = config;
 
   // @todo add to e2e-selectors and `aria-label`
   e2e()
@@ -115,20 +124,8 @@ const addAnnotation = (config: AddAnnotationConfig, isFirst: boolean) => {
     .find('input')
     .type(name);
 
-  if (sources) {
-    // @todo add to e2e-selectors and `aria-label`
-    e2e()
-      .contains('.gf-form', 'Sources')
-      .find('input')
-      .type(sources);
-  }
-
-  if (tags) {
-    // @todo add to e2e-selectors and `aria-label`
-    e2e()
-      .contains('.gf-form', 'Tags')
-      .find('input')
-      .type(tags);
+  if (dataSourceForm) {
+    dataSourceForm();
   }
 
   // @todo add to e2e-selectors and `aria-label`
@@ -137,13 +134,12 @@ const addAnnotation = (config: AddAnnotationConfig, isFirst: boolean) => {
     .click();
 };
 
-// @todo this actually returns type `Cypress.Chainable`
-const addAnnotations = (configs: AddAnnotationConfig[]): any => {
+const addAnnotations = (configs: AddAnnotationConfig[]) => {
   if (configs.length > 0) {
     e2e.pages.Dashboard.Settings.General.sectionItems('Annotations').click();
   }
 
-  return configs.map((config, i) => addAnnotation(config, i === 0));
+  return configs.forEach((config, i) => addAnnotation(config, i === 0));
 };
 
 export const VARIABLE_HIDE_LABEL = 'Label';
@@ -155,13 +151,12 @@ export const VARIABLE_TYPE_CONSTANT = 'Constant';
 export const VARIABLE_TYPE_DATASOURCE = 'Datasource';
 export const VARIABLE_TYPE_QUERY = 'Query';
 
-// @todo this actually returns type `Cypress.Chainable`
-const addVariable = (config: Partial<AddVariableConfig>, isFirst: boolean): any => {
+const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVariableConfig => {
   const fullConfig = {
     hide: VARIABLE_HIDE_NOTHING,
     type: VARIABLE_TYPE_QUERY,
     ...config,
-  } as AddVariableConfig;
+  };
 
   if (isFirst) {
     e2e.pages.Dashboard.Settings.Variables.List.addVariableCTA().click();
@@ -222,13 +217,12 @@ const addVariable = (config: Partial<AddVariableConfig>, isFirst: boolean): any 
       }
     });
 
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.addButton().click();
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
 
   return fullConfig;
 };
 
-// @todo this actually returns type `Cypress.Chainable`
-const addVariables = (configs: Array<Partial<AddVariableConfig>>): any => {
+const addVariables = (configs: PartialAddVariableConfig[]): AddVariableConfig[] => {
   if (configs.length > 0) {
     e2e.pages.Dashboard.Settings.General.sectionItems('Variables').click();
   }

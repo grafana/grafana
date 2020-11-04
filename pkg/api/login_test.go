@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func mockSetIndexViewData() {
@@ -498,6 +500,41 @@ func TestLoginOAuthRedirect(t *testing.T) {
 	assert.Equal(t, location[0], "/login/github")
 }
 
+func TestLoginInternal(t *testing.T) {
+	mockSetIndexViewData()
+	defer resetSetIndexViewData()
+
+	mockViewIndex()
+	defer resetViewIndex()
+	sc := setupScenarioContext("/login")
+	hs := &HTTPServer{
+		Cfg:     setting.NewCfg(),
+		License: &licensing.OSSLicensingService{},
+		log:     log.New("test"),
+	}
+
+	sc.defaultHandler = Wrap(func(c *models.ReqContext) {
+		c.Req.URL.RawQuery = "disableAutoLogin=true"
+		hs.LoginView(c)
+	})
+
+	setting.OAuthService = &setting.OAuther{}
+	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
+	setting.OAuthService.OAuthInfos["github"] = &setting.OAuthInfo{
+		ClientId:     "fake",
+		ClientSecret: "fakefake",
+		Enabled:      true,
+		AllowSignup:  true,
+		Name:         "github",
+	}
+	setting.OAuthAutoLogin = true
+	sc.m.Get(sc.url, sc.defaultHandler)
+	sc.fakeReqNoAssertions("GET", sc.url).exec()
+
+	// Shouldn't redirect to the OAuth login URL
+	assert.Equal(t, sc.resp.Code, 200)
+}
+
 func TestAuthProxyLoginEnableLoginTokenDisabled(t *testing.T) {
 	sc := setupAuthProxyLoginTest(false)
 
@@ -552,4 +589,112 @@ func setupAuthProxyLoginTest(enableLoginToken bool) *scenarioContext {
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
 
 	return sc
+}
+
+type loginLogTestReceiver struct {
+	cmd *models.SendLoginLogCommand
+}
+
+func (r *loginLogTestReceiver) SaveLoginLog(ctx context.Context, cmd *models.SendLoginLogCommand) error {
+	r.cmd = cmd
+	return nil
+}
+
+func TestLoginPostSendLoginLog(t *testing.T) {
+	sc := setupScenarioContext("/login")
+	hs := &HTTPServer{
+		log:              log.New("test"),
+		Cfg:              setting.NewCfg(),
+		License:          &licensing.OSSLicensingService{},
+		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+	}
+
+	sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) Response {
+		cmd := dtos.LoginCommand{
+			User:     "admin",
+			Password: "admin",
+		}
+		return hs.LoginPost(c, cmd)
+	})
+
+	testReceiver := loginLogTestReceiver{}
+	bus.AddHandlerCtx("login-log-receiver", testReceiver.SaveLoginLog)
+
+	type sendLoginLogCase struct {
+		desc       string
+		authUser   *models.User
+		authModule string
+		authErr    error
+		cmd        models.SendLoginLogCommand
+	}
+
+	testUser := &models.User{
+		Id:    42,
+		Email: "",
+	}
+
+	testCases := []sendLoginLogCase{
+		{
+			desc:    "invalid credentials",
+			authErr: login.ErrInvalidCredentials,
+			cmd: models.SendLoginLogCommand{
+				LogAction:  "login",
+				HTTPStatus: 401,
+				Error:      login.ErrInvalidCredentials,
+			},
+		},
+		{
+			desc:    "user disabled",
+			authErr: login.ErrUserDisabled,
+			cmd: models.SendLoginLogCommand{
+				LogAction:  "login",
+				HTTPStatus: 401,
+				Error:      login.ErrUserDisabled,
+			},
+		},
+		{
+			desc:       "valid Grafana user",
+			authUser:   testUser,
+			authModule: "grafana",
+			cmd: models.SendLoginLogCommand{
+				LogAction:  "login-grafana",
+				User:       testUser,
+				HTTPStatus: 200,
+			},
+		},
+		{
+			desc:       "valid LDAP user",
+			authUser:   testUser,
+			authModule: "ldap",
+			cmd: models.SendLoginLogCommand{
+				LogAction:  "login-ldap",
+				User:       testUser,
+				HTTPStatus: 200,
+			},
+		},
+	}
+
+	for _, c := range testCases {
+		t.Run(c.desc, func(t *testing.T) {
+			bus.AddHandler("grafana-auth", func(query *models.LoginUserQuery) error {
+				query.User = c.authUser
+				query.AuthModule = c.authModule
+				return c.authErr
+			})
+
+			sc.m.Post(sc.url, sc.defaultHandler)
+			sc.fakeReqNoAssertions("POST", sc.url).exec()
+
+			cmd := testReceiver.cmd
+			assert.Equal(t, c.cmd.LogAction, cmd.LogAction)
+			assert.Equal(t, "admin", cmd.LoginUsername)
+			assert.Equal(t, c.cmd.HTTPStatus, cmd.HTTPStatus)
+			assert.Equal(t, c.cmd.Error, cmd.Error)
+
+			if c.cmd.User != nil {
+				require.NotEmpty(t, cmd.User)
+				assert.Equal(t, c.cmd.User.Id, cmd.User.Id)
+			}
+		})
+	}
 }

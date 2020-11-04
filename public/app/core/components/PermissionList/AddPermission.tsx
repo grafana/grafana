@@ -1,8 +1,10 @@
 import React, { Component } from 'react';
+import { css } from 'emotion';
+import config from 'app/core/config';
 import { UserPicker } from 'app/core/components/Select/UserPicker';
 import { TeamPicker, Team } from 'app/core/components/Select/TeamPicker';
-import { LegacyForms, Icon } from '@grafana/ui';
-import { SelectableValue } from '@grafana/data';
+import { Button, Form, HorizontalGroup, Icon, Select, stylesFactory } from '@grafana/ui';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { User } from 'app/types';
 import {
   dashboardPermissionLevels,
@@ -12,7 +14,6 @@ import {
   NewDashboardAclItem,
   OrgRole,
 } from 'app/types/acl';
-const { Select } = LegacyForms;
 
 export interface Props {
   onAddPermission: (item: NewDashboardAclItem) => void;
@@ -38,8 +39,8 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     };
   }
 
-  onTypeChanged = (evt: any) => {
-    const type = evt.target.value as AclTarget;
+  onTypeChanged = (item: any) => {
+    const type = item.value as AclTarget;
 
     switch (type) {
       case AclTarget.User:
@@ -67,8 +68,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     this.setState({ permission: permission.value! });
   };
 
-  onSubmit = async (evt: React.SyntheticEvent) => {
-    evt.preventDefault();
+  onSubmit = async () => {
     await this.props.onAddPermission(this.state);
     this.setState(this.getCleanState());
   };
@@ -88,59 +88,57 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     const newItem = this.state;
     const pickerClassName = 'min-width-20';
     const isValid = this.isValid();
+    const styles = getStyles(config.theme);
+
     return (
-      <div className="gf-form-inline cta-form">
+      <div className="cta-form">
         <button className="cta-form__close btn btn-transparent" onClick={onCancel}>
           <Icon name="times" />
         </button>
-        <form name="addPermission" onSubmit={this.onSubmit}>
-          <h5>Add Permission For</h5>
-          <div className="gf-form-inline">
-            <div className="gf-form">
-              <div className="gf-form-select-wrapper">
-                <select className="gf-form-input gf-size-auto" value={newItem.type} onChange={this.onTypeChanged}>
-                  {dashboardAclTargets.map((option, idx) => {
-                    return (
-                      <option key={idx} value={option.value}>
-                        {option.text}
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
-            </div>
-
-            {newItem.type === AclTarget.User ? (
-              <div className="gf-form">
-                <UserPicker onSelected={this.onUserSelected} className={pickerClassName} />
-              </div>
-            ) : null}
-
-            {newItem.type === AclTarget.Team ? (
-              <div className="gf-form">
-                <TeamPicker onSelected={this.onTeamSelected} className={pickerClassName} />
-              </div>
-            ) : null}
-
-            <div className="gf-form">
+        <h5>Add Permission For</h5>
+        <Form maxWidth="none" onSubmit={this.onSubmit}>
+          {() => (
+            <HorizontalGroup>
               <Select
                 isSearchable={false}
+                value={this.state.type}
+                options={dashboardAclTargets}
+                onChange={this.onTypeChanged}
+              />
+
+              {newItem.type === AclTarget.User ? (
+                <UserPicker onSelected={this.onUserSelected} className={pickerClassName} />
+              ) : null}
+
+              {newItem.type === AclTarget.Team ? (
+                <TeamPicker onSelected={this.onTeamSelected} className={pickerClassName} />
+              ) : null}
+
+              <span className={styles.label}>Can</span>
+
+              <Select
+                isSearchable={false}
+                value={this.state.permission}
                 options={dashboardPermissionLevels}
                 onChange={this.onPermissionChanged}
-                className="gf-form-select-box__control--menu-right"
+                width={25}
               />
-            </div>
-
-            <div className="gf-form">
-              <button data-save-permission className="btn btn-primary" type="submit" disabled={!isValid}>
+              <Button data-save-permission type="submit" disabled={!isValid}>
                 Save
-              </button>
-            </div>
-          </div>
-        </form>
+              </Button>
+            </HorizontalGroup>
+          )}
+        </Form>
       </div>
     );
   }
 }
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  label: css`
+    color: ${theme.colors.textBlue};
+    font-weight: bold;
+  `,
+}));
 
 export default AddPermissions;

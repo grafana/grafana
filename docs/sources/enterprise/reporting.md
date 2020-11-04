@@ -21,8 +21,8 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 ## Requirements
 
-* SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../administration/configuration.md#smtp" >}}) in [Configuration]({{< relref "../administration/configuration.md" >}}) for more information.
-* The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../administration/image_rendering.md" >}}) for more information.
+- SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../administration/configuration.md#smtp" >}}) in [Configuration]({{< relref "../administration/configuration.md" >}}) for more information.
+- The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../administration/image_rendering.md" >}}) for more information.
 
 ## Create or update a report
 
@@ -30,13 +30,13 @@ Currently only Organization Admins can create reports.
 
 1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports.
 1. Enter report information. All fields are required unless otherwise indicated.
-   * **Name -** Name of the report as you want it to appear in the Reports list.
-   * **Source dashboard -** Select the dashboard to generate the report from.
-   * **Recipients -** Enter the emails of the people or teams that you want to receive the report.
-   * **Reply to -** (optional) The address that will appear in the **Reply to** field of the email. 
-   * **Message -** (optional) Message body in the email with the report.
-   * **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
-1. **Preview PDF**to make sure the report appears as you expect. Update if necessary.
+   - **Name -** Name of the report as you want it to appear in the Reports list.
+   - **Source dashboard -** Select the dashboard to generate the report from.
+   - **Recipients -** Enter the emails of the people or teams that you want to receive the report.
+   - **Reply to -** (optional) The address that will appear in the **Reply to** field of the email.
+   - **Message -** (optional) Message body in the email with the report.
+   - **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
+1. **Preview PDF** to make sure the report appears as you expect. Update if necessary.
 1. Enter scheduling information. Options vary depending on the frequency you select.
 1. Select the orientation option for generated report: **Portrait** or **Landscape**.  
 1. Select the layout option for generated report: **Simple** or **Grid**.  
@@ -66,23 +66,23 @@ All scheduling indicates when the reporting service will start rendering the das
 
 Hourly reports are generated once per hour. All fields are required.
 
-* **At minute -** The number of minutes after full hour when the report should be generated.
-* **Time zone -** Time zone to determine the offset of the full hour. Does not currently change the time in the rendered report. 
+- **At minute -** The number of minutes after full hour when the report should be generated.
+- **Time zone -** Time zone to determine the offset of the full hour. Does not currently change the time in the rendered report. 
 
 #### Daily
 
 Daily reports are generated once per day. All fields are required.
 
-* **Time -** Time the report is sent, in 24-hour format.
-* **Time zone -** Time zone for the **Time** field.
+- **Time -** Time the report is sent, in 24-hour format.
+- **Time zone -** Time zone for the **Time** field.
 
 #### Weekly
 
 Weekly reports are generated once per week. All fields are required.
 
-* **Day -** Weekday which the report should be sent on.
-* **Time -** Time the report is sent, in 24-hour format.
-* **Time zone -** Time zone for the **Time** field.
+- **Day -** Weekday which the report should be sent on.
+- **Time -** Time the report is sent, in 24-hour format.
+- **Time zone -** Time zone for the **Time** field.
 
 #### Monthly
 
@@ -90,9 +90,9 @@ Weekly reports are generated once per week. All fields are required.
 
 Monthly reports are generated once per month. All fields are required.
 
-* **Day in month -** Day of the month when the report should be sent. You can select `last` for reports that should go out on the last day of the month.
-* **Time -** Time the report is sent, in 24-hour format.
-* **Time zone -** Time zone for the **Time** field.
+- **Day in month -** Day of the month when the report should be sent. You can select `last` for reports that should go out on the last day of the month.
+- **Time -** Time the report is sent, in 24-hour format.
+- **Time zone -** Time zone for the **Time** field.
 
 #### Never
 

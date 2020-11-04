@@ -15,10 +15,10 @@ const (
 
 type profilingDiagnostics struct {
 	enabled bool
-	port    uint
+	port    uint64
 }
 
-func newProfilingDiagnostics(enabled bool, port uint) *profilingDiagnostics {
+func newProfilingDiagnostics(enabled bool, port uint64) *profilingDiagnostics {
 	return &profilingDiagnostics{
 		enabled: enabled,
 		port:    port,
@@ -41,7 +41,7 @@ func (pd *profilingDiagnostics) overrideWithEnv() error {
 		if parseErr != nil {
 			return fmt.Errorf("Failed to parse %s environment variable to unsigned integer", profilingPortEnvName)
 		}
-		pd.port = uint(port)
+		pd.port = port
 	}
 
 	return nil

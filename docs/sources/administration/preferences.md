@@ -4,7 +4,9 @@ description = "How to change your Grafana preferences"
 keywords = ["grafana", "profile", "change", "preferences"]
 type = "docs"
 [menu.docs]
-weight = 100
+identifier = "preferences"
+parent = "administration"
+weight = 200
 +++
 
 # Change your Grafana preferences
@@ -32,7 +34,7 @@ Your Grafana preferences include whether uses the dark or light theme, your home
 1. In the Preferences section, you can edit any of the following:
    - **UI Theme -** Click to set the **Dark** or **Light** to select a theme. **Default** is either the dark theme or the theme selected by your Grafana administrator.
    - **Home Dashboard -** Refer to [Set your personal home dashboard]({{< relref "change-home-dashboard.md#set-your-personal-home-dashboard" >}}) for more information.
-   - **Timezone -** Click to select an option in the **Timezone** list. Refer to [Time range controls]({{< relref "../dashboards/time-range-controls.md" >}}) for more information about Grafana time settings.
+   - **Timezone -** Click to select an option in the **Timezone** list. **Default** is either the browser local timezone or the timezone selected by your Grafana administrator. Refer to [Time range controls]({{< relref "../dashboards/time-range-controls.md" >}}) for more information about Grafana time settings.
 1. Click **Save**.
 
 ## View your assigned organizations

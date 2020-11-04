@@ -10,6 +10,7 @@
       .graph-legend {
         flex: 0 1 10px;
         max-height: 100%;
+        overflow-y: initial;
       }
 
       .graph-legend-series {
@@ -50,6 +51,7 @@
   max-height: 35%;
   margin: 0;
   text-align: center;
+  overflow-y: auto;
   padding-top: 6px;
   position: relative;
 

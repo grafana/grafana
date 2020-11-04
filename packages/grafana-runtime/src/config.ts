@@ -9,6 +9,8 @@ import {
   GrafanaThemeType,
   LicenseInfo,
   PanelPluginMeta,
+  systemDateFormats,
+  SystemDateFormatSettings,
 } from '@grafana/data';
 
 export class GrafanaBootConfig implements GrafanaConfig {
@@ -34,6 +36,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   authProxyEnabled = false;
   exploreEnabled = false;
   ldapEnabled = false;
+  sigV4AuthEnabled = false;
   samlEnabled = false;
   autoAssignOrg = true;
   verifyEmailEnabled = false;
@@ -52,13 +55,13 @@ export class GrafanaBootConfig implements GrafanaConfig {
     live: false,
     expressions: false,
     meta: false,
-    datasourceInsights: false,
-    reportGrid: false,
-    standaloneAlerts: false,
+    ngalert: false,
+    traceToLogs: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
   http2Enabled = false;
+  dateFormats?: SystemDateFormatSettings;
 
   constructor(options: GrafanaBootConfig) {
     this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);
@@ -84,6 +87,10 @@ export class GrafanaBootConfig implements GrafanaConfig {
     };
 
     merge(this, defaults, options);
+
+    if (this.dateFormats) {
+      systemDateFormats.update(this.dateFormats);
+    }
   }
 }
 

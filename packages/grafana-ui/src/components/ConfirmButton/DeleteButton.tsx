@@ -4,9 +4,12 @@ import { ComponentSize } from '../../types/size';
 import { Button } from '../Button';
 
 export interface Props {
-  size?: ComponentSize;
-  disabled?: boolean;
+  /** Confirm action callback */
   onConfirm(): void;
+  /** Button size */
+  size?: ComponentSize;
+  /** Disable button click action */
+  disabled?: boolean;
 }
 
 export const DeleteButton: FC<Props> = ({ size, disabled, onConfirm }) => {

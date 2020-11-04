@@ -19,8 +19,6 @@ import { colors, JsonExplorer } from '@grafana/ui/';
 
 import { infoPopover } from './components/info_popover';
 import { arrayJoin } from './directives/array_join';
-import { liveSrv } from './live/live_srv';
-import { Emitter } from './utils/emitter';
 import { switchDirective } from './components/switch';
 import { dashboardSelector } from './components/dashboard_selector';
 import { queryPartEditorDirective } from './components/query_part/query_part_editor';
@@ -46,10 +44,8 @@ export {
   registerAngularDirectives,
   arrayJoin,
   coreModule,
-  liveSrv,
   switchDirective,
   infoPopover,
-  Emitter,
   appEvents,
   dashboardSelector,
   queryPartEditorDirective,

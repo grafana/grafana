@@ -190,11 +190,11 @@ func validateDashboardRefreshInterval(dash *models.Dashboard) error {
 		return nil
 	}
 
-	minRefreshInterval, err := gtime.ParseInterval(setting.MinRefreshInterval)
+	minRefreshInterval, err := gtime.ParseDuration(setting.MinRefreshInterval)
 	if err != nil {
 		return err
 	}
-	d, err := gtime.ParseInterval(refresh)
+	d, err := gtime.ParseDuration(refresh)
 	if err != nil {
 		return err
 	}
@@ -244,7 +244,7 @@ func (dr *dashboardServiceImpl) SaveProvisionedDashboard(dto *SaveDashboardDTO, 
 		return nil, err
 	}
 
-	//alerts
+	// alerts
 	err = dr.updateAlerting(cmd, dto)
 	if err != nil {
 		return nil, err

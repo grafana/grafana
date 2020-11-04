@@ -1,15 +1,31 @@
 import '../datasource';
 import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
 import * as redux from 'app/store/store';
-import { DataFrame, DataQueryResponse, DataSourceInstanceSettings, dateMath, getFrameDisplayName } from '@grafana/data';
+import {
+  DataFrame,
+  DataQueryErrorType,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+  dateMath,
+  getFrameDisplayName,
+} from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CloudWatchLogsQueryStatus, CloudWatchMetricsQuery, CloudWatchQuery, LogAction } from '../types';
+import {
+  CloudWatchLogsQuery,
+  CloudWatchLogsQueryStatus,
+  CloudWatchMetricsQuery,
+  CloudWatchQuery,
+  LogAction,
+} from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
 import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependencies';
-import { of } from 'rxjs';
-import { CustomVariableModel, VariableHide } from '../../../../features/variables/types';
+import { interval, of } from 'rxjs';
+import { CustomVariableModel, initialVariableModelState, VariableHide } from '../../../../features/variables/types';
+import { TimeSrvStub } from '../../../../../test/specs/helpers';
+
+import * as rxjsUtils from '../utils/rxjs/increasingInterval';
 
 jest.mock('rxjs/operators', () => {
   const operators = jest.requireActual('rxjs/operators');
@@ -113,6 +129,10 @@ describe('CloudWatchDatasource', () => {
   });
 
   describe('When performing CloudWatch logs query', () => {
+    beforeEach(() => {
+      jest.spyOn(rxjsUtils, 'increasingInterval').mockImplementation(() => interval(100));
+    });
+
     it('should add data links to response', () => {
       const mockResponse: DataQueryResponse = {
         data: [
@@ -164,13 +184,26 @@ describe('CloudWatchDatasource', () => {
       });
     });
 
-    it('should stop querying when no more data retrieved past max attempts', async () => {
-      const fakeFrames = genMockFrames(10);
-      for (let i = 7; i < fakeFrames.length; i++) {
+    it('should stop querying when no more data received a number of times in a row', async () => {
+      const fakeFrames = genMockFrames(20);
+      const initialRecordsMatched = fakeFrames[0].meta!.stats!.find(stat => stat.displayName === 'Records matched')!
+        .value!;
+      for (let i = 1; i < 4; i++) {
         fakeFrames[i].meta!.stats = [
           {
             displayName: 'Records matched',
-            value: fakeFrames[6].meta!.stats?.find(stat => stat.displayName === 'Records matched')?.value!,
+            value: initialRecordsMatched,
+          },
+        ];
+      }
+
+      const finalRecordsMatched = fakeFrames[9].meta!.stats!.find(stat => stat.displayName === 'Records matched')!
+        .value!;
+      for (let i = 10; i < fakeFrames.length; i++) {
+        fakeFrames[i].meta!.stats = [
+          {
+            displayName: 'Records matched',
+            value: finalRecordsMatched,
           },
         ];
       }
@@ -190,22 +223,26 @@ describe('CloudWatchDatasource', () => {
 
       const expectedData = [
         {
-          ...fakeFrames[MAX_ATTEMPTS - 1],
+          ...fakeFrames[14],
           meta: {
             custom: {
-              ...fakeFrames[MAX_ATTEMPTS - 1].meta!.custom,
-              Status: 'Complete',
+              Status: 'Cancelled',
             },
-            stats: fakeFrames[MAX_ATTEMPTS - 1].meta!.stats,
+            stats: fakeFrames[14].meta!.stats,
           },
         },
       ];
+
       expect(myResponse).toEqual({
         data: expectedData,
         key: 'test-key',
         state: 'Done',
+        error: {
+          type: DataQueryErrorType.Timeout,
+          message: `error: query timed out after ${MAX_ATTEMPTS} attempts`,
+        },
       });
-      expect(i).toBe(MAX_ATTEMPTS);
+      expect(i).toBe(15);
     });
 
     it('should continue querying as long as new data is being received', async () => {
@@ -339,6 +376,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should generate the correct query with interval variable', async () => {
       const period: CustomVariableModel = {
+        ...initialVariableModelState,
         id: 'period',
         name: 'period',
         index: 0,
@@ -349,9 +387,6 @@ describe('CloudWatchDatasource', () => {
         query: '',
         hide: VariableHide.dontHide,
         type: 'custom',
-        label: null,
-        skipUrlSync: false,
-        global: false,
       };
       templateSrv.init([period]);
 
@@ -647,6 +682,69 @@ describe('CloudWatchDatasource', () => {
     });
   });
 
+  describe('When interpolating variables', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+
+      ctx.mockedTemplateSrv = {
+        replace: jest.fn(),
+      };
+
+      ctx.ds = new CloudWatchDatasource(
+        instanceSettings,
+        ctx.mockedTemplateSrv,
+        (new TimeSrvStub() as unknown) as TimeSrv
+      );
+    });
+
+    it('should return an empty array if no queries are provided', () => {
+      expect(ctx.ds.interpolateVariablesInQueries([], {})).toHaveLength(0);
+    });
+
+    it('should replace correct variables in CloudWatchLogsQuery', () => {
+      const variableName = 'someVar';
+      const logQuery: CloudWatchLogsQuery = {
+        id: 'someId',
+        refId: 'someRefId',
+        queryMode: 'Logs',
+        expression: `$${variableName}`,
+        region: `$${variableName}`,
+      };
+
+      ctx.ds.interpolateVariablesInQueries([logQuery], {});
+
+      // We interpolate `expression` and `region` in CloudWatchLogsQuery
+      expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledWith(`$${variableName}`, {});
+      expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledTimes(2);
+    });
+
+    it('should replace correct variables in CloudWatchMetricsQuery', () => {
+      const variableName = 'someVar';
+      const logQuery: CloudWatchMetricsQuery = {
+        id: 'someId',
+        refId: 'someRefId',
+        queryMode: 'Metrics',
+        expression: `$${variableName}`,
+        region: `$${variableName}`,
+        period: `$${variableName}`,
+        alias: `$${variableName}`,
+        metricName: `$${variableName}`,
+        namespace: `$${variableName}`,
+        dimensions: {
+          [`$${variableName}`]: `$${variableName}`,
+        },
+        matchExact: false,
+        statistics: [],
+      };
+
+      ctx.ds.interpolateVariablesInQueries([logQuery], {});
+
+      // We interpolate `expression`, `region`, `period`, `alias`, `metricName`, `nameSpace` and `dimensions` in CloudWatchMetricsQuery
+      expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledWith(`$${variableName}`, {});
+      expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledTimes(8);
+    });
+  });
+
   describe('When performing CloudWatch query for extended statistics', () => {
     const query = {
       range: defaultTimeRange,
@@ -721,6 +819,7 @@ describe('CloudWatchDatasource', () => {
     let requestParams: { queries: CloudWatchMetricsQuery[] };
     beforeEach(() => {
       const var1: CustomVariableModel = {
+        ...initialVariableModelState,
         id: 'var1',
         name: 'var1',
         index: 0,
@@ -731,11 +830,9 @@ describe('CloudWatchDatasource', () => {
         query: '',
         hide: VariableHide.dontHide,
         type: 'custom',
-        label: null,
-        skipUrlSync: false,
-        global: false,
       };
       const var2: CustomVariableModel = {
+        ...initialVariableModelState,
         id: 'var2',
         name: 'var2',
         index: 1,
@@ -746,11 +843,9 @@ describe('CloudWatchDatasource', () => {
         query: '',
         hide: VariableHide.dontHide,
         type: 'custom',
-        label: null,
-        skipUrlSync: false,
-        global: false,
       };
       const var3: CustomVariableModel = {
+        ...initialVariableModelState,
         id: 'var3',
         name: 'var3',
         index: 2,
@@ -765,11 +860,9 @@ describe('CloudWatchDatasource', () => {
         query: '',
         hide: VariableHide.dontHide,
         type: 'custom',
-        label: null,
-        skipUrlSync: false,
-        global: false,
       };
       const var4: CustomVariableModel = {
+        ...initialVariableModelState,
         id: 'var4',
         name: 'var4',
         index: 3,
@@ -784,9 +877,6 @@ describe('CloudWatchDatasource', () => {
         query: '',
         hide: VariableHide.dontHide,
         type: 'custom',
-        label: null,
-        skipUrlSync: false,
-        global: false,
       };
       const variables = [var1, var2, var3, var4];
       const state = convertToStoreState(variables);
@@ -1113,6 +1203,7 @@ function genMockFrames(numResponses: number): DataFrame[] {
           },
         ],
       },
+      refId: 'A',
       length: 0,
     });
   }

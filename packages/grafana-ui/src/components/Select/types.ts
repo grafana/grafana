@@ -20,7 +20,7 @@ export interface SelectCommonProps<T> {
   filterOption?: (option: SelectableValue, searchQuery: string) => boolean;
   /**   Function for formatting the text that is displayed when creating a new value*/
   formatCreateLabel?: (input: string) => string;
-  getOptionLabel?: (item: SelectableValue<T>) => string;
+  getOptionLabel?: (item: SelectableValue<T>) => React.ReactNode;
   getOptionValue?: (item: SelectableValue<T>) => string;
   inputValue?: string;
   invalid?: boolean;
@@ -32,6 +32,7 @@ export interface SelectCommonProps<T> {
   isSearchable?: boolean;
   showAllSelectedWhenOpen?: boolean;
   maxMenuHeight?: number;
+  minMenuHeight?: number;
   maxVisibleValues?: number;
   menuPlacement?: 'auto' | 'bottom' | 'top';
   menuPosition?: 'fixed' | 'absolute';

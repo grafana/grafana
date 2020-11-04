@@ -10,6 +10,7 @@ import { navigateToExplore } from '../../explore/state/actions';
 import { getExploreUrl } from '../../../core/utils/explore';
 import { getTimeSrv } from '../services/TimeSrv';
 import { PanelCtrl } from '../../panel/panel_ctrl';
+import config from 'app/core/config';
 
 export function getPanelMenu(
   dashboard: DashboardModel,
@@ -76,7 +77,8 @@ export function getPanelMenu(
 
   const onNavigateToExplore = (event: React.MouseEvent<any>) => {
     event.preventDefault();
-    const openInNewWindow = event.ctrlKey || event.metaKey ? (url: string) => window.open(url) : undefined;
+    const openInNewWindow =
+      event.ctrlKey || event.metaKey ? (url: string) => window.open(`${config.appSubUrl}${url}`) : undefined;
     store.dispatch(navigateToExplore(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow }) as any);
   };
 

@@ -3,8 +3,10 @@
   children:
     - name: What is Grafana?
       link: /getting-started/what-is-grafana/
-    - name: Getting started
+    - name: With Grafana
       link: /getting-started/getting-started/
+    - name: With Grafana and Prometheus
+      link: /getting-started/getting-started-prometheus/
     - name: Intro to time series
       link: /getting-started/timeseries/
     - name: Time series dimensions
@@ -29,6 +31,8 @@
 - name: Installation
   link: /installation/
   children:
+    - name: Installation
+      link: /installation/installation/
     - name: Requirements
       link: /installation/requirements/
     - name: Install on Ubuntu/Debian
@@ -46,21 +50,27 @@
 - name: Administration
   link: /administration/
   children:
+    - name: Administration tasks
+      link: /administration/
     - name: Change password
       link: /administration/change-your-password/
     - name: Change preferences
       link: /administration/preferences/
     - name: Configuration
       link: /administration/configuration/
+    - name: View server settings
+      link: /administration/view-server-settings/
     - name: Configure Docker image
-      link: /installation/configure-docker/
+      link: /administration/configure-docker/
     - name: Security
-      link: /installation/security/
+      link: /administration/security/
     - name: Authentication
       link: /auth/
       children:
         - link: /auth/overview/
           name: Overview
+        - link: /auth/grafana/
+          name: Grafana Authentication
         - link: /auth/auth-proxy/
           name: Auth Proxy
         - link: /auth/ldap/
@@ -86,7 +96,7 @@
     - name: Permissions
       link: /permissions/
       children:
-        - link: /permissions/overview/
+        - link: /permissions/
           name: Overview
         - link: /permissions/organization_roles/
           name: Organization Roles
@@ -100,10 +110,12 @@
       link: /administration/cli/
     - name: Internal metrics
       link: /administration/metrics/
+    - name: View server stats
+      link: /administration/view-server-stats/
     - name: Jaeger instrumentation
       link: /administration/jaeger-instrumentation/
     - name: Set up Grafana for high availability
-      link: /tutorials/ha_setup/
+      link: /administration/set-up-for-high-availability/
     - name: Change home dashboard
       link: /administration/change-home-dashboard/
 - name: Manage users
@@ -120,39 +132,41 @@
     - link: /manage-users/add-or-remove-user-from-team/
       name: Add or remove user from team
 - name: Data sources
-  link: /features/datasources/
+  link: /datasources/
   children:
-    - link: /features/datasources/add-a-data-source/
+    - link: /datasources/add-a-data-source/
       name: Add data source
-    - link: /features/datasources/cloudwatch/
+    - link: /datasources/cloudwatch/
       name: AWS Cloudwatch
-    - link: /features/datasources/azuremonitor/
+    - link: /datasources/azuremonitor/
       name: Azure Monitor
-    - link: /features/datasources/elasticsearch/
+    - link: /datasources/elasticsearch/
       name: Elasticsearch
-    - link: /features/datasources/cloudmonitoring/
+    - link: /datasources/cloudmonitoring/
       name: Google Cloud Monitoring
-    - link: /features/datasources/graphite/
+    - link: /datasources/graphite/
       name: Graphite
-    - link: /features/datasources/influxdb/
+    - link: /datasources/influxdb/
       name: InfluxDB
-    - link: /features/datasources/jaeger/
+    - link: /datasources/jaeger/
       name: Jaeger
-    - link: /features/datasources/loki/
+    - link: /datasources/loki/
       name: Loki
-    - link: /features/datasources/mssql/
+    - link: /datasources/mssql/
       name: Microsoft SQL Server
-    - link: /features/datasources/mysql/
+    - link: /datasources/mysql/
       name: MySQL
-    - link: /features/datasources/opentsdb/
+    - link: /datasources/opentsdb/
       name: OpenTSDB
-    - link: /features/datasources/postgres/
+    - link: /datasources/postgres/
       name: PostgreSQL
-    - link: /features/datasources/prometheus/
+    - link: /datasources/prometheus/
       name: Prometheus
-    - link: /features/datasources/testdata/
+    - link: /datasources/tempo/
+      name: Tempo
+    - link: /datasources/testdata/
       name: TestData DB
-    - link: /features/datasources/zipkin/
+    - link: /datasources/zipkin/
       name: Zipkin
 - name: Panels
   link: /panels/
@@ -163,10 +177,28 @@
       name: Add panel
     - link: /panels/queries/
       name: Queries
+    - link: /panels/share-query-results/
+      name: Share query results
     - link: /panels/transformations/
       name: Transformations
-    - link: /panels/field-configuration-options/
-      name: Field config options
+      children:
+        - link: /panels/transformations/
+          name: Overview
+        - link: /panels/transformations/apply-transformations/
+          name: Apply transformations
+        - link: /panels/transformations/types-options/
+          name: Transformation types and options
+    - link: /panels/field-options/
+      name: Field options and overrides
+      children:
+        - link: /panels/field-options/
+          name: Overview
+        - link: /panels/field-options/configure-all-fields/
+          name: Configure all fields
+        - link: /panels/field-options/configure-specific-fields/
+          name: Configure specific fields
+        - link: /panels/field-options/standard-field-options/
+          name: Standard field options
     - link: /panels/panel-editor/
       name: Panel editor
     - name: Visualizations
@@ -192,6 +224,13 @@
           name: Stat
         - link: /panels/visualizations/table-panel/
           name: Table
+          children:
+            - name: Overview
+              link: /panels/visualizations/table/
+            - link: /panels/visualizations/table/table-field-options/
+              name: Table field options
+            - link: /panels/visualizations/table/filter-table-columns/
+              name: Filter table columns
         - link: /panels/visualizations/text-panel/
           name: Text
     - link: /panels/thresholds/
@@ -201,9 +240,9 @@
     - link: /panels/calculations-list/
       name: Calculations list
 - name: Dashboards
-  link: /features/dashboard/
+  link: /dashboards/
   children:
-    - link: /features/dashboard/dashboards/
+    - link: /dashboards/
       name: Overview
     - link: /dashboards/annotations/
       name: Annotations
@@ -213,26 +252,26 @@
       name: Playlist
     - link: /dashboards/search/
       name: Search
-    - link: /reference/share_dashboard/
-      name: Sharing a dashboard
-    - link: /reference/share_panel/
-      name: Sharing a panel
+    - link: /dashboards/share-dashboard/
+      name: Share dashboard
+    - link: /dashboards/share-panel/
+      name: Share a panel
     - link: /dashboards/time-range-controls/
       name: Time range controls
-    - link: /reference/export_import/
+    - link: /dashboards/export-import/
       name: Export and import
     - link: /dashboards/dashboard_history/
       name: Dashboard version history
-    - name: Keyboard Shortcuts
-      link: /features/shortcuts/
+    - name: Keyboard shortcuts
+      link: /dashboards/shortcuts/
     - name: Reporting
-      link: /features/reporting/
-    - link: /reference/dashboard/
-      name: JSON Model
-    - link: /reference/scripting/
+      link: /dashboards/reporting/
+    - link: /dashboards/json-model/
+      name: JSON model
+    - link: /dashboards/scripted-dashboards/
       name: Scripted dashboards
 - name: Explore
-  link: /features/explore/
+  link: /explore/
 - name: Alerting
   link: /alerting/
   children:
@@ -266,8 +305,8 @@
 - name: Templates and variables
   link: /variables/
   children:
-    - link: /variables/templates-and-variables/
-      name: Overview
+    - link: /variables/syntax/
+      name: Variables syntax
     - link: /variables/variable-examples/
       name: Variable examples
     - name: Variable types
@@ -306,62 +345,70 @@
 - name: What's new in Grafana
   link: /whatsnew/
   children:
+    - name: Version 7.3
+      link: /whatsnew/whats-new-in-v7-3/
+    - name: Version 7.2
+      link: /whatsnew/whats-new-in-v7-2/
     - name: Version 7.1
-      link: /guides/whats-new-in-v7-1/
+      link: /whatsnew/whats-new-in-v7-1/
     - name: Version 7.0
-      link: /guides/whats-new-in-v7-0/
+      link: /whatsnew/whats-new-in-v7-0/
     - name: Version 6.7
-      link: /guides/whats-new-in-v6-7/
+      link: /whatsnew/whats-new-in-v6-7/
     - name: Version 6.6
-      link: /guides/whats-new-in-v6-6/
+      link: /whatsnew/whats-new-in-v6-6/
     - name: Version 6.5
-      link: /guides/whats-new-in-v6-5/
+      link: /whatsnew/whats-new-in-v6-5/
     - name: Version 6.4
-      link: /guides/whats-new-in-v6-4/
+      link: /whatsnew/whats-new-in-v6-4/
     - name: Version 6.3
-      link: /guides/whats-new-in-v6-3/
+      link: /whatsnew/whats-new-in-v6-3/
     - name: Version 6.2
-      link: /guides/whats-new-in-v6-2/
+      link: /whatsnew/whats-new-in-v6-2/
     - name: Version 6.1
-      link: /guides/whats-new-in-v6-1/
+      link: /whatsnew/whats-new-in-v6-1/
     - name: Version 6.0
-      link: /guides/whats-new-in-v6-0/
+      link: /whatsnew/whats-new-in-v6-0/
     - name: Old versions
       link: /whatsnew/
       children:
         - name: Version 5.4
-          link: /guides/whats-new-in-v5-4/
+          link: /whatsnew/whats-new-in-v5-4/
         - name: Version 5.3
-          link: /guides/whats-new-in-v5-3/
+          link: /whatsnew/whats-new-in-v5-3/
         - name: Version 5.2
-          link: /guides/whats-new-in-v5-2/
+          link: /whatsnew/whats-new-in-v5-2/
         - name: Version 5.1
-          link: /guides/whats-new-in-v5-1/
+          link: /whatsnew/whats-new-in-v5-1/
         - name: Version 5.0
-          link: /guides/whats-new-in-v5/
+          link: /whatsnew/whats-new-in-v5/
         - name: Version 4.6
-          link: /guides/whats-new-in-v4-6/
+          link: /whatsnew/whats-new-in-v4-6/
         - name: Version 4.5
-          link: /guides/whats-new-in-v4-5/
+          link: /whatsnew/whats-new-in-v4-5/
         - name: Version 4.4
-          link: /guides/whats-new-in-v4-4/
+          link: /whatsnew/whats-new-in-v4-4/
         - name: Version 4.3
-          link: /guides/whats-new-in-v4-3/
+          link: /whatsnew/whats-new-in-v4-3/
         - name: Version 4.2
-          link: /guides/whats-new-in-v4-2/
+          link: /whatsnew/whats-new-in-v4-2/
         - name: Version 4.1
-          link: /guides/whats-new-in-v4-1/
+          link: /whatsnew/whats-new-in-v4-1/
         - name: Version 4.0
-          link: /guides/whats-new-in-v4/
+          link: /whatsnew/whats-new-in-v4/
         - name: Version 3.1
-          link: /guides/whats-new-in-v3-1/
+          link: /whatsnew/whats-new-in-v3-1/
         - name: Version 3.0
-          link: /guides/whats-new-in-v3/
+          link: /whatsnew/whats-new-in-v3/
 - name: Grafana Enterprise
   link: /enterprise/
   children:
     - name: Overview
       link: /enterprise/
+    - name: Activate license
+      link: /enterprise/activate-license/
+    - name: Auditing
+      link: /enterprise/auditing/
     - name: Configuration
       link: /enterprise/enterprise-configuration/
     - name: Data source permissions
@@ -399,7 +446,7 @@
     - name: API Authentication
       link: /http_api/auth/
     - name: Create API Tokens and Dashboards for a Specific Organization
-      link: /tutorials/api_org_token_howto/
+      link: /http_api/create-api-tokens-for-org/
     - name: cURL examples
       link: /http_api/curl-examples/
     - name: Admin API
@@ -464,6 +511,8 @@
           link: /developers/plugins/metadata/
         - name: Data frames
           link: /developers/plugins/data-frames/
+        - name: Working with data frames
+          link: /developers/plugins/working-with-data-frames/
         - name: Add support for variables
           link: /developers/plugins/add-support-for-variables/
         - name: Add support for annotations
@@ -516,5 +565,3 @@
       link: /developers/contribute/
     - name: Contributor License Agreement (CLA)
       link: /developers/cla/
-- name: Docs Archive
-  link: /archive/

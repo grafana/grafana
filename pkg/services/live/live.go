@@ -1,13 +1,19 @@
 package live
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/centrifugal/centrifuge"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/live/features"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 )
 
 var (
@@ -15,14 +21,52 @@ var (
 	loggerCF = log.New("live.centrifuge")
 )
 
-// GrafanaLive pretends to be the server
-type GrafanaLive struct {
-	node    *centrifuge.Node
-	Handler interface{} // handler func
+func init() {
+	registry.RegisterService(&GrafanaLive{
+		channels:   make(map[string]models.ChannelHandler),
+		channelsMu: sync.RWMutex{},
+		GrafanaScope: CoreGrafanaScope{
+			Features: make(map[string]models.ChannelHandlerFactory),
+		},
+	})
 }
 
-// InitalizeBroker initializes the broker and starts listening for requests.
-func InitalizeBroker() (*GrafanaLive, error) {
+// CoreGrafanaScope list of core features
+type CoreGrafanaScope struct {
+	Features map[string]models.ChannelHandlerFactory
+
+	// The generic service to advertise dashboard changes
+	Dashboards models.DashboardActivityChannel
+}
+
+// GrafanaLive pretends to be the server
+type GrafanaLive struct {
+	Cfg           *setting.Cfg            `inject:""`
+	RouteRegister routing.RouteRegister   `inject:""`
+	LogsService   *cloudwatch.LogsService `inject:""`
+	node          *centrifuge.Node
+
+	// The websocket handler
+	WebsocketHandler interface{}
+
+	// Full channel handler
+	channels   map[string]models.ChannelHandler
+	channelsMu sync.RWMutex
+
+	// The core internal features
+	GrafanaScope CoreGrafanaScope
+}
+
+// Init initializes the instance.
+// Required to implement the registry.Service interface.
+func (g *GrafanaLive) Init() error {
+	logger.Debug("GrafanaLive initing")
+
+	if !g.IsEnabled() {
+		logger.Debug("GrafanaLive feature not enabled, skipping initialization")
+		return nil
+	}
+
 	// We use default config here as starting point. Default config contains
 	// reasonable values for available options.
 	cfg := centrifuge.DefaultConfig
@@ -30,18 +74,42 @@ func InitalizeBroker() (*GrafanaLive, error) {
 	// cfg.LogLevel = centrifuge.LogLevelDebug
 	cfg.LogHandler = handleLog
 
+	// This function is called fast and often -- it must be sychronized
+	cfg.ChannelOptionsFunc = func(channel string) (centrifuge.ChannelOptions, bool, error) {
+		handler, err := g.GetChannelHandler(channel)
+		if err != nil {
+			logger.Error("ChannelOptionsFunc", "channel", channel, "err", err)
+			if err.Error() == "404" { // ????
+				return centrifuge.ChannelOptions{}, false, nil
+			}
+			return centrifuge.ChannelOptions{}, true, err
+		}
+		opts := handler.GetChannelOptions(channel)
+		return opts, true, nil
+	}
+
 	// Node is the core object in Centrifuge library responsible for many useful
 	// things. For example Node allows to publish messages to channels from server
 	// side with its Publish method, but in this example we will publish messages
 	// only from client side.
 	node, err := centrifuge.New(cfg)
 	if err != nil {
-		return nil, err
+		return err
+	}
+	g.node = node
+
+	// Initialize the main features
+	dash := &features.DashboardHandler{
+		Publisher: g.Publish,
 	}
 
-	b := &GrafanaLive{
-		node: node,
+	g.GrafanaScope.Dashboards = dash
+	g.GrafanaScope.Features["dashboard"] = dash
+	g.GrafanaScope.Features["testdata"] = &features.TestDataSupplier{
+		Publisher: g.Publish,
 	}
+	g.GrafanaScope.Features["broadcast"] = &features.BroadcastRunner{}
+	g.GrafanaScope.Features["measurements"] = &features.MeasurementsRunner{}
 
 	// Set ConnectHandler called when client successfully connected to Node. Your code
 	// inside handler must be synchronized since it will be called concurrently from
@@ -56,57 +124,53 @@ func InitalizeBroker() (*GrafanaLive, error) {
 		logger.Debug("client connected", "transport", transportName, "encoding", transportEncoding)
 	})
 
+	// Set Disconnect handler to react on client disconnect events.
+	node.OnDisconnect(func(c *centrifuge.Client, e centrifuge.DisconnectEvent) {
+		logger.Info("client disconnected")
+	})
+
 	// Set SubscribeHandler to react on every channel subscription attempt
 	// initiated by client. Here you can theoretically return an error or
 	// disconnect client from server if needed. But now we just accept
 	// all subscriptions to all channels. In real life you may use a more
 	// complex permission check here.
 	node.OnSubscribe(func(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
-		info := &channelInfo{
-			Description: fmt.Sprintf("channel: %s", e.Channel),
-		}
-		bytes, err := json.Marshal(&info)
-		if err != nil {
-			return centrifuge.SubscribeReply{}, err
-		}
-		logger.Debug("client subscribes on channel", "channel", e.Channel, "info", string(bytes))
+		reply := centrifuge.SubscribeReply{}
 
-		return centrifuge.SubscribeReply{
-			ExpireAt:    0, // does not expire
-			ChannelInfo: bytes,
-		}, nil
+		handler, err := g.GetChannelHandler(e.Channel)
+		if err != nil {
+			return reply, err
+		}
+
+		err = handler.OnSubscribe(c, e)
+		if err != nil {
+			return reply, err
+		}
+
+		return reply, nil
 	})
 
 	node.OnUnsubscribe(func(c *centrifuge.Client, e centrifuge.UnsubscribeEvent) {
-		s, err := node.PresenceStats(e.Channel)
-		if err != nil {
-			logger.Warn("unable to get presence stats", "channel", e.Channel, "error", err)
-		}
-		logger.Debug("unsubscribe from channel", "channel", e.Channel, "clients", s.NumClients, "users", s.NumUsers)
+		logger.Debug("unsubscribe from channel", "channel", e.Channel, "user", c.UserID())
 	})
 
-	// By default, clients can not publish messages into channels. By setting
-	// PublishHandler we tell Centrifuge that publish from client side is possible.
-	// Now each time client calls publish method this handler will be called and
-	// you have a possibility to validate publication request before message will
-	// be published into channel and reach active subscribers. In our simple chat
-	// app we allow everyone to publish into any channel.
+	// Called when a client writes to the websocket channel.
+	// In general, we should prefer writing to the HTTP API, but this
+	// allows some simple prototypes to work quickly
 	node.OnPublish(func(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
-		// logger.Debug("client publishes into channel", "channel", e.Channel, "body", string(e.Data))
+		reply := centrifuge.PublishReply{}
+		handler, err := g.GetChannelHandler(e.Channel)
+		if err != nil {
+			return reply, err
+		}
 
-		// For now, broadcast any messages to everyone
-		_, err := node.Publish(e.Channel, e.Data)
-		return centrifuge.PublishReply{}, err // returns an error if it could not publish
-	})
-
-	// Set Disconnect handler to react on client disconnect events.
-	node.OnDisconnect(func(c *centrifuge.Client, e centrifuge.DisconnectEvent) {
-		logger.Info("client disconnected")
+		err = handler.AllowBroadcast(c, e)
+		return centrifuge.PublishReply{}, err
 	})
 
 	// Run node. This method does not block.
 	if err := node.Run(); err != nil {
-		return nil, err
+		return err
 	}
 
 	// SockJS will find the best protocol possible for the browser
@@ -123,27 +187,23 @@ func InitalizeBroker() (*GrafanaLive, error) {
 		WriteBufferSize: 1024,
 	})
 
-	b.Handler = func(ctx *models.ReqContext) {
-		// Put authentication Credentials into request Context. Since we don't
-		// have any session backend here we simply set user ID as empty string.
-		// Users with empty ID called anonymous users, in real app you should
-		// decide whether anonymous users allowed to connect to your server
-		// or not. There is also another way to set Credentials - returning them
-		// from ConnectingHandler which is called after client sent first command
-		// to server called Connect. See _examples folder in repo to find real-life
-		// auth samples (OAuth2, Gin sessions, JWT etc).
+	g.WebsocketHandler = func(ctx *models.ReqContext) {
+		user := ctx.SignedInUser
+		if user == nil {
+			ctx.Resp.WriteHeader(401)
+			return
+		}
+
 		cred := &centrifuge.Credentials{
-			UserID: "",
+			UserID: fmt.Sprintf("%d", user.UserId),
 		}
 		newCtx := centrifuge.SetCredentials(ctx.Req.Context(), cred)
-
-		path := ctx.Req.URL.Path
-		logger.Debug("Handle", "path", path)
 
 		r := ctx.Req.Request
 		r = r.WithContext(newCtx) // Set a user ID
 
 		// Check if this is a direct websocket connection
+		path := ctx.Req.URL.Path
 		if strings.Contains(path, "live/ws") {
 			wsHandler.ServeHTTP(ctx.Resp, r)
 			return
@@ -157,16 +217,96 @@ func InitalizeBroker() (*GrafanaLive, error) {
 		// Unknown path
 		ctx.Resp.WriteHeader(404)
 	}
-	return b, nil
+
+	g.RouteRegister.Any("/live/*", g.WebsocketHandler)
+
+	return nil
 }
 
-// Publish sends the data to the channel
-func (b *GrafanaLive) Publish(channel string, data []byte) bool {
-	_, err := b.node.Publish(channel, data)
-	if err != nil {
-		logger.Warn("error writing to channel", "channel", channel, "err", err)
+// GetChannelHandler gives threadsafe access to the channel
+func (g *GrafanaLive) GetChannelHandler(channel string) (models.ChannelHandler, error) {
+	g.channelsMu.RLock()
+	c, ok := g.channels[channel]
+	g.channelsMu.RUnlock() // defer? but then you can't lock further down
+	if ok {
+		return c, nil
 	}
-	return err == nil
+
+	// Parse the identifier ${scope}/${namespace}/${path}
+	addr := ParseChannelAddress(channel)
+	if !addr.IsValid() {
+		return nil, fmt.Errorf("invalid channel: %q", channel)
+	}
+	logger.Info("initChannel", "channel", channel, "address", addr)
+
+	g.channelsMu.Lock()
+	defer g.channelsMu.Unlock()
+	c, ok = g.channels[channel] // may have filled in while locked
+	if ok {
+		return c, nil
+	}
+
+	getter, err := g.GetChannelHandlerFactory(addr.Scope, addr.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	// First access will initialize
+	c, err = getter.GetHandlerForPath(addr.Path)
+	if err != nil {
+		return nil, err
+	}
+
+	g.channels[channel] = c
+	return c, nil
+}
+
+// GetChannelHandlerFactory gets a ChannelHandlerFactory for a namespace.
+// It gives threadsafe access to the channel.
+func (g *GrafanaLive) GetChannelHandlerFactory(scope string, name string) (models.ChannelHandlerFactory, error) {
+	if scope == "grafana" {
+		p, ok := g.GrafanaScope.Features[name]
+		if ok {
+			return p, nil
+		}
+		return nil, fmt.Errorf("unknown feature: %q", name)
+	}
+
+	if scope == "ds" {
+		return nil, fmt.Errorf("todo... look up datasource: %q", name)
+	}
+
+	if scope == "plugin" {
+		// Temporary hack until we have a more generic solution later on
+		if name == "cloudwatch" {
+			return &cloudwatch.LogQueryRunnerSupplier{
+				Publisher: g.Publish,
+				Service:   g.LogsService,
+			}, nil
+		}
+
+		p, ok := plugins.Plugins[name]
+		if ok {
+			h := &PluginHandler{
+				Plugin: p,
+			}
+			return h, nil
+		}
+		return nil, fmt.Errorf("unknown plugin: %q", name)
+	}
+
+	return nil, fmt.Errorf("invalid scope: %q", scope)
+}
+
+// Publish sends the data to the channel without checking permissions etc
+func (g *GrafanaLive) Publish(channel string, data []byte) error {
+	_, err := g.node.Publish(channel, data)
+	return err
+}
+
+// IsEnabled returns true if the Grafana Live feature is enabled.
+func (g *GrafanaLive) IsEnabled() bool {
+	return g.Cfg.IsLiveEnabled()
 }
 
 // Write to the standard log15 logger

@@ -1,8 +1,11 @@
-import { MysqlDatasource } from '../datasource';
+import { of } from 'rxjs';
 import { dateTime, toUtc } from '@grafana/data';
+
+import { MysqlDatasource } from '../datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
+import { FetchResponse } from '@grafana/runtime';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -10,35 +13,32 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 describe('MySQLDatasource', () => {
-  const instanceSettings = { name: 'mysql' };
-  const templateSrv: TemplateSrv = new TemplateSrv();
-  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  const raw = {
-    from: toUtc('2018-04-25 10:00'),
-    to: toUtc('2018-04-25 11:00'),
-  };
-  const ctx = {
-    timeSrvMock: {
+  const fetchMock = jest.spyOn(backendSrv, 'fetch');
+  const setupTextContext = (response: any) => {
+    const instanceSettings = { name: 'mysql' };
+    const templateSrv: TemplateSrv = new TemplateSrv();
+    const raw = {
+      from: toUtc('2018-04-25 10:00'),
+      to: toUtc('2018-04-25 11:00'),
+    };
+    const timeSrvMock: any = {
       timeRange: () => ({
         from: raw.from,
         to: raw.to,
         raw: raw,
       }),
-    },
-  } as any;
+    };
+    const variable = { ...initialCustomVariableModelState };
 
-  beforeEach(() => {
-    ctx.ds = new MysqlDatasource(instanceSettings, templateSrv, ctx.timeSrvMock);
-  });
+    jest.clearAllMocks();
+    fetchMock.mockImplementation(options => of(createFetchResponse(response)));
+
+    const ds = new MysqlDatasource(instanceSettings, templateSrv, timeSrvMock);
+
+    return { ds, variable, templateSrv };
+  };
 
   describe('When performing annotationQuery', () => {
-    let results: any;
-
     const annotationName = 'MyAnno';
 
     const options = {
@@ -70,15 +70,10 @@ describe('MySQLDatasource', () => {
       },
     };
 
-    beforeEach(() => {
-      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+    it('should return annotation list', async () => {
+      const { ds } = setupTextContext(response);
+      const results = await ds.annotationQuery(options);
 
-      ctx.ds.annotationQuery(options).then((data: any) => {
-        results = data;
-      });
-    });
-
-    it('should return annotation list', () => {
       expect(results.length).toBe(3);
 
       expect(results[0].text).toBe('some text');
@@ -93,7 +88,6 @@ describe('MySQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery', () => {
-    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -116,15 +110,10 @@ describe('MySQLDatasource', () => {
       },
     };
 
-    beforeEach(() => {
-      datasourceRequestMock.mockImplementation(options => Promise.resolve({ data: response, status: 200 }));
+    it('should return list of all column values', async () => {
+      const { ds } = setupTextContext(response);
+      const results = await ds.metricFindQuery(query, {});
 
-      ctx.ds.metricFindQuery(query).then((data: any) => {
-        results = data;
-      });
-    });
-
-    it('should return list of all column values', () => {
       expect(results.length).toBe(6);
       expect(results[0].text).toBe('aTitle');
       expect(results[5].text).toBe('some text3');
@@ -132,8 +121,6 @@ describe('MySQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery with $__searchFilter and a searchFilter is given', () => {
-    let results: any;
-    let calledWith: any = {};
     const query = "select title from atable where title LIKE '$__searchFilter'";
     const response = {
       results: {
@@ -156,26 +143,19 @@ describe('MySQLDatasource', () => {
       },
     };
 
-    beforeEach(() => {
-      datasourceRequestMock.mockImplementation(options => {
-        calledWith = options;
-        return Promise.resolve({ data: response, status: 200 });
-      });
-      ctx.ds.metricFindQuery(query, { searchFilter: 'aTit' }).then((data: any) => {
-        results = data;
-      });
-    });
+    it('should return list of all column values', async () => {
+      const { ds } = setupTextContext(response);
+      const results = await ds.metricFindQuery(query, { searchFilter: 'aTit' });
 
-    it('should return list of all column values', () => {
-      expect(datasourceRequestMock).toBeCalledTimes(1);
-      expect(calledWith.data.queries[0].rawSql).toBe("select title from atable where title LIKE 'aTit%'");
+      expect(fetchMock).toBeCalledTimes(1);
+      expect(fetchMock.mock.calls[0][0].data.queries[0].rawSql).toBe(
+        "select title from atable where title LIKE 'aTit%'"
+      );
       expect(results.length).toBe(6);
     });
   });
 
   describe('When performing metricFindQuery with $__searchFilter but no searchFilter is given', () => {
-    let results: any;
-    let calledWith: any = {};
     const query = "select title from atable where title LIKE '$__searchFilter'";
     const response = {
       results: {
@@ -198,25 +178,17 @@ describe('MySQLDatasource', () => {
       },
     };
 
-    beforeEach(() => {
-      datasourceRequestMock.mockImplementation(options => {
-        calledWith = options;
-        return Promise.resolve({ data: response, status: 200 });
-      });
-      ctx.ds.metricFindQuery(query, {}).then((data: any) => {
-        results = data;
-      });
-    });
+    it('should return list of all column values', async () => {
+      const { ds } = setupTextContext(response);
+      const results = await ds.metricFindQuery(query, {});
 
-    it('should return list of all column values', () => {
-      expect(datasourceRequestMock).toBeCalledTimes(1);
-      expect(calledWith.data.queries[0].rawSql).toBe("select title from atable where title LIKE '%'");
+      expect(fetchMock).toBeCalledTimes(1);
+      expect(fetchMock.mock.calls[0][0].data.queries[0].rawSql).toBe("select title from atable where title LIKE '%'");
       expect(results.length).toBe(6);
     });
   });
 
   describe('When performing metricFindQuery with key, value columns', () => {
-    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -239,14 +211,10 @@ describe('MySQLDatasource', () => {
       },
     };
 
-    beforeEach(() => {
-      datasourceRequestMock.mockImplementation(() => Promise.resolve({ data: response, status: 200 }));
-      ctx.ds.metricFindQuery(query).then((data: any) => {
-        results = data;
-      });
-    });
+    it('should return list of as text, value', async () => {
+      const { ds } = setupTextContext(response);
+      const results = await ds.metricFindQuery(query, {});
 
-    it('should return list of as text, value', () => {
       expect(results.length).toBe(3);
       expect(results[0].text).toBe('aTitle');
       expect(results[0].value).toBe('value1');
@@ -256,7 +224,6 @@ describe('MySQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery with key, value columns and with duplicate keys', () => {
-    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -279,14 +246,10 @@ describe('MySQLDatasource', () => {
       },
     };
 
-    beforeEach(() => {
-      datasourceRequestMock.mockImplementation(() => Promise.resolve({ data: response, status: 200 }));
-      ctx.ds.metricFindQuery(query).then((data: any) => {
-        results = data;
-      });
-    });
+    it('should return list of unique keys', async () => {
+      const { ds } = setupTextContext(response);
+      const results = await ds.metricFindQuery(query, {});
 
-    it('should return list of unique keys', () => {
       expect(results.length).toBe(1);
       expect(results[0].text).toBe('aTitle');
       expect(results[0].value).toBe('same');
@@ -294,52 +257,55 @@ describe('MySQLDatasource', () => {
   });
 
   describe('When interpolating variables', () => {
-    beforeEach(() => {
-      ctx.variable = { ...initialCustomVariableModelState };
-    });
-
     describe('and value is a string', () => {
       it('should return an unquoted value', () => {
-        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual('abc');
+        const { ds, variable } = setupTextContext({});
+        expect(ds.interpolateVariable('abc', variable)).toEqual('abc');
       });
     });
 
     describe('and value is a number', () => {
       it('should return an unquoted value', () => {
-        expect(ctx.ds.interpolateVariable(1000, ctx.variable)).toEqual(1000);
+        const { ds, variable } = setupTextContext({});
+        expect(ds.interpolateVariable(1000, variable)).toEqual(1000);
       });
     });
 
     describe('and value is an array of strings', () => {
       it('should return comma separated quoted values', () => {
-        expect(ctx.ds.interpolateVariable(['a', 'b', 'c'], ctx.variable)).toEqual("'a','b','c'");
+        const { ds, variable } = setupTextContext({});
+        expect(ds.interpolateVariable(['a', 'b', 'c'], variable)).toEqual("'a','b','c'");
       });
     });
 
     describe('and variable allows multi-value and value is a string', () => {
       it('should return a quoted value', () => {
-        ctx.variable.multi = true;
-        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
+        const { ds, variable } = setupTextContext({});
+        variable.multi = true;
+        expect(ds.interpolateVariable('abc', variable)).toEqual("'abc'");
       });
     });
 
     describe('and variable contains single quote', () => {
       it('should return a quoted value', () => {
-        ctx.variable.multi = true;
-        expect(ctx.ds.interpolateVariable("a'bc", ctx.variable)).toEqual("'a''bc'");
+        const { ds, variable } = setupTextContext({});
+        variable.multi = true;
+        expect(ds.interpolateVariable("a'bc", variable)).toEqual("'a''bc'");
       });
     });
 
     describe('and variable allows all and value is a string', () => {
       it('should return a quoted value', () => {
-        ctx.variable.includeAll = true;
-        expect(ctx.ds.interpolateVariable('abc', ctx.variable)).toEqual("'abc'");
+        const { ds, variable } = setupTextContext({});
+        variable.includeAll = true;
+        expect(ds.interpolateVariable('abc', variable)).toEqual("'abc'");
       });
     });
   });
 
   describe('targetContainsTemplate', () => {
     it('given query that contains template variable it should return true', () => {
+      const { ds, templateSrv } = setupTextContext({});
       const rawSql = `SELECT
       $__timeGroup(createdAt,'$summarize') as time_sec,
       avg(value) as value,
@@ -360,10 +326,11 @@ describe('MySQLDatasource', () => {
         { type: 'query', name: 'summarize', current: { value: '1m' } },
         { type: 'query', name: 'host', current: { value: 'a' } },
       ]);
-      expect(ctx.ds.targetContainsTemplate(query)).toBeTruthy();
+      expect(ds.targetContainsTemplate(query)).toBeTruthy();
     });
 
     it('given query that only contains global template variable it should return false', () => {
+      const { ds, templateSrv } = setupTextContext({});
       const rawSql = `SELECT
       $__timeGroup(createdAt,'$__interval') as time_sec,
       avg(value) as value,
@@ -383,7 +350,19 @@ describe('MySQLDatasource', () => {
         { type: 'query', name: 'summarize', current: { value: '1m' } },
         { type: 'query', name: 'host', current: { value: 'a' } },
       ]);
-      expect(ctx.ds.targetContainsTemplate(query)).toBeFalsy();
+      expect(ds.targetContainsTemplate(query)).toBeFalsy();
     });
   });
+});
+
+const createFetchResponse = <T>(data: T): FetchResponse<T> => ({
+  data,
+  status: 200,
+  url: 'http://localhost:3000/api/query',
+  config: { url: 'http://localhost:3000/api/query' },
+  type: 'basic',
+  statusText: 'Ok',
+  redirected: false,
+  headers: ({} as unknown) as Headers,
+  ok: true,
 });

@@ -8,8 +8,10 @@ import {
   DataQueryResponse,
   GrafanaTheme,
   dateTimeFormat,
+  checkLogsError,
 } from '@grafana/data';
 import { Icon } from '../Icon/Icon';
+import { Tooltip } from '../Tooltip/Tooltip';
 import { cx, css } from 'emotion';
 
 import {
@@ -72,6 +74,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: hoverBackground;
       background-color: ${bgColor};
     `,
+    errorLogRow: css`
+      label: erroredLogRow;
+      color: ${theme.colors.textWeak};
+    `,
   };
 });
 /**
@@ -127,6 +133,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     });
   };
 
+  renderTimeStamp(epochMs: number) {
+    return dateTimeFormat(epochMs, {
+      timeZone: this.props.timeZone,
+    });
+  }
+
   renderLogRow(
     context?: LogRowContextRows,
     errors?: LogRowContextQueryErrors,
@@ -143,7 +155,6 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       allowDetails,
       row,
       showDuplicates,
-      timeZone,
       showContextToggle,
       showLabels,
       showTime,
@@ -155,28 +166,33 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const { showDetails, showContext, hasHoverBackground } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const styles = getStyles(theme);
-    const hoverBackground = cx(style.logsRow, { [styles.hoverBackground]: hasHoverBackground });
+    const { errorMessage, hasError } = checkLogsError(row);
+    const logRowBackground = cx(style.logsRow, {
+      [styles.hoverBackground]: hasHoverBackground,
+      [styles.errorLogRow]: hasError,
+    });
 
     return (
       <>
-        <tr
-          className={hoverBackground}
-          onMouseEnter={this.addHoverBackground}
-          onMouseLeave={this.clearHoverBackground}
-          onClick={this.toggleDetails}
-        >
+        <tr className={logRowBackground} onClick={this.toggleDetails}>
           {showDuplicates && (
             <td className={style.logsRowDuplicates}>
               {row.duplicates && row.duplicates > 0 ? `${row.duplicates + 1}x` : null}
             </td>
           )}
-          <td className={style.logsRowLevel} />
+          <td className={cx({ [style.logsRowLevel]: !hasError })}>
+            {hasError && (
+              <Tooltip content={`Error: ${errorMessage}`} placement="right" theme="error">
+                <Icon className={style.logIconError} name="exclamation-triangle" size="xs" />
+              </Tooltip>
+            )}
+          </td>
           {!allowDetails && (
             <td title={showDetails ? 'Hide log details' : 'See log details'} className={style.logsRowToggleDetails}>
               <Icon className={styles.topVerticalAlign} name={showDetails ? 'angle-down' : 'angle-right'} />
             </td>
           )}
-          {showTime && <td className={style.logsRowLocalTime}>{dateTimeFormat(row.timeEpochMs, { timeZone })}</td>}
+          {showTime && <td className={style.logsRowLocalTime}>{this.renderTimeStamp(row.timeEpochMs)}</td>}
           {showLabels && row.uniqueLabels && (
             <td className={style.logsRowLabels}>
               <LogLabels labels={row.uniqueLabels} />
@@ -202,7 +218,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
         </tr>
         {this.state.showDetails && (
           <LogDetails
-            className={hoverBackground}
+            className={logRowBackground}
             onMouseEnter={this.addHoverBackground}
             onMouseLeave={this.clearHoverBackground}
             showDuplicates={showDuplicates}
@@ -213,6 +229,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             onClickHideParsedField={onClickHideParsedField}
             getRows={getRows}
             row={row}
+            hasError={hasError}
             showParsedFields={showParsedFields}
           />
         )}

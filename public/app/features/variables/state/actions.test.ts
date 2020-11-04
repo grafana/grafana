@@ -20,15 +20,21 @@ import {
   validateVariableSelectionState,
 } from './actions';
 import {
-  addInitLock,
   addVariable,
   changeVariableProp,
-  removeInitLock,
   removeVariable,
-  resolveInitLock,
   setCurrentVariableValue,
+  variableStateCompleted,
+  variableStateFetching,
+  variableStateNotStarted,
 } from './sharedReducer';
-import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload } from './types';
+import {
+  ALL_VARIABLE_TEXT,
+  ALL_VARIABLE_VALUE,
+  NEW_VARIABLE_ID,
+  toVariableIdentifier,
+  toVariablePayload,
+} from './types';
 import {
   constantBuilder,
   customBuilder,
@@ -53,6 +59,8 @@ import {
 import { initialState } from '../pickers/OptionsPicker/reducer';
 import { cleanVariables } from './variablesReducer';
 import { expect } from '../../../../test/lib/common';
+import { VariableRefresh } from '../types';
+import { updateVariableOptions } from '../query/reducer';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -61,10 +69,24 @@ variableAdapters.setInit(() => [
   createConstantVariableAdapter(),
 ]);
 
+const metricFindQuery = jest
+  .fn()
+  .mockResolvedValueOnce([{ text: 'responses' }, { text: 'timers' }])
+  .mockResolvedValue([{ text: '200' }, { text: '500' }]);
+const getMetricSources = jest.fn().mockReturnValue([]);
+const getDatasource = jest.fn().mockResolvedValue({ metricFindQuery });
+
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: () => ({
     timeRange: jest.fn().mockReturnValue(undefined),
   }),
+}));
+
+jest.mock('app/features/plugins/datasource_srv', () => ({
+  getDatasourceSrv: jest.fn(() => ({
+    get: getDatasource,
+    getMetricSources,
+  })),
 }));
 
 describe('shared actions', () => {
@@ -98,16 +120,16 @@ describe('shared actions', () => {
           // because uuid are dynamic we need to get the uuid from the resulting state
           // an alternative would be to add our own uuids in the model above instead
           expect(dispatchedActions[4]).toEqual(
-            addInitLock(toVariablePayload({ ...query, id: dispatchedActions[4].payload.id }))
+            variableStateNotStarted(toVariablePayload({ ...query, id: dispatchedActions[4].payload.id }))
           );
           expect(dispatchedActions[5]).toEqual(
-            addInitLock(toVariablePayload({ ...constant, id: dispatchedActions[5].payload.id }))
+            variableStateNotStarted(toVariablePayload({ ...constant, id: dispatchedActions[5].payload.id }))
           );
           expect(dispatchedActions[6]).toEqual(
-            addInitLock(toVariablePayload({ ...custom, id: dispatchedActions[6].payload.id }))
+            variableStateNotStarted(toVariablePayload({ ...custom, id: dispatchedActions[6].payload.id }))
           );
           expect(dispatchedActions[7]).toEqual(
-            addInitLock(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
+            variableStateNotStarted(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
           );
 
           return true;
@@ -128,40 +150,94 @@ describe('shared actions', () => {
         preloadedState: { templating: ({} as unknown) as TemplatingState, location: { query: {} } },
       })
         .givenRootReducer(getTemplatingAndLocationRootReducer())
+        .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
         .whenActionIsDispatched(initDashboardTemplating(list))
         .whenAsyncActionIsDispatched(processVariables(), true);
 
       await tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
-        expect(dispatchedActions.length).toEqual(8);
+        expect(dispatchedActions.length).toEqual(4);
 
         expect(dispatchedActions[0]).toEqual(
-          resolveInitLock(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
-        );
-        expect(dispatchedActions[1]).toEqual(
-          resolveInitLock(toVariablePayload({ ...constant, id: dispatchedActions[1].payload.id }))
-        );
-        expect(dispatchedActions[2]).toEqual(
-          resolveInitLock(toVariablePayload({ ...custom, id: dispatchedActions[2].payload.id }))
-        );
-        expect(dispatchedActions[3]).toEqual(
-          resolveInitLock(toVariablePayload({ ...textbox, id: dispatchedActions[3].payload.id }))
+          variableStateCompleted(toVariablePayload({ ...query, id: dispatchedActions[0].payload.id }))
         );
 
-        expect(dispatchedActions[4]).toEqual(
-          removeInitLock(toVariablePayload({ ...query, id: dispatchedActions[4].payload.id }))
+        expect(dispatchedActions[1]).toEqual(
+          variableStateCompleted(toVariablePayload({ ...constant, id: dispatchedActions[1].payload.id }))
         );
-        expect(dispatchedActions[5]).toEqual(
-          removeInitLock(toVariablePayload({ ...constant, id: dispatchedActions[5].payload.id }))
+
+        expect(dispatchedActions[2]).toEqual(
+          variableStateCompleted(toVariablePayload({ ...custom, id: dispatchedActions[2].payload.id }))
         );
-        expect(dispatchedActions[6]).toEqual(
-          removeInitLock(toVariablePayload({ ...custom, id: dispatchedActions[6].payload.id }))
-        );
-        expect(dispatchedActions[7]).toEqual(
-          removeInitLock(toVariablePayload({ ...textbox, id: dispatchedActions[7].payload.id }))
+
+        expect(dispatchedActions[3]).toEqual(
+          variableStateCompleted(toVariablePayload({ ...textbox, id: dispatchedActions[3].payload.id }))
         );
 
         return true;
       });
+    });
+
+    // Fix for https://github.com/grafana/grafana/issues/28791
+    it('fix for https://github.com/grafana/grafana/issues/28791', async () => {
+      const stats = queryBuilder()
+        .withId('stats')
+        .withName('stats')
+        .withQuery('stats.*')
+        .withRefresh(VariableRefresh.onDashboardLoad)
+        .withCurrent(['response'], ['response'])
+        .withMulti()
+        .withIncludeAll()
+        .build();
+
+      const substats = queryBuilder()
+        .withId('substats')
+        .withName('substats')
+        .withQuery('stats.$stats.*')
+        .withRefresh(VariableRefresh.onDashboardLoad)
+        .withCurrent([ALL_VARIABLE_TEXT], [ALL_VARIABLE_VALUE])
+        .withMulti()
+        .withIncludeAll()
+        .build();
+
+      const list = [stats, substats];
+      const query = { orgId: '1', 'var-stats': 'response', 'var-substats': ALL_VARIABLE_TEXT };
+      const tester = await reduxTester<{ templating: TemplatingState; location: { query: UrlQueryMap } }>({
+        preloadedState: { templating: ({} as unknown) as TemplatingState, location: { query } },
+        debug: true,
+      })
+        .givenRootReducer(getTemplatingAndLocationRootReducer())
+        .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
+        .whenActionIsDispatched(initDashboardTemplating(list))
+        .whenAsyncActionIsDispatched(processVariables(), true);
+
+      await tester.thenDispatchedActionsShouldEqual(
+        variableStateFetching(toVariablePayload(stats)),
+        updateVariableOptions(
+          toVariablePayload(stats, { results: [{ text: 'responses' }, { text: 'timers' }], templatedRegex: '' })
+        ),
+        setCurrentVariableValue(
+          toVariablePayload(stats, { option: { text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false } })
+        ),
+        variableStateCompleted(toVariablePayload(stats)),
+        setCurrentVariableValue(
+          toVariablePayload(stats, { option: { text: ['response'], value: ['response'], selected: false } })
+        ),
+        variableStateFetching(toVariablePayload(substats)),
+        updateVariableOptions(
+          toVariablePayload(substats, { results: [{ text: '200' }, { text: '500' }], templatedRegex: '' })
+        ),
+        setCurrentVariableValue(
+          toVariablePayload(substats, {
+            option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: true },
+          })
+        ),
+        variableStateCompleted(toVariablePayload(substats)),
+        setCurrentVariableValue(
+          toVariablePayload(substats, {
+            option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: false },
+          })
+        )
+      );
     });
   });
 
@@ -578,12 +654,11 @@ describe('shared actions', () => {
           expect(dispatchedActions[4]).toEqual(
             addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
           );
-          expect(dispatchedActions[5]).toEqual(addInitLock(toVariablePayload(constant)));
-          expect(dispatchedActions[6]).toEqual(resolveInitLock(toVariablePayload(constant)));
-          expect(dispatchedActions[7]).toEqual(removeInitLock(toVariablePayload(constant)));
+          expect(dispatchedActions[5]).toEqual(variableStateNotStarted(toVariablePayload(constant)));
+          expect(dispatchedActions[6]).toEqual(variableStateCompleted(toVariablePayload(constant)));
 
-          expect(dispatchedActions[8]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 9;
+          expect(dispatchedActions[7]).toEqual(variablesCompleteTransaction({ uid }));
+          return dispatchedActions.length === 8;
         });
       });
     });
@@ -618,11 +693,10 @@ describe('shared actions', () => {
           expect(dispatchedActions[6]).toEqual(
             addVariable(toVariablePayload(constant, { global: false, index: 0, model: constant }))
           );
-          expect(dispatchedActions[7]).toEqual(addInitLock(toVariablePayload(constant)));
-          expect(dispatchedActions[8]).toEqual(resolveInitLock(toVariablePayload(constant)));
-          expect(dispatchedActions[9]).toEqual(removeInitLock(toVariablePayload(constant)));
-          expect(dispatchedActions[10]).toEqual(variablesCompleteTransaction({ uid }));
-          return dispatchedActions.length === 11;
+          expect(dispatchedActions[7]).toEqual(variableStateNotStarted(toVariablePayload(constant)));
+          expect(dispatchedActions[8]).toEqual(variableStateCompleted(toVariablePayload(constant)));
+          expect(dispatchedActions[9]).toEqual(variablesCompleteTransaction({ uid }));
+          return dispatchedActions.length === 10;
         });
       });
     });

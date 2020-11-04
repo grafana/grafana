@@ -17,25 +17,6 @@ func init() {
 		Description: "Send notifications to LINE notify",
 		Heading:     "LINE notify settings",
 		Factory:     NewLINENotifier,
-		OptionsTemplate: `
-		<h3 class="page-heading">LINE notify settings</h3>
-		<div class="gf-form">
-			<label class="gf-form-label max-width-14">Token</label>
-			<div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.token">
-				<input type="text"
-					required
-					class="gf-form-input max-width-22"
-					ng-init="ctrl.model.secureSettings.token = ctrl.model.settings.token || null; ctrl.model.settings.token = null;"
-					ng-model="ctrl.model.secureSettings.token"
-					data-placement="right">
-				</input>
-			</div>
-			<div class="gf-form" ng-if="ctrl.model.secureFields.token">
-			  <input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
-			  <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.token = false">reset</a>
-			</div>
-		</div>
-`,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Token",
@@ -44,6 +25,7 @@ func init() {
 				Placeholder:  "LINE notify token key",
 				PropertyName: "token",
 				Required:     true,
+				Secure:       true,
 			}},
 	})
 }
@@ -77,11 +59,8 @@ type LineNotifier struct {
 // Notify send an alert notification to LINE
 func (ln *LineNotifier) Notify(evalContext *alerting.EvalContext) error {
 	ln.log.Info("Executing line notification", "ruleId", evalContext.Rule.ID, "notification", ln.Name)
-	if evalContext.Rule.State == models.AlertStateAlerting {
-		return ln.createAlert(evalContext)
-	}
 
-	return nil
+	return ln.createAlert(evalContext)
 }
 
 func (ln *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
@@ -93,7 +72,7 @@ func (ln *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
 	}
 
 	form := url.Values{}
-	body := fmt.Sprintf("%s - %s\n%s", evalContext.Rule.Name, ruleURL, evalContext.Rule.Message)
+	body := fmt.Sprintf("%s - %s\n%s", evalContext.GetNotificationTitle(), ruleURL, evalContext.Rule.Message)
 	form.Add("message", body)
 
 	if ln.NeedsImage() && evalContext.ImagePublicURL != "" {

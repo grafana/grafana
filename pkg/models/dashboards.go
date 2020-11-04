@@ -139,7 +139,7 @@ type UpdatePluginDashboardError struct {
 }
 
 func (d UpdatePluginDashboardError) Error() string {
-	return "Dashboard belong to plugin"
+	return "Dashboard belongs to plugin"
 }
 
 const (
@@ -382,6 +382,10 @@ type ValidateDashboardBeforeSaveCommand struct {
 	Dashboard *Dashboard
 	Overwrite bool
 	Result    *ValidateDashboardBeforeSaveResult
+}
+
+type DeleteOrphanedProvisionedDashboardsCommand struct {
+	ReaderNames []string
 }
 
 //

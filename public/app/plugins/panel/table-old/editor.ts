@@ -9,8 +9,8 @@ export class TablePanelEditorCtrl {
   fontSizes: any;
   addColumnSegment: any;
   getColumnNames: any;
-  canSetColumns: boolean;
-  columnsHelpMessage: string;
+  canSetColumns = false;
+  columnsHelpMessage = '';
 
   /** @ngInject */
   constructor($scope: any, private uiSegmentSrv: any) {

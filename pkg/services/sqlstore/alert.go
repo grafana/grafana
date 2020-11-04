@@ -303,7 +303,7 @@ func SetAlertState(cmd *models.SetAlertStateCommand) error {
 		alert.EvalData = cmd.EvalData
 
 		if cmd.Error == "" {
-			alert.ExecutionError = " " //without this space, xorm skips updating this field
+			alert.ExecutionError = " " // without this space, xorm skips updating this field
 		} else {
 			alert.ExecutionError = cmd.Error
 		}
