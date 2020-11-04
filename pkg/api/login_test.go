@@ -687,7 +687,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 
 			info := testHook.info
 			assert.Equal(t, c.info.AuthModule, info.AuthModule)
-			assert.Equal(t, "admin", info.Query.Username)
+			assert.Equal(t, "admin", info.LoginUsername)
 			assert.Equal(t, c.info.HTTPStatus, info.HTTPStatus)
 			assert.Equal(t, c.info.Error, info.Error)
 

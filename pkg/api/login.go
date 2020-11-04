@@ -168,12 +168,6 @@ func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) Response {
 
 func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Response {
 	authModule := ""
-	authQuery := &models.LoginUserQuery{
-		ReqContext: c,
-		Username:   cmd.User,
-		Password:   cmd.Password,
-		IpAddress:  c.Req.RemoteAddr,
-	}
 	var user *models.User
 	var response *NormalResponse
 
@@ -183,17 +177,24 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 			err = errors.New(response.errMessage)
 		}
 		hs.HooksService.RunLoginHook(&models.LoginInfo{
-			AuthModule: authModule,
-			User:       user,
-			Query:      authQuery,
-			HTTPStatus: response.status,
-			Error:      err,
+			AuthModule:    authModule,
+			User:          user,
+			LoginUsername: cmd.User,
+			HTTPStatus:    response.status,
+			Error:         err,
 		}, c)
 	}()
 
 	if setting.DisableLoginForm {
 		response = Error(http.StatusUnauthorized, "Login is disabled", nil)
 		return response
+	}
+
+	authQuery := &models.LoginUserQuery{
+		ReqContext: c,
+		Username:   cmd.User,
+		Password:   cmd.Password,
+		IpAddress:  c.Req.RemoteAddr,
 	}
 
 	err := bus.Dispatch(authQuery)

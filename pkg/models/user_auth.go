@@ -37,12 +37,12 @@ type ExternalUserInfo struct {
 }
 
 type LoginInfo struct {
-	AuthModule   string
-	User         *User
-	ExternalUser ExternalUserInfo
-	Query        *LoginUserQuery
-	HTTPStatus   int
-	Error        error
+	AuthModule    string
+	User          *User
+	ExternalUser  ExternalUserInfo
+	LoginUsername string
+	HTTPStatus    int
+	Error         error
 }
 
 // ---------------------
