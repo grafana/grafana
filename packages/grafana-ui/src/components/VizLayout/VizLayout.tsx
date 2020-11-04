@@ -15,14 +15,14 @@ export interface Props {
 /**
  * @beta
  */
-export interface VizLayoutType extends FC<Props> {
+export interface VizLayoutComponentType extends FC<Props> {
   Legend: ComponentType<VizLayoutLegendProps>;
 }
 
 /**
  * @beta
  */
-export const VizLayout: VizLayoutType = ({ width, height, legend, children }) => {
+export const VizLayout: VizLayoutComponentType = ({ width, height, legend, children }) => {
   const containerStyle: CSSProperties = {
     display: 'flex',
     width: `${width}px`,
