@@ -8,8 +8,7 @@ import { timeReducer } from './time';
 import { historyReducer } from './history';
 import { makeExploreItemState, makeInitialUpdateState } from './utils';
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
-import { DataQuery, ExploreUrlState, LogLevel, LogsDedupStrategy, TimeRange } from '@grafana/data';
-import { Emitter } from 'app/core/core';
+import { EventBusExtended, DataQuery, ExploreUrlState, LogLevel, LogsDedupStrategy, TimeRange } from '@grafana/data';
 import {
   clearQueryKeys,
   ensureQueries,
@@ -66,7 +65,7 @@ export const highlightLogsExpressionAction = createAction<HighlightLogsExpressio
 export interface InitializeExplorePayload {
   exploreId: ExploreId;
   containerWidth: number;
-  eventBridge: Emitter;
+  eventBridge: EventBusExtended;
   queries: DataQuery[];
   range: TimeRange;
   originPanelId?: number | null;
@@ -115,7 +114,7 @@ export function initializeExplore(
   queries: DataQuery[],
   range: TimeRange,
   containerWidth: number,
-  eventBridge: Emitter,
+  eventBridge: EventBusExtended,
   originPanelId?: number | null
 ): ThunkResult<void> {
   return async (dispatch, getState) => {

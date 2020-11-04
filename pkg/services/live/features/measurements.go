@@ -33,9 +33,8 @@ func (m *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subs
 	return nil
 }
 
-// OnPublish is called when an event is received from the websocket.
-func (m *MeasurementsRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
-	// currently generic... but should be stricter
-	// logger.Debug("Measurements runner got event on channel", "channel", e.Channel)
-	return e.Data, nil
+// AllowBroadcast checks if a message from the websocket can be broadcast on this channel
+// Currently this sends measurements over websocket -- should be replaced with the HTTP interface
+func (m *MeasurementsRunner) AllowBroadcast(c *centrifuge.Client, e centrifuge.PublishEvent) error {
+	return nil
 }

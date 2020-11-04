@@ -209,8 +209,6 @@ export function grafanaAppDirective(
         for (const drop of Drop.drops) {
           drop.destroy();
         }
-
-        appEvents.emit(CoreEvents.hideDashSearch);
       });
 
       // handle kiosk mode

@@ -1,5 +1,5 @@
 import { PayloadAction } from '@reduxjs/toolkit';
-import { DataQuery, DefaultTimeZone, ExploreUrlState, LogsDedupStrategy, toUtc } from '@grafana/data';
+import { DataQuery, DefaultTimeZone, ExploreUrlState, LogsDedupStrategy, toUtc, EventBusExtended } from '@grafana/data';
 import { ExploreId, ExploreItemState, ExploreUpdateState } from 'app/types';
 import { thunkTester } from 'test/core/thunk/thunkTester';
 import {
@@ -11,7 +11,6 @@ import {
 } from './exploreItem';
 import { setQueriesAction } from './query';
 import * as DatasourceSrv from 'app/features/plugins/datasource_srv';
-import { Emitter } from 'app/core/core';
 import { makeExploreItemState, makeInitialUpdateState } from './utils';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 
@@ -51,7 +50,7 @@ const testRange = {
 const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
   const exploreId = ExploreId.left;
   const containerWidth = 1920;
-  const eventBridge = {} as Emitter;
+  const eventBridge = {} as EventBusExtended;
   const timeZone = DefaultTimeZone;
   const range = testRange;
   const urlState: ExploreUrlState = {
