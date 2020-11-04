@@ -14,6 +14,7 @@ import {
   DataSourceHttpSettings,
   GraphContextMenu,
   Icon,
+  Spinner,
   LegacyForms,
   SeriesColorPickerPopoverWithTheme,
   UnitPicker,
@@ -36,12 +37,12 @@ const { SecretFormField } = LegacyForms;
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
   react2AngularDirective('icon', Icon, [
-    'color',
     'name',
     'size',
     'type',
     ['onClick', { watchDepth: 'reference', wrapApply: true }],
   ]);
+  react2AngularDirective('spinner', Spinner, ['inline']);
   react2AngularDirective('helpModal', HelpModal, []);
   react2AngularDirective('sidemenu', SideMenu, []);
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
