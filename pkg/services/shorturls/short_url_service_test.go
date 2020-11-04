@@ -47,6 +47,32 @@ func TestShortURLService(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, expectedTime.Unix(), updatedShortURL.LastSeenAt)
 		})
+
+		t.Run("Should be able delete stale short urls", func(t *testing.T) {
+			staleShortURL, err := service.CreateShortURL(context.Background(), user, refPath)
+			require.NoError(t, err)
+			require.NotNil(t, staleShortURL)
+			require.NotEmpty(t, staleShortURL.Uid)
+			require.Equal(t, int64(0), staleShortURL.LastSeenAt)
+
+			cmd := models.DeleteShortUrlCommand{OlderThan: time.Unix(staleShortURL.CreatedAt, 0)}
+			err = service.DeleteStaleShortURLs(context.Background(), &cmd)
+			require.NoError(t, err)
+			require.Equal(t, int64(1), cmd.NumDeleted)
+
+			t.Run("Should not delete urls which have been accessed", func(t *testing.T) {
+				updatedShortURL, err := service.GetShortURLByUID(context.Background(), user, existingShortURL.Uid)
+				require.NoError(t, err)
+				require.NotNil(t, updatedShortURL)
+			})
+
+			t.Run("Should do nothing when no stale short urls exist", func(t *testing.T) {
+				createdAt := time.Unix(existingShortURL.CreatedAt, 0)
+				cmd := models.DeleteShortUrlCommand{OlderThan: createdAt.Add(1 * time.Second)}
+				require.NoError(t, err)
+				require.Equal(t, int64(0), cmd.NumDeleted)
+			})
+		})
 	})
 
 	t.Run("User cannot look up nonexistent short URLs", func(t *testing.T) {

@@ -46,6 +46,7 @@ func (srv *CleanUpService) Run(ctx context.Context) error {
 			srv.deleteExpiredDashboardVersions()
 			srv.cleanUpOldAnnotations(ctxWithTimeout)
 			srv.expireOldUserInvites()
+			srv.deleteStaleShortURLs()
 			err := srv.ServerLockService.LockAndExecute(ctx, "delete old login attempts",
 				time.Minute*10, func() {
 					srv.deleteOldLoginAttempts()
@@ -149,5 +150,16 @@ func (srv *CleanUpService) expireOldUserInvites() {
 		srv.log.Error("Problem expiring user invites", "error", err.Error())
 	} else {
 		srv.log.Debug("Expired user invites", "rows affected", cmd.NumExpired)
+	}
+}
+
+func (srv *CleanUpService) deleteStaleShortURLs() {
+	cmd := models.DeleteShortUrlCommand{
+		OlderThan: time.Now().Add(-time.Hour * 24 * 7),
+	}
+	if err := bus.Dispatch(&cmd); err != nil {
+		srv.log.Error("Problem deleting stale short urls", "error", err.Error())
+	} else {
+		srv.log.Debug("Deleted short urls", "rows affected", cmd.NumDeleted)
 	}
 }
