@@ -28,7 +28,7 @@ func getTsdbQueryEndpointFor(dsInfo *models.DataSource) (TsdbQueryEndpoint, erro
 
 		return executor, nil
 	}
-	return nil, fmt.Errorf("Could not find executor for data source type: %s", dsInfo.Type)
+	return nil, fmt.Errorf("could not find executor for data source type: %s", dsInfo.Type)
 }
 
 func RegisterTsdbQueryEndpoint(pluginId string, fn GetTsdbQueryEndpointFn) {

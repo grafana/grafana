@@ -50,8 +50,8 @@ func New(hash string) *Avatar {
 	}
 }
 
-func (this *Avatar) Expired() bool {
-	return time.Since(this.timestamp) > (time.Minute * 10)
+func (a *Avatar) Expired() bool {
+	return time.Since(a.timestamp) > (time.Minute * 10)
 }
 
 func (this *Avatar) Encode(wr io.Writer) error {

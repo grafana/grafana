@@ -103,7 +103,7 @@ func (e *CloudMonitoringExecutor) getGCEDefaultProject(ctx context.Context, tsdb
 
 	gceDefaultProject, err := e.getDefaultProject(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
+		return nil, fmt.Errorf("failed to retrieve default project from GCE metadata server, error: %w", err)
 	}
 
 	queryResult.Meta.Set("defaultProject", gceDefaultProject)
@@ -769,7 +769,7 @@ func (e *CloudMonitoringExecutor) createRequest(ctx context.Context, dsInfo *mod
 	req, err := http.NewRequest(http.MethodGet, "https://monitoring.googleapis.com/", nil)
 	if err != nil {
 		slog.Error("Failed to create request", "error", err)
-		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -778,7 +778,7 @@ func (e *CloudMonitoringExecutor) createRequest(ctx context.Context, dsInfo *mod
 	// find plugin
 	plugin, ok := plugins.DataSources[dsInfo.Type]
 	if !ok {
-		return nil, errors.New("Unable to find datasource plugin CloudMonitoring")
+		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
 	}
 
 	var cloudMonitoringRoute *plugins.AppPluginRoute
@@ -799,14 +799,14 @@ func (e *CloudMonitoringExecutor) getDefaultProject(ctx context.Context) (string
 	if authenticationType == gceAuthentication {
 		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
 		if err != nil {
-			return "", fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
+			return "", fmt.Errorf("failed to retrieve default project from GCE metadata server: %w", err)
 		}
 		token, err := defaultCredentials.TokenSource.Token()
 		if err != nil {
-			return "", fmt.Errorf("Failed to retrieve GCP credential token. error: %v", err)
+			return "", fmt.Errorf("failed to retrieve GCP credential token: %w", err)
 		}
 		if !token.Valid() {
-			return "", errors.New("Failed to validate GCP credentials")
+			return "", errors.New("failed to validate GCP credentials")
 		}
 
 		return defaultCredentials.ProjectID, nil
