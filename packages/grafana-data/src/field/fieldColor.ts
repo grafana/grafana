@@ -67,6 +67,13 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       colors: ['green', 'yellow', 'red'],
     }),
     new FieldColorSchemeMode({
+      id: 'continuous-RdYlGr',
+      name: 'Red-Yellow-Green',
+      isContinuous: true,
+      isByValue: true,
+      colors: ['red', 'yellow', 'green'],
+    }),
+    new FieldColorSchemeMode({
       id: 'continuous-BlYlRd',
       name: 'Blue-Yellow-Red',
       isContinuous: true,
