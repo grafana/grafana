@@ -9,11 +9,6 @@ import (
 	"log"
 )
 
-// returns the current implementation version
-func Version() string {
-	return "0.5.0"
-}
-
 type Json struct {
 	data interface{}
 }
@@ -227,14 +222,6 @@ func (j *Json) String() (string, error) {
 	return "", errors.New("type assertion to string failed")
 }
 
-// Bytes type asserts to `[]byte`
-func (j *Json) Bytes() ([]byte, error) {
-	if s, ok := (j.data).(string); ok {
-		return []byte(s), nil
-	}
-	return nil, errors.New("type assertion to []byte failed")
-}
-
 // StringArray type asserts to an `array` of `string`
 func (j *Json) StringArray() ([]string, error) {
 	arr, err := j.Array()
@@ -439,29 +426,6 @@ func (j *Json) MustInt64(args ...int64) int64 {
 	}
 
 	i, err := j.Int64()
-	if err == nil {
-		return i
-	}
-
-	return def
-}
-
-// MustUInt64 guarantees the return of an `uint64` (with optional default)
-//
-// useful when you explicitly want an `uint64` in a single value return context:
-//     myFunc(js.Get("param1").MustUint64(), js.Get("optional_param").MustUint64(5150))
-func (j *Json) MustUint64(args ...uint64) uint64 {
-	var def uint64
-
-	switch len(args) {
-	case 0:
-	case 1:
-		def = args[0]
-	default:
-		log.Panicf("MustUint64() received too many arguments %d", len(args))
-	}
-
-	i, err := j.Uint64()
 	if err == nil {
 		return i
 	}

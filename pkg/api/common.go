@@ -10,9 +10,6 @@ import (
 )
 
 var (
-	NotFound = func() Response {
-		return Error(404, "Not found", nil)
-	}
 	ServerError = func(err error) Response {
 		return Error(500, "Server error", err)
 	}
@@ -57,10 +54,6 @@ func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 	if _, err := ctx.Resp.Write(r.body); err != nil {
 		ctx.Logger.Error("Error writing to response", "err", err)
 	}
-}
-
-func (r *NormalResponse) Cache(ttl string) *NormalResponse {
-	return r.Header("Cache-Control", "public,max-age="+ttl)
 }
 
 func (r *NormalResponse) Header(key, value string) *NormalResponse {

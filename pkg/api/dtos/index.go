@@ -20,11 +20,6 @@ type IndexViewData struct {
 	AppTitle                string
 }
 
-type PluginCss struct {
-	Light string `json:"light"`
-	Dark  string `json:"dark"`
-}
-
 const (
 	// These weights may be used by an extension to reliably place
 	// itself in relation to a particular item in the menu. The weights

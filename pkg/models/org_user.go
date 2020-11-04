@@ -9,7 +9,6 @@ import (
 
 // Typed errors
 var (
-	ErrInvalidRoleType     = errors.New("Invalid role type")
 	ErrLastOrgAdmin        = errors.New("Cannot remove last organization admin")
 	ErrOrgUserNotFound     = errors.New("Cannot find the organization user")
 	ErrOrgUserAlreadyAdded = errors.New("User is already added to organization")

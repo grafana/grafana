@@ -12,7 +12,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
@@ -75,14 +74,10 @@ var (
 	PluginsPath    string
 	CustomInitPath = "conf/custom.ini"
 
-	// Log settings.
-	LogConfigs []util.DynMap
-
-	// Http server options
+	// HTTP server options
 	Protocol                       Scheme
 	Domain                         string
 	HttpAddr, HttpPort             string
-	SshPort                        int
 	CertFile, KeyFile              string
 	SocketPath                     string
 	RouterLogging                  bool
@@ -168,13 +163,8 @@ var (
 	// Basic Auth
 	BasicAuthEnabled bool
 
-	// Session settings.
-	SessionConnMaxLifetime int64
-
 	// Global setting objects.
-	Raw          *ini.File
-	ConfRootPath string
-	IsWindows    bool
+	Raw *ini.File
 
 	// for logging purposes
 	configFiles                  []string
@@ -213,11 +203,6 @@ var (
 
 	// Grafana.NET URL
 	GrafanaComUrl string
-
-	// S3 temp image store
-	S3TempImageStoreBucketUrl string
-	S3TempImageStoreAccessKey string
-	S3TempImageStoreSecretKey string
 
 	ImageUploadProvider string
 )
@@ -338,10 +323,6 @@ func (c Cfg) IsNgAlertEnabled() bool {
 	return c.FeatureToggles["ngalert"]
 }
 
-func (c Cfg) IsDatabaseMetricsEnabled() bool {
-	return c.FeatureToggles["database_metrics"]
-}
-
 func (c Cfg) IsHTTPRequestHistogramEnabled() bool {
 	return c.FeatureToggles["http_request_histogram"]
 }
@@ -350,10 +331,6 @@ type CommandLineArgs struct {
 	Config   string
 	HomePath string
 	Args     []string
-}
-
-func init() {
-	IsWindows = runtime.GOOS == "windows"
 }
 
 func parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {

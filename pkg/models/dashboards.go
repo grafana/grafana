@@ -298,11 +298,6 @@ func (dash *Dashboard) GetUrl() string {
 	return GetDashboardFolderUrl(dash.IsFolder, dash.Uid, dash.Slug)
 }
 
-// Return the html url for a dashboard
-func (d *Dashboard) GenerateUrl() string {
-	return GetDashboardUrl(d.Uid, d.Slug)
-}
-
 // GetDashboardFolderUrl return the html url for a folder if it's folder, otherwise for a dashboard
 func GetDashboardFolderUrl(isFolder bool, uid string, slug string) string {
 	if isFolder {

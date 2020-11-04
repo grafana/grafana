@@ -24,11 +24,6 @@ func (e URLValidationError) Error() string {
 	return fmt.Sprintf("validation of data source URL %q failed: %s", e.URL, e.Err.Error())
 }
 
-// Unwrap returns the wrapped error.
-func (e URLValidationError) Unwrap() error {
-	return e.Err
-}
-
 // reURL is a regexp to detect if a URL specifies the protocol. We match also strings where the actual protocol is
 // missing (i.e., "://"), in order to catch these as invalid when parsing.
 var reURL = regexp.MustCompile("^[^:]*://")

@@ -8,7 +8,6 @@ import (
 	"errors"
 	"io"
 	"reflect"
-	"strconv"
 )
 
 // Implements the json.Unmarshaler interface.
@@ -72,21 +71,6 @@ func (j *Json) Int64() (int64, error) {
 		return reflect.ValueOf(j.data).Int(), nil
 	case uint, uint8, uint16, uint32, uint64:
 		return int64(reflect.ValueOf(j.data).Uint()), nil
-	}
-	return 0, errors.New("invalid value type")
-}
-
-// Uint64 coerces into an uint64
-func (j *Json) Uint64() (uint64, error) {
-	switch n := j.data.(type) {
-	case json.Number:
-		return strconv.ParseUint(n.String(), 10, 64)
-	case float32, float64:
-		return uint64(reflect.ValueOf(j.data).Float()), nil
-	case int, int8, int16, int32, int64:
-		return uint64(reflect.ValueOf(j.data).Int()), nil
-	case uint, uint8, uint16, uint32, uint64:
-		return reflect.ValueOf(j.data).Uint(), nil
 	}
 	return 0, errors.New("invalid value type")
 }
