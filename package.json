@@ -293,7 +293,9 @@
     "whatwg-fetch": "3.1.0"
   },
   "resolutions": {
-    "caniuse-db": "1.0.30000772"
+    "caniuse-db": "1.0.30000772",
+    "react": "16.12.0",
+    "react-dom": "16.12.0"
   },
   "workspaces": {
     "packages": [
@@ -302,7 +304,10 @@
     ],
     "nohoist": [
       "**/@types/*",
-      "**/@types/*/**"
+      "**/@types/*/**",
+      "@storybook",
+      "**/@storybook",
+      "**/@storybook/**"
     ]
   },
   "_moduleAliases": {

@@ -26,6 +26,7 @@ export const alignAndSortDataFramesByFieldName = (data: DataFrame[], fieldName: 
 
   // uPlot data needs to be aligned on x-axis (ref. https://github.com/leeoniya/uPlot/issues/108)
   // For experimentation just assuming alignment on time field, needs to change
+  // @ts-ignore
   return transformDataFrame(
     [
       {
@@ -35,6 +36,7 @@ export const alignAndSortDataFramesByFieldName = (data: DataFrame[], fieldName: 
     ],
     dataFramesToPlot
   ).pipe(
+    // @ts-ignore
     map(data => {
       const aligned = data[0];
       // need to be more "clever", not time only in the future!
