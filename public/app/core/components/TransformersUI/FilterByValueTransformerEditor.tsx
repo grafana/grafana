@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { css } from 'emotion';
 import {
   DataTransformerID,
@@ -10,56 +10,67 @@ import {
   DataFrame,
   SelectableValue,
   FieldType,
+  valueMatchers,
+  MatcherConfig,
 } from '@grafana/data';
-import { Select, Button, Input, RadioButtonGroup, stylesFactory } from '@grafana/ui';
+import { Select, Button, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 import cloneDeep from 'lodash/cloneDeep';
 import {
   FilterByValueTransformerOptions,
   ValueFilter,
 } from '@grafana/data/src/transformations/transformers/filterByValue';
 
-import { valueFiltersRegistry, ValueFilterID } from '@grafana/data/src/transformations/valueFilters';
+import { ValueFilterID } from '@grafana/data/src/transformations/valueFilters';
 
 interface RowProps {
   fieldNameOptions: Array<SelectableValue<string>>;
   onDelete: () => void;
   onConfigChange: (config: ValueFilter) => void;
-  config: ValueFilter;
-  fieldType: FieldType;
+  filter: ValueFilter;
+  field: Field;
+}
+
+const getFilterConfigEditor = (id: ValueFilterID): React.FC<EditorProps> | null => {
+  // TODO: return editor that creates a valueMatcherConfig.
+  switch (id) {
+    case ValueFilterID.isNull:
+      return null;
+    default:
+      return null;
+  }
+};
+
+interface EditorProps {
+  config: MatcherConfig;
+  onChange: (config: MatcherConfig) => void;
 }
 
 const FilterSelectorRow: React.FC<RowProps> = props => {
-  const { fieldNameOptions, onDelete, onConfigChange, config, fieldType } = props;
-
+  const { fieldNameOptions, onDelete, onConfigChange, filter, field } = props;
+  const Editor = getFilterConfigEditor(filter.config?.id as ValueFilterID);
   // Find filter types that fit the chosen field type
   const filterTypeOptions = useMemo(() => {
-    return valueFiltersRegistry
-      .list()
-      .filter(element => {
-        if (!Array.isArray(element?.supportedFieldTypes)) {
-          return true;
-        }
-        return element.supportedFieldTypes.includes(fieldType);
-      })
-      .map(item => ({
-        value: item.id,
-        label: item.name,
-        description: item.description,
-      }));
-  }, [fieldType]);
+    const options = [];
 
-  const filterInfo = valueFiltersRegistry.get(config.filterType);
-  const filterInstance = filterInfo.getInstance({
-    filterExpression: config.filterExpression,
-    fieldType: fieldType,
-  });
-  const filterValid = filterInstance.isValid;
+    for (const matcher of valueMatchers.list()) {
+      if (!matcher.isApplicable(field)) {
+        continue;
+      }
 
-  const fieldNameInvalid = config.fieldName !== null && !fieldNameOptions.find(item => item.value === config.fieldName);
-  const filterTypeInvalid =
-    !fieldNameInvalid && filterInfo.supportedFieldTypes && !filterInfo.supportedFieldTypes.includes(fieldType);
-  const filterExpressionInvalid =
-    config.filterExpression !== '' && !fieldNameInvalid && !filterTypeInvalid && !filterValid;
+      const editor = getFilterConfigEditor(matcher.id as ValueFilterID);
+      if (!editor) {
+        continue;
+      }
+
+      options.push({
+        value: matcher.id,
+        label: matcher.name,
+        description: matcher.description,
+      });
+    }
+
+    return options;
+  }, [field]);
 
   return (
     <div className="gf-form-inline">
@@ -69,12 +80,15 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
           className="width-24"
           placeholder="Field Name"
           options={fieldNameOptions}
-          value={config.fieldName}
-          invalid={fieldNameInvalid}
+          value={filter.fieldName}
           onChange={value => {
+            if (!value?.value) {
+              return;
+            }
+
             onConfigChange({
-              ...config,
-              fieldName: value?.value ?? null,
+              ...filter,
+              fieldName: value.value,
             });
           }}
           isClearable
@@ -84,29 +98,21 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
       <div className="gf-form gf-form-spacing">
         <div className="gf-form-label width-8">Match</div>
         <Select
-          invalid={filterTypeInvalid}
           className="width-8"
           placeholder="Select test"
           options={filterTypeOptions}
-          value={config.filterType}
+          value={filter.config.id}
           onChange={value => {
-            onConfigChange({ ...config, filterType: (value.value as ValueFilterID) ?? ValueFilterID.regex });
+            if (!value?.value) {
+              return;
+            }
+            onConfigChange({ ...filter, config: { id: value.value } });
           }}
           menuPlacement="bottom"
         />
       </div>
       <div className="gf-form gf-form--grow gf-form-spacing ">
-        {filterInfo.placeholder && (
-          <Input
-            className="flex-grow-1"
-            invalid={filterExpressionInvalid}
-            defaultValue={config.filterExpression || undefined}
-            placeholder={filterInfo.placeholder}
-            onBlur={event => {
-              onConfigChange({ ...config, filterExpression: event.currentTarget.value });
-            }}
-          />
-        )}
+        {Editor && <Editor config={filter.config} onChange={config => onConfigChange({ ...filter, config })} />}
       </div>
       <div className="gf-form">
         <Button icon="times" onClick={onDelete} style={{ height: '100%' }} size="sm" variant="secondary" />
@@ -115,11 +121,8 @@ const FilterSelectorRow: React.FC<RowProps> = props => {
   );
 };
 
-export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterByValueTransformerOptions>> = ({
-  input,
-  options,
-  onChange,
-}) => {
+export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterByValueTransformerOptions>> = props => {
+  const { input, options, onChange } = props;
   const styles = getEditorStyles();
   const fieldsInfo = useMemo(() => getAllFieldInfoFromDataFrames(input), [input]);
   const fieldNameOptions = useMemo(
@@ -131,39 +134,30 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
   );
 
   const onAddFilter = useCallback(() => {
-    let valueFilters = cloneDeep(options.valueFilters);
-    valueFilters.push({
-      fieldName: null,
-      filterExpression: null,
-      filterType: ValueFilterID.regex,
+    let filters = cloneDeep(options.filters);
+    filters.push({
+      fieldName: '',
+      config: {
+        id: ValueFilterID.regex,
+      },
     });
-
-    onChange({
-      ...options,
-      valueFilters,
-    });
+    onChange({ ...options, filters });
   }, [onChange, options]);
 
   const onDeleteFilter = useCallback(
     (index: number) => () => {
-      let valueFilters = cloneDeep(options.valueFilters);
-      valueFilters.splice(index, 1);
-      onChange({
-        ...options,
-        valueFilters,
-      });
+      let filters = cloneDeep(options.filters);
+      filters.splice(index, 1);
+      onChange({ ...options, filters });
     },
     [options, onChange]
   );
 
   const onConfigChange = useCallback(
     (index: number) => (config: ValueFilter) => {
-      let valueFilters = cloneDeep(options.valueFilters);
-      valueFilters[index] = config;
-      onChange({
-        ...options,
-        valueFilters: valueFilters as ValueFilter[],
-      });
+      let filters = cloneDeep(options.filters);
+      filters[index] = config;
+      onChange({ ...options, filters });
     },
     [options, onChange]
   );
@@ -197,15 +191,20 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
         />
       </div>
       <div className={styles.conditions}>
-        {options.valueFilters.map((val, idx) => {
-          const matchingField = getFieldByName(val.fieldName, input);
+        {options.filters.map((filter, idx) => {
+          const matchingField = getFieldByName(filter.fieldName, input);
+
+          if (!matchingField) {
+            return null;
+          }
+
           return (
             <FilterSelectorRow
               onConfigChange={onConfigChange(idx)}
               onDelete={onDeleteFilter(idx)}
               fieldNameOptions={fieldNameOptions}
-              config={val}
-              fieldType={matchingField?.type || FieldType.other}
+              filter={filter}
+              field={matchingField}
               key={idx}
             />
           );

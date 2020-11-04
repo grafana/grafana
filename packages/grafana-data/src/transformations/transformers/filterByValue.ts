@@ -1,20 +1,20 @@
 import { DataTransformerID } from './ids';
-import { DataFrame /*FieldType,*/ } from '../../types/dataFrame';
-import { MutableField } from '../../dataframe/MutableDataFrame';
-import { DataTransformerInfo } from '../../types/transformations';
+import { DataFrame, Field } from '../../types/dataFrame';
+import { DataTransformerInfo, MatcherConfig } from '../../types/transformations';
 import { getFieldDisplayName } from '../../field/fieldState';
 import { ArrayVector } from '../../vector/ArrayVector';
-import { ValueFilterID, valueFiltersRegistry } from '../valueFilters';
+import { getValueMatcher } from '../matchers';
 
 export interface ValueFilter {
-  fieldName: string | null; // Corresponding field name
-  filterExpression: string | null; // The filter expression / value
-  filterType: ValueFilterID;
+  fieldName: string;
+  config: MatcherConfig;
 }
 
 export interface FilterByValueTransformerOptions {
-  valueFilters: ValueFilter[];
+  filters: ValueFilter[];
+  // TODO: create enum that holds this value.
   type: string; // 'include' or 'exclude'
+  // TODO: create enum that holds this value.
   match: string; // 'all' or 'any'
 }
 
@@ -23,9 +23,9 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
   name: 'Filter by value',
   description: 'Filter the data points (rows) depending on the value of certain fields',
   defaultOptions: {
-    valueFilters: [{ fieldName: null, filterExpression: null, filterType: ValueFilterID.regex }],
+    valueFilters: [],
     type: 'include',
-    match: 'all',
+    match: 'any',
   },
 
   /**
@@ -37,96 +37,81 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
     const matchAll = options.match === 'all';
 
     return (data: DataFrame[]) => {
-      if (options.valueFilters.length === 0) {
+      if (options.filters.length === 0) {
         return data;
+      }
+
+      const { filters: valueFilters } = options;
+      const matchingRows = new Set<number>();
+
+      for (const frame of data) {
+        const fieldIndexByName = groupFieldIndexByName(frame, data);
+
+        for (let index = 0; index < frame.length; index++) {
+          if (matchingRows.has(index)) {
+            // Row already matching filters no need to check again.
+            continue;
+          }
+
+          const checkIfFilterIsMatchingRow = (filter: ValueFilter): boolean => {
+            const matcher = getValueMatcher(filter.config);
+            const fieldIndex = fieldIndexByName[filter.fieldName];
+            return matcher(index, frame.fields[fieldIndex], frame, data);
+          };
+
+          const matching = matchAll
+            ? valueFilters.every(checkIfFilterIsMatchingRow)
+            : !!valueFilters.find(checkIfFilterIsMatchingRow);
+
+          if (matching) {
+            matchingRows.add(index);
+          }
+        }
       }
 
       const processed: DataFrame[] = [];
 
-      let includeThisRow = []; // All data points will be flagged for include (true) or exclude (false) in this variable
-
       for (let frame of data) {
-        for (let filterIndex = 0; filterIndex < options.valueFilters.length; filterIndex++) {
-          let filter = options.valueFilters[filterIndex];
+        const fields: Field[] = [];
 
-          // Find the matching field for this filter
-          let field = null;
-          for (let f of frame.fields) {
-            if (getFieldDisplayName(f) === filter.fieldName) {
-              field = f;
-              break;
+        for (const field of frame.fields) {
+          const buffer = [];
+
+          for (let index = 0; index < frame.length; index++) {
+            if (includeRow && matchingRows.has(index)) {
+              buffer.push(field.values.get(index));
+              continue;
+            }
+
+            if (!includeRow && !matchingRows.has(index)) {
+              buffer.push(field.values.get(index));
+              continue;
             }
           }
 
-          if (field === null) {
-            continue; // No field found for for this filter in this frame, ignore
-          }
-
-          // This creates the filter instance we need (with the test function) we need to match the rows
-          let filterInstance = valueFiltersRegistry.get(filter.filterType).getInstance({
-            filterExpression: filter.filterExpression,
-            fieldType: field.type,
-          });
-
-          if (!filterInstance.isValid) {
-            continue;
-          }
-
-          if (matchAll) {
-            // Run the test on each row
-            for (let row = 0; row < frame.length; row++) {
-              if (!filterInstance.test(field.values.get(row))) {
-                includeThisRow[row] = !includeRow;
-              } else if (filterIndex === 0) {
-                includeThisRow[row] = includeRow;
-              }
-            }
-          } else {
-            // Run the test on each row
-            for (let row = 0; row < frame.length; row++) {
-              if (filterInstance.test(field.values.get(row))) {
-                includeThisRow[row] = includeRow;
-              } else if (filterIndex === 0) {
-                includeThisRow[row] = !includeRow;
-              }
-            }
-          }
-        }
-
-        // Create the skeleton of the new data, copy original field attributes
-        let filteredFields: MutableField[] = [];
-        for (let field of frame.fields) {
-          filteredFields.push({
+          // TODO: what parts needs to be excluded from field.
+          fields.push({
             ...field,
-            values: new ArrayVector(),
-            config: {
-              ...field.config,
-            },
+            values: new ArrayVector(buffer),
           });
         }
 
-        // Create a copy of the data with the included rows only
-        let dataLength = 0;
-        for (let row = 0; row < includeThisRow.length; row++) {
-          if (includeThisRow[row]) {
-            for (let j = 0; j < frame.fields.length; j++) {
-              filteredFields[j].values.add(frame.fields[j].values.get(row));
-            }
-            dataLength++;
-          }
-        }
-
+        // TODO: calculate frame length.
         processed.push({
-          fields: filteredFields,
-          length: dataLength,
+          ...frame,
+          fields: fields,
         });
       }
 
-      if (includeThisRow.length > 0) {
-        return processed;
-      } else {
-        return data;
-      }
+      return processed;
     };
   },
+};
+
+const groupFieldIndexByName = (frame: DataFrame, data: DataFrame[]): Record<string, number> => {
+  return frame.fields.reduce((all: Record<string, number>, field, fieldIndex) => {
+    const fieldName = getFieldDisplayName(field, frame, data);
+    all[fieldName] = fieldIndex;
+    return all;
+  }, {});
 };

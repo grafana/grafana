@@ -13,6 +13,7 @@ import {
   ValueMatcher,
 } from '../types/transformations';
 import { Registry } from '../utils/Registry';
+import { getNullValueMatchers } from './matchers/valueMatchers';
 
 export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
   return [
@@ -31,7 +32,7 @@ export const frameMatchers = new Registry<FrameMatcherInfo>(() => {
 });
 
 export const valueMatchers = new Registry<ValueMatcherInfo>(() => {
-  return [];
+  return [...getNullValueMatchers()];
 });
 
 export function getFieldMatcher(config: MatcherConfig): FieldMatcher {
@@ -50,7 +51,7 @@ export function getFrameMatchers(config: MatcherConfig): FrameMatcher {
   return info.get(config.options);
 }
 
-export function getValueMatchers(config: MatcherConfig): ValueMatcher {
+export function getValueMatcher(config: MatcherConfig): ValueMatcher {
   const info = valueMatchers.get(config.id);
   if (!info) {
     throw new Error('Unknown value matcher: ' + config.id);

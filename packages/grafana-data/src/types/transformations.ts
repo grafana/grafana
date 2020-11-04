@@ -25,9 +25,9 @@ export interface DataTransformerConfig<TOptions = any> {
   options: TOptions;
 }
 
-export type FieldMatcher = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => boolean;
 export type FrameMatcher = (frame: DataFrame) => boolean;
-export type ValueMatcher = (value: any) => boolean;
+export type FieldMatcher = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => boolean;
+export type ValueMatcher = (valueIndex: number, field: Field, frame: DataFrame, allFrames: DataFrame[]) => boolean;
 
 export interface FieldMatcherInfo<TOptions = any> extends RegistryItemWithOptions<TOptions> {
   get: (options: TOptions) => FieldMatcher;
@@ -39,6 +39,7 @@ export interface FrameMatcherInfo<TOptions = any> extends RegistryItemWithOption
 
 export interface ValueMatcherInfo<TOptions = any> extends RegistryItemWithOptions<TOptions> {
   get: (options: TOptions) => ValueMatcher;
+  isApplicable: (field: Field) => boolean;
 }
 export interface MatcherConfig<TOptions = any> {
   id: string;
