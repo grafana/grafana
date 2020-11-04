@@ -27,7 +27,7 @@ export enum VariableSupportType {
 /**
  * Base class for VariableSupport classes
  *
- * @internal -- experimental
+ * @alpha -- experimental
  */
 export abstract class VariableSupportBase<
   DSType extends DataSourceApi<TQuery, TOptions>,
