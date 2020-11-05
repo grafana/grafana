@@ -22,6 +22,7 @@ The main highlights are:
 - [**Table improvements and new image cell mode**]({{< relref "#table-improvements-and-new-image-cell-mode" >}})
 - [**New color scheme option**]({{< relref "#new-color-scheme-option" >}})
 - [**SigV4 Authentication for Amazon Elasticsearch Service**]({{< relref "#sigv4-authentication-for-aws-users" >}})
+- [**CSV exports for Excel**]({{< relref "#csv-exports-for-excel" >}})
 
 ## Table improvements and new image cell mode
 
@@ -59,6 +60,11 @@ As this new option is a standard field option it works in every panel. Here is a
 
 {{< figure src="/img/docs/v73/bar_gauge_gradient_color_scheme.png" max-width="900px" caption="bar gauge color scheme" >}}
 
+## CSV exports for Excel
+
+In v7.0, we introduced a new table panel and inspect mode with Download CSV enabled. However, CSV export to Excel was removed. Due to a large number of inquiries and requests, this [community contribution from tomdaly](https://github.com/grafana/grafana/pull/27284) brought the feature back.
+
+For more information, refer to [Download raw query results as CSV]({{< relref "../panels/inspect-panel/#download-raw-query-results-as-csv" >}}) in the Grafana documentation.
 
 ## Google Cloud monitoring out-of-the-box dashboards
 
@@ -83,6 +89,10 @@ This is an amazing new feature that was created in cooperation with one of our c
 You can now configure your Elasticsearch data source to access your Amazon Elasticsearch Service domain directly from Grafana.
 
 For more details, refer to the [Elasticsearch docs]({{<relref "../datasources/elasticsearch/#aws-signature-version-4-authentication">}}).
+
+## Chaining pipeline aggregation in Elasticsearch
+
+Thanks to a contribution from a community member, it's now possible to chain multiple pipeline aggregations together and use the results of one pipeline aggregation as the input of another. This unleashes the full power of Elasticsearch's pipeline aggregations in Grafana, allowing users to perform high order derivatives or use a pipeline aggregation result as a variable for a Bucket Script Aggregation.
 
 ## Grafana Enterprise features
 

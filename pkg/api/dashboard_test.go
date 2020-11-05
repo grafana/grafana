@@ -1246,7 +1246,7 @@ func (m mockDashboardProvisioningService) GetProvisionedDashboardData(name strin
 	panic("implement me")
 }
 
-func (mock mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(dashboardId int64) (*models.DashboardProvisioning, error) {
+func (m mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(dashboardId int64) (*models.DashboardProvisioning, error) {
 	return &models.DashboardProvisioning{}, nil
 }
 

@@ -13,7 +13,7 @@ export interface PopoverContentProps {
 
 export type PopoverContent = string | React.ReactElement<any> | ((props: PopoverContentProps) => JSX.Element);
 
-export const Tooltip: FC<TooltipProps> = ({ children, theme, ...controllerProps }: TooltipProps) => {
+export const Tooltip: FC<TooltipProps> = React.memo(({ children, theme, ...controllerProps }: TooltipProps) => {
   const tooltipTriggerRef = createRef<PopperJS.ReferenceObject>();
   const popperBackgroundClassName = 'popper__background' + (theme ? ' popper__background--' + theme : '');
 
@@ -52,4 +52,4 @@ export const Tooltip: FC<TooltipProps> = ({ children, theme, ...controllerProps 
       }}
     </PopoverController>
   );
-};
+});

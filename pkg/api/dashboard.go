@@ -356,14 +356,20 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 		return Error(500, "Failed to load home dashboard", err)
 	}
 
-	if c.HasUserRole(models.ROLE_ADMIN) && !c.HasHelpFlag(models.HelpFlagGettingStartedPanelDismissed) {
-		addGettingStartedPanelToHomeDashboard(dash.Dashboard)
-	}
+	hs.addGettingStartedPanelToHomeDashboard(c, dash.Dashboard)
 
 	return JSON(200, &dash)
 }
 
-func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
+func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext, dash *simplejson.Json) {
+	// We only add this getting started panel for Admins who have not dismissed it,
+	// and if a custom default home dashboard hasn't been configured
+	if !c.HasUserRole(models.ROLE_ADMIN) ||
+		c.HasHelpFlag(models.HelpFlagGettingStartedPanelDismissed) ||
+		hs.Cfg.DefaultHomeDashboardPath != "" {
+		return
+	}
+
 	panels := dash.Get("panels").MustArray()
 
 	newpanel := simplejson.NewFromAny(map[string]interface{}{

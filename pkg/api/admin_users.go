@@ -121,7 +121,7 @@ func AdminDeleteUser(c *models.ReqContext) Response {
 }
 
 // POST /api/admin/users/:id/disable
-func (server *HTTPServer) AdminDisableUser(c *models.ReqContext) Response {
+func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) Response {
 	userID := c.ParamsInt64(":id")
 
 	// External users shouldn't be disabled from API
@@ -138,7 +138,7 @@ func (server *HTTPServer) AdminDisableUser(c *models.ReqContext) Response {
 		return Error(500, "Failed to disable user", err)
 	}
 
-	err := server.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userID)
+	err := hs.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userID)
 	if err != nil {
 		return Error(500, "Failed to disable user", err)
 	}
@@ -168,24 +168,24 @@ func AdminEnableUser(c *models.ReqContext) Response {
 }
 
 // POST /api/admin/users/:id/logout
-func (server *HTTPServer) AdminLogoutUser(c *models.ReqContext) Response {
+func (hs *HTTPServer) AdminLogoutUser(c *models.ReqContext) Response {
 	userID := c.ParamsInt64(":id")
 
 	if c.UserId == userID {
 		return Error(400, "You cannot logout yourself", nil)
 	}
 
-	return server.logoutUserFromAllDevicesInternal(c.Req.Context(), userID)
+	return hs.logoutUserFromAllDevicesInternal(c.Req.Context(), userID)
 }
 
 // GET /api/admin/users/:id/auth-tokens
-func (server *HTTPServer) AdminGetUserAuthTokens(c *models.ReqContext) Response {
+func (hs *HTTPServer) AdminGetUserAuthTokens(c *models.ReqContext) Response {
 	userID := c.ParamsInt64(":id")
-	return server.getUserAuthTokensInternal(c, userID)
+	return hs.getUserAuthTokensInternal(c, userID)
 }
 
 // POST /api/admin/users/:id/revoke-auth-token
-func (server *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext, cmd models.RevokeAuthTokenCmd) Response {
+func (hs *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext, cmd models.RevokeAuthTokenCmd) Response {
 	userID := c.ParamsInt64(":id")
-	return server.revokeUserAuthTokenInternal(c, userID, cmd)
+	return hs.revokeUserAuthTokenInternal(c, userID, cmd)
 }

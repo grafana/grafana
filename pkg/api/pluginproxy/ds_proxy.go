@@ -218,30 +218,30 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 
 func (proxy *DataSourceProxy) validateRequest() error {
 	if !checkWhiteList(proxy.ctx, proxy.targetUrl.Host) {
-		return errors.New("Target url is not a valid target")
+		return errors.New("target URL is not a valid target")
 	}
 
 	if proxy.ds.Type == models.DS_PROMETHEUS {
 		if proxy.ctx.Req.Request.Method == "DELETE" {
-			return errors.New("Deletes not allowed on proxied Prometheus datasource")
+			return errors.New("deletes not allowed on proxied Prometheus datasource")
 		}
 		if proxy.ctx.Req.Request.Method == "PUT" {
-			return errors.New("Puts not allowed on proxied Prometheus datasource")
+			return errors.New("puts not allowed on proxied Prometheus datasource")
 		}
 		if proxy.ctx.Req.Request.Method == "POST" && !(proxy.proxyPath == "api/v1/query" || proxy.proxyPath == "api/v1/query_range") {
-			return errors.New("Posts not allowed on proxied Prometheus datasource except on /query and /query_range")
+			return errors.New("posts not allowed on proxied Prometheus datasource except on /query and /query_range")
 		}
 	}
 
 	if proxy.ds.Type == models.DS_ES {
 		if proxy.ctx.Req.Request.Method == "DELETE" {
-			return errors.New("Deletes not allowed on proxied Elasticsearch datasource")
+			return errors.New("deletes not allowed on proxied Elasticsearch datasource")
 		}
 		if proxy.ctx.Req.Request.Method == "PUT" {
-			return errors.New("Puts not allowed on proxied Elasticsearch datasource")
+			return errors.New("puts not allowed on proxied Elasticsearch datasource")
 		}
 		if proxy.ctx.Req.Request.Method == "POST" && proxy.proxyPath != "_msearch" {
-			return errors.New("Posts not allowed on proxied Elasticsearch datasource except on /_msearch")
+			return errors.New("posts not allowed on proxied Elasticsearch datasource except on /_msearch")
 		}
 	}
 
@@ -255,7 +255,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 
 			if route.ReqRole.IsValid() {
 				if !proxy.ctx.HasUserRole(route.ReqRole) {
-					return errors.New("Plugin proxy route access denied")
+					return errors.New("plugin proxy route access denied")
 				}
 			}
 
