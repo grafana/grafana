@@ -272,11 +272,6 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	return dash
 }
 
-// GetString a
-func (d *Dashboard) GetString(prop string, defaultValue string) string {
-	return d.Data.Get(prop).MustString(defaultValue)
-}
-
 // UpdateSlug updates the slug
 func (d *Dashboard) UpdateSlug() {
 	title := d.Data.Get("title").MustString()

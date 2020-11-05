@@ -5,6 +5,7 @@ import {
   dateTimeAsUS,
   dateTimeAsUSNoDateIfToday,
   getDateTimeAsLocalFormat,
+  getDateTimeAsLocalFormatNoDateIfToday,
   dateTimeFromNow,
   toClockMilliseconds,
   toClockSeconds,
@@ -127,6 +128,7 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Indian Rupee (₹)', id: 'currencyINR', fn: currency('₹') },
       { name: 'South Korean Won (₩)', id: 'currencyKRW', fn: currency('₩') },
       { name: 'Indonesian Rupiah (Rp)', id: 'currencyIDR', fn: currency('Rp') },
+      { name: 'Philippine Peso (PHP)', id: 'currencyPHP', fn: currency('PHP') },
     ],
   },
   {
@@ -186,6 +188,11 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Datetime US', id: 'dateTimeAsUS', fn: dateTimeAsUS },
       { name: 'Datetime US (No date if today)', id: 'dateTimeAsUSNoDateIfToday', fn: dateTimeAsUSNoDateIfToday },
       { name: 'Datetime local', id: 'dateTimeAsLocal', fn: getDateTimeAsLocalFormat() },
+      {
+        name: 'Datetime local (No date if today)',
+        id: 'dateTimeAsLocalNoDateIfToday',
+        fn: getDateTimeAsLocalFormatNoDateIfToday(),
+      },
       { name: 'Datetime default', id: 'dateTimeAsSystem', fn: dateTimeSystemFormatter },
       { name: 'From Now', id: 'dateTimeFromNow', fn: dateTimeFromNow },
     ],
