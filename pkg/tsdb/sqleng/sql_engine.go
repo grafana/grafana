@@ -199,7 +199,7 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 	return result, nil
 }
 
-// global macros/substitutions for all sql datasources
+// Interpolate provides global macros/substitutions for all sql datasources.
 var Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
 	minInterval, err := tsdb.GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
 	if err != nil {

@@ -161,6 +161,7 @@ export const addSystemTemplateVariables = (dashboard: DashboardModel): ThunkResu
         value: {
           login: contextSrv.user.login,
           id: contextSrv.user.id,
+          email: contextSrv.user.email,
           toString: () => contextSrv.user.id.toString(),
         },
       },

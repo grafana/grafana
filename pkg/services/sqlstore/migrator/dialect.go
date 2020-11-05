@@ -79,8 +79,8 @@ type BaseDialect struct {
 	driverName string
 }
 
-func (d *BaseDialect) DriverName() string {
-	return d.driverName
+func (b *BaseDialect) DriverName() string {
+	return b.driverName
 }
 
 func (b *BaseDialect) ShowCreateNull() bool {
@@ -107,7 +107,7 @@ func (b *BaseDialect) Default(col *Column) string {
 	return col.Default
 }
 
-func (db *BaseDialect) DateTimeFunc(value string) string {
+func (b *BaseDialect) DateTimeFunc(value string) string {
 	return value
 }
 
@@ -145,12 +145,12 @@ func (b *BaseDialect) CreateTableSql(table *Table) string {
 	return sql
 }
 
-func (db *BaseDialect) AddColumnSql(tableName string, col *Column) string {
-	return fmt.Sprintf("alter table %s ADD COLUMN %s", db.dialect.Quote(tableName), col.StringNoPk(db.dialect))
+func (b *BaseDialect) AddColumnSql(tableName string, col *Column) string {
+	return fmt.Sprintf("alter table %s ADD COLUMN %s", b.dialect.Quote(tableName), col.StringNoPk(b.dialect))
 }
 
-func (db *BaseDialect) CreateIndexSql(tableName string, index *Index) string {
-	quote := db.dialect.Quote
+func (b *BaseDialect) CreateIndexSql(tableName string, index *Index) string {
+	quote := b.dialect.Quote
 	var unique string
 	if index.Type == UniqueIndex {
 		unique = " UNIQUE"
@@ -160,66 +160,66 @@ func (db *BaseDialect) CreateIndexSql(tableName string, index *Index) string {
 
 	quotedCols := []string{}
 	for _, col := range index.Cols {
-		quotedCols = append(quotedCols, db.dialect.Quote(col))
+		quotedCols = append(quotedCols, b.dialect.Quote(col))
 	}
 
 	return fmt.Sprintf("CREATE%s INDEX %v ON %v (%v);", unique, quote(idxName), quote(tableName), strings.Join(quotedCols, ","))
 }
 
-func (db *BaseDialect) QuoteColList(cols []string) string {
+func (b *BaseDialect) QuoteColList(cols []string) string {
 	var sourceColsSql = ""
 	for _, col := range cols {
-		sourceColsSql += db.dialect.Quote(col)
+		sourceColsSql += b.dialect.Quote(col)
 		sourceColsSql += "\n, "
 	}
 	return strings.TrimSuffix(sourceColsSql, "\n, ")
 }
 
-func (db *BaseDialect) CopyTableData(sourceTable string, targetTable string, sourceCols []string, targetCols []string) string {
-	sourceColsSql := db.QuoteColList(sourceCols)
-	targetColsSql := db.QuoteColList(targetCols)
+func (b *BaseDialect) CopyTableData(sourceTable string, targetTable string, sourceCols []string, targetCols []string) string {
+	sourceColsSql := b.QuoteColList(sourceCols)
+	targetColsSql := b.QuoteColList(targetCols)
 
-	quote := db.dialect.Quote
+	quote := b.dialect.Quote
 	return fmt.Sprintf("INSERT INTO %s (%s) SELECT %s FROM %s", quote(targetTable), targetColsSql, sourceColsSql, quote(sourceTable))
 }
 
-func (db *BaseDialect) DropTable(tableName string) string {
-	quote := db.dialect.Quote
+func (b *BaseDialect) DropTable(tableName string) string {
+	quote := b.dialect.Quote
 	return fmt.Sprintf("DROP TABLE IF EXISTS %s", quote(tableName))
 }
 
-func (db *BaseDialect) RenameTable(oldName string, newName string) string {
-	quote := db.dialect.Quote
+func (b *BaseDialect) RenameTable(oldName string, newName string) string {
+	quote := b.dialect.Quote
 	return fmt.Sprintf("ALTER TABLE %s RENAME TO %s", quote(oldName), quote(newName))
 }
 
-func (db *BaseDialect) ColumnCheckSql(tableName, columnName string) (string, []interface{}) {
+func (b *BaseDialect) ColumnCheckSql(tableName, columnName string) (string, []interface{}) {
 	return "", nil
 }
 
-func (db *BaseDialect) DropIndexSql(tableName string, index *Index) string {
-	quote := db.dialect.Quote
+func (b *BaseDialect) DropIndexSql(tableName string, index *Index) string {
+	quote := b.dialect.Quote
 	name := index.XName(tableName)
 	return fmt.Sprintf("DROP INDEX %v ON %s", quote(name), quote(tableName))
 }
 
-func (db *BaseDialect) UpdateTableSql(tableName string, columns []*Column) string {
+func (b *BaseDialect) UpdateTableSql(tableName string, columns []*Column) string {
 	return "-- NOT REQUIRED"
 }
 
-func (db *BaseDialect) ColString(col *Column) string {
-	sql := db.dialect.Quote(col.Name) + " "
+func (b *BaseDialect) ColString(col *Column) string {
+	sql := b.dialect.Quote(col.Name) + " "
 
-	sql += db.dialect.SqlType(col) + " "
+	sql += b.dialect.SqlType(col) + " "
 
 	if col.IsPrimaryKey {
 		sql += "PRIMARY KEY "
 		if col.IsAutoIncrement {
-			sql += db.dialect.AutoIncrStr() + " "
+			sql += b.dialect.AutoIncrStr() + " "
 		}
 	}
 
-	if db.dialect.ShowCreateNull() {
+	if b.dialect.ShowCreateNull() {
 		if col.Nullable {
 			sql += "NULL "
 		} else {
@@ -228,18 +228,18 @@ func (db *BaseDialect) ColString(col *Column) string {
 	}
 
 	if col.Default != "" {
-		sql += "DEFAULT " + db.dialect.Default(col) + " "
+		sql += "DEFAULT " + b.dialect.Default(col) + " "
 	}
 
 	return sql
 }
 
-func (db *BaseDialect) ColStringNoPk(col *Column) string {
-	sql := db.dialect.Quote(col.Name) + " "
+func (b *BaseDialect) ColStringNoPk(col *Column) string {
+	sql := b.dialect.Quote(col.Name) + " "
 
-	sql += db.dialect.SqlType(col) + " "
+	sql += b.dialect.SqlType(col) + " "
 
-	if db.dialect.ShowCreateNull() {
+	if b.dialect.ShowCreateNull() {
 		if col.Nullable {
 			sql += "NULL "
 		} else {
@@ -248,36 +248,36 @@ func (db *BaseDialect) ColStringNoPk(col *Column) string {
 	}
 
 	if col.Default != "" {
-		sql += "DEFAULT " + db.dialect.Default(col) + " "
+		sql += "DEFAULT " + b.dialect.Default(col) + " "
 	}
 
 	return sql
 }
 
-func (db *BaseDialect) Limit(limit int64) string {
+func (b *BaseDialect) Limit(limit int64) string {
 	return fmt.Sprintf(" LIMIT %d", limit)
 }
 
-func (db *BaseDialect) LimitOffset(limit int64, offset int64) string {
+func (b *BaseDialect) LimitOffset(limit int64, offset int64) string {
 	return fmt.Sprintf(" LIMIT %d OFFSET %d", limit, offset)
 }
 
-func (db *BaseDialect) PreInsertId(table string, sess *xorm.Session) error {
+func (b *BaseDialect) PreInsertId(table string, sess *xorm.Session) error {
 	return nil
 }
 
-func (db *BaseDialect) PostInsertId(table string, sess *xorm.Session) error {
+func (b *BaseDialect) PostInsertId(table string, sess *xorm.Session) error {
 	return nil
 }
 
-func (db *BaseDialect) CleanDB() error {
+func (b *BaseDialect) CleanDB() error {
 	return nil
 }
 
-func (db *BaseDialect) NoOpSql() string {
+func (b *BaseDialect) NoOpSql() string {
 	return "SELECT 0;"
 }
 
-func (db *BaseDialect) TruncateDBTables() error {
+func (b *BaseDialect) TruncateDBTables() error {
 	return nil
 }
