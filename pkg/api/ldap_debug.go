@@ -97,7 +97,7 @@ func (user *LDAPUserDTO) FetchOrgs() error {
 }
 
 // ReloadLDAPCfg reloads the LDAP configuration
-func (server *HTTPServer) ReloadLDAPCfg() Response {
+func (hs *HTTPServer) ReloadLDAPCfg() Response {
 	if !ldap.IsEnabled() {
 		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
@@ -110,7 +110,7 @@ func (server *HTTPServer) ReloadLDAPCfg() Response {
 }
 
 // GetLDAPStatus attempts to connect to all the configured LDAP servers and returns information on whenever they're available or not.
-func (server *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
+func (hs *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
 	if !ldap.IsEnabled() {
 		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
@@ -152,7 +152,7 @@ func (server *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
 }
 
 // PostSyncUserWithLDAP enables a single Grafana user to be synchronized against LDAP
-func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
+func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 	if !ldap.IsEnabled() {
 		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
@@ -203,7 +203,7 @@ func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 				return Error(http.StatusInternalServerError, "Failed to disable the user", err)
 			}
 
-			err = server.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userId)
+			err = hs.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userId)
 			if err != nil {
 				return Error(http.StatusInternalServerError, "Failed to remove session tokens for the user", err)
 			}
@@ -231,7 +231,7 @@ func (server *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 }
 
 // GetUserFromLDAP finds an user based on a username in LDAP. This helps illustrate how would the particular user be mapped in Grafana when synced.
-func (server *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
+func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 	if !ldap.IsEnabled() {
 		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
