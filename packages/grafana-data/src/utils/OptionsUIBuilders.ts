@@ -13,7 +13,6 @@ import {
   StringFieldConfigSettings,
   NumberFieldConfigSettings,
   SliderFieldConfigSettings,
-  ColorFieldConfigSettings,
   identityOverrideProcessor,
   UnitFieldConfigSettings,
   unitOverrideProcessor,

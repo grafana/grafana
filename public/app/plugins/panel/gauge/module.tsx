@@ -1,4 +1,4 @@
-import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 import { GaugePanel } from './GaugePanel';
 import { GaugeOptions } from './types';
 import { addStandardDataReduceOptions } from '../stat/types';
