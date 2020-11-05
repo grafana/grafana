@@ -28,7 +28,7 @@ func (r *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subs
 
 // OnPublish is called when a client wants to broadcast on the websocket
 // Currently this sends measurements over websocket -- should be replaced with the HTTP interface
-func (b *MeasurementsRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
+func (r *MeasurementsRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
 	return centrifuge.PublishReply{
 		Options: centrifuge.PublishOptions{},
 	}, nil
