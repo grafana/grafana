@@ -25,7 +25,7 @@ func (*OSSLicensingService) Expiry() int64 {
 }
 
 func (*OSSLicensingService) Edition() string {
-	return OpenSource
+	return openSource
 }
 
 func (*OSSLicensingService) StateInfo() string {
