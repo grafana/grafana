@@ -494,7 +494,7 @@ func build(binaryName, pkg string, tags []string) {
 	if !isDev {
 		rmr(binary, binary+".md5")
 	}
-	args := []string{"build", "-ldflags", ldflags()}
+	args := []string{"build", "-buildmode=exe", "-ldflags", ldflags()}
 	if len(tags) > 0 {
 		args = append(args, "-tags", strings.Join(tags, ","))
 	}
