@@ -41,9 +41,27 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
     </td>
   </tr>
   <tr>
+    <td style="vertical-align: top">Exporter</td>
+    <td>
+      An exporter implements the translation of data that comes out of a data source into a format that Prometheus can digest.
+    </td>
+  </tr>
+  <tr>
+    <td style="vertical-align: top">Integration (Grafana Cloud)</td>
+    <td>
+      Each Integration in Grafana Cloud uses the cloud agent to connect your data source to Grafana Cloud for visualizing. Note: Prometheus uses the word “integrations” to refer to software that exposes Prometheus metrics without needing an exporter, which is a different use of the same word we use here.
+    </td>
+  </tr>
+  <tr>
     <td style="vertical-align: top">Graph</td>
     <td>
       A commonly-used visualization that displays data as points, lines, or bars.
+    </td>
+  </tr>
+  <tr>
+    <td style="vertical-align: top">Mixin</td>
+    <td>
+      A mixin is a set of Grafana dashboards and Prometheus rules and alerts, written in jsonnet and packaged together in a bundle.
     </td>
   </tr>
   <tr>
