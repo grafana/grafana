@@ -1,89 +1,88 @@
 //
-// Layout
+// Container
 //
 
 .error-container {
   display: flex;
   flex-direction: row;
-}
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url(/public/img/graph404.svg) right no-repeat;
+  background-position: 50% 50%;
+  background-size: cover;
+  filter: saturate(80%);
+  text-align: center;
 
-.error-row {
-  display: flex;
-  flex-direction: row;
-}
+  .error-content {
+    margin: auto;
+    font-weight: 300;
+    font-family: Roboto;
+    font-style: normal;
 
-.error-column {
-  display: flex;
-  flex-direction: column;
-}
+    .error-head {
+      display: flex;
+      justify-content: center;
+      position: relative;
+      margin-top: 1rem;
 
-.error-space-between {
-  justify-content: space-between;
-}
+      .error-icon {
+        height: 102px;
+        width: 92.3px;
+      }
 
-.graph-box {
-  width: 62%;
-  padding: $space-xl $space-md;
-}
+      .error-title {
+        line-height: 0.9;
 
-.info-box {
-  width: 38%;
-  padding: $space-xl $space-md;
-}
+        .error-code {
+          font-size: 73px;
+        }
 
-.graph-percentage {
-  padding: 0 0 18px;
-}
+        .error-text {
+          font-size: 37px;
+        }
+      }
 
-.image-box {
-  padding: $space-sm;
-}
+      .error-oops {
+        position: absolute;
+        top: -46px;
+        left: 51px;
+      }
+    }
 
-.left-margin {
-  padding: 0 0 0 64px;
-}
+    .error-main-text {
+      color: #f05a28;
+      font-size: 20px;
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
 
-.current-box {
-  justify-content: flex-end;
-}
+    .error-sub-text {
+      width: 60%;
+      margin: auto;
+    }
 
-//
-// Text
-//
-
-.current-text {
-  color: $blue;
-  font-weight: bold;
-  line-height: 14px;
-}
-
-.error-link {
-  color: $orange;
-}
-
-.error-minus {
-  color: #7eb26d;
-  padding: 0 $space-sm;
-  line-height: 21px;
-}
-
-.graph-percentage p {
-  text-align: right;
-  margin: 0;
-  line-height: 14px;
-}
-
-.graph-text {
-  margin: 0;
+    .error-home-button {
+      width: 213px;
+      justify-content: center;
+      height: 48px;
+      background: #0f335d;
+      border-radius: 27px;
+      margin-top: 1rem;
+    }
+  }
 }
 
 @include media-breakpoint-down(sm) {
-  .graph-box {
-    width: 50%;
+  .error-oops {
+    left: 48px !important;
   }
 
-  .info-box {
-    width: 50%;
+  .error-sub-text {
+    width: 70% !important;
   }
 }
 
@@ -92,15 +91,7 @@
     flex-direction: column;
   }
 
-  .graph-box {
-    width: 100%;
-  }
-
-  .info-box {
-    width: 100%;
-  }
-
-  .error-full-width {
-    width: 100%;
-  }
+  // .error-oops {
+  //   left: 25px !important;
+  // }
 }
