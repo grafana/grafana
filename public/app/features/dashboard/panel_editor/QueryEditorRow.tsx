@@ -25,6 +25,7 @@ import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOp
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { DashboardModel } from '../state/DashboardModel';
 import { selectors } from '@grafana/e2e-selectors';
+import { HelpToggle } from './HelpToggle';
 
 interface Props {
   panel: PanelModel;
@@ -270,7 +271,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   render() {
-    const { query, id, index } = this.props;
+    const { query, id, index, onChange } = this.props;
     const { datasource } = this.state;
     const isDisabled = query.hide;
 
@@ -284,6 +285,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     }
 
     const editor = this.renderPluginEditor();
+    const DatasourceCheatsheet = datasource.components?.ExploreStartPage;
 
     return (
       <div aria-label={selectors.components.QueryEditorRows.rows}>
@@ -296,7 +298,14 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           onOpen={this.onOpen}
         >
           <div className={rowClasses}>
-            <ErrorBoundaryAlert>{editor}</ErrorBoundaryAlert>
+            <ErrorBoundaryAlert>
+              {editor}
+              {DatasourceCheatsheet && (
+                <HelpToggle>
+                  <DatasourceCheatsheet onClickExample={query => onChange(query)} datasource={datasource} />
+                </HelpToggle>
+              )}
+            </ErrorBoundaryAlert>
           </div>
         </QueryOperationRow>
       </div>
