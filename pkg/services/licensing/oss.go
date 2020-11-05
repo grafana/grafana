@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	OpenSource = "Open Source"
+	openSource = "Open Source"
 )
 
 type OSSLicensingService struct {
