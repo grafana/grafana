@@ -10,6 +10,7 @@ import {
   DataLink,
   PluginMeta,
   DataQuery,
+  MetricFindValue,
 } from '@grafana/data';
 import LanguageProvider from './language_provider';
 import { ElasticResponse } from './elastic_response';
@@ -505,7 +506,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   // TODO: instead of being a string, this could be a custom type representing all the elastic types
-  async getFields(type?: string): Promise<string[]> {
+  async getFields(type?: string): Promise<MetricFindValue[]> {
     // FIXME: This can be simplified a lot as we are performing unnecessary transformations
     const configuredEsVersion = this.esVersion;
     return this.get('/_mapping').then((result: any) => {
@@ -586,7 +587,9 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       }
 
       // transform to array
-      return Object.values(fields).map(({ text }) => text);
+      return _.map(fields, value => {
+        return value;
+      });
     });
   }
 
@@ -625,27 +628,27 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return '_msearch';
   }
 
-  // metricFindQuery(query: any) {
-  //   query = angular.fromJson(query);
-  //   if (query) {
-  //     if (query.find === 'fields') {
-  //       query.field = this.templateSrv.replace(query.field, {}, 'lucene');
-  //       return this.getFields(query);
-  //     }
+  metricFindQuery(query: any) {
+    query = angular.fromJson(query);
+    if (query) {
+      if (query.find === 'fields') {
+        query.field = this.templateSrv.replace(query.field, {}, 'lucene');
+        return this.getFields(query);
+      }
 
-  //     if (query.find === 'terms') {
-  //       query.field = this.templateSrv.replace(query.field, {}, 'lucene');
-  //       query.query = this.templateSrv.replace(query.query || '*', {}, 'lucene');
-  //       return this.getTerms(query);
-  //     }
-  //   }
+      if (query.find === 'terms') {
+        query.field = this.templateSrv.replace(query.field, {}, 'lucene');
+        query.query = this.templateSrv.replace(query.query || '*', {}, 'lucene');
+        return this.getTerms(query);
+      }
+    }
 
-  //   return Promise.resolve([]);
-  // }
+    return Promise.resolve([]);
+  }
 
-  // getTagKeys() {
-  //   return this.getFields({});
-  // }
+  getTagKeys() {
+    return this.getFields();
+  }
 
   getTagValues(options: any) {
     return this.getTerms({ field: options.key, query: '*' });

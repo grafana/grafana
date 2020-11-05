@@ -1,4 +1,4 @@
-import { SelectableValue } from '@grafana/data';
+import { MetricFindValue, SelectableValue } from '@grafana/data';
 import { InlineField, Segment, SegmentAsync, useTheme } from '@grafana/ui';
 import { cx } from 'emotion';
 import React, { FunctionComponent } from 'react';
@@ -26,9 +26,9 @@ const toOption = (metric: MetricAggregation) => ({
   value: metric.type,
 });
 
-const toSelectableValue = (value: string): SelectableValue<string> => ({
-  label: value,
-  value,
+const toSelectableValue = ({ value, text }: MetricFindValue): SelectableValue<string> => ({
+  label: text,
+  value: `${value || text}`,
 });
 
 interface Props {

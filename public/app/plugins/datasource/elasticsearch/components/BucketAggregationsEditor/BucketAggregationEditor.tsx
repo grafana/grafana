@@ -1,4 +1,4 @@
-import { SelectableValue } from '@grafana/data';
+import { MetricFindValue, SelectableValue } from '@grafana/data';
 import { InlineField, Segment, SegmentAsync } from '@grafana/ui';
 import React, { ComponentProps, FunctionComponent } from 'react';
 import { useDatasource, useDispatch } from '../ElasticsearchQueryContext';
@@ -21,9 +21,9 @@ const bucketAggOptions: Array<SelectableValue<BucketAggregationType>> = Object.e
   })
 );
 
-const toSelectableValue = (value: string): SelectableValue<string> => ({
-  label: value,
-  value,
+const toSelectableValue = ({ value, text }: MetricFindValue): SelectableValue<string> => ({
+  label: text,
+  value: `${value || text}`,
 });
 
 const toOption = (bucketAgg: BucketAggregation) => ({
@@ -40,7 +40,7 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
   const datasource = useDatasource();
   const dispatch = useDispatch<BucketAggregationAction>();
 
-  // TODO: Move this in a separate hook (and be simplified)
+  // TODO: Move this in a separate hook (and simplify)
   const getFields = async () => {
     const get = () => {
       switch (value.type) {
