@@ -215,7 +215,7 @@ One word, not two.
 
 #### mixin
 
-One word, not two.
+One word, not two. Also, not hyphenated.
 
 #### open source, open-source
 
