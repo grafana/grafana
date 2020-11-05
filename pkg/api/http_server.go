@@ -88,6 +88,10 @@ func (hs *HTTPServer) Init() error {
 	return nil
 }
 
+func (hs *HTTPServer) AddMiddleware(middleware macaron.Handler) {
+	hs.middlewares = append(hs.middlewares, middleware)
+}
+
 func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.context = ctx
 

@@ -36,6 +36,12 @@ type SortOptionFilter interface {
 	searchstore.FilterOrderBy
 }
 
+// RegisterSortOption allows for hooking in more search options from
+// other services.
+func (s *SearchService) RegisterSortOption(option SortOption) {
+	s.sortOptions[option.Name] = option
+}
+
 func (s *SearchService) SortOptions() []SortOption {
 	opts := make([]SortOption, 0, len(s.sortOptions))
 	for _, o := range s.sortOptions {

@@ -61,6 +61,11 @@ func (r *NormalResponse) Header(key, value string) *NormalResponse {
 	return r
 }
 
+// Empty creates an empty response.
+func Empty(status int) *NormalResponse {
+	return Respond(status, nil)
+}
+
 // JSON create a JSON response
 func JSON(status int, body interface{}) *NormalResponse {
 	return Respond(status, body).Header("Content-Type", "application/json")
@@ -123,4 +128,16 @@ func Respond(status int, body interface{}) *NormalResponse {
 		status: status,
 		header: make(http.Header),
 	}
+}
+
+type RedirectResponse struct {
+	location string
+}
+
+func (r *RedirectResponse) WriteTo(ctx *models.ReqContext) {
+	ctx.Redirect(r.location)
+}
+
+func Redirect(location string) *RedirectResponse {
+	return &RedirectResponse{location: location}
 }
