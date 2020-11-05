@@ -41,6 +41,12 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
     </td>
   </tr>
   <tr>
+    <td style="vertical-align: top">Export/Import</td>
+    <td>
+      Grafana includes the ability to export your dashboards to a file containing JSON. Community members sometimes share their created dashboards on the [Grafana Dashboards page](https://grafana.com/grafana/dashboards). Dashboards previously exported or found on this site may be imported by other users.
+    </td>
+  </tr>
+  <tr>
     <td style="vertical-align: top">Exporter</td>
     <td>
       An exporter implements the translation of data that comes out of a data source into a format that Prometheus can digest.
@@ -61,7 +67,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">Mixin</td>
     <td>
-      A mixin is a set of Grafana dashboards and Prometheus rules and alerts, written in jsonnet and packaged together in a bundle.
+      A mixin is a set of Grafana dashboards and Prometheus rules and alerts, written in Jsonnet and packaged together in a bundle.
     </td>
   </tr>
   <tr>
