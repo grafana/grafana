@@ -248,6 +248,33 @@ describe('Prometheus Result Transformer', () => {
   });
 
   describe('When the response is a matrix', () => {
+    it('should have labels with the value field', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: 'matrix',
+          result: [
+            {
+              metric: { __name__: 'test', job: 'testjob', instance: 'testinstance' },
+              values: [
+                [0, '10'],
+                [1, '10'],
+                [2, '0'],
+              ],
+            },
+          ],
+        },
+      };
+
+      const result: DataFrame[] = transform({ data: response } as any, {
+        ...options,
+      });
+
+      expect(result[0].fields[1].labels).toBeDefined();
+      expect(result[0].fields[1].labels?.instance).toBe('testinstance');
+      expect(result[0].fields[1].labels?.job).toBe('testjob');
+    });
+
     it('should transform into a data frame', () => {
       const response = {
         status: 'success',

@@ -66,7 +66,7 @@ func (e *AzureMonitorExecutor) Query(ctx context.Context, dsInfo *models.DataSou
 		case "Insights Analytics":
 			insightsAnalyticsQueries = append(insightsAnalyticsQueries, query)
 		default:
-			return nil, fmt.Errorf("Alerting not supported for %s", queryType)
+			return nil, fmt.Errorf("alerting not supported for %q", queryType)
 		}
 	}
 

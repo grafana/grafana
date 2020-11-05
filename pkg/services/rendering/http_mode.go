@@ -72,7 +72,7 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 	resp, err := netClient.Do(req)
 	if err != nil {
 		rs.log.Error("Failed to send request to remote rendering service.", "error", err)
-		return nil, fmt.Errorf("Failed to send request to remote rendering service. %s", err)
+		return nil, fmt.Errorf("failed to send request to remote rendering service: %w", err)
 	}
 
 	// save response to file
@@ -87,7 +87,8 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 	// if we didn't get a 200 response, something went wrong.
 	if resp.StatusCode != http.StatusOK {
 		rs.log.Error("Remote rendering request failed", "error", resp.Status)
-		return nil, fmt.Errorf("Remote rendering request failed. %d: %s", resp.StatusCode, resp.Status)
+		return nil, fmt.Errorf("remote rendering request failed, status code: %d, status: %s", resp.StatusCode,
+			resp.Status)
 	}
 
 	out, err := os.Create(filePath)
@@ -103,7 +104,7 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 			return nil, ErrTimeout
 		}
 		rs.log.Error("Remote rendering request failed", "error", err)
-		return nil, fmt.Errorf("Remote rendering request failed.  %s", err)
+		return nil, fmt.Errorf("remote rendering request failed: %w", err)
 	}
 
 	return &RenderResult{FilePath: filePath}, err

@@ -286,7 +286,7 @@ func SetAlertState(cmd *models.SetAlertStateCommand) error {
 		if has, err := sess.ID(cmd.AlertId).Get(&alert); err != nil {
 			return err
 		} else if !has {
-			return fmt.Errorf("Could not find alert")
+			return fmt.Errorf("could not find alert")
 		}
 
 		if alert.State == models.AlertStatePaused {

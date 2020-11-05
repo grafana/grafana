@@ -34,7 +34,7 @@ const (
 )
 
 var (
-	ErrCannotChangeStateOnPausedAlert = fmt.Errorf("Cannot change state on pause alert")
+	ErrCannotChangeStateOnPausedAlert = fmt.Errorf("cannot change state on pause alert")
 	ErrRequiresNewState               = fmt.Errorf("update alert state requires a new state")
 )
 
@@ -97,13 +97,13 @@ func (alert *Alert) ShouldUpdateState(newState AlertStateType) bool {
 	return alert.State != newState
 }
 
-func (this *Alert) ContainsUpdates(other *Alert) bool {
+func (a *Alert) ContainsUpdates(other *Alert) bool {
 	result := false
-	result = result || this.Name != other.Name
-	result = result || this.Message != other.Message
+	result = result || a.Name != other.Name
+	result = result || a.Message != other.Message
 
-	if this.Settings != nil && other.Settings != nil {
-		json1, err1 := this.Settings.Encode()
+	if a.Settings != nil && other.Settings != nil {
+		json1, err1 := a.Settings.Encode()
 		json2, err2 := other.Settings.Encode()
 
 		if err1 != nil || err2 != nil {
