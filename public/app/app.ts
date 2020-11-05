@@ -28,7 +28,6 @@ import _ from 'lodash';
 import {
   AppEvents,
   setLocale,
-  setMarkdownOptions,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
@@ -96,8 +95,6 @@ export class GrafanaApp {
     addClassIfNoOverlayScrollbar();
     setLocale(config.bootData.user.locale);
     setTimeZoneResolver(() => config.bootData.user.timezone);
-
-    setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
 
     standardEditorsRegistry.setInit(getStandardOptionEditors);
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);

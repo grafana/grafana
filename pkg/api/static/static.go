@@ -65,20 +65,6 @@ func (sm *staticMap) Set(dir *http.Dir) {
 	sm.data[string(*dir)] = dir
 }
 
-func (sm *staticMap) Get(name string) *http.Dir {
-	sm.lock.RLock()
-	defer sm.lock.RUnlock()
-
-	return sm.data[name]
-}
-
-func (sm *staticMap) Delete(name string) {
-	sm.lock.Lock()
-	defer sm.lock.Unlock()
-
-	delete(sm.data, name)
-}
-
 var statics = staticMap{sync.RWMutex{}, map[string]*http.Dir{}}
 
 // staticFileSystem implements http.FileSystem interface.
@@ -195,24 +181,5 @@ func Static(directory string, staticOpt ...StaticOptions) macaron.Handler {
 
 	return func(ctx *macaron.Context, log *log.Logger) {
 		staticHandler(ctx, log, opt)
-	}
-}
-
-// Statics registers multiple static middleware handlers all at once.
-func Statics(opt StaticOptions, dirs ...string) macaron.Handler {
-	if len(dirs) == 0 {
-		panic("no static directory is given")
-	}
-	opts := make([]StaticOptions, len(dirs))
-	for i := range dirs {
-		opts[i] = prepareStaticOption(dirs[i], opt)
-	}
-
-	return func(ctx *macaron.Context, log *log.Logger) {
-		for i := range opts {
-			if staticHandler(ctx, log, opts[i]) {
-				return
-			}
-		}
 	}
 }

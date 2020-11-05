@@ -302,7 +302,7 @@ func (pm *PluginManager) GetDatasource(pluginID string) (*DataSourcePlugin, bool
 	return ds, exist
 }
 
-func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err error) error {
+func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) error {
 	// We scan all the subfolders for plugin.json (with some exceptions) so that we also load embedded plugins, for
 	// example https://github.com/raintank/worldping-app/tree/master/dist/grafana-worldmap-panel worldmap panel plugin
 	// is embedded in worldping app.
@@ -322,9 +322,9 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 		return nil
 	}
 
-	if err := scanner.loadPlugin(currentPath); err != nil {
-		scanner.log.Error("Failed to load plugin", "error", err, "pluginPath", filepath.Dir(currentPath))
-		scanner.errors = append(scanner.errors, err)
+	if err := s.loadPlugin(currentPath); err != nil {
+		s.log.Error("Failed to load plugin", "error", err, "pluginPath", filepath.Dir(currentPath))
+		s.errors = append(s.errors, err)
 	}
 
 	return nil
@@ -367,7 +367,7 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	return nil
 }
 
-func (scanner *PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
+func (*PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
 	return pluginType == "renderer" || pluginType == "transform"
 }
 
