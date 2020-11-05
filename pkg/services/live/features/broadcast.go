@@ -12,8 +12,8 @@ import (
 type BroadcastRunner struct{}
 
 // GetHandlerForPath called on init
-func (g *BroadcastRunner) GetHandlerForPath(path string) (models.ChannelHandler, error) {
-	return g, nil // all dashboards share the same handler
+func (b *BroadcastRunner) GetHandlerForPath(path string) (models.ChannelHandler, error) {
+	return b, nil // all dashboards share the same handler
 }
 
 // OnSubscribe will let anyone connect to the path
