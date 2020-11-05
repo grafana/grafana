@@ -11,12 +11,7 @@ import {
   PreferredVisualisationType,
 } from '@grafana/data';
 import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
-import {
-  ExtendedStatMetaType,
-  isMetricAggregationType,
-  isMetricAggregationWithField,
-  MetricAggregationType,
-} from './components/MetricAggregationsEditor/aggregations';
+import { ExtendedStatMetaType, isMetricAggregationWithField } from './components/MetricAggregationsEditor/aggregations';
 import { describeMetric } from './utils';
 import { metricAggregationConfig } from './components/MetricAggregationsEditor/utils';
 
@@ -105,10 +100,14 @@ export class ElasticResponse {
           newSeries = {
             datapoints: [],
             metric: metric.type,
-            field: isMetricAggregationWithField(metric) ? metric.field : undefined,
             metricId: metric.id,
             props: props,
           };
+
+          if (isMetricAggregationWithField(metric)) {
+            newSeries.field = metric.field;
+          }
+
           for (let i = 0; i < esAgg.buckets.length; i++) {
             const bucket = esAgg.buckets[i];
             const value = bucket[metric.id];
@@ -252,12 +251,21 @@ export class ElasticResponse {
     }
   }
 
-  private getMetricName(metricType: MetricAggregationType | ExtendedStatMetaType): string {
-    if (isMetricAggregationType(metricType)) {
-      return metricAggregationConfig[metricType].label;
+  private getMetricName(metric: string): string {
+    const metricDef = Object.entries(metricAggregationConfig)
+      .filter(([key]) => key === metric)
+      .map(([_, value]) => value)[0];
+
+    if (metricDef) {
+      return metricDef.label;
     }
 
-    return queryDef.extendedStats.find(stat => stat.value === metricType)!.label;
+    const extendedStat = queryDef.extendedStats.find(e => e.value === metric);
+    if (extendedStat) {
+      return extendedStat.label;
+    }
+
+    return metric;
   }
 
   private getSeriesName(series: any, target: ElasticsearchQuery, metricTypeCount: any) {
@@ -286,7 +294,7 @@ export class ElasticResponse {
       });
     }
 
-    if (series.field && queryDef.isPipelineAgg(series.metric)) {
+    if (queryDef.isPipelineAgg(series.metric)) {
       if (series.metric && queryDef.isPipelineAggWithMultipleBucketPaths(series.metric)) {
         const agg: any = _.find(target.metrics, { id: series.metricId });
         if (agg && agg.settings.script) {

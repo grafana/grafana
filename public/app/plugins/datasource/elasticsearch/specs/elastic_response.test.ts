@@ -263,8 +263,8 @@ describe('ElasticResponse', () => {
     it('should return 2 series', () => {
       expect(result.data.length).toBe(2);
       expect(result.data[0].datapoints.length).toBe(2);
-      expect(result.data[0].target).toBe('p75');
-      expect(result.data[1].target).toBe('p90');
+      expect(result.data[0].target).toBe('p75 @value');
+      expect(result.data[1].target).toBe('p90 @value');
       expect(result.data[0].datapoints[0][0]).toBe(3.3);
       expect(result.data[0].datapoints[0][1]).toBe(1000);
       expect(result.data[1].datapoints[1][0]).toBe(4.5);
@@ -343,8 +343,8 @@ describe('ElasticResponse', () => {
     it('should return 4 series', () => {
       expect(result.data.length).toBe(4);
       expect(result.data[0].datapoints.length).toBe(1);
-      expect(result.data[0].target).toBe('server1 Max');
-      expect(result.data[1].target).toBe('server1 Std Dev Upper');
+      expect(result.data[0].target).toBe('server1 Max @value');
+      expect(result.data[1].target).toBe('server1 Std Dev Upper @value');
 
       expect(result.data[0].datapoints[0][0]).toBe(10.2);
       expect(result.data[1].datapoints[0][0]).toBe(3);

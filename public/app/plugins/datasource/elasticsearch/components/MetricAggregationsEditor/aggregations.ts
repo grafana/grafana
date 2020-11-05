@@ -297,22 +297,24 @@ export const isMetricAggregationWithInlineScript = (
   metric: BaseMetricAggregation | MetricAggregationWithInlineScript
 ): metric is MetricAggregationWithInlineScript => metricAggregationConfig[metric.type].supportsInlineScript;
 
+export const METRIC_AGGREGATION_TYPES = [
+  'count',
+  'avg',
+  'sum',
+  'min',
+  'max',
+  'extended_stats',
+  'percentiles',
+  'cardinality',
+  'raw_document',
+  'raw_data',
+  'logs',
+  'moving_avg',
+  'moving_fn',
+  'derivative',
+  'cumulative_sum',
+  'bucket_script',
+];
+
 export const isMetricAggregationType = (s: MetricAggregationType | string): s is MetricAggregationType =>
-  [
-    'count',
-    'avg',
-    'sum',
-    'min',
-    'max',
-    'extended_stats',
-    'percentiles',
-    'cardinality',
-    'raw_document',
-    'raw_data',
-    'logs',
-    'moving_avg',
-    'moving_fn',
-    'derivative',
-    'cumulative_sum',
-    'bucket_script',
-  ].includes(s);
+  METRIC_AGGREGATION_TYPES.includes(s);
