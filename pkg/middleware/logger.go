@@ -33,11 +33,11 @@ func Logger() macaron.Handler {
 		rw := res.(macaron.ResponseWriter)
 		c.Next()
 
-		timeTakenMs := time.Since(start) / time.Millisecond
+		timeTaken := time.Since(start) / time.Millisecond
 
 		if timer, ok := c.Data["perfmon.timer"]; ok {
 			timerTyped := timer.(prometheus.Summary)
-			timerTyped.Observe(float64(timeTakenMs))
+			timerTyped.Observe(float64(timeTaken))
 		}
 
 		status := rw.Status()
@@ -50,9 +50,11 @@ func Logger() macaron.Handler {
 		if ctx, ok := c.Data["ctx"]; ok {
 			ctxTyped := ctx.(*models.ReqContext)
 			if status == 500 {
-				ctxTyped.Logger.Error("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "time_ms", int64(timeTakenMs), "size", rw.Size(), "referer", req.Referer())
+				ctxTyped.Logger.Error("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status,
+					"remote_addr", c.RemoteAddr(), "time_ms", int64(timeTaken), "size", rw.Size(), "referer", req.Referer())
 			} else {
-				ctxTyped.Logger.Info("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "time_ms", int64(timeTakenMs), "size", rw.Size(), "referer", req.Referer())
+				ctxTyped.Logger.Info("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status,
+					"remote_addr", c.RemoteAddr(), "time_ms", int64(timeTaken), "size", rw.Size(), "referer", req.Referer())
 			}
 		}
 	}

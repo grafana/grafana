@@ -6,8 +6,8 @@ import (
 
 // Typed errors
 var (
-	ErrPlaylistNotFound           = errors.New("Playlist not found")
-	ErrPlaylistWithSameNameExists = errors.New("A playlist with the same name already exists")
+	ErrPlaylistNotFound           = errors.New("playlist not found")
+	ErrPlaylistWithSameNameExists = errors.New("a playlist with the same name already exists")
 )
 
 // Playlist model
@@ -50,7 +50,7 @@ type PlaylistItem struct {
 	Title      string
 }
 
-func (this PlaylistDashboard) TableName() string {
+func (p PlaylistDashboard) TableName() string {
 	return "dashboard"
 }
 

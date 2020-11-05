@@ -21,7 +21,7 @@ var (
 	logger = log.New("LDAP.debug")
 
 	errOrganizationNotFound = func(orgId int64) error {
-		return fmt.Errorf("Unable to find organization with ID '%d'", orgId)
+		return fmt.Errorf("unable to find organization with ID '%d'", orgId)
 	}
 )
 
