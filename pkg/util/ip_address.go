@@ -29,7 +29,7 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string) (NetworkAddres
 		addrEnd := strings.LastIndex(input, "]")
 		if addrEnd < 0 {
 			// Malformed address
-			return addr, fmt.Errorf("Malformed IPv6 address: '%s'", input)
+			return addr, fmt.Errorf("malformed IPv6 address: '%s'", input)
 		}
 
 		start = addrEnd

@@ -145,7 +145,7 @@ Suggestions can appear under the query field - click on them to update your quer
 
 ### Table filters
 
-Click on the filter button <span title="Filter for label" class="logs-label__icon fa fa-search-plus"></span> in a labels column in the Table panel to add filters to the query expression. This works with multiple queries too - the filter will be added for all the queries.
+Click on the filter button in the "label" column of a Table panel to add filters to the query expression. You can add filters for multiple queries as well - the filter is added for all the queries.
 
 ## Logs integration
 

@@ -28,6 +28,7 @@
     "eventemitter3": "4.0.7",
     "lodash": "4.17.19",
     "rxjs": "6.6.3",
+    "marked": "1.2.2",
     "xss": "1.0.6"
   },
   "devDependencies": {
@@ -40,6 +41,7 @@
     "@types/jquery": "3.3.38",
     "@types/lodash": "4.14.123",
     "@types/node": "10.14.1",
+    "@types/marked": "1.1.0",
     "@types/papaparse": "5.2.0",
     "@types/react": "16.8.16",
     "@types/rollup-plugin-visualizer": "2.6.0",

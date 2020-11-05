@@ -509,7 +509,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 
 	expected := `
 	{
-		"error": "Did not find a user",
+		"error": "did not find a user",
 		"message": "Refusing to sync grafana super admin \"ldap-daniel\" - it would be disabled"
 	}
 	`
