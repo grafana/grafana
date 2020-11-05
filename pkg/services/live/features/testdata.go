@@ -67,7 +67,7 @@ func (r *testDataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscrib
 }
 
 // OnPublish checks if a message from the websocket can be broadcast on this channel
-func (b *testDataRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
+func (r *testDataRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
 	return centrifuge.PublishReply{}, fmt.Errorf("can not publish to testdata")
 }
 
