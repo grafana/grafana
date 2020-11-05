@@ -15,7 +15,7 @@ describe('ElasticQueryBuilder', () => {
       it('should return query with defaults', () => {
         const query = builder.build({
           refId: 'A',
-          metrics: [{ type: 'count', id: '0', hide: false }],
+          metrics: [{ type: 'count', id: '0' }],
           timeField: '@timestamp',
           bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
         });
@@ -87,8 +87,8 @@ describe('ElasticQueryBuilder', () => {
           {
             refId: 'A',
             metrics: [
-              { type: 'count', id: '1', hide: false },
-              { type: 'avg', field: '@value', id: '5', hide: false },
+              { type: 'count', id: '1' },
+              { type: 'avg', field: '@value', id: '5' },
             ],
             bucketAggs: [
               {
@@ -114,12 +114,13 @@ describe('ElasticQueryBuilder', () => {
       it('with term agg and valid min_doc_count', () => {
         const query = builder.build(
           {
+            refId: 'A',
             metrics: [{ type: 'count', id: '1' }],
             bucketAggs: [
               {
                 type: 'terms',
                 field: '@host',
-                settings: { min_doc_count: 1 },
+                settings: { min_doc_count: '1' },
                 id: '2',
               },
               { type: 'date_histogram', field: '@timestamp', id: '3' },
@@ -157,15 +158,19 @@ describe('ElasticQueryBuilder', () => {
       });
 
       it('with metric percentiles', () => {
+        const percents = ['1', '2', '3', '4'];
+        const field = '@load_time';
+
         const query = builder.build(
           {
+            refId: 'A',
             metrics: [
               {
                 id: '1',
                 type: 'percentiles',
-                field: '@load_time',
+                field,
                 settings: {
-                  percents: [1, 2, 3, 4],
+                  percents,
                 },
               },
             ],
@@ -177,8 +182,8 @@ describe('ElasticQueryBuilder', () => {
 
         const firstLevel = query.aggs['3'];
 
-        expect(firstLevel.aggs['1'].percentiles.field).toBe('@load_time');
-        expect(firstLevel.aggs['1'].percentiles.percents).toEqual([1, 2, 3, 4]);
+        expect(firstLevel.aggs['1'].percentiles.field).toBe(field);
+        expect(firstLevel.aggs['1'].percentiles.percents).toEqual(percents);
       });
 
       it('with filters aggs', () => {
@@ -473,8 +478,6 @@ describe('ElasticQueryBuilder', () => {
               settings: {
                 interval: '10',
                 min_doc_count: '2',
-                // TODO: Should historgram really support missing?
-                // missing: '5',
               },
             },
           ],
@@ -484,7 +487,6 @@ describe('ElasticQueryBuilder', () => {
         expect(firstLevel.histogram.field).toBe('bytes');
         expect(firstLevel.histogram.interval).toBe('10');
         expect(firstLevel.histogram.min_doc_count).toBe('2');
-        expect(firstLevel.histogram.missing).toBe('5');
       });
 
       it('with adhoc filters', () => {

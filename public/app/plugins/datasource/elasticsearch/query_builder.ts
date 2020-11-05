@@ -96,11 +96,6 @@ export class ElasticQueryBuilder {
       esAgg.interval = '$__interval';
     }
 
-    // FIXME: Accroding to this, Histogram bucket agregation has missing support, but the previous editor didn't implement it
-    // if (settings.missing) {
-    //   esAgg.missing = settings.missing;
-    // }
-
     return esAgg;
   }
 
@@ -110,11 +105,6 @@ export class ElasticQueryBuilder {
     esAgg.interval = settings.interval;
     esAgg.field = aggDef.field;
     esAgg.min_doc_count = settings.min_doc_count || 0;
-
-    // FIXME: Accroding to this, Histogram bucket agregation has missing support, but the previous editor didn't implement it
-    // if (settings.missing) {
-    //   esAgg.missing = settings.missing;
-    // }
 
     return esAgg;
   }
