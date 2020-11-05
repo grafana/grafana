@@ -88,8 +88,8 @@ type Alert struct {
 	Settings *simplejson.Json
 }
 
-func (alert *Alert) ValidToSave() bool {
-	return alert.DashboardId != 0 && alert.OrgId != 0 && alert.PanelId != 0
+func (a *Alert) ValidToSave() bool {
+	return a.DashboardId != 0 && a.OrgId != 0 && a.PanelId != 0
 }
 
 func (a *Alert) ContainsUpdates(other *Alert) bool {
@@ -112,10 +112,10 @@ func (a *Alert) ContainsUpdates(other *Alert) bool {
 	return result
 }
 
-func (alert *Alert) GetTagsFromSettings() []*Tag {
+func (a *Alert) GetTagsFromSettings() []*Tag {
 	tags := []*Tag{}
-	if alert.Settings != nil {
-		if data, ok := alert.Settings.CheckGet("alertRuleTags"); ok {
+	if a.Settings != nil {
+		if data, ok := a.Settings.CheckGet("alertRuleTags"); ok {
 			for tagNameString, tagValue := range data.MustMap() {
 				// MustMap() already guarantees the return of a `map[string]interface{}`.
 				// Therefore we only need to verify that tagValue is a String.
