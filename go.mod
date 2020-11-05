@@ -19,7 +19,7 @@ require (
 	github.com/beevik/etree v1.1.0
 	github.com/benbjohnson/clock v0.0.0-20161215174838-7dc76406b6d3
 	github.com/bradfitz/gomemcache v0.0.0-20190913173617-a41fca850d0b
-	github.com/centrifugal/centrifuge v0.11.0
+	github.com/centrifugal/centrifuge v0.13.0
 	github.com/crewjam/saml v0.4.1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/deepmap/oapi-codegen v1.3.11 // indirect
