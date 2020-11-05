@@ -22,6 +22,6 @@ func (g *PluginHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscribe
 }
 
 // OnPublish checks if a message from the websocket can be broadcast on this channel
-func (g *PluginHandler) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
+func (h *PluginHandler) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
 	return centrifuge.PublishReply{}, nil // broadcast any event
 }
