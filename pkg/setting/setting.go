@@ -552,7 +552,7 @@ func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 
 	userConfig, err := ini.Load(configFile)
 	if err != nil {
-		return fmt.Errorf("Failed to parse %v, %v", configFile, err)
+		return fmt.Errorf("failed to parse %q: %w", configFile, err)
 	}
 
 	userConfig.BlockMode = false
