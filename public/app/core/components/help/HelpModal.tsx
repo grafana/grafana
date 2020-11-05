@@ -8,6 +8,7 @@ export class HelpModal extends React.PureComponent {
     Global: [
       { keys: ['g', 'h'], description: 'Go to Home Dashboard' },
       { keys: ['g', 'p'], description: 'Go to Profile' },
+      { keys: ['g', 'e'], description: 'Go to Explore' },
       { keys: ['s', 'o'], description: 'Open search' },
       { keys: ['esc'], description: 'Exit edit/setting views' },
     ],

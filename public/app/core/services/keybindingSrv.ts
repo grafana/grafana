@@ -46,6 +46,7 @@ export class KeybindingSrv {
       this.bind('g h', this.goToHome);
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
+      this.bind('g e', this.goToExplore);
       this.bind('s o', this.openSearch);
       this.bind('f', this.openSearch);
       this.bind('esc', this.exit);
@@ -99,6 +100,10 @@ export class KeybindingSrv {
 
   goToProfile() {
     this.$location.url('/profile');
+  }
+
+  goToExplore() {
+    this.$location.url('/explore');
   }
 
   showHelpModal() {
