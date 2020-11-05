@@ -12,8 +12,8 @@ type PluginHandler struct {
 }
 
 // GetHandlerForPath called on init
-func (g *PluginHandler) GetHandlerForPath(path string) (models.ChannelHandler, error) {
-	return g, nil // all dashboards share the same handler
+func (h *PluginHandler) GetHandlerForPath(path string) (models.ChannelHandler, error) {
+	return h, nil // all dashboards share the same handler
 }
 
 // OnSubscribe for now allows anyone to subscribe

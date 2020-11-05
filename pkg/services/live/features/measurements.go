@@ -22,13 +22,13 @@ func (m *MeasurementsRunner) GetHandlerForPath(path string) (models.ChannelHandl
 }
 
 // OnSubscribe will let anyone connect to the path
-func (r *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
+func (m *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
 	return centrifuge.SubscribeReply{}, nil
 }
 
 // OnPublish is called when a client wants to broadcast on the websocket
 // Currently this sends measurements over websocket -- should be replaced with the HTTP interface
-func (r *MeasurementsRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
+func (m *MeasurementsRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
 	return centrifuge.PublishReply{
 		Options: centrifuge.PublishOptions{},
 	}, nil
