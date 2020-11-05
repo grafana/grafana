@@ -145,7 +145,7 @@ func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
 
 	expected := `
 	{
-		"error": "Unable to find organization with ID '2'",
+		"error": "unable to find organization with ID '2'",
 		"message": "An organization was not found - Please verify your LDAP configuration"
 	}
 	`
@@ -467,7 +467,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 
 	expected := `
 	{
-		"message": "User not found"
+		"message": "user not found"
 	}
 	`
 
