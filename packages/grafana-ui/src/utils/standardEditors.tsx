@@ -213,7 +213,10 @@ export const getStandardFieldConfigs = () => {
     override: standardEditorsRegistry.get('fieldColor').editor as any,
     process: identityOverrideProcessor,
     shouldApply: () => true,
-    settings: {},
+    settings: {
+      byValueSupport: true,
+      preferThresholdsMode: true,
+    },
     category,
   };
 

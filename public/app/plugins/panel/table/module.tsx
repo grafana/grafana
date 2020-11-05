@@ -1,4 +1,4 @@
-import { PanelPlugin } from '@grafana/data';
+import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
 import { TablePanel } from './TablePanel';
 import { CustomFieldConfig, Options } from './types';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
@@ -9,9 +9,6 @@ export const plugin = new PanelPlugin<Options, CustomFieldConfig>(TablePanel)
   .setMigrationHandler(tableMigrationHandler)
   .setNoPadding()
   .useFieldConfig({
-    fieldColorSettings: {
-      preferByThreshold: true,
-    },
     useCustomConfig: builder => {
       builder
         .addNumberInput({
