@@ -4,7 +4,6 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { StoreState } from '../../../types';
-import { VariableEditorList } from './VariableEditorList';
 import { VariableEditorEditor } from './VariableEditorEditor';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
@@ -12,12 +11,17 @@ import { getEditorVariables } from '../state/selectors';
 import { VariableModel } from '../types';
 import { switchToEditMode, switchToListMode, switchToNewMode } from './actions';
 import { changeVariableOrder, duplicateVariable, removeVariable } from '../state/sharedReducer';
+import { VariableEditorList } from './VariableEditorList';
+import { DashboardModel } from '../../dashboard/state';
+import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
+import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
 
 interface OwnProps {}
 
 interface ConnectedProps {
   idInEditor: string | null;
   variables: VariableModel[];
+  dashboard: DashboardModel | null;
 }
 
 interface DispatchProps {
@@ -96,26 +100,33 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
 
           <div className="page-action-bar__spacer" />
           {this.props.variables.length > 0 && variableToEdit === null && (
-            <a
-              type="button"
-              className="btn btn-primary"
-              onClick={this.onNewVariable}
-              aria-label={selectors.pages.Dashboard.Settings.Variables.List.newButton}
-            >
-              New
-            </a>
+            <>
+              <VariablesDependenciesButton variables={this.props.variables} />
+              <a
+                type="button"
+                className="btn btn-primary"
+                onClick={this.onNewVariable}
+                aria-label={selectors.pages.Dashboard.Settings.Variables.List.newButton}
+              >
+                New
+              </a>
+            </>
           )}
         </div>
 
         {!variableToEdit && (
-          <VariableEditorList
-            variables={this.props.variables}
-            onAddClick={this.onNewVariable}
-            onEditClick={this.onEditVariable}
-            onChangeVariableOrder={this.onChangeVariableOrder}
-            onDuplicateVariable={this.onDuplicateVariable}
-            onRemoveVariable={this.onRemoveVariable}
-          />
+          <>
+            <VariableEditorList
+              dashboard={this.props.dashboard}
+              variables={this.props.variables}
+              onAddClick={this.onNewVariable}
+              onEditClick={this.onEditVariable}
+              onChangeVariableOrder={this.onChangeVariableOrder}
+              onDuplicateVariable={this.onDuplicateVariable}
+              onRemoveVariable={this.onRemoveVariable}
+            />
+            <VariablesUnknownTable dashboard={this.props.dashboard} variables={this.props.variables} />
+          </>
         )}
         {variableToEdit && <VariableEditorEditor identifier={toVariableIdentifier(variableToEdit)} />}
       </div>
@@ -126,6 +137,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
 const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
   variables: getEditorVariables(state),
   idInEditor: state.templating.editor.id,
+  dashboard: state.dashboard.getModel(),
 });
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
