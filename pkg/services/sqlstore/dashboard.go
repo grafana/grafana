@@ -388,30 +388,23 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 			return err
 		}
 
-		dashIdsArray := make([]interface{}, len(dashIds))
-		queryEnd := "("
-		for i, id := range dashIds {
+		for _, id := range dashIds {
 			if err := deleteAlertDefinition(id.Id, sess); err != nil {
 				return err
 			}
-			dashIdsArray[i] = id.Id
-			queryEnd += "?,"
 		}
-		queryEnd = queryEnd[:len(queryEnd)-1] + ")"
 
 		if len(dashIds) > 0 {
 			childrenDeletes := []string{
-				"DELETE FROM dashboard_tag WHERE dashboard_id IN ",
-				"DELETE FROM star WHERE dashboard_id IN ",
-				"DELETE FROM dashboard_version WHERE dashboard_id IN ",
-				"DELETE FROM annotation WHERE dashboard_id IN ",
-				"DELETE FROM dashboard_provisioning WHERE dashboard_id IN ",
-				"DELETE FROM dashboard_acl WHERE dashboard_id IN ",
+				"DELETE FROM dashboard_tag WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+				"DELETE FROM star WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+				"DELETE FROM dashboard_version WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+				"DELETE FROM annotation WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+				"DELETE FROM dashboard_provisioning WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+				"DELETE FROM dashboard_acl WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
 			}
 			for _, sql := range childrenDeletes {
-				sqlOrArgs := append([]interface{}{sql + queryEnd}, dashIdsArray...)
-				_, err := sess.Exec(sqlOrArgs...)
-
+				_, err := sess.Exec(sql, dashboard.OrgId, dashboard.Id)
 				if err != nil {
 					return err
 				}
@@ -425,7 +418,6 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 
 	for _, sql := range deletes {
 		_, err := sess.Exec(sql, dashboard.Id)
-
 		if err != nil {
 			return err
 		}
