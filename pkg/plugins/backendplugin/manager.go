@@ -23,11 +23,11 @@ import (
 
 var (
 	// ErrPluginNotRegistered error returned when plugin not registered.
-	ErrPluginNotRegistered = errors.New("Plugin not registered")
+	ErrPluginNotRegistered = errors.New("plugin not registered")
 	// ErrHealthCheckFailed error returned when health check failed.
-	ErrHealthCheckFailed = errors.New("Health check failed")
+	ErrHealthCheckFailed = errors.New("health check failed")
 	// ErrPluginUnavailable error returned when plugin is unavailable.
-	ErrPluginUnavailable = errors.New("Plugin unavailable")
+	ErrPluginUnavailable = errors.New("plugin unavailable")
 	// ErrMethodNotImplemented error returned when plugin method not implemented.
 	ErrMethodNotImplemented = errors.New("method not implemented")
 )
@@ -81,7 +81,7 @@ func (m *manager) Register(pluginID string, factory PluginFactoryFunc) error {
 	defer m.pluginsMu.Unlock()
 
 	if _, exists := m.plugins[pluginID]; exists {
-		return errors.New("Backend plugin already registered")
+		return fmt.Errorf("backend plugin %s already registered", pluginID)
 	}
 
 	pluginSettings := pluginSettings{}
@@ -141,7 +141,7 @@ func (m *manager) StartPlugin(ctx context.Context, pluginID string) error {
 	}
 
 	if p.IsManaged() {
-		return errors.New("Backend plugin is managed and cannot be manually started")
+		return errors.New("backend plugin is managed and cannot be manually started")
 	}
 
 	return startPluginAndRestartKilledProcesses(ctx, p)
@@ -241,7 +241,7 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		return errors.New("Failed to read request body")
+		return fmt.Errorf("failed to read request body: %w", err)
 	}
 
 	crReq := &backend.CallResourceRequest{
@@ -315,13 +315,13 @@ func flushStream(plugin Plugin, stream CallResourceClientResponseStream, w http.
 		resp, err := stream.Recv()
 		if err == io.EOF {
 			if processedStreams == 0 {
-				return errors.New("Received empty resource response")
+				return errors.New("received empty resource response")
 			}
 			return nil
 		}
 		if err != nil {
 			if processedStreams == 0 {
-				return errutil.Wrap("Failed to receive response from resource call", err)
+				return errutil.Wrap("failed to receive response from resource call", err)
 			}
 
 			plugin.Logger().Error("Failed to receive response from resource call", "error", err)
