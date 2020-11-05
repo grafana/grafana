@@ -114,6 +114,7 @@ export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMet
   queryOptions?: PluginMetaQueryOptions;
   sort?: number;
   streaming?: boolean;
+  unlicensed?: boolean;
 }
 
 interface PluginMetaQueryOptions {
