@@ -159,6 +159,6 @@ func (m *postgresMacroEngine) evaluateMacro(name string, args []string) (string,
 		}
 		return "", err
 	default:
-		return "", fmt.Errorf("Unknown macro %v", name)
+		return "", fmt.Errorf("unknown macro %q", name)
 	}
 }

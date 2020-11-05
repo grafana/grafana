@@ -343,7 +343,7 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.R
 	}
 
 	if cfg.timeIndex == -1 {
-		return fmt.Errorf("Found no column named %s", strings.Join(e.timeColumnNames, " or "))
+		return fmt.Errorf("found no column named %q", strings.Join(e.timeColumnNames, " or "))
 	}
 
 	if cfg.fillMissing {
@@ -666,7 +666,10 @@ func ConvertSqlValueColumnToFloat(columnName string, columnValue interface{}) (n
 	case nil:
 		value.Valid = false
 	default:
-		return null.NewFloat(0, false), fmt.Errorf("Value column must have numeric datatype, column: %s type: %T value: %v", columnName, typedValue, typedValue)
+		return null.NewFloat(0, false), fmt.Errorf(
+			"value column must have numeric datatype, column: %s, type: %T, value: %v",
+			columnName, typedValue, typedValue,
+		)
 	}
 
 	return value, nil
