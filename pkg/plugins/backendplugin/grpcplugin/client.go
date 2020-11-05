@@ -6,7 +6,6 @@ import (
 	datasourceV1 "github.com/grafana/grafana-plugin-model/go/datasource"
 	rendererV1 "github.com/grafana/grafana-plugin-model/go/renderer"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
-	sdkgrpcplugin "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
@@ -28,8 +27,8 @@ var handshake = goplugin.HandshakeConfig{
 	ProtocolVersion: DefaultProtocolVersion,
 
 	// The magic cookie values should NEVER be changed.
-	MagicCookieKey:   sdkgrpcplugin.MagicCookieKey,
-	MagicCookieValue: sdkgrpcplugin.MagicCookieValue,
+	MagicCookieKey:   grpcplugin.MagicCookieKey,
+	MagicCookieValue: grpcplugin.MagicCookieValue,
 }
 
 func newClientConfig(executablePath string, env []string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
@@ -69,10 +68,10 @@ type PluginDescriptor struct {
 // getV2PluginSet returns list of plugins supported on v2.
 func getV2PluginSet() goplugin.PluginSet {
 	return goplugin.PluginSet{
-		"diagnostics": &sdkgrpcplugin.DiagnosticsGRPCPlugin{},
-		"resource":    &sdkgrpcplugin.ResourceGRPCPlugin{},
-		"data":        &sdkgrpcplugin.DataGRPCPlugin{},
-		"transform":   &sdkgrpcplugin.TransformGRPCPlugin{},
+		"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
+		"resource":    &grpcplugin.ResourceGRPCPlugin{},
+		"data":        &grpcplugin.DataGRPCPlugin{},
+		"transform":   &grpcplugin.TransformGRPCPlugin{},
 		"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
 	}
 }
@@ -87,7 +86,7 @@ func NewBackendPlugin(pluginID, executablePath string, startFns PluginStartFuncs
 			DefaultProtocolVersion: {
 				pluginID: &datasourceV1.DatasourcePluginImpl{},
 			},
-			sdkgrpcplugin.ProtocolVersion: getV2PluginSet(),
+			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
 		startFns: startFns,
 	})
@@ -103,7 +102,7 @@ func NewRendererPlugin(pluginID, executablePath string, startFns PluginStartFunc
 			DefaultProtocolVersion: {
 				pluginID: &rendererV1.RendererPluginImpl{},
 			},
-			sdkgrpcplugin.ProtocolVersion: getV2PluginSet(),
+			grpcplugin.ProtocolVersion: getV2PluginSet(),
 		},
 		startFns: startFns,
 	})

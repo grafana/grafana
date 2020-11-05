@@ -204,16 +204,16 @@ type UpdateUserLastSeenAtCommand struct {
 	UserId int64
 }
 
-func (user *SignedInUser) HasRole(role RoleType) bool {
-	if user.IsGrafanaAdmin {
+func (u *SignedInUser) HasRole(role RoleType) bool {
+	if u.IsGrafanaAdmin {
 		return true
 	}
 
-	return user.OrgRole.Includes(role)
+	return u.OrgRole.Includes(role)
 }
 
-func (user *SignedInUser) IsRealUser() bool {
-	return user.UserId != 0
+func (u *SignedInUser) IsRealUser() bool {
+	return u.UserId != 0
 }
 
 type UserProfileDTO struct {
