@@ -36,7 +36,7 @@ func (h *DashboardHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscr
 }
 
 // OnPublish is called when someone begins to edit a dashoard
-func (b *DashboardHandler) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
+func (h *DashboardHandler) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
 	return centrifuge.PublishReply{
 		Options: centrifuge.PublishOptions{},
 	}, nil
