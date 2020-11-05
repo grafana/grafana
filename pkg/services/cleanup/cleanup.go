@@ -7,6 +7,8 @@ import (
 	"path"
 	"time"
 
+	"github.com/grafana/grafana/pkg/services/shorturls"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -20,6 +22,7 @@ type CleanUpService struct {
 	log               log.Logger
 	Cfg               *setting.Cfg                  `inject:""`
 	ServerLockService *serverlock.ServerLockService `inject:""`
+	ShortURLService   *shorturls.ShortURLService    `inject:""`
 }
 
 func init() {
@@ -157,7 +160,7 @@ func (srv *CleanUpService) deleteStaleShortURLs() {
 	cmd := models.DeleteShortUrlCommand{
 		OlderThan: time.Now().Add(-time.Hour * 24 * 7),
 	}
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := srv.ShortURLService.DeleteStaleShortURLs(context.Background(), &cmd); err != nil {
 		srv.log.Error("Problem deleting stale short urls", "error", err.Error())
 	} else {
 		srv.log.Debug("Deleted short urls", "rows affected", cmd.NumDeleted)
