@@ -55,7 +55,7 @@ func (g *TestDataSupplier) GetHandlerForPath(path string) (models.ChannelHandler
 }
 
 // OnSubscribe will let anyone connect to the path
-func (g *testDataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
+func (r *testDataRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
 	if !g.running {
 		g.running = true
 
