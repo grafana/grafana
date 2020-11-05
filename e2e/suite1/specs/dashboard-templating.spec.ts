@@ -39,7 +39,7 @@ e2e.scenario({
 
     e2e()
       .get('.markdown-html li')
-      .should('have.length', 22)
+      .should('have.length', 23)
       .each(element => {
         items.push(element.text());
       })
