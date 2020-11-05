@@ -15,6 +15,7 @@ awsconfig
 .yarnrc
 .yarn/
 vendor/
+.lighthouseci/
 
 # Enterprise emails
 /emails/templates/enterprise_*
