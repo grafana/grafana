@@ -76,7 +76,7 @@
     "@rollup/plugin-commonjs": "11.0.2",
     "@rollup/plugin-image": "2.0.4",
     "@rollup/plugin-node-resolve": "7.1.1",
-    "@storybook/addon-actions": "5.3.21",
+    "@storybook/addon-actions": "6.0.28",
     "@storybook/addon-docs": "6.0.28",
     "@storybook/addon-knobs": "6.0.28",
     "@storybook/addon-storysource": "6.0.28",
