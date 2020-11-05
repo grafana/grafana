@@ -27,10 +27,10 @@ var ErrInvalidCredentials = ldap.ErrInvalidCredentials
 var ErrCouldNotFindUser = ldap.ErrCouldNotFindUser
 
 // ErrNoLDAPServers is returned when there is no LDAP servers specified
-var ErrNoLDAPServers = errors.New("No LDAP servers are configured")
+var ErrNoLDAPServers = errors.New("no LDAP servers are configured")
 
 // ErrDidNotFindUser if request for user is unsuccessful
-var ErrDidNotFindUser = errors.New("Did not find a user")
+var ErrDidNotFindUser = errors.New("did not find a user")
 
 // ServerStatus holds the LDAP server status
 type ServerStatus struct {
