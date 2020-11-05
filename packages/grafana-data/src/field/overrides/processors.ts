@@ -122,13 +122,13 @@ export const booleanOverrideProcessor = (
 
 export interface FieldColorConfigSettings {
   /**
-   * When switching to a visualization that has this set to true then Grafana will change color mode
-   * to from thresholds if it was set to a by series palette
-   */
-  preferByThreshold?: boolean;
-  /**
    * When switching to a visualization that does not support by value coloring then Grafana will
    * switch to a by series palette based color mode
    */
-  noByValueSupport?: boolean;
+  byValueSupport?: boolean;
+  /**
+   * When switching to a visualization that has this set to true then Grafana will change color mode
+   * to from thresholds if it was set to a by series palette
+   */
+  preferThresholdsMode?: boolean;
 }
