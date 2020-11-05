@@ -367,7 +367,7 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	return nil
 }
 
-func (s *PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
+func (*PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
 	return pluginType == "renderer" || pluginType == "transform"
 }
 

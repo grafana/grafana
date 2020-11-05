@@ -45,11 +45,13 @@ enable = [
 # "unparam"
 
 # Enable when appropriate
+# Poorly chosen identifier
 [[issues.exclude-rules]]
 linters = ["stylecheck"]
 text = "ST1003"
 
 # Enable when appropriate
+# Dot imports that aren't in external test packages are discouraged.
 [[issues.exclude-rules]]
 linters = ["stylecheck"]
 text = "ST1001"
