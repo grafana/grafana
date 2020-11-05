@@ -40,7 +40,7 @@ func InterpolateURL(anURL *url.URL, route *plugins.AppPluginRoute, orgID int64, 
 			if err == nil {
 				result, err = url.Parse(interpolatedResult)
 				if err != nil {
-					return nil, fmt.Errorf("Error parsing plugin route url %v", err)
+					return nil, fmt.Errorf("error parsing plugin route URL: %w", err)
 				}
 			}
 		}

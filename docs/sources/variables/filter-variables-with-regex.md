@@ -79,4 +79,35 @@ demo.robustperception.io:9090
 demo.robustperception.io:9093
 demo.robustperception.io:9100
 ```
+
+## Filter and modify using named text and value capture groups
+
+Using named capture groups, you can capture separate 'text' and 'value' parts from the options returned by the variable query. This allows the variable drop-down list to contain a friendly name for each value that can be selected.
+
+For example, when querying the `node_hwmon_chip_names` Prometheus metric, the `chip_name` is a lot friendlier that the `chip` value. So the following variable query result:
+
+```text
+node_hwmon_chip_names{chip="0000:d7:00_0_0000:d8:00_0",chip_name="enp216s0f0np0"} 1
+node_hwmon_chip_names{chip="0000:d7:00_0_0000:d8:00_1",chip_name="enp216s0f0np1"} 1
+node_hwmon_chip_names{chip="0000:d7:00_0_0000:d8:00_2",chip_name="enp216s0f0np2"} 1
+node_hwmon_chip_names{chip="0000:d7:00_0_0000:d8:00_3",chip_name="enp216s0f0np3"} 1
 ```
+
+Passed through the following Regex:
+
+```regex
+/chip_name="(?<text>[^"]+)|chip="(?<value>[^"]+)/g
+```
+
+Would produce the following drop-down list:
+
+```text
+Display Name          Value
+------------          -------------------------
+enp216s0f0np0         0000:d7:00_0_0000:d8:00_0
+enp216s0f0np1         0000:d7:00_0_0000:d8:00_1
+enp216s0f0np2         0000:d7:00_0_0000:d8:00_2
+enp216s0f0np3         0000:d7:00_0_0000:d8:00_3
+```
+
+**Note:** Only `text` and `value` capture group names are supported.

@@ -15,7 +15,7 @@ import (
 func validateTimeRange(item *annotations.Item) error {
 	if item.EpochEnd == 0 {
 		if item.Epoch == 0 {
-			return errors.New("Missing Time Range")
+			return errors.New("missing time range")
 		}
 		item.EpochEnd = item.Epoch
 	}
@@ -78,7 +78,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 			return err
 		}
 		if !isExist {
-			return errors.New("Annotation not found")
+			return errors.New("annotation not found")
 		}
 
 		existing.Updated = timeNow().UnixNano() / int64(time.Millisecond)

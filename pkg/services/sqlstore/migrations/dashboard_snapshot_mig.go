@@ -68,4 +68,7 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 	mg.AddMigration("Add encrypted dashboard json column", NewAddColumnMigration(snapshotV5, &Column{
 		Name: "dashboard_encrypted", Type: DB_Blob, Nullable: true,
 	}))
+
+	mg.AddMigration("Change dashboard_encrypted column to MEDIUMBLOB", NewRawSqlMigration("").
+		Mysql("ALTER TABLE dashboard_snapshot MODIFY dashboard_encrypted MEDIUMBLOB;"))
 }

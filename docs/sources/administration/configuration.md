@@ -1336,6 +1336,10 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
 
+### marketplace_url
+
+Custom install/learn more url for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
+
 <hr>
 
 ## [plugin.grafana-image-renderer]
