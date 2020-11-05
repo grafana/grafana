@@ -22,7 +22,7 @@ func (m *MeasurementsRunner) GetHandlerForPath(path string) (models.ChannelHandl
 }
 
 // OnSubscribe will let anyone connect to the path
-func (g *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
+func (r *MeasurementsRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
 	return centrifuge.SubscribeReply{}, nil
 }
 
