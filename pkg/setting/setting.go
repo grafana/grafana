@@ -797,7 +797,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		plug = strings.TrimSpace(plug)
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
-	cfg.MarketPlaceURL = pluginsSection.Key("marketplace_url").MustString("https://grafana.com/grafana/plugins/")
+	cfg.MarketplaceURL = pluginsSection.Key("marketplace_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.Protocol = Protocol
 
 	// Read and populate feature toggles list
