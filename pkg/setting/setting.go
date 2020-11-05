@@ -273,7 +273,7 @@ type Cfg struct {
 	PluginsAppsSkipVerifyTLS bool
 	PluginSettings           PluginSettings
 	PluginsAllowUnsigned     []string
-	MarketPlaceUrl           string
+	MarketPlaceURL           string
 	DisableSanitizeHtml      bool
 	EnterpriseLicensePath    string
 
