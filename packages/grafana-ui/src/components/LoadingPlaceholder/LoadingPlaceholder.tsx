@@ -4,10 +4,16 @@ import { GrafanaTheme } from '@grafana/data';
 import { Spinner } from '../Spinner/Spinner';
 import { useStyles } from '../../themes';
 
-interface LoadingPlaceholderProps extends HTMLAttributes<HTMLDivElement> {
+/**
+ * @public
+ */
+export interface LoadingPlaceholderProps extends HTMLAttributes<HTMLDivElement> {
   text: string;
 }
 
+/**
+ * @public
+ */
 export const LoadingPlaceholder: SFC<LoadingPlaceholderProps> = ({ text, className, ...rest }) => {
   const styles = useStyles(getStyles);
   return (
