@@ -17,7 +17,7 @@ func (g *PluginHandler) GetHandlerForPath(path string) (models.ChannelHandler, e
 }
 
 // OnSubscribe for now allows anyone to subscribe
-func (g *PluginHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
+func (h *PluginHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
 	return centrifuge.SubscribeReply{}, nil
 }
 
