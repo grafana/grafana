@@ -12,6 +12,8 @@ import {
   StandardEditorProps,
   StringFieldConfigSettings,
   NumberFieldConfigSettings,
+  SliderFieldConfigSettings,
+  ColorFieldConfigSettings,
   identityOverrideProcessor,
   UnitFieldConfigSettings,
   unitOverrideProcessor,
@@ -31,6 +33,18 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
       id: config.path,
       override: standardEditorsRegistry.get('number').editor as any,
       editor: standardEditorsRegistry.get('number').editor as any,
+      process: numberOverrideProcessor,
+      shouldApply: config.shouldApply ? config.shouldApply : field => field.type === FieldType.number,
+      settings: config.settings || {},
+    });
+  }
+
+  addSliderInput<TSettings>(config: FieldConfigEditorConfig<TOptions, TSettings & SliderFieldConfigSettings, number>) {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      override: standardEditorsRegistry.get('slider').editor as any,
+      editor: standardEditorsRegistry.get('slider').editor as any,
       process: numberOverrideProcessor,
       shouldApply: config.shouldApply ? config.shouldApply : field => field.type === FieldType.number,
       settings: config.settings || {},
@@ -129,6 +143,14 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
       ...config,
       id: config.path,
       editor: standardEditorsRegistry.get('number').editor as any,
+    });
+  }
+
+  addSliderInput<TSettings>(config: PanelOptionsEditorConfig<TOptions, TSettings & SliderFieldConfigSettings, number>) {
+    return this.addCustomEditor({
+      ...config,
+      id: config.path,
+      editor: standardEditorsRegistry.get('slider').editor as any,
     });
   }
 

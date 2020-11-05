@@ -31,10 +31,10 @@ Just add it as a data source and you are ready to query your log data in [Explor
 
 | Name            | Description                                                                                                                                   |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| _Name_          | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                               |
-| _Default_       | Default data source means that it will be pre-selected for new panels.                                                                        |
-| _URL_           | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
-| _Maximum lines_ | Upper limit for number of log lines returned by Loki (default is 1000). Decrease if your browser is sluggish when displaying logs in Explore. |
+| `Name`          | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                               |
+| `Default`       | Default data source means that it will be pre-selected for new panels.                                                                        |
+| `URL`           | The URL of the Loki instance, e.g., `http://localhost:3100`                                                                                   |
+| `Maximum lines` | Upper limit for number of log lines returned by Loki (default is 1000). Decrease if your browser is sluggish when displaying logs in Explore. |
 
 ### Derived fields
 
@@ -134,8 +134,37 @@ Note that Live Tailing relies on two Websocket connections: one between the brow
 ```
 ProxyPassMatch "^/(api/datasources/proxy/\d+/loki/api/v1/tail)" "ws://127.0.0.1:3000/$1"
 ```
+The following example shows basic NGINX proxy configuration. It assumes that the Grafana server is available at `http://localhost:3000/`, Loki server is running locally without proxy, and your external site uses HTTPS. If you also host Loki behind NGINX proxy, then you might want to repeat the following configuration for Loki as well.
 
-> **Note:** This feature is only available in Grafana v6.3+
+In the `http` section of NGINX configuration, add the following map definition:
+```
+  map $http_upgrade $connection_upgrade {
+    default upgrade;
+    '' close;
+  }
+```
+In your `server` section, add the following configuration:
+```
+  location ~ /(api/datasources/proxy/\d+/loki/api/v1/tail) {
+      proxy_pass          http://localhost:3000$request_uri;
+      proxy_set_header    Host              $host;
+      proxy_set_header    X-Real-IP         $remote_addr;
+      proxy_set_header    X-Forwarded-for   $proxy_add_x_forwarded_for;
+      proxy_set_header    X-Forwarded-Proto "https";
+      proxy_set_header    Connection        $connection_upgrade;
+      proxy_set_header    Upgrade           $http_upgrade;
+  }
+
+  location / {
+      proxy_pass          http://localhost:3000/;
+      proxy_set_header    Host              $host;
+      proxy_set_header    X-Real-IP         $remote_addr;
+      proxy_set_header    X-Forwarded-for   $proxy_add_x_forwarded_for;
+      proxy_set_header    X-Forwarded-Proto "https";
+  }
+```
+
+> **Note:** This feature is only available in Grafana v6.3+.
 
 ## Log Context
 
@@ -153,7 +182,7 @@ Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentatio
 
 ## Annotations
 
-You can use any non-metric Loki query as a source for annotations. Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
+You can use any non-metric Loki query as a source for [annotations]({{< relref "../dashboards/annotations" >}}). Log content will be used as annotation text and your log stream labels as tags, so there is no need for additional mapping.
 
 > **Note:** Annotations for Loki are only available in Grafana v6.4+
 

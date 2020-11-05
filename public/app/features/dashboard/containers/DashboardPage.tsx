@@ -13,7 +13,7 @@ import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { Alert, Button, CustomScrollbar, HorizontalGroup, Icon, VerticalGroup } from '@grafana/ui';
+import { Alert, Button, CustomScrollbar, HorizontalGroup, Spinner, VerticalGroup } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
 import { notifyApp, updateLocation } from 'app/core/actions';
@@ -145,6 +145,7 @@ export class DashboardPage extends PureComponent<Props, State> {
         this.setState({
           viewPanel: panel,
           rememberScrollTop: this.state.scrollTop,
+          updateScrollTop: 0,
         });
       });
     }
@@ -234,7 +235,7 @@ export class DashboardPage extends PureComponent<Props, State> {
         <div className="dashboard-loading__text">
           <VerticalGroup spacing="md">
             <HorizontalGroup align="center" justify="center" spacing="xs">
-              <Icon name="fa fa-spinner" className="fa-spin" /> {this.props.initPhase}
+              <Spinner inline={true} /> {this.props.initPhase}
             </HorizontalGroup>{' '}
             <HorizontalGroup align="center" justify="center">
               <Button variant="secondary" size="md" icon="repeat" onClick={this.cancelVariables}>
@@ -315,6 +316,7 @@ export class DashboardPage extends PureComponent<Props, State> {
             autoHeightMin="100%"
             setScrollTop={this.setScrollTop}
             scrollTop={updateScrollTop}
+            hideHorizontalTrack={true}
             updateAfterMountMs={500}
             className="custom-scrollbar--page"
           >

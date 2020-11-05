@@ -8,9 +8,11 @@ import {
   getActiveThreshold,
   Threshold,
   getColorForTheme,
+  FieldColorModeId,
+  FALLBACK_COLOR,
 } from '@grafana/data';
 import { Themeable } from '../../types';
-import { selectThemeVariant } from '../../themes';
+import { calculateFontSize } from '../../utils/measureText';
 
 export interface Props extends Themeable {
   height: number;
@@ -22,8 +24,6 @@ export interface Props extends Themeable {
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
 }
-
-const FONT_SCALE = 1;
 
 export class Gauge extends PureComponent<Props> {
   canvasElement: any;
@@ -53,12 +53,18 @@ export class Gauge extends PureComponent<Props> {
   }
 
   getFormattedThresholds(decimals: number): Threshold[] {
-    const { field, theme } = this.props;
+    const { field, theme, value } = this.props;
+
+    if (field.color?.mode !== FieldColorModeId.Thresholds) {
+      return [{ value: field.min ?? 0, color: value.color ?? FALLBACK_COLOR }];
+    }
+
     const thresholds = field.thresholds ?? Gauge.defaultProps.field?.thresholds!;
     const isPercent = thresholds.mode === ThresholdsMode.Percentage;
     const steps = thresholds.steps;
     let min = field.min!;
     let max = field.max!;
+
     if (isPercent) {
       min = 0;
       max = 100;
@@ -87,33 +93,22 @@ export class Gauge extends PureComponent<Props> {
     return formatted;
   }
 
-  getFontScale(length: number): number {
-    if (length > 12) {
-      return FONT_SCALE - (length * 5) / 110;
-    }
-    return FONT_SCALE - (length * 5) / 101;
-  }
-
   draw() {
     const { field, showThresholdLabels, showThresholdMarkers, width, height, theme, value } = this.props;
 
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
     const dimension = Math.min(width, autoProps.gaugeHeight);
-
-    const backgroundColor = selectThemeVariant(
-      {
-        dark: theme.palette.dark8,
-        light: theme.palette.gray6,
-      },
-      theme.type
-    );
-
+    const backgroundColor = theme.colors.bg2;
     const gaugeWidthReduceRatio = showThresholdLabels ? 1.5 : 1;
     const gaugeWidth = Math.min(dimension / 5.5, 40) / gaugeWidthReduceRatio;
     const thresholdMarkersWidth = gaugeWidth / 5;
     const text = formattedValueToString(value);
-    const fontSize = Math.min(dimension / 4, 100) * (text !== null ? this.getFontScale(text.length) : 1);
-
+    // This not 100% accurate as I am unsure of flot's calculations here
+    const valueWidthBase = Math.min(width, dimension * 1.3) * 0.9;
+    // remove gauge & marker width (on left and right side)
+    // and 10px is some padding that flot adds to the outer canvas
+    const valueWidth = valueWidthBase - ((gaugeWidth + (showThresholdMarkers ? thresholdMarkersWidth : 0)) * 2 + 10);
+    const fontSize = calculateFontSize(text, valueWidth, dimension, 1, 48);
     const thresholdLabelFontSize = fontSize / 2.5;
 
     let min = field.min!;

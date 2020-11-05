@@ -46,7 +46,7 @@ import {
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { cleanVariables } from './variablesReducer';
 import isEqual from 'lodash/isEqual';
-import { getCurrentText } from '../utils';
+import { getCurrentText, getVariableRefresh } from '../utils';
 import { store } from 'app/store/store';
 
 // process flow queryVariable
@@ -250,7 +250,7 @@ export const processVariable = (
     }
 
     // for variables that aren't updated via url or refresh let's simulate the same state changes
-    dispatch(variableStateCompleted(toVariablePayload(variable)));
+    dispatch(completeVariableLoading(identifier));
   };
 };
 
@@ -271,14 +271,9 @@ export const setOptionFromUrl = (
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const variable = getVariable(identifier.id, getState());
-    if (variable.hasOwnProperty('refresh') && (variable as QueryVariableModel).refresh !== VariableRefresh.never) {
+    if (getVariableRefresh(variable) !== VariableRefresh.never) {
       // updates options
       await dispatch(updateOptions(toVariableIdentifier(variable)));
-    }
-
-    if (variable.hasOwnProperty('refresh') && (variable as QueryVariableModel).refresh === VariableRefresh.never) {
-      // for variables that have refresh to never simulate the same state changes
-      dispatch(variableStateCompleted(toVariablePayload(variable)));
     }
 
     // get variable from state
@@ -452,6 +447,10 @@ export const variableUpdated = (
 
     // if we're initializing variables ignore cascading update because we are in a boot up scenario
     if (getState().templating.transaction.status === TransactionStatus.Fetching) {
+      if (getVariableRefresh(variableInState) === VariableRefresh.never) {
+        // for variable types with updates that go the setValueFromUrl path in the update let's make sure their state is set to Done.
+        dispatch(completeVariableLoading(identifier));
+      }
       return Promise.resolve();
     }
 
@@ -624,7 +623,7 @@ export const updateOptions = (identifier: VariableIdentifier, rethrow = false): 
   try {
     dispatch(variableStateFetching(toVariablePayload(variableInState)));
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
-    dispatch(variableStateCompleted(toVariablePayload(variableInState)));
+    dispatch(completeVariableLoading(identifier));
   } catch (error) {
     dispatch(variableStateFailed(toVariablePayload(variableInState, { error })));
 
@@ -648,3 +647,11 @@ export const createVariableErrorNotification = (
     `${identifier ? `Templating [${identifier.id}]` : 'Templating'}`,
     `${message} ${error.message}`
   );
+
+export const completeVariableLoading = (identifier: VariableIdentifier): ThunkResult<void> => (dispatch, getState) => {
+  const variableInState = getVariable(identifier.id, getState());
+
+  if (variableInState.state !== LoadingState.Done) {
+    dispatch(variableStateCompleted(toVariablePayload(variableInState)));
+  }
+};

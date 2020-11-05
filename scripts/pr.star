@@ -13,12 +13,12 @@ load(
     'e2e_tests_server_step',
     'e2e_tests_step',
     'build_storybook_step',
+    'build_frontend_docs_step',
     'build_docs_website_step',
     'copy_packages_for_docker_step',
     'build_docker_images_step',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
-    'get_windows_steps',
     'benchmark_ldap_step',
     'ldap_service',
     'integration_test_services',
@@ -42,13 +42,13 @@ def pr_pipelines(edition):
         e2e_tests_server_step(),
         e2e_tests_step(),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
+        build_frontend_docs_step(edition=edition),
         build_docs_website_step(),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, archs=['amd64',]),
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
     ]
-    windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
     if edition == 'enterprise':
         steps.append(benchmark_ldap_step())
         services.append(ldap_service())
@@ -58,10 +58,6 @@ def pr_pipelines(edition):
     return [
         pipeline(
             name='test-pr', edition=edition, trigger=trigger, services=services, steps=steps,
-            ver_mode=ver_mode,
-        ),
-        pipeline(
-            name='windows-pr', edition=edition, trigger=trigger, steps=windows_steps, platform='windows',
             ver_mode=ver_mode,
         ),
     ]

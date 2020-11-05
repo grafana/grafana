@@ -24,6 +24,12 @@ export const numberOverrideProcessor = (
   return parseFloat(value);
 };
 
+export interface SliderFieldConfigSettings {
+  min: number;
+  max: number;
+  step?: number;
+}
+
 export interface DataLinksFieldConfigSettings {}
 
 export const dataLinksOverrideProcessor = (

@@ -1,4 +1,3 @@
-import { SelectableValue } from './select';
 import { Observable } from 'rxjs';
 
 /**
@@ -15,9 +14,9 @@ export enum LiveChannelScope {
 }
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
-export interface LiveChannelConfig<TMessage = any> {
+export interface LiveChannelConfig<TMessage = any, TController = any> {
   /**
    * The path definition.  either static, or it may contain variables identifed with {varname}
    */
@@ -27,11 +26,6 @@ export interface LiveChannelConfig<TMessage = any> {
    * An optional description for the channel
    */
   description?: string;
-
-  /**
-   * When variables exist, this list will identify each one
-   */
-  variables?: Array<SelectableValue<string>>;
 
   /**
    * The channel keeps track of who else is connected to the same channel
@@ -46,6 +40,9 @@ export interface LiveChannelConfig<TMessage = any> {
 
   /** convert the raw stream message into a message that should be broadcast */
   processMessage?: (msg: any) => TMessage;
+
+  /** some channels are managed by an explicit interface */
+  getController?: () => TController;
 }
 
 export enum LiveChannelConnectionState {
@@ -69,7 +66,7 @@ export enum LiveChannelEventType {
 }
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
 export interface LiveChannelStatusEvent {
   type: LiveChannelEventType.Status;
@@ -101,12 +98,12 @@ export interface LiveChannelStatusEvent {
 
 export interface LiveChannelJoinEvent {
   type: LiveChannelEventType.Join;
-  user: any; // @experimental -- will be filled in when we improve the UI
+  user: any; // @alpha -- experimental -- will be filled in when we improve the UI
 }
 
 export interface LiveChannelLeaveEvent {
   type: LiveChannelEventType.Leave;
-  user: any; // @experimental -- will be filled in when we improve the UI
+  user: any; // @alpha -- experimental -- will be filled in when we improve the UI
 }
 
 export interface LiveChannelMessageEvent<T> {
@@ -137,14 +134,14 @@ export function isLiveChannelMessageEvent<T>(evt: LiveChannelEvent<T>): evt is L
 }
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
 export interface LiveChannelPresenceStatus {
-  users: any; // @experimental -- will be filled in when we improve the UI
+  users: any; // @alpha -- experimental -- will be filled in when we improve the UI
 }
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
 export interface LiveChannelAddress {
   scope: LiveChannelScope;
@@ -160,7 +157,7 @@ export function isValidLiveChannelAddress(addr?: LiveChannelAddress): addr is Li
 }
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
 export interface LiveChannel<TMessage = any, TPublish = any> {
   /** The fully qualified channel id: ${scope}/${namespace}/${path} */
@@ -201,7 +198,7 @@ export interface LiveChannel<TMessage = any, TPublish = any> {
 }
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
 export interface LiveChannelSupport {
   /**

@@ -20,6 +20,8 @@ import {
   TimeZone,
   ExploreUrlState,
   LogsModel,
+  EventBusExtended,
+  EventBusSrv,
 } from '@grafana/data';
 
 import store from 'app/core/store';
@@ -37,6 +39,7 @@ import {
   scanStart,
   setQueries,
   updateTimeRange,
+  splitOpen,
 } from './state/actions';
 
 import { ExploreId, ExploreItemState, ExploreUpdateState } from 'app/types/explore';
@@ -49,7 +52,6 @@ import {
   getTimeRangeFromUrl,
   lastUsedDatasourceKeyForOrgId,
 } from 'app/core/utils/explore';
-import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
@@ -120,6 +122,7 @@ export interface ExploreProps {
   showTable: boolean;
   showLogs: boolean;
   showTrace: boolean;
+  splitOpen: typeof splitOpen;
 }
 
 enum ExploreDrawer {
@@ -157,11 +160,11 @@ interface ExploreState {
  */
 export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   el: any;
-  exploreEvents: Emitter;
+  exploreEvents: EventBusExtended;
 
   constructor(props: ExploreProps) {
     super(props);
-    this.exploreEvents = new Emitter();
+    this.exploreEvents = new EventBusSrv();
     this.state = {
       openDrawer: undefined,
     };
@@ -309,6 +312,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       showTable,
       showLogs,
       showTrace,
+      splitOpen,
     } = this.props;
     const { openDrawer } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
@@ -405,7 +409,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                             // We expect only one trace at the moment to be in the dataframe
                             // If there is not data (like 404) we show a separate error so no need to show anything here
                             queryResponse.series[0] && (
-                              <TraceView trace={queryResponse.series[0].fields[0].values.get(0) as any} />
+                              <TraceView
+                                trace={queryResponse.series[0].fields[0].values.get(0) as any}
+                                splitOpenFn={splitOpen}
+                              />
                             )}
                         </>
                       )}
@@ -505,6 +512,7 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   setQueries,
   updateTimeRange,
   addQueryRow,
+  splitOpen,
 };
 
 export default compose(

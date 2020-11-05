@@ -173,6 +173,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"sort":          getPanelSort(panel.Id),
 			"skipDataQuery": panel.SkipDataQuery,
 			"state":         panel.State,
+			"signature":     panel.Signature,
 		}
 	}
 

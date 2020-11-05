@@ -9,6 +9,7 @@ import { calculateFontSize } from '../../utils/measureText';
 
 // Types
 import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
+import { getTextColorForBackground } from '../../utils';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
@@ -51,7 +52,7 @@ export abstract class BigValueLayout {
     };
 
     if (this.props.colorMode === BigValueColorMode.Background) {
-      styles.color = 'white';
+      styles.color = getTextColorForBackground(this.valueColor);
     }
 
     return styles;
@@ -62,6 +63,8 @@ export abstract class BigValueLayout {
       fontSize: this.valueFontSize,
       fontWeight: 500,
       lineHeight: LINE_HEIGHT,
+      position: 'relative',
+      zIndex: 1,
     };
 
     switch (this.props.colorMode) {
@@ -69,7 +72,7 @@ export abstract class BigValueLayout {
         styles.color = this.valueColor;
         break;
       case BigValueColorMode.Background:
-        styles.color = 'white';
+        styles.color = getTextColorForBackground(this.valueColor);
     }
 
     return styles;

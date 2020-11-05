@@ -30,9 +30,9 @@ Grafana ships with built-in support for Google Cloud Monitoring. Just add it as 
 
 | Name                  | Description                                                                           |
 | --------------------- | ------------------------------------------------------------------------------------- |
-| _Name_                | The data source name. This is how you refer to the data source in panels and queries. |
-| _Default_             | Default data source means that it will be pre-selected for new panels.                |
-| _Service Account Key_ | Service Account Key File for a GCP Project. Instructions below on how to create it.   |
+| `Name`                | The data source name. This is how you refer to the data source in panels and queries. |
+| `Default`             | Default data source means that it will be pre-selected for new panels.                |
+| `Service Account Key` | Service Account Key File for a GCP Project. Instructions below on how to create it.   |
 
 ## Authentication
 
@@ -241,16 +241,16 @@ Variable of the type _Query_ allows you to query Google Cloud Monitoring for var
 
 | Name                             | Description                                                                                                   |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| _Metric Types_                   | Returns a list of metric type names that are available for the specified service.                             |
-| _Labels Keys_                    | Returns a list of keys for `metric label` and `resource label` in the specified metric.                       |
-| _Labels Values_                  | Returns a list of values for the label in the specified metric.                                               |
-| _Resource Types_                 | Returns a list of resource types for the specified metric.                                                    |
-| _Aggregations_                   | Returns a list of aggregations (cross series reducers) for the specified metric.                              |
-| _Aligners_                       | Returns a list of aligners (per series aligners) for the specified metric.                                    |
-| _Alignment periods_              | Returns a list of all alignment periods that are available in Google Cloud Monitoring query editor in Grafana |
-| _Selectors_                      | Returns a list of selectors that can be used in SLO (Service Level Objectives) queries                        |
-| _SLO Services_                   | Returns a list of Service Monitoring services that can be used in SLO queries                                 |
-| _Service Level Objectives (SLO)_ | Returns a list of SLO's for the specified SLO service                                                         |
+| `Metric Types`                   | Returns a list of metric type names that are available for the specified service.                             |
+| `Labels Keys`                    | Returns a list of keys for `metric label` and `resource label` in the specified metric.                       |
+| `Labels Values`                  | Returns a list of values for the label in the specified metric.                                               |
+| `Resource Types`                 | Returns a list of resource types for the specified metric.                                                    |
+| `Aggregations`                   | Returns a list of aggregations (cross series reducers) for the specified metric.                              |
+| `Aligners`                       | Returns a list of aligners (per series aligners) for the specified metric.                                    |
+| `Alignment periods`              | Returns a list of all alignment periods that are available in Google Cloud Monitoring query editor in Grafana |
+| `Selectors`                      | Returns a list of selectors that can be used in SLO (Service Level Objectives) queries                        |
+| `SLO Services`                   | Returns a list of Service Monitoring services that can be used in SLO queries                                 |
+| `Service Level Objectives (SLO)` | Returns a list of SLO's for the specified SLO service                                                         |
 
 ### Using variables in queries
 
@@ -335,3 +335,24 @@ Only available in Grafana v7.1+.
 
 Click on a time series in the panel to see a context menu with a link to View in Metrics Explorer in Google Cloud Console. Clicking that link opens the Metrics Explorer in the Google Cloud Console and runs the query from the Grafana panel there.
 The link navigates the user first to the Google Account Chooser and after successfully selecting an account, the user is redirected to the Metrics Explorer. The provided link is valid for any account, but it only displays the query if your account has access to the GCP project specified in the query.
+
+## Out-of-the-box dashboards
+
+> Only available in Grafana v7.3+.
+
+The updated Cloud Monitoring data source ships with pre-configured dashboards for five of the most popular GCP services:
+
+1. BigQuery
+1. Cloud Load Balancing
+1. Cloud SQL
+1. Google Compute Engine `GCE`
+1. Google Kubernetes Engine `GKE`
+
+To import the pre-configured dashboards, go to the configuration page of a Cloud monitoring data source and click on the `Dashboards` tab. Click `Import` for the dashboard you would like to use.
+The datasource of the newly created dashboard panels will be the one selected above.
+
+The dashboards have a template variable which is populated with the projects accessible by the configured service account every time the dashboard is loaded. After the dashboard is loaded, you can select the project you prefer from the drop-down list.
+
+To customize the dashboard, we recommend saving the dashboard under a different name, because otherwise the dashboard will be overwritten when a new version of the dashboard is released.
+
+{{< docs-imagebox img="/img/docs/v73/cloud-monitoring-dashboard-import.png" caption="Cloud Monitoring dashboard import" >}}

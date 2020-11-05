@@ -17,14 +17,7 @@ type dashboardEvent struct {
 
 // DashboardHandler manages all the `grafana/dashboard/*` channels
 type DashboardHandler struct {
-	publisher models.ChannelPublisher
-}
-
-// CreateDashboardHandler Initialize a dashboard handler
-func CreateDashboardHandler(p models.ChannelPublisher) DashboardHandler {
-	return DashboardHandler{
-		publisher: p,
-	}
+	Publisher models.ChannelPublisher
 }
 
 // GetHandlerForPath called on init
@@ -46,10 +39,10 @@ func (g *DashboardHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscr
 	return nil
 }
 
-// OnPublish called when an event is received from the websocket
-func (g *DashboardHandler) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
-	// TODO -- verify and keep track of editors?
-	return e.Data, nil
+// AllowBroadcast checks if a message from the websocket can be broadcast on this channel
+// currently messages are sent when a dashboard starts editing
+func (g *DashboardHandler) AllowBroadcast(c *centrifuge.Client, e centrifuge.PublishEvent) error {
+	return nil
 }
 
 // DashboardSaved should broadcast to the appropriate stream
@@ -58,7 +51,7 @@ func (g *DashboardHandler) publish(event dashboardEvent) error {
 	if err != nil {
 		return err
 	}
-	return g.publisher("grafana/dashboard/"+event.UID, msg)
+	return g.Publisher("grafana/dashboard/"+event.UID, msg)
 }
 
 // DashboardSaved will broadcast to all connected dashboards

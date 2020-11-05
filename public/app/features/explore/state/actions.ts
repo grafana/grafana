@@ -1,5 +1,5 @@
 // Libraries
-import { map, throttleTime } from 'rxjs/operators';
+import { map, mergeMap, throttleTime } from 'rxjs/operators';
 import { identity } from 'rxjs';
 import { PayloadAction } from '@reduxjs/toolkit';
 import { DataSourceSrv } from '@grafana/runtime';
@@ -14,6 +14,7 @@ import {
   LoadingState,
   LogsDedupStrategy,
   PanelData,
+  EventBusExtended,
   QueryFixAction,
   RawTimeRange,
   TimeRange,
@@ -21,7 +22,6 @@ import {
 // Services & Utils
 import store from 'app/core/store';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { Emitter } from 'app/core/core';
 import {
   buildQueryTransaction,
   clearQueryKeys,
@@ -84,7 +84,7 @@ import {
 } from './actionTypes';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
-import { updateLocation } from '../../../core/actions';
+import { notifyApp, updateLocation } from '../../../core/actions';
 import { getTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
@@ -96,6 +96,7 @@ import {
   decorateWithLogsResult,
   decorateWithTableResult,
 } from '../utils/decorators';
+import { createErrorNotification } from '../../../core/copy/appNotification';
 
 /**
  * Adds a query row after the row with the given index.
@@ -279,7 +280,7 @@ export function initializeExplore(
   queries: DataQuery[],
   range: TimeRange,
   containerWidth: number,
-  eventBridge: Emitter,
+  eventBridge: EventBusExtended,
   originPanelId?: number | null
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
@@ -427,6 +428,8 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       queryResponse,
       querySubscription,
       history,
+      refreshInterval,
+      absoluteRange,
     } = exploreItemState;
 
     if (!hasNonEmptyQuery(queries)) {
@@ -473,47 +476,54 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
         // actually can see what is happening.
         live ? throttleTime(500) : identity,
         map((data: PanelData) => preProcessPanelData(data, queryResponse)),
-        decorateWithGraphLogsTraceAndTable(getState().explore[exploreId].datasourceInstance),
-        decorateWithGraphResult(),
-        decorateWithTableResult(),
-        decorateWithLogsResult(getState().explore[exploreId])
+        map(decorateWithGraphLogsTraceAndTable),
+        map(decorateWithGraphResult),
+        map(decorateWithLogsResult({ absoluteRange, refreshInterval })),
+        mergeMap(decorateWithTableResult)
       )
-      .subscribe(data => {
-        if (!data.error && firstResponse) {
-          // Side-effect: Saving history in localstorage
-          const nextHistory = updateHistory(history, datasourceId, queries);
-          const nextRichHistory = addToRichHistory(
-            richHistory || [],
-            datasourceId,
-            datasourceName,
-            queries,
-            false,
-            '',
-            ''
-          );
-          dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
-          dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
+      .subscribe(
+        data => {
+          if (!data.error && firstResponse) {
+            // Side-effect: Saving history in localstorage
+            const nextHistory = updateHistory(history, datasourceId, queries);
+            const nextRichHistory = addToRichHistory(
+              richHistory || [],
+              datasourceId,
+              datasourceName,
+              queries,
+              false,
+              '',
+              ''
+            );
+            dispatch(historyUpdatedAction({ exploreId, history: nextHistory }));
+            dispatch(richHistoryUpdatedAction({ richHistory: nextRichHistory }));
 
-          // We save queries to the URL here so that only successfully run queries change the URL.
-          dispatch(stateSave());
-        }
-
-        firstResponse = false;
-
-        dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
-
-        // Keep scanning for results if this was the last scanning transaction
-        if (getState().explore[exploreId].scanning) {
-          if (data.state === LoadingState.Done && data.series.length === 0) {
-            const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
-            dispatch(updateTime({ exploreId, absoluteRange: range }));
-            dispatch(runQueries(exploreId));
-          } else {
-            // We can stop scanning if we have a result
-            dispatch(scanStopAction({ exploreId }));
+            // We save queries to the URL here so that only successfully run queries change the URL.
+            dispatch(stateSave());
           }
+
+          firstResponse = false;
+
+          dispatch(queryStreamUpdatedAction({ exploreId, response: data }));
+
+          // Keep scanning for results if this was the last scanning transaction
+          if (getState().explore[exploreId].scanning) {
+            if (data.state === LoadingState.Done && data.series.length === 0) {
+              const range = getShiftedTimeRange(-1, getState().explore[exploreId].range);
+              dispatch(updateTime({ exploreId, absoluteRange: range }));
+              dispatch(runQueries(exploreId));
+            } else {
+              // We can stop scanning if we have a result
+              dispatch(scanStopAction({ exploreId }));
+            }
+          }
+        },
+        error => {
+          dispatch(notifyApp(createErrorNotification('Query processing error', error)));
+          dispatch(changeLoadingStateAction({ exploreId, loadingState: LoadingState.Error }));
+          console.error(error);
         }
-      });
+      );
 
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySub }));
   };
@@ -678,7 +688,12 @@ export function splitClose(itemId: ExploreId): ThunkResult<void> {
  * Otherwise it copies the left state to be the right state. The copy keeps all query modifications but wipes the query
  * results.
  */
-export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: string; query: T }): ThunkResult<void> {
+export function splitOpen<T extends DataQuery = any>(options?: {
+  datasourceUid: string;
+  query: T;
+  // Don't use right now. It's used for Traces to Logs interaction but is hacky in how the range is actually handled.
+  range?: TimeRange;
+}): ThunkResult<void> {
   return async (dispatch, getState) => {
     // Clone left state to become the right state
     const leftState: ExploreItemState = getState().explore[ExploreId.left];
@@ -696,6 +711,19 @@ export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: 
       rightState.queryKeys = [];
       urlState.queries = [];
       rightState.urlState = urlState;
+      if (options.range) {
+        urlState.range = options.range.raw;
+        // This is super hacky. In traces to logs we want to create a link but also internally open split window.
+        // We use the same range object but the raw part is treated differently because it's parsed differently during
+        // init depending on whether we open split or new window.
+        rightState.range = {
+          ...options.range,
+          raw: {
+            from: options.range.from.utc().toISOString(),
+            to: options.range.to.utc().toISOString(),
+          },
+        };
+      }
 
       dispatch(splitOpenAction({ itemState: rightState }));
 
@@ -707,6 +735,7 @@ export function splitOpen<T extends DataQuery = any>(options?: { datasourceUid: 
       ];
 
       const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.datasourceUid);
+
       await dispatch(changeDatasource(ExploreId.right, dataSourceSettings!.name));
       await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));
       await dispatch(runQueries(ExploreId.right));

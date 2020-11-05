@@ -30,10 +30,12 @@ exports[`BigValue Render with basic options should render 1`] = `
     <FormattedDisplayValue
       style={
         Object {
-          "color": "white",
+          "color": "#f7f8fa",
           "fontSize": 230,
           "fontWeight": 500,
           "lineHeight": 1.2,
+          "position": "relative",
+          "zIndex": 1,
         }
       }
       value={

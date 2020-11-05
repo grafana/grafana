@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/go-macaron/session"
+	"github.com/prometheus/common/model"
 	ini "gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/components/gtime"
@@ -267,17 +268,20 @@ type Cfg struct {
 	CookieSameSiteDisabled           bool
 	CookieSameSiteMode               http.SameSite
 
-	TempDataLifetime                 time.Duration
+	TempDataLifetime         time.Duration
+	PluginsEnableAlpha       bool
+	PluginsAppsSkipVerifyTLS bool
+	PluginSettings           PluginSettings
+	PluginsAllowUnsigned     []string
+	DisableSanitizeHtml      bool
+	EnterpriseLicensePath    string
+
+	// Metrics
 	MetricsEndpointEnabled           bool
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
 	MetricsEndpointDisableTotalStats bool
-	PluginsEnableAlpha               bool
-	PluginsAppsSkipVerifyTLS         bool
-	PluginSettings                   PluginSettings
-	PluginsAllowUnsigned             []string
-	DisableSanitizeHtml              bool
-	EnterpriseLicensePath            string
+	MetricsGrafanaEnvironmentInfo    map[string]string
 
 	// Dashboards
 	DefaultHomeDashboardPath string
@@ -334,6 +338,14 @@ func (c Cfg) IsLiveEnabled() bool {
 // IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
 func (c Cfg) IsNgAlertEnabled() bool {
 	return c.FeatureToggles["ngalert"]
+}
+
+func (c Cfg) IsDatabaseMetricsEnabled() bool {
+	return c.FeatureToggles["database_metrics"]
+}
+
+func (c Cfg) IsHTTPRequestHistogramEnabled() bool {
+	return c.FeatureToggles["http_request_histogram"]
 }
 
 type CommandLineArgs struct {
@@ -411,13 +423,36 @@ func applyEnvVariableOverrides(file *ini.File) error {
 	return nil
 }
 
+func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
+	environmentMetricsSection := cfg.Raw.Section("metrics.environment_info")
+	keys := environmentMetricsSection.Keys()
+	cfg.MetricsGrafanaEnvironmentInfo = make(map[string]string, len(keys))
+
+	for _, key := range keys {
+		labelName := model.LabelName(key.Name())
+		labelValue := model.LabelValue(key.Value())
+
+		if !labelName.IsValid() {
+			return fmt.Errorf("invalid label name in [metrics.environment_info] configuration. name %q", labelName)
+		}
+
+		if !labelValue.IsValid() {
+			return fmt.Errorf("invalid label value in [metrics.environment_info] configuration. name %q value %q", labelName, labelValue)
+		}
+
+		cfg.MetricsGrafanaEnvironmentInfo[string(labelName)] = string(labelValue)
+	}
+
+	return nil
+}
+
 func (cfg *Cfg) readAnnotationSettings() {
 	dashboardAnnotation := cfg.Raw.Section("annotations.dashboard")
 	apiIAnnotation := cfg.Raw.Section("annotations.api")
 	alertingSection := cfg.Raw.Section("alerting")
 
 	var newAnnotationCleanupSettings = func(section *ini.Section, maxAgeField string) AnnotationCleanupSettings {
-		maxAge, err := gtime.ParseInterval(section.Key(maxAgeField).MustString(""))
+		maxAge, err := gtime.ParseDuration(section.Key(maxAgeField).MustString(""))
 		if err != nil {
 			maxAge = 0
 		}
@@ -781,6 +816,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
 	cfg.readAnnotationSettings()
+	if err := cfg.readGrafanaEnvironmentMetrics(); err != nil {
+		return err
+	}
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		log.Warnf("require_email_validation is enabled but smtp is disabled")
@@ -980,7 +1018,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		maxInactiveDaysVal = "7d"
 	}
 	maxInactiveDurationVal := valueAsString(auth, "login_maximum_inactive_lifetime_duration", maxInactiveDaysVal)
-	cfg.LoginMaxInactiveLifetime, err = gtime.ParseInterval(maxInactiveDurationVal)
+	cfg.LoginMaxInactiveLifetime, err = gtime.ParseDuration(maxInactiveDurationVal)
 	if err != nil {
 		return err
 	}
@@ -993,7 +1031,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		maxLifetimeDaysVal = "7d"
 	}
 	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", maxLifetimeDaysVal)
-	cfg.LoginMaxLifetime, err = gtime.ParseInterval(maxLifetimeDurationVal)
+	cfg.LoginMaxLifetime, err = gtime.ParseDuration(maxLifetimeDurationVal)
 	if err != nil {
 		return err
 	}
@@ -1083,7 +1121,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
 
 	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
-	userInviteMaxLifetimeDuration, err := gtime.ParseInterval(userInviteMaxLifetimeVal)
+	userInviteMaxLifetimeDuration, err := gtime.ParseDuration(userInviteMaxLifetimeVal)
 	if err != nil {
 		return err
 	}
