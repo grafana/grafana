@@ -70,6 +70,7 @@ This variable is the ID of the current organization.
 
 `${__user.id}` is the ID of the current user.
 `${__user.login}` is the login handle of the current user.
+`${__user.email}` is the email for the current user.
 
 ## $__range
 

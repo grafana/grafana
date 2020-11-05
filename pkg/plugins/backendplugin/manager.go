@@ -81,7 +81,7 @@ func (m *manager) Register(pluginID string, factory PluginFactoryFunc) error {
 	defer m.pluginsMu.Unlock()
 
 	if _, exists := m.plugins[pluginID]; exists {
-		return errors.New("backend plugin already registered")
+		return fmt.Errorf("backend plugin %s already registered", pluginID)
 	}
 
 	pluginSettings := pluginSettings{}
@@ -241,7 +241,7 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 
 	body, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		return errors.New("failed to read request body")
+		return fmt.Errorf("failed to read request body: %w", err)
 	}
 
 	crReq := &backend.CallResourceRequest{
