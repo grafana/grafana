@@ -26,7 +26,7 @@ func (g *DashboardHandler) GetHandlerForPath(path string) (models.ChannelHandler
 }
 
 // OnSubscribe for now allows anyone to subscribe to any dashboard
-func (g *DashboardHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
+func (h *DashboardHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
 	return centrifuge.SubscribeReply{
 		Options: centrifuge.SubscribeOptions{
 			Presence:  true,
