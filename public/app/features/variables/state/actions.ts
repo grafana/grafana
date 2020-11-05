@@ -46,7 +46,7 @@ import {
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { cleanVariables } from './variablesReducer';
 import isEqual from 'lodash/isEqual';
-import { getCurrentText } from '../utils';
+import { getCurrentText, getVariableRefresh } from '../utils';
 import { store } from 'app/store/store';
 
 // process flow queryVariable
@@ -271,7 +271,7 @@ export const setOptionFromUrl = (
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const variable = getVariable(identifier.id, getState());
-    if (variable.hasOwnProperty('refresh') && (variable as QueryVariableModel).refresh !== VariableRefresh.never) {
+    if (getVariableRefresh(variable) !== VariableRefresh.never) {
       // updates options
       await dispatch(updateOptions(toVariableIdentifier(variable)));
     }
@@ -447,8 +447,10 @@ export const variableUpdated = (
 
     // if we're initializing variables ignore cascading update because we are in a boot up scenario
     if (getState().templating.transaction.status === TransactionStatus.Fetching) {
-      // for all variable types with updates that go the setValueFromUrl path in the update let's make sure their state is set to Done.
-      dispatch(completeVariableLoading(identifier));
+      if (getVariableRefresh(variableInState) === VariableRefresh.never) {
+        // for variable types with updates that go the setValueFromUrl path in the update let's make sure their state is set to Done.
+        dispatch(completeVariableLoading(identifier));
+      }
       return Promise.resolve();
     }
 

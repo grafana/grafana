@@ -232,6 +232,7 @@ export default class TimeSeries {
     this.stats.first = null;
     this.stats.delta = 0;
     this.stats.diff = null;
+    this.stats.diffperc = 0;
     this.stats.range = null;
     this.stats.timeStep = Number.MAX_VALUE;
     this.allIsNull = true;
@@ -336,6 +337,7 @@ export default class TimeSeries {
     }
     if (this.stats.current !== null && this.stats.first !== null) {
       this.stats.diff = this.stats.current - this.stats.first;
+      this.stats.diffperc = this.stats.diff / this.stats.first;
     }
 
     this.stats.count = result.length;

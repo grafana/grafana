@@ -185,7 +185,7 @@ func getAlertNotificationUidInternal(query *models.GetAlertNotificationUidQuery,
 	}
 
 	if len(results) == 0 {
-		return fmt.Errorf("Alert notification [ Id: %v, OrgId: %v ] not found", query.Id, query.OrgId)
+		return models.ErrAlertNotificationFailedTranslateUniqueID
 	}
 
 	query.Result = results[0]
@@ -390,7 +390,7 @@ func UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
 		}
 
 		if sameNameQuery.Result != nil && sameNameQuery.Result.Id != current.Id {
-			return fmt.Errorf("Alert notification name %s already exists", cmd.Name)
+			return fmt.Errorf("alert notification name %q already exists", cmd.Name)
 		}
 
 		// delete empty keys
@@ -431,7 +431,7 @@ func UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
 		if affected, err := sess.ID(cmd.Id).Update(current); err != nil {
 			return err
 		} else if affected == 0 {
-			return fmt.Errorf("Could not update alert notification")
+			return fmt.Errorf("could not update alert notification")
 		}
 
 		cmd.Result = &current
@@ -578,7 +578,7 @@ func GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCre
 				}
 
 				if !exist {
-					return errors.New("Should not happen")
+					return errors.New("should not happen")
 				}
 
 				cmd.Result = nj

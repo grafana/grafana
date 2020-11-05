@@ -15,47 +15,37 @@ import { UPlotChart } from '../uPlot/Plot';
 import { AxisSide, GraphCustomFieldConfig, PlotProps } from '../uPlot/types';
 import { useTheme } from '../../themes';
 
+const _ = null;
+
 const timeStampsConfig = [
-  [3600 * 24 * 365, '{YYYY}', 7, '{YYYY}'],
-  [3600 * 24 * 28, `{${timeFormatToTemplate(systemDateFormats.interval.month)}`, 7, '{MMM}\n{YYYY}'],
-  [
-    3600 * 24,
-    `{${timeFormatToTemplate(systemDateFormats.interval.day)}`,
-    7,
-    `${timeFormatToTemplate(systemDateFormats.interval.day)}\n${timeFormatToTemplate(systemDateFormats.interval.year)}`,
-  ],
+  //   tick incr    default          year                    month   day                   hour    min       sec   mode
+  [3600 * 24 * 365, '{YYYY}', _, _, _, _, _, _, 1],
+  [3600 * 24 * 28, `${timeFormatToTemplate(systemDateFormats.interval.month)}`, _, _, _, _, _, _, 1],
+  [3600 * 24, `${timeFormatToTemplate(systemDateFormats.interval.day)}`, `\n{YYYY}`, _, _, _, _, _, 1],
   [
     3600,
-    `{${timeFormatToTemplate(systemDateFormats.interval.minute)}`,
-    4,
-    `${timeFormatToTemplate(systemDateFormats.interval.minute)}\n${timeFormatToTemplate(
-      systemDateFormats.interval.day
-    )}`,
+    `${timeFormatToTemplate(systemDateFormats.interval.minute)}`,
+    _,
+    _,
+    `\n${timeFormatToTemplate(systemDateFormats.interval.day)}`,
+    _,
+    _,
+    _,
+    1,
   ],
   [
     60,
-    `{${timeFormatToTemplate(systemDateFormats.interval.second)}`,
-    4,
-    `${timeFormatToTemplate(systemDateFormats.interval.second)}\n${timeFormatToTemplate(
-      systemDateFormats.interval.day
-    )}`,
-  ],
-  [
+    `${timeFormatToTemplate(systemDateFormats.interval.minute)}`,
+    _,
+    _,
+    `\n${timeFormatToTemplate(systemDateFormats.interval.day)}`,
+    _,
+    _,
+    _,
     1,
-    `:{ss}`,
-    2,
-    `:{ss}\n${timeFormatToTemplate(systemDateFormats.interval.day)} ${timeFormatToTemplate(
-      systemDateFormats.interval.minute
-    )}`,
   ],
-  [
-    1e-3,
-    ':{ss}.{fff}',
-    2,
-    `:{ss}.{fff}\n${timeFormatToTemplate(systemDateFormats.interval.day)} ${timeFormatToTemplate(
-      systemDateFormats.interval.minute
-    )}`,
-  ],
+  [1, ':{ss}', _, _, _, _, `\n ${timeFormatToTemplate(systemDateFormats.interval.minute)}`, _, 1],
+  [1e-3, ':{ss}.{fff}', _, _, _, _, `\n ${timeFormatToTemplate(systemDateFormats.interval.minute)}`, _, 1],
 ];
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));

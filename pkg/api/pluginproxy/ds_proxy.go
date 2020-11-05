@@ -2,7 +2,6 @@ package pluginproxy
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -14,18 +13,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opentracing/opentracing-go"
-	"golang.org/x/oauth2"
-
 	"github.com/grafana/grafana/pkg/api/datasource"
-	"github.com/grafana/grafana/pkg/bus"
 	glog "github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
+	"github.com/opentracing/opentracing-go"
 )
 
 var (
@@ -211,8 +207,11 @@ func (proxy *DataSourceProxy) getDirector() func(req *http.Request) {
 			ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, proxy.route, proxy.ds)
 		}
 
-		if proxy.ds.JsonData != nil && proxy.ds.JsonData.Get("oauthPassThru").MustBool() {
-			addOAuthPassThruAuth(proxy.ctx, req)
+		if oauthtoken.IsOAuthPassThruEnabled(proxy.ds) {
+			if token := oauthtoken.GetCurrentOAuthToken(proxy.ctx.Req.Context(), proxy.ctx.SignedInUser); token != nil {
+				req.Header.Del("Authorization")
+				req.Header.Add("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
+			}
 		}
 	}
 }
@@ -303,65 +302,4 @@ func checkWhiteList(c *models.ReqContext, host string) bool {
 	}
 
 	return true
-}
-
-func addOAuthPassThruAuth(c *models.ReqContext, req *http.Request) {
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: c.UserId}
-	if err := bus.Dispatch(authInfoQuery); err != nil {
-		logger.Error("Error fetching oauth information for user", "userid", c.UserId, "username", c.Login, "error", err)
-		return
-	}
-
-	authProvider := authInfoQuery.Result.AuthModule
-	connect, err := social.GetConnector(authProvider)
-	if err != nil {
-		logger.Error("Failed to get OAuth connector", "error", err)
-		return
-	}
-
-	persistedToken := &oauth2.Token{
-		AccessToken:  authInfoQuery.Result.OAuthAccessToken,
-		Expiry:       authInfoQuery.Result.OAuthExpiry,
-		RefreshToken: authInfoQuery.Result.OAuthRefreshToken,
-		TokenType:    authInfoQuery.Result.OAuthTokenType,
-	}
-
-	client, err := social.GetOAuthHttpClient(authProvider)
-	if err != nil {
-		logger.Error("Failed to create OAuth http client", "error", err)
-		return
-	}
-	oauthctx := context.WithValue(c.Req.Context(), oauth2.HTTPClient, client)
-
-	// TokenSource handles refreshing the token if it has expired
-	token, err := connect.TokenSource(oauthctx, persistedToken).Token()
-	if err != nil {
-		logger.Error("Failed to retrieve access token from OAuth provider", "provider", authInfoQuery.Result.AuthModule, "userid", c.UserId, "username", c.Login, "error", err)
-		return
-	}
-
-	// If the tokens are not the same, update the entry in the DB
-	if !tokensEq(persistedToken, token) {
-		updateAuthCommand := &models.UpdateAuthInfoCommand{
-			UserId:     authInfoQuery.Result.UserId,
-			AuthModule: authInfoQuery.Result.AuthModule,
-			AuthId:     authInfoQuery.Result.AuthId,
-			OAuthToken: token,
-		}
-		if err := bus.Dispatch(updateAuthCommand); err != nil {
-			logger.Error("Failed to update auth info during token refresh", "userid", c.UserId, "username", c.Login, "error", err)
-			return
-		}
-		logger.Debug("Updated OAuth info while proxying an OAuth pass-thru request", "userid", c.UserId, "username", c.Login)
-	}
-	req.Header.Del("Authorization")
-	req.Header.Add("Authorization", fmt.Sprintf("%s %s", token.Type(), token.AccessToken))
-}
-
-// tokensEq checks for OAuth2 token equivalence given the fields of the struct Grafana is interested in
-func tokensEq(t1, t2 *oauth2.Token) bool {
-	return t1.AccessToken == t2.AccessToken &&
-		t1.RefreshToken == t2.RefreshToken &&
-		t1.Expiry == t2.Expiry &&
-		t1.TokenType == t2.TokenType
 }

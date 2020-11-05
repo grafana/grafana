@@ -11,6 +11,7 @@ import {
   PanelEvents,
   sortLogsResult,
   toLegacyResponseData,
+  EventBusExtended,
 } from '@grafana/data';
 import { RefreshPicker } from '@grafana/ui';
 import { LocationUpdate } from '@grafana/runtime';
@@ -62,7 +63,6 @@ import {
   updateDatasourceInstanceAction,
 } from './actionTypes';
 import { updateLocation } from '../../../core/actions';
-import { Emitter } from 'app/core/core';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -111,7 +111,7 @@ export const makeExploreItemState = (): ExploreItemState => ({
   graphResult: null,
   logsResult: null,
   dedupStrategy: LogsDedupStrategy.none,
-  eventBridge: (null as unknown) as Emitter,
+  eventBridge: (null as unknown) as EventBusExtended,
 });
 
 export const createEmptyQueryResponse = (): PanelData => ({

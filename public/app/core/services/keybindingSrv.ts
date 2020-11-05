@@ -2,7 +2,7 @@ import _ from 'lodash';
 import Mousetrap from 'mousetrap';
 import 'mousetrap-global-bind';
 import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
-import { locationUtil } from '@grafana/data';
+import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
 
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
@@ -19,7 +19,6 @@ import { ContextSrv } from './context_srv';
 export class KeybindingSrv {
   helpModal: boolean;
   modalOpen = false;
-  timepickerOpen = false;
 
   /** @ngInject */
   constructor(
@@ -39,8 +38,6 @@ export class KeybindingSrv {
 
     this.setupGlobal();
     appEvents.on(CoreEvents.showModal, () => (this.modalOpen = true));
-    appEvents.on(CoreEvents.timepickerOpen, () => (this.timepickerOpen = true));
-    appEvents.on(CoreEvents.timepickerClosed, () => (this.timepickerOpen = false));
   }
 
   setupGlobal() {
@@ -113,12 +110,6 @@ export class KeybindingSrv {
 
     if (this.modalOpen) {
       this.modalOpen = false;
-      return;
-    }
-
-    if (this.timepickerOpen) {
-      this.$rootScope.appEvent(CoreEvents.closeTimepicker);
-      this.timepickerOpen = false;
       return;
     }
 
@@ -197,7 +188,7 @@ export class KeybindingSrv {
   setupDashboardBindings(scope: IRootScopeService & AppEventEmitter, dashboard: DashboardModel) {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
-      appEvents.emit(CoreEvents.graphHoverClear);
+      dashboard.events.publish(new LegacyGraphHoverClearEvent());
       dashboard.startRefresh();
     });
 
