@@ -42,10 +42,6 @@ type OverrideServiceFunc func(descriptor Descriptor) (*Descriptor, bool)
 
 var overrides []OverrideServiceFunc
 
-func RegisterOverride(fn OverrideServiceFunc) {
-	overrides = append(overrides, fn)
-}
-
 func getServicesWithOverrides() []*Descriptor {
 	slice := []*Descriptor{}
 	for _, s := range services {

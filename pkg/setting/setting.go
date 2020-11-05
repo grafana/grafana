@@ -177,11 +177,9 @@ var (
 	GoogleTagManagerId string
 
 	// LDAP
-	LDAPEnabled           bool
-	LDAPConfigFile        string
-	LDAPSyncCron          string
-	LDAPAllowSignup       bool
-	LDAPActiveSyncEnabled bool
+	LDAPEnabled     bool
+	LDAPConfigFile  string
+	LDAPAllowSignup bool
 
 	// QUOTA
 	Quota QuotaSettings
@@ -839,9 +837,7 @@ type RemoteCacheOptions struct {
 func (cfg *Cfg) readLDAPConfig() {
 	ldapSec := cfg.Raw.Section("auth.ldap")
 	LDAPConfigFile = ldapSec.Key("config_file").String()
-	LDAPSyncCron = ldapSec.Key("sync_cron").String()
 	LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
-	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
 	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 }
 
