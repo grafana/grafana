@@ -38,7 +38,7 @@ describe('LogDetails', () => {
   describe('when labels are present', () => {
     it('should render heading', () => {
       const wrapper = setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });
-      expect(wrapper.find({ 'aria-label': 'Log Labels' }).hostNodes()).toHaveLength(1);
+      expect(wrapper.find({ 'aria-label': 'Log labels' }).hostNodes()).toHaveLength(1);
     });
     it('should render labels', () => {
       const wrapper = setup(undefined, { labels: { key1: 'label1', key2: 'label2' } });

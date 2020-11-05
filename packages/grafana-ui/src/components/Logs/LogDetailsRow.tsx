@@ -21,8 +21,8 @@ export interface Props extends Themeable {
   links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
   showDetectedFields?: string[];
-  onClickShowParsedField?: (key: string) => void;
-  onClickHideParsedField?: (key: string) => void;
+  onClickShowDetectedField?: (key: string) => void;
+  onClickHideDetectedField?: (key: string) => void;
 }
 
 interface State {
@@ -61,16 +61,16 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   showField = () => {
-    const { onClickShowParsedField, parsedKey } = this.props;
-    if (onClickShowParsedField) {
-      onClickShowParsedField(parsedKey);
+    const { onClickShowDetectedField, parsedKey } = this.props;
+    if (onClickShowDetectedField) {
+      onClickShowDetectedField(parsedKey);
     }
   };
 
   hideField = () => {
-    const { onClickHideParsedField, parsedKey } = this.props;
-    if (onClickHideParsedField) {
-      onClickHideParsedField(parsedKey);
+    const { onClickHideDetectedField, parsedKey } = this.props;
+    if (onClickHideDetectedField) {
+      onClickHideDetectedField(parsedKey);
     }
   };
 

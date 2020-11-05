@@ -22,6 +22,7 @@ import { getAllFields } from './logParser';
 
 //Components
 import { LogDetailsRow } from './LogDetailsRow';
+import { Tooltip } from '../Tooltip/Tooltip';
 
 export interface Props extends Themeable {
   row: LogRowModel;
@@ -35,8 +36,8 @@ export interface Props extends Themeable {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   showDetectedFields?: string[];
-  onClickShowParsedField?: (key: string) => void;
-  onClickHideParsedField?: (key: string) => void;
+  onClickShowDetectedField?: (key: string) => void;
+  onClickHideDetectedField?: (key: string) => void;
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -62,7 +63,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 class UnThemedLogDetails extends PureComponent<Props> {
   getParser = memoizeOne(getParser);
 
-  getStatsForParsedField = (key: string) => {
+  getStatsForDetectedField = (key: string) => {
     const matcher = this.getParser(this.props.row.entry)!.buildMatcher(key);
     return calculateFieldStats(this.props.getRows(), matcher);
   };
@@ -79,8 +80,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
       className,
       onMouseEnter,
       onMouseLeave,
-      onClickShowParsedField,
-      onClickHideParsedField,
+      onClickShowDetectedField,
+      onClickHideDetectedField,
       showDetectedFields,
       getFieldLinks,
     } = this.props;
@@ -107,7 +108,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
               <tbody>
                 {labelsAvailable && (
                   <tr>
-                    <td colSpan={5} className={style.logDetailsHeading} aria-label="Log Labels">
+                    <td colSpan={5} className={style.logDetailsHeading} aria-label="Log labels">
                       Log labels:
                     </td>
                   </tr>
@@ -130,7 +131,15 @@ class UnThemedLogDetails extends PureComponent<Props> {
                 {detectedFieldsAvailable && (
                   <tr>
                     <td colSpan={5} className={style.logDetailsHeading} aria-label="Detected fields">
-                      Detected fields:
+                      <Tooltip content="Fields that are parsed from log message and detected by Grafana">
+                        <span
+                          className={css`
+                            cursor: help;
+                          `}
+                        >
+                          Detected fields:
+                        </span>
+                      </Tooltip>
                     </td>
                   </tr>
                 )}
@@ -142,11 +151,11 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       parsedKey={key}
                       parsedValue={value}
                       links={links}
-                      onClickShowParsedField={onClickShowParsedField}
-                      onClickHideParsedField={onClickHideParsedField}
+                      onClickShowDetectedField={onClickShowDetectedField}
+                      onClickHideDetectedField={onClickHideDetectedField}
                       getStats={() =>
                         fieldIndex === undefined
-                          ? this.getStatsForParsedField(key)
+                          ? this.getStatsForDetectedField(key)
                           : calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())
                       }
                       showDetectedFields={showDetectedFields}

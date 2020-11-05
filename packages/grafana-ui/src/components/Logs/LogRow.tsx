@@ -51,8 +51,8 @@ interface Props extends Themeable {
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
   showDetectedFields?: string[];
-  onClickShowParsedField?: (key: string) => void;
-  onClickHideParsedField?: (key: string) => void;
+  onClickShowDetectedField?: (key: string) => void;
+  onClickHideDetectedField?: (key: string) => void;
 }
 
 interface State {
@@ -149,8 +149,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       getRows,
       onClickFilterLabel,
       onClickFilterOutLabel,
-      onClickShowParsedField,
-      onClickHideParsedField,
+      onClickShowDetectedField,
+      onClickHideDetectedField,
       highlighterExpressions,
       allowDetails,
       row,
@@ -225,8 +225,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             getFieldLinks={getFieldLinks}
             onClickFilterLabel={onClickFilterLabel}
             onClickFilterOutLabel={onClickFilterOutLabel}
-            onClickShowParsedField={onClickShowParsedField}
-            onClickHideParsedField={onClickHideParsedField}
+            onClickShowDetectedField={onClickShowDetectedField}
+            onClickHideDetectedField={onClickHideDetectedField}
             getRows={getRows}
             row={row}
             hasError={hasError}

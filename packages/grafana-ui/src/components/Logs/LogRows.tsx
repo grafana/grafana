@@ -35,8 +35,8 @@ export interface Props extends Themeable {
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   showDetectedFields?: string[];
-  onClickShowParsedField?: (key: string) => void;
-  onClickHideParsedField?: (key: string) => void;
+  onClickShowDetectedField?: (key: string) => void;
+  onClickHideDetectedField?: (key: string) => void;
 }
 
 interface State {
@@ -103,8 +103,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       disableCustomHorizontalScroll,
       logsSortOrder,
       showDetectedFields,
-      onClickShowParsedField,
-      onClickHideParsedField,
+      onClickShowDetectedField,
+      onClickHideDetectedField,
     } = this.props;
     const { renderAll } = this.state;
     const { logsRowsTable, logsRowsHorizontalScroll } = getLogRowStyles(theme);
@@ -152,8 +152,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   allowDetails={allowDetails}
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
-                  onClickShowParsedField={onClickShowParsedField}
-                  onClickHideParsedField={onClickHideParsedField}
+                  onClickShowDetectedField={onClickShowDetectedField}
+                  onClickHideDetectedField={onClickHideDetectedField}
                   getFieldLinks={getFieldLinks}
                   logsSortOrder={logsSortOrder}
                 />
@@ -176,8 +176,8 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                   allowDetails={allowDetails}
                   onClickFilterLabel={onClickFilterLabel}
                   onClickFilterOutLabel={onClickFilterOutLabel}
-                  onClickShowParsedField={onClickShowParsedField}
-                  onClickHideParsedField={onClickHideParsedField}
+                  onClickShowDetectedField={onClickShowDetectedField}
+                  onClickHideDetectedField={onClickHideDetectedField}
                   getFieldLinks={getFieldLinks}
                   logsSortOrder={logsSortOrder}
                 />

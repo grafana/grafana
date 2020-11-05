@@ -174,7 +174,7 @@ export class Logs extends PureComponent<Props, State> {
     }
   };
 
-  showParsedField = (key: string) => {
+  showDetectedField = (key: string) => {
     const index = this.state.showDetectedFields.indexOf(key);
 
     if (index === -1) {
@@ -186,7 +186,7 @@ export class Logs extends PureComponent<Props, State> {
     }
   };
 
-  hideParsedField = (key: string) => {
+  hideDetectedField = (key: string) => {
     const index = this.state.showDetectedFields.indexOf(key);
     if (index > -1) {
       this.setState(state => {
@@ -359,8 +359,8 @@ export class Logs extends PureComponent<Props, State> {
           getFieldLinks={getFieldLinks}
           logsSortOrder={logsSortOrder}
           showDetectedFields={showDetectedFields}
-          onClickShowParsedField={this.showParsedField}
-          onClickHideParsedField={this.hideParsedField}
+          onClickShowDetectedField={this.showDetectedField}
+          onClickHideDetectedField={this.hideDetectedField}
         />
 
         {!loading && !hasData && !scanning && (
