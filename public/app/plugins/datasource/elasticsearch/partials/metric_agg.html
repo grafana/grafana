@@ -10,11 +10,17 @@
 		</label>
 	</div>
 
-	<div class="gf-form">
+	<div class="gf-form" ng-if="isValidAgg">
 		<metric-segment-model property="agg.type" options="metricAggTypes" on-change="onTypeChange()" custom="false" css-class="width-10"></metric-segment-model>
 		<metric-segment-model ng-if="aggDef.requiresField" property="agg.field" get-options="getFieldsInternal()" on-change="onChange()" css-class="width-12"></metric-segment-model>
 		<metric-segment-model ng-if="aggDef.isPipelineAgg && !aggDef.supportsMultipleBucketPaths" property="agg.pipelineAgg" options="pipelineAggOptions" on-change="onChangeInternal()" custom="false" css-class="width-12"></metric-segment-model>
 	</div>
+
+  <div class="gf-form gf-form--grow" ng-if="!isValidAgg">
+    <label class="gf-form-label gf-form-label--grow">
+      <em>This aggregation is no longer supported by your version of Elasticsearch</em>
+    </label>
+  </div>
 
   <div class="gf-form gf-form--grow" ng-if="aggDef.isPipelineAgg && aggDef.supportsMultipleBucketPaths">
 		<label class="gf-form-label gf-form-label--grow">
@@ -26,7 +32,7 @@
 		</label>
 	</div>
 
-	<div class="gf-form gf-form--grow">
+	<div class="gf-form gf-form--grow" ng-if="isValidAgg">
 		<label class="gf-form-label gf-form-label--grow">
 			<a ng-click="toggleOptions()" ng-if="settingsLinkText">
 				<icon name="'angle-down'" ng-show="showOptions"></icon>

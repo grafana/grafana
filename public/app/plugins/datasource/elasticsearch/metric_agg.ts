@@ -44,6 +44,7 @@ export class ElasticMetricAggCtrl {
       $scope.settingsLinkText = '';
       $scope.variablesLinkText = '';
       $scope.aggDef = _.find($scope.metricAggTypes, { value: $scope.agg.type });
+      $scope.isValidAgg = $scope.aggDef != null;
 
       if (queryDef.isPipelineAgg($scope.agg.type)) {
         if (queryDef.isPipelineAggWithMultipleBucketPaths($scope.agg.type)) {
@@ -122,7 +123,7 @@ export class ElasticMetricAggCtrl {
           break;
         }
       }
-      if ($scope.aggDef.supportsInlineScript) {
+      if ($scope.aggDef?.supportsInlineScript) {
         // I know this stores the inline script twice
         // but having it like this simplifes the query_builder
         const inlineScript = $scope.agg.inlineScript;
