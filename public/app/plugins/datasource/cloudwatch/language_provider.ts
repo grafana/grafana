@@ -3,22 +3,22 @@ import _ from 'lodash';
 
 // Services & Utils
 import syntax, {
-  QUERY_COMMANDS,
   AGGREGATION_FUNCTIONS_STATS,
-  STRING_FUNCTIONS,
-  DATETIME_FUNCTIONS,
-  IP_FUNCTIONS,
   BOOLEAN_FUNCTIONS,
-  NUMERIC_OPERATORS,
+  DATETIME_FUNCTIONS,
   FIELD_AND_FILTER_FUNCTIONS,
+  IP_FUNCTIONS,
+  NUMERIC_OPERATORS,
+  QUERY_COMMANDS,
+  STRING_FUNCTIONS,
 } from './syntax';
 
 // Types
-import { CloudWatchQuery } from './types';
-import { AbsoluteTimeRange, LanguageProvider, HistoryItem } from '@grafana/data';
+import { CloudWatchQuery, TSDBResponse } from './types';
+import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data';
 
 import { CloudWatchDatasource } from './datasource';
-import { TypeaheadInput, TypeaheadOutput, Token } from '@grafana/ui';
+import { Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 import Prism, { Grammar } from 'prismjs';
 
 export type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
@@ -49,8 +49,8 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     return syntax;
   }
 
-  request = (url: string, params?: any): Promise<{ data: { data: string[] } }> => {
-    return this.datasource.awsRequest(url, params);
+  request = (url: string, params?: any): Promise<TSDBResponse> => {
+    return this.datasource.awsRequest(url, params).toPromise();
   };
 
   start = () => {
