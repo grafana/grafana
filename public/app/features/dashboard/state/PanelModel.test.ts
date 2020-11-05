@@ -9,6 +9,7 @@ import {
   PanelData,
   DataSourceInstanceSettings,
   FieldColorModeId,
+  FieldColorConfigSettings,
 } from '@grafana/data';
 import { ComponentClass } from 'react';
 import { PanelQueryRunner } from './PanelQueryRunner';
@@ -161,10 +162,13 @@ describe('PanelModel', () => {
       });
 
       panelPlugin.useFieldConfig({
-        standardOptions: [FieldConfigProperty.Unit, FieldConfigProperty.Decimals],
-        standardOptionsDefaults: {
-          [FieldConfigProperty.Unit]: 'flop',
-          [FieldConfigProperty.Decimals]: 2,
+        standardOptions: {
+          [FieldConfigProperty.Unit]: {
+            defaultValue: 'flop',
+          },
+          [FieldConfigProperty.Decimals]: {
+            defaultValue: 2,
+          },
         },
       });
       model.pluginLoaded(panelPlugin);
@@ -255,8 +259,12 @@ describe('PanelModel', () => {
         const newPlugin = getPanelPlugin({ id: 'graph' });
 
         newPlugin.useFieldConfig({
-          fieldColorSettings: {
-            preferByThreshold: true,
+          standardOptions: {
+            [FieldConfigProperty.Color]: {
+              settings: {
+                byThresholdsSupport: true,
+              },
+            },
           },
         });
 
@@ -312,8 +320,12 @@ describe('PanelModel', () => {
 
         const newPlugin = getPanelPlugin({ id: 'graph' });
         newPlugin.useFieldConfig({
-          fieldColorSettings: {
-            noByValueSupport: true,
+          standardOptions: {
+            [FieldConfigProperty.Color]: {
+              settings: {
+                byValueSupport: false,
+              },
+            },
           },
         });
 
@@ -327,24 +339,38 @@ describe('PanelModel', () => {
       });
     });
 
-    describe('when changing panel type to one that prefers color mode thresholds and current is by series', () => {
-      beforeEach(() => {
-        model.fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
+    describe('when changing panel type from one not supporting by value color mode to one that supports it', () => {
+      const prepareModel = (colorOptions?: FieldColorConfigSettings) => {
+        const newModel = new PanelModel(modelJson);
+        newModel.fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
 
         const newPlugin = getPanelPlugin({ id: 'graph' });
         newPlugin.useFieldConfig({
-          fieldColorSettings: {
-            preferByThreshold: true,
+          standardOptions: {
+            [FieldConfigProperty.Color]: {
+              settings: {
+                byValueSupport: true,
+                ...colorOptions,
+              },
+            },
           },
         });
 
-        model.editSourceId = 1001;
-        model.changePlugin(newPlugin);
-        model.alert = { id: 2 };
+        newModel.editSourceId = 1001;
+        newModel.changePlugin(newPlugin);
+        newModel.alert = { id: 2 };
+        return newModel;
+      };
+
+      it('should keep supported mode', () => {
+        const testModel = prepareModel();
+
+        expect(testModel.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.PaletteClassic);
       });
 
-      it('should change color mode', () => {
-        expect(model.fieldConfig.defaults.color.mode).toBe(FieldColorModeId.Thresholds);
+      it('should change to thresholds mode when it prefers to', () => {
+        const testModel = prepareModel({ preferThresholdsMode: true });
+        expect(testModel.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.Thresholds);
       });
     });
 

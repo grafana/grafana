@@ -338,16 +338,19 @@ export class PanelModel implements DataConfigSource {
       const colorSettings = color.settings as FieldColorConfigSettings;
       const mode = fieldColorModeRegistry.getIfExists(this.fieldConfig.defaults.color?.mode);
 
-      if (colorSettings.preferByThreshold) {
-        if (!mode || !mode.isByValue) {
-          this.fieldConfig.defaults.color = { mode: FieldColorModeId.Thresholds };
+      // When no support fo value colors, use classic palette
+      if (!colorSettings.byValueSupport) {
+        if (!mode || mode.isByValue) {
+          this.fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
           return;
         }
       }
 
-      if (colorSettings.noByValueSupport) {
-        if (!mode || mode.isByValue) {
-          this.fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
+      // When supporting value colors and prefering thresholds, use Thresholds mode.
+      // Otherwise keep current mode
+      if (colorSettings.byValueSupport && colorSettings.preferThresholdsMode) {
+        if (!mode || !mode.isByValue) {
+          this.fieldConfig.defaults.color = { mode: FieldColorModeId.Thresholds };
           return;
         }
       }
