@@ -109,12 +109,12 @@ func (ng *AlertNG) LoadAlertCondition(dashboardID int64, panelID int64, conditio
 
 	blob, err := getDashboardQuery.Result.Data.MarshalJSON()
 	if err != nil {
-		return nil, errors.New("Failed to marshal dashboard JSON")
+		return nil, errors.New("failed to marshal dashboard JSON")
 	}
 	var dash minimalDashboard
 	err = json.Unmarshal(blob, &dash)
 	if err != nil {
-		return nil, errors.New("Failed to unmarshal dashboard JSON")
+		return nil, errors.New("failed to unmarshal dashboard JSON")
 	}
 
 	condition := Condition{}
@@ -144,7 +144,7 @@ func (ng *AlertNG) LoadAlertCondition(dashboardID int64, panelID int64, conditio
 				}
 
 				if ds == nil {
-					return nil, errors.New("No datasource reference found")
+					return nil, errors.New("no datasource reference found")
 				}
 
 				if queryDatasource == "" {
@@ -192,7 +192,7 @@ func (ng *AlertNG) LoadAlertCondition(dashboardID int64, panelID int64, conditio
 func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*ExecutionResults, error) {
 	result := ExecutionResults{}
 	if !c.IsValid() {
-		return nil, fmt.Errorf("Invalid conditions")
+		return nil, fmt.Errorf("invalid conditions")
 	}
 
 	request := &tsdb.TsdbQuery{
@@ -212,7 +212,7 @@ func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*Execution
 
 	conditionResult := resp.Results[c.RefID]
 	if conditionResult == nil {
-		err = fmt.Errorf("No GEL results")
+		err = fmt.Errorf("no GEL results")
 		result.Error = err
 		return &result, err
 	}
@@ -234,24 +234,24 @@ func EvaluateExecutionResult(results *ExecutionResults) (Results, error) {
 	for _, f := range results.Results {
 		rowLen, err := f.RowLen()
 		if err != nil {
-			return nil, fmt.Errorf("Unable to get frame row length")
+			return nil, fmt.Errorf("unable to get frame row length")
 		}
 		if rowLen > 1 {
-			return nil, fmt.Errorf("Invalid frame %v: row length %v", f.Name, rowLen)
+			return nil, fmt.Errorf("invalid frame %v: row length %v", f.Name, rowLen)
 		}
 
 		if len(f.Fields) > 1 {
-			return nil, fmt.Errorf("Invalid frame %v: field length %v", f.Name, len(f.Fields))
+			return nil, fmt.Errorf("invalid frame %v: field length %v", f.Name, len(f.Fields))
 		}
 
 		if f.Fields[0].Type() != data.FieldTypeNullableFloat64 {
-			return nil, fmt.Errorf("Invalid frame %v: field type %v", f.Name, f.Fields[0].Type())
+			return nil, fmt.Errorf("invalid frame %v: field type %v", f.Name, f.Fields[0].Type())
 		}
 
 		labelsStr := f.Fields[0].Labels.String()
 		_, ok := labels[labelsStr]
 		if ok {
-			return nil, fmt.Errorf("Invalid frame %v: frames cannot uniquely be identified by its labels: %q", f.Name, labelsStr)
+			return nil, fmt.Errorf("invalid frame %v: frames cannot uniquely be identified by its labels: %q", f.Name, labelsStr)
 		}
 		labels[labelsStr] = true
 

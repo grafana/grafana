@@ -55,6 +55,8 @@ export interface LicenseInfo {
   expiry: number;
   licenseUrl: string;
   stateInfo: string;
+  hasValidLicense: boolean;
+  edition: string;
 }
 
 /**

@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	ErrGuardianPermissionExists = errors.New("Permission already exists")
-	ErrGuardianOverride         = errors.New("You can only override a permission to be higher")
+	ErrGuardianPermissionExists = errors.New("permission already exists")
+	ErrGuardianOverride         = errors.New("you can only override a permission to be higher")
 )
 
 // DashboardGuardian to be used for guard against operations without access on dashboard and acl

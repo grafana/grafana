@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"time"
 
 	"github.com/inconshreveable/log15"
+	"github.com/mattn/go-isatty"
 	"github.com/stretchr/testify/require"
 
 	"testing"
@@ -15,11 +17,24 @@ import (
 	"golang.org/x/oauth2"
 )
 
+func getLogFormat() log15.Format {
+	if isatty.IsTerminal(os.Stdout.Fd()) {
+		return log15.TerminalFormat()
+	}
+	return log15.LogfmtFormat()
+}
+
+func newLogger(name string, level log15.Lvl) log.Logger {
+	logger := log.Root.New("logger", name)
+	logger.SetHandler(log15.LvlFilterHandler(level, log15.StreamHandler(os.Stdout, getLogFormat())))
+	return logger
+}
+
 func TestSearchJSONForEmail(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: log.NewWithLevel("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", log15.LvlDebug),
 			},
 		}
 
@@ -107,7 +122,7 @@ func TestSearchJSONForRole(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: log.NewWithLevel("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", log15.LvlDebug),
 			},
 		}
 
@@ -170,7 +185,7 @@ func TestUserInfoSearchesForEmailAndRole(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: log.NewWithLevel("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", log15.LvlDebug),
 			},
 			emailAttributePath: "email",
 		}
@@ -337,7 +352,7 @@ func TestUserInfoSearchesForLogin(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: log.NewWithLevel("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", log15.LvlDebug),
 			},
 			loginAttributePath: "login",
 		}
@@ -432,7 +447,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 	t.Run("Given a generic OAuth provider", func(t *testing.T) {
 		provider := SocialGenericOAuth{
 			SocialBase: &SocialBase{
-				log: log.NewWithLevel("generic_oauth_test", log15.LvlDebug),
+				log: newLogger("generic_oauth_test", log15.LvlDebug),
 			},
 			nameAttributePath: "name",
 		}
@@ -529,7 +544,7 @@ func TestUserInfoSearchesForName(t *testing.T) {
 func TestPayloadCompression(t *testing.T) {
 	provider := SocialGenericOAuth{
 		SocialBase: &SocialBase{
-			log: log.NewWithLevel("generic_oauth_test", log15.LvlDebug),
+			log: newLogger("generic_oauth_test", log15.LvlDebug),
 		},
 		emailAttributePath: "email",
 	}

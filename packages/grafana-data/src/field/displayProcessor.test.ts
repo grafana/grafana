@@ -1,4 +1,4 @@
-import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
+import { getDecimalsForValue, getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { MappingType, ValueMapping } from '../types/valueMapping';
 import { FieldConfig, FieldType, ThresholdsMode } from '../types';
@@ -327,5 +327,23 @@ describe('getRawDisplayProcessor', () => {
     const result = processor(value);
 
     expect(result).toEqual({ text: expected, numeric: null });
+  });
+});
+
+describe('getDecimalsForValue', () => {
+  it.each`
+    value                   | expected
+    ${0}                    | ${0}
+    ${13.37}                | ${0}
+    ${-13.37}               | ${0}
+    ${12679.3712345811212}  | ${0}
+    ${-12679.3712345811212} | ${0}
+    ${0.3712345}            | ${2}
+    ${-0.37123458}          | ${2}
+    ${-0.04671994403853774} | ${3}
+    ${0.04671994403853774}  | ${3}
+  `('should return correct suggested decimal count', ({ value, expected }) => {
+    const result = getDecimalsForValue(value);
+    expect(result.decimals).toEqual(expected);
   });
 });
