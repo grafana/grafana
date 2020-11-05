@@ -116,7 +116,7 @@ func (ss *SqlStore) ensureMainOrgAndAdminUser() error {
 		systemUserCountQuery := models.GetSystemUserCountStatsQuery{}
 		err := bus.DispatchCtx(ctx, &systemUserCountQuery)
 		if err != nil {
-			return fmt.Errorf("Could not determine if admin user exists: %v", err)
+			return fmt.Errorf("could not determine if admin user exists: %w", err)
 		}
 
 		if systemUserCountQuery.Result.Count > 0 {
@@ -132,7 +132,7 @@ func (ss *SqlStore) ensureMainOrgAndAdminUser() error {
 			cmd.IsAdmin = true
 
 			if err := bus.DispatchCtx(ctx, &cmd); err != nil {
-				return fmt.Errorf("Failed to create admin user: %v", err)
+				return fmt.Errorf("failed to create admin user: %s", err)
 			}
 
 			ss.log.Info("Created default admin", "user", setting.AdminUser)
@@ -226,7 +226,7 @@ func (ss *SqlStore) buildConnectionString() (string, error) {
 		cnnstr = fmt.Sprintf("file:%s?cache=%s&mode=rwc", ss.dbCfg.Path, ss.dbCfg.CacheMode)
 		cnnstr += ss.buildExtraConnectionString('&')
 	default:
-		return "", fmt.Errorf("Unknown database type: %s", ss.dbCfg.Type)
+		return "", fmt.Errorf("unknown database type: %s", ss.dbCfg.Type)
 	}
 
 	return cnnstr, nil

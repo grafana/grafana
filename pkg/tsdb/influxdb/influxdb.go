@@ -85,7 +85,7 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	defer resp.Body.Close()
 	if resp.StatusCode/100 != 2 {
-		return nil, fmt.Errorf("Influxdb returned statuscode invalid status code: %v", resp.Status)
+		return nil, fmt.Errorf("InfluxDB returned statuscode invalid status code: %s", resp.Status)
 	}
 
 	var response Response

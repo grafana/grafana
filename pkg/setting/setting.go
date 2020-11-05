@@ -16,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-macaron/session"
 	"github.com/prometheus/common/model"
 	ini "gopkg.in/ini.v1"
 
@@ -170,7 +169,6 @@ var (
 	BasicAuthEnabled bool
 
 	// Session settings.
-	SessionOptions         session.Options
 	SessionConnMaxLifetime int64
 
 	// Global setting objects.
@@ -273,6 +271,7 @@ type Cfg struct {
 	PluginsAppsSkipVerifyTLS bool
 	PluginSettings           PluginSettings
 	PluginsAllowUnsigned     []string
+	MarketplaceURL           string
 	DisableSanitizeHtml      bool
 	EnterpriseLicensePath    string
 
@@ -553,7 +552,7 @@ func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 
 	userConfig, err := ini.Load(configFile)
 	if err != nil {
-		return fmt.Errorf("Failed to parse %v, %v", configFile, err)
+		return fmt.Errorf("failed to parse %q: %w", configFile, err)
 	}
 
 	userConfig.BlockMode = false
@@ -796,6 +795,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		plug = strings.TrimSpace(plug)
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
+	cfg.MarketplaceURL = pluginsSection.Key("marketplace_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.Protocol = Protocol
 
 	// Read and populate feature toggles list
