@@ -40,6 +40,8 @@ var (
 	pluginScanningErrors map[string]*PluginError
 )
 
+type UnsignedPluginConditionFunc = func(plugin *PluginBase) bool
+
 type PluginScanner struct {
 	pluginPath                    string
 	errors                        []error
@@ -52,22 +54,18 @@ type PluginScanner struct {
 }
 
 type PluginManager struct {
-	BackendPluginManager          backendplugin.Manager `inject:""`
-	Cfg                           *setting.Cfg          `inject:""`
-	log                           log.Logger
-	scanningErrors                []error
-	allowUnsignedPluginsCondition func(plugin *PluginBase) bool
+	BackendPluginManager backendplugin.Manager `inject:""`
+	Cfg                  *setting.Cfg          `inject:""`
+	log                  log.Logger
+	scanningErrors       []error
+
+	// AllowUnsignedPluginsCondition changes the policy for allowing unsigned plugins. Signature validation only runs when plugins are starting
+	// and running plugins will not be terminated if they violate the new policy.
+	AllowUnsignedPluginsCondition UnsignedPluginConditionFunc
 }
 
 func init() {
 	registry.RegisterService(&PluginManager{})
-}
-
-// ReplaceAllowUnsignedPluginCondition changes the policy for allowing unsigned plugins. Signature validation only runs when plugins are starting
-// and running plugins will not be terminated if they violate the new policy.
-// Run this before PluginManager.Init to be sure policy is applied to all loaded plugins.
-func (pm *PluginManager) ReplaceAllowUnsignedPluginCondition(condition func(base *PluginBase) bool) {
-	pm.allowUnsignedPluginsCondition = condition
 }
 
 func (pm *PluginManager) Init() error {
@@ -202,7 +200,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		requireSigned:                 requireSigned,
 		log:                           pm.log,
 		plugins:                       map[string]*PluginBase{},
-		allowUnsignedPluginsCondition: pm.allowUnsignedPluginsCondition,
+		allowUnsignedPluginsCondition: pm.AllowUnsignedPluginsCondition,
 	}
 
 	// 1st pass: Scan plugins, also mapping plugins to their respective directories
