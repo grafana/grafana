@@ -2,7 +2,6 @@
 import { Unsubscribable } from 'rxjs';
 import { createAction } from '@reduxjs/toolkit';
 
-import { Emitter } from 'app/core/core';
 import {
   AbsoluteTimeRange,
   DataQuery,
@@ -13,6 +12,7 @@ import {
   LogsDedupStrategy,
   QueryFixAction,
   TimeRange,
+  EventBusExtended,
 } from '@grafana/data';
 import { ExploreId, ExploreItemState, ExplorePanelData } from 'app/types/explore';
 
@@ -52,7 +52,7 @@ export interface HighlightLogsExpressionPayload {
 export interface InitializeExplorePayload {
   exploreId: ExploreId;
   containerWidth: number;
-  eventBridge: Emitter;
+  eventBridge: EventBusExtended;
   queries: DataQuery[];
   range: TimeRange;
   originPanelId?: number | null;

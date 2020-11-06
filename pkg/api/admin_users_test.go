@@ -111,7 +111,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 			So(err, ShouldBeNil)
 
-			So(respJSON.Get("message").MustString(), ShouldEqual, "User not found")
+			So(respJSON.Get("message").MustString(), ShouldEqual, "user not found")
 
 			So(userId, ShouldEqual, 42)
 			So(isDisabled, ShouldEqual, false)
@@ -124,7 +124,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 			So(err, ShouldBeNil)
 
-			So(respJSON.Get("message").MustString(), ShouldEqual, "User not found")
+			So(respJSON.Get("message").MustString(), ShouldEqual, "user not found")
 
 			So(userId, ShouldEqual, 42)
 			So(isDisabled, ShouldEqual, true)
@@ -175,7 +175,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 
 			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 			So(err, ShouldBeNil)
-			So(respJSON.Get("message").MustString(), ShouldEqual, "User not found")
+			So(respJSON.Get("message").MustString(), ShouldEqual, "user not found")
 
 			So(userId, ShouldEqual, 42)
 		})
@@ -252,7 +252,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 				So(err, ShouldBeNil)
-				So(respJSON.Get("message").MustString(), ShouldEqual, "Organization not found")
+				So(respJSON.Get("message").MustString(), ShouldEqual, "organization not found")
 
 				So(userLogin, ShouldEqual, TestLogin)
 				So(orgId, ShouldEqual, 1000)
@@ -276,7 +276,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 
 			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 			So(err, ShouldBeNil)
-			So(respJSON.Get("error").MustString(), ShouldEqual, "User already exists")
+			So(respJSON.Get("error").MustString(), ShouldEqual, "user already exists")
 		})
 	})
 }

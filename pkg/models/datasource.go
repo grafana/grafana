@@ -30,13 +30,13 @@ const (
 )
 
 var (
-	ErrDataSourceNotFound                = errors.New("Data source not found")
-	ErrDataSourceNameExists              = errors.New("Data source with the same name already exists")
-	ErrDataSourceUidExists               = errors.New("Data source with the same uid already exists")
-	ErrDataSourceUpdatingOldVersion      = errors.New("Trying to update old version of datasource")
-	ErrDatasourceIsReadOnly              = errors.New("Data source is readonly. Can only be updated from configuration")
-	ErrDataSourceAccessDenied            = errors.New("Data source access denied")
-	ErrDataSourceFailedGenerateUniqueUid = errors.New("Failed to generate unique datasource id")
+	ErrDataSourceNotFound                = errors.New("data source not found")
+	ErrDataSourceNameExists              = errors.New("data source with the same name already exists")
+	ErrDataSourceUidExists               = errors.New("data source with the same uid already exists")
+	ErrDataSourceUpdatingOldVersion      = errors.New("trying to update old version of datasource")
+	ErrDatasourceIsReadOnly              = errors.New("data source is readonly, can only be updated from configuration")
+	ErrDataSourceAccessDenied            = errors.New("data source access denied")
+	ErrDataSourceFailedGenerateUniqueUid = errors.New("failed to generate unique datasource ID")
 )
 
 type DsAccess string

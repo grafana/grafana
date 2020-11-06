@@ -78,7 +78,7 @@ export class VariableOptions extends PureComponent<Props> {
         className={`${tag.selected ? 'variable-option-tag pointer selected' : 'variable-option-tag pointer'}`}
         onClick={this.onToggleTag(tag)}
       >
-        <span className="fa fa-fw variable-option-icon"></span>
+        <span className="variable-option-icon"></span>
         <span className="label-tag" style={{ backgroundColor: color, borderColor }}>
           {tag.text}&nbsp;&nbsp;
           <Icon name="tag-alt" />

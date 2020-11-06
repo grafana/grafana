@@ -5,6 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { useTheme } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types/icon';
+import { getColorsFromSeverity } from '../../utils/colors';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
@@ -51,51 +52,36 @@ export const Alert: FC<Props> = ({
   const styles = getStyles(theme, severity, !!buttonContent);
 
   return (
-    <div className={styles.container}>
-      <div className={styles.alert} aria-label={selectors.components.Alert.alert(severity)}>
-        <div className={styles.icon}>
-          <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
-        </div>
-        <div className={styles.body}>
-          <div className={styles.title}>{title}</div>
-          {children && <div>{children}</div>}
-        </div>
-        {/* If onRemove is specified, giving preference to onRemove */}
-        {onRemove ? (
-          <button type="button" className={styles.close} onClick={onRemove}>
-            {buttonContent || <Icon name="times" size="lg" />}
-          </button>
-        ) : onButtonClick ? (
-          <button type="button" className="btn btn-outline-danger" onClick={onButtonClick}>
-            {buttonText}
-          </button>
-        ) : null}
+    <div className={styles.alert} aria-label={selectors.components.Alert.alert(severity)}>
+      <div className={styles.icon}>
+        <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
       </div>
+      <div className={styles.body}>
+        <div className={styles.title}>{title}</div>
+        {children && <div>{children}</div>}
+      </div>
+      {/* If onRemove is specified, giving preference to onRemove */}
+      {onRemove ? (
+        <button type="button" className={styles.close} onClick={onRemove}>
+          {buttonContent || <Icon name="times" size="lg" />}
+        </button>
+      ) : onButtonClick ? (
+        <button type="button" className="btn btn-outline-danger" onClick={onButtonClick}>
+          {buttonText}
+        </button>
+      ) : null}
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean) => {
-  const { redBase, redShade, greenBase, greenShade, blue80, blue77, white } = theme.palette;
-  const backgrounds = {
-    error: css`
-      background: linear-gradient(90deg, ${redBase}, ${redShade});
-    `,
-    warning: css`
-      background: linear-gradient(90deg, ${redBase}, ${redShade});
-    `,
-    info: css`
-      background: linear-gradient(100deg, ${blue80}, ${blue77});
-    `,
-    success: css`
-      background: linear-gradient(100deg, ${greenBase}, ${greenShade});
-    `,
-  };
+  const { white } = theme.palette;
+  const severityColors = getColorsFromSeverity(severity, theme);
+  const background = css`
+    background: linear-gradient(90deg, ${severityColors[0]}, ${severityColors[0]});
+  `;
 
   return {
-    container: css`
-      z-index: ${theme.zIndex.tooltip};
-    `,
     alert: css`
       padding: 15px 20px;
       margin-bottom: ${theme.spacing.xs};
@@ -106,7 +92,7 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
       display: flex;
       flex-direction: row;
       align-items: center;
-      ${backgrounds[severity]}
+      ${background}
     `,
     icon: css`
       padding: 0 ${theme.spacing.md} 0 0;
