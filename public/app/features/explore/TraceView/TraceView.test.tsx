@@ -20,6 +20,13 @@ describe('TraceView', () => {
     expect(header).toHaveLength(1);
   });
 
+  it('does not render anything on missing trace', () => {
+    // Simulating Explore's access to empty response data
+    const trace = [][0];
+    const wrapper = shallow(<TraceView trace={trace} splitOpenFn={() => {}} />);
+    expect(wrapper.isEmptyRender()).toBeTruthy();
+  });
+
   it('toggles detailState', () => {
     let { timeline, wrapper } = renderTraceView();
     expect(timeline.props().traceTimeline.detailStates.size).toBe(0);

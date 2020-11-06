@@ -25,6 +25,9 @@ type Props = {
 };
 
 export function TraceView(props: Props) {
+  if (!props.trace) {
+    return null;
+  }
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
   const {
     detailStates,
