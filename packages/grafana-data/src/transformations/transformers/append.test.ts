@@ -3,7 +3,6 @@ import { toDataFrame } from '../../dataframe/processDataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
 import { appendTransformer } from './append';
 import { transformDataFrame } from '../transformDataFrame';
-import { observableTester } from '../../utils/tests/observableTester';
 
 const seriesAB = toDataFrame({
   columns: [{ text: 'A' }, { text: 'B' }],
@@ -26,27 +25,24 @@ describe('Append Transformer', () => {
     mockTransformationsRegistry([appendTransformer]);
   });
 
-  it('filters by include', done => {
+  it('filters by include', async () => {
     const cfg = {
       id: DataTransformerID.append,
       options: {},
     };
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [seriesAB, seriesBC]),
-      expect: data => {
-        const processed = data[0];
-        expect(processed.fields.length).toBe(3);
+    await expect(transformDataFrame([cfg], [seriesAB, seriesBC])).toCompleteWith(received => {
+      const data = received[0];
+      const processed = data[0];
+      expect(processed.fields.length).toBe(3);
 
-        const fieldA = processed.fields[0];
-        const fieldB = processed.fields[1];
-        const fieldC = processed.fields[2];
+      const fieldA = processed.fields[0];
+      const fieldB = processed.fields[1];
+      const fieldC = processed.fields[2];
 
-        expect(fieldA.values.toArray()).toEqual([1, 2, 3, 4]);
-        expect(fieldB.values.toArray()).toEqual([100, 200, null, null]);
-        expect(fieldC.values.toArray()).toEqual([null, null, 3000, 4000]);
-      },
-      done,
+      expect(fieldA.values.toArray()).toEqual([1, 2, 3, 4]);
+      expect(fieldB.values.toArray()).toEqual([100, 200, null, null]);
+      expect(fieldC.values.toArray()).toEqual([null, null, 3000, 4000]);
     });
   });
 });
