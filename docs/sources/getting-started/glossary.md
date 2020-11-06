@@ -41,7 +41,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
     </td>
   </tr>
   <tr>
-    <td style="vertical-align: top">Export/Import</td>
+    <td style="vertical-align: top">Export/Import dashboard</td>
     <td>
       Grafana includes the ability to export your dashboards to a file containing JSON. Community members sometimes share their created dashboards on the [Grafana Dashboards page](https://grafana.com/grafana/dashboards). Dashboards previously exported or found on this site may be imported by other users.
     </td>
