@@ -1,4 +1,3 @@
-import angular from 'angular';
 import _ from 'lodash';
 import {
   DataSourceApi,
@@ -243,7 +242,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       header.index = this.indexPattern.getIndexList(options.range.from, options.range.to);
     }
 
-    const payload = angular.toJson(header) + '\n' + angular.toJson(data) + '\n';
+    const payload = JSON.stringify(header) + '\n' + JSON.stringify(data) + '\n';
 
     return this.post('_msearch', payload).then((res: any) => {
       const list = [];
@@ -379,7 +378,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       queryHeader['max_concurrent_shard_requests'] = this.maxConcurrentShardRequests;
     }
 
-    return angular.toJson(queryHeader);
+    return JSON.stringify(queryHeader);
   }
 
   getQueryDisplayText(query: ElasticsearchQuery) {
@@ -461,7 +460,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         queryObj = this.queryBuilder.build(target, adhocFilters, target.query);
       }
 
-      const esQuery = angular.toJson(queryObj);
+      const esQuery = JSON.stringify(queryObj);
 
       const searchType = queryObj.size === 0 && this.esVersion < 5 ? 'count' : 'query_then_fetch';
       const header = this.getQueryHeader(searchType, options.range.from, options.range.to);
@@ -596,7 +595,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const range = this.timeSrv.timeRange();
     const searchType = this.esVersion >= 5 ? 'query_then_fetch' : 'count';
     const header = this.getQueryHeader(searchType, range.from, range.to);
-    let esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
+    let esQuery = JSON.stringify(this.queryBuilder.getTermsQuery(queryDef));
 
     esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf().toString());
     esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf().toString());
@@ -627,17 +626,17 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return '_msearch';
   }
 
-  metricFindQuery(query: any) {
-    query = angular.fromJson(query);
+  metricFindQuery(query: string) {
+    const parsedQuery = JSON.parse(query);
     if (query) {
-      if (query.find === 'fields') {
-        query.field = this.templateSrv.replace(query.field, {}, 'lucene');
+      if (parsedQuery.find === 'fields') {
+        parsedQuery.field = this.templateSrv.replace(parsedQuery.field, {}, 'lucene');
         return this.getFields(query);
       }
 
-      if (query.find === 'terms') {
-        query.field = this.templateSrv.replace(query.field, {}, 'lucene');
-        query.query = this.templateSrv.replace(query.query || '*', {}, 'lucene');
+      if (parsedQuery.find === 'terms') {
+        parsedQuery.field = this.templateSrv.replace(parsedQuery.field, {}, 'lucene');
+        parsedQuery.query = this.templateSrv.replace(parsedQuery.query || '*', {}, 'lucene');
         return this.getTerms(query);
       }
     }

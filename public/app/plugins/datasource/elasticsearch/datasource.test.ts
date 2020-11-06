@@ -1,4 +1,3 @@
-import angular from 'angular';
 import {
   ArrayVector,
   CoreApp,
@@ -159,7 +158,7 @@ describe('ElasticDatasource', function(this: any) {
       result = await ctx.ds.query(query);
 
       parts = requestOptions.data.split('\n');
-      header = angular.fromJson(parts[0]);
+      header = JSON.parse(parts[0]);
     });
 
     it('should translate index pattern to current day', () => {
@@ -175,7 +174,7 @@ describe('ElasticDatasource', function(this: any) {
     });
 
     it('should json escape lucene query', () => {
-      const body = angular.fromJson(parts[1]);
+      const body = JSON.parse(parts[1]);
       expect(body.query.bool.filter[1].query_string.query).toBe('escape\\:test');
     });
   });
@@ -273,7 +272,7 @@ describe('ElasticDatasource', function(this: any) {
       });
 
       parts = requestOptions.data.split('\n');
-      header = angular.fromJson(parts[0]);
+      header = JSON.parse(parts[0]);
     });
 
     it('should set search type to query_then_fetch', () => {
@@ -281,7 +280,7 @@ describe('ElasticDatasource', function(this: any) {
     });
 
     it('should set size', () => {
-      const body = angular.fromJson(parts[1]);
+      const body = JSON.parse(parts[1]);
       expect(body.size).toBe(500);
     });
   });
@@ -742,7 +741,7 @@ describe('ElasticDatasource', function(this: any) {
       });
 
       parts = requestOptions.data.split('\n');
-      header = angular.fromJson(parts[0]);
+      header = JSON.parse(parts[0]);
     });
 
     it('should not set search type to count', () => {
@@ -750,7 +749,7 @@ describe('ElasticDatasource', function(this: any) {
     });
 
     it('should set size to 0', () => {
-      const body = angular.fromJson(parts[1]);
+      const body = JSON.parse(parts[1]);
       expect(body.size).toBe(0);
     });
   });
@@ -794,8 +793,8 @@ describe('ElasticDatasource', function(this: any) {
       });
 
       parts = requestOptions.data.split('\n');
-      header = angular.fromJson(parts[0]);
-      body = angular.fromJson(parts[1]);
+      header = JSON.parse(parts[0]);
+      body = JSON.parse(parts[1]);
     });
 
     it('should get results', () => {
