@@ -514,6 +514,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         integer: 'number',
         long: 'number',
         date: 'date',
+        date_nanos: 'date',
         string: 'string',
         text: 'string',
         scaled_float: 'number',
