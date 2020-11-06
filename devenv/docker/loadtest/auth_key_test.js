@@ -11,12 +11,12 @@ let endpoint = __ENV.URL || 'http://localhost:3000';
 
 let apiKey = __ENV.API_KEY;
 if (!apiKey) {
-  throw new Error('This script requires the API key argument -k to be defined.')
+  throw new Error('This script requires the API key argument -k to be defined.');
 }
 const client = createBearerAuthClient(endpoint, apiKey);
 
 export const setup = () => {
-  let authClient = createBearerAuthClient(endpoint, apiKey)
+  const authClient = createBearerAuthClient(endpoint, apiKey);
 
   const orgId = createTestOrgIfNotExists(authClient);
   authClient.withOrgId(orgId);

@@ -2,7 +2,6 @@ import { sleep, check, group } from 'k6';
 import { createClient, createBasicAuthClient } from './modules/client.js';
 import { createTestOrgIfNotExists, createTestdataDatasourceIfNotExists } from './modules/util.js';
 
-
 export let options = {
   noCookiesReset: true,
 };
@@ -21,7 +20,6 @@ export const setup = () => {
     datasourceId,
   };
 };
-
 
 export default data => {
   client.withOrgId(data.orgId);

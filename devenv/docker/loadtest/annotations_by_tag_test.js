@@ -21,7 +21,7 @@ export const setup = () => {
 };
 
 export default data => {
-  client.withOrgId(data.orgId)
+  client.withOrgId(data.orgId);
 
   group('annotation by tag test', () => {
     if (__ITER === 0) {
