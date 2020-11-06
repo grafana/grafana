@@ -27,6 +27,7 @@ Grafana displays all user accounts on the server, listed in alphabetical order b
 - **Name -** The value in the **Name** field of the account.
 - **Seen -** How long ago the user logged in. If they have never logged in, then the default longest time (10y) is displayed.
 - **Server Admin status -** If the user account has **Grafana Admin** option set, then a shield icon is displayed.
+- **Account status -** If the account is disabled, then the **Disabled** label is displayed.
 
 {{< docs-imagebox img="/img/docs/manage-users/server-user-list-7-3.png" max-width="1200px">}}
 
@@ -83,15 +84,55 @@ Create a new user account at the server level.
 
 The user can change all this information after they log in. For instructions, refer to [Change your information](NEED LINK) and [Change your password](NEED Link).
 
-## Edit a user account
+## Edit a user account 
 
-## Delete a user account
+### Edit user information
 
-## Disable a user account
+Edit information on an existing user account, including the user name, email, username, and password.
 
-## Edit user information
+1. [View the user account list](#view-the-user-account-list).
+1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+1. In the User information section, click **Edit** next to the field that you want to change.
+1. Enter the new value and then click **Save**.
 
-## Change the password on a user account
+### Change the password on a user account
+
+Users can change their own passwords, but Server Admins can change user passwords as well.
+
+1. [View the user account list](#view-the-user-account-list).
+1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+1. In the User information section, click **Edit** next to the **Password** field.
+1. Enter the new value and then click **Save**. Grafana requires a value at least four characters long in this field.
+
+### Delete a user account
+
+Permanently remove a user account from the server.
+
+1. [View the user account list](#view-the-user-account-list).
+1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+1. Click **Delete User**.
+1. Click **Delete user** to confirm the action.
+
+### Enable or disable a user account
+
+Temporarily turn on or off account access, but do not remove the account from the server.
+
+#### Disable user account
+
+Prevent a user from logging in with this account, but do not delete the account. You might disable an account if a colleague goes on sabbatical.
+
+1. [View the user account list](#view-the-user-account-list).
+1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+1. Click **Disable User**.
+1. Click **Disable user** to confirm the action.
+
+#### Enable a user account
+
+Reactivate a disabled user account.
+
+1. [View the user account list](#view-the-user-account-list).
+1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+1. Click **Enable User**.
 
 ## Add/remove Grafana Admin flag
 
