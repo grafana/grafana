@@ -471,7 +471,7 @@ Content-Type: application/json
 
 Reloads the provisioning config files for specified type and provision entities again. It won't return
 until the new provisioned entities are already stored in the database. In case of dashboards, it will stop
-polling for changes in dashboard files and then restart it with new configs after returning.
+polling for changes in dashboard files and then restart it with new configurations after returning.
 
 Only works with Basic Authentication (username and password). See [introduction](http://docs.grafana.org/http_api/admin/#admin-api) for an explanation.
 

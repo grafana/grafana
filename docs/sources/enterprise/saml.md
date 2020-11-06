@@ -185,7 +185,7 @@ Organization mapping allows you to assign users to particular organization in Gr
 1. In configuration file, set [`assertion_attribute_org`]({{< relref "./enterprise-configuration.md#assertion-attribute-org" >}}) to the attribute name you store organization info in.
 1. Set [`org_mapping`]({{< relref "./enterprise-configuration.md#org-mapping" >}}) option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by id.
 
-For example, use following config to assign users from `Engineering` organization to the Grafana organization with id `2` and users from `Sales` - to the org with id `3`, based on `Org` assertion attribute value:
+For example, use following configuration to assign users from `Engineering` organization to the Grafana organization with id `2` and users from `Sales` - to the org with id `3`, based on `Org` assertion attribute value:
 
 ```bash
 [auth.saml]

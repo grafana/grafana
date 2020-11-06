@@ -17,6 +17,7 @@ const rimraf = promisify(rimrafCallback);
 interface PluginBuildOptions {
   coverage: boolean;
   maxJestWorkers?: string;
+  preserveConsole?: boolean;
 }
 
 interface Fixable {
@@ -102,21 +103,28 @@ export const lintPlugin = ({ fix }: Fixable = {}) =>
     }
 
     const { errorCount, results, warningCount } = report;
+    const formatter = cli.getFormatter();
 
     if (errorCount > 0 || warningCount > 0) {
-      const formatter = cli.getFormatter();
       console.log('\n');
       console.log(formatter(results));
       console.log('\n');
-      throw new Error(`${errorCount + warningCount} linting errors found in ${results.length} files`);
+    }
+
+    if (errorCount > 0) {
+      throw new Error(`${errorCount} linting errors found in ${results.length} files`);
     }
   });
 
-export const pluginBuildRunner: TaskRunner<PluginBuildOptions> = async ({ coverage, maxJestWorkers }) => {
+export const pluginBuildRunner: TaskRunner<PluginBuildOptions> = async ({
+  coverage,
+  maxJestWorkers,
+  preserveConsole,
+}) => {
   await prepare();
   await lintPlugin({ fix: false });
   await testPlugin({ updateSnapshot: false, coverage, maxWorkers: maxJestWorkers, watch: false });
-  await bundlePlugin({ watch: false, production: true });
+  await bundlePlugin({ watch: false, production: true, preserveConsole });
 };
 
 export const pluginBuildTask = new Task<PluginBuildOptions>('Build plugin', pluginBuildRunner);

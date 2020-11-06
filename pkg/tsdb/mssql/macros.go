@@ -129,6 +129,6 @@ func (m *msSqlMacroEngine) evaluateMacro(name string, args []string) (string, er
 		}
 		return "", err
 	default:
-		return "", fmt.Errorf("Unknown macro %v", name)
+		return "", fmt.Errorf("unknown macro %q", name)
 	}
 }
