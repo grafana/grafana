@@ -13,7 +13,6 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   dataLinks?: DataLinkConfig[];
 }
 
-// TODO: Fix the stuff below here.
 interface MetricConfiguration {
   label: string;
   requiresField: boolean;
@@ -23,8 +22,8 @@ interface MetricConfiguration {
   minVersion?: number;
   maxVersion?: number;
   supportsMultipleBucketPaths: boolean;
+  // TODO: Maybe isSinglemetric is not necessary
   isSingleMetric?: boolean;
-  // TODO: this can probably be inferred from other settings
   hasSettings: boolean;
   hasMeta: boolean;
 }

@@ -1,9 +1,6 @@
-import _ from 'lodash';
 import { BucketAggregation } from './components/BucketAggregationsEditor/state/types';
-import { orderByOptions } from './components/BucketAggregationsEditor/utils';
 import {
   ExtendedStat,
-  isPipelineAggregation,
   MetricAggregation,
   MovingAverageModelOption,
   MovingAverageSettingDefinition,
@@ -11,7 +8,6 @@ import {
   MetricAggregationType,
 } from './components/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig, pipelineOptions } from './components/MetricAggregationsEditor/utils';
-import { describeMetric } from './utils';
 
 export const extendedStats: ExtendedStat[] = [
   { label: 'Avg', value: 'avg', default: false },
@@ -51,56 +47,23 @@ export const movingAvgModelSettings: Record<MovingAverageModel, MovingAverageSet
   ],
 };
 
-export function getPipelineOptions(metric: MetricAggregation) {
-  if (!isPipelineAggregation(metric)) {
-    return [];
-  }
-
-  return pipelineOptions[metric.type];
-}
-
-export function getMovingAvgSettings(model: MovingAverageModel, filtered: boolean) {
-  const filteredResult: any[] = [];
-  if (filtered) {
-    _.each(movingAvgModelSettings[model], setting => {
-      if (setting.type !== 'boolean') {
-        filteredResult.push(setting);
-      }
-    });
-    return filteredResult;
-  }
-  return movingAvgModelSettings[model];
-}
-
-export function getOrderByOptions(target: any) {
-  const metricRefs: any[] = [];
-  _.each(target.metrics, metric => {
-    if (metric.type !== 'count' && !isPipelineAgg(metric.type)) {
-      metricRefs.push({ text: describeMetric(metric), value: metric.id });
-    }
-  });
-
-  return orderByOptions.concat(metricRefs);
-}
-
 export function defaultMetricAgg(id = '1'): MetricAggregation {
-  return { type: 'count', id, hide: false };
+  return { type: 'count', id };
 }
 
 export function defaultBucketAgg(id = '1'): BucketAggregation {
   return { type: 'date_histogram', id, settings: { interval: 'auto' } };
 }
 
-export const findMetricById = (metrics: any[], id: string) => {
-  return _.find(metrics, { id: id });
-};
+export const findMetricById = (metrics: MetricAggregation[], id: MetricAggregation['id']) =>
+  metrics.find(metric => metric.id === id);
 
 export function hasMetricOfType(target: any, type: string): boolean {
   return target && target.metrics && target.metrics.some((m: any) => m.type === type);
 }
 
 /**
- * @deprecated TODO: Remove
+ * @deprecated TODO: Remove this, we should rely on type guards if possible
  */
 export function isPipelineAgg(metricType: MetricAggregationType) {
   if (metricType in pipelineOptions) {
@@ -111,7 +74,7 @@ export function isPipelineAgg(metricType: MetricAggregationType) {
 }
 
 /**
- * @deprecated TODO: Remove
+ * @deprecated TODO: Remove this, we should rely on type guards if possible
  */
 export function isPipelineAggWithMultipleBucketPaths(metricType: MetricAggregationType) {
   return !!metricAggregationConfig[metricType].supportsMultipleBucketPaths;

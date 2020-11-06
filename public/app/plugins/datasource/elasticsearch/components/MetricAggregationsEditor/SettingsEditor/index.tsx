@@ -35,7 +35,6 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
       {metric.type === 'cumulative_sum' && <SettingField label="Format" metric={metric} settingName="format" />}
 
       {metric.type === 'moving_avg' && (
-        // TODO: onBlur, defaultValue
         <>
           <InlineField label="Model" {...inlineFieldProps}>
             <Select
@@ -46,7 +45,11 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
               }
             />
           </InlineField>
-          <InlineField label="Window" {...inlineFieldProps} invalid={!isValidNumber(metric.settings?.window)}>
+          <InlineField
+            label="Window"
+            {...inlineFieldProps}
+            invalid={!!metric.settings?.window && !isValidNumber(metric.settings?.window)}
+          >
             <Input
               defaultValue={metric.settings?.window || '5'}
               onBlur={e => dispatch(changeMetricSetting(metric, 'window', e.target.value))}

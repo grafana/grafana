@@ -6,6 +6,5 @@ export const describeMetric = (metric: MetricAggregation) => {
     return metricAggregationConfig[metric.type].label;
   }
 
-  // TODO: Here it would be nice to have better descriptions for metrics
   return `${metricAggregationConfig[metric.type].label} ${metric.field}`;
 };

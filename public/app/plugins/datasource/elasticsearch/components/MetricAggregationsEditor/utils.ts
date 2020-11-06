@@ -6,8 +6,6 @@ import {
   PipelineMetricAggregationType,
 } from './aggregations';
 
-// We can probably split Pipeline Aggregations from here.
-// TODO: hasSettings can probably be removed as it can be inferred
 export const metricAggregationConfig: MetricsConfiguration = {
   count: {
     label: 'Count',
@@ -225,6 +223,6 @@ export const getChildren = (metric: MetricAggregation, metrics: MetricAggregatio
  * Checks if a string is a valid number
  * @param stringNumber
  */
-export const isValidNumber = (stringNumber?: string) => {
+export const isValidNumber = (stringNumber: string) => {
   return !isNaN(+(stringNumber ?? 0));
 };

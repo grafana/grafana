@@ -17,7 +17,7 @@ import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { toUtc } from '@grafana/data';
-import * as queryDef from './query_def';
+import { defaultBucketAgg, hasMetricOfType } from './query_def';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -447,8 +447,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       }
 
       let queryObj;
-      if (target.isLogsQuery || queryDef.hasMetricOfType(target, 'logs')) {
-        target.bucketAggs = [queryDef.defaultBucketAgg()];
+      if (target.isLogsQuery || hasMetricOfType(target, 'logs')) {
+        target.bucketAggs = [defaultBucketAgg()];
         target.metrics = [];
         // Setting this for metrics queries that are typed as logs
         target.isLogsQuery = true;
@@ -507,7 +507,6 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   // TODO: instead of being a string, this could be a custom type representing all the elastic types
   async getFields(type?: string): Promise<MetricFindValue[]> {
-    // FIXME: This can be simplified a lot as we are performing unnecessary transformations
     const configuredEsVersion = this.esVersion;
     return this.get('/_mapping').then((result: any) => {
       const typeMap: any = {
