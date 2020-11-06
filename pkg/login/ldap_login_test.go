@@ -11,7 +11,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-var errTest = errors.New("Test error")
+var errTest = errors.New("test error")
 
 func TestLDAPLogin(t *testing.T) {
 	Convey("Login using ldap", t, func() {

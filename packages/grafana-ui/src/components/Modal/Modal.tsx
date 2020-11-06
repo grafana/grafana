@@ -2,14 +2,14 @@ import React from 'react';
 import { Portal } from '../Portal/Portal';
 import { cx } from 'emotion';
 import { withTheme } from '../../themes';
-import { IconName } from '../../types';
-import { Themeable } from '../../types';
+import { IconName, Themeable } from '../../types';
 import { getModalStyles } from './getModalStyles';
 import { ModalHeader } from './ModalHeader';
 import { IconButton } from '../IconButton/IconButton';
 
 export interface Props extends Themeable {
   icon?: IconName;
+  iconTooltip?: string;
   /** Title for the modal or custom header element */
   title: string | JSX.Element;
   className?: string;
@@ -33,9 +33,9 @@ export class UnthemedModal extends React.PureComponent<Props> {
   };
 
   renderDefaultHeader(title: string) {
-    const { icon } = this.props;
+    const { icon, iconTooltip } = this.props;
 
-    return <ModalHeader icon={icon} title={title} />;
+    return <ModalHeader icon={icon} iconTooltip={iconTooltip} title={title} />;
   }
 
   render() {
