@@ -1,6 +1,7 @@
 import {
   AbsoluteTimeRange,
   DataFrame,
+  FieldColorModeId,
   FieldType,
   getDisplayProcessor,
   PanelData,
@@ -89,11 +90,14 @@ export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelDat
     const valueField = graph.fields.find(f => f.name === TIME_SERIES_VALUE_FIELD_NAME);
     if (valueField) {
       valueField.config = {
+        color: {
+          mode: FieldColorModeId.PaletteClassic,
+        },
         custom: {
           axis: { label: '', side: AxisSide.Left, width: 60, grid: true },
           bars: { show: false },
-          fill: { alpha: 0.1 },
           line: { show: true, width: 1 },
+
           nullValues: 'null',
           points: { show: false, radius: 4 },
         },
