@@ -1,6 +1,6 @@
 import React, { ChangeEvent } from 'react';
 import { mount } from 'enzyme';
-import { ThresholdsMode } from '@grafana/data';
+import { Threshold, ThresholdsConfig, ThresholdsMode } from '@grafana/data';
 import { ThresholdsEditor, Props, thresholdsWithoutKey } from './ThresholdsEditor';
 import { colors } from '../../utils';
 import { mockThemeContext } from '../../themes/ThemeContext';
@@ -183,6 +183,30 @@ describe('ThresholdsEditor', () => {
       });
 
       instance.onBlur();
+
+      expect(getCurrentThresholds(instance).steps).toEqual([
+        { value: -Infinity, color: '#7EB26D' },
+        { value: 75, color: '#6ED0E0' },
+        { value: 78, color: '#EAB839' },
+      ]);
+    });
+  });
+
+  describe('on load with invalid steps', () => {
+    it('should exclude invalid steps and render a proper list', () => {
+      const { instance } = setup({
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: '#7EB26D', key: 1 },
+            { value: 75, color: '#6ED0E0', key: 2 },
+            { color: '#7EB26D', key: 3 } as any,
+            { value: 78, color: '#EAB839', key: 4 },
+            { value: null, color: '#7EB26D', key: 5 } as any,
+            { value: null, color: '#7EB26D', key: 6 } as any,
+          ],
+        },
+      });
 
       expect(getCurrentThresholds(instance).steps).toEqual([
         { value: -Infinity, color: '#7EB26D' },
