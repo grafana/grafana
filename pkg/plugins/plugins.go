@@ -63,7 +63,9 @@ func init() {
 	registry.RegisterService(&PluginManager{})
 }
 
-// ReplaceAllowUnsignedPluginCondition has to be called before PluginManager.Init() has run
+// ReplaceAllowUnsignedPluginCondition changes the policy for allowing unsigned plugins. Signature validation only runs when plugins are starting
+// and running plugins will not be terminated if they violate the new policy.
+// Run this before PluginManager.Init to be sure policy is applied to all loaded plugins.
 func (pm *PluginManager) ReplaceAllowUnsignedPluginCondition(condition func(base *PluginBase) bool) {
 	pm.allowUnsignedPluginsCondition = condition
 }
