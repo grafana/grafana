@@ -40,7 +40,7 @@ export interface LoadDatasourceReadyPayload {
 export const loadDatasourceReadyAction = createAction<LoadDatasourceReadyPayload>('explore/loadDatasourceReady');
 
 /**
- * Updates datasource instance before datasouce loading has started
+ * Updates datasource instance before datasource loading has started
  */
 export interface UpdateDatasourceInstancePayload {
   exploreId: ExploreId;
