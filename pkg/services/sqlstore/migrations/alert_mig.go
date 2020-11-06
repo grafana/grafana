@@ -155,8 +155,8 @@ func addAlertMigrations(mg *Migrator) {
 		Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true,
 	}))
 
-	mg.AddMigration("Update uid column values in alert_notification", new(RawSqlMigration).
-		Sqlite("UPDATE alert_notification SET uid=printf('%09d',id) WHERE uid IS NULL;").
+	mg.AddMigration("Update uid column values in alert_notification", new(RawSQLMigration).
+		SQLite("UPDATE alert_notification SET uid=printf('%09d',id) WHERE uid IS NULL;").
 		Postgres("UPDATE alert_notification SET uid=lpad('' || id::text,9,'0') WHERE uid IS NULL;").
 		Mysql("UPDATE alert_notification SET uid=lpad(id,9,'0') WHERE uid IS NULL;"))
 
@@ -173,7 +173,7 @@ func addAlertMigrations(mg *Migrator) {
 	}))
 
 	// change column type of alert.settings
-	mg.AddMigration("alter alert.settings to mediumtext", NewRawSqlMigration("").
+	mg.AddMigration("alter alert.settings to mediumtext", NewRawSQLMigration("").
 		Mysql("ALTER TABLE alert MODIFY settings MEDIUMTEXT;"))
 
 	mg.AddMigration("Add non-unique index alert_notification_state_alert_id", NewAddIndexMigration(alert_notification_state, &Index{
