@@ -4,9 +4,12 @@ import {
   DataQueryRequest,
   DataSourceInstanceSettings,
   dateMath,
+  DateTime,
   dateTime,
   Field,
+  MetricFindValue,
   MutableDataFrame,
+  TimeRange,
   toUtc,
 } from '@grafana/data';
 import _ from 'lodash';
@@ -30,6 +33,15 @@ jest.mock('@grafana/runtime', () => ({
   },
 }));
 
+const createTimeRange = (from: DateTime, to: DateTime): TimeRange => ({
+  from,
+  to,
+  raw: {
+    from,
+    to,
+  },
+});
+
 describe('ElasticDatasource', function(this: any) {
   const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
 
@@ -50,9 +62,11 @@ describe('ElasticDatasource', function(this: any) {
 
   const timeSrv: any = createTimeSrv('now-1h');
 
-  const ctx: {
+  // TODO: This is temporary, when refactoring this test suite we should remove this cast.
+  interface TestContext {
     ds: ElasticDatasource;
-  } = {};
+  }
+  const ctx: TestContext = {} as TestContext;
 
   function createTimeSrv(from: string) {
     const srv: any = {
@@ -196,11 +210,8 @@ describe('ElasticDatasource', function(this: any) {
         return Promise.resolve(logsResponse);
       });
 
-      const query = {
-        range: {
-          from: toUtc([2015, 4, 30, 10]),
-          to: toUtc([2019, 7, 1, 10]),
-        },
+      const query: DataQueryRequest<ElasticsearchQuery> = {
+        range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2019, 7, 1, 10])),
         targets: [
           {
             alias: '$varAlias',
@@ -208,12 +219,11 @@ describe('ElasticDatasource', function(this: any) {
             bucketAggs: [{ type: 'date_histogram', settings: { interval: 'auto' }, id: '2' }],
             metrics: [{ type: 'count', id: '1' }],
             query: 'escape\\:test',
-            interval: '10s',
             isLogsQuery: true,
             timeField: '@timestamp',
           },
         ],
-      };
+      } as DataQueryRequest<ElasticsearchQuery>;
 
       const queryBuilderSpy = jest.spyOn(ctx.ds.queryBuilder, 'getLogsQuery');
       const response = await ctx.ds.query(query);
@@ -257,19 +267,19 @@ describe('ElasticDatasource', function(this: any) {
         return Promise.resolve({ data: { responses: [] } });
       });
 
-      ctx.ds.query({
-        range: {
-          from: dateTime([2015, 4, 30, 10]),
-          to: dateTime([2015, 5, 1, 10]),
-        },
+      const query: DataQueryRequest<ElasticsearchQuery> = {
+        range: createTimeRange(dateTime([2015, 4, 30, 10]), dateTime([2015, 5, 1, 10])),
         targets: [
           {
-            bucketAggs: [],
-            metrics: [{ type: 'raw_document' }],
+            refId: 'A',
+            metrics: [{ type: 'raw_document', id: '1' }],
             query: 'test',
           },
         ],
-      });
+        // TODO: Remove this cast
+      } as DataQueryRequest<ElasticsearchQuery>;
+
+      ctx.ds.query(query);
 
       parts = requestOptions.data.split('\n');
       header = JSON.parse(parts[0]);
@@ -286,20 +296,18 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   describe('When getting an error on response', () => {
-    const query = {
-      range: {
-        from: toUtc([2020, 1, 1, 10]),
-        to: toUtc([2020, 2, 1, 10]),
-      },
+    const query: DataQueryRequest<ElasticsearchQuery> = {
+      range: createTimeRange(toUtc([2020, 1, 1, 10]), toUtc([2020, 2, 1, 10])),
       targets: [
         {
+          refId: 'A',
           alias: '$varAlias',
           bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
           metrics: [{ type: 'count', id: '1' }],
           query: 'escape\\:test',
         },
       ],
-    };
+    } as DataQueryRequest<ElasticsearchQuery>;
 
     createDatasource({
       url: ELASTICSEARCH_MOCK_URL,
@@ -726,19 +734,20 @@ describe('ElasticDatasource', function(this: any) {
         return Promise.resolve({ data: { responses: [] } });
       });
 
-      ctx.ds.query({
-        range: {
-          from: dateTime([2015, 4, 30, 10]),
-          to: dateTime([2015, 5, 1, 10]),
-        },
+      const query: DataQueryRequest<ElasticsearchQuery> = {
+        range: createTimeRange(dateTime([2015, 4, 30, 10]), dateTime([2015, 5, 1, 10])),
         targets: [
           {
+            refId: 'A',
             bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '2' }],
-            metrics: [{ type: 'count' }],
+            metrics: [{ type: 'count', id: '1' }],
             query: 'test',
           },
         ],
-      });
+        // TODO: Remove this cast
+      } as DataQueryRequest<ElasticsearchQuery>;
+
+      ctx.ds.query(query);
 
       parts = requestOptions.data.split('\n');
       header = JSON.parse(parts[0]);
@@ -755,7 +764,8 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   describe('When issuing metricFind query on es5.x', () => {
-    let requestOptions: any, parts, header: any, body: any, results: any;
+    let requestOptions: any, parts, header: any, body: any;
+    let results: MetricFindValue[];
 
     beforeEach(() => {
       createDatasource({
@@ -788,7 +798,7 @@ describe('ElasticDatasource', function(this: any) {
         });
       });
 
-      ctx.ds.metricFindQuery('{"find": "terms", "field": "test"}').then((res: any) => {
+      ctx.ds.metricFindQuery('{"find": "terms", "field": "test"}').then(res => {
         results = res;
       });
 
