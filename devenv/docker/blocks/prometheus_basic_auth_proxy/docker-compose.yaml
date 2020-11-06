@@ -3,4 +3,5 @@
 
   nginxproxy:
     build: docker/blocks/nginx_proxy
-    network_mode: host
+    ports:
+      - "10090:10090"
