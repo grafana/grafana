@@ -12,7 +12,6 @@ import (
 
 type CacheService interface {
 	GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
-	SetSQLStore(sqlStore *sqlstore.SqlStore)
 }
 
 type CacheServiceImpl struct {

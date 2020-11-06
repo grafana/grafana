@@ -17,15 +17,40 @@ type Descriptor struct {
 var services []*Descriptor
 
 func RegisterService(instance Service) {
-	services = append(services, &Descriptor{
+	desc := &Descriptor{
 		Name:         reflect.TypeOf(instance).Elem().Name(),
 		Instance:     instance,
 		InitPriority: Medium,
-	})
+	}
+	Register(desc)
 }
 
 func Register(descriptor *Descriptor) {
+	if descriptor == nil {
+		return
+	}
+
+	// Overwrite any existing equivalent service
+	for i, svc := range services {
+		if svc.Name == descriptor.Name {
+			services[i] = descriptor
+			return
+		}
+	}
+
 	services = append(services, descriptor)
+}
+
+// GetService gets the registered service descriptor with a certain name.
+// If none is found, nil is returned.
+func GetService(name string) *Descriptor {
+	for _, svc := range services {
+		if svc.Name == name {
+			return svc
+		}
+	}
+
+	return nil
 }
 
 func GetServices() []*Descriptor {

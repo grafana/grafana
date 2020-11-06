@@ -19,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 
@@ -42,7 +43,6 @@ func TestQueryCloudWatchMetrics(t *testing.T) {
 	t.Cleanup(func() {
 		cloudwatch.NewCWClient = origNewCWClient
 	})
-
 	var client cloudwatch.FakeCWClient
 	cloudwatch.NewCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 		return client
@@ -267,17 +267,28 @@ func createGrafDir(t *testing.T) (string, string) {
 func startGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SqlStore) string {
 	t.Helper()
 
+	origSQLStore := registry.GetService(sqlstore.ServiceName)
+	t.Cleanup(func() {
+		registry.Register(origSQLStore)
+	})
+
+	registry.Register(&registry.Descriptor{
+		Name:         sqlstore.ServiceName,
+		Instance:     sqlStore,
+		InitPriority: sqlstore.InitPriority,
+	})
+
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 	server, err := New(Config{
 		ConfigFile: cfgPath,
 		HomePath:   grafDir,
 		Listener:   listener,
-		SQLStore:   sqlStore,
 	})
 	require.NoError(t, err)
 
 	go func() {
+		// When the server runs, it will also build and initialize the service graph
 		if err := server.Run(); err != nil {
 			t.Log("Server exited uncleanly", "error", err)
 		}

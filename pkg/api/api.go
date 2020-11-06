@@ -23,7 +23,7 @@ func (hs *HTTPServer) registerRoutes() {
 	quota := middleware.Quota(hs.QuotaService)
 	bind := binding.Bind
 
-	r := hs.routeRegister
+	r := hs.RouteRegister
 
 	// not logged in views
 	r.Get("/logout", hs.Logout)

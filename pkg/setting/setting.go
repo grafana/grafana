@@ -78,7 +78,7 @@ var (
 	// Log settings.
 	LogConfigs []util.DynMap
 
-	// Http server options
+	// HTTP server options
 	Protocol                       Scheme
 	Domain                         string
 	HttpAddr, HttpPort             string
@@ -233,6 +233,7 @@ type Cfg struct {
 	ServeFromSubPath bool
 	StaticRootPath   string
 	Protocol         Scheme
+	SocketPath       string
 
 	// build
 	BuildVersion string
@@ -797,6 +798,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 	cfg.MarketplaceURL = pluginsSection.Key("marketplace_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.Protocol = Protocol
+	cfg.SocketPath = SocketPath
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")

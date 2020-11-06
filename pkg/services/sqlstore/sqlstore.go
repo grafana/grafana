@@ -39,6 +39,9 @@ var (
 // ContextSessionKey is used as key to save values in `context.Context`
 type ContextSessionKey struct{}
 
+const ServiceName = "SqlStore"
+const InitPriority = registry.High
+
 func init() {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
@@ -46,9 +49,9 @@ func init() {
 	xorm.DefaultPostgresSchema = ""
 
 	registry.Register(&registry.Descriptor{
-		Name:         "SqlStore",
+		Name:         ServiceName,
 		Instance:     &SqlStore{},
-		InitPriority: registry.High,
+		InitPriority: InitPriority,
 	})
 }
 

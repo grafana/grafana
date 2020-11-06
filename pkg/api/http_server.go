@@ -57,7 +57,7 @@ type HTTPServer struct {
 	httpSrv     *http.Server
 	middlewares []macaron.Handler
 
-	routeRegister        routing.RouteRegister
+	RouteRegister        routing.RouteRegister            `inject:""`
 	Bus                  bus.Bus                          `inject:""`
 	RenderService        rendering.Service                `inject:""`
 	Cfg                  *setting.Cfg                     `inject:""`
@@ -81,7 +81,6 @@ type HTTPServer struct {
 
 func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
-	hs.routeRegister = routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing)
 
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
@@ -165,7 +164,7 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 		return hs.Listener, nil
 	}
 
-	switch setting.Protocol {
+	switch hs.Cfg.Protocol {
 	case setting.HTTPScheme, setting.HTTPSScheme, setting.HTTP2Scheme:
 		listener, err := net.Listen("tcp", hs.httpSrv.Addr)
 		if err != nil {
@@ -173,51 +172,20 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 		}
 		return listener, nil
 	case setting.SocketScheme:
-		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
+		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: hs.Cfg.SocketPath, Net: "unix"})
 		if err != nil {
-			return nil, errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
+			return nil, errutil.Wrapf(err, "failed to open listener for socket %s", hs.Cfg.SocketPath)
 		}
 
 		// Make socket writable by group
-		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
+		if err := os.Chmod(hs.Cfg.SocketPath, 0660); err != nil {
 			return nil, errutil.Wrapf(err, "failed to change socket permissions")
 		}
 
 		return listener, nil
 	default:
-		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
-		return nil, fmt.Errorf("invalid protocol %q", setting.Protocol)
-	}
-}
-
-func (hs *HTTPServer) getListener() (net.Listener, error) {
-	if hs.Listener != nil {
-		return hs.Listener, nil
-	}
-
-	switch setting.Protocol {
-	case setting.HTTP, setting.HTTPS, setting.HTTP2:
-		// TODO: Support already having a listener
-		listener, err := net.Listen("tcp", hs.httpSrv.Addr)
-		if err != nil {
-			return nil, errutil.Wrapf(err, "failed to open listener on address %s", hs.httpSrv.Addr)
-		}
-		return listener, nil
-	case setting.SOCKET:
-		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
-		if err != nil {
-			return nil, errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
-		}
-
-		// Make socket writable by group
-		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
-			return nil, errutil.Wrapf(err, "failed to change socket permissions")
-		}
-
-		return listener, nil
-	default:
-		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
-		return nil, fmt.Errorf("invalid protocol %q", setting.Protocol)
+		hs.log.Error("Invalid protocol", "protocol", hs.Cfg.Protocol)
+		return nil, fmt.Errorf("invalid protocol %q", hs.Cfg.Protocol)
 	}
 }
 
@@ -316,7 +284,7 @@ func (hs *HTTPServer) applyRoutes() {
 	// start with middlewares & static routes
 	hs.addMiddlewaresAndStaticRoutes()
 	// then add view routes & api routes
-	hs.routeRegister.Register(hs.macaron)
+	hs.RouteRegister.Register(hs.macaron)
 	// then custom app proxy routes
 	hs.initAppPluginRoutes(hs.macaron)
 	// lastly not found route
