@@ -218,9 +218,6 @@ func extractFiles(archiveFile string, pluginName string, dstDir string, allowSym
 	if err != nil {
 		return err
 	}
-	if strings.HasSuffix(dstDir, string(filepath.Separator)) {
-		dstDir = dstDir[0:]
-	}
 	logger.Debugf("Extracting archive %q to %q...\n", archiveFile, dstDir)
 
 	r, err := zip.OpenReader(archiveFile)
@@ -228,14 +225,13 @@ func extractFiles(archiveFile string, pluginName string, dstDir string, allowSym
 		return err
 	}
 	for _, zf := range r.File {
-		dstPath := filepath.Clean(filepath.Join(dstDir, removeGitBuildFromName(pluginName, zf.Name)))
-		if !strings.HasPrefix(dstPath, dstDir+string(filepath.Separator)) {
+		if filepath.IsAbs(zf.Name) || strings.HasPrefix(zf.Name, ".."+string(filepath.Separator)) {
 			return fmt.Errorf(
 				"archive member %q tries to write outside of plugin directory: %q, this can be a security risk",
 				zf.Name, dstDir)
 		}
 
-		dstPath = filepath.Clean(filepath.Join(dstDir, removeGitBuildFromName(pluginName, zf.Name)))
+		dstPath := filepath.Clean(filepath.Join(dstDir, removeGitBuildFromName(pluginName, zf.Name)))
 
 		if zf.FileInfo().IsDir() {
 			if err := os.MkdirAll(dstPath, 0755); err != nil {
