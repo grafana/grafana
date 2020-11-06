@@ -221,12 +221,11 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 	}
 	for _, zf := range r.File {
 		newFileName := removeGitBuildFromName(pluginName, zf.Name)
-		newFile := filepath.Clean(filepath.Join(filePath, newFileName))
-		rel, err := filepath.Rel(filePath, newFileName)
-		if err != nil || rel == ".." {
+		if !isPathSafe(newFileName, filepath.Join(filePath, pluginName)) {
 			return fmt.Errorf("filepath: %q tries to write outside of plugin directory: %q, this can be a security risk",
 				zf.Name, filepath.Join(filePath, pluginName))
 		}
+		newFile := filepath.Join(filePath, newFileName)
 
 		if zf.FileInfo().IsDir() {
 			if err := os.MkdirAll(newFile, 0755); err != nil {
@@ -319,4 +318,12 @@ func extractFile(file *zip.File, filePath string) (err error) {
 
 	_, err = io.Copy(dst, src)
 	return err
+}
+
+// isPathSafe checks if the filePath does not resolve outside of destination. This is used to prevent
+// https://snyk.io/research/zip-slip-vulnerability
+// Based on https://github.com/mholt/archiver/pull/65/files#diff-635e4219ee55ef011b2b32bba065606bR109
+func isPathSafe(filePath string, destination string) bool {
+	destpath := filepath.Join(destination, filePath)
+	return strings.HasPrefix(destpath, destination)
 }

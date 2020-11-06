@@ -132,6 +132,22 @@ func TestInstallPluginCommand(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestIsPathSafe(t *testing.T) {
+	dest := fmt.Sprintf("%stest%spath", string(os.PathSeparator), string(os.PathSeparator))
+
+	t.Run("Should be true on nested destinations", func(t *testing.T) {
+		assert.True(t, isPathSafe("dest", dest))
+		assert.True(t, isPathSafe("dest/one", dest))
+		assert.True(t, isPathSafe("../path/dest/one", dest))
+	})
+
+	t.Run("Should be false on destinations outside of path", func(t *testing.T) {
+		assert.False(t, isPathSafe("../dest", dest))
+		assert.False(t, isPathSafe("../../", dest))
+		assert.False(t, isPathSafe("../../test", dest))
+	})
+}
+
 func TestSelectVersion(t *testing.T) {
 	t.Run("Should return error when requested version does not exist", func(t *testing.T) {
 		_, err := SelectVersion(
