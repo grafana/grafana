@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	_ "github.com/grafana/grafana/pkg/infra/metrics"
 	_ "github.com/grafana/grafana/pkg/infra/remotecache"
 	_ "github.com/grafana/grafana/pkg/infra/serverlock"
 	_ "github.com/grafana/grafana/pkg/infra/tracing"
@@ -293,7 +292,7 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 
 	// Resolve services and their dependencies.
 	if err := serviceGraph.Populate(); err != nil {
-		return errutil.Wrapf(err, "Failed to populate service dependency")
+		return errutil.Wrapf(err, "Failed to populate service dependencies")
 	}
 
 	return nil

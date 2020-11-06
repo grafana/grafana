@@ -7,14 +7,16 @@ export interface PluginBundleOptions {
   watch: boolean;
   production?: boolean;
   yarnlink?: boolean;
+  preserveConsole?: boolean;
 }
 
 // export const bundlePlugin = ({ watch, production }: PluginBundleOptions) => useSpinner('Bundle plugin', async () => {
-export const bundlePlugin = async ({ watch, production }: PluginBundleOptions) => {
+export const bundlePlugin = async ({ watch, production, preserveConsole }: PluginBundleOptions) => {
   const compiler = webpack(
     await loadWebpackConfig({
       watch,
       production,
+      preserveConsole,
     })
   );
 

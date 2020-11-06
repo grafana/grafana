@@ -70,7 +70,7 @@
     "react-transition-group": "4.3.0",
     "slate": "0.47.8",
     "tinycolor2": "1.4.1",
-    "uplot": "1.1.2"
+    "uplot": "1.2.2"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "11.0.2",

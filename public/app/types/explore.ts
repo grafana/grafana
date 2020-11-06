@@ -15,9 +15,8 @@ import {
   QueryHint,
   RawTimeRange,
   TimeRange,
+  EventBusExtended,
 } from '@grafana/data';
-
-import { Emitter } from 'app/core/core';
 
 export enum ExploreId {
   left = 'left',
@@ -74,7 +73,7 @@ export interface ExploreItemState {
   /**
    * Emitter to send events to the rest of Grafana.
    */
-  eventBridge: Emitter;
+  eventBridge: EventBusExtended;
   /**
    * List of timeseries to be shown in the Explore graph result viewer.
    */

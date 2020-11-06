@@ -20,6 +20,8 @@ import {
   TimeZone,
   ExploreUrlState,
   LogsModel,
+  EventBusExtended,
+  EventBusSrv,
 } from '@grafana/data';
 
 import store from 'app/core/store';
@@ -50,7 +52,6 @@ import {
   getTimeRangeFromUrl,
   lastUsedDatasourceKeyForOrgId,
 } from 'app/core/utils/explore';
-import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
@@ -159,11 +160,11 @@ interface ExploreState {
  */
 export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   el: any;
-  exploreEvents: Emitter;
+  exploreEvents: EventBusExtended;
 
   constructor(props: ExploreProps) {
     super(props);
-    this.exploreEvents = new Emitter();
+    this.exploreEvents = new EventBusSrv();
     this.state = {
       openDrawer: undefined,
     };

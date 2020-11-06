@@ -20,7 +20,7 @@ import (
 
 var (
 	// ErrFolderNameMissing is returned when folder name is missing.
-	ErrFolderNameMissing = errors.New("Folder name missing")
+	ErrFolderNameMissing = errors.New("folder name missing")
 )
 
 // FileReader is responsible for reading dashboards from disc and
@@ -41,7 +41,7 @@ func NewDashboardFileReader(cfg *config, log log.Logger) (*FileReader, error) {
 	if !ok {
 		path, ok = cfg.Options["folder"].(string)
 		if !ok {
-			return nil, fmt.Errorf("Failed to load dashboards. path param is not a string")
+			return nil, fmt.Errorf("failed to load dashboards, path param is not a string")
 		}
 
 		log.Warn("[Deprecated] The folder property is deprecated. Please use path instead.")

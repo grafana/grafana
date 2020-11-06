@@ -19,8 +19,8 @@ export const Controlled = () => {
     <Checkbox
       value={checked}
       onChange={onChange}
-      label="Skip SLL cert validation"
-      description="Set to true if you want to skip sll cert validation"
+      label="Skip TLS cert validation"
+      description="Set to true if you want to skip TLS cert validation"
     />
   );
 };
@@ -29,8 +29,8 @@ export const uncontrolled = () => {
   return (
     <Checkbox
       defaultChecked={true}
-      label="Skip SLL cert validation"
-      description="Set to true if you want to skip sll cert validation"
+      label="Skip TLS cert validation"
+      description="Set to true if you want to skip TLS cert validation"
     />
   );
 };

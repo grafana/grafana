@@ -59,14 +59,16 @@ With Grafana Enterprise, you get access to new features, including:
 
 With a Grafana Enterprise license, you get access to premium plugins, including:
 
-- [Amazon Timestream](https://grafana.com/plugins/grafana-timestream-datasource)
 - [AppDynamics](https://grafana.com/plugins/dlopes7-appdynamics-datasource)
 - [DataDog](https://grafana.com/plugins/grafana-datadog-datasource)
 - [Dynatrace](https://grafana.com/plugins/grafana-dynatrace-datasource)
+- [MongoDB](https://grafana.com/grafana/plugins/grafana-mongodb-datasource)
 - [New Relic](https://grafana.com/plugins/grafana-newrelic-datasource)
 - [Oracle Database](https://grafana.com/plugins/grafana-oracle-datasource)
 - [ServiceNow](https://grafana.com/grafana/plugins/grafana-servicenow-datasource)
+- [Snowflake](https://grafana.com/grafana/plugins/grafana-snowflake-datasource)
 - [Splunk](https://grafana.com/plugins/grafana-splunk-datasource)
+- [Wavefront](https://grafana.com/grafana/plugins/grafana-wavefront-datasource)
 
 ## Try Grafana Enterprise
 
