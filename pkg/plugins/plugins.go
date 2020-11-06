@@ -40,7 +40,7 @@ var (
 	pluginScanningErrors map[string]*PluginError
 )
 
-type UnsignedPluginConditionFunc = func(plugin *PluginBase) bool
+type unsignedPluginConditionFunc = func(plugin *PluginBase) bool
 
 type PluginScanner struct {
 	pluginPath                    string
@@ -61,7 +61,7 @@ type PluginManager struct {
 
 	// AllowUnsignedPluginsCondition changes the policy for allowing unsigned plugins. Signature validation only runs when plugins are starting
 	// and running plugins will not be terminated if they violate the new policy.
-	AllowUnsignedPluginsCondition UnsignedPluginConditionFunc
+	AllowUnsignedPluginsCondition unsignedPluginConditionFunc
 }
 
 func init() {
