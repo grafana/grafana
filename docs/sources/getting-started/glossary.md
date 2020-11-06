@@ -49,7 +49,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">Exporter</td>
     <td>
-      An exporter implements the translation of data that comes out of a data source into a format that Prometheus can digest.
+      An exporter translates data that comes out of a data source into a format that Prometheus can digest.
     </td>
   </tr>
   <tr>
