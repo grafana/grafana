@@ -4,7 +4,9 @@ package ngalert
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -12,6 +14,36 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestCreatingAlertDefinition(t *testing.T) {
+	t.Run("should fail gracefully when creating alert definition with invalid relative time range", func(t *testing.T) {
+		ng := setupTestEnv(t)
+		q := saveAlertDefinitionCommand{
+			OrgID: 1,
+			Name:  "something completely different",
+			Condition: condition{
+				RefID: "B",
+				QueriesAndExpressions: []eval.AlertQuery{
+					{
+						Model: json.RawMessage(`{
+							"datasource": "__expr__",
+							"type":"math",
+							"expression":"2 + 3 > 1"
+						}`),
+						RefID: "B",
+						RelativeTimeRange: eval.RelativeTimeRange{
+							From: eval.Duration(3 * time.Hour),
+							To:   eval.Duration(5 * time.Hour),
+						},
+					},
+				},
+			},
+		}
+		err := ng.saveAlertDefinition(&q)
+		require.Error(t, err, fmt.Errorf("invalid relative time range: {From:3h0m0s To:5h0m0s}"))
+	})
+
+}
 
 func TestUpdatingAlertDefinition(t *testing.T) {
 	t.Run("zero rows affected when updating unknown alert", func(t *testing.T) {
@@ -31,6 +63,10 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 							"expression":"2 + 2 > 1"
 						}`),
 						RefID: "A",
+						RelativeTimeRange: eval.RelativeTimeRange{
+							From: eval.Duration(time.Duration(5) * time.Hour),
+							To:   eval.Duration(time.Duration(3) * time.Hour),
+						},
 					},
 				},
 			},
@@ -59,6 +95,10 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 							"expression":"2 + 3 > 1"
 						}`),
 						RefID: "B",
+						RelativeTimeRange: eval.RelativeTimeRange{
+							From: eval.Duration(5 * time.Hour),
+							To:   eval.Duration(3 * time.Hour),
+						},
 					},
 				},
 			},
@@ -130,6 +170,10 @@ func createTestAlertDefinition(t *testing.T, ng AlertNG) *AlertDefinition {
 						"type":"math",
 						"expression":"2 + 2 > 1"
 					}`),
+					RelativeTimeRange: eval.RelativeTimeRange{
+						From: eval.Duration(5 * time.Hour),
+						To:   eval.Duration(3 * time.Hour),
+					},
 					RefID: "A",
 				},
 			},

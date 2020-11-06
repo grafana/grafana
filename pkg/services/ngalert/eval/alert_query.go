@@ -14,20 +14,25 @@ const defaultIntervalMS float64 = 1000
 // DefaultExprDatasourceID is the datasource identifier for expressions.:w
 const DefaultExprDatasourceID = -100
 
-type duration time.Duration
+// Duration is a type used for marshalling durations.
+type Duration time.Duration
 
-func (d duration) MarshalJSON() ([]byte, error) {
+func (d Duration) String() string {
+	return time.Duration(d).String()
+}
+
+func (d Duration) MarshalJSON() ([]byte, error) {
 	return json.Marshal(time.Duration(d).Seconds())
 }
 
-func (d *duration) UnmarshalJSON(b []byte) error {
+func (d *Duration) UnmarshalJSON(b []byte) error {
 	var v interface{}
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}
 	switch value := v.(type) {
 	case float64:
-		*d = duration(time.Duration(value) * time.Second)
+		*d = Duration(time.Duration(value) * time.Second)
 		return nil
 	default:
 		return fmt.Errorf("invalid duration %v", v)
@@ -36,17 +41,17 @@ func (d *duration) UnmarshalJSON(b []byte) error {
 
 // relativeTimeRange is the per query start and end time
 // for requests.
-type relativeTimeRange struct {
-	From duration
-	To   duration
+type RelativeTimeRange struct {
+	From Duration
+	To   Duration
 }
 
 // isValid checks that From duration is greater than To duration.
-func (rtr *relativeTimeRange) isValid() bool {
+func (rtr *RelativeTimeRange) isValid() bool {
 	return rtr.From > rtr.To
 }
 
-func (rtr *relativeTimeRange) toTimeRange(now time.Time) *pluginv2.TimeRange {
+func (rtr *RelativeTimeRange) toTimeRange(now time.Time) *pluginv2.TimeRange {
 	return &pluginv2.TimeRange{
 		FromEpochMS: now.Add(-time.Duration(rtr.From)).UnixNano() / 1e6,
 		ToEpochMS:   now.Add(-time.Duration(rtr.To)).UnixNano() / 1e6,
@@ -63,7 +68,7 @@ type AlertQuery struct {
 	QueryType string `json:"queryType"`
 
 	// RelativeTimeRange is the relative Start and End of the query as sent by the frontend.
-	RelativeTimeRange relativeTimeRange `json:"relativeTimeRange"`
+	RelativeTimeRange RelativeTimeRange `json:"relativeTimeRange"`
 
 	DatasourceID int64 `json:"-"`
 
@@ -278,7 +283,7 @@ func (aq *AlertQuery) PreSave(orgID int64) error {
 	aq.Model = model
 
 	if ok := aq.RelativeTimeRange.isValid(); !ok {
-		return fmt.Errorf("invalid ")
+		return fmt.Errorf("invalid relative time range: %+v", aq.RelativeTimeRange)
 	}
 	return nil
 }
