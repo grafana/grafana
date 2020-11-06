@@ -41,24 +41,31 @@ var (
 )
 
 type PluginScanner struct {
-	pluginPath           string
-	errors               []error
-	backendPluginManager backendplugin.Manager
-	cfg                  *setting.Cfg
-	requireSigned        bool
-	log                  log.Logger
-	plugins              map[string]*PluginBase
+	pluginPath                    string
+	errors                        []error
+	backendPluginManager          backendplugin.Manager
+	cfg                           *setting.Cfg
+	requireSigned                 bool
+	log                           log.Logger
+	plugins                       map[string]*PluginBase
+	allowUnsignedPluginsCondition func(plugin *PluginBase) bool
 }
 
 type PluginManager struct {
-	BackendPluginManager backendplugin.Manager `inject:""`
-	Cfg                  *setting.Cfg          `inject:""`
-	log                  log.Logger
-	scanningErrors       []error
+	BackendPluginManager          backendplugin.Manager `inject:""`
+	Cfg                           *setting.Cfg          `inject:""`
+	log                           log.Logger
+	scanningErrors                []error
+	allowUnsignedPluginsCondition func(plugin *PluginBase) bool
 }
 
 func init() {
 	registry.RegisterService(&PluginManager{})
+}
+
+// ReplaceAllowUnsignedPluginCondition has to be called before PluginManager.Init() has run
+func (pm *PluginManager) ReplaceAllowUnsignedPluginCondition(condition func(base *PluginBase) bool) {
+	pm.allowUnsignedPluginsCondition = condition
 }
 
 func (pm *PluginManager) Init() error {
@@ -187,12 +194,13 @@ func (pm *PluginManager) scanPluginPaths() error {
 // scan a directory for plugins.
 func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 	scanner := &PluginScanner{
-		pluginPath:           pluginDir,
-		backendPluginManager: pm.BackendPluginManager,
-		cfg:                  pm.Cfg,
-		requireSigned:        requireSigned,
-		log:                  pm.log,
-		plugins:              map[string]*PluginBase{},
+		pluginPath:                    pluginDir,
+		backendPluginManager:          pm.BackendPluginManager,
+		cfg:                           pm.Cfg,
+		requireSigned:                 requireSigned,
+		log:                           pm.log,
+		plugins:                       map[string]*PluginBase{},
+		allowUnsignedPluginsCondition: pm.allowUnsignedPluginsCondition,
 	}
 
 	// 1st pass: Scan plugins, also mapping plugins to their respective directories
@@ -405,21 +413,13 @@ func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
 
 	switch plugin.Signature {
 	case PluginSignatureUnsigned:
-		allowUnsigned := false
-		for _, plug := range s.cfg.PluginsAllowUnsigned {
-			if plug == plugin.Id {
-				allowUnsigned = true
-				break
-			}
-		}
-		if setting.Env != setting.Dev && !allowUnsigned {
+		if allowed := s.allowUnsigned(plugin); !allowed {
 			s.log.Debug("Plugin is unsigned", "id", plugin.Id)
 			s.errors = append(s.errors, fmt.Errorf("plugin %q is unsigned", plugin.Id))
 			return &PluginError{
 				ErrorCode: signatureMissing,
 			}
 		}
-
 		s.log.Warn("Running an unsigned backend plugin", "pluginID", plugin.Id, "pluginDir",
 			plugin.PluginDir)
 		return nil
@@ -438,6 +438,24 @@ func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
 	default:
 		panic(fmt.Sprintf("Plugin %q has unrecognized plugin signature state %q", plugin.Id, plugin.Signature))
 	}
+}
+
+func (s *PluginScanner) allowUnsigned(plugin *PluginBase) bool {
+	if s.allowUnsignedPluginsCondition != nil {
+		return s.allowUnsignedPluginsCondition(plugin)
+	}
+
+	if setting.Env == setting.Dev {
+		return true
+	}
+
+	for _, plug := range s.cfg.PluginsAllowUnsigned {
+		if plug == plugin.Id {
+			return true
+		}
+	}
+
+	return false
 }
 
 func ScanningErrors() []PluginError {
