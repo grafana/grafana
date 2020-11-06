@@ -29,7 +29,7 @@ export { TimeZonePicker } from './TimePicker/TimeZonePicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
-export { Tag } from './Tags/Tag';
+export { Tag, OnTagClick } from './Tags/Tag';
 export { TagList } from './Tags/TagList';
 export { FilterPill } from './FilterPill/FilterPill';
 
@@ -78,6 +78,7 @@ export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
+export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
 
 export {
   LegendOptions,
@@ -104,6 +105,7 @@ export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
 export { ContextMenu, ContextMenuItem, ContextMenuGroup, ContextMenuProps } from './ContextMenu/ContextMenu';
+export { WithContextMenu } from './ContextMenu/WithContextMenu';
 export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
@@ -125,11 +127,13 @@ export { default as Chart } from './Chart';
 export { TooltipContainer } from './Chart/TooltipContainer';
 export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
+export { RangeSlider } from './Slider/RangeSlider';
 
 // TODO: namespace!!
 export { StringValueEditor } from './OptionsUI/string';
 export { StringArrayEditor } from './OptionsUI/strings';
 export { NumberValueEditor } from './OptionsUI/number';
+export { SliderValueEditor } from './OptionsUI/slider';
 export { SelectValueEditor } from './OptionsUI/select';
 export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
 
@@ -168,6 +172,7 @@ export { Checkbox } from './Forms/Checkbox';
 export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
 export { TimeRangeInput } from './TimePicker/TimeRangeInput';
+export { Card, Props as CardProps, ContainerProps, CardInnerProps, getCardStyles } from './Card/Card';
 
 // Legacy forms
 

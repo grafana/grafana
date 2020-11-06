@@ -88,13 +88,13 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsd
 	postData, err := json.Marshal(data)
 	if err != nil {
 		plog.Info("Failed marshaling data", "error", err)
-		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(string(postData)))
 	if err != nil {
 		plog.Info("Failed to create request", "error", err)
-		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -117,7 +117,7 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 
 	if res.StatusCode/100 != 2 {
 		plog.Info("Request failed", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf("Request failed status: %v", res.Status)
+		return nil, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	var data []OpenTsdbResponse

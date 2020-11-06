@@ -1,4 +1,4 @@
-grabpl_version = '0.5.18'
+grabpl_version = '0.5.24'
 build_image = 'grafana/build-container:1.2.28'
 publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -264,8 +264,12 @@ def build_storybook_step(edition, ver_mode):
             # Best to ensure that this step doesn't mess with what's getting built and packaged
             'package',
         ],
+        'environment': {
+            'NODE_OPTIONS': '--max_old_space_size=4096',
+        },
         'commands': [
             'yarn storybook:build',
+            './bin/grabpl verify-storybook',
         ],
     }
 
@@ -884,12 +888,12 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'gcloud auth activate-service-account --key-file=gcpkey.json',
             'rm gcpkey.json',
             'cp C:\\App\\nssm-2.24.zip .',
-            '.\\grabpl.exe windows-installer --edition {}{} {}'.format(edition, bucket_part, ver_part),
         ]
         if (ver_mode == 'master' and (edition != 'enterprise' or is_downstream)) or ver_mode in (
             'release', 'test-release',
         ):
             installer_commands.extend([
+                '.\\grabpl.exe windows-installer --edition {}{} {}'.format(edition, bucket_part, ver_part),
                 '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
                 'gsutil cp $$fname gs://{}/{}/{}/'.format(bucket, edition, dir),
                 'gsutil cp "$$fname.sha256" gs://{}/{}/{}/'.format(bucket, edition, dir),

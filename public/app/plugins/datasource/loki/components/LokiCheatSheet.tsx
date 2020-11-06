@@ -9,6 +9,12 @@ const EXAMPLES_LIMIT = 5;
 
 const LOGQL_EXAMPLES = [
   {
+    title: 'Log pipeline',
+    expression: '{job="mysql"} |= "metrics" | logfmt | duration > 10s',
+    label:
+      'This query targets the MySQL job, filters out logs that don’t contain the word "metrics" and parses each log line to extract more labels and filters with them.',
+  },
+  {
     title: 'Count over time',
     expression: 'count_over_time({job="mysql"}[5m])',
     label: 'This query counts all the log lines within the last five minutes for the MySQL job.',

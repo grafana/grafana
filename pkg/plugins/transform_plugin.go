@@ -149,7 +149,7 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {
-		return nil, fmt.Errorf("Could not find datasource %v", err)
+		return nil, fmt.Errorf("could not find datasource: %w", err)
 	}
 
 	// Convert plugin-model (datasource) queries to tsdb queries

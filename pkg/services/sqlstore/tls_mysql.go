@@ -15,7 +15,7 @@ func makeCert(config DatabaseConfig) (*tls.Config, error) {
 	rootCertPool := x509.NewCertPool()
 	pem, err := ioutil.ReadFile(config.CaCertPath)
 	if err != nil {
-		return nil, fmt.Errorf("Could not read DB CA Cert path: %v", config.CaCertPath)
+		return nil, fmt.Errorf("could not read DB CA Cert path %q: %w", config.CaCertPath, err)
 	}
 	if ok := rootCertPool.AppendCertsFromPEM(pem); !ok {
 		return nil, err

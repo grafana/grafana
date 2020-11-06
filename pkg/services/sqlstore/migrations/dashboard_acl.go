@@ -46,4 +46,7 @@ INSERT INTO dashboard_acl
 	`
 
 	mg.AddMigration("save default acl rules in dashboard_acl table", NewRawSqlMigration(rawSQL))
+
+	mg.AddMigration("delete acl rules for deleted dashboards and folders", NewRawSqlMigration(
+		"DELETE FROM dashboard_acl WHERE dashboard_id NOT IN (SELECT id FROM dashboard) AND dashboard_id != -1"))
 }
