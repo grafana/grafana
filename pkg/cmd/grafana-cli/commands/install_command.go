@@ -218,6 +218,9 @@ func extractFiles(archiveFile string, pluginName string, dstDir string, allowSym
 	if err != nil {
 		return err
 	}
+	if strings.HasSuffix(dstDir, string(filepath.Separator)) {
+		dstDir = dstDir[0:]
+	}
 	logger.Debugf("Extracting archive %q to %q...\n", archiveFile, dstDir)
 
 	r, err := zip.OpenReader(archiveFile)
@@ -225,14 +228,14 @@ func extractFiles(archiveFile string, pluginName string, dstDir string, allowSym
 		return err
 	}
 	for _, zf := range r.File {
-		fname := zf.Name
-		if filepath.IsAbs(fname) || strings.Split(fname, string(filepath.Separator))[0] == ".." {
+		dstPath := filepath.Clean(filepath.Join(dstDir, removeGitBuildFromName(pluginName, zf.Name)))
+		if !strings.HasPrefix(dstPath, dstDir+string(filepath.Separator)) {
 			return fmt.Errorf(
 				"archive member %q tries to write outside of plugin directory: %q, this can be a security risk",
-				fname, dstDir)
+				zf.Name, dstDir)
 		}
 
-		dstPath := filepath.Clean(filepath.Join(dstDir, removeGitBuildFromName(pluginName, fname)))
+		dstPath = filepath.Clean(filepath.Join(dstDir, removeGitBuildFromName(pluginName, zf.Name)))
 
 		if zf.FileInfo().IsDir() {
 			if err := os.MkdirAll(dstPath, 0755); err != nil {
@@ -253,7 +256,7 @@ func extractFiles(archiveFile string, pluginName string, dstDir string, allowSym
 
 		if isSymlink(zf) {
 			if !allowSymlinks {
-				logger.Warnf("%v: plugin archive contains a symlink, which is not allowed. Skipping \n", fname)
+				logger.Warnf("%v: plugin archive contains a symlink, which is not allowed. Skipping \n", zf.Name)
 				continue
 			}
 			if err := extractSymlink(zf, dstPath); err != nil {
