@@ -213,6 +213,10 @@ Do not use. This is developer jargon that refers to a UI panel. Refer to the pan
 
 One word, not two.
 
+#### mixin
+
+One word, not two. Also, not hyphenated.
+
 #### open source, open-source
 
 Do not hyphenate when used as an adjective unless the lack of hyphen would cause confusion. For example: _Open source software design is the most open open-source system I can imagine._
