@@ -213,6 +213,11 @@ func removeGitBuildFromName(pluginName, filename string) string {
 const permissionsDeniedMessage = "could not create %q, permission denied, make sure you have write access to plugin dir"
 
 func extractFiles(archiveFile string, pluginName string, dstDir string, allowSymlinks bool) error {
+	var err error
+	dstDir, err = filepath.Abs(dstDir)
+	if err != nil {
+		return err
+	}
 	logger.Debugf("Extracting archive %q to %q...\n", archiveFile, dstDir)
 
 	r, err := zip.OpenReader(archiveFile)
@@ -220,14 +225,13 @@ func extractFiles(archiveFile string, pluginName string, dstDir string, allowSym
 		return err
 	}
 	for _, zf := range r.File {
-		relPath, err := filepath.Rel(dstDir, zf.Name)
-		if err != nil || relPath == ".." {
+		if filepath.IsAbs(zf.Name) || strings.Split(zf.Name, string(filepath.Separator))[0] == ".." {
 			return fmt.Errorf(
 				"archive member %q tries to write outside of plugin directory: %q, this can be a security risk",
 				zf.Name, dstDir)
 		}
 
-		dstPath := filepath.Clean(filepath.Join(dstDir, removeGitBuildFromName(pluginName, relPath)))
+		dstPath := filepath.Clean(filepath.Join(dstDir, removeGitBuildFromName(pluginName, zf.Name)))
 
 		if zf.FileInfo().IsDir() {
 			if err := os.MkdirAll(dstPath, 0755); err != nil {
