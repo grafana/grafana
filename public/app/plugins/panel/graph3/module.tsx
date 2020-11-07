@@ -162,8 +162,6 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
         defaultValue: 'bottom',
         settings: {
           options: [
-            { value: 'left', label: 'Left' },
-            { value: 'top', label: 'Top' },
             { value: 'bottom', label: 'Bottom' },
             { value: 'right', label: 'Right' },
           ],

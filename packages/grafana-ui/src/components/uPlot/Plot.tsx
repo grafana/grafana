@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { css } from 'emotion';
-import uPlot from 'uplot';
 import { usePrevious } from 'react-use';
+import uPlot from 'uplot';
 import { buildPlotContext, PlotContext } from './context';
 import { pluginLog, preparePlotData, shouldInitialisePlot } from './utils';
 import { usePlotConfig } from './hooks';
@@ -115,15 +114,8 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 
   return (
     <PlotContext.Provider value={plotCtx}>
-      <div
-        className={css`
-          position: relative;
-          width: ${props.width}px;
-          height: ${props.height}px;
-        `}
-      >
-        {props.children}
-      </div>
+      <div ref={plotCtx.canvasRef} />
+      {props.children}
     </PlotContext.Provider>
   );
 };

@@ -15,7 +15,6 @@ import { Area, Axis, Line, Point, Scale, SeriesGeometry } from '../uPlot/geometr
 import { UPlotChart } from '../uPlot/Plot';
 import { AxisSide, GraphCustomFieldConfig, PlotProps } from '../uPlot/types';
 import { useTheme } from '../../themes';
-import { Canvas } from '../uPlot/Canvas';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendOptions } from '../Legend/Legend';
 import { LegendPlugin } from '../uPlot/plugins';
@@ -173,7 +172,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, width, height,
     <VizLayout width={width} height={height} legend={legendElement}>
       {(vizWidth: number, vizHeight: number) => (
         <UPlotChart data={alignedData} width={vizWidth} height={vizHeight} {...plotProps}>
-          <Canvas />
           {scales}
           {axes}
           {geometries}

@@ -210,7 +210,6 @@ export { GraphCustomFieldConfig, AxisSide } from './uPlot/types';
 export { UPlotChart } from './uPlot/Plot';
 export * from './uPlot/geometries';
 export { usePlotConfigContext } from './uPlot/context';
-export { Canvas } from './uPlot/Canvas';
 export * from './uPlot/plugins';
 export { useRefreshAfterGraphRendered } from './uPlot/hooks';
 export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';

@@ -41,9 +41,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
     flexGrow: 1,
   };
 
-  const legendStyle: CSSProperties = {
-    flexGrow: 1,
-  };
+  const legendStyle: CSSProperties = {};
 
   switch (position) {
     case 'bottom':
@@ -63,6 +61,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
       }
       break;
   }
+  console.log('VizLayout', size);
 
   return (
     <div style={containerStyle}>
