@@ -24,7 +24,7 @@ export enum LegendDisplayMode {
 }
 export interface LegendBasicOptions {
   isVisible: boolean;
-  asTable: boolean;
+  displayMode: LegendDisplayMode;
 }
 
 export interface LegendRenderOptions {

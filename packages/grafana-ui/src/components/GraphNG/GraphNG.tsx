@@ -5,6 +5,7 @@ import {
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
+  getFieldDisplayName,
   getTimeField,
   systemDateFormats,
   TIME_SERIES_TIME_FIELD_NAME,
@@ -16,8 +17,8 @@ import { UPlotChart } from '../uPlot/Plot';
 import { AxisSide, GraphCustomFieldConfig, PlotProps } from '../uPlot/types';
 import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
-import { LegendOptions } from '../Legend/Legend';
-import { LegendPlugin } from '../uPlot/plugins';
+import { LegendItem, LegendOptions } from '../Legend/Legend';
+import { GraphLegend } from '../Graph/GraphLegend';
 
 const _ = null;
 
@@ -86,6 +87,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, width, height,
   axes.push(<Axis key="axis-scale--x" scaleKey="x" values={timeStampsConfig} side={AxisSide.Bottom} />);
 
   let seriesIdx = 0;
+  const legendItems: LegendItem[] = [];
   const uniqueScales: Record<string, boolean> = {};
 
   for (let i = 0; i < alignedData.fields.length; i++) {
@@ -145,6 +147,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, width, height,
         <Area key={`area-${scale}-${i}`} scaleKey={scale} fill={customConfig?.fill.alpha} color={seriesColor} />
       );
     }
+
     if (seriesGeometry.length > 1) {
       geometries.push(
         <SeriesGeometry key={`seriesGeometry-${scale}-${i}`} scaleKey={scale}>
@@ -155,6 +158,15 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, width, height,
       geometries.push(seriesGeometry);
     }
 
+    if (legend.isVisible) {
+      legendItems.push({
+        color: seriesColor,
+        label: getFieldDisplayName(field, alignedData),
+        isVisible: true,
+        yAxis: customConfig?.axis?.side === 1 ? 3 : 1,
+      });
+    }
+
     seriesIdx++;
   }
 
@@ -163,7 +175,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, width, height,
   if (legend.isVisible) {
     legendElement = (
       <VizLayout.Legend position={legend.placement} maxHeight="35%" maxWidth="60%">
-        <LegendPlugin placement={legend.placement} data={alignedData} />
+        <GraphLegend placement={legend.placement} items={legendItems} displayMode={legend.displayMode} />
       </VizLayout.Legend>
     );
   }
