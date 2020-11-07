@@ -97,6 +97,7 @@ export const DEFAULT_PLOT_CONFIG = {
   series: [],
   hooks: {},
 };
+
 export const usePlotConfig = (width: number, height: number, timeZone: TimeZone) => {
   const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
   const [seriesConfig, setSeriesConfig] = useState<uPlot.Series[]>([{}]);

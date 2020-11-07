@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   DataFrame,
   FieldConfig,
@@ -7,6 +7,7 @@ import {
   getFieldColorModeForField,
   getTimeField,
   systemDateFormats,
+  TIME_SERIES_TIME_FIELD_NAME,
 } from '@grafana/data';
 import { timeFormatToTemplate } from '../uPlot/utils';
 import { alignAndSortDataFramesByFieldName } from './utils';
@@ -50,30 +51,15 @@ const timeStampsConfig = [
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
-const TIME_FIELD_NAME = 'Time';
-
 interface GraphNGProps extends Omit<PlotProps, 'data'> {
   data: DataFrame[];
 }
 
 export const GraphNG: React.FC<GraphNGProps> = ({ data, children, ...plotProps }) => {
   const theme = useTheme();
-  const [alignedData, setAlignedData] = useState<DataFrame | null>(null);
+  const alignedData = useMemo(() => alignAndSortDataFramesByFieldName(data, TIME_SERIES_TIME_FIELD_NAME), [data]);
 
-  useEffect(() => {
-    if (data.length === 0) {
-      setAlignedData(null);
-      return;
-    }
-
-    const subscription = alignAndSortDataFramesByFieldName(data, TIME_FIELD_NAME).subscribe(setAlignedData);
-
-    return function unsubscribe() {
-      subscription.unsubscribe();
-    };
-  }, [data]);
-
-  if (!alignedData) {
+  if (!alignedData.length) {
     return (
       <div className="panel-empty">
         <p>No data found in response</p>
