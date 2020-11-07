@@ -45,24 +45,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	}
 
 	sqlStore := sqlstore.InitTestDB(t)
-	sqlStore.Register()
-
 	remoteCacheSvc := &remotecache.RemoteCache{}
-	remoteCacheSvc.Register()
-
-	origSvc := registry.GetService(serviceName)
-	t.Cleanup(func() {
-		// Clear the registered services
-		registry.Register(&registry.Descriptor{
-			Name: sqlstore.ServiceName,
-		})
-		registry.Register(&registry.Descriptor{
-			Name: remotecache.ServiceName,
-		})
-		registry.Register(&registry.Descriptor{
-			Name: serviceName,
-		})
-	})
 
 	cfg := setting.NewCfg()
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
@@ -75,7 +58,20 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	svc := &MiddlewareService{}
 	svc.register()
 
-	err := registry.BuildServiceGraph([]interface{}{cfg}, nil)
+	err := registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
+		{
+			Name:     sqlstore.ServiceName,
+			Instance: sqlStore,
+		},
+		{
+			Name:     remotecache.ServiceName,
+			Instance: remoteCacheSvc,
+		},
+		{
+			Name:     serviceName,
+			Instance: svc,
+		},
+	})
 	require.NoError(t, err)
 
 	bus.AddHandler("", upsertHandler)

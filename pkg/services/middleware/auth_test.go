@@ -4,15 +4,21 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMiddlewareAuth(t *testing.T) {
-	reqSignIn := Auth(&AuthOptions{ReqSignedIn: true})
+	reqSignIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
 
-	middlewareScenario(t, "ReqSignIn true and unauthenticated request", func(sc *scenarioContext) {
+	middlewareScenario(t, "ReqSignIn true and unauthenticated request", func(t *testing.T, sc *scenarioContext) {
+		cfg := setting.NewCfg()
+		svc := &MiddlewareService{
+			Cfg: cfg,
+		}
+
 		sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
 
 		sc.fakeReq("GET", "/secure").exec()
@@ -20,7 +26,12 @@ func TestMiddlewareAuth(t *testing.T) {
 		assert.Equal(t, 302, sc.resp.Code)
 	})
 
-	middlewareScenario(t, "ReqSignIn true and unauthenticated API request", func(sc *scenarioContext) {
+	middlewareScenario(t, "ReqSignIn true and unauthenticated API request", func(t *testing.T, sc *scenarioContext) {
+		cfg := setting.NewCfg()
+		svc := &MiddlewareService{
+			Cfg: cfg,
+		}
+
 		sc.m.Get("/api/secure", reqSignIn, sc.defaultHandler)
 
 		sc.fakeReq("GET", "/api/secure").exec()
@@ -29,23 +40,19 @@ func TestMiddlewareAuth(t *testing.T) {
 	})
 
 	t.Run("Anonymous auth enabled", func(t *testing.T) {
-		origEnabled := setting.AnonymousEnabled
-		t.Cleanup(func() {
-			setting.AnonymousEnabled = origEnabled
-		})
-		origName := setting.AnonymousOrgName
-		t.Cleanup(func() {
-			setting.AnonymousOrgName = origName
-		})
-		setting.AnonymousEnabled = true
-		setting.AnonymousOrgName = "test"
+		cfg := setting.NewCfg()
+		cfg.AnonymousEnabled = true
+		cfg.AnonymousOrgName = "test"
+		svc := &MiddlewareService{
+			Cfg: cfg,
+		}
 
 		bus.AddHandler("test", func(query *models.GetOrgByNameQuery) error {
 			query.Result = &models.Org{Id: 1, Name: "test"}
 			return nil
 		})
 
-		middlewareScenario(t, "ReqSignIn true and request with forceLogin in query string", func(sc *scenarioContext) {
+		middlewareScenario(t, "ReqSignIn true and request with forceLogin in query string", func(t *testing.T, sc *scenarioContext) {
 			sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
 
 			sc.fakeReq("GET", "/secure?forceLogin=true").exec()
@@ -56,15 +63,15 @@ func TestMiddlewareAuth(t *testing.T) {
 			assert.Equal(t, "/login", location[0])
 		})
 
-		middlewareScenario(t, "ReqSignIn true and request with same org provided in query string", func(sc *scenarioContext) {
+		middlewareScenario(t, "ReqSignIn true and request with same org provided in query string", func(t *testing.T, sc *scenarioContext) {
 			sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
 
 			sc.fakeReq("GET", "/secure?orgId=1").exec()
 
-			assert.Equal(t, 200, scp.resp.Code)
+			assert.Equal(t, 200, sc.resp.Code)
 		})
 
-		middlewareScenario(t, "ReqSignIn true and request with different org provided in query string", func(sc *scenarioContext) {
+		middlewareScenario(t, "ReqSignIn true and request with different org provided in query string", func(t *testing.T, sc *scenarioContext) {
 			sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
 
 			sc.fakeReq("GET", "/secure?orgId=2").exec()
@@ -76,18 +83,21 @@ func TestMiddlewareAuth(t *testing.T) {
 		})
 	})
 
-	Convey("snapshot public mode or signed in", func() {
-		middlewareScenario(t, "Snapshot public mode disabled and unauthenticated request should return 401", func(sc *scenarioContext) {
-			sc.m.Get("/api/snapshot", SnapshotPublicModeOrSignedIn(), sc.defaultHandler)
-			sc.fakeReq("GET", "/api/snapshot").exec()
-			assert.Equal(t, 401, sc.resp.Code)
-		})
+	middlewareScenario(t, "Snapshot public mode disabled and unauthenticated request should return 401", func(t *testing.T, sc *scenarioContext) {
+		sc.m.Get("/api/snapshot", sc.service.SnapshotPublicModeOrSignedIn, sc.defaultHandler)
+		sc.fakeReq("GET", "/api/snapshot").exec()
+		assert.Equal(t, 401, sc.resp.Code)
+	})
 
-		middlewareScenario(t, "Snapshot public mode enabled and unauthenticated request should return 200", func(sc *scenarioContext) {
-			setting.SnapshotPublicMode = true
-			sc.m.Get("/api/snapshot", SnapshotPublicModeOrSignedIn(), sc.defaultHandler)
-			sc.fakeReq("GET", "/api/snapshot").exec()
-			assert.Equal(t, 200, sc.resp.Code)
-		})
+	middlewareScenario(t, "Snapshot public mode enabled and unauthenticated request should return 200", func(t *testing.T, sc *scenarioContext) {
+		cfg := setting.NewCfg()
+		cfg.SnapshotPublicMode = true
+		svc := &MiddlewareService{
+			Cfg: cfg,
+		}
+
+		sc.m.Get("/api/snapshot", svc.SnapshotPublicModeOrSignedIn, sc.defaultHandler)
+		sc.fakeReq("GET", "/api/snapshot").exec()
+		assert.Equal(t, 200, sc.resp.Code)
 	})
 }

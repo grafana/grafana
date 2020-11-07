@@ -263,12 +263,17 @@ type Cfg struct {
 	RendererConcurrentRequestLimit int
 
 	// Security
-	DisableInitAdminCreation         bool
-	DisableBruteForceLoginProtection bool
-	CookieSecure                     bool
-	CookieSameSiteDisabled           bool
-	CookieSameSiteMode               http.SameSite
-	AllowEmbedding                   bool
+	DisableInitAdminCreation          bool
+	DisableBruteForceLoginProtection  bool
+	CookieSecure                      bool
+	CookieSameSiteDisabled            bool
+	CookieSameSiteMode                http.SameSite
+	AllowEmbedding                    bool
+	XSSProtectionHeader               bool
+	StrictTransportSecurity           bool
+	StrictTransportSecurityMaxAge     int
+	StrictTransportSecurityPreload    bool
+	StrictTransportSecuritySubDomains bool
 
 	TempDataLifetime         time.Duration
 	PluginsEnableAlpha       bool
@@ -323,6 +328,8 @@ type Cfg struct {
 
 	// Use to enable new features which may still be in alpha/beta stage.
 	FeatureToggles       map[string]bool
+	AnonymousEnabled     bool
+	AnonymousOrgName     string
 	AnonymousHideVersion bool
 
 	DateFormats DateFormats
@@ -334,6 +341,11 @@ type Cfg struct {
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
+
+	// Snapshots
+	SnapshotPublicMode bool
+
+	ErrTemplateName string
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.
@@ -716,7 +728,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	cfg.Raw = iniFile
 
-	// Temporary keep global, to make refactor in steps
+	// Temporarily keep global, to make refactor in steps
 	Raw = cfg.Raw
 
 	cfg.BuildVersion = BuildVersion
@@ -725,6 +737,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.BuildBranch = BuildBranch
 	cfg.IsEnterprise = IsEnterprise
 	cfg.Packaging = Packaging
+
+	cfg.ErrTemplateName = ErrTemplateName
 
 	ApplicationName = "Grafana"
 
@@ -755,7 +769,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 
-	if err := readSnapshotsSettings(iniFile); err != nil {
+	if err := readSnapshotsSettings(cfg, iniFile); err != nil {
 		return err
 	}
 
@@ -998,10 +1012,15 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 
 	ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
 	XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
+	cfg.XSSProtectionHeader = XSSProtectionHeader
 	StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
+	cfg.StrictTransportSecurity = StrictTransportSecurity
 	StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
+	cfg.StrictTransportSecurityMaxAge = StrictTransportSecurityMaxAge
 	StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
+	cfg.StrictTransportSecurityPreload = StrictTransportSecurityPreload
 	StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
+	cfg.StrictTransportSecuritySubDomains = StrictTransportSecuritySubDomains
 
 	// read data source proxy whitelist
 	DataProxyWhiteList = make(map[string]bool)
@@ -1074,7 +1093,9 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
+	cfg.AnonymousEnabled = AnonymousEnabled
 	AnonymousOrgName = valueAsString(iniFile.Section("auth.anonymous"), "org_name", "")
+	cfg.AnonymousOrgName = cfg.AnonymousOrgName
 	AnonymousOrgRole = valueAsString(iniFile.Section("auth.anonymous"), "org_role", "")
 	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
 
@@ -1197,7 +1218,7 @@ func readAlertingSettings(iniFile *ini.File) error {
 	return nil
 }
 
-func readSnapshotsSettings(iniFile *ini.File) error {
+func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	snapshots := iniFile.Section("snapshots")
 
 	ExternalSnapshotUrl = valueAsString(snapshots, "external_snapshot_url", "")
@@ -1206,6 +1227,7 @@ func readSnapshotsSettings(iniFile *ini.File) error {
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
 	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
 	SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
+	cfg.SnapshotPublicMode = SnapshotPublicMode
 
 	return nil
 }

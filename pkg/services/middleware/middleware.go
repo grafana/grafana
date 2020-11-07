@@ -33,6 +33,16 @@ const (
 
 var getTime = time.Now
 
+var (
+	ReqGrafanaAdmin = middleware.Auth(&middleware.AuthOptions{
+		ReqSignedIn:     true,
+		ReqGrafanaAdmin: true,
+	})
+	ReqSignedIn   = middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
+	ReqEditorRole = middleware.RoleAuth(models.ROLE_EDITOR, models.ROLE_ADMIN)
+	ReqOrgAdmin   = middleware.RoleAuth(models.ROLE_ADMIN)
+)
+
 func init() {
 	svc := &MiddlewareService{}
 	svc.register()
