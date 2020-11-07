@@ -25,7 +25,7 @@ func TestRecoveryMiddleware(t *testing.T) {
 	recoveryScenario(t, "Given an API route that panics, recovery middleware should return JSON", apiURL,
 		func(t *testing.T, sc *scenarioContext) {
 			sc.handlerFunc = panicHandler
-			sc.fakeReq("GET", apiURL).exec()
+			sc.fakeReq(t, "GET", apiURL).exec(t)
 			sc.req.Header.Add("content-type", "application/json")
 
 			assert.Equal(t, 500, sc.resp.Code)
@@ -37,7 +37,7 @@ func TestRecoveryMiddleware(t *testing.T) {
 	recoveryScenario(t, "Given a non-API route that panics, recovery middleware should return html", apiURL,
 		func(t *testing.T, sc *scenarioContext) {
 			sc.handlerFunc = panicHandler
-			sc.fakeReq("GET", apiURL).exec()
+			sc.fakeReq(t, "GET", apiURL).exec(t)
 
 			assert.Equal(t, 500, sc.resp.Code)
 			assert.Equal(t, "text/html; charset=UTF-8", sc.resp.Header().Get("content-type"))

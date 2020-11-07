@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -48,14 +49,14 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 	middlewareScenario(t, "middleware should get correct x-xss-protection header", func(t *testing.T, sc *scenarioContext) {
 		sc.service.Cfg.ErrTemplateName = errorTemplate
 		sc.service.Cfg.XSSProtectionHeader = true
-		sc.fakeReq("GET", "/api/").exec()
+		sc.fakeReq(t, "GET", "/api/").exec(t)
 		assert.Equal(t, "1; mode=block", sc.resp.Header().Get("X-XSS-Protection"))
 	})
 
 	middlewareScenario(t, "middleware should not get x-xss-protection when disabled", func(t *testing.T, sc *scenarioContext) {
 		sc.service.Cfg.ErrTemplateName = errorTemplate
 		sc.service.Cfg.XSSProtectionHeader = false
-		sc.fakeReq("GET", "/api/").exec()
+		sc.fakeReq(t, "GET", "/api/").exec(t)
 		assert.Empty(t, sc.resp.Header().Get("X-XSS-Protection"))
 	})
 
@@ -65,13 +66,13 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 		sc.service.Cfg.Protocol = setting.HTTPSScheme
 
 		sc.service.Cfg.StrictTransportSecurityMaxAge = 64000
-		sc.fakeReq("GET", "/api/").exec()
+		sc.fakeReq(t, "GET", "/api/").exec(t)
 		assert.Equal(t, "max-age=64000", sc.resp.Header().Get("Strict-Transport-Security"))
 		sc.service.Cfg.StrictTransportSecurityPreload = true
-		sc.fakeReq("GET", "/api/").exec()
+		sc.fakeReq(t, "GET", "/api/").exec(t)
 		assert.Equal(t, "max-age=64000; preload", sc.resp.Header().Get("Strict-Transport-Security"))
 		sc.service.Cfg.StrictTransportSecuritySubDomains = true
-		sc.fakeReq("GET", "/api/").exec()
+		sc.fakeReq(t, "GET", "/api/").exec(t)
 		assert.Equal(t, "max-age=64000; preload; includeSubDomains", sc.resp.Header().Get("Strict-Transport-Security"))
 	})
 }
@@ -80,24 +81,24 @@ func TestMiddlewareContext(t *testing.T) {
 	const noCache = "no-cache"
 	//sc.service.Cfg.ErrTemplateName = errorTemplate
 	middlewareScenario(t, "middleware should add context to injector", func(t *testing.T, sc *scenarioContext) {
-		sc.fakeReq("GET", "/").exec()
+		sc.fakeReq(t, "GET", "/").exec(t)
 		assert.NotNil(t, sc.context)
 	})
 
 	middlewareScenario(t, "Default middleware should allow get request", func(t *testing.T, sc *scenarioContext) {
-		sc.fakeReq("GET", "/").exec()
+		sc.fakeReq(t, "GET", "/").exec(t)
 		assert.Equal(t, 200, sc.resp.Code)
 	})
 
 	middlewareScenario(t, "middleware should add Cache-Control header for requests to API", func(t *testing.T, sc *scenarioContext) {
-		sc.fakeReq("GET", "/api/search").exec()
+		sc.fakeReq(t, "GET", "/api/search").exec(t)
 		assert.Equal(t, noCache, sc.resp.Header().Get("Cache-Control"))
 		assert.Equal(t, noCache, sc.resp.Header().Get("Pragma"))
 		assert.Equal(t, "-1", sc.resp.Header().Get("Expires"))
 	})
 
 	middlewareScenario(t, "middleware should not add Cache-Control header for requests to datasource proxy API", func(t *testing.T, sc *scenarioContext) {
-		sc.fakeReq("GET", "/api/datasources/proxy/1/test").exec()
+		sc.fakeReq(t, "GET", "/api/datasources/proxy/1/test").exec(t)
 		assert.Empty(t, sc.resp.Header().Get("Cache-Control"))
 		assert.Empty(t, sc.resp.Header().Get("Pragma"))
 		assert.Empty(t, sc.resp.Header().Get("Expires"))
@@ -112,7 +113,7 @@ func TestMiddlewareContext(t *testing.T) {
 			}
 			c.HTML(200, "index-template", data)
 		})
-		sc.fakeReq("GET", "/").exec()
+		sc.fakeReq(t, "GET", "/").exec(t)
 		assert.Equal(t, 200, sc.resp.Code)
 		assert.Equal(t, noCache, sc.resp.Header().Get("Cache-Control"))
 		assert.Equal(t, noCache, sc.resp.Header().Get("Pragma"))
@@ -120,20 +121,20 @@ func TestMiddlewareContext(t *testing.T) {
 	})
 
 	middlewareScenario(t, "middleware should add X-Frame-Options header with deny for request when not allowing embedding", func(t *testing.T, sc *scenarioContext) {
-		sc.fakeReq("GET", "/api/search").exec()
+		sc.fakeReq(t, "GET", "/api/search").exec(t)
 		assert.Equal(t, "deny", sc.resp.Header().Get("X-Frame-Options"))
 	})
 
 	middlewareScenario(t, "middleware should not add X-Frame-Options header for request when allowing embedding",
 		func(t *testing.T, sc *scenarioContext) {
 			sc.service.Cfg.AllowEmbedding = true
-			sc.fakeReq("GET", "/api/search").exec()
+			sc.fakeReq(t, "GET", "/api/search").exec(t)
 			assert.Empty(t, sc.resp.Header().Get("X-Frame-Options"))
 		})
 
 	middlewareScenario(t, "Invalid API key", func(t *testing.T, sc *scenarioContext) {
 		sc.apiKey = "invalid_key_test"
-		sc.fakeReq("GET", "/").exec()
+		sc.fakeReq(t, "GET", "/").exec(t)
 
 		assert.Empty(t, sc.resp.Header().Get("Set-Cookie"))
 		assert.Equal(t, 401, sc.resp.Code)
@@ -149,7 +150,7 @@ func TestMiddlewareContext(t *testing.T) {
 			return nil
 		})
 
-		sc.fakeReq("GET", "/").withValidApiKey().exec()
+		sc.fakeReq(t, "GET", "/").withValidApiKey().exec(t)
 
 		require.Equal(t, 200, sc.resp.Code)
 
@@ -166,7 +167,7 @@ func TestMiddlewareContext(t *testing.T) {
 			return nil
 		})
 
-		sc.fakeReq("GET", "/").withValidApiKey().exec()
+		sc.fakeReq(t, "GET", "/").withValidApiKey().exec(t)
 
 		assert.Equal(t, 401, sc.resp.Code)
 		assert.Equal(t, errStringInvalidAPIKey, sc.respJson["message"])
@@ -187,7 +188,7 @@ func TestMiddlewareContext(t *testing.T) {
 			return nil
 		})
 
-		sc.fakeReq("GET", "/").withValidApiKey().exec()
+		sc.fakeReq(t, "GET", "/").withValidApiKey().exec(t)
 
 		assert.Equal(t, 401, sc.resp.Code)
 		assert.Equal(t, "Expired API key", sc.respJson["message"])
@@ -208,7 +209,7 @@ func TestMiddlewareContext(t *testing.T) {
 			}, nil
 		}
 
-		sc.fakeReq("GET", "/").exec()
+		sc.fakeReq(t, "GET", "/").exec(t)
 
 		assert.True(t, sc.context.IsSignedIn)
 		assert.Equal(t, 12, sc.context.UserId)
@@ -260,7 +261,7 @@ func TestMiddlewareContext(t *testing.T) {
 				SameSite: sameSitePolicy,
 			}
 
-			sc.fakeReq("GET", "/").exec()
+			sc.fakeReq(t, "GET", "/").exec(t)
 
 			assert.True(t, sc.context.IsSignedIn)
 			assert.Equal(t, 12, sc.context.UserId)
@@ -285,7 +286,7 @@ func TestMiddlewareContext(t *testing.T) {
 				Secure:   sc.service.Cfg.CookieSecure,
 			}
 
-			sc.fakeReq("GET", "/").exec()
+			sc.fakeReq(t, "GET", "/").exec(t)
 			assert.Equal(t, expectedCookie.String(), sc.resp.Header().Get("Set-Cookie"))
 		})
 	})
@@ -297,7 +298,7 @@ func TestMiddlewareContext(t *testing.T) {
 			return nil, models.ErrUserTokenNotFound
 		}
 
-		sc.fakeReq("GET", "/").exec()
+		sc.fakeReq(t, "GET", "/").exec(t)
 
 		assert.False(t, sc.context.IsSignedIn)
 		assert.Equal(t, 0, sc.context.UserId)
@@ -316,7 +317,7 @@ func TestMiddlewareContext(t *testing.T) {
 			return nil
 		})
 
-		sc.fakeReq("GET", "/").exec()
+		sc.fakeReq(t, "GET", "/").exec(t)
 
 		assert.Equal(t, 0, sc.context.UserId)
 		assert.Equal(t, 2, sc.context.OrgId)
@@ -344,11 +345,11 @@ func TestMiddlewareContext(t *testing.T) {
 			key := fmt.Sprintf(authproxy.CachePrefix, authproxy.HashCacheKey(name+"-"+group))
 			err := sc.remoteCacheService.Set(key, int64(33), 0)
 			require.NoError(t, err)
-			sc.fakeReq("GET", "/")
+			sc.fakeReq(t, "GET", "/")
 
 			sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
 			sc.req.Header.Add("X-WEBAUTH-GROUPS", group)
-			sc.exec()
+			sc.exec(t)
 
 			assert.True(t, sc.context.IsSignedIn)
 			assert.Equal(t, 33, sc.context.UserId)
@@ -365,9 +366,9 @@ func TestMiddlewareContext(t *testing.T) {
 				return login.ErrInvalidCredentials
 			})
 
-			sc.fakeReq("GET", "/")
+			sc.fakeReq(t, "GET", "/")
 			sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
-			sc.exec()
+			sc.exec(t)
 
 			assert.False(t, *actualAuthProxyAutoSignUp)
 			assert.Equal(t, sc.resp.Code, 407)
@@ -391,9 +392,9 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			sc.fakeReq("GET", "/")
+			sc.fakeReq(t, "GET", "/")
 			sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
-			sc.exec()
+			sc.exec(t)
 
 			assert.True(t, sc.context.IsSignedIn)
 			assert.Equal(t, 33, sc.context.UserId)
@@ -413,9 +414,9 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			sc.fakeReq("GET", "/")
+			sc.fakeReq(t, "GET", "/")
 			sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
-			sc.exec()
+			sc.exec(t)
 
 			assert.True(t, sc.context.IsSignedIn)
 			assert.Equal(t, 12, sc.context.UserId)
@@ -436,10 +437,10 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			sc.fakeReq("GET", "/")
+			sc.fakeReq(t, "GET", "/")
 			sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
 			sc.req.RemoteAddr = "[2001::23]:12345"
-			sc.exec()
+			sc.exec(t)
 
 			assert.True(t, sc.context.IsSignedIn)
 			assert.Equal(t, 33, sc.context.UserId)
@@ -460,10 +461,10 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			sc.fakeReq("GET", "/")
+			sc.fakeReq(t, "GET", "/")
 			sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
 			sc.req.RemoteAddr = "[2001::23]:12345"
-			sc.exec()
+			sc.exec(t)
 
 			assert.Equal(t, 407, sc.resp.Code)
 			assert.Nil(t, sc.context)
@@ -474,9 +475,9 @@ func TestMiddlewareContext(t *testing.T) {
 				return errors.New("Do not add user")
 			})
 
-			sc.fakeReq("GET", "/")
+			sc.fakeReq(t, "GET", "/")
 			sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
-			sc.exec()
+			sc.exec(t)
 
 			assert.Equal(t, 407, sc.resp.Code)
 			assert.Nil(t, sc.context)
@@ -487,9 +488,9 @@ func TestMiddlewareContext(t *testing.T) {
 				return errors.New("Do not add user")
 			})
 
-			sc.fakeReq("GET", "/")
+			sc.fakeReq(t, "GET", "/")
 			sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
-			sc.exec()
+			sc.exec(t)
 
 			assert.Equal(t, 407, sc.resp.Code)
 			assert.Nil(t, sc.context)
@@ -498,6 +499,14 @@ func TestMiddlewareContext(t *testing.T) {
 }
 
 type scenarioFunc func(t *testing.T, c *scenarioContext)
+
+type fakeRenderService struct {
+	rendering.Service
+}
+
+func (s *fakeRenderService) Init() error {
+	return nil
+}
 
 func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 	t.Helper()
@@ -515,6 +524,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 		sqlStore := sqlstore.InitTestDB(t)
 		remoteCacheSvc := &remotecache.RemoteCache{}
 		userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
+		renderSvc := &fakeRenderService{}
 		svc := &MiddlewareService{}
 		err = registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
 			{
@@ -528,6 +538,10 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 			{
 				Name:     auth.ServiceName,
 				Instance: userAuthTokenSvc,
+			},
+			{
+				Name:     rendering.ServiceName,
+				Instance: renderSvc,
 			},
 			{
 				Name:     serviceName,

@@ -38,7 +38,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		})
 
 		authHeader := util.GetBasicAuthHeader("api_key", "eyJrIjoidjVuQXdwTWFmRlA2em5hUzR1cmhkV0RMUzU1MTFNNDIiLCJuIjoiYXNkIiwiaWQiOjF9")
-		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
+		sc.fakeReq(t, "GET", "/").withAuthorizationHeader(authHeader).exec(t)
 
 		require.Equal(t, 200, sc.resp.Code)
 
@@ -70,7 +70,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		})
 
 		authHeader := util.GetBasicAuthHeader("myUser", password)
-		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
+		sc.fakeReq(t, "GET", "/").withAuthorizationHeader(authHeader).exec(t)
 
 		assert.True(t, sc.context.IsSignedIn)
 		assert.Equal(t, orgID, sc.context.OrgId)
@@ -102,16 +102,16 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		})
 
 		authHeader := util.GetBasicAuthHeader("myUser", password)
-		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
+		sc.fakeReq(t, "GET", "/").withAuthorizationHeader(authHeader).exec(t)
 
 		assert.True(t, sc.context.IsSignedIn)
 		assert.Equal(t, id, sc.context.UserId)
 	})
 
 	basicAuthScenario(t, "Should return error if user is not found", func(t *testing.T, sc *scenarioContext) {
-		sc.fakeReq("GET", "/")
+		sc.fakeReq(t, "GET", "/")
 		sc.req.SetBasicAuth("user", "password")
-		sc.exec()
+		sc.exec(t)
 
 		err := json.NewDecoder(sc.resp.Body).Decode(&sc.respJson)
 		require.NoError(t, err)
@@ -125,9 +125,9 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 			return nil
 		})
 
-		sc.fakeReq("GET", "/")
+		sc.fakeReq(t, "GET", "/")
 		sc.req.SetBasicAuth("killa", "gorilla")
-		sc.exec()
+		sc.exec(t)
 
 		err := json.NewDecoder(sc.resp.Body).Decode(&sc.respJson)
 		require.NoError(t, err)

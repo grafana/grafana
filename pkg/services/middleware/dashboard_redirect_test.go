@@ -28,7 +28,7 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 	middlewareScenario(t, "GET dashboard by legacy url", func(t *testing.T, sc *scenarioContext) {
 		sc.m.Get("/dashboard/db/:slug", sc.service.RedirectFromLegacyDashboardURL, sc.defaultHandler)
 
-		sc.fakeReqWithParams("GET", "/dashboard/db/dash?orgId=1&panelId=2", map[string]string{}).exec()
+		sc.fakeReqWithParams(t, "GET", "/dashboard/db/dash?orgId=1&panelId=2", map[string]string{}).exec(t)
 
 		assert.Equal(t, 301, sc.resp.Code)
 		resp := sc.resp.Result()
@@ -42,7 +42,7 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 	middlewareScenario(t, "GET dashboard solo by legacy url", func(t *testing.T, sc *scenarioContext) {
 		sc.m.Get("/dashboard-solo/db/:slug", sc.service.RedirectFromLegacyDashboardSoloURL, sc.defaultHandler)
 
-		sc.fakeReqWithParams("GET", "/dashboard-solo/db/dash?orgId=1&panelId=2", map[string]string{}).exec()
+		sc.fakeReqWithParams(t, "GET", "/dashboard-solo/db/dash?orgId=1&panelId=2", map[string]string{}).exec(t)
 
 		require.Equal(t, 301, sc.resp.Code)
 		resp := sc.resp.Result()
@@ -63,7 +63,7 @@ func TestMiddlewareDashboardRedirect_legacyEditPanel(t *testing.T) {
 	middlewareScenario(t, "GET dashboard by legacy edit url", func(t *testing.T, sc *scenarioContext) {
 		sc.m.Get("/d/:uid/:slug", sc.service.RedirectFromLegacyPanelEditURL, sc.defaultHandler)
 
-		sc.fakeReqWithParams("GET", "/d/asd/dash?orgId=1&panelId=12&fullscreen&edit", map[string]string{}).exec()
+		sc.fakeReqWithParams(t, "GET", "/d/asd/dash?orgId=1&panelId=12&fullscreen&edit", map[string]string{}).exec(t)
 
 		resp := sc.resp.Result()
 		defer resp.Body.Close()

@@ -51,25 +51,25 @@ func TestMiddlewareQuota(t *testing.T) {
 
 		// global quota not reached"
 		sc.m.Get("/user", quotaFn("user"), sc.defaultHandler)
-		sc.fakeReq("GET", "/user").exec()
+		sc.fakeReq(t, "GET", "/user").exec(t)
 		assert.Equal(t, 200, sc.resp.Code)
 
 		// global quota reached
 		sc.service.Cfg.Quota.Global.User = 4
 		sc.m.Get("/user", quotaFn("user"), sc.defaultHandler)
-		sc.fakeReq("GET", "/user").exec()
+		sc.fakeReq(t, "GET", "/user").exec(t)
 		assert.Equal(t, 403, sc.resp.Code)
 
 		// global session quota not reached
 		sc.service.Cfg.Quota.Global.Session = 10
 		sc.m.Get("/user", quotaFn("session"), sc.defaultHandler)
-		sc.fakeReq("GET", "/user").exec()
+		sc.fakeReq(t, "GET", "/user").exec(t)
 		assert.Equal(t, 200, sc.resp.Code)
 
 		// global session quota reached
 		sc.service.Cfg.Quota.Global.Session = 1
 		sc.m.Get("/user", quotaFn("session"), sc.defaultHandler)
-		sc.fakeReq("GET", "/user").exec()
+		sc.fakeReq(t, "GET", "/user").exec(t)
 		assert.Equal(t, 403, sc.resp.Code)
 	})
 
@@ -143,38 +143,38 @@ func TestMiddlewareQuota(t *testing.T) {
 		// global datasource quota reached
 		sc.service.Cfg.Quota.Global.DataSource = 4
 		sc.m.Get("/ds", quotaFn("data_source"), sc.defaultHandler)
-		sc.fakeReq("GET", "/ds").exec()
+		sc.fakeReq(t, "GET", "/ds").exec(t)
 		assert.Equal(t, 403, sc.resp.Code)
 
 		// user Org quota not reached"
 		sc.service.Cfg.Quota.User.Org = 5
 		sc.m.Get("/org", quotaFn("org"), sc.defaultHandler)
-		sc.fakeReq("GET", "/org").exec()
+		sc.fakeReq(t, "GET", "/org").exec(t)
 		assert.Equal(t, 200, sc.resp.Code)
 
 		// user Org quota reache
 		sc.service.Cfg.Quota.User.Org = 4
 		sc.m.Get("/org", quotaFn("org"), sc.defaultHandler)
-		sc.fakeReq("GET", "/org").exec()
+		sc.fakeReq(t, "GET", "/org").exec(t)
 		assert.Equal(t, 403, sc.resp.Code)
 
 		// org dashboard quota not reached
 		sc.service.Cfg.Quota.Org.Dashboard = 10
 		sc.m.Get("/dashboard", quotaFn("dashboard"), sc.defaultHandler)
-		sc.fakeReq("GET", "/dashboard").exec()
+		sc.fakeReq(t, "GET", "/dashboard").exec(t)
 		assert.Equal(t, 200, sc.resp.Code)
 
 		// org dashboard quota reached
 		sc.service.Cfg.Quota.Org.Dashboard = 4
 		sc.m.Get("/dashboard", quotaFn("dashboard"), sc.defaultHandler)
-		sc.fakeReq("GET", "/dashboard").exec()
+		sc.fakeReq(t, "GET", "/dashboard").exec(t)
 		assert.Equal(t, 403, sc.resp.Code)
 
 		// org dashboard quota reached but quotas disabled
 		sc.service.Cfg.Quota.Org.Dashboard = 4
 		sc.service.Cfg.Quota.Enabled = false
 		sc.m.Get("/dashboard", quotaFn("dashboard"), sc.defaultHandler)
-		sc.fakeReq("GET", "/dashboard").exec()
+		sc.fakeReq(t, "GET", "/dashboard").exec(t)
 		assert.Equal(t, 200, sc.resp.Code)
 	})
 }
