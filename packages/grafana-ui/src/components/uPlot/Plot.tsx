@@ -21,6 +21,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     props.height,
     props.timeZone
   );
+
   const prevConfig = usePrevious(currentConfig);
 
   const getPlotInstance = useCallback(() => {
@@ -39,6 +40,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     pluginLog('uPlot core', false, 'updating plot data(throttled log!)', plotData.current);
     // If config hasn't changed just update uPlot's data
     plotInstance.setData(plotData.current);
+    console.log('plot.setData');
 
     if (props.onDataUpdate) {
       props.onDataUpdate(plotData.current);
@@ -75,6 +77,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
         throw new Error('Missing Canvas component as a child of the plot.');
       }
       const instance = initPlot(plotData.current, currentConfig, canvasRef.current);
+      console.log('initPlot');
 
       if (props.onPlotInit) {
         props.onPlotInit();

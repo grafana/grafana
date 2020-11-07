@@ -3,6 +3,7 @@ import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphNG } from './GraphNG';
 import { dateTime } from '@grafana/data';
+import { Canvas } from '../uPlot/Canvas';
 
 export default {
   title: 'Visualizations/GraphNG',
@@ -23,11 +24,13 @@ export const Lines = () => {
     ],
   });
 
+  seriesA.fields[1].config.custom = { line: { show: true } };
+
   return (
     <GraphNG
       data={[seriesA]}
-      width={400}
-      height={600}
+      width={600}
+      height={400}
       timeRange={{
         from: dateTime(1546372800000),
         to: dateTime(1546380000000),
@@ -37,6 +40,6 @@ export const Lines = () => {
         },
       }}
       timeZone="browser"
-    />
+    ></GraphNG>
   );
 };

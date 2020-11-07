@@ -1,19 +1,21 @@
 import React from 'react';
 import { GraphCustomFieldConfig, GraphLegend, LegendDisplayMode, LegendItem } from '../..';
-import { usePlotData } from '../context';
-import { FieldType, getColorForTheme, getFieldDisplayName } from '@grafana/data';
+import { DataFrame, FieldType, getColorForTheme, getFieldDisplayName } from '@grafana/data';
 import { colors } from '../../../utils';
 import { useTheme } from '../../../themes';
-
-export type LegendPlacement = 'top' | 'bottom' | 'left' | 'right';
+import { LegendPlacement } from '../../Legend/Legend';
 
 interface LegendPluginProps {
   placement: LegendPlacement;
   displayMode?: LegendDisplayMode;
+  data: DataFrame;
 }
 
-export const LegendPlugin: React.FC<LegendPluginProps> = ({ placement, displayMode = LegendDisplayMode.List }) => {
-  const { data } = usePlotData();
+export const LegendPlugin: React.FC<LegendPluginProps> = ({
+  placement,
+  data,
+  displayMode = LegendDisplayMode.List,
+}) => {
   const theme = useTheme();
 
   const legendItems: LegendItem[] = [];
@@ -39,11 +41,5 @@ export const LegendPlugin: React.FC<LegendPluginProps> = ({ placement, displayMo
     seriesIdx++;
   }
 
-  return (
-    <GraphLegend
-      placement={placement === 'top' || placement === 'bottom' ? 'under' : 'right'}
-      items={legendItems}
-      displayMode={displayMode}
-    />
-  );
+  return <GraphLegend placement={placement} items={legendItems} displayMode={displayMode} />;
 };

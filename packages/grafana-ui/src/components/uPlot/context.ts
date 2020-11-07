@@ -76,6 +76,7 @@ export const usePlotPluginContext = (): PlotPluginsContextType => {
 // Exposes API for building uPlot config
 export const usePlotConfigContext = (): PlotConfigContextType => {
   const ctx = usePlotContext();
+  console.log('usePlotConfigContext');
 
   if (!ctx) {
     throwWhenNoContext('usePlotPluginContext');
@@ -104,6 +105,7 @@ interface PlotDataAPI {
 
 export const usePlotData = (): PlotDataAPI => {
   const ctx = usePlotContext();
+  console.log('usePlotData');
 
   const getField = useCallback(
     (idx: number) => {

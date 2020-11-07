@@ -110,6 +110,7 @@ export const shouldInitialisePlot = (prevConfig?: uPlot.Options, config?: uPlot.
   if (isPlottingTime(config!) && prevConfig!.tzDate !== config!.tzDate) {
     return true;
   }
+
   // reinitialise when number of series, scales or axes changes
   if (
     prevConfig!.series?.length !== config!.series?.length ||

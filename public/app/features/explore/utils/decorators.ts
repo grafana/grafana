@@ -91,7 +91,7 @@ export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelDat
           data.request?.timezone ?? 'browser',
           {},
           { showBars: false, showLines: true, showPoints: false },
-          { asTable: false, isVisible: true, placement: 'under' }
+          { asTable: false, isVisible: true, placement: 'bottom' }
         );
 
   return { ...data, graphResult };

@@ -68,8 +68,9 @@ export const Axis: React.FC<AxisProps> = props => {
 
     return config;
   };
-  useAxisConfig(getConfig);
 
+  useAxisConfig(getConfig);
   return null;
 };
+
 Axis.displayName = 'Axis';

@@ -33,7 +33,7 @@ export interface LegendRenderOptions {
   hideZero?: boolean;
 }
 
-export type LegendPlacement = 'under' | 'right' | 'over'; // Over used by piechart
+export type LegendPlacement = 'bottom' | 'right';
 
 export interface LegendOptions extends LegendBasicOptions, LegendRenderOptions {}
 

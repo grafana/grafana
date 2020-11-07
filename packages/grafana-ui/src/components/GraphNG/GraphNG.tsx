@@ -15,6 +15,10 @@ import { Area, Axis, Line, Point, Scale, SeriesGeometry } from '../uPlot/geometr
 import { UPlotChart } from '../uPlot/Plot';
 import { AxisSide, GraphCustomFieldConfig, PlotProps } from '../uPlot/types';
 import { useTheme } from '../../themes';
+import { Canvas } from '../uPlot/Canvas';
+import { VizLayout } from '../VizLayout/VizLayout';
+import { LegendOptions } from '../Legend/Legend';
+import { LegendPlugin } from '../uPlot/plugins';
 
 const _ = null;
 
@@ -53,13 +57,14 @@ const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
 interface GraphNGProps extends Omit<PlotProps, 'data'> {
   data: DataFrame[];
+  legend: LegendOptions;
 }
 
-export const GraphNG: React.FC<GraphNGProps> = ({ data, children, ...plotProps }) => {
+export const GraphNG: React.FC<GraphNGProps> = ({ data, children, width, height, legend, ...plotProps }) => {
   const theme = useTheme();
   const alignedData = useMemo(() => alignAndSortDataFramesByFieldName(data, TIME_SERIES_TIME_FIELD_NAME), [data]);
 
-  if (!alignedData.length) {
+  if (!alignedData) {
     return (
       <div className="panel-empty">
         <p>No data found in response</p>
@@ -154,12 +159,27 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, ...plotProps }
     seriesIdx++;
   }
 
+  let legendElement: React.ReactElement | undefined;
+
+  if (legend.isVisible) {
+    legendElement = (
+      <VizLayout.Legend position={legend.placement} maxHeight="35%" maxWidth="60%">
+        <LegendPlugin placement={legend.placement} data={alignedData} />
+      </VizLayout.Legend>
+    );
+  }
+
   return (
-    <UPlotChart data={alignedData} {...plotProps}>
-      {scales}
-      {axes}
-      {geometries}
-      {children}
-    </UPlotChart>
+    <VizLayout width={width} height={height} legend={legendElement}>
+      {(vizWidth: number, vizHeight: number) => (
+        <UPlotChart data={alignedData} width={vizWidth} height={vizHeight} {...plotProps}>
+          <Canvas />
+          {scales}
+          {axes}
+          {geometries}
+          {children}
+        </UPlotChart>
+      )}
+    </VizLayout>
   );
 };
