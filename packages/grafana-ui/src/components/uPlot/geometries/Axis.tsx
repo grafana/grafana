@@ -3,6 +3,7 @@ import { AxisProps } from './types';
 import { usePlotConfigContext } from '../context';
 import { useTheme } from '../../../themes';
 import uPlot from 'uplot';
+import { measureText } from '../../../utils';
 
 export const useAxisConfig = (getConfig: () => any) => {
   const { addAxis } = usePlotConfigContext();
@@ -37,7 +38,6 @@ export const Axis: React.FC<AxisProps> = props => {
     scaleKey,
     label,
     show = true,
-    size = 80,
     stroke = theme.colors.text,
     side = 3,
     grid = true,
@@ -50,9 +50,9 @@ export const Axis: React.FC<AxisProps> = props => {
       scale: scaleKey,
       label,
       show,
-      size,
       stroke,
       side,
+      size: calculateAxisSize,
       grid: {
         show: grid,
         stroke: gridColor,
@@ -72,5 +72,25 @@ export const Axis: React.FC<AxisProps> = props => {
   useAxisConfig(getConfig);
   return null;
 };
+
+function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
+  const axis = self.axes[axisIdx];
+  if (axis.scale === 'x') {
+    return 54;
+  }
+
+  if (values === null || !values.length) {
+    return 0;
+  }
+
+  let maxLength = values[0];
+  for (let i = 0; i < values.length; i++) {
+    if (values[i].length > maxLength.length) {
+      maxLength = maxLength;
+    }
+  }
+
+  return measureText(maxLength, 12).width;
+}
 
 Axis.displayName = 'Axis';

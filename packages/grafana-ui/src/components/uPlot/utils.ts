@@ -136,7 +136,7 @@ export const shouldInitialisePlot = (prevConfig?: uPlot.Options, config?: uPlot.
     idx = 0;
     for (const axis of config!.axes) {
       // Comparing axes config, skipping values property as it changes across config builds - probably need to be more clever
-      if (!isEqual(omit(axis, 'values'), omit(prevConfig!.axes[idx], 'values'))) {
+      if (!isEqual(omit(axis, 'values', 'size'), omit(prevConfig!.axes[idx], 'values', 'size'))) {
         return true;
       }
       idx++;

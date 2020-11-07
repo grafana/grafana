@@ -94,6 +94,10 @@ export const DEFAULT_PLOT_CONFIG = {
   legend: {
     show: false,
   },
+  gutters: {
+    x: 4,
+    y: 4,
+  },
   series: [],
   hooks: {},
 };
