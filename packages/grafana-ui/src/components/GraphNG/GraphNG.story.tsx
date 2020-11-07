@@ -3,7 +3,6 @@ import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphNG } from './GraphNG';
 import { dateTime } from '@grafana/data';
-import { Canvas } from '../uPlot/Canvas';
 
 export default {
   title: 'Visualizations/GraphNG',
@@ -39,6 +38,7 @@ export const Lines = () => {
           to: dateTime(1546380000000),
         },
       }}
+      legend={{ isVisible: false, asTable: false, placement: 'bottom' }}
       timeZone="browser"
     ></GraphNG>
   );

@@ -17,11 +17,6 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
   onChangeTimeRange,
 }) => {
   return (
-    /* <LegendPlugin */
-    /*               placement={options.legend.placement} */
-    /*               displayMode={options.legend.asTable ? LegendDisplayMode.Table : LegendDisplayMode.List} */
-    /*             /> */
-
     <GraphNG
       data={data.series}
       timeRange={timeRange}
@@ -33,11 +28,8 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
       <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
       <ZoomPlugin onZoom={onChangeTimeRange} />
       <ContextMenuPlugin />
-
       {data.annotations && <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} />}
       {data.annotations && <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} />}
-      {/* TODO: */}
-      {/*<AnnotationsEditorPlugin />*/}
     </GraphNG>
   );
 };
