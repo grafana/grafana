@@ -308,6 +308,8 @@ type Cfg struct {
 	AuthProxyHeaderProperty   string
 	AuthProxyAutoSignUp       bool
 	AuthProxyEnableLoginToken bool
+	AuthProxyWhitelist        string
+	AuthProxyHeaders          map[string]string
 
 	// OAuth
 	OAuthCookieMaxAge int
@@ -330,6 +332,7 @@ type Cfg struct {
 	FeatureToggles       map[string]bool
 	AnonymousEnabled     bool
 	AnonymousOrgName     string
+	AnonymousOrgRole     string
 	AnonymousHideVersion bool
 
 	DateFormats DateFormats
@@ -346,6 +349,9 @@ type Cfg struct {
 	SnapshotPublicMode bool
 
 	ErrTemplateName string
+
+	// LDAP
+	LDAPEnabled bool
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.
@@ -891,6 +897,7 @@ func (cfg *Cfg) readLDAPConfig() {
 	LDAPConfigFile = ldapSec.Key("config_file").String()
 	LDAPSyncCron = ldapSec.Key("sync_cron").String()
 	LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
+	cfg.LDAPEnabled = LDAPEnabled
 	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
 	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 }
@@ -1097,6 +1104,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	AnonymousOrgName = valueAsString(iniFile.Section("auth.anonymous"), "org_name", "")
 	cfg.AnonymousOrgName = cfg.AnonymousOrgName
 	AnonymousOrgRole = valueAsString(iniFile.Section("auth.anonymous"), "org_role", "")
+	cfg.AnonymousOrgRole = AnonymousOrgRole
 	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
 
 	// basic auth
@@ -1128,6 +1136,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	}
 
 	AuthProxyWhitelist = valueAsString(authProxy, "whitelist", "")
+	cfg.AuthProxyWhitelist = AuthProxyWhitelist
 
 	AuthProxyHeaders = make(map[string]string)
 	headers := valueAsString(authProxy, "headers", "")
@@ -1138,6 +1147,8 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 			AuthProxyHeaders[split[0]] = split[1]
 		}
 	}
+
+	cfg.AuthProxyHeaders = AuthProxyHeaders
 
 	return nil
 }
