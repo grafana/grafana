@@ -52,6 +52,7 @@ export const Axis: React.FC<AxisProps> = props => {
       show,
       stroke,
       side,
+      font: '12px Roboto',
       size: calculateAxisSize,
       grid: {
         show: grid,

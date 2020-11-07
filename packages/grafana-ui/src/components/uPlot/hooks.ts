@@ -95,7 +95,7 @@ export const DEFAULT_PLOT_CONFIG = {
     show: false,
   },
   gutters: {
-    x: 4,
+    x: 0,
     y: 4,
   },
   series: [],
