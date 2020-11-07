@@ -228,12 +228,14 @@ type Cfg struct {
 	Logger log.Logger
 
 	// HTTP Server Settings
-	AppUrl           string
-	AppSubUrl        string
+	AppURL           string
+	AppSubURL        string
 	ServeFromSubPath bool
 	StaticRootPath   string
 	Protocol         Scheme
 	SocketPath       string
+	RouterLogging    bool
+	Domain           string
 
 	// build
 	BuildVersion string
@@ -266,6 +268,7 @@ type Cfg struct {
 	CookieSecure                     bool
 	CookieSameSiteDisabled           bool
 	CookieSameSiteMode               http.SameSite
+	AllowEmbedding                   bool
 
 	TempDataLifetime         time.Duration
 	PluginsEnableAlpha       bool
@@ -292,6 +295,7 @@ type Cfg struct {
 	LoginMaxLifetime             time.Duration
 	TokenRotationIntervalMinutes int
 	SigV4AuthEnabled             bool
+	BasicAuthEnabled             bool
 
 	// OAuth
 	OAuthCookieMaxAge int
@@ -983,6 +987,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 		}
 	}
 	AllowEmbedding = security.Key("allow_embedding").MustBool(false)
+	cfg.AllowEmbedding = AllowEmbedding
 
 	ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
 	XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
@@ -1069,6 +1074,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// basic auth
 	authBasic := iniFile.Section("auth.basic")
 	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
+	cfg.BasicAuthEnabled = BasicAuthEnabled
 
 	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
@@ -1201,8 +1207,8 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 	}
 	ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
 
-	cfg.AppUrl = AppUrl
-	cfg.AppSubUrl = AppSubUrl
+	cfg.AppURL = AppUrl
+	cfg.AppSubURL = AppSubUrl
 	cfg.ServeFromSubPath = ServeFromSubPath
 
 	Protocol = HTTPScheme
@@ -1224,9 +1230,11 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 	}
 
 	Domain = valueAsString(server, "domain", "localhost")
+	cfg.Domain = Domain
 	HttpAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
 	HttpPort = valueAsString(server, "http_port", "3000")
 	RouterLogging = server.Key("router_logging").MustBool(false)
+	cfg.RouterLogging = RouterLogging
 
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
 	EnforceDomain = server.Key("enforce_domain").MustBool(false)

@@ -108,6 +108,7 @@ func (ss *SqlStore) Init() error {
 	ss.addPreferencesQueryAndCommandHandlers()
 
 	if ss.skipEnsureDefaultOrgAndUser {
+		panic("Hrmr!")
 		return nil
 	}
 
@@ -352,7 +353,7 @@ func InitTestDB(t ITestDB) *SqlStore {
 		testSqlStore = &SqlStore{}
 		testSqlStore.Bus = bus.New()
 		testSqlStore.CacheService = localcache.New(5*time.Minute, 10*time.Minute)
-		testSqlStore.skipEnsureDefaultOrgAndUser = true
+		testSqlStore.skipEnsureDefaultOrgAndUser = false
 
 		dbType := migrator.SQLITE
 

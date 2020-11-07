@@ -99,64 +99,64 @@ func function(pc uintptr) []byte {
 
 // Recovery returns a middleware that recovers from any panics and writes a 500 if there was one.
 // While Martini is in development mode, Recovery will also output the panic as HTML.
-func Recovery() macaron.Handler {
-	return func(c *macaron.Context) {
-		defer func() {
-			if err := recover(); err != nil {
-				panicLogger := log.Root
-				// try to get request logger
-				if ctx, ok := c.Data["ctx"]; ok {
-					ctxTyped := ctx.(*models.ReqContext)
-					panicLogger = ctxTyped.Logger
-				}
+func (s *MiddlewareService) Recovery(c *macaron.Context) {
+	defer func() {
+		r := recover()
+		if r == nil {
+			return
+		}
 
-				// http.ErrAbortHandler is suppressed by default in the http package
-				// and used as a signal for aborting requests. Suppresses stacktrace
-				// since it doesn't add any important information.
-				if err == http.ErrAbortHandler {
-					panicLogger.Error("Request error", "error", err)
-					return
-				}
+		panicLogger := log.Root
+		// try to get request logger
+		if ctx, ok := c.Data["ctx"]; ok {
+			ctxTyped := ctx.(*models.ReqContext)
+			panicLogger = ctxTyped.Logger
+		}
 
-				stack := stack(3)
-				panicLogger.Error("Request error", "error", err, "stack", string(stack))
+		// http.ErrAbortHandler is suppressed by default in the http package
+		// and used as a signal for aborting requests. Suppresses stacktrace
+		// since it doesn't add any important information.
+		if r == http.ErrAbortHandler {
+			panicLogger.Error("Request error", "error", r)
+			return
+		}
 
-				// if response has already been written, skip.
-				if c.Written() {
-					return
-				}
+		stack := stack(3)
+		panicLogger.Error("Request error", "error", r, "stack", string(stack))
 
-				c.Data["Title"] = "Server Error"
-				c.Data["AppSubUrl"] = setting.AppSubUrl
-				c.Data["Theme"] = setting.DefaultTheme
+		// if response has already been written, skip.
+		if c.Written() {
+			return
+		}
 
-				if setting.Env == setting.Dev {
-					if theErr, ok := err.(error); ok {
-						c.Data["Title"] = theErr.Error()
-					}
+		c.Data["Title"] = "Server Error"
+		c.Data["AppSubUrl"] = setting.AppSubUrl
+		c.Data["Theme"] = setting.DefaultTheme
 
-					c.Data["ErrorMsg"] = string(stack)
-				}
-
-				ctx, ok := c.Data["ctx"].(*models.ReqContext)
-
-				if ok && ctx.IsApiRequest() {
-					resp := make(map[string]interface{})
-					resp["message"] = "Internal Server Error - Check the Grafana server logs for the detailed error message."
-
-					if c.Data["ErrorMsg"] != nil {
-						resp["error"] = fmt.Sprintf("%v - %v", c.Data["Title"], c.Data["ErrorMsg"])
-					} else {
-						resp["error"] = c.Data["Title"]
-					}
-
-					c.JSON(500, resp)
-				} else {
-					c.HTML(500, setting.ErrTemplateName)
-				}
+		if setting.Env == setting.Dev {
+			if err, ok := r.(error); ok {
+				c.Data["Title"] = err.Error()
 			}
-		}()
 
-		c.Next()
-	}
+			c.Data["ErrorMsg"] = string(stack)
+		}
+
+		ctx, ok := c.Data["ctx"].(*models.ReqContext)
+		if ok && ctx.IsApiRequest() {
+			resp := make(map[string]interface{})
+			resp["message"] = "Internal Server Error - Check the Grafana server logs for the detailed error message."
+
+			if c.Data["ErrorMsg"] != nil {
+				resp["error"] = fmt.Sprintf("%v - %v", c.Data["Title"], c.Data["ErrorMsg"])
+			} else {
+				resp["error"] = c.Data["Title"]
+			}
+
+			c.JSON(500, resp)
+		} else {
+			c.HTML(500, setting.ErrTemplateName)
+		}
+	}()
+
+	c.Next()
 }

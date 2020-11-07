@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	authproxy "github.com/grafana/grafana/pkg/middleware/auth_proxy"
+	"github.com/grafana/grafana/pkg/middleware/authproxy"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -542,6 +542,8 @@ func TestMiddlewareContext(t *testing.T) {
 }
 
 func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
+	t.Helper()
+
 	Convey(desc, func() {
 		defer bus.ClearBusHandlers()
 

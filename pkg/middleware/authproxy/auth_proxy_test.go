@@ -46,7 +46,7 @@ func (stub *TestMultiLDAP) User(login string) (
 	return result, ldap.ServerConfig{}, nil
 }
 
-func prepareMiddleware(t *testing.T, req *http.Request, store *remotecache.RemoteCache) *AuthProxy {
+func prepareMiddleware(t *testing.T, req *http.Request, remoteCacheService *remotecache.RemoteCache) *AuthProxy {
 	t.Helper()
 
 	ctx := &models.ReqContext{
@@ -58,9 +58,9 @@ func prepareMiddleware(t *testing.T, req *http.Request, store *remotecache.Remot
 	}
 
 	auth := New(&Options{
-		Store: store,
-		Ctx:   ctx,
-		OrgID: 4,
+		RemoteCacheService: remoteCacheService,
+		Ctx:                ctx,
+		OrgID:              4,
 	})
 
 	return auth
@@ -72,7 +72,7 @@ func TestMiddlewareContext(t *testing.T) {
 		req, err := http.NewRequest("POST", "http://example.com", nil)
 		So(err, ShouldBeNil)
 		setting.AuthProxyHeaderName = "X-Killa"
-		store := remotecache.NewFakeStore(t)
+		remoteCacheService := remotecache.NewFakeStore(t)
 
 		name := "markelog"
 		req.Header.Add(setting.AuthProxyHeaderName, name)
@@ -81,11 +81,11 @@ func TestMiddlewareContext(t *testing.T) {
 			Convey("with a simple cache key", func() {
 				// Set cache key
 				key := fmt.Sprintf(CachePrefix, HashCacheKey(name))
-				err := store.Set(key, int64(33), 0)
+				err := remoteCacheService.Set(key, int64(33), 0)
 				So(err, ShouldBeNil)
 
 				// Set up the middleware
-				auth := prepareMiddleware(t, req, store)
+				auth := prepareMiddleware(t, req, remoteCacheService)
 				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:0a7f3374e9659b10980fd66247b0cf2f")
 
 				id, err := auth.Login(logger, false)
@@ -100,10 +100,10 @@ func TestMiddlewareContext(t *testing.T) {
 				req.Header.Add("X-WEBAUTH-GROUPS", group)
 
 				key := fmt.Sprintf(CachePrefix, HashCacheKey(name+"-"+group))
-				err := store.Set(key, int64(33), 0)
+				err := remoteCacheService.Set(key, int64(33), 0)
 				So(err, ShouldBeNil)
 
-				auth := prepareMiddleware(t, req, store)
+				auth := prepareMiddleware(t, req, remoteCacheService)
 				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:14f69b7023baa0ac98c96b31cec07bc0")
 
 				id, err := auth.Login(logger, false)
@@ -151,9 +151,9 @@ func TestMiddlewareContext(t *testing.T) {
 					getLDAPConfig = ldap.GetConfig
 				}()
 
-				store := remotecache.NewFakeStore(t)
+				remoteCacheService := remotecache.NewFakeStore(t)
 
-				auth := prepareMiddleware(t, req, store)
+				auth := prepareMiddleware(t, req, remoteCacheService)
 
 				id, err := auth.Login(logger, false)
 
@@ -177,9 +177,9 @@ func TestMiddlewareContext(t *testing.T) {
 					getLDAPConfig = ldap.GetConfig
 				}()
 
-				store := remotecache.NewFakeStore(t)
+				remoteCacheService := remotecache.NewFakeStore(t)
 
-				auth := prepareMiddleware(t, req, store)
+				auth := prepareMiddleware(t, req, remoteCacheService)
 
 				stub := &TestMultiLDAP{
 					ID: 42,

@@ -24,13 +24,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/middleware"
 	eval "github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -76,6 +76,7 @@ type HTTPServer struct {
 	AlertNG              *eval.AlertNG                    `inject:""`
 	ShortURLService      *shorturls.ShortURLService       `inject:""`
 	Live                 *live.GrafanaLive                `inject:""`
+	MiddlewareService    *middleware.MiddlewareService    `inject:""`
 	Listener             net.Listener
 }
 
@@ -294,13 +295,13 @@ func (hs *HTTPServer) applyRoutes() {
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.macaron
 
-	m.Use(middleware.Logger())
+	m.Use(hs.MiddlewareService.Logger)
 
 	if setting.EnableGzip {
-		m.Use(middleware.Gziper())
+		m.Use(hs.MiddlewareService.Gzipper)
 	}
 
-	m.Use(middleware.Recovery())
+	m.Use(hs.MiddlewareService.Recovery)
 
 	for _, route := range plugins.StaticRoutes {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)
@@ -316,7 +317,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
 	}
 
-	m.Use(middleware.AddDefaultResponseHeaders())
+	m.Use(hs.MiddlewareService.AddDefaultResponseHeaders)
 
 	if setting.ServeFromSubPath && setting.AppSubUrl != "" {
 		m.SetURLPrefix(setting.AppSubUrl)
@@ -334,19 +335,15 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(hs.apiHealthHandler)
 	m.Use(hs.metricsEndpoint)
 
-	m.Use(middleware.GetContextHandler(
-		hs.AuthTokenService,
-		hs.RemoteCacheService,
-		hs.RenderService,
-	))
-	m.Use(middleware.OrgRedirect())
+	m.Use(hs.MiddlewareService.ContextHandler)
+	m.Use(hs.MiddlewareService.OrgRedirect)
 
 	// needs to be after context handler
 	if setting.EnforceDomain {
-		m.Use(middleware.ValidateHostHeader(setting.Domain))
+		m.Use(hs.MiddlewareService.ValidateHostHeader)
 	}
 
-	m.Use(middleware.HandleNoCacheHeader())
+	m.Use(hs.MiddlewareService.HandleNoCacheHeader)
 
 	for _, mw := range hs.middlewares {
 		m.Use(mw)

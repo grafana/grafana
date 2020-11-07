@@ -40,10 +40,10 @@ var supportedHeaderFields = []string{"Name", "Email", "Login", "Groups"}
 
 // AuthProxy struct
 type AuthProxy struct {
-	store  *remotecache.RemoteCache
-	ctx    *models.ReqContext
-	orgID  int64
-	header string
+	remoteCacheService *remotecache.RemoteCache
+	ctx                *models.ReqContext
+	orgID              int64
+	header             string
 
 	enabled             bool
 	LDAPAllowSignup     bool
@@ -75,20 +75,20 @@ func (err *Error) Error() string {
 
 // Options for the AuthProxy
 type Options struct {
-	Store *remotecache.RemoteCache
-	Ctx   *models.ReqContext
-	OrgID int64
+	RemoteCacheService *remotecache.RemoteCache
+	Ctx                *models.ReqContext
+	OrgID              int64
 }
 
-// New instance of the AuthProxy
+// New instance of the AuthProxy.
 func New(options *Options) *AuthProxy {
 	header := options.Ctx.Req.Header.Get(setting.AuthProxyHeaderName)
 
 	return &AuthProxy{
-		store:  options.Store,
-		ctx:    options.Ctx,
-		orgID:  options.OrgID,
-		header: header,
+		remoteCacheService: options.RemoteCacheService,
+		ctx:                options.Ctx,
+		orgID:              options.OrgID,
+		header:             header,
 
 		enabled:             setting.AuthProxyEnabled,
 		headerType:          setting.AuthProxyHeaderProperty,
@@ -202,7 +202,7 @@ func (auth *AuthProxy) Login(logger log.Logger, ignoreCache bool) (int64, *Error
 func (auth *AuthProxy) GetUserViaCache(logger log.Logger) (int64, error) {
 	cacheKey := auth.getKey()
 	logger.Debug("Getting user ID via auth cache", "cacheKey", cacheKey)
-	userID, err := auth.store.Get(cacheKey)
+	userID, err := auth.remoteCacheService.Get(cacheKey)
 	if err != nil {
 		logger.Debug("Failed getting user ID via auth cache", "error", err)
 		return 0, err
@@ -216,7 +216,7 @@ func (auth *AuthProxy) GetUserViaCache(logger log.Logger) (int64, error) {
 func (auth *AuthProxy) RemoveUserFromCache(logger log.Logger) error {
 	cacheKey := auth.getKey()
 	logger.Debug("Removing user from auth cache", "cacheKey", cacheKey)
-	if err := auth.store.Delete(cacheKey); err != nil {
+	if err := auth.remoteCacheService.Delete(cacheKey); err != nil {
 		return err
 	}
 
@@ -328,14 +328,14 @@ func (auth *AuthProxy) Remember(id int64) *Error {
 	key := auth.getKey()
 
 	// Check if user already in cache
-	userID, _ := auth.store.Get(key)
+	userID, _ := auth.remoteCacheService.Get(key)
 	if userID != nil {
 		return nil
 	}
 
 	expiration := time.Duration(auth.cacheTTL) * time.Minute
 
-	err := auth.store.Set(key, id, expiration)
+	err := auth.remoteCacheService.Set(key, id, expiration)
 	if err != nil {
 		return newError(err.Error(), nil)
 	}

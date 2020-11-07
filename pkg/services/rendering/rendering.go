@@ -235,7 +235,7 @@ func (rs *RenderingService) getURL(path string) string {
 
 	subPath := ""
 	if rs.Cfg.ServeFromSubPath {
-		subPath = rs.Cfg.AppSubUrl
+		subPath = rs.Cfg.AppSubURL
 	}
 
 	// &render=1 signals to the legacy redirect layer to

@@ -255,11 +255,11 @@ func TestLoginViewRedirect(t *testing.T) {
 
 	for _, c := range redirectCases {
 		hs.Cfg.AppUrl = c.appURL
-		hs.Cfg.AppSubUrl = c.appSubURL
+		hs.cfg.AppSubURL = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
 			expCookiePath := "/"
-			if len(hs.Cfg.AppSubUrl) > 0 {
-				expCookiePath = hs.Cfg.AppSubUrl
+			if len(hs.cfg.AppSubURL) > 0 {
+				expCookiePath = hs.cfg.AppSubURL
 			}
 			cookie := http.Cookie{
 				Name:     "redirect_to",
@@ -424,11 +424,11 @@ func TestLoginPostRedirect(t *testing.T) {
 
 	for _, c := range redirectCases {
 		hs.Cfg.AppUrl = c.appURL
-		hs.Cfg.AppSubUrl = c.appSubURL
+		hs.cfg.AppSubURL = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
 			expCookiePath := "/"
-			if len(hs.Cfg.AppSubUrl) > 0 {
-				expCookiePath = hs.Cfg.AppSubUrl
+			if len(hs.cfg.AppSubURL) > 0 {
+				expCookiePath = hs.cfg.AppSubURL
 			}
 			cookie := http.Cookie{
 				Name:     "redirect_to",
