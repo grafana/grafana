@@ -13,6 +13,7 @@ func init() {
 
 type QuotaService struct {
 	AuthTokenService models.UserTokenService `inject:""`
+	Cfg              *setting.Cfg            `inject:""`
 }
 
 func (qs *QuotaService) Init() error {

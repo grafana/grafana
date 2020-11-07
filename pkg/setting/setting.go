@@ -193,7 +193,7 @@ var (
 	LDAPAllowSignup       bool
 	LDAPActiveSyncEnabled bool
 
-	// QUOTA
+	// Quota
 	Quota QuotaSettings
 
 	// Alerting
@@ -352,6 +352,8 @@ type Cfg struct {
 
 	// LDAP
 	LDAPEnabled bool
+
+	Quota QuotaSettings
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.

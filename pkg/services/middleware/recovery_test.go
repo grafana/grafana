@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -12,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	macaron "gopkg.in/macaron.v1"
 )
@@ -21,32 +22,34 @@ func TestRecoveryMiddleware(t *testing.T) {
 	// setting.ErrTemplateName = "error-template"
 	const apiURL = "/whatever"
 
-	recoveryScenario(t, "Given an API route that panics, recovery middleware should return JSON", apiURL, func(t *testing.T, sc *scenarioContext) {
-		sc.handlerFunc = panicHandler
-		sc.fakeReq("GET", apiURL).exec()
-		sc.req.Header.Add("content-type", "application/json")
+	recoveryScenario(t, "Given an API route that panics, recovery middleware should return JSON", apiURL,
+		func(t *testing.T, sc *scenarioContext) {
+			sc.handlerFunc = panicHandler
+			sc.fakeReq("GET", apiURL).exec()
+			sc.req.Header.Add("content-type", "application/json")
 
-		assert.Equal(t, 500, sc.resp.Code)
-		assert.StartsWith(t, sc.respJson["message"],
-			"Internal Server Error - Check the Grafana server logs for the detailed error message.")
-		assert.StartsWith(t, sc.respJson["error"], "Server Error")
-	})
+			assert.Equal(t, 500, sc.resp.Code)
+			assert.True(t, strings.HasPrefix(sc.respJson["message"].(string),
+				"Internal Server Error - Check the Grafana server logs for the detailed error message."))
+			assert.True(t, strings.HasPrefix(sc.respJson["error"].(string), "Server Error"))
+		})
 
-	recoveryScenario(t, "Given a non-API route that panics, recovery middleware should return html", apiURL, t, func(t *testing.T, sc *scenarioContext) {
-		sc.handlerFunc = panicHandler
-		sc.fakeReq("GET", apiURL).exec()
+	recoveryScenario(t, "Given a non-API route that panics, recovery middleware should return html", apiURL,
+		func(t *testing.T, sc *scenarioContext) {
+			sc.handlerFunc = panicHandler
+			sc.fakeReq("GET", apiURL).exec()
 
-		assert.Equal(t, 500, sc.resp.Code)
-		assert.Equal(t, "text/html; charset=UTF-8", sc.resp.Header().Get("content-type"))
-		assert.Contains(t, sc.resp.Body.String(), "<title>Grafana - Error</title>")
-	})
+			assert.Equal(t, 500, sc.resp.Code)
+			assert.Equal(t, "text/html; charset=UTF-8", sc.resp.Header().Get("content-type"))
+			assert.Contains(t, sc.resp.Body.String(), "<title>Grafana - Error</title>")
+		})
 }
 
 func panicHandler(c *models.ReqContext) {
 	panic("Handler has panicked")
 }
 
-func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
+func recoveryScenario(t *testing.T, desc, url string, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.LoginCookieName = "grafana_session"
@@ -96,7 +99,7 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 
 		sc.m.Use(sc.service.Recovery)
 
-		sc.m.Use(AddDefaultResponseHeaders())
+		sc.m.Use(sc.service.AddDefaultResponseHeaders)
 		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
 			Directory: viewsPath,
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
@@ -115,6 +118,6 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 
 		sc.m.Get(url, sc.defaultHandler)
 
-		fn(sc)
+		fn(t, sc)
 	})
 }

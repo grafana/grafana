@@ -14,11 +14,6 @@ func TestMiddlewareAuth(t *testing.T) {
 	reqSignIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
 
 	middlewareScenario(t, "ReqSignIn true and unauthenticated request", func(t *testing.T, sc *scenarioContext) {
-		cfg := setting.NewCfg()
-		svc := &MiddlewareService{
-			Cfg: cfg,
-		}
-
 		sc.m.Get("/secure", reqSignIn, sc.defaultHandler)
 
 		sc.fakeReq("GET", "/secure").exec()
@@ -27,11 +22,6 @@ func TestMiddlewareAuth(t *testing.T) {
 	})
 
 	middlewareScenario(t, "ReqSignIn true and unauthenticated API request", func(t *testing.T, sc *scenarioContext) {
-		cfg := setting.NewCfg()
-		svc := &MiddlewareService{
-			Cfg: cfg,
-		}
-
 		sc.m.Get("/api/secure", reqSignIn, sc.defaultHandler)
 
 		sc.fakeReq("GET", "/api/secure").exec()
@@ -39,13 +29,9 @@ func TestMiddlewareAuth(t *testing.T) {
 		assert.Equal(t, 401, sc.resp.Code)
 	})
 
-	t.Run("Anonymous auth enabled", func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.AnonymousEnabled = true
-		cfg.AnonymousOrgName = "test"
-		svc := &MiddlewareService{
-			Cfg: cfg,
-		}
+	middlewareScenario(t, "Anonymous auth enabled", func(t *testing.T, sc *scenarioContext) {
+		sc.service.Cfg.AnonymousEnabled = true
+		sc.service.Cfg.AnonymousOrgName = "test"
 
 		bus.AddHandler("test", func(query *models.GetOrgByNameQuery) error {
 			query.Result = &models.Org{Id: 1, Name: "test"}
