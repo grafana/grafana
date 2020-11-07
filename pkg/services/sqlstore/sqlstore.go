@@ -43,16 +43,8 @@ const ServiceName = "SqlStore"
 const InitPriority = registry.High
 
 func init() {
-	// This change will make xorm use an empty default schema for postgres and
-	// by that mimic the functionality of how it was functioning before
-	// xorm's changes above.
-	xorm.DefaultPostgresSchema = ""
-
-	registry.Register(&registry.Descriptor{
-		Name:         ServiceName,
-		Instance:     &SqlStore{},
-		InitPriority: InitPriority,
-	})
+	ss := &SqlStore{}
+	ss.Register()
 }
 
 type SqlStore struct {
@@ -65,6 +57,20 @@ type SqlStore struct {
 	log                         log.Logger
 	Dialect                     migrator.Dialect
 	skipEnsureDefaultOrgAndUser bool
+}
+
+// Register registers the SqlStore service with the DI system.
+func (ss *SqlStore) Register() {
+	// This change will make xorm use an empty default schema for postgres and
+	// by that mimic the functionality of how it was functioning before
+	// xorm's changes above.
+	xorm.DefaultPostgresSchema = ""
+
+	registry.Register(&registry.Descriptor{
+		Name:         ServiceName,
+		Instance:     ss,
+		InitPriority: InitPriority,
+	})
 }
 
 func (ss *SqlStore) Init() error {

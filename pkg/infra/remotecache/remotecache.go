@@ -23,8 +23,13 @@ var (
 	defaultMaxCacheExpiration = time.Hour * 24
 )
 
+const (
+	ServiceName = "RemoteCache"
+)
+
 func init() {
-	registry.RegisterService(&RemoteCache{})
+	rc := &RemoteCache{}
+	rc.Register()
 }
 
 // CacheStorage allows the caller to set, get and delete items in the cache.
@@ -48,6 +53,15 @@ type RemoteCache struct {
 	client   CacheStorage
 	SQLStore *sqlstore.SqlStore `inject:""`
 	Cfg      *setting.Cfg       `inject:""`
+}
+
+// Register registers the RemoteCache service with the DI system.
+func (ds *RemoteCache) Register() {
+	registry.Register(&registry.Descriptor{
+		Name:         ServiceName,
+		Instance:     ds,
+		InitPriority: registry.Medium,
+	})
 }
 
 // Get reads object from Cache

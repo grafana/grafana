@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/middleware/authproxy"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	macaron "gopkg.in/macaron.v1"
@@ -42,24 +44,48 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 		return nil
 	}
 
-	origHeaderName := setting.AuthProxyHeaderName
-	origEnabled := setting.AuthProxyEnabled
-	origHeaderProperty := setting.AuthProxyHeaderProperty
+	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore.Register()
+
+	remoteCacheSvc := &remotecache.RemoteCache{}
+	remoteCacheSvc.Register()
+
+	origSvc := registry.GetService(serviceName)
+	t.Cleanup(func() {
+		// Clear the registered services
+		registry.Register(&registry.Descriptor{
+			Name: sqlstore.ServiceName,
+		})
+		registry.Register(&registry.Descriptor{
+			Name: remotecache.ServiceName,
+		})
+		registry.Register(&registry.Descriptor{
+			Name: serviceName,
+		})
+	})
+
+	cfg := setting.NewCfg()
+	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
+		Name:    "database",
+		ConnStr: "",
+	}
+	cfg.AuthProxyHeaderName = "X-Killa"
+	cfg.AuthProxyEnabled = true
+	cfg.AuthProxyHeaderProperty = "username"
+	svc := &MiddlewareService{}
+	svc.register()
+
+	err := registry.BuildServiceGraph([]interface{}{cfg}, nil)
+	require.NoError(t, err)
+
 	bus.AddHandler("", upsertHandler)
 	bus.AddHandler("", getSignedUserHandler)
 	t.Cleanup(func() {
-		setting.AuthProxyHeaderName = origHeaderName
-		setting.AuthProxyEnabled = origEnabled
-		setting.AuthProxyHeaderProperty = origHeaderProperty
 		bus.ClearBusHandlers()
 	})
 
-	setting.AuthProxyHeaderName = "X-Killa"
-	setting.AuthProxyEnabled = true
-	setting.AuthProxyHeaderProperty = "username"
 	req, err := http.NewRequest("POST", "http://example.com", nil)
 	require.NoError(t, err)
-	store := remotecache.NewFakeStore(t)
 	ctx := &models.ReqContext{
 		Context: &macaron.Context{
 			Req: macaron.Request{
@@ -73,16 +99,16 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	key := fmt.Sprintf(authproxy.CachePrefix, authproxy.HashCacheKey(name))
 
 	t.Logf("Injecting stale user ID in cache with key %q", key)
-	err = store.Set(key, int64(33), 0)
+	err = remoteCacheSvc.Set(key, int64(33), 0)
 	require.NoError(t, err)
 
-	authEnabled := initContextWithAuthProxy(store, ctx, orgID)
+	authEnabled := svc.initContextWithAuthProxy(ctx, orgID)
 	require.True(t, authEnabled)
 
 	require.Equal(t, userID, ctx.SignedInUser.UserId)
 	require.True(t, ctx.IsSignedIn)
 
-	i, err := store.Get(key)
+	i, err := remoteCacheSvc.Get(key)
 	require.NoError(t, err)
 	require.Equal(t, userID, i.(int64))
 }

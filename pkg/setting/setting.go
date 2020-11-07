@@ -297,6 +297,13 @@ type Cfg struct {
 	SigV4AuthEnabled             bool
 	BasicAuthEnabled             bool
 
+	// Auth proxy settings
+	AuthProxyEnabled          bool
+	AuthProxyHeaderName       string
+	AuthProxyHeaderProperty   string
+	AuthProxyAutoSignUp       bool
+	AuthProxyEnableLoginToken bool
+
 	// OAuth
 	OAuthCookieMaxAge int
 
@@ -1078,11 +1085,16 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	authProxy := iniFile.Section("auth.proxy")
 	AuthProxyEnabled = authProxy.Key("enabled").MustBool(false)
+	cfg.AuthProxyEnabled = AuthProxyEnabled
 
 	AuthProxyHeaderName = valueAsString(authProxy, "header_name", "")
+	cfg.AuthProxyHeaderName = AuthProxyHeaderName
 	AuthProxyHeaderProperty = valueAsString(authProxy, "header_property", "")
+	cfg.AuthProxyHeaderProperty = AuthProxyHeaderProperty
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
+	cfg.AuthProxyAutoSignUp = AuthProxyAutoSignUp
 	AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
+	cfg.AuthProxyEnableLoginToken = AuthProxyEnableLoginToken
 
 	ldapSyncVal := authProxy.Key("ldap_sync_ttl").MustInt()
 	syncVal := authProxy.Key("sync_ttl").MustInt()

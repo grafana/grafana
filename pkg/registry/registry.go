@@ -29,7 +29,6 @@ func Register(descriptor *Descriptor) {
 	if descriptor == nil {
 		return
 	}
-
 	// Overwrite any existing equivalent service
 	for i, svc := range services {
 		if svc.Name == descriptor.Name {

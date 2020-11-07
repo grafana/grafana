@@ -13,7 +13,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/facebookgo/inject"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api"
@@ -41,7 +40,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/search"
 	_ "github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // Config contains parameters for the New function.
@@ -129,13 +127,8 @@ func (s *Server) init(cfg *Config) error {
 		return err
 	}
 
-	// Initialize services.
-	for _, service := range services {
-		if registry.IsDisabled(service.Instance) {
-			continue
-		}
-
-		if cfg != nil {
+	if cfg != nil {
+		for _, service := range services {
 			if httpS, ok := service.Instance.(*api.HTTPServer); ok {
 				// Configure the api.HTTPServer if necessary
 				// Hopefully we can find a better solution, maybe with a more advanced DI framework, f.ex. Dig?
@@ -144,9 +137,6 @@ func (s *Server) init(cfg *Config) error {
 					httpS.Listener = cfg.Listener
 				}
 			}
-		}
-		if err := service.Instance.Init(); err != nil {
-			return errutil.Wrapf(err, "Service init failed")
 		}
 	}
 
@@ -276,26 +266,7 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 		localcache.New(5*time.Minute, 10*time.Minute),
 		s,
 	}
-
-	for _, service := range services {
-		objs = append(objs, service.Instance)
-	}
-
-	var serviceGraph inject.Graph
-
-	// Provide services and their dependencies to the graph.
-	for _, obj := range objs {
-		if err := serviceGraph.Provide(&inject.Object{Value: obj}); err != nil {
-			return errutil.Wrapf(err, "Failed to provide object to the graph")
-		}
-	}
-
-	// Resolve services and their dependencies.
-	if err := serviceGraph.Populate(); err != nil {
-		return errutil.Wrapf(err, "failed to populate service dependencies")
-	}
-
-	return nil
+	return registry.buildServiceGraph(objs, services)
 }
 
 // loadConfiguration loads settings and configuration from config files.

@@ -26,6 +26,7 @@ import (
 )
 
 const (
+	serviceName                      = "MiddlewareService"
 	errStringInvalidAPIKey           = "Invalid API key"
 	errStringInvalidUsernamePassword = "Invalid username or password"
 )
@@ -33,9 +34,15 @@ const (
 var getTime = time.Now
 
 func init() {
+	svc := &MiddlewareService{}
+	svc.register()
+}
+
+// register registers service with DI system.
+func (s *MiddlewareService) register() {
 	registry.Register(&registry.Descriptor{
-		Name:         "MiddlewareService",
-		Instance:     &MiddlewareService{},
+		Name:         serviceName,
+		Instance:     s,
 		InitPriority: registry.High,
 	})
 }
