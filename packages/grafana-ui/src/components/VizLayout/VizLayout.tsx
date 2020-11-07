@@ -61,7 +61,6 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
       }
       break;
   }
-  console.log('VizLayout', size);
 
   return (
     <div style={containerStyle}>
