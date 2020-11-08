@@ -22,7 +22,7 @@ export interface VizLayoutComponentType extends FC<VizLayoutProps> {
 /**
  * @beta
  */
-export const VizLayout: VizLayoutComponentType = ({ width, height, legend, children }) => {
+export const VizLayout: VizLayoutComponentType = ({ width, height, legend, style, children }) => {
   const containerStyle: CSSProperties = {
     display: 'flex',
     width: `${width}px`,
