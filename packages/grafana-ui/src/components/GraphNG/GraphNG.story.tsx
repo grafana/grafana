@@ -1,9 +1,11 @@
-import { toDataFrame } from '@grafana/data';
+import { FieldColorModeId, toDataFrame } from '@grafana/data';
 import React from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphNG } from './GraphNG';
 import { dateTime } from '@grafana/data';
 import { LegendDisplayMode } from '../Legend/Legend';
+import { prepDataForStorybook } from '../../utils/storybook/data';
+import { useTheme } from '../../themes';
 
 export default {
   title: 'Visualizations/GraphNG',
@@ -14,21 +16,26 @@ export default {
   },
 };
 
-export const Lines = () => {
+export const Lines: React.FC = () => {
+  const theme = useTheme();
   const seriesA = toDataFrame({
     target: 'SeriesA',
     datapoints: [
-      [1546372800000, 10],
-      [1546376400000, 20],
-      [1546380000000, 10],
+      [10, 1546372800000],
+      [20, 1546376400000],
+      [10, 1546380000000],
     ],
   });
 
   seriesA.fields[1].config.custom = { line: { show: true } };
+  seriesA.fields[1].config.color = { mode: FieldColorModeId.PaletteClassic };
+  seriesA.fields[1].config.unit = 'degree';
+
+  const data = prepDataForStorybook([seriesA], theme);
 
   return (
     <GraphNG
-      data={[seriesA]}
+      data={data}
       width={600}
       height={400}
       timeRange={{
@@ -39,7 +46,7 @@ export const Lines = () => {
           to: dateTime(1546380000000),
         },
       }}
-      legend={{ isVisible: false, displayMode: LegendDisplayMode.List, placement: 'bottom' }}
+      legend={{ isVisible: true, displayMode: LegendDisplayMode.List, placement: 'bottom' }}
       timeZone="browser"
     ></GraphNG>
   );

@@ -15,6 +15,7 @@ import {
   ThresholdsMode,
   FieldConfig,
 } from '@grafana/data';
+import { prepDataForStorybook } from '../../utils/storybook/data';
 
 export default {
   title: 'Visualizations/Table',
@@ -82,16 +83,7 @@ function buildData(theme: GrafanaTheme, config: Record<string, FieldConfig>): Da
     ]);
   }
 
-  return applyFieldOverrides({
-    data: [data],
-    fieldConfig: {
-      overrides: [],
-      defaults: {},
-    },
-    theme,
-    replaceVariables: (value: string) => value,
-    getDataSourceSettingsByUid: (value: string) => ({} as any),
-  })[0];
+  return prepDataForStorybook([data], theme)[0];
 }
 
 const defaultThresholds: ThresholdsConfig = {
