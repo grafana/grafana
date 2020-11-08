@@ -4,6 +4,7 @@ import { GraphPanel } from './GraphPanel';
 import { Options } from './types';
 
 export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPanel)
+  .setNoPadding()
   .useFieldConfig({
     standardOptions: [
       // FieldConfigProperty.Min,
