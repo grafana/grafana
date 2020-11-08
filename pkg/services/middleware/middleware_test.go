@@ -574,6 +574,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 
 		sc.defaultHandler = func(c *models.ReqContext) {
 			t.Log("Default handler executing")
+			t.Fatal("Vroom")
 			sc.context = c
 			if sc.handlerFunc != nil {
 				t.Log("Calling handlerFunc")

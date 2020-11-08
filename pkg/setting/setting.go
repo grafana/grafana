@@ -270,6 +270,7 @@ type Cfg struct {
 	CookieSameSiteMode                http.SameSite
 	AllowEmbedding                    bool
 	XSSProtectionHeader               bool
+	ContentTypeProtectionHeader       bool
 	StrictTransportSecurity           bool
 	StrictTransportSecurityMaxAge     int
 	StrictTransportSecurityPreload    bool
@@ -349,6 +350,8 @@ type Cfg struct {
 	SnapshotPublicMode bool
 
 	ErrTemplateName string
+
+	Env string
 
 	// LDAP
 	LDAPEnabled bool
@@ -751,6 +754,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	ApplicationName = "Grafana"
 
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
+	cfg.Env = Env
 	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
 	plugins := valueAsString(iniFile.Section("paths"), "plugins", "")
 	PluginsPath = makeAbsolute(plugins, HomePath)
@@ -1020,6 +1024,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AllowEmbedding = AllowEmbedding
 
 	ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
+	cfg.ContentTypeProtectionHeader = ContentTypeProtectionHeader
 	XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
 	cfg.XSSProtectionHeader = XSSProtectionHeader
 	StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)

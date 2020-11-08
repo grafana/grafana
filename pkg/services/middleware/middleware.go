@@ -255,7 +255,7 @@ func (s *MiddlewareService) initContextWithBasicAuth(ctx *models.ReqContext, org
 }
 
 func (s *MiddlewareService) initContextWithAuthProxy(ctx *models.ReqContext, orgID int64) bool {
-	username := ctx.Req.Header.Get(setting.AuthProxyHeaderName)
+	username := ctx.Req.Header.Get(s.Cfg.AuthProxyHeaderName)
 	auth := authproxy.New(&authproxy.Options{
 		RemoteCacheService: s.RemoteCacheService,
 		Ctx:                ctx,
@@ -353,11 +353,11 @@ func (s *MiddlewareService) logUserIn(auth *authproxy.AuthProxy, username string
 }
 
 func (s *MiddlewareService) initContextWithToken(ctx *models.ReqContext, orgID int64) bool {
-	if setting.LoginCookieName == "" {
+	if s.Cfg.LoginCookieName == "" {
 		return false
 	}
 
-	rawToken := ctx.GetCookie(setting.LoginCookieName)
+	rawToken := ctx.GetCookie(s.Cfg.LoginCookieName)
 	if rawToken == "" {
 		return false
 	}
@@ -408,13 +408,13 @@ func (s *MiddlewareService) rotateEndOfRequestFunc(ctx *models.ReqContext, token
 		}
 
 		if rotated {
-			s.WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetime)
+			s.WriteSessionCookie(ctx, token.UnhashedToken, s.Cfg.LoginMaxLifetime)
 		}
 	}
 }
 
 func (s *MiddlewareService) WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetime time.Duration) {
-	if setting.Env == setting.Dev {
+	if s.Cfg.Env == setting.Dev {
 		ctx.Logger.Info("New token", "unhashed token", value)
 	}
 
@@ -425,24 +425,25 @@ func (s *MiddlewareService) WriteSessionCookie(ctx *models.ReqContext, value str
 		maxAge = int(maxLifetime.Seconds())
 	}
 
-	middleware.WriteCookie(ctx.Resp, setting.LoginCookieName, url.QueryEscape(value), maxAge, s.newCookieOptions)
+	middleware.WriteCookie(ctx.Resp, s.Cfg.LoginCookieName, url.QueryEscape(value), maxAge, s.newCookieOptions)
 }
 
 func (s *MiddlewareService) initContextWithAnonymousUser(ctx *models.ReqContext) bool {
-	if !setting.AnonymousEnabled {
+	fmt.Printf("Initing context with anon user: %v\n", s.Cfg.AnonymousEnabled)
+	if !s.Cfg.AnonymousEnabled {
 		return false
 	}
 
-	orgQuery := models.GetOrgByNameQuery{Name: setting.AnonymousOrgName}
+	orgQuery := models.GetOrgByNameQuery{Name: s.Cfg.AnonymousOrgName}
 	if err := bus.Dispatch(&orgQuery); err != nil {
-		log.Errorf(3, "Anonymous access organization error: '%s': %s", setting.AnonymousOrgName, err)
+		log.Errorf(3, "Anonymous access organization error: '%s': %s", s.Cfg.AnonymousOrgName, err)
 		return false
 	}
 
 	ctx.IsSignedIn = false
 	ctx.AllowAnonymous = true
 	ctx.SignedInUser = &models.SignedInUser{IsAnonymous: true}
-	ctx.OrgRole = models.RoleType(setting.AnonymousOrgRole)
+	ctx.OrgRole = models.RoleType(s.Cfg.AnonymousOrgRole)
 	ctx.OrgId = orgQuery.Result.Id
 	ctx.OrgName = orgQuery.Result.Name
 	return true
@@ -471,23 +472,23 @@ func (s *MiddlewareService) AddDefaultResponseHeaders(ctx *macaron.Context) {
 
 // AddSecurityHeaders adds various HTTP(S) response headers that enable various security protections behaviors in the client's browser.
 func (s *MiddlewareService) addSecurityHeaders(w macaron.ResponseWriter) {
-	if (setting.Protocol == setting.HTTPSScheme || setting.Protocol == setting.HTTP2Scheme) &&
-		setting.StrictTransportSecurity {
-		strictHeaderValues := []string{fmt.Sprintf("max-age=%v", setting.StrictTransportSecurityMaxAge)}
-		if setting.StrictTransportSecurityPreload {
+	if (s.Cfg.Protocol == setting.HTTPSScheme || s.Cfg.Protocol == setting.HTTP2Scheme) &&
+		s.Cfg.StrictTransportSecurity {
+		strictHeaderValues := []string{fmt.Sprintf("max-age=%v", s.Cfg.StrictTransportSecurityMaxAge)}
+		if s.Cfg.StrictTransportSecurityPreload {
 			strictHeaderValues = append(strictHeaderValues, "preload")
 		}
-		if setting.StrictTransportSecuritySubDomains {
+		if s.Cfg.StrictTransportSecuritySubDomains {
 			strictHeaderValues = append(strictHeaderValues, "includeSubDomains")
 		}
 		w.Header().Add("Strict-Transport-Security", strings.Join(strictHeaderValues, "; "))
 	}
 
-	if setting.ContentTypeProtectionHeader {
+	if s.Cfg.ContentTypeProtectionHeader {
 		w.Header().Add("X-Content-Type-Options", "nosniff")
 	}
 
-	if setting.XSSProtectionHeader {
+	if s.Cfg.XSSProtectionHeader {
 		w.Header().Add("X-XSS-Protection", "1; mode=block")
 	}
 }
