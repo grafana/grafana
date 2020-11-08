@@ -93,14 +93,22 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   }
 
   private _request(apiUrl: string, data?: any, options?: Partial<BackendSrvRequest>): Observable<Record<string, any>> {
-    // Hack for proxying metadata requests
-    const baseUrl = `/api/datasources/proxy/${this.instanceSettings.id}`;
+    const baseUrl = this.instanceSettings.url || `/api/datasources/proxy/${this.instanceSettings.id}`;
     const params = data ? serializeParams(data) : '';
     const url = `${baseUrl}${apiUrl}${params.length ? `?${params}` : ''}`;
     const req = {
       ...options,
       url,
     };
+
+    const { basicAuth, withCredentials } = this.instanceSettings;
+    if (basicAuth || withCredentials) {
+      req.withCredentials = true;
+    }
+    if (basicAuth) {
+      req.headers = req.headers || {};
+      req.headers.Authorization = basicAuth;
+    }
 
     return from(getBackendSrv().datasourceRequest(req));
   }

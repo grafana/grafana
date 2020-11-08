@@ -53,9 +53,26 @@ describe('JaegerDatasource', () => {
   });
 });
 
+it('uses direct datasource url and auth when configured', async () => {
+  const backendSrvMock = makeBackendSrvMock('12345');
+  await withMockedBackendSrv(backendSrvMock, async () => {
+    const url = 'https://my-test-jaeger.com';
+    const withCredentials = true;
+    const settings: DataSourceInstanceSettings = { ...defaultSettings, url, withCredentials };
+    const ds = new JaegerDatasource(settings);
+    await ds.query(defaultQuery).toPromise();
+    const { lastRequest } = backendSrvMock.sideEffects;
+    expect(lastRequest.url).toBe(url + '/api/traces/12345');
+    expect(lastRequest.withCredentials).toBe(true);
+  });
+});
+  
 function makeBackendSrvMock(traceId: string) {
+  const sideEffects: any = {};
   return {
+    sideEffects: sideEffects,
     datasourceRequest(options: BackendSrvRequest): Promise<any> {
+      sideEffects.lastRequest = options;
       expect(options.url.substr(options.url.length - 17, options.url.length)).toBe(
         `/api/traces/${encodeURIComponent(traceId)}`
       );
