@@ -1,4 +1,4 @@
-import React, { useMemo, CSSProperties } from 'react';
+import React, { useMemo } from 'react';
 import {
   DataFrame,
   FieldConfig,
@@ -183,6 +183,7 @@ function getTimeConfig(timeRange: TimeRange) {
 
   intervals.push([3600 * 24, `${timeFormatToTemplate(systemDateFormats.interval.day)}`, _, _, _, _, _, _, 1]);
 
+  // this dynamic logic is not working great as the config is not reloaded
   if (diff > oneDay) {
     intervals.push([3600, `${timeFormatToTemplate(systemDateFormats.interval.hour)}`, _, _, _, _, _, _, 1]);
   }
