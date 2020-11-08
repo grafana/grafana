@@ -359,6 +359,8 @@ type Cfg struct {
 	LDAPAllowSignup bool
 
 	Quota QuotaSettings
+
+	DefaultTheme string
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.
@@ -1176,6 +1178,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")
 	DefaultTheme = valueAsString(users, "default_theme", "")
+	cfg.DefaultTheme = DefaultTheme
 	ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
 	ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
 	ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")

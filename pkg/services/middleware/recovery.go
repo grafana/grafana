@@ -130,10 +130,10 @@ func (s *MiddlewareService) Recovery(c *macaron.Context) {
 		}
 
 		c.Data["Title"] = "Server Error"
-		c.Data["AppSubUrl"] = setting.AppSubUrl
-		c.Data["Theme"] = setting.DefaultTheme
+		c.Data["AppSubUrl"] = s.Cfg.AppSubURL
+		c.Data["Theme"] = s.Cfg.DefaultTheme
 
-		if setting.Env == setting.Dev {
+		if s.Cfg.Env == setting.Dev {
 			if err, ok := r.(error); ok {
 				c.Data["Title"] = err.Error()
 			}
@@ -154,7 +154,7 @@ func (s *MiddlewareService) Recovery(c *macaron.Context) {
 
 			c.JSON(500, resp)
 		} else {
-			c.HTML(500, setting.ErrTemplateName)
+			c.HTML(500, s.Cfg.ErrTemplateName)
 		}
 	}()
 

@@ -80,7 +80,6 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 
 func TestMiddlewareContext(t *testing.T) {
 	const noCache = "no-cache"
-	//sc.service.Cfg.ErrTemplateName = errorTemplate
 
 	middlewareScenario(t, "middleware should add context to injector", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq(t, "GET", "/").exec(t)

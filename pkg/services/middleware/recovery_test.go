@@ -7,10 +7,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/gtime"
+	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
@@ -19,27 +21,29 @@ import (
 )
 
 func TestRecoveryMiddleware(t *testing.T) {
-	// setting.ErrTemplateName = "error-template"
-	const apiURL = "/whatever"
+	const apiURL = "/api/whatever"
+	const nonAPIURL = "/whatever"
 
 	recoveryScenario(t, "Given an API route that panics, recovery middleware should return JSON", apiURL,
 		func(t *testing.T, sc *scenarioContext) {
+			sc.service.Cfg.ErrTemplateName = errorTemplate
 			sc.handlerFunc = panicHandler
 			sc.fakeReq(t, "GET", apiURL).exec(t)
 			sc.req.Header.Add("content-type", "application/json")
 
-			assert.Equal(t, 500, sc.resp.Code)
+			require.Equal(t, 500, sc.resp.Code)
 			assert.True(t, strings.HasPrefix(sc.respJson["message"].(string),
 				"Internal Server Error - Check the Grafana server logs for the detailed error message."))
 			assert.True(t, strings.HasPrefix(sc.respJson["error"].(string), "Server Error"))
 		})
 
-	recoveryScenario(t, "Given a non-API route that panics, recovery middleware should return html", apiURL,
+	recoveryScenario(t, "Given a non-API route that panics, recovery middleware should return HTML", nonAPIURL,
 		func(t *testing.T, sc *scenarioContext) {
+			sc.service.Cfg.ErrTemplateName = errorTemplate
 			sc.handlerFunc = panicHandler
-			sc.fakeReq(t, "GET", apiURL).exec(t)
+			sc.fakeReq(t, "GET", nonAPIURL).exec(t)
 
-			assert.Equal(t, 500, sc.resp.Code)
+			require.Equal(t, 500, sc.resp.Code)
 			assert.Equal(t, "text/html; charset=UTF-8", sc.resp.Header().Get("content-type"))
 			assert.Contains(t, sc.resp.Body.String(), "<title>Grafana - Error</title>")
 		})
@@ -63,6 +67,7 @@ func recoveryScenario(t *testing.T, desc, url string, fn scenarioFunc) {
 		sqlStore := sqlstore.InitTestDB(t)
 		remoteCacheSvc := &remotecache.RemoteCache{}
 		userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
+		renderSvc := &fakeRenderService{}
 		svc := &MiddlewareService{}
 		err = registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
 			{
@@ -76,6 +81,10 @@ func recoveryScenario(t *testing.T, desc, url string, fn scenarioFunc) {
 			{
 				Name:     auth.ServiceName,
 				Instance: userAuthTokenSvc,
+			},
+			{
+				Name:     rendering.ServiceName,
+				Instance: renderSvc,
 			},
 			{
 				Name:     serviceName,
@@ -94,8 +103,11 @@ func recoveryScenario(t *testing.T, desc, url string, fn scenarioFunc) {
 			remoteCacheService:   remoteCacheSvc,
 		}
 
-		viewsPath, err := filepath.Abs("../../public/views")
+		viewsPath, err := filepath.Abs("../../../public/views")
 		require.NoError(t, err)
+		exists, err := fs.Exists(viewsPath)
+		require.NoError(t, err)
+		require.Truef(t, exists, "Views should be in %q", viewsPath)
 
 		sc.m.Use(sc.service.Recovery)
 
@@ -110,12 +122,15 @@ func recoveryScenario(t *testing.T, desc, url string, fn scenarioFunc) {
 		sc.m.Use(svc.OrgRedirect)
 
 		sc.defaultHandler = func(c *models.ReqContext) {
+			t.Log("Handling request", "url", c.Req.URL)
 			sc.context = c
 			if sc.handlerFunc != nil {
+				t.Log("Invoking handlerFunc")
 				sc.handlerFunc(sc.context)
 			}
 		}
 
+		t.Logf("Routing GET requests to %q", url)
 		sc.m.Get(url, sc.defaultHandler)
 
 		fn(t, sc)

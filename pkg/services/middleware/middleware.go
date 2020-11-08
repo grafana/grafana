@@ -96,9 +96,9 @@ func (s *MiddlewareService) ContextHandler(c *macaron.Context) {
 	}
 
 	// the order in which these are tested are important
-	// look for api key in Authorization header first
+	// look for API key in Authorization header first
 	// then init session and look for userId in session
-	// then look for api key in session (special case for render calls via api)
+	// then look for API key in session (special case for render calls via API)
 	// then test if anonymous access is enabled
 	switch {
 	case s.initContextWithRenderAuth(ctx):
@@ -177,7 +177,7 @@ func (s *MiddlewareService) initContextWithAPIKey(ctx *models.ReqContext) bool {
 
 	apikey := keyQuery.Result
 
-	// validate api key
+	// validate API key
 	isValid, err := apikeygen.IsValid(decoded, apikey.Key)
 	if err != nil {
 		ctx.JsonApiErr(500, "Validating API key failed", err)
