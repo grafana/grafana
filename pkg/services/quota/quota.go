@@ -66,7 +66,7 @@ func (qs *QuotaService) getQuotaScopes(target string) ([]models.QuotaScope, erro
 }
 
 func (qs *QuotaService) QuotaReached(c *models.ReqContext, target string) (bool, error) {
-	if !qs.Cfg.Quota.Enabled {
+	if qs == nil || !qs.Cfg.Quota.Enabled {
 		return false, nil
 	}
 	// No request context means this is a background service, like LDAP Background Sync.

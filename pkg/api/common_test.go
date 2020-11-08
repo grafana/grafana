@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/middleware"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/macaron.v1"
 )
@@ -77,7 +76,7 @@ func anonymousUserScenario(t *testing.T, desc string, method string, url string,
 func (sc *scenarioContext) fakeReq(method, url string) *scenarioContext {
 	sc.resp = httptest.NewRecorder()
 	req, err := http.NewRequest(method, url, nil)
-	So(err, ShouldBeNil)
+	require.NoError(sc.t, err)
 	sc.req = req
 
 	return sc

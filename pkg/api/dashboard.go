@@ -48,7 +48,9 @@ func dashboardGuardianResponse(err error) Response {
 }
 
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) Response {
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
+	slug := c.Params(":slug")
+	uid := c.Params(":uid")
+	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
 	if rsp != nil {
 		return rsp
 	}
