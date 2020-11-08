@@ -104,3 +104,5 @@ require (
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.1
 )
+
+replace gopkg.in/macaron.v1 => /home/arve/Projects/macaron

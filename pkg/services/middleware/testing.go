@@ -72,11 +72,6 @@ func (sc *scenarioContext) fakeReqWithParams(t *testing.T, method, url string, q
 	return sc
 }
 
-func (sc *scenarioContext) handler(fn handlerFunc) *scenarioContext {
-	sc.handlerFunc = fn
-	return sc
-}
-
 func (sc *scenarioContext) exec(t *testing.T) {
 	if sc.apiKey != "" {
 		sc.req.Header.Add("Authorization", "Bearer "+sc.apiKey)
@@ -95,6 +90,8 @@ func (sc *scenarioContext) exec(t *testing.T) {
 
 	t.Log("Making fake HTTP request", "method", sc.req.Method, "url", sc.req.URL)
 	sc.m.ServeHTTP(sc.resp, sc.req)
+
+	t.Log("Fake HTTP request handled", "status", sc.resp.Code)
 
 	if sc.resp.Header().Get("Content-Type") == "application/json; charset=UTF-8" {
 		err := json.NewDecoder(sc.resp.Body).Decode(&sc.respJson)

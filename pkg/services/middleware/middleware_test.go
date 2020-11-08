@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/gtime"
+	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/middleware/authproxy"
@@ -98,30 +99,36 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, "-1", sc.resp.Header().Get("Expires"))
 	})
 
-	middlewareScenario(t, "middleware should not add Cache-Control header for requests to datasource proxy API", func(t *testing.T, sc *scenarioContext) {
+	middlewareScenario(t, "middleware should not add Cache-Control header for requests to datasource proxy API", func(
+		t *testing.T, sc *scenarioContext) {
 		sc.fakeReq(t, "GET", "/api/datasources/proxy/1/test").exec(t)
 		assert.Empty(t, sc.resp.Header().Get("Cache-Control"))
 		assert.Empty(t, sc.resp.Header().Get("Pragma"))
 		assert.Empty(t, sc.resp.Header().Get("Expires"))
 	})
 
-	middlewareScenario(t, "middleware should add Cache-Control header for requests with html response", func(t *testing.T, sc *scenarioContext) {
-		sc.handler(func(c *models.ReqContext) {
+	middlewareScenario(t, "middleware should add Cache-Control header for requests with HTML response", func(
+		t *testing.T, sc *scenarioContext) {
+		sc.handlerFunc = func(c *models.ReqContext) {
+			t.Log("Handler called")
 			data := &dtos.IndexViewData{
 				User:     &dtos.CurrentUser{},
 				Settings: map[string]interface{}{},
 				NavTree:  []*dtos.NavLink{},
 			}
+			t.Log("Calling HTML", "data", data, "render", c.Render)
 			c.HTML(200, "index-template", data)
-		})
+			t.Log("Returned HTML with code 200")
+		}
 		sc.fakeReq(t, "GET", "/").exec(t)
-		assert.Equal(t, 200, sc.resp.Code)
+		require.Equal(t, 200, sc.resp.Code)
 		assert.Equal(t, noCache, sc.resp.Header().Get("Cache-Control"))
 		assert.Equal(t, noCache, sc.resp.Header().Get("Pragma"))
-		assert.Equal(t, -1, sc.resp.Header().Get("Expires"))
+		assert.Equal(t, "-1", sc.resp.Header().Get("Expires"))
 	})
 
-	middlewareScenario(t, "middleware should add X-Frame-Options header with deny for request when not allowing embedding", func(t *testing.T, sc *scenarioContext) {
+	middlewareScenario(t, "middleware should add X-Frame-Options header with deny for request when not allowing embedding", func(
+		t *testing.T, sc *scenarioContext) {
 		sc.fakeReq(t, "GET", "/api/search").exec(t)
 		assert.Equal(t, "deny", sc.resp.Header().Get("X-Frame-Options"))
 	})
@@ -196,7 +203,8 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, "Expired API key", sc.respJson["message"])
 	})
 
-	middlewareScenario(t, "Non-expired auth token in cookie which not are being rotated", func(t *testing.T, sc *scenarioContext) {
+	middlewareScenario(t, "Non-expired auth token in cookie which is not being rotated", func(
+		t *testing.T, sc *scenarioContext) {
 		sc.withTokenSessionCookie("token")
 
 		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
@@ -220,7 +228,7 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Empty(t, sc.resp.Header().Get("Set-Cookie"))
 	})
 
-	middlewareScenario(t, "Non-expired auth token in cookie which are being rotated", func(t *testing.T, sc *scenarioContext) {
+	middlewareScenario(t, "Non-expired auth token in cookie which is being rotated", func(t *testing.T, sc *scenarioContext) {
 		sc.withTokenSessionCookie("token")
 
 		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
@@ -561,8 +569,11 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 			remoteCacheService:   remoteCacheSvc,
 		}
 
-		viewsPath, err := filepath.Abs("../../public/views")
+		viewsPath, err := filepath.Abs("../../../public/views")
 		require.NoError(t, err)
+		exists, err := fs.Exists(viewsPath)
+		require.NoError(t, err)
+		require.Truef(t, exists, "Views directory should exist at %q", viewsPath)
 
 		sc.m.Use(svc.AddDefaultResponseHeaders)
 		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
