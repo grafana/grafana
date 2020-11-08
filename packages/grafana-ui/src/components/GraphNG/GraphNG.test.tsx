@@ -1,18 +1,9 @@
 import React from 'react';
 import { GraphNG } from './GraphNG';
 import { render } from '@testing-library/react';
-import {
-  ArrayVector,
-  DataTransformerID,
-  dateTime,
-  FieldConfig,
-  FieldType,
-  MutableDataFrame,
-  standardTransformers,
-  standardTransformersRegistry,
-} from '@grafana/data';
+import { ArrayVector, dateTime, FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
 import { GraphCustomFieldConfig } from '..';
-import { LegendDisplayMode } from '../Legend/Legend';
+import { LegendDisplayMode, LegendOptions } from '../Legend/Legend';
 
 const mockData = () => {
   const data = new MutableDataFrame();
@@ -43,7 +34,11 @@ const mockData = () => {
   return { data, timeRange };
 };
 
-const defaultLegendOptions = { isVisible: false, displayMode: LegendDisplayMode.List, placement: 'bottom' };
+const defaultLegendOptions: LegendOptions = {
+  isVisible: false,
+  displayMode: LegendDisplayMode.List,
+  placement: 'bottom',
+};
 
 describe('GraphNG', () => {
   describe('data update', () => {
