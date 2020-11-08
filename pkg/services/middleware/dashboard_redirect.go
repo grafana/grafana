@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"gopkg.in/macaron.v1"
 )
 
 func (s *MiddlewareService) getDashboardURLBySlug(orgID int64, slug string) (string, error) {
@@ -19,16 +18,14 @@ func (s *MiddlewareService) getDashboardURLBySlug(orgID int64, slug string) (str
 	return models.GetDashboardUrl(query.Result.Uid, query.Result.Slug), nil
 }
 
-func (s *MiddlewareService) RedirectFromLegacyDashboardURL() macaron.Handler {
-	return func(c *models.ReqContext) {
-		slug := c.Params("slug")
+func (s *MiddlewareService) RedirectFromLegacyDashboardURL(c *models.ReqContext) {
+	slug := c.Params("slug")
 
-		if slug != "" {
-			if url, err := s.getDashboardURLBySlug(c.OrgId, slug); err == nil {
-				url = fmt.Sprintf("%s?%s", url, c.Req.URL.RawQuery)
-				c.Redirect(url, 301)
-				return
-			}
+	if slug != "" {
+		if url, err := s.getDashboardURLBySlug(c.OrgId, slug); err == nil {
+			url = fmt.Sprintf("%s?%s", url, c.Req.URL.RawQuery)
+			c.Redirect(url, 301)
+			return
 		}
 	}
 }
@@ -39,19 +36,19 @@ func (s *MiddlewareService) RedirectFromLegacyDashboardURL() macaron.Handler {
 func (s *MiddlewareService) RedirectFromLegacyPanelEditURL(c *models.ReqContext) {
 	queryParams := c.Req.URL.Query()
 
-	panelId, hasPanelId := queryParams["panelId"]
+	panelID, hasPanelID := queryParams["panelId"]
 	_, hasFullscreen := queryParams["fullscreen"]
 	_, hasEdit := queryParams["edit"]
 
-	if hasPanelId && hasFullscreen {
+	if hasPanelID && hasFullscreen {
 		delete(queryParams, "panelId")
 		delete(queryParams, "fullscreen")
 		delete(queryParams, "edit")
 
 		if hasEdit {
-			queryParams["editPanel"] = panelId
+			queryParams["editPanel"] = panelID
 		} else {
-			queryParams["viewPanel"] = panelId
+			queryParams["viewPanel"] = panelID
 		}
 
 		newURL := fmt.Sprintf("%s%s?%s", s.Cfg.AppURL, strings.TrimPrefix(c.Req.URL.Path, "/"), queryParams.Encode())
@@ -64,15 +61,17 @@ func (s *MiddlewareService) RedirectFromLegacyDashboardSoloURL(c *models.ReqCont
 	renderRequest := c.QueryBool("render")
 
 	if slug != "" {
-		if url, err := s.getDashboardURLBySlug(c.OrgId, slug); err == nil {
-			if renderRequest && strings.Contains(url, s.Cfg.AppSubURL) {
-				url = strings.Replace(url, s.Cfg.AppSubURL, "", 1)
-			}
-
-			url = strings.Replace(url, "/d/", "/d-solo/", 1)
-			url = fmt.Sprintf("%s?%s", url, c.Req.URL.RawQuery)
-			c.Redirect(url, 301)
+		url, err := s.getDashboardURLBySlug(c.OrgId, slug)
+		if err != nil {
 			return
 		}
+
+		if renderRequest && strings.Contains(url, s.Cfg.AppSubURL) {
+			url = strings.Replace(url, s.Cfg.AppSubURL, "", 1)
+		}
+
+		url = strings.Replace(url, "/d/", "/d-solo/", 1)
+		url = fmt.Sprintf("%s?%s", url, c.Req.URL.RawQuery)
+		c.Redirect(url, 301)
 	}
 }

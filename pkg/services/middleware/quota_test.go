@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
@@ -13,7 +14,7 @@ import (
 
 func TestMiddlewareQuota(t *testing.T) {
 	middlewareScenario(t, "with user not logged in", func(t *testing.T, sc *scenarioContext) {
-		quotaFn := Quota(&quota.QuotaService{
+		quotaFn := middleware.Quota(&quota.QuotaService{
 			AuthTokenService: sc.userAuthTokenService,
 			Cfg:              sc.service.Cfg,
 		})
@@ -39,6 +40,7 @@ func TestMiddlewareQuota(t *testing.T) {
 				Session:    5,
 			},
 		}
+		sc.m.Get("/user", sc.defaultHandler)
 
 		bus.AddHandler("globalQuota", func(query *models.GetGlobalQuotaByTargetQuery) error {
 			query.Result = &models.GlobalQuotaDTO{
@@ -49,32 +51,34 @@ func TestMiddlewareQuota(t *testing.T) {
 			return nil
 		})
 
+		userHandler := quotaFn("user").(func(c *models.ReqContext))
+		sessionHandler := quotaFn("session").(func(c *models.ReqContext))
+
+		sc.handlerFunc = userHandler
+
 		// global quota not reached"
-		sc.m.Get("/user", quotaFn("user"), sc.defaultHandler)
 		sc.fakeReq(t, "GET", "/user").exec(t)
 		assert.Equal(t, 200, sc.resp.Code)
 
 		// global quota reached
 		sc.service.Cfg.Quota.Global.User = 4
-		sc.m.Get("/user", quotaFn("user"), sc.defaultHandler)
 		sc.fakeReq(t, "GET", "/user").exec(t)
 		assert.Equal(t, 403, sc.resp.Code)
 
 		// global session quota not reached
 		sc.service.Cfg.Quota.Global.Session = 10
-		sc.m.Get("/user", quotaFn("session"), sc.defaultHandler)
+		sc.handlerFunc = sessionHandler
 		sc.fakeReq(t, "GET", "/user").exec(t)
 		assert.Equal(t, 200, sc.resp.Code)
 
 		// global session quota reached
 		sc.service.Cfg.Quota.Global.Session = 1
-		sc.m.Get("/user", quotaFn("session"), sc.defaultHandler)
 		sc.fakeReq(t, "GET", "/user").exec(t)
 		assert.Equal(t, 403, sc.resp.Code)
 	})
 
 	middlewareScenario(t, "with user logged in", func(t *testing.T, sc *scenarioContext) {
-		quotaFn := Quota(&quota.QuotaService{
+		quotaFn := middleware.Quota(&quota.QuotaService{
 			AuthTokenService: sc.userAuthTokenService,
 			Cfg:              sc.service.Cfg,
 		})
@@ -101,6 +105,9 @@ func TestMiddlewareQuota(t *testing.T) {
 			},
 		}
 		sc.withTokenSessionCookie("token")
+		sc.m.Get("/ds", sc.defaultHandler)
+		sc.m.Get("/org", sc.defaultHandler)
+
 		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{OrgId: 2, UserId: 12}
 			return nil
@@ -140,25 +147,30 @@ func TestMiddlewareQuota(t *testing.T) {
 			return nil
 		})
 
+		dataSrcHandler := quotaFn("data_source").(func(c *models.ReqContext))
+		orgHandler := quotaFn("org").(func(c *models.ReqContext))
+		dashboardHandler := quotaFn("dashboard").(func(c *models.ReqContext))
+
 		// global datasource quota reached
+		sc.handlerFunc = dataSrcHandler
 		sc.service.Cfg.Quota.Global.DataSource = 4
-		sc.m.Get("/ds", quotaFn("data_source"), sc.defaultHandler)
 		sc.fakeReq(t, "GET", "/ds").exec(t)
 		assert.Equal(t, 403, sc.resp.Code)
 
 		// user Org quota not reached"
+		sc.handlerFunc = orgHandler
 		sc.service.Cfg.Quota.User.Org = 5
-		sc.m.Get("/org", quotaFn("org"), sc.defaultHandler)
 		sc.fakeReq(t, "GET", "/org").exec(t)
 		assert.Equal(t, 200, sc.resp.Code)
 
-		// user Org quota reache
+		// user Org quota reached
 		sc.service.Cfg.Quota.User.Org = 4
 		sc.m.Get("/org", quotaFn("org"), sc.defaultHandler)
 		sc.fakeReq(t, "GET", "/org").exec(t)
 		assert.Equal(t, 403, sc.resp.Code)
 
 		// org dashboard quota not reached
+		sc.handlerFunc = dashboardHandler
 		sc.service.Cfg.Quota.Org.Dashboard = 10
 		sc.m.Get("/dashboard", quotaFn("dashboard"), sc.defaultHandler)
 		sc.fakeReq(t, "GET", "/dashboard").exec(t)

@@ -46,7 +46,7 @@ func (stub *TestMultiLDAP) User(login string) (
 	return result, ldap.ServerConfig{}, nil
 }
 
-func prepareMiddleware(t *testing.T, req *http.Request, remoteCacheService *remotecache.RemoteCache) *AuthProxy {
+func prepareMiddleware(t *testing.T, cfg *setting.Cfg, req *http.Request, remoteCacheService *remotecache.RemoteCache) *AuthProxy {
 	t.Helper()
 
 	ctx := &models.ReqContext{
@@ -57,7 +57,7 @@ func prepareMiddleware(t *testing.T, req *http.Request, remoteCacheService *remo
 		},
 	}
 
-	auth := New(&Options{
+	auth := New(cfg, &Options{
 		RemoteCacheService: remoteCacheService,
 		Ctx:                ctx,
 		OrgID:              4,
@@ -71,11 +71,12 @@ func TestMiddlewareContext(t *testing.T) {
 	Convey("auth_proxy helper", t, func() {
 		req, err := http.NewRequest("POST", "http://example.com", nil)
 		So(err, ShouldBeNil)
-		setting.AuthProxyHeaderName = "X-Killa"
+		cfg := setting.NewCfg()
+		cfg.AuthProxyHeaderName = "X-Killa"
 		remoteCacheService := remotecache.NewFakeStore(t)
 
 		name := "markelog"
-		req.Header.Add(setting.AuthProxyHeaderName, name)
+		req.Header.Add(cfg.AuthProxyHeaderName, name)
 
 		Convey("when the cache only contains the main header", func() {
 			Convey("with a simple cache key", func() {
@@ -85,7 +86,7 @@ func TestMiddlewareContext(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				// Set up the middleware
-				auth := prepareMiddleware(t, req, remoteCacheService)
+				auth := prepareMiddleware(t, cfg, req, remoteCacheService)
 				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:0a7f3374e9659b10980fd66247b0cf2f")
 
 				id, err := auth.Login(logger, false)
@@ -95,7 +96,12 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			Convey("when the cache key contains additional headers", func() {
-				setting.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS"}
+				origHeaders := cfg.AuthProxyHeaders
+				t.Cleanup(func() {
+					cfg.AuthProxyHeaders = origHeaders
+				})
+
+				cfg.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS"}
 				group := "grafana-core-team"
 				req.Header.Add("X-WEBAUTH-GROUPS", group)
 
@@ -103,7 +109,7 @@ func TestMiddlewareContext(t *testing.T) {
 				err := remoteCacheService.Set(key, int64(33), 0)
 				So(err, ShouldBeNil)
 
-				auth := prepareMiddleware(t, req, remoteCacheService)
+				auth := prepareMiddleware(t, cfg, req, remoteCacheService)
 				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:14f69b7023baa0ac98c96b31cec07bc0")
 
 				id, err := auth.Login(logger, false)
@@ -153,7 +159,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 				remoteCacheService := remotecache.NewFakeStore(t)
 
-				auth := prepareMiddleware(t, req, remoteCacheService)
+				auth := prepareMiddleware(t, cfg, req, remoteCacheService)
 
 				id, err := auth.Login(logger, false)
 
@@ -179,7 +185,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 				remoteCacheService := remotecache.NewFakeStore(t)
 
-				auth := prepareMiddleware(t, req, remoteCacheService)
+				auth := prepareMiddleware(t, cfg, req, remoteCacheService)
 
 				stub := &TestMultiLDAP{
 					ID: 42,

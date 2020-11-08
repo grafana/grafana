@@ -33,26 +33,11 @@ const (
 
 var getTime = time.Now
 
-var (
-	ReqGrafanaAdmin = middleware.Auth(&middleware.AuthOptions{
-		ReqSignedIn:     true,
-		ReqGrafanaAdmin: true,
-	})
-	ReqSignedIn   = middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
-	ReqEditorRole = middleware.RoleAuth(models.ROLE_EDITOR, models.ROLE_ADMIN)
-	ReqOrgAdmin   = middleware.RoleAuth(models.ROLE_ADMIN)
-)
-
 func init() {
 	svc := &MiddlewareService{}
-	svc.register()
-}
-
-// register registers service with DI system.
-func (s *MiddlewareService) register() {
 	registry.Register(&registry.Descriptor{
 		Name:         serviceName,
-		Instance:     s,
+		Instance:     svc,
 		InitPriority: registry.High,
 	})
 }
@@ -255,7 +240,6 @@ func (s *MiddlewareService) initContextWithBasicAuth(ctx *models.ReqContext, org
 }
 
 func (s *MiddlewareService) initContextWithAuthProxy(ctx *models.ReqContext, orgID int64) bool {
-	fmt.Printf("Initing with auth proxy, enabled: %v\n", s.Cfg.AuthProxyEnabled)
 	username := ctx.Req.Header.Get(s.Cfg.AuthProxyHeaderName)
 	auth := authproxy.New(s.Cfg, &authproxy.Options{
 		RemoteCacheService: s.RemoteCacheService,

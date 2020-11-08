@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/authproxy"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -55,8 +57,9 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	cfg.AuthProxyHeaderName = "X-Killa"
 	cfg.AuthProxyEnabled = true
 	cfg.AuthProxyHeaderProperty = "username"
+	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
+	renderSvc := &fakeRenderService{}
 	svc := &MiddlewareService{}
-	svc.register()
 
 	err := registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
 		{
@@ -66,6 +69,14 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 		{
 			Name:     remotecache.ServiceName,
 			Instance: remoteCacheSvc,
+		},
+		{
+			Name:     auth.ServiceName,
+			Instance: userAuthTokenSvc,
+		},
+		{
+			Name:     rendering.ServiceName,
+			Instance: renderSvc,
 		},
 		{
 			Name:     serviceName,
@@ -91,7 +102,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 		},
 		Logger: log.New("Test"),
 	}
-	req.Header.Add(setting.AuthProxyHeaderName, name)
+	req.Header.Add(cfg.AuthProxyHeaderName, name)
 	key := fmt.Sprintf(authproxy.CachePrefix, authproxy.HashCacheKey(name))
 
 	t.Logf("Injecting stale user ID in cache with key %q", key)

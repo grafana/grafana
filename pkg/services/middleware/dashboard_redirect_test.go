@@ -20,13 +20,15 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 	fakeDash.HasAcl = false
 	fakeDash.Uid = util.GenerateShortUID()
 
-	bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
-		query.Result = fakeDash
-		return nil
-	})
+	middlewareScenario(t, "GET dashboard by legacy URL", func(t *testing.T, sc *scenarioContext) {
+		bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			t.Log("Returning fake dashboard")
+			query.Result = fakeDash
+			return nil
+		})
 
-	middlewareScenario(t, "GET dashboard by legacy url", func(t *testing.T, sc *scenarioContext) {
-		sc.m.Get("/dashboard/db/:slug", sc.service.RedirectFromLegacyDashboardURL, sc.defaultHandler)
+		sc.handlerFunc = sc.service.RedirectFromLegacyDashboardURL
+		sc.m.Get("/dashboard/db/:slug", sc.defaultHandler)
 
 		sc.fakeReqWithParams(t, "GET", "/dashboard/db/dash?orgId=1&panelId=2", map[string]string{}).exec(t)
 
@@ -39,8 +41,15 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 		assert.Len(t, redirectURL.Query(), 2)
 	})
 
-	middlewareScenario(t, "GET dashboard solo by legacy url", func(t *testing.T, sc *scenarioContext) {
-		sc.m.Get("/dashboard-solo/db/:slug", sc.service.RedirectFromLegacyDashboardSoloURL, sc.defaultHandler)
+	middlewareScenario(t, "GET dashboard solo by legacy URL", func(t *testing.T, sc *scenarioContext) {
+		bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+			t.Log("Returning fake dashboard")
+			query.Result = fakeDash
+			return nil
+		})
+
+		sc.handlerFunc = sc.service.RedirectFromLegacyDashboardSoloURL
+		sc.m.Get("/dashboard-solo/db/:slug", sc.defaultHandler)
 
 		sc.fakeReqWithParams(t, "GET", "/dashboard-solo/db/dash?orgId=1&panelId=2", map[string]string{}).exec(t)
 
@@ -60,7 +69,7 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 func TestMiddlewareDashboardRedirect_legacyEditPanel(t *testing.T) {
 	bus.ClearBusHandlers()
 
-	middlewareScenario(t, "GET dashboard by legacy edit url", func(t *testing.T, sc *scenarioContext) {
+	middlewareScenario(t, "GET dashboard by legacy edit URL", func(t *testing.T, sc *scenarioContext) {
 		sc.m.Get("/d/:uid/:slug", sc.service.RedirectFromLegacyPanelEditURL, sc.defaultHandler)
 
 		sc.fakeReqWithParams(t, "GET", "/d/asd/dash?orgId=1&panelId=12&fullscreen&edit", map[string]string{}).exec(t)

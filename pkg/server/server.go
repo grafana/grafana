@@ -266,7 +266,7 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 		localcache.New(5*time.Minute, 10*time.Minute),
 		s,
 	}
-	return registry.buildServiceGraph(objs, services)
+	return registry.BuildServiceGraph(objs, services)
 }
 
 // loadConfiguration loads settings and configuration from config files.

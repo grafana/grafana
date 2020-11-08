@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
 )
 
@@ -41,6 +40,6 @@ func (s *MiddlewareService) OrgRedirect(res http.ResponseWriter, req *http.Reque
 		return
 	}
 
-	newURL := setting.ToAbsUrl(fmt.Sprintf("%s?%s", strings.TrimPrefix(c.Req.URL.Path, "/"), c.Req.URL.Query().Encode()))
+	newURL := fmt.Sprintf("%s%s?%s", s.Cfg.AppURL, strings.TrimPrefix(c.Req.URL.Path, "/"), c.Req.URL.Query().Encode())
 	c.Redirect(newURL, 302)
 }
