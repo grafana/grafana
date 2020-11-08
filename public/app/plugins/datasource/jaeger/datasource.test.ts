@@ -66,7 +66,7 @@ it('uses direct datasource url and auth when configured', async () => {
     expect(lastRequest.withCredentials).toBe(true);
   });
 });
-  
+
 function makeBackendSrvMock(traceId: string) {
   const sideEffects: any = {};
   return {
