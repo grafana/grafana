@@ -393,6 +393,7 @@ func GetDashboardVersions(c *models.ReqContext) Response {
 
 	guardian := guardian.New(dashID, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
+		fmt.Printf("Got guardian error %s\n", err)
 		return dashboardGuardianResponse(err)
 	}
 
