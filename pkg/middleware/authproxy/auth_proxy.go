@@ -40,6 +40,7 @@ var supportedHeaderFields = []string{"Name", "Email", "Login", "Groups"}
 
 // AuthProxy struct
 type AuthProxy struct {
+	cfg                *setting.Cfg
 	remoteCacheService *remotecache.RemoteCache
 	ctx                *models.ReqContext
 	orgID              int64
@@ -81,26 +82,27 @@ type Options struct {
 }
 
 // New instance of the AuthProxy.
-func New(options *Options) *AuthProxy {
-	header := options.Ctx.Req.Header.Get(setting.AuthProxyHeaderName)
+func New(cfg *setting.Cfg, options *Options) *AuthProxy {
+	header := options.Ctx.Req.Header.Get(cfg.AuthProxyHeaderName)
 
 	return &AuthProxy{
+		cfg:                cfg,
 		remoteCacheService: options.RemoteCacheService,
 		ctx:                options.Ctx,
 		orgID:              options.OrgID,
 		header:             header,
 
-		enabled:             setting.AuthProxyEnabled,
-		headerType:          setting.AuthProxyHeaderProperty,
-		headers:             setting.AuthProxyHeaders,
-		whitelistIP:         setting.AuthProxyWhitelist,
-		cacheTTL:            setting.AuthProxySyncTtl,
-		LDAPAllowSignup:     setting.LDAPAllowSignup,
-		AuthProxyAutoSignUp: setting.AuthProxyAutoSignUp,
+		enabled:             cfg.AuthProxyEnabled,
+		headerType:          cfg.AuthProxyHeaderProperty,
+		headers:             cfg.AuthProxyHeaders,
+		whitelistIP:         cfg.AuthProxyWhitelist,
+		cacheTTL:            cfg.AuthProxySyncTTL,
+		LDAPAllowSignup:     cfg.LDAPAllowSignup,
+		AuthProxyAutoSignUp: cfg.AuthProxyAutoSignUp,
 	}
 }
 
-// IsEnabled checks if the proxy auth is enabled
+// IsEnabled checks if the auth proxy is enabled
 func (auth *AuthProxy) IsEnabled() bool {
 	// Bail if the setting is not enabled
 	return auth.enabled
@@ -282,7 +284,7 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 
 	upsert := &models.UpsertUserCommand{
 		ReqContext:    auth.ctx,
-		SignupAllowed: setting.AuthProxyAutoSignUp,
+		SignupAllowed: auth.cfg.AuthProxyAutoSignUp,
 		ExternalUser:  extUser,
 	}
 

@@ -177,8 +177,6 @@ func (s *MiddlewareService) initContextWithAPIKey(ctx *models.ReqContext) bool {
 
 	apikey := keyQuery.Result
 
-	fmt.Printf("Got API key %+v\n", apikey)
-
 	// validate api key
 	isValid, err := apikeygen.IsValid(decoded, apikey.Key)
 	if err != nil {
@@ -257,8 +255,9 @@ func (s *MiddlewareService) initContextWithBasicAuth(ctx *models.ReqContext, org
 }
 
 func (s *MiddlewareService) initContextWithAuthProxy(ctx *models.ReqContext, orgID int64) bool {
+	fmt.Printf("Initing with auth proxy, enabled: %v\n", s.Cfg.AuthProxyEnabled)
 	username := ctx.Req.Header.Get(s.Cfg.AuthProxyHeaderName)
-	auth := authproxy.New(&authproxy.Options{
+	auth := authproxy.New(s.Cfg, &authproxy.Options{
 		RemoteCacheService: s.RemoteCacheService,
 		Ctx:                ctx,
 		OrgID:              orgID,

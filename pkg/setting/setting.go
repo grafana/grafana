@@ -311,6 +311,7 @@ type Cfg struct {
 	AuthProxyEnableLoginToken bool
 	AuthProxyWhitelist        string
 	AuthProxyHeaders          map[string]string
+	AuthProxySyncTTL          int
 
 	// OAuth
 	OAuthCookieMaxAge int
@@ -354,7 +355,8 @@ type Cfg struct {
 	Env string
 
 	// LDAP
-	LDAPEnabled bool
+	LDAPEnabled     bool
+	LDAPAllowSignup bool
 
 	Quota QuotaSettings
 }
@@ -906,6 +908,7 @@ func (cfg *Cfg) readLDAPConfig() {
 	cfg.LDAPEnabled = LDAPEnabled
 	LDAPActiveSyncEnabled = ldapSec.Key("active_sync_enabled").MustBool(false)
 	LDAPAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
+	cfg.LDAPAllowSignup = LDAPAllowSignup
 }
 
 func (cfg *Cfg) readSessionConfig() {
@@ -1141,6 +1144,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	} else {
 		AuthProxySyncTtl = syncVal
 	}
+	cfg.AuthProxySyncTTL = AuthProxySyncTtl
 
 	AuthProxyWhitelist = valueAsString(authProxy, "whitelist", "")
 	cfg.AuthProxyWhitelist = AuthProxyWhitelist

@@ -205,40 +205,45 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "Non-expired auth token in cookie which is not being rotated", func(
 		t *testing.T, sc *scenarioContext) {
+		const userID int64 = 12
 		sc.withTokenSessionCookie("token")
 
 		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{OrgId: 2, UserId: 12}
+			query.Result = &models.SignedInUser{OrgId: 2, UserId: userID}
 			return nil
 		})
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{
-				UserId:        12,
+				UserId:        userID,
 				UnhashedToken: unhashedToken,
 			}, nil
 		}
 
 		sc.fakeReq(t, "GET", "/").exec(t)
 
+		require.NotNil(t, sc.context)
+		require.NotNil(t, sc.context.UserToken)
 		assert.True(t, sc.context.IsSignedIn)
-		assert.Equal(t, 12, sc.context.UserId)
-		assert.Equal(t, 12, sc.context.UserToken.UserId)
+		assert.Equal(t, userID, sc.context.UserId)
+		assert.Equal(t, userID, sc.context.UserToken.UserId)
 		assert.Equal(t, "token", sc.context.UserToken.UnhashedToken)
 		assert.Empty(t, sc.resp.Header().Get("Set-Cookie"))
 	})
 
 	middlewareScenario(t, "Non-expired auth token in cookie which is being rotated", func(t *testing.T, sc *scenarioContext) {
+		const userID int64 = 12
+
 		sc.withTokenSessionCookie("token")
 
 		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
-			query.Result = &models.SignedInUser{OrgId: 2, UserId: 12}
+			query.Result = &models.SignedInUser{OrgId: 2, UserId: userID}
 			return nil
 		})
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
 			return &models.UserToken{
-				UserId:        12,
+				UserId:        userID,
 				UnhashedToken: "",
 			}, nil
 		}
@@ -274,8 +279,8 @@ func TestMiddlewareContext(t *testing.T) {
 			sc.fakeReq(t, "GET", "/").exec(t)
 
 			assert.True(t, sc.context.IsSignedIn)
-			assert.Equal(t, 12, sc.context.UserId)
-			assert.Equal(t, 12, sc.context.UserToken.UserId)
+			assert.Equal(t, userID, sc.context.UserId)
+			assert.Equal(t, userID, sc.context.UserToken.UserId)
 			assert.Equal(t, "rotated", sc.context.UserToken.UnhashedToken)
 			assert.Equal(t, expectedCookie.String(), sc.resp.Header().Get("Set-Cookie"))
 		}
@@ -311,11 +316,13 @@ func TestMiddlewareContext(t *testing.T) {
 		sc.fakeReq(t, "GET", "/").exec(t)
 
 		assert.False(t, sc.context.IsSignedIn)
-		assert.Equal(t, 0, sc.context.UserId)
+		assert.Equal(t, int64(0), sc.context.UserId)
 		assert.Nil(t, sc.context.UserToken)
 	})
 
 	middlewareScenario(t, "When anonymous access is enabled", func(t *testing.T, sc *scenarioContext) {
+		const orgID int64 = 2
+
 		sc.service.Cfg.AnonymousEnabled = true
 		sc.service.Cfg.AnonymousOrgName = "test"
 		sc.service.Cfg.AnonymousOrgRole = string(models.ROLE_EDITOR)
@@ -323,19 +330,21 @@ func TestMiddlewareContext(t *testing.T) {
 		bus.AddHandler("test", func(query *models.GetOrgByNameQuery) error {
 			assert.Equal(t, "test", query.Name)
 
-			query.Result = &models.Org{Id: 2, Name: "test"}
+			query.Result = &models.Org{Id: orgID, Name: "test"}
 			return nil
 		})
 
 		sc.fakeReq(t, "GET", "/").exec(t)
 
-		assert.Equal(t, 0, sc.context.UserId)
-		assert.Equal(t, 2, sc.context.OrgId)
+		assert.Equal(t, int64(0), sc.context.UserId)
+		assert.Equal(t, orgID, sc.context.OrgId)
 		assert.Equal(t, models.ROLE_EDITOR, sc.context.OrgRole)
 		assert.False(t, sc.context.IsSignedIn)
 	})
+}
 
-	middlewareScenario(t, "auth_proxy", func(t *testing.T, sc *scenarioContext) {
+func authProxyScenario(t *testing.T, desc string, fn scenarioFunc) {
+	middlewareScenario(t, desc, func(t *testing.T, sc *scenarioContext) {
 		sc.service.Cfg.AuthProxyEnabled = true
 		sc.service.Cfg.AuthProxyWhitelist = ""
 		sc.service.Cfg.AuthProxyAutoSignUp = true
@@ -343,168 +352,185 @@ func TestMiddlewareContext(t *testing.T) {
 		sc.service.Cfg.AuthProxyHeaderName = "X-WEBAUTH-USER"
 		sc.service.Cfg.AuthProxyHeaderProperty = "username"
 		sc.service.Cfg.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS"}
-		name := "markelog"
-		group := "grafana-core-team"
 
-		middlewareScenario(t, "Should not sync the user if it's in the cache", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
-				query.Result = &models.SignedInUser{OrgId: 4, UserId: query.UserId}
-				return nil
-			})
+		fn(t, sc)
+	})
+}
 
-			key := fmt.Sprintf(authproxy.CachePrefix, authproxy.HashCacheKey(name+"-"+group))
-			err := sc.remoteCacheService.Set(key, int64(33), 0)
-			require.NoError(t, err)
-			sc.fakeReq(t, "GET", "/")
+func TestMiddlewareContext_authProxy(t *testing.T) {
+	const name = "markelog"
+	const group = "grafana-core-team"
 
-			sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
-			sc.req.Header.Add("X-WEBAUTH-GROUPS", group)
-			sc.exec(t)
+	authProxyScenario(t, "Should not sync the user if it's in the cache", func(t *testing.T, sc *scenarioContext) {
+		const userID int64 = 33
+		const orgID int64 = 4
 
-			assert.True(t, sc.context.IsSignedIn)
-			assert.Equal(t, 33, sc.context.UserId)
-			assert.Equal(t, 4, sc.context.OrgId)
+		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+			query.Result = &models.SignedInUser{OrgId: orgID, UserId: query.UserId}
+			return nil
 		})
 
-		middlewareScenario(t, "Should respect auto signup option", func(t *testing.T, sc *scenarioContext) {
-			sc.service.Cfg.LDAPEnabled = false
-			sc.service.Cfg.AuthProxyAutoSignUp = false
-			var actualAuthProxyAutoSignUp *bool = nil
+		key := fmt.Sprintf(authproxy.CachePrefix, authproxy.HashCacheKey(name+"-"+group))
+		err := sc.remoteCacheService.Set(key, userID, 0)
+		require.NoError(t, err)
+		sc.fakeReq(t, "GET", "/")
 
-			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
-				actualAuthProxyAutoSignUp = &cmd.SignupAllowed
-				return login.ErrInvalidCredentials
-			})
+		sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
+		sc.req.Header.Add("X-WEBAUTH-GROUPS", group)
+		sc.exec(t)
 
-			sc.fakeReq(t, "GET", "/")
-			sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
-			sc.exec(t)
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, userID, sc.context.UserId)
+		assert.Equal(t, orgID, sc.context.OrgId)
+	})
 
-			assert.False(t, *actualAuthProxyAutoSignUp)
-			assert.Equal(t, sc.resp.Code, 407)
-			assert.Nil(t, sc.context)
+	authProxyScenario(t, "Should respect auto signup option", func(t *testing.T, sc *scenarioContext) {
+		sc.service.Cfg.LDAPEnabled = false
+		sc.service.Cfg.AuthProxyAutoSignUp = false
+		actualAuthProxyAutoSignUp := true
+
+		bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+			actualAuthProxyAutoSignUp = cmd.SignupAllowed
+			return login.ErrInvalidCredentials
 		})
 
-		middlewareScenario(t, "Should create an user from a header", func(t *testing.T, sc *scenarioContext) {
-			sc.service.Cfg.LDAPEnabled = false
-			sc.service.Cfg.AuthProxyAutoSignUp = true
+		sc.fakeReq(t, "GET", "/")
+		sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
+		sc.exec(t)
 
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
-				if query.UserId > 0 {
-					query.Result = &models.SignedInUser{OrgId: 4, UserId: 33}
-					return nil
-				}
-				return models.ErrUserNotFound
-			})
+		assert.False(t, actualAuthProxyAutoSignUp)
+		assert.Equal(t, sc.resp.Code, 407)
+		assert.Nil(t, sc.context)
+	})
 
-			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
-				cmd.Result = &models.User{Id: 33}
+	authProxyScenario(t, "Should create a user from a header", func(t *testing.T, sc *scenarioContext) {
+		const userID int64 = 33
+		const orgID int64 = 4
+
+		sc.service.Cfg.LDAPEnabled = false
+		sc.service.Cfg.AuthProxyAutoSignUp = true
+
+		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+			if query.UserId > 0 {
+				query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID}
 				return nil
-			})
-
-			sc.fakeReq(t, "GET", "/")
-			sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
-			sc.exec(t)
-
-			assert.True(t, sc.context.IsSignedIn)
-			assert.Equal(t, 33, sc.context.UserId)
-			assert.Equal(t, 4, sc.context.OrgId)
+			}
+			return models.ErrUserNotFound
 		})
 
-		middlewareScenario(t, "Should get an existing user from header", func(t *testing.T, sc *scenarioContext) {
-			sc.service.Cfg.LDAPEnabled = false
-
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
-				query.Result = &models.SignedInUser{OrgId: 2, UserId: 12}
-				return nil
-			})
-
-			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
-				cmd.Result = &models.User{Id: 12}
-				return nil
-			})
-
-			sc.fakeReq(t, "GET", "/")
-			sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
-			sc.exec(t)
-
-			assert.True(t, sc.context.IsSignedIn)
-			assert.Equal(t, 12, sc.context.UserId)
-			assert.Equal(t, 2, sc.context.OrgId)
+		bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+			cmd.Result = &models.User{Id: userID}
+			return nil
 		})
 
-		middlewareScenario(t, "Should allow the request from whitelist IP", func(t *testing.T, sc *scenarioContext) {
-			sc.service.Cfg.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
-			sc.service.Cfg.LDAPEnabled = false
+		sc.fakeReq(t, "GET", "/")
+		sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
+		sc.exec(t)
 
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
-				query.Result = &models.SignedInUser{OrgId: 4, UserId: 33}
-				return nil
-			})
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, userID, sc.context.UserId)
+		assert.Equal(t, orgID, sc.context.OrgId)
+	})
 
-			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
-				cmd.Result = &models.User{Id: 33}
-				return nil
-			})
+	authProxyScenario(t, "Should get an existing user from header", func(t *testing.T, sc *scenarioContext) {
+		const userID int64 = 12
+		const orgID int64 = 2
 
-			sc.fakeReq(t, "GET", "/")
-			sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
-			sc.req.RemoteAddr = "[2001::23]:12345"
-			sc.exec(t)
+		sc.service.Cfg.LDAPEnabled = false
 
-			assert.True(t, sc.context.IsSignedIn)
-			assert.Equal(t, 33, sc.context.UserId)
-			assert.Equal(t, 4, sc.context.OrgId)
+		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+			query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID}
+			return nil
 		})
 
-		middlewareScenario(t, "Should not allow the request from whitelist IP", func(t *testing.T, sc *scenarioContext) {
-			sc.service.Cfg.AuthProxyWhitelist = "8.8.8.8"
-			sc.service.Cfg.LDAPEnabled = false
-
-			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
-				query.Result = &models.SignedInUser{OrgId: 4, UserId: 33}
-				return nil
-			})
-
-			bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
-				cmd.Result = &models.User{Id: 33}
-				return nil
-			})
-
-			sc.fakeReq(t, "GET", "/")
-			sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
-			sc.req.RemoteAddr = "[2001::23]:12345"
-			sc.exec(t)
-
-			assert.Equal(t, 407, sc.resp.Code)
-			assert.Nil(t, sc.context)
+		bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+			cmd.Result = &models.User{Id: userID}
+			return nil
 		})
 
-		middlewareScenario(t, "Should return 407 status code if LDAP says no", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("LDAP", func(cmd *models.UpsertUserCommand) error {
-				return errors.New("Do not add user")
-			})
+		sc.fakeReq(t, "GET", "/")
+		sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
+		sc.exec(t)
 
-			sc.fakeReq(t, "GET", "/")
-			sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
-			sc.exec(t)
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, userID, sc.context.UserId)
+		assert.Equal(t, orgID, sc.context.OrgId)
+	})
 
-			assert.Equal(t, 407, sc.resp.Code)
-			assert.Nil(t, sc.context)
+	authProxyScenario(t, "Should allow the request from whitelist IP", func(t *testing.T, sc *scenarioContext) {
+		const userID int64 = 33
+		const orgID int64 = 4
+
+		sc.service.Cfg.AuthProxyWhitelist = "192.168.1.0/24, 2001::0/120"
+		sc.service.Cfg.LDAPEnabled = false
+
+		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+			query.Result = &models.SignedInUser{OrgId: orgID, UserId: userID}
+			return nil
 		})
 
-		middlewareScenario(t, "Should return 407 status code if there is cache mishap", func(t *testing.T, sc *scenarioContext) {
-			bus.AddHandler("Do not have the user", func(query *models.GetSignedInUserQuery) error {
-				return errors.New("Do not add user")
-			})
-
-			sc.fakeReq(t, "GET", "/")
-			sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
-			sc.exec(t)
-
-			assert.Equal(t, 407, sc.resp.Code)
-			assert.Nil(t, sc.context)
+		bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+			cmd.Result = &models.User{Id: userID}
+			return nil
 		})
+
+		sc.fakeReq(t, "GET", "/")
+		sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
+		sc.req.RemoteAddr = "[2001::23]:12345"
+		sc.exec(t)
+
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, userID, sc.context.UserId)
+		assert.Equal(t, orgID, sc.context.OrgId)
+	})
+
+	authProxyScenario(t, "Should not allow the request from whitelist IP", func(t *testing.T, sc *scenarioContext) {
+		sc.service.Cfg.AuthProxyWhitelist = "8.8.8.8"
+		sc.service.Cfg.LDAPEnabled = false
+
+		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
+			query.Result = &models.SignedInUser{OrgId: 4, UserId: 33}
+			return nil
+		})
+
+		bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+			cmd.Result = &models.User{Id: 33}
+			return nil
+		})
+
+		sc.fakeReq(t, "GET", "/")
+		sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
+		sc.req.RemoteAddr = "[2001::23]:12345"
+		sc.exec(t)
+
+		assert.Equal(t, 407, sc.resp.Code)
+		assert.Nil(t, sc.context)
+	})
+
+	authProxyScenario(t, "Should return 407 status code if LDAP says no", func(t *testing.T, sc *scenarioContext) {
+		bus.AddHandler("LDAP", func(cmd *models.UpsertUserCommand) error {
+			return errors.New("Do not add user")
+		})
+
+		sc.fakeReq(t, "GET", "/")
+		sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
+		sc.exec(t)
+
+		assert.Equal(t, 407, sc.resp.Code)
+		assert.Nil(t, sc.context)
+	})
+
+	authProxyScenario(t, "Should return 407 status code if there is cache mishap", func(t *testing.T, sc *scenarioContext) {
+		bus.AddHandler("Do not have the user", func(query *models.GetSignedInUserQuery) error {
+			return errors.New("Do not add user")
+		})
+
+		sc.fakeReq(t, "GET", "/")
+		sc.req.Header.Add(sc.service.Cfg.AuthProxyHeaderName, name)
+		sc.exec(t)
+
+		assert.Equal(t, 407, sc.resp.Code)
+		assert.Nil(t, sc.context)
 	})
 }
 

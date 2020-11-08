@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -82,8 +81,9 @@ func (sc *scenarioContext) exec(t *testing.T) {
 	}
 
 	if sc.tokenSessionCookie != "" {
+		t.Log("Adding cookie", "name", sc.service.Cfg.LoginCookieName, "value", sc.tokenSessionCookie)
 		sc.req.AddCookie(&http.Cookie{
-			Name:  setting.LoginCookieName,
+			Name:  sc.service.Cfg.LoginCookieName,
 			Value: sc.tokenSessionCookie,
 		})
 	}
