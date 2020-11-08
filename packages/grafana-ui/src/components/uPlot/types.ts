@@ -1,47 +1,6 @@
 import React from 'react';
 import uPlot from 'uplot';
-import { DataFrame, FieldColor, TimeRange, TimeZone } from '@grafana/data';
-
-export type NullValuesMode = 'null' | 'connected' | 'asZero';
-
-export enum AxisSide {
-  Top,
-  Right,
-  Bottom,
-  Left,
-}
-
-interface AxisConfig {
-  label: string;
-  side: AxisSide;
-  grid: boolean;
-  width: number;
-}
-
-interface LineConfig {
-  show: boolean;
-  width: number;
-  color: FieldColor;
-}
-interface PointConfig {
-  show: boolean;
-  radius: number;
-}
-interface BarsConfig {
-  show: boolean;
-}
-interface FillConfig {
-  alpha: number;
-}
-
-export interface GraphCustomFieldConfig {
-  axis: AxisConfig;
-  line: LineConfig;
-  points: PointConfig;
-  bars: BarsConfig;
-  fill: FillConfig;
-  nullValues: NullValuesMode;
-}
+import { DataFrame, TimeRange, TimeZone } from '@grafana/data';
 
 export type PlotPlugin = {
   id: string;

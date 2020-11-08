@@ -1,5 +1,6 @@
 import { LegendOptions, GraphTooltipOptions } from '@grafana/ui';
 
+// TODO? reuse AxisPlacement?
 export type LegendPlacement = 'top' | 'bottom' | 'left' | 'right';
 
 export interface GraphOptions {
