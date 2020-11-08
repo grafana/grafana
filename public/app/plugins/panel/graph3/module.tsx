@@ -64,7 +64,7 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
         .addSliderInput({
           path: 'fill.alpha',
           name: 'Fill area opacity',
-          defaultValue: 0.1,
+          defaultValue: 0,
           settings: {
             min: 0,
             max: 1,

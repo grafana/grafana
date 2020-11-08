@@ -8,9 +8,10 @@ import {
   getFieldDisplayName,
   getTimeField,
   systemDateFormats,
+  TimeRange,
   TIME_SERIES_TIME_FIELD_NAME,
 } from '@grafana/data';
-import { timeFormatToTemplate } from '../uPlot/utils';
+import { rangeToMinMax, timeFormatToTemplate } from '../uPlot/utils';
 import { alignAndSortDataFramesByFieldName } from './utils';
 import { Area, Axis, Line, Point, Scale, SeriesGeometry } from '../uPlot/geometries';
 import { UPlotChart } from '../uPlot/Plot';
@@ -20,39 +21,6 @@ import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendItem, LegendOptions } from '../Legend/Legend';
 import { GraphLegend } from '../Graph/GraphLegend';
 
-const _ = null;
-
-const timeStampsConfig = [
-  //   tick incr    default          year                    month   day                   hour    min       sec   mode
-  [3600 * 24 * 365, '{YYYY}', _, _, _, _, _, _, 1],
-  [3600 * 24 * 28, `${timeFormatToTemplate(systemDateFormats.interval.month)}`, _, _, _, _, _, _, 1],
-  [3600 * 24, `${timeFormatToTemplate(systemDateFormats.interval.day)}`, `\n{YYYY}`, _, _, _, _, _, 1],
-  [
-    3600,
-    `${timeFormatToTemplate(systemDateFormats.interval.minute)}`,
-    _,
-    _,
-    `\n${timeFormatToTemplate(systemDateFormats.interval.day)}`,
-    _,
-    _,
-    _,
-    1,
-  ],
-  [
-    60,
-    `${timeFormatToTemplate(systemDateFormats.interval.minute)}`,
-    _,
-    _,
-    `\n${timeFormatToTemplate(systemDateFormats.interval.day)}`,
-    _,
-    _,
-    _,
-    1,
-  ],
-  [1, ':{ss}', _, _, _, _, `\n ${timeFormatToTemplate(systemDateFormats.interval.minute)}`, _, 1],
-  [1e-3, ':{ss}.{fff}', _, _, _, _, `\n ${timeFormatToTemplate(systemDateFormats.interval.minute)}`, _, 1],
-];
-
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
 interface GraphNGProps extends Omit<PlotProps, 'data'> {
@@ -60,7 +28,7 @@ interface GraphNGProps extends Omit<PlotProps, 'data'> {
   legend?: LegendOptions;
 }
 
-export const GraphNG: React.FC<GraphNGProps> = ({ data, children, width, height, legend, ...plotProps }) => {
+export const GraphNG: React.FC<GraphNGProps> = ({ data, children, width, height, legend, timeRange, ...plotProps }) => {
   const theme = useTheme();
   const alignedData = useMemo(() => alignAndSortDataFramesByFieldName(data, TIME_SERIES_TIME_FIELD_NAME), [data]);
 
@@ -84,7 +52,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, width, height,
     scales.push(<Scale key="scale-x" scaleKey="x" time />);
   }
 
-  axes.push(<Axis key="axis-scale--x" scaleKey="x" values={timeStampsConfig} side={AxisSide.Bottom} />);
+  axes.push(<Axis key="axis-scale--x" scaleKey="x" values={getTimeConfig(timeRange)} side={AxisSide.Bottom} />);
 
   let seriesIdx = 0;
   const legendItems: LegendItem[] = [];
@@ -183,7 +151,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, width, height,
   return (
     <VizLayout width={width} height={height} legend={legendElement}>
       {(vizWidth: number, vizHeight: number) => (
-        <UPlotChart data={alignedData} width={vizWidth} height={vizHeight} {...plotProps}>
+        <UPlotChart data={alignedData} width={vizWidth} height={vizHeight} timeRange={timeRange} {...plotProps}>
           {scales}
           {axes}
           {geometries}
@@ -193,3 +161,35 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, width, height,
     </VizLayout>
   );
 };
+
+/**
+ * Trying to mimic logic in graphTimeFormat from Graph/utils
+ */
+function getTimeConfig(timeRange: TimeRange) {
+  const [min, max] = rangeToMinMax(timeRange);
+  const diff = max - min;
+  const oneDay = 86400;
+  const oneYear = 31536000;
+  const _ = null;
+
+  const intervals: any[] = [
+    [3600 * 24 * 365, `${timeFormatToTemplate(systemDateFormats.interval.year)}`, _, _, _, _, _, _, 1],
+    [31536000, `${timeFormatToTemplate(systemDateFormats.interval.month)}`, _, _, _, _, _, _, 1],
+  ];
+
+  if (diff < oneYear) {
+    intervals.push([2419200, `${timeFormatToTemplate(systemDateFormats.interval.day)}`, _, _, _, _, _, _, 1]);
+  }
+
+  intervals.push([3600 * 24, `${timeFormatToTemplate(systemDateFormats.interval.day)}`, _, _, _, _, _, _, 1]);
+
+  if (diff > oneDay) {
+    intervals.push([3600, `${timeFormatToTemplate(systemDateFormats.interval.hour)}`, _, _, _, _, _, _, 1]);
+  }
+
+  intervals.push([60, `${timeFormatToTemplate(systemDateFormats.interval.minute)}`, _, _, _, _, _, _, 1]);
+  intervals.push([1, `${timeFormatToTemplate(systemDateFormats.interval.second)}`, _, _, _, _, _, _, 1]);
+  intervals.push([1e-3, '{mm}:{ss}.{fff}', _, _, _, _, _, _, 1]);
+
+  return intervals;
+}

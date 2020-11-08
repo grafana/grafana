@@ -33,7 +33,7 @@ export const useAxisConfig = (getConfig: () => any) => {
 
 export const Axis: React.FC<AxisProps> = props => {
   const theme = useTheme();
-  const gridColor = useMemo(() => (theme.isDark ? theme.palette.gray1 : theme.palette.gray4), [theme]);
+  const gridColor = theme.isDark ? theme.palette.gray25 : theme.palette.gray90;
   const {
     scaleKey,
     label,
@@ -77,7 +77,7 @@ export const Axis: React.FC<AxisProps> = props => {
 function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
   const axis = self.axes[axisIdx];
   if (axis.scale === 'x') {
-    return 54;
+    return 33;
   }
 
   if (values === null || !values.length) {
