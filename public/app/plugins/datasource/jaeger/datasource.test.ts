@@ -89,9 +89,8 @@ describe('when performing testDataSource', () => {
         const response = await ds.testDatasource();
         expect(response.status).toEqual('error');
         expect(response.message).toBe(
-          'Data source connected, but no services received. '+
-          'Verify that Jaeger is configured properly.'
-         );
+          'Data source connected, but no services received. Verify that Jaeger is configured properly.'
+        );
       });
     });
   });
@@ -137,9 +136,7 @@ describe('when performing testDataSource', () => {
         const ds = new JaegerDatasource(defaultSettings);
         const response = await ds.testDatasource();
         expect(response.status).toEqual('error');
-        expect(response.message).toBe(
-          'Jaeger: Bad gateway. 502. {\"errors\":[\"Could not connect to Jaeger backend\"]}'
-         );
+        expect(response.message).toBe('Jaeger: Bad gateway. 502. {"errors":["Could not connect to Jaeger backend"]}');
       });
     });
   });
