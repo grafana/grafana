@@ -80,6 +80,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 func TestMiddlewareContext(t *testing.T) {
 	const noCache = "no-cache"
 	//sc.service.Cfg.ErrTemplateName = errorTemplate
+
 	middlewareScenario(t, "middleware should add context to injector", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq(t, "GET", "/").exec(t)
 		assert.NotNil(t, sc.context)
@@ -142,11 +143,12 @@ func TestMiddlewareContext(t *testing.T) {
 	})
 
 	middlewareScenario(t, "Valid API key", func(t *testing.T, sc *scenarioContext) {
+		const orgID int64 = 12
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
 		bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
-			query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash}
+			query.Result = &models.ApiKey{OrgId: orgID, Role: models.ROLE_EDITOR, Key: keyhash}
 			return nil
 		})
 
@@ -155,7 +157,7 @@ func TestMiddlewareContext(t *testing.T) {
 		require.Equal(t, 200, sc.resp.Code)
 
 		assert.True(t, sc.context.IsSignedIn)
-		assert.Equal(t, 12, sc.context.OrgId)
+		assert.Equal(t, int64(orgID), sc.context.OrgId)
 		assert.Equal(t, models.ROLE_EDITOR, sc.context.OrgRole)
 	})
 

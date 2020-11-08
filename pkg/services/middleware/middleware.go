@@ -177,6 +177,8 @@ func (s *MiddlewareService) initContextWithAPIKey(ctx *models.ReqContext) bool {
 
 	apikey := keyQuery.Result
 
+	fmt.Printf("Got API key %+v\n", apikey)
+
 	// validate api key
 	isValid, err := apikeygen.IsValid(decoded, apikey.Key)
 	if err != nil {
