@@ -23,7 +23,7 @@ func loggedInUserScenario(t *testing.T, desc string, url string, fn scenarioFunc
 
 func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
+		t.Cleanup(bus.ClearBusHandlers)
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
@@ -51,7 +51,7 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 
 func anonymousUserScenario(t *testing.T, desc string, method string, url string, routePattern string, fn scenarioFunc) {
 	t.Run(desc+" "+url, func(t *testing.T) {
-		defer bus.ClearBusHandlers()
+		t.Cleanup(bus.ClearBusHandlers)
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {

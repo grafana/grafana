@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	TestOrgID  = 1
-	TestUserID = 1
+	TestOrgID  int64 = 1
+	TestUserID int64 = 1
 )
 
 func TestDataSourcesProxy(t *testing.T) {
