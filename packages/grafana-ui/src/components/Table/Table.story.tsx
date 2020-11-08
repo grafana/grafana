@@ -6,7 +6,6 @@ import { number } from '@storybook/addon-knobs';
 import { useTheme } from '../../themes';
 import mdx from './Table.mdx';
 import {
-  applyFieldOverrides,
   DataFrame,
   FieldType,
   GrafanaTheme,

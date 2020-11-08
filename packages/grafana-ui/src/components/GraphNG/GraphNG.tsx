@@ -7,11 +7,8 @@ import {
   getFieldColorModeForField,
   getFieldDisplayName,
   getTimeField,
-  systemDateFormats,
-  TimeRange,
   TIME_SERIES_TIME_FIELD_NAME,
 } from '@grafana/data';
-import { rangeToMinMax, timeFormatToTemplate } from '../uPlot/utils';
 import { alignAndSortDataFramesByFieldName } from './utils';
 import { Area, Axis, Line, Point, Scale, SeriesGeometry } from '../uPlot/geometries';
 import { UPlotChart } from '../uPlot/Plot';
@@ -28,7 +25,16 @@ interface GraphNGProps extends Omit<PlotProps, 'data'> {
   legend?: LegendOptions;
 }
 
-export const GraphNG: React.FC<GraphNGProps> = ({ data, children, width, height, legend, timeRange, ...plotProps }) => {
+export const GraphNG: React.FC<GraphNGProps> = ({
+  data,
+  children,
+  width,
+  height,
+  legend,
+  timeRange,
+  timeZone,
+  ...plotProps
+}) => {
   const theme = useTheme();
   const alignedData = useMemo(() => alignAndSortDataFramesByFieldName(data, TIME_SERIES_TIME_FIELD_NAME), [data]);
 
@@ -49,10 +55,10 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, width, height,
     timeIndex = 0; // assuming first field represents x-domain
     scales.push(<Scale key="scale-x" scaleKey="x" />);
   } else {
-    scales.push(<Scale key="scale-x" scaleKey="x" time />);
+    scales.push(<Scale key="scale-x" scaleKey="x" isTime />);
   }
 
-  axes.push(<Axis key="axis-scale--x" scaleKey="x" values={getTimeConfig(timeRange)} side={AxisSide.Bottom} />);
+  axes.push(<Axis key="axis-scale-x" scaleKey="x" isTime side={AxisSide.Bottom} timeZone={timeZone} />);
 
   let seriesIdx = 0;
   const legendItems: LegendItem[] = [];
@@ -151,7 +157,14 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, width, height,
   return (
     <VizLayout width={width} height={height} legend={legendElement}>
       {(vizWidth: number, vizHeight: number) => (
-        <UPlotChart data={alignedData} width={vizWidth} height={vizHeight} timeRange={timeRange} {...plotProps}>
+        <UPlotChart
+          data={alignedData}
+          width={vizWidth}
+          height={vizHeight}
+          timeRange={timeRange}
+          timeZone={timeZone}
+          {...plotProps}
+        >
           {scales}
           {axes}
           {geometries}
@@ -161,36 +174,3 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, width, height,
     </VizLayout>
   );
 };
-
-/**
- * Trying to mimic logic in graphTimeFormat from Graph/utils
- */
-function getTimeConfig(timeRange: TimeRange) {
-  const [min, max] = rangeToMinMax(timeRange);
-  const diff = max - min;
-  const oneDay = 86400;
-  const oneYear = 31536000;
-  const _ = null;
-
-  const intervals: any[] = [
-    [3600 * 24 * 365, `${timeFormatToTemplate(systemDateFormats.interval.year)}`, _, _, _, _, _, _, 1],
-    [31536000, `${timeFormatToTemplate(systemDateFormats.interval.month)}`, _, _, _, _, _, _, 1],
-  ];
-
-  if (diff < oneYear) {
-    intervals.push([2419200, `${timeFormatToTemplate(systemDateFormats.interval.day)}`, _, _, _, _, _, _, 1]);
-  }
-
-  intervals.push([3600 * 24, `${timeFormatToTemplate(systemDateFormats.interval.day)}`, _, _, _, _, _, _, 1]);
-
-  // this dynamic logic is not working great as the config is not reloaded
-  if (diff > oneDay) {
-    intervals.push([3600, `${timeFormatToTemplate(systemDateFormats.interval.hour)}`, _, _, _, _, _, _, 1]);
-  }
-
-  intervals.push([60, `${timeFormatToTemplate(systemDateFormats.interval.minute)}`, _, _, _, _, _, _, 1]);
-  intervals.push([1, `${timeFormatToTemplate(systemDateFormats.interval.second)}`, _, _, _, _, _, _, 1]);
-  intervals.push([1e-3, '{mm}:{ss}.{fff}', _, _, _, _, _, _, 1]);
-
-  return intervals;
-}

@@ -88,7 +88,7 @@ export const DEFAULT_PLOT_CONFIG = {
   },
   cursor: {
     focus: {
-      prox: 30,
+      prox: -1,
     },
   },
   legend: {
