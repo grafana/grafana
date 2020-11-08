@@ -1,14 +1,12 @@
 package middleware
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
-	authLogin "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -25,10 +23,10 @@ func basicAuthScenario(t *testing.T, desc string, fn scenarioFunc) {
 }
 
 func TestMiddlewareBasicAuth(t *testing.T) {
-	var id int64 = 12
+	const id int64 = 12
 
 	basicAuthScenario(t, "Valid API key", func(t *testing.T, sc *scenarioContext) {
-		var orgID int64 = 2
+		const orgID int64 = 2
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
@@ -48,9 +46,9 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 	})
 
 	basicAuthScenario(t, "Handle auth", func(t *testing.T, sc *scenarioContext) {
-		var password = "MyPass"
-		var salt = "Salt"
-		var orgID int64 = 2
+		const password = "MyPass"
+		const salt = "Salt"
+		const orgID int64 = 2
 
 		bus.AddHandler("grafana-auth", func(query *models.LoginUserQuery) error {
 			encoded, err := util.EncodePassword(password, salt)
@@ -78,10 +76,23 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 	})
 
 	basicAuthScenario(t, "Auth sequence", func(t *testing.T, sc *scenarioContext) {
-		var password = "MyPass"
-		var salt = "Salt"
+		t.Log("Starting scenario", "scenario", sc.context)
 
-		authLogin.Init()
+		const password = "MyPass"
+		const salt = "Salt"
+
+		bus.AddHandler("grafana-auth", func(query *models.LoginUserQuery) error {
+			encoded, err := util.EncodePassword(password, salt)
+			if err != nil {
+				return err
+			}
+			query.User = &models.User{
+				Id:       id,
+				Password: encoded,
+				Salt:     salt,
+			}
+			return nil
+		})
 
 		bus.AddHandler("user-query", func(query *models.GetUserByLoginQuery) error {
 			encoded, err := util.EncodePassword(password, salt)
@@ -104,6 +115,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		authHeader := util.GetBasicAuthHeader("myUser", password)
 		sc.fakeReq(t, "GET", "/").withAuthorizationHeader(authHeader).exec(t)
 
+		require.NotNil(t, sc.context)
 		assert.True(t, sc.context.IsSignedIn)
 		assert.Equal(t, id, sc.context.UserId)
 	})
@@ -113,10 +125,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		sc.req.SetBasicAuth("user", "password")
 		sc.exec(t)
 
-		err := json.NewDecoder(sc.resp.Body).Decode(&sc.respJson)
-		require.NoError(t, err)
-
-		assert.Equal(t, 401, sc.resp.Code)
+		require.Equal(t, 401, sc.resp.Code)
 		assert.Equal(t, errStringInvalidUsernamePassword, sc.respJson["message"])
 	})
 
@@ -128,9 +137,6 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		sc.fakeReq(t, "GET", "/")
 		sc.req.SetBasicAuth("killa", "gorilla")
 		sc.exec(t)
-
-		err := json.NewDecoder(sc.resp.Body).Decode(&sc.respJson)
-		require.NoError(t, err)
 
 		assert.Equal(t, 401, sc.resp.Code)
 		assert.Equal(t, errStringInvalidUsernamePassword, sc.respJson["message"])

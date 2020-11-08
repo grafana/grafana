@@ -429,7 +429,6 @@ func (s *MiddlewareService) WriteSessionCookie(ctx *models.ReqContext, value str
 }
 
 func (s *MiddlewareService) initContextWithAnonymousUser(ctx *models.ReqContext) bool {
-	fmt.Printf("Initing context with anon user: %v\n", s.Cfg.AnonymousEnabled)
 	if !s.Cfg.AnonymousEnabled {
 		return false
 	}

@@ -99,6 +99,9 @@ func (sc *scenarioContext) exec(t *testing.T) {
 	if sc.resp.Header().Get("Content-Type") == "application/json; charset=UTF-8" {
 		err := json.NewDecoder(sc.resp.Body).Decode(&sc.respJson)
 		require.NoError(t, err)
+		t.Log("Decoded JSON", "json", sc.respJson)
+	} else {
+		t.Log("Not decoding JSON")
 	}
 }
 

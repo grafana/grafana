@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -88,9 +87,7 @@ func Auth(options *AuthOptions) macaron.Handler {
 			}
 		}
 		requireLogin := !c.AllowAnonymous || forceLogin
-		fmt.Printf("requireLogin: %v, isSignedIn: %v, allowAnon: %v, forceLogin: %v\n", requireLogin, c.IsSignedIn, c.AllowAnonymous, forceLogin)
 		if !c.IsSignedIn && options.ReqSignedIn && requireLogin {
-			fmt.Printf("Not authorized\n")
 			notAuthorized(c)
 			return
 		}
