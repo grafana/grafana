@@ -19,14 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/middleware/authproxy"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/rendering"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -535,57 +530,13 @@ func TestMiddlewareContext_authProxy(t *testing.T) {
 
 type scenarioFunc func(t *testing.T, c *scenarioContext)
 
-type fakeRenderService struct {
-	rendering.Service
-}
-
-func (s *fakeRenderService) Init() error {
-	return nil
-}
-
 func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 	t.Helper()
 
 	t.Run(desc, func(t *testing.T) {
-		cfg := setting.NewCfg()
-		cfg.LoginCookieName = "grafana_session"
-		var err error
-		cfg.LoginMaxLifetime, err = gtime.ParseDuration("30d")
-		cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
-			Name:    "database",
-			ConnStr: "",
-		}
-
-		sqlStore := sqlstore.InitTestDB(t)
-		remoteCacheSvc := &remotecache.RemoteCache{}
-		userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
-		renderSvc := &fakeRenderService{}
-		svc := &MiddlewareService{}
-		err = registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
-			{
-				Name:     sqlstore.ServiceName,
-				Instance: sqlStore,
-			},
-			{
-				Name:     remotecache.ServiceName,
-				Instance: remoteCacheSvc,
-			},
-			{
-				Name:     auth.ServiceName,
-				Instance: userAuthTokenSvc,
-			},
-			{
-				Name:     rendering.ServiceName,
-				Instance: renderSvc,
-			},
-			{
-				Name:     serviceName,
-				Instance: svc,
-			},
-		})
-		require.NoError(t, err)
-
 		t.Cleanup(bus.ClearBusHandlers)
+
+		svc := FakeService(t)
 
 		sc := &scenarioContext{
 			service:              svc,

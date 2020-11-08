@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 
-	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/services/middleware"
 	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -52,8 +52,10 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HT
 		RenderService: r,
 	}
 
+	svc := middleware.FakeService(t)
+
 	m := macaron.New()
-	m.Use(middleware.GetContextHandler(nil, nil, nil))
+	m.Use(svc.ContextHandler)
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  filepath.Join(setting.StaticRootPath, "views"),
 		IndentJSON: true,

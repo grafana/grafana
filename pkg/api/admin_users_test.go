@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -8,8 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
-
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/grafana/grafana/pkg/services/middleware"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -18,9 +20,10 @@ const (
 	nonExistingOrgID = 1000
 )
 
-func TestAdminApiEndpoint(t *testing.T) {
-	role := models.ROLE_ADMIN
-	Convey("Given a server admin attempts to remove themself as an admin", t, func() {
+func TestAdminAPIEndpoint(t *testing.T) {
+	const role = models.ROLE_ADMIN
+
+	t.Run("Given a server admin attempts to remove themself as an admin", func(t *testing.T) {
 		updateCmd := dtos.AdminUpdateUserPermissionsForm{
 			IsGrafanaAdmin: false,
 		}
@@ -32,11 +35,11 @@ func TestAdminApiEndpoint(t *testing.T) {
 		putAdminScenario(t, "When calling PUT on", "/api/admin/users/1/permissions",
 			"/api/admin/users/:id/permissions", role, updateCmd, func(sc *scenarioContext) {
 				sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
-				So(sc.resp.Code, ShouldEqual, 400)
+				assert.Equal(t, 400, sc.resp.Code)
 			})
 	})
 
-	Convey("When a server admin attempts to logout himself from all devices", t, func() {
+	t.Run("When a server admin attempts to logout himself from all devices", func(t *testing.T) {
 		bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
 			cmd.Result = &models.User{Id: TestUserID}
 			return nil
@@ -45,25 +48,26 @@ func TestAdminApiEndpoint(t *testing.T) {
 		adminLogoutUserScenario(t, "Should not be allowed when calling POST on",
 			"/api/admin/users/1/logout", "/api/admin/users/:id/logout", func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-				So(sc.resp.Code, ShouldEqual, 400)
+				assert.Equal(t, 400, sc.resp.Code)
 			})
 	})
 
-	Convey("When a server admin attempts to logout a non-existing user from all devices", t, func() {
-		userId := int64(0)
+	t.Run("When a server admin attempts to logout a non-existing user from all devices", func(t *testing.T) {
+		userID := int64(0)
 		bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
-			userId = cmd.Id
+			userID = cmd.Id
 			return models.ErrUserNotFound
 		})
 
-		adminLogoutUserScenario(t, "Should return not found when calling POST on", "/api/admin/users/200/logout", "/api/admin/users/:id/logout", func(sc *scenarioContext) {
-			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-			So(sc.resp.Code, ShouldEqual, 404)
-			So(userId, ShouldEqual, 200)
-		})
+		adminLogoutUserScenario(t, "Should return not found when calling POST on", "/api/admin/users/200/logout",
+			"/api/admin/users/:id/logout", func(sc *scenarioContext) {
+				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+				assert.Equal(t, 404, sc.resp.Code)
+				assert.Equal(t, int64(200), userID)
+			})
 	})
 
-	Convey("When a server admin attempts to revoke an auth token for a non-existing user", t, func() {
+	t.Run("When a server admin attempts to revoke an auth token for a non-existing user", func(t *testing.T) {
 		userId := int64(0)
 		bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
 			userId = cmd.Id
@@ -75,12 +79,12 @@ func TestAdminApiEndpoint(t *testing.T) {
 		adminRevokeUserAuthTokenScenario(t, "Should return not found when calling POST on",
 			"/api/admin/users/200/revoke-auth-token", "/api/admin/users/:id/revoke-auth-token", cmd, func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-				So(sc.resp.Code, ShouldEqual, 404)
-				So(userId, ShouldEqual, 200)
+				assert.Equal(t, 404, sc.resp.Code)
+				assert.Equal(t, 200, userId)
 			})
 	})
 
-	Convey("When a server admin gets auth tokens for a non-existing user", t, func() {
+	t.Run("When a server admin gets auth tokens for a non-existing user", func(t *testing.T) {
 		userId := int64(0)
 		bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
 			userId = cmd.Id
@@ -90,12 +94,12 @@ func TestAdminApiEndpoint(t *testing.T) {
 		adminGetUserAuthTokensScenario(t, "Should return not found when calling GET on",
 			"/api/admin/users/200/auth-tokens", "/api/admin/users/:id/auth-tokens", func(sc *scenarioContext) {
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-				So(sc.resp.Code, ShouldEqual, 404)
-				So(userId, ShouldEqual, 200)
+				assert.Equal(t, 404, sc.resp.Code)
+				assert.Equal(t, 200, userId)
 			})
 	})
 
-	Convey("When a server admin attempts to enable/disable a nonexistent user", t, func() {
+	t.Run("When a server admin attempts to enable/disable a nonexistent user", func(t *testing.T) {
 		var userId int64
 		isDisabled := false
 		bus.AddHandler("test", func(cmd *models.GetAuthInfoQuery) error {
@@ -112,32 +116,32 @@ func TestAdminApiEndpoint(t *testing.T) {
 			"/api/admin/users/42/enable", "/api/admin/users/:id/enable", func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 
-				So(sc.resp.Code, ShouldEqual, 404)
+				assert.Equal(t, 404, sc.resp.Code)
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(respJSON.Get("message").MustString(), ShouldEqual, "user not found")
+				assert.Equal(t, "user not found", respJSON.Get("message").MustString())
 
-				So(userId, ShouldEqual, 42)
-				So(isDisabled, ShouldEqual, false)
+				assert.Equal(t, 42, userId)
+				assert.Equal(t, false, isDisabled)
 			})
 
 		adminDisableUserScenario(t, "Should return user not found on a POST request", "disable",
 			"/api/admin/users/42/disable", "/api/admin/users/:id/disable", func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 
-				So(sc.resp.Code, ShouldEqual, 404)
+				assert.Equal(t, 404, sc.resp.Code)
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
-				So(respJSON.Get("message").MustString(), ShouldEqual, "user not found")
+				assert.Equal(t, "user not found", respJSON.Get("message").MustString())
 
-				So(userId, ShouldEqual, 42)
-				So(isDisabled, ShouldEqual, true)
+				assert.Equal(t, 42, userId)
+				assert.Equal(t, true, isDisabled)
 			})
 	})
 
-	Convey("When a server admin attempts to disable/enable external user", t, func() {
+	t.Run("When a server admin attempts to disable/enable external user", func(t *testing.T) {
 		userId := int64(0)
 		bus.AddHandler("test", func(cmd *models.GetAuthInfoQuery) error {
 			userId = cmd.UserId
@@ -147,29 +151,29 @@ func TestAdminApiEndpoint(t *testing.T) {
 		adminDisableUserScenario(t, "Should return Could not disable external user error", "disable",
 			"/api/admin/users/42/disable", "/api/admin/users/:id/disable", func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-				So(sc.resp.Code, ShouldEqual, 500)
+				assert.Equal(t, 500, sc.resp.Code)
 
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-				So(err, ShouldBeNil)
-				So(respJSON.Get("message").MustString(), ShouldEqual, "Could not disable external user")
+				require.NoError(t, err)
+				assert.Equal(t, "Could not disable external user", respJSON.Get("message").MustString())
 
-				So(userId, ShouldEqual, 42)
+				assert.Equal(t, 42, userId)
 			})
 
 		adminDisableUserScenario(t, "Should return Could not enable external user error", "enable",
 			"/api/admin/users/42/enable", "/api/admin/users/:id/enable", func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-				So(sc.resp.Code, ShouldEqual, 500)
+				assert.Equal(t, 500, sc.resp.Code)
 
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-				So(err, ShouldBeNil)
-				So(respJSON.Get("message").MustString(), ShouldEqual, "Could not enable external user")
+				require.NoError(t, err)
+				assert.Equal(t, "Could not enable external user", respJSON.Get("message").MustString())
 
-				So(userId, ShouldEqual, 42)
+				assert.Equal(t, 42, userId)
 			})
 	})
 
-	Convey("When a server admin attempts to delete a nonexistent user", t, func() {
+	t.Run("When a server admin attempts to delete a nonexistent user", func(t *testing.T) {
 		var userId int64
 		bus.AddHandler("test", func(cmd *models.DeleteUserCommand) error {
 			userId = cmd.UserId
@@ -180,17 +184,17 @@ func TestAdminApiEndpoint(t *testing.T) {
 			"/api/admin/users/:id", func(sc *scenarioContext) {
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 
-				So(sc.resp.Code, ShouldEqual, 404)
+				assert.Equal(t, 404, sc.resp.Code)
 
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-				So(err, ShouldBeNil)
-				So(respJSON.Get("message").MustString(), ShouldEqual, "user not found")
+				require.NoError(t, err)
+				assert.Equal(t, "user not found", respJSON.Get("message").MustString())
 
-				So(userId, ShouldEqual, 42)
+				assert.Equal(t, 42, userId)
 			})
 	})
 
-	Convey("When a server admin attempts to create a user", t, func() {
+	t.Run("When a server admin attempts to create a user", func(t *testing.T) {
 		var userLogin string
 		var orgId int64
 
@@ -206,7 +210,7 @@ func TestAdminApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		Convey("Without an organization", func() {
+		t.Run("Without an organization", func(t *testing.T) {
 			createCmd := dtos.AdminCreateUserForm{
 				Login:    TestLogin,
 				Password: TestPassword,
@@ -214,20 +218,20 @@ func TestAdminApiEndpoint(t *testing.T) {
 
 			adminCreateUserScenario(t, "Should create the user", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-				So(sc.resp.Code, ShouldEqual, 200)
+				assert.Equal(t, 200, sc.resp.Code)
 
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-				So(err, ShouldBeNil)
-				So(respJSON.Get("id").MustInt64(), ShouldEqual, TestUserID)
-				So(respJSON.Get("message").MustString(), ShouldEqual, "User created")
+				require.NoError(t, err)
+				assert.Equal(t, TestUserID, respJSON.Get("id").MustInt64())
+				assert.Equal(t, "User created", respJSON.Get("message").MustString())
 
 				// test that userLogin and orgId were transmitted correctly to the handler
-				So(userLogin, ShouldEqual, TestLogin)
-				So(orgId, ShouldEqual, 0)
+				assert.Equal(t, TestLogin, userLogin)
+				assert.Equal(t, 0, orgId)
 			})
 		})
 
-		Convey("With an organization", func() {
+		t.Run("With an organization", func(t *testing.T) {
 			createCmd := dtos.AdminCreateUserForm{
 				Login:    TestLogin,
 				Password: TestPassword,
@@ -236,19 +240,19 @@ func TestAdminApiEndpoint(t *testing.T) {
 
 			adminCreateUserScenario(t, "Should create the user", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-				So(sc.resp.Code, ShouldEqual, 200)
+				assert.Equal(t, 200, sc.resp.Code)
 
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-				So(err, ShouldBeNil)
-				So(respJSON.Get("id").MustInt64(), ShouldEqual, TestUserID)
-				So(respJSON.Get("message").MustString(), ShouldEqual, "User created")
+				require.NoError(t, err)
+				assert.Equal(t, TestUserID, respJSON.Get("id").MustInt64())
+				assert.Equal(t, "User created", respJSON.Get("message").MustString())
 
-				So(userLogin, ShouldEqual, TestLogin)
-				So(orgId, ShouldEqual, TestOrgID)
+				assert.Equal(t, TestLogin, userLogin)
+				assert.Equal(t, TestOrgID, orgId)
 			})
 		})
 
-		Convey("With a nonexistent organization", func() {
+		t.Run("With a nonexistent organization", func(t *testing.T) {
 			createCmd := dtos.AdminCreateUserForm{
 				Login:    TestLogin,
 				Password: TestPassword,
@@ -257,19 +261,19 @@ func TestAdminApiEndpoint(t *testing.T) {
 
 			adminCreateUserScenario(t, "Should create the user", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
 				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-				So(sc.resp.Code, ShouldEqual, 400)
+				assert.Equal(t, 400, sc.resp.Code)
 
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-				So(err, ShouldBeNil)
-				So(respJSON.Get("message").MustString(), ShouldEqual, "organization not found")
+				require.NoError(t, err)
+				assert.Equal(t, "organization not found", respJSON.Get("message").MustString())
 
-				So(userLogin, ShouldEqual, TestLogin)
-				So(orgId, ShouldEqual, 1000)
+				assert.Equal(t, TestLogin, userLogin)
+				assert.Equal(t, 1000, orgId)
 			})
 		})
 	})
 
-	Convey("When a server admin attempts to create a user with an already existing email/login", t, func() {
+	t.Run("When a server admin attempts to create a user with an already existing email/login", func(t *testing.T) {
 		bus.AddHandler("test", func(cmd *models.CreateUserCommand) error {
 			return models.ErrUserAlreadyExists
 		})
@@ -281,17 +285,17 @@ func TestAdminApiEndpoint(t *testing.T) {
 
 		adminCreateUserScenario(t, "Should return an error", "/api/admin/users", "/api/admin/users", createCmd, func(sc *scenarioContext) {
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-			So(sc.resp.Code, ShouldEqual, 412)
+			assert.Equal(t, 412, sc.resp.Code)
 
 			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-			So(err, ShouldBeNil)
-			So(respJSON.Get("error").MustString(), ShouldEqual, "user already exists")
+			require.NoError(t, err)
+			assert.Equal(t, "user already exists", respJSON.Get("error").MustString())
 		})
 	})
 }
 
 func putAdminScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType, cmd dtos.AdminUpdateUserPermissionsForm, fn scenarioFunc) {
-	Convey(desc+" "+url, func() {
+	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(t, url)
@@ -311,7 +315,7 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 }
 
 func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc) {
-	Convey(desc+" "+url, func() {
+	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
 		hs := HTTPServer{
@@ -336,7 +340,7 @@ func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern
 }
 
 func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd models.RevokeAuthTokenCmd, fn scenarioFunc) {
-	Convey(desc+" "+url, func() {
+	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
@@ -364,7 +368,7 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 }
 
 func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc) {
-	Convey(desc+" "+url, func() {
+	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
@@ -392,7 +396,7 @@ func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, route
 }
 
 func adminDisableUserScenario(t *testing.T, desc string, action string, url string, routePattern string, fn scenarioFunc) {
-	Convey(desc+" "+url, func() {
+	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
 		fakeAuthTokenService := auth.NewFakeUserAuthTokenService()
@@ -421,7 +425,7 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 }
 
 func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern string, fn scenarioFunc) {
-	Convey(desc+" "+url, func() {
+	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(t, url)
@@ -439,7 +443,7 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 }
 
 func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.AdminCreateUserForm, fn scenarioFunc) {
-	Convey(desc+" "+url, func() {
+	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(t, url)

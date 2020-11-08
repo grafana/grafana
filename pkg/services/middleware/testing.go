@@ -8,9 +8,14 @@ import (
 
 	"gopkg.in/macaron.v1"
 
+	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -103,3 +108,56 @@ func (sc *scenarioContext) exec(t *testing.T) {
 }
 
 type handlerFunc func(c *models.ReqContext)
+
+type fakeRenderService struct {
+	rendering.Service
+}
+
+func (s *fakeRenderService) Init() error {
+	return nil
+}
+
+// FakeService returns a MiddlewareService for testing.
+func FakeService(t *testing.T) *MiddlewareService {
+	t.Helper()
+
+	cfg := setting.NewCfg()
+	cfg.LoginCookieName = "grafana_session"
+	var err error
+	cfg.LoginMaxLifetime, err = gtime.ParseDuration("30d")
+	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
+		Name:    "database",
+		ConnStr: "",
+	}
+
+	sqlStore := sqlstore.InitTestDB(t)
+	remoteCacheSvc := &remotecache.RemoteCache{}
+	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
+	renderSvc := &fakeRenderService{}
+	svc := &MiddlewareService{}
+	err = registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
+		{
+			Name:     sqlstore.ServiceName,
+			Instance: sqlStore,
+		},
+		{
+			Name:     remotecache.ServiceName,
+			Instance: remoteCacheSvc,
+		},
+		{
+			Name:     auth.ServiceName,
+			Instance: userAuthTokenSvc,
+		},
+		{
+			Name:     rendering.ServiceName,
+			Instance: renderSvc,
+		},
+		{
+			Name:     serviceName,
+			Instance: svc,
+		},
+	})
+	require.NoError(t, err)
+
+	return svc
+}

@@ -8,9 +8,10 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/middleware"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/macaron.v1"
@@ -21,7 +22,7 @@ func loggedInUserScenario(t *testing.T, desc string, url string, fn scenarioFunc
 }
 
 func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc) {
-	Convey(desc+" "+url, func() {
+	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(t, url)
@@ -148,6 +149,9 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	}
 	viewsPath, err := filepath.Abs("../../public/views")
 	require.NoError(t, err)
+	exists, err := fs.Exists(viewsPath)
+	require.NoError(t, err)
+	require.Truef(t, exists, "Views should be in %q", viewsPath)
 
 	sc.m = macaron.New()
 	sc.m.Use(macaron.Renderer(macaron.RenderOptions{
@@ -155,7 +159,9 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 		Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
-	sc.m.Use(middleware.GetContextHandler(nil, nil, nil))
+	svc := middleware.FakeService(t)
+
+	sc.m.Use(svc.ContextHandler)
 
 	return sc
 }

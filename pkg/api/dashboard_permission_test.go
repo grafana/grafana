@@ -8,6 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -22,7 +24,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:id/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
 					callGetDashboardPermissions(sc)
-					So(sc.resp.Code, ShouldEqual, 404)
+					assert.Equal(t, 404, sc.resp.Code)
 				})
 
 			cmd := dtos.UpdateDashboardAclCommand{
@@ -34,7 +36,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 			updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
 					callUpdateDashboardPermissions(sc)
-					So(sc.resp.Code, ShouldEqual, 404)
+					assert.Equal(t, 404, sc.resp.Code)
 				})
 		})
 
@@ -50,7 +52,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				callGetDashboardPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 403)
+				assert.Equal(t, 403, sc.resp.Code)
 			})
 
 			cmd := dtos.UpdateDashboardAclCommand{
@@ -62,7 +64,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 			updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
 					callUpdateDashboardPermissions(sc)
-					So(sc.resp.Code, ShouldEqual, 403)
+					assert.Equal(t, 403, sc.resp.Code)
 				})
 
 			Reset(func() {
@@ -93,12 +95,12 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:id/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
 					callGetDashboardPermissions(sc)
-					So(sc.resp.Code, ShouldEqual, 200)
+					assert.Equal(t, 200, sc.resp.Code)
 					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-					So(err, ShouldBeNil)
-					So(len(respJSON.MustArray()), ShouldEqual, 5)
-					So(respJSON.GetIndex(0).Get("userId").MustInt(), ShouldEqual, 2)
-					So(respJSON.GetIndex(0).Get("permission").MustInt(), ShouldEqual, models.PERMISSION_VIEW)
+					require.NoError(t, err)
+					assert.Equal(t, 5, len(respJSON.MustArray()))
+					assert.Equal(t, 2, respJSON.GetIndex(0).Get("userId").MustInt())
+					assert.Equal(t, models.PERMISSION_VIEW, respJSON.GetIndex(0).Get("permission").MustInt())
 				})
 
 			cmd := dtos.UpdateDashboardAclCommand{
@@ -110,7 +112,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 			updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
 					callUpdateDashboardPermissions(sc)
-					So(sc.resp.Code, ShouldEqual, 200)
+					assert.Equal(t, 200, sc.resp.Code)
 				})
 
 			Reset(func() {
@@ -141,7 +143,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 			updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
 					callUpdateDashboardPermissions(sc)
-					So(sc.resp.Code, ShouldEqual, 400)
+					assert.Equal(t, 400, sc.resp.Code)
 				})
 
 			Reset(func() {
@@ -172,7 +174,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 			updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
 					callUpdateDashboardPermissions(sc)
-					So(sc.resp.Code, ShouldEqual, 400)
+					assert.Equal(t, 400, sc.resp.Code)
 				})
 
 			Reset(func() {

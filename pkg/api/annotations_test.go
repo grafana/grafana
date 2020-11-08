@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/stretchr/testify/assert"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -37,26 +38,26 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role,
 					cmd, func(sc *scenarioContext) {
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-						So(sc.resp.Code, ShouldEqual, 403)
+						assert.Equal(t, 403, sc.resp.Code)
 					})
 
 				putAnnotationScenario(t, "When calling PUT on", "/api/annotations/1", "/api/annotations/:annotationId",
 					role, updateCmd, func(sc *scenarioContext) {
 						sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
-						So(sc.resp.Code, ShouldEqual, 403)
+						assert.Equal(t, 403, sc.resp.Code)
 					})
 
 				patchAnnotationScenario(t, "When calling PATCH on", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, patchCmd, func(sc *scenarioContext) {
 						sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
-						So(sc.resp.Code, ShouldEqual, 403)
+						assert.Equal(t, 403, sc.resp.Code)
 					})
 
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						sc.handlerFunc = DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
-						So(sc.resp.Code, ShouldEqual, 403)
+						assert.Equal(t, 403, sc.resp.Code)
 					})
 			})
 		})
@@ -67,24 +68,24 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role,
 					cmd, func(sc *scenarioContext) {
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-						So(sc.resp.Code, ShouldEqual, 200)
+						assert.Equal(t, 200, sc.resp.Code)
 					})
 
 				putAnnotationScenario(t, "When calling PUT on", "/api/annotations/1", "/api/annotations/:annotationId", role, updateCmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
-					So(sc.resp.Code, ShouldEqual, 200)
+					assert.Equal(t, 200, sc.resp.Code)
 				})
 
 				patchAnnotationScenario(t, "When calling PATCH on", "/api/annotations/1", "/api/annotations/:annotationId", role, patchCmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
-					So(sc.resp.Code, ShouldEqual, 200)
+					assert.Equal(t, 200, sc.resp.Code)
 				})
 
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						sc.handlerFunc = DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
-						So(sc.resp.Code, ShouldEqual, 200)
+						assert.Equal(t, 200, sc.resp.Code)
 					})
 			})
 		})
@@ -141,24 +142,24 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 			Convey("Should not be allowed to save an annotation", func() {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-					So(sc.resp.Code, ShouldEqual, 403)
+					assert.Equal(t, 403, sc.resp.Code)
 				})
 
 				putAnnotationScenario(t, "When calling PUT on", "/api/annotations/1", "/api/annotations/:annotationId", role, updateCmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
-					So(sc.resp.Code, ShouldEqual, 403)
+					assert.Equal(t, 403, sc.resp.Code)
 				})
 
 				patchAnnotationScenario(t, "When calling PATCH on", "/api/annotations/1", "/api/annotations/:annotationId", role, patchCmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
-					So(sc.resp.Code, ShouldEqual, 403)
+					assert.Equal(t, 403, sc.resp.Code)
 				})
 
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						sc.handlerFunc = DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
-						So(sc.resp.Code, ShouldEqual, 403)
+						assert.Equal(t, 403, sc.resp.Code)
 					})
 			})
 		})
@@ -168,24 +169,24 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 			Convey("Should be able to save an annotation", func() {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-					So(sc.resp.Code, ShouldEqual, 200)
+					assert.Equal(t, 200, sc.resp.Code)
 				})
 
 				putAnnotationScenario(t, "When calling PUT on", "/api/annotations/1", "/api/annotations/:annotationId", role, updateCmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
-					So(sc.resp.Code, ShouldEqual, 200)
+					assert.Equal(t, 200, sc.resp.Code)
 				})
 
 				patchAnnotationScenario(t, "When calling PATCH on", "/api/annotations/1", "/api/annotations/:annotationId", role, patchCmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
-					So(sc.resp.Code, ShouldEqual, 200)
+					assert.Equal(t, 200, sc.resp.Code)
 				})
 
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						sc.handlerFunc = DeleteAnnotationByID
 						sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
-						So(sc.resp.Code, ShouldEqual, 200)
+						assert.Equal(t, 200, sc.resp.Code)
 					})
 			})
 		})
@@ -195,23 +196,23 @@ func TestAnnotationsApiEndpoint(t *testing.T) {
 			Convey("Should be able to do anything", func() {
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-					So(sc.resp.Code, ShouldEqual, 200)
+					assert.Equal(t, 200, sc.resp.Code)
 				})
 
 				putAnnotationScenario(t, "When calling PUT on", "/api/annotations/1", "/api/annotations/:annotationId", role, updateCmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
-					So(sc.resp.Code, ShouldEqual, 200)
+					assert.Equal(t, 200, sc.resp.Code)
 				})
 
 				patchAnnotationScenario(t, "When calling PATCH on", "/api/annotations/1", "/api/annotations/:annotationId", role, patchCmd, func(sc *scenarioContext) {
 					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
-					So(sc.resp.Code, ShouldEqual, 200)
+					assert.Equal(t, 200, sc.resp.Code)
 				})
 
 				deleteAnnotationsScenario(t, "When calling POST on", "/api/annotations/mass-delete",
 					"/api/annotations/mass-delete", role, deleteCmd, func(sc *scenarioContext) {
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
-						So(sc.resp.Code, ShouldEqual, 200)
+						assert.Equal(t, 200, sc.resp.Code)
 					})
 			})
 		})
