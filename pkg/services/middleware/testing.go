@@ -93,6 +93,7 @@ func (sc *scenarioContext) exec(t *testing.T) {
 		})
 	}
 
+	t.Log("Making fake HTTP request", "method", sc.req.Method, "url", sc.req.URL)
 	sc.m.ServeHTTP(sc.resp, sc.req)
 
 	if sc.resp.Header().Get("Content-Type") == "application/json; charset=UTF-8" {

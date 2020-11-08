@@ -573,10 +573,13 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 		sc.m.Use(sc.service.OrgRedirect)
 
 		sc.defaultHandler = func(c *models.ReqContext) {
+			t.Log("Default handler executing")
 			sc.context = c
 			if sc.handlerFunc != nil {
+				t.Log("Calling handlerFunc")
 				sc.handlerFunc(sc.context)
 			} else {
+				t.Log("Returning JSON OK")
 				c.JsonOK("OK")
 			}
 		}

@@ -123,13 +123,20 @@ func (ss *SqlStore) Init() error {
 
 func (ss *SqlStore) ensureMainOrgAndAdminUser() error {
 	err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
-		systemUserCountQuery := models.GetSystemUserCountStatsQuery{}
-		err := bus.DispatchCtx(ctx, &systemUserCountQuery)
+		var stats models.SystemUserCountStats
+		err := ss.WithDbSession(ctx, func(sess *DBSession) error {
+			var rawSql = `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
+			if _, err := sess.SQL(rawSql).Get(&stats); err != nil {
+				return fmt.Errorf("could not determine if admin user exists: %w", err)
+			}
+
+			return nil
+		})
 		if err != nil {
-			return fmt.Errorf("could not determine if admin user exists: %w", err)
+			return err
 		}
 
-		if systemUserCountQuery.Result.Count > 0 {
+		if stats.Count > 0 {
 			return nil
 		}
 

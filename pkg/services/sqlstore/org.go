@@ -231,7 +231,6 @@ func verifyExistingOrg(sess *DBSession, orgId int64) error {
 }
 
 func getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
-	fmt.Printf("\nCreating org %q\n\n", orgName)
 	var org models.Org
 
 	if setting.AutoAssignOrg {
@@ -263,7 +262,6 @@ func getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
 			return 0, err
 		}
 	} else {
-		fmt.Printf("\nWeau %+v\n\n", org)
 		if _, err := sess.InsertOne(&org); err != nil {
 			return 0, err
 		}
