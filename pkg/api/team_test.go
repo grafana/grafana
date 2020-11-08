@@ -43,7 +43,7 @@ func TestTeamApiEndpoint(t *testing.T) {
 		}
 
 		Convey("When searching with no parameters", func() {
-			loggedInUserScenario("When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
+			loggedInUserScenario(t, "When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
 				var sentLimit int
 				var sendPage int
 				bus.AddHandler("test", func(query *models.SearchTeamsQuery) error {
@@ -70,7 +70,7 @@ func TestTeamApiEndpoint(t *testing.T) {
 		})
 
 		Convey("When searching with page and perpage parameters", func() {
-			loggedInUserScenario("When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
+			loggedInUserScenario(t, "When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
 				var sentLimit int
 				var sendPage int
 				bus.AddHandler("test", func(query *models.SearchTeamsQuery) error {

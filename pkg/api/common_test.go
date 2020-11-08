@@ -16,15 +16,15 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-func loggedInUserScenario(desc string, url string, fn scenarioFunc) {
-	loggedInUserScenarioWithRole(desc, "GET", url, url, models.ROLE_EDITOR, fn)
+func loggedInUserScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
+	loggedInUserScenarioWithRole(t, desc, "GET", url, url, models.ROLE_EDITOR, fn)
 }
 
-func loggedInUserScenarioWithRole(desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc) {
+func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
-		sc := setupScenarioContext(url)
+		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
@@ -48,11 +48,11 @@ func loggedInUserScenarioWithRole(desc string, method string, url string, routeP
 	})
 }
 
-func anonymousUserScenario(desc string, method string, url string, routePattern string, fn scenarioFunc) {
-	Convey(desc+" "+url, func() {
+func anonymousUserScenario(t *testing.T, desc string, method string, url string, routePattern string, fn scenarioFunc) {
+	t.Run(desc+" "+url, func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
-		sc := setupScenarioContext(url)
+		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			if sc.handlerFunc != nil {
@@ -141,11 +141,13 @@ func (sc *scenarioContext) exec() {
 type scenarioFunc func(c *scenarioContext)
 type handlerFunc func(c *models.ReqContext) Response
 
-func setupScenarioContext(url string) *scenarioContext {
+func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	sc := &scenarioContext{
 		url: url,
+		t:   t,
 	}
-	viewsPath, _ := filepath.Abs("../../public/views")
+	viewsPath, err := filepath.Abs("../../public/views")
+	require.NoError(t, err)
 
 	sc.m = macaron.New()
 	sc.m.Use(macaron.Renderer(macaron.RenderOptions{

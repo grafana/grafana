@@ -26,7 +26,7 @@ func TestFoldersApiEndpoint(t *testing.T) {
 				CreateFolderResult: &models.Folder{Id: 1, Uid: "uid", Title: "Folder"},
 			}
 
-			createFolderScenario("When calling POST on", "/api/folders", "/api/folders", mock, cmd, func(sc *scenarioContext) {
+			createFolderScenario(t, "When calling POST on", "/api/folders", "/api/folders", mock, cmd, func(sc *scenarioContext) {
 				callCreateFolder(sc)
 
 				Convey("It should return correct response data", func() {
@@ -66,7 +66,7 @@ func TestFoldersApiEndpoint(t *testing.T) {
 					CreateFolderError: tc.Error,
 				}
 
-				createFolderScenario(fmt.Sprintf("Expect '%s' error when calling POST on", tc.Error.Error()), "/api/folders", "/api/folders", mock, cmd, func(sc *scenarioContext) {
+				createFolderScenario(t, fmt.Sprintf("Expect '%s' error when calling POST on", tc.Error.Error()), "/api/folders", "/api/folders", mock, cmd, func(sc *scenarioContext) {
 					callCreateFolder(sc)
 					if sc.resp.Code != tc.ExpectedStatusCode {
 						t.Errorf("For error '%s' expected status code %d, actual %d", tc.Error, tc.ExpectedStatusCode, sc.resp.Code)
@@ -84,7 +84,7 @@ func TestFoldersApiEndpoint(t *testing.T) {
 				UpdateFolderResult: &models.Folder{Id: 1, Uid: "uid", Title: "Folder upd"},
 			}
 
-			updateFolderScenario("When calling PUT on", "/api/folders/uid", "/api/folders/:uid", mock, cmd, func(sc *scenarioContext) {
+			updateFolderScenario(t, "When calling PUT on", "/api/folders/uid", "/api/folders/:uid", mock, cmd, func(sc *scenarioContext) {
 				callUpdateFolder(sc)
 
 				Convey("It should return correct response data", func() {
@@ -123,12 +123,13 @@ func TestFoldersApiEndpoint(t *testing.T) {
 					UpdateFolderError: tc.Error,
 				}
 
-				updateFolderScenario(fmt.Sprintf("Expect '%s' error when calling PUT on", tc.Error.Error()), "/api/folders/uid", "/api/folders/:uid", mock, cmd, func(sc *scenarioContext) {
-					callUpdateFolder(sc)
-					if sc.resp.Code != tc.ExpectedStatusCode {
-						t.Errorf("For error '%s' expected status code %d, actual %d", tc.Error, tc.ExpectedStatusCode, sc.resp.Code)
-					}
-				})
+				updateFolderScenario(t, fmt.Sprintf("Expect '%s' error when calling PUT on", tc.Error.Error()),
+					"/api/folders/uid", "/api/folders/:uid", mock, cmd, func(sc *scenarioContext) {
+						callUpdateFolder(sc)
+						if sc.resp.Code != tc.ExpectedStatusCode {
+							t.Errorf("For error '%s' expected status code %d, actual %d", tc.Error, tc.ExpectedStatusCode, sc.resp.Code)
+						}
+					})
 			}
 		})
 	})
@@ -138,7 +139,8 @@ func callCreateFolder(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
-func createFolderScenario(desc string, url string, routePattern string, mock *fakeFolderService, cmd models.CreateFolderCommand, fn scenarioFunc) {
+func createFolderScenario(t *testing.T, desc string, url string, routePattern string, mock *fakeFolderService,
+	cmd models.CreateFolderCommand, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
@@ -147,7 +149,7 @@ func createFolderScenario(desc string, url string, routePattern string, mock *fa
 			Cfg: setting.NewCfg(),
 		}
 
-		sc := setupScenarioContext(url)
+		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{OrgId: TestOrgID, UserId: TestUserID}
@@ -172,11 +174,12 @@ func callUpdateFolder(sc *scenarioContext) {
 	sc.fakeReqWithParams("PUT", sc.url, map[string]string{}).exec()
 }
 
-func updateFolderScenario(desc string, url string, routePattern string, mock *fakeFolderService, cmd models.UpdateFolderCommand, fn scenarioFunc) {
+func updateFolderScenario(t *testing.T, desc string, url string, routePattern string, mock *fakeFolderService,
+	cmd models.UpdateFolderCommand, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
-		sc := setupScenarioContext(url)
+		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{OrgId: TestOrgID, UserId: TestUserID}

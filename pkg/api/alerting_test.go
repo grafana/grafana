@@ -40,10 +40,11 @@ func TestAlertingApiEndpoint(t *testing.T) {
 					AlertId: 1,
 					Paused:  true,
 				}
-				postAlertScenario("When calling POST on", "/api/alerts/1/pause", "/api/alerts/:alertId/pause", models.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
-					CallPauseAlert(sc)
-					So(sc.resp.Code, ShouldEqual, 403)
-				})
+				postAlertScenario(t, "When calling POST on", "/api/alerts/1/pause", "/api/alerts/:alertId/pause",
+					models.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
+						CallPauseAlert(sc)
+						So(sc.resp.Code, ShouldEqual, 403)
+					})
 			})
 		})
 
@@ -58,14 +59,14 @@ func TestAlertingApiEndpoint(t *testing.T) {
 					AlertId: 1,
 					Paused:  true,
 				}
-				postAlertScenario("When calling POST on", "/api/alerts/1/pause", "/api/alerts/:alertId/pause", models.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
+				postAlertScenario(t, "When calling POST on", "/api/alerts/1/pause", "/api/alerts/:alertId/pause", models.ROLE_EDITOR, cmd, func(sc *scenarioContext) {
 					CallPauseAlert(sc)
 					So(sc.resp.Code, ShouldEqual, 200)
 				})
 			})
 		})
 
-		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alerts?dashboardId=1", "/api/alerts", models.ROLE_EDITOR, func(sc *scenarioContext) {
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/alerts?dashboardId=1", "/api/alerts", models.ROLE_EDITOR, func(sc *scenarioContext) {
 			var searchQuery *search.Query
 			bus.AddHandler("test", func(query *search.Query) error {
 				searchQuery = query
@@ -85,45 +86,48 @@ func TestAlertingApiEndpoint(t *testing.T) {
 			So(getAlertsQuery, ShouldNotBeNil)
 		})
 
-		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alerts?dashboardId=1&dashboardId=2&folderId=3&dashboardTag=abc&dashboardQuery=dbQuery&limit=5&query=alertQuery", "/api/alerts", models.ROLE_EDITOR, func(sc *scenarioContext) {
-			var searchQuery *search.Query
-			bus.AddHandler("test", func(query *search.Query) error {
-				searchQuery = query
-				query.Result = search.HitList{
-					&search.Hit{Id: 1},
-					&search.Hit{Id: 2},
-				}
-				return nil
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET",
+			"/api/alerts?dashboardId=1&dashboardId=2&folderId=3&dashboardTag=abc&dashboardQuery=dbQuery&limit=5&query=alertQuery",
+			"/api/alerts", models.ROLE_EDITOR, func(sc *scenarioContext) {
+				var searchQuery *search.Query
+				bus.AddHandler("test", func(query *search.Query) error {
+					searchQuery = query
+					query.Result = search.HitList{
+						&search.Hit{Id: 1},
+						&search.Hit{Id: 2},
+					}
+					return nil
+				})
+
+				var getAlertsQuery *models.GetAlertsQuery
+				bus.AddHandler("test", func(query *models.GetAlertsQuery) error {
+					getAlertsQuery = query
+					return nil
+				})
+
+				sc.handlerFunc = GetAlerts
+				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+				So(searchQuery, ShouldNotBeNil)
+				So(searchQuery.DashboardIds[0], ShouldEqual, 1)
+				So(searchQuery.DashboardIds[1], ShouldEqual, 2)
+				So(searchQuery.FolderIds[0], ShouldEqual, 3)
+				So(searchQuery.Tags[0], ShouldEqual, "abc")
+				So(searchQuery.Title, ShouldEqual, "dbQuery")
+
+				So(getAlertsQuery, ShouldNotBeNil)
+				So(getAlertsQuery.DashboardIDs[0], ShouldEqual, 1)
+				So(getAlertsQuery.DashboardIDs[1], ShouldEqual, 2)
+				So(getAlertsQuery.Limit, ShouldEqual, 5)
+				So(getAlertsQuery.Query, ShouldEqual, "alertQuery")
 			})
 
-			var getAlertsQuery *models.GetAlertsQuery
-			bus.AddHandler("test", func(query *models.GetAlertsQuery) error {
-				getAlertsQuery = query
-				return nil
+		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/alert-notifications/1",
+			"/alert-notifications/:notificationId", models.ROLE_ADMIN, func(sc *scenarioContext) {
+				sc.handlerFunc = GetAlertNotificationByID
+				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+				So(sc.resp.Code, ShouldEqual, 404)
 			})
-
-			sc.handlerFunc = GetAlerts
-			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-
-			So(searchQuery, ShouldNotBeNil)
-			So(searchQuery.DashboardIds[0], ShouldEqual, 1)
-			So(searchQuery.DashboardIds[1], ShouldEqual, 2)
-			So(searchQuery.FolderIds[0], ShouldEqual, 3)
-			So(searchQuery.Tags[0], ShouldEqual, "abc")
-			So(searchQuery.Title, ShouldEqual, "dbQuery")
-
-			So(getAlertsQuery, ShouldNotBeNil)
-			So(getAlertsQuery.DashboardIDs[0], ShouldEqual, 1)
-			So(getAlertsQuery.DashboardIDs[1], ShouldEqual, 2)
-			So(getAlertsQuery.Limit, ShouldEqual, 5)
-			So(getAlertsQuery.Query, ShouldEqual, "alertQuery")
-		})
-
-		loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/alert-notifications/1", "/alert-notifications/:notificationId", models.ROLE_ADMIN, func(sc *scenarioContext) {
-			sc.handlerFunc = GetAlertNotificationByID
-			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-			So(sc.resp.Code, ShouldEqual, 404)
-		})
 	})
 }
 
@@ -135,11 +139,12 @@ func CallPauseAlert(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
-func postAlertScenario(desc string, url string, routePattern string, role models.RoleType, cmd dtos.PauseAlertCommand, fn scenarioFunc) {
+func postAlertScenario(t *testing.T, desc string, url string, routePattern string, role models.RoleType,
+	cmd dtos.PauseAlertCommand, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
-		sc := setupScenarioContext(url)
+		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID

@@ -50,7 +50,7 @@ func (m *LDAPMock) User(login string) (*models.ExternalUserInfo, ldap.ServerConf
 func getUserFromLDAPContext(t *testing.T, requestURL string) *scenarioContext {
 	t.Helper()
 
-	sc := setupScenarioContext(requestURL)
+	sc := setupScenarioContext(t, requestURL)
 
 	ldap := setting.LDAPEnabled
 	setting.LDAPEnabled = true
@@ -319,7 +319,7 @@ func getLDAPStatusContext(t *testing.T) *scenarioContext {
 	t.Helper()
 
 	requestURL := "/api/admin/ldap/status"
-	sc := setupScenarioContext(requestURL)
+	sc := setupScenarioContext(t, requestURL)
 
 	ldap := setting.LDAPEnabled
 	setting.LDAPEnabled = true
@@ -378,7 +378,7 @@ func TestGetLDAPStatusApiEndpoint(t *testing.T) {
 func postSyncUserWithLDAPContext(t *testing.T, requestURL string) *scenarioContext {
 	t.Helper()
 
-	sc := setupScenarioContext(requestURL)
+	sc := setupScenarioContext(t, requestURL)
 
 	ldap := setting.LDAPEnabled
 	setting.LDAPEnabled = true

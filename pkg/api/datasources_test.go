@@ -18,7 +18,7 @@ const (
 
 func TestDataSourcesProxy(t *testing.T) {
 	Convey("Given a user is logged in", t, func() {
-		loggedInUserScenario("When calling GET on", "/api/datasources/", func(sc *scenarioContext) {
+		loggedInUserScenario(t, "When calling GET on", "/api/datasources/", func(sc *scenarioContext) {
 			// Stubs the database query
 			bus.AddHandler("test", func(query *models.GetDataSourcesQuery) error {
 				So(query.OrgId, ShouldEqual, TestOrgID)
@@ -48,7 +48,7 @@ func TestDataSourcesProxy(t *testing.T) {
 		})
 
 		Convey("Should be able to save a data source", func() {
-			loggedInUserScenario("When calling DELETE on non-existing", "/api/datasources/name/12345", func(sc *scenarioContext) {
+			loggedInUserScenario(t, "When calling DELETE on non-existing", "/api/datasources/name/12345", func(sc *scenarioContext) {
 				sc.handlerFunc = DeleteDataSourceByName
 				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{}).exec()
 				So(sc.resp.Code, ShouldEqual, 404)
@@ -61,9 +61,7 @@ func TestDataSourcesProxy(t *testing.T) {
 func TestAddDataSource_InvalidURL(t *testing.T) {
 	defer bus.ClearBusHandlers()
 
-	sc := setupScenarioContext("/api/datasources")
-	// TODO: Make this an argument to setupScenarioContext
-	sc.t = t
+	sc := setupScenarioContext(t, "/api/datasources")
 
 	sc.m.Post(sc.url, Wrap(func(c *models.ReqContext) Response {
 		return AddDataSource(c, models.AddDataSourceCommand{
@@ -93,9 +91,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 		return nil
 	})
 
-	sc := setupScenarioContext("/api/datasources")
-	// TODO: Make this an argument to setupScenarioContext
-	sc.t = t
+	sc := setupScenarioContext(t, "/api/datasources")
 
 	sc.m.Post(sc.url, Wrap(func(c *models.ReqContext) Response {
 		return AddDataSource(c, models.AddDataSourceCommand{
@@ -113,9 +109,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 func TestUpdateDataSource_InvalidURL(t *testing.T) {
 	defer bus.ClearBusHandlers()
 
-	sc := setupScenarioContext("/api/datasources/1234")
-	// TODO: Make this an argument to setupScenarioContext
-	sc.t = t
+	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	sc.m.Put(sc.url, Wrap(func(c *models.ReqContext) Response {
 		return AddDataSource(c, models.AddDataSourceCommand{
@@ -145,9 +139,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 		return nil
 	})
 
-	sc := setupScenarioContext("/api/datasources/1234")
-	// TODO: Make this an argument to setupScenarioContext
-	sc.t = t
+	sc := setupScenarioContext(t, "/api/datasources/1234")
 
 	sc.m.Put(sc.url, Wrap(func(c *models.ReqContext) Response {
 		return AddDataSource(c, models.AddDataSourceCommand{

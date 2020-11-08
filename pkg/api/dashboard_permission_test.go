@@ -19,10 +19,11 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				return models.ErrDashboardNotFound
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				callGetDashboardPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 404)
-			})
+			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
+				"/api/dashboards/id/:id/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
+					callGetDashboardPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 404)
+				})
 
 			cmd := dtos.UpdateDashboardAclCommand{
 				Items: []dtos.DashboardAclUpdateItem{
@@ -30,10 +31,11 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				},
 			}
 
-			updateDashboardPermissionScenario("When calling POST on", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
-				callUpdateDashboardPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 404)
-			})
+			updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
+				"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
+					callUpdateDashboardPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 404)
+				})
 		})
 
 		Convey("Given user has no admin permissions", func() {
@@ -46,7 +48,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				return nil
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
+			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				callGetDashboardPermissions(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
@@ -57,10 +59,11 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				},
 			}
 
-			updateDashboardPermissionScenario("When calling POST on", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
-				callUpdateDashboardPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 403)
-			})
+			updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
+				"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
+					callUpdateDashboardPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 403)
+				})
 
 			Reset(func() {
 				guardian.New = origNewGuardian
@@ -87,15 +90,16 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				return nil
 			})
 
-			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
-				callGetDashboardPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 200)
-				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-				So(err, ShouldBeNil)
-				So(len(respJSON.MustArray()), ShouldEqual, 5)
-				So(respJSON.GetIndex(0).Get("userId").MustInt(), ShouldEqual, 2)
-				So(respJSON.GetIndex(0).Get("permission").MustInt(), ShouldEqual, models.PERMISSION_VIEW)
-			})
+			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
+				"/api/dashboards/id/:id/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
+					callGetDashboardPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 200)
+					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+					So(err, ShouldBeNil)
+					So(len(respJSON.MustArray()), ShouldEqual, 5)
+					So(respJSON.GetIndex(0).Get("userId").MustInt(), ShouldEqual, 2)
+					So(respJSON.GetIndex(0).Get("permission").MustInt(), ShouldEqual, models.PERMISSION_VIEW)
+				})
 
 			cmd := dtos.UpdateDashboardAclCommand{
 				Items: []dtos.DashboardAclUpdateItem{
@@ -103,10 +107,11 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				},
 			}
 
-			updateDashboardPermissionScenario("When calling POST on", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
-				callUpdateDashboardPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 200)
-			})
+			updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
+				"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
+					callUpdateDashboardPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 200)
+				})
 
 			Reset(func() {
 				guardian.New = origNewGuardian
@@ -133,10 +138,11 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				},
 			}
 
-			updateDashboardPermissionScenario("When calling POST on", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
-				callUpdateDashboardPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 400)
-			})
+			updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
+				"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
+					callUpdateDashboardPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 400)
+				})
 
 			Reset(func() {
 				guardian.New = origNewGuardian
@@ -163,10 +169,11 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				},
 			}
 
-			updateDashboardPermissionScenario("When calling POST on", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
-				callUpdateDashboardPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 400)
-			})
+			updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
+				"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
+					callUpdateDashboardPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 400)
+				})
 
 			Reset(func() {
 				guardian.New = origNewGuardian
@@ -188,11 +195,11 @@ func callUpdateDashboardPermissions(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
-func updateDashboardPermissionScenario(desc string, url string, routePattern string, cmd dtos.UpdateDashboardAclCommand, fn scenarioFunc) {
+func updateDashboardPermissionScenario(t *testing.T, desc string, url string, routePattern string, cmd dtos.UpdateDashboardAclCommand, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
-		sc := setupScenarioContext(url)
+		sc := setupScenarioContext(t, url)
 
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c

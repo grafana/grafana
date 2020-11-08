@@ -22,7 +22,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 
 		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
 
-		revokeUserAuthTokenScenario("Should return not found when calling POST on", "/api/user/revoke-auth-token", "/api/user/revoke-auth-token", cmd, 200, func(sc *scenarioContext) {
+		revokeUserAuthTokenScenario(t, "Should return not found when calling POST on", "/api/user/revoke-auth-token", "/api/user/revoke-auth-token", cmd, 200, func(sc *scenarioContext) {
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 			So(sc.resp.Code, ShouldEqual, 404)
 			So(userId, ShouldEqual, 200)
@@ -36,7 +36,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 			return models.ErrUserNotFound
 		})
 
-		getUserAuthTokensScenario("Should return not found when calling GET on", "/api/user/auth-tokens", "/api/user/auth-tokens", 200, func(sc *scenarioContext) {
+		getUserAuthTokensScenario(t, "Should return not found when calling GET on", "/api/user/auth-tokens", "/api/user/auth-tokens", 200, func(sc *scenarioContext) {
 			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 			So(sc.resp.Code, ShouldEqual, 404)
 			So(userId, ShouldEqual, 200)
@@ -49,7 +49,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		logoutUserFromAllDevicesInternalScenario("Should be successful", 1, func(sc *scenarioContext) {
+		logoutUserFromAllDevicesInternalScenario(t, "Should be successful", 1, func(sc *scenarioContext) {
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 			So(sc.resp.Code, ShouldEqual, 200)
 		})
@@ -60,7 +60,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 			return models.ErrUserNotFound
 		})
 
-		logoutUserFromAllDevicesInternalScenario("Should return not found", TestUserID, func(sc *scenarioContext) {
+		logoutUserFromAllDevicesInternalScenario(t, "Should return not found", TestUserID, func(sc *scenarioContext) {
 			sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 			So(sc.resp.Code, ShouldEqual, 404)
 		})
@@ -75,7 +75,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
 		token := &models.UserToken{Id: 1}
 
-		revokeUserAuthTokenInternalScenario("Should be successful", cmd, 200, token, func(sc *scenarioContext) {
+		revokeUserAuthTokenInternalScenario(t, "Should be successful", cmd, 200, token, func(sc *scenarioContext) {
 			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*models.UserToken, error) {
 				return &models.UserToken{Id: 2}, nil
 			}
@@ -93,7 +93,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
 		token := &models.UserToken{Id: 2}
 
-		revokeUserAuthTokenInternalScenario("Should not be successful", cmd, TestUserID, token, func(sc *scenarioContext) {
+		revokeUserAuthTokenInternalScenario(t, "Should not be successful", cmd, TestUserID, token, func(sc *scenarioContext) {
 			sc.userAuthTokenService.GetUserTokenProvider = func(ctx context.Context, userId, userTokenId int64) (*models.UserToken, error) {
 				return token, nil
 			}
@@ -110,7 +110,7 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 
 		currentToken := &models.UserToken{Id: 1}
 
-		getUserAuthTokensInternalScenario("Should be successful", currentToken, func(sc *scenarioContext) {
+		getUserAuthTokensInternalScenario(t, "Should be successful", currentToken, func(sc *scenarioContext) {
 			tokens := []*models.UserToken{
 				{
 					Id:        1,
@@ -165,7 +165,8 @@ func TestUserTokenApiEndpoint(t *testing.T) {
 	})
 }
 
-func revokeUserAuthTokenScenario(desc string, url string, routePattern string, cmd models.RevokeAuthTokenCmd, userId int64, fn scenarioFunc) {
+func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePattern string, cmd models.RevokeAuthTokenCmd,
+	userId int64, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
@@ -176,7 +177,7 @@ func revokeUserAuthTokenScenario(desc string, url string, routePattern string, c
 			AuthTokenService: fakeAuthTokenService,
 		}
 
-		sc := setupScenarioContext(url)
+		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
@@ -193,7 +194,7 @@ func revokeUserAuthTokenScenario(desc string, url string, routePattern string, c
 	})
 }
 
-func getUserAuthTokensScenario(desc string, url string, routePattern string, userId int64, fn scenarioFunc) {
+func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePattern string, userId int64, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
@@ -204,7 +205,7 @@ func getUserAuthTokensScenario(desc string, url string, routePattern string, use
 			AuthTokenService: fakeAuthTokenService,
 		}
 
-		sc := setupScenarioContext(url)
+		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
@@ -221,7 +222,7 @@ func getUserAuthTokensScenario(desc string, url string, routePattern string, use
 	})
 }
 
-func logoutUserFromAllDevicesInternalScenario(desc string, userId int64, fn scenarioFunc) {
+func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId int64, fn scenarioFunc) {
 	Convey(desc, func() {
 		defer bus.ClearBusHandlers()
 
@@ -230,7 +231,7 @@ func logoutUserFromAllDevicesInternalScenario(desc string, userId int64, fn scen
 			AuthTokenService: auth.NewFakeUserAuthTokenService(),
 		}
 
-		sc := setupScenarioContext("/")
+		sc := setupScenarioContext(t, "/")
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
@@ -246,7 +247,8 @@ func logoutUserFromAllDevicesInternalScenario(desc string, userId int64, fn scen
 	})
 }
 
-func revokeUserAuthTokenInternalScenario(desc string, cmd models.RevokeAuthTokenCmd, userId int64, token *models.UserToken, fn scenarioFunc) {
+func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd models.RevokeAuthTokenCmd, userId int64,
+	token *models.UserToken, fn scenarioFunc) {
 	Convey(desc, func() {
 		defer bus.ClearBusHandlers()
 
@@ -257,7 +259,7 @@ func revokeUserAuthTokenInternalScenario(desc string, cmd models.RevokeAuthToken
 			AuthTokenService: fakeAuthTokenService,
 		}
 
-		sc := setupScenarioContext("/")
+		sc := setupScenarioContext(t, "/")
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
@@ -275,7 +277,7 @@ func revokeUserAuthTokenInternalScenario(desc string, cmd models.RevokeAuthToken
 	})
 }
 
-func getUserAuthTokensInternalScenario(desc string, token *models.UserToken, fn scenarioFunc) {
+func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *models.UserToken, fn scenarioFunc) {
 	Convey(desc, func() {
 		defer bus.ClearBusHandlers()
 
@@ -286,7 +288,7 @@ func getUserAuthTokensInternalScenario(desc string, token *models.UserToken, fn 
 			AuthTokenService: fakeAuthTokenService,
 		}
 
-		sc := setupScenarioContext("/")
+		sc := setupScenarioContext(t, "/")
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
