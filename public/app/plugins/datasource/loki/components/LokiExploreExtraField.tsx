@@ -3,7 +3,7 @@ import React, { memo } from 'react';
 import { css, cx } from 'emotion';
 
 // Types
-import { InlineFormLabel, RadioButtonGroup } from '@grafana/ui';
+import { InlineFormLabel, RadioButtonGroup, Tooltip, Icon } from '@grafana/ui';
 
 export interface LokiExploreExtraFieldProps {
   lineLimitValue: string;
@@ -34,7 +34,12 @@ export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
         )}
         aria-label="Query type field"
       >
-        <InlineFormLabel width={5}>Query type</InlineFormLabel>
+        <InlineFormLabel
+          tooltip="Choose the type of query you would like to run. Instant query allows doing queries against a single point in time. Range query is used to do a query over a range of time."
+          width={7}
+        >
+          Query type
+        </InlineFormLabel>
 
         <RadioButtonGroup options={rangeOptions} value={queryType} onChange={onQueryTypeChange} />
       </div>

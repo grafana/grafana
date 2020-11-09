@@ -69,7 +69,6 @@ export function LokiExploreQueryEditor(props: Props) {
       range={range}
       ExtraFieldElement={
         <LokiExploreExtraField
-          // If query doesn't have range and instant parameter, then it is old query and we set it to "both"
           queryType={query.instant ? 'instant' : 'range'}
           lineLimitValue={query?.maxLines?.toString() || ''}
           onQueryTypeChange={onQueryTypeChange}
