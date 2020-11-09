@@ -50,7 +50,7 @@ type PluginScanner struct {
 	requireSigned                 bool
 	log                           log.Logger
 	plugins                       map[string]*PluginBase
-	allowUnsignedPluginsCondition func(plugin *PluginBase) bool
+	allowUnsignedPluginsCondition unsignedPluginConditionFunc
 }
 
 type PluginManager struct {
