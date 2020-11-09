@@ -19,7 +19,6 @@ export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
   const rangeOptions = [
     { value: 'range', label: 'Range' },
     { value: 'instant', label: 'Instant' },
-    { value: 'both', label: 'Both' },
   ];
 
   return (

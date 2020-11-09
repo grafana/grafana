@@ -25,10 +25,8 @@ export function LokiExploreQueryEditor(props: Props) {
     let nextQuery;
     if (value === 'instant') {
       nextQuery = { ...query, instant: true, range: false };
-    } else if (value === 'range') {
-      nextQuery = { ...query, instant: false, range: true };
     } else {
-      nextQuery = { ...query, instant: true, range: true };
+      nextQuery = { ...query, instant: false, range: true };
     }
     onChange(nextQuery);
   }
@@ -72,7 +70,7 @@ export function LokiExploreQueryEditor(props: Props) {
       ExtraFieldElement={
         <LokiExploreExtraField
           // If query doesn't have range and instant parameter, then it is old query and we set it to "both"
-          queryType={query.range === query.instant ? 'both' : query.instant ? 'instant' : 'range'}
+          queryType={query.instant ? 'instant' : 'range'}
           lineLimitValue={query?.maxLines?.toString() || ''}
           onQueryTypeChange={onQueryTypeChange}
           onLineLimitChange={onMaxLinesChange}

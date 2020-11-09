@@ -189,15 +189,22 @@ describe('LokiDatasource', () => {
       return { ds, options };
     }
 
-    it('should run range and instant if both are selected', async () => {
-      const { ds, options } = setup('rate({job="grafana"}[10m])', CoreApp.Explore, true, true);
+    it('should run instant if only instant is selected', async () => {
+      const { ds, options } = setup('rate({job="grafana"}[10m])', CoreApp.Explore, true, false);
       await ds.query(options).toPromise();
       expect(ds.runInstantQuery).toBeCalled();
+      expect(ds.runRangeQuery).not.toBeCalled();
+    });
+
+    it('should run only range query if only range is selected', async () => {
+      const { ds, options } = setup('{job="grafana"}', CoreApp.Explore, false, true);
+      await ds.query(options).toPromise();
+      expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
-    it('should run only range query if only range selectd', async () => {
-      const { ds, options } = setup('{job="grafana"}', CoreApp.Explore, false, true);
+    it('should run only range query if no query type is selected in Explore', async () => {
+      const { ds, options } = setup('{job="grafana"}', CoreApp.Explore);
       await ds.query(options).toPromise();
       expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();

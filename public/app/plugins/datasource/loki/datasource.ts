@@ -103,13 +103,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       }));
 
     for (const target of filteredTargets) {
-      if (target.instant || target.range) {
-        if (target.instant) {
-          subQueries.push(this.runInstantQuery(target, options, filteredTargets.length));
-        }
-        if (target.range) {
-          subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
-        }
+      if (target.instant) {
+        subQueries.push(this.runInstantQuery(target, options, filteredTargets.length));
       } else {
         subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
       }

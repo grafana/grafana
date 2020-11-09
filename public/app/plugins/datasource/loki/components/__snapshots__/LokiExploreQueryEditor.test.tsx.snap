@@ -8,7 +8,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
       onKeyDownFunc={[Function]}
       onLineLimitChange={[Function]}
       onQueryTypeChange={[Function]}
-      queryType="both"
+      queryType="range"
     />
   }
   data={
