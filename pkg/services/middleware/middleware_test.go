@@ -19,8 +19,10 @@ import (
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/middleware/authproxy"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -536,7 +538,13 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
-		svc := FakeService(t)
+		remoteCacheSvc := &remotecache.RemoteCache{}
+		userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
+
+		svc := FakeService(t, FakeServiceCfg{
+			UserAuthTokenService: userAuthTokenSvc,
+			RemoteCacheService:   remoteCacheSvc,
+		})
 
 		sc := &scenarioContext{
 			service:              svc,

@@ -117,8 +117,13 @@ func (s *fakeRenderService) Init() error {
 	return nil
 }
 
+type FakeServiceCfg struct {
+	UserAuthTokenService *auth.FakeUserAuthTokenService
+	RemoteCacheService   *remotecache.RemoteCache
+}
+
 // FakeService returns a MiddlewareService for testing.
-func FakeService(t *testing.T) *MiddlewareService {
+func FakeService(t *testing.T, cfgs ...FakeServiceCfg) *MiddlewareService {
 	t.Helper()
 
 	cfg := setting.NewCfg()
@@ -130,9 +135,24 @@ func FakeService(t *testing.T) *MiddlewareService {
 		ConnStr: "",
 	}
 
+	var remoteCacheSvc *remotecache.RemoteCache
+	var userAuthTokenSvc *auth.FakeUserAuthTokenService
+	for _, cfg := range cfgs {
+		if cfg.RemoteCacheService != nil {
+			remoteCacheSvc = cfg.RemoteCacheService
+		}
+		if cfg.UserAuthTokenService != nil {
+			userAuthTokenSvc = cfg.UserAuthTokenService
+		}
+	}
+	if remoteCacheSvc == nil {
+		remoteCacheSvc = &remotecache.RemoteCache{}
+	}
+	if userAuthTokenSvc == nil {
+		userAuthTokenSvc = auth.NewFakeUserAuthTokenService()
+	}
+
 	sqlStore := sqlstore.InitTestDB(t)
-	remoteCacheSvc := &remotecache.RemoteCache{}
-	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
 	svc := &MiddlewareService{}
 	err = registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
