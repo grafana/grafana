@@ -18,10 +18,14 @@ type logScenarioFunc func(c *scenarioContext, logs []*log.Record)
 func logSentryEventScenario(t *testing.T, desc string, event frontendSentryEvent, fn logScenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
 		logs := []*log.Record{}
+		origHandler := frontendLogger.GetHandler()
 		frontendLogger.SetHandler(log.FuncHandler(func(r *log.Record) error {
 			logs = append(logs, r)
 			return nil
 		}))
+		t.Cleanup(func() {
+			frontendLogger.SetHandler(origHandler)
+		})
 
 		sc := setupScenarioContext("/log")
 		hs := HTTPServer{}
