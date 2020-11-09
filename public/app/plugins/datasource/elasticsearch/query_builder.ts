@@ -5,7 +5,7 @@ import {
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/MetricAggregationsEditor/aggregations';
-import * as queryDef from './query_def';
+import { defaultBucketAgg, defaultMetricAgg, findMetricById } from './query_def';
 import { ElasticsearchQuery } from './types';
 
 export class ElasticQueryBuilder {
@@ -187,8 +187,8 @@ export class ElasticQueryBuilder {
 
   build(target: ElasticsearchQuery, adhocFilters?: any, queryString?: string) {
     // make sure query has defaults;
-    target.metrics = target.metrics || [queryDef.defaultMetricAgg()];
-    target.bucketAggs = target.bucketAggs || [queryDef.defaultBucketAgg()];
+    target.metrics = target.metrics || [defaultMetricAgg()];
+    target.bucketAggs = target.bucketAggs || [defaultBucketAgg()];
     target.timeField = this.timeField;
 
     let i, j, pv, nestedAggs, metric;
@@ -292,7 +292,7 @@ export class ElasticQueryBuilder {
               pv = metric.pipelineVariables[j];
 
               if (pv.name && pv.pipelineAgg && /^\d*$/.test(pv.pipelineAgg)) {
-                const appliedAgg = queryDef.findMetricById(target.metrics, pv.pipelineAgg);
+                const appliedAgg = findMetricById(target.metrics, pv.pipelineAgg);
                 if (appliedAgg) {
                   if (appliedAgg.type === 'count') {
                     metricAgg.buckets_path[pv.name] = '_count';
@@ -306,13 +306,13 @@ export class ElasticQueryBuilder {
             continue;
           }
         } else {
-          if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
-            const appliedAgg = queryDef.findMetricById(target.metrics, metric.pipelineAgg);
+          if (metric.field && /^\d*$/.test(metric.field)) {
+            const appliedAgg = findMetricById(target.metrics, metric.field);
             if (appliedAgg) {
               if (appliedAgg.type === 'count') {
                 metricAgg = { buckets_path: '_count' };
               } else {
-                metricAgg = { buckets_path: metric.pipelineAgg };
+                metricAgg = { buckets_path: metric.field };
               }
             }
           } else {
