@@ -22,7 +22,7 @@ type frontendSentryException struct {
 	Values []frontendSentryExceptionValue `json:"values,omitempty"`
 }
 
-type FrontendSentryEvent struct {
+type frontendSentryEvent struct {
 	*sentry.Event
 	Exception *frontendSentryException `json:"exception,omitempty"`
 }
@@ -47,7 +47,7 @@ func (exception *frontendSentryException) FmtStacktraces() string {
 	return strings.Join(stacktraces, "\n\n")
 }
 
-func (event *FrontendSentryEvent) ToLogContext() log15.Ctx {
+func (event *frontendSentryEvent) ToLogContext() log15.Ctx {
 	var ctx = make(log15.Ctx)
 	ctx["url"] = event.Request.URL
 	ctx["user_agent"] = event.Request.Headers["User-Agent"]
@@ -64,7 +64,7 @@ func (event *FrontendSentryEvent) ToLogContext() log15.Ctx {
 	return ctx
 }
 
-func (hs *HTTPServer) LogFrontendMessage(c *models.ReqContext, event FrontendSentryEvent) Response {
+func (hs *HTTPServer) logFrontendMessage(c *models.ReqContext, event frontendSentryEvent) Response {
 	var msg = "unknown"
 
 	if len(event.Message) > 0 {

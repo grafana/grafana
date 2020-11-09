@@ -9,12 +9,14 @@ import (
 	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	log "github.com/inconshreveable/log15"
+	"github.com/stretchr/testify/require"
+
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 type logScenarioFunc func(c *scenarioContext, logs []*log.Record)
 
-func logSentryEventScenario(desc string, event FrontendSentryEvent, fn logScenarioFunc) {
+func logSentryEventScenario(desc string, event frontendSentryEvent, fn logScenarioFunc) {
 	Convey(desc, func() {
 		logs := []*log.Record{}
 		frontendLogger.SetHandler(log.FuncHandler(func(r *log.Record) error {
@@ -27,7 +29,7 @@ func logSentryEventScenario(desc string, event FrontendSentryEvent, fn logScenar
 
 		sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) Response {
 			sc.context = c
-			return hs.LogFrontendMessage(c, event)
+			return hs.logFrontendMessage(c, event)
 		})
 
 		sc.m.Post(sc.url, sc.defaultHandler)
@@ -53,7 +55,7 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 			ID:    "45",
 		}
 
-		errorEvent := FrontendSentryEvent{
+		errorEvent := frontendSentryEvent{
 			&sentry.Event{
 				EventID:   "123",
 				Level:     sentry.LevelError,
@@ -99,7 +101,7 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
   at barfn (bar.js:113:231)`)
 		})
 
-		messageEvent := FrontendSentryEvent{
+		messageEvent := frontendSentryEvent{
 			&sentry.Event{
 				EventID:   "123",
 				Level:     sentry.LevelInfo,
