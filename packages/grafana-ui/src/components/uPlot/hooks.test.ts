@@ -10,11 +10,15 @@ describe('usePlotConfig', () => {
         "axes": Array [],
         "cursor": Object {
           "focus": Object {
-            "prox": 30,
+            "prox": -1,
           },
         },
         "focus": Object {
           "alpha": 1,
+        },
+        "gutters": Object {
+          "x": 8,
+          "y": 8,
         },
         "height": 0,
         "hooks": Object {},
@@ -48,11 +52,15 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": 30,
+              "prox": -1,
             },
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -93,11 +101,15 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": 30,
+              "prox": -1,
             },
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -136,11 +148,15 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": 30,
+              "prox": -1,
             },
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -180,11 +196,15 @@ describe('usePlotConfig', () => {
           ],
           "cursor": Object {
             "focus": Object {
-              "prox": 30,
+              "prox": -1,
             },
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -226,11 +246,15 @@ describe('usePlotConfig', () => {
           ],
           "cursor": Object {
             "focus": Object {
-              "prox": 30,
+              "prox": -1,
             },
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -266,11 +290,15 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": 30,
+              "prox": -1,
             },
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -306,11 +334,15 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": 30,
+              "prox": -1,
             },
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -352,11 +384,15 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": 30,
+              "prox": -1,
             },
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -396,11 +432,15 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": 30,
+              "prox": -1,
             },
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -437,11 +477,15 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": 30,
+              "prox": -1,
             },
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -487,11 +531,15 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": 30,
+              "prox": -1,
             },
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},

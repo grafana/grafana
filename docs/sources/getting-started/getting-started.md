@@ -46,7 +46,6 @@ To create your first dashboard:
 - [Keyboard shortcuts]({{< relref "../dashboards/shortcuts.md" >}})
 - [Plugins](https://grafana.com/grafana/plugins?orderBy=weight&direction=asc)
 
-
 ### Admins
 
 The following topics are of interest to Grafana server admin users:
