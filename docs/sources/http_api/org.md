@@ -309,7 +309,7 @@ Content-Type: application/json
 ```
 Note: The api will work in the following two ways
 1) Need to set GF_USERS_ALLOW_ORG_CREATE=true
-2) Set the config users.allow_org_create to true in ini file
+2) Set the config value users.allow_org_create to true in ini file
 
 **Example Response**:
 

@@ -57,6 +57,11 @@ func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
 		return
 	}
 
+	// Failure to update LastSeenAt should still allow to redirect
+	if err := hs.ShortURLService.UpdateLastSeenAt(c.Req.Context(), shortURL); err != nil {
+		hs.log.Error("Failed to update short URL last seen at", "error", err)
+	}
+
 	hs.log.Debug("Redirecting short URL", "path", shortURL.Path)
 	c.Redirect(setting.ToAbsUrl(shortURL.Path), 302)
 }

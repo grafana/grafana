@@ -31,7 +31,7 @@ export const DEFAULT_MS_PRECISION = Math.log10(ONE_MILLISECOND);
  * @param {number} timestamp
  * @param {number} initialTimestamp
  * @param {number} totalDuration
- * @return {number} 0-100 percentage
+ * @returns {number} 0-100 percentage
  */
 export function getPercentageOfDuration(duration: number, totalDuration: number) {
   return (duration / totalDuration) * 100;
@@ -42,7 +42,7 @@ const quantizeDuration = (duration: number, floatPrecision: number, conversionFa
 
 /**
  * @param {number} duration (in microseconds)
- * @return {string} formatted, unit-labelled string with time in milliseconds
+ * @returns {string} formatted, unit-labelled string with time in milliseconds
  */
 export function formatDate(duration: number) {
   return moment(duration / ONE_MILLISECOND).format(STANDARD_DATE_FORMAT);
@@ -50,7 +50,7 @@ export function formatDate(duration: number) {
 
 /**
  * @param {number} duration (in microseconds)
- * @return {string} formatted, unit-labelled string with time in milliseconds
+ * @returns {string} formatted, unit-labelled string with time in milliseconds
  */
 export function formatTime(duration: number) {
   return moment(duration / ONE_MILLISECOND).format(STANDARD_TIME_FORMAT);
@@ -58,7 +58,7 @@ export function formatTime(duration: number) {
 
 /**
  * @param {number} duration (in microseconds)
- * @return {string} formatted, unit-labelled string with time in milliseconds
+ * @returns {string} formatted, unit-labelled string with time in milliseconds
  */
 export function formatDatetime(duration: number) {
   return moment(duration / ONE_MILLISECOND).format(STANDARD_DATETIME_FORMAT);
@@ -66,7 +66,7 @@ export function formatDatetime(duration: number) {
 
 /**
  * @param {number} duration (in microseconds)
- * @return {string} formatted, unit-labelled string with time in milliseconds
+ * @returns {string} formatted, unit-labelled string with time in milliseconds
  */
 export function formatMillisecondTime(duration: number) {
   const targetDuration = quantizeDuration(duration, DEFAULT_MS_PRECISION, ONE_MILLISECOND);
@@ -75,7 +75,7 @@ export function formatMillisecondTime(duration: number) {
 
 /**
  * @param {number} duration (in microseconds)
- * @return {string} formatted, unit-labelled string with time in seconds
+ * @returns {string} formatted, unit-labelled string with time in seconds
  */
 export function formatSecondTime(duration: number) {
   const targetDuration = quantizeDuration(duration, DEFAULT_MS_PRECISION, ONE_SECOND);

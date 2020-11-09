@@ -75,21 +75,12 @@ type HTTPServer struct {
 	SearchService        *search.SearchService            `inject:""`
 	AlertNG              *eval.AlertNG                    `inject:""`
 	ShortURLService      *shorturls.ShortURLService       `inject:""`
-	Live                 *live.GrafanaLive
+	Live                 *live.GrafanaLive                `inject:""`
 	Listener             net.Listener
 }
 
 func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
-
-	// Set up a websocket broker
-	if hs.Cfg.IsLiveEnabled() { // feature flag
-		node, err := live.InitializeBroker()
-		if err != nil {
-			return err
-		}
-		hs.Live = node
-	}
 
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
@@ -107,7 +98,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.applyRoutes()
 
 	hs.httpSrv = &http.Server{
-		Addr:    fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort),
+		Addr:    net.JoinHostPort(setting.HttpAddr, setting.HttpPort),
 		Handler: hs.macaron,
 	}
 	switch setting.Protocol {
@@ -208,11 +199,11 @@ func (hs *HTTPServer) configureHttps() error {
 	}
 
 	if _, err := os.Stat(setting.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf(`Cannot find SSL cert_file at %v`, setting.CertFile)
+		return fmt.Errorf(`cannot find SSL cert_file at %q`, setting.CertFile)
 	}
 
 	if _, err := os.Stat(setting.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf(`Cannot find SSL key_file at %v`, setting.KeyFile)
+		return fmt.Errorf(`cannot find SSL key_file at %q`, setting.KeyFile)
 	}
 
 	tlsCfg := &tls.Config{
@@ -250,11 +241,11 @@ func (hs *HTTPServer) configureHttp2() error {
 	}
 
 	if _, err := os.Stat(setting.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf(`Cannot find SSL cert_file at %v`, setting.CertFile)
+		return fmt.Errorf(`cannot find SSL cert_file at %q`, setting.CertFile)
 	}
 
 	if _, err := os.Stat(setting.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf(`Cannot find SSL key_file at %v`, setting.KeyFile)
+		return fmt.Errorf(`cannot find SSL key_file at %q`, setting.KeyFile)
 	}
 
 	tlsCfg := &tls.Config{
@@ -338,7 +329,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}))
 
 	// These endpoints are used for monitoring the Grafana instance
-	// and should not be redirect or rejected.
+	// and should not be redirected or rejected.
 	m.Use(hs.healthzHandler)
 	m.Use(hs.apiHealthHandler)
 	m.Use(hs.metricsEndpoint)
@@ -396,7 +387,7 @@ func (hs *HTTPServer) healthzHandler(ctx *macaron.Context) {
 }
 
 // apiHealthHandler will return ok if Grafana's web server is running and it
-// can access the database. If the database cannot be access it will return
+// can access the database. If the database cannot be accessed it will return
 // http status code 503.
 func (hs *HTTPServer) apiHealthHandler(ctx *macaron.Context) {
 	notHeadOrGet := ctx.Req.Method != http.MethodGet && ctx.Req.Method != http.MethodHead
@@ -411,7 +402,7 @@ func (hs *HTTPServer) apiHealthHandler(ctx *macaron.Context) {
 		data.Set("commit", setting.BuildCommit)
 	}
 
-	if err := bus.Dispatch(&models.GetDBHealthQuery{}); err != nil {
+	if !hs.databaseHealthy() {
 		data.Set("database", "failing")
 		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
 		ctx.Resp.WriteHeader(503)

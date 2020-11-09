@@ -17,53 +17,43 @@ type dashboardEvent struct {
 
 // DashboardHandler manages all the `grafana/dashboard/*` channels
 type DashboardHandler struct {
-	publisher models.ChannelPublisher
-}
-
-// CreateDashboardHandler Initialize a dashboard handler
-func CreateDashboardHandler(p models.ChannelPublisher) DashboardHandler {
-	return DashboardHandler{
-		publisher: p,
-	}
+	Publisher models.ChannelPublisher
 }
 
 // GetHandlerForPath called on init
-func (g *DashboardHandler) GetHandlerForPath(path string) (models.ChannelHandler, error) {
-	return g, nil // all dashboards share the same handler
-}
-
-// GetChannelOptions called fast and often
-func (g *DashboardHandler) GetChannelOptions(id string) centrifuge.ChannelOptions {
-	return centrifuge.ChannelOptions{
-		Presence:  true,
-		JoinLeave: true, // if enterprise?
-	}
+func (h *DashboardHandler) GetHandlerForPath(path string) (models.ChannelHandler, error) {
+	return h, nil // all dashboards share the same handler
 }
 
 // OnSubscribe for now allows anyone to subscribe to any dashboard
-func (g *DashboardHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
-	// TODO? check authentication
-	return nil
+func (h *DashboardHandler) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
+	return centrifuge.SubscribeReply{
+		Options: centrifuge.SubscribeOptions{
+			Presence:  true,
+			JoinLeave: true,
+		},
+	}, nil
 }
 
-// OnPublish called when an event is received from the websocket
-func (g *DashboardHandler) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) ([]byte, error) {
-	// TODO -- verify and keep track of editors?
-	return e.Data, nil
+// OnPublish is called when someone begins to edit a dashoard
+func (h *DashboardHandler) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
+	return centrifuge.PublishReply{
+		Options: centrifuge.PublishOptions{},
+	}, nil
 }
 
 // DashboardSaved should broadcast to the appropriate stream
-func (g *DashboardHandler) publish(event dashboardEvent) error {
+func (h *DashboardHandler) publish(event dashboardEvent) error {
 	msg, err := json.Marshal(event)
 	if err != nil {
 		return err
 	}
-	return g.publisher("grafana/dashboard/"+event.UID, msg)
+	return h.Publisher("grafana/dashboard/"+event.UID, msg)
 }
 
 // DashboardSaved will broadcast to all connected dashboards
-func (g *DashboardHandler) DashboardSaved(uid string, userID int64) error {
-	return g.publish(dashboardEvent{
+func (h *DashboardHandler) DashboardSaved(uid string, userID int64) error {
+	return h.publish(dashboardEvent{
 		UID:    uid,
 		Action: "saved",
 		UserID: userID,
@@ -71,8 +61,8 @@ func (g *DashboardHandler) DashboardSaved(uid string, userID int64) error {
 }
 
 // DashboardDeleted will broadcast to all connected dashboards
-func (g *DashboardHandler) DashboardDeleted(uid string, userID int64) error {
-	return g.publish(dashboardEvent{
+func (h *DashboardHandler) DashboardDeleted(uid string, userID int64) error {
+	return h.publish(dashboardEvent{
 		UID:    uid,
 		Action: "deleted",
 		UserID: userID,

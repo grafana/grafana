@@ -32,7 +32,7 @@ enable = [
   "exportloopref",
   "staticcheck",
   "structcheck",
-  # "stylecheck",
+  "stylecheck",
   "typecheck",
   "unconvert",
   "unused",
@@ -43,6 +43,18 @@ enable = [
 
 # Disabled linters (might want them later)
 # "unparam"
+
+# Enable when appropriate
+# Poorly chosen identifier
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1003"
+
+# Enable when appropriate
+# Dot imports that aren't in external test packages are discouraged.
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1001"
 
 [[issues.exclude-rules]]
 linters = ["gosec"]

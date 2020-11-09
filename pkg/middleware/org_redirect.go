@@ -17,7 +17,7 @@ import (
 func OrgRedirect() macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		orgIdValue := req.URL.Query().Get("orgId")
-		orgId, err := strconv.ParseInt(orgIdValue, 10, 32)
+		orgId, err := strconv.ParseInt(orgIdValue, 10, 64)
 
 		if err != nil || orgId == 0 {
 			return

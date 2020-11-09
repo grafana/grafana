@@ -193,14 +193,26 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
           <div className="gf-form">
             <InlineFormLabel
               width={10}
-              tooltip={'Optional, if you want to extract part of a series name or metric node segment.'}
+              tooltip={
+                <div>
+                  Optional, if you want to extract part of a series name or metric node segment. Named capture groups
+                  can be used to separate the display text and value (
+                  <a
+                    href="https://grafana.com/docs/grafana/latest/variables/filter-variables-with-regex#filter-and-modify-using-named-text-and-value-capture-groups"
+                    target="__blank"
+                  >
+                    see examples
+                  </a>
+                  ).
+                </div>
+              }
             >
               Regex
             </InlineFormLabel>
             <input
               type="text"
               className="gf-form-input"
-              placeholder="/.*-(.*)-.*/"
+              placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
               value={this.state.regex ?? this.props.variable.regex}
               onChange={this.onRegExChange}
               onBlur={this.onRegExBlur}

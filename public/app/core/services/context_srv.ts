@@ -16,6 +16,7 @@ export class User {
   helpFlags1: number;
   lightTheme: boolean;
   hasEditPermissionInFolders: boolean;
+  email?: string;
 
   constructor() {
     if (config.bootData.user) {

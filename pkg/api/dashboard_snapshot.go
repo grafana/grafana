@@ -57,7 +57,7 @@ func createExternalDashboardSnapshot(cmd models.CreateDashboardSnapshotCommand) 
 	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
-		return nil, fmt.Errorf("Create external snapshot response status code %d", response.StatusCode)
+		return nil, fmt.Errorf("create external snapshot response status code %d", response.StatusCode)
 	}
 
 	if err := json.NewDecoder(response.Body).Decode(&createSnapshotResponse); err != nil {
@@ -196,7 +196,7 @@ func deleteExternalDashboardSnapshot(externalUrl string) error {
 		}
 	}
 
-	return fmt.Errorf("Unexpected response when deleting external snapshot. Status code: %d", response.StatusCode)
+	return fmt.Errorf("unexpected response when deleting external snapshot, status code: %d", response.StatusCode)
 }
 
 // GET /api/snapshots-delete/:deleteKey

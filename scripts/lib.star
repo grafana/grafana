@@ -1,4 +1,4 @@
-grabpl_version = '0.5.18'
+grabpl_version = '0.5.24'
 build_image = 'grafana/build-container:1.2.28'
 publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -118,17 +118,17 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
             'yarn install --frozen-lockfile --no-progress',
         ])
     if edition == 'enterprise':
+        source_commit = ''
         if ver_mode == 'release':
             committish = '${DRONE_TAG}'
             source_commit = ' ${DRONE_TAG}'
         elif ver_mode == 'test-release':
             committish = 'master'
-            source_commit = ''
+        elif ver_mode == 'version-branch':
+            committish = '${DRONE_BRANCH}'
         else:
             if is_downstream:
                 source_commit = ' $${SOURCE_COMMIT}'
-            else:
-                source_commit = ''
             committish = '${DRONE_COMMIT}'
         steps = [
             identify_runner_step,
@@ -264,8 +264,12 @@ def build_storybook_step(edition, ver_mode):
             # Best to ensure that this step doesn't mess with what's getting built and packaged
             'package',
         ],
+        'environment': {
+            'NODE_OPTIONS': '--max_old_space_size=4096',
+        },
         'commands': [
             'yarn storybook:build',
+            './bin/grabpl verify-storybook',
         ],
     }
 
@@ -523,7 +527,7 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
         variants_str = ' --variants {}'.format(','.join(variants))
     else:
         variants_str = ''
-    if ver_mode in ('master', 'release', 'test-release',):
+    if ver_mode in ('master', 'release', 'test-release', 'version-branch'):
         sign_args = ' --sign'
         env = {
             'GRAFANA_API_KEY': {
@@ -605,7 +609,7 @@ def e2e_tests_server_step():
 def e2e_tests_step():
     return {
         'name': 'end-to-end-tests',
-        'image': 'grafana/ci-e2e:12.18-1',
+        'image': 'grafana/ci-e2e:12.19.0-1',
         'depends_on': [
             'end-to-end-tests-server',
         ],
@@ -856,7 +860,9 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'commands': init_cmds,
         },
     ]
-    if (ver_mode == 'master' and (edition != 'enterprise' or is_downstream)) or ver_mode in ('release', 'test-release'):
+    if (ver_mode == 'master' and (edition != 'enterprise' or is_downstream)) or ver_mode in (
+        'release', 'test-release', 'version-branch',
+    ):
         bucket_part = ''
         bucket = 'grafana-downloads'
         if ver_mode == 'release':
@@ -882,11 +888,16 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'gcloud auth activate-service-account --key-file=gcpkey.json',
             'rm gcpkey.json',
             'cp C:\\App\\nssm-2.24.zip .',
-            '.\\grabpl.exe windows-installer --edition {}{} {}'.format(edition, bucket_part, ver_part),
-            '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
-            'gsutil cp $$fname gs://{}/{}/{}/'.format(bucket, edition, dir),
-            'gsutil cp "$$fname.sha256" gs://{}/{}/{}/'.format(bucket, edition, dir),
         ]
+        if (ver_mode == 'master' and (edition != 'enterprise' or is_downstream)) or ver_mode in (
+            'release', 'test-release',
+        ):
+            installer_commands.extend([
+                '.\\grabpl.exe windows-installer --edition {}{} {}'.format(edition, bucket_part, ver_part),
+                '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
+                'gsutil cp $$fname gs://{}/{}/{}/'.format(bucket, edition, dir),
+                'gsutil cp "$$fname.sha256" gs://{}/{}/{}/'.format(bucket, edition, dir),
+            ])
         steps.append({
             'name': 'build-windows-installer',
             'image': wix_image,
@@ -906,6 +917,8 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             committish = '${DRONE_TAG}'
         elif ver_mode == 'test-release':
             committish = 'master'
+        elif ver_mode == 'version-branch':
+            committish = '$$env:DRONE_BRANCH'
         else:
             committish = '$$env:DRONE_COMMIT'
         # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former

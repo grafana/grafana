@@ -33,6 +33,7 @@ export const LoginForm: FC<Props> = ({ children, onSubmit, isLoggingIn, password
               <Input
                 autoFocus
                 name="user"
+                autoCapitalize="none"
                 ref={register({ required: 'Email or username is required' })}
                 placeholder={loginHint}
                 aria-label={selectors.pages.Login.username}

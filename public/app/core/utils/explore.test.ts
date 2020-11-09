@@ -11,6 +11,7 @@ import {
   updateHistory,
   getExploreUrl,
   GetExploreUrlArguments,
+  getTimeRangeFromUrl,
 } from './explore';
 import store from 'app/core/store';
 import { DataQueryError, dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
@@ -35,8 +36,7 @@ describe('state functions', () => {
     });
 
     it('returns a valid Explore state from URL parameter', () => {
-      const paramValue =
-        '%7B"datasource":"Local","queries":%5B%7B"expr":"metric"%7D%5D,"range":%7B"from":"now-1h","to":"now"%7D%7D';
+      const paramValue = '{"datasource":"Local","queries":[{"expr":"metric"}],"range":{"from":"now-1h","to":"now"}}';
       expect(parseUrlState(paramValue)).toMatchObject({
         datasource: 'Local',
         queries: [{ expr: 'metric' }],
@@ -48,9 +48,7 @@ describe('state functions', () => {
     });
 
     it('returns a valid Explore state from a compact URL parameter', () => {
-      // ["now-1h","now","Local",{"expr":"metric"},{"ui":[true,true,true,"none"]}]
-      const paramValue =
-        '%5B"now-1h","now","Local",%7B"expr":"metric"%7D,%7B%22ui%22:%5Btrue,true,true,%22none%22%5D%7D%5D';
+      const paramValue = '["now-1h","now","Local",{"expr":"metric"},{"ui":[true,true,true,"none"]}]';
       expect(parseUrlState(paramValue)).toMatchObject({
         datasource: 'Local',
         queries: [{ expr: 'metric' }],
@@ -62,9 +60,8 @@ describe('state functions', () => {
     });
 
     it('should return queries if queryType is present in the url', () => {
-      // ["now-1h","now","x-ray-datasource",{"queryType":"getTraceSummaries"},{"ui":[true,true,true,"none"]}]
       const paramValue =
-        '%5B"now-1h","now","x-ray-datasource",%7B"queryType":"getTraceSummaries"%7D,%7B%22ui%22:%5Btrue,true,true,%22none%22%5D%7D%5D';
+        '["now-1h","now","x-ray-datasource",{"queryType":"getTraceSummaries"},{"ui":[true,true,true,"none"]}]';
       expect(parseUrlState(paramValue)).toMatchObject({
         datasource: 'x-ray-datasource',
         queries: [{ queryType: 'getTraceSummaries' }],
@@ -276,6 +273,43 @@ describe('hasRefId', () => {
 
       expect(result).toBe(input.data[3].series[3]);
     });
+  });
+});
+
+describe('getTimeRangeFromUrl', () => {
+  it('should parse moment date', () => {
+    // convert date strings to moment object
+    const range = { from: dateTime('2020-10-22T10:44:33.615Z'), to: dateTime('2020-10-22T10:49:33.615Z') };
+    const result = getTimeRangeFromUrl(range, 'browser');
+    expect(result.raw).toEqual(range);
+  });
+
+  it('should parse epoch strings', () => {
+    const range = {
+      from: dateTime('2020-10-22T10:00:00Z')
+        .valueOf()
+        .toString(),
+      to: dateTime('2020-10-22T11:00:00Z')
+        .valueOf()
+        .toString(),
+    };
+    const result = getTimeRangeFromUrl(range, 'browser');
+    expect(result.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
+    expect(result.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
+    expect(result.raw.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
+    expect(result.raw.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
+  });
+
+  it('should parse ISO strings', () => {
+    const range = {
+      from: dateTime('2020-10-22T10:00:00Z').toISOString(),
+      to: dateTime('2020-10-22T11:00:00Z').toISOString(),
+    };
+    const result = getTimeRangeFromUrl(range, 'browser');
+    expect(result.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
+    expect(result.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
+    expect(result.raw.from.valueOf()).toEqual(dateTime('2020-10-22T10:00:00Z').valueOf());
+    expect(result.raw.to.valueOf()).toEqual(dateTime('2020-10-22T11:00:00Z').valueOf());
   });
 });
 

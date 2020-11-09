@@ -5,13 +5,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/smartystreets/goconvey/convey"
 )
 
 type scenarioContext struct {
@@ -49,7 +49,7 @@ func (sc *scenarioContext) withAuthorizationHeader(authHeader string) *scenarioC
 func (sc *scenarioContext) fakeReq(method, url string) *scenarioContext {
 	sc.resp = httptest.NewRecorder()
 	req, err := http.NewRequest(method, url, nil)
-	So(err, ShouldBeNil)
+	convey.So(err, convey.ShouldBeNil)
 	sc.req = req
 
 	return sc
@@ -63,7 +63,7 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 		q.Add(k, v)
 	}
 	req.URL.RawQuery = q.Encode()
-	So(err, ShouldBeNil)
+	convey.So(err, convey.ShouldBeNil)
 	sc.req = req
 
 	return sc
@@ -94,7 +94,7 @@ func (sc *scenarioContext) exec() {
 
 	if sc.resp.Header().Get("Content-Type") == "application/json; charset=UTF-8" {
 		err := json.NewDecoder(sc.resp.Body).Decode(&sc.respJson)
-		So(err, ShouldBeNil)
+		convey.So(err, convey.ShouldBeNil)
 	}
 }
 

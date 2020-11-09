@@ -18,7 +18,7 @@ import (
 
 var (
 	databaseQueryCounter   *prometheus.CounterVec
-	databaseQueryHistogram *prometheus.HistogramVec
+	databaseQueryHistogram prometheus.Histogram
 )
 
 func init() {
@@ -28,12 +28,12 @@ func init() {
 		Help:      "The total amount of Database queries",
 	}, []string{"status"})
 
-	databaseQueryHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+	databaseQueryHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "database_queries_duration_seconds",
 		Help:      "Database query histogram",
 		Buckets:   prometheus.ExponentialBuckets(0.0001, 4, 9),
-	}, []string{"status"})
+	})
 
 	prometheus.MustRegister(databaseQueryCounter, databaseQueryHistogram)
 }
@@ -78,7 +78,7 @@ func (h *databaseQueryWrapper) After(ctx context.Context, query string, args ...
 	begin := ctx.Value(databaseQueryWrapperKey{}).(time.Time)
 	elapsed := time.Since(begin)
 	databaseQueryCounter.WithLabelValues("success").Inc()
-	databaseQueryHistogram.WithLabelValues("success").Observe(elapsed.Seconds())
+	databaseQueryHistogram.Observe(elapsed.Seconds())
 	h.log.Debug("query finished", "status", "success", "elapsed time", elapsed, "sql", query)
 	return ctx, nil
 }
@@ -94,7 +94,7 @@ func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query str
 	begin := ctx.Value(databaseQueryWrapperKey{}).(time.Time)
 	elapsed := time.Since(begin)
 	databaseQueryCounter.WithLabelValues(status).Inc()
-	databaseQueryHistogram.WithLabelValues(status).Observe(elapsed.Seconds())
+	databaseQueryHistogram.Observe(elapsed.Seconds())
 	h.log.Debug("query finished", "status", status, "elapsed time", elapsed, "sql", query, "error", err)
 	return err
 }

@@ -29,7 +29,7 @@ Grafana v5.3 brings new features, many enhancements and bug fixes. This article 
 
 Grafana v5.3 ships with built-in support for [Google Stackdriver](https://cloud.google.com/stackdriver/) and enables you to visualize your Stackdriver metrics in Grafana.
 
-Getting started with the plugin is easy. Simply create a GCE Service account that has access to the Stackdriver API scope, download the Service Account key file from Google and upload it on the Stackdriver data source config page in Grafana and you should have a secure server-to-server authentication setup. Like other core plugins, Stackdriver has built-in support for alerting. It also comes with support for heatmaps and basic variables.
+Getting started with the plugin is easy. Simply create a GCE Service account that has access to the Stackdriver API scope, download the Service Account key file from Google and upload it on the Stackdriver data source configuration page in Grafana and you should have a secure server-to-server authentication setup. Like other core plugins, Stackdriver has built-in support for alerting. It also comes with support for heatmaps and basic variables.
 
 If you're already accustomed to the Stackdriver Metrics Explorer UI, you'll notice that there are a lot of similarities to the query editor in Grafana. It is possible to add filters using wildcards and regular expressions. You can do Group By, Primary Aggregation and Alignment.
 
