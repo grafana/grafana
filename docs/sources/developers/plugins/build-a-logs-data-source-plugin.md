@@ -1,6 +1,5 @@
 +++
 title = "Build a logs data source plugin"
-type = "docs"
 +++
 
 # Build a logs data source plugin

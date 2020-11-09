@@ -1,11 +1,6 @@
 +++
 title = "Add a panel"
-type = "docs"
-[menu.docs]
-identifier = "add-a-panel"
-parent = "panels"
 weight = 100
-draft = "true"
 +++
 
 # Add a panel
