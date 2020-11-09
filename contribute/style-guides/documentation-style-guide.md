@@ -51,12 +51,12 @@ The following sections provide general guidelines on topics specific to Grafana 
 ### General
 
 - Use active voice. Avoid passive voice.
-  - Passive: The heatmap visualization is displayed.
   - Active: Grafana displays the heatmap visualization.
+  - Passive: The heatmap visualization is displayed.
 - Write in the imperative second person. Examples: You can write a query. Click the panel. Close the window.
 - Write in present tense.
-  - Not: The panel will open.
   - Use: The panel opens. Grafana opens the panel.
+  - Not: The panel will open.
 - Do not use an ampersand (&) as an abbreviation for "and."
   - **Exceptions:** If an ampersand is used in the Grafana UI, then match the UI.
 - Avoid using internal slang and jargon in technical documentation.
@@ -78,9 +78,9 @@ The following sections provide general guidelines on topics specific to Grafana 
 - Task topic headings start with a verb.
   - Write a query. Create a dashboard.
 - Concept and reference topic headings should be nouns or gerunds. Examples: Contributing to docs, Visualizations, Style guide
-- Avoid following one heading with another heading.
+- Avoid stacked headings, which is following one heading with another heading.
 - Avoid skipping heading levels. For example, an h1 should be followed by an h2 rather than an h3.
-- Avoid having just one lower-level heading. For example, h1, h2, h2, h3, h3, h2 is a good order. Do not go h1, h2, h3, h2, h3, h2.
+- Avoid having just one lower-level heading. For example, h1, h2, h2, h3, h3, h2, h2 is a good order. Do not go h1, h2, h3, h2, h3, h2.
 - Don't include parenthetical words like (Important!) in headings.
 
 ### Images
@@ -152,9 +152,8 @@ Warnings tell the user not to do something. For example:
 - Do not assume everyone is using Linux. Make sure instructions include enough information for Windows and Mac users to successfully complete procedures.
 
 - Do not add `$` before commands. Make it easy for users to copy and paste commands.
-
-  - **Wrong:** `$ sudo yum install grafana`
   - **Right:** `sudo yum install grafana`
+  - **Wrong:** `$ sudo yum install grafana`
 
 - Include `sudo` before commands that require `sudo` to work.
 
@@ -185,7 +184,7 @@ Two words if used as a verb, one word if used as a noun.
 
 #### data source
 
-Two words, not one
+Two words, not one.
 
 **Exceptions:**
 - "datasource" used as an identifier
@@ -212,6 +211,10 @@ Do not use. This is developer jargon that refers to a UI panel. Refer to the pan
 #### metadata
 
 One word, not two.
+
+#### mixin
+
+One word, not two. Also, not hyphenated.
 
 #### open source, open-source
 

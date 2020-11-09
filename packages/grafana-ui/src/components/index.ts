@@ -13,7 +13,7 @@ export { ClipboardButton } from './ClipboardButton/ClipboardButton';
 export { Cascader, CascaderOption } from './Cascader/Cascader';
 export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 
-export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';
+export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';

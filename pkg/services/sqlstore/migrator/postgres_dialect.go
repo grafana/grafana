@@ -31,7 +31,7 @@ func (db *Postgres) Quote(name string) string {
 	return "\"" + name + "\""
 }
 
-func (b *Postgres) LikeStr() string {
+func (db *Postgres) LikeStr() string {
 	return "ILIKE"
 }
 
@@ -43,7 +43,7 @@ func (db *Postgres) BooleanStr(value bool) string {
 	return strconv.FormatBool(value)
 }
 
-func (b *Postgres) Default(col *Column) string {
+func (db *Postgres) Default(col *Column) string {
 	if col.Type == DB_Bool {
 		if col.Default == "0" {
 			return "FALSE"
