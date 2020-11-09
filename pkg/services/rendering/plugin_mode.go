@@ -96,7 +96,7 @@ func (rs *RenderingService) renderViaPluginV2(ctx context.Context, renderKey str
 		return nil, err
 	}
 	if rsp.Error != "" {
-		return nil, fmt.Errorf("Rendering failed: %v", rsp.Error)
+		return nil, fmt.Errorf("rendering failed: %s", rsp.Error)
 	}
 
 	return &RenderResult{FilePath: pngPath}, err

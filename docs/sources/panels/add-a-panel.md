@@ -16,8 +16,8 @@ Panels allow you to show your data in visual form. This topic walks you through 
 
 1. Navigate to the dashboard you want to add a panel to.
 1. Click the **Add panel** icon.
-   
-     ![](/img/docs/panels/add-panel-icon-7-0.png)
+
+   ![](/img/docs/panels/add-panel-icon-7-0.png)
 
 1. Click **Add new panel**.
 
@@ -25,7 +25,7 @@ Grafana creates an empty graph panel with your default data source selected.
 
 ## 2. Edit panel settings
 
-While not required, we recommend that you add a helpful title and description to your panel. You can use [variables you have defined]({{< relref "../variables/templates-and-variables.md" >}}) in either field, but not [global variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
+While not required, we recommend that you add a helpful title and description to your panel. You can use [variables you have defined]({{< relref "../variables/_index.md" >}}) in either field, but not [global variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
 
 ![](/img/docs/panels/panel-settings-7-0.png)
 
@@ -37,8 +37,8 @@ While not required, we recommend that you add a helpful title and description to
 
 Each panel needs at least one query to display a visualization. You write queries in the Query tab of the panel editor. For more information about the Query tab, refer to [Queries]({{< relref "queries.md" >}}).
 
-1. Choose a data source. In the first line of the Query tab, click the drop-down list to see all available data sources. This list includes all data sources you added. Refer to [Add a data source]({{< relref "../features/datasources/add-a-data-source.md" >}}) if you need instructions.
-1. Write or construct a query in the query language of your data source. Options will vary. Refer to your specific [data source documentation]({{< relref "../features/datasources/_index.md" >}}) for specific guidelines.
+1. Choose a data source. In the first line of the Query tab, click the drop-down list to see all available data sources. This list includes all data sources you added. Refer to [Add a data source]({{< relref "../datasources/add-a-data-source.md" >}}) if you need instructions.
+1. Write or construct a query in the query language of your data source. Options will vary. Refer to your specific [data source documentation]({{< relref "../datasources/_index.md" >}}) for specific guidelines.
 
 ## 4. Choose a visualization type
 
@@ -58,7 +58,8 @@ Our Grafana Fundamentals tutorial is a great place to start, or you can learn mo
 
 - Learn more about [panel editor]({{< relref "panel-editor.md" >}}) options.
 - Add more [queries]({{< relref "queries.md" >}}).
-- [Transform]({{< relref "transformations.md" >}}) your data.
-- [Configure]({{< relref "field-configuration-options.md" >}}) how your results are displayed in the visualization.
+- [Transform]({{< relref "transformations/_index.md" >}}) your data.
+- [Configure]({{< relref "field-options/_index.md" >}}) how your results are displayed in the visualization.
+
 - If you made a graph panel, set up an [alert]({{< relref "../alerting/alerts-overview.md" >}}).
-- Create [templates and variables]({{< relref "../variables/templates-and-variables.md" >}}).
+- Create [templates and variables]({{< relref "../variables/_index.md" >}}).

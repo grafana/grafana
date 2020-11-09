@@ -2,12 +2,15 @@ package plugins
 
 import (
 	"encoding/json"
+	"path/filepath"
 	"strings"
 
 	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 type AppPluginCss struct {
@@ -21,6 +24,8 @@ type AppPlugin struct {
 
 	FoundChildPlugins []*PluginInclude `json:"-"`
 	Pinned            bool             `json:"-"`
+
+	Executable string `json:"executable,omitempty"`
 }
 
 // AppPluginRoute describes a plugin route that is defined in
@@ -58,13 +63,22 @@ type JwtTokenAuth struct {
 	Params map[string]string `json:"params"`
 }
 
-func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
+func (app *AppPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) error {
 	if err := decoder.Decode(app); err != nil {
 		return err
 	}
 
-	if err := app.registerPlugin(pluginDir); err != nil {
+	if err := app.registerPlugin(base); err != nil {
 		return err
+	}
+
+	if app.Backend {
+		cmd := ComposePluginStartCommand(app.Executable)
+		fullpath := filepath.Join(app.PluginDir, cmd)
+		factory := grpcplugin.NewBackendPlugin(app.Id, fullpath, grpcplugin.PluginStartFuncs{})
+		if err := backendPluginManager.Register(app.Id, factory); err != nil {
+			return errutil.Wrapf(err, "failed to register backend plugin")
+		}
 	}
 
 	Apps[app.Id] = app

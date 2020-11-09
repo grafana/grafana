@@ -1,17 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { IntervalVariableModel, VariableHide, VariableOption, VariableRefresh } from '../types';
-import { getInstanceState, NEW_VARIABLE_ID, VariablePayload } from '../state/types';
+import { initialVariableModelState, IntervalVariableModel, VariableOption, VariableRefresh } from '../types';
+import { getInstanceState, VariablePayload } from '../state/types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 import _ from 'lodash';
 
 export const initialIntervalVariableModelState: IntervalVariableModel = {
-  id: NEW_VARIABLE_ID,
-  global: false,
+  ...initialVariableModelState,
   type: 'interval',
-  name: '',
-  label: '',
-  hide: VariableHide.dontHide,
-  skipUrlSync: false,
   auto_count: 30,
   auto_min: '10s',
   options: [],
@@ -19,8 +14,6 @@ export const initialIntervalVariableModelState: IntervalVariableModel = {
   query: '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d',
   refresh: VariableRefresh.onTimeRangeChanged,
   current: {} as VariableOption,
-  index: -1,
-  initLock: null,
 };
 
 export const intervalVariableSlice = createSlice({

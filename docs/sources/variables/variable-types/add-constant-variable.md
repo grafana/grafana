@@ -3,7 +3,9 @@ title = "Add a constant variable"
 type = "docs"
 aliases = ["/docs/grafana/latest/variables/add-constant-variable.md"]
 [menu.docs]
-weight = 500
+identifier = "add-constant-variable"
+parent = "variable-types"
+weight = 400
 +++
 
 # Add a constant variable

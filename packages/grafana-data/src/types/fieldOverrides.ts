@@ -37,7 +37,7 @@ export interface FieldOverrideContext extends StandardEditorContext<any> {
 }
 export interface FieldConfigEditorProps<TValue, TSettings>
   extends Omit<StandardEditorProps<TValue, TSettings>, 'item'> {
-  item: FieldConfigPropertyItem<TValue, TSettings>; // The property info
+  item: FieldConfigPropertyItem<any, TValue, TSettings>; // The property info
   value: TValue;
   context: FieldOverrideContext;
   onChange: (value?: TValue) => void;

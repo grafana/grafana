@@ -9,6 +9,7 @@ import { default as ReactAsyncSelect } from '@torkelo/react-select/async';
 import { default as AsyncCreatable } from '@torkelo/react-select/async-creatable';
 
 import { Icon } from '../Icon/Icon';
+import { Spinner } from '../Spinner/Spinner';
 import { css, cx } from 'emotion';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
@@ -113,6 +114,7 @@ export function SelectBase<T>({
   loadOptions,
   loadingMessage = 'Loading options...',
   maxMenuHeight = 300,
+  minMenuHeight,
   maxVisibleValues,
   menuPlacement = 'auto',
   menuPosition,
@@ -143,7 +145,7 @@ export function SelectBase<T>({
       }
       onChange(value);
     },
-    [isMulti, value, onChange]
+    [isMulti, onChange]
   );
   let ReactSelectComponent: ReactSelect | Creatable = ReactSelect;
   const creatableProps: any = {};
@@ -190,6 +192,7 @@ export function SelectBase<T>({
     isOptionDisabled,
     isSearchable,
     maxMenuHeight,
+    minMenuHeight,
     maxVisibleValues,
     menuIsOpen: isOpen,
     menuPlacement,
@@ -292,7 +295,7 @@ export function SelectBase<T>({
             );
           },
           LoadingIndicator: (props: any) => {
-            return <Icon className="fa-spin" name="fa fa-spinner" />;
+            return <Spinner inline={true} />;
           },
           LoadingMessage: (props: any) => {
             return <div className={styles.loadingMessage}>{loadingMessage}</div>;

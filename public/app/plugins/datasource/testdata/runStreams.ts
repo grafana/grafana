@@ -98,6 +98,7 @@ export function runSignalStream(
       subscriber.next({
         data: [data],
         key: streamId,
+        state: LoadingState.Streaming,
       });
 
       timeoutId = setTimeout(pushNextEvent, speed);

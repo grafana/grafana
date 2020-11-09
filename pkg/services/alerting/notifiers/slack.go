@@ -241,7 +241,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		}
 	}
 	msg := ""
-	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
+	if evalContext.Rule.State != models.AlertStateOK { // don't add message when going back to alert state ok.
 		msg = evalContext.Rule.Message
 	}
 	imageURL := ""
@@ -287,7 +287,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		body["blocks"] = blocks
 	}
 
-	//recipient override
+	// recipient override
 	if sn.Recipient != "" {
 		body["channel"] = sn.Recipient
 	}

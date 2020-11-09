@@ -7,6 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const (
+	openSource = "Open Source"
+)
+
 type OSSLicensingService struct {
 	Cfg          *setting.Cfg        `inject:""`
 	HooksService *hooks.HooksService `inject:""`
@@ -21,7 +25,7 @@ func (*OSSLicensingService) Expiry() int64 {
 }
 
 func (*OSSLicensingService) Edition() string {
-	return "Open Source"
+	return openSource
 }
 
 func (*OSSLicensingService) StateInfo() string {

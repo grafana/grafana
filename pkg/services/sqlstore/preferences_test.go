@@ -1,3 +1,5 @@
+// +build integration
+
 package sqlstore
 
 import (
@@ -11,14 +13,17 @@ import (
 
 func TestPreferencesDataAccess(t *testing.T) {
 	Convey("Testing preferences data access", t, func() {
-		InitTestDB(t)
+		ss := InitTestDB(t)
 
 		Convey("GetPreferencesWithDefaults with no saved preferences should return defaults", func() {
+			setting.DefaultTheme = "light"
+			ss.Cfg.DateFormats.DefaultTimezone = "UTC"
+
 			query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{}}
-			err := GetPreferencesWithDefaults(query)
+			err := ss.GetPreferencesWithDefaults(query)
 			So(err, ShouldBeNil)
-			So(query.Result.Theme, ShouldEqual, setting.DefaultTheme)
-			So(query.Result.Timezone, ShouldEqual, "browser")
+			So(query.Result.Theme, ShouldEqual, "light")
+			So(query.Result.Timezone, ShouldEqual, "UTC")
 			So(query.Result.HomeDashboardId, ShouldEqual, 0)
 		})
 
@@ -29,7 +34,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1, UserId: 1}}
-			err = GetPreferencesWithDefaults(query)
+			err = ss.GetPreferencesWithDefaults(query)
 			So(err, ShouldBeNil)
 			So(query.Result.HomeDashboardId, ShouldEqual, 4)
 		})
@@ -41,7 +46,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1, UserId: 2}}
-			err = GetPreferencesWithDefaults(query)
+			err = ss.GetPreferencesWithDefaults(query)
 			So(err, ShouldBeNil)
 			So(query.Result.HomeDashboardId, ShouldEqual, 1)
 		})
@@ -57,7 +62,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 			query := &models.GetPreferencesWithDefaultsQuery{
 				User: &models.SignedInUser{OrgId: 1, Teams: []int64{2, 3}},
 			}
-			err = GetPreferencesWithDefaults(query)
+			err = ss.GetPreferencesWithDefaults(query)
 			So(err, ShouldBeNil)
 			So(query.Result.HomeDashboardId, ShouldEqual, 3)
 		})
@@ -71,7 +76,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1}}
-			err = GetPreferencesWithDefaults(query)
+			err = ss.GetPreferencesWithDefaults(query)
 			So(err, ShouldBeNil)
 			So(query.Result.HomeDashboardId, ShouldEqual, 1)
 		})
@@ -89,7 +94,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 			query := &models.GetPreferencesWithDefaultsQuery{
 				User: &models.SignedInUser{OrgId: 1, UserId: 1, Teams: []int64{2, 3}},
 			}
-			err = GetPreferencesWithDefaults(query)
+			err = ss.GetPreferencesWithDefaults(query)
 			So(err, ShouldBeNil)
 			So(query.Result.HomeDashboardId, ShouldEqual, 4)
 		})
@@ -107,7 +112,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 			query := &models.GetPreferencesWithDefaultsQuery{
 				User: &models.SignedInUser{OrgId: 1, UserId: 2},
 			}
-			err = GetPreferencesWithDefaults(query)
+			err = ss.GetPreferencesWithDefaults(query)
 			So(err, ShouldBeNil)
 			So(query.Result.HomeDashboardId, ShouldEqual, 1)
 		})

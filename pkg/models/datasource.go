@@ -30,41 +30,41 @@ const (
 )
 
 var (
-	ErrDataSourceNotFound                = errors.New("Data source not found")
-	ErrDataSourceNameExists              = errors.New("Data source with the same name already exists")
-	ErrDataSourceUidExists               = errors.New("Data source with the same uid already exists")
-	ErrDataSourceUpdatingOldVersion      = errors.New("Trying to update old version of datasource")
-	ErrDatasourceIsReadOnly              = errors.New("Data source is readonly. Can only be updated from configuration")
-	ErrDataSourceAccessDenied            = errors.New("Data source access denied")
-	ErrDataSourceFailedGenerateUniqueUid = errors.New("Failed to generate unique datasource id")
+	ErrDataSourceNotFound                = errors.New("data source not found")
+	ErrDataSourceNameExists              = errors.New("data source with the same name already exists")
+	ErrDataSourceUidExists               = errors.New("data source with the same uid already exists")
+	ErrDataSourceUpdatingOldVersion      = errors.New("trying to update old version of datasource")
+	ErrDatasourceIsReadOnly              = errors.New("data source is readonly, can only be updated from configuration")
+	ErrDataSourceAccessDenied            = errors.New("data source access denied")
+	ErrDataSourceFailedGenerateUniqueUid = errors.New("failed to generate unique datasource ID")
 )
 
 type DsAccess string
 
 type DataSource struct {
-	Id      int64
-	OrgId   int64
-	Version int
+	Id      int64 `json:"id"`
+	OrgId   int64 `json:"orgId"`
+	Version int   `json:"version"`
 
-	Name              string
-	Type              string
-	Access            DsAccess
-	Url               string
-	Password          string
-	User              string
-	Database          string
-	BasicAuth         bool
-	BasicAuthUser     string
-	BasicAuthPassword string
-	WithCredentials   bool
-	IsDefault         bool
-	JsonData          *simplejson.Json
-	SecureJsonData    securejsondata.SecureJsonData
-	ReadOnly          bool
-	Uid               string
+	Name              string                        `json:"name"`
+	Type              string                        `json:"type"`
+	Access            DsAccess                      `json:"access"`
+	Url               string                        `json:"url"`
+	Password          string                        `json:"password"`
+	User              string                        `json:"user"`
+	Database          string                        `json:"database"`
+	BasicAuth         bool                          `json:"basicAuth"`
+	BasicAuthUser     string                        `json:"basicAuthUser"`
+	BasicAuthPassword string                        `json:"basicAuthPassword"`
+	WithCredentials   bool                          `json:"withCredentials"`
+	IsDefault         bool                          `json:"isDefault"`
+	JsonData          *simplejson.Json              `json:"jsonData"`
+	SecureJsonData    securejsondata.SecureJsonData `json:"secureJsonData"`
+	ReadOnly          bool                          `json:"readOnly"`
+	Uid               string                        `json:"uid"`
 
-	Created time.Time
-	Updated time.Time
+	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
 }
 
 // DecryptedBasicAuthPassword returns data source basic auth password in plain text. It uses either deprecated

@@ -5,7 +5,7 @@ type = "docs"
 [menu.docs]
 identifier = "enable-or-disable-user"
 parent = "manage-users"
-weight = 10
+weight = 200
 +++
 
 # Enable or disable a user

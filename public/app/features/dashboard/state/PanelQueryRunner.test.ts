@@ -1,3 +1,11 @@
+const applyFieldOverridesMock = jest.fn();
+
+jest.mock('@grafana/data', () => ({
+  __esModule: true,
+  ...(jest.requireActual('@grafana/data') as any),
+  applyFieldOverrides: applyFieldOverridesMock,
+}));
+
 import { PanelQueryRunner } from './PanelQueryRunner';
 // Importing this way to be able to spy on grafana/data
 import * as grafanaData from '@grafana/data';
@@ -131,6 +139,10 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
 }
 
 describe('PanelQueryRunner', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describeQueryRunnerScenario('simple scenario', ctx => {
     it('should set requestId on request', async () => {
       expect(ctx.queryCalledWith?.requestId).toBe('Q100');
@@ -211,14 +223,12 @@ describe('PanelQueryRunner', () => {
     'field overrides',
     ctx => {
       it('should apply when field override options are set', async () => {
-        const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
-
         ctx.runner.getData({ withTransforms: true, withFieldConfig: true }).subscribe({
           next: (data: PanelData) => {
             return data;
           },
         });
-        expect(spy).toBeCalled();
+        expect(applyFieldOverridesMock).toBeCalled();
       });
     },
     {
@@ -277,15 +287,13 @@ describe('PanelQueryRunner', () => {
       });
 
       it('should not apply field config when applyFieldConfig option is false', async () => {
-        const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
-        spy.mockClear();
         ctx.runner.getData({ withFieldConfig: false, withTransforms: true }).subscribe({
           next: (data: PanelData) => {
             return data;
           },
         });
 
-        expect(spy).not.toBeCalled();
+        expect(applyFieldOverridesMock).not.toBeCalled();
       });
     },
     {
@@ -322,15 +330,13 @@ describe('PanelQueryRunner', () => {
       });
 
       it('should not apply field config when applyFieldConfig option is false', async () => {
-        const spy = jest.spyOn(grafanaData, 'applyFieldOverrides');
-        spy.mockClear();
         ctx.runner.getData({ withFieldConfig: false, withTransforms: true }).subscribe({
           next: (data: PanelData) => {
             return data;
           },
         });
 
-        expect(spy).not.toBeCalled();
+        expect(applyFieldOverridesMock).not.toBeCalled();
       });
     },
     {

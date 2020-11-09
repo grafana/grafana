@@ -15,7 +15,7 @@ import {
   ThresholdsMode,
   ThresholdsConfig,
   validateFieldConfig,
-  FieldColorMode,
+  FieldColorModeId,
 } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
@@ -174,7 +174,7 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     const { defaults } = fieldOptions;
     if (defaults.color && typeof defaults.color === 'string') {
       defaults.color = {
-        mode: FieldColorMode.Fixed,
+        mode: FieldColorModeId.Fixed,
         fixedColor: defaults.color,
       };
     }

@@ -4,9 +4,9 @@ keywords = ["grafana", "templating", "documentation", "guide", "template", "vari
 type = "docs"
 aliases = ["/docs/grafana/latest/variables/global-variables.md"]
 [menu.docs]
-name = "global-variables"
-parent = "variables"
-weight = 200
+identifier = "global-variable"
+parent = "variable-types"
+weight = 900
 +++
 
 # Global variables
@@ -70,6 +70,7 @@ This variable is the ID of the current organization.
 
 `${__user.id}` is the ID of the current user.
 `${__user.login}` is the login handle of the current user.
+`${__user.email}` is the email for the current user.
 
 ## $__range
 
@@ -83,5 +84,5 @@ This is used in several places, including:
 
 - The WHERE clause for the InfluxDB data source. Grafana adds it automatically to InfluxDB queries when in Query Editor mode. You can add it manually in Text Editor mode: `WHERE $timeFilter`.
 - Log Analytics queries in the Azure Monitor data source.
-- SQL queries in MySQL, Postgres, and MSSQL
+- SQL queries in MySQL, Postgres, and MSSQL.
 - The `$__timeFilter` variable is used in the MySQL data source.

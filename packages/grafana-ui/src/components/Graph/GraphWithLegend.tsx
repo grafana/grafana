@@ -28,7 +28,7 @@ export interface GraphWithLegendProps extends GraphProps, LegendRenderOptions {
 const getGraphWithLegendStyles = stylesFactory(({ placement }: GraphWithLegendProps) => ({
   wrapper: css`
     display: flex;
-    flex-direction: ${placement === 'under' ? 'column' : 'row'};
+    flex-direction: ${placement === 'bottom' ? 'column' : 'row'};
     height: 100%;
   `,
   graphContainer: css`
@@ -37,7 +37,7 @@ const getGraphWithLegendStyles = stylesFactory(({ placement }: GraphWithLegendPr
   `,
   legendContainer: css`
     padding: 10px 0;
-    max-height: ${placement === 'under' ? '35%' : 'none'};
+    max-height: ${placement === 'bottom' ? '35%' : 'none'};
   `,
 }));
 

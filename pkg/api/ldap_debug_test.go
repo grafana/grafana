@@ -43,9 +43,9 @@ func (m *LDAPMock) User(login string) (*models.ExternalUserInfo, ldap.ServerConf
 	return userSearchResult, userSearchConfig, userSearchError
 }
 
-//***
+// ***
 // GetUserFromLDAP tests
-//***
+// ***
 
 func getUserFromLDAPContext(t *testing.T, requestURL string) *scenarioContext {
 	t.Helper()
@@ -145,7 +145,7 @@ func TestGetUserFromLDAPApiEndpoint_OrgNotfound(t *testing.T) {
 
 	expected := `
 	{
-		"error": "Unable to find organization with ID '2'",
+		"error": "unable to find organization with ID '2'",
 		"message": "An organization was not found - Please verify your LDAP configuration"
 	}
 	`
@@ -311,9 +311,9 @@ func TestGetUserFromLDAPApiEndpoint_WithTeamHandler(t *testing.T) {
 	assert.JSONEq(t, expected, sc.resp.Body.String())
 }
 
-//***
+// ***
 // GetLDAPStatus tests
-//***
+// ***
 
 func getLDAPStatusContext(t *testing.T) *scenarioContext {
 	t.Helper()
@@ -371,9 +371,9 @@ func TestGetLDAPStatusApiEndpoint(t *testing.T) {
 	assert.JSONEq(t, expected, sc.resp.Body.String())
 }
 
-//***
+// ***
 // PostSyncUserWithLDAP tests
-//***
+// ***
 
 func postSyncUserWithLDAPContext(t *testing.T, requestURL string) *scenarioContext {
 	t.Helper()
@@ -467,7 +467,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 
 	expected := `
 	{
-		"message": "User not found"
+		"message": "user not found"
 	}
 	`
 
@@ -509,7 +509,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 
 	expected := `
 	{
-		"error": "Did not find a user",
+		"error": "did not find a user",
 		"message": "Refusing to sync grafana super admin \"ldap-daniel\" - it would be disabled"
 	}
 	`

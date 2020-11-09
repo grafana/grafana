@@ -212,7 +212,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"User added to organization"}
+{"message":"User added to organization","userId":1}
 ```
 
 ## Admin Organizations API
@@ -309,7 +309,7 @@ Content-Type: application/json
 ```
 Note: The api will work in the following two ways
 1) Need to set GF_USERS_ALLOW_ORG_CREATE=true
-2) Set the config users.allow_org_create to true in ini file
+2) Set the config value users.allow_org_create to true in ini file
 
 **Example Response**:
 
@@ -463,7 +463,7 @@ Content-Type: application/json
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"User added to organization"}
+{"message":"User added to organization", "userId": 1}
 ```
 
 ### Update Users in Organization

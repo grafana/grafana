@@ -2,9 +2,9 @@ import React, { PureComponent } from 'react';
 import { InlineFormLabel, LegacyForms, Button } from '@grafana/ui';
 const { Select, Input } = LegacyForms;
 import {
+  AppEvents,
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOptionSelect,
-  onUpdateDatasourceOption,
   onUpdateDatasourceResetOption,
   onUpdateDatasourceJsonDataOption,
   onUpdateDatasourceSecureJsonDataOption,
@@ -14,11 +14,12 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
+import { appEvents } from 'app/core/core';
 
 const authProviderOptions = [
+  { label: 'AWS SDK Default', value: 'default' },
   { label: 'Access & secret key', value: 'keys' },
   { label: 'Credentials file', value: 'credentials' },
-  { label: 'ARN', value: 'arn' },
 ] as SelectableValue[];
 
 export type Props = DataSourcePluginOptionsEditorProps<CloudWatchJsonData, CloudWatchSecureJsonData>;
@@ -42,9 +43,25 @@ export class ConfigEditor extends PureComponent<Props, State> {
     this.loadRegionsPromise = makePromiseCancelable(this.loadRegions());
     this.loadRegionsPromise.promise.catch(({ isCanceled }) => {
       if (isCanceled) {
-        console.warn('Cloud Watch ConfigEditor has unmounted, intialization was canceled');
+        console.warn('Cloud Watch ConfigEditor has unmounted, initialization was canceled');
       }
     });
+
+    if (this.props.options.jsonData.authType === 'arn') {
+      appEvents.emit(AppEvents.alertWarning, [
+        'Since grafana 7.3 authentication type "arn" is deprecated, falling back to default SDK provider',
+      ]);
+    } else if (
+      this.props.options.jsonData.authType === 'credentials' &&
+      !this.props.options.jsonData.profile &&
+      !this.props.options.jsonData.database
+    ) {
+      appEvents.emit(AppEvents.alertWarning, [
+        'As of grafana 7.3 authentication type "credentials" should be used only for shared file credentials. \
+         If you don\'t have a credentials file, switch to the default SDK provider for extracting credentials \
+         from environment variables or IAM roles',
+      ]);
+    }
   }
 
   componentWillUnmount() {
@@ -115,6 +132,10 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const { regions } = this.state;
     const { options } = this.props;
     const secureJsonData = (options.secureJsonData || {}) as CloudWatchSecureJsonData;
+    let profile = options.jsonData.profile;
+    if (profile === undefined) {
+      profile = options.database;
+    }
 
     return (
       <>
@@ -122,17 +143,18 @@ export class ConfigEditor extends PureComponent<Props, State> {
         <div className="gf-form-group">
           <div className="gf-form-inline">
             <div className="gf-form">
-              <InlineFormLabel className="width-14">Auth Provider</InlineFormLabel>
+              <InlineFormLabel
+                className="width-14"
+                tooltip="Specify which AWS credentials chain to use. AWS SDK Default is the recommended option for EKS, ECS, or if you've attached an IAM role to your EC2 instance."
+              >
+                Authentication Provider
+              </InlineFormLabel>
               <Select
                 className="width-30"
                 value={authProviderOptions.find(authProvider => authProvider.value === options.jsonData.authType)}
                 options={authProviderOptions}
                 defaultValue={options.jsonData.authType}
                 onChange={option => {
-                  if (options.jsonData.authType === 'arn' && option.value !== 'arn') {
-                    delete this.props.options.jsonData.assumeRoleArn;
-                    delete this.props.options.jsonData.externalId;
-                  }
                   onUpdateDatasourceJsonDataOptionSelect(this.props, 'authType')(option);
                 }}
               />
@@ -151,8 +173,8 @@ export class ConfigEditor extends PureComponent<Props, State> {
                   <Input
                     className="width-30"
                     placeholder="default"
-                    value={options.jsonData.database}
-                    onChange={onUpdateDatasourceOption(this.props, 'database')}
+                    value={profile}
+                    onChange={onUpdateDatasourceJsonDataOption(this.props, 'profile')}
                   />
                 </div>
               </div>
@@ -226,21 +248,24 @@ export class ConfigEditor extends PureComponent<Props, State> {
               )}
             </div>
           )}
-          {options.jsonData.authType === 'arn' && (
-            <div className="gf-form-inline">
-              <div className="gf-form">
-                <InlineFormLabel className="width-14" tooltip="ARN of Assume Role">
-                  Assume Role ARN
-                </InlineFormLabel>
-                <div className="width-30">
-                  <Input
-                    className="width-30"
-                    placeholder="arn:aws:iam:*"
-                    value={options.jsonData.assumeRoleArn || ''}
-                    onChange={onUpdateDatasourceJsonDataOption(this.props, 'assumeRoleArn')}
-                  />
-                </div>
+          <div className="gf-form-inline">
+            <div className="gf-form">
+              <InlineFormLabel
+                className="width-14"
+                tooltip="Optionally, specify the ARN of a role to assume. Specifying a role here will ensure that the selected authentication provider is used to assume the specified role rather than using the credentials directly. Leave blank if you don't need to assume a role at all"
+              >
+                Assume Role ARN
+              </InlineFormLabel>
+              <div className="width-30">
+                <Input
+                  className="width-30"
+                  placeholder="arn:aws:iam:*"
+                  value={options.jsonData.assumeRoleArn || ''}
+                  onChange={onUpdateDatasourceJsonDataOption(this.props, 'assumeRoleArn')}
+                />
               </div>
+            </div>
+            <div className="gf-form-inline">
               <div className="gf-form">
                 <InlineFormLabel
                   className="width-14"
@@ -258,7 +283,7 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 </div>
               </div>
             </div>
-          )}
+          </div>
           <div className="gf-form-inline">
             <div className="gf-form">
               <InlineFormLabel

@@ -5,6 +5,7 @@ import {
   dateTimeAsUS,
   dateTimeAsUSNoDateIfToday,
   getDateTimeAsLocalFormat,
+  getDateTimeAsLocalFormatNoDateIfToday,
   dateTimeFromNow,
   toClockMilliseconds,
   toClockSeconds,
@@ -20,6 +21,7 @@ import {
   toNanoSeconds,
   toSeconds,
   toTimeTicks,
+  dateTimeSystemFormatter,
 } from './dateTimeFormatters';
 import { toHex, sci, toHex0x, toPercent, toPercentUnit } from './arithmeticFormatters';
 import { binaryPrefix, currency, SIPrefix } from './symbolFormatters';
@@ -125,6 +127,8 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'South African Rand (R)', id: 'currencyZAR', fn: currency('R') },
       { name: 'Indian Rupee (₹)', id: 'currencyINR', fn: currency('₹') },
       { name: 'South Korean Won (₩)', id: 'currencyKRW', fn: currency('₩') },
+      { name: 'Indonesian Rupiah (Rp)', id: 'currencyIDR', fn: currency('Rp') },
+      { name: 'Philippine Peso (PHP)', id: 'currencyPHP', fn: currency('PHP') },
     ],
   },
   {
@@ -150,10 +154,10 @@ export const getCategories = (): ValueFormatCategory[] => [
     name: 'Data rate',
     formats: [
       { name: 'packets/sec', id: 'pps', fn: SIPrefix('p/s') },
-      { name: 'bytes/sec(IEC)', id: 'Bps', fn: binaryPrefix('B/s') },
-      { name: 'bytes/sec(SI)', id: 'decBps', fn: SIPrefix('B/s') },
-      { name: 'bits/sec(IEC)', id: 'bps', fn: binaryPrefix('b/s') },
-      { name: 'bits/sec(SI)', id: 'decbps', fn: SIPrefix('b/s') },
+      { name: 'bytes/sec(IEC)', id: 'binBps', fn: binaryPrefix('B/s') },
+      { name: 'bytes/sec(SI)', id: 'Bps', fn: SIPrefix('B/s') },
+      { name: 'bits/sec(IEC)', id: 'binbps', fn: binaryPrefix('b/s') },
+      { name: 'bits/sec(SI)', id: 'bps', fn: SIPrefix('b/s') },
       { name: 'kibibytes/sec', id: 'KiBs', fn: binaryPrefix('B/s', 1) },
       { name: 'kibibits/sec', id: 'Kibits', fn: binaryPrefix('b/s', 1) },
       { name: 'kilobytes/sec', id: 'KBs', fn: SIPrefix('B/s', 1) },
@@ -184,6 +188,12 @@ export const getCategories = (): ValueFormatCategory[] => [
       { name: 'Datetime US', id: 'dateTimeAsUS', fn: dateTimeAsUS },
       { name: 'Datetime US (No date if today)', id: 'dateTimeAsUSNoDateIfToday', fn: dateTimeAsUSNoDateIfToday },
       { name: 'Datetime local', id: 'dateTimeAsLocal', fn: getDateTimeAsLocalFormat() },
+      {
+        name: 'Datetime local (No date if today)',
+        id: 'dateTimeAsLocalNoDateIfToday',
+        fn: getDateTimeAsLocalFormatNoDateIfToday(),
+      },
+      { name: 'Datetime default', id: 'dateTimeAsSystem', fn: dateTimeSystemFormatter },
       { name: 'From Now', id: 'dateTimeFromNow', fn: dateTimeFromNow },
     ],
   },

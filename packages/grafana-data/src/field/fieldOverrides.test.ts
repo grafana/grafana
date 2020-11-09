@@ -11,13 +11,13 @@ import { MutableDataFrame, toDataFrame } from '../dataframe';
 import {
   DataFrame,
   Field,
-  FieldColorMode,
+  FieldColorModeId,
   FieldConfig,
   FieldConfigPropertyItem,
   FieldConfigSource,
   FieldType,
-  GrafanaTheme,
   InterpolateFunction,
+  ScopedVars,
   ThresholdsMode,
 } from '../types';
 import { locationUtil, Registry } from '../utils';
@@ -27,6 +27,7 @@ import { FieldConfigOptionsRegistry } from './FieldConfigOptionsRegistry';
 import { getFieldDisplayName } from './fieldState';
 import { ArrayVector } from '../vector';
 import { getDisplayProcessor } from './displayProcessor';
+import { getTestTheme } from '../utils/testdata/testTheme';
 
 const property1: any = {
   id: 'custom.property1', // Match field properties
@@ -64,6 +65,16 @@ export const customFieldRegistry: FieldConfigOptionsRegistry = new Registry<Fiel
   return [property1, property2, property3, shouldApplyFalse, ...mockStandardProperties()];
 });
 
+locationUtil.initialize({
+  getConfig: () => {
+    return { appSubUrl: '/subUrl' } as any;
+  },
+  // @ts-ignore
+  buildParamsFromVariables: () => {},
+  // @ts-ignore
+  getTimeRangeForUrl: () => {},
+});
+
 describe('Global MinMax', () => {
   it('find global min max', () => {
     const f0 = new MutableDataFrame();
@@ -75,6 +86,21 @@ describe('Global MinMax', () => {
     const minmax = findNumericFieldMinMax([f0]);
     expect(minmax.min).toEqual(-20);
     expect(minmax.max).toEqual(1234);
+  });
+
+  describe('when value is null', () => {
+    it('then global min max should be null', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1] },
+          { name: 'Value', type: FieldType.number, values: [null] },
+        ],
+      });
+      const { min, max } = findNumericFieldMinMax([frame]);
+
+      expect(min).toBeNull();
+      expect(max).toBeNull();
+    });
   });
 });
 
@@ -93,6 +119,7 @@ describe('applyFieldOverrides', () => {
     defaults: {
       unit: 'xyz',
       decimals: 2,
+      links: [{ title: 'link', url: '${__value.text}' }],
     },
     overrides: [
       {
@@ -124,7 +151,7 @@ describe('applyFieldOverrides', () => {
         },
         replaceVariables: (value: any) => value,
         getDataSourceSettingsByUid: undefined as any,
-        theme: {} as GrafanaTheme,
+        theme: getTestTheme(),
         fieldConfigRegistry: new FieldConfigOptionsRegistry(),
       });
 
@@ -187,7 +214,7 @@ describe('applyFieldOverrides', () => {
       fieldConfigRegistry: customFieldRegistry,
       getDataSourceSettingsByUid: undefined as any,
       replaceVariables: v => v,
-      theme: {} as GrafanaTheme,
+      theme: getTestTheme(),
     })[0];
 
     const outField = processed.fields[0];
@@ -204,7 +231,7 @@ describe('applyFieldOverrides', () => {
       fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
       getDataSourceSettingsByUid: undefined as any,
-      theme: (undefined as any) as GrafanaTheme,
+      theme: getTestTheme(),
       fieldConfigRegistry: customFieldRegistry,
     })[0];
     const valueColumn = data.fields[1];
@@ -232,7 +259,7 @@ describe('applyFieldOverrides', () => {
       fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
       getDataSourceSettingsByUid: undefined as any,
-      theme: (undefined as any) as GrafanaTheme,
+      theme: getTestTheme(),
       autoMinMax: true,
     })[0];
     const valueColumn = data.fields[1];
@@ -243,6 +270,28 @@ describe('applyFieldOverrides', () => {
 
     // Don't Automatically pick the min value
     expect(config.min).toEqual(-20);
+  });
+
+  it('getLinks should use applied field config', () => {
+    const replaceVariablesCalls: any[] = [];
+
+    const data = applyFieldOverrides({
+      data: [f0], // the frame
+      fieldConfig: src as FieldConfigSource, // defaults + overrides
+      replaceVariables: ((value: string, variables: ScopedVars) => {
+        replaceVariablesCalls.push(variables);
+        return value;
+      }) as InterpolateFunction,
+      getDataSourceSettingsByUid: undefined as any,
+      theme: getTestTheme(),
+      autoMinMax: true,
+      fieldConfigRegistry: customFieldRegistry,
+    })[0];
+
+    data.fields[1].getLinks!({ valueRowIndex: 0 });
+
+    expect(data.fields[1].config.decimals).toEqual(1);
+    expect(replaceVariablesCalls[0].__value.value.text).toEqual('100.0');
   });
 });
 
@@ -487,7 +536,7 @@ describe('getLinksSupplier', () => {
       // this is used only for internal links so isn't needed here
       () => ({} as any),
       {
-        theme: {} as GrafanaTheme,
+        theme: getTestTheme(),
       }
     );
     supplier({});
@@ -534,15 +583,14 @@ describe('getLinksSupplier', () => {
       // We do not need to interpolate anything for this test
       (value, vars, format) => value,
       uid => ({ name: 'testDS' } as any),
-      { theme: {} as GrafanaTheme }
+      { theme: getTestTheme() }
     );
     const links = supplier({ valueRowIndex: 0 });
     expect(links.length).toBe(1);
     expect(links[0]).toEqual(
       expect.objectContaining({
         title: 'testDS',
-        href:
-          '/explore?left={"datasource":"testDS","queries":["12345"],"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}',
+        href: '/explore?left={"datasource":"testDS","queries":["12345"]}',
         onClick: undefined,
       })
     );
@@ -567,7 +615,7 @@ describe('applyRawFieldOverrides', () => {
     },
     mappings: [],
     color: {
-      mode: FieldColorMode.Thresholds,
+      mode: FieldColorModeId.Thresholds,
     },
     min: 0,
     max: 1599124316808,
@@ -600,6 +648,7 @@ describe('applyRawFieldOverrides', () => {
       prefix: undefined,
       suffix: undefined,
       text: '1599045551050',
+      percent: expect.any(Number),
       threshold: {
         color: 'red',
         value: 80,
@@ -609,6 +658,7 @@ describe('applyRawFieldOverrides', () => {
     expect(getDisplayValue(frames, frameIndex, 1)).toEqual({
       color: '#73BF69',
       numeric: 3.14159265359,
+      percent: expect.any(Number),
       prefix: undefined,
       suffix: undefined,
       text: '3.142',
@@ -621,6 +671,7 @@ describe('applyRawFieldOverrides', () => {
     expect(getDisplayValue(frames, frameIndex, 2)).toEqual({
       color: '#73BF69',
       numeric: 0,
+      percent: expect.any(Number),
       prefix: undefined,
       suffix: undefined,
       text: '0',
@@ -631,24 +682,33 @@ describe('applyRawFieldOverrides', () => {
     });
 
     expect(getDisplayValue(frames, frameIndex, 3)).toEqual({
+      color: '#808080',
       numeric: 0,
+      percent: expect.any(Number),
       prefix: undefined,
       suffix: undefined,
       text: '0',
+      threshold: expect.anything(),
     });
 
     expect(getDisplayValue(frames, frameIndex, 4)).toEqual({
+      color: '#808080',
       numeric: NaN,
+      percent: 0,
       prefix: undefined,
       suffix: undefined,
       text: 'A - string',
+      threshold: expect.anything(),
     });
 
     expect(getDisplayValue(frames, frameIndex, 5)).toEqual({
+      color: '#808080',
       numeric: 1599045551050,
+      percent: expect.any(Number),
       prefix: undefined,
       suffix: undefined,
       text: '2020-09-02 11:19:11',
+      threshold: expect.anything(),
     });
   };
 

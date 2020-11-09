@@ -13,7 +13,7 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-//ApplyRoute should use the plugin route data to set auth headers and custom headers
+// ApplyRoute should use the plugin route data to set auth headers and custom headers
 func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route *plugins.AppPluginRoute, ds *models.DataSource) {
 	proxyPath = strings.TrimPrefix(proxyPath, route.Path)
 
@@ -22,22 +22,24 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 		SecureJsonData: ds.SecureJsonData.Decrypt(),
 	}
 
-	interpolatedURL, err := InterpolateString(route.URL, data)
-	if err != nil {
-		logger.Error("Error interpolating proxy url", "error", err)
-		return
-	}
+	if len(route.URL) > 0 {
+		interpolatedURL, err := InterpolateString(route.URL, data)
+		if err != nil {
+			logger.Error("Error interpolating proxy url", "error", err)
+			return
+		}
 
-	routeURL, err := url.Parse(interpolatedURL)
-	if err != nil {
-		logger.Error("Error parsing plugin route url", "error", err)
-		return
-	}
+		routeURL, err := url.Parse(interpolatedURL)
+		if err != nil {
+			logger.Error("Error parsing plugin route url", "error", err)
+			return
+		}
 
-	req.URL.Scheme = routeURL.Scheme
-	req.URL.Host = routeURL.Host
-	req.Host = routeURL.Host
-	req.URL.Path = util.JoinURLFragments(routeURL.Path, proxyPath)
+		req.URL.Scheme = routeURL.Scheme
+		req.URL.Host = routeURL.Host
+		req.Host = routeURL.Host
+		req.URL.Path = util.JoinURLFragments(routeURL.Path, proxyPath)
+	}
 
 	if err := addQueryString(req, route, data); err != nil {
 		logger.Error("Failed to render plugin URL query string", "error", err)

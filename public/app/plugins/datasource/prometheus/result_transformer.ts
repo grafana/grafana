@@ -1,234 +1,312 @@
-import _ from 'lodash';
-import TableModel from 'app/core/table_model';
-import { TimeSeries, FieldType, Labels, formatLabels, QueryResultMeta } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import {
+  ArrayVector,
+  DataFrame,
+  Field,
+  FieldType,
+  formatLabels,
+  Labels,
+  MutableField,
+  ScopedVars,
+  TIME_SERIES_TIME_FIELD_NAME,
+  TIME_SERIES_VALUE_FIELD_NAME,
+} from '@grafana/data';
+import { FetchResponse } from '@grafana/runtime';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
+import {
+  isMatrixData,
+  MatrixOrVectorResult,
+  PromDataSuccessResponse,
+  PromMetric,
+  PromQuery,
+  PromQueryRequest,
+  PromValue,
+  TransformOptions,
+} from './types';
 
-export class ResultTransformer {
-  constructor(private templateSrv: TemplateSrv) {}
+const POSITIVE_INFINITY_SAMPLE_VALUE = '+Inf';
+const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';
 
-  transform(response: any, options: any): Array<TableModel | TimeSeries> {
-    const prometheusResult = response.data.data.result;
+export function transform(
+  response: FetchResponse<PromDataSuccessResponse>,
+  transformOptions: {
+    query: PromQueryRequest;
+    target: PromQuery;
+    responseListLength: number;
+    scopedVars?: ScopedVars;
+    mixedQueries?: boolean;
+  }
+) {
+  // Create options object from transformOptions
+  const options: TransformOptions = {
+    format: transformOptions.target.format,
+    step: transformOptions.query.step,
+    legendFormat: transformOptions.target.legendFormat,
+    start: transformOptions.query.start,
+    end: transformOptions.query.end,
+    query: transformOptions.query.expr,
+    responseListLength: transformOptions.responseListLength,
+    scopedVars: transformOptions.scopedVars,
+    refId: transformOptions.target.refId,
+    valueWithRefId: transformOptions.target.valueWithRefId,
+    meta: {
+      /**
+       * Fix for showing of Prometheus results in Explore table.
+       * We want to show result of instant query always in table and result of range query based on target.runAll;
+       */
+      preferredVisualisationType: getPreferredVisualisationType(
+        transformOptions.query.instant,
+        transformOptions.mixedQueries
+      ),
+    },
+  };
+  const prometheusResult = response.data.data;
 
-    if (options.format === 'table') {
-      return [
-        this.transformMetricDataToTable(
-          prometheusResult,
-          options.responseListLength,
-          options.refId,
-          options.meta,
-          options.valueWithRefId
-        ),
-      ];
-    } else if (prometheusResult && options.format === 'heatmap') {
-      let seriesList: TimeSeries[] = [];
-      for (const metricData of prometheusResult) {
-        seriesList.push(this.transformMetricData(metricData, options, options.start, options.end));
-      }
-      seriesList.sort(sortSeriesByLabel);
-      seriesList = this.transformToHistogramOverTime(seriesList);
-      return seriesList;
-    } else if (prometheusResult) {
-      const seriesList: TimeSeries[] = [];
-      for (const metricData of prometheusResult) {
-        if (response.data.data.resultType === 'matrix') {
-          seriesList.push(this.transformMetricData(metricData, options, options.start, options.end));
-        } else if (response.data.data.resultType === 'vector') {
-          seriesList.push(this.transformInstantMetricData(metricData, options));
-        }
-      }
-      return seriesList;
-    }
+  if (!prometheusResult.result) {
     return [];
   }
 
-  transformMetricData(metricData: any, options: any, start: number, end: number): TimeSeries {
-    const dps = [];
-    const { name, labels, title } = this.createLabelInfo(metricData.metric, options);
+  // Return early if result type is scalar
+  if (prometheusResult.resultType === 'scalar') {
+    return [
+      {
+        meta: options.meta,
+        refId: options.refId,
+        length: 1,
+        fields: [getTimeField([prometheusResult.result]), getValueField({ data: [prometheusResult.result] })],
+      },
+    ];
+  }
 
-    const stepMs = parseFloat(options.step) * 1000;
-    let baseTimestamp = start * 1000;
+  // Return early again if the format is table, this needs special transformation.
+  if (options.format === 'table') {
+    const tableData = transformMetricDataToTable(prometheusResult.result, options);
+    return [tableData];
+  }
 
-    if (metricData.values === undefined) {
-      throw new Error('Prometheus heatmap error: data should be a time series');
-    }
+  // Process matrix and vector results to DataFrame
+  const dataFrame: DataFrame[] = [];
+  prometheusResult.result.forEach((data: MatrixOrVectorResult) => dataFrame.push(transformToDataFrame(data, options)));
 
-    for (const value of metricData.values) {
-      let dpValue: number | null = parseFloat(value[1]);
+  // When format is heatmap use the already created data frames and transform it more
+  if (options.format === 'heatmap') {
+    dataFrame.sort(sortSeriesByLabel);
+    const seriesList = transformToHistogramOverTime(dataFrame);
+    return seriesList;
+  }
 
-      if (_.isNaN(dpValue)) {
+  // Return matrix or vector result as DataFrame[]
+  return dataFrame;
+}
+
+function getPreferredVisualisationType(isInstantQuery?: boolean, mixedQueries?: boolean) {
+  if (isInstantQuery) {
+    return 'table';
+  }
+
+  return mixedQueries ? 'graph' : undefined;
+}
+
+/**
+ * Transforms matrix and vector result from Prometheus result to DataFrame
+ */
+function transformToDataFrame(data: MatrixOrVectorResult, options: TransformOptions): DataFrame {
+  const { name, labels } = createLabelInfo(data.metric, options);
+
+  const fields: Field[] = [];
+
+  if (isMatrixData(data)) {
+    const stepMs = options.step ? options.step * 1000 : NaN;
+    let baseTimestamp = options.start * 1000;
+    const dps: PromValue[] = [];
+
+    for (const value of data.values) {
+      let dpValue: number | null = parseSampleValue(value[1]);
+
+      if (isNaN(dpValue)) {
         dpValue = null;
       }
 
-      const timestamp = parseFloat(value[0]) * 1000;
+      const timestamp = value[0] * 1000;
       for (let t = baseTimestamp; t < timestamp; t += stepMs) {
-        dps.push([null, t]);
+        dps.push([t, null]);
       }
       baseTimestamp = timestamp + stepMs;
-      dps.push([dpValue, timestamp]);
+      dps.push([timestamp, dpValue]);
     }
 
-    const endTimestamp = end * 1000;
+    const endTimestamp = options.end * 1000;
     for (let t = baseTimestamp; t <= endTimestamp; t += stepMs) {
-      dps.push([null, t]);
+      dps.push([t, null]);
     }
+    fields.push(getTimeField(dps, true));
+    fields.push(getValueField({ data: dps, parseValue: false, labels, displayName: name }));
+  } else {
+    fields.push(getTimeField([data.value]));
+    fields.push(getValueField({ data: [data.value], labels, displayName: name }));
+  }
 
+  return {
+    meta: options.meta,
+    refId: options.refId,
+    length: fields[0].values.length,
+    fields,
+    name,
+  };
+}
+
+function transformMetricDataToTable(md: MatrixOrVectorResult[], options: TransformOptions): DataFrame {
+  if (!md || md.length === 0) {
     return {
-      datapoints: dps,
-      refId: options.refId,
-      target: name ?? '',
-      tags: labels,
-      title,
       meta: options.meta,
+      refId: options.refId,
+      length: 0,
+      fields: [],
     };
   }
 
-  transformMetricDataToTable(
-    md: any,
-    resultCount: number,
-    refId: string,
-    meta: QueryResultMeta,
-    valueWithRefId?: boolean
-  ): TableModel {
-    const table = new TableModel();
-    table.refId = refId;
-    table.meta = meta;
+  const valueText = options.responseListLength > 1 || options.valueWithRefId ? `Value #${options.refId}` : 'Value';
 
-    let i: number, j: number;
-    const metricLabels: { [key: string]: number } = {};
+  const timeField = getTimeField([]);
+  const metricFields = Object.keys(md.reduce((acc, series) => ({ ...acc, ...series.metric }), {}))
+    .sort()
+    .map(label => {
+      return {
+        name: label,
+        config: { filterable: true },
+        type: FieldType.other,
+        values: new ArrayVector(),
+      };
+    });
+  const valueField = getValueField({ data: [], valueName: valueText });
 
-    if (!md || md.length === 0) {
-      return table;
+  md.forEach(d => {
+    if (isMatrixData(d)) {
+      d.values.forEach(val => {
+        timeField.values.add(val[0] * 1000);
+        metricFields.forEach(metricField => metricField.values.add(getLabelValue(d.metric, metricField.name)));
+        valueField.values.add(parseSampleValue(val[1]));
+      });
+    } else {
+      timeField.values.add(d.value[0] * 1000);
+      metricFields.forEach(metricField => metricField.values.add(getLabelValue(d.metric, metricField.name)));
+      valueField.values.add(parseSampleValue(d.value[1]));
     }
+  });
 
-    // Collect all labels across all metrics
-    _.each(md, series => {
-      for (const label in series.metric) {
-        if (!metricLabels.hasOwnProperty(label)) {
-          metricLabels[label] = 1;
-        }
-      }
-    });
+  return {
+    meta: options.meta,
+    refId: options.refId,
+    length: timeField.values.length,
+    fields: [timeField, ...metricFields, valueField],
+  };
+}
 
-    // Sort metric labels, create columns for them and record their index
-    const sortedLabels = _.keys(metricLabels).sort();
-    table.columns.push({ text: 'Time', type: FieldType.time });
-    _.each(sortedLabels, (label, labelIndex) => {
-      metricLabels[label] = labelIndex + 1;
-      table.columns.push({ text: label, filterable: true });
-    });
-    const valueText = resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value';
-    table.columns.push({ text: valueText });
-
-    // Populate rows, set value to empty string when label not present.
-    _.each(md, series => {
-      if (series.value) {
-        series.values = [series.value];
-      }
-      if (series.values) {
-        for (i = 0; i < series.values.length; i++) {
-          const values = series.values[i];
-          const reordered: any = [values[0] * 1000];
-          if (series.metric) {
-            for (j = 0; j < sortedLabels.length; j++) {
-              const label = sortedLabels[j];
-              if (series.metric.hasOwnProperty(label)) {
-                if (label === 'le') {
-                  reordered.push(parseHistogramLabel(series.metric[label]));
-                } else {
-                  reordered.push(series.metric[label]);
-                }
-              } else {
-                reordered.push('');
-              }
-            }
-          }
-          reordered.push(parseFloat(values[1]));
-          table.rows.push(reordered);
-        }
-      }
-    });
-
-    return table;
-  }
-
-  transformInstantMetricData(md: any, options: any): TimeSeries {
-    const dps = [];
-    const { name, labels } = this.createLabelInfo(md.metric, options);
-    dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
-    return { target: name ?? '', title: name, datapoints: dps, tags: labels, refId: options.refId, meta: options.meta };
-  }
-
-  createLabelInfo(labels: { [key: string]: string }, options: any): { name?: string; labels: Labels; title?: string } {
-    if (options?.legendFormat) {
-      const title = this.renderTemplate(this.templateSrv.replace(options.legendFormat, options?.scopedVars), labels);
-      return { name: title, title, labels };
+function getLabelValue(metric: PromMetric, label: string): string | number {
+  if (metric.hasOwnProperty(label)) {
+    if (label === 'le') {
+      return parseSampleValue(metric[label]);
     }
+    return metric[label];
+  }
+  return '';
+}
 
-    let { __name__, ...labelsWithoutName } = labels;
+function getTimeField(data: PromValue[], isMs = false): MutableField {
+  return {
+    name: TIME_SERIES_TIME_FIELD_NAME,
+    type: FieldType.time,
+    config: {},
+    values: new ArrayVector<number>(data.map(val => (isMs ? val[0] : val[0] * 1000))),
+  };
+}
+type ValueFieldOptions = {
+  data: PromValue[];
+  valueName?: string;
+  parseValue?: boolean;
+  labels?: Labels;
+  displayName?: string;
+};
 
-    let title = __name__ || '';
+function getValueField({
+  data,
+  valueName = TIME_SERIES_VALUE_FIELD_NAME,
+  parseValue = true,
+  labels,
+  displayName,
+}: ValueFieldOptions): MutableField {
+  return {
+    name: valueName,
+    type: FieldType.number,
+    config: {
+      displayName,
+    },
+    labels,
+    values: new ArrayVector<number | null>(data.map(val => (parseValue ? parseSampleValue(val[1]) : val[1]))),
+  };
+}
 
-    const labelPart = formatLabels(labelsWithoutName);
+function createLabelInfo(labels: { [key: string]: string }, options: TransformOptions) {
+  if (options?.legendFormat) {
+    const title = renderTemplate(getTemplateSrv().replace(options.legendFormat, options?.scopedVars), labels);
+    return { name: title, labels };
+  }
 
-    if (!title && !labelPart) {
-      title = options.query;
+  const { __name__, ...labelsWithoutName } = labels;
+  const labelPart = formatLabels(labelsWithoutName);
+  const title = `${__name__ ?? ''}${labelPart}`;
+
+  return { name: title, labels: labelsWithoutName };
+}
+
+export function getOriginalMetricName(labelData: { [key: string]: string }) {
+  const metricName = labelData.__name__ || '';
+  delete labelData.__name__;
+  const labelPart = Object.entries(labelData)
+    .map(label => `${label[0]}="${label[1]}"`)
+    .join(',');
+  return `${metricName}{${labelPart}}`;
+}
+
+export function renderTemplate(aliasPattern: string, aliasData: { [key: string]: string }) {
+  const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
+  return aliasPattern.replace(aliasRegex, (_match, g1) => {
+    if (aliasData[g1]) {
+      return aliasData[g1];
     }
+    return '';
+  });
+}
 
-    title = `${__name__ ?? ''}${labelPart}`;
-
-    return { name: title, title, labels: labelsWithoutName };
-  }
-
-  getOriginalMetricName(labelData: { [key: string]: string }) {
-    const metricName = labelData.__name__ || '';
-    delete labelData.__name__;
-    const labelPart = Object.entries(labelData)
-      .map(label => `${label[0]}="${label[1]}"`)
-      .join(',');
-    return `${metricName}{${labelPart}}`;
-  }
-
-  renderTemplate(aliasPattern: string, aliasData: { [key: string]: string }) {
-    const aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
-    return aliasPattern.replace(aliasRegex, (match, g1) => {
-      if (aliasData[g1]) {
-        return aliasData[g1];
-      }
-      return '';
-    });
-  }
-
-  transformToHistogramOverTime(seriesList: TimeSeries[]) {
-    /*      t1 = timestamp1, t2 = timestamp2 etc.
+function transformToHistogramOverTime(seriesList: DataFrame[]) {
+  /*      t1 = timestamp1, t2 = timestamp2 etc.
             t1  t2  t3          t1  t2  t3
     le10    10  10  0     =>    10  10  0
     le20    20  10  30    =>    10  0   30
     le30    30  10  35    =>    10  0   5
     */
-    for (let i = seriesList.length - 1; i > 0; i--) {
-      const topSeries = seriesList[i].datapoints;
-      const bottomSeries = seriesList[i - 1].datapoints;
-      if (!topSeries || !bottomSeries) {
-        throw new Error('Prometheus heatmap transform error: data should be a time series');
-      }
-
-      for (let j = 0; j < topSeries.length; j++) {
-        const bottomPoint = bottomSeries[j] || [0];
-        topSeries[j][0]! -= bottomPoint[0]!;
-      }
+  for (let i = seriesList.length - 1; i > 0; i--) {
+    const topSeries = seriesList[i].fields.find(s => s.name === TIME_SERIES_VALUE_FIELD_NAME);
+    const bottomSeries = seriesList[i - 1].fields.find(s => s.name === TIME_SERIES_VALUE_FIELD_NAME);
+    if (!topSeries || !bottomSeries) {
+      throw new Error('Prometheus heatmap transform error: data should be a time series');
     }
 
-    return seriesList;
+    for (let j = 0; j < topSeries.values.length; j++) {
+      const bottomPoint = bottomSeries.values.get(j) || [0];
+      topSeries.values.toArray()[j] -= bottomPoint;
+    }
   }
+
+  return seriesList;
 }
 
-function sortSeriesByLabel(s1: TimeSeries, s2: TimeSeries): number {
+function sortSeriesByLabel(s1: DataFrame, s2: DataFrame): number {
   let le1, le2;
 
   try {
     // fail if not integer. might happen with bad queries
-    le1 = parseHistogramLabel(s1.target);
-    le2 = parseHistogramLabel(s2.target);
+    le1 = parseSampleValue(s1.name ?? '');
+    le2 = parseSampleValue(s2.name ?? '');
   } catch (err) {
     console.error(err);
     return 0;
@@ -245,9 +323,13 @@ function sortSeriesByLabel(s1: TimeSeries, s2: TimeSeries): number {
   return 0;
 }
 
-function parseHistogramLabel(le: string): number {
-  if (le === '+Inf') {
-    return +Infinity;
+function parseSampleValue(value: string): number {
+  switch (value) {
+    case POSITIVE_INFINITY_SAMPLE_VALUE:
+      return Number.POSITIVE_INFINITY;
+    case NEGATIVE_INFINITY_SAMPLE_VALUE:
+      return Number.NEGATIVE_INFINITY;
+    default:
+      return parseFloat(value);
   }
-  return Number(le);
 }

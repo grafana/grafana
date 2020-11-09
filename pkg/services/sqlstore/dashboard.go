@@ -374,16 +374,16 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 		"DELETE FROM dashboard_version WHERE dashboard_id = ?",
 		"DELETE FROM annotation WHERE dashboard_id = ?",
 		"DELETE FROM dashboard_provisioning WHERE dashboard_id = ?",
+		"DELETE FROM dashboard_acl WHERE dashboard_id = ?",
 	}
 
 	if dashboard.IsFolder {
-		deletes = append(deletes, "DELETE FROM dashboard_provisioning WHERE dashboard_id in (select id from dashboard where folder_id = ?)")
 		deletes = append(deletes, "DELETE FROM dashboard WHERE folder_id = ?")
 
 		dashIds := []struct {
 			Id int64
 		}{}
-		err := sess.SQL("select id from dashboard where folder_id = ?", dashboard.Id).Find(&dashIds)
+		err := sess.SQL("SELECT id FROM dashboard WHERE folder_id = ?", dashboard.Id).Find(&dashIds)
 		if err != nil {
 			return err
 		}
@@ -391,6 +391,23 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 		for _, id := range dashIds {
 			if err := deleteAlertDefinition(id.Id, sess); err != nil {
 				return err
+			}
+		}
+
+		if len(dashIds) > 0 {
+			childrenDeletes := []string{
+				"DELETE FROM dashboard_tag WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+				"DELETE FROM star WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+				"DELETE FROM dashboard_version WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+				"DELETE FROM annotation WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+				"DELETE FROM dashboard_provisioning WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+				"DELETE FROM dashboard_acl WHERE dashboard_id IN (SELECT id FROM dashboard WHERE org_id = ? AND folder_id = ?)",
+			}
+			for _, sql := range childrenDeletes {
+				_, err := sess.Exec(sql, dashboard.OrgId, dashboard.Id)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -401,7 +418,6 @@ func deleteDashboard(cmd *models.DeleteDashboardCommand, sess *DBSession) error 
 
 	for _, sql := range deletes {
 		_, err := sess.Exec(sql, dashboard.Id)
-
 		if err != nil {
 			return err
 		}
@@ -454,7 +470,7 @@ func GetDashboardPermissionsForUser(query *models.GetDashboardPermissionsForUser
 	`
 	params = append(params, query.UserId)
 
-	//check the user's role for dashboards that do not have hasAcl set
+	// check the user's role for dashboards that do not have hasAcl set
 	sql += `LEFT JOIN org_user ouRole ON ouRole.user_id = ? AND ouRole.org_id = ?`
 	params = append(params, query.UserId)
 	params = append(params, query.OrgId)

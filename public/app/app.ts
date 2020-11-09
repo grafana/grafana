@@ -13,7 +13,6 @@ import 'jquery';
 import 'angular';
 import 'angular-route';
 import 'angular-sanitize';
-import 'angular-native-dragdrop';
 import 'angular-bindonce';
 import 'react';
 import 'react-dom';
@@ -29,7 +28,6 @@ import _ from 'lodash';
 import {
   AppEvents,
   setLocale,
-  setMarkdownOptions,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
@@ -51,6 +49,7 @@ import { getStandardFieldConfigs, getStandardOptionEditors, getScrollbarWidth } 
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
+import { monkeyPatchInjectorWithPreAssignedBindings } from './core/injectorMonkeyPatch';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -97,8 +96,6 @@ export class GrafanaApp {
     setLocale(config.bootData.user.locale);
     setTimeZoneResolver(() => config.bootData.user.timezone);
 
-    setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
-
     standardEditorsRegistry.setInit(getStandardOptionEditors);
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
     standardTransformersRegistry.setInit(getStandardTransformers);
@@ -106,16 +103,12 @@ export class GrafanaApp {
 
     app.config(
       (
-        $locationProvider: angular.ILocationProvider,
         $controllerProvider: angular.IControllerProvider,
         $compileProvider: angular.ICompileProvider,
         $filterProvider: angular.IFilterProvider,
         $httpProvider: angular.IHttpProvider,
         $provide: angular.auto.IProvideService
       ) => {
-        // pre assing bindings before constructor calls
-        $compileProvider.preAssignBindingsEnabled(true);
-
         if (config.buildInfo.env !== 'development') {
           $compileProvider.debugInfoEnabled(false);
         }
@@ -153,7 +146,6 @@ export class GrafanaApp {
       'ngRoute',
       'ngSanitize',
       '$strap.directives',
-      'ang-drag-drop',
       'grafana',
       'pasvaz.bindonce',
       'react',
@@ -172,7 +164,9 @@ export class GrafanaApp {
     $.fn.tooltip.defaults.animation = false;
 
     // bootstrap the app
-    angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
+    const injector: any = angular.bootstrap(document, this.ngModuleDependencies);
+
+    injector.invoke(() => {
       _.each(this.preBootModules, (module: angular.IModule) => {
         _.extend(module, this.registerFunctions);
       });
@@ -188,6 +182,8 @@ export class GrafanaApp {
         }, 1000);
       }
     });
+
+    monkeyPatchInjectorWithPreAssignedBindings(injector);
 
     // Preload selected app plugins
     for (const modulePath of config.pluginsToPreload) {
