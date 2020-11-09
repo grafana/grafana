@@ -79,7 +79,7 @@ func (s ShortURLService) CreateShortURL(ctx context.Context, user *models.Signed
 
 func (s ShortURLService) DeleteStaleShortURLs(ctx context.Context, cmd *models.DeleteShortUrlCommand) error {
 	return s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
-		var rawSql = "DELETE FROM short_url WHERE created_at <= ? AND last_seen_at IN (NULL, 0)"
+		var rawSql = "DELETE FROM short_url WHERE created_at <= ? AND (last_seen_at IS NULL OR last_seen_at = 0)"
 
 		if result, err := session.Exec(rawSql, cmd.OlderThan.Unix()); err != nil {
 			return err
