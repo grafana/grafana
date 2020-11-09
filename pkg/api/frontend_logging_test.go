@@ -37,7 +37,8 @@ func logSentryEventScenario(desc string, event FrontendSentryEvent, fn logScenar
 }
 
 func TestFrontendLoggingEndpoint(t *testing.T) {
-	ts, _ := time.Parse("2006-01-02T15:04:05.000Z", "2020-10-22T06:29:29.078Z")
+	ts, err := time.Parse("2006-01-02T15:04:05.000Z", "2020-10-22T06:29:29.078Z")
+	require.NoError(t, err)
 
 	Convey("FrontendLoggingEndpoint", t, func() {
 		request := sentry.Request{
