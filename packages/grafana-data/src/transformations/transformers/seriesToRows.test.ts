@@ -33,7 +33,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toCompleteWith(received => {
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith(received => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -68,7 +68,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toCompleteWith(received => {
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith(received => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -111,7 +111,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [seriesA, seriesB, seriesC])).toCompleteWith(received => {
+    await expect(transformDataFrame([cfg], [seriesA, seriesB, seriesC])).toEmitValuesWith(received => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -146,7 +146,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [serieA, serieB])).toCompleteWith(received => {
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -184,7 +184,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [serieA, serieB])).toCompleteWith(received => {
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
       const result = received[0];
 
       const expected: Field[] = [
@@ -222,7 +222,7 @@ describe('Series to rows', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [serieA, serieB])).toCompleteWith(received => {
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
       const result = received[0];
 
       const expected: Field[] = [

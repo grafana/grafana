@@ -3,12 +3,12 @@ import { map, mergeMap, take } from 'rxjs/operators';
 
 import { OBSERVABLE_TEST_TIMEOUT_IN_MS } from './types';
 
-describe('toCompleteWith matcher', () => {
+describe('toEmitValuesWith matcher', () => {
   describe('failing test (need to skip these for obvious reasons)', () => {
     describe.skip('passing null in expect', () => {
       it('should fail with correct message', async () => {
         const observable = null;
-        await expect(observable).toCompleteWith(received => {
+        await expect(observable).toEmitValuesWith(received => {
           expect(received).toEqual([1, 2, 3]);
         });
       });
@@ -17,7 +17,7 @@ describe('toCompleteWith matcher', () => {
     describe.skip('passing undefined in expect', () => {
       it('should fail with correct message', async () => {
         const observable = undefined;
-        await expect(observable).toCompleteWith(received => {
+        await expect(observable).toEmitValuesWith(received => {
           expect(received).toEqual([1, 2, 3]);
         });
       });
@@ -26,7 +26,7 @@ describe('toCompleteWith matcher', () => {
     describe.skip('passing number instead of Observable in expect', () => {
       it('should fail with correct message', async () => {
         const observable = 1;
-        await expect(observable).toCompleteWith(received => {
+        await expect(observable).toEmitValuesWith(received => {
           expect(received).toEqual([1, 2, 3]);
         });
       });
@@ -35,7 +35,7 @@ describe('toCompleteWith matcher', () => {
     describe.skip(`observable that does not complete within ${OBSERVABLE_TEST_TIMEOUT_IN_MS}ms`, () => {
       it('should fail with correct message', async () => {
         const observable = interval(10);
-        await expect(observable).toCompleteWith(received => {
+        await expect(observable).toEmitValuesWith(received => {
           expect(received).toEqual([1, 2, 3]);
         });
       });
@@ -46,7 +46,7 @@ describe('toCompleteWith matcher', () => {
     describe('correct emitted values', () => {
       it('should pass with correct message', async () => {
         const observable = interval(10).pipe(take(3));
-        await expect(observable).toCompleteWith(received => {
+        await expect(observable).toEmitValuesWith(received => {
           expect(received).toEqual([0, 1, 2]);
         });
       });
@@ -64,7 +64,7 @@ describe('toCompleteWith matcher', () => {
           })
         );
 
-        await expect(observable).toCompleteWith(received => {
+        await expect(observable).toEmitValuesWith(received => {
           expect(received).toEqual([0, 1, 'an error']);
         });
       });
@@ -82,7 +82,7 @@ describe('toCompleteWith matcher', () => {
           })
         );
 
-        await expect(observable).toCompleteWith(received => {
+        await expect(observable).toEmitValuesWith(received => {
           expect(received).toEqual([0, 'an error']);
         });
       });

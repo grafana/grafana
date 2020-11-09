@@ -6,7 +6,7 @@ export type ObservableType<T> = T extends Observable<infer V> ? V : never;
 
 export interface ObservableMatchers<R, T = {}> extends jest.ExpectExtendMap {
   toEmitValues<E = ObservableType<T>>(received: T, expected: E[]): Promise<jest.CustomMatcherResult>;
-  toCompleteWith<E = ObservableType<T>>(
+  toEmitValuesWith<E = ObservableType<T>>(
     received: T,
     expectations: (received: E[]) => void
   ): Promise<jest.CustomMatcherResult>;

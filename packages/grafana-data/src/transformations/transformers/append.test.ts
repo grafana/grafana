@@ -31,7 +31,7 @@ describe('Append Transformer', () => {
       options: {},
     };
 
-    await expect(transformDataFrame([cfg], [seriesAB, seriesBC])).toCompleteWith(received => {
+    await expect(transformDataFrame([cfg], [seriesAB, seriesBC])).toEmitValuesWith(received => {
       const data = received[0];
       const processed = data[0];
       expect(processed.fields.length).toBe(3);

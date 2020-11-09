@@ -56,7 +56,7 @@ describe('Reducer Transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesAWithMultipleFields, seriesBWithMultipleFields])).toCompleteWith(
+    await expect(transformDataFrame([cfg], [seriesAWithMultipleFields, seriesBWithMultipleFields])).toEmitValuesWith(
       received => {
         const processed = received[0];
         const expected: Field[] = [
@@ -107,7 +107,7 @@ describe('Reducer Transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesAWithSingleField, seriesBWithSingleField])).toCompleteWith(
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField, seriesBWithSingleField])).toEmitValuesWith(
       received => {
         const processed = received[0];
         const expected: Field[] = [
@@ -158,7 +158,7 @@ describe('Reducer Transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesAWithMultipleFields])).toCompleteWith(received => {
+    await expect(transformDataFrame([cfg], [seriesAWithMultipleFields])).toEmitValuesWith(received => {
       const processed = received[0];
       const expected: Field[] = [
         {
@@ -207,7 +207,7 @@ describe('Reducer Transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toCompleteWith(received => {
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith(received => {
       const processed = received[0];
       const expected: Field[] = [
         {

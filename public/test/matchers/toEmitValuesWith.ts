@@ -21,7 +21,7 @@ function tryExpectations(received: any[], expectations: (received: any[]) => voi
   }
 }
 
-export function toCompleteWith(
+export function toEmitValuesWith(
   received: Observable<any>,
   expectations: (actual: any[]) => void
 ): Promise<jest.CustomMatcherResult> {

@@ -8,7 +8,7 @@ declare global {
   namespace jest {
     interface Matchers<R, T = {}> {
       toEmitValues(expected: Array<ObservableType<T>>): Promise<CustomMatcherResult>;
-      toCompleteWith(expectations: (received: Array<ObservableType<T>>) => void): Promise<CustomMatcherResult>;
+      toEmitValuesWith(expectations: (received: Array<ObservableType<T>>) => void): Promise<CustomMatcherResult>;
     }
   }
 }

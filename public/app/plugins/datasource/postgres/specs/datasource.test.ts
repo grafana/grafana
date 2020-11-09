@@ -227,7 +227,7 @@ describe('PostgreSQLDatasource', () => {
 
       const { ds } = setupTestContext({});
 
-      await expect(ds.query(options)).toCompleteWith(received => {
+      await expect(ds.query(options)).toEmitValuesWith(received => {
         expect(received[0]).toEqual({ data: [] });
         expect(fetchMock).not.toHaveBeenCalled();
       });

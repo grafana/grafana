@@ -123,7 +123,7 @@ describe('LokiDatasource', () => {
 
       fetchMock.mockImplementation(() => of(testResponse));
 
-      await expect(ds.query(options).pipe(take(1))).toCompleteWith(() => {
+      await expect(ds.query(options).pipe(take(1))).toEmitValuesWith(() => {
         expect(fetchMock.mock.calls.length).toBe(1);
         expect(fetchMock.mock.calls[0][0].url).toContain(`limit=${expectedLimit}`);
       });
@@ -194,7 +194,7 @@ describe('LokiDatasource', () => {
         .mockImplementationOnce(() => of(testResponse))
         .mockImplementation(() => of(omit(testResponse, 'data.status')));
 
-      await expect(ds.query(options)).toCompleteWith(received => {
+      await expect(ds.query(options)).toEmitValuesWith(received => {
         // first result always comes from runInstantQuery
         const firstResult = received[0];
         expect(firstResult).toEqual({ data: [], key: 'B_instant' });
@@ -220,7 +220,7 @@ describe('LokiDatasource', () => {
         .mockImplementationOnce(() => of(testResponse))
         .mockImplementation(() => of(omit(testResponse, 'data.status')));
 
-      await expect(ds.query(options)).toCompleteWith(received => {
+      await expect(ds.query(options)).toEmitValuesWith(received => {
         // first result will come from runRangeQuery
         const firstResult = received[0];
         const dataFrame = firstResult.data[0] as DataFrame;
@@ -248,7 +248,7 @@ describe('LokiDatasource', () => {
         })
       );
 
-      await expect(ds.query(options)).toCompleteWith(received => {
+      await expect(ds.query(options)).toEmitValuesWith(received => {
         const err: any = received[0];
         expect(err.data.message).toBe(
           'Error: parse error at line 1, col 6: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://github.com/grafana/loki/blob/master/docs/logql.md.'

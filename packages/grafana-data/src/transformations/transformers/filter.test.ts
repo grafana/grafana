@@ -28,7 +28,7 @@ describe('Filter Transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [simpleSeriesWithTypes])).toCompleteWith(received => {
+    await expect(transformDataFrame([cfg], [simpleSeriesWithTypes])).toEmitValuesWith(received => {
       const data = received[0];
       const filtered = data[0];
       expect(filtered.fields.length).toBe(1);

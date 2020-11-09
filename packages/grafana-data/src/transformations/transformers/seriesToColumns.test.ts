@@ -41,7 +41,7 @@ describe('SeriesToColumns Transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toCompleteWith(received => {
+    await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toEmitValuesWith(received => {
       const data = received[0];
       const filtered = data[0];
       expect(filtered.fields).toEqual([
@@ -107,7 +107,7 @@ describe('SeriesToColumns Transformer', () => {
       },
     };
 
-    await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toCompleteWith(received => {
+    await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toEmitValuesWith(received => {
       const data = received[0];
       const filtered = data[0];
       expect(filtered.fields).toEqual([
@@ -177,7 +177,7 @@ describe('SeriesToColumns Transformer', () => {
     everySecondSeries.fields[1].values = new ArrayVector(everySecondSeries.fields[1].values.toArray().reverse());
     everySecondSeries.fields[2].values = new ArrayVector(everySecondSeries.fields[2].values.toArray().reverse());
 
-    await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toCompleteWith(received => {
+    await expect(transformDataFrame([cfg], [everySecondSeries, everyOtherSecondSeries])).toEmitValuesWith(received => {
       const data = received[0];
       const filtered = data[0];
       expect(filtered.fields).toEqual([
@@ -260,7 +260,7 @@ describe('SeriesToColumns Transformer', () => {
         },
       };
 
-      await expect(transformDataFrame([cfg], [seriesWithSameFieldAndDataFrameName, seriesB])).toCompleteWith(
+      await expect(transformDataFrame([cfg], [seriesWithSameFieldAndDataFrameName, seriesB])).toEmitValuesWith(
         received => {
           const data = received[0];
           const filtered = data[0];
@@ -332,7 +332,7 @@ describe('SeriesToColumns Transformer', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [frame1, frame2, frame3])).toCompleteWith(received => {
+    await expect(transformDataFrame([cfg], [frame1, frame2, frame3])).toEmitValuesWith(received => {
       const data = received[0];
       const filtered = data[0];
       expect(filtered.fields).toEqual([
@@ -385,7 +385,7 @@ describe('SeriesToColumns Transformer', () => {
       ],
     });
 
-    await expect(transformDataFrame([cfg], [frame1, frame2])).toCompleteWith(received => {
+    await expect(transformDataFrame([cfg], [frame1, frame2])).toEmitValuesWith(received => {
       const data = received[0];
       const filtered = data[0];
       expect(filtered.fields).toEqual([
