@@ -3,7 +3,6 @@ import { Field, FieldType } from '../../types';
 import { ArrayVector } from '../../vector';
 import { transformDataFrame } from '../transformDataFrame';
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { ValueFilterID, valueFiltersRegistry } from '../valueFilters';
 import { filterByValueTransformer } from './filterByValue';
 import { DataTransformerID } from './ids';
 
@@ -25,15 +24,9 @@ describe('FilterByValue transformer', () => {
     const cfg = {
       id: DataTransformerID.filterByValue,
       options: {
-        type: 'exclude',
+        mode: 'exclude',
         match: 'all',
-        valueFilters: [
-          {
-            fieldName: 'numbers',
-            filterExpression: '5',
-            filterType: ValueFilterID.lowerOrEqual,
-          },
-        ],
+        filters: [],
       },
     };
 

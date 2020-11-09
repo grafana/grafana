@@ -14,6 +14,7 @@ import {
 } from '../types/transformations';
 import { Registry } from '../utils/Registry';
 import { getNullValueMatchers } from './matchers/valueMatchers/nullMatchers';
+import { getNumericValueMatchers } from './matchers/valueMatchers/numericMatchers';
 
 export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
   return [
@@ -32,7 +33,7 @@ export const frameMatchers = new Registry<FrameMatcherInfo>(() => {
 });
 
 export const valueMatchers = new Registry<ValueMatcherInfo>(() => {
-  return [...getNullValueMatchers()];
+  return [...getNullValueMatchers(), ...getNumericValueMatchers()];
 });
 
 export function getFieldMatcher(config: MatcherConfig): FieldMatcher {

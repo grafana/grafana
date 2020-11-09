@@ -3,7 +3,7 @@ import { ValueMatcherInfo } from '../../../types/transformations';
 import { ValueMatcherID } from '../ids';
 import { ValueMatcherOptions } from './types';
 
-const isNullMatcher: ValueMatcherInfo<ValueMatcherOptions> = {
+const isNullValueMatcher: ValueMatcherInfo<ValueMatcherOptions> = {
   id: ValueMatcherID.isNull,
   name: 'Is null',
   description: 'Match where value for given field is null.',
@@ -19,4 +19,4 @@ const isNullMatcher: ValueMatcherInfo<ValueMatcherOptions> = {
   isApplicable: () => true,
 };
 
-export const getNullValueMatchers = (): ValueMatcherInfo[] => [isNullMatcher];
+export const getNullValueMatchers = (): ValueMatcherInfo[] => [isNullValueMatcher];
