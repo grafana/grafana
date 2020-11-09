@@ -68,7 +68,7 @@ func Logger() macaron.Handler {
 				logParams = append(logParams, "traceID", traceID)
 			}
 
-			if status == 500 {
+			if status >= 500 {
 				ctxTyped.Logger.Error("Request Completed", logParams...)
 			} else {
 				ctxTyped.Logger.Info("Request Completed", logParams...)
