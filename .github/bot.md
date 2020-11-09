@@ -19,3 +19,7 @@ Label commands:
 
 Metrics are configured in [metrics-collector.json](https://github.com/grafana/grafana/blob/master/.github/metrics-collector.json) and are also defined in the 
 [metrics-collector](https://github.com/grafana/grafana-github-actions/blob/main/metrics-collector/index.ts) GitHub action.
+
+## Backport PR
+
+The backport logic is written [here](https://github.com/grafana/grafana-github-actions/blob/main/backport/backport.ts)
