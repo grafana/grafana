@@ -11,7 +11,7 @@ Overrides allow you to change the settings for one or more fields. Field options
 
 For example, you could change the number of decimal places shown in all numeric fields or columns by changing the **Decimals** option for **Fields with type** that matches **Numeric**. For more information about options, refer to:
    - [Standard field options]({{< relref "standard-field-options.md" >}}), which apply to all panel visualizations that allow transformations.
-   - [Table field options]({{< relref "table-field-options.md" >}}), which only apply to table panel visualizations.
+   - [Table field options]({{< relref "../visualizations/table/table-field-options.md" >}}), which only apply to table panel visualizations.
 
 ## Add a field override
 
