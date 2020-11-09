@@ -36,7 +36,7 @@ import {
 } from '../utils/decorators';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { richHistoryUpdatedAction } from './main';
-import { stateSave } from './exploreItem';
+import { stateSave } from './explorePane';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';

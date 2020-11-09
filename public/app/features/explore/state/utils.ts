@@ -17,7 +17,7 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
 /**
  * Returns a fresh Explore area state
  */
-export const makeExploreItemState = (): ExploreItemState => ({
+export const makeExplorePaneState = (): ExploreItemState => ({
   containerWidth: 0,
   datasourceInstance: null,
   requestedDatasourceName: null,

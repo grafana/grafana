@@ -31,7 +31,7 @@ import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
 import { splitOpen } from './state/main';
-import { changeSize, initializeExplore, refreshExplore } from './state/exploreItem';
+import { changeSize, initializeExplore, refreshExplore } from './state/explorePane';
 import { updateTimeRange } from './state/time';
 import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart } from './state/query';
 import { ExploreId, ExploreItemState, ExploreUpdateState } from 'app/types/explore';

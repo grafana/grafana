@@ -22,7 +22,7 @@ import { StoreState } from 'app/types';
 
 import { splitOpen } from './state/main';
 import { updateTimeRange } from './state/time';
-import { toggleLogLevelAction, changeDedupStrategy } from './state/exploreItem';
+import { toggleLogLevelAction, changeDedupStrategy } from './state/explorePane';
 import { deduplicatedRowsSelector } from './state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';

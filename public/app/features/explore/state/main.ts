@@ -5,9 +5,9 @@ import { DataSourceSrv, LocationUpdate } from '@grafana/runtime';
 import { stopQueryState, parseUrlState, DEFAULT_RANGE, GetExploreUrlArguments } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { updateLocation } from '../../../core/actions';
-import { itemReducer, stateSave } from './exploreItem';
+import { paneReducer, stateSave } from './explorePane';
 import { createAction } from '@reduxjs/toolkit';
-import { makeExploreItemState } from './utils';
+import { makeExplorePaneState } from './utils';
 import { DataQuery, TimeRange } from '@grafana/data';
 import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
@@ -170,7 +170,7 @@ export const navigateToExplore = (
 /**
  * Global Explore state that handles multiple Explore areas and the split state
  */
-const initialExploreItemState = makeExploreItemState();
+const initialExploreItemState = makeExplorePaneState();
 export const initialExploreState: ExploreState = {
   split: false,
   syncedTimes: false,
@@ -247,8 +247,8 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     return {
       ...state,
       split,
-      [ExploreId.left]: updateChildRefreshState(leftState, payload, ExploreId.left),
-      [ExploreId.right]: updateChildRefreshState(rightState, payload, ExploreId.right),
+      [ExploreId.left]: updatePaneRefreshState(leftState, payload, ExploreId.left),
+      [ExploreId.right]: updatePaneRefreshState(rightState, payload, ExploreId.right),
     };
   }
 
@@ -256,8 +256,8 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     const { exploreId } = action.payload;
     if (exploreId !== undefined) {
       // @ts-ignore
-      const exploreItemState = state[exploreId];
-      return { ...state, [exploreId]: itemReducer(exploreItemState, action as any) };
+      const explorePaneState = state[exploreId];
+      return { ...state, [exploreId]: paneReducer(explorePaneState, action as any) };
     }
   }
 
@@ -268,7 +268,7 @@ export default {
   explore: exploreReducer,
 };
 
-export const updateChildRefreshState = (
+export const updatePaneRefreshState = (
   state: Readonly<ExploreItemState>,
   payload: LocationUpdate,
   exploreId: ExploreId

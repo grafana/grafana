@@ -6,7 +6,7 @@ import { queryReducer } from './query';
 import { datasourceReducer } from './datasource';
 import { timeReducer } from './time';
 import { historyReducer } from './history';
-import { makeExploreItemState, makeInitialUpdateState } from './utils';
+import { makeExplorePaneState, makeInitialUpdateState } from './utils';
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
 import { EventBusExtended, DataQuery, ExploreUrlState, LogLevel, LogsDedupStrategy, TimeRange } from '@grafana/data';
 import {
@@ -234,7 +234,7 @@ export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
 // because the state would become frozen and during run time we would get errors because flot (Graph lib) would try to mutate
 // the frozen state.
 // https://github.com/reduxjs/redux-toolkit/issues/242
-export const itemReducer = (state: ExploreItemState = makeExploreItemState(), action: AnyAction): ExploreItemState => {
+export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), action: AnyAction): ExploreItemState => {
   state = queryReducer(state, action);
   state = datasourceReducer(state, action);
   state = timeReducer(state, action);

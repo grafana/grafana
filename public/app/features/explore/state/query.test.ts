@@ -11,7 +11,7 @@ import { ExploreId, ExploreItemState } from 'app/types';
 import { interval } from 'rxjs';
 import { RawTimeRange, toUtc } from '@grafana/data';
 import { thunkTester } from 'test/core/thunk/thunkTester';
-import { makeExploreItemState } from './utils';
+import { makeExplorePaneState } from './utils';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 
 const QUERY_KEY_REGEX = /Q-(?:[a-z0-9]+-){5}(?:[0-9]+)/;
@@ -63,7 +63,7 @@ describe('reducer', () => {
   describe('scanning', () => {
     it('should start scanning', () => {
       const initialState = {
-        ...makeExploreItemState(),
+        ...makeExplorePaneState(),
         scanning: false,
       };
 
@@ -71,13 +71,13 @@ describe('reducer', () => {
         .givenReducer(queryReducer, initialState)
         .whenActionIsDispatched(scanStartAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
-          ...makeExploreItemState(),
+          ...makeExplorePaneState(),
           scanning: true,
         });
     });
     it('should stop scanning', () => {
       const initialState = {
-        ...makeExploreItemState(),
+        ...makeExplorePaneState(),
         scanning: true,
         scanRange: {} as RawTimeRange,
       };
@@ -86,7 +86,7 @@ describe('reducer', () => {
         .givenReducer(queryReducer, initialState)
         .whenActionIsDispatched(scanStopAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
-          ...makeExploreItemState(),
+          ...makeExplorePaneState(),
           scanning: false,
           scanRange: undefined,
         });

@@ -17,7 +17,7 @@ import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { runQueries } from './query';
 import { syncTimesAction } from './main';
-import { stateSave } from './exploreItem';
+import { stateSave } from './explorePane';
 import { makeInitialUpdateState } from './utils';
 
 //

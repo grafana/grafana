@@ -5,7 +5,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { updateLocation } from '../../../core/actions';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
 import { ExploreId, ExploreItemState, ExploreState } from '../../../types';
-import { makeExploreItemState, makeInitialUpdateState } from './utils';
+import { makeExplorePaneState, makeInitialUpdateState } from './utils';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { ExploreUrlState, UrlQueryMap } from '@grafana/data';
 
@@ -145,7 +145,7 @@ describe('Explore reducer', () => {
       const initialState = ({
         split: null,
         left: leftItemMock as ExploreItemState,
-        right: makeExploreItemState(),
+        right: makeExplorePaneState(),
       } as unknown) as ExploreState;
 
       reducerTester<ExploreState>()

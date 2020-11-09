@@ -8,7 +8,7 @@ import {
   InitializeExplorePayload,
   itemReducer,
   refreshExplore,
-} from './exploreItem';
+} from './explorePane';
 import { setQueriesAction } from './query';
 import * as DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { makeExploreItemState, makeInitialUpdateState } from './utils';

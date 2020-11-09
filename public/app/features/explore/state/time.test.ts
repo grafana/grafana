@@ -1,6 +1,6 @@
 import { dateTime, LoadingState } from '@grafana/data';
 
-import { makeExploreItemState, makeInitialUpdateState } from './utils';
+import { makeExplorePaneState, makeInitialUpdateState } from './utils';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import { changeRangeAction, changeRefreshIntervalAction, timeReducer } from './time';
@@ -8,9 +8,9 @@ import { changeRangeAction, changeRefreshIntervalAction, timeReducer } from './t
 describe('Explore item reducer', () => {
   describe('changing refresh intervals', () => {
     it("should result in 'streaming' state, when live-tailing is active", () => {
-      const initialState = makeExploreItemState();
+      const initialState = makeExplorePaneState();
       const expectedState = {
-        ...makeExploreItemState(),
+        ...makeExplorePaneState(),
         refreshInterval: 'LIVE',
         isLive: true,
         loading: true,
@@ -19,7 +19,7 @@ describe('Explore item reducer', () => {
           rows: [] as any[],
         },
         queryResponse: {
-          ...makeExploreItemState().queryResponse,
+          ...makeExplorePaneState().queryResponse,
           state: LoadingState.Streaming,
         },
       };
@@ -30,16 +30,16 @@ describe('Explore item reducer', () => {
     });
 
     it("should result in 'done' state, when live-tailing is stopped", () => {
-      const initialState = makeExploreItemState();
+      const initialState = makeExplorePaneState();
       const expectedState = {
-        ...makeExploreItemState(),
+        ...makeExplorePaneState(),
         refreshInterval: '',
         logsResult: {
           hasUniqueLabels: false,
           rows: [] as any[],
         },
         queryResponse: {
-          ...makeExploreItemState().queryResponse,
+          ...makeExplorePaneState().queryResponse,
           state: LoadingState.Done,
         },
       };
