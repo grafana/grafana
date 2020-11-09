@@ -1,7 +1,7 @@
-import { splitOpen } from '../state/actions';
 import { Field, LinkModel, TimeRange, mapInternalLinkToExplore } from '@grafana/data';
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
 import { getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { splitOpen } from '../state/main';
 
 /**
  * Get links from the field of a dataframe and in addition check if there is associated
