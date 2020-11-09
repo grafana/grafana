@@ -1,4 +1,4 @@
-grabpl_version = '0.5.20'
+grabpl_version = '0.5.24'
 build_image = 'grafana/build-container:1.2.28'
 publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -264,8 +264,12 @@ def build_storybook_step(edition, ver_mode):
             # Best to ensure that this step doesn't mess with what's getting built and packaged
             'package',
         ],
+        'environment': {
+            'NODE_OPTIONS': '--max_old_space_size=4096',
+        },
         'commands': [
             'yarn storybook:build',
+            './bin/grabpl verify-storybook',
         ],
     }
 
@@ -437,7 +441,9 @@ def test_backend_step():
             'lint-backend',
         ],
         'commands': [
-            # First execute non-integration tests in parallel, since it should be safe
+            # First make sure that there are no tests with FocusConvey
+            '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
+            # Then execute non-integration tests in parallel, since it should be safe
             './bin/grabpl test-backend',
             # Then execute integration tests in serial
             './bin/grabpl integration-tests',

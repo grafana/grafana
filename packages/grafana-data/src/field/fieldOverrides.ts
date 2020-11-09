@@ -306,7 +306,6 @@ const processFieldConfigValue = (
   const currentConfig = get(destination, fieldConfigProperty.path);
   if (currentConfig === null || currentConfig === undefined) {
     const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
-    // console.log(item);
     if (!item) {
       return;
     }

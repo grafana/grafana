@@ -201,6 +201,14 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(query.Result.Updated.IsZero(), ShouldBeFalse)
 			})
 
+			Convey("Should be able to delete empty folder", func() {
+				emptyFolder := insertTestDashboard("2 test dash folder", 1, 0, true, "prod", "webapp")
+
+				deleteCmd := &models.DeleteDashboardCommand{Id: emptyFolder.Id}
+				err := DeleteDashboard(deleteCmd)
+				So(err, ShouldBeNil)
+			})
+
 			Convey("Should be able to delete a dashboard folder and its children", func() {
 				deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.Id}
 				err := DeleteDashboard(deleteCmd)

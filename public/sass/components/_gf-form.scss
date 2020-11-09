@@ -319,6 +319,7 @@ $input-border: 1px solid $input-border-color;
 
   .gf-form-input {
     margin-right: 0;
+    line-height: $input-height;
   }
 
   select.gf-form-input {

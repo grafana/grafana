@@ -1,17 +1,9 @@
 import React from 'react';
 import { GraphNG } from './GraphNG';
 import { render } from '@testing-library/react';
-import {
-  ArrayVector,
-  DataTransformerID,
-  dateTime,
-  FieldConfig,
-  FieldType,
-  MutableDataFrame,
-  standardTransformers,
-  standardTransformersRegistry,
-} from '@grafana/data';
-import { Canvas, GraphCustomFieldConfig } from '..';
+import { ArrayVector, dateTime, FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
+import { GraphCustomFieldConfig } from '..';
+import { LegendDisplayMode, LegendOptions } from '../Legend/Legend';
 
 const mockData = () => {
   const data = new MutableDataFrame();
@@ -42,25 +34,13 @@ const mockData = () => {
   return { data, timeRange };
 };
 
+const defaultLegendOptions: LegendOptions = {
+  isVisible: false,
+  displayMode: LegendDisplayMode.List,
+  placement: 'bottom',
+};
+
 describe('GraphNG', () => {
-  beforeAll(() => {
-    standardTransformersRegistry.setInit(() => [
-      {
-        id: DataTransformerID.seriesToColumns,
-        editor: () => null,
-        transformation: standardTransformers.seriesToColumnsTransformer,
-        name: 'outer join',
-      },
-    ]);
-  });
-
-  it('should throw when rendered without Canvas as child', () => {
-    const { data, timeRange } = mockData();
-    expect(() => {
-      render(<GraphNG data={[data]} timeRange={timeRange} timeZone={'browser'} width={100} height={100} />);
-    }).toThrow('Missing Canvas component as a child of the plot.');
-  });
-
   describe('data update', () => {
     it('does not re-initialise uPlot when there are no field config changes', () => {
       const { data, timeRange } = mockData();
@@ -76,9 +56,8 @@ describe('GraphNG', () => {
           height={100}
           onDataUpdate={onDataUpdateSpy}
           onPlotInit={onPlotInitSpy}
-        >
-          <Canvas />
-        </GraphNG>
+          legend={defaultLegendOptions}
+        ></GraphNG>
       );
 
       data.fields[1].values.set(0, 1);
@@ -92,9 +71,8 @@ describe('GraphNG', () => {
           height={100}
           onDataUpdate={onDataUpdateSpy}
           onPlotInit={onPlotInitSpy}
-        >
-          <Canvas />
-        </GraphNG>
+          legend={defaultLegendOptions}
+        ></GraphNG>
       );
 
       expect(onPlotInitSpy).toBeCalledTimes(1);
@@ -118,9 +96,7 @@ describe('GraphNG', () => {
           width={0}
           height={0}
           onPlotInit={onPlotInitSpy}
-        >
-          <Canvas />
-        </GraphNG>
+        ></GraphNG>
       );
 
       expect(onPlotInitSpy).not.toBeCalled();
@@ -138,9 +114,7 @@ describe('GraphNG', () => {
           width={100}
           height={100}
           onPlotInit={onPlotInitSpy}
-        >
-          <Canvas />
-        </GraphNG>
+        ></GraphNG>
       );
 
       data.addField({
@@ -162,9 +136,7 @@ describe('GraphNG', () => {
           width={100}
           height={100}
           onPlotInit={onPlotInitSpy}
-        >
-          <Canvas />
-        </GraphNG>
+        ></GraphNG>
       );
 
       expect(onPlotInitSpy).toBeCalledTimes(2);
@@ -182,9 +154,7 @@ describe('GraphNG', () => {
           width={100}
           height={100}
           onPlotInit={onPlotInitSpy}
-        >
-          <Canvas />
-        </GraphNG>
+        ></GraphNG>
       );
       expect(onPlotInitSpy).toBeCalledTimes(1);
 
@@ -198,9 +168,7 @@ describe('GraphNG', () => {
           width={100}
           height={100}
           onPlotInit={onPlotInitSpy}
-        >
-          <Canvas />
-        </GraphNG>
+        ></GraphNG>
       );
 
       expect(onPlotInitSpy).toBeCalledTimes(2);

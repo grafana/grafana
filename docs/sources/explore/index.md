@@ -53,7 +53,7 @@ You can close the newly created query by clicking on the Close Split button.
 
 > Share shortened link is only available in Grafana 7.3 and above.
 
-The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs containing complex query parameters. You can create a shortened link by clicking on the **Share** option in Explore toolbar.
+The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs containing complex query parameters. You can create a shortened link by clicking on the **Share** option in Explore toolbar. Please note that any shortened links that are never used will be automatically deleted after 7 days.
 
 ## Query history
 
@@ -145,7 +145,7 @@ Suggestions can appear under the query field - click on them to update your quer
 
 ### Table filters
 
-Click on the filter button <span title="Filter for label" class="logs-label__icon fa fa-search-plus"></span> in a labels column in the Table panel to add filters to the query expression. This works with multiple queries too - the filter will be added for all the queries.
+Click on the filter button in the "label" column of a Table panel to add filters to the query expression. You can add filters for multiple queries as well - the filter is added for all the queries.
 
 ## Logs integration
 

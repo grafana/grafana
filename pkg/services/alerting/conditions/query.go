@@ -113,7 +113,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {
-		return nil, fmt.Errorf("Could not find datasource %v", err)
+		return nil, fmt.Errorf("could not find datasource: %w", err)
 	}
 
 	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange, context.IsDebug)
@@ -159,7 +159,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	resp, err := c.HandleRequest(context.Ctx, getDsInfo.Result, req)
 	if err != nil {
 		if err == gocontext.DeadlineExceeded {
-			return nil, fmt.Errorf("Alert execution exceeded the timeout")
+			return nil, fmt.Errorf("alert execution exceeded the timeout")
 		}
 
 		return nil, fmt.Errorf("tsdb.HandleRequest() error %v", err)

@@ -1,9 +1,8 @@
-import React, { FormEvent } from 'react';
+import React from 'react';
 import { css } from 'emotion';
 import { Tab, TabsBar, Icon, IconName } from '@grafana/ui';
-import appEvents from 'app/core/app_events';
 import { NavModel, NavModelItem, NavModelBreadcrumb } from '@grafana/data';
-import { CoreEvents } from 'app/types';
+import { PanelHeaderMenuItem } from 'app/features/dashboard/dashgrid/PanelHeader/PanelHeaderMenuItem';
 
 export interface Props {
   model: NavModel;
@@ -18,37 +17,29 @@ const SelectNav = ({ children, customCss }: { children: NavModelItem[]; customCs
     return navItem.active === true;
   });
 
-  const gotoUrl = (evt: FormEvent) => {
-    const element = evt.target as HTMLSelectElement;
-    const url = element.options[element.selectedIndex].value;
-    appEvents.emit(CoreEvents.locationChange, { href: url });
-  };
-
   return (
     <div className={`gf-form-select-wrapper width-20 ${customCss}`}>
-      <label
-        className={`gf-form-select-icon ${defaultSelectedItem ? defaultSelectedItem?.icon : ''}`}
-        htmlFor="page-header-select-nav"
-      />
-      {/* Label to make it clickable */}
-      <select
-        className="gf-select-nav gf-form-input"
-        value={defaultSelectedItem?.url ?? ''}
-        onChange={gotoUrl}
-        id="page-header-select-nav"
-      >
-        {children.map((navItem: NavModelItem) => {
-          if (navItem.hideFromTabs) {
-            // TODO: Rename hideFromTabs => hideFromNav
-            return null;
-          }
-          return (
-            <option key={navItem.url} value={navItem.url}>
-              {navItem.text}
-            </option>
-          );
-        })}
-      </select>
+      <div className="dropdown">
+        <div className="gf-form-input dropdown-toggle" data-toggle="dropdown">
+          {defaultSelectedItem?.text}
+        </div>
+        <ul className="dropdown-menu dropdown-menu--menu">
+          {children.map((navItem: NavModelItem) => {
+            if (navItem.hideFromTabs) {
+              // TODO: Rename hideFromTabs => hideFromNav
+              return null;
+            }
+            return (
+              <PanelHeaderMenuItem
+                key={navItem.url}
+                iconClassName={navItem.icon}
+                text={navItem.text}
+                href={navItem.url}
+              />
+            );
+          })}
+        </ul>
+      </div>
     </div>
   );
 };
@@ -57,14 +48,6 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
   if (!children || children.length === 0) {
     return null;
   }
-
-  const goToUrl = (index: number) => {
-    children.forEach((child, i) => {
-      if (i === index) {
-        appEvents.emit(CoreEvents.locationChange, { href: child.url });
-      }
-    });
-  };
 
   return (
     <nav>
@@ -78,7 +61,6 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
                 active={child.active}
                 key={`${child.url}-${index}`}
                 icon={child.icon as IconName}
-                onChangeTab={() => goToUrl(index)}
                 href={child.url}
               />
             )

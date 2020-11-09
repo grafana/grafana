@@ -44,7 +44,7 @@ export const PluginsErrorsInfoUnconnected: React.FC<PluginsErrorsInfoProps> = ({
       aria-label={selectors.pages.PluginsList.signatureErrorNotice}
       severity="warning"
       urlTitle="Read more about plugin signing"
-      url="https://grafana.com/docs/grafana/latest/plugins/plugin-signature-verification/"
+      url="https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/"
     >
       <div>
         <p>

@@ -3375,10 +3375,10 @@
     typescript "3.7.5"
     yaml "^1.8.3"
 
-"@grafana/eslint-config@2.0.4":
-  version "2.0.4"
-  resolved "https://registry.yarnpkg.com/@grafana/eslint-config/-/eslint-config-2.0.4.tgz#961e571e2eaf1db9b0558af0b977fcfd12ffb9eb"
-  integrity sha512-umdakxytNJv9jSnAHfcWfuLQ1XJ4jCX7m7ommCGn8tJmDP+2G/D6dOFsaZZQWMuhC/7+q1mG+Wy/Zs0kxq/xLg==
+"@grafana/eslint-config@2.0.5":
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/@grafana/eslint-config/-/eslint-config-2.0.5.tgz#d15aadcac00d704b94354a8c2e153be403e03a1f"
+  integrity sha512-1eOh2Fj36rKd4LDzYhmTwy+CqU6ciiel19GAPhFi1hSCTN9Kq0JSbiJ4TpTinjYK4v9kg6MCkXSOqWQOtWFU1Q==
   dependencies:
     "@typescript-eslint/eslint-plugin" "4.0.1"
     "@typescript-eslint/parser" "4.0.1"
@@ -7746,25 +7746,20 @@ angular-mocks@1.6.6:
   resolved "https://registry.yarnpkg.com/angular-mocks/-/angular-mocks-1.6.6.tgz#c93018e7838c6dc5ceaf1a6bcf9be13c830ea515"
   integrity sha1-yTAY54OMbcXOrxprz5vhPIMOpRU=
 
-angular-native-dragdrop@1.2.2:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/angular-native-dragdrop/-/angular-native-dragdrop-1.2.2.tgz#d646c6b75b131c48073c3f6e36a225b2726d8bae"
-  integrity sha1-1kbGt1sTHEgHPD9uNqIlsnJti64=
+angular-route@1.8.2:
+  version "1.8.2"
+  resolved "https://registry.yarnpkg.com/angular-route/-/angular-route-1.8.2.tgz#d482bf05a8c9e448300acd8f9989c635d31b5077"
+  integrity sha512-49LJYxuaQ/ZDiu9dD2xo1LkazqObkGjw0a7dUF7UKCT8EELgBsMd6QrI6aEVGtI62ppkiFkxqmiV8fcwYdXpug==
 
-angular-route@1.6.6:
-  version "1.6.6"
-  resolved "https://registry.yarnpkg.com/angular-route/-/angular-route-1.6.6.tgz#8c11748aa195c717b1b615a7e746442bfc7c61f4"
-  integrity sha1-jBF0iqGVxxexthWn50ZEK/x8YfQ=
+angular-sanitize@1.8.2:
+  version "1.8.2"
+  resolved "https://registry.yarnpkg.com/angular-sanitize/-/angular-sanitize-1.8.2.tgz#ae78040f00c5e2ce1c63780bcc47fa14a1698296"
+  integrity sha512-OB6Goa+QN3byf5asQ7XRl7DKZejm/F/ZOqa9z1skqYVOWA2hoBxoCmt9E7+i7T/TbxZP5zYzKxNZVVJNu860Hg==
 
-angular-sanitize@1.6.6:
-  version "1.6.6"
-  resolved "https://registry.yarnpkg.com/angular-sanitize/-/angular-sanitize-1.6.6.tgz#0fd065a19931517fbece66596d325d72b6e06041"
-  integrity sha1-D9BloZkxUX++zmZZbTJdcrbgYEE=
-
-angular@1.6.9:
-  version "1.6.9"
-  resolved "https://registry.yarnpkg.com/angular/-/angular-1.6.9.tgz#bc812932e18909038412d594a5990f4bb66c0619"
-  integrity sha512-6igWH2GIsxV+J38wNWCh8oyjaZsrIPIDO35twloIUyjlF2Yit6UyLAWujHP05ma/LFxTsx4NtYibRoMNBXPR1A==
+angular@1.8.2:
+  version "1.8.2"
+  resolved "https://registry.yarnpkg.com/angular/-/angular-1.8.2.tgz#5983bbb5a9fa63e213cb7749199e0d352de3a2f1"
+  integrity sha512-IauMOej2xEe7/7Ennahkbb5qd/HFADiNuLSESz9Q27inmi32zB0lnAsFeLEWcox3Gd1F6YhNd1CP7/9IukJ0Gw==
 
 ansi-align@^2.0.0:
   version "2.0.0"
@@ -12029,6 +12024,11 @@ elliptic@^6.0.0:
     minimalistic-assert "^1.0.0"
     minimalistic-crypto-utils "^1.0.0"
 
+emitter-component@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/emitter-component/-/emitter-component-1.1.1.tgz#065e2dbed6959bf470679edabeaf7981d1003ab6"
+  integrity sha1-Bl4tvtaVm/RwZ57avq95gdEAOrY=
+
 emittery@^0.7.1:
   version "0.7.1"
   resolved "https://registry.yarnpkg.com/emittery/-/emittery-0.7.1.tgz#c02375a927a40948c0345cc903072597f5270451"
@@ -12757,15 +12757,15 @@ eventemitter3@4.0.0:
   resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-4.0.0.tgz#d65176163887ee59f386d64c82610b696a4a74eb"
   integrity sha512-qerSRB0p+UDEssxTtm6EDKcE7W4OaoisfIMl4CngyEhjpYglocpNg6UEqCvemdGhosAsg4sO2dXJOdyBifPGCg==
 
+eventemitter3@4.0.7, eventemitter3@^4.0.0:
+  version "4.0.7"
+  resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-4.0.7.tgz#2de9b68f6528d5644ef5c59526a1b4a07306169f"
+  integrity sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==
+
 eventemitter3@^3.1.0:
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-3.1.2.tgz#2d3d48f9c346698fce83a85d7d664e98535df6e7"
   integrity sha512-tvtQIeLVHjDkJYnzf2dgVMxfuSGJeM/7UCG17TT4EumTfNtF+0nebF/4zWOIkCreAbtNqhGEboB6BWrwqNaw4Q==
-
-eventemitter3@^4.0.0:
-  version "4.0.7"
-  resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-4.0.7.tgz#2de9b68f6528d5644ef5c59526a1b4a07306169f"
-  integrity sha512-8guHBZCwKnFhYdHr2ysuRWErTwhoN2X8XELRlrRwpmfeY2jjuUN4taQMsULKUVo1K4DvZl+0pgfyoysHxvmvEw==
 
 events@^3.0.0:
   version "3.0.0"
@@ -14541,6 +14541,11 @@ gzip-size@5.1.1, gzip-size@^5.0.0:
   dependencies:
     duplexer "^0.1.1"
     pify "^4.0.1"
+
+hammerjs@^2.0.8:
+  version "2.0.8"
+  resolved "https://registry.yarnpkg.com/hammerjs/-/hammerjs-2.0.8.tgz#04ef77862cff2bb79d30f7692095930222bf60f1"
+  integrity sha1-BO93hiz/K7edMPdpIJWTAiK/YPE=
 
 handle-thing@^2.0.0:
   version "2.0.0"
@@ -17441,6 +17446,11 @@ just-extend@^4.0.2:
   resolved "https://registry.yarnpkg.com/just-extend/-/just-extend-4.0.2.tgz#f3f47f7dfca0f989c55410a7ebc8854b07108afc"
   integrity sha512-FrLwOgm+iXrPV+5zDU6Jqu4gCRXbWEQg2O3SKONsWE4w7AXFRkryS53bpWdaL9cNol+AmR3AEYz6kn+o0fCPnw==
 
+keycharm@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/keycharm/-/keycharm-0.2.0.tgz#fa6ea2e43b90a68028843d27f2075d35a8c3e6f9"
+  integrity sha1-+m6i5DuQpoAohD0n8gddNajD5vk=
+
 killable@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/killable/-/killable-1.0.1.tgz#4c8ce441187a061c7474fb87ca08e2a638194892"
@@ -18234,10 +18244,10 @@ markdown-to-jsx@^6.11.4:
     prop-types "^15.6.2"
     unquote "^1.1.0"
 
-marked@1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/marked/-/marked-1.1.1.tgz#e5d61b69842210d5df57b05856e0c91572703e6a"
-  integrity sha512-mJzT8D2yPxoPh7h0UXkB+dBj4FykPJ2OIfxAWeIHrvoHDkFxukV/29QxoFQoPM6RLEwhIFdJpmKBlqVM3s2ZIw==
+marked@1.2.2:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/marked/-/marked-1.2.2.tgz#5d77ffb789c4cb0ae828bfe76250f7140b123f70"
+  integrity sha512-5jjKHVl/FPo0Z6ocP3zYhKiJLzkwJAw4CZoLjv57FkvbUuwOX4LIBBGGcXjAY6ATcd1q9B8UTj5T9Umauj0QYQ==
 
 marked@^0.3.12:
   version "0.3.19"
@@ -18783,6 +18793,11 @@ moment@*, moment@2.24.0, moment@2.x, "moment@>= 2.9.0", moment@>=2.14.0, moment@
   version "2.24.0"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.24.0.tgz#0d055d53f5052aa653c9f6eb68bb5d12bf5c2b5b"
   integrity sha512-bV7f+6l2QigeBBZSM/6yTNq4P2fNpSWj/0e7jQcy87A8e7o2nAfP/34/2ky5Vw4B9S446EtIhodAzkFCcR4dQg==
+
+moment@^2.20.1:
+  version "2.29.1"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.29.1.tgz#b2be769fa31940be9eeea6469c075e35006fa3d3"
+  integrity sha512-kHmoybcPV8Sqy59DwNDY3Jefr64lK/by/da0ViFcuA4DH0vQg5Q6Ze5VimxkfQNSC+Mls/Kx53s7TjP1RhFEDQ==
 
 moment@^2.27.0:
   version "2.27.0"
@@ -21370,6 +21385,13 @@ prop-types@15.7.2, prop-types@15.x, prop-types@^15.0.0, prop-types@^15.5.0, prop
     loose-envify "^1.4.0"
     object-assign "^4.1.1"
     react-is "^16.8.1"
+
+propagating-hammerjs@^1.4.6:
+  version "1.4.7"
+  resolved "https://registry.yarnpkg.com/propagating-hammerjs/-/propagating-hammerjs-1.4.7.tgz#671ab1791a7f88b9dccce8fd8b14a9655950e7d6"
+  integrity sha512-oW9Wd+W2Tp5uOz6Fh4mEU7p+FoyU85smLH/mPga83Loh0pHa6AH4ZHGywvwMk3TWP31l7iUsvJyW265p4Ipwrg==
+  dependencies:
+    hammerjs "^2.0.8"
 
 property-information@^5.0.0, property-information@^5.0.1, property-information@^5.3.0:
   version "5.3.0"
@@ -26468,10 +26490,10 @@ update-notifier@^2.5.0:
     semver-diff "^2.0.0"
     xdg-basedir "^3.0.0"
 
-uplot@1.2.2:
-  version "1.2.2"
-  resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.2.2.tgz#b8876ab55c8a76fff81673b4b48fa5f76c4d9d2b"
-  integrity sha512-FiUCvD0QB+y0YGGtzTYhvaGktsddxiIFMSRScEsd97aasfnAGhIvs6aShbaB6/TZpKa6X1qVzFWuNgwnzaWBcg==
+uplot@1.3.0:
+  version "1.3.0"
+  resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.3.0.tgz#c805e632c9dc0a2f47041fa0431996cbb42de83a"
+  integrity sha512-15EIwgOYdTeX6YXRJK6u3sq/gtFFa8ICdQROTeQBStmekhGgl8MixhL6pO66pmxPuzaJUrfIa+o5gvzttMF5rw==
 
 upper-case-first@^1.1.0, upper-case-first@^1.1.2:
   version "1.1.2"
@@ -26726,6 +26748,18 @@ vfile@^4.0.0:
     replace-ext "1.0.0"
     unist-util-stringify-position "^2.0.0"
     vfile-message "^2.0.0"
+
+visjs-network@4.25.0:
+  version "4.25.0"
+  resolved "https://registry.yarnpkg.com/visjs-network/-/visjs-network-4.25.0.tgz#a3f0a9ac490b49346a0284986fcd40f8c0622335"
+  integrity sha512-DL6RXd+G6XME2qHMrSh9VYPbkqrY4Hs/liBuNCA1E0wq6bUpQljrM7ePhZMy7zD0yA3wQziOQFB78tvSOevKEQ==
+  dependencies:
+    emitter-component "^1.1.1"
+    hammerjs "^2.0.8"
+    keycharm "^0.2.0"
+    moment "^2.20.1"
+    propagating-hammerjs "^1.4.6"
+    timsort "^0.3.0"
 
 vm-browserify@^1.0.1:
   version "1.1.0"
