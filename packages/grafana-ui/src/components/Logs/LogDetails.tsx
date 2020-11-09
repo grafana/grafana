@@ -23,6 +23,7 @@ import { getAllFields } from './logParser';
 //Components
 import { LogDetailsRow } from './LogDetailsRow';
 import { Tooltip } from '../Tooltip/Tooltip';
+import { Icon } from '../Icon/Icon';
 
 export interface Props extends Themeable {
   row: LogRowModel;
@@ -109,7 +110,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                 {labelsAvailable && (
                   <tr>
                     <td colSpan={5} className={style.logDetailsHeading} aria-label="Log labels">
-                      Log labels:
+                      Log labels
                     </td>
                   </tr>
                 )}
@@ -131,14 +132,15 @@ class UnThemedLogDetails extends PureComponent<Props> {
                 {detectedFieldsAvailable && (
                   <tr>
                     <td colSpan={5} className={style.logDetailsHeading} aria-label="Detected fields">
-                      <Tooltip content="Fields that are parsed from log message and detected by Grafana">
-                        <span
+                      Detected fields
+                      <Tooltip content="Fields that are parsed from log message and detected by Grafana.">
+                        <Icon
+                          name="question-circle"
+                          size="xs"
                           className={css`
-                            cursor: help;
+                            margin-left: 4px;
                           `}
-                        >
-                          Detected fields:
-                        </span>
+                        />
                       </Tooltip>
                     </td>
                   </tr>

@@ -121,7 +121,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     return (
       <tr className={cx(style.logDetailsValue, { [styles.noHoverBackground]: showFieldsStats })}>
         {/* Action buttons - show stats/filter results */}
-        <td className={style.logsDetailsIcon} colSpan={isLabel ? undefined : 2}>
+        <td className={style.logsDetailsIcon}>
           <IconButton name="signal" title={'Ad-hoc statistics'} onClick={this.showStats} />
         </td>
 
@@ -138,7 +138,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
         {!isLabel && (
           <>
-            <td className={style.logsDetailsIcon}>{toggleFieldButton}</td>
+            <td className={style.logsDetailsIcon} colSpan={2}>
+              {toggleFieldButton}
+            </td>
           </>
         )}
 
