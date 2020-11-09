@@ -37,10 +37,9 @@ interface Props {
 
 // If a metric is a Pipeline Aggregation (https://www.elastic.co/guide/en/elasticsearch/reference/current/search-aggregations-pipeline.html)
 // it doesn't make sense to show it in the type picker when there is no non-pipeline-aggregation previously selected
-// as they work on the outputs produced from other aggregations rather than from document sets.
+// as they work on the outputs produced from other aggregations rather than from documents or fields.
 // This means we should filter them out from the type picker if there's no other "basic" aggregation before the current one.
-const isBasicAggregation = (metric: MetricAggregation) =>
-  metric.type !== 'count' && !metricAggregationConfig[metric.type].isPipelineAgg;
+const isBasicAggregation = (metric: MetricAggregation) => !metricAggregationConfig[metric.type].isPipelineAgg;
 
 const getTypeOptions = (
   previousMetrics: MetricAggregation[],
