@@ -17,7 +17,7 @@
     "name": "type/duplicate",
     "action": "close",
     "comment": "Thanks for creating this issue! It looks like this has already been reported by another user. We’ve closed this in favor of the existing one. Please consider adding any details you think is missing to that issue.\n\nTo avoid having your issue closed in the future, please read our [CONTRIBUTING](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guidelines.\n\nHappy graphing!"
-  },  
+  },
   {
     "type": "comment",
     "name": "needsMoreInfo",
@@ -38,5 +38,11 @@
     "name": "no new info",
     "action": "close",
     "comment": "We've closed this issue since it needs more information and hasn't had any activity recently. We can re-open it after you you add more information. To avoid having your issue closed in the future, please read our [CONTRIBUTING](https://github.com/grafana/grafana/blob/master/CONTRIBUTING.md) guidelines.\n\nHappy graphing!"
+  },
+  {
+    "type": "label",
+    "name": "close-feature-request",
+    "action": "close",
+    "comment": ":slightly_frowning_face: This feature request has been open for a long time with few received upvotes or comments so we are closing it. We are trying to limit open GitHub issues in order to better track planned work and features. \r\n\r\nThis does not mean that we will never ever implement it or that we will never accept a PR for it. A closed issue can still attract upvotes and act as a ticket to track feature demand\/interest. \r\n\r\nStill a big Thank You to you for taking the time to create this issue!"
   }
 ]
