@@ -407,6 +407,9 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, direction));
     const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);
     const dataFrame = _.first(logResponse.data);
+    if (!dataFrame) {
+      return { data: [] };
+    }
     /**
      * The LogRowContextProvider requires there is a field in the dataFrame.fields
      * named `ts` for timestamp and `line` for the actual log line to display.
