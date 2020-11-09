@@ -1,6 +1,7 @@
 import isString from 'lodash/isString';
 import { ScopedVars } from '@grafana/data';
 import { ALL_VARIABLE_TEXT } from './state/types';
+import { QueryVariableModel, VariableModel, VariableRefresh } from './types';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -103,3 +104,21 @@ export const getCurrentText = (variable: any): string => {
 
   return variable.current.text;
 };
+
+export function getVariableRefresh(variable: VariableModel): VariableRefresh {
+  if (!variable || !variable.hasOwnProperty('refresh')) {
+    return VariableRefresh.never;
+  }
+
+  const queryVariable = variable as QueryVariableModel;
+
+  if (
+    queryVariable.refresh !== VariableRefresh.onTimeRangeChanged &&
+    queryVariable.refresh !== VariableRefresh.onDashboardLoad &&
+    queryVariable.refresh !== VariableRefresh.never
+  ) {
+    return VariableRefresh.never;
+  }
+
+  return queryVariable.refresh;
+}

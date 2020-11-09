@@ -110,6 +110,7 @@ export interface OrgVariableModel extends SystemVariable<OrgProps> {}
 export interface UserProps {
   login: string;
   id: number;
+  email?: string;
   toString: () => string;
 }
 

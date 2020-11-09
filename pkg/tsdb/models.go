@@ -72,16 +72,6 @@ func NewTimePoint(value null.Float, timestamp float64) TimePoint {
 	return TimePoint{value, null.FloatFrom(timestamp)}
 }
 
-func NewTimeSeriesPointsFromArgs(values ...float64) TimeSeriesPoints {
-	points := make(TimeSeriesPoints, 0)
-
-	for i := 0; i < len(values); i += 2 {
-		points = append(points, NewTimePoint(null.FloatFrom(values[i]), values[i+1]))
-	}
-
-	return points
-}
-
 func NewTimeSeries(name string, points TimeSeriesPoints) *TimeSeries {
 	return &TimeSeries{
 		Name:   name,
