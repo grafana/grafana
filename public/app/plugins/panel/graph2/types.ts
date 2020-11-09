@@ -28,7 +28,6 @@ export const defaults: Options = {
     showPoints: false,
   },
   legend: {
-    asTable: false,
     isVisible: true,
     placement: 'bottom',
   },
