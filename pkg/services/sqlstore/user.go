@@ -643,7 +643,7 @@ func validateOneAdminLeft(sess *DBSession) error {
 	return nil
 }
 
-func getHiddenUsersIds() ([]int64, error) {
+func GetHiddenUsersIDs() ([]int64, error) {
 	userIds := []struct {
 		Id int64
 	}{}

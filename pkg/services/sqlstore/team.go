@@ -31,7 +31,7 @@ func getFilteredUsers(signedInUser *models.SignedInUser) ([]int64, error) {
 		return filteredUsers, nil
 	}
 
-	ids, err := getHiddenUsersIds()
+	ids, err := GetHiddenUsersIDs()
 	if err != nil {
 		return filteredUsers, err
 	}
