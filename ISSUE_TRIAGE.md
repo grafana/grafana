@@ -306,6 +306,8 @@ We have some automation that triggers on comments or labels being added to issue
 * Add /duplicate `#<issue number>`  to have Grafana label & close issue with an appropriate message. 
 * Add `type/question` and the bot will close it with an appropriate message. 
 
+[Read more on bot actions](https://github.com/grafana/grafana/blob/master/.github/bot.md)
+
 ## External PRs
 
 Part of issue triage should also be triaging of external PRs. Main goal should be to make sure PRs from external contributors have an owner/reviewer and are not forgotten.
