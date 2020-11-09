@@ -9,9 +9,6 @@ import (
 // HandlerFunc defines a handler function interface.
 type HandlerFunc interface{}
 
-// CtxHandlerFunc defines a context handler function.
-type CtxHandlerFunc func()
-
 // Msg defines a message interface.
 type Msg interface{}
 
@@ -202,14 +199,6 @@ func DispatchCtx(ctx context.Context, msg Msg) error {
 
 func Publish(msg Msg) error {
 	return globalBus.Publish(msg)
-}
-
-// InTransaction starts a transaction and store it in the context.
-// The caller can then pass a function with multiple DispatchCtx calls that
-// all will be executed in the same transaction. InTransaction will rollback if the
-// callback returns an error.
-func InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	return globalBus.InTransaction(ctx, fn)
 }
 
 func ClearBusHandlers() {

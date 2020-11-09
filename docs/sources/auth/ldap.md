@@ -94,7 +94,7 @@ email =  "email"
 
 ### Using environment variables
 
-You can interpolate variables in the TOML config from environment variables. For instance, you could externalize your `bind_password` that way:
+You can interpolate variables in the TOML configuration from environment variables. For instance, you could externalize your `bind_password` that way:
 
 ```bash
 bind_password = "${LDAP_ADMIN_PASSWORD}"
@@ -161,8 +161,7 @@ In `[[servers.group_mappings]]` you can map an LDAP group to a Grafana organizat
 the authoritative source. So, if you change a user's role in the Grafana Org. Users page, this change will be reset the next time the user logs in. If you
 change the LDAP groups of a user, the change will take effect the next time the user logs in.
 
-The first group mapping that an LDAP user is matched to will be used for the sync. If you have LDAP users that fit multiple mappings, the topmost mapping in the
-TOML config will be used.
+The first group mapping that an LDAP user is matched to will be used for the sync. If you have LDAP users that fit multiple mappings, the topmost mapping in the TOML configuration will be used.
 
 **LDAP specific configuration file (ldap.toml) example:**
 ```bash

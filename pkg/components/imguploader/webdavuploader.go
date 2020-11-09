@@ -79,7 +79,7 @@ func (u *WebdavUploader) Upload(ctx context.Context, pa string) (string, error) 
 
 	if res.StatusCode != http.StatusCreated {
 		body, _ := ioutil.ReadAll(res.Body)
-		return "", fmt.Errorf("Failed to upload image. Returned statuscode %v body %s", res.StatusCode, body)
+		return "", fmt.Errorf("failed to upload image, statuscode: %d, body: %s", res.StatusCode, body)
 	}
 
 	if u.public_url != "" {

@@ -38,7 +38,7 @@ on but will be not ready for v4 release.
 
 {{< imgbox max-width="40%" img="/img/docs/v4/alerting_conditions.png" caption="Alerting Conditions" >}}
 
-The rule config allows you to specify a name, how often the rule should be evaluated and a series
+The rule configuration allows you to specify a name, how often the rule should be evaluated and a series
 of conditions that all need to be true for the alert to fire.
 
 Currently the only condition type that exists is a `Query` condition that allows you to

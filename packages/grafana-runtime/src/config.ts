@@ -62,6 +62,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rendererAvailable = false;
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
+  marketplaceUrl?: string;
 
   constructor(options: GrafanaBootConfig) {
     this.theme = options.bootData.user.lightTheme ? getTheme(GrafanaThemeType.Light) : getTheme(GrafanaThemeType.Dark);

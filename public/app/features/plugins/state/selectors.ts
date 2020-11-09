@@ -7,5 +7,8 @@ export const getPlugins = (state: PluginsState) => {
     return regex.test(item.name) || regex.test(item.info.author.name) || regex.test(item.info.description);
   });
 };
+export const getAllPluginsErrors = (state: PluginsState) => {
+  return state.errors;
+};
 
 export const getPluginsSearchQuery = (state: PluginsState) => state.searchQuery;
