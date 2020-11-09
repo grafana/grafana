@@ -609,9 +609,17 @@ Text used as placeholder text on login page for password input.
 
 Set the default UI theme: `dark` or `light`. Default is `dark`.
 
-### External user management
+### external_manage_link_url
 
-If you manage users externally you can replace the user invite button for organizations with a link to an external site together with a description.
+If you manage users externally you can replace the "Manage users on grafana.com" button (on the Users page in the Grafana UI) with a link to an external site. Default is `https://grafana.com/profile/org`.
+
+### external_manage_link_name
+
+If you manage users externally you can replace the text shown on the "Manage users on grafana.com" button (on the Users page in the Grafana UI). Default is `Manage users on grafana.com`.
+
+### external_manage_info
+
+If you manage users externally, you can replace the text shown at the top of the Users page in the Grafana UI. This value can contain markdown, so it can contain links.Default is `Users are managed via [grafana.com](https://grafana.com/profile/org). The table below shows users who have logged in at least once. To remove a user you also need to remove them from your [grafana.com](https://grafana.com/profile/org) org.`.
 
 ### viewers_can_edit
 
