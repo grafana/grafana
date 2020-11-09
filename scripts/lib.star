@@ -437,7 +437,9 @@ def test_backend_step():
             'lint-backend',
         ],
         'commands': [
-            # First execute non-integration tests in parallel, since it should be safe
+            # First make sure that there are no tests with FocusConvey
+            'yarn grunt no-focus-convey-tests',
+            # Then execute non-integration tests in parallel, since it should be safe
             './bin/grabpl test-backend',
             # Then execute integration tests in serial
             './bin/grabpl integration-tests',

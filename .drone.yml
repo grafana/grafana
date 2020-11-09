@@ -337,6 +337,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.28
   commands:
+  - yarn grunt no-focus-convey-tests
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -781,6 +782,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.28
   commands:
+  - yarn grunt no-focus-convey-tests
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -1143,6 +1145,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.28
   commands:
+  - yarn grunt no-focus-convey-tests
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -1550,6 +1553,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.28
   commands:
+  - yarn grunt no-focus-convey-tests
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -1902,6 +1906,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.28
   commands:
+  - yarn grunt no-focus-convey-tests
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -2311,6 +2316,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.28
   commands:
+  - yarn grunt no-focus-convey-tests
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -2613,6 +2619,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.28
   commands:
+  - yarn grunt no-focus-convey-tests
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
