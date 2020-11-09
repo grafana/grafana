@@ -34,7 +34,12 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
           )}
           aria-label="Query type field"
         >
-          <InlineFormLabel width={5}>Query type</InlineFormLabel>
+          <InlineFormLabel
+            width="auto"
+            tooltip="Choose the type of query you would like to run. With instant queries, you query only the latest value. Range query is used to do a query over a range of time. With both, you run 2 queries - instant and range."
+          >
+            Query type
+          </InlineFormLabel>
 
           <RadioButtonGroup options={rangeOptions} value={queryType} onChange={onQueryTypeChange} />
         </div>

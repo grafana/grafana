@@ -7,7 +7,7 @@ exports[`PromExploreQueryEditor should render component 1`] = `
       onKeyDownFunc={[Function]}
       onQueryTypeChange={[Function]}
       onStepChange={[Function]}
-      queryType="range"
+      queryType="both"
       stepValue="1s"
     />
   }
