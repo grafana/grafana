@@ -16,6 +16,10 @@ import { runQueries, setQueriesAction } from './query';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
 
+//
+// Actions and Payloads
+//
+
 /**
  * Close the split view and save URL state.
  */

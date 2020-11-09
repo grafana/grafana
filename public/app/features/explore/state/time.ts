@@ -20,6 +20,10 @@ import { syncTimesAction } from './main';
 import { stateSave } from './exploreItem';
 import { makeInitialUpdateState } from './utils';
 
+//
+// Actions and Payloads
+//
+
 export interface ChangeRangePayload {
   exploreId: ExploreId;
   range: TimeRange;

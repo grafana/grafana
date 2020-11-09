@@ -42,6 +42,10 @@ import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
 import { createEmptyQueryResponse, makeInitialUpdateState } from './utils';
 
+//
+// Actions and Payloads
+//
+
 /**
  * Adds a query row after the row with the given index.
  */

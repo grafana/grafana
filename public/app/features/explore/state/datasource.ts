@@ -13,6 +13,10 @@ import { importQueries, runQueries } from './query';
 import { changeRefreshInterval } from './time';
 import { createEmptyQueryResponse, makeInitialUpdateState } from './utils';
 
+//
+// Actions and Payloads
+//
+
 /**
  * Display an error when no datasources have been configured
  */

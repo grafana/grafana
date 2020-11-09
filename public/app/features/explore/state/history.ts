@@ -9,11 +9,19 @@ import { richHistoryUpdatedAction } from './main';
 import { HistoryItem } from '@grafana/data';
 import { AnyAction, createAction } from '@reduxjs/toolkit';
 
+//
+// Actions and Payloads
+//
+
 export interface HistoryUpdatedPayload {
   exploreId: ExploreId;
   history: HistoryItem[];
 }
 export const historyUpdatedAction = createAction<HistoryUpdatedPayload>('explore/historyUpdated');
+
+//
+// Action creators
+//
 
 export const updateRichHistory = (ts: number, property: string, updatedProperty?: string): ThunkResult<void> => {
   return (dispatch, getState) => {

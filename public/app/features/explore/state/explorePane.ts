@@ -27,6 +27,10 @@ import { loadExploreDatasourcesAndSetDatasource } from './datasource';
 import { updateTime } from './time';
 import { toRawTimeRange } from '../utils/time';
 
+//
+// Actions and Payloads
+//
+
 /**
  * Keep track of the Explore container size, in particular the width.
  * The width will be used to calculate graph intervals (number of datapoints).
