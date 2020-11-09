@@ -36,7 +36,7 @@ export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
       >
         <InlineFormLabel
           tooltip="Choose the type of query you would like to run. Instant query allows doing queries against a single point in time. Range query is used to do a query over a range of time."
-          width={7}
+          width="auto"
         >
           Query type
         </InlineFormLabel>

@@ -229,7 +229,6 @@ describe('LokiDatasource', () => {
         expect: res => {
           const dataFrame = res.data[0] as DataFrame;
           const fieldCache = new FieldCache(dataFrame);
-          console.log(dataFrame);
           expect(fieldCache.getFieldByName('line')?.values.get(0)).toBe('hello');
           expect(dataFrame.meta?.limit).toBe(20);
           expect(dataFrame.meta?.limit).toBe(20);
