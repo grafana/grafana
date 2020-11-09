@@ -143,6 +143,7 @@ var (
 	ExternalUserMngInfo     string
 	OAuthAutoLogin          bool
 	ViewersCanEdit          bool
+	HiddenUsers             []string
 
 	// Http auth
 	AdminUser        string
@@ -1129,6 +1130,12 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.UserInviteMaxLifetime = userInviteMaxLifetimeDuration
 	if cfg.UserInviteMaxLifetime < time.Minute*15 {
 		return errors.New("the minimum supported value for the `user_invite_max_lifetime_duration` configuration is 15m (15 minutes)")
+	}
+
+	hiddenUsers := users.Key("hidden_users").MustString("")
+	for _, user := range strings.Split(hiddenUsers, ",") {
+		user = strings.TrimSpace(user)
+		HiddenUsers = append(HiddenUsers, user)
 	}
 
 	return nil

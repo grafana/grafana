@@ -79,3 +79,17 @@ func GetGravatarUrlWithDefault(text string, defaultText string) string {
 
 	return GetGravatarUrl(text)
 }
+
+func IsHiddenUser(userLogin string, signedInUser *models.SignedInUser) bool {
+	if signedInUser.IsGrafanaAdmin || userLogin == signedInUser.Login {
+		return false
+	}
+
+	for _, hu := range setting.HiddenUsers {
+		if userLogin == hu {
+			return true
+		}
+	}
+
+	return false
+}

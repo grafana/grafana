@@ -288,7 +288,12 @@ func searchUser(c *models.ReqContext) (*models.SearchUsersQuery, error) {
 		return nil, err
 	}
 
+	filteredUsers := make([]*models.UserSearchHitDTO, 0)
 	for _, user := range query.Result.Users {
+		if dtos.IsHiddenUser(user.Login, c.SignedInUser) {
+			continue
+		}
+
 		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
 		user.AuthLabels = make([]string, 0)
 		if user.AuthModule != nil && len(user.AuthModule) > 0 {
@@ -296,8 +301,11 @@ func searchUser(c *models.ReqContext) (*models.SearchUsersQuery, error) {
 				user.AuthLabels = append(user.AuthLabels, GetAuthProviderLabel(authModule))
 			}
 		}
+
+		filteredUsers = append(filteredUsers, user)
 	}
 
+	query.Result.Users = filteredUsers
 	query.Result.Page = page
 	query.Result.PerPage = perPage
 
