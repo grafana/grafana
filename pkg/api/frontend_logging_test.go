@@ -92,8 +92,8 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 		}
 
 		logSentryEventScenario(t, "Should log received error event", errorEvent, func(sc *scenarioContext, logs []*log.Record) {
-			assert.Equal(t, sc.resp.Code, 200)
-			assert.Equal(t, len(logs), 1)
+			assert.Equal(t, 200, sc.resp.Code)
+			assert.Len(t, logs, 1)
 			assertContextContains(t, logs[0], "logger", "frontend")
 			assertContextContains(t, logs[0], "url", errorEvent.Request.URL)
 			assertContextContains(t, logs[0], "user_agent", errorEvent.Request.Headers["User-Agent"])
@@ -117,10 +117,10 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 		}
 
 		logSentryEventScenario(t, "Should log received message event", messageEvent, func(sc *scenarioContext, logs []*log.Record) {
-			assert.Equal(t, sc.resp.Code, 200)
-			assert.Equal(t, len(logs), 1)
-			assert.Equal(t, logs[0].Msg, "hello world")
-			assert.Equal(t, logs[0].Lvl, log.LvlInfo)
+			assert.Equal(t, 200, sc.resp.Code)
+			assert.Len(t, logs, 1)
+			assert.Equal(t, "hello world", logs[0].Msg)
+			assert.Equal(t, log.LvlInfo, logs[0].Lvl)
 			assertContextContains(t, logs[0], "logger", "frontend")
 			assertContextContains(t, logs[0], "url", messageEvent.Request.URL)
 			assertContextContains(t, logs[0], "user_agent", messageEvent.Request.Headers["User-Agent"])
@@ -145,5 +145,5 @@ func indexOf(arr []interface{}, item string) int {
 func assertContextContains(t *testing.T, logRecord *log.Record, label string, value interface{}) {
 	assert.Contains(t, logRecord.Ctx, label)
 	labelIdx := indexOf(logRecord.Ctx, label)
-	assert.Equal(t, logRecord.Ctx[labelIdx+1], value)
+	assert.Equal(t, value, logRecord.Ctx[labelIdx+1])
 }
