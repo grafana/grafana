@@ -149,3 +149,21 @@ servers = ["test1", "test2"]
 String to interpolate: '${servers:text}'
 Interpolation result: "test1 + test2"
 ```
+
+## Replace
+
+Formats single- and multi-valued variables by replacing text. Accepts one to three arguments and allows escaping of colons using backslashes. When called with two or more arguments, the first 2 arguments follow the semantics of `String.prototype.replace()`. When called with an odd number of arguments, the rightmost argument should be either `upper` or `lower`, which will change the case of the result string.
+
+```bash
+servers = ["value1", "values2"]
+String to interpolate: '${servers:replace:upper}'
+Interpolation result: "VAL1,VAL2"
+
+servers = ["value1", "values2"]
+String to interpolate: '${servers:replace:values?:val}'
+Interpolation result: "val1,val2"
+
+servers = ["value1", "values2"]
+String to interpolate: '${servers:replace:values?:val:upper}'
+Interpolation result: "VAL1,VAL2"
+```

@@ -557,7 +557,7 @@ describe('templateSrv', () => {
     });
   });
 
-  describe('date formating', () => {
+  describe('date formatting', () => {
     beforeEach(() => {
       _templateSrv = initTemplateSrv([], {
         from: dateTime(1594671549254),
@@ -619,6 +619,103 @@ describe('templateSrv', () => {
       });
 
       expect(passedValue).toBe('hello');
+    });
+  });
+
+  describe('replace', () => {
+    beforeEach(() => {
+      initTemplateSrv([
+        {
+          type: 'query',
+          name: 'single_value',
+          current: { value: ['value1'] },
+        },
+        {
+          type: 'query',
+          name: 'multi_value',
+          current: { value: ['value1', 'value2'] },
+        },
+        {
+          type: 'query',
+          name: 'has_colon',
+          current: { value: ['value1:value2', 'value3:value4'] },
+        },
+        {
+          type: 'query',
+          name: 'upper_with_colon',
+          current: { value: ['VALUE1:VALUE2', 'VALUE3:VALUE4'] },
+        },
+      ]);
+    });
+
+    it('should regex replace single value', () => {
+      const target = _templateSrv.replace('${single_value:replace:[0-9]:d}');
+      expect(target).toBe('valued');
+    });
+
+    it('should regex replace multiple values', () => {
+      const target = _templateSrv.replace('${multi_value:replace:value:val}');
+      expect(target).toBe('val1,val2');
+    });
+
+    it('should allow escaping colons within the regex', () => {
+      const target = _templateSrv.replace('${has_colon:replace:\\::|}');
+      expect(target).toBe('value1|value2,value3|value4');
+    });
+
+    it('should do nothing with fewer than two args', () => {
+      const target = _templateSrv.replace('${single_value:replace:[0-9]}');
+      expect(target).toBe('value1');
+    });
+
+    it('should allow empty string as second arg', () => {
+      const target = _templateSrv.replace('${single_value:replace:[0-9]:}');
+      expect(target).toBe('value');
+    });
+
+    it('should allow using capture groups in output', () => {
+      const target = _templateSrv.replace('${multi_value:replace:value([0-9]+):foo$1}');
+      expect(target).toBe('foo1,foo2');
+    });
+
+    it('should not escape colons in the replacement', () => {
+      const target = _templateSrv.replace('${single_value:replace:([0-9]):\\:\\:$1}');
+      expect(target).toBe('value::1');
+    });
+
+    it('should replace all occurrences', () => {
+      const target = _templateSrv.replace('${has_colon:replace:value:foo}');
+      expect(target).toBe('foo1:foo2,foo3:foo4');
+    });
+
+    it('should transform to upper case without regex', () => {
+      const target = _templateSrv.replace('${single_value:replace:upper}');
+      expect(target).toBe('VALUE1');
+    });
+
+    it('should transform to upper case with regex', () => {
+      const target = _templateSrv.replace('${single_value:replace:value:foo:upper}');
+      expect(target).toBe('FOO1');
+    });
+
+    it('should transform to lower case without regex', () => {
+      const target = _templateSrv.replace('${upper_with_colon:replace:lower}');
+      expect(target).toBe('value1:value2,value3:value4');
+    });
+
+    it('should transform to lower case with regex', () => {
+      const target = _templateSrv.replace('${upper_with_colon:replace:[AEIOU]::lower}');
+      expect(target).toBe('vl1:vl2,vl3:vl4');
+    });
+
+    it('should allow ignore invalid single argument', () => {
+      const target = _templateSrv.replace('${single_value:replace:invalid}');
+      expect(target).toBe('value1');
+    });
+
+    it('should allow regex replacement and ignore invalid third argument', () => {
+      const target = _templateSrv.replace('${single_value:replace:[0-9]:d:nonsense}');
+      expect(target).toBe('valued');
     });
   });
 });

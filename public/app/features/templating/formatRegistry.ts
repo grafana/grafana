@@ -1,6 +1,6 @@
 import kbn from 'app/core/utils/kbn';
-import { Registry, RegistryItem, VariableModel, textUtil, dateTime } from '@grafana/data';
-import { map, isArray, replace } from 'lodash';
+import { dateTime, Registry, RegistryItem, textUtil, VariableModel } from '@grafana/data';
+import { isArray, map, replace } from 'lodash';
 import { formatVariableLabel } from '../variables/shared/formatVariable';
 
 export interface FormatOptions {
@@ -216,6 +216,13 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
         return formatVariableLabel(variable);
       },
     },
+    {
+      id: 'replace',
+      name: 'Replace',
+      description:
+        'Format variables using regex replacement. Requires two args and has the same semantics as String.prototype.replace().',
+      formatter: replaceText,
+    },
   ];
 
   return formats;
@@ -240,4 +247,37 @@ function encodeURIComponentStrict(str: string) {
         .toUpperCase()
     );
   });
+}
+
+function replaceText({ value, args }: FormatOptions) {
+  if (!isArray(args)) {
+    return value;
+  }
+
+  let replace = (s: string) => s;
+
+  if (args.length >= 2) {
+    const regex = new RegExp(args[0], 'g');
+    const replacement = args[1].replace(/\\:/g, ':');
+
+    replace = (s: string) => s.replace(regex, replacement);
+
+    args = args.slice(2);
+  }
+
+  if (args.length > 0) {
+    const inner = replace;
+
+    if (args[0] === 'upper') {
+      replace = (s: string) => inner(s).toUpperCase();
+    } else if (args[0] === 'lower') {
+      replace = (s: string) => inner(s).toLowerCase();
+    }
+  }
+
+  if (typeof value === 'string') {
+    return replace(value);
+  }
+
+  return map(value, replace);
 }

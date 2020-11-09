@@ -128,8 +128,8 @@ export class TemplateSrv implements BaseTemplateSrv {
       format = 'glob';
     }
 
-    // some formats have arguments that come after ':' character
-    let args = format.split(':');
+    // some formats have arguments that come after ':' character but allow escaping of the : with a backslash for regex
+    let args = format.split(/(?<!\\):/);
     if (args.length > 1) {
       format = args[0];
       args = args.slice(1);
