@@ -271,7 +271,7 @@ describe('Prometheus Result Transformer', () => {
       });
 
       expect(result[0].fields[1].labels).toBeDefined();
-      expect(result[0].fields[1].labels?.instance).toBe('testinstance2');
+      expect(result[0].fields[1].labels?.instance).toBe('testinstance');
       expect(result[0].fields[1].labels?.job).toBe('testjob');
     });
 
