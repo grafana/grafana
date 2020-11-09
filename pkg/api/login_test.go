@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/services/middleware"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
@@ -313,14 +314,16 @@ func TestLoginPostRedirect(t *testing.T) {
 	defer resetSetIndexViewData()
 
 	mockViewIndex()
-	defer resetViewIndex()
+	t.Cleanup(resetViewIndex)
 	sc := setupScenarioContext(t, "/login")
+	fakeMiddlewareSvc := middleware.FakeService(t)
 	hs := &HTTPServer{
-		log:              &FakeLogger{},
-		Cfg:              setting.NewCfg(),
-		HooksService:     &hooks.HooksService{},
-		License:          &licensing.OSSLicensingService{},
-		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+		log:               &FakeLogger{},
+		Cfg:               setting.NewCfg(),
+		HooksService:      &hooks.HooksService{},
+		License:           &licensing.OSSLicensingService{},
+		AuthTokenService:  auth.NewFakeUserAuthTokenService(),
+		MiddlewareService: fakeMiddlewareSvc,
 	}
 	hs.Cfg.CookieSecure = true
 
@@ -567,10 +570,11 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 
 	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
-		Cfg:              setting.NewCfg(),
-		License:          &licensing.OSSLicensingService{},
-		AuthTokenService: auth.NewFakeUserAuthTokenService(),
-		log:              log.New("hello"),
+		Cfg:               setting.NewCfg(),
+		License:           &licensing.OSSLicensingService{},
+		AuthTokenService:  auth.NewFakeUserAuthTokenService(),
+		log:               log.New("hello"),
+		MiddlewareService: middleware.FakeService(t),
 	}
 
 	sc.defaultHandler = Wrap(func(c *models.ReqContext) {
@@ -600,15 +604,16 @@ func (r *loginHookTest) LoginHook(loginInfo *models.LoginInfo, req *models.ReqCo
 	r.info = loginInfo
 }
 
-func TestLoginPostRunLokingHook(t *testing.T) {
+func TestLoginPostRunLoginHook(t *testing.T) {
 	sc := setupScenarioContext(t, "/login")
 	hookService := &hooks.HooksService{}
 	hs := &HTTPServer{
-		log:              log.New("test"),
-		Cfg:              setting.NewCfg(),
-		License:          &licensing.OSSLicensingService{},
-		AuthTokenService: auth.NewFakeUserAuthTokenService(),
-		HooksService:     hookService,
+		log:               log.New("test"),
+		Cfg:               setting.NewCfg(),
+		License:           &licensing.OSSLicensingService{},
+		AuthTokenService:  auth.NewFakeUserAuthTokenService(),
+		HooksService:      hookService,
+		MiddlewareService: middleware.FakeService(t),
 	}
 
 	sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) Response {
