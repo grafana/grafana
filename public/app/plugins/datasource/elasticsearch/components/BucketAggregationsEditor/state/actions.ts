@@ -1,12 +1,11 @@
 import { SettingKeyOf } from '../../types';
+import { BucketAggregation, BucketAggregationWithField } from '../aggregations';
 import {
   ADD_BUCKET_AGG,
-  BucketAggregation,
   BucketAggregationAction,
   REMOVE_BUCKET_AGG,
   CHANGE_BUCKET_AGG_TYPE,
   CHANGE_BUCKET_AGG_FIELD,
-  BucketAggregationWithField,
   CHANGE_BUCKET_AGG_SETTING,
   ChangeBucketAggregationSettingAction,
 } from './types';

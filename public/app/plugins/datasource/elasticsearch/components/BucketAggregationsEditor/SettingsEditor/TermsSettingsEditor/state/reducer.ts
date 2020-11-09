@@ -1,4 +1,4 @@
-import { Filter } from '../../../state/types';
+import { Filter } from '../../../aggregations';
 import { defaultFilter } from '../utils';
 import { ADD_FILTER, CHANGE_FILTER, FilterAction, REMOVE_FILTER } from './types';
 

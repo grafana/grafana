@@ -1,4 +1,4 @@
-import { Filters, Histogram, DateHistogram, Terms } from './components/BucketAggregationsEditor/state/types';
+import { Filters, Histogram, DateHistogram, Terms } from './components/BucketAggregationsEditor/aggregations';
 import {
   isMetricAggregationWithField,
   isMetricAggregationWithSettings,

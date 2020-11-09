@@ -1,5 +1,5 @@
 import { Action } from '../../../../../hooks/useReducerCallback';
-import { Filter } from '../../../state/types';
+import { Filter } from '../../../aggregations';
 
 export const ADD_FILTER = '@bucketAggregations/filter/add';
 export const REMOVE_FILTER = '@bucketAggregations/filter/remove';

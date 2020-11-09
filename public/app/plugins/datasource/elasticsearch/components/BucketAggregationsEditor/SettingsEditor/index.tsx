@@ -4,7 +4,7 @@ import React, { ComponentProps, FunctionComponent } from 'react';
 import { useDispatch } from '../../ElasticsearchQueryContext';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { changeBucketAggregationSetting } from '../state/actions';
-import { BucketAggregation } from '../state/types';
+import { BucketAggregation } from '../aggregations';
 import { intervalOptions, orderByOptions, orderOptions, sizeOptions } from '../utils';
 import { FiltersSettingsEditor } from './TermsSettingsEditor';
 import { useDescription } from './useDescription';

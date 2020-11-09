@@ -1,4 +1,4 @@
-import { Filter } from '../../../state/types';
+import { Filter } from '../../../aggregations';
 import { FilterAction, ADD_FILTER, REMOVE_FILTER, CHANGE_FILTER } from './types';
 
 export const addFilter = (): FilterAction => ({

@@ -1,4 +1,4 @@
-import { BucketAggregation } from './components/BucketAggregationsEditor/state/types';
+import { BucketAggregation } from './components/BucketAggregationsEditor/aggregations';
 import {
   ExtendedStat,
   MetricAggregation,

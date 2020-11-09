@@ -27,7 +27,7 @@ import {
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/MetricAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/BucketAggregationsEditor/utils';
-import { isBucketAggregationWithField } from './components/BucketAggregationsEditor/state/types';
+import { isBucketAggregationWithField } from './components/BucketAggregationsEditor/aggregations';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.

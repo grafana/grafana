@@ -4,7 +4,8 @@ import { AddRemove } from '../AddRemove';
 import { BucketAggregationEditor } from './BucketAggregationEditor';
 import { useDispatch } from '../ElasticsearchQueryContext';
 import { addBucketAggregation, removeBucketAggregation } from './state/actions';
-import { BucketAggregation, BucketAggregationAction } from './state/types';
+import { BucketAggregationAction } from './state/types';
+import { BucketAggregation } from './aggregations';
 
 interface Props {
   value: BucketAggregation[];
@@ -15,8 +16,6 @@ export const BucketAggregationsEditor: FunctionComponent<Props> = ({ value }) =>
 
   return (
     <>
-      {/* {JSON.stringify(value, null, 2)} */}
-
       {value.map((bucketAgg, index) => (
         <InlineFieldRow key={bucketAgg.id}>
           <BucketAggregationEditor value={bucketAgg} label={index === 0 ? 'Group By' : 'Then By'} />

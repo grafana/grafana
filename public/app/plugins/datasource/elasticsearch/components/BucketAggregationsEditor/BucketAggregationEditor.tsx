@@ -4,14 +4,10 @@ import React, { ComponentProps, FunctionComponent } from 'react';
 import { useDatasource, useDispatch } from '../ElasticsearchQueryContext';
 import { QueryEditorRow } from '../QueryEditorRow';
 import { marginZero } from '../styles';
+import { BucketAggregation, BucketAggregationType, isBucketAggregationWithField } from './aggregations';
 import { SettingsEditor } from './SettingsEditor';
 import { changeBucketAggregationField, changeBucketAggregationType } from './state/actions';
-import {
-  BucketAggregation,
-  BucketAggregationAction,
-  BucketAggregationType,
-  isBucketAggregationWithField,
-} from './state/types';
+import { BucketAggregationAction } from './state/types';
 import { bucketAggregationConfig } from './utils';
 
 const bucketAggOptions: Array<SelectableValue<BucketAggregationType>> = Object.entries(bucketAggregationConfig).map(

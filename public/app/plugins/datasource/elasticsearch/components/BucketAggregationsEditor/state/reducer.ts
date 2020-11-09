@@ -2,18 +2,18 @@ import { defaultBucketAgg } from '../../../query_def';
 import { ElasticsearchQuery } from '../../../types';
 import { ChangeMetricTypeAction, CHANGE_METRIC_TYPE } from '../../MetricAggregationsEditor/state/types';
 import { metricAggregationConfig } from '../../MetricAggregationsEditor/utils';
+import { BucketAggregation } from '../aggregations';
 import {
   ADD_BUCKET_AGG,
-  BucketAggregation,
-  BucketAggregationAction,
   REMOVE_BUCKET_AGG,
   CHANGE_BUCKET_AGG_TYPE,
   CHANGE_BUCKET_AGG_FIELD,
   CHANGE_BUCKET_AGG_SETTING,
+  BucketAggregationAction,
 } from './types';
 
 export const reducer = (
-  state: BucketAggregation[] = [],
+  state: BucketAggregation[],
   action: BucketAggregationAction | ChangeMetricTypeAction
 ): ElasticsearchQuery['bucketAggs'] => {
   switch (action.type) {
