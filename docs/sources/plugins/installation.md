@@ -1,9 +1,6 @@
 +++
 title = "Install plugins"
-type = "docs"
 aliases = ["/docs/plugins/installation/"]
-[menu.docs]
-parent = "plugins"
 weight = 1
 +++
 

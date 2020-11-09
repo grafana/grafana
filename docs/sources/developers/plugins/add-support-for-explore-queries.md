@@ -1,6 +1,5 @@
 +++
 title = "Add support for Explore queries"
-type = "docs"
 +++
 
 # Add support for Explore queries
