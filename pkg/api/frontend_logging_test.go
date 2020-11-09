@@ -128,8 +128,8 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 }
 
 func indexOf(arr []interface{}, item string) int {
-	for i := 0; i < len(arr); i++ {
-		if arr[i] == item {
+	for i, elem := range arr {
+		if elem == item {
 			return i
 		}
 	}
