@@ -30,12 +30,12 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendSentryEvent
 		sc := setupScenarioContext("/log")
 		hs := HTTPServer{}
 
-		sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) Response {
+		handler := Wrap(func(w http.ResponseWriter, c *models.ReqContext) Response {
 			sc.context = c
 			return hs.logFrontendMessage(c, event)
 		})
 
-		sc.m.Post(sc.url, sc.defaultHandler)
+		sc.m.Post(sc.url, handler)
 		sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 		fn(sc, logs)
 	})
