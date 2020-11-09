@@ -28,7 +28,6 @@ import _ from 'lodash';
 import {
   AppEvents,
   setLocale,
-  setMarkdownOptions,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
@@ -97,8 +96,6 @@ export class GrafanaApp {
     setLocale(config.bootData.user.locale);
     setTimeZoneResolver(() => config.bootData.user.timezone);
 
-    setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
-
     standardEditorsRegistry.setInit(getStandardOptionEditors);
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
     standardTransformersRegistry.setInit(getStandardTransformers);
@@ -106,7 +103,6 @@ export class GrafanaApp {
 
     app.config(
       (
-        $locationProvider: angular.ILocationProvider,
         $controllerProvider: angular.IControllerProvider,
         $compileProvider: angular.ICompileProvider,
         $filterProvider: angular.IFilterProvider,

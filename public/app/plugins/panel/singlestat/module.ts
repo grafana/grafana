@@ -68,6 +68,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     { value: 'first', text: 'First' },
     { value: 'delta', text: 'Delta' },
     { value: 'diff', text: 'Difference' },
+    { value: 'diffperc', text: 'Difference percent' },
     { value: 'range', text: 'Range' },
     { value: 'last_time', text: 'Time of last point' },
   ];

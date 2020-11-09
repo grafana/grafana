@@ -75,7 +75,7 @@
     "@emotion/core": "10.0.27",
     "@grafana/api-documenter": "0.9.3",
     "@grafana/api-extractor": "7.10.1",
-    "@grafana/eslint-config": "2.0.4",
+    "@grafana/eslint-config": "2.0.5",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
     "@testing-library/jest-dom": "^5.11.3",
     "@testing-library/react": "^10.4.8",
@@ -95,7 +95,6 @@
     "@types/jquery": "3.3.38",
     "@types/lodash": "4.14.149",
     "@types/lru-cache": "^5.1.0",
-    "@types/marked": "1.1.0",
     "@types/moment-timezone": "0.5.13",
     "@types/mousetrap": "1.6.3",
     "@types/node": "13.7.0",
@@ -247,7 +246,6 @@
     "jsurl": "^0.1.5",
     "lodash": "4.17.19",
     "lru-cache": "^5.1.1",
-    "marked": "1.1.1",
     "md5": "^2.2.1",
     "memoize-one": "5.1.1",
     "moment": "2.24.0",
@@ -290,7 +288,8 @@
     "tinycolor2": "1.4.1",
     "tti-polyfill": "0.2.2",
     "uuid": "8.3.0",
-    "whatwg-fetch": "3.1.0"
+    "whatwg-fetch": "3.1.0",
+    "visjs-network": "4.25.0"
   },
   "resolutions": {
     "caniuse-db": "1.0.30000772"

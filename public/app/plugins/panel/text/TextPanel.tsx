@@ -9,7 +9,6 @@ import { TextOptions } from './types';
 import { CustomScrollbar, stylesFactory } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import { Unsubscribable } from 'rxjs';
 
 interface Props extends PanelProps<TextOptions> {}
 
@@ -18,8 +17,6 @@ interface State {
 }
 
 export class TextPanel extends PureComponent<Props, State> {
-  eventSub?: Unsubscribable;
-
   constructor(props: Props) {
     super(props);
 
@@ -46,7 +43,8 @@ export class TextPanel extends PureComponent<Props, State> {
   }
 
   prepareMarkdown(content: string): string {
-    return renderMarkdown(this.interpolateAndSanitizeString(content));
+    // Sanitize is disabled here as we handle that after variable interpolation
+    return renderMarkdown(this.interpolateAndSanitizeString(content), { noSanitize: config.disableSanitizeHtml });
   }
 
   interpolateAndSanitizeString(content: string): string {

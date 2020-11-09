@@ -113,8 +113,8 @@ type DashTemplateEvaluator struct {
 	result    *simplejson.Json
 }
 
-func (this *DashTemplateEvaluator) findInput(varName string, varType string) *ImportDashboardInput {
-	for _, input := range this.inputs {
+func (e *DashTemplateEvaluator) findInput(varName string, varType string) *ImportDashboardInput {
+	for _, input := range e.inputs {
 		if varType == input.Type && (input.Name == varName || input.Name == "*") {
 			return &input
 		}
@@ -123,34 +123,34 @@ func (this *DashTemplateEvaluator) findInput(varName string, varType string) *Im
 	return nil
 }
 
-func (this *DashTemplateEvaluator) Eval() (*simplejson.Json, error) {
-	this.result = simplejson.New()
-	this.variables = make(map[string]string)
+func (e *DashTemplateEvaluator) Eval() (*simplejson.Json, error) {
+	e.result = simplejson.New()
+	e.variables = make(map[string]string)
 
 	// check that we have all inputs we need
-	for _, inputDef := range this.template.Get("__inputs").MustArray() {
+	for _, inputDef := range e.template.Get("__inputs").MustArray() {
 		inputDefJson := simplejson.NewFromAny(inputDef)
 		inputName := inputDefJson.Get("name").MustString()
 		inputType := inputDefJson.Get("type").MustString()
-		input := this.findInput(inputName, inputType)
+		input := e.findInput(inputName, inputType)
 
 		if input == nil {
 			return nil, &DashboardInputMissingError{VariableName: inputName}
 		}
 
-		this.variables["${"+inputName+"}"] = input.Value
+		e.variables["${"+inputName+"}"] = input.Value
 	}
 
-	return simplejson.NewFromAny(this.evalObject(this.template)), nil
+	return simplejson.NewFromAny(e.evalObject(e.template)), nil
 }
 
-func (this *DashTemplateEvaluator) evalValue(source *simplejson.Json) interface{} {
+func (e *DashTemplateEvaluator) evalValue(source *simplejson.Json) interface{} {
 	sourceValue := source.Interface()
 
 	switch v := sourceValue.(type) {
 	case string:
 		interpolated := varRegex.ReplaceAllStringFunc(v, func(match string) string {
-			replacement, exists := this.variables[match]
+			replacement, exists := e.variables[match]
 			if exists {
 				return replacement
 			}
@@ -162,11 +162,11 @@ func (this *DashTemplateEvaluator) evalValue(source *simplejson.Json) interface{
 	case json.Number:
 		return v
 	case map[string]interface{}:
-		return this.evalObject(source)
+		return e.evalObject(source)
 	case []interface{}:
 		array := make([]interface{}, 0)
 		for _, item := range v {
-			array = append(array, this.evalValue(simplejson.NewFromAny(item)))
+			array = append(array, e.evalValue(simplejson.NewFromAny(item)))
 		}
 		return array
 	}
@@ -174,14 +174,14 @@ func (this *DashTemplateEvaluator) evalValue(source *simplejson.Json) interface{
 	return nil
 }
 
-func (this *DashTemplateEvaluator) evalObject(source *simplejson.Json) interface{} {
+func (e *DashTemplateEvaluator) evalObject(source *simplejson.Json) interface{} {
 	result := make(map[string]interface{})
 
 	for key, value := range source.MustMap() {
 		if key == "__inputs" {
 			continue
 		}
-		result[key] = this.evalValue(simplejson.NewFromAny(value))
+		result[key] = e.evalValue(simplejson.NewFromAny(value))
 	}
 
 	return result

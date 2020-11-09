@@ -246,7 +246,7 @@ export function getMovingAvgSettings(model: any, filtered: boolean) {
 export function getOrderByOptions(target: any) {
   const metricRefs: any[] = [];
   _.each(target.metrics, metric => {
-    if (metric.type !== 'count') {
+    if (metric.type !== 'count' && !isPipelineAgg(metric.type)) {
       metricRefs.push({ text: describeMetric(metric), value: metric.id });
     }
   });
