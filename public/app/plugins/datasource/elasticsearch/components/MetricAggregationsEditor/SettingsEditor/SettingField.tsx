@@ -1,6 +1,6 @@
 import React, { ComponentProps } from 'react';
 import { InlineField, Input } from '@grafana/ui';
-import { useDispatch } from '../../ElasticsearchQueryContext';
+import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { changeMetricSetting } from '../state/actions';
 import { ChangeMetricSettingAction } from '../state/types';
 import { SettingKeyOf } from '../../types';

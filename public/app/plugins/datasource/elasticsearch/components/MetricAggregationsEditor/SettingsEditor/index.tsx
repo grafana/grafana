@@ -1,7 +1,7 @@
 import { InlineField, Input, Select, Switch } from '@grafana/ui';
 import React, { FunctionComponent, ComponentProps } from 'react';
 import { extendedStats, movingAvgModelOptions, movingAvgModelSettings } from '../../../query_def';
-import { useDispatch } from '../../ElasticsearchQueryContext';
+import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { changeMetricMeta, changeMetricSetting } from '../state/actions';
 import {
   MetricAggregation,

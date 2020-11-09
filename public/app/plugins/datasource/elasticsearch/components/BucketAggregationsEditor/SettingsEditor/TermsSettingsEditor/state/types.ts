@@ -1,4 +1,4 @@
-import { Action } from '../../../../../hooks/useReducerCallback';
+import { Action } from '../../../../../hooks/useStatelessReducer';
 import { Filter } from '../../../aggregations';
 
 export const ADD_FILTER = '@bucketAggregations/filter/add';

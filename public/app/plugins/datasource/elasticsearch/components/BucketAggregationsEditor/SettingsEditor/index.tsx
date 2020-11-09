@@ -1,7 +1,7 @@
 import { SelectableValue } from '@grafana/data';
 import { InlineField, Input, Select } from '@grafana/ui';
 import React, { ComponentProps, FunctionComponent } from 'react';
-import { useDispatch } from '../../ElasticsearchQueryContext';
+import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { BucketAggregation } from '../aggregations';

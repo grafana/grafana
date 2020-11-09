@@ -1,13 +1,12 @@
 import React, { createContext, FunctionComponent, useContext } from 'react';
 import { ElasticDatasource } from '../datasource';
-import { Action, combineReducers, useReducerCallback } from '../hooks/useReducerCallback';
+import { combineReducers, useStatelessReducer, DispatchContext } from '../hooks/useStatelessReducer';
 import { ElasticsearchQuery } from '../types';
 
 import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
 import { reducer as bucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
 
 const DatasourceContext = createContext<ElasticDatasource | undefined>(undefined);
-const DispatchContext = createContext<((action: Action) => void) | undefined>(undefined);
 const QueryContext = createContext<ElasticsearchQuery | undefined>(undefined);
 
 interface Props {
@@ -22,7 +21,7 @@ export const ElasticsearchProvider: FunctionComponent<Props> = ({ children, onCh
     bucketAggs: bucketAggsReducer,
   });
 
-  const dispatch = useReducerCallback(newState => onChange({ ...query, ...newState }), query, reducer);
+  const dispatch = useStatelessReducer(newState => onChange({ ...query, ...newState }), query, reducer);
 
   return (
     <DatasourceContext.Provider value={datasource}>
@@ -31,16 +30,6 @@ export const ElasticsearchProvider: FunctionComponent<Props> = ({ children, onCh
       </QueryContext.Provider>
     </DatasourceContext.Provider>
   );
-};
-
-export const useDispatch = <T extends Action = Action>(): ((action: T) => void) => {
-  const dispatch = useContext(DispatchContext);
-
-  if (!dispatch) {
-    throw new Error('use ElasticsearchProvider first.');
-  }
-
-  return dispatch;
 };
 
 export const useQuery = (): ElasticsearchQuery => {

@@ -1,4 +1,4 @@
-import { Action } from '../../../hooks/useReducerCallback';
+import { Action } from '../../../hooks/useStatelessReducer';
 import { SettingKeyOf } from '../../types';
 import { BucketAggregation, BucketAggregationWithField } from '../aggregations';
 

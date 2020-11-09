@@ -2,7 +2,7 @@ import React, { FunctionComponent } from 'react';
 import { InlineFieldRow } from '@grafana/ui';
 import { AddRemove } from '../AddRemove';
 import { MetricEditor } from './MetricEditor';
-import { useDispatch } from '../ElasticsearchQueryContext';
+import { useDispatch } from '../../hooks/useStatelessReducer';
 import { MetricAggregationAction } from './state/types';
 import { metricAggregationConfig } from './utils';
 import { addMetric, removeMetric } from './state/actions';

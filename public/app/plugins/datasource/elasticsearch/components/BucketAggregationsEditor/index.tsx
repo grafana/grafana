@@ -2,7 +2,7 @@ import React, { FunctionComponent } from 'react';
 import { InlineFieldRow } from '@grafana/ui';
 import { AddRemove } from '../AddRemove';
 import { BucketAggregationEditor } from './BucketAggregationEditor';
-import { useDispatch } from '../ElasticsearchQueryContext';
+import { useDispatch } from '../../hooks/useStatelessReducer';
 import { addBucketAggregation, removeBucketAggregation } from './state/actions';
 import { BucketAggregationAction } from './state/types';
 import { BucketAggregation } from './aggregations';

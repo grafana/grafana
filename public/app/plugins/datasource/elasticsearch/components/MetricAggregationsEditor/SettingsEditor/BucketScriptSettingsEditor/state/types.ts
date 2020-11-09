@@ -1,4 +1,4 @@
-import { Action } from '../../../../../hooks/useReducerCallback';
+import { Action } from '../../../../../hooks/useStatelessReducer';
 
 export const ADD_PIPELINE_VARIABLE = '@pipelineVariables/add';
 export const REMOVE_PIPELINE_VARIABLE = '@pipelineVariables/remove';

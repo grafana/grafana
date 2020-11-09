@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { createContext, useCallback, useContext } from 'react';
 
 export interface Action<T extends string = string> {
   type: T;
@@ -17,7 +17,7 @@ export const combineReducers = <S, A extends Action = Action>(reducers: { [P in 
   return newState;
 };
 
-export const useReducerCallback = <State, A = Action>(
+export const useStatelessReducer = <State, A = Action>(
   onChange: (value: State) => void,
   state: State,
   reducer: (state: State, action: A) => State
@@ -28,6 +28,18 @@ export const useReducerCallback = <State, A = Action>(
     },
     [onChange, state, reducer]
   );
+
+  return dispatch;
+};
+
+export const DispatchContext = createContext<((action: Action) => void) | undefined>(undefined);
+
+export const useDispatch = <T extends Action = Action>(): ((action: T) => void) => {
+  const dispatch = useContext(DispatchContext);
+
+  if (!dispatch) {
+    throw new Error('Use DisparchContext first.');
+  }
 
   return dispatch;
 };

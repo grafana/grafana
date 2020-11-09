@@ -1,9 +1,8 @@
 import { InlineField, Input, QueryField } from '@grafana/ui';
-import { useReducerCallback } from 'app/plugins/datasource/elasticsearch/hooks/useReducerCallback';
 import { css } from 'emotion';
 import React, { FunctionComponent } from 'react';
 import { AddRemove } from '../../../AddRemove';
-import { useDispatch } from '../../../ElasticsearchQueryContext';
+import { useDispatch, useStatelessReducer } from '../../../../hooks/useStatelessReducer';
 import { Filters } from '../../aggregations';
 import { changeBucketAggregationSetting } from '../../state/actions';
 import { BucketAggregationAction } from '../../state/types';
@@ -18,7 +17,7 @@ interface Props {
 export const FiltersSettingsEditor: FunctionComponent<Props> = ({ value }) => {
   const upperStateDispatch = useDispatch<BucketAggregationAction<Filters>>();
 
-  const dispatch = useReducerCallback(
+  const dispatch = useStatelessReducer(
     newState => upperStateDispatch(changeBucketAggregationSetting(value, 'filters', newState)),
     value.settings?.filters || [],
     filtersReducer

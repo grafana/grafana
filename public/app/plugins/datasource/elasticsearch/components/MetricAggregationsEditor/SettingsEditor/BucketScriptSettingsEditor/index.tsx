@@ -1,11 +1,10 @@
 import React, { Fragment, FunctionComponent } from 'react';
 import { Input, InlineLabel } from '@grafana/ui';
-import { useDispatch } from '../../../ElasticsearchQueryContext';
 import { MetricAggregationAction } from '../../state/types';
 import { changeMetricAttribute } from '../../state/actions';
 import { css } from 'emotion';
 import { AddRemove } from '../../../AddRemove';
-import { useReducerCallback } from '../../../../hooks/useReducerCallback';
+import { useStatelessReducer, useDispatch } from '../../../../hooks/useStatelessReducer';
 import { MetricPicker } from '../../../MetricPicker';
 import { defaultPipelineVariable } from './utils';
 import pipelineVariablesReducer from './state/reducer';
@@ -26,7 +25,7 @@ interface Props {
 export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, previousMetrics }) => {
   const upperStateDispatch = useDispatch<MetricAggregationAction<BucketScript>>();
 
-  const dispatch = useReducerCallback(
+  const dispatch = useStatelessReducer(
     newState => upperStateDispatch(changeMetricAttribute(value, 'pipelineVariables', newState)),
     value.pipelineVariables || [],
     pipelineVariablesReducer
