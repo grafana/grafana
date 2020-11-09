@@ -15,33 +15,38 @@ import set from 'lodash/set';
 import { deprecationWarning } from '../utils';
 import { FieldConfigOptionsRegistry, standardFieldConfigEditorRegistry } from '../field';
 
+type StandardOptionConfig = {
+  defaultValue?: any;
+  settings?: any;
+};
+
 export interface SetFieldConfigOptionsArgs<TFieldConfigOptions = any> {
   /**
-   * Array of standard field config properties
+   * Configuration object of the standard field config properites
    *
    * @example
    * ```typescript
    * {
-   *   standardOptions: [FieldConfigProperty.Min, FieldConfigProperty.Max, FieldConfigProperty.Unit]
-   * }
-   * ```
-   */
-  standardOptions?: FieldConfigProperty[];
-
-  /**
-   * Object specifying standard option properties default values
-   *
-   * @example
-   * ```typescript
-   * {
-   *   standardOptionsDefaults: {
-   *     [FieldConfigProperty.Min]: 20,
-   *     [FieldConfigProperty.Max]: 100
+   *   standardOptions: {
+   *     [FieldConfigProperty.Decimals]: {
+   *       defaultValue: 3
+   *     }
    *   }
    * }
    * ```
    */
-  standardOptionsDefaults?: Partial<Record<FieldConfigProperty, any>>;
+  standardOptions?: Partial<Record<FieldConfigProperty, StandardOptionConfig>>;
+
+  /**
+   * Array of standard field config properties that should not be available in the panel
+   * @example
+   * ```typescript
+   * {
+   *   disableStandardOptions: [FieldConfigProperty.Min, FieldConfigProperty.Max, FieldConfigProperty.Unit]
+   * }
+   * ```
+   */
+  disableStandardOptions?: FieldConfigProperty[];
 
   /**
    * Function that allows custom field config properties definition.
@@ -305,13 +310,13 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
    *
    * @public
    */
-  useFieldConfig(config?: SetFieldConfigOptionsArgs<TFieldConfigOptions>) {
+  useFieldConfig(config: SetFieldConfigOptionsArgs<TFieldConfigOptions> = {}) {
     // builder is applied lazily when custom field configs are accessed
     this._initConfigRegistry = () => {
       const registry = new FieldConfigOptionsRegistry();
 
       // Add custom options
-      if (config && config.useCustomConfig) {
+      if (config.useCustomConfig) {
         const builder = new FieldConfigEditorBuilder<TFieldConfigOptions>();
         config.useCustomConfig(builder);
 
@@ -326,20 +331,32 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
         }
       }
 
-      if (config && config.standardOptions) {
-        for (const standardOption of config.standardOptions) {
-          const standardEditor = standardFieldConfigEditorRegistry.get(standardOption);
-          registry.register({
-            ...standardEditor,
-            defaultValue:
-              (config.standardOptionsDefaults && config.standardOptionsDefaults[standardOption]) ||
-              standardEditor.defaultValue,
-          });
+      for (let fieldConfigProp of standardFieldConfigEditorRegistry.list()) {
+        if (config.disableStandardOptions) {
+          const isDisabled = config.disableStandardOptions.indexOf(fieldConfigProp.id as FieldConfigProperty) > -1;
+          if (isDisabled) {
+            continue;
+          }
         }
-      } else {
-        for (const fieldConfigProp of standardFieldConfigEditorRegistry.list()) {
-          registry.register(fieldConfigProp);
+        if (config.standardOptions) {
+          const customDefault: any = config.standardOptions[fieldConfigProp.id as FieldConfigProperty]?.defaultValue;
+          const customSettings: any = config.standardOptions[fieldConfigProp.id as FieldConfigProperty]?.settings;
+          if (customDefault) {
+            fieldConfigProp = {
+              ...fieldConfigProp,
+              defaultValue: customDefault,
+            };
+          }
+
+          if (customSettings) {
+            fieldConfigProp = {
+              ...fieldConfigProp,
+              settings: fieldConfigProp.settings ? { ...fieldConfigProp.settings, ...customSettings } : customSettings,
+            };
+          }
         }
+
+        registry.register(fieldConfigProp);
       }
 
       return registry;
