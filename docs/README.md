@@ -24,7 +24,7 @@ Use the Hugo shortcode [relref](https://gohugo.io/content-management/cross-refer
 
 ### Edit the side menu
 
-The side menu is automtically build from the file structure. Use the [weight](https://gohugo.io/templates/lists/#by-weight) front matter parameter to order pages.
+The side menu is automatically build from the file structure. Use the [weight](https://gohugo.io/templates/lists/#by-weight) front matter parameter to order pages.
 
 ### Add images
 
