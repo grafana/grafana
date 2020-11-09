@@ -41,12 +41,16 @@ export const reducer = (state: MetricAggregation[], action: MetricAggregationAct
             return metric;
           }
 
-          // TODO: Here we should do some checks to clean out metric configurations that are not compatible
-          // with the new one (eg. `settings` or `field`) and apply default settings for that metric.
+          /*
+            TODO: The previous version of the query editor was keeping some of the old metric's configurations
+            in the new selected one (such as field or some settings).
+            It the future would be nice to have the same behavior but it's hard without a proper definition,
+            as Elasticsearch will error sometimes if some settings are not compatible.
+          */
           return {
-            ...metric,
+            id: metric.id,
             type: action.payload.type,
-          } as MetricAggregation;
+          };
         });
 
     case CHANGE_METRIC_FIELD:
@@ -101,6 +105,7 @@ export const reducer = (state: MetricAggregation[], action: MetricAggregationAct
             },
           };
         }
+
         // This should never happen.
         return metric;
       });
@@ -120,6 +125,7 @@ export const reducer = (state: MetricAggregation[], action: MetricAggregationAct
             },
           };
         }
+
         // This should never happen.
         return metric;
       });

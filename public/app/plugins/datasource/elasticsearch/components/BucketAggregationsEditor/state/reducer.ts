@@ -31,12 +31,16 @@ export const reducer = (
           return bucketAgg;
         }
 
-        // TODO: Here we should do some checks to clean out bucketAgg configurations that are not compatible
-        // with the new one and apply default settings for that metric.
+        /*
+            TODO: The previous version of the query editor was keeping some of the old bucket aggregation's configurations
+            in the new selected one (such as field or some settings).
+            It the future would be nice to have the same behavior but it's hard without a proper definition,
+            as Elasticsearch will error sometimes if some settings are not compatible.
+          */
         return {
-          ...bucketAgg,
+          id: bucketAgg.id,
           type: action.payload.newType,
-        } as BucketAggregation;
+        };
       });
 
     case CHANGE_BUCKET_AGG_FIELD:
