@@ -30,7 +30,7 @@ export const defaults: Options = {
   legend: {
     asTable: false,
     isVisible: true,
-    placement: 'under',
+    placement: 'bottom',
   },
   series: {},
   tooltipOptions: { mode: 'single' },
