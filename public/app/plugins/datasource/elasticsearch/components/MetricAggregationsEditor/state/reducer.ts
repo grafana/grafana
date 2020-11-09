@@ -24,6 +24,9 @@ export const reducer = (state: MetricAggregation[], action: MetricAggregationAct
       const metricToRemove = state.find(m => m.id === action.payload.id)!;
       const metricsToRemove = [metricToRemove, ...getChildren(metricToRemove, state)];
       const resultingMetrics = state.filter(metric => !metricsToRemove.some(toRemove => toRemove.id === metric.id));
+      if (resultingMetrics.length === 0) {
+        return [defaultMetricAgg('1')];
+      }
       return resultingMetrics;
 
     case CHANGE_METRIC_TYPE:
