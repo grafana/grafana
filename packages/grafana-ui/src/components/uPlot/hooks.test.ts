@@ -10,7 +10,7 @@ describe('usePlotConfig', () => {
         "axes": Array [],
         "cursor": Object {
           "focus": Object {
-            "prox": -1,
+            "prox": 30,
           },
         },
         "focus": Object {
@@ -52,7 +52,7 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": -1,
+              "prox": 30,
             },
           },
           "focus": Object {
@@ -101,7 +101,7 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": -1,
+              "prox": 30,
             },
           },
           "focus": Object {
@@ -148,7 +148,7 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": -1,
+              "prox": 30,
             },
           },
           "focus": Object {
@@ -196,7 +196,7 @@ describe('usePlotConfig', () => {
           ],
           "cursor": Object {
             "focus": Object {
-              "prox": -1,
+              "prox": 30,
             },
           },
           "focus": Object {
@@ -246,7 +246,7 @@ describe('usePlotConfig', () => {
           ],
           "cursor": Object {
             "focus": Object {
-              "prox": -1,
+              "prox": 30,
             },
           },
           "focus": Object {
@@ -290,7 +290,7 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": -1,
+              "prox": 30,
             },
           },
           "focus": Object {
@@ -334,7 +334,7 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": -1,
+              "prox": 30,
             },
           },
           "focus": Object {
@@ -384,7 +384,7 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": -1,
+              "prox": 30,
             },
           },
           "focus": Object {
@@ -432,7 +432,7 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": -1,
+              "prox": 30,
             },
           },
           "focus": Object {
@@ -477,7 +477,7 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": -1,
+              "prox": 30,
             },
           },
           "focus": Object {
@@ -531,7 +531,7 @@ describe('usePlotConfig', () => {
           "axes": Array [],
           "cursor": Object {
             "focus": Object {
-              "prox": -1,
+              "prox": 30,
             },
           },
           "focus": Object {
