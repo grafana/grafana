@@ -3,7 +3,7 @@ import React, { memo } from 'react';
 import { css, cx } from 'emotion';
 
 // Types
-import { InlineFormLabel, RadioButtonGroup, Tooltip, Icon } from '@grafana/ui';
+import { InlineFormLabel, RadioButtonGroup } from '@grafana/ui';
 
 export interface LokiExploreExtraFieldProps {
   lineLimitValue: string;
