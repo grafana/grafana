@@ -242,8 +242,8 @@ func TestAlertQueryMarshalling(t *testing.T) {
 		desc         string
 		blob         string
 		err          error
-		expectedFrom duration
-		expectedTo   duration
+		expectedFrom Duration
+		expectedTo   Duration
 	}{
 		{
 			desc: "unmarshalling successfully when input is correct",
@@ -255,8 +255,8 @@ func TestAlertQueryMarshalling(t *testing.T) {
 				},
 				"model": {}
 			}`,
-			expectedFrom: duration(5 * time.Hour),
-			expectedTo:   duration(3 * time.Hour),
+			expectedFrom: Duration(5 * time.Hour),
+			expectedTo:   Duration(3 * time.Hour),
 		},
 		{
 			desc: "failing unmarshalling gracefully when from is incorrect",
