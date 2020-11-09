@@ -102,8 +102,8 @@ describe('refreshExplore', () => {
           .givenThunk(refreshExplore)
           .whenThunkIsDispatched(exploreId);
 
-        const initializeExplore = dispatchedActions[1] as PayloadAction<InitializeExplorePayload>;
-        const { type, payload } = initializeExplore;
+        const initializeExplore = dispatchedActions.find(action => action.type === initializeExploreAction.type);
+        const { type, payload } = initializeExplore as PayloadAction<InitializeExplorePayload>;
 
         expect(type).toEqual(initializeExploreAction.type);
         expect(payload.containerWidth).toEqual(containerWidth);
@@ -144,7 +144,7 @@ describe('refreshExplore', () => {
   });
 });
 
-describe('Explore item reducer', () => {
+describe('Explore pane reducer', () => {
   describe('changing dedup strategy', () => {
     describe('when changeDedupStrategyAction is dispatched', () => {
       it('then it should set correct dedup strategy in state', () => {

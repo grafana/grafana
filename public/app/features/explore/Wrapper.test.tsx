@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Wrapper from './Wrapper';
 import { configureStore } from '../../store/configureStore';
 import { Provider } from 'react-redux';
@@ -107,6 +107,7 @@ describe('Wrapper', () => {
     (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     // Wait for rendering the logs
     await screen.findByText(/custom log line/i);
+    await screen.findByText(`loki Editor input: { label="value"}`);
 
     (datasources.elastic.query as Mock).mockReturnValueOnce(makeMetricsQueryResponse());
     store.dispatch(
@@ -117,7 +118,7 @@ describe('Wrapper', () => {
     );
 
     // Editor renders the new query
-    await screen.findByText(`loki Editor input: other query`);
+    await screen.findByText(`elastic Editor input: other query`);
     // Renders graph
     await screen.findByText(/Graph/i);
   });
@@ -154,8 +155,10 @@ describe('Wrapper', () => {
     (datasources.elastic.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
 
     // Make sure we render the logs panel
-    const logsPanels = await screen.findAllByText(/^Logs$/i);
-    expect(logsPanels.length).toBe(2);
+    await waitFor(() => {
+      const logsPanels = screen.getAllByText(/^Logs$/i);
+      expect(logsPanels.length).toBe(2);
+    });
 
     // Make sure we render the log line
     const logsLines = await screen.findAllByText(/custom log line/i);
