@@ -252,7 +252,8 @@ describe('ElasticQueryBuilder', () => {
 
       it('should set query size from settings when raw_documents', () => {
         const query = builder.build({
-          metrics: [{ type: 'raw_document', id: '1', settings: { size: 1337 } }],
+          refId: 'A',
+          metrics: [{ type: 'raw_document', id: '1', settings: { size: '1337' } }],
           timeField: '@timestamp',
           bucketAggs: [],
         });
@@ -262,6 +263,7 @@ describe('ElasticQueryBuilder', () => {
 
       it('with moving average', () => {
         const query = builder.build({
+          refId: 'A',
           metrics: [
             {
               id: '3',
@@ -272,8 +274,6 @@ describe('ElasticQueryBuilder', () => {
               id: '2',
               type: 'moving_avg',
               field: '3',
-              // TODO: Moving average has also this field, try to remove it.
-              pipelineAgg: '3',
             },
           ],
           bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
@@ -288,6 +288,7 @@ describe('ElasticQueryBuilder', () => {
 
       it('with moving average doc count', () => {
         const query = builder.build({
+          refId: 'A',
           metrics: [
             {
               id: '3',
@@ -297,8 +298,6 @@ describe('ElasticQueryBuilder', () => {
               id: '2',
               type: 'moving_avg',
               field: '3',
-              // TODO: Moving average has also this field, try to remove it.
-              pipelineAgg: '3',
             },
           ],
           bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '4' }],
@@ -313,6 +312,7 @@ describe('ElasticQueryBuilder', () => {
 
       it('with broken moving average', () => {
         const query = builder.build({
+          refId: 'A',
           metrics: [
             {
               id: '3',
@@ -322,14 +322,12 @@ describe('ElasticQueryBuilder', () => {
             {
               id: '2',
               type: 'moving_avg',
-              // TODO: Moving average has also this field, try to remove it.
-              pipelineAgg: '3',
+              field: '3',
             },
             {
               id: '4',
               type: 'moving_avg',
-              // TODO: Moving average has also this field, try to remove it.
-              pipelineAgg: 'Metric to apply moving average',
+              // TODO: This Moving Average is "broken" as it doesn't have a `field` property
             },
           ],
           bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
@@ -345,6 +343,7 @@ describe('ElasticQueryBuilder', () => {
 
       it('with derivative', () => {
         const query = builder.build({
+          refId: 'A',
           metrics: [
             {
               id: '3',
@@ -354,8 +353,7 @@ describe('ElasticQueryBuilder', () => {
             {
               id: '2',
               type: 'derivative',
-              // TODO: Derivative has also this field, try to remove it.
-              pipelineAgg: '3',
+              field: '3',
             },
           ],
           bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
@@ -370,6 +368,7 @@ describe('ElasticQueryBuilder', () => {
 
       it('with derivative doc count', () => {
         const query = builder.build({
+          refId: 'A',
           metrics: [
             {
               id: '3',
@@ -378,8 +377,7 @@ describe('ElasticQueryBuilder', () => {
             {
               id: '2',
               type: 'derivative',
-              // TODO: Derivative has also this field, try to remove it.
-              pipelineAgg: '3',
+              field: '3',
             },
           ],
           bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '4' }],
