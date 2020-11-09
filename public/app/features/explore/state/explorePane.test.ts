@@ -6,12 +6,12 @@ import {
   changeDedupStrategyAction,
   initializeExploreAction,
   InitializeExplorePayload,
-  itemReducer,
+  paneReducer,
   refreshExplore,
 } from './explorePane';
 import { setQueriesAction } from './query';
 import * as DatasourceSrv from 'app/features/plugins/datasource_srv';
-import { makeExploreItemState, makeInitialUpdateState } from './utils';
+import { makeExplorePaneState, makeInitialUpdateState } from './utils';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 
 jest.mock('app/features/plugins/datasource_srv');
@@ -148,15 +148,15 @@ describe('Explore item reducer', () => {
   describe('changing dedup strategy', () => {
     describe('when changeDedupStrategyAction is dispatched', () => {
       it('then it should set correct dedup strategy in state', () => {
-        const initialState = makeExploreItemState();
+        const initialState = makeExplorePaneState();
 
         reducerTester<ExploreItemState>()
-          .givenReducer(itemReducer, initialState)
+          .givenReducer(paneReducer, initialState)
           .whenActionIsDispatched(
             changeDedupStrategyAction({ exploreId: ExploreId.left, dedupStrategy: LogsDedupStrategy.exact })
           )
           .thenStateShouldEqual({
-            ...makeExploreItemState(),
+            ...makeExplorePaneState(),
             dedupStrategy: LogsDedupStrategy.exact,
           });
       });
