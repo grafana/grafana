@@ -6,18 +6,17 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
-	glog "github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	log "github.com/inconshreveable/log15"
-	"github.com/stretchr/testify/require"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type logScenarioFunc func(c *scenarioContext, logs []*log.Record)
 
-func logSentryEventScenario(desc string, event frontendSentryEvent, fn logScenarioFunc) {
-	Convey(desc, func() {
+func logSentryEventScenario(t *testing.T, desc string, event frontendSentryEvent, fn logScenarioFunc) {
+	t.Run(desc, func(t *testing.T) {
 		logs := []*log.Record{}
 		frontendLogger.SetHandler(log.FuncHandler(func(r *log.Record) error {
 			logs = append(logs, r)
@@ -42,7 +41,7 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 	ts, err := time.Parse("2006-01-02T15:04:05.000Z", "2020-10-22T06:29:29.078Z")
 	require.NoError(t, err)
 
-	Convey("FrontendLoggingEndpoint", t, func() {
+	t.Run("FrontendLoggingEndpoint", func(t *testing.T) {
 		request := sentry.Request{
 			URL: "http://localhost:3000/",
 			Headers: map[string]string{
@@ -88,15 +87,15 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 			},
 		}
 
-		logSentryEventScenario("Should log received error event", errorEvent, func(sc *scenarioContext, logs []*log.Record) {
-			So(sc.resp.Code, ShouldEqual, 200)
-			So(len(logs), ShouldEqual, 1)
-			soContextContains(logs[0], "logger", "frontend")
-			soContextContains(logs[0], "url", errorEvent.Request.URL)
-			soContextContains(logs[0], "user_agent", errorEvent.Request.Headers["User-Agent"])
-			soContextContains(logs[0], "event_id", errorEvent.EventID)
-			soContextContains(logs[0], "original_timestamp", errorEvent.Timestamp)
-			soContextContains(logs[0], "stacktrace", `UserError: Please replace user and try again
+		logSentryEventScenario(t, "Should log received error event", errorEvent, func(sc *scenarioContext, logs []*log.Record) {
+			assert.Equal(t, sc.resp.Code, 200)
+			assert.Equal(t, len(logs), 1)
+			assertContextContains(t, logs[0], "logger", "frontend")
+			assertContextContains(t, logs[0], "url", errorEvent.Request.URL)
+			assertContextContains(t, logs[0], "user_agent", errorEvent.Request.Headers["User-Agent"])
+			assertContextContains(t, logs[0], "event_id", errorEvent.EventID)
+			assertContextContains(t, logs[0], "original_timestamp", errorEvent.Timestamp)
+			assertContextContains(t, logs[0], "stacktrace", `UserError: Please replace user and try again
   at foofn (foo.js:123:23)
   at barfn (bar.js:113:231)`)
 		})
@@ -113,19 +112,19 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 			nil,
 		}
 
-		logSentryEventScenario("Should log received message event", messageEvent, func(sc *scenarioContext, logs []*log.Record) {
-			So(sc.resp.Code, ShouldEqual, 200)
-			So(len(logs), ShouldEqual, 1)
-			So(logs[0].Msg, ShouldEqual, "hello world")
-			So(logs[0].Lvl, ShouldEqual, glog.LvlInfo)
-			soContextContains(logs[0], "logger", "frontend")
-			soContextContains(logs[0], "url", messageEvent.Request.URL)
-			soContextContains(logs[0], "user_agent", messageEvent.Request.Headers["User-Agent"])
-			soContextContains(logs[0], "event_id", messageEvent.EventID)
-			soContextContains(logs[0], "original_timestamp", messageEvent.Timestamp)
-			So(logs[0].Ctx, ShouldNotContain, "stacktrace")
-			soContextContains(logs[0], "user_email", user.Email)
-			soContextContains(logs[0], "user_id", user.ID)
+		logSentryEventScenario(t, "Should log received message event", messageEvent, func(sc *scenarioContext, logs []*log.Record) {
+			assert.Equal(t, sc.resp.Code, 200)
+			assert.Equal(t, len(logs), 1)
+			assert.Equal(t, logs[0].Msg, "hello world")
+			assert.Equal(t, logs[0].Lvl, log.LvlInfo)
+			assertContextContains(t, logs[0], "logger", "frontend")
+			assertContextContains(t, logs[0], "url", messageEvent.Request.URL)
+			assertContextContains(t, logs[0], "user_agent", messageEvent.Request.Headers["User-Agent"])
+			assertContextContains(t, logs[0], "event_id", messageEvent.EventID)
+			assertContextContains(t, logs[0], "original_timestamp", messageEvent.Timestamp)
+			assert.NotContains(t, logs[0].Ctx, "stacktrace")
+			assertContextContains(t, logs[0], "user_email", user.Email)
+			assertContextContains(t, logs[0], "user_id", user.ID)
 		})
 	})
 }
@@ -139,8 +138,8 @@ func indexOf(arr []interface{}, item string) int {
 	return -1
 }
 
-func soContextContains(logRecord *log.Record, label string, value interface{}) {
-	So(logRecord.Ctx, ShouldContain, label)
+func assertContextContains(t *testing.T, logRecord *log.Record, label string, value interface{}) {
+	assert.Contains(t, logRecord.Ctx, label)
 	labelIdx := indexOf(logRecord.Ctx, label)
-	So(logRecord.Ctx[labelIdx+1], ShouldEqual, value)
+	assert.Equal(t, logRecord.Ctx[labelIdx+1], value)
 }
