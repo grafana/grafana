@@ -21,6 +21,12 @@ export const ToggleVisibilityButton: FunctionComponent<Props> = ({ onClick, hide
     `;
   }, [theme]);
 
-  // TODO: The button should have proper aria attributes
-  return <IconButton className={cx(hide && buttonCss)} iconName={hide ? 'eye-slash' : 'eye'} onClick={onClick} />;
+  return (
+    <IconButton
+      aria-pressed={hide}
+      className={cx(hide && buttonCss)}
+      iconName={hide ? 'eye-slash' : 'eye'}
+      onClick={onClick}
+    />
+  );
 };
