@@ -8,7 +8,7 @@ The open-source platform for monitoring and observability.
 
 Grafana allows you to query, visualize, alert on and understand your metrics no matter where they are stored. Create, explore, and share dashboards with your team and foster a data driven culture:
 
-- **Visualize:** Fast and flexible client side graphs with a multitude of options. Panel plugins for many different way to visualize metrics and logs.
+- **Visualize:** Fast and flexible client side graphs with a multitude of options. Panel plugins offer many different ways to visualize metrics and logs.
 - **Dynamic Dashboards:** Create dynamic & reusable dashboards with template variables that appear as dropdowns at the top of the dashboard.
 - **Explore Metrics:** Explore your data through ad-hoc queries and dynamic drilldown. Split view and compare different time ranges, queries and data sources side by side.
 - **Explore Logs:** Experience the magic of switching from metrics to logs with preserved label filters. Quickly search through all your logs or streaming them live.
@@ -36,8 +36,8 @@ If you're interested in contributing to the Grafana project:
 
 ## Get involved
 
-- Follow [@grafana on Twitter](https://twitter.com/grafana/)
-- Read and subscribe to the [Grafana blog](https://grafana.com/blog/)
+- Follow [@grafana on Twitter](https://twitter.com/grafana/).
+- Read and subscribe to the [Grafana blog](https://grafana.com/blog/).
 - If you have a specific question, check out our [discussion forums](https://community.grafana.com/).
 - For general discussions, join us on the [official Slack](http://slack.raintank.io/) team.
 

@@ -7,6 +7,8 @@ import { NotificationSettings } from './NotificationSettings';
 import { BasicSettings } from './BasicSettings';
 import { ChannelSettings } from './ChannelSettings';
 
+import config from 'app/core/config';
+
 interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
   selectableChannels: Array<SelectableValue<string>>;
   selectedChannel?: NotificationChannelType;
@@ -36,14 +38,32 @@ export const NotificationChannelForm: FC<Props> = ({
 }) => {
   const styles = getStyles(useTheme());
 
+  /*
+   Finds fields that have dependencies on other fields and removes duplicates.
+   Needs to be prefixed with settings.
+  */
+  const fieldsToWatch =
+    new Set(
+      selectedChannel?.options
+        .filter(o => o.showWhen.field)
+        .map(option => {
+          return `settings.${option.showWhen.field}`;
+        })
+    ) || [];
+
   useEffect(() => {
-    watch(['type', 'settings.priority', 'sendReminder', 'uploadImage']);
-  }, []);
+    watch(['type', 'sendReminder', 'uploadImage', ...fieldsToWatch]);
+  }, [fieldsToWatch]);
 
   const currentFormValues = getValues();
-  return selectedChannel ? (
-    <>
-      <div className={styles.basicSettings}>
+
+  if (!selectedChannel) {
+    return <Spinner />;
+  }
+
+  return (
+    <div className={styles.formContainer}>
+      <div className={styles.formItem}>
         <BasicSettings
           selectedChannel={selectedChannel}
           channels={selectableChannels}
@@ -54,8 +74,10 @@ export const NotificationChannelForm: FC<Props> = ({
           errors={errors}
           control={control}
         />
-        {/* If there are no non-required fields, don't render this section*/}
-        {selectedChannel.options.filter(o => !o.required).length > 0 && (
+      </div>
+      {/* If there are no non-required fields, don't render this section*/}
+      {selectedChannel.options.filter(o => !o.required).length > 0 && (
+        <div className={styles.formItem}>
           <ChannelSettings
             selectedChannel={selectedChannel}
             secureFields={secureFields}
@@ -65,7 +87,9 @@ export const NotificationChannelForm: FC<Props> = ({
             errors={errors}
             control={control}
           />
-        )}
+        </div>
+      )}
+      <div className={styles.formItem}>
         <NotificationSettings
           imageRendererAvailable={imageRendererAvailable}
           currentFormValues={currentFormValues}
@@ -74,27 +98,32 @@ export const NotificationChannelForm: FC<Props> = ({
           control={control}
         />
       </div>
-      <HorizontalGroup>
-        <Button type="submit">Save</Button>
-        <Button type="button" variant="secondary" onClick={() => onTestChannel(getValues({ nest: true }))}>
-          Test
-        </Button>
-        <a href="/alerting/notifications">
-          <Button type="button" variant="secondary">
-            Back
+      <div className={styles.formButtons}>
+        <HorizontalGroup>
+          <Button type="submit">Save</Button>
+          <Button type="button" variant="secondary" onClick={() => onTestChannel(getValues({ nest: true }))}>
+            Test
           </Button>
-        </a>
-      </HorizontalGroup>
-    </>
-  ) : (
-    <Spinner />
+          <a href={`${config.appSubUrl}/alerting/notifications`}>
+            <Button type="button" variant="secondary">
+              Back
+            </Button>
+          </a>
+        </HorizontalGroup>
+      </div>
+    </div>
   );
 };
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    basicSettings: css`
-      margin-bottom: ${theme.spacing.xl};
+    formContainer: css``,
+    formItem: css`
+      flex-grow: 1;
+      padding-top: ${theme.spacing.md};
+    `,
+    formButtons: css`
+      padding-top: ${theme.spacing.xl};
     `,
   };
 });

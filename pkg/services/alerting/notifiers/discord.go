@@ -103,7 +103,7 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	embed := simplejson.New()
 	embed.Set("title", evalContext.GetNotificationTitle())
-	//Discord takes integer for color
+	// Discord takes integer for color
 	embed.Set("color", color)
 	embed.Set("url", ruleURL)
 	embed.Set("description", evalContext.Rule.Message)

@@ -13,7 +13,7 @@ import {
   ValueMatcher,
 } from '../types/transformations';
 import { Registry } from '../utils/Registry';
-import { getNullValueMatchers } from './matchers/valueMatchers';
+import { getNullValueMatchers } from './matchers/valueMatchers/nullMatchers';
 
 export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
   return [

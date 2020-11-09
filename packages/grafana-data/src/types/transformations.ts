@@ -1,17 +1,17 @@
+import { MonoTypeOperatorFunction } from 'rxjs';
+
 import { DataFrame, Field } from './dataFrame';
 import { RegistryItemWithOptions } from '../utils/Registry';
 
 /**
  * Function that transform data frames (AKA transformer)
  */
-export type DataTransformer = (data: DataFrame[]) => DataFrame[];
-
 export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOptions {
   /**
    * Function that configures transformation and returns a transformer
    * @param options
    */
-  transformer: (options: TOptions) => DataTransformer;
+  operator: (options: TOptions) => MonoTypeOperatorFunction<DataFrame[]>;
 }
 
 export interface DataTransformerConfig<TOptions = any> {
@@ -27,6 +27,11 @@ export interface DataTransformerConfig<TOptions = any> {
 
 export type FrameMatcher = (frame: DataFrame) => boolean;
 export type FieldMatcher = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => boolean;
+
+/**
+ * Value matcher type to describe the matcher function
+ * @public
+ */
 export type ValueMatcher = (valueIndex: number, field: Field, frame: DataFrame, allFrames: DataFrame[]) => boolean;
 
 export interface FieldMatcherInfo<TOptions = any> extends RegistryItemWithOptions<TOptions> {
@@ -37,6 +42,11 @@ export interface FrameMatcherInfo<TOptions = any> extends RegistryItemWithOption
   get: (options: TOptions) => FrameMatcher;
 }
 
+/**
+ * Registry item to represent all the different valu matchers supported
+ * in the Grafana platform.
+ * @public
+ */
 export interface ValueMatcherInfo<TOptions = any> extends RegistryItemWithOptions<TOptions> {
   get: (options: TOptions) => ValueMatcher;
   isApplicable: (field: Field) => boolean;

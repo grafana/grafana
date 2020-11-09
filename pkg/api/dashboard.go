@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -262,6 +261,17 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 	}
 
+	// Tell everyone listening that the dashboard changed
+	if hs.Live.IsEnabled() {
+		err := hs.Live.GrafanaScope.Dashboards.DashboardSaved(
+			dashboard.Uid,
+			c.UserId,
+		)
+		if err != nil {
+			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
+		}
+	}
+
 	c.TimeRequest(metrics.MApiDashboardSave)
 	return JSON(200, util.DynMap{
 		"status":  "success",
@@ -327,7 +337,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 
 	filePath := hs.Cfg.DefaultHomeDashboardPath
 	if filePath == "" {
-		filePath = path.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
+		filePath = filepath.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
 	}
 
 	file, err := os.Open(filePath)
@@ -346,14 +356,20 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 		return Error(500, "Failed to load home dashboard", err)
 	}
 
-	if c.HasUserRole(models.ROLE_ADMIN) && !c.HasHelpFlag(models.HelpFlagGettingStartedPanelDismissed) {
-		addGettingStartedPanelToHomeDashboard(dash.Dashboard)
-	}
+	hs.addGettingStartedPanelToHomeDashboard(c, dash.Dashboard)
 
 	return JSON(200, &dash)
 }
 
-func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
+func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext, dash *simplejson.Json) {
+	// We only add this getting started panel for Admins who have not dismissed it,
+	// and if a custom default home dashboard hasn't been configured
+	if !c.HasUserRole(models.ROLE_ADMIN) ||
+		c.HasHelpFlag(models.HelpFlagGettingStartedPanelDismissed) ||
+		hs.Cfg.DefaultHomeDashboardPath != "" {
+		return
+	}
+
 	panels := dash.Get("panels").MustArray()
 
 	newpanel := simplejson.NewFromAny(map[string]interface{}{

@@ -18,9 +18,10 @@ import {
   RawTimeRange,
   TimeRange,
   TimeZone,
-  ExploreUIState,
   ExploreUrlState,
   LogsModel,
+  EventBusExtended,
+  EventBusSrv,
 } from '@grafana/data';
 
 import store from 'app/core/store';
@@ -37,22 +38,20 @@ import {
   refreshExplore,
   scanStart,
   setQueries,
-  toggleGraph,
   updateTimeRange,
+  splitOpen,
 } from './state/actions';
 
 import { ExploreId, ExploreItemState, ExploreUpdateState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
   DEFAULT_RANGE,
-  DEFAULT_UI_STATE,
   ensureQueries,
   getFirstNonQueryRowSpecificError,
   getTimeRange,
   getTimeRangeFromUrl,
   lastUsedDatasourceKeyForOrgId,
 } from 'app/core/utils/explore';
-import { Emitter } from 'app/core/utils/emitter';
 import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
@@ -106,7 +105,6 @@ export interface ExploreProps {
   initialDatasource: string;
   initialQueries: DataQuery[];
   initialRange: TimeRange;
-  initialUI: ExploreUIState;
   isLive: boolean;
   syncedTimes: boolean;
   updateTimeRange: typeof updateTimeRange;
@@ -114,11 +112,8 @@ export interface ExploreProps {
   logsResult?: LogsModel;
   loading?: boolean;
   absoluteRange: AbsoluteTimeRange;
-  showingGraph?: boolean;
-  showingTable?: boolean;
   timeZone?: TimeZone;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
-  toggleGraph: typeof toggleGraph;
   queryResponse: PanelData;
   originPanelId: number;
   addQueryRow: typeof addQueryRow;
@@ -127,6 +122,7 @@ export interface ExploreProps {
   showTable: boolean;
   showLogs: boolean;
   showTrace: boolean;
+  splitOpen: typeof splitOpen;
 }
 
 enum ExploreDrawer {
@@ -164,26 +160,18 @@ interface ExploreState {
  */
 export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   el: any;
-  exploreEvents: Emitter;
+  exploreEvents: EventBusExtended;
 
   constructor(props: ExploreProps) {
     super(props);
-    this.exploreEvents = new Emitter();
+    this.exploreEvents = new EventBusSrv();
     this.state = {
       openDrawer: undefined,
     };
   }
 
   componentDidMount() {
-    const {
-      initialized,
-      exploreId,
-      initialDatasource,
-      initialQueries,
-      initialRange,
-      initialUI,
-      originPanelId,
-    } = this.props;
+    const { initialized, exploreId, initialDatasource, initialQueries, initialRange, originPanelId } = this.props;
     const width = this.el ? this.el.offsetWidth : 0;
 
     // initialize the whole explore first time we mount and if browser history contains a change in datasource
@@ -195,7 +183,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
         initialRange,
         width,
         this.exploreEvents,
-        initialUI,
         originPanelId
       );
     }
@@ -269,11 +256,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     this.props.scanStopAction({ exploreId: this.props.exploreId });
   };
 
-  onToggleGraph = (showingGraph: boolean) => {
-    const { toggleGraph, exploreId } = this.props;
-    toggleGraph(exploreId, showingGraph);
-  };
-
   onUpdateTimeRange = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
@@ -298,7 +280,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   refreshExplore = () => {
     const { exploreId, update } = this.props;
 
-    if (update.queries || update.ui || update.range || update.datasource || update.mode) {
+    if (update.queries || update.range || update.datasource || update.mode) {
       this.props.refreshExplore(exploreId);
     }
   };
@@ -321,8 +303,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       graphResult,
       loading,
       absoluteRange,
-      showingGraph,
-      showingTable,
       timeZone,
       queryResponse,
       syncedTimes,
@@ -332,6 +312,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       showTable,
       showLogs,
       showTrace,
+      splitOpen,
     } = this.props;
     const { openDrawer } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
@@ -396,10 +377,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                               absoluteRange={absoluteRange}
                               isStacked={false}
                               showPanel={true}
-                              showingGraph={showingGraph}
-                              showingTable={showingTable}
                               timeZone={timeZone}
-                              onToggleGraph={this.onToggleGraph}
                               onUpdateTimeRange={this.onUpdateTimeRange}
                               showBars={false}
                               showLines={true}
@@ -431,7 +409,10 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                             // We expect only one trace at the moment to be in the dataframe
                             // If there is not data (like 404) we show a separate error so no need to show anything here
                             queryResponse.series[0] && (
-                              <TraceView trace={queryResponse.series[0].fields[0].values.get(0) as any} />
+                              <TraceView
+                                trace={queryResponse.series[0].fields[0].values.get(0) as any}
+                                splitOpenFn={splitOpen}
+                              />
                             )}
                         </>
                       )}
@@ -484,20 +465,16 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showTable,
     showTrace,
     loading,
-    showingGraph,
-    showingTable,
     absoluteRange,
     queryResponse,
   } = item;
 
-  const { datasource, queries, range: urlRange, ui, originPanelId } = (urlState || {}) as ExploreUrlState;
+  const { datasource, queries, range: urlRange, originPanelId } = (urlState || {}) as ExploreUrlState;
   const initialDatasource = datasource || store.get(lastUsedDatasourceKeyForOrgId(state.user.orgId));
   const initialQueries: DataQuery[] = ensureQueriesMemoized(queries);
   const initialRange = urlRange
     ? getTimeRangeFromUrlMemoized(urlRange, timeZone)
     : getTimeRange(timeZone, DEFAULT_RANGE);
-
-  const initialUI = ui || DEFAULT_UI_STATE;
 
   return {
     datasourceInstance,
@@ -509,13 +486,10 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     initialDatasource,
     initialQueries,
     initialRange,
-    initialUI,
     isLive,
     graphResult: graphResult ?? undefined,
     logsResult: logsResult ?? undefined,
     loading,
-    showingGraph,
-    showingTable,
     absoluteRange,
     queryResponse,
     originPanelId,
@@ -537,8 +511,8 @@ const mapDispatchToProps: Partial<ExploreProps> = {
   scanStopAction,
   setQueries,
   updateTimeRange,
-  toggleGraph,
   addQueryRow,
+  splitOpen,
 };
 
 export default compose(

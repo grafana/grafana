@@ -49,7 +49,7 @@ To use a DraggableManager instance, relevant mouse events should be piped to the
 </div>
 ```
 
-Note: Not all handlers are always necessary. See "Mouse events need to be piped into it" for more details.
+> **Note:** Not all handlers are always necessary. See "Mouse events need to be piped into it" for more details.
 
 ### Maps the `clientX` to `x` and `value`
 

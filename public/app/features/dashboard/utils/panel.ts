@@ -14,7 +14,7 @@ import appEvents from 'app/core/app_events';
 import config from 'app/core/config';
 
 // Services
-import templateSrv from 'app/features/templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 
 // Constants
 import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
@@ -84,7 +84,7 @@ export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange)
   };
 
   if (panel.timeFrom) {
-    const timeFromInterpolated = templateSrv.replace(panel.timeFrom, panel.scopedVars);
+    const timeFromInterpolated = getTemplateSrv().replace(panel.timeFrom, panel.scopedVars);
     const timeFromInfo = rangeUtil.describeTextRange(timeFromInterpolated);
     if (timeFromInfo.invalid) {
       newTimeData.timeInfo = 'invalid time override';
@@ -106,7 +106,7 @@ export function applyPanelTimeOverrides(panel: PanelModel, timeRange: TimeRange)
   }
 
   if (panel.timeShift) {
-    const timeShiftInterpolated = templateSrv.replace(panel.timeShift, panel.scopedVars);
+    const timeShiftInterpolated = getTemplateSrv().replace(panel.timeShift, panel.scopedVars);
     const timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
     if (timeShiftInfo.invalid) {
       newTimeData.timeInfo = 'invalid timeshift';

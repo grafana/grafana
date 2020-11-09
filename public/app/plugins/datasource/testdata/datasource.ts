@@ -14,20 +14,34 @@ import {
   MetricFindValue,
   TableData,
   TimeSeries,
+  TimeRange,
+  DataTopic,
+  AnnotationEvent,
+  LiveChannelScope,
 } from '@grafana/data';
 import { Scenario, TestDataQuery } from './types';
-import { getBackendSrv, toDataQueryError } from '@grafana/runtime';
+import {
+  getBackendSrv,
+  toDataQueryError,
+  getTemplateSrv,
+  TemplateSrv,
+  getLiveMeasurementsObserver,
+} from '@grafana/runtime';
 import { queryMetricTree } from './metricTree';
 import { from, merge, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { runStream } from './runStreams';
-import templateSrv from 'app/features/templating/template_srv';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 
 type TestData = TimeSeries | TableData;
 
 export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
-  constructor(instanceSettings: DataSourceInstanceSettings) {
+  scenariosCache?: Promise<Scenario[]>;
+
+  constructor(
+    instanceSettings: DataSourceInstanceSettings,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv()
+  ) {
     super(instanceSettings);
   }
 
@@ -40,20 +54,31 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
       if (target.hide) {
         continue;
       }
-      if (target.scenarioId === 'streaming_client') {
-        streams.push(runStream(target, options));
-      } else if (target.scenarioId === 'grafana_api') {
-        streams.push(runGrafanaAPI(target, options));
-      } else if (target.scenarioId === 'arrow') {
-        streams.push(runArrowFile(target, options));
-      } else {
-        queries.push({
-          ...target,
-          intervalMs: options.intervalMs,
-          maxDataPoints: options.maxDataPoints,
-          datasourceId: this.id,
-          alias: templateSrv.replace(target.alias || '', options.scopedVars),
-        });
+
+      switch (target.scenarioId) {
+        case 'live':
+          streams.push(runGrafanaLiveQuery(target, options));
+          break;
+        case 'streaming_client':
+          streams.push(runStream(target, options));
+          break;
+        case 'grafana_api':
+          streams.push(runGrafanaAPI(target, options));
+          break;
+        case 'arrow':
+          streams.push(runArrowFile(target, options));
+          break;
+        case 'annotations':
+          streams.push(this.annotationDataTopicTest(target, options));
+          break;
+        default:
+          queries.push({
+            ...target,
+            intervalMs: options.intervalMs,
+            maxDataPoints: options.maxDataPoints,
+            datasourceId: this.id,
+            alias: this.templateSrv.replace(target.alias || '', options.scopedVars),
+          });
       }
     }
 
@@ -109,23 +134,36 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
     return { data, error };
   }
 
-  annotationQuery(options: any) {
-    let timeWalker = options.range.from.valueOf();
-    const to = options.range.to.valueOf();
-    const events = [];
-    const eventCount = 10;
-    const step = (to - timeWalker) / eventCount;
+  annotationDataTopicTest(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
+    return new Observable<DataQueryResponse>(observer => {
+      const events = this.buildFakeAnnotationEvents(req.range, 10);
+      const dataFrame = new ArrayDataFrame(events);
+      dataFrame.meta = { dataTopic: DataTopic.Annotations };
 
-    for (let i = 0; i < eventCount; i++) {
+      observer.next({ key: target.refId, data: [dataFrame] });
+    });
+  }
+
+  buildFakeAnnotationEvents(range: TimeRange, count: number): AnnotationEvent[] {
+    let timeWalker = range.from.valueOf();
+    const to = range.to.valueOf();
+    const events = [];
+    const step = (to - timeWalker) / count;
+
+    for (let i = 0; i < count; i++) {
       events.push({
-        annotation: options.annotation,
         time: timeWalker,
         text: 'This is the text, <a href="https://grafana.com">Grafana.com</a>',
         tags: ['text', 'server'],
       });
       timeWalker += step;
     }
-    return Promise.resolve(events);
+
+    return events;
+  }
+
+  annotationQuery(options: any) {
+    return Promise.resolve(this.buildFakeAnnotationEvents(options.range, 10));
   }
 
   getQueryDisplayText(query: TestDataQuery) {
@@ -143,13 +181,17 @@ export class TestDataDataSource extends DataSourceApi<TestDataQuery> {
   }
 
   getScenarios(): Promise<Scenario[]> {
-    return getBackendSrv().get('/api/tsdb/testdata/scenarios');
+    if (!this.scenariosCache) {
+      this.scenariosCache = getBackendSrv().get('/api/tsdb/testdata/scenarios');
+    }
+
+    return this.scenariosCache;
   }
 
   metricFindQuery(query: string, options: any) {
     return new Promise<MetricFindValue[]>((resolve, reject) => {
       setTimeout(() => {
-        const interpolatedQuery = templateSrv.replace(
+        const interpolatedQuery = this.templateSrv.replace(
           query,
           getSearchFilterScopedVar({ query, wildcardChar: '*', options })
         );
@@ -166,7 +208,9 @@ function runArrowFile(target: TestDataQuery, req: DataQueryRequest<TestDataQuery
   if (target.stringInput && target.stringInput.length > 10) {
     try {
       const table = base64StringToArrowTable(target.stringInput);
-      data = [arrowTableToDataFrame(table)];
+      const frame = arrowTableToDataFrame(table);
+      frame.refId = target.refId;
+      data = [frame];
     } catch (e) {
       console.warn('Error reading saved arrow', e);
       const error = toDataQueryError(e);
@@ -174,7 +218,7 @@ function runArrowFile(target: TestDataQuery, req: DataQueryRequest<TestDataQuery
       return of({ state: LoadingState.Error, error, data });
     }
   }
-  return of({ state: LoadingState.Done, data });
+  return of({ state: LoadingState.Done, data, key: req.requestId + target.refId });
 }
 
 function runGrafanaAPI(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
@@ -189,5 +233,24 @@ function runGrafanaAPI(target: TestDataQuery, req: DataQueryRequest<TestDataQuer
           data: [frame],
         };
       })
+  );
+}
+
+let liveQueryCounter = 1000;
+
+function runGrafanaLiveQuery(
+  target: TestDataQuery,
+  req: DataQueryRequest<TestDataQuery>
+): Observable<DataQueryResponse> {
+  if (!target.channel) {
+    throw new Error(`Missing channel config`);
+  }
+  return getLiveMeasurementsObserver(
+    {
+      scope: LiveChannelScope.Grafana,
+      namespace: 'testdata',
+      path: target.channel,
+    },
+    `testStream.${liveQueryCounter++}`
   );
 }

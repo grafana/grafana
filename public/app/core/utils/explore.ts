@@ -23,6 +23,8 @@ import {
   urlUtil,
   ExploreUrlState,
   rangeUtil,
+  DateTime,
+  isDateTime,
 } from '@grafana/data';
 import store from 'app/core/store';
 import { v4 as uuidv4 } from 'uuid';
@@ -41,9 +43,6 @@ export const DEFAULT_RANGE = {
 };
 
 export const DEFAULT_UI_STATE = {
-  showingTable: true,
-  showingGraph: true,
-  showingLogs: true,
   dedupStrategy: LogsDedupStrategy.none,
 };
 
@@ -158,10 +157,13 @@ export function buildQueryTransaction(
       __interval_ms: { text: intervalMs, value: intervalMs },
     },
     maxDataPoints: queryOptions.maxDataPoints,
-    exploreMode: queryOptions.mode,
+    exploreMode: undefined,
     liveStreaming: queryOptions.liveStreaming,
-    showingGraph: queryOptions.showingGraph,
-    showingTable: queryOptions.showingTable,
+    /**
+     * @deprecated (external API) showingGraph and showingTable are always set to true and set to true
+     */
+    showingGraph: true,
+    showingTable: true,
   };
 
   return {
@@ -186,20 +188,13 @@ enum ParseUrlStateIndex {
   SegmentsStart = 3,
 }
 
-enum ParseUiStateIndex {
-  Graph = 0,
-  Logs = 1,
-  Table = 2,
-  Strategy = 3,
-}
-
 export const safeParseJson = (text?: string): any | undefined => {
   if (!text) {
     return;
   }
 
   try {
-    return JSON.parse(decodeURI(text));
+    return JSON.parse(text);
   } catch (error) {
     console.error(error);
   }
@@ -225,7 +220,6 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     datasource: null,
     queries: [],
     range: DEFAULT_RANGE,
-    ui: DEFAULT_UI_STATE,
     mode: null,
     originPanelId: null,
   };
@@ -251,18 +245,8 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
   const queries = parsedSegments.filter(segment => !isSegment(segment, 'ui', 'originPanelId'));
 
-  const uiState = parsedSegments.filter(segment => isSegment(segment, 'ui'))[0];
-  const ui = uiState
-    ? {
-        showingGraph: uiState.ui[ParseUiStateIndex.Graph],
-        showingLogs: uiState.ui[ParseUiStateIndex.Logs],
-        showingTable: uiState.ui[ParseUiStateIndex.Table],
-        dedupStrategy: uiState.ui[ParseUiStateIndex.Strategy],
-      }
-    : DEFAULT_UI_STATE;
-
   const originPanelId = parsedSegments.filter(segment => isSegment(segment, 'originPanelId'))[0];
-  return { datasource, queries, range, ui, originPanelId };
+  return { datasource, queries, range, originPanelId };
 }
 
 export function generateKey(index = 0): string {
@@ -373,9 +357,13 @@ export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRa
   };
 };
 
-const parseRawTime = (value: any): TimeFragment | null => {
+const parseRawTime = (value: string | DateTime): TimeFragment | null => {
   if (value === null) {
     return null;
+  }
+
+  if (isDateTime(value)) {
+    return value;
   }
 
   if (value.indexOf('now') !== -1) {
@@ -392,9 +380,16 @@ const parseRawTime = (value: any): TimeFragment | null => {
     return toUtc(value, 'YYYY-MM-DD HH:mm:ss');
   }
 
-  if (!isNaN(value)) {
+  // This should handle cases where value is an epoch time as string
+  if (value.match(/^\d+$/)) {
     const epoch = parseInt(value, 10);
     return toUtc(epoch);
+  }
+
+  // This should handle ISO strings
+  const time = toUtc(value);
+  if (time.isValid()) {
+    return time;
   }
 
   return null;
@@ -498,4 +493,13 @@ export function deduplicateLogRowsById(rows: LogRowModel[]) {
 export const getFirstNonQueryRowSpecificError = (queryErrors?: DataQueryError[]): DataQueryError | undefined => {
   const refId = getValueWithRefId(queryErrors);
   return refId ? undefined : getFirstQueryErrorWithoutRefId(queryErrors);
+};
+
+export const copyStringToClipboard = (string: string) => {
+  const el = document.createElement('textarea');
+  el.value = string;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
 };

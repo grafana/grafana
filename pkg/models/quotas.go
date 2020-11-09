@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var ErrInvalidQuotaTarget = errors.New("Invalid quota target")
+var ErrInvalidQuotaTarget = errors.New("invalid quota target")
 
 type Quota struct {
 	Id      int64

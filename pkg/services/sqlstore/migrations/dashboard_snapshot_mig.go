@@ -64,4 +64,11 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 	mg.AddMigration("Add column external_delete_url to dashboard_snapshots table", NewAddColumnMigration(snapshotV5, &Column{
 		Name: "external_delete_url", Type: DB_NVarchar, Length: 255, Nullable: true,
 	}))
+
+	mg.AddMigration("Add encrypted dashboard json column", NewAddColumnMigration(snapshotV5, &Column{
+		Name: "dashboard_encrypted", Type: DB_Blob, Nullable: true,
+	}))
+
+	mg.AddMigration("Change dashboard_encrypted column to MEDIUMBLOB", NewRawSqlMigration("").
+		Mysql("ALTER TABLE dashboard_snapshot MODIFY dashboard_encrypted MEDIUMBLOB;"))
 }

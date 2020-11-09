@@ -12,6 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/model"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCountersAsDelta(t *testing.T) {
@@ -30,14 +31,10 @@ func TestCountersAsDelta(t *testing.T) {
 	var got float64
 	want = float64(1)
 	got = b.replaceCounterWithDelta(mf, m, model.SampleValue(1))
-	if got != want {
-		t.Fatalf("want %v got %v", want, got)
-	}
+	require.Equal(t, want, got)
 
 	got = b.replaceCounterWithDelta(mf, m, model.SampleValue(2))
-	if got != want {
-		t.Fatalf("want %v got %v", want, got)
-	}
+	require.Equal(t, want, got)
 }
 
 func TestCountersAsDeltaDisabled(t *testing.T) {
@@ -56,15 +53,11 @@ func TestCountersAsDeltaDisabled(t *testing.T) {
 	var got float64
 	want = float64(1)
 	got = b.replaceCounterWithDelta(mf, m, model.SampleValue(1))
-	if got != want {
-		t.Fatalf("want %v got %v", want, got)
-	}
+	require.Equal(t, want, got)
 
 	want = float64(2)
 	got = b.replaceCounterWithDelta(mf, m, model.SampleValue(2))
-	if got != want {
-		t.Fatalf("want %v got %v", want, got)
-	}
+	require.Equal(t, want, got)
 }
 
 func TestSanitize(t *testing.T) {
@@ -306,7 +299,7 @@ prefix.page.response.constname.constvalue.labelname.val2.count 1 1477043
 		t.Fatalf("wanted \n%s\n, got \n%s\n", want, got)
 	}
 
-	//next collect
+	// next collect
 	cntVec.WithLabelValues("val1").Inc()
 	cntVec.WithLabelValues("val2").Inc()
 	apicntVec.WithLabelValues("val1").Inc()
@@ -373,7 +366,7 @@ func TestCounter(t *testing.T) {
 		t.Fatalf("wanted \n%s\n, got \n%s\n", want, got)
 	}
 
-	//next collect
+	// next collect
 	cntVec.Inc()
 
 	mfs, err = reg.Gather()

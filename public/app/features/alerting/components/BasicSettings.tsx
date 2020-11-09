@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { SelectableValue } from '@grafana/data';
-import { CollapsableSection, Field, Input, InputControl, Select } from '@grafana/ui';
+import { Field, Input, InputControl, Select } from '@grafana/ui';
 import { NotificationChannelOptions } from './NotificationChannelOptions';
 import { NotificationSettingsProps } from './NotificationChannelForm';
 import { NotificationChannelSecureFields, NotificationChannelType } from '../../../types';
@@ -23,7 +23,7 @@ export const BasicSettings: FC<Props> = ({
   resetSecureField,
 }) => {
   return (
-    <CollapsableSection label="Channel" isOpen>
+    <>
       <Field label="Name" invalid={!!errors.name} error={errors.name && errors.name.message}>
         <Input name="name" ref={register({ required: 'Name is required' })} />
       </Field>
@@ -39,6 +39,6 @@ export const BasicSettings: FC<Props> = ({
         errors={errors}
         control={control}
       />
-    </CollapsableSection>
+    </>
   );
 };

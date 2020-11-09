@@ -286,7 +286,7 @@ func SetAlertState(cmd *models.SetAlertStateCommand) error {
 		if has, err := sess.ID(cmd.AlertId).Get(&alert); err != nil {
 			return err
 		} else if !has {
-			return fmt.Errorf("Could not find alert")
+			return fmt.Errorf("could not find alert")
 		}
 
 		if alert.State == models.AlertStatePaused {
@@ -303,7 +303,7 @@ func SetAlertState(cmd *models.SetAlertStateCommand) error {
 		alert.EvalData = cmd.EvalData
 
 		if cmd.Error == "" {
-			alert.ExecutionError = " " //without this space, xorm skips updating this field
+			alert.ExecutionError = " " // without this space, xorm skips updating this field
 		} else {
 			alert.ExecutionError = cmd.Error
 		}
