@@ -442,7 +442,7 @@ def test_backend_step():
         ],
         'commands': [
             # First make sure that there are no tests with FocusConvey
-            '[[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ]] || exit 1',
+            '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
             # Then execute non-integration tests in parallel, since it should be safe
             './bin/grabpl test-backend',
             # Then execute integration tests in serial
