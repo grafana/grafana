@@ -1,6 +1,7 @@
 const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
+const FilterWarningsPlugin = require('webpack-filter-warnings-plugin');
 
 const stories = ['../src/**/*.story.{js,jsx,ts,tsx,mdx}'];
 
@@ -17,6 +18,14 @@ module.exports = {
     'storybook-dark-mode/register',
     '@storybook/addon-storysource',
   ],
+  typescript: {
+    check: true,
+    reactDocgen: 'react-docgen-typescript',
+    reactDocgenTypescriptOptions: {
+      shouldExtractLiteralValuesFromEnum: true,
+      propFilter: (prop: any) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
+    },
+  },
   webpackFinal: async (config: any, { configType }: any) => {
     const isProductionBuild = configType === 'PRODUCTION';
     config.module.rules = [
@@ -27,7 +36,7 @@ module.exports = {
           {
             loader: require.resolve('ts-loader'),
             options: {
-              // transpileOnly: true,
+              transpileOnly: true,
               configFile: path.resolve(__dirname, 'tsconfig.json'),
             },
           },
@@ -127,9 +136,9 @@ module.exports = {
     config.resolve.alias = config.resolve.alias || {};
     config.resolve.alias['@grafana/ui'] = path.resolve(__dirname, '..');
 
-    config.stats = {
-      warningsFilter: /export .* was not found in/,
-    };
+    config.plugins.push(new FilterWarningsPlugin({
+      exclude: /export .* was not found in/
+    }));
 
     return config;
   },
