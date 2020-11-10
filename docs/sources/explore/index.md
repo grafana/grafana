@@ -156,7 +156,8 @@ Along with metrics, Explore allows you to investigate your logs with the followi
 Results of log queries are shown as histograms in the graph and individual logs are displayed below. If the data source does not send histogram data for the requested time range, the logs model computes a time series based on the log row counts bucketed by an automatically calculated time interval and the start of the histogram is then anchored by the first log row's timestamp from the result. The end of the time series is anchored to the time picker's **To** range.
 
 #### Log level
-If log has a **level label**, we use the value of the label to determine log level and update color accordingly. If log doesn't have a level label, we parse the log line to find out if its content matches any of the supported expressions (see below). The log level is determined by the first match. If Grafana is not able to determine log level, log will be visualised with **unknown log level**.
+
+For logs with a **level** label, we use the value of the label to determine log level and update color accordingly. If log doesn't have a level label, we parse the log line to find out if its content matches any of the supported expressions (see below). Log level is always determined by the first match. In a case where Grafana is not able to determine log level, log will be visualised with **unknown** log level.
 
 **Supported log levels and mapping of log level abbreviation and expressions: **
 
