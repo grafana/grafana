@@ -19,7 +19,7 @@ To limit the number of lines rendered, you can use the **Max data points** setti
 
 ## Log level
 
-For logs with a **level** label, we use the value of the label to determine log level and update color accordingly. If log doesn't have a level label, we parse the log line to find out if its content matches any of the supported expressions. Log level is always determined by the first match. In a case where Grafana is not able to determine log level, log will be visualised with **unknown** log level. See [supported log levels and mappings of log level abbreviation and expressions](../explore/#log-level/).
+For logs where a **level** label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we parse the log to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with **unknown** log level. See [supported log levels and mappings of log level abbreviation and expressions](../explore/#log-level/).
 
 ### Display options
 
