@@ -238,7 +238,6 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				ApplyRoute(proxy.ctx.Req.Context(), req, proxy.proxyPath, plugin.Routes[0], proxy.ds)
 
 				authorizationHeaderCall1 = req.Header.Get("Authorization")
-				t.Logf("authorizationHeaderCall1: %q", authorizationHeaderCall1)
 				assert.Equal(t, "https://api.nr1.io/some/path", req.URL.String())
 				assert.True(t, strings.HasPrefix(authorizationHeaderCall1, "Bearer eyJ0e"))
 
@@ -281,7 +280,12 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 	})
 
 	t.Run("When proxying graphite", func(t *testing.T) {
+		origBuildVer := setting.BuildVersion
+		t.Cleanup(func() {
+			setting.BuildVersion = origBuildVer
+		})
 		setting.BuildVersion = "5.3.0"
+
 		plugin := &plugins.DataSourcePlugin{}
 		ds := &models.DataSource{Url: "htttp://graphite:8080", Type: models.DS_GRAPHITE}
 		ctx := &models.ReqContext{}
@@ -319,10 +323,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		require.NoError(t, err)
 
 		proxy.getDirector()(req)
-
-		t.Run("Should add db to url", func(t *testing.T) {
-			assert.Equal(t, "/db/site/", req.URL.Path)
-		})
+		assert.Equal(t, "/db/site/", req.URL.Path)
 	})
 
 	t.Run("When proxying a data source with no keepCookies specified", func(t *testing.T) {
@@ -409,6 +410,10 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 				Config: &oauth2.Config{},
 			},
 		}
+		origAuthSvc := setting.OAuthService
+		t.Cleanup(func() {
+			setting.OAuthService = origAuthSvc
+		})
 		setting.OAuthService = &setting.OAuther{}
 		setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 		setting.OAuthService.OAuthInfos["generic_oauth"] = &setting.OAuthInfo{}
@@ -701,17 +706,13 @@ type httpClientStub struct {
 
 func (c *httpClientStub) Do(req *http.Request) (*http.Response, error) {
 	bodyJSON, err := simplejson.NewJson(c.fakeBody)
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(c.t, err)
 	_, passedTokenCacheTest := bodyJSON.CheckGet("expires_on")
 	require.True(c.t, passedTokenCacheTest)
 
 	bodyJSON.Set("expires_on", fmt.Sprint(time.Now().Add(time.Second*60).Unix()))
 	body, err := bodyJSON.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
+	require.NoError(c.t, err)
 	resp := &http.Response{
 		Body: ioutil.NopCloser(bytes.NewReader(body)),
 	}
