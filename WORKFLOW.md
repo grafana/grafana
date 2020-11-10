@@ -61,11 +61,9 @@ Release branches MUST be split from the following branches.
 
 Security releases follow the same process but MUST be prepared in secret. Security releases MUST NOT include changes which are not related to the security fix. Normal release processes MUST accommodate the security release process. SECURITY.md MUST be followed.
 
-PRs intended for inclusion in the next PATCH release they must be backported to the release branch. The bot can do this automatically.
+PRs intended for inclusion in the next PATCH release they must be backported to the release branch. The bot can do this automatically. [Read more on backport PRs](https://github.com/grafana/grafana/blob/master/.github/bot.md)
 
-[Read more on backport PRs](https://github.com/grafana/grafana/blob/master/.github/bot.md)
-
-* Both the source PR and the backport PR should be assigned to the patch release milestone, unless you are backporting to many releases then it can differ. 
+Both the source PR and the backport PR should be assigned to the patch release milestone, unless you are backporting to many releases then it can differ. 
 
 Releases follow the following cadence
 - MAJOR: Yearly
