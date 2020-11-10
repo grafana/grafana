@@ -78,8 +78,9 @@ export const usePlotConfigContext = (): PlotConfigContextType => {
   const ctx = usePlotContext();
 
   if (!ctx) {
-    throwWhenNoContext('usePlotPluginContext');
+    throwWhenNoContext('usePlotConfigContext');
   }
+
   return {
     addSeries: ctx!.addSeries,
     addAxis: ctx!.addAxis,

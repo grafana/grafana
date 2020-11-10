@@ -2,7 +2,6 @@
 title = "URL variables"
 keywords = ["grafana", "url variables", "documentation", "variables", "data link"]
 aliases = ["/docs/grafana/latest/variables/url-variables.md","/docs/grafana/latest/variables/variable-types/url-variables.md"]
-type = "docs"
 weight = 400
 +++
 
@@ -50,6 +49,6 @@ Value-specific variables are available under ``__value`` namespace:
 
 When linking to another dashboard that uses template variables, select variable values for whoever clicks the link.
 
-``var-myvar=${myvar}`` - where ``myvar`` is a name of the template variable that matches one in the current dashboard that you want to use. 
+``var-myvar=${myvar}`` - where ``myvar`` is a name of the template variable that matches one in the current dashboard that you want to use.
 
 If you want to add all of the current dashboard's variables to the URL, then use  ``__all_variables``.

@@ -2,12 +2,7 @@
 title = "Glossary"
 description = "Grafana glossary"
 keywords = ["grafana", "intro", "glossary", "dictionary"]
-type = "docs"
 aliases = ["/docs/grafana/latest/guides/glossary"]
-[menu.docs]
-name = "Glossary"
-identifier = "glossary"
-parent = "guides"
 weight = 500
 +++
 
@@ -114,7 +109,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">Transformation</td>
     <td>
-      Transformations process the result set of a query before it’s passed on for visualization. 
+      Transformations process the result set of a query before it’s passed on for visualization.
     </td>
   </tr>
   <tr>

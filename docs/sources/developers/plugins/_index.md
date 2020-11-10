@@ -1,6 +1,5 @@
 +++
 title = "Build a plugin."
-type = "docs"
 +++
 
 # Build a plugin

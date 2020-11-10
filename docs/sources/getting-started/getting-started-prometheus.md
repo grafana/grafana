@@ -2,11 +2,7 @@
 title = "Getting started with Grafana and Prometheus"
 description = "Guide for getting started with Grafana"
 keywords = ["grafana", "intro", "guide", "started"]
-type = "docs"
 aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
-[menu.docs]
-identifier = "getting_started-grafana-prometheus"
-parent = "guides"
 weight = 300
 +++
 

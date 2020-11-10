@@ -1,9 +1,5 @@
 +++
 title = "Calculations list"
-type = "docs"
-[menu.docs]
-identifier = "calculations-list"
-parent = "panels"
 weight = 300
 +++
 
