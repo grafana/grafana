@@ -2,7 +2,7 @@
 
 <div class="page-container page-body">
   <div ng-if="ctrl.playlists.length > 0">
-    <div class="page-action-bar">
+    <div class="page-action-bar" ng-if="!ctrl.isViewer">
       <div class="page-action-bar__spacer"></div>
       <a class="btn btn-primary pull-right" href="playlists/create">
         New playlist
@@ -13,11 +13,12 @@
       <thead>
         <th><strong>Name</strong></th>
         <th style="width: 100px"></th>
-        <th style="width: 78px"></th>
+        <th ng-if="!ctrl.isViewer" style="width: 78px"></th>
       </thead>
       <tr ng-repeat="playlist in ctrl.playlists">
-        <td class="link-td">
-          <a href="playlists/edit/{{playlist.id}}">{{playlist.name}}</a>
+        <td ng-class="{'link-td': !ctrl.isViewer}">
+          <a ng-if="!ctrl.isViewer" href="playlists/edit/{{playlist.id}}">{{playlist.name}}</a>
+          <span ng-if="ctrl.isViewer">{{playlist.name}}</span>
         </td>
         <td class="dropdown">
           <button class="btn btn-inverse btn-small" data-toggle="dropdown">
@@ -44,7 +45,7 @@
             </li>
           </ul>
         </td>
-        <td  class="text-right">
+        <td ng-if="!ctrl.isViewer" class="text-right">
           <a ng-click="ctrl.removePlaylist(playlist)" class="btn btn-danger btn-small">
             <icon name="'times'"></icon>
           </a>
@@ -52,7 +53,7 @@
       </tr>
     </table>
   </div>
-  <div ng-if="ctrl.playlists.length === 0">
+  <div ng-if="ctrl.playlists.length === 0 && !ctrl.isViewer">
     <empty-list-cta
       title="'There are no playlists created yet'"
       buttonIcon="'plus'"
@@ -62,6 +63,10 @@
       proTipLink="'http://docs.grafana.org/reference/playlist/'"
       proTipLinkTitle="'Learn more'"
       proTipTarget="'_blank'" />
+  </div>
+  <div class="grafana-info-box" ng-if="ctrl.playlists.length === 0 && ctrl.isViewer">
+    <h5>There are no playlists created yet</h5>
+    <p>Unfortunately you don't have permission to create playlists.</p>
   </div>
 </div>
 
