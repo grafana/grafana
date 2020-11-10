@@ -284,7 +284,7 @@ func (hs *HTTPServer) registerRoutes() {
 				folderUidRoute.Delete("/", Wrap(DeleteFolder))
 
 				folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
-					folderPermissionRoute.Get("/", Wrap(GetFolderPermissionList))
+					folderPermissionRoute.Get("/", Wrap(hs.GetFolderPermissionList))
 					folderPermissionRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), Wrap(UpdateFolderPermissions))
 				})
 			})
@@ -311,7 +311,7 @@ func (hs *HTTPServer) registerRoutes() {
 				dashIdRoute.Post("/restore", bind(dtos.RestoreDashboardVersionCommand{}), Wrap(hs.RestoreDashboardVersion))
 
 				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
-					dashboardPermissionRoute.Get("/", Wrap(GetDashboardPermissionList))
+					dashboardPermissionRoute.Get("/", Wrap(hs.GetDashboardPermissionList))
 					dashboardPermissionRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), Wrap(UpdateDashboardPermissions))
 				})
 			})

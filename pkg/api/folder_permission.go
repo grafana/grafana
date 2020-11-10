@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetFolderPermissionList(c *models.ReqContext) Response {
+func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	folder, err := s.GetFolderByUID(c.Params(":uid"))
 
@@ -30,7 +30,12 @@ func GetFolderPermissionList(c *models.ReqContext) Response {
 		return Error(500, "Failed to get folder permissions", err)
 	}
 
+	filteredAcls := make([]*models.DashboardAclInfoDTO, 0, len(acl))
 	for _, perm := range acl {
+		if dtos.IsHiddenUser(perm.UserLogin, c.SignedInUser, hs.Cfg) {
+			continue
+		}
+
 		perm.FolderId = folder.Id
 		perm.DashboardId = 0
 
@@ -43,9 +48,11 @@ func GetFolderPermissionList(c *models.ReqContext) Response {
 		if perm.Slug != "" {
 			perm.Url = models.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
 		}
+
+		filteredAcls = append(filteredAcls, perm)
 	}
 
-	return JSON(200, acl)
+	return JSON(200, filteredAcls)
 }
 
 func UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {

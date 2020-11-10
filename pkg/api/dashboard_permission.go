@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-func GetDashboardPermissionList(c *models.ReqContext) Response {
+func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) Response {
 	dashID := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashID, "")
@@ -28,7 +28,12 @@ func GetDashboardPermissionList(c *models.ReqContext) Response {
 		return Error(500, "Failed to get dashboard permissions", err)
 	}
 
+	filteredAcls := make([]*models.DashboardAclInfoDTO, 0, len(acl))
 	for _, perm := range acl {
+		if dtos.IsHiddenUser(perm.UserLogin, c.SignedInUser, hs.Cfg) {
+			continue
+		}
+
 		perm.UserAvatarUrl = dtos.GetGravatarUrl(perm.UserEmail)
 
 		if perm.TeamId > 0 {
@@ -37,9 +42,11 @@ func GetDashboardPermissionList(c *models.ReqContext) Response {
 		if perm.Slug != "" {
 			perm.Url = models.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
 		}
+
+		filteredAcls = append(filteredAcls, perm)
 	}
 
-	return JSON(200, acl)
+	return JSON(200, filteredAcls)
 }
 
 func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
