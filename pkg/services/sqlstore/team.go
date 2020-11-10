@@ -61,7 +61,7 @@ func getTeamSearchSqlBase(filteredUsers []string) string {
 		team.email AS email,
 		team_member.permission, ` +
 		getTeamMemberCount(filteredUsers) +
-		`FROM team AS team
+		` FROM team AS team
 		INNER JOIN team_member ON team.id = team_member.team_id AND team_member.user_id = ? `
 }
 
@@ -72,7 +72,7 @@ func getTeamSelectSqlBase(filteredUsers []string) string {
 		team.name as name,
 		team.email as email, ` +
 		getTeamMemberCount(filteredUsers) +
-		`FROM team as team `
+		` FROM team as team `
 }
 
 func CreateTeam(cmd *models.CreateTeamCommand) error {
@@ -189,12 +189,15 @@ func SearchTeams(query *models.SearchTeamsQuery) error {
 	filteredUsers := getFilteredUsers(query.SignedInUser, query.HiddenUsers)
 	if query.UserIdFilter > 0 {
 		sql.WriteString(getTeamSearchSqlBase(filteredUsers))
+		for _, user := range filteredUsers {
+			params = append(params, user)
+		}
 		params = append(params, query.UserIdFilter)
 	} else {
 		sql.WriteString(getTeamSelectSqlBase(filteredUsers))
-	}
-	for _, user := range filteredUsers {
-		params = append(params, user)
+		for _, user := range filteredUsers {
+			params = append(params, user)
+		}
 	}
 
 	sql.WriteString(` WHERE team.org_id = ?`)
