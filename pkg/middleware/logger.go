@@ -16,12 +16,15 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/uber/jaeger-client-go"
 	"gopkg.in/macaron.v1"
 )
 
@@ -33,11 +36,11 @@ func Logger() macaron.Handler {
 		rw := res.(macaron.ResponseWriter)
 		c.Next()
 
-		timeTakenMs := time.Since(start) / time.Millisecond
+		timeTaken := time.Since(start) / time.Millisecond
 
 		if timer, ok := c.Data["perfmon.timer"]; ok {
 			timerTyped := timer.(prometheus.Summary)
-			timerTyped.Observe(float64(timeTakenMs))
+			timerTyped.Observe(float64(timeTaken))
 		}
 
 		status := rw.Status()
@@ -49,11 +52,39 @@ func Logger() macaron.Handler {
 
 		if ctx, ok := c.Data["ctx"]; ok {
 			ctxTyped := ctx.(*models.ReqContext)
-			if status == 500 {
-				ctxTyped.Logger.Error("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "time_ms", int64(timeTakenMs), "size", rw.Size(), "referer", req.Referer())
+			logParams := []interface{}{
+				"method", req.Method,
+				"path", req.URL.Path,
+				"status", status,
+				"remote_addr", c.RemoteAddr(),
+				"time_ms", int64(timeTaken),
+				"size", rw.Size(),
+				"referer", req.Referer(),
+			}
+
+			traceID, exist := extractTraceID(ctxTyped.Req.Request.Context())
+			if exist {
+				logParams = append(logParams, "traceID", traceID)
+			}
+
+			if status >= 500 {
+				ctxTyped.Logger.Error("Request Completed", logParams...)
 			} else {
-				ctxTyped.Logger.Info("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "time_ms", int64(timeTakenMs), "size", rw.Size(), "referer", req.Referer())
+				ctxTyped.Logger.Info("Request Completed", logParams...)
 			}
 		}
 	}
+}
+
+func extractTraceID(ctx context.Context) (string, bool) {
+	sp := opentracing.SpanFromContext(ctx)
+	if sp == nil {
+		return "", false
+	}
+	sctx, ok := sp.Context().(jaeger.SpanContext)
+	if !ok {
+		return "", false
+	}
+
+	return sctx.TraceID().String(), true
 }
