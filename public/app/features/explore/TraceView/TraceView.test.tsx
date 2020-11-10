@@ -1,5 +1,6 @@
 import React from 'react';
 import { shallow } from 'enzyme';
+import { render } from '@testing-library/react';
 import { TraceView } from './TraceView';
 import { TracePageHeader, TraceTimelineViewer } from '@jaegertracing/jaeger-ui-components';
 import { TraceSpanData, TraceData } from '@grafana/data';
@@ -23,8 +24,8 @@ describe('TraceView', () => {
   it('does not render anything on missing trace', () => {
     // Simulating Explore's access to empty response data
     const trace = [][0];
-    const wrapper = shallow(<TraceView trace={trace} splitOpenFn={() => {}} />);
-    expect(wrapper.isEmptyRender()).toBeTruthy();
+    const { container } = render(<TraceView trace={trace} splitOpenFn={() => {}} />);
+    expect(container.hasChildNodes()).toBeFalsy();
   });
 
   it('toggles detailState', () => {
