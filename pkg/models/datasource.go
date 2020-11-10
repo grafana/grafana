@@ -123,6 +123,7 @@ var knownDatasourcePlugins = map[string]bool{
 	"grafana-influxdb-flux-datasource":       true,
 	"doitintl-bigquery-datasource":           true,
 	"grafana-azure-data-explorer-datasource": true,
+	"tempo":                                  true,
 }
 
 func IsKnownDataSourcePlugin(dsType string) bool {
