@@ -642,29 +642,3 @@ func validateOneAdminLeft(sess *DBSession) error {
 
 	return nil
 }
-
-func GetHiddenUsersIDs() ([]int64, error) {
-	userIds := []struct {
-		Id int64
-	}{}
-	err := withDbSession(context.Background(), func(sess *DBSession) error {
-		hiddenUsers := make([]string, len(setting.HiddenUsers))
-		i := 0
-		for u := range setting.HiddenUsers {
-			hiddenUsers[i] = u
-			i++
-		}
-
-		return sess.Table("user").Cols("id").In("login", hiddenUsers).Find(&userIds)
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	ids := make([]int64, len(userIds))
-	for i, id := range userIds {
-		ids[i] = id.Id
-	}
-
-	return ids, nil
-}

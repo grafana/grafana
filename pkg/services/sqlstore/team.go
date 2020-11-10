@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -25,39 +26,35 @@ func init() {
 	bus.AddHandler("sql", IsAdminOfTeams)
 }
 
-func getFilteredUsers(signedInUser *models.SignedInUser) ([]int64, error) {
-	filteredUsers := make([]int64, 0)
+func getFilteredUsers(signedInUser *models.SignedInUser) []string {
+	filteredUsers := make([]string, 0, len(setting.HiddenUsers))
 	if signedInUser == nil || signedInUser.IsGrafanaAdmin {
-		return filteredUsers, nil
+		return filteredUsers
 	}
 
-	ids, err := GetHiddenUsersIDs()
-	if err != nil {
-		return filteredUsers, err
-	}
-
-	for _, id := range ids {
-		if id == signedInUser.UserId {
+	for u := range setting.HiddenUsers {
+		if u == signedInUser.Login {
 			continue
 		}
-		filteredUsers = append(filteredUsers, id)
+		filteredUsers = append(filteredUsers, u)
 	}
 
-	return filteredUsers, nil
+	return filteredUsers
 }
 
-func getTeamMemberCount(filteredUsers []int64) string {
+func getTeamMemberCount(filteredUsers []string) string {
 	if len(filteredUsers) > 0 {
-		return "(SELECT COUNT(*) FROM team_member " +
-			"WHERE team_member.team_id = team.id AND team_member.user_id NOT IN (?" +
+		return `(SELECT COUNT(*) FROM team_member 
+			INNER JOIN user ON team_member.user_id = user.id
+			WHERE team_member.team_id = team.id AND user.login NOT IN (?` +
 			strings.Repeat(",?", len(filteredUsers)-1) + ")" +
-			") AS member_count "
+			`) AS member_count `
 	}
 
 	return "(SELECT COUNT(*) FROM team_member WHERE team_member.team_id = team.id) AS member_count "
 }
 
-func getTeamSearchSqlBase(filteredUsers []int64) string {
+func getTeamSearchSqlBase(filteredUsers []string) string {
 	return `SELECT
 		team.id AS id,
 		team.org_id,
@@ -69,7 +66,7 @@ func getTeamSearchSqlBase(filteredUsers []int64) string {
 		INNER JOIN team_member ON team.id = team_member.team_id AND team_member.user_id = ? `
 }
 
-func getTeamSelectSqlBase(filteredUsers []int64) string {
+func getTeamSelectSqlBase(filteredUsers []string) string {
 	return `SELECT
 		team.id as id,
 		team.org_id,
@@ -190,18 +187,15 @@ func SearchTeams(query *models.SearchTeamsQuery) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
-	filteredUsers, err := getFilteredUsers(query.SignedInUser)
-	if err != nil {
-		return err
-	}
+	filteredUsers := getFilteredUsers(query.SignedInUser)
 	if query.UserIdFilter > 0 {
 		sql.WriteString(getTeamSearchSqlBase(filteredUsers))
 		params = append(params, query.UserIdFilter)
 	} else {
 		sql.WriteString(getTeamSelectSqlBase(filteredUsers))
 	}
-	for _, id := range filteredUsers {
-		params = append(params, id)
+	for _, user := range filteredUsers {
+		params = append(params, user)
 	}
 
 	sql.WriteString(` WHERE team.org_id = ?`)
@@ -248,13 +242,10 @@ func GetTeamById(query *models.GetTeamByIdQuery) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
-	filteredUsers, err := getFilteredUsers(query.SignedInUser)
-	if err != nil {
-		return err
-	}
+	filteredUsers := getFilteredUsers(query.SignedInUser)
 	sql.WriteString(getTeamSelectSqlBase(filteredUsers))
-	for _, id := range filteredUsers {
-		params = append(params, id)
+	for _, user := range filteredUsers {
+		params = append(params, user)
 	}
 
 	sql.WriteString(` WHERE team.org_id = ? and team.id = ?`)
@@ -281,7 +272,7 @@ func GetTeamsByUser(query *models.GetTeamsByUserQuery) error {
 
 	var sql bytes.Buffer
 
-	sql.WriteString(getTeamSelectSqlBase([]int64{}))
+	sql.WriteString(getTeamSelectSqlBase([]string{}))
 	sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
 	sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
 
