@@ -51,8 +51,8 @@ func addOrgUserHelper(cmd models.AddOrgUserCommand) Response {
 }
 
 // GET /api/org/users
-func GetOrgUsersForCurrentOrg(c *models.ReqContext) Response {
-	result, err := getOrgUsersHelper(&models.GetOrgUsersQuery{
+func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) Response {
+	result, err := hs.getOrgUsersHelper(&models.GetOrgUsersQuery{
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
@@ -66,7 +66,7 @@ func GetOrgUsersForCurrentOrg(c *models.ReqContext) Response {
 }
 
 // GET /api/org/users/lookup
-func GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) Response {
+func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) Response {
 	isAdmin, err := isOrgAdminFolderAdminOrTeamAdmin(c)
 	if err != nil {
 		return Error(500, "Failed to get users for current organization", err)
@@ -76,7 +76,7 @@ func GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) Response {
 		return Error(403, "Permission denied", nil)
 	}
 
-	orgUsers, err := getOrgUsersHelper(&models.GetOrgUsersQuery{
+	orgUsers, err := hs.getOrgUsersHelper(&models.GetOrgUsersQuery{
 		OrgId: c.OrgId,
 		Query: c.Query("query"),
 		Limit: c.QueryInt("limit"),
@@ -122,8 +122,8 @@ func isOrgAdminFolderAdminOrTeamAdmin(c *models.ReqContext) (bool, error) {
 }
 
 // GET /api/orgs/:orgId/users
-func GetOrgUsers(c *models.ReqContext) Response {
-	result, err := getOrgUsersHelper(&models.GetOrgUsersQuery{
+func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) Response {
+	result, err := hs.getOrgUsersHelper(&models.GetOrgUsersQuery{
 		OrgId: c.ParamsInt64(":orgId"),
 		Query: "",
 		Limit: 0,
@@ -136,14 +136,14 @@ func GetOrgUsers(c *models.ReqContext) Response {
 	return JSON(200, result)
 }
 
-func getOrgUsersHelper(query *models.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*models.OrgUserDTO, error) {
+func (hs *HTTPServer) getOrgUsersHelper(query *models.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*models.OrgUserDTO, error) {
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
 	}
 
 	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result))
 	for _, user := range query.Result {
-		if dtos.IsHiddenUser(user.Login, signedInUser) {
+		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
 			continue
 		}
 		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)

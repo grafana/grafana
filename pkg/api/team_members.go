@@ -18,7 +18,7 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) Response {
 
 	filteredMembers := make([]*models.TeamMemberDTO, 0, len(query.Result))
 	for _, member := range query.Result {
-		if dtos.IsHiddenUser(member.Login, c.SignedInUser) {
+		if dtos.IsHiddenUser(member.Login, c.SignedInUser, hs.Cfg) {
 			continue
 		}
 

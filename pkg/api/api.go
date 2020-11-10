@@ -167,7 +167,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// team without requirement of user to be org admin
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
-			teamsRoute.Get("/:teamId", Wrap(GetTeamByID))
+			teamsRoute.Get("/:teamId", Wrap(hs.GetTeamByID))
 			teamsRoute.Get("/search", Wrap(hs.SearchTeams))
 		})
 
@@ -181,7 +181,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			orgRoute.Put("/", bind(dtos.UpdateOrgForm{}), Wrap(UpdateOrgCurrent))
 			orgRoute.Put("/address", bind(dtos.UpdateOrgAddressForm{}), Wrap(UpdateOrgAddressCurrent))
-			orgRoute.Get("/users", Wrap(GetOrgUsersForCurrentOrg))
+			orgRoute.Get("/users", Wrap(hs.GetOrgUsersForCurrentOrg))
 			orgRoute.Post("/users", quota("user"), bind(models.AddOrgUserCommand{}), Wrap(AddOrgUserToCurrentOrg))
 			orgRoute.Patch("/users/:userId", bind(models.UpdateOrgUserCommand{}), Wrap(UpdateOrgUserForCurrentOrg))
 			orgRoute.Delete("/users/:userId", Wrap(RemoveOrgUserForCurrentOrg))
@@ -198,7 +198,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// current org without requirement of user to be org admin
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
-			orgRoute.Get("/users/lookup", Wrap(GetOrgUsersForCurrentOrgLookup))
+			orgRoute.Get("/users/lookup", Wrap(hs.GetOrgUsersForCurrentOrgLookup))
 		})
 
 		// create new org
@@ -213,7 +213,7 @@ func (hs *HTTPServer) registerRoutes() {
 			orgsRoute.Put("/", bind(dtos.UpdateOrgForm{}), Wrap(UpdateOrg))
 			orgsRoute.Put("/address", bind(dtos.UpdateOrgAddressForm{}), Wrap(UpdateOrgAddress))
 			orgsRoute.Delete("/", Wrap(DeleteOrgByID))
-			orgsRoute.Get("/users", Wrap(GetOrgUsers))
+			orgsRoute.Get("/users", Wrap(hs.GetOrgUsers))
 			orgsRoute.Post("/users", bind(models.AddOrgUserCommand{}), Wrap(AddOrgUser))
 			orgsRoute.Patch("/users/:userId", bind(models.UpdateOrgUserCommand{}), Wrap(UpdateOrgUser))
 			orgsRoute.Delete("/users/:userId", Wrap(RemoveOrgUser))

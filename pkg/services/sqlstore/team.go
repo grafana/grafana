@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -26,13 +25,13 @@ func init() {
 	bus.AddHandler("sql", IsAdminOfTeams)
 }
 
-func getFilteredUsers(signedInUser *models.SignedInUser) []string {
-	filteredUsers := make([]string, 0, len(setting.HiddenUsers))
+func getFilteredUsers(signedInUser *models.SignedInUser, hiddenUsers map[string]struct{}) []string {
+	filteredUsers := make([]string, 0, len(hiddenUsers))
 	if signedInUser == nil || signedInUser.IsGrafanaAdmin {
 		return filteredUsers
 	}
 
-	for u := range setting.HiddenUsers {
+	for u := range hiddenUsers {
 		if u == signedInUser.Login {
 			continue
 		}
@@ -187,7 +186,7 @@ func SearchTeams(query *models.SearchTeamsQuery) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
-	filteredUsers := getFilteredUsers(query.SignedInUser)
+	filteredUsers := getFilteredUsers(query.SignedInUser, query.HiddenUsers)
 	if query.UserIdFilter > 0 {
 		sql.WriteString(getTeamSearchSqlBase(filteredUsers))
 		params = append(params, query.UserIdFilter)
@@ -242,7 +241,7 @@ func GetTeamById(query *models.GetTeamByIdQuery) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
-	filteredUsers := getFilteredUsers(query.SignedInUser)
+	filteredUsers := getFilteredUsers(query.SignedInUser, query.HiddenUsers)
 	sql.WriteString(getTeamSelectSqlBase(filteredUsers))
 	for _, user := range filteredUsers {
 		params = append(params, user)
