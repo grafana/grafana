@@ -116,7 +116,7 @@ class UnThemedExploreGraphPanel extends PureComponent<Props, State> {
               displayMode={LegendDisplayMode.List}
               height={height}
               isLegendVisible={true}
-              placement={'under'}
+              placement={'bottom'}
               width={width}
               timeRange={timeRange}
               timeZone={timeZone}

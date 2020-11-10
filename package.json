@@ -12,9 +12,9 @@
     "e2e": "./e2e/start-and-run-suite",
     "e2e:debug": "./e2e/start-and-run-suite debug",
     "e2e:dev": "./e2e/start-and-run-suite dev",
-    "jest": "jest --notify --watch",
+    "test": "jest --notify --watch",
     "lint": "eslint . --ext .js,.tsx,.ts --cache",
-    "jest-ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
+    "test:ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
     "lint:fix": "yarn lint --fix",
     "packages:build": "lerna run clean && lerna run build --ignore @grafana-plugins/input-datasource",
     "packages:docsExtract": "rm -rf ./reports/docs && lerna run docsExtract",
@@ -37,12 +37,11 @@
     "stats": "webpack --mode production --config scripts/webpack/webpack.prod.js --profile --json > compilation-stats.json",
     "storybook": "cd packages/grafana-ui && yarn storybook --ci",
     "storybook:build": "cd packages/grafana-ui && yarn storybook:build",
-    "test": "grunt test",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
     "typecheck": "tsc --noEmit",
     "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
     "watch": "yarn start -d watch,start core:start --watchTheme",
-    "ci:test-frontend": "yarn run prettier:check && yarn run packages:typecheck && yarn run typecheck && yarn run test"
+    "ci:test-frontend": "yarn run prettier:check && yarn run packages:typecheck && yarn run typecheck && yarn grunt no-only-tests && yarn run test:ci"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/latest/guides/whats-new-in-v7-3/",
@@ -288,8 +287,8 @@
     "tinycolor2": "1.4.1",
     "tti-polyfill": "0.2.2",
     "uuid": "8.3.0",
-    "whatwg-fetch": "3.1.0",
-    "visjs-network": "4.25.0"
+    "visjs-network": "4.25.0",
+    "whatwg-fetch": "3.1.0"
   },
   "resolutions": {
     "caniuse-db": "1.0.30000772"

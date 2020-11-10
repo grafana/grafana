@@ -30,18 +30,10 @@ import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
-import {
-  addQueryRow,
-  changeSize,
-  initializeExplore,
-  modifyQueries,
-  refreshExplore,
-  scanStart,
-  setQueries,
-  updateTimeRange,
-  splitOpen,
-} from './state/actions';
-
+import { splitOpen } from './state/main';
+import { changeSize, initializeExplore, refreshExplore } from './state/explorePane';
+import { updateTimeRange } from './state/time';
+import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart } from './state/query';
 import { ExploreId, ExploreItemState, ExploreUpdateState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
@@ -56,7 +48,6 @@ import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
-import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 //TODO:unification
 import { TraceView } from './TraceView/TraceView';
