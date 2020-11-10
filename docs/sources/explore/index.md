@@ -159,7 +159,7 @@ Results of log queries are shown as histograms in the graph and individual logs 
 
 For logs with a **level** label, we use the value of the label to determine log level and update color accordingly. If log doesn't have a level label, we parse the log line to find out if its content matches any of the supported expressions (see below). Log level is always determined by the first match. In a case where Grafana is not able to determine log level, log will be visualised with **unknown** log level.
 
-**Supported log levels and mapping of log level abbreviation and expressions: **
+**Supported log levels and mapping of log level abbreviation and expressions:**
 
 
 |  Supported expressions      | Log level     | Color       |
