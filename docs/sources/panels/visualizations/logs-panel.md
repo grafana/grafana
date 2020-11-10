@@ -18,7 +18,7 @@ The logs panel shows the result of queries that were entered in the Query tab. T
 To limit the number of lines rendered, you can use the **Max data points** setting in the **Query options**. If it is not set, then the data source will usually enforce a default limit.
 
 ## Log level
-If log has a **level label**, we use the value of the label to determine log level and update color accordingly. If log doesn't have a level label, we parse the log line to determine it's log level. If Grafana is not able to determiine log level, it will be visualised with **unknown log level**. See [supported log levels and mappings of log level abbreviation and expressions](../explore/#log-level/).
+If log has a **level label**, we use the value of the label to determine log level and update color accordingly. If log doesn't have a level label, we parse the log line to find out if its content matches any of the supported expressions. The log level is determined by the first match. If Grafana is not able to determine log level, log will be visualised with **unknown log level**. See [supported log levels and mappings of log level abbreviation and expressions](../explore/#log-level/).
 
 ### Display options
 
