@@ -8,19 +8,22 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/setting"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestDashboardPermissionApiEndpoint(t *testing.T) {
 	Convey("Dashboard permissions test", t, func() {
+		hs := &HTTPServer{Cfg: setting.NewCfg()}
+
 		Convey("Given dashboard not exists", func() {
 			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
 				return models.ErrDashboardNotFound
 			})
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				callGetDashboardPermissions(sc)
+				callGetDashboardPermissions(sc, hs)
 				So(sc.resp.Code, ShouldEqual, 404)
 			})
 
@@ -47,7 +50,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				callGetDashboardPermissions(sc)
+				callGetDashboardPermissions(sc, hs)
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
 
@@ -88,7 +91,7 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
-				callGetDashboardPermissions(sc)
+				callGetDashboardPermissions(sc, hs)
 				So(sc.resp.Code, ShouldEqual, 200)
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 				So(err, ShouldBeNil)
@@ -175,8 +178,8 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 	})
 }
 
-func callGetDashboardPermissions(sc *scenarioContext) {
-	sc.handlerFunc = GetDashboardPermissionList
+func callGetDashboardPermissions(sc *scenarioContext, hs *HTTPServer) {
+	sc.handlerFunc = hs.GetDashboardPermissionList
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 

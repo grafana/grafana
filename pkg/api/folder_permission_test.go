@@ -9,12 +9,15 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/setting"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestFolderPermissionApiEndpoint(t *testing.T) {
 	Convey("Folder permissions test", t, func() {
+		hs := &HTTPServer{Cfg: setting.NewCfg()}
+
 		Convey("Given folder not exists", func() {
 			mock := &fakeFolderService{
 				GetFolderByUIDError: models.ErrFolderNotFound,
@@ -24,7 +27,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			mockFolderService(mock)
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				callGetFolderPermissions(sc)
+				callGetFolderPermissions(sc, hs)
 				So(sc.resp.Code, ShouldEqual, 404)
 			})
 
@@ -60,7 +63,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			mockFolderService(mock)
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				callGetFolderPermissions(sc)
+				callGetFolderPermissions(sc, hs)
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
 
@@ -107,7 +110,7 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			mockFolderService(mock)
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
-				callGetFolderPermissions(sc)
+				callGetFolderPermissions(sc, hs)
 				So(sc.resp.Code, ShouldEqual, 200)
 				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 				So(err, ShouldBeNil)
@@ -211,8 +214,8 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 	})
 }
 
-func callGetFolderPermissions(sc *scenarioContext) {
-	sc.handlerFunc = GetFolderPermissionList
+func callGetFolderPermissions(sc *scenarioContext, hs *HTTPServer) {
+	sc.handlerFunc = hs.GetFolderPermissionList
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
