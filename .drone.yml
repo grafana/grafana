@@ -159,7 +159,7 @@ steps:
   image: grafana/docs-base:latest
   commands:
   - mkdir -p /hugo/content/docs/grafana
-  - cp -r docs/sources /hugo/content/docs/grafana/latest
+  - cp -r docs/sources/* /hugo/content/docs/grafana/latest/
   - cd /hugo && make prod
   depends_on:
   - initialize
@@ -439,16 +439,6 @@ steps:
   - ./scripts/ci-reference-docs-lint.sh ci
   depends_on:
   - build-frontend
-
-- name: build-docs-website
-  image: grafana/docs-base:latest
-  commands:
-  - mkdir -p /hugo/content/docs/grafana
-  - cp -r docs/sources /hugo/content/docs/grafana/latest
-  - cd /hugo && make prod
-  depends_on:
-  - initialize
-  - build-frontend-docs
 
 - name: copy-packages-for-docker
   image: grafana/build-container:1.2.28
