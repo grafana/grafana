@@ -61,7 +61,9 @@ Release branches MUST be split from the following branches.
 
 Security releases follow the same process but MUST be prepared in secret. Security releases MUST NOT include changes which are not related to the security fix. Normal release processes MUST accommodate the security release process. SECURITY.md MUST be followed.
 
-PRs intended for inclusion in the next PATCH release MUST be labeled with `cherry-pick-needed` so they can be picked up by automated release tooling.
+PRs intended for inclusion in the next PATCH release they must be backported to the release branch. The bot can do this automatically.
+
+[Read more on backport PRs](https://github.com/grafana/grafana/blob/master/.github/bot.md)
 
 Releases follow the following cadence
 - MAJOR: Yearly
