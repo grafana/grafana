@@ -4,7 +4,6 @@ package ngalert
 
 import (
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -31,16 +30,12 @@ func TestCreatingAlertDefinition(t *testing.T) {
 							"expression":"2 + 3 > 1"
 						}`),
 						RefID: "B",
-						RelativeTimeRange: eval.RelativeTimeRange{
-							From: eval.Duration(3 * time.Hour),
-							To:   eval.Duration(5 * time.Hour),
-						},
 					},
 				},
 			},
 		}
 		err := ng.saveAlertDefinition(&q)
-		require.Error(t, err, fmt.Errorf("invalid relative time range: {From:3h0m0s To:5h0m0s}"))
+		require.NoError(t, err)
 	})
 
 }
@@ -107,6 +102,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		err := ng.updateAlertDefinition(&q)
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), q.RowsAffected)
+		assert.Equal(t, int64(1), q.Result.Id)
 
 		getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: (*alertDefinition).Id}
 		err = ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery)

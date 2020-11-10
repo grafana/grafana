@@ -37,7 +37,7 @@ type deleteAlertDefinitionByIDQuery struct {
 	RowsAffected int64
 }
 
-// Condition is the structure used by storing/updating alert definition commmands
+// condition is the structure used by storing/updating alert definition commmands
 type condition struct {
 	RefID string `json:"refId"`
 

@@ -14,6 +14,25 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
+// invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.
+type invalidEvalResultFormatError struct {
+	refID  string
+	reason string
+	err    error
+}
+
+func (e *invalidEvalResultFormatError) Error() string {
+	s := fmt.Sprintf("invalid format of evaluation results for the alert definition %s: %s", e.refID, e.reason)
+	if e.err != nil {
+		s = fmt.Sprintf("%s: %s", s, e.err.Error())
+	}
+	return s
+}
+
+func (e *invalidEvalResultFormatError) Unwrap() error {
+	return e.err
+}
+
 // Condition contains backend expressions and queries and the RefID
 // of the query or expression that will be evaluated.
 type Condition struct {
@@ -148,24 +167,24 @@ func EvaluateExecutionResult(results *ExecutionResults) (Results, error) {
 	for _, f := range results.Results {
 		rowLen, err := f.RowLen()
 		if err != nil {
-			return nil, fmt.Errorf("unable to get frame row length: %w", err)
+			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: "unable to get frame row length", err: err}
 		}
 		if rowLen > 1 {
-			return nil, fmt.Errorf("invalid frame %q: row length: %v", f.Name, rowLen)
+			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("unexpected row length: %d instead of 1", rowLen)}
 		}
 
 		if len(f.Fields) > 1 {
-			return nil, fmt.Errorf("invalid frame %q: field length %v", f.Name, len(f.Fields))
+			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("unexpected field length: %d instead of 1", len(f.Fields))}
 		}
 
 		if f.Fields[0].Type() != data.FieldTypeNullableFloat64 {
-			return nil, fmt.Errorf("invalid frame %q: field type %v", f.Name, f.Fields[0].Type())
+			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("invalid field type: %d", f.Fields[0].Type())}
 		}
 
 		labelsStr := f.Fields[0].Labels.String()
 		_, ok := labels[labelsStr]
 		if ok {
-			return nil, fmt.Errorf("invalid frame %q: frames cannot uniquely be identified by its labels: %q", f.Name, labelsStr)
+			return nil, &invalidEvalResultFormatError{refID: f.RefID, reason: fmt.Sprintf("frame cannot uniquely be identified by its labels: %s", labelsStr)}
 		}
 		labels[labelsStr] = true
 

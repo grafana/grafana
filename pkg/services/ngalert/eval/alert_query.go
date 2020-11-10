@@ -39,7 +39,7 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	}
 }
 
-// relativeTimeRange is the per query start and end time
+// RelativeTimeRange is the per query start and end time
 // for requests.
 type RelativeTimeRange struct {
 	From Duration
@@ -259,7 +259,7 @@ func (aq *AlertQuery) setQueryType() error {
 	return nil
 }
 
-// PreSave sets queries properties.
+// PreSave sets query's properties.
 // It should be called before being saved.
 func (aq *AlertQuery) PreSave(orgID int64) error {
 	err := aq.setOrgID(orgID)
@@ -282,7 +282,12 @@ func (aq *AlertQuery) PreSave(orgID int64) error {
 	}
 	aq.Model = model
 
-	if ok := aq.RelativeTimeRange.isValid(); !ok {
+	isExpression, err := aq.IsExpression()
+	if err != nil {
+		return err
+	}
+
+	if ok := isExpression || aq.RelativeTimeRange.isValid(); !ok {
 		return fmt.Errorf("invalid relative time range: %+v", aq.RelativeTimeRange)
 	}
 	return nil

@@ -81,6 +81,7 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertDefinition := &AlertDefinition{
+			Id:        cmd.ID,
 			Name:      cmd.Name,
 			Condition: cmd.Condition.RefID,
 			Data:      cmd.Condition.QueriesAndExpressions,
