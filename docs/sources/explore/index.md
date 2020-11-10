@@ -169,17 +169,18 @@ For logs with a **level** label, we use the value of the label to determine log 
 | alert                       | critical      | purple      |
 | crit                        | critical      | purple      |
 | critical                    | critical      | purple      |
-| warn                        | warning       | yellow      |
-| warning                     | warning       | yellow      |
 | err                         | error         | red         |
 | eror                        | error         | red         |
 | error                       | error         | red         |
+| warn                        | warning       | yellow      |
+| warning                     | warning       | yellow      |
 | info                        | info          | green       |
 | information                 | info          | green       |
 | notice                      | info          | green       |
 | dbug                        | debug         | blue        |
 | debug                       | debug         | blue        |
 | trace                       | trace         | light blue  |
+| *                           | unknown       | grey        |
 
 ### Visualization options
 
