@@ -59,7 +59,7 @@ export function addStandardDataReduceOptions(
     name: 'Calculation',
     description: 'Choose a reducer function / calculation',
     editor: standardEditorsRegistry.get('stats-picker').editor as any,
-    defaultValue: [ReducerID.mean],
+    defaultValue: [ReducerID.lastNotNull],
     // Hides it when all values mode is on
     showIf: currentConfig => currentConfig.reduceOptions.values === false,
   });
