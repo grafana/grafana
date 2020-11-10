@@ -94,7 +94,6 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       ? cx([style.logsRowMatchHighLight, style.logsRowMatchHighLightPreview])
       : cx([style.logsRowMatchHighLight]);
     const styles = getStyles(theme);
-    console.log('highlighterExpressions', highlighterExpressions);
 
     return (
       <td className={style.logsRowMessage}>
