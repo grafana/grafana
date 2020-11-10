@@ -141,7 +141,7 @@ func getOrgUsersHelper(query *models.GetOrgUsersQuery, signedInUser *models.Sign
 		return nil, err
 	}
 
-	filteredUsers := make([]*models.OrgUserDTO, 0)
+	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result))
 	for _, user := range query.Result {
 		if dtos.IsHiddenUser(user.Login, signedInUser) {
 			continue
