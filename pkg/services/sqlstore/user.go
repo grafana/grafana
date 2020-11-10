@@ -648,7 +648,13 @@ func GetHiddenUsersIDs() ([]int64, error) {
 		Id int64
 	}{}
 	err := withDbSession(context.Background(), func(sess *DBSession) error {
-		hiddenUsers := setting.HiddenUsers
+		hiddenUsers := make([]string, len(setting.HiddenUsers))
+		i := 0
+		for u := range setting.HiddenUsers {
+			hiddenUsers[i] = u
+			i++
+		}
+
 		return sess.Table("user").Cols("id").In("login", hiddenUsers).Find(&userIds)
 	})
 	if err != nil {

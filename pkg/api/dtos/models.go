@@ -85,10 +85,8 @@ func IsHiddenUser(userLogin string, signedInUser *models.SignedInUser) bool {
 		return false
 	}
 
-	for _, hu := range setting.HiddenUsers {
-		if userLogin == hu {
-			return true
-		}
+	if _, hidden := setting.HiddenUsers[userLogin]; hidden {
+		return true
 	}
 
 	return false
