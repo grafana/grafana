@@ -33,10 +33,16 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				},
 			}
 
-			updateDashboardPermissionScenario("When calling POST on", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
-				callUpdateDashboardPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 404)
-			})
+			updateDashboardPermissionScenario(updatePermissionContext{
+				desc:         "When calling POST on",
+				url:          "/api/dashboards/id/1/permissions",
+				routePattern: "/api/dashboards/id/:id/permissions",
+				cmd:          cmd,
+				fn: func(sc *scenarioContext) {
+					callUpdateDashboardPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 404)
+				},
+			}, hs)
 		})
 
 		Convey("Given user has no admin permissions", func() {
@@ -60,10 +66,16 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				},
 			}
 
-			updateDashboardPermissionScenario("When calling POST on", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
-				callUpdateDashboardPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 403)
-			})
+			updateDashboardPermissionScenario(updatePermissionContext{
+				desc:         "When calling POST on",
+				url:          "/api/dashboards/id/1/permissions",
+				routePattern: "/api/dashboards/id/:id/permissions",
+				cmd:          cmd,
+				fn: func(sc *scenarioContext) {
+					callUpdateDashboardPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 403)
+				},
+			}, hs)
 
 			Reset(func() {
 				guardian.New = origNewGuardian
@@ -106,10 +118,16 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				},
 			}
 
-			updateDashboardPermissionScenario("When calling POST on", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
-				callUpdateDashboardPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 200)
-			})
+			updateDashboardPermissionScenario(updatePermissionContext{
+				desc:         "When calling POST on",
+				url:          "/api/dashboards/id/1/permissions",
+				routePattern: "/api/dashboards/id/:id/permissions",
+				cmd:          cmd,
+				fn: func(sc *scenarioContext) {
+					callUpdateDashboardPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 200)
+				},
+			}, hs)
 
 			Reset(func() {
 				guardian.New = origNewGuardian
@@ -136,10 +154,16 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				},
 			}
 
-			updateDashboardPermissionScenario("When calling POST on", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
-				callUpdateDashboardPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 400)
-			})
+			updateDashboardPermissionScenario(updatePermissionContext{
+				desc:         "When calling POST on",
+				url:          "/api/dashboards/id/1/permissions",
+				routePattern: "/api/dashboards/id/:id/permissions",
+				cmd:          cmd,
+				fn: func(sc *scenarioContext) {
+					callUpdateDashboardPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 400)
+				},
+			}, hs)
 
 			Reset(func() {
 				guardian.New = origNewGuardian
@@ -166,10 +190,16 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 				},
 			}
 
-			updateDashboardPermissionScenario("When calling POST on", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
-				callUpdateDashboardPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 400)
-			})
+			updateDashboardPermissionScenario(updatePermissionContext{
+				desc:         "When calling POST on",
+				url:          "/api/dashboards/id/1/permissions",
+				routePattern: "/api/dashboards/id/:id/permissions",
+				cmd:          cmd,
+				fn: func(sc *scenarioContext) {
+					callUpdateDashboardPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 400)
+				},
+			}, hs)
 
 			Reset(func() {
 				guardian.New = origNewGuardian
@@ -191,22 +221,30 @@ func callUpdateDashboardPermissions(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
-func updateDashboardPermissionScenario(desc string, url string, routePattern string, cmd dtos.UpdateDashboardAclCommand, fn scenarioFunc) {
-	Convey(desc+" "+url, func() {
+type updatePermissionContext struct {
+	desc         string
+	url          string
+	routePattern string
+	cmd          dtos.UpdateDashboardAclCommand
+	fn           scenarioFunc
+}
+
+func updateDashboardPermissionScenario(ctx updatePermissionContext, hs *HTTPServer) {
+	Convey(ctx.desc+" "+ctx.url, func() {
 		defer bus.ClearBusHandlers()
 
-		sc := setupScenarioContext(url)
+		sc := setupScenarioContext(ctx.url)
 
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.OrgId = TestOrgID
 			sc.context.UserId = TestUserID
 
-			return UpdateDashboardPermissions(c, cmd)
+			return hs.UpdateDashboardPermissions(c, ctx.cmd)
 		})
 
-		sc.m.Post(routePattern, sc.defaultHandler)
+		sc.m.Post(ctx.routePattern, sc.defaultHandler)
 
-		fn(sc)
+		ctx.fn(sc)
 	})
 }

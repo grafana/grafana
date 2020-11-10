@@ -23,6 +23,7 @@ type DashboardGuardian interface {
 	HasPermission(permission models.PermissionType) (bool, error)
 	CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardAcl) (bool, error)
 	GetAcl() ([]*models.DashboardAclInfoDTO, error)
+	AddHiddenPermissions([]*models.DashboardAcl, *setting.Cfg) ([]*models.DashboardAcl, error)
 }
 
 type dashboardGuardianImpl struct {
@@ -213,6 +214,38 @@ func (g *dashboardGuardianImpl) getTeams() ([]*models.TeamDTO, error) {
 	return query.Result, err
 }
 
+func (g *dashboardGuardianImpl) AddHiddenPermissions(updatePermissions []*models.DashboardAcl, cfg *setting.Cfg) ([]*models.DashboardAcl, error) {
+	if g.user.IsGrafanaAdmin {
+		return updatePermissions, nil
+	}
+
+	existingPermissions, err := g.GetAcl()
+	if err != nil {
+		return updatePermissions, err
+	}
+
+	newPermissions := updatePermissions
+	for _, item := range existingPermissions {
+		if item.Inherited || item.UserLogin == g.user.Login {
+			continue
+		}
+
+		if _, hidden := cfg.HiddenUsers[item.UserLogin]; hidden {
+			newPermissions = append(newPermissions, &models.DashboardAcl{
+				OrgId:       item.OrgId,
+				DashboardId: item.DashboardId,
+				UserId:      item.UserId,
+				TeamId:      item.TeamId,
+				Role:        item.Role,
+				Permission:  item.Permission,
+				Created:     item.Created,
+				Updated:     item.Updated,
+			})
+		}
+	}
+	return newPermissions, nil
+}
+
 type FakeDashboardGuardian struct {
 	DashId                           int64
 	OrgId                            int64
@@ -253,6 +286,10 @@ func (g *FakeDashboardGuardian) CheckPermissionBeforeUpdate(permission models.Pe
 
 func (g *FakeDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO, error) {
 	return g.GetAclValue, nil
+}
+
+func (g *FakeDashboardGuardian) AddHiddenPermissions(updatePermissions []*models.DashboardAcl, cfg *setting.Cfg) ([]*models.DashboardAcl, error) {
+	return updatePermissions, nil
 }
 
 func MockDashboardGuardian(mock *FakeDashboardGuardian) {

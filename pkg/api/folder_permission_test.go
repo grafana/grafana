@@ -37,10 +37,16 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 				},
 			}
 
-			updateFolderPermissionScenario("When calling POST on", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
-				callUpdateFolderPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 404)
-			})
+			updateFolderPermissionScenario(updatePermissionContext{
+				desc:         "When calling POST on",
+				url:          "/api/folders/uid/permissions",
+				routePattern: "/api/folders/:uid/permissions",
+				cmd:          cmd,
+				fn: func(sc *scenarioContext) {
+					callUpdateFolderPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 404)
+				},
+			}, hs)
 
 			Reset(func() {
 				dashboards.NewFolderService = origNewFolderService
@@ -73,10 +79,16 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 				},
 			}
 
-			updateFolderPermissionScenario("When calling POST on", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
-				callUpdateFolderPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 403)
-			})
+			updateFolderPermissionScenario(updatePermissionContext{
+				desc:         "When calling POST on",
+				url:          "/api/folders/uid/permissions",
+				routePattern: "/api/folders/:uid/permissions",
+				cmd:          cmd,
+				fn: func(sc *scenarioContext) {
+					callUpdateFolderPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 403)
+				},
+			}, hs)
 
 			Reset(func() {
 				guardian.New = origNewGuardian
@@ -125,14 +137,20 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 				},
 			}
 
-			updateFolderPermissionScenario("When calling POST on", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
-				callUpdateFolderPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 200)
-				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-				So(err, ShouldBeNil)
-				So(respJSON.Get("id").MustInt(), ShouldEqual, 1)
-				So(respJSON.Get("title").MustString(), ShouldEqual, "Folder")
-			})
+			updateFolderPermissionScenario(updatePermissionContext{
+				desc:         "When calling POST on",
+				url:          "/api/folders/uid/permissions",
+				routePattern: "/api/folders/:uid/permissions",
+				cmd:          cmd,
+				fn: func(sc *scenarioContext) {
+					callUpdateFolderPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 200)
+					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+					So(err, ShouldBeNil)
+					So(respJSON.Get("id").MustInt(), ShouldEqual, 1)
+					So(respJSON.Get("title").MustString(), ShouldEqual, "Folder")
+				},
+			}, hs)
 
 			Reset(func() {
 				guardian.New = origNewGuardian
@@ -165,10 +183,16 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 				},
 			}
 
-			updateFolderPermissionScenario("When calling POST on", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
-				callUpdateFolderPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 400)
-			})
+			updateFolderPermissionScenario(updatePermissionContext{
+				desc:         "When calling POST on",
+				url:          "/api/folders/uid/permissions",
+				routePattern: "/api/folders/:uid/permissions",
+				cmd:          cmd,
+				fn: func(sc *scenarioContext) {
+					callUpdateFolderPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 400)
+				},
+			}, hs)
 
 			Reset(func() {
 				guardian.New = origNewGuardian
@@ -201,10 +225,16 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 				},
 			}
 
-			updateFolderPermissionScenario("When calling POST on", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
-				callUpdateFolderPermissions(sc)
-				So(sc.resp.Code, ShouldEqual, 400)
-			})
+			updateFolderPermissionScenario(updatePermissionContext{
+				desc:         "When calling POST on",
+				url:          "/api/folders/uid/permissions",
+				routePattern: "/api/folders/:uid/permissions",
+				cmd:          cmd,
+				fn: func(sc *scenarioContext) {
+					callUpdateFolderPermissions(sc)
+					So(sc.resp.Code, ShouldEqual, 400)
+				},
+			}, hs)
 
 			Reset(func() {
 				guardian.New = origNewGuardian
@@ -227,22 +257,22 @@ func callUpdateFolderPermissions(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
-func updateFolderPermissionScenario(desc string, url string, routePattern string, cmd dtos.UpdateDashboardAclCommand, fn scenarioFunc) {
-	Convey(desc+" "+url, func() {
+func updateFolderPermissionScenario(ctx updatePermissionContext, hs *HTTPServer) {
+	Convey(ctx.desc+" "+ctx.url, func() {
 		defer bus.ClearBusHandlers()
 
-		sc := setupScenarioContext(url)
+		sc := setupScenarioContext(ctx.url)
 
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.OrgId = TestOrgID
 			sc.context.UserId = TestUserID
 
-			return UpdateFolderPermissions(c, cmd)
+			return hs.UpdateFolderPermissions(c, ctx.cmd)
 		})
 
-		sc.m.Post(routePattern, sc.defaultHandler)
+		sc.m.Post(ctx.routePattern, sc.defaultHandler)
 
-		fn(sc)
+		ctx.fn(sc)
 	})
 }

@@ -49,7 +49,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) Response 
 	return JSON(200, filteredAcls)
 }
 
-func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
+func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
 	dashID := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashID, "")
@@ -77,6 +77,12 @@ func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboar
 			Updated:     time.Now(),
 		})
 	}
+
+	newPermissions, err := g.AddHiddenPermissions(cmd.Items, hs.Cfg)
+	if err != nil {
+		return Error(500, "Error while retrieving hidden permissions", err)
+	}
+	cmd.Items = newPermissions
 
 	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
 		if err != nil {

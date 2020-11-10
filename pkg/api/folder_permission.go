@@ -55,7 +55,7 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) Response {
 	return JSON(200, filteredAcls)
 }
 
-func UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
+func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	folder, err := s.GetFolderByUID(c.Params(":uid"))
 
@@ -87,6 +87,11 @@ func UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAc
 			Created:     time.Now(),
 			Updated:     time.Now(),
 		})
+	}
+
+	cmd.Items, err = g.AddHiddenPermissions(cmd.Items, hs.Cfg)
+	if err != nil {
+		return Error(500, "Error while retrieving hidden permissions", err)
 	}
 
 	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
