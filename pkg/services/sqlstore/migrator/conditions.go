@@ -1,7 +1,7 @@
 package migrator
 
 type MigrationCondition interface {
-	Sql(dialect Dialect) (string, []interface{})
+	SQL(dialect Dialect) (string, []interface{})
 	IsFulfilled(results []map[string][]byte) bool
 }
 
@@ -23,8 +23,8 @@ type IfIndexExistsCondition struct {
 	IndexName string
 }
 
-func (c *IfIndexExistsCondition) Sql(dialect Dialect) (string, []interface{}) {
-	return dialect.IndexCheckSql(c.TableName, c.IndexName)
+func (c *IfIndexExistsCondition) SQL(dialect Dialect) (string, []interface{}) {
+	return dialect.IndexCheckSQL(c.TableName, c.IndexName)
 }
 
 type IfIndexNotExistsCondition struct {
@@ -33,8 +33,8 @@ type IfIndexNotExistsCondition struct {
 	IndexName string
 }
 
-func (c *IfIndexNotExistsCondition) Sql(dialect Dialect) (string, []interface{}) {
-	return dialect.IndexCheckSql(c.TableName, c.IndexName)
+func (c *IfIndexNotExistsCondition) SQL(dialect Dialect) (string, []interface{}) {
+	return dialect.IndexCheckSQL(c.TableName, c.IndexName)
 }
 
 type IfColumnNotExistsCondition struct {
@@ -43,6 +43,6 @@ type IfColumnNotExistsCondition struct {
 	ColumnName string
 }
 
-func (c *IfColumnNotExistsCondition) Sql(dialect Dialect) (string, []interface{}) {
-	return dialect.ColumnCheckSql(c.TableName, c.ColumnName)
+func (c *IfColumnNotExistsCondition) SQL(dialect Dialect) (string, []interface{}) {
+	return dialect.ColumnCheckSQL(c.TableName, c.ColumnName)
 }
