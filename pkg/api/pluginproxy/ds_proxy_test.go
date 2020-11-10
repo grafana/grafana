@@ -399,8 +399,8 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		assert.Equal(t, "http://host/root/path/to/folder/", req.URL.String())
 
-		assert.Equal(t, "", req.Header.Get("Origin"))
-		assert.Equal(t, "", req.Header.Get("Referer"))
+		assert.Empty(t, req.Header.Get("Origin"))
+		assert.Empty(t, req.Header.Get("Referer"))
 		assert.Equal(t, "stillthere", req.Header.Get("X-Canary"))
 	})
 
@@ -455,7 +455,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		proxy.getDirector()(req)
 
-		assert.Equal(t, fmt.Sprintf("%s %s", "Bearer", "testtoken"), req.Header.Get("Authorization"))
+		assert.Equal(t, "Bearer testtoken", req.Header.Get("Authorization"))
 	})
 
 	t.Run("When SendUserHeader config is enabled", func(t *testing.T) {
@@ -482,7 +482,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			&setting.Cfg{SendUserHeader: false},
 		)
 		// Get will return empty string even if header is not set
-		assert.Equal(t, "", req.Header.Get("X-Grafana-User"))
+		assert.Empty(t, req.Header.Get("X-Grafana-User"))
 	})
 
 	t.Run("When SendUserHeader config is enabled but user is anonymous", func(t *testing.T) {
@@ -494,7 +494,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			&setting.Cfg{SendUserHeader: true},
 		)
 		// Get will return empty string even if header is not set
-		assert.Equal(t, "", req.Header.Get("X-Grafana-User"))
+		assert.Empty(t, req.Header.Get("X-Grafana-User"))
 	})
 
 	t.Run("When proxying data source proxy should handle authentication", func(t *testing.T) {
