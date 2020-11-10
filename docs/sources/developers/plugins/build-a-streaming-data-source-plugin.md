@@ -1,6 +1,5 @@
 +++
 title = "Build a streaming data source plugin"
-type = "docs"
 +++
 
 # Build a streaming data source plugin

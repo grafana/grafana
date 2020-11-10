@@ -66,6 +66,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.28
   commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -313,6 +314,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.28
   commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -760,6 +762,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.28
   commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -1125,6 +1128,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.28
   commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -1532,6 +1536,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.28
   commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -1887,6 +1892,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.28
   commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -2296,6 +2302,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.28
   commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -2601,6 +2608,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.28
   commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:

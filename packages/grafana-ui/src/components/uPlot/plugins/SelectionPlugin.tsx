@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { PlotPluginProps } from '../types';
-import { usePlotContext, usePlotPluginContext } from '../context';
+import { usePlotContext } from '../context';
 import { pluginLog } from '../utils';
 
 interface Selection {
@@ -32,7 +32,6 @@ interface SelectionPluginProps extends PlotPluginProps {
 
 export const SelectionPlugin: React.FC<SelectionPluginProps> = ({ onSelect, onDismiss, lazy, id, children }) => {
   const pluginId = `SelectionPlugin:${id}`;
-  const pluginsApi = usePlotPluginContext();
   const plotCtx = usePlotContext();
   const [selection, setSelection] = useState<Selection | null>(null);
 
@@ -48,7 +47,7 @@ export const SelectionPlugin: React.FC<SelectionPluginProps> = ({ onSelect, onDi
   }, [setSelection]);
 
   useEffect(() => {
-    pluginsApi.registerPlugin({
+    plotCtx.registerPlugin({
       id: pluginId,
       hooks: {
         setSelect: u => {
