@@ -1,4 +1,4 @@
-grabpl_version = '0.5.20'
+grabpl_version = '0.5.25'
 build_image = 'grafana/build-container:1.2.28'
 publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -605,7 +605,7 @@ def e2e_tests_server_step():
 def e2e_tests_step():
     return {
         'name': 'end-to-end-tests',
-        'image': 'grafana/ci-e2e:12.18-1',
+        'image': 'grafana/ci-e2e:12.19.0-1',
         'depends_on': [
             'end-to-end-tests-server',
         ],
