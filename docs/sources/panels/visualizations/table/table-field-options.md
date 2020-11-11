@@ -1,7 +1,6 @@
 +++
 title = "Table field options"
 keywords = ["grafana", "table options", "documentation", "format tables"]
-type = "docs"
 weight = 500
 +++
 
@@ -77,5 +76,5 @@ If you have a field value that is an image URL or a base64 encoded image you can
 ## Column filter
 
 > **Note:** This feature is available in Grafana 7.2+.
-> 
+>
 Turn this on to enable table field filters. For more information, refer to [Filter table columns]({{< relref "filter-table-columns.md" >}}).

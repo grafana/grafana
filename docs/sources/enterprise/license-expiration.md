@@ -2,9 +2,6 @@
 title = "License Expiration"
 description = ""
 keywords = ["grafana", "licensing"]
-type = "docs"
-[menu.docs]
-parent = "enterprise"
 weight = 8
 +++
 

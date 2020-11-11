@@ -4,6 +4,7 @@ import { GraphPanel } from './GraphPanel';
 import { Options } from './types';
 
 export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPanel)
+  .setNoPadding()
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -62,7 +63,7 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
         .addSliderInput({
           path: 'fill.alpha',
           name: 'Fill area opacity',
-          defaultValue: 0.1,
+          defaultValue: 0,
           settings: {
             min: 0,
             max: 1,
@@ -161,8 +162,6 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
         defaultValue: 'bottom',
         settings: {
           options: [
-            { value: 'left', label: 'Left' },
-            { value: 'top', label: 'Top' },
             { value: 'bottom', label: 'Bottom' },
             { value: 'right', label: 'Right' },
           ],

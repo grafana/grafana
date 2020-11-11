@@ -637,7 +637,7 @@ def build_docs_website_step():
         ],
         'commands': [
             'mkdir -p /hugo/content/docs/grafana',
-            'cp -r docs/sources /hugo/content/docs/grafana/latest',
+            'cp -r docs/sources/* /hugo/content/docs/grafana/latest/',
             'cd /hugo && make prod',
         ],
     }

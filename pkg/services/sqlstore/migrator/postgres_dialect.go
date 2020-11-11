@@ -11,39 +11,39 @@ import (
 	"xorm.io/xorm"
 )
 
-type Postgres struct {
+type PostgresDialect struct {
 	BaseDialect
 }
 
 func NewPostgresDialect(engine *xorm.Engine) Dialect {
-	d := Postgres{}
+	d := PostgresDialect{}
 	d.BaseDialect.dialect = &d
 	d.BaseDialect.engine = engine
-	d.BaseDialect.driverName = POSTGRES
+	d.BaseDialect.driverName = Postgres
 	return &d
 }
 
-func (db *Postgres) SupportEngine() bool {
+func (db *PostgresDialect) SupportEngine() bool {
 	return false
 }
 
-func (db *Postgres) Quote(name string) string {
+func (db *PostgresDialect) Quote(name string) string {
 	return "\"" + name + "\""
 }
 
-func (db *Postgres) LikeStr() string {
+func (db *PostgresDialect) LikeStr() string {
 	return "ILIKE"
 }
 
-func (db *Postgres) AutoIncrStr() string {
+func (db *PostgresDialect) AutoIncrStr() string {
 	return ""
 }
 
-func (db *Postgres) BooleanStr(value bool) string {
+func (db *PostgresDialect) BooleanStr(value bool) string {
 	return strconv.FormatBool(value)
 }
 
-func (db *Postgres) Default(col *Column) string {
+func (db *PostgresDialect) Default(col *Column) string {
 	if col.Type == DB_Bool {
 		if col.Default == "0" {
 			return "FALSE"
@@ -53,7 +53,7 @@ func (db *Postgres) Default(col *Column) string {
 	return col.Default
 }
 
-func (db *Postgres) SqlType(c *Column) string {
+func (db *PostgresDialect) SQLType(c *Column) string {
 	var res string
 	switch t := c.Type; t {
 	case DB_TinyInt:
@@ -103,29 +103,29 @@ func (db *Postgres) SqlType(c *Column) string {
 	return res
 }
 
-func (db *Postgres) IndexCheckSql(tableName, indexName string) (string, []interface{}) {
+func (db *PostgresDialect) IndexCheckSQL(tableName, indexName string) (string, []interface{}) {
 	args := []interface{}{tableName, indexName}
 	sql := "SELECT 1 FROM " + db.Quote("pg_indexes") + " WHERE" + db.Quote("tablename") + "=? AND " + db.Quote("indexname") + "=?"
 	return sql, args
 }
 
-func (db *Postgres) DropIndexSql(tableName string, index *Index) string {
+func (db *PostgresDialect) DropIndexSQL(tableName string, index *Index) string {
 	quote := db.Quote
 	idxName := index.XName(tableName)
 	return fmt.Sprintf("DROP INDEX %v CASCADE", quote(idxName))
 }
 
-func (db *Postgres) UpdateTableSql(tableName string, columns []*Column) string {
+func (db *PostgresDialect) UpdateTableSQL(tableName string, columns []*Column) string {
 	var statements = []string{}
 
 	for _, col := range columns {
-		statements = append(statements, "ALTER "+db.Quote(col.Name)+" TYPE "+db.SqlType(col))
+		statements = append(statements, "ALTER "+db.Quote(col.Name)+" TYPE "+db.SQLType(col))
 	}
 
 	return "ALTER TABLE " + db.Quote(tableName) + " " + strings.Join(statements, ", ") + ";"
 }
 
-func (db *Postgres) CleanDB() error {
+func (db *PostgresDialect) CleanDB() error {
 	sess := db.engine.NewSession()
 	defer sess.Close()
 
@@ -142,7 +142,7 @@ func (db *Postgres) CleanDB() error {
 
 // TruncateDBTables truncates all the tables.
 // A special case is the dashboard_acl table where we keep the default permissions.
-func (db *Postgres) TruncateDBTables() error {
+func (db *PostgresDialect) TruncateDBTables() error {
 	sess := db.engine.NewSession()
 	defer sess.Close()
 
@@ -171,7 +171,7 @@ func (db *Postgres) TruncateDBTables() error {
 	return nil
 }
 
-func (db *Postgres) isThisError(err error, errcode string) bool {
+func (db *PostgresDialect) isThisError(err error, errcode string) bool {
 	if driverErr, ok := err.(*pq.Error); ok {
 		if string(driverErr.Code) == errcode {
 			return true
@@ -181,26 +181,26 @@ func (db *Postgres) isThisError(err error, errcode string) bool {
 	return false
 }
 
-func (db *Postgres) ErrorMessage(err error) string {
+func (db *PostgresDialect) ErrorMessage(err error) string {
 	if driverErr, ok := err.(*pq.Error); ok {
 		return driverErr.Message
 	}
 	return ""
 }
 
-func (db *Postgres) isUndefinedTable(err error) bool {
+func (db *PostgresDialect) isUndefinedTable(err error) bool {
 	return db.isThisError(err, "42P01")
 }
 
-func (db *Postgres) IsUniqueConstraintViolation(err error) bool {
+func (db *PostgresDialect) IsUniqueConstraintViolation(err error) bool {
 	return db.isThisError(err, "23505")
 }
 
-func (db *Postgres) IsDeadlock(err error) bool {
+func (db *PostgresDialect) IsDeadlock(err error) bool {
 	return db.isThisError(err, "40P01")
 }
 
-func (db *Postgres) PostInsertId(table string, sess *xorm.Session) error {
+func (db *PostgresDialect) PostInsertId(table string, sess *xorm.Session) error {
 	if table != "org" {
 		return nil
 	}

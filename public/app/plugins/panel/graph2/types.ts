@@ -1,4 +1,4 @@
-import { LegendOptions, GraphTooltipOptions } from '@grafana/ui';
+import { LegendOptions, GraphTooltipOptions, LegendDisplayMode } from '@grafana/ui';
 import { YAxis } from '@grafana/data';
 
 export interface SeriesOptions {
@@ -28,9 +28,9 @@ export const defaults: Options = {
     showPoints: false,
   },
   legend: {
-    asTable: false,
     isVisible: true,
-    placement: 'under',
+    displayMode: LegendDisplayMode.List,
+    placement: 'bottom',
   },
   series: {},
   tooltipOptions: { mode: 'single' },
