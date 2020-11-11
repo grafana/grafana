@@ -3,10 +3,6 @@ title = "Data source HTTP API "
 description = "Grafana Data source HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "data source"]
 aliases = ["/docs/grafana/latest/http_api/datasource/"]
-type = "docs"
-[menu.docs]
-name = "Data source"
-parent = "http_api"
 +++
 
 

@@ -1,10 +1,6 @@
 +++
 title = "News panel"
 keywords = ["grafana", "news", "documentation", "panels", "news panel"]
-type = "docs"
-[menu.docs]
-name = "news-panel"
-parent = "visualizations"
 weight = 800
 +++
 

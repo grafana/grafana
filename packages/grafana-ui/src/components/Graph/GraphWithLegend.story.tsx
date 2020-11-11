@@ -86,10 +86,10 @@ const getStoriesKnobs = () => {
   const legendPlacement = select<LegendPlacement>(
     'Legend placement',
     {
-      under: 'under',
+      bottom: 'under',
       right: 'right',
     },
-    'under'
+    'bottom'
   );
   const renderLegendAsTable = select<any>(
     'Render legend as',
