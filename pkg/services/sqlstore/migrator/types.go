@@ -8,14 +8,14 @@ import (
 )
 
 const (
-	POSTGRES = "postgres"
-	SQLITE   = "sqlite3"
-	MYSQL    = "mysql"
+	Postgres = "postgres"
+	SQLite   = "sqlite3"
+	MySQL    = "mysql"
 	MSSQL    = "mssql"
 )
 
 type Migration interface {
-	Sql(dialect Dialect) string
+	SQL(dialect Dialect) string
 	Id() string
 	SetId(string)
 	GetCondition() MigrationCondition
