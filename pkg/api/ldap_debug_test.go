@@ -512,7 +512,6 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 
 			return nil
 		})
-
 	})
 
 	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
@@ -562,7 +561,6 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 			assert.Equal(t, 34, cmd.UserId)
 			return nil
 		})
-
 	})
 
 	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
