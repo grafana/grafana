@@ -58,23 +58,23 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
         const statsMin = stats[ReducerID.min];
         const statsMax = stats[ReducerID.max];
 
-        if (!statsMin) {
+        if (statsMin !== undefined && statsMin !== null && statsMin < min) {
           min = statsMin;
         }
 
-        if (!statsMax) {
-          max = statsMax;
-        }
-
-        if (statsMin && statsMin < min) {
-          min = statsMin;
-        }
-
-        if (statsMax && statsMax > max) {
+        if (statsMax !== undefined && statsMax !== null && statsMax > max) {
           max = statsMax;
         }
       }
     }
+  }
+
+  if (min === Number.MAX_VALUE) {
+    min = Number.MIN_VALUE;
+  }
+
+  if (max === Number.MIN_VALUE) {
+    max = Number.MAX_VALUE;
   }
 
   return { min, max };

@@ -98,8 +98,30 @@ describe('Global MinMax', () => {
       });
       const { min, max } = findNumericFieldMinMax([frame]);
 
-      expect(min).toBeNull();
-      expect(max).toBeNull();
+      expect(min).toBe(Number.MIN_VALUE);
+      expect(max).toBe(Number.MAX_VALUE);
+    });
+  });
+
+  describe('when value values are zeo', () => {
+    it('then global min max should be correct', () => {
+      const frame = toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1, 2] },
+          { name: 'Value', type: FieldType.number, values: [1, 2] },
+        ],
+      });
+      const frame2 = toDataFrame({
+        fields: [
+          { name: 'Time', type: FieldType.time, values: [1, 2] },
+          { name: 'Value', type: FieldType.number, values: [0, 0] },
+        ],
+      });
+
+      const { min, max } = findNumericFieldMinMax([frame, frame2]);
+
+      expect(min).toBe(0);
+      expect(max).toBe(2);
     });
   });
 });
