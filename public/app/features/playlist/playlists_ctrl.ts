@@ -13,12 +13,12 @@ import { promiseToDigest } from '../../core/utils/promiseToDigest';
 export class PlaylistsCtrl {
   playlists: any;
   navModel: any;
-  isViewer: boolean;
+  canEditPlaylists: boolean;
 
   /** @ngInject */
   constructor(private $scope: IScope & AppEventEmitter, navModelSrv: NavModelSrv) {
     this.navModel = navModelSrv.getNav('dashboards', 'playlists', 0);
-    this.isViewer = config.bootData.user.orgRole === OrgRole.Viewer;
+    this.canEditPlaylists = config.bootData.user.orgRole !== OrgRole.Viewer;
 
     promiseToDigest($scope)(
       getBackendSrv()
