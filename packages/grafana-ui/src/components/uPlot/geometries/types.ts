@@ -1,5 +1,4 @@
 import { TimeZone } from '@grafana/data';
-import { AxisSide } from '../types';
 
 export interface LineProps {
   scaleKey: string;
@@ -17,6 +16,13 @@ export interface AreaProps {
   scaleKey: string;
   fill: number;
   color: string;
+}
+
+export enum AxisSide {
+  Top, // 0
+  Right, // 1
+  Bottom, // 2
+  Left, // 3
 }
 
 export interface AxisProps {
