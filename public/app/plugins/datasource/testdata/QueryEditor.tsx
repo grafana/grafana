@@ -1,5 +1,5 @@
 // Libraries
-import React, { ChangeEvent, FormEvent, useMemo, useEffect } from 'react';
+import React, { ChangeEvent, FormEvent, useMemo } from 'react';
 import { useAsync } from 'react-use';
 
 // Components
@@ -14,6 +14,7 @@ import { TestDataQuery, Scenario } from './types';
 import { PredictablePulseEditor } from './components/PredictablePulseEditor';
 import { CSVWaveEditor } from './components/CSVWaveEditor';
 import { defaultQuery } from './constants';
+import { GrafanaLiveEditor } from './components/GrafanaLiveEditor';
 
 const showLabelsFor = ['random_walk', 'predictable_pulse', 'predictable_csv_wave'];
 const endpoints = [
@@ -21,9 +22,6 @@ const endpoints = [
   { value: 'search', label: 'Search' },
   { value: 'annotations', label: 'Annotations' },
 ];
-
-// Fields that need to be transformed to numbers
-const numberFields = ['lines', 'seriesCount', 'timeStep'];
 
 const selectors = editorSelectors.components.DataSource.TestData.QueryTab;
 
@@ -46,10 +44,6 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
     onRunQuery();
   };
 
-  useEffect(() => {
-    onUpdate(query);
-  }, []);
-
   const currentScenario = useMemo(() => scenarioList?.find(scenario => scenario.id === query.scenarioId), [
     scenarioList,
     query,
@@ -63,36 +57,49 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       return;
     }
 
-    let stringInput = scenario.stringInput ?? '';
+    const update = { ...query, scenarioId: item.value! };
 
-    if (scenario.id === 'grafana_api') {
-      stringInput = 'datasources';
+    if (scenario.stringInput) {
+      update.stringInput = scenario.stringInput;
     }
 
-    onUpdate({
-      ...query,
-      scenarioId: item.value!,
-      stringInput,
-    });
+    if (scenario.id === 'grafana_api') {
+      update.stringInput = 'datasources';
+    } else if (scenario.id === 'streaming_client') {
+      update.stringInput = '';
+    } else if (scenario.id === 'live') {
+      if (!update.channel) {
+        update.channel = 'random-2s-stream'; // default stream
+      }
+    }
+
+    onUpdate(update);
   };
 
   const onInputChange = (e: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target as HTMLInputElement | HTMLTextAreaElement;
-    let newValue: Partial<TestDataQuery> = { [name]: value };
+    const { name, value, type } = e.target as HTMLInputElement | HTMLTextAreaElement;
+    let newValue: any = value;
 
-    if (name === 'levelColumn') {
-      newValue = { levelColumn: (e.target as HTMLInputElement).checked };
-    } else if (numberFields.includes(name)) {
-      newValue = { [name]: Number(value) };
+    if (type === 'number') {
+      newValue = Number(value);
     }
 
-    onUpdate({ ...query, ...newValue });
+    if (name === 'levelColumn') {
+      newValue = (e.target as HTMLInputElement).checked;
+    }
+
+    onUpdate({ ...query, [name]: newValue });
   };
 
   const onFieldChange = (field: string) => (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target as HTMLInputElement;
-    const formattedValue = numberFields.includes(name) ? Number(value) : value;
-    onUpdate({ ...query, [field]: { ...query[field as keyof TestDataQuery], [name]: formattedValue } });
+    const { name, value, type } = e.target as HTMLInputElement;
+    let newValue: any = value;
+
+    if (type === 'number') {
+      newValue = Number(value);
+    }
+
+    onUpdate({ ...query, [field]: { ...query[field as keyof TestDataQuery], [name]: newValue } });
   };
 
   const onEndPointChange = ({ value }: SelectableValue) => {
@@ -131,7 +138,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
           <InlineField label="String Input">
             <Input
               width={32}
-              id="stringInput"
+              id={`stringInput-${query.refId}`}
               name="stringInput"
               placeholder={query.stringInput}
               value={query.stringInput}
@@ -142,7 +149,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
         <InlineField label="Alias" labelWidth={14}>
           <Input
             width={32}
-            id="alias"
+            id={`alias-${query.refId}`}
             type="text"
             placeholder="optional"
             pattern='[^<>&\\"]+'
@@ -170,7 +177,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
           >
             <Input
               width={32}
-              id="labels"
+              id={`labels-${query.refId}`}
               name="labels"
               onChange={onInputChange}
               value={query?.labels}
@@ -183,6 +190,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
       {scenarioId === 'manual_entry' && <ManualEntryEditor onChange={onUpdate} query={query} onRunQuery={onRunQuery} />}
       {scenarioId === 'random_walk' && <RandomWalkEditor onChange={onInputChange} query={query} />}
       {scenarioId === 'streaming_client' && <StreamingClientEditor onChange={onStreamClientChange} query={query} />}
+      {scenarioId === 'live' && <GrafanaLiveEditor onChange={onUpdate} query={query} />}
       {scenarioId === 'logs' && (
         <InlineFieldRow>
           <InlineField label="Lines" labelWidth={14}>

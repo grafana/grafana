@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React, { createRef, PureComponent } from 'react';
 import { Icon, Tooltip } from '@grafana/ui';
 import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -19,6 +19,7 @@ interface State {
 
 export class DashboardLinksDashboard extends PureComponent<Props, State> {
   state: State = { resolvedLinks: [] };
+  listItemRef = createRef<HTMLUListElement>();
 
   componentDidMount() {
     this.searchForDashboards();
@@ -60,7 +61,7 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
           resolvedLinks.map((resolvedLink, index) => {
             const linkElement = (
               <a
-                className="gf-form-label"
+                className="gf-form-label gf-form-label--dashlink"
                 href={resolvedLink.url}
                 target={link.targetBlank ? '_blank' : '_self'}
                 aria-label={selectors.components.DashboardLinks.link}
@@ -79,22 +80,26 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
     );
   };
 
-  renderDropdown = () => {
+  renderDropdown() {
     const { link, linkInfo } = this.props;
     const { resolvedLinks } = this.state;
 
     const linkElement = (
       <>
         <a
-          className="gf-form-label pointer"
+          className="gf-form-label gf-form-label--dashlink"
           onClick={this.searchForDashboards}
           data-placement="bottom"
           data-toggle="dropdown"
         >
-          <Icon name="bars" />
+          <Icon name="bars" style={{ marginRight: '4px' }} />
           <span>{linkInfo.title}</span>
         </a>
-        <ul className="dropdown-menu pull-right" role="menu">
+        <ul
+          className={`dropdown-menu ${getDropdownLocationCssClass(this.listItemRef.current)}`}
+          role="menu"
+          ref={this.listItemRef}
+        >
           {resolvedLinks.length > 0 &&
             resolvedLinks.map((resolvedLink, index) => {
               return (
@@ -114,7 +119,7 @@ export class DashboardLinksDashboard extends PureComponent<Props, State> {
     );
 
     return this.renderElement(linkElement, 'dashlinks-dropdown', selectors.components.DashboardLinks.dropDown);
-  };
+  }
 
   render() {
     if (this.props.link.asDropdown) {
@@ -161,4 +166,23 @@ export function resolveLinks(
 
       return { id, title, url };
     });
+}
+
+function getDropdownLocationCssClass(element: HTMLElement | null) {
+  if (!element) {
+    return 'invisible';
+  }
+
+  const wrapperPos = element.parentElement!.getBoundingClientRect();
+  const pos = element.getBoundingClientRect();
+
+  if (pos.width === 0) {
+    return 'invisible';
+  }
+
+  if (wrapperPos.left + pos.width + 10 > window.innerWidth) {
+    return 'pull-left';
+  } else {
+    return 'pull-right';
+  }
 }

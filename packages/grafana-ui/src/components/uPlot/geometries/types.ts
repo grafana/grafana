@@ -1,3 +1,6 @@
+import { TimeZone } from '@grafana/data';
+import { AxisSide } from '../types';
+
 export interface LineProps {
   scaleKey: string;
   stroke: string;
@@ -22,13 +25,15 @@ export interface AxisProps {
   show?: boolean;
   size?: number;
   stroke?: string;
-  side?: number;
+  side?: AxisSide;
   grid?: boolean;
   formatValue?: (v: any) => string;
   values?: any;
+  isTime?: boolean;
+  timeZone?: TimeZone;
 }
 
 export interface ScaleProps {
   scaleKey: string;
-  time?: boolean;
+  isTime?: boolean;
 }

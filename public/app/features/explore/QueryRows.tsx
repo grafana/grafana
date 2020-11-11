@@ -5,12 +5,12 @@ import React, { PureComponent } from 'react';
 import QueryRow from './QueryRow';
 
 // Types
-import { Emitter } from 'app/core/utils/emitter';
+import { EventBusExtended } from '@grafana/data';
 import { ExploreId } from 'app/types/explore';
 
 interface QueryRowsProps {
   className?: string;
-  exploreEvents: Emitter;
+  exploreEvents: EventBusExtended;
   exploreId: ExploreId;
   queryKeys: string[];
 }

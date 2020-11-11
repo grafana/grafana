@@ -3,7 +3,7 @@ import TableModel from 'app/core/table_model';
 import { TableRenderer } from '../renderer';
 import { ScopedVars, TimeZone } from '@grafana/data';
 import { ColumnRender } from '../types';
-import { config } from 'app/core/config';
+import { getTheme } from '@grafana/ui';
 
 const utc: TimeZone = 'utc';
 
@@ -211,7 +211,7 @@ describe('when rendering table', () => {
     };
 
     //@ts-ignore
-    const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv, config.theme);
+    const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv, getTheme());
 
     it('time column should be formatted', () => {
       const html = renderer.renderCell(0, 0, 1388556366666);
@@ -467,7 +467,7 @@ describe('when rendering table with different patterns', () => {
       };
 
       //@ts-ignore
-      const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv);
+      const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv, getTheme());
       const html = renderer.renderCell(1, 0, 1230);
 
       expect(html).toBe(expected);
@@ -537,7 +537,7 @@ describe('when rendering cells with different alignment options', () => {
       };
 
       //@ts-ignore
-      const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv);
+      const renderer = new TableRenderer(panel, table, utc, sanitize, templateSrv, getTheme());
       const html = renderer.renderCell(1, 0, 42);
 
       expect(html).toBe(expected);

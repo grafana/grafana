@@ -100,7 +100,7 @@ func TestAlertRuleModel(t *testing.T) {
 					Settings: alertJSON,
 				}
 
-				alertRule, err := NewRuleFromDBAlert(alert)
+				alertRule, err := NewRuleFromDBAlert(alert, false)
 				So(err, ShouldBeNil)
 
 				So(len(alertRule.Conditions), ShouldEqual, 1)
@@ -142,7 +142,7 @@ func TestAlertRuleModel(t *testing.T) {
 				Settings: alertJSON,
 			}
 
-			alertRule, err := NewRuleFromDBAlert(alert)
+			alertRule, err := NewRuleFromDBAlert(alert, false)
 			Convey("swallows the error", func() {
 				So(err, ShouldBeNil)
 				So(alertRule.Notifications, ShouldNotContain, "999")
@@ -175,7 +175,7 @@ func TestAlertRuleModel(t *testing.T) {
 				Settings: alertJSON,
 			}
 
-			alertRule, err := NewRuleFromDBAlert(alert)
+			alertRule, err := NewRuleFromDBAlert(alert, false)
 			So(err, ShouldBeNil)
 			So(alertRule.Frequency, ShouldEqual, 60)
 		})
@@ -213,7 +213,7 @@ func TestAlertRuleModel(t *testing.T) {
 				Settings: alertJSON,
 			}
 
-			_, err := NewRuleFromDBAlert(alert)
+			_, err := NewRuleFromDBAlert(alert, false)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "alert validation error: Neither id nor uid is specified in 'notifications' block, type assertion to string failed AlertId: 1 PanelId: 1 DashboardId: 1")
 		})

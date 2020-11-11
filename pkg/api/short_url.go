@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"path"
 	"strings"
 
@@ -27,7 +28,7 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 		return Error(500, "Failed to create short URL", err)
 	}
 
-	url := path.Join(setting.AppUrl, "goto", shortURL.Uid)
+	url := fmt.Sprintf("%s/goto/%s", strings.TrimSuffix(setting.AppUrl, "/"), shortURL.Uid)
 	c.Logger.Debug("Created short URL", "url", url)
 
 	dto := dtos.ShortURL{
@@ -54,6 +55,11 @@ func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
 
 		hs.log.Error("Short URL redirection error", "err", err)
 		return
+	}
+
+	// Failure to update LastSeenAt should still allow to redirect
+	if err := hs.ShortURLService.UpdateLastSeenAt(c.Req.Context(), shortURL); err != nil {
+		hs.log.Error("Failed to update short URL last seen at", "error", err)
 	}
 
 	hs.log.Debug("Redirecting short URL", "path", shortURL.Path)

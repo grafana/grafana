@@ -14,8 +14,8 @@ export const usePlotPlugins = () => {
 
   // arePluginsReady determines whether or not all plugins has already registered and uPlot should be initialised
   const [arePluginsReady, setPluginsReady] = useState(false);
-
   const cancellationToken = useRef<number>();
+  const isMounted = useRef(false);
 
   const checkPluginsReady = useCallback(() => {
     if (cancellationToken.current) {
@@ -29,7 +29,9 @@ export const usePlotPlugins = () => {
      * and arePluginsReady will be deferred to next animation frame.
      */
     cancellationToken.current = window.requestAnimationFrame(function() {
-      setPluginsReady(true);
+      if (isMounted.current) {
+        setPluginsReady(true);
+      }
     });
   }, [cancellationToken, setPluginsReady]);
 
@@ -66,9 +68,9 @@ export const usePlotPlugins = () => {
   useEffect(() => {
     checkPluginsReady();
     return () => {
+      isMounted.current = false;
       if (cancellationToken.current) {
         window.cancelAnimationFrame(cancellationToken.current);
-        cancellationToken.current = undefined;
       }
     };
   }, []);
@@ -92,8 +94,14 @@ export const DEFAULT_PLOT_CONFIG = {
   legend: {
     show: false,
   },
+  gutters: {
+    x: 8,
+    y: 8,
+  },
+  series: [],
   hooks: {},
 };
+
 export const usePlotConfig = (width: number, height: number, timeZone: TimeZone) => {
   const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
   const [seriesConfig, setSeriesConfig] = useState<uPlot.Series[]>([{}]);
@@ -113,7 +121,7 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone)
     return fmt;
   }, [timeZone]);
 
-  const defaultConfig = useMemo(() => {
+  const defaultConfig = useMemo<uPlot.Options>(() => {
     return {
       ...DEFAULT_PLOT_CONFIG,
       width,
@@ -122,7 +130,7 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone)
         hooks: p[1].hooks,
       })),
       tzDate,
-    } as any;
+    };
   }, [plugins, width, height, tzDate]);
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { FormEvent, memo, useCallback, useEffect, useState } from 'react';
+import React, { FormEvent, memo, useCallback } from 'react';
 import { css } from 'emotion';
 import Calendar from 'react-calendar/dist/entry.nostyle';
 import { dateTime, DateTime, dateTimeParse, GrafanaTheme, TimeZone } from '@grafana/data';
@@ -244,14 +244,10 @@ const Header = memo<Props>(({ onClose }) => {
 });
 
 const Body = memo<Props>(({ onChange, from, to, timeZone }) => {
-  const [value, setValue] = useState<Date[]>();
+  const value = inputToValue(from, to);
   const theme = useTheme();
   const onCalendarChange = useOnCalendarChange(onChange, timeZone);
   const styles = getBodyStyles(theme);
-
-  useEffect(() => {
-    setValue(inputToValue(from, to));
-  }, []);
 
   return (
     <Calendar
@@ -309,7 +305,7 @@ function useOnCalendarChange(onChange: (from: DateTime, to: DateTime) => void, t
 
       onChange(from, to);
     },
-    [onChange]
+    [onChange, timeZone]
   );
 }
 

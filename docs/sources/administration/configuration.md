@@ -2,12 +2,7 @@
 title = "Configuration"
 description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
-type = "docs"
 aliases = ["/docs/grafana/latest/installation/configuration/"]
-[menu.docs]
-name = "Configuration"
-identifier = "config"
-parent = "admin"
 weight = 300
 +++
 
@@ -16,6 +11,8 @@ weight = 300
 Grafana has a number of configuration options that you can specify in a `.ini` configuration file or specified using environment variables.
 
 > **Note:** You must restart Grafana for any configuration changes to take effect.
+
+To see all settings currently applied to the Grafana server, refer to [View server settings]({{< relref "view-server-settings.md" >}}).
 
 ## Config file locations
 
@@ -89,9 +86,7 @@ export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
 
 ## Variable expansion
 
-> Only available in Grafana 7.1+.
-
-> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana.
+> **Note:** Only available in Grafana 7.1+.
 
 If any of your options contains the expression `$__<provider>{<argument>}`
 or `${<environment variable>}`, then they will be processed by Grafana's
@@ -399,7 +394,7 @@ The length of time that Grafana will wait for a successful TLS handshake with th
 
 ### expect_continue_timeout_seconds
 
-The length of time that Grafana will wait for a datasource’s first response headers after fully writing the request headers, if the request has an “Expect: 100-continue” header.  A value of `0` will result in the body being sent immediately. Default is `1` second. For more details check the [Transport.ExpectContinueTimeout](https://golang.org/pkg/net/http/#Transport.ExpectContinueTimeout) documentation.
+The length of time that Grafana will wait for a datasource’s first response headers after fully writing the request headers, if the request has an “Expect: 100-continue” header. A value of `0` will result in the body being sent immediately. Default is `1` second. For more details check the [Transport.ExpectContinueTimeout](https://golang.org/pkg/net/http/#Transport.ExpectContinueTimeout) documentation.
 
 ### max_idle_connections
 
@@ -549,8 +544,10 @@ Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 
 > Only available in Grafana v6.7+.
 
-This prevents users from setting the dashboard refresh interval of a lower than given interval. Per default this is 5 seconds.
+This feature prevents users from setting the dashboard refresh interval to a lower value than a given interval value. The default interval value is 5 seconds.
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
+
+As of Grafana v7.3, this also limits the refresh interval options in Explore.
 
 ### default_home_dashboard_path
 
@@ -623,7 +620,7 @@ Default is `false`.
 
 ### user_invite_max_lifetime_duration
 
-The duration in time a user invitation remains valid before expiring. 
+The duration in time a user invitation remains valid before expiring.
 This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
 Default is `24h` (24 hours). The minimum supported duration is `15m` (15 minutes).
 
@@ -1073,6 +1070,15 @@ If both are set, then basic authentication is required to access the metrics end
 
 <hr>
 
+## [metrics.environment_info]
+
+Adds dimensions to the `grafana_environment_info` metric, which can expose more information about the Grafana instance.
+
+```
+; exampleLabel1 = exampleValue1
+; exampleLabel2 = exampleValue2
+```
+
 ## [metrics.graphite]
 
 Use these options if you want to send internal Grafana metrics to Graphite.
@@ -1324,6 +1330,10 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 ### allow_loading_unsigned_plugins
 
 Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
+
+### marketplace_url
+
+Custom install/learn more url for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
 
 <hr>
 

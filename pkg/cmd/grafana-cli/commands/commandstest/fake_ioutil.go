@@ -22,7 +22,7 @@ func (util *FakeIoUtil) ReadDir(path string) ([]os.FileInfo, error) {
 	return util.FakeReadDir, nil
 }
 
-func (i *FakeIoUtil) ReadFile(filename string) ([]byte, error) {
+func (*FakeIoUtil) ReadFile(filename string) ([]byte, error) {
 	return make([]byte, 0), nil
 }
 

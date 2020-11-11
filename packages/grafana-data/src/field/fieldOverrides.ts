@@ -55,11 +55,23 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
         const stats = reduceField({ field, reducers });
-        if (stats[ReducerID.min] < min) {
-          min = stats[ReducerID.min];
+        const statsMin = stats[ReducerID.min];
+        const statsMax = stats[ReducerID.max];
+
+        if (!statsMin) {
+          min = statsMin;
         }
-        if (stats[ReducerID.max] > max) {
-          max = stats[ReducerID.max];
+
+        if (!statsMax) {
+          max = statsMax;
+        }
+
+        if (statsMin && statsMin < min) {
+          min = statsMin;
+        }
+
+        if (statsMax && statsMax > max) {
+          max = statsMax;
         }
       }
     }
@@ -294,7 +306,6 @@ const processFieldConfigValue = (
   const currentConfig = get(destination, fieldConfigProperty.path);
   if (currentConfig === null || currentConfig === undefined) {
     const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
-    // console.log(item);
     if (!item) {
       return;
     }

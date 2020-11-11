@@ -22,7 +22,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	_ "github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	_ "github.com/grafana/grafana/pkg/infra/remotecache"
 	_ "github.com/grafana/grafana/pkg/infra/serverlock"
 	_ "github.com/grafana/grafana/pkg/infra/tracing"
@@ -117,6 +117,9 @@ func (s *Server) init(cfg *Config) error {
 
 	s.loadConfiguration()
 	s.writePIDFile()
+	if err := metrics.SetEnvironmentInformation(s.cfg.MetricsGrafanaEnvironmentInfo); err != nil {
+		return err
+	}
 
 	login.Init()
 	social.NewOAuthService()
@@ -269,7 +272,7 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 	objs := []interface{}{
 		bus.GetBus(),
 		s.cfg,
-		routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing),
+		routing.NewRouteRegister(middleware.RequestMetrics(s.cfg), middleware.RequestTracing),
 		localcache.New(5*time.Minute, 10*time.Minute),
 		s,
 	}
@@ -289,7 +292,7 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 
 	// Resolve services and their dependencies.
 	if err := serviceGraph.Populate(); err != nil {
-		return errutil.Wrapf(err, "Failed to populate service dependency")
+		return errutil.Wrapf(err, "Failed to populate service dependencies")
 	}
 
 	return nil

@@ -3,10 +3,6 @@ title = "SAML Authentication"
 description = "Grafana SAML Authentication"
 keywords = ["grafana", "saml", "documentation", "saml-auth"]
 aliases = ["/docs/grafana/latest/auth/saml/"]
-type = "docs"
-[menu.docs]
-name = "SAML"
-parent = "authentication"
 weight = 500
 +++
 
@@ -14,7 +10,7 @@ weight = 500
 
 SAML authentication integration allows your Grafana users to log in by using an external SAML 2.0 Identity Provider (IdP). To enable this, Grafana becomes a Service Provider (SP) in the authentication flow, interacting with the IdP to exchange user information.
 
-The SAML single-sign-on (SSO) standard is varied and flexible. Our implementation contains the subset of features needed to provide a smooth authentication experience into Grafana.
+The SAML single sign-on (SSO) standard is varied and flexible. Our implementation contains a subset of features needed to provide a smooth authentication experience into Grafana.
 
 > Only available in Grafana Enterprise v6.3+. If you encounter any problems with our implementation, please don't hesitate to contact us.
 
@@ -30,10 +26,10 @@ Grafana supports the following SAML 2.0 bindings:
   - `HTTP-POST` binding
 
 In terms of security:
-- Grafana supports signed and encrypted assertions. 
+- Grafana supports signed and encrypted assertions.
 - Grafana does not support signed or encrypted requests.
 
-In terms of initiation: 
+In terms of initiation:
 - Grafana supports SP-initiated requests.
 - Grafana does not support IdP-initiated request.
 
@@ -45,12 +41,14 @@ The table below describes all SAML configuration options. Continue reading below
 | ----------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------- | ------------- |
 | `enabled`                                                   | No  | Whether SAML authentication is allowed                                                             | `false`       |
 | `single_logout`                                             | No  | Whether SAML Single Logout enabled                                                                 | `false`       |
+| `allow_idp_initiated`                                       | No  | Whether SAML IdP-initiated login is allowed                                                        | `false`       |
 | `certificate` or `certificate_path`                         | Yes | Base64-encoded string or Path for the SP X.509 certificate                                         |               |
 | `private_key` or `private_key_path`                         | Yes | Base64-encoded string or Path for the SP private key                                               |               |
 | `signature_algorithm`                                       | No  | Signature algorithm used for signing requests to the IdP. Supported values are rsa-sha1, rsa-sha256, rsa-sha512. |              |
 | `idp_metadata`, `idp_metadata_path`, or `idp_metadata_url`  | Yes | Base64-encoded string, Path or URL for the IdP SAML metadata XML                                   |               |
 | `max_issue_delay`                                           | No  | Duration, since the IdP issued a response and the SP is allowed to process it                      | `90s`         |
 | `metadata_valid_duration`                                   | No  | Duration, for how long the SP metadata is valid                                                    | `48h`         |
+| `relay_state`                                               | No  | Relay state for IdP-initiated login. Should match relay state configured in IdP                    |               |
 | `assertion_attribute_name`                                  | No  | Friendly name or name of the attribute within the SAML assertion to use as the user name           | `displayName` |
 | `assertion_attribute_login`                                 | No  | Friendly name or name of the attribute within the SAML assertion to use as the user login handle   | `mail`        |
 | `assertion_attribute_email`                                 | No  | Friendly name or name of the attribute within the SAML assertion to use as the user email          | `mail`        |
@@ -65,7 +63,7 @@ The table below describes all SAML configuration options. Continue reading below
 
 ### Enable SAML authentication
 
-To use the SAML integration, in the `auth.saml` section of in the Grafana custom configuration file, set `enabled` to `true`. 
+To use the SAML integration, in the `auth.saml` section of in the Grafana custom configuration file, set `enabled` to `true`.
 
 Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) for more information about configuring Grafana.
 
@@ -73,21 +71,23 @@ Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) fo
 
 The SAML SSO standard uses asymmetric encryption to exchange information between the SP (Grafana) and the IdP. To perform such encryption, you need a public part and a private part. In this case, the X.509 certificate provides the public part, while the private key provides the private part.
 
-Grafana supports two ways of specifying both the `certificate` and `private_key`. 
-- Without a suffix (`certificate` or `private_key`), the configuration assumes you've supplied the base64-encoded file contents. 
+Grafana supports two ways of specifying both the `certificate` and `private_key`.
+- Without a suffix (`certificate` or `private_key`), the configuration assumes you've supplied the base64-encoded file contents.
 - With the `_path` suffix (`certificate_path` or `private_key_path`), then Grafana treats the value entered as a file path and attempts to read the file from the file system.
 
 You can only use one form of each configuration option. Using multiple forms, such as both `certificate` and `certificate_path`, results in an error.
 
 ### Signature algorithm
 
-The SAML standard recommends using digital signature for some types of messages, like authentication or logout requests. If `signature_algorithm` option configured, Grafana will put digital signature into SAML requests. Supported signature types are `rsa-sha1`, `rsa-sha256`, `rsa-sha512`. This option should match your IdP configuration, otherwise, signature won't be validated by the IdP. Grafana uses key and certificate configured with `private_key` and `certificate` options for signing SAML requests.
+> Only available in Grafana v7.3+
+
+The SAML standard recommends using a digital signature for some types of messages, like authentication or logout requests. If the `signature_algorithm` option is configured, Grafana will put a digital signature into SAML requests. Supported signature types are `rsa-sha1`, `rsa-sha256`, `rsa-sha512`. This option should match your IdP configuration, otherwise, signature validation will fail. Grafana uses key and certificate configured with `private_key` and `certificate` options for signing SAML requests.
 
 ### IdP metadata
 
 You also need to define the public part of the IdP for message verification. The SAML IdP metadata XML defines where and how Grafana exchanges user information.
 
-Grafana supports three ways of specifying the IdP metadata. 
+Grafana supports three ways of specifying the IdP metadata.
 - Without a suffix `idp_metadata`, Grafana assumes base64-encoded XML file contents.
 - With the `_path` suffix, Grafana assumes a file path and attempts to read the file from the file system.
 - With the `_url` suffix, Grafana assumes a URL and attempts to load the metadata from the given location.
@@ -113,9 +113,19 @@ The integration provides two key endpoints as part of Grafana:
 - The `/saml/metadata` endpoint, which contains the SP metadata. You can either download and upload it manually, or youmake the IdP request it directly from the endpoint. Some providers name it Identifier or Entity ID.
 - The `/saml/acs` endpoint, which is intended to receive the ACS (Assertion Customer Service) callback. Some providers name it SSO URL or Reply URL.
 
-### Single Logout
+### IdP-initiated Single Sign-On (SSO)
 
-Single Logout feature allows user to log out from all applications associated with current IdP session established via SAML SSO. If `single_logout` option set to `true` and user logs out, Grafana requests IdP to terminate user session. Then IdP triggers logout process for all other applications which user logged in with the same IdP session (application should support single logout). And conversely, if another application connected to the same IdP initiates single logout, Grafana gets logout request from IdP and terminates user session.
+> Only available in Grafana v7.3+
+
+By default, Grafana allows only service provider (SP) initiated logins (when the user logs in with SAML via Grafana’s login page). If you want users to log in into Grafana directly from your identity provider (IdP), set the `allow_idp_initiated` configuration option to `true` and configure `relay_state` with the same value specified in the IdP configuration.
+
+IdP-initiated SSO has some security risks, so make sure you understand the risks before enabling this feature. When using IdP-initiated SSO, Grafana receives unsolicited SAML requests and can't verify that login flow was started by the user. This makes it hard to detect whether SAML message has been stolen or replaced. Because of this, IdP-initiated SSO is vulnerable to login cross-site request forgery (CSRF) and man in the middle (MITM) attacks. We do not recommend using IdP-initiated SSO and keeping it disabled whenever possible.
+
+### Single logout
+
+> Only available in Grafana v7.3+
+
+SAML's single logout feature allows users to log out from all applications associated with the current IdP session established via SAML SSO. If the `single_logout` option is set to `true` and a user logs out, Grafana requests IdP to end the user session which in turn triggers logout from all other applications the user is logged into using the same IdP session (applications should support single logout). Conversely, if another application connected to the same IdP logs out using single logout, Grafana receives a logout request from IdP and ends the user session.
 
 ### Assertion mapping
 
@@ -125,7 +135,6 @@ For Grafana to map the user information, it looks at the individual attributes w
 
 Grafana provides configuration options that let you modify which keys to look at for these values. The data we need to create the user in Grafana is Name, Login handle, and email.
 
-An example is `assertion_attribute_name = "givenName"` where Grafana looks within the assertion for an attribute with a friendly name or name of `givenName`. Both, the friendly name (e.g. `givenName`) or the name (e.g. `urn:oid:2.5.4.42`) can be used interchangeably as the value for the configuration option.
 
 ### Configure team sync
 
@@ -166,12 +175,12 @@ role_values_grafana_admin = superadmin
 
 > Only available in Grafana v7.0+
 
-Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider. 
+Organization mapping allows you to assign users to particular organization in Grafana depending on attribute value obtained from identity provider.
 
 1. In configuration file, set [`assertion_attribute_org`]({{< relref "./enterprise-configuration.md#assertion-attribute-org" >}}) to the attribute name you store organization info in.
 1. Set [`org_mapping`]({{< relref "./enterprise-configuration.md#org-mapping" >}}) option to the comma-separated list of `Organization:OrgId` pairs to map organization from IdP to Grafana organization specified by id.
 
-For example, use following config to assign users from `Engineering` organization to the Grafana organization with id `2` and users from `Sales` - to the org with id `3`, based on `Org` assertion attribute value:
+For example, use following configuration to assign users from `Engineering` organization to the Grafana organization with id `2` and users from `Sales` - to the org with id `3`, based on `Org` assertion attribute value:
 
 ```bash
 [auth.saml]
@@ -236,13 +245,13 @@ To configure SAML integration with Okta, create integration inside the Okta orga
     - In the **Audience URI (SP Entity ID)** field, use the `/saml/metadata` endpoint URL, for example, `https://grafana.example.com/saml/metadata`.
     - Leave the default values for **Name ID format** and **Application username**.
     - In the **ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter the SAML attributes to be shared with Grafana, for example:
-      
+
       | Attribute name (in Grafana) | Value (in Okta profile)                |
       | --------------------------- | -------------------------------------- |
       | Login                       | `user.login`                           |
       | Email                       | `user.email`                           |
       | DisplayName                 | `user.firstName + " " + user.lastName` |
-    
+
     - In the **GROUP ATTRIBUTE STATEMENTS (OPTIONAL)** section, enter a group attribute name (for example, `Group`) and set filter to `Matches regex .*` to return all user groups.
 1. Click **Next**.
 1. On the final Feedback tab, fill out the form and then click **Finish**.
@@ -255,7 +264,7 @@ Once the application is created, configure Grafana to use it for SAML authentica
 1. Configure the [certificate and private key]({{< relref "#certificate-and-private-key" >}}).
 1. On the Okta application page where you have been redirected after application created, navigate to the **Sign On** tab and find **Identity Provider metadata** link in the **Settings** section.
 1. Set the [`idp_metadata_url`]({{< relref "./enterprise-configuration.md#idp-metadata-url" >}}) to the URL obtained from the previous step. The URL should look like `https://<your-org-id>.okta.com/app/<application-id>/sso/saml/metadata`.
-1. Set the following options to the attribute names configured at the **step 10** of the SAML integration setup. You can find this attributes on the **General** tab of the application page (**ATTRIBUTE STATEMENTS** and **GROUP ATTRIBUTE STATEMENTS** in the **SAML Settings** section). 
+1. Set the following options to the attribute names configured at the **step 10** of the SAML integration setup. You can find this attributes on the **General** tab of the application page (**ATTRIBUTE STATEMENTS** and **GROUP ATTRIBUTE STATEMENTS** in the **SAML Settings** section).
     - [`assertion_attribute_login`]({{< relref "./enterprise-configuration.md#assertion-attribute-login" >}})
     - [`assertion_attribute_email`]({{< relref "./enterprise-configuration.md#assertion-attribute-email" >}})
     - [`assertion_attribute_name`]({{< relref "./enterprise-configuration.md#assertion-attribute-name" >}})

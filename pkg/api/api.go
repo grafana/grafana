@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+// registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
 	reqSignedIn := middleware.ReqSignedIn
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
@@ -32,8 +33,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/invite/:code", hs.Index)
 
 	// authed views
+	r.Get("/", reqSignedIn, hs.Index)
 	r.Get("/profile/", reqSignedIn, hs.Index)
 	r.Get("/profile/password", reqSignedIn, hs.Index)
+	r.Get("/.well-known/change-password", redirectToChangePassword)
 	r.Get("/profile/switch-org/:id", reqSignedIn, hs.ChangeActiveOrgAndRedirectToHome)
 	r.Get("/org/", reqOrgAdmin, hs.Index)
 	r.Get("/org/new", reqGrafanaAdmin, hs.Index)
@@ -70,6 +73,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/dashboard/db/:slug", reqSignedIn, redirectFromLegacyDashboardURL, hs.Index)
 	r.Get("/dashboard/script/*", reqSignedIn, hs.Index)
+	r.Get("/dashboard/new", reqSignedIn, hs.Index)
 	r.Get("/dashboard-solo/snapshot/*", hs.Index)
 	r.Get("/d-solo/:uid/:slug", reqSignedIn, hs.Index)
 	r.Get("/d-solo/:uid", reqSignedIn, hs.Index)
@@ -256,6 +260,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/plugins/:pluginId/health", Wrap(hs.CheckHealth))
 		apiRoute.Any("/plugins/:pluginId/resources", hs.CallResource)
 		apiRoute.Any("/plugins/:pluginId/resources/*", hs.CallResource)
+		apiRoute.Any("/plugins/errors", Wrap(hs.GetPluginErrorsList))
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", Wrap(GetPluginDashboards))
@@ -355,7 +360,7 @@ func (hs *HTTPServer) registerRoutes() {
 		if hs.Cfg.IsNgAlertEnabled() {
 			apiRoute.Group("/alert-definitions", func(alertDefinitions routing.RouteRegister) {
 				alertDefinitions.Get("/eval/:dashboardID/:panelID/:refID", reqEditorRole, Wrap(hs.AlertDefinitionEval))
-				alertDefinitions.Post("/eval", reqEditorRole, bind(dtos.EvalAlertConditionsCommand{}), Wrap(hs.ConditionsEval))
+				alertDefinitions.Post("/eval", reqEditorRole, bind(dtos.EvalAlertConditionCommand{}), Wrap(hs.ConditionEval))
 			})
 		}
 
@@ -434,17 +439,10 @@ func (hs *HTTPServer) registerRoutes() {
 	avatarCacheServer := avatar.NewCacheServer()
 	r.Get("/avatar/:hash", avatarCacheServer.Handler)
 
-	// Live streaming
-	if hs.Live != nil {
-		r.Any("/live/*", hs.Live.WebsocketHandler)
-	}
-
 	// Snapshots
 	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, bind(models.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
 	r.Get("/api/snapshot/shared-options/", reqSignedIn, GetSharingOptions)
 	r.Get("/api/snapshots/:key", Wrap(GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, Wrap(DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
-
-	r.Get("/*", reqSignedIn, hs.Index)
 }

@@ -105,6 +105,7 @@ This command creates a production-ready build of your plugin.
 Available options:
 
 - `--coverage` - Reports code coverage after the test step of the build.
+- `--preserveConsole` - Preserves console statements in the code.
 
 ### Sign your plugin
 

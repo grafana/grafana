@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
+	"net"
+	"strconv"
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
@@ -71,10 +73,10 @@ const UsersMaxRequest = 500
 var (
 
 	// ErrInvalidCredentials is returned if username and password do not match
-	ErrInvalidCredentials = errors.New("Invalid Username or Password")
+	ErrInvalidCredentials = errors.New("invalid username or password")
 
 	// ErrCouldNotFindUser is returned when username hasn't been found (not username+password)
-	ErrCouldNotFindUser = errors.New("Can't find user in LDAP")
+	ErrCouldNotFindUser = errors.New("can't find user in LDAP")
 )
 
 // New creates the new LDAP connection
@@ -110,7 +112,7 @@ func (server *Server) Dial() error {
 		}
 	}
 	for _, host := range strings.Split(server.Config.Host, " ") {
-		address := fmt.Sprintf("%s:%d", host, server.Config.Port)
+		address := net.JoinHostPort(host, strconv.Itoa(server.Config.Port))
 		if server.Config.UseSSL {
 			tlsCfg := &tls.Config{
 				InsecureSkipVerify: server.Config.SkipVerifySSL,

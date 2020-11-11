@@ -11,7 +11,6 @@ import { DashboardSearchHit } from 'app/features/search/types';
 import { FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
-import { Emitter } from '../utils/emitter';
 import { parseInitFromOptions, parseUrlFromOptions } from '../utils/fetch';
 import { isDataQuery, isLocalUrl } from '../utils/query';
 import { FetchQueue } from './FetchQueue';
@@ -22,7 +21,7 @@ const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
 export interface BackendSrvDependencies {
   fromFetch: (input: string | Request, init?: RequestInit) => Observable<Response>;
-  appEvents: Emitter;
+  appEvents: typeof appEvents;
   contextSrv: ContextSrv;
   logout: () => void;
 }
@@ -65,10 +64,11 @@ export class BackendSrv implements BackendService {
   }
 
   fetch<T>(options: BackendSrvRequest): Observable<FetchResponse<T>> {
-    return new Observable(observer => {
-      // We need to match an entry added to the queue stream with the entry that is eventually added to the response stream
-      const id = uuidv4();
+    // We need to match an entry added to the queue stream with the entry that is eventually added to the response stream
+    const id = uuidv4();
+    const fetchQueue = this.fetchQueue;
 
+    return new Observable(observer => {
       // Subscription is an object that is returned whenever you subscribe to an Observable.
       // You can also use it as a container of many subscriptions and when it is unsubscribed all subscriptions within are also unsubscribed.
       const subscriptions: Subscription = new Subscription();
@@ -89,6 +89,9 @@ export class BackendSrv implements BackendService {
 
       // This returned function will be called whenever the returned Observable from the fetch<T> function is unsubscribed/errored/completed/canceled.
       return function unsubscribe() {
+        // Change status to Done moved here from ResponseQueue because this unsubscribe was called before the responseQueue produced a result
+        fetchQueue.setDone(id);
+
         // When subscriptions is unsubscribed all the implicitly added subscriptions above are also unsubscribed.
         subscriptions.unsubscribe();
       };

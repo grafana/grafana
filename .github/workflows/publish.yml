@@ -15,6 +15,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
+    - run: git clone --single-branch --no-tags --depth 1 -b master https://grafanabot:${{ secrets.GH_BOT_ACCESS_TOKEN }}@github.com/grafana/website-sync ./.github/actions/website-sync
+    - uses: actions/cache@v2
+      with:
+        path: '**/node_modules'
+        key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
     - name: generate-packages-docs
       uses: actions/setup-node@v1
       id: generate-docs
@@ -23,7 +28,7 @@ jobs:
     - run: yarn install --pure-lockfile --no-progress
     - run: ./scripts/ci-reference-docs-build.sh
     - name: publish-to-git
-      uses: ./.github/actions/gha-publish-to-git
+      uses: ./.github/actions/website-sync
       id: publish
       with:
         repository: grafana/website
@@ -32,6 +37,7 @@ jobs:
         github_pat: '${{ secrets.GH_BOT_ACCESS_TOKEN }}'
         source_folder: docs/sources
         target_folder: content/docs/grafana/latest
+        allow_no_changes: 'true'
     - shell: bash
       run: |
         test -n "${{ steps.publish.outputs.commit_hash }}"

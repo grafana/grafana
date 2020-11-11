@@ -207,7 +207,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
-		return nil, errutil.Wrap("Failed to create request", err)
+		return nil, errutil.Wrap("failed to create request", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -216,7 +216,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	// find plugin
 	plugin, ok := plugins.DataSources[dsInfo.Type]
 	if !ok {
-		return nil, errors.New("Unable to find datasource plugin Azure Monitor")
+		return nil, errors.New("unable to find datasource plugin Azure Monitor")
 	}
 	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 
@@ -272,7 +272,7 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return AzureLogAnalyticsResponse{}, fmt.Errorf("Request failed status: %v: %w", res.Status, fmt.Errorf(string(body)))
+		return AzureLogAnalyticsResponse{}, fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body))
 	}
 
 	var data AzureLogAnalyticsResponse

@@ -70,7 +70,6 @@ func getServicesWithOverrides() []*Descriptor {
 // Service interface is the lowest common shape that services
 // are expected to fulfill to be started within Grafana.
 type Service interface {
-
 	// Init is called by Grafana main process which gives the service
 	// the possibility do some initial work before its started. Things
 	// like adding routes, bus handlers should be done in the Init function
@@ -82,7 +81,6 @@ type Service interface {
 // that might not always be started, ex alerting.
 // This will be called after `Init()`.
 type CanBeDisabled interface {
-
 	// IsDisabled should return a bool saying if it can be started or not.
 	IsDisabled() bool
 }
@@ -99,13 +97,12 @@ type BackgroundService interface {
 // DatabaseMigrator allows the caller to add migrations to
 // the migrator passed as argument
 type DatabaseMigrator interface {
-
 	// AddMigrations allows the service to add migrations to
 	// the database migrator.
 	AddMigration(mg *migrator.Migrator)
 }
 
-// IsDisabled takes an service and return true if its disabled
+// IsDisabled returns whether a service is disabled.
 func IsDisabled(srv Service) bool {
 	canBeDisabled, ok := srv.(CanBeDisabled)
 	return ok && canBeDisabled.IsDisabled()

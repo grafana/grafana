@@ -3,8 +3,7 @@ import { renderHook, act } from '@testing-library/react-hooks';
 
 describe('usePlotConfig', () => {
   it('returns default plot config', async () => {
-    const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
-    await waitForNextUpdate();
+    const { result } = renderHook(() => usePlotConfig(0, 0, 'browser'));
 
     expect(result.current.currentConfig).toMatchInlineSnapshot(`
       Object {
@@ -16,6 +15,10 @@ describe('usePlotConfig', () => {
         },
         "focus": Object {
           "alpha": 1,
+        },
+        "gutters": Object {
+          "x": 8,
+          "y": 8,
         },
         "height": 0,
         "hooks": Object {},
@@ -34,7 +37,7 @@ describe('usePlotConfig', () => {
   });
   describe('series config', () => {
     it('should add series', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
+      const { result } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addSeries = result.current.addSeries;
 
       act(() => {
@@ -42,7 +45,6 @@ describe('usePlotConfig', () => {
           stroke: '#ff0000',
         });
       });
-      await waitForNextUpdate();
 
       expect(result.current.currentConfig?.series).toHaveLength(2);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
@@ -55,6 +57,10 @@ describe('usePlotConfig', () => {
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -76,7 +82,7 @@ describe('usePlotConfig', () => {
     });
 
     it('should update series', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
+      const { result } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addSeries = result.current.addSeries;
 
       act(() => {
@@ -88,7 +94,6 @@ describe('usePlotConfig', () => {
           stroke: '#00ff00',
         });
       });
-      await waitForNextUpdate();
 
       expect(result.current.currentConfig?.series).toHaveLength(2);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
@@ -101,6 +106,10 @@ describe('usePlotConfig', () => {
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -122,7 +131,7 @@ describe('usePlotConfig', () => {
     });
 
     it('should remove series', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
+      const { result } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addSeries = result.current.addSeries;
 
       act(() => {
@@ -132,7 +141,6 @@ describe('usePlotConfig', () => {
 
         removeSeries();
       });
-      await waitForNextUpdate();
 
       expect(result.current.currentConfig?.series).toHaveLength(1);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
@@ -145,6 +153,10 @@ describe('usePlotConfig', () => {
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -165,7 +177,7 @@ describe('usePlotConfig', () => {
 
   describe('axis config', () => {
     it('should add axis', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
+      const { result } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addAxis = result.current.addAxis;
 
       act(() => {
@@ -173,7 +185,6 @@ describe('usePlotConfig', () => {
           side: 1,
         });
       });
-      await waitForNextUpdate();
 
       expect(result.current.currentConfig?.axes).toHaveLength(1);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
@@ -190,6 +201,10 @@ describe('usePlotConfig', () => {
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -208,7 +223,7 @@ describe('usePlotConfig', () => {
     });
 
     it('should update axis', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
+      const { result } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addAxis = result.current.addAxis;
 
       act(() => {
@@ -220,7 +235,6 @@ describe('usePlotConfig', () => {
           side: 3,
         });
       });
-      await waitForNextUpdate();
 
       expect(result.current.currentConfig?.axes).toHaveLength(1);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
@@ -237,6 +251,10 @@ describe('usePlotConfig', () => {
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -255,7 +273,7 @@ describe('usePlotConfig', () => {
     });
 
     it('should remove axis', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
+      const { result } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addAxis = result.current.addAxis;
 
       act(() => {
@@ -265,7 +283,6 @@ describe('usePlotConfig', () => {
 
         removeAxis();
       });
-      await waitForNextUpdate();
 
       expect(result.current.currentConfig?.axes).toHaveLength(0);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
@@ -278,6 +295,10 @@ describe('usePlotConfig', () => {
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -298,7 +319,7 @@ describe('usePlotConfig', () => {
 
   describe('scales config', () => {
     it('should add scale', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
+      const { result } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addScale = result.current.addScale;
 
       act(() => {
@@ -306,7 +327,6 @@ describe('usePlotConfig', () => {
           time: true,
         });
       });
-      await waitForNextUpdate();
 
       expect(Object.keys(result.current.currentConfig?.scales!)).toHaveLength(1);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
@@ -319,6 +339,10 @@ describe('usePlotConfig', () => {
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -341,7 +365,7 @@ describe('usePlotConfig', () => {
     });
 
     it('should update scale', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
+      const { result } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addScale = result.current.addScale;
 
       act(() => {
@@ -353,7 +377,6 @@ describe('usePlotConfig', () => {
           time: false,
         });
       });
-      await waitForNextUpdate();
 
       expect(Object.keys(result.current.currentConfig?.scales!)).toHaveLength(1);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
@@ -366,6 +389,10 @@ describe('usePlotConfig', () => {
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -388,7 +415,7 @@ describe('usePlotConfig', () => {
     });
 
     it('should remove scale', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
+      const { result } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const addScale = result.current.addScale;
 
       act(() => {
@@ -398,7 +425,6 @@ describe('usePlotConfig', () => {
 
         removeScale();
       });
-      await waitForNextUpdate();
 
       expect(Object.keys(result.current.currentConfig?.scales!)).toHaveLength(0);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
@@ -411,6 +437,10 @@ describe('usePlotConfig', () => {
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -431,7 +461,7 @@ describe('usePlotConfig', () => {
 
   describe('plugins config', () => {
     it('should register plugin', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
+      const { result } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const registerPlugin = result.current.registerPlugin;
 
       act(() => {
@@ -440,7 +470,6 @@ describe('usePlotConfig', () => {
           hooks: {},
         });
       });
-      await waitForNextUpdate();
 
       expect(Object.keys(result.current.currentConfig?.plugins!)).toHaveLength(1);
       expect(result.current.currentConfig).toMatchInlineSnapshot(`
@@ -453,6 +482,10 @@ describe('usePlotConfig', () => {
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
@@ -475,7 +508,7 @@ describe('usePlotConfig', () => {
     });
 
     it('should unregister plugin', async () => {
-      const { result, waitForNextUpdate } = renderHook(() => usePlotConfig(0, 0, 'browser'));
+      const { result } = renderHook(() => usePlotConfig(0, 0, 'browser'));
       const registerPlugin = result.current.registerPlugin;
 
       let unregister: () => void;
@@ -485,7 +518,6 @@ describe('usePlotConfig', () => {
           hooks: {},
         });
       });
-      await waitForNextUpdate();
 
       expect(Object.keys(result.current.currentConfig?.plugins!)).toHaveLength(1);
 
@@ -504,6 +536,10 @@ describe('usePlotConfig', () => {
           },
           "focus": Object {
             "alpha": 1,
+          },
+          "gutters": Object {
+            "x": 8,
+            "y": 8,
           },
           "height": 0,
           "hooks": Object {},
