@@ -131,7 +131,7 @@ func getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
 	return appLinks, nil
 }
 
-func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dtos.NavLink, error) {
+func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool, hasPlaylists bool) ([]*dtos.NavLink, error) {
 	navTree := []*dtos.NavLink{}
 
 	if hasEditPerm {
@@ -162,9 +162,16 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		{Text: "Home", Id: "home", Url: setting.AppSubUrl + "/", Icon: "home-alt", HideFromTabs: true},
 		{Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true},
 		{Text: "Manage", Id: "manage-dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "sitemap"},
-		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "presentation-play"},
 	}
 
+	if c.OrgRole != models.ROLE_VIEWER || hasPlaylists {
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+			Text: "Playlists",
+			Id:   "playlists",
+			Url:  setting.AppSubUrl + "/playlists",
+			Icon: "presentation-play",
+		})
+	}
 	if c.OrgRole != models.ROLE_VIEWER {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 			Text: "Snapshots",
@@ -338,10 +345,16 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewData, error) {
 	hasEditPermissionInFoldersQuery := models.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
+	hasPlaylistsQuery := models.GetPlaylistsQuery{Name: "", Limit: 1, OrgId: c.OrgId}
 	if err := bus.Dispatch(&hasEditPermissionInFoldersQuery); err != nil {
 		return nil, err
 	}
+	if err := bus.Dispatch(&hasPlaylistsQuery); err != nil {
+		return nil, err
+	}
+
 	hasEditPerm := hasEditPermissionInFoldersQuery.Result
+	hasPlaylists := len(hasPlaylistsQuery.Result) > 0
 
 	settings, err := hs.getFrontendSettingsMap(c)
 	if err != nil {
@@ -375,7 +388,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		settings["appSubUrl"] = ""
 	}
 
-	navTree, err := hs.getNavTree(c, hasEditPerm)
+	navTree, err := hs.getNavTree(c, hasEditPerm, hasPlaylists)
 	if err != nil {
 		return nil, err
 	}
