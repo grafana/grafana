@@ -1156,7 +1156,7 @@ May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
 
 ### sampling_server_url
 
-sampling_server_url is the URL of sampling manager that can provide sampling strategy to this service.
+sampling_server_url is the URL of a sampling manager that providing a sampling strategy to this service.
 
 ### zipkin_propagation
 
