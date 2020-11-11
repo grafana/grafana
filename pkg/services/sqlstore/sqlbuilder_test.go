@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSqlBuilder(t *testing.T) {
+func TestSQLBuilder(t *testing.T) {
 	t.Run("writeDashboardPermissionFilter", func(t *testing.T) {
 		t.Run("user ACL", func(t *testing.T) {
 			test(t,
@@ -317,8 +317,8 @@ func createDummyAcl(dashboardPermission *DashboardPermission, search Search, das
 	return 0, err
 }
 
-func getDashboards(sqlStore *SqlStore, search Search, aclUserId int64) ([]*dashboardResponse, error) {
-	builder := &SqlBuilder{}
+func getDashboards(sqlStore *SQLStore, search Search, aclUserId int64) ([]*dashboardResponse, error) {
+	builder := &SQLBuilder{}
 	signedInUser := &models.SignedInUser{
 		UserId: 9999999999,
 	}
@@ -341,6 +341,6 @@ func getDashboards(sqlStore *SqlStore, search Search, aclUserId int64) ([]*dashb
 	var res []*dashboardResponse
 	builder.Write("SELECT * FROM dashboard WHERE true")
 	builder.writeDashboardPermissionFilter(signedInUser, search.RequiredPermission)
-	err := sqlStore.engine.SQL(builder.GetSqlString(), builder.params...).Find(&res)
+	err := sqlStore.engine.SQL(builder.GetSQLString(), builder.params...).Find(&res)
 	return res, err
 }

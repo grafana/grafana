@@ -1,9 +1,5 @@
 +++
 title = "Overview"
-type = "docs"
-[menu.docs]
-identifier = "overview"
-parent = "transformations"
 weight = 300
 +++
 
@@ -28,7 +24,7 @@ The order in which transformations are applied can make a huge difference in how
 Before you can configure and apply transformations:
 
 - You must have entered a query and returned data from a data source. For more information on queries, refer to [Queries]({{< relref "../queries.md" >}}).
-  
+
 - You must have chosen a visualization that supports your query result and chosen transforms. Different transformations can result in a data structure that only some visualizations can render. For example, Graph visualization cannot show reduced data (that results from the Reduce transform). If your current visualization does not show you what you expect after applying a transform, switch to the Table visualization to check the result. For more information on the different types of visualizations, refer to:
   - [Bar gauge]({{< relref "../visualizations/bar-gauge-panel.md" >}})
   - [Gauge]({{< relref "../visualizations/gauge-panel.md" >}})

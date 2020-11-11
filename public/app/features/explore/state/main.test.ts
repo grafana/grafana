@@ -1,297 +1,139 @@
-import {
-  DataQuery,
-  DataSourceApi,
-  dateTime,
-  LoadingState,
-  RawTimeRange,
-  UrlQueryMap,
-  ExploreUrlState,
-  LogsDedupStrategy,
-} from '@grafana/data';
-
-import {
-  createEmptyQueryResponse,
-  exploreReducer,
-  initialExploreState,
-  itemReducer,
-  makeExploreItemState,
-  makeInitialUpdateState,
-} from './reducers';
-import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
-import { reducerTester } from 'test/core/redux/reducerTester';
-import {
-  changeRangeAction,
-  changeRefreshIntervalAction,
-  scanStartAction,
-  scanStopAction,
-  splitCloseAction,
-  splitOpenAction,
-  updateDatasourceInstanceAction,
-  addQueryRowAction,
-  removeQueryRowAction,
-  changeDedupStrategyAction,
-} from './actionTypes';
-import { updateLocation } from '../../../core/actions';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import { exploreReducer, initialExploreState, navigateToExplore, splitCloseAction, splitOpenAction } from './main';
+import { thunkTester } from 'test/core/thunk/thunkTester';
+import { PanelModel } from 'app/features/dashboard/state';
+import { updateLocation } from '../../../core/actions';
+import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
+import { ExploreId, ExploreItemState, ExploreState } from '../../../types';
+import { makeExplorePaneState, makeInitialUpdateState } from './utils';
+import { reducerTester } from '../../../../test/core/redux/reducerTester';
+import { ExploreUrlState, UrlQueryMap } from '@grafana/data';
 
-const QUERY_KEY_REGEX = /Q-(?:[a-z0-9]+-){5}(?:[0-9]+)/;
+const getNavigateToExploreContext = async (openInNewWindow?: (url: string) => void) => {
+  const url = 'http://www.someurl.com';
+  const panel: Partial<PanelModel> = {
+    datasource: 'mocked datasource',
+    targets: [{ refId: 'A' }],
+  };
+  const datasource = new MockDataSourceApi(panel.datasource!);
+  const get = jest.fn().mockResolvedValue(datasource);
+  const getDataSourceSrv = jest.fn().mockReturnValue({ get });
+  const getTimeSrv = jest.fn();
+  const getExploreUrl = jest.fn().mockResolvedValue(url);
 
-describe('Explore item reducer', () => {
-  describe('scanning', () => {
-    it('should start scanning', () => {
-      const initialState = {
-        ...makeExploreItemState(),
-        scanning: false,
-      };
+  const dispatchedActions = await thunkTester({})
+    .givenThunk(navigateToExplore)
+    .whenThunkIsDispatched(panel, { getDataSourceSrv, getTimeSrv, getExploreUrl, openInNewWindow });
 
-      reducerTester<ExploreItemState>()
-        .givenReducer(itemReducer, initialState)
-        .whenActionIsDispatched(scanStartAction({ exploreId: ExploreId.left }))
-        .thenStateShouldEqual({
-          ...makeExploreItemState(),
-          scanning: true,
-        });
-    });
-    it('should stop scanning', () => {
-      const initialState = {
-        ...makeExploreItemState(),
-        scanning: true,
-        scanRange: {} as RawTimeRange,
-      };
+  return {
+    url,
+    panel,
+    datasource,
+    get,
+    getDataSourceSrv,
+    getTimeSrv,
+    getExploreUrl,
+    dispatchedActions,
+  };
+};
 
-      reducerTester<ExploreItemState>()
-        .givenReducer(itemReducer, initialState)
-        .whenActionIsDispatched(scanStopAction({ exploreId: ExploreId.left }))
-        .thenStateShouldEqual({
-          ...makeExploreItemState(),
-          scanning: false,
-          scanRange: undefined,
-        });
-    });
-  });
+describe('navigateToExplore', () => {
+  describe('when navigateToExplore thunk is dispatched', () => {
+    describe('and openInNewWindow is undefined', () => {
+      const openInNewWindow: (url: string) => void = (undefined as unknown) as (url: string) => void;
+      it('then it should dispatch correct actions', async () => {
+        const { dispatchedActions, url } = await getNavigateToExploreContext(openInNewWindow);
 
-  describe('changing datasource', () => {
-    describe('when updateDatasourceInstanceAction is dispatched', () => {
-      describe('and datasourceInstance supports graph, logs, table and has a startpage', () => {
-        it('then it should set correct state', () => {
-          const StartPage = {};
-          const datasourceInstance = {
-            meta: {
-              metrics: true,
-              logs: true,
-            },
-            components: {
-              ExploreStartPage: StartPage,
-            },
-          } as DataSourceApi;
-          const queries: DataQuery[] = [];
-          const queryKeys: string[] = [];
-          const initialState: ExploreItemState = ({
-            datasourceInstance: null,
-            queries,
-            queryKeys,
-          } as unknown) as ExploreItemState;
-          const expectedState: any = {
-            datasourceInstance,
-            queries,
-            queryKeys,
-            graphResult: null,
-            logsResult: null,
-            tableResult: null,
-            latency: 0,
-            loading: false,
-            queryResponse: createEmptyQueryResponse(),
-          };
+        expect(dispatchedActions).toEqual([updateLocation({ path: url, query: {} })]);
+      });
 
-          reducerTester<ExploreItemState>()
-            .givenReducer(itemReducer, initialState)
-            .whenActionIsDispatched(updateDatasourceInstanceAction({ exploreId: ExploreId.left, datasourceInstance }))
-            .thenStateShouldEqual(expectedState);
+      it('then getDataSourceSrv should have been once', async () => {
+        const { getDataSourceSrv } = await getNavigateToExploreContext(openInNewWindow);
+
+        expect(getDataSourceSrv).toHaveBeenCalledTimes(1);
+      });
+
+      it('then getDataSourceSrv.get should have been called with correct arguments', async () => {
+        const { get, panel } = await getNavigateToExploreContext(openInNewWindow);
+
+        expect(get).toHaveBeenCalledTimes(1);
+        expect(get).toHaveBeenCalledWith(panel.datasource);
+      });
+
+      it('then getTimeSrv should have been called once', async () => {
+        const { getTimeSrv } = await getNavigateToExploreContext(openInNewWindow);
+
+        expect(getTimeSrv).toHaveBeenCalledTimes(1);
+      });
+
+      it('then getExploreUrl should have been called with correct arguments', async () => {
+        const { getExploreUrl, panel, datasource, getDataSourceSrv, getTimeSrv } = await getNavigateToExploreContext(
+          openInNewWindow
+        );
+
+        expect(getExploreUrl).toHaveBeenCalledTimes(1);
+        expect(getExploreUrl).toHaveBeenCalledWith({
+          panel,
+          panelTargets: panel.targets,
+          panelDatasource: datasource,
+          datasourceSrv: getDataSourceSrv(),
+          timeSrv: getTimeSrv(),
         });
       });
     });
-  });
 
-  describe('changing refresh intervals', () => {
-    it("should result in 'streaming' state, when live-tailing is active", () => {
-      const initialState = makeExploreItemState();
-      const expectedState = {
-        ...makeExploreItemState(),
-        refreshInterval: 'LIVE',
-        isLive: true,
-        loading: true,
-        logsResult: {
-          hasUniqueLabels: false,
-          rows: [] as any[],
-        },
-        queryResponse: {
-          ...makeExploreItemState().queryResponse,
-          state: LoadingState.Streaming,
-        },
-      };
-      reducerTester<ExploreItemState>()
-        .givenReducer(itemReducer, initialState)
-        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: 'LIVE' }))
-        .thenStateShouldEqual(expectedState);
-    });
+    describe('and openInNewWindow is defined', () => {
+      const openInNewWindow: (url: string) => void = jest.fn();
+      it('then it should dispatch no actions', async () => {
+        const { dispatchedActions } = await getNavigateToExploreContext(openInNewWindow);
 
-    it("should result in 'done' state, when live-tailing is stopped", () => {
-      const initialState = makeExploreItemState();
-      const expectedState = {
-        ...makeExploreItemState(),
-        refreshInterval: '',
-        logsResult: {
-          hasUniqueLabels: false,
-          rows: [] as any[],
-        },
-        queryResponse: {
-          ...makeExploreItemState().queryResponse,
-          state: LoadingState.Done,
-        },
-      };
-      reducerTester<ExploreItemState>()
-        .givenReducer(itemReducer, initialState)
-        .whenActionIsDispatched(changeRefreshIntervalAction({ exploreId: ExploreId.left, refreshInterval: '' }))
-        .thenStateShouldEqual(expectedState);
-    });
-  });
-
-  describe('changing range', () => {
-    describe('when changeRangeAction is dispatched', () => {
-      it('then it should set correct state', () => {
-        reducerTester<ExploreItemState>()
-          .givenReducer(itemReducer, ({
-            update: { ...makeInitialUpdateState(), range: true },
-            range: null,
-            absoluteRange: null,
-          } as unknown) as ExploreItemState)
-          .whenActionIsDispatched(
-            changeRangeAction({
-              exploreId: ExploreId.left,
-              absoluteRange: { from: 1546297200000, to: 1546383600000 },
-              range: { from: dateTime('2019-01-01'), to: dateTime('2019-01-02'), raw: { from: 'now-1d', to: 'now' } },
-            })
-          )
-          .thenStateShouldEqual(({
-            update: { ...makeInitialUpdateState(), range: false },
-            absoluteRange: { from: 1546297200000, to: 1546383600000 },
-            range: { from: dateTime('2019-01-01'), to: dateTime('2019-01-02'), raw: { from: 'now-1d', to: 'now' } },
-          } as unknown) as ExploreItemState);
+        expect(dispatchedActions).toEqual([]);
       });
-    });
-  });
 
-  describe('changing dedup strategy', () => {
-    describe('when changeDedupStrategyAction is dispatched', () => {
-      it('then it should set correct dedup strategy in state', () => {
-        const initialState = makeExploreItemState();
+      it('then getDataSourceSrv should have been once', async () => {
+        const { getDataSourceSrv } = await getNavigateToExploreContext(openInNewWindow);
 
-        reducerTester<ExploreItemState>()
-          .givenReducer(itemReducer, initialState)
-          .whenActionIsDispatched(
-            changeDedupStrategyAction({ exploreId: ExploreId.left, dedupStrategy: LogsDedupStrategy.exact })
-          )
-          .thenStateShouldEqual({
-            ...makeExploreItemState(),
-            dedupStrategy: LogsDedupStrategy.exact,
-          });
+        expect(getDataSourceSrv).toHaveBeenCalledTimes(1);
       });
-    });
-  });
 
-  describe('query rows', () => {
-    it('adds a new query row', () => {
-      reducerTester<ExploreItemState>()
-        .givenReducer(itemReducer, ({
-          queries: [],
-        } as unknown) as ExploreItemState)
-        .whenActionIsDispatched(
-          addQueryRowAction({
-            exploreId: ExploreId.left,
-            query: { refId: 'A', key: 'mockKey' },
-            index: 0,
-          })
-        )
-        .thenStateShouldEqual(({
-          queries: [{ refId: 'A', key: 'mockKey' }],
-          queryKeys: ['mockKey-0'],
-        } as unknown) as ExploreItemState);
-    });
-    it('removes a query row', () => {
-      reducerTester<ExploreItemState>()
-        .givenReducer(itemReducer, ({
-          queries: [
-            { refId: 'A', key: 'mockKey' },
-            { refId: 'B', key: 'mockKey' },
-          ],
-          queryKeys: ['mockKey-0', 'mockKey-1'],
-        } as unknown) as ExploreItemState)
-        .whenActionIsDispatched(
-          removeQueryRowAction({
-            exploreId: ExploreId.left,
-            index: 0,
-          })
-        )
-        .thenStatePredicateShouldEqual((resultingState: ExploreItemState) => {
-          expect(resultingState.queries.length).toBe(1);
-          expect(resultingState.queries[0].refId).toBe('A');
-          expect(resultingState.queries[0].key).toMatch(QUERY_KEY_REGEX);
-          expect(resultingState.queryKeys[0]).toMatch(QUERY_KEY_REGEX);
-          return true;
+      it('then getDataSourceSrv.get should have been called with correct arguments', async () => {
+        const { get, panel } = await getNavigateToExploreContext(openInNewWindow);
+
+        expect(get).toHaveBeenCalledTimes(1);
+        expect(get).toHaveBeenCalledWith(panel.datasource);
+      });
+
+      it('then getTimeSrv should have been called once', async () => {
+        const { getTimeSrv } = await getNavigateToExploreContext(openInNewWindow);
+
+        expect(getTimeSrv).toHaveBeenCalledTimes(1);
+      });
+
+      it('then getExploreUrl should have been called with correct arguments', async () => {
+        const { getExploreUrl, panel, datasource, getDataSourceSrv, getTimeSrv } = await getNavigateToExploreContext(
+          openInNewWindow
+        );
+
+        expect(getExploreUrl).toHaveBeenCalledTimes(1);
+        expect(getExploreUrl).toHaveBeenCalledWith({
+          panel,
+          panelTargets: panel.targets,
+          panelDatasource: datasource,
+          datasourceSrv: getDataSourceSrv(),
+          timeSrv: getTimeSrv(),
         });
-    });
-    it('reassigns query refId after removing a query to keep queries in order', () => {
-      reducerTester<ExploreItemState>()
-        .givenReducer(itemReducer, ({
-          queries: [{ refId: 'A' }, { refId: 'B' }, { refId: 'C' }],
-          queryKeys: ['undefined-0', 'undefined-1', 'undefined-2'],
-        } as unknown) as ExploreItemState)
-        .whenActionIsDispatched(
-          removeQueryRowAction({
-            exploreId: ExploreId.left,
-            index: 0,
-          })
-        )
-        .thenStatePredicateShouldEqual((resultingState: ExploreItemState) => {
-          expect(resultingState.queries.length).toBe(2);
-          const queriesRefIds = resultingState.queries.map(query => query.refId);
-          const queriesKeys = resultingState.queries.map(query => query.key);
-          expect(queriesRefIds).toEqual(['A', 'B']);
-          queriesKeys.forEach(queryKey => {
-            expect(queryKey).toMatch(QUERY_KEY_REGEX);
-          });
-          resultingState.queryKeys.forEach(queryKey => {
-            expect(queryKey).toMatch(QUERY_KEY_REGEX);
-          });
-          return true;
-        });
+      });
+
+      it('then openInNewWindow should have been called with correct arguments', async () => {
+        const openInNewWindowFunc = jest.fn();
+        const { url } = await getNavigateToExploreContext(openInNewWindowFunc);
+
+        expect(openInNewWindowFunc).toHaveBeenCalledTimes(1);
+        expect(openInNewWindowFunc).toHaveBeenCalledWith(url);
+      });
     });
   });
 });
-
-export const setup = (urlStateOverrides?: any) => {
-  const update = makeInitialUpdateState();
-  const urlStateDefaults: ExploreUrlState = {
-    datasource: 'some-datasource',
-    queries: [],
-    range: {
-      from: '',
-      to: '',
-    },
-  };
-  const urlState: ExploreUrlState = { ...urlStateDefaults, ...urlStateOverrides };
-  const serializedUrlState = serializeStateToUrlParam(urlState);
-  const initialState = ({
-    split: false,
-    left: { urlState, update },
-    right: { urlState, update },
-  } as unknown) as ExploreState;
-
-  return {
-    initialState,
-    serializedUrlState,
-  };
-};
 
 describe('Explore reducer', () => {
   describe('split view', () => {
@@ -303,7 +145,7 @@ describe('Explore reducer', () => {
       const initialState = ({
         split: null,
         left: leftItemMock as ExploreItemState,
-        right: makeExploreItemState(),
+        right: makeExplorePaneState(),
       } as unknown) as ExploreState;
 
       reducerTester<ExploreState>()
@@ -591,3 +433,27 @@ describe('Explore reducer', () => {
     });
   });
 });
+
+export const setup = (urlStateOverrides?: any) => {
+  const update = makeInitialUpdateState();
+  const urlStateDefaults: ExploreUrlState = {
+    datasource: 'some-datasource',
+    queries: [],
+    range: {
+      from: '',
+      to: '',
+    },
+  };
+  const urlState: ExploreUrlState = { ...urlStateDefaults, ...urlStateOverrides };
+  const serializedUrlState = serializeStateToUrlParam(urlState);
+  const initialState = ({
+    split: false,
+    left: { urlState, update },
+    right: { urlState, update },
+  } as unknown) as ExploreState;
+
+  return {
+    initialState,
+    serializedUrlState,
+  };
+};

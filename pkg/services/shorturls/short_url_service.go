@@ -17,7 +17,7 @@ func init() {
 }
 
 type ShortURLService struct {
-	SQLStore *sqlstore.SqlStore `inject:""`
+	SQLStore *sqlstore.SQLStore `inject:""`
 }
 
 func (s *ShortURLService) Init() error {
@@ -75,4 +75,17 @@ func (s ShortURLService) CreateShortURL(ctx context.Context, user *models.Signed
 	}
 
 	return &shortURL, nil
+}
+
+func (s ShortURLService) DeleteStaleShortURLs(ctx context.Context, cmd *models.DeleteShortUrlCommand) error {
+	return s.SQLStore.WithTransactionalDbSession(ctx, func(session *sqlstore.DBSession) error {
+		var rawSql = "DELETE FROM short_url WHERE created_at <= ? AND (last_seen_at IS NULL OR last_seen_at = 0)"
+
+		if result, err := session.Exec(rawSql, cmd.OlderThan.Unix()); err != nil {
+			return err
+		} else if cmd.NumDeleted, err = result.RowsAffected(); err != nil {
+			return err
+		}
+		return nil
+	})
 }

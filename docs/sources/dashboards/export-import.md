@@ -1,10 +1,7 @@
 +++
 title = "Export and import"
 keywords = ["grafana", "dashboard", "documentation", "export", "import"]
-type = "docs"
 aliases = ["/docs/grafana/latest/reference/export_import/"]
-[menu.docs]
-parent = "dashboard_features"
 weight = 800
 +++
 
@@ -30,7 +27,7 @@ the dashboard, and will also be added as a required input when the dashboard is 
 
 ## Importing a dashboard
 
-To import a dashboard click the + icon in the side menu, and then click **Import**. 
+To import a dashboard click the + icon in the side menu, and then click **Import**.
 
 {{< docs-imagebox img="/img/docs/v70/import_step1.png" max-width="700px" >}}
 
