@@ -193,6 +193,7 @@ export class BackendSrv implements BackendService {
               break;
           }
         }
+        // @ts-ignore
         if (!data) {
           const textData = await response.text(); // this could be just a string, prometheus requests for instance
           try {

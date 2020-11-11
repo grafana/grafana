@@ -68,7 +68,7 @@ export type BackendSrvRequest = {
    *
    * By default values are json parsed from text
    */
-  responseType?: 'arraybuffer' | 'blob' | 'json' | 'text';
+  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob';
 
   /**
    * The credentials read-only property of the Request interface indicates whether the user agent should send cookies from the other domain in the case of cross-origin requests.
