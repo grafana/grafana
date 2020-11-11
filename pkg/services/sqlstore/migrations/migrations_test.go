@@ -12,7 +12,7 @@ import (
 
 func TestMigrations(t *testing.T) {
 	testDBs := []sqlutil.TestDB{
-		sqlutil.Sqlite3TestDB(),
+		sqlutil.SQLite3TestDB(),
 	}
 
 	for _, testDB := range testDBs {

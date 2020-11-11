@@ -16,7 +16,6 @@ import {
   initDashboardTemplating,
   initVariablesTransaction,
   processVariables,
-  setOptionFromUrl,
   validateVariableSelectionState,
 } from './actions';
 import {
@@ -203,7 +202,6 @@ describe('shared actions', () => {
       const query = { orgId: '1', 'var-stats': 'response', 'var-substats': ALL_VARIABLE_TEXT };
       const tester = await reduxTester<{ templating: TemplatingState; location: { query: UrlQueryMap } }>({
         preloadedState: { templating: ({} as unknown) as TemplatingState, location: { query } },
-        debug: true,
       })
         .givenRootReducer(getTemplatingAndLocationRootReducer())
         .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
@@ -236,46 +234,6 @@ describe('shared actions', () => {
           toVariablePayload(substats, {
             option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: false },
           })
-        )
-      );
-    });
-  });
-
-  describe('when setOptionFromUrl is dispatched with a custom variable (no refresh property)', () => {
-    it.each`
-      urlValue      | isMulti  | expected
-      ${'B'}        | ${false} | ${'B'}
-      ${['B']}      | ${false} | ${'B'}
-      ${'X'}        | ${false} | ${'X'}
-      ${''}         | ${false} | ${''}
-      ${null}       | ${false} | ${null}
-      ${undefined}  | ${false} | ${undefined}
-      ${'B'}        | ${true}  | ${['B']}
-      ${['B']}      | ${true}  | ${['B']}
-      ${'X'}        | ${true}  | ${['X']}
-      ${''}         | ${true}  | ${['']}
-      ${['A', 'B']} | ${true}  | ${['A', 'B']}
-      ${null}       | ${true}  | ${[null]}
-      ${undefined}  | ${true}  | ${[undefined]}
-    `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected, isMulti }) => {
-      const custom = customBuilder()
-        .withId('0')
-        .withMulti(isMulti)
-        .withOptions('A', 'B', 'C')
-        .withCurrent('A')
-        .build();
-
-      const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
-        .whenAsyncActionIsDispatched(setOptionFromUrl(toVariableIdentifier(custom), urlValue), true);
-
-      await tester.thenDispatchedActionsShouldEqual(
-        setCurrentVariableValue(
-          toVariablePayload(
-            { type: 'custom', id: '0' },
-            { option: { text: expected, value: expected, selected: false } }
-          )
         )
       );
     });
