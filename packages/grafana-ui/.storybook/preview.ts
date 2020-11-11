@@ -47,13 +47,10 @@ export const parameters = {
     showNav: true,
     isFullscreen: false,
     isToolshown: true,
-    storySort: (a: any, b: any) => {
-      if (a[1].kind.split('/')[0] === 'Docs Overview') {
-        return -1;
-      } else if (b[1].kind.split('/')[0] === 'Docs Overview') {
-        return 1;
-      }
-      return a[1].id.localeCompare(b[1].id);
+    storySort: {
+      method: 'alphabetical',
+      // Order Docs Overview and Docs Overview/Intro story first
+      order: ['Docs Overview', ['Intro']],
     },
   },
   knobs: {
