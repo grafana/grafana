@@ -1,27 +1,32 @@
-import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
-import { GraphFieldConfig, graphFieldOptions } from '@grafana/ui';
-import { PointMode, LineMode, AxisPlacement } from '@grafana/ui/src/components/uPlot/config';
+import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import {
+  GraphFieldConfig,
+  PointMode,
+  GraphMode,
+  AxisPlacement,
+  graphFieldOptions,
+} from '@grafana/ui/src/components/uPlot/config';
 import { GraphPanel } from './GraphPanel';
 import { Options } from './types';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
+  .setNoPadding()
   .useFieldConfig({
-    standardOptions: [
-      // FieldConfigProperty.Min,
-      // FieldConfigProperty.Max,
-      FieldConfigProperty.Color,
-      FieldConfigProperty.Unit,
-      FieldConfigProperty.DisplayName,
-      FieldConfigProperty.Decimals,
-      // NOT:  FieldConfigProperty.Thresholds,
-      FieldConfigProperty.Mappings,
-    ],
-
+    standardOptions: {
+      [FieldConfigProperty.Color]: {
+        settings: {
+          byValueSupport: false,
+        },
+        defaultValue: {
+          mode: FieldColorModeId.PaletteClassic,
+        },
+      },
+    },
     useCustomConfig: builder => {
       builder
         .addRadio({
-          path: 'line',
-          name: 'Mode',
+          path: 'mode',
+          name: 'Display',
           defaultValue: graphFieldOptions.line[0].value,
           settings: {
             options: graphFieldOptions.line,
@@ -36,7 +41,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             max: 10,
             step: 1,
           },
-          showIf: c => !(c.line === LineMode.Bar || c.line === LineMode.Hide),
+          showIf: c => !(c.mode === GraphMode.Bar || c.mode === GraphMode.Points),
         })
         .addSliderInput({
           path: 'fillAlpha',
@@ -47,7 +52,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             max: 1,
             step: 0.1,
           },
-          showIf: c => c.line !== LineMode.Hide,
+          showIf: c => !(c.mode === GraphMode.Bar || c.mode === GraphMode.Points),
         })
         .addRadio({
           path: 'points',
@@ -66,57 +71,39 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             max: 10,
             step: 1,
           },
-          showIf: c => c.points !== PointMode.Hide,
+          showIf: c => c.points !== PointMode.Never,
         })
         .addRadio({
           path: 'axis',
-          name: 'Axis',
-          defaultValue: graphFieldOptions.axis[0].value,
+          name: 'Placement',
+          category: ['Axis'],
+          defaultValue: graphFieldOptions.axisPlacement[0].value,
           settings: {
-            options: graphFieldOptions.axis,
+            options: graphFieldOptions.axisPlacement,
           },
         })
         .addTextInput({
-          path: 'axis.label',
-          name: 'Axis Label',
+          path: 'axisLabel',
+          name: 'Label',
           category: ['Axis'],
           defaultValue: '',
           settings: {
             placeholder: 'Optional text',
           },
-          showIf: c => c.axis !== AxisPlacement.Hide,
+          showIf: c => c.axisPlacement !== AxisPlacement.Hide,
           // no matter what the field type is
           shouldApply: () => true,
         })
         .addNumberInput({
           path: 'axisWidth',
-          name: 'Y axis width',
+          name: 'Width',
+          category: ['Axis'],
           defaultValue: 60,
           settings: {
             placeholder: '60',
           },
-          showIf: c => c.axis !== AxisPlacement.Hide,
-        })
-        .addBooleanSwitch({
-          path: 'axisGrid',
-          name: 'Show axis grid',
-          description: '',
-          defaultValue: true,
-          showIf: c => c.axis !== AxisPlacement.Hide,
+          showIf: c => c.axisPlacement !== AxisPlacement.Hide,
         });
-      // .addRadio({
-      //   path: 'nullValues',
-      //   name: 'Display null values as',
-      //   description: '',
-      //   defaultValue: 'null',
-      //   settings: {
-      //     options: [
-      //       { value: 'null', label: 'null' },
-      //       { value: 'connected', label: 'Connected' },
-      //       { value: 'asZero', label: 'Zero' },
-      //     ],
-      //   },
-      // });
     },
   })
   .setPanelOptions(builder => {
@@ -157,8 +144,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
         defaultValue: 'bottom',
         settings: {
           options: [
-            { value: 'left', label: 'Left' },
-            { value: 'top', label: 'Top' },
             { value: 'bottom', label: 'Bottom' },
             { value: 'right', label: 'Right' },
           ],

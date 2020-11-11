@@ -2,11 +2,7 @@
 title = "Prometheus"
 description = "Guide for using Prometheus in Grafana"
 keywords = ["grafana", "prometheus", "guide"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/datasources/prometheus"]
-[menu.docs]
-name = "Prometheus"
-parent = "datasources"
 weight = 1300
 +++
 

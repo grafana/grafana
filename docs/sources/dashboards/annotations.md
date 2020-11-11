@@ -1,11 +1,7 @@
 +++
 title = "Annotations"
 keywords = ["grafana", "annotations", "documentation", "guide"]
-type = "docs"
 aliases = ["/docs/grafana/latest/reference/annotations/"]
-[menu.docs]
-name = "Annotations"
-parent = "dashboard_features"
 weight = 2
 +++
 
