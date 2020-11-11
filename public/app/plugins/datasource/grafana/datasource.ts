@@ -81,11 +81,7 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
       params.dashboardId = options.dashboard.id;
       // remove tags filter if any
       delete params.tags;
-    } else {
-      // require at least one tag
-      if (!Array.isArray(annotation.tags) || annotation.tags.length === 0) {
-        return Promise.resolve([]);
-      }
+    } else if (Array.isArray(annotation.tags) && annotation.tags.length > 0) {
       const delimiter = '__delimiter__';
       const tags = [];
       for (const t of params.tags) {
@@ -101,6 +97,9 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
         }
       }
       params.tags = tags;
+    } else {
+      // If neither tags nor dashboard are specified, fetch all annotations.
+      delete params.tags;
     }
 
     return getBackendSrv().get(

@@ -71,7 +71,52 @@ describe('grafana data source', () => {
         return ds.annotationQuery(options);
       });
 
+      it('should query by dashboard ID', () => {
+        expect(calledBackendSrvParams.dashboardId).toBe(1);
+      });
       it('should remove tags from query options', () => {
+        expect(calledBackendSrvParams.tags).toBe(undefined);
+      });
+    });
+
+    describe('with type tags and tags', () => {
+      const options = setupAnnotationQueryOptions(
+        {
+          type: GrafanaAnnotationType.Tags,
+          tags: ['tag1', 'tag2'],
+        },
+        { id: 1 }
+      );
+
+      beforeEach(() => {
+        return ds.annotationQuery(options);
+      });
+
+      it('should not set dashboard ID in query options', () => {
+        expect(calledBackendSrvParams.dashboardId).toBe(undefined);
+      });
+      it('should set tags in query options', () => {
+        expect(calledBackendSrvParams.tags).toStrictEqual(['tag1', 'tag2']);
+      });
+    });
+
+    describe('with type tags and no tags', () => {
+      const options = setupAnnotationQueryOptions(
+        {
+          type: GrafanaAnnotationType.Tags,
+          tags: [],
+        },
+        { id: 1 }
+      );
+
+      beforeEach(() => {
+        return ds.annotationQuery(options);
+      });
+
+      it('should not set dashboard ID in query options', () => {
+        expect(calledBackendSrvParams.dashboardId).toBe(undefined);
+      });
+      it('should set not tags in query options', () => {
         expect(calledBackendSrvParams.tags).toBe(undefined);
       });
     });
