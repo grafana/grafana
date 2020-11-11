@@ -70,20 +70,19 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
           transition: transform 0.2s cubic-bezier(0.19, 1, 0.22, 1);
         }
       }
-    }
     `,
   };
 });
 
 export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
-  ({ value, checked, disabled = false, onChange, ...inputProps }, ref) => {
+  ({ value, checked, disabled = false, onChange, id, ...inputProps }, ref) => {
     if (checked) {
       deprecationWarning('Switch', 'checked prop', 'value');
     }
 
     const theme = useTheme();
     const styles = getSwitchStyles(theme);
-    const switchIdRef = useRef(uniqueId('switch-'));
+    const switchIdRef = useRef(id ? id : uniqueId('switch-'));
 
     return (
       <div className={cx(styles.switch)}>
@@ -103,3 +102,5 @@ export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
     );
   }
 );
+
+Switch.displayName = 'Switch';
