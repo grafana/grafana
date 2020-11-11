@@ -90,7 +90,7 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("drop table dashboard_v1", NewDropTableMigration("dashboard_v1"))
 
 	// change column type of dashboard.data
-	mg.AddMigration("alter dashboard.data to mediumtext v1", NewRawSqlMigration("").
+	mg.AddMigration("alter dashboard.data to mediumtext v1", NewRawSQLMigration("").
 		Mysql("ALTER TABLE dashboard MODIFY data MEDIUMTEXT;"))
 
 	// add column to store updater of a dashboard
@@ -155,8 +155,8 @@ func addDashboardMigration(mg *Migrator) {
 		Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true,
 	}))
 
-	mg.AddMigration("Update uid column values in dashboard", NewRawSqlMigration("").
-		Sqlite("UPDATE dashboard SET uid=printf('%09d',id) WHERE uid IS NULL;").
+	mg.AddMigration("Update uid column values in dashboard", NewRawSQLMigration("").
+		SQLite("UPDATE dashboard SET uid=printf('%09d',id) WHERE uid IS NULL;").
 		Postgres("UPDATE dashboard SET uid=lpad('' || id::text,9,'0') WHERE uid IS NULL;").
 		Mysql("UPDATE dashboard SET uid=lpad(id,9,'0') WHERE uid IS NULL;"))
 
@@ -220,9 +220,9 @@ func addDashboardMigration(mg *Migrator) {
 		Type: IndexType,
 	}))
 
-	mg.AddMigration("delete tags for deleted dashboards", NewRawSqlMigration(
+	mg.AddMigration("delete tags for deleted dashboards", NewRawSQLMigration(
 		"DELETE FROM dashboard_tag WHERE dashboard_id NOT IN (SELECT id FROM dashboard)"))
 
-	mg.AddMigration("delete stars for deleted dashboards", NewRawSqlMigration(
+	mg.AddMigration("delete stars for deleted dashboards", NewRawSQLMigration(
 		"DELETE FROM star WHERE dashboard_id NOT IN (SELECT id FROM dashboard)"))
 }
