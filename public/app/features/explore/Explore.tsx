@@ -20,6 +20,7 @@ import {
   TimeZone,
   ExploreUrlState,
   LogsModel,
+  TraceViewData,
 } from '@grafana/data';
 
 import store from 'app/core/store';
@@ -409,7 +410,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                             // If there is not data (like 404) we show a separate error so no need to show anything here
                             queryResponse.series[0] && (
                               <TraceView
-                                trace={queryResponse.series[0].fields[0].values.get(0) as any}
+                                trace={queryResponse.series[0].fields[0].values.get(0) as TraceViewData | undefined}
                                 splitOpenFn={splitOpen}
                               />
                             )}
