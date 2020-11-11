@@ -2,13 +2,8 @@
 title = "What's new in Grafana v6.6"
 description = "Feature and improvement highlights for Grafana v6.6"
 keywords = ["grafana", "new", "documentation", "6.6", "release notes"]
-type = "docs"
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v6-6/"]
-[menu.docs]
-name = "Version 6.6"
-identifier = "v6.6"
-parent = "whatsnew"
-weight = -16
+weight = -25
 +++
 
 # What's new in Grafana v6.6
@@ -209,9 +204,9 @@ In our mission to migrate away from AngularJS to React we have removed all Angul
 
 Removing the AngularJS dependencies in `backendSrv` has the unfortunate side effect of AngularJS digest no longer being triggered for any request made with `backendSrv`. Because of this, external plugins using `backendSrv` directly may suffer from strange behaviour in the UI.
 
-To remedy this issue as a plugin author you need to trigger the digest after a direct call to `backendSrv`. 
+To remedy this issue as a plugin author you need to trigger the digest after a direct call to `backendSrv`.
 
-Example: 
+Example:
 
 ```js
 backendSrv.get(‘http://your.url/api’).then(result => {
