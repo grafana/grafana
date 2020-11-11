@@ -1,10 +1,8 @@
-import React, { cloneElement, FC, HTMLAttributes, ReactElement, ReactNode, useCallback, useMemo } from 'react';
+import React, { cloneElement, FC, HTMLAttributes, ReactNode, useCallback, useMemo } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme, styleMixins, stylesFactory } from '../../themes';
 import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';
-import { OnTagClick } from '../Tags/Tag';
-import { TagList } from '../Tags/TagList';
 
 /**
  * @alpha
@@ -49,26 +47,22 @@ const CardInner: FC<CardInnerProps> = ({ children, href }) => {
 export interface Props extends ContainerProps {
   /** Main heading for the Card **/
   heading: ReactNode;
-  /** Additional data about the card. If array is supplied, elements will be rendered with vertical line separator */
-  metadata?: ReactNode | ReactNode[];
   /** Card description text */
   description?: string;
-  /** List of tags to display in the card */
-  tags?: string[];
-  /** Optional callback for tag onclick event */
-  onTagClick?: OnTagClick;
   /** Indicates if the card and all its actions can be interacted with */
   disabled?: boolean;
-  /** Image or icon to be displayed on the let side of the card */
-  image?: ReactNode;
-  /** Main card actions **/
-  actions?: ReactElement[];
-  /** Right-side actions */
-  secondaryActions?: ReactElement[];
   /** Link to redirect to on card click. If provided, the Card inner content will be rendered inside `a` */
   href?: string;
   /** On click handler for the Card */
   onClick?: () => void;
+}
+
+export interface CardInterface extends FC<Props> {
+  Tags: typeof Tags;
+  Figure: typeof Figure;
+  Meta: typeof Meta;
+  Actions: typeof Actions;
+  SecondaryActions: typeof SecondaryActions;
 }
 
 /**
@@ -76,68 +70,59 @@ export interface Props extends ContainerProps {
  *
  * @alpha
  */
-export const Card: FC<Props> = ({
+export const Card: CardInterface = ({
   heading,
   description,
-  metadata,
-  tags = [],
-  onTagClick,
   disabled,
-  image,
-  actions = [],
   tooltip,
-  secondaryActions = [],
   href,
   onClick,
   className,
+  children,
   ...htmlProps
 }) => {
-  const hasActions = Boolean(actions.length || secondaryActions.length);
-  const disableHover = disabled || actions.length > 1 || !onClick;
-  const disableEvents = disabled && !actions.length;
   const theme = useTheme();
-  const styles = getCardStyles(theme, disableEvents, disableHover);
-  // Join meta data elements by '|'
-  const meta = useMemo(
-    () =>
-      Array.isArray(metadata)
-        ? (metadata as ReactNode[]).filter(Boolean).reduce((prev, curr, i) => [
-            prev,
-            <span key={`separator_${i}`} className={styles.separator}>
-              |
-            </span>,
-            curr,
-          ])
-        : metadata,
-    [metadata, styles.separator]
+  const styles = getCardStyles(theme);
+  const [tags, figure, meta, actions, secondaryActions] = ['Tags', 'Figure', 'Meta', 'Actions', 'SecondaryActions'].map(
+    item => {
+      //@ts-ignore
+      const found = React.Children.toArray(children).find((child: JSX.Element) => {
+        return child && child?.type?.displayName === item;
+      }) as JSX.Element | undefined;
+
+      if (found) {
+        return React.cloneElement(found, { ...found.props, styles, disabled });
+      }
+      return found;
+    }
   );
+
+  const hasActions = Boolean(actions || secondaryActions);
+  const disableHover = disabled || !onClick;
+  const disableEvents = disabled && !actions;
+
+  const containerStyles = getContainerStyles(theme, disableEvents, disableHover);
   const onCardClick = useCallback(() => (disableHover ? () => {} : onClick), [disableHover, onClick]);
 
   return (
     <CardContainer
       tooltip={tooltip}
       tabIndex={disableHover ? undefined : 0}
-      className={cx(styles.container, className)}
+      className={cx(containerStyles, className)}
       onClick={onCardClick}
       {...htmlProps}
     >
       <CardInner href={href}>
-        {image && <div className={styles.media}>{image}</div>}
+        {figure}
         <div className={styles.inner}>
           <div className={styles.heading}>{heading}</div>
-          {meta && <div className={styles.metadata}>{meta}</div>}
-          {!!tags.length && <TagList tags={tags} onClick={onTagClick} className={styles.tagList} />}
+          {meta}
+          {tags}
           {description && <p className={styles.description}>{description}</p>}
           {hasActions && (
             <div className={styles.actionRow}>
-              {!!actions.length && (
-                <div className={styles.actions}>{actions.map(action => cloneElement(action, { disabled }))}</div>
-              )}
-              {!!secondaryActions.length && (
-                <div className={styles.secondaryActions}>
-                  {secondaryActions.map(action => cloneElement(action, { disabled }))}
-                </div>
-              )}
+              {actions}
+              {secondaryActions}
             </div>
           )}
         </div>
@@ -149,42 +134,48 @@ export const Card: FC<Props> = ({
 /**
  * @alpha
  */
-export const getCardStyles = stylesFactory((theme: GrafanaTheme, disabled = false, disableHover = false) => {
-  return {
-    container: css`
-      display: flex;
-      width: 100%;
-      color: ${theme.colors.textStrong};
-      background: ${theme.colors.bg2};
+export const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled = false, disableHover = false) => {
+  return css`
+    display: flex;
+    width: 100%;
+    color: ${theme.colors.textStrong};
+    background: ${theme.colors.bg2};
+    border-radius: ${theme.border.radius.sm};
+    padding: ${theme.spacing.md};
+    position: relative;
+    pointer-events: ${disabled ? 'none' : 'auto'};
+    margin-bottom: ${theme.spacing.sm};
+
+    &::after {
+      content: '';
+      display: ${disabled ? 'block' : 'none'};
+      position: absolute;
+      top: 1px;
+      left: 1px;
+      right: 1px;
+      bottom: 1px;
+      background: linear-gradient(180deg, rgba(75, 79, 84, 0.5) 0%, rgba(82, 84, 92, 0.5) 100%);
+      width: calc(100% - 2px);
+      height: calc(100% - 2px);
       border-radius: ${theme.border.radius.sm};
-      padding: ${theme.spacing.md};
-      position: relative;
-      pointer-events: ${disabled ? 'none' : 'auto'};
-      margin-bottom: ${theme.spacing.sm};
+    }
 
-      &::after {
-        content: '';
-        display: ${disabled ? 'block' : 'none'};
-        position: absolute;
-        top: 1px;
-        left: 1px;
-        right: 1px;
-        bottom: 1px;
-        background: linear-gradient(180deg, rgba(75, 79, 84, 0.5) 0%, rgba(82, 84, 92, 0.5) 100%);
-        width: calc(100% - 2px);
-        height: calc(100% - 2px);
-        border-radius: ${theme.border.radius.sm};
-      }
+    &:hover {
+      background: ${disableHover ? theme.colors.bg2 : styleMixins.hoverColor(theme.colors.bg2, theme)};
+      cursor: ${disableHover ? 'default' : 'pointer'};
+    }
 
-      &:hover {
-        background: ${disableHover ? theme.colors.bg2 : styleMixins.hoverColor(theme.colors.bg2, theme)};
-        cursor: ${disableHover ? 'default' : 'pointer'};
-      }
+    &:focus {
+      ${styleMixins.focusCss(theme)};
+    }
+  `;
+});
 
-      &:focus {
-        ${styleMixins.focusCss(theme)};
-      }
-    `,
+/**
+ * @alpha
+ */
+export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
     inner: css`
       width: 100%;
     `,
@@ -243,3 +234,60 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme, disabled = fals
     `,
   };
 });
+
+const Tags: FC = ({ children }) => {
+  return <>{children}</>;
+};
+Tags.displayName = 'Tags';
+
+const Figure: FC<{ styles?: any }> = ({ children, styles }) => {
+  return <div className={styles.media}>{children}</div>;
+};
+
+Figure.displayName = 'Figure';
+
+const Meta: FC<{ styles?: any }> = ({ children, styles }) => {
+  // Join meta data elements by '|'
+  const meta = useMemo(
+    () =>
+      Array.isArray(children)
+        ? React.Children.toArray(children)
+            .filter(Boolean)
+            .reduce((prev, curr, i) => [
+              prev,
+              <span key={`separator_${i}`} className={styles.separator}>
+                |
+              </span>,
+              curr,
+            ])
+        : children,
+    [children, styles.separator]
+  );
+  return <div className={styles.metadata}>{meta}</div>;
+};
+
+Meta.displayName = 'Meta';
+
+const Actions: FC<any> = ({ children, styles, disabled }) => {
+  return (
+    <div className={styles.actions}>{React.Children.map(children, child => cloneElement(child, { disabled }))}</div>
+  );
+};
+
+Actions.displayName = 'Actions';
+
+const SecondaryActions: FC<any> = ({ children, styles, disabled }) => {
+  return (
+    <div className={styles.secondaryActions}>
+      {React.Children.map(children, child => cloneElement(child, { disabled }))}
+    </div>
+  );
+};
+
+SecondaryActions.displayName = 'SecondaryActions';
+
+Card.Tags = Tags;
+Card.Figure = Figure;
+Card.Meta = Meta;
+Card.Actions = Actions;
+Card.SecondaryActions = SecondaryActions;
