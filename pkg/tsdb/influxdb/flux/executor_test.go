@@ -204,6 +204,12 @@ func TestBuckets(t *testing.T) {
 	})
 }
 
+func TestBooleanGrouping(t *testing.T) {
+	t.Run("Boolean", func(t *testing.T) {
+		verifyGoldenResponse(t, "boolean")
+	})
+}
+
 func TestGoldenFiles(t *testing.T) {
 	t.Run("Renamed", func(t *testing.T) {
 		verifyGoldenResponse(t, "renamed")
