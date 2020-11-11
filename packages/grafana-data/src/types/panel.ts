@@ -28,6 +28,14 @@ export interface PanelData {
   /** Contains data frames with field overrides applied */
   series: DataFrame[];
 
+  /**
+   * This flag will change when the structure is different from the previous response
+   * The structure includes frames, names, types, and any config properties
+   *
+   * 0 or undefined indicates that the change status is unknown or not computed
+   */
+  seriesStructureChanged?: number;
+
   /** A list of annotation items */
   annotations?: DataFrame[];
 
