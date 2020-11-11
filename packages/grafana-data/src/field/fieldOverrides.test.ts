@@ -7,7 +7,7 @@ import {
   setDynamicConfigValue,
   setFieldConfigDefaults,
 } from './fieldOverrides';
-import { MutableDataFrame, toDataFrame } from '../dataframe';
+import { ArrayDataFrame, MutableDataFrame, toDataFrame } from '../dataframe';
 import {
   DataFrame,
   Field,
@@ -77,11 +77,11 @@ locationUtil.initialize({
 
 describe('Global MinMax', () => {
   it('find global min max', () => {
-    const f0 = new MutableDataFrame();
-    f0.add({ title: 'AAA', value: 100, value2: 1234 });
-    f0.add({ title: 'BBB', value: -20, value2: null });
-    f0.add({ title: 'CCC', value: 200, value2: 1000 });
-    expect(f0.length).toEqual(3);
+    const f0 = new ArrayDataFrame<{ title: string; value: number; value2: number | null }>([
+      { title: 'AAA', value: 100, value2: 1234 },
+      { title: 'BBB', value: -20, value2: null },
+      { title: 'CCC', value: 200, value2: 1000 },
+    ]);
 
     const minmax = findNumericFieldMinMax([f0]);
     expect(minmax.min).toEqual(-20);
@@ -105,11 +105,11 @@ describe('Global MinMax', () => {
 });
 
 describe('applyFieldOverrides', () => {
-  const f0 = new MutableDataFrame();
-  f0.add({ title: 'AAA', value: 100, value2: 1234 });
-  f0.add({ title: 'BBB', value: -20, value2: null });
-  f0.add({ title: 'CCC', value: 200, value2: 1000 });
-  expect(f0.length).toEqual(3);
+  const f0 = new ArrayDataFrame<{ title: string; value: number; value2: number | null }>([
+    { title: 'AAA', value: 100, value2: 1234 },
+    { title: 'BBB', value: -20, value2: null },
+    { title: 'CCC', value: 200, value2: 1000 },
+  ]);
 
   // Hardcode the max value
   f0.fields[1].config.max = 0;
@@ -156,19 +156,19 @@ describe('applyFieldOverrides', () => {
       });
 
       expect(withOverrides[0].fields[0].state!.scopedVars).toMatchInlineSnapshot(`
-        Object {
-          "__field": Object {
-            "text": "Field",
-            "value": Object {},
-          },
-          "__series": Object {
-            "text": "Series",
-            "value": Object {
-              "name": "A",
-            },
-          },
-        }
-      `);
+                                                                                 Object {
+                                                                                   "__field": Object {
+                                                                                     "text": "Field",
+                                                                                     "value": Object {},
+                                                                                   },
+                                                                                   "__series": Object {
+                                                                                     "text": "Series",
+                                                                                     "value": Object {
+                                                                                       "name": "A",
+                                                                                     },
+                                                                                   },
+                                                                                 }
+                                                                                 `);
 
       expect(withOverrides[1].fields[0].state!.scopedVars).toMatchInlineSnapshot(`
         Object {
