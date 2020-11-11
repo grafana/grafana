@@ -56,8 +56,8 @@ export const graphFieldOptions = {
     { label: 'Line', value: GraphMode.Line },
     { label: 'Bars', value: GraphMode.Bar },
     { label: 'Points', value: GraphMode.Points },
-    { label: 'Staircase', value: GraphMode.Staircase, description: 'TODO!!!' },
-    { label: 'Smooth', value: GraphMode.Smooth, description: 'TODO!!!' },
+    // { label: 'Staircase', value: GraphMode.Staircase, description: 'TODO!!!' },
+    // { label: 'Smooth', value: GraphMode.Smooth, description: 'TODO!!!' },
   ] as Array<SelectableValue<GraphMode>>,
 
   points: [
