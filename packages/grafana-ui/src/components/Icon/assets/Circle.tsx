@@ -11,7 +11,7 @@ export const Circle: FunctionComponent<SvgProps> = ({ size, ...rest }) => {
       height={size}
       {...rest}
     >
-      <circle cx="12" cy="12" r="10" />
+      <path d="M22,12c0,5.5-4.5,10-10,10S2,17.5,2,12S6.5,2,12,2S22,6.5,22,12z" />
     </svg>
   );
 };

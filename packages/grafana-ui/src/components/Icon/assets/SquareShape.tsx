@@ -11,7 +11,7 @@ export const SquareShape: FunctionComponent<SvgProps> = ({ size, ...rest }) => {
       height={size}
       {...rest}
     >
-      <rect width="85%" height="85%" x="2" y="2" rx="5" />
+      <path d="M17,2H7C4.2,2,2,4.2,2,7v10c0,2.8,2.2,5,5,5h10c2.8,0,5-2.2,5-5V7C22,4.2,19.8,2,17,2z" />
     </svg>
   );
 };
