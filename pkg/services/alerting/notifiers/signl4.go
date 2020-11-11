@@ -77,7 +77,7 @@ func NewSignl4Notifier(model *models.AlertNotification) (alerting.Notifier, erro
 		return nil, alerting.ValidationError{Reason: "Could not find api key property in settings"}
 	}
 	apiURL := signl4AlertURL + teamSecret
-	
+
 	s4Service := model.Settings.Get("s4Service").MustString()
 	s4Location := model.Settings.Get("s4Location").MustString()
 	s4AlertingScenario := model.Settings.Get("s4AlertingScenario").MustString()
@@ -112,9 +112,8 @@ type Signl4Notifier struct {
 
 // Notify sends an alert notification to SIGNL4.
 func (on *Signl4Notifier) Notify(evalContext *alerting.EvalContext) error {
-	var err error
 
-	err = on.createAlert(evalContext)
+	err := on.createAlert(evalContext)
 
 	return err
 }
