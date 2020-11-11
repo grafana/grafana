@@ -21,6 +21,7 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { defaultIntervals } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { appEvents } from 'app/core/core';
 import { defaultSelectOptions } from '@grafana/ui/src/components/TimePicker/TimePicker';
+import { rawToTimeRange } from '@grafana/ui/src/components/TimePicker/time';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -43,10 +44,39 @@ class UnthemedDashNavTimeControls extends Component<Props> {
     // and this happens before timeSrv has had chance to update state (as it listens to angular route-updated)
     // This can be removed after timeSrv listens redux location
     this.props.dashboard.on(CoreEvents.timeRangeUpdated, this.triggerForceUpdate);
+
+    window.addEventListener('message', this.handleDOMessage, false);
   }
+
+  handleDOMessage = (event: MessageEvent) => {
+    if (event.origin !== location.origin) {
+      return;
+    }
+    if (event.data !== null && event.data.action !== null) {
+      switch (event.data.action) {
+        case 'do:refresh':
+          this.onRefresh();
+          break;
+        case 'do:change_refresh_interval':
+          if (event.data.interval !== null) {
+            this.onChangeRefreshInterval(event.data.interval);
+          }
+          break;
+        case 'do:change_period':
+          if (event.data.from !== null && event.data.to !== null) {
+            this.onChangeTimePicker(rawToTimeRange({ from: event.data.from, to: event.data.to }));
+          }
+          this.forceUpdate();
+          break;
+        default:
+        // no-op
+      }
+    }
+  };
 
   componentWillUnmount() {
     this.props.dashboard.off(CoreEvents.timeRangeUpdated, this.triggerForceUpdate);
+    window.removeEventListener('message', this.handleDOMessage);
   }
 
   triggerForceUpdate = () => {
@@ -122,6 +152,10 @@ class UnthemedDashNavTimeControls extends Component<Props> {
     const timePickerValue = getTimeSrv().timeRange();
     const timeZone = dashboard.getTimezone();
     const styles = getStyles(theme);
+
+    if (location.query.hideTimeControls) {
+      return <div style={{ display: 'none' }}></div>;
+    }
 
     return (
       <div className={styles.container}>
