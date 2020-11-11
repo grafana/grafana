@@ -284,42 +284,38 @@ func formatDate(t time.Time, pattern string) string {
 		formattedDatePatterns = append(formattedDatePatterns, formatted)
 	}
 
+	isoYear, isoWeek := t.ISOWeek()
+	isoYearShort := fmt.Sprintf("%d", isoYear)[2:4]
+	day := t.Weekday()
+	dayOfWeekIso := int(day)
+	if day == time.Sunday {
+		dayOfWeekIso = 7
+	}
+	quarter := 4
+	switch t.Month() {
+	case time.January, time.February, time.March:
+		quarter = 1
+	case time.April, time.May, time.June:
+		quarter = 2
+	case time.July, time.August, time.September:
+		quarter = 3
+	}
+
 	for i, formatted := range formattedDatePatterns {
-		if strings.Contains(formatted, "<std") {
-			isoYear, isoWeek := t.ISOWeek()
-			isoYearShort := fmt.Sprintf("%d", isoYear)[2:4]
-			formatted = strings.ReplaceAll(formatted, "<stdIsoYear>", fmt.Sprintf("%d", isoYear))
-			formatted = strings.ReplaceAll(formatted, "<stdIsoYearShort>", isoYearShort)
-			formatted = strings.ReplaceAll(formatted, "<stdWeekOfYear>", fmt.Sprintf("%02d", isoWeek))
-
-			formatted = strings.ReplaceAll(formatted, "<stdUnix>", fmt.Sprintf("%d", t.Unix()))
-
-			day := t.Weekday()
-			dayOfWeekIso := int(day)
-			if day == time.Sunday {
-				dayOfWeekIso = 7
-			}
-
-			formatted = strings.ReplaceAll(formatted, "<stdDayOfWeek>", fmt.Sprintf("%d", day))
-			formatted = strings.ReplaceAll(formatted, "<stdDayOfWeekISO>", fmt.Sprintf("%d", dayOfWeekIso))
-			formatted = strings.ReplaceAll(formatted, "<stdDayOfYear>", fmt.Sprintf("%d", t.YearDay()))
-
-			quarter := 4
-
-			switch t.Month() {
-			case time.January, time.February, time.March:
-				quarter = 1
-			case time.April, time.May, time.June:
-				quarter = 2
-			case time.July, time.August, time.September:
-				quarter = 3
-			}
-
-			formatted = strings.ReplaceAll(formatted, "<stdQuarter>", fmt.Sprintf("%d", quarter))
-			formatted = strings.ReplaceAll(formatted, "<stdHourNoZero>", fmt.Sprintf("%d", t.Hour()))
-
-			formattedDatePatterns[i] = formatted
+		if !strings.Contains(formatted, "<std") {
+			continue
 		}
+		formatted = strings.ReplaceAll(formatted, "<stdIsoYear>", fmt.Sprintf("%d", isoYear))
+		formatted = strings.ReplaceAll(formatted, "<stdIsoYearShort>", isoYearShort)
+		formatted = strings.ReplaceAll(formatted, "<stdWeekOfYear>", fmt.Sprintf("%02d", isoWeek))
+		formatted = strings.ReplaceAll(formatted, "<stdUnix>", fmt.Sprintf("%d", t.Unix()))
+		formatted = strings.ReplaceAll(formatted, "<stdDayOfWeek>", fmt.Sprintf("%d", day))
+		formatted = strings.ReplaceAll(formatted, "<stdDayOfWeekISO>", fmt.Sprintf("%d", dayOfWeekIso))
+		formatted = strings.ReplaceAll(formatted, "<stdDayOfYear>", fmt.Sprintf("%d", t.YearDay()))
+		formatted = strings.ReplaceAll(formatted, "<stdQuarter>", fmt.Sprintf("%d", quarter))
+		formatted = strings.ReplaceAll(formatted, "<stdHourNoZero>", fmt.Sprintf("%d", t.Hour()))
+
+		formattedDatePatterns[i] = formatted
 	}
 
 	var fullPattern []string
