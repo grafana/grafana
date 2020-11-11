@@ -23,7 +23,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "fixed"
+            "mode": "palette-classic"
           },
           "custom": {
             "axis": {
@@ -39,9 +39,6 @@
               "alpha": 0.1
             },
             "line": {
-              "color": {
-                "mode": "fixed"
-              },
               "show": true,
               "width": 1
             },
@@ -359,7 +356,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "align": null,
@@ -564,7 +561,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "align": null,
@@ -682,7 +679,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "align": null,
@@ -815,7 +812,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "align": null,
@@ -964,7 +961,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "align": null,
@@ -1054,7 +1051,7 @@
                     "id": "color",
                     "value": {
                       "fixedColor": "purple",
-                      "mode": "fixed"
+                      "mode": "palette-classic"
                     }
                   },
                   {
@@ -1113,7 +1110,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "align": null,
@@ -1203,7 +1200,7 @@
                     "id": "color",
                     "value": {
                       "fixedColor": "purple",
-                      "mode": "fixed"
+                      "mode": "palette-classic"
                     }
                   },
                   {
@@ -1262,7 +1259,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "align": null,
@@ -1352,7 +1349,7 @@
                     "id": "color",
                     "value": {
                       "fixedColor": "purple",
-                      "mode": "fixed"
+                      "mode": "palette-classic"
                     }
                   },
                   {
@@ -1426,7 +1423,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "align": null,
@@ -1444,7 +1441,7 @@
                 },
                 "line": {
                   "color": {
-                    "mode": "fixed"
+                    "mode": "palette-classic"
                   },
                   "show": true,
                   "width": 1
@@ -1486,7 +1483,7 @@
             "legend": {
               "asTable": false,
               "isVisible": true,
-              "placement": "under"
+              "placement": "bottom"
             },
             "tooltipOptions": {
               "mode": "single"
@@ -1513,7 +1510,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "align": null,
@@ -1531,7 +1528,7 @@
                 },
                 "line": {
                   "color": {
-                    "mode": "fixed"
+                    "mode": "palette-classic"
                   },
                   "show": true,
                   "width": 1
@@ -1573,7 +1570,7 @@
             "legend": {
               "asTable": false,
               "isVisible": true,
-              "placement": "under"
+              "placement": "bottom"
             },
             "tooltipOptions": {
               "mode": "multi"
@@ -1600,7 +1597,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "axis": {
@@ -1617,7 +1614,7 @@
                 },
                 "line": {
                   "color": {
-                    "mode": "fixed"
+                    "mode": "palette-classic"
                   },
                   "show": true,
                   "width": 1
@@ -1659,7 +1656,7 @@
             "legend": {
               "asTable": false,
               "isVisible": true,
-              "placement": "under"
+              "placement": "bottom"
             },
             "tooltipOptions": {
               "mode": "none"
@@ -1686,7 +1683,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "axis": {
@@ -1703,7 +1700,7 @@
                 },
                 "line": {
                   "color": {
-                    "mode": "fixed"
+                    "mode": "palette-classic"
                   },
                   "show": true,
                   "width": 1
@@ -1746,7 +1743,7 @@
             "legend": {
               "asTable": false,
               "isVisible": true,
-              "placement": "under"
+              "placement": "bottom"
             },
             "tooltipOptions": {
               "mode": "multi"
@@ -1791,7 +1788,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "axis": {
@@ -1808,7 +1805,7 @@
                 },
                 "line": {
                   "color": {
-                    "mode": "fixed"
+                    "mode": "palette-classic"
                   },
                   "show": true,
                   "width": 1
@@ -1851,7 +1848,7 @@
             "legend": {
               "asTable": false,
               "isVisible": true,
-              "placement": "under"
+              "placement": "bottom"
             },
             "tooltipOptions": {
               "mode": "single"
@@ -1881,7 +1878,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "axis": {
@@ -1915,7 +1912,7 @@
                 },
                 "line": {
                   "color": {
-                    "mode": "fixed"
+                    "mode": "palette-classic"
                   },
                   "show": true,
                   "width": 1
@@ -1958,7 +1955,7 @@
             "legend": {
               "asTable": false,
               "isVisible": true,
-              "placement": "under"
+              "placement": "bottom"
             },
             "tooltipOptions": {
               "mode": "single"
@@ -1988,7 +1985,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "axis": {
@@ -2005,7 +2002,7 @@
                 },
                 "line": {
                   "color": {
-                    "mode": "fixed"
+                    "mode": "palette-classic"
                   },
                   "show": true,
                   "width": 1
@@ -2048,7 +2045,7 @@
             "legend": {
               "asTable": false,
               "isVisible": true,
-              "placement": "under"
+              "placement": "bottom"
             },
             "tooltipOptions": {
               "mode": "single"
@@ -2093,7 +2090,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "axis": {
@@ -2110,7 +2107,7 @@
                 },
                 "line": {
                   "color": {
-                    "mode": "fixed"
+                    "mode": "palette-classic"
                   },
                   "show": true,
                   "width": 1
@@ -2153,7 +2150,7 @@
             "legend": {
               "asTable": false,
               "isVisible": true,
-              "placement": "under"
+              "placement": "bottom"
             },
             "tooltipOptions": {
               "mode": "single"
@@ -2198,7 +2195,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "align": null,
@@ -2216,7 +2213,7 @@
                 },
                 "line": {
                   "color": {
-                    "mode": "fixed"
+                    "mode": "palette-classic"
                   },
                   "show": false,
                   "width": 1
@@ -2295,7 +2292,7 @@
                     "id": "color",
                     "value": {
                       "fixedColor": "purple",
-                      "mode": "fixed"
+                      "mode": "palette-classic"
                     }
                   }
                 ]
@@ -2363,7 +2360,7 @@
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "fixed"
+                "mode": "palette-classic"
               },
               "custom": {
                 "axis": {
@@ -2380,7 +2377,7 @@
                 },
                 "line": {
                   "color": {
-                    "mode": "fixed"
+                    "mode": "palette-classic"
                   },
                   "show": true,
                   "width": 1
@@ -2469,7 +2466,7 @@
   "refresh": false,
   "schemaVersion": 26,
   "style": "dark",
-  "tags": [],
+  "tags": ["gdev", "panel-tests"],
   "templating": {
     "list": []
   },
@@ -2481,7 +2478,7 @@
     "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
   },
   "timezone": "Africa/Accra",
-  "title": "Graph NG - tests",
+  "title": "Panel Tests - Graph NG",
   "uid": "TkZXxlNG3",
   "version": 65
 }
