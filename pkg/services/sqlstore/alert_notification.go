@@ -80,11 +80,11 @@ func GetAlertNotifications(query *models.GetAlertNotificationsQuery) error {
 	return getAlertNotificationInternal(query, newSession())
 }
 
-func (ss *SqlStore) addAlertNotificationUidByIdHandler() {
+func (ss *SQLStore) addAlertNotificationUidByIdHandler() {
 	bus.AddHandler("sql", ss.GetAlertNotificationUidWithId)
 }
 
-func (ss *SqlStore) GetAlertNotificationUidWithId(query *models.GetAlertNotificationUidQuery) error {
+func (ss *SQLStore) GetAlertNotificationUidWithId(query *models.GetAlertNotificationUidQuery) error {
 	cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
 
 	if cached, found := ss.CacheService.Get(cacheKey); found {
