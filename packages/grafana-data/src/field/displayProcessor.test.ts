@@ -16,10 +16,8 @@ function getDisplayProcessorFromConfig(config: FieldConfig) {
 function assertSame(input: any, processors: DisplayProcessor[], match: DisplayValue) {
   processors.forEach(processor => {
     const value = processor(input);
-    for (const key in match) {
-      if (match.hasOwnProperty(key)) {
-        expect((value as any)[key]).toEqual((match as any)[key]);
-      }
+    for (const key of Object.keys(match)) {
+      expect((value as any)[key]).toEqual((match as any)[key]);
     }
   });
 }
