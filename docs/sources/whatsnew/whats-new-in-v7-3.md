@@ -2,13 +2,8 @@
 title = "What's New in Grafana v7.3"
 description = "Feature and improvement highlights for Grafana v7.3"
 keywords = ["grafana", "new", "documentation", "7.3", "release notes"]
-type = "docs"
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-3/"]
-[menu.docs]
-name = "Version 7.3"
-identifier = "v7.3"
-parent = "whatsnew"
-weight = -17
+weight = -30
 +++
 
 # What's new in Grafana v7.3
@@ -37,26 +32,26 @@ Another new feature that can be seen in the image above is the new image cell di
 
 {{< figure src="/img/docs/v73/color_scheme_dropdown.png" max-width="450px" caption="Color scheme" class="pull-right" >}}
 
-A new standard field [color scheme]({{< relref "../panels/field-options/standard-field-options.md#color-scheme" >}}) option has been added. This new option will provide a unified way for all new panels to specify how colors should be assigned. 
+A new standard field [color scheme]({{< relref "../panels/field-options/standard-field-options.md#color-scheme" >}}) option has been added. This new option will provide a unified way for all new panels to specify how colors should be assigned.
 
-* **Single color**: Specify a single color, useful in an override rule. 
-* **From thresholds**: Informs Grafana to take the color from the matching threshold. 
-* **Classic palette**: Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations. 
-* **Green-Yellow-Red (by value)**: This is a continuous color scheme where Grafana will interpolate a color based on the value being displayed and the field  min & max values.  
+* **Single color**: Specify a single color, useful in an override rule.
+* **From thresholds**: Informs Grafana to take the color from the matching threshold.
+* **Classic palette**: Grafana will assign color by looking up a color in a palette by series index. Useful for Graphs and pie charts and other categorical data visualizations.
+* **Green-Yellow-Red (by value)**: This is a continuous color scheme where Grafana will interpolate a color based on the value being displayed and the field  min & max values.
 * **Blue-Yellow-Red (by value)**: Same as above but different colors.
-* **Blues (by value)**: Same as above but color scheme go from panel background to blue. 
+* **Blues (by value)**: Same as above but color scheme go from panel background to blue.
 
 <div class="clearfix"></div>
 
-As you can see this adds new continuous color schemes where Grafana will interpolate colors. A great use of these new color schemes is the table panel where you can color the background and get a heatmap like effect. 
+As you can see this adds new continuous color schemes where Grafana will interpolate colors. A great use of these new color schemes is the table panel where you can color the background and get a heatmap like effect.
 
 {{< figure src="/img/docs/v73/table_color_scheme.png" max-width="900px" caption="table color scheme" >}}
 
-Another thing to highlight is that all these new color schemes are theme aware and adapt to the current theme. For example here is how the new monochrome color scheme look like in the light theme: 
+Another thing to highlight is that all these new color schemes are theme aware and adapt to the current theme. For example here is how the new monochrome color scheme look like in the light theme:
 
 {{< figure src="/img/docs/v73/table_color_scheme_mono_light.png" max-width="900px" caption="table color monochrome scheme" >}}
 
-As this new option is a standard field option it works in every panel. Here is another example from the [Bar Gauge]({{< relref "../panels/visualizations/bar-gauge-panel.md" >}}) panel. 
+As this new option is a standard field option it works in every panel. Here is another example from the [Bar Gauge]({{< relref "../panels/visualizations/bar-gauge-panel.md" >}}) panel.
 
 {{< figure src="/img/docs/v73/bar_gauge_gradient_color_scheme.png" max-width="900px" caption="bar gauge color scheme" >}}
 
@@ -122,7 +117,7 @@ Example of a login event:
   "userAgent": "Chrome/86.0.4240.111",
   "grafanaVersion": "7.3.0"
 }
-``` 
+```
 
 For more details, see the [Auditing docs]({{<relref "../enterprise/auditing.md">}}).
 
@@ -138,11 +133,11 @@ Insights:
 
 ### SAML single logout
 
-SAML’s single logout (SLO) capability allows users to log out from all applications associated with the current identity provider (IdP) session established via SAML SSO. For more information, refer to the [docs]({{<relref "../enterprise/saml/#single-logout">}}). 
+SAML’s single logout (SLO) capability allows users to log out from all applications associated with the current identity provider (IdP) session established via SAML SSO. For more information, refer to the [docs]({{<relref "../enterprise/saml/#single-logout">}}).
 
 ### SAML IdP-initiated single sign on
 
-IdP-initiated single sign on (SSO) allows the user to log in directly from the SAML identity provider (IdP). It is disabled by default for security reasons. For more information, refer to the [docs]({{<relref "../enterprise/saml/#idp-initiated-single-sign-on-sso">}}). 
+IdP-initiated single sign on (SSO) allows the user to log in directly from the SAML identity provider (IdP). It is disabled by default for security reasons. For more information, refer to the [docs]({{<relref "../enterprise/saml/#idp-initiated-single-sign-on-sso">}}).
 
 ## Upgrading
 
