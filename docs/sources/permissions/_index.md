@@ -2,11 +2,7 @@
 title = "Permissions"
 description = "Permissions"
 keywords = ["grafana", "configuration", "documentation", "admin", "users", "datasources", "permissions"]
-type = "docs"
 aliases = ["/docs/grafana/latest/permissions/overview/"]
-[menu.docs]
-name = "Permissions"
-identifier = "permissions"
 weight = 50
 +++
 
