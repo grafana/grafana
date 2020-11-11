@@ -235,18 +235,23 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
+interface ChildProps {
+  styles?: ReturnType<typeof getCardStyles>;
+  disabled?: boolean;
+}
+
 const Tags: FC = ({ children }) => {
   return <>{children}</>;
 };
 Tags.displayName = 'Tags';
 
-const Figure: FC<{ styles?: any }> = ({ children, styles }) => {
-  return <div className={styles.media}>{children}</div>;
+const Figure: FC<ChildProps> = ({ children, styles }) => {
+  return <div className={styles?.media}>{children}</div>;
 };
 
 Figure.displayName = 'Figure';
 
-const Meta: FC<{ styles?: any }> = ({ children, styles }) => {
+const Meta: FC<ChildProps> = ({ children, styles }) => {
   // Join meta data elements by '|'
   const meta = useMemo(
     () =>
@@ -255,30 +260,33 @@ const Meta: FC<{ styles?: any }> = ({ children, styles }) => {
             .filter(Boolean)
             .reduce((prev, curr, i) => [
               prev,
-              <span key={`separator_${i}`} className={styles.separator}>
+              <span key={`separator_${i}`} className={styles?.separator}>
                 |
               </span>,
               curr,
             ])
         : children,
-    [children, styles.separator]
+    [children, styles?.separator]
   );
-  return <div className={styles.metadata}>{meta}</div>;
+  return <div className={styles?.metadata}>{meta}</div>;
 };
 
 Meta.displayName = 'Meta';
 
-const Actions: FC<any> = ({ children, styles, disabled }) => {
+interface ActionsProps extends ChildProps {
+  children: JSX.Element[];
+}
+const Actions: FC<ActionsProps> = ({ children, styles, disabled }) => {
   return (
-    <div className={styles.actions}>{React.Children.map(children, child => cloneElement(child, { disabled }))}</div>
+    <div className={styles?.actions}>{React.Children.map(children, child => cloneElement(child, { disabled }))}</div>
   );
 };
 
 Actions.displayName = 'Actions';
 
-const SecondaryActions: FC<any> = ({ children, styles, disabled }) => {
+const SecondaryActions: FC<ActionsProps> = ({ children, styles, disabled }) => {
   return (
-    <div className={styles.secondaryActions}>
+    <div className={styles?.secondaryActions}>
       {React.Children.map(children, child => cloneElement(child, { disabled }))}
     </div>
   );
