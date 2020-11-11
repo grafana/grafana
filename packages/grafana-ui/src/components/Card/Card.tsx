@@ -1,4 +1,4 @@
-import React, { cloneElement, FC, HTMLAttributes, ReactNode, useCallback, useMemo } from 'react';
+import React, { memo, cloneElement, FC, HTMLAttributes, ReactNode, useCallback } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { useTheme, styleMixins, stylesFactory } from '../../themes';
@@ -251,23 +251,21 @@ const Figure: FC<ChildProps> = ({ children, styles }) => {
 
 Figure.displayName = 'Figure';
 
-const Meta: FC<ChildProps> = ({ children, styles }) => {
+const Meta: FC<ChildProps> = memo(({ children, styles }) => {
+  let meta = children;
+
   // Join meta data elements by '|'
-  const meta = useMemo(
-    () =>
-      Array.isArray(children)
-        ? React.Children.toArray(children).reduce((prev, curr, i) => [
-            prev,
-            <span key={`separator_${i}`} className={styles?.separator}>
-              |
-            </span>,
-            curr,
-          ])
-        : children,
-    [children, styles?.separator]
-  );
+  if (Array.isArray(children)) {
+    meta = React.Children.toArray(children).reduce((prev, curr, i) => [
+      prev,
+      <span key={`separator_${i}`} className={styles?.separator}>
+        |
+      </span>,
+      curr,
+    ]);
+  }
   return <div className={styles?.metadata}>{meta}</div>;
-};
+});
 
 Meta.displayName = 'Meta';
 
