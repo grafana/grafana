@@ -1,2 +1,10 @@
 // importing the uPlot css so it will be bundled with the rest of the styling.
 @import '../../node_modules/uplot/dist/uPlot.min.css';
+
+.uplot {
+  font-family: inherit;
+}
+
+.u-select {
+  background: rgba(120, 120, 130, 0.2);
+}

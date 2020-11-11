@@ -13,12 +13,10 @@ import {
   StringFieldConfigSettings,
   NumberFieldConfigSettings,
   SliderFieldConfigSettings,
-  ColorFieldConfigSettings,
   identityOverrideProcessor,
   UnitFieldConfigSettings,
   unitOverrideProcessor,
 } from '../field';
-import { FieldColor } from '../types';
 
 /**
  * Fluent API for declarative creation of field config option editors
@@ -104,9 +102,7 @@ export class FieldConfigEditorBuilder<TOptions> extends OptionsUIRegistryBuilder
     });
   }
 
-  addColorPicker<TSettings = any>(
-    config: FieldConfigEditorConfig<TOptions, TSettings & ColorFieldConfigSettings, FieldColor>
-  ) {
+  addColorPicker<TSettings = any>(config: FieldConfigEditorConfig<TOptions, TSettings, string>) {
     return this.addCustomEditor({
       ...config,
       id: config.path,
@@ -203,9 +199,7 @@ export class PanelOptionsEditorBuilder<TOptions> extends OptionsUIRegistryBuilde
     });
   }
 
-  addColorPicker<TSettings = any>(
-    config: PanelOptionsEditorConfig<TOptions, TSettings & ColorFieldConfigSettings, string>
-  ): this {
+  addColorPicker<TSettings = any>(config: PanelOptionsEditorConfig<TOptions, TSettings, string>): this {
     return this.addCustomEditor({
       ...config,
       id: config.path,

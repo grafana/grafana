@@ -38,8 +38,8 @@ func GenStateString() (string, error) {
 }
 
 func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
-	loginInfo := LoginInformation{
-		Action: "login-oauth",
+	loginInfo := models.LoginInfo{
+		AuthModule: "oauth",
 	}
 	if setting.OAuthService == nil {
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
@@ -50,7 +50,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	}
 
 	name := ctx.Params(":name")
-	loginInfo.Action += fmt.Sprintf("-%s", name)
+	loginInfo.AuthModule = name
 	connect, ok := social.SocialMap[name]
 	if !ok {
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
@@ -172,8 +172,8 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		return
 	}
 
-	loginInfo.ExtUserInfo = buildExternalUserInfo(token, userInfo, name)
-	loginInfo.User, err = syncUser(ctx, loginInfo.ExtUserInfo, connect)
+	loginInfo.ExternalUser = *buildExternalUserInfo(token, userInfo, name)
+	loginInfo.User, err = syncUser(ctx, &loginInfo.ExternalUser, connect)
 	if err != nil {
 		hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, err)
 		return
@@ -185,13 +185,8 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		return
 	}
 
-	hs.SendLoginLog(&models.SendLoginLogCommand{
-		ReqContext:   ctx,
-		LogAction:    loginInfo.Action,
-		User:         loginInfo.User,
-		ExternalUser: loginInfo.ExtUserInfo,
-		HTTPStatus:   http.StatusOK,
-	})
+	loginInfo.HTTPStatus = http.StatusOK
+	hs.HooksService.RunLoginHook(&loginInfo, ctx)
 	metrics.MApiLoginOAuth.Inc()
 
 	if redirectTo, err := url.QueryUnescape(ctx.GetCookie("redirect_to")); err == nil && len(redirectTo) > 0 {
@@ -280,36 +275,21 @@ type LoginError struct {
 	Err           error
 }
 
-type LoginInformation struct {
-	Action      string
-	User        *models.User
-	ExtUserInfo *models.ExternalUserInfo
-}
-
-func (hs *HTTPServer) handleOAuthLoginError(ctx *models.ReqContext, info LoginInformation, err LoginError) {
+func (hs *HTTPServer) handleOAuthLoginError(ctx *models.ReqContext, info models.LoginInfo, err LoginError) {
 	ctx.Handle(err.HttpStatus, err.PublicMessage, err.Err)
 
-	logErr := err.Err
-	if logErr == nil {
-		logErr = errors.New(err.PublicMessage)
+	info.Error = err.Err
+	if info.Error == nil {
+		info.Error = errors.New(err.PublicMessage)
 	}
+	info.HTTPStatus = err.HttpStatus
 
-	hs.SendLoginLog(&models.SendLoginLogCommand{
-		ReqContext: ctx,
-		LogAction:  info.Action,
-		HTTPStatus: err.HttpStatus,
-		Error:      logErr,
-	})
+	hs.HooksService.RunLoginHook(&info, ctx)
 }
 
-func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *models.ReqContext, info LoginInformation, err error, v ...interface{}) {
+func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *models.ReqContext, info models.LoginInfo, err error, v ...interface{}) {
 	hs.redirectWithError(ctx, err, v...)
 
-	hs.SendLoginLog(&models.SendLoginLogCommand{
-		ReqContext:   ctx,
-		LogAction:    info.Action,
-		User:         info.User,
-		ExternalUser: info.ExtUserInfo,
-		Error:        err,
-	})
+	info.Error = err
+	hs.HooksService.RunLoginHook(&info, ctx)
 }

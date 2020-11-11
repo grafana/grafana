@@ -2,10 +2,7 @@
 title = "Provisioning"
 description = ""
 keywords = ["grafana", "provisioning"]
-type = "docs"
 aliases = ["/docs/grafana/latest/installation/provisioning"]
-[menu.docs]
-parent = "admin"
 weight = 8
 +++
 

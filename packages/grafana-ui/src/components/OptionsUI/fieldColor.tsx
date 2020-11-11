@@ -8,13 +8,14 @@ import {
   FieldColorMode,
   GrafanaTheme,
   getColorForTheme,
+  FieldColorConfigSettings,
 } from '@grafana/data';
 import { Select } from '../Select/Select';
 import { ColorValueEditor } from './color';
 import { useStyles, useTheme } from '../../themes/ThemeContext';
 import { css } from 'emotion';
 
-export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | undefined, {}>> = ({
+export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | undefined, FieldColorConfigSettings>> = ({
   value,
   onChange,
   item,
@@ -22,7 +23,11 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
   const theme = useTheme();
   const styles = useStyles(getStyles);
 
-  const options = fieldColorModeRegistry.list().map(mode => {
+  const availableOptions = item.settings?.byValueSupport
+    ? fieldColorModeRegistry.list()
+    : fieldColorModeRegistry.list().filter(m => !m.isByValue);
+
+  const options = availableOptions.map(mode => {
     let suffix = mode.isByValue ? ' (by value)' : '';
 
     return {

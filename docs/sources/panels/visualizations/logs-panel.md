@@ -1,11 +1,7 @@
 +++
 title = "Logs panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "logs panel"]
-type = "docs"
 aliases = ["/docs/grafana/latest/reference/logs/", "/docs/grafana/latest/features/panels/logs/",]
-[menu.docs]
-name = "Logs panel"
-parent = "visualizations"
 weight = 700
 +++
 
