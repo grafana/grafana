@@ -32,6 +32,7 @@ export const IconButton = React.forwardRef<HTMLButtonElement, Props>(
 
     const button = (
       <button ref={ref} {...restProps} className={cx(styles.button, className)}>
+        {/* @ts-ignore */}
         <Icon name={name} size={size} className={styles.icon} type={iconType} />
       </button>
     );

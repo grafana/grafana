@@ -64,11 +64,13 @@ export const DashNavButton: FunctionComponent<Props> = ({
           onClick={onClick}
           aria-label={selectors.pages.Dashboard.Toolbar.toolbarItems(tooltip)}
         >
+          {/* @ts-ignore */}
           {icon && <Icon name={icon} type={iconType} size={iconSize || 'lg'} />}
           {children}
         </button>
       ) : (
         <a className={`btn navbar-button navbar-button--${classSuffix}`} href={href}>
+          {/* @ts-ignore */}
           {icon && <Icon name={icon} type={iconType} size="lg" />}
           {children}
         </a>

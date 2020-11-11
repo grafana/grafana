@@ -1,11 +1,11 @@
 import { select } from '@storybook/addon-knobs';
-import { getAvailableIcons } from '../../types';
+import { getAvailableDefaultIcons } from '../../types';
 
 const VISUAL_GROUP = 'Visual options';
 
 const iconOptions = {
   None: undefined,
-  ...getAvailableIcons().reduce<Record<string, string>>((prev, c) => {
+  ...getAvailableDefaultIcons().reduce<Record<string, string>>((prev, c) => {
     return {
       ...prev,
       [`Icon: ${c}`]: `${c}`,

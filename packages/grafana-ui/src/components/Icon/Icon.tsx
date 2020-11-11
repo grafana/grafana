@@ -3,18 +3,12 @@ import { css, cx } from 'emotion';
 import { GrafanaTheme, toPascalCase } from '@grafana/data';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { useTheme } from '../../themes/ThemeContext';
-import { IconName, IconType, IconSize } from '../../types/icon';
+import { IconProps, IconSize } from '../../types/icon';
 //@ts-ignore
 import * as DefaultIcon from '@iconscout/react-unicons';
 import * as MonoIcon from './assets';
 
-const alwaysMonoIcons = ['grafana', 'favorite', 'heart-break', 'heart'];
-
-export interface IconProps extends React.HTMLAttributes<HTMLDivElement> {
-  name: IconName;
-  size?: IconSize;
-  type?: IconType;
-}
+const alwaysSolidIcons = ['grafana', 'favorite', 'heart-break', 'heart'];
 
 const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -46,8 +40,8 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
       return <i className={cx(name, className)} {...divElementProps} style={style} />;
     }
 
-    if (alwaysMonoIcons.includes(name)) {
-      type = 'mono';
+    if (alwaysSolidIcons.includes(name)) {
+      type = 'solid';
     }
 
     const iconName = type === 'default' ? `Uil${toPascalCase(name)}` : toPascalCase(name);
@@ -63,7 +57,11 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     return (
       <div className={styles.container} {...divElementProps} ref={ref}>
         {type === 'default' && <Component size={svgSize} className={cx(styles.icon, className)} style={style} />}
-        {type === 'mono' && (
+        {/* We are still chekcing here if Icon has type mono - for backward compatibility
+         * however, we want to notify users that they should replace the type
+         */}
+        {/* @ts-ignore */}
+        {(type === 'mono' || type === 'solid') && (
           <Component
             size={svgSize}
             className={cx(styles.icon, { [styles.orange]: name === 'favorite' }, className)}

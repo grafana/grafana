@@ -264,7 +264,7 @@ export function RichHistoryCard(props: Props) {
       <IconButton name="trash-alt" title={'Delete query'} onClick={onDeleteQuery} />
       <IconButton
         name={query.starred ? 'favorite' : 'star'}
-        iconType={query.starred ? 'mono' : 'default'}
+        iconType={query.starred ? 'solid' : 'default'}
         onClick={onStarrQuery}
         title={query.starred ? 'Unstar query' : 'Star query'}
       />

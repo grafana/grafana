@@ -148,7 +148,7 @@ export function LiveTailButton(props: LiveTailButtonProps) {
               className={`btn navbar-button navbar-button--attached explore-active-button ${styles.isLive}`}
               onClick={stop}
             >
-              <Icon className="icon-brand-gradient" name="square-shape" size="lg" type="mono" />
+              <Icon className="icon-brand-gradient" name="square-shape" size="lg" type="solid" />
             </button>
           </Tooltip>
         </div>

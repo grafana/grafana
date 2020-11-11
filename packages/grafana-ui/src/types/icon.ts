@@ -1,9 +1,23 @@
+import React from 'react';
 import { ComponentSize } from './size';
-export type IconType = 'mono' | 'default';
+
+// Exports of main Icon types
+export type IconProps = SolidIconProps | DefaultIconProps;
+export type IconType = DefaultIconType | SolidIconType;
+export type IconName = DefaultIconName | SolidIconName;
 export type IconSize = ComponentSize | 'xl' | 'xxl' | 'xxxl';
 
-export type IconName =
+// Default types
+export interface DefaultIconProps extends React.HTMLAttributes<HTMLDivElement> {
+  name: DefaultIconName;
+  type?: DefaultIconType;
+  size?: IconSize;
+}
+
+type DefaultIconType = 'default';
+type DefaultIconName =
   | 'fa fa-spinner'
+  | 'heart'
   | 'grafana'
   | 'question-circle'
   | 'angle-up'
@@ -110,7 +124,6 @@ export type IconName =
   | 'minus-circle'
   | 'table'
   | 'plus'
-  | 'heart'
   | 'heart-break'
   | 'ellipsis-v'
   | 'favorite'
@@ -120,9 +133,33 @@ export type IconName =
   | 'draggabledots'
   | 'folder-upload';
 
-export const getAvailableIcons = (): IconName[] => [
+// Solid/mono types
+export interface SolidIconProps extends React.HTMLAttributes<HTMLDivElement> {
+  name: SolidIconName;
+  type: SolidIconType;
+  size?: IconSize;
+}
+
+type SolidIconType = 'solid';
+type SolidIconName =
+  | 'apps'
+  | 'bell'
+  | 'circle'
+  | 'cog'
+  | 'favorite'
+  | 'folder'
+  | 'folder-plus'
+  | 'grafana'
+  | 'heart'
+  | 'heart-break'
+  | 'import'
+  | 'panel-add'
+  | 'plus-square'
+  | 'shield'
+  | 'square-shape';
+
+export const getAvailableDefaultIcons = (): DefaultIconName[] => [
   'fa fa-spinner',
-  'grafana',
   'question-circle',
   'angle-up',
   'history',
@@ -228,7 +265,6 @@ export const getAvailableIcons = (): IconName[] => [
   'minus-circle',
   'table',
   'plus',
-  'heart',
   'heart-break',
   'ellipsis-v',
   'favorite',
@@ -236,4 +272,22 @@ export const getAvailableIcons = (): IconName[] => [
   'cloud',
   'draggabledots',
   'folder-upload',
+];
+
+export const getAvailableSolidIcons = (): SolidIconName[] => [
+  'apps',
+  'bell',
+  'circle',
+  'cog',
+  'favorite',
+  'folder',
+  'folder-plus',
+  'grafana',
+  'heart',
+  'heart-break',
+  'import',
+  'panel-add',
+  'plus-square',
+  'shield',
+  'square-shape',
 ];

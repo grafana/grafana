@@ -329,7 +329,7 @@ var (
 <div class="diff-group">
 	<div class="diff-block">
 		<h2 class="diff-block-title">
-			<icon class="diff-circle diff-circle-{{ getChange .Change }}" name="'circle'" type="'mono'"></icon>
+			<icon class="diff-circle diff-circle-{{ getChange .Change }}" name="'circle'" type="'solid'"></icon>
 			<strong class="diff-title">{{ .Title }}</strong> {{ getChange .Change }}
 		</h2>
 

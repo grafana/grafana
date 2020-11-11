@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { boolean, text, select, number } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './Input.mdx';
-import { getAvailableIcons, IconName } from '../../types';
+import { getAvailableDefaultIcons, IconName } from '../../types';
 import { KeyValue } from '@grafana/data';
 import { Field, Icon, Button, Input } from '@grafana/ui';
 
@@ -21,7 +21,7 @@ export const Simple = () => {
   const prefixSuffixOpts = {
     None: null,
     Text: '$',
-    ...getAvailableIcons().reduce<KeyValue<string>>((prev, c) => {
+    ...getAvailableDefaultIcons().reduce<KeyValue<string>>((prev, c) => {
       return {
         ...prev,
         [`Icon: ${c}`]: `icon-${c}`,

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { SelectableValue } from '@grafana/data';
 import { Icon, Button, ButtonSelect, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
-import { getAvailableIcons, IconName } from '../../types';
+import { getAvailableDefaultIcons, IconName } from '../../types';
 import { select, boolean, number } from '@storybook/addon-knobs';
 import { getIconKnob } from '../../utils/storybook/knobs';
 import kebabCase from 'lodash/kebabCase';
@@ -38,7 +38,7 @@ const getKnobs = () => {
   const prefixSuffixOpts = {
     None: null,
     Text: '$',
-    ...getAvailableIcons().reduce<Record<string, string>>((prev, c) => {
+    ...getAvailableDefaultIcons().reduce<Record<string, string>>((prev, c) => {
       return {
         ...prev,
         [`Icon: ${c}`]: `icon-${c}`,

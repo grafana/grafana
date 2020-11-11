@@ -1,8 +1,8 @@
 import React, { ChangeEvent, useState } from 'react';
 import { css } from 'emotion';
 
-import { Input, Field, Icon } from '@grafana/ui';
-import { getAvailableIcons, IconName } from '../../types';
+import { Input, Field, Icon, Legend } from '@grafana/ui';
+import { getAvailableDefaultIcons, getAvailableSolidIcons, IconName, IconType } from '../../types';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { useTheme, selectThemeVariant } from '../../themes';
 import mdx from './Icon.mdx';
@@ -21,7 +21,7 @@ export default {
   },
 };
 
-const IconWrapper: React.FC<{ name: IconName }> = ({ name }) => {
+const IconWrapper: React.FC<{ name: IconName; type: IconType }> = ({ name, type }) => {
   const theme = useTheme();
   const borderColor = selectThemeVariant(
     {
@@ -44,7 +44,8 @@ const IconWrapper: React.FC<{ name: IconName }> = ({ name }) => {
         }
       `}
     >
-      <Icon name={name} />
+      {/* @ts-ignore */}
+      <Icon name={name} type={type} />
       <div
         className={css`
           padding-top: 16px;
@@ -59,7 +60,8 @@ const IconWrapper: React.FC<{ name: IconName }> = ({ name }) => {
   );
 };
 
-const icons = getAvailableIcons().sort((a, b) => a.localeCompare(b));
+const defaultIcons = getAvailableDefaultIcons().sort((a, b) => a.localeCompare(b));
+const solidIcons = getAvailableSolidIcons().sort((a, b) => a.localeCompare(b));
 
 export const IconsOverview = () => {
   const [filter, setFilter] = useState('');
@@ -83,16 +85,31 @@ export const IconsOverview = () => {
       >
         <Input onChange={searchIcon} placeholder="Search icons by name" />
       </Field>
+      <Legend>Default icons</Legend>
+      <div
+        className={css`
+          display: flex;
+          flex-wrap: wrap;
+          margin-bottom: 20px;
+        `}
+      >
+        {defaultIcons
+          .filter(val => val.includes(filter))
+          .map(i => {
+            return <IconWrapper name={i} key={i} type={'default'} />;
+          })}
+      </div>
+      <Legend>Solid icons</Legend>
       <div
         className={css`
           display: flex;
           flex-wrap: wrap;
         `}
       >
-        {icons
+        {solidIcons
           .filter(val => val.includes(filter))
           .map(i => {
-            return <IconWrapper name={i} key={i} />;
+            return <IconWrapper name={i} key={i} type={'solid'} />;
           })}
       </div>
     </div>

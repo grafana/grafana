@@ -137,7 +137,7 @@ class DashNav extends PureComponent<Props> {
           tooltip="Mark as favorite"
           classSuffix="star"
           icon={isStarred ? 'favorite' : 'star'}
-          iconType={isStarred ? 'mono' : 'default'}
+          iconType={isStarred ? 'solid' : 'default'}
           iconSize="lg"
           noBorder={true}
           onClick={this.onStarDashboard}
@@ -229,7 +229,7 @@ class DashNav extends PureComponent<Props> {
           tooltip="Add panel"
           icon="panel-add"
           onClick={onAddPanel}
-          iconType="mono"
+          iconType="solid"
           iconSize="xl"
           key="button-panel-add"
         />
