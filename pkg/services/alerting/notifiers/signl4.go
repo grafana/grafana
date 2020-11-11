@@ -112,7 +112,6 @@ type Signl4Notifier struct {
 
 // Notify sends an alert notification to SIGNL4.
 func (on *Signl4Notifier) Notify(evalContext *alerting.EvalContext) error {
-
 	err := on.createAlert(evalContext)
 
 	return err
@@ -126,7 +125,7 @@ func (on *Signl4Notifier) createAlert(evalContext *alerting.EvalContext) error {
 		on.log.Error("Failed get rule link", "error", err)
 		return err
 	}
-	
+
 	var status = "new"
 	if evalContext.Rule.State == models.AlertStateOK {
 		if on.AutoClose {
