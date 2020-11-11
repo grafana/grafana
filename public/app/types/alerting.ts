@@ -53,7 +53,8 @@ export type NotifierType =
   | 'victorops'
   | 'pushover'
   | 'LINE'
-  | 'kafka';
+  | 'kafka'
+  | 'signl4';
 
 export interface NotifierDTO {
   name: string;
