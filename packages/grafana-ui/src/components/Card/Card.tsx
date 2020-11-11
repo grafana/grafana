@@ -87,7 +87,7 @@ export const Card: CardInterface = ({
     item => {
       //@ts-ignore
       const found = React.Children.toArray(children).find((child: JSX.Element) => {
-        return child && child?.type?.displayName === item;
+        return child?.type?.displayName === item;
       }) as JSX.Element | undefined;
 
       if (found) {
@@ -256,15 +256,13 @@ const Meta: FC<ChildProps> = ({ children, styles }) => {
   const meta = useMemo(
     () =>
       Array.isArray(children)
-        ? React.Children.toArray(children)
-            .filter(Boolean)
-            .reduce((prev, curr, i) => [
-              prev,
-              <span key={`separator_${i}`} className={styles?.separator}>
-                |
-              </span>,
-              curr,
-            ])
+        ? React.Children.toArray(children).reduce((prev, curr, i) => [
+            prev,
+            <span key={`separator_${i}`} className={styles?.separator}>
+              |
+            </span>,
+            curr,
+          ])
         : children,
     [children, styles?.separator]
   );
