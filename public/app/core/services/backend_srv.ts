@@ -175,15 +175,32 @@ export class BackendSrv implements BackendService {
     return this.dependencies.fromFetch(url, init).pipe(
       mergeMap(async response => {
         const { status, statusText, ok, headers, url, type, redirected } = response;
-        const textData = await response.text(); // this could be just a string, prometheus requests for instance
         let data: T;
 
-        try {
-          data = JSON.parse(textData); // majority of the requests this will be something that can be parsed
-        } catch {
-          data = textData as any;
+        if (options.responseType) {
+          switch (options.responseType) {
+            case 'arraybuffer':
+              data = (await response.arrayBuffer()) as any;
+              break;
+            case 'blob':
+              data = (await response.blob()) as any;
+              break;
+            case 'json':
+              data = await response.json();
+              break;
+            case 'text':
+              data = (await response.text()) as any;
+              break;
+          }
         }
-
+        if (!data) {
+          const textData = await response.text(); // this could be just a string, prometheus requests for instance
+          try {
+            data = JSON.parse(textData); // majority of the requests this will be something that can be parsed
+          } catch {
+            data = textData as any;
+          }
+        }
         const fetchResponse: FetchResponse<T> = {
           status,
           statusText,
