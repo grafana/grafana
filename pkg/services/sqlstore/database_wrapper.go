@@ -43,9 +43,9 @@ func init() {
 // database queries.
 func WrapDatabaseDriverWithHooks(dbType string) string {
 	drivers := map[string]driver.Driver{
-		migrator.SQLITE:   &sqlite3.SQLiteDriver{},
-		migrator.MYSQL:    &mysql.MySQLDriver{},
-		migrator.POSTGRES: &pq.Driver{},
+		migrator.SQLite:   &sqlite3.SQLiteDriver{},
+		migrator.MySQL:    &mysql.MySQLDriver{},
+		migrator.Postgres: &pq.Driver{},
 	}
 
 	d, exist := drivers[dbType]

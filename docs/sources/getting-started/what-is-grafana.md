@@ -2,12 +2,7 @@
 title = "What is Grafana?"
 description = "Overview of Grafana and features"
 keywords = ["grafana", "intro", "guide", "started"]
-type = "docs"
-[menu.docs]
 aliases = ["/docs/grafana/latest/guides/what-is-grafana"]
-name = "What is Grafana?"
-identifier = "what_is_grafana"
-parent = "guides"
 weight = 200
 +++
 
@@ -17,7 +12,7 @@ This topic provides a high-level look at Grafana, the Grafana process, and Grafa
 
 Grafana is open source visualization and analytics software. It allows you to query, visualize, alert on, and explore your metrics no matter where they are stored. In plain English, it provides you with tools to turn your time-series database (TSDB) data into beautiful graphs and visualizations.
 
-After creating a dashboard like you do in [Getting started]({{< relref "getting-started.md" >}}), there are many possible things you might do next. It all depends on your needs and your use case. 
+After creating a dashboard like you do in [Getting started]({{< relref "getting-started.md" >}}), there are many possible things you might do next. It all depends on your needs and your use case.
 
 For example, if you want to view weather data and statistics about your smart home, then you might create a playlist. If you are the administrator for a corporation and are managing Grafana for multiple teams, then you might need to set up provisioning and authentication.
 
@@ -25,13 +20,13 @@ The following sections provide an overview of things you might want to do with y
 
 ## Explore metrics and logs
 
-Explore your data through ad-hoc queries and dynamic drilldown. Split view and compare different time ranges, queries and data sources side by side. 
+Explore your data through ad-hoc queries and dynamic drilldown. Split view and compare different time ranges, queries and data sources side by side.
 
 Refer to [Explore]({{< relref "../explore/index.md" >}}) for more information.
 
 ## Alerts
 
-If you're using Grafana alerting, then you can have alerts sent through a number of different [alert notifiers]({{< relref "../alerting/notifications.md" >}}), including PagerDuty, SMS, email, VictorOps, OpsGenie, or Slack. 
+If you're using Grafana alerting, then you can have alerts sent through a number of different [alert notifiers]({{< relref "../alerting/notifications.md" >}}), including PagerDuty, SMS, email, VictorOps, OpsGenie, or Slack.
 
 Alert hooks allow you to create different notifiers with a bit of code if you prefer some other channels of communication. Visually define [alert rules]({{< relref "../alerting/alerts-overview.md" >}}) for your most important metrics.
 
@@ -45,7 +40,7 @@ Refer to [Annotations]({{< relref "../dashboards/annotations.md" >}}) for more i
 
 ## Dashboard variables
 
-[Template variables]({{< relref "../variables/_index.md" >}}) allow you to create dashboards that can be reused for lots of different use cases. Values aren't hard-coded with these templates, so for instance, if you have a production server and a test server, you can use the same dashboard for both. 
+[Template variables]({{< relref "../variables/_index.md" >}}) allow you to create dashboards that can be reused for lots of different use cases. Values aren't hard-coded with these templates, so for instance, if you have a production server and a test server, you can use the same dashboard for both.
 
 Templating allows you to drill down into your data, say, from all data to North America data, down to Texas data, and beyond. You can also share these dashboards across teams within your organization—or if you create a great dashboard template for a popular data source, you can contribute it to the whole community to customize and use.
 
@@ -69,7 +64,7 @@ Refer to [Grafana Enterprise]({{< relref "../enterprise/_index.md" >}}) for more
 
 ## Provisioning
 
-While it's easy to click, drag, and drop to create a single dashboard, power users in need of many dashboards will want to automate the setup with a script. You can script anything in Grafana. 
+While it's easy to click, drag, and drop to create a single dashboard, power users in need of many dashboards will want to automate the setup with a script. You can script anything in Grafana.
 
 For example, if you're spinning up a new Kubernetes cluster, you can also spin up a Grafana automatically with a script that would have the right server, IP address, and data sources preset and locked in so users cannot change them. It's also a way of getting control over a lot of dashboards.
 

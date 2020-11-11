@@ -24,7 +24,7 @@ Use the Hugo shortcode [relref](https://gohugo.io/content-management/cross-refer
 
 ### Edit the side menu
 
-Edit [sources/menu.yaml](sources/menu.yaml) to make changes to the sidebar. Stop and rerun the `make docs` command for changes to take effect.
+The side menu is automatically build from the file structure. Use the [weight](https://gohugo.io/templates/lists/#by-weight) front matter parameter to order pages.
 
 ### Add images
 

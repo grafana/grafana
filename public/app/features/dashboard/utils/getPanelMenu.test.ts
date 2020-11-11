@@ -4,7 +4,7 @@ import { getPanelMenu } from './getPanelMenu';
 import { describe } from '../../../../test/lib/common';
 import { setStore } from 'app/store/store';
 import config from 'app/core/config';
-import * as actions from 'app/features/explore/state/actions';
+import * as actions from 'app/features/explore/state/main';
 
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {

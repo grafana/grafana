@@ -3,7 +3,6 @@ import { GraphWithLegend, Chart } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { GraphPanelController } from './GraphPanelController';
-import { LegendDisplayMode } from '@grafana/ui/src/components/Legend/Legend';
 
 interface GraphPanelProps extends PanelProps<Options> {}
 
@@ -38,7 +37,6 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
     showPoints,
     tooltipOptions,
   };
-  const { asTable, isVisible, ...legendProps } = legendOptions;
   return (
     <GraphPanelController
       data={data}
@@ -55,14 +53,14 @@ export const GraphPanel: React.FunctionComponent<GraphPanelProps> = ({
             timeZone={timeZone}
             width={width}
             height={height}
-            displayMode={asTable ? LegendDisplayMode.Table : LegendDisplayMode.List}
-            isLegendVisible={isVisible}
+            displayMode={legendOptions.displayMode}
+            isLegendVisible={legendOptions.isVisible}
+            placement={legendOptions.placement}
             sortLegendBy={legendOptions.sortBy}
             sortLegendDesc={legendOptions.sortDesc}
             onSeriesToggle={onSeriesToggle}
             onHorizontalRegionSelected={onHorizontalRegionSelected}
             {...graphProps}
-            {...legendProps}
             {...controllerApi}
           >
             <Chart.Tooltip mode={tooltipOptions.mode} />

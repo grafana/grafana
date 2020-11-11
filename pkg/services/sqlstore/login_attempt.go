@@ -39,12 +39,10 @@ func DeleteOldLoginAttempts(cmd *models.DeleteOldLoginAttemptsCommand) error {
 		var maxId int64
 		sql := "SELECT max(id) as id FROM login_attempt WHERE created < ?"
 		result, err := sess.Query(sql, cmd.OlderThan.Unix())
-
 		if err != nil {
 			return err
 		}
-		// nolint: gosimple
-		if result == nil || len(result) == 0 || result[0] == nil {
+		if len(result) == 0 || result[0] == nil {
 			return nil
 		}
 

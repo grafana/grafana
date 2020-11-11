@@ -2,12 +2,7 @@
 title = "Configuration"
 description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
-type = "docs"
 aliases = ["/docs/grafana/latest/installation/configuration/"]
-[menu.docs]
-name = "Configuration"
-identifier = "config"
-parent = "admin"
 weight = 300
 +++
 
@@ -1159,6 +1154,10 @@ This is the sampler configuration parameter. Depending on the value of `sampler_
 
 May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
 
+### sampling_server_url
+
+sampling_server_url is the URL of a sampling manager providing a sampling strategy.
+
 ### zipkin_propagation
 
 Default value is `false`.
@@ -1335,6 +1334,10 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 ### allow_loading_unsigned_plugins
 
 Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
+
+### marketplace_url
+
+Custom install/learn more url for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
 
 <hr>
 
