@@ -5,18 +5,26 @@ import { Icon } from './Icon';
 
 # Icon
 
-Grafana's wrapper component over [Font Awesome](https://fontawesome.com/) and Unicons icons
+Icon component is Grafana's wrapper component over and [Unicons](https://iconscout.com/unicons) icons. We are in process of deprecating and removing [Font Awesome](https://fontawesome.com/), so please don't use it anymore.
+If you would like to use icon that you have found on Unicons but is not listed in here, please let us know and create [github issue](https://github.com/grafana/grafana/issues/new?labels=type%3A+feature+request&template=2-feature_request.md) for this (or even better, PR!)
 
 
 ### Changing icon size
 
 By default `Icon` has width and height of `16px` and font-size of `14px`. Pass `className` to control icon's size:
 
+### Changing icon color
+
+By default `Icon` has `color: currentColor`, which means that is has the same color as its parent component. Pass `className` to control icon's color
+
+### Changing icon type
+
+By default we use **line icons**. If you would like to use **solid icon**, update type to solid `type = 'solid`. We have implemented only limited number of solid icons. If you would like to use solid icon that you have found on Unicons but is not listed in here, please let us know and create [github issue](https://github.com/grafana/grafana/issues/new?labels=type%3A+feature+request&template=2-feature_request.md).
+
 ```jsx
 import { css } from 'emotion';
 
 <Icon name="check" />
 ```
-
 
 <Props of={Icon} />
