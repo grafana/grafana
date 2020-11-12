@@ -271,10 +271,19 @@ Meta.displayName = 'Meta';
 
 interface ActionsProps extends ChildProps {
   children: JSX.Element[];
+  variant?: 'primary' | 'secondary';
 }
+
+const BaseActions: FC<ActionsProps> = ({ children, styles, disabled, variant }) => {
+  const css = variant === 'primary' ? styles?.actions : styles?.secondaryActions;
+  return <div className={css}>{React.Children.map(children, child => cloneElement(child, { disabled }))}</div>;
+};
+
 const Actions: FC<ActionsProps> = ({ children, styles, disabled }) => {
   return (
-    <div className={styles?.actions}>{React.Children.map(children, child => cloneElement(child, { disabled }))}</div>
+    <BaseActions variant="primary" disabled={disabled} styles={styles}>
+      {children}
+    </BaseActions>
   );
 };
 
@@ -282,9 +291,9 @@ Actions.displayName = 'Actions';
 
 const SecondaryActions: FC<ActionsProps> = ({ children, styles, disabled }) => {
   return (
-    <div className={styles?.secondaryActions}>
-      {React.Children.map(children, child => cloneElement(child, { disabled }))}
-    </div>
+    <BaseActions variant="primary" disabled={disabled} styles={styles}>
+      {children}
+    </BaseActions>
   );
 };
 

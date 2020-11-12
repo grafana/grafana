@@ -44,7 +44,20 @@ const AlertRuleItem = ({ rule, search, onTogglePause }: Props) => {
           </span>
           {rule.info ? renderText(rule.info) : null}
         </Card.Meta>
-        <Card.Actions>
+        {/*<Card.Actions>*/}
+        {/*  <Button*/}
+        {/*    key="play"*/}
+        {/*    variant="secondary"*/}
+        {/*    icon={rule.state === 'paused' ? 'play' : 'pause'}*/}
+        {/*    onClick={onTogglePause}*/}
+        {/*  >*/}
+        {/*    {rule.state === 'paused' ? 'Resume' : 'Pause'}*/}
+        {/*  </Button>*/}
+        {/*  <LinkButton key="edit" variant="secondary" href={ruleUrl} icon="cog">*/}
+        {/*    Edit alert*/}
+        {/*  </LinkButton>*/}
+        {/*</Card.Actions>*/}
+        <Card.SecondaryActions>
           <Button
             key="play"
             variant="secondary"
@@ -56,7 +69,7 @@ const AlertRuleItem = ({ rule, search, onTogglePause }: Props) => {
           <LinkButton key="edit" variant="secondary" href={ruleUrl} icon="cog">
             Edit alert
           </LinkButton>
-        </Card.Actions>
+        </Card.SecondaryActions>
       </Card>
     </li>
   );
