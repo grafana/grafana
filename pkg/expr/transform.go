@@ -2,9 +2,14 @@ package expr
 
 import (
 	"encoding/json"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/codes"
@@ -32,7 +37,7 @@ func WrapTransformData(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Respon
 			QueryType:     q.QueryType,
 			TimeRange: backend.TimeRange{
 				From: query.TimeRange.GetFromAsTimeUTC(),
-				To:   query.TimeRange.GetFromAsTimeUTC(),
+				To:   query.TimeRange.GetToAsTimeUTC(),
 			},
 		})
 	}
@@ -117,4 +122,95 @@ func hiddenRefIDs(queries []backend.DataQuery) (map[string]struct{}, error) {
 		}
 	}
 	return hidden, nil
+}
+
+func QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if len(req.Queries) == 0 {
+		return nil, fmt.Errorf("zero queries found in datasource request")
+	}
+
+	datasourceID := int64(0)
+
+	if req.PluginContext.DataSourceInstanceSettings != nil {
+		datasourceID = req.PluginContext.DataSourceInstanceSettings.ID
+	}
+
+	getDsInfo := &models.GetDataSourceByIdQuery{
+		OrgId: req.PluginContext.OrgID,
+		Id:    datasourceID,
+	}
+
+	if err := bus.Dispatch(getDsInfo); err != nil {
+		return nil, fmt.Errorf("could not find datasource: %w", err)
+	}
+
+	// Convert plugin-model (datasource) queries to tsdb queries
+	queries := make([]*tsdb.Query, len(req.Queries))
+	for i, query := range req.Queries {
+		sj, err := simplejson.NewJson(query.JSON)
+		if err != nil {
+			return nil, err
+		}
+		queries[i] = &tsdb.Query{
+			RefId:         query.RefID,
+			IntervalMs:    query.Interval.Microseconds(),
+			MaxDataPoints: query.MaxDataPoints,
+			QueryType:     query.QueryType,
+			DataSource:    getDsInfo.Result,
+			Model:         sj,
+		}
+	}
+
+	// For now take Time Range from first query.
+	timeRange := tsdb.NewTimeRange(strconv.FormatInt(req.Queries[0].TimeRange.From.Unix()*1000, 10), strconv.FormatInt(req.Queries[0].TimeRange.To.Unix()*1000, 10))
+
+	tQ := &tsdb.TsdbQuery{
+		TimeRange: timeRange,
+		Queries:   queries,
+	}
+
+	// Execute the converted queries
+	tsdbRes, err := tsdb.HandleRequest(ctx, getDsInfo.Result, tQ)
+	if err != nil {
+		return nil, err
+	}
+	// Convert tsdb results (map) to plugin-model/datasource (slice) results.
+	// Only error, tsdb.Series, and encoded Dataframes responses are mapped.
+	responses := make(map[string]backend.DataResponse, len(tsdbRes.Results))
+	for refID, res := range tsdbRes.Results {
+		pRes := backend.DataResponse{}
+		if res.Error != nil {
+			pRes.Error = res.Error
+		}
+
+		if res.Dataframes != nil {
+			decoded, err := res.Dataframes.Decoded()
+			if err != nil {
+				return nil, err
+			}
+			pRes.Frames = decoded
+			responses[refID] = pRes
+			continue
+		}
+
+		for _, series := range res.Series {
+			frame, err := tsdb.SeriesToFrame(series)
+			frame.RefID = refID
+			if err != nil {
+				return nil, err
+			}
+			pRes.Frames = append(pRes.Frames, frame)
+		}
+		if res.Meta != nil {
+			//b, err := res.Meta.MarshalJSON()
+			//if err != nil {
+			//	backend.Logger.Error("failed to marshal json metadata", err)
+			//}
+			//pRes.JsonMeta = b
+		}
+		responses[refID] = pRes
+	}
+	return &backend.QueryDataResponse{
+		Responses: responses,
+	}, nil
 }

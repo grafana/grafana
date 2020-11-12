@@ -131,7 +131,6 @@ type DSNode struct {
 	timeRange    backend.TimeRange
 	intervalMS   int64
 	maxDP        int64
-	callBack     backend.TransformDataCallBackHandler
 }
 
 // NodeType returns the data pipeline node type.
@@ -219,7 +218,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Resul
 		},
 	}
 
-	resp, err := dn.callBack.QueryData(ctx, &backend.QueryDataRequest{
+	resp, err := QueryData(ctx, &backend.QueryDataRequest{
 		PluginContext: pc,
 		Queries:       q,
 	})
