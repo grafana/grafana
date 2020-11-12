@@ -19,7 +19,7 @@ type TsdbQuery struct {
 }
 
 type Query struct {
-	RefId         string             `json:"refID"`
+	RefId         string             `json:"refId"`
 	Model         *simplejson.Json   `json:"model,omitempty"`
 	DataSource    *models.DataSource `json:"datasource"`
 	MaxDataPoints int64              `json:"maxDataPoints"`
