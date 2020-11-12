@@ -13,10 +13,9 @@
         "react-hooks/exhaustive-deps": "off",
         "react/prop-types": "off",
         "react/no-unescaped-entities": "off",
-        "react/jsx-no-target-blank": "off",
         "react/display-name": "off",
         "react/no-deprecated": "off",
-        "react/no-unknown-property": "off",
+        "react/no-unknown-property": "off", 
         "react/no-find-dom-node": "off",
         "react/no-render-return-value": "off"
       }

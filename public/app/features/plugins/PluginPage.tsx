@@ -287,7 +287,7 @@ class PluginPage extends PureComponent<Props, State> {
           {info.links.map(link => {
             return (
               <li key={link.url}>
-                <a href={link.url} className="external-link" target="_blank" rel="noopener">
+                <a href={link.url} className="external-link" target="_blank" rel="noreferrer noopener">
                   {link.name}
                 </a>
               </li>

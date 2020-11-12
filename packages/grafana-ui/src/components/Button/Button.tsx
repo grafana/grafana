@@ -149,7 +149,6 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     return (
       <button className={cx(styles.button, className)} {...otherProps} ref={ref}>
-        <div>Dupa'sd</div>
         <ButtonContent icon={icon} size={otherProps.size}>
           {children}
         </ButtonContent>
