@@ -744,7 +744,7 @@ const (
 
 func createAuthTest(t *testing.T, dsType string, authType string, authCheck string, useSecureJsonData bool) *testCase {
 	// Basic user:password
-	base64AthHeader := "Basic dXNlcjpwYXNzd29yZA=="
+	base64AuthHeader := "Basic dXNlcjpwYXNzd29yZA=="
 
 	test := &testCase{
 		datasource: &models.DataSource{
