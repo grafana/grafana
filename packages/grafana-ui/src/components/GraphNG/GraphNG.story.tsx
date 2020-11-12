@@ -46,7 +46,7 @@ export const Lines: React.FC = () => {
           to: dateTime(1546380000000),
         },
       }}
-      legend={{ isVisible: true, displayMode: LegendDisplayMode.List, placement: 'bottom' }}
+      legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom' }}
       timeZone="browser"
     ></GraphNG>
   );
