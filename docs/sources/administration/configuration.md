@@ -1154,6 +1154,10 @@ This is the sampler configuration parameter. Depending on the value of `sampler_
 
 May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
 
+### sampling_server_url
+
+sampling_server_url is the URL of a sampling manager providing a sampling strategy.
+
 ### zipkin_propagation
 
 Default value is `false`.
