@@ -49,6 +49,7 @@ import { getStandardFieldConfigs, getStandardOptionEditors, getScrollbarWidth } 
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
+import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
 import { monkeyPatchInjectorWithPreAssignedBindings } from './core/injectorMonkeyPatch';
 
 // add move to lodash for backward compatabiltiy
@@ -205,6 +206,13 @@ export class GrafanaApp {
     });
 
     registerEchoBackend(new PerformanceBackend({}));
+    registerEchoBackend(
+      new SentryEchoBackend({
+        ...config.sentry,
+        user: config.bootData.user,
+        buildInfo: config.buildInfo,
+      })
+    );
 
     window.addEventListener('DOMContentLoaded', () => {
       reportPerformance('dcl', Math.round(performance.now()));
