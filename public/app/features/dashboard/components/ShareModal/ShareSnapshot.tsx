@@ -1,13 +1,21 @@
 import React, { PureComponent } from 'react';
-import { Button, ClipboardButton, Icon, Spinner, LegacyForms, LinkButton } from '@grafana/ui';
+import {
+  Button,
+  ClipboardButton,
+  Icon,
+  Spinner,
+  Select,
+  Input,
+  LinkButton,
+  InlineField,
+  InlineFieldRow,
+} from '@grafana/ui';
 import { AppEvents, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { appEvents } from 'app/core/core';
 import { VariableRefresh } from '../../../variables/types';
-
-const { Select, Input } = LegacyForms;
 
 const snapshotApiUrl = '/api/snapshots';
 
@@ -221,27 +229,24 @@ export class ShareSnapshot extends PureComponent<Props, State> {
             URL. Share wisely.
           </p>
         </div>
-        <div className="gf-form-group share-modal-options">
-          <div className="gf-form" ng-if="step === 1">
-            <label className="gf-form-label width-12">Snapshot name</label>
-            <Input width={15} value={snapshotName} onChange={this.onSnapshotNameChange} />
-          </div>
-          <div className="gf-form" ng-if="step === 1">
-            <label className="gf-form-label width-12">Expire</label>
-            <Select width={15} options={expireOptions} value={selectedExpireOption} onChange={this.onExpireChange} />
-          </div>
-        </div>
+        <InlineFieldRow className="share-modal-options">
+          <InlineField labelWidth={24} label="Snapshot name">
+            <Input width={30} value={snapshotName} onChange={this.onSnapshotNameChange} />
+          </InlineField>
+          <InlineField labelWidth={24} label="Expire">
+            <Select width={30} options={expireOptions} value={selectedExpireOption} onChange={this.onExpireChange} />
+          </InlineField>
+        </InlineFieldRow>
 
         <p className="share-modal-info-text">
           You may need to configure the timeout value if it takes a long time to collect your dashboard's metrics.
         </p>
 
-        <div className="gf-form-group share-modal-options">
-          <div className="gf-form">
-            <span className="gf-form-label width-12">Timeout (seconds)</span>
-            <Input type="number" width={15} value={timeoutSeconds} onChange={this.onTimeoutChange} />
-          </div>
-        </div>
+        <InlineFieldRow className="share-modal-options">
+          <InlineField labelWidth={24} label="Timeout (seconds)">
+            <Input type="number" width={21} value={timeoutSeconds} onChange={this.onTimeoutChange} />
+          </InlineField>
+        </InlineFieldRow>
 
         <div className="gf-form-button-row">
           <Button className="width-10" variant="primary" disabled={isLoading} onClick={this.createSnapshot()}>
@@ -277,7 +282,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
           </div>
         </div>
 
-        <div className="pull-right" ng-if="step === 2" style={{ padding: '5px' }}>
+        <div className="pull-right" style={{ padding: '5px' }}>
           Did you make a mistake?{' '}
           <LinkButton variant="link" target="_blank" onClick={this.deleteSnapshot}>
             delete snapshot.
@@ -291,8 +296,8 @@ export class ShareSnapshot extends PureComponent<Props, State> {
     return (
       <div className="share-modal-header">
         <p className="share-modal-info-text">
-          The snapshot has now been deleted. If it you have already accessed it once, It might take up to an hour before
-          it is removed from browser caches or CDN caches.
+          The snapshot has now been deleted. If you have already accessed it once, it might take up to an hour before it
+          is removed from browser caches or CDN caches.
         </p>
       </div>
     );
