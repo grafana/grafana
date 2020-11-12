@@ -25,10 +25,10 @@ func TestDashboardDataAccess(t *testing.T) {
 		InitTestDB(t)
 
 		Convey("Given saved dashboard", func() {
-			savedFolder := insertTestDashboard("1 test dash folder", 1, 0, true, "prod", "webapp")
-			savedDash := insertTestDashboard("test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
-			insertTestDashboard("test dash 45", 1, savedFolder.Id, false, "prod")
-			insertTestDashboard("test dash 67", 1, 0, false, "prod", "webapp")
+			savedFolder := insertTestDashboard(t, "1 test dash folder", 1, 0, true, "prod", "webapp")
+			savedDash := insertTestDashboard(t, "test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
+			insertTestDashboard(t, "test dash 45", 1, savedFolder.Id, false, "prod")
+			insertTestDashboard(t, "test dash 67", 1, 0, false, "prod", "webapp")
 
 			Convey("Should return dashboard model", func() {
 				So(savedDash.Title, ShouldEqual, "test dash 23")
@@ -104,13 +104,12 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to delete dashboard", func() {
-				dash := insertTestDashboard("delete me", 1, 0, false, "delete this")
+				dash := insertTestDashboard(t, "delete me", 1, 0, false, "delete this")
 
 				err := DeleteDashboard(&models.DeleteDashboardCommand{
 					Id:    dash.Id,
 					OrgId: 1,
 				})
-
 				So(err, ShouldBeNil)
 			})
 
@@ -202,7 +201,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to delete empty folder", func() {
-				emptyFolder := insertTestDashboard("2 test dash folder", 1, 0, true, "prod", "webapp")
+				emptyFolder := insertTestDashboard(t, "2 test dash folder", 1, 0, true, "prod", "webapp")
 
 				deleteCmd := &models.DeleteDashboardCommand{Id: emptyFolder.Id}
 				err := DeleteDashboard(deleteCmd)
@@ -367,7 +366,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Given two dashboards, one is starred dashboard by user 10, other starred by user 1", func() {
-				starredDash := insertTestDashboard("starred dash", 1, 0, false)
+				starredDash := insertTestDashboard(t, "starred dash", 1, 0, false)
 				err := StarDashboard(&models.StarDashboardCommand{
 					DashboardId: starredDash.Id,
 					UserId:      10,
@@ -419,8 +418,8 @@ func TestDashboard_SortingOptions(t *testing.T) {
 	// insertTestDashboard uses GoConvey's assertions. Workaround.
 	Convey("test with multiple sorting options", t, func() {
 		InitTestDB(t)
-		dashB := insertTestDashboard("Beta", 1, 0, false)
-		dashA := insertTestDashboard("Alfa", 1, 0, false)
+		dashB := insertTestDashboard(t, "Beta", 1, 0, false)
+		dashA := insertTestDashboard(t, "Alfa", 1, 0, false)
 
 		assert.NotZero(t, dashA.Id)
 		assert.Less(t, dashB.Id, dashA.Id)
@@ -442,7 +441,9 @@ func TestDashboard_SortingOptions(t *testing.T) {
 	})
 }
 
-func insertTestDashboard(title string, orgId int64, folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
+func insertTestDashboard(t *testing.T, title string, orgId int64, folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
+	t.Helper()
+
 	cmd := models.SaveDashboardCommand{
 		OrgId:    orgId,
 		FolderId: folderId,
@@ -455,7 +456,7 @@ func insertTestDashboard(title string, orgId int64, folderId int64, isFolder boo
 	}
 
 	err := SaveDashboard(&cmd)
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
 
 	cmd.Result.Data.Set("id", cmd.Result.Id)
 	cmd.Result.Data.Set("uid", cmd.Result.Uid)
@@ -481,19 +482,21 @@ func insertTestDashboardForPlugin(title string, orgId int64, folderId int64, isF
 	return cmd.Result
 }
 
-func createUser(name string, role string, isAdmin bool) models.User {
+func createUser(t *testing.T, name string, role string, isAdmin bool) models.User {
+	t.Helper()
+
 	setting.AutoAssignOrg = true
 	setting.AutoAssignOrgId = 1
 	setting.AutoAssignOrgRole = role
 
 	currentUserCmd := models.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
 	err := CreateUser(context.Background(), &currentUserCmd)
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
 
 	q1 := models.GetUserOrgListQuery{UserId: currentUserCmd.Result.Id}
 	err = GetUserOrgList(&q1)
-	So(err, ShouldBeNil)
-	So(q1.Result[0].Role, ShouldEqual, role)
+	require.NoError(t, err)
+	require.Equal(t, models.RoleType(role), q1.Result[0].Role)
 
 	return currentUserCmd.Result
 }

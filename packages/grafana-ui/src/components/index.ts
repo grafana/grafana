@@ -96,6 +96,7 @@ export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesTo
 export { Collapse, ControlledCollapse } from './Collapse/Collapse';
 export { CollapsableSection } from './Collapse/CollapsableSection';
 export { LogLabels } from './Logs/LogLabels';
+export { LogMessageAnsi } from './Logs/LogMessageAnsi';
 export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
