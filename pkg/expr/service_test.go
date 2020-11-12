@@ -10,7 +10,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,14 +22,14 @@ func TestService(t *testing.T) {
 		data.NewField("time", nil, []*time.Time{utp(1)}),
 		data.NewField("value", nil, []*float64{fp(2)}))
 
-	//m := newMockTransformCallBack("A", dsDF)
+	registerEndPoint(dsDF)
 
 	s := Service{}
 
 	queries := []backend.DataQuery{
 		{
 			RefID: "A",
-			JSON:  json.RawMessage(`{ "datasource": "test", "datasourceId": 3, "orgId": 1, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			JSON:  json.RawMessage(`{ "datasource": "test", "datasourceId": 1, "orgId": 1, "intervalMs": 1000, "maxDataPoints": 1000 }`),
 		},
 		{
 			RefID: "B",
@@ -71,42 +73,6 @@ func TestService(t *testing.T) {
 	}
 }
 
-type mockTransformCallBack struct {
-	DataQueryFn func() (*backend.QueryDataResponse, error)
-}
-
-func newMockTransformCallBack(refID string, df ...*data.Frame) *mockTransformCallBack {
-	return &mockTransformCallBack{
-		DataQueryFn: func() (res *backend.QueryDataResponse, err error) {
-			series := make([]mathexp.Series, 0, len(df))
-			for _, frame := range df {
-				s, err := mathexp.SeriesFromFrame(frame)
-				if err != nil {
-					return res, err
-				}
-				series = append(series, s)
-			}
-
-			frames := make([]*data.Frame, len(series))
-			for idx, s := range series {
-				frames[idx] = s.AsDataFrame()
-			}
-			return &backend.QueryDataResponse{
-				Responses: map[string]backend.DataResponse{
-					refID: {
-						Frames: frames,
-					},
-				},
-			}, nil
-
-		},
-	}
-}
-
-func (m *mockTransformCallBack) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	return m.DataQueryFn()
-}
-
 func utp(sec int64) *time.Time {
 	t := time.Unix(sec, 0)
 	return &t
@@ -114,4 +80,33 @@ func utp(sec int64) *time.Time {
 
 func fp(f float64) *float64 {
 	return &f
+}
+
+type mockEndpoint struct {
+	Frames data.Frames
+}
+
+func (me *mockEndpoint) Query(ctx context.Context, ds *models.DataSource, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	return &tsdb.Response{
+		Results: map[string]*tsdb.QueryResult{
+			"A": {
+				Dataframes: tsdb.NewDecodedDataFrames(me.Frames),
+			},
+		},
+	}, nil
+}
+
+func registerEndPoint(df ...*data.Frame) {
+	me := &mockEndpoint{
+		Frames: df,
+	}
+	endpoint := func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+		return me, nil
+	}
+
+	tsdb.RegisterTsdbQueryEndpoint("test", endpoint)
+	bus.AddHandler("test", func(query *models.GetDataSourceByIdQuery) error {
+		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test"}
+		return nil
+	})
 }
