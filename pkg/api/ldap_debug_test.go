@@ -52,7 +52,7 @@ func getUserFromLDAPContext(t *testing.T, requestURL string) *scenarioContext {
 
 	sc := setupScenarioContext(t, requestURL)
 
-	ldap := setting.LDAPEnabled
+	origLDAP := setting.LDAPEnabled
 	setting.LDAPEnabled = true
 	t.Cleanup(func() { setting.LDAPEnabled = ldap })
 
