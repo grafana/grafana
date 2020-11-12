@@ -107,6 +107,11 @@ func (m *SigV4Middleware) signer() (*v4.Signer, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		if m.Config.AssumeRoleARN != "" {
+			return v4.NewSigner(stscreds.NewCredentials(s, m.Config.AssumeRoleARN)), nil
+		}
+
 		return v4.NewSigner(s.Config.Credentials), nil
 	}
 
