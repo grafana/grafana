@@ -79,7 +79,7 @@ type testState struct {
 
 func TestDashboardAPIEndpoint(t *testing.T) {
 	t.Run("Given a dashboard with a parent folder which does not have an ACL", func(t *testing.T) {
-		setup := func() *testState {
+		setUp := func() *testState {
 			fakeDash := models.NewDashboard("Child dash")
 			fakeDash.Id = 1
 			fakeDash.FolderId = 1
