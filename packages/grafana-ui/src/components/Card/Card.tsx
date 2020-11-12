@@ -218,6 +218,8 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       align-items: center;
       color: ${theme.colors.textSemiWeak};
+      // align to the right
+      margin-left: auto;
       & > * {
         margin-right: ${theme.spacing.sm} !important;
       }
@@ -291,7 +293,7 @@ Actions.displayName = 'Actions';
 
 const SecondaryActions: FC<ActionsProps> = ({ children, styles, disabled }) => {
   return (
-    <BaseActions variant="primary" disabled={disabled} styles={styles}>
+    <BaseActions variant="secondary" disabled={disabled} styles={styles}>
       {children}
     </BaseActions>
   );
