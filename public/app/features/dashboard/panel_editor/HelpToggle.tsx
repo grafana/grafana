@@ -11,10 +11,10 @@ export const HelpToggle: React.FunctionComponent = ({ children }) => {
 
   return (
     <>
-      <label className="gf-form-label query-keyword pointer" onClick={_ => setIsHelpVisible(!isHelpVisible)}>
-        Help&nbsp;
+      <button className="gf-form-label query-keyword pointer" onClick={_ => setIsHelpVisible(!isHelpVisible)}>
+        Help
         <Icon name={isHelpVisible ? 'angle-down' : 'angle-right'} />
-      </label>
+      </button>
       {isHelpVisible && <div className={cx('grafana-info-box', 'grafana-info-box--max-lg', helpStyle)}>{children}</div>}
     </>
   );
