@@ -307,6 +307,9 @@ type Cfg struct {
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
+
+	// Sentry config
+	Sentry Sentry
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.
@@ -823,6 +826,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	cfg.readDateFormats()
+	cfg.readSentryConfig()
 
 	return nil
 }

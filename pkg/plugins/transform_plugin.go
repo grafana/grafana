@@ -74,7 +74,7 @@ func NewTransformWrapper(log log.Logger, plugin sdkgrpcplugin.TransformClient) *
 type TransformWrapper struct {
 	sdkgrpcplugin.TransformClient
 	logger   log.Logger
-	callback *transformCallback
+	Callback *transformCallback
 }
 
 func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
@@ -102,7 +102,7 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 			},
 		})
 	}
-	pbRes, err := tw.TransformClient.TransformData(ctx, pbQuery, tw.callback)
+	pbRes, err := tw.TransformClient.TransformData(ctx, pbQuery, tw.Callback)
 	if err != nil {
 		return nil, err
 	}
