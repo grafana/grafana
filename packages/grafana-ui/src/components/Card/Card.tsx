@@ -240,8 +240,8 @@ interface ChildProps {
   disabled?: boolean;
 }
 
-const Tags: FC = ({ children }) => {
-  return <>{children}</>;
+const Tags: FC<ChildProps> = ({ children, styles }) => {
+  return <div className={styles?.tagList}>{children}</div>;
 };
 Tags.displayName = 'Tags';
 
