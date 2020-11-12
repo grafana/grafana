@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 const defaultMaxDataPoints float64 = 100
@@ -51,10 +51,10 @@ func (rtr *RelativeTimeRange) isValid() bool {
 	return rtr.From > rtr.To
 }
 
-func (rtr *RelativeTimeRange) toTimeRange(now time.Time) *pluginv2.TimeRange {
-	return &pluginv2.TimeRange{
-		FromEpochMS: now.Add(-time.Duration(rtr.From)).UnixNano() / 1e6,
-		ToEpochMS:   now.Add(-time.Duration(rtr.To)).UnixNano() / 1e6,
+func (rtr *RelativeTimeRange) toTimeRange(now time.Time) backend.TimeRange {
+	return backend.TimeRange{
+		From: now.Add(-time.Duration(rtr.From)),
+		To:   now.Add(-time.Duration(rtr.To)),
 	}
 }
 
@@ -181,7 +181,7 @@ func (aq *AlertQuery) setIntervalMS() error {
 	return nil
 }
 
-func (aq *AlertQuery) getIntervalMS() (int64, error) {
+func (aq *AlertQuery) getInterval() (time.Duration, error) {
 	err := aq.setIntervalMS()
 	if err != nil {
 		return 0, err
@@ -191,7 +191,7 @@ func (aq *AlertQuery) getIntervalMS() (int64, error) {
 	if !ok {
 		return 0, fmt.Errorf("failed to cast intervalMs to float64: %v", aq.modelProps["intervalMs"])
 	}
-	return int64(intervalMs), nil
+	return time.Duration(intervalMs) * time.Millisecond, nil
 }
 
 // GetDatasource returns the query datasource identifier.
