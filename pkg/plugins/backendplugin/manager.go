@@ -33,7 +33,7 @@ var (
 )
 
 func init() {
-	registry.RegisterService(&manager{})
+	registry.RegisterServiceWithPriority(&manager{}, registry.MediumHigh)
 }
 
 // Manager manages backend plugins.
