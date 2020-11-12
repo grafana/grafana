@@ -102,7 +102,7 @@ function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
   let maxLength = values[0];
   for (let i = 0; i < values.length; i++) {
     if (values[i].length > maxLength.length) {
-      maxLength = maxLength;
+      maxLength = values[i];
     }
   }
 
