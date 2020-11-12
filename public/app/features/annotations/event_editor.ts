@@ -14,7 +14,9 @@ export class EventEditorCtrl {
   timeFormated: string;
 
   /** @ngInject */
-  constructor(private annotationsSrv: AnnotationsSrv) {
+  constructor(private annotationsSrv: AnnotationsSrv) {}
+
+  $onInit() {
     this.event.panelId = this.panelCtrl.panel.id;
     this.event.dashboardId = this.panelCtrl.dashboard.id;
 

@@ -403,6 +403,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		AppleTouchIcon:          "public/img/apple-touch-icon.png",
 		AppTitle:                "Grafana",
 		NavTree:                 navTree,
+		Sentry:                  &hs.Cfg.Sentry,
 	}
 
 	if setting.DisableGravatar {
