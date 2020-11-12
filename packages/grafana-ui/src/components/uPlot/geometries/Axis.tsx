@@ -122,6 +122,7 @@ function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
   return measureText(maxLength, 12).width;
 }
 
+/** Format time axis ticks */
 function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: number, foundIncr: number): string[] {
   const timeZone = (self.axes[axisIdx] as any).timeZone;
   const scale = self.scales.x;
