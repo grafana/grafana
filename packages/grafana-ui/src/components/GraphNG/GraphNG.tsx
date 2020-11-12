@@ -63,7 +63,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   let seriesIdx = 0;
   const legendItems: LegendItem[] = [];
   const uniqueScales: Record<string, boolean> = {};
-  const hasLegend = legend?.displayMode !== LegendDisplayMode.Hidden;
+  const hasLegend = legend && legend.displayMode !== LegendDisplayMode.Hidden;
 
   for (let i = 0; i < alignedData.fields.length; i++) {
     const seriesGeometry = [];

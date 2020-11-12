@@ -133,8 +133,8 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
         defaultValue: 'single',
         settings: {
           options: [
-            { value: 'single', label: 'Single series' },
-            { value: 'multi', label: 'All series' },
+            { value: 'single', label: 'Single' },
+            { value: 'multi', label: 'All' },
             { value: 'none', label: 'Hidden' },
           ],
         },
