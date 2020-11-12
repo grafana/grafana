@@ -135,7 +135,7 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           options: [
             { value: 'single', label: 'Single series' },
             { value: 'multi', label: 'All series' },
-            { value: 'none', label: 'No tooltip' },
+            { value: 'none', label: 'Hidden' },
           ],
         },
       })
