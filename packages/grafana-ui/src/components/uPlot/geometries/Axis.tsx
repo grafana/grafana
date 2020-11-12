@@ -68,13 +68,13 @@ export const Axis: React.FC<AxisProps> = props => {
         width: 1 / devicePixelRatio,
       },
       values: values,
+      space: calculateSpace,
     };
 
     if (values) {
       config.values = values;
     } else if (isTime) {
       config.values = formatTime;
-      config.space = 60;
     } else if (formatValue) {
       config.values = (u: uPlot, vals: any[]) => vals.map(v => formatValue(v));
     }
@@ -89,9 +89,22 @@ export const Axis: React.FC<AxisProps> = props => {
   return null;
 };
 
+/* Minimum grid & tick spacing in CSS pixels */
+function calculateSpace(self: uPlot, axisIdx: number, scaleMin: number, scaleMax: number, plotDim: number): number {
+  const axis = self.axes[axisIdx];
+
+  // For x-axis (bottom) we need bigger spacing between labels
+  if (axis.side === 2) {
+    return 60;
+  }
+
+  return 30;
+}
+
+/** height of x axis or width of y axis in CSS pixels alloted for values, gap & ticks, but excluding axis label */
 function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
   const axis = self.axes[axisIdx];
-  if (axis.scale === 'x') {
+  if (axis.side === 2) {
     return 33;
   }
 
@@ -109,6 +122,7 @@ function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
   return measureText(maxLength, 12).width;
 }
 
+/** Format time axis ticks */
 function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: number, foundIncr: number): string[] {
   const timeZone = (self.axes[axisIdx] as any).timeZone;
   const scale = self.scales.x;
