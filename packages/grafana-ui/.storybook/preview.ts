@@ -57,6 +57,3 @@ export const parameters = {
     escapeHTML: false,
   },
 };
-
-// @ts-ignore
-configure(require.context('../src', true, /\.story\.(js|jsx|ts|tsx|mdx)$/), module);
