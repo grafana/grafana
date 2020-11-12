@@ -77,6 +77,7 @@
     "@rollup/plugin-image": "2.0.4",
     "@rollup/plugin-node-resolve": "7.1.1",
     "@storybook/addon-essentials": "6.0.28",
+    "@storybook/addon-controls": "^6.0.28",
     "@storybook/addon-knobs": "6.0.28",
     "@storybook/addon-storysource": "6.0.28",
     "@storybook/react": "6.0.28",

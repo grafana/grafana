@@ -17,6 +17,7 @@ module.exports = {
     '@storybook/addon-docs',
     'storybook-dark-mode/register',
     '@storybook/addon-storysource',
+    '@storybook/addon-controls',
   ],
   typescript: {
     check: true,
@@ -136,9 +137,11 @@ module.exports = {
     config.resolve.alias = config.resolve.alias || {};
     config.resolve.alias['@grafana/ui'] = path.resolve(__dirname, '..');
 
-    config.plugins.push(new FilterWarningsPlugin({
-      exclude: /export .* was not found in/
-    }));
+    config.plugins.push(
+      new FilterWarningsPlugin({
+        exclude: /export .* was not found in/,
+      })
+    );
 
     return config;
   },
