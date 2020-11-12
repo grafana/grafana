@@ -243,29 +243,6 @@ export const BasicSelectAsync = () => {
   );
 };
 
-export const CustomizedControl = () => {
-  const [value, setValue] = useState<SelectableValue<string>>();
-
-  return (
-    <Select
-      options={generateOptions()}
-      value={value}
-      onChange={v => {
-        setValue(v);
-      }}
-      renderControl={React.forwardRef(({ isOpen, value, ...otherProps }, ref) => {
-        return (
-          <Button {...otherProps} ref={ref}>
-            {' '}
-            {isOpen ? 'Open' : 'Closed'}
-          </Button>
-        );
-      })}
-      {...getDynamicProps()}
-    />
-  );
-};
-
 export const AutoMenuPlacement = () => {
   const [value, setValue] = useState<SelectableValue<string>>();
 

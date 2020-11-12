@@ -24,6 +24,7 @@ const getStoriesKnobs = (table = false) => {
     </>
   );
 
+  // eslint-disable-next-line react/display-name
   const customRenderer = (component: React.ComponentType<GraphLegendItemProps>) => (item: LegendItem) =>
     React.createElement(component, {
       item,
