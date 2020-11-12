@@ -308,6 +308,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
   }
 
+  private interpolateLuceneQuery(queryString: string, scopedVars: ScopedVars) {
+    // Elasticsearch queryString should always be '*' if empty string
+    return this.templateSrv.replace(queryString, scopedVars, 'lucene') || '*';
+  }
+
   interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
@@ -315,8 +320,16 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          query: this.templateSrv.replace(query.query, scopedVars, 'lucene'),
+          query: this.interpolateLuceneQuery(query.query || '', scopedVars),
         };
+
+        for (let bucketAgg of query.bucketAggs || []) {
+          if (bucketAgg.type === 'filters') {
+            for (let filter of bucketAgg.settings.filters) {
+              filter.query = this.interpolateLuceneQuery(filter.query, scopedVars);
+            }
+          }
+        }
         return expandedQuery;
       });
     }
@@ -363,7 +376,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   query(options: DataQueryRequest<ElasticsearchQuery>): Promise<DataQueryResponse> {
     let payload = '';
-    const targets = _.cloneDeep(options.targets);
+    const targets = this.interpolateVariablesInQueries(_.cloneDeep(options.targets), options.scopedVars);
     const sentTargets: ElasticsearchQuery[] = [];
 
     // add global adhoc filters to timeFilter
@@ -374,25 +387,19 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
         continue;
       }
 
-      let queryString = this.templateSrv.replace(target.query, options.scopedVars, 'lucene');
-      // Elasticsearch queryString should always be '*' if empty string
-      if (!queryString || queryString === '') {
-        queryString = '*';
-      }
-
       let queryObj;
       if (target.isLogsQuery || queryDef.hasMetricOfType(target, 'logs')) {
         target.bucketAggs = [queryDef.defaultBucketAgg()];
         target.metrics = [];
         // Setting this for metrics queries that are typed as logs
         target.isLogsQuery = true;
-        queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, queryString);
+        queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, target.query);
       } else {
         if (target.alias) {
           target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
         }
 
-        queryObj = this.queryBuilder.build(target, adhocFilters, queryString);
+        queryObj = this.queryBuilder.build(target, adhocFilters, target.query);
       }
 
       const esQuery = angular.toJson(queryObj);

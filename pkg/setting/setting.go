@@ -347,6 +347,9 @@ type Cfg struct {
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
 
+	// Sentry config
+	Sentry Sentry
+
 	// Snapshots
 	SnapshotPublicMode bool
 
@@ -889,6 +892,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	cfg.readDateFormats()
+	cfg.readSentryConfig()
 
 	return nil
 }
