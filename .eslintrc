@@ -12,7 +12,6 @@
         "react-hooks/rules-of-hooks": "off",
         "react-hooks/exhaustive-deps": "off",
         "react/prop-types": "off",
-        "react/no-children-prop": "off",
         "react/no-unescaped-entities": "off",
         "react/jsx-no-target-blank": "off",
         "react/display-name": "off",
