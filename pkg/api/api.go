@@ -445,4 +445,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", Wrap(GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, Wrap(DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
+
+	// Frontend logs
+	r.Post("/log", bind(frontendSentryEvent{}), Wrap(hs.logFrontendMessage))
 }
