@@ -18,7 +18,7 @@ type AlertNG struct {
 	Cfg             *setting.Cfg             `inject:""`
 	DatasourceCache datasources.CacheService `inject:""`
 	RouteRegister   routing.RouteRegister    `inject:""`
-	SQLStore        *sqlstore.SqlStore       `inject:""`
+	SQLStore        *sqlstore.SQLStore       `inject:""`
 	log             log.Logger
 }
 
