@@ -16,7 +16,6 @@
         "react/no-unescaped-entities": "off",
         "react/jsx-no-target-blank": "off",
         "react/display-name": "off",
-        "react/jsx-key": "off",
         "react/no-deprecated": "off",
         "react/no-unknown-property": "off",
         "react/no-find-dom-node": "off",
