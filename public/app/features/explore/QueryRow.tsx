@@ -27,6 +27,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { ExploreItemState, ExploreId } from 'app/types/explore';
 import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
 import { ErrorContainer } from './ErrorContainer';
+import { HelpToggle } from '../dashboard/panel_editor/HelpToggle';
 
 interface PropsFromParent {
   exploreId: ExploreId;
@@ -120,8 +121,9 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
 
     const ReactQueryEditor = this.setReactQueryEditor();
 
+    let QueryEditor: JSX.Element;
     if (ReactQueryEditor) {
-      return (
+      QueryEditor = (
         <ReactQueryEditor
           datasource={datasourceInstance}
           query={query}
@@ -134,18 +136,31 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
           exploreId={exploreId}
         />
       );
+    } else {
+      QueryEditor = (
+        <AngularQueryEditor
+          error={queryErrors}
+          datasource={datasourceInstance}
+          onQueryChange={this.onChange}
+          onExecuteQuery={this.onRunQuery}
+          initialQuery={query}
+          exploreEvents={exploreEvents}
+          range={range}
+          textEditModeEnabled={this.state.textEditModeEnabled}
+        />
+      );
     }
+
+    const DatasourceCheatsheet = datasourceInstance.components?.ExploreStartPage;
     return (
-      <AngularQueryEditor
-        error={queryErrors}
-        datasource={datasourceInstance}
-        onQueryChange={this.onChange}
-        onExecuteQuery={this.onRunQuery}
-        initialQuery={query}
-        exploreEvents={exploreEvents}
-        range={range}
-        textEditModeEnabled={this.state.textEditModeEnabled}
-      />
+      <>
+        {QueryEditor}
+        {DatasourceCheatsheet && (
+          <HelpToggle>
+            <DatasourceCheatsheet onClickExample={query => this.onChange(query)} datasource={datasourceInstance} />
+          </HelpToggle>
+        )}
+      </>
     );
   };
 
