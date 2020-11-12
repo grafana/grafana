@@ -53,6 +53,8 @@ The following sections provide general guidelines on topics specific to Grafana 
 - Use active voice. Avoid passive voice.
   - Active: Grafana displays the heatmap visualization.
   - Passive: The heatmap visualization is displayed.
+  - Active: After you create a dashboard, you can add a panel to it.
+  - Passive: After you create a dashboard, it is possible to add a panel to it.
 - Write in the imperative second person. Examples: You can write a query. Click the panel. Close the window.
 - Write in present tense.
   - Use: The panel opens. Grafana opens the panel.
