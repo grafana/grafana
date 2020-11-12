@@ -111,7 +111,7 @@ func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*Execution
 		if err != nil {
 			return nil, fmt.Errorf("failed to get query model: %w", err)
 		}
-		interval, err := q.getInterval()
+		interval, err := q.getIntervalDuration()
 		if err != nil {
 			return nil, fmt.Errorf("failed to retrieve intervalMs from the model: %w", err)
 		}

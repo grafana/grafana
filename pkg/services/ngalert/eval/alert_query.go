@@ -181,7 +181,20 @@ func (aq *AlertQuery) setIntervalMS() error {
 	return nil
 }
 
-func (aq *AlertQuery) getInterval() (time.Duration, error) {
+func (aq *AlertQuery) getIntervalMS() (int64, error) {
+	err := aq.setIntervalMS()
+	if err != nil {
+		return 0, err
+	}
+
+	intervalMs, ok := aq.modelProps["intervalMs"].(float64)
+	if !ok {
+		return 0, fmt.Errorf("failed to cast intervalMs to float64: %v", aq.modelProps["intervalMs"])
+	}
+	return int64(intervalMs), nil
+}
+
+func (aq *AlertQuery) getIntervalDuration() (time.Duration, error) {
 	err := aq.setIntervalMS()
 	if err != nil {
 		return 0, err
