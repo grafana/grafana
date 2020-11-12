@@ -72,7 +72,7 @@ func deleteAlertByIdInternal(alertId int64, reason string, sess *DBSession) erro
 }
 
 func HandleAlertsQuery(query *models.GetAlertsQuery) error {
-	builder := SqlBuilder{}
+	builder := SQLBuilder{}
 
 	builder.Write(`SELECT
 		alert.id,
@@ -135,7 +135,7 @@ func HandleAlertsQuery(query *models.GetAlertsQuery) error {
 	}
 
 	alerts := make([]*models.AlertListItemDTO, 0)
-	if err := x.SQL(builder.GetSqlString(), builder.params...).Find(&alerts); err != nil {
+	if err := x.SQL(builder.GetSQLString(), builder.params...).Find(&alerts); err != nil {
 		return err
 	}
 
@@ -371,7 +371,7 @@ func PauseAllAlerts(cmd *models.PauseAllAlertCommand) error {
 }
 
 func GetAlertStatesForDashboard(query *models.GetAlertStatesForDashboardQuery) error {
-	var rawSql = `SELECT
+	var rawSQL = `SELECT
 	                id,
 	                dashboard_id,
 	                panel_id,
@@ -381,7 +381,7 @@ func GetAlertStatesForDashboard(query *models.GetAlertStatesForDashboardQuery) e
 	                WHERE org_id = ? AND dashboard_id = ?`
 
 	query.Result = make([]*models.AlertStateInfoDTO, 0)
-	err := x.SQL(rawSql, query.OrgId, query.DashboardId).Find(&query.Result)
+	err := x.SQL(rawSQL, query.OrgId, query.DashboardId).Find(&query.Result)
 
 	return err
 }

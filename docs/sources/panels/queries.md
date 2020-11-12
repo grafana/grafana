@@ -1,9 +1,5 @@
 +++
 title = "Queries"
-type = "docs"
-[menu.docs]
-identifier = "queries"
-parent = "panels"
 weight = 300
 +++
 
@@ -81,15 +77,15 @@ Grafana sets defaults that are shown in dark gray text. Changes are displayed in
 Panel data source query options:
 
 - **Max data points -** If the data source supports it, sets the maximum numbers of data points for each series returned. If the query returns more data points than the max data points setting, then the data source consolidates them (reduces the number of points returned by aggregating them together by average or max or other function).
-  
+
   There are two main reasons for limiting the number of points, performance and smoothing the line. The default value is the width (or number of pixels) of the graph as there is no point in having more data points than the graph panel can display.
 
   With streaming data, the max data points value is used for the rolling buffer. (Streaming is a continuous flow of data and buffering is a way of dividing the stream into chunks). Loki streams data in the live tailing mode.
 
 - **Min interval -** Sets a minimum limit for the automatically calculated interval, typically the minimum scrape interval. If a data point is saved every 15 seconds, then there's no point in having an interval lower than that. Another use case is to set it to a higher minimum than the scrape interval to get more coarse-grained, well-functioning queries.
-  
-- **Interval -** The interval is a time span that you can use when aggregating or grouping data points by time. 
-  
+
+- **Interval -** The interval is a time span that you can use when aggregating or grouping data points by time.
+
   Grafana automatically calculates an appropriate interval and it can be used as a variable in templated queries. The variable is either in seconds: `$__interval` or in milliseconds: `$__interval_ms`. It is typically used in aggregation functions like sum or average. For example, a Prometheus query using the interval variable: `rate(http_requests_total[$__interval])`.
 
   This automatic interval is calculated based on the width of the graph. If the user zooms out a lot then the interval becomes greater, resulting in a more coarse grained aggregation whereas if the user zooms in then the interval decreases resulting in a more fine grained aggregation.
@@ -97,16 +93,16 @@ Panel data source query options:
   For more information, refer to [Global variables]({{< relref "../variables/variable-types/global-variables.md" >}}).
 
 - **Relative time -** You can override the relative time range for individual panels, causing them to be different than what is selected in the dashboard time picker in the top right corner of the dashboard. This allows you to show metrics from different time periods or days on the same dashboard.
-  
+
 - **Time shift -** The time shift function is another way to override the time range for individual panels. It only works with relative time ranges and allows you to adjust the time range.
-  
+
   For example, you could shift the time range for the panel to be two hours earlier than the dashboard time picker. For more information, refer to [Time range controls]({{< relref "../dashboards/time-range-controls.md" >}}).
 
 - **Cache timeout -** (This field is only visible if available in your data source.) If your time series store has a query cache, then this option can override the default cache timeout. Specified as a numeric value in seconds.
 
 ### Query inspector button
 
-You can click **Query inspector** to open the Query tab of the panel inspector where you can see the query request sent by the panel and the response. 
+You can click **Query inspector** to open the Query tab of the panel inspector where you can see the query request sent by the panel and the response.
 
 Click **Refresh** to see the full text of the request sent by this panel to the server.
 
@@ -116,7 +112,7 @@ For more information about the panel inspector, refer to [Inspect a panel]({{< r
 
 ### Query editor list
 
-In the UI, queries are organized in collapsible query rows. Each query row contains a query editor and is identified with a letter (A, B, C, and so on). 
+In the UI, queries are organized in collapsible query rows. Each query row contains a query editor and is identified with a letter (A, B, C, and so on).
 
 You can:
 

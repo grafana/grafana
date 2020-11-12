@@ -3,10 +3,6 @@ title = "Organization HTTP API "
 description = "Grafana Organization HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "organization"]
 aliases = ["/docs/grafana/latest/http_api/organization/"]
-type = "docs"
-[menu.docs]
-name = "Organization"
-parent = "http_api"
 +++
 
 

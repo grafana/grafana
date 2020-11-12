@@ -8,42 +8,42 @@ import (
 	"xorm.io/xorm"
 )
 
-type Sqlite3 struct {
+type SQLite3 struct {
 	BaseDialect
 }
 
-func NewSqlite3Dialect(engine *xorm.Engine) Dialect {
-	d := Sqlite3{}
+func NewSQLite3Dialect(engine *xorm.Engine) Dialect {
+	d := SQLite3{}
 	d.BaseDialect.dialect = &d
 	d.BaseDialect.engine = engine
-	d.BaseDialect.driverName = SQLITE
+	d.BaseDialect.driverName = SQLite
 	return &d
 }
 
-func (db *Sqlite3) SupportEngine() bool {
+func (db *SQLite3) SupportEngine() bool {
 	return false
 }
 
-func (db *Sqlite3) Quote(name string) string {
+func (db *SQLite3) Quote(name string) string {
 	return "`" + name + "`"
 }
 
-func (db *Sqlite3) AutoIncrStr() string {
+func (db *SQLite3) AutoIncrStr() string {
 	return "AUTOINCREMENT"
 }
 
-func (db *Sqlite3) BooleanStr(value bool) string {
+func (db *SQLite3) BooleanStr(value bool) string {
 	if value {
 		return "1"
 	}
 	return "0"
 }
 
-func (db *Sqlite3) DateTimeFunc(value string) string {
+func (db *SQLite3) DateTimeFunc(value string) string {
 	return "datetime(" + value + ")"
 }
 
-func (db *Sqlite3) SqlType(c *Column) string {
+func (db *SQLite3) SQLType(c *Column) string {
 	switch c.Type {
 	case DB_Date, DB_DateTime, DB_TimeStamp, DB_Time:
 		return DB_DateTime
@@ -69,26 +69,26 @@ func (db *Sqlite3) SqlType(c *Column) string {
 	}
 }
 
-func (db *Sqlite3) IndexCheckSql(tableName, indexName string) (string, []interface{}) {
+func (db *SQLite3) IndexCheckSQL(tableName, indexName string) (string, []interface{}) {
 	args := []interface{}{tableName, indexName}
 	sql := "SELECT 1 FROM " + db.Quote("sqlite_master") + " WHERE " + db.Quote("type") + "='index' AND " + db.Quote("tbl_name") + "=? AND " + db.Quote("name") + "=?"
 	return sql, args
 }
 
-func (db *Sqlite3) DropIndexSql(tableName string, index *Index) string {
+func (db *SQLite3) DropIndexSQL(tableName string, index *Index) string {
 	quote := db.Quote
 	// var unique string
 	idxName := index.XName(tableName)
 	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
 }
 
-func (db *Sqlite3) CleanDB() error {
+func (db *SQLite3) CleanDB() error {
 	return nil
 }
 
 // TruncateDBTables deletes all data from all the tables and resets the sequences.
 // A special case is the dashboard_acl table where we keep the default permissions.
-func (db *Sqlite3) TruncateDBTables() error {
+func (db *SQLite3) TruncateDBTables() error {
 	tables, err := db.engine.DBMetas()
 	if err != nil {
 		return err
@@ -119,7 +119,7 @@ func (db *Sqlite3) TruncateDBTables() error {
 	return nil
 }
 
-func (db *Sqlite3) isThisError(err error, errcode int) bool {
+func (db *SQLite3) isThisError(err error, errcode int) bool {
 	if driverErr, ok := err.(sqlite3.Error); ok {
 		if int(driverErr.ExtendedCode) == errcode {
 			return true
@@ -129,17 +129,17 @@ func (db *Sqlite3) isThisError(err error, errcode int) bool {
 	return false
 }
 
-func (db *Sqlite3) ErrorMessage(err error) string {
+func (db *SQLite3) ErrorMessage(err error) string {
 	if driverErr, ok := err.(sqlite3.Error); ok {
 		return driverErr.Error()
 	}
 	return ""
 }
 
-func (db *Sqlite3) IsUniqueConstraintViolation(err error) bool {
+func (db *SQLite3) IsUniqueConstraintViolation(err error) bool {
 	return db.isThisError(err, int(sqlite3.ErrConstraintUnique))
 }
 
-func (db *Sqlite3) IsDeadlock(err error) bool {
+func (db *SQLite3) IsDeadlock(err error) bool {
 	return false // No deadlock
 }
