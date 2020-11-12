@@ -250,6 +250,11 @@ func ChangeUserPassword(c *models.ReqContext, cmd models.ChangeUserPasswordComma
 	return Success("User password changed")
 }
 
+// redirectToChangePassword handles GET /.well-known/change-password.
+func redirectToChangePassword(c *models.ReqContext) {
+	c.Redirect("/profile/password", 302)
+}
+
 // GET /api/users
 func SearchUsers(c *models.ReqContext) Response {
 	query, err := searchUser(c)
