@@ -27,10 +27,19 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
         .addRadio({
           path: 'mode',
           name: 'Display',
-          defaultValue: graphFieldOptions.line[0].value,
+          defaultValue: graphFieldOptions.mode[0].value,
           settings: {
-            options: graphFieldOptions.line,
+            options: graphFieldOptions.mode,
           },
+        })
+        .addRadio({
+          path: 'lineMode',
+          name: 'Line interpolation',
+          defaultValue: graphFieldOptions.lineMode[0].value,
+          settings: {
+            options: graphFieldOptions.lineMode,
+          },
+          showIf: c => !(c.mode === GraphMode.Bar || c.mode === GraphMode.Points),
         })
         .addSliderInput({
           path: 'lineWidth',
@@ -74,7 +83,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           showIf: c => c.points !== PointMode.Never,
         })
         .addRadio({
-          path: 'axis',
+          path: 'axisPlacement',
           name: 'Placement',
           category: ['Axis'],
           defaultValue: graphFieldOptions.axisPlacement[0].value,

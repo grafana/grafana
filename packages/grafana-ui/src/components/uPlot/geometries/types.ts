@@ -1,9 +1,11 @@
 import { TimeZone } from '@grafana/data';
+import { LineInterpolation } from '../config';
 
 export interface LineProps {
   scaleKey: string;
   stroke: string;
   width: number;
+  interpolation?: LineInterpolation; // defaults to linear
 }
 
 export interface PointProps {

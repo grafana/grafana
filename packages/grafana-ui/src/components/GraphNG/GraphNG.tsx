@@ -26,6 +26,12 @@ interface GraphNGProps extends Omit<PlotProps, 'data'> {
   legend?: LegendOptions;
 }
 
+const defaultConfig: GraphFieldConfig = {
+  mode: GraphMode.Line,
+  points: PointMode.Auto,
+  axisPlacement: AxisPlacement.Auto,
+};
+
 export const GraphNG: React.FC<GraphNGProps> = ({
   data,
   children,
@@ -78,7 +84,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     const seriesGeometry = [];
     const field = alignedData.fields[i];
     const config = field.config as FieldConfig<GraphFieldConfig>;
-    const customConfig = config.custom;
+    const customConfig = config.custom ?? defaultConfig;
 
     if (i === timeIndex || field.type !== FieldType.number) {
       continue;
@@ -87,8 +93,8 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     const fmt = field.display ?? defaultFormatter;
     const scale = config.unit || '__fixed';
 
-    if (!uniqueScales[scale] && config.custom?.axisPlacement !== AxisPlacement.Hide) {
-      const side = config.custom?.axisPlacement ?? (hasLeftAxis ? AxisPlacement.Right : AxisPlacement.Left);
+    if (!uniqueScales[scale] && customConfig.axisPlacement !== AxisPlacement.Hide) {
+      const side = customConfig.axisPlacement ?? (hasLeftAxis ? AxisPlacement.Right : AxisPlacement.Left);
       if (side === AxisPlacement.Left) {
         hasLeftAxis = true;
       }
@@ -99,8 +105,8 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         <Axis
           key={`axis-${scale}-${i}`}
           scaleKey={scale}
-          label={config.custom?.axisLabel}
-          size={config.custom?.axisWidth}
+          label={customConfig.axisLabel}
+          size={customConfig.axisWidth}
           side={getUPlotSideFromAxis(side)}
           grid={!hasYAxis}
           formatValue={v => formattedValueToString(fmt(v))}
@@ -114,27 +120,27 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
     const colorMode = getFieldColorModeForField(field);
     const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
-
-    if (customConfig?.mode !== GraphMode.Points) {
+    if ((customConfig.mode ?? GraphMode.Line) === GraphMode.Points) {
       seriesGeometry.push(
-        <Line key={`line-${scale}-${i}`} scaleKey={scale} stroke={seriesColor} width={customConfig?.lineWidth ?? 0} />
-      );
-    }
-
-    if (customConfig?.points !== PointMode.Never) {
-      seriesGeometry.push(
-        <Point
-          key={`point-${scale}-${i}`}
+        <Line
+          key={`line-${scale}-${i}`}
           scaleKey={scale}
-          size={customConfig?.pointRadius ?? 2}
           stroke={seriesColor}
+          width={customConfig.lineWidth ?? 0}
+          // ??? interpolation={customConfig.lineMode}
         />
       );
     }
 
-    if (customConfig?.fillAlpha) {
+    if (customConfig.points !== PointMode.Never) {
       seriesGeometry.push(
-        <Area key={`area-${scale}-${i}`} scaleKey={scale} fill={customConfig?.fillAlpha} color={seriesColor} />
+        <Point key={`point-${scale}-${i}`} scaleKey={scale} size={customConfig.pointRadius ?? 2} stroke={seriesColor} />
+      );
+    }
+
+    if (customConfig.fillAlpha) {
+      seriesGeometry.push(
+        <Area key={`area-${scale}-${i}`} scaleKey={scale} fill={customConfig.fillAlpha} color={seriesColor} />
       );
     }
 

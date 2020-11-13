@@ -31,34 +31,44 @@ export enum PointMode {
 export enum GraphMode {
   Line = 'line', // default
   Bar = 'bar', // will also have a gap percent
-  Points = 'points', // use the points config
+  Points = 'points', // Only show points
+}
+
+export enum LineInterpolation {
+  Linear = 'linear',
   Staircase = 'staircase', // https://leeoniya.github.io/uPlot/demos/line-stepped.html
   Smooth = 'smooth', // https://leeoniya.github.io/uPlot/demos/line-smoothing.html
 }
 
 export interface GraphFieldConfig {
   mode: GraphMode;
-  lineWidth: number; // pixels
-  fillAlpha: number; // 0-1
 
-  points: PointMode;
-  pointRadius: number; // pixels
-  symbol: string; // eventually dot,star, etc
+  lineMode?: LineInterpolation;
+  lineWidth?: number; // pixels
+  fillAlpha?: number; // 0-1
+
+  points?: PointMode;
+  pointRadius?: number; // pixels
+  symbol?: string; // eventually dot,star, etc
 
   // Axis is actually unique based on the unit... not each field!
-  axisPlacement: AxisPlacement;
+  axisPlacement?: AxisPlacement;
   axisLabel?: string;
   axisWidth?: number; // pixels ideally auto?
 }
 
 export const graphFieldOptions = {
-  line: [
-    { label: 'Line', value: GraphMode.Line },
+  mode: [
+    { label: 'Lines', value: GraphMode.Line },
     { label: 'Bars', value: GraphMode.Bar },
     { label: 'Points', value: GraphMode.Points },
-    // { label: 'Staircase', value: GraphMode.Staircase, description: 'TODO!!!' },
-    // { label: 'Smooth', value: GraphMode.Smooth, description: 'TODO!!!' },
   ] as Array<SelectableValue<GraphMode>>,
+
+  lineMode: [
+    { label: 'Linear', value: LineInterpolation.Linear },
+    { label: 'Staircase', value: LineInterpolation.Staircase },
+    { label: 'Smooth', value: LineInterpolation.Smooth },
+  ] as Array<SelectableValue<LineInterpolation>>,
 
   points: [
     { label: 'Auto', value: PointMode.Auto, description: 'Show points when the density is low' },
