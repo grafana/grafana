@@ -251,7 +251,7 @@ describe('LokiDatasource', () => {
       await expect(ds.query(options)).toEmitValuesWith(received => {
         const err: any = received[0];
         expect(err.data.message).toBe(
-          'Error: parse error at line 1, col 6: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://github.com/grafana/loki/blob/master/docs/logql.md.'
+          'Error: parse error at line 1, col 6: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://grafana.com/docs/loki/latest/logql/.'
         );
       });
     });

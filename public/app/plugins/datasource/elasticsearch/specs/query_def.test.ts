@@ -162,8 +162,21 @@ describe('ElasticQueryDef', () => {
     });
 
     describe('using esversion 5', () => {
+      const metricAggTypes = queryDef.getMetricAggTypes(5);
       test('should get pipeline aggs', () => {
-        expect(queryDef.getMetricAggTypes(5).length).toBe(15);
+        expect(metricAggTypes.length).toBe(15);
+      });
+    });
+    describe('using esversion 70', () => {
+      const metricAggTypes = queryDef.getMetricAggTypes(70);
+      test('should get pipeline aggs', () => {
+        expect(metricAggTypes.length).toBe(15);
+      });
+      test('should get pipeline aggs with moving function', () => {
+        expect(metricAggTypes.some(m => m.value === 'moving_fn')).toBeTruthy();
+      });
+      test('should get pipeline aggs without moving average', () => {
+        expect(metricAggTypes.some(m => m.value === 'moving_avg')).toBeFalsy();
       });
     });
   });

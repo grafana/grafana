@@ -13,7 +13,7 @@ func HandleRequest(ctx context.Context, dsInfo *models.DataSource, req *TsdbQuer
 	var endpoint TsdbQueryEndpoint
 	fn, exists := registry[dsInfo.Type]
 	if !exists {
-		return nil, fmt.Errorf("Could not find executor for data source type: %s", dsInfo.Type)
+		return nil, fmt.Errorf("could not find executor for data source type: %s", dsInfo.Type)
 	}
 
 	var err error
