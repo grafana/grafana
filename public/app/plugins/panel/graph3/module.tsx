@@ -35,6 +35,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
         .addRadio({
           path: 'lineMode',
           name: 'Line interpolation',
+          description: 'NOTE: WIP and will be implemented soon',
           defaultValue: graphFieldOptions.lineMode[0].value,
           settings: {
             options: graphFieldOptions.lineMode,
@@ -66,6 +67,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
         .addRadio({
           path: 'points',
           name: 'Points',
+          description: 'WIP, only partially implemented',
           defaultValue: graphFieldOptions.points[0].value,
           settings: {
             options: graphFieldOptions.points,
