@@ -13,7 +13,7 @@ import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { Alert, Button, CustomScrollbar, HorizontalGroup, Spinner, VerticalGroup } from '@grafana/ui';
+import { Alert, Button, HorizontalGroup, Spinner, VerticalGroup } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
 import { notifyApp, updateLocation } from 'app/core/actions';
@@ -294,7 +294,7 @@ export class DashboardPage extends PureComponent<Props, State> {
       updateLocation,
     } = this.props;
 
-    const { editPanel, viewPanel, scrollTop, updateScrollTop } = this.state;
+    const { editPanel, viewPanel, scrollTop } = this.state;
 
     if (!dashboard) {
       if (isInitSlow) {
@@ -312,27 +312,18 @@ export class DashboardPage extends PureComponent<Props, State> {
         <DashNav dashboard={dashboard} isFullscreen={!!viewPanel} $injector={$injector} onAddPanel={this.onAddPanel} />
 
         <div className="dashboard-scroll">
-          <CustomScrollbar
-            autoHeightMin="100%"
-            setScrollTop={this.setScrollTop}
-            scrollTop={updateScrollTop}
-            hideHorizontalTrack={true}
-            updateAfterMountMs={500}
-            className="custom-scrollbar--page"
-          >
-            <div className="dashboard-content">
-              {initError && this.renderInitFailedState()}
-              {!editPanel && <SubMenu dashboard={dashboard} links={dashboard.links} />}
+          <div className="dashboard-content">
+            {initError && this.renderInitFailedState()}
+            {!editPanel && <SubMenu dashboard={dashboard} links={dashboard.links} />}
 
-              <DashboardGrid
-                dashboard={dashboard}
-                viewPanel={viewPanel}
-                editPanel={editPanel}
-                scrollTop={approximateScrollTop}
-                isPanelEditorOpen={isPanelEditorOpen}
-              />
-            </div>
-          </CustomScrollbar>
+            <DashboardGrid
+              dashboard={dashboard}
+              viewPanel={viewPanel}
+              editPanel={editPanel}
+              scrollTop={approximateScrollTop}
+              isPanelEditorOpen={isPanelEditorOpen}
+            />
+          </div>
         </div>
 
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} defaultTab={inspectTab} />}
