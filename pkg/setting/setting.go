@@ -16,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-macaron/session"
 	"github.com/prometheus/common/model"
 	ini "gopkg.in/ini.v1"
 
@@ -79,7 +78,7 @@ var (
 	// Log settings.
 	LogConfigs []util.DynMap
 
-	// Http server options
+	// HTTP server options
 	Protocol                       Scheme
 	Domain                         string
 	HttpAddr, HttpPort             string
@@ -170,7 +169,6 @@ var (
 	BasicAuthEnabled bool
 
 	// Session settings.
-	SessionOptions         session.Options
 	SessionConnMaxLifetime int64
 
 	// Global setting objects.
@@ -195,7 +193,7 @@ var (
 	LDAPAllowSignup       bool
 	LDAPActiveSyncEnabled bool
 
-	// QUOTA
+	// Quota
 	Quota QuotaSettings
 
 	// Alerting
@@ -230,8 +228,8 @@ type Cfg struct {
 	Logger log.Logger
 
 	// HTTP Server Settings
-	AppUrl           string
-	AppSubUrl        string
+	AppURL           string
+	AppSubURL        string
 	ServeFromSubPath bool
 	StaticRootPath   string
 	Protocol         Scheme
@@ -273,6 +271,7 @@ type Cfg struct {
 	PluginsAppsSkipVerifyTLS bool
 	PluginSettings           PluginSettings
 	PluginsAllowUnsigned     []string
+	MarketplaceURL           string
 	DisableSanitizeHtml      bool
 	EnterpriseLicensePath    string
 
@@ -323,29 +322,32 @@ type Cfg struct {
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
+
+	// Sentry config
+	Sentry Sentry
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.
-func (c Cfg) IsExpressionsEnabled() bool {
-	return c.FeatureToggles["expressions"]
+func (cfg Cfg) IsExpressionsEnabled() bool {
+	return cfg.FeatureToggles["expressions"]
 }
 
 // IsLiveEnabled returns if grafana live should be enabled
-func (c Cfg) IsLiveEnabled() bool {
-	return c.FeatureToggles["live"]
+func (cfg Cfg) IsLiveEnabled() bool {
+	return cfg.FeatureToggles["live"]
 }
 
 // IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
-func (c Cfg) IsNgAlertEnabled() bool {
-	return c.FeatureToggles["ngalert"]
+func (cfg Cfg) IsNgAlertEnabled() bool {
+	return cfg.FeatureToggles["ngalert"]
 }
 
-func (c Cfg) IsDatabaseMetricsEnabled() bool {
-	return c.FeatureToggles["database_metrics"]
+func (cfg Cfg) IsDatabaseMetricsEnabled() bool {
+	return cfg.FeatureToggles["database_metrics"]
 }
 
-func (c Cfg) IsHTTPRequestHistogramEnabled() bool {
-	return c.FeatureToggles["http_request_histogram"]
+func (cfg Cfg) IsHTTPRequestHistogramEnabled() bool {
+	return cfg.FeatureToggles["http_request_histogram"]
 }
 
 type CommandLineArgs struct {
@@ -452,7 +454,7 @@ func (cfg *Cfg) readAnnotationSettings() {
 	alertingSection := cfg.Raw.Section("alerting")
 
 	var newAnnotationCleanupSettings = func(section *ini.Section, maxAgeField string) AnnotationCleanupSettings {
-		maxAge, err := gtime.ParseInterval(section.Key(maxAgeField).MustString(""))
+		maxAge, err := gtime.ParseDuration(section.Key(maxAgeField).MustString(""))
 		if err != nil {
 			maxAge = 0
 		}
@@ -553,7 +555,7 @@ func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 
 	userConfig, err := ini.Load(configFile)
 	if err != nil {
-		return fmt.Errorf("Failed to parse %v, %v", configFile, err)
+		return fmt.Errorf("failed to parse %q: %w", configFile, err)
 	}
 
 	userConfig.BlockMode = false
@@ -705,7 +707,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	cfg.Raw = iniFile
 
-	// Temporary keep global, to make refactor in steps
+	// Temporarily keep global, to make refactor in steps
 	Raw = cfg.Raw
 
 	cfg.BuildVersion = BuildVersion
@@ -796,6 +798,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		plug = strings.TrimSpace(plug)
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
+	cfg.MarketplaceURL = pluginsSection.Key("marketplace_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.Protocol = Protocol
 
 	// Read and populate feature toggles list
@@ -846,6 +849,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	cfg.readDateFormats()
+	cfg.readSentryConfig()
 
 	return nil
 }
@@ -1018,7 +1022,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		maxInactiveDaysVal = "7d"
 	}
 	maxInactiveDurationVal := valueAsString(auth, "login_maximum_inactive_lifetime_duration", maxInactiveDaysVal)
-	cfg.LoginMaxInactiveLifetime, err = gtime.ParseInterval(maxInactiveDurationVal)
+	cfg.LoginMaxInactiveLifetime, err = gtime.ParseDuration(maxInactiveDurationVal)
 	if err != nil {
 		return err
 	}
@@ -1031,7 +1035,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		maxLifetimeDaysVal = "7d"
 	}
 	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", maxLifetimeDaysVal)
-	cfg.LoginMaxLifetime, err = gtime.ParseInterval(maxLifetimeDurationVal)
+	cfg.LoginMaxLifetime, err = gtime.ParseDuration(maxLifetimeDurationVal)
 	if err != nil {
 		return err
 	}
@@ -1121,7 +1125,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
 
 	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
-	userInviteMaxLifetimeDuration, err := gtime.ParseInterval(userInviteMaxLifetimeVal)
+	userInviteMaxLifetimeDuration, err := gtime.ParseDuration(userInviteMaxLifetimeVal)
 	if err != nil {
 		return err
 	}
@@ -1199,8 +1203,8 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 	}
 	ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
 
-	cfg.AppUrl = AppUrl
-	cfg.AppSubUrl = AppSubUrl
+	cfg.AppURL = AppUrl
+	cfg.AppSubURL = AppSubUrl
 	cfg.ServeFromSubPath = ServeFromSubPath
 
 	Protocol = HTTPScheme

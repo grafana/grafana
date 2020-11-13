@@ -121,6 +121,12 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
     }
   }
 
+  const tsField = data.fields[0];
+  const tsNsField = data.fields[1];
+  const lineField = data.fields[2];
+  const labelsField = data.fields[3];
+  const idField = data.fields[4];
+
   for (const stream of streams) {
     // Find unique labels
     const unique = findUniqueLabels(stream.stream, baseLabels);
@@ -131,11 +137,11 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
 
     // Add each line
     for (const [ts, line] of stream.values) {
-      data.values.ts.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
-      data.values.tsNs.add(ts);
-      data.values.line.add(line);
-      data.values.labels.add(unique);
-      data.values.id.add(createUid(ts, allLabelsString, line));
+      tsField.values.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
+      tsNsField.values.add(ts);
+      lineField.values.add(line);
+      labelsField.values.add(unique);
+      idField.values.add(createUid(ts, allLabelsString, line));
     }
   }
 }

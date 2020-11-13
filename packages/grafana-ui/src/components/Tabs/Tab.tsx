@@ -14,7 +14,7 @@ export interface TabProps extends HTMLProps<HTMLLIElement> {
   /** When provided, it is possible to use the tab as a hyperlink. Use in cases where the tabs update location. */
   href?: string;
   icon?: IconName;
-  onChangeTab: (event?: React.MouseEvent<HTMLLIElement>) => void;
+  onChangeTab?: (event?: React.MouseEvent<HTMLLIElement>) => void;
   /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
   counter?: number | null;
 }

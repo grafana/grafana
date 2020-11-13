@@ -1,3 +1,4 @@
+import { TimeZone } from '@grafana/data';
 import { AxisSide } from '../types';
 
 export interface LineProps {
@@ -28,9 +29,11 @@ export interface AxisProps {
   grid?: boolean;
   formatValue?: (v: any) => string;
   values?: any;
+  isTime?: boolean;
+  timeZone?: TimeZone;
 }
 
 export interface ScaleProps {
   scaleKey: string;
-  time?: boolean;
+  isTime?: boolean;
 }

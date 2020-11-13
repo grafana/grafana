@@ -2,10 +2,7 @@
 title = "Provisioning"
 description = ""
 keywords = ["grafana", "provisioning"]
-type = "docs"
 aliases = ["/docs/grafana/latest/installation/provisioning"]
-[menu.docs]
-parent = "admin"
 weight = 8
 +++
 
@@ -30,9 +27,9 @@ Check out the [configuration]({{< relref "configuration.md" >}}) page for more i
 
 ### Using Environment Variables
 
-It is possible to use environment variable interpolation in all 3 provisioning config types. Allowed syntax
+It is possible to use environment variable interpolation in all 3 provisioning configuration types. Allowed syntax
 is either `$ENV_VAR_NAME` or `${ENV_VAR_NAME}` and can be used only for values not for keys or bigger parts
-of the configs. It is not available in the dashboard's definition files just the dashboard provisioning
+of the configurations. It is not available in the dashboard's definition files just the dashboard provisioning
 configuration.
 Example:
 
@@ -150,8 +147,9 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsAuthWithCACert       | boolean | _All_                                                            | Enable TLS authentication using CA cert                                                     |
 | tlsSkipVerify           | boolean | _All_                                                            | Controls whether a client verifies the server's certificate chain and host name.            |
 | graphiteVersion         | string  | Graphite                                                         | Graphite version                                                                            |
-| timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source                         |
-| httpMode                | string  | Influxdb, Prometheus                                             | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
+| timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL  | Lowest interval/step value that should be used for this data source                         |
+| httpMode                | string  | Influxdb                                                          | HTTP Method. 'GET', 'POST', defaults to GET                                                |
+| httpMethod              | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to GET                                                |
 | esVersion               | number  | Elasticsearch                                                    | Elasticsearch version as a number (2/5/56/60/70)                                            |
 | timeField               | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                |
 | interval                | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |

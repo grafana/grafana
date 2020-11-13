@@ -2,11 +2,7 @@
 title = "Azure Monitor"
 description = "Guide for using Azure Monitor in Grafana"
 keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/datasources/azuremonitor"]
-[menu.docs]
-name = "Azure Monitor"
-parent = "datasources"
 weight = 300
 +++
 
@@ -47,7 +43,7 @@ The data source can access metrics from four different services. You can configu
 
    - The Subscription Id can be changed per query. Save the data source and refresh the page to see the list of subscriptions available for the specified Client Id.
 
-1. If you are also using the Azure Log Analytics service, then you need to specify these two config values (or you can reuse the Client Id and Secret from the previous step).
+1. If you are also using the Azure Log Analytics service, then you need to specify these two configuration values (or you can reuse the Client Id and Secret from the previous step).
 
    - Client Id (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
    - Client Secret (Azure Active Directory -> App Registrations -> Choose your app -> Keys -> Create a key -> Use client secret)

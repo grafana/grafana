@@ -20,6 +20,16 @@ import (
 	"github.com/xorcare/pointer"
 )
 
+func newTimeSeriesPointsFromArgs(values ...float64) tsdb.TimeSeriesPoints {
+	points := make(tsdb.TimeSeriesPoints, 0)
+
+	for i := 0; i < len(values); i += 2 {
+		points = append(points, tsdb.NewTimePoint(null.FloatFrom(values[i]), values[i+1]))
+	}
+
+	return points
+}
+
 func TestQueryCondition(t *testing.T) {
 	Convey("when evaluating query condition", t, func() {
 		queryConditionScenario("Given avg() and > 100", func(ctx *queryConditionTestContext) {
@@ -47,7 +57,7 @@ func TestQueryCondition(t *testing.T) {
 			})
 
 			Convey("should fire when avg is above 100", func() {
-				points := tsdb.NewTimeSeriesPointsFromArgs(120, 0)
+				points := newTimeSeriesPointsFromArgs(120, 0)
 				ctx.series = tsdb.TimeSeriesSlice{tsdb.NewTimeSeries("test1", points)}
 				cr, err := ctx.exec()
 
@@ -67,7 +77,7 @@ func TestQueryCondition(t *testing.T) {
 			})
 
 			Convey("Should not fire when avg is below 100", func() {
-				points := tsdb.NewTimeSeriesPointsFromArgs(90, 0)
+				points := newTimeSeriesPointsFromArgs(90, 0)
 				ctx.series = tsdb.TimeSeriesSlice{tsdb.NewTimeSeries("test1", points)}
 				cr, err := ctx.exec()
 
@@ -88,8 +98,8 @@ func TestQueryCondition(t *testing.T) {
 
 			Convey("Should fire if only first series matches", func() {
 				ctx.series = tsdb.TimeSeriesSlice{
-					tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs(120, 0)),
-					tsdb.NewTimeSeries("test2", tsdb.NewTimeSeriesPointsFromArgs(0, 0)),
+					tsdb.NewTimeSeries("test1", newTimeSeriesPointsFromArgs(120, 0)),
+					tsdb.NewTimeSeries("test2", newTimeSeriesPointsFromArgs(0, 0)),
 				}
 				cr, err := ctx.exec()
 
@@ -121,7 +131,7 @@ func TestQueryCondition(t *testing.T) {
 				Convey("Should set Firing if eval match", func() {
 					ctx.evaluator = `{"type": "no_value", "params": []}`
 					ctx.series = tsdb.TimeSeriesSlice{
-						tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs()),
+						tsdb.NewTimeSeries("test1", newTimeSeriesPointsFromArgs()),
 					}
 					cr, err := ctx.exec()
 
@@ -131,8 +141,8 @@ func TestQueryCondition(t *testing.T) {
 
 				Convey("Should set NoDataFound both series are empty", func() {
 					ctx.series = tsdb.TimeSeriesSlice{
-						tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs()),
-						tsdb.NewTimeSeries("test2", tsdb.NewTimeSeriesPointsFromArgs()),
+						tsdb.NewTimeSeries("test1", newTimeSeriesPointsFromArgs()),
+						tsdb.NewTimeSeries("test2", newTimeSeriesPointsFromArgs()),
 					}
 					cr, err := ctx.exec()
 
@@ -153,8 +163,8 @@ func TestQueryCondition(t *testing.T) {
 
 				Convey("Should not set NoDataFound if one series is empty", func() {
 					ctx.series = tsdb.TimeSeriesSlice{
-						tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs()),
-						tsdb.NewTimeSeries("test2", tsdb.NewTimeSeriesPointsFromArgs(120, 0)),
+						tsdb.NewTimeSeries("test1", newTimeSeriesPointsFromArgs()),
+						tsdb.NewTimeSeries("test2", newTimeSeriesPointsFromArgs(120, 0)),
 					}
 					cr, err := ctx.exec()
 

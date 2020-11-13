@@ -336,7 +336,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
         ({ failures, prevRecordsMatched }, frames) => {
           failures++;
           for (const frame of frames) {
-            const recordsMatched = frame.meta?.stats?.find(stat => stat.displayName === 'Records matched')?.value!;
+            const recordsMatched = frame.meta?.stats?.find(stat => stat.displayName === 'Records scanned')?.value!;
             if (recordsMatched > (prevRecordsMatched[frame.refId!] ?? 0)) {
               failures = 0;
             }
@@ -595,44 +595,45 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
         return { data: [] };
       }
 
-      return Object.values(request.queries).reduce(
-        ({ data, error }: any, queryRequest: any) => {
-          const queryResult = res.results[queryRequest.refId];
-          if (!queryResult) {
-            return { data, error };
+      const data = dataframes.map(frame => {
+        const queryResult = res.results[frame.refId!];
+        const error = queryResult.error ? { message: queryResult.error } : null;
+        if (!queryResult) {
+          return { frame, error };
+        }
+
+        const requestQuery = request.queries.find(q => q.refId === frame.refId!) as any;
+
+        const link = this.buildCloudwatchConsoleUrl(
+          requestQuery!,
+          from.toISOString(),
+          to.toISOString(),
+          frame.refId!,
+          queryResult.meta.gmdMeta
+        );
+
+        if (link) {
+          for (const field of frame.fields) {
+            field.config.links = [
+              {
+                url: link,
+                title: 'View in CloudWatch console',
+                targetBlank: true,
+              },
+            ];
           }
+        }
+        return { frame, error };
+      });
 
-          const link = this.buildCloudwatchConsoleUrl(
-            queryRequest,
-            from.toISOString(),
-            to.toISOString(),
-            queryRequest.refId,
-            queryResult.meta.gmdMeta
-          );
-
-          return {
-            error: error || queryResult.error ? { message: queryResult.error } : null,
-            data: [
-              ...data,
-              ...dataframes.map(frame => {
-                if (link) {
-                  for (const field of frame.fields) {
-                    field.config.links = [
-                      {
-                        url: link,
-                        title: 'View in CloudWatch console',
-                        targetBlank: true,
-                      },
-                    ];
-                  }
-                }
-                return frame;
-              }),
-            ],
-          };
-        },
-        { data: [], error: null }
-      );
+      return {
+        data: data.map(o => o.frame),
+        error: data
+          .map(o => o.error)
+          .reduce((err, error) => {
+            return err || error;
+          }, null),
+      };
     } catch (err) {
       if (/^Throttling:.*/.test(err.data.message)) {
         const failedRedIds = Object.keys(err.data.results);

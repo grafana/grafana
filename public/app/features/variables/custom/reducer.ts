@@ -22,12 +22,13 @@ export const customVariableSlice = createSlice({
     createCustomOptionsFromQuery: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
       const instanceState = getInstanceState<CustomVariableModel>(state, action.payload.id);
       const { includeAll, query } = instanceState;
+
       const match = query.match(/(?:\\,|[^,])+/g) ?? [];
       const options = match.map(text => {
         text = text.replace(/\\,/g, ',');
-        const textMatch = text.match(/(?:\\:|[^:])+/g) ?? [];
-        if (textMatch.length > 1) {
-          const [key, value] = textMatch;
+        const textMatch = /^(.+)\s:\s(.+)$/g.exec(text) ?? [];
+        if (textMatch.length === 3) {
+          const [, key, value] = textMatch;
           return { text: key.trim(), value: value.trim(), selected: false };
         } else {
           return { text: text.trim(), value: text.trim(), selected: false };

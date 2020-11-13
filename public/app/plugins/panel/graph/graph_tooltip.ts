@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import { appEvents } from 'app/core/core';
 import { CoreEvents } from 'app/types';
-import { textUtil, systemDateFormats } from '@grafana/data';
+import { textUtil, systemDateFormats, LegacyGraphHoverClearEvent, LegacyGraphHoverEvent } from '@grafana/data';
 
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;
@@ -102,17 +102,11 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         minTime = pointTime;
       }
 
-      if (series.stack) {
-        if (panel.tooltip.value_type === 'individual') {
-          value = series.data[hoverIndex][1];
-        } else if (!series.stack) {
-          value = series.data[hoverIndex][1];
-        } else {
-          lastValue += series.data[hoverIndex][1];
-          value = lastValue;
-        }
-      } else {
-        value = series.data[hoverIndex][1];
+      value = series.data[hoverIndex][1];
+
+      if (series.stack && value !== null && panel.tooltip.value_type !== 'individual') {
+        lastValue += value;
+        value = lastValue;
       }
 
       // Highlighting multiple Points depending on the plot type
@@ -157,7 +151,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         plot.unhighlight();
       }
     }
-    appEvents.emit(CoreEvents.graphHoverClear);
+    dashboard.events.publish(new LegacyGraphHoverClearEvent());
   });
 
   elem.bind('plothover', (event: any, pos: { panelRelY: number; pageY: number }, item: any) => {
@@ -165,7 +159,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
 
     // broadcast to other graph panels that we are hovering!
     pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
-    appEvents.emit(CoreEvents.graphHover, { pos: pos, panel: panel });
+    dashboard.events.publish(new LegacyGraphHoverEvent({ pos: pos, panel: panel }));
   });
 
   elem.bind('plotclick', (event: any, pos: any, item: any) => {

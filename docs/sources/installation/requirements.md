@@ -2,11 +2,6 @@
 title = "Requirements"
 description = "Requirements for Grafana"
 keywords = ["grafana", "installation", "documentation"]
-type = "docs"
-[menu.docs]
-name = "Requirements"
-identifier = "requirements"
-parent = "installation"
 weight = 100
 +++
 
@@ -29,7 +24,7 @@ Installation of Grafana on other operating systems is possible, but it is neithe
 
 ## Hardware recommendations
 
-Grafana does not use a lot of resources and is very lightweight in use of memory and CPU. 
+Grafana does not use a lot of resources and is very lightweight in use of memory and CPU.
 
 Minimum recommended memory: 255 MB
 Minimum recommended CPU: 1
