@@ -1,7 +1,25 @@
 import _ from 'lodash';
+import { MetricFindValue } from '@grafana/data';
+
+interface TableResponse extends Record<string, any> {
+  type: string;
+  refId: string;
+  meta: any;
+}
+
+interface SeriesResponse extends Record<string, any> {
+  target: string;
+  refId: string;
+  meta: any;
+  datapoints: [any[]];
+}
+
+export interface MssqlResponse {
+  data: Array<TableResponse | SeriesResponse>;
+}
 
 export default class ResponseParser {
-  processQueryResult(res: any) {
+  processQueryResult(res: any): MssqlResponse {
     const data: any[] = [];
 
     if (!res.data.results) {
@@ -35,7 +53,7 @@ export default class ResponseParser {
     return { data: data };
   }
 
-  parseMetricFindQueryResult(refId: string, results: any) {
+  parseMetricFindQueryResult(refId: string, results: any): MetricFindValue[] {
     if (!results || results.data.length === 0 || results.data.results[refId].meta.rowCount === 0) {
       return [];
     }
@@ -52,7 +70,7 @@ export default class ResponseParser {
     return this.transformToSimpleList(rows);
   }
 
-  transformToKeyValueList(rows: any, textColIndex: number, valueColIndex: number) {
+  transformToKeyValueList(rows: any, textColIndex: number, valueColIndex: number): MetricFindValue[] {
     const res = [];
 
     for (let i = 0; i < rows.length; i++) {
@@ -64,7 +82,7 @@ export default class ResponseParser {
     return res;
   }
 
-  transformToSimpleList(rows: any) {
+  transformToSimpleList(rows: any): MetricFindValue[] {
     const res = [];
 
     for (let i = 0; i < rows.length; i++) {
