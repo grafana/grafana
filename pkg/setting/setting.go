@@ -183,7 +183,7 @@ var (
 	LDAPAllowSignup       bool
 	LDAPActiveSyncEnabled bool
 
-	// QUOTA
+	// Quota
 	Quota QuotaSettings
 
 	// Alerting
@@ -213,8 +213,8 @@ type Cfg struct {
 	Logger log.Logger
 
 	// HTTP Server Settings
-	AppUrl           string
-	AppSubUrl        string
+	AppURL           string
+	AppSubURL        string
 	ServeFromSubPath bool
 	StaticRootPath   string
 	Protocol         Scheme
@@ -684,7 +684,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	cfg.Raw = iniFile
 
-	// Temporary keep global, to make refactor in steps
+	// Temporarily keep global, to make refactor in steps
 	Raw = cfg.Raw
 
 	cfg.BuildVersion = BuildVersion
@@ -1180,8 +1180,8 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 	}
 	ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
 
-	cfg.AppUrl = AppUrl
-	cfg.AppSubUrl = AppSubUrl
+	cfg.AppURL = AppUrl
+	cfg.AppSubURL = AppSubUrl
 	cfg.ServeFromSubPath = ServeFromSubPath
 
 	Protocol = HTTPScheme
