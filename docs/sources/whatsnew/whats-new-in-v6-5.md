@@ -130,7 +130,7 @@ In the Datasource configuration for Graphite, you can change the type to Metrict
 Metrictank returns 2 kinds of additional metadata along its responses:
 
 - **Performance information:** Time spent querying index, fetching data, running processing functions, the number of series and points fetched, cache hits/misses, etc. This can be useful for optimizing queries or tuning the chunk cache.
-- **Lineage information about the returned series:** Which archive was fetched from (raw or rollup), which (if any) runtime consolidation was applied (using which processing function), etc. This is very useful information for anyone trying to understand how their data was generated and why it may not look as expected.
+- **Lineage information about the returned series:** Which archive was fetched from (raw or rollup), which (if any) runtime consolidation was applied (using which processing function), and so on. This is very useful information for anyone trying to understand how their data was generated and why it might not look as expected.
 
 To see the metadata response from Metrictank you can inspect the response using the Query Inspector found in the panel queries tab.
 Grafana 6.5 includes a new `Panel Inspector` in alpha/preview where you also can see the metadata response from Metrictank.
