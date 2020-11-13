@@ -32,23 +32,29 @@ var builtins = map[string]parse.Func{
 }
 
 // abs returns the absolute value for each result in NumberSet, SeriesSet, or Scalar
-func abs(e *State, varSet Results) Results {
+func abs(e *State, varSet Results) (Results, error) {
 	newRes := Results{}
 	for _, res := range varSet.Values {
-		newVal := perFloat(res, math.Abs)
+		newVal, err := perFloat(res, math.Abs)
+		if err != nil {
+			return newRes, err
+		}
 		newRes.Values = append(newRes.Values, newVal)
 	}
-	return newRes
+	return newRes, nil
 }
 
 // log returns the natural logarithm value for each result in NumberSet, SeriesSet, or Scalar
-func log(e *State, varSet Results) Results {
+func log(e *State, varSet Results) (Results, error) {
 	newRes := Results{}
 	for _, res := range varSet.Values {
-		newVal := perFloat(res, math.Log)
+		newVal, err := perFloat(res, math.Log)
+		if err != nil {
+			return newRes, err
+		}
 		newRes.Values = append(newRes.Values, newVal)
 	}
-	return newRes
+	return newRes, nil
 }
 
 // nan returns a scalar nan value
@@ -68,7 +74,7 @@ func null(e *State) Results {
 	return NewScalarResults(nil)
 }
 
-func perFloat(val Value, floatF func(x float64) float64) Value {
+func perFloat(val Value, floatF func(x float64) float64) (Value, error) {
 	var newVal Value
 	switch val.Type() {
 	case parse.TypeNumberSet:
@@ -96,9 +102,11 @@ func perFloat(val Value, floatF func(x float64) float64) Value {
 			if f != nil {
 				nF = floatF(*f)
 			}
-			newSeries.SetPoint(i, t, &nF)
+			if err := newSeries.SetPoint(i, t, &nF); err != nil {
+				return newSeries, err
+			}
 		}
 		newVal = newSeries
 	}
-	return newVal
+	return newVal, nil
 }

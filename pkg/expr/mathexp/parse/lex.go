@@ -89,6 +89,7 @@ func (l *lexer) next() rune {
 }
 
 // peek returns but does not consume the next rune in the input.
+//nolint:deadcode
 func (l *lexer) peek() rune {
 	r := l.next()
 	l.backup()
@@ -108,7 +109,7 @@ func (l *lexer) emit(t itemType) {
 
 // accept consumes the next rune if it's from the valid set.
 func (l *lexer) accept(valid string) bool {
-	if strings.IndexRune(valid, l.next()) >= 0 {
+	if strings.ContainsRune(valid, l.next()) {
 		return true
 	}
 	l.backup()
@@ -117,7 +118,7 @@ func (l *lexer) accept(valid string) bool {
 
 // acceptRun consumes a run of runes from the valid set.
 func (l *lexer) acceptRun(valid string) {
-	for strings.IndexRune(valid, l.next()) >= 0 {
+	for strings.ContainsRune(valid, l.next()) {
 	}
 	l.backup()
 }
@@ -319,12 +320,15 @@ func isSpace(r rune) bool {
 	return unicode.IsSpace(r)
 }
 
+// isVarchar should maybe be used in place of unicode is letter above,
+// but do not want to modify it at this time, so adding lint exception.
+//nolint:unused
 func isVarchar(r rune) bool {
 	return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
 }
 
 func isSymbol(r rune) bool {
-	return strings.IndexRune(symbols, r) != -1
+	return strings.ContainsRune(symbols, r)
 }
 
 func isNumber(r rune) bool {

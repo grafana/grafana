@@ -4,13 +4,10 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
 // Service is service representation for GEL.
 type Service struct {
-	//CallBack backend.TransformDataCallBackHandler
 }
 
 // BuildPipeline builds a pipeline from a request.
@@ -31,16 +28,4 @@ func (s *Service) ExecutePipeline(ctx context.Context, pipeline DataPipeline) (*
 		}
 	}
 	return res, nil
-}
-
-func extractDataFrames(vars mathexp.Vars) []*data.Frame {
-	res := []*data.Frame{}
-	for refID, results := range vars {
-		for _, val := range results.Values {
-			df := val.AsDataFrame()
-			df.RefID = refID
-			res = append(res, df)
-		}
-	}
-	return res
 }

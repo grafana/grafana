@@ -33,7 +33,7 @@ func (rn *rawNode) GetDatasourceName() (string, error) {
 	}
 	dsName, ok := rawDs.(string)
 	if !ok {
-		return "", fmt.Errorf("expted datasource identifer to be a string, got %T", rawDs)
+		return "", fmt.Errorf("expted datasource identifier to be a string, got %T", rawDs)
 	}
 	return dsName, nil
 }

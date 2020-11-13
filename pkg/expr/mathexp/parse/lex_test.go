@@ -51,9 +51,6 @@ type lexTest struct {
 
 var (
 	tEOF   = item{itemEOF, 0, ""}
-	tLpar  = item{itemLeftParen, 0, "("}
-	tRpar  = item{itemRightParen, 0, ")"}
-	tComma = item{itemComma, 0, ","}
 	tLt    = item{itemLess, 0, "<"}
 	tGt    = item{itemGreater, 0, ">"}
 	tOr    = item{itemOr, 0, "||"}
@@ -150,8 +147,8 @@ func equal(i1, i2 []item, checkPos bool) bool {
 }
 
 func TestLex(t *testing.T) {
-	for _, test := range lexTests {
-		items := collect(&test)
+	for i, test := range lexTests {
+		items := collect(&lexTests[i])
 		if !equal(items, test.items, false) {
 			t.Errorf("%s: got\n\t%+v\nexpected\n\t%v", test.name, items, test.items)
 		}

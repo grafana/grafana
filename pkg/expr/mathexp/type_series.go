@@ -188,8 +188,8 @@ func (ss SortSeriesByTime) Len() int { return Series(ss).Len() }
 func (ss SortSeriesByTime) Swap(i, j int) {
 	iTimeVal, iFVal := Series(ss).GetPoint(i)
 	jTimeVal, jFVal := Series(ss).GetPoint(j)
-	Series(ss).SetPoint(j, iTimeVal, iFVal)
-	Series(ss).SetPoint(i, jTimeVal, jFVal)
+	_ = Series(ss).SetPoint(j, iTimeVal, iFVal)
+	_ = Series(ss).SetPoint(i, jTimeVal, jFVal)
 }
 
 func (ss SortSeriesByTime) Less(i, j int) bool {

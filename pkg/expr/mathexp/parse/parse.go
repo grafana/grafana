@@ -128,7 +128,6 @@ func (t *Tree) recover(errp *error) {
 		}
 		*errp = e.(error)
 	}
-	return
 }
 
 // startParse initializes the parser, using the lexer.

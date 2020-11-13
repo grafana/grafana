@@ -11,8 +11,6 @@ import (
 	"strconv"
 )
 
-var textFormat = "%s" // Changed to "%q" in tests for better error messages.
-
 // A Node is an element in the parse tree. The interface is trivial.
 // The interface contains an unexported method so that only
 // types local to this package can satisfy it.
@@ -171,8 +169,7 @@ func (f *FuncNode) Check(t *Tree) error {
 	}
 
 	for i, arg := range f.Args {
-		var funcType ReturnType
-		funcType = f.F.Args[i]
+		funcType := f.F.Args[i]
 		argType := arg.Return()
 		// if funcType == TypeNumberSet && argType == TypeScalar {
 		// 	argType = TypeNumberSet

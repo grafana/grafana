@@ -133,14 +133,18 @@ func unarySeries(s Series, op string) (Series, error) {
 	for i := 0; i < s.Len(); i++ {
 		t, f := s.GetPoint(i)
 		if f == nil {
-			newSeries.SetPoint(i, t, nil)
+			if err := newSeries.SetPoint(i, t, nil); err != nil {
+				return newSeries, err
+			}
 			continue
 		}
 		newF, err := unaryOp(op, *f)
 		if err != nil {
 			return newSeries, err
 		}
-		newSeries.SetPoint(i, t, &newF)
+		if err := newSeries.SetPoint(i, t, &newF); err != nil {
+			return newSeries, err
+		}
 	}
 	return newSeries, nil
 }
@@ -322,6 +326,7 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 
 // binaryOp performs a binary operations (e.g. A+B or A>B) on two
 // float values
+// nolint:gocyclo
 func binaryOp(op string, a, b float64) (r float64, err error) {
 	// Test short circuit before NaN.
 	switch op {
@@ -432,7 +437,9 @@ func biSeriesNumber(name string, labels data.Labels, op string, s Series, scalar
 		nF := math.NaN()
 		t, f := s.GetPoint(i)
 		if f == nil || scalarVal == nil {
-			newSeries.SetPoint(i, t, nil)
+			if err := newSeries.SetPoint(i, t, nil); err != nil {
+				return newSeries, err
+			}
 			continue
 		}
 		if seriesFirst {
@@ -443,7 +450,9 @@ func biSeriesNumber(name string, labels data.Labels, op string, s Series, scalar
 		if err != nil {
 			return newSeries, err
 		}
-		newSeries.SetPoint(i, t, &nF)
+		if err := newSeries.SetPoint(i, t, &nF); err != nil {
+			return newSeries, err
+		}
 	}
 	return newSeries, nil
 }
@@ -468,14 +477,18 @@ func biSeriesSeries(name string, labels data.Labels, op string, aSeries, bSeries
 			continue
 		}
 		if aF == nil || bF == nil {
-			newSeries.AppendPoint(aIdx, aTime, nil)
+			if err := newSeries.AppendPoint(aIdx, aTime, nil); err != nil {
+				return newSeries, err
+			}
 			continue
 		}
 		nF, err := binaryOp(op, *aF, *bF)
 		if err != nil {
 			return newSeries, err
 		}
-		newSeries.AppendPoint(aIdx, aTime, &nF)
+		if err := newSeries.AppendPoint(aIdx, aTime, &nF); err != nil {
+			return newSeries, err
+		}
 	}
 	return newSeries, nil
 }
@@ -517,7 +530,7 @@ func (e *State) walkFunc(node *parse.FuncNode) (Results, error) {
 	if len(fr) > 1 && !fr[1].IsNil() {
 		err := fr[1].Interface().(error)
 		if err != nil {
-			panic(err)
+			return res, err
 		}
 	}
 	return res, nil

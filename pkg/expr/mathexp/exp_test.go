@@ -31,7 +31,7 @@ type noNullTP struct {
 func makeSeriesNullableTime(name string, labels data.Labels, points ...nullTimeTP) Series {
 	newSeries := NewSeries(name, labels, 0, true, 1, true, len(points))
 	for idx, p := range points {
-		newSeries.SetPoint(idx, p.t, p.f)
+		_ = newSeries.SetPoint(idx, p.t, p.f)
 	}
 	return newSeries
 }

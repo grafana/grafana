@@ -131,7 +131,9 @@ func (s Series) Resample(rule string, downsampler string, upsampler string, tr b
 			value = tmp
 		}
 		tv := t // his is required otherwise all points keep the latest timestamp; anything better?
-		resampled.SetPoint(idx, &tv, value)
+		if err := resampled.SetPoint(idx, &tv, value); err != nil {
+			return resampled, err
+		}
 		t = t.Add(interval)
 		idx++
 	}

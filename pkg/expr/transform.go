@@ -201,13 +201,7 @@ func QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.Que
 			}
 			pRes.Frames = append(pRes.Frames, frame)
 		}
-		if res.Meta != nil {
-			//b, err := res.Meta.MarshalJSON()
-			//if err != nil {
-			//	backend.Logger.Error("failed to marshal json metadata", err)
-			//}
-			//pRes.JsonMeta = b
-		}
+
 		responses[refID] = pRes
 	}
 	return &backend.QueryDataResponse{
