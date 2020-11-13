@@ -7,7 +7,7 @@ import {
   setDynamicConfigValue,
   setFieldConfigDefaults,
 } from './fieldOverrides';
-import { MutableDataFrame, toDataFrame } from '../dataframe';
+import { MutableDataFrame, toDataFrame, ArrayDataFrame } from '../dataframe';
 import {
   DataFrame,
   Field,
