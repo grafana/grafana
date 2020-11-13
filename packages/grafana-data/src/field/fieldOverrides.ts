@@ -46,8 +46,8 @@ interface GlobalMinMax {
 }
 
 export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
-  let min: number | null | undefined = null;
-  let max: number | null | undefined = null;
+  let min: number | null = null;
+  let max: number | null = null;
 
   const reducers = [ReducerID.min, ReducerID.max];
 
