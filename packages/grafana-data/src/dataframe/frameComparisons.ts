@@ -2,7 +2,12 @@ import { DataFrame } from '../types/dataFrame';
 
 /**
  * Returns true if both frames have the same list of fields and configs.
- * Each field can have diferent names, labels and values
+ * Field may have diferent names, labels and values but share the same structure
+ *
+ * To compare multiple frames use:
+ * ```
+ * _.isEqualWith(a, b, framesHaveSameStructure);
+ * ```
  */
 export function framesHaveSameStructure(a: DataFrame, b: DataFrame): boolean {
   if (a === b) {

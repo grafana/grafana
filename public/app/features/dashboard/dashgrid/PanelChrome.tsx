@@ -26,8 +26,6 @@ import {
   PanelPlugin,
   FieldConfigSource,
   PanelPluginMeta,
-  arrayCompare,
-  framesHaveSameStructure,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -168,11 +166,6 @@ export class PanelChrome extends PureComponent<Props, State> {
           isFirstLoad = false;
         }
         break;
-    }
-
-    const last = this.state.data;
-    if (!arrayCompare(data?.series, last?.series, framesHaveSameStructure)) {
-      data = { ...data, seriesStructureChanged: changeCounter++ };
     }
 
     this.setState({ isFirstLoad, errorMessage, data });
@@ -364,5 +357,3 @@ export class PanelChrome extends PureComponent<Props, State> {
     );
   }
 }
-
-let changeCounter = 1000;
