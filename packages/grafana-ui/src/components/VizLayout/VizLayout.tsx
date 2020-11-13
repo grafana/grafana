@@ -1,5 +1,5 @@
 import React, { FC, CSSProperties, ComponentType } from 'react';
-import { useMeasure, usePrevious } from 'react-use';
+import { useMeasure } from 'react-use';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 
 /**
@@ -38,7 +38,7 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   let size: VizSize | null = null;
 
   const vizStyle: CSSProperties = {
-    flexGrow: 1,
+    flexGrow: 2,
   };
 
   const legendStyle: CSSProperties = {};
