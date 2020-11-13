@@ -47,7 +47,7 @@ func (s Scalar) Value() interface{} { return s }
 
 func (s Scalar) GetLabels() data.Labels { return nil }
 
-func (s Scalar) SetLabels(ls data.Labels) { return }
+func (s Scalar) SetLabels(ls data.Labels) {}
 
 func (s Scalar) GetName() string { return s.Frame.Name }
 

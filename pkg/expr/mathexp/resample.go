@@ -70,7 +70,7 @@ func (s Series) Resample(rule string, downsampler string, upsampler string, tr b
 
 	newSeriesLength := int(float64(tr.To.Sub(tr.From).Nanoseconds()) / float64(interval.Nanoseconds()))
 	if newSeriesLength <= 0 {
-		return s, fmt.Errorf("The series cannot be sampled further; the time range is shorter than the interval")
+		return s, fmt.Errorf("the series cannot be sampled further; the time range is shorter than the interval")
 	}
 	resampled := NewSeries(s.GetName(), s.GetLabels(), s.TimeIdx, s.TimeIsNullable, s.ValueIdx, s.ValueIsNullabe, newSeriesLength+1)
 	bookmark := 0
@@ -111,7 +111,7 @@ func (s Series) Resample(rule string, downsampler string, upsampler string, tr b
 			case "fillna":
 				value = nil
 			default:
-				return s, fmt.Errorf("Upsampling %v not implemented", upsampler)
+				return s, fmt.Errorf("upsampling %v not implemented", upsampler)
 			}
 		} else { // downsampling
 			fVec := data.NewField("", s.GetLabels(), vals)
@@ -126,7 +126,7 @@ func (s Series) Resample(rule string, downsampler string, upsampler string, tr b
 			case "max":
 				tmp = Max(fVec)
 			default:
-				return s, fmt.Errorf("Downsampling %v not implemented", downsampler)
+				return s, fmt.Errorf("downsampling %v not implemented", downsampler)
 			}
 			value = tmp
 		}

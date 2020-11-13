@@ -17,7 +17,6 @@ import (
 )
 
 func TestService(t *testing.T) {
-
 	dsDF := data.NewFrame("test",
 		data.NewField("time", nil, []*time.Time{utp(1)}),
 		data.NewField("value", nil, []*float64{fp(2)}))

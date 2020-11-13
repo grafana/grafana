@@ -86,7 +86,6 @@ func (gn *GELNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Resu
 }
 
 func buildGELNode(dp *simple.DirectedGraph, rn *rawNode) (*GELNode, error) {
-
 	commandType, err := rn.GetGELType()
 	if err != nil {
 		return nil, fmt.Errorf("invalid GEL type in '%v'", rn.RefID)
@@ -199,7 +198,6 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode) (*DSNode, error) {
 // other nodes they must have already been executed and their results must
 // already by in vars.
 func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
-
 	pc := backend.PluginContext{
 		OrgID: dn.orgID,
 		DataSourceInstanceSettings: &backend.DataSourceInstanceSettings{
@@ -317,7 +315,6 @@ func extractNumberSet(frame *data.Frame) ([]mathexp.Number, error) {
 		numbers[rowIdx] = n
 	}
 	return numbers, nil
-
 }
 
 // WideToMany converts a data package wide type Frame to one or multiple Series. A series
@@ -329,14 +326,15 @@ func WideToMany(frame *data.Frame) ([]mathexp.Series, error) {
 	if tsSchema.Type != data.TimeSeriesTypeWide {
 		return nil, fmt.Errorf("input data must be a wide series but got type %s (input refid)", tsSchema.Type)
 	}
+
 	if len(tsSchema.ValueIndices) == 1 {
 		s, err := mathexp.SeriesFromFrame(frame)
 		if err != nil {
 			return nil, err
 		}
 		return []mathexp.Series{s}, nil
-
 	}
+
 	series := []mathexp.Series{}
 	for _, valIdx := range tsSchema.ValueIndices {
 		l := frame.Rows()
@@ -354,7 +352,7 @@ func WideToMany(frame *data.Frame) ([]mathexp.Series, error) {
 			return nil, err
 		}
 		series = append(series, s)
-
 	}
+
 	return series, nil
 }

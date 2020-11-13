@@ -102,7 +102,6 @@ func TransformData(ctx context.Context, req *backend.QueryDataRequest) (*backend
 	}
 
 	return responses, nil
-
 }
 
 func hiddenRefIDs(queries []backend.DataQuery) (map[string]struct{}, error) {

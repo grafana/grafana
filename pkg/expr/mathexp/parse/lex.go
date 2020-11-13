@@ -89,7 +89,7 @@ func (l *lexer) next() rune {
 }
 
 // peek returns but does not consume the next rune in the input.
-//nolint:deadcode
+// nolint:unused
 func (l *lexer) peek() rune {
 	r := l.next()
 	l.backup()
@@ -131,6 +131,7 @@ func (l *lexer) ignore() {
 // lineNumber reports which line we're on, based on the position of
 // the previous item returned by nextItem. Doing it this way
 // means we don't have to worry about peek double counting.
+// nolint:unused
 func (l *lexer) lineNumber() int {
 	return 1 + strings.Count(l.input[:l.lastPos], "\n")
 }
@@ -322,7 +323,7 @@ func isSpace(r rune) bool {
 
 // isVarchar should maybe be used in place of unicode is letter above,
 // but do not want to modify it at this time, so adding lint exception.
-//nolint:unused
+// nolint:unused,deadcode
 func isVarchar(r rune) bool {
 	return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
 }

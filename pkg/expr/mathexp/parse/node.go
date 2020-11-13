@@ -161,7 +161,6 @@ func (f *FuncNode) StringAST() string {
 
 // Check performs parse time checking on the FuncNode so it fulfills the Node interface.
 func (f *FuncNode) Check(t *Tree) error {
-	const errFuncType = "parse: bad argument type in %s, expected %s, got %s"
 	if len(f.Args) < len(f.F.Args) {
 		return fmt.Errorf("parse: not enough arguments for %s", f.Name)
 	} else if len(f.Args) > len(f.F.Args) {

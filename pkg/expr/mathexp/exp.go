@@ -123,7 +123,6 @@ func (e *State) walkUnary(node *parse.UnaryNode) (Results, error) {
 			return newResults, err
 		}
 		newResults.Values = append(newResults.Values, newVal)
-
 	}
 	return newResults, nil
 }
@@ -204,19 +203,20 @@ func union(aResults, bResults Results) []*Union {
 			var labels data.Labels
 			aLabels := a.GetLabels()
 			bLabels := b.GetLabels()
-			if aLabels.Equals(bLabels) || len(aLabels) == 0 || len(bLabels) == 0 {
+			switch {
+			case aLabels.Equals(bLabels) || len(aLabels) == 0 || len(bLabels) == 0:
 				l := aLabels
 				if len(aLabels) == 0 {
 					l = bLabels
 				}
 				labels = l
-			} else if len(aLabels) == len(bLabels) {
+			case len(aLabels) == len(bLabels):
 				continue // invalid union, drop for now
-			} else if aLabels.Contains(bLabels) {
+			case aLabels.Contains(bLabels):
 				labels = aLabels
-			} else if bLabels.Contains(aLabels) {
+			case bLabels.Contains(aLabels):
 				labels = bLabels
-			} else {
+			default:
 				continue
 			}
 			u := &Union{
@@ -406,7 +406,7 @@ func binaryOp(op string, a, b float64) (r float64, err error) {
 	default:
 		return r, fmt.Errorf("expr: unknown operator %s", op)
 	}
-	return
+	return r, nil
 }
 
 func biScalarNumber(name string, labels data.Labels, op string, number Number, scalarVal *float64, numberFirst bool) (Number, error) {
@@ -522,9 +522,8 @@ func (e *State) walkFunc(node *parse.FuncNode) (Results, error) {
 	}
 
 	f := reflect.ValueOf(node.F.F)
-	fr := []reflect.Value{}
 
-	fr = f.Call(append([]reflect.Value{reflect.ValueOf(e)}, in...))
+	fr := f.Call(append([]reflect.Value{reflect.ValueOf(e)}, in...))
 
 	res = fr[0].Interface().(Results)
 	if len(fr) > 1 && !fr[1].IsNil() {

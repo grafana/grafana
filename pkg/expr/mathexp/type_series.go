@@ -30,7 +30,7 @@ func SeriesFromFrame(frame *data.Frame) (s Series, err error) {
 
 	foundTime := false
 	foundValue := false
-	for i, field := range frame.Fields { //[0].Vector.PrimitiveType() {
+	for i, field := range frame.Fields {
 		switch field.Type() {
 		case data.FieldTypeTime:
 			s.TimeIdx = i
@@ -55,7 +55,7 @@ func SeriesFromFrame(frame *data.Frame) (s Series, err error) {
 		return s, fmt.Errorf("no float64 value column found in frame %v", frame.Name)
 	}
 	s.Frame = frame
-	return
+	return s, nil
 }
 
 // NewSeries returns a dataframe of type Series.
