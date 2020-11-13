@@ -20,7 +20,7 @@ import { GraphLegend } from '../Graph/GraphLegend';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
-interface GraphNGProps extends Omit<PlotProps, 'data'> {
+export interface GraphNGProps extends Omit<PlotProps, 'data'> {
   data: DataFrame[];
   legend?: LegendOptions;
 }
