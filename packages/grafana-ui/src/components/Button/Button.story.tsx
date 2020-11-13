@@ -3,7 +3,6 @@ import { Story } from '@storybook/react';
 import { Button, ButtonProps } from './Button';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { iconOptions } from '../../utils/storybook/knobs';
-import { ComponentSize } from '../../types/size';
 import mdx from './Button.mdx';
 
 export default {
@@ -24,9 +23,9 @@ export default {
   },
 };
 
-export const Simple: Story<Omit<ButtonProps, 'className' | 'css'>> = ({ disabled, icon, children, size, variant }) => {
+export const Simple: Story<ButtonProps> = ({ disabled, icon, children, size, variant }) => {
   return (
-    <Button variant={variant} size={size as ComponentSize} icon={icon} disabled={disabled}>
+    <Button variant={variant} size={size} icon={icon} disabled={disabled}>
       {children}
     </Button>
   );
