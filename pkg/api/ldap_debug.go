@@ -158,7 +158,6 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 	}
 
 	ldapConfig, err := getLDAPConfig()
-
 	if err != nil {
 		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again", err)
 	}

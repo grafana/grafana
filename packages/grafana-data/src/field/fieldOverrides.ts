@@ -41,13 +41,13 @@ interface OverrideProps {
 }
 
 interface GlobalMinMax {
-  min: number;
-  max: number;
+  min?: number | null;
+  max?: number | null;
 }
 
 export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
-  let min = Number.MAX_VALUE;
-  let max = Number.MIN_VALUE;
+  let min: number | null = null;
+  let max: number | null = null;
 
   const reducers = [ReducerID.min, ReducerID.max];
 
@@ -58,23 +58,15 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
         const statsMin = stats[ReducerID.min];
         const statsMax = stats[ReducerID.max];
 
-        if (statsMin !== undefined && statsMin !== null && statsMin < min) {
+        if (min === null || statsMin < min) {
           min = statsMin;
         }
 
-        if (statsMax !== undefined && statsMax !== null && statsMax > max) {
+        if (max === null || statsMax > max) {
           max = statsMax;
         }
       }
     }
-  }
-
-  if (min === Number.MAX_VALUE) {
-    min = Number.MIN_VALUE;
-  }
-
-  if (max === Number.MIN_VALUE) {
-    max = Number.MAX_VALUE;
   }
 
   return { min, max };
