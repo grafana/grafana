@@ -3,10 +3,6 @@ title = "Short URL HTTP API "
 description = "Grafana Short URL HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "shortUrl"]
 aliases = ["/docs/grafana/latest/http_api/short_url/"]
-type = "docs"
-[menu.docs]
-name = "Short URL"
-parent = "http_api"
 +++
 
 # Short URL API
