@@ -28,7 +28,7 @@ describe('toEmitValuesWith matcher', () => {
       it('should fail with correct message', async () => {
         const observable = (undefined as unknown) as Observable<number>;
 
-        const rejects = cexpect(() =>
+        const rejects = expect(() =>
           expect(observable).toEmitValuesWith(received => {
             expect(received).toEqual([1, 2, 3]);
           })
