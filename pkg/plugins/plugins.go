@@ -31,7 +31,6 @@ var (
 	Plugins      map[string]*PluginBase
 	PluginTypes  map[string]interface{}
 	Renderer     *RendererPlugin
-	Transform    *TransformPlugin
 
 	GrafanaLatestVersion string
 	GrafanaHasUpdate     bool
@@ -82,7 +81,6 @@ func (pm *PluginManager) Init() error {
 		"datasource": DataSourcePlugin{},
 		"app":        AppPlugin{},
 		"renderer":   RendererPlugin{},
-		"transform":  TransformPlugin{},
 	}
 	pluginScanningErrors = map[string]*PluginError{}
 
