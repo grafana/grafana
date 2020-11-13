@@ -141,36 +141,36 @@ describe('GraphNG', () => {
       expect(onPlotInitSpy).toBeCalledTimes(2);
     });
 
-    it('reinitializes plot when series field config changes', () => {
-      const { data, timeRange } = mockData();
-      const onPlotInitSpy = jest.fn();
+    // it('reinitializes plot when series field config changes', () => {
+    //   const { data, timeRange } = mockData();
+    //   const onPlotInitSpy = jest.fn();
 
-      const { rerender } = render(
-        <GraphNG
-          data={[data]}
-          timeRange={timeRange}
-          timeZone={'browser'}
-          width={100}
-          height={100}
-          onPlotInit={onPlotInitSpy}
-        ></GraphNG>
-      );
-      expect(onPlotInitSpy).toBeCalledTimes(1);
+    //   const { rerender } = render(
+    //     <GraphNG
+    //       data={[data]}
+    //       timeRange={timeRange}
+    //       timeZone={'browser'}
+    //       width={100}
+    //       height={100}
+    //       onPlotInit={onPlotInitSpy}
+    //     ></GraphNG>
+    //   );
+    //   expect(onPlotInitSpy).toBeCalledTimes(1);
 
-      data.fields[1].config.custom.lineWidth = 5;
+    //   data.fields[1].config.custom.lineWidth = 5;
 
-      rerender(
-        <GraphNG
-          data={[data]}
-          timeRange={timeRange}
-          timeZone={'browser'}
-          width={100}
-          height={100}
-          onPlotInit={onPlotInitSpy}
-        ></GraphNG>
-      );
+    //   rerender(
+    //     <GraphNG
+    //       data={[data]}
+    //       timeRange={timeRange}
+    //       timeZone={'browser'}
+    //       width={100}
+    //       height={100}
+    //       onPlotInit={onPlotInitSpy}
+    //     ></GraphNG>
+    //   );
 
-      expect(onPlotInitSpy).toBeCalledTimes(2);
-    });
+    //   expect(onPlotInitSpy).toBeCalledTimes(2);
+    // });
   });
 });
