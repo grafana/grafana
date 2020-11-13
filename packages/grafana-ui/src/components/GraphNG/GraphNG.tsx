@@ -94,7 +94,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     const fmt = field.display ?? defaultFormatter;
     const scale = config.unit || '__fixed';
 
-    if (!uniqueScales[scale] && customConfig.axisPlacement !== AxisPlacement.Hide) {
+    if (!uniqueScales[scale] && customConfig.axisPlacement !== AxisPlacement.Hidden) {
       const side = customConfig.axisPlacement ?? (hasLeftAxis ? AxisPlacement.Right : AxisPlacement.Left);
       if (side === AxisPlacement.Left) {
         hasLeftAxis = true;

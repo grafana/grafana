@@ -6,7 +6,7 @@ export enum AxisPlacement {
   Right = 'right',
   Bottom = 'bottom',
   Left = 'left',
-  Hide = 'hide',
+  Hidden = 'hidden',
 }
 
 export function getUPlotSideFromAxis(axis: AxisPlacement) {
@@ -80,6 +80,6 @@ export const graphFieldOptions = {
     { label: 'Auto', value: AxisPlacement.Auto, description: 'First field on the left, everything else on the right' },
     { label: 'Left', value: AxisPlacement.Left },
     { label: 'Right', value: AxisPlacement.Right },
-    { label: 'Hide', value: AxisPlacement.Hide },
+    { label: 'Hidden', value: AxisPlacement.Hidden },
   ] as Array<SelectableValue<AxisPlacement>>,
 };

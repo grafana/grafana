@@ -35,7 +35,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
         .addRadio({
           path: 'lineMode',
           name: 'Line interpolation',
-          description: 'NOTE: WIP and will be implemented soon',
+          description: 'NOTE: not implemented yet',
           defaultValue: graphFieldOptions.lineMode[0].value,
           settings: {
             options: graphFieldOptions.lineMode,
@@ -67,7 +67,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
         .addRadio({
           path: 'points',
           name: 'Points',
-          description: 'WIP, only partially implemented',
+          description: 'NOTE: auto vs always are currently the same',
           defaultValue: graphFieldOptions.points[0].value,
           settings: {
             options: graphFieldOptions.points,
@@ -101,7 +101,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           settings: {
             placeholder: 'Optional text',
           },
-          showIf: c => c.axisPlacement !== AxisPlacement.Hide,
+          showIf: c => c.axisPlacement !== AxisPlacement.Hidden,
           // no matter what the field type is
           shouldApply: () => true,
         })
@@ -113,7 +113,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           settings: {
             placeholder: '60',
           },
-          showIf: c => c.axisPlacement !== AxisPlacement.Hide,
+          showIf: c => c.axisPlacement !== AxisPlacement.Hidden,
         });
     },
   })
