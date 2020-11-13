@@ -1,5 +1,5 @@
 import React, { FC, CSSProperties, ComponentType } from 'react';
-import { useMeasure } from 'react-use';
+import { useMeasure, usePrevious } from 'react-use';
 import CustomScrollbar from '../CustomScrollbar/CustomScrollbar';
 
 /**
@@ -60,6 +60,16 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
         size = { width: width - legendMeasure.width, height };
       }
       break;
+  }
+
+  // This happens when position is switched from bottom to right
+  // Then we preserve old with for one render cycle until lenged is measured in it's new position
+  if (size?.width === 0) {
+    size.width = width;
+  }
+
+  if (size?.height === 0) {
+    size.height = height;
   }
 
   return (
