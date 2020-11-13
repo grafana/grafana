@@ -16,7 +16,7 @@ import { PlotProps } from '../uPlot/types';
 import { GraphFieldConfig, AxisPlacement, PointMode, GraphMode, getUPlotSideFromAxis } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
-import { LegendItem, LegendOptions } from '../Legend/Legend';
+import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
 import { GraphLegend } from '../Graph/GraphLegend';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
@@ -77,6 +77,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   let seriesIdx = 0;
   const legendItems: LegendItem[] = [];
   const uniqueScales: Record<string, AxisPlacement> = {};
+  const hasLegend = legend && legend.displayMode !== LegendDisplayMode.Hidden;
   let hasLeftAxis = false;
   let hasYAxis = false;
 
@@ -154,11 +155,10 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       geometries.push(seriesGeometry);
     }
 
-    if (legend?.isVisible) {
+    if (hasLegend) {
       legendItems.push({
         color: seriesColor,
         label: getFieldDisplayName(field, alignedData),
-        isVisible: true,
         yAxis: uniqueScales[scale] === AxisPlacement.Right ? 3 : 1,
       });
     }
@@ -168,10 +168,10 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
   let legendElement: React.ReactElement | undefined;
 
-  if (legend?.isVisible && legendItems.length > 0) {
+  if (hasLegend && legendItems.length > 0) {
     legendElement = (
-      <VizLayout.Legend position={legend.placement} maxHeight="35%" maxWidth="60%">
-        <GraphLegend placement={legend.placement} items={legendItems} displayMode={legend.displayMode} />
+      <VizLayout.Legend position={legend!.placement} maxHeight="35%" maxWidth="60%">
+        <GraphLegend placement={legend!.placement} items={legendItems} displayMode={legend!.displayMode} />
       </VizLayout.Legend>
     );
   }

@@ -35,7 +35,6 @@ const mockData = () => {
 };
 
 const defaultLegendOptions: LegendOptions = {
-  isVisible: false,
   displayMode: LegendDisplayMode.List,
   placement: 'bottom',
 };
