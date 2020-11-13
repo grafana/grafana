@@ -16,11 +16,6 @@ describe('toEmitValuesWith matcher', () => {
         ).rejects;
 
         await rejects.toThrow();
-        await rejects.toMatchInlineSnapshot(`
-                          [Error: [2mexpect([22m[31mreceived[39m[2m).toEmitValues([22m[32mexpected[39m[2m)[22m
-
-                          Expected [31mnull[39m to be [32m"defined"[39m.]
-                      `);
       });
     });
 
@@ -35,11 +30,6 @@ describe('toEmitValuesWith matcher', () => {
         ).rejects;
 
         await rejects.toThrow();
-        await rejects.toMatchInlineSnapshot(`
-                          [Error: [2mexpect([22m[31mreceived[39m[2m).toEmitValues([22m[32mexpected[39m[2m)[22m
-
-                          Expected [31mundefined[39m to be [32m"defined"[39m.]
-                      `);
       });
     });
 
@@ -54,11 +44,6 @@ describe('toEmitValuesWith matcher', () => {
         ).rejects;
 
         await rejects.toThrow();
-        await rejects.toMatchInlineSnapshot(`
-                          [Error: [2mexpect([22m[31mreceived[39m[2m).toEmitValues([22m[32mexpected[39m[2m)[22m
-
-                          Expected [31m1[39m to be [32m"an Observable"[39m.]
-                      `);
       });
     });
 
@@ -73,18 +58,6 @@ describe('toEmitValuesWith matcher', () => {
         ).rejects;
 
         await rejects.toThrow();
-        await rejects.toMatchInlineSnapshot(`
-                [Error: failed Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
-
-                [32m- Expected  - 0[39m
-                [31m+ Received  + 1[39m
-
-                [2m  Array [[22m
-                [2m    0,[22m
-                [2m    1,[22m
-                [31m+   2,[39m
-                [2m  ][22m]
-              `);
       });
     });
 
@@ -99,19 +72,6 @@ describe('toEmitValuesWith matcher', () => {
         ).rejects;
 
         await rejects.toThrow();
-        await rejects.toMatchInlineSnapshot(`
-                [Error: failed Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
-
-                [32m- Expected  - 1[39m
-                [31m+ Received  + 1[39m
-
-                [2m  Array [[22m
-                [31m+   0,[39m
-                [2m    1,[22m
-                [2m    2,[22m
-                [32m-   3,[39m
-                [2m  ][22m]
-              `);
       });
     });
 
@@ -126,21 +86,6 @@ describe('toEmitValuesWith matcher', () => {
         ).rejects;
 
         await rejects.toThrow();
-        await rejects.toMatchInlineSnapshot(`
-                [Error: failed Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
-
-                [32m- Expected  - 3[39m
-                [31m+ Received  + 3[39m
-
-                [2m  Array [[22m
-                [32m-   "0",[39m
-                [32m-   "1",[39m
-                [32m-   "2",[39m
-                [31m+   0,[39m
-                [31m+   1,[39m
-                [31m+   2,[39m
-                [2m  ][22m]
-              `);
       });
     });
 
@@ -155,11 +100,6 @@ describe('toEmitValuesWith matcher', () => {
         ).rejects;
 
         await rejects.toThrow();
-        await rejects.toMatchInlineSnapshot(`
-                [Error: [2mexpect([22m[31mreceived[39m[2m).toEmitValues([22m[32mexpected[39m[2m)[22m
-
-                    Expected [31m"Observable"[39m to be [32m"completed within 1000ms"[39m but it did not.]
-              `);
       });
     });
   });
