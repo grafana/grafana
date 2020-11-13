@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Icon, Tooltip } from '@grafana/ui';
 import { sanitize, sanitizeUrl } from '@grafana/data/src/text/sanitize';
 import { getBackendSrv } from 'app/core/services/backend_srv';
@@ -6,7 +6,7 @@ import { getLinkSrv } from '../../../panel/panellinks/link_srv';
 import { DashboardLink } from '../../state/DashboardModel';
 import { DashboardSearchHit } from 'app/features/search/types';
 import { selectors } from '@grafana/e2e-selectors';
-import { useAsync, useUpdate } from 'react-use';
+import { useAsync } from 'react-use';
 
 interface Props {
   link: DashboardLink;
@@ -17,15 +17,15 @@ interface Props {
 export const DashboardLinksDashboard: React.FC<Props> = props => {
   const { link, linkInfo } = props;
   const listRef = useRef<HTMLUListElement>(null);
-  const resolvedLinks = useResolvedLinks(props);
-  const triggerUpdate = useUpdate();
+  const [opened, setOpened] = useState(0);
+  const resolvedLinks = useResolvedLinks(props, opened);
 
   if (link.asDropdown) {
     return (
       <LinkElement link={link} key="dashlinks-dropdown" aria-label={selectors.components.DashboardLinks.dropDown}>
         <>
           <a
-            onClick={triggerUpdate}
+            onClick={() => setOpened(Date.now())}
             className="gf-form-label gf-form-label--dashlink"
             data-placement="bottom"
             data-toggle="dropdown"
@@ -98,9 +98,9 @@ const LinkElement: React.FC<LinkElementProps> = props => {
   );
 };
 
-const useResolvedLinks = ({ link, dashboardId }: Props): ResolvedLinkDTO[] => {
+const useResolvedLinks = ({ link, dashboardId }: Props, opened: number): ResolvedLinkDTO[] => {
   const { tags } = link;
-  const result = useAsync(() => searchForTags(tags), [tags]);
+  const result = useAsync(() => searchForTags(tags), [tags, opened]);
   if (!result.value) {
     return [];
   }
