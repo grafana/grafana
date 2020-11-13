@@ -115,7 +115,9 @@ export const Card: CardInterface = ({
       <CardInner href={href}>
         {figure}
         <div className={styles.inner}>
-          <div className={styles.heading}>{heading}</div>
+          <div className={styles.heading} role="heading">
+            {heading}
+          </div>
           {meta}
           {tags}
           {description && <p className={styles.description}>{description}</p>}
