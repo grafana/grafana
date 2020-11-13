@@ -10,11 +10,6 @@ describe('toEmitValues matcher', () => {
 
         const rejects = expect(() => expect(observable).toEmitValues([1, 2, 3])).rejects;
         await rejects.toThrow();
-        await rejects.toMatchInlineSnapshot(`
-          [Error: [2mexpect([22m[31mreceived[39m[2m).toEmitValues([22m[32mexpected[39m[2m)[22m
-
-          Expected [31mnull[39m to be [32m"defined"[39m.]
-        `);
       });
     });
 
