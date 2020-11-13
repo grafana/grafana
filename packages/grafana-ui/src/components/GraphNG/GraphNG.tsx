@@ -120,7 +120,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
     const colorMode = getFieldColorModeForField(field);
     const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
-    if ((customConfig.mode ?? GraphMode.Line) === GraphMode.Points) {
+    if ((customConfig.mode ?? GraphMode.Line) === GraphMode.Line) {
       seriesGeometry.push(
         <Line
           key={`line-${scale}-${i}`}
