@@ -283,8 +283,8 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			assert.Equal(t, 2, len(respJSON.MustArray()))
 			assert.Equal(t, 3, respJSON.GetIndex(0).Get("userId").MustInt())
 			assert.Equal(t, int(models.PERMISSION_EDIT), respJSON.GetIndex(0).Get("permission").MustInt())
-			assert.Equal(t, 4, respJSON.GetIndex(0).Get("userId").MustInt())
-			assert.Equal(t, int(models.PERMISSION_ADMIN), respJSON.GetIndex(0).Get("permission").MustInt())
+			assert.Equal(t, 4, respJSON.GetIndex(1).Get("userId").MustInt())
+			assert.Equal(t, int(models.PERMISSION_ADMIN), respJSON.GetIndex(1).Get("permission").MustInt())
 		})
 	})
 }
