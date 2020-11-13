@@ -1,11 +1,7 @@
 +++
 title = "Alert list panel"
 keywords = ["grafana", "alert list", "documentation", "panel", "alertlist"]
-type = "docs"
 aliases = ["/docs/grafana/latest/reference/alertlist/", "/docs/grafana/latest/features/panels/alertlist/"]
-[menu.docs]
-name = "alert-list-panel"
-parent = "visualizations"
 weight = 100
 +++
 

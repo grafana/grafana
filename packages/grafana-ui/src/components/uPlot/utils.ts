@@ -110,6 +110,7 @@ export const shouldInitialisePlot = (prevConfig?: uPlot.Options, config?: uPlot.
   if (isPlottingTime(config!) && prevConfig!.tzDate !== config!.tzDate) {
     return true;
   }
+
   // reinitialise when number of series, scales or axes changes
   if (
     prevConfig!.series?.length !== config!.series?.length ||
@@ -135,7 +136,7 @@ export const shouldInitialisePlot = (prevConfig?: uPlot.Options, config?: uPlot.
     idx = 0;
     for (const axis of config!.axes) {
       // Comparing axes config, skipping values property as it changes across config builds - probably need to be more clever
-      if (!isEqual(omit(axis, 'values'), omit(prevConfig!.axes[idx], 'values'))) {
+      if (!isEqual(omit(axis, 'values', 'size'), omit(prevConfig!.axes[idx], 'values', 'size'))) {
         return true;
       }
       idx++;

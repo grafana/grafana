@@ -17,7 +17,7 @@ export enum PluginType {
   renderer = 'renderer',
 }
 
-/** Describes status of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signature-verification/ | plugin signature} */
+/** Describes status of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/ | plugin signature} */
 export enum PluginSignatureStatus {
   internal = 'internal', // core plugin, no signature
   valid = 'valid', // signed and accurate MANIFEST

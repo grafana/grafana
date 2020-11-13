@@ -2,9 +2,6 @@
 title = "Auditing"
 description = "Auditing"
 keywords = ["grafana", "auditing", "audit", "logs"]
-type = "docs"
-[menu.docs]
-parent = "enterprise"
 weight = 700
 +++
 
