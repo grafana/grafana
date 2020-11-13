@@ -28,6 +28,7 @@ var (
 	ErrDashboardPermissionDashboardEmpty = errors.New("Dashboard Id must be greater than zero for a dashboard permission")
 	ErrFolderAclInfoMissing              = errors.New("User id and team id cannot both be empty for a folder permission")
 	ErrFolderPermissionFolderEmpty       = errors.New("Folder Id must be greater than zero for a folder permission")
+	ErrPermissionsWithRoleNotAllowed     = errors.New("Teams and Users permissions cannot have an associated role")
 )
 
 // Dashboard ACL model
