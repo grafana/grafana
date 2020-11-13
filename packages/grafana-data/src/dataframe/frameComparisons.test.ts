@@ -1,5 +1,5 @@
 import { FieldType } from '../types/dataFrame';
-import { framesHaveSameStructure, compareArrayValues } from './frameComparisons';
+import { compareDataFrameStructures, compareArrayValues } from './frameComparisons';
 import { toDataFrame } from './processDataFrame';
 
 describe('test comparisons', () => {
@@ -27,25 +27,25 @@ describe('test comparisons', () => {
   const field1 = frameB.fields[1];
 
   it('should support null/undefined without crash', () => {
-    expect(framesHaveSameStructure(frameA, frameA)).toBeTruthy();
-    expect(framesHaveSameStructure(frameA, { ...frameA })).toBeTruthy();
-    expect(framesHaveSameStructure(frameA, frameB)).toBeFalsy();
-    expect(framesHaveSameStructure(frameA, null as any)).toBeFalsy();
-    expect(framesHaveSameStructure(undefined as any, frameA)).toBeFalsy();
+    expect(compareDataFrameStructures(frameA, frameA)).toBeTruthy();
+    expect(compareDataFrameStructures(frameA, { ...frameA })).toBeTruthy();
+    expect(compareDataFrameStructures(frameA, frameB)).toBeFalsy();
+    expect(compareDataFrameStructures(frameA, null as any)).toBeFalsy();
+    expect(compareDataFrameStructures(undefined as any, frameA)).toBeFalsy();
 
-    expect(compareArrayValues([frameA], [frameA], framesHaveSameStructure)).toBeTruthy();
-    expect(compareArrayValues([frameA], null as any, framesHaveSameStructure)).toBeFalsy();
-    expect(compareArrayValues(null as any, [frameA], framesHaveSameStructure)).toBeFalsy();
+    expect(compareArrayValues([frameA], [frameA], compareDataFrameStructures)).toBeTruthy();
+    expect(compareArrayValues([frameA], null as any, compareDataFrameStructures)).toBeFalsy();
+    expect(compareArrayValues(null as any, [frameA], compareDataFrameStructures)).toBeFalsy();
   });
 
   it('name change and field copy is not a structure change', () => {
-    expect(framesHaveSameStructure(frameB, { ...frameB, name: 'AA' })).toBeTruthy();
-    expect(framesHaveSameStructure(frameB, { ...frameB, fields: [field0, field1] })).toBeTruthy();
+    expect(compareDataFrameStructures(frameB, { ...frameB, name: 'AA' })).toBeTruthy();
+    expect(compareDataFrameStructures(frameB, { ...frameB, fields: [field0, field1] })).toBeTruthy();
   });
 
   it('changing type should change the config', () => {
     expect(
-      framesHaveSameStructure(frameB, {
+      compareDataFrameStructures(frameB, {
         ...frameB,
         fields: [
           field0,
@@ -60,7 +60,7 @@ describe('test comparisons', () => {
 
   it('full copy of config will not change structure', () => {
     expect(
-      framesHaveSameStructure(frameB, {
+      compareDataFrameStructures(frameB, {
         ...frameB,
         fields: [
           field0,
@@ -77,7 +77,7 @@ describe('test comparisons', () => {
 
   it('adding an additional config field', () => {
     expect(
-      framesHaveSameStructure(frameB, {
+      compareDataFrameStructures(frameB, {
         ...frameB,
         fields: [
           field0,
