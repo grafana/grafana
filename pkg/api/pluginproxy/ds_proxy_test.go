@@ -789,7 +789,7 @@ const (
 
 func createAuthTest(t *testing.T, dsType string, authType string, authCheck string, useSecureJsonData bool) *testCase {
 	// Basic user:password
-	base64AthHeader := "Basic dXNlcjpwYXNzd29yZA=="
+	base64AuthHeader := "Basic dXNlcjpwYXNzd29yZA=="
 
 	test := &testCase{
 		datasource: &models.DataSource{
@@ -835,7 +835,7 @@ func createAuthTest(t *testing.T, dsType string, authType string, authCheck stri
 	} else {
 		message += " to auth header"
 		test.checkReq = func(req *http.Request) {
-			assert.Equal(t, base64AthHeader, req.Header.Get("Authorization"), message)
+			assert.Equal(t, base64AuthHeader, req.Header.Get("Authorization"), message)
 		}
 	}
 
