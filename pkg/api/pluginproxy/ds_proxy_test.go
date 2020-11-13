@@ -610,7 +610,8 @@ func TestDataSourceProxy_requestHandling(t *testing.T) {
 			writeCb: func(w http.ResponseWriter) {
 				w.WriteHeader(401)
 				w.Header().Set("www-authenticate", `Basic realm="Access to the server"`)
-				w.Write([]byte("Not authenticated"))
+				_, err := w.Write([]byte("Not authenticated"))
+				require.NoError(t, err)
 				t.Log("Wrote 401 response")
 			},
 		})
