@@ -8,6 +8,9 @@ import { DataFrame } from '../types/dataFrame';
  * ```
  * areArraysEqual(a, b, framesHaveSameStructure);
  * ```
+ * NOTE: this does a shallow check on the FieldConfig properties, when using the query
+ * editor, this should be sufficient, however if applicaitons are mutating properties
+ * deep in the FieldConfig this will not recognize a change
  */
 export function compareDataFrameStructures(a: DataFrame, b: DataFrame): boolean {
   if (a === b) {
