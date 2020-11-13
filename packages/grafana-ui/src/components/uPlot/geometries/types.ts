@@ -1,30 +1,26 @@
-import { TimeZone } from '@grafana/data';
+import { GrafanaTheme, TimeZone } from '@grafana/data';
 import { AxisSide } from '../types';
 
-export interface LineProps {
+export interface SeriesProps {
   scaleKey: string;
-  stroke: string;
-  width: number;
-}
-
-export interface PointProps {
-  scaleKey: string;
-  size: number;
-  stroke: string;
-}
-
-export interface AreaProps {
-  scaleKey: string;
-  fill: number;
-  color: string;
+  line?: boolean;
+  lineColor?: string;
+  lineWidth?: number;
+  points?: boolean;
+  pointSize?: number;
+  pointColor?: string;
+  fill?: boolean;
+  fillOpacity?: number;
+  fillColor?: string;
 }
 
 export interface AxisProps {
   scaleKey: string;
+  theme: GrafanaTheme;
   label?: string;
+  stroke?: string;
   show?: boolean;
   size?: number;
-  stroke?: string;
   side?: AxisSide;
   grid?: boolean;
   formatValue?: (v: any) => string;

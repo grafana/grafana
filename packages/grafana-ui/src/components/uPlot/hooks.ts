@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { PlotPlugin } from './types';
+import { PlotPlugin, PlotSeriesConfig } from './types';
 import { pluginLog } from './utils';
 import uPlot from 'uplot';
 import { getTimeZoneInfo, TimeZone } from '@grafana/data';
@@ -102,13 +102,8 @@ export const DEFAULT_PLOT_CONFIG = {
   hooks: {},
 };
 
-export const usePlotConfig = (width: number, height: number, timeZone: TimeZone) => {
+export const usePlotConfig = (width: number, height: number, timeZone: TimeZone, seriesConfig: PlotSeriesConfig) => {
   const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
-  const [seriesConfig, setSeriesConfig] = useState<uPlot.Series[]>([{}]);
-  const [axesConfig, setAxisConfig] = useState<uPlot.Axis[]>([]);
-  const [scalesConfig, setScaleConfig] = useState<Record<string, uPlot.Scale>>({});
-  const [currentConfig, setCurrentConfig] = useState<uPlot.Options>();
-
   const tzDate = useMemo(() => {
     let fmt = undefined;
 
@@ -121,136 +116,40 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone)
     return fmt;
   }, [timeZone]);
 
-  const defaultConfig = useMemo<uPlot.Options>(() => {
-    return {
-      ...DEFAULT_PLOT_CONFIG,
-      width,
-      height,
-      plugins: Object.entries(plugins).map(p => ({
-        hooks: p[1].hooks,
-      })),
-      tzDate,
-    };
-  }, [plugins, width, height, tzDate]);
+  const [currentConfig, setCurrentConfig] = useState<uPlot.Options>({
+    ...DEFAULT_PLOT_CONFIG,
+    width,
+    height,
+    plugins: Object.entries(plugins).map(p => ({
+      hooks: p[1].hooks,
+    })),
+    tzDate,
+    ...seriesConfig,
+  });
+
+  useEffect(() => {
+    setCurrentConfig(c => ({
+      ...c,
+      ...seriesConfig,
+    }));
+  }, [seriesConfig]);
 
   useEffect(() => {
     if (!arePluginsReady) {
       return;
     }
 
-    setCurrentConfig(() => {
+    setCurrentConfig(s => {
       return {
-        ...defaultConfig,
-        series: seriesConfig,
-        axes: axesConfig,
-        scales: scalesConfig,
+        ...s,
+        plugins: Object.entries(plugins).map(p => ({
+          hooks: p[1].hooks,
+        })),
       };
     });
-  }, [arePluginsReady]);
-
-  useEffect(() => {
-    setCurrentConfig({
-      ...defaultConfig,
-      series: seriesConfig,
-      axes: axesConfig,
-      scales: scalesConfig,
-    });
-  }, [defaultConfig, seriesConfig, axesConfig, scalesConfig]);
-
-  const addSeries = useCallback(
-    (s: uPlot.Series) => {
-      let index = 0;
-      setSeriesConfig(sc => {
-        index = sc.length;
-        return [...sc, s];
-      });
-
-      return {
-        removeSeries: () => {
-          setSeriesConfig(c => {
-            const tmp = [...c];
-            tmp.splice(index);
-            return tmp;
-          });
-        },
-        updateSeries: (config: uPlot.Series) => {
-          setSeriesConfig(c => {
-            const tmp = [...c];
-            tmp[index] = config;
-            return tmp;
-          });
-        },
-      };
-    },
-    [setCurrentConfig]
-  );
-
-  const addAxis = useCallback(
-    (a: uPlot.Axis) => {
-      let index = 0;
-      setAxisConfig(ac => {
-        index = ac.length;
-        return [...ac, a];
-      });
-
-      return {
-        removeAxis: () => {
-          setAxisConfig(a => {
-            const tmp = [...a];
-            tmp.splice(index);
-            return tmp;
-          });
-        },
-        updateAxis: (config: uPlot.Axis) => {
-          setAxisConfig(a => {
-            const tmp = [...a];
-            tmp[index] = config;
-            return tmp;
-          });
-        },
-      };
-    },
-    [setAxisConfig]
-  );
-
-  const addScale = useCallback(
-    (scaleKey: string, s: uPlot.Scale) => {
-      let key = scaleKey;
-
-      setScaleConfig(sc => {
-        const tmp = { ...sc };
-        tmp[key] = s;
-        return tmp;
-      });
-
-      return {
-        removeScale: () => {
-          setScaleConfig(sc => {
-            const tmp = { ...sc };
-            if (tmp[key]) {
-              delete tmp[key];
-            }
-            return tmp;
-          });
-        },
-        updateScale: (config: uPlot.Scale) => {
-          setScaleConfig(sc => {
-            const tmp = { ...sc };
-            if (tmp[key]) {
-              tmp[key] = config;
-            }
-            return tmp;
-          });
-        },
-      };
-    },
-    [setScaleConfig]
-  );
+  }, [arePluginsReady, plugins]);
 
   return {
-    addSeries,
-    addAxis,
-    addScale,
     registerPlugin,
     currentConfig,
   };
@@ -270,7 +169,7 @@ export const useRefreshAfterGraphRendered = (pluginId: string) => {
       id: pluginId,
       hooks: {
         // refresh events when uPlot draws
-        draw: u => {
+        draw: () => {
           setRenderToken(c => c + 1);
           return;
         },

@@ -43,6 +43,7 @@ export interface GraphCustomFieldConfig {
   nullValues: NullValuesMode;
 }
 
+export type PlotSeriesConfig = Pick<uPlot.Options, 'series' | 'scales' | 'axes'>;
 export type PlotPlugin = {
   id: string;
   /** can mutate provided opts as necessary */
@@ -60,7 +61,8 @@ export interface PlotProps {
   timeZone: TimeZone;
   width: number;
   height: number;
-  children?: React.ReactNode | React.ReactNode[];
+  config: PlotSeriesConfig;
+  children?: React.ReactElement[];
   /** Callback performed when uPlot data is updated */
   onDataUpdate?: (data: uPlot.AlignedData) => {};
   /** Callback performed when uPlot is (re)initialized */
