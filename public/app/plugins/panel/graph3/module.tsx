@@ -4,7 +4,6 @@ import { GraphPanel } from './GraphPanel';
 import { Options } from './types';
 
 export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPanel)
-  .setNoPadding()
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -140,7 +139,7 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
         },
       })
       .addRadio({
-        path: 'legend.mode',
+        path: 'legend.displayMode',
         name: 'Legend mode',
         description: '',
         defaultValue: LegendDisplayMode.List,
