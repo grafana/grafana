@@ -63,7 +63,7 @@ and remove any knobs.
     ```
 
 6. If the component have advanced props type (ie. other than string, number, boolean). You need to 
-specify these in an `argsTable`. This is done in the default export of the story.
+specify these in an `argTypes`. This is done in the default export of the story.
 
     ```tsx
     export default {
