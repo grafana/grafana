@@ -233,7 +233,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			origNewGuardian := guardian.New
 			settings.HiddenUsers = map[string]struct{}{
 				"hiddenUser":  {},
-				TestUserLogin: {},
+				testUserLogin: {},
 			}
 			t.Cleanup(func() {
 				guardian.New = origNewGuardian
@@ -245,7 +245,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				CheckPermissionBeforeUpdateValue: true,
 				GetAclValue: []*models.DashboardAclInfoDTO{
 					{OrgId: 1, DashboardId: 1, UserId: 2, UserLogin: "hiddenUser", Permission: models.PERMISSION_VIEW},
-					{OrgId: 1, DashboardId: 1, UserId: 3, UserLogin: TestUserLogin, Permission: models.PERMISSION_EDIT},
+					{OrgId: 1, DashboardId: 1, UserId: 3, UserLogin: testUserLogin, Permission: models.PERMISSION_EDIT},
 					{OrgId: 1, DashboardId: 1, UserId: 4, UserLogin: "user_1", Permission: models.PERMISSION_ADMIN},
 				},
 			})
