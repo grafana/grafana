@@ -5,15 +5,7 @@ import React, { PureComponent, ChangeEvent, FocusEvent } from 'react';
 import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
 
 // Components
-import {
-  EventsWithValidation,
-  LegacyInputStatus,
-  LegacyForms,
-  ValidationEvents,
-  InlineFormLabel,
-  stylesFactory,
-} from '@grafana/ui';
-const { Switch, Input } = LegacyForms;
+import { Switch, Input, InlineField, InlineFormLabel, stylesFactory } from '@grafana/ui';
 
 // Types
 import { PanelModel } from '../state';
@@ -21,18 +13,11 @@ import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOp
 import { config } from 'app/core/config';
 import { css } from 'emotion';
 
-const timeRangeValidationEvents: ValidationEvents = {
-  [EventsWithValidation.onBlur]: [
-    {
-      rule: value => {
-        if (!value) {
-          return true;
-        }
-        return rangeUtil.isValidTimeSpan(value);
-      },
-      errorMessage: 'Not a valid timespan',
-    },
-  ],
+const timeRangeValidation = (value: string) => {
+  if (!value) {
+    return true;
+  }
+  return rangeUtil.isValidTimeSpan(value);
 };
 
 const emptyToNull = (value: string) => {
@@ -53,6 +38,8 @@ interface State {
   interval: string;
   hideTimeOverride: boolean;
   isOpen: boolean;
+  relativeTimeIsValid: boolean;
+  timeShiftIsValid: boolean;
 }
 
 export class QueryOptions extends PureComponent<Props, State> {
@@ -67,6 +54,8 @@ export class QueryOptions extends PureComponent<Props, State> {
       interval: props.panel.interval || '',
       hideTimeOverride: props.panel.hideTimeOverride || false,
       isOpen: false,
+      relativeTimeIsValid: true,
+      timeShiftIsValid: true,
     };
   }
 
@@ -82,26 +71,30 @@ export class QueryOptions extends PureComponent<Props, State> {
     });
   };
 
-  onOverrideTime = (event: FocusEvent<HTMLInputElement>, status: LegacyInputStatus) => {
+  onOverrideTime = (event: FocusEvent<HTMLInputElement>) => {
     const { value } = event.target;
     const { panel } = this.props;
     const emptyToNullValue = emptyToNull(value);
+    const isValid = timeRangeValidation(value);
 
-    if (status === LegacyInputStatus.Valid && panel.timeFrom !== emptyToNullValue) {
+    if (isValid && panel.timeFrom !== emptyToNullValue) {
       panel.timeFrom = emptyToNullValue;
       panel.refresh();
     }
+    this.setState({ relativeTimeIsValid: isValid });
   };
 
-  onTimeShift = (event: FocusEvent<HTMLInputElement>, status: LegacyInputStatus) => {
+  onTimeShift = (event: FocusEvent<HTMLInputElement>) => {
     const { value } = event.target;
     const { panel } = this.props;
     const emptyToNullValue = emptyToNull(value);
+    const isValid = timeRangeValidation(value);
 
-    if (status === LegacyInputStatus.Valid && panel.timeShift !== emptyToNullValue) {
+    if (isValid && panel.timeShift !== emptyToNullValue) {
       panel.timeShift = emptyToNullValue;
       panel.refresh();
     }
+    this.setState({ timeShiftIsValid: isValid });
   };
 
   onToggleTimeOverride = () => {
@@ -301,7 +294,7 @@ export class QueryOptions extends PureComponent<Props, State> {
   }
 
   render() {
-    const { hideTimeOverride } = this.state;
+    const { hideTimeOverride, relativeTimeIsValid, timeShiftIsValid } = this.state;
     const { relativeTime, timeShift, isOpen } = this.state;
     const styles = getStyles();
 
@@ -327,8 +320,7 @@ export class QueryOptions extends PureComponent<Props, State> {
             placeholder="1h"
             onChange={this.onRelativeTimeChange}
             onBlur={this.onOverrideTime}
-            validationEvents={timeRangeValidationEvents}
-            hideErrorMessage={true}
+            invalid={!relativeTimeIsValid}
             value={relativeTime}
           />
         </div>
@@ -341,19 +333,15 @@ export class QueryOptions extends PureComponent<Props, State> {
             placeholder="1h"
             onChange={this.onTimeShiftChange}
             onBlur={this.onTimeShift}
-            validationEvents={timeRangeValidationEvents}
-            hideErrorMessage={true}
+            invalid={!timeShiftIsValid}
             value={timeShift}
           />
         </div>
         {(timeShift || relativeTime) && (
           <div className="gf-form-inline">
-            <Switch
-              label="Hide time info"
-              labelClass="width-9"
-              checked={hideTimeOverride}
-              onChange={this.onToggleTimeOverride}
-            />
+            <InlineField label="Hide time info" labelWidth={18}>
+              <Switch value={hideTimeOverride} onChange={this.onToggleTimeOverride} />
+            </InlineField>
           </div>
         )}
       </QueryOperationRow>

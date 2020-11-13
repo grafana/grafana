@@ -37,7 +37,7 @@
     "@types/expect-puppeteer": "3.3.1",
     "@types/fs-extra": "^8.1.0",
     "@types/inquirer": "^6.0.3",
-    "@types/jest": "24.0.13",
+    "@types/jest": "26.0.0",
     "@types/node": "^12.0.4",
     "@types/prettier": "^1.16.4",
     "@types/puppeteer-core": "1.9.0",

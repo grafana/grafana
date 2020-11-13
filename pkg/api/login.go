@@ -53,7 +53,7 @@ func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 
 	// when using a subUrl, the redirect_to should start with the subUrl (which contains the leading slash), otherwise the redirect
 	// will send the user to the wrong location
-	if hs.Cfg.AppSubUrl != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubUrl+"/") {
+	if hs.Cfg.AppSubURL != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubURL+"/") {
 		return login.ErrInvalidRedirectTo
 	}
 
@@ -62,8 +62,8 @@ func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 
 func (hs *HTTPServer) CookieOptionsFromCfg() middleware.CookieOptions {
 	path := "/"
-	if len(hs.Cfg.AppSubUrl) > 0 {
-		path = hs.Cfg.AppSubUrl
+	if len(hs.Cfg.AppSubURL) > 0 {
+		path = hs.Cfg.AppSubURL
 	}
 	return middleware.CookieOptions{
 		Path:             path,
@@ -126,7 +126,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 				// the user is already logged so instead of rendering the login page with error
 				// it should be redirected to the home page.
 				log.Debugf("Ignored invalid redirect_to cookie value: %v", redirectTo)
-				redirectTo = hs.Cfg.AppSubUrl + "/"
+				redirectTo = hs.Cfg.AppSubURL + "/"
 			}
 			middleware.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 			c.Redirect(redirectTo)
