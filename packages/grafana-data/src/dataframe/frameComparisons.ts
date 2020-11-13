@@ -6,10 +6,10 @@ import { DataFrame } from '../types/dataFrame';
  *
  * To compare multiple frames use:
  * ```
- * _.isEqualWith(a, b, framesHaveSameStructure);
+ * areArraysEqual(a, b, framesHaveSameStructure);
  * ```
  */
-export function framesHaveSameStructure(a: DataFrame, b: DataFrame): boolean {
+export function compareDataFrameStructures(a: DataFrame, b: DataFrame): boolean {
   if (a === b) {
     return true;
   }
@@ -41,7 +41,10 @@ export function framesHaveSameStructure(a: DataFrame, b: DataFrame): boolean {
   return true;
 }
 
-export function arrayCompare<T>(a: T[], b: T[], fn: (a: T, b: T) => boolean) {
+/**
+ * Check if all values in two arrays match the compare funciton
+ */
+export function compareArrayValues<T>(a: T[], b: T[], cmp: (a: T, b: T) => boolean) {
   if (a === b) {
     return true;
   }
@@ -49,7 +52,7 @@ export function arrayCompare<T>(a: T[], b: T[], fn: (a: T, b: T) => boolean) {
     return false;
   }
   for (let i = 0; i < a.length; i++) {
-    if (!fn(a[i], b[i])) {
+    if (!cmp(a[i], b[i])) {
       return false;
     }
   }

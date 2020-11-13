@@ -1,6 +1,5 @@
-import isEqualWith from 'lodash/isEqualWith';
 import { FieldType } from '../types/dataFrame';
-import { framesHaveSameStructure } from './frameComparisons';
+import { framesHaveSameStructure, compareArrayValues } from './frameComparisons';
 import { toDataFrame } from './processDataFrame';
 
 describe('test comparisons', () => {
@@ -34,9 +33,9 @@ describe('test comparisons', () => {
     expect(framesHaveSameStructure(frameA, null as any)).toBeFalsy();
     expect(framesHaveSameStructure(undefined as any, frameA)).toBeFalsy();
 
-    expect(isEqualWith([frameA], [frameA], framesHaveSameStructure)).toBeTruthy();
-    expect(isEqualWith([frameA], null as any, framesHaveSameStructure)).toBeFalsy();
-    expect(isEqualWith(null as any, [frameA], framesHaveSameStructure)).toBeFalsy();
+    expect(compareArrayValues([frameA], [frameA], framesHaveSameStructure)).toBeTruthy();
+    expect(compareArrayValues([frameA], null as any, framesHaveSameStructure)).toBeFalsy();
+    expect(compareArrayValues(null as any, [frameA], framesHaveSameStructure)).toBeFalsy();
   });
 
   it('name change and field copy is not a structure change', () => {
