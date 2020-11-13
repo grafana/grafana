@@ -223,8 +223,8 @@ func updateDashboardPermissionScenario(t *testing.T, desc string, url string, ro
 
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
-			sc.context.OrgId = TestOrgID
-			sc.context.UserId = TestUserID
+			sc.context.OrgId = testOrgID
+			sc.context.UserId = testUserID
 
 			return UpdateDashboardPermissions(c, cmd)
 		})

@@ -52,9 +52,9 @@ func getUserFromLDAPContext(t *testing.T, requestURL string) *scenarioContext {
 
 	sc := setupScenarioContext(t, requestURL)
 
-	ldap := setting.LDAPEnabled
+	origLDAP := setting.LDAPEnabled
 	setting.LDAPEnabled = true
-	t.Cleanup(func() { setting.LDAPEnabled = ldap })
+	t.Cleanup(func() { setting.LDAPEnabled = origLDAP })
 
 	hs := &HTTPServer{Cfg: setting.NewCfg()}
 
@@ -381,10 +381,10 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(t
 	sc := setupScenarioContext(t, requestURL)
 
 	ldap := setting.LDAPEnabled
-	setting.LDAPEnabled = true
 	t.Cleanup(func() {
 		setting.LDAPEnabled = ldap
 	})
+	setting.LDAPEnabled = true
 
 	hs := &HTTPServer{
 		Cfg:              setting.NewCfg(),
@@ -496,8 +496,8 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 		userSearchError = multildap.ErrDidNotFindUser
 
 		admin := setting.AdminUser
-		setting.AdminUser = "ldap-daniel"
 		t.Cleanup(func() { setting.AdminUser = admin })
+		setting.AdminUser = "ldap-daniel"
 
 		bus.AddHandler("test", func(q *models.GetUserByIdQuery) error {
 			require.Equal(t, q.Id, int64(34))
@@ -512,7 +512,6 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 
 			return nil
 		})
-
 	})
 
 	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)
@@ -562,7 +561,6 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 			assert.Equal(t, 34, cmd.UserId)
 			return nil
 		})
-
 	})
 
 	assert.Equal(t, http.StatusBadRequest, sc.resp.Code)

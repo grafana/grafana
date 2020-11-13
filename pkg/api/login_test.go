@@ -604,7 +604,7 @@ func (r *loginHookTest) LoginHook(loginInfo *models.LoginInfo, req *models.ReqCo
 	r.info = loginInfo
 }
 
-func TestLoginPostRunLoginHook(t *testing.T) {
+func TestLoginPostRunLokingHook(t *testing.T) {
 	sc := setupScenarioContext(t, "/login")
 	hookService := &hooks.HooksService{}
 	hs := &HTTPServer{

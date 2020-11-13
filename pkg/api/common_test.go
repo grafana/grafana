@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/middleware"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/macaron.v1"
 )
@@ -27,8 +26,8 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
-			sc.context.UserId = TestUserID
-			sc.context.OrgId = TestOrgID
+			sc.context.UserId = testUserID
+			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 			if sc.handlerFunc != nil {
 				return sc.handlerFunc(sc.context)
@@ -49,8 +48,8 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 }
 
 func anonymousUserScenario(t *testing.T, desc string, method string, url string, routePattern string, fn scenarioFunc) {
-	t.Run(desc+" "+url, func(t *testing.T) {
-		t.Cleanup(bus.ClearBusHandlers)
+	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
+		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {

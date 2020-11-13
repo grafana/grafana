@@ -230,8 +230,8 @@ func updateFolderPermissionScenario(t *testing.T, desc string, url string, route
 
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
-			sc.context.OrgId = TestOrgID
-			sc.context.UserId = TestUserID
+			sc.context.OrgId = testOrgID
+			sc.context.UserId = testUserID
 
 			return UpdateFolderPermissions(c, cmd)
 		})

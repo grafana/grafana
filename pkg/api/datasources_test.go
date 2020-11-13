@@ -12,15 +12,15 @@ import (
 )
 
 const (
-	TestOrgID  int64 = 1
-	TestUserID int64 = 1
+	testOrgID  int64 = 1
+	testUserID int64 = 1
 )
 
-func TestDataSourcesProxy(t *testing.T) {
+func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 	loggedInUserScenario(t, "When calling GET on", "/api/datasources/", func(sc *scenarioContext) {
 		// Stubs the database query
 		bus.AddHandler("test", func(query *models.GetDataSourcesQuery) error {
-			assert.Equal(t, TestOrgID, query.OrgId)
+			assert.Equal(t, testOrgID, query.OrgId)
 			query.Result = []*models.DataSource{
 				{Name: "mmm"},
 				{Name: "ZZZ"},

@@ -44,7 +44,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 		})
 	})
 
-	t.Run("When logout an existing user from all devices", func(t *testing.T) {
+	t.Run("When logging out an existing user from all devices", func(t *testing.T) {
 		logoutUserFromAllDevicesInternalScenario(t, "Should be successful", 1, func(sc *scenarioContext) {
 			const userID int64 = 200
 			bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
@@ -58,7 +58,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("When logout a non-existing user from all devices", func(t *testing.T) {
-		logoutUserFromAllDevicesInternalScenario(t, "Should return not found", TestUserID, func(sc *scenarioContext) {
+		logoutUserFromAllDevicesInternalScenario(t, "Should return not found", testUserID, func(sc *scenarioContext) {
 			bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
 				return models.ErrUserNotFound
 			})
@@ -90,9 +90,9 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 		cmd := models.RevokeAuthTokenCmd{AuthTokenId: 2}
 		token := &models.UserToken{Id: 2}
 
-		revokeUserAuthTokenInternalScenario(t, "Should not be successful", cmd, TestUserID, token, func(sc *scenarioContext) {
+		revokeUserAuthTokenInternalScenario(t, "Should not be successful", cmd, testUserID, token, func(sc *scenarioContext) {
 			bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
-				cmd.Result = &models.User{Id: TestUserID}
+				cmd.Result = &models.User{Id: testUserID}
 				return nil
 			})
 
@@ -109,7 +109,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 
 		getUserAuthTokensInternalScenario(t, "Should be successful", currentToken, func(sc *scenarioContext) {
 			bus.AddHandler("test", func(cmd *models.GetUserByIdQuery) error {
-				cmd.Result = &models.User{Id: TestUserID}
+				cmd.Result = &models.User{Id: testUserID}
 				return nil
 			})
 
@@ -149,7 +149,7 @@ func TestUserTokenAPIEndpoint(t *testing.T) {
 			assert.Equal(t, "Chrome", resultOne.Get("browser").MustString())
 			assert.Equal(t, "72.0", resultOne.Get("browserVersion").MustString())
 			assert.Equal(t, "Linux", resultOne.Get("os").MustString())
-			assert.Equal(t, "", resultOne.Get("osVersion").MustString())
+			assert.Empty(t, resultOne.Get("osVersion").MustString())
 
 			resultTwo := result.GetIndex(1)
 			assert.Equal(t, tokens[1].Id, resultTwo.Get("id").MustInt64())
@@ -184,7 +184,7 @@ func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePat
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = userId
-			sc.context.OrgId = TestOrgID
+			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = models.ROLE_ADMIN
 
 			return hs.RevokeUserAuthToken(c, cmd)
@@ -212,7 +212,7 @@ func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePatte
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = userId
-			sc.context.OrgId = TestOrgID
+			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = models.ROLE_ADMIN
 
 			return hs.GetUserAuthTokens(c)
@@ -236,8 +236,8 @@ func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId 
 		sc := setupScenarioContext(t, "/")
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
-			sc.context.UserId = TestUserID
-			sc.context.OrgId = TestOrgID
+			sc.context.UserId = testUserID
+			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = models.ROLE_ADMIN
 
 			return hs.logoutUserFromAllDevicesInternal(context.Background(), userId)
@@ -265,8 +265,8 @@ func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd models.R
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
-			sc.context.UserId = TestUserID
-			sc.context.OrgId = TestOrgID
+			sc.context.UserId = testUserID
+			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = models.ROLE_ADMIN
 			sc.context.UserToken = token
 
@@ -294,12 +294,12 @@ func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *models.
 		sc.userAuthTokenService = fakeAuthTokenService
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
-			sc.context.UserId = TestUserID
-			sc.context.OrgId = TestOrgID
+			sc.context.UserId = testUserID
+			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = models.ROLE_ADMIN
 			sc.context.UserToken = token
 
-			return hs.getUserAuthTokensInternal(c, TestUserID)
+			return hs.getUserAuthTokensInternal(c, testUserID)
 		})
 
 		sc.m.Get("/", sc.defaultHandler)

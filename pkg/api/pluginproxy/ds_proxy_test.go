@@ -297,7 +297,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 
 		proxy.getDirector()(req)
 
-		t.Run("Can translate request url and path", func(t *testing.T) {
+		t.Run("Can translate request URL and path", func(t *testing.T) {
 			assert.Equal(t, "graphite:8080", req.URL.Host)
 			assert.Equal(t, "/render", req.URL.Path)
 			assert.Equal(t, "Grafana/5.3.0", req.Header.Get("User-Agent"))
@@ -744,7 +744,7 @@ const (
 
 func createAuthTest(t *testing.T, dsType string, authType string, authCheck string, useSecureJsonData bool) *testCase {
 	// Basic user:password
-	base64AthHeader := "Basic dXNlcjpwYXNzd29yZA=="
+	base64AuthHeader := "Basic dXNlcjpwYXNzd29yZA=="
 
 	test := &testCase{
 		datasource: &models.DataSource{
@@ -790,7 +790,7 @@ func createAuthTest(t *testing.T, dsType string, authType string, authCheck stri
 	} else {
 		message += " to auth header"
 		test.checkReq = func(req *http.Request) {
-			assert.Equal(t, base64AthHeader, req.Header.Get("Authorization"), message)
+			assert.Equal(t, base64AuthHeader, req.Header.Get("Authorization"), message)
 		}
 	}
 

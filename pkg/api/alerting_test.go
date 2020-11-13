@@ -164,8 +164,8 @@ func postAlertScenario(t *testing.T, desc string, url string, routePattern strin
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
-			sc.context.UserId = TestUserID
-			sc.context.OrgId = TestOrgID
+			sc.context.UserId = testUserID
+			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
 			return PauseAlert(c, cmd)

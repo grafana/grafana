@@ -79,7 +79,7 @@ type testState struct {
 
 func TestDashboardAPIEndpoint(t *testing.T) {
 	t.Run("Given a dashboard with a parent folder which does not have an ACL", func(t *testing.T) {
-		setup := func() *testState {
+		setUp := func() *testState {
 			fakeDash := models.NewDashboard("Child dash")
 			fakeDash.Id = 1
 			fakeDash.FolderId = 1
@@ -134,7 +134,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/db/child-dash",
 				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setup()
+					state := setUp()
 
 					dash := getDashboardShouldReturn200(sc)
 
@@ -147,7 +147,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-					state := setup()
+					state := setUp()
 
 					dash := getDashboardShouldReturn200(sc)
 
@@ -160,7 +160,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash",
 				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setup()
+					state := setUp()
 
 					CallDeleteDashboardBySlug(sc)
 					assert.Equal(t, 403, sc.resp.Code)
@@ -170,7 +170,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-					state := setup()
+					state := setUp()
 
 					CallDeleteDashboardByUID(sc)
 					assert.Equal(t, 403, sc.resp.Code)
@@ -180,7 +180,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1",
 				"/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
-					setup()
+					setUp()
 
 					callGetDashboardVersion(sc)
 					assert.Equal(t, 403, sc.resp.Code)
@@ -188,7 +188,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions",
 				"/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
-					setup()
+					setUp()
 
 					callGetDashboardVersions(sc)
 					assert.Equal(t, 403, sc.resp.Code)
@@ -200,7 +200,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/db/child-dash",
 				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setup()
+					state := setUp()
 
 					dash := getDashboardShouldReturn200(sc)
 
@@ -213,7 +213,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-					state := setup()
+					state := setUp()
 
 					dash := getDashboardShouldReturn200(sc)
 
@@ -225,7 +225,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash",
 				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setup()
+					state := setUp()
 
 					CallDeleteDashboardBySlug(sc)
 					assert.Equal(t, 200, sc.resp.Code)
@@ -234,7 +234,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-					state := setup()
+					state := setUp()
 
 					CallDeleteDashboardByUID(sc)
 					assert.Equal(t, 200, sc.resp.Code)
@@ -243,7 +243,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1",
 				"/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
-					setup()
+					setUp()
 
 					callGetDashboardVersion(sc)
 					assert.Equal(t, 200, sc.resp.Code)
@@ -251,7 +251,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions",
 				"/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
-					setup()
+					setUp()
 
 					callGetDashboardVersions(sc)
 					assert.Equal(t, 200, sc.resp.Code)
@@ -264,7 +264,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			Cfg: setting.NewCfg(),
 		}
 
-		setup := func() *testState {
+		setUp := func() *testState {
 			state := &testState{}
 
 			fakeDash := models.NewDashboard("Child dash")
@@ -329,7 +329,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/db/child-dash",
 				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setup()
+					state := setUp()
 
 					sc.handlerFunc = hs.GetDashboard
 					sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -339,7 +339,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-					state := setup()
+					state := setUp()
 
 					sc.handlerFunc = hs.GetDashboard
 					sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -349,7 +349,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash",
 				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setup()
+					state := setUp()
 
 					CallDeleteDashboardBySlug(sc)
 					assert.Equal(t, 403, sc.resp.Code)
@@ -358,7 +358,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-					state := setup()
+					state := setUp()
 
 					CallDeleteDashboardByUID(sc)
 					assert.Equal(t, 403, sc.resp.Code)
@@ -367,7 +367,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1",
 				"/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
-					setup()
+					setUp()
 
 					callGetDashboardVersion(sc)
 					assert.Equal(t, 403, sc.resp.Code)
@@ -375,7 +375,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions",
 				"/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
-					setup()
+					setUp()
 
 					callGetDashboardVersions(sc)
 					assert.Equal(t, 403, sc.resp.Code)
@@ -387,7 +387,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/db/child-dash",
 				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setup()
+					state := setUp()
 
 					sc.handlerFunc = hs.GetDashboard
 					sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -398,7 +398,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-					state := setup()
+					state := setUp()
 
 					sc.handlerFunc = hs.GetDashboard
 					sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -409,7 +409,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/db/child-dash",
 				"/api/dashboards/db/:slug", role, func(sc *scenarioContext) {
-					state := setup()
+					state := setUp()
 
 					CallDeleteDashboardBySlug(sc)
 					assert.Equal(t, 403, sc.resp.Code)
@@ -418,7 +418,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/dashboards/uid/abcdefghi",
 				"/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
-					state := setup()
+					state := setUp()
 
 					CallDeleteDashboardByUID(sc)
 					assert.Equal(t, 403, sc.resp.Code)
@@ -427,7 +427,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions/1",
 				"/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
-					setup()
+					setUp()
 
 					callGetDashboardVersion(sc)
 					assert.Equal(t, 403, sc.resp.Code)
@@ -435,7 +435,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/2/versions",
 				"/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
-					setup()
+					setUp()
 
 					callGetDashboardVersions(sc)
 					assert.Equal(t, 403, sc.resp.Code)
@@ -450,7 +450,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			}
 
 			setUpInner := func() *testState {
-				state := setup()
+				state := setUp()
 				bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
 					query.Result = mockResult
 					return nil
@@ -521,7 +521,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			role := models.ROLE_VIEWER
 
 			setUpInner := func() *testState {
-				state := setup()
+				state := setUp()
 
 				mockResult := []*models.DashboardAclInfoDTO{
 					{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_VIEW},
@@ -555,7 +555,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/uid/abcdefghi", "/api/dashboards/uid/:uid", role, func(sc *scenarioContext) {
 				state := setUpInner()
 
-				t.Log("Getting dashboard")
 				require.True(t, setting.ViewersCanEdit)
 				dash := getDashboardShouldReturn200(sc)
 
@@ -586,7 +585,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			role := models.ROLE_VIEWER
 
 			setUpInner := func() *testState {
-				state := setup()
+				state := setUp()
 
 				mockResult := []*models.DashboardAclInfoDTO{
 					{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_ADMIN},
@@ -654,7 +653,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			role := models.ROLE_EDITOR
 
 			setUpInner := func() *testState {
-				state := setup()
+				state := setUp()
 
 				mockResult := []*models.DashboardAclInfoDTO{
 					{OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_VIEW},
@@ -1020,7 +1019,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 			bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
 				query.Result = []*models.DashboardAclInfoDTO{
-					{OrgId: TestOrgID, DashboardId: 1, UserId: TestUserID, Permission: models.PERMISSION_EDIT},
+					{OrgId: testOrgID, DashboardId: 1, UserId: testUserID, Permission: models.PERMISSION_EDIT},
 				}
 				return nil
 			})
@@ -1220,8 +1219,8 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{
-				OrgId:  TestOrgID,
-				UserId: TestUserID,
+				OrgId:  testOrgID,
+				UserId: testUserID,
 			}
 			sc.context.OrgRole = role
 
@@ -1250,8 +1249,8 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{
-				OrgId:  TestOrgID,
-				UserId: TestUserID,
+				OrgId:  testOrgID,
+				UserId: testUserID,
 			}
 			sc.context.OrgRole = models.ROLE_ADMIN
 

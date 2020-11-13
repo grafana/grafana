@@ -268,8 +268,8 @@ func postAnnotationScenario(t *testing.T, desc string, url string, routePattern 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
-			sc.context.UserId = TestUserID
-			sc.context.OrgId = TestOrgID
+			sc.context.UserId = testUserID
+			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
 			return PostAnnotation(c, cmd)
@@ -292,8 +292,8 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
-			sc.context.UserId = TestUserID
-			sc.context.OrgId = TestOrgID
+			sc.context.UserId = testUserID
+			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
 			return UpdateAnnotation(c, cmd)
@@ -315,8 +315,8 @@ func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
-			sc.context.UserId = TestUserID
-			sc.context.OrgId = TestOrgID
+			sc.context.UserId = testUserID
+			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
 			return PatchAnnotation(c, cmd)
@@ -339,8 +339,8 @@ func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePatte
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
-			sc.context.UserId = TestUserID
-			sc.context.OrgId = TestOrgID
+			sc.context.UserId = testUserID
+			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 
 			return DeleteAnnotations(c, cmd)
