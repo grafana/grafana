@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
+	macaron "gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -12,9 +13,8 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/assert"
-	macaron "gopkg.in/macaron.v1"
+	"github.com/stretchr/testify/require"
 )
 
 type testLogger struct {
@@ -28,8 +28,8 @@ func (stub *testLogger) Warn(testMessage string, ctx ...interface{}) {
 	stub.warnMessage = testMessage
 }
 
-func TestTeamApiEndpoint(t *testing.T) {
-	Convey("Given two teams", t, func() {
+func TestTeamAPIEndpoint(t *testing.T) {
+	t.Run("Given two teams", func(t *testing.T) {
 		mockResult := models.SearchTeamQueryResult{
 			Teams: []*models.TeamDTO{
 				{Name: "team1"},
@@ -42,56 +42,52 @@ func TestTeamApiEndpoint(t *testing.T) {
 			Cfg: setting.NewCfg(),
 		}
 
-		Convey("When searching with no parameters", func() {
-			loggedInUserScenario("When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
-				var sentLimit int
-				var sendPage int
-				bus.AddHandler("test", func(query *models.SearchTeamsQuery) error {
-					query.Result = mockResult
+		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
+			var sentLimit int
+			var sendPage int
+			bus.AddHandler("test", func(query *models.SearchTeamsQuery) error {
+				query.Result = mockResult
 
-					sentLimit = query.Limit
-					sendPage = query.Page
+				sentLimit = query.Limit
+				sendPage = query.Page
 
-					return nil
-				})
-
-				sc.handlerFunc = hs.SearchTeams
-				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
-
-				So(sentLimit, ShouldEqual, 1000)
-				So(sendPage, ShouldEqual, 1)
-
-				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-				So(err, ShouldBeNil)
-
-				So(respJSON.Get("totalCount").MustInt(), ShouldEqual, 2)
-				So(len(respJSON.Get("teams").MustArray()), ShouldEqual, 2)
+				return nil
 			})
+
+			sc.handlerFunc = hs.SearchTeams
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+
+			assert.Equal(t, 1000, sentLimit)
+			assert.Equal(t, 1, sendPage)
+
+			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+			require.NoError(t, err)
+
+			assert.Equal(t, 2, respJSON.Get("totalCount").MustInt())
+			assert.Equal(t, 2, len(respJSON.Get("teams").MustArray()))
 		})
 
-		Convey("When searching with page and perpage parameters", func() {
-			loggedInUserScenario("When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
-				var sentLimit int
-				var sendPage int
-				bus.AddHandler("test", func(query *models.SearchTeamsQuery) error {
-					query.Result = mockResult
+		loggedInUserScenario(t, "When calling GET on", "/api/teams/search", func(sc *scenarioContext) {
+			var sentLimit int
+			var sendPage int
+			bus.AddHandler("test", func(query *models.SearchTeamsQuery) error {
+				query.Result = mockResult
 
-					sentLimit = query.Limit
-					sendPage = query.Page
+				sentLimit = query.Limit
+				sendPage = query.Page
 
-					return nil
-				})
-
-				sc.handlerFunc = hs.SearchTeams
-				sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
-
-				So(sentLimit, ShouldEqual, 10)
-				So(sendPage, ShouldEqual, 2)
+				return nil
 			})
+
+			sc.handlerFunc = hs.SearchTeams
+			sc.fakeReqWithParams("GET", sc.url, map[string]string{"perpage": "10", "page": "2"}).exec()
+
+			assert.Equal(t, 10, sentLimit)
+			assert.Equal(t, 2, sendPage)
 		})
 	})
 
-	t.Run("When creating team with api key", func(t *testing.T) {
+	t.Run("When creating team with API key", func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
 		hs := &HTTPServer{

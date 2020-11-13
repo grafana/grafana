@@ -357,13 +357,6 @@ func (hs *HTTPServer) registerRoutes() {
 			alertsRoute.Get("/states-for-dashboard", Wrap(GetAlertStatesForDashboard))
 		})
 
-		if hs.Cfg.IsNgAlertEnabled() {
-			apiRoute.Group("/alert-definitions", func(alertDefinitions routing.RouteRegister) {
-				alertDefinitions.Get("/eval/:dashboardID/:panelID/:refID", reqEditorRole, Wrap(hs.AlertDefinitionEval))
-				alertDefinitions.Post("/eval", reqEditorRole, bind(dtos.EvalAlertConditionCommand{}), Wrap(hs.ConditionEval))
-			})
-		}
-
 		apiRoute.Get("/alert-notifiers", reqEditorRole, Wrap(GetAlertNotifiers))
 
 		apiRoute.Group("/alert-notifications", func(alertNotifications routing.RouteRegister) {
@@ -445,4 +438,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/api/snapshots/:key", Wrap(GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, Wrap(DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
+
+	// Frontend logs
+	r.Post("/log", bind(frontendSentryEvent{}), Wrap(hs.logFrontendMessage))
 }
