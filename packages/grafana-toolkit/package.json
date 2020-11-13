@@ -111,6 +111,5 @@
   },
   "_moduleAliases": {
     "puppeteer": "node_modules/puppeteer-core"
-  },
-  "devDependencies": {}
+  }
 }
