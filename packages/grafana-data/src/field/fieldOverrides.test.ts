@@ -88,6 +88,17 @@ describe('Global MinMax', () => {
     expect(minmax.max).toEqual(1234);
   });
 
+  it('find global min max when all values are zero', () => {
+    const f0 = new ArrayDataFrame<{ title: string; value: number; value2: number | null }>([
+      { title: 'AAA', value: 0, value2: 0 },
+      { title: 'CCC', value: 0, value2: 0 },
+    ]);
+
+    const minmax = findNumericFieldMinMax([f0]);
+    expect(minmax.min).toEqual(0);
+    expect(minmax.max).toEqual(0);
+  });
+
   describe('when value is null', () => {
     it('then global min max should be null', () => {
       const frame = toDataFrame({
@@ -98,8 +109,8 @@ describe('Global MinMax', () => {
       });
       const { min, max } = findNumericFieldMinMax([frame]);
 
-      expect(min).toBe(Number.MIN_VALUE);
-      expect(max).toBe(Number.MAX_VALUE);
+      expect(min).toBe(null);
+      expect(max).toBe(null);
     });
   });
 
