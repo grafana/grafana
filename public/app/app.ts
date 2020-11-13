@@ -28,7 +28,6 @@ import _ from 'lodash';
 import {
   AppEvents,
   setLocale,
-  setMarkdownOptions,
   setTimeZoneResolver,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
@@ -50,6 +49,7 @@ import { getScrollbarWidth, getStandardFieldConfigs, getStandardOptionEditors } 
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
+import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
 import { monkeyPatchInjectorWithPreAssignedBindings } from './core/injectorMonkeyPatch';
 import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
 
@@ -97,8 +97,6 @@ export class GrafanaApp {
     addClassIfNoOverlayScrollbar();
     setLocale(config.bootData.user.locale);
     setTimeZoneResolver(() => config.bootData.user.timezone);
-
-    setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
 
     standardEditorsRegistry.setInit(getStandardOptionEditors);
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
@@ -210,6 +208,13 @@ export class GrafanaApp {
     });
 
     registerEchoBackend(new PerformanceBackend({}));
+    registerEchoBackend(
+      new SentryEchoBackend({
+        ...config.sentry,
+        user: config.bootData.user,
+        buildInfo: config.buildInfo,
+      })
+    );
 
     window.addEventListener('DOMContentLoaded', () => {
       reportPerformance('dcl', Math.round(performance.now()));

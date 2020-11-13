@@ -1,9 +1,11 @@
-import { Observable } from 'rxjs';
-import { DataFrame, FieldType, getTimeField, sortDataFrame, transformDataFrame } from '@grafana/data';
-import { map } from 'rxjs/operators';
+import { DataFrame, FieldType, getTimeField, outerJoinDataFrames, sortDataFrame } from '@grafana/data';
 
 // very time oriented for now
-export const alignAndSortDataFramesByFieldName = (data: DataFrame[], fieldName: string): Observable<DataFrame> => {
+export const alignAndSortDataFramesByFieldName = (data: DataFrame[], fieldName: string): DataFrame | null => {
+  if (!data.length) {
+    return null;
+  }
+
   // normalize time field names
   // in each frame find first time field and rename it to unified name
   for (let i = 0; i < data.length; i++) {
@@ -24,21 +26,6 @@ export const alignAndSortDataFramesByFieldName = (data: DataFrame[], fieldName: 
     return timeIndex !== undefined ? frame.fields.length > 1 : false;
   });
 
-  // uPlot data needs to be aligned on x-axis (ref. https://github.com/leeoniya/uPlot/issues/108)
-  // For experimentation just assuming alignment on time field, needs to change
-  return transformDataFrame(
-    [
-      {
-        id: 'seriesToColumns',
-        options: { byField: fieldName },
-      },
-    ],
-    dataFramesToPlot
-  ).pipe(
-    map(data => {
-      const aligned = data[0];
-      // need to be more "clever", not time only in the future!
-      return sortDataFrame(aligned, getTimeField(aligned).timeIndex!);
-    })
-  );
+  const aligned = outerJoinDataFrames(dataFramesToPlot, { byField: fieldName })[0];
+  return sortDataFrame(aligned, getTimeField(aligned).timeIndex!);
 };

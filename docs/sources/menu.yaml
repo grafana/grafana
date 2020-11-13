@@ -438,8 +438,8 @@
       link: /plugins/
     - name: Install plugins
       link: /plugins/installation/
-    - name: Plugin signature verification
-      link: /plugins/plugin-signature-verification/
+    - name: Plugin signatures
+      link: /plugins/plugin-signatures/
 - name: HTTP APIs
   link: /http_api/
   children:
@@ -537,8 +537,8 @@
               name: Plugin protocol
             - link: /developers/plugins/backend/grafana-plugin-sdk-for-go/
               name: Grafana plugin SDK for Go
-        - name: Share a plugin
-          link: /developers/plugins/share-a-plugin/
+        - name: Package a plugin
+          link: /developers/plugins/package-a-plugin/
         - name: Error handling
           link: /developers/plugins/error-handling/
         - name: Plugin migration guide

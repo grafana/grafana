@@ -2,12 +2,7 @@
 title = "Glossary"
 description = "Grafana glossary"
 keywords = ["grafana", "intro", "glossary", "dictionary"]
-type = "docs"
 aliases = ["/docs/grafana/latest/guides/glossary"]
-[menu.docs]
-name = "Glossary"
-identifier = "glossary"
-parent = "guides"
 weight = 500
 +++
 
@@ -41,9 +36,33 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
     </td>
   </tr>
   <tr>
+    <td style="vertical-align: top">Export/Import dashboard</td>
+    <td>
+      Grafana includes the ability to export your dashboards to a file containing JSON. Community members sometimes share their created dashboards on the [Grafana Dashboards page](https://grafana.com/grafana/dashboards). Dashboards previously exported or found on this site may be imported by other users.
+    </td>
+  </tr>
+  <tr>
+    <td style="vertical-align: top">Exporter</td>
+    <td>
+      An exporter translates data that comes out of a data source into a format that Prometheus can digest.
+    </td>
+  </tr>
+  <tr>
+    <td style="vertical-align: top">Integration (Grafana Cloud)</td>
+    <td>
+      Each Integration in Grafana Cloud uses the cloud agent to connect your data source to Grafana Cloud for visualizing. Note: Prometheus uses the word “integrations” to refer to software that exposes Prometheus metrics without needing an exporter, which is a different use of the same word we use here.
+    </td>
+  </tr>
+  <tr>
     <td style="vertical-align: top">Graph</td>
     <td>
       A commonly-used visualization that displays data as points, lines, or bars.
+    </td>
+  </tr>
+  <tr>
+    <td style="vertical-align: top">Mixin</td>
+    <td>
+      A mixin is a set of Grafana dashboards and Prometheus rules and alerts, written in Jsonnet and packaged together in a bundle.
     </td>
   </tr>
   <tr>
@@ -90,7 +109,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">Transformation</td>
     <td>
-      Transformations process the result set of a query before it’s passed on for visualization. 
+      Transformations process the result set of a query before it’s passed on for visualization.
     </td>
   </tr>
   <tr>

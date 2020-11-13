@@ -147,24 +147,24 @@ const (
 	VIEWER_ACCESS = CAN_VIEW
 )
 
-func (flag permissionFlags) canAdmin() bool {
-	return flag&CAN_ADMIN != 0
+func (f permissionFlags) canAdmin() bool {
+	return f&CAN_ADMIN != 0
 }
 
-func (flag permissionFlags) canEdit() bool {
-	return flag&CAN_EDIT != 0
+func (f permissionFlags) canEdit() bool {
+	return f&CAN_EDIT != 0
 }
 
-func (flag permissionFlags) canSave() bool {
-	return flag&CAN_SAVE != 0
+func (f permissionFlags) canSave() bool {
+	return f&CAN_SAVE != 0
 }
 
-func (flag permissionFlags) canView() bool {
-	return flag&CAN_VIEW != 0
+func (f permissionFlags) canView() bool {
+	return f&CAN_VIEW != 0
 }
 
-func (flag permissionFlags) noAccess() bool {
-	return flag&(CAN_ADMIN|CAN_EDIT|CAN_SAVE|CAN_VIEW) == 0
+func (f permissionFlags) noAccess() bool {
+	return f&(CAN_ADMIN|CAN_EDIT|CAN_SAVE|CAN_VIEW) == 0
 }
 
 func (f permissionFlags) String() string {

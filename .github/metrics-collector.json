@@ -5,6 +5,10 @@
       "query": "label:\"type/bug\" is:open"
     },
     {
+      "name": "type_docs",
+      "query": "label:\"type/docs\" is:open"
+    },
+    {
       "name": "needs_investigation",
       "query": "label:\"needs investigation\" is:open"
     },

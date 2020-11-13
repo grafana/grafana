@@ -20,9 +20,10 @@ import {
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 
-import { changeDedupStrategy, splitOpen, updateTimeRange } from './state/actions';
-import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
-import { deduplicatedRowsSelector } from 'app/features/explore/state/selectors';
+import { splitOpen } from './state/main';
+import { updateTimeRange } from './state/time';
+import { toggleLogLevelAction, changeDedupStrategy } from './state/explorePane';
+import { deduplicatedRowsSelector } from './state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
