@@ -28,7 +28,6 @@ export const defaults: Options = {
     showPoints: false,
   },
   legend: {
-    isVisible: true,
     displayMode: LegendDisplayMode.List,
     placement: 'bottom',
   },

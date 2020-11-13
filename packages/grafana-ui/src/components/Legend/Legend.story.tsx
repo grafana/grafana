@@ -19,8 +19,8 @@ const getStoriesKnobs = (table = false) => {
 
   const rawRenderer = (item: LegendItem) => (
     <>
-      Label: <strong>{item.label}</strong>, Color: <strong>{item.color}</strong>, isVisible:{' '}
-      <strong>{item.isVisible ? 'yes' : 'no'}</strong>
+      Label: <strong>{item.label}</strong>, Color: <strong>{item.color}</strong>, disabled:{' '}
+      <strong>{item.disabled ? 'yes' : 'no'}</strong>
     </>
   );
 
