@@ -33,7 +33,7 @@ var (
 )
 
 func init() {
-	registry.RegisterService(&manager{})
+	registry.RegisterServiceWithPriority(&manager{}, registry.MediumHigh)
 }
 
 // Manager manages backend plugins.
@@ -209,7 +209,7 @@ func (m *manager) CheckHealth(ctx context.Context, pluginContext backend.PluginC
 			return nil, err
 		}
 
-		return nil, errutil.Wrap("Failed to check plugin health", ErrHealthCheckFailed)
+		return nil, errutil.Wrap("failed to check plugin health", ErrHealthCheckFailed)
 	}
 
 	return resp, nil

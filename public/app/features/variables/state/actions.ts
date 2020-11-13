@@ -29,7 +29,13 @@ import {
   variableStateFetching,
   variableStateNotStarted,
 } from './sharedReducer';
-import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './types';
+import {
+  ALL_VARIABLE_TEXT,
+  ALL_VARIABLE_VALUE,
+  toVariableIdentifier,
+  toVariablePayload,
+  VariableIdentifier,
+} from './types';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
@@ -286,6 +292,12 @@ export const setOptionFromUrl = (
     let option = variableFromState.options.find(op => {
       return op.text === urlValue || op.value === urlValue;
     });
+
+    if (!option && isMulti(variableFromState)) {
+      if (variableFromState.allValue && urlValue === variableFromState.allValue) {
+        option = { text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false };
+      }
+    }
 
     if (!option) {
       let defaultText = urlValue as string | string[];

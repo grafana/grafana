@@ -247,7 +247,6 @@ func DeleteAnnotationByID(c *models.ReqContext) Response {
 		OrgId: c.OrgId,
 		Id:    annotationID,
 	})
-
 	if err != nil {
 		return Error(500, "Failed to delete annotation", err)
 	}
@@ -272,7 +271,6 @@ func canSaveByDashboardID(c *models.ReqContext, dashboardID int64) (bool, error)
 
 func canSave(c *models.ReqContext, repo annotations.Repository, annotationID int64) Response {
 	items, err := repo.Find(&annotations.ItemQuery{AnnotationId: annotationID, OrgId: c.OrgId})
-
 	if err != nil || len(items) == 0 {
 		return Error(500, "Could not find annotation to update", err)
 	}

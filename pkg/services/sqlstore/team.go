@@ -53,7 +53,7 @@ func getTeamMemberCount(filteredUsers []string) string {
 	return "(SELECT COUNT(*) FROM team_member WHERE team_member.team_id = team.id) AS member_count "
 }
 
-func getTeamSearchSqlBase(filteredUsers []string) string {
+func getTeamSearchSQLBase(filteredUsers []string) string {
 	return `SELECT
 		team.id AS id,
 		team.org_id,
@@ -65,7 +65,7 @@ func getTeamSearchSqlBase(filteredUsers []string) string {
 		INNER JOIN team_member ON team.id = team_member.team_id AND team_member.user_id = ? `
 }
 
-func getTeamSelectSqlBase(filteredUsers []string) string {
+func getTeamSelectSQLBase(filteredUsers []string) string {
 	return `SELECT
 		team.id as id,
 		team.org_id,
@@ -188,13 +188,13 @@ func SearchTeams(query *models.SearchTeamsQuery) error {
 
 	filteredUsers := getFilteredUsers(query.SignedInUser, query.HiddenUsers)
 	if query.UserIdFilter > 0 {
-		sql.WriteString(getTeamSearchSqlBase(filteredUsers))
+		sql.WriteString(getTeamSearchSQLBase(filteredUsers))
 		for _, user := range filteredUsers {
 			params = append(params, user)
 		}
 		params = append(params, query.UserIdFilter)
 	} else {
-		sql.WriteString(getTeamSelectSqlBase(filteredUsers))
+		sql.WriteString(getTeamSelectSQLBase(filteredUsers))
 		for _, user := range filteredUsers {
 			params = append(params, user)
 		}
@@ -245,7 +245,7 @@ func GetTeamById(query *models.GetTeamByIdQuery) error {
 	params := make([]interface{}, 0)
 
 	filteredUsers := getFilteredUsers(query.SignedInUser, query.HiddenUsers)
-	sql.WriteString(getTeamSelectSqlBase(filteredUsers))
+	sql.WriteString(getTeamSelectSQLBase(filteredUsers))
 	for _, user := range filteredUsers {
 		params = append(params, user)
 	}
@@ -274,7 +274,7 @@ func GetTeamsByUser(query *models.GetTeamsByUserQuery) error {
 
 	var sql bytes.Buffer
 
-	sql.WriteString(getTeamSelectSqlBase([]string{}))
+	sql.WriteString(getTeamSelectSQLBase([]string{}))
 	sql.WriteString(` INNER JOIN team_member on team.id = team_member.team_id`)
 	sql.WriteString(` WHERE team.org_id = ? and team_member.user_id = ?`)
 
@@ -311,9 +311,9 @@ func AddTeamMember(cmd *models.AddTeamMemberCommand) error {
 }
 
 func getTeamMember(sess *DBSession, orgId int64, teamId int64, userId int64) (models.TeamMember, error) {
-	rawSql := `SELECT * FROM team_member WHERE org_id=? and team_id=? and user_id=?`
+	rawSQL := `SELECT * FROM team_member WHERE org_id=? and team_id=? and user_id=?`
 	var member models.TeamMember
-	exists, err := sess.SQL(rawSql, orgId, teamId, userId).Get(&member)
+	exists, err := sess.SQL(rawSQL, orgId, teamId, userId).Get(&member)
 
 	if err != nil {
 		return member, err
@@ -365,8 +365,8 @@ func RemoveTeamMember(cmd *models.RemoveTeamMemberCommand) error {
 			}
 		}
 
-		var rawSql = "DELETE FROM team_member WHERE org_id=? and team_id=? and user_id=?"
-		res, err := sess.Exec(rawSql, cmd.OrgId, cmd.TeamId, cmd.UserId)
+		var rawSQL = "DELETE FROM team_member WHERE org_id=? and team_id=? and user_id=?"
+		res, err := sess.Exec(rawSQL, cmd.OrgId, cmd.TeamId, cmd.UserId)
 		if err != nil {
 			return err
 		}
@@ -380,9 +380,9 @@ func RemoveTeamMember(cmd *models.RemoveTeamMemberCommand) error {
 }
 
 func isLastAdmin(sess *DBSession, orgId int64, teamId int64, userId int64) (bool, error) {
-	rawSql := "SELECT user_id FROM team_member WHERE org_id=? and team_id=? and permission=?"
+	rawSQL := "SELECT user_id FROM team_member WHERE org_id=? and team_id=? and permission=?"
 	userIds := []*int64{}
-	err := sess.SQL(rawSql, orgId, teamId, models.PERMISSION_ADMIN).Find(&userIds)
+	err := sess.SQL(rawSQL, orgId, teamId, models.PERMISSION_ADMIN).Find(&userIds)
 	if err != nil {
 		return false, err
 	}
@@ -446,7 +446,7 @@ func GetTeamMembers(query *models.GetTeamMembersQuery) error {
 }
 
 func IsAdminOfTeams(query *models.IsAdminOfTeamsQuery) error {
-	builder := &SqlBuilder{}
+	builder := &SQLBuilder{}
 	builder.Write("SELECT COUNT(team.id) AS count FROM team INNER JOIN team_member ON team_member.team_id = team.id WHERE team.org_id = ? AND team_member.user_id = ? AND team_member.permission = ?", query.SignedInUser.OrgId, query.SignedInUser.UserId, models.PERMISSION_ADMIN)
 
 	type teamCount struct {
@@ -454,7 +454,7 @@ func IsAdminOfTeams(query *models.IsAdminOfTeamsQuery) error {
 	}
 
 	resp := make([]*teamCount, 0)
-	if err := x.SQL(builder.GetSqlString(), builder.params...).Find(&resp); err != nil {
+	if err := x.SQL(builder.GetSQLString(), builder.params...).Find(&resp); err != nil {
 		return err
 	}
 

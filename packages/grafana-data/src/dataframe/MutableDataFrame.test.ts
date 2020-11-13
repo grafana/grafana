@@ -14,15 +14,15 @@ describe('Reversing DataFrame', () => {
 
       const helper = new MutableDataFrame(frame);
 
-      expect(helper.values.time.toArray()).toEqual([100, 200, 300]);
-      expect(helper.values.name.toArray()).toEqual(['a', 'b', 'c']);
-      expect(helper.values.value.toArray()).toEqual([1, 2, 3]);
+      expect(helper.fields[0].values.toArray()).toEqual([100, 200, 300]);
+      expect(helper.fields[1].values.toArray()).toEqual(['a', 'b', 'c']);
+      expect(helper.fields[2].values.toArray()).toEqual([1, 2, 3]);
 
       helper.reverse();
 
-      expect(helper.values.time.toArray()).toEqual([300, 200, 100]);
-      expect(helper.values.name.toArray()).toEqual(['c', 'b', 'a']);
-      expect(helper.values.value.toArray()).toEqual([3, 2, 1]);
+      expect(helper.fields[0].values.toArray()).toEqual([300, 200, 100]);
+      expect(helper.fields[1].values.toArray()).toEqual(['c', 'b', 'a']);
+      expect(helper.fields[2].values.toArray()).toEqual([3, 2, 1]);
     });
   });
 });
@@ -38,7 +38,7 @@ describe('Apending DataFrame', () => {
     };
 
     const frame = new MutableDataFrame(dto);
-    expect(frame.values.time.toArray()).toEqual([100, null, null]);
+    expect(frame.fields[0].values.toArray()).toEqual([100, null, null]);
 
     // Set a value on the second row
     frame.set(1, { time: 200, name: 'BB', value: 20 });
@@ -48,23 +48,13 @@ describe('Apending DataFrame', () => {
       { time: null, name: null, value: 3 }, // 3
     ]);
 
-    // Set a value on the second row
-    frame.add({ value2: 'XXX' }, true);
-    expect(frame.toArray()).toEqual([
-      { time: 100, name: 'a', value: 1, value2: null }, // 1
-      { time: 200, name: 'BB', value: 20, value2: null }, // 2
-      { time: null, name: null, value: 3, value2: null }, // 3
-      { time: null, name: null, value: null, value2: 'XXX' }, // 4
-    ]);
-
     // Add a time value that has an array type
     frame.add({ time: 300 });
     expect(frame.toArray()).toEqual([
-      { time: 100, name: 'a', value: 1, value2: null }, // 1
-      { time: 200, name: 'BB', value: 20, value2: null }, // 2
-      { time: null, name: null, value: 3, value2: null }, // 3
-      { time: null, name: null, value: null, value2: 'XXX' }, // 4
-      { time: 300, name: null, value: null, value2: null }, // 5
+      { time: 100, name: 'a', value: 1 }, // 1
+      { time: 200, name: 'BB', value: 20 }, // 2
+      { time: null, name: null, value: 3 }, // 3
+      { time: 300, name: null, value: null }, // 5
     ]);
 
     // Make sure length survives a spread operator
