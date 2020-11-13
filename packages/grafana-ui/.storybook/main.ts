@@ -133,10 +133,10 @@ module.exports = {
         : [],
     };
 
-    config.resolve.extensions.push('.ts', '.tsx', '.mdx');
-    config.resolve.alias = config.resolve.alias || {};
     config.resolve.alias['@grafana/ui'] = path.resolve(__dirname, '..');
 
+    // Silence "export not found" webpack warnings with transpileOnly 
+    // https://github.com/TypeStrong/ts-loader#transpileonly
     config.plugins.push(
       new FilterWarningsPlugin({
         exclude: /export .* was not found in/,
