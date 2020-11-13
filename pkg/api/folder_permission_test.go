@@ -192,9 +192,9 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 				"/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
 					callUpdateFolderPermissions(sc)
 					assert.Equal(t, 400, sc.resp.Code)
-					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+					respJSON, err := jsonMap(sc.resp.Body.Bytes())
 					require.NoError(t, err)
-					assert.Equal(t, models.ErrPermissionsWithRoleNotAllowed.Error(), respJSON.Get("error").MustString())
+					assert.Equal(t, models.ErrPermissionsWithRoleNotAllowed.Error(), respJSON["error"])
 				})
 		}
 	})

@@ -186,9 +186,9 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
 						callUpdateDashboardPermissions(sc)
 						assert.Equal(t, 400, sc.resp.Code)
-						respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+						respJSON, err := jsonMap(sc.resp.Body.Bytes())
 						require.NoError(t, err)
-						assert.Equal(t, models.ErrPermissionsWithRoleNotAllowed.Error(), respJSON.Get("error").MustString())
+						assert.Equal(t, models.ErrPermissionsWithRoleNotAllowed.Error(), respJSON["error"])
 					})
 			}
 		})
