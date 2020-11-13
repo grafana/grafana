@@ -28,6 +28,7 @@ func loggedInUserScenarioWithRole(desc string, method string, url string, routeP
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			sc.context.UserId = TestUserID
+			sc.context.Login = TestUserLogin
 			sc.context.OrgId = TestOrgID
 			sc.context.OrgRole = role
 			if sc.handlerFunc != nil {

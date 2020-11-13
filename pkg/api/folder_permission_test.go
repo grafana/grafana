@@ -16,7 +16,8 @@ import (
 
 func TestFolderPermissionApiEndpoint(t *testing.T) {
 	Convey("Folder permissions test", t, func() {
-		hs := &HTTPServer{Cfg: setting.NewCfg()}
+		settings := setting.NewCfg()
+		hs := &HTTPServer{Cfg: settings}
 
 		Convey("Given folder not exists", func() {
 			mock := &fakeFolderService{
@@ -239,6 +240,52 @@ func TestFolderPermissionApiEndpoint(t *testing.T) {
 			Reset(func() {
 				guardian.New = origNewGuardian
 				dashboards.NewFolderService = origNewFolderService
+			})
+		})
+
+		Convey("Getting folder permissions without hidden users (except for signed in user)", func() {
+			settings.HiddenUsers = map[string]struct{}{
+				"hiddenUser":  {},
+				TestUserLogin: {},
+			}
+			origNewGuardian := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+				CanAdminValue:                    true,
+				CheckPermissionBeforeUpdateValue: true,
+				GetAclValue: []*models.DashboardAclInfoDTO{
+					{OrgId: 1, DashboardId: 1, UserId: 2, UserLogin: "hiddenUser", Permission: models.PERMISSION_VIEW},
+					{OrgId: 1, DashboardId: 1, UserId: 3, UserLogin: TestUserLogin, Permission: models.PERMISSION_EDIT},
+					{OrgId: 1, DashboardId: 1, UserId: 4, UserLogin: "user_1", Permission: models.PERMISSION_ADMIN},
+				},
+			})
+
+			mock := &fakeFolderService{
+				GetFolderByUIDResult: &models.Folder{
+					Id:    1,
+					Uid:   "uid",
+					Title: "Folder",
+				},
+			}
+
+			origNewFolderService := dashboards.NewFolderService
+			mockFolderService(mock)
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
+				callGetFolderPermissions(sc, hs)
+				So(sc.resp.Code, ShouldEqual, 200)
+				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+				So(err, ShouldBeNil)
+				So(len(respJSON.MustArray()), ShouldEqual, 2)
+				So(respJSON.GetIndex(0).Get("userId").MustInt(), ShouldEqual, 3)
+				So(respJSON.GetIndex(0).Get("permission").MustInt(), ShouldEqual, models.PERMISSION_EDIT)
+				So(respJSON.GetIndex(1).Get("userId").MustInt(), ShouldEqual, 4)
+				So(respJSON.GetIndex(1).Get("permission").MustInt(), ShouldEqual, models.PERMISSION_ADMIN)
+			})
+
+			Reset(func() {
+				guardian.New = origNewGuardian
+				dashboards.NewFolderService = origNewFolderService
+				settings.HiddenUsers = make(map[string]struct{})
 			})
 		})
 	})

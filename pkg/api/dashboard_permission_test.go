@@ -15,7 +15,8 @@ import (
 
 func TestDashboardPermissionApiEndpoint(t *testing.T) {
 	Convey("Dashboard permissions test", t, func() {
-		hs := &HTTPServer{Cfg: setting.NewCfg()}
+		settings := setting.NewCfg()
+		hs := &HTTPServer{Cfg: settings}
 
 		Convey("Given dashboard not exists", func() {
 			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
@@ -203,6 +204,46 @@ func TestDashboardPermissionApiEndpoint(t *testing.T) {
 
 			Reset(func() {
 				guardian.New = origNewGuardian
+			})
+		})
+
+		Convey("Getting dashboard permissions without hidden users (except for signed in user)", func() {
+			settings.HiddenUsers = map[string]struct{}{
+				"hiddenUser":  {},
+				TestUserLogin: {},
+			}
+			origNewGuardian := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
+				CanAdminValue:                    true,
+				CheckPermissionBeforeUpdateValue: true,
+				GetAclValue: []*models.DashboardAclInfoDTO{
+					{OrgId: 1, DashboardId: 1, UserId: 2, UserLogin: "hiddenUser", Permission: models.PERMISSION_VIEW},
+					{OrgId: 1, DashboardId: 1, UserId: 3, UserLogin: TestUserLogin, Permission: models.PERMISSION_EDIT},
+					{OrgId: 1, DashboardId: 1, UserId: 4, UserLogin: "user_1", Permission: models.PERMISSION_ADMIN},
+				},
+			})
+
+			getDashboardQueryResult := models.NewDashboard("Dash")
+			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+				query.Result = getDashboardQueryResult
+				return nil
+			})
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/1/permissions", "/api/dashboards/id/:id/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
+				callGetDashboardPermissions(sc, hs)
+				So(sc.resp.Code, ShouldEqual, 200)
+				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+				So(err, ShouldBeNil)
+				So(len(respJSON.MustArray()), ShouldEqual, 2)
+				So(respJSON.GetIndex(0).Get("userId").MustInt(), ShouldEqual, 3)
+				So(respJSON.GetIndex(0).Get("permission").MustInt(), ShouldEqual, models.PERMISSION_EDIT)
+				So(respJSON.GetIndex(1).Get("userId").MustInt(), ShouldEqual, 4)
+				So(respJSON.GetIndex(1).Get("permission").MustInt(), ShouldEqual, models.PERMISSION_ADMIN)
+			})
+
+			Reset(func() {
+				guardian.New = origNewGuardian
+				settings.HiddenUsers = make(map[string]struct{})
 			})
 		})
 	})
