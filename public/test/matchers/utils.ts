@@ -1,20 +1,24 @@
 import { matcherHint, printExpected, printReceived } from 'jest-matcher-utils';
 import { OBSERVABLE_TEST_TIMEOUT_IN_MS } from './types';
-import { Observable, Subscription } from 'rxjs';
+import { asapScheduler, Observable, Subscription, timer } from 'rxjs';
 
 export function forceObservableCompletion(subscription: Subscription, resolve: (args: any) => void) {
-  setTimeout(() => {
-    subscription.unsubscribe();
-    resolve({
-      pass: false,
-      message: () =>
-        `${matcherHint('.toEmitValues')}
+  const timeoutObservable = timer(OBSERVABLE_TEST_TIMEOUT_IN_MS, asapScheduler);
 
-          Expected ${printReceived('Observable')} to be ${printExpected(
-          `completed within ${OBSERVABLE_TEST_TIMEOUT_IN_MS}ms`
-        )} but it did not.`,
-    });
-  }, OBSERVABLE_TEST_TIMEOUT_IN_MS);
+  subscription.add(
+    timeoutObservable.subscribe(() => {
+      subscription.unsubscribe();
+      resolve({
+        pass: false,
+        message: () =>
+          `${matcherHint('.toEmitValues')}
+
+    Expected ${printReceived('Observable')} to be ${printExpected(
+            `completed within ${OBSERVABLE_TEST_TIMEOUT_IN_MS}ms`
+          )} but it did not.`,
+      });
+    })
+  );
 }
 
 export function expectObservableToBeDefined(received: any): jest.CustomMatcherResult | null {
@@ -39,7 +43,7 @@ export function expectObservableToBeObservable(received: any): jest.CustomMatche
     pass: false,
     message: () => `${matcherHint('.toEmitValues')}
 
-Expected ${printReceived(received)} to be ${printExpected('defined')}.`,
+Expected ${printReceived(received)} to be ${printExpected('an Observable')}.`,
   };
 }
 

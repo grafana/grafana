@@ -1,7 +1,5 @@
 import { Observable } from 'rxjs';
 
-export {};
-
 type ObservableType<T> = T extends Observable<infer V> ? V : never;
 
 declare global {

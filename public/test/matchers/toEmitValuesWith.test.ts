@@ -1,43 +1,165 @@
-import { interval, of, throwError } from 'rxjs';
+import { interval, Observable, of, throwError } from 'rxjs';
 import { map, mergeMap, take } from 'rxjs/operators';
 
 import { OBSERVABLE_TEST_TIMEOUT_IN_MS } from './types';
 
 describe('toEmitValuesWith matcher', () => {
-  describe('failing test (need to skip these for obvious reasons)', () => {
-    describe.skip('passing null in expect', () => {
+  describe('failing tests', () => {
+    describe('passing null in expect', () => {
       it('should fail with correct message', async () => {
-        const observable = null;
-        await expect(observable).toEmitValuesWith(received => {
-          expect(received).toEqual([1, 2, 3]);
-        });
+        const observable = (null as unknown) as Observable<number>;
+
+        const rejects = expect(() =>
+          expect(observable).toEmitValuesWith(received => {
+            expect(received).toEqual([1, 2, 3]);
+          })
+        ).rejects;
+
+        await rejects.toThrow();
+        await rejects.toMatchInlineSnapshot(`
+                          [Error: [2mexpect([22m[31mreceived[39m[2m).toEmitValues([22m[32mexpected[39m[2m)[22m
+
+                          Expected [31mnull[39m to be [32m"defined"[39m.]
+                      `);
       });
     });
 
-    describe.skip('passing undefined in expect', () => {
+    describe('passing undefined in expect', () => {
       it('should fail with correct message', async () => {
-        const observable = undefined;
-        await expect(observable).toEmitValuesWith(received => {
-          expect(received).toEqual([1, 2, 3]);
-        });
+        const observable = (undefined as unknown) as Observable<number>;
+
+        const rejects = expect(() =>
+          expect(observable).toEmitValuesWith(received => {
+            expect(received).toEqual([1, 2, 3]);
+          })
+        ).rejects;
+
+        await rejects.toThrow();
+        await rejects.toMatchInlineSnapshot(`
+                          [Error: [2mexpect([22m[31mreceived[39m[2m).toEmitValues([22m[32mexpected[39m[2m)[22m
+
+                          Expected [31mundefined[39m to be [32m"defined"[39m.]
+                      `);
       });
     });
 
-    describe.skip('passing number instead of Observable in expect', () => {
+    describe('passing number instead of Observable in expect', () => {
       it('should fail with correct message', async () => {
-        const observable = 1;
-        await expect(observable).toEmitValuesWith(received => {
-          expect(received).toEqual([1, 2, 3]);
-        });
+        const observable = (1 as unknown) as Observable<number>;
+
+        const rejects = expect(() =>
+          expect(observable).toEmitValuesWith(received => {
+            expect(received).toEqual([1, 2, 3]);
+          })
+        ).rejects;
+
+        await rejects.toThrow();
+        await rejects.toMatchInlineSnapshot(`
+                          [Error: [2mexpect([22m[31mreceived[39m[2m).toEmitValues([22m[32mexpected[39m[2m)[22m
+
+                          Expected [31m1[39m to be [32m"an Observable"[39m.]
+                      `);
       });
     });
 
-    describe.skip(`observable that does not complete within ${OBSERVABLE_TEST_TIMEOUT_IN_MS}ms`, () => {
+    describe('wrong number of emitted values', () => {
       it('should fail with correct message', async () => {
-        const observable = interval(10);
-        await expect(observable).toEmitValuesWith(received => {
-          expect(received).toEqual([1, 2, 3]);
-        });
+        const observable = interval(10).pipe(take(3));
+
+        const rejects = expect(() =>
+          expect(observable).toEmitValuesWith(received => {
+            expect(received).toEqual([0, 1]);
+          })
+        ).rejects;
+
+        await rejects.toThrow();
+        await rejects.toMatchInlineSnapshot(`
+                [Error: failed Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+                [32m- Expected  - 0[39m
+                [31m+ Received  + 1[39m
+
+                [2m  Array [[22m
+                [2m    0,[22m
+                [2m    1,[22m
+                [31m+   2,[39m
+                [2m  ][22m]
+              `);
+      });
+    });
+
+    describe('wrong emitted values', () => {
+      it('should fail with correct message', async () => {
+        const observable = interval(10).pipe(take(3));
+
+        const rejects = expect(() =>
+          expect(observable).toEmitValuesWith(received => {
+            expect(received).toEqual([1, 2, 3]);
+          })
+        ).rejects;
+
+        await rejects.toThrow();
+        await rejects.toMatchInlineSnapshot(`
+                [Error: failed Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+                [32m- Expected  - 1[39m
+                [31m+ Received  + 1[39m
+
+                [2m  Array [[22m
+                [31m+   0,[39m
+                [2m    1,[22m
+                [2m    2,[22m
+                [32m-   3,[39m
+                [2m  ][22m]
+              `);
+      });
+    });
+
+    describe('wrong emitted value types', () => {
+      it('should fail with correct message', async () => {
+        const observable = (interval(10).pipe(take(3)) as unknown) as Observable<string>;
+
+        const rejects = expect(() =>
+          expect(observable).toEmitValuesWith(received => {
+            expect(received).toEqual(['0', '1', '2']);
+          })
+        ).rejects;
+
+        await rejects.toThrow();
+        await rejects.toMatchInlineSnapshot(`
+                [Error: failed Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+                [32m- Expected  - 3[39m
+                [31m+ Received  + 3[39m
+
+                [2m  Array [[22m
+                [32m-   "0",[39m
+                [32m-   "1",[39m
+                [32m-   "2",[39m
+                [31m+   0,[39m
+                [31m+   1,[39m
+                [31m+   2,[39m
+                [2m  ][22m]
+              `);
+      });
+    });
+
+    describe(`observable that does not complete within ${OBSERVABLE_TEST_TIMEOUT_IN_MS}ms`, () => {
+      it('should fail with correct message', async () => {
+        const observable = interval(600);
+
+        const rejects = expect(() =>
+          expect(observable).toEmitValuesWith(received => {
+            expect(received).toEqual([0]);
+          })
+        ).rejects;
+
+        await rejects.toThrow();
+        await rejects.toMatchInlineSnapshot(`
+                [Error: [2mexpect([22m[31mreceived[39m[2m).toEmitValues([22m[32mexpected[39m[2m)[22m
+
+                    Expected [31m"Observable"[39m to be [32m"completed within 1000ms"[39m but it did not.]
+              `);
       });
     });
   });
