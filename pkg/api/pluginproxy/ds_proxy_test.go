@@ -276,7 +276,7 @@ func TestDSRouteRule(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 			So(err, ShouldBeNil)
 
-			proxy.getDirector()(req)
+			proxy.director(req)
 
 			Convey("Can translate request url and path", func() {
 				So(req.URL.Host, ShouldEqual, "graphite:8080")
@@ -303,7 +303,7 @@ func TestDSRouteRule(t *testing.T) {
 			req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 			So(err, ShouldBeNil)
 
-			proxy.getDirector()(req)
+			proxy.director(req)
 
 			Convey("Should add db to url", func() {
 				So(req.URL.Path, ShouldEqual, "/db/site/")
@@ -330,7 +330,7 @@ func TestDSRouteRule(t *testing.T) {
 			cookies := "grafana_user=admin; grafana_remember=99; grafana_sess=11; JSESSION_ID=test"
 			req.Header.Set("Cookie", cookies)
 
-			proxy.getDirector()(&req)
+			proxy.director(&req)
 
 			Convey("Should clear all cookies", func() {
 				So(req.Header.Get("Cookie"), ShouldEqual, "")
@@ -357,7 +357,7 @@ func TestDSRouteRule(t *testing.T) {
 			cookies := "grafana_user=admin; grafana_remember=99; grafana_sess=11; JSESSION_ID=test"
 			req.Header.Set("Cookie", cookies)
 
-			proxy.getDirector()(&req)
+			proxy.director(&req)
 
 			Convey("Should keep named cookies", func() {
 				So(req.Header.Get("Cookie"), ShouldEqual, "JSESSION_ID=test")
@@ -379,7 +379,7 @@ func TestDSRouteRule(t *testing.T) {
 			req.Header.Add("X-Canary", "stillthere")
 			So(err, ShouldBeNil)
 
-			proxy.getDirector()(req)
+			proxy.director(req)
 
 			Convey("Should keep user request (including trailing slash)", func() {
 				So(req.URL.String(), ShouldEqual, "http://host/root/path/to/folder/")
@@ -436,7 +436,7 @@ func TestDSRouteRule(t *testing.T) {
 			req, err = http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 			So(err, ShouldBeNil)
 
-			proxy.getDirector()(req)
+			proxy.director(req)
 
 			Convey("Should have access token in header", func() {
 				So(req.Header.Get("Authorization"), ShouldEqual, fmt.Sprintf("%s %s", "Bearer", "testtoken"))
@@ -518,7 +518,7 @@ func TestDSRouteRule(t *testing.T) {
 			plugin := &plugins.DataSourcePlugin{}
 			ds := &models.DataSource{Url: backend.URL, Type: models.DS_GRAPHITE}
 
-			responseRecorder := &CloseNotifierResponseRecorder{
+			responseRecorder := &closeNotifierResponseRecorder{
 				ResponseRecorder: httptest.NewRecorder(),
 			}
 			defer responseRecorder.Close()
@@ -657,17 +657,17 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 	}
 }
 
-type CloseNotifierResponseRecorder struct {
+type closeNotifierResponseRecorder struct {
 	*httptest.ResponseRecorder
 	closeChan chan bool
 }
 
-func (r *CloseNotifierResponseRecorder) CloseNotify() <-chan bool {
+func (r *closeNotifierResponseRecorder) CloseNotify() <-chan bool {
 	r.closeChan = make(chan bool)
 	return r.closeChan
 }
 
-func (r *CloseNotifierResponseRecorder) Close() {
+func (r *closeNotifierResponseRecorder) Close() {
 	close(r.closeChan)
 }
 
@@ -685,7 +685,7 @@ func getDatasourceProxiedRequest(ctx *models.ReqContext, cfg *setting.Cfg) *http
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 	So(err, ShouldBeNil)
 
-	proxy.getDirector()(req)
+	proxy.director(req)
 	return req
 }
 
@@ -796,7 +796,7 @@ func runDatasourceAuthTest(test *Test) {
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 	So(err, ShouldBeNil)
 
-	proxy.getDirector()(req)
+	proxy.director(req)
 
 	test.checkReq(req)
 }
