@@ -71,7 +71,7 @@ You can untoggle `Match Exact` to include metrics that have other dimensions def
 
 {{< docs-imagebox img="/img/docs/v65/cloudwatch-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch deep linking" >}}
 
-Left-clicking a time series in the panel displays a context menu with a link to `View in CloudWatch console`. Clicking that link opens the CloudWatch console and displays all the metrics for that query. If you are not currently logged in to the CloudWatch console, then the link opens the login page. The link is valid for any account, but it only displays the right metrics if you are logged in to the account that corresponds to the selected data source in Grafana.
+Click a time series in the panel to display a context menu with a link to **View in CloudWatch console**. Clicking that link opens the CloudWatch console and displays all the metrics for that query. If you are not currently logged in to the CloudWatch console, then the link opens the login page. The link is valid for any account, but it only displays the right metrics if you are logged in to the account that corresponds to the selected data source in Grafana.
 
 This feature is not available for metrics based on math expressions.
 
