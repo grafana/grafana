@@ -131,7 +131,8 @@ func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.
 			ReqRole: models.ROLE_EDITOR,
 		}
 	}
-	proxy := NewAPIPluginProxy(ctx, "", route, "", cfg)
+	proxy, err := NewApiPluginProxy(ctx, "", route, "", cfg)
+	So(err, ShouldBeNil)
 
 	req, err := http.NewRequest(http.MethodGet, route.URL, nil)
 	require.NoError(t, err)

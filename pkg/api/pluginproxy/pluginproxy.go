@@ -55,11 +55,13 @@ func updateURL(route *plugins.AppPluginRoute, orgId int64, appID string) (string
 	return interpolated, err
 }
 
-// NewAPIPluginProxy creates an API plugin proxy.
-func NewAPIPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appID string,
-	cfg *setting.Cfg) *httputil.ReverseProxy {
-	// TODO: Deal with error
-	targetURL, _ := url.Parse(route.URL)
+// NewApiPluginProxy create a plugin proxy
+func NewApiPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.AppPluginRoute, appID string,
+	cfg *setting.Cfg) (*httputil.ReverseProxy, error) {
+	targetURL, err := url.Parse(route.URL)
+	if err != nil {
+		return nil, err
+	}
 
 	director := func(req *http.Request) {
 		req.URL.Scheme = targetURL.Scheme
@@ -117,5 +119,5 @@ func NewAPIPluginProxy(ctx *models.ReqContext, proxyPath string, route *plugins.
 		// log.Tracef("Proxying plugin request: %s", string(reqBytes))
 	}
 
-	return &httputil.ReverseProxy{Director: director}
+	return &httputil.ReverseProxy{Director: director}, nil
 }
