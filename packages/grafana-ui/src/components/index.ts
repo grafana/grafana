@@ -13,7 +13,7 @@ export { ClipboardButton } from './ClipboardButton/ClipboardButton';
 export { Cascader, CascaderOption } from './Cascader/Cascader';
 export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 
-export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';
+export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
@@ -96,6 +96,7 @@ export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesTo
 export { Collapse, ControlledCollapse } from './Collapse/Collapse';
 export { CollapsableSection } from './Collapse/CollapsableSection';
 export { LogLabels } from './Logs/LogLabels';
+export { LogMessageAnsi } from './Logs/LogMessageAnsi';
 export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
@@ -210,7 +211,6 @@ export { GraphCustomFieldConfig, AxisSide } from './uPlot/types';
 export { UPlotChart } from './uPlot/Plot';
 export * from './uPlot/geometries';
 export { usePlotConfigContext } from './uPlot/context';
-export { Canvas } from './uPlot/Canvas';
 export * from './uPlot/plugins';
 export { useRefreshAfterGraphRendered } from './uPlot/hooks';
 export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';

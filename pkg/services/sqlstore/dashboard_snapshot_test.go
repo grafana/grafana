@@ -165,7 +165,7 @@ func TestDeleteExpiredSnapshots(t *testing.T) {
 	})
 }
 
-func createTestSnapshot(t *testing.T, sqlstore *SqlStore, key string, expires int64) *models.DashboardSnapshot {
+func createTestSnapshot(t *testing.T, sqlstore *SQLStore, key string, expires int64) *models.DashboardSnapshot {
 	cmd := models.CreateDashboardSnapshotCommand{
 		Key:       key,
 		DeleteKey: "delete" + key,
