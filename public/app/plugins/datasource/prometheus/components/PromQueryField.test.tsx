@@ -1,12 +1,11 @@
-import { mount } from 'enzyme';
 // @ts-ignore
 import RCCascader from 'rc-cascader';
 import React from 'react';
 import PromQlLanguageProvider, { DEFAULT_LOOKUP_METRICS_THRESHOLD } from '../language_provider';
 import PromQueryField, { groupMetricsByPrefix, RECORDING_RULES_GROUP } from './PromQueryField';
-import { ButtonCascader } from '@grafana/ui';
-import { DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
 import { PromOptions } from '../types';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 describe('PromQueryField', () => {
   beforeAll(() => {
@@ -21,7 +20,7 @@ describe('PromQueryField', () => {
       },
     } as unknown) as DataSourceInstanceSettings<PromOptions>;
 
-    const queryField = mount(
+    const queryField = render(
       <PromQueryField
         // @ts-ignore
         datasource={datasource}
@@ -32,11 +31,11 @@ describe('PromQueryField', () => {
       />
     );
 
-    expect(queryField.find(ButtonCascader).length).toBe(1);
+    expect(queryField.getAllByRole('button')).toHaveLength(1);
   });
 
   it('renders a disabled metrics chooser if lookups are disabled in datasource settings', () => {
-    const queryField = mount(
+    const queryField = render(
       <PromQueryField
         // @ts-ignore
         datasource={{ lookupsDisabled: true }}
@@ -47,63 +46,94 @@ describe('PromQueryField', () => {
       />
     );
 
-    expect(
-      queryField
-        .find(ButtonCascader)
-        .find('button')
-        .props().disabled
-    ).toBe(true);
+    const bcButton = queryField.getByRole('button');
+    expect(bcButton).toBeDisabled();
   });
 
   it('refreshes metrics when the data source changes', async () => {
+    const defaultProps = {
+      query: { expr: '', refId: '' },
+      onRunQuery: () => {},
+      onChange: () => {},
+      history: [],
+    };
     const metrics = ['foo', 'bar'];
-    const languageProvider = ({
-      histogramMetrics: [] as any,
-      metrics,
-      metricsMetadata: {},
-      lookupsDisabled: false,
-      lookupMetricsThreshold: DEFAULT_LOOKUP_METRICS_THRESHOLD,
-      start: () => {
-        return Promise.resolve([]);
-      },
-    } as unknown) as PromQlLanguageProvider;
-
-    const queryField = mount(
+    const queryField = render(
       <PromQueryField
         // @ts-ignore
         datasource={{
-          languageProvider,
+          languageProvider: makeLanguageProvider({ metrics: [metrics] }),
         }}
-        query={{ expr: '', refId: '' }}
-        onRunQuery={() => {}}
-        onChange={() => {}}
-        history={[]}
+        {...defaultProps}
       />
     );
-    await Promise.resolve();
 
-    const cascader = queryField.find<RCCascader>(RCCascader);
-    cascader.simulate('click');
-    const cascaderNode: HTMLElement = cascader.instance().getPopupDOMNode();
-
-    for (const item of Array.from(cascaderNode.getElementsByTagName('li'))) {
-      expect(metrics.includes(item.innerHTML)).toBe(true);
-    }
+    checkMetricsInCascader(await screen.findByRole('button'), metrics);
 
     const changedMetrics = ['baz', 'moo'];
-    queryField.setProps({
-      datasource: {
-        languageProvider: {
-          ...languageProvider,
-          metrics: changedMetrics,
-        },
-      },
-    });
-    await Promise.resolve();
+    queryField.rerender(
+      <PromQueryField
+        // @ts-ignore
+        datasource={{
+          languageProvider: makeLanguageProvider({ metrics: [changedMetrics] }),
+        }}
+        {...defaultProps}
+      />
+    );
 
-    for (const item of Array.from(cascaderNode.getElementsByTagName('li'))) {
-      expect(changedMetrics.includes(item.innerHTML)).toBe(true);
-    }
+    // If we check the cascader right away it should be in loading state
+    let cascader = screen.getByRole('button');
+    expect(cascader.textContent).toContain('Loading');
+    checkMetricsInCascader(await screen.findByRole('button'), changedMetrics);
+  });
+
+  it('refreshes metrics when time range changes but dont show loading state', async () => {
+    const defaultProps = {
+      query: { expr: '', refId: '' },
+      onRunQuery: () => {},
+      onChange: () => {},
+      history: [],
+    };
+    const metrics = ['foo', 'bar'];
+    const changedMetrics = ['baz', 'moo'];
+    const range = {
+      from: dateTime('2020-10-28T00:00:00Z'),
+      to: dateTime('2020-10-28T01:00:00Z'),
+    };
+
+    const languageProvider = makeLanguageProvider({ metrics: [metrics, changedMetrics] });
+    const queryField = render(
+      <PromQueryField
+        // @ts-ignore
+        datasource={{ languageProvider }}
+        range={{
+          ...range,
+          raw: range,
+        }}
+        {...defaultProps}
+      />
+    );
+    checkMetricsInCascader(await screen.findByRole('button'), metrics);
+
+    const newRange = {
+      from: dateTime('2020-10-28T01:00:00Z'),
+      to: dateTime('2020-10-28T02:00:00Z'),
+    };
+    queryField.rerender(
+      <PromQueryField
+        // @ts-ignore
+        datasource={{ languageProvider }}
+        range={{
+          ...newRange,
+          raw: newRange,
+        }}
+        {...defaultProps}
+      />
+    );
+    let cascader = screen.getByRole('button');
+    // Should not show loading
+    expect(cascader.textContent).toContain('Metrics');
+    checkMetricsInCascader(cascader, metrics);
   });
 });
 
@@ -160,3 +190,26 @@ describe('groupMetricsByPrefix()', () => {
     ]);
   });
 });
+
+function makeLanguageProvider(options: { metrics: string[][] }) {
+  const metricsStack = [...options.metrics];
+  return ({
+    histogramMetrics: [] as any,
+    metrics: [],
+    metricsMetadata: {},
+    lookupsDisabled: false,
+    lookupMetricsThreshold: DEFAULT_LOOKUP_METRICS_THRESHOLD,
+    start() {
+      this.metrics = metricsStack.shift();
+      return Promise.resolve([]);
+    },
+  } as any) as PromQlLanguageProvider;
+}
+
+function checkMetricsInCascader(cascader: HTMLElement, metrics: string[]) {
+  fireEvent.keyDown(cascader, { keyCode: 40 });
+  let listNodes = screen.getAllByRole('menuitem');
+  for (const node of listNodes) {
+    expect(metrics).toContain(node.innerHTML);
+  }
+}

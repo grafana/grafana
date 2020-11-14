@@ -10,11 +10,11 @@ Grafana supports the [following databases](https://grafana.com/docs/installation
 
 Grafana uses the [XORM](https://xorm.io) framework for persisting objects to the database. For more information on how to use XORM, refer to the [documentation](http://gobook.io/read/github.com/go-xorm/manual-en-US/).
 
-[Services](services.md) don't use XORM directly. Instead, services use the _SQL store_, a special type of service that provides an abstraction for the database layer. There are two ways of using the `sqlstore`: using `sqlstore` handlers, and using the `SqlStore` instance.
+[Services](services.md) don't use XORM directly. Instead, services use the _SQL store_, a special type of service that provides an abstraction for the database layer. There are two ways of using the `sqlstore`: using `sqlstore` handlers, and using the `SQLStore` instance.
 
 ## `sqlstore` handlers
 
-> **Deprecated:** We are deprecating `sqlstore` handlers in favor of using the `SqlStore` object directly in each service. Since most services still use the `sqlstore` handlers, we still want to explain how they work.
+> **Deprecated:** We are deprecating `sqlstore` handlers in favor of using the `SQLStore` object directly in each service. Since most services still use the `sqlstore` handlers, we still want to explain how they work.
 
 The `sqlstore` package allows you to register [command handlers](communication.md#handle-commands) that either store, or retrieve objects from the database. `sqlstore` handlers are similar to services:
 
@@ -46,15 +46,15 @@ func DeleteDashboard(cmd *models.DeleteDashboardCommand) error {
 
 Here, `inTransaction` is a helper function in the `sqlstore` package that provides a session, that lets you execute SQL statements.
 
-## `SqlStore`
+## `SQLStore`
 
-As opposed to a `sqlstore` handler, the `SqlStore` is a service itself. The `SqlStore` has the same responsibility however: to store and retrieve objects, to and from the database.
+As opposed to a `sqlstore` handler, the `SQLStore` is a service itself. The `SQLStore` has the same responsibility however: to store and retrieve objects, to and from the database.
 
-To use the `SqlStore`, inject the `SQLStore` in your service struct:
+To use the `SQLStore`, inject it in your service struct:
 
 ```go
 type MyService struct {
-    SQLStore *sqlstore.SqlStore `inject:""`
+    SQLStore *sqlstore.SQLStore `inject:""`
 }
 ```
 

@@ -17,8 +17,9 @@
 }
 
 .dashboard-content {
-  padding: $dashboard-padding $dashboard-padding 0 $dashboard-padding;
-  height: 100%;
+  padding: $dashboard-padding;
+  flex-basis: 100%;
+  flex-grow: 1;
 }
 
 div.flot-text {

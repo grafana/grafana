@@ -2,7 +2,6 @@
 title = "Gauge panel"
 description = "Gauge panel docs"
 keywords = ["grafana", "gauge", "gauge panel"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/panels/gauge/"]
 weight = 400
 +++
@@ -17,8 +16,8 @@ Gauge is a single value panel that can repeat a gauge for every series, column o
 
 Gauge visualizations allow you to apply:
 
-- [Data transformations]({{< relref "../transformations.md" >}})
-- [Field configuration options and overrides]({{< relref "../field-configuration-options.md" >}})
+- [Data transformations]({{< relref "../transformations/_index.md" >}})
+- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options

@@ -20,9 +20,10 @@ import {
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 
-import { changeDedupStrategy, splitOpen, updateTimeRange } from './state/actions';
-import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
-import { deduplicatedRowsSelector } from 'app/features/explore/state/selectors';
+import { splitOpen } from './state/main';
+import { updateTimeRange } from './state/time';
+import { toggleLogLevelAction, changeDedupStrategy } from './state/explorePane';
+import { deduplicatedRowsSelector } from './state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
@@ -62,15 +63,7 @@ interface LogsContainerProps {
   splitOpen: typeof splitOpen;
 }
 
-interface LogsContainerState {
-  logsContainerOpen: boolean;
-}
-
-export class LogsContainer extends PureComponent<LogsContainerProps, LogsContainerState> {
-  state: LogsContainerState = {
-    logsContainerOpen: true,
-  };
-
+export class LogsContainer extends PureComponent<LogsContainerProps> {
   onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
@@ -102,12 +95,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
     return getFieldLinksForExplore(field, rowIndex, this.props.splitOpen, this.props.range);
   };
 
-  onToggleCollapse = () => {
-    this.setState(state => ({
-      logsContainerOpen: !state.logsContainerOpen,
-    }));
-  };
-
   render() {
     const {
       loading,
@@ -130,8 +117,6 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
       exploreId,
     } = this.props;
 
-    const { logsContainerOpen } = this.state;
-
     return (
       <>
         <LogsCrossFadeTransition visible={isLive}>
@@ -151,13 +136,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps, LogsContain
           </Collapse>
         </LogsCrossFadeTransition>
         <LogsCrossFadeTransition visible={!isLive}>
-          <Collapse
-            label="Logs"
-            loading={loading}
-            isOpen={logsContainerOpen}
-            onToggle={this.onToggleCollapse}
-            collapsible
-          >
+          <Collapse label="Logs" loading={loading} isOpen>
             <Logs
               dedupStrategy={this.props.dedupStrategy || LogsDedupStrategy.none}
               logRows={logRows}

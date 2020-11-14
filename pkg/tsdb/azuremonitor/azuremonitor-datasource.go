@@ -135,12 +135,12 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 
 		dimSB := strings.Builder{}
 
-		if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionsFilters) == 0 {
+		if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionFilters) == 0 {
 			dimSB.WriteString(fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
 		} else {
-			for i, filter := range azJSONModel.DimensionsFilters {
+			for i, filter := range azJSONModel.DimensionFilters {
 				dimSB.WriteString(filter.String())
-				if i != len(azJSONModel.DimensionsFilters)-1 {
+				if i != len(azJSONModel.DimensionFilters)-1 {
 					dimSB.WriteString(" and ")
 				}
 			}
@@ -153,7 +153,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 
 		target = params.Encode()
 
-		if setting.Env == setting.DEV {
+		if setting.Env == setting.Dev {
 			azlog.Debug("Azuremonitor request", "params", params)
 		}
 
@@ -220,7 +220,7 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 	// find plugin
 	plugin, ok := plugins.DataSources[dsInfo.Type]
 	if !ok {
-		return nil, errors.New("Unable to find datasource plugin Azure Monitor")
+		return nil, errors.New("unable to find datasource plugin Azure Monitor")
 	}
 
 	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
@@ -263,7 +263,7 @@ func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMon
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return AzureMonitorResponse{}, fmt.Errorf("Request failed status: %v", res.Status)
+		return AzureMonitorResponse{}, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	var data AzureMonitorResponse
@@ -288,7 +288,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 			labels[md.Name.LocalizedValue] = md.Value
 		}
 
-		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeFloat64)
+		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeNullableFloat64)
 		frame.RefID = query.RefID
 		dataField := frame.Fields[1]
 		dataField.Name = amr.Value[0].Name.LocalizedValue
@@ -314,7 +314,7 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 		requestedAgg := query.Params.Get("aggregation")
 
 		for i, point := range series.Data {
-			var value float64
+			var value *float64
 			switch requestedAgg {
 			case "Average":
 				value = point.Average
@@ -381,10 +381,16 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 		}
 
 		if metaPartName == "dimensionname" {
+			if len(keys) == 0 {
+				return []byte{}
+			}
 			return []byte(keys[0])
 		}
 
 		if metaPartName == "dimensionvalue" {
+			if len(keys) == 0 {
+				return []byte{}
+			}
 			return []byte(lowerLabels[keys[0]])
 		}
 

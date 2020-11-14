@@ -93,7 +93,7 @@ func function(pc uintptr) []byte {
 	if period := bytes.Index(name, dot); period >= 0 {
 		name = name[period+1:]
 	}
-	name = bytes.Replace(name, centerDot, dot, -1)
+	name = bytes.ReplaceAll(name, centerDot, dot)
 	return name
 }
 
@@ -130,7 +130,7 @@ func Recovery() macaron.Handler {
 				c.Data["AppSubUrl"] = setting.AppSubUrl
 				c.Data["Theme"] = setting.DefaultTheme
 
-				if setting.Env == setting.DEV {
+				if setting.Env == setting.Dev {
 					if theErr, ok := err.(error); ok {
 						c.Data["Title"] = theErr.Error()
 					}
@@ -152,7 +152,7 @@ func Recovery() macaron.Handler {
 
 					c.JSON(500, resp)
 				} else {
-					c.HTML(500, setting.ERR_TEMPLATE_NAME)
+					c.HTML(500, setting.ErrTemplateName)
 				}
 			}
 		}()

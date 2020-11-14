@@ -1,8 +1,6 @@
 +++
 title = "Formatting multi-value variables"
-type = "docs"
-[menu.docs]
-weight = 500
+weight = 600
 +++
 
 # Formatting multi-value variables

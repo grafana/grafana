@@ -125,7 +125,44 @@ function calculateFieldDisplayName(field: Field, frame?: DataFrame, allFrames?: 
     displayName = TIME_SERIES_VALUE_FIELD_NAME;
   }
 
+  // Ensure unique field name
+  if (displayName === field.name) {
+    displayName = getUniqueFieldName(field, frame);
+  }
+
   return displayName;
+}
+
+function getUniqueFieldName(field: Field, frame?: DataFrame) {
+  let dupeCount = 0;
+  let foundSelf = false;
+
+  if (frame) {
+    for (let i = 0; i < frame.fields.length; i++) {
+      const otherField = frame.fields[i];
+
+      if (field === otherField) {
+        foundSelf = true;
+
+        if (dupeCount > 0) {
+          dupeCount++;
+          break;
+        }
+      } else if (field.name === otherField.name) {
+        dupeCount++;
+
+        if (foundSelf) {
+          break;
+        }
+      }
+    }
+  }
+
+  if (dupeCount) {
+    return `${field.name} ${dupeCount}`;
+  }
+
+  return field.name;
 }
 
 /**

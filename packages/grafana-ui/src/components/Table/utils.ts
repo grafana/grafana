@@ -1,8 +1,6 @@
 import { Column, Row } from 'react-table';
 import memoizeOne from 'memoize-one';
-import { css, cx } from 'emotion';
-import tinycolor from 'tinycolor2';
-import { ContentPosition, TextAlignProperty } from 'csstype';
+import { ContentPosition } from 'csstype';
 import {
   DataFrame,
   Field,
@@ -14,13 +12,13 @@ import {
 
 import { DefaultCell } from './DefaultCell';
 import { BarGaugeCell } from './BarGaugeCell';
-import { TableCellDisplayMode, TableCellProps, TableFieldOptions } from './types';
-import { withTableStyles } from './withTableStyles';
+import { TableCellDisplayMode, TableFieldOptions } from './types';
 import { JSONViewCell } from './JSONViewCell';
+import { ImageCell } from './ImageCell';
 
-export function getTextAlign(field?: Field): TextAlignProperty {
+export function getTextAlign(field?: Field): ContentPosition {
   if (!field) {
-    return 'left';
+    return 'flex-start';
   }
 
   if (field.config.custom) {
@@ -28,19 +26,19 @@ export function getTextAlign(field?: Field): TextAlignProperty {
 
     switch (custom.align) {
       case 'right':
-        return 'right';
+        return 'flex-end';
       case 'left':
-        return 'left';
+        return 'flex-start';
       case 'center':
         return 'center';
     }
   }
 
   if (field.type === FieldType.number) {
-    return 'right';
+    return 'flex-end';
   }
 
-  return 'left';
+  return 'flex-start';
 }
 
 export function getColumns(data: DataFrame, availableWidth: number, columnMinWidth: number): Column[] {
@@ -68,6 +66,7 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
           return 'alphanumeric';
       }
     };
+
     const Cell = getCellComponent(fieldTableOptions.displayMode, field);
     columns.push({
       Cell,
@@ -79,7 +78,8 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
       sortType: selectSortType(field.type),
       width: fieldTableOptions.width,
       minWidth: 50,
-      filter: memoizeOne(filterByValue),
+      filter: memoizeOne(filterByValue(field)),
+      justifyContent: getTextAlign(field),
     });
   }
 
@@ -97,9 +97,10 @@ export function getColumns(data: DataFrame, availableWidth: number, columnMinWid
 function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
   switch (displayMode) {
     case TableCellDisplayMode.ColorText:
-      return withTableStyles(DefaultCell, getTextColorStyle);
     case TableCellDisplayMode.ColorBackground:
-      return withTableStyles(DefaultCell, getBackgroundColorStyle);
+      return DefaultCell;
+    case TableCellDisplayMode.Image:
+      return ImageCell;
     case TableCellDisplayMode.LcdGauge:
     case TableCellDisplayMode.BasicGauge:
     case TableCellDisplayMode.GradientGauge:
@@ -115,89 +116,28 @@ function getCellComponent(displayMode: TableCellDisplayMode, field: Field) {
   return DefaultCell;
 }
 
-function getTextColorStyle(props: TableCellProps) {
-  const { field, cell, tableStyles } = props;
-
-  if (!field.display) {
-    return tableStyles;
-  }
-
-  const displayValue = field.display(cell.value);
-  if (!displayValue.color) {
-    return tableStyles;
-  }
-
-  const extendedStyle = css`
-    color: ${displayValue.color};
-  `;
-
-  return {
-    ...tableStyles,
-    tableCell: cx(tableStyles.tableCell, extendedStyle),
-  };
-}
-
-function getBackgroundColorStyle(props: TableCellProps) {
-  const { field, cell, tableStyles } = props;
-  if (!field.display) {
-    return tableStyles;
-  }
-
-  const displayValue = field.display(cell.value);
-  if (!displayValue.color) {
-    return tableStyles;
-  }
-
-  const themeFactor = tableStyles.theme.isDark ? 1 : -0.7;
-  const bgColor2 = tinycolor(displayValue.color)
-    .darken(10 * themeFactor)
-    .spin(5)
-    .toRgbString();
-
-  const extendedStyle = css`
-    background: linear-gradient(120deg, ${bgColor2}, ${displayValue.color});
-    color: white;
-    height: ${tableStyles.cellHeight}px;
-    padding: ${tableStyles.cellPadding}px;
-  `;
-
-  return {
-    ...tableStyles,
-    tableCell: cx(tableStyles.tableCell, extendedStyle),
-  };
-}
-
-export function filterByValue(rows: Row[], id: string, filterValues?: SelectableValue[]) {
-  if (rows.length === 0) {
-    return rows;
-  }
-
-  if (!filterValues) {
-    return rows;
-  }
-
-  return rows.filter(row => {
-    if (!row.values.hasOwnProperty(id)) {
-      return false;
+export function filterByValue(field?: Field) {
+  return function(rows: Row[], id: string, filterValues?: SelectableValue[]) {
+    if (rows.length === 0) {
+      return rows;
     }
 
-    const value = row.values[id];
-    return filterValues.find(filter => filter.value === value) !== undefined;
-  });
-}
+    if (!filterValues) {
+      return rows;
+    }
 
-export function getHeaderAlign(field?: Field): ContentPosition {
-  const align = getTextAlign(field);
+    if (!field) {
+      return rows;
+    }
 
-  if (align === 'right') {
-    return 'flex-end';
-  }
-
-  if (align === 'center') {
-    return align;
-  }
-
-  return 'flex-start';
+    return rows.filter(row => {
+      if (!row.values.hasOwnProperty(id)) {
+        return false;
+      }
+      const value = rowToFieldValue(row, field);
+      return filterValues.find(filter => filter.value === value) !== undefined;
+    });
+  };
 }
 
 export function calculateUniqueFieldValues(rows: any[], field?: Field) {
@@ -208,14 +148,23 @@ export function calculateUniqueFieldValues(rows: any[], field?: Field) {
   const set: Record<string, any> = {};
 
   for (let index = 0; index < rows.length; index++) {
-    const fieldIndex = parseInt(rows[index].id, 10);
-    const fieldValue = field.values.get(fieldIndex);
-    const displayValue = field.display ? field.display(fieldValue) : fieldValue;
-    const value = field.display ? formattedValueToString(displayValue) : displayValue;
-    set[value || '(Blanks)'] = fieldValue;
+    const value = rowToFieldValue(rows[index], field);
+    set[value || '(Blanks)'] = value;
   }
 
   return set;
+}
+
+export function rowToFieldValue(row: any, field?: Field): string {
+  if (!field || !row) {
+    return '';
+  }
+
+  const fieldValue = field.values.get(row.index);
+  const displayValue = field.display ? field.display(fieldValue) : fieldValue;
+  const value = field.display ? formattedValueToString(displayValue) : displayValue;
+
+  return value;
 }
 
 export function valuesToOptions(unique: Record<string, any>): SelectableValue[] {

@@ -1,7 +1,6 @@
 +++
 title = "Legacy data source plugins"
 keywords = ["grafana", "plugins", "documentation"]
-type = "docs"
 aliases = ["/docs/grafana/latest/plugins/developing/datasources/"]
 +++
 
@@ -109,13 +108,13 @@ An array of:
         "text": "Time",
         "type": "time",
         "sort": true,
-        "desc": true,
+        "desc": true
       },
       {
-        "text": "mean",
+        "text": "mean"
       },
       {
-        "text": "sum",
+        "text": "sum"
       }
     ],
     "rows": [
@@ -128,7 +127,7 @@ An array of:
         1457425370000,
         1002.76215352,
         1002.76215352
-      ],
+      ]
     ],
     "type": "table"
   }

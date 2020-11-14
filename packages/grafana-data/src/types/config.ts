@@ -34,15 +34,15 @@ export interface BuildInfo {
 export interface FeatureToggles {
   live: boolean;
   expressions: boolean;
+  ngalert: boolean;
+  // Just for demo at the moment
+  traceToLogs: boolean;
 
   /**
    * @remarks
    * Available only in Grafana Enterprise
    */
   meta: boolean;
-  datasourceInsights: boolean;
-  reportGrid: boolean;
-  standaloneAlerts: boolean;
 }
 
 /**
@@ -55,6 +55,20 @@ export interface LicenseInfo {
   expiry: number;
   licenseUrl: string;
   stateInfo: string;
+  hasValidLicense: boolean;
+  edition: string;
+}
+
+/**
+ * Describes Sentry integration config
+ *
+ * @public
+ */
+export interface SentryConfig {
+  enabled: boolean;
+  dsn: string;
+  customEndpoint: string;
+  sampleRate: number;
 }
 
 /**
@@ -84,6 +98,7 @@ export interface GrafanaConfig {
   authProxyEnabled: boolean;
   exploreEnabled: boolean;
   ldapEnabled: boolean;
+  sigV4AuthEnabled: boolean;
   samlEnabled: boolean;
   autoAssignOrg: boolean;
   verifyEmailEnabled: boolean;
@@ -102,4 +117,5 @@ export interface GrafanaConfig {
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
+  sentry: SentryConfig;
 }

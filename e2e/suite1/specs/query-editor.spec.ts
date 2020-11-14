@@ -29,7 +29,7 @@ e2e.scenario({
 
     cy.contains(queryText.slice(0, -1)).should('be.visible');
 
-    e2e.components.QueryField.container().type('{ctrl}z');
+    e2e.components.QueryField.container().type(e2e.typings.undo());
 
     cy.contains(queryText).should('be.visible');
   },

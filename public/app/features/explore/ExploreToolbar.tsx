@@ -10,16 +10,10 @@ import { Icon, IconButton, LegacyForms, SetInterval, Tooltip } from '@grafana/ui
 import { DataQuery, RawTimeRange, TimeRange, TimeZone } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
-import {
-  cancelQueries,
-  changeDatasource,
-  changeRefreshInterval,
-  clearQueries,
-  runQueries,
-  splitClose,
-  splitOpen,
-  syncTimes,
-} from './state/actions';
+import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
+import { changeDatasource } from './state/datasource';
+import { splitClose, splitOpen } from './state/main';
+import { syncTimes, changeRefreshInterval } from './state/time';
 import { updateLocation } from 'app/core/actions';
 import { getTimeZone } from '../profile/state/selectors';
 import { updateTimeZoneForSession } from '../profile/state/reducers';
@@ -32,6 +26,7 @@ import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
 import { getExploreDatasources } from './state/selectors';
 import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
+import { cancelQueries, clearQueries, runQueries } from './state/query';
 
 const { ButtonSelect } = LegacyForms;
 
@@ -262,6 +257,13 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                 />
               </div>
             ) : null}
+            <div className={'explore-toolbar-content-item'}>
+              <Tooltip content={'Copy shortened link'} placement="bottom">
+                <button className={'btn navbar-button'} onClick={() => createAndCopyShortLink(window.location.href)}>
+                  <Icon name="share-alt" />
+                </button>
+              </Tooltip>
+            </div>
             {!isLive && (
               <div className="explore-toolbar-content-item">
                 <ExploreTimeControls

@@ -4,6 +4,7 @@ import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { Field, TextArea } from '@grafana/ui';
 import { StoreState } from 'app/types';
 import { changeVariableMultiValue } from '../state/actions';
 
@@ -18,7 +19,7 @@ interface DispatchProps {
 export type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class CustomVariableEditorUnconnected extends PureComponent<Props> {
-  onChange = (event: ChangeEvent<HTMLInputElement>) => {
+  onChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     this.props.onPropChange({
       propName: 'query',
       propValue: event.target.value,
@@ -29,7 +30,7 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
     this.props.onPropChange({ propName, propValue, updateOptions: true });
   };
 
-  onBlur = (event: FocusEvent<HTMLInputElement>) => {
+  onBlur = (event: FocusEvent<HTMLTextAreaElement>) => {
     this.props.onPropChange({
       propName: 'query',
       propValue: event.target.value,
@@ -43,17 +44,19 @@ class CustomVariableEditorUnconnected extends PureComponent<Props> {
         <div className="gf-form-group">
           <h5 className="section-heading">Custom Options</h5>
           <div className="gf-form">
-            <span className="gf-form-label width-14">Values separated by comma</span>
-            <input
-              type="text"
-              className="gf-form-input"
-              value={this.props.variable.query}
-              onChange={this.onChange}
-              onBlur={this.onBlur}
-              placeholder="1, 10, 20, myvalue, escaped\,value"
-              required
-              aria-label="Variable editor Form Custom Query field"
-            />
+            <Field label="Values separated by comma">
+              <TextArea
+                className="gf-form-input"
+                value={this.props.variable.query}
+                onChange={this.onChange}
+                onBlur={this.onBlur}
+                rows={5}
+                cols={81}
+                placeholder="1, 10, mykey : myvalue, myvalue, escaped\,value"
+                required
+                aria-label="Variable editor Form Custom Query field"
+              />
+            </Field>
           </div>
         </div>
         <SelectionOptionsEditor

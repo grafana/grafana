@@ -1,20 +1,20 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import { isEqual } from 'lodash';
 import { DataLink, LoadingState, PanelData, PanelMenuItem, QueryResultMetaNotice, ScopedVars } from '@grafana/data';
-import { AngularComponent } from '@grafana/runtime';
-import { ClickOutsideWrapper, Icon, Tooltip } from '@grafana/ui';
+import { AngularComponent, config, getTemplateSrv } from '@grafana/runtime';
+import { ClickOutsideWrapper, Icon, IconName, Tooltip, stylesFactory } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import PanelHeaderCorner from './PanelHeaderCorner';
 import { PanelHeaderMenu } from './PanelHeaderMenu';
-import templateSrv from 'app/features/templating/template_srv';
 
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { getPanelMenu } from 'app/features/dashboard/utils/getPanelMenu';
 import { updateLocation } from 'app/core/actions';
+import { css } from 'emotion';
 
 export interface Props {
   panel: PanelModel;
@@ -42,7 +42,7 @@ interface State {
   menuItems: PanelMenuItem[];
 }
 
-export class PanelHeader extends Component<Props, State> {
+export class PanelHeader extends PureComponent<Props, State> {
   clickCoordinates: ClickCoordinates = { x: 0, y: 0 };
 
   state: State = {
@@ -91,14 +91,28 @@ export class PanelHeader extends Component<Props, State> {
     this.props.panel.getQueryRunner().cancelQuery();
   };
 
-  private renderLoadingState(): JSX.Element {
-    return (
-      <div className="panel-loading" onClick={this.onCancelQuery}>
-        <Tooltip content="Cancel query">
-          <Icon className="panel-loading__spinner spin-clockwise" name="sync" />
-        </Tooltip>
-      </div>
-    );
+  renderLoadingState(state: LoadingState): JSX.Element | null {
+    if (state === LoadingState.Loading) {
+      return (
+        <div className="panel-loading" onClick={this.onCancelQuery}>
+          <Tooltip content="Cancel query">
+            <Icon className="panel-loading__spinner spin-clockwise" name="sync" />
+          </Tooltip>
+        </div>
+      );
+    }
+
+    if (state === LoadingState.Streaming) {
+      const styles = getStyles();
+
+      return (
+        <div className="panel-loading" onClick={this.onCancelQuery}>
+          <div title="Streaming (click to stop)" className={styles.streamIndicator} />
+        </div>
+      );
+    }
+
+    return null;
   }
 
   openInspect = (e: React.SyntheticEvent, tab: string) => {
@@ -112,16 +126,22 @@ export class PanelHeader extends Component<Props, State> {
     });
   };
 
+  // This will show one icon for each severity
   renderNotice = (notice: QueryResultMetaNotice) => {
+    let iconName: IconName = 'info-circle';
+    if (notice.severity === 'error' || notice.severity === 'warning') {
+      iconName = 'exclamation-triangle';
+    }
+
     return (
       <Tooltip content={notice.text} key={notice.severity}>
         {notice.inspect ? (
           <div className="panel-info-notice pointer" onClick={e => this.openInspect(e, notice.inspect!)}>
-            <Icon name="info-circle" style={{ marginRight: '8px' }} />
+            <Icon name={iconName} style={{ marginRight: '8px' }} />
           </div>
         ) : (
           <a className="panel-info-notice" href={notice.link} target="_blank">
-            <Icon name="info-circle" style={{ marginRight: '8px' }} />
+            <Icon name={iconName} style={{ marginRight: '8px' }} />
           </a>
         )}
       </Tooltip>
@@ -131,7 +151,7 @@ export class PanelHeader extends Component<Props, State> {
   render() {
     const { panel, scopedVars, error, isViewing, isEditing, data, alertState } = this.props;
     const { menuItems } = this.state;
-    const title = templateSrv.replaceWithText(panel.title, scopedVars);
+    const title = getTemplateSrv().replace(panel.title, scopedVars, 'text');
 
     const panelHeaderClass = classNames({
       'panel-header': true,
@@ -151,7 +171,7 @@ export class PanelHeader extends Component<Props, State> {
 
     return (
       <>
-        {data.state === LoadingState.Loading && this.renderLoadingState()}
+        {this.renderLoadingState(data.state)}
         <div className={panelHeaderClass}>
           <PanelHeaderCorner
             panel={panel}
@@ -196,3 +216,21 @@ export class PanelHeader extends Component<Props, State> {
     );
   }
 }
+
+/*
+ * Styles
+ */
+export const getStyles = stylesFactory(() => {
+  return {
+    streamIndicator: css`
+      width: 10px;
+      height: 10px;
+      background: ${config.theme.colors.textFaint};
+      box-shadow: 0 0 2px ${config.theme.colors.textFaint};
+      border-radius: 50%;
+      position: relative;
+      top: 6px;
+      right: 1px;
+    `,
+  };
+});

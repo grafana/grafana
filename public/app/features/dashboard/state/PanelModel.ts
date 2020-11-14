@@ -1,28 +1,35 @@
 // Libraries
 import _ from 'lodash';
 // Utils
-import { Emitter } from 'app/core/utils/emitter';
+import { getTemplateSrv } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import templateSrv from 'app/features/templating/template_srv';
 // Types
 import {
+  AppEvent,
   DataConfigSource,
   DataLink,
   DataQuery,
   DataQueryResponseData,
   DataTransformerConfig,
   eventFactory,
+  FieldColorConfigSettings,
+  FieldColorModeId,
+  fieldColorModeRegistry,
+  FieldConfigProperty,
   FieldConfigSource,
   PanelEvents,
   PanelPlugin,
   ScopedVars,
   ThresholdsConfig,
   ThresholdsMode,
+  EventBusExtended,
+  EventBusSrv,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
 import { PanelQueryRunner } from './PanelQueryRunner';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import { CoreEvents } from '../../../types';
 
 export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
 export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
@@ -116,7 +123,6 @@ export class PanelModel implements DataConfigSource {
   collapsed?: boolean;
 
   panels?: any;
-  soloMode?: boolean;
   targets: DataQuery[];
   transformations?: DataTransformerConfig[];
   datasource: string | null;
@@ -142,8 +148,9 @@ export class PanelModel implements DataConfigSource {
   isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
+
   hasRefreshed: boolean;
-  events: Emitter;
+  events: EventBusExtended;
   cacheTimeout?: any;
   cachedPluginOptions?: any;
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
@@ -152,7 +159,7 @@ export class PanelModel implements DataConfigSource {
   private queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
-    this.events = new Emitter();
+    this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
   }
@@ -319,7 +326,35 @@ export class PanelModel implements DataConfigSource {
       }
     });
 
-    this.fieldConfig = applyFieldConfigDefaults(this.fieldConfig, this.plugin!.fieldConfigDefaults);
+    this.fieldConfig = applyFieldConfigDefaults(this.fieldConfig, plugin.fieldConfigDefaults);
+    this.validateFieldColorMode(plugin);
+  }
+
+  private validateFieldColorMode(plugin: PanelPlugin) {
+    // adjust to prefered field color setting if needed
+    const color = plugin.fieldConfigRegistry.getIfExists(FieldConfigProperty.Color);
+
+    if (color && color.settings) {
+      const colorSettings = color.settings as FieldColorConfigSettings;
+      const mode = fieldColorModeRegistry.getIfExists(this.fieldConfig.defaults.color?.mode);
+
+      // When no support fo value colors, use classic palette
+      if (!colorSettings.byValueSupport) {
+        if (!mode || mode.isByValue) {
+          this.fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
+          return;
+        }
+      }
+
+      // When supporting value colors and prefering thresholds, use Thresholds mode.
+      // Otherwise keep current mode
+      if (colorSettings.byValueSupport && colorSettings.preferThresholdsMode) {
+        if (!mode || !mode.isByValue) {
+          this.fieldConfig.defaults.color = { mode: FieldColorModeId.Thresholds };
+          return;
+        }
+      }
+    }
   }
 
   pluginLoaded(plugin: PanelPlugin) {
@@ -380,6 +415,11 @@ export class PanelModel implements DataConfigSource {
     if (newPlugin.onPanelMigration) {
       this.pluginVersion = getPluginVersion(newPlugin);
     }
+  }
+
+  updateQueries(queries: DataQuery[]) {
+    this.events.emit(CoreEvents.queryChanged);
+    this.targets = queries;
   }
 
   addQuery(query?: Partial<DataQuery>) {
@@ -461,6 +501,7 @@ export class PanelModel implements DataConfigSource {
   }
 
   setTransformations(transformations: DataTransformerConfig[]) {
+    this.events.emit(CoreEvents.transformationChanged);
     this.transformations = transformations;
     this.resendLastResult();
   }
@@ -470,7 +511,7 @@ export class PanelModel implements DataConfigSource {
     if (extraVars) {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
-    return templateSrv.replace(value, vars, format);
+    return getTemplateSrv().replace(value, vars, format);
   }
 
   resendLastResult() {
@@ -487,6 +528,14 @@ export class PanelModel implements DataConfigSource {
    * */
   getSavedId(): number {
     return this.editSourceId ?? this.id;
+  }
+
+  on<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
+    this.events.on(event, callback);
+  }
+
+  off<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
+    this.events.off(event, callback);
   }
 }
 

@@ -1,7 +1,6 @@
 +++
 title = "Legacy app plugins"
 keywords = ["grafana", "plugins", "documentation"]
-type = "docs"
 aliases = ["/docs/grafana/latest/plugins/developing/apps/"]
 +++
 
@@ -15,7 +14,7 @@ Data source and panel plugins will show up like normal plugins. The app pages wi
 
 ## Enabling app plugins
 
-After installing an app, it has to be enabled before it shows up as a data source or panel. You can do that on the app page in the config tab.
+After installing an app, it has to be enabled before it shows up as a data source or panel. You can do that on the app page in the configuration tab.
 
 ## Developing an App Plugin
 
@@ -44,7 +43,7 @@ export class ConfigCtrl {
 ConfigCtrl.templateUrl = 'components/config/config.html';
 ```
 
-If possible a link to a dashboard or custom page should be shown after enabling the app to guide the user to the appropriate place.
+If possible, a link to a dashboard or custom page should be shown after enabling the app to guide the user to the appropriate place.
 
 {{< imgbox img="/img/docs/app_plugin_after_enable.png" caption="After enabling" >}}
 

@@ -4,7 +4,6 @@ import _ from 'lodash';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 // Utils & Services
-import { Emitter } from 'app/core/utils/emitter';
 import { contextSrv } from 'app/core/services/context_srv';
 import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
@@ -19,6 +18,8 @@ import {
   TimeRange,
   TimeZone,
   UrlQueryValue,
+  EventBusSrv,
+  EventBusExtended,
 } from '@grafana/data';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
@@ -80,9 +81,9 @@ export class DashboardModel {
   // ------------------
 
   // repeat process cycles
-  iteration: number;
+  iteration?: number;
   meta: DashboardMeta;
-  events: Emitter;
+  events: EventBusExtended;
 
   static nonPersistedProperties: { [str: string]: boolean } = {
     events: true,
@@ -101,7 +102,7 @@ export class DashboardModel {
       data = {};
     }
 
-    this.events = new Emitter();
+    this.events = new EventBusSrv();
     this.id = data.id || null;
     this.uid = data.uid || null;
     this.revision = data.revision;
@@ -485,6 +486,7 @@ export class DashboardModel {
     }
 
     const clone = new PanelModel(sourcePanel.getSaveModel());
+
     clone.id = this.getNextPanelId();
 
     // insert after source panel + value index
@@ -493,6 +495,11 @@ export class DashboardModel {
     clone.repeatIteration = this.iteration;
     clone.repeatPanelId = sourcePanel.id;
     clone.repeat = undefined;
+
+    if (this.panelInView?.id === clone.id) {
+      clone.setIsViewing(true);
+      this.panelInView = clone;
+    }
 
     return clone;
   }
@@ -539,6 +546,7 @@ export class DashboardModel {
     }
 
     const selectedOptions = this.getSelectedVariableOptions(variable);
+
     const maxPerRow = panel.maxPerRow || 4;
     let xPos = 0;
     let yPos = panel.gridPos.y;

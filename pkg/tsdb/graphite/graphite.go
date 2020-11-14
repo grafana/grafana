@@ -68,12 +68,12 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	if target == "" {
 		glog.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
-		return nil, errors.New("No query target found for the alert rule")
+		return nil, errors.New("no query target found for the alert rule")
 	}
 
 	formData["target"] = []string{target}
 
-	if setting.Env == setting.DEV {
+	if setting.Env == setting.Dev {
 		glog.Debug("Graphite request", "params", formData)
 	}
 
@@ -122,7 +122,7 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 			Points: series.DataPoints,
 		})
 
-		if setting.Env == setting.DEV {
+		if setting.Env == setting.Dev {
 			glog.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
 		}
 	}
@@ -140,7 +140,7 @@ func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDT
 
 	if res.StatusCode/100 != 2 {
 		glog.Info("Request failed", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf("Request failed status: %v", res.Status)
+		return nil, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	var data []TargetResponseDTO
@@ -163,7 +163,7 @@ func (e *GraphiteExecutor) createRequest(dsInfo *models.DataSource, data url.Val
 	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(data.Encode()))
 	if err != nil {
 		glog.Info("Failed to create request", "error", err)
-		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -178,17 +178,17 @@ func formatTimeRange(input string) string {
 	if input == "now" {
 		return input
 	}
-	return strings.Replace(strings.Replace(strings.Replace(input, "now", "", -1), "m", "min", -1), "M", "mon", -1)
+	return strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(input, "now", ""), "m", "min"), "M", "mon")
 }
 
 func fixIntervalFormat(target string) string {
 	rMinute := regexp.MustCompile(`'(\d+)m'`)
 	target = rMinute.ReplaceAllStringFunc(target, func(m string) string {
-		return strings.Replace(m, "m", "min", -1)
+		return strings.ReplaceAll(m, "m", "min")
 	})
 	rMonth := regexp.MustCompile(`'(\d+)M'`)
 	target = rMonth.ReplaceAllStringFunc(target, func(M string) string {
-		return strings.Replace(M, "M", "mon", -1)
+		return strings.ReplaceAll(M, "M", "mon")
 	})
 	return target
 }

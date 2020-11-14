@@ -4,6 +4,9 @@ import { GrafanaTheme } from '@grafana/data';
 import { useTheme } from '../../themes';
 import { getTagColor, getTagColorsFromName } from '../../utils';
 
+/**
+ * @public
+ */
 export type OnTagClick = (name: string, event: React.MouseEvent<HTMLElement>) => any;
 
 export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {
@@ -25,7 +28,13 @@ export const Tag = forwardRef<HTMLElement, Props>(({ name, onClick, className, c
   };
 
   return (
-    <span key={name} ref={ref} onClick={onTagClick} className={cx(styles.wrapper, className)} {...rest}>
+    <span
+      key={name}
+      ref={ref}
+      onClick={onTagClick}
+      className={cx(styles.wrapper, className, onClick && styles.hover)}
+      {...rest}
+    >
       {name}
     </span>
   );
@@ -50,8 +59,9 @@ const getTagStyles = (theme: GrafanaTheme, name: string, colorIndex?: number) =>
       text-shadow: none;
       padding: 3px 6px;
       border-radius: ${theme.border.radius.md};
-
-      :hover {
+    `,
+    hover: css`
+      &:hover {
         opacity: 0.85;
         cursor: pointer;
       }

@@ -85,7 +85,7 @@ func UpdateUser(c *models.ReqContext, cmd models.UpdateUserCommand) Response {
 	return handleUpdateUser(cmd)
 }
 
-//POST /api/users/:id/using/:orgId
+// POST /api/users/:id/using/:orgId
 func UpdateUserActiveOrg(c *models.ReqContext) Response {
 	userID := c.ParamsInt64(":id")
 	orgID := c.ParamsInt64(":orgId")
@@ -248,6 +248,11 @@ func ChangeUserPassword(c *models.ReqContext, cmd models.ChangeUserPasswordComma
 	}
 
 	return Success("User password changed")
+}
+
+// redirectToChangePassword handles GET /.well-known/change-password.
+func redirectToChangePassword(c *models.ReqContext) {
+	c.Redirect("/profile/password", 302)
 }
 
 // GET /api/users

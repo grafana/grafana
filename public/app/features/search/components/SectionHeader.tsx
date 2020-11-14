@@ -41,7 +41,11 @@ export const SectionHeader: FC<SectionHeaderProps> = ({
   );
 
   return (
-    <div className={styles.wrapper} onClick={onSectionExpand}>
+    <div
+      className={styles.wrapper}
+      onClick={onSectionExpand}
+      aria-label={section.expanded ? `Collapse folder ${section.id}` : `Expand folder ${section.id}`}
+    >
       <SearchCheckbox editable={editable} checked={section.checked} onClick={onSectionChecked} />
 
       <div className={styles.icon}>

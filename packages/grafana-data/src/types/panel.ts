@@ -4,6 +4,7 @@ import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
+import { EventBus } from '../events';
 import { FieldConfigSource } from './fieldOverrides';
 import { Registry } from '../utils';
 import { StandardEditorProps } from '../field';
@@ -27,6 +28,9 @@ export interface PanelData {
   /** Contains data frames with field overrides applied */
   series: DataFrame[];
 
+  /** A list of annotation items */
+  annotations?: DataFrame[];
+
   /** Request contains the queries and properties sent to the datasource */
   request?: DataQueryRequest;
 
@@ -43,34 +47,51 @@ export interface PanelData {
 export interface PanelProps<T = any> {
   /** ID of the panel within the current dashboard */
   id: number;
+
   /** Result set of panel queries */
   data: PanelData;
+
   /** Time range of the current dashboard */
   timeRange: TimeRange;
+
   /** Time zone of the current dashboard */
   timeZone: TimeZone;
+
   /** Panel options */
   options: T;
-  /** Panel options change handler */
-  onOptionsChange: (options: T) => void;
-  /** Field options configuration */
-  fieldConfig: FieldConfigSource;
-  /** Field config change handler */
-  onFieldConfigChange: (config: FieldConfigSource) => void;
+
   /** Indicates whether or not panel should be rendered transparent */
   transparent: boolean;
+
   /** Current width of the panel */
   width: number;
+
   /** Current height of the panel */
   height: number;
-  /** Template variables interpolation function */
-  replaceVariables: InterpolateFunction;
-  /** Time range change handler */
-  onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
+
+  /** Field options configuration */
+  fieldConfig: FieldConfigSource;
+
   /** @internal */
   renderCounter: number;
+
   /** Panel title */
   title: string;
+
+  /** EventBus  */
+  eventBus: EventBus;
+
+  /** Panel options change handler */
+  onOptionsChange: (options: T) => void;
+
+  /** Field config change handler */
+  onFieldConfigChange: (config: FieldConfigSource) => void;
+
+  /** Template variables interpolation function */
+  replaceVariables: InterpolateFunction;
+
+  /** Time range change handler */
+  onChangeTimeRange: (timeRange: AbsoluteTimeRange) => void;
 }
 
 export interface PanelEditorProps<T = any> {

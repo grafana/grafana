@@ -70,8 +70,8 @@ func UpdatePlaylist(cmd *models.UpdatePlaylistCommand) error {
 		return err
 	}
 
-	rawSql := "DELETE FROM playlist_item WHERE playlist_id = ?"
-	_, err = x.Exec(rawSql, cmd.Id)
+	rawSQL := "DELETE FROM playlist_item WHERE playlist_id = ?"
+	_, err = x.Exec(rawSQL, cmd.Id)
 
 	if err != nil {
 		return err
@@ -108,20 +108,20 @@ func GetPlaylist(query *models.GetPlaylistByIdQuery) error {
 }
 
 func DeletePlaylist(cmd *models.DeletePlaylistCommand) error {
-	if cmd.Id == 0 {
+	if cmd.Id == 0 || cmd.OrgId == 0 {
 		return models.ErrCommandValidationFailed
 	}
 
 	return inTransaction(func(sess *DBSession) error {
-		var rawPlaylistSql = "DELETE FROM playlist WHERE id = ? and org_id = ?"
-		_, err := sess.Exec(rawPlaylistSql, cmd.Id, cmd.OrgId)
+		var rawPlaylistSQL = "DELETE FROM playlist WHERE id = ? and org_id = ?"
+		_, err := sess.Exec(rawPlaylistSQL, cmd.Id, cmd.OrgId)
 
 		if err != nil {
 			return err
 		}
 
-		var rawItemSql = "DELETE FROM playlist_item WHERE playlist_id = ?"
-		_, err2 := sess.Exec(rawItemSql, cmd.Id)
+		var rawItemSQL = "DELETE FROM playlist_item WHERE playlist_id = ?"
+		_, err2 := sess.Exec(rawItemSQL, cmd.Id)
 
 		return err2
 	})
