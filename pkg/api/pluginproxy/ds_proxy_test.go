@@ -295,7 +295,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 		require.NoError(t, err)
 
-		proxy.getDirector()(req)
+		proxy.director(req)
 
 		t.Run("Can translate request URL and path", func(t *testing.T) {
 			assert.Equal(t, "graphite:8080", req.URL.Host)
@@ -322,7 +322,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 		require.NoError(t, err)
 
-		proxy.getDirector()(req)
+		proxy.director(req)
 		assert.Equal(t, "/db/site/", req.URL.Path)
 	})
 
@@ -348,7 +348,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		cookies := "grafana_user=admin; grafana_remember=99; grafana_sess=11; JSESSION_ID=test"
 		req.Header.Set("Cookie", cookies)
 
-		proxy.getDirector()(&req)
+		proxy.director(&req)
 
 		assert.Equal(t, "", req.Header.Get("Cookie"))
 	})
@@ -375,7 +375,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		cookies := "grafana_user=admin; grafana_remember=99; grafana_sess=11; JSESSION_ID=test"
 		req.Header.Set("Cookie", cookies)
 
-		proxy.getDirector()(&req)
+		proxy.director(&req)
 
 		assert.Equal(t, "JSESSION_ID=test", req.Header.Get("Cookie"))
 	})
@@ -395,7 +395,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		req.Header.Add("X-Canary", "stillthere")
 		require.NoError(t, err)
 
-		proxy.getDirector()(req)
+		proxy.director(req)
 
 		assert.Equal(t, "http://host/root/path/to/folder/", req.URL.String())
 
@@ -404,7 +404,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		assert.Equal(t, "stillthere", req.Header.Get("X-Canary"))
 	})
 
-	t.Run("When proxying a datasource that has oauth token pass-through enabled", func(t *testing.T) {
+	t.Run("When proxying a datasource that has OAuth token pass-through enabled", func(t *testing.T) {
 		social.SocialMap["generic_oauth"] = &social.SocialGenericOAuth{
 			SocialBase: &social.SocialBase{
 				Config: &oauth2.Config{},
@@ -453,7 +453,7 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		req, err = http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 		require.NoError(t, err)
 
-		proxy.getDirector()(req)
+		proxy.director(req)
 
 		assert.Equal(t, "Bearer testtoken", req.Header.Get("Authorization"))
 	})
@@ -517,66 +517,112 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 			runDatasourceAuthTest(t, test)
 		}
 	})
+}
 
-	t.Run("HandleRequest()", func(t *testing.T) {
-		var writeErr error
+// test DataSourceProxy request handling.
+func TestDataSourceProxy_requestHandling(t *testing.T) {
+	var writeErr error
+
+	plugin := &plugins.DataSourcePlugin{}
+
+	type setUpCfg struct {
+		headers map[string]string
+		writeCb func(w http.ResponseWriter)
+	}
+
+	setUp := func(t *testing.T, cfgs ...setUpCfg) (*models.ReqContext, *models.DataSource) {
+		writeErr = nil
+
 		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			http.SetCookie(w, &http.Cookie{Name: "flavor", Value: "chocolateChip"})
-			w.WriteHeader(200)
-			_, writeErr = w.Write([]byte("I am the backend"))
+			written := false
+			for _, cfg := range cfgs {
+				if cfg.writeCb != nil {
+					t.Log("Writing response via callback")
+					cfg.writeCb(w)
+					written = true
+				}
+			}
+			if !written {
+				t.Log("Writing default response")
+				w.WriteHeader(200)
+				_, writeErr = w.Write([]byte("I am the backend"))
+			}
 		}))
 		t.Cleanup(backend.Close)
 
-		plugin := &plugins.DataSourcePlugin{}
 		ds := &models.DataSource{Url: backend.URL, Type: models.DS_GRAPHITE}
 
-		responseRecorder := &CloseNotifierResponseRecorder{
+		responseRecorder := &closeNotifierResponseRecorder{
 			ResponseRecorder: httptest.NewRecorder(),
 		}
 		t.Cleanup(responseRecorder.Close)
 
-		setupCtx := func(fn func(http.ResponseWriter)) *models.ReqContext {
-			responseWriter := macaron.NewResponseWriter("GET", responseRecorder)
-			if fn != nil {
-				fn(responseWriter)
-			}
+		responseWriter := macaron.NewResponseWriter("GET", responseRecorder)
 
-			return &models.ReqContext{
-				SignedInUser: &models.SignedInUser{},
-				Context: &macaron.Context{
-					Req: macaron.Request{
-						Request: httptest.NewRequest("GET", "/render", nil),
-					},
-					Resp: responseWriter,
-				},
+		// XXX: Really unsure why, but setting headers within the HTTP handler function doesn't stick,
+		// so doing it here instead
+		for _, cfg := range cfgs {
+			for k, v := range cfg.headers {
+				responseWriter.Header().Set(k, v)
 			}
 		}
 
-		t.Run("When response header Set-Cookie is not set should remove proxied Set-Cookie header", func(t *testing.T) {
-			writeErr = nil
-			ctx := setupCtx(nil)
-			proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
-			require.NoError(t, err)
+		return &models.ReqContext{
+			SignedInUser: &models.SignedInUser{},
+			Context: &macaron.Context{
+				Req: macaron.Request{
+					Request: httptest.NewRequest("GET", "/render", nil),
+				},
+				Resp: responseWriter,
+			},
+		}, ds
+	}
 
-			proxy.HandleRequest()
+	t.Run("When response header Set-Cookie is not set should remove proxied Set-Cookie header", func(t *testing.T) {
+		ctx, ds := setUp(t)
+		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+		require.NoError(t, err)
 
-			require.NoError(t, writeErr)
-			assert.Empty(t, proxy.ctx.Resp.Header().Get("Set-Cookie"))
+		proxy.HandleRequest()
+
+		require.NoError(t, writeErr)
+		assert.Empty(t, proxy.ctx.Resp.Header().Get("Set-Cookie"))
+	})
+
+	t.Run("When response header Set-Cookie is set should remove proxied Set-Cookie header and restore the original Set-Cookie header", func(t *testing.T) {
+		ctx, ds := setUp(t, setUpCfg{
+			headers: map[string]string{
+				"Set-Cookie": "important_cookie=important_value",
+			},
 		})
+		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+		require.NoError(t, err)
 
-		t.Run("When response header Set-Cookie is set should remove proxied Set-Cookie header and restore the original Set-Cookie header", func(t *testing.T) {
-			writeErr = nil
-			ctx := setupCtx(func(w http.ResponseWriter) {
-				w.Header().Set("Set-Cookie", "important_cookie=important_value")
-			})
-			proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
-			require.NoError(t, err)
+		proxy.HandleRequest()
 
-			proxy.HandleRequest()
+		require.NoError(t, writeErr)
+		assert.Equal(t, "important_cookie=important_value", proxy.ctx.Resp.Header().Get("Set-Cookie"))
+	})
 
-			require.NoError(t, writeErr)
-			assert.Equal(t, "important_cookie=important_value", proxy.ctx.Resp.Header().Get("Set-Cookie"))
+	t.Run("Data source returns status code 401", func(t *testing.T) {
+		ctx, ds := setUp(t, setUpCfg{
+			writeCb: func(w http.ResponseWriter) {
+				w.WriteHeader(401)
+				w.Header().Set("www-authenticate", `Basic realm="Access to the server"`)
+				_, err := w.Write([]byte("Not authenticated"))
+				require.NoError(t, err)
+				t.Log("Wrote 401 response")
+			},
 		})
+		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/render", &setting.Cfg{})
+		require.NoError(t, err)
+
+		proxy.HandleRequest()
+
+		require.NoError(t, writeErr)
+		assert.Equal(t, 400, proxy.ctx.Resp.Status(), "Status code 401 should be converted to 400")
+		assert.Empty(t, proxy.ctx.Resp.Header().Get("www-authenticate"))
 	})
 }
 
@@ -667,17 +713,17 @@ func TestNewDataSourceProxy_MSSQL(t *testing.T) {
 	}
 }
 
-type CloseNotifierResponseRecorder struct {
+type closeNotifierResponseRecorder struct {
 	*httptest.ResponseRecorder
 	closeChan chan bool
 }
 
-func (r *CloseNotifierResponseRecorder) CloseNotify() <-chan bool {
+func (r *closeNotifierResponseRecorder) CloseNotify() <-chan bool {
 	r.closeChan = make(chan bool)
 	return r.closeChan
 }
 
-func (r *CloseNotifierResponseRecorder) Close() {
+func (r *closeNotifierResponseRecorder) Close() {
 	close(r.closeChan)
 }
 
@@ -695,7 +741,7 @@ func getDatasourceProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *sett
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 	require.NoError(t, err)
 
-	proxy.getDirector()(req)
+	proxy.director(req)
 	return req
 }
 
@@ -806,7 +852,7 @@ func runDatasourceAuthTest(t *testing.T, test *testCase) {
 	req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
 	require.NoError(t, err)
 
-	proxy.getDirector()(req)
+	proxy.director(req)
 
 	test.checkReq(req)
 }
