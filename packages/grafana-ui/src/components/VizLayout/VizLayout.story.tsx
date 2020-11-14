@@ -34,7 +34,7 @@ export const BottomLegend = () => {
   );
 
   return (
-    <VizLayout width={400} height={500} legend={legend}>
+    <VizLayout width={600} height={500} legend={legend}>
       {(vizWidth: number, vizHeight: number) => {
         return <div style={{ width: vizWidth, height: vizHeight, background: 'red' }} />;
       }}
@@ -57,7 +57,7 @@ export const RightLegend = () => {
   );
 
   return (
-    <VizLayout width={400} height={500} legend={legend}>
+    <VizLayout width={810} height={400} legend={legend}>
       {(vizWidth: number, vizHeight: number) => {
         return <div style={{ width: vizWidth, height: vizHeight, background: 'red' }} />;
       }}
