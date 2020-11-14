@@ -140,7 +140,8 @@ func getPluginProxiedRequest(ctx *models.ReqContext, cfg *setting.Cfg, route *pl
 			ReqRole: models.ROLE_EDITOR,
 		}
 	}
-	proxy := NewApiPluginProxy(ctx, "", route, "", cfg)
+	proxy, err := NewApiPluginProxy(ctx, "", route, "", cfg)
+	So(err, ShouldBeNil)
 
 	req, err := http.NewRequest(http.MethodGet, route.URL, nil)
 	So(err, ShouldBeNil)

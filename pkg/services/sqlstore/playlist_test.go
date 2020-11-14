@@ -3,6 +3,7 @@
 package sqlstore
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -32,9 +33,36 @@ func TestPlaylistDataAccess(t *testing.T) {
 		})
 
 		t.Run("Can remove playlist", func(t *testing.T) {
-			query := models.DeletePlaylistCommand{Id: 1}
-			err = DeletePlaylist(&query)
+			deleteQuery := models.DeletePlaylistCommand{Id: 1, OrgId: 1}
+			err = DeletePlaylist(&deleteQuery)
 			require.NoError(t, err)
+
+			getQuery := models.GetPlaylistByIdQuery{Id: 1}
+			err = GetPlaylist(&getQuery)
+			require.NoError(t, err)
+			require.Equal(t, int64(0), getQuery.Result.Id, "playlist should've been removed")
 		})
+	})
+
+	t.Run("Delete playlist that doesn't exist", func(t *testing.T) {
+		deleteQuery := models.DeletePlaylistCommand{Id: 1, OrgId: 1}
+		err := DeletePlaylist(&deleteQuery)
+		require.NoError(t, err)
+	})
+
+	t.Run("Delete playlist with invalid command yields error", func(t *testing.T) {
+		testCases := []struct {
+			desc string
+			cmd  models.DeletePlaylistCommand
+		}{
+			{desc: "none", cmd: models.DeletePlaylistCommand{}},
+			{desc: "no OrgId", cmd: models.DeletePlaylistCommand{Id: 1}},
+			{desc: "no Id", cmd: models.DeletePlaylistCommand{OrgId: 1}},
+		}
+
+		for _, tc := range testCases {
+			err := DeletePlaylist(&tc.cmd)
+			require.EqualError(t, err, models.ErrCommandValidationFailed.Error(), fmt.Sprintf("expected command validation error for %q", tc.desc))
+		}
 	})
 }
