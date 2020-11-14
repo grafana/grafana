@@ -11,6 +11,8 @@ import { DataFrame } from '../types/dataFrame';
  * NOTE: this does a shallow check on the FieldConfig properties, when using the query
  * editor, this should be sufficient, however if applicaitons are mutating properties
  * deep in the FieldConfig this will not recognize a change
+ *
+ * @beta
  */
 export function compareDataFrameStructures(a: DataFrame, b: DataFrame): boolean {
   if (a === b) {
@@ -46,6 +48,8 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame): boolean 
 
 /**
  * Check if all values in two arrays match the compare funciton
+ *
+ * @beta
  */
 export function compareArrayValues<T>(a: T[], b: T[], cmp: (a: T, b: T) => boolean) {
   if (a === b) {
