@@ -132,7 +132,7 @@ func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.
 		}
 	}
 	proxy, err := NewApiPluginProxy(ctx, "", route, "", cfg)
-	So(err, ShouldBeNil)
+	require.NoError(t, err)
 
 	req, err := http.NewRequest(http.MethodGet, route.URL, nil)
 	require.NoError(t, err)
