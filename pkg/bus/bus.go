@@ -141,12 +141,13 @@ func (b *InProcBus) Publish(msg Msg) error {
 
 	for _, listenerHandler := range listeners {
 		ret := reflect.ValueOf(listenerHandler).Call(params)
-		err, ok := ret[0].Interface().(error)
-		if err != nil {
+		e := ret[0].Interface()
+		if e != nil {
+			err, ok := e.(error)
 			if ok {
 				return err
 			}
-			return fmt.Errorf("expected listener to return an error, got '%v'", reflect.TypeOf(ret[0].Interface()))
+			return fmt.Errorf("expected listener to return an error, got '%T'", e)
 		}
 	}
 
