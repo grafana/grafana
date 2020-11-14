@@ -4,13 +4,15 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"sync"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -24,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -31,8 +34,8 @@ import (
 type datasourceInfo struct {
 	Profile       string
 	Region        string
-	AuthType      string
-	AssumeRoleArn string
+	AuthType      authType
+	AssumeRoleARN string
 	ExternalID    string
 	Namespace     string
 
@@ -51,14 +54,30 @@ var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return newExecutor(), nil
+	registry.Register(&registry.Descriptor{
+		Name:         "CloudWatchService",
+		InitPriority: registry.Low,
+		Instance:     &CloudWatchService{},
 	})
 }
 
-func newExecutor() *cloudWatchExecutor {
+type CloudWatchService struct {
+	LogsService *LogsService `inject:""`
+}
+
+func (s *CloudWatchService) Init() error {
+	plog.Debug("initing")
+
+	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+		return newExecutor(s.LogsService), nil
+	})
+
+	return nil
+}
+
+func newExecutor(logsService *LogsService) *cloudWatchExecutor {
 	return &cloudWatchExecutor{
-		logsClientsByRegion: map[string]cloudwatchlogsiface.CloudWatchLogsAPI{},
+		logsService: logsService,
 	}
 }
 
@@ -66,24 +85,113 @@ func newExecutor() *cloudWatchExecutor {
 type cloudWatchExecutor struct {
 	*models.DataSource
 
-	ec2Client           ec2iface.EC2API
-	rgtaClient          resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-	logsClientsByRegion map[string]cloudwatchlogsiface.CloudWatchLogsAPI
-	mtx                 sync.Mutex
+	ec2Client  ec2iface.EC2API
+	rgtaClient resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
+
+	logsService *LogsService
 }
 
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
 	dsInfo := e.getDSInfo(region)
-	creds, err := getCredentials(dsInfo)
+
+	bldr := strings.Builder{}
+	for i, s := range []string{
+		dsInfo.AuthType.String(), dsInfo.AccessKey, dsInfo.Profile, dsInfo.AssumeRoleARN, region,
+	} {
+		if i != 0 {
+			bldr.WriteString(":")
+		}
+		bldr.WriteString(strings.ReplaceAll(s, ":", `\:`))
+	}
+	cacheKey := bldr.String()
+
+	sessCacheLock.RLock()
+	if env, ok := sessCache[cacheKey]; ok {
+		if env.expiration.After(time.Now().UTC()) {
+			sessCacheLock.RUnlock()
+			return env.session, nil
+		}
+	}
+	sessCacheLock.RUnlock()
+
+	cfgs := []*aws.Config{
+		{
+			CredentialsChainVerboseErrors: aws.Bool(true),
+		},
+	}
+
+	var regionCfg *aws.Config
+	if dsInfo.Region == defaultRegion {
+		plog.Warn("Region is set to \"default\", which is unsupported")
+		dsInfo.Region = ""
+	}
+	if dsInfo.Region != "" {
+		regionCfg = &aws.Config{Region: aws.String(dsInfo.Region)}
+		cfgs = append(cfgs, regionCfg)
+	}
+
+	switch dsInfo.AuthType {
+	case authTypeSharedCreds:
+		plog.Debug("Authenticating towards AWS with shared credentials", "profile", dsInfo.Profile,
+			"region", dsInfo.Region)
+		cfgs = append(cfgs, &aws.Config{
+			Credentials: credentials.NewSharedCredentials("", dsInfo.Profile),
+		})
+	case authTypeKeys:
+		plog.Debug("Authenticating towards AWS with an access key pair", "region", dsInfo.Region)
+		cfgs = append(cfgs, &aws.Config{
+			Credentials: credentials.NewStaticCredentials(dsInfo.AccessKey, dsInfo.SecretKey, ""),
+		})
+	case authTypeDefault:
+		plog.Debug("Authenticating towards AWS with default SDK method", "region", dsInfo.Region)
+	default:
+		panic(fmt.Sprintf("Unrecognized authType: %d", dsInfo.AuthType))
+	}
+	sess, err := newSession(cfgs...)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg := &aws.Config{
-		Region:      aws.String(dsInfo.Region),
-		Credentials: creds,
+	duration := stscreds.DefaultDuration
+	expiration := time.Now().Add(duration)
+	if dsInfo.AssumeRoleARN != "" {
+		// We should assume a role in AWS
+		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleARN)
+
+		cfgs := []*aws.Config{
+			{
+				CredentialsChainVerboseErrors: aws.Bool(true),
+			},
+			{
+				Credentials: newSTSCredentials(sess, dsInfo.AssumeRoleARN, func(p *stscreds.AssumeRoleProvider) {
+					// Not sure if this is necessary, overlaps with p.Duration and is undocumented
+					p.Expiry.SetExpiration(expiration, 0)
+					p.Duration = duration
+					if dsInfo.ExternalID != "" {
+						p.ExternalID = aws.String(dsInfo.ExternalID)
+					}
+				}),
+			},
+		}
+		if regionCfg != nil {
+			cfgs = append(cfgs, regionCfg)
+		}
+		sess, err = newSession(cfgs...)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return newSession(cfg)
+
+	plog.Debug("Successfully created AWS session")
+
+	sessCacheLock.Lock()
+	sessCache[cacheKey] = envelope{
+		session:    sess,
+		expiration: expiration,
+	}
+	sessCacheLock.Unlock()
+
+	return sess, nil
 }
 
 func (e *cloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWatchAPI, error) {
@@ -95,20 +203,12 @@ func (e *cloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWa
 }
 
 func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
-	e.mtx.Lock()
-	defer e.mtx.Unlock()
-
-	if logsClient, ok := e.logsClientsByRegion[region]; ok {
-		return logsClient, nil
-	}
-
 	sess, err := e.newSession(region)
 	if err != nil {
 		return nil, err
 	}
 
 	logsClient := newCWLogsClient(sess)
-	e.logsClientsByRegion[region] = logsClient
 
 	return logsClient, nil
 }
@@ -209,6 +309,8 @@ func (e *cloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 		result, err = e.executeAnnotationQuery(ctx, queryContext)
 	case "logAction":
 		result, err = e.executeLogActions(ctx, queryContext)
+	case "liveLogAction":
+		result, err = e.executeLiveLogQuery(ctx, queryContext)
 	case "timeSeriesQuery":
 		fallthrough
 	default:
@@ -282,17 +384,53 @@ func (e *cloudWatchExecutor) executeLogAlertQuery(ctx context.Context, queryCont
 	return response, nil
 }
 
+type authType int
+
+const (
+	authTypeDefault authType = iota
+	authTypeSharedCreds
+	authTypeKeys
+)
+
+func (at authType) String() string {
+	switch at {
+	case authTypeDefault:
+		return "default"
+	case authTypeSharedCreds:
+		return "sharedCreds"
+	case authTypeKeys:
+		return "keys"
+	default:
+		panic(fmt.Sprintf("Unrecognized auth type %d", at))
+	}
+}
+
 func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 	if region == defaultRegion {
 		region = e.DataSource.JsonData.Get("defaultRegion").MustString()
 	}
 
-	authType := e.DataSource.JsonData.Get("authType").MustString()
-	assumeRoleArn := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
+	atStr := e.DataSource.JsonData.Get("authType").MustString()
+	assumeRoleARN := e.DataSource.JsonData.Get("assumeRoleArn").MustString()
 	externalID := e.DataSource.JsonData.Get("externalId").MustString()
 	decrypted := e.DataSource.DecryptedValues()
 	accessKey := decrypted["accessKey"]
 	secretKey := decrypted["secretKey"]
+
+	at := authTypeDefault
+	switch atStr {
+	case "credentials":
+		at = authTypeSharedCreds
+	case "keys":
+		at = authTypeKeys
+	case "default":
+		at = authTypeDefault
+	case "arn":
+		at = authTypeDefault
+		plog.Warn("Authentication type \"arn\" is deprecated, falling back to default")
+	default:
+		plog.Warn("Unrecognized AWS authentication type", "type", atStr)
+	}
 
 	profile := e.DataSource.JsonData.Get("profile").MustString()
 	if profile == "" {
@@ -302,8 +440,8 @@ func (e *cloudWatchExecutor) getDSInfo(region string) *datasourceInfo {
 	return &datasourceInfo{
 		Region:        region,
 		Profile:       profile,
-		AuthType:      authType,
-		AssumeRoleArn: assumeRoleArn,
+		AuthType:      at,
+		AssumeRoleARN: assumeRoleARN,
 		ExternalID:    externalID,
 		AccessKey:     accessKey,
 		SecretKey:     secretKey,

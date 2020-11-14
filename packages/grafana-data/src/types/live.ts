@@ -1,4 +1,3 @@
-import { SelectableValue } from './select';
 import { Observable } from 'rxjs';
 
 /**
@@ -15,9 +14,9 @@ export enum LiveChannelScope {
 }
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
-export interface LiveChannelConfig<TMessage = any> {
+export interface LiveChannelConfig<TMessage = any, TController = any> {
   /**
    * The path definition.  either static, or it may contain variables identifed with {varname}
    */
@@ -29,14 +28,9 @@ export interface LiveChannelConfig<TMessage = any> {
   description?: string;
 
   /**
-   * When variables exist, this list will identify each one
-   */
-  variables?: Array<SelectableValue<string>>;
-
-  /**
    * The channel keeps track of who else is connected to the same channel
    */
-  hasPresense?: boolean;
+  hasPresence?: boolean;
 
   /**
    * This method will be defined if it is possible to publish in this channel.
@@ -46,6 +40,9 @@ export interface LiveChannelConfig<TMessage = any> {
 
   /** convert the raw stream message into a message that should be broadcast */
   processMessage?: (msg: any) => TMessage;
+
+  /** some channels are managed by an explicit interface */
+  getController?: () => TController;
 }
 
 export enum LiveChannelConnectionState {
@@ -61,10 +58,19 @@ export enum LiveChannelConnectionState {
   Invalid = 'invalid',
 }
 
+export enum LiveChannelEventType {
+  Status = 'status',
+  Join = 'join',
+  Leave = 'leave',
+  Message = 'message',
+}
+
 /**
- * @experimental
+ * @alpha -- experimental
  */
-export interface LiveChannelStatus {
+export interface LiveChannelStatusEvent {
+  type: LiveChannelEventType.Status;
+
   /**
    * {scope}/{namespace}/{path}
    */
@@ -76,7 +82,7 @@ export interface LiveChannelStatus {
   timestamp: number;
 
   /**
-   * flag if the channel is activly connected to the channel.
+   * flag if the channel is actively connected to the channel.
    * This may be false while the connections get established or if the network is lost
    * As long as the `shutdown` flag is not set, the connection will try to reestablish
    */
@@ -85,45 +91,80 @@ export interface LiveChannelStatus {
   /**
    * The last error.
    *
-   * This will remain in the status until a new message is succesfully recieved from the channel
+   * This will remain in the status until a new message is successfully received from the channel
    */
   error?: any;
 }
 
+export interface LiveChannelJoinEvent {
+  type: LiveChannelEventType.Join;
+  user: any; // @alpha -- experimental -- will be filled in when we improve the UI
+}
+
+export interface LiveChannelLeaveEvent {
+  type: LiveChannelEventType.Leave;
+  user: any; // @alpha -- experimental -- will be filled in when we improve the UI
+}
+
+export interface LiveChannelMessageEvent<T> {
+  type: LiveChannelEventType.Message;
+  message: T;
+}
+
+export type LiveChannelEvent<T = any> =
+  | LiveChannelStatusEvent
+  | LiveChannelJoinEvent
+  | LiveChannelLeaveEvent
+  | LiveChannelMessageEvent<T>;
+
+export function isLiveChannelStatusEvent<T>(evt: LiveChannelEvent<T>): evt is LiveChannelStatusEvent {
+  return evt.type === LiveChannelEventType.Status;
+}
+
+export function isLiveChannelJoinEvent<T>(evt: LiveChannelEvent<T>): evt is LiveChannelJoinEvent {
+  return evt.type === LiveChannelEventType.Join;
+}
+
+export function isLiveChannelLeaveEvent<T>(evt: LiveChannelEvent<T>): evt is LiveChannelLeaveEvent {
+  return evt.type === LiveChannelEventType.Leave;
+}
+
+export function isLiveChannelMessageEvent<T>(evt: LiveChannelEvent<T>): evt is LiveChannelMessageEvent<T> {
+  return evt.type === LiveChannelEventType.Message;
+}
+
 /**
- * @experimental
+ * @alpha -- experimental
  */
-export interface LiveChannelJoinLeave {
-  user: any;
+export interface LiveChannelPresenceStatus {
+  users: any; // @alpha -- experimental -- will be filled in when we improve the UI
 }
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
-export interface LiveChannelPresense {
-  users: any;
-}
-
-export interface LiveChannelMessage<TMessage = any> {
-  type: 'status' | 'message' | 'join' | 'leave';
-  message: TMessage | LiveChannelStatus | LiveChannelJoinLeave;
+export interface LiveChannelAddress {
+  scope: LiveChannelScope;
+  namespace: string; // depends on the scope
+  path: string;
 }
 
 /**
- * @experimental
+ * Check if the address has a scope, namespace, and path
+ */
+export function isValidLiveChannelAddress(addr?: LiveChannelAddress): addr is LiveChannelAddress {
+  return !!(addr?.path && addr.namespace && addr.scope);
+}
+
+/**
+ * @alpha -- experimental
  */
 export interface LiveChannel<TMessage = any, TPublish = any> {
   /** The fully qualified channel id: ${scope}/${namespace}/${path} */
   id: string;
 
-  /** The scope for this channel */
-  scope: LiveChannelScope;
-
-  /** datasourceId/plugin name/feature depending on scope */
-  namespace: string;
-
-  /** additional qualifier */
-  path: string;
+  /** The channel address */
+  addr: LiveChannelAddress;
 
   /** Unix timestamp for when the channel connected */
   opened: number;
@@ -134,14 +175,14 @@ export interface LiveChannel<TMessage = any, TPublish = any> {
   /**
    * Watch all events in this channel
    */
-  getStream: () => Observable<LiveChannelMessage<TMessage>>;
+  getStream: () => Observable<LiveChannelEvent<TMessage>>;
 
   /**
-   * For channels that support presense, this will request the current state from the server.
+   * For channels that support presence, this will request the current state from the server.
    *
    * Join and leave messages will be sent to the open stream
    */
-  getPresense?: () => Promise<LiveChannelPresense>;
+  getPresence?: () => Promise<LiveChannelPresenceStatus>;
 
   /**
    * Write a message into the channel
@@ -157,7 +198,7 @@ export interface LiveChannel<TMessage = any, TPublish = any> {
 }
 
 /**
- * @experimental
+ * @alpha -- experimental
  */
 export interface LiveChannelSupport {
   /**

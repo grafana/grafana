@@ -1,66 +1,36 @@
-import {
-  FieldColor,
-  FieldConfigProperty,
-  identityOverrideProcessor,
-  PanelPlugin,
-  standardEditorsRegistry,
-} from '@grafana/data';
-import { GraphCustomFieldConfig } from '@grafana/ui';
+import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { AxisSide, GraphCustomFieldConfig, LegendDisplayMode } from '@grafana/ui';
 import { GraphPanel } from './GraphPanel';
 import { Options } from './types';
 
 export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPanel)
   .useFieldConfig({
-    standardOptions: [
-      // FieldConfigProperty.Min,
-      // FieldConfigProperty.Max,
-      FieldConfigProperty.Unit,
-      FieldConfigProperty.DisplayName,
-      FieldConfigProperty.Decimals,
-      // NOT:  FieldConfigProperty.Thresholds,
-      FieldConfigProperty.Mappings,
-    ],
-
+    standardOptions: {
+      [FieldConfigProperty.Color]: {
+        settings: {
+          byValueSupport: false,
+        },
+        defaultValue: {
+          mode: FieldColorModeId.PaletteClassic,
+        },
+      },
+    },
     useCustomConfig: builder => {
       builder
-        // TODO:  Until we fix standard color property let's do it the custom editor way
-        .addCustomEditor<{}, FieldColor>({
-          path: 'line.color',
-          id: 'line.color',
-          name: 'Series color',
-          shouldApply: () => true,
-          settings: {
-            allowUndefined: true,
-            textWhenUndefined: 'Automatic',
-          },
-          defaultValue: undefined,
-          editor: standardEditorsRegistry.get('color').editor as any,
-          override: standardEditorsRegistry.get('color').editor as any,
-          process: identityOverrideProcessor,
-        })
         .addBooleanSwitch({
           path: 'line.show',
           name: 'Show lines',
           description: '',
           defaultValue: true,
         })
-        .addSelect({
+        .addSliderInput({
           path: 'line.width',
           name: 'Line width',
           defaultValue: 1,
           settings: {
-            options: [
-              { value: 1, label: '1 • thin' },
-              { value: 2, label: '2' },
-              { value: 3, label: '3' },
-              { value: 4, label: '4' },
-              { value: 5, label: '5' },
-              { value: 6, label: '6' },
-              { value: 7, label: '7' },
-              { value: 8, label: '8' },
-              { value: 9, label: '9' },
-              { value: 10, label: '10 • thick' },
-            ],
+            min: 1,
+            max: 10,
+            step: 1,
           },
           showIf: c => {
             return c.line.show;
@@ -72,23 +42,14 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           description: '',
           defaultValue: false,
         })
-        .addSelect({
+        .addSliderInput({
           path: 'points.radius',
           name: 'Point radius',
           defaultValue: 4,
           settings: {
-            options: [
-              { value: 1, label: '1 • thin' },
-              { value: 2, label: '2' },
-              { value: 3, label: '3' },
-              { value: 4, label: '4' },
-              { value: 5, label: '5' },
-              { value: 6, label: '6' },
-              { value: 7, label: '7' },
-              { value: 8, label: '8' },
-              { value: 9, label: '9' },
-              { value: 10, label: '10 • thick' },
-            ],
+            min: 1,
+            max: 10,
+            step: 1,
           },
           showIf: c => c.points.show,
         })
@@ -98,24 +59,14 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           description: '',
           defaultValue: false,
         })
-        .addSelect({
+        .addSliderInput({
           path: 'fill.alpha',
           name: 'Fill area opacity',
-          defaultValue: 0.1,
+          defaultValue: 0,
           settings: {
-            options: [
-              { value: 0, label: 'No Fill' },
-              { value: 0.1, label: '10% • transparent' },
-              { value: 0.2, label: '20%' },
-              { value: 0.3, label: '30%' },
-              { value: 0.4, label: '40% ' },
-              { value: 0.5, label: '50%' },
-              { value: 0.6, label: '60%' },
-              { value: 0.7, label: '70%' },
-              { value: 0.8, label: '80%' },
-              { value: 0.9, label: '90%' },
-              { value: 1, label: '100% • opaque' },
-            ],
+            min: 0,
+            max: 1,
+            step: 0.1,
           },
         })
         .addTextInput({
@@ -133,11 +84,11 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
           path: 'axis.side',
           name: 'Y axis side',
           category: ['Axis'],
-          defaultValue: 3,
+          defaultValue: AxisSide.Left,
           settings: {
             options: [
-              { value: 3, label: 'Left' },
-              { value: 1, label: 'Right' },
+              { value: AxisSide.Left, label: 'Left' },
+              { value: AxisSide.Right, label: 'Right' },
             ],
           },
         })
@@ -181,47 +132,36 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
         defaultValue: 'single',
         settings: {
           options: [
-            { value: 'single', label: 'Single series' },
-            { value: 'multi', label: 'All series' },
-            { value: 'none', label: 'No tooltip' },
+            { value: 'single', label: 'Single' },
+            { value: 'multi', label: 'All' },
+            { value: 'none', label: 'Hidden' },
           ],
         },
       })
-      // .addBooleanSwitch({
-      //   path: 'graph.realTimeUpdates',
-      //   name: 'Real time updates',
-      //   description: 'continue to update the graph so the time axis matches the clock.',
-      //   defaultValue: false,
-      // })
-      .addBooleanSwitch({
-        category: ['Legend'],
-        path: 'legend.isVisible',
-        name: 'Show legend',
+      .addRadio({
+        path: 'legend.displayMode',
+        name: 'Legend mode',
         description: '',
-        defaultValue: true,
-      })
-      .addBooleanSwitch({
-        category: ['Legend'],
-        path: 'legend.asTable',
-        name: 'Display legend as table',
-        description: '',
-        defaultValue: false,
-        showIf: c => c.legend.isVisible,
+        defaultValue: LegendDisplayMode.List,
+        settings: {
+          options: [
+            { value: LegendDisplayMode.List, label: 'List' },
+            { value: LegendDisplayMode.Table, label: 'Table' },
+            { value: LegendDisplayMode.Hidden, label: 'Hidden' },
+          ],
+        },
       })
       .addRadio({
-        category: ['Legend'],
         path: 'legend.placement',
         name: 'Legend placement',
         description: '',
         defaultValue: 'bottom',
         settings: {
           options: [
-            { value: 'left', label: 'Left' },
-            { value: 'top', label: 'Top' },
             { value: 'bottom', label: 'Bottom' },
             { value: 'right', label: 'Right' },
           ],
         },
-        showIf: c => c.legend.isVisible,
+        showIf: c => c.legend.displayMode !== LegendDisplayMode.Hidden,
       });
   });

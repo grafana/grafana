@@ -1,47 +1,61 @@
 import { LiveChannelConfig } from '@grafana/data';
+import { MeasurementCollector } from '@grafana/runtime';
+import { getDashboardChannelsFeature } from './dashboard/dashboardWatcher';
+import { LiveMeasurementsSupport } from './measurements/measurementsSupport';
 import { grafanaLiveCoreFeatures } from './scopes';
 
 export function registerLiveFeatures() {
-  const channels = [
+  const random2s = new MeasurementCollector();
+  const randomFlakey = new MeasurementCollector();
+  const channels: LiveChannelConfig[] = [
     {
       path: 'random-2s-stream',
       description: 'Random stream with points every 2s',
+      getController: () => random2s,
+      processMessage: random2s.addBatch,
     },
     {
       path: 'random-flakey-stream',
       description: 'Random stream with flakey data points',
+      getController: () => randomFlakey,
+      processMessage: randomFlakey.addBatch,
     },
   ];
 
-  grafanaLiveCoreFeatures.register(
-    'testdata',
-    {
+  grafanaLiveCoreFeatures.register({
+    name: 'testdata',
+    support: {
       getChannelConfig: (path: string) => {
         return channels.find(c => c.path === path);
       },
       getSupportedPaths: () => channels,
     },
-    'Test data generations'
-  );
+    description: 'Test data generations',
+  });
 
-  const chatConfig: LiveChannelConfig = {
-    path: 'chat',
-    description: 'Broadcast text messages to a channel',
+  const broadcastConfig: LiveChannelConfig = {
+    path: '${path}',
+    description: 'Broadcast any messages to a channel',
     canPublish: () => true,
-    hasPresense: true,
   };
 
-  grafanaLiveCoreFeatures.register(
-    'experimental',
-    {
+  grafanaLiveCoreFeatures.register({
+    name: 'broadcast',
+    support: {
       getChannelConfig: (path: string) => {
-        if ('chat' === path) {
-          return chatConfig;
-        }
-        throw new Error('invalid path: ' + path);
+        return broadcastConfig;
       },
-      getSupportedPaths: () => [chatConfig],
+      getSupportedPaths: () => [broadcastConfig],
     },
-    'Experimental features'
-  );
+    description: 'Broadcast will send/receive any JSON object in a channel',
+  });
+
+  grafanaLiveCoreFeatures.register({
+    name: 'measurements',
+    support: new LiveMeasurementsSupport(),
+    description: 'These channels listen for measurements and produce DataFrames',
+  });
+
+  // dashboard/*
+  grafanaLiveCoreFeatures.register(getDashboardChannelsFeature());
 }

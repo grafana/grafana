@@ -2,9 +2,6 @@
 title = "Vault"
 description = ""
 keywords = ["grafana", "vault", "configuration"]
-type = "docs"
-[menu.docs]
-parent = "enterprise"
 weight = 700
 +++
 
@@ -61,9 +58,9 @@ use Vault. Vault configuration is an extension of configuration's [variable expa
 `$__vault{<argument>}` syntax.
 
 The argument to Vault consists of three parts separated by a colon:
-* The first part specifies which secrets engine should be used.
-* The second part specifies which secret should be accessed.
-* The third part specifies which field of that secret should be used.
+- The first part specifies which secrets engine should be used.
+- The second part specifies which secret should be accessed.
+- The third part specifies which field of that secret should be used.
 
 For example, if you place a Key/Value secret for the Grafana admin user in _secret/grafana/admin_defaults_
 the syntax for accessing it's _password_ field would be `$__vault{kv:secret/grafana/admin_defaults:password}`.
@@ -76,7 +73,7 @@ authorized user. Grafana supports a subset of these which are most likely to be 
 #### Key/Value
 
 Grafana supports Vault's [K/V version 2](https://www.vaultproject.io/docs/secrets/kv/kv-v2) storage engine which
-is used to store and retrieve arbitrary secrets as `kv`. 
+is used to store and retrieve arbitrary secrets as `kv`.
 
 ```ini
 $__vault{kv:secret/grafana/smtp:username}

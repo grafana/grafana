@@ -2,13 +2,19 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import _ from 'lodash';
 import { DataSourceApi, DataSourceSelectItem, MetricFindValue, stringToJsRegex } from '@grafana/data';
 
-import { QueryVariableModel, VariableHide, VariableOption, VariableRefresh, VariableSort, VariableTag } from '../types';
+import {
+  initialVariableModelState,
+  QueryVariableModel,
+  VariableOption,
+  VariableRefresh,
+  VariableSort,
+  VariableTag,
+} from '../types';
 
 import {
   ALL_VARIABLE_TEXT,
   ALL_VARIABLE_VALUE,
   getInstanceState,
-  NEW_VARIABLE_ID,
   NONE_VARIABLE_TEXT,
   NONE_VARIABLE_VALUE,
   VariablePayload,
@@ -29,14 +35,8 @@ export interface QueryVariableEditorState {
 }
 
 export const initialQueryVariableModelState: QueryVariableModel = {
-  id: NEW_VARIABLE_ID,
-  global: false,
-  index: -1,
+  ...initialVariableModelState,
   type: 'query',
-  name: '',
-  label: null,
-  hide: VariableHide.dontHide,
-  skipUrlSync: false,
   datasource: null,
   query: '',
   regex: '',
@@ -52,7 +52,6 @@ export const initialQueryVariableModelState: QueryVariableModel = {
   tagsQuery: '',
   tagValuesQuery: '',
   definition: '',
-  initLock: null,
 };
 
 const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
@@ -87,6 +86,18 @@ const sortVariableValues = (options: any[], sortOrder: VariableSort) => {
   return options;
 };
 
+const getAllMatches = (str: string, regex: RegExp): any => {
+  const results = {};
+  let matches;
+
+  do {
+    matches = regex.exec(str);
+    _.merge(results, matches);
+  } while (regex.global && matches);
+
+  return results;
+};
+
 const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, metricNames: any[]) => {
   let regex, i, matches;
   let options: VariableOption[] = [];
@@ -110,13 +121,23 @@ const metricNamesToVariableValues = (variableRegEx: string, sort: VariableSort, 
     }
 
     if (regex) {
-      matches = regex.exec(value);
-      if (!matches) {
+      matches = getAllMatches(value, regex);
+
+      if (_.isEmpty(matches)) {
         continue;
       }
-      if (matches.length > 1) {
-        value = matches[1];
-        text = matches[1];
+
+      if (matches.groups && matches.groups.value && matches.groups.text) {
+        value = matches.groups.value;
+        text = matches.groups.text;
+      } else if (matches.groups && matches.groups.value) {
+        value = matches.groups.value;
+        text = value;
+      } else if (matches.groups && matches.groups.text) {
+        text = matches.groups.text;
+        value = text;
+      } else if (matches['1']) {
+        value = matches['1'];
       }
     }
 

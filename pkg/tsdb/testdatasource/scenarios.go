@@ -237,7 +237,10 @@ func init() {
 			series := newSeriesForQuery(query, 0)
 			startTime := context.TimeRange.GetFromAsMsEpoch()
 			endTime := context.TimeRange.GetToAsMsEpoch()
-			step := (endTime - startTime) / int64(len(values)-1)
+			var step int64 = 0
+			if len(values) > 1 {
+				step = (endTime - startTime) / int64(len(values)-1)
+			}
 
 			for _, val := range values {
 				series.Points = append(series.Points, tsdb.TimePoint{val, null.FloatFrom(float64(startTime))})
@@ -253,6 +256,15 @@ func init() {
 	registerScenario(&Scenario{
 		Id:   "streaming_client",
 		Name: "Streaming Client",
+		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
+			// Real work is in javascript client
+			return tsdb.NewQueryResult()
+		},
+	})
+
+	registerScenario(&Scenario{
+		Id:   "live",
+		Name: "Grafana Live",
 		Handler: func(query *tsdb.Query, context *tsdb.TsdbQuery) *tsdb.QueryResult {
 			// Real work is in javascript client
 			return tsdb.NewQueryResult()

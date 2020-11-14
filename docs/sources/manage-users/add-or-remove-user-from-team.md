@@ -2,11 +2,7 @@
 title = "Add or remove a user from a team"
 keywords = ["grafana", "configuration", "documentation", "users",
 "teams"]
-type = "docs"
-[menu.docs]
-identifier = "add-or-remove-user-from-team"
-parent = "manage-users"
-weight = 10
+weight = 300
 +++
 
 # Add or remove a user from a team

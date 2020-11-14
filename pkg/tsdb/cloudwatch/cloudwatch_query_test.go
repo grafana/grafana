@@ -3,188 +3,137 @@ package cloudwatch
 import (
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCloudWatchQuery(t *testing.T) {
-	Convey("TestCloudWatchQuery", t, func() {
-		Convey("and SEARCH(someexpression) was specified in the query editor", func() {
-			query := &cloudWatchQuery{
-				RefId:      "A",
-				Region:     "us-east-1",
-				Expression: "SEARCH(someexpression)",
-				Stats:      "Average",
-				Period:     300,
-				Id:         "id1",
-			}
+	t.Run("SEARCH(someexpression) was specified in the query editor", func(t *testing.T) {
+		query := &cloudWatchQuery{
+			RefId:      "A",
+			Region:     "us-east-1",
+			Expression: "SEARCH(someexpression)",
+			Stats:      "Average",
+			Period:     300,
+			Id:         "id1",
+		}
 
-			Convey("it is a search expression", func() {
-				So(query.isSearchExpression(), ShouldBeTrue)
-			})
+		assert.True(t, query.isSearchExpression(), "Expected a search expression")
+		assert.False(t, query.isMathExpression(), "Expected not math expression")
+	})
 
-			Convey("it is not math expressions", func() {
-				So(query.isMathExpression(), ShouldBeFalse)
-			})
+	t.Run("No expression, no multi dimension key values and no * was used", func(t *testing.T) {
+		query := &cloudWatchQuery{
+			RefId:      "A",
+			Region:     "us-east-1",
+			Expression: "",
+			Stats:      "Average",
+			Period:     300,
+			Id:         "id1",
+			MatchExact: true,
+			Dimensions: map[string][]string{
+				"InstanceId": {"i-12345678"},
+			},
+		}
+
+		assert.False(t, query.isSearchExpression(), "Expected not a search expression")
+		assert.False(t, query.isMathExpression(), "Expected not math expressions")
+	})
+
+	t.Run("No expression but multi dimension key values exist", func(t *testing.T) {
+		query := &cloudWatchQuery{
+			RefId:      "A",
+			Region:     "us-east-1",
+			Expression: "",
+			Stats:      "Average",
+			Period:     300,
+			Id:         "id1",
+			Dimensions: map[string][]string{
+				"InstanceId": {"i-12345678", "i-34562312"},
+			},
+		}
+
+		assert.True(t, query.isSearchExpression(), "Expected a search expression")
+		assert.False(t, query.isMathExpression(), "Expected not math expressions")
+	})
+
+	t.Run("No expression but dimension values has *", func(t *testing.T) {
+		query := &cloudWatchQuery{
+			RefId:      "A",
+			Region:     "us-east-1",
+			Expression: "",
+			Stats:      "Average",
+			Period:     300,
+			Id:         "id1",
+			Dimensions: map[string][]string{
+				"InstanceId":   {"i-12345678", "*"},
+				"InstanceType": {"abc", "def"},
+			},
+		}
+
+		assert.True(t, query.isSearchExpression(), "Expected a search expression")
+		assert.False(t, query.isMathExpression(), "Expected not math expression")
+	})
+
+	t.Run("Query has a multi-valued dimension", func(t *testing.T) {
+		query := &cloudWatchQuery{
+			RefId:      "A",
+			Region:     "us-east-1",
+			Expression: "",
+			Stats:      "Average",
+			Period:     300,
+			Id:         "id1",
+			Dimensions: map[string][]string{
+				"InstanceId":   {"i-12345678", "i-12345679"},
+				"InstanceType": {"abc"},
+			},
+		}
+
+		assert.True(t, query.isSearchExpression(), "Expected a search expression")
+		assert.True(t, query.isMultiValuedDimensionExpression(), "Expected a multi-valued dimension expression")
+	})
+
+	t.Run("No dimensions were added", func(t *testing.T) {
+		query := &cloudWatchQuery{
+			RefId:      "A",
+			Region:     "us-east-1",
+			Expression: "",
+			Stats:      "Average",
+			Period:     300,
+			Id:         "id1",
+			MatchExact: false,
+			Dimensions: make(map[string][]string),
+		}
+		t.Run("Match exact is false", func(t *testing.T) {
+			query.MatchExact = false
+			assert.True(t, query.isSearchExpression(), "Expected a search expression")
+			assert.False(t, query.isMathExpression(), "Expected not math expression")
+			assert.False(t, query.isMetricStat(), "Expected not metric stat")
 		})
 
-		Convey("and no expression, no multi dimension key values and no * was used", func() {
-			query := &cloudWatchQuery{
-				RefId:      "A",
-				Region:     "us-east-1",
-				Expression: "",
-				Stats:      "Average",
-				Period:     300,
-				Id:         "id1",
-				MatchExact: true,
-				Dimensions: map[string][]string{
-					"InstanceId": {"i-12345678"},
-				},
-			}
-
-			Convey("it is not a search expression", func() {
-				So(query.isSearchExpression(), ShouldBeFalse)
-			})
-
-			Convey("it is not math expressions", func() {
-				So(query.isMathExpression(), ShouldBeFalse)
-			})
+		t.Run("Match exact is true", func(t *testing.T) {
+			query.MatchExact = true
+			assert.False(t, query.isSearchExpression(), "Exxpected not search expression")
+			assert.False(t, query.isMathExpression(), "Expected not math expression")
+			assert.True(t, query.isMetricStat(), "Expected a metric stat")
 		})
+	})
 
-		Convey("and no expression but multi dimension key values exist", func() {
-			query := &cloudWatchQuery{
-				RefId:      "A",
-				Region:     "us-east-1",
-				Expression: "",
-				Stats:      "Average",
-				Period:     300,
-				Id:         "id1",
-				Dimensions: map[string][]string{
-					"InstanceId": {"i-12345678", "i-34562312"},
-				},
-			}
+	t.Run("Match exact is", func(t *testing.T) {
+		query := &cloudWatchQuery{
+			RefId:      "A",
+			Region:     "us-east-1",
+			Expression: "",
+			Stats:      "Average",
+			Period:     300,
+			Id:         "id1",
+			MatchExact: false,
+			Dimensions: map[string][]string{
+				"InstanceId": {"i-12345678"},
+			},
+		}
 
-			Convey("it is a search expression", func() {
-				So(query.isSearchExpression(), ShouldBeTrue)
-			})
-
-			Convey("it is not math expressions", func() {
-				So(query.isMathExpression(), ShouldBeFalse)
-			})
-		})
-
-		Convey("and no expression but dimension values has *", func() {
-			query := &cloudWatchQuery{
-				RefId:      "A",
-				Region:     "us-east-1",
-				Expression: "",
-				Stats:      "Average",
-				Period:     300,
-				Id:         "id1",
-				Dimensions: map[string][]string{
-					"InstanceId":   {"i-12345678", "*"},
-					"InstanceType": {"abc", "def"},
-				},
-			}
-
-			Convey("it is not a search expression", func() {
-				So(query.isSearchExpression(), ShouldBeTrue)
-			})
-
-			Convey("it is not math expressions", func() {
-				So(query.isMathExpression(), ShouldBeFalse)
-			})
-		})
-
-		Convey("and query has a multi-valued dimension", func() {
-			query := &cloudWatchQuery{
-				RefId:      "A",
-				Region:     "us-east-1",
-				Expression: "",
-				Stats:      "Average",
-				Period:     300,
-				Id:         "id1",
-				Dimensions: map[string][]string{
-					"InstanceId":   {"i-12345678", "i-12345679"},
-					"InstanceType": {"abc"},
-				},
-			}
-
-			Convey("it is a search expression", func() {
-				So(query.isSearchExpression(), ShouldBeTrue)
-			})
-
-			Convey("it is a multi-valued dimension expression", func() {
-				So(query.isMultiValuedDimensionExpression(), ShouldBeTrue)
-			})
-		})
-
-		Convey("and no dimensions were added", func() {
-			query := &cloudWatchQuery{
-				RefId:      "A",
-				Region:     "us-east-1",
-				Expression: "",
-				Stats:      "Average",
-				Period:     300,
-				Id:         "id1",
-				MatchExact: false,
-				Dimensions: make(map[string][]string),
-			}
-			Convey("and match exact is false", func() {
-				query.MatchExact = false
-				Convey("it is a search expression", func() {
-					So(query.isSearchExpression(), ShouldBeTrue)
-				})
-
-				Convey("it is not math expressions", func() {
-					So(query.isMathExpression(), ShouldBeFalse)
-				})
-
-				Convey("it is not metric stat", func() {
-					So(query.isMetricStat(), ShouldBeFalse)
-				})
-			})
-
-			Convey("and match exact is true", func() {
-				query.MatchExact = true
-				Convey("it is a search expression", func() {
-					So(query.isSearchExpression(), ShouldBeFalse)
-				})
-
-				Convey("it is not math expressions", func() {
-					So(query.isMathExpression(), ShouldBeFalse)
-				})
-
-				Convey("it is a metric stat", func() {
-					So(query.isMetricStat(), ShouldBeTrue)
-				})
-			})
-		})
-
-		Convey("and match exact is", func() {
-			query := &cloudWatchQuery{
-				RefId:      "A",
-				Region:     "us-east-1",
-				Expression: "",
-				Stats:      "Average",
-				Period:     300,
-				Id:         "id1",
-				MatchExact: false,
-				Dimensions: map[string][]string{
-					"InstanceId": {"i-12345678"},
-				},
-			}
-
-			Convey("it is a search expression", func() {
-				So(query.isSearchExpression(), ShouldBeTrue)
-			})
-
-			Convey("it is not math expressions", func() {
-				So(query.isMathExpression(), ShouldBeFalse)
-			})
-
-			Convey("it is not metric stat", func() {
-				So(query.isMetricStat(), ShouldBeFalse)
-			})
-		})
+		assert.True(t, query.isSearchExpression(), "Expected search expression")
+		assert.False(t, query.isMathExpression(), "Expected not math expression")
+		assert.False(t, query.isMetricStat(), "Expected not metric stat")
 	})
 }

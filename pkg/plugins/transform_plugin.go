@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"path"
+	"path/filepath"
 	"strconv"
 
 	sdkgrpcplugin "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
@@ -28,17 +28,17 @@ type TransformPlugin struct {
 	*TransformWrapper
 }
 
-func (p *TransformPlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
+func (p *TransformPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) error {
 	if err := decoder.Decode(p); err != nil {
 		return err
 	}
 
-	if err := p.registerPlugin(pluginDir); err != nil {
+	if err := p.registerPlugin(base); err != nil {
 		return err
 	}
 
 	cmd := ComposePluginStartCommand(p.Executable)
-	fullpath := path.Join(p.PluginDir, cmd)
+	fullpath := filepath.Join(p.PluginDir, cmd)
 	factory := grpcplugin.NewBackendPlugin(p.Id, fullpath, grpcplugin.PluginStartFuncs{
 		OnStart: p.onPluginStart,
 	})
@@ -74,7 +74,7 @@ func NewTransformWrapper(log log.Logger, plugin sdkgrpcplugin.TransformClient) *
 type TransformWrapper struct {
 	sdkgrpcplugin.TransformClient
 	logger   log.Logger
-	callback *transformCallback
+	Callback *transformCallback
 }
 
 func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
@@ -102,7 +102,7 @@ func (tw *TransformWrapper) Transform(ctx context.Context, query *tsdb.TsdbQuery
 			},
 		})
 	}
-	pbRes, err := tw.TransformClient.TransformData(ctx, pbQuery, tw.callback)
+	pbRes, err := tw.TransformClient.TransformData(ctx, pbQuery, tw.Callback)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +149,7 @@ func (s *transformCallback) QueryData(ctx context.Context, req *pluginv2.QueryDa
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {
-		return nil, fmt.Errorf("Could not find datasource %v", err)
+		return nil, fmt.Errorf("could not find datasource: %w", err)
 	}
 
 	// Convert plugin-model (datasource) queries to tsdb queries

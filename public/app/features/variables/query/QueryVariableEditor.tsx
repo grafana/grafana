@@ -2,7 +2,7 @@ import React, { ChangeEvent, PureComponent } from 'react';
 import { InlineFormLabel, LegacyForms } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
-import templateSrv from '../../templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
 import { QueryVariableEditorState } from './reducer';
@@ -185,7 +185,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
             <VariableQueryEditor
               datasource={this.props.editor.extended?.dataSource}
               query={this.props.variable.query}
-              templateSrv={templateSrv}
+              templateSrv={getTemplateSrv()}
               onChange={this.onQueryChange}
             />
           )}
@@ -193,14 +193,26 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
           <div className="gf-form">
             <InlineFormLabel
               width={10}
-              tooltip={'Optional, if you want to extract part of a series name or metric node segment.'}
+              tooltip={
+                <div>
+                  Optional, if you want to extract part of a series name or metric node segment. Named capture groups
+                  can be used to separate the display text and value (
+                  <a
+                    href="https://grafana.com/docs/grafana/latest/variables/filter-variables-with-regex#filter-and-modify-using-named-text-and-value-capture-groups"
+                    target="__blank"
+                  >
+                    see examples
+                  </a>
+                  ).
+                </div>
+              }
             >
               Regex
             </InlineFormLabel>
             <input
               type="text"
               className="gf-form-input"
-              placeholder="/.*-(.*)-.*/"
+              placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
               value={this.state.regex ?? this.props.variable.regex}
               onChange={this.onRegExChange}
               onBlur={this.onRegExBlur}

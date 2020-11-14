@@ -47,7 +47,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			},
 		}
 
-		executor := newExecutor()
+		executor := newExecutor(nil)
 		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			Queries: []*tsdb.Query{
 				{
@@ -100,7 +100,7 @@ func TestQuery_DescribeLogGroups(t *testing.T) {
 			},
 		}
 
-		executor := newExecutor()
+		executor := newExecutor(nil)
 		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			Queries: []*tsdb.Query{
 				{
@@ -170,7 +170,7 @@ func TestQuery_GetLogGroupFields(t *testing.T) {
 
 	const refID = "A"
 
-	executor := newExecutor()
+	executor := newExecutor(nil)
 	resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 		Queries: []*tsdb.Query{
 			{
@@ -249,7 +249,7 @@ func TestQuery_StartQuery(t *testing.T) {
 			To:   "1584700643000",
 		}
 
-		executor := newExecutor()
+		executor := newExecutor(nil)
 		_, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			TimeRange: timeRange,
 			Queries: []*tsdb.Query{
@@ -295,7 +295,7 @@ func TestQuery_StartQuery(t *testing.T) {
 			To:   "1584873443000",
 		}
 
-		executor := newExecutor()
+		executor := newExecutor(nil)
 		resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 			TimeRange: timeRange,
 			Queries: []*tsdb.Query{
@@ -371,7 +371,7 @@ func TestQuery_StopQuery(t *testing.T) {
 		To:   "1584700643000",
 	}
 
-	executor := newExecutor()
+	executor := newExecutor(nil)
 	resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
@@ -458,7 +458,7 @@ func TestQuery_GetQueryResults(t *testing.T) {
 		},
 	}
 
-	executor := newExecutor()
+	executor := newExecutor(nil)
 	resp, err := executor.Query(context.Background(), fakeDataSource(), &tsdb.TsdbQuery{
 		Queries: []*tsdb.Query{
 			{

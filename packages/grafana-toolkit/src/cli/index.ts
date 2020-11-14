@@ -18,6 +18,7 @@ import { pluginUpdateTask } from './tasks/plugin.update';
 import { ciBuildPluginDocsTask, ciBuildPluginTask, ciPackagePluginTask, ciPluginReportTask } from './tasks/plugin.ci';
 import { buildPackageTask } from './tasks/package.build';
 import { pluginCreateTask } from './tasks/plugin.create';
+import { pluginSignTask } from './tasks/plugin.sign';
 import { bundleManagedTask } from './tasks/plugin/bundle.managed';
 import { componentCreateTask } from './tasks/component.create';
 
@@ -139,10 +140,16 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:build')
     .option('--maxJestWorkers <num>|<string>', 'Limit number of Jest workers spawned')
-    .description('Prepares plugin dist package')
     .option('--coverage', 'Run code coverage', false)
+    .option('--preserveConsole', 'Preserves console calls', false)
+    .description('Prepares plugin dist package')
     .action(async cmd => {
-      await execTask(pluginBuildTask)({ coverage: cmd.coverage, silent: true, maxJestWorkers: cmd.maxJestWorkers });
+      await execTask(pluginBuildTask)({
+        coverage: cmd.coverage,
+        silent: true,
+        maxJestWorkers: cmd.maxJestWorkers,
+        preserveConsole: cmd.preserveConsole,
+      });
     });
 
   program
@@ -180,6 +187,19 @@ export const run = (includeInternalScripts = false) => {
     });
 
   program
+    .command('plugin:sign')
+    .option('--signatureType <type>', 'Signature Type')
+    .option('--rootUrls <urls...>', 'Root URLs')
+    .description('Create a plugin signature')
+    .action(async cmd => {
+      await execTask(pluginSignTask)({
+        signatureType: cmd.signatureType,
+        rootUrls: cmd.rootUrls,
+        silent: true,
+      });
+    });
+
+  program
     .command('plugin:ci-build')
     .option('--finish', 'move all results to the jobs folder', false)
     .option('--maxJestWorkers <num>|<string>', 'Limit number of Jest workers spawned')
@@ -200,11 +220,14 @@ export const run = (includeInternalScripts = false) => {
 
   program
     .command('plugin:ci-package')
-    .option('--signing-admin', 'Use the admin API endpoint for signing the manifest.', false)
+    .option('--signatureType <type>', 'Signature Type')
+    .option('--rootUrls <urls...>', 'Root URLs')
+    .option('--signing-admin', 'Use the admin API endpoint for signing the manifest. (deprecated)', false)
     .description('Create a zip packages for the plugin')
     .action(async cmd => {
       await execTask(ciPackagePluginTask)({
-        signingAdmin: cmd.signingAdmin,
+        signatureType: cmd.signatureType,
+        rootUrls: cmd.rootUrls,
       });
     });
 

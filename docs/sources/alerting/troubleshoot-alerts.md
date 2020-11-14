@@ -2,10 +2,6 @@
 title = "Troubleshoot alerts"
 description = "Troubleshoot alert rules"
 keywords = ["grafana", "alerting", "guide", "rules", "troubleshoot"]
-type = "docs"
-[menu.docs]
-name = "Troubleshoot alerts"
-parent = "alerting"
 weight = 500
 +++
 

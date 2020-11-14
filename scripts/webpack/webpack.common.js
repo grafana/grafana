@@ -65,7 +65,7 @@ module.exports = {
     new MonacoWebpackPlugin({
       // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
       filename: 'monaco-[name].worker.js',
-      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql'],
+      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql', 'javascript'],
       features: [
         '!accessibilityHelp',
         'bracketMatching',
@@ -180,6 +180,12 @@ module.exports = {
       chunks: 'all',
       minChunks: 1,
       cacheGroups: {
+        unicons: {
+          test: /[\\/]node_modules[\\/]@iconscout[\\/]react-unicons[\\/].*[jt]sx?$/,
+          chunks: 'initial',
+          priority: 20,
+          enforce: true,
+        },
         moment: {
           test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
           chunks: 'initial',

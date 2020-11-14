@@ -1,8 +1,6 @@
 +++
 title = "Enter variable Selection Options"
-type = "docs"
-[menu.docs]
-weight = 800
+weight = 400
 +++
 
 # Enter variable selection options
@@ -23,6 +21,6 @@ This option is only visible if the **Include All option** is selected.
 
 Enter regex, globs, or lucene syntax in the **Custom all value** field to define the value of the `All` option.
 
-By default the `All` value includes all options in combined expression. This can become very long and can have performance problems. Sometimes it can be better to specify a custom all value, like a wildcard regex. 
+By default the `All` value includes all options in combined expression. This can become very long and can have performance problems. Sometimes it can be better to specify a custom all value, like a wildcard regex.
 
 In order to have custom regex, globs, or lucene syntax in the **Custom all value** option, it is never escaped so you will have to think about what is a valid value for your data source.

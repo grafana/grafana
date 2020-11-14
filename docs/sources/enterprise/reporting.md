@@ -2,10 +2,7 @@
 title = "Reporting"
 description = ""
 keywords = ["grafana", "reporting"]
-type = "docs"
 aliases = ["/docs/grafana/latest/administration/reports"]
-[menu.docs]
-parent = "enterprise"
 weight = 400
 +++
 
@@ -21,8 +18,8 @@ Any changes you make to a dashboard used in a report are reflected the next time
 
 ## Requirements
 
-* SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../administration/configuration.md#smtp" >}}) in [Configuration]({{< relref "../administration/configuration.md" >}}) for more information.
-* The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../administration/image_rendering.md" >}}) for more information.
+- SMTP must be configured for reports to be sent. Refer to [SMTP]({{< relref "../administration/configuration.md#smtp" >}}) in [Configuration]({{< relref "../administration/configuration.md" >}}) for more information.
+- The Image Renderer plugin must be installed or the remote rendering service must be set up. Refer to [Image rendering]({{< relref "../administration/image_rendering.md" >}}) for more information.
 
 ## Create or update a report
 
@@ -30,16 +27,16 @@ Currently only Organization Admins can create reports.
 
 1. Click on the reports icon in the side menu. The Reports tab allows you to view, create, and update your reports.
 1. Enter report information. All fields are required unless otherwise indicated.
-   * **Name -** Name of the report as you want it to appear in the Reports list.
-   * **Source dashboard -** Select the dashboard to generate the report from.
-   * **Recipients -** Enter the emails of the people or teams that you want to receive the report.
-   * **Reply to -** (optional) The address that will appear in the **Reply to** field of the email.
-   * **Message -** (optional) Message body in the email with the report.
-   * **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
+   - **Name -** Name of the report as you want it to appear in the Reports list.
+   - **Source dashboard -** Select the dashboard to generate the report from.
+   - **Recipients -** Enter the emails of the people or teams that you want to receive the report.
+   - **Reply to -** (optional) The address that will appear in the **Reply to** field of the email.
+   - **Message -** (optional) Message body in the email with the report.
+   - **Time range -** (optional) Use custom time range for the report. For more information check [Report time range]({{< relref "#report-time-range" >}}).
 1. **Preview PDF** to make sure the report appears as you expect. Update if necessary.
 1. Enter scheduling information. Options vary depending on the frequency you select.
-1. Select the orientation option for generated report: **Portrait** or **Landscape**.  
-1. Select the layout option for generated report: **Simple** or **Grid**.  
+1. Select the orientation option for generated report: **Portrait** or **Landscape**.
+1. Select the layout option for generated report: **Simple** or **Grid**.
 1. **Save** the report.
 1. **Send test email** to verify that the whole configuration is working as expected.
 
@@ -66,23 +63,23 @@ All scheduling indicates when the reporting service will start rendering the das
 
 Hourly reports are generated once per hour. All fields are required.
 
-* **At minute -** The number of minutes after full hour when the report should be generated.
-* **Time zone -** Time zone to determine the offset of the full hour. Does not currently change the time in the rendered report. 
+- **At minute -** The number of minutes after full hour when the report should be generated.
+- **Time zone -** Time zone to determine the offset of the full hour. Does not currently change the time in the rendered report.
 
 #### Daily
 
 Daily reports are generated once per day. All fields are required.
 
-* **Time -** Time the report is sent, in 24-hour format.
-* **Time zone -** Time zone for the **Time** field.
+- **Time -** Time the report is sent, in 24-hour format.
+- **Time zone -** Time zone for the **Time** field.
 
 #### Weekly
 
 Weekly reports are generated once per week. All fields are required.
 
-* **Day -** Weekday which the report should be sent on.
-* **Time -** Time the report is sent, in 24-hour format.
-* **Time zone -** Time zone for the **Time** field.
+- **Day -** Weekday which the report should be sent on.
+- **Time -** Time the report is sent, in 24-hour format.
+- **Time zone -** Time zone for the **Time** field.
 
 #### Monthly
 
@@ -90,9 +87,9 @@ Weekly reports are generated once per week. All fields are required.
 
 Monthly reports are generated once per month. All fields are required.
 
-* **Day in month -** Day of the month when the report should be sent. You can select `last` for reports that should go out on the last day of the month.
-* **Time -** Time the report is sent, in 24-hour format.
-* **Time zone -** Time zone for the **Time** field.
+- **Day in month -** Day of the month when the report should be sent. You can select `last` for reports that should go out on the last day of the month.
+- **Time -** Time the report is sent, in 24-hour format.
+- **Time zone -** Time zone for the **Time** field.
 
 #### Never
 
@@ -141,12 +138,12 @@ image_scale_factor = 2
 > Setting custom report time range is available in Grafana Enterprise v7.2+.
 
 By default, reports use the saved time range of the dashboard. Changing the time range of the report can be done by:
-- Saving a modified time range to the dashboard. 
+- Saving a modified time range to the dashboard.
 - Setting a time range via **Time range** field in the report form. If specified, then this custom time range overrides the one from the report's dashboard.
 
 The page header of the report displays the time range for the dashboard's data queries. Dashboards set to use the browser's time zone will use the time zone on the Grafana server.
 
-If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. We advise always setting the time zone to UTC for dashboards when using a remote renderer to avoid this. 
+If the time zone is set differently between your Grafana server and its remote image renderer, then the time ranges in the report might be different between the page header and the time axes in the panels. We advise always setting the time zone to UTC for dashboards when using a remote renderer to avoid this.
 
 ## Reports settings
 
@@ -154,7 +151,7 @@ If the time zone is set differently between your Grafana server and its remote i
 
 You can configure organization-wide report settings in the **Settings** tab on the **Reporting** page. Settings are applied to all the reports for current organization.
 
-You can customize the branding options.  
+You can customize the branding options.
 
 Report branding:
 **Company logo URL** - Company logo displayed in the report PDF. Defaults to the Grafana logo.
@@ -163,8 +160,8 @@ Email branding:
 - **Company logo URL** - Company logo displayed in the report PDF. Defaults to the Grafana logo.
 - **Email footer** - Toggle to enable report email footer. Select **Sent by** or **None**.
 - **Footer link text** - Text for the link in the report email footer. Defaults to "Grafana".
-- **Footer link URL** - Link for the report email footer.  
-  
+- **Footer link URL** - Link for the report email footer.
+
 {{< docs-imagebox img="/img/docs/enterprise/reports_settings.png" max-width="500px" class="docs-image--no-shadow" >}}
 
 ## Troubleshoot reporting

@@ -85,8 +85,7 @@ export const Pages = {
             selectionOptionsIncludeAllSwitch: 'Variable editor Form IncludeAll switch',
             selectionOptionsCustomAllInput: 'Variable editor Form IncludeAll field',
             previewOfValuesOption: 'Variable editor Preview of Values option',
-            addButton: 'Variable editor Add button',
-            updateButton: 'Variable editor Update button',
+            submitButton: 'Variable editor Submit button',
           },
           QueryVariable: {
             queryOptionsDataSourceSelect: 'Variable editor Form Query DataSource select',
@@ -135,5 +134,15 @@ export const Pages = {
   },
   SoloPanel: {
     url: (page: string) => `/d-solo/${page}`,
+  },
+  PluginsList: {
+    page: 'Plugins list page',
+    list: 'Plugins list',
+    listItem: 'Plugins list item',
+    signatureErrorNotice: 'Unsigned plugins notice',
+  },
+  PluginPage: {
+    page: 'Plugin page',
+    signatureInfo: 'Plugin signature info',
   },
 };

@@ -60,7 +60,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
     {
       id: 'pipe',
       name: 'Pipe',
-      description: 'Values are seperated by | character',
+      description: 'Values are separated by | character',
       formatter: ({ value }) => {
         if (typeof value === 'string') {
           return value;
@@ -90,7 +90,7 @@ export const formatRegistry = new Registry<FormatRegistryItem>(() => {
     {
       id: 'csv',
       name: 'Csv',
-      description: 'Comma seperated values',
+      description: 'Comma separated values',
       formatter: ({ value }) => {
         if (isArray(value)) {
           return value.join(',');

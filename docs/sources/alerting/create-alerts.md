@@ -2,10 +2,6 @@
 title = "Create alerts"
 description = "Configure alert rules"
 keywords = ["grafana", "alerting", "guide", "rules"]
-type = "docs"
-[menu.docs]
-name = "Create alerts"
-parent = "alerting"
 weight = 200
 +++
 
@@ -41,7 +37,7 @@ This section describes the fields you fill out to create an alert.
 - **Evaluate every -** Specify how often the scheduler should evaluate the alert rule. This is referred to as the _evaluation interval_.
 - **For -** Specify how long the query needs to violate the configured thresholds before the alert notification triggers.
 
-You can set a minimum evaluation interval in the `alerting.min_interval_seconds` config field, to set a minimum time between evaluations. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}#min-interval-seconds) for more information.
+You can set a minimum evaluation interval in the `alerting.min_interval_seconds` configuration field, to set a minimum time between evaluations. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}#min-interval-seconds) for more information.
 
 > **Caution:** Do not use `For` with the `If no data or all values are null` setting set to `No Data`. The triggering of `No Data` will trigger instantly and not take `For` into consideration. This may also result in that an OK notification not being sent if alert transitions from `No Data -> Pending -> OK`.
 
@@ -127,3 +123,5 @@ The actual notifications are configured and shared between multiple alerts. Read
 ## Alert state history and annotations
 
 Alert state changes are recorded in the internal annotation table in Grafana's database. The state changes are visualized as annotations in the alert rule's graph panel. You can also go into the `State history` submenu in the alert tab to view and clear state history.
+
+<!-- BEGIN Optimal Workshop Intercept Snippet --><div id='owInviteSnippet' style='position:fixed;right:20px;bottom:20px;width:280px;padding:20px;margin:0;border-radius:6px;background:#1857B8;color:#F7F8FA;text-align:left;z-index:2200000000;opacity:0;transition:opacity 500ms;-webkit-transition:opacity 500ms;display:none;'><div id='owInviteMessage' style='padding:0;margin:0 0 20px 0;font-size:16px;'>Got a spare two and a half minutes to help us improve the docs?</div><a id='owInviteOk' href='https://Grafana.optimalworkshop.com/questions/grafana-docs?tag=docs&utm_medium=intercept' onclick='this.parentNode.style.display="none";' target='_blank' style='color:#F7FAFF;font-size:16px;font-weight:bold;text-decoration:underline;'>Yes, I&#x27;ll help</a><a id='owInviteCancel' href='javascript:void(0)' onclick='this.parentNode.style.display="none";' style='color:#F7F8FA;font-size:14px;text-decoration:underline;float:right;'>Close</a></div><script>var owOnload=function(){if(-1==document.cookie.indexOf('ow-intercept-quiz-4ior230e')){var o=new XMLHttpRequest;o.onloadend=function(){try{var o=document.getElementById('owInviteSnippet');var date=new Date();date.setMonth(date.getMonth()+1);this.response&&JSON.parse(this.response).active===!0&&(document.cookie='ow-intercept-quiz-4ior230e=Done;path=/;expires='+date.toUTCString()+';',setTimeout(function(){o.style.display='block',o.style.opacity=1},2e3))}catch(e){}},o.open('POST','https://app.optimalworkshop.com/survey_status/questions/4ior230e/active'),o.send()}};if(window.addEventListener){window.addEventListener('load',function(){owOnload();});}else if(window.attachEvent){window.attachEvent('onload',function(){owOnload();});}</script><!-- END Optimal Workshop snippet -->

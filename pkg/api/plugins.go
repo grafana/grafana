@@ -121,7 +121,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 			listItem.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + listItem.Id + "/"
 		}
 
-		// filter out disabled
+		// filter out disabled plugins
 		if enabledFilter == "1" && !listItem.Enabled {
 			continue
 		}
@@ -362,6 +362,10 @@ func (hs *HTTPServer) getCachedPluginSettings(pluginID string, user *models.Sign
 
 	hs.CacheService.Set(cacheKey, query.Result, time.Second*5)
 	return query.Result, nil
+}
+
+func (hs *HTTPServer) GetPluginErrorsList(c *models.ReqContext) Response {
+	return JSON(200, plugins.ScanningErrors())
 }
 
 func translatePluginRequestErrorToAPIError(err error) Response {

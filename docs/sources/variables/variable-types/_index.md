@@ -1,8 +1,6 @@
 +++
 title = "Variables types"
-type = "docs"
-[menu.docs]
-weight = 300
+weight = 140
 +++
 
 # Variables types

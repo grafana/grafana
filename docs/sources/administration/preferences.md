@@ -2,9 +2,7 @@
 title = "Change your preferences"
 description = "How to change your Grafana preferences"
 keywords = ["grafana", "profile", "change", "preferences"]
-type = "docs"
-[menu.docs]
-weight = 100
+weight = 200
 +++
 
 # Change your Grafana preferences

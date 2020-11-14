@@ -1,12 +1,11 @@
 import {
   ApplyFieldOverrideOptions,
-  ColorScheme,
   DataFrame,
   DataLink,
   DataSourceInstanceSettings,
   DynamicConfigValue,
   Field,
-  FieldColorMode,
+  FieldColorModeId,
   FieldConfig,
   FieldConfigPropertyItem,
   FieldOverrideContext,
@@ -42,13 +41,13 @@ interface OverrideProps {
 }
 
 interface GlobalMinMax {
-  min: number;
-  max: number;
+  min?: number | null;
+  max?: number | null;
 }
 
 export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
-  let min = Number.MAX_VALUE;
-  let max = Number.MIN_VALUE;
+  let min: number | null = null;
+  let max: number | null = null;
 
   const reducers = [ReducerID.min, ReducerID.max];
 
@@ -56,11 +55,15 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
     for (const field of frame.fields) {
       if (field.type === FieldType.number) {
         const stats = reduceField({ field, reducers });
-        if (stats[ReducerID.min] < min) {
-          min = stats[ReducerID.min];
+        const statsMin = stats[ReducerID.min];
+        const statsMax = stats[ReducerID.max];
+
+        if (min === null || statsMin < min) {
+          min = statsMin;
         }
-        if (stats[ReducerID.max] > max) {
-          max = stats[ReducerID.max];
+
+        if (max === null || statsMax > max) {
+          max = statsMax;
         }
       }
     }
@@ -84,6 +87,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 
   const fieldConfigRegistry = options.fieldConfigRegistry ?? standardFieldConfigEditorRegistry;
 
+  let seriesIndex = 0;
   let range: GlobalMinMax | undefined = undefined;
 
   // Prepare the Matchers
@@ -188,28 +192,35 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         }
       }
 
+      // Some color modes needs series index to assign field color so we count
+      // up series index here but ignore time fields
+      if (field.type !== FieldType.time) {
+        seriesIndex++;
+      }
+
       // Overwrite the configs
-      const f: Field = {
+      const newField: Field = {
         ...field,
         config,
         type,
         state: {
           ...field.state,
           displayName: null,
+          seriesIndex,
         },
       };
 
       // and set the display processor using it
-      f.display = getDisplayProcessor({
-        field: f,
+      newField.display = getDisplayProcessor({
+        field: newField,
         theme: options.theme,
         timeZone: options.timeZone,
       });
 
       // Attach data links supplier
-      f.getLinks = getLinksSupplier(
+      newField.getLinks = getLinksSupplier(
         newFrame,
-        f,
+        newField,
         fieldScopedVars,
         context.replaceVariables,
         context.getDataSourceSettingsByUid,
@@ -219,7 +230,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         }
       );
 
-      return f;
+      return newField;
     });
 
     newFrame.fields = fields;
@@ -287,7 +298,6 @@ const processFieldConfigValue = (
   const currentConfig = get(destination, fieldConfigProperty.path);
   if (currentConfig === null || currentConfig === undefined) {
     const item = context.fieldConfigRegistry.getIfExists(fieldConfigProperty.id);
-    // console.log(item);
     if (!item) {
       return;
     }
@@ -311,22 +321,13 @@ export function validateFieldConfig(config: FieldConfig) {
   if (!config.color) {
     if (thresholds) {
       config.color = {
-        mode: FieldColorMode.Thresholds,
+        mode: FieldColorModeId.Thresholds,
       };
     }
     // No Color settings
   } else if (!config.color.mode) {
     // Without a mode, skip color altogether
     delete config.color;
-  } else {
-    const { color } = config;
-    if (color.mode === FieldColorMode.Scheme) {
-      if (!color.schemeName) {
-        color.schemeName = ColorScheme.BrBG;
-      }
-    } else {
-      delete color.schemeName;
-    }
   }
 
   // Verify that max > min (swap if necessary)

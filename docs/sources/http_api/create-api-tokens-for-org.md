@@ -1,9 +1,7 @@
 +++
 title = "API Tutorial: Create API tokens and dashboards for an organization"
-type = "docs"
 keywords = ["grafana", "tutorials", "API", "Token", "Org", "Organization"]
 aliases =["/docs/grafana/latest/tutorials/api_org_token_howto/"]
-[menu.docs]
 weight = 150
 +++
 
@@ -13,9 +11,9 @@ Use the Grafana API to set up new Grafana organizations or to add dynamically ge
 
 ## Authentication
 
-There are two authentication methods to access the API: 
+There are two authentication methods to access the API:
 
-- Basic authentication: A Grafana Admin user can access some parts of the Grafana API through basic authentication. 
+- Basic authentication: A Grafana Admin user can access some parts of the Grafana API through basic authentication.
 - API Tokens: All organization actions are accessed through an API Token. An API Token is associated with an organization. It can be used to create dashboards and other components specific for that organization.
 
 ## How to create a new organization and an API Token
@@ -29,17 +27,17 @@ The task is to create a new organization and then add a Token that can be used b
 
     This should return a response: `{"message":"Organization created","orgId":6}`. Use the orgId for the next steps.
 
-2. Optional step. If the org was created previously and/or step 3 fails then first [add your Admin user to the org](http://docs.grafana.org/http_api/org/#add-user-in-organization):
+1. Optional step. If the org was created previously and/or step 3 fails then first [add your Admin user to the org](http://docs.grafana.org/http_api/org/#add-user-in-organization):
     ```bash
     curl -X POST -H "Content-Type: application/json" -d '{"loginOrEmail":"admin", "role": "Admin"}' http://admin:admin@localhost:3000/api/orgs/<org id of new org>/users
     ```
 
-3. [Switch the org context for the Admin user to the new org](http://docs.grafana.org/http_api/user/#switch-user-context-for-signed-in-user):
+1. [Switch the org context for the Admin user to the new org](http://docs.grafana.org/http_api/user/#switch-user-context-for-signed-in-user):
     ```bash
     curl -X POST http://admin:admin@localhost:3000/api/user/using/<id of new org>
     ```
 
-4. [Create the API token](http://docs.grafana.org/http_api/auth/#create-api-key):
+1. [Create the API token](http://docs.grafana.org/http_api/auth/#create-api-key):
     ```bash
     curl -X POST -H "Content-Type: application/json" -d '{"name":"apikeycurl", "role": "Admin"}' http://admin:admin@localhost:3000/api/auth/keys
     ```

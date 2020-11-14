@@ -199,7 +199,7 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 	return result, nil
 }
 
-// global macros/substitutions for all sql datasources
+// Interpolate provides global macros/substitutions for all sql datasources.
 var Interpolate = func(query *tsdb.Query, timeRange *tsdb.TimeRange, sql string) (string, error) {
 	minInterval, err := tsdb.GetIntervalFrom(query.DataSource, query.Model, time.Second*60)
 	if err != nil {
@@ -343,7 +343,7 @@ func (e *sqlQueryEndpoint) transformToTimeSeries(query *tsdb.Query, rows *core.R
 	}
 
 	if cfg.timeIndex == -1 {
-		return fmt.Errorf("Found no column named %s", strings.Join(e.timeColumnNames, " or "))
+		return fmt.Errorf("found no column named %q", strings.Join(e.timeColumnNames, " or "))
 	}
 
 	if cfg.fillMissing {
@@ -506,7 +506,7 @@ func (e *sqlQueryEndpoint) processRow(cfg *processCfg) error {
 
 		series.Points = append(series.Points, tsdb.TimePoint{value, null.FloatFrom(timestamp)})
 
-		if setting.Env == setting.DEV {
+		if setting.Env == setting.Dev {
 			e.log.Debug("Rows", "metric", metric, "time", timestamp, "value", value)
 		}
 	}
@@ -666,7 +666,10 @@ func ConvertSqlValueColumnToFloat(columnName string, columnValue interface{}) (n
 	case nil:
 		value.Valid = false
 	default:
-		return null.NewFloat(0, false), fmt.Errorf("Value column must have numeric datatype, column: %s type: %T value: %v", columnName, typedValue, typedValue)
+		return null.NewFloat(0, false), fmt.Errorf(
+			"value column must have numeric datatype, column: %s, type: %T, value: %v",
+			columnName, typedValue, typedValue,
+		)
 	}
 
 	return value, nil

@@ -9,8 +9,8 @@ import {
   SelectableValue,
   toDataFrame,
 } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import {
   CloudMonitoringQuery,
@@ -28,11 +28,10 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
   api: API;
   authenticationType: string;
 
-  /** @ngInject */
   constructor(
     private instanceSettings: DataSourceInstanceSettings<CloudMonitoringOptions>,
-    public templateSrv: TemplateSrv,
-    private timeSrv: TimeSrv
+    public templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly timeSrv: TimeSrv = getTimeSrv()
   ) {
     super(instanceSettings);
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
@@ -345,7 +344,8 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
       metricQuery: {
         ...this.interpolateProps(metricQuery, scopedVars),
         projectName: this.templateSrv.replace(
-          metricQuery.projectName ? metricQuery.projectName : this.getDefaultProject()
+          metricQuery.projectName ? metricQuery.projectName : this.getDefaultProject(),
+          scopedVars
         ),
         filters: this.interpolateFilters(metricQuery.filters || [], scopedVars),
         groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], scopedVars),

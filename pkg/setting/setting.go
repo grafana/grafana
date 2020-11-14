@@ -5,6 +5,7 @@ package setting
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -15,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-macaron/session"
+	"github.com/prometheus/common/model"
 	ini "gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/components/gtime"
@@ -26,34 +27,33 @@ import (
 type Scheme string
 
 const (
-	HTTP              Scheme = "http"
-	HTTPS             Scheme = "https"
-	HTTP2             Scheme = "h2"
-	SOCKET            Scheme = "socket"
-	DEFAULT_HTTP_ADDR string = "0.0.0.0"
-	REDACTED_PASSWORD string = "*********"
+	HTTPScheme   Scheme = "http"
+	HTTPSScheme  Scheme = "https"
+	HTTP2Scheme  Scheme = "h2"
+	SocketScheme Scheme = "socket"
 )
 
 const (
-	DEV      = "development"
-	PROD     = "production"
-	TEST     = "test"
-	APP_NAME = "Grafana"
+	redactedPassword = "*********"
+	DefaultHTTPAddr  = "0.0.0.0"
+	Dev              = "development"
+	Prod             = "production"
+	Test             = "test"
 )
 
 var (
-	ERR_TEMPLATE_NAME = "error"
+	ErrTemplateName = "error"
 )
 
 // This constant corresponds to the default value for ldap_sync_ttl in .ini files
 // it is used for comparison and has to be kept in sync
 const (
-	AUTH_PROXY_SYNC_TTL = 60
+	AuthProxySyncTTL = 60
 )
 
 var (
 	// App settings.
-	Env              = DEV
+	Env              = Dev
 	AppUrl           string
 	AppSubUrl        string
 	ServeFromSubPath bool
@@ -78,19 +78,24 @@ var (
 	// Log settings.
 	LogConfigs []util.DynMap
 
-	// Http server options
-	Protocol           Scheme
-	Domain             string
-	HttpAddr, HttpPort string
-	SshPort            int
-	CertFile, KeyFile  string
-	SocketPath         string
-	RouterLogging      bool
-	DataProxyLogging   bool
-	DataProxyTimeout   int
-	StaticRootPath     string
-	EnableGzip         bool
-	EnforceDomain      bool
+	// HTTP server options
+	Protocol                       Scheme
+	Domain                         string
+	HttpAddr, HttpPort             string
+	SshPort                        int
+	CertFile, KeyFile              string
+	SocketPath                     string
+	RouterLogging                  bool
+	DataProxyLogging               bool
+	DataProxyTimeout               int
+	DataProxyTLSHandshakeTimeout   int
+	DataProxyExpectContinueTimeout int
+	DataProxyMaxIdleConns          int
+	DataProxyKeepAlive             int
+	DataProxyIdleConnTimeout       int
+	StaticRootPath                 string
+	EnableGzip                     bool
+	EnforceDomain                  bool
 
 	// Security settings.
 	SecretKey                         string
@@ -144,6 +149,7 @@ var (
 	AdminPassword    string
 	LoginCookieName  string
 	LoginMaxLifetime time.Duration
+	SigV4AuthEnabled bool
 
 	AnonymousEnabled bool
 	AnonymousOrgName string
@@ -163,7 +169,6 @@ var (
 	BasicAuthEnabled bool
 
 	// Session settings.
-	SessionOptions         session.Options
 	SessionConnMaxLifetime int64
 
 	// Global setting objects.
@@ -188,7 +193,7 @@ var (
 	LDAPAllowSignup       bool
 	LDAPActiveSyncEnabled bool
 
-	// QUOTA
+	// Quota
 	Quota QuotaSettings
 
 	// Alerting
@@ -223,8 +228,8 @@ type Cfg struct {
 	Logger log.Logger
 
 	// HTTP Server Settings
-	AppUrl           string
-	AppSubUrl        string
+	AppURL           string
+	AppSubURL        string
 	ServeFromSubPath bool
 	StaticRootPath   string
 	Protocol         Scheme
@@ -261,17 +266,21 @@ type Cfg struct {
 	CookieSameSiteDisabled           bool
 	CookieSameSiteMode               http.SameSite
 
-	TempDataLifetime                 time.Duration
+	TempDataLifetime         time.Duration
+	PluginsEnableAlpha       bool
+	PluginsAppsSkipVerifyTLS bool
+	PluginSettings           PluginSettings
+	PluginsAllowUnsigned     []string
+	MarketplaceURL           string
+	DisableSanitizeHtml      bool
+	EnterpriseLicensePath    string
+
+	// Metrics
 	MetricsEndpointEnabled           bool
 	MetricsEndpointBasicAuthUsername string
 	MetricsEndpointBasicAuthPassword string
 	MetricsEndpointDisableTotalStats bool
-	PluginsEnableAlpha               bool
-	PluginsAppsSkipVerifyTLS         bool
-	PluginSettings                   PluginSettings
-	PluginsAllowUnsigned             []string
-	DisableSanitizeHtml              bool
-	EnterpriseLicensePath            string
+	MetricsGrafanaEnvironmentInfo    map[string]string
 
 	// Dashboards
 	DefaultHomeDashboardPath string
@@ -281,12 +290,14 @@ type Cfg struct {
 	LoginMaxInactiveLifetime     time.Duration
 	LoginMaxLifetime             time.Duration
 	TokenRotationIntervalMinutes int
+	SigV4AuthEnabled             bool
 
 	// OAuth
 	OAuthCookieMaxAge int
 
 	// SAML Auth
-	SAMLEnabled bool
+	SAMLEnabled             bool
+	SAMLSingleLogoutEnabled bool
 
 	// Dataproxy
 	SendUserHeader bool
@@ -304,20 +315,39 @@ type Cfg struct {
 
 	DateFormats DateFormats
 
+	// User
+	UserInviteMaxLifetime time.Duration
+
 	// Annotations
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
+
+	// Sentry config
+	Sentry Sentry
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.
-func (c Cfg) IsExpressionsEnabled() bool {
-	return c.FeatureToggles["expressions"]
+func (cfg Cfg) IsExpressionsEnabled() bool {
+	return cfg.FeatureToggles["expressions"]
 }
 
 // IsLiveEnabled returns if grafana live should be enabled
-func (c Cfg) IsLiveEnabled() bool {
-	return c.FeatureToggles["live"]
+func (cfg Cfg) IsLiveEnabled() bool {
+	return cfg.FeatureToggles["live"]
+}
+
+// IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
+func (cfg Cfg) IsNgAlertEnabled() bool {
+	return cfg.FeatureToggles["ngalert"]
+}
+
+func (cfg Cfg) IsDatabaseMetricsEnabled() bool {
+	return cfg.FeatureToggles["database_metrics"]
+}
+
+func (cfg Cfg) IsHTTPRequestHistogramEnabled() bool {
+	return cfg.FeatureToggles["http_request_histogram"]
 }
 
 type CommandLineArgs struct {
@@ -371,7 +401,7 @@ func applyEnvVariableOverrides(file *ini.File) error {
 			if len(envValue) > 0 {
 				key.SetValue(envValue)
 				if shouldRedactKey(envKey) {
-					envValue = REDACTED_PASSWORD
+					envValue = redactedPassword
 				}
 				if shouldRedactURLKey(envKey) {
 					u, err := url.Parse(envValue)
@@ -395,13 +425,36 @@ func applyEnvVariableOverrides(file *ini.File) error {
 	return nil
 }
 
+func (cfg *Cfg) readGrafanaEnvironmentMetrics() error {
+	environmentMetricsSection := cfg.Raw.Section("metrics.environment_info")
+	keys := environmentMetricsSection.Keys()
+	cfg.MetricsGrafanaEnvironmentInfo = make(map[string]string, len(keys))
+
+	for _, key := range keys {
+		labelName := model.LabelName(key.Name())
+		labelValue := model.LabelValue(key.Value())
+
+		if !labelName.IsValid() {
+			return fmt.Errorf("invalid label name in [metrics.environment_info] configuration. name %q", labelName)
+		}
+
+		if !labelValue.IsValid() {
+			return fmt.Errorf("invalid label value in [metrics.environment_info] configuration. name %q value %q", labelName, labelValue)
+		}
+
+		cfg.MetricsGrafanaEnvironmentInfo[string(labelName)] = string(labelValue)
+	}
+
+	return nil
+}
+
 func (cfg *Cfg) readAnnotationSettings() {
 	dashboardAnnotation := cfg.Raw.Section("annotations.dashboard")
 	apiIAnnotation := cfg.Raw.Section("annotations.api")
 	alertingSection := cfg.Raw.Section("alerting")
 
 	var newAnnotationCleanupSettings = func(section *ini.Section, maxAgeField string) AnnotationCleanupSettings {
-		maxAge, err := gtime.ParseInterval(section.Key(maxAgeField).MustString(""))
+		maxAge, err := gtime.ParseDuration(section.Key(maxAgeField).MustString(""))
 		if err != nil {
 			maxAge = 0
 		}
@@ -439,7 +492,7 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 			if exists {
 				key.SetValue(value)
 				if shouldRedactKey(keyString) {
-					value = REDACTED_PASSWORD
+					value = redactedPassword
 				}
 				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
 			}
@@ -502,7 +555,7 @@ func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 
 	userConfig, err := ini.Load(configFile)
 	if err != nil {
-		return fmt.Errorf("Failed to parse %v, %v", configFile, err)
+		return fmt.Errorf("failed to parse %q: %w", configFile, err)
 	}
 
 	userConfig.BlockMode = false
@@ -654,7 +707,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	cfg.Raw = iniFile
 
-	// Temporary keep global, to make refactor in steps
+	// Temporarily keep global, to make refactor in steps
 	Raw = cfg.Raw
 
 	cfg.BuildVersion = BuildVersion
@@ -664,7 +717,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.IsEnterprise = IsEnterprise
 	cfg.Packaging = Packaging
 
-	ApplicationName = APP_NAME
+	ApplicationName = "Grafana"
 
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	InstanceName = valueAsString(iniFile.Section(""), "instance_name", "unknown_instance_name")
@@ -682,6 +735,11 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	dataproxy := iniFile.Section("dataproxy")
 	DataProxyLogging = dataproxy.Key("logging").MustBool(false)
 	DataProxyTimeout = dataproxy.Key("timeout").MustInt(30)
+	DataProxyKeepAlive = dataproxy.Key("keep_alive_seconds").MustInt(30)
+	DataProxyTLSHandshakeTimeout = dataproxy.Key("tls_handshake_timeout_seconds").MustInt(10)
+	DataProxyExpectContinueTimeout = dataproxy.Key("expect_continue_timeout_seconds").MustInt(1)
+	DataProxyMaxIdleConns = dataproxy.Key("max_idle_connections").MustInt(100)
+	DataProxyIdleConnTimeout = dataproxy.Key("idle_conn_timeout_seconds").MustInt(90)
 	cfg.SendUserHeader = dataproxy.Key("send_user_header").MustBool(false)
 
 	if err := readSecuritySettings(iniFile, cfg); err != nil {
@@ -740,6 +798,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		plug = strings.TrimSpace(plug)
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
+	cfg.MarketplaceURL = pluginsSection.Key("marketplace_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.Protocol = Protocol
 
 	// Read and populate feature toggles list
@@ -760,6 +819,9 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.readSmtpSettings()
 	cfg.readQuotaSettings()
 	cfg.readAnnotationSettings()
+	if err := cfg.readGrafanaEnvironmentMetrics(); err != nil {
+		return err
+	}
 
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		log.Warnf("require_email_validation is enabled but smtp is disabled")
@@ -787,6 +849,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	cfg.readDateFormats()
+	cfg.readSentryConfig()
 
 	return nil
 }
@@ -878,7 +941,7 @@ func (s *DynamicSection) Key(k string) *ini.Key {
 
 	key.SetValue(envValue)
 	if shouldRedactKey(envKey) {
-		envValue = REDACTED_PASSWORD
+		envValue = redactedPassword
 	}
 	s.Logger.Info("Config overridden from Environment variable", "var", fmt.Sprintf("%s=%s", envKey, envValue))
 
@@ -959,7 +1022,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		maxInactiveDaysVal = "7d"
 	}
 	maxInactiveDurationVal := valueAsString(auth, "login_maximum_inactive_lifetime_duration", maxInactiveDaysVal)
-	cfg.LoginMaxInactiveLifetime, err = gtime.ParseInterval(maxInactiveDurationVal)
+	cfg.LoginMaxInactiveLifetime, err = gtime.ParseDuration(maxInactiveDurationVal)
 	if err != nil {
 		return err
 	}
@@ -972,7 +1035,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		maxLifetimeDaysVal = "7d"
 	}
 	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", maxLifetimeDaysVal)
-	cfg.LoginMaxLifetime, err = gtime.ParseInterval(maxLifetimeDurationVal)
+	cfg.LoginMaxLifetime, err = gtime.ParseDuration(maxLifetimeDurationVal)
 	if err != nil {
 		return err
 	}
@@ -991,8 +1054,13 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
 	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 
+	// SigV4
+	SigV4AuthEnabled = auth.Key("sigv4_auth_enabled").MustBool(false)
+	cfg.SigV4AuthEnabled = SigV4AuthEnabled
+
 	// SAML auth
 	cfg.SAMLEnabled = iniFile.Section("auth.saml").Key("enabled").MustBool(false)
+	cfg.SAMLSingleLogoutEnabled = iniFile.Section("auth.saml").Key("single_logout").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -1015,7 +1083,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	ldapSyncVal := authProxy.Key("ldap_sync_ttl").MustInt()
 	syncVal := authProxy.Key("sync_ttl").MustInt()
 
-	if ldapSyncVal != AUTH_PROXY_SYNC_TTL {
+	if ldapSyncVal != AuthProxySyncTTL {
 		AuthProxySyncTtl = ldapSyncVal
 		cfg.Logger.Warn("[Deprecated] the configuration setting 'ldap_sync_ttl' is deprecated, please use 'sync_ttl' instead")
 	} else {
@@ -1055,6 +1123,17 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 
 	ViewersCanEdit = users.Key("viewers_can_edit").MustBool(false)
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
+
+	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
+	userInviteMaxLifetimeDuration, err := gtime.ParseDuration(userInviteMaxLifetimeVal)
+	if err != nil {
+		return err
+	}
+
+	cfg.UserInviteMaxLifetime = userInviteMaxLifetimeDuration
+	if cfg.UserInviteMaxLifetime < time.Minute*15 {
+		return errors.New("the minimum supported value for the `user_invite_max_lifetime_duration` configuration is 15m (15 minutes)")
+	}
 
 	return nil
 }
@@ -1124,30 +1203,30 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 	}
 	ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
 
-	cfg.AppUrl = AppUrl
-	cfg.AppSubUrl = AppSubUrl
+	cfg.AppURL = AppUrl
+	cfg.AppSubURL = AppSubUrl
 	cfg.ServeFromSubPath = ServeFromSubPath
 
-	Protocol = HTTP
+	Protocol = HTTPScheme
 	protocolStr := valueAsString(server, "protocol", "http")
 
 	if protocolStr == "https" {
-		Protocol = HTTPS
+		Protocol = HTTPSScheme
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
 	}
 	if protocolStr == "h2" {
-		Protocol = HTTP2
+		Protocol = HTTP2Scheme
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
 	}
 	if protocolStr == "socket" {
-		Protocol = SOCKET
+		Protocol = SocketScheme
 		SocketPath = server.Key("socket").String()
 	}
 
 	Domain = valueAsString(server, "domain", "localhost")
-	HttpAddr = valueAsString(server, "http_addr", DEFAULT_HTTP_ADDR)
+	HttpAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
 	HttpPort = valueAsString(server, "http_port", "3000")
 	RouterLogging = server.Key("router_logging").MustBool(false)
 

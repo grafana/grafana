@@ -140,7 +140,7 @@ func (auth *AuthProxy) IsAllowedIP() (bool, *Error) {
 	}
 
 	err := fmt.Errorf(
-		"Request for user (%s) from %s is not from the authentication proxy", auth.header,
+		"request for user (%s) from %s is not from the authentication proxy", auth.header,
 		sourceIP,
 	)
 

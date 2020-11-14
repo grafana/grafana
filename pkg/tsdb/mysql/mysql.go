@@ -57,7 +57,7 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		cnnstr += "&tls=" + tlsConfigString
 	}
 
-	if setting.Env == setting.DEV {
+	if setting.Env == setting.Dev {
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
 
@@ -150,4 +150,4 @@ func (t *mysqlQueryResultTransformer) TransformQueryError(err error) error {
 	return err
 }
 
-var errQueryFailed = errors.New("Query failed. Please inspect Grafana server log for details")
+var errQueryFailed = errors.New("query failed - please inspect Grafana server log for details")
