@@ -6,6 +6,7 @@ import { dateTime } from '@grafana/data';
 import { LegendDisplayMode } from '../Legend/Legend';
 import { prepDataForStorybook } from '../../utils/storybook/data';
 import { useTheme } from '../../themes';
+import { text, select } from '@storybook/addon-knobs';
 
 export default {
   title: 'Visualizations/GraphNG',
@@ -16,7 +17,23 @@ export default {
   },
 };
 
+const getKnobs = () => {
+  return {
+    unit: text('Unit', 'short'),
+    legendPlacement: select(
+      'Legend placement',
+      {
+        bottom: 'bottom',
+        right: 'right',
+      },
+      'bottom'
+    ),
+  };
+};
+
 export const Lines: React.FC = () => {
+  const { unit, legendPlacement } = getKnobs();
+
   const theme = useTheme();
   const seriesA = toDataFrame({
     target: 'SeriesA',
@@ -29,7 +46,7 @@ export const Lines: React.FC = () => {
 
   seriesA.fields[1].config.custom = { line: { show: true } };
   seriesA.fields[1].config.color = { mode: FieldColorModeId.PaletteClassic };
-  seriesA.fields[1].config.unit = 'degree';
+  seriesA.fields[1].config.unit = unit;
 
   const data = prepDataForStorybook([seriesA], theme);
 
@@ -46,7 +63,7 @@ export const Lines: React.FC = () => {
           to: dateTime(1546380000000),
         },
       }}
-      legend={{ isVisible: true, displayMode: LegendDisplayMode.List, placement: 'bottom' }}
+      legend={{ displayMode: LegendDisplayMode.List, placement: legendPlacement }}
       timeZone="browser"
     ></GraphNG>
   );
