@@ -60,7 +60,7 @@ func TestPlaylistDataAccess(t *testing.T) {
 		}
 
 		for _, tc := range testCases {
-			t.Run(tc.Desc, func(t *testing.T) {
+			t.Run(tc.desc, func(t *testing.T) {
 				err := DeletePlaylist(&tc.cmd)
 				require.EqualError(t, err, models.ErrCommandValidationFailed)
 			})
