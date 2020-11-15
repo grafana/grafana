@@ -153,3 +153,30 @@ Grafana automatically renews the token when it expires.
   }
 ]
 ```
+
+### Add headers to OAuth request
+
+If the call to the OAuth URL expects a header value, you can send it using the `headers` property. 
+
+```json
+"routes": [
+  {
+    "path": "example",
+    "url": "https://api.example.com",
+    "tokenAuth": {
+      "url": "https://login.example.com/oauth2/token",
+      "headers": [
+        {
+          "name": "ApiVersion",
+          "content": "1.0"
+        }
+      ],
+      "params": {
+        "grant_type": "client_credentials",
+        "client_id": "{{ .JsonData.clientId }}",
+        "client_secret": "{{ .SecureJsonData.clientSecret }}"
+      }
+    }
+  }
+]
+```

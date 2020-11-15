@@ -316,6 +316,10 @@
                 "description": "For data source plugins. URL to fetch the authentication token.",
                 "format": "uri"
               },
+              "headers": {
+                "type": "array",
+                "description": "For data source plugins. Add HTTP headers to the token authentication request."
+              },
               "params": {
                 "type": "object",
                 "description": "For data source plugins. Parameters for the token authentication request.",
