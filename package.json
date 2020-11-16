@@ -14,7 +14,7 @@
     "e2e:dev": "./e2e/start-and-run-suite dev",
     "test": "jest --notify --watch",
     "lint": "eslint . --ext .js,.tsx,.ts --cache",
-    "test:ci": "jest --ci --reporters=default --reporters=jest-github-reporter -w ${TEST_MAX_WORKERS:-100%}",
+    "test:ci": "jest --ci --reporters=default --reporters=jest-github-reporter -w ${TEST_MAX_WORKERS:-100%} --testLocationInResults",
     "lint:fix": "yarn lint --fix",
     "packages:build": "lerna run clean && lerna run build --ignore @grafana-plugins/input-datasource",
     "packages:docsExtract": "rm -rf ./reports/docs && lerna run docsExtract",
