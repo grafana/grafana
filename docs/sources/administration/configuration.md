@@ -2,12 +2,7 @@
 title = "Configuration"
 description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
-type = "docs"
 aliases = ["/docs/grafana/latest/installation/configuration/"]
-[menu.docs]
-name = "Configuration"
-identifier = "config"
-parent = "admin"
 weight = 300
 +++
 
@@ -1158,6 +1153,10 @@ This is the sampler configuration parameter. Depending on the value of `sampler_
   is received from the mothership
 
 May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
+
+### sampling_server_url
+
+sampling_server_url is the URL of a sampling manager providing a sampling strategy.
 
 ### zipkin_propagation
 

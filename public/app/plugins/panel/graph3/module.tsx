@@ -1,21 +1,20 @@
-import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
-import { AxisSide, GraphCustomFieldConfig } from '@grafana/ui';
+import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { AxisSide, GraphCustomFieldConfig, LegendDisplayMode } from '@grafana/ui';
 import { GraphPanel } from './GraphPanel';
 import { Options } from './types';
 
 export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPanel)
   .useFieldConfig({
-    standardOptions: [
-      // FieldConfigProperty.Min,
-      // FieldConfigProperty.Max,
-      FieldConfigProperty.Color,
-      FieldConfigProperty.Unit,
-      FieldConfigProperty.DisplayName,
-      FieldConfigProperty.Decimals,
-      // NOT:  FieldConfigProperty.Thresholds,
-      FieldConfigProperty.Mappings,
-    ],
-
+    standardOptions: {
+      [FieldConfigProperty.Color]: {
+        settings: {
+          byValueSupport: false,
+        },
+        defaultValue: {
+          mode: FieldColorModeId.PaletteClassic,
+        },
+      },
+    },
     useCustomConfig: builder => {
       builder
         .addBooleanSwitch({
@@ -63,7 +62,7 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
         .addSliderInput({
           path: 'fill.alpha',
           name: 'Fill area opacity',
-          defaultValue: 0.1,
+          defaultValue: 0,
           settings: {
             min: 0,
             max: 1,
@@ -133,41 +132,36 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
         defaultValue: 'single',
         settings: {
           options: [
-            { value: 'single', label: 'Single series' },
-            { value: 'multi', label: 'All series' },
-            { value: 'none', label: 'No tooltip' },
+            { value: 'single', label: 'Single' },
+            { value: 'multi', label: 'All' },
+            { value: 'none', label: 'Hidden' },
           ],
         },
       })
-      .addBooleanSwitch({
-        category: ['Legend'],
-        path: 'legend.isVisible',
-        name: 'Show legend',
+      .addRadio({
+        path: 'legend.displayMode',
+        name: 'Legend mode',
         description: '',
-        defaultValue: true,
-      })
-      .addBooleanSwitch({
-        category: ['Legend'],
-        path: 'legend.asTable',
-        name: 'Display legend as table',
-        description: '',
-        defaultValue: false,
-        showIf: c => c.legend.isVisible,
+        defaultValue: LegendDisplayMode.List,
+        settings: {
+          options: [
+            { value: LegendDisplayMode.List, label: 'List' },
+            { value: LegendDisplayMode.Table, label: 'Table' },
+            { value: LegendDisplayMode.Hidden, label: 'Hidden' },
+          ],
+        },
       })
       .addRadio({
-        category: ['Legend'],
         path: 'legend.placement',
         name: 'Legend placement',
         description: '',
         defaultValue: 'bottom',
         settings: {
           options: [
-            { value: 'left', label: 'Left' },
-            { value: 'top', label: 'Top' },
             { value: 'bottom', label: 'Bottom' },
             { value: 'right', label: 'Right' },
           ],
         },
-        showIf: c => c.legend.isVisible,
+        showIf: c => c.legend.displayMode !== LegendDisplayMode.Hidden,
       });
   });

@@ -23,9 +23,6 @@ const endpoints = [
   { value: 'annotations', label: 'Annotations' },
 ];
 
-// Fields that need to be transformed to numbers
-const numberFields = ['lines', 'seriesCount', 'timeStep'];
-
 const selectors = editorSelectors.components.DataSource.TestData.QueryTab;
 
 export interface EditorProps {
@@ -80,22 +77,29 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
   };
 
   const onInputChange = (e: FormEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target as HTMLInputElement | HTMLTextAreaElement;
-    let newValue: Partial<TestDataQuery> = { [name]: value };
+    const { name, value, type } = e.target as HTMLInputElement | HTMLTextAreaElement;
+    let newValue: any = value;
 
-    if (name === 'levelColumn') {
-      newValue = { levelColumn: (e.target as HTMLInputElement).checked };
-    } else if (numberFields.includes(name)) {
-      newValue = { [name]: Number(value) };
+    if (type === 'number') {
+      newValue = Number(value);
     }
 
-    onUpdate({ ...query, ...newValue });
+    if (name === 'levelColumn') {
+      newValue = (e.target as HTMLInputElement).checked;
+    }
+
+    onUpdate({ ...query, [name]: newValue });
   };
 
   const onFieldChange = (field: string) => (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target as HTMLInputElement;
-    const formattedValue = numberFields.includes(name) ? Number(value) : value;
-    onUpdate({ ...query, [field]: { ...query[field as keyof TestDataQuery], [name]: formattedValue } });
+    const { name, value, type } = e.target as HTMLInputElement;
+    let newValue: any = value;
+
+    if (type === 'number') {
+      newValue = Number(value);
+    }
+
+    onUpdate({ ...query, [field]: { ...query[field as keyof TestDataQuery], [name]: newValue } });
   };
 
   const onEndPointChange = ({ value }: SelectableValue) => {

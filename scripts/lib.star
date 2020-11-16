@@ -1,4 +1,4 @@
-grabpl_version = '0.5.24'
+grabpl_version = '0.5.26'
 build_image = 'grafana/build-container:1.2.28'
 publish_image = 'grafana/grafana-ci-deploy:1.2.6'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -94,8 +94,9 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
         ),
         'chmod +x bin/grabpl',
     ]
-    common_cmds = []
-    pre_cmds = []
+    common_cmds = [
+        './bin/grabpl verify-drone',
+    ]
 
     if ver_mode == 'release':
         common_cmds.append('./bin/grabpl verify-version ${DRONE_TAG}')
@@ -140,7 +141,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
                         'from_secret': 'github_token',
                     },
                 },
-                'commands': download_grabpl_cmds + pre_cmds + [
+                'commands': download_grabpl_cmds + [
                     'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
                     'cd grafana-enterprise',
                     'git checkout {}'.format(committish),
@@ -155,7 +156,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
                 'depends_on': [
                     'clone',
                 ],
-                'commands': pre_cmds + [
+                'commands': [
                     'mv bin/grabpl /tmp/',
                     'rmdir bin',
                     'mv grafana-enterprise /tmp/',
@@ -176,7 +177,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
             'environment': {
                 'DOCKERIZE_VERSION': dockerize_version,
             },
-            'commands': download_grabpl_cmds + pre_cmds + common_cmds,
+            'commands': download_grabpl_cmds + common_cmds,
         },
     ]
 
@@ -441,7 +442,9 @@ def test_backend_step():
             'lint-backend',
         ],
         'commands': [
-            # First execute non-integration tests in parallel, since it should be safe
+            # First make sure that there are no tests with FocusConvey
+            '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
+            # Then execute non-integration tests in parallel, since it should be safe
             './bin/grabpl test-backend',
             # Then execute integration tests in serial
             './bin/grabpl integration-tests',
@@ -635,7 +638,7 @@ def build_docs_website_step():
         ],
         'commands': [
             'mkdir -p /hugo/content/docs/grafana',
-            'cp -r docs/sources /hugo/content/docs/grafana/latest',
+            'cp -r docs/sources/* /hugo/content/docs/grafana/latest/',
             'cd /hugo && make prod',
         ],
     }
@@ -843,7 +846,6 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
     else:
         source_commit = ' $$env:SOURCE_COMMIT'
 
-    pre_cmds = []
     sfx = ''
     if edition == 'enterprise':
         sfx = '-enterprise'
@@ -852,6 +854,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         init_cmds.extend([
             '$$ProgressPreference = "SilentlyContinue"',
             'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
+            '.\\grabpl.exe verify-drone',
         ])
     steps = [
         {
@@ -906,7 +909,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
                     'from_secret': 'gcp_key',
                 },
             },
-            'commands': pre_cmds + installer_commands,
+            'commands': installer_commands,
             'depends_on': [
                 'initialize',
             ],
@@ -942,7 +945,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
                     'from_secret': 'github_token',
                 },
             },
-            'commands': download_grabpl_cmds + pre_cmds + clone_cmds,
+            'commands': download_grabpl_cmds + clone_cmds,
         })
         steps[1]['depends_on'] = [
             'clone',
@@ -955,6 +958,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'rm -force grabpl.exe',
             'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise{}'.format(source_commit),
             'cp C:\\App\\grabpl.exe grabpl.exe',
+            '.\\grabpl.exe verify-drone',
         ])
 
     return steps

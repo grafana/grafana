@@ -44,7 +44,7 @@ export const LegendList: React.FunctionComponent<LegendComponentProps> = ({
 
   const getItemKey = (item: LegendItem) => `${item.label}`;
 
-  return placement === 'under' ? (
+  return placement === 'bottom' ? (
     <div className={cx(styles.wrapper, className)}>
       <div className={styles.section}>
         <InlineList items={items.filter(item => item.yAxis === 1)} renderItem={renderItem} getItemKey={getItemKey} />

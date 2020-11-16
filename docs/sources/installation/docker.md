@@ -2,11 +2,6 @@
 title = "Run Grafana Docker image"
 description = "Guide for running Grafana using Docker"
 keywords = ["grafana", "configuration", "documentation", "docker"]
-type = "docs"
-[menu.docs]
-name = "Run Grafana Docker image"
-identifier = "docker"
-parent = "installation"
 weight = 600
 +++
 
