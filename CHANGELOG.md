@@ -10,6 +10,18 @@ In order not to break all angular panel plugins and data sources we have some cu
 
 <!-- 7.4.0 END -->
 
+<!-- 7.3.3 START -->
+
+### Bug Fixes
+
+* **Cloud monitoring**: Fix for multi-value template variable for project selector. [#29042](https://github.com/grafana/grafana/pull/29042), [@papagian](https://github.com/papagian)
+* **Graph**: Fixes stacking issues like floating bars when data is not aligned. [#29051](https://github.com/grafana/grafana/pull/29051), [@torkelo](https://github.com/torkelo)
+* **LogsPanel**: Fix scrolling in dashboards. [#28974](https://github.com/grafana/grafana/pull/28974), [@aocenas](https://github.com/aocenas)
+* **StatPanel**: Fixes hanging issue when all values are zero. [#29077](https://github.com/grafana/grafana/pull/29077), [@torkelo](https://github.com/torkelo)
+* **Thresholds**: Fixes color assigned to null values. [#29010](https://github.com/grafana/grafana/pull/29010), [@torkelo](https://github.com/torkelo)
+
+<!-- 7.3.3 END -->
+
 <!-- 7.3.2 START -->
 
 # 7.3.2 (2020-11-11)
