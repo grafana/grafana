@@ -82,6 +82,9 @@ export class GrafanaDatasource extends DataSourceApi<GrafanaQuery> {
       // remove tags filter if any
       delete params.tags;
     } else {
+      if (annotation.matchDashboards) {
+        params.dashboardId = options.dashboard.id;
+      }
       // require at least one tag
       if (!Array.isArray(annotation.tags) || annotation.tags.length === 0) {
         return Promise.resolve([]);
