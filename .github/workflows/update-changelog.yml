@@ -1,10 +1,10 @@
-name: Bump version
+name: Update changelog
 on:
   workflow_dispatch:
     inputs:
       version:
-        required: true
-        default: '7.x.x'
+        required: true        
+        description: Needs to match, exactly, the name of a milestone
 jobs:
   main:
     runs-on: ubuntu-latest
