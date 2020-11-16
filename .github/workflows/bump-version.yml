@@ -25,4 +25,3 @@ jobs:
         with:
           token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
           metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
-          
