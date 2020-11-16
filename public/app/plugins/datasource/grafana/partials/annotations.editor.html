@@ -40,7 +40,14 @@
         checked="ctrl.annotation.matchDashboards"
         on-change="ctrl.refresh()"
         tooltip="By default Grafana will show annotation that matches all tags in the on all dashboard. Enabling this will make Grafana show tags only on specifc dashboards."></gf-form-switch>
-		</div>
+      <gf-form-switch
+        class="gf-form"
+        label="Filter tags by variable"
+        label-class="width-12"
+        checked="ctrl.annotation.filterByVariable"
+        on-change="ctrl.refresh()"
+        tooltip="Enabling this allows filtering of annotations with tags that match selected options for variable used in annotation queries."></gf-form-switch>
+    </div>
 		<div class="gf-form" ng-if="ctrl.annotation.type === 'tags'">
 			<span class="gf-form-label">
 				Tags

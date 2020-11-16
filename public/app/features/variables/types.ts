@@ -127,6 +127,8 @@ export interface VariableModel extends BaseVariableModel {
   skipUrlSync: boolean;
   index: number;
   state: LoadingState;
+  current: any;
+  options: any;
   error: any | null;
 }
 
@@ -140,5 +142,7 @@ export const initialVariableModelState: VariableModel = {
   hide: VariableHide.dontHide,
   skipUrlSync: false,
   state: LoadingState.NotStarted,
+  current: null,
+  options: null,
   error: null,
 };

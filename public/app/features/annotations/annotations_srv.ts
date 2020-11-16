@@ -73,6 +73,81 @@ export class AnnotationsSrv {
 
         annotations = dedupAnnotations(annotations);
 
+        const currentVariables = options.dashboard.getVariables();
+        let filteredAnnotations = [];
+        // iterate through prospective annotations
+        for (const annotation of annotations) {
+          let removeAnnotation = false;
+          // the case that this annotation contains tags
+          if (typeof annotation.tags !== 'undefined') {
+            for (const variable of currentVariables) {
+              removeAnnotation = true;
+              let variableName = variable.name;
+              let variableSelectedOptions = variable.current.value;
+              let relevantAnnotationFilters = options.dashboard.annotations.list.filter(a => a.name === variableName);
+              // no options are selected for this variable, we will not respect any filtering then
+              if (variableSelectedOptions.length === 0) {
+                removeAnnotation = false;
+              }
+              // some option(s) are selected for this variable
+              else {
+                // the case we've selected all, need to modify variableSelectedOptions accordingly
+                if (variableSelectedOptions[0] === '$__all') {
+                  variableSelectedOptions = variable.options
+                    .map((o: any) => o.value)
+                    .filter((o: any) => o !== '$__all');
+                }
+                // there are annotation filters that leverage this variable
+                if (relevantAnnotationFilters.length > 0) {
+                  for (const relevantAnnotationFilter of relevantAnnotationFilters) {
+                    if (!relevantAnnotationFilter.filterByVariable) {
+                      removeAnnotation = false;
+                    } else {
+                      // the case that the annotation tags will need to respect this filter due to being enabled
+                      if (relevantAnnotationFilter.enable === true) {
+                        for (const selectedOption of variableSelectedOptions) {
+                          if (annotation.tags.includes(selectedOption)) {
+                            removeAnnotation = false;
+                          }
+                          // do not  check the other selected options for this variable
+                          if (removeAnnotation === false) {
+                            break;
+                          }
+                        }
+                      }
+                      // the case that the annotation tags will not need to respect this filter due to being disabled
+                      else {
+                        removeAnnotation = false;
+                      }
+                      // annotation already respect one annotation filter that leverages current variable, no need to go
+                      // through the other annotation filters that leverage this currentVariables
+                      if (removeAnnotation === false) {
+                        break;
+                      }
+                    }
+                  }
+                }
+                // no annotation filters leverage this variable, possibly move on to the next variable
+                else {
+                  removeAnnotation = false;
+                }
+                // current annotation does not satisfy the current variable's filtering requirements, don't check the rest of the variables
+                if (removeAnnotation === true) {
+                  break;
+                }
+              }
+            }
+          }
+          // no tags for this annotation, remove it
+          else {
+            removeAnnotation = true;
+          }
+          if (removeAnnotation === false) {
+            filteredAnnotations.push(annotation);
+          }
+        }
+        annotations = filteredAnnotations;
+
         // look for alert state for this panel
         const alertState: any = results[1].find((res: any) => res.panelId === panelFilterId);
 
