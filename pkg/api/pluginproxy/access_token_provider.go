@@ -99,14 +99,14 @@ func (provider *accessTokenProvider) getAccessToken(data templateData) (string, 
 		}
 	}
 
-	urlInterpolated, err := InterpolateString(provider.route.TokenAuth.Url, data)
+	urlInterpolated, err := interpolateString(provider.route.TokenAuth.Url, data)
 	if err != nil {
 		return "", err
 	}
 
 	params := make(url.Values)
 	for key, value := range provider.route.TokenAuth.Params {
-		interpolatedParam, err := InterpolateString(value, data)
+		interpolatedParam, err := interpolateString(value, data)
 		if err != nil {
 			return "", err
 		}
@@ -147,7 +147,7 @@ func (provider *accessTokenProvider) getJwtAccessToken(ctx context.Context, data
 	conf := &jwt.Config{}
 
 	if val, ok := provider.route.JwtTokenAuth.Params["client_email"]; ok {
-		interpolatedVal, err := InterpolateString(val, data)
+		interpolatedVal, err := interpolateString(val, data)
 		if err != nil {
 			return "", err
 		}
@@ -155,7 +155,7 @@ func (provider *accessTokenProvider) getJwtAccessToken(ctx context.Context, data
 	}
 
 	if val, ok := provider.route.JwtTokenAuth.Params["private_key"]; ok {
-		interpolatedVal, err := InterpolateString(val, data)
+		interpolatedVal, err := interpolateString(val, data)
 		if err != nil {
 			return "", err
 		}
@@ -163,7 +163,7 @@ func (provider *accessTokenProvider) getJwtAccessToken(ctx context.Context, data
 	}
 
 	if val, ok := provider.route.JwtTokenAuth.Params["token_uri"]; ok {
-		interpolatedVal, err := InterpolateString(val, data)
+		interpolatedVal, err := interpolateString(val, data)
 		if err != nil {
 			return "", err
 		}
@@ -184,6 +184,8 @@ func (provider *accessTokenProvider) getJwtAccessToken(ctx context.Context, data
 	return token.AccessToken, nil
 }
 
+// getTokenSource gets a token source.
+// Stubbable by tests.
 var getTokenSource = func(conf *jwt.Config, ctx context.Context) (*oauth2.Token, error) {
 	tokenSrc := conf.TokenSource(ctx)
 	token, err := tokenSrc.Token()
