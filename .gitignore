@@ -13,7 +13,7 @@ awsconfig
 .yarnrc
 .yarn/
 vendor/
-
+database/
 # Enterprise emails
 /emails/templates/enterprise_*
 /public/emails/enterprise_*

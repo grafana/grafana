@@ -222,7 +222,7 @@ export class DashboardPage extends PureComponent<Props, State> {
             </HorizontalGroup>{' '}
             <HorizontalGroup align="center" justify="center">
               <Button variant="secondary" size="md" icon="repeat" onClick={this.cancelVariables}>
-                Cancel loading dashboard
+                Cancel loading
               </Button>
             </HorizontalGroup>
           </VerticalGroup>

@@ -5,11 +5,9 @@ import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
 import classNames from 'classnames';
 // @ts-ignore
 import sizeMe from 'react-sizeme';
-
 // Components
 import { AddPanelWidget } from '../components/AddPanelWidget';
 import { DashboardRow } from '../components/DashboardRow';
-
 // Types
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT } from 'app/core/constants';
 import { DashboardPanel } from './DashboardPanel';
@@ -19,6 +17,7 @@ import { panelAdded, panelRemoved } from '../state/PanelModel';
 
 let lastGridWidth = 1200;
 let ignoreNextWidthChange = false;
+let inHome = false;
 
 interface GridWrapperProps {
   size: { width: number };
@@ -35,20 +34,23 @@ interface GridWrapperProps {
   viewPanel: PanelModel | null;
 }
 
-function GridWrapper({
-  size,
-  layout,
-  onLayoutChange,
-  children,
-  onDragStop,
-  onResize,
-  onResizeStop,
-  onWidthChange,
-  className,
-  isResizable,
-  isDraggable,
-  viewPanel,
-}: GridWrapperProps) {
+function GridWrapper(
+  this: any,
+  {
+    size,
+    layout,
+    onLayoutChange,
+    children,
+    onDragStop,
+    onResize,
+    onResizeStop,
+    onWidthChange,
+    className,
+    isResizable,
+    isDraggable,
+    viewPanel,
+  }: GridWrapperProps
+) {
   const width = size.width > 0 ? size.width : lastGridWidth;
 
   // logic to ignore width changes (optimization)
@@ -84,6 +86,9 @@ function GridWrapper({
       onResizeStop={onResizeStop}
       onDragStop={onDragStop}
       onLayoutChange={onLayoutChange}
+      autoSize={inHome}
+      verticalCompact={true}
+      compactType={'vertical'}
     >
       {children}
     </ReactGridLayout>
@@ -106,7 +111,8 @@ export class DashboardGrid extends PureComponent<Props> {
 
   componentDidMount() {
     const { dashboard } = this.props;
-
+    console.log(dashboard);
+    inHome = dashboard.uid === '7iOhKpdMH';
     dashboard.on(panelAdded, this.triggerForceUpdate);
     dashboard.on(panelRemoved, this.triggerForceUpdate);
     dashboard.on(CoreEvents.repeatsProcessed, this.triggerForceUpdate);
@@ -145,7 +151,7 @@ export class DashboardGrid extends PureComponent<Props> {
       };
 
       if (panel.type === 'row') {
-        panelPos.w = GRID_COLUMN_COUNT;
+        panelPos.w = inHome ? 6 : GRID_COLUMN_COUNT;
         panelPos.h = 1;
         panelPos.isResizable = false;
         panelPos.isDraggable = panel.collapsed;
