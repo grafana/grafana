@@ -71,7 +71,7 @@ You can untoggle `Match Exact` to include metrics that have other dimensions def
 
 {{< docs-imagebox img="/img/docs/v65/cloudwatch-deep-linking.png" max-width="500px" class="docs-image--right" caption="CloudWatch deep linking" >}}
 
-Click a time series in the panel to display a context menu with a link to **View in CloudWatch console**. Clicking that link opens the CloudWatch console and displays all the metrics for that query. If you are not currently logged in to the CloudWatch console, then the link opens the login page. The link is valid for any account, but it only displays the right metrics if you are logged in to the account that corresponds to the selected data source in Grafana.
+Left-clicking a time series in the panel displays a context menu with a link to `View in CloudWatch console`. Clicking that link opens  the CloudWatch console and displays all the metrics for that query. If you are not currently logged in to the CloudWatch console, then the link opens the login page. The link is valid for any account, but it only displays the right metrics if you are logged in to the account that corresponds to the selected data source in Grafana.
 
 This feature is not available for metrics based on math expressions.
 
@@ -130,7 +130,7 @@ In the Datasource configuration for Graphite, you can change the type to Metrict
 Metrictank returns 2 kinds of additional metadata along its responses:
 
 - **Performance information:** Time spent querying index, fetching data, running processing functions, the number of series and points fetched, cache hits/misses, etc. This can be useful for optimizing queries or tuning the chunk cache.
-- **Lineage information about the returned series:** Which archive was fetched from (raw or rollup), which (if any) runtime consolidation was applied (using which processing function), and so on. This is very useful information for anyone trying to understand how their data was generated and why it might not look as expected.
+- **Lineage information about the returned series:** Which archive was fetched from (raw or rollup), which (if any) runtime consolidation was applied (using which processing function), etc.  This is very useful information for anyone trying to understand how their data was generated and why it may not look as expected.
 
 To see the metadata response from Metrictank you can inspect the response using the Query Inspector found in the panel queries tab.
 Grafana 6.5 includes a new `Panel Inspector` in alpha/preview where you also can see the metadata response from Metrictank.
@@ -153,15 +153,15 @@ We finally got around to implementing the series hover that shows values of the 
 
 ### Explore/Logs: Log row details
 
-We have massively simplified the way we display both log row labels/fields as well as detected fields by putting them into an extendable area in each row.
+We have massively simplified the way we display both log row labels/fields as well as parsed fields by putting them into an extendable area in each row.
 
-So far labels had been squashed into their own column, making long label values difficult to read or interact with. Similarly, the detected fields (available for logfmt and JSON structured logs) were too fiddly for mouse interaction. To solve this we took both and put them into a collapsed area below each row for more robust interaction. We have also added the ability to filter out labels, i.e., turn them into a negative filter on click (in addition to a positive filter).
+So far labels had been squashed into their own column, making long label values difficult to read or interact with. Similarly, the parsed fields (available for logfmt and JSON structured logs) were too fiddly for mouse interaction. To solve this we took both and put them into a collapsed area below each row for more robust interaction. We have also added the ability to filter out labels, i.e., turn them into a negative filter on click (in addition to a positive filter).
 
 {{< docs-imagebox img="/img/docs/v65/explore_log_details.gif" caption="Explore Log row details" >}}
 
 ### Loki/Explore: Derived fields
 
-Derived fields allow any part of a log message to be turned into a link. Leaning on the concept of data links for graphs, we've extended the log result viewer in Explore to turn certain detected fields into a link, based on a pattern to match.
+Derived fields allow any part of a log message to be turned into a link. Leaning on the concept of data links for graphs, we've extended the log result viewer in Explore to turn certain parsed fields into a link, based on a pattern to match.
 
 This allows you to turn an occurrence of e.g., `traceId=624f706351956b81` in your log line, into a link to your distributed tracing system to view that trace. The configuration for the patterns to match can be found in the datasource settings.
 

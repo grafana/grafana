@@ -110,7 +110,7 @@ With this awesome contribution from one of our community members, you can now to
 
 {{< docs-imagebox img="/img/docs/v72/explore-toggle-parsed-fields.gif" max-width="800px" caption="Toggling parsed fields in Explore" >}}
 
-The [Toggle detected fields]({{< relref "../explore/index.md#toggle-parsed-fields" >}}) section has been added to [Explore]({{< relref "../explore/index.md" >}}) as a result of this feature.
+The [Toggle parsed fields]({{< relref "../explore/index.md#toggle-detected-fields" >}}) section has been added to [Explore]({{< relref "../explore/index.md" >}}) as a result of this feature.
 
 ## Sensitive alert channel settings are now encrypted
 
