@@ -66,6 +66,7 @@ export const usePlotPlugins = () => {
 
   // When uPlot mounts let's check if there are any plugins pending registration
   useEffect(() => {
+    isMounted.current = true;
     checkPluginsReady();
     return () => {
       isMounted.current = false;
@@ -104,6 +105,8 @@ export const DEFAULT_PLOT_CONFIG = {
 
 export const usePlotConfig = (width: number, height: number, timeZone: TimeZone, seriesConfig: PlotSeriesConfig) => {
   const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
+  const [currentConfig, setCurrentConfig] = useState<uPlot.Options>();
+
   const tzDate = useMemo(() => {
     let fmt = undefined;
 
@@ -116,38 +119,22 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
     return fmt;
   }, [timeZone]);
 
-  const [currentConfig, setCurrentConfig] = useState<uPlot.Options>({
-    ...DEFAULT_PLOT_CONFIG,
-    width,
-    height,
-    plugins: Object.entries(plugins).map(p => ({
-      hooks: p[1].hooks,
-    })),
-    tzDate,
-    ...seriesConfig,
-  });
-
-  useEffect(() => {
-    setCurrentConfig(c => ({
-      ...c,
-      ...seriesConfig,
-    }));
-  }, [seriesConfig]);
-
   useEffect(() => {
     if (!arePluginsReady) {
       return;
     }
 
-    setCurrentConfig(s => {
-      return {
-        ...s,
-        plugins: Object.entries(plugins).map(p => ({
-          hooks: p[1].hooks,
-        })),
-      };
+    setCurrentConfig({
+      ...DEFAULT_PLOT_CONFIG,
+      width,
+      height,
+      plugins: Object.entries(plugins).map(p => ({
+        hooks: p[1].hooks,
+      })),
+      tzDate,
+      ...seriesConfig,
     });
-  }, [arePluginsReady, plugins]);
+  }, [arePluginsReady, plugins, width, height, seriesConfig]);
 
   return {
     registerPlugin,
