@@ -10,8 +10,8 @@ about deprecations and breaking changes.
 
 ## Grafana 7
 
-* [Releas notes for 7.3.2]({{< relref "release-notes-7-3-2" >}})
-* [Releas notes for 7.3.1]({{< relref "release-notes-7-3-1" >}})
-* [Releas notes for 7.3.0]({{< relref "release-notes-7-3-0" >}})
+* [Release notes for 7.3.2]({{< relref "release-notes-7-3-2" >}})
+* [Release notes for 7.3.1]({{< relref "release-notes-7-3-1" >}})
+* [Release notes for 7.3.0]({{< relref "release-notes-7-3-0" >}})
 
 
