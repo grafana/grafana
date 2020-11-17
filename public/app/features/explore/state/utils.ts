@@ -8,7 +8,7 @@ import {
   HistoryItem,
 } from '@grafana/data';
 
-import { ExploreItemState, ExploreUpdateState } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import store from '../../../core/store';
 import { lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
@@ -17,13 +17,6 @@ export const DEFAULT_RANGE = {
   from: 'now-6h',
   to: 'now',
 };
-
-export const makeInitialUpdateState = (): ExploreUpdateState => ({
-  datasource: false,
-  queries: false,
-  range: false,
-  mode: false,
-});
 
 /**
  * Returns a fresh Explore area state
@@ -48,12 +41,9 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   scanning: false,
   loading: false,
   queryKeys: [],
-  urlState: null,
-  update: makeInitialUpdateState(),
   latency: 0,
   isLive: false,
   isPaused: false,
-  urlReplaced: false,
   queryResponse: createEmptyQueryResponse(),
   tableResult: null,
   graphResult: null,

@@ -35,12 +35,11 @@ import {
   decorateWithTableResult,
 } from '../utils/decorators';
 import { createErrorNotification } from '../../../core/copy/appNotification';
-import { richHistoryUpdatedAction } from './main';
-import { stateSave } from './explorePane';
+import { richHistoryUpdatedAction, stateSave } from './main';
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import { updateTime } from './time';
 import { historyUpdatedAction } from './history';
-import { createEmptyQueryResponse, makeInitialUpdateState } from './utils';
+import { createEmptyQueryResponse } from './utils';
 
 //
 // Actions and Payloads
@@ -630,7 +629,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
       ...state,
       scanning: false,
       scanRange: undefined,
-      update: makeInitialUpdateState(),
     };
   }
 
@@ -665,7 +663,6 @@ export const processQueryResponse = (
       graphResult: null,
       tableResult: null,
       logsResult: null,
-      update: makeInitialUpdateState(),
     };
   }
 
@@ -690,7 +687,6 @@ export const processQueryResponse = (
     tableResult,
     logsResult,
     loading: loadingState === LoadingState.Loading || loadingState === LoadingState.Streaming,
-    update: makeInitialUpdateState(),
     showLogs: !!logsResult,
     showMetrics: !!graphResult,
     showTable: !!tableResult,

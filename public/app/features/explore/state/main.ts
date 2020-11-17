@@ -1,24 +1,30 @@
-import _ from 'lodash';
 import { AnyAction } from 'redux';
-import { DataSourceSrv, LocationUpdate } from '@grafana/runtime';
+import { DataSourceSrv } from '@grafana/runtime';
+import { serializeStateToUrlParam } from '@grafana/data';
 
-import { stopQueryState, parseUrlState, DEFAULT_RANGE, GetExploreUrlArguments } from 'app/core/utils/explore';
+import { stopQueryState, parseUrlState, GetExploreUrlArguments, clearQueryKeys } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
 import { updateLocation } from '../../../core/actions';
-import { paneReducer, stateSave } from './explorePane';
+import { paneReducer } from './explorePane';
 import { createAction } from '@reduxjs/toolkit';
 import { makeExplorePaneState } from './utils';
-import { DataQuery, TimeRange } from '@grafana/data';
+import { DataQuery, ExploreUrlState, TimeRange, UrlQueryMap } from '@grafana/data';
 import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { changeDatasource } from './datasource';
 import { runQueries, setQueriesAction } from './query';
 import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { PanelModel } from 'app/features/dashboard/state';
+import { toRawTimeRange } from '../utils/time';
 
 //
 // Actions and Payloads
 //
+
+export interface InitMainPayload {
+  split: boolean;
+}
+export const initMainAction = createAction<InitMainPayload>('explore/initMain');
 
 /**
  * Close the split view and save URL state.
@@ -57,6 +63,36 @@ export const resetExploreAction = createAction<ResetExplorePayload>('explore/res
 // Action creators
 //
 
+export const initMain = (): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    const query = getState().location.query;
+    dispatch(initMainAction({ split: Boolean(query[ExploreId.left] && query[ExploreId.right]) }));
+  };
+};
+
+/**
+ * Save local redux state back to the URL. Should be called when there is some change that should affect the URL.
+ * Not all of the redux state is reflected in URL though.
+ */
+export const stateSave = (): ThunkResult<void> => {
+  return (dispatch, getState) => {
+    const { left, right, split } = getState().explore;
+    const orgId = getState().user.orgId.toString();
+    const urlStates: { [index: string]: string } = { orgId };
+    urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left), true);
+    if (split && right.initialized) {
+      urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right), true);
+    }
+
+    lastSavedUrl.right = urlStates.right;
+    lastSavedUrl.left = urlStates.left;
+    dispatch(updateLocation({ query: urlStates, partial: split && !right.initialized }));
+  };
+};
+
+// Store the url we saved last se we are not trying to update local state based on that.
+export const lastSavedUrl: UrlQueryMap = {};
+
 /**
  * Open the split view and the right state is automatically initialized.
  * If options are specified it initializes that pane with the datasource and query from options.
@@ -85,7 +121,6 @@ export function splitOpen<T extends DataQuery = any>(options?: {
       rightState.tableResult = null;
       rightState.queryKeys = [];
       urlState.queries = [];
-      rightState.urlState = urlState;
       if (options.range) {
         urlState.range = options.range.raw;
         // This is super hacky. In traces to logs we want to create a link but also internally open split window.
@@ -116,7 +151,6 @@ export function splitOpen<T extends DataQuery = any>(options?: {
       await dispatch(runQueries(ExploreId.right));
     } else {
       rightState.queries = leftState.queries.slice();
-      rightState.urlState = urlState;
       dispatch(splitOpenAction({ itemState: rightState }));
     }
 
@@ -184,6 +218,9 @@ export const initialExploreState: ExploreState = {
  * Actions that have an `exploreId` get routed to the ExploreItemReducer.
  */
 export const exploreReducer = (state = initialExploreState, action: AnyAction): ExploreState => {
+  if (initMainAction.match(action)) {
+    return { ...state, split: action.payload.split };
+  }
   if (splitCloseAction.match(action)) {
     const { itemId } = action.payload as SplitCloseActionPayload;
     const targetSplit = {
@@ -233,25 +270,6 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     };
   }
 
-  if (updateLocation.match(action)) {
-    const payload: LocationUpdate = action.payload;
-    const { query } = payload;
-    if (!query || !query[ExploreId.left]) {
-      return state;
-    }
-
-    const split = query[ExploreId.right] ? true : false;
-    const leftState = state[ExploreId.left];
-    const rightState = state[ExploreId.right];
-
-    return {
-      ...state,
-      split,
-      [ExploreId.left]: updatePaneRefreshState(leftState, payload, ExploreId.left),
-      [ExploreId.right]: updatePaneRefreshState(rightState, payload, ExploreId.right),
-    };
-  }
-
   if (action.payload) {
     const { exploreId } = action.payload;
     if (exploreId !== undefined) {
@@ -268,43 +286,13 @@ export default {
   explore: exploreReducer,
 };
 
-export const updatePaneRefreshState = (
-  state: Readonly<ExploreItemState>,
-  payload: LocationUpdate,
-  exploreId: ExploreId
-): ExploreItemState => {
-  const path = payload.path || '';
-  if (!payload.query) {
-    return state;
-  }
-
-  const queryState = payload.query[exploreId] as string;
-  if (!queryState) {
-    return state;
-  }
-
-  const urlState = parseUrlState(queryState);
-  if (!state.urlState || path !== '/explore') {
-    // we only want to refresh when browser back/forward
-    return {
-      ...state,
-      urlState,
-      update: { datasource: false, queries: false, range: false, mode: false },
-    };
-  }
-
-  const datasource = _.isEqual(urlState ? urlState.datasource : '', state.urlState.datasource) === false;
-  const queries = _.isEqual(urlState ? urlState.queries : [], state.urlState.queries) === false;
-  const range = _.isEqual(urlState ? urlState.range : DEFAULT_RANGE, state.urlState.range) === false;
-
+export function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
   return {
-    ...state,
-    urlState,
-    update: {
-      ...state.update,
-      datasource,
-      queries,
-      range,
-    },
+    // It can happen that if we are in a split and initial load also runs queries we can be here before the second pane
+    // is initialized so datasourceInstance will be still undefined.
+    // TODO: this probably isn't good case we are saving an url based on this we should not save empty datasource.
+    datasource: pane.datasourceInstance?.name || '',
+    queries: pane.queries.map(clearQueryKeys),
+    range: toRawTimeRange(pane.range),
   };
-};
+}

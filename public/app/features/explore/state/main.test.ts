@@ -5,7 +5,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 import { updateLocation } from '../../../core/actions';
 import { MockDataSourceApi } from '../../../../test/mocks/datasource_srv';
 import { ExploreId, ExploreItemState, ExploreState } from '../../../types';
-import { makeExplorePaneState, makeInitialUpdateState } from './utils';
+import { makeExplorePaneState } from './utils';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { ExploreUrlState, UrlQueryMap } from '@grafana/data';
 
@@ -300,20 +300,12 @@ describe('Explore reducer', () => {
                 ...initialState,
                 left: {
                   ...initialState.left,
-                  update: {
-                    ...initialState.left.update,
-                    datasource: true,
-                  },
                 },
               };
               const stateWithDifferentDataSource: any = {
                 ...initialState,
                 left: {
                   ...initialState.left,
-                  urlState: {
-                    ...initialState.left.urlState,
-                    datasource: 'different datasource',
-                  },
                 },
               };
 
@@ -338,23 +330,12 @@ describe('Explore reducer', () => {
                 ...initialState,
                 left: {
                   ...initialState.left,
-                  update: {
-                    ...initialState.left.update,
-                    range: true,
-                  },
                 },
               };
               const stateWithDifferentDataSource: any = {
                 ...initialState,
                 left: {
                   ...initialState.left,
-                  urlState: {
-                    ...initialState.left.urlState,
-                    range: {
-                      from: 'now',
-                      to: 'now-6h',
-                    },
-                  },
                 },
               };
 
@@ -379,20 +360,12 @@ describe('Explore reducer', () => {
                 ...initialState,
                 left: {
                   ...initialState.left,
-                  update: {
-                    ...initialState.left.update,
-                    queries: true,
-                  },
                 },
               };
               const stateWithDifferentDataSource: any = {
                 ...initialState,
                 left: {
                   ...initialState.left,
-                  urlState: {
-                    ...initialState.left.urlState,
-                    queries: [{ expr: '{__filename__="some.log"}' }],
-                  },
                 },
               };
 
@@ -435,7 +408,6 @@ describe('Explore reducer', () => {
 });
 
 export const setup = (urlStateOverrides?: any) => {
-  const update = makeInitialUpdateState();
   const urlStateDefaults: ExploreUrlState = {
     datasource: 'some-datasource',
     queries: [],
@@ -448,8 +420,6 @@ export const setup = (urlStateOverrides?: any) => {
   const serializedUrlState = serializeStateToUrlParam(urlState);
   const initialState = ({
     split: false,
-    left: { urlState, update },
-    right: { urlState, update },
   } as unknown) as ExploreState;
 
   return {

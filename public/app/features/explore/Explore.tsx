@@ -30,11 +30,11 @@ import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
-import { splitOpen } from './state/main';
+import { lastSavedUrl, splitOpen } from './state/main';
 import { changeSize, initializeExplore, refreshExplore } from './state/explorePane';
 import { updateTimeRange } from './state/time';
 import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart } from './state/query';
-import { ExploreId, ExploreItemState, ExploreUpdateState } from 'app/types/explore';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
   DEFAULT_RANGE,
@@ -43,6 +43,7 @@ import {
   getTimeRange,
   getTimeRangeFromUrl,
   lastUsedDatasourceKeyForOrgId,
+  parseUrlState,
 } from 'app/core/utils/explore';
 import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
@@ -84,7 +85,6 @@ export interface ExploreProps {
   initializeExplore: typeof initializeExplore;
   initialized: boolean;
   modifyQueries: typeof modifyQueries;
-  update: ExploreUpdateState;
   refreshExplore: typeof refreshExplore;
   scanning?: boolean;
   scanRange?: RawTimeRange;
@@ -114,6 +114,7 @@ export interface ExploreProps {
   showLogs: boolean;
   showTrace: boolean;
   splitOpen: typeof splitOpen;
+  urlQuery: string;
 }
 
 enum ExploreDrawer {
@@ -184,7 +185,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
   }
 
   componentDidUpdate(prevProps: ExploreProps) {
-    this.refreshExplore();
+    this.refreshExplore(prevProps.urlQuery);
   }
 
   getRef = (el: any) => {
@@ -268,11 +269,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     });
   };
 
-  refreshExplore = () => {
-    const { exploreId, update } = this.props;
+  refreshExplore = (prevUrlQuery: string) => {
+    const { exploreId, urlQuery } = this.props;
 
-    if (update.queries || update.range || update.datasource || update.mode) {
-      this.props.refreshExplore(exploreId);
+    if (urlQuery !== prevUrlQuery && urlQuery !== lastSavedUrl[exploreId]) {
+      this.props.refreshExplore(exploreId, urlQuery);
     }
   };
 
@@ -438,7 +439,10 @@ const getTimeRangeFromUrlMemoized = memoizeOne(getTimeRangeFromUrl);
 
 function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partial<ExploreProps> {
   const explore = state.explore;
-  const { split, syncedTimes } = explore;
+  const urlQuery = state.location.query[exploreId] as string;
+  const urlState = parseUrlState(urlQuery);
+  const split = explore.split;
+  const { syncedTimes } = explore;
   const item: ExploreItemState = explore[exploreId];
   const timeZone = getTimeZone(state.user);
   const {
@@ -446,8 +450,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     datasourceMissing,
     initialized,
     queryKeys,
-    urlState,
-    update,
     isLive,
     graphResult,
     logsResult,
@@ -473,7 +475,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     initialized,
     split,
     queryKeys,
-    update,
     initialDatasource,
     initialQueries,
     initialRange,
@@ -490,6 +491,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showMetrics,
     showTable,
     showTrace,
+    urlQuery,
   };
 }
 

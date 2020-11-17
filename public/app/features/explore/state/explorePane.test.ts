@@ -11,7 +11,7 @@ import {
 } from './explorePane';
 import { setQueriesAction } from './query';
 import * as DatasourceSrv from 'app/features/plugins/datasource_srv';
-import { makeExplorePaneState, makeInitialUpdateState } from './utils';
+import { makeExplorePaneState } from './utils';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 
 jest.mock('app/features/plugins/datasource_srv');
@@ -58,8 +58,6 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
     queries: [],
     range: range.raw,
   };
-  const updateDefaults = makeInitialUpdateState();
-  const update = { ...updateDefaults, ...updateOverides };
   const initialState = {
     user: {
       orgId: '1',
@@ -71,7 +69,6 @@ const setup = (updateOverides?: Partial<ExploreUpdateState>) => {
         urlState,
         containerWidth,
         eventBridge,
-        update,
         datasourceInstance: { name: 'some-datasource' },
         queries: [] as DataQuery[],
         range,

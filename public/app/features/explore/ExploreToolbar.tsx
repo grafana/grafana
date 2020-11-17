@@ -198,7 +198,12 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
               )}
             </div>
             {splitted && (
-              <IconButton className="explore-toolbar-header-close" onClick={() => closeSplit(exploreId)} name="times" />
+              <IconButton
+                title="Close split pane"
+                className="explore-toolbar-header-close"
+                onClick={() => closeSplit(exploreId)}
+                name="times"
+              />
             )}
           </div>
         </div>

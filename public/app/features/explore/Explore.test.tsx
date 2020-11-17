@@ -24,12 +24,6 @@ const dummyProps: ExploreProps = {
   initializeExplore: jest.fn(),
   initialized: true,
   modifyQueries: jest.fn(),
-  update: {
-    datasource: false,
-    queries: false,
-    range: false,
-    mode: false,
-  },
   refreshExplore: jest.fn(),
   scanning: false,
   scanRange: {
@@ -102,6 +96,7 @@ const dummyProps: ExploreProps = {
   showTable: true,
   showTrace: true,
   splitOpen: (() => {}) as any,
+  urlQuery: '',
 };
 
 const setupErrors = (hasRefId?: boolean) => {

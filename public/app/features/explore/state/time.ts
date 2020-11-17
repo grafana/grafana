@@ -17,8 +17,7 @@ import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { runQueries } from './query';
 import { syncTimesAction } from './main';
-import { stateSave } from './explorePane';
-import { makeInitialUpdateState } from './utils';
+import { stateSave } from './main';
 
 //
 // Actions and Payloads
@@ -165,7 +164,6 @@ export const timeReducer = (state: ExploreItemState, action: AnyAction): Explore
       ...state,
       range,
       absoluteRange,
-      update: makeInitialUpdateState(),
     };
   }
 

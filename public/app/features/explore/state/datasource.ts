@@ -8,7 +8,7 @@ import { ExploreItemState, ThunkResult } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 import { importQueries, runQueries } from './query';
 import { changeRefreshInterval } from './time';
-import { createEmptyQueryResponse, loadAndInitDatasource, makeInitialUpdateState } from './utils';
+import { createEmptyQueryResponse, loadAndInitDatasource } from './utils';
 
 //
 // Actions and Payloads
@@ -97,11 +97,9 @@ export const datasourceReducer = (state: ExploreItemState, action: AnyAction): E
       queryResponse: createEmptyQueryResponse(),
       loading: false,
       queryKeys: [],
-      originPanelId: state.urlState && state.urlState.originPanelId,
       history,
       datasourceMissing: false,
       logsHighlighterExpressions: undefined,
-      update: makeInitialUpdateState(),
     };
   }
 

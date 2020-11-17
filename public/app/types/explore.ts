@@ -5,7 +5,6 @@ import {
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
-  ExploreUrlState,
   GraphSeriesXY,
   HistoryItem,
   LogLevel,
@@ -139,17 +138,6 @@ export interface ExploreItemState {
    */
   refreshInterval?: string;
 
-  /**
-   * Copy of the state of the URL which is in store.location.query. This is duplicated here so we can diff the two
-   * after a change to see if we need to sync url state back to redux store (like on clicking Back in browser).
-   */
-  urlState: ExploreUrlState | null;
-
-  /**
-   * Map of what changed between real url and local urlState so we can partially update just the things that are needed.
-   */
-  update: ExploreUpdateState;
-
   latency: number;
 
   /**
@@ -161,7 +149,6 @@ export interface ExploreItemState {
    * If true, the live tailing view is paused.
    */
   isPaused: boolean;
-  urlReplaced: boolean;
 
   querySubscription?: Unsubscribable;
 

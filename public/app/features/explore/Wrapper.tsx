@@ -6,17 +6,24 @@ import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
 import { CustomScrollbar, ErrorBoundaryAlert } from '@grafana/ui';
-import { resetExploreAction } from './state/main';
+import { initMain, lastSavedUrl, resetExploreAction } from './state/main';
 import Explore from './Explore';
 
 interface WrapperProps {
   split: boolean;
   resetExploreAction: typeof resetExploreAction;
+  initMain: typeof initMain;
 }
 
 export class Wrapper extends Component<WrapperProps> {
   componentWillUnmount() {
     this.props.resetExploreAction({});
+  }
+
+  componentDidMount() {
+    this.props.initMain();
+    lastSavedUrl.left = undefined;
+    lastSavedUrl.right = undefined;
   }
 
   render() {
@@ -48,6 +55,7 @@ const mapStateToProps = (state: StoreState) => {
 
 const mapDispatchToProps = {
   resetExploreAction,
+  initMain,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(Wrapper));

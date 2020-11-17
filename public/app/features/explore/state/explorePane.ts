@@ -1,39 +1,32 @@
 import { AnyAction } from 'redux';
+import _ from 'lodash';
 
-import { getQueryKeys } from 'app/core/utils/explore';
+import { DEFAULT_RANGE, getQueryKeys, parseUrlState } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { queryReducer } from './query';
 import { datasourceReducer } from './datasource';
 import { timeReducer } from './time';
 import { historyReducer } from './history';
-import { makeExplorePaneState, makeInitialUpdateState, loadAndInitDatasource, createEmptyQueryResponse } from './utils';
+import { makeExplorePaneState, loadAndInitDatasource, createEmptyQueryResponse } from './utils';
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
 import {
   EventBusExtended,
   DataQuery,
-  ExploreUrlState,
   LogLevel,
   LogsDedupStrategy,
   TimeRange,
   HistoryItem,
   DataSourceApi,
+  ExploreUrlState,
 } from '@grafana/data';
-import {
-  clearQueryKeys,
-  ensureQueries,
-  generateNewKeyAndAddRefIdIfMissing,
-  getTimeRangeFromUrl,
-} from 'app/core/utils/explore';
+import { ensureQueries, generateNewKeyAndAddRefIdIfMissing, getTimeRangeFromUrl } from 'app/core/utils/explore';
 import { getRichHistory } from 'app/core/utils/richHistory';
 // Types
 import { ThunkResult } from 'app/types';
 import { getTimeZone } from 'app/features/profile/state/selectors';
-import { updateLocation } from '../../../core/actions';
-import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
-import { richHistoryUpdatedAction } from './main';
+import { getUrlStateFromPaneState, richHistoryUpdatedAction } from './main';
 import { runQueries, setQueriesAction } from './query';
 import { updateTime } from './time';
-import { toRawTimeRange } from '../utils/time';
 import { getExploreDatasources } from './selectors';
 
 //
@@ -168,44 +161,20 @@ export function initializeExplore(
 }
 
 /**
- * Save local redux state back to the URL. Should be called when there is some change that should affect the URL.
- * Not all of the redux state is reflected in URL though.
- */
-export const stateSave = (): ThunkResult<void> => {
-  return (dispatch, getState) => {
-    const { left, right, split } = getState().explore;
-    const orgId = getState().user.orgId.toString();
-    const replace = left && left.urlReplaced === false;
-    const urlStates: { [index: string]: string } = { orgId };
-    urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left), true);
-    if (split) {
-      urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right), true);
-    }
-
-    dispatch(updateLocation({ query: urlStates, replace }));
-    if (replace) {
-      dispatch(setUrlReplacedAction({ exploreId: ExploreId.left }));
-    }
-  };
-};
-
-/**
  * Reacts to changes in URL state that we need to sync back to our redux state. Checks the internal update variable
  * to see which parts change and need to be synced.
- * @param exploreId
  */
-export function refreshExplore(exploreId: ExploreId): ThunkResult<void> {
+export function refreshExplore(exploreId: ExploreId, urlQuery: string): ThunkResult<void> {
   return (dispatch, getState) => {
     const itemState = getState().explore[exploreId];
     if (!itemState.initialized) {
       return;
     }
 
-    const { urlState, update, containerWidth, eventBridge } = itemState;
+    const urlState = parseUrlState(urlQuery);
+    const update = urlDiff(urlState, getUrlStateFromPaneState(itemState));
 
-    if (!urlState) {
-      return;
-    }
+    const { containerWidth, eventBridge } = itemState;
 
     const { datasource, queries, range: urlRange, originPanelId } = urlState;
     const refreshQueries: DataQuery[] = [];
@@ -286,7 +255,6 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       initialized: true,
       queryKeys: getQueryKeys(queries, state.datasourceInstance),
       originPanelId,
-      update: makeInitialUpdateState(),
       datasourceInstance,
       history,
       datasourceMissing: !datasourceInstance,
@@ -303,22 +271,28 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
     };
   }
 
-  if (setUrlReplacedAction.match(action)) {
-    return {
-      ...state,
-      urlReplaced: true,
-    };
-  }
-
   return state;
 };
 
-function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
+/**
+ * Compare 2 explore urls and return a map of what changed. Used to update the local state with all the
+ * side effects needed.
+ */
+export const urlDiff = (
+  oldUrlState: ExploreUrlState | undefined,
+  currentUrlState: ExploreUrlState | undefined
+): {
+  datasource: boolean;
+  queries: boolean;
+  range: boolean;
+} => {
+  const datasource = !_.isEqual(currentUrlState?.datasource, oldUrlState?.datasource);
+  const queries = !_.isEqual(currentUrlState?.queries, oldUrlState?.queries);
+  const range = !_.isEqual(currentUrlState?.range || DEFAULT_RANGE, oldUrlState?.range || DEFAULT_RANGE);
+
   return {
-    // It can happen that if we are in a split and initial load also runs queries we can be here before the second pane
-    // is initialized so datasourceInstance will be still undefined.
-    datasource: pane.datasourceInstance?.name || pane.urlState!.datasource,
-    queries: pane.queries.map(clearQueryKeys),
-    range: toRawTimeRange(pane.range),
+    datasource,
+    queries,
+    range,
   };
-}
+};
