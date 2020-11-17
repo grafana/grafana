@@ -246,6 +246,7 @@ func (g *dashboardGuardianImpl) GetHiddenACL(cfg *setting.Cfg) ([]*models.Dashbo
 	return hiddenACL, nil
 }
 
+// nolint:unused
 type FakeDashboardGuardian struct {
 	DashId                           int64
 	OrgId                            int64
@@ -292,6 +293,7 @@ func (g *FakeDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.Dashbo
 	return make([]*models.DashboardAcl, 0), nil
 }
 
+// nolint:unused
 func MockDashboardGuardian(mock *FakeDashboardGuardian) {
 	New = func(dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
 		mock.OrgId = orgId
