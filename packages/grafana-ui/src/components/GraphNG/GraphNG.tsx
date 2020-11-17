@@ -14,7 +14,7 @@ import { UPlotChart } from '../uPlot/Plot';
 import { AxisSide, GraphCustomFieldConfig, PlotProps } from '../uPlot/types';
 import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
-import { LegendItem, LegendOptions } from '../Legend/Legend';
+import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
 import { GraphLegend } from '../Graph/GraphLegend';
 import { GraphConfigBuilder } from './GraphConfigBuilder';
 
@@ -38,6 +38,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   const theme = useTheme();
   const alignedData = useMemo(() => alignAndSortDataFramesByFieldName(data, TIME_SERIES_TIME_FIELD_NAME), [data]);
   const legendItemsRef = useRef<LegendItem[]>([]);
+  const hasLegend = legend && legend.displayMode !== LegendDisplayMode.Hidden;
 
   if (!alignedData) {
     return (
@@ -63,6 +64,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         isTime: true,
       });
     }
+
     builder.addAxis({
       scaleKey: 'x',
       isTime: true,
@@ -120,28 +122,36 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         fillColor: seriesColor,
       });
 
-      if (legend?.isVisible) {
+      if (hasLegend) {
         legendItems.push({
           color: seriesColor,
           label: getFieldDisplayName(field, alignedData),
-          isVisible: true,
           yAxis: customConfig?.axis?.side === 1 ? 3 : 1,
         });
       }
+
+      // if (legend?.isVisible) {
+      //   legendItems.push({
+      //     color: seriesColor,
+      //     label: getFieldDisplayName(field, alignedData),
+      //     isVisible: true,
+      //     yAxis: customConfig?.axis?.side === 1 ? 3 : 1,
+      //   });
+      // }
 
       seriesIdx++;
     }
 
     legendItemsRef.current = legendItems;
     return builder.getConfig();
-  }, [alignedData]);
+  }, [alignedData, hasLegend]);
 
   let legendElement: React.ReactElement | undefined;
 
-  if (legend?.isVisible && legendItemsRef.current.length > 0) {
+  if (hasLegend && legendItemsRef.current.length > 0) {
     legendElement = (
-      <VizLayout.Legend position={legend.placement} maxHeight="35%" maxWidth="60%">
-        <GraphLegend placement={legend.placement} items={legendItemsRef.current} displayMode={legend.displayMode} />
+      <VizLayout.Legend position={legend!.placement} maxHeight="35%" maxWidth="60%">
+        <GraphLegend placement={legend!.placement} items={legendItemsRef.current} displayMode={legend!.displayMode} />
       </VizLayout.Legend>
     );
   }

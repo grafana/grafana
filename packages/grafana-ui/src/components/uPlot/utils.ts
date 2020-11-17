@@ -204,7 +204,7 @@ export function calculateAxisSize(self: uPlot, values: string[], axisIdx: number
     }
   }
 
-  return measureText(maxLength, 12).width;
+  return measureText(maxLength, 12).width - 8;
 }
 
 /** Format time axis ticks */

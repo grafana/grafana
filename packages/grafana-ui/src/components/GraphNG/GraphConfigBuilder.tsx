@@ -14,15 +14,15 @@ export class GraphConfigBuilder {
   private axes: GraphAxisBuilder[] = [];
   private scales: GraphScaleBuilder[] = [];
 
-  public addAxis(props: AxisProps) {
+  addAxis(props: AxisProps) {
     this.axes.push(new GraphAxisBuilder(props));
   }
 
-  public addSeries(props: SeriesProps) {
+  addSeries(props: SeriesProps) {
     this.series.push(new GraphSeriesBuilder(props));
   }
 
-  public addScale(props: ScaleProps) {
+  addScale(props: ScaleProps) {
     this.scales.push(new GraphScaleBuilder(props));
   }
 

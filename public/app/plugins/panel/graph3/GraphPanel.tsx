@@ -22,7 +22,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
       timeRange={timeRange}
       timeZone={timeZone}
       width={width}
-      height={height - 8}
+      height={height}
       legend={options.legend}
     >
       <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />

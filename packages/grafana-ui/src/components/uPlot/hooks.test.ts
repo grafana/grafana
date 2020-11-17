@@ -17,7 +17,7 @@ describe('usePlotConfig', () => {
           "alpha": 1,
         },
         "gutters": Object {
-          "x": 16,
+          "x": 8,
           "y": 8,
         },
         "height": 0,
@@ -61,7 +61,7 @@ describe('usePlotConfig', () => {
             "alpha": 1,
           },
           "gutters": Object {
-            "x": 16,
+            "x": 8,
             "y": 8,
           },
           "height": 0,
@@ -115,7 +115,7 @@ describe('usePlotConfig', () => {
             "alpha": 1,
           },
           "gutters": Object {
-            "x": 16,
+            "x": 8,
             "y": 8,
           },
           "height": 0,
