@@ -259,6 +259,7 @@ type FakeDashboardGuardian struct {
 	CheckPermissionBeforeUpdateValue bool
 	CheckPermissionBeforeUpdateError error
 	GetAclValue                      []*models.DashboardAclInfoDTO
+	GetHiddenAclValue                []*models.DashboardAcl
 }
 
 func (g *FakeDashboardGuardian) CanSave() (bool, error) {
@@ -290,7 +291,7 @@ func (g *FakeDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO, error) 
 }
 
 func (g *FakeDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardAcl, error) {
-	return make([]*models.DashboardAcl, 0), nil
+	return g.GetHiddenAclValue, nil
 }
 
 // nolint:unused

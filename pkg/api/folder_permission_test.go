@@ -1,12 +1,12 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -129,11 +129,14 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)
 			assert.Equal(t, 200, sc.resp.Code)
-			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+
+			var resp []*models.DashboardAclInfoDTO
+			err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 			require.NoError(t, err)
-			assert.Equal(t, 5, len(respJSON.MustArray()))
-			assert.Equal(t, 2, respJSON.GetIndex(0).Get("userId").MustInt())
-			assert.Equal(t, int(models.PERMISSION_VIEW), respJSON.GetIndex(0).Get("permission").MustInt())
+
+			assert.Len(t, resp, 5)
+			assert.Equal(t, int64(2), resp[0].UserId)
+			assert.Equal(t, models.PERMISSION_VIEW, resp[0].Permission)
 		})
 
 		cmd := dtos.UpdateDashboardAclCommand{
@@ -150,10 +153,16 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			fn: func(sc *scenarioContext) {
 				callUpdateFolderPermissions(sc)
 				assert.Equal(t, 200, sc.resp.Code)
-				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+
+				var resp struct {
+					ID    int64
+					Title string
+				}
+				err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 				require.NoError(t, err)
-				assert.Equal(t, 1, respJSON.Get("id").MustInt())
-				assert.Equal(t, "Folder", respJSON.Get("title").MustString())
+
+				assert.Equal(t, int64(1), resp.ID)
+				assert.Equal(t, "Folder", resp.Title)
 			},
 		}, hs)
 	})
@@ -242,7 +251,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		}, hs)
 	})
 
-	t.Run("Getting folder permissions without hidden users (except for signed in user)", func(t *testing.T) {
+	t.Run("Getting and updating folder permissions with hidden users", func(t *testing.T) {
 		origNewGuardian := guardian.New
 		origNewFolderService := dashboards.NewFolderService
 		settings.HiddenUsers = map[string]struct{}{
@@ -263,6 +272,9 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 				{OrgId: 1, DashboardId: 1, UserId: 3, UserLogin: testUserLogin, Permission: models.PERMISSION_EDIT},
 				{OrgId: 1, DashboardId: 1, UserId: 4, UserLogin: "user_1", Permission: models.PERMISSION_ADMIN},
 			},
+			GetHiddenAclValue: []*models.DashboardAcl{
+				{OrgId: 1, DashboardId: 1, UserId: 2, Permission: models.PERMISSION_VIEW},
+			},
 		})
 
 		mock := &fakeFolderService{
@@ -275,17 +287,49 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 
 		mockFolderService(mock)
 
+		var resp []*models.DashboardAclInfoDTO
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", models.ROLE_ADMIN, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)
 			assert.Equal(t, 200, sc.resp.Code)
-			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+
+			err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 			require.NoError(t, err)
-			assert.Equal(t, 2, len(respJSON.MustArray()))
-			assert.Equal(t, 3, respJSON.GetIndex(0).Get("userId").MustInt())
-			assert.Equal(t, int(models.PERMISSION_EDIT), respJSON.GetIndex(0).Get("permission").MustInt())
-			assert.Equal(t, 4, respJSON.GetIndex(1).Get("userId").MustInt())
-			assert.Equal(t, int(models.PERMISSION_ADMIN), respJSON.GetIndex(1).Get("permission").MustInt())
+
+			assert.Len(t, resp, 2)
+			assert.Equal(t, int64(3), resp[0].UserId)
+			assert.Equal(t, models.PERMISSION_EDIT, resp[0].Permission)
+			assert.Equal(t, int64(4), resp[1].UserId)
+			assert.Equal(t, models.PERMISSION_ADMIN, resp[1].Permission)
 		})
+
+		cmd := dtos.UpdateDashboardAclCommand{
+			Items: []dtos.DashboardAclUpdateItem{
+				{UserId: 1000, Permission: models.PERMISSION_ADMIN},
+			},
+		}
+		for _, acl := range resp {
+			cmd.Items = append(cmd.Items, dtos.DashboardAclUpdateItem{
+				UserId:     acl.UserId,
+				Permission: acl.Permission,
+			})
+		}
+		assert.Len(t, cmd.Items, 3)
+
+		updateFolderPermissionScenario(t, updatePermissionContext{
+			desc:         "When calling POST on",
+			url:          "/api/folders/uid/permissions",
+			routePattern: "/api/folders/:uid/permissions",
+			cmd:          cmd,
+			fn: func(sc *scenarioContext) {
+				bus.AddHandler("test", func(cmd *models.UpdateDashboardAclCommand) error {
+					assert.Len(t, cmd.Items, 4)
+					return nil
+				})
+
+				sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
+				assert.Equal(t, 200, sc.resp.Code)
+			},
+		}, hs)
 	})
 }
 
