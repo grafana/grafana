@@ -1,9 +1,11 @@
 import { usePlotConfig } from './hooks';
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react-hooks';
+import { act } from '@testing-library/react';
+import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
 describe('usePlotConfig', () => {
   it('returns default plot config', async () => {
-    const { result } = renderHook(() => usePlotConfig(0, 0, 'browser', { series: [] }));
+    const { result } = renderHook(() => usePlotConfig(0, 0, 'browser', new UPlotConfigBuilder()));
 
     expect(result.current.currentConfig).toMatchInlineSnapshot(`
       Object {
@@ -38,7 +40,7 @@ describe('usePlotConfig', () => {
 
   describe('plugins config', () => {
     it('should register plugin', async () => {
-      const { result } = renderHook(() => usePlotConfig(0, 0, 'browser', { series: [] }));
+      const { result } = renderHook(() => usePlotConfig(0, 0, 'browser', new UPlotConfigBuilder()));
       const registerPlugin = result.current.registerPlugin;
 
       act(() => {
@@ -85,7 +87,7 @@ describe('usePlotConfig', () => {
     });
 
     it('should unregister plugin', async () => {
-      const { result } = renderHook(() => usePlotConfig(0, 0, 'browser', { series: [] }));
+      const { result } = renderHook(() => usePlotConfig(0, 0, 'browser', new UPlotConfigBuilder()));
       const registerPlugin = result.current.registerPlugin;
 
       let unregister: () => void;
