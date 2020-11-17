@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
@@ -78,14 +80,12 @@ func (hs *HTTPServer) SignUpStep2(c *models.ReqContext, form dtos.SignUpStep2For
 		createUserCmd.EmailVerified = true
 	}
 
-	// check if user exists
-	existing := models.GetUserByLoginQuery{LoginOrEmail: form.Email}
-	if err := bus.Dispatch(&existing); err == nil {
-		return Error(401, "User with same email address already exists", nil)
-	}
-
 	// dispatch create command
 	if err := bus.Dispatch(&createUserCmd); err != nil {
+		if errors.Is(err, models.ErrUserAlreadyExists) {
+			return Error(401, "User with same email address already exists", nil)
+		}
+
 		return Error(500, "Failed to create user", err)
 	}
 

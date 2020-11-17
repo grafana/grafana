@@ -2,16 +2,15 @@ package plugins
 
 import (
 	"encoding/json"
-	"path"
-
-	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-
-	"github.com/grafana/grafana/pkg/util/errutil"
+	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/datasource/wrapper"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 // DataSourcePlugin contains all metadata about a datasource plugin
@@ -35,23 +34,23 @@ type DataSourcePlugin struct {
 	SDK        bool   `json:"sdk,omitempty"`
 }
 
-func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string, backendPluginManager backendplugin.Manager) error {
+func (p *DataSourcePlugin) Load(decoder *json.Decoder, base *PluginBase, backendPluginManager backendplugin.Manager) error {
 	if err := decoder.Decode(p); err != nil {
 		return errutil.Wrapf(err, "Failed to decode datasource plugin")
 	}
 
-	if err := p.registerPlugin(pluginDir); err != nil {
+	if err := p.registerPlugin(base); err != nil {
 		return errutil.Wrapf(err, "Failed to register plugin")
 	}
 
 	if p.Backend {
 		cmd := ComposePluginStartCommand(p.Executable)
-		fullpath := path.Join(p.PluginDir, cmd)
-		descriptor := backendplugin.NewBackendPluginDescriptor(p.Id, fullpath, backendplugin.PluginStartFuncs{
+		fullpath := filepath.Join(p.PluginDir, cmd)
+		factory := grpcplugin.NewBackendPlugin(p.Id, fullpath, grpcplugin.PluginStartFuncs{
 			OnLegacyStart: p.onLegacyPluginStart,
 			OnStart:       p.onPluginStart,
 		})
-		if err := backendPluginManager.Register(descriptor); err != nil {
+		if err := backendPluginManager.Register(p.Id, factory); err != nil {
 			return errutil.Wrapf(err, "Failed to register backend plugin")
 		}
 	}
@@ -60,7 +59,7 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string, backend
 	return nil
 }
 
-func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *backendplugin.LegacyClient, logger log.Logger) error {
+func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *grpcplugin.LegacyClient, logger log.Logger) error {
 	tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 		return wrapper.NewDatasourcePluginWrapper(logger, client.DatasourcePlugin), nil
 	})
@@ -68,7 +67,7 @@ func (p *DataSourcePlugin) onLegacyPluginStart(pluginID string, client *backendp
 	return nil
 }
 
-func (p *DataSourcePlugin) onPluginStart(pluginID string, client *backendplugin.Client, logger log.Logger) error {
+func (p *DataSourcePlugin) onPluginStart(pluginID string, client *grpcplugin.Client, logger log.Logger) error {
 	if client.DataPlugin != nil {
 		tsdb.RegisterTsdbQueryEndpoint(pluginID, func(dsInfo *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 			return wrapper.NewDatasourcePluginWrapperV2(logger, p.Id, p.Type, client.DataPlugin), nil

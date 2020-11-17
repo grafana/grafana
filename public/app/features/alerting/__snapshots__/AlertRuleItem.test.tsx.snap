@@ -2,90 +2,72 @@
 
 exports[`Render should render component 1`] = `
 <li
-  className="alert-rule-item"
+  className="css-1aih96i"
 >
-  <Icon
-    className="alert-rule-item__icon state class"
-    name="icon"
-    size="xl"
-  />
-  <div
-    className="alert-rule-item__body"
-  >
-    <div
-      className="alert-rule-item__header"
-    >
-      <div
-        className="alert-rule-item__name"
-      >
-        <a
-          href="https://something.something.darkside?editPanel=1&tab=alert"
-        >
-          <Highlighter
-            highlightClassName="highlight-search-match"
-            searchWords={
-              Array [
-                "",
-              ]
-            }
-            textToHighlight="Some rule"
-          />
-        </a>
-      </div>
-      <div
-        className="alert-rule-item__text"
-      >
-        <span
-          className="state class"
-        >
-          <Highlighter
-            highlightClassName="highlight-search-match"
-            searchWords={
-              Array [
-                "",
-              ]
-            }
-            textToHighlight="state text"
-          />
-        </span>
-        <span
-          className="alert-rule-item__time"
-        >
-           for 
-          age
-        </span>
-      </div>
-    </div>
-  </div>
-  <div
-    className="alert-rule-item__actions"
-  >
-    <Component
-      spacing="sm"
-    >
-      <Component
-        content="Pausing an alert rule prevents it from executing"
-        placement="bottom"
-      >
+  <Component
+    actions={
+      Array [
         <Button
           icon="pause"
           onClick={[MockFunction]}
-          size="sm"
           variant="secondary"
-        />
-      </Component>
-      <Component
-        content="Edit alert rule"
-        placement="right"
-      >
+        >
+          Pause
+        </Button>,
         <LinkButton
           href="https://something.something.darkside?editPanel=1&tab=alert"
           icon="cog"
-          size="sm"
           variant="secondary"
+        >
+          Edit alert
+        </LinkButton>,
+      ]
+    }
+    heading={
+      <a
+        href="https://something.something.darkside?editPanel=1&tab=alert"
+      >
+        <Highlighter
+          highlightClassName="highlight-search-match"
+          searchWords={
+            Array [
+              "",
+            ]
+          }
+          textToHighlight="Some rule"
         />
-      </Component>
-    </Component>
-  </div>
+      </a>
+    }
+    image={
+      <Icon
+        className="alert-rule-item__icon state class"
+        name="icon"
+        size="xl"
+      />
+    }
+    metadata={
+      Array [
+        <span>
+          <span
+            className="state class"
+          >
+            <Highlighter
+              highlightClassName="highlight-search-match"
+              searchWords={
+                Array [
+                  "",
+                ]
+              }
+              textToHighlight="state text"
+            />
+             
+          </span>
+          for 
+          age
+        </span>,
+        null,
+      ]
+    }
+  />
 </li>
 `;

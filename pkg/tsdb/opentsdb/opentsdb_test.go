@@ -10,11 +10,9 @@ import (
 
 func TestOpenTsdbExecutor(t *testing.T) {
 	Convey("OpenTsdb query testing", t, func() {
-
 		exec := &OpenTsdbExecutor{}
 
 		Convey("Build metric with downsampling enabled", func() {
-
 			query := &tsdb.Query{
 				Model: simplejson.New(),
 			}
@@ -32,11 +30,9 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			So(metric["metric"], ShouldEqual, "cpu.average.percent")
 			So(metric["aggregator"], ShouldEqual, "avg")
 			So(metric["downsample"], ShouldEqual, "1m-avg")
-
 		})
 
 		Convey("Build metric with downsampling disabled", func() {
-
 			query := &tsdb.Query{
 				Model: simplejson.New(),
 			}
@@ -53,11 +49,9 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			So(len(metric), ShouldEqual, 2)
 			So(metric["metric"], ShouldEqual, "cpu.average.percent")
 			So(metric["aggregator"], ShouldEqual, "avg")
-
 		})
 
 		Convey("Build metric with downsampling enabled with params", func() {
-
 			query := &tsdb.Query{
 				Model: simplejson.New(),
 			}
@@ -78,7 +72,6 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		})
 
 		Convey("Build metric with tags with downsampling disabled", func() {
-
 			query := &tsdb.Query{
 				Model: simplejson.New(),
 			}
@@ -108,7 +101,6 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		})
 
 		Convey("Build metric with rate enabled but counter disabled", func() {
-
 			query := &tsdb.Query{
 				Model: simplejson.New(),
 			}
@@ -138,7 +130,6 @@ func TestOpenTsdbExecutor(t *testing.T) {
 		})
 
 		Convey("Build metric with rate and counter enabled", func() {
-
 			query := &tsdb.Query{
 				Model: simplejson.New(),
 			}
@@ -171,6 +162,5 @@ func TestOpenTsdbExecutor(t *testing.T) {
 			So(metric["rateOptions"].(map[string]interface{})["counterMax"], ShouldEqual, 45)
 			So(metric["rateOptions"].(map[string]interface{})["resetValue"], ShouldEqual, 60)
 		})
-
 	})
 }

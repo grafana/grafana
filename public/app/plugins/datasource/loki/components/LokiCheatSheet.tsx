@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { shuffle } from 'lodash';
-import { ExploreStartPageProps, DataQuery, ExploreMode } from '@grafana/data';
+import { ExploreStartPageProps, DataQuery } from '@grafana/data';
 import LokiLanguageProvider from '../language_provider';
 
 const DEFAULT_EXAMPLES = ['{job="default/prometheus"}'];
@@ -8,6 +8,12 @@ const PREFERRED_LABELS = ['job', 'app', 'k8s_app'];
 const EXAMPLES_LIMIT = 5;
 
 const LOGQL_EXAMPLES = [
+  {
+    title: 'Log pipeline',
+    expression: '{job="mysql"} |= "metrics" | logfmt | duration > 10s',
+    label:
+      'This query targets the MySQL job, filters out logs that don’t contain the word "metrics" and parses each log line to extract more labels and filters with them.',
+  },
   {
     title: 'Count over time',
     expression: 'count_over_time({job="mysql"}[5m])',
@@ -46,7 +52,7 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
 
   checkUserLabels = async () => {
     // Set example from user labels
-    const provider: LokiLanguageProvider = this.props.datasource.languageProvider;
+    const provider: LokiLanguageProvider = this.props.datasource?.languageProvider;
     if (provider.started) {
       const labels = provider.getLabelKeys() || [];
       const preferredLabel = PREFERRED_LABELS.find(l => labels.includes(l));
@@ -76,11 +82,11 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
     );
   }
 
-  renderLogsCheatSheet() {
+  render() {
     const { userExamples } = this.state;
 
     return (
-      <>
+      <div>
         <h2>Loki Cheat Sheet</h2>
         <div className="cheat-sheet-item">
           <div className="cheat-sheet-item__title">See your logs</div>
@@ -108,20 +114,12 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
           {this.renderExpression('{app="cassandra"} |= "exact match"')}
           {this.renderExpression('{app="cassandra"} != "do not match"')}
           <div className="cheat-sheet-item__label">
-            <a href="https://github.com/grafana/loki/blob/master/docs/logql.md#filter-expression" target="logql">
+            <a href="https://grafana.com/docs/loki/latest/logql/#log-pipeline" target="logql">
               LogQL
             </a>{' '}
             supports exact and regular expression filters.
           </div>
         </div>
-      </>
-    );
-  }
-
-  renderMetricsCheatSheet() {
-    return (
-      <div>
-        <h2>LogQL Cheat Sheet</h2>
         {LOGQL_EXAMPLES.map(item => (
           <div className="cheat-sheet-item" key={item.expression}>
             <div className="cheat-sheet-item__title">{item.title}</div>
@@ -131,11 +129,5 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
         ))}
       </div>
     );
-  }
-
-  render() {
-    const { exploreMode } = this.props;
-
-    return exploreMode === ExploreMode.Logs ? this.renderLogsCheatSheet() : this.renderMetricsCheatSheet();
   }
 }

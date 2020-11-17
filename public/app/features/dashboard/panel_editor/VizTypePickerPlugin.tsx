@@ -3,6 +3,7 @@ import { GrafanaTheme, PanelPluginMeta, PluginState } from '@grafana/data';
 import { Badge, BadgeProps, styleMixins, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
+import { isUnsignedPluginSignature, PluginSignatureBadge } from '../../plugins/PluginSignatureBadge';
 
 interface Props {
   isCurrent: boolean;
@@ -22,7 +23,11 @@ const VizTypePickerPlugin: React.FC<Props> = ({ isCurrent, plugin, onClick, disa
 
   return (
     <div className={styles.wrapper} aria-label={selectors.components.PluginVisualization.item(plugin.name)}>
-      <div className={cssClass} onClick={disabled ? () => {} : onClick} title={plugin.name}>
+      <div
+        className={cssClass}
+        onClick={disabled ? () => {} : onClick}
+        title={isCurrent ? 'Click again to close this section' : plugin.name}
+      >
         <div className={styles.bg} />
         <div className={styles.itemContent}>
           <div className={styles.name} title={plugin.name}>
@@ -87,7 +92,6 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     current: css`
       label: currentVisualizationItem;
-      pointer-events: none;
       > div:first-child {
         ${styleMixins.focusCss(theme)};
       }
@@ -131,6 +135,10 @@ interface PanelPluginBadgeProps {
 }
 const PanelPluginBadge: React.FC<PanelPluginBadgeProps> = ({ plugin }) => {
   const display = getPanelStateBadgeDisplayModel(plugin);
+
+  if (isUnsignedPluginSignature(plugin.signature)) {
+    return <PluginSignatureBadge status={plugin.signature} />;
+  }
 
   if (plugin.state !== PluginState.deprecated && plugin.state !== PluginState.alpha) {
     return null;

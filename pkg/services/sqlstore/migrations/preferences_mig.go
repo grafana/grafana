@@ -3,7 +3,6 @@ package migrations
 import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 func addPreferencesMigrations(mg *Migrator) {
-
 	mg.AddMigration("drop preferences table v2", NewDropTableMigration("preferences"))
 
 	preferencesV2 := Table{
@@ -39,8 +38,8 @@ func addPreferencesMigrations(mg *Migrator) {
 		Name: "team_id", Type: DB_BigInt, Nullable: true,
 	}))
 
-	mg.AddMigration("Update team_id column values in preferences", NewRawSqlMigration("").
-		Sqlite("UPDATE preferences SET team_id=0 WHERE team_id IS NULL;").
+	mg.AddMigration("Update team_id column values in preferences", NewRawSQLMigration("").
+		SQLite("UPDATE preferences SET team_id=0 WHERE team_id IS NULL;").
 		Postgres("UPDATE preferences SET team_id=0 WHERE team_id IS NULL;").
 		Mysql("UPDATE preferences SET team_id=0 WHERE team_id IS NULL;"))
 }

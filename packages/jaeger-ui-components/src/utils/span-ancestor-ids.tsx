@@ -16,9 +16,9 @@ import _find from 'lodash/find';
 import _get from 'lodash/get';
 
 import { TNil } from '../types';
-import { Span } from '../types/trace';
+import { TraceSpan } from '@grafana/data';
 
-function getFirstAncestor(span: Span): Span | TNil {
+function getFirstAncestor(span: TraceSpan): TraceSpan | TNil {
   return _get(
     _find(
       span.references,
@@ -28,7 +28,7 @@ function getFirstAncestor(span: Span): Span | TNil {
   );
 }
 
-export default function spanAncestorIds(span: Span | TNil): string[] {
+export default function spanAncestorIds(span: TraceSpan | TNil): string[] {
   const ancestorIDs: string[] = [];
   if (!span) {
     return ancestorIDs;

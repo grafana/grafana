@@ -26,10 +26,11 @@ export interface Props {
   /** Set to true if the component rendered within in drawer content has its own scroll */
   scrollableContent?: boolean;
 
+  /** Callback for closing the drawer */
   onClose: () => void;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean) => {
+const getStyles = stylesFactory((theme: GrafanaTheme, scrollableContent: boolean) => {
   return {
     drawer: css`
       .drawer-content {
@@ -61,7 +62,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme, scollableContent: boolean)
     content: css`
       padding: ${theme.spacing.md};
       flex-grow: 1;
-      overflow: ${!scollableContent ? 'hidden' : 'auto'};
+      overflow: ${!scrollableContent ? 'hidden' : 'auto'};
       z-index: 0;
       height: 100%;
     `,

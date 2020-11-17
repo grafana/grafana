@@ -3,9 +3,255 @@ import { ElasticResponse } from '../elastic_response';
 import flatten from 'app/core/utils/flatten';
 
 describe('ElasticResponse', () => {
-  let targets;
+  let targets: any;
   let response: any;
   let result: any;
+
+  describe('refId matching', () => {
+    // We default to the old table structure to ensure backward compatibility,
+    // therefore we only process responses as DataFrames when there's at least one
+    // raw_data (new) query type.
+    // We should test if refId gets populated wether there's such type of query or not
+    const countQuery = {
+      target: {
+        refId: 'COUNT_GROUPBY_DATE_HISTOGRAM',
+        metrics: [{ type: 'count', id: 'c_1' }],
+        bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: 'c_2' }],
+      },
+      response: {
+        aggregations: {
+          c_2: {
+            buckets: [
+              {
+                doc_count: 10,
+                key: 1000,
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    const countGroupByHistogramQuery = {
+      target: {
+        refId: 'COUNT_GROUPBY_HISTOGRAM',
+        metrics: [{ type: 'count', id: 'h_3' }],
+        bucketAggs: [{ type: 'histogram', field: 'bytes', id: 'h_4' }],
+      },
+      response: {
+        aggregations: {
+          h_4: {
+            buckets: [{ doc_count: 1, key: 1000 }],
+          },
+        },
+      },
+    };
+
+    const rawDocumentQuery = {
+      target: {
+        refId: 'RAW_DOC',
+        metrics: [{ type: 'raw_document', id: 'r_5' }],
+        bucketAggs: [],
+      },
+      response: {
+        hits: {
+          total: 2,
+          hits: [
+            {
+              _id: '5',
+              _type: 'type',
+              _index: 'index',
+              _source: { sourceProp: 'asd' },
+              fields: { fieldProp: 'field' },
+            },
+            {
+              _source: { sourceProp: 'asd2' },
+              fields: { fieldProp: 'field2' },
+            },
+          ],
+        },
+      },
+    };
+
+    const percentilesQuery = {
+      target: {
+        refId: 'PERCENTILE',
+        metrics: [{ type: 'percentiles', settings: { percents: [75, 90] }, id: 'p_1' }],
+        bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: 'p_3' }],
+      },
+      response: {
+        aggregations: {
+          p_3: {
+            buckets: [
+              {
+                p_1: { values: { '75': 3.3, '90': 5.5 } },
+                doc_count: 10,
+                key: 1000,
+              },
+              {
+                p_1: { values: { '75': 2.3, '90': 4.5 } },
+                doc_count: 15,
+                key: 2000,
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    const extendedStatsQuery = {
+      target: {
+        refId: 'EXTENDEDSTATS',
+        metrics: [
+          {
+            type: 'extended_stats',
+            meta: { max: true, std_deviation_bounds_upper: true },
+            id: 'e_1',
+          },
+        ],
+        bucketAggs: [
+          { type: 'terms', field: 'host', id: 'e_3' },
+          { type: 'date_histogram', id: 'e_4' },
+        ],
+      },
+      response: {
+        aggregations: {
+          e_3: {
+            buckets: [
+              {
+                key: 'server1',
+                e_4: {
+                  buckets: [
+                    {
+                      e_1: {
+                        max: 10.2,
+                        min: 5.5,
+                        std_deviation_bounds: { upper: 3, lower: -2 },
+                      },
+                      doc_count: 10,
+                      key: 1000,
+                    },
+                  ],
+                },
+              },
+              {
+                key: 'server2',
+                e_4: {
+                  buckets: [
+                    {
+                      e_1: {
+                        max: 10.2,
+                        min: 5.5,
+                        std_deviation_bounds: { upper: 3, lower: -2 },
+                      },
+                      doc_count: 10,
+                      key: 1000,
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    const commonTargets = [
+      { ...countQuery.target },
+      { ...countGroupByHistogramQuery.target },
+      { ...rawDocumentQuery.target },
+      { ...percentilesQuery.target },
+      { ...extendedStatsQuery.target },
+    ];
+
+    const commonResponses = [
+      { ...countQuery.response },
+      { ...countGroupByHistogramQuery.response },
+      { ...rawDocumentQuery.response },
+      { ...percentilesQuery.response },
+      { ...extendedStatsQuery.response },
+    ];
+
+    describe('When processing responses as DataFrames (raw_data query present)', () => {
+      beforeEach(() => {
+        targets = [
+          ...commonTargets,
+          // Raw Data Query
+          {
+            refId: 'D',
+            metrics: [{ type: 'raw_data', id: '6' }],
+            bucketAggs: [],
+          },
+        ];
+
+        response = {
+          responses: [
+            ...commonResponses,
+            // Raw Data Query
+            {
+              hits: {
+                total: {
+                  relation: 'eq',
+                  value: 1,
+                },
+                hits: [
+                  {
+                    _id: '6',
+                    _type: '_doc',
+                    _index: 'index',
+                    _source: { sourceProp: 'asd' },
+                  },
+                ],
+              },
+            },
+          ],
+        };
+
+        result = new ElasticResponse(targets, response).getTimeSeries();
+      });
+
+      it('should add the correct refId to each returned series', () => {
+        expect(result.data[0].refId).toBe(countQuery.target.refId);
+
+        expect(result.data[1].refId).toBe(countGroupByHistogramQuery.target.refId);
+
+        expect(result.data[2].refId).toBe(rawDocumentQuery.target.refId);
+
+        expect(result.data[3].refId).toBe(percentilesQuery.target.refId);
+        expect(result.data[4].refId).toBe(percentilesQuery.target.refId);
+
+        expect(result.data[5].refId).toBe(extendedStatsQuery.target.refId);
+
+        // Raw Data query
+        expect(result.data[result.data.length - 1].refId).toBe('D');
+      });
+    });
+
+    describe('When NOT processing responses as DataFrames (raw_data query NOT present)', () => {
+      beforeEach(() => {
+        targets = [...commonTargets];
+
+        response = {
+          responses: [...commonResponses],
+        };
+
+        result = new ElasticResponse(targets, response).getTimeSeries();
+      });
+
+      it('should add the correct refId to each returned series', () => {
+        expect(result.data[0].refId).toBe(countQuery.target.refId);
+
+        expect(result.data[1].refId).toBe(countGroupByHistogramQuery.target.refId);
+
+        expect(result.data[2].refId).toBe(rawDocumentQuery.target.refId);
+
+        expect(result.data[3].refId).toBe(percentilesQuery.target.refId);
+        expect(result.data[4].refId).toBe(percentilesQuery.target.refId);
+
+        expect(result.data[5].refId).toBe(extendedStatsQuery.target.refId);
+      });
+    });
+  });
 
   describe('simple query and count', () => {
     beforeEach(() => {
@@ -811,7 +1057,6 @@ describe('ElasticResponse', () => {
 
       result = new ElasticResponse(targets, response).getTimeSeries();
     });
-
     it('should return 3 series', () => {
       expect(result.data.length).toBe(3);
       expect(result.data[0].datapoints.length).toBe(2);
@@ -824,6 +1069,127 @@ describe('ElasticResponse', () => {
       expect(result.data[0].datapoints[1][0]).toBe(3);
       expect(result.data[1].datapoints[1][0]).toBe(4);
       expect(result.data[2].datapoints[1][0]).toBe(12);
+    });
+  });
+
+  describe('terms with bucket_script and two scripts', () => {
+    let result: any;
+
+    beforeEach(() => {
+      targets = [
+        {
+          refId: 'A',
+          metrics: [
+            { id: '1', type: 'sum', field: '@value' },
+            { id: '3', type: 'max', field: '@value' },
+            {
+              id: '4',
+              field: 'select field',
+              pipelineVariables: [
+                { name: 'var1', pipelineAgg: '1' },
+                { name: 'var2', pipelineAgg: '3' },
+              ],
+              settings: { script: 'params.var1 * params.var2' },
+              type: 'bucket_script',
+            },
+            {
+              id: '5',
+              field: 'select field',
+              pipelineVariables: [
+                { name: 'var1', pipelineAgg: '1' },
+                { name: 'var2', pipelineAgg: '3' },
+              ],
+              settings: { script: 'params.var1 * params.var2 * 4' },
+              type: 'bucket_script',
+            },
+          ],
+          bucketAggs: [{ type: 'terms', field: '@timestamp', id: '2' }],
+        },
+      ];
+      response = {
+        responses: [
+          {
+            aggregations: {
+              '2': {
+                buckets: [
+                  {
+                    1: { value: 2 },
+                    3: { value: 3 },
+                    4: { value: 6 },
+                    5: { value: 24 },
+                    doc_count: 60,
+                    key: 1000,
+                  },
+                  {
+                    1: { value: 3 },
+                    3: { value: 4 },
+                    4: { value: 12 },
+                    5: { value: 48 },
+                    doc_count: 60,
+                    key: 2000,
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      };
+
+      result = new ElasticResponse(targets, response).getTimeSeries();
+    });
+
+    it('should return 2 rows with 5 columns', () => {
+      expect(result.data[0].columns.length).toBe(5);
+      expect(result.data[0].rows.length).toBe(2);
+      expect(result.data[0].rows[0][1]).toBe(2);
+      expect(result.data[0].rows[0][2]).toBe(3);
+      expect(result.data[0].rows[0][3]).toBe(6);
+      expect(result.data[0].rows[0][4]).toBe(24);
+      expect(result.data[0].rows[1][1]).toBe(3);
+      expect(result.data[0].rows[1][2]).toBe(4);
+      expect(result.data[0].rows[1][3]).toBe(12);
+      expect(result.data[0].rows[1][4]).toBe(48);
+    });
+  });
+
+  describe('Raw Data Query', () => {
+    beforeEach(() => {
+      targets = [
+        {
+          refId: 'A',
+          metrics: [{ type: 'raw_data', id: '1' }],
+          bucketAggs: [],
+        },
+      ];
+
+      response = {
+        responses: [
+          {
+            hits: {
+              total: {
+                relation: 'eq',
+                value: 1,
+              },
+              hits: [
+                {
+                  _id: '1',
+                  _type: '_doc',
+                  _index: 'index',
+                  _source: { sourceProp: 'asd' },
+                },
+              ],
+            },
+          },
+        ],
+      };
+
+      result = new ElasticResponse(targets, response).getTimeSeries();
+    });
+
+    it('should create dataframes with filterable fields', () => {
+      for (const field of result.data[0].fields) {
+        expect(field.config.filterable).toBe(true);
+      }
     });
   });
 

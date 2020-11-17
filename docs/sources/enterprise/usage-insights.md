@@ -3,10 +3,6 @@ title = "Usage-insights"
 description = "Usage-insights"
 keywords = ["grafana", "usage-insights", "enterprise"]
 aliases = ["/docs/grafana/latest/enterprise/usage-insights/"]
-type = "docs"
-[menu.docs]
-name = "Usage-insights"
-parent = "enterprise"
 weight = 700
 +++
 
@@ -24,11 +20,11 @@ Usage insights allow you to have a better understanding of how your Grafana inst
 
 The presence indicator is visible to all signed-in users on all dashboards. It shows the avatars of users who interacted with the dashboard recently (last 10 minutes by default). You can see the user's name by hovering your cursor over the user's avatar. The avatars come from [Gravatar](https://gravatar.com) based on the user's email.
 
-When more users are active on a dashboard than can fit in the presence indicator section, click on the `+X` icon that opens [dashboard insights]({{< relref "#dashboard-insights" >}}) to see more details about recent user activity. 
+When more users are active on a dashboard than can fit in the presence indicator section, click on the `+X` icon that opens [dashboard insights]({{< relref "#dashboard-insights" >}}) to see more details about recent user activity.
 
 {{< docs-imagebox img="/img/docs/enterprise/presence_indicators.png" max-width="400px" class="docs-image--no-shadow" >}}
 
-You can choose your own definition of "recent" by setting it in the [configuration]({{< relref "../installation/configuration.md">}}) file.
+You can choose your own definition of "recent" by setting it in the [configuration]({{< relref "../administration/configuration.md">}}) file.
 
 ```ini
 [analytics.views]
@@ -55,3 +51,21 @@ It shows two kinds of information:
 In the search view, you can sort dashboards using these insights data. It helps you find unused or broken dashboards or discover most viewed ones.
 
 {{< docs-imagebox img="/img/docs/enterprise/improved_search.png" max-width="650px" class="docs-image--no-shadow" >}}
+
+## Data source insights
+
+> Only available in Grafana Enterprise v7.3+.
+
+Data source insights give you information about how a data source has been used in the last thirty days.
+
+- Queries per day
+- Errors per day
+- Average load duration per day (ms)
+ 
+To find data source insights, go to:
+1. Data source list view
+1. Click on a data source
+1. Click the insights tab
+
+{{< docs-imagebox img="/img/docs/enterprise/datasource_insights.png" max-width="650px" class="docs-image--no-shadow" >}}
+

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { action } from '@storybook/addon-actions';
-import { SegmentInput } from '.';
-import { Icon } from '../Icon/Icon';
+import { SegmentInput, Icon } from '@grafana/ui';
 
 const SegmentFrame = ({ children }: any) => (
   <>
@@ -50,6 +49,23 @@ export const BasicInputWithPlaceholder = () => {
   );
 };
 
+export const BasicInputWithHtmlAttributes = () => {
+  const [value, setValue] = useState('some text');
+  return (
+    <SegmentFrame>
+      <SegmentInput
+        data-testid="segment-input-test"
+        id="segment-input"
+        value={value}
+        onChange={text => {
+          setValue(text as string);
+          action('Segment value changed')(text);
+        }}
+      />
+    </SegmentFrame>
+  );
+};
+
 const InputComponent = ({ initialValue }: any) => {
   const [value, setValue] = useState(initialValue);
   return (
@@ -70,7 +86,7 @@ export const InputWithAutoFocus = () => {
   return (
     <SegmentFrame>
       {inputComponents.map((InputComponent: any) => (
-        <InputComponent intitialValue="test"></InputComponent>
+        <InputComponent initialValue="test"></InputComponent>
       ))}
       <a
         className="gf-form-label query-part"

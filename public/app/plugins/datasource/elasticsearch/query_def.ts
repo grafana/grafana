@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
 
 export const metricAggTypes = [
   { text: 'Count', value: 'count', requiresField: false },
@@ -56,6 +57,14 @@ export const metricAggTypes = [
     requiresField: false,
     isPipelineAgg: true,
     minVersion: 2,
+    maxVersion: 60,
+  },
+  {
+    text: 'Moving Function',
+    value: 'moving_fn',
+    requiresField: false,
+    isPipelineAgg: true,
+    minVersion: 70,
   },
   {
     text: 'Derivative',
@@ -79,7 +88,8 @@ export const metricAggTypes = [
     supportsMultipleBucketPaths: true,
     minVersion: 2,
   },
-  { text: 'Raw Document', value: 'raw_document', requiresField: false },
+  { text: 'Raw Document (legacy)', value: 'raw_document', requiresField: false },
+  { text: 'Raw Data', value: 'raw_data', requiresField: false },
   { text: 'Logs', value: 'logs', requiresField: false },
 ];
 
@@ -149,6 +159,7 @@ export const pipelineOptions: any = {
     { text: 'predict', default: undefined },
     { text: 'minimize', default: false },
   ],
+  moving_fn: [{ text: 'window', default: 5 }, { text: 'script' }],
   derivative: [{ text: 'unit', default: undefined }],
   cumulative_sum: [{ text: 'format', default: undefined }],
   bucket_script: [],
@@ -173,8 +184,10 @@ export const movingAvgModelSettings: any = {
 
 export function getMetricAggTypes(esVersion: any) {
   return _.filter(metricAggTypes, f => {
-    if (f.minVersion) {
-      return f.minVersion <= esVersion;
+    if (f.minVersion || f.maxVersion) {
+      const minVersion = f.minVersion || 0;
+      const maxVersion = f.maxVersion || esVersion;
+      return esVersion >= minVersion && esVersion <= maxVersion;
     } else {
       return true;
     }
@@ -206,15 +219,26 @@ export function isPipelineAggWithMultipleBucketPaths(metricType: any) {
   return false;
 }
 
-export function getPipelineAggOptions(targets: any) {
-  const result: any[] = [];
-  _.each(targets.metrics, metric => {
-    if (!isPipelineAgg(metric.type)) {
-      result.push({ text: describeMetric(metric), value: metric.id });
-    }
-  });
+export function getAncestors(target: ElasticsearchQuery, metric?: ElasticsearchAggregation) {
+  const { metrics } = target;
+  if (!metrics) {
+    return (metric && [metric.id]) || [];
+  }
+  const initialAncestors = metric != null ? [metric.id] : ([] as string[]);
+  return metrics.reduce((acc: string[], metric: ElasticsearchAggregation) => {
+    const includedInField = (metric.field && acc.includes(metric.field)) || false;
+    const includedInVariables = metric.pipelineVariables?.some(pv => acc.includes(pv?.pipelineAgg ?? ''));
+    return includedInField || includedInVariables ? [...acc, metric.id] : acc;
+  }, initialAncestors);
+}
 
-  return result;
+export function getPipelineAggOptions(target: ElasticsearchQuery, metric?: ElasticsearchAggregation) {
+  const { metrics } = target;
+  if (!metrics) {
+    return [];
+  }
+  const ancestors = getAncestors(target, metric);
+  return metrics.filter(m => !ancestors.includes(m.id)).map(m => ({ text: describeMetric(m), value: m.id }));
 }
 
 export function getMovingAvgSettings(model: any, filtered: boolean) {
@@ -233,7 +257,7 @@ export function getMovingAvgSettings(model: any, filtered: boolean) {
 export function getOrderByOptions(target: any) {
   const metricRefs: any[] = [];
   _.each(target.metrics, metric => {
-    if (metric.type !== 'count') {
+    if (metric.type !== 'count' && !isPipelineAgg(metric.type)) {
       metricRefs.push({ text: describeMetric(metric), value: metric.id });
     }
   });
@@ -246,7 +270,7 @@ export function describeOrder(order: string) {
   return def.text;
 }
 
-export function describeMetric(metric: { type: string; field: string }) {
+export function describeMetric(metric: ElasticsearchAggregation) {
   const def: any = _.find(metricAggTypes, { value: metric.type });
   if (!def.requiresField && !isPipelineAgg(metric.type)) {
     return def.text;

@@ -16,36 +16,38 @@ func init() {
 		Type:        "opsgenie",
 		Name:        "OpsGenie",
 		Description: "Sends notifications to OpsGenie",
+		Heading:     "OpsGenie settings",
 		Factory:     NewOpsGenieNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">OpsGenie settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">API Key</span>
-        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.apiKey" placeholder="OpsGenie API Key"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">Alert API Url</span>
-        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.apiUrl" placeholder="https://api.opsgenie.com/v2/alerts"></input>
-      </div>
-      <div class="gf-form">
-        <gf-form-switch
-           class="gf-form"
-           label="Auto close incidents"
-           label-class="width-14"
-           checked="ctrl.model.settings.autoClose"
-           tooltip="Automatically close alerts in OpsGenie once the alert goes back to ok.">
-        </gf-form-switch>
-      </div>
-      <div class="gf-form">
-        <gf-form-switch
-           class="gf-form"
-           label="Override priority"
-           label-class="width-14"
-           checked="ctrl.model.settings.overridePriority"
-           tooltip="Allow the alert priority to be set using the og_priority tag">
-        </gf-form-switch>
-  </div>
-`,
+		Options: []alerting.NotifierOption{
+			{
+				Label:        "API Key",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "OpsGenie API Key",
+				PropertyName: "apiKey",
+				Required:     true,
+				Secure:       true,
+			},
+			{
+				Label:        "Alert API Url",
+				Element:      alerting.ElementTypeInput,
+				InputType:    alerting.InputTypeText,
+				Placeholder:  "https://api.opsgenie.com/v2/alerts",
+				PropertyName: "apiUrl",
+				Required:     true,
+			},
+			{
+				Label:        "Auto close incidents",
+				Element:      alerting.ElementTypeCheckbox,
+				Description:  "Automatically close alerts in OpsGenie once the alert goes back to ok.",
+				PropertyName: "autoClose",
+			}, {
+				Label:        "Override priority",
+				Element:      alerting.ElementTypeCheckbox,
+				Description:  "Allow the alert priority to be set using the og_priority tag",
+				PropertyName: "overridePriority",
+			},
+		},
 	})
 }
 
@@ -57,7 +59,7 @@ var (
 func NewOpsGenieNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	autoClose := model.Settings.Get("autoClose").MustBool(true)
 	overridePriority := model.Settings.Get("overridePriority").MustBool(true)
-	apiKey := model.Settings.Get("apiKey").MustString()
+	apiKey := model.DecryptedValue("apiKey", model.Settings.Get("apiKey").MustString())
 	apiURL := model.Settings.Get("apiUrl").MustString()
 	if apiKey == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find api key property in settings"}
@@ -112,7 +114,7 @@ func (on *OpsGenieNotifier) createAlert(evalContext *alerting.EvalContext) error
 
 	customData := triggMetrString
 	for _, evt := range evalContext.EvalMatches {
-		customData = customData + fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
+		customData += fmt.Sprintf("%s: %v\n", evt.Metric, evt.Value)
 	}
 
 	bodyJSON := simplejson.New()

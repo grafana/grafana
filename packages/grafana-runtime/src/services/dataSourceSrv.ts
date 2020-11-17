@@ -13,19 +13,29 @@ export interface DataSourceSrv {
    * @param name - name of the datasource plugin you want to use.
    * @param scopedVars - variables used to interpolate a templated passed as name.
    */
-  get(name?: string, scopedVars?: ScopedVars): Promise<DataSourceApi>;
+  get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi>;
 
   /**
    * Returns metadata based on UID.
    */
   getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined;
+
+  /**
+   * Get all data sources
+   */
+  getAll(): DataSourceInstanceSettings[];
+
+  /**
+   * Get all data sources except for internal ones that usually should not be listed like mixed data source.
+   */
+  getExternal(): DataSourceInstanceSettings[];
 }
 
 let singletonInstance: DataSourceSrv;
 
 /**
  * Used during startup by Grafana to set the DataSourceSrv so it is available
- * via the the {@link getDataSourceSrv} to the rest of the application.
+ * via the {@link getDataSourceSrv} to the rest of the application.
  *
  * @internal
  */

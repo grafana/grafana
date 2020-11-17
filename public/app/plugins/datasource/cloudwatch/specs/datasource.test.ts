@@ -1,15 +1,31 @@
 import '../datasource';
 import { CloudWatchDatasource, MAX_ATTEMPTS } from '../datasource';
 import * as redux from 'app/store/store';
-import { DataFrame, DataQueryResponse, DataSourceInstanceSettings, dateMath, getFrameDisplayName } from '@grafana/data';
+import {
+  DataFrame,
+  DataQueryErrorType,
+  DataQueryResponse,
+  DataSourceInstanceSettings,
+  dateMath,
+  getFrameDisplayName,
+} from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { CloudWatchLogsQueryStatus, CloudWatchMetricsQuery, CloudWatchQuery, LogAction } from '../types';
+import {
+  CloudWatchLogsQuery,
+  CloudWatchLogsQueryStatus,
+  CloudWatchMetricsQuery,
+  CloudWatchQuery,
+  LogAction,
+} from '../types';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToStoreState } from '../../../../../test/helpers/convertToStoreState';
 import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependencies';
-import { of } from 'rxjs';
-import { CustomVariableModel, VariableHide } from '../../../../features/variables/types';
+import { interval, of } from 'rxjs';
+import { CustomVariableModel, initialVariableModelState, VariableHide } from '../../../../features/variables/types';
+import { TimeSrvStub } from '../../../../../test/specs/helpers';
+
+import * as rxjsUtils from '../utils/rxjs/increasingInterval';
 
 jest.mock('rxjs/operators', () => {
   const operators = jest.requireActual('rxjs/operators');
@@ -18,7 +34,7 @@ jest.mock('rxjs/operators', () => {
 });
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
 }));
 
@@ -113,6 +129,10 @@ describe('CloudWatchDatasource', () => {
   });
 
   describe('When performing CloudWatch logs query', () => {
+    beforeEach(() => {
+      jest.spyOn(rxjsUtils, 'increasingInterval').mockImplementation(() => interval(100));
+    });
+
     it('should add data links to response', () => {
       const mockResponse: DataQueryResponse = {
         data: [
@@ -163,11 +183,28 @@ describe('CloudWatchDatasource', () => {
         ],
       });
     });
-    it('should stop querying when no more data retrieved past max attempts', async () => {
-      const fakeFrames = genMockFrames(10);
-      for (let i = 7; i < fakeFrames.length; i++) {
-        fakeFrames[i].meta!.custom!['Statistics']['RecordsMatched'] = fakeFrames[6].meta!.custom!['Statistics'][
-          'RecordsMatched'
+
+    it('should stop querying when no more data received a number of times in a row', async () => {
+      const fakeFrames = genMockFrames(20);
+      const initialRecordsMatched = fakeFrames[0].meta!.stats!.find(stat => stat.displayName === 'Records scanned')!
+        .value!;
+      for (let i = 1; i < 4; i++) {
+        fakeFrames[i].meta!.stats = [
+          {
+            displayName: 'Records scanned',
+            value: initialRecordsMatched,
+          },
+        ];
+      }
+
+      const finalRecordsMatched = fakeFrames[9].meta!.stats!.find(stat => stat.displayName === 'Records scanned')!
+        .value!;
+      for (let i = 10; i < fakeFrames.length; i++) {
+        fakeFrames[i].meta!.stats = [
+          {
+            displayName: 'Records scanned',
+            value: finalRecordsMatched,
+          },
         ];
       }
 
@@ -186,16 +223,26 @@ describe('CloudWatchDatasource', () => {
 
       const expectedData = [
         {
-          ...fakeFrames[MAX_ATTEMPTS - 1],
-          meta: { custom: { ...fakeFrames[MAX_ATTEMPTS - 1].meta!.custom, Status: 'Complete' } },
+          ...fakeFrames[14],
+          meta: {
+            custom: {
+              Status: 'Cancelled',
+            },
+            stats: fakeFrames[14].meta!.stats,
+          },
         },
       ];
+
       expect(myResponse).toEqual({
         data: expectedData,
         key: 'test-key',
         state: 'Done',
+        error: {
+          type: DataQueryErrorType.Timeout,
+          message: `error: query timed out after ${MAX_ATTEMPTS} attempts`,
+        },
       });
-      expect(i).toBe(MAX_ATTEMPTS);
+      expect(i).toBe(15);
     });
 
     it('should continue querying as long as new data is being received', async () => {
@@ -242,6 +289,21 @@ describe('CloudWatchDatasource', () => {
         state: 'Done',
       });
       expect(i).toBe(3);
+    });
+
+    it('should call the replace method on provided log groups', () => {
+      const replaceSpy = jest.spyOn(ctx.ds, 'replace').mockImplementation((target: string) => target);
+      ctx.ds.makeLogActionRequest('StartQuery', [
+        {
+          queryString: 'test query string',
+          region: 'default',
+          logGroupNames: ['log-group', '${my_var}Variable', 'Cool${other_var}'],
+        },
+      ]);
+
+      expect(replaceSpy).toBeCalledWith('log-group', undefined, true, 'log groups');
+      expect(replaceSpy).toBeCalledWith('${my_var}Variable', undefined, true, 'log groups');
+      expect(replaceSpy).toBeCalledWith('Cool${other_var}', undefined, true, 'log groups');
     });
   });
 
@@ -298,7 +360,7 @@ describe('CloudWatchDatasource', () => {
     });
 
     it('should generate the correct query', async () => {
-      await ctx.ds.query(query);
+      await ctx.ds.query(query).toPromise();
       expect(datasourceRequestMock.mock.calls[0][0].data.queries).toMatchObject(
         expect.arrayContaining([
           expect.objectContaining({
@@ -314,6 +376,7 @@ describe('CloudWatchDatasource', () => {
 
     it('should generate the correct query with interval variable', async () => {
       const period: CustomVariableModel = {
+        ...initialVariableModelState,
         id: 'period',
         name: 'period',
         index: 0,
@@ -324,9 +387,6 @@ describe('CloudWatchDatasource', () => {
         query: '',
         hide: VariableHide.dontHide,
         type: 'custom',
-        label: null,
-        skipUrlSync: false,
-        global: false,
       };
       templateSrv.init([period]);
 
@@ -349,7 +409,7 @@ describe('CloudWatchDatasource', () => {
         ],
       };
 
-      await ctx.ds.query(query);
+      await ctx.ds.query(query).toPromise();
       expect(datasourceRequestMock.mock.calls[0][0].data.queries[0].period).toEqual('600');
     });
 
@@ -376,11 +436,14 @@ describe('CloudWatchDatasource', () => {
     });
 
     it('should return series list', done => {
-      ctx.ds.query(query).then((result: any) => {
-        expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
-        expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
-        done();
-      });
+      ctx.ds
+        .query(query)
+        .toPromise()
+        .then((result: any) => {
+          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
+          expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
+          done();
+        });
     });
 
     describe('a correct cloudwatch url should be built for each time series in the response', () => {
@@ -392,14 +455,17 @@ describe('CloudWatchDatasource', () => {
 
       it('should be built correctly if theres one search expressions returned in meta for a given query row', done => {
         response.results['A'].meta.gmdMeta = [{ Expression: `REMOVE_EMPTY(SEARCH('some expression'))`, Period: '300' }];
-        ctx.ds.query(query).then((result: any) => {
-          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
-          expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
-          expect(decodeURIComponent(result.data[0].fields[1].config.links[0].url)).toContain(
-            `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'some expression\'))"}]}`
-          );
-          done();
-        });
+        ctx.ds
+          .query(query)
+          .toPromise()
+          .then((result: any) => {
+            expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
+            expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
+            expect(decodeURIComponent(result.data[0].fields[1].config.links[0].url)).toContain(
+              `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'some expression\'))"}]}`
+            );
+            done();
+          });
       });
 
       it('should be built correctly if theres two search expressions returned in meta for a given query row', done => {
@@ -407,35 +473,44 @@ describe('CloudWatchDatasource', () => {
           { Expression: `REMOVE_EMPTY(SEARCH('first expression'))` },
           { Expression: `REMOVE_EMPTY(SEARCH('second expression'))` },
         ];
-        ctx.ds.query(query).then((result: any) => {
-          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
-          expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
-          expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
-            `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'first expression\'))"},{"expression":"REMOVE_EMPTY(SEARCH(\'second expression\'))"}]}`
-          );
-          done();
-        });
+        ctx.ds
+          .query(query)
+          .toPromise()
+          .then((result: any) => {
+            expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
+            expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
+            expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
+              `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'first expression\'))"},{"expression":"REMOVE_EMPTY(SEARCH(\'second expression\'))"}]}`
+            );
+            done();
+          });
       });
 
       it('should be built correctly if the query is a metric stat query', done => {
         response.results['A'].meta.gmdMeta = [{ Period: '300' }];
-        ctx.ds.query(query).then((result: any) => {
-          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
-          expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
-          expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
-            `region=us-east-1#metricsV2:graph={\"view\":\"timeSeries\",\"stacked\":false,\"title\":\"A\",\"start\":\"2016-12-31T15:00:00.000Z\",\"end\":\"2016-12-31T16:00:00.000Z\",\"region\":\"us-east-1\",\"metrics\":[[\"AWS/EC2\",\"CPUUtilization\",\"InstanceId\",\"i-12345678\",{\"stat\":\"Average\",\"period\":\"300\"}]]}`
-          );
-          done();
-        });
+        ctx.ds
+          .query(query)
+          .toPromise()
+          .then((result: any) => {
+            expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
+            expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
+            expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
+              `region=us-east-1#metricsV2:graph={\"view\":\"timeSeries\",\"stacked\":false,\"title\":\"A\",\"start\":\"2016-12-31T15:00:00.000Z\",\"end\":\"2016-12-31T16:00:00.000Z\",\"region\":\"us-east-1\",\"metrics\":[[\"AWS/EC2\",\"CPUUtilization\",\"InstanceId\",\"i-12345678\",{\"stat\":\"Average\",\"period\":\"300\"}]]}`
+            );
+            done();
+          });
       });
 
       it('should not be added at all if query is a math expression', done => {
         query.targets[0].expression = 'a * 2';
         response.results['A'].meta.searchExpressions = [];
-        ctx.ds.query(query).then((result: any) => {
-          expect(result.data[0].fields[1].config.links).toBeUndefined();
-          done();
-        });
+        ctx.ds
+          .query(query)
+          .toPromise()
+          .then((result: any) => {
+            expect(result.data[0].fields[1].config.links).toBeUndefined();
+            done();
+          });
       });
     });
 
@@ -509,13 +584,16 @@ describe('CloudWatchDatasource', () => {
 
       it('should display one alert error message per region+datasource combination', done => {
         const memoizedDebounceSpy = jest.spyOn(ctx.ds, 'debouncedAlert');
-        ctx.ds.query(query).catch(() => {
-          expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-1');
-          expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-2');
-          expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'eu-north-1');
-          expect(memoizedDebounceSpy).toBeCalledTimes(3);
-          done();
-        });
+        ctx.ds
+          .query(query)
+          .toPromise()
+          .catch(() => {
+            expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-1');
+            expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-2');
+            expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'eu-north-1');
+            expect(memoizedDebounceSpy).toBeCalledTimes(3);
+            done();
+          });
       });
     });
 
@@ -594,10 +672,76 @@ describe('CloudWatchDatasource', () => {
         ],
       };
 
-      ctx.ds.query(query).then((result: any) => {
-        expect(requestParams.queries[0].region).toBe(instanceSettings.jsonData.defaultRegion);
-        done();
-      });
+      ctx.ds
+        .query(query)
+        .toPromise()
+        .then((result: any) => {
+          expect(requestParams.queries[0].region).toBe(instanceSettings.jsonData.defaultRegion);
+          done();
+        });
+    });
+  });
+
+  describe('When interpolating variables', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+
+      ctx.mockedTemplateSrv = {
+        replace: jest.fn(),
+      };
+
+      ctx.ds = new CloudWatchDatasource(
+        instanceSettings,
+        ctx.mockedTemplateSrv,
+        (new TimeSrvStub() as unknown) as TimeSrv
+      );
+    });
+
+    it('should return an empty array if no queries are provided', () => {
+      expect(ctx.ds.interpolateVariablesInQueries([], {})).toHaveLength(0);
+    });
+
+    it('should replace correct variables in CloudWatchLogsQuery', () => {
+      const variableName = 'someVar';
+      const logQuery: CloudWatchLogsQuery = {
+        id: 'someId',
+        refId: 'someRefId',
+        queryMode: 'Logs',
+        expression: `$${variableName}`,
+        region: `$${variableName}`,
+      };
+
+      ctx.ds.interpolateVariablesInQueries([logQuery], {});
+
+      // We interpolate `expression` and `region` in CloudWatchLogsQuery
+      expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledWith(`$${variableName}`, {});
+      expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledTimes(2);
+    });
+
+    it('should replace correct variables in CloudWatchMetricsQuery', () => {
+      const variableName = 'someVar';
+      const logQuery: CloudWatchMetricsQuery = {
+        id: 'someId',
+        refId: 'someRefId',
+        queryMode: 'Metrics',
+        expression: `$${variableName}`,
+        region: `$${variableName}`,
+        period: `$${variableName}`,
+        alias: `$${variableName}`,
+        metricName: `$${variableName}`,
+        namespace: `$${variableName}`,
+        dimensions: {
+          [`$${variableName}`]: `$${variableName}`,
+        },
+        matchExact: false,
+        statistics: [],
+      };
+
+      ctx.ds.interpolateVariablesInQueries([logQuery], {});
+
+      // We interpolate `expression`, `region`, `period`, `alias`, `metricName`, `nameSpace` and `dimensions` in CloudWatchMetricsQuery
+      expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledWith(`$${variableName}`, {});
+      expect(ctx.mockedTemplateSrv.replace).toHaveBeenCalledTimes(8);
     });
   });
 
@@ -660,11 +804,14 @@ describe('CloudWatchDatasource', () => {
     });
 
     it('should return series list', done => {
-      ctx.ds.query(query).then((result: any) => {
-        expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
-        expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
-        done();
-      });
+      ctx.ds
+        .query(query)
+        .toPromise()
+        .then((result: any) => {
+          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
+          expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
+          done();
+        });
     });
   });
 
@@ -672,6 +819,7 @@ describe('CloudWatchDatasource', () => {
     let requestParams: { queries: CloudWatchMetricsQuery[] };
     beforeEach(() => {
       const var1: CustomVariableModel = {
+        ...initialVariableModelState,
         id: 'var1',
         name: 'var1',
         index: 0,
@@ -682,11 +830,9 @@ describe('CloudWatchDatasource', () => {
         query: '',
         hide: VariableHide.dontHide,
         type: 'custom',
-        label: null,
-        skipUrlSync: false,
-        global: false,
       };
       const var2: CustomVariableModel = {
+        ...initialVariableModelState,
         id: 'var2',
         name: 'var2',
         index: 1,
@@ -697,11 +843,9 @@ describe('CloudWatchDatasource', () => {
         query: '',
         hide: VariableHide.dontHide,
         type: 'custom',
-        label: null,
-        skipUrlSync: false,
-        global: false,
       };
       const var3: CustomVariableModel = {
+        ...initialVariableModelState,
         id: 'var3',
         name: 'var3',
         index: 2,
@@ -716,11 +860,9 @@ describe('CloudWatchDatasource', () => {
         query: '',
         hide: VariableHide.dontHide,
         type: 'custom',
-        label: null,
-        skipUrlSync: false,
-        global: false,
       };
       const var4: CustomVariableModel = {
+        ...initialVariableModelState,
         id: 'var4',
         name: 'var4',
         index: 3,
@@ -735,9 +877,6 @@ describe('CloudWatchDatasource', () => {
         query: '',
         hide: VariableHide.dontHide,
         type: 'custom',
-        label: null,
-        skipUrlSync: false,
-        global: false,
       };
       const variables = [var1, var2, var3, var4];
       const state = convertToStoreState(variables);
@@ -771,10 +910,13 @@ describe('CloudWatchDatasource', () => {
         ],
       };
 
-      ctx.ds.query(query).then(() => {
-        expect(requestParams.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
-        done();
-      });
+      ctx.ds
+        .query(query)
+        .toPromise()
+        .then(() => {
+          expect(requestParams.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
+          done();
+        });
     });
 
     it('should generate the correct query in the case of one multilple template variables', done => {
@@ -803,12 +945,15 @@ describe('CloudWatchDatasource', () => {
         },
       };
 
-      ctx.ds.query(query).then(() => {
-        expect(requestParams.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
-        expect(requestParams.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
-        expect(requestParams.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
-        done();
-      });
+      ctx.ds
+        .query(query)
+        .toPromise()
+        .then(() => {
+          expect(requestParams.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
+          expect(requestParams.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
+          expect(requestParams.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
+          done();
+        });
     });
 
     it('should generate the correct query in the case of multilple multi template variables', done => {
@@ -833,12 +978,15 @@ describe('CloudWatchDatasource', () => {
         ],
       };
 
-      ctx.ds.query(query).then(() => {
-        expect(requestParams.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
-        expect(requestParams.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
-        expect(requestParams.queries[0].dimensions['dim4']).toStrictEqual(['var4-foo', 'var4-baz']);
-        done();
-      });
+      ctx.ds
+        .query(query)
+        .toPromise()
+        .then(() => {
+          expect(requestParams.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
+          expect(requestParams.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
+          expect(requestParams.queries[0].dimensions['dim4']).toStrictEqual(['var4-foo', 'var4-baz']);
+          done();
+        });
     });
 
     it('should generate the correct query for multilple template variables, lack scopedVars', done => {
@@ -866,12 +1014,15 @@ describe('CloudWatchDatasource', () => {
         },
       };
 
-      ctx.ds.query(query).then(() => {
-        expect(requestParams.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
-        expect(requestParams.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
-        expect(requestParams.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
-        done();
-      });
+      ctx.ds
+        .query(query)
+        .toPromise()
+        .then(() => {
+          expect(requestParams.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
+          expect(requestParams.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
+          expect(requestParams.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
+          done();
+        });
     });
   });
 
@@ -1044,11 +1195,15 @@ function genMockFrames(numResponses: number): DataFrame[] {
       meta: {
         custom: {
           Status: i === numResponses - 1 ? CloudWatchLogsQueryStatus.Complete : CloudWatchLogsQueryStatus.Running,
-          Statistics: {
-            RecordsMatched: (i + 1) * recordIncrement,
-          },
         },
+        stats: [
+          {
+            displayName: 'Records scanned',
+            value: (i + 1) * recordIncrement,
+          },
+        ],
       },
+      refId: 'A',
       length: 0,
     });
   }

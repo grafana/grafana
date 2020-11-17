@@ -1,12 +1,12 @@
 import { identity } from 'lodash';
 import { keyBy } from 'lodash';
 import { ZipkinAnnotation, ZipkinEndpoint, ZipkinSpan } from '../types';
-import { KeyValuePair, Log, Process, SpanData, TraceData } from '@jaegertracing/jaeger-ui-components';
+import { TraceKeyValuePair, TraceLog, TraceProcess, TraceSpanData, TraceData } from '@grafana/data';
 
 /**
  * Transforms response to format similar to Jaegers as we use Jaeger ui on the frontend.
  */
-export function transformResponse(zSpans: ZipkinSpan[]): TraceData & { spans: SpanData[] } {
+export function transformResponse(zSpans: ZipkinSpan[]): TraceData & { spans: TraceSpanData[] } {
   return {
     processes: gatherProcesses(zSpans),
     traceID: zSpans[0].traceId,
@@ -15,8 +15,8 @@ export function transformResponse(zSpans: ZipkinSpan[]): TraceData & { spans: Sp
   };
 }
 
-function transformSpan(span: ZipkinSpan): SpanData {
-  const jaegerSpan: SpanData = {
+function transformSpan(span: ZipkinSpan): TraceSpanData {
+  const jaegerSpan: TraceSpanData = {
     duration: span.duration,
     // TODO: not sure what this is
     flags: 1,
@@ -63,7 +63,7 @@ function transformSpan(span: ZipkinSpan): SpanData {
  * Maps annotations as a Jaeger log as that seems to be the closest thing.
  * See https://zipkin.io/zipkin-api/#/default/get_trace__traceId_
  */
-function transformAnnotation(annotation: ZipkinAnnotation): Log {
+function transformAnnotation(annotation: ZipkinAnnotation): TraceLog {
   return {
     timestamp: annotation.timestamp,
     fields: [
@@ -76,7 +76,7 @@ function transformAnnotation(annotation: ZipkinAnnotation): Log {
   };
 }
 
-function gatherProcesses(zSpans: ZipkinSpan[]): Record<string, Process> {
+function gatherProcesses(zSpans: ZipkinSpan[]): Record<string, TraceProcess> {
   const processes = zSpans.reduce((acc, span) => {
     if (span.localEndpoint) {
       acc.push(endpointToProcess(span.localEndpoint));
@@ -85,22 +85,22 @@ function gatherProcesses(zSpans: ZipkinSpan[]): Record<string, Process> {
       acc.push(endpointToProcess(span.remoteEndpoint));
     }
     return acc;
-  }, [] as Process[]);
+  }, [] as TraceProcess[]);
   return keyBy(processes, 'serviceName');
 }
 
-function endpointToProcess(endpoint: ZipkinEndpoint): Process {
+function endpointToProcess(endpoint: ZipkinEndpoint): TraceProcess {
   return {
     serviceName: endpoint.serviceName,
     tags: [
       valueToTag('ipv4', endpoint.ipv4, 'string'),
       valueToTag('ipv6', endpoint.ipv6, 'string'),
       valueToTag('port', endpoint.port, 'number'),
-    ].filter(identity) as KeyValuePair[],
+    ].filter(identity) as TraceKeyValuePair[],
   };
 }
 
-function valueToTag(key: string, value: string | number | undefined, type: string): KeyValuePair | undefined {
+function valueToTag(key: string, value: string | number | undefined, type: string): TraceKeyValuePair | undefined {
   if (!value) {
     return undefined;
   }

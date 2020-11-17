@@ -5,7 +5,8 @@ import { contextSrv } from 'app/core/core';
 import { tickStep } from 'app/core/utils/ticks';
 import { getColorScale, getOpacityScale } from './color_scale';
 import coreModule from 'app/core/core_module';
-import { PanelEvents, GrafanaThemeType, getColorFromHexRgbOrName } from '@grafana/data';
+import { PanelEvents, getColorForTheme } from '@grafana/data';
+import { config } from 'app/core/config';
 
 const LEGEND_HEIGHT_PX = 6;
 const LEGEND_WIDTH_PX = 100;
@@ -33,7 +34,7 @@ coreModule.directive('colorLegend', () => {
 
       function render() {
         const legendElem = $(elem).find('svg');
-        const legendWidth = Math.floor(legendElem.outerWidth());
+        const legendWidth = Math.floor(legendElem.outerWidth() ?? 10);
 
         if (panel.color.mode === 'spectrum') {
           const colorScheme: any = _.find(ctrl.colorSchemes, {
@@ -102,7 +103,7 @@ function drawColorLegend(
   const legend = d3.select(legendElem.get(0));
   clearLegend(elem);
 
-  const legendWidth = Math.floor(legendElem.outerWidth()) - 30;
+  const legendWidth = Math.floor(legendElem.outerWidth() ?? 10) - 30;
   const legendHeight = legendElem.attr('height');
 
   const rangeStep = ((rangeTo - rangeFrom) / legendWidth) * LEGEND_SEGMENT_WIDTH;
@@ -140,7 +141,7 @@ function drawOpacityLegend(
   const legend = d3.select(legendElem.get(0));
   clearLegend(elem);
 
-  const legendWidth = Math.floor(legendElem.outerWidth()) - 30;
+  const legendWidth = Math.floor(legendElem.outerWidth() ?? 30) - 30;
   const legendHeight = legendElem.attr('height');
 
   const rangeStep = ((rangeTo - rangeFrom) / legendWidth) * LEGEND_SEGMENT_WIDTH;
@@ -214,7 +215,7 @@ function drawSimpleColorLegend(elem: JQuery, colorScale: any) {
   const legendElem = $(elem).find('svg');
   clearLegend(elem);
 
-  const legendWidth = Math.floor(legendElem.outerWidth());
+  const legendWidth = Math.floor(legendElem.outerWidth() ?? 30);
   const legendHeight = legendElem.attr('height');
 
   if (legendWidth) {
@@ -242,7 +243,7 @@ function drawSimpleOpacityLegend(elem: JQuery, options: { colorScale: string; ex
   clearLegend(elem);
 
   const legend = d3.select(legendElem.get(0));
-  const legendWidth = Math.floor(legendElem.outerWidth());
+  const legendWidth = Math.floor(legendElem.outerWidth() ?? 30);
   const legendHeight = legendElem.attr('height');
 
   if (legendWidth) {
@@ -272,13 +273,7 @@ function drawSimpleOpacityLegend(elem: JQuery, options: { colorScale: string; ex
       .attr('width', rangeStep)
       .attr('height', legendHeight)
       .attr('stroke-width', 0)
-      .attr(
-        'fill',
-        getColorFromHexRgbOrName(
-          options.cardColor,
-          contextSrv.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark
-        )
-      )
+      .attr('fill', getColorForTheme(options.cardColor, config.theme))
       .style('opacity', d => legendOpacityScale(d));
   }
 }

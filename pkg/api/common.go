@@ -10,9 +10,6 @@ import (
 )
 
 var (
-	NotFound = func() Response {
-		return Error(404, "Not found", nil)
-	}
 	ServerError = func(err error) Response {
 		return Error(500, "Server error", err)
 	}
@@ -31,7 +28,6 @@ type NormalResponse struct {
 }
 
 func Wrap(action interface{}) macaron.Handler {
-
 	return func(c *models.ReqContext) {
 		var res Response
 		val, err := c.Invoke(action)
@@ -48,7 +44,6 @@ func Wrap(action interface{}) macaron.Handler {
 func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 	if r.err != nil {
 		ctx.Logger.Error(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr())
-
 	}
 
 	header := ctx.Resp.Header()
@@ -61,16 +56,12 @@ func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 	}
 }
 
-func (r *NormalResponse) Cache(ttl string) *NormalResponse {
-	return r.Header("Cache-Control", "public,max-age="+ttl)
-}
-
 func (r *NormalResponse) Header(key, value string) *NormalResponse {
 	r.header.Set(key, value)
 	return r
 }
 
-// Empty create an empty response
+// Empty creates an empty response.
 func Empty(status int) *NormalResponse {
 	return Respond(status, nil)
 }
@@ -103,7 +94,7 @@ func Error(status int, message string, err error) *NormalResponse {
 	}
 
 	if err != nil {
-		if setting.Env != setting.PROD {
+		if setting.Env != setting.Prod {
 			data["error"] = err.Error()
 		}
 	}

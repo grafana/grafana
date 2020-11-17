@@ -9,7 +9,6 @@ import { ErrorBoundary } from '@grafana/ui';
 import { getTimeSrv, TimeSrv } from '../services/TimeSrv';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { profiler } from 'app/core/profiler';
-import { getProcessedDataFrames } from '../state/runRequest';
 import config from 'app/core/config';
 import { updateLocation } from 'app/core/actions';
 // Types
@@ -25,8 +24,10 @@ import {
   PanelData,
   PanelPlugin,
   FieldConfigSource,
+  PanelPluginMeta,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -35,7 +36,7 @@ export interface Props {
   dashboard: DashboardModel;
   plugin: PanelPlugin;
   isViewing: boolean;
-  isEditing?: boolean;
+  isEditing: boolean;
   isInView: boolean;
   width: number;
   height: number;
@@ -51,8 +52,9 @@ export interface State {
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
-  timeSrv: TimeSrv = getTimeSrv();
-  querySubscription: Unsubscribable;
+  readonly timeSrv: TimeSrv = getTimeSrv();
+
+  querySubscription?: Unsubscribable;
 
   constructor(props: Props) {
     super(props);
@@ -72,6 +74,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   componentDidMount() {
     const { panel, dashboard } = this.props;
 
+    // Subscribe to panel events
     panel.events.on(PanelEvents.refresh, this.onRefresh);
     panel.events.on(PanelEvents.render, this.onRender);
 
@@ -80,11 +83,7 @@ export class PanelChrome extends PureComponent<Props, State> {
     // Move snapshot data into the query response
     if (this.hasPanelSnapshot) {
       this.setState({
-        data: {
-          ...this.state.data,
-          state: LoadingState.Done,
-          series: getProcessedDataFrames(panel.snapshotData),
-        },
+        data: loadSnapshotData(panel, dashboard),
         isFirstLoad: false,
       });
       return;
@@ -171,7 +170,6 @@ export class PanelChrome extends PureComponent<Props, State> {
   onRefresh = () => {
     const { panel, isInView, width } = this.props;
     if (!isInView) {
-      console.log('Refresh when panel is visible', panel.id);
       this.setState({ refreshWhenInView: true });
       return;
     }
@@ -181,7 +179,6 @@ export class PanelChrome extends PureComponent<Props, State> {
     // Issue Query
     if (this.wantsQueryExecution) {
       if (width < 0) {
-        console.log('Refresh skippted, no width yet... wait till we know');
         return;
       }
 
@@ -240,24 +237,28 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
   };
 
+  shouldSignalRenderingCompleted(loadingState: LoadingState, pluginMeta: PanelPluginMeta) {
+    return loadingState === LoadingState.Done || pluginMeta.skipDataQuery;
+  }
+
   renderPanel(width: number, height: number) {
-    const { panel, plugin } = this.props;
+    const { panel, plugin, dashboard } = this.props;
     const { renderCounter, data, isFirstLoad } = this.state;
     const { theme } = config;
-
-    // This is only done to increase a counter that is used by backend
-    // image rendering to know when to capture image
-    const loading = data.state;
-    if (loading === LoadingState.Done) {
-      profiler.renderingCompleted();
-    }
+    const { state: loadingState } = data;
 
     // do not render component until we have first data
-    if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
+    if (isFirstLoad && (loadingState === LoadingState.Loading || loadingState === LoadingState.NotStarted)) {
       return null;
     }
 
-    const PanelComponent = plugin.panel;
+    // This is only done to increase a counter that is used by backend
+    // image rendering to know when to capture image
+    if (this.shouldSignalRenderingCompleted(loadingState, plugin.meta)) {
+      profiler.renderingCompleted();
+    }
+
+    const PanelComponent = plugin.panel!;
     const timeRange = data.timeRange || this.timeSrv.timeRange();
     const headerHeight = this.hasOverlayHeader() ? 0 : theme.panelHeaderHeight;
     const chromePadding = plugin.noPadding ? 0 : theme.panelPadding;
@@ -275,6 +276,7 @@ export class PanelChrome extends PureComponent<Props, State> {
           <PanelComponent
             id={panel.id}
             data={data}
+            title={panel.title}
             timeRange={timeRange}
             timeZone={this.props.dashboard.getTimezone()}
             options={panelOptions}
@@ -287,6 +289,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             onOptionsChange={this.onOptionsChange}
             onFieldConfigChange={this.onFieldConfigChange}
             onChangeTimeRange={this.onChangeTimeRange}
+            eventBus={dashboard.events}
           />
         </div>
       </>

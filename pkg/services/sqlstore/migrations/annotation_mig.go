@@ -6,7 +6,6 @@ import (
 )
 
 func addAnnotationMig(mg *Migrator) {
-
 	table := Table{
 		Name: "annotation",
 		Columns: []*Column{
@@ -66,9 +65,9 @@ func addAnnotationMig(mg *Migrator) {
 		Name: "tags", Type: DB_NVarchar, Nullable: true, Length: 500,
 	}))
 
-	///
-	/// Annotation tag
-	///
+	//
+	// Annotation tag
+	//
 	annotationTagTable := Table{
 		Name: "annotation_tag",
 		Columns: []*Column{
@@ -116,8 +115,8 @@ func addAnnotationMig(mg *Migrator) {
 	//
 	// clear alert text
 	//
-	updateTextFieldSql := "UPDATE annotation SET TEXT = '' WHERE alert_id > 0"
-	mg.AddMigration("Update alert annotations and set TEXT to empty", NewRawSqlMigration(updateTextFieldSql))
+	updateTextFieldSQL := "UPDATE annotation SET TEXT = '' WHERE alert_id > 0"
+	mg.AddMigration("Update alert annotations and set TEXT to empty", NewRawSQLMigration(updateTextFieldSQL))
 
 	//
 	// Add a 'created' & 'updated' column
@@ -138,8 +137,8 @@ func addAnnotationMig(mg *Migrator) {
 	//
 	// Convert epoch saved as seconds to milliseconds
 	//
-	updateEpochSql := "UPDATE annotation SET epoch = (epoch*1000) where epoch < 9999999999"
-	mg.AddMigration("Convert existing annotations from seconds to milliseconds", NewRawSqlMigration(updateEpochSql))
+	updateEpochSQL := "UPDATE annotation SET epoch = (epoch*1000) where epoch < 9999999999"
+	mg.AddMigration("Convert existing annotations from seconds to milliseconds", NewRawSQLMigration(updateEpochSQL))
 
 	//
 	// 6.4: Make Regions a single annotation row
@@ -150,7 +149,7 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Add index for epoch_end", NewAddIndexMigration(table, &Index{
 		Cols: []string{"org_id", "epoch", "epoch_end"}, Type: IndexType,
 	}))
-	mg.AddMigration("Make epoch_end the same as epoch", NewRawSqlMigration("UPDATE annotation SET epoch_end = epoch"))
+	mg.AddMigration("Make epoch_end the same as epoch", NewRawSQLMigration("UPDATE annotation SET epoch_end = epoch"))
 	mg.AddMigration("Move region to single row", &AddMakeRegionSingleRowMigration{})
 
 	//
@@ -185,7 +184,7 @@ type AddMakeRegionSingleRowMigration struct {
 	MigrationBase
 }
 
-func (m *AddMakeRegionSingleRowMigration) Sql(dialect Dialect) string {
+func (m *AddMakeRegionSingleRowMigration) SQL(dialect Dialect) string {
 	return "code migration"
 }
 

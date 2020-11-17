@@ -44,5 +44,6 @@ export const getMockDataSource = (): DataSourceSettings => {
     typeLogoUrl: 'public/app/plugins/datasource/cloudwatch/img/amazon-web-services.png',
     url: '',
     user: '',
+    secureJsonFields: {},
   };
 };

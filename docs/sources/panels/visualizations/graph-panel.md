@@ -1,10 +1,7 @@
 +++
 title = "Graph panel"
 keywords = ["grafana", "graph panel", "documentation", "guide", "graph"]
-type = "docs"
 aliases = ["/docs/grafana/latest/reference/graph/", "/docs/grafana/latest/features/panels/graph/"]
-[menu.docs]
-parent = "visualizations"
 weight = 500
 +++
 
@@ -15,8 +12,10 @@ This visualization is the most-used in the Grafana ecosystem. It can render as a
 ## Data and field options
 
 Graph visualizations allow you to apply:
-- [Data transformations]({{< relref "../transformations.md" >}})
-- [Alerts](../../alerting/alerts-overview.md) - This is the only type of visualization that allows you to set alerts.
+
+- [Alerts]({{< relref "../../alerting/alerts-overview.md" >}}) - This is the only type of visualization that allows you to set alerts.
+- [Data transformations]({{< relref "../transformations/_index.md" >}})
+- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options
@@ -28,21 +27,10 @@ Use these settings to refine your visualization.
 - **Line width -** The width of the line for a series. (default 1).
 - **Staircase -** Draws adjacent points as staircase.
 - **Area fill -** Amount of color fill for a series. (default 1, 0 is none)
-- **Fill gradient -** XXX
+- **Fill gradient -** Degree of gradient on the area fill. (0 is no gradient, 10 is a steep gradient. Default is 0.)
 - **Points -** Display points for values.
 - **Point radius -** Controls how large the points are.
-
-### Hover tooltip
-
-Use these settings to change the appearance of the tooltip that appears when you hover your cursor over the graph visualization.
-
-- **Mode**
-  - **All series -** The hover tooltips shows all series in the graph. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
-  - **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the graph.
-- **Sort order -** Sorts the order of series in the hover tooltip if you have selected *All series* mode.
-  - **None -** The order of the series in the tooltip is determined by the sort order in your query. For example, they could be alphabetically sorted by series name.
-  - **Increasing -** The series in the hover tooltip are sorted by value and in increasing order, with the lowest value at the top of the list.
-  - **Decreasing -** The series in the hover tooltip are sorted by value and in decreasing order, with the highest value at the top of the list.
+- **Alert thresholds -** Display alert thresholds and regions on the panel.
 
 ### Stacking and null value
 
@@ -55,9 +43,21 @@ Use these settings to change the appearance of the tooltip that appears when you
 
 > **Note:** If you are monitoring a server's CPU load and the load reaches 100%, then the server will lock up and the agent sending statistics will not be able to collect the load statistic. This leads to a gap in the metrics and having the default as _null_ means Grafana will show the gaps and indicate that something is wrong. If this is set to _connected_, then it would be easy to miss this signal.
 
+### Hover tooltip
+
+Use these settings to change the appearance of the tooltip that appears when you hover your cursor over the graph visualization.
+
+- **Mode**
+  - **All series -** The hover tooltip shows all series in the graph. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
+  - **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the graph.
+- **Sort order -** Sorts the order of series in the hover tooltip if you have selected **All series** mode. When you hover your cursor on a graph, Grafana displays the values associated with the lines. Generally users are most interested in the highest or lowest values. Sorting these values can make it much easier to find the data of interest.
+  - **None -** The order of the series in the tooltip is determined by the sort order in your query. For example, they could be alphabetically sorted by series name.
+  - **Increasing -** The series in the hover tooltip are sorted by value and in increasing order, with the lowest value at the top of the list.
+  - **Decreasing -** The series in the hover tooltip are sorted by value and in decreasing order, with the highest value at the top of the list.
+
 ## Series overrides
 
-Series overrides allows a series in a graph panel to be rendered differently from the others. You can customize display options on a per-series bases or by using regex rules. For example, one series can have a thicker line width to make it stand out or be moved to the right Y-axis.
+Series overrides allow a series in a graph panel to be rendered differently from the others. You can customize display options on a per-series bases or by using regex rules. For example, one series can have a thicker line width to make it stand out or be moved to the right Y-axis.
 
 You can add multiple series overrides.
 
@@ -65,7 +65,7 @@ You can add multiple series overrides.
 
 1. Click **Add series override**.
 1. In **Alias or regex** Type or select a series. Click in the field to see a list of available series.
-   
+
    **Example:**  `/Network.*/` would match two series named `Network out` and `Network in`.
 
 1. Click **+** and then select a style to apply to the series. You can add multiple styles to each entry.
@@ -118,13 +118,13 @@ Options are identical for both Y-axes.
   - **Time -** (default) The X-axis represents time and that the data is grouped by time (for example, by hour, or by minute).
   - **Series -** The data is grouped by series and not by time. The Y-axis still represents the value.
     - **Value -**  The aggregation type to use for the values. The default is total (summing the values together).
-  - **Histogram -** Converts the graph into a histogram. A histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range. 
-   
+  - **Histogram -** Converts the graph into a histogram. A histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range.
+
     For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../getting-started/intro-histograms.md" >}}).
     - **Buckets -** The number of buckets to group the values by. If left empty, then Grafana tries to calculate a suitable number of buckets.
     - **X-Min -** Filters out values from the histogram that are under this minimum limit.
     - **X-Max -** Filters out values that are greater than this maximum limit.
-	
+
 ## Legend
 
 Use these settings to refine how the legend appears in your visualization.
@@ -147,7 +147,7 @@ Additional values can be shown along-side the legend names:
 - **Total -** Sum of all values returned from the metric query.
 - **Decimals -** Controls how many decimals are displayed for legend values and graph hover tooltips.
 
-The legend values are calculated on the client side by Grafana and depend on what type of aggregation or point consolidation your metric query is using. All the above legend values cannot be correct at the same time. 
+The legend values are calculated on the client side by Grafana and depend on what type of aggregation or point consolidation your metric query is using. All the above legend values cannot be correct at the same time.
 
 For example, if you plot a rate like requests/second, this is probably using average as an aggregator, then the Total in the legend will not represent the total number of requests. It is just the sum of all data points received by Grafana.
 
@@ -156,8 +156,8 @@ For example, if you plot a rate like requests/second, this is probably using ave
 Hide series when all values of a series from a metric query are of a specific value.
 
 - **With only nulls -** Value=null (default unchecked)
-- **With only zeroes -** Value=zero (default unchecked) 
+- **With only zeroes -** Value=zero (default unchecked)
 
 ### Time regions
 
-Time regions allow you to highlight certain time regions of the graph to make it easier to see for example weekends, business hours and/or off work hours.
+Time regions allow you to highlight certain time regions of the graph to make it easier to see for example weekends, business hours and/or off work hours. All configured time regions refer to UTC time.

@@ -1,17 +1,20 @@
-ARG BASE_IMAGE=alpine:3.11
+ARG BASE_IMAGE=alpine:3.12
 FROM ${BASE_IMAGE}
 
 ARG GRAFANA_TGZ="grafana-latest.linux-x64-musl.tar.gz"
 
+# Make sure we have Gnu tar
+RUN apk add --no-cache tar
+
 COPY ${GRAFANA_TGZ} /tmp/grafana.tar.gz
 
 # Change to tar xfzv to make tar print every file it extracts
-RUN mkdir /tmp/grafana && tar xfz /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
+RUN mkdir /tmp/grafana && tar xzf /tmp/grafana.tar.gz --strip-components=1 -C /tmp/grafana
 
 FROM ${BASE_IMAGE}
 
 ARG GF_UID="472"
-ARG GF_GID="472"
+ARG GF_GID="0"
 
 ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
     GF_PATHS_CONFIG="/etc/grafana/grafana.ini" \
@@ -24,11 +27,11 @@ ENV PATH=/usr/share/grafana/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bi
 WORKDIR $GF_PATHS_HOME
 
 RUN apk add --no-cache ca-certificates bash tzdata && \
-    apk add --no-cache --upgrade openssl musl-utils
+    apk add --no-cache openssl musl-utils
 
 # Oracle Support for x86_64 only
 RUN if [ `arch` = "x86_64" ]; then \
-      apk add --no-cache --upgrade libaio libnsl && \
+      apk add --no-cache libaio libnsl && \
       ln -s /usr/lib/libnsl.so.2 /usr/lib/libnsl.so.1 && \
       wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.30-r0/glibc-2.30-r0.apk \
         -O /tmp/glibc-2.30-r0.apk && \
@@ -43,23 +46,28 @@ RUN if [ `arch` = "x86_64" ]; then \
 
 COPY --from=0 /tmp/grafana "$GF_PATHS_HOME"
 
-RUN mkdir -p "$GF_PATHS_HOME/.aws" && \
-    addgroup -S -g $GF_GID grafana && \
-    adduser -S -u $GF_UID -G grafana grafana && \
+RUN if [ ! $(getent group "$GF_GID") ]; then \
+      addgroup -S -g $GF_GID grafana; \
+    fi
+
+RUN export GF_GID_NAME=$(getent group $GF_GID | cut -d':' -f1) && \
+    mkdir -p "$GF_PATHS_HOME/.aws" && \
+    adduser -S -u $GF_UID -G "$GF_GID_NAME" grafana && \
     mkdir -p "$GF_PATHS_PROVISIONING/datasources" \
              "$GF_PATHS_PROVISIONING/dashboards" \
              "$GF_PATHS_PROVISIONING/notifiers" \
+             "$GF_PATHS_PROVISIONING/plugins" \
              "$GF_PATHS_LOGS" \
              "$GF_PATHS_PLUGINS" \
              "$GF_PATHS_DATA" && \
     cp "$GF_PATHS_HOME/conf/sample.ini" "$GF_PATHS_CONFIG" && \
     cp "$GF_PATHS_HOME/conf/ldap.toml" /etc/grafana/ldap.toml && \
-    chown -R grafana:grafana "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
+    chown -R "grafana:$GF_GID_NAME" "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING" && \
     chmod -R 777 "$GF_PATHS_DATA" "$GF_PATHS_HOME/.aws" "$GF_PATHS_LOGS" "$GF_PATHS_PLUGINS" "$GF_PATHS_PROVISIONING"
 
 EXPOSE 3000
 
 COPY ./run.sh /run.sh
 
-USER grafana
+USER "$GF_UID"
 ENTRYPOINT [ "/run.sh" ]

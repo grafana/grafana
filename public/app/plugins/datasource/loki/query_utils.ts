@@ -1,6 +1,6 @@
 import escapeRegExp from 'lodash/escapeRegExp';
 
-export function formatQuery(selector: string): string {
+export function formatQuery(selector: string | undefined): string {
   return `${selector || ''}`.trim();
 }
 
@@ -11,6 +11,7 @@ export function formatQuery(selector: string): string {
 export function getHighlighterExpressionsFromQuery(input: string): string[] {
   let expression = input;
   const results = [];
+
   // Consume filter expression from left to right
   while (expression) {
     const filterStart = expression.search(/\|=|\|~|!=|!~/);
@@ -43,8 +44,9 @@ export function getHighlighterExpressionsFromQuery(input: string): string[] {
       const regexOperator = filterOperator === '|~';
       results.push(regexOperator ? unwrappedFilterTerm : escapeRegExp(unwrappedFilterTerm));
     } else {
-      return null;
+      return [];
     }
   }
+
   return results;
 }

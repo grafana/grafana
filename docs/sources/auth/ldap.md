@@ -2,13 +2,8 @@
 title = "LDAP Authentication"
 description = "Grafana LDAP Authentication Guide "
 keywords = ["grafana", "configuration", "documentation", "ldap", "active directory"]
-type = "docs"
 aliases = ["/docs/grafana/latest/installation/ldap/"]
-[menu.docs]
-name = "LDAP"
-identifier = "ldap"
-parent = "authentication"
-weight = 2
+weight = 300
 +++
 
 # LDAP Authentication
@@ -26,7 +21,7 @@ This means that you should be able to configure LDAP integration using any compl
 
 ## Enable LDAP
 
-In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "../installation/configuration.md" >}}) as well as specify the path to the LDAP
+In order to use LDAP integration you'll first need to enable LDAP in the [main config file]({{< relref "../administration/configuration.md" >}}) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
 
 ```bash
@@ -85,16 +80,13 @@ search_base_dns = ["dc=grafana,dc=org"]
 
 # Specify names of the LDAP attributes your LDAP uses
 [servers.attributes]
-name = "givenName"
-surname = "sn"
-username = "cn"
 member_of = "memberOf"
 email =  "email"
 ```
 
 ### Using environment variables
 
-You can interpolate variables in the TOML config from environment variables. For instance, you could externalize your `bind_password` that way:
+You can interpolate variables in the TOML configuration from environment variables. For instance, you could externalize your `bind_password` that way:
 
 ```bash
 bind_password = "${LDAP_ADMIN_PASSWORD}"
@@ -105,7 +97,7 @@ bind_password = "${LDAP_ADMIN_PASSWORD}"
 > Only available in Grafana v6.4+
 
 Grafana has an LDAP debug view built-in which allows you to test your LDAP configuration directly within Grafana. At the moment of writing, only Grafana admins can use the LDAP debug view.
- 
+
 Within this view, you'll be able to see which LDAP servers are currently reachable and test your current configuration.
 
 {{< docs-imagebox img="/img/docs/ldap_debug.png" class="docs-image--no-shadow" max-width="600px" >}}
@@ -114,8 +106,8 @@ Within this view, you'll be able to see which LDAP servers are currently reachab
 To use the debug view:
 
  1. Type the username of a user that exists within any of your LDAP server(s)
- 2. Then, press "Run"
- 3. If the user is found within any of your LDAP instances, the mapping information is displayed
+ 1. Then, press "Run"
+ 1. If the user is found within any of your LDAP instances, the mapping information is displayed
 
 {{< docs-imagebox img="/img/docs/ldap_debug_mapping_testing.png" class="docs-image--no-shadow" max-width="600px" >}}
 
@@ -161,8 +153,7 @@ In `[[servers.group_mappings]]` you can map an LDAP group to a Grafana organizat
 the authoritative source. So, if you change a user's role in the Grafana Org. Users page, this change will be reset the next time the user logs in. If you
 change the LDAP groups of a user, the change will take effect the next time the user logs in.
 
-The first group mapping that an LDAP user is matched to will be used for the sync. If you have LDAP users that fit multiple mappings, the topmost mapping in the
-TOML config will be used.
+The first group mapping that an LDAP user is matched to will be used for the sync. If you have LDAP users that fit multiple mappings, the topmost mapping in the TOML configuration will be used.
 
 **LDAP specific configuration file (ldap.toml) example:**
 ```bash
@@ -200,8 +191,8 @@ Users with nested/recursive group membership must have an LDAP server that suppo
 and configure `group_search_filter` in a way that it returns the groups the submitted username is a member of.
 
 To configure `group_search_filter`:
-* You can set `group_search_base_dns` to specify where the matching groups are defined.
-* If you do not use `group_search_base_dns`, then the previously defined `search_base_dns` is used.
+- You can set `group_search_base_dns` to specify where the matching groups are defined.
+- If you do not use `group_search_base_dns`, then the previously defined `search_base_dns` is used.
 
 **Active Directory example:**
 
@@ -244,9 +235,6 @@ search_filter = "(cn=%s)"
 search_base_dns = ["dc=grafana,dc=org"]
 
 [servers.attributes]
-name = "givenName"
-surname = "sn"
-username = "cn"
 member_of = "memberOf"
 email =  "email"
 
@@ -273,9 +261,6 @@ search_filter = "(cn=%s)"
 search_base_dns = ["ou=users,dc=grafana,dc=org"]
 
 [servers.attributes]
-name = "givenName"
-surname = "sn"
-username = "cn"
 member_of = "memberOf"
 email =  "email"
 
@@ -299,9 +284,6 @@ search_filter = "(cn=%s)"
 search_base_dns = ["ou=users,dc=grafana,dc=org"]
 
 [servers.attributes]
-name = "givenName"
-surname = "sn"
-username = "cn"
 member_of = "memberOf"
 email =  "email"
 
@@ -320,9 +302,9 @@ org_role = "Viewer"
 
 Assuming the following Active Directory server setup:
 
-* IP address: `10.0.0.1`
-* Domain: `CORP`
-* DNS name: `corp.local`
+- IP address: `10.0.0.1`
+- Domain: `CORP`
+- DNS name: `corp.local`
 
 **LDAP specific configuration file (ldap.toml):**
 ```bash
@@ -337,9 +319,6 @@ search_filter = "(sAMAccountName=%s)"
 search_base_dns = ["dc=corp,dc=local"]
 
 [servers.attributes]
-name = "givenName"
-surname = "sn"
-username = "sAMAccountName"
 member_of = "memberOf"
 email =  "mail"
 
@@ -355,7 +334,7 @@ Please inspect your Active Directory configuration and documentation to find the
 
 ## Troubleshooting
 
-To troubleshoot and get more log info enable LDAP debug logging in the [main config file]({{< relref "../installation/configuration.md" >}}).
+To troubleshoot and get more log info enable LDAP debug logging in the [main config file]({{< relref "../administration/configuration.md" >}}).
 
 ```bash
 [log]

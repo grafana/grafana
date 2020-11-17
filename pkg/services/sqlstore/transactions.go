@@ -11,16 +11,16 @@ import (
 	"xorm.io/xorm"
 )
 
-// WithTransactionalDbSession calls the callback with an session within a transaction
-func (ss *SqlStore) WithTransactionalDbSession(ctx context.Context, callback dbTransactionFunc) error {
+// WithTransactionalDbSession calls the callback with a session within a transaction.
+func (ss *SQLStore) WithTransactionalDbSession(ctx context.Context, callback dbTransactionFunc) error {
 	return inTransactionWithRetryCtx(ctx, ss.engine, callback, 0)
 }
 
-func (ss *SqlStore) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
+func (ss *SQLStore) InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	return ss.inTransactionWithRetry(ctx, fn, 0)
 }
 
-func (ss *SqlStore) inTransactionWithRetry(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
+func (ss *SQLStore) inTransactionWithRetry(ctx context.Context, fn func(ctx context.Context) error, retry int) error {
 	return inTransactionWithRetryCtx(ctx, ss.engine, func(sess *DBSession) error {
 		withValue := context.WithValue(ctx, ContextSessionKey{}, sess)
 		return fn(withValue)
@@ -66,7 +66,7 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callbac
 	if len(sess.events) > 0 {
 		for _, e := range sess.events {
 			if err = bus.Publish(e); err != nil {
-				log.Error(3, "Failed to publish event after commit. error: %v", err)
+				log.Errorf(3, "Failed to publish event after commit. error: %v", err)
 			}
 		}
 	}

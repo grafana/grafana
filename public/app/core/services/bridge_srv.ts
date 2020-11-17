@@ -1,30 +1,27 @@
 import coreModule from 'app/core/core_module';
-import appEvents from 'app/core/app_events';
 import { dispatch, store } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
-import { ILocationService, ITimeoutService, IWindowService } from 'angular';
-import { CoreEvents } from 'app/types';
+import { ILocationService, ITimeoutService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { locationUtil, UrlQueryMap } from '@grafana/data';
+import { UrlQueryMap } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { templateVarsChangedInUrl } from 'app/features/variables/state/actions';
+import { isArray, isEqual } from 'lodash';
 
 // Services that handles angular -> redux store sync & other react <-> angular sync
 export class BridgeSrv {
-  private fullPageReloadRoutes: string[];
   private lastQuery: UrlQueryMap = {};
   private lastPath = '';
   private angularUrl: string;
+  private lastUrl: string | null = null;
 
   /** @ngInject */
   constructor(
     private $location: ILocationService,
     private $timeout: ITimeoutService,
-    private $window: IWindowService,
     private $rootScope: GrafanaRootScope,
     private $route: any
   ) {
-    this.fullPageReloadRoutes = ['/logout'];
     this.angularUrl = $location.url();
   }
 
@@ -62,6 +59,11 @@ export class BridgeSrv {
       const state = store.getState();
       const url = state.location.url;
 
+      // No url change ignore redux store change
+      if (url === this.lastUrl) {
+        return;
+      }
+
       if (this.angularUrl !== url) {
         // store angular url right away as otherwise we end up syncing multiple times
         this.angularUrl = url;
@@ -73,58 +75,73 @@ export class BridgeSrv {
             this.$location.replace();
           }
         });
-
-        console.log('store updating angular $location.url', url);
       }
 
-      // Check for template variable changes on a dashboard
-      if (state.location.path === this.lastPath) {
+      // if only query params changed, check if variables changed
+      if (state.location.path === this.lastPath && state.location.query !== this.lastQuery) {
+        // Find template variable changes
         const changes = findTemplateVarChanges(state.location.query, this.lastQuery);
+        // Store current query params to avoid recursion
+        this.lastQuery = state.location.query;
+
         if (changes) {
           const dash = getDashboardSrv().getCurrent();
           if (dash) {
             dispatch(templateVarsChangedInUrl(changes));
           }
         }
-        this.lastQuery = state.location.query;
-      } else {
-        this.lastQuery = {};
       }
+
       this.lastPath = state.location.path;
-    });
-
-    appEvents.on(CoreEvents.locationChange, payload => {
-      const urlWithoutBase = locationUtil.stripBaseFromUrl(payload.href);
-      if (this.fullPageReloadRoutes.indexOf(urlWithoutBase) > -1) {
-        this.$window.location.href = payload.href;
-        return;
-      }
-
-      this.$timeout(() => {
-        // A hack to use timeout when we're changing things (in this case the url) from outside of Angular.
-        this.$location.url(urlWithoutBase);
-      });
+      this.lastQuery = state.location.query;
+      this.lastUrl = state.location.url;
     });
   }
+}
+
+function getUrlValueForComparison(value: any): any {
+  if (isArray(value)) {
+    if (value.length === 0) {
+      value = undefined;
+    } else if (value.length === 1) {
+      value = value[0];
+    }
+  }
+
+  return value;
 }
 
 export function findTemplateVarChanges(query: UrlQueryMap, old: UrlQueryMap): UrlQueryMap | undefined {
   let count = 0;
   const changes: UrlQueryMap = {};
+
   for (const key in query) {
     if (!key.startsWith('var-')) {
       continue;
     }
-    if (query[key] !== old[key]) {
+
+    let oldValue = getUrlValueForComparison(old[key]);
+    let newValue = getUrlValueForComparison(query[key]);
+
+    if (!isEqual(newValue, oldValue)) {
       changes[key] = query[key];
       count++;
     }
   }
+
   for (const key in old) {
     if (!key.startsWith('var-')) {
       continue;
     }
-    if (!query[key]) {
+
+    const value = old[key];
+
+    // ignore empty array values
+    if (isArray(value) && value.length === 0) {
+      continue;
+    }
+
+    if (!query.hasOwnProperty(key)) {
       changes[key] = ''; // removed
       count++;
     }

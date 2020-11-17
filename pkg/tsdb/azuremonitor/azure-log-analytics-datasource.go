@@ -110,16 +110,26 @@ func (e *AzureLogAnalyticsDatasource) buildQueries(queries []*tsdb.Query, timeRa
 }
 
 func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *AzureLogAnalyticsQuery, queries []*tsdb.Query, timeRange *tsdb.TimeRange) *tsdb.QueryResult {
-	queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefID}
+	queryResult := &tsdb.QueryResult{RefId: query.RefID}
 
-	queryResultError := func(err error) *tsdb.QueryResult {
+	queryResultErrorWithExecuted := func(err error) *tsdb.QueryResult {
 		queryResult.Error = err
+		frames := data.Frames{
+			&data.Frame{
+				RefID: query.RefID,
+				Meta: &data.FrameMeta{
+					ExecutedQueryString: query.Params.Get("query"),
+				},
+			},
+		}
+		queryResult.Dataframes = tsdb.NewDecodedDataFrames(frames)
 		return queryResult
 	}
 
 	req, err := e.createRequest(ctx, e.dsInfo)
 	if err != nil {
-		return queryResultError(err)
+		queryResult.Error = err
+		return queryResult
 	}
 
 	req.URL.Path = path.Join(req.URL.Path, query.URL)
@@ -138,39 +148,43 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		span.Context(),
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(req.Header)); err != nil {
-		return queryResultError(err)
+		return queryResultErrorWithExecuted(err)
 	}
 
 	azlog.Debug("AzureLogAnalytics", "Request ApiURL", req.URL.String())
 	res, err := ctxhttp.Do(ctx, e.httpClient, req)
 	if err != nil {
-		return queryResultError(err)
+		return queryResultErrorWithExecuted(err)
 	}
 
 	logResponse, err := e.unmarshalResponse(res)
 	if err != nil {
-		return queryResultError(err)
+		return queryResultErrorWithExecuted(err)
 	}
 
 	t, err := logResponse.GetPrimaryResultTable()
 	if err != nil {
-		return queryResultError(err)
+		return queryResultErrorWithExecuted(err)
 	}
 
 	frame, err := LogTableToFrame(t)
 	if err != nil {
-		return queryResultError(err)
+		return queryResultErrorWithExecuted(err)
 	}
 
-	setAdditionalFrameMeta(frame,
+	err = setAdditionalFrameMeta(frame,
 		query.Params.Get("query"),
 		query.Model.Get("subscriptionId").MustString(),
 		query.Model.Get("azureLogAnalytics").Get("workspace").MustString())
+	if err != nil {
+		frame.AppendNotices(data.Notice{Severity: data.NoticeSeverityWarning, Text: "could not add custom metadata: " + err.Error()})
+		azlog.Warn("failed to add custom metadata to azure log analytics response", err)
+	}
 
 	if query.ResultFormat == "time_series" {
 		tsSchema := frame.TimeSeriesSchema()
 		if tsSchema.Type == data.TimeSeriesTypeLong {
-			wideFrame, err := data.LongToWide(frame, &data.FillMissing{})
+			wideFrame, err := data.LongToWide(frame, nil)
 			if err == nil {
 				frame = wideFrame
 			} else {
@@ -179,21 +193,21 @@ func (e *AzureLogAnalyticsDatasource) executeQuery(ctx context.Context, query *A
 		}
 	}
 	frames := data.Frames{frame}
-	queryResult.Dataframes, err = frames.MarshalArrow()
-	if err != nil {
-		return queryResultError(err)
-	}
+	queryResult.Dataframes = tsdb.NewDecodedDataFrames(frames)
 	return queryResult
 }
 
 func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo *models.DataSource) (*http.Request, error) {
-	u, _ := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.Url)
+	if err != nil {
+		return nil, err
+	}
 	u.Path = path.Join(u.Path, "render")
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
 		azlog.Debug("Failed to create request", "error", err)
-		return nil, errutil.Wrap("Failed to create request", err)
+		return nil, errutil.Wrap("failed to create request", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -202,7 +216,7 @@ func (e *AzureLogAnalyticsDatasource) createRequest(ctx context.Context, dsInfo 
 	// find plugin
 	plugin, ok := plugins.DataSources[dsInfo.Type]
 	if !ok {
-		return nil, errors.New("Unable to find datasource plugin Azure Monitor")
+		return nil, errors.New("unable to find datasource plugin Azure Monitor")
 	}
 	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 
@@ -245,7 +259,7 @@ func (ar *AzureLogAnalyticsResponse) GetPrimaryResultTable() (*AzureLogAnalytics
 			return &t, nil
 		}
 	}
-	return nil, fmt.Errorf("no data as PrimaryResult table is missing from the the response")
+	return nil, fmt.Errorf("no data as PrimaryResult table is missing from the response")
 }
 
 func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (AzureLogAnalyticsResponse, error) {
@@ -258,7 +272,7 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return AzureLogAnalyticsResponse{}, fmt.Errorf("Request failed status: %v", res.Status)
+		return AzureLogAnalyticsResponse{}, fmt.Errorf("request failed, status: %s, body: %s", res.Status, string(body))
 	}
 
 	var data AzureLogAnalyticsResponse
@@ -273,16 +287,28 @@ func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (Azu
 	return data, nil
 }
 
-func setAdditionalFrameMeta(frame *data.Frame, query, subscriptionID, workspace string) {
+// LogAnalyticsMeta is a type for the a Frame's Meta's Custom property.
+type LogAnalyticsMeta struct {
+	ColumnTypes  []string `json:"azureColumnTypes"`
+	Subscription string   `json:"subscription"`
+	Workspace    string   `json:"workspace"`
+	EncodedQuery []byte   `json:"encodedQuery"` // EncodedQuery is used for deep links.
+}
+
+func setAdditionalFrameMeta(frame *data.Frame, query, subscriptionID, workspace string) error {
 	frame.Meta.ExecutedQueryString = query
-	frame.Meta.Custom["subscription"] = subscriptionID
-	frame.Meta.Custom["workspace"] = workspace
+	la, ok := frame.Meta.Custom.(*LogAnalyticsMeta)
+	if !ok {
+		return fmt.Errorf("unexpected type found for frame's custom metadata")
+	}
+	la.Subscription = subscriptionID
+	la.Workspace = workspace
 	encodedQuery, err := encodeQuery(query)
 	if err == nil {
-		frame.Meta.Custom["encodedQuery"] = encodedQuery
-		return
+		la.EncodedQuery = encodedQuery
+		return nil
 	}
-	azlog.Error("failed to encode the query into the encodedQuery property")
+	return fmt.Errorf("failed to encode the query into the encodedQuery property")
 }
 
 // encodeQuery encodes the query in gzip so the frontend can build links.

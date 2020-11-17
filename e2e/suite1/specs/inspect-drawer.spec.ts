@@ -9,8 +9,32 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
+    // @ts-ignore some typing issue
+    e2e().on('uncaught:exception', err => {
+      if (err.stack?.indexOf("TypeError: Cannot read property 'getText' of null") !== -1) {
+        // On occasion monaco editor will not have the time to be properly unloaded when we change the tab
+        // and then the e2e test fails with the uncaught:exception:
+        // TypeError: Cannot read property 'getText' of null
+        //     at Object.ai [as getFoldingRanges] (http://localhost:3001/public/build/monaco-json.worker.js:2:215257)
+        //     at e.getFoldingRanges (http://localhost:3001/public/build/monaco-json.worker.js:2:221188)
+        //     at e.fmr (http://localhost:3001/public/build/monaco-json.worker.js:2:116605)
+        //     at e._handleMessage (http://localhost:3001/public/build/monaco-json.worker.js:2:7414)
+        //     at Object.handleMessage (http://localhost:3001/public/build/monaco-json.worker.js:2:7018)
+        //     at e._handleMessage (http://localhost:3001/public/build/monaco-json.worker.js:2:5038)
+        //     at e.handleMessage (http://localhost:3001/public/build/monaco-json.worker.js:2:4606)
+        //     at e.onmessage (http://localhost:3001/public/build/monaco-json.worker.js:2:7097)
+        //     at Tt.self.onmessage (http://localhost:3001/public/build/monaco-json.worker.js:2:117109)
+
+        // return false to prevent the error from
+        // failing this test
+        return false;
+      }
+
+      return true;
+    });
+
     const viewPortWidth = e2e.config().viewportWidth;
-    e2e.flows.openDashboard('5SdHCadmz');
+    e2e.flows.openDashboard({ uid: '5SdHCadmz' });
 
     // testing opening inspect drawer directly by clicking on Inspect in header menu
     e2e.flows.openPanelMenuItem(e2e.flows.PanelMenuItems.Inspect, PANEL_UNDER_TEST);
@@ -77,6 +101,7 @@ const expectDrawerTabsAndContent = () => {
       e2e.components.Tab.title('Query')
         .should('be.visible')
         .click();
+
       e2e.components.PanelInspector.Query.content().should('be.visible');
       e2e.components.PanelInspector.Data.content().should('not.be.visible');
       e2e.components.PanelInspector.Stats.content().should('not.be.visible');

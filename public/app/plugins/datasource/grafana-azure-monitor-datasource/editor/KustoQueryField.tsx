@@ -26,7 +26,7 @@ interface SuggestionGroup {
 
 interface KustoSchema {
   Databases: {
-    Default?: KustoDBSchema;
+    Default: KustoDBSchema;
   };
   Plugins?: any[];
 }
@@ -65,7 +65,8 @@ export default class KustoQueryField extends QueryField {
 
   onTypeahead = (force = false) => {
     const selection = window.getSelection();
-    if (selection.anchorNode) {
+
+    if (selection && selection.anchorNode) {
       const wrapperNode = selection.anchorNode.parentElement;
       if (wrapperNode === null) {
         return;
@@ -134,7 +135,6 @@ export default class KustoQueryField extends QueryField {
       } else if (modelPrefix.match(/(database\(\"(\w+)\"\)\.(.+\b)?$)/i)) {
         typeaheadContext = 'context-database-table';
         const db = this.getDBFromDatabaseFunction(modelPrefix);
-        console.log(db);
         suggestionGroups = this.getTableSuggestions(db);
         prefix = prefix.replace('.', '');
 
@@ -408,7 +408,7 @@ export default class KustoQueryField extends QueryField {
     if (match && match.length > 1 && match[0] && match[1]) {
       return match[1];
     } else {
-      return null;
+      return undefined;
     }
   }
 

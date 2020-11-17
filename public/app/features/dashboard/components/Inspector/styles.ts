@@ -54,14 +54,18 @@ export const getPanelInspectorStyles = stylesFactory(() => {
     `,
     actionsWrapper: css`
       display: flex;
-      flex-wrap: wrap;
     `,
     leftActions: css`
       display: flex;
       flex-grow: 1;
+
+      max-width: 85%;
+      @media (max-width: 1345px) {
+        max-width: 75%;
+      }
     `,
     options: css`
-      margin-top: 19px;
+      padding-top: ${config.theme.spacing.sm};
     `,
     dataDisplayOptions: css`
       flex-grow: 1;

@@ -7,9 +7,9 @@ e2e.scenario({
   addScenarioDashBoard: false,
   skipScenario: false,
   scenario: () => {
-    e2e.flows.openDashboard('5SdHCasdf');
+    e2e.flows.openDashboard({ uid: '5SdHCasdf' });
 
-    const fromTimeZone = 'UTC';
+    const fromTimeZone = 'Coordinated Universal Time';
     const toTimeZone = 'America/Chicago';
     const offset = -5;
 

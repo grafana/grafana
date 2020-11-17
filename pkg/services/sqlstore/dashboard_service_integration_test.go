@@ -1,3 +1,5 @@
+// +build integration
+
 package sqlstore
 
 import (
@@ -129,7 +131,6 @@ func TestIntegratedDashboardService(t *testing.T) {
 			// Given user has no permission to save
 
 			permissionScenario("Given user has no permission to save", false, func(sc *dashboardPermissionScenarioContext) {
-
 				Convey("When creating a new dashboard in the General folder", func() {
 					cmd := models.SaveDashboardCommand{
 						OrgId: testOrgId,
@@ -370,7 +371,6 @@ func TestIntegratedDashboardService(t *testing.T) {
 			// Given user has permission to save
 
 			permissionScenario("Given user has permission to save", true, func(sc *dashboardPermissionScenarioContext) {
-
 				Convey("and overwrite flag is set to false", func() {
 					shouldOverwrite := false
 

@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react-hooks';
 import { useChildrenState } from './useChildrenState';
-import { Span } from '@jaegertracing/jaeger-ui-components';
+import { TraceSpan } from '@grafana/data';
 
 describe('useChildrenState', () => {
   describe('childrenToggle', () => {
@@ -37,8 +37,8 @@ describe('useChildrenState', () => {
       const { result } = renderHook(() => useChildrenState());
       act(() =>
         result.current.collapseAll([
-          { spanID: 'span1', hasChildren: true } as Span,
-          { spanID: 'span2', hasChildren: false } as Span,
+          { spanID: 'span1', hasChildren: true } as TraceSpan,
+          { spanID: 'span2', hasChildren: false } as TraceSpan,
         ])
       );
 
@@ -51,8 +51,8 @@ describe('useChildrenState', () => {
       act(() => result.current.childrenToggle('span1'));
       act(() =>
         result.current.collapseAll([
-          { spanID: 'span1', hasChildren: true } as Span,
-          { spanID: 'span2', hasChildren: false } as Span,
+          { spanID: 'span1', hasChildren: true } as TraceSpan,
+          { spanID: 'span2', hasChildren: false } as TraceSpan,
         ])
       );
 

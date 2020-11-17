@@ -9,16 +9,15 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", InsertSqlTestData)
+	bus.AddHandler("sql", InsertSQLTestData)
 }
 
 func sqlRandomWalk(m1 string, m2 string, intWalker int64, floatWalker float64, sess *DBSession) error {
-
 	timeWalker := time.Now().UTC().Add(time.Hour * -200)
 	now := time.Now().UTC()
 	step := time.Minute
 
-	row := &models.SqlTestData{
+	row := &models.SQLTestData{
 		Metric1:      m1,
 		Metric2:      m2,
 		TimeEpoch:    timeWalker.Unix(),
@@ -44,7 +43,7 @@ func sqlRandomWalk(m1 string, m2 string, intWalker int64, floatWalker float64, s
 	return nil
 }
 
-func InsertSqlTestData(cmd *models.InsertSqlTestDataCommand) error {
+func InsertSQLTestData(cmd *models.InsertSQLTestDataCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var err error
 

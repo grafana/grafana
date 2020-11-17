@@ -1,8 +1,8 @@
-import React, { useCallback } from 'react';
-import cloneDeep from 'lodash/cloneDeep';
+import React, { ReactNode, useCallback } from 'react';
+import { get as lodashGet, cloneDeep } from 'lodash';
 import {
   DataFrame,
-  FeatureState,
+  DocsId,
   FieldConfigPropertyItem,
   FieldConfigSource,
   PanelPlugin,
@@ -16,6 +16,8 @@ import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
 import { selectors } from '@grafana/e2e-selectors';
 import { css } from 'emotion';
+import { getDocsLink } from 'app/core/utils/docsLinks';
+import { updateDefaultFieldConfigValue } from './utils';
 
 interface Props {
   plugin: PanelPlugin;
@@ -31,6 +33,7 @@ interface Props {
 export const OverrideFieldConfigEditor: React.FC<Props> = props => {
   const theme = useTheme();
   const { config } = props;
+
   const onOverrideChange = (index: number, override: any) => {
     const { config } = props;
     let overrides = cloneDeep(config.overrides);
@@ -94,7 +97,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
       <Container padding="md">
         <ValuePicker
           icon="plus"
-          label="Add override"
+          label="Add an override for"
           variant="secondary"
           options={fieldMatchersUI
             .list()
@@ -111,13 +114,12 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
       {config.overrides.length === 0 && (
         <FeatureInfoBox
           title="Overrides"
-          featureState={FeatureState.beta}
-          // url={getDocsLink(DocsId.FieldConfigOverrides)}
+          url={getDocsLink(DocsId.FieldConfigOverrides)}
           className={css`
             margin: ${theme.spacing.md};
           `}
         >
-          Field options overrides give you a fine grained control over how your data is displayed.
+          Field override rules give you a fine grained control over how your data is displayed.
         </FeatureInfoBox>
       )}
 
@@ -128,32 +130,9 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
 };
 
 export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, config, plugin }) => {
-  const setDefaultValue = useCallback(
-    (name: string, value: any, custom: boolean) => {
-      const defaults = { ...config.defaults };
-      const remove = value === undefined || value === null || '';
-
-      if (custom) {
-        if (defaults.custom) {
-          if (remove) {
-            defaults.custom = { ...defaults.custom };
-            delete defaults.custom[name];
-          } else {
-            defaults.custom = { ...defaults.custom, [name]: value };
-          }
-        } else if (!remove) {
-          defaults.custom = { [name]: value };
-        }
-      } else if (remove) {
-        delete (defaults as any)[name];
-      } else {
-        (defaults as any)[name] = value;
-      }
-
-      onChange({
-        ...config,
-        defaults,
-      });
+  const onDefaultValueChange = useCallback(
+    (name: string, value: any, isCustom: boolean | undefined) => {
+      onChange(updateDefaultFieldConfigValue(config, name, value, isCustom));
     },
     [config, onChange]
   );
@@ -167,22 +146,27 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
       const defaults = config.defaults;
       const value = item.isCustom
         ? defaults.custom
-          ? defaults.custom[item.path]
+          ? lodashGet(defaults.custom, item.path)
           : undefined
-        : (defaults as any)[item.path];
+        : lodashGet(defaults, item.path);
 
-      const label = (
+      let label: ReactNode | undefined = (
         <Label description={item.description} category={item.category?.slice(1)}>
           {item.name}
         </Label>
       );
+
+      // hide label if there is only one item and category name is same as item, name
+      if (categoryItemCount === 1 && item.category?.[0] === item.name) {
+        label = undefined;
+      }
 
       return (
         <Field label={label} key={`${item.id}/${item.isCustom}`}>
           <item.editor
             item={item}
             value={value}
-            onChange={v => setDefaultValue(item.path, v, item.isCustom)}
+            onChange={v => onDefaultValueChange(item.path, v, item.isCustom)}
             context={{
               data,
               getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),

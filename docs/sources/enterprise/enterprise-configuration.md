@@ -2,17 +2,12 @@
 title = "Enterprise configuration"
 description = "Enterprise configuration documentation"
 keywords = ["grafana", "configuration", "documentation", "enterprise"]
-type = "docs"
-[menu.docs]
-name = "Enterprise configuration"
-identifier = "enterprise-config"
-parent = "enterprise"
 weight = 300
 +++
 
 # Grafana Enterprise configuration
 
-This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../installation/configuration.md" >}}) for more information about available configuration options.
+This page describes Grafana Enterprise-specific configuration options that you can specify in a `.ini` configuration file or using environment variables. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}) for more information about available configuration options.
 
 ## [white_labeling]
 
@@ -26,7 +21,7 @@ Set to complete URL to override login logo.
 
 ### login_background
 
-Set to complete CSS background expression to override login background. Example: 
+Set to complete CSS background expression to override login background. Example:
 
 ```bash
 [white_labeling]
@@ -100,6 +95,46 @@ Maximum number of concurrent calls to the rendering service.
 ### image_scale_factor
 
 Scale factor for rendering images. Value `2` is enough for monitor resolutions, `4` would be better for printed material. Setting a higher value affects performance and memory.
+
+## [auditing]
+
+[Auditing]({{< relref "auditing.md" >}}) allows you to track important changes to your Grafana instance. By default, audit logs are logged to file but the auditing feature also supports sending logs directly to Loki.
+
+### enabled
+
+Enable the auditing feature. Defaults to false.
+
+### loggers
+
+List of enabled loggers.
+
+### log_dashboard_content
+
+Keep dashboard content in the logs (request or response fields). This can significantly increase the size of your logs.
+
+## [auditing.logs.file]
+
+### path
+
+Path to logs folder.
+
+### max_files
+
+Maximum log files to keep.
+
+### max_file_size_mb
+
+Max size in megabytes per log file.
+
+## [auditing.logs.loki]
+
+### url
+
+Set the URL for writing logs to Loki.
+
+### tls
+
+If true, it establishes a secure connection to Loki. Defaults to true.
 
 ## [auth.saml]
 
@@ -186,3 +221,33 @@ List of comma- or space-separated roles that will be mapped to the Admin role.
 ### role_values_grafana_admin
 
 List of comma- or space-separated roles that will be mapped to the Grafana Admin (Super Admin) role.
+
+## [keystore.vault]
+
+### url
+
+Location of the Vault server.
+
+### namespace
+
+Vault namespace if using Vault with multi-tenancy.
+
+### auth_method
+
+Method for authenticating towards Vault. Vault is inactive if this option is not set. Current possible values: `token`.
+
+### token
+
+Secret token to connect to Vault when auth_method is `token`.
+
+### lease_renewal_interval
+
+Time between checking if there are any secrets which needs to be renewed.
+
+### lease_renewal_expires_within
+
+Time until expiration for tokens which are renewed. Should have a value higher than lease_renewal_interval.
+
+### lease_renewal_increment
+
+New duration for renewed tokens. Vault may be configured to ignore this value and impose a stricter limit.

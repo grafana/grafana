@@ -28,7 +28,7 @@ import SpanBar from './SpanBar';
 import Ticks from './Ticks';
 
 import { TNil } from '../types';
-import { Span } from '../types/trace';
+import { TraceSpan } from '@grafana/data';
 import { autoColor, createStyle, Theme, withTheme } from '../Theme';
 
 const getStyles = createStyle((theme: Theme) => {
@@ -252,7 +252,6 @@ const getStyles = createStyle((theme: Theme) => {
     `,
     errorIcon: css`
       label: errorIcon;
-      background: ${autoColor(theme, '#db2828')};
       border-radius: 6.5px;
       color: ${autoColor(theme, '#fff')};
       font-size: 0.85em;
@@ -304,13 +303,16 @@ type SpanBarRowProps = {
   showErrorIcon: boolean;
   getViewedBounds: ViewedBoundsFunctionType;
   traceStartTime: number;
-  span: Span;
+  span: TraceSpan;
   focusSpan: (spanID: string) => void;
   hoverIndentGuideIds: Set<string>;
   addHoverIndentGuideId: (spanID: string) => void;
   removeHoverIndentGuideId: (spanID: string) => void;
   clippingLeft?: boolean;
   clippingRight?: boolean;
+  createSpanLink?: (
+    span: TraceSpan
+  ) => { href: string; onClick?: (e: React.MouseEvent) => void; content: React.ReactNode };
 };
 
 /**
@@ -357,6 +359,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       clippingLeft,
       clippingRight,
       theme,
+      createSpanLink,
     } = this.props;
     const {
       duration,
@@ -418,7 +421,16 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                   [styles.svcNameChildrenCollapsed]: isParent && !isChildrenExpanded,
                 })}
               >
-                {showErrorIcon && <IoAlert className={styles.errorIcon} />}
+                {showErrorIcon && (
+                  <IoAlert
+                    style={{
+                      backgroundColor: span.errorIconColor
+                        ? autoColor(theme, span.errorIconColor)
+                        : autoColor(theme, '#db2828'),
+                    }}
+                    className={styles.errorIcon}
+                  />
+                )}
                 {serviceName}{' '}
                 {rpc && (
                   <span>
@@ -429,6 +441,32 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               </span>
               <small className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</small>
             </a>
+            {createSpanLink &&
+              (() => {
+                const link = createSpanLink(span);
+                return (
+                  <a
+                    href={link.href}
+                    // Needs to have target otherwise preventDefault would not work due to angularRouter.
+                    target={'_blank'}
+                    style={{ marginRight: '5px' }}
+                    rel="noopener noreferrer"
+                    onClick={
+                      link.onClick
+                        ? event => {
+                            if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+                              event.preventDefault();
+                              link.onClick(event);
+                            }
+                          }
+                        : undefined
+                    }
+                  >
+                    {link.content}
+                  </a>
+                );
+              })()}
+
             {span.references && span.references.length > 1 && (
               <ReferencesButton
                 references={span.references}

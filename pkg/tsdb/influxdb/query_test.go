@@ -11,9 +11,7 @@ import (
 )
 
 func TestInfluxdbQueryBuilder(t *testing.T) {
-
 	Convey("Influxdb query builder", t, func() {
-
 		qp1, _ := NewQueryPart("field", []string{"value"})
 		qp2, _ := NewQueryPart("mean", []string{})
 
@@ -202,5 +200,4 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			So(query.renderMeasurement(), ShouldEqual, ` FROM "policy"./apa/`)
 		})
 	})
-
 }

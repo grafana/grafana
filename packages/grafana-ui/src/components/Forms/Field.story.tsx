@@ -1,8 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { boolean, number, text } from '@storybook/addon-knobs';
-import { Field } from './Field';
-import { Input } from '../Input/Input';
-import { Switch } from '../Switch/Switch';
+import { Field, Input, Switch } from '@grafana/ui';
 import mdx from './Field.mdx';
 
 export default {
@@ -39,7 +37,7 @@ const getKnobs = () => {
   return { containerWidth, disabled, invalid, loading, error };
 };
 
-export const simple = () => {
+export const Simple = () => {
   const { containerWidth, ...otherProps } = getKnobs();
   return (
     <div style={{ width: containerWidth }}>
@@ -50,7 +48,7 @@ export const simple = () => {
   );
 };
 
-export const horizontalLayout = () => {
+export const HorizontalLayout = () => {
   const [checked, setChecked] = useState(false);
   const onChange = useCallback(e => setChecked(e.currentTarget.checked), [setChecked]);
   const { containerWidth, ...otherProps } = getKnobs();

@@ -218,7 +218,7 @@ export class FormDropdownCtrl {
   }
 
   open() {
-    this.inputElement.css('width', Math.max(this.linkElement.width(), 80) + 16 + 'px');
+    this.inputElement.css('width', Math.max(this.linkElement.width()!, 80) + 16 + 'px');
 
     this.inputElement.show();
     this.inputElement.focus();

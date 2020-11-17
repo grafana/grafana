@@ -98,6 +98,7 @@ export function runSignalStream(
       subscriber.next({
         data: [data],
         key: streamId,
+        state: LoadingState.Streaming,
       });
 
       timeoutId = setTimeout(pushNextEvent, speed);
@@ -128,16 +129,17 @@ export function runLogsStream(
     });
     data.refId = target.refId;
     data.name = target.alias || 'Logs ' + target.refId;
-    data.addField({ name: 'time', type: FieldType.time });
     data.addField({ name: 'line', type: FieldType.string });
+    data.addField({ name: 'time', type: FieldType.time });
+    data.meta = { preferredVisualisationType: 'logs' };
 
     const { speed } = query;
 
     let timeoutId: any = null;
 
     const pushNextEvent = () => {
-      data.values.time.add(Date.now());
-      data.values.line.add(getRandomLine());
+      data.fields[0].values.add(Date.now());
+      data.fields[1].values.add(getRandomLine());
 
       subscriber.next({
         data: [data],

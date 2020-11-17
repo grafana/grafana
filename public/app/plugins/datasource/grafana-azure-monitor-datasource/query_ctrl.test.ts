@@ -31,7 +31,7 @@ describe('AzureMonitorQueryCtrl', () => {
     });
 
     it('should set default App Insights editor to be builder', () => {
-      expect(queryCtrl.target.appInsights.rawQuery).toBe(false);
+      expect(!!(queryCtrl.target.appInsights as any).rawQuery).toBe(false);
     });
 
     it('should set query parts to select', () => {
@@ -40,7 +40,7 @@ describe('AzureMonitorQueryCtrl', () => {
       expect(queryCtrl.target.azureMonitor.resourceName).toBe('select');
       expect(queryCtrl.target.azureMonitor.metricNamespace).toBe('select');
       expect(queryCtrl.target.azureMonitor.metricName).toBe('select');
-      expect(queryCtrl.target.appInsights.dimension).toBe('none');
+      expect(queryCtrl.target.appInsights.dimension).toMatchObject([]);
     });
   });
 

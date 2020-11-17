@@ -57,7 +57,6 @@ func TestEvaluators(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			So(evaluator.Eval(null.FloatFromPtr(nil)), ShouldBeTrue)
-
 		})
 	})
 }

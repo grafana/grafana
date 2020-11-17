@@ -1,4 +1,5 @@
-import { LogLevel } from '../types/logs';
+import { LogLevel, LogsModel, LogRowModel, LogsSortOrder } from '../types/logs';
+import { MutableDataFrame } from '../dataframe/MutableDataFrame';
 import {
   getLogLevel,
   calculateLogsLabelStats,
@@ -7,6 +8,8 @@ import {
   LogsParsers,
   calculateStats,
   getLogLevelFromKey,
+  sortLogsResult,
+  checkLogsError,
 } from './logs';
 
 describe('getLoglevel()', () => {
@@ -282,5 +285,83 @@ describe('getParser()', () => {
   test('should return JSON parser on JSON log lines', () => {
     // TODO implement other JSON value types than string
     expect(getParser('{"foo": "bar", "baz": "41 + 1"}')).toEqual(LogsParsers.JSON);
+  });
+});
+
+describe('sortLogsResult', () => {
+  const firstRow: LogRowModel = {
+    rowIndex: 0,
+    entryFieldIndex: 0,
+    dataFrame: new MutableDataFrame(),
+    entry: '',
+    hasAnsi: false,
+    labels: {},
+    logLevel: LogLevel.info,
+    raw: '',
+    timeEpochMs: 0,
+    timeEpochNs: '0',
+    timeFromNow: '',
+    timeLocal: '',
+    timeUtc: '',
+    uid: '1',
+  };
+  const sameAsFirstRow = firstRow;
+  const secondRow: LogRowModel = {
+    rowIndex: 1,
+    entryFieldIndex: 0,
+    dataFrame: new MutableDataFrame(),
+    entry: '',
+    hasAnsi: false,
+    labels: {},
+    logLevel: LogLevel.info,
+    raw: '',
+    timeEpochMs: 10,
+    timeEpochNs: '10000000',
+    timeFromNow: '',
+    timeLocal: '',
+    timeUtc: '',
+    uid: '2',
+  };
+
+  describe('when called with LogsSortOrder.Descending', () => {
+    it('then it should sort descending', () => {
+      const logsResult: LogsModel = {
+        rows: [firstRow, sameAsFirstRow, secondRow],
+        hasUniqueLabels: false,
+      };
+      const result = sortLogsResult(logsResult, LogsSortOrder.Descending);
+
+      expect(result).toEqual({
+        rows: [secondRow, firstRow, sameAsFirstRow],
+        hasUniqueLabels: false,
+      });
+    });
+  });
+
+  describe('when called with LogsSortOrder.Ascending', () => {
+    it('then it should sort ascending', () => {
+      const logsResult: LogsModel = {
+        rows: [secondRow, firstRow, sameAsFirstRow],
+        hasUniqueLabels: false,
+      };
+      const result = sortLogsResult(logsResult, LogsSortOrder.Ascending);
+
+      expect(result).toEqual({
+        rows: [firstRow, sameAsFirstRow, secondRow],
+        hasUniqueLabels: false,
+      });
+    });
+  });
+});
+
+describe('checkLogsError()', () => {
+  const log = ({
+    labels: {
+      __error__: 'Error Message',
+      foo: 'boo',
+    },
+  } as any) as LogRowModel;
+  test('should return correct error if error is present', () => {
+    expect(checkLogsError(log)).toStrictEqual({ hasError: true, errorMessage: 'Error Message' });
   });
 });

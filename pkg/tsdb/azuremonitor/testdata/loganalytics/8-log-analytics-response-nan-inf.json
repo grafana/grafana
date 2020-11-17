@@ -1,0 +1,29 @@
+{
+    "tables": [
+      {
+        "name": "PrimaryResult",
+        "columns": [
+          {
+            "name": "XInf",
+            "type": "real"
+          },
+          {
+            "name": "XInfNeg",
+            "type": "real"
+          },
+          {
+            "name": "XNan",
+            "type": "real"
+          }
+        ],
+        "rows": [
+          [
+            "Infinity",
+            "-Infinity",
+            "NaN"
+          ]
+        ]
+      }
+    ]
+  }
+  

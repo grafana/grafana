@@ -2,7 +2,7 @@
 import classNames from 'classnames';
 import React, { PureComponent } from 'react';
 
-// Ignoring because I couldn't get @types/react-select work wih Torkel's fork
+// Ignoring because I couldn't get @types/react-select work with Torkel's fork
 // @ts-ignore
 import { default as ReactSelect } from '@torkelo/react-select';
 // @ts-ignore
@@ -154,7 +154,7 @@ export class Select<T> extends PureComponent<LegacySelectProps<T>> {
               onBlur={onBlur}
               openMenuOnFocus={openMenuOnFocus}
               maxMenuHeight={maxMenuHeight}
-              noOptionsMessage={() => noOptionsMessage}
+              noOptionsMessage={noOptionsMessage}
               isMulti={isMulti}
               backspaceRemovesValue={backspaceRemovesValue}
               menuIsOpen={isOpen}

@@ -2,10 +2,6 @@
 title = "Create alerts"
 description = "Configure alert rules"
 keywords = ["grafana", "alerting", "guide", "rules"]
-type = "docs"
-[menu.docs]
-name = "Create alerts"
-parent = "alerting"
 weight = 200
 +++
 
@@ -38,10 +34,10 @@ This section describes the fields you fill out to create an alert.
 ### Rule
 
 - **Name -** Enter a descriptive name. The name will be displayed in the Alert Rules list.
-- **Evaluate every -**  Specify how often the scheduler should evaluate the alert rule. This is referred to as the _evaluation interval_. 
+- **Evaluate every -** Specify how often the scheduler should evaluate the alert rule. This is referred to as the _evaluation interval_.
 - **For -** Specify how long the query needs to violate the configured thresholds before the alert notification triggers.
 
-You can set a minimum evaluation interval in the `alerting.min_interval_seconds` config field, to set a minimum time between evaluations. Refer to [Configuration]({{< relref "../installation/configuration.md" >}}#min-interval-seconds) for more information.
+You can set a minimum evaluation interval in the `alerting.min_interval_seconds` configuration field, to set a minimum time between evaluations. Refer to [Configuration]({{< relref "../administration/configuration.md" >}}#min-interval-seconds) for more information.
 
 > **Caution:** Do not use `For` with the `If no data or all values are null` setting set to `No Data`. The triggering of `No Data` will trigger instantly and not take `For` into consideration. This may also result in that an OK notification not being sent if alert transitions from `No Data -> Pending -> OK`.
 
@@ -66,27 +62,27 @@ avg() OF query(A, 15m, now) IS BELOW 14
 ```
 
 - `avg()` Controls how the values for **each** series should be reduced to a value that can be compared against the threshold. Click on the function to change it to another aggregation function.
-- `query(A, 15m, now)`  The letter defines what query to execute from the **Metrics** tab. The second two parameters define the time range, `15m, now` means 15 minutes ago to now. You can also do `10m, now-2m` to define a time range that will be 10 minutes ago to 2 minutes ago. This is useful if you want to ignore the last 2 minutes of data.
-- `IS BELOW 14`  Defines the type of threshold and the threshold value.  You can click on `IS BELOW` to change the type of threshold.
+- `query(A, 15m, now)` The letter defines what query to execute from the **Metrics** tab. The second two parameters define the time range, `15m, now` means 15 minutes ago to now. You can also do `10m, now-2m` to define a time range that will be 10 minutes ago to 2 minutes ago. This is useful if you want to ignore the last 2 minutes of data.
+- `IS BELOW 14` Defines the type of threshold and the threshold value. You can click on `IS BELOW` to change the type of threshold.
 
 The query used in an alert rule cannot contain any template variables. Currently we only support `AND` and `OR` operators between conditions and they are executed serially.
 For example, we have 3 conditions in the following order:
-*condition:A(evaluates to: TRUE) OR condition:B(evaluates to: FALSE) AND condition:C(evaluates to: TRUE)*
+_condition:A(evaluates to: TRUE) OR condition:B(evaluates to: FALSE) AND condition:C(evaluates to: TRUE)_
 so the result will be calculated as ((TRUE OR FALSE) AND TRUE) = TRUE.
 
 We plan to add other condition types in the future, like `Other Alert`, where you can include the state of another alert in your conditions, and `Time Of Day`.
 
 #### Multiple Series
 
-If a query returns multiple series then the aggregation function and threshold check will be evaluated for each series. What Grafana does not do currently is track alert rule state **per series**. This has implications that are detailed in the scenario below.
+If a query returns multiple series, then the aggregation function and threshold check will be evaluated for each series. What Grafana does not do currently is track alert rule state **per series**. This has implications that are detailed in the scenario below.
 
 - Alert condition with query that returns 2 series: **server1** and **server2**
 - **server1** series causes the alert rule to fire and switch to state `Alerting`
-- Notifications are sent out with message:  _load peaking (server1)_
-- In a subsequence evaluation of the same alert rule the **server2** series also cause the alert rule to fire
+- Notifications are sent out with message: _load peaking (server1)_
+- In a subsequent evaluation of the same alert rule, the **server2** series also causes the alert rule to fire
 - No new notifications are sent as the alert rule is already in state `Alerting`.
 
-So as you can see from the above scenario Grafana will not send out notifications when other series cause the alert to fire if the rule already is in state `Alerting`. To improve support for queries that return multiple series we plan to track state **per series** in a future release.
+So, as you can see from the above scenario Grafana will not send out notifications when other series cause the alert to fire if the rule already is in state `Alerting`. To improve support for queries that return multiple series we plan to track state **per series** in a future release.
 
 > Starting with Grafana v5.3 you can configure reminders to be sent for triggered alerts. This will send additional notifications
 > when an alert continues to fire. If other series (like server2 in the example above) also cause the alert rule to fire they will be included in the reminder notification. Depending on what notification channel you're using you may be able to take advantage of this feature for identifying new/existing series causing alert to fire.
@@ -95,21 +91,21 @@ So as you can see from the above scenario Grafana will not send out notification
 
 Below are conditions you can configure how the rule evaluation engine should handle queries that return no data or only null values.
 
-No Data Option | Description
------------- | -------------
-No Data | Set alert rule state to `NoData`
-Alerting | Set alert rule state to `Alerting`
-Keep Last State | Keep the current alert rule state, what ever it is.
-Ok | Not sure why you would want to send yourself an alert when things are okay, but you could.
+| No Data Option  | Description                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------ |
+| No Data         | Set alert rule state to `NoData`                                                           |
+| Alerting        | Set alert rule state to `Alerting`                                                         |
+| Keep Last State | Keep the current alert rule state, whatever it is.                                        |
+| Ok              | Not sure why you would want to send yourself an alert when things are okay, but you could. |
 
 ### Execution errors or timeouts
 
 Tell Grafana how to handle execution or timeout errors.
 
-Error or timeout option | Description
------------- | -------------
-Alerting | Set alert rule state to `Alerting`
-Keep Last State | Keep the current alert rule state, what ever it is.
+| Error or timeout option | Description                                         |
+| ----------------------- | --------------------------------------------------- |
+| Alerting                | Set alert rule state to `Alerting`                  |
+| Keep Last State         | Keep the current alert rule state, whatever it is. |
 
 If you have an unreliable time series store from which queries sometime timeout or fail randomly you can set this option to `Keep Last State` in order to basically ignore them.
 
@@ -121,9 +117,11 @@ The actual notifications are configured and shared between multiple alerts. Read
 [Alert notifications]({{< relref "notifications.md" >}}) for information on how to configure and set up notifications.
 
 - **Send to -** Select an alert notification channel if you have one set up.
-- **Message -** Enter a message to be sent on the notification channel. The message can be in text, markdown, or HTML format. It can include links and variables as well.
-- **Tags -**  Specify a list of tags (key/value) to be included in the notification. It is only supported by [some notifiers]({{< relref "notifications/#all-supported-notifiers" >}}).
+- **Message -** Enter a text message to be sent on the notification channel. Some alert notifiers support transforming the text to HTML or other rich formats.
+- **Tags -** Specify a list of tags (key/value) to be included in the notification. It is only supported by [some notifiers]({{< relref "notifications/#all-supported-notifiers" >}}).
 
 ## Alert state history and annotations
 
 Alert state changes are recorded in the internal annotation table in Grafana's database. The state changes are visualized as annotations in the alert rule's graph panel. You can also go into the `State history` submenu in the alert tab to view and clear state history.
+
+<!-- BEGIN Optimal Workshop Intercept Snippet --><div id='owInviteSnippet' style='position:fixed;right:20px;bottom:20px;width:280px;padding:20px;margin:0;border-radius:6px;background:#1857B8;color:#F7F8FA;text-align:left;z-index:2200000000;opacity:0;transition:opacity 500ms;-webkit-transition:opacity 500ms;display:none;'><div id='owInviteMessage' style='padding:0;margin:0 0 20px 0;font-size:16px;'>Got a spare two and a half minutes to help us improve the docs?</div><a id='owInviteOk' href='https://Grafana.optimalworkshop.com/questions/grafana-docs?tag=docs&utm_medium=intercept' onclick='this.parentNode.style.display="none";' target='_blank' style='color:#F7FAFF;font-size:16px;font-weight:bold;text-decoration:underline;'>Yes, I&#x27;ll help</a><a id='owInviteCancel' href='javascript:void(0)' onclick='this.parentNode.style.display="none";' style='color:#F7F8FA;font-size:14px;text-decoration:underline;float:right;'>Close</a></div><script>var owOnload=function(){if(-1==document.cookie.indexOf('ow-intercept-quiz-4ior230e')){var o=new XMLHttpRequest;o.onloadend=function(){try{var o=document.getElementById('owInviteSnippet');var date=new Date();date.setMonth(date.getMonth()+1);this.response&&JSON.parse(this.response).active===!0&&(document.cookie='ow-intercept-quiz-4ior230e=Done;path=/;expires='+date.toUTCString()+';',setTimeout(function(){o.style.display='block',o.style.opacity=1},2e3))}catch(e){}},o.open('POST','https://app.optimalworkshop.com/survey_status/questions/4ior230e/active'),o.send()}};if(window.addEventListener){window.addEventListener('load',function(){owOnload();});}else if(window.attachEvent){window.attachEvent('onload',function(){owOnload();});}</script><!-- END Optimal Workshop snippet -->

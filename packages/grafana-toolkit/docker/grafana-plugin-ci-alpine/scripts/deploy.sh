@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eo pipefail
+
 source "./deploy-common.sh"
 
 # Make libgcc compatible
@@ -9,32 +10,32 @@ mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
 rm /bin/cp
 mv /usr/local/bin/cp /bin/cp
 
-sed -i -e 's/v[[:digit:]]\..*\//edge\//g' /etc/apk/repositories
-apk add nodejs npm yarn build-base openssh git-lfs perl-utils
+apk add --no-cache curl nodejs npm yarn build-base openssh git-lfs perl-utils coreutils python3
 
 #
 # Only relevant for testing, but cypress does not work with musl/alpine.
 #
-# apk add xvfb glib nss nspr gdk-pixbuf "gtk+3.0" pango atk cairo dbus-libs libxcomposite libxrender libxi libxtst libxrandr libxscrnsaver alsa-lib at-spi2-atk at-spi2-core cups-libs gcompat libc6-compat
+# apk add --no-cache xvfb glib nss nspr gdk-pixbuf "gtk+3.0" pango atk cairo dbus-libs libxcomposite libxrender libxi libxtst libxrandr libxscrnsaver alsa-lib at-spi2-atk at-spi2-core cups-libs gcompat libc6-compat
 
 # Install Go
-filename="go1.14.linux-amd64.tar.gz"
-get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "08df79b46b0adf498ea9f320a0f23d6ec59e9003660b4c9c1ce8e5e2c6f823ca"
+filename="go1.15.3.linux-amd64.tar.gz"
+get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "010a88df924a81ec21b293b5da8f9b11c176d27c0ee3962dc1738d2352d3c02d"
 untar_file "/tmp/$filename"
 
 # Install golangci-lint
-filename="golangci-lint-1.26.0-linux-amd64"
-get_file "https://github.com/golangci/golangci-lint/releases/download/v1.26.0/$filename.tar.gz" \
-    "/tmp/$filename.tar.gz" \
-    "59b0e49a4578fea574648a2fd5174ed61644c667ea1a1b54b8082fde15ef94fd"
-untar_file "/tmp/$filename.tar.gz"
+GOLANGCILINT_VERSION=1.32.2
+filename="golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64"
+get_file "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/$filename.tar.gz" \
+    "/tmp/${filename}.tar.gz" \
+    "e7ab86d833bf9faed39801ab3b5cd294f026d26f9a7da63a42390943ead486cc"
+untar_file "/tmp/${filename}.tar.gz"
 ln -s /usr/local/${filename}/golangci-lint /usr/local/bin/golangci-lint
 ln -s /usr/local/go/bin/go /usr/local/bin/go
 ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt
 chmod 755 /usr/local/bin/golangci-lint
 
 # Install dependencies
-apk add fontconfig zip jq
+apk add --no-cache fontconfig zip jq
 
 # Install code climate
 get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64" \
@@ -42,10 +43,9 @@ get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-l
     "b4138199aa755ebfe171b57cc46910b13258ace5fbc4eaa099c42607cd0bff32"
 chmod +x /usr/local/bin/cc-test-reporter
 
-wget -O /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.4.4/grabpl"
-chmod +x /usr/local/bin/grabpl
+curl -fL -o /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.24/grabpl"
 
-apk add git
+apk add --no-cache git
 # Install Mage
 mkdir -pv /tmp/mage $HOME/go/bin
 git clone https://github.com/magefile/mage.git /tmp/mage
@@ -65,7 +65,16 @@ current_dir=$PWD
 cd /usr/local/grafana-toolkit && yarn install && cd $current_dir
 ln -s /usr/local/grafana-toolkit/bin/grafana-toolkit.js /usr/local/bin/grafana-toolkit
 
+GOOGLE_SDK_VERSION=316.0.0
+GOOGLE_SDK_CHECKSUM=96a0b75474dbfa9f3d46dcdec7a4d68a664cb7d57fade5710fe88b1fdf6babb3
+
+curl -fLO https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz
+echo "${GOOGLE_SDK_CHECKSUM} google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz" | sha256sum --check --status
+tar xvzf google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz -C /opt
+rm google-cloud-sdk-${GOOGLE_SDK_VERSION}-linux-x86_64.tar.gz
+ln -s /opt/google-cloud-sdk/bin/gsutil /usr/bin/gsutil
+ln -s /opt/google-cloud-sdk/bin/gcloud /usr/bin/gcloud
+
 # Cleanup after yourself
-/bin/rm -rf /tmp/mage 
+/bin/rm -rf /tmp/mage
 /bin/rm -rf $HOME/go
-/bin/rm -rf /var/cache/apk/*

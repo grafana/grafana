@@ -1,17 +1,15 @@
-import $ from 'jquery';
 import _ from 'lodash';
 import angular, { ILocationService, IScope } from 'angular';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { appEvents, contextSrv, coreModule } from 'app/core/core';
 import { DashboardModel } from '../../state/DashboardModel';
-import { getConfig } from 'app/core/config';
-import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardSrv } from '../../services/DashboardSrv';
 import { CoreEvents } from 'app/types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { AppEvents, locationUtil, TimeZone } from '@grafana/data';
+import { AppEvents, locationUtil, TimeZone, urlUtil } from '@grafana/data';
 import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
+import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 
 export class SettingsCtrl {
   dashboard: DashboardModel;
@@ -20,11 +18,12 @@ export class SettingsCtrl {
   json: string;
   alertCount: number;
   canSaveAs: boolean;
-  canSave: boolean;
-  canDelete: boolean;
+  canSave?: boolean;
+  canDelete?: boolean;
   sections: any[];
   hasUnsavedFolderChange: boolean;
   selectors: typeof selectors.pages.Dashboard.Settings.General;
+  renderCount: number; // hack to update React when Angular changes
 
   /** @ngInject */
   constructor(
@@ -40,8 +39,8 @@ export class SettingsCtrl {
 
     this.$scope.$on('$destroy', () => {
       this.dashboard.updateSubmenuVisibility();
+
       setTimeout(() => {
-        this.$rootScope.appEvent(CoreEvents.dashScroll, { restore: true });
         this.dashboard.startRefresh();
       });
     });
@@ -54,11 +53,11 @@ export class SettingsCtrl {
     this.onRouteUpdated();
 
     this.$rootScope.onAppEvent(CoreEvents.routeUpdated, this.onRouteUpdated.bind(this), $scope);
-    this.$rootScope.appEvent(CoreEvents.dashScroll, { animate: false, pos: 0 });
 
     appEvents.on(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
 
     this.selectors = selectors.pages.Dashboard.Settings.General;
+    this.renderCount = 0;
   }
 
   buildSectionList() {
@@ -121,8 +120,7 @@ export class SettingsCtrl {
     const url = this.$location.path();
 
     for (const section of this.sections) {
-      const sectionParams = _.defaults({ editview: section.id }, params);
-      section.url = getConfig().appSubUrl + url + '?' + $.param(sectionParams);
+      section.url = locationUtil.assureBaseUrl(urlUtil.renderUrl(url, { ...params, editview: section.id }));
     }
   }
 
@@ -229,7 +227,7 @@ export class SettingsCtrl {
 
   deleteDashboardConfirmed() {
     promiseToDigest(this.$scope)(
-      backendSrv.deleteDashboard(this.dashboard.uid, false).then(() => {
+      deleteDashboard(this.dashboard.uid, false).then(() => {
         appEvents.emit(AppEvents.alertSuccess, ['Dashboard Deleted', this.dashboard.title + ' has been deleted']);
         this.$location.url('/');
       })
@@ -255,19 +253,23 @@ export class SettingsCtrl {
   };
 
   onRefreshIntervalChange = (intervals: string[]) => {
-    this.dashboard.timepicker.refresh_intervals = intervals;
+    this.dashboard.timepicker.refresh_intervals = intervals.filter(i => i.trim() !== '');
+    this.renderCount++;
   };
 
   onNowDelayChange = (nowDelay: string) => {
     this.dashboard.timepicker.nowDelay = nowDelay;
+    this.renderCount++;
   };
 
   onHideTimePickerChange = (hide: boolean) => {
     this.dashboard.timepicker.hidden = hide;
+    this.renderCount++;
   };
 
   onTimeZoneChange = (timeZone: TimeZone) => {
     this.dashboard.timezone = timeZone;
+    this.renderCount++;
   };
 }
 

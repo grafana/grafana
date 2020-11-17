@@ -17,6 +17,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	authproxy "github.com/grafana/grafana/pkg/middleware/auth_proxy"
@@ -43,10 +44,9 @@ func resetGetTime() {
 }
 
 func TestMiddleWareSecurityHeaders(t *testing.T) {
-	setting.ERR_TEMPLATE_NAME = errorTemplate
+	setting.ErrTemplateName = errorTemplate
 
 	Convey("Given the grafana middleware", t, func() {
-
 		middlewareScenario(t, "middleware should get correct x-xss-protection header", func(sc *scenarioContext) {
 			setting.XSSProtectionHeader = true
 			sc.fakeReq("GET", "/api/").exec()
@@ -61,7 +61,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 
 		middlewareScenario(t, "middleware should add correct Strict-Transport-Security header", func(sc *scenarioContext) {
 			setting.StrictTransportSecurity = true
-			setting.Protocol = setting.HTTPS
+			setting.Protocol = setting.HTTPSScheme
 			setting.StrictTransportSecurityMaxAge = 64000
 			sc.fakeReq("GET", "/api/").exec()
 			So(sc.resp.Header().Get("Strict-Transport-Security"), ShouldEqual, "max-age=64000")
@@ -76,7 +76,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 }
 
 func TestMiddlewareContext(t *testing.T) {
-	setting.ERR_TEMPLATE_NAME = errorTemplate
+	setting.ErrTemplateName = errorTemplate
 
 	Convey("Given the grafana middleware", t, func() {
 		middlewareScenario(t, "middleware should add context to injector", func(sc *scenarioContext) {
@@ -254,8 +254,7 @@ func TestMiddlewareContext(t *testing.T) {
 				return true, nil
 			}
 
-			maxAgeHours := (time.Duration(setting.LoginMaxLifetimeDays) * 24 * time.Hour)
-			maxAge := (maxAgeHours + time.Hour).Seconds()
+			maxAge := int(setting.LoginMaxLifetime.Seconds())
 
 			sameSitePolicies := []http.SameSite{
 				http.SameSiteNoneMode,
@@ -273,7 +272,7 @@ func TestMiddlewareContext(t *testing.T) {
 					Value:    "rotated",
 					Path:     expectedCookiePath,
 					HttpOnly: true,
-					MaxAge:   int(maxAge),
+					MaxAge:   maxAge,
 					Secure:   setting.CookieSecure,
 					SameSite: sameSitePolicy,
 				}
@@ -304,7 +303,7 @@ func TestMiddlewareContext(t *testing.T) {
 					Value:    "rotated",
 					Path:     expectedCookiePath,
 					HttpOnly: true,
-					MaxAge:   int(maxAge),
+					MaxAge:   maxAge,
 					Secure:   setting.CookieSecure,
 				}
 
@@ -547,7 +546,9 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 		defer bus.ClearBusHandlers()
 
 		setting.LoginCookieName = "grafana_session"
-		setting.LoginMaxLifetimeDays = 30
+		var err error
+		setting.LoginMaxLifetime, err = gtime.ParseDuration("30d")
+		require.NoError(t, err)
 
 		sc := &scenarioContext{}
 
@@ -573,7 +574,9 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
 			} else {
-				c.JsonOK("OK")
+				resp := make(map[string]interface{})
+				resp["message"] = "OK"
+				c.JSON(200, resp)
 			}
 		}
 
@@ -623,7 +626,9 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	rotateEndOfRequestFunc(reqContext, uts, token)(reqContext.Resp)
 
 	foundLoginCookie := false
-	for _, c := range rr.Result().Cookies() {
+	resp := rr.Result()
+	defer resp.Body.Close()
+	for _, c := range resp.Cookies() {
 		if c.Name == "login_token" {
 			foundLoginCookie = true
 
@@ -636,7 +641,11 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 
 func initTokenRotationTest(ctx context.Context) (*models.ReqContext, *httptest.ResponseRecorder, error) {
 	setting.LoginCookieName = "login_token"
-	setting.LoginMaxLifetimeDays = 7
+	var err error
+	setting.LoginMaxLifetime, err = gtime.ParseDuration("7d")
+	if err != nil {
+		return nil, nil, err
+	}
 
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequestWithContext(ctx, "", "", nil)
@@ -667,3 +676,6 @@ func (mw mockWriter) Status() int               { return 0 }
 func (mw mockWriter) Size() int                 { return 0 }
 func (mw mockWriter) Written() bool             { return false }
 func (mw mockWriter) Before(macaron.BeforeFunc) {}
+func (mw mockWriter) Push(target string, opts *http.PushOptions) error {
+	return nil
+}

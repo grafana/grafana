@@ -16,14 +16,14 @@ export interface TemplateSrv {
   /**
    * Replace the values within the target string.  See also {@link InterpolateFunction}
    */
-  replace(target: string, scopedVars?: ScopedVars, format?: string | Function): string;
+  replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string;
 }
 
 let singletonInstance: TemplateSrv;
 
 /**
  * Used during startup by Grafana to set the TemplateSrv so it is available
- * via the the {@link getTemplateSrv} to the rest of the application.
+ * via the {@link getTemplateSrv} to the rest of the application.
  *
  * @internal
  */

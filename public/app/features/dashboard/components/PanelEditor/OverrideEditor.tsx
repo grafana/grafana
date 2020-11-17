@@ -52,11 +52,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   const matcherUi = fieldMatchersUI.get(override.matcher.id);
   const styles = getStyles(theme);
 
-  const matcherLabel = (
-    <Label category={['Matcher']} description={matcherUi.description}>
-      {matcherUi.name}
-    </Label>
-  );
+  const matcherLabel = <Label>{matcherUi.name}</Label>;
 
   const onMatcherConfigChange = useCallback(
     (matcherConfig: any) => {
@@ -110,6 +106,8 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   });
 
   const renderOverrideTitle = (isExpanded: boolean) => {
+    const overriddenProperites = override.properties.map(p => registry.get(p.id).name).join(', ');
+    const matcherOptions = matcherUi.optionsToLabel(override.matcher.options);
     return (
       <div>
         <HorizontalGroup justify="space-between">
@@ -118,8 +116,13 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
         </HorizontalGroup>
         {!isExpanded && (
           <div className={styles.overrideDetails}>
-            Matcher <Icon name="angle-right" /> {matcherUi.name} <br />
-            {override.properties.length === 0 ? 'No' : override.properties.length} properties overriden
+            <div className={styles.options} title={matcherOptions}>
+              {matcherUi.name} <Icon name="angle-right" /> {matcherOptions}
+            </div>
+            <div className={styles.options} title={overriddenProperites}>
+              Properties overridden <Icon name="angle-right" />
+              {overriddenProperites}
+            </div>
           </div>
         )}
       </div>
@@ -128,7 +131,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
 
   return (
     <OptionsGroup renderTitle={renderOverrideTitle} id={name} key={name}>
-      <Field label={matcherLabel} description={matcherUi.description}>
+      <Field label={matcherLabel}>
         <matcherUi.component
           matcher={matcherUi.matcher}
           data={data}
@@ -137,7 +140,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
         />
       </Field>
 
-      <div>
+      <>
         {override.properties.map((p, j) => {
           const item = registry.getIfExists(p.id);
 
@@ -170,13 +173,13 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
               icon="plus"
               options={configPropertiesOptions}
               onChange={o => {
-                onDynamicConfigValueAdd(o.value);
+                onDynamicConfigValueAdd(o.value!);
               }}
               isFullWidth={false}
             />
           </div>
         )}
-      </div>
+      </>
     </OptionsGroup>
   );
 };
@@ -193,6 +196,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       font-size: ${theme.typography.size.sm};
       color: ${theme.colors.textWeak};
       font-weight: ${theme.typography.weight.regular};
+    `,
+    options: css`
+      overflow: hidden;
+      padding-right: ${theme.spacing.xl};
     `,
   };
 });

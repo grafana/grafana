@@ -102,11 +102,6 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   const theme = useContext(ThemeContext);
   const { header } = getLogRowContextStyles(theme);
 
-  const onClickLoadMore = (event: React.SyntheticEvent) => {
-    event.stopPropagation();
-    onLoadMoreContext();
-  };
-
   return (
     <div className={header}>
       <span
@@ -125,7 +120,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
               cursor: pointer;
             }
           `}
-          onClick={onClickLoadMore}
+          onClick={onLoadMoreContext}
         >
           Load 10 more
         </span>
@@ -152,7 +147,7 @@ const LogRowContextGroup: React.FunctionComponent<LogRowContextGroupProps> = ({
     if (shouldScrollToBottom && listContainerRef.current) {
       setScrollTop(listContainerRef.current.offsetHeight);
     }
-  });
+  }, [shouldScrollToBottom]);
 
   const headerProps = {
     row,
@@ -202,22 +197,23 @@ export const LogRowContext: React.FunctionComponent<LogRowContextProps> = ({
   onLoadMoreContext,
   hasMoreContextRows,
 }) => {
-  const handleEscKeyDown = (e: KeyboardEvent): void => {
-    if (e.keyCode === 27) {
-      onOutsideClick();
-    }
-  };
-
   useEffect(() => {
+    const handleEscKeyDown = (e: KeyboardEvent): void => {
+      if (e.keyCode === 27) {
+        onOutsideClick();
+      }
+    };
     document.addEventListener('keydown', handleEscKeyDown, false);
     return () => {
       document.removeEventListener('keydown', handleEscKeyDown, false);
     };
-  }, []);
+  }, [onOutsideClick]);
 
   return (
     <ClickOutsideWrapper onClick={onOutsideClick}>
-      <div>
+      {/* e.stopPropagation is necessary so the log details doesn't open when clicked on log line in context
+       * and/or when context log line is being highlighted */}
+      <div onClick={e => e.stopPropagation()}>
         {context.after && (
           <LogRowContextGroup
             rows={context.after}

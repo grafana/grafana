@@ -154,5 +154,4 @@ func TestPluginRoutes(t *testing.T) {
 			}
 		})
 	}
-
 }

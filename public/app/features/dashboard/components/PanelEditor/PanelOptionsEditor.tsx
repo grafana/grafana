@@ -1,15 +1,17 @@
 import React, { useMemo } from 'react';
 import {
+  DataFrame,
+  InterpolateFunction,
   PanelOptionsEditorItem,
   PanelPlugin,
-  DataFrame,
   StandardEditorContext,
-  InterpolateFunction,
+  VariableSuggestionsScope,
 } from '@grafana/data';
 import { get as lodashGet, set as lodashSet } from 'lodash';
 import { Field, Label } from '@grafana/ui';
 import groupBy from 'lodash/groupBy';
 import { OptionsGroup } from './OptionsGroup';
+import { getPanelOptionsVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
 interface PanelOptionsEditorProps<TOptions> {
   plugin: PanelPlugin;
@@ -37,9 +39,13 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
     onChange(newOptions);
   };
 
-  const context: StandardEditorContext = {
-    data: data ?? [],
+  const context: StandardEditorContext<any> = {
+    data: data || [],
     replaceVariables,
+    options,
+    getSuggestions: (scope?: VariableSuggestionsScope) => {
+      return getPanelOptionsVariableSuggestions(plugin, data);
+    },
   };
 
   return (

@@ -2,6 +2,7 @@ package azuremonitor
 
 import (
 	"encoding/json"
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
@@ -41,7 +42,7 @@ func TestLogTableToFrame(t *testing.T) {
 					}),
 				)
 				frame.Meta = &data.FrameMeta{
-					Custom: map[string]interface{}{"azureColumnTypes": []string{"datetime", "string", "real"}},
+					Custom: &LogAnalyticsMeta{ColumnTypes: []string{"datetime", "string", "real"}},
 				}
 				return frame
 			},
@@ -91,7 +92,7 @@ func TestLogTableToFrame(t *testing.T) {
 					}),
 				)
 				frame.Meta = &data.FrameMeta{
-					Custom: map[string]interface{}{"azureColumnTypes": []string{"string", "string", "string",
+					Custom: &LogAnalyticsMeta{ColumnTypes: []string{"string", "string", "string",
 						"string", "string", "real", "real", "int", "real", "datetime"}},
 				}
 				return frame
@@ -111,10 +112,26 @@ func TestLogTableToFrame(t *testing.T) {
 					data.NewField("XLong", nil, []*int64{pointer.Int64(9223372036854775807)}),
 					data.NewField("XReal", nil, []*float64{pointer.Float64(1.797693134862315708145274237317043567981e+308)}),
 					data.NewField("XTimeSpan", nil, []*string{pointer.String("00:00:00.0000001")}),
+					data.NewField("XDecimal", nil, []*float64{pointer.Float64(79228162514264337593543950335)}),
 				)
 				frame.Meta = &data.FrameMeta{
-					Custom: map[string]interface{}{"azureColumnTypes": []string{"bool", "string", "datetime",
-						"dynamic", "guid", "int", "long", "real", "timespan"}},
+					Custom: &LogAnalyticsMeta{ColumnTypes: []string{"bool", "string", "datetime",
+						"dynamic", "guid", "int", "long", "real", "timespan", "decimal"}},
+				}
+				return frame
+			},
+		},
+		{
+			name:     "nan and infinity in real response",
+			testFile: "loganalytics/8-log-analytics-response-nan-inf.json",
+			expectedFrame: func() *data.Frame {
+				frame := data.NewFrame("",
+					data.NewField("XInf", nil, []*float64{pointer.Float64(math.Inf(0))}),
+					data.NewField("XInfNeg", nil, []*float64{pointer.Float64(math.Inf(-2))}),
+					data.NewField("XNan", nil, []*float64{pointer.Float64(math.NaN())}),
+				)
+				frame.Meta = &data.FrameMeta{
+					Custom: &LogAnalyticsMeta{ColumnTypes: []string{"real", "real", "real"}},
 				}
 				return frame
 			},
@@ -131,10 +148,8 @@ func TestLogTableToFrame(t *testing.T) {
 			if diff := cmp.Diff(tt.expectedFrame(), frame, data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
-
 		})
 	}
-
 }
 
 func loadLogAnalyticsTestFileWithNumber(name string) (AzureLogAnalyticsResponse, error) {

@@ -73,7 +73,7 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
         <Form defaultValues={initFormModel} onSubmit={onSubmit}>
           {({ register, errors }) => (
             <>
-              <Field invalid={!!errors.email} error={!!errors.email && errors.email.message} label="Email">
+              <Field invalid={!!errors.email} error={errors.email && errors.email.message} label="Email">
                 <Input
                   placeholder="email@example.com"
                   name="email"
@@ -86,13 +86,13 @@ const SingupInvitedPageUnconnected: FC<DispatchProps & ConnectedProps> = ({ code
                   })}
                 />
               </Field>
-              <Field invalid={!!errors.name} error={!!errors.name && errors.name.message} label="Name">
+              <Field invalid={!!errors.name} error={errors.name && errors.name.message} label="Name">
                 <Input placeholder="Name (optional)" name="name" ref={register} />
               </Field>
-              <Field invalid={!!errors.username} error={!!errors.username && errors.username.message} label="Username">
+              <Field invalid={!!errors.username} error={errors.username && errors.username.message} label="Username">
                 <Input placeholder="Username" name="username" ref={register({ required: 'Username is required' })} />
               </Field>
-              <Field invalid={!!errors.password} error={!!errors.password && errors.password.message} label="Password">
+              <Field invalid={!!errors.password} error={errors.password && errors.password.message} label="Password">
                 <Input
                   type="password"
                   placeholder="Password"

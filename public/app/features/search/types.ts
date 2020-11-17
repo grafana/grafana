@@ -54,10 +54,6 @@ export interface SearchAction extends Action {
   payload?: any;
 }
 
-export interface OpenSearchParams {
-  query?: string;
-}
-
 export interface UidsToDelete {
   folders: string[];
   dashboards: string[];
@@ -94,4 +90,12 @@ export type OnMoveItems = (selectedDashboards: DashboardSectionItem[], folder: F
 export enum SearchLayout {
   List = 'list',
   Folders = 'folders',
+}
+
+export interface RouteParams {
+  query?: string | null;
+  sort?: string | null;
+  starred?: boolean | null;
+  tag?: string[] | null;
+  layout?: SearchLayout | null;
 }

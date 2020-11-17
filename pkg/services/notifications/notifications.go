@@ -63,7 +63,7 @@ func (ns *NotificationService) Init() error {
 	}
 
 	if !util.IsEmail(ns.Cfg.Smtp.FromAddress) {
-		return errors.New("Invalid email address for SMTP from_address config")
+		return errors.New("invalid email address for SMTP from_address config")
 	}
 
 	if setting.EmailCodeValidMinutes == 0 {
@@ -126,6 +126,7 @@ func (ns *NotificationService) sendEmailCommandHandlerSync(ctx context.Context, 
 		SingleEmail:   cmd.SingleEmail,
 		EmbeddedFiles: cmd.EmbeddedFiles,
 		Subject:       cmd.Subject,
+		ReplyTo:       cmd.ReplyTo,
 	})
 
 	if err != nil {

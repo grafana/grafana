@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -21,7 +22,6 @@ const (
 )
 
 func TestLoadingSettings(t *testing.T) {
-
 	Convey("Testing loading settings from ini file", t, func() {
 		skipStaticRootValidation = true
 
@@ -215,7 +215,8 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			hostname, _ := os.Hostname()
+			hostname, err := os.Hostname()
+			So(err, ShouldBeNil)
 			So(InstanceName, ShouldEqual, hostname)
 		})
 
@@ -276,32 +277,22 @@ func TestLoadingSettings(t *testing.T) {
 	})
 
 	Convey("Test reading string values from .ini file", t, func() {
-
 		iniFile, err := ini.Load(path.Join(HomePath, "pkg/setting/testdata/invalid.ini"))
 		So(err, ShouldBeNil)
 
 		Convey("If key is found - should return value from ini file", func() {
-			value, err := valueAsString(iniFile.Section("server"), "alt_url", "")
-			So(err, ShouldBeNil)
+			value := valueAsString(iniFile.Section("server"), "alt_url", "")
 			So(value, ShouldEqual, "https://grafana.com/")
 		})
 
 		Convey("If key is not found - should return default value", func() {
-			value, err := valueAsString(iniFile.Section("server"), "extra_url", "default_url_val")
-			So(err, ShouldBeNil)
+			value := valueAsString(iniFile.Section("server"), "extra_url", "default_url_val")
 			So(value, ShouldEqual, "default_url_val")
 		})
-
-		Convey("In case of panic - should return user-friendly error", func() {
-			value, err := valueAsString(iniFile.Section("server"), "root_url", "")
-			So(err.Error(), ShouldEqual, "Invalid value for key 'root_url' in configuration file")
-			So(value, ShouldEqual, "")
-		})
-
 	})
 }
 
-func TestParseAppUrlAndSubUrl(t *testing.T) {
+func TestParseAppURLAndSubURL(t *testing.T) {
 	testCases := []struct {
 		rootURL           string
 		expectedAppURL    string
@@ -324,4 +315,55 @@ func TestParseAppUrlAndSubUrl(t *testing.T) {
 		require.Equal(t, tc.expectedAppURL, appURL)
 		require.Equal(t, tc.expectedAppSubURL, appSubURL)
 	}
+}
+
+func TestAuthDurationSettings(t *testing.T) {
+	const maxInactiveDaysTest = 240 * time.Hour
+
+	f := ini.Empty()
+	cfg := NewCfg()
+	sec, err := f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_inactive_lifetime_days", "10")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_inactive_lifetime_duration", "")
+	require.NoError(t, err)
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
+	require.Equal(t, maxInactiveDaysTest, cfg.LoginMaxInactiveLifetime)
+
+	f = ini.Empty()
+	sec, err = f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_inactive_lifetime_duration", "824h")
+	require.NoError(t, err)
+	maxInactiveDurationTest, err := time.ParseDuration("824h")
+	require.NoError(t, err)
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
+	require.Equal(t, maxInactiveDurationTest, cfg.LoginMaxInactiveLifetime)
+
+	f = ini.Empty()
+	sec, err = f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_days", "24")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_duration", "")
+	require.NoError(t, err)
+	maxLifetimeDaysTest, err := time.ParseDuration("576h")
+	require.NoError(t, err)
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
+	require.Equal(t, maxLifetimeDaysTest, cfg.LoginMaxLifetime)
+
+	f = ini.Empty()
+	sec, err = f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_duration", "824h")
+	require.NoError(t, err)
+	maxLifetimeDurationTest, err := time.ParseDuration("824h")
+	require.NoError(t, err)
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
+	require.Equal(t, maxLifetimeDurationTest, cfg.LoginMaxLifetime)
 }

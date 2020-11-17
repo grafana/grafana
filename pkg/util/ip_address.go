@@ -12,7 +12,7 @@ import (
 func ParseIPAddress(input string) (string, error) {
 	addr, err := SplitHostPort(input)
 	if err != nil {
-		return "", errutil.Wrapf(err, "Failed to split network address '%s' by host and port",
+		return "", errutil.Wrapf(err, "failed to split network address %q by host and port",
 			input)
 	}
 
@@ -53,7 +53,7 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string) (NetworkAddres
 		addrEnd := strings.LastIndex(input, "]")
 		if addrEnd < 0 {
 			// Malformed address
-			return addr, fmt.Errorf("Malformed IPv6 address: '%s'", input)
+			return addr, fmt.Errorf("malformed IPv6 address: '%s'", input)
 		}
 
 		start = addrEnd
@@ -83,7 +83,7 @@ func SplitHostPortDefault(input, defaultHost, defaultPort string) (NetworkAddres
 // SplitHostPort splits ip address/hostname string by host and port
 func SplitHostPort(input string) (NetworkAddress, error) {
 	if len(input) == 0 {
-		return NetworkAddress{}, fmt.Errorf("Input is empty")
+		return NetworkAddress{}, fmt.Errorf("input is empty")
 	}
 	return SplitHostPortDefault(input, "", "")
 }

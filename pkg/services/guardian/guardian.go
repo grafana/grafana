@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	ErrGuardianPermissionExists = errors.New("Permission already exists")
-	ErrGuardianOverride         = errors.New("You can only override a permission to be higher")
+	ErrGuardianPermissionExists = errors.New("permission already exists")
+	ErrGuardianOverride         = errors.New("you can only override a permission to be higher")
 )
 
 // DashboardGuardian to be used for guard against operations without access on dashboard and acl
@@ -213,6 +213,7 @@ func (g *dashboardGuardianImpl) getTeams() ([]*models.TeamDTO, error) {
 	return query.Result, err
 }
 
+// nolint:unused
 type FakeDashboardGuardian struct {
 	DashId                           int64
 	OrgId                            int64
@@ -255,6 +256,7 @@ func (g *FakeDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO, error) 
 	return g.GetAclValue, nil
 }
 
+// nolint:unused
 func MockDashboardGuardian(mock *FakeDashboardGuardian) {
 	New = func(dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
 		mock.OrgId = orgId

@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var regNonAlphaNumeric = regexp.MustCompile("[^a-zA-Z0-9]+")
+
 type AnyId struct {
 	Id int64 `json:"id"`
 }
@@ -48,10 +50,6 @@ type MetricRequest struct {
 	Debug   bool               `json:"debug"`
 }
 
-type UserStars struct {
-	DashboardIds map[string]bool `json:"dashboardIds"`
-}
-
 func GetGravatarUrl(text string) string {
 	if setting.DisableGravatar {
 		return setting.AppSubUrl + "/public/img/user_profile.png"
@@ -63,7 +61,7 @@ func GetGravatarUrl(text string) string {
 
 	hasher := md5.New()
 	if _, err := hasher.Write([]byte(strings.ToLower(text))); err != nil {
-		log.Warn("Failed to hash text: %s", err)
+		log.Warnf("Failed to hash text: %s", err)
 	}
 	return fmt.Sprintf(setting.AppSubUrl+"/avatar/%x", hasher.Sum(nil))
 }
@@ -73,13 +71,7 @@ func GetGravatarUrlWithDefault(text string, defaultText string) string {
 		return GetGravatarUrl(text)
 	}
 
-	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
-
-	if err != nil {
-		return ""
-	}
-
-	text = reg.ReplaceAllString(defaultText, "") + "@localhost"
+	text = regNonAlphaNumeric.ReplaceAllString(defaultText, "") + "@localhost"
 
 	return GetGravatarUrl(text)
 }

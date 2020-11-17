@@ -11,6 +11,12 @@ describe('ZipkinDatasource', () => {
       const response = await ds.query({ targets: [{ query: '12345' }] } as DataQueryRequest<ZipkinQuery>).toPromise();
       expect(response.data[0].fields[0].values.get(0)).toEqual(jaegerTrace);
     });
+    it('runs query with traceId that includes special characters', async () => {
+      setupBackendSrv({ url: '/api/datasources/proxy/1/api/v2/trace/a%2Fb', response: zipkinResponse });
+      const ds = new ZipkinDatasource(defaultSettings);
+      const response = await ds.query({ targets: [{ query: 'a/b' }] } as DataQueryRequest<ZipkinQuery>).toPromise();
+      expect(response.data[0].fields[0].values.get(0)).toEqual(jaegerTrace);
+    });
   });
 
   describe('metadataRequest', () => {

@@ -2,36 +2,31 @@
 title = "Google OAuth2 Authentication"
 description = "Grafana OAuthentication Guide "
 keywords = ["grafana", "configuration", "documentation", "oauth"]
-type = "docs"
-[menu.docs]
-name = "Google"
-identifier = "ggogle_oauth2"
-parent = "authentication"
-weight = 3
+weight = 600
 +++
 
 # Google OAuth2 Authentication
 
-To enable the Google OAuth2 you must register your application with Google. Google will generate a client ID and secret key for you to use.
+To enable Google OAuth2 you must register your application with Google. Google will generate a client ID and secret key for you to use.
 
 ## Create Google OAuth keys
 
 First, you need to create a Google OAuth Client:
 
 1. Go to https://console.developers.google.com/apis/credentials.
-2. Click **Create Credentials**, then click **OAuth Client ID** in the drop-down menu
-3. Enter the following:
+1. Click **Create Credentials**, then click **OAuth Client ID** in the drop-down menu
+1. Enter the following:
    - Application Type: Web Application
    - Name: Grafana
-   - Authorized Javascript Origins: https://grafana.mycompany.com
+   - Authorized JavaScript Origins: https://grafana.mycompany.com
    - Authorized Redirect URLs: https://grafana.mycompany.com/login/google
    - Replace https://grafana.mycompany.com with the URL of your Grafana instance.
-4. Click Create
-5. Copy the Client ID and Client Secret from the 'OAuth Client' modal
+1. Click Create
+1. Copy the Client ID and Client Secret from the 'OAuth Client' modal
 
 ## Enable Google OAuth in Grafana
 
-Specify the Client ID and Secret in the [Grafana configuration file]({{< relref "../installation/configuration.md#config-file-locations" >}}). For example:
+Specify the Client ID and Secret in the [Grafana configuration file]({{< relref "../administration/configuration.md#config-file-locations" >}}). For example:
 
 ```bash
 [auth.google]
@@ -45,7 +40,7 @@ allowed_domains = mycompany.com mycompany.org
 allow_sign_up = true
 ```
 
-You may have to set the `root_url` option of `[server]` for the callback URL to be 
+You may have to set the `root_url` option of `[server]` for the callback URL to be
 correct. For example in case you are serving Grafana behind a proxy.
 
 Restart the Grafana back-end. You should now see a Google login button

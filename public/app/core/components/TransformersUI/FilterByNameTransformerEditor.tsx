@@ -85,7 +85,7 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
           }
         }
       } catch (error) {
-        console.log(error);
+        console.error(error);
       }
     }
 

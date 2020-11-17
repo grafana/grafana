@@ -50,7 +50,7 @@ func (e *OpenTsdbExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 		tsdbQuery.Queries = append(tsdbQuery.Queries, metric)
 	}
 
-	if setting.Env == setting.DEV {
+	if setting.Env == setting.Dev {
 		plog.Debug("OpenTsdb request", "params", tsdbQuery)
 	}
 
@@ -79,19 +79,22 @@ func (e *OpenTsdbExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 }
 
 func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsdbQuery) (*http.Request, error) {
-	u, _ := url.Parse(dsInfo.Url)
+	u, err := url.Parse(dsInfo.Url)
+	if err != nil {
+		return nil, err
+	}
 	u.Path = path.Join(u.Path, "api/query")
 
 	postData, err := json.Marshal(data)
 	if err != nil {
 		plog.Info("Failed marshaling data", "error", err)
-		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(string(postData)))
 	if err != nil {
 		plog.Info("Failed to create request", "error", err)
-		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -103,7 +106,6 @@ func (e *OpenTsdbExecutor) createRequest(dsInfo *models.DataSource, data OpenTsd
 }
 
 func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response) (map[string]*tsdb.QueryResult, error) {
-
 	queryResults := make(map[string]*tsdb.QueryResult)
 	queryRes := tsdb.NewQueryResult()
 
@@ -115,7 +117,7 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 
 	if res.StatusCode/100 != 2 {
 		plog.Info("Request failed", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf("Request failed status: %v", res.Status)
+		return nil, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	var data []OpenTsdbResponse
@@ -147,7 +149,6 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 }
 
 func (e *OpenTsdbExecutor) buildMetric(query *tsdb.Query) map[string]interface{} {
-
 	metric := make(map[string]interface{})
 
 	// Setting metric and aggregator
@@ -159,7 +160,7 @@ func (e *OpenTsdbExecutor) buildMetric(query *tsdb.Query) map[string]interface{}
 	if !disableDownsampling {
 		downsampleInterval := query.Model.Get("downsampleInterval").MustString()
 		if downsampleInterval == "" {
-			downsampleInterval = "1m" //default value for blank
+			downsampleInterval = "1m" // default value for blank
 		}
 		downsample := downsampleInterval + "-" + query.Model.Get("downsampleAggregator").MustString()
 		if query.Model.Get("downsampleFillPolicy").MustString() != "none" {
@@ -171,7 +172,6 @@ func (e *OpenTsdbExecutor) buildMetric(query *tsdb.Query) map[string]interface{}
 
 	// Setting rate options
 	if query.Model.Get("shouldComputeRate").MustBool() {
-
 		metric["rate"] = true
 		rateOptions := make(map[string]interface{})
 		rateOptions["counter"] = query.Model.Get("isCounter").MustBool()
@@ -206,5 +206,4 @@ func (e *OpenTsdbExecutor) buildMetric(query *tsdb.Query) map[string]interface{}
 	}
 
 	return metric
-
 }

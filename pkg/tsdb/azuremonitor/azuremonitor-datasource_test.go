@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/stretchr/testify/require"
+	ptr "github.com/xorcare/pointer"
 )
 
 func TestAzureMonitorBuildQueries(t *testing.T) {
@@ -72,7 +73,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
 		},
 		{
-			name: "has a dimension filter",
+			name: "has a dimension filter and none Dimension",
 			azureMonitorVariedProperties: map[string]interface{}{
 				"timeGrain":       "PT1M",
 				"dimension":       "None",
@@ -82,6 +83,28 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			queryIntervalMS:         400000,
 			expectedInterval:        "PT1M",
 			azureMonitorQueryTarget: "aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z",
+		},
+		{
+			name: "has dimensionFilter*s* property with one dimension",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain":        "PT1M",
+				"dimensionFilters": []azureMonitorDimensionFilter{{"blob", "eq", "*"}},
+				"top":              "30",
+			},
+			queryIntervalMS:         400000,
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
+		},
+		{
+			name: "has dimensionFilter*s* property with two dimensions",
+			azureMonitorVariedProperties: map[string]interface{}{
+				"timeGrain":        "PT1M",
+				"dimensionFilters": []azureMonitorDimensionFilter{{"blob", "eq", "*"}, {"tier", "eq", "*"}},
+				"top":              "30",
+			},
+			queryIntervalMS:         400000,
+			expectedInterval:        "PT1M",
+			azureMonitorQueryTarget: "%24filter=blob+eq+%27%2A%27+and+tier+eq+%27%2A%27&aggregation=Average&api-version=2018-01-01&interval=PT1M&metricnames=Percentage+CPU&metricnamespace=Microsoft.Compute-virtualMachines&timespan=2018-03-15T13%3A00%3A00Z%2F2018-03-15T13%3A34%3A00Z&top=30",
 		},
 	}
 
@@ -139,9 +162,7 @@ func TestAzureMonitorBuildQueries(t *testing.T) {
 			}
 
 			queries, err := datasource.buildQueries(tsdbQuery.Queries, tsdbQuery.TimeRange)
-			if err != nil {
-				t.Error(err)
-			}
+			require.NoError(t, err)
 			if diff := cmp.Diff(azureMonitorQuery, queries[0], cmpopts.IgnoreUnexported(simplejson.Json{}), cmpopts.IgnoreFields(AzureMonitorQuery{}, "Params")); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 			}
@@ -179,9 +200,9 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC), 5, time.Minute)),
-					data.NewField("grafana.Percentage CPU", nil, []float64{
-						2.0875, 2.1525, 2.155, 3.6925, 2.44,
-					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+					data.NewField("Percentage CPU", nil, []*float64{
+						ptr.Float64(2.0875), ptr.Float64(2.1525), ptr.Float64(2.155), ptr.Float64(3.6925), ptr.Float64(2.44),
+					}).SetConfig(&data.FieldConfig{Unit: "percent"})),
 			},
 		},
 		{
@@ -199,9 +220,9 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 13, 29, 0, 0, time.UTC), 5, time.Minute)),
-					data.NewField("grafana.Percentage CPU", nil, []float64{
-						8.26, 8.7, 14.82, 10.07, 8.52,
-					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+					data.NewField("Percentage CPU", nil, []*float64{
+						ptr.Float64(8.26), ptr.Float64(8.7), ptr.Float64(14.82), ptr.Float64(10.07), ptr.Float64(8.52),
+					}).SetConfig(&data.FieldConfig{Unit: "percent"})),
 			},
 		},
 		{
@@ -219,9 +240,9 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 14, 26, 0, 0, time.UTC), 5, time.Minute)),
-					data.NewField("grafana.Percentage CPU", nil, []float64{
-						3.07, 2.92, 2.87, 2.27, 2.52,
-					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+					data.NewField("Percentage CPU", nil, []*float64{
+						ptr.Float64(3.07), ptr.Float64(2.92), ptr.Float64(2.87), ptr.Float64(2.27), ptr.Float64(2.52),
+					}).SetConfig(&data.FieldConfig{Unit: "percent"})),
 			},
 		},
 		{
@@ -239,9 +260,9 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 14, 43, 0, 0, time.UTC), 5, time.Minute)),
-					data.NewField("grafana.Percentage CPU", nil, []float64{
-						1.51, 2.38, 1.69, 2.27, 1.96,
-					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+					data.NewField("Percentage CPU", nil, []*float64{
+						ptr.Float64(1.51), ptr.Float64(2.38), ptr.Float64(1.69), ptr.Float64(2.27), ptr.Float64(1.96),
+					}).SetConfig(&data.FieldConfig{Unit: "percent"})),
 			},
 		},
 		{
@@ -259,14 +280,14 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 14, 44, 0, 0, time.UTC), 5, time.Minute)),
-					data.NewField("grafana.Percentage CPU", nil, []float64{
-						4, 4, 4, 4, 4,
-					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+					data.NewField("Percentage CPU", nil, []*float64{
+						ptr.Float64(4), ptr.Float64(4), ptr.Float64(4), ptr.Float64(4), ptr.Float64(4),
+					}).SetConfig(&data.FieldConfig{Unit: "percent"})),
 			},
 		},
 		{
-			name:         "multi dimension time series response",
-			responseFile: "6-azure-monitor-response-multi-dimension.json",
+			name:         "single dimension time series response",
+			responseFile: "6-azure-monitor-response-single-dimension.json",
 			mockQuery: &AzureMonitorQuery{
 				UrlComponents: map[string]string{
 					"resourceName": "grafana",
@@ -275,31 +296,24 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 					"aggregation": {"Average"},
 				},
 			},
-			// Regarding multi-dimensional response:
-			// - It seems they all share the same time index, so maybe can be a wide frame.
-			// - Due to the type for the Azure monitor response, nulls currently become 0.
-			// - blogtype=X should maybe become labels.
 			expectedFrames: data.Frames{
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("grafana{blobtype=PageBlob}.Blob Count", nil, []float64{
-						3, 3, 3, 3, 3, 0,
-					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+					data.NewField("Blob Count", data.Labels{"blobtype": "PageBlob"},
+						[]*float64{ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), nil}).SetConfig(&data.FieldConfig{Unit: "short"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("grafana{blobtype=BlockBlob}.Blob Count", nil, []float64{
-						1, 1, 1, 1, 1, 0,
-					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+					data.NewField("Blob Count", data.Labels{"blobtype": "BlockBlob"},
+						[]*float64{ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), nil}).SetConfig(&data.FieldConfig{Unit: "short"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("grafana{blobtype=Azure Data Lake Storage}.Blob Count", nil, []float64{
-						0, 0, 0, 0, 0, 0,
-					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+					data.NewField("Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"},
+						[]*float64{ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), nil}).SetConfig(&data.FieldConfig{Unit: "short"})),
 			},
 		},
 		{
@@ -318,14 +332,14 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 13, 29, 0, 0, time.UTC), 5, time.Minute)),
-					data.NewField("custom grafanastaging Microsoft.Compute/virtualMachines grafana Percentage CPU", nil, []float64{
-						8.26, 8.7, 14.82, 10.07, 8.52,
-					}).SetConfig(&data.FieldConfig{Unit: "Percent"})),
+					data.NewField("Percentage CPU", nil, []*float64{
+						ptr.Float64(8.26), ptr.Float64(8.7), ptr.Float64(14.82), ptr.Float64(10.07), ptr.Float64(8.52),
+					}).SetConfig(&data.FieldConfig{Unit: "percent", DisplayName: "custom grafanastaging Microsoft.Compute/virtualMachines grafana Percentage CPU"})),
 			},
 		},
 		{
-			name:         "multi dimension with alias",
-			responseFile: "6-azure-monitor-response-multi-dimension.json",
+			name:         "single dimension with alias",
+			responseFile: "6-azure-monitor-response-single-dimension.json",
 			mockQuery: &AzureMonitorQuery{
 				Alias: "{{dimensionname}}={{DimensionValue}}",
 				UrlComponents: map[string]string{
@@ -339,23 +353,78 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("blobtype=PageBlob", nil, []float64{
-						3, 3, 3, 3, 3, 0,
-					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+					data.NewField("Blob Count", data.Labels{"blobtype": "PageBlob"},
+						[]*float64{ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), nil}).SetConfig(&data.FieldConfig{Unit: "short", DisplayName: "blobtype=PageBlob"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("blobtype=BlockBlob", nil, []float64{
-						1, 1, 1, 1, 1, 0,
-					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+					data.NewField("Blob Count", data.Labels{"blobtype": "BlockBlob"}, []*float64{
+						ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), nil,
+					}).SetConfig(&data.FieldConfig{Unit: "short", DisplayName: "blobtype=BlockBlob"})),
 
 				data.NewFrame("",
 					data.NewField("", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour)),
-					data.NewField("blobtype=Azure Data Lake Storage", nil, []float64{
-						0, 0, 0, 0, 0, 0,
-					}).SetConfig(&data.FieldConfig{Unit: "Count"})),
+					data.NewField("Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"}, []*float64{
+						ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), nil,
+					}).SetConfig(&data.FieldConfig{Unit: "short", DisplayName: "blobtype=Azure Data Lake Storage"})),
+			},
+		},
+		{
+			name:         "multiple dimension time series response with label alias",
+			responseFile: "7-azure-monitor-response-multi-dimension.json",
+			mockQuery: &AzureMonitorQuery{
+				Alias: "{{resourcegroup}} {Blob Type={{blobtype}}, Tier={{Tier}}}",
+				UrlComponents: map[string]string{
+					"resourceName": "grafana",
+				},
+				Params: url.Values{
+					"aggregation": {"Average"},
+				},
+			},
+			expectedFrames: data.Frames{
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour)),
+					data.NewField("Blob Capacity", data.Labels{"blobtype": "PageBlob", "tier": "Standard"},
+						[]*float64{ptr.Float64(675530), ptr.Float64(675530), ptr.Float64(675530)}).SetConfig(
+						&data.FieldConfig{Unit: "decbytes", DisplayName: "danieltest {Blob Type=PageBlob, Tier=Standard}"})),
+
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour)),
+					data.NewField("Blob Capacity", data.Labels{"blobtype": "BlockBlob", "tier": "Hot"},
+						[]*float64{ptr.Float64(0), ptr.Float64(0), ptr.Float64(0)}).SetConfig(
+						&data.FieldConfig{Unit: "decbytes", DisplayName: "danieltest {Blob Type=BlockBlob, Tier=Hot}"})),
+
+				data.NewFrame("",
+					data.NewField("", nil,
+						makeDates(time.Date(2020, 06, 30, 9, 58, 0, 0, time.UTC), 3, time.Hour)),
+					data.NewField("Blob Capacity", data.Labels{"blobtype": "Azure Data Lake Storage", "tier": "Cool"},
+						[]*float64{ptr.Float64(0), ptr.Float64(0), ptr.Float64(0)}).SetConfig(
+						&data.FieldConfig{Unit: "decbytes", DisplayName: "danieltest {Blob Type=Azure Data Lake Storage, Tier=Cool}"})),
+			},
+		},
+		{
+			name:         "unspecified unit with alias should not panic",
+			responseFile: "8-azure-monitor-response-unspecified-unit.json",
+			mockQuery: &AzureMonitorQuery{
+				Alias: "custom",
+				UrlComponents: map[string]string{
+					"resourceName": "grafana",
+				},
+				Params: url.Values{
+					"aggregation": {"Average"},
+				},
+			},
+			expectedFrames: data.Frames{
+				data.NewFrame("",
+					data.NewField("", nil,
+						[]time.Time{time.Date(2019, 2, 8, 10, 13, 0, 0, time.UTC)}),
+					data.NewField("Percentage CPU", nil, []*float64{
+						ptr.Float64(2.0875),
+					}).SetConfig(&data.FieldConfig{DisplayName: "custom"})),
 			},
 		},
 	}
@@ -370,7 +439,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 			err = datasource.parseResponse(res, azData, tt.mockQuery)
 			require.NoError(t, err)
 
-			frames, err := data.UnmarshalArrowFrames(res.Dataframes)
+			frames, err := res.Dataframes.Decoded()
 			require.NoError(t, err)
 			if diff := cmp.Diff(tt.expectedFrames, frames, data.FrameTestCompareOptions()...); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)

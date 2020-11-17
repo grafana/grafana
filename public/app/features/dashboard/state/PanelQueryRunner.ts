@@ -1,41 +1,42 @@
 // Libraries
 import { cloneDeep } from 'lodash';
-import { ReplaySubject, Unsubscribable, Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { MonoTypeOperatorFunction, Observable, of, ReplaySubject, Unsubscribable } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
 
 // Services & Utils
+import { getTemplateSrv } from '@grafana/runtime';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import kbn from 'app/core/utils/kbn';
-import templateSrv from 'app/features/templating/template_srv';
-import { runRequest, preProcessPanelData } from './runRequest';
-import { runSharedRequest, isSharedDashboardQuery } from '../../../plugins/datasource/dashboard';
+import { preProcessPanelData, runRequest } from './runRequest';
+import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard';
 
 // Types
 import {
-  PanelData,
-  DataQuery,
+  applyFieldOverrides,
   CoreApp,
+  DataConfigSource,
+  DataQuery,
   DataQueryRequest,
   DataSourceApi,
   DataSourceJsonData,
-  TimeRange,
   DataTransformerConfig,
-  transformDataFrame,
+  LoadingState,
+  PanelData,
+  rangeUtil,
   ScopedVars,
-  applyFieldOverrides,
-  DataConfigSource,
+  TimeRange,
   TimeZone,
+  transformDataFrame,
 } from '@grafana/data';
 
 export interface QueryRunnerOptions<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData
 > {
-  datasource: string | DataSourceApi<TQuery, TOptions>;
+  datasource: string | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
   panelId: number;
   dashboardId?: number;
-  timezone?: string;
+  timezone: TimeZone;
   timeRange: TimeRange;
   timeInfo?: string; // String description of time range for display
   maxDataPoints: number;
@@ -57,11 +58,10 @@ export interface GetDataOptions {
 }
 
 export class PanelQueryRunner {
-  private subject?: ReplaySubject<PanelData>;
+  private subject: ReplaySubject<PanelData>;
   private subscription?: Unsubscribable;
   private lastResult?: PanelData;
   private dataConfigSource: DataConfigSource;
-  private timeZone?: TimeZone;
 
   constructor(dataConfigSource: DataConfigSource) {
     this.subject = new ReplaySubject(1);
@@ -75,29 +75,20 @@ export class PanelQueryRunner {
     const { withFieldConfig, withTransforms } = options;
 
     return this.subject.pipe(
+      this.getTransformationsStream(withTransforms),
       map((data: PanelData) => {
         let processedData = data;
-
-        // Apply transformation
-        if (withTransforms) {
-          const transformations = this.dataConfigSource.getTransformations();
-
-          if (transformations && transformations.length > 0) {
-            processedData = {
-              ...processedData,
-              series: transformDataFrame(transformations, data.series),
-            };
-          }
-        }
 
         if (withFieldConfig) {
           // Apply field defaults & overrides
           const fieldConfig = this.dataConfigSource.getFieldOverrideOptions();
+          const timeZone = data.request?.timezone ?? 'browser';
+
           if (fieldConfig) {
             processedData = {
               ...processedData,
               series: applyFieldOverrides({
-                timeZone: this.timeZone,
+                timeZone: timeZone,
                 autoMinMax: true,
                 data: processedData.series,
                 ...fieldConfig,
@@ -110,6 +101,25 @@ export class PanelQueryRunner {
       })
     );
   }
+
+  private getTransformationsStream = (withTransforms: boolean): MonoTypeOperatorFunction<PanelData> => {
+    return inputStream =>
+      inputStream.pipe(
+        mergeMap(data => {
+          if (!withTransforms) {
+            return of(data);
+          }
+
+          const transformations = this.dataConfigSource.getTransformations();
+
+          if (!transformations || transformations.length === 0) {
+            return of(data);
+          }
+
+          return transformDataFrame(transformations, data.series).pipe(map(series => ({ ...data, series })));
+        })
+      );
+  };
 
   async run(options: QueryRunnerOptions) {
     const {
@@ -125,8 +135,6 @@ export class PanelQueryRunner {
       scopedVars,
       minInterval,
     } = options;
-
-    this.timeZone = timezone;
 
     if (isSharedDashboardQuery(datasource)) {
       this.pipeToSubject(runSharedRequest(options));
@@ -164,8 +172,8 @@ export class PanelQueryRunner {
         return query;
       });
 
-      const lowerIntervalLimit = minInterval ? templateSrv.replace(minInterval, request.scopedVars) : ds.interval;
-      const norm = kbn.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
+      const lowerIntervalLimit = minInterval ? getTemplateSrv().replace(minInterval, request.scopedVars) : ds.interval;
+      const norm = rangeUtil.calculateInterval(timeRange, maxDataPoints, lowerIntervalLimit);
 
       // make shallow copy of scoped vars,
       // and add built in variables interval and interval_ms
@@ -179,7 +187,7 @@ export class PanelQueryRunner {
 
       this.pipeToSubject(runRequest(ds, request));
     } catch (err) {
-      console.log('PanelQueryRunner Error', err);
+      console.error('PanelQueryRunner Error', err);
     }
   }
 
@@ -189,12 +197,28 @@ export class PanelQueryRunner {
     }
 
     this.subscription = observable.subscribe({
-      next: (data: PanelData) => {
+      next: data => {
         this.lastResult = preProcessPanelData(data, this.lastResult);
         // Store preprocessed query results for applying overrides later on in the pipeline
         this.subject.next(this.lastResult);
       },
     });
+  }
+
+  cancelQuery() {
+    if (!this.subscription) {
+      return;
+    }
+
+    this.subscription.unsubscribe();
+
+    // If we have an old result with loading state, send it with done state
+    if (this.lastResult && this.lastResult.state === LoadingState.Loading) {
+      this.subject.next({
+        ...this.lastResult,
+        state: LoadingState.Done,
+      });
+    }
   }
 
   resendLastResult = () => {
@@ -226,7 +250,7 @@ export class PanelQueryRunner {
     }
   }
 
-  getLastResult(): PanelData {
+  getLastResult(): PanelData | undefined {
     return this.lastResult;
   }
 }

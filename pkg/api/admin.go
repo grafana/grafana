@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func AdminGetSettings(c *models.ReqContext) {
+func AdminGetSettings(c *models.ReqContext) Response {
 	settings := make(map[string]interface{})
 
 	for _, section := range setting.Raw.Sections() {
@@ -35,17 +35,15 @@ func AdminGetSettings(c *models.ReqContext) {
 		}
 	}
 
-	c.JSON(200, settings)
+	return JSON(200, settings)
 }
 
-func AdminGetStats(c *models.ReqContext) {
-
+func AdminGetStats(c *models.ReqContext) Response {
 	statsQuery := models.GetAdminStatsQuery{}
 
 	if err := bus.Dispatch(&statsQuery); err != nil {
-		c.JsonApiErr(500, "Failed to get admin stats from database", err)
-		return
+		return Error(500, "Failed to get admin stats from database", err)
 	}
 
-	c.JSON(200, statsQuery.Result)
+	return JSON(200, statsQuery.Result)
 }

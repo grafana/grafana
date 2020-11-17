@@ -1,8 +1,10 @@
 import { number, text } from '@storybook/addon-knobs';
-import { BarGauge, Props, BarGaugeDisplayMode } from './BarGauge';
+import { BarGauge, BarGaugeDisplayMode } from '@grafana/ui';
 import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
+import { Props } from './BarGauge';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
+import mdx from './BarGauge.mdx';
 
 const getKnobs = () => {
   return {
@@ -21,6 +23,11 @@ export default {
   title: 'Visualizations/BarGauge',
   component: BarGauge,
   decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 function addBarGaugeStory(overrides: Partial<Props>) {

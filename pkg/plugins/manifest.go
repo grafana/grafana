@@ -9,7 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -84,16 +84,18 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 
 // getPluginSignatureState returns the signature state for a plugin.
 func getPluginSignatureState(log log.Logger, plugin *PluginBase) PluginSignature {
-	log.Debug("Getting signature state of plugin", "plugin", plugin.Id)
-	manifestPath := path.Join(plugin.PluginDir, "MANIFEST.txt")
+	log.Debug("Getting signature state of plugin", "plugin", plugin.Id, "isBackend", plugin.Backend)
+	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
 
 	byteValue, err := ioutil.ReadFile(manifestPath)
 	if err != nil || len(byteValue) < 10 {
+		log.Debug("Plugin is unsigned", "id", plugin.Id)
 		return PluginSignatureUnsigned
 	}
 
 	manifest, err := readPluginManifest(byteValue)
 	if err != nil {
+		log.Debug("Plugin signature invalid", "id", plugin.Id)
 		return PluginSignatureInvalid
 	}
 
@@ -106,7 +108,7 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) PluginSignature
 	log.Debug("Verifying contents of plugin manifest", "plugin", plugin.Id)
 	for p, hash := range manifest.Files {
 		// Open the file
-		fp := path.Join(plugin.PluginDir, p)
+		fp := filepath.Join(plugin.PluginDir, p)
 		f, err := os.Open(fp)
 		if err != nil {
 			return PluginSignatureModified
@@ -126,5 +128,6 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) PluginSignature
 	}
 
 	// Everything OK
+	log.Debug("Plugin signature valid", "id", plugin.Id)
 	return PluginSignatureValid
 }

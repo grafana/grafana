@@ -1,0 +1,8 @@
+{
+  "extends": "@grafana/toolkit/src/config/tsconfig.plugin.json",
+  "include": ["**/*.ts"],
+  "compilerOptions": {
+    "baseUrl": "../node_modules",
+    "types": ["cypress", "cypress-file-upload"]
+  }
+}

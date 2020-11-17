@@ -2,72 +2,121 @@ import _ from 'lodash';
 import AzureMonitorDatasource from './azure_monitor/azure_monitor_datasource';
 import AppInsightsDatasource from './app_insights/app_insights_datasource';
 import AzureLogAnalyticsDatasource from './azure_log_analytics/azure_log_analytics_datasource';
-import { AzureMonitorQuery, AzureDataSourceJsonData } from './types';
+import { AzureDataSourceJsonData, AzureMonitorQuery, AzureQueryType, InsightsAnalyticsQuery } from './types';
 import {
-  DataSourceApi,
+  DataFrame,
   DataQueryRequest,
-  DataSourceInstanceSettings,
   DataQueryResponse,
-  DataQueryResponseData,
+  DataSourceApi,
+  DataSourceInstanceSettings,
+  LoadingState,
+  ScopedVars,
 } from '@grafana/data';
-import { Observable } from 'rxjs';
+import { forkJoin, Observable, of } from 'rxjs';
+import { DataSourceWithBackend } from '@grafana/runtime';
+import InsightsAnalyticsDatasource from './insights_analytics/insights_analytics_datasource';
+import { migrateMetricsDimensionFilters } from './query_ctrl';
+import { map } from 'rxjs/operators';
 
 export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDataSourceJsonData> {
   azureMonitorDatasource: AzureMonitorDatasource;
   appInsightsDatasource: AppInsightsDatasource;
   azureLogAnalyticsDatasource: AzureLogAnalyticsDatasource;
+  insightsAnalyticsDatasource: InsightsAnalyticsDatasource;
+
+  pseudoDatasource: Record<AzureQueryType, DataSourceWithBackend>;
+  optionsKey: Record<AzureQueryType, string>;
 
   constructor(instanceSettings: DataSourceInstanceSettings<AzureDataSourceJsonData>) {
     super(instanceSettings);
     this.azureMonitorDatasource = new AzureMonitorDatasource(instanceSettings);
     this.appInsightsDatasource = new AppInsightsDatasource(instanceSettings);
     this.azureLogAnalyticsDatasource = new AzureLogAnalyticsDatasource(instanceSettings);
+    this.insightsAnalyticsDatasource = new InsightsAnalyticsDatasource(instanceSettings);
+
+    const pseudoDatasource: any = {};
+    pseudoDatasource[AzureQueryType.ApplicationInsights] = this.appInsightsDatasource;
+    pseudoDatasource[AzureQueryType.AzureMonitor] = this.azureMonitorDatasource;
+    pseudoDatasource[AzureQueryType.InsightsAnalytics] = this.insightsAnalyticsDatasource;
+    pseudoDatasource[AzureQueryType.LogAnalytics] = this.azureLogAnalyticsDatasource;
+    this.pseudoDatasource = pseudoDatasource;
+
+    const optionsKey: any = {};
+    optionsKey[AzureQueryType.ApplicationInsights] = 'appInsights';
+    optionsKey[AzureQueryType.AzureMonitor] = 'azureMonitor';
+    optionsKey[AzureQueryType.InsightsAnalytics] = 'insightsAnalytics';
+    optionsKey[AzureQueryType.LogAnalytics] = 'azureLogAnalytics';
+    this.optionsKey = optionsKey;
   }
 
-  query(options: DataQueryRequest<AzureMonitorQuery>): Promise<DataQueryResponse> | Observable<DataQueryResponseData> {
-    const promises: any[] = [];
-    const azureMonitorOptions = _.cloneDeep(options);
-    const appInsightsOptions = _.cloneDeep(options);
-    const azureLogAnalyticsOptions = _.cloneDeep(options);
+  query(options: DataQueryRequest<AzureMonitorQuery>): Observable<DataQueryResponse> {
+    const byType: Record<AzureQueryType, DataQueryRequest<AzureMonitorQuery>> = ({} as unknown) as Record<
+      AzureQueryType,
+      DataQueryRequest<AzureMonitorQuery>
+    >;
 
-    azureMonitorOptions.targets = _.filter(azureMonitorOptions.targets, ['queryType', 'Azure Monitor']);
-    appInsightsOptions.targets = _.filter(appInsightsOptions.targets, ['queryType', 'Application Insights']);
-    azureLogAnalyticsOptions.targets = _.filter(azureLogAnalyticsOptions.targets, ['queryType', 'Azure Log Analytics']);
-
-    if (appInsightsOptions.targets.length > 0) {
-      const aiPromise = this.appInsightsDatasource.query(appInsightsOptions);
-      if (aiPromise) {
-        promises.push(aiPromise);
+    for (const target of options.targets) {
+      // Migrate old query structure
+      if (target.queryType === AzureQueryType.ApplicationInsights) {
+        if ((target.appInsights as any).rawQuery) {
+          target.queryType = AzureQueryType.InsightsAnalytics;
+          target.insightsAnalytics = (target.appInsights as unknown) as InsightsAnalyticsQuery;
+          delete target.appInsights;
+        }
       }
-    }
-
-    if (azureLogAnalyticsOptions.targets.length > 0) {
-      const obs = this.azureLogAnalyticsDatasource.query(azureLogAnalyticsOptions);
-      if (!promises.length) {
-        return obs; // return the observable directly
+      if (!target.queryType) {
+        target.queryType = AzureQueryType.AzureMonitor;
       }
-      // NOTE: this only includes the data!
-      // When all three query types are ready to be observale, they should all use observable
-      promises.push(obs.toPromise().then(r => r.data));
-    }
 
-    if (azureMonitorOptions.targets.length > 0) {
-      const obs = this.azureMonitorDatasource.query(azureMonitorOptions);
-      if (!promises.length) {
-        return obs; // return the observable directly
+      if (target.queryType === AzureQueryType.AzureMonitor) {
+        migrateMetricsDimensionFilters(target.azureMonitor);
       }
-      // NOTE: this only includes the data!
-      // When all three query types are ready to be observale, they should all use observable
-      promises.push(obs.toPromise().then(r => r.data));
+
+      // Check that we have options
+      const opts = (target as any)[this.optionsKey[target.queryType]];
+
+      // Skip hidden queries or ones without properties
+      if (target.hide || !opts) {
+        continue;
+      }
+
+      // Initialize the list of queries
+      let q = byType[target.queryType];
+      if (!q) {
+        q = _.cloneDeep(options);
+        q.requestId = `${q.requestId}-${target.refId}`;
+        q.targets = [];
+        byType[target.queryType] = q;
+      }
+      q.targets.push(target);
     }
 
-    if (promises.length === 0) {
-      return Promise.resolve({ data: [] });
-    }
-
-    return Promise.all(promises).then(results => {
-      return { data: _.flatten(results) };
+    // Distinct types are managed by distinct requests
+    const obs = Object.keys(byType).map((type: AzureQueryType) => {
+      const req = byType[type];
+      return this.pseudoDatasource[type].query(req);
     });
+    // Single query can skip merge
+    if (obs.length === 1) {
+      return obs[0];
+    }
+
+    if (obs.length > 1) {
+      return forkJoin(obs).pipe(
+        map((results: DataQueryResponse[]) => {
+          const data: DataFrame[] = [];
+          for (const result of results) {
+            for (const frame of result.data) {
+              data.push(frame);
+            }
+          }
+
+          return { state: LoadingState.Done, data };
+        })
+      );
+    }
+
+    return of({ state: LoadingState.Done, data: [] });
   }
 
   async annotationQuery(options: any) {
@@ -79,17 +128,17 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
       return Promise.resolve([]);
     }
 
-    const aiResult = this.appInsightsDatasource.metricFindQuery(query);
+    const aiResult = this.appInsightsDatasource.metricFindQueryInternal(query);
     if (aiResult) {
       return aiResult;
     }
 
-    const amResult = this.azureMonitorDatasource.metricFindQuery(query);
+    const amResult = this.azureMonitorDatasource.metricFindQueryInternal(query);
     if (amResult) {
       return amResult;
     }
 
-    const alaResult = this.azureLogAnalyticsDatasource.metricFindQuery(query);
+    const alaResult = this.azureLogAnalyticsDatasource.metricFindQueryInternal(query);
     if (alaResult) {
       return alaResult;
     }
@@ -215,5 +264,11 @@ export default class Datasource extends DataSourceApi<AzureMonitorQuery, AzureDa
 
   getSubscriptions() {
     return this.azureMonitorDatasource.getSubscriptions();
+  }
+
+  interpolateVariablesInQueries(queries: AzureMonitorQuery[], scopedVars: ScopedVars): AzureMonitorQuery[] {
+    return queries.map(
+      query => this.pseudoDatasource[query.queryType].applyTemplateVariables(query, scopedVars) as AzureMonitorQuery
+    );
   }
 }

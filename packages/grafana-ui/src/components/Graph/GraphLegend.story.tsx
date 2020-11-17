@@ -9,7 +9,7 @@ import { LegendPlacement, LegendDisplayMode } from '../Legend/Legend';
 export default {
   title: 'Visualizations/Graph/GraphLegend',
   component: GraphLegend,
-  decororators: [withHorizontallyCenteredStory],
+  decorators: [withHorizontallyCenteredStory],
 };
 
 const getStoriesKnobs = (isList = false) => {
@@ -41,10 +41,10 @@ const getStoriesKnobs = (isList = false) => {
   const legendPlacement = select<LegendPlacement>(
     'Legend placement',
     {
-      under: 'under',
+      bottom: 'bottom',
       right: 'right',
     },
-    'under'
+    'bottom'
   );
 
   return {

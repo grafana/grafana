@@ -2,13 +2,10 @@ import { e2e } from '../index';
 
 const getBaseUrl = () => e2e.env('BASE_URL') || e2e.config().baseUrl || 'http://localhost:3000';
 
-export const fromBaseUrl = (url = ''): string => {
-  const strippedUrl = url.replace('^/', '');
-  return `${getBaseUrl()}${strippedUrl}`;
-};
+export const fromBaseUrl = (url = '') => new URL(url, getBaseUrl()).href;
 
 export const getDashboardUid = (url: string): string => {
-  const matches = url.match(/\/d\/(.*)\//);
+  const matches = new URL(url).pathname.match(/\/d\/([^/]+)/);
   if (!matches) {
     throw new Error(`Couldn't parse uid from ${url}`);
   } else {
@@ -17,7 +14,7 @@ export const getDashboardUid = (url: string): string => {
 };
 
 export const getDataSourceId = (url: string): string => {
-  const matches = url.match(/\/edit\/(.*)\//);
+  const matches = new URL(url).pathname.match(/\/edit\/([^/]+)/);
   if (!matches) {
     throw new Error(`Couldn't parse id from ${url}`);
   } else {

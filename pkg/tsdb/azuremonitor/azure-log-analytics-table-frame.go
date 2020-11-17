@@ -3,6 +3,7 @@ package azuremonitor
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"time"
 
@@ -52,7 +53,7 @@ func converterFrameForTable(t *AzureLogAnalyticsTable) (*data.FrameInputConverte
 	}
 
 	fic.Frame.Meta = &data.FrameMeta{
-		Custom: map[string]interface{}{"azureColumnTypes": colTypes},
+		Custom: &LogAnalyticsMeta{ColumnTypes: colTypes},
 	}
 
 	return fic, nil
@@ -68,6 +69,7 @@ var converterMap = map[string]data.FieldConverter{
 	"long":     longConverter,
 	"real":     realConverter,
 	"bool":     boolConverter,
+	"decimal":  decimalConverter,
 }
 
 var stringConverter = data.FieldConverter{
@@ -115,7 +117,21 @@ var realConverter = data.FieldConverter{
 		}
 		jN, ok := v.(json.Number)
 		if !ok {
-			return nil, fmt.Errorf("unexpected type, expected json.Number but got %T", v)
+			s, sOk := v.(string)
+			if sOk {
+				switch s {
+				case "Infinity":
+					f := math.Inf(0)
+					return &f, nil
+				case "-Infinity":
+					f := math.Inf(-1)
+					return &f, nil
+				case "NaN":
+					f := math.NaN()
+					return &f, nil
+				}
+			}
+			return nil, fmt.Errorf("unexpected type, expected json.Number but got type %T for value %v", v, v)
 		}
 		f, err := jN.Float64()
 		if err != nil {
@@ -177,5 +193,43 @@ var longConverter = data.FieldConverter{
 			return nil, err
 		}
 		return &out, err
+	},
+}
+
+// decimalConverter converts the Kusto 128-bit type number to
+// a float64. We do not have 128 bit numbers in our dataframe
+// model yet (and even if we did, not sure how javascript would handle them).
+// In the future, we may want to revisit storing this will proper precision,
+// but for now it solves the case of people getting an error response.
+// If we were to keep it a string, it would not work correctly with calls
+// to functions like sdk's data.LongToWide.
+var decimalConverter = data.FieldConverter{
+	OutputFieldType: data.FieldTypeNullableFloat64,
+	Converter: func(v interface{}) (interface{}, error) {
+		var af *float64
+		if v == nil {
+			return af, nil
+		}
+
+		jS, sOk := v.(string)
+		if sOk {
+			out, err := strconv.ParseFloat(jS, 64)
+			if err != nil {
+				return nil, err
+			}
+			return &out, err
+		}
+
+		// As far as I can tell this always comes in a string, but this is in the
+		// ADX code, so leaving this in case values do sometimes become a number somehow.
+		jN, nOk := v.(json.Number)
+		if !nOk {
+			return nil, fmt.Errorf("unexpected type, expected json.Number or string but got type %T with a value of %v", v, v)
+		}
+		out, err := jN.Float64() // Float64 calls strconv.ParseFloat64
+		if err != nil {
+			return nil, err
+		}
+		return &out, nil
 	},
 }

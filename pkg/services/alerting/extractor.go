@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -64,7 +65,7 @@ func findPanelQueryByRefID(panel *simplejson.Json, refID string) *simplejson.Jso
 	return nil
 }
 
-func copyJSON(in *simplejson.Json) (*simplejson.Json, error) {
+func copyJSON(in json.Marshaler) (*simplejson.Json, error) {
 	rawJSON, err := in.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -73,7 +74,7 @@ func copyJSON(in *simplejson.Json) (*simplejson.Json, error) {
 	return simplejson.NewJson(rawJSON)
 }
 
-func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json, validateAlertFunc func(*models.Alert) bool) ([]*models.Alert, error) {
+func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json, validateAlertFunc func(*models.Alert) bool, logTranslationFailures bool) ([]*models.Alert, error) {
 	alerts := make([]*models.Alert, 0)
 
 	for _, panelObj := range jsonWithPanels.Get("panels").MustArray() {
@@ -82,9 +83,8 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		collapsedJSON, collapsed := panel.CheckGet("collapsed")
 		// check if the panel is collapsed
 		if collapsed && collapsedJSON.MustBool() {
-
 			// extract alerts from sub panels for collapsed panels
-			alertSlice, err := e.getAlertFromPanels(panel, validateAlertFunc)
+			alertSlice, err := e.getAlertFromPanels(panel, validateAlertFunc, logTranslationFailures)
 			if err != nil {
 				return nil, err
 			}
@@ -188,7 +188,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 		alert.Settings = jsonAlert
 
 		// validate
-		_, err = NewRuleFromDBAlert(alert)
+		_, err = NewRuleFromDBAlert(alert, logTranslationFailures)
 		if err != nil {
 			return nil, err
 		}
@@ -209,10 +209,10 @@ func validateAlertRule(alert *models.Alert) bool {
 
 // GetAlerts extracts alerts from the dashboard json and does full validation on the alert json data.
 func (e *DashAlertExtractor) GetAlerts() ([]*models.Alert, error) {
-	return e.extractAlerts(validateAlertRule)
+	return e.extractAlerts(validateAlertRule, true)
 }
 
-func (e *DashAlertExtractor) extractAlerts(validateFunc func(alert *models.Alert) bool) ([]*models.Alert, error) {
+func (e *DashAlertExtractor) extractAlerts(validateFunc func(alert *models.Alert) bool, logTranslationFailures bool) ([]*models.Alert, error) {
 	dashboardJSON, err := copyJSON(e.Dash.Data)
 	if err != nil {
 		return nil, err
@@ -226,7 +226,7 @@ func (e *DashAlertExtractor) extractAlerts(validateFunc func(alert *models.Alert
 	if len(rows) > 0 {
 		for _, rowObj := range rows {
 			row := simplejson.NewFromAny(rowObj)
-			a, err := e.getAlertFromPanels(row, validateFunc)
+			a, err := e.getAlertFromPanels(row, validateFunc, logTranslationFailures)
 			if err != nil {
 				return nil, err
 			}
@@ -234,7 +234,7 @@ func (e *DashAlertExtractor) extractAlerts(validateFunc func(alert *models.Alert
 			alerts = append(alerts, a...)
 		}
 	} else {
-		a, err := e.getAlertFromPanels(dashboardJSON, validateFunc)
+		a, err := e.getAlertFromPanels(dashboardJSON, validateFunc, logTranslationFailures)
 		if err != nil {
 			return nil, err
 		}
@@ -249,6 +249,6 @@ func (e *DashAlertExtractor) extractAlerts(validateFunc func(alert *models.Alert
 // ValidateAlerts validates alerts in the dashboard json but does not require a valid dashboard id
 // in the first validation pass.
 func (e *DashAlertExtractor) ValidateAlerts() error {
-	_, err := e.extractAlerts(func(alert *models.Alert) bool { return alert.OrgId != 0 && alert.PanelId != 0 })
+	_, err := e.extractAlerts(func(alert *models.Alert) bool { return alert.OrgId != 0 && alert.PanelId != 0 }, false)
 	return err
 }

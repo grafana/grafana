@@ -8,6 +8,6 @@ module.exports = function() {
       stats: false,
     },
     dev: dev,
-    prod: prod
+    prod: prod,
   };
 };

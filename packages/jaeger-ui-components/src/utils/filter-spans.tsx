@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { KeyValuePair, Span } from '../types/trace';
+import { TraceKeyValuePair, TraceSpan } from '@grafana/data';
 import { TNil } from '../types';
 
-export default function filterSpans(textFilter: string, spans: Span[] | TNil) {
+export default function filterSpans(textFilter: string, spans: TraceSpan[] | TNil) {
   if (!spans) {
     return null;
   }
@@ -41,7 +41,7 @@ export default function filterSpans(textFilter: string, spans: Span[] | TNil) {
   const isTextInFilters = (filters: string[], text: string) =>
     filters.some(filter => text.toLowerCase().includes(filter));
 
-  const isTextInKeyValues = (kvs: KeyValuePair[]) =>
+  const isTextInKeyValues = (kvs: TraceKeyValuePair[]) =>
     kvs
       ? kvs.some(kv => {
           // ignore checking key and value for a match if key is in excludeKeys
@@ -53,7 +53,7 @@ export default function filterSpans(textFilter: string, spans: Span[] | TNil) {
         })
       : false;
 
-  const isSpanAMatch = (span: Span) =>
+  const isSpanAMatch = (span: TraceSpan) =>
     isTextInFilters(includeFilters, span.operationName) ||
     isTextInFilters(includeFilters, span.process.serviceName) ||
     isTextInKeyValues(span.tags) ||
@@ -62,6 +62,6 @@ export default function filterSpans(textFilter: string, spans: Span[] | TNil) {
     includeFilters.some(filter => filter === span.spanID);
 
   // declare as const because need to disambiguate the type
-  const rv: Set<string> = new Set(spans.filter(isSpanAMatch).map((span: Span) => span.spanID));
+  const rv: Set<string> = new Set(spans.filter(isSpanAMatch).map((span: TraceSpan) => span.spanID));
   return rv;
 }

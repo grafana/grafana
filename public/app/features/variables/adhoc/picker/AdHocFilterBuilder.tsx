@@ -1,77 +1,63 @@
-import React, { FC, ReactElement, useState } from 'react';
-import { Icon, SegmentAsync } from '@grafana/ui';
-import { OperatorSegment } from './OperatorSegment';
+import React, { FC, useCallback, useState } from 'react';
 import { AdHocVariableFilter } from 'app/features/variables/types';
 import { SelectableValue } from '@grafana/data';
+import { AdHocFilterKey, REMOVE_FILTER_KEY } from './AdHocFilterKey';
+import { AdHocFilterRenderer } from './AdHocFilterRenderer';
 
 interface Props {
-  onLoadKeys: () => Promise<Array<SelectableValue<string>>>;
-  onLoadValues: (key: string) => Promise<Array<SelectableValue<string>>>;
+  datasource: string;
   onCompleted: (filter: AdHocVariableFilter) => void;
   appendBefore?: React.ReactNode;
 }
 
-export const AdHocFilterBuilder: FC<Props> = ({ appendBefore, onCompleted, onLoadKeys, onLoadValues }) => {
+export const AdHocFilterBuilder: FC<Props> = ({ datasource, appendBefore, onCompleted }) => {
   const [key, setKey] = useState<string | null>(null);
   const [operator, setOperator] = useState<string>('=');
 
+  const onKeyChanged = useCallback(
+    (item: SelectableValue<string | null>) => {
+      if (item.value !== REMOVE_FILTER_KEY) {
+        setKey(item.value ?? '');
+        return;
+      }
+      setKey(null);
+    },
+    [setKey]
+  );
+
+  const onOperatorChanged = useCallback((item: SelectableValue<string>) => setOperator(item.value ?? ''), [
+    setOperator,
+  ]);
+
+  const onValueChanged = useCallback(
+    (item: SelectableValue<string>) => {
+      onCompleted({
+        value: item.value ?? '',
+        operator: operator,
+        condition: '',
+        key: key!,
+      });
+      setKey(null);
+      setOperator('=');
+    },
+    [onCompleted, key, setKey, setOperator]
+  );
+
   if (key === null) {
-    return (
-      <div className="gf-form">
-        <SegmentAsync
-          className="query-segment-key"
-          Component={filterAddButton(key)}
-          value={key}
-          onChange={({ value }) => setKey(value ?? '')}
-          loadOptions={onLoadKeys}
-        />
-      </div>
-    );
+    return <AdHocFilterKey datasource={datasource} filterKey={key} onChange={onKeyChanged} />;
   }
 
   return (
     <React.Fragment key="filter-builder">
       {appendBefore}
-      <div className="gf-form">
-        <SegmentAsync
-          className="query-segment-key"
-          value={key}
-          onChange={({ value }) => setKey(value ?? '')}
-          loadOptions={onLoadKeys}
-        />
-      </div>
-      <div className="gf-form">
-        <OperatorSegment value={operator} onChange={({ value }) => setOperator(value ?? '')} />
-      </div>
-      <div className="gf-form">
-        <SegmentAsync
-          className="query-segment-value"
-          placeholder="select value"
-          onChange={({ value }) => {
-            onCompleted({
-              value: value ?? '',
-              operator: operator,
-              condition: '',
-              key: key,
-            });
-            setKey(null);
-            setOperator('=');
-          }}
-          loadOptions={() => onLoadValues(key)}
-        />
-      </div>
+      <AdHocFilterRenderer
+        datasource={datasource}
+        filter={{ key, value: '', operator, condition: '' }}
+        placeHolder="select value"
+        onKeyChange={onKeyChanged}
+        onOperatorChange={onOperatorChanged}
+        onValueChange={onValueChanged}
+      />
     </React.Fragment>
   );
 };
-
-function filterAddButton(key: string | null): ReactElement | undefined {
-  if (key !== null) {
-    return undefined;
-  }
-
-  return (
-    <a className="gf-form-label query-part">
-      <Icon name="plus" />
-    </a>
-  );
-}

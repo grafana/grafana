@@ -1,8 +1,11 @@
+// +build integration
+
 package sqlstore
 
 import (
 	"context"
 	"math/rand"
+	"strconv"
 	"testing"
 	"time"
 
@@ -11,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSqlBuilder(t *testing.T) {
+func TestSQLBuilder(t *testing.T) {
 	t.Run("writeDashboardPermissionFilter", func(t *testing.T) {
 		t.Run("user ACL", func(t *testing.T) {
 			test(t,
@@ -191,14 +194,14 @@ func test(t *testing.T, dashboardProps DashboardProps, dashboardPermission *Dash
 }
 
 func createDummyUser() (*models.User, error) {
-	uid := rand.Intn(9999999)
+	uid := strconv.Itoa(rand.Intn(9999999))
 	createUserCmd := &models.CreateUserCommand{
-		Email:          string(uid) + "@example.com",
-		Login:          string(uid),
-		Name:           string(uid),
+		Email:          uid + "@example.com",
+		Login:          uid,
+		Name:           uid,
 		Company:        "",
 		OrgName:        "",
-		Password:       string(uid),
+		Password:       uid,
 		EmailVerified:  true,
 		IsAdmin:        false,
 		SkipOrgSetup:   false,
@@ -314,8 +317,8 @@ func createDummyAcl(dashboardPermission *DashboardPermission, search Search, das
 	return 0, err
 }
 
-func getDashboards(sqlStore *SqlStore, search Search, aclUserId int64) ([]*dashboardResponse, error) {
-	builder := &SqlBuilder{}
+func getDashboards(sqlStore *SQLStore, search Search, aclUserId int64) ([]*dashboardResponse, error) {
+	builder := &SQLBuilder{}
 	signedInUser := &models.SignedInUser{
 		UserId: 9999999999,
 	}
@@ -338,6 +341,6 @@ func getDashboards(sqlStore *SqlStore, search Search, aclUserId int64) ([]*dashb
 	var res []*dashboardResponse
 	builder.Write("SELECT * FROM dashboard WHERE true")
 	builder.writeDashboardPermissionFilter(signedInUser, search.RequiredPermission)
-	err := sqlStore.engine.SQL(builder.GetSqlString(), builder.params...).Find(&res)
+	err := sqlStore.engine.SQL(builder.GetSQLString(), builder.params...).Find(&res)
 	return res, err
 }

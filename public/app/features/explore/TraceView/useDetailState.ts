@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
-import { DetailState, Log } from '@jaegertracing/jaeger-ui-components';
+import { DetailState } from '@jaegertracing/jaeger-ui-components';
+import { TraceLog } from '@grafana/data';
 
 /**
  * Keeps state of the span detail. This means whether span details are open but also state of each detail subitem
@@ -22,7 +23,7 @@ export function useDetailState() {
   );
 
   const detailLogItemToggle = useCallback(
-    function detailLogItemToggle(spanID: string, log: Log) {
+    function detailLogItemToggle(spanID: string, log: TraceLog) {
       const old = detailStates.get(spanID);
       if (!old) {
         return;
@@ -43,6 +44,9 @@ export function useDetailState() {
     detailWarningsToggle: useCallback(makeDetailSubsectionToggle('warnings', detailStates, setDetailStates), [
       detailStates,
     ]),
+    detailStackTracesToggle: useCallback(makeDetailSubsectionToggle('stackTraces', detailStates, setDetailStates), [
+      detailStates,
+    ]),
     detailReferencesToggle: useCallback(makeDetailSubsectionToggle('references', detailStates, setDetailStates), [
       detailStates,
     ]),
@@ -54,7 +58,7 @@ export function useDetailState() {
 }
 
 function makeDetailSubsectionToggle(
-  subSection: 'tags' | 'process' | 'logs' | 'warnings' | 'references',
+  subSection: 'tags' | 'process' | 'logs' | 'warnings' | 'references' | 'stackTraces',
   detailStates: Map<string, DetailState>,
   setDetailStates: (detailStates: Map<string, DetailState>) => void
 ) {
@@ -72,6 +76,8 @@ function makeDetailSubsectionToggle(
       detailState = old.toggleWarnings();
     } else if (subSection === 'references') {
       detailState = old.toggleReferences();
+    } else if (subSection === 'stackTraces') {
+      detailState = old.toggleStackTraces();
     } else {
       detailState = old.toggleLogs();
     }

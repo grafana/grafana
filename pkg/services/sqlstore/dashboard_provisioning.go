@@ -1,6 +1,8 @@
 package sqlstore
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -10,6 +12,7 @@ func init() {
 	bus.AddHandler("sql", SaveProvisionedDashboard)
 	bus.AddHandler("sql", GetProvisionedDataByDashboardId)
 	bus.AddHandler("sql", UnprovisionDashboard)
+	bus.AddHandler("sql", DeleteOrphanedProvisionedDashboards)
 }
 
 type DashboardExtras struct {
@@ -86,5 +89,28 @@ func UnprovisionDashboard(cmd *models.UnprovisionDashboardCommand) error {
 	if _, err := x.Where("dashboard_id = ?", cmd.Id).Delete(&models.DashboardProvisioning{}); err != nil {
 		return err
 	}
+	return nil
+}
+
+func DeleteOrphanedProvisionedDashboards(cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
+	var result []*models.DashboardProvisioning
+
+	convertedReaderNames := make([]interface{}, len(cmd.ReaderNames))
+	for index, readerName := range cmd.ReaderNames {
+		convertedReaderNames[index] = readerName
+	}
+
+	err := x.NotIn("name", convertedReaderNames...).Find(&result)
+	if err != nil {
+		return err
+	}
+
+	for _, deleteDashCommand := range result {
+		err := DeleteDashboard(&models.DeleteDashboardCommand{Id: deleteDashCommand.DashboardId})
+		if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
+			return err
+		}
+	}
+
 	return nil
 }

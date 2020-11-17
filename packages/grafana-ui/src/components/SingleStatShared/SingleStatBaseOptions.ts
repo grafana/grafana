@@ -15,7 +15,7 @@ import {
   ThresholdsMode,
   ThresholdsConfig,
   validateFieldConfig,
-  FieldColorMode,
+  FieldColorModeId,
 } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
@@ -55,7 +55,7 @@ function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOp
   const prevPanel = prevOptions.angular;
   const reducer = fieldReducers.getIfExists(prevPanel.valueName);
   const options = {
-    fieldOptions: {
+    reduceOptions: {
       calcs: [reducer ? reducer.id : ReducerID.mean],
     },
     orientation: VizOrientation.Horizontal,
@@ -65,6 +65,10 @@ function migrateFromAngularSinglestat(panel: PanelModel<Partial<SingleStatBaseOp
 
   if (prevPanel.format) {
     defaults.unit = prevPanel.format;
+  }
+
+  if (prevPanel.tableColumn) {
+    options.reduceOptions.fields = `/^${prevPanel.tableColumn}$/`;
   }
 
   if (prevPanel.nullPointMode) {
@@ -170,7 +174,7 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     const { defaults } = fieldOptions;
     if (defaults.color && typeof defaults.color === 'string') {
       defaults.color = {
-        mode: FieldColorMode.Fixed,
+        mode: FieldColorModeId.Fixed,
         fixedColor: defaults.color,
       };
     }

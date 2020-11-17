@@ -224,13 +224,10 @@ func TestDataSourceProxyCache(t *testing.T) {
 			// 3. Send test request which should have the Authorization header set
 			req := httptest.NewRequest("GET", backend.URL+"/test-headers", nil)
 			res, err := transport.RoundTrip(req)
-			if err != nil {
-				log.Fatal(err.Error())
-			}
+			So(err, ShouldBeNil)
+			defer res.Body.Close()
 			body, err := ioutil.ReadAll(res.Body)
-			if err != nil {
-				log.Fatal(err.Error())
-			}
+			So(err, ShouldBeNil)
 			bodyStr := string(body)
 			So(bodyStr, ShouldEqual, "Ok")
 		})
@@ -291,6 +288,78 @@ func TestDataSourceDecryptionCache(t *testing.T) {
 		password, ok = ds.DecryptedValue("password")
 		So(password, ShouldEqual, "")
 		So(ok, ShouldBeTrue)
+	})
+}
+
+func TestDataSourceSigV4Auth(t *testing.T) {
+	Convey("When caching a datasource proxy with middleware", t, func() {
+		clearDSProxyCache()
+		origEnabled := setting.SigV4AuthEnabled
+		setting.SigV4AuthEnabled = true
+		t.Cleanup(func() {
+			setting.SigV4AuthEnabled = origEnabled
+		})
+
+		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
+		So(err, ShouldBeNil)
+
+		ds := DataSource{
+			JsonData: json,
+		}
+
+		t, err := ds.GetHttpTransport()
+		So(err, ShouldBeNil)
+
+		Convey("SigV4 is in middleware chain if configured in JsonData", func() {
+			m1, ok := t.next.(*SigV4Middleware)
+			So(ok, ShouldEqual, true)
+
+			_, ok = m1.Next.(*http.Transport)
+			So(ok, ShouldEqual, true)
+		})
+	})
+
+	Convey("When caching a datasource proxy with middleware", t, func() {
+		clearDSProxyCache()
+		origEnabled := setting.SigV4AuthEnabled
+		setting.SigV4AuthEnabled = true
+		t.Cleanup(func() {
+			setting.SigV4AuthEnabled = origEnabled
+		})
+
+		ds := DataSource{}
+
+		t, err := ds.GetHttpTransport()
+		So(err, ShouldBeNil)
+
+		Convey("Should not include sigV4 middleware if not configured in JsonData", func() {
+			_, ok := t.next.(*http.Transport)
+			So(ok, ShouldEqual, true)
+		})
+	})
+
+	Convey("When caching a datasource proxy with middleware", t, func() {
+		clearDSProxyCache()
+		origEnabled := setting.SigV4AuthEnabled
+		setting.SigV4AuthEnabled = false
+		t.Cleanup(func() {
+			setting.SigV4AuthEnabled = origEnabled
+		})
+
+		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
+		So(err, ShouldBeNil)
+
+		ds := DataSource{
+			JsonData: json,
+		}
+
+		t, err := ds.GetHttpTransport()
+		So(err, ShouldBeNil)
+
+		Convey("Should not include sigV4 middleware if not configured in app config", func() {
+			_, ok := t.next.(*http.Transport)
+			So(ok, ShouldEqual, true)
+		})
 	})
 }
 

@@ -4,7 +4,7 @@ import { Alert } from '@grafana/ui';
 
 interface Props {
   appNotification: AppNotification;
-  onClearNotification: (id: number) => void;
+  onClearNotification: (id: string) => void;
 }
 
 export default class AppNotificationItem extends Component<Props> {

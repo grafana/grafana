@@ -1,8 +1,6 @@
 package api
 
 import (
-	"net/http"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -24,18 +22,6 @@ func ValidateOrgPlaylist(c *models.ReqContext) {
 
 	if query.Result.OrgId != c.OrgId {
 		c.JsonApiErr(403, "You are not allowed to edit/view playlist", nil)
-		return
-	}
-
-	items, itemsErr := LoadPlaylistItemDTOs(id)
-
-	if itemsErr != nil {
-		c.JsonApiErr(404, "Playlist items not found", err)
-		return
-	}
-
-	if len(items) == 0 && c.Context.Req.Method != http.MethodDelete {
-		c.JsonApiErr(404, "Playlist is empty", itemsErr)
 		return
 	}
 }

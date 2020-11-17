@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func (ss *SqlStore) addUserQueryAndCommandHandlers() {
+func (ss *SQLStore) addUserQueryAndCommandHandlers() {
 	ss.Bus.AddHandler(ss.GetSignedInUserWithCache)
 
 	bus.AddHandler("sql", GetUserById)
@@ -66,6 +66,11 @@ func CreateUser(ctx context.Context, cmd *models.CreateUserCommand) error {
 
 		if cmd.Email == "" {
 			cmd.Email = cmd.Login
+		}
+
+		exists, _ := sess.Where("email=? OR login=?", cmd.Email, cmd.Login).Get(&models.User{})
+		if exists {
+			return models.ErrUserAlreadyExists
 		}
 
 		// create user
@@ -213,7 +218,6 @@ func GetUserByEmail(query *models.GetUserByEmailQuery) error {
 
 func UpdateUser(cmd *models.UpdateUserCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-
 		user := models.User{
 			Name:    cmd.Name,
 			Email:   cmd.Email,
@@ -240,7 +244,6 @@ func UpdateUser(cmd *models.UpdateUserCommand) error {
 
 func ChangeUserPassword(cmd *models.ChangeUserPasswordCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-
 		user := models.User{
 			Password: cmd.NewPassword,
 			Updated:  time.Now(),
@@ -357,7 +360,7 @@ func newSignedInUserCacheKey(orgID, userID int64) string {
 	return fmt.Sprintf("signed-in-user-%d-%d", userID, orgID)
 }
 
-func (ss *SqlStore) GetSignedInUserWithCache(query *models.GetSignedInUserQuery) error {
+func (ss *SQLStore) GetSignedInUserWithCache(query *models.GetSignedInUserQuery) error {
 	cacheKey := newSignedInUserCacheKey(query.OrgId, query.UserId)
 	if cached, found := ss.CacheService.Get(cacheKey); found {
 		query.Result = cached.(*models.SignedInUser)
@@ -380,7 +383,7 @@ func GetSignedInUser(query *models.GetSignedInUserQuery) error {
 		orgId = strconv.FormatInt(query.OrgId, 10)
 	}
 
-	var rawSql = `SELECT
+	var rawSQL = `SELECT
 		u.id             as user_id,
 		u.is_admin       as is_grafana_admin,
 		u.email          as email,
@@ -397,12 +400,13 @@ func GetSignedInUser(query *models.GetSignedInUserQuery) error {
 		LEFT OUTER JOIN org on org.id = org_user.org_id `
 
 	sess := x.Table("user")
-	if query.UserId > 0 {
-		sess.SQL(rawSql+"WHERE u.id=?", query.UserId)
-	} else if query.Login != "" {
-		sess.SQL(rawSql+"WHERE u.login=?", query.Login)
-	} else if query.Email != "" {
-		sess.SQL(rawSql+"WHERE u.email=?", query.Email)
+	switch {
+	case query.UserId > 0:
+		sess.SQL(rawSQL+"WHERE u.id=?", query.UserId)
+	case query.Login != "":
+		sess.SQL(rawSQL+"WHERE u.login=?", query.Login)
+	case query.Email != "":
+		sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
 	}
 
 	var user models.SignedInUser
@@ -556,7 +560,7 @@ func DeleteUser(cmd *models.DeleteUserCommand) error {
 }
 
 func deleteUserInTransaction(sess *DBSession, cmd *models.DeleteUserCommand) error {
-	//Check if user exists
+	// Check if user exists
 	user := models.User{Id: cmd.UserId}
 	has, err := sess.Get(&user)
 	if err != nil {
@@ -614,7 +618,6 @@ func UpdateUserPermissions(cmd *models.UpdateUserPermissionsCommand) error {
 
 func SetUserHelpFlag(cmd *models.SetUserHelpFlagCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-
 		user := models.User{
 			Id:         cmd.UserId,
 			HelpFlags1: cmd.HelpFlags1,

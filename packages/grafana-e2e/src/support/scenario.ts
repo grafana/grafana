@@ -1,6 +1,4 @@
 import { e2e } from '../';
-import { Flows } from '../flows';
-import { getScenarioContext } from './scenarioContext';
 
 export interface ScenarioArguments {
   describeName: string;
@@ -23,24 +21,26 @@ export const e2eScenario = ({
     if (skipScenario) {
       it.skip(itName, () => scenario());
     } else {
+      before(() => e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD')));
+
       beforeEach(() => {
-        Flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+        Cypress.Cookies.preserveOnce('grafana_session');
+
         if (addScenarioDataSource) {
-          Flows.addDataSource();
+          e2e.flows.addDataSource();
         }
         if (addScenarioDashBoard) {
-          Flows.addDashboard();
+          e2e.flows.addDashboard();
         }
       });
 
-      afterEach(() => {
-        getScenarioContext().then(({ addedDashboards, addedDataSources }: any) => {
-          addedDashboards.forEach((dashboard: any) => Flows.deleteDashboard(dashboard));
-          addedDataSources.forEach((dataSource: any) => Flows.deleteDataSource(dataSource));
-        });
-      });
+      afterEach(() => e2e.flows.revertAllChanges());
+      after(() => e2e().clearCookies());
 
       it(itName, () => scenario());
+
+      // @todo remove when possible: https://github.com/cypress-io/cypress/issues/2831
+      it('temporary', () => {});
     }
   });
 };

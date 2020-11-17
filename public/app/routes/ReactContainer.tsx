@@ -63,7 +63,7 @@ export function reactContainer(
         $rootScope: $rootScope,
         $scope: scope,
         $contextSrv: contextSrv,
-        routeInfo: $route.current.$$route.routeInfo,
+        routeInfo: $route.current.$$route?.routeInfo,
       };
 
       document.body.classList.add('is-react');

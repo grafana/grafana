@@ -65,5 +65,4 @@ func TestPluginDashboards(t *testing.T) {
 			So(dashboards[1].ImportedRevision, ShouldEqual, 0)
 		})
 	})
-
 }

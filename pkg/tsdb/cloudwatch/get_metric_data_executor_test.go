@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/aws/aws-sdk-go/service/cloudwatch/cloudwatchiface"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -14,6 +15,7 @@ import (
 var counter = 1
 
 type cloudWatchFakeClient struct {
+	cloudwatchiface.CloudWatchAPI
 }
 
 func (client *cloudWatchFakeClient) GetMetricDataWithContext(ctx aws.Context, input *cloudwatch.GetMetricDataInput, opts ...request.Option) (*cloudwatch.GetMetricDataOutput, error) {
@@ -35,7 +37,7 @@ func (client *cloudWatchFakeClient) GetMetricDataWithContext(ctx aws.Context, in
 }
 
 func TestGetMetricDataExecutorTest(t *testing.T) {
-	executor := &CloudWatchExecutor{}
+	executor := &cloudWatchExecutor{}
 	inputs := &cloudwatch.GetMetricDataInput{MetricDataQueries: []*cloudwatch.MetricDataQuery{}}
 	res, err := executor.executeRequest(context.Background(), &cloudWatchFakeClient{}, inputs)
 	require.NoError(t, err)

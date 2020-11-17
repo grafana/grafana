@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -32,8 +33,17 @@ func init() {
 func DeleteAlertNotification(cmd *models.DeleteAlertNotificationCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		sql := "DELETE FROM alert_notification WHERE alert_notification.org_id = ? AND alert_notification.id = ?"
-		if _, err := sess.Exec(sql, cmd.OrgId, cmd.Id); err != nil {
+		res, err := sess.Exec(sql, cmd.OrgId, cmd.Id)
+		if err != nil {
 			return err
+		}
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
+
+		if rowsAffected == 0 {
+			return models.ErrAlertNotificationNotFound
 		}
 
 		if _, err := sess.Exec("DELETE FROM alert_notification_state WHERE alert_notification_state.org_id = ? AND alert_notification_state.notifier_id = ?", cmd.OrgId, cmd.Id); err != nil {
@@ -50,14 +60,17 @@ func DeleteAlertNotificationWithUid(cmd *models.DeleteAlertNotificationWithUidCo
 		return err
 	}
 
-	if existingNotification.Result != nil {
-		deleteCommand := &models.DeleteAlertNotificationCommand{
-			Id:    existingNotification.Result.Id,
-			OrgId: existingNotification.Result.OrgId,
-		}
-		if err := bus.Dispatch(deleteCommand); err != nil {
-			return err
-		}
+	if existingNotification.Result == nil {
+		return models.ErrAlertNotificationNotFound
+	}
+
+	cmd.DeletedAlertNotificationId = existingNotification.Result.Id
+	deleteCommand := &models.DeleteAlertNotificationCommand{
+		Id:    existingNotification.Result.Id,
+		OrgId: existingNotification.Result.OrgId,
+	}
+	if err := bus.Dispatch(deleteCommand); err != nil {
+		return err
 	}
 
 	return nil
@@ -67,11 +80,11 @@ func GetAlertNotifications(query *models.GetAlertNotificationsQuery) error {
 	return getAlertNotificationInternal(query, newSession())
 }
 
-func (ss *SqlStore) addAlertNotificationUidByIdHandler() {
+func (ss *SQLStore) addAlertNotificationUidByIdHandler() {
 	bus.AddHandler("sql", ss.GetAlertNotificationUidWithId)
 }
 
-func (ss *SqlStore) GetAlertNotificationUidWithId(query *models.GetAlertNotificationUidQuery) error {
+func (ss *SQLStore) GetAlertNotificationUidWithId(query *models.GetAlertNotificationUidQuery) error {
 	cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
 
 	if cached, found := ss.CacheService.Get(cacheKey); found {
@@ -84,7 +97,7 @@ func (ss *SqlStore) GetAlertNotificationUidWithId(query *models.GetAlertNotifica
 		return err
 	}
 
-	ss.CacheService.Set(cacheKey, query.Result, -1) //Infinite, never changes
+	ss.CacheService.Set(cacheKey, query.Result, -1) // Infinite, never changes
 
 	return nil
 }
@@ -120,6 +133,7 @@ func GetAlertNotificationsWithUidToSend(query *models.GetAlertNotificationsWithU
 										alert_notification.created,
 										alert_notification.updated,
 										alert_notification.settings,
+										alert_notification.secure_settings,
 										alert_notification.is_default,
 										alert_notification.disable_resolve_message,
 										alert_notification.send_reminder,
@@ -171,7 +185,7 @@ func getAlertNotificationUidInternal(query *models.GetAlertNotificationUidQuery,
 	}
 
 	if len(results) == 0 {
-		return fmt.Errorf("Alert notification [ Id: %v, OrgId: %v ] not found", query.Id, query.OrgId)
+		return models.ErrAlertNotificationFailedTranslateUniqueID
 	}
 
 	query.Result = results[0]
@@ -192,6 +206,7 @@ func getAlertNotificationInternal(query *models.GetAlertNotificationsQuery, sess
 										alert_notification.created,
 										alert_notification.updated,
 										alert_notification.settings,
+										alert_notification.secure_settings,
 										alert_notification.is_default,
 										alert_notification.disable_resolve_message,
 										alert_notification.send_reminder,
@@ -241,6 +256,7 @@ func getAlertNotificationWithUidInternal(query *models.GetAlertNotificationsWith
 										alert_notification.created,
 										alert_notification.updated,
 										alert_notification.settings,
+										alert_notification.secure_settings,
 										alert_notification.is_default,
 										alert_notification.disable_resolve_message,
 										alert_notification.send_reminder,
@@ -283,7 +299,7 @@ func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) 
 		}
 
 		if existingQuery.Result != nil {
-			return fmt.Errorf("Alert notification uid %s already exists", cmd.Uid)
+			return models.ErrAlertNotificationWithSameUIDExists
 		}
 
 		// check if name exists
@@ -293,7 +309,7 @@ func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) 
 		}
 
 		if sameNameQuery.Result != nil {
-			return fmt.Errorf("Alert notification name %s already exists", cmd.Name)
+			return models.ErrAlertNotificationWithSameNameExists
 		}
 
 		var frequency time.Duration
@@ -308,12 +324,20 @@ func CreateAlertNotificationCommand(cmd *models.CreateAlertNotificationCommand) 
 			}
 		}
 
+		// delete empty keys
+		for k, v := range cmd.SecureSettings {
+			if v == "" {
+				delete(cmd.SecureSettings, k)
+			}
+		}
+
 		alertNotification := &models.AlertNotification{
 			Uid:                   cmd.Uid,
 			OrgId:                 cmd.OrgId,
 			Name:                  cmd.Name,
 			Type:                  cmd.Type,
 			Settings:              cmd.Settings,
+			SecureSettings:        securejsondata.GetEncryptedJsonData(cmd.SecureSettings),
 			SendReminder:          cmd.SendReminder,
 			DisableResolveMessage: cmd.DisableResolveMessage,
 			Frequency:             frequency,
@@ -355,6 +379,10 @@ func UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
 			return err
 		}
 
+		if current.Id == 0 {
+			return models.ErrAlertNotificationNotFound
+		}
+
 		// check if name exists
 		sameNameQuery := &models.GetAlertNotificationsQuery{OrgId: cmd.OrgId, Name: cmd.Name}
 		if err := getAlertNotificationInternal(sameNameQuery, sess); err != nil {
@@ -362,11 +390,19 @@ func UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
 		}
 
 		if sameNameQuery.Result != nil && sameNameQuery.Result.Id != current.Id {
-			return fmt.Errorf("Alert notification name %s already exists", cmd.Name)
+			return fmt.Errorf("alert notification name %q already exists", cmd.Name)
+		}
+
+		// delete empty keys
+		for k, v := range cmd.SecureSettings {
+			if v == "" {
+				delete(cmd.SecureSettings, k)
+			}
 		}
 
 		current.Updated = time.Now()
 		current.Settings = cmd.Settings
+		current.SecureSettings = securejsondata.GetEncryptedJsonData(cmd.SecureSettings)
 		current.Name = cmd.Name
 		current.Type = cmd.Type
 		current.IsDefault = cmd.IsDefault
@@ -395,7 +431,7 @@ func UpdateAlertNotification(cmd *models.UpdateAlertNotificationCommand) error {
 		if affected, err := sess.ID(cmd.Id).Update(current); err != nil {
 			return err
 		} else if affected == 0 {
-			return fmt.Errorf("Could not update alert notification")
+			return fmt.Errorf("could not update alert notification")
 		}
 
 		cmd.Result = &current
@@ -413,7 +449,7 @@ func UpdateAlertNotificationWithUid(cmd *models.UpdateAlertNotificationWithUidCo
 	current := getAlertNotificationWithUidQuery.Result
 
 	if current == nil {
-		return fmt.Errorf("Cannot update, alert notification uid %s doesn't exist", cmd.Uid)
+		return models.ErrAlertNotificationNotFound
 	}
 
 	if cmd.NewUid == "" {
@@ -430,6 +466,7 @@ func UpdateAlertNotificationWithUid(cmd *models.UpdateAlertNotificationWithUidCo
 		Frequency:             cmd.Frequency,
 		IsDefault:             cmd.IsDefault,
 		Settings:              cmd.Settings,
+		SecureSettings:        cmd.SecureSettings,
 
 		OrgId: cmd.OrgId,
 	}
@@ -541,7 +578,7 @@ func GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCre
 				}
 
 				if !exist {
-					return errors.New("Should not happen")
+					return errors.New("should not happen")
 				}
 
 				cmd.Result = nj

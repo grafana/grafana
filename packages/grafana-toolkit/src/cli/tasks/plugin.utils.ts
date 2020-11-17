@@ -58,85 +58,86 @@ const gitUrlParse = (url: string): { owner: string; name: string } => {
   throw `Could not find a suitable git repository. Received [${url}]`;
 };
 
-const prepareRelease = useSpinner<any>('Preparing release', async ({ dryrun, verbose }) => {
-  const ciDir = getCiFolder();
-  const distDir = path.resolve(ciDir, 'dist');
-  const distContentDir = path.resolve(distDir, getPluginId());
-  const pluginJsonFile = path.resolve(distContentDir, 'plugin.json');
-  const pluginJson = getPluginJson(pluginJsonFile);
+const prepareRelease = ({ dryrun, verbose }: any) =>
+  useSpinner('Preparing release', async () => {
+    const ciDir = getCiFolder();
+    const distDir = path.resolve(ciDir, 'dist');
+    const distContentDir = path.resolve(distDir, getPluginId());
+    const pluginJsonFile = path.resolve(distContentDir, 'plugin.json');
+    const pluginJson = getPluginJson(pluginJsonFile);
 
-  const githubPublishScript: Command = [
-    ['git', ['config', 'user.email', DEFAULT_EMAIL_ADDRESS]],
-    ['git', ['config', 'user.name', DEFAULT_USERNAME]],
-    await checkoutBranch(`release-${pluginJson.info.version}`),
-    ['/bin/rm', ['-rf', 'dist'], { dryrun }],
-    ['mv', ['-v', distContentDir, 'dist']],
-    ['git', ['add', '--force', 'dist'], { dryrun }],
-    ['/bin/rm', ['-rf', 'src'], { enterprise: true }],
-    ['git', ['rm', '-rf', 'src'], { enterprise: true }],
-    [
-      'git',
-      ['commit', '-m', `automated release ${pluginJson.info.version} [skip ci]`],
-      {
-        dryrun,
-        okOnError: [/nothing to commit/g, /nothing added to commit/g, /no changes added to commit/g],
-      },
-    ],
-    ['git', ['push', '-f', 'origin', `release-${pluginJson.info.version}`], { dryrun }],
-    ['git', ['tag', '-f', `v${pluginJson.info.version}`]],
-    ['git', ['push', '-f', 'origin', `v${pluginJson.info.version}`]],
-  ];
+    const githubPublishScript: Command = [
+      ['git', ['config', 'user.email', DEFAULT_EMAIL_ADDRESS]],
+      ['git', ['config', 'user.name', DEFAULT_USERNAME]],
+      await checkoutBranch(`release-${pluginJson.info.version}`),
+      ['/bin/rm', ['-rf', 'dist'], { dryrun }],
+      ['mv', ['-v', distContentDir, 'dist']],
+      ['git', ['add', '--force', 'dist'], { dryrun }],
+      ['/bin/rm', ['-rf', 'src'], { enterprise: true }],
+      ['git', ['rm', '-rf', 'src'], { enterprise: true }],
+      [
+        'git',
+        ['commit', '-m', `automated release ${pluginJson.info.version} [skip ci]`],
+        {
+          dryrun,
+          okOnError: [/nothing to commit/g, /nothing added to commit/g, /no changes added to commit/g],
+        },
+      ],
+      ['git', ['push', '-f', 'origin', `release-${pluginJson.info.version}`], { dryrun }],
+      ['git', ['tag', '-f', `v${pluginJson.info.version}`]],
+      ['git', ['push', '-f', 'origin', `v${pluginJson.info.version}`]],
+    ];
 
-  for (let line of githubPublishScript) {
-    const opts = line.length === 3 ? line[2] : {};
-    const command = line[0];
-    const args = line[1];
+    for (let line of githubPublishScript) {
+      const opts = line.length === 3 ? line[2] : {};
+      const command = line[0];
+      const args = line[1];
 
-    try {
-      if (verbose) {
-        console.log('executing >>', line);
-      }
-
-      if (line.length > 0 && line[0].length > 0) {
-        if (opts['dryrun']) {
-          line[1].push('--dry-run');
-        }
-
-        // Exit if the plugin is NOT an enterprise plugin
-        if (pluginJson.enterprise && !opts['enterprise']) {
-          continue;
-        }
-
-        const { stdout } = await execa(command, args);
+      try {
         if (verbose) {
-          console.log(stdout);
+          console.log('executing >>', line);
         }
-      } else {
-        if (verbose) {
-          console.log('skipping empty line');
-        }
-      }
-    } catch (ex) {
-      const err: string = ex.message;
-      if (opts['okOnError'] && Array.isArray(opts['okOnError'])) {
-        let trueError = true;
-        for (let regex of opts['okOnError']) {
-          if (err.match(regex)) {
-            trueError = false;
-            break;
+
+        if (line.length > 0 && line[0].length > 0) {
+          if (opts['dryrun']) {
+            line[1].push('--dry-run');
+          }
+
+          // Exit if the plugin is NOT an enterprise plugin
+          if (pluginJson.enterprise && !opts['enterprise']) {
+            continue;
+          }
+
+          const { stdout } = await execa(command, args);
+          if (verbose) {
+            console.log(stdout);
+          }
+        } else {
+          if (verbose) {
+            console.log('skipping empty line');
           }
         }
+      } catch (ex) {
+        const err: string = ex.message;
+        if (opts['okOnError'] && Array.isArray(opts['okOnError'])) {
+          let trueError = true;
+          for (let regex of opts['okOnError']) {
+            if (err.match(regex)) {
+              trueError = false;
+              break;
+            }
+          }
 
-        if (!trueError) {
-          // This is not an error
-          continue;
+          if (!trueError) {
+            // This is not an error
+            continue;
+          }
         }
+        console.error(err);
+        process.exit(-1);
       }
-      console.error(err);
-      process.exit(-1);
     }
-  }
-});
+  });
 
 interface GithubPublishReleaseOptions {
   commitHash?: string;
@@ -145,13 +146,11 @@ interface GithubPublishReleaseOptions {
   gitRepoName: string;
 }
 
-const createRelease = useSpinner<GithubPublishReleaseOptions>(
-  'Creating release',
-  async ({ commitHash, githubUser, githubToken, gitRepoName }) => {
+const createRelease = ({ commitHash, githubUser, githubToken, gitRepoName }: GithubPublishReleaseOptions) =>
+  useSpinner('Creating release', async () => {
     const gitRelease = new GitHubRelease(githubToken, githubUser, gitRepoName, await releaseNotes(), commitHash);
     return gitRelease.release();
-  }
-);
+  });
 
 export interface GithubPublishOptions {
   dryrun?: boolean;
@@ -161,14 +160,16 @@ export interface GithubPublishOptions {
 }
 
 const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, verbose, commitHash }) => {
-  if (!process.env['CIRCLE_REPOSITORY_URL']) {
+  let repoUrl: string | undefined = process.env.DRONE_REPO_LINK || process.env.CIRCLE_REPOSITORY_URL;
+  if (!repoUrl) {
     // Try and figure it out
     const repo = await execa('git', ['config', '--local', 'remote.origin.url']);
     if (repo && repo.stdout) {
-      process.env.CIRCLE_REPOSITORY_URL = repo.stdout;
+      repoUrl = repo.stdout;
     } else {
       throw new Error(
-        'The release plugin requires you specify the repository url as environment variable CIRCLE_REPOSITORY_URL'
+        'The release plugin requires you specify the repository url as environment variable DRONE_REPO_LINK or ' +
+          'CIRCLE_REPOSITORY_URL'
       );
     }
   }
@@ -179,7 +180,7 @@ const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, v
       process.env['GITHUB_ACCESS_TOKEN'] = process.env['GITHUB_TOKEN'];
     } else {
       throw new Error(
-        `Github publish requires that you set the environment variable GITHUB_ACCESS_TOKEN to a valid github api token.
+        `GitHub publish requires that you set the environment variable GITHUB_ACCESS_TOKEN to a valid github api token.
         See: https://github.com/settings/tokens for more details.`
       );
     }
@@ -190,7 +191,7 @@ const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, v
     process.env['GITHUB_USERNAME'] = DEFAULT_EMAIL_ADDRESS;
   }
 
-  const parsedUrl = gitUrlParse(process.env['CIRCLE_REPOSITORY_URL']);
+  const parsedUrl = gitUrlParse(repoUrl);
   const githubToken = process.env['GITHUB_ACCESS_TOKEN'];
   const githubUser = parsedUrl.owner;
 
@@ -207,4 +208,4 @@ const githubPublishRunner: TaskRunner<GithubPublishOptions> = async ({ dryrun, v
   });
 };
 
-export const githubPublishTask = new Task<GithubPublishOptions>('Github Publish', githubPublishRunner);
+export const githubPublishTask = new Task<GithubPublishOptions>('GitHub Publish', githubPublishRunner);

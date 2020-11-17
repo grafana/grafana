@@ -1,0 +1,17 @@
+import { Meta, Props } from '@storybook/addon-docs/blocks';
+import { Alert } from './Alert';
+
+<Meta title="MDX|Alert" component={Alert} />
+
+# Alert
+
+An alert displays an important message in a way that attracts the user's attention without interrupting the user's task.
+`onRemove` handler can be used to enable manually dismissing the alert.
+
+# Usage
+
+```jsx
+  <Alert title="Some very important message" severity="info" />
+```
+
+<Props of={Alert}/>

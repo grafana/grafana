@@ -5,9 +5,9 @@ import (
 	"time"
 )
 
-var ErrInvalidApiKey = errors.New("Invalid API Key")
-var ErrInvalidApiKeyExpiration = errors.New("Negative value for SecondsToLive")
-var ErrDuplicateApiKey = errors.New("API Key Organization ID And Name Must Be Unique")
+var ErrInvalidApiKey = errors.New("invalid API key")
+var ErrInvalidApiKeyExpiration = errors.New("negative value for SecondsToLive")
+var ErrDuplicateApiKey = errors.New("API key, organization ID and name must be unique")
 
 type ApiKey struct {
 	Id      int64
@@ -30,14 +30,6 @@ type AddApiKeyCommand struct {
 	SecondsToLive int64    `json:"secondsToLive"`
 
 	Result *ApiKey `json:"-"`
-}
-
-type UpdateApiKeyCommand struct {
-	Id   int64    `json:"id"`
-	Name string   `json:"name"`
-	Role RoleType `json:"role"`
-
-	OrgId int64 `json:"-"`
 }
 
 type DeleteApiKeyCommand struct {

@@ -5,10 +5,9 @@ source "$(dirname "$0")/helpers/exit-if-fail.sh"
 
 start=$(date +%s)
 
-exit_if_fail yarn run prettier:check
-exit_if_fail yarn run packages:typecheck
-exit_if_fail yarn run typecheck
-exit_if_fail yarn run test
+export TEST_MAX_WORKERS=2
+
+/tmp/grabpl test-frontend --github-token "${GITHUB_GRAFANABOT_TOKEN}" "$@"
 
 end=$(date +%s)
 seconds=$((end - start))

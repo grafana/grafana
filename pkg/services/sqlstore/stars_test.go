@@ -1,3 +1,5 @@
+// +build integration
+
 package sqlstore
 
 import (
@@ -8,7 +10,6 @@ import (
 )
 
 func TestUserStarsDataAccess(t *testing.T) {
-
 	Convey("Testing User Stars Data Access", t, func() {
 		InitTestDB(t)
 

@@ -1,7 +1,10 @@
 package azuremonitor
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -39,11 +42,11 @@ type AzureMonitorResponse struct {
 			} `json:"metadatavalues"`
 			Data []struct {
 				TimeStamp time.Time `json:"timeStamp"`
-				Average   float64   `json:"average,omitempty"`
-				Total     float64   `json:"total,omitempty"`
-				Count     float64   `json:"count,omitempty"`
-				Maximum   float64   `json:"maximum,omitempty"`
-				Minimum   float64   `json:"minimum,omitempty"`
+				Average   *float64  `json:"average,omitempty"`
+				Total     *float64  `json:"total,omitempty"`
+				Count     *float64  `json:"count,omitempty"`
+				Maximum   *float64  `json:"maximum,omitempty"`
+				Minimum   *float64  `json:"minimum,omitempty"`
 			} `json:"data"`
 		} `json:"timeseries"`
 	} `json:"value"`
@@ -51,24 +54,12 @@ type AzureMonitorResponse struct {
 	Resourceregion string `json:"resourceregion"`
 }
 
-//ApplicationInsightsQueryResponse is the json response from the Application Insights API
-type ApplicationInsightsQueryResponse struct {
-	Tables []struct {
-		Name    string `json:"name"`
-		Columns []struct {
-			Name string `json:"name"`
-			Type string `json:"type"`
-		} `json:"columns"`
-		Rows [][]interface{} `json:"rows"`
-	} `json:"tables"`
-}
-
 // AzureLogAnalyticsResponse is the json response object from the Azure Log Analytics API.
 type AzureLogAnalyticsResponse struct {
 	Tables []AzureLogAnalyticsTable `json:"tables"`
 }
 
-//AzureLogAnalyticsTable is the table format for Log Analytics responses
+// AzureLogAnalyticsTable is the table format for Log Analytics responses
 type AzureLogAnalyticsTable struct {
 	Name    string `json:"name"`
 	Columns []struct {
@@ -84,8 +75,8 @@ type azureMonitorJSONQuery struct {
 		Aggregation         string  `json:"aggregation"`
 		Alias               string  `json:"alias"`
 		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
-		Dimension           string  `json:"dimension"`
-		DimensionFilter     string  `json:"dimensionFilter"`
+		Dimension           string  `json:"dimension"`       // old model
+		DimensionFilter     string  `json:"dimensionFilter"` // old model
 		Format              string  `json:"format"`
 		MetricDefinition    string  `json:"metricDefinition"`
 		MetricName          string  `json:"metricName"`
@@ -94,27 +85,47 @@ type azureMonitorJSONQuery struct {
 		ResourceName        string  `json:"resourceName"`
 		TimeGrain           string  `json:"timeGrain"`
 		Top                 string  `json:"top"`
+
+		DimensionFilters []azureMonitorDimensionFilter `json:"dimensionFilters"` // new model
 	} `json:"azureMonitor"`
 	Subscription string `json:"subscription"`
+}
+
+// azureMonitorDimensionFilter is the model for the frontend sent for azureMonitor metric
+// queries like "BlobType", "eq", "*"
+type azureMonitorDimensionFilter struct {
+	Dimension string `json:"dimension"`
+	Operator  string `json:"operator"`
+	Filter    string `json:"filter"`
+}
+
+func (a azureMonitorDimensionFilter) String() string {
+	filter := "*"
+	if a.Filter != "" {
+		filter = a.Filter
+	}
+	return fmt.Sprintf("%v %v '%v'", a.Dimension, a.Operator, filter)
 }
 
 // insightsJSONQuery is the frontend JSON query model for an Azure Application Insights query.
 type insightsJSONQuery struct {
 	AppInsights struct {
-		Aggregation         string  `json:"aggregation"`
-		Alias               string  `json:"alias"`
-		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
-		Dimension           string  `json:"dimension"`
-		DimensionFilter     string  `json:"dimensionFilter"`
-		MetricName          string  `json:"metricName"`
-		RawQuery            *bool   `json:"rawQuery"`
-		RawQueryString      string  `json:"rawQueryString"`
-		TimeGrain           string  `json:"timeGrain"`
-		TimeColumn          string  `json:"timeColumn"`
-		ValueColumn         string  `json:"valueColumn"`
-		SegmentColumn       string  `json:"segmentColumn"`
+		Aggregation         string             `json:"aggregation"`
+		Alias               string             `json:"alias"`
+		AllowedTimeGrainsMs []int64            `json:"allowedTimeGrainsMs"`
+		Dimensions          InsightsDimensions `json:"dimension"`
+		DimensionFilter     string             `json:"dimensionFilter"`
+		MetricName          string             `json:"metricName"`
+		TimeGrain           string             `json:"timeGrain"`
 	} `json:"appInsights"`
 	Raw *bool `json:"raw"`
+}
+
+type insightsAnalyticsJSONQuery struct {
+	InsightsAnalytics struct {
+		Query        string `json:"query"`
+		ResultFormat string `json:"resultFormat"`
+	} `json:"insightsAnalytics"`
 }
 
 // logJSONQuery is the frontend JSON query model for an Azure Log Analytics query.
@@ -124,4 +135,48 @@ type logJSONQuery struct {
 		ResultFormat string `json:"resultFormat"`
 		Workspace    string `json:"workspace"`
 	} `json:"azureLogAnalytics"`
+}
+
+// InsightsDimensions will unmarshal from a JSON string, or an array of strings,
+// into a string array. This exists to support an older query format which is updated
+// when a user saves the query or it is sent from the front end, but may not be when
+// alerting fetches the model.
+type InsightsDimensions []string
+
+// UnmarshalJSON fulfills the json.Unmarshaler interface type.
+func (s *InsightsDimensions) UnmarshalJSON(data []byte) error {
+	*s = InsightsDimensions{}
+	if string(data) == "null" || string(data) == "" {
+		return nil
+	}
+	if strings.ToLower(string(data)) == `"none"` {
+		return nil
+	}
+	if data[0] == '[' {
+		var sa []string
+		err := json.Unmarshal(data, &sa)
+		if err != nil {
+			return err
+		}
+		dimensions := []string{}
+		for _, v := range sa {
+			if v == "none" || v == "None" {
+				continue
+			}
+			dimensions = append(dimensions, v)
+		}
+		*s = InsightsDimensions(dimensions)
+		return nil
+	}
+
+	var str string
+	err := json.Unmarshal(data, &str)
+	if err != nil {
+		return fmt.Errorf("could not parse %q as string or array: %w", string(data), err)
+	}
+	if str != "" {
+		*s = InsightsDimensions{str}
+		return nil
+	}
+	return nil
 }

@@ -5,13 +5,14 @@ import { connect } from 'react-redux';
 // Types
 import { StoreState } from 'app/types';
 import { AppEvents, AppPlugin, AppPluginMeta, NavModel, PluginType, UrlQueryMap } from '@grafana/data';
+import { createHtmlPortalNode, InPortal, OutPortal, HtmlPortalNode } from 'react-reverse-portal';
 
 import Page from 'app/core/components/Page/Page';
 import { getPluginSettings } from './PluginSettingsCache';
 import { importAppPlugin } from './plugin_loader';
-import { getLoadingNav } from './PluginPage';
-import { getNotFoundNav, getWarningNav } from 'app/core/nav_model_srv';
+import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/nav_model_srv';
 import { appEvents } from 'app/core/core';
+import PageLoader from 'app/core/components/PageLoader/PageLoader';
 
 interface Props {
   pluginId: string; // From the angular router
@@ -22,8 +23,9 @@ interface Props {
 
 interface State {
   loading: boolean;
-  plugin?: AppPlugin;
-  nav: NavModel;
+  portalNode: HtmlPortalNode;
+  plugin?: AppPlugin | null;
+  nav?: NavModel;
 }
 
 export function getAppPluginPageError(meta: AppPluginMeta) {
@@ -44,7 +46,7 @@ class AppRootPage extends Component<Props, State> {
     super(props);
     this.state = {
       loading: true,
-      nav: getLoadingNav(),
+      portalNode: createHtmlPortalNode(),
     };
   }
 
@@ -63,7 +65,11 @@ class AppRootPage extends Component<Props, State> {
       });
       this.setState({ plugin: app, loading: false });
     } catch (err) {
-      this.setState({ plugin: null, loading: false, nav: getNotFoundNav() });
+      this.setState({
+        plugin: null,
+        loading: false,
+        nav: process.env.NODE_ENV === 'development' ? getExceptionNav(err) : getNotFoundNav(),
+      });
     }
   }
 
@@ -73,7 +79,7 @@ class AppRootPage extends Component<Props, State> {
 
   render() {
     const { path, query } = this.props;
-    const { loading, plugin, nav } = this.state;
+    const { loading, plugin, nav, portalNode } = this.state;
 
     if (plugin && !plugin.root) {
       // TODO? redirect to plugin page?
@@ -81,13 +87,25 @@ class AppRootPage extends Component<Props, State> {
     }
 
     return (
-      <Page navModel={nav}>
-        <Page.Contents isLoading={loading}>
-          {!loading && plugin && (
+      <>
+        <InPortal node={portalNode}>
+          {plugin && plugin.root && (
             <plugin.root meta={plugin.meta} query={query} path={path} onNavChanged={this.onNavChanged} />
           )}
-        </Page.Contents>
-      </Page>
+        </InPortal>
+        {nav ? (
+          <Page navModel={nav}>
+            <Page.Contents isLoading={loading}>
+              <OutPortal node={portalNode} />
+            </Page.Contents>
+          </Page>
+        ) : (
+          <>
+            <OutPortal node={portalNode} />
+            {loading && <PageLoader />}
+          </>
+        )}
+      </>
     );
   }
 }

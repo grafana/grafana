@@ -1,6 +1,6 @@
 // Libraries
 import { Observable, of, timer, merge, from } from 'rxjs';
-import { flatten, map as lodashMap, isArray, isString } from 'lodash';
+import { map as isArray, isString } from 'lodash';
 import { map, catchError, takeUntil, mapTo, share, finalize, tap } from 'rxjs/operators';
 // Utils & Services
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -16,6 +16,7 @@ import {
   dateMath,
   toDataFrame,
   DataFrame,
+  DataTopic,
   guessFieldTypes,
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
@@ -34,7 +35,7 @@ interface RunningQueryState {
  * This function should handle composing a PanelData from multiple responses
  */
 export function processResponsePacket(packet: DataQueryResponse, state: RunningQueryState): RunningQueryState {
-  const request = state.panelData.request;
+  const request = state.panelData.request!;
   const packets: MapOfResponsePackets = {
     ...state.packets,
   };
@@ -48,25 +49,39 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   const range = { ...request.range };
   const timeRange = isString(range.raw.from)
     ? {
-        from: dateMath.parse(range.raw.from, false),
-        to: dateMath.parse(range.raw.to, true),
+        from: dateMath.parse(range.raw.from, false)!,
+        to: dateMath.parse(range.raw.to, true)!,
         raw: range.raw,
       }
     : range;
 
-  const combinedData = flatten(
-    lodashMap(packets, (packet: DataQueryResponse) => {
-      if (packet.error) {
-        loadingState = LoadingState.Error;
-        error = packet.error;
+  const series: DataQueryResponseData[] = [];
+  const annotations: DataQueryResponseData[] = [];
+
+  for (const key in packets) {
+    const packet = packets[key];
+
+    if (packet.error) {
+      loadingState = LoadingState.Error;
+      error = packet.error;
+    }
+
+    if (packet.data && packet.data.length) {
+      for (const dataItem of packet.data) {
+        if (dataItem.meta?.dataTopic === DataTopic.Annotations) {
+          annotations.push(dataItem);
+          continue;
+        }
+
+        series.push(dataItem);
       }
-      return packet.data;
-    })
-  );
+    }
+  }
 
   const panelData = {
     state: loadingState,
-    series: combinedData,
+    series,
+    annotations,
     error,
     request,
     timeRange,
@@ -76,12 +91,11 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
 }
 
 /**
- * This function handles the excecution of requests & and processes the single or multiple response packets into
- * a combined PanelData response.
- * It will
- *  * Merge multiple responses into a single DataFrame array based on the packet key
- *  * Will emit a loading state if no response after 50ms
- *  * Cancel any still running network requests on unsubscribe (using request.requestId)
+ * This function handles the execution of requests & and processes the single or multiple response packets into
+ * a combined PanelData response. It will
+ *  Merge multiple responses into a single DataFrame array based on the packet key
+ *  Will emit a loading state if no response after 50ms
+ *  Cancel any still running network requests on unsubscribe (using request.requestId)
  */
 export function runRequest(datasource: DataSourceApi, request: DataQueryRequest): Observable<PanelData> {
   let state: RunningQueryState = {
@@ -115,13 +129,14 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
       return state.panelData;
     }),
     // handle errors
-    catchError(err =>
-      of({
+    catchError(err => {
+      console.error('runRequest.catchError', err);
+      return of({
         ...state.panelData,
         state: LoadingState.Error,
         error: toDataQueryError(err),
-      })
-    ),
+      });
+    }),
     tap(emitDataRequestEvent(datasource)),
     // finalize is triggered when subscriber unsubscribes
     // This makes sure any still running network requests are cancelled
@@ -156,12 +171,12 @@ export function callQueryMethod(datasource: DataSourceApi, request: DataQueryReq
 }
 
 /**
- * All panels will be passed tables that have our best guess at colum type set
+ * All panels will be passed tables that have our best guess at column type set
  *
  * This is also used by PanelChrome for snapshot support
  */
 export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataFrame[] {
-  if (!isArray(results)) {
+  if (!results || !isArray(results)) {
     return [];
   }
 
@@ -170,9 +185,11 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
   for (const result of results) {
     const dataFrame = guessFieldTypes(toDataFrame(result));
 
-    // clear out the cached info
-    for (const field of dataFrame.fields) {
-      field.state = null;
+    if (dataFrame.fields && dataFrame.fields.length) {
+      // clear out the cached info
+      for (const field of dataFrame.fields) {
+        field.state = null;
+      }
     }
 
     dataFrames.push(dataFrame);
@@ -181,8 +198,8 @@ export function getProcessedDataFrames(results?: DataQueryResponseData[]): DataF
   return dataFrames;
 }
 
-export function preProcessPanelData(data: PanelData, lastResult: PanelData): PanelData {
-  const { series } = data;
+export function preProcessPanelData(data: PanelData, lastResult?: PanelData): PanelData {
+  const { series, annotations } = data;
 
   //  for loading states with no data, use last result
   if (data.state === LoadingState.Loading && series.length === 0) {
@@ -190,17 +207,23 @@ export function preProcessPanelData(data: PanelData, lastResult: PanelData): Pan
       lastResult = data;
     }
 
-    return { ...lastResult, state: LoadingState.Loading };
+    return {
+      ...lastResult,
+      state: LoadingState.Loading,
+      request: data.request,
+    };
   }
 
   // Make sure the data frames are properly formatted
   const STARTTIME = performance.now();
   const processedDataFrames = getProcessedDataFrames(series);
+  const annotationsProcessed = getProcessedDataFrames(annotations);
   const STOPTIME = performance.now();
 
   return {
     ...data,
     series: processedDataFrames,
+    annotations: annotationsProcessed,
     timings: { dataProcessingTime: STOPTIME - STARTTIME },
   };
 }

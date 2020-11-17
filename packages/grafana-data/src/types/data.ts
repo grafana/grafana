@@ -2,10 +2,11 @@ import { FieldConfig } from './dataFrame';
 import { DataTransformerConfig } from './transformations';
 import { ApplyFieldOverrideOptions } from './fieldOverrides';
 
-export type KeyValue<T = any> = { [s: string]: T };
+export type KeyValue<T = any> = Record<string, T>;
 
 /**
  * Represent panel data loading state.
+ * @public
  */
 export enum LoadingState {
   NotStarted = 'NotStarted',
@@ -15,8 +16,15 @@ export enum LoadingState {
   Error = 'Error',
 }
 
-export type PreferredVisualisationType = 'graph' | 'table';
+export enum DataTopic {
+  Annotations = 'annotations',
+}
 
+export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';
+
+/**
+ * @public
+ */
 export interface QueryResultMeta {
   /** DatasSource Specific Values */
   custom?: Record<string, any>;
@@ -34,6 +42,12 @@ export interface QueryResultMeta {
   preferredVisualisationType?: PreferredVisualisationType;
 
   /**
+   * Optionally identify which topic the frame should be assigned to.
+   * A value specified in the response will override what the request asked for.
+   */
+  dataTopic?: DataTopic;
+
+  /**
    * This is the raw query sent to the underlying system.  All macros and templating
    * as been applied.  When metadata contains this value, it will be shown in the query inspector
    */
@@ -43,11 +57,11 @@ export interface QueryResultMeta {
    * Legacy data source specific, should be moved to custom
    * */
   gmdMeta?: any[]; // used by cloudwatch
-  alignmentPeriod?: string; // used by stackdriver
-  query?: string; // used by azure log
+  alignmentPeriod?: number; // used by cloud monitoring
   searchWords?: string[]; // used by log models and loki
   limit?: number; // used by log models and loki
   json?: boolean; // used to keep track of old json doc values
+  instant?: boolean;
 }
 
 export interface QueryResultMetaStat extends FieldConfig {
@@ -57,6 +71,7 @@ export interface QueryResultMetaStat extends FieldConfig {
 
 /**
  * QueryResultMetaNotice is a structure that provides user notices for query result data
+ * @public
  */
 export interface QueryResultMetaNotice {
   /**
@@ -81,6 +96,9 @@ export interface QueryResultMetaNotice {
   inspect?: 'meta' | 'error' | 'data' | 'stats';
 }
 
+/**
+ * @public
+ */
 export interface QueryResultBase {
   /**
    * Matches the query target refId
@@ -130,27 +148,6 @@ export enum NullValueMode {
   Null = 'null',
   Ignore = 'connected',
   AsZero = 'null as zero',
-}
-
-export interface AnnotationEvent {
-  id?: string;
-  annotation?: any;
-  dashboardId?: number;
-  panelId?: number;
-  userId?: number;
-  login?: string;
-  email?: string;
-  avatarUrl?: string;
-  time?: number;
-  timeEnd?: number;
-  isRegion?: boolean;
-  title?: string;
-  text?: string;
-  type?: string;
-  tags?: string[];
-
-  // Currently used to merge annotations from alerts and dashboard
-  source?: any; // source.type === 'dashboard'
 }
 
 /**

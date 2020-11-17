@@ -9,11 +9,15 @@ const intervalMap: any = {
 };
 
 export class IndexPattern {
-  constructor(private pattern: any, private interval: string | null) {}
+  private dateLocale = 'en';
+
+  constructor(private pattern: any, private interval?: string) {}
 
   getIndexForToday() {
     if (this.interval) {
-      return toUtc().format(this.pattern);
+      return toUtc()
+        .locale(this.dateLocale)
+        .format(this.pattern);
     } else {
       return this.pattern;
     }
@@ -35,7 +39,7 @@ export class IndexPattern {
     const indexList = [];
 
     while (start.valueOf() <= endEpoch) {
-      indexList.push(start.format(this.pattern));
+      indexList.push(start.locale(this.dateLocale).format(this.pattern));
       start.add(1, intervalInfo.amount);
     }
 

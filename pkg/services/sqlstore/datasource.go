@@ -1,9 +1,10 @@
 package sqlstore
 
 import (
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/util/errutil"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -17,7 +18,6 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetDataSources)
-	bus.AddHandler("sql", GetAllDataSources)
 	bus.AddHandler("sql", AddDataSource)
 	bus.AddHandler("sql", DeleteDataSourceById)
 	bus.AddHandler("sql", DeleteDataSourceByName)
@@ -26,21 +26,31 @@ func init() {
 	bus.AddHandler("sql", GetDataSourceByName)
 }
 
-func GetDataSourceById(query *models.GetDataSourceByIdQuery) error {
+func getDataSourceByID(id, orgID int64, engine *xorm.Engine) (*models.DataSource, error) {
 	metrics.MDBDataSourceQueryByID.Inc()
 
-	datasource := models.DataSource{OrgId: query.OrgId, Id: query.Id}
-	has, err := x.Get(&datasource)
-
+	datasource := models.DataSource{OrgId: orgID, Id: id}
+	has, err := engine.Get(&datasource)
 	if err != nil {
-		return err
+		sqlog.Error("Failed getting data source", "err", err, "id", id, "orgId", orgID)
+		return nil, err
 	}
-
 	if !has {
-		return models.ErrDataSourceNotFound
+		sqlog.Debug("Failed to find data source", "id", id, "orgId", orgID)
+		return nil, models.ErrDataSourceNotFound
 	}
 
-	query.Result = &datasource
+	return &datasource, nil
+}
+
+func (ss *SQLStore) GetDataSourceByID(id, orgID int64) (*models.DataSource, error) {
+	return getDataSourceByID(id, orgID, ss.engine)
+}
+
+func GetDataSourceById(query *models.GetDataSourceByIdQuery) error {
+	ds, err := getDataSourceByID(query.Id, query.OrgId, x)
+	query.Result = ds
+
 	return err
 }
 
@@ -63,17 +73,10 @@ func GetDataSources(query *models.GetDataSourcesQuery) error {
 	return sess.Find(&query.Result)
 }
 
-func GetAllDataSources(query *models.GetAllDataSourcesQuery) error {
-	sess := x.Limit(5000, 0).Asc("name")
-
-	query.Result = make([]*models.DataSource, 0)
-	return sess.Find(&query.Result)
-}
-
 func DeleteDataSourceById(cmd *models.DeleteDataSourceByIdCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		var rawSql = "DELETE FROM data_source WHERE id=? and org_id=?"
-		result, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
+		var rawSQL = "DELETE FROM data_source WHERE id=? and org_id=?"
+		result, err := sess.Exec(rawSQL, cmd.Id, cmd.OrgId)
 		affected, _ := result.RowsAffected()
 		cmd.DeletedDatasourcesCount = affected
 		return err
@@ -82,8 +85,8 @@ func DeleteDataSourceById(cmd *models.DeleteDataSourceByIdCommand) error {
 
 func DeleteDataSourceByName(cmd *models.DeleteDataSourceByNameCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		var rawSql = "DELETE FROM data_source WHERE name=? and org_id=?"
-		result, err := sess.Exec(rawSql, cmd.Name, cmd.OrgId)
+		var rawSQL = "DELETE FROM data_source WHERE name=? and org_id=?"
+		result, err := sess.Exec(rawSQL, cmd.Name, cmd.OrgId)
 		affected, _ := result.RowsAffected()
 		cmd.DeletedDatasourcesCount = affected
 		return err
@@ -152,8 +155,8 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 func updateIsDefaultFlag(ds *models.DataSource, sess *DBSession) error {
 	// Handle is default flag
 	if ds.IsDefault {
-		rawSql := "UPDATE data_source SET is_default=? WHERE org_id=? AND id <> ?"
-		if _, err := sess.Exec(rawSql, false, ds.OrgId, ds.Id); err != nil {
+		rawSQL := "UPDATE data_source SET is_default=? WHERE org_id=? AND id <> ?"
+		if _, err := sess.Exec(rawSQL, false, ds.OrgId, ds.Id); err != nil {
 			return err
 		}
 	}
@@ -204,7 +207,6 @@ func UpdateDataSource(cmd *models.UpdateDataSourceCommand) error {
 			// updates to datasources using the datasource.yaml file without knowing exactly what version
 			// a datasource have in the db.
 			updateSession = sess.Where("id=? and org_id=? and version < ?", ds.Id, ds.OrgId, ds.Version)
-
 		} else {
 			updateSession = sess.Where("id=? and org_id=?", ds.Id, ds.OrgId)
 		}

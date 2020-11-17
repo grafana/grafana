@@ -5,7 +5,6 @@ import (
 )
 
 func addAlertMigrations(mg *Migrator) {
-
 	alertV1 := Table{
 		Name: "alert",
 		Columns: []*Column{
@@ -185,8 +184,8 @@ func addAlertMigrations(mg *Migrator) {
 		Name: "uid", Type: DB_NVarchar, Length: 40, Nullable: true,
 	}))
 
-	mg.AddMigration("Update uid column values in alert_notification", new(RawSqlMigration).
-		Sqlite("UPDATE alert_notification SET uid=printf('%09d',id) WHERE uid IS NULL;").
+	mg.AddMigration("Update uid column values in alert_notification", new(RawSQLMigration).
+		SQLite("UPDATE alert_notification SET uid=printf('%09d',id) WHERE uid IS NULL;").
 		Postgres("UPDATE alert_notification SET uid=lpad('' || id::text,9,'0') WHERE uid IS NULL;").
 		Mysql("UPDATE alert_notification SET uid=lpad(id,9,'0') WHERE uid IS NULL;"))
 
@@ -196,5 +195,21 @@ func addAlertMigrations(mg *Migrator) {
 
 	mg.AddMigration("Remove unique index org_id_name", NewDropIndexMigration(alert_notification, &Index{
 		Cols: []string{"org_id", "name"}, Type: UniqueIndex,
+	}))
+
+	mg.AddMigration("Add column secure_settings in alert_notification", NewAddColumnMigration(alert_notification, &Column{
+		Name: "secure_settings", Type: DB_Text, Nullable: true,
+	}))
+
+	// change column type of alert.settings
+	mg.AddMigration("alter alert.settings to mediumtext", NewRawSQLMigration("").
+		Mysql("ALTER TABLE alert MODIFY settings MEDIUMTEXT;"))
+
+	mg.AddMigration("Add non-unique index alert_notification_state_alert_id", NewAddIndexMigration(alert_notification_state, &Index{
+		Cols: []string{"alert_id"}, Type: IndexType,
+	}))
+
+	mg.AddMigration("Add non-unique index alert_rule_tag_alert_id", NewAddIndexMigration(alertRuleTagTable, &Index{
+		Cols: []string{"alert_id"}, Type: IndexType,
 	}))
 }

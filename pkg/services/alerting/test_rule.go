@@ -25,7 +25,6 @@ func init() {
 }
 
 func handleAlertTestCommand(cmd *AlertTestCommand) error {
-
 	dash := models.NewDashboardFromJson(cmd.Dashboard)
 
 	extractor := NewDashAlertExtractor(dash, cmd.OrgID, cmd.User)
@@ -36,7 +35,7 @@ func handleAlertTestCommand(cmd *AlertTestCommand) error {
 
 	for _, alert := range alerts {
 		if alert.PanelId == cmd.PanelID {
-			rule, err := NewRuleFromDBAlert(alert)
+			rule, err := NewRuleFromDBAlert(alert, true)
 			if err != nil {
 				return err
 			}
@@ -46,7 +45,7 @@ func handleAlertTestCommand(cmd *AlertTestCommand) error {
 		}
 	}
 
-	return fmt.Errorf("Could not find alert with panel id %d", cmd.PanelID)
+	return fmt.Errorf("could not find alert with panel ID %d", cmd.PanelID)
 }
 
 func testAlertRule(rule *Rule) *EvalContext {

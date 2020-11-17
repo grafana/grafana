@@ -1,3 +1,5 @@
+// +build integration
+
 package sqlstore
 
 import (
@@ -11,7 +13,6 @@ import (
 )
 
 func TestTeamCommandsAndQueries(t *testing.T) {
-
 	Convey("Testing Team commands & queries", t, func() {
 		InitTestDB(t)
 

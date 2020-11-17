@@ -26,7 +26,7 @@ import { getDataSourceSrv } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { changeVariableProp, setCurrentVariableValue } from '../../state/sharedReducer';
 import { toVariablePayload } from '../../state/types';
-import { containsSearchFilter } from '../../utils';
+import { containsSearchFilter, getCurrentText } from '../../utils';
 
 export const navigateOptions = (key: NavigationKey, clearOthers: boolean): ThunkResult<void> => {
   return async (dispatch, getState) => {
@@ -82,14 +82,15 @@ export const commitChangesToVariable = (): ThunkResult<void> => {
     dispatch(setCurrentVariableValue(toVariablePayload(existing, currentPayload)));
     dispatch(changeVariableProp(toVariablePayload(existing, searchQueryPayload)));
     const updated = getVariable<VariableWithMultiSupport>(picker.id, getState());
+    dispatch(hideOptions());
 
-    if (existing.current.text === updated.current.text) {
-      return dispatch(hideOptions());
+    if (getCurrentText(existing) === getCurrentText(updated)) {
+      return;
     }
 
     const adapter = variableAdapters.get(updated.type);
     await adapter.setValue(updated, updated.current, true);
-    return dispatch(hideOptions());
+    return;
   };
 };
 
@@ -118,7 +119,7 @@ const fetchTagValues = (tagText: string): ThunkResult<Promise<string[]>> => {
     const variable = getVariable<QueryVariableModel>(picker.id, getState());
 
     const datasource = await getDataSourceSrv().get(variable.datasource ?? '');
-    const query = variable.tagValuesQuery.replace('$tag', tagText);
+    const query = variable.tagValuesQuery.replace(/\$tag/g, tagText);
     const options = { range: getTimeRange(variable), variable };
 
     if (!datasource.metricFindQuery) {
@@ -183,7 +184,7 @@ function mapToCurrent(picker: OptionsPickerState): VariableOption | undefined {
 
   return {
     value: values,
-    text: texts.join(' + '),
+    text: texts,
     tags: picker.tags.filter(t => t.selected),
     selected: true,
   };

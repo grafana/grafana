@@ -1,33 +1,64 @@
-import { CloudWatchDatasource } from './datasource';
-import { TemplateSrv } from '../../../features/templating/template_srv';
+import { DataQueryResponse, dateTime, DefaultTimeRange } from '@grafana/data';
 import { setBackendSrv } from '@grafana/runtime';
-import { DataQueryResponse, DefaultTimeRange } from '@grafana/data';
+import { TemplateSrv } from '../../../features/templating/template_srv';
+import { CloudWatchDatasource } from './datasource';
 
 describe('datasource', () => {
   describe('query', () => {
     it('should return error if log query and log groups is not specified', async () => {
       const { datasource } = setup();
-      const response: DataQueryResponse = (await datasource.query({
-        targets: [
-          {
-            queryMode: 'Logs' as 'Logs',
-          },
-        ],
-      } as any)) as any;
-      expect(response.error.message).toBe('Log group is required');
+      const response: DataQueryResponse = (await datasource
+        .query({
+          targets: [
+            {
+              queryMode: 'Logs' as 'Logs',
+            },
+          ],
+        } as any)
+        .toPromise()) as any;
+      expect(response.error?.message).toBe('Log group is required');
     });
 
     it('should return empty response if queries are hidden', async () => {
       const { datasource } = setup();
-      const response: DataQueryResponse = (await datasource.query({
-        targets: [
-          {
-            queryMode: 'Logs' as 'Logs',
-            hide: true,
-          },
-        ],
-      } as any)) as any;
+      const response: DataQueryResponse = (await datasource
+        .query({
+          targets: [
+            {
+              queryMode: 'Logs' as 'Logs',
+              hide: true,
+            },
+          ],
+        } as any)
+        .toPromise()) as any;
       expect(response.data).toEqual([]);
+    });
+  });
+
+  describe('performTimeSeriesQuery', () => {
+    it('should return the same length of data as result', async () => {
+      const { datasource } = setup();
+      const awsRequestMock = jest.spyOn(datasource, 'awsRequest');
+      const buildCloudwatchConsoleUrlMock = jest.spyOn(datasource, 'buildCloudwatchConsoleUrl');
+      buildCloudwatchConsoleUrlMock.mockImplementation(() => '');
+      awsRequestMock.mockImplementation(async () => {
+        return {
+          results: {
+            a: { refId: 'a', series: [{ name: 'cpu', points: [1, 1] }], meta: { gmdMeta: '' } },
+            b: { refId: 'b', series: [{ name: 'memory', points: [2, 2] }], meta: { gmdMeta: '' } },
+          },
+        };
+      });
+      const response: DataQueryResponse = await datasource.performTimeSeriesQuery(
+        {
+          queries: [
+            { datasourceId: 1, refId: 'a' },
+            { datasourceId: 1, refId: 'b' },
+          ],
+        } as any,
+        { from: dateTime(), to: dateTime() } as any
+      );
+      expect(response.data.length).toEqual(2);
     });
   });
 

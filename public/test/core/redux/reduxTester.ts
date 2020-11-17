@@ -50,10 +50,16 @@ export const reduxTester = <State>(args?: ReduxTesterArguments<State>): ReduxTes
   const debug = args?.debug ?? false;
   let store: EnhancedStore<State> | null = null;
 
+  const defaultMiddleware = getDefaultMiddleware<State>({
+    thunk: false,
+    serializableCheck: false,
+    immutableCheck: false,
+  } as any);
+
   const givenRootReducer = (rootReducer: Reducer<State>): ReduxTesterWhen<State> => {
     store = configureStore<State>({
       reducer: rootReducer,
-      middleware: [...getDefaultMiddleware<State>(), logActionsMiddleWare, thunk] as [ThunkMiddleware<State>],
+      middleware: [...defaultMiddleware, logActionsMiddleWare, thunk] as [ThunkMiddleware<State>],
       preloadedState,
     });
 

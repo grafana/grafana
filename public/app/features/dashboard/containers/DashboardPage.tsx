@@ -3,7 +3,7 @@ import $ from 'jquery';
 import React, { MouseEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
-import classNames from 'classnames';
+
 // Services & Utils
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getMessageFromError } from 'app/core/utils/errors';
@@ -13,7 +13,7 @@ import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { Alert, Button, CustomScrollbar, HorizontalGroup, Icon, VerticalGroup } from '@grafana/ui';
+import { Alert, Button, CustomScrollbar, HorizontalGroup, Spinner, VerticalGroup } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
 import { notifyApp, updateLocation } from 'app/core/actions';
@@ -27,10 +27,12 @@ import {
 } from 'app/types';
 
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { InspectTab, PanelInspector } from '../components/Inspector/PanelInspector';
+import { InspectTab } from '../components/Inspector/types';
+import { PanelInspector } from '../components/Inspector/PanelInspector';
 import { SubMenu } from '../components/SubMenu/SubMenu';
 import { cleanUpDashboardAndVariables } from '../state/actions';
 import { cancelVariables } from '../../variables/state/actions';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
 export interface Props {
   urlUid?: string;
@@ -115,13 +117,23 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     // entering edit mode
     if (!editPanel && urlEditPanelId) {
+      dashboardWatcher.setEditingState(true);
+
       this.getPanelByIdFromUrlParam(urlEditPanelId, panel => {
+        // if no edit permission show error
+        if (!dashboard.canEditPanel(panel)) {
+          this.props.notifyApp(createErrorNotification('Permission to edit panel denied'));
+          return;
+        }
+
         this.setState({ editPanel: panel });
       });
     }
 
     // leaving edit mode
     if (editPanel && !urlEditPanelId) {
+      dashboardWatcher.setEditingState(false);
+
       this.setState({ editPanel: null });
     }
 
@@ -133,6 +145,7 @@ export class DashboardPage extends PureComponent<Props, State> {
         this.setState({
           viewPanel: panel,
           rememberScrollTop: this.state.scrollTop,
+          updateScrollTop: 0,
         });
       });
     }
@@ -187,11 +200,15 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   setScrollTop = (e: MouseEvent<HTMLElement>): void => {
     const target = e.target as HTMLElement;
-    this.setState({ scrollTop: target.scrollTop, updateScrollTop: null });
+    this.setState({ scrollTop: target.scrollTop, updateScrollTop: undefined });
   };
 
   onAddPanel = () => {
     const { dashboard } = this.props;
+
+    if (!dashboard) {
+      return;
+    }
 
     // Return if the "Add panel" exists already
     if (dashboard.panels.length > 0 && dashboard.panels[0].type === 'add-panel') {
@@ -218,7 +235,7 @@ export class DashboardPage extends PureComponent<Props, State> {
         <div className="dashboard-loading__text">
           <VerticalGroup spacing="md">
             <HorizontalGroup align="center" justify="center" spacing="xs">
-              <Icon name="fa fa-spinner" className="fa-spin" /> {this.props.initPhase}
+              <Spinner inline={true} /> {this.props.initPhase}
             </HorizontalGroup>{' '}
             <HorizontalGroup align="center" justify="center">
               <Button variant="secondary" size="md" icon="repeat" onClick={this.cancelVariables}>
@@ -233,6 +250,10 @@ export class DashboardPage extends PureComponent<Props, State> {
 
   renderInitFailedState() {
     const { initError } = this.props;
+
+    if (!initError) {
+      return null;
+    }
 
     return (
       <div className="dashboard-loading">
@@ -282,30 +303,27 @@ export class DashboardPage extends PureComponent<Props, State> {
       return null;
     }
 
-    const gridWrapperClasses = classNames({
-      'dashboard-container': true,
-      'dashboard-container--has-submenu': dashboard.meta.submenuEnabled,
-    });
-
     // Only trigger render when the scroll has moved by 25
     const approximateScrollTop = Math.round(scrollTop / 25) * 25;
     const inspectPanel = this.getInspectPanel();
 
     return (
-      <div>
+      <div className="dashboard-container">
         <DashNav dashboard={dashboard} isFullscreen={!!viewPanel} $injector={$injector} onAddPanel={this.onAddPanel} />
-        <div className="scroll-canvas scroll-canvas--dashboard">
+
+        <div className="dashboard-scroll">
           <CustomScrollbar
             autoHeightMin="100%"
             setScrollTop={this.setScrollTop}
             scrollTop={updateScrollTop}
+            hideHorizontalTrack={true}
             updateAfterMountMs={500}
             className="custom-scrollbar--page"
           >
-            {initError && this.renderInitFailedState()}
+            <div className="dashboard-content">
+              {initError && this.renderInitFailedState()}
+              {!editPanel && <SubMenu dashboard={dashboard} links={dashboard.links} />}
 
-            <div className={gridWrapperClasses}>
-              {!editPanel && <SubMenu dashboard={dashboard} />}
               <DashboardGrid
                 dashboard={dashboard}
                 viewPanel={viewPanel}

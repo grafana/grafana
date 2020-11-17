@@ -20,6 +20,7 @@ type Props = {
   value?: DerivedFieldConfig[];
   onChange: (value: DerivedFieldConfig[]) => void;
 };
+
 export const DerivedFields = (props: Props) => {
   const { value, onChange } = props;
   const theme = useTheme();
@@ -32,7 +33,7 @@ export const DerivedFields = (props: Props) => {
       <h3 className="page-heading">Derived fields</h3>
 
       <div className={styles.infoText}>
-        Derived fields can be used to extract new fields from the log message and create link from it's value.
+        Derived fields can be used to extract new fields from a log message and create a link from its value.
       </div>
 
       <div className="gf-form-group">

@@ -4,11 +4,14 @@ import coreModule from 'app/core/core_module';
 // Services & Utils
 import config from 'app/core/config';
 import { importDataSourcePlugin } from './plugin_loader';
-import { DataSourceSrv as DataSourceService, getDataSourceSrv as getDataSourceService } from '@grafana/runtime';
+import {
+  DataSourceSrv as DataSourceService,
+  getDataSourceSrv as getDataSourceService,
+  TemplateSrv,
+} from '@grafana/runtime';
 // Types
 import { AppEvents, DataSourceApi, DataSourceInstanceSettings, DataSourceSelectItem, ScopedVars } from '@grafana/data';
 import { auto } from 'angular';
-import { TemplateSrv } from '../templating/template_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 // Pretend Datasource
 import { expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
@@ -34,7 +37,7 @@ export class DatasourceSrv implements DataSourceService {
     return Object.values(config.datasources).find(ds => ds.uid === uid);
   }
 
-  get(name?: string, scopedVars?: ScopedVars): Promise<DataSourceApi> {
+  get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
     if (!name) {
       return this.get(config.defaultDatasource);
     }
@@ -126,7 +129,7 @@ export class DatasourceSrv implements DataSourceService {
 
     Object.entries(config.datasources).forEach(([key, value]) => {
       if (value.meta?.metrics) {
-        let metricSource = { value: key, name: key, meta: value.meta, sort: key };
+        let metricSource: DataSourceSelectItem = { value: key, name: key, meta: value.meta, sort: key };
 
         //Make sure grafana and mixed are sorted at the bottom
         if (value.meta.id === 'grafana') {

@@ -21,6 +21,7 @@ Object {
     Object {
       "config": Object {
         "decimals": 2,
+        "displayName": "Grafana ❤️ (Previous should be heart emoji) 🦥 (Previous should be sloth emoji)",
         "filterable": false,
         "links": Array [
           Object {
@@ -33,7 +34,6 @@ Object {
         "min": null,
         "noValue": "😤",
         "nullValueMode": "null",
-        "title": "Grafana ❤️ (Previous should be heart emoji) 🦥 (Previous should be sloth emoji)",
       },
       "labels": Object {
         "aLabelKey": "aLabelValue",
@@ -136,11 +136,11 @@ Object {
       "name": "int64_values",
       "type": "number",
       "values": Array [
-        "\\"-9223372036854775808\\"",
-        "\\"-9007199254740991\\"",
-        "\\"1\\"",
-        "\\"9007199254740991\\"",
-        "\\"9223372036854775807\\"",
+        -9223372036854776000,
+        -9007199254740991,
+        1,
+        9007199254740991,
+        9223372036854776000,
       ],
     },
     Object {
@@ -149,11 +149,11 @@ Object {
       "name": "nullable_int64_values",
       "type": "number",
       "values": Array [
-        "\\"-9223372036854775808\\"",
-        "\\"-9007199254740991\\"",
+        -9223372036854776000,
+        -9007199254740991,
         null,
-        "\\"9007199254740991\\"",
-        "\\"9223372036854775807\\"",
+        9007199254740991,
+        9223372036854776000,
       ],
     },
     Object {
@@ -240,11 +240,11 @@ Object {
       "name": "uint64_values",
       "type": "number",
       "values": Array [
-        "\\"0\\"",
-        "\\"0\\"",
-        "\\"1\\"",
-        "\\"9007199254740991\\"",
-        "\\"18446744073709551615\\"",
+        0,
+        0,
+        1,
+        9007199254740991,
+        18446744073709552000,
       ],
     },
     Object {
@@ -253,11 +253,11 @@ Object {
       "name": "nullable_uint64_values",
       "type": "number",
       "values": Array [
-        "\\"0\\"",
-        "\\"0\\"",
+        0,
+        0,
         null,
-        "\\"9007199254740991\\"",
-        "\\"18446744073709551615\\"",
+        9007199254740991,
+        18446744073709552000,
       ],
     },
     Object {
@@ -354,6 +354,19 @@ Object {
     Object {
       "config": Object {},
       "labels": undefined,
+      "name": "timestamps",
+      "type": "time",
+      "values": Array [
+        0,
+        1568039445000,
+        1568039450000,
+        9007199254.740992,
+        9223372036854.775,
+      ],
+    },
+    Object {
+      "config": Object {},
+      "labels": undefined,
       "name": "nullable_timestamps",
       "type": "time",
       "values": Array [
@@ -366,13 +379,9 @@ Object {
     },
   ],
   "meta": Object {
-    "limit": 4242,
-    "searchWords": Array [
-      "Grafana",
-      "❤️",
-      " 🦥 ",
-      "test",
-    ],
+    "custom": Object {
+      "Hi": "there",
+    },
   },
   "name": "many_types",
   "refId": "A",

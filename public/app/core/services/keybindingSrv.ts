@@ -1,25 +1,24 @@
 import _ from 'lodash';
+import Mousetrap from 'mousetrap';
+import 'mousetrap-global-bind';
+import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
+import { LegacyGraphHoverClearEvent, locationUtil } from '@grafana/data';
 
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { store } from 'app/store/store';
 import { AppEventEmitter, CoreEvents } from 'app/types';
-
-import Mousetrap from 'mousetrap';
-import 'mousetrap-global-bind';
-import { ContextSrv } from './context_srv';
-import { ILocationService, IRootScopeService, ITimeoutService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { DashboardModel } from '../../features/dashboard/state';
+import { DashboardModel } from 'app/features/dashboard/state';
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
-import { SaveDashboardModalProxy } from '../../features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
-import { locationUtil } from '@grafana/data';
+import { SaveDashboardModalProxy } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardModalProxy';
+import { defaultQueryParams } from 'app/features/search/reducers/searchQueryReducer';
+import { ContextSrv } from './context_srv';
 
 export class KeybindingSrv {
   helpModal: boolean;
   modalOpen = false;
-  timepickerOpen = false;
 
   /** @ngInject */
   constructor(
@@ -39,8 +38,6 @@ export class KeybindingSrv {
 
     this.setupGlobal();
     appEvents.on(CoreEvents.showModal, () => (this.modalOpen = true));
-    appEvents.on(CoreEvents.timepickerOpen, () => (this.timepickerOpen = true));
-    appEvents.on(CoreEvents.timepickerClosed, () => (this.timepickerOpen = false));
   }
 
   setupGlobal() {
@@ -88,7 +85,7 @@ export class KeybindingSrv {
   }
 
   closeSearch() {
-    const search = _.extend(this.$location.search(), { search: null });
+    const search = _.extend(this.$location.search(), { search: null, ...defaultQueryParams });
     this.$location.search(search);
   }
 
@@ -113,12 +110,6 @@ export class KeybindingSrv {
 
     if (this.modalOpen) {
       this.modalOpen = false;
-      return;
-    }
-
-    if (this.timepickerOpen) {
-      this.$rootScope.appEvent(CoreEvents.closeTimepicker);
-      this.timepickerOpen = false;
       return;
     }
 
@@ -197,7 +188,7 @@ export class KeybindingSrv {
   setupDashboardBindings(scope: IRootScopeService & AppEventEmitter, dashboard: DashboardModel) {
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
-      appEvents.emit(CoreEvents.graphHoverClear);
+      dashboard.events.publish(new LegacyGraphHoverClearEvent());
       dashboard.startRefresh();
     });
 
@@ -228,6 +219,10 @@ export class KeybindingSrv {
 
     // edit panel
     this.bind('e', () => {
+      if (!dashboard.meta.focusPanelId) {
+        return;
+      }
+
       if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
         const search = _.extend(this.$location.search(), { editPanel: dashboard.meta.focusPanelId });
         this.$location.search(search);
@@ -253,7 +248,7 @@ export class KeybindingSrv {
     if (this.contextSrv.hasAccessToExplore()) {
       this.bind('x', async () => {
         if (dashboard.meta.focusPanelId) {
-          const panel = dashboard.getPanelById(dashboard.meta.focusPanelId);
+          const panel = dashboard.getPanelById(dashboard.meta.focusPanelId)!;
           const datasource = await this.datasourceSrv.get(panel.datasource);
           const url = await getExploreUrl({
             panel,
@@ -262,10 +257,12 @@ export class KeybindingSrv {
             datasourceSrv: this.datasourceSrv,
             timeSrv: this.timeSrv,
           });
-          const urlWithoutBase = locationUtil.stripBaseFromUrl(url);
 
-          if (urlWithoutBase) {
-            this.$timeout(() => this.$location.url(urlWithoutBase));
+          if (url) {
+            const urlWithoutBase = locationUtil.stripBaseFromUrl(url);
+            if (urlWithoutBase) {
+              this.$timeout(() => this.$location.url(urlWithoutBase));
+            }
           }
         }
       });
@@ -273,16 +270,20 @@ export class KeybindingSrv {
 
     // delete panel
     this.bind('p r', () => {
-      if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
-        appEvents.emit(CoreEvents.removePanel, dashboard.meta.focusPanelId);
+      const panelId = dashboard.meta.focusPanelId;
+
+      if (panelId && dashboard.canEditPanelById(panelId)) {
+        appEvents.emit(CoreEvents.removePanel, panelId);
         dashboard.meta.focusPanelId = 0;
       }
     });
 
     // duplicate panel
     this.bind('p d', () => {
-      if (dashboard.canEditPanelById(dashboard.meta.focusPanelId)) {
-        const panelIndex = dashboard.getPanelInfoById(dashboard.meta.focusPanelId).index;
+      const panelId = dashboard.meta.focusPanelId;
+
+      if (panelId && dashboard.canEditPanelById(panelId)) {
+        const panelIndex = dashboard.getPanelInfoById(panelId)!.index;
         dashboard.duplicatePanel(dashboard.panels[panelIndex]);
       }
     });
@@ -305,11 +306,11 @@ export class KeybindingSrv {
     // toggle panel legend
     this.bind('p l', () => {
       if (dashboard.meta.focusPanelId) {
-        const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
+        const panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId)!;
+
         if (panelInfo.panel.legend) {
-          const panelRef = dashboard.getPanelById(dashboard.meta.focusPanelId);
-          panelRef.legend.show = !panelRef.legend.show;
-          panelRef.render();
+          panelInfo.panel.legend.show = !panelInfo.panel.legend.show;
+          panelInfo.panel.render();
         }
       }
     });

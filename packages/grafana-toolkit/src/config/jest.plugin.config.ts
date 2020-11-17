@@ -74,6 +74,7 @@ export const jestConfig = (baseDir: string = process.cwd()) => {
         },
       ],
     ],
+    testEnvironment: 'jest-environment-jsdom-fifteen',
     testMatch: [
       '<rootDir>/src/**/__tests__/**/*.{js,jsx,ts,tsx}',
       '<rootDir>/src/**/*.{spec,test,jest}.{js,jsx,ts,tsx}',

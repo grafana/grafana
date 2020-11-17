@@ -49,7 +49,10 @@ describe('<TraceTimelineViewer>', () => {
   let wrapper;
 
   beforeEach(() => {
-    wrapper = shallow(<TraceTimelineViewer {...props} />).dive().dive().dive();
+    wrapper = shallow(<TraceTimelineViewer {...props} />)
+      .dive()
+      .dive()
+      .dive();
   });
 
   it('it does not explode', () => {

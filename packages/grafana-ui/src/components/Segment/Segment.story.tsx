@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { action } from '@storybook/addon-actions';
-import { Segment } from './';
-import { Icon } from '../Icon/Icon';
+import { Segment, Icon } from '@grafana/ui';
 
 const AddButton = (
   <a className="gf-form-label query-part">
@@ -123,6 +122,24 @@ export const CustomLabelField = () => {
     <SegmentFrame options={options}>
       <Segment
         Component={<CustomLabelComponent value={value} />}
+        options={groupedOptions}
+        onChange={({ value }) => {
+          setValue(value);
+          action('Segment value changed')(value);
+        }}
+      />
+    </SegmentFrame>
+  );
+};
+
+export const HtmlAttributes = () => {
+  const [value, setValue] = useState<any>(options[0]);
+  return (
+    <SegmentFrame options={options}>
+      <Segment
+        data-testid="segment-test"
+        id="segment-id"
+        value={value}
         options={groupedOptions}
         onChange={({ value }) => {
           setValue(value);

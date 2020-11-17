@@ -86,7 +86,7 @@ export class ConfigEditor extends PureComponent<Props> {
                   label="Rollup indicator"
                   labelClass={'width-10'}
                   tooltip="Shows up as an info icon in panel headers when data is aggregated"
-                  checked={options.jsonData.rollupIndicatorEnabled}
+                  checked={!!options.jsonData.rollupIndicatorEnabled}
                   onChange={onUpdateDatasourceJsonDataOptionChecked(this.props, 'rollupIndicatorEnabled')}
                 />
               </div>

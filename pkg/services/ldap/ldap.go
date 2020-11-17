@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
+	"net"
+	"strconv"
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
@@ -71,10 +73,10 @@ const UsersMaxRequest = 500
 var (
 
 	// ErrInvalidCredentials is returned if username and password do not match
-	ErrInvalidCredentials = errors.New("Invalid Username or Password")
+	ErrInvalidCredentials = errors.New("invalid username or password")
 
 	// ErrCouldNotFindUser is returned when username hasn't been found (not username+password)
-	ErrCouldNotFindUser = errors.New("Can't find user in LDAP")
+	ErrCouldNotFindUser = errors.New("can't find user in LDAP")
 )
 
 // New creates the new LDAP connection
@@ -110,7 +112,7 @@ func (server *Server) Dial() error {
 		}
 	}
 	for _, host := range strings.Split(server.Config.Host, " ") {
-		address := fmt.Sprintf("%s:%d", host, server.Config.Port)
+		address := net.JoinHostPort(host, strconv.Itoa(server.Config.Port))
 		if server.Config.UseSSL {
 			tlsCfg := &tls.Config{
 				InsecureSkipVerify: server.Config.SkipVerifySSL,
@@ -173,11 +175,12 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 	var authAndBind bool
 
 	// Check if we can use a search user
-	if server.shouldAdminBind() {
+	switch {
+	case server.shouldAdminBind():
 		if err := server.AdminBind(); err != nil {
 			return nil, err
 		}
-	} else if server.shouldSingleBind() {
+	case server.shouldSingleBind():
 		authAndBind = true
 		err = server.UserBind(
 			server.singleBindDN(query.Username),
@@ -186,7 +189,7 @@ func (server *Server) Login(query *models.LoginUserQuery) (
 		if err != nil {
 			return nil, err
 		}
-	} else {
+	default:
 		err := server.Connection.UnauthenticatedBind(server.Config.BindDN)
 		if err != nil {
 			return nil, err
@@ -362,13 +365,12 @@ func (server *Server) getSearchRequest(
 
 	search := ""
 	for _, login := range logins {
-		query := strings.Replace(
+		query := strings.ReplaceAll(
 			server.Config.SearchFilter,
 			"%s", ldap.EscapeFilter(login),
-			-1,
 		)
 
-		search = search + query
+		search += query
 	}
 
 	filter := fmt.Sprintf("(|%s)", search)
@@ -424,6 +426,12 @@ func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserIn
 				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
 			}
 		}
+	}
+
+	// If there are group org mappings configured, but no matching mappings,
+	// the user will not be able to login and will be disabled
+	if len(server.Config.Groups) > 0 && len(extUser.OrgRoles) == 0 {
+		extUser.IsDisabled = true
 	}
 
 	return extUser, nil
@@ -502,10 +510,9 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 			)
 		}
 
-		filter := strings.Replace(
+		filter := strings.ReplaceAll(
 			config.GroupSearchFilter, "%s",
 			ldap.EscapeFilter(filterReplace),
-			-1,
 		)
 
 		server.log.Info("Searching for user's groups", "filter", filter)
@@ -532,13 +539,11 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 
 		if len(groupSearchResult.Entries) > 0 {
 			for _, group := range groupSearchResult.Entries {
-
 				memberOf = append(
 					memberOf,
 					getAttribute(groupIDAttribute, group),
 				)
 			}
-			break
 		}
 	}
 

@@ -24,7 +24,6 @@ func TestDingDingNotifier(t *testing.T) {
 
 			_, err := newDingDingNotifier(model)
 			So(err, ShouldNotBeNil)
-
 		})
 		Convey("settings should trigger incident", func() {
 			json := `{ "url": "https://www.google.com" }`

@@ -26,9 +26,9 @@ const INTERVAL_FACTOR_OPTIONS: Array<SelectableValue<number>> = _.map([1, 2, 3, 
 }));
 
 interface State {
-  legendFormat: string;
+  legendFormat?: string;
   formatOption: SelectableValue<string>;
-  interval: string;
+  interval?: string;
   intervalFactorOption: SelectableValue<number>;
   instant: boolean;
 }
@@ -96,7 +96,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { datasource, query, data } = this.props;
+    const { datasource, query, range, data } = this.props;
     const { formatOption, instant, interval, intervalFactorOption, legendFormat } = this.state;
 
     return (
@@ -104,6 +104,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
         <PromQueryField
           datasource={datasource}
           query={query}
+          range={range}
           onRunQuery={this.onRunQuery}
           onChange={this.onFieldChange}
           history={[]}
@@ -135,7 +136,8 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               tooltip={
                 <>
                   An additional lower limit for the step parameter of the Prometheus query and for the{' '}
-                  <code>$__interval</code> variable. The limit is absolute and not modified by the "Resolution" setting.
+                  <code>$__interval</code> and <code>$__rate_interval</code> variables. The limit is absolute and not
+                  modified by the "Resolution" setting.
                 </>
               }
             >
@@ -155,6 +157,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
             <div className="gf-form-label">Resolution</div>
             <Select
               isSearchable={false}
+              menuPlacement="bottom"
               options={INTERVAL_FACTOR_OPTIONS}
               onChange={this.onIntervalFactorChange}
               value={intervalFactorOption}

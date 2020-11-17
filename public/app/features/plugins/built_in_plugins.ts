@@ -29,16 +29,18 @@ const mssqlPlugin = async () =>
   await import(/* webpackChunkName: "mssqlPlugin" */ 'app/plugins/datasource/mssql/module');
 const testDataDSPlugin = async () =>
   await import(/* webpackChunkName: "testDataDSPlugin" */ 'app/plugins/datasource/testdata/module');
-const stackdriverPlugin = async () =>
-  await import(/* webpackChunkName: "stackdriverPlugin" */ 'app/plugins/datasource/stackdriver/module');
+const cloudMonitoringPlugin = async () =>
+  await import(/* webpackChunkName: "cloudMonitoringPlugin" */ 'app/plugins/datasource/cloud-monitoring/module');
 const azureMonitorPlugin = async () =>
   await import(
     /* webpackChunkName: "azureMonitorPlugin" */ 'app/plugins/datasource/grafana-azure-monitor-datasource/module'
   );
+const tempoPlugin = async () =>
+  await import(/* webpackChunkName: "tempoPlugin" */ 'app/plugins/datasource/tempo/module');
 
 import * as textPanel from 'app/plugins/panel/text/module';
-import * as text2Panel from 'app/plugins/panel/text2/module';
 import * as graph2Panel from 'app/plugins/panel/graph2/module';
+import * as graph3Panel from 'app/plugins/panel/graph3/module';
 import * as graphPanel from 'app/plugins/panel/graph/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
 import * as pluginsListPanel from 'app/plugins/panel/pluginlist/module';
@@ -55,7 +57,7 @@ import * as pieChartPanel from 'app/plugins/panel/piechart/module';
 import * as barGaugePanel from 'app/plugins/panel/bargauge/module';
 import * as logsPanel from 'app/plugins/panel/logs/module';
 import * as newsPanel from 'app/plugins/panel/news/module';
-import * as homeLinksPanel from 'app/plugins/panel/homelinks/module';
+import * as livePanel from 'app/plugins/panel/live/module';
 import * as welcomeBanner from 'app/plugins/panel/welcome/module';
 
 const builtInPlugins: any = {
@@ -75,12 +77,13 @@ const builtInPlugins: any = {
   'app/plugins/datasource/mssql/module': mssqlPlugin,
   'app/plugins/datasource/prometheus/module': prometheusPlugin,
   'app/plugins/datasource/testdata/module': testDataDSPlugin,
-  'app/plugins/datasource/stackdriver/module': stackdriverPlugin,
+  'app/plugins/datasource/cloud-monitoring/module': cloudMonitoringPlugin,
   'app/plugins/datasource/grafana-azure-monitor-datasource/module': azureMonitorPlugin,
+  'app/plugins/datasource/tempo/module': tempoPlugin,
 
   'app/plugins/panel/text/module': textPanel,
-  'app/plugins/panel/text2/module': text2Panel,
   'app/plugins/panel/graph2/module': graph2Panel,
+  'app/plugins/panel/graph3/module': graph3Panel,
   'app/plugins/panel/graph/module': graphPanel,
   'app/plugins/panel/dashlist/module': dashListPanel,
   'app/plugins/panel/pluginlist/module': pluginsListPanel,
@@ -90,6 +93,7 @@ const builtInPlugins: any = {
   'app/plugins/panel/table/module': tablePanel,
   'app/plugins/panel/table-old/module': oldTablePanel,
   'app/plugins/panel/news/module': newsPanel,
+  'app/plugins/panel/live/module': livePanel,
   'app/plugins/panel/singlestat/module': singlestatPanel,
   'app/plugins/panel/stat/module': singlestatPanel2,
   'app/plugins/panel/gettingstarted/module': gettingStartedPanel,
@@ -97,7 +101,6 @@ const builtInPlugins: any = {
   'app/plugins/panel/piechart/module': pieChartPanel,
   'app/plugins/panel/bargauge/module': barGaugePanel,
   'app/plugins/panel/logs/module': logsPanel,
-  'app/plugins/panel/homelinks/module': homeLinksPanel,
   'app/plugins/panel/welcome/module': welcomeBanner,
 };
 

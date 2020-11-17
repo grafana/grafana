@@ -1,6 +1,6 @@
 import { react2AngularDirective } from 'app/core/utils/react2angular';
-import { QueryEditor as StackdriverQueryEditor } from 'app/plugins/datasource/stackdriver/components/QueryEditor';
-import { AnnotationQueryEditor as StackdriverAnnotationQueryEditor } from 'app/plugins/datasource/stackdriver/components/AnnotationQueryEditor';
+import { QueryEditor as CloudMonitoringQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/QueryEditor';
+import { AnnotationQueryEditor as CloudMonitoringAnnotationQueryEditor } from 'app/plugins/datasource/cloud-monitoring/components/AnnotationQueryEditor';
 import { AnnotationQueryEditor as CloudWatchAnnotationQueryEditor } from 'app/plugins/datasource/cloudwatch/components/AnnotationQueryEditor';
 import PageHeader from './components/PageHeader/PageHeader';
 import EmptyListCTA from './components/EmptyListCTA/EmptyListCTA';
@@ -10,15 +10,15 @@ import { MetricSelect } from './components/Select/MetricSelect';
 import AppNotificationList from './components/AppNotifications/AppNotificationList';
 import {
   ColorPicker,
+  DataLinksInlineEditor,
   DataSourceHttpSettings,
   GraphContextMenu,
+  Icon,
+  Spinner,
+  LegacyForms,
   SeriesColorPickerPopoverWithTheme,
   UnitPicker,
-  Icon,
-  LegacyForms,
-  DataLinksInlineEditor,
 } from '@grafana/ui';
-const { SecretFormField } = LegacyForms;
 import { FunctionEditor } from 'app/plugins/datasource/graphite/FunctionEditor';
 import { LokiAnnotationsQueryEditor } from '../plugins/datasource/loki/components/AnnotationsQueryEditor';
 import { HelpModal } from './components/help/HelpModal';
@@ -29,18 +29,20 @@ import {
   SaveDashboardButtonConnected,
 } from '../features/dashboard/components/SaveDashboard/SaveDashboardButton';
 import { VariableEditorContainer } from '../features/variables/editor/VariableEditorContainer';
-import { SearchField, SearchResults, SearchWrapper, SearchResultsFilter } from '../features/search';
+import { SearchField, SearchResults, SearchResultsFilter, SearchWrapper } from '../features/search';
 import { TimePickerSettings } from 'app/features/dashboard/components/DashboardSettings/TimePickerSettings';
+
+const { SecretFormField } = LegacyForms;
 
 export function registerAngularDirectives() {
   react2AngularDirective('footer', Footer, []);
   react2AngularDirective('icon', Icon, [
-    'color',
     'name',
     'size',
     'type',
     ['onClick', { watchDepth: 'reference', wrapApply: true }],
   ]);
+  react2AngularDirective('spinner', Spinner, ['inline']);
   react2AngularDirective('helpModal', HelpModal, []);
   react2AngularDirective('sidemenu', SideMenu, []);
   react2AngularDirective('functionEditor', FunctionEditor, ['func', 'onRemove', 'onMoveLeft', 'onMoveRight']);
@@ -118,7 +120,7 @@ export function registerAngularDirectives() {
     'placeholder',
     ['variables', { watchDepth: 'reference' }],
   ]);
-  react2AngularDirective('stackdriverQueryEditor', StackdriverQueryEditor, [
+  react2AngularDirective('cloudMonitoringQueryEditor', CloudMonitoringQueryEditor, [
     'target',
     'onQueryChange',
     'onExecuteQuery',
@@ -126,7 +128,7 @@ export function registerAngularDirectives() {
     ['datasource', { watchDepth: 'reference' }],
     ['templateSrv', { watchDepth: 'reference' }],
   ]);
-  react2AngularDirective('stackdriverAnnotationQueryEditor', StackdriverAnnotationQueryEditor, [
+  react2AngularDirective('cloudMonitoringAnnotationQueryEditor', CloudMonitoringAnnotationQueryEditor, [
     'target',
     'onQueryChange',
     ['datasource', { watchDepth: 'reference' }],
@@ -200,7 +202,11 @@ export function registerAngularDirectives() {
   ]);
   react2AngularDirective('variableEditorContainer', VariableEditorContainer, []);
   react2AngularDirective('timePickerSettings', TimePickerSettings, [
-    ['getDashboard', { watchDepth: 'reference', wrapApply: true }],
+    'renderCount',
+    'refreshIntervals',
+    'timePickerHidden',
+    'nowDelay',
+    'timezone',
     ['onTimeZoneChange', { watchDepth: 'reference', wrapApply: true }],
     ['onRefreshIntervalChange', { watchDepth: 'reference', wrapApply: true }],
     ['onNowDelayChange', { watchDepth: 'reference', wrapApply: true }],

@@ -45,7 +45,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     }
   `,
   // Wrapper with child selector needed.
-  // When classnames are appplied to the same element as the wrapper, it causes the suggestions to stop working
+  // When classnames are applied to the same element as the wrapper, it causes the suggestions to stop working
   wrapperOverrides: css`
     width: 100%;
     > .slate-query-field__wrapper {
@@ -82,7 +82,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     stateRef.current = { showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange };
 
     // SelectionReference is used to position the variables suggestion relatively to current DOM selection
-    const selectionRef = useMemo(() => new SelectionReference(), [setShowingSuggestions, linkUrl]);
+    const selectionRef = useMemo(() => new SelectionReference(), []);
 
     const onKeyDown = React.useCallback((event: KeyboardEvent, next: () => any) => {
       if (!stateRef.current.showingSuggestions) {

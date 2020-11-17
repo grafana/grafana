@@ -15,6 +15,7 @@ module.exports = async baseConfig => {
     // @todo: https://github.com/cypress-io/cypress/issues/6406
     const jsonReporter = require.resolve('@mochajs/json-file-reporter');
 
+    // @todo `baseUrl: env.CYPRESS_BASEURL`
     const projectConfig = {
       fixturesFolder: `${CWD}/cypress/fixtures`,
       integrationFolder: `${CWD}/cypress/integration`,

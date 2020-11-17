@@ -1,11 +1,13 @@
 import React from 'react';
-import { RefreshPicker } from '@grafana/ui';
+import { RefreshPicker, defaultIntervals } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import memoizeOne from 'memoize-one';
 import { css } from 'emotion';
 import classNames from 'classnames';
 
 import { ResponsiveButton } from './ResponsiveButton';
+
+import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 const getStyles = memoizeOne(() => {
   return {
@@ -18,7 +20,7 @@ const getStyles = memoizeOne(() => {
   };
 });
 
-type Props = {
+export type Props = {
   splitted: boolean;
   loading: boolean;
   isLive: boolean;
@@ -31,6 +33,7 @@ type Props = {
 export function RunButton(props: Props) {
   const { splitted, loading, onRun, onChangeRefreshInterval, refreshInterval, showDropdown, isLive } = props;
   const styles = getStyles();
+  const intervals = getTimeSrv().getValidIntervals(defaultIntervals);
 
   const runButton = (
     <ResponsiveButton
@@ -43,7 +46,7 @@ export function RunButton(props: Props) {
         'btn--radius-right-0': showDropdown,
       })}
       icon={loading ? 'fa fa-spinner' : 'sync'}
-      iconClassName={loading && ' fa-spin run-icon'}
+      iconClassName={loading ? ' fa-spin' : undefined}
       aria-label={selectors.pages.Explore.General.runButton}
     />
   );
@@ -57,6 +60,7 @@ export function RunButton(props: Props) {
           styles.selectButtonOverride
         }`}
         refreshButton={runButton}
+        intervals={intervals}
       />
     );
   }

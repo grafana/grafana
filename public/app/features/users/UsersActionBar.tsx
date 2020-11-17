@@ -41,7 +41,7 @@ export class UsersActionBar extends PureComponent<Props> {
             inputClassName="gf-form-input width-20"
             value={searchQuery}
             onChange={setUsersSearchQuery}
-            placeholder="Search user by login,email or name"
+            placeholder="Search user by login, email or name"
           />
           {pendingInvitesCount > 0 && (
             <div style={{ marginLeft: '1rem' }}>

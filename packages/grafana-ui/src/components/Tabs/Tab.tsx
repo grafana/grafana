@@ -11,35 +11,47 @@ import { Counter } from './Counter';
 export interface TabProps extends HTMLProps<HTMLLIElement> {
   label: string;
   active?: boolean;
+  /** When provided, it is possible to use the tab as a hyperlink. Use in cases where the tabs update location. */
+  href?: string;
   icon?: IconName;
-  onChangeTab: () => void;
-  counter?: number;
+  onChangeTab?: (event?: React.MouseEvent<HTMLLIElement>) => void;
+  /** A number rendered next to the text. Usually used to display the number of items in a tab's view. */
+  counter?: number | null;
 }
 
 export const Tab = React.forwardRef<HTMLLIElement, TabProps>(
-  ({ label, active, icon, onChangeTab, counter, className, ...otherProps }, ref) => {
+  ({ label, active, icon, onChangeTab, counter, className, href, ...otherProps }, ref) => {
     const theme = useTheme();
     const tabsStyles = getTabStyles(theme);
+    const content = () => (
+      <>
+        {icon && <Icon name={icon} />}
+        {label}
+        {typeof counter === 'number' && <Counter value={counter} />}
+      </>
+    );
 
     return (
       <li
         {...otherProps}
-        className={cx(tabsStyles.tabItem, active && tabsStyles.activeStyle)}
-        onClick={() => {
-          if (!active) {
-            onChangeTab();
-          }
-        }}
+        className={cx(!href && tabsStyles.padding, tabsStyles.tabItem, active && tabsStyles.activeStyle)}
+        onClick={onChangeTab}
         aria-label={otherProps['aria-label'] || selectors.components.Tab.title(label)}
         ref={ref}
       >
-        {icon && <Icon name={icon} />}
-        {label}
-        {typeof counter === 'number' && <Counter value={counter} />}
+        {href ? (
+          <a href={href} className={tabsStyles.padding}>
+            {content()}
+          </a>
+        ) : (
+          <>{content()}</>
+        )}
       </li>
     );
   }
 );
+
+Tab.displayName = 'Tab';
 
 const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
   const colors = theme.colors;
@@ -47,7 +59,6 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     tabItem: css`
       list-style: none;
-      padding: 11px 15px 9px;
       margin-right: ${theme.spacing.md};
       position: relative;
       display: block;
@@ -61,10 +72,17 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
         margin-right: ${theme.spacing.sm};
       }
 
+      a {
+        display: block;
+        height: 100%;
+      }
       &:hover,
       &:focus {
         color: ${colors.linkHover};
       }
+    `,
+    padding: css`
+      padding: 11px 15px 9px;
     `,
     activeStyle: css`
       label: activeTabStyle;
@@ -72,7 +90,6 @@ const getTabStyles = stylesFactory((theme: GrafanaTheme) => {
       background: ${colors.bodyBg};
       color: ${colors.link};
       overflow: hidden;
-      cursor: default;
 
       &::before {
         display: block;

@@ -25,9 +25,9 @@ Often reference topics are linked from *task* topics, because they contain infor
 
 Lists of commands or parameters are often organized in reference topics. The information you need to present will dictate the format.
 
-* They might
-* be in
-* unordered lists.
+- They might
+- be in
+- unordered lists.
 
 [Configuration](https://grafana.com/docs/grafana/latest/installation/configuration/) is an example of lists.
 

@@ -4,6 +4,7 @@ export const Components = {
   DataSource: {
     TestData: {
       QueryTab: {
+        scenarioSelectContainer: 'Test Data Query scenario select container',
         scenarioSelect: 'Test Data Query scenario select',
         max: 'TestData max',
         min: 'TestData min',
@@ -32,6 +33,9 @@ export const Components = {
         xAxis: {
           labels: () => 'div.flot-x-axis > div.flot-tick-label',
         },
+      },
+      BarGauge: {
+        value: 'Bar gauge value',
       },
     },
   },
@@ -95,12 +99,18 @@ export const Components = {
   AlertTab: {
     content: 'Alert editor tab content',
   },
+  Alert: {
+    alert: (severity: string) => `Alert ${severity}`,
+  },
   TransformTab: {
     content: 'Transform editor tab content',
-    newTransform: (title: string) => `New transform ${title}`,
+    newTransform: (name: string) => `New transform ${name}`,
+    transformationEditor: (name: string) => `Transformation editor ${name}`,
+    transformationEditorDebugger: (name: string) => `Transformation editor debugger ${name}`,
   },
   Transforms: {
     Reduce: {
+      modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
     },
   },
@@ -138,4 +148,16 @@ export const Components = {
     container: 'Time zone picker select container',
   },
   QueryField: { container: 'Query field' },
+  ValuePicker: {
+    select: (name: string) => `Value picker select ${name}`,
+  },
+  Search: {
+    section: 'Search section',
+    items: 'Search items',
+  },
+  DashboardLinks: {
+    container: 'Dashboard link container',
+    dropDown: 'Dashboard link dropdown',
+    link: 'Dashboard link',
+  },
 };

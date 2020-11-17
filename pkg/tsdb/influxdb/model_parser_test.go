@@ -11,7 +11,6 @@ import (
 
 func TestInfluxdbQueryParser(t *testing.T) {
 	Convey("Influxdb query parser", t, func() {
-
 		parser := &InfluxdbQueryParser{}
 		dsInfo := &models.DataSource{
 			JsonData: simplejson.New(),

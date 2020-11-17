@@ -1,10 +1,12 @@
 import React from 'react';
 import { shallow } from 'enzyme';
+import { render } from '@testing-library/react';
 import { TraceView } from './TraceView';
-import { SpanData, TraceData, TracePageHeader, TraceTimelineViewer } from '@jaegertracing/jaeger-ui-components';
+import { TracePageHeader, TraceTimelineViewer } from '@jaegertracing/jaeger-ui-components';
+import { TraceSpanData, TraceData } from '@grafana/data';
 
 function renderTraceView() {
-  const wrapper = shallow(<TraceView trace={response} />);
+  const wrapper = shallow(<TraceView trace={response} splitOpenFn={() => {}} />);
   return {
     timeline: wrapper.find(TraceTimelineViewer),
     header: wrapper.find(TracePageHeader),
@@ -17,6 +19,13 @@ describe('TraceView', () => {
     const { timeline, header } = renderTraceView();
     expect(timeline).toHaveLength(1);
     expect(header).toHaveLength(1);
+  });
+
+  it('does not render anything on missing trace', () => {
+    // Simulating Explore's access to empty response data
+    const trace = [][0];
+    const { container } = render(<TraceView trace={trace} splitOpenFn={() => {}} />);
+    expect(container.hasChildNodes()).toBeFalsy();
   });
 
   it('toggles detailState', () => {
@@ -97,7 +106,7 @@ describe('TraceView', () => {
     header.props().onSearchValueChange('HTTP POST - api_prom_push');
 
     const timeline = wrapper.find(TraceTimelineViewer);
-    expect(timeline.props().findMatchesIDs.has('1ed38015486087ca')).toBeTruthy();
+    expect(timeline.props().findMatchesIDs?.has('1ed38015486087ca')).toBeTruthy();
   });
 
   it('change viewRange', () => {
@@ -122,7 +131,7 @@ describe('TraceView', () => {
   });
 });
 
-const response: TraceData & { spans: SpanData[] } = {
+const response: TraceData & { spans: TraceSpanData[] } = {
   traceID: '1ed38015486087ca',
   spans: [
     {

@@ -15,6 +15,7 @@ export class ElasticQueryCtrl extends QueryCtrl {
 
   esVersion: any;
   rawQueryOld: string;
+  targetMetricsOld: string;
 
   /** @ngInject */
   constructor(
@@ -51,12 +52,17 @@ export class ElasticQueryCtrl extends QueryCtrl {
   }
 
   queryUpdated() {
-    const newJson = angular.toJson(this.datasource.queryBuilder.build(this.target), true);
-    if (this.rawQueryOld && newJson !== this.rawQueryOld) {
+    const newJsonTargetMetrics = angular.toJson(this.target.metrics);
+    const newJsonRawQuery = angular.toJson(this.datasource.queryBuilder.build(this.target), true);
+    if (
+      (this.rawQueryOld && newJsonRawQuery !== this.rawQueryOld) ||
+      (this.targetMetricsOld && newJsonTargetMetrics !== this.targetMetricsOld)
+    ) {
       this.refresh();
     }
 
-    this.rawQueryOld = newJson;
+    this.rawQueryOld = newJsonRawQuery;
+    this.targetMetricsOld = newJsonTargetMetrics;
     this.$rootScope.appEvent(CoreEvents.elasticQueryUpdated);
   }
 

@@ -1,7 +1,6 @@
 // Library
 import React, { PureComponent, CSSProperties, ReactNode } from 'react';
 import tinycolor from 'tinycolor2';
-import * as d3 from 'd3-scale-chromatic';
 import {
   TimeSeriesValue,
   DisplayValue,
@@ -11,14 +10,17 @@ import {
   ThresholdsMode,
   DisplayProcessor,
   FieldConfig,
-  FieldColorMode,
+  FieldColorModeId,
+  getFieldColorMode,
+  getColorForTheme,
+  FALLBACK_COLOR,
 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
-// Compontents
+// Components
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
 
 // Utils
-import { getColorFromHexRgbOrName } from '@grafana/data';
 import { measureText, calculateFontSize } from '../../utils/measureText';
 
 // Types
@@ -115,7 +117,11 @@ export class BarGauge extends PureComponent<Props> {
 
     return (
       <div style={styles.wrapper}>
-        <FormattedValueDisplay className="bar-gauge__value" value={value} style={styles.value} />
+        <FormattedValueDisplay
+          aria-label={selectors.components.Panels.Visualization.BarGauge.value}
+          value={value}
+          style={styles.value}
+        />
         {showUnfilled && <div style={styles.emptyBar} />}
         <div style={styles.bar} />
       </div>
@@ -126,8 +132,8 @@ export class BarGauge extends PureComponent<Props> {
     const { value, display } = this.props;
     if (positionValue === null) {
       return {
-        background: 'gray',
-        border: 'gray',
+        background: FALLBACK_COLOR,
+        border: FALLBACK_COLOR,
       };
     }
 
@@ -160,8 +166,8 @@ export class BarGauge extends PureComponent<Props> {
     }
 
     return {
-      background: 'gray',
-      border: 'gray',
+      background: FALLBACK_COLOR,
+      border: FALLBACK_COLOR,
     };
   }
 
@@ -235,7 +241,11 @@ export class BarGauge extends PureComponent<Props> {
     return (
       <div style={containerStyles}>
         {cells}
-        <FormattedValueDisplay className="bar-gauge__value" value={value} style={valueStyles} />
+        <FormattedValueDisplay
+          aria-label={selectors.components.Panels.Visualization.BarGauge.value}
+          value={value}
+          style={valueStyles}
+        />
       </div>
     );
   }
@@ -503,44 +513,21 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
  * Only exported to for unit test
  */
 export function getBarGradient(props: Props, maxSize: number): string {
-  const { field, value, orientation } = props;
+  const { field, value, orientation, theme } = props;
   const cssDirection = isVertical(orientation) ? '0deg' : '90deg';
   const minValue = field.min!;
   const maxValue = field.max!;
 
   let gradient = '';
   let lastpos = 0;
+  let mode = getFieldColorMode(field.color?.mode);
 
-  if (field.color && field.color.mode === FieldColorMode.Scheme) {
-    const schemeSet = (d3 as any)[`scheme${field.color.schemeName}`] as any[];
-    if (!schemeSet) {
-      // Error: unknown scheme
-      const color = '#F00';
-      gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
-      gradient += ` ${maxSize}px, ${color}`;
-      return gradient + ')';
-    }
-    // Get the scheme with as many steps as possible
-    const scheme = schemeSet[schemeSet.length - 1] as string[];
-    for (let i = 0; i < scheme.length; i++) {
-      const color = scheme[i];
-      const valuePercent = i / (scheme.length - 1);
-      const pos = valuePercent * maxSize;
-      const offset = Math.round(pos - (pos - lastpos) / 2);
-
-      if (gradient === '') {
-        gradient = `linear-gradient(${cssDirection}, ${color}, ${color}`;
-      } else {
-        lastpos = pos;
-        gradient += ` ${offset}px, ${color}`;
-      }
-    }
-  } else {
+  if (mode.id === FieldColorModeId.Thresholds) {
     const thresholds = field.thresholds!;
 
     for (let i = 0; i < thresholds.steps.length; i++) {
       const threshold = thresholds.steps[i];
-      const color = getColorFromHexRgbOrName(threshold.color);
+      const color = getColorForTheme(threshold.color, props.theme);
       const valuePercent = getValuePercent(threshold.value, minValue, maxValue);
       const pos = valuePercent * maxSize;
       const offset = Math.round(pos - (pos - lastpos) / 2);
@@ -554,20 +541,39 @@ export function getBarGradient(props: Props, maxSize: number): string {
         gradient += ` ${offset}px, ${color}`;
       }
     }
+
+    return gradient + ')';
   }
 
-  return gradient + ')';
+  if (mode.isContinuous && mode.colors) {
+    const scheme = mode.colors.map(item => getColorForTheme(item, theme));
+    for (let i = 0; i < scheme.length; i++) {
+      const color = scheme[i];
+
+      if (gradient === '') {
+        gradient = `linear-gradient(${cssDirection}, ${color} 0px`;
+      } else {
+        const valuePercent = i / (scheme.length - 1);
+        const pos = valuePercent * maxSize;
+        gradient += `, ${color} ${pos}px`;
+      }
+    }
+    return gradient + ')';
+  }
+
+  return value.color ?? FALLBACK_COLOR;
 }
 
 /**
  * Only exported to for unit test
  */
 export function getValueColor(props: Props): string {
-  const { theme, value } = props;
+  const { value } = props;
   if (value.color) {
     return value.color;
   }
-  return getColorFromHexRgbOrName('gray', theme.type);
+
+  return FALLBACK_COLOR;
 }
 
 function getValueStyles(
@@ -578,7 +584,7 @@ function getValueStyles(
   orientation: VizOrientation
 ): CSSProperties {
   const styles: CSSProperties = {
-    color: color,
+    color,
     height: `${height}px`,
     width: `${width}px`,
     display: 'flex',
@@ -605,9 +611,6 @@ function getValueStyles(
     styles.paddingRight = `${VALUE_LEFT_PADDING}px`;
     // Need to remove the left padding from the text width constraints
     textWidth -= VALUE_LEFT_PADDING;
-
-    // adjust width of title box
-    styles.width = measureText(formattedValueString, styles.fontSize).width + VALUE_LEFT_PADDING * 2;
   }
 
   return styles;

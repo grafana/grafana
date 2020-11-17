@@ -1,16 +1,18 @@
-import { DataFrame, DataTransformerInfo, Vector, FieldType, Field, NullValueMode } from '../../types';
+import { map } from 'rxjs/operators';
+
+import { DataFrame, DataTransformerInfo, Field, FieldType, NullValueMode, Vector } from '../../types';
 import { DataTransformerID } from './ids';
-import { ReducerID, fieldReducers } from '../fieldReducer';
+import { doStandardCalcs, fieldReducers, ReducerID } from '../fieldReducer';
 import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 import { RowVector } from '../../vector/RowVector';
 import { ArrayVector, BinaryOperationVector, ConstantVector } from '../../vector';
-import { doStandardCalcs } from '../fieldReducer';
 import { getTimeField } from '../../dataframe/processDataFrame';
 import defaults from 'lodash/defaults';
 import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators';
 import { ensureColumnsTransformer } from './ensureColumns';
 import { getFieldDisplayName } from '../../field';
+import { noopTransformer } from './noop';
 
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
@@ -68,56 +70,60 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
       reducer: ReducerID.sum,
     },
   },
-  transformer: options => (data: DataFrame[]) => {
-    if (options && options.timeSeries !== false) {
-      data = ensureColumnsTransformer.transformer(null)(data);
-    }
+  operator: options => outerSource => {
+    const operator =
+      options && options.timeSeries !== false ? ensureColumnsTransformer.operator(null) : noopTransformer.operator({});
 
-    const mode = options.mode ?? CalculateFieldMode.ReduceRow;
-    let creator: ValuesCreator | undefined = undefined;
+    return outerSource.pipe(
+      operator,
+      map(data => {
+        const mode = options.mode ?? CalculateFieldMode.ReduceRow;
+        let creator: ValuesCreator | undefined = undefined;
 
-    if (mode === CalculateFieldMode.ReduceRow) {
-      creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
-    } else if (mode === CalculateFieldMode.BinaryOperation) {
-      creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions), data);
-    }
-
-    // Nothing configured
-    if (!creator) {
-      return data;
-    }
-
-    return data.map(frame => {
-      // delegate field creation to the specific function
-      const values = creator!(frame);
-      if (!values) {
-        return frame;
-      }
-
-      const field = {
-        name: getNameFromOptions(options),
-        type: FieldType.number,
-        config: {},
-        values,
-      };
-      let fields: Field[] = [];
-
-      // Replace all fields with the single field
-      if (options.replaceFields) {
-        const { timeField } = getTimeField(frame);
-        if (timeField && options.timeSeries !== false) {
-          fields = [timeField, field];
-        } else {
-          fields = [field];
+        if (mode === CalculateFieldMode.ReduceRow) {
+          creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
+        } else if (mode === CalculateFieldMode.BinaryOperation) {
+          creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions), data);
         }
-      } else {
-        fields = [...frame.fields, field];
-      }
-      return {
-        ...frame,
-        fields,
-      };
-    });
+
+        // Nothing configured
+        if (!creator) {
+          return data;
+        }
+
+        return data.map(frame => {
+          // delegate field creation to the specific function
+          const values = creator!(frame);
+          if (!values) {
+            return frame;
+          }
+
+          const field = {
+            name: getNameFromOptions(options),
+            type: FieldType.number,
+            config: {},
+            values,
+          };
+          let fields: Field[] = [];
+
+          // Replace all fields with the single field
+          if (options.replaceFields) {
+            const { timeField } = getTimeField(frame);
+            if (timeField && options.timeSeries !== false) {
+              fields = [timeField, field];
+            } else {
+              fields = [field];
+            }
+          } else {
+            fields = [...frame.fields, field];
+          }
+          return {
+            ...frame,
+            fields,
+          };
+        });
+      })
+    );
   },
 };
 

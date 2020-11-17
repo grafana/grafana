@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Span } from '@jaegertracing/jaeger-ui-components';
+import { TraceSpan } from '@grafana/data';
 
 /**
  * Children state means whether spans are collapsed or not. Also provides some functions to manipulate that state.
@@ -8,7 +8,7 @@ export function useChildrenState() {
   const [childrenHiddenIDs, setChildrenHiddenIDs] = useState(new Set<string>());
 
   const expandOne = useCallback(
-    function expandOne(spans: Span[]) {
+    function expandOne(spans: TraceSpan[]) {
       if (childrenHiddenIDs.size === 0) {
         return;
       }
@@ -31,11 +31,11 @@ export function useChildrenState() {
   );
 
   const collapseOne = useCallback(
-    function collapseOne(spans: Span[]) {
+    function collapseOne(spans: TraceSpan[]) {
       if (shouldDisableCollapse(spans, childrenHiddenIDs)) {
         return;
       }
-      let nearestCollapsedAncestor: Span | undefined;
+      let nearestCollapsedAncestor: TraceSpan | undefined;
       const newChildrenHiddenIDs = spans.reduce((res, curSpan) => {
         if (nearestCollapsedAncestor && curSpan.depth <= nearestCollapsedAncestor.depth) {
           res.add(nearestCollapsedAncestor.spanID);
@@ -61,7 +61,7 @@ export function useChildrenState() {
   }, []);
 
   const collapseAll = useCallback(
-    function collapseAll(spans: Span[]) {
+    function collapseAll(spans: TraceSpan[]) {
       if (shouldDisableCollapse(spans, childrenHiddenIDs)) {
         return;
       }
@@ -100,7 +100,7 @@ export function useChildrenState() {
   };
 }
 
-function shouldDisableCollapse(allSpans: Span[], hiddenSpansIds: Set<string>) {
+function shouldDisableCollapse(allSpans: TraceSpan[], hiddenSpansIds: Set<string>) {
   const allParentSpans = allSpans.filter(s => s.hasChildren);
   return allParentSpans.length === hiddenSpansIds.size;
 }

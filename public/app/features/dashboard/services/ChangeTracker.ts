@@ -112,6 +112,7 @@ export class ChangeTracker {
     dash.time = 0;
     dash.refresh = 0;
     dash.schemaVersion = 0;
+    dash.timezone = 0;
 
     // ignore iteration property
     delete dash.iteration;
@@ -122,7 +123,7 @@ export class ChangeTracker {
       }
 
       // remove scopedVars
-      panel.scopedVars = null;
+      panel.scopedVars = undefined;
 
       // ignore panel legend sort
       if (panel.legend) {

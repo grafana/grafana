@@ -7,41 +7,42 @@ import (
 
 	"github.com/VividCortex/mysqlerr"
 	"github.com/go-sql-driver/mysql"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"xorm.io/xorm"
 )
 
-type Mysql struct {
+type MySQLDialect struct {
 	BaseDialect
 }
 
-func NewMysqlDialect(engine *xorm.Engine) *Mysql {
-	d := Mysql{}
+func NewMysqlDialect(engine *xorm.Engine) Dialect {
+	d := MySQLDialect{}
 	d.BaseDialect.dialect = &d
 	d.BaseDialect.engine = engine
-	d.BaseDialect.driverName = MYSQL
+	d.BaseDialect.driverName = MySQL
 	return &d
 }
 
-func (db *Mysql) SupportEngine() bool {
+func (db *MySQLDialect) SupportEngine() bool {
 	return true
 }
 
-func (db *Mysql) Quote(name string) string {
+func (db *MySQLDialect) Quote(name string) string {
 	return "`" + name + "`"
 }
 
-func (db *Mysql) AutoIncrStr() string {
+func (db *MySQLDialect) AutoIncrStr() string {
 	return "AUTO_INCREMENT"
 }
 
-func (db *Mysql) BooleanStr(value bool) string {
+func (db *MySQLDialect) BooleanStr(value bool) string {
 	if value {
 		return "1"
 	}
 	return "0"
 }
 
-func (db *Mysql) SqlType(c *Column) string {
+func (db *MySQLDialect) SQLType(c *Column) string {
 	var res string
 	switch c.Type {
 	case DB_Bool:
@@ -90,7 +91,7 @@ func (db *Mysql) SqlType(c *Column) string {
 	return res
 }
 
-func (db *Mysql) UpdateTableSql(tableName string, columns []*Column) string {
+func (db *MySQLDialect) UpdateTableSQL(tableName string, columns []*Column) string {
 	var statements = []string{}
 
 	statements = append(statements, "DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
@@ -102,39 +103,72 @@ func (db *Mysql) UpdateTableSql(tableName string, columns []*Column) string {
 	return "ALTER TABLE " + db.Quote(tableName) + " " + strings.Join(statements, ", ") + ";"
 }
 
-func (db *Mysql) IndexCheckSql(tableName, indexName string) (string, []interface{}) {
+func (db *MySQLDialect) IndexCheckSQL(tableName, indexName string) (string, []interface{}) {
 	args := []interface{}{tableName, indexName}
 	sql := "SELECT 1 FROM " + db.Quote("INFORMATION_SCHEMA") + "." + db.Quote("STATISTICS") + " WHERE " + db.Quote("TABLE_SCHEMA") + " = DATABASE() AND " + db.Quote("TABLE_NAME") + "=? AND " + db.Quote("INDEX_NAME") + "=?"
 	return sql, args
 }
 
-func (db *Mysql) ColumnCheckSql(tableName, columnName string) (string, []interface{}) {
+func (db *MySQLDialect) ColumnCheckSQL(tableName, columnName string) (string, []interface{}) {
 	args := []interface{}{tableName, columnName}
 	sql := "SELECT 1 FROM " + db.Quote("INFORMATION_SCHEMA") + "." + db.Quote("COLUMNS") + " WHERE " + db.Quote("TABLE_SCHEMA") + " = DATABASE() AND " + db.Quote("TABLE_NAME") + "=? AND " + db.Quote("COLUMN_NAME") + "=?"
 	return sql, args
 }
 
-func (db *Mysql) CleanDB() error {
-	tables, _ := db.engine.DBMetas()
+func (db *MySQLDialect) CleanDB() error {
+	tables, err := db.engine.DBMetas()
+	if err != nil {
+		return err
+	}
 	sess := db.engine.NewSession()
 	defer sess.Close()
 
 	for _, table := range tables {
 		if _, err := sess.Exec("set foreign_key_checks = 0"); err != nil {
-			return fmt.Errorf("failed to disable foreign key checks")
+			return errutil.Wrap("failed to disable foreign key checks", err)
 		}
 		if _, err := sess.Exec("drop table " + table.Name + " ;"); err != nil {
-			return fmt.Errorf("failed to delete table: %v, err: %v", table.Name, err)
+			return errutil.Wrapf(err, "failed to delete table %q", table.Name)
 		}
 		if _, err := sess.Exec("set foreign_key_checks = 1"); err != nil {
-			return fmt.Errorf("failed to disable foreign key checks")
+			return errutil.Wrap("failed to disable foreign key checks", err)
 		}
 	}
 
 	return nil
 }
 
-func (db *Mysql) isThisError(err error, errcode uint16) bool {
+// TruncateDBTables truncates all the tables.
+// A special case is the dashboard_acl table where we keep the default permissions.
+func (db *MySQLDialect) TruncateDBTables() error {
+	tables, err := db.engine.DBMetas()
+	if err != nil {
+		return err
+	}
+	sess := db.engine.NewSession()
+	defer sess.Close()
+
+	for _, table := range tables {
+		switch table.Name {
+		case "dashboard_acl":
+			// keep default dashboard permissions
+			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", db.Quote(table.Name))); err != nil {
+				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
+			}
+			if _, err := sess.Exec(fmt.Sprintf("ALTER TABLE %v AUTO_INCREMENT = 3;", db.Quote(table.Name))); err != nil {
+				return errutil.Wrapf(err, "failed to reset table %q", table.Name)
+			}
+		default:
+			if _, err := sess.Exec(fmt.Sprintf("TRUNCATE TABLE %v;", db.Quote(table.Name))); err != nil {
+				return errutil.Wrapf(err, "failed to truncate table %q", table.Name)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (db *MySQLDialect) isThisError(err error, errcode uint16) bool {
 	if driverErr, ok := err.(*mysql.MySQLError); ok {
 		if driverErr.Number == errcode {
 			return true
@@ -144,17 +178,17 @@ func (db *Mysql) isThisError(err error, errcode uint16) bool {
 	return false
 }
 
-func (db *Mysql) IsUniqueConstraintViolation(err error) bool {
+func (db *MySQLDialect) IsUniqueConstraintViolation(err error) bool {
 	return db.isThisError(err, mysqlerr.ER_DUP_ENTRY)
 }
 
-func (db *Mysql) ErrorMessage(err error) string {
+func (db *MySQLDialect) ErrorMessage(err error) string {
 	if driverErr, ok := err.(*mysql.MySQLError); ok {
 		return driverErr.Message
 	}
 	return ""
 }
 
-func (db *Mysql) IsDeadlock(err error) bool {
+func (db *MySQLDialect) IsDeadlock(err error) bool {
 	return db.isThisError(err, mysqlerr.ER_LOCK_DEADLOCK)
 }

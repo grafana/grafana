@@ -34,7 +34,10 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 
 			Convey("Should redirect to new dashboard url with a 301 Moved Permanently", func() {
 				So(sc.resp.Code, ShouldEqual, 301)
-				redirectURL, _ := sc.resp.Result().Location()
+				resp := sc.resp.Result()
+				defer resp.Body.Close()
+				redirectURL, err := resp.Location()
+				So(err, ShouldBeNil)
 				So(redirectURL.Path, ShouldEqual, models.GetDashboardUrl(fakeDash.Uid, fakeDash.Slug))
 				So(len(redirectURL.Query()), ShouldEqual, 2)
 			})
@@ -47,11 +50,33 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 
 			Convey("Should redirect to new dashboard url with a 301 Moved Permanently", func() {
 				So(sc.resp.Code, ShouldEqual, 301)
-				redirectURL, _ := sc.resp.Result().Location()
+				resp := sc.resp.Result()
+				defer resp.Body.Close()
+				redirectURL, err := resp.Location()
+				So(err, ShouldBeNil)
 				expectedURL := models.GetDashboardUrl(fakeDash.Uid, fakeDash.Slug)
 				expectedURL = strings.Replace(expectedURL, "/d/", "/d-solo/", 1)
 				So(redirectURL.Path, ShouldEqual, expectedURL)
 				So(len(redirectURL.Query()), ShouldEqual, 2)
+			})
+		})
+	})
+
+	Convey("Given the dashboard legacy edit panel middleware", t, func() {
+		bus.ClearBusHandlers()
+
+		middlewareScenario(t, "GET dashboard by legacy edit url", func(sc *scenarioContext) {
+			sc.m.Get("/d/:uid/:slug", RedirectFromLegacyPanelEditURL(), sc.defaultHandler)
+
+			sc.fakeReqWithParams("GET", "/d/asd/dash?orgId=1&panelId=12&fullscreen&edit", map[string]string{}).exec()
+
+			Convey("Should redirect to new dashboard edit url with a 301 Moved Permanently", func() {
+				So(sc.resp.Code, ShouldEqual, 301)
+				resp := sc.resp.Result()
+				defer resp.Body.Close()
+				redirectURL, err := resp.Location()
+				So(err, ShouldBeNil)
+				So(redirectURL.String(), ShouldEqual, "/d/asd/d/asd/dash?editPanel=12&orgId=1")
 			})
 		})
 	})

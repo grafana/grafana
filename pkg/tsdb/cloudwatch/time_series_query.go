@@ -6,17 +6,19 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/sync/errgroup"
 )
 
-func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryContext *tsdb.TsdbQuery) (*tsdb.Response, error) {
+	plog.Debug("Executing time series query")
 	startTime, err := queryContext.TimeRange.ParseFrom()
 	if err != nil {
-		return nil, err
+		return nil, errutil.Wrap("failed to parse start time", err)
 	}
 	endTime, err := queryContext.TimeRange.ParseTo()
 	if err != nil {
-		return nil, err
+		return nil, errutil.Wrap("failed to parse end time", err)
 	}
 	if !startTime.Before(endTime) {
 		return nil, fmt.Errorf("invalid time range: start time must be before end time")
@@ -50,7 +52,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 				}
 			}()
 
-			client, err := e.getClient(region)
+			client, err := e.getCWClient(region)
 			if err != nil {
 				return err
 			}
@@ -95,7 +97,7 @@ func (e *CloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 			}
 
 			cloudwatchResponses = append(cloudwatchResponses, responses...)
-			res := e.transformQueryResponseToQueryResult(cloudwatchResponses)
+			res := e.transformQueryResponsesToQueryResult(cloudwatchResponses)
 			for _, queryRes := range res {
 				resultChan <- queryRes
 			}

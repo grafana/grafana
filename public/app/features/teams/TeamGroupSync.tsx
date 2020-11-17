@@ -19,7 +19,7 @@ export interface Props {
 
 interface State {
   isAdding: boolean;
-  newGroupId?: string;
+  newGroupId: string;
 }
 
 const headerTooltip = `Sync LDAP or OAuth groups with your Grafana teams.`;

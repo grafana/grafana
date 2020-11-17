@@ -14,7 +14,7 @@ describe('<LogLabels />', () => {
     expect(wrapper.text()).toContain('bar');
     expect(wrapper.text()).toContain('42');
   });
-  it('exlcudes labels with certain names or labels starting with underscore', () => {
+  it('excludes labels with certain names or labels starting with underscore', () => {
     const wrapper = shallow(<LogLabels labels={{ foo: 'bar', level: '42', _private: '13' }} theme={getTheme()} />);
     expect(wrapper.text()).toContain('bar');
     expect(wrapper.text()).not.toContain('42');

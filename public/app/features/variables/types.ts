@@ -1,5 +1,5 @@
-import { Deferred } from '../../core/utils/deferred';
-import { VariableModel as BaseVariableModel } from '@grafana/data';
+import { LoadingState, VariableModel as BaseVariableModel, VariableType } from '@grafana/data';
+import { NEW_VARIABLE_ID } from './state/types';
 
 export enum VariableRefresh {
   never,
@@ -91,11 +91,54 @@ export interface VariableWithOptions extends VariableModel {
   query: string;
 }
 
+export interface DashboardProps {
+  name: string;
+  uid: string;
+  toString: () => string;
+}
+
+export interface DashboardVariableModel extends SystemVariable<DashboardProps> {}
+
+export interface OrgProps {
+  name: string;
+  id: number;
+  toString: () => string;
+}
+
+export interface OrgVariableModel extends SystemVariable<OrgProps> {}
+
+export interface UserProps {
+  login: string;
+  id: number;
+  email?: string;
+  toString: () => string;
+}
+
+export interface UserVariableModel extends SystemVariable<UserProps> {}
+
+export interface SystemVariable<TProps extends { toString: () => string }> extends VariableModel {
+  current: { value: TProps };
+}
+
 export interface VariableModel extends BaseVariableModel {
   id: string;
   global: boolean;
   hide: VariableHide;
   skipUrlSync: boolean;
   index: number;
-  initLock?: Deferred | null;
+  state: LoadingState;
+  error: any | null;
 }
+
+export const initialVariableModelState: VariableModel = {
+  id: NEW_VARIABLE_ID,
+  name: '',
+  label: null,
+  type: ('' as unknown) as VariableType,
+  global: false,
+  index: -1,
+  hide: VariableHide.dontHide,
+  skipUrlSync: false,
+  state: LoadingState.NotStarted,
+  error: null,
+};

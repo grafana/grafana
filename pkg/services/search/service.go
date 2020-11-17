@@ -11,11 +11,7 @@ import (
 )
 
 func init() {
-	registry.Register(&registry.Descriptor{
-		Name:         "SearchService",
-		Instance:     &SearchService{},
-		InitPriority: 20,
-	})
+	registry.RegisterService(&SearchService{})
 }
 
 type Query struct {

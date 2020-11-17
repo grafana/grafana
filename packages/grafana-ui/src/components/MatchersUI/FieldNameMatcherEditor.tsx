@@ -4,7 +4,7 @@ import { FieldMatcherID, fieldMatchers, getFieldDisplayName, SelectableValue, Da
 import { Select } from '../Select/Select';
 
 export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>(props => {
-  const { data, options } = props;
+  const { data, options, onChange: onChangeFromProps } = props;
   const names = useFieldDisplayNames(data);
   const selectOptions = useSelectOptions(names);
 
@@ -13,9 +13,9 @@ export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>(props => {
       if (!selection.value || !names.has(selection.value)) {
         return;
       }
-      return props.onChange(selection.value);
+      return onChangeFromProps(selection.value);
     },
-    [names, props.onChange]
+    [names, onChangeFromProps]
   );
 
   const selectedOption = selectOptions.find(v => v.value === options);
@@ -26,8 +26,9 @@ export const fieldNameMatcherItem: FieldMatcherUIRegistryItem<string> = {
   id: FieldMatcherID.byName,
   component: FieldNameMatcherEditor,
   matcher: fieldMatchers.get(FieldMatcherID.byName),
-  name: 'Filter by field',
-  description: 'Set properties for fields matching the name',
+  name: 'Fields with name',
+  description: 'Set properties for a specific field',
+  optionsToLabel: options => options,
 };
 
 const useFieldDisplayNames = (data: DataFrame[]): Set<string> => {

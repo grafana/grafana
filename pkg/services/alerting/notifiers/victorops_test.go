@@ -10,7 +10,6 @@ import (
 
 func TestVictoropsNotifier(t *testing.T) {
 	Convey("Victorops notifier tests", t, func() {
-
 		Convey("Parsing alert notification from settings", func() {
 			Convey("empty settings should return error", func() {
 				json := `{ }`

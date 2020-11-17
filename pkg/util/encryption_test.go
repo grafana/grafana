@@ -3,29 +3,28 @@ package util
 import (
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEncryption(t *testing.T) {
-
-	Convey("When getting encryption key", t, func() {
-
+	t.Run("getting encryption key", func(t *testing.T) {
 		key, err := encryptionKeyToBytes("secret", "salt")
-		So(err, ShouldBeNil)
-		So(len(key), ShouldEqual, 32)
+		require.NoError(t, err)
+		assert.Len(t, key, 32)
 
 		key, err = encryptionKeyToBytes("a very long secret key that is larger then 32bytes", "salt")
-		So(err, ShouldBeNil)
-		So(len(key), ShouldEqual, 32)
+		require.NoError(t, err)
+		assert.Len(t, key, 32)
 	})
 
-	Convey("When decrypting basic payload", t, func() {
-		encrypted, encryptErr := Encrypt([]byte("grafana"), "1234")
-		decrypted, decryptErr := Decrypt(encrypted, "1234")
+	t.Run("decrypting basic payload", func(t *testing.T) {
+		encrypted, err := Encrypt([]byte("grafana"), "1234")
+		require.NoError(t, err)
 
-		So(encryptErr, ShouldBeNil)
-		So(decryptErr, ShouldBeNil)
-		So(string(decrypted), ShouldEqual, "grafana")
+		decrypted, err := Decrypt(encrypted, "1234")
+		require.NoError(t, err)
+
+		assert.Equal(t, []byte("grafana"), decrypted)
 	})
-
 }

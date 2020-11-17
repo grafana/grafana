@@ -204,7 +204,7 @@ export class DashboardExporter {
         return newObj;
       })
       .catch(err => {
-        console.log('Export failed:', err);
+        console.error('Export failed:', err);
         return {
           error: err,
         };

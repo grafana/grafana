@@ -2,25 +2,28 @@ import InfluxDatasource from '../datasource';
 
 import { TemplateSrvStub } from 'test/specs/helpers';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
+import { of } from 'rxjs';
+import { FetchResponse } from '@grafana/runtime';
+
+//@ts-ignore
+const templateSrv = new TemplateSrvStub();
 
 jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
+  ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
 }));
 
 describe('InfluxDataSource', () => {
   const ctx: any = {
-    //@ts-ignore
-    templateSrv: new TemplateSrvStub(),
     instanceSettings: { url: 'url', name: 'influxDb', jsonData: { httpMode: 'GET' } },
   };
 
-  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+  const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
   beforeEach(() => {
     jest.clearAllMocks();
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
-    ctx.ds = new InfluxDatasource(ctx.instanceSettings, ctx.templateSrv);
+    ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
   });
 
   describe('When issuing metricFindQuery', () => {
@@ -34,12 +37,13 @@ describe('InfluxDataSource', () => {
     let requestQuery: any, requestMethod: any, requestData: any, response: any;
 
     beforeEach(async () => {
-      datasourceRequestMock.mockImplementation((req: any) => {
+      fetchMock.mockImplementation((req: any) => {
         requestMethod = req.method;
         requestQuery = req.params.q;
         requestData = req.data;
-        return Promise.resolve({
+        return of({
           data: {
+            status: 'success',
             results: [
               {
                 series: [
@@ -52,7 +56,7 @@ describe('InfluxDataSource', () => {
               },
             ],
           },
-        });
+        } as FetchResponse);
       });
 
       response = await ctx.ds.metricFindQuery(query, queryOptions);
@@ -95,8 +99,8 @@ describe('InfluxDataSource', () => {
     };
 
     it('throws an error', async () => {
-      datasourceRequestMock.mockImplementation((req: any) => {
-        return Promise.resolve({
+      fetchMock.mockImplementation((req: any) => {
+        return of({
           data: {
             results: [
               {
@@ -104,11 +108,11 @@ describe('InfluxDataSource', () => {
               },
             ],
           },
-        });
+        } as FetchResponse);
       });
 
       try {
-        await ctx.ds.query(queryOptions);
+        await ctx.ds.query(queryOptions).toPromise();
       } catch (err) {
         expect(err.message).toBe('InfluxDB Error: Query timeout');
       }
@@ -117,14 +121,12 @@ describe('InfluxDataSource', () => {
 
   describe('InfluxDataSource in POST query mode', () => {
     const ctx: any = {
-      //@ts-ignore
-      templateSrv: new TemplateSrvStub(),
       instanceSettings: { url: 'url', name: 'influxDb', jsonData: { httpMode: 'POST' } },
     };
 
     beforeEach(() => {
       ctx.instanceSettings.url = '/api/datasources/proxy/1';
-      ctx.ds = new InfluxDatasource(ctx.instanceSettings, ctx.templateSrv);
+      ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
     });
 
     describe('When issuing metricFindQuery', () => {
@@ -133,23 +135,25 @@ describe('InfluxDataSource', () => {
       let requestMethod: any, requestQueryParameter: any, queryEncoded: any, requestQuery: any;
 
       beforeEach(async () => {
-        datasourceRequestMock.mockImplementation((req: any) => {
+        fetchMock.mockImplementation((req: any) => {
           requestMethod = req.method;
           requestQueryParameter = req.params;
           requestQuery = req.data;
-          return Promise.resolve({
-            results: [
-              {
-                series: [
-                  {
-                    name: 'measurement',
-                    columns: ['max'],
-                    values: [[1]],
-                  },
-                ],
-              },
-            ],
-          });
+          return of({
+            data: {
+              results: [
+                {
+                  series: [
+                    {
+                      name: 'measurement',
+                      columns: ['max'],
+                      values: [[1]],
+                    },
+                  ],
+                },
+              ],
+            },
+          } as FetchResponse);
         });
 
         queryEncoded = await ctx.ds.serializeParams({ q: query });

@@ -13,11 +13,11 @@
 // limitations under the License.
 
 import React from 'react';
-import { SpanReference } from '../types/trace';
+import { TraceSpanReference } from '@grafana/data';
 import ExternalLinkContext from './externalLinkContext';
 
 type ReferenceLinkProps = {
-  reference: SpanReference;
+  reference: TraceSpanReference;
   children: React.ReactNode;
   className?: string;
   focusSpan: (spanID: string) => void;

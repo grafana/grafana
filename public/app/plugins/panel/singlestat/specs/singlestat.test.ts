@@ -90,7 +90,7 @@ describe('SingleStatCtrl', () => {
     });
 
     it('Should use series avg as default main value', () => {
-      const name = getFieldDisplayName(ctx.data.field);
+      const name = getFieldDisplayName(ctx.data.field!);
       expect(name).toBe('test.cpu1');
     });
 

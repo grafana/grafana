@@ -77,7 +77,6 @@ func DisableExternalUser(username string) error {
 
 	userInfo := userQuery.Result
 	if !userInfo.IsDisabled {
-
 		ldapLogger.Debug(
 			"Disabling external user",
 			"user",

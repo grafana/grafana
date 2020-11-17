@@ -4,7 +4,7 @@ export class AlertSrv {
   constructor() {}
 
   set() {
-    console.log('old depricated alert srv being used');
+    console.warn('old deprecated alert srv being used');
   }
 }
 

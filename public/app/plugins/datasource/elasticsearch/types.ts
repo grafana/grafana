@@ -3,7 +3,7 @@ import { DataQuery, DataSourceJsonData } from '@grafana/data';
 export interface ElasticsearchOptions extends DataSourceJsonData {
   timeField: string;
   esVersion: number;
-  interval: string;
+  interval?: string;
   timeInterval: string;
   maxConcurrentShardRequests?: number;
   logMessageField?: string;
@@ -16,6 +16,7 @@ export interface ElasticsearchAggregation {
   type: string;
   settings?: any;
   field?: string;
+  pipelineVariables?: Array<{ name?: string; pipelineAgg?: string }>;
 }
 
 export interface ElasticsearchQuery extends DataQuery {
@@ -29,4 +30,5 @@ export interface ElasticsearchQuery extends DataQuery {
 export type DataLinkConfig = {
   field: string;
   url: string;
+  datasourceUid?: string;
 };
