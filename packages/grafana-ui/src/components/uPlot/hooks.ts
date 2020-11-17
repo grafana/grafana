@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { PlotPlugin, PlotSeriesConfig } from './types';
+import { PlotPlugin } from './types';
 import { pluginLog } from './utils';
 import uPlot from 'uplot';
 import { getTimeZoneInfo, TimeZone } from '@grafana/data';
 import { usePlotPluginContext } from './context';
+import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
 export const usePlotPlugins = () => {
   /**
@@ -103,7 +104,7 @@ export const DEFAULT_PLOT_CONFIG = {
   hooks: {},
 };
 
-export const usePlotConfig = (width: number, height: number, timeZone: TimeZone, seriesConfig: PlotSeriesConfig) => {
+export const usePlotConfig = (width: number, height: number, timeZone: TimeZone, configBuilder: UPlotConfigBuilder) => {
   const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
   const [currentConfig, setCurrentConfig] = useState<uPlot.Options>();
 
@@ -132,9 +133,9 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
         hooks: p[1].hooks,
       })),
       tzDate,
-      ...seriesConfig,
+      ...configBuilder.getConfig(),
     });
-  }, [arePluginsReady, plugins, width, height, seriesConfig]);
+  }, [arePluginsReady, plugins, width, height, configBuilder]);
 
   return {
     registerPlugin,

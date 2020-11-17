@@ -1,18 +1,9 @@
 import throttle from 'lodash/throttle';
 import isEqual from 'lodash/isEqual';
 import omit from 'lodash/omit';
-import {
-  DataFrame,
-  dateTimeFormat,
-  FieldType,
-  getTimeField,
-  rangeUtil,
-  RawTimeRange,
-  systemDateFormats,
-} from '@grafana/data';
+import { DataFrame, FieldType, getTimeField, rangeUtil, RawTimeRange } from '@grafana/data';
 import uPlot from 'uplot';
 import { PlotPlugin, PlotProps } from './types';
-import { measureText } from '../../utils';
 
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
 
@@ -167,73 +158,3 @@ export const pluginLog = (id: string, throttle = false, ...t: any[]) => {
   const fn = throttle ? throttledLog : console.log;
   fn(`[Plugin: ${id}]: `, ...t);
 };
-
-/* Minimum grid & tick spacing in CSS pixels */
-export function calculateSpace(
-  self: uPlot,
-  axisIdx: number,
-  scaleMin: number,
-  scaleMax: number,
-  plotDim: number
-): number {
-  const axis = self.axes[axisIdx];
-
-  // For x-axis (bottom) we need bigger spacing between labels
-  if (axis.side === 2) {
-    return 60;
-  }
-
-  return 30;
-}
-
-/** height of x axis or width of y axis in CSS pixels alloted for values, gap & ticks, but excluding axis label */
-export function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
-  const axis = self.axes[axisIdx];
-  if (axis.side === 2) {
-    return 33;
-  }
-
-  if (values === null || !values.length) {
-    return 0;
-  }
-
-  let maxLength = values[0];
-  for (let i = 0; i < values.length; i++) {
-    if (values[i].length > maxLength.length) {
-      maxLength = values[i];
-    }
-  }
-
-  return measureText(maxLength, 12).width - 8;
-}
-
-/** Format time axis ticks */
-export function formatTime(
-  self: uPlot,
-  splits: number[],
-  axisIdx: number,
-  foundSpace: number,
-  foundIncr: number
-): string[] {
-  const timeZone = (self.axes[axisIdx] as any).timeZone;
-  const scale = self.scales.x;
-  const range = (scale?.max ?? 0) - (scale?.min ?? 0);
-  const oneDay = 86400;
-  const oneYear = 31536000;
-
-  let format = systemDateFormats.interval.minute;
-
-  if (foundIncr <= 45) {
-    format = systemDateFormats.interval.second;
-  } else if (foundIncr <= 7200 || range <= oneDay) {
-    format = systemDateFormats.interval.minute;
-  } else if (foundIncr <= 80000) {
-    format = systemDateFormats.interval.hour;
-  } else if (foundIncr <= 2419200 || range <= oneYear) {
-    format = systemDateFormats.interval.day;
-  } else if (foundIncr <= 31536000) {
-    format = systemDateFormats.interval.month;
-  }
-
-  return splits.map(v => dateTimeFormat(v * 1000, { format, timeZone }));
-}

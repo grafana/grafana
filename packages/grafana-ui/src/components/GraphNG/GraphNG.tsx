@@ -16,7 +16,7 @@ import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
 import { GraphLegend } from '../Graph/GraphLegend';
-import { GraphConfigBuilder } from './GraphConfigBuilder';
+import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -48,8 +48,8 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     );
   }
 
-  const currentConfig = useMemo(() => {
-    const builder = new GraphConfigBuilder();
+  const configBuilder = useMemo(() => {
+    const builder = new UPlotConfigBuilder();
 
     let { timeIndex } = getTimeField(alignedData);
 
@@ -130,20 +130,11 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         });
       }
 
-      // if (legend?.isVisible) {
-      //   legendItems.push({
-      //     color: seriesColor,
-      //     label: getFieldDisplayName(field, alignedData),
-      //     isVisible: true,
-      //     yAxis: customConfig?.axis?.side === 1 ? 3 : 1,
-      //   });
-      // }
-
       seriesIdx++;
     }
 
     legendItemsRef.current = legendItems;
-    return builder.getConfig();
+    return builder;
   }, [alignedData, hasLegend]);
 
   let legendElement: React.ReactElement | undefined;
@@ -161,7 +152,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       {(vizWidth: number, vizHeight: number) => (
         <UPlotChart
           data={alignedData}
-          config={currentConfig}
+          config={configBuilder}
           width={vizWidth}
           height={vizHeight}
           timeRange={timeRange}
