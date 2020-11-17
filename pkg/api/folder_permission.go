@@ -89,10 +89,11 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.
 		})
 	}
 
-	cmd.Items, err = g.AddHiddenPermissions(cmd.Items, hs.Cfg)
+	hiddenACL, err := g.GetHiddenACL(hs.Cfg)
 	if err != nil {
 		return Error(500, "Error while retrieving hidden permissions", err)
 	}
+	cmd.Items = append(cmd.Items, hiddenACL...)
 
 	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
 		if err != nil {
