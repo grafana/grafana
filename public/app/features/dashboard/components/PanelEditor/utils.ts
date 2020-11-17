@@ -28,7 +28,7 @@ export function calculatePanelSize(mode: DisplayMode, width: number, height: num
 }
 
 export function supportsDataQuery(plugin: PanelPlugin | undefined): boolean {
-  return plugin?.meta.skipDataQuery === false;
+  return plugin?.meta.skipDataQuery === true;
 }
 
 export const updateDefaultFieldConfigValue = (
