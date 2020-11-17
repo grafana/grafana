@@ -38,6 +38,7 @@ func TestPluginProxy(t *testing.T) {
 		})
 
 		req := getPluginProxiedRequest(
+			t,
 			&models.ReqContext{
 				SignedInUser: &models.SignedInUser{
 					Login: "test_user",
@@ -120,11 +121,32 @@ func TestPluginProxy(t *testing.T) {
 			&setting.Cfg{SendUserHeader: true},
 			route,
 		)
-		header, err := getHeaders(route, 1, "my-app")
-		require.NoError(t, err)
-		assert.Equal(t, "", header.Get("X-Grafana-User"))
 		assert.Equal(t, "https://dynamic.grafana.com", req.URL.String())
 		assert.Equal(t, "{{.JsonData.dynamicUrl}}", route.URL)
+	})
+
+	t.Run("When getting complex templated url", func(t *testing.T) {
+		route := &plugins.AppPluginRoute{
+			URL:    "{{if .JsonData.apiHost}}{{.JsonData.apiHost}}{{else}}https://example.com{{end}}",
+			Method: "GET",
+		}
+
+		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
+			query.Result = &models.PluginSetting{}
+			return nil
+		})
+
+		req := getPluginProxiedRequest(
+			t,
+			&models.ReqContext{
+				SignedInUser: &models.SignedInUser{
+					Login: "test_user",
+				},
+			},
+			&setting.Cfg{SendUserHeader: true},
+			route,
+		)
+		assert.Equal(t, "https://example.com", req.URL.String())
 	})
 }
 
@@ -138,10 +160,9 @@ func getPluginProxiedRequest(t *testing.T, ctx *models.ReqContext, cfg *setting.
 			ReqRole: models.ROLE_EDITOR,
 		}
 	}
-	proxy, err := NewApiPluginProxy(ctx, "", route, "", cfg)
-	require.NoError(t, err)
+	proxy := NewApiPluginProxy(ctx, "", route, "", cfg)
 
-	req, err := http.NewRequest(http.MethodGet, route.URL, nil)
+	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)
 	require.NoError(t, err)
 	proxy.Director(req)
 	return req
