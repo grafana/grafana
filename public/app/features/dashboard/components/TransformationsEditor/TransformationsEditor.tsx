@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Alert,
   Button,
   Container,
   CustomScrollbar,
@@ -10,42 +11,66 @@ import {
   VerticalGroup,
 } from '@grafana/ui';
 import {
+  DataFrame,
   DataTransformerConfig,
+  DocsId,
   GrafanaTheme,
+  PanelData,
   SelectableValue,
   standardTransformersRegistry,
-  transformDataFrame,
-  DataFrame,
-  PanelData,
-  DocsId,
 } from '@grafana/data';
-import { TransformationOperationRow } from './TransformationOperationRow';
 import { Card, CardProps } from '../../../../core/components/Card/Card';
 import { css } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from '../../state';
 import { getDocsLink } from 'app/core/utils/docsLinks';
+import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
+import { TransformationOperationRows } from './TransformationOperationRows';
+import { TransformationsEditorTransformation } from './types';
+import { PanelNotSupported } from '../PanelEditor/PanelNotSupported';
+import { AppNotificationSeverity } from '../../../../types';
 
-interface Props {
+interface TransformationsEditorProps {
   panel: PanelModel;
 }
 
 interface State {
   data: DataFrame[];
-  transformations: DataTransformerConfig[];
+  transformations: TransformationsEditorTransformation[];
 }
 
-export class TransformationsEditor extends React.PureComponent<Props, State> {
+export class TransformationsEditor extends React.PureComponent<TransformationsEditorProps, State> {
   subscription?: Unsubscribable;
 
-  constructor(props: Props) {
+  constructor(props: TransformationsEditorProps) {
     super(props);
+    const transformations = props.panel.transformations || [];
 
+    const ids = this.buildTransformationIds(transformations);
     this.state = {
-      transformations: props.panel.transformations || [],
+      transformations: transformations.map((t, i) => ({
+        transformation: t,
+        id: ids[i],
+      })),
       data: [],
     };
+  }
+
+  buildTransformationIds(transformations: DataTransformerConfig[]) {
+    const transformationCounters: Record<string, number> = {};
+    const transformationIds: string[] = [];
+
+    for (let i = 0; i < transformations.length; i++) {
+      const transformation = transformations[i];
+      if (transformationCounters[transformation.id] === undefined) {
+        transformationCounters[transformation.id] = 0;
+      } else {
+        transformationCounters[transformation.id] += 1;
+      }
+      transformationIds.push(`${transformations[i].id}-${transformationCounters[transformations[i].id]}`);
+    }
+    return transformationIds;
   }
 
   componentDidMount() {
@@ -63,19 +88,37 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
     }
   }
 
-  onChange(transformations: DataTransformerConfig[]) {
-    this.props.panel.setTransformations(transformations);
+  onChange(transformations: TransformationsEditorTransformation[]) {
     this.setState({ transformations });
+    this.props.panel.setTransformations(transformations.map(t => t.transformation));
   }
+
+  // Transformation uid are stored in a name-X form. name is NOT unique hence we need to parse the ids and increase X
+  // for transformations with the same name
+  getTransformationNextId = (name: string) => {
+    const { transformations } = this.state;
+    let nextId = 0;
+    const existingIds = transformations.filter(t => t.id.startsWith(name)).map(t => t.id);
+
+    if (existingIds.length !== 0) {
+      nextId = Math.max(...existingIds.map(i => parseInt(i.match(/\d+/)![0], 10))) + 1;
+    }
+
+    return `${name}-${nextId}`;
+  };
 
   onTransformationAdd = (selectable: SelectableValue<string>) => {
     const { transformations } = this.state;
 
+    const nextId = this.getTransformationNextId(selectable.value!);
     this.onChange([
       ...transformations,
       {
-        id: selectable.value as string,
-        options: {},
+        id: nextId,
+        transformation: {
+          id: selectable.value as string,
+          options: {},
+        },
       },
     ]);
   };
@@ -83,7 +126,7 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
   onTransformationChange = (idx: number, config: DataTransformerConfig) => {
     const { transformations } = this.state;
     const next = Array.from(transformations);
-    next[idx] = config;
+    next[idx].transformation = config;
     this.onChange(next);
   };
 
@@ -122,48 +165,45 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
     );
   };
 
+  onDragEnd = (result: DropResult) => {
+    const { transformations } = this.state;
+
+    if (!result || !result.destination) {
+      return;
+    }
+
+    const startIndex = result.source.index;
+    const endIndex = result.destination.index;
+    if (startIndex === endIndex) {
+      return;
+    }
+    const update = Array.from(transformations);
+    const [removed] = update.splice(startIndex, 1);
+    update.splice(endIndex, 0, removed);
+    this.onChange(update);
+  };
+
   renderTransformationEditors = () => {
     const { data, transformations } = this.state;
 
     return (
-      <>
-        {transformations.map((t, i) => {
-          let editor;
-
-          const transformationUI = standardTransformersRegistry.getIfExists(t.id);
-          if (!transformationUI) {
-            return null;
-          }
-
-          const input = transformDataFrame(transformations.slice(0, i), data);
-          const output = transformDataFrame(transformations.slice(i), input);
-
-          if (transformationUI) {
-            editor = React.createElement(transformationUI.editor, {
-              options: { ...transformationUI.transformation.defaultOptions, ...t.options },
-              input,
-              onChange: (options: any) => {
-                this.onTransformationChange(i, {
-                  id: t.id,
-                  options,
-                });
-              },
-            });
-          }
-
-          return (
-            <TransformationOperationRow
-              key={`${t.id}-${i}`}
-              input={input || []}
-              output={output || []}
-              onRemove={() => this.onTransformationRemove(i)}
-              editor={editor}
-              name={transformationUI ? transformationUI.name : ''}
-              description={transformationUI ? transformationUI.description : ''}
-            />
-          );
-        })}
-      </>
+      <DragDropContext onDragEnd={this.onDragEnd}>
+        <Droppable droppableId="transformations-list" direction="vertical">
+          {provided => {
+            return (
+              <div ref={provided.innerRef} {...provided.droppableProps}>
+                <TransformationOperationRows
+                  configs={transformations}
+                  data={data}
+                  onRemove={this.onTransformationRemove}
+                  onChange={this.onTransformationChange}
+                />
+                {provided.placeholder}
+              </div>
+            );
+          }}
+        </Droppable>
+      </DragDropContext>
     );
   };
 
@@ -202,14 +242,27 @@ export class TransformationsEditor extends React.PureComponent<Props, State> {
   }
 
   render() {
+    const {
+      panel: { alert },
+    } = this.props;
     const { transformations } = this.state;
 
     const hasTransforms = transformations.length > 0;
+
+    if (!hasTransforms && alert) {
+      return <PanelNotSupported message="Transformations can't be used on a panel with existing alerts" />;
+    }
 
     return (
       <CustomScrollbar autoHeightMin="100%">
         <Container padding="md">
           <div aria-label={selectors.components.TransformTab.content}>
+            {hasTransforms && alert ? (
+              <Alert
+                severity={AppNotificationSeverity.Error}
+                title="Transformations can't be used on a panel with alerts"
+              />
+            ) : null}
             {!hasTransforms && this.renderNoAddedTransformsState()}
             {hasTransforms && this.renderTransformationEditors()}
             {hasTransforms && this.renderTransformationSelector()}

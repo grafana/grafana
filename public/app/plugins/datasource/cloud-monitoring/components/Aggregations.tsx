@@ -22,7 +22,7 @@ export const Aggregations: FC<Props> = props => {
   const selected = useSelectedFromOptions(aggOptions, props);
 
   return (
-    <>
+    <div data-testid="aggregations">
       <div className="gf-form-inline">
         <label className="gf-form-label query-keyword width-9">Aggregation</label>
         <Segment
@@ -40,7 +40,7 @@ export const Aggregations: FC<Props> = props => {
             },
           ]}
           placeholder="Select Reducer"
-        ></Segment>
+        />
         <div className="gf-form gf-form--grow">
           <label className="gf-form-label gf-form-label--grow">
             <a onClick={() => setDisplayAdvancedOptions(!displayAdvancedOptions)}>
@@ -52,7 +52,7 @@ export const Aggregations: FC<Props> = props => {
         </div>
       </div>
       {props.children(displayAdvancedOptions)}
-    </>
+    </div>
   );
 };
 

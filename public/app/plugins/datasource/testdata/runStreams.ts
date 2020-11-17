@@ -98,6 +98,7 @@ export function runSignalStream(
       subscriber.next({
         data: [data],
         key: streamId,
+        state: LoadingState.Streaming,
       });
 
       timeoutId = setTimeout(pushNextEvent, speed);
@@ -137,8 +138,8 @@ export function runLogsStream(
     let timeoutId: any = null;
 
     const pushNextEvent = () => {
-      data.values.time.add(Date.now());
-      data.values.line.add(getRandomLine());
+      data.fields[0].values.add(Date.now());
+      data.fields[1].values.add(getRandomLine());
 
       subscriber.next({
         data: [data],

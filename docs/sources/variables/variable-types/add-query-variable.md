@@ -1,9 +1,7 @@
 +++
 title = "Add a query variable"
-type = "docs"
 aliases = ["/docs/grafana/latest/variables/add-query-variable.md"]
-[menu.docs]
-weight = 500
+weight = 100
 +++
 
 # Add a query variable
@@ -14,7 +12,7 @@ Query expressions can contain references to other variables and in effect create
 
 ## Query expressions
 
-Query expressions are different for each data source. For more information, refer to the documentation for your [data source]({{< relref "../../features/datasources/_index.md" >}}).
+Query expressions are different for each data source. For more information, refer to the documentation for your [data source]({{< relref "../../datasources/_index.md" >}}).
 
 ## Enter General options
 
@@ -30,12 +28,12 @@ Query expressions are different for each data source. For more information, refe
 
 ## Enter Query Options
 
-1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source]({{< relref "../../features/datasources/add-a-data-source.md" >}}).
+1. In the **Data source** list, select the target data source for the query. For more information about data sources, refer to [Add a data source]({{< relref "../../datasources/add-a-data-source.md" >}}).
 1. In the **Refresh** list, select when the variable should update options.
    - **Never -** Variables queries are cached and values are not updated. This is fine if the values never change, but problematic if they are dynamic and change a lot.
-   - **On Dashboard Load -** Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized. 
+   - **On Dashboard Load -** Queries the data source every time the dashboard loads. This slows down dashboard loading, because the variable query needs to be completed before dashboard can be initialized.
    - **On Time Range Change -** Queries the data source when the dashboard time range changes. Only use this option if your variable options query contains a time range filter or is dependent on the dashboard time range.
-1. In the **Query** field, enter a query. 
+1. In the **Query** field, enter a query.
    - The query field varies according to your data source. Some data sources have custom query editors.
    - If you need more room in a single input field query editor, then hover your cursor over the lines in the lower right corner of the field and drag downward to expand.
 1. (optional) In the **Regex** field, type a regex expression to filter or capture specific parts of the names returned by your data source query. To see examples, refer to [Filter variables with regex]({{< relref "../filter-variables-with-regex.md" >}}).

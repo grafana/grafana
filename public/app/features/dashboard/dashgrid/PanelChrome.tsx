@@ -25,6 +25,7 @@ import {
   PanelData,
   PanelPlugin,
   FieldConfigSource,
+  PanelPluginMeta,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -51,8 +52,9 @@ export interface State {
 }
 
 export class PanelChrome extends PureComponent<Props, State> {
-  timeSrv: TimeSrv = getTimeSrv();
-  querySubscription: Unsubscribable;
+  readonly timeSrv: TimeSrv = getTimeSrv();
+
+  querySubscription?: Unsubscribable;
 
   constructor(props: Props) {
     super(props);
@@ -72,6 +74,7 @@ export class PanelChrome extends PureComponent<Props, State> {
   componentDidMount() {
     const { panel, dashboard } = this.props;
 
+    // Subscribe to panel events
     panel.events.on(PanelEvents.refresh, this.onRefresh);
     panel.events.on(PanelEvents.render, this.onRender);
 
@@ -238,21 +241,25 @@ export class PanelChrome extends PureComponent<Props, State> {
     });
   };
 
+  shouldSignalRenderingCompleted(loadingState: LoadingState, pluginMeta: PanelPluginMeta) {
+    return loadingState === LoadingState.Done || pluginMeta.skipDataQuery;
+  }
+
   renderPanel(width: number, height: number) {
-    const { panel, plugin } = this.props;
+    const { panel, plugin, dashboard } = this.props;
     const { renderCounter, data, isFirstLoad } = this.state;
     const { theme } = config;
+    const { state: loadingState } = data;
+
+    // do not render component until we have first data
+    if (isFirstLoad && (loadingState === LoadingState.Loading || loadingState === LoadingState.NotStarted)) {
+      return null;
+    }
 
     // This is only done to increase a counter that is used by backend
     // image rendering to know when to capture image
-    const loading = data.state;
-    if (loading === LoadingState.Done) {
+    if (this.shouldSignalRenderingCompleted(loadingState, plugin.meta)) {
       profiler.renderingCompleted();
-    }
-
-    // do not render component until we have first data
-    if (isFirstLoad && (loading === LoadingState.Loading || loading === LoadingState.NotStarted)) {
-      return null;
     }
 
     const PanelComponent = plugin.panel!;
@@ -286,6 +293,7 @@ export class PanelChrome extends PureComponent<Props, State> {
             onOptionsChange={this.onOptionsChange}
             onFieldConfigChange={this.onFieldConfigChange}
             onChangeTimeRange={this.onChangeTimeRange}
+            eventBus={dashboard.events}
           />
         </div>
       </>

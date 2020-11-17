@@ -1,6 +1,6 @@
 // @ts-ignore
 import * as _ from 'lodash';
-import { Task, TaskRunner } from './task';
+import { Task } from './task';
 import GithubClient from '../utils/githubClient';
 import difference from 'lodash/difference';
 import chalk from 'chalk';
@@ -46,9 +46,8 @@ const getPackageChangelog = (packageName: string, issues: any[]) => {
   return markdown;
 };
 
-const changelogTaskRunner: TaskRunner<ChangelogOptions> = useSpinner<ChangelogOptions>(
-  'Generating changelog',
-  async ({ milestone }) => {
+const changelogTaskRunner = ({ milestone }: ChangelogOptions) =>
+  useSpinner('Generating changelog', async () => {
     const githubClient = new GithubClient();
     const client = githubClient.client;
 
@@ -106,8 +105,7 @@ const changelogTaskRunner: TaskRunner<ChangelogOptions> = useSpinner<ChangelogOp
     markdown += getPackageChangelog('grafana-ui', grafanaUiIssues);
 
     console.log(markdown);
-  }
-);
+  });
 
 function getMarkdownLineForIssue(item: any) {
   const githubGrafanaUrl = 'https://github.com/grafana/grafana';

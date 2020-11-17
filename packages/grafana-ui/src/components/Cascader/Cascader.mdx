@@ -1,8 +1,12 @@
-import { Meta, Story, Preview, Props } from '@storybook/addon-docs/blocks';
+import { Meta, Props } from '@storybook/addon-docs/blocks';
 import { Cascader } from './Cascader';
 
-# Cascader with search
-
 <Meta title="MDX|Cascader" component={Cascader} />
+
+# Cascader
+
+The cascader component is a `Select` with a cascading flyout menu. When you have lots of options in your select, they can be hard to navigate from a regular dropdown list. In that case you can use the cascader to organize your options into groups hierarchically. Just like in the `Select` component, the cascader input doubles as a search field to quickly jump to a selection without navigating the list.
+
+You can either use the `Simple` cascader component for an empty input as default state or use the `initialValue` or `allowCustomValue` fields to pre-fill your cascader. Initial value means that one of the options from your cascaded list is pre-selected. Custom value means that apart from existing options from the list, your users can add custom values to the list by typing them in the `Select` input.
 
 <Props of={Cascader}/>

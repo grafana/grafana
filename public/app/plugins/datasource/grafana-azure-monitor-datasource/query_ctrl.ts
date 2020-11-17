@@ -2,11 +2,10 @@ import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
 import TimegrainConverter from './time_grain_converter';
 import './editor/editor_component';
-import kbn from 'app/core/utils/kbn';
 
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 import { auto, IPromise } from 'angular';
-import { DataFrame, PanelEvents } from '@grafana/data';
+import { DataFrame, PanelEvents, rangeUtil } from '@grafana/data';
 import { AzureQueryType, AzureMetricQuery } from './types';
 
 export interface ResultFormat {
@@ -493,7 +492,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     const allowedTimeGrainsMs: number[] = [];
     timeGrains.forEach((tg: any) => {
       if (tg.value !== 'auto') {
-        allowedTimeGrainsMs.push(kbn.intervalToMs(TimegrainConverter.createKbnUnitFromISO8601Duration(tg.value)));
+        allowedTimeGrainsMs.push(rangeUtil.intervalToMs(TimegrainConverter.createKbnUnitFromISO8601Duration(tg.value)));
       }
     });
     return allowedTimeGrainsMs;

@@ -1,0 +1,18 @@
+import { Meta, Preview, Props } from '@storybook/addon-docs/blocks';
+import {Collapse} from "./Collapse";
+
+# Collapse
+
+A content area, which can be horizontally collapsed and expanded. Can be used to hide extra information on the page.
+
+## Usage
+
+```jsx
+const [isOpen, setIsOpen] = useState(false);
+
+<Collapse label="Collapse panel" isOpen={isOpen} onToggle={() => setIsOpen(!isOpen)}>
+  <p>Panel data</p>
+</Collapse>
+```
+
+<Props of={Collapse}/>

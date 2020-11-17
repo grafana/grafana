@@ -1,0 +1,21 @@
+import { Meta, Props } from '@storybook/addon-docs/blocks';
+import { ClipboardButton } from './ClipboardButton';
+
+<Meta title="MDX|ClipboardButton" component={ClipboardButton} />
+
+# ClipboardButton
+
+A wrapper for [clipboard.js](https://github.com/zenorocha/clipboard.js) library that allows copying text to clipboard. The text to be copied should be provided via `getText` prop.
+
+# Usage
+
+```jsx
+<ClipboardButton
+  variant="secondary"
+  getText={() => 'Text to be copied'}
+  onClipboardCopy={() => console.log('text copied')}
+>
+  Copy to clipboard
+</ClipboardButton>
+````
+<Props of={ClipboardButton}/>

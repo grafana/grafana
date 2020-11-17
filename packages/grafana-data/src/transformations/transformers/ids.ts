@@ -10,6 +10,7 @@ export enum DataTransformerID {
   seriesToColumns = 'seriesToColumns',
   seriesToRows = 'seriesToRows',
   merge = 'merge',
+  concatenate = 'concatenate',
   labelsToFields = 'labelsToFields',
   filterFields = 'filterFields',
   filterFieldsByName = 'filterFieldsByName',
@@ -17,4 +18,5 @@ export enum DataTransformerID {
   filterByRefId = 'filterByRefId',
   noop = 'noop',
   ensureColumns = 'ensureColumns',
+  groupBy = 'groupBy',
 }

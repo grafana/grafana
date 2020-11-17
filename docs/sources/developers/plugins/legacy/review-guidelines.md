@@ -1,6 +1,5 @@
 +++
 title = "Legacy review guidelines"
-type = "docs"
 aliases = ["/docs/grafana/latest/plugins/developing/plugin-review-guidelines/"]
 +++
 
@@ -67,7 +66,7 @@ A minimal `plugin.json` file:
 - The `type` field should be either `datasource` `app` or `panel`.
 - The `version` field should be in the form: x.x.x e.g. `1.0.0` or `0.4.1`.
 
-The full file format for the `plugin.json` file is described [here](http://docs.grafana.org/plugins/developing/plugin.json/).
+The full file format for `plugin.json` file is in [plugin.json](http://docs.grafana.org/plugins/developing/plugin.json/).
 
 ## Plugin Language
 
@@ -133,10 +132,9 @@ Below is a minimal example of an editor row with one form group and two fields, 
 Use the `width-x` and `max-width-x` classes to control the width of your labels and input fields. Try to get labels and input fields to line up neatly by having the same width for all the labels in a group and the same width for all inputs in a group if possible.
 
 ## Data Sources
+For more information about data sources, refer to the [basic guide for data sources](http://docs.grafana.org/plugins/developing/datasources/).
 
-A basic guide for data sources can be found [here](http://docs.grafana.org/plugins/developing/datasources/).
-
-### Config Page Guidelines
+### Configuration Page Guidelines
 
 - It should be as easy as possible for a user to configure a URL. If the data source is using the `datasource-http-settings` component, it should use the `suggest-url` attribute to suggest the default URL or a URL that is similar to what it should be (especially important if the URL refers to a REST endpoint that is not common knowledge for most users e.g. `https://yourserver:4000/api/custom-endpoint`).
 
@@ -152,11 +150,11 @@ A basic guide for data sources can be found [here](http://docs.grafana.org/plugi
 
 #### Password Security
 
-If possible, any passwords or secrets should be be saved in the `secureJsonData` blob. To encrypt sensitive data, the Grafana server's proxy feature must be used. The Grafana server has support for token authentication (OAuth) and HTTP Header authentication. If the calls have to be sent directly from the browser to a third-party API, this will not be possible and sensitive data will not be encrypted.
+If possible, any passwords or secrets should be saved in the `secureJsonData` blob. To encrypt sensitive data, the Grafana server's proxy feature must be used. The Grafana server has support for token authentication (OAuth) and HTTP Header authentication. If the calls have to be sent directly from the browser to a third-party API, this will not be possible and sensitive data will not be encrypted.
 
 Read more here about how [authentication for data sources]({{< relref "../add-authentication-for-data-source-plugins.md" >}}) works.
 
-If using the proxy feature, the Config page should use the `secureJsonData` blob like this:
+If using the proxy feature, the Configuration page should use the `secureJsonData` blob like this:
 
   - good: `<input type="password" class="gf-form-input" ng-model='ctrl.current.secureJsonData.password' placeholder="password"></input>`
   - bad: `<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder="password"></input>`
@@ -171,5 +169,5 @@ Each query editor is unique and can have a unique style. It should be adapted to
 - The data source should be able to handle when a user toggles a query (by clicking on the eye icon) and not execute the query. This is done by checking the `hide` property - an [example](https://github.com/grafana/grafana/blob/e75840737e81f70b6d169df21eca86a624d4bdc4/public/app/plugins/datasource/postgres/datasource.ts#L73).
 - Should not execute queries if fields in the Query Editor are empty and the query will throw an exception (defensive programming).
 - Should handle errors. There are two main ways to do this:
-  - use the notification system in Grafana to show a toaster popup with the error message. Example [here](https://github.com/alexanderzobnin/grafana-zabbix/blob/fdbbba2fb03f5f2a4b3b0715415e09d5a4cf6cde/src/panel-triggers/triggers_panel_ctrl.js#L467-L471).
-  - provide an error notification in the query editor like the MySQL/Postgres data sources do. Example code in the `query_ctrl`  [here](https://github.com/grafana/azure-monitor-datasource/blob/b184d077f082a69f962120ef0d1f8296a0d46f03/src/query_ctrl.ts#L36-L51) and in the [html](https://github.com/grafana/azure-monitor-datasource/blob/b184d077f082a69f962120ef0d1f8296a0d46f03/src/partials/query.editor.html#L190-L193).
+  - use the notification system in Grafana to show a toaster pop-up with the error message. For an example of a pop-up with the error message, refer to [code in triggers_panel_ctrl](https://github.com/alexanderzobnin/grafana-zabbix/blob/fdbbba2fb03f5f2a4b3b0715415e09d5a4cf6cde/src/panel-triggers/triggers_panel_ctrl.js#L467-L471).
+  - provide an error notification in the query editor like the MySQL/Postgres data sources do. For an example of error notification in the query editor, refer to [code in query_ctrl](https://github.com/grafana/azure-monitor-datasource/blob/b184d077f082a69f962120ef0d1f8296a0d46f03/src/query_ctrl.ts#L36-L51) and in the [html](https://github.com/grafana/azure-monitor-datasource/blob/b184d077f082a69f962120ef0d1f8296a0d46f03/src/partials/query.editor.html#L190-L193).

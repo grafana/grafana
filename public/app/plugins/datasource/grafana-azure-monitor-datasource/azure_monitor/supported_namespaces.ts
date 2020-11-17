@@ -40,7 +40,7 @@ export default class SupportedNamespaces {
       'Microsoft.Logic/workflows',
       'Microsoft.Logic/integrationServiceEnvironments',
       'Microsoft.NetApp/netAppAccounts/capacityPools',
-      'Microsoft.NetApp/netAppAccounts/capacityPools/Volumes',
+      'Microsoft.NetApp/netAppAccounts/capacityPools/volumes',
       'Microsoft.Network/networkInterfaces',
       'Microsoft.Network/loadBalancers',
       'Microsoft.Network/dnsZones',

@@ -378,8 +378,13 @@ describe('ElasticDatasource', function(this: any) {
               mappings: {
                 metricsets: {
                   _all: {},
+                  _meta: {
+                    test: 'something',
+                  },
                   properties: {
                     '@timestamp': { type: 'date' },
+                    __timestamp: { type: 'date' },
+                    '@timestampnano': { type: 'date_nanos' },
                     beat: {
                       properties: {
                         name: {
@@ -426,6 +431,8 @@ describe('ElasticDatasource', function(this: any) {
       const fields = _.map(fieldObjects, 'text');
       expect(fields).toEqual([
         '@timestamp',
+        '__timestamp',
+        '@timestampnano',
         'beat.name.raw',
         'beat.name',
         'beat.hostname',
@@ -455,7 +462,7 @@ describe('ElasticDatasource', function(this: any) {
       });
 
       const fields = _.map(fieldObjects, 'text');
-      expect(fields).toEqual(['@timestamp']);
+      expect(fields).toEqual(['@timestamp', '__timestamp', '@timestampnano']);
     });
   });
 
@@ -856,6 +863,34 @@ describe('ElasticDatasource', function(this: any) {
       const query = ((dataSource as any).post as jest.Mock).mock.calls[0][1];
       expect(typeof JSON.parse(query.split('\n')[1]).query.bool.filter[0].range['@time'].gte).toBe('number');
     });
+  });
+
+  it('should correctly interpolate variables in query', () => {
+    const query = {
+      alias: '',
+      bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
+      metrics: [{ type: 'count', id: '1' }],
+      query: '$var',
+    };
+
+    const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
+
+    expect(interpolatedQuery.query).toBe('resolvedVariable');
+    expect(interpolatedQuery.bucketAggs[0].settings.filters[0].query).toBe('resolvedVariable');
+  });
+
+  it('should correctly handle empty query strings', () => {
+    const query = {
+      alias: '',
+      bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '', label: '' }] }, id: '1' }],
+      metrics: [{ type: 'count', id: '1' }],
+      query: '',
+    };
+
+    const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
+
+    expect(interpolatedQuery.query).toBe('*');
+    expect(interpolatedQuery.bucketAggs[0].settings.filters[0].query).toBe('*');
   });
 });
 

@@ -16,9 +16,10 @@ import {
   QueryResultMetaStat,
   QueryResultMeta,
   TimeSeriesValue,
+  ScopedVars,
 } from '@grafana/data';
 
-import templateSrv from 'app/features/templating/template_srv';
+import { getTemplateSrv } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import {
@@ -120,6 +121,12 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
     }
   }
 
+  const tsField = data.fields[0];
+  const tsNsField = data.fields[1];
+  const lineField = data.fields[2];
+  const labelsField = data.fields[3];
+  const idField = data.fields[4];
+
   for (const stream of streams) {
     // Find unique labels
     const unique = findUniqueLabels(stream.stream, baseLabels);
@@ -130,11 +137,11 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
 
     // Add each line
     for (const [ts, line] of stream.values) {
-      data.values.ts.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
-      data.values.tsNs.add(ts);
-      data.values.line.add(line);
-      data.values.labels.add(unique);
-      data.values.id.add(createUid(ts, allLabelsString, line));
+      tsField.values.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
+      tsNsField.values.add(ts);
+      lineField.values.add(line);
+      labelsField.values.add(unique);
+      idField.values.add(createUid(ts, allLabelsString, line));
     }
   }
 }
@@ -240,11 +247,11 @@ export function lokiResultsToTableModel(
   return table;
 }
 
-function createMetricLabel(labelData: { [key: string]: string }, options?: TransformerOptions) {
+export function createMetricLabel(labelData: { [key: string]: string }, options?: TransformerOptions) {
   let label =
     options === undefined || _.isEmpty(options.legendFormat)
       ? getOriginalMetricName(labelData)
-      : renderTemplate(templateSrv.replace(options.legendFormat ?? ''), labelData);
+      : renderTemplate(getTemplateSrv().replace(options.legendFormat ?? '', options.scopedVars), labelData);
 
   if (!label && options) {
     label = options.query;
@@ -323,6 +330,10 @@ export function lokiStreamsToDataframes(
   const series: DataFrame[] = data.map(stream => {
     const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
     enhanceDataFrame(dataFrame, config);
+
+    if (meta.custom && dataFrame.fields.some(f => f.labels && Object.keys(f.labels).some(l => l === '__error__'))) {
+      meta.custom.error = 'Error when parsing some of the logs';
+    }
 
     return {
       ...dataFrame,
@@ -415,13 +426,13 @@ export function rangeQueryResponseToTimeSeries(
   response: LokiResponse,
   query: LokiRangeQueryRequest,
   target: LokiQuery,
-  responseListLength: number
+  responseListLength: number,
+  scopedVars: ScopedVars
 ): TimeSeries[] {
   /** Show results of Loki metric queries only in graph */
   const meta: QueryResultMeta = {
     preferredVisualisationType: 'graph',
   };
-
   const transformerOptions: TransformerOptions = {
     format: target.format,
     legendFormat: target.legendFormat ?? '',
@@ -433,6 +444,7 @@ export function rangeQueryResponseToTimeSeries(
     refId: target.refId,
     meta,
     valueWithRefId: target.valueWithRefId,
+    scopedVars,
   };
 
   switch (response.data.resultType) {
@@ -454,6 +466,7 @@ export function processRangeQueryResponse(
   responseListLength: number,
   limit: number,
   config: LokiOptions,
+  scopedVars: ScopedVars,
   reverse = false
 ) {
   switch (response.data.resultType) {
@@ -473,7 +486,8 @@ export function processRangeQueryResponse(
             ...target,
             format: 'time_series',
           },
-          responseListLength
+          responseListLength,
+          scopedVars
         ),
         key: target.refId,
       });

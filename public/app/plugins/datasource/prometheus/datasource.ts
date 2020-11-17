@@ -1,62 +1,46 @@
-// Libraries
-import cloneDeep from 'lodash/cloneDeep';
-// Services & Utils
-import kbn from 'app/core/utils/kbn';
 import {
   AnnotationEvent,
   CoreApp,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
-  DataQueryResponseData,
   DataSourceApi,
   DataSourceInstanceSettings,
   dateMath,
   DateTime,
   LoadingState,
+  rangeUtil,
   ScopedVars,
   TimeRange,
-  TimeSeries,
 } from '@grafana/data';
-import { forkJoin, from, merge, Observable, of } from 'rxjs';
-import { filter, map, tap } from 'rxjs/operators';
-
-import PrometheusMetricFindQuery from './metric_find_query';
-import { ResultTransformer } from './result_transformer';
-import PrometheusLanguageProvider from './language_provider';
-import { getBackendSrv, BackendSrvRequest } from '@grafana/runtime';
-import addLabelToQuery from './add_label_to_query';
-import { getQueryHints } from './query_hints';
-import { expandRecordingRules } from './language_utils';
-// Types
-import { PromOptions, PromQuery, PromQueryRequest } from './types';
+import { BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { safeStringifyValue } from 'app/core/utils/explore';
-import templateSrv from 'app/features/templating/template_srv';
-import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import TableModel from 'app/core/table_model';
-import { defaults } from 'lodash';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import cloneDeep from 'lodash/cloneDeep';
+import defaults from 'lodash/defaults';
+import LRU from 'lru-cache';
+import { forkJoin, merge, Observable, of, pipe, throwError } from 'rxjs';
+import { catchError, filter, map, tap } from 'rxjs/operators';
+import addLabelToQuery from './add_label_to_query';
+import PrometheusLanguageProvider from './language_provider';
+import { expandRecordingRules } from './language_utils';
+import PrometheusMetricFindQuery from './metric_find_query';
+import { getQueryHints } from './query_hints';
+import { getOriginalMetricName, renderTemplate, transform } from './result_transformer';
+import {
+  isFetchErrorResponse,
+  PromDataErrorResponse,
+  PromDataSuccessResponse,
+  PromMatrixData,
+  PromOptions,
+  PromQuery,
+  PromQueryRequest,
+  PromScalarData,
+  PromVectorData,
+} from './types';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
-
-export interface PromDataQueryResponse {
-  data: {
-    status: string;
-    data: {
-      resultType: string;
-      results?: DataQueryResponseData[];
-      result?: DataQueryResponseData[];
-    };
-  };
-  cancelled?: boolean;
-}
-
-export interface PromLabelQueryResponse {
-  data: {
-    status: string;
-    data: string[];
-  };
-  cancelled?: boolean;
-}
 
 export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> {
   type: string;
@@ -66,16 +50,19 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   directUrl: string;
   basicAuth: any;
   withCredentials: any;
-  metricsNameCache: any;
+  metricsNameCache = new LRU<string, string[]>(10);
   interval: string;
   queryTimeout: string;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
   lookupsDisabled: boolean;
-  resultTransformer: ResultTransformer;
   customQueryParameters: any;
 
-  constructor(instanceSettings: DataSourceInstanceSettings<PromOptions>) {
+  constructor(
+    instanceSettings: DataSourceInstanceSettings<PromOptions>,
+    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly timeSrv: TimeSrv = getTimeSrv()
+  ) {
     super(instanceSettings);
 
     this.type = 'prometheus';
@@ -87,7 +74,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.directUrl = instanceSettings.jsonData.directUrl;
-    this.resultTransformer = new ResultTransformer(templateSrv);
     this.ruleMappings = {};
     this.languageProvider = new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
@@ -111,7 +97,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     }
   }
 
-  _request(url: string, data: Record<string, string> | null, overrides: Partial<BackendSrvRequest> = {}) {
+  _request<T = any>(url: string, data: Record<string, string> | null, overrides: Partial<BackendSrvRequest> = {}) {
     const options: BackendSrvRequest = defaults(overrides, {
       url: this.url + url,
       method: this.httpMethod,
@@ -140,12 +126,12 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       options.headers!.Authorization = this.basicAuth;
     }
 
-    return getBackendSrv().datasourceRequest(options);
+    return getBackendSrv().fetch<T>(options);
   }
 
   // Use this for tab completion features, wont publish response to other components
-  metadataRequest(url: string) {
-    return this._request(url, null, { method: 'GET', hideFromInspector: true });
+  metadataRequest<T = any>(url: string) {
+    return this._request<T>(url, null, { method: 'GET', hideFromInspector: true }).toPromise(); // toPromise until we change getTagValues, getTagKeys to Observable
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {
@@ -168,30 +154,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   targetContainsTemplate(target: PromQuery) {
-    return templateSrv.variableExists(target.expr);
+    return this.templateSrv.variableExists(target.expr);
   }
-
-  processResult = (response: any, query: PromQueryRequest, target: PromQuery, responseListLength: number) => {
-    // Keeping original start/end for transformers
-    const transformerOptions = {
-      format: target.format,
-      step: query.step,
-      legendFormat: target.legendFormat,
-      start: query.start,
-      end: query.end,
-      query: query.expr,
-      responseListLength,
-      refId: target.refId,
-      valueWithRefId: target.valueWithRefId,
-      meta: {
-        /** Fix for showing of Prometheus results in Explore table. We want to show result of instant query in table and the rest of time series in graph */
-        preferredVisualisationType: query.instant ? 'table' : 'graph',
-      },
-    };
-    const series = this.resultTransformer.transform(response, transformerOptions);
-
-    return series;
-  };
 
   prepareTargets = (options: DataQueryRequest<PromQuery>, start: number, end: number) => {
     const queries: PromQueryRequest[] = [];
@@ -204,32 +168,38 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
       target.requestId = options.panelId + target.refId;
 
-      if (options.app !== CoreApp.Explore) {
-        activeTargets.push(target);
-        queries.push(this.createQuery(target, options, start, end));
-        continue;
-      }
-
-      if (options.showingTable) {
-        // create instant target only if Table is showed in Explore
+      if (target.range && target.instant) {
+        // If running both (only available in Explore) - instant and range query, prepare both targets
+        // Create instant target
         const instantTarget: any = cloneDeep(target);
         instantTarget.format = 'table';
         instantTarget.instant = true;
+        instantTarget.range = false;
         instantTarget.valueWithRefId = true;
         delete instantTarget.maxDataPoints;
         instantTarget.requestId += '_instant';
 
-        activeTargets.push(instantTarget);
+        // Create range target
+        const rangeTarget: any = cloneDeep(target);
+        rangeTarget.format = 'time_series';
+        rangeTarget.instant = false;
+        instantTarget.range = true;
+
+        // Add both targets to activeTargets and queries arrays
+        activeTargets.push(instantTarget, rangeTarget);
+        queries.push(
+          this.createQuery(instantTarget, options, start, end),
+          this.createQuery(rangeTarget, options, start, end)
+        );
+      } else if (target.instant && options.app === CoreApp.Explore) {
+        // If running only instant query in Explore, format as table
+        const instantTarget: any = cloneDeep(target);
+        instantTarget.format = 'table';
         queries.push(this.createQuery(instantTarget, options, start, end));
-      }
-
-      if (options.showingGraph) {
-        // create time series target only if Graph is showed in Explore
-        target.format = 'time_series';
-        target.instant = false;
-
-        activeTargets.push(target);
+        activeTargets.push(instantTarget);
+      } else {
         queries.push(this.createQuery(target, options, start, end));
+        activeTargets.push(target);
       }
     }
 
@@ -256,25 +226,23 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       return this.exploreQuery(queries, activeTargets, end);
     }
 
-    return this.panelsQuery(queries, activeTargets, end, options.requestId);
+    return this.panelsQuery(queries, activeTargets, end, options.requestId, options.scopedVars);
   }
 
   private exploreQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number) {
     let runningQueriesCount = queries.length;
+    const mixedQueries = activeTargets.some(t => t.range) && activeTargets.some(t => t.instant);
+
     const subQueries = queries.map((query, index) => {
       const target = activeTargets[index];
 
-      let observable = query.instant
-        ? from(this.performInstantQuery(query, end))
-        : from(this.performTimeSeriesQuery(query, query.start, query.end));
-
-      return observable.pipe(
+      const filterAndMapResponse = pipe(
         // Decrease the counter here. We assume that each request returns only single value and then completes
         // (should hold until there is some streaming requests involved).
         tap(() => runningQueriesCount--),
         filter((response: any) => (response.cancelled ? false : true)),
         map((response: any) => {
-          const data = this.processResult(response, query, target, queries.length);
+          const data = transform(response, { query, target, responseListLength: queries.length, mixedQueries });
           return {
             data,
             key: query.requestId,
@@ -282,30 +250,44 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           } as DataQueryResponse;
         })
       );
+
+      if (query.instant) {
+        return this.performInstantQuery(query, end).pipe(filterAndMapResponse);
+      }
+
+      return this.performTimeSeriesQuery(query, query.start, query.end).pipe(filterAndMapResponse);
     });
 
     return merge(...subQueries);
   }
 
-  private panelsQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number, requestId: string) {
-    const observables: Array<Observable<Array<TableModel | TimeSeries>>> = queries.map((query, index) => {
+  private panelsQuery(
+    queries: PromQueryRequest[],
+    activeTargets: PromQuery[],
+    end: number,
+    requestId: string,
+    scopedVars: ScopedVars
+  ) {
+    const observables = queries.map((query, index) => {
       const target = activeTargets[index];
 
-      let observable = query.instant
-        ? from(this.performInstantQuery(query, end))
-        : from(this.performTimeSeriesQuery(query, query.start, query.end));
-
-      return observable.pipe(
+      const filterAndMapResponse = pipe(
         filter((response: any) => (response.cancelled ? false : true)),
         map((response: any) => {
-          const data = this.processResult(response, query, target, queries.length);
+          const data = transform(response, { query, target, responseListLength: queries.length, scopedVars });
           return data;
         })
       );
+
+      if (query.instant) {
+        return this.performInstantQuery(query, end).pipe(filterAndMapResponse);
+      }
+
+      return this.performTimeSeriesQuery(query, query.start, query.end).pipe(filterAndMapResponse);
     });
 
     return forkJoin(observables).pipe(
-      map((results: Array<Array<TableModel | TimeSeries>>) => {
+      map(results => {
         const data = results.reduce((result, current) => {
           return [...result, ...current];
         }, []);
@@ -332,18 +314,24 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     const range = Math.ceil(end - start);
 
     // options.interval is the dynamically calculated interval
-    let interval: number = kbn.intervalToSeconds(options.interval);
-    // Minimum interval ("Min step"), if specified for the query or datasource. or same as interval otherwise
-    const minInterval = kbn.intervalToSeconds(
-      templateSrv.replace(target.interval || options.interval, options.scopedVars)
+    let interval: number = rangeUtil.intervalToSeconds(options.interval);
+    // Minimum interval ("Min step"), if specified for the query, or same as interval otherwise.
+    const minInterval = rangeUtil.intervalToSeconds(
+      this.templateSrv.replace(target.interval || options.interval, options.scopedVars)
     );
+    // Scrape interval as specified for the query ("Min step") or otherwise taken from the datasource.
+    // Min step field can have template variables in it, make sure to replace it.
+    const scrapeInterval = target.interval
+      ? rangeUtil.intervalToSeconds(this.templateSrv.replace(target.interval, options.scopedVars))
+      : rangeUtil.intervalToSeconds(this.interval);
+
     const intervalFactor = target.intervalFactor || 1;
     // Adjust the interval to take into account any specified minimum and interval factor plus Prometheus limits
     const adjustedInterval = this.adjustInterval(interval, minInterval, range, intervalFactor);
     let scopedVars = {
       ...options.scopedVars,
       ...this.getRangeScopedVars(options.range),
-      ...this.getRateIntervalScopedVariable(interval, minInterval),
+      ...this.getRateIntervalScopedVariable(adjustedInterval, scrapeInterval),
     };
     // If the interval was adjusted, make a shallow copy of scopedVars with updated interval vars
     if (interval !== adjustedInterval) {
@@ -351,7 +339,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       scopedVars = Object.assign({}, options.scopedVars, {
         __interval: { text: interval + 's', value: interval + 's' },
         __interval_ms: { text: interval * 1000, value: interval * 1000 },
-        ...this.getRateIntervalScopedVariable(interval, minInterval),
+        ...this.getRateIntervalScopedVariable(interval, scrapeInterval),
         ...this.getRangeScopedVars(options.range),
       });
     }
@@ -360,7 +348,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     let expr = target.expr;
 
     // Apply adhoc filters
-    const adhocFilters = templateSrv.getAdhocFilters(this.name);
+    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
     expr = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
       const { key, operator } = filter;
       let { value } = filter;
@@ -371,18 +359,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     }, expr);
 
     // Only replace vars in expression after having (possibly) updated interval vars
-    query.expr = templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
+    query.expr = this.templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
 
     // Align query interval with step to allow query caching and to ensure
     // that about-same-time query results look the same.
-    const adjusted = alignRange(
-      start,
-      end,
-      query.step,
-      getTimeSrv()
-        .timeRange()
-        .to.utcOffset() * 60
-    );
+    const adjusted = alignRange(start, end, query.step, this.timeSrv.timeRange().to.utcOffset() * 60);
     query.start = adjusted.start;
     query.end = adjusted.end;
     this._addTracingHeaders(query, options);
@@ -390,13 +371,12 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return query;
   }
 
-  getRateIntervalScopedVariable(interval: number, minInterval: number) {
-    let intervalInSeconds = minInterval === interval ? kbn.intervalToSeconds(this.interval) : minInterval;
-    // if intervalInSeconds === 0 then we should fall back to the default 15 seconds
-    if (intervalInSeconds === 0) {
-      intervalInSeconds = 15;
+  getRateIntervalScopedVariable(interval: number, scrapeInterval: number) {
+    // Fall back to the default scrape interval of 15s if scrapeInterval is 0 for some reason.
+    if (scrapeInterval === 0) {
+      scrapeInterval = 15;
     }
-    const rateInterval = Math.max(interval + intervalInSeconds, 4 * intervalInSeconds);
+    const rateInterval = Math.max(interval + scrapeInterval, 4 * scrapeInterval);
     return { __rate_interval: { text: rateInterval + 's', value: rateInterval + 's' } };
   }
 
@@ -435,13 +415,18 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
     }
 
-    return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) => {
-      if (err.cancelled) {
-        return err;
-      }
+    return this._request<PromDataSuccessResponse<PromMatrixData>>(url, data, {
+      requestId: query.requestId,
+      headers: query.headers,
+    }).pipe(
+      catchError((err: FetchError<PromDataErrorResponse<PromMatrixData>>) => {
+        if (err.cancelled) {
+          return of(err);
+        }
 
-      throw this.handleErrors(err, query);
-    });
+        return throwError(this.handleErrors(err, query));
+      })
+    );
   }
 
   performInstantQuery(query: PromQueryRequest, time: number) {
@@ -461,13 +446,18 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       }
     }
 
-    return this._request(url, data, { requestId: query.requestId, headers: query.headers }).catch((err: any) => {
-      if (err.cancelled) {
-        return err;
-      }
+    return this._request<PromDataSuccessResponse<PromVectorData | PromScalarData>>(url, data, {
+      requestId: query.requestId,
+      headers: query.headers,
+    }).pipe(
+      catchError((err: FetchError<PromDataErrorResponse<PromVectorData | PromScalarData>>) => {
+        if (err.cancelled) {
+          return of(err);
+        }
 
-      throw this.handleErrors(err, query);
-    });
+        return throwError(this.handleErrors(err, query));
+      })
+    );
   }
 
   handleErrors = (err: any, target: PromQuery) => {
@@ -494,20 +484,6 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     return error;
   };
 
-  async performSuggestQuery(query: string, cache = false) {
-    if (cache && this.metricsNameCache?.expire > Date.now()) {
-      return this.metricsNameCache.data.filter((metricName: any) => metricName.indexOf(query) !== 1);
-    }
-
-    const response: PromLabelQueryResponse = await this.metadataRequest('/api/v1/label/__name__/values');
-    this.metricsNameCache = {
-      data: response.data.data,
-      expire: Date.now() + 60 * 1000,
-    };
-
-    return response.data.data.filter(metricName => metricName.indexOf(query) !== 1);
-  }
-
   metricFindQuery(query: string) {
     if (!query) {
       return Promise.resolve([]);
@@ -515,15 +491,15 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     const scopedVars = {
       __interval: { text: this.interval, value: this.interval },
-      __interval_ms: { text: kbn.intervalToMs(this.interval), value: kbn.intervalToMs(this.interval) },
-      ...this.getRangeScopedVars(getTimeSrv().timeRange()),
+      __interval_ms: { text: rangeUtil.intervalToMs(this.interval), value: rangeUtil.intervalToMs(this.interval) },
+      ...this.getRangeScopedVars(this.timeSrv.timeRange()),
     };
-    const interpolated = templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
+    const interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
     const metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
     return metricFindQuery.process();
   }
 
-  getRangeScopedVars(range: TimeRange = getTimeSrv().timeRange()) {
+  getRangeScopedVars(range: TimeRange = this.timeSrv.timeRange()) {
     const msRange = range.to.diff(range.from);
     const sRange = Math.round(msRange / 1000);
     return {
@@ -567,13 +543,11 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     };
 
     const query = this.createQuery(queryModel, queryOptions, start, end);
-
-    const self = this;
-    const response: PromDataQueryResponse = await this.performTimeSeriesQuery(query, query.start, query.end);
+    const response = await this.performTimeSeriesQuery(query, query.start, query.end).toPromise();
     const eventList: AnnotationEvent[] = [];
     const splitKeys = tagKeys.split(',');
 
-    if (response.cancelled) {
+    if (isFetchErrorResponse(response) && response.cancelled) {
       return [];
     }
 
@@ -596,8 +570,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         value[0] = timestampValue;
       });
 
-      const activeValues = series.values.filter((value: Record<number, string>) => parseFloat(value[1]) >= 1);
-      const activeValuesTimestamps: number[] = activeValues.map((value: number[]) => value[0]);
+      const activeValues = series.values.filter(value => parseFloat(value[1]) >= 1);
+      const activeValuesTimestamps = activeValues.map(value => value[0]);
 
       // Instead of creating singular annotation for each active event we group events into region if they are less
       // then `step` apart.
@@ -620,9 +594,9 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           time: timestamp,
           timeEnd: timestamp,
           annotation,
-          title: self.resultTransformer.renderTemplate(titleFormat, series.metric),
+          title: renderTemplate(titleFormat, series.metric),
           tags,
-          text: self.resultTransformer.renderTemplate(textFormat, series.metric),
+          text: renderTemplate(textFormat, series.metric),
         };
       }
 
@@ -649,10 +623,10 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   async testDatasource() {
     const now = new Date().getTime();
     const query = { expr: '1+1' } as PromQueryRequest;
-    const response = await this.performInstantQuery(query, now / 1000);
+    const response = await this.performInstantQuery(query, now / 1000).toPromise();
     return response.data.status === 'success'
       ? { status: 'success', message: 'Data source is working' }
-      : { status: 'error', message: response.error };
+      : { status: 'error', message: response.data.error };
   }
 
   interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
@@ -662,7 +636,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          expr: templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
+          expr: this.templateSrv.replace(query.expr, scopedVars, this.interpolateQueryExpr),
         };
         return expandedQuery;
       });
@@ -677,9 +651,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   async loadRules() {
     try {
       const res = await this.metadataRequest('/api/v1/rules');
-      const body = res.data || res.json();
+      const groups = res.data?.data?.groups;
 
-      const groups = body?.data?.groups;
       if (groups) {
         this.ruleMappings = extractRuleMappingFromGroups(groups);
       }
@@ -733,7 +706,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   getTimeRange(): { start: number; end: number } {
-    const range = getTimeSrv().timeRange();
+    const range = this.timeSrv.timeRange();
     return {
       start: this.getPrometheusTime(range.from, false),
       end: this.getPrometheusTime(range.to, true),
@@ -741,7 +714,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   }
 
   getOriginalMetricName(labelData: { [key: string]: string }) {
-    return this.resultTransformer.getOriginalMetricName(labelData);
+    return getOriginalMetricName(labelData);
   }
 }
 

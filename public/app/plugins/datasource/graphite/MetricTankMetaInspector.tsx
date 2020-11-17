@@ -1,12 +1,11 @@
 import { css, cx } from 'emotion';
 import React, { PureComponent } from 'react';
-import { MetadataInspectorProps } from '@grafana/data';
+import { MetadataInspectorProps, rangeUtil } from '@grafana/data';
 import { GraphiteDatasource } from './datasource';
 import { GraphiteQuery, GraphiteOptions, MetricTankSeriesMeta } from './types';
 import { parseSchemaRetentions, getRollupNotice, getRuntimeConsolidationNotice } from './meta';
 import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
-import kbn from 'app/core/utils/kbn';
 
 export type Props = MetadataInspectorProps<GraphiteDatasource, GraphiteQuery, GraphiteOptions>;
 
@@ -23,7 +22,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
     const normFunc = (meta['consolidator-normfetch'] ?? '').replace('Consolidator', '');
 
     const totalSeconds = buckets.reduce(
-      (acc, bucket) => acc + (bucket.retention ? kbn.intervalToSeconds(bucket.retention) : 0),
+      (acc, bucket) => acc + (bucket.retention ? rangeUtil.intervalToSeconds(bucket.retention) : 0),
       0
     );
 
@@ -45,7 +44,7 @@ export class MetricTankMetaInspector extends PureComponent<Props, State> {
 
             <div>
               {buckets.map((bucket, index) => {
-                const bucketLength = bucket.retention ? kbn.intervalToSeconds(bucket.retention) : 0;
+                const bucketLength = bucket.retention ? rangeUtil.intervalToSeconds(bucket.retention) : 0;
                 const lengthPercent = (bucketLength / totalSeconds) * 100;
                 const isActive = index === meta['archive-read'];
 

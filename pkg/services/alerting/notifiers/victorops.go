@@ -25,29 +25,6 @@ func init() {
 		Description: "Sends notifications to VictorOps",
 		Heading:     "VictorOps settings",
 		Factory:     NewVictoropsNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">VictorOps settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-6">Url</span>
-        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="VictorOps url"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">No Data Alert Type</span>
-        <div class="gf-form-select-wrapper width-14">
-          <select class="gf-form-input" ng-model="ctrl.model.settings.noDataAlertType" ng-options="t for t in ['CRITICAL', 'WARNING']" ng-init="ctrl.model.settings.noDataAlertType=ctrl.model.settings.noDataAlertType || '` + AlertStateWarning + `'">
-          </select>
-        </div>
-      </div>
-      <div class="gf-form">
-        <gf-form-switch
-           class="gf-form"
-           label="Auto resolve incidents"
-           label-class="width-14"
-           checked="ctrl.model.settings.autoResolve"
-           tooltip="Resolve incidents in VictorOps once the alert goes back to ok.">
-        </gf-form-switch>
-      </div>
-    `,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Url",
@@ -60,7 +37,7 @@ func init() {
 			{
 				Label:        "Auto resolve incidents",
 				Description:  "Resolve incidents in VictorOps once the alert goes back to ok.",
-				Element:      alerting.ElementTypeSwitch,
+				Element:      alerting.ElementTypeCheckbox,
 				PropertyName: "autoResolve",
 			},
 		},

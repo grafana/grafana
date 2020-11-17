@@ -5,6 +5,10 @@ import { ElasticsearchAggregation } from './types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
 
+function createDefaultMetric(id = 0): ElasticsearchAggregation {
+  return { type: 'count', field: 'select field', id: (id + 1).toString() };
+}
+
 export class ElasticMetricAggCtrl {
   /** @ngInject */
   constructor($scope: any, uiSegmentSrv: any, $rootScope: GrafanaRootScope) {
@@ -21,7 +25,7 @@ export class ElasticMetricAggCtrl {
     };
 
     $scope.updatePipelineAggOptions = () => {
-      $scope.pipelineAggOptions = queryDef.getPipelineAggOptions($scope.target);
+      $scope.pipelineAggOptions = queryDef.getPipelineAggOptions($scope.target, $scope.agg);
     };
 
     $rootScope.onAppEvent(
@@ -40,6 +44,7 @@ export class ElasticMetricAggCtrl {
       $scope.settingsLinkText = '';
       $scope.variablesLinkText = '';
       $scope.aggDef = _.find($scope.metricAggTypes, { value: $scope.agg.type });
+      $scope.isValidAgg = $scope.aggDef != null;
 
       if (queryDef.isPipelineAgg($scope.agg.type)) {
         if (queryDef.isPipelineAggWithMultipleBucketPaths($scope.agg.type)) {
@@ -101,6 +106,13 @@ export class ElasticMetricAggCtrl {
           $scope.updateMovingAvgModelSettings();
           break;
         }
+        case 'moving_fn': {
+          const movingFunctionOptions = queryDef.getPipelineOptions($scope.agg);
+          _.each(movingFunctionOptions, opt => {
+            $scope.agg.settings[opt.text] = $scope.agg.settings[opt.text] || opt.default;
+          });
+          break;
+        }
         case 'raw_document':
         case 'raw_data': {
           $scope.agg.settings.size = $scope.agg.settings.size || 500;
@@ -111,7 +123,7 @@ export class ElasticMetricAggCtrl {
           break;
         }
       }
-      if ($scope.aggDef.supportsInlineScript) {
+      if ($scope.aggDef?.supportsInlineScript) {
         // I know this stores the inline script twice
         // but having it like this simplifes the query_builder
         const inlineScript = $scope.agg.inlineScript;
@@ -195,12 +207,19 @@ export class ElasticMetricAggCtrl {
         0
       );
 
-      metricAggs.splice(addIndex, 0, { type: 'count', field: 'select field', id: (id + 1).toString() });
+      metricAggs.splice(addIndex, 0, createDefaultMetric(id));
       $scope.onChange();
     };
 
     $scope.removeMetricAgg = () => {
-      metricAggs.splice($scope.index, 1);
+      const metricBeingRemoved = metricAggs[$scope.index];
+      const metricsToRemove = queryDef.getAncestors($scope.target, metricBeingRemoved);
+      const newMetricAggs = metricAggs.filter(m => !metricsToRemove.includes(m.id));
+      if (newMetricAggs.length > 0) {
+        metricAggs.splice(0, metricAggs.length, ...newMetricAggs);
+      } else {
+        metricAggs.splice(0, metricAggs.length, createDefaultMetric());
+      }
       $scope.onChange();
     };
 

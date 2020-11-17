@@ -23,6 +23,7 @@ export class SettingsCtrl {
   sections: any[];
   hasUnsavedFolderChange: boolean;
   selectors: typeof selectors.pages.Dashboard.Settings.General;
+  renderCount: number; // hack to update React when Angular changes
 
   /** @ngInject */
   constructor(
@@ -38,8 +39,8 @@ export class SettingsCtrl {
 
     this.$scope.$on('$destroy', () => {
       this.dashboard.updateSubmenuVisibility();
+
       setTimeout(() => {
-        this.$rootScope.appEvent(CoreEvents.dashScroll, { restore: true });
         this.dashboard.startRefresh();
       });
     });
@@ -52,11 +53,11 @@ export class SettingsCtrl {
     this.onRouteUpdated();
 
     this.$rootScope.onAppEvent(CoreEvents.routeUpdated, this.onRouteUpdated.bind(this), $scope);
-    this.$rootScope.appEvent(CoreEvents.dashScroll, { animate: false, pos: 0 });
 
     appEvents.on(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
 
     this.selectors = selectors.pages.Dashboard.Settings.General;
+    this.renderCount = 0;
   }
 
   buildSectionList() {
@@ -253,18 +254,22 @@ export class SettingsCtrl {
 
   onRefreshIntervalChange = (intervals: string[]) => {
     this.dashboard.timepicker.refresh_intervals = intervals.filter(i => i.trim() !== '');
+    this.renderCount++;
   };
 
   onNowDelayChange = (nowDelay: string) => {
     this.dashboard.timepicker.nowDelay = nowDelay;
+    this.renderCount++;
   };
 
   onHideTimePickerChange = (hide: boolean) => {
     this.dashboard.timepicker.hidden = hide;
+    this.renderCount++;
   };
 
   onTimeZoneChange = (timeZone: TimeZone) => {
     this.dashboard.timezone = timeZone;
+    this.renderCount++;
   };
 }
 

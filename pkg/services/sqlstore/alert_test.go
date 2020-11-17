@@ -1,3 +1,5 @@
+// +build integration
+
 package sqlstore
 
 import (
@@ -30,7 +32,7 @@ func TestAlertingDataAccess(t *testing.T) {
 	Convey("Testing Alerting data access", t, func() {
 		InitTestDB(t)
 
-		testDash := insertTestDashboard("dashboard with alerts", 1, 0, false, "alert")
+		testDash := insertTestDashboard(t, "dashboard with alerts", 1, 0, false, "alert")
 		evalData, _ := simplejson.NewJson([]byte(`{"test": "test"}`))
 		items := []*models.Alert{
 			{
@@ -128,7 +130,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			So(alert.DashboardSlug, ShouldEqual, "dashboard-with-alerts")
 		})
 
-		Convey("Viewer cannot read alerts", func() {
+		Convey("Viewer can read alerts", func() {
 			viewerUser := &models.SignedInUser{OrgRole: models.ROLE_VIEWER, OrgId: 1}
 			alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: viewerUser}
 			err2 := HandleAlertsQuery(&alertQuery)
@@ -271,7 +273,7 @@ func TestPausingAlerts(t *testing.T) {
 	Convey("Given an alert", t, func() {
 		InitTestDB(t)
 
-		testDash := insertTestDashboard("dashboard with alerts", 1, 0, false, "alert")
+		testDash := insertTestDashboard(t, "dashboard with alerts", 1, 0, false, "alert")
 		alert, _ := insertTestAlert("Alerting title", "Alerting message", testDash.OrgId, testDash.Id, simplejson.New())
 
 		stateDateBeforePause := alert.NewStateDate

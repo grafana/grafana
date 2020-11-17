@@ -36,6 +36,15 @@ type ExternalUserInfo struct {
 	IsDisabled     bool
 }
 
+type LoginInfo struct {
+	AuthModule    string
+	User          *User
+	ExternalUser  ExternalUserInfo
+	LoginUsername string
+	HTTPStatus    int
+	Error         error
+}
+
 // ---------------------
 // COMMANDS
 
@@ -74,6 +83,7 @@ type LoginUserQuery struct {
 	Password   string
 	User       *User
 	IpAddress  string
+	AuthModule string
 }
 
 type GetUserByAuthInfoQuery struct {

@@ -1,10 +1,7 @@
 +++
 title = "Graph panel"
 keywords = ["grafana", "graph panel", "documentation", "guide", "graph"]
-type = "docs"
 aliases = ["/docs/grafana/latest/reference/graph/", "/docs/grafana/latest/features/panels/graph/"]
-[menu.docs]
-parent = "visualizations"
 weight = 500
 +++
 
@@ -15,8 +12,10 @@ This visualization is the most-used in the Grafana ecosystem. It can render as a
 ## Data and field options
 
 Graph visualizations allow you to apply:
-- [Data transformations]({{< relref "../transformations.md" >}})
+
 - [Alerts]({{< relref "../../alerting/alerts-overview.md" >}}) - This is the only type of visualization that allows you to set alerts.
+- [Data transformations]({{< relref "../transformations/_index.md" >}})
+- [Field options and overrides]({{< relref "../field-options/_index.md" >}})
 - [Thresholds]({{< relref "../thresholds.md" >}})
 
 ## Display options
@@ -51,7 +50,7 @@ Use these settings to change the appearance of the tooltip that appears when you
 - **Mode**
   - **All series -** The hover tooltip shows all series in the graph. Grafana highlights the series that you are hovering over in bold in the series list in the tooltip.
   - **Single -** The hover tooltip shows only a single series, the one that you are hovering over on the graph.
-- **Sort order -** Sorts the order of series in the hover tooltip if you have selected *All series* mode.
+- **Sort order -** Sorts the order of series in the hover tooltip if you have selected **All series** mode. When you hover your cursor on a graph, Grafana displays the values associated with the lines. Generally users are most interested in the highest or lowest values. Sorting these values can make it much easier to find the data of interest.
   - **None -** The order of the series in the tooltip is determined by the sort order in your query. For example, they could be alphabetically sorted by series name.
   - **Increasing -** The series in the hover tooltip are sorted by value and in increasing order, with the lowest value at the top of the list.
   - **Decreasing -** The series in the hover tooltip are sorted by value and in decreasing order, with the highest value at the top of the list.
@@ -66,7 +65,7 @@ You can add multiple series overrides.
 
 1. Click **Add series override**.
 1. In **Alias or regex** Type or select a series. Click in the field to see a list of available series.
-   
+
    **Example:**  `/Network.*/` would match two series named `Network out` and `Network in`.
 
 1. Click **+** and then select a style to apply to the series. You can add multiple styles to each entry.
@@ -119,13 +118,13 @@ Options are identical for both Y-axes.
   - **Time -** (default) The X-axis represents time and that the data is grouped by time (for example, by hour, or by minute).
   - **Series -** The data is grouped by series and not by time. The Y-axis still represents the value.
     - **Value -**  The aggregation type to use for the values. The default is total (summing the values together).
-  - **Histogram -** Converts the graph into a histogram. A histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range. 
-   
+  - **Histogram -** Converts the graph into a histogram. A histogram is a kind of bar chart that groups numbers into ranges, often called buckets or bins. Taller bars show that more data falls in that range.
+
     For more information about histograms, refer to [Introduction to histograms and heatmaps]({{< relref "../../getting-started/intro-histograms.md" >}}).
     - **Buckets -** The number of buckets to group the values by. If left empty, then Grafana tries to calculate a suitable number of buckets.
     - **X-Min -** Filters out values from the histogram that are under this minimum limit.
     - **X-Max -** Filters out values that are greater than this maximum limit.
-	
+
 ## Legend
 
 Use these settings to refine how the legend appears in your visualization.
@@ -148,7 +147,7 @@ Additional values can be shown along-side the legend names:
 - **Total -** Sum of all values returned from the metric query.
 - **Decimals -** Controls how many decimals are displayed for legend values and graph hover tooltips.
 
-The legend values are calculated on the client side by Grafana and depend on what type of aggregation or point consolidation your metric query is using. All the above legend values cannot be correct at the same time. 
+The legend values are calculated on the client side by Grafana and depend on what type of aggregation or point consolidation your metric query is using. All the above legend values cannot be correct at the same time.
 
 For example, if you plot a rate like requests/second, this is probably using average as an aggregator, then the Total in the legend will not represent the total number of requests. It is just the sum of all data points received by Grafana.
 
@@ -157,7 +156,7 @@ For example, if you plot a rate like requests/second, this is probably using ave
 Hide series when all values of a series from a metric query are of a specific value.
 
 - **With only nulls -** Value=null (default unchecked)
-- **With only zeroes -** Value=zero (default unchecked) 
+- **With only zeroes -** Value=zero (default unchecked)
 
 ### Time regions
 

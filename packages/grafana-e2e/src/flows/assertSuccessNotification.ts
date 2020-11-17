@@ -2,6 +2,6 @@ import { e2e } from '../index';
 
 export const assertSuccessNotification = () => {
   e2e()
-    .get('.alert-success')
+    .get('[aria-label^="Alert success"]')
     .should('exist');
 };

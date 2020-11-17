@@ -4,6 +4,7 @@ import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor }
 import { Props } from './BarGauge';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
+import mdx from './BarGauge.mdx';
 
 const getKnobs = () => {
   return {
@@ -22,6 +23,11 @@ export default {
   title: 'Visualizations/BarGauge',
   component: BarGauge,
   decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 function addBarGaugeStory(overrides: Partial<Props>) {

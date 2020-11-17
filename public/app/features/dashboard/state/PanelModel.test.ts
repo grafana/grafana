@@ -8,6 +8,8 @@ import {
   standardFieldConfigEditorRegistry,
   PanelData,
   DataSourceInstanceSettings,
+  FieldColorModeId,
+  FieldColorConfigSettings,
 } from '@grafana/data';
 import { ComponentClass } from 'react';
 import { PanelQueryRunner } from './PanelQueryRunner';
@@ -55,7 +57,20 @@ export const mockStandardProperties = () => {
     shouldApply: () => true,
   };
 
-  return [unit, decimals, boolean];
+  const fieldColor = {
+    id: 'color',
+    path: 'color',
+    name: 'color',
+    description: '',
+    // @ts-ignore
+    editor: () => null,
+    // @ts-ignore
+    override: () => null,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+  };
+
+  return [unit, decimals, boolean, fieldColor];
 };
 
 standardFieldConfigEditorRegistry.setInit(() => mockStandardProperties());
@@ -96,6 +111,13 @@ describe('PanelModel', () => {
         fieldConfig: {
           defaults: {
             unit: 'mpg',
+            thresholds: {
+              mode: 'absolute',
+              steps: [
+                { color: 'green', value: null },
+                { color: 'red', value: 80 },
+              ],
+            },
           },
           overrides: [
             {
@@ -103,7 +125,18 @@ describe('PanelModel', () => {
                 id: '1',
                 options: {},
               },
-              properties: [],
+              properties: [
+                {
+                  id: 'thresholds',
+                  value: {
+                    mode: 'absolute',
+                    steps: [
+                      { color: 'green', value: null },
+                      { color: 'red', value: 80 },
+                    ],
+                  },
+                },
+              ],
             },
           ],
         },
@@ -129,10 +162,13 @@ describe('PanelModel', () => {
       });
 
       panelPlugin.useFieldConfig({
-        standardOptions: [FieldConfigProperty.Unit, FieldConfigProperty.Decimals],
-        standardOptionsDefaults: {
-          [FieldConfigProperty.Unit]: 'flop',
-          [FieldConfigProperty.Decimals]: 2,
+        standardOptions: {
+          [FieldConfigProperty.Unit]: {
+            defaultValue: 'flop',
+          },
+          [FieldConfigProperty.Decimals]: {
+            defaultValue: 2,
+          },
         },
       });
       model.pluginLoaded(panelPlugin);
@@ -144,6 +180,11 @@ describe('PanelModel', () => {
 
     it('should apply option defaults', () => {
       expect(model.getOptions().showThresholds).toBeTruthy();
+    });
+
+    it('should change null thresholds to negative infinity', () => {
+      expect(model.fieldConfig.defaults.thresholds.steps[0].value).toBe(-Infinity);
+      expect(model.fieldConfig.overrides[0].properties[0].value.steps[0].value).toBe(-Infinity);
     });
 
     it('should apply option defaults but not override if array is changed', () => {
@@ -216,6 +257,17 @@ describe('PanelModel', () => {
     describe('when changing panel type', () => {
       beforeEach(() => {
         const newPlugin = getPanelPlugin({ id: 'graph' });
+
+        newPlugin.useFieldConfig({
+          standardOptions: {
+            [FieldConfigProperty.Color]: {
+              settings: {
+                byThresholdsSupport: true,
+              },
+            },
+          },
+        });
+
         newPlugin.setPanelOptions(builder => {
           builder.addBooleanSwitch({
             name: 'Show thresholds labels',
@@ -259,6 +311,66 @@ describe('PanelModel', () => {
       it('should remove alert rule when changing type that does not support it', () => {
         model.changePlugin(getPanelPlugin({ id: 'table' }));
         expect(model.alert).toBe(undefined);
+      });
+    });
+
+    describe('when changing panel type to one that does not support by value color mode', () => {
+      beforeEach(() => {
+        model.fieldConfig.defaults.color = { mode: FieldColorModeId.Thresholds };
+
+        const newPlugin = getPanelPlugin({ id: 'graph' });
+        newPlugin.useFieldConfig({
+          standardOptions: {
+            [FieldConfigProperty.Color]: {
+              settings: {
+                byValueSupport: false,
+              },
+            },
+          },
+        });
+
+        model.editSourceId = 1001;
+        model.changePlugin(newPlugin);
+        model.alert = { id: 2 };
+      });
+
+      it('should change color mode', () => {
+        expect(model.fieldConfig.defaults.color.mode).toBe(FieldColorModeId.PaletteClassic);
+      });
+    });
+
+    describe('when changing panel type from one not supporting by value color mode to one that supports it', () => {
+      const prepareModel = (colorOptions?: FieldColorConfigSettings) => {
+        const newModel = new PanelModel(modelJson);
+        newModel.fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
+
+        const newPlugin = getPanelPlugin({ id: 'graph' });
+        newPlugin.useFieldConfig({
+          standardOptions: {
+            [FieldConfigProperty.Color]: {
+              settings: {
+                byValueSupport: true,
+                ...colorOptions,
+              },
+            },
+          },
+        });
+
+        newModel.editSourceId = 1001;
+        newModel.changePlugin(newPlugin);
+        newModel.alert = { id: 2 };
+        return newModel;
+      };
+
+      it('should keep supported mode', () => {
+        const testModel = prepareModel();
+
+        expect(testModel.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.PaletteClassic);
+      });
+
+      it('should change to thresholds mode when it prefers to', () => {
+        const testModel = prepareModel({ preferThresholdsMode: true });
+        expect(testModel.fieldConfig.defaults.color!.mode).toBe(FieldColorModeId.Thresholds);
       });
     });
 
@@ -330,7 +442,7 @@ describe('PanelModel', () => {
         expect(model.someProperty).toBeUndefined();
       });
 
-      it('Should remove old angular panel specfic props', () => {
+      it('Should remove old angular panel specific props', () => {
         model.axes = [{ prop: 1 }];
         model.thresholds = [];
 

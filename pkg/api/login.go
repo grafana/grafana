@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/hex"
 	"errors"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -52,7 +53,7 @@ func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 
 	// when using a subUrl, the redirect_to should start with the subUrl (which contains the leading slash), otherwise the redirect
 	// will send the user to the wrong location
-	if hs.Cfg.AppSubUrl != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubUrl+"/") {
+	if hs.Cfg.AppSubURL != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubURL+"/") {
 		return login.ErrInvalidRedirectTo
 	}
 
@@ -61,8 +62,8 @@ func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 
 func (hs *HTTPServer) CookieOptionsFromCfg() middleware.CookieOptions {
 	path := "/"
-	if len(hs.Cfg.AppSubUrl) > 0 {
-		path = hs.Cfg.AppSubUrl
+	if len(hs.Cfg.AppSubURL) > 0 {
+		path = hs.Cfg.AppSubURL
 	}
 	return middleware.CookieOptions{
 		Path:             path,
@@ -79,6 +80,13 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
+	urlParams := c.Req.URL.Query()
+	if _, disableAutoLogin := urlParams["disableAutoLogin"]; disableAutoLogin {
+		hs.log.Debug("Auto login manually disabled")
+		c.HTML(200, getViewIndex(), viewData)
+		return
+	}
+
 	enabledOAuths := make(map[string]interface{})
 	for key, oauth := range setting.OAuthService.OAuthInfos {
 		enabledOAuths[key] = map[string]string{"name": oauth.Name}
@@ -88,10 +96,10 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	viewData.Settings["samlEnabled"] = hs.License.HasValidLicense() && hs.Cfg.SAMLEnabled
 
 	if loginError, ok := tryGetEncryptedCookie(c, LoginErrorCookieName); ok {
-		//this cookie is only set whenever an OAuth login fails
-		//therefore the loginError should be passed to the view data
-		//and the view should return immediately before attempting
-		//to login again via OAuth and enter to a redirect loop
+		// this cookie is only set whenever an OAuth login fails
+		// therefore the loginError should be passed to the view data
+		// and the view should return immediately before attempting
+		// to login again via OAuth and enter to a redirect loop
 		middleware.DeleteCookie(c.Resp, LoginErrorCookieName, hs.CookieOptionsFromCfg)
 		viewData.Settings["loginError"] = loginError
 		c.HTML(200, getViewIndex(), viewData)
@@ -118,7 +126,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 				// the user is already logged so instead of rendering the login page with error
 				// it should be redirected to the home page.
 				log.Debugf("Ignored invalid redirect_to cookie value: %v", redirectTo)
-				redirectTo = hs.Cfg.AppSubUrl + "/"
+				redirectTo = hs.Cfg.AppSubURL + "/"
 			}
 			middleware.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 			c.Redirect(redirectTo)
@@ -159,8 +167,27 @@ func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) Response {
 }
 
 func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Response {
+	authModule := ""
+	var user *models.User
+	var response *NormalResponse
+
+	defer func() {
+		err := response.err
+		if err == nil && response.errMessage != "" {
+			err = errors.New(response.errMessage)
+		}
+		hs.HooksService.RunLoginHook(&models.LoginInfo{
+			AuthModule:    authModule,
+			User:          user,
+			LoginUsername: cmd.User,
+			HTTPStatus:    response.status,
+			Error:         err,
+		}, c)
+	}()
+
 	if setting.DisableLoginForm {
-		return Error(401, "Login is disabled", nil)
+		response = Error(http.StatusUnauthorized, "Login is disabled", nil)
+		return response
 	}
 
 	authQuery := &models.LoginUserQuery{
@@ -170,27 +197,31 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 		IpAddress:  c.Req.RemoteAddr,
 	}
 
-	if err := bus.Dispatch(authQuery); err != nil {
-		e401 := Error(401, "Invalid username or password", err)
-		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts {
-			return e401
+	err := bus.Dispatch(authQuery)
+	authModule = authQuery.AuthModule
+	if err != nil {
+		response = Error(401, "Invalid username or password", err)
+		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts || err == models.ErrUserNotFound {
+			return response
 		}
 
 		// Do not expose disabled status,
 		// just show incorrect user credentials error (see #17947)
 		if err == login.ErrUserDisabled {
 			hs.log.Warn("User is disabled", "user", cmd.User)
-			return e401
+			return response
 		}
 
-		return Error(500, "Error while trying to authenticate user", err)
+		response = Error(500, "Error while trying to authenticate user", err)
+		return response
 	}
 
-	user := authQuery.User
+	user = authQuery.User
 
-	err := hs.loginUserWithUser(user, c)
+	err = hs.loginUserWithUser(user, c)
 	if err != nil {
-		return Error(500, "Error while signing in user", err)
+		response = Error(http.StatusInternalServerError, "Error while signing in user", err)
+		return response
 	}
 
 	result := map[string]interface{}{
@@ -207,7 +238,8 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 	}
 
 	metrics.MApiLoginPost.Inc()
-	return JSON(200, result)
+	response = JSON(http.StatusOK, result)
+	return response
 }
 
 func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext) error {
@@ -221,11 +253,16 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 	}
 
 	hs.log.Info("Successful Login", "User", user.Email)
-	middleware.WriteSessionCookie(c, userToken.UnhashedToken, hs.Cfg.LoginMaxLifetimeDays)
+	middleware.WriteSessionCookie(c, userToken.UnhashedToken, hs.Cfg.LoginMaxLifetime)
 	return nil
 }
 
 func (hs *HTTPServer) Logout(c *models.ReqContext) {
+	if hs.Cfg.SAMLEnabled && hs.Cfg.SAMLSingleLogoutEnabled {
+		c.Redirect(setting.AppSubUrl + "/logout/saml")
+		return
+	}
+
 	if err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken); err != nil && err != models.ErrUserTokenNotFound {
 		hs.log.Error("failed to revoke auth token", "error", err)
 	}

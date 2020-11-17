@@ -1,10 +1,11 @@
 import './dashboard_loaders';
 import './ReactContainer';
 import { applyRouteRegistrationHandlers } from './registry';
+import { contextSrv } from 'app/core/services/context_srv';
+
 // Pages
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
-import SignupPage from 'app/features/profile/SignupPage';
 import { LoginPage } from 'app/core/components/Login/LoginPage';
 
 import config from 'app/core/config';
@@ -71,6 +72,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       routeInfo: DashboardRouteInfo.New,
       reloadOnSearch: false,
       resolve: {
+        roles: () => (contextSrv.hasEditPermissionInFolders ? [contextSrv.user.orgRole] : ['Admin']),
         component: importDashboardPage,
       },
     })
@@ -404,13 +406,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           SafeDynamicImport(import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')),
       },
     })
-    .when('/admin/live', {
-      template: '<react-container />',
-      reloadOnSearch: false,
-      resolve: {
-        component: () => SafeDynamicImport(import(/* webpackChunkName: "LiveAdmin" */ 'app/features/admin/LiveAdmin')),
-      },
-    })
     .when('/admin/ldap', {
       template: '<react-container />',
       reloadOnSearch: false,
@@ -436,13 +431,25 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           SafeDynamicImport(import(/* webpackChunkName: "SignupInvited" */ 'app/features/users/SignupInvited')),
       },
     })
-    .when('/signup', {
-      template: '<react-container/>',
-      //@ts-ignore
-      pageClass: 'sidemenu-hidden',
+    .when('/verify', {
+      template: '<react-container />',
       resolve: {
-        component: () => SignupPage,
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "VerifyEmailPage" */ 'app/core/components/Signup/VerifyEmailPage')
+          ),
       },
+      // @ts-ignore
+      pageClass: 'login-page sidemenu-hidden',
+    })
+    .when('/signup', {
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "SignupPage" */ 'app/core/components/Signup/SignupPage')),
+      },
+      // @ts-ignore
+      pageClass: 'login-page sidemenu-hidden',
     })
     .when('/user/password/send-reset-email', {
       template: '<react-container />',
@@ -524,25 +531,22 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       },
     })
     .when('/alerting/notification/new', {
-      templateUrl: 'public/app/features/alerting/partials/notification_edit.html',
-      controller: 'AlertNotificationEditCtrl',
-      controllerAs: 'ctrl',
-      reloadOnSearch: false,
-    })
-    .when('/alerting/notification/new2', {
       template: '<react-container />',
       resolve: {
         component: () =>
           SafeDynamicImport(
-            import(/* webpackChunkName: "NewNotificationChannel" */ 'app/features/alerting/NewAlertNotificationPage')
+            import(/* webpackChunkName: "NewNotificationChannel" */ 'app/features/alerting/NewNotificationChannelPage')
           ),
       },
     })
     .when('/alerting/notification/:id/edit', {
-      templateUrl: 'public/app/features/alerting/partials/notification_edit.html',
-      controller: 'AlertNotificationEditCtrl',
-      controllerAs: 'ctrl',
-      reloadOnSearch: false,
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "EditNotificationChannel"*/ 'app/features/alerting/EditNotificationChannelPage')
+          ),
+      },
     })
     .otherwise({
       template: '<react-container />',

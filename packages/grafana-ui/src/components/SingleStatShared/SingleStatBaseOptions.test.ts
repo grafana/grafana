@@ -17,7 +17,7 @@ describe('sharedSingleStatMigrationHandler', () => {
           {
             color: 'green',
             index: 0,
-            value: null,
+            value: -Infinity,
           },
           {
             color: 'orange',
