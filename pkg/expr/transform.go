@@ -19,7 +19,7 @@ import (
 func WrapTransformData(ctx context.Context, query *tsdb.TsdbQuery) (*tsdb.Response, error) {
 	sdkReq := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			// TODO: Things probably
+			OrgID: query.User.OrgId,
 		},
 		Queries: []backend.DataQuery{},
 	}
@@ -123,6 +123,8 @@ func hiddenRefIDs(queries []backend.DataQuery) (map[string]struct{}, error) {
 	return hidden, nil
 }
 
+// QueryData is called used to query datasources that are not expression commands, but are used
+// alongside expressions and/or are the input of an expression command.
 func QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	if len(req.Queries) == 0 {
 		return nil, fmt.Errorf("zero queries found in datasource request")
