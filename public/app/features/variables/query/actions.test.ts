@@ -561,45 +561,6 @@ describe('query actions', () => {
     });
   });
 
-  const complexObject = {
-    level2: {
-      level3: {
-        query: '${query3}',
-        refId: 'C',
-        num: 2,
-        bool: true,
-        arr: [
-          { query: '${query4}', refId: 'D', num: 4, bool: true },
-          {
-            query: '${query5}',
-            refId: 'E',
-            num: 5,
-            bool: true,
-            arr: [{ query: '${query6}', refId: 'F', num: 6, bool: true }],
-          },
-        ],
-      },
-      query: '${query2}',
-      refId: 'B',
-      num: 1,
-      bool: false,
-    },
-    query: '${query1}',
-    refId: 'A',
-    num: 0,
-    bool: true,
-    arr: [
-      { query: '${query7}', refId: 'G', num: 7, bool: true },
-      {
-        query: '${query8}',
-        refId: 'H',
-        num: 8,
-        bool: true,
-        arr: [{ query: '${query9}', refId: 'I', num: 9, bool: true }],
-      },
-    ],
-  };
-
   describe('hasSelfReferencingQuery', () => {
     it('when called with a string', () => {
       const query = '$query';
