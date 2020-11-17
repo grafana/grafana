@@ -165,7 +165,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "presentation-play"},
 	}
 
-	if c.OrgRole != models.ROLE_VIEWER {
+	if hasEditPerm {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
 			Text: "Snapshots",
 			Id:   "snapshots",
