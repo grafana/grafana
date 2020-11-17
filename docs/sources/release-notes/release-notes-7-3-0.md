@@ -8,7 +8,7 @@ list = false
 
 # Release notes for Grafana 7.3.0
 
-## 7.3.0 (2020-10-28)
+## 7.3.0 Stable
 
 ----
 
@@ -25,7 +25,7 @@ list = false
 * **Graphite**: Fix default version to be 1.1. [#28471](https://github.com/grafana/grafana/pull/28471), [@ivanahuckova](https://github.com/ivanahuckova)
 * **StatPanel**: Fixes BizChart error max: yyy should not be less than min zzz. [#28587](https://github.com/grafana/grafana/pull/28587), [@hugohaggmark](https://github.com/hugohaggmark)
 
-## 7.3.0-beta2 (2020-10-22)
+## 7.3.0-beta2
 
 ----
 
@@ -46,7 +46,7 @@ list = false
 * **Loki**: Run instant query only when doing metric query. [#28325](https://github.com/grafana/grafana/pull/28325), [@aocenas](https://github.com/aocenas)
 * **Plugins**: Don't exit on duplicate plugin. [#28390](https://github.com/grafana/grafana/pull/28390), [@aknuds1](https://github.com/aknuds1)
 
-## 7.3.0-beta1 (2020-10-15)
+## 7.3.0-beta1
 
 ----
 

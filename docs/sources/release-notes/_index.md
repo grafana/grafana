@@ -5,7 +5,7 @@ weight = 10000
 
 # Release notes
 
-Here you can find details release notes that list everything that is included in every release as well as notices
+Here you can find detailed release notes that list everything that is included in every release as well as notices
 about deprecations and breaking changes.
 
 ## Grafana 7
