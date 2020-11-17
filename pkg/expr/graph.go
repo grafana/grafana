@@ -13,17 +13,17 @@ import (
 	"gonum.org/v1/gonum/graph/topo"
 )
 
-// NodeType is the type of a DPNode. Currently either a GEL or datasource query.
+// NodeType is the type of a DPNode. Currently either a expression command or datasource query.
 type NodeType int
 
 const (
-	// TypeGELNode is a DPNode NodeType for GEL commands.
-	TypeGELNode NodeType = iota
-	// TypeDatasourceNode is a DPNode NodeType for datasource queries.
+	// TypeCMDNode is a NodeType for expression commands.
+	TypeCMDNode NodeType = iota
+	// TypeDatasourceNode is a NodeType for datasource queries.
 	TypeDatasourceNode
 )
 
-// Node is a node in a Data Pipeline. Node is either a GEL command or a datasource query.
+// Node is a node in a Data Pipeline. Node is either a expression command or a datasource query.
 type Node interface {
 	ID() int64 // ID() allows the gonum graph node interface to be fulfilled
 	NodeType() NodeType
@@ -50,10 +50,12 @@ func (dp *DataPipeline) execute(c context.Context) (mathexp.Vars, error) {
 	return vars, nil
 }
 
-const gelNodeName = "__expr__"
+// ExprNodeName is the string constant used as the datasource name in requests
+// to identify it as an expression command.
+const ExprNodeName = "__expr__"
 
 // BuildPipeline builds a graph of the nodes, and returns the nodes in an
-// executable order
+// executable order.
 func buildPipeline(queries []backend.DataQuery) (DataPipeline, error) {
 	graph, err := buildDependencyGraph(queries)
 	if err != nil {
@@ -138,9 +140,9 @@ func buildGraph(queries []backend.DataQuery) (*simple.DirectedGraph, error) {
 
 		var node graph.Node
 		switch dsName {
-		case gelNodeName:
-			node, err = buildGELNode(dp, rn)
-		default: // If it's not a GEL query, it's a data source query.
+		case ExprNodeName:
+			node, err = buildCMDNode(dp, rn)
+		default: // If it's not an expression query, it's a data source query.
 			node, err = buildDSNode(dp, rn)
 		}
 		if err != nil {
@@ -158,25 +160,25 @@ func buildGraphEdges(dp *simple.DirectedGraph, registry map[string]Node) error {
 	for nodeIt.Next() {
 		node := nodeIt.Node().(Node)
 
-		if node.NodeType() != TypeGELNode {
-			// datasource node, nothing to do for now. Although if we want GEL results to be
+		if node.NodeType() != TypeCMDNode {
+			// datasource node, nothing to do for now. Although if we want expression results to be
 			// used as datasource query params some day this will need change
 			continue
 		}
 
-		gelNode := node.(*GELNode)
+		cmdNode := node.(*CMDNode)
 
-		for _, neededVar := range gelNode.GELCommand.NeedsVars() {
+		for _, neededVar := range cmdNode.Command.NeedsVars() {
 			neededNode, ok := registry[neededVar]
 			if !ok {
 				return fmt.Errorf("unable to find dependent node '%v'", neededVar)
 			}
 
-			if neededNode.ID() == gelNode.ID() {
+			if neededNode.ID() == cmdNode.ID() {
 				return fmt.Errorf("can not add self referencing node for var '%v' ", neededVar)
 			}
 
-			edge := dp.NewEdge(neededNode, gelNode)
+			edge := dp.NewEdge(neededNode, cmdNode)
 
 			dp.SetEdge(edge)
 		}

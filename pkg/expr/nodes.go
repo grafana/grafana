@@ -38,14 +38,14 @@ func (rn *rawNode) GetDatasourceName() (string, error) {
 	return dsName, nil
 }
 
-func (rn *rawNode) GetGELType() (c CommandType, err error) {
+func (rn *rawNode) GetCommandType() (c CommandType, err error) {
 	rawType, ok := rn.Query["type"]
 	if !ok {
-		return c, fmt.Errorf("no gel type in query for refId %v", rn.RefID)
+		return c, fmt.Errorf("no expression command type in query for refId %v", rn.RefID)
 	}
 	typeString, ok := rawType.(string)
 	if !ok {
-		return c, fmt.Errorf("expected gel type to be a string, got %T", rawType)
+		return c, fmt.Errorf("expected expression command type to be a string, got type %T", rawType)
 	}
 	return ParseCommandType(typeString)
 }
@@ -56,11 +56,11 @@ func (b *baseNode) String() string {
 	return b.refID
 }
 
-// GELNode is a DPNode that holds a GEL command.
-type GELNode struct {
+// CMDNode is a DPNode that holds an expression command.
+type CMDNode struct {
 	baseNode
-	GELType    CommandType
-	GELCommand Command
+	CMDType CommandType
+	Command Command
 }
 
 // ID returns the id of the node so it can fulfill the gonum's graph Node interface.
@@ -74,24 +74,24 @@ func (b *baseNode) RefID() string {
 }
 
 // NodeType returns the data pipeline node type.
-func (gn *GELNode) NodeType() NodeType {
-	return TypeGELNode
+func (gn *CMDNode) NodeType() NodeType {
+	return TypeCMDNode
 }
 
 // Execute runs the node and adds the results to vars. If the node requires
 // other nodes they must have already been executed and their results must
 // already by in vars.
-func (gn *GELNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
-	return gn.GELCommand.Execute(ctx, vars)
+func (gn *CMDNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
+	return gn.Command.Execute(ctx, vars)
 }
 
-func buildGELNode(dp *simple.DirectedGraph, rn *rawNode) (*GELNode, error) {
-	commandType, err := rn.GetGELType()
+func buildCMDNode(dp *simple.DirectedGraph, rn *rawNode) (*CMDNode, error) {
+	commandType, err := rn.GetCommandType()
 	if err != nil {
-		return nil, fmt.Errorf("invalid GEL type in '%v'", rn.RefID)
+		return nil, fmt.Errorf("invalid expression command type in '%v'", rn.RefID)
 	}
 
-	node := &GELNode{
+	node := &CMDNode{
 		baseNode: baseNode{
 			id:    dp.NewNode().ID(),
 			refID: rn.RefID,
@@ -100,13 +100,13 @@ func buildGELNode(dp *simple.DirectedGraph, rn *rawNode) (*GELNode, error) {
 
 	switch commandType {
 	case TypeMath:
-		node.GELCommand, err = UnmarshalMathCommand(rn)
+		node.Command, err = UnmarshalMathCommand(rn)
 	case TypeReduce:
-		node.GELCommand, err = UnmarshalReduceCommand(rn)
+		node.Command, err = UnmarshalReduceCommand(rn)
 	case TypeResample:
-		node.GELCommand, err = UnmarshalResampleCommand(rn)
+		node.Command, err = UnmarshalResampleCommand(rn)
 	default:
-		return nil, fmt.Errorf("gel type '%v' in '%v' not implemented", commandType, rn.RefID)
+		return nil, fmt.Errorf("expression command type '%v' in '%v' not implemented", commandType, rn.RefID)
 	}
 	if err != nil {
 		return nil, err
@@ -157,28 +157,28 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode) (*DSNode, error) {
 
 	rawDsID, ok := rn.Query["datasourceId"]
 	if !ok {
-		return nil, fmt.Errorf("no datasourceId in gel command for refId %v", rn.RefID)
+		return nil, fmt.Errorf("no datasourceId in expression data source request for refId %v", rn.RefID)
 	}
 	floatDsID, ok := rawDsID.(float64)
 	if !ok {
-		return nil, fmt.Errorf("expected datasourceId to be a float64, got %T for refId %v", rawDsID, rn.RefID)
+		return nil, fmt.Errorf("expected datasourceId to be a float64, got type %T for refId %v", rawDsID, rn.RefID)
 	}
 	dsNode.datasourceID = int64(floatDsID)
 
 	rawOrgID, ok := rn.Query["orgId"]
 	if !ok {
-		return nil, fmt.Errorf("no orgId in gel command for refId %v", rn.RefID)
+		return nil, fmt.Errorf("no orgId in expression data source request command for refId %v", rn.RefID)
 	}
 	floatOrgID, ok := rawOrgID.(float64)
 	if !ok {
-		return nil, fmt.Errorf("expected orgId to be a float64, got %T for refId %v", rawOrgID, rn.RefID)
+		return nil, fmt.Errorf("expected orgId to be a float64, got type %T for refId %v", rawOrgID, rn.RefID)
 	}
 	dsNode.orgID = int64(floatOrgID)
 
 	var floatIntervalMS float64
 	if rawIntervalMS := rn.Query["intervalMs"]; ok {
 		if floatIntervalMS, ok = rawIntervalMS.(float64); !ok {
-			return nil, fmt.Errorf("expected intervalMs to be an float64, got %T for refId %v", rawIntervalMS, rn.RefID)
+			return nil, fmt.Errorf("expected intervalMs to be an float64, got type %T for refId %v", rawIntervalMS, rn.RefID)
 		}
 		dsNode.intervalMS = int64(floatIntervalMS)
 	}
@@ -186,7 +186,7 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode) (*DSNode, error) {
 	var floatMaxDP float64
 	if rawMaxDP := rn.Query["maxDataPoints"]; ok {
 		if floatMaxDP, ok = rawMaxDP.(float64); !ok {
-			return nil, fmt.Errorf("expected maxDataPoints to be an float64, got %T for refId %v", rawMaxDP, rn.RefID)
+			return nil, fmt.Errorf("expected maxDataPoints to be an float64, got type %T for refId %v", rawMaxDP, rn.RefID)
 		}
 		dsNode.maxDP = int64(floatMaxDP)
 	}
@@ -230,7 +230,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Resul
 		if len(qr.Frames) == 1 {
 			frame := qr.Frames[0]
 			if frame.TimeSeriesSchema().Type == data.TimeSeriesTypeNot && isNumberTable(frame) {
-				backend.Logger.Debug("GEL datasource query (numberSet)", "query", refID)
+				backend.Logger.Debug("expression datasource query (numberSet)", "query", refID)
 				numberSet, err := extractNumberSet(frame)
 				if err != nil {
 					return mathexp.Results{}, err
@@ -246,7 +246,7 @@ func (dn *DSNode) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Resul
 		}
 
 		for _, frame := range qr.Frames {
-			backend.Logger.Debug("GEL datasource query (seriesSet)", "query", refID)
+			backend.Logger.Debug("expression datasource query (seriesSet)", "query", refID)
 			series, err := WideToMany(frame)
 			if err != nil {
 				return mathexp.Results{}, err

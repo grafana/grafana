@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-// Service is service representation for GEL.
+// Service is service representation for expression handling.
 type Service struct {
 }
 
@@ -15,7 +15,7 @@ func (s *Service) BuildPipeline(queries []backend.DataQuery) (DataPipeline, erro
 	return buildPipeline(queries)
 }
 
-// ExecutePipeline executes a GEL data pipeline and returns all the results.
+// ExecutePipeline executes an expression pipeline and returns all the results.
 func (s *Service) ExecutePipeline(ctx context.Context, pipeline DataPipeline) (*backend.QueryDataResponse, error) {
 	res := backend.NewQueryDataResponse()
 	vars, err := pipeline.execute(ctx)

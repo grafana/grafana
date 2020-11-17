@@ -11,13 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 )
 
-// Expr holds a parsed expression
+// Expr holds a parsed math command expression.
 type Expr struct {
 	*parse.Tree
 }
 
 // State embeds a parsed Expr with variables and their results
-// so the expression can act on them
+// so the expression can act on them.
 type State struct {
 	*Expr
 	Vars Vars
@@ -26,7 +26,7 @@ type State struct {
 	//  - NaN/Null behavior
 }
 
-// Vars holds the results of datasource queries or other GEL expressions
+// Vars holds the results of datasource queries or other expression commands.
 type Vars map[string]Results
 
 // New creates a new expression tree

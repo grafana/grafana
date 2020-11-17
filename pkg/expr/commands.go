@@ -9,13 +9,13 @@ import (
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
-// Command is an interface for all GEL commands.
+// Command is an interface for all expression commands.
 type Command interface {
 	NeedsVars() []string
 	Execute(c context.Context, vars mathexp.Vars) (mathexp.Results, error)
 }
 
-// MathCommand is a GEL commad for a GEL math expression such as "1 + $GA / 2"
+// MathCommand is a command for a math expression such as "1 + $GA / 2"
 type MathCommand struct {
 	RawExpression string
 	Expression    *mathexp.Expr
@@ -38,11 +38,11 @@ func NewMathCommand(expr string) (*MathCommand, error) {
 func UnmarshalMathCommand(rn *rawNode) (*MathCommand, error) {
 	rawExpr, ok := rn.Query["expression"]
 	if !ok {
-		return nil, fmt.Errorf("no expression in gel command for refId %v", rn.RefID)
+		return nil, fmt.Errorf("math command for refId %v is missing an expression", rn.RefID)
 	}
 	exprString, ok := rawExpr.(string)
 	if !ok {
-		return nil, fmt.Errorf("expected expression to be a string, got %T", rawExpr)
+		return nil, fmt.Errorf("expected math command for refId %v expression to be a string, got %T", rn.RefID, rawExpr)
 	}
 
 	gm, err := NewMathCommand(exprString)
@@ -64,7 +64,7 @@ func (gm *MathCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.
 	return gm.Expression.Execute(vars)
 }
 
-// ReduceCommand is a GEL command for reduction of a timeseries such as a min, mean, or max.
+// ReduceCommand is an expression command for reduction of a timeseries such as a min, mean, or max.
 type ReduceCommand struct {
 	Reducer     string
 	VarToReduce string
@@ -83,17 +83,17 @@ func NewReduceCommand(reducer, varToReduce string) *ReduceCommand {
 func UnmarshalReduceCommand(rn *rawNode) (*ReduceCommand, error) {
 	rawVar, ok := rn.Query["expression"]
 	if !ok {
-		return nil, fmt.Errorf("no variable to reduce in gel command for refId %v", rn.RefID)
+		return nil, fmt.Errorf("no variable specified to reduce for refId %v", rn.RefID)
 	}
 	varToReduce, ok := rawVar.(string)
 	if !ok {
-		return nil, fmt.Errorf("expected variable to be a string, got %T for refId %v", rawVar, rn.RefID)
+		return nil, fmt.Errorf("expected reduce variable to be a string, got %T for refId %v", rawVar, rn.RefID)
 	}
 	varToReduce = strings.TrimPrefix(varToReduce, "$")
 
 	rawReducer, ok := rn.Query["reducer"]
 	if !ok {
-		return nil, fmt.Errorf("no reducer specified in gel command for refId %v", rn.RefID)
+		return nil, fmt.Errorf("no reducer specified for refId %v", rn.RefID)
 	}
 	redFunc, ok := rawReducer.(string)
 	if !ok {
@@ -127,7 +127,7 @@ func (gr *ReduceCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathex
 	return newRes, nil
 }
 
-// ResampleCommand is a GEL command for resampling of a timeseries
+// ResampleCommand is an expression command for resampling of a timeseries.
 type ResampleCommand struct {
 	Rule          string
 	VarToResample string
@@ -152,40 +152,40 @@ func NewResampleCommand(rule, varToResample string, downsampler string, upsample
 func UnmarshalResampleCommand(rn *rawNode) (*ResampleCommand, error) {
 	rawVar, ok := rn.Query["expression"]
 	if !ok {
-		return nil, fmt.Errorf("no variable to resample in gel command for refId %v", rn.RefID)
+		return nil, fmt.Errorf("no variable to resample for refId %v", rn.RefID)
 	}
 	varToReduce, ok := rawVar.(string)
 	if !ok {
-		return nil, fmt.Errorf("expected variable to be a string, got %T for refId %v", rawVar, rn.RefID)
+		return nil, fmt.Errorf("expected resample input variable to be type string, but got type %T for refId %v", rawVar, rn.RefID)
 	}
 	varToReduce = strings.TrimPrefix(varToReduce, "$")
 	varToResample := varToReduce
 
-	rawRule, ok := rn.Query["rule"]
+	rawRule, ok := rn.Query["rule"] // TODO: Rename property to window when changing units
 	if !ok {
-		return nil, fmt.Errorf("no rule specified in gel command for refId %v", rn.RefID)
+		return nil, fmt.Errorf("no time duration specified for the window in resample command for refId %v", rn.RefID)
 	}
 	rule, ok := rawRule.(string)
 	if !ok {
-		return nil, fmt.Errorf("expected reducer to be a string, got %T for refId %v", rawRule, rn.RefID)
+		return nil, fmt.Errorf("expected resample window to be a string, got %T for refId %v", rawRule, rn.RefID)
 	}
 
 	rawDownsampler, ok := rn.Query["downsampler"]
 	if !ok {
-		return nil, fmt.Errorf("no downsampler specified in gel command for refId %v", rn.RefID)
+		return nil, fmt.Errorf("no downsampler function specified in resample command for refId %v", rn.RefID)
 	}
 	downsampler, ok := rawDownsampler.(string)
 	if !ok {
-		return nil, fmt.Errorf("expected downsampler to be a string, got %T for refId %v", downsampler, rn.RefID)
+		return nil, fmt.Errorf("expected resample downsampler to be a string, got type %T for refId %v", downsampler, rn.RefID)
 	}
 
 	rawUpsampler, ok := rn.Query["upsampler"]
 	if !ok {
-		return nil, fmt.Errorf("no downsampler specified in gel command for refId %v", rn.RefID)
+		return nil, fmt.Errorf("no downsampler specified in resample command for refId %v", rn.RefID)
 	}
 	upsampler, ok := rawUpsampler.(string)
 	if !ok {
-		return nil, fmt.Errorf("expected downsampler to be a string, got %T for refId %v", upsampler, rn.RefID)
+		return nil, fmt.Errorf("expected resample downsampler to be a string, got type %T for refId %v", upsampler, rn.RefID)
 	}
 	return NewResampleCommand(rule, varToResample, downsampler, upsampler, rn.TimeRange), nil
 }
@@ -214,17 +214,17 @@ func (gr *ResampleCommand) Execute(ctx context.Context, vars mathexp.Vars) (math
 	return newRes, nil
 }
 
-// CommandType is the type of GelCommand.
+// CommandType is the type of the expression command.
 type CommandType int
 
 const (
-	// TypeUnknown is the CMDType for an unrecognized GEL type.
+	// TypeUnknown is the CMDType for an unrecognized expression type.
 	TypeUnknown CommandType = iota
-	// TypeMath is the CMDType for a GEL math expression.
+	// TypeMath is the CMDType for a math expression.
 	TypeMath
-	// TypeReduce is the CMDType for a GEL reduction function.
+	// TypeReduce is the CMDType for a reduction expression.
 	TypeReduce
-	// TypeResample is the CMDType for a GEL resampling function.
+	// TypeResample is the CMDType for a resampling expression.
 	TypeResample
 )
 
@@ -251,6 +251,6 @@ func ParseCommandType(s string) (CommandType, error) {
 	case "resample":
 		return TypeResample, nil
 	default:
-		return TypeUnknown, fmt.Errorf("'%v' is not a GEL Type", s)
+		return TypeUnknown, fmt.Errorf("'%v' is not a recognized expression type", s)
 	}
 }
