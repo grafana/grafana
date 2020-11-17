@@ -14,7 +14,6 @@ var (
 	ErrInvalidCredentials    = errors.New("invalid username or password")
 	ErrNoEmail               = errors.New("login provider didn't return an email address")
 	ErrProviderDeniedRequest = errors.New("login provider denied login request")
-	ErrSignUpNotAllowed      = errors.New("signup is not allowed for this adapter")
 	ErrTooManyLoginAttempts  = errors.New("too many consecutive incorrect login attempts for user - login for user temporarily blocked")
 	ErrPasswordEmpty         = errors.New("no password provided")
 	ErrUserDisabled          = errors.New("user is disabled")
