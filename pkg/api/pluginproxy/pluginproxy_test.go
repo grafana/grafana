@@ -36,11 +36,18 @@ func TestPluginProxy(t *testing.T) {
 			return nil
 		})
 
-		header, err := getHeaders(route, 1, "my-app")
-		So(err, ShouldBeNil)
+		req := getPluginProxiedRequest(
+			&models.ReqContext{
+				SignedInUser: &models.SignedInUser{
+					Login: "test_user",
+				},
+			},
+			&setting.Cfg{SendUserHeader: true},
+			route,
+		)
 
 		Convey("Should render header template", func() {
-			So(header.Get("x-header"), ShouldEqual, "my secret 123")
+			So(req.Header.Get("x-header"), ShouldEqual, "my secret 123")
 		})
 	})
 
@@ -116,16 +123,36 @@ func TestPluginProxy(t *testing.T) {
 			&setting.Cfg{SendUserHeader: true},
 			route,
 		)
-		Convey("Headers should be updated", func() {
-			header, err := getHeaders(route, 1, "my-app")
-			So(err, ShouldBeNil)
-			So(header.Get("X-Grafana-User"), ShouldEqual, "")
-		})
 		Convey("Should set req.URL to be interpolated value from jsonData", func() {
 			So(req.URL.String(), ShouldEqual, "https://dynamic.grafana.com")
 		})
 		Convey("Route url should not be modified", func() {
 			So(route.URL, ShouldEqual, "{{.JsonData.dynamicUrl}}")
+		})
+	})
+
+	Convey("When getting complex templated url", t, func() {
+		route := &plugins.AppPluginRoute{
+			URL:    "{{if .JsonData.apiHost}}{{.JsonData.apiHost}}{{else}}https://example.com{{end}}",
+			Method: "GET",
+		}
+
+		bus.AddHandler("test", func(query *models.GetPluginSettingByIdQuery) error {
+			query.Result = &models.PluginSetting{}
+			return nil
+		})
+
+		req := getPluginProxiedRequest(
+			&models.ReqContext{
+				SignedInUser: &models.SignedInUser{
+					Login: "test_user",
+				},
+			},
+			&setting.Cfg{SendUserHeader: true},
+			route,
+		)
+		Convey("Should set req.URL to be interpolated default value", func() {
+			So(req.URL.String(), ShouldEqual, "https://example.com")
 		})
 	})
 }
@@ -140,10 +167,9 @@ func getPluginProxiedRequest(ctx *models.ReqContext, cfg *setting.Cfg, route *pl
 			ReqRole: models.ROLE_EDITOR,
 		}
 	}
-	proxy, err := NewApiPluginProxy(ctx, "", route, "", cfg)
-	So(err, ShouldBeNil)
+	proxy := NewApiPluginProxy(ctx, "", route, "", cfg)
 
-	req, err := http.NewRequest(http.MethodGet, route.URL, nil)
+	req, err := http.NewRequest(http.MethodGet, "/api/plugin-proxy/grafana-simple-app/api/v4/alerts", nil)
 	So(err, ShouldBeNil)
 	proxy.Director(req)
 	return req
