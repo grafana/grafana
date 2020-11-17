@@ -37,10 +37,17 @@ func TestPluginProxy(t *testing.T) {
 			return nil
 		})
 
-		header, err := getHeaders(route, 1, "my-app")
-		require.NoError(t, err)
+		req := getPluginProxiedRequest(
+			&models.ReqContext{
+				SignedInUser: &models.SignedInUser{
+					Login: "test_user",
+				},
+			},
+			&setting.Cfg{SendUserHeader: true},
+			route,
+		)
 
-		assert.Equal(t, "my secret 123", header.Get("x-header"))
+		assert.Equal(t, "my secret 123", req.Header.Get("x-header"))
 	})
 
 	t.Run("When SendUserHeader config is enabled", func(t *testing.T) {

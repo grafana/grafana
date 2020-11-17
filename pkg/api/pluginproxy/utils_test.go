@@ -14,7 +14,7 @@ func TestInterpolateString(t *testing.T) {
 		},
 	}
 
-	interpolated, err := InterpolateString("{{.SecureJsonData.Test}}", data)
+	interpolated, err := interpolateString("{{.SecureJsonData.Test}}", data)
 	require.NoError(t, err)
 	assert.Equal(t, "0asd+asd", interpolated)
 }
