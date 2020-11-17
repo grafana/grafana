@@ -232,10 +232,10 @@ func (g *dashboardGuardianImpl) GetHiddenACL(cfg *setting.Cfg) ([]*models.Dashbo
 
 		if _, hidden := cfg.HiddenUsers[item.UserLogin]; hidden {
 			hiddenACL = append(hiddenACL, &models.DashboardAcl{
-				OrgId:       item.OrgId,
-				DashboardId: item.DashboardId,
-				UserId:      item.UserId,
-				TeamId:      item.TeamId,
+				OrgID:       item.OrgId,
+				DashboardID: item.DashboardId,
+				UserID:      item.UserId,
+				TeamID:      item.TeamId,
 				Role:        item.Role,
 				Permission:  item.Permission,
 				Created:     item.Created,

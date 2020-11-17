@@ -273,7 +273,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 				{OrgId: 1, DashboardId: 1, UserId: 4, UserLogin: "user_1", Permission: models.PERMISSION_ADMIN},
 			},
 			GetHiddenAclValue: []*models.DashboardAcl{
-				{OrgId: 1, DashboardId: 1, UserId: 2, Permission: models.PERMISSION_VIEW},
+				{OrgID: 1, DashboardID: 1, UserID: 2, Permission: models.PERMISSION_VIEW},
 			},
 		})
 
@@ -304,12 +304,12 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 
 		cmd := dtos.UpdateDashboardAclCommand{
 			Items: []dtos.DashboardAclUpdateItem{
-				{UserId: 1000, Permission: models.PERMISSION_ADMIN},
+				{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 			},
 		}
 		for _, acl := range resp {
 			cmd.Items = append(cmd.Items, dtos.DashboardAclUpdateItem{
-				UserId:     acl.UserId,
+				UserID:     acl.UserId,
 				Permission: acl.Permission,
 			})
 		}
