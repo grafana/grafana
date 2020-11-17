@@ -52,19 +52,6 @@ export const usePlotPluginContext = (): PlotPluginsContextType => {
 };
 
 // Exposes API for building uPlot config
-// export const usePlotConfigContext = (): PlotConfigContextType => {
-//   const ctx = usePlotContext();
-//
-//   if (!ctx) {
-//     throwWhenNoContext('usePlotConfigContext');
-//   }
-//
-//   return {
-//     addSeries: ctx!.addSeries,
-//     addAxis: ctx!.addAxis,
-//     addScale: ctx!.addScale,
-//   };
-// };
 
 interface PlotDataAPI {
   /** Data frame passed to graph, x-axis aligned */
