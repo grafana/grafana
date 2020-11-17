@@ -372,6 +372,12 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "LibraryPanelsPage"*/ 'app/features/library-panels/LibraryPanelsPage')
       ),
     },
+    {
+      path: '/integrated-alerting',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "IntegratedAlertingPage" */ 'app/features/integrated-alerting/IntegratedAlertingPage')
+      ),
+    },
     ...getPluginCatalogRoutes(),
     ...getLiveRoutes(),
     ...getAlertingRoutes(),
