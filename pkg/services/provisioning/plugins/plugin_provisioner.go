@@ -47,7 +47,6 @@ func (ap *PluginProvisioner) apply(cfg *pluginsAsConfig) error {
 			}
 		} else {
 			app.PluginVersion = query.Result.PluginVersion
-			app.Pinned = query.Result.Pinned
 		}
 
 		ap.log.Info("Updating app from configuration ", "type", app.PluginID, "enabled", app.Enabled)
