@@ -27,7 +27,6 @@ func (im *InternalMetricsService) readSettings() error {
 
 func (im *InternalMetricsService) parseGraphiteSettings() error {
 	graphiteSection, err := im.Cfg.Raw.GetSection("metrics.graphite")
-
 	if err != nil {
 		return nil
 	}

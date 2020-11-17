@@ -35,7 +35,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			cmd := dtos.UpdateDashboardAclCommand{
 				Items: []dtos.DashboardAclUpdateItem{
-					{UserId: 1000, Permission: models.PERMISSION_ADMIN},
+					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 				},
 			}
 
@@ -78,7 +78,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			cmd := dtos.UpdateDashboardAclCommand{
 				Items: []dtos.DashboardAclUpdateItem{
-					{UserId: 1000, Permission: models.PERMISSION_ADMIN},
+					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 				},
 			}
 
@@ -138,7 +138,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			cmd := dtos.UpdateDashboardAclCommand{
 				Items: []dtos.DashboardAclUpdateItem{
-					{UserId: 1000, Permission: models.PERMISSION_ADMIN},
+					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 				},
 			}
 
@@ -176,7 +176,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			cmd := dtos.UpdateDashboardAclCommand{
 				Items: []dtos.DashboardAclUpdateItem{
-					{UserId: 1000, Permission: models.PERMISSION_ADMIN},
+					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 				},
 			}
 
@@ -215,7 +215,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			cmd := dtos.UpdateDashboardAclCommand{
 				Items: []dtos.DashboardAclUpdateItem{
-					{UserId: 1000, Permission: models.PERMISSION_ADMIN},
+					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
 				},
 			}
 

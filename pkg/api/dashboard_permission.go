@@ -63,14 +63,14 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dt
 	}
 
 	cmd := models.UpdateDashboardAclCommand{}
-	cmd.DashboardId = dashID
+	cmd.DashboardID = dashID
 
 	for _, item := range apiCmd.Items {
 		cmd.Items = append(cmd.Items, &models.DashboardAcl{
-			OrgId:       c.OrgId,
-			DashboardId: dashID,
-			UserId:      item.UserId,
-			TeamId:      item.TeamId,
+			OrgID:       c.OrgId,
+			DashboardID: dashID,
+			UserID:      item.UserID,
+			TeamID:      item.TeamID,
 			Role:        item.Role,
 			Permission:  item.Permission,
 			Created:     time.Now(),
