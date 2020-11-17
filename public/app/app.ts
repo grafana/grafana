@@ -206,13 +206,15 @@ export class GrafanaApp {
     });
 
     registerEchoBackend(new PerformanceBackend({}));
-    registerEchoBackend(
-      new SentryEchoBackend({
-        ...config.sentry,
-        user: config.bootData.user,
-        buildInfo: config.buildInfo,
-      })
-    );
+    if (config.sentry.enabled) {
+      registerEchoBackend(
+        new SentryEchoBackend({
+          ...config.sentry,
+          user: config.bootData.user,
+          buildInfo: config.buildInfo,
+        })
+      );
+    }
 
     window.addEventListener('DOMContentLoaded', () => {
       reportPerformance('dcl', Math.round(performance.now()));
