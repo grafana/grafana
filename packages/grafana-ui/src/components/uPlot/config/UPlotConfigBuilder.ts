@@ -7,6 +7,7 @@ export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
   private axes: UPlotAxisBuilder[] = [];
   private scales: UPlotScaleBuilder[] = [];
+  private registeredScales: string[] = [];
 
   addAxis(props: AxisProps) {
     this.axes.push(new UPlotAxisBuilder(props));
@@ -17,7 +18,12 @@ export class UPlotConfigBuilder {
   }
 
   addScale(props: ScaleProps) {
+    this.registeredScales.push(props.scaleKey);
     this.scales.push(new UPlotScaleBuilder(props));
+  }
+
+  hasScale(scaleKey: string) {
+    return this.registeredScales.indexOf(scaleKey) > -1;
   }
 
   getConfig() {

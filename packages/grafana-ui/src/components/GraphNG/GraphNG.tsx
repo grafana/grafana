@@ -75,7 +75,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
     let seriesIdx = 0;
     const legendItems: LegendItem[] = [];
-    const uniqueScales: Record<string, boolean> = {};
 
     for (let i = 0; i < alignedData.fields.length; i++) {
       const field = alignedData.fields[i];
@@ -89,8 +88,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       const fmt = field.display ?? defaultFormatter;
       const scale = config.unit || '__fixed';
 
-      if (!uniqueScales[scale]) {
-        uniqueScales[scale] = true;
+      if (!builder.hasScale(scale)) {
         builder.addScale({ scaleKey: scale });
         builder.addAxis({
           scaleKey: scale,

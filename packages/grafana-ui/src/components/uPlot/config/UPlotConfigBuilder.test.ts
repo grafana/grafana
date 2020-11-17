@@ -3,19 +3,21 @@
 import { UPlotConfigBuilder } from './UPlotConfigBuilder';
 import { AxisSide } from '../types';
 import { GrafanaTheme } from '@grafana/data';
+import { expect } from '../../../../../../public/test/lib/common';
 
 describe('UPlotConfigBuilder', () => {
-  it('allows scales configuration', () => {
-    const builder = new UPlotConfigBuilder();
-    builder.addScale({
-      scaleKey: 'scale-x',
-      isTime: true,
-    });
-    builder.addScale({
-      scaleKey: 'scale-y',
-      isTime: false,
-    });
-    expect(builder.getConfig()).toMatchInlineSnapshot(`
+  describe('scales config', () => {
+    it('allows scales configuration', () => {
+      const builder = new UPlotConfigBuilder();
+      builder.addScale({
+        scaleKey: 'scale-x',
+        isTime: true,
+      });
+      builder.addScale({
+        scaleKey: 'scale-y',
+        isTime: false,
+      });
+      expect(builder.getConfig()).toMatchInlineSnapshot(`
       Object {
         "axes": Array [],
         "scales": Object {
@@ -31,6 +33,21 @@ describe('UPlotConfigBuilder', () => {
         ],
       }
     `);
+    });
+
+    it('prevents duplicate scales', () => {
+      const builder = new UPlotConfigBuilder();
+      builder.addScale({
+        scaleKey: 'scale-x',
+        isTime: true,
+      });
+      builder.addScale({
+        scaleKey: 'scale-x',
+        isTime: false,
+      });
+
+      expect(Object.keys(builder.getConfig().scales!)).toHaveLength(1);
+    });
   });
 
   it('allows axes configuration', () => {
