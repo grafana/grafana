@@ -184,6 +184,8 @@ func (provider *accessTokenProvider) getJwtAccessToken(ctx context.Context, data
 	return token.AccessToken, nil
 }
 
+// getTokenSource gets a token source.
+// Stubbable by tests.
 var getTokenSource = func(conf *jwt.Config, ctx context.Context) (*oauth2.Token, error) {
 	tokenSrc := conf.TokenSource(ctx)
 	token, err := tokenSrc.Token()
