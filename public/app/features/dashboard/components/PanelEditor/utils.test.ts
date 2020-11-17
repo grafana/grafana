@@ -26,7 +26,7 @@ describe('supportsDataQuery', () => {
   describe('when called with plugin that supports queries', () => {
     it('then it should return true', () => {
       const plugin = ({ meta: { skipDataQuery: false } } as unknown) as PanelPlugin;
-      expect(supportsDataQuery(plugin)).toBe(false);
+      expect(supportsDataQuery(plugin)).toBe(true);
     });
   });
 
