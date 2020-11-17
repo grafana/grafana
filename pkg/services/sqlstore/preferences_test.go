@@ -5,116 +5,113 @@ package sqlstore
 import (
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPreferencesDataAccess(t *testing.T) {
-	Convey("Testing preferences data access", t, func() {
-		ss := InitTestDB(t)
+	ss := InitTestDB(t)
 
-		Convey("GetPreferencesWithDefaults with no saved preferences should return defaults", func() {
-			setting.DefaultTheme = "light"
-			ss.Cfg.DateFormats.DefaultTimezone = "UTC"
+	t.Run("GetPreferencesWithDefaults with no saved preferences should return defaults", func(t *testing.T) {
+		setting.DefaultTheme = "light"
+		ss.Cfg.DateFormats.DefaultTimezone = "UTC"
 
-			query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{}}
-			err := ss.GetPreferencesWithDefaults(query)
-			So(err, ShouldBeNil)
-			So(query.Result.Theme, ShouldEqual, "light")
-			So(query.Result.Timezone, ShouldEqual, "UTC")
-			So(query.Result.HomeDashboardId, ShouldEqual, 0)
-		})
+		query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{}}
+		err := ss.GetPreferencesWithDefaults(query)
+		require.NoError(t, err)
+		require.Equal(t, "light", query.Result.Theme)
+		require.Equal(t, "UTC", query.Result.Timezone)
+		require.Equal(t, int64(0), query.Result.HomeDashboardId)
+	})
 
-		Convey("GetPreferencesWithDefaults with saved org and user home dashboard should return user home dashboard", func() {
-			err := SavePreferences(&models.SavePreferencesCommand{OrgId: 1, HomeDashboardId: 1})
-			So(err, ShouldBeNil)
-			err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, UserId: 1, HomeDashboardId: 4})
-			So(err, ShouldBeNil)
+	t.Run("GetPreferencesWithDefaults with saved org and user home dashboard should return user home dashboard", func(t *testing.T) {
+		err := SavePreferences(&models.SavePreferencesCommand{OrgId: 1, HomeDashboardId: 1})
+		require.NoError(t, err)
+		err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, UserId: 1, HomeDashboardId: 4})
+		require.NoError(t, err)
 
-			query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1, UserId: 1}}
-			err = ss.GetPreferencesWithDefaults(query)
-			So(err, ShouldBeNil)
-			So(query.Result.HomeDashboardId, ShouldEqual, 4)
-		})
+		query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1, UserId: 1}}
+		err = ss.GetPreferencesWithDefaults(query)
+		require.NoError(t, err)
+		require.Equal(t, int64(4), query.Result.HomeDashboardId)
+	})
 
-		Convey("GetPreferencesWithDefaults with saved org and other user home dashboard should return org home dashboard", func() {
-			err := SavePreferences(&models.SavePreferencesCommand{OrgId: 1, HomeDashboardId: 1})
-			So(err, ShouldBeNil)
-			err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, UserId: 1, HomeDashboardId: 4})
-			So(err, ShouldBeNil)
+	t.Run("GetPreferencesWithDefaults with saved org and other user home dashboard should return org home dashboard", func(t *testing.T) {
+		err := SavePreferences(&models.SavePreferencesCommand{OrgId: 1, HomeDashboardId: 1})
+		require.NoError(t, err)
+		err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, UserId: 1, HomeDashboardId: 4})
+		require.NoError(t, err)
 
-			query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1, UserId: 2}}
-			err = ss.GetPreferencesWithDefaults(query)
-			So(err, ShouldBeNil)
-			So(query.Result.HomeDashboardId, ShouldEqual, 1)
-		})
+		query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1, UserId: 2}}
+		err = ss.GetPreferencesWithDefaults(query)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), query.Result.HomeDashboardId)
+	})
 
-		Convey("GetPreferencesWithDefaults with saved org and teams home dashboard should return last team home dashboard", func() {
-			err := SavePreferences(&models.SavePreferencesCommand{OrgId: 1, HomeDashboardId: 1})
-			So(err, ShouldBeNil)
-			err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, TeamId: 2, HomeDashboardId: 2})
-			So(err, ShouldBeNil)
-			err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, TeamId: 3, HomeDashboardId: 3})
-			So(err, ShouldBeNil)
+	t.Run("GetPreferencesWithDefaults with saved org and teams home dashboard should return last team home dashboard", func(t *testing.T) {
+		err := SavePreferences(&models.SavePreferencesCommand{OrgId: 1, HomeDashboardId: 1})
+		require.NoError(t, err)
+		err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, TeamId: 2, HomeDashboardId: 2})
+		require.NoError(t, err)
+		err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, TeamId: 3, HomeDashboardId: 3})
+		require.NoError(t, err)
 
-			query := &models.GetPreferencesWithDefaultsQuery{
-				User: &models.SignedInUser{OrgId: 1, Teams: []int64{2, 3}},
-			}
-			err = ss.GetPreferencesWithDefaults(query)
-			So(err, ShouldBeNil)
-			So(query.Result.HomeDashboardId, ShouldEqual, 3)
-		})
+		query := &models.GetPreferencesWithDefaultsQuery{
+			User: &models.SignedInUser{OrgId: 1, Teams: []int64{2, 3}},
+		}
+		err = ss.GetPreferencesWithDefaults(query)
+		require.NoError(t, err)
+		require.Equal(t, int64(3), query.Result.HomeDashboardId)
+	})
 
-		Convey("GetPreferencesWithDefaults with saved org and other teams home dashboard should return org home dashboard", func() {
-			err := SavePreferences(&models.SavePreferencesCommand{OrgId: 1, HomeDashboardId: 1})
-			So(err, ShouldBeNil)
-			err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, TeamId: 2, HomeDashboardId: 2})
-			So(err, ShouldBeNil)
-			err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, TeamId: 3, HomeDashboardId: 3})
-			So(err, ShouldBeNil)
+	t.Run("GetPreferencesWithDefaults with saved org and other teams home dashboard should return org home dashboard", func(t *testing.T) {
+		err := SavePreferences(&models.SavePreferencesCommand{OrgId: 1, HomeDashboardId: 1})
+		require.NoError(t, err)
+		err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, TeamId: 2, HomeDashboardId: 2})
+		require.NoError(t, err)
+		err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, TeamId: 3, HomeDashboardId: 3})
+		require.NoError(t, err)
 
-			query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1}}
-			err = ss.GetPreferencesWithDefaults(query)
-			So(err, ShouldBeNil)
-			So(query.Result.HomeDashboardId, ShouldEqual, 1)
-		})
+		query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{OrgId: 1}}
+		err = ss.GetPreferencesWithDefaults(query)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), query.Result.HomeDashboardId)
+	})
 
-		Convey("GetPreferencesWithDefaults with saved org, teams and user home dashboard should return user home dashboard", func() {
-			err := SavePreferences(&models.SavePreferencesCommand{OrgId: 1, HomeDashboardId: 1})
-			So(err, ShouldBeNil)
-			err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, TeamId: 2, HomeDashboardId: 2})
-			So(err, ShouldBeNil)
-			err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, TeamId: 3, HomeDashboardId: 3})
-			So(err, ShouldBeNil)
-			err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, UserId: 1, HomeDashboardId: 4})
-			So(err, ShouldBeNil)
+	t.Run("GetPreferencesWithDefaults with saved org, teams and user home dashboard should return user home dashboard", func(t *testing.T) {
+		err := SavePreferences(&models.SavePreferencesCommand{OrgId: 1, HomeDashboardId: 1})
+		require.NoError(t, err)
+		err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, TeamId: 2, HomeDashboardId: 2})
+		require.NoError(t, err)
+		err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, TeamId: 3, HomeDashboardId: 3})
+		require.NoError(t, err)
+		err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, UserId: 1, HomeDashboardId: 4})
+		require.NoError(t, err)
 
-			query := &models.GetPreferencesWithDefaultsQuery{
-				User: &models.SignedInUser{OrgId: 1, UserId: 1, Teams: []int64{2, 3}},
-			}
-			err = ss.GetPreferencesWithDefaults(query)
-			So(err, ShouldBeNil)
-			So(query.Result.HomeDashboardId, ShouldEqual, 4)
-		})
+		query := &models.GetPreferencesWithDefaultsQuery{
+			User: &models.SignedInUser{OrgId: 1, UserId: 1, Teams: []int64{2, 3}},
+		}
+		err = ss.GetPreferencesWithDefaults(query)
+		require.NoError(t, err)
+		require.Equal(t, int64(4), query.Result.HomeDashboardId)
+	})
 
-		Convey("GetPreferencesWithDefaults with saved org, other teams and user home dashboard should return org home dashboard", func() {
-			err := SavePreferences(&models.SavePreferencesCommand{OrgId: 1, HomeDashboardId: 1})
-			So(err, ShouldBeNil)
-			err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, TeamId: 2, HomeDashboardId: 2})
-			So(err, ShouldBeNil)
-			err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, TeamId: 3, HomeDashboardId: 3})
-			So(err, ShouldBeNil)
-			err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, UserId: 1, HomeDashboardId: 4})
-			So(err, ShouldBeNil)
+	t.Run("GetPreferencesWithDefaults with saved org, other teams and user home dashboard should return org home dashboard", func(t *testing.T) {
+		err := SavePreferences(&models.SavePreferencesCommand{OrgId: 1, HomeDashboardId: 1})
+		require.NoError(t, err)
+		err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, TeamId: 2, HomeDashboardId: 2})
+		require.NoError(t, err)
+		err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, TeamId: 3, HomeDashboardId: 3})
+		require.NoError(t, err)
+		err = SavePreferences(&models.SavePreferencesCommand{OrgId: 1, UserId: 1, HomeDashboardId: 4})
+		require.NoError(t, err)
 
-			query := &models.GetPreferencesWithDefaultsQuery{
-				User: &models.SignedInUser{OrgId: 1, UserId: 2},
-			}
-			err = ss.GetPreferencesWithDefaults(query)
-			So(err, ShouldBeNil)
-			So(query.Result.HomeDashboardId, ShouldEqual, 1)
-		})
+		query := &models.GetPreferencesWithDefaultsQuery{
+			User: &models.SignedInUser{OrgId: 1, UserId: 2},
+		}
+		err = ss.GetPreferencesWithDefaults(query)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), query.Result.HomeDashboardId)
 	})
 }
