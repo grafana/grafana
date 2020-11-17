@@ -1342,7 +1342,6 @@ steps:
   commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.26/windows/grabpl.exe -OutFile grabpl.exe
-  - .\grabpl.exe verify-drone
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout ${DRONE_TAG}
@@ -1359,6 +1358,7 @@ steps:
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
+  - .\grabpl.exe verify-drone
   depends_on:
   - clone
 
@@ -2105,7 +2105,6 @@ steps:
   commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.26/windows/grabpl.exe -OutFile grabpl.exe
-  - .\grabpl.exe verify-drone
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout master
@@ -2122,6 +2121,7 @@ steps:
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
+  - .\grabpl.exe verify-drone
   depends_on:
   - clone
 
@@ -2812,7 +2812,6 @@ steps:
   commands:
   - $$ProgressPreference = "SilentlyContinue"
   - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.26/windows/grabpl.exe -OutFile grabpl.exe
-  - .\grabpl.exe verify-drone
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout $$env:DRONE_BRANCH
@@ -2829,6 +2828,7 @@ steps:
   - rm -force grabpl.exe
   - C:\App\grabpl.exe init-enterprise C:\App\grafana-enterprise
   - cp C:\App\grabpl.exe grabpl.exe
+  - .\grabpl.exe verify-drone
   depends_on:
   - clone
 
