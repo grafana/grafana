@@ -25,10 +25,6 @@ type Tag struct {
 
 type Select []QueryPart
 
-type InfluxDbSelect struct {
-	Type string
-}
-
 type Response struct {
 	Results []Result
 	Err     error

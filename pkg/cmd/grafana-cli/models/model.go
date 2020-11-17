@@ -5,7 +5,7 @@ import (
 )
 
 type InstalledPlugin struct {
-	Id   string `json:"id"`
+	ID   string `json:"id"`
 	Name string `json:"name"`
 	Type string `json:"type"`
 
@@ -24,14 +24,14 @@ type PluginInfo struct {
 }
 
 type Plugin struct {
-	Id       string    `json:"id"`
+	ID       string    `json:"id"`
 	Category string    `json:"category"`
 	Versions []Version `json:"versions"`
 }
 
 type Version struct {
 	Commit  string `json:"commit"`
-	Url     string `json:"url"`
+	URL     string `json:"url"`
 	Version string `json:"version"`
 	// os-arch to md5 checksum to check when downloading the file
 	Arch map[string]ArchMeta `json:"arch"`
