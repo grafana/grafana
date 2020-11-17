@@ -12,7 +12,7 @@ import (
 func TestResampleSeries(t *testing.T) {
 	var tests = []struct {
 		name             string
-		interval         string
+		interval         time.Duration
 		downsampler      string
 		upsampler        string
 		timeRange        backend.TimeRange
@@ -21,7 +21,7 @@ func TestResampleSeries(t *testing.T) {
 	}{
 		{
 			name:        "resample series: time range shorter than the rule interval",
-			interval:    "5s",
+			interval:    time.Second * 5,
 			downsampler: "mean",
 			upsampler:   "fillna",
 			timeRange: backend.TimeRange{
@@ -36,7 +36,7 @@ func TestResampleSeries(t *testing.T) {
 		},
 		{
 			name:        "resample series: invalid time range",
-			interval:    "5s",
+			interval:    time.Second * 5,
 			downsampler: "mean",
 			upsampler:   "fillna",
 			timeRange: backend.TimeRange{
@@ -51,7 +51,7 @@ func TestResampleSeries(t *testing.T) {
 		},
 		{
 			name:        "resample series: downsampling (mean / pad)",
-			interval:    "5s",
+			interval:    time.Second * 5,
 			downsampler: "mean",
 			upsampler:   "pad",
 			timeRange: backend.TimeRange{
@@ -79,7 +79,7 @@ func TestResampleSeries(t *testing.T) {
 		},
 		{
 			name:        "resample series: downsampling (max / fillna)",
-			interval:    "5s",
+			interval:    time.Second * 5,
 			downsampler: "max",
 			upsampler:   "fillna",
 			timeRange: backend.TimeRange{
@@ -107,7 +107,7 @@ func TestResampleSeries(t *testing.T) {
 		},
 		{
 			name:        "resample series: downsampling (min / fillna)",
-			interval:    "5s",
+			interval:    time.Second * 5,
 			downsampler: "min",
 			upsampler:   "fillna",
 			timeRange: backend.TimeRange{
@@ -135,7 +135,7 @@ func TestResampleSeries(t *testing.T) {
 		},
 		{
 			name:        "resample series: downsampling (sum / fillna)",
-			interval:    "5s",
+			interval:    time.Second * 5,
 			downsampler: "sum",
 			upsampler:   "fillna",
 			timeRange: backend.TimeRange{
@@ -163,7 +163,7 @@ func TestResampleSeries(t *testing.T) {
 		},
 		{
 			name:        "resample series: downsampling (mean / fillna)",
-			interval:    "5s",
+			interval:    time.Second * 5,
 			downsampler: "mean",
 			upsampler:   "fillna",
 			timeRange: backend.TimeRange{
@@ -191,7 +191,7 @@ func TestResampleSeries(t *testing.T) {
 		},
 		{
 			name:        "resample series: upsampling (mean / pad )",
-			interval:    "2s",
+			interval:    time.Second * 2,
 			downsampler: "mean",
 			upsampler:   "pad",
 			timeRange: backend.TimeRange{
@@ -219,7 +219,7 @@ func TestResampleSeries(t *testing.T) {
 		},
 		{
 			name:        "resample series: upsampling (mean / backfilling )",
-			interval:    "2s",
+			interval:    time.Second * 2,
 			downsampler: "mean",
 			upsampler:   "backfilling",
 			timeRange: backend.TimeRange{

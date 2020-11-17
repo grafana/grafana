@@ -2,19 +2,14 @@ package mathexp
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/gtime"
 )
 
 // Resample turns the Series into a Number based on the given reduction function
-func (s Series) Resample(rule string, downsampler string, upsampler string, tr backend.TimeRange) (Series, error) {
-	interval, err := gtime.ParseDuration(rule)
-	if err != nil {
-		return s, fmt.Errorf(`failed to parse "rule" field %q: %w`, rule, err)
-	}
-
+func (s Series) Resample(interval time.Duration, downsampler string, upsampler string, tr backend.TimeRange) (Series, error) {
 	newSeriesLength := int(float64(tr.To.Sub(tr.From).Nanoseconds()) / float64(interval.Nanoseconds()))
 	if newSeriesLength <= 0 {
 		return s, fmt.Errorf("the series cannot be sampled further; the time range is shorter than the interval")

@@ -14,7 +14,7 @@ export interface ExpressionQuery extends DataQuery {
   type: GELQueryType;
   reducer?: string;
   expression?: string;
-  rule?: string;
+  window?: string;
   downsampler?: string;
   upsampler?: string;
 }

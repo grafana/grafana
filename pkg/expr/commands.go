@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
@@ -129,7 +131,7 @@ func (gr *ReduceCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathex
 
 // ResampleCommand is an expression command for resampling of a timeseries.
 type ResampleCommand struct {
-	Rule          string
+	Window        time.Duration
 	VarToResample string
 	Downsampler   string
 	Upsampler     string
@@ -137,15 +139,19 @@ type ResampleCommand struct {
 }
 
 // NewResampleCommand creates a new ResampleCMD.
-func NewResampleCommand(rule, varToResample string, downsampler string, upsampler string, tr backend.TimeRange) *ResampleCommand {
+func NewResampleCommand(rawWindow, varToResample string, downsampler string, upsampler string, tr backend.TimeRange) (*ResampleCommand, error) {
 	// TODO: validate reducer here, before execution
+	window, err := gtime.ParseDuration(rawWindow)
+	if err != nil {
+		return nil, fmt.Errorf(`failed to parse resample "window" duration field %q: %w`, window, err)
+	}
 	return &ResampleCommand{
-		Rule:          rule,
+		Window:        window,
 		VarToResample: varToResample,
 		Downsampler:   downsampler,
 		Upsampler:     upsampler,
 		TimeRange:     tr,
-	}
+	}, nil
 }
 
 // UnmarshalResampleCommand creates a ResampleCMD from Grafana's frontend query.
@@ -161,13 +167,13 @@ func UnmarshalResampleCommand(rn *rawNode) (*ResampleCommand, error) {
 	varToReduce = strings.TrimPrefix(varToReduce, "$")
 	varToResample := varToReduce
 
-	rawRule, ok := rn.Query["rule"] // TODO: Rename property to window when changing units
+	rawWindow, ok := rn.Query["window"]
 	if !ok {
 		return nil, fmt.Errorf("no time duration specified for the window in resample command for refId %v", rn.RefID)
 	}
-	rule, ok := rawRule.(string)
+	window, ok := rawWindow.(string)
 	if !ok {
-		return nil, fmt.Errorf("expected resample window to be a string, got %T for refId %v", rawRule, rn.RefID)
+		return nil, fmt.Errorf("expected resample window to be a string, got %T for refId %v", rawWindow, rn.RefID)
 	}
 
 	rawDownsampler, ok := rn.Query["downsampler"]
@@ -187,7 +193,8 @@ func UnmarshalResampleCommand(rn *rawNode) (*ResampleCommand, error) {
 	if !ok {
 		return nil, fmt.Errorf("expected resample downsampler to be a string, got type %T for refId %v", upsampler, rn.RefID)
 	}
-	return NewResampleCommand(rule, varToResample, downsampler, upsampler, rn.TimeRange), nil
+
+	return NewResampleCommand(window, varToResample, downsampler, upsampler, rn.TimeRange)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -205,7 +212,7 @@ func (gr *ResampleCommand) Execute(ctx context.Context, vars mathexp.Vars) (math
 		if !ok {
 			return newRes, fmt.Errorf("can only resample type series, got type %v", val.Type())
 		}
-		num, err := series.Resample(gr.Rule, gr.Downsampler, gr.Upsampler, gr.TimeRange)
+		num, err := series.Resample(gr.Window, gr.Downsampler, gr.Upsampler, gr.TimeRange)
 		if err != nil {
 			return newRes, err
 		}
