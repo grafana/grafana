@@ -4,6 +4,8 @@ description = "Feature and improvement highlights for Grafana v5.2"
 keywords = ["grafana", "new", "documentation", "5.2", "release notes"]
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v5-2/"]
 weight = -16
+[_build]
+list = false
 +++
 
 # What's new in Grafana v5.2
