@@ -14,7 +14,7 @@ func TestInterpolateString(t *testing.T) {
 			},
 		}
 
-		interpolated, err := InterpolateString("{{.SecureJsonData.Test}}", data)
+		interpolated, err := interpolateString("{{.SecureJsonData.Test}}", data)
 		So(err, ShouldBeNil)
 		So(interpolated, ShouldEqual, "0asd+asd")
 	})
