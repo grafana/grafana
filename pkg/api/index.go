@@ -195,6 +195,8 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 
 	if setting.AlertingEnabled && (c.OrgRole == models.ROLE_ADMIN || c.OrgRole == models.ROLE_EDITOR) {
 		alertChildNavs := []*dtos.NavLink{
+			{Text: "Integrated Alerting", Id: "integrated-alerting", Url: setting.AppSubUrl + "/integrated-alerting", Icon: "list-ul"},
+			{Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true},
 			{Text: "Alert Rules", Id: "alert-list", Url: setting.AppSubUrl + "/alerting/list", Icon: "list-ul"},
 			{
 				Text: "Notification channels", Id: "channels", Url: setting.AppSubUrl + "/alerting/notifications",

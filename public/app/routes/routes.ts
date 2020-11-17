@@ -538,6 +538,17 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           ),
       },
     })
+    .when('/integrated-alerting', {
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(
+              /* webpackChunkName: "IntegratedAlertingPage" */ 'app/features/integrated-alerting/IntegratedAlertingPage'
+            )
+          ),
+      },
+    })
     .when('/alerting/notification/new', {
       template: '<react-container />',
       resolve: {
