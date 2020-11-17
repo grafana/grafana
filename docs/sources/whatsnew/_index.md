@@ -6,7 +6,8 @@ weight = 1
 
 # What's new Grafana
 
-Grafana is changing all the time. Here you can find articles with release highlights.
+Grafana is changing all the time. For release highlights checkout links below, if you want a complete list of every change, as well
+as info on deprecations, breaking changes and plugin development read the [release notes]({{< relref "../release-notes" >}}).
 
 ## Grafana 7
 
