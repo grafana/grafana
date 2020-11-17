@@ -8,11 +8,11 @@ list = false
 
 # Release notes for Grafana 7.3.3
 
-### Features / Enhancements
+### Features and enhancements
 
 - **Provisioning**: Pin application to the sidebar when it's enabled. [#29084](https://github.com/grafana/grafana/pull/29084), [@alexanderzobnin](https://github.com/alexanderzobnin)
 
-### Bug Fixes
+### Bug fixes
 
 - **Cloud monitoring**: Fix for multi-value template variable for project selector. [#29042](https://github.com/grafana/grafana/pull/29042), [@papagian](https://github.com/papagian)
 - **LogsPanel**: Fix scrolling in dashboards. [#28974](https://github.com/grafana/grafana/pull/28974), [@aocenas](https://github.com/aocenas)
