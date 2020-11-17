@@ -6,13 +6,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/expr"
 )
 
 const defaultMaxDataPoints float64 = 100
 const defaultIntervalMS float64 = 1000
-
-// DefaultExprDatasourceID is the datasource identifier for expressions.:w
-const DefaultExprDatasourceID = -100
 
 // Duration is a type used for marshalling durations.
 type Duration time.Duration
@@ -103,9 +101,9 @@ func (aq *AlertQuery) setDatasource() error {
 		return fmt.Errorf("failed to get datasource from query model")
 	}
 
-	if dsName == "__expr__" {
-		aq.DatasourceID = DefaultExprDatasourceID
-		aq.modelProps["datasourceId"] = DefaultExprDatasourceID
+	if dsName == expr.DatasourceName {
+		aq.DatasourceID = expr.DatasourceID
+		aq.modelProps["datasourceId"] = expr.DatasourceID
 		return nil
 	}
 
@@ -127,7 +125,7 @@ func (aq *AlertQuery) IsExpression() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return aq.DatasourceID == DefaultExprDatasourceID, nil
+	return aq.DatasourceID == expr.DatasourceID, nil
 }
 
 // setMaxDatapoints sets the model maxDataPoints if it's missing or invalid

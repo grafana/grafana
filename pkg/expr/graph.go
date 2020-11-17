@@ -50,10 +50,6 @@ func (dp *DataPipeline) execute(c context.Context) (mathexp.Vars, error) {
 	return vars, nil
 }
 
-// ExprNodeName is the string constant used as the datasource name in requests
-// to identify it as an expression command.
-const ExprNodeName = "__expr__"
-
 // BuildPipeline builds a graph of the nodes, and returns the nodes in an
 // executable order.
 func buildPipeline(queries []backend.DataQuery) (DataPipeline, error) {
@@ -140,7 +136,7 @@ func buildGraph(queries []backend.DataQuery) (*simple.DirectedGraph, error) {
 
 		var node graph.Node
 		switch dsName {
-		case ExprNodeName:
+		case DatasourceName:
 			node, err = buildCMDNode(dp, rn)
 		default: // If it's not an expression query, it's a data source query.
 			node, err = buildDSNode(dp, rn)

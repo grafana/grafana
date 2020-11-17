@@ -6,6 +6,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
+// DatasourceName is the string constant used as the datasource name in requests
+// to identify it as an expression command.
+const DatasourceName = "__expr__"
+
+// DatasourceID is the fake datasource id used in requests to identify it as an
+// expression command.
+const DatasourceID = -100
+
 // Service is service representation for expression handling.
 type Service struct {
 }

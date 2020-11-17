@@ -34,7 +34,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 	for i, query := range reqDto.Queries {
 		hs.log.Debug("Processing metrics query", "query", query)
 		name := query.Get("datasource").MustString("")
-		if name == "__expr__" {
+		if name == expr.DatasourceName {
 			hasExpr = true
 		}
 
