@@ -20,6 +20,7 @@ import cloneDeep from 'lodash/cloneDeep';
 import { VariableType } from '@grafana/data';
 import { addVariable, removeVariable, storeNewVariable } from '../state/sharedReducer';
 import { updateOptions } from '../state/actions';
+import { VariableModel } from '../types';
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async dispatch => {
@@ -109,13 +110,14 @@ export const completeChangeVariableName = (identifier: VariableIdentifier, newNa
   dispatch(removeVariable(toVariablePayload(identifier, { reIndex: false })));
 };
 
-export const switchToNewMode = (): ThunkResult<void> => (dispatch, getState) => {
-  const type: VariableType = 'query';
-  const id = NEW_VARIABLE_ID;
-  const global = false;
-  const model = cloneDeep(variableAdapters.get(type).initialState);
-  const index = getNewVariabelIndex(getState());
+export const switchToNewMode = (type: VariableType = 'query'): ThunkResult<void> => (dispatch, getState) => {
+  const id = getNextAvailableId(type, getVariables(getState()));
   const identifier = { type, id };
+  const global = false;
+  const index = getNewVariabelIndex(getState());
+  const model = cloneDeep(variableAdapters.get(type).initialState);
+  model.id = id;
+  model.name = id;
   dispatch(
     addVariable(
       toVariablePayload<AddVariable>(identifier, { global, model, index })
@@ -131,3 +133,14 @@ export const switchToEditMode = (identifier: VariableIdentifier): ThunkResult<vo
 export const switchToListMode = (): ThunkResult<void> => dispatch => {
   dispatch(clearIdInEditor());
 };
+
+export function getNextAvailableId(type: VariableType, variables: VariableModel[]): string {
+  let counter = 0;
+  let nextId = `${type}${counter}`;
+
+  while (variables.find(variable => variable.id === nextId)) {
+    nextId = `${type}${++counter}`;
+  }
+
+  return nextId;
+}
