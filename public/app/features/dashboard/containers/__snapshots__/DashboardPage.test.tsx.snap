@@ -120,6 +120,19 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         className="dashboard-content"
       >
         <SubMenu
+          annotations={
+            Array [
+              Object {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard",
+              },
+            ]
+          }
           dashboard={
             DashboardModel {
               "annotations": Object {
@@ -479,6 +492,19 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         className="dashboard-content"
       >
         <SubMenu
+          annotations={
+            Array [
+              Object {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard",
+              },
+            ]
+          }
           dashboard={
             DashboardModel {
               "annotations": Object {
