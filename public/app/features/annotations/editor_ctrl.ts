@@ -9,11 +9,11 @@ import { AppEvents } from '@grafana/data';
 
 // Registeres the angular directive
 import './components/StandardAnnotationQueryEditor';
+import { Annotation } from '../dashboard/state/DashboardModel';
 
 export class AnnotationsEditorCtrl {
   mode: any;
   datasources: any;
-  annotations: any[];
   currentAnnotation: any;
   currentDatasource: any;
   currentIsNew: any;
@@ -59,7 +59,7 @@ export class AnnotationsEditorCtrl {
     this.dashboard = $scope.dashboard;
     this.mode = 'list';
     this.datasources = datasourceSrv.getAnnotationSources();
-    this.annotations = this.dashboard.annotations.list;
+    this.dashboard.annotations.list = this.dashboard.annotations.list ?? [];
     this.reset();
 
     this.onColorChange = this.onColorChange.bind(this);
@@ -75,17 +75,25 @@ export class AnnotationsEditorCtrl {
   /**
    * Called from the react editor
    */
-  onAnnotationChange = (annotation: any) => {
-    const currentIndex = this.dashboard.annotations.list.indexOf(this.currentAnnotation);
-    if (currentIndex >= 0) {
-      this.dashboard.annotations.list[currentIndex] = annotation;
-    } else {
+  onAnnotationChange = (annotation: Annotation) => {
+    let replaced = false;
+
+    this.dashboard.annotations.list = this.dashboard.annotations.list.map(a => {
+      if (a.name !== annotation.name) {
+        return a;
+      }
+      replaced = true;
+      return annotation;
+    });
+
+    if (!replaced) {
       console.warn('updating annotatoin, but not in the dashboard', annotation);
     }
+
     this.currentAnnotation = annotation;
   };
 
-  edit(annotation: any) {
+  edit(annotation: Annotation) {
     this.currentAnnotation = annotation;
     this.currentAnnotation.showIn = this.currentAnnotation.showIn || 0;
     this.currentIsNew = false;
@@ -116,25 +124,49 @@ export class AnnotationsEditorCtrl {
   }
 
   move(index: number, dir: number) {
-    // @ts-ignore
-    _.move(this.annotations, index, index + dir);
+    const { list } = this.dashboard.annotations;
+    const annotation = list[index];
+    const target: Annotation[] = [];
+
+    for (let i = 0; i < list.length; i++) {
+      const current = list[i];
+
+      if (i === index) {
+        continue;
+      }
+
+      if (dir > 0) {
+        target.push(current);
+      }
+
+      if (i === index + dir) {
+        target.push(annotation);
+      }
+
+      if (dir < 0) {
+        target.push(current);
+      }
+    }
+
+    this.dashboard.annotations.list = target;
   }
 
   add() {
-    const sameName: any = _.find(this.annotations, { name: this.currentAnnotation.name });
+    const sameName: any = _.find(this.dashboard.annotations.list, { name: this.currentAnnotation.name });
     if (sameName) {
       appEvents.emit(AppEvents.alertWarning, ['Validation', 'Annotations with the same name already exists']);
       return;
     }
-    this.annotations.push(this.currentAnnotation);
+    this.dashboard.annotations.list = [...this.dashboard.annotations.list, this.currentAnnotation];
     this.reset();
     this.mode = 'list';
     this.dashboard.updateSubmenuVisibility();
   }
 
-  removeAnnotation(annotation: any) {
-    const index = _.indexOf(this.annotations, annotation);
-    this.annotations.splice(index, 1);
+  removeAnnotation(annotation: Annotation) {
+    this.dashboard.annotations.list = this.dashboard.annotations.list.filter(a => {
+      return a.name !== annotation.name;
+    });
     this.dashboard.updateSubmenuVisibility();
   }
 

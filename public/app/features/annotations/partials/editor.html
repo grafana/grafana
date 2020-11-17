@@ -12,7 +12,7 @@
       type="button"
       class="btn btn-primary"
       ng-click="ctrl.setupNew();"
-      ng-if="ctrl.annotations.length > 1"
+      ng-if="ctrl.dashboard.annotations.list.length > 1"
       ng-hide="ctrl.mode === 'edit' || ctrl.mode === 'new'"
     >
       New
@@ -29,7 +29,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr ng-repeat="annotation in ctrl.annotations track by annotation.name">
+        <tr ng-repeat="annotation in ctrl.dashboard.annotations.list track by annotation.name">
           <td style="width:90%" ng-hide="annotation.builtIn" class="pointer" ng-click="ctrl.edit(annotation)">
             <icon name="'comment-alt'" style="color:{{ annotation.iconColor }}"></icon> &nbsp; {{ annotation.name }}
           </td>
@@ -60,7 +60,7 @@
     </table>
 
     <!-- empty list cta, there is always one built in query -->
-    <div ng-if="ctrl.annotations.length === 1" class="p-t-2">
+    <div ng-if="ctrl.dashboard.annotations.list.length === 1" class="p-t-2">
       <empty-list-cta
         title="ctrl.emptyListCta.title"
         buttonIcon="ctrl.emptyListCta.buttonIcon"

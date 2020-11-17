@@ -1,28 +1,18 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { LegacyForms } from '@grafana/ui';
-import { EventBusExtended } from '@grafana/data';
-import { CoreEvents } from 'app/types';
+import { Annotation } from '../../state/DashboardModel';
 const { Switch } = LegacyForms;
 
 interface Props {
-  events: EventBusExtended;
-  annotations: any[];
+  annotations: Annotation[];
   onAnnotationChanged: (annotation: any) => void;
 }
 
-export const Annotations: FunctionComponent<Props> = ({ events, annotations, onAnnotationChanged }) => {
+export const Annotations: FunctionComponent<Props> = ({ annotations, onAnnotationChanged }) => {
   const [visibleAnnotations, setVisibleAnnotations] = useState<any>([]);
   useEffect(() => {
     setVisibleAnnotations(annotations.filter(annotation => annotation.hide !== true));
   }, [annotations]);
-
-  useEffect(() => {
-    const handler = () => {
-      setVisibleAnnotations(annotations.filter(annotation => annotation.hide !== true));
-    };
-    events.on(CoreEvents.submenuVisibilityChanged, handler);
-    return () => events.off(CoreEvents.submenuVisibilityChanged, handler);
-  }, []);
 
   if (visibleAnnotations.length === 0) {
     return null;

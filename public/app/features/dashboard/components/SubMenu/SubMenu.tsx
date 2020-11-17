@@ -7,11 +7,12 @@ import { DashboardModel } from '../../state';
 import { DashboardLinks } from './DashboardLinks';
 import { Annotations } from './Annotations';
 import { SubMenuItems } from './SubMenuItems';
-import { DashboardLink } from '../../state/DashboardModel';
+import { Annotation, DashboardLink } from '../../state/DashboardModel';
 
 interface OwnProps {
   dashboard: DashboardModel;
   links: DashboardLink[];
+  annotations: Annotation[];
 }
 
 interface ConnectedProps {
@@ -51,7 +52,7 @@ class SubMenuUnConnected extends PureComponent<Props> {
   };
 
   render() {
-    const { dashboard, variables, links } = this.props;
+    const { dashboard, variables, links, annotations } = this.props;
 
     if (!this.isSubMenuVisible()) {
       return null;
@@ -60,11 +61,7 @@ class SubMenuUnConnected extends PureComponent<Props> {
     return (
       <div className="submenu-controls">
         <SubMenuItems variables={variables} />
-        <Annotations
-          events={dashboard.events}
-          annotations={dashboard.annotations.list}
-          onAnnotationChanged={this.onAnnotationStateChanged}
-        />
+        <Annotations annotations={annotations} onAnnotationChanged={this.onAnnotationStateChanged} />
         <div className="gf-form gf-form--grow" />
         {dashboard && <DashboardLinks dashboard={dashboard} links={links} />}
         <div className="clearfix" />

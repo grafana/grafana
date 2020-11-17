@@ -48,6 +48,25 @@ export interface DashboardLink {
   targetBlank: boolean;
 }
 
+type AnnotationType = 'tags' | 'dashboard';
+
+/**
+ * Typings for Annotation is added only for the basic scenarios.
+ * We need to improve the typings to support custom annotations
+ * added by different types of datasources.
+ */
+export interface Annotation {
+  name: string;
+  type: AnnotationType;
+  hide: boolean;
+  enable: boolean;
+  limit: number;
+  datasource: string;
+  iconColor: string;
+  builtIn?: number;
+  tags?: string[];
+}
+
 export class DashboardModel {
   id: any;
   uid: string;
