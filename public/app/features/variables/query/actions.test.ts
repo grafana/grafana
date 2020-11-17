@@ -18,6 +18,8 @@ import { TemplatingState } from '../state/reducers';
 import {
   changeQueryVariableDataSource,
   changeQueryVariableQuery,
+  flattenQuery,
+  hasSelfReferencingQuery,
   initQueryVariableEditor,
   updateQueryVariableOptions,
 } from './actions';
@@ -555,6 +557,201 @@ describe('query actions', () => {
 
         expect(editorError).toEqual(addVariableEditorError({ errorProp: 'query', errorText }));
         return actions.length === expectedNumberOfActions;
+      });
+    });
+  });
+
+  const complexObject = {
+    level2: {
+      level3: {
+        query: '${query3}',
+        refId: 'C',
+        num: 2,
+        bool: true,
+        arr: [
+          { query: '${query4}', refId: 'D', num: 4, bool: true },
+          {
+            query: '${query5}',
+            refId: 'E',
+            num: 5,
+            bool: true,
+            arr: [{ query: '${query6}', refId: 'F', num: 6, bool: true }],
+          },
+        ],
+      },
+      query: '${query2}',
+      refId: 'B',
+      num: 1,
+      bool: false,
+    },
+    query: '${query1}',
+    refId: 'A',
+    num: 0,
+    bool: true,
+    arr: [
+      { query: '${query7}', refId: 'G', num: 7, bool: true },
+      {
+        query: '${query8}',
+        refId: 'H',
+        num: 8,
+        bool: true,
+        arr: [{ query: '${query9}', refId: 'I', num: 9, bool: true }],
+      },
+    ],
+  };
+
+  describe('hasSelfReferencingQuery', () => {
+    it('when called with a string', () => {
+      const query = '$query';
+      const name = 'query';
+
+      expect(hasSelfReferencingQuery(name, query)).toBe(true);
+    });
+
+    it('when called with an array', () => {
+      const query = ['$query'];
+      const name = 'query';
+
+      expect(hasSelfReferencingQuery(name, query)).toBe(true);
+    });
+
+    it('when called with a simple object', () => {
+      const query = { a: '$query' };
+      const name = 'query';
+
+      expect(hasSelfReferencingQuery(name, query)).toBe(true);
+    });
+
+    it('when called with a complex object', () => {
+      const query = {
+        level2: {
+          level3: {
+            query: 'query3',
+            refId: 'C',
+            num: 2,
+            bool: true,
+            arr: [
+              { query: 'query4', refId: 'D', num: 4, bool: true },
+              {
+                query: 'query5',
+                refId: 'E',
+                num: 5,
+                bool: true,
+                arr: [{ query: '$query', refId: 'F', num: 6, bool: true }],
+              },
+            ],
+          },
+          query: 'query2',
+          refId: 'B',
+          num: 1,
+          bool: false,
+        },
+        query: 'query1',
+        refId: 'A',
+        num: 0,
+        bool: true,
+        arr: [
+          { query: 'query7', refId: 'G', num: 7, bool: true },
+          {
+            query: 'query8',
+            refId: 'H',
+            num: 8,
+            bool: true,
+            arr: [{ query: 'query9', refId: 'I', num: 9, bool: true }],
+          },
+        ],
+      };
+      const name = 'query';
+
+      expect(hasSelfReferencingQuery(name, query)).toBe(true);
+    });
+
+    it('when called with a number', () => {
+      const query = 1;
+      const name = 'query';
+
+      expect(hasSelfReferencingQuery(name, query)).toBe(false);
+    });
+  });
+
+  describe('flattenQuery', () => {
+    it('when called with a complex object', () => {
+      const query = {
+        level2: {
+          level3: {
+            query: '${query3}',
+            refId: 'C',
+            num: 2,
+            bool: true,
+            arr: [
+              { query: '${query4}', refId: 'D', num: 4, bool: true },
+              {
+                query: '${query5}',
+                refId: 'E',
+                num: 5,
+                bool: true,
+                arr: [{ query: '${query6}', refId: 'F', num: 6, bool: true }],
+              },
+            ],
+          },
+          query: '${query2}',
+          refId: 'B',
+          num: 1,
+          bool: false,
+        },
+        query: '${query1}',
+        refId: 'A',
+        num: 0,
+        bool: true,
+        arr: [
+          { query: '${query7}', refId: 'G', num: 7, bool: true },
+          {
+            query: '${query8}',
+            refId: 'H',
+            num: 8,
+            bool: true,
+            arr: [{ query: '${query9}', refId: 'I', num: 9, bool: true }],
+          },
+        ],
+      };
+
+      expect(flattenQuery(query)).toEqual({
+        query: '${query1}',
+        refId: 'A',
+        num: 0,
+        bool: true,
+        level2_query: '${query2}',
+        level2_refId: 'B',
+        level2_num: 1,
+        level2_bool: false,
+        level2_level3_query: '${query3}',
+        level2_level3_refId: 'C',
+        level2_level3_num: 2,
+        level2_level3_bool: true,
+        level2_level3_arr_0_query: '${query4}',
+        level2_level3_arr_0_refId: 'D',
+        level2_level3_arr_0_num: 4,
+        level2_level3_arr_0_bool: true,
+        level2_level3_arr_1_query: '${query5}',
+        level2_level3_arr_1_refId: 'E',
+        level2_level3_arr_1_num: 5,
+        level2_level3_arr_1_bool: true,
+        level2_level3_arr_1_arr_0_query: '${query6}',
+        level2_level3_arr_1_arr_0_refId: 'F',
+        level2_level3_arr_1_arr_0_num: 6,
+        level2_level3_arr_1_arr_0_bool: true,
+        arr_0_query: '${query7}',
+        arr_0_refId: 'G',
+        arr_0_num: 7,
+        arr_0_bool: true,
+        arr_1_query: '${query8}',
+        arr_1_refId: 'H',
+        arr_1_num: 8,
+        arr_1_bool: true,
+        arr_1_arr_0_query: '${query9}',
+        arr_1_arr_0_refId: 'I',
+        arr_1_arr_0_num: 9,
+        arr_1_arr_0_bool: true,
       });
     });
   });
