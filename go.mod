@@ -31,6 +31,7 @@ require (
 	github.com/facebookgo/subset v0.0.0-20150612182917-8dac2c3c4870 // indirect
 	github.com/fatih/color v1.9.0
 	github.com/gchaincl/sqlhooks v1.3.0
+	github.com/getsentry/sentry-go v0.7.0
 	github.com/go-macaron/binding v0.0.0-20190806013118-0b4f37bab25b
 	github.com/go-macaron/gzip v0.0.0-20160222043647-cad1c6580a07
 	github.com/go-sql-driver/mysql v1.5.0
@@ -53,7 +54,6 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/jonboulle/clockwork v0.2.1 // indirect
 	github.com/jung-kurt/gofpdf v1.10.1
-	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/lib/pq v1.3.0
 	github.com/linkedin/goavro/v2 v2.9.7
 	github.com/magefile/mage v1.9.0
@@ -80,8 +80,6 @@ require (
 	github.com/urfave/cli/v2 v2.1.1
 	github.com/xorcare/pointer v1.1.0
 	github.com/yudai/gojsondiff v1.0.0
-	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
-	github.com/yudai/pp v2.0.1+incompatible // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/net v0.0.0-20201022231255-08b38378de70
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43

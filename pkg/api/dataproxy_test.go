@@ -3,17 +3,32 @@ package api
 import (
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDataProxy(t *testing.T) {
-	Convey("Data proxy test", t, func() {
-		Convey("Should append trailing slash to proxy path if original path has a trailing slash", func() {
-			So(ensureProxyPathTrailingSlash("/api/datasources/proxy/6/api/v1/query_range/", "api/v1/query_range/"), ShouldEqual, "api/v1/query_range/")
+	testCases := []struct {
+		desc      string
+		origPath  string
+		proxyPath string
+		exp       string
+	}{
+		{
+			"Should append trailing slash to proxy path if original path has a trailing slash",
+			"/api/datasources/proxy/6/api/v1/query_range/",
+			"api/v1/query_range/",
+			"api/v1/query_range/",
+		},
+		{
+			"Should not append trailing slash to proxy path if original path doesn't have a trailing slash",
+			"/api/datasources/proxy/6/api/v1/query_range",
+			"api/v1/query_range",
+			"api/v1/query_range",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			assert.Equal(t, tc.exp, ensureProxyPathTrailingSlash(tc.origPath, tc.proxyPath))
 		})
-
-		Convey("Should not append trailing slash to proxy path if original path doesn't have a trailing slash", func() {
-			So(ensureProxyPathTrailingSlash("/api/datasources/proxy/6/api/v1/query_range", "api/v1/query_range"), ShouldEqual, "api/v1/query_range")
-		})
-	})
+	}
 }

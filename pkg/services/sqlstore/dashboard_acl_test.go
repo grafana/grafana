@@ -13,9 +13,9 @@ func TestDashboardAclDataAccess(t *testing.T) {
 	Convey("Testing DB", t, func() {
 		InitTestDB(t)
 		Convey("Given a dashboard folder and a user", func() {
-			currentUser := createUser("viewer", "Viewer", false)
-			savedFolder := insertTestDashboard("1 test dash folder", 1, 0, true, "prod", "webapp")
-			childDash := insertTestDashboard("2 test dash", 1, savedFolder.Id, false, "prod", "webapp")
+			currentUser := createUser(t, "viewer", "Viewer", false)
+			savedFolder := insertTestDashboard(t, "1 test dash folder", 1, 0, true, "prod", "webapp")
+			childDash := insertTestDashboard(t, "2 test dash", 1, savedFolder.Id, false, "prod", "webapp")
 
 			Convey("When adding dashboard permission with userId and teamId set to 0", func() {
 				err := testHelperUpdateDashboardAcl(savedFolder.Id, models.DashboardAcl{
