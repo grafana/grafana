@@ -36,7 +36,7 @@ func TestServerLock(t *testing.T) {
 		for i := 0; i < 3; i++ {
 			latest, err = sl.getOrCreate(context.Background(), operationUID)
 			require.NoError(t, err)
-			assert.Equal(t, operationUID, first.OperationUid)
+			assert.Equal(t, operationUID, first.OperationUID)
 			assert.Equal(t, int64(1), first.Id)
 		}
 

@@ -47,7 +47,7 @@ func (cmd Command) lsCommand(c utils.CommandLine) error {
 	}
 
 	for _, plugin := range plugins {
-		logger.Infof("%s %s %s\n", plugin.Id, color.YellowString("@"), plugin.Info.Version)
+		logger.Infof("%s %s %s\n", plugin.ID, color.YellowString("@"), plugin.Info.Version)
 	}
 
 	return nil
