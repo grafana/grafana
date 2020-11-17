@@ -548,12 +548,12 @@ func (hs *HTTPServer) buildAlertNavLinks(c *models.ReqContext) []*dtos.NavLink {
 	var alertChildNavs []*dtos.NavLink
 
 	if hasAccess(ac.ReqViewer, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleRead), ac.EvalPermission(ac.ActionAlertingRuleExternalRead))) {
-		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
-			Text: "Integrated Alerting", Id: "integrated-alerting", Url: hs.Cfg.AppSubURL + "/integrated-alerting", Icon: "list-ul",
-		})
-		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
-			Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
-		})
+		// alertChildNavs = append(alertChildNavs, &dtos.NavLink{
+		// 	Text: "Integrated Alerting", Id: "integrated-alerting", Url: hs.Cfg.AppSubURL + "/integrated-alerting", Icon: "list-ul",
+		// })
+		// alertChildNavs = append(alertChildNavs, &dtos.NavLink{
+		// 	Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true,
+		// })
 		alertChildNavs = append(alertChildNavs, &dtos.NavLink{
 			Text: "Alert rules", Id: "alert-list", Url: hs.Cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
 		})
