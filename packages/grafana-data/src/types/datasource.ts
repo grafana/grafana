@@ -81,7 +81,7 @@ export class DataSourcePlugin<
   }
 
   /*
-   * @deprecated -- prefer using {@link CustomVariableSupport or DataSourceVariableSupport}
+   * @deprecated -- prefer using {@link StandardVariableSupport} or {@link CustomVariableSupport} or {@link DataSourceVariableSupport} in data source instead
    * */
   setVariableQueryEditor(VariableQueryEditor: any) {
     this.components.VariableQueryEditor = VariableQueryEditor;
