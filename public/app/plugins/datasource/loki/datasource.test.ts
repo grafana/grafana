@@ -1,16 +1,7 @@
-import { of, Subject } from 'rxjs';
-import { first, last, take } from 'rxjs/operators';
+import { of, throwError } from 'rxjs';
+import { take } from 'rxjs/operators';
 import { omit } from 'lodash';
-import {
-  AnnotationQueryRequest,
-  CoreApp,
-  DataFrame,
-  DataQueryResponse,
-  dateTime,
-  FieldCache,
-  observableTester,
-  TimeRange,
-} from '@grafana/data';
+import { AnnotationQueryRequest, CoreApp, DataFrame, dateTime, FieldCache, TimeRange } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 
 import LokiDatasource from './datasource';
@@ -20,7 +11,6 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { CustomVariableModel } from '../../../features/variables/types';
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
-import { expect } from '../../../../test/lib/common';
 import { makeMockLokiDatasource } from './mocks';
 
 jest.mock('@grafana/runtime', () => ({
@@ -60,13 +50,11 @@ const testResponse: FetchResponse<LokiResponse> = {
 };
 
 describe('LokiDatasource', () => {
-  let fetchStream: Subject<FetchResponse>;
   const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
   beforeEach(() => {
     jest.clearAllMocks();
-    fetchStream = new Subject<FetchResponse>();
-    fetchMock.mockImplementation(() => fetchStream.asObservable());
+    fetchMock.mockImplementation(() => of(createFetchResponse({})));
   });
 
   describe('when creating range query', () => {
@@ -109,12 +97,11 @@ describe('LokiDatasource', () => {
   });
 
   describe('when querying with limits', () => {
-    const runLimitTest = ({
+    const runLimitTest = async ({
       maxDataPoints = 123,
       queryMaxLines,
       dsMaxLines = 456,
       expectedLimit,
-      done,
       expr = '{label="val"}',
     }: any) => {
       let settings: any = {
@@ -134,46 +121,32 @@ describe('LokiDatasource', () => {
       const options = getQueryOptions<LokiQuery>({ targets: [{ expr, refId: 'B', maxLines: queryMaxLines }] });
       options.maxDataPoints = maxDataPoints;
 
-      observableTester().subscribeAndExpectOnComplete<DataQueryResponse>({
-        observable: ds.query(options).pipe(take(1)),
-        expect: () => {
-          expect(fetchMock.mock.calls.length).toBe(1);
-          expect(fetchMock.mock.calls[0][0].url).toContain(`limit=${expectedLimit}`);
-        },
-        done,
-      });
+      fetchMock.mockImplementation(() => of(testResponse));
 
-      fetchStream.next(testResponse);
+      await expect(ds.query(options).pipe(take(1))).toEmitValuesWith(() => {
+        expect(fetchMock.mock.calls.length).toBe(1);
+        expect(fetchMock.mock.calls[0][0].url).toContain(`limit=${expectedLimit}`);
+      });
     };
 
-    it('should use datasource max lines when no limit given and it is log query', done => {
-      runLimitTest({
-        expectedLimit: 456,
-        done,
-      });
+    it('should use datasource max lines when no limit given and it is log query', async () => {
+      await runLimitTest({ expectedLimit: 456 });
     });
 
-    it('should use custom max lines from query if set and it is logs query', done => {
-      runLimitTest({
-        queryMaxLines: 20,
-        expectedLimit: 20,
-        done,
-      });
+    it('should use custom max lines from query if set and it is logs query', async () => {
+      await runLimitTest({ queryMaxLines: 20, expectedLimit: 20 });
     });
 
-    it('should use custom max lines from query if set and it is logs query even if it is higher than data source limit', done => {
-      runLimitTest({
-        queryMaxLines: 500,
-        expectedLimit: 500,
-        done,
-      });
+    it('should use custom max lines from query if set and it is logs query even if it is higher than data source limit', async () => {
+      await runLimitTest({ queryMaxLines: 500, expectedLimit: 500 });
     });
 
-    it('should use maxDataPoints if it is metrics query', () => {
-      runLimitTest({
-        expr: 'rate({label="val"}[10m])',
-        expectedLimit: 123,
-      });
+    it('should use maxDataPoints if it is metrics query', async () => {
+      await runLimitTest({ expr: 'rate({label="val"}[10m])', expectedLimit: 123 });
+    });
+
+    it('should use maxDataPoints if it is metrics query and using search', async () => {
+      await runLimitTest({ expr: 'rate({label="val"}[10m])', expectedLimit: 123 });
     });
   });
 
@@ -210,84 +183,76 @@ describe('LokiDatasource', () => {
       expect(ds.runRangeQuery).toBeCalled();
     });
 
-    it('should return series data for both queries in Explore if metrics query', done => {
+    it('should return series data for both queries in Explore if metrics query', async () => {
       const ds = createLokiDSForTests();
       const options = getQueryOptions<LokiQuery>({
         targets: [{ expr: 'rate({job="grafana"} |= "foo" [10m])', refId: 'B' }],
         app: CoreApp.Explore,
       });
 
-      observableTester().subscribeAndExpectOnNext<DataQueryResponse>({
-        observable: ds.query(options).pipe(first()), // first result always comes from runInstantQuery
-        expect: res => {
-          expect(res).toEqual({
-            data: [],
-            key: 'B_instant',
-          });
-        },
-        done,
-      });
+      fetchMock
+        .mockImplementationOnce(() => of(testResponse))
+        .mockImplementation(() => of(omit(testResponse, 'data.status')));
 
-      observableTester().subscribeAndExpectOnNext<DataQueryResponse>({
-        observable: ds.query(options).pipe(last()), // last result always comes from runRangeQuery
-        expect: res => {
-          const dataFrame = res.data[0] as DataFrame;
-          const fieldCache = new FieldCache(dataFrame);
-          expect(fieldCache.getFieldByName('line')?.values.get(0)).toBe('hello');
-          expect(dataFrame.meta?.limit).toBe(20);
-          expect(dataFrame.meta?.searchWords).toEqual(['foo']);
-        },
-        done,
-      });
+      await expect(ds.query(options)).toEmitValuesWith(received => {
+        // first result always comes from runInstantQuery
+        const firstResult = received[0];
+        expect(firstResult).toEqual({ data: [], key: 'B_instant' });
 
-      fetchStream.next(testResponse);
-      fetchStream.next(omit(testResponse, 'data.status'));
+        // second result always comes from runRangeQuery
+        const secondResult = received[1];
+        const dataFrame = secondResult.data[0] as DataFrame;
+        const fieldCache = new FieldCache(dataFrame);
+
+        expect(fieldCache.getFieldByName('line')?.values.get(0)).toBe('hello');
+        expect(dataFrame.meta?.limit).toBe(500);
+        expect(dataFrame.meta?.searchWords).toEqual([]);
+      });
     });
 
-    it('should return series data for range query in Dashboard', done => {
+    it('should return series data for range query in Dashboard', async () => {
       const ds = createLokiDSForTests();
       const options = getQueryOptions<LokiQuery>({
         targets: [{ expr: '{job="grafana"} |= "foo"', refId: 'B' }],
       });
 
-      observableTester().subscribeAndExpectOnNext<DataQueryResponse>({
-        observable: ds.query(options).pipe(first()), // first result will come from runRangeQuery
-        expect: res => {
-          const dataFrame = res.data[0] as DataFrame;
-          const fieldCache = new FieldCache(dataFrame);
-          expect(fieldCache.getFieldByName('line')?.values.get(0)).toBe('hello');
-          expect(dataFrame.meta?.limit).toBe(20);
-          expect(dataFrame.meta?.searchWords).toEqual(['foo']);
-        },
-        done,
-      });
+      fetchMock
+        .mockImplementationOnce(() => of(testResponse))
+        .mockImplementation(() => of(omit(testResponse, 'data.status')));
 
-      fetchStream.next(testResponse);
-      fetchStream.next(omit(testResponse, 'data.status'));
+      await expect(ds.query(options)).toEmitValuesWith(received => {
+        // first result will come from runRangeQuery
+        const firstResult = received[0];
+        const dataFrame = firstResult.data[0] as DataFrame;
+        const fieldCache = new FieldCache(dataFrame);
+
+        expect(fieldCache.getFieldByName('line')?.values.get(0)).toBe('hello');
+        expect(dataFrame.meta?.limit).toBe(20);
+        expect(dataFrame.meta?.searchWords).toEqual(['foo']);
+      });
     });
 
-    it('should return custom error message when Loki returns escaping error', done => {
+    it('should return custom error message when Loki returns escaping error', async () => {
       const ds = createLokiDSForTests();
       const options = getQueryOptions<LokiQuery>({
         targets: [{ expr: '{job="gra\\fana"}', refId: 'B' }],
       });
 
-      observableTester().subscribeAndExpectOnError<DataQueryResponse>({
-        observable: ds.query(options),
-        expect: err => {
-          expect(err.data.message).toBe(
-            'Error: parse error at line 1, col 6: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://grafana.com/docs/loki/latest/logql/.'
-          );
-        },
-        done,
-      });
+      fetchMock.mockImplementation(() =>
+        throwError({
+          data: {
+            message: 'parse error at line 1, col 6: invalid char escape',
+          },
+          status: 400,
+          statusText: 'Bad Request',
+        })
+      );
 
-      fetchStream.error({
-        data: {
-          message: 'parse error at line 1, col 6: invalid char escape',
-        },
-        status: 400,
-        statusText: 'Bad Request',
+      await expect(ds.query(options)).toEmitValuesWith(received => {
+        const err: any = received[0];
+        expect(err.data.message).toBe(
+          'Error: parse error at line 1, col 6: invalid char escape. Make sure that all special characters are escaped with \\. For more information on escaping of special characters visit LogQL documentation at https://grafana.com/docs/loki/latest/logql/.'
+        );
       });
     });
   });
@@ -339,27 +304,12 @@ describe('LokiDatasource', () => {
   });
 
   describe('when performing testDataSource', () => {
-    const getTestContext = () => {
-      const ds = createLokiDSForTests({} as TemplateSrv);
-      const promise = ds.testDatasource();
-
-      return { promise };
-    };
-
     describe('and call succeeds', () => {
       it('should return successfully', async () => {
-        const { promise } = getTestContext();
+        fetchMock.mockImplementation(() => of(createFetchResponse({ values: ['avalue'] })));
+        const ds = createLokiDSForTests({} as TemplateSrv);
 
-        fetchStream.next(({
-          status: 200,
-          data: {
-            values: ['avalue'],
-          },
-        } as unknown) as FetchResponse);
-
-        fetchStream.complete();
-
-        const result = await promise;
+        const result = await ds.testDatasource();
 
         expect(result.status).toBe('success');
       });
@@ -367,17 +317,18 @@ describe('LokiDatasource', () => {
 
     describe('and call fails with 401 error', () => {
       it('should return error status and a detailed error message', async () => {
-        const { promise } = getTestContext();
+        fetchMock.mockImplementation(() =>
+          throwError({
+            statusText: 'Unauthorized',
+            status: 401,
+            data: {
+              message: 'Unauthorized',
+            },
+          })
+        );
+        const ds = createLokiDSForTests({} as TemplateSrv);
 
-        fetchStream.error({
-          statusText: 'Unauthorized',
-          status: 401,
-          data: {
-            message: 'Unauthorized',
-          },
-        });
-
-        const result = await promise;
+        const result = await ds.testDatasource();
 
         expect(result.status).toEqual('error');
         expect(result.message).toBe('Loki: Unauthorized. 401. Unauthorized');
@@ -386,17 +337,19 @@ describe('LokiDatasource', () => {
 
     describe('and call fails with 404 error', () => {
       it('should return error status and a detailed error message', async () => {
-        const { promise } = getTestContext();
+        fetchMock.mockImplementation(() =>
+          throwError({
+            statusText: 'Not found',
+            status: 404,
+            data: {
+              message: '404 page not found',
+            },
+          })
+        );
 
-        fetchStream.error({
-          statusText: 'Not found',
-          status: 404,
-          data: {
-            message: '404 page not found',
-          },
-        });
+        const ds = createLokiDSForTests({} as TemplateSrv);
 
-        const result = await promise;
+        const result = await ds.testDatasource();
 
         expect(result.status).toEqual('error');
         expect(result.message).toBe('Loki: Not found. 404. 404 page not found');
@@ -405,15 +358,17 @@ describe('LokiDatasource', () => {
 
     describe('and call fails with 502 error', () => {
       it('should return error status and a detailed error message', async () => {
-        const { promise } = getTestContext();
+        fetchMock.mockImplementation(() =>
+          throwError({
+            statusText: 'Bad Gateway',
+            status: 502,
+            data: '',
+          })
+        );
 
-        fetchStream.error({
-          statusText: 'Bad Gateway',
-          status: 502,
-          data: '',
-        });
+        const ds = createLokiDSForTests({} as TemplateSrv);
 
-        const result = await promise;
+        const result = await ds.testDatasource();
 
         expect(result.status).toEqual('error');
         expect(result.message).toBe('Loki: Bad Gateway. 502');
@@ -440,8 +395,10 @@ describe('LokiDatasource', () => {
   });
 
   describe('when calling annotationQuery', () => {
-    const getTestContext = () => {
+    const getTestContext = (response: any) => {
       const query = makeAnnotationQueryRequest();
+      fetchMock.mockImplementation(() => of(response));
+
       const ds = createLokiDSForTests();
       const promise = ds.annotationQuery(query);
 
@@ -449,7 +406,6 @@ describe('LokiDatasource', () => {
     };
 
     it('should transform the loki data to annotation response', async () => {
-      const { promise } = getTestContext();
       const response: FetchResponse = ({
         data: {
           data: {
@@ -473,9 +429,7 @@ describe('LokiDatasource', () => {
           status: 'success',
         },
       } as unknown) as FetchResponse;
-
-      fetchStream.next(response);
-      fetchStream.complete();
+      const { promise } = getTestContext(response);
 
       const res = await promise;
 
@@ -589,4 +543,18 @@ function makeMetadataAndVersionsMocks() {
     mocks.push(mock);
   }
   return mocks;
+}
+
+function createFetchResponse<T>(data: T): FetchResponse<T> {
+  return {
+    data,
+    status: 200,
+    url: 'http://localhost:3000/api/query',
+    config: { url: 'http://localhost:3000/api/query' },
+    type: 'basic',
+    statusText: 'Ok',
+    redirected: false,
+    headers: ({} as unknown) as Headers,
+    ok: true,
+  };
 }

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Segment, SegmentAsync } from '@grafana/ui';
-import { SelectableStrings, CloudWatchMetricsQuery } from '../types';
+import { CloudWatchMetricsQuery, SelectableStrings } from '../types';
 import { CloudWatchDatasource } from '../datasource';
-import { Stats, Dimensions, QueryInlineField } from '.';
+import { Dimensions, QueryInlineField, Stats } from '.';
 
 export type Props = {
   query: CloudWatchMetricsQuery;
@@ -39,7 +39,7 @@ export function MetricsQueryFieldsEditor({
   useEffect(() => {
     const variableOptionGroup = {
       label: 'Template Variables',
-      options: datasource.variables.map(toOption),
+      options: datasource.getVariables().map(toOption),
     };
 
     Promise.all([datasource.metricFindQuery('regions()'), datasource.metricFindQuery('namespaces()')]).then(
@@ -61,7 +61,7 @@ export function MetricsQueryFieldsEditor({
 
   const appendTemplateVariables = (values: SelectableValue[]) => [
     ...values,
-    { label: 'Template Variables', options: datasource.variables.map(toOption) },
+    { label: 'Template Variables', options: datasource.getVariables().map(toOption) },
   ];
 
   const toOption = (value: any) => ({ label: value, value });
