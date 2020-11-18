@@ -5,7 +5,7 @@ import { useTheme, styleMixins, stylesFactory } from '../../themes';
 import { Tooltip, PopoverContent } from '../Tooltip/Tooltip';
 
 /**
- * @alpha
+ * @public
  */
 export interface ContainerProps extends HTMLAttributes<HTMLOrSVGElement> {
   /** Content for the card's tooltip */
@@ -23,7 +23,7 @@ const CardContainer: FC<ContainerProps> = ({ children, tooltip, ...props }) => {
 };
 
 /**
- * @alpha
+ * @public
  */
 export interface CardInnerProps {
   href?: string;
@@ -42,7 +42,7 @@ const CardInner: FC<CardInnerProps> = ({ children, href }) => {
 };
 
 /**
- * @alpha
+ * @public
  */
 export interface Props extends ContainerProps {
   /** Main heading for the Card **/
@@ -68,7 +68,7 @@ export interface CardInterface extends FC<Props> {
 /**
  * Generic card component
  *
- * @alpha
+ * @public
  */
 export const Card: CardInterface = ({
   heading,
@@ -85,10 +85,9 @@ export const Card: CardInterface = ({
   const styles = getCardStyles(theme);
   const [tags, figure, meta, actions, secondaryActions] = ['Tags', 'Figure', 'Meta', 'Actions', 'SecondaryActions'].map(
     item => {
-      //@ts-ignore
-      const found = React.Children.toArray(children).find((child: JSX.Element) => {
-        return child?.type?.displayName === item;
-      }) as JSX.Element | undefined;
+      const found = React.Children.toArray(children as React.ReactElement[]).find(child => {
+        return child?.type && (child.type as any).displayName === item;
+      });
 
       if (found) {
         return React.cloneElement(found, { disabled, styles, ...found.props });
@@ -134,7 +133,7 @@ export const Card: CardInterface = ({
 };
 
 /**
- * @alpha
+ * @public
  */
 export const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled = false, disableHover = false) => {
   return css`
@@ -174,7 +173,7 @@ export const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled =
 });
 
 /**
- * @alpha
+ * @public
  */
 export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
