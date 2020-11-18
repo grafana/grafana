@@ -210,7 +210,6 @@ export { LegacyForms, LegacyInputStatus };
 export { GraphFieldConfig, graphFieldOptions } from './uPlot/config';
 export { UPlotChart } from './uPlot/Plot';
 export * from './uPlot/geometries';
-export { usePlotConfigContext } from './uPlot/context';
 export * from './uPlot/plugins';
 export { useRefreshAfterGraphRendered } from './uPlot/hooks';
 export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';

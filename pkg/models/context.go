@@ -37,12 +37,6 @@ func (ctx *ReqContext) Handle(status int, title string, err error) {
 	ctx.HTML(status, setting.ErrTemplateName)
 }
 
-func (ctx *ReqContext) JsonOK(message string) {
-	resp := make(map[string]interface{})
-	resp["message"] = message
-	ctx.JSON(200, resp)
-}
-
 func (ctx *ReqContext) IsApiRequest() bool {
 	return strings.HasPrefix(ctx.Req.URL.Path, "/api")
 }
