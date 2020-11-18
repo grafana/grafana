@@ -203,7 +203,7 @@ class DashNav extends PureComponent<Props> {
     const { dashboard, location, isFullscreen, updateTimeZoneForSession } = this.props;
 
     return (
-      <div className="navbar">
+      <div className="navbar" style={location.query.hideTimeControls ? { display: 'none' } : {}}>
         {isFullscreen && this.renderBackButton()}
         {this.renderDashboardTitleSearchButton()}
 
