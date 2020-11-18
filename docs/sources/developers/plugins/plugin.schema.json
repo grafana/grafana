@@ -100,33 +100,9 @@
       "type": "boolean",
       "description": "For panel plugins. Hides the query editor."
     },
-    "partials": {
-      "type": "object",
-      "additionalItems": false,
-      "properties": {
-        "config": {
-          "type": "string"
-        }
-      }
-    },
     "metrics": {
       "type": "boolean",
       "description": "For data source plugins. If the plugin supports metric queries. Used in the Explore feature."
-    },
-    "mixed": {
-      "type": "boolean",
-      "description": "Not to be used by external plugins. Special property for the built-in mixed plugin."
-    },
-    "module": {
-      "type": "string",
-      "description": ""
-    },
-    "sort": {
-      "type": "number",
-      "description": "Internal property for sorting. Cannot be used as will be overwritten by Grafana."
-    },
-    "staticRoot": {
-      "type": "string"
     },
     "streaming": {
       "type": "boolean",
@@ -210,6 +186,37 @@
               "type": "string",
               "description": "Link to author's website.",
               "format": "uri"
+            }
+          }
+        },
+        "build": {
+          "type": "object",
+          "description": "",
+          "additionalProperties": false,
+          "properties": {
+            "time": {
+              "type": "number",
+              "description": ""
+            },
+            "repo": {
+              "type": "string",
+              "description": ""
+            },
+            "branch": {
+              "type": "string",
+              "description": ""
+            },
+            "hash": {
+              "type": "string",
+              "description": ""
+            },
+            "number": {
+              "type": "number",
+              "description": ""
+            },
+            "pr": {
+              "type": "number",
+              "description": ""
             }
           }
         },

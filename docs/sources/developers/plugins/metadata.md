@@ -30,16 +30,11 @@ The plugin.json file is required for all plugins. When Grafana starts, it scans 
 | `includes`      | [object](#includes)[]   | No       | Resources to include in plugin.                                                                                                                                                                                                                                                                                                                                                                         |
 | `logs`          | boolean                 | No       | For data source plugins. If the plugin supports logs.                                                                                                                                                                                                                                                                                                                                                   |
 | `metrics`       | boolean                 | No       | For data source plugins. If the plugin supports metric queries. Used in the Explore feature.                                                                                                                                                                                                                                                                                                            |
-| `mixed`         | boolean                 | No       | Not to be used by external plugins. Special property for the built-in mixed plugin.                                                                                                                                                                                                                                                                                                                     |
-| `module`        | string                  | No       |                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `partials`      | [object](#partials)     | No       |                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `preload`       | boolean                 | No       | Initialize plugin on startup. By default, the plugin initializes on first use.                                                                                                                                                                                                                                                                                                                          |
 | `queryOptions`  | [object](#queryoptions) | No       | For data source plugins. There is a query options section in the plugin's query editor and these options can be turned on if needed.                                                                                                                                                                                                                                                                    |
 | `routes`        | [object](#routes)[]     | No       | For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).                                                                                                                       |
 | `skipDataQuery` | boolean                 | No       | For panel plugins. Hides the query editor.                                                                                                                                                                                                                                                                                                                                                              |
-| `sort`          | number                  | No       | Internal property for sorting. Cannot be used as will be overwritten by Grafana.                                                                                                                                                                                                                                                                                                                        |
 | `state`         | string                  | No       | Marks a plugin as a pre-release.                                                                                                                                                                                                                                                                                                                                                                        |
-| `staticRoot`    | string                  | No       |                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `streaming`     | boolean                 | No       | For data source plugins. If the plugin supports streaming.                                                                                                                                                                                                                                                                                                                                              |
 | `tables`        | boolean                 | No       |                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `tracing`       | boolean                 | No       | For data source plugins. If the plugin supports tracing.                                                                                                                                                                                                                                                                                                                                                |
@@ -96,6 +91,7 @@ Metadata for the plugin. Some fields are used on the plugins page in Grafana and
 | `updated`     | string                   | **Yes**  | Date when this plugin was built.                                                                                              |
 | `version`     | string                   | **Yes**  | Project version of this commit, e.g. `6.7.x`.                                                                                 |
 | `author`      | [object](#author)        | No       | Information about the plugin author.                                                                                          |
+| `build`       | [object](#build)         | No       |                                                                                                                               |
 | `description` | string                   | No       | Description of plugin. Used on the plugins page in Grafana and for search on grafana.com.                                     |
 | `links`       | [object](#links)[]       | No       | An array of link objects to be displayed on this plugin's project page in the form `{name: 'foo', url: 'http://example.com'}` |
 | `screenshots` | [object](#screenshots)[] | No       | An array of screenshot objects in the form `{name: 'bar', path: 'img/screenshot.png'}`                                        |
@@ -111,6 +107,19 @@ Information about the plugin author.
 | `email`  | string | No       | Author's name.            |
 | `name`   | string | No       | Author's name.            |
 | `url`    | string | No       | Link to author's website. |
+
+### build
+
+#### Properties
+
+| Property | Type   | Required | Description |
+|----------|--------|----------|-------------|
+| `branch` | string | No       |             |
+| `hash`   | string | No       |             |
+| `number` | number | No       |             |
+| `pr`     | number | No       |             |
+| `repo`   | string | No       |             |
+| `time`   | number | No       |             |
 
 ### links
 
@@ -140,14 +149,6 @@ SVG images that are used as plugin icons.
 |----------|--------|----------|-------------|
 | `name`   | string | No       |             |
 | `path`   | string | No       |             |
-
-## partials
-
-### Properties
-
-| Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
-| `config` | string | No       |             |
 
 ## queryOptions
 
