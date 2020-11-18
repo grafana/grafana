@@ -725,5 +725,4 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 			So(hiddenACL, ShouldHaveLength, 0)
 		})
 	})
-
 }
