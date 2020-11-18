@@ -154,7 +154,7 @@ export class ShareLink extends PureComponent<Props, State> {
             </div>
             {panel && config.rendererAvailable && (
               <div className="gf-form">
-                <a href={imageUrl} target="_blank" aria-label={selectors.linkToRenderedImage}>
+                <a href={imageUrl} target="_blank" rel="noreferrer" aria-label={selectors.linkToRenderedImage}>
                   <Icon name="camera" /> Direct link rendered image
                 </a>
               </div>
@@ -166,7 +166,7 @@ export class ShareLink extends PureComponent<Props, State> {
                   <a
                     href="https://grafana.com/grafana/plugins/grafana-image-renderer"
                     target="_blank"
-                    rel="noopener"
+                    rel="noopener noreferrer"
                     className="external-link"
                   >
                     Grafana Image Renderer plugin
