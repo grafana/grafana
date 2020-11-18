@@ -71,7 +71,6 @@ func getV2PluginSet() goplugin.PluginSet {
 		"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
 		"resource":    &grpcplugin.ResourceGRPCPlugin{},
 		"data":        &grpcplugin.DataGRPCPlugin{},
-		"transform":   &grpcplugin.TransformGRPCPlugin{},
 		"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
 	}
 }
@@ -116,7 +115,6 @@ type LegacyClient struct {
 
 // Client client for communicating with a plugin using the current (v2) plugin protocol.
 type Client struct {
-	DataPlugin      grpcplugin.DataClient
-	TransformPlugin grpcplugin.TransformClient
-	RendererPlugin  pluginextensionv2.RendererPlugin
+	DataPlugin     grpcplugin.DataClient
+	RendererPlugin pluginextensionv2.RendererPlugin
 }
