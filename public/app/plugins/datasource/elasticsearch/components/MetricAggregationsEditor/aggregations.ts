@@ -102,7 +102,7 @@ export interface ExtendedStat {
   default: boolean;
 }
 
-interface ExtendedStats extends MetricAggregationWithField, MetricAggregationWithInlineScript {
+export interface ExtendedStats extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'extended_stats';
   settings?: {
     script?: string;

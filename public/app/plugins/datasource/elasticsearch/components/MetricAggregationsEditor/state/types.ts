@@ -18,11 +18,7 @@ export const TOGGLE_METRIC_VISIBILITY = '@metrics/toggle_visibility';
 
 //
 // Action Types
-export interface AddMetricAction extends Action<typeof ADD_METRIC> {
-  payload: {
-    metricType: MetricAggregation['type'];
-  };
-}
+export interface AddMetricAction extends Action<typeof ADD_METRIC> {}
 
 export interface RemoveMetricAction extends Action<typeof REMOVE_METRIC> {
   payload: {
@@ -62,7 +58,7 @@ export interface ChangeMetricMetaAction<T extends MetricAggregationWithMeta> ext
   payload: {
     metric: T;
     meta: Extract<keyof Required<T>['meta'], string>;
-    newValue: string | number;
+    newValue: string | number | boolean;
   };
 }
 

@@ -15,11 +15,8 @@ import {
   ChangeMetricMetaAction,
 } from './types';
 
-export const addMetric = (metricType: MetricAggregation['type'] = 'count'): MetricAggregationAction => ({
+export const addMetric = (): MetricAggregationAction => ({
   type: ADD_METRIC,
-  payload: {
-    metricType,
-  },
 });
 
 export const removeMetric = (id: MetricAggregation['id']): MetricAggregationAction => ({
@@ -85,7 +82,7 @@ export const changeMetricSetting = <T extends MetricAggregationWithSettings, K e
 export const changeMetricMeta = <T extends MetricAggregationWithMeta>(
   metric: T,
   meta: Extract<keyof Required<T>['meta'], string>,
-  newValue: string | number
+  newValue: string | number | boolean
 ): ChangeMetricMetaAction<T> => ({
   type: CHANGE_METRIC_META,
   payload: {

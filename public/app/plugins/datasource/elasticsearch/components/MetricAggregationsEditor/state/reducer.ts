@@ -17,7 +17,7 @@ import {
 export const reducer = (state: MetricAggregation[], action: MetricAggregationAction): ElasticsearchQuery['metrics'] => {
   switch (action.type) {
     case ADD_METRIC:
-      const nextId = parseInt(state[state.length - 1].id, 10) + 1;
+      const nextId = parseInt(state[state.length - 1]?.id || '0', 10) + 1;
       return [...state, defaultMetricAgg(nextId.toString())];
 
     case REMOVE_METRIC:
@@ -83,6 +83,7 @@ export const reducer = (state: MetricAggregation[], action: MetricAggregationAct
           return metric;
         }
 
+        // TODO: Here, instead of this if statement, we should assert that metric is MetricAggregationWithSettings
         if (isMetricAggregationWithSettings(metric)) {
           // FIXME: this can be done in a better way, also romeving empty objects
           const newSettings = Object.entries({
@@ -116,6 +117,7 @@ export const reducer = (state: MetricAggregation[], action: MetricAggregationAct
           return metric;
         }
 
+        // TODO: Here, instead of this if statement, we should assert that metric is MetricAggregationWithMeta
         if (isMetricAggregationWithMeta(metric)) {
           return {
             ...metric,
