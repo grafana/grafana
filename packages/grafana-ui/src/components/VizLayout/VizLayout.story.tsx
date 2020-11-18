@@ -26,7 +26,7 @@ export const BottomLegend = () => {
   const legend = (
     <VizLayout.Legend position="bottom" maxHeight="30%">
       {items.map((_, index) => (
-        <div style={{ height: '30px', width: '100%', background: 'blue', marginBottom: '2px' }}>
+        <div style={{ height: '30px', width: '100%', background: 'blue', marginBottom: '2px' }} key={index}>
           Legend item {index}
         </div>
       ))}
@@ -34,7 +34,7 @@ export const BottomLegend = () => {
   );
 
   return (
-    <VizLayout width={400} height={500} legend={legend}>
+    <VizLayout width={600} height={500} legend={legend}>
       {(vizWidth: number, vizHeight: number) => {
         return <div style={{ width: vizWidth, height: vizHeight, background: 'red' }} />;
       }}
@@ -49,7 +49,7 @@ export const RightLegend = () => {
   const legend = (
     <VizLayout.Legend position="right" maxWidth="50%">
       {items.map((_, index) => (
-        <div style={{ height: '30px', width: `${legendWidth}px`, background: 'blue', marginBottom: '2px' }}>
+        <div style={{ height: '30px', width: `${legendWidth}px`, background: 'blue', marginBottom: '2px' }} key={index}>
           Legend item {index}
         </div>
       ))}
@@ -57,7 +57,7 @@ export const RightLegend = () => {
   );
 
   return (
-    <VizLayout width={400} height={500} legend={legend}>
+    <VizLayout width={810} height={400} legend={legend}>
       {(vizWidth: number, vizHeight: number) => {
         return <div style={{ width: vizWidth, height: vizHeight, background: 'red' }} />;
       }}
