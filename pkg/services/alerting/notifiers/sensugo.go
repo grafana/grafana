@@ -35,6 +35,7 @@ func init() {
 				Description:  "API Key to auth to Sensu Go backend",
 				PropertyName: "apikey",
 				Required:     true,
+				Secure:       true,
 			},
 			{
 				Label:        "Proxy entity name",
@@ -70,7 +71,7 @@ func init() {
 // NewSensuGoNotifier is the constructor for the Sensu Go Notifier.
 func NewSensuGoNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
-	apikey := model.Settings.Get("apikey").MustString()
+	apikey := model.DecryptedValue("apikey", model.Settings.Get("apikey").MustString())
 
 	if url == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find URL property in settings"}
