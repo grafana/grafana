@@ -60,6 +60,7 @@ import { cleanVariables } from './variablesReducer';
 import { expect } from '../../../../test/lib/common';
 import { VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
+import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -178,6 +179,7 @@ describe('shared actions', () => {
 
     // Fix for https://github.com/grafana/grafana/issues/28791
     it('fix for https://github.com/grafana/grafana/issues/28791', async () => {
+      setVariableQueryRunner(new VariableQueryRunner());
       const stats = queryBuilder()
         .withId('stats')
         .withName('stats')
