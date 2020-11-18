@@ -31,7 +31,7 @@ export class ConfigEditor extends PureComponent<Props> {
       <p>
         There are different types of Graphite compatible backends. Here you can specify the type you are using. If you
         are using{' '}
-        <a href="https://github.com/grafana/metrictank" className="pointer" target="_blank">
+        <a href="https://github.com/grafana/metrictank" className="pointer" target="_blank" rel="noreferrer">
           Metrictank
         </a>{' '}
         then select that here. This will enable Metrictank specific features like query processing meta data. Metrictank
