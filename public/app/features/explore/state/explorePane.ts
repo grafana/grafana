@@ -24,13 +24,11 @@ import {
   generateNewKeyAndAddRefIdIfMissing,
   getTimeRangeFromUrl,
 } from 'app/core/utils/explore';
-import { getRichHistory } from 'app/core/utils/richHistory';
 // Types
 import { ThunkResult } from 'app/types';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { updateLocation } from '../../../core/actions';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
-import { richHistoryUpdatedAction } from './main';
 import { runQueries, setQueriesAction } from './query';
 import { updateTime } from './time';
 import { toRawTimeRange } from '../utils/time';
