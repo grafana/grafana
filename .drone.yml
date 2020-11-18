@@ -67,6 +67,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.29
   commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -142,6 +143,9 @@ steps:
   image: grafana/build-container:1.2.29
   commands:
   - yarn storybook:build
+  - ./bin/grabpl verify-storybook
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
 
@@ -312,6 +316,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.29
   commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -412,6 +417,9 @@ steps:
   image: grafana/build-container:1.2.29
   commands:
   - yarn storybook:build
+  - ./bin/grabpl verify-storybook
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
 
@@ -750,6 +758,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.29
   commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -842,21 +851,11 @@ steps:
   image: grafana/build-container:1.2.29
   commands:
   - yarn storybook:build
+  - ./bin/grabpl verify-storybook
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
-
-- name: publish-storybook
-  image: grafana/grafana-ci-deploy:1.2.7
-  commands:
-  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
-  - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
-  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/latest
-  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/${DRONE_TAG}
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-  depends_on:
-  - build-storybook
 
 - name: copy-packages-for-docker
   image: grafana/build-container:1.2.29
@@ -921,18 +920,6 @@ steps:
   - test-backend
   - test-frontend
 
-- name: release-npm-packages
-  image: grafana/build-container:1.2.29
-  commands:
-  - ./node_modules/.bin/lerna bootstrap
-  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
-  - ./scripts/build/release-packages.sh ${DRONE_TAG}
-  environment:
-    NPM_TOKEN:
-      from_secret: npm_token
-  depends_on:
-  - end-to-end-tests
-
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.2.7
   commands:
@@ -945,6 +932,31 @@ steps:
   - end-to-end-tests
   - mysql-integration-tests
   - postgres-integration-tests
+
+- name: release-npm-packages
+  image: grafana/build-container:1.2.29
+  commands:
+  - ./node_modules/.bin/lerna bootstrap
+  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
+  - ./scripts/build/release-packages.sh ${DRONE_TAG}
+  environment:
+    NPM_TOKEN:
+      from_secret: npm_token
+  depends_on:
+  - end-to-end-tests
+
+- name: publish-storybook
+  image: grafana/grafana-ci-deploy:1.2.7
+  commands:
+  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
+  - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
+  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/latest
+  - gsutil -m rsync -d -r ./packages/grafana-ui/dist/storybook gs://grafana-storybook/${DRONE_TAG}
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  depends_on:
+  - build-storybook
 
 services:
 - name: postgres
@@ -1106,6 +1118,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.29
   commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -1517,6 +1530,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.29
   commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -1609,18 +1623,11 @@ steps:
   image: grafana/build-container:1.2.29
   commands:
   - yarn storybook:build
+  - ./bin/grabpl verify-storybook
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
-
-- name: publish-storybook
-  image: grafana/grafana-ci-deploy:1.2.7
-  commands:
-  - echo Testing release
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-  depends_on:
-  - build-storybook
 
 - name: copy-packages-for-docker
   image: grafana/build-container:1.2.29
@@ -1679,17 +1686,6 @@ steps:
   - test-backend
   - test-frontend
 
-- name: release-npm-packages
-  image: grafana/build-container:1.2.29
-  commands:
-  - ./node_modules/.bin/lerna bootstrap
-  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
-  environment:
-    NPM_TOKEN:
-      from_secret: npm_token
-  depends_on:
-  - end-to-end-tests
-
 - name: upload-packages
   image: grafana/grafana-ci-deploy:1.2.7
   commands:
@@ -1702,6 +1698,27 @@ steps:
   - end-to-end-tests
   - mysql-integration-tests
   - postgres-integration-tests
+
+- name: release-npm-packages
+  image: grafana/build-container:1.2.29
+  commands:
+  - ./node_modules/.bin/lerna bootstrap
+  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
+  environment:
+    NPM_TOKEN:
+      from_secret: npm_token
+  depends_on:
+  - end-to-end-tests
+
+- name: publish-storybook
+  image: grafana/grafana-ci-deploy:1.2.7
+  commands:
+  - echo Testing release
+  environment:
+    GCP_KEY:
+      from_secret: gcp_key
+  depends_on:
+  - build-storybook
 
 services:
 - name: postgres
@@ -1863,6 +1880,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.29
   commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -2267,6 +2285,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.29
   commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -2356,6 +2375,9 @@ steps:
   image: grafana/build-container:1.2.29
   commands:
   - yarn storybook:build
+  - ./bin/grabpl verify-storybook
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
 
@@ -2571,6 +2593,7 @@ steps:
 - name: test-backend
   image: grafana/build-container:1.2.29
   commands:
+  - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend
   - ./bin/grabpl integration-tests
   depends_on:
@@ -2660,6 +2683,9 @@ steps:
   image: grafana/build-container:1.2.29
   commands:
   - yarn storybook:build
+  - ./bin/grabpl verify-storybook
+  environment:
+    NODE_OPTIONS: --max_old_space_size=4096
   depends_on:
   - package
 
