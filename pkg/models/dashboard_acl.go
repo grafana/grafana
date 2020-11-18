@@ -32,12 +32,13 @@ var (
 
 // Dashboard ACL model
 type DashboardAcl struct {
+	// nolint:stylecheck
 	Id          int64
-	OrgId       int64
-	DashboardId int64
+	OrgID       int64 `xorm:"org_id"`
+	DashboardID int64 `xorm:"dashboard_id"`
 
-	UserId     int64
-	TeamId     int64
+	UserID     int64     `xorm:"user_id"`
+	TeamID     int64     `xorm:"team_id"`
 	Role       *RoleType // pointer to be nullable
 	Permission PermissionType
 
@@ -98,7 +99,7 @@ func (dto *DashboardAclInfoDTO) IsDuplicateOf(other *DashboardAclInfoDTO) bool {
 //
 
 type UpdateDashboardAclCommand struct {
-	DashboardId int64
+	DashboardID int64
 	Items       []*DashboardAcl
 }
 
@@ -106,7 +107,7 @@ type UpdateDashboardAclCommand struct {
 // QUERIES
 //
 type GetDashboardAclInfoListQuery struct {
-	DashboardId int64
-	OrgId       int64
+	DashboardID int64
+	OrgID       int64
 	Result      []*DashboardAclInfoDTO
 }
