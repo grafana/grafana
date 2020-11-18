@@ -91,7 +91,7 @@ export const Card: CardInterface = ({
       }) as JSX.Element | undefined;
 
       if (found) {
-        return React.cloneElement(found, { ...found.props, styles, disabled });
+        return React.cloneElement(found, { disabled, styles, ...found.props });
       }
       return found;
     }
