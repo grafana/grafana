@@ -11,14 +11,13 @@ import {
   removeVariable,
   setCurrentVariableValue,
   sharedReducer,
-  storeNewVariable,
   variableStateCompleted,
   variableStateFailed,
   variableStateFetching,
   variableStateNotStarted,
 } from './sharedReducer';
 import { QueryVariableModel, VariableHide } from '../types';
-import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, NEW_VARIABLE_ID, toVariablePayload } from './types';
+import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
 import { initialQueryVariableModelState } from '../query/reducer';
@@ -223,73 +222,6 @@ describe('sharedReducer', () => {
             global: false,
             state: LoadingState.NotStarted,
             error: null,
-          },
-        });
-    });
-  });
-
-  describe('when storeNewVariable is dispatched', () => {
-    it('then state should be correct', () => {
-      const initialState: VariablesState = getVariableState(3, -1, true);
-      const payload = toVariablePayload({ id: '11', type: 'query' });
-      reducerTester<VariablesState>()
-        .givenReducer(sharedReducer, initialState)
-        .whenActionIsDispatched(storeNewVariable(payload))
-        .thenStateShouldEqual({
-          '0': {
-            id: '0',
-            type: 'query',
-            name: 'Name-0',
-            hide: VariableHide.dontHide,
-            index: 0,
-            label: 'Label-0',
-            skipUrlSync: false,
-            global: false,
-            state: LoadingState.NotStarted,
-            error: null,
-          },
-          '1': {
-            id: '1',
-            type: 'query',
-            name: 'Name-1',
-            hide: VariableHide.dontHide,
-            index: 1,
-            label: 'Label-1',
-            skipUrlSync: false,
-            global: false,
-            state: LoadingState.NotStarted,
-            error: null,
-          },
-          '2': {
-            id: '2',
-            type: 'query',
-            name: 'Name-2',
-            hide: VariableHide.dontHide,
-            index: 2,
-            label: 'Label-2',
-            skipUrlSync: false,
-            global: false,
-            state: LoadingState.NotStarted,
-            error: null,
-          },
-          [NEW_VARIABLE_ID]: {
-            id: NEW_VARIABLE_ID,
-            type: 'query',
-            name: `Name-${NEW_VARIABLE_ID}`,
-            hide: VariableHide.dontHide,
-            index: 3,
-            label: `Label-${NEW_VARIABLE_ID}`,
-            skipUrlSync: false,
-            global: false,
-            state: LoadingState.NotStarted,
-            error: null,
-          },
-          [11]: {
-            ...initialQueryVariableModelState,
-            id: '11',
-            name: `Name-${NEW_VARIABLE_ID}`,
-            index: 3,
-            label: `Label-${NEW_VARIABLE_ID}`,
           },
         });
     });

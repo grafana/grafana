@@ -4,7 +4,7 @@ import { default as lodashDefaults } from 'lodash/defaults';
 
 import { LoadingState, VariableType } from '@grafana/data';
 import { VariableModel, VariableOption, VariableWithOptions } from '../types';
-import { AddVariable, getInstanceState, NEW_VARIABLE_ID, VariablePayload } from './types';
+import { AddVariable, getInstanceState, VariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { initialVariablesState, VariablesState } from './variablesReducer';
@@ -96,16 +96,6 @@ const sharedReducerSlice = createSlice({
         state[toVariable.id].index = action.payload.data.fromIndex;
       }
     },
-    storeNewVariable: (state: VariablesState, action: PayloadAction<VariablePayload>) => {
-      const id = action.payload.id;
-      const emptyVariable = cloneDeep<VariableModel>(state[NEW_VARIABLE_ID]);
-      state[id] = {
-        ...cloneDeep(variableAdapters.get(action.payload.type).initialState),
-        ...emptyVariable,
-        id,
-        index: emptyVariable.index,
-      };
-    },
     changeVariableType: (state: VariablesState, action: PayloadAction<VariablePayload<{ newType: VariableType }>>) => {
       const { id } = action.payload;
       const { label, name, index } = state[id];
@@ -182,7 +172,6 @@ export const {
   addVariable,
   changeVariableProp,
   changeVariableOrder,
-  storeNewVariable,
   duplicateVariable,
   setCurrentVariableValue,
   changeVariableType,

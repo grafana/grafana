@@ -9,16 +9,10 @@ import {
   variableEditorUnMounted,
 } from './reducer';
 import { variableAdapters } from '../adapters';
-import {
-  AddVariable,
-  NEW_VARIABLE_ID,
-  toVariableIdentifier,
-  toVariablePayload,
-  VariableIdentifier,
-} from '../state/types';
+import { AddVariable, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import cloneDeep from 'lodash/cloneDeep';
 import { VariableType } from '@grafana/data';
-import { addVariable, removeVariable, storeNewVariable } from '../state/sharedReducer';
+import { addVariable, removeVariable } from '../state/sharedReducer';
 import { updateOptions } from '../state/actions';
 import { VariableModel } from '../types';
 
@@ -31,9 +25,6 @@ export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult
 export const variableEditorUnMount = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
     dispatch(variableEditorUnMounted(toVariablePayload(identifier)));
-    if (getState().templating.variables[NEW_VARIABLE_ID]) {
-      dispatch(removeVariable(toVariablePayload({ type: identifier.type, id: NEW_VARIABLE_ID }, { reIndex: false })));
-    }
   };
 };
 
@@ -41,17 +32,6 @@ export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void
   return async dispatch => {
     await dispatch(updateOptions(identifier));
     dispatch(switchToListMode());
-  };
-};
-
-export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const newVariableInState = getVariable(NEW_VARIABLE_ID, getState());
-    const id = newVariableInState.name;
-    dispatch(storeNewVariable(toVariablePayload({ type: identifier.type, id })));
-    await dispatch(updateOptions(identifier));
-    dispatch(switchToListMode());
-    dispatch(removeVariable(toVariablePayload({ type: identifier.type, id: NEW_VARIABLE_ID }, { reIndex: false })));
   };
 };
 
@@ -78,16 +58,8 @@ export const changeVariableName = (identifier: VariableIdentifier, newName: stri
       return;
     }
 
-    const thunkToCall = identifier.id === NEW_VARIABLE_ID ? completeChangeNewVariableName : completeChangeVariableName;
-    dispatch(thunkToCall(identifier, newName));
+    dispatch(completeChangeVariableName(identifier, newName));
   };
-};
-
-export const completeChangeNewVariableName = (
-  identifier: VariableIdentifier,
-  newName: string
-): ThunkResult<void> => dispatch => {
-  dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, { newName })));
 };
 
 export const completeChangeVariableName = (identifier: VariableIdentifier, newName: string): ThunkResult<void> => (
