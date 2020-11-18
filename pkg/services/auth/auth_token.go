@@ -63,12 +63,16 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, userId int64, cl
 	hashedToken := hashToken(token)
 
 	now := getTime().Unix()
+	clientIPStr := clientIP.String()
+	if len(clientIP) == 0 {
+		clientIPStr = ""
+	}
 
 	userAuthToken := userAuthToken{
 		UserId:        userId,
 		AuthToken:     hashedToken,
 		PrevAuthToken: hashedToken,
-		ClientIp:      clientIP.String(),
+		ClientIp:      clientIPStr,
 		UserAgent:     userAgent,
 		RotatedAt:     now,
 		CreatedAt:     now,
@@ -215,6 +219,10 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models
 
 	s.log.Debug("token needs rotation", "tokenId", model.Id, "authTokenSeen", model.AuthTokenSeen, "rotatedAt", rotatedAt)
 
+	clientIPStr := clientIP.String()
+	if len(clientIP) == 0 {
+		clientIPStr = ""
+	}
 	newToken, err := util.RandomHex(16)
 	if err != nil {
 		return false, err
@@ -236,7 +244,7 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *models
 
 	var affected int64
 	err = s.SQLStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		res, err := dbSession.Exec(sql, userAgent, clientIP.String(), s.SQLStore.Dialect.BooleanStr(true), hashedToken,
+		res, err := dbSession.Exec(sql, userAgent, clientIPStr, s.SQLStore.Dialect.BooleanStr(true), hashedToken,
 			s.SQLStore.Dialect.BooleanStr(false), now.Unix(), model.Id, s.SQLStore.Dialect.BooleanStr(true),
 			now.Add(-30*time.Second).Unix())
 		if err != nil {
