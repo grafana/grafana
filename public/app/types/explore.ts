@@ -59,10 +59,6 @@ export interface ExploreItemState {
    */
   datasourceInstance?: DataSourceApi | null;
   /**
-   * Current data source name or null if default
-   */
-  requestedDatasourceName: string | null;
-  /**
    * True if there is no datasource to be selected.
    */
   datasourceMissing: boolean;

@@ -31,7 +31,6 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
 export const makeExplorePaneState = (): ExploreItemState => ({
   containerWidth: 0,
   datasourceInstance: null,
-  requestedDatasourceName: null,
   datasourceMissing: false,
   history: [],
   queries: [],

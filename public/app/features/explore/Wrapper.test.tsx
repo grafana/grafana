@@ -73,6 +73,12 @@ describe('Wrapper', () => {
       ...query,
     });
 
+    expect(store.getState().explore.richHistory[0]).toMatchObject({
+      datasourceId: '1',
+      datasourceName: 'loki',
+      queries: [{ expr: '{ label="value"}' }],
+    });
+
     // We called the data source query method once
     expect(datasources.loki.query).toBeCalledTimes(1);
     expect((datasources.loki.query as Mock).mock.calls[0][0]).toMatchObject({
