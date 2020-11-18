@@ -1,5 +1,5 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
-import { BucketAggregation, BucketAggregationType } from './components/BucketAggregationsEditor/state/types';
+import { BucketAggregation, BucketAggregationType } from './components/BucketAggregationsEditor/aggregations';
 import { MetricAggregation, MetricAggregationType } from './components/MetricAggregationsEditor/aggregations';
 
 export interface ElasticsearchOptions extends DataSourceJsonData {

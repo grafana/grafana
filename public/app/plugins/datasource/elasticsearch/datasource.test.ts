@@ -18,6 +18,7 @@ import { backendSrv } from 'app/core/services/backend_srv'; // will use the vers
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { ElasticsearchOptions, ElasticsearchQuery } from './types';
+import { Filters } from './components/BucketAggregationsEditor/aggregations';
 
 const ELASTICSEARCH_MOCK_URL = 'http://elasticsearch.local';
 
@@ -865,7 +866,7 @@ describe('ElasticDatasource', function(this: any) {
     const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
 
     expect(interpolatedQuery.query).toBe('resolvedVariable');
-    expect(interpolatedQuery.bucketAggs![0].settings.filters[0].query).toBe('resolvedVariable');
+    expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('resolvedVariable');
   });
 
   it('should correctly handle empty query strings', () => {
@@ -879,7 +880,7 @@ describe('ElasticDatasource', function(this: any) {
     const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
 
     expect(interpolatedQuery.query).toBe('*');
-    expect(interpolatedQuery.bucketAggs![0].settings.filters[0].query).toBe('*');
+    expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('*');
   });
 });
 
