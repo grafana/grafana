@@ -124,13 +124,19 @@ describe('Wrapper', () => {
   });
 
   it('handles changing the datasource manually', async () => {
-    const { datasources } = setup();
+    const query = { left: JSON.stringify(['now-1h', 'now', 'loki', { expr: '{ label="value"}' }]) };
+    const { datasources } = setup({ query });
+    (datasources.loki.query as Mock).mockReturnValueOnce(makeLogsQueryResponse());
     // Wait for rendering the editor
     await screen.findByText(/Editor/i);
     await changeDatasource('elastic');
 
     await screen.findByText('elastic Editor input:');
     expect(datasources.elastic.query).not.toBeCalled();
+    expect(store.getState().location.query).toEqual({
+      orgId: '1',
+      left: JSON.stringify(['now-1h', 'now', 'elastic', {}]),
+    });
   });
 
   it('opens the split pane', async () => {
@@ -238,18 +244,21 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
   return { datasources: fromPairs(dsSettings.map(d => [d.api.name, d.api])) };
 }
 
+let id = 1;
+
 function makeDatasourceSetup({ name = 'loki' }: { name?: string } = {}): DatasourceSetup {
+  const currentId = id++;
   const meta: any = {
     info: {
       logos: {
         small: '',
       },
     },
-    id: '1',
+    id: currentId.toString(),
   };
   return {
     settings: {
-      id: 1,
+      id: currentId,
       uid: name,
       type: 'logs',
       name,
