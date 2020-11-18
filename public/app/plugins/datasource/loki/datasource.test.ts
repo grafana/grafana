@@ -55,7 +55,7 @@ const testMetricsResponse: FetchResponse<LokiResponse> = {
       result: [
         {
           metric: {},
-          values: [[1605715380, "1.1"]],
+          values: [[1605715380, '1.1']],
         },
       ],
     },
@@ -222,7 +222,7 @@ describe('LokiDatasource', () => {
       expect(ds.runRangeQuery).toBeCalled();
     });
 
-        it('should run only metrics range query if no query type is selected in Explore', async () => {
+    it('should run only metrics range query if no query type is selected in Explore', async () => {
       const { ds, options } = setup(metricsQuery, CoreApp.Explore);
       await ds.query(options).toPromise();
       expect(ds.runInstantQuery).not.toBeCalled();
@@ -252,7 +252,6 @@ describe('LokiDatasource', () => {
 
       fetchMock.mockImplementation(() => of(testMetricsResponse));
 
-
       await expect(ds.query(options)).toEmitValuesWith(received => {
         const result = received[0];
         const timeSeries = result.data[0] as TimeSeries;
@@ -266,11 +265,10 @@ describe('LokiDatasource', () => {
     it('should return series data for logs range query', async () => {
       const ds = createLokiDSForTests();
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr:logsQuery, refId: 'B' }],
+        targets: [{ expr: logsQuery, refId: 'B' }],
       });
 
-      fetchMock.mockImplementation(() => of(testLogsResponse))
-
+      fetchMock.mockImplementation(() => of(testLogsResponse));
 
       await expect(ds.query(options)).toEmitValuesWith(received => {
         const result = received[0];
