@@ -37,6 +37,9 @@ export const decorators = [withTheme(handleThemeChange), withPaddedStory];
 
 export const parameters = {
   info: {},
+  docs: {
+    theme: GrafanaDark,
+  },
   darkMode: {
     dark: GrafanaDark,
     light: GrafanaLight,
