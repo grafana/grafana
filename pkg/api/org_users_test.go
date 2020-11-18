@@ -13,6 +13,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func setUpGetOrgUsersHandler() {
+	bus.AddHandler("test", func(query *models.GetOrgUsersQuery) error {
+		query.Result = []*models.OrgUserDTO{
+			{Email: "testUser@grafana.com", Login: testUserLogin},
+			{Email: "user1@grafana.com", Login: "user1"},
+			{Email: "user2@grafana.com", Login: "user2"},
+		}
+		return nil
+	})
+}
+
 func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	settings := setting.NewCfg()
 	hs := &HTTPServer{Cfg: settings}
@@ -111,16 +122,5 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 				assert.Equal(t, testUserLogin, resp[0].Login)
 				assert.Equal(t, "user2", resp[1].Login)
 			})
-	})
-}
-
-func setUpGetOrgUsersHandler() {
-	bus.AddHandler("test", func(query *models.GetOrgUsersQuery) error {
-		query.Result = []*models.OrgUserDTO{
-			{Email: "testUser@grafana.com", Login: testUserLogin},
-			{Email: "user1@grafana.com", Login: "user1"},
-			{Email: "user2@grafana.com", Login: "user2"},
-		}
-		return nil
 	})
 }
