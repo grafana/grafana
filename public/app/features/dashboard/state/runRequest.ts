@@ -1,27 +1,27 @@
 // Libraries
-import { Observable, of, timer, merge, from } from 'rxjs';
-import { map as isArray, isString } from 'lodash';
-import { map, catchError, takeUntil, mapTo, share, finalize, tap } from 'rxjs/operators';
+import { from, merge, Observable, of, timer } from 'rxjs';
+import { isString, map as isArray } from 'lodash';
+import { catchError, finalize, map, mapTo, share, takeUntil, tap } from 'rxjs/operators';
 // Utils & Services
 import { backendSrv } from 'app/core/services/backend_srv';
 // Types
 import {
-  DataSourceApi,
+  DataFrame,
+  DataQueryError,
   DataQueryRequest,
-  PanelData,
   DataQueryResponse,
   DataQueryResponseData,
-  DataQueryError,
-  LoadingState,
-  dateMath,
-  toDataFrame,
-  DataFrame,
+  DataSourceApi,
   DataTopic,
+  dateMath,
   guessFieldTypes,
+  LoadingState,
+  PanelData,
+  toDataFrame,
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
 import { emitDataRequestEvent } from './analyticsProcessor';
-import { ExpressionDatasourceID, expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
+import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
 import { ExpressionQuery } from 'app/features/expressions/types';
 
 type MapOfResponsePackets = { [str: string]: DataQueryResponse };
@@ -97,7 +97,11 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
  *  Will emit a loading state if no response after 50ms
  *  Cancel any still running network requests on unsubscribe (using request.requestId)
  */
-export function runRequest(datasource: DataSourceApi, request: DataQueryRequest): Observable<PanelData> {
+export function runRequest(
+  datasource: DataSourceApi,
+  request: DataQueryRequest,
+  queryFunction?: typeof datasource.query
+): Observable<PanelData> {
   let state: RunningQueryState = {
     panelData: {
       state: LoadingState.Loading,
@@ -115,7 +119,7 @@ export function runRequest(datasource: DataSourceApi, request: DataQueryRequest)
     return of(state.panelData);
   }
 
-  const dataObservable = callQueryMethod(datasource, request).pipe(
+  const dataObservable = callQueryMethod(datasource, request, queryFunction).pipe(
     // Transform response packets into PanelData with merged results
     map((packet: DataQueryResponse) => {
       if (!isArray(packet.data)) {
@@ -157,7 +161,11 @@ function cancelNetworkRequestsOnUnsubscribe(req: DataQueryRequest) {
   };
 }
 
-export function callQueryMethod(datasource: DataSourceApi, request: DataQueryRequest) {
+export function callQueryMethod(
+  datasource: DataSourceApi,
+  request: DataQueryRequest,
+  queryFunction?: typeof datasource.query
+) {
   // If any query has an expression, use the expression endpoint
   for (const target of request.targets) {
     if (target.datasource === ExpressionDatasourceID) {
@@ -166,7 +174,7 @@ export function callQueryMethod(datasource: DataSourceApi, request: DataQueryReq
   }
 
   // Otherwise it is a standard datasource request
-  const returnVal = datasource.query(request);
+  const returnVal = queryFunction ? queryFunction(request) : datasource.query(request);
   return from(returnVal);
 }
 

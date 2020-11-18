@@ -1,20 +1,20 @@
 import isString from 'lodash/isString';
-import { alignmentPeriods, ValueTypes, MetricKind, selectors } from './constants';
+import { alignmentPeriods, MetricKind, selectors, ValueTypes } from './constants';
 import CloudMonitoringDatasource from './datasource';
-import { MetricFindQueryTypes, VariableQueryData } from './types';
+import { CloudMonitoringVariableQuery, MetricFindQueryTypes } from './types';
 import { SelectableValue } from '@grafana/data';
 import {
-  getMetricTypesByService,
-  getAlignmentOptionsByMetric,
-  getAggregationOptionsByMetric,
   extractServicesFromMetricDescriptors,
+  getAggregationOptionsByMetric,
+  getAlignmentOptionsByMetric,
   getLabelKeys,
+  getMetricTypesByService,
 } from './functions';
 
 export default class CloudMonitoringMetricFindQuery {
   constructor(private datasource: CloudMonitoringDatasource) {}
 
-  async execute(query: VariableQueryData) {
+  async execute(query: CloudMonitoringVariableQuery) {
     try {
       if (!query.projectName) {
         query.projectName = this.datasource.getDefaultProject();
@@ -63,7 +63,7 @@ export default class CloudMonitoringMetricFindQuery {
     }));
   }
 
-  async handleServiceQuery({ projectName }: VariableQueryData) {
+  async handleServiceQuery({ projectName }: CloudMonitoringVariableQuery) {
     const metricDescriptors = await this.datasource.getMetricTypes(projectName);
     const services: any[] = extractServicesFromMetricDescriptors(metricDescriptors);
     return services.map(s => ({
@@ -73,7 +73,7 @@ export default class CloudMonitoringMetricFindQuery {
     }));
   }
 
-  async handleMetricTypesQuery({ selectedService, projectName }: VariableQueryData) {
+  async handleMetricTypesQuery({ selectedService, projectName }: CloudMonitoringVariableQuery) {
     if (!selectedService) {
       return [];
     }
@@ -87,7 +87,7 @@ export default class CloudMonitoringMetricFindQuery {
     );
   }
 
-  async handleLabelKeysQuery({ selectedMetricType, projectName }: VariableQueryData) {
+  async handleLabelKeysQuery({ selectedMetricType, projectName }: CloudMonitoringVariableQuery) {
     if (!selectedMetricType) {
       return [];
     }
@@ -95,7 +95,7 @@ export default class CloudMonitoringMetricFindQuery {
     return labelKeys.map(this.toFindQueryResult);
   }
 
-  async handleLabelValuesQuery({ selectedMetricType, labelKey, projectName }: VariableQueryData) {
+  async handleLabelValuesQuery({ selectedMetricType, labelKey, projectName }: CloudMonitoringVariableQuery) {
     if (!selectedMetricType) {
       return [];
     }
@@ -106,7 +106,7 @@ export default class CloudMonitoringMetricFindQuery {
     return values.map(this.toFindQueryResult);
   }
 
-  async handleResourceTypeQuery({ selectedMetricType, projectName }: VariableQueryData) {
+  async handleResourceTypeQuery({ selectedMetricType, projectName }: CloudMonitoringVariableQuery) {
     if (!selectedMetricType) {
       return [];
     }
@@ -115,7 +115,7 @@ export default class CloudMonitoringMetricFindQuery {
     return labels['resource.type'].map(this.toFindQueryResult);
   }
 
-  async handleAlignersQuery({ selectedMetricType, projectName }: VariableQueryData) {
+  async handleAlignersQuery({ selectedMetricType, projectName }: CloudMonitoringVariableQuery) {
     if (!selectedMetricType) {
       return [];
     }
@@ -131,7 +131,7 @@ export default class CloudMonitoringMetricFindQuery {
     return getAlignmentOptionsByMetric(descriptor.valueType, descriptor.metricKind).map(this.toFindQueryResult);
   }
 
-  async handleAggregationQuery({ selectedMetricType, projectName }: VariableQueryData) {
+  async handleAggregationQuery({ selectedMetricType, projectName }: CloudMonitoringVariableQuery) {
     if (!selectedMetricType) {
       return [];
     }
@@ -150,12 +150,12 @@ export default class CloudMonitoringMetricFindQuery {
     );
   }
 
-  async handleSLOServicesQuery({ projectName }: VariableQueryData) {
+  async handleSLOServicesQuery({ projectName }: CloudMonitoringVariableQuery) {
     const services = await this.datasource.getSLOServices(projectName);
     return services.map(this.toFindQueryResult);
   }
 
-  async handleSLOQuery({ selectedSLOService, projectName }: VariableQueryData) {
+  async handleSLOQuery({ selectedSLOService, projectName }: CloudMonitoringVariableQuery) {
     const slos = await this.datasource.getServiceLevelObjectives(projectName, selectedSLOService);
     return slos.map(this.toFindQueryResult);
   }

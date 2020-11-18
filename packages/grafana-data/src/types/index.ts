@@ -28,5 +28,6 @@ export * from './trace';
 export * from './explore';
 export * from './legacyEvents';
 export * from './live';
+export * from './variables';
 
 export { GrafanaConfig, BuildInfo, FeatureToggles, LicenseInfo } from './config';

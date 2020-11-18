@@ -49,6 +49,10 @@ func GetFolderPermissionList(c *models.ReqContext) Response {
 }
 
 func UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
+	if err := validatePermissionsUpdate(apiCmd); err != nil {
+		return Error(400, err.Error(), err)
+	}
+
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	folder, err := s.GetFolderByUID(c.Params(":uid"))
 
