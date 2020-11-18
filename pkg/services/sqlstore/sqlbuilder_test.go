@@ -260,11 +260,11 @@ func createDummyDashboard(dashboardProps DashboardProps) (*models.Dashboard, err
 
 func createDummyAcl(dashboardPermission *DashboardPermission, search Search, dashboardId int64) (int64, error) {
 	acl := &models.DashboardAcl{
-		OrgId:       1,
+		OrgID:       1,
 		Created:     time.Now(),
 		Updated:     time.Now(),
 		Permission:  dashboardPermission.Permission,
-		DashboardId: dashboardId,
+		DashboardID: dashboardId,
 	}
 
 	var user *models.User
@@ -275,7 +275,7 @@ func createDummyAcl(dashboardPermission *DashboardPermission, search Search, das
 			return 0, err
 		}
 
-		acl.UserId = user.Id
+		acl.UserID = user.Id
 	}
 
 	if dashboardPermission.Team {
@@ -299,7 +299,7 @@ func createDummyAcl(dashboardPermission *DashboardPermission, search Search, das
 			}
 		}
 
-		acl.TeamId = team.Id
+		acl.TeamID = team.Id
 	}
 
 	if len(string(dashboardPermission.Role)) > 0 {
@@ -307,7 +307,7 @@ func createDummyAcl(dashboardPermission *DashboardPermission, search Search, das
 	}
 
 	updateAclCmd := &models.UpdateDashboardAclCommand{
-		DashboardId: dashboardId,
+		DashboardID: dashboardId,
 		Items:       []*models.DashboardAcl{acl},
 	}
 	err = UpdateDashboardAcl(updateAclCmd)

@@ -1,6 +1,6 @@
-grabpl_version = '0.5.26'
-build_image = 'grafana/build-container:1.2.28'
-publish_image = 'grafana/grafana-ci-deploy:1.2.6'
+grabpl_version = '0.5.27'
+build_image = 'grafana/build-container:1.2.29'
+publish_image = 'grafana/grafana-ci-deploy:1.2.7'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
@@ -799,18 +799,6 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
             'GCP_GRAFANA_UPLOAD_KEY': {
                 'from_secret': 'gcp_key',
             },
-            'GRAFANA_COM_API_KEY': {
-                'from_secret': 'grafana_api_key',
-            },
-            'GPG_PRIV_KEY': {
-                'from_secret': 'gpg_priv_key',
-            },
-            'GPG_PUB_KEY': {
-                'from_secret': 'gpg_pub_key',
-            },
-            'GPG_KEY_PASSWORD': {
-                'from_secret': 'gpg_key_password',
-            },
         },
         'commands': [cmd,],
     }
@@ -834,9 +822,24 @@ def publish_packages_step(edition, is_downstream):
             'GRAFANA_COM_API_KEY': {
                 'from_secret': 'grafana_api_key',
             },
+            'GCP_KEY': {
+                'from_secret': 'gcp_key',
+            },
+            'GPG_PRIV_KEY': {
+                'from_secret': 'gpg_priv_key',
+            },
+            'GPG_PUB_KEY': {
+                'from_secret': 'gpg_pub_key',
+            },
+            'GPG_KEY_PASSWORD': {
+                'from_secret': 'gpg_key_password',
+            },
         },
         'commands': [
-            './bin/grabpl publish-packages --edition {} --build-id {}'.format(edition, build_no),
+            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
+            './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
+                edition, build_no,
+            ),
         ],
     }
 
