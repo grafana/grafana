@@ -80,6 +80,14 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
         </>
       )}
 
+      {metric.type === 'moving_fn' && (
+        <>
+          <SettingField label="Window" metric={metric} settingName="window" />
+          <SettingField label="Script" metric={metric} settingName="script" />
+          <SettingField label="Shift" metric={metric} settingName="shift" />
+        </>
+      )}
+
       {metric.type === 'bucket_script' && (
         <BucketScriptSettingsEditor value={metric} previousMetrics={previousMetrics} />
       )}
