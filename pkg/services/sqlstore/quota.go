@@ -36,9 +36,9 @@ func GetOrgQuotaByTarget(query *models.GetOrgQuotaByTargetQuery) error {
 	}
 
 	// get quota used.
-	rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(query.Target))
+	rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(query.Target))
 	resp := make([]*targetCount, 0)
-	if err := x.SQL(rawSql, query.OrgId).Find(&resp); err != nil {
+	if err := x.SQL(rawSQL, query.OrgId).Find(&resp); err != nil {
 		return err
 	}
 
@@ -79,9 +79,9 @@ func GetOrgQuotas(query *models.GetOrgQuotasQuery) error {
 	result := make([]*models.OrgQuotaDTO, len(quotas))
 	for i, q := range quotas {
 		// get quota used.
-		rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(q.Target))
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where org_id=?", dialect.Quote(q.Target))
 		resp := make([]*targetCount, 0)
-		if err := x.SQL(rawSql, q.OrgId).Find(&resp); err != nil {
+		if err := x.SQL(rawSQL, q.OrgId).Find(&resp); err != nil {
 			return err
 		}
 		result[i] = &models.OrgQuotaDTO{
@@ -139,9 +139,9 @@ func GetUserQuotaByTarget(query *models.GetUserQuotaByTargetQuery) error {
 	}
 
 	// get quota used.
-	rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(query.Target))
+	rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(query.Target))
 	resp := make([]*targetCount, 0)
-	if err := x.SQL(rawSql, query.UserId).Find(&resp); err != nil {
+	if err := x.SQL(rawSQL, query.UserId).Find(&resp); err != nil {
 		return err
 	}
 
@@ -182,9 +182,9 @@ func GetUserQuotas(query *models.GetUserQuotasQuery) error {
 	result := make([]*models.UserQuotaDTO, len(quotas))
 	for i, q := range quotas {
 		// get quota used.
-		rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(q.Target))
+		rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s where user_id=?", dialect.Quote(q.Target))
 		resp := make([]*targetCount, 0)
-		if err := x.SQL(rawSql, q.UserId).Find(&resp); err != nil {
+		if err := x.SQL(rawSQL, q.UserId).Find(&resp); err != nil {
 			return err
 		}
 		result[i] = &models.UserQuotaDTO{
@@ -231,9 +231,9 @@ func UpdateUserQuota(cmd *models.UpdateUserQuotaCmd) error {
 
 func GetGlobalQuotaByTarget(query *models.GetGlobalQuotaByTargetQuery) error {
 	// get quota used.
-	rawSql := fmt.Sprintf("SELECT COUNT(*) as count from %s", dialect.Quote(query.Target))
+	rawSQL := fmt.Sprintf("SELECT COUNT(*) as count from %s", dialect.Quote(query.Target))
 	resp := make([]*targetCount, 0)
-	if err := x.SQL(rawSql).Find(&resp); err != nil {
+	if err := x.SQL(rawSQL).Find(&resp); err != nil {
 		return err
 	}
 

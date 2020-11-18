@@ -185,7 +185,7 @@ func GenerateError(c *models.ReqContext) Response {
 
 // GET /api/tsdb/testdata/gensql
 func GenerateSQLTestData(c *models.ReqContext) Response {
-	if err := bus.Dispatch(&models.InsertSqlTestDataCommand{}); err != nil {
+	if err := bus.Dispatch(&models.InsertSQLTestDataCommand{}); err != nil {
 		return Error(500, "Failed to insert test data", err)
 	}
 

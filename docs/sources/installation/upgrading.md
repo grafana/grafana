@@ -2,11 +2,6 @@
 title = "Upgrade Grafana"
 description = "Guide for upgrading Grafana"
 keywords = ["grafana", "configuration", "documentation", "upgrade"]
-type = "docs"
-[menu.docs]
-name = "Upgrade Grafana"
-identifier = "upgrading"
-parent = "installation"
 weight = 700
 +++
 

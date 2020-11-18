@@ -19,7 +19,7 @@ type TsdbQuery struct {
 }
 
 type Query struct {
-	RefId         string             `json:"refID"`
+	RefId         string             `json:"refId"`
 	Model         *simplejson.Json   `json:"model,omitempty"`
 	DataSource    *models.DataSource `json:"datasource"`
 	MaxDataPoints int64              `json:"maxDataPoints"`
@@ -70,13 +70,6 @@ func NewQueryResult() *QueryResult {
 
 func NewTimePoint(value null.Float, timestamp float64) TimePoint {
 	return TimePoint{value, null.FloatFrom(timestamp)}
-}
-
-func NewTimeSeries(name string, points TimeSeriesPoints) *TimeSeries {
-	return &TimeSeries{
-		Name:   name,
-		Points: points,
-	}
 }
 
 // DataFrames is an interface for retrieving encoded and decoded data frames.
