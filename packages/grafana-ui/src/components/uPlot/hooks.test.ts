@@ -1,4 +1,7 @@
 // TODO: Update the tests
+describe('usePlotConfig', () => {
+  it('tmp', () => {});
+});
 // import { usePlotConfig } from './hooks';
 // import { renderHook } from '@testing-library/react-hooks';
 // import { act } from '@testing-library/react';
