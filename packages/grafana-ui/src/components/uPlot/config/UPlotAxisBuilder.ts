@@ -1,54 +1,40 @@
-import React, { useCallback, useEffect, useRef } from 'react';
-import { AxisProps } from './types';
-import { usePlotConfigContext } from '../context';
-import { useTheme } from '../../../themes';
+import { dateTimeFormat, GrafanaTheme, systemDateFormats, TimeZone } from '@grafana/data';
 import uPlot from 'uplot';
-import { measureText } from '../../../utils';
-import { dateTimeFormat, systemDateFormats } from '@grafana/data';
+import { AxisSide, PlotConfigBuilder } from '../types';
+import { measureText } from '../../../utils/measureText';
 
-export const useAxisConfig = (getConfig: () => any) => {
-  const { addAxis } = usePlotConfigContext();
-  const updateConfigRef = useRef<(c: uPlot.Axis) => void>(() => {});
+export interface AxisProps {
+  scaleKey: string;
+  theme: GrafanaTheme;
+  label?: string;
+  stroke?: string;
+  show?: boolean;
+  size?: number;
+  side?: AxisSide;
+  grid?: boolean;
+  formatValue?: (v: any) => string;
+  values?: any;
+  isTime?: boolean;
+  timeZone?: TimeZone;
+}
 
-  const defaultAxisConfig: uPlot.Axis = {};
+export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, uPlot.Axis> {
+  getConfig(): uPlot.Axis {
+    const {
+      scaleKey,
+      label,
+      show = true,
+      side = 3,
+      grid = true,
+      formatValue,
+      values,
+      isTime,
+      timeZone,
+      theme,
+    } = this.props;
+    const stroke = this.props.stroke || theme.colors.text;
+    const gridColor = theme.isDark ? theme.palette.gray25 : theme.palette.gray90;
 
-  const getUpdateConfigRef = useCallback(() => {
-    return updateConfigRef.current;
-  }, [updateConfigRef]);
-
-  useEffect(() => {
-    const config = getConfig();
-    const { removeAxis, updateAxis } = addAxis({ ...defaultAxisConfig, ...config });
-    updateConfigRef.current = updateAxis;
-    return () => {
-      removeAxis();
-    };
-  }, []);
-
-  // update series config when config getter is updated
-  useEffect(() => {
-    const config = getConfig();
-    getUpdateConfigRef()({ ...defaultAxisConfig, ...config });
-  }, [getConfig]);
-};
-
-export const Axis: React.FC<AxisProps> = props => {
-  const theme = useTheme();
-  const gridColor = theme.isDark ? theme.palette.gray25 : theme.palette.gray90;
-  const {
-    scaleKey,
-    label,
-    show = true,
-    stroke = theme.colors.text,
-    side = 3,
-    grid = true,
-    formatValue,
-    values,
-    isTime,
-    timeZone,
-  } = props;
-
-  const getConfig = () => {
     let config: uPlot.Axis = {
       scale: scaleKey,
       label,
@@ -83,11 +69,8 @@ export const Axis: React.FC<AxisProps> = props => {
     (config as any).timeZone = timeZone;
 
     return config;
-  };
-
-  useAxisConfig(getConfig);
-  return null;
-};
+  }
+}
 
 /* Minimum grid & tick spacing in CSS pixels */
 function calculateSpace(self: uPlot, axisIdx: number, scaleMin: number, scaleMax: number, plotDim: number): number {
@@ -146,5 +129,3 @@ function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: 
 
   return splits.map(v => dateTimeFormat(v * 1000, { format, timeZone }));
 }
-
-Axis.displayName = 'Axis';
