@@ -265,8 +265,12 @@ def build_storybook_step(edition, ver_mode):
             # Best to ensure that this step doesn't mess with what's getting built and packaged
             'package',
         ],
+        'environment': {
+            'NODE_OPTIONS': '--max_old_space_size=4096',
+        },
         'commands': [
             'yarn storybook:build',
+            './bin/grabpl verify-storybook',
         ],
     }
 
@@ -438,7 +442,9 @@ def test_backend_step():
             'lint-backend',
         ],
         'commands': [
-            # First execute non-integration tests in parallel, since it should be safe
+            # First make sure that there are no tests with FocusConvey
+            '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
+            # Then execute non-integration tests in parallel, since it should be safe
             './bin/grabpl test-backend',
             # Then execute integration tests in serial
             './bin/grabpl integration-tests',
