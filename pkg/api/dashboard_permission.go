@@ -43,6 +43,10 @@ func GetDashboardPermissionList(c *models.ReqContext) Response {
 }
 
 func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
+	if err := validatePermissionsUpdate(apiCmd); err != nil {
+		return Error(400, err.Error(), err)
+	}
+
 	dashID := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashID, "")
@@ -56,14 +60,14 @@ func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboar
 	}
 
 	cmd := models.UpdateDashboardAclCommand{}
-	cmd.DashboardId = dashID
+	cmd.DashboardID = dashID
 
 	for _, item := range apiCmd.Items {
 		cmd.Items = append(cmd.Items, &models.DashboardAcl{
-			OrgId:       c.OrgId,
-			DashboardId: dashID,
-			UserId:      item.UserId,
-			TeamId:      item.TeamId,
+			OrgID:       c.OrgId,
+			DashboardID: dashID,
+			UserID:      item.UserID,
+			TeamID:      item.TeamID,
 			Role:        item.Role,
 			Permission:  item.Permission,
 			Created:     time.Now(),
@@ -92,4 +96,13 @@ func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboar
 	}
 
 	return Success("Dashboard permissions updated")
+}
+
+func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardAclCommand) error {
+	for _, item := range apiCmd.Items {
+		if (item.UserId > 0 || item.TeamId > 0) && item.Role != nil {
+			return models.ErrPermissionsWithRoleNotAllowed
+		}
+	}
+	return nil
 }

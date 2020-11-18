@@ -60,6 +60,7 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
                   href={`https://grafana.com/dashboards/${dashboard.gnetId}`}
                   className="external-link"
                   target="_blank"
+                  rel="noreferrer"
                 >
                   Grafana.com
                 </a>
