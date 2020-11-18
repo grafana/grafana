@@ -416,7 +416,7 @@ steps:
   - package
 
 - name: publish-storybook
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
@@ -510,7 +510,7 @@ steps:
   - end-to-end-tests
 
 - name: upload-packages
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - ./bin/grabpl upload-packages --edition oss
   environment:
@@ -629,7 +629,7 @@ steps:
     DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - ./bin/grabpl publish-packages --edition oss --build-id ${DRONE_BUILD_NUMBER}
   environment:
@@ -845,7 +845,7 @@ steps:
   - package
 
 - name: publish-storybook
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
@@ -933,7 +933,7 @@ steps:
   - end-to-end-tests
 
 - name: upload-packages
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - ./bin/grabpl upload-packages --edition oss
   environment:
@@ -1265,7 +1265,7 @@ steps:
   - test-frontend
 
 - name: upload-packages
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - ./bin/grabpl upload-packages --edition enterprise
   environment:
@@ -1402,7 +1402,7 @@ steps:
     DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - ./bin/grabpl publish-packages --edition oss ${DRONE_TAG}
   - ./bin/grabpl publish-packages --edition enterprise ${DRONE_TAG}
@@ -1619,7 +1619,7 @@ steps:
   - package
 
 - name: publish-storybook
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - echo Testing release
   environment:
@@ -1697,7 +1697,7 @@ steps:
   - end-to-end-tests
 
 - name: upload-packages
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - ./bin/grabpl upload-packages --edition oss --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket grafana-downloads-test --rpm-repo-bucket grafana-testing-repo
   environment:
@@ -2023,7 +2023,7 @@ steps:
   - test-frontend
 
 - name: upload-packages
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - ./bin/grabpl upload-packages --edition enterprise --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket grafana-downloads-test --rpm-repo-bucket grafana-testing-repo
   environment:
@@ -2160,7 +2160,7 @@ steps:
     DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages-oss
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - ./bin/grabpl publish-packages --edition oss --dry-run v7.3.0-test
   environment:
@@ -2170,7 +2170,7 @@ steps:
   - initialize
 
 - name: publish-packages-enterprise
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - ./bin/grabpl publish-packages --edition enterprise --dry-run v7.3.0-test
   environment:
