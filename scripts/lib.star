@@ -1,6 +1,6 @@
-grabpl_version = '0.5.18'
-build_image = 'grafana/build-container:1.2.28'
-publish_image = 'grafana/grafana-ci-deploy:1.2.6'
+grabpl_version = '0.5.27'
+build_image = 'grafana/build-container:1.2.29'
+publish_image = 'grafana/grafana-ci-deploy:1.2.7'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 alpine_image = 'alpine:3.12'
 windows_image = 'mcr.microsoft.com/windows:1809'
@@ -94,8 +94,9 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
         ),
         'chmod +x bin/grabpl',
     ]
-    common_cmds = []
-    pre_cmds = []
+    common_cmds = [
+        './bin/grabpl verify-drone',
+    ]
 
     if ver_mode == 'release':
         common_cmds.append('./bin/grabpl verify-version ${DRONE_TAG}')
@@ -118,17 +119,17 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
             'yarn install --frozen-lockfile --no-progress',
         ])
     if edition == 'enterprise':
+        source_commit = ''
         if ver_mode == 'release':
             committish = '${DRONE_TAG}'
             source_commit = ' ${DRONE_TAG}'
         elif ver_mode == 'test-release':
             committish = 'master'
-            source_commit = ''
+        elif ver_mode == 'version-branch':
+            committish = '${DRONE_BRANCH}'
         else:
             if is_downstream:
                 source_commit = ' $${SOURCE_COMMIT}'
-            else:
-                source_commit = ''
             committish = '${DRONE_COMMIT}'
         steps = [
             identify_runner_step,
@@ -140,7 +141,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
                         'from_secret': 'github_token',
                     },
                 },
-                'commands': download_grabpl_cmds + pre_cmds + [
+                'commands': download_grabpl_cmds + [
                     'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
                     'cd grafana-enterprise',
                     'git checkout {}'.format(committish),
@@ -155,7 +156,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
                 'depends_on': [
                     'clone',
                 ],
-                'commands': pre_cmds + [
+                'commands': [
                     'mv bin/grabpl /tmp/',
                     'rmdir bin',
                     'mv grafana-enterprise /tmp/',
@@ -176,7 +177,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
             'environment': {
                 'DOCKERIZE_VERSION': dockerize_version,
             },
-            'commands': download_grabpl_cmds + pre_cmds + common_cmds,
+            'commands': download_grabpl_cmds + common_cmds,
         },
     ]
 
@@ -264,8 +265,12 @@ def build_storybook_step(edition, ver_mode):
             # Best to ensure that this step doesn't mess with what's getting built and packaged
             'package',
         ],
+        'environment': {
+            'NODE_OPTIONS': '--max_old_space_size=4096',
+        },
         'commands': [
             'yarn storybook:build',
+            './bin/grabpl verify-storybook',
         ],
     }
 
@@ -437,7 +442,9 @@ def test_backend_step():
             'lint-backend',
         ],
         'commands': [
-            # First execute non-integration tests in parallel, since it should be safe
+            # First make sure that there are no tests with FocusConvey
+            '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
+            # Then execute non-integration tests in parallel, since it should be safe
             './bin/grabpl test-backend',
             # Then execute integration tests in serial
             './bin/grabpl integration-tests',
@@ -523,7 +530,7 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
         variants_str = ' --variants {}'.format(','.join(variants))
     else:
         variants_str = ''
-    if ver_mode in ('master', 'release', 'test-release',):
+    if ver_mode in ('master', 'release', 'test-release', 'version-branch'):
         sign_args = ' --sign'
         env = {
             'GRAFANA_API_KEY': {
@@ -631,7 +638,7 @@ def build_docs_website_step():
         ],
         'commands': [
             'mkdir -p /hugo/content/docs/grafana',
-            'cp -r docs/sources /hugo/content/docs/grafana/latest',
+            'cp -r docs/sources/* /hugo/content/docs/grafana/latest/',
             'cd /hugo && make prod',
         ],
     }
@@ -792,18 +799,6 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
             'GCP_GRAFANA_UPLOAD_KEY': {
                 'from_secret': 'gcp_key',
             },
-            'GRAFANA_COM_API_KEY': {
-                'from_secret': 'grafana_api_key',
-            },
-            'GPG_PRIV_KEY': {
-                'from_secret': 'gpg_priv_key',
-            },
-            'GPG_PUB_KEY': {
-                'from_secret': 'gpg_pub_key',
-            },
-            'GPG_KEY_PASSWORD': {
-                'from_secret': 'gpg_key_password',
-            },
         },
         'commands': [cmd,],
     }
@@ -827,9 +822,24 @@ def publish_packages_step(edition, is_downstream):
             'GRAFANA_COM_API_KEY': {
                 'from_secret': 'grafana_api_key',
             },
+            'GCP_KEY': {
+                'from_secret': 'gcp_key',
+            },
+            'GPG_PRIV_KEY': {
+                'from_secret': 'gpg_priv_key',
+            },
+            'GPG_PUB_KEY': {
+                'from_secret': 'gpg_pub_key',
+            },
+            'GPG_KEY_PASSWORD': {
+                'from_secret': 'gpg_key_password',
+            },
         },
         'commands': [
-            './bin/grabpl publish-packages --edition {} --build-id {}'.format(edition, build_no),
+            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
+            './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
+                edition, build_no,
+            ),
         ],
     }
 
@@ -839,7 +849,6 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
     else:
         source_commit = ' $$env:SOURCE_COMMIT'
 
-    pre_cmds = []
     sfx = ''
     if edition == 'enterprise':
         sfx = '-enterprise'
@@ -848,6 +857,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         init_cmds.extend([
             '$$ProgressPreference = "SilentlyContinue"',
             'Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v{}/windows/grabpl.exe -OutFile grabpl.exe'.format(grabpl_version),
+            '.\\grabpl.exe verify-drone',
         ])
     steps = [
         {
@@ -856,7 +866,9 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'commands': init_cmds,
         },
     ]
-    if (ver_mode == 'master' and (edition != 'enterprise' or is_downstream)) or ver_mode in ('release', 'test-release'):
+    if (ver_mode == 'master' and (edition != 'enterprise' or is_downstream)) or ver_mode in (
+        'release', 'test-release', 'version-branch',
+    ):
         bucket_part = ''
         bucket = 'grafana-downloads'
         if ver_mode == 'release':
@@ -882,11 +894,16 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'gcloud auth activate-service-account --key-file=gcpkey.json',
             'rm gcpkey.json',
             'cp C:\\App\\nssm-2.24.zip .',
-            '.\\grabpl.exe windows-installer --edition {}{} {}'.format(edition, bucket_part, ver_part),
-            '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
-            'gsutil cp $$fname gs://{}/{}/{}/'.format(bucket, edition, dir),
-            'gsutil cp "$$fname.sha256" gs://{}/{}/{}/'.format(bucket, edition, dir),
         ]
+        if (ver_mode == 'master' and (edition != 'enterprise' or is_downstream)) or ver_mode in (
+            'release', 'test-release',
+        ):
+            installer_commands.extend([
+                '.\\grabpl.exe windows-installer --edition {}{} {}'.format(edition, bucket_part, ver_part),
+                '$$fname = ((Get-Childitem grafana*.msi -name) -split "`n")[0]',
+                'gsutil cp $$fname gs://{}/{}/{}/'.format(bucket, edition, dir),
+                'gsutil cp "$$fname.sha256" gs://{}/{}/{}/'.format(bucket, edition, dir),
+            ])
         steps.append({
             'name': 'build-windows-installer',
             'image': wix_image,
@@ -895,7 +912,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
                     'from_secret': 'gcp_key',
                 },
             },
-            'commands': pre_cmds + installer_commands,
+            'commands': installer_commands,
             'depends_on': [
                 'initialize',
             ],
@@ -906,6 +923,8 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             committish = '${DRONE_TAG}'
         elif ver_mode == 'test-release':
             committish = 'master'
+        elif ver_mode == 'version-branch':
+            committish = '$$env:DRONE_BRANCH'
         else:
             committish = '$$env:DRONE_COMMIT'
         # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
@@ -929,7 +948,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
                     'from_secret': 'github_token',
                 },
             },
-            'commands': download_grabpl_cmds + pre_cmds + clone_cmds,
+            'commands': download_grabpl_cmds + clone_cmds,
         })
         steps[1]['depends_on'] = [
             'clone',
@@ -942,6 +961,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             'rm -force grabpl.exe',
             'C:\\App\\grabpl.exe init-enterprise C:\\App\\grafana-enterprise{}'.format(source_commit),
             'cp C:\\App\\grabpl.exe grabpl.exe',
+            '.\\grabpl.exe verify-drone',
         ])
 
     return steps

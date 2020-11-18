@@ -1,5 +1,7 @@
 package dtos
 
+import "github.com/grafana/grafana/pkg/setting"
+
 type IndexViewData struct {
 	User                    *CurrentUser
 	Settings                map[string]interface{}
@@ -18,11 +20,7 @@ type IndexViewData struct {
 	FavIcon                 string
 	AppleTouchIcon          string
 	AppTitle                string
-}
-
-type PluginCss struct {
-	Light string `json:"light"`
-	Dark  string `json:"dark"`
+	Sentry                  *setting.Sentry
 }
 
 const (

@@ -28,8 +28,8 @@ const plugins: DataSourcePluginMeta[] = [
 describe('buildCategories', () => {
   const categories = buildCategories(plugins);
 
-  it('should group plugins into categories', () => {
-    expect(categories.length).toBe(7);
+  it('should group plugins into categories and remove empty categories', () => {
+    expect(categories.length).toBe(4);
     expect(categories[0].title).toBe('Time series databases');
     expect(categories[0].plugins.length).toBe(2);
     expect(categories[1].title).toBe('Logging & document databases');
@@ -40,17 +40,17 @@ describe('buildCategories', () => {
   });
 
   it('should add phantom plugin for Grafana cloud', () => {
-    expect(categories[4].title).toBe('Cloud');
-    expect(categories[4].plugins.length).toBe(2);
-    expect(categories[4].plugins[1].id).toBe('gcloud');
+    expect(categories[2].title).toBe('Cloud');
+    expect(categories[2].plugins.length).toBe(2);
+    expect(categories[2].plugins[1].id).toBe('gcloud');
   });
 
   it('should set module to phantom on phantom plugins', () => {
-    expect(categories[5].plugins[0].module).toBe('phantom');
+    expect(categories[3].plugins[0].module).toBe('phantom');
   });
 
   it('should add enterprise phantom plugins', () => {
-    expect(categories[5].title).toBe('Enterprise plugins');
-    expect(categories[5].plugins.length).toBe(7);
+    expect(categories[3].title).toBe('Enterprise plugins');
+    expect(categories[3].plugins.length).toBe(10);
   });
 });

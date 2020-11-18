@@ -1,43 +1,44 @@
 import React from 'react';
-import { number } from '@storybook/addon-knobs';
-import { InfoBox, FeatureInfoBox } from '@grafana/ui';
+import { number, select, text } from '@storybook/addon-knobs';
 import { FeatureState } from '@grafana/data';
+import { InfoBox, FeatureInfoBox } from '@grafana/ui';
+import mdx from './InfoBox.mdx';
 
 export default {
   title: 'Layout/InfoBox',
   component: InfoBox,
   decorators: [],
   parameters: {
-    docs: {},
+    docs: {
+      page: mdx,
+    },
   },
 };
 
 const getKnobs = () => {
-  const CONTAINER_GROUP = 'Container options';
-  // ---
-  const containerWidth = number(
-    'Container width',
-    800,
-    {
-      range: true,
-      min: 100,
-      max: 1500,
-      step: 100,
-    },
-    CONTAINER_GROUP
-  );
+  const containerWidth = number('Container width', 800, {
+    range: true,
+    min: 100,
+    max: 1500,
+    step: 100,
+  });
 
-  return { containerWidth };
+  const title = text('Title', 'User permission');
+  const url = text('Url', 'http://docs.grafana.org/features/datasources/mysql/');
+  const severity = select('Severity', ['success', 'warning', 'error', 'info'], 'info');
+
+  return { containerWidth, severity, title, url };
 };
 
 export const basic = () => {
-  const { containerWidth } = getKnobs();
+  const { containerWidth, severity, title, url } = getKnobs();
 
   return (
     <div style={{ width: containerWidth }}>
       <InfoBox
-        title="User Permission"
-        url={'http://docs.grafana.org/features/datasources/mysql/'}
+        title={title}
+        url={url}
+        severity={severity}
         onDismiss={() => {
           alert('onDismiss clicked');
         }}
@@ -69,7 +70,7 @@ export const featureInfoBox = () => {
       >
         Transformations allow you to join, calculate, re-order, hide and rename your query results before being
         visualized. <br />
-        Many transforms are not suitable if you're using the Graph visualisation as it currently only supports time
+        Many transforms are not suitable if you&apos;re using the Graph visualisation as it currently only supports time
         series. <br />
         It can help to switch to Table visualisation to understand what a transformation is doing.
       </FeatureInfoBox>

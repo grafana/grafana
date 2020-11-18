@@ -4,6 +4,9 @@ import { GrafanaTheme } from '@grafana/data';
 import { useTheme } from '../../themes';
 import { getTagColor, getTagColorsFromName } from '../../utils';
 
+/**
+ * @public
+ */
 export type OnTagClick = (name: string, event: React.MouseEvent<HTMLElement>) => any;
 
 export interface Props extends Omit<HTMLAttributes<HTMLElement>, 'onClick'> {

@@ -48,7 +48,9 @@ func dashboardGuardianResponse(err error) Response {
 }
 
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) Response {
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
+	slug := c.Params(":slug")
+	uid := c.Params(":uid")
+	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
 	if rsp != nil {
 		return rsp
 	}
@@ -262,7 +264,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 	}
 
 	// Tell everyone listening that the dashboard changed
-	if hs.Live != nil {
+	if hs.Live.IsEnabled() {
 		err := hs.Live.GrafanaScope.Dashboards.DashboardSaved(
 			dashboard.Uid,
 			c.UserId,
@@ -356,14 +358,20 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 		return Error(500, "Failed to load home dashboard", err)
 	}
 
-	if c.HasUserRole(models.ROLE_ADMIN) && !c.HasHelpFlag(models.HelpFlagGettingStartedPanelDismissed) {
-		addGettingStartedPanelToHomeDashboard(dash.Dashboard)
-	}
+	hs.addGettingStartedPanelToHomeDashboard(c, dash.Dashboard)
 
 	return JSON(200, &dash)
 }
 
-func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
+func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext, dash *simplejson.Json) {
+	// We only add this getting started panel for Admins who have not dismissed it,
+	// and if a custom default home dashboard hasn't been configured
+	if !c.HasUserRole(models.ROLE_ADMIN) ||
+		c.HasHelpFlag(models.HelpFlagGettingStartedPanelDismissed) ||
+		hs.Cfg.DefaultHomeDashboardPath != "" {
+		return
+	}
+
 	panels := dash.Get("panels").MustArray()
 
 	newpanel := simplejson.NewFromAny(map[string]interface{}{

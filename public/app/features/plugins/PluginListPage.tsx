@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react';
+import React from 'react';
 import { hot } from 'react-hot-loader';
 import { connect } from 'react-redux';
 import Page from 'app/core/components/Page/Page';
@@ -10,6 +10,9 @@ import { getPlugins, getPluginsSearchQuery } from './state/selectors';
 import { NavModel, PluginMeta } from '@grafana/data';
 import { StoreState } from 'app/types';
 import { setPluginsSearchQuery } from './state/reducers';
+import { useAsync } from 'react-use';
+import { selectors } from '@grafana/e2e-selectors';
+import { PluginsErrorsInfo } from './PluginsErrorsInfo';
 
 export interface Props {
   navModel: NavModel;
@@ -20,40 +23,49 @@ export interface Props {
   setPluginsSearchQuery: typeof setPluginsSearchQuery;
 }
 
-export class PluginListPage extends PureComponent<Props> {
-  componentDidMount() {
-    this.fetchPlugins();
-  }
+export const PluginListPage: React.FC<Props> = ({
+  hasFetched,
+  navModel,
+  plugins,
+  setPluginsSearchQuery,
+  searchQuery,
+  loadPlugins,
+}) => {
+  useAsync(async () => {
+    loadPlugins();
+  }, [loadPlugins]);
 
-  async fetchPlugins() {
-    await this.props.loadPlugins();
-  }
+  const linkButton = {
+    href: 'https://grafana.com/plugins?utm_source=grafana_plugin_list',
+    title: 'Find more plugins on Grafana.com',
+  };
 
-  render() {
-    const { hasFetched, navModel, plugins, setPluginsSearchQuery, searchQuery } = this.props;
+  return (
+    <Page navModel={navModel} aria-label={selectors.pages.PluginsList.page}>
+      <Page.Contents isLoading={!hasFetched}>
+        <>
+          <OrgActionBar
+            searchQuery={searchQuery}
+            setSearchQuery={query => setPluginsSearchQuery(query)}
+            linkButton={linkButton}
+            target="_blank"
+          />
 
-    const linkButton = {
-      href: 'https://grafana.com/plugins?utm_source=grafana_plugin_list',
-      title: 'Find more plugins on Grafana.com',
-    };
-
-    return (
-      <Page navModel={navModel}>
-        <Page.Contents isLoading={!hasFetched}>
-          <>
-            <OrgActionBar
-              searchQuery={searchQuery}
-              setSearchQuery={query => setPluginsSearchQuery(query)}
-              linkButton={linkButton}
-              target="_blank"
-            />
-            {hasFetched && plugins && plugins && <PluginList plugins={plugins} />}
-          </>
-        </Page.Contents>
-      </Page>
-    );
-  }
-}
+          <PluginsErrorsInfo>
+            <>
+              <br />
+              <p>
+                Note that <strong>unsigned front-end datasource and panel plugins</strong> are still usable, but this is
+                subject to change in the upcoming releases of Grafana
+              </p>
+            </>
+          </PluginsErrorsInfo>
+          {hasFetched && plugins && <PluginList plugins={plugins} />}
+        </>
+      </Page.Contents>
+    </Page>
+  );
+};
 
 function mapStateToProps(state: StoreState) {
   return {

@@ -1,11 +1,7 @@
 +++
 title = "Explore"
 keywords = ["explore", "loki", "logs"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/explore/"]
-[menu.docs]
-name = "Explore"
-identifier = "explore"
 weight = 90
 +++
 
@@ -53,7 +49,7 @@ You can close the newly created query by clicking on the Close Split button.
 
 > Share shortened link is only available in Grafana 7.3 and above.
 
-The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs containing complex query parameters. You can create a shortened link by clicking on the **Share** option in Explore toolbar.
+The Share shortened link capability allows you to create smaller and simpler URLs of the format /goto/:uid instead of using longer URLs containing complex query parameters. You can create a shortened link by clicking on the **Share** option in Explore toolbar. Please note that any shortened links that are never used will be automatically deleted after 7 days.
 
 ## Query history
 
@@ -145,7 +141,7 @@ Suggestions can appear under the query field - click on them to update your quer
 
 ### Table filters
 
-Click on the filter button <span title="Filter for label" class="logs-label__icon fa fa-search-plus"></span> in a labels column in the Table panel to add filters to the query expression. This works with multiple queries too - the filter will be added for all the queries.
+Click on the filter button in the "label" column of a Table panel to add filters to the query expression. You can add filters for multiple queries as well - the filter is added for all the queries.
 
 ## Logs integration
 
@@ -154,6 +150,37 @@ Along with metrics, Explore allows you to investigate your logs with the followi
 - [Loki](../datasources/loki)
 - [InfluxDB](../datasources/influxdb)
 - [Elasticsearch](../datasources/elasticsearch)
+
+### Logs visualization
+
+Results of log queries are shown as histograms in the graph and individual logs are displayed below. If the data source does not send histogram data for the requested time range, the logs model computes a time series based on the log row counts bucketed by an automatically calculated time interval and the start of the histogram is then anchored by the first log row's timestamp from the result. The end of the time series is anchored to the time picker's **To** range.
+
+#### Log level
+
+For logs where a **level** label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we parse the log to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with **unknown** log level.
+
+**Supported log levels and mapping of log level abbreviation and expressions:**
+
+
+|  Supported expressions      | Log level     | Color       |
+| --------------------------- |:-------------:| -----------:|
+| emerg                       | critical      | purple      |
+| fatal                       | critical      | purple      |
+| alert                       | critical      | purple      |
+| crit                        | critical      | purple      |
+| critical                    | critical      | purple      |
+| err                         | error         | red         |
+| eror                        | error         | red         |
+| error                       | error         | red         |
+| warn                        | warning       | yellow      |
+| warning                     | warning       | yellow      |
+| info                        | info          | green       |
+| information                 | info          | green       |
+| notice                      | info          | green       |
+| dbug                        | debug         | blue        |
+| debug                       | debug         | blue        |
+| trace                       | trace         | light blue  |
+| *                           | unknown       | grey        |
 
 ### Visualization options
 
@@ -296,3 +323,5 @@ This functionality is similar to the panel inspector [Stats tab]({{< relref "../
 [Query tab]({{< relref "../panels/inspect-panel.md##view-raw-request-and-response-to-data-source" >}}).
 
 {{< docs-imagebox img="/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" caption="Screenshot of the query inspector button in Explore" >}}
+
+<!-- BEGIN Optimal Workshop Intercept Snippet --><div id='owInviteSnippet' style='position:fixed;right:20px;bottom:20px;width:280px;padding:20px;margin:0;border-radius:6px;background:#1857B8;color:#F7F8FA;text-align:left;z-index:2200000000;opacity:0;transition:opacity 500ms;-webkit-transition:opacity 500ms;display:none;'><div id='owInviteMessage' style='padding:0;margin:0 0 20px 0;font-size:16px;'>Got a spare two and a half minutes to help us improve the docs?</div><a id='owInviteOk' href='https://Grafana.optimalworkshop.com/questions/grafana-docs?tag=docs&utm_medium=intercept' onclick='this.parentNode.style.display="none";' target='_blank' style='color:#F7FAFF;font-size:16px;font-weight:bold;text-decoration:underline;'>Yes, I&#x27;ll help</a><a id='owInviteCancel' href='javascript:void(0)' onclick='this.parentNode.style.display="none";' style='color:#F7F8FA;font-size:14px;text-decoration:underline;float:right;'>Close</a></div><script>var owOnload=function(){if(-1==document.cookie.indexOf('ow-intercept-quiz-4ior230e')){var o=new XMLHttpRequest;o.onloadend=function(){try{var o=document.getElementById('owInviteSnippet');var date=new Date();date.setMonth(date.getMonth()+1);this.response&&JSON.parse(this.response).active===!0&&(document.cookie='ow-intercept-quiz-4ior230e=Done;path=/;expires='+date.toUTCString()+';',setTimeout(function(){o.style.display='block',o.style.opacity=1},2e3))}catch(e){}},o.open('POST','https://app.optimalworkshop.com/survey_status/questions/4ior230e/active'),o.send()}};if(window.addEventListener){window.addEventListener('load',function(){owOnload();});}else if(window.attachEvent){window.attachEvent('onload',function(){owOnload();});}</script><!-- END Optimal Workshop snippet -->

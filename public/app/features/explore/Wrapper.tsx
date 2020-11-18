@@ -6,7 +6,7 @@ import { StoreState } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
 import { CustomScrollbar, ErrorBoundaryAlert } from '@grafana/ui';
-import { resetExploreAction } from './state/actionTypes';
+import { resetExploreAction } from './state/main';
 import Explore from './Explore';
 
 interface WrapperProps {

@@ -270,6 +270,7 @@ function separateLogsAndMetrics(dataFrames: DataFrame[]) {
   const logSeries: DataFrame[] = [];
 
   for (const dataFrame of dataFrames) {
+    // We want to show meta stats even if no result was returned. That's why we are pushing also data frames with no fields.
     if (isLogsData(dataFrame) || !dataFrame.fields.length) {
       logSeries.push(dataFrame);
       continue;
@@ -306,8 +307,12 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   // Find the fields we care about and collect all labels
   let allSeries: LogFields[] = [];
 
-  if (hasFields(logSeries)) {
-    allSeries = logSeries.map(series => {
+  // We are sometimes passing data frames with no fields because we want to calculate correct meta stats.
+  // Therefore we need to filter out series with no fields. These series are used only for meta stats calculation.
+  const seriesWithFields = logSeries.filter(series => series.fields.length);
+
+  if (seriesWithFields.length) {
+    allSeries = seriesWithFields.map(series => {
       const fieldCache = new FieldCache(series);
       const stringField = fieldCache.getFirstFieldOfType(FieldType.string);
 
@@ -461,10 +466,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     meta,
     rows: deduplicatedLogRows,
   };
-}
-
-function hasFields(logSeries: DataFrame[]): boolean {
-  return logSeries.some(series => series.fields.length);
 }
 
 function getIdField(fieldCache: FieldCache): FieldWithIndex | undefined {

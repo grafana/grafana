@@ -86,7 +86,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     const style = getLogRowStyles(theme, row.logLevel);
     const { entry, hasAnsi, raw } = row;
 
-    const previewHighlights = highlighterExpressions && !_.isEqual(highlighterExpressions, row.searchWords);
+    const previewHighlights = highlighterExpressions?.length && !_.isEqual(highlighterExpressions, row.searchWords);
     const highlights = previewHighlights ? highlighterExpressions : row.searchWords;
     const needsHighlighter =
       highlights && highlights.length > 0 && highlights[0] && highlights[0].length > 0 && entry.length < MAX_CHARACTERS;

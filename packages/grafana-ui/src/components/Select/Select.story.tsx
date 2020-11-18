@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { withCenteredStory, withHorizontallyCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { SelectableValue } from '@grafana/data';
-import { Icon, Button, ButtonSelect, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
+import { Icon, ButtonSelect, Select, AsyncSelect, MultiSelect, AsyncMultiSelect } from '@grafana/ui';
 import { getAvailableIcons, IconName } from '../../types';
 import { select, boolean, number } from '@storybook/addon-knobs';
 import { getIconKnob } from '../../utils/storybook/knobs';
@@ -238,29 +238,6 @@ export const BasicSelectAsync = () => {
       onChange={v => {
         setValue(v);
       }}
-      {...getDynamicProps()}
-    />
-  );
-};
-
-export const CustomizedControl = () => {
-  const [value, setValue] = useState<SelectableValue<string>>();
-
-  return (
-    <Select
-      options={generateOptions()}
-      value={value}
-      onChange={v => {
-        setValue(v);
-      }}
-      renderControl={React.forwardRef(({ isOpen, value, ...otherProps }, ref) => {
-        return (
-          <Button {...otherProps} ref={ref}>
-            {' '}
-            {isOpen ? 'Open' : 'Closed'}
-          </Button>
-        );
-      })}
       {...getDynamicProps()}
     />
   );

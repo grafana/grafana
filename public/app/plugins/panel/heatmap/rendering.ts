@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import * as d3 from 'd3';
-import { appEvents, contextSrv } from 'app/core/core';
+import { contextSrv } from 'app/core/core';
 import * as ticksUtils from 'app/core/utils/ticks';
 import { HeatmapTooltip } from './heatmap_tooltip';
 import { mergeZeroBuckets } from './heatmap_data_converter';
@@ -12,10 +12,11 @@ import {
   getValueFormat,
   formattedValueToString,
   dateTimeFormat,
+  LegacyGraphHoverEvent,
+  LegacyGraphHoverClearEvent,
   getColorForTheme,
 } from '@grafana/data';
 import { graphTimeFormat } from '@grafana/ui';
-import { CoreEvents } from 'app/types';
 import { config } from 'app/core/config';
 
 const MIN_CARD_SIZE = 1,
@@ -84,9 +85,8 @@ export class HeatmapRenderer {
     /////////////////////////////
 
     // Shared crosshair and tooltip
-    appEvents.on(CoreEvents.graphHover, this.onGraphHover.bind(this), this.scope);
-
-    appEvents.on(CoreEvents.graphHoverClear, this.onGraphHoverClear.bind(this), this.scope);
+    this.ctrl.dashboard.events.on(LegacyGraphHoverEvent.type, this.onGraphHover.bind(this), this.scope);
+    this.ctrl.dashboard.events.on(LegacyGraphHoverClearEvent.type, this.onGraphHoverClear.bind(this), this.scope);
 
     // Register selection listeners
     this.$heatmap.on('mousedown', this.onMouseDown.bind(this));
@@ -735,7 +735,7 @@ export class HeatmapRenderer {
   }
 
   onMouseLeave() {
-    appEvents.emit(CoreEvents.graphHoverClear);
+    this.ctrl.dashboard.$emit(new LegacyGraphHoverClearEvent());
     this.clearCrosshair();
   }
 
@@ -781,7 +781,7 @@ export class HeatmapRenderer {
     // Set minimum offset to prevent showing legend from another panel
     pos.panelRelY = Math.max(pos.offset.y / this.height, 0.001);
     // broadcast to other graph panels that we are hovering
-    appEvents.emit(CoreEvents.graphHover, { pos: pos, panel: this.panel });
+    this.ctrl.dashboard.events.emit$(new LegacyGraphHoverEvent({ pos: pos, panel: this.panel }));
   }
 
   limitSelection(x2: number) {

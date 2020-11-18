@@ -1,6 +1,5 @@
 +++
 title = "Add authentication for data source plugins"
-type = "docs"
 aliases = ["/docs/grafana/latest/plugins/developing/auth-for-datasources/",  "/docs/grafana/latest/developers/plugins/authentication/"]
 +++
 

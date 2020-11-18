@@ -3,19 +3,18 @@ package pluginproxy
 import (
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestInterpolateString(t *testing.T) {
-	Convey("When interpolating string", t, func() {
-		data := templateData{
-			SecureJsonData: map[string]string{
-				"Test": "0asd+asd",
-			},
-		}
+	data := templateData{
+		SecureJsonData: map[string]string{
+			"Test": "0asd+asd",
+		},
+	}
 
-		interpolated, err := InterpolateString("{{.SecureJsonData.Test}}", data)
-		So(err, ShouldBeNil)
-		So(interpolated, ShouldEqual, "0asd+asd")
-	})
+	interpolated, err := interpolateString("{{.SecureJsonData.Test}}", data)
+	require.NoError(t, err)
+	assert.Equal(t, "0asd+asd", interpolated)
 }

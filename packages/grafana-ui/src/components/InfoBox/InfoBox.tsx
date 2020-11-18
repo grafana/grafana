@@ -1,32 +1,39 @@
 import React from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { stylesFactory, useTheme } from '../../themes';
 import { Icon } from '../Icon/Icon';
 import { IconButton } from '../IconButton/IconButton';
 import { HorizontalGroup } from '../Layout/Layout';
+import { AlertVariant } from '../Alert/Alert';
 import panelArtDark from './panelArt_dark.svg';
 import panelArtLight from './panelArt_light.svg';
+import { stylesFactory, useTheme } from '../../themes';
+import { getColorsFromSeverity } from '../../utils/colors';
 
 export interface InfoBoxProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'title'> {
   children: React.ReactNode;
+  /** Title of the box */
   title?: string | JSX.Element;
+  /** Url of the read more link */
   url?: string;
+  /** Text of the read more link */
   urlTitle?: string;
+  /** Indicates whether or not box should be rendered with Grafana branding background */
   branded?: boolean;
+  /** Color variant of the box */
+  severity?: AlertVariant;
+  /** Call back to be performed when box is dismissed */
   onDismiss?: () => void;
 }
 
 /**
- * This is a simple InfoBox component, the api is not considered stable yet and will likely see breaking changes
- * in future minor releases.
- * @Alpha
+  @public
  */
 export const InfoBox = React.memo(
   React.forwardRef<HTMLDivElement, InfoBoxProps>(
-    ({ title, className, children, branded, url, urlTitle, onDismiss, ...otherProps }, ref) => {
+    ({ title, className, children, branded, url, urlTitle, onDismiss, severity = 'info', ...otherProps }, ref) => {
       const theme = useTheme();
-      const styles = getInfoBoxStyles(theme);
+      const styles = getInfoBoxStyles(theme, severity);
       const wrapperClassName = branded ? cx(styles.wrapperBranded, className) : cx(styles.wrapper, className);
 
       return (
@@ -39,7 +46,7 @@ export const InfoBox = React.memo(
           </div>
           <div>{children}</div>
           {url && (
-            <a href={url} className={styles.docsLink} target="_blank">
+            <a href={url} className={styles.docsLink} target="_blank" rel="noreferrer">
               <Icon name="book" /> {urlTitle || 'Read more'}
             </a>
           )}
@@ -49,18 +56,15 @@ export const InfoBox = React.memo(
   )
 );
 
-const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme, severity: AlertVariant) => ({
   wrapper: css`
     position: relative;
     padding: ${theme.spacing.md};
     background-color: ${theme.colors.bg2};
-    border-top: 3px solid ${theme.palette.blue80};
+    border-top: 3px solid ${getColorsFromSeverity(severity, theme)[0]};
     margin-bottom: ${theme.spacing.md};
     flex-grow: 1;
-
-    ul {
-      padding-left: ${theme.spacing.lg};
-    }
+    color: ${theme.colors.textSemiWeak};
 
     code {
       @include font-family-monospace();
@@ -109,5 +113,6 @@ const getInfoBoxStyles = stylesFactory((theme: GrafanaTheme) => ({
     display: inline-block;
     margin-top: ${theme.spacing.md};
     font-size: ${theme.typography.size.sm};
+    color: ${theme.colors.textSemiWeak};
   `,
 }));

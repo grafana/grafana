@@ -16,7 +16,6 @@ import {
   initDashboardTemplating,
   initVariablesTransaction,
   processVariables,
-  setOptionFromUrl,
   validateVariableSelectionState,
 } from './actions';
 import {
@@ -25,9 +24,16 @@ import {
   removeVariable,
   setCurrentVariableValue,
   variableStateCompleted,
+  variableStateFetching,
   variableStateNotStarted,
 } from './sharedReducer';
-import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload } from './types';
+import {
+  ALL_VARIABLE_TEXT,
+  ALL_VARIABLE_VALUE,
+  NEW_VARIABLE_ID,
+  toVariableIdentifier,
+  toVariablePayload,
+} from './types';
 import {
   constantBuilder,
   customBuilder,
@@ -52,6 +58,9 @@ import {
 import { initialState } from '../pickers/OptionsPicker/reducer';
 import { cleanVariables } from './variablesReducer';
 import { expect } from '../../../../test/lib/common';
+import { VariableRefresh } from '../types';
+import { updateVariableOptions } from '../query/reducer';
+import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -60,10 +69,24 @@ variableAdapters.setInit(() => [
   createConstantVariableAdapter(),
 ]);
 
+const metricFindQuery = jest
+  .fn()
+  .mockResolvedValueOnce([{ text: 'responses' }, { text: 'timers' }])
+  .mockResolvedValue([{ text: '200' }, { text: '500' }]);
+const getMetricSources = jest.fn().mockReturnValue([]);
+const getDatasource = jest.fn().mockResolvedValue({ metricFindQuery });
+
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: () => ({
     timeRange: jest.fn().mockReturnValue(undefined),
   }),
+}));
+
+jest.mock('app/features/plugins/datasource_srv', () => ({
+  getDatasourceSrv: jest.fn(() => ({
+    get: getDatasource,
+    getMetricSources,
+  })),
 }));
 
 describe('shared actions', () => {
@@ -153,43 +176,66 @@ describe('shared actions', () => {
         return true;
       });
     });
-  });
 
-  describe('when setOptionFromUrl is dispatched with a custom variable (no refresh property)', () => {
-    it.each`
-      urlValue      | isMulti  | expected
-      ${'B'}        | ${false} | ${'B'}
-      ${['B']}      | ${false} | ${'B'}
-      ${'X'}        | ${false} | ${'X'}
-      ${''}         | ${false} | ${''}
-      ${null}       | ${false} | ${null}
-      ${undefined}  | ${false} | ${undefined}
-      ${'B'}        | ${true}  | ${['B']}
-      ${['B']}      | ${true}  | ${['B']}
-      ${'X'}        | ${true}  | ${['X']}
-      ${''}         | ${true}  | ${['']}
-      ${['A', 'B']} | ${true}  | ${['A', 'B']}
-      ${null}       | ${true}  | ${[null]}
-      ${undefined}  | ${true}  | ${[undefined]}
-    `('and urlValue is $urlValue then correct actions are dispatched', async ({ urlValue, expected, isMulti }) => {
-      const custom = customBuilder()
-        .withId('0')
-        .withMulti(isMulti)
-        .withOptions('A', 'B', 'C')
-        .withCurrent('A')
+    // Fix for https://github.com/grafana/grafana/issues/28791
+    it('fix for https://github.com/grafana/grafana/issues/28791', async () => {
+      setVariableQueryRunner(new VariableQueryRunner());
+      const stats = queryBuilder()
+        .withId('stats')
+        .withName('stats')
+        .withQuery('stats.*')
+        .withRefresh(VariableRefresh.onDashboardLoad)
+        .withCurrent(['response'], ['response'])
+        .withMulti()
+        .withIncludeAll()
         .build();
 
-      const tester = await reduxTester<{ templating: TemplatingState }>()
-        .givenRootReducer(getTemplatingRootReducer())
-        .whenActionIsDispatched(addVariable(toVariablePayload(custom, { global: false, index: 0, model: custom })))
-        .whenAsyncActionIsDispatched(setOptionFromUrl(toVariableIdentifier(custom), urlValue), true);
+      const substats = queryBuilder()
+        .withId('substats')
+        .withName('substats')
+        .withQuery('stats.$stats.*')
+        .withRefresh(VariableRefresh.onDashboardLoad)
+        .withCurrent([ALL_VARIABLE_TEXT], [ALL_VARIABLE_VALUE])
+        .withMulti()
+        .withIncludeAll()
+        .build();
+
+      const list = [stats, substats];
+      const query = { orgId: '1', 'var-stats': 'response', 'var-substats': ALL_VARIABLE_TEXT };
+      const tester = await reduxTester<{ templating: TemplatingState; location: { query: UrlQueryMap } }>({
+        preloadedState: { templating: ({} as unknown) as TemplatingState, location: { query } },
+      })
+        .givenRootReducer(getTemplatingAndLocationRootReducer())
+        .whenActionIsDispatched(variablesInitTransaction({ uid: '' }))
+        .whenActionIsDispatched(initDashboardTemplating(list))
+        .whenAsyncActionIsDispatched(processVariables(), true);
 
       await tester.thenDispatchedActionsShouldEqual(
+        variableStateFetching(toVariablePayload(stats)),
+        updateVariableOptions(
+          toVariablePayload(stats, { results: [{ text: 'responses' }, { text: 'timers' }], templatedRegex: '' })
+        ),
         setCurrentVariableValue(
-          toVariablePayload(
-            { type: 'custom', id: '0' },
-            { option: { text: expected, value: expected, selected: false } }
-          )
+          toVariablePayload(stats, { option: { text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false } })
+        ),
+        variableStateCompleted(toVariablePayload(stats)),
+        setCurrentVariableValue(
+          toVariablePayload(stats, { option: { text: ['response'], value: ['response'], selected: false } })
+        ),
+        variableStateFetching(toVariablePayload(substats)),
+        updateVariableOptions(
+          toVariablePayload(substats, { results: [{ text: '200' }, { text: '500' }], templatedRegex: '' })
+        ),
+        setCurrentVariableValue(
+          toVariablePayload(substats, {
+            option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: true },
+          })
+        ),
+        variableStateCompleted(toVariablePayload(substats)),
+        setCurrentVariableValue(
+          toVariablePayload(substats, {
+            option: { text: [ALL_VARIABLE_TEXT], value: [ALL_VARIABLE_VALUE], selected: false },
+          })
         )
       );
     });

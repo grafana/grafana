@@ -2,13 +2,10 @@
 title = "What's new in Grafana v6.5"
 description = "Feature and improvement highlights for Grafana v6.5"
 keywords = ["grafana", "new", "documentation", "6.5", "release notes"]
-type = "docs"
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v6-5/"]
-[menu.docs]
-name = "Version 6.5"
-identifier = "v6.5"
-parent = "whatsnew"
-weight = -16
+weight = -24
+[_build]
+list = false
 +++
 
 # What's new in Grafana v6.5

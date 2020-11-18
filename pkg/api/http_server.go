@@ -31,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/login"
-	eval "github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -73,23 +72,13 @@ type HTTPServer struct {
 	BackendPluginManager backendplugin.Manager            `inject:""`
 	PluginManager        *plugins.PluginManager           `inject:""`
 	SearchService        *search.SearchService            `inject:""`
-	AlertNG              *eval.AlertNG                    `inject:""`
 	ShortURLService      *shorturls.ShortURLService       `inject:""`
-	Live                 *live.GrafanaLive
+	Live                 *live.GrafanaLive                `inject:""`
 	Listener             net.Listener
 }
 
 func (hs *HTTPServer) Init() error {
 	hs.log = log.New("http.server")
-
-	// Set up a websocket broker
-	if hs.Cfg.IsLiveEnabled() { // feature flag
-		node, err := live.InitializeBroker()
-		if err != nil {
-			return err
-		}
-		hs.Live = node
-	}
 
 	hs.macaron = hs.newMacaron()
 	hs.registerRoutes()
@@ -208,11 +197,11 @@ func (hs *HTTPServer) configureHttps() error {
 	}
 
 	if _, err := os.Stat(setting.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf(`Cannot find SSL cert_file at %v`, setting.CertFile)
+		return fmt.Errorf(`cannot find SSL cert_file at %q`, setting.CertFile)
 	}
 
 	if _, err := os.Stat(setting.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf(`Cannot find SSL key_file at %v`, setting.KeyFile)
+		return fmt.Errorf(`cannot find SSL key_file at %q`, setting.KeyFile)
 	}
 
 	tlsCfg := &tls.Config{
@@ -250,11 +239,11 @@ func (hs *HTTPServer) configureHttp2() error {
 	}
 
 	if _, err := os.Stat(setting.CertFile); os.IsNotExist(err) {
-		return fmt.Errorf(`Cannot find SSL cert_file at %v`, setting.CertFile)
+		return fmt.Errorf(`cannot find SSL cert_file at %q`, setting.CertFile)
 	}
 
 	if _, err := os.Stat(setting.KeyFile); os.IsNotExist(err) {
-		return fmt.Errorf(`Cannot find SSL key_file at %v`, setting.KeyFile)
+		return fmt.Errorf(`cannot find SSL key_file at %q`, setting.KeyFile)
 	}
 
 	tlsCfg := &tls.Config{
@@ -297,7 +286,7 @@ func (hs *HTTPServer) applyRoutes() {
 	// then custom app proxy routes
 	hs.initAppPluginRoutes(hs.macaron)
 	// lastly not found route
-	hs.macaron.NotFound(hs.NotFoundHandler)
+	hs.macaron.NotFound(middleware.ReqSignedIn, hs.NotFoundHandler)
 }
 
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {

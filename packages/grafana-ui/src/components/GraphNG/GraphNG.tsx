@@ -1,87 +1,51 @@
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useRef } from 'react';
 import {
   DataFrame,
   FieldConfig,
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
+  getFieldDisplayName,
   getTimeField,
-  systemDateFormats,
+  TIME_SERIES_TIME_FIELD_NAME,
 } from '@grafana/data';
-import { timeFormatToTemplate } from '../uPlot/utils';
 import { alignAndSortDataFramesByFieldName } from './utils';
-import { Area, Axis, Line, Point, Scale, SeriesGeometry } from '../uPlot/geometries';
 import { UPlotChart } from '../uPlot/Plot';
-import { AxisSide, GraphCustomFieldConfig, PlotProps } from '../uPlot/types';
+import { PlotProps } from '../uPlot/types';
+import { AxisPlacement, getUPlotSideFromAxis, GraphFieldConfig, GraphMode, PointMode } from '../uPlot/config';
 import { useTheme } from '../../themes';
-
-const timeStampsConfig = [
-  [3600 * 24 * 365, '{YYYY}', 7, '{YYYY}'],
-  [3600 * 24 * 28, `{${timeFormatToTemplate(systemDateFormats.interval.month)}`, 7, '{MMM}\n{YYYY}'],
-  [
-    3600 * 24,
-    `{${timeFormatToTemplate(systemDateFormats.interval.day)}`,
-    7,
-    `${timeFormatToTemplate(systemDateFormats.interval.day)}\n${timeFormatToTemplate(systemDateFormats.interval.year)}`,
-  ],
-  [
-    3600,
-    `{${timeFormatToTemplate(systemDateFormats.interval.minute)}`,
-    4,
-    `${timeFormatToTemplate(systemDateFormats.interval.minute)}\n${timeFormatToTemplate(
-      systemDateFormats.interval.day
-    )}`,
-  ],
-  [
-    60,
-    `{${timeFormatToTemplate(systemDateFormats.interval.second)}`,
-    4,
-    `${timeFormatToTemplate(systemDateFormats.interval.second)}\n${timeFormatToTemplate(
-      systemDateFormats.interval.day
-    )}`,
-  ],
-  [
-    1,
-    `:{ss}`,
-    2,
-    `:{ss}\n${timeFormatToTemplate(systemDateFormats.interval.day)} ${timeFormatToTemplate(
-      systemDateFormats.interval.minute
-    )}`,
-  ],
-  [
-    1e-3,
-    ':{ss}.{fff}',
-    2,
-    `:{ss}.{fff}\n${timeFormatToTemplate(systemDateFormats.interval.day)} ${timeFormatToTemplate(
-      systemDateFormats.interval.minute
-    )}`,
-  ],
-];
+import { VizLayout } from '../VizLayout/VizLayout';
+import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
+import { GraphLegend } from '../Graph/GraphLegend';
+import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
-const TIME_FIELD_NAME = 'Time';
-
-interface GraphNGProps extends Omit<PlotProps, 'data'> {
+interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
   data: DataFrame[];
+  legend?: LegendOptions;
 }
 
-export const GraphNG: React.FC<GraphNGProps> = ({ data, children, ...plotProps }) => {
+const defaultConfig: GraphFieldConfig = {
+  mode: GraphMode.Line,
+  points: PointMode.Auto,
+  axisPlacement: AxisPlacement.Auto,
+};
+
+export const GraphNG: React.FC<GraphNGProps> = ({
+  data,
+  children,
+  width,
+  height,
+  legend,
+  timeRange,
+  timeZone,
+  ...plotProps
+}) => {
   const theme = useTheme();
-  const [alignedData, setAlignedData] = useState<DataFrame | null>(null);
-
-  useEffect(() => {
-    if (data.length === 0) {
-      setAlignedData(null);
-      return;
-    }
-
-    const subscription = alignAndSortDataFramesByFieldName(data, TIME_FIELD_NAME).subscribe(setAlignedData);
-
-    return function unsubscribe() {
-      subscription.unsubscribe();
-    };
-  }, [data]);
+  const alignedData = useMemo(() => alignAndSortDataFramesByFieldName(data, TIME_SERIES_TIME_FIELD_NAME), [data]);
+  const legendItemsRef = useRef<LegendItem[]>([]);
+  const hasLegend = legend && legend.displayMode !== LegendDisplayMode.Hidden;
 
   if (!alignedData) {
     return (
@@ -91,99 +55,125 @@ export const GraphNG: React.FC<GraphNGProps> = ({ data, children, ...plotProps }
     );
   }
 
-  const geometries: React.ReactNode[] = [];
-  const scales: React.ReactNode[] = [];
-  const axes: React.ReactNode[] = [];
+  const configBuilder = useMemo(() => {
+    const builder = new UPlotConfigBuilder();
 
-  let { timeIndex } = getTimeField(alignedData);
-  if (timeIndex === undefined) {
-    timeIndex = 0; // assuming first field represents x-domain
-    scales.push(<Scale key="scale-x" scaleKey="x" />);
-  } else {
-    scales.push(<Scale key="scale-x" scaleKey="x" time />);
-  }
+    let { timeIndex } = getTimeField(alignedData);
 
-  axes.push(<Axis key="axis-scale--x" scaleKey="x" values={timeStampsConfig} side={AxisSide.Bottom} />);
-
-  let seriesIdx = 0;
-  const uniqueScales: Record<string, boolean> = {};
-
-  for (let i = 0; i < alignedData.fields.length; i++) {
-    const seriesGeometry = [];
-    const field = alignedData.fields[i];
-    const config = field.config as FieldConfig<GraphCustomFieldConfig>;
-    const customConfig = config.custom;
-
-    if (i === timeIndex || field.type !== FieldType.number) {
-      continue;
-    }
-
-    const fmt = field.display ?? defaultFormatter;
-    const scale = config.unit || '__fixed';
-
-    if (!uniqueScales[scale]) {
-      uniqueScales[scale] = true;
-      scales.push(<Scale key={`scale-${scale}`} scaleKey={scale} />);
-      axes.push(
-        <Axis
-          key={`axis-${scale}-${i}`}
-          scaleKey={scale}
-          label={config.custom?.axis?.label}
-          size={config.custom?.axis?.width}
-          side={config.custom?.axis?.side || AxisSide.Left}
-          grid={config.custom?.axis?.grid}
-          formatValue={v => formattedValueToString(fmt(v))}
-        />
-      );
-    }
-
-    // need to update field state here because we use a transform to merge framesP
-    field.state = { ...field.state, seriesIndex: seriesIdx };
-
-    const colorMode = getFieldColorModeForField(field);
-    const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
-
-    if (customConfig?.line?.show) {
-      seriesGeometry.push(
-        <Line
-          key={`line-${scale}-${i}`}
-          scaleKey={scale}
-          stroke={seriesColor}
-          width={customConfig?.line.show ? customConfig?.line.width || 1 : 0}
-        />
-      );
-    }
-
-    if (customConfig?.points?.show) {
-      seriesGeometry.push(
-        <Point key={`point-${scale}-${i}`} scaleKey={scale} size={customConfig?.points?.radius} stroke={seriesColor} />
-      );
-    }
-
-    if (customConfig?.fill?.alpha) {
-      seriesGeometry.push(
-        <Area key={`area-${scale}-${i}`} scaleKey={scale} fill={customConfig?.fill.alpha} color={seriesColor} />
-      );
-    }
-    if (seriesGeometry.length > 1) {
-      geometries.push(
-        <SeriesGeometry key={`seriesGeometry-${scale}-${i}`} scaleKey={scale}>
-          {seriesGeometry}
-        </SeriesGeometry>
-      );
+    if (timeIndex === undefined) {
+      timeIndex = 0; // assuming first field represents x-domain
+      builder.addScale({
+        scaleKey: 'x',
+      });
     } else {
-      geometries.push(seriesGeometry);
+      builder.addScale({
+        scaleKey: 'x',
+        isTime: true,
+      });
     }
 
-    seriesIdx++;
+    builder.addAxis({
+      scaleKey: 'x',
+      isTime: true,
+      side: getUPlotSideFromAxis(AxisPlacement.Bottom),
+      timeZone,
+      theme,
+    });
+
+    let seriesIdx = 0;
+    const legendItems: LegendItem[] = [];
+    let hasLeftAxis = false;
+    let hasYAxis = false;
+
+    for (let i = 0; i < alignedData.fields.length; i++) {
+      const field = alignedData.fields[i];
+      const config = field.config as FieldConfig<GraphFieldConfig>;
+      const customConfig = config.custom || defaultConfig;
+
+      if (i === timeIndex || field.type !== FieldType.number) {
+        continue;
+      }
+
+      const fmt = field.display ?? defaultFormatter;
+      const scale = config.unit || '__fixed';
+      const side = customConfig.axisPlacement ?? (hasLeftAxis ? AxisPlacement.Right : AxisPlacement.Left);
+
+      if (!builder.hasScale(scale) && customConfig.axisPlacement !== AxisPlacement.Hidden) {
+        if (side === AxisPlacement.Left) {
+          hasLeftAxis = true;
+        }
+
+        builder.addScale({ scaleKey: scale });
+        builder.addAxis({
+          scaleKey: scale,
+          label: customConfig.axisLabel,
+          side: getUPlotSideFromAxis(side),
+          grid: !hasYAxis,
+          formatValue: v => formattedValueToString(fmt(v)),
+          theme,
+        });
+        hasYAxis = true;
+      }
+
+      // need to update field state here because we use a transform to merge framesP
+      field.state = { ...field.state, seriesIndex: seriesIdx };
+
+      const colorMode = getFieldColorModeForField(field);
+      const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
+
+      builder.addSeries({
+        scaleKey: scale,
+        line: (customConfig.mode ?? GraphMode.Line) === GraphMode.Line,
+        lineColor: seriesColor,
+        lineWidth: customConfig.lineWidth,
+        points: customConfig.points !== PointMode.Never,
+        pointSize: customConfig.pointRadius,
+        pointColor: seriesColor,
+        fill: customConfig.fillAlpha !== undefined,
+        fillOpacity: customConfig.fillAlpha,
+        fillColor: seriesColor,
+      });
+
+      if (hasLegend) {
+        legendItems.push({
+          color: seriesColor,
+          label: getFieldDisplayName(field, alignedData),
+          yAxis: side === AxisPlacement.Right ? 3 : 1,
+        });
+      }
+
+      seriesIdx++;
+    }
+
+    legendItemsRef.current = legendItems;
+    return builder;
+  }, [alignedData, hasLegend]);
+
+  let legendElement: React.ReactElement | undefined;
+
+  if (hasLegend && legendItemsRef.current.length > 0) {
+    legendElement = (
+      <VizLayout.Legend position={legend!.placement} maxHeight="35%" maxWidth="60%">
+        <GraphLegend placement={legend!.placement} items={legendItemsRef.current} displayMode={legend!.displayMode} />
+      </VizLayout.Legend>
+    );
   }
 
   return (
-    <UPlotChart data={alignedData} {...plotProps}>
-      {scales}
-      {axes}
-      {geometries}
-      {children}
-    </UPlotChart>
+    <VizLayout width={width} height={height} legend={legendElement}>
+      {(vizWidth: number, vizHeight: number) => (
+        <UPlotChart
+          data={alignedData}
+          config={configBuilder}
+          width={vizWidth}
+          height={vizHeight}
+          timeRange={timeRange}
+          timeZone={timeZone}
+          {...plotProps}
+        >
+          {children}
+        </UPlotChart>
+      )}
+    </VizLayout>
   );
 };

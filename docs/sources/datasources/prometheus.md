@@ -2,11 +2,7 @@
 title = "Prometheus"
 description = "Guide for using Prometheus in Grafana"
 keywords = ["grafana", "prometheus", "guide"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/datasources/prometheus"]
-[menu.docs]
-name = "Prometheus"
-parent = "datasources"
 weight = 1300
 +++
 
@@ -90,11 +86,11 @@ provides the following functions you can use in the `Query` input field.
 
 | Name                             | Description                                                             |
 | -------------------------------- | ----------------------------------------------------------------------- |
-| `label`\``names()`               | Returns a list of label names.                                          |
-| `label`\``values(label)`         | Returns a list of label values for the `label` in every metric.         |
-| `label`\``values(metric, label)` | Returns a list of label values for the `label` in the specified metric. |
-| `metrics(metric)`                | Returns a list of metrics matching the specified `metric` regex.        |
-| `query`\``result(query)`         | Returns a list of Prometheus query result for the `query`.              |
+| `label_names()`                  | Returns a list of label names.                                          |
+| `label_values(label)`            | Returns a list of label values for the `label` in every metric.         |
+| `label_values(metric, label)`    | Returns a list of label values for the `label` in the specified metric.  |
+| `metrics(metric)`                | Returns a list of metrics matching the specified `metric` regex.         |
+| `query_result(query)`            | Returns a list of Prometheus query result for the `query`.              |
 
 For details of what _metric names_, _label names_ and _label values_ are please refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
 

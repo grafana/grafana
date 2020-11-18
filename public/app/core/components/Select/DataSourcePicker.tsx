@@ -2,9 +2,10 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { Select } from '@grafana/ui';
+import { HorizontalGroup, Select } from '@grafana/ui';
 import { SelectableValue, DataSourceSelectItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { isUnsignedPluginSignature, PluginSignatureBadge } from '../../../features/plugins/PluginSignatureBadge';
 
 export interface Props {
   onChange: (ds: DataSourceSelectItem) => void;
@@ -57,6 +58,7 @@ export class DataSourcePicker extends PureComponent<Props> {
       value: ds.name,
       label: ds.name,
       imgUrl: ds.meta.info.logos.small,
+      meta: ds.meta,
     }));
 
     const value = current && {
@@ -65,6 +67,7 @@ export class DataSourcePicker extends PureComponent<Props> {
       imgUrl: current.meta.info.logos.small,
       loading: showLoading,
       hideText: hideTextValue,
+      meta: current.meta,
     };
 
     return (
@@ -85,6 +88,16 @@ export class DataSourcePicker extends PureComponent<Props> {
           noOptionsMessage="No datasources found"
           value={value}
           invalid={invalid}
+          getOptionLabel={o => {
+            if (isUnsignedPluginSignature(o.meta.signature) && o !== value) {
+              return (
+                <HorizontalGroup align="center" justify="space-between">
+                  <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />
+                </HorizontalGroup>
+              );
+            }
+            return o.label || '';
+          }}
         />
       </div>
     );
