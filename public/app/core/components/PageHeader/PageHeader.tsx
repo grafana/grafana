@@ -51,7 +51,7 @@ const Navigation = ({ children }: { children: NavModelItem[] }) => {
 
   return (
     <nav>
-      <SelectNav customCss="page-header__select-nav" children={children} />
+      <SelectNav customCss="page-header__select-nav">{children}</SelectNav>
       <TabsBar className="page-header__tabs" hideBorder={true}>
         {children.map((child, index) => {
           return (
@@ -147,7 +147,7 @@ export default class PageHeader extends React.Component<Props, any> {
         <div className="page-container">
           <div className="page-header">
             {this.renderHeaderTitle(main)}
-            {children && children.length && <Navigation children={children} />}
+            {children && children.length && <Navigation>{children}</Navigation>}
           </div>
         </div>
       </div>

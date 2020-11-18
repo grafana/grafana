@@ -16,33 +16,11 @@ interface PlotCanvasContextType {
   };
 }
 
-interface PlotConfigContextType {
-  addSeries: (
-    series: uPlot.Series
-  ) => {
-    removeSeries: () => void;
-    updateSeries: () => void;
-  };
-  addScale: (
-    scaleKey: string,
-    scale: uPlot.Scale
-  ) => {
-    removeScale: () => void;
-    updateScale: () => void;
-  };
-  addAxis: (
-    axis: uPlot.Axis
-  ) => {
-    removeAxis: () => void;
-    updateAxis: () => void;
-  };
-}
-
 interface PlotPluginsContextType {
   registerPlugin: (plugin: PlotPlugin) => () => void;
 }
 
-interface PlotContextType extends PlotConfigContextType, PlotPluginsContextType {
+interface PlotContextType extends PlotPluginsContextType {
   isPlotReady: boolean;
   getPlotInstance: () => uPlot;
   getSeries: () => uPlot.Series[];
@@ -74,19 +52,6 @@ export const usePlotPluginContext = (): PlotPluginsContextType => {
 };
 
 // Exposes API for building uPlot config
-export const usePlotConfigContext = (): PlotConfigContextType => {
-  const ctx = usePlotContext();
-
-  if (!ctx) {
-    throwWhenNoContext('usePlotConfigContext');
-  }
-
-  return {
-    addSeries: ctx!.addSeries,
-    addAxis: ctx!.addAxis,
-    addScale: ctx!.addScale,
-  };
-};
 
 interface PlotDataAPI {
   /** Data frame passed to graph, x-axis aligned */
@@ -166,9 +131,6 @@ export const buildPlotContext = (
   canvasRef: any,
   data: DataFrame,
   registerPlugin: any,
-  addSeries: any,
-  addAxis: any,
-  addScale: any,
   getPlotInstance: () => uPlot
 ): PlotContextType => {
   return {
@@ -176,9 +138,6 @@ export const buildPlotContext = (
     canvasRef,
     data,
     registerPlugin,
-    addSeries,
-    addAxis,
-    addScale,
     getPlotInstance,
     getSeries: () => getPlotInstance().series,
     getCanvas: () => ({
