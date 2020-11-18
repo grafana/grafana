@@ -3396,10 +3396,10 @@
     typescript "3.7.5"
     yaml "^1.8.3"
 
-"@grafana/eslint-config@2.0.5":
-  version "2.0.5"
-  resolved "https://registry.yarnpkg.com/@grafana/eslint-config/-/eslint-config-2.0.5.tgz#d15aadcac00d704b94354a8c2e153be403e03a1f"
-  integrity sha512-1eOh2Fj36rKd4LDzYhmTwy+CqU6ciiel19GAPhFi1hSCTN9Kq0JSbiJ4TpTinjYK4v9kg6MCkXSOqWQOtWFU1Q==
+"@grafana/eslint-config@2.0.6":
+  version "2.0.6"
+  resolved "https://registry.yarnpkg.com/@grafana/eslint-config/-/eslint-config-2.0.6.tgz#8c9bb35e0691599e5c9797c3e999320e4eb5b2a2"
+  integrity sha512-WWnfGQxO34aGNpWgYqcU7XBAf7Oi8FmZnXx+QPO7eVmB0NpHPt7WUpGsJjaDP+M7w98c8k3VxD/Vz1d/eHtqCQ==
   dependencies:
     "@typescript-eslint/eslint-plugin" "4.0.1"
     "@typescript-eslint/parser" "4.0.1"
@@ -3407,6 +3407,7 @@
     eslint-config-prettier "6.11.0"
     eslint-plugin-jsdoc "28.6.1"
     eslint-plugin-prettier "3.1.4"
+    eslint-plugin-react "7.21.5"
     eslint-plugin-react-hooks "4.1.2"
     prettier "1.19.1"
     typescript "4.0.2"
