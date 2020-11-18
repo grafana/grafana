@@ -21,6 +21,10 @@ export const UnProvidedVariablesDependenciesButton: FC<Props> = ({ variables }) 
   const nodes = useMemo(() => createDependencyNodes(variables), [variables]);
   const edges = useMemo(() => createDependencyEdges(variables), [variables]);
 
+  if (!edges.length) {
+    return null;
+  }
+
   return (
     <NetworkGraphModal
       show={false}
