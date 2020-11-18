@@ -1,5 +1,15 @@
-import { LoadingState, VariableModel as BaseVariableModel, VariableType } from '@grafana/data';
+import { ComponentType } from 'react';
+import {
+  DataQuery,
+  DataSourceJsonData,
+  LoadingState,
+  QueryEditorProps,
+  VariableModel as BaseVariableModel,
+  VariableType,
+} from '@grafana/data';
+
 import { NEW_VARIABLE_ID } from './state/types';
+import { VariableQueryProps } from '../../types';
 
 export enum VariableRefresh {
   never,
@@ -73,6 +83,7 @@ export interface QueryVariableModel extends DataSourceVariableModel {
   tagValuesQuery: string;
   useTags: boolean;
   queryValue?: string;
+  query: any;
 }
 
 export interface TextBoxVariableModel extends VariableWithOptions {}
@@ -142,3 +153,8 @@ export const initialVariableModelState: VariableModel = {
   state: LoadingState.NotStarted,
   error: null,
 };
+
+export type VariableQueryEditorType<
+  TQuery extends DataQuery = DataQuery,
+  TOptions extends DataSourceJsonData = DataSourceJsonData
+> = ComponentType<VariableQueryProps> | ComponentType<QueryEditorProps<any, TQuery, TOptions, any>> | null;
