@@ -6,6 +6,7 @@ import {
   initialVariableModelState,
   QueryVariableModel,
   VariableOption,
+  VariableQueryEditorType,
   VariableRefresh,
   VariableSort,
   VariableTag,
@@ -19,8 +20,6 @@ import {
   NONE_VARIABLE_VALUE,
   VariablePayload,
 } from '../state/types';
-import { ComponentType } from 'react';
-import { VariableQueryProps } from '../../../types';
 import { initialVariablesState, VariablesState } from '../state/variablesReducer';
 
 interface VariableOptionsUpdate {
@@ -29,7 +28,7 @@ interface VariableOptionsUpdate {
 }
 
 export interface QueryVariableEditorState {
-  VariableQueryEditor: ComponentType<VariableQueryProps> | null;
+  VariableQueryEditor: VariableQueryEditorType;
   dataSources: DataSourceSelectItem[];
   dataSource: DataSourceApi | null;
 }
