@@ -92,6 +92,11 @@ export class VariableEditorList extends PureComponent<Props> {
                 <tbody>
                   {this.props.variables.map((state, index) => {
                     const variable = state as QueryVariableModel;
+                    const definition = variable.definition
+                      ? variable.definition
+                      : typeof variable.query === 'string'
+                      ? variable.query
+                      : '';
                     const usages = getVariableUsages(variable.id, this.props.variables, this.props.dashboard);
                     const passed = usages > 0 || isAdHoc(variable);
                     return (
@@ -115,7 +120,7 @@ export class VariableEditorList extends PureComponent<Props> {
                             variable.name
                           )}
                         >
-                          {variable.definition ? variable.definition : variable.query}
+                          {definition}
                         </td>
 
                         <td style={{ width: '1%' }}>
