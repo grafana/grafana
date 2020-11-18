@@ -1,4 +1,3 @@
-import { RSA_PKCS1_OAEP_PADDING } from 'constants';
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import {
   isContentTypeApplicationJson,
