@@ -144,9 +144,9 @@ func (proxy *DataSourceProxy) HandleRequest() {
 
 	proxy.ctx.Req.Request = proxy.ctx.Req.WithContext(ctx)
 
-	span.SetTag("datasource_id", proxy.ds.Id)
+	span.SetTag("datasource_name", proxy.ds.Name)
 	span.SetTag("datasource_type", proxy.ds.Type)
-	span.SetTag("user_id", proxy.ctx.SignedInUser.UserId)
+	span.SetTag("user", proxy.ctx.SignedInUser.Login)
 	span.SetTag("org_id", proxy.ctx.SignedInUser.OrgId)
 
 	proxy.addTraceFromHeaderValue(span, "X-Panel-Id", "panel_id")
