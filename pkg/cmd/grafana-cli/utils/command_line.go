@@ -61,7 +61,3 @@ func (c *ContextCommandLine) RepoDirectory() string {
 func (c *ContextCommandLine) PluginURL() string {
 	return c.String("pluginUrl")
 }
-
-func (c *ContextCommandLine) OptionsString() string {
-	return c.String("configOverrides")
-}

@@ -3,7 +3,6 @@
 package sqlstore
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -61,8 +60,10 @@ func TestPlaylistDataAccess(t *testing.T) {
 		}
 
 		for _, tc := range testCases {
-			err := DeletePlaylist(&tc.cmd)
-			require.EqualError(t, err, models.ErrCommandValidationFailed.Error(), fmt.Sprintf("expected command validation error for %q", tc.desc))
+			t.Run(tc.desc, func(t *testing.T) {
+				err := DeletePlaylist(&tc.cmd)
+				require.EqualError(t, err, models.ErrCommandValidationFailed.Error())
+			})
 		}
 	})
 }

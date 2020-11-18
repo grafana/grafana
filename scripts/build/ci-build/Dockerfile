@@ -1,5 +1,5 @@
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20200908-slim AS toolchain
+FROM debian:stretch-20201012-slim AS toolchain
 
 ENV OSX_MIN=10.10 \
     CTNG=1.24.0 \
@@ -73,8 +73,8 @@ RUN cd /tmp && \
     rm -rf /tmp/x86_64-centos6-linux-gnu/ && \
     rm -rf /tmp/crosstool-ng-${CTNG}
 
-ARG GOLANGCILINT_VERSION=1.31.0
-ARG GOLANGCILINT_CHKSUM=9a5d47b51442d68b718af4c7350f4406cdc087e2236a5b9ae52f37aebede6cb3
+ARG GOLANGCILINT_VERSION=1.32.2
+ARG GOLANGCILINT_CHKSUM=e7ab86d833bf9faed39801ab3b5cd294f026d26f9a7da63a42390943ead486cc
 
 RUN curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
 RUN echo ${GOLANGCILINT_CHKSUM} golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
@@ -83,12 +83,12 @@ RUN mv golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64/golangci-lint /tmp/
 
 # Base image to crossbuild grafana.
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20200908
+FROM debian:stretch-20201012
 
-ENV GOVERSION=1.15.1 \
+ENV GOVERSION=1.15.5 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=12.19.0-1nodesource1 \
+    NODEVERSION=12.19.1-1nodesource1 \
     YARNVERSION=1.22.5-1 \
     GO111MODULE=on
 

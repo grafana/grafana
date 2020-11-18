@@ -6,7 +6,6 @@ aliases = ["/docs/grafana/latest/overview"]
 weight = 170
 +++
 
-
 # HTTP API Reference
 
 The Grafana backend exposes an HTTP API, the same API is used by the frontend to do everything from saving
