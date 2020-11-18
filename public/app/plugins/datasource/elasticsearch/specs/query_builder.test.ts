@@ -188,6 +188,7 @@ describe('ElasticQueryBuilder', () => {
 
       it('with filters aggs', () => {
         const query = builder.build({
+          refId: 'A',
           metrics: [{ type: 'count', id: '1' }],
           timeField: '@timestamp',
           bucketAggs: [

@@ -855,8 +855,8 @@ describe('ElasticDatasource', function(this: any) {
   });
 
   it('should correctly interpolate variables in query', () => {
-    const query = {
-      alias: '',
+    const query: ElasticsearchQuery = {
+      refId: 'A',
       bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
       metrics: [{ type: 'count', id: '1' }],
       query: '$var',
@@ -865,12 +865,12 @@ describe('ElasticDatasource', function(this: any) {
     const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
 
     expect(interpolatedQuery.query).toBe('resolvedVariable');
-    expect(interpolatedQuery.bucketAggs[0].settings.filters[0].query).toBe('resolvedVariable');
+    expect(interpolatedQuery.bucketAggs![0].settings.filters[0].query).toBe('resolvedVariable');
   });
 
   it('should correctly handle empty query strings', () => {
-    const query = {
-      alias: '',
+    const query: ElasticsearchQuery = {
+      refId: 'A',
       bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '', label: '' }] }, id: '1' }],
       metrics: [{ type: 'count', id: '1' }],
       query: '',
@@ -879,7 +879,7 @@ describe('ElasticDatasource', function(this: any) {
     const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
 
     expect(interpolatedQuery.query).toBe('*');
-    expect(interpolatedQuery.bucketAggs[0].settings.filters[0].query).toBe('*');
+    expect(interpolatedQuery.bucketAggs![0].settings.filters[0].query).toBe('*');
   });
 });
 
