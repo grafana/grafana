@@ -23,19 +23,19 @@ import (
 type FileLogWriter struct {
 	mw *MuxWriter
 
-	Format            log15.Format
-	Filename          string
-	Maxlines          int
-	maxlines_curlines int
+	Format           log15.Format
+	Filename         string
+	Maxlines         int
+	maxlinesCurlines int
 
 	// Rotate at size
-	Maxsize         int
-	maxsize_cursize int
+	Maxsize        int
+	maxsizeCursize int
 
 	// Rotate daily
-	Daily          bool
-	Maxdays        int64
-	daily_opendate int
+	Daily         bool
+	Maxdays       int64
+	dailyOpendate int
 
 	Rotate    bool
 	startLock sync.Mutex
@@ -105,16 +105,16 @@ func (w *FileLogWriter) StartLogger() error {
 func (w *FileLogWriter) docheck(size int) {
 	w.startLock.Lock()
 	defer w.startLock.Unlock()
-	if w.Rotate && ((w.Maxlines > 0 && w.maxlines_curlines >= w.Maxlines) ||
-		(w.Maxsize > 0 && w.maxsize_cursize >= w.Maxsize) ||
-		(w.Daily && time.Now().Day() != w.daily_opendate)) {
+	if w.Rotate && ((w.Maxlines > 0 && w.maxlinesCurlines >= w.Maxlines) ||
+		(w.Maxsize > 0 && w.maxsizeCursize >= w.Maxsize) ||
+		(w.Daily && time.Now().Day() != w.dailyOpendate)) {
 		if err := w.DoRotate(); err != nil {
 			fmt.Fprintf(os.Stderr, "FileLogWriter(%q): %s\n", w.Filename, err)
 			return
 		}
 	}
-	w.maxlines_curlines++
-	w.maxsize_cursize += size
+	w.maxlinesCurlines++
+	w.maxsizeCursize += size
 }
 
 func (w *FileLogWriter) createLogFile() (*os.File, error) {
@@ -152,16 +152,16 @@ func (w *FileLogWriter) initFd() error {
 	if err != nil {
 		return fmt.Errorf("get stat: %s", err)
 	}
-	w.maxsize_cursize = int(finfo.Size())
-	w.daily_opendate = time.Now().Day()
+	w.maxsizeCursize = int(finfo.Size())
+	w.dailyOpendate = time.Now().Day()
 	if finfo.Size() > 0 {
 		count, err := w.lineCounter()
 		if err != nil {
 			return err
 		}
-		w.maxlines_curlines = count
+		w.maxlinesCurlines = count
 	} else {
-		w.maxlines_curlines = 0
+		w.maxlinesCurlines = 0
 	}
 	return nil
 }

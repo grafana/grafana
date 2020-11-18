@@ -424,7 +424,7 @@ steps:
   - package
 
 - name: publish-storybook
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
@@ -518,20 +518,12 @@ steps:
   - end-to-end-tests
 
 - name: upload-packages
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - ./bin/grabpl upload-packages --edition oss
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
-    GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
-    GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
-    GPG_PUB_KEY:
-      from_secret: gpg_pub_key
-    GRAFANA_COM_API_KEY:
-      from_secret: grafana_api_key
   depends_on:
   - package
   - end-to-end-tests
@@ -637,10 +629,19 @@ steps:
     DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
-  - ./bin/grabpl publish-packages --edition oss --build-id ${DRONE_BUILD_NUMBER}
+  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
+  - ./bin/grabpl publish-packages --edition oss --gcp-key /tmp/gcpkey.json --build-id ${DRONE_BUILD_NUMBER}
   environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
   depends_on:
@@ -920,20 +921,12 @@ steps:
   - test-frontend
 
 - name: upload-packages
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - ./bin/grabpl upload-packages --edition oss
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
-    GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
-    GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
-    GPG_PUB_KEY:
-      from_secret: gpg_pub_key
-    GRAFANA_COM_API_KEY:
-      from_secret: grafana_api_key
   depends_on:
   - package
   - end-to-end-tests
@@ -953,7 +946,7 @@ steps:
   - end-to-end-tests
 
 - name: publish-storybook
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
   - gcloud auth activate-service-account --key-file=/tmp/gcpkey.json
@@ -1278,20 +1271,12 @@ steps:
   - test-frontend
 
 - name: upload-packages
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - ./bin/grabpl upload-packages --edition enterprise
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
-    GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
-    GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
-    GPG_PUB_KEY:
-      from_secret: gpg_pub_key
-    GRAFANA_COM_API_KEY:
-      from_secret: grafana_api_key
   depends_on:
   - package
   - end-to-end-tests
@@ -1415,11 +1400,20 @@ steps:
     DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
-  - ./bin/grabpl publish-packages --edition oss ${DRONE_TAG}
-  - ./bin/grabpl publish-packages --edition enterprise ${DRONE_TAG}
+  - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
+  - ./bin/grabpl publish-packages --edition oss --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
+  - ./bin/grabpl publish-packages --edition enterprise --gcp-key /tmp/gcpkey.json ${DRONE_TAG}
   environment:
+    GCP_KEY:
+      from_secret: gcp_key
+    GPG_KEY_PASSWORD:
+      from_secret: gpg_key_password
+    GPG_PRIV_KEY:
+      from_secret: gpg_priv_key
+    GPG_PUB_KEY:
+      from_secret: gpg_pub_key
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
   depends_on:
@@ -1693,20 +1687,12 @@ steps:
   - test-frontend
 
 - name: upload-packages
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - ./bin/grabpl upload-packages --edition oss --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket grafana-downloads-test --rpm-repo-bucket grafana-testing-repo
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
-    GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
-    GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
-    GPG_PUB_KEY:
-      from_secret: gpg_pub_key
-    GRAFANA_COM_API_KEY:
-      from_secret: grafana_api_key
   depends_on:
   - package
   - end-to-end-tests
@@ -1725,7 +1711,7 @@ steps:
   - end-to-end-tests
 
 - name: publish-storybook
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - echo Testing release
   environment:
@@ -2041,20 +2027,12 @@ steps:
   - test-frontend
 
 - name: upload-packages
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - ./bin/grabpl upload-packages --edition enterprise --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket grafana-downloads-test --rpm-repo-bucket grafana-testing-repo
   environment:
     GCP_GRAFANA_UPLOAD_KEY:
       from_secret: gcp_key
-    GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
-    GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
-    GPG_PUB_KEY:
-      from_secret: gpg_pub_key
-    GRAFANA_COM_API_KEY:
-      from_secret: grafana_api_key
   depends_on:
   - package
   - end-to-end-tests
@@ -2178,7 +2156,7 @@ steps:
     DOCKERIZE_VERSION: 0.6.1
 
 - name: publish-packages-oss
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - ./bin/grabpl publish-packages --edition oss --dry-run v7.3.0-test
   environment:
@@ -2188,7 +2166,7 @@ steps:
   - initialize
 
 - name: publish-packages-enterprise
-  image: grafana/grafana-ci-deploy:1.2.6
+  image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - ./bin/grabpl publish-packages --edition enterprise --dry-run v7.3.0-test
   environment:
