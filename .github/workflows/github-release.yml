@@ -1,10 +1,10 @@
-name: Update changelog
+name: Create or update GitHub release
 on:
   workflow_dispatch:
     inputs:
       version:
         required: true        
-        description: Needs to match, exactly, the name of a milestone
+        description: Needs to match, exactly, the name of a milestone (NO v prefix)
 jobs:
   main:
     runs-on: ubuntu-latest
@@ -14,11 +14,11 @@ jobs:
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
-          ref: main      
+          ref: main    
       - name: Install Actions
         run: npm install --production --prefix ./actions
-      - name: Run update changelog
-        uses: ./actions/update-changelog
+      - name: Run github release action
+        uses: ./actions/github-release
         with:
           token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
           metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
