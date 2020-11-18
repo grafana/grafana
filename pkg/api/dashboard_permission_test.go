@@ -171,12 +171,12 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			cmds := []dtos.UpdateDashboardAclCommand{
 				{
 					Items: []dtos.DashboardAclUpdateItem{
-						{UserId: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
+						{UserID: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
 					},
 				},
 				{
 					Items: []dtos.DashboardAclUpdateItem{
-						{TeamId: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
+						{TeamID: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
 					},
 				},
 			}
