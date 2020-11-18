@@ -1,6 +1,7 @@
 import React from 'react';
 import uPlot from 'uplot';
 import { DataFrame, FieldColor, TimeRange, TimeZone } from '@grafana/data';
+import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
 export type NullValuesMode = 'null' | 'connected' | 'asZero';
 
@@ -43,6 +44,7 @@ export interface GraphCustomFieldConfig {
   nullValues: NullValuesMode;
 }
 
+export type PlotSeriesConfig = Pick<uPlot.Options, 'series' | 'scales' | 'axes'>;
 export type PlotPlugin = {
   id: string;
   /** can mutate provided opts as necessary */
@@ -60,9 +62,15 @@ export interface PlotProps {
   timeZone: TimeZone;
   width: number;
   height: number;
-  children?: React.ReactNode | React.ReactNode[];
+  config: UPlotConfigBuilder;
+  children?: React.ReactElement[];
   /** Callback performed when uPlot data is updated */
   onDataUpdate?: (data: uPlot.AlignedData) => {};
   /** Callback performed when uPlot is (re)initialized */
   onPlotInit?: () => {};
+}
+
+export abstract class PlotConfigBuilder<P, T> {
+  constructor(protected props: P) {}
+  abstract getConfig(): T;
 }

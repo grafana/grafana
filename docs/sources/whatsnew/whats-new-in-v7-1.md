@@ -4,6 +4,8 @@ description = "Feature and improvement highlights for Grafana v7.1"
 keywords = ["grafana", "new", "documentation", "7.1", "release notes"]
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-1/"]
 weight = -28
+[_build]
+list = false
 +++
 
 # What's new in Grafana v7.1
