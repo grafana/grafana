@@ -22,14 +22,14 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
       timeRange={timeRange}
       timeZone={timeZone}
       width={width}
-      height={height - 8}
+      height={height}
       legend={options.legend}
     >
       <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
       <ZoomPlugin onZoom={onChangeTimeRange} />
       <ContextMenuPlugin />
-      {data.annotations && <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} />}
-      {data.annotations && <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} />}
+      {data.annotations ? <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} /> : <></>}
+      {data.annotations ? <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} /> : <></>}
     </GraphNG>
   );
 };
