@@ -210,7 +210,10 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
   window.localStorage.clear();
 
   // Create this here so any mocks are recreated on setup and don't retain state
-  const defaultDatasources: DatasourceSetup[] = [makeDatasourceSetup(), makeDatasourceSetup({ name: 'elastic' })];
+  const defaultDatasources: DatasourceSetup[] = [
+    makeDatasourceSetup(),
+    makeDatasourceSetup({ name: 'elastic', id: 2 }),
+  ];
 
   const dsSettings = options?.datasources || defaultDatasources;
 
@@ -250,21 +253,18 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
   return { datasources: fromPairs(dsSettings.map(d => [d.api.name, d.api])) };
 }
 
-let id = 1;
-
-function makeDatasourceSetup({ name = 'loki' }: { name?: string } = {}): DatasourceSetup {
-  const currentId = id++;
+function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: number } = {}): DatasourceSetup {
   const meta: any = {
     info: {
       logos: {
         small: '',
       },
     },
-    id: currentId.toString(),
+    id: id.toString(),
   };
   return {
     settings: {
-      id: currentId,
+      id,
       uid: name,
       type: 'logs',
       name,
