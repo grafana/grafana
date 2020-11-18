@@ -15,6 +15,7 @@ import { VariableEditorList } from './VariableEditorList';
 import { DashboardModel } from '../../dashboard/state';
 import { VariablesUnknownTable } from '../inspect/VariablesUnknownTable';
 import { VariablesDependenciesButton } from '../inspect/VariablesDependenciesButton';
+import { NewVariableButton } from './NewVariableButton';
 
 interface OwnProps {}
 
@@ -102,14 +103,7 @@ class VariableEditorContainerUnconnected extends PureComponent<Props> {
           {this.props.variables.length > 0 && variableToEdit === null && (
             <>
               <VariablesDependenciesButton variables={this.props.variables} />
-              <a
-                type="button"
-                className="btn btn-primary"
-                onClick={this.onNewVariable}
-                aria-label={selectors.pages.Dashboard.Settings.Variables.List.newButton}
-              >
-                New
-              </a>
+              <NewVariableButton />
             </>
           )}
         </div>

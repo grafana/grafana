@@ -18,6 +18,7 @@ import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { OnPropChangeArguments } from './types';
 import { changeVariableProp, changeVariableType } from '../state/sharedReducer';
 import { updateOptions } from '../state/actions';
+import { getVariableTypes } from '../utils';
 
 export interface OwnProps {
   identifier: VariableIdentifier;
@@ -148,8 +149,8 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                     onChange={this.onTypeChange}
                     aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect}
                   >
-                    {variableAdapters.list().map(({ id, name }) => (
-                      <option key={id} label={name} value={id}>
+                    {getVariableTypes().map(({ label, value }) => (
+                      <option key={value} label={label} value={value}>
                         {name}
                       </option>
                     ))}
