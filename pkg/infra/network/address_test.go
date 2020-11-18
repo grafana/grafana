@@ -26,6 +26,11 @@ func TestGetIPFromAddress(t *testing.T) {
 			exp:   "2001:db8::ff00:42:8329",
 		},
 		{
+			desc:  "Valid IPv6 enclosed in square brackets",
+			input: "[2001:0db8:0000:0000:0000:ff00:0042:8329]",
+			exp:   "2001:db8::ff00:42:8329",
+		},
+		{
 			desc:  "Valid IPv4/port pair",
 			input: "192.168.2.1:5000",
 			exp:   "192.168.2.1",
@@ -49,11 +54,6 @@ func TestGetIPFromAddress(t *testing.T) {
 			desc:   "IPv6 with too few parts",
 			input:  "2001:0db8:0000:0000:0000:ff00:0042",
 			expErr: `not a valid IP address or IP address/port pair: "2001:0db8:0000:0000:0000:ff00:0042"`,
-		},
-		{
-			desc:   "Invalid IPv6 due to surrounding brackets",
-			input:  "[2001:0db8:0000:0000:0000:ff00:0042:8329]",
-			expErr: `not a valid IP address or IP address/port pair: "[2001:0db8:0000:0000:0000:ff00:0042:8329]"`,
 		},
 		{
 			desc:  "Valid shortened IPv6",

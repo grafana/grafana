@@ -254,6 +254,8 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 		hs.log.Debug("Failed to get IP from client address", "addr", addr)
 		ip = nil
 	}
+
+	hs.log.Debug("Got IP address from client address", "addr", addr, "ip", ip)
 	userToken, err := hs.AuthTokenService.CreateToken(c.Req.Context(), user.Id, ip, c.Req.UserAgent())
 	if err != nil {
 		return errutil.Wrap("failed to create auth token", err)

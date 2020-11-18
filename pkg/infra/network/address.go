@@ -7,7 +7,11 @@ import (
 )
 
 var reIPv4AndPort = regexp.MustCompile(`^(\d+\.\d+\.\d+\.\d+):\d+$`)
-var reIPv6AndPort = regexp.MustCompile(`^\[(.+)\]:\d+$`)
+
+// An IPv6 address/port pair can consist of the IP address enclosed in square brackets followed by a colon and
+// a port, although the colon/port component is actually optional in practice (e.g., we may receive [::1], where
+// we should just strip off the square brackets).
+var reIPv6AndPort = regexp.MustCompile(`^\[(.+)\](:\d+)?$`)
 
 // GetIPFromAddress tries to get an IPv4 or IPv6 address from a host address, potentially including a port.
 func GetIPFromAddress(input string) (net.IP, error) {
