@@ -793,18 +793,6 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
             'GCP_GRAFANA_UPLOAD_KEY': {
                 'from_secret': 'gcp_key',
             },
-            'GRAFANA_COM_API_KEY': {
-                'from_secret': 'grafana_api_key',
-            },
-            'GPG_PRIV_KEY': {
-                'from_secret': 'gpg_priv_key',
-            },
-            'GPG_PUB_KEY': {
-                'from_secret': 'gpg_pub_key',
-            },
-            'GPG_KEY_PASSWORD': {
-                'from_secret': 'gpg_key_password',
-            },
         },
         'commands': [cmd,],
     }
@@ -828,9 +816,24 @@ def publish_packages_step(edition, is_downstream):
             'GRAFANA_COM_API_KEY': {
                 'from_secret': 'grafana_api_key',
             },
+            'GCP_KEY': {
+                'from_secret': 'gcp_key',
+            },
+            'GPG_PRIV_KEY': {
+                'from_secret': 'gpg_priv_key',
+            },
+            'GPG_PUB_KEY': {
+                'from_secret': 'gpg_pub_key',
+            },
+            'GPG_KEY_PASSWORD': {
+                'from_secret': 'gpg_key_password',
+            },
         },
         'commands': [
-            './bin/grabpl publish-packages --edition {} --build-id {}'.format(edition, build_no),
+            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
+            './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
+                edition, build_no,
+            ),
         ],
     }
 
