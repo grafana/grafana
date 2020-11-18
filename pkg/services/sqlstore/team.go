@@ -44,8 +44,8 @@ func getFilteredUsers(signedInUser *models.SignedInUser, hiddenUsers map[string]
 func getTeamMemberCount(filteredUsers []string) string {
 	if len(filteredUsers) > 0 {
 		return `(SELECT COUNT(*) FROM team_member 
-			INNER JOIN user ON team_member.user_id = user.id
-			WHERE team_member.team_id = team.id AND user.login NOT IN (?` +
+			INNER JOIN ` + dialect.Quote("user") + ` ON team_member.user_id = ` + dialect.Quote("user") + `.id
+			WHERE team_member.team_id = team.id AND ` + dialect.Quote("user") + `.login NOT IN (?` +
 			strings.Repeat(",?", len(filteredUsers)-1) + ")" +
 			`) AS member_count `
 	}
