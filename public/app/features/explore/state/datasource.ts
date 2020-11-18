@@ -54,7 +54,6 @@ export function changeDatasource(
     const queries = getState().explore[exploreId].queries;
 
     if (options?.importQueries) {
-      console.log({ currentDataSourceInstance, instance });
       await dispatch(importQueries(exploreId, queries, currentDataSourceInstance, instance));
     }
 
