@@ -58,7 +58,7 @@ export default class CloudWatchLink extends Component<Props, State> {
   render() {
     const { href } = this.state;
     return (
-      <a href={href} target="_blank" rel="noopener">
+      <a href={href} target="_blank" rel="noopener noreferrer">
         <Icon name="share-alt" /> CloudWatch Logs Insights
       </a>
     );
