@@ -1,4 +1,4 @@
-name: Create and update GitHub release
+name: Create or update GitHub release
 on:
   workflow_dispatch:
     inputs:
