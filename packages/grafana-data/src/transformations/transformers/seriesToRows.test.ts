@@ -5,14 +5,13 @@ import { toDataFrame } from '../../dataframe';
 import { transformDataFrame } from '../transformDataFrame';
 import { ArrayVector } from '../../vector';
 import { seriesToRowsTransformer, SeriesToRowsTransformerOptions } from './seriesToRows';
-import { observableTester } from '../../utils/tests/observableTester';
 
 describe('Series to rows', () => {
   beforeAll(() => {
     mockTransformationsRegistry([seriesToRowsTransformer]);
   });
 
-  it('combine two series into one', done => {
+  it('combine two series into one', async () => {
     const cfg: DataTransformerConfig<SeriesToRowsTransformerOptions> = {
       id: DataTransformerID.seriesToRows,
       options: {},
@@ -34,22 +33,20 @@ describe('Series to rows', () => {
       ],
     });
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [seriesA, seriesB]),
-      expect: result => {
-        const expected: Field[] = [
-          createField('Time', FieldType.time, [2000, 1000]),
-          createField('Metric', FieldType.string, ['B', 'A']),
-          createField('Value', FieldType.number, [-1, 1]),
-        ];
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith(received => {
+      const result = received[0];
 
-        expect(unwrap(result[0].fields)).toEqual(expected);
-      },
-      done,
+      const expected: Field[] = [
+        createField('Time', FieldType.time, [2000, 1000]),
+        createField('Metric', FieldType.string, ['B', 'A']),
+        createField('Value', FieldType.number, [-1, 1]),
+      ];
+
+      expect(unwrap(result[0].fields)).toEqual(expected);
     });
   });
 
-  it('combine two series with multiple values into one', done => {
+  it('combine two series with multiple values into one', async () => {
     const cfg: DataTransformerConfig<SeriesToRowsTransformerOptions> = {
       id: DataTransformerID.seriesToRows,
       options: {},
@@ -71,22 +68,20 @@ describe('Series to rows', () => {
       ],
     });
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [seriesA, seriesB]),
-      expect: result => {
-        const expected: Field[] = [
-          createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
-          createField('Metric', FieldType.string, ['A', 'A', 'B', 'B', 'A', 'B']),
-          createField('Value', FieldType.number, [5, 4, 3, 2, 1, -1]),
-        ];
+    await expect(transformDataFrame([cfg], [seriesA, seriesB])).toEmitValuesWith(received => {
+      const result = received[0];
 
-        expect(unwrap(result[0].fields)).toEqual(expected);
-      },
-      done,
+      const expected: Field[] = [
+        createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
+        createField('Metric', FieldType.string, ['A', 'A', 'B', 'B', 'A', 'B']),
+        createField('Value', FieldType.number, [5, 4, 3, 2, 1, -1]),
+      ];
+
+      expect(unwrap(result[0].fields)).toEqual(expected);
     });
   });
 
-  it('combine three series into one', done => {
+  it('combine three series into one', async () => {
     const cfg: DataTransformerConfig<SeriesToRowsTransformerOptions> = {
       id: DataTransformerID.seriesToRows,
       options: {},
@@ -116,22 +111,20 @@ describe('Series to rows', () => {
       ],
     });
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [seriesA, seriesB, seriesC]),
-      expect: result => {
-        const expected: Field[] = [
-          createField('Time', FieldType.time, [2000, 1000, 500]),
-          createField('Metric', FieldType.string, ['B', 'A', 'C']),
-          createField('Value', FieldType.number, [-1, 1, 2]),
-        ];
+    await expect(transformDataFrame([cfg], [seriesA, seriesB, seriesC])).toEmitValuesWith(received => {
+      const result = received[0];
 
-        expect(unwrap(result[0].fields)).toEqual(expected);
-      },
-      done,
+      const expected: Field[] = [
+        createField('Time', FieldType.time, [2000, 1000, 500]),
+        createField('Metric', FieldType.string, ['B', 'A', 'C']),
+        createField('Value', FieldType.number, [-1, 1, 2]),
+      ];
+
+      expect(unwrap(result[0].fields)).toEqual(expected);
     });
   });
 
-  it('combine two time series, where first serie fields has displayName, into one', done => {
+  it('combine two time series, where first serie fields has displayName, into one', async () => {
     const cfg: DataTransformerConfig<SeriesToRowsTransformerOptions> = {
       id: DataTransformerID.seriesToRows,
       options: {},
@@ -153,25 +146,23 @@ describe('Series to rows', () => {
       ],
     });
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [serieA, serieB]),
-      expect: result => {
-        const expected: Field[] = [
-          createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
-          createField('Metric', FieldType.string, ['A', 'A', 'B', 'B', 'A', 'B']),
-          createField('Value', FieldType.number, [5, 4, 3, 2, 1, -1]),
-        ];
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
+      const result = received[0];
 
-        const fields = unwrap(result[0].fields);
+      const expected: Field[] = [
+        createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
+        createField('Metric', FieldType.string, ['A', 'A', 'B', 'B', 'A', 'B']),
+        createField('Value', FieldType.number, [5, 4, 3, 2, 1, -1]),
+      ];
 
-        expect(fields[2].config).toEqual({});
-        expect(fields).toEqual(expected);
-      },
-      done,
+      const fields = unwrap(result[0].fields);
+
+      expect(fields[2].config).toEqual({});
+      expect(fields).toEqual(expected);
     });
   });
 
-  it('combine two time series, where first serie fields has units, into one', done => {
+  it('combine two time series, where first serie fields has units, into one', async () => {
     const cfg: DataTransformerConfig<SeriesToRowsTransformerOptions> = {
       id: DataTransformerID.seriesToRows,
       options: {},
@@ -193,25 +184,23 @@ describe('Series to rows', () => {
       ],
     });
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [serieA, serieB]),
-      expect: result => {
-        const expected: Field[] = [
-          createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
-          createField('Metric', FieldType.string, ['A', 'A', 'B', 'B', 'A', 'B']),
-          createField('Value', FieldType.number, [5, 4, 3, 2, 1, -1], { units: 'celsius' }),
-        ];
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
+      const result = received[0];
 
-        const fields = unwrap(result[0].fields);
+      const expected: Field[] = [
+        createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
+        createField('Metric', FieldType.string, ['A', 'A', 'B', 'B', 'A', 'B']),
+        createField('Value', FieldType.number, [5, 4, 3, 2, 1, -1], { units: 'celsius' }),
+      ];
 
-        expect(fields[2].config).toEqual({ units: 'celsius' });
-        expect(fields).toEqual(expected);
-      },
-      done,
+      const fields = unwrap(result[0].fields);
+
+      expect(fields[2].config).toEqual({ units: 'celsius' });
+      expect(fields).toEqual(expected);
     });
   });
 
-  it('combine two time series, where second serie fields has units, into one', done => {
+  it('combine two time series, where second serie fields has units, into one', async () => {
     const cfg: DataTransformerConfig<SeriesToRowsTransformerOptions> = {
       id: DataTransformerID.seriesToRows,
       options: {},
@@ -233,21 +222,19 @@ describe('Series to rows', () => {
       ],
     });
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [serieA, serieB]),
-      expect: result => {
-        const expected: Field[] = [
-          createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
-          createField('Metric', FieldType.string, ['A', 'A', 'B', 'B', 'A', 'B']),
-          createField('Value', FieldType.number, [5, 4, 3, 2, 1, -1]),
-        ];
+    await expect(transformDataFrame([cfg], [serieA, serieB])).toEmitValuesWith(received => {
+      const result = received[0];
 
-        const fields = unwrap(result[0].fields);
+      const expected: Field[] = [
+        createField('Time', FieldType.time, [200, 150, 126, 125, 100, 100]),
+        createField('Metric', FieldType.string, ['A', 'A', 'B', 'B', 'A', 'B']),
+        createField('Value', FieldType.number, [5, 4, 3, 2, 1, -1]),
+      ];
 
-        expect(fields[2].config).toEqual({});
-        expect(fields).toEqual(expected);
-      },
-      done,
+      const fields = unwrap(result[0].fields);
+
+      expect(fields[2].config).toEqual({});
+      expect(fields).toEqual(expected);
     });
   });
 });
