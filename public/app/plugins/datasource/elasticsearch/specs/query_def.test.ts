@@ -1,4 +1,5 @@
 import * as queryDef from '../query_def';
+import { ElasticsearchQueryType } from '../types';
 
 describe('ElasticQueryDef', () => {
   describe('getAncestors', () => {
@@ -177,6 +178,22 @@ describe('ElasticQueryDef', () => {
       });
       test('should get pipeline aggs without moving average', () => {
         expect(metricAggTypes.some(m => m.value === 'moving_avg')).toBeFalsy();
+      });
+    });
+  });
+
+  describe('query types depending on types included', () => {
+    describe('without any supported types', () => {
+      const queryTypes = queryDef.getQueryTypes([]);
+      test('should return no query types', () => {
+        expect(queryTypes.length).toBe(0);
+      });
+    });
+    describe('with Lucene type included', () => {
+      const queryTypes = queryDef.getQueryTypes([ElasticsearchQueryType.Lucene]);
+      test('should get lucene and PPL query type', () => {
+        expect(queryTypes.length).toBe(1);
+        expect(queryTypes.some(t => t.value === ElasticsearchQueryType.Lucene)).toBe(true);
       });
     });
   });

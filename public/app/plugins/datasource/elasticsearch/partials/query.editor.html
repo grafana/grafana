@@ -3,15 +3,24 @@
 	<div class="gf-form-inline">
 		<div class="gf-form gf-form--grow">
 			<label class="gf-form-label query-keyword width-7">Query</label>
-			<input type="text" class="gf-form-input" ng-model="ctrl.target.query" spellcheck='false' placeholder="Lucene query" ng-blur="ctrl.refresh()">
+			<gf-form-dropdown
+				model="ctrl.target.queryType"
+				lookup-text="true"
+				get-options="ctrl.getQueryTypes()"
+				on-change="ctrl.refresh()"
+				allow-custom="false"
+				label-mode="true"
+			>
+			</gf-form-dropdown>
+			<input type="text" class="gf-form-input" ng-model="ctrl.target.query" spellcheck='false' placeholder="{{ctrl.getQueryInputPlaceholder()}}" ng-blur="ctrl.refresh()">
 		</div>
-		<div class="gf-form max-width-15">
+		<div ng-if="ctrl.target.queryType === ctrl.esQueryType.Lucene" class="gf-form max-width-15">
 			<label class="gf-form-label query-keyword">Alias</label>
 			<input type="text" class="gf-form-input" ng-model="ctrl.target.alias" spellcheck='false' placeholder="alias patterns" ng-blur="ctrl.refresh()" pattern='[^<>&\\"]+'>
 		</div>
 	</div>
 
-	<div ng-repeat="agg in ctrl.target.metrics">
+	<div ng-if="ctrl.target.queryType === ctrl.esQueryType.Lucene" ng-repeat="agg in ctrl.target.metrics">
 		<elastic-metric-agg
 			target="ctrl.target" index="$index"
 			get-fields="ctrl.getFields($fieldType)"
@@ -20,7 +29,7 @@
 		</elastic-metric-agg>
 	</div>
 
-	<div ng-repeat="agg in ctrl.target.bucketAggs">
+	<div ng-if="ctrl.target.queryType === ctrl.esQueryType.Lucene" ng-repeat="agg in ctrl.target.bucketAggs">
 		<elastic-bucket-agg
 			target="ctrl.target" index="$index"
 			get-fields="ctrl.getFields($fieldType)"
@@ -28,4 +37,43 @@
 		</elastic-bucket-agg>
 	</div>
 
+	<div ng-if="ctrl.target.queryType === ctrl.esQueryType.PPL" class="gf-form-inline">
+		<div class="gf-form" style="margin-right: 4px;">
+			<label class="gf-form-label query-keyword width-7">Format as</label>
+			<gf-form-dropdown
+				model="ctrl.target.format"
+				lookup-text="true"
+				get-options="ctrl.getPPLFormatTypes()"
+				on-change="ctrl.refresh()"
+				allow-custom="false"
+				label-mode="true"
+			>
+			</gf-form-dropdown>
+		</div>
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword pointer" ng-click="ctrl.showHelp = !ctrl.showHelp">
+				Show Help
+				<icon name="'angle-down'" ng-show="ctrl.showHelp" style="margin-top: 3px;"></icon>
+				<icon name="'angle-right'" ng-hide="ctrl.showHelp" style="margin-top: 3px;"></icon>
+			</label>
+		</div>
+	</div>
+
+	<div class="gf-form"	ng-show="ctrl.showHelp">
+		<pre class="gf-form-pre alert alert-info">Table:
+- return any set of columns
+
+Logs:
+- return any set of columns
+
+Time series:
+- return column as date, time, datetime, or timestamp
+- return column with numeric datatype as values
+
+Resultsets of time series queries need to be sorted by time.
+
+Example PPL query for time series:
+source=&lt;index&gt; | eval dateValue=time(timestamp) | stats count(response) by dateValue
+		</pre>
+	</div>
 </query-editor-row>

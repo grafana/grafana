@@ -6,7 +6,7 @@ import angular, { auto } from 'angular';
 import _ from 'lodash';
 import * as queryDef from './query_def';
 import { QueryCtrl } from 'app/plugins/sdk';
-import { ElasticsearchAggregation } from './types';
+import { ElasticsearchAggregation, ElasticsearchQueryType } from './types';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
 
@@ -16,6 +16,10 @@ export class ElasticQueryCtrl extends QueryCtrl {
   esVersion: any;
   rawQueryOld: string;
   targetMetricsOld: string;
+  pplSupportEnabled?: boolean;
+  showHelp: boolean;
+
+  esQueryType = ElasticsearchQueryType;
 
   /** @ngInject */
   constructor(
@@ -27,8 +31,11 @@ export class ElasticQueryCtrl extends QueryCtrl {
     super($scope, $injector);
 
     this.esVersion = this.datasource.esVersion;
+    this.pplSupportEnabled = this.datasource.pplSupportEnabled;
 
     this.target = this.target || {};
+    this.target.queryType = this.target.queryType || ElasticsearchQueryType.Lucene;
+    this.target.format = this.target.format || queryDef.defaultPPLFormat();
     this.target.metrics = this.target.metrics || [queryDef.defaultMetricAgg()];
     this.target.bucketAggs = this.target.bucketAggs || [queryDef.defaultBucketAgg()];
 
@@ -43,6 +50,29 @@ export class ElasticQueryCtrl extends QueryCtrl {
     this.queryUpdated();
   }
 
+  getQueryInputPlaceholder(): string {
+    switch (this.target.queryType) {
+      case ElasticsearchQueryType.PPL:
+        return 'PPL query';
+      case ElasticsearchQueryType.Lucene:
+        return 'Lucene query';
+      default:
+        return '';
+    }
+  }
+
+  getQueryTypes() {
+    const supportedTypes: ElasticsearchQueryType[] = [
+      ElasticsearchQueryType.Lucene,
+      ...(this.pplSupportEnabled ? [ElasticsearchQueryType.PPL] : []),
+    ];
+    return queryDef.getQueryTypes(supportedTypes);
+  }
+
+  getPPLFormatTypes() {
+    return queryDef.pplFormatTypes;
+  }
+
   getFields(type: any) {
     const jsonStr = angular.toJson({ find: 'fields', type: type });
     return this.datasource
@@ -53,7 +83,12 @@ export class ElasticQueryCtrl extends QueryCtrl {
 
   queryUpdated() {
     const newJsonTargetMetrics = angular.toJson(this.target.metrics);
-    const newJsonRawQuery = angular.toJson(this.datasource.queryBuilder.build(this.target), true);
+    let newJsonRawQuery = '';
+    if (this.target.queryType === ElasticsearchQueryType.PPL) {
+      // TODO: Implement query builder method for PPL queries
+    } else {
+      newJsonRawQuery = angular.toJson(this.datasource.queryBuilder.build(this.target), true);
+    }
     if (
       (this.rawQueryOld && newJsonRawQuery !== this.rawQueryOld) ||
       (this.targetMetricsOld && newJsonTargetMetrics !== this.targetMetricsOld)

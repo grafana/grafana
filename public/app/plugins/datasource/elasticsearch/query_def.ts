@@ -1,5 +1,10 @@
 import _ from 'lodash';
-import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
+import { ElasticsearchAggregation, ElasticsearchQuery, ElasticsearchQueryType } from './types';
+
+export const queryTypes = [
+  { text: 'Lucene', value: ElasticsearchQueryType.Lucene },
+  { text: 'PPL', value: ElasticsearchQueryType.PPL },
+];
 
 export const metricAggTypes = [
   { text: 'Count', value: 'count', requiresField: false },
@@ -182,6 +187,18 @@ export const movingAvgModelSettings: any = {
   ],
 };
 
+export const pplFormatTypes = [
+  { text: 'Table', value: 'table' },
+  { text: 'Logs', value: 'logs' },
+  { text: 'Time series', value: 'time_series' },
+];
+
+export function getQueryTypes(supportedTypes: ElasticsearchQueryType[]) {
+  return _.filter(queryTypes, queryType => {
+    return supportedTypes.includes(queryType.value);
+  });
+}
+
 export function getMetricAggTypes(esVersion: any) {
   return _.filter(metricAggTypes, f => {
     if (f.minVersion || f.maxVersion) {
@@ -297,6 +314,10 @@ export function defaultMetricAgg() {
 
 export function defaultBucketAgg() {
   return { type: 'date_histogram', id: '2', settings: { interval: 'auto' } };
+}
+
+export function defaultPPLFormat() {
+  return 'table';
 }
 
 export const findMetricById = (metrics: any[], id: any) => {
