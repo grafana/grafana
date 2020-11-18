@@ -161,9 +161,6 @@ export function initializeExplore(
     if (instance) {
       dispatch(runQueries(exploreId));
     }
-
-    const richHistory = getRichHistory();
-    dispatch(richHistoryUpdatedAction({ richHistory }));
   };
 }
 
