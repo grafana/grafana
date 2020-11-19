@@ -40,6 +40,7 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
               className="external-link"
               href="http://docs.grafana.org/administration/provisioning/#dashboards"
               target="_blank"
+              rel="noreferrer"
             >
               documentation
             </a>{' '}

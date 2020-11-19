@@ -43,6 +43,10 @@ func GetDashboardPermissionList(c *models.ReqContext) Response {
 }
 
 func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
+	if err := validatePermissionsUpdate(apiCmd); err != nil {
+		return Error(400, err.Error(), err)
+	}
+
 	dashID := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashID, "")
@@ -92,4 +96,13 @@ func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboar
 	}
 
 	return Success("Dashboard permissions updated")
+}
+
+func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardAclCommand) error {
+	for _, item := range apiCmd.Items {
+		if (item.UserID > 0 || item.TeamID > 0) && item.Role != nil {
+			return models.ErrPermissionsWithRoleNotAllowed
+		}
+	}
+	return nil
 }
