@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -88,8 +89,8 @@ func UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAc
 
 	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
 		if err != nil {
-			if err == guardian.ErrGuardianPermissionExists ||
-				err == guardian.ErrGuardianOverride {
+			if errors.Is(err, guardian.ErrGuardianPermissionExists) ||
+				errors.Is(err, guardian.ErrGuardianOverride) {
 				return Error(400, err.Error(), err)
 			}
 
@@ -100,14 +101,14 @@ func UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAc
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrDashboardAclInfoMissing {
+		if errors.Is(err, models.ErrDashboardAclInfoMissing) {
 			err = models.ErrFolderAclInfoMissing
 		}
-		if err == models.ErrDashboardPermissionDashboardEmpty {
+		if errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
 			err = models.ErrFolderPermissionFolderEmpty
 		}
 
-		if err == models.ErrFolderAclInfoMissing || err == models.ErrFolderPermissionFolderEmpty {
+		if errors.Is(err, models.ErrFolderAclInfoMissing) || errors.Is(err, models.ErrFolderPermissionFolderEmpty) {
 			return Error(409, err.Error(), err)
 		}
 
