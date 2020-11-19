@@ -31,21 +31,20 @@ const AlertRuleItem = ({ rule, search, onTogglePause }: Props) => {
         width: 100%;
       `}
     >
-      <Card
-        heading={<a href={ruleUrl}>{renderText(rule.name)}</a>}
-        image={
+      <Card heading={<a href={ruleUrl}>{renderText(rule.name)}</a>}>
+        <Card.Figure>
           <Icon size="xl" name={rule.stateIcon as IconName} className={`alert-rule-item__icon ${rule.stateClass}`} />
-        }
-        metadata={[
+        </Card.Figure>
+        <Card.Meta>
           <span key="state">
             <span key="text" className={`${rule.stateClass}`}>
               {renderText(rule.stateText)}{' '}
             </span>
             for {rule.stateAge}
-          </span>,
-          rule.info ? renderText(rule.info) : null,
-        ]}
-        actions={[
+          </span>
+          {rule.info ? renderText(rule.info) : null}
+        </Card.Meta>
+        <Card.Actions>
           <Button
             key="play"
             variant="secondary"
@@ -53,12 +52,12 @@ const AlertRuleItem = ({ rule, search, onTogglePause }: Props) => {
             onClick={onTogglePause}
           >
             {rule.state === 'paused' ? 'Resume' : 'Pause'}
-          </Button>,
+          </Button>
           <LinkButton key="edit" variant="secondary" href={ruleUrl} icon="cog">
             Edit alert
-          </LinkButton>,
-        ]}
-      />
+          </LinkButton>
+        </Card.Actions>
+      </Card>
     </li>
   );
 };
