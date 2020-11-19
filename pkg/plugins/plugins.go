@@ -346,33 +346,32 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	defer reader.Close()
 
 	jsonParser := json.NewDecoder(reader)
-	pluginCommon := PluginBase{}
-	if err := jsonParser.Decode(&pluginCommon); err != nil {
+	plugin := PluginBase{}
+	if err := jsonParser.Decode(&plugin); err != nil {
 		return err
 	}
 
-	if pluginCommon.Id == "" || pluginCommon.Type == "" {
+	if plugin.Id == "" || plugin.Type == "" {
 		return errors.New("did not find type or id properties in plugin.json")
 	}
 
-	pluginCommon.PluginDir = filepath.Dir(pluginJSONFilePath)
-	pluginCommon.Files, err = collectPluginFilesWithin(pluginCommon.PluginDir)
+	plugin.PluginDir = filepath.Dir(pluginJSONFilePath)
+	plugin.Files, err = collectPluginFilesWithin(plugin.PluginDir)
 	if err != nil {
-		s.log.Debug("Could not collect plugin file information in directory",
-			"pluginID", pluginCommon.Id, "dir", pluginCommon.PluginDir)
+		s.log.Debug("Could not collect plugin file information in directory", "pluginID", plugin.Id, "dir", plugin.PluginDir)
 		return err
 	}
 
-	signatureState, err := getPluginSignatureState(s.log, &pluginCommon)
+	signatureState, err := getPluginSignatureState(s.log, &plugin)
 	if err != nil {
-		s.log.Debug("Could not get plugin signature state", "pluginID", pluginCommon.Id, "err", err)
+		s.log.Debug("Could not get plugin signature state", "pluginID", plugin.Id, "err", err)
 		return err
 	}
-	pluginCommon.Signature = signatureState.Status
-	pluginCommon.SignatureType = signatureState.Type
-	pluginCommon.SignatureOrg = signatureState.SigningOrg
+	plugin.Signature = signatureState.Status
+	plugin.SignatureType = signatureState.Type
+	plugin.SignatureOrg = signatureState.SigningOrg
 
-	s.plugins[currentDir] = &pluginCommon
+	s.plugins[currentDir] = &plugin
 
 	return nil
 }
