@@ -1,6 +1,7 @@
 package migrator
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -169,7 +170,8 @@ func (db *MySQLDialect) TruncateDBTables() error {
 }
 
 func (db *MySQLDialect) isThisError(err error, errcode uint16) bool {
-	if driverErr, ok := err.(*mysql.MySQLError); ok {
+	var driverErr *mysql.MySQLError
+	if errors.As(err, &driverErr) {
 		if driverErr.Number == errcode {
 			return true
 		}
@@ -183,7 +185,8 @@ func (db *MySQLDialect) IsUniqueConstraintViolation(err error) bool {
 }
 
 func (db *MySQLDialect) ErrorMessage(err error) string {
-	if driverErr, ok := err.(*mysql.MySQLError); ok {
+	var driverErr *mysql.MySQLError
+	if errors.As(err, &driverErr) {
 		return driverErr.Message
 	}
 	return ""

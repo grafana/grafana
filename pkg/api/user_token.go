@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -25,7 +26,7 @@ func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, user
 	userQuery := models.GetUserByIdQuery{Id: userID}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
-		if err == models.ErrUserNotFound {
+		if errors.Is(err, models.ErrUserNotFound) {
 			return Error(404, "User not found", err)
 		}
 		return Error(500, "Could not read user from database", err)
@@ -45,7 +46,7 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int
 	userQuery := models.GetUserByIdQuery{Id: userID}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
-		if err == models.ErrUserNotFound {
+		if errors.Is(err, models.ErrUserNotFound) {
 			return Error(404, "User not found", err)
 		}
 		return Error(500, "Failed to get user", err)
@@ -112,7 +113,7 @@ func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID i
 	userQuery := models.GetUserByIdQuery{Id: userID}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
-		if err == models.ErrUserNotFound {
+		if errors.Is(err, models.ErrUserNotFound) {
 			return Error(404, "User not found", err)
 		}
 		return Error(500, "Failed to get user", err)
@@ -120,7 +121,7 @@ func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID i
 
 	token, err := hs.AuthTokenService.GetUserToken(c.Req.Context(), userID, cmd.AuthTokenId)
 	if err != nil {
-		if err == models.ErrUserTokenNotFound {
+		if errors.Is(err, models.ErrUserTokenNotFound) {
 			return Error(404, "User auth token not found", err)
 		}
 		return Error(500, "Failed to get user auth token", err)
@@ -132,7 +133,7 @@ func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID i
 
 	err = hs.AuthTokenService.RevokeToken(c.Req.Context(), token)
 	if err != nil {
-		if err == models.ErrUserTokenNotFound {
+		if errors.Is(err, models.ErrUserTokenNotFound) {
 			return Error(404, "User auth token not found", err)
 		}
 		return Error(500, "Failed to revoke user auth token", err)

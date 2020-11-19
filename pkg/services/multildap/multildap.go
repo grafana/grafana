@@ -234,7 +234,7 @@ func isSilentError(err error) bool {
 	continueErrs := []error{ErrInvalidCredentials, ErrCouldNotFindUser}
 
 	for _, cerr := range continueErrs {
-		if err == cerr {
+		if errors.Is(err, cerr) {
 			return true
 		}
 	}

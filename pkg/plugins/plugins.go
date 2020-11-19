@@ -31,7 +31,6 @@ var (
 	Plugins      map[string]*PluginBase
 	PluginTypes  map[string]interface{}
 	Renderer     *RendererPlugin
-	Transform    *TransformPlugin
 
 	GrafanaLatestVersion string
 	GrafanaHasUpdate     bool
@@ -82,7 +81,6 @@ func (pm *PluginManager) Init() error {
 		"datasource": DataSourcePlugin{},
 		"app":        AppPlugin{},
 		"renderer":   RendererPlugin{},
-		"transform":  TransformPlugin{},
 	}
 	pluginScanningErrors = map[string]*PluginError{}
 
@@ -357,16 +355,6 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 		return errors.New("did not find type or id properties in plugin.json")
 	}
 
-	// The expressions feature toggle corresponds to transform plug-ins.
-	if pluginCommon.Type == "transform" {
-		isEnabled := s.cfg.IsExpressionsEnabled()
-		if !isEnabled {
-			s.log.Debug("Transform plugin is disabled since the expressions feature toggle is not enabled",
-				"pluginID", pluginCommon.Id)
-			return nil
-		}
-	}
-
 	pluginCommon.PluginDir = filepath.Dir(pluginJSONFilePath)
 	pluginCommon.Signature = getPluginSignatureState(s.log, &pluginCommon)
 
@@ -376,7 +364,7 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 }
 
 func (*PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
-	return pluginType == "renderer" || pluginType == "transform"
+	return pluginType == "renderer"
 }
 
 // validateSignature validates a plugin's signature.
