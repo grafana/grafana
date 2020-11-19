@@ -133,13 +133,14 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) (*PluginSignatu
 
 		foundMatch := false
 		for _, u := range manifest.RootUrls {
-			rootUrl, err := url.Parse(u)
+			rootURL, err := url.Parse(u)
 			if err != nil {
+				log.Warn("Could not parse plugin root URL", "plugin", plugin.Id, "rootUrl", rootURL)
 				return nil, err
 			}
-			if rootUrl.Scheme == appURL.Scheme &&
-				rootUrl.Host == appURL.Host &&
-				rootUrl.RequestURI() == appURL.RequestURI() {
+			if rootURL.Scheme == appURL.Scheme &&
+				rootURL.Host == appURL.Host &&
+				rootURL.RequestURI() == appURL.RequestURI() {
 				foundMatch = true
 				break
 			}
