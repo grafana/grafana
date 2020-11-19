@@ -77,6 +77,12 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
     );
   };
 
+  onDescriptionChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.props.changeVariableProp(
+      toVariablePayload(this.props.identifier, { propName: 'description', propValue: event.target.value })
+    );
+  };
+
   onHideChange = (event: ChangeEvent<HTMLSelectElement>) => {
     event.preventDefault();
     this.props.changeVariableProp(
@@ -196,6 +202,18 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                     </option>
                   </select>
                 </div>
+              </div>
+            </div>
+            <div className="gf-form-inline">
+              <div className="gf-form max-width-26">
+                <span className="gf-form-label width-6">Description</span>
+                <input
+                  type="text"
+                  className="gf-form-input"
+                  value={this.props.variable.description ?? ''}
+                  onChange={this.onDescriptionChange}
+                  placeholder="descriptive text"
+                />
               </div>
             </div>
           </div>

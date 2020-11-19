@@ -139,6 +139,7 @@ export interface VariableModel extends BaseVariableModel {
   index: number;
   state: LoadingState;
   error: any | null;
+  description: string | null;
 }
 
 export const initialVariableModelState: VariableModel = {
@@ -152,6 +153,7 @@ export const initialVariableModelState: VariableModel = {
   skipUrlSync: false,
   state: LoadingState.NotStarted,
   error: null,
+  description: null,
 };
 
 export type VariableQueryEditorType<
