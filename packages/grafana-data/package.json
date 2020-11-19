@@ -43,7 +43,7 @@
     "@types/marked": "1.1.0",
     "@types/node": "10.14.1",
     "@types/papaparse": "5.2.0",
-    "@types/react": "16.8.16",
+    "@types/react": "16.9.9",
     "@types/rollup-plugin-visualizer": "2.6.0",
     "@types/sinon": "^7.5.2",
     "pretty-format": "25.1.0",

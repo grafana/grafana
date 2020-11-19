@@ -287,7 +287,7 @@ class PluginPage extends PureComponent<Props, State> {
           {info.links.map(link => {
             return (
               <li key={link.url}>
-                <a href={link.url} className="external-link" target="_blank" rel="noopener">
+                <a href={link.url} className="external-link" target="_blank" rel="noreferrer noopener">
                   {link.name}
                 </a>
               </li>
@@ -346,16 +346,12 @@ class PluginPage extends PureComponent<Props, State> {
             <div className="sidebar-container">
               <div className="sidebar-content">
                 {plugin.loadError && (
-                  <Alert
-                    severity={AppNotificationSeverity.Error}
-                    title="Error Loading Plugin"
-                    children={
-                      <>
-                        Check the server startup logs for more information. <br />
-                        If this plugin was loaded from git, make sure it was compiled.
-                      </>
-                    }
-                  />
+                  <Alert severity={AppNotificationSeverity.Error} title="Error Loading Plugin">
+                    <>
+                      Check the server startup logs for more information. <br />
+                      If this plugin was loaded from git, make sure it was compiled.
+                    </>
+                  </Alert>
                 )}
                 {this.renderPluginNotice()}
                 {this.renderBody()}
