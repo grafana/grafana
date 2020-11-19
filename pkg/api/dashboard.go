@@ -69,6 +69,18 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext, cmd models.TrimDashboa
 	return response.JSON(200, dto)
 }
 
+// GetDashboard swagger:route GET /dashboards/uid/{uid} dashboards getDashboardByUID
+//
+// Get dashboard by uid
+//
+// Will return the dashboard given the dashboard unique identifier (uid).
+//
+// Responses:
+// 200: DashboardResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	uid := c.Params(":uid")
 	dash, rsp := getDashboardHelper(c.Req.Context(), c.OrgId, 0, uid)
@@ -227,6 +239,18 @@ func (hs *HTTPServer) DeleteDashboardBySlug(c *models.ReqContext) response.Respo
 	return hs.deleteDashboard(c)
 }
 
+// DeleteDashboardByUID swagger:route DELETE /dashboards/uid/{uid} dashboards deleteDashboardByUID
+//
+// Delete dashboard by uid
+//
+// Will delete the dashboard given the specified unique identifier (uid).
+//
+// Responses:
+// 200: DeleteDashboardResponse
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 500: internalServerError
 func (hs *HTTPServer) DeleteDashboardByUID(c *models.ReqContext) response.Response {
 	return hs.deleteDashboard(c)
 }
@@ -275,6 +299,21 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 	})
 }
 
+// PostDashboard swagger:route POST /dashboards/db dashboards postDashboard
+//
+// Create / Update dashboard
+//
+// Creates a new dashboard or updates an existing dashboard.
+//
+// Responses:
+// 200: PostDashboardResponse
+// 400: badRequestError
+// 401: unauthorisedError
+// 403: forbiddenError
+// 404: notFoundError
+// 412: preconditionFailedError
+// 422: unprocessableEntityError
+// 500: internalServerError
 func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboardCommand) response.Response {
 	var err error
 	cmd.OrgId = c.OrgId
@@ -418,7 +457,14 @@ func (hs *HTTPServer) dashboardSaveErrorToApiResponse(err error) response.Respon
 	return response.Error(500, "Failed to save dashboard", err)
 }
 
-// GetHomeDashboard returns the home dashboard.
+// GetHomeDashboard swagger:route GET /dashboards/home dashboards getHomeDashboard
+//
+// Get home dashboard
+//
+// Responses:
+// 200: GetHomeDashboardResponse
+// 401: unauthorisedError
+// 500: internalServerError
 func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 	prefsQuery := models.GetPreferencesWithDefaultsQuery{User: c.SignedInUser}
 	homePage := hs.Cfg.HomePage

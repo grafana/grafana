@@ -135,6 +135,10 @@ protobuf: ## Compile protobuf definitions
 	bash scripts/protobuf-check.sh
 	bash pkg/plugins/backendplugin/pluginextensionv2/generate.sh
 
+apidocs: ## Generate OpenAPI spec
+# pull docker image: docker pull quay.io/goswagger/swagger
+	docker run --rm -it -e GOPATH=${HOME}/go:/go -v ${HOME}:${HOME} -w $(PWD) -e SWAGGER_GENERATE_EXTENSION=false quay.io/goswagger/swagger generate spec -w ./pkg/cmd/grafana-server -o public/swagger.json -m
+
 clean: ## Clean up intermediate build artifacts.
 	@echo "cleaning"
 	rm -rf node_modules

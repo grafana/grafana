@@ -33,8 +33,14 @@ type DashboardMeta struct {
 	ProvisionedExternalId string    `json:"provisionedExternalId"`
 }
 
+// It is the full dashboard response with metadata.
+//
+// swagger:model DashboardResponse
 type DashboardFullWithMeta struct {
-	Meta      DashboardMeta    `json:"meta"`
+	// Meta Dashboard metadata
+	Meta DashboardMeta `json:"meta"`
+
+	// Dashboard JSON dashboard model
 	Dashboard *simplejson.Json `json:"dashboard"`
 }
 
@@ -43,7 +49,10 @@ type TrimDashboardFullWithMeta struct {
 	Dashboard *simplejson.Json `json:"dashboard"`
 }
 
+// swagger:model DashboardRedirect
 type DashboardRedirect struct {
+	// RedirectUri The redirect URI
+	// required: true
 	RedirectUri string `json:"redirectUri"`
 }
 
