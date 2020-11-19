@@ -1,6 +1,7 @@
 package migrator
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -120,7 +121,8 @@ func (db *SQLite3) TruncateDBTables() error {
 }
 
 func (db *SQLite3) isThisError(err error, errcode int) bool {
-	if driverErr, ok := err.(sqlite3.Error); ok {
+	var driverErr sqlite3.Error
+	if errors.As(err, &driverErr) {
 		if int(driverErr.ExtendedCode) == errcode {
 			return true
 		}
@@ -130,7 +132,8 @@ func (db *SQLite3) isThisError(err error, errcode int) bool {
 }
 
 func (db *SQLite3) ErrorMessage(err error) string {
-	if driverErr, ok := err.(sqlite3.Error); ok {
+	var driverErr sqlite3.Error
+	if errors.As(err, &driverErr) {
 		return driverErr.Error()
 	}
 	return ""

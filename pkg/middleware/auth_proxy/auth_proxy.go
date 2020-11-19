@@ -2,6 +2,7 @@ package authproxy
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"net"
@@ -182,7 +183,7 @@ func (auth *AuthProxy) Login(logger log.Logger, ignoreCache bool) (int64, *Error
 	if isLDAPEnabled() {
 		id, e := auth.LoginViaLDAP()
 		if e != nil {
-			if e == ldap.ErrInvalidCredentials {
+			if errors.Is(e, ldap.ErrInvalidCredentials) {
 				return 0, newError("proxy authentication required", ldap.ErrInvalidCredentials)
 			}
 			return 0, newError("failed to get the user", e)
