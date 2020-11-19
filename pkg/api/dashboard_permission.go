@@ -89,8 +89,8 @@ func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboar
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if errors.Is(err, models.ErrDashboardAclInfoMissing) || errors.Is(err,
-			models.ErrDashboardPermissionDashboardEmpty) {
+		if errors.Is(err, models.ErrDashboardAclInfoMissing) ||
+			errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
 			return Error(409, err.Error(), err)
 		}
 		return Error(500, "Failed to create permission", err)

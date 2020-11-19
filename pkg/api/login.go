@@ -264,8 +264,8 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 		return
 	}
 
-	if err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken); err != nil && !errors.Is(
-		err, models.ErrUserTokenNotFound) {
+	err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken)
+	if err != nil && !errors.Is(err, models.ErrUserTokenNotFound) {
 		hs.log.Error("failed to revoke auth token", "error", err)
 	}
 
