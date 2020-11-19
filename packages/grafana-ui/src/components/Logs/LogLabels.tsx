@@ -57,7 +57,7 @@ export const UnThemedLogLabels: FunctionComponent<Props> = ({ labels, theme }) =
 
   return (
     <span className={cx([styles.logsLabels])}>
-      {displayLabels.map(label => {
+      {displayLabels.sort().map(label => {
         const value = labels[label];
         const tooltip = `${label}: ${value}`;
         return (

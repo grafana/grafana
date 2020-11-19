@@ -24,25 +24,25 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 
 	width, err := strconv.Atoi(queryReader.Get("width", "800"))
 	if err != nil {
-		c.Handle(400, "Render parameters error", fmt.Errorf("Cannot parse width as int: %s", err))
+		c.Handle(400, "Render parameters error", fmt.Errorf("cannot parse width as int: %s", err))
 		return
 	}
 
 	height, err := strconv.Atoi(queryReader.Get("height", "400"))
 	if err != nil {
-		c.Handle(400, "Render parameters error", fmt.Errorf("Cannot parse height as int: %s", err))
+		c.Handle(400, "Render parameters error", fmt.Errorf("cannot parse height as int: %s", err))
 		return
 	}
 
 	timeout, err := strconv.Atoi(queryReader.Get("timeout", "60"))
 	if err != nil {
-		c.Handle(400, "Render parameters error", fmt.Errorf("Cannot parse timeout as int: %s", err))
+		c.Handle(400, "Render parameters error", fmt.Errorf("cannot parse timeout as int: %s", err))
 		return
 	}
 
 	scale, err := strconv.ParseFloat(queryReader.Get("scale", "1"), 64)
 	if err != nil {
-		c.Handle(400, "Render parameters error", fmt.Errorf("Cannot parse scale as float: %s", err))
+		c.Handle(400, "Render parameters error", fmt.Errorf("cannot parse scale as float: %s", err))
 		return
 	}
 

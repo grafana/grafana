@@ -67,6 +67,10 @@ export abstract class BigValueLayout {
       zIndex: 1,
     };
 
+    if (this.justifyCenter) {
+      styles.textAlign = 'center';
+    }
+
     switch (this.props.colorMode) {
       case BigValueColorMode.Value:
         styles.color = this.valueColor;

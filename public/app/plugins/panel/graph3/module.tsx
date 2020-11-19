@@ -1,31 +1,49 @@
-import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
-import { AxisSide, GraphCustomFieldConfig } from '@grafana/ui';
+import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { LegendDisplayMode } from '@grafana/ui';
+import {
+  GraphFieldConfig,
+  PointMode,
+  GraphMode,
+  AxisPlacement,
+  graphFieldOptions,
+} from '@grafana/ui/src/components/uPlot/config';
 import { GraphPanel } from './GraphPanel';
 import { Options } from './types';
 
-export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPanel)
+export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
   .useFieldConfig({
-    standardOptions: [
-      // FieldConfigProperty.Min,
-      // FieldConfigProperty.Max,
-      FieldConfigProperty.Color,
-      FieldConfigProperty.Unit,
-      FieldConfigProperty.DisplayName,
-      FieldConfigProperty.Decimals,
-      // NOT:  FieldConfigProperty.Thresholds,
-      FieldConfigProperty.Mappings,
-    ],
-
+    standardOptions: {
+      [FieldConfigProperty.Color]: {
+        settings: {
+          byValueSupport: false,
+        },
+        defaultValue: {
+          mode: FieldColorModeId.PaletteClassic,
+        },
+      },
+    },
     useCustomConfig: builder => {
       builder
-        .addBooleanSwitch({
-          path: 'line.show',
-          name: 'Show lines',
-          description: '',
-          defaultValue: true,
+        .addRadio({
+          path: 'mode',
+          name: 'Display',
+          defaultValue: graphFieldOptions.mode[0].value,
+          settings: {
+            options: graphFieldOptions.mode,
+          },
+        })
+        .addRadio({
+          path: 'lineMode',
+          name: 'Line interpolation',
+          description: 'NOTE: not implemented yet',
+          defaultValue: graphFieldOptions.lineMode[0].value,
+          settings: {
+            options: graphFieldOptions.lineMode,
+          },
+          showIf: c => !(c.mode === GraphMode.Bar || c.mode === GraphMode.Points),
         })
         .addSliderInput({
-          path: 'line.width',
+          path: 'lineWidth',
           name: 'Line width',
           defaultValue: 1,
           settings: {
@@ -33,35 +51,10 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
             max: 10,
             step: 1,
           },
-          showIf: c => {
-            return c.line.show;
-          },
-        })
-        .addBooleanSwitch({
-          path: 'points.show',
-          name: 'Show points',
-          description: '',
-          defaultValue: false,
+          showIf: c => !(c.mode === GraphMode.Bar || c.mode === GraphMode.Points),
         })
         .addSliderInput({
-          path: 'points.radius',
-          name: 'Point radius',
-          defaultValue: 4,
-          settings: {
-            min: 1,
-            max: 10,
-            step: 1,
-          },
-          showIf: c => c.points.show,
-        })
-        .addBooleanSwitch({
-          path: 'bars.show',
-          name: 'Show bars',
-          description: '',
-          defaultValue: false,
-        })
-        .addSliderInput({
-          path: 'fill.alpha',
+          path: 'fillAlpha',
           name: 'Fill area opacity',
           defaultValue: 0.1,
           settings: {
@@ -69,58 +62,58 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
             max: 1,
             step: 0.1,
           },
+          showIf: c => !(c.mode === GraphMode.Bar || c.mode === GraphMode.Points),
+        })
+        .addRadio({
+          path: 'points',
+          name: 'Points',
+          description: 'NOTE: auto vs always are currently the same',
+          defaultValue: graphFieldOptions.points[0].value,
+          settings: {
+            options: graphFieldOptions.points,
+          },
+        })
+        .addSliderInput({
+          path: 'pointRadius',
+          name: 'Point radius',
+          defaultValue: 4,
+          settings: {
+            min: 1,
+            max: 10,
+            step: 1,
+          },
+          showIf: c => c.points !== PointMode.Never,
+        })
+        .addRadio({
+          path: 'axisPlacement',
+          name: 'Placement',
+          category: ['Axis'],
+          defaultValue: graphFieldOptions.axisPlacement[0].value,
+          settings: {
+            options: graphFieldOptions.axisPlacement,
+          },
         })
         .addTextInput({
-          path: 'axis.label',
-          name: 'Axis Label',
+          path: 'axisLabel',
+          name: 'Label',
           category: ['Axis'],
           defaultValue: '',
           settings: {
             placeholder: 'Optional text',
           },
+          showIf: c => c.axisPlacement !== AxisPlacement.Hidden,
           // no matter what the field type is
           shouldApply: () => true,
         })
-        .addRadio({
-          path: 'axis.side',
-          name: 'Y axis side',
-          category: ['Axis'],
-          defaultValue: AxisSide.Left,
-          settings: {
-            options: [
-              { value: AxisSide.Left, label: 'Left' },
-              { value: AxisSide.Right, label: 'Right' },
-            ],
-          },
-        })
         .addNumberInput({
-          path: 'axis.width',
-          name: 'Y axis width',
+          path: 'axisWidth',
+          name: 'Width',
           category: ['Axis'],
           defaultValue: 60,
           settings: {
             placeholder: '60',
           },
-        })
-        .addBooleanSwitch({
-          path: 'axis.grid',
-          name: 'Show axis grid',
-          category: ['Axis'],
-          description: '',
-          defaultValue: true,
-        })
-        .addRadio({
-          path: 'nullValues',
-          name: 'Display null values as',
-          description: '',
-          defaultValue: 'null',
-          settings: {
-            options: [
-              { value: 'null', label: 'null' },
-              { value: 'connected', label: 'Connected' },
-              { value: 'asZero', label: 'Zero' },
-            ],
-          },
+          showIf: c => c.axisPlacement !== AxisPlacement.Hidden,
         });
     },
   })
@@ -133,41 +126,36 @@ export const plugin = new PanelPlugin<Options, GraphCustomFieldConfig>(GraphPane
         defaultValue: 'single',
         settings: {
           options: [
-            { value: 'single', label: 'Single series' },
-            { value: 'multi', label: 'All series' },
-            { value: 'none', label: 'No tooltip' },
+            { value: 'single', label: 'Single' },
+            { value: 'multi', label: 'All' },
+            { value: 'none', label: 'Hidden' },
           ],
         },
       })
-      .addBooleanSwitch({
-        category: ['Legend'],
-        path: 'legend.isVisible',
-        name: 'Show legend',
+      .addRadio({
+        path: 'legend.displayMode',
+        name: 'Legend mode',
         description: '',
-        defaultValue: true,
-      })
-      .addBooleanSwitch({
-        category: ['Legend'],
-        path: 'legend.asTable',
-        name: 'Display legend as table',
-        description: '',
-        defaultValue: false,
-        showIf: c => c.legend.isVisible,
+        defaultValue: LegendDisplayMode.List,
+        settings: {
+          options: [
+            { value: LegendDisplayMode.List, label: 'List' },
+            { value: LegendDisplayMode.Table, label: 'Table' },
+            { value: LegendDisplayMode.Hidden, label: 'Hidden' },
+          ],
+        },
       })
       .addRadio({
-        category: ['Legend'],
         path: 'legend.placement',
         name: 'Legend placement',
         description: '',
         defaultValue: 'bottom',
         settings: {
           options: [
-            { value: 'left', label: 'Left' },
-            { value: 'top', label: 'Top' },
             { value: 'bottom', label: 'Bottom' },
             { value: 'right', label: 'Right' },
           ],
         },
-        showIf: c => c.legend.isVisible,
+        showIf: c => c.legend.displayMode !== LegendDisplayMode.Hidden,
       });
   });
