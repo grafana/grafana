@@ -21,6 +21,7 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame): boolean 
   if (a?.fields?.length !== b?.fields?.length) {
     return false;
   }
+
   for (let i = 0; i < a.fields.length; i++) {
     const fA = a.fields[i];
     const fB = b.fields[i];
@@ -34,10 +35,20 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame): boolean 
     if (keys.length !== Object.keys(cfgB).length) {
       return false;
     }
+
     for (const key of keys) {
       if (!cfgB.hasOwnProperty(key)) {
         return false;
       }
+
+      if (key === 'custom') {
+        if (!shallowCompare(cfgA[key], cfgB[key])) {
+          return false;
+        } else {
+          continue;
+        }
+      }
+
       if (cfgA[key] !== cfgB[key]) {
         return false;
       }
@@ -63,5 +74,36 @@ export function compareArrayValues<T>(a: T[], b: T[], cmp: (a: T, b: T) => boole
       return false;
     }
   }
+  return true;
+}
+
+/**
+ * Checks if two objects are equal shallowly
+ *
+ * @beta
+ */
+export function shallowCompare<T extends {}>(a: T, b: T, cmp?: (valA: any, valB: any) => boolean) {
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (a === b) {
+    return true;
+  }
+
+  if (aKeys.length !== bKeys.length) {
+    return false;
+  }
+
+  for (let key of aKeys) {
+    if (cmp) {
+      //@ts-ignore
+      return cmp(a[key], b[key]);
+    }
+    //@ts-ignore
+    if (a[key] !== b[key]) {
+      console.log(a[key], b[key]);
+      return false;
+    }
+  }
+
   return true;
 }
