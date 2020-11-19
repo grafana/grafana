@@ -139,6 +139,7 @@ In order not to break all angular panel plugins and data sources we have some cu
 ### Breaking changes
 
 - **CloudWatch**: The AWS CloudWatch data source's authentication scheme has changed. See the [upgrade notes](https://grafana.com/docs/grafana/latest/installation/upgrading/#upgrading-to-v73) for details and how this may affect you.
+- **Docker**: The Grafana docker image will run with the root group instead of the grafana group. This may break builds for users who extend the official docker images. See the [upgrade notes](https://grafana.com/docs/grafana/latest/installation/upgrading/#upgrading-to-v73) for details.
 
 ### Features / Enhancements
 * **Alerting**: Add labels to name when converting data frame to series. [#28085](https://github.com/grafana/grafana/pull/28085), [@kylebrandt](https://github.com/kylebrandt)

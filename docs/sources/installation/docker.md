@@ -137,6 +137,10 @@ Replace `Dockerfile` in above example with `ubuntu.Dockerfile` to build a custom
 
 This section contains important information if you want to migrate from previous Grafana container versions to a more current one.
 
+### Migrate to v7.3 or later
+
+Grafana Docker image run with the `root` group (id 1) instead of the `grafana` group (id 472) for better compatibility with OpenShift. If you extend the official docker image you may need to change your scripts to use the `root` group instead of the `grafana`.
+
 ### Migrate to v6.5 or later
 
 Grafana Docker image now comes in two variants, one [Alpine](http://alpinelinux.org) based and one [Ubuntu](https://ubuntu.com/) based, see [Image Variants](#image-variants) for details.
@@ -169,12 +173,13 @@ You should always be careful to define your own named volume for storage, but if
 
 #### User ID changes
 
-In Grafana v5.1, we changed the ID of the Grafana user. Unfortunately this means that files created prior to v5.1 won't have the correct permissions for later versions. We made this change so that it would be more likely that the Grafana users ID would be unique to Grafana. For example, on Ubuntu 16.04 `104` is already in use by the syslog user.
+In Grafana v5.1, we changed the ID and group of the Grafana user and in v7.3 we changed the group. Unfortunately this means that files created prior to v5.1 won't have the correct permissions for later versions. We made this change so that it would be more likely that the Grafana users ID would be unique to Grafana. For example, on Ubuntu 16.04 `104` is already in use by the syslog user.
 
-Version | User    | User ID
---------|---------|---------
-< 5.1   | grafana | 104
-\>= 5.1  | grafana | 472
+Version | User    | User ID | Group | Group ID
+--------|---------|---------|---------|---------
+< 5.1   | grafana | 104 | grafana | 107
+\>= 5.1  | grafana | 472 | grafana | 472
+\>= 7.3  | grafana | 472 | root | 1
 
 There are two possible solutions to this problem. Either you start the new container as the root user and change ownership from `104` to `472`, or you start the upgraded container as user `104`.
 
