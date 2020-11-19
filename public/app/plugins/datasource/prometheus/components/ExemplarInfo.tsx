@@ -14,7 +14,7 @@ export function ExemplarInfo({ exemplar, seriesLabels, exemplarTraceIDDestinatio
     const traceID = exemplar.labels[exemplarTraceIDDestination.name];
     const href = exemplarTraceIDDestination.url.replace('${value}', traceID);
     const anchorElement = (
-      <a href={href} rel="noopener" target="_blank">
+      <a href={href} rel="noreferrer" target="_blank">
         <Tag name={traceID} colorIndex={6} />
       </a>
     );

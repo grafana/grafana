@@ -1,17 +1,15 @@
 import { AbsoluteTimeRange, DataFrame, dateTime, GrafanaTheme, TimeZone } from '@grafana/data';
 import {
-  Canvas,
   Collapse,
+  ContextMenuPlugin,
   GraphNG,
   Icon,
   LegendDisplayMode,
-  LegendPlugin,
   TooltipPlugin,
   useStyles,
   ZoomPlugin,
 } from '@grafana/ui';
 import { ExemplarsPlugin } from 'app/plugins/panel/graph3/plugins/ExemplarsPlugin';
-import { VizLayout } from 'app/plugins/panel/graph3/VizLayout';
 import { css, cx } from 'emotion';
 import React, { useState } from 'react';
 
@@ -63,29 +61,19 @@ export function ExploreGraphNGPanel({
       )}
 
       <Collapse label="Graph" loading={isLoading} isOpen>
-        <VizLayout width={width - 20} height={300}>
-          {({ builder, getLayout }) => {
-            const layout = getLayout();
-            // when all layout slots are ready we can calculate the canvas(actual viz) size
-            const canvasSize = layout.isReady
-              ? {
-                  width: width - 20 - (layout.left.width + layout.right.width),
-                  height: 300 - (layout.top.height + layout.bottom.height),
-                }
-              : { width: 0, height: 0 };
-            builder.addSlot('bottom', <LegendPlugin placement="bottom" displayMode={LegendDisplayMode.List} />);
-
-            return (
-              <GraphNG timeRange={timeRange} timeZone={timeZone} data={seriesToShow} {...canvasSize}>
-                {builder.addSlot('canvas', <Canvas />).render()}
-                <TooltipPlugin mode="single" timeZone={timeZone} />
-                <ZoomPlugin onZoom={onUpdateTimeRange} />
-
-                {annotations && <ExemplarsPlugin exemplars={annotations} timeZone={timeZone} />}
-              </GraphNG>
-            );
-          }}
-        </VizLayout>
+        <GraphNG
+          data={seriesToShow}
+          width={width}
+          height={400}
+          timeRange={timeRange}
+          legend={{ displayMode: LegendDisplayMode.List, placement: 'bottom' }}
+          timeZone={timeZone}
+        >
+          <TooltipPlugin mode="single" timeZone={timeZone} />
+          <ZoomPlugin onZoom={onUpdateTimeRange} />
+          <ContextMenuPlugin />
+          {annotations ? <ExemplarsPlugin exemplars={annotations} timeZone={timeZone} /> : <></>}
+        </GraphNG>
       </Collapse>
     </>
   );
