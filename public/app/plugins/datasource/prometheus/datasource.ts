@@ -25,7 +25,6 @@ import { catchError, filter, map, tap } from 'rxjs/operators';
 import addLabelToQuery from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
-import PrometheusMetricFindQuery from './metric_find_query';
 import { getQueryHints } from './query_hints';
 import { getOriginalMetricName, renderTemplate, transform } from './result_transformer';
 import {
@@ -39,6 +38,8 @@ import {
   PromScalarData,
   PromVectorData,
 } from './types';
+import { PrometheusVariableSupport } from './variables';
+import PrometheusMetricFindQuery from './metric_find_query';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 
@@ -78,6 +79,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.languageProvider = new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
+
+    this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
   }
 
   init = () => {

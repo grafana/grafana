@@ -1,10 +1,12 @@
 import React from 'react';
 import { boolean } from '@storybook/addon-knobs';
+import { action } from '@storybook/addon-actions';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { Card } from './Card';
 import mdx from './Card.mdx';
 import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
+import { TagList } from '../Tags/TagList';
 
 const logo = 'https://grafana.com/static/assets/img/apple-touch-icon.png';
 
@@ -63,58 +65,57 @@ export const WithTooltip = () => {
 export const WithTags = () => {
   const { disabled } = getKnobs();
   return (
-    <Card
-      heading="Elasticsearch – Custom Templated Query"
-      metadata="Elastic Search"
-      tags={['elasticsearch', 'test', 'testdata']}
-      disabled={disabled}
-    />
+    <Card heading="Elasticsearch – Custom Templated Query" disabled={disabled}>
+      <Card.Meta>Elastic Search</Card.Meta>
+      <Card.Tags>
+        <TagList tags={['elasticsearch', 'test', 'testdata']} onClick={tag => console.log('tag', tag)} />
+      </Card.Tags>
+    </Card>
   );
 };
 
 export const WithMedia = () => {
   const { disabled } = getKnobs();
   return (
-    <Card
-      href="https://ops-us-east4.grafana.net/api/prom"
-      heading="1-ops-tools1-fallback"
-      metadata={[
-        'Prometheus',
+    <Card href="https://ops-us-east4.grafana.net/api/prom" heading="1-ops-tools1-fallback" disabled={disabled}>
+      <Card.Meta>
+        Prometheus
         <a key="link2" href="https://ops-us-east4.grafana.net/api/prom">
           https://ops-us-east4.grafana.net/api/prom
-        </a>,
-      ]}
-      disabled={disabled}
-      image={<img src={logo} alt="Prometheus Logo" />}
-    />
+        </a>
+      </Card.Meta>
+      <Card.Figure>
+        <img src={logo} alt="Prometheus Logo" />
+      </Card.Figure>
+    </Card>
   );
 };
 export const WithActions = () => {
   const { disabled } = getKnobs();
   return (
-    <Card
-      heading="1-ops-tools1-fallback"
-      metadata={[
-        'Prometheus',
-        <a key="link" href="https://ops-us-east4.grafana.net/api/prom">
+    <Card heading="1-ops-tools1-fallback" disabled={disabled}>
+      <Card.Meta>
+        Prometheus
+        <a key="link2" href="https://ops-us-east4.grafana.net/api/prom">
           https://ops-us-east4.grafana.net/api/prom
-        </a>,
-      ]}
-      disabled={disabled}
-      image={<img src={logo} alt="Prometheus Logo" />}
-      actions={[
+        </a>
+      </Card.Meta>
+      <Card.Figure>
+        <img src={logo} alt="Prometheus Logo" />
+      </Card.Figure>
+      <Card.Actions>
         <Button key="settings" variant="secondary">
           Settings
-        </Button>,
+        </Button>
         <Button key="explore" variant="secondary">
           Explore
-        </Button>,
-      ]}
-      secondaryActions={[
-        <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />,
-        <IconButton key="delete" name="trash-alt" tooltip="Delete this data source" />,
-      ]}
-    />
+        </Button>
+      </Card.Actions>
+      <Card.SecondaryActions>
+        <IconButton key="showAll" name="apps" tooltip="Show all dashboards for this data source" />
+        <IconButton key="delete" name="trash-alt" tooltip="Delete this data source" />
+      </Card.SecondaryActions>
+    </Card>
   );
 };
 
@@ -124,33 +125,36 @@ export const Full = () => {
   return (
     <Card
       heading="Card title"
-      metadata={[
-        'Subtitle',
-        'Meta info 1',
-        'Meta info 2',
+      disabled={disabled}
+      description="Description, body text. Greetings! Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+    >
+      <Card.Meta>
+        {['Subtitle', 'Meta info 1', 'Meta info 2']}
         <a key="link" href="https://ops-us-east4.grafana.net/api/prom">
           https://ops-us-east4.grafana.net/api/prom
-        </a>,
-      ]}
-      disabled={disabled}
-      image={<img src={logo} alt="Prometheus Logo" />}
-      tags={['firing', 'active', 'test', 'testdata', 'prometheus']}
-      description="Description, body text. Greetings! Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
-      actions={[
+        </a>
+      </Card.Meta>
+      <Card.Figure>
+        <img src={logo} alt="Prometheus Logo" />
+      </Card.Figure>
+      <Card.Tags>
+        <TagList tags={['firing', 'active', 'test', 'testdata', 'prometheus']} onClick={action('Clicked tag')} />
+      </Card.Tags>
+      <Card.Actions>
         <Button key="settings" variant="secondary">
           Main action
-        </Button>,
+        </Button>
         <Button key="explore" variant="secondary">
           2nd action
-        </Button>,
-      ]}
-      secondaryActions={[
-        <IconButton key="comment-alt" name="comment-alt" tooltip="Tooltip content" />,
-        <IconButton key="copy" name="copy" tooltip="Tooltip content" />,
-        <IconButton key="link" name="link" tooltip="Tooltip content" />,
-        <IconButton key="star" name="star" tooltip="Tooltip content" />,
-        <IconButton key="delete" name="trash-alt" tooltip="Delete this data source" />,
-      ]}
-    />
+        </Button>
+      </Card.Actions>
+      <Card.SecondaryActions>
+        <IconButton key="comment-alt" name="comment-alt" tooltip="Tooltip content" />
+        <IconButton key="copy" name="copy" tooltip="Tooltip content" />
+        <IconButton key="link" name="link" tooltip="Tooltip content" />
+        <IconButton key="star" name="star" tooltip="Tooltip content" />
+        <IconButton key="delete" name="trash-alt" tooltip="Delete this data source" />
+      </Card.SecondaryActions>
+    </Card>
   );
 };
