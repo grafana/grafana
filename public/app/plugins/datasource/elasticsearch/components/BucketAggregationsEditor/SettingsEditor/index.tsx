@@ -6,7 +6,7 @@ import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { BucketAggregation } from '../aggregations';
 import { intervalOptions, orderByOptions, orderOptions, sizeOptions } from '../utils';
-import { FiltersSettingsEditor } from './TermsSettingsEditor';
+import { FiltersSettingsEditor } from './FiltersSettingsEditor';
 import { useDescription } from './useDescription';
 
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
