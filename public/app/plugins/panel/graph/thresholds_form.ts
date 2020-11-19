@@ -7,14 +7,16 @@ export class ThresholdFormCtrl {
   disabled: boolean;
 
   /** @ngInject */
-  constructor($scope: any) {
+  constructor(private $scope: any) {}
+
+  $onInit() {
     this.panel = this.panelCtrl.panel;
 
     if (this.panel.alert) {
       this.disabled = true;
     }
 
-    const unbindDestroy = $scope.$on('$destroy', () => {
+    const unbindDestroy = this.$scope.$on('$destroy', () => {
       this.panelCtrl.editingThresholds = false;
       this.panelCtrl.render();
       unbindDestroy();
