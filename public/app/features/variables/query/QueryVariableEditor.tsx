@@ -1,19 +1,22 @@
 import React, { ChangeEvent, PureComponent } from 'react';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { InlineFormLabel, LegacyForms } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-
 import { getTemplateSrv } from '@grafana/runtime';
+import { LoadingState } from '@grafana/data';
+
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
 import { QueryVariableEditorState } from './reducer';
 import { changeQueryVariableDataSource, changeQueryVariableQuery, initQueryVariableEditor } from './actions';
 import { VariableEditorState } from '../editor/reducer';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../types';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { toVariableIdentifier } from '../state/types';
 import { changeVariableMultiValue } from '../state/actions';
+import { getTimeSrv } from '../../dashboard/services/TimeSrv';
+import { isLegacyQueryEditor, isQueryEditor } from '../guard';
 
 const { Switch } = LegacyForms;
 
@@ -72,8 +75,20 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     this.props.onPropChange({ propName: 'datasource', propValue: event.target.value });
   };
 
-  onQueryChange = async (query: any, definition: string) => {
+  onLegacyQueryChange = async (query: any, definition: string) => {
     if (this.props.variable.query !== query) {
+      this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, definition);
+    }
+  };
+
+  onQueryChange = async (query: any) => {
+    if (this.props.variable.query !== query) {
+      let definition = '';
+
+      if (query && query.hasOwnProperty('query') && typeof query.query === 'string') {
+        definition = query.query;
+      }
+
       this.props.changeQueryVariableQuery(toVariableIdentifier(this.props.variable), query, definition);
     }
   };
@@ -127,8 +142,48 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     this.props.onPropChange({ propName: 'useTags', propValue: event.target.checked, updateOptions: true });
   };
 
+  renderQueryEditor = () => {
+    const { editor, variable } = this.props;
+    if (!editor.extended || !editor.extended.dataSource || !editor.extended.VariableQueryEditor) {
+      return null;
+    }
+
+    const query = variable.query;
+    const datasource = editor.extended.dataSource;
+    const VariableQueryEditor = editor.extended.VariableQueryEditor;
+
+    if (isLegacyQueryEditor(VariableQueryEditor, datasource)) {
+      return (
+        <VariableQueryEditor
+          datasource={datasource}
+          query={query}
+          templateSrv={getTemplateSrv()}
+          onChange={this.onLegacyQueryChange}
+        />
+      );
+    }
+
+    const range = getTimeSrv().timeRange();
+
+    if (isQueryEditor(VariableQueryEditor, datasource)) {
+      return (
+        <VariableQueryEditor
+          datasource={datasource}
+          query={query}
+          onChange={this.onQueryChange}
+          onRunQuery={() => {}}
+          data={{ series: [], state: LoadingState.Done, timeRange: range }}
+          range={range}
+          onBlur={() => {}}
+          history={[]}
+        />
+      );
+    }
+
+    return null;
+  };
+
   render() {
-    const VariableQueryEditor = this.props.editor.extended?.VariableQueryEditor;
     return (
       <>
         <div className="gf-form-group">
@@ -181,14 +236,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
             </div>
           </div>
 
-          {VariableQueryEditor && this.props.editor.extended?.dataSource && (
-            <VariableQueryEditor
-              datasource={this.props.editor.extended?.dataSource}
-              query={this.props.variable.query}
-              templateSrv={getTemplateSrv()}
-              onChange={this.onQueryChange}
-            />
-          )}
+          {this.renderQueryEditor()}
 
           <div className="gf-form">
             <InlineFormLabel

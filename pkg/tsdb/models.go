@@ -72,13 +72,6 @@ func NewTimePoint(value null.Float, timestamp float64) TimePoint {
 	return TimePoint{value, null.FloatFrom(timestamp)}
 }
 
-func NewTimeSeries(name string, points TimeSeriesPoints) *TimeSeries {
-	return &TimeSeries{
-		Name:   name,
-		Points: points,
-	}
-}
-
 // DataFrames is an interface for retrieving encoded and decoded data frames.
 //
 // See NewDecodedDataFrames and NewEncodedDataFrames for more information.

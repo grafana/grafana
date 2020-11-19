@@ -27,7 +27,7 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendSentryEvent
 			frontendLogger.SetHandler(origHandler)
 		})
 
-		sc := setupScenarioContext("/log")
+		sc := setupScenarioContext(t, "/log")
 		hs := HTTPServer{}
 
 		handler := Wrap(func(w http.ResponseWriter, c *models.ReqContext) Response {

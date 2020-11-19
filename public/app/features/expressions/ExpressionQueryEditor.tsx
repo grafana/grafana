@@ -97,7 +97,7 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
     const { query, onChange } = this.props;
     onChange({
       ...query,
-      rule: item.value!,
+      window: item.value!,
     });
   };
 
@@ -109,11 +109,11 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
     });
   };
 
-  onRuleChange = (evt: ChangeEvent<any>) => {
+  onWindowChange = (evt: ChangeEvent<any>) => {
     const { query, onChange } = this.props;
     onChange({
       ...query,
-      rule: evt.target.value,
+      window: evt.target.value,
     });
   };
 
@@ -150,7 +150,7 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
               <Input onChange={this.onExpressionChange} value={query.expression} width={25} />
             </InlineField>
             <InlineField label="Window">
-              <Input onChange={this.onRuleChange} value={query.rule} width={25} />
+              <Input onChange={this.onWindowChange} value={query.window} width={25} />
             </InlineField>
             <InlineField label="Downsample">
               <Select options={downsamplingTypes} value={downsampler} onChange={this.onSelectDownsampler} width={25} />

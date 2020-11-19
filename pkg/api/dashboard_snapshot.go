@@ -236,10 +236,10 @@ func DeleteDashboardSnapshot(c *models.ReqContext) Response {
 	if err != nil {
 		return Error(500, "Failed to get dashboard snapshot", err)
 	}
-
 	if query.Result == nil {
 		return Error(404, "Failed to get dashboard snapshot", nil)
 	}
+
 	dashboard, err := query.Result.DashboardJSON()
 	if err != nil {
 		return Error(500, "Failed to get dashboard data for dashboard snapshot", err)

@@ -53,7 +53,7 @@ func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 
 	// when using a subUrl, the redirect_to should start with the subUrl (which contains the leading slash), otherwise the redirect
 	// will send the user to the wrong location
-	if hs.Cfg.AppSubUrl != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubUrl+"/") {
+	if hs.Cfg.AppSubURL != "" && !strings.HasPrefix(to.Path, hs.Cfg.AppSubURL+"/") {
 		return login.ErrInvalidRedirectTo
 	}
 
@@ -62,8 +62,8 @@ func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 
 func (hs *HTTPServer) CookieOptionsFromCfg() middleware.CookieOptions {
 	path := "/"
-	if len(hs.Cfg.AppSubUrl) > 0 {
-		path = hs.Cfg.AppSubUrl
+	if len(hs.Cfg.AppSubURL) > 0 {
+		path = hs.Cfg.AppSubURL
 	}
 	return middleware.CookieOptions{
 		Path:             path,
@@ -126,7 +126,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 				// the user is already logged so instead of rendering the login page with error
 				// it should be redirected to the home page.
 				log.Debugf("Ignored invalid redirect_to cookie value: %v", redirectTo)
-				redirectTo = hs.Cfg.AppSubUrl + "/"
+				redirectTo = hs.Cfg.AppSubURL + "/"
 			}
 			middleware.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 			c.Redirect(redirectTo)
@@ -201,13 +201,14 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 	authModule = authQuery.AuthModule
 	if err != nil {
 		response = Error(401, "Invalid username or password", err)
-		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts || err == models.ErrUserNotFound {
+		if errors.Is(err, login.ErrInvalidCredentials) || errors.Is(err, login.ErrTooManyLoginAttempts) || errors.Is(err,
+			models.ErrUserNotFound) {
 			return response
 		}
 
 		// Do not expose disabled status,
 		// just show incorrect user credentials error (see #17947)
-		if err == login.ErrUserDisabled {
+		if errors.Is(err, login.ErrUserDisabled) {
 			hs.log.Warn("User is disabled", "user", cmd.User)
 			return response
 		}
@@ -263,7 +264,8 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 		return
 	}
 
-	if err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken); err != nil && err != models.ErrUserTokenNotFound {
+	err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken)
+	if err != nil && !errors.Is(err, models.ErrUserTokenNotFound) {
 		hs.log.Error("failed to revoke auth token", "error", err)
 	}
 

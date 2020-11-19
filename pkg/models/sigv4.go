@@ -11,7 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/session"
 	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 	"github.com/aws/aws-sdk-go/private/protocol/rest"
@@ -90,9 +89,30 @@ func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
 }
 
 func (m *SigV4Middleware) signer() (*v4.Signer, error) {
-	c, err := m.credentials()
-	if err != nil {
-		return nil, err
+	authType := AuthType(m.Config.AuthType)
+
+	var c *credentials.Credentials
+	switch authType {
+	case Keys:
+		c = credentials.NewStaticCredentials(m.Config.AccessKey, m.Config.SecretKey, "")
+	case Credentials:
+		c = credentials.NewSharedCredentials("", m.Config.Profile)
+	}
+
+	// passing nil credentials will force AWS to allow a more complete credential chain vs the explicit default
+	if c == nil {
+		s, err := session.NewSession(&aws.Config{
+			Region: aws.String(m.Config.Region),
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		if m.Config.AssumeRoleARN != "" {
+			return v4.NewSigner(stscreds.NewCredentials(s, m.Config.AssumeRoleARN)), nil
+		}
+
+		return v4.NewSigner(s.Config.Credentials), nil
 	}
 
 	if m.Config.AssumeRoleARN != "" {
@@ -107,21 +127,6 @@ func (m *SigV4Middleware) signer() (*v4.Signer, error) {
 	}
 
 	return v4.NewSigner(c), nil
-}
-
-func (m *SigV4Middleware) credentials() (*credentials.Credentials, error) {
-	authType := AuthType(m.Config.AuthType)
-
-	switch authType {
-	case Default:
-		return defaults.CredChain(defaults.Config(), defaults.Handlers()), nil
-	case Keys:
-		return credentials.NewStaticCredentials(m.Config.AccessKey, m.Config.SecretKey, ""), nil
-	case Credentials:
-		return credentials.NewSharedCredentials("", m.Config.Profile), nil
-	}
-
-	return nil, fmt.Errorf("unrecognized authType: %s", authType)
 }
 
 func replaceBody(req *http.Request) ([]byte, error) {
