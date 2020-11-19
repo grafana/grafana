@@ -1,7 +1,7 @@
 import React from 'react';
 import angular from 'angular';
 import _ from 'lodash';
-import { from, merge, Observable, of, zip } from 'rxjs';
+import { merge, Observable, of, throwError, zip } from 'rxjs';
 import {
   catchError,
   concatMap,
@@ -184,7 +184,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       queries: queryParams,
     };
 
-    return from(this.awsRequest(TSDB_QUERY_ENDPOINT, requestParams)).pipe(
+    return this.awsRequest(TSDB_QUERY_ENDPOINT, requestParams).pipe(
       mergeMap((response: TSDBResponse) => {
         const channelName: string = response.results['A'].meta.channelName;
         const channel = getGrafanaLiveSrv().getChannel({
@@ -310,11 +310,17 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
       queries: validMetricsQueries,
     };
 
-    return from(this.performTimeSeriesQuery(request, options.range));
+    return this.performTimeSeriesQuery(request, options.range);
   };
 
   logsQuery(
-    queryParams: Array<{ queryId: string; refId: string; limit?: number; region: string; statsGroups?: string[] }>
+    queryParams: Array<{
+      queryId: string;
+      refId: string;
+      limit?: number;
+      region: string;
+      statsGroups?: string[];
+    }>
   ): Observable<DataQueryResponse> {
     this.logQueries = {};
     queryParams.forEach(param => {
@@ -587,74 +593,76 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     )}`;
   }
 
-  async performTimeSeriesQuery(request: MetricRequest, { from, to }: TimeRange): Promise<any> {
-    try {
-      const res: TSDBResponse = await this.awsRequest(TSDB_QUERY_ENDPOINT, request);
-      const dataframes: DataFrame[] = toDataQueryResponse({ data: res }).data;
-      if (!dataframes || dataframes.length <= 0) {
-        return { data: [] };
-      }
-
-      const data = dataframes.map(frame => {
-        const queryResult = res.results[frame.refId!];
-        const error = queryResult.error ? { message: queryResult.error } : null;
-        if (!queryResult) {
-          return { frame, error };
+  performTimeSeriesQuery(request: MetricRequest, { from, to }: TimeRange): Observable<any> {
+    return this.awsRequest(TSDB_QUERY_ENDPOINT, request).pipe(
+      map(res => {
+        const dataframes: DataFrame[] = toDataQueryResponse({ data: res }).data;
+        if (!dataframes || dataframes.length <= 0) {
+          return { data: [] };
         }
 
-        const requestQuery = request.queries.find(q => q.refId === frame.refId!) as any;
-
-        const link = this.buildCloudwatchConsoleUrl(
-          requestQuery!,
-          from.toISOString(),
-          to.toISOString(),
-          frame.refId!,
-          queryResult.meta.gmdMeta
-        );
-
-        if (link) {
-          for (const field of frame.fields) {
-            field.config.links = [
-              {
-                url: link,
-                title: 'View in CloudWatch console',
-                targetBlank: true,
-              },
-            ];
+        const data = dataframes.map(frame => {
+          const queryResult = res.results[frame.refId!];
+          const error = queryResult.error ? { message: queryResult.error } : null;
+          if (!queryResult) {
+            return { frame, error };
           }
+
+          const requestQuery = request.queries.find(q => q.refId === frame.refId!) as any;
+
+          const link = this.buildCloudwatchConsoleUrl(
+            requestQuery!,
+            from.toISOString(),
+            to.toISOString(),
+            frame.refId!,
+            queryResult.meta.gmdMeta
+          );
+
+          if (link) {
+            for (const field of frame.fields) {
+              field.config.links = [
+                {
+                  url: link,
+                  title: 'View in CloudWatch console',
+                  targetBlank: true,
+                },
+              ];
+            }
+          }
+          return { frame, error };
+        });
+
+        return {
+          data: data.map(o => o.frame),
+          error: data
+            .map(o => o.error)
+            .reduce((err, error) => {
+              return err || error;
+            }, null),
+        };
+      }),
+      catchError(err => {
+        if (/^Throttling:.*/.test(err.data.message)) {
+          const failedRedIds = Object.keys(err.data.results);
+          const regionsAffected = Object.values(request.queries).reduce(
+            (res: string[], { refId, region }) =>
+              (refId && !failedRedIds.includes(refId)) || res.includes(region) ? res : [...res, region],
+            []
+          ) as string[];
+
+          regionsAffected.forEach(region => this.debouncedAlert(this.datasourceName, this.getActualRegion(region)));
         }
-        return { frame, error };
-      });
 
-      return {
-        data: data.map(o => o.frame),
-        error: data
-          .map(o => o.error)
-          .reduce((err, error) => {
-            return err || error;
-          }, null),
-      };
-    } catch (err) {
-      if (/^Throttling:.*/.test(err.data.message)) {
-        const failedRedIds = Object.keys(err.data.results);
-        const regionsAffected = Object.values(request.queries).reduce(
-          (res: string[], { refId, region }) =>
-            (refId && !failedRedIds.includes(refId)) || res.includes(region) ? res : [...res, region],
-          []
-        ) as string[];
+        if (err.data && err.data.message === 'Metric request error' && err.data.error) {
+          err.data.message = err.data.error;
+        }
 
-        regionsAffected.forEach(region => this.debouncedAlert(this.datasourceName, this.getActualRegion(region)));
-      }
-
-      if (err.data && err.data.message === 'Metric request error' && err.data.error) {
-        err.data.message = err.data.error;
-      }
-
-      throw err;
-    }
+        return throwError(err);
+      })
+    );
   }
 
-  transformSuggestDataFromTable(suggestData: TSDBResponse) {
+  transformSuggestDataFromTable(suggestData: TSDBResponse): Array<{ text: any; label: any; value: any }> {
     return suggestData.results['metricFindQuery'].tables[0].rows.map(([text, value]) => ({
       text,
       value,
@@ -662,7 +670,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     }));
   }
 
-  doMetricQueryRequest(subtype: string, parameters: any) {
+  doMetricQueryRequest(subtype: string, parameters: any): Promise<Array<{ text: any; label: any; value: any }>> {
     const range = this.timeSrv.timeRange();
     return this.awsRequest(TSDB_QUERY_ENDPOINT, {
       from: range.from.valueOf().toString(),
@@ -678,9 +686,13 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
           ...parameters,
         },
       ],
-    }).then((r: TSDBResponse) => {
-      return this.transformSuggestDataFromTable(r);
-    });
+    })
+      .pipe(
+        map(r => {
+          return this.transformSuggestDataFromTable(r);
+        })
+      )
+      .toPromise();
   }
 
   makeLogActionRequest(
@@ -724,7 +736,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
     const resultsToDataFrames = (val: any): DataFrame[] => toDataQueryResponse(val).data || [];
 
-    return from(this.awsRequest(TSDB_QUERY_ENDPOINT, requestParams)).pipe(
+    return this.awsRequest(TSDB_QUERY_ENDPOINT, requestParams).pipe(
       map(response => resultsToDataFrames({ data: response })),
       catchError(err => {
         if (err.data?.error) {
@@ -920,15 +932,19 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
           ...parameters,
         },
       ],
-    }).then((r: TSDBResponse) => {
-      return r.results['annotationQuery'].tables[0].rows.map(v => ({
-        annotation: annotation,
-        time: Date.parse(v[0]),
-        title: v[1],
-        tags: [v[2]],
-        text: v[3],
-      }));
-    });
+    })
+      .pipe(
+        map(r => {
+          return r.results['annotationQuery'].tables[0].rows.map(v => ({
+            annotation: annotation,
+            time: Date.parse(v[0]),
+            title: v[1],
+            tags: [v[2]],
+            text: v[3],
+          }));
+        })
+      )
+      .toPromise();
   }
 
   targetContainsTemplate(target: any) {
@@ -955,16 +971,16 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
     }));
   }
 
-  async awsRequest(url: string, data: MetricRequest) {
+  awsRequest(url: string, data: MetricRequest): Observable<TSDBResponse> {
     const options = {
       method: 'POST',
       url,
       data,
     };
 
-    const result = await getBackendSrv().datasourceRequest(options);
-
-    return result.data;
+    return getBackendSrv()
+      .fetch<TSDBResponse>(options)
+      .pipe(map(result => result.data));
   }
 
   getDefaultRegion() {

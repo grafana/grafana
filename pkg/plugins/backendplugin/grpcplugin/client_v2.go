@@ -2,6 +2,7 @@ package grpcplugin
 
 import (
 	"context"
+	"errors"
 	"io"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -21,7 +22,6 @@ type clientV2 struct {
 	grpcplugin.DiagnosticsClient
 	grpcplugin.ResourceClient
 	grpcplugin.DataClient
-	grpcplugin.TransformClient
 	pluginextensionv2.RendererPlugin
 }
 
@@ -37,11 +37,6 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 	}
 
 	rawData, err := rpcClient.Dispense("data")
-	if err != nil {
-		return nil, err
-	}
-
-	rawTransform, err := rpcClient.Dispense("transform")
 	if err != nil {
 		return nil, err
 	}
@@ -70,12 +65,6 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 		}
 	}
 
-	if rawTransform != nil {
-		if plugin, ok := rawTransform.(grpcplugin.TransformClient); ok {
-			c.TransformClient = instrumentTransformPlugin(plugin)
-		}
-	}
-
 	if rawRenderer != nil {
 		if plugin, ok := rawRenderer.(pluginextensionv2.RendererPlugin); ok {
 			c.RendererPlugin = plugin
@@ -84,9 +73,8 @@ func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugi
 
 	if descriptor.startFns.OnStart != nil {
 		client := &Client{
-			DataPlugin:      c.DataClient,
-			TransformPlugin: c.TransformClient,
-			RendererPlugin:  c.RendererPlugin,
+			DataPlugin:     c.DataClient,
+			RendererPlugin: c.RendererPlugin,
 		}
 		if err := descriptor.startFns.OnStart(descriptor.pluginID, client, logger); err != nil {
 			return nil, err
@@ -156,11 +144,11 @@ func (c *clientV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 				return backendplugin.ErrMethodNotImplemented
 			}
 
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				return nil
 			}
 
-			return errutil.Wrap("Failed to receive call resource response", err)
+			return errutil.Wrap("failed to receive call resource response", err)
 		}
 
 		if err := sender.Send(backend.FromProto().CallResourceResponse(protoResp)); err != nil {
@@ -184,27 +172,6 @@ func instrumentDataClient(plugin grpcplugin.DataClient) grpcplugin.DataClient {
 		var resp *pluginv2.QueryDataResponse
 		err := backendplugin.InstrumentQueryDataRequest(req.PluginContext.PluginId, func() (innerErr error) {
 			resp, innerErr = plugin.QueryData(ctx, req)
-			return
-		})
-		return resp, err
-	})
-}
-
-type transformPluginTransformDataFunc func(ctx context.Context, req *pluginv2.QueryDataRequest, callback grpcplugin.TransformDataCallBack) (*pluginv2.QueryDataResponse, error)
-
-func (fn transformPluginTransformDataFunc) TransformData(ctx context.Context, req *pluginv2.QueryDataRequest, callback grpcplugin.TransformDataCallBack) (*pluginv2.QueryDataResponse, error) {
-	return fn(ctx, req, callback)
-}
-
-func instrumentTransformPlugin(plugin grpcplugin.TransformClient) grpcplugin.TransformClient {
-	if plugin == nil {
-		return nil
-	}
-
-	return transformPluginTransformDataFunc(func(ctx context.Context, req *pluginv2.QueryDataRequest, callback grpcplugin.TransformDataCallBack) (*pluginv2.QueryDataResponse, error) {
-		var resp *pluginv2.QueryDataResponse
-		err := backendplugin.InstrumentTransformDataRequest(req.PluginContext.PluginId, func() (innerErr error) {
-			resp, innerErr = plugin.TransformData(ctx, req, callback)
 			return
 		})
 		return resp, err

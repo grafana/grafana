@@ -2,6 +2,7 @@ package services
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -74,8 +75,9 @@ func makeBody(body string) io.ReadCloser {
 }
 
 func asBadRequestError(t *testing.T, err error) *BadRequestError {
-	if badRequestError, ok := err.(*BadRequestError); ok {
-		return badRequestError
+	var badErr *BadRequestError
+	if errors.As(err, &badErr) {
+		return badErr
 	}
 	assert.FailNow(t, "Error was not of type BadRequestError")
 	return nil

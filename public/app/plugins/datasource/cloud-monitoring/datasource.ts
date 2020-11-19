@@ -14,8 +14,10 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { CloudMonitoringOptions, CloudMonitoringQuery, Filter, MetricDescriptor, QueryType } from './types';
 import { cloudMonitoringUnitMappings } from './constants';
-import API from './api';
+import API, { PostResponse } from './api';
 import { CloudMonitoringVariableSupport } from './variables';
+import { catchError, map, mergeMap } from 'rxjs/operators';
+import { from, Observable, of, throwError } from 'rxjs';
 
 export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonitoringQuery, CloudMonitoringOptions> {
   api: API;
@@ -37,45 +39,52 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     return this.templateSrv.getVariables().map(v => `$${v.name}`);
   }
 
-  async query(options: DataQueryRequest<CloudMonitoringQuery>): Promise<DataQueryResponseData> {
-    const result: DataQueryResponseData[] = [];
-    const data = await this.getTimeSeries(options);
-    if (data.results) {
-      Object.values(data.results).forEach((queryRes: any) => {
-        if (!queryRes.series) {
-          return;
+  query(options: DataQueryRequest<CloudMonitoringQuery>): Observable<DataQueryResponseData> {
+    return this.getTimeSeries(options).pipe(
+      map(data => {
+        if (!data.results) {
+          return { data: [] };
         }
-        const unit = this.resolvePanelUnitFromTargets(options.targets);
-        queryRes.series.forEach((series: any) => {
-          let timeSerie: any = {
-            target: series.name,
-            datapoints: series.points,
-            refId: queryRes.refId,
-            meta: queryRes.meta,
-          };
-          if (unit) {
-            timeSerie = { ...timeSerie, unit };
-          }
-          const df = toDataFrame(timeSerie);
 
-          for (const field of df.fields) {
-            if (queryRes.meta?.deepLink && queryRes.meta?.deepLink.length > 0) {
-              field.config.links = [
-                {
-                  url: queryRes.meta?.deepLink,
-                  title: 'View in Metrics Explorer',
-                  targetBlank: true,
-                },
-              ];
-            }
+        const result: DataQueryResponseData[] = [];
+        const values = Object.values(data.results);
+        for (const queryRes of values) {
+          if (!queryRes.series) {
+            continue;
           }
-          result.push(df);
-        });
-      });
-      return { data: result };
-    } else {
-      return { data: [] };
-    }
+
+          const unit = this.resolvePanelUnitFromTargets(options.targets);
+
+          for (const series of queryRes.series) {
+            let timeSerie: any = {
+              target: series.name,
+              datapoints: series.points,
+              refId: queryRes.refId,
+              meta: queryRes.meta,
+            };
+            if (unit) {
+              timeSerie = { ...timeSerie, unit };
+            }
+            const df = toDataFrame(timeSerie);
+
+            for (const field of df.fields) {
+              if (queryRes.meta?.deepLink && queryRes.meta?.deepLink.length > 0) {
+                field.config.links = [
+                  {
+                    url: queryRes.meta?.deepLink,
+                    title: 'View in Metrics Explorer',
+                    targetBlank: true,
+                  },
+                ];
+              }
+            }
+            result.push(df);
+          }
+        }
+
+        return { data: result };
+      })
+    );
   }
 
   async annotationQuery(options: any) {
@@ -101,47 +110,57 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
       },
     ];
 
-    const { data } = await this.api.post({
-      from: options.range.from.valueOf().toString(),
-      to: options.range.to.valueOf().toString(),
-      queries,
-    });
+    return this.api
+      .post({
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
+        queries,
+      })
+      .pipe(
+        map(({ data }) => {
+          const results = data.results['annotationQuery'].tables[0].rows.map((v: any) => {
+            return {
+              annotation: annotation,
+              time: Date.parse(v[0]),
+              title: v[1],
+              tags: [],
+              text: v[3],
+            } as any;
+          });
 
-    const results = data.results['annotationQuery'].tables[0].rows.map((v: any) => {
-      return {
-        annotation: annotation,
-        time: Date.parse(v[0]),
-        title: v[1],
-        tags: [],
-        text: v[3],
-      } as any;
-    });
-
-    return results;
+          return results;
+        })
+      )
+      .toPromise();
   }
 
-  async getTimeSeries(options: DataQueryRequest<CloudMonitoringQuery>) {
-    await this.ensureGCEDefaultProject();
+  getTimeSeries(options: DataQueryRequest<CloudMonitoringQuery>): Observable<PostResponse> {
     const queries = options.targets
       .map(this.migrateQuery)
       .filter(this.shouldRunQuery)
       .map(q => this.prepareTimeSeriesQuery(q, options.scopedVars))
       .map(q => ({ ...q, intervalMs: options.intervalMs, type: 'timeSeriesQuery' }));
 
-    if (queries.length > 0) {
-      const { data } = await this.api.post({
-        from: options.range.from.valueOf().toString(),
-        to: options.range.to.valueOf().toString(),
-        queries,
-      });
-      return data;
-    } else {
-      return { results: [] };
+    if (!queries.length) {
+      return of({ results: [] });
     }
+
+    return from(this.ensureGCEDefaultProject()).pipe(
+      mergeMap(() => {
+        return this.api.post({
+          from: options.range.from.valueOf().toString(),
+          to: options.range.to.valueOf().toString(),
+          queries,
+        });
+      }),
+      map(({ data }) => {
+        return data;
+      })
+    );
   }
 
   async getLabels(metricType: string, refId: string, projectName: string, groupBys?: string[]) {
-    const response = await this.getTimeSeries({
+    return this.getTimeSeries({
       targets: [
         {
           refId,
@@ -157,9 +176,14 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
         },
       ],
       range: this.timeSrv.timeRange(),
-    } as DataQueryRequest<CloudMonitoringQuery>);
-    const result = response.results[refId];
-    return result && result.meta ? result.meta.labels : {};
+    } as DataQueryRequest<CloudMonitoringQuery>)
+      .pipe(
+        map(response => {
+          const result = response.results[refId];
+          return result && result.meta ? result.meta.labels : {};
+        })
+      )
+      .toPromise();
   }
 
   async testDatasource() {
@@ -205,14 +229,17 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
           },
         ],
       })
-      .then(({ data }) => {
-        return data && data.results && data.results.getGCEDefaultProject && data.results.getGCEDefaultProject.meta
-          ? data.results.getGCEDefaultProject.meta.defaultProject
-          : '';
-      })
-      .catch(err => {
-        throw err.data.error;
-      });
+      .pipe(
+        map(({ data }) => {
+          return data && data.results && data.results.getGCEDefaultProject && data.results.getGCEDefaultProject.meta
+            ? data.results.getGCEDefaultProject.meta.defaultProject
+            : '';
+        }),
+        catchError(err => {
+          return throwError(err.data.error);
+        })
+      )
+      .toPromise();
   }
 
   getDefaultProject(): string {
@@ -272,7 +299,7 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     });
   }
 
-  async getProjects() {
+  getProjects() {
     return this.api.get(`projects`, {
       responseMap: ({ projectId, name }: { projectId: string; name: string }) => ({
         value: projectId,

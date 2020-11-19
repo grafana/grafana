@@ -55,8 +55,8 @@ var engineCache = engineCacheType{
 
 var sqlIntervalCalculator = tsdb.NewIntervalCalculator(nil)
 
-//nolint:gocritic
 // NewXormEngine is an xorm.Engine factory, that can be stubbed by tests.
+//nolint:gocritic
 var NewXormEngine = func(driverName string, connectionString string) (*xorm.Engine, error) {
 	return xorm.NewEngine(driverName, connectionString)
 }
