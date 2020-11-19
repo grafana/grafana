@@ -142,29 +142,6 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Empty(t, fm.registeredPlugins)
 	})
 
-	t.Run("Transform plugins should be loaded when expressions feature is on", func(t *testing.T) {
-		origPluginsPath := setting.PluginsPath
-		t.Cleanup(func() {
-			setting.PluginsPath = origPluginsPath
-		})
-		setting.PluginsPath = "testdata/behind-feature-flag"
-
-		fm := &fakeBackendPluginManager{}
-		pm := &PluginManager{
-			Cfg: &setting.Cfg{
-				FeatureToggles: map[string]bool{
-					"expressions": true,
-				},
-			},
-			BackendPluginManager: fm,
-		}
-		err := pm.Init()
-		require.NoError(t, err)
-
-		require.Empty(t, pm.scanningErrors)
-		assert.Equal(t, []string{"gel"}, fm.registeredPlugins)
-	})
-
 	t.Run("With nested plugin duplicating parent", func(t *testing.T) {
 		origPluginsPath := setting.PluginsPath
 		t.Cleanup(func() {

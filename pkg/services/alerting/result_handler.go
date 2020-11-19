@@ -59,12 +59,12 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 		}
 
 		if err := bus.Dispatch(cmd); err != nil {
-			if err == models.ErrCannotChangeStateOnPausedAlert {
+			if errors.Is(err, models.ErrCannotChangeStateOnPausedAlert) {
 				handler.log.Error("Cannot change state on alert that's paused", "error", err)
 				return err
 			}
 
-			if err == models.ErrRequiresNewState {
+			if errors.Is(err, models.ErrRequiresNewState) {
 				handler.log.Info("Alert already updated")
 				return nil
 			}

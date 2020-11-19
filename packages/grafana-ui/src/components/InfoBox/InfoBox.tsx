@@ -46,7 +46,7 @@ export const InfoBox = React.memo(
           </div>
           <div>{children}</div>
           {url && (
-            <a href={url} className={styles.docsLink} target="_blank">
+            <a href={url} className={styles.docsLink} target="_blank" rel="noreferrer">
               <Icon name="book" /> {urlTitle || 'Read more'}
             </a>
           )}

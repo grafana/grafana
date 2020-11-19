@@ -108,7 +108,7 @@ export class Gauge extends PureComponent<Props> {
     // remove gauge & marker width (on left and right side)
     // and 10px is some padding that flot adds to the outer canvas
     const valueWidth = valueWidthBase - ((gaugeWidth + (showThresholdMarkers ? thresholdMarkersWidth : 0)) * 2 + 10);
-    const fontSize = calculateFontSize(text, valueWidth, dimension, 1, 48);
+    const fontSize = calculateFontSize(text, valueWidth, dimension, 1, gaugeWidth * 1.7);
     const thresholdLabelFontSize = fontSize / 2.5;
 
     let min = field.min!;

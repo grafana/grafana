@@ -131,7 +131,7 @@ func verifyUserSignUpEmail(email string, code string) (bool, Response) {
 	query := models.GetTempUserByCodeQuery{Code: code}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrTempUserNotFound {
+		if errors.Is(err, models.ErrTempUserNotFound) {
 			return false, Error(404, "Invalid email verification code", nil)
 		}
 		return false, Error(500, "Failed to read temp user", err)

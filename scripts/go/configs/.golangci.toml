@@ -44,6 +44,10 @@ enable = [
   "varcheck",
   "whitespace",
   "gocyclo",
+  "typecheck",
+  "asciicheck",
+  "errorlint",
+  "sqlclosecheck",
 ]
 
 # Disabled linters (might want them later)
@@ -100,3 +104,7 @@ text = "404"
 [[issues.exclude-rules]]
 linters = ["misspell"]
 text = "Unknwon` is a misspelling of `Unknown"
+
+[[issues.exclude-rules]]
+linters = ["errorlint"]
+text = "non-wrapping format verb for fmt.Errorf"

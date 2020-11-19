@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -42,8 +43,8 @@ func inTransactionWithRetryCtx(ctx context.Context, engine *xorm.Engine, callbac
 	err = callback(sess)
 
 	// special handling of database locked errors for sqlite, then we can retry 5 times
-	if sqlError, ok := err.(sqlite3.Error); ok && retry < 5 && sqlError.Code ==
-		sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy {
+	var sqlError sqlite3.Error
+	if errors.As(err, &sqlError) && retry < 5 && sqlError.Code == sqlite3.ErrLocked || sqlError.Code == sqlite3.ErrBusy {
 		if rollErr := sess.Rollback(); rollErr != nil {
 			return errutil.Wrapf(err, "Rolling back transaction due to error failed: %s", rollErr)
 		}
