@@ -183,7 +183,6 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, PluginSignatureValid, Plugins[pluginId].Signature)
 		assert.Equal(t, Grafana, Plugins[pluginId].SignatureType)
 		assert.Equal(t, "Grafana Labs", Plugins[pluginId].SignatureOrg)
-		assert.Equal(t, fmt.Sprintf("%s/%s", setting.PluginsPath, "plugin"), Plugins[pluginId].PluginDir)
 		assert.False(t, Plugins[pluginId].IsCorePlugin)
 	})
 
@@ -234,7 +233,6 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, PluginSignatureValid, Plugins[pluginId].Signature)
 		assert.Equal(t, Private, Plugins[pluginId].SignatureType)
 		assert.Equal(t, "Will Browne", Plugins[pluginId].SignatureOrg)
-		assert.Equal(t, fmt.Sprintf("%s/%s", setting.PluginsPath, "plugin"), Plugins[pluginId].PluginDir)
 		assert.False(t, Plugins[pluginId].IsCorePlugin)
 	})
 }
