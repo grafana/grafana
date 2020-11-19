@@ -332,7 +332,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
         for (let bucketAgg of query.bucketAggs || []) {
           if (bucketAgg.type === 'filters') {
-            for (let filter of bucketAgg.settings.filters) {
+            for (let filter of bucketAgg.settings?.filters || []) {
               filter.query = this.interpolateLuceneQuery(filter.query, scopedVars);
             }
           }
