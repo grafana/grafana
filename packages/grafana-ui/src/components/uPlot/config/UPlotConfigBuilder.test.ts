@@ -1,7 +1,7 @@
 // TODO: migrate tests below to the builder
 
 import { UPlotConfigBuilder } from './UPlotConfigBuilder';
-import { AxisSide } from '../types';
+import { Axis } from 'uplot';
 import { GrafanaTheme } from '@grafana/data';
 import { expect } from '../../../../../../public/test/lib/common';
 
@@ -56,7 +56,7 @@ describe('UPlotConfigBuilder', () => {
       scaleKey: 'scale-x',
       label: 'test label',
       timeZone: 'browser',
-      side: AxisSide.Bottom,
+      side: Axis.Side.Bottom,
       isTime: false,
       formatValue: () => 'test value',
       grid: false,
