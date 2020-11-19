@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/expr"
 )
 
 const defaultMaxDataPoints float64 = 100
 const defaultIntervalMS float64 = 1000
-
-// DefaultExprDatasourceID is the datasource identifier for expressions.:w
-const DefaultExprDatasourceID = -100
 
 // Duration is a type used for marshalling durations.
 type Duration time.Duration
@@ -51,10 +49,10 @@ func (rtr *RelativeTimeRange) isValid() bool {
 	return rtr.From > rtr.To
 }
 
-func (rtr *RelativeTimeRange) toTimeRange(now time.Time) *pluginv2.TimeRange {
-	return &pluginv2.TimeRange{
-		FromEpochMS: now.Add(-time.Duration(rtr.From)).UnixNano() / 1e6,
-		ToEpochMS:   now.Add(-time.Duration(rtr.To)).UnixNano() / 1e6,
+func (rtr *RelativeTimeRange) toTimeRange(now time.Time) backend.TimeRange {
+	return backend.TimeRange{
+		From: now.Add(-time.Duration(rtr.From)),
+		To:   now.Add(-time.Duration(rtr.To)),
 	}
 }
 
@@ -103,9 +101,9 @@ func (aq *AlertQuery) setDatasource() error {
 		return fmt.Errorf("failed to get datasource from query model")
 	}
 
-	if dsName == "__expr__" {
-		aq.DatasourceID = DefaultExprDatasourceID
-		aq.modelProps["datasourceId"] = DefaultExprDatasourceID
+	if dsName == expr.DatasourceName {
+		aq.DatasourceID = expr.DatasourceID
+		aq.modelProps["datasourceId"] = expr.DatasourceID
 		return nil
 	}
 
@@ -127,7 +125,7 @@ func (aq *AlertQuery) IsExpression() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	return aq.DatasourceID == DefaultExprDatasourceID, nil
+	return aq.DatasourceID == expr.DatasourceID, nil
 }
 
 // setMaxDatapoints sets the model maxDataPoints if it's missing or invalid
@@ -192,6 +190,19 @@ func (aq *AlertQuery) getIntervalMS() (int64, error) {
 		return 0, fmt.Errorf("failed to cast intervalMs to float64: %v", aq.modelProps["intervalMs"])
 	}
 	return int64(intervalMs), nil
+}
+
+func (aq *AlertQuery) getIntervalDuration() (time.Duration, error) {
+	err := aq.setIntervalMS()
+	if err != nil {
+		return 0, err
+	}
+
+	intervalMs, ok := aq.modelProps["intervalMs"].(float64)
+	if !ok {
+		return 0, fmt.Errorf("failed to cast intervalMs to float64: %v", aq.modelProps["intervalMs"])
+	}
+	return time.Duration(intervalMs) * time.Millisecond, nil
 }
 
 // GetDatasource returns the query datasource identifier.

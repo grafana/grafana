@@ -6,26 +6,33 @@ import { queryReducer } from './query';
 import { datasourceReducer } from './datasource';
 import { timeReducer } from './time';
 import { historyReducer } from './history';
-import { makeExplorePaneState, makeInitialUpdateState } from './utils';
+import { makeExplorePaneState, makeInitialUpdateState, loadAndInitDatasource, createEmptyQueryResponse } from './utils';
 import { createAction, PayloadAction } from '@reduxjs/toolkit';
-import { EventBusExtended, DataQuery, ExploreUrlState, LogLevel, LogsDedupStrategy, TimeRange } from '@grafana/data';
+import {
+  EventBusExtended,
+  DataQuery,
+  ExploreUrlState,
+  LogLevel,
+  LogsDedupStrategy,
+  TimeRange,
+  HistoryItem,
+  DataSourceApi,
+} from '@grafana/data';
 import {
   clearQueryKeys,
   ensureQueries,
   generateNewKeyAndAddRefIdIfMissing,
   getTimeRangeFromUrl,
 } from 'app/core/utils/explore';
-import { getRichHistory } from 'app/core/utils/richHistory';
 // Types
 import { ThunkResult } from 'app/types';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { updateLocation } from '../../../core/actions';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
-import { richHistoryUpdatedAction } from './main';
 import { runQueries, setQueriesAction } from './query';
-import { loadExploreDatasourcesAndSetDatasource } from './datasource';
 import { updateTime } from './time';
 import { toRawTimeRange } from '../utils/time';
+import { getExploreDatasources } from './selectors';
 
 //
 // Actions and Payloads
@@ -72,6 +79,8 @@ export interface InitializeExplorePayload {
   eventBridge: EventBusExtended;
   queries: DataQuery[];
   range: TimeRange;
+  history: HistoryItem[];
+  datasourceInstance?: DataSourceApi;
   originPanelId?: number | null;
 }
 export const initializeExploreAction = createAction<InitializeExplorePayload>('explore/initializeExplore');
@@ -122,7 +131,17 @@ export function initializeExplore(
   originPanelId?: number | null
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
-    dispatch(loadExploreDatasourcesAndSetDatasource(exploreId, datasourceName));
+    const exploreDatasources = getExploreDatasources();
+    let instance = undefined;
+    let history: HistoryItem[] = [];
+
+    if (exploreDatasources.length >= 1) {
+      const orgId = getState().user.orgId;
+      const loadResult = await loadAndInitDatasource(orgId, datasourceName);
+      instance = loadResult.instance;
+      history = loadResult.history;
+    }
+
     dispatch(
       initializeExploreAction({
         exploreId,
@@ -131,11 +150,15 @@ export function initializeExplore(
         queries,
         range,
         originPanelId,
+        datasourceInstance: instance,
+        history,
       })
     );
     dispatch(updateTime({ exploreId }));
-    const richHistory = getRichHistory();
-    dispatch(richHistoryUpdatedAction({ richHistory }));
+
+    if (instance) {
+      dispatch(runQueries(exploreId));
+    }
   };
 }
 
@@ -149,20 +172,9 @@ export const stateSave = (): ThunkResult<void> => {
     const orgId = getState().user.orgId.toString();
     const replace = left && left.urlReplaced === false;
     const urlStates: { [index: string]: string } = { orgId };
-    const leftUrlState: ExploreUrlState = {
-      datasource: left.datasourceInstance!.name,
-      queries: left.queries.map(clearQueryKeys),
-      range: toRawTimeRange(left.range),
-    };
-    urlStates.left = serializeStateToUrlParam(leftUrlState, true);
+    urlStates.left = serializeStateToUrlParam(getUrlStateFromPaneState(left), true);
     if (split) {
-      const rightUrlState: ExploreUrlState = {
-        datasource: right.datasourceInstance!.name,
-        queries: right.queries.map(clearQueryKeys),
-        range: toRawTimeRange(right.range),
-      };
-
-      urlStates.right = serializeStateToUrlParam(rightUrlState, true);
+      urlStates.right = serializeStateToUrlParam(getUrlStateFromPaneState(right), true);
     }
 
     dispatch(updateLocation({ query: urlStates, replace }));
@@ -259,7 +271,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   }
 
   if (initializeExploreAction.match(action)) {
-    const { containerWidth, eventBridge, queries, range, originPanelId } = action.payload;
+    const { containerWidth, eventBridge, queries, range, originPanelId, datasourceInstance, history } = action.payload;
     return {
       ...state,
       containerWidth,
@@ -270,6 +282,11 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       queryKeys: getQueryKeys(queries, state.datasourceInstance),
       originPanelId,
       update: makeInitialUpdateState(),
+      datasourceInstance,
+      history,
+      datasourceMissing: !datasourceInstance,
+      queryResponse: createEmptyQueryResponse(),
+      logsHighlighterExpressions: undefined,
     };
   }
 
@@ -290,3 +307,13 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
 
   return state;
 };
+
+function getUrlStateFromPaneState(pane: ExploreItemState): ExploreUrlState {
+  return {
+    // It can happen that if we are in a split and initial load also runs queries we can be here before the second pane
+    // is initialized so datasourceInstance will be still undefined.
+    datasource: pane.datasourceInstance?.name || pane.urlState!.datasource,
+    queries: pane.queries.map(clearQueryKeys),
+    range: toRawTimeRange(pane.range),
+  };
+}

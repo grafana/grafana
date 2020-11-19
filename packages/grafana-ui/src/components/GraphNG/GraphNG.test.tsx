@@ -2,7 +2,7 @@ import React from 'react';
 import { GraphNG } from './GraphNG';
 import { render } from '@testing-library/react';
 import { ArrayVector, dateTime, FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
-import { GraphCustomFieldConfig } from '..';
+import { GraphFieldConfig, GraphMode } from '../uPlot/config';
 
 const mockData = () => {
   const data = new MutableDataFrame();
@@ -20,9 +20,9 @@ const mockData = () => {
     values: new ArrayVector([10, 20, 5]),
     config: {
       custom: {
-        line: { show: true },
+        mode: GraphMode.Line,
       },
-    } as FieldConfig<GraphCustomFieldConfig>,
+    } as FieldConfig<GraphFieldConfig>,
   });
 
   const timeRange = {

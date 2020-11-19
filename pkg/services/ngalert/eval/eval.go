@@ -7,11 +7,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 // invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.
@@ -99,11 +98,11 @@ func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*Execution
 		return nil, fmt.Errorf("invalid conditions")
 	}
 
-	pbQuery := &pluginv2.QueryDataRequest{
-		PluginContext: &pluginv2.PluginContext{
+	queryDataReq := &backend.QueryDataRequest{
+		PluginContext: backend.PluginContext{
 			// TODO: Things probably
 		},
-		Queries: []*pluginv2.DataQuery{},
+		Queries: []backend.DataQuery{},
 	}
 
 	for i := range c.QueriesAndExpressions {
@@ -112,7 +111,7 @@ func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*Execution
 		if err != nil {
 			return nil, fmt.Errorf("failed to get query model: %w", err)
 		}
-		intervalMS, err := q.getIntervalMS()
+		interval, err := q.getIntervalDuration()
 		if err != nil {
 			return nil, fmt.Errorf("failed to retrieve intervalMs from the model: %w", err)
 		}
@@ -122,18 +121,17 @@ func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*Execution
 			return nil, fmt.Errorf("failed to retrieve maxDatapoints from the model: %w", err)
 		}
 
-		pbQuery.Queries = append(pbQuery.Queries, &pluginv2.DataQuery{
-			Json:          model,
-			IntervalMS:    intervalMS,
-			RefId:         q.RefID,
+		queryDataReq.Queries = append(queryDataReq.Queries, backend.DataQuery{
+			JSON:          model,
+			Interval:      interval,
+			RefID:         q.RefID,
 			MaxDataPoints: maxDatapoints,
 			QueryType:     q.QueryType,
 			TimeRange:     q.RelativeTimeRange.toTimeRange(time.Now()),
 		})
 	}
 
-	tw := plugins.Transform
-	pbRes, err := tw.TransformClient.TransformData(ctx.Ctx, pbQuery, tw.Callback)
+	pbRes, err := expr.TransformData(ctx.Ctx, queryDataReq)
 	if err != nil {
 		return &result, err
 	}
@@ -142,12 +140,7 @@ func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*Execution
 		if refID != c.RefID {
 			continue
 		}
-		df := tsdb.NewEncodedDataFrames(res.Frames)
-		result.Results, err = df.Decoded()
-		if err != nil {
-			result.Error = err
-			return &result, err
-		}
+		result.Results = res.Frames
 	}
 
 	if len(result.Results) == 0 {

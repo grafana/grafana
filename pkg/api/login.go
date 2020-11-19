@@ -201,13 +201,14 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 	authModule = authQuery.AuthModule
 	if err != nil {
 		response = Error(401, "Invalid username or password", err)
-		if err == login.ErrInvalidCredentials || err == login.ErrTooManyLoginAttempts || err == models.ErrUserNotFound {
+		if errors.Is(err, login.ErrInvalidCredentials) || errors.Is(err, login.ErrTooManyLoginAttempts) || errors.Is(err,
+			models.ErrUserNotFound) {
 			return response
 		}
 
 		// Do not expose disabled status,
 		// just show incorrect user credentials error (see #17947)
-		if err == login.ErrUserDisabled {
+		if errors.Is(err, login.ErrUserDisabled) {
 			hs.log.Warn("User is disabled", "user", cmd.User)
 			return response
 		}
@@ -263,7 +264,8 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 		return
 	}
 
-	if err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken); err != nil && err != models.ErrUserTokenNotFound {
+	err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken)
+	if err != nil && !errors.Is(err, models.ErrUserTokenNotFound) {
 		hs.log.Error("failed to revoke auth token", "error", err)
 	}
 

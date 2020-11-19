@@ -70,7 +70,7 @@ export const featureInfoBox = () => {
       >
         Transformations allow you to join, calculate, re-order, hide and rename your query results before being
         visualized. <br />
-        Many transforms are not suitable if you're using the Graph visualisation as it currently only supports time
+        Many transforms are not suitable if you&apos;re using the Graph visualisation as it currently only supports time
         series. <br />
         It can help to switch to Table visualisation to understand what a transformation is doing.
       </FeatureInfoBox>

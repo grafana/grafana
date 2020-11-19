@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -43,6 +44,10 @@ func GetDashboardPermissionList(c *models.ReqContext) Response {
 }
 
 func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
+	if err := validatePermissionsUpdate(apiCmd); err != nil {
+		return Error(400, err.Error(), err)
+	}
+
 	dashID := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashID, "")
@@ -73,8 +78,7 @@ func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboar
 
 	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
 		if err != nil {
-			if err == guardian.ErrGuardianPermissionExists ||
-				err == guardian.ErrGuardianOverride {
+			if errors.Is(err, guardian.ErrGuardianPermissionExists) || errors.Is(err, guardian.ErrGuardianOverride) {
 				return Error(400, err.Error(), err)
 			}
 
@@ -85,11 +89,21 @@ func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboar
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrDashboardAclInfoMissing || err == models.ErrDashboardPermissionDashboardEmpty {
+		if errors.Is(err, models.ErrDashboardAclInfoMissing) ||
+			errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
 			return Error(409, err.Error(), err)
 		}
 		return Error(500, "Failed to create permission", err)
 	}
 
 	return Success("Dashboard permissions updated")
+}
+
+func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardAclCommand) error {
+	for _, item := range apiCmd.Items {
+		if (item.UserID > 0 || item.TeamID > 0) && item.Role != nil {
+			return models.ErrPermissionsWithRoleNotAllowed
+		}
+	}
+	return nil
 }

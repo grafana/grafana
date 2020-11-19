@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -182,7 +183,7 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 			"err", err,
 		)
 
-		if err == models.ErrUserNotFound {
+		if errors.Is(err, models.ErrUserNotFound) {
 			err = login.ErrInvalidCredentials
 		}
 		ctx.JsonApiErr(401, errStringInvalidUsernamePassword, err)
@@ -250,7 +251,7 @@ func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.User
 
 		// if the request is cancelled by the client we should not try
 		// to rotate the token since the client would not accept any result.
-		if ctx.Context.Req.Context().Err() == context.Canceled {
+		if errors.Is(ctx.Context.Req.Context().Err(), context.Canceled) {
 			return
 		}
 

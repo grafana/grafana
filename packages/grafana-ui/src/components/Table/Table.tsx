@@ -195,8 +195,9 @@ export const Table: FC<Props> = memo((props: Props) => {
           {!noHeader && (
             <div>
               {headerGroups.map((headerGroup: HeaderGroup) => {
+                const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
                 return (
-                  <div className={tableStyles.thead} {...headerGroup.getHeaderGroupProps()}>
+                  <div className={tableStyles.thead} {...headerGroupProps} key={key}>
                     {headerGroup.headers.map((column: Column, index: number) =>
                       renderHeaderCell(column, tableStyles, data.fields[index])
                     )}

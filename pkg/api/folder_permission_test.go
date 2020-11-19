@@ -172,6 +172,33 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		})
 	})
 
+	t.Run("When trying to update team or user permissions with a role", func(t *testing.T) {
+		role := models.ROLE_ADMIN
+		cmds := []dtos.UpdateDashboardAclCommand{
+			{
+				Items: []dtos.DashboardAclUpdateItem{
+					{UserID: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
+				},
+			},
+			{
+				Items: []dtos.DashboardAclUpdateItem{
+					{TeamID: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
+				},
+			},
+		}
+
+		for _, cmd := range cmds {
+			updateFolderPermissionScenario(t, "When calling POST on", "/api/folders/uid/permissions",
+				"/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
+					callUpdateFolderPermissions(sc)
+					assert.Equal(t, 400, sc.resp.Code)
+					respJSON, err := jsonMap(sc.resp.Body.Bytes())
+					require.NoError(t, err)
+					assert.Equal(t, models.ErrPermissionsWithRoleNotAllowed.Error(), respJSON["error"])
+				})
+		}
+	})
+
 	t.Run("When trying to override inherited permissions with lower precedence", func(t *testing.T) {
 		origNewGuardian := guardian.New
 		origNewFolderService := dashboards.NewFolderService
