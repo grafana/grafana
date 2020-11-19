@@ -356,7 +356,22 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	}
 
 	pluginCommon.PluginDir = filepath.Dir(pluginJSONFilePath)
-	pluginCommon.Signature = getPluginSignatureState(s.log, &pluginCommon)
+	pluginCommon.Files, err = collectPluginFilesWithin(pluginCommon.PluginDir)
+	if err != nil {
+		s.log.Debug("Could not collect plugin file information in directory",
+			"pluginID", pluginCommon.Id, "dir", pluginCommon.PluginDir)
+		return err
+	}
+
+	signatureState, err := getPluginSignatureState(s.log, &pluginCommon)
+	if err != nil {
+		s.log.Debug("Could not get plugin signature state",
+			"pluginID", pluginCommon.Id, "err", err)
+		return err
+	}
+	pluginCommon.Signature = signatureState.Status
+	pluginCommon.SignatureType = signatureState.Type
+	pluginCommon.SignatureOrg = signatureState.SigningOrg
 
 	s.plugins[currentDir] = &pluginCommon
 
@@ -485,4 +500,21 @@ func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 		return nil, err
 	}
 	return data, nil
+}
+
+// gets plugin filenames that require verification for plugin signing
+func collectPluginFilesWithin(rootDir string) ([]string, error) {
+	var files []string
+
+	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+		if !info.IsDir() && info.Name() != "MANIFEST.txt" {
+			file, err := filepath.Rel(rootDir, path)
+			if err != nil {
+				return err
+			}
+			files = append(files, file)
+		}
+		return nil
+	})
+	return files, err
 }

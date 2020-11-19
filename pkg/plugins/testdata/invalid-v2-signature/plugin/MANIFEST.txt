@@ -1,0 +1,62 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+{
+  "manifestVersion": "2.0.0",
+  "signatureType": "grafana",
+  "signedByOrg": "grafana",
+  "signedByOrgName": "grafana",
+  "plugin": "test-plugin",
+  "version": "1.0.0",
+  "time": 1605277453328,
+  "keyId": "123456789",
+  "files": {
+    "plugin.json": "8980ba28cf74412fc6e6f4f58e97c090eacc538a312ff71007a3f96b112fc076",
+    "module.js.map": "4dbefdd5b6019a8394180de27e1925cab414d89b8c2dd03a251b44b7ed6f1ad0",
+    "panel-triggers/plugin.json": "614a19f021938707b3e3726747c23a8f78668dc578370cc5a3fc0aba95d90a6f",
+    "panel-triggers/module.js.map": "9b24271193d32e1915d4e0023afe17676df40aeb6be3f3f424cdde3bf4f65825",
+    "panel-triggers/img/icn-zabbix-problems-panel.svg": "e9afa313c485976d9ea4f6735bdc71af271fde5d72963e3c461d9a10144bd229",
+    "panel-triggers/partials/options_tab.html": "8780236792cd7ceb9f3670c0452331b396f6bc6890d2f4568d58d53e8556ba09",
+    "panel-triggers/partials/module.html": "1a3a844c81f7944398edf0972567e7d446d2a752878af8a720a179d2ee12ae08",
+    "panel-triggers/module.js": "c0a8766918d171bcfbe7c436b91e6af861d14a3c18a9dc4a4d03d3d3fe731020",
+    "zabbix-plugin_linux_amd64": "9b9e99a5473d2451f2d802b196eec56dfead2987dab6426ef62cf2995025bddb",
+    "app_config_ctrl/config.js": "0b2e5869e3f902937ff4b7acc62b17b3798c8ab978e09f7ed4bc4818b68b171f",
+    "app_config_ctrl/config.html": "919b3679cd6b1393eb8e38d8437415ba245367018a2068469af281b0287adce5",
+    "app_config_ctrl/config.js.map": "ee84920b3683443e438629d60486dc68ea1667018a7135d25a5f476f6c4ee9de",
+    "zabbix-plugin_darwin_amd64": "20444e751d8422680995a5cff52017e95d0b1805bce0e206296811e32863e47a",
+    "zabbix-plugin_windows_amd64.exe": "59348f003720e36900b839227b3e9836a309b1e502878d2272fe65d7257ab6e6",
+    "css/grafana-zabbix.light.css.map": "5c91676707e979e0ad7a32ebf98e80ea7abc155ecf10bde9ea97600a1ea926e8",
+    "css/grafana-zabbix.dark.css.map": "a1b4d57c9eae98a225a3784372eeb6bd75f51448b7d9799eed3e9406827286ef",
+    "css/grafana-zabbix.light.css": "a7ede4541c60085e7f687e9902afddf73d6da139afa63c476dc20552da2f82bd",
+    "css/grafana-zabbix.dark.css": "ee41c317d721b17e8e8aeb08f991feef943c7b2a68e0b320a6f017bbe481642f",
+    "img/screenshot-annotations.png": "b698176703e2af787f58c5856574f55918c468ae69635b3b9e76b3fe2611a0d6",
+    "img/screenshot-metric_editor.png": "c99dce5cbcc4858bcb4a432e73c051963178e948014b1fb5689dce17a5624f73",
+    "img/screenshot-dashboard01.png": "bb465a73a27ab39e02846cfcd1d551da34e2d2367370ba65bc0dd035d879bd81",
+    "img/screenshot-showcase.png": "5be71aacb80a513e7838b99bdeeed246b8d518cb6a846905541806e52dc291f8",
+    "img/screenshot-triggers.png": "95bba466dbd9e8eefbe488e83a486e2af5621ec2bbf6bc22f49b4d04a5ea300b",
+    "img/icn-zabbix-app.svg": "406bfc69249278c8d0f97462fea735639b05328229d887c2e6b10bf97592fbad",
+    "README.md": "3ea0978feb3de3979c1d269ec33b901a042f48becced2d50c3240fe391ea8a17",
+    "datasource-zabbix/plugin.json": "a1c2acb8a442ebe2f26c6aca44a1f2d5e8ef8c3b84c6fa2aaf93b9fe779643c1",
+    "datasource-zabbix/module.js.map": "08f7a2c4cc718a6cd185f80bfaacc132572e64f67a96cceb4a02360fde2d41bf",
+    "datasource-zabbix/query_help.md": "77ed4ea817540d043512057915b6387f6ccf910f8efde7d428b9add7f6142e2b",
+    "datasource-zabbix/img/icn-zabbix-datasource.svg": "406bfc69249278c8d0f97462fea735639b05328229d887c2e6b10bf97592fbad",
+    "datasource-zabbix/partials/query.editor.html": "941658b08f6d9ebcb60ec7a0fb48614d3c30653e1863e56f86196a56a74c499a",
+    "datasource-zabbix/partials/annotations.editor.html": "6aaa8d966cea4e9b1dfffd3e75956c6877481df459efaed9913eb2cc81fec182",
+    "datasource-zabbix/module.js": "2be47f4b66de688348818c652a708eaaa3336c82a7d191da18dbedd78603be55",
+    "CHANGELOG.md": "da4bb9f61f36fa77ac52ee2eb32285e78b09cc9dc8f38a1cd6059a5df796affd",
+    "dashboards/template_linux_server.json": "c1df05a5e8f78d3c9e0f9cfb6686e227273e25ac1f7795ef3d401d95d7107fb0",
+    "dashboards/zabbix_server_dashboard.json": "7b26d56de5232460dcadeedd0e7947a2d64f365307f97ea588aa6b469ce2a1a0",
+    "dashboards/zabbix_system_status.json": "20b65122a9e39b6d0fc5245bd339e37bf46b662eedf5c3d924acc313b5b4b859",
+    "module.js": "10cb08ceb5de028eaff13da184b9279675ca308320fa60d1307e92f952ee2f5c"
+  }
+}
+-----BEGIN PGP SIGNATURE-----
+Version: OpenPGP.js v4.10.1
+Comment: https://openpgpjs.org
+
+wqAEARMKAAYFAl+ulw0ACgkQfk0ManCIZucdMgIHRA3yOXKIZI/lzYnHtcFr
+sG0Z3WPYvp+xeAj1mcQ3RGZNfbMJbSKDw7pQpGGQdWfkADFQve/MfWjc6/08
+oj52sHgCCNGyp7ga3jXvNPJxoE8X8onemiafPaT0RruHqu8yLWiheexrL8fD
+ZJkM77SkpP3r5BYjzSBZ0RQ27bi8+tqmnIYT
+=+9ZI
+-----END PGP SIGNATURE-----

@@ -21,6 +21,12 @@ var (
 	PluginStateAlpha PluginState = "alpha"
 )
 
+type PluginSignatureState struct {
+	Status     PluginSignature
+	Type       PluginSignatureType
+	SigningOrg string
+}
+
 type PluginSignature string
 
 const (
@@ -29,6 +35,15 @@ const (
 	PluginSignatureInvalid  PluginSignature = "invalid"  // invalid signature
 	PluginSignatureModified PluginSignature = "modified" // valid signature, but content mismatch
 	PluginSignatureUnsigned PluginSignature = "unsigned" // no MANIFEST file
+)
+
+type PluginSignatureType string
+
+const (
+	Grafana    PluginSignatureType = "grafana"
+	Commercial PluginSignatureType = "commercial"
+	Community  PluginSignatureType = "community"
+	Private    PluginSignatureType = "private"
 )
 
 type PluginNotFoundError struct {
@@ -77,10 +92,13 @@ type PluginBase struct {
 	Signature    PluginSignature    `json:"signature"`
 	Backend      bool               `json:"backend"`
 
-	IncludedInAppId string `json:"-"`
-	PluginDir       string `json:"-"`
-	DefaultNavUrl   string `json:"-"`
-	IsCorePlugin    bool   `json:"-"`
+	IncludedInAppId string              `json:"-"`
+	PluginDir       string              `json:"-"`
+	DefaultNavUrl   string              `json:"-"`
+	IsCorePlugin    bool                `json:"-"`
+	Files           []string            `json:"-"`
+	SignatureType   PluginSignatureType `json:"-"`
+	SignatureOrg    string              `json:"-"`
 
 	GrafanaNetVersion   string `json:"-"`
 	GrafanaNetHasUpdate bool   `json:"-"`
@@ -114,6 +132,8 @@ func (pb *PluginBase) registerPlugin(base *PluginBase) error {
 	// Copy relevant fields from the base
 	pb.PluginDir = base.PluginDir
 	pb.Signature = base.Signature
+	pb.SignatureType = base.SignatureType
+	pb.SignatureOrg = base.SignatureOrg
 
 	Plugins[pb.Id] = pb
 	return nil
