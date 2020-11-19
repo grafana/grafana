@@ -195,7 +195,7 @@ func TestFolderService(t *testing.T) {
 
 			for _, tc := range testCases {
 				actualError := toFolderError(tc.ActualError)
-				require.EqualErrorf(t, actualError, tc.ExpectedError.Error(),
+				assert.EqualErrorf(t, actualError, tc.ExpectedError.Error(),
 					"For error '%s' expected error '%s', actual '%s'", tc.ActualError, tc.ExpectedError, actualError)
 			}
 		})
