@@ -10,7 +10,7 @@ const isGreaterValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> 
   get: options => {
     return (valueIndex: number, field: Field) => {
       const value = field.values.get(valueIndex);
-      if (typeof value !== 'number') {
+      if (isNaN(value)) {
         return false;
       }
       return value > options.value;

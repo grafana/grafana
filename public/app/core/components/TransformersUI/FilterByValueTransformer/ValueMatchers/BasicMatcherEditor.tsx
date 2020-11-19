@@ -3,12 +3,18 @@ import { Input } from '@grafana/ui';
 import { BasicValueMatcherOptions } from '@grafana/data/src/transformations/matchers/valueMatchers/types';
 import { ValueMatcherUIProps, ValueMatcherUIRegistryItem, ValueMatcherValidator } from './types';
 import { ValueMatcherID } from '@grafana/data';
-import { isNumber } from 'lodash';
+import { isNumber, isUndefined } from 'lodash';
+
+interface EditorConfig<T> {
+  defaultValue: T;
+  validator: ValueMatcherValidator<BasicValueMatcherOptions>;
+}
 
 export function basicMatcherEditor<T = any>(
-  validator: ValueMatcherValidator<BasicValueMatcherOptions>
+  config: EditorConfig<T>
 ): React.FC<ValueMatcherUIProps<BasicValueMatcherOptions<T>>> {
   return ({ options, onChange }) => {
+    const { validator, defaultValue } = config;
     const [isInvalid, setInvalid] = useState(validator(options));
 
     const onChangeValue = useCallback(
@@ -30,7 +36,7 @@ export function basicMatcherEditor<T = any>(
         }
         onChange({
           ...options,
-          value: convertToType<T>(event.currentTarget.value),
+          value: convertToType(defaultValue, event.currentTarget.value),
         });
       },
       [options, onChange, isInvalid]
@@ -41,7 +47,7 @@ export function basicMatcherEditor<T = any>(
         <Input
           className="flex-grow-1"
           invalid={isInvalid}
-          defaultValue={String(options.value)}
+          defaultValue={String(options.value ?? defaultValue)}
           placeholder="Value"
           onChange={onChangeValue}
           onBlur={onChangeOptions}
@@ -51,7 +57,15 @@ export function basicMatcherEditor<T = any>(
   };
 }
 
-function convertToType<T>(value?: string) {
+function convertToType<T>(defaultValue: T, value?: string) {
+  if (isUndefined(value)) {
+    return defaultValue;
+  }
+
+  if (isNumber(defaultValue)) {
+    return (parseInt(value, 10) as any) as T;
+  }
+
   return (value as any) as T;
 }
 
@@ -60,7 +74,12 @@ export const getBasicValueMatchers = (): Array<ValueMatcherUIRegistryItem<BasicV
     {
       name: 'Is greater',
       id: ValueMatcherID.greater,
-      component: basicMatcherEditor<number>(options => isNumber(options.value)),
+      component: basicMatcherEditor<number>({
+        defaultValue: 0,
+        validator: options => {
+          return !isNaN(options.value);
+        },
+      }),
     },
   ];
 };
