@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -31,7 +32,7 @@ func getFSDataSources(c *models.ReqContext, enabledPlugins *plugins.EnabledPlugi
 		}
 
 		if err := bus.Dispatch(&dsFilterQuery); err != nil {
-			if err != bus.ErrHandlerNotFound {
+			if !errors.Is(err, bus.ErrHandlerNotFound) {
 				return nil, err
 			}
 

@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -35,7 +37,7 @@ func ResetPassword(c *models.ReqContext, form dtos.ResetUserPasswordForm) Respon
 	query := models.ValidateResetPasswordCodeQuery{Code: form.Code}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrInvalidEmailCode {
+		if errors.Is(err, models.ErrInvalidEmailCode) {
 			return Error(400, "Invalid or expired reset password code", nil)
 		}
 		return Error(500, "Unknown error validating email code", err)

@@ -2,6 +2,7 @@ package grpcplugin
 
 import (
 	"context"
+	"errors"
 	"io"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -143,11 +144,11 @@ func (c *clientV2) CallResource(ctx context.Context, req *backend.CallResourceRe
 				return backendplugin.ErrMethodNotImplemented
 			}
 
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				return nil
 			}
 
-			return errutil.Wrap("Failed to receive call resource response", err)
+			return errutil.Wrap("failed to receive call resource response", err)
 		}
 
 		if err := sender.Send(backend.FromProto().CallResourceResponse(protoResp)); err != nil {

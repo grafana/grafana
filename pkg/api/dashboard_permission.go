@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -77,8 +78,7 @@ func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboar
 
 	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
 		if err != nil {
-			if err == guardian.ErrGuardianPermissionExists ||
-				err == guardian.ErrGuardianOverride {
+			if errors.Is(err, guardian.ErrGuardianPermissionExists) || errors.Is(err, guardian.ErrGuardianOverride) {
 				return Error(400, err.Error(), err)
 			}
 
@@ -89,7 +89,8 @@ func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboar
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrDashboardAclInfoMissing || err == models.ErrDashboardPermissionDashboardEmpty {
+		if errors.Is(err, models.ErrDashboardAclInfoMissing) ||
+			errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
 			return Error(409, err.Error(), err)
 		}
 		return Error(500, "Failed to create permission", err)
