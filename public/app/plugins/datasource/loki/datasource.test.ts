@@ -258,7 +258,7 @@ describe('LokiDatasource', () => {
 
         expect(timeSeries.meta?.preferredVisualisationType).toBe('graph');
         expect(timeSeries.refId).toBe('B');
-        expect(timeSeries.datapoints[0]).toEqual([[1.1, 1605715380000]]);
+        expect(timeSeries.datapoints[0]).toEqual([1.1, 1605715380000]);
       });
     });
 
