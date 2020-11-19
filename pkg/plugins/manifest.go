@@ -165,7 +165,7 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) (*PluginSignatu
 	for p, hash := range manifest.Files {
 		// Verify file is listed in the manifest and exists in the plugin dir
 		if _, exists := pluginFileInSignature[p]; !exists && manifest.isV2() {
-			log.Warn("Plugin file listed in the manifest was not found in the plugin directory", "plugin", plugin.Id, "filename", p, "dir", plugin.PluginDir)
+			log.Warn("Plugin file listed in the manifest was not found", "plugin", plugin.Id, "filename", p, "dir", plugin.PluginDir)
 			return &PluginSignatureState{
 				Status: PluginSignatureModified,
 			}, nil
