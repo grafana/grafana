@@ -18,7 +18,7 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
 	dsID := c.ParamsInt64(":id")
 	ds, err := hs.DatasourceCache.GetDatasource(dsID, c.SignedInUser, c.SkipCache)
 	if err != nil {
-		if err == models.ErrDataSourceAccessDenied {
+		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			c.JsonApiErr(403, "Access denied to datasource", err)
 			return
 		}

@@ -35,7 +35,7 @@ func AddOrgInvite(c *models.ReqContext, inviteDto dtos.AddInviteForm) Response {
 	// first try get existing user
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: inviteDto.LoginOrEmail}
 	if err := bus.Dispatch(&userQuery); err != nil {
-		if err != models.ErrUserNotFound {
+		if !errors.Is(err, models.ErrUserNotFound) {
 			return Error(500, "Failed to query db for existing user check", err)
 		}
 	} else {
@@ -79,7 +79,7 @@ func AddOrgInvite(c *models.ReqContext, inviteDto dtos.AddInviteForm) Response {
 		}
 
 		if err := bus.Dispatch(&emailCmd); err != nil {
-			if err == models.ErrSmtpNotEnabled {
+			if errors.Is(err, models.ErrSmtpNotEnabled) {
 				return Error(412, err.Error(), err)
 			}
 
@@ -101,7 +101,7 @@ func inviteExistingUserToOrg(c *models.ReqContext, user *models.User, inviteDto 
 	// user exists, add org role
 	createOrgUserCmd := models.AddOrgUserCommand{OrgId: c.OrgId, UserId: user.Id, Role: inviteDto.Role}
 	if err := bus.Dispatch(&createOrgUserCmd); err != nil {
-		if err == models.ErrOrgUserAlreadyAdded {
+		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {
 			return Error(412, fmt.Sprintf("User %s is already added to organization", inviteDto.LoginOrEmail), err)
 		}
 		return Error(500, "Error while trying to create org user", err)
@@ -143,7 +143,7 @@ func RevokeInvite(c *models.ReqContext) Response {
 func GetInviteInfoByCode(c *models.ReqContext) Response {
 	query := models.GetTempUserByCodeQuery{Code: c.Params(":code")}
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrTempUserNotFound {
+		if errors.Is(err, models.ErrTempUserNotFound) {
 			return Error(404, "Invite not found", nil)
 		}
 		return Error(500, "Failed to get invite", err)
@@ -166,7 +166,7 @@ func (hs *HTTPServer) CompleteInvite(c *models.ReqContext, completeInvite dtos.C
 	query := models.GetTempUserByCodeQuery{Code: completeInvite.InviteCode}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrTempUserNotFound {
+		if errors.Is(err, models.ErrTempUserNotFound) {
 			return Error(404, "Invite not found", nil)
 		}
 		return Error(500, "Failed to get invite", err)
@@ -234,7 +234,7 @@ func applyUserInvite(user *models.User, invite *models.TempUserDTO, setActive bo
 	// add to org
 	addOrgUserCmd := models.AddOrgUserCommand{OrgId: invite.OrgId, UserId: user.Id, Role: invite.Role}
 	if err := bus.Dispatch(&addOrgUserCmd); err != nil {
-		if err != models.ErrOrgUserAlreadyAdded {
+		if !errors.Is(err, models.ErrOrgUserAlreadyAdded) {
 			return false, Error(500, "Error while trying to create org user", err)
 		}
 	}

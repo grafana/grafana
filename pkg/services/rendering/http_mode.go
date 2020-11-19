@@ -2,6 +2,7 @@ package rendering
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -79,7 +80,7 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 	defer resp.Body.Close()
 
 	// check for timeout first
-	if reqContext.Err() == context.DeadlineExceeded {
+	if errors.Is(reqContext.Err(), context.DeadlineExceeded) {
 		rs.log.Info("Rendering timed out")
 		return nil, ErrTimeout
 	}
@@ -99,7 +100,7 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
 		// check that we didn't timeout while receiving the response.
-		if reqContext.Err() == context.DeadlineExceeded {
+		if errors.Is(reqContext.Err(), context.DeadlineExceeded) {
 			rs.log.Info("Rendering timed out")
 			return nil, ErrTimeout
 		}
