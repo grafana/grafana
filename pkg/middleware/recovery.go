@@ -17,6 +17,7 @@ package middleware
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -102,7 +103,7 @@ func function(pc uintptr) []byte {
 func Recovery() macaron.Handler {
 	return func(c *macaron.Context) {
 		defer func() {
-			if err := recover(); err != nil {
+			if r := recover(); r != nil {
 				panicLogger := log.Root
 				// try to get request logger
 				if ctx, ok := c.Data["ctx"]; ok {
@@ -110,16 +111,18 @@ func Recovery() macaron.Handler {
 					panicLogger = ctxTyped.Logger
 				}
 
-				// http.ErrAbortHandler is suppressed by default in the http package
-				// and used as a signal for aborting requests. Suppresses stacktrace
-				// since it doesn't add any important information.
-				if err == http.ErrAbortHandler {
-					panicLogger.Error("Request error", "error", err)
-					return
+				if err, ok := r.(error); ok {
+					// http.ErrAbortHandler is suppressed by default in the http package
+					// and used as a signal for aborting requests. Suppresses stacktrace
+					// since it doesn't add any important information.
+					if errors.Is(err, http.ErrAbortHandler) {
+						panicLogger.Error("Request error", "error", err)
+						return
+					}
 				}
 
 				stack := stack(3)
-				panicLogger.Error("Request error", "error", err, "stack", string(stack))
+				panicLogger.Error("Request error", "error", r, "stack", string(stack))
 
 				// if response has already been written, skip.
 				if c.Written() {
@@ -131,8 +134,8 @@ func Recovery() macaron.Handler {
 				c.Data["Theme"] = setting.DefaultTheme
 
 				if setting.Env == setting.Dev {
-					if theErr, ok := err.(error); ok {
-						c.Data["Title"] = theErr.Error()
+					if err, ok := r.(error); ok {
+						c.Data["Title"] = err.Error()
 					}
 
 					c.Data["ErrorMsg"] = string(stack)

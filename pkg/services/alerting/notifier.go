@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -159,11 +160,11 @@ func (n *notificationService) sendNotification(evalContext *EvalContext, notifie
 		}
 
 		err := bus.DispatchCtx(evalContext.Ctx, setPendingCmd)
-		if err == models.ErrAlertNotificationStateVersionConflict {
-			return nil
-		}
-
 		if err != nil {
+			if errors.Is(err, models.ErrAlertNotificationStateVersionConflict) {
+				return nil
+			}
+
 			return err
 		}
 
