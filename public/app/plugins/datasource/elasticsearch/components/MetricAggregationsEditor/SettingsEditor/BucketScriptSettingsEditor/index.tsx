@@ -7,13 +7,13 @@ import { AddRemove } from '../../../AddRemove';
 import { useStatelessReducer, useDispatch } from '../../../../hooks/useStatelessReducer';
 import { MetricPicker } from '../../../MetricPicker';
 import { defaultPipelineVariable } from './utils';
-import pipelineVariablesReducer from './state/reducer';
+import { reducer } from './state/reducer';
 import {
   addPipelineVariable,
   removePipelineVariable,
   renamePipelineVariable,
   changePipelineVariableMetric,
-} from './state/action';
+} from './state/actions';
 import { SettingField } from '../SettingField';
 import { BucketScript, MetricAggregation } from '../../aggregations';
 
@@ -28,7 +28,7 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
   const dispatch = useStatelessReducer(
     newState => upperStateDispatch(changeMetricAttribute(value, 'pipelineVariables', newState)),
     value.pipelineVariables || [],
-    pipelineVariablesReducer
+    reducer
   );
 
   return (
@@ -48,6 +48,7 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
           `}
         >
           {(value.pipelineVariables || [defaultPipelineVariable()]).map((pipelineVar, index) => (
+            // FIXME: name is totally arbitrary and can be duplicated, we should use another key
             <Fragment key={pipelineVar.name}>
               <div
                 className={css`

@@ -8,7 +8,7 @@ import {
   CHANGE_PIPELINE_VARIABLE_METRIC,
 } from './types';
 
-export default (state: PipelineVariable[], action: PipelineVariablesAction) => {
+export const reducer = (state: PipelineVariable[], action: PipelineVariablesAction) => {
   switch (action.type) {
     case ADD_PIPELINE_VARIABLE:
       return [...state, defaultPipelineVariable()];
