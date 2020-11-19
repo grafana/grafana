@@ -8,7 +8,7 @@ import { getFieldDisplayName } from '../../field/fieldState';
 import { getValueMatcher } from '../matchers';
 import { ArrayVector } from '../../vector/ArrayVector';
 
-export enum FilterByValueMode {
+export enum FilterByValueType {
   exclude = 'exclude',
   include = 'include',
 }
@@ -25,7 +25,7 @@ export interface FilterByValueFilter {
 
 export interface FilterByValueTransformerOptions {
   filters: FilterByValueFilter[];
-  mode: FilterByValueMode;
+  type: FilterByValueType;
   match: FilterByValueMatch;
 }
 
@@ -35,14 +35,14 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
   description: 'select a subset of results based on values',
   defaultOptions: {
     filters: [],
-    mode: FilterByValueMode.include,
+    type: FilterByValueType.include,
     match: FilterByValueMatch.any,
   },
 
   operator: options => source => {
     const filters = options.filters;
     const matchAll = options.match === FilterByValueMatch.all;
-    const include = options.mode === FilterByValueMode.include;
+    const include = options.type === FilterByValueType.include;
 
     if (!Array.isArray(filters) || filters.length === 0) {
       return source.pipe(noopTransformer.operator({}));

@@ -37,5 +37,4 @@ export const standardTransformers = {
   ensureColumnsTransformer,
   groupByTransformer,
   mergeTransformer,
-  filterByValueTransformer,
 };
