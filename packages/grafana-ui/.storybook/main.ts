@@ -12,13 +12,16 @@ if (process.env.NODE_ENV !== 'production') {
 module.exports = {
   stories: stories,
   addons: [
+    '@storybook/addon-controls',
     '@storybook/addon-knobs',
     '@storybook/addon-actions',
     '@storybook/addon-docs',
     'storybook-dark-mode/register',
     '@storybook/addon-storysource',
-    '@storybook/addon-controls',
   ],
+  reactOptions: {
+    fastRefresh: true,
+  },
   typescript: {
     check: true,
     reactDocgen: 'react-docgen-typescript',
