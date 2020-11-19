@@ -1,5 +1,5 @@
 import React, { useCallback, useContext } from 'react';
-import uPlot from 'uplot';
+import uPlot, { Series } from 'uplot';
 import { PlotPlugin } from './types';
 import { DataFrame, Field, FieldConfig } from '@grafana/data';
 
@@ -23,7 +23,7 @@ interface PlotPluginsContextType {
 interface PlotContextType extends PlotPluginsContextType {
   isPlotReady: boolean;
   getPlotInstance: () => uPlot;
-  getSeries: () => uPlot.Series[];
+  getSeries: () => Series[];
   getCanvas: () => PlotCanvasContextType;
   canvasRef: any;
   data: DataFrame;

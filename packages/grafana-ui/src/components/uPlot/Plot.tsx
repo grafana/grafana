@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious } from 'react-use';
-import uPlot from 'uplot';
+import uPlot, { Options, AlignedData } from 'uplot';
 import { buildPlotContext, PlotContext } from './context';
 import { pluginLog, preparePlotData, shouldInitialisePlot } from './utils';
 import { usePlotConfig } from './hooks';
@@ -12,7 +12,7 @@ import { PlotProps } from './types';
 export const UPlotChart: React.FC<PlotProps> = props => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [plotInstance, setPlotInstance] = useState<uPlot>();
-  const plotData = useRef<uPlot.AlignedData>();
+  const plotData = useRef<AlignedData>();
 
   // uPlot config API
   const { currentConfig, registerPlugin } = usePlotConfig(props.width, props.height, props.timeZone, props.config);
@@ -106,7 +106,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 };
 
 // Main function initialising uPlot. If final config is not settled it will do nothing
-function initPlot(data: uPlot.AlignedData, config: uPlot.Options, ref: HTMLDivElement) {
+function initPlot(data: AlignedData, config: Options, ref: HTMLDivElement) {
   pluginLog('uPlot core', false, 'initialized with', data, config);
   return new uPlot(config, data, ref);
 }
