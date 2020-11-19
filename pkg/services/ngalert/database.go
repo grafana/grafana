@@ -2,6 +2,7 @@ package ngalert
 
 import (
 	"context"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -116,6 +117,31 @@ func (ng *AlertNG) getAlertDefinitions(cmd *listAlertDefinitionsCommand) error {
 		}
 
 		cmd.Result = alertDefinitions
+		return nil
+	})
+}
+
+// saveAlertDefinition is a handler for saving a new alert definition.
+func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
+	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		alertInstance := &AlertInstance{
+			OrgID:             cmd.OrgID,
+			Labels:            cmd.Labels,
+			CurrentState:      cmd.State,
+			AlertDefinitionID: cmd.AlertDefinitionID,
+			CurrentStateSince: time.Now(),
+			LastEvalTime:      time.Now(), // TODO: Probably better to pass in to the command for more accurate timestamp
+		}
+
+		if err := ng.validateAlertInstance(alertInstance); err != nil {
+			return err
+		}
+
+		if _, err := sess.Insert(alertInstance); err != nil {
+			return err
+		}
+
+		cmd.Result = alertInstance
 		return nil
 	})
 }

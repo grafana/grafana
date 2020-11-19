@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -178,4 +179,19 @@ func createTestAlertDefinition(t *testing.T, ng AlertNG) *AlertDefinition {
 	err := ng.saveAlertDefinition(&cmd)
 	require.NoError(t, err)
 	return cmd.Result
+}
+
+func TestCreatingAlertInstance(t *testing.T) {
+	t.Run("can save new alert instance", func(t *testing.T) {
+		ng := setupTestEnv(t)
+		q := saveAlertInstanceCommand{
+			OrgID:             1,
+			AlertDefinitionID: 1,
+			State:             InstateStateFiring,
+			Labels:            data.Labels{"test": "testValue"},
+		}
+		err := ng.saveAlertInstance(&q)
+		require.NoError(t, err)
+	})
+
 }

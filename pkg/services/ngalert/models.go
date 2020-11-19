@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
@@ -89,4 +90,39 @@ type listAlertDefinitionsCommand struct {
 	OrgID int64 `json:"-"`
 
 	Result []*AlertDefinition
+}
+
+// AlertInstance represent a single alert instance.
+type AlertInstance struct {
+	ID                int64
+	OrgID             int64 `xorm:"org_id"`
+	AlertDefinitionID int64 `xorm:"alert_definition_id"`
+	Labels            data.Labels
+	CurrentState      InstanceStateType
+	CurrentStateSince time.Time
+	LastEvalTime      time.Time
+}
+
+// saveAlertInstanceCommand is the query for saving a new alert instance.
+type saveAlertInstanceCommand struct {
+	OrgID             int64 `json:"-"`
+	AlertDefinitionID int64
+	Labels            data.Labels
+	State             InstanceStateType
+	SignedInUser      *models.SignedInUser `json:"-"`
+	SkipCache         bool                 `json:"-"`
+
+	Result *AlertInstance
+}
+
+type InstanceStateType string
+
+const (
+	InstateStateFiring InstanceStateType = "firing"
+	InstateStateNormal InstanceStateType = "normal"
+)
+
+func (i InstanceStateType) IsValid() bool {
+	return i == InstateStateFiring ||
+		i == InstateStateNormal
 }
