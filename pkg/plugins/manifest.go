@@ -198,7 +198,7 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) (*PluginSignatu
 		pluginFileInSignature[p] = true
 	}
 
-	// Track files that were found but not included in the signature
+	// Track files that were found but not listed in the manifest
 	var unsignedFiles []string
 	for f := range pluginFileInSignature {
 		if inSignature := pluginFileInSignature[f]; !inSignature && manifest.isV2() {
