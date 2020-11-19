@@ -12,17 +12,10 @@ import {
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-import {
-  CloudMonitoringOptions,
-  CloudMonitoringQuery,
-  Filter,
-  MetricDescriptor,
-  QueryType,
-  VariableQueryData,
-} from './types';
+import { CloudMonitoringOptions, CloudMonitoringQuery, Filter, MetricDescriptor, QueryType } from './types';
 import { cloudMonitoringUnitMappings } from './constants';
 import API, { PostResponse } from './api';
-import CloudMonitoringMetricFindQuery from './CloudMonitoringMetricFindQuery';
+import { CloudMonitoringVariableSupport } from './variables';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { from, Observable, of, throwError } from 'rxjs';
 
@@ -38,9 +31,11 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     super(instanceSettings);
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.api = new API(`${instanceSettings.url!}/cloudmonitoring/v3/projects/`);
+
+    this.variables = new CloudMonitoringVariableSupport(this);
   }
 
-  get variables() {
+  getVariables() {
     return this.templateSrv.getVariables().map(v => `$${v.name}`);
   }
 
@@ -137,12 +132,6 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
         })
       )
       .toPromise();
-  }
-
-  async metricFindQuery(query: VariableQueryData) {
-    await this.ensureGCEDefaultProject();
-    const cloudMonitoringMetricFindQuery = new CloudMonitoringMetricFindQuery(this);
-    return cloudMonitoringMetricFindQuery.execute(query);
   }
 
   getTimeSeries(options: DataQueryRequest<CloudMonitoringQuery>): Observable<PostResponse> {
@@ -371,7 +360,8 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
       metricQuery: {
         ...this.interpolateProps(metricQuery, scopedVars),
         projectName: this.templateSrv.replace(
-          metricQuery.projectName ? metricQuery.projectName : this.getDefaultProject()
+          metricQuery.projectName ? metricQuery.projectName : this.getDefaultProject(),
+          scopedVars
         ),
         filters: this.interpolateFilters(metricQuery.filters || [], scopedVars),
         groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], scopedVars),

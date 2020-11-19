@@ -266,7 +266,7 @@ export class AnnoListPanel extends PureComponent<Props, State> {
     // Previously we showed inidication that it covered all time
     // { timeInfo && (
     //   <span className="panel-time-info">
-    //     <i className="fa fa-clock-o" /> {timeInfo}
+    //     <Icon name="clock-nine" /> {timeInfo}
     //   </span>
     // )}
 

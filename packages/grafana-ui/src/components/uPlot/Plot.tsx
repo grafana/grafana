@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { css } from 'emotion';
-import uPlot from 'uplot';
 import { usePrevious } from 'react-use';
+import uPlot from 'uplot';
 import { buildPlotContext, PlotContext } from './context';
 import { pluginLog, preparePlotData, shouldInitialisePlot } from './utils';
 import { usePlotConfig } from './hooks';
@@ -16,11 +15,8 @@ export const UPlotChart: React.FC<PlotProps> = props => {
   const plotData = useRef<uPlot.AlignedData>();
 
   // uPlot config API
-  const { currentConfig, addSeries, addAxis, addScale, registerPlugin } = usePlotConfig(
-    props.width,
-    props.height,
-    props.timeZone
-  );
+  const { currentConfig, registerPlugin } = usePlotConfig(props.width, props.height, props.timeZone, props.config);
+
   const prevConfig = usePrevious(currentConfig);
 
   const getPlotInstance = useCallback(() => {
@@ -98,29 +94,13 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 
   // Memoize plot context
   const plotCtx = useMemo(() => {
-    return buildPlotContext(
-      Boolean(plotInstance),
-      canvasRef,
-      props.data,
-      registerPlugin,
-      addSeries,
-      addAxis,
-      addScale,
-      getPlotInstance
-    );
-  }, [plotInstance, canvasRef, props.data, registerPlugin, addSeries, addAxis, addScale, getPlotInstance]);
+    return buildPlotContext(Boolean(plotInstance), canvasRef, props.data, registerPlugin, getPlotInstance);
+  }, [plotInstance, canvasRef, props.data, registerPlugin, getPlotInstance]);
 
   return (
     <PlotContext.Provider value={plotCtx}>
-      <div
-        className={css`
-          position: relative;
-          width: ${props.width}px;
-          height: ${props.height}px;
-        `}
-      >
-        {props.children}
-      </div>
+      <div ref={plotCtx.canvasRef} />
+      {props.children}
     </PlotContext.Provider>
   );
 };

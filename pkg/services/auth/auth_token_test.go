@@ -514,7 +514,7 @@ func createTestContext(t *testing.T) *testContext {
 }
 
 type testContext struct {
-	sqlstore     *sqlstore.SqlStore
+	sqlstore     *sqlstore.SQLStore
 	tokenService *UserAuthTokenService
 }
 

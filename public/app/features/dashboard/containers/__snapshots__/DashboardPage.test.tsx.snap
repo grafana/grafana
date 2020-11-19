@@ -332,9 +332,8 @@ exports[`DashboardPage Dashboard is fetching slowly Should render slow init stat
         justify="center"
         spacing="xs"
       >
-        <Icon
-          className="fa-spin"
-          name="fa fa-spinner"
+        <Component
+          inline={true}
         />
          
         Fetching
