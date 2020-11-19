@@ -3,7 +3,7 @@ title = "Getting Started"
 weight = 10
 +++
 
-# Getting Started
+# Getting started
 
 This section provides a high-level look at Grafana, the Grafana process, and Grafana features. It's a good place to learn how to use the Grafana software.
 
