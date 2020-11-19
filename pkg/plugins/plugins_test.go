@@ -178,7 +178,7 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.NotNil(t, Plugins[pluginId])
 		assert.Equal(t, "datasource", Plugins[pluginId].Type)
 		assert.Equal(t, "Test", Plugins[pluginId].Name)
-		assert.Equal(t, "test", Plugins[pluginId].Id)
+		assert.Equal(t, pluginId, Plugins[pluginId].Id)
 		assert.Equal(t, "1.0.0", Plugins[pluginId].Info.Version)
 		assert.Equal(t, PluginSignatureValid, Plugins[pluginId].Signature)
 		assert.Equal(t, Grafana, Plugins[pluginId].SignatureType)
@@ -198,15 +198,13 @@ func TestPluginManager_Init(t *testing.T) {
 		setting.PluginsPath = "testdata/valid-v2-pvt-signature"
 
 		pm := &PluginManager{
-			Cfg:                  &setting.Cfg{},
-			BackendPluginManager: &fakeBackendPluginManager{},
+			Cfg: &setting.Cfg{},
 		}
 		err := pm.Init()
 		require.NoError(t, err)
-		assert.Equal(t, []error{fmt.Errorf(`plugin "test" has an invalid signature`)}, pm.scanningErrors)
 
-		pluginId := "test"
-		assert.Nil(t, Plugins[pluginId])
+		assert.Equal(t, []error{fmt.Errorf(`plugin "test" has an invalid signature`)}, pm.scanningErrors)
+		assert.Nil(t, Plugins[("test")])
 	})
 
 	t.Run("With back-end plugin with valid v2 private signature", func(t *testing.T) {
@@ -231,7 +229,7 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.NotNil(t, Plugins[pluginId])
 		assert.Equal(t, "datasource", Plugins[pluginId].Type)
 		assert.Equal(t, "Test", Plugins[pluginId].Name)
-		assert.Equal(t, "test", Plugins[pluginId].Id)
+		assert.Equal(t, pluginId, Plugins[pluginId].Id)
 		assert.Equal(t, "1.0.0", Plugins[pluginId].Info.Version)
 		assert.Equal(t, PluginSignatureValid, Plugins[pluginId].Signature)
 		assert.Equal(t, Private, Plugins[pluginId].SignatureType)
