@@ -3,8 +3,8 @@ package ngalert
 import (
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
 // validateAlertDefinition validates that the alert definition contains at least one alert query
@@ -20,7 +20,7 @@ func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, sig
 			return err
 		}
 
-		if datasourceID == eval.DefaultExprDatasourceID {
+		if datasourceID == expr.DatasourceID {
 			return nil
 		}
 
