@@ -75,30 +75,21 @@ Hash: SHA512
   ],
   "plugin": "test",
   "version": "1.0.0",
-  "time": 1605791563212,
+  "time": 1605807018050,
   "keyId": "7e4d0c6a708866e7",
   "files": {
-    "test_windows_amd64.exe": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "LICENSE": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "test_linux_arm64": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "module.js.LICENSE.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "plugin.json": "d41d43201f70d5f5c38e7ed8cfcc0f31ebcb37bf10a115a25e272c794773b6ba",
-    "README.md": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "img/logo.svg": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "test_linux_amd64": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "module.js": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "test_darwin_amd64": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    "plugin.json": "2bb467c0bfd6c454551419efe475b8bf8573734e73c7bab52b14842adb62886f"
   }
 }
 -----BEGIN PGP SIGNATURE-----
 Version: OpenPGP.js v4.10.1
 Comment: https://openpgpjs.org
 
-wqIEARMKAAYFAl+2b0sACgkQfk0ManCIZudstwIJAVDPZ52Ex8uAC1e3ZfiS
-I9bqpuih12iMIb62b1Y+0ji9HUvTC3nZ4s2jewRsioN+mLiFFyMtANUA3JNR
-I2q53egCAgkBHXxVsl5abaWbpqX0InC09dymwEsqRYvbDooamMB4VwHWFHrG
-92cl2W+dRyoAOmfx5sf9nOMw2tCPJZaKnhM4fEE=
-=Fhr8
+wqIEARMKAAYFAl+2q6oACgkQfk0ManCIZudmzwIJAXWz58cd/91rTXszKPnE
+xbVEvERCbjKTtPBQBNQyqEvV+Ig3MuBSNOVy2SOGrMsdbS6lONgvgt4Cm+iS
+wV+vYifkAgkBJtg/9DMB7/iX5O0h49CtSltcpfBFXlGqIeOwRac/yENzRzAA
+khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
+=rLIE
 -----END PGP SIGNATURE-----`
 
 	t.Run("valid manifest", func(t *testing.T) {
@@ -108,16 +99,14 @@ I2q53egCAgkBHXxVsl5abaWbpqX0InC09dymwEsqRYvbDooamMB4VwHWFHrG
 		require.NotNil(t, manifest)
 		assert.Equal(t, "test", manifest.Plugin)
 		assert.Equal(t, "1.0.0", manifest.Version)
-		assert.Equal(t, int64(1605791563212), manifest.Time)
+		assert.Equal(t, int64(1605807018050), manifest.Time)
 		assert.Equal(t, "7e4d0c6a708866e7", manifest.KeyID)
 		assert.Equal(t, "2.0.0", manifest.ManifestVersion)
 		assert.Equal(t, Private, manifest.SignatureType)
 		assert.Equal(t, "willbrowne", manifest.SignedByOrg)
 		assert.Equal(t, "Will Browne", manifest.SignedByOrgName)
 		assert.Equal(t, []string{"http://localhost:3000/"}, manifest.RootUrls)
-		expectedFiles := []string{"LICENSE", "README.md", "img/logo.svg", "module.js", "module.js.LICENSE.txt",
-			"plugin.json", "test_darwin_amd64", "test_linux_amd64", "test_linux_arm64", "test_windows_amd64.exe"}
-		assert.Equal(t, expectedFiles, fileList(manifest))
+		assert.Equal(t, []string{"plugin.json"}, fileList(manifest))
 	})
 }
 
