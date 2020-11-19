@@ -25,8 +25,9 @@ describe('ConfigEditor', () => {
     //@ts-ignore
     delete options.jsonData.timeField;
     delete options.jsonData.maxConcurrentShardRequests;
+    delete options.jsonData.pplSupportEnabled;
 
-    expect.assertions(3);
+    expect.assertions(4);
 
     mount(
       <ConfigEditor
@@ -34,6 +35,7 @@ describe('ConfigEditor', () => {
           expect(options.jsonData.esVersion).toBe(5);
           expect(options.jsonData.timeField).toBe('@timestamp');
           expect(options.jsonData.maxConcurrentShardRequests).toBe(256);
+          expect(options.jsonData.pplSupportEnabled).toBe(false);
         }}
         options={options}
       />
@@ -41,7 +43,7 @@ describe('ConfigEditor', () => {
   });
 
   it('should not apply default if values are set', () => {
-    expect.assertions(3);
+    expect.assertions(4);
 
     mount(
       <ConfigEditor
@@ -49,6 +51,7 @@ describe('ConfigEditor', () => {
           expect(options.jsonData.esVersion).toBe(70);
           expect(options.jsonData.timeField).toBe('@time');
           expect(options.jsonData.maxConcurrentShardRequests).toBe(300);
+          expect(options.jsonData.pplSupportEnabled).toBe(true);
         }}
         options={createDefaultConfigOptions()}
       />

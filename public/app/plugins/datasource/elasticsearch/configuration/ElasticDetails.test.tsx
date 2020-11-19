@@ -4,7 +4,7 @@ import { mount } from 'enzyme';
 import { ElasticDetails } from './ElasticDetails';
 import { createDefaultConfigOptions } from './mocks';
 import { LegacyForms } from '@grafana/ui';
-const { Select } = LegacyForms;
+const { Select, Switch } = LegacyForms;
 
 describe('ElasticDetails', () => {
   it('should render without error', () => {
@@ -84,6 +84,37 @@ describe('ElasticDetails', () => {
           tc.expectedMaxConcurrentShardRequests
         );
       });
+    });
+  });
+
+  describe('PPL support', () => {
+    it('should render switch if version high enough', () => {
+      const options = createDefaultConfigOptions();
+      options.jsonData.esVersion = 70;
+      const wrapper = mount(<ElasticDetails onChange={() => {}} value={options} />);
+      expect(wrapper.find({ label: 'PPL support' }).length).toBe(1);
+    });
+
+    it('should not render switch if version is low', () => {
+      const options = createDefaultConfigOptions();
+      options.jsonData.esVersion = 60;
+      const wrapper = mount(<ElasticDetails onChange={() => {}} value={options} />);
+      expect(wrapper.find({ label: 'PPL support' }).length).toBe(0);
+    });
+
+    it('should set pplSupportEnabled', () => {
+      const onChangeMock = jest.fn();
+      const options = createDefaultConfigOptions();
+      options.jsonData.pplSupportEnabled = false;
+      const wrapper = mount(<ElasticDetails onChange={onChangeMock} value={options} />);
+
+      const switchEl = wrapper.find({ label: 'PPL support' }).find(Switch);
+      const event = {
+        currentTarget: { checked: true },
+      } as React.ChangeEvent<HTMLInputElement>;
+      switchEl.props().onChange(event);
+
+      expect(onChangeMock.mock.calls[0][0].jsonData.pplSupportEnabled).toBe(true);
     });
   });
 });

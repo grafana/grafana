@@ -1,6 +1,6 @@
 import React from 'react';
 import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui';
-const { Select, Input, FormField } = LegacyForms;
+const { Select, Input, FormField, Switch } = LegacyForms;
 import { ElasticsearchOptions } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 
@@ -144,6 +144,17 @@ export const ElasticDetails = (props: Props) => {
             />
           </div>
         </div>
+        {value.jsonData.esVersion >= 70 && (
+          <div className="gf-form">
+            <Switch
+              label="PPL support"
+              labelClass="width-10"
+              tooltip="Allow Piped Processing Language as an alternative query syntax in the Elasticsearch query editor."
+              checked={value.jsonData.pplSupportEnabled || false}
+              onChange={jsonDataSwitchChangeHandler('pplSupportEnabled', value, onChange)}
+            />
+          </div>
+        )}
       </div>
     </>
   );
@@ -168,6 +179,20 @@ const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['va
     jsonData: {
       ...value.jsonData,
       [key]: event.currentTarget.value,
+    },
+  });
+};
+
+const jsonDataSwitchChangeHandler = (
+  key: keyof ElasticsearchOptions,
+  value: Props['value'],
+  onChange: Props['onChange']
+) => (event: React.SyntheticEvent<HTMLInputElement>) => {
+  onChange({
+    ...value,
+    jsonData: {
+      ...value.jsonData,
+      [key]: event.currentTarget.checked,
     },
   });
 };
