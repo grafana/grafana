@@ -22,19 +22,19 @@ var (
 )
 
 type PluginSignatureState struct {
-	Status     PluginSignature
+	Status     PluginSignatureStatus
 	Type       PluginSignatureType
 	SigningOrg string
 }
 
-type PluginSignature string
+type PluginSignatureStatus string
 
 const (
-	PluginSignatureInternal PluginSignature = "internal" // core plugin, no signature
-	PluginSignatureValid    PluginSignature = "valid"    // signed and accurate MANIFEST
-	PluginSignatureInvalid  PluginSignature = "invalid"  // invalid signature
-	PluginSignatureModified PluginSignature = "modified" // valid signature, but content mismatch
-	PluginSignatureUnsigned PluginSignature = "unsigned" // no MANIFEST file
+	PluginSignatureInternal PluginSignatureStatus = "internal" // core plugin, no signature
+	PluginSignatureValid    PluginSignatureStatus = "valid"    // signed and accurate MANIFEST
+	PluginSignatureInvalid  PluginSignatureStatus = "invalid"  // invalid signature
+	PluginSignatureModified PluginSignatureStatus = "modified" // valid signature, but content mismatch
+	PluginSignatureUnsigned PluginSignatureStatus = "unsigned" // no MANIFEST file
 )
 
 type PluginSignatureType string
@@ -77,20 +77,20 @@ type PluginLoader interface {
 
 // PluginBase is the base plugin type.
 type PluginBase struct {
-	Type         string             `json:"type"`
-	Name         string             `json:"name"`
-	Id           string             `json:"id"`
-	Info         PluginInfo         `json:"info"`
-	Dependencies PluginDependencies `json:"dependencies"`
-	Includes     []*PluginInclude   `json:"includes"`
-	Module       string             `json:"module"`
-	BaseUrl      string             `json:"baseUrl"`
-	Category     string             `json:"category"`
-	HideFromList bool               `json:"hideFromList,omitempty"`
-	Preload      bool               `json:"preload"`
-	State        PluginState        `json:"state,omitempty"`
-	Signature    PluginSignature    `json:"signature"`
-	Backend      bool               `json:"backend"`
+	Type         string                `json:"type"`
+	Name         string                `json:"name"`
+	Id           string                `json:"id"`
+	Info         PluginInfo            `json:"info"`
+	Dependencies PluginDependencies    `json:"dependencies"`
+	Includes     []*PluginInclude      `json:"includes"`
+	Module       string                `json:"module"`
+	BaseUrl      string                `json:"baseUrl"`
+	Category     string                `json:"category"`
+	HideFromList bool                  `json:"hideFromList,omitempty"`
+	Preload      bool                  `json:"preload"`
+	State        PluginState           `json:"state,omitempty"`
+	Signature    PluginSignatureStatus `json:"signature"`
+	Backend      bool                  `json:"backend"`
 
 	IncludedInAppId string              `json:"-"`
 	PluginDir       string              `json:"-"`
