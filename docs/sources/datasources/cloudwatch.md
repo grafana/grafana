@@ -218,7 +218,7 @@ If you're not currently logged in to the CloudWatch console, the link will forwa
 ### Alerting
 
 Since CloudWatch Logs queries can return numeric data, for example through the use of the `stats` command, alerts are supported.
-See the [Alerting]({{< relref "../alerting/alerts-overview.md" >}}) documentation for more on Grafana alerts.
+See the [Alerting]({{< relref "../alerting/_index.md" >}}) documentation for more on Grafana alerts.
 
 ## Curated dashboards
 
