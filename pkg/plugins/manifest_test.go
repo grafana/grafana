@@ -114,7 +114,7 @@ I2q53egCAgkBHXxVsl5abaWbpqX0InC09dymwEsqRYvbDooamMB4VwHWFHrG
 		assert.Equal(t, Private, manifest.SignatureType)
 		assert.Equal(t, "willbrowne", manifest.SignedByOrg)
 		assert.Equal(t, "Will Browne", manifest.SignedByOrgName)
-		assert.Equal(t, []string{"http://localhost:3000/"}, manifest.RootUrls, 1)
+		assert.Equal(t, []string{"http://localhost:3000/"}, manifest.RootUrls)
 		expectedFiles := []string{"LICENSE", "README.md", "img/logo.svg", "module.js", "module.js.LICENSE.txt",
 			"plugin.json", "test_darwin_amd64", "test_linux_amd64", "test_linux_arm64", "test_windows_amd64.exe"}
 		assert.Equal(t, expectedFiles, fileList(manifest))
