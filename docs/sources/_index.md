@@ -44,10 +44,6 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
 ## Guides
 
 <div class="nav-cards">
-    <a href="{{< relref "getting-started/what-is-grafana.md" >}}" class="nav-cards__item nav-cards__item--guide">
-        <h4>What is Grafana?</h4>
-        <p>Get an overview of Grafana's key features.</p>
-    </a>
     <a href="{{< relref "getting-started/getting-started.md" >}}" class="nav-cards__item nav-cards__item--guide">
         <h4>Getting started</h4>
         <p>Learn the basics of using Grafana.</p>

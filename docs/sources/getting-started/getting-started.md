@@ -1,5 +1,5 @@
 +++
-title = "Getting started with Grafana"
+title = "With Grafana"
 description = "Guide for getting started with Grafana"
 keywords = ["grafana", "intro", "guide", "started"]
 aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
@@ -8,7 +8,7 @@ weight = 200
 
 # Getting started with Grafana
 
-This topic helps you get started with Grafana and build your first dashboard. To learn more about Grafana, refer to [What is Grafana?]({{< relref "what-is-grafana.md" >}}).
+This topic helps you get started with Grafana and build your first dashboard. To learn more about Grafana, refer to [What is Grafana?]({{< relref "_index.md" >}}).
 
 ## Step 1: Install Grafana
 

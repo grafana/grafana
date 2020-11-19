@@ -1,8 +1,6 @@
 - name: Getting started
   link: /getting-started/
   children:
-    - name: What is Grafana?
-      link: /getting-started/what-is-grafana/
     - name: With Grafana
       link: /getting-started/getting-started/
     - name: With Grafana and Prometheus
