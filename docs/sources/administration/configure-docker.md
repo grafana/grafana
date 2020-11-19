@@ -2,12 +2,7 @@
 title = "Configure Grafana Docker image"
 description = "Guide for configuring the Grafana Docker image"
 keywords = ["grafana", "configuration", "documentation", "docker"]
-type = "docs"
 aliases = ["/docs/grafana/latest/installation/configure-docker/"]
-[menu.docs]
-name = "Configure Grafana Docker image"
-identifier = "configure-docker"
-parent = "administration"
 weight = 400
 +++
 

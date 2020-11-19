@@ -1,0 +1,27 @@
+name: Bump version
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        default: '7.x.x'
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Actions
+        uses: actions/checkout@v2
+        with:
+          repository: "grafana/grafana-github-actions"
+          path: ./actions
+          ref: main
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12'
+      - name: Install Actions
+        run: npm install --production --prefix ./actions
+      - name: Run bump version
+        uses: ./actions/bump-version
+        with:
+          token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
+          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}

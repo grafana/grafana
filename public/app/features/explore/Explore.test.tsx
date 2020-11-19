@@ -4,7 +4,7 @@ import { getFirstNonQueryRowSpecificError } from 'app/core/utils/explore';
 import { ExploreId } from 'app/types/explore';
 import { shallow } from 'enzyme';
 import { Explore, ExploreProps } from './Explore';
-import { scanStopAction } from './state/actionTypes';
+import { scanStopAction } from './state/query';
 import { SecondaryActions } from './SecondaryActions';
 import { getTheme } from '@grafana/ui';
 

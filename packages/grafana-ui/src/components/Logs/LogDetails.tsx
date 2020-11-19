@@ -114,20 +114,22 @@ class UnThemedLogDetails extends PureComponent<Props> {
                     </td>
                   </tr>
                 )}
-                {Object.keys(labels).map(key => {
-                  const value = labels[key];
-                  return (
-                    <LogDetailsRow
-                      key={`${key}=${value}`}
-                      parsedKey={key}
-                      parsedValue={value}
-                      isLabel={true}
-                      getStats={() => calculateLogsLabelStats(getRows(), key)}
-                      onClickFilterOutLabel={onClickFilterOutLabel}
-                      onClickFilterLabel={onClickFilterLabel}
-                    />
-                  );
-                })}
+                {Object.keys(labels)
+                  .sort()
+                  .map(key => {
+                    const value = labels[key];
+                    return (
+                      <LogDetailsRow
+                        key={`${key}=${value}`}
+                        parsedKey={key}
+                        parsedValue={value}
+                        isLabel={true}
+                        getStats={() => calculateLogsLabelStats(getRows(), key)}
+                        onClickFilterOutLabel={onClickFilterOutLabel}
+                        onClickFilterLabel={onClickFilterLabel}
+                      />
+                    );
+                  })}
 
                 {detectedFieldsAvailable && (
                   <tr>
@@ -145,7 +147,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                     </td>
                   </tr>
                 )}
-                {fields.map(field => {
+                {fields.sort().map(field => {
                   const { key, value, links, fieldIndex } = field;
                   return (
                     <LogDetailsRow

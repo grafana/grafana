@@ -57,6 +57,14 @@ export const metricAggTypes = [
     requiresField: false,
     isPipelineAgg: true,
     minVersion: 2,
+    maxVersion: 60,
+  },
+  {
+    text: 'Moving Function',
+    value: 'moving_fn',
+    requiresField: false,
+    isPipelineAgg: true,
+    minVersion: 70,
   },
   {
     text: 'Derivative',
@@ -151,6 +159,7 @@ export const pipelineOptions: any = {
     { text: 'predict', default: undefined },
     { text: 'minimize', default: false },
   ],
+  moving_fn: [{ text: 'window', default: 5 }, { text: 'script' }],
   derivative: [{ text: 'unit', default: undefined }],
   cumulative_sum: [{ text: 'format', default: undefined }],
   bucket_script: [],
@@ -175,8 +184,10 @@ export const movingAvgModelSettings: any = {
 
 export function getMetricAggTypes(esVersion: any) {
   return _.filter(metricAggTypes, f => {
-    if (f.minVersion) {
-      return f.minVersion <= esVersion;
+    if (f.minVersion || f.maxVersion) {
+      const minVersion = f.minVersion || 0;
+      const maxVersion = f.maxVersion || esVersion;
+      return esVersion >= minVersion && esVersion <= maxVersion;
     } else {
       return true;
     }
@@ -246,7 +257,7 @@ export function getMovingAvgSettings(model: any, filtered: boolean) {
 export function getOrderByOptions(target: any) {
   const metricRefs: any[] = [];
   _.each(target.metrics, metric => {
-    if (metric.type !== 'count') {
+    if (metric.type !== 'count' && !isPipelineAgg(metric.type)) {
       metricRefs.push({ text: describeMetric(metric), value: metric.id });
     }
   });

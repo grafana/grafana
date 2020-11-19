@@ -44,12 +44,16 @@ export const PluginsErrorsInfoUnconnected: React.FC<PluginsErrorsInfoProps> = ({
       aria-label={selectors.pages.PluginsList.signatureErrorNotice}
       severity="warning"
       urlTitle="Read more about plugin signing"
-      url="https://grafana.com/docs/grafana/latest/plugins/plugin-signature-verification/"
+      url="https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/"
     >
       <div>
         <p>
           We have encountered{' '}
-          <a href="https://grafana.com/docs/grafana/latest/developers/plugins/backend/" target="_blank">
+          <a
+            href="https://grafana.com/docs/grafana/latest/developers/plugins/backend/"
+            target="_blank"
+            rel="noreferrer"
+          >
             data source backend plugins
           </a>{' '}
           that are unsigned. Grafana Labs cannot guarantee the integrity of unsigned plugins and recommends using signed

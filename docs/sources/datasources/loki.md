@@ -2,11 +2,7 @@
 title = "Loki"
 description = "Guide for using Loki in Grafana"
 keywords = ["grafana", "loki", "logging", "guide"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/datasources/loki"]
-[menu.docs]
-name = "Loki"
-parent = "datasources"
 weight = 800
 +++
 

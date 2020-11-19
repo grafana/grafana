@@ -545,7 +545,7 @@ export function getBarGradient(props: Props, maxSize: number): string {
     return gradient + ')';
   }
 
-  if (mode.colors) {
+  if (mode.isContinuous && mode.colors) {
     const scheme = mode.colors.map(item => getColorForTheme(item, theme));
     for (let i = 0; i < scheme.length; i++) {
       const color = scheme[i];

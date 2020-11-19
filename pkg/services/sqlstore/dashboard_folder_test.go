@@ -16,12 +16,12 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 		InitTestDB(t)
 
 		Convey("Given one dashboard folder with two dashboards and one dashboard in the root folder", func() {
-			folder := insertTestDashboard("1 test dash folder", 1, 0, true, "prod", "webapp")
-			dashInRoot := insertTestDashboard("test dash 67", 1, 0, false, "prod", "webapp")
-			childDash := insertTestDashboard("test dash 23", 1, folder.Id, false, "prod", "webapp")
-			insertTestDashboard("test dash 45", 1, folder.Id, false, "prod")
+			folder := insertTestDashboard(t, "1 test dash folder", 1, 0, true, "prod", "webapp")
+			dashInRoot := insertTestDashboard(t, "test dash 67", 1, 0, false, "prod", "webapp")
+			childDash := insertTestDashboard(t, "test dash 23", 1, folder.Id, false, "prod", "webapp")
+			insertTestDashboard(t, "test dash 45", 1, folder.Id, false, "prod")
 
-			currentUser := createUser("viewer", "Viewer", false)
+			currentUser := createUser(t, "viewer", "Viewer", false)
 
 			Convey("and no acls are set", func() {
 				Convey("should return all dashboards", func() {
@@ -41,9 +41,9 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 			Convey("and acl is set for dashboard folder", func() {
 				var otherUser int64 = 999
 				err := testHelperUpdateDashboardAcl(folder.Id, models.DashboardAcl{
-					DashboardId: folder.Id,
-					OrgId:       1,
-					UserId:      otherUser,
+					DashboardID: folder.Id,
+					OrgID:       1,
+					UserID:      otherUser,
 					Permission:  models.PERMISSION_EDIT,
 				})
 				So(err, ShouldBeNil)
@@ -62,7 +62,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 				Convey("when the user is given permission", func() {
 					err := testHelperUpdateDashboardAcl(folder.Id, models.DashboardAcl{
-						DashboardId: folder.Id, OrgId: 1, UserId: currentUser.Id, Permission: models.PERMISSION_EDIT,
+						DashboardID: folder.Id, OrgID: 1, UserID: currentUser.Id, Permission: models.PERMISSION_EDIT,
 					})
 					So(err, ShouldBeNil)
 
@@ -105,7 +105,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				err := testHelperUpdateDashboardAcl(folder.Id)
 				So(err, ShouldBeNil)
 				err = testHelperUpdateDashboardAcl(childDash.Id, models.DashboardAcl{
-					DashboardId: folder.Id, OrgId: 1, UserId: otherUser, Permission: models.PERMISSION_EDIT,
+					DashboardID: folder.Id, OrgID: 1, UserID: otherUser, Permission: models.PERMISSION_EDIT,
 				})
 				So(err, ShouldBeNil)
 
@@ -120,7 +120,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 				})
 
 				Convey("when the user is given permission to child", func() {
-					err := testHelperUpdateDashboardAcl(childDash.Id, models.DashboardAcl{DashboardId: childDash.Id, OrgId: 1, UserId: currentUser.Id, Permission: models.PERMISSION_EDIT})
+					err := testHelperUpdateDashboardAcl(childDash.Id, models.DashboardAcl{DashboardID: childDash.Id, OrgID: 1, UserID: currentUser.Id, Permission: models.PERMISSION_EDIT})
 					So(err, ShouldBeNil)
 
 					Convey("should be able to search for child dashboard but not folder", func() {
@@ -156,13 +156,13 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 		})
 
 		Convey("Given two dashboard folders with one dashboard each and one dashboard in the root folder", func() {
-			folder1 := insertTestDashboard("1 test dash folder", 1, 0, true, "prod")
-			folder2 := insertTestDashboard("2 test dash folder", 1, 0, true, "prod")
-			dashInRoot := insertTestDashboard("test dash 67", 1, 0, false, "prod")
-			childDash1 := insertTestDashboard("child dash 1", 1, folder1.Id, false, "prod")
-			childDash2 := insertTestDashboard("child dash 2", 1, folder2.Id, false, "prod")
+			folder1 := insertTestDashboard(t, "1 test dash folder", 1, 0, true, "prod")
+			folder2 := insertTestDashboard(t, "2 test dash folder", 1, 0, true, "prod")
+			dashInRoot := insertTestDashboard(t, "test dash 67", 1, 0, false, "prod")
+			childDash1 := insertTestDashboard(t, "child dash 1", 1, folder1.Id, false, "prod")
+			childDash2 := insertTestDashboard(t, "child dash 2", 1, folder2.Id, false, "prod")
 
-			currentUser := createUser("viewer", "Viewer", false)
+			currentUser := createUser(t, "viewer", "Viewer", false)
 			var rootFolderId int64 = 0
 
 			Convey("and one folder is expanded, the other collapsed", func() {
@@ -181,7 +181,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 			Convey("and acl is set for one dashboard folder", func() {
 				var otherUser int64 = 999
 				err := testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{
-					DashboardId: folder1.Id, OrgId: 1, UserId: otherUser, Permission: models.PERMISSION_EDIT,
+					DashboardID: folder1.Id, OrgID: 1, UserID: otherUser, Permission: models.PERMISSION_EDIT,
 				})
 				So(err, ShouldBeNil)
 
@@ -221,7 +221,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 				Convey("and a dashboard with an acl is moved to the folder without an acl", func() {
 					err := testHelperUpdateDashboardAcl(childDash1.Id, models.DashboardAcl{
-						DashboardId: childDash1.Id, OrgId: 1, UserId: otherUser, Permission: models.PERMISSION_EDIT,
+						DashboardID: childDash1.Id, OrgID: 1, UserID: otherUser, Permission: models.PERMISSION_EDIT,
 					})
 					So(err, ShouldBeNil)
 
@@ -246,13 +246,13 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 		})
 
 		Convey("Given two dashboard folders", func() {
-			folder1 := insertTestDashboard("1 test dash folder", 1, 0, true, "prod")
-			folder2 := insertTestDashboard("2 test dash folder", 1, 0, true, "prod")
-			insertTestDashboard("folder in another org", 2, 0, true, "prod")
+			folder1 := insertTestDashboard(t, "1 test dash folder", 1, 0, true, "prod")
+			folder2 := insertTestDashboard(t, "2 test dash folder", 1, 0, true, "prod")
+			insertTestDashboard(t, "folder in another org", 2, 0, true, "prod")
 
-			adminUser := createUser("admin", "Admin", true)
-			editorUser := createUser("editor", "Editor", false)
-			viewerUser := createUser("viewer", "Viewer", false)
+			adminUser := createUser(t, "admin", "Admin", true)
+			editorUser := createUser(t, "editor", "Editor", false)
+			viewerUser := createUser(t, "viewer", "Viewer", false)
 
 			Convey("Admin users", func() {
 				Convey("Should have write access to all dashboard folders in their org", func() {
@@ -344,7 +344,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 				Convey("Should have write access to one dashboard folder if default role changed to view for one folder", func() {
 					err := testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{
-						DashboardId: folder1.Id, OrgId: 1, UserId: editorUser.Id, Permission: models.PERMISSION_VIEW,
+						DashboardID: folder1.Id, OrgID: 1, UserID: editorUser.Id, Permission: models.PERMISSION_VIEW,
 					})
 					So(err, ShouldBeNil)
 
@@ -408,7 +408,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 				Convey("Should be able to get one dashboard folder if default role changed to edit for one folder", func() {
 					err := testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{
-						DashboardId: folder1.Id, OrgId: 1, UserId: viewerUser.Id, Permission: models.PERMISSION_EDIT,
+						DashboardID: folder1.Id, OrgID: 1, UserID: viewerUser.Id, Permission: models.PERMISSION_EDIT,
 					})
 					So(err, ShouldBeNil)
 
@@ -439,7 +439,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 				Convey("and admin permission is given for user with org role viewer in one dashboard folder", func() {
 					err := testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{
-						DashboardId: folder1.Id, OrgId: 1, UserId: viewerUser.Id, Permission: models.PERMISSION_ADMIN,
+						DashboardID: folder1.Id, OrgID: 1, UserID: viewerUser.Id, Permission: models.PERMISSION_ADMIN,
 					})
 					So(err, ShouldBeNil)
 
@@ -455,7 +455,7 @@ func TestDashboardFolderDataAccess(t *testing.T) {
 
 				Convey("and edit permission is given for user with org role viewer in one dashboard folder", func() {
 					err := testHelperUpdateDashboardAcl(folder1.Id, models.DashboardAcl{
-						DashboardId: folder1.Id, OrgId: 1, UserId: viewerUser.Id, Permission: models.PERMISSION_EDIT,
+						DashboardID: folder1.Id, OrgID: 1, UserID: viewerUser.Id, Permission: models.PERMISSION_EDIT,
 					})
 					So(err, ShouldBeNil)
 

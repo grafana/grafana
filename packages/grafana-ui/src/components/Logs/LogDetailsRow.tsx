@@ -191,6 +191,7 @@ function FieldLink({ link }: FieldLinkProps) {
     <a
       href={link.href}
       target={'_blank'}
+      rel="noreferrer"
       onClick={
         link.onClick
           ? event => {

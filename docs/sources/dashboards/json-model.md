@@ -1,11 +1,7 @@
 +++
 title = "JSON model"
 keywords = ["grafana", "dashboard", "documentation", "json", "model"]
-type = "docs"
 aliases = ["/docs/grafana/latest/reference/dashboard/"]
-[menu.docs]
-name = "JSON Model"
-parent = "dashboard_features"
 weight = 1200
 +++
 
