@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 import { TestScheduler } from 'rxjs/testing';
 import { FetchResponse } from '@grafana/runtime';
-import { dateTime, observableTester, toUtc } from '@grafana/data';
+import { dateTime, toUtc } from '@grafana/data';
 
 import { PostgresDatasource } from '../datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
@@ -207,7 +207,7 @@ describe('PostgreSQLDatasource', () => {
   });
 
   describe('When performing a query with hidden target', () => {
-    it('should return empty result and backendSrv.fetch should not be called', done => {
+    it('should return empty result and backendSrv.fetch should not be called', async () => {
       const options = {
         range: {
           from: dateTime(1432288354),
@@ -227,15 +227,9 @@ describe('PostgreSQLDatasource', () => {
 
       const { ds } = setupTestContext({});
 
-      observableTester().subscribeAndExpectOnNextAndComplete({
-        observable: ds.query(options),
-        expectOnNext: value => {
-          expect(value).toEqual({ data: [] });
-        },
-        expectOnComplete: () => {
-          expect(fetchMock).not.toHaveBeenCalled();
-        },
-        done,
+      await expect(ds.query(options)).toEmitValuesWith(received => {
+        expect(received[0]).toEqual({ data: [] });
+        expect(fetchMock).not.toHaveBeenCalled();
       });
     });
   });

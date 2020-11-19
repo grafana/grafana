@@ -1,18 +1,19 @@
-import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
-import { toDataQueryError, getTemplateSrv } from '@grafana/runtime';
+import { DataQuery, DataSourceApi, DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
+import { toDataQueryError } from '@grafana/runtime';
 
-import { updateOptions, validateVariableSelectionState } from '../state/actions';
-import { QueryVariableModel, VariableRefresh } from '../types';
+import { updateOptions } from '../state/actions';
+import { QueryVariableModel } from '../types';
 import { ThunkResult } from '../../../types';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { getTimeSrv } from '../../dashboard/services/TimeSrv';
-import { importDataSourcePlugin } from '../../plugins/plugin_loader';
-import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
 import { getVariable } from '../state/selectors';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';
-import { updateVariableOptions, updateVariableTags } from './reducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
+import { hasLegacyVariableSupport, hasStandardVariableSupport } from '../guard';
+import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
+import { Subscription } from 'rxjs';
+import { getVariableQueryRunner } from './VariableQueryRunner';
+import { variableQueryObserver } from './variableQueryObserver';
 
 export const updateQueryVariableOptions = (
   identifier: VariableIdentifier,
@@ -21,43 +22,24 @@ export const updateQueryVariableOptions = (
   return async (dispatch, getState) => {
     const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
     try {
-      const beforeUid = getState().templating.transaction.uid;
       if (getState().templating.editor.id === variableInState.id) {
         dispatch(removeVariableEditorError({ errorProp: 'update' }));
       }
-      const dataSource = await getDatasourceSrv().get(variableInState.datasource ?? '');
-      const queryOptions: any = { range: undefined, variable: variableInState, searchFilter };
-      if (variableInState.refresh === VariableRefresh.onTimeRangeChanged) {
-        queryOptions.range = getTimeSrv().timeRange();
-      }
+      const datasource = await getDatasourceSrv().get(variableInState.datasource ?? '');
+      dispatch(upgradeLegacyQueries(identifier, datasource));
 
-      if (!dataSource.metricFindQuery) {
-        return;
-      }
+      // we need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
+      // variable will have the wrong current value as input
+      await new Promise((resolve, reject) => {
+        const subscription: Subscription = new Subscription();
+        const observer = variableQueryObserver(resolve, reject, subscription);
+        const responseSubscription = getVariableQueryRunner()
+          .getResponse(identifier)
+          .subscribe(observer);
+        subscription.add(responseSubscription);
 
-      const results = await dataSource.metricFindQuery(variableInState.query, queryOptions);
-
-      const afterUid = getState().templating.transaction.uid;
-      if (beforeUid !== afterUid) {
-        // we started another batch before this metricFindQuery finished let's abort
-        return;
-      }
-
-      const templatedRegex = getTemplatedRegex(variableInState);
-      await dispatch(updateVariableOptions(toVariablePayload(variableInState, { results, templatedRegex })));
-
-      if (variableInState.useTags) {
-        const tagResults = await dataSource.metricFindQuery(variableInState.tagsQuery, queryOptions);
-        await dispatch(updateVariableTags(toVariablePayload(variableInState, tagResults)));
-      }
-
-      // If we are searching options there is no need to validate selection state
-      // This condition was added to as validateVariableSelectionState will update the current value of the variable
-      // So after search and selection the current value is already update so no setValue, refresh & url update is performed
-      // The if statement below fixes https://github.com/grafana/grafana/issues/25671
-      if (!searchFilter) {
-        await dispatch(validateVariableSelectionState(toVariableIdentifier(variableInState)));
-      }
+        getVariableQueryRunner().queueRequest({ identifier, datasource, searchFilter });
+      });
     } catch (err) {
       const error = toDataQueryError(err);
       if (getState().templating.editor.id === variableInState.id) {
@@ -95,9 +77,9 @@ export const changeQueryVariableDataSource = (
   return async (dispatch, getState) => {
     try {
       const dataSource = await getDatasourceSrv().get(name ?? '');
-      const dsPlugin = await importDataSourcePlugin(dataSource.meta!);
-      const VariableQueryEditor = dsPlugin.components.VariableQueryEditor ?? DefaultVariableQueryEditor;
       dispatch(changeVariableEditorExtended({ propName: 'dataSource', propValue: dataSource }));
+
+      const VariableQueryEditor = await getVariableQueryEditor(dataSource);
       dispatch(changeVariableEditorExtended({ propName: 'VariableQueryEditor', propValue: VariableQueryEditor }));
     } catch (err) {
       console.error(err);
@@ -108,10 +90,10 @@ export const changeQueryVariableDataSource = (
 export const changeQueryVariableQuery = (
   identifier: VariableIdentifier,
   query: any,
-  definition: string
+  definition?: string
 ): ThunkResult<void> => async (dispatch, getState) => {
   const variableInState = getVariable<QueryVariableModel>(identifier.id, getState());
-  if (typeof query === 'string' && query.match(new RegExp('\\$' + variableInState.name + '(/| |$)'))) {
+  if (hasSelfReferencingQuery(variableInState.name, query)) {
     const errorText = 'Query cannot contain a reference to itself. Variable: $' + variableInState.name;
     dispatch(addVariableEditorError({ errorProp: 'query', errorText }));
     return;
@@ -119,18 +101,92 @@ export const changeQueryVariableQuery = (
 
   dispatch(removeVariableEditorError({ errorProp: 'query' }));
   dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
-  dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition })));
+
+  if (definition) {
+    dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: definition })));
+  } else if (typeof query === 'string') {
+    dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'definition', propValue: query })));
+  }
+
   await dispatch(updateOptions(identifier));
 };
 
-const getTemplatedRegex = (variable: QueryVariableModel): string => {
-  if (!variable) {
-    return '';
+export function hasSelfReferencingQuery(name: string, query: any): boolean {
+  if (typeof query === 'string' && query.match(new RegExp('\\$' + name + '(/| |$)'))) {
+    return true;
   }
 
-  if (!variable.regex) {
-    return '';
+  const flattened = flattenQuery(query);
+
+  for (let prop in flattened) {
+    if (flattened.hasOwnProperty(prop)) {
+      const value = flattened[prop];
+      if (typeof value === 'string' && value.match(new RegExp('\\$' + name + '(/| |$)'))) {
+        return true;
+      }
+    }
   }
 
-  return getTemplateSrv().replace(variable.regex, {}, 'regex');
-};
+  return false;
+}
+
+/*
+ * Function that takes any object and flattens all props into one level deep object
+ * */
+export function flattenQuery(query: any): any {
+  if (typeof query !== 'object') {
+    return { query };
+  }
+
+  const keys = Object.keys(query);
+  const flattened = keys.reduce((all, key) => {
+    const value = query[key];
+    if (typeof value !== 'object') {
+      all[key] = value;
+      return all;
+    }
+
+    const result = flattenQuery(value);
+    for (let childProp in result) {
+      if (result.hasOwnProperty(childProp)) {
+        all[`${key}_${childProp}`] = result[childProp];
+      }
+    }
+
+    return all;
+  }, {} as Record<string, any>);
+
+  return flattened;
+}
+
+export function upgradeLegacyQueries(identifier: VariableIdentifier, datasource: DataSourceApi): ThunkResult<void> {
+  return function(dispatch, getState) {
+    if (hasLegacyVariableSupport(datasource)) {
+      return;
+    }
+
+    if (!hasStandardVariableSupport(datasource)) {
+      return;
+    }
+
+    const variable = getVariable<QueryVariableModel>(identifier.id, getState());
+    if (isDataQuery(variable.query)) {
+      return;
+    }
+
+    const query = {
+      refId: `${datasource.name}-${identifier.id}-Variable-Query`,
+      query: variable.query,
+    };
+
+    dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
+  };
+}
+
+function isDataQuery(query: any): query is DataQuery {
+  if (!query) {
+    return false;
+  }
+
+  return query.hasOwnProperty('refId') && typeof query.refId === 'string';
+}

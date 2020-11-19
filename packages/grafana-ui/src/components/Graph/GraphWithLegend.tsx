@@ -15,8 +15,7 @@ export type SeriesColorChangeHandler = SeriesOptionChangeHandler<string>;
 export type SeriesAxisToggleHandler = SeriesOptionChangeHandler<number>;
 
 export interface GraphWithLegendProps extends GraphProps, LegendRenderOptions {
-  isLegendVisible: boolean;
-  displayMode: LegendDisplayMode;
+  legendDisplayMode: LegendDisplayMode;
   sortLegendBy?: string;
   sortLegendDesc?: boolean;
   onSeriesColorChange?: SeriesColorChangeHandler;
@@ -28,7 +27,7 @@ export interface GraphWithLegendProps extends GraphProps, LegendRenderOptions {
 const getGraphWithLegendStyles = stylesFactory(({ placement }: GraphWithLegendProps) => ({
   wrapper: css`
     display: flex;
-    flex-direction: ${placement === 'under' ? 'column' : 'row'};
+    flex-direction: ${placement === 'bottom' ? 'column' : 'row'};
     height: 100%;
   `,
   graphContainer: css`
@@ -37,7 +36,7 @@ const getGraphWithLegendStyles = stylesFactory(({ placement }: GraphWithLegendPr
   `,
   legendContainer: css`
     padding: 10px 0;
-    max-height: ${placement === 'under' ? '35%' : 'none'};
+    max-height: ${placement === 'bottom' ? '35%' : 'none'};
   `,
 }));
 
@@ -59,8 +58,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     showPoints,
     sortLegendBy,
     sortLegendDesc,
-    isLegendVisible,
-    displayMode,
+    legendDisplayMode,
     placement,
     onSeriesAxisToggle,
     onSeriesColorChange,
@@ -84,7 +82,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
           {
             label: s.label,
             color: s.color || '',
-            isVisible: s.isVisible,
+            disabled: !s.isVisible,
             yAxis: s.yAxis.index,
             displayValues: s.info || [],
           },
@@ -103,7 +101,6 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
           showBars={showBars}
           width={width}
           height={height}
-          key={isLegendVisible ? 'legend-visible' : 'legend-invisible'}
           isStacked={isStacked}
           lineWidth={lineWidth}
           onHorizontalRegionSelected={onHorizontalRegionSelected}
@@ -112,12 +109,12 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
         </Graph>
       </div>
 
-      {isLegendVisible && (
+      {legendDisplayMode !== LegendDisplayMode.Hidden && (
         <div className={legendContainer}>
           <CustomScrollbar hideHorizontalTrack>
             <GraphLegend
               items={legendItems}
-              displayMode={displayMode}
+              displayMode={legendDisplayMode}
               placement={placement}
               sortBy={sortLegendBy}
               sortDesc={sortLegendDesc}

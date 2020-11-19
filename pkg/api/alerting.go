@@ -140,10 +140,11 @@ func AlertTest(c *models.ReqContext, dto dtos.AlertTestCommand) Response {
 	}
 
 	if err := bus.Dispatch(&backendCmd); err != nil {
-		if validationErr, ok := err.(alerting.ValidationError); ok {
+		var validationErr alerting.ValidationError
+		if errors.As(err, &validationErr) {
 			return Error(422, validationErr.Error(), nil)
 		}
-		if err == models.ErrDataSourceAccessDenied {
+		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			return Error(403, "Access denied to datasource", err)
 		}
 		return Error(500, "Failed to test rule", err)
@@ -292,7 +293,7 @@ func UpdateAlertNotification(c *models.ReqContext, cmd models.UpdateAlertNotific
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrAlertNotificationNotFound {
+		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return Error(404, err.Error(), err)
 		}
 		return Error(500, "Failed to update alert notification", err)
@@ -320,7 +321,7 @@ func UpdateAlertNotificationByUID(c *models.ReqContext, cmd models.UpdateAlertNo
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrAlertNotificationNotFound {
+		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return Error(404, err.Error(), nil)
 		}
 		return Error(500, "Failed to update alert notification", err)
@@ -393,7 +394,7 @@ func DeleteAlertNotification(c *models.ReqContext) Response {
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrAlertNotificationNotFound {
+		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return Error(404, err.Error(), nil)
 		}
 		return Error(500, "Failed to delete alert notification", err)
@@ -409,7 +410,7 @@ func DeleteAlertNotificationByUID(c *models.ReqContext) Response {
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrAlertNotificationNotFound {
+		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return Error(404, err.Error(), nil)
 		}
 		return Error(500, "Failed to delete alert notification", err)
@@ -433,7 +434,7 @@ func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) Re
 	}
 
 	if err := bus.Dispatch(cmd); err != nil {
-		if err == models.ErrSmtpNotEnabled {
+		if errors.Is(err, models.ErrSmtpNotEnabled) {
 			return Error(412, err.Error(), err)
 		}
 		return Error(500, "Failed to send alert notifications", err)

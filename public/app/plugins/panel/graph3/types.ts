@@ -1,6 +1,4 @@
-import { LegendOptions, GraphTooltipOptions } from '@grafana/ui';
-
-export type LegendPlacement = 'top' | 'bottom' | 'left' | 'right';
+import { LegendOptions, GraphTooltipOptions, LegendPlacement } from '@grafana/ui';
 
 export interface GraphOptions {
   // Redraw as time passes

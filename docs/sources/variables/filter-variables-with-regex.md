@@ -1,10 +1,6 @@
 +++
 title = "Filter variables with regex"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
-type = "docs"
-[menu.docs]
-identifier = "filter-variables-regex"
-parent = "variables"
 weight = 700
 +++
 

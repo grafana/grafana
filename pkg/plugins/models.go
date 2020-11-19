@@ -11,17 +11,14 @@ import (
 )
 
 var (
-	PluginTypeApp        = "app"
-	PluginTypeDatasource = "datasource"
-	PluginTypePanel      = "panel"
-	PluginTypeDashboard  = "dashboard"
+	PluginTypeApp       = "app"
+	PluginTypeDashboard = "dashboard"
 )
 
 type PluginState string
 
 var (
 	PluginStateAlpha PluginState = "alpha"
-	PluginStateBeta  PluginState = "beta"
 )
 
 type PluginSignature string
@@ -52,6 +49,7 @@ func (e duplicatePluginError) Error() string {
 }
 
 func (e duplicatePluginError) Is(err error) bool {
+	// nolint:errorlint
 	_, ok := err.(duplicatePluginError)
 	return ok
 }

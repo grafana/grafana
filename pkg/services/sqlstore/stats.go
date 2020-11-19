@@ -22,28 +22,28 @@ func init() {
 const activeUserTimeLimit = time.Hour * 24 * 30
 
 func GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
-	var rawSql = `SELECT COUNT(*) AS count, type FROM ` + dialect.Quote("alert_notification") + ` GROUP BY type`
+	var rawSQL = `SELECT COUNT(*) AS count, type FROM ` + dialect.Quote("alert_notification") + ` GROUP BY type`
 	query.Result = make([]*models.NotifierUsageStats, 0)
-	err := x.SQL(rawSql).Find(&query.Result)
+	err := x.SQL(rawSQL).Find(&query.Result)
 	return err
 }
 
 func GetDataSourceStats(query *models.GetDataSourceStatsQuery) error {
-	var rawSql = `SELECT COUNT(*) AS count, type FROM ` + dialect.Quote("data_source") + ` GROUP BY type`
+	var rawSQL = `SELECT COUNT(*) AS count, type FROM ` + dialect.Quote("data_source") + ` GROUP BY type`
 	query.Result = make([]*models.DataSourceStats, 0)
-	err := x.SQL(rawSql).Find(&query.Result)
+	err := x.SQL(rawSQL).Find(&query.Result)
 	return err
 }
 
 func GetDataSourceAccessStats(query *models.GetDataSourceAccessStatsQuery) error {
-	var rawSql = `SELECT COUNT(*) AS count, type, access FROM ` + dialect.Quote("data_source") + ` GROUP BY type, access`
+	var rawSQL = `SELECT COUNT(*) AS count, type, access FROM ` + dialect.Quote("data_source") + ` GROUP BY type, access`
 	query.Result = make([]*models.DataSourceAccessStats, 0)
-	err := x.SQL(rawSql).Find(&query.Result)
+	err := x.SQL(rawSQL).Find(&query.Result)
 	return err
 }
 
 func GetSystemStats(query *models.GetSystemStatsQuery) error {
-	sb := &SqlBuilder{}
+	sb := &SQLBuilder{}
 	sb.Write("SELECT ")
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("user") + `) AS users,`)
 	sb.Write(`(SELECT COUNT(*) FROM ` + dialect.Quote("org") + `) AS orgs,`)
@@ -84,7 +84,7 @@ func GetSystemStats(query *models.GetSystemStatsQuery) error {
 	sb.Write(roleCounterSQL())
 
 	var stats models.SystemStats
-	_, err := x.SQL(sb.GetSqlString(), sb.params...).Get(&stats)
+	_, err := x.SQL(sb.GetSQLString(), sb.params...).Get(&stats)
 	if err != nil {
 		return err
 	}
@@ -113,7 +113,7 @@ func roleCounterSQL() string {
 func GetAdminStats(query *models.GetAdminStatsQuery) error {
 	activeEndDate := time.Now().Add(-activeUserTimeLimit)
 
-	var rawSql = `SELECT
+	var rawSQL = `SELECT
 		(
 			SELECT COUNT(*)
 			FROM ` + dialect.Quote("org") + `
@@ -161,7 +161,7 @@ func GetAdminStats(query *models.GetAdminStatsQuery) error {
 		) AS active_sessions`
 
 	var stats models.AdminStats
-	_, err := x.SQL(rawSql, activeEndDate, activeEndDate.Unix()).Get(&stats)
+	_, err := x.SQL(rawSQL, activeEndDate, activeEndDate.Unix()).Get(&stats)
 	if err != nil {
 		return err
 	}
@@ -172,9 +172,9 @@ func GetAdminStats(query *models.GetAdminStatsQuery) error {
 
 func GetSystemUserCountStats(ctx context.Context, query *models.GetSystemUserCountStatsQuery) error {
 	return withDbSession(ctx, func(sess *DBSession) error {
-		var rawSql = `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
+		var rawSQL = `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
 		var stats models.SystemUserCountStats
-		_, err := sess.SQL(rawSql).Get(&stats)
+		_, err := sess.SQL(rawSQL).Get(&stats)
 		if err != nil {
 			return err
 		}

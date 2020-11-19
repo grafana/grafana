@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -22,7 +24,7 @@ func getUserUserProfile(userID int64) Response {
 	query := models.GetUserProfileQuery{UserId: userID}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrUserNotFound {
+		if errors.Is(err, models.ErrUserNotFound) {
 			return Error(404, models.ErrUserNotFound.Error(), nil)
 		}
 		return Error(500, "Failed to get user", err)
@@ -45,7 +47,7 @@ func getUserUserProfile(userID int64) Response {
 func GetUserByLoginOrEmail(c *models.ReqContext) Response {
 	query := models.GetUserByLoginQuery{LoginOrEmail: c.Query("loginOrEmail")}
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrUserNotFound {
+		if errors.Is(err, models.ErrUserNotFound) {
 			return Error(404, models.ErrUserNotFound.Error(), nil)
 		}
 		return Error(500, "Failed to get user", err)
@@ -248,6 +250,11 @@ func ChangeUserPassword(c *models.ReqContext, cmd models.ChangeUserPasswordComma
 	}
 
 	return Success("User password changed")
+}
+
+// redirectToChangePassword handles GET /.well-known/change-password.
+func redirectToChangePassword(c *models.ReqContext) {
+	c.Redirect("/profile/password", 302)
 }
 
 // GET /api/users

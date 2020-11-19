@@ -5,14 +5,17 @@ import { css, cx } from 'emotion';
 import { stylesFactory, useTheme, TextArea, Button, IconButton } from '@grafana/ui';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { GrafanaTheme, AppEvents, DataSourceApi } from '@grafana/data';
-import { RichHistoryQuery, ExploreId } from 'app/types/explore';
+import { RichHistoryQuery, ExploreId, ExploreItemState } from 'app/types/explore';
 import { createUrlFromRichHistory, createQueryText } from 'app/core/utils/richHistory';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { copyStringToClipboard } from 'app/core/utils/explore';
 import appEvents from 'app/core/app_events';
 import { StoreState, CoreEvents } from 'app/types';
 
-import { changeDatasource, updateRichHistory, setQueries } from '../state/actions';
+import { updateRichHistory } from '../state/history';
+import { changeDatasource } from '../state/datasource';
+import { setQueries } from '../state/query';
+
 export interface Props {
   query: RichHistoryQuery;
   dsImg: string;
