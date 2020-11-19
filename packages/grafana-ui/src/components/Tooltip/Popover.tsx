@@ -6,7 +6,9 @@ import Transition from 'react-transition-group/Transition';
 import { PopoverContent } from './Tooltip';
 
 const defaultTransitionStyles = {
-  transition: 'opacity 200ms linear',
+  transitionProperty: 'opacity',
+  transitionDuration: '200ms',
+  transitionTimingFunction: 'linear',
   opacity: 0,
 };
 
