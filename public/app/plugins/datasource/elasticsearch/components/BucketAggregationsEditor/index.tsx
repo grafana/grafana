@@ -23,7 +23,7 @@ export const BucketAggregationsEditor: FunctionComponent<Props> = ({ value }) =>
           <AddRemove
             index={index}
             elements={value}
-            onAdd={() => dispatch(addBucketAggregation('date_histogram'))}
+            onAdd={() => dispatch(addBucketAggregation())}
             onRemove={() => dispatch(removeBucketAggregation(bucketAgg.id))}
           />
         </InlineFieldRow>

@@ -10,11 +10,8 @@ import {
   ChangeBucketAggregationSettingAction,
 } from './types';
 
-export const addBucketAggregation = (aggregationType: BucketAggregation['type']): BucketAggregationAction => ({
+export const addBucketAggregation = (): BucketAggregationAction => ({
   type: ADD_BUCKET_AGG,
-  payload: {
-    aggregationType,
-  },
 });
 
 export const removeBucketAggregation = (id: BucketAggregation['id']): BucketAggregationAction => ({
