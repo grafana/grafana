@@ -15,7 +15,7 @@ interface Props {
   rightPaneComponent: React.ReactNode;
   uiState: { topPaneSize: number | string; rightPaneSize: number | string };
   rightPanelVisible?: boolean;
-  updateUiState: (uiState: { topPaneSize?: number | string; rightPaneSize?: number | string }) => void;
+  updateUiState: (uiState: { topPaneSize?: number; rightPaneSize?: number }) => void;
 }
 
 export class ThreePaneSplit extends PureComponent<Props> {
