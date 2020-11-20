@@ -1,5 +1,5 @@
 import * as queryDef from './query_def';
-import { ElasticsearchAggregation } from './types';
+import { ElasticsearchAggregation, ElasticsearchQueryType } from './types';
 
 export class ElasticQueryBuilder {
   timeField: string;
@@ -418,5 +418,35 @@ export class ElasticQueryBuilder {
       ...query,
       aggs: this.build(target, null, querystring).aggs,
     };
+  }
+
+  buildPPLQuery(target: any, adhocFilters?: any, queryString?: string) {
+    // make sure query has defaults
+    target.format = target.format || queryDef.defaultPPLFormat();
+    target.queryType = ElasticsearchQueryType.PPL;
+
+    // set isLogsQuery depending on the format
+    if (target.format === 'logs') {
+      target.isLogsQuery = true;
+    } else {
+      target.isLogsQuery = false;
+    }
+
+    const timeRangeFilter = " | where $timestamp > timestamp('$timeFrom') and $timestamp < timestamp('$timeTo')";
+    //time range filter must be placed before other query filters
+    if (queryString) {
+      const separatorIndex = queryString.indexOf('|');
+      if (separatorIndex === -1) {
+        queryString = queryString.trimEnd() + timeRangeFilter;
+      } else {
+        queryString =
+          queryString.slice(0, separatorIndex).trimEnd() +
+          timeRangeFilter +
+          ' |' +
+          queryString.slice(separatorIndex + 1);
+      }
+    }
+
+    return { query: queryString };
   }
 }
