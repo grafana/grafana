@@ -6,7 +6,7 @@ export const NoopMatcherEditor: React.FC<ValueMatcherUIProps<any>> = () => {
   return null;
 };
 
-export const getNoopValueMatchers = (): Array<ValueMatcherUIRegistryItem<any>> => {
+export const getNoopValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<any>> => {
   return [
     {
       name: 'Is null',

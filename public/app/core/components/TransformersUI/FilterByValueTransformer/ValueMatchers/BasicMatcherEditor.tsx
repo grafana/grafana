@@ -59,7 +59,7 @@ export function basicMatcherEditor<T = any>(
   };
 }
 
-export const getBasicValueMatchers = (): Array<ValueMatcherUIRegistryItem<BasicValueMatcherOptions>> => {
+export const getBasicValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<BasicValueMatcherOptions>> => {
   return [
     {
       name: 'Is greater',

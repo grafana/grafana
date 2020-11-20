@@ -1,8 +1,9 @@
 import { Registry } from '@grafana/data';
-import { getBasicValueMatchers } from './BasicMatcherEditor';
-import { getNoopValueMatchers } from './NoopMatcherEditor';
+import { getBasicValueMatchersUI } from './BasicMatcherEditor';
+import { getNoopValueMatchersUI } from './NoopMatcherEditor';
+import { getRangeValueMatchersUI } from './RangeMatcherEditor';
 import { ValueMatcherUIRegistryItem } from './types';
 
 export const valueMatchersUI = new Registry<ValueMatcherUIRegistryItem<any>>(() => {
-  return [...getBasicValueMatchers(), ...getNoopValueMatchers()];
+  return [...getBasicValueMatchersUI(), ...getNoopValueMatchersUI(), ...getRangeValueMatchersUI()];
 });
