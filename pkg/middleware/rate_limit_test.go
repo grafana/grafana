@@ -43,7 +43,6 @@ func rateLimiterScenario(t *testing.T, desc string, rps int, burst int, fn rateL
 
 func TestRateLimitMiddleware(t *testing.T) {
 	rateLimiterScenario(t, "rate limit calls, with burst", 10, 10, func(doReq execFunc) {
-
 		// first 10 calls succeed
 		for i := 0; i < 10; i++ {
 			resp := doReq()
