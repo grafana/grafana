@@ -23,7 +23,7 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
 
     return (
       <div aria-label="Prometheus extra field" className="gf-form-inline">
-        {/*QueryTypeField */}
+        {/*Query type field*/}
         <div
           data-testid="queryTypeField"
           className={cx(
