@@ -440,5 +440,5 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
 
 	// Frontend logs
-	r.Post("/log", bind(frontendSentryEvent{}), Wrap(hs.logFrontendMessage))
+	r.Post("/log", middleware.RateLimit(hs.Cfg.Sentry.EndpointRPS, hs.Cfg.Sentry.EndpointRPS), bind(frontendSentryEvent{}), Wrap(hs.logFrontendMessage))
 }
