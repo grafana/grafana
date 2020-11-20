@@ -7,12 +7,13 @@ import { DashboardModel } from '../../state';
 import { DashboardLinks } from './DashboardLinks';
 import { Annotations } from './Annotations';
 import { SubMenuItems } from './SubMenuItems';
-import { Annotation, DashboardLink } from '../../state/DashboardModel';
+import { DashboardLink } from '../../state/DashboardModel';
+import { AnnotationQuery } from '@grafana/data';
 
 interface OwnProps {
   dashboard: DashboardModel;
   links: DashboardLink[];
-  annotations: Annotation[];
+  annotations: AnnotationQuery[];
 }
 
 interface ConnectedProps {

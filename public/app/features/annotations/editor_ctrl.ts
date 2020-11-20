@@ -5,11 +5,10 @@ import coreModule from 'app/core/core_module';
 import { DashboardModel } from 'app/features/dashboard/state';
 import DatasourceSrv from '../plugins/datasource_srv';
 import appEvents from 'app/core/app_events';
-import { AppEvents } from '@grafana/data';
+import { AnnotationQuery, AppEvents } from '@grafana/data';
 
 // Registeres the angular directive
 import './components/StandardAnnotationQueryEditor';
-import { Annotation } from '../dashboard/state/DashboardModel';
 
 export class AnnotationsEditorCtrl {
   mode: any;
@@ -75,7 +74,7 @@ export class AnnotationsEditorCtrl {
   /**
    * Called from the react editor
    */
-  onAnnotationChange = (annotation: Annotation) => {
+  onAnnotationChange = (annotation: AnnotationQuery) => {
     let replaced = false;
 
     this.dashboard.annotations.list = this.dashboard.annotations.list.map(a => {
@@ -93,7 +92,7 @@ export class AnnotationsEditorCtrl {
     this.currentAnnotation = annotation;
   };
 
-  edit(annotation: Annotation) {
+  edit(annotation: AnnotationQuery) {
     this.currentAnnotation = annotation;
     this.currentAnnotation.showIn = this.currentAnnotation.showIn || 0;
     this.currentIsNew = false;
@@ -124,31 +123,9 @@ export class AnnotationsEditorCtrl {
   }
 
   move(index: number, dir: number) {
-    const { list } = this.dashboard.annotations;
-    const annotation = list[index];
-    const target: Annotation[] = [];
-
-    for (let i = 0; i < list.length; i++) {
-      const current = list[i];
-
-      if (i === index) {
-        continue;
-      }
-
-      if (dir > 0) {
-        target.push(current);
-      }
-
-      if (i === index + dir) {
-        target.push(annotation);
-      }
-
-      if (dir < 0) {
-        target.push(current);
-      }
-    }
-
-    this.dashboard.annotations.list = target;
+    const list = [...this.dashboard.annotations.list];
+    Array.prototype.splice.call(list, index + dir, 0, Array.prototype.splice.call(list, index, 1)[0]);
+    this.dashboard.annotations.list = list;
   }
 
   add() {
@@ -163,7 +140,7 @@ export class AnnotationsEditorCtrl {
     this.dashboard.updateSubmenuVisibility();
   }
 
-  removeAnnotation(annotation: Annotation) {
+  removeAnnotation(annotation: AnnotationQuery) {
     this.dashboard.annotations.list = this.dashboard.annotations.list.filter(a => {
       return a.name !== annotation.name;
     });
