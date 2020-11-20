@@ -1,11 +1,7 @@
 import { DataFrame, FieldType, getTimeField, outerJoinDataFrames, sortDataFrame } from '@grafana/data';
 
 // very time oriented for now
-export const alignAndSortDataFramesByFieldName = (data: DataFrame[], fieldName: string): DataFrame | null => {
-  if (!data.length) {
-    return null;
-  }
-
+export const alignAndSortDataFramesByFieldName = (data: DataFrame[], fieldName: string): DataFrame => {
   // normalize time field names
   // in each frame find first time field and rename it to unified name
   for (let i = 0; i < data.length; i++) {

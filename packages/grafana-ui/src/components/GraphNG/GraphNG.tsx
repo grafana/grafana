@@ -1,5 +1,6 @@
 import React, { useMemo, useRef } from 'react';
 import {
+  compareDataFrameStructures,
   DataFrame,
   FieldConfig,
   FieldType,
@@ -18,6 +19,7 @@ import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
 import { GraphLegend } from '../Graph/GraphLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+import { useRevision } from '../uPlot/hooks';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -42,22 +44,22 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   timeZone,
   ...plotProps
 }) => {
-  const theme = useTheme();
-  const alignedData = useMemo(() => alignAndSortDataFramesByFieldName(data, TIME_SERIES_TIME_FIELD_NAME), [data]);
-  const legendItemsRef = useRef<LegendItem[]>([]);
-  const hasLegend = legend && legend.displayMode !== LegendDisplayMode.Hidden;
-
-  if (!alignedData) {
+  if (!data.length) {
     return (
       <div className="panel-empty">
         <p>No data found in response</p>
       </div>
     );
   }
+  const theme = useTheme();
+  const legendItemsRef = useRef<LegendItem[]>([]);
+  const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
+
+  const alignedData = alignAndSortDataFramesByFieldName(data, TIME_SERIES_TIME_FIELD_NAME);
+  const configRev = useRevision(alignedData, compareDataFrameStructures);
 
   const configBuilder = useMemo(() => {
     const builder = new UPlotConfigBuilder();
-
     let { timeIndex } = getTimeField(alignedData);
 
     if (timeIndex === undefined) {
@@ -134,7 +136,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         fillColor: seriesColor,
       });
 
-      if (hasLegend) {
+      if (hasLegend.current) {
         legendItems.push({
           color: seriesColor,
           label: getFieldDisplayName(field, alignedData),
@@ -147,7 +149,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
     legendItemsRef.current = legendItems;
     return builder;
-  }, [alignedData, hasLegend]);
+  }, [configRev]);
 
   let legendElement: React.ReactElement | undefined;
 

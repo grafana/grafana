@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { usePrevious } from 'react-use';
 import uPlot from 'uplot';
 import { buildPlotContext, PlotContext } from './context';
-import { pluginLog, preparePlotData, shouldInitialisePlot } from './utils';
+import { pluginLog, preparePlotData } from './utils';
 import { usePlotConfig } from './hooks';
 import { PlotProps } from './types';
+import usePrevious from 'react-use/lib/usePrevious';
+import isEqual from 'lodash/isEqual';
 
 // uPlot abstraction responsible for plot initialisation, setup and refresh
 // Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
@@ -12,12 +13,27 @@ import { PlotProps } from './types';
 export const UPlotChart: React.FC<PlotProps> = props => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [plotInstance, setPlotInstance] = useState<uPlot>();
-  const plotData = useRef<uPlot.AlignedData>();
+  const plotData = preparePlotData(props.data);
+  const previousData = usePrevious(plotData);
 
   // uPlot config API
   const { currentConfig, registerPlugin } = usePlotConfig(props.width, props.height, props.timeZone, props.config);
 
-  const prevConfig = usePrevious(currentConfig);
+  const initializePlot = useCallback(() => {
+    if (!currentConfig || !plotData) {
+      return;
+    }
+    if (!canvasRef.current) {
+      throw new Error('Missing Canvas component as a child of the plot.');
+    }
+    const instance = initPlot(plotData, currentConfig, canvasRef.current);
+
+    if (props.onPlotInit) {
+      props.onPlotInit();
+    }
+
+    setPlotInstance(instance);
+  }, [setPlotInstance, currentConfig, props.onPlotInit]);
 
   const getPlotInstance = useCallback(() => {
     if (!plotInstance) {
@@ -27,60 +43,25 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     return plotInstance;
   }, [plotInstance]);
 
-  // Callback executed when there was no change in plot config
-  const updateData = useCallback(() => {
-    if (!plotInstance || !plotData.current) {
-      return;
+  useLayoutEffect(() => {
+    if (!isEqual(plotData, previousData)) {
+      updateData(plotInstance, plotData);
+      if (props.onDataUpdate) {
+        props.onDataUpdate(plotData);
+      }
     }
-    pluginLog('uPlot core', false, 'updating plot data(throttled log!)', plotData.current);
-    // If config hasn't changed just update uPlot's data
-    plotInstance.setData(plotData.current);
+  }, [plotData, plotInstance, props.onDataUpdate]);
 
-    if (props.onDataUpdate) {
-      props.onDataUpdate(plotData.current);
-    }
-  }, [plotInstance, props.onDataUpdate]);
+  useLayoutEffect(() => {
+    initializePlot();
+  }, [currentConfig]);
 
-  // Destroys previous plot instance when plot re-initialised
   useEffect(() => {
     const currentInstance = plotInstance;
     return () => {
       currentInstance?.destroy();
     };
   }, [plotInstance]);
-
-  useLayoutEffect(() => {
-    plotData.current = preparePlotData(props.data);
-  }, [props.data]);
-
-  // Decides if plot should update data or re-initialise
-  useLayoutEffect(() => {
-    // Make sure everything is ready before proceeding
-    if (!currentConfig || !plotData.current) {
-      return;
-    }
-
-    // Do nothing if there is data vs series config mismatch. This may happen when the data was updated and made this
-    // effect fire before the config update triggered the effect.
-    if (currentConfig.series.length !== plotData.current.length) {
-      return;
-    }
-
-    if (shouldInitialisePlot(prevConfig, currentConfig)) {
-      if (!canvasRef.current) {
-        throw new Error('Missing Canvas component as a child of the plot.');
-      }
-      const instance = initPlot(plotData.current, currentConfig, canvasRef.current);
-
-      if (props.onPlotInit) {
-        props.onPlotInit();
-      }
-
-      setPlotInstance(instance);
-    } else {
-      updateData();
-    }
-  }, [currentConfig, updateData, setPlotInstance, props.onPlotInit]);
 
   // When size props changed update plot size synchronously
   useLayoutEffect(() => {
@@ -109,4 +90,14 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 function initPlot(data: uPlot.AlignedData, config: uPlot.Options, ref: HTMLDivElement) {
   pluginLog('uPlot core', false, 'initialized with', data, config);
   return new uPlot(config, data, ref);
+}
+
+// Callback executed when there was no change in plot config
+function updateData(plotInstance?: uPlot, data?: uPlot.AlignedData) {
+  if (!plotInstance || !data) {
+    return;
+  }
+  pluginLog('uPlot core', false, 'updating plot data(throttled log!)', data);
+  // If config hasn't changed just update uPlot's data
+  plotInstance.setData(data);
 }
