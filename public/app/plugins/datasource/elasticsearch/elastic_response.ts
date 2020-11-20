@@ -10,12 +10,17 @@ import {
   MutableDataFrame,
   PreferredVisualisationType,
 } from '@grafana/data';
-import { ElasticsearchAggregation } from './types';
+import { ElasticsearchAggregation, ElasticsearchQueryType } from './types';
 
 export class ElasticResponse {
-  constructor(private targets: any, private response: any) {
+  constructor(
+    private targets: any,
+    private response: any,
+    private targetType: ElasticsearchQueryType = ElasticsearchQueryType.Lucene
+  ) {
     this.targets = targets;
     this.response = response;
+    this.targetType = targetType;
   }
 
   processMetrics(esAgg: any, target: any, seriesList: any, props: any) {
@@ -402,7 +407,14 @@ export class ElasticResponse {
   }
 
   getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
+    if (this.targetType === ElasticsearchQueryType.PPL) {
+      return this.processPPLResponseToDataFrames(true, logMessageField, logLevelField);
+    }
     return this.processResponseToDataFrames(true, logMessageField, logLevelField);
+  }
+
+  getTable() {
+    return this.processPPLResponseToDataFrames(false);
   }
 
   processResponseToDataFrames(
@@ -425,6 +437,7 @@ export class ElasticResponse {
             propNames,
             this.targets[0].timeField,
             isLogsRequest,
+            this.targetType,
             logMessageField,
             logLevelField
           );
@@ -478,7 +491,7 @@ export class ElasticResponse {
       }
     }
 
-    return { data: dataFrame };
+    return { data: dataFrame, key: this.targets[0]?.refId };
   }
 
   processResponseToSeries = () => {
@@ -516,8 +529,54 @@ export class ElasticResponse {
       }
     }
 
-    return { data: seriesList };
+    return { data: seriesList, key: this.targets[0]?.refId };
   };
+
+  processPPLResponseToDataFrames(
+    isLogsRequest: boolean,
+    logMessageField?: string,
+    logLevelField?: string
+  ): DataQueryResponse {
+    const dataFrame: DataFrame[] = [];
+
+    //map the schema into an array of string containing its name
+    const schema = this.response.schema.map((a: { name: any }) => a.name);
+    //combine the schema key and response value
+    const response = _.map(this.response.datarows, arr => _.zipObject(schema, arr));
+    //flatten the response
+    const { flattenSchema, docs } = flattenResponses(response);
+
+    if (this.response.datarows.error) {
+      throw this.getErrorFromElasticResponse(this.response, this.response.datarows.error);
+    }
+
+    if (response.length > 0) {
+      let series = createEmptyDataFrame(
+        flattenSchema,
+        this.targets[0].timeField,
+        isLogsRequest,
+        this.targetType,
+        logMessageField,
+        logLevelField
+      );
+      // Add a row for each document
+      for (const doc of docs) {
+        if (logLevelField) {
+          // Remap level field based on the datasource config. This field is then used in explore to figure out the
+          // log level. We may rewrite some actual data in the level field if they are different.
+          doc['level'] = doc[logLevelField];
+        }
+        series.add(doc);
+      }
+      if (isLogsRequest) {
+        series = addPreferredVisualisationType(series, 'logs');
+      }
+      const target = this.targets[0];
+      series.refId = target.refId;
+      dataFrame.push(series);
+    }
+    return { data: dataFrame, key: this.targets[0]?.refId };
+  }
 }
 
 type Doc = {
@@ -563,6 +622,78 @@ const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames
 };
 
 /**
+ * Flatten the response which can be nested. This flattens it so that it is one level deep and the keys are:
+ * `level1Name.level2Name...`. Also returns list of all schemas from all the response
+ * @param responses
+ */
+const flattenResponses = (responses: any): { docs: Array<Record<string, any>>; flattenSchema: string[] } => {
+  const docs: any[] = [];
+  // We keep a list of all schemas so that we can create all the fields in the dataFrame, this can lead
+  // to wide sparse dataframes in case the scheme is different per document.
+  let flattenSchema: string[] = [];
+
+  for (const response of responses) {
+    //initial flatten of the datarows which contains extra types if it's a nested object
+    Object.keys(response).forEach(key => {
+      const type = Object.prototype.toString.call(response[key]);
+      const isobject = type === '[object Object]';
+      if (isobject) {
+        response[key] = flattenDataRows(response[key]);
+      }
+    });
+
+    const doc = flatten(response);
+
+    for (const schema of Object.keys(doc)) {
+      if (flattenSchema.indexOf(schema) === -1) {
+        flattenSchema.push(schema);
+      }
+    }
+    docs.push(doc);
+  }
+  return { docs, flattenSchema };
+};
+
+/**
+ * Inital flatten of datarows which can be nested.
+ * When nested, datarows return additional types to the nested fields which should be ignored
+ * This flattens it so that it is one level deep and the keys are:
+ * `level1Name.level3Name...`.
+ * @param datarow
+ */
+const flattenDataRows = (datarow: object): any => {
+  const delimiter = '.';
+  let depth = 1;
+  const output: any = {};
+
+  function step(object: any, prev: string | null) {
+    Object.keys(object).forEach(key => {
+      const value = object[key];
+      const isobject = Object.prototype.toString.call(value) === '[object Object]';
+      let newKey = '';
+
+      //only flatten the fields
+      if (depth % 2 === 0) {
+        newKey = prev ? prev : newKey;
+      } else {
+        newKey = prev ? prev + delimiter + key : key;
+      }
+      //keep iterating until the end of the nested object
+      if (isobject && Object.keys(value).length) {
+        ++depth;
+        return step(value, newKey);
+      }
+      //reset the depth if end is reached
+      depth = 1;
+      output[newKey] = value;
+    });
+  }
+  step(datarow, null);
+
+  return output;
+};
+
+/**
  * Create empty dataframe but with created fields. Fields are based from propNames (should be from the response) and
  * also from configuration specified fields for message, time, and level.
  * @param propNames
@@ -574,18 +705,22 @@ const createEmptyDataFrame = (
   propNames: string[],
   timeField: string,
   isLogsRequest: boolean,
+  targetType: ElasticsearchQueryType,
   logMessageField?: string,
   logLevelField?: string
 ): MutableDataFrame => {
   const series = new MutableDataFrame({ fields: [] });
 
-  series.addField({
-    config: {
-      filterable: true,
-    },
-    name: timeField,
-    type: FieldType.time,
-  });
+  //PPL table response should add time field only when it is part of the query response
+  if (targetType === ElasticsearchQueryType.Lucene || isLogsRequest) {
+    series.addField({
+      config: {
+        filterable: true,
+      },
+      name: timeField,
+      type: FieldType.time,
+    });
+  }
 
   if (logMessageField) {
     series.addField({
