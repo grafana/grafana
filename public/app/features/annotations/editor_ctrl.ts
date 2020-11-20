@@ -109,6 +109,7 @@ export class AnnotationsEditorCtrl {
   }
 
   update() {
+    this.dashboard.annotations.list = [...this.dashboard.annotations.list];
     this.reset();
     this.mode = 'list';
   }
