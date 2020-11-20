@@ -207,7 +207,7 @@ var (
 	ImageUploadProvider string
 )
 
-// AddChangePasswordLink returns if logini form is disabled or not since
+// AddChangePasswordLink returns if login form is disabled or not since
 // the same intention can be used to hide both features.
 func AddChangePasswordLink() bool {
 	return !DisableLoginForm
