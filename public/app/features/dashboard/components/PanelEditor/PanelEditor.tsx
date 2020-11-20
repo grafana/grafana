@@ -289,7 +289,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   render() {
-    const { initDone, uiState } = this.props;
+    const { initDone, updatePanelEditorUIState, uiState } = this.props;
     const styles = getStyles(config.theme, this.props);
 
     if (!initDone) {
@@ -304,7 +304,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             horizontalSplitComponents={this.renderPanelAndEditor(styles)}
             rightPaneComponent={this.renderOptionsPane()}
             uiState={uiState}
-            updateUiState={this.props.updatePanelEditorUIState}
+            updateUiState={updatePanelEditorUIState}
             rightPanelVisible={uiState.isPanelOptionsVisible}
           />
         </div>
