@@ -5,11 +5,13 @@ import { Tooltip } from '../Tooltip/Tooltip';
 import { Icon } from '../Icon/Icon';
 import { CertificationKey } from './CertificationKey';
 import { HttpSettingsBaseProps } from './types';
+import { FormField } from '../FormField/FormField';
 
 export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceConfig, onChange }) => {
   const hasTLSCACert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsCACert;
   const hasTLSClientCert = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsClientCert;
   const hasTLSClientKey = dataSourceConfig.secureJsonFields && dataSourceConfig.secureJsonFields.tlsClientKey;
+  const hasServerName = dataSourceConfig.jsonData && dataSourceConfig.jsonData.serverName;
 
   const onResetClickFactory = (field: string) => (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
@@ -28,6 +30,16 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
     onChange({
       ...dataSourceConfig,
       secureJsonData: newSecureJsonData,
+    });
+  };
+
+  const onServerNameLabelChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
+    const newJsonData = { ...dataSourceConfig.jsonData };
+    newJsonData['serverName'] = event.currentTarget.value;
+
+    onChange({
+      ...dataSourceConfig,
+      jsonData: newJsonData,
     });
   };
 
@@ -65,6 +77,16 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
 
         {dataSourceConfig.jsonData.tlsAuth && (
           <>
+            <div className="gf-form">
+              <FormField
+                label="ServerName"
+                labelWidth={7}
+                inputWidth={14}
+                placeholder="domain.example.com"
+                value={hasServerName && dataSourceConfig.jsonData.serverName}
+                onChange={onServerNameLabelChange}
+              />
+            </div>
             <CertificationKey
               hasCert={!!hasTLSClientCert}
               label="Client Cert"
