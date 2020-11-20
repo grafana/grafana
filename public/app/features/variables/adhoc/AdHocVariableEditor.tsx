@@ -8,6 +8,10 @@ import { AdHocVariableEditorState } from './reducer';
 import { changeVariableDatasource, initAdHocVariableEditor } from './actions';
 import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 import { StoreState } from 'app/types';
+import { Alert, InlineFieldRow, VerticalGroup } from '@grafana/ui';
+import { VariableSectionHeader } from '../editor/VariableSectionHeader';
+import { VariableSelectField } from '../editor/VariableSelectField';
+import { SelectableValue } from '@grafana/data';
 
 export interface OwnProps extends VariableEditorProps<AdHocVariableModel> {}
 
@@ -27,45 +31,33 @@ export class AdHocVariableEditorUnConnected extends PureComponent<Props> {
     this.props.initAdHocVariableEditor();
   }
 
-  onDatasourceChanged = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    this.props.changeVariableDatasource(event.target.value);
+  onDatasourceChanged = (option: SelectableValue<string>) => {
+    this.props.changeVariableDatasource(option.value ?? '');
   };
 
   render() {
     const { variable, editor } = this.props;
     const dataSources = editor.extended?.dataSources ?? [];
     const infoText = editor.extended?.infoText ?? null;
+    const options = dataSources.map(ds => ({ label: ds.text, value: ds.value ?? '' }));
+    const value = options.find(o => o.value === variable.datasource) ?? options[0];
 
     return (
-      <>
-        <div className="gf-form-group">
-          <h5 className="section-heading">Options</h5>
-          <div className="gf-form max-width-21">
-            <span className="gf-form-label width-8">Data source</span>
-            <div className="gf-form-select-wrapper max-width-14">
-              <select
-                className="gf-form-input"
-                required
-                onChange={this.onDatasourceChanged}
-                value={variable.datasource ?? ''}
-                aria-label="Variable editor Form AdHoc DataSource select"
-              >
-                {dataSources.map(ds => (
-                  <option key={ds.value ?? ''} value={ds.value ?? ''} label={ds.text}>
-                    {ds.text}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {infoText && (
-          <div className="alert alert-info gf-form-group" aria-label="Variable editor Form Alert">
-            {infoText}
-          </div>
-        )}
-      </>
+      <VerticalGroup spacing="xs">
+        <VariableSectionHeader name="Options" />
+        <VerticalGroup spacing="sm">
+          <InlineFieldRow>
+            <VariableSelectField
+              name="Data source"
+              value={value}
+              options={options}
+              onChange={this.onDatasourceChanged}
+              labelWidth={10}
+            />
+          </InlineFieldRow>
+          {infoText ? <Alert title={infoText} severity="info" /> : null}
+        </VerticalGroup>
+      </VerticalGroup>
     );
   }
 }

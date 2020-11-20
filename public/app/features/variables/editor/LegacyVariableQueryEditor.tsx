@@ -2,14 +2,11 @@ import React, { FC, useCallback, useState } from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { VariableQueryProps } from 'app/types/plugins';
-import { InlineField, TextArea, useStyles } from '@grafana/ui';
-import { GrafanaTheme } from '@grafana/data';
-import { css } from 'emotion';
+import { VariableTextAreaField } from './VariableTextAreaField';
 
 export const LEGACY_VARIABLE_QUERY_EDITOR_NAME = 'Grafana-LegacyVariableQueryEditor';
 
 export const LegacyVariableQueryEditor: FC<VariableQueryProps> = ({ onChange, query }) => {
-  const styles = useStyles(getStyles);
   const [value, setValue] = useState(query);
   const onValueChange = useCallback(
     (event: React.FormEvent<HTMLTextAreaElement>) => {
@@ -17,6 +14,7 @@ export const LegacyVariableQueryEditor: FC<VariableQueryProps> = ({ onChange, qu
     },
     [onChange]
   );
+
   const onBlur = useCallback(
     (event: React.FormEvent<HTMLTextAreaElement>) => {
       onChange(event.currentTarget.value, event.currentTarget.value);
@@ -25,38 +23,18 @@ export const LegacyVariableQueryEditor: FC<VariableQueryProps> = ({ onChange, qu
   );
 
   return (
-    <div className="gf-form">
-      <InlineField label="Query" labelWidth={20} grow={false} className={styles.inlineFieldOverride}>
-        <span hidden />
-      </InlineField>
-      <TextArea
-        rows={getLineCount(value)}
-        className="gf-form-input"
-        value={value}
-        onChange={onValueChange}
-        onBlur={onBlur}
-        placeholder="metric name or tags query"
-        required
-        aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput}
-      />
-    </div>
+    <VariableTextAreaField
+      name="Query"
+      value={value}
+      placeholder="metric name or tags query"
+      width={100}
+      onChange={onValueChange}
+      onBlur={onBlur}
+      required
+      labelWidth={20}
+      aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput}
+    />
   );
 };
 
-function getStyles(theme: GrafanaTheme) {
-  return {
-    inlineFieldOverride: css`
-      margin: 0;
-    `,
-  };
-}
-
 LegacyVariableQueryEditor.displayName = LEGACY_VARIABLE_QUERY_EDITOR_NAME;
-
-const getLineCount = (value: any) => {
-  if (value && typeof value === 'string') {
-    return value.split('\n').length;
-  }
-
-  return 1;
-};
