@@ -31,46 +31,44 @@ export const FiltersSettingsEditor: FunctionComponent<Props> = ({ value }) => {
           flex-direction: column;
         `}
       >
-        {(value.settings?.filters || [defaultFilter()]).map((filter, index) => {
-          // TODO: Here we should have a unique key, not sure if we can get it from the fields
-          return (
+        {(value.settings?.filters || [defaultFilter()]).map((filter, index) => (
+          <div
+            key={index}
+            className={css`
+              display: flex;
+            `}
+          >
             <div
               className={css`
-                display: flex;
+                width: 250px;
               `}
             >
-              <div
-                className={css`
-                  width: 250px;
-                `}
-              >
-                <InlineField label="Query" labelWidth={10}>
-                  <QueryField
-                    placeholder="Lucene Query"
-                    portalOrigin="elasticsearch"
-                    // FIXME: There's a weird thing happening with this field:
-                    // when an error is thrown it becomes impossible to remove focus from this element
-                    onChange={query => dispatch(changeFilter(index, { ...filter, query }))}
-                    query={filter.query}
-                  />
-                </InlineField>
-              </div>
-              <InlineField label="Label" labelWidth={10}>
-                <Input
-                  placeholder="Label"
-                  onBlur={e => dispatch(changeFilter(index, { ...filter, label: e.target.value }))}
-                  defaultValue={filter.label}
+              <InlineField label="Query" labelWidth={10}>
+                <QueryField
+                  placeholder="Lucene Query"
+                  portalOrigin="elasticsearch"
+                  // FIXME: There's a weird thing happening with this field:
+                  // when an error is thrown it becomes impossible to remove focus from this element
+                  onChange={query => dispatch(changeFilter(index, { ...filter, query }))}
+                  query={filter.query}
                 />
               </InlineField>
-              <AddRemove
-                index={index}
-                elements={value.settings?.filters || []}
-                onAdd={() => dispatch(addFilter())}
-                onRemove={() => dispatch(removeFilter(index))}
-              />
             </div>
-          );
-        })}
+            <InlineField label="Label" labelWidth={10}>
+              <Input
+                placeholder="Label"
+                onBlur={e => dispatch(changeFilter(index, { ...filter, label: e.target.value }))}
+                defaultValue={filter.label}
+              />
+            </InlineField>
+            <AddRemove
+              index={index}
+              elements={value.settings?.filters || []}
+              onAdd={() => dispatch(addFilter())}
+              onRemove={() => dispatch(removeFilter(index))}
+            />
+          </div>
+        ))}
       </div>
     </>
   );
