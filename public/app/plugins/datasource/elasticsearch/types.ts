@@ -9,6 +9,7 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   logMessageField?: string;
   logLevelField?: string;
   dataLinks?: DataLinkConfig[];
+  pplSupportEnabled?: boolean;
 }
 
 export interface ElasticsearchAggregation {
@@ -23,8 +24,10 @@ export interface ElasticsearchQuery extends DataQuery {
   isLogsQuery: boolean;
   alias?: string;
   query?: string;
+  queryType?: ElasticsearchQueryType;
   bucketAggs?: ElasticsearchAggregation[];
   metrics?: ElasticsearchAggregation[];
+  format?: string;
 }
 
 export type DataLinkConfig = {
@@ -32,3 +35,8 @@ export type DataLinkConfig = {
   url: string;
   datasourceUid?: string;
 };
+
+export enum ElasticsearchQueryType {
+  Lucene = 'lucene',
+  PPL = 'PPL',
+}
