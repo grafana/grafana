@@ -92,7 +92,7 @@ export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelDat
           data.request?.timezone ?? 'browser',
           {},
           { showBars: false, showLines: true, showPoints: false },
-          { displayMode: LegendDisplayMode.List, isVisible: true, placement: 'bottom' }
+          { displayMode: LegendDisplayMode.List, placement: 'bottom' }
         );
 
   return { ...data, graphResult };

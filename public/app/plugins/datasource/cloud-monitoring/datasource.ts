@@ -12,17 +12,10 @@ import {
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-import {
-  CloudMonitoringQuery,
-  MetricDescriptor,
-  CloudMonitoringOptions,
-  Filter,
-  VariableQueryData,
-  QueryType,
-} from './types';
+import { CloudMonitoringOptions, CloudMonitoringQuery, Filter, MetricDescriptor, QueryType } from './types';
 import { cloudMonitoringUnitMappings } from './constants';
 import API from './api';
-import CloudMonitoringMetricFindQuery from './CloudMonitoringMetricFindQuery';
+import { CloudMonitoringVariableSupport } from './variables';
 
 export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonitoringQuery, CloudMonitoringOptions> {
   api: API;
@@ -36,9 +29,11 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     super(instanceSettings);
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
     this.api = new API(`${instanceSettings.url!}/cloudmonitoring/v3/projects/`);
+
+    this.variables = new CloudMonitoringVariableSupport(this);
   }
 
-  get variables() {
+  getVariables() {
     return this.templateSrv.getVariables().map(v => `$${v.name}`);
   }
 
@@ -123,12 +118,6 @@ export default class CloudMonitoringDatasource extends DataSourceApi<CloudMonito
     });
 
     return results;
-  }
-
-  async metricFindQuery(query: VariableQueryData) {
-    await this.ensureGCEDefaultProject();
-    const cloudMonitoringMetricFindQuery = new CloudMonitoringMetricFindQuery(this);
-    return cloudMonitoringMetricFindQuery.execute(query);
   }
 
   async getTimeSeries(options: DataQueryRequest<CloudMonitoringQuery>) {

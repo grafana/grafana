@@ -38,7 +38,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">Export/Import dashboard</td>
     <td>
-      Grafana includes the ability to export your dashboards to a file containing JSON. Community members sometimes share their created dashboards on the [Grafana Dashboards page](https://grafana.com/grafana/dashboards). Dashboards previously exported or found on this site may be imported by other users.
+      Grafana includes the ability to export your dashboards to a file containing JSON. Community members sometimes share their created dashboards on the <a href="https://grafana.com/grafana/dashboards">Grafana Dashboards page</a>. Dashboards previously exported or found on this site may be imported by other users.
     </td>
   </tr>
   <tr>
@@ -103,7 +103,7 @@ This topic lists words and abbreviations that are commonly used in the Grafana d
   <tr>
     <td style="vertical-align: top">Trace</td>
     <td>
-      An observed execution path of a request through a distributed system. For more information, refer to [What is Distributed Tracing?](https://opentracing.io/docs/overview/what-is-tracing/)
+      An observed execution path of a request through a distributed system. For more information, refer to <a href="https://opentracing.io/docs/overview/what-is-tracing/">What is Distributed Tracing?</a>
     </td>
   </tr>
   <tr>

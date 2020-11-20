@@ -44,7 +44,7 @@ export const GraphLegendListItem: React.FunctionComponent<GraphLegendItemProps> 
             onLabelClick(item, event);
           }
         }}
-        className={cx(styles.label, !item.isVisible && styles.labelDisabled)}
+        className={cx(styles.label, item.disabled && styles.labelDisabled)}
       >
         {item.label}
       </div>

@@ -11,9 +11,7 @@ import (
 var (
 	ErrAlertNotificationNotFound                = errors.New("alert notification not found")
 	ErrNotificationFrequencyNotFound            = errors.New("notification frequency not specified")
-	ErrAlertNotificationStateNotFound           = errors.New("alert notification state not found")
 	ErrAlertNotificationStateVersionConflict    = errors.New("alert notification state update version conflict")
-	ErrAlertNotificationStateAlreadyExist       = errors.New("alert notification state already exists")
 	ErrAlertNotificationFailedGenerateUniqueUid = errors.New("failed to generate unique alert notification uid")
 	ErrAlertNotificationFailedTranslateUniqueID = errors.New("failed to translate Notification Id to Uid")
 	ErrAlertNotificationWithSameNameExists      = errors.New("alert notification with same name already exists")

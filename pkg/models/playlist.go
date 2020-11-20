@@ -6,8 +6,7 @@ import (
 
 // Typed errors
 var (
-	ErrPlaylistNotFound           = errors.New("playlist not found")
-	ErrPlaylistWithSameNameExists = errors.New("a playlist with the same name already exists")
+	ErrPlaylistNotFound = errors.New("Playlist not found")
 )
 
 // Playlist model
@@ -35,12 +34,6 @@ type PlaylistItemDTO struct {
 	Order      int    `json:"order"`
 }
 
-type PlaylistDashboard struct {
-	Id    int64  `json:"id"`
-	Slug  string `json:"slug"`
-	Title string `json:"title"`
-}
-
 type PlaylistItem struct {
 	Id         int64
 	PlaylistId int64
@@ -50,12 +43,7 @@ type PlaylistItem struct {
 	Title      string
 }
 
-func (p PlaylistDashboard) TableName() string {
-	return "dashboard"
-}
-
 type Playlists []*Playlist
-type PlaylistDashboards []*PlaylistDashboard
 
 //
 // COMMANDS
