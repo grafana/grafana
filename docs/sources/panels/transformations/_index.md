@@ -1,9 +1,9 @@
 +++
-title = "Overview"
+title = "Transformations"
 weight = 300
 +++
 
-# Transformations overview
+# Transformations
 
 Transformations process the result set of a query before it’s passed on for visualization. They allow you to rename fields, join separate time series together, do math across queries, and more. For users, with numerous dashboards or with a large volume of queries, the ability to reuse the query result from one panel in another panel can be a huge performance gain.
 
