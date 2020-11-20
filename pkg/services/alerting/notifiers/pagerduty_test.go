@@ -159,7 +159,9 @@ func TestPagerdutyNotifier(t *testing.T) {
 					"payload": map[string]interface{}{
 						"component":      "Grafana",
 						"source":         "<<PRESENCE>>",
-						"custom_details": map[string]interface{}{},
+						"custom_details": map[string]interface{}{
+							"state": "alerting",
+						},
 						"severity":       "critical",
 						"summary":        "someRule - someMessage",
 						"timestamp":      "<<PRESENCE>>",
@@ -229,6 +231,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 							"queries": map[string]interface{}{
 								"someMetric": nil,
 							},
+							"state": "alerting",
 						},
 						"severity":  "critical",
 						"summary":   "someRule",
@@ -301,6 +304,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 							"severity":  "warning",
 							"dedup_key": "key-" + strings.Repeat("x", 250),
 							"keyOnly":   "",
+							"state":     "alerting",
 						},
 						"severity":  "warning",
 						"summary":   "someRule - someMessage",
@@ -378,6 +382,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 							"component": "aComponent",
 							"severity":  "info",
 							"keyOnly":   "",
+							"state":     "alerting",
 						},
 						"severity":  "info",
 						"summary":   "someRule - someMessage",
@@ -456,6 +461,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 							"component": "aComponent",
 							"severity":  "llama",
 							"keyOnly":   "",
+							"state":     "alerting",
 						},
 						"severity":  "critical",
 						"summary":   "someRule - someMessage",
