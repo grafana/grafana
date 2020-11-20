@@ -23,6 +23,7 @@ export const ToggleVisibilityButton: FunctionComponent<Props> = ({ onClick, hide
 
   return (
     <IconButton
+      label="show"
       aria-pressed={hide}
       className={cx(hide && buttonCss)}
       iconName={hide ? 'eye-slash' : 'eye'}
