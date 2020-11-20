@@ -182,6 +182,12 @@ export const movingAvgModelSettings: any = {
   ],
 };
 
+export const pplFormatTypes = [
+  { text: 'Table', value: 'table' },
+  { text: 'Logs', value: 'logs' },
+  { text: 'Time series', value: 'time_series' },
+];
+
 export function getMetricAggTypes(esVersion: any) {
   return _.filter(metricAggTypes, f => {
     if (f.minVersion || f.maxVersion) {
@@ -297,6 +303,10 @@ export function defaultMetricAgg() {
 
 export function defaultBucketAgg() {
   return { type: 'date_histogram', id: '2', settings: { interval: 'auto' } };
+}
+
+export function defaultPPLFormat() {
+  return 'table';
 }
 
 export const findMetricById = (metrics: any[], id: any) => {
