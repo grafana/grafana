@@ -40,7 +40,12 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
 
   const onAddFilter = useCallback(() => {
     const frame = input[0];
-    const field = frame.fields[1];
+    const field = frame.fields.find(f => f.type !== FieldType.time);
+
+    if (!field) {
+      return;
+    }
+
     const filters = cloneDeep(options.filters);
     const matcher = valueMatchers.get(ValueMatcherID.greater);
 

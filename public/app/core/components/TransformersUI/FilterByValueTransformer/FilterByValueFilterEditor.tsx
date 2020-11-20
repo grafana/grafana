@@ -19,7 +19,7 @@ export interface DataFrameFieldsInfo {
 export const FilterByValueFilterEditor: React.FC<Props> = props => {
   const { onDelete, onChange, filter, fieldsInfo } = props;
   const { fieldsAsOptions, fieldByDisplayName } = fieldsInfo;
-  const fieldName = getFieldName(filter, fieldsAsOptions);
+  const fieldName = getFieldName(filter, fieldsAsOptions) ?? '';
   const field = fieldByDisplayName[fieldName];
 
   if (!field) {
@@ -52,14 +52,16 @@ export const FilterByValueFilterEditor: React.FC<Props> = props => {
       if (!selectable?.value) {
         return;
       }
+
+      const id = selectable.value;
+      const options = valueMatchers.get(id).getDefaultOptions(field);
+
       onChange({
         ...filter,
-        config: {
-          id: selectable.value,
-        },
+        config: { id, options },
       });
     },
-    [onChange, filter]
+    [onChange, filter, field]
   );
 
   const onChangeMatcherOptions = useCallback(
@@ -133,7 +135,10 @@ const getMatcherOptions = (field: Field): Array<SelectableValue<string>> => {
   return options;
 };
 
-const getSelectedMatcherId = (filter: FilterByValueFilter, matcherOptions: Array<SelectableValue<string>>): string => {
+const getSelectedMatcherId = (
+  filter: FilterByValueFilter,
+  matcherOptions: Array<SelectableValue<string>>
+): string | undefined => {
   const matcher = matcherOptions.find(m => m.value === filter.config.id);
 
   if (matcher && matcher.value) {
@@ -144,10 +149,13 @@ const getSelectedMatcherId = (filter: FilterByValueFilter, matcherOptions: Array
     return matcherOptions[0]?.value;
   }
 
-  return '';
+  return;
 };
 
-const getFieldName = (filter: FilterByValueFilter, fieldOptions: Array<SelectableValue<string>>): string => {
+const getFieldName = (
+  filter: FilterByValueFilter,
+  fieldOptions: Array<SelectableValue<string>>
+): string | undefined => {
   const fieldName = fieldOptions.find(m => m.value === filter.fieldName);
 
   if (fieldName && fieldName.value) {
@@ -158,5 +166,5 @@ const getFieldName = (filter: FilterByValueFilter, fieldOptions: Array<Selectabl
     return fieldOptions[0]?.value;
   }
 
-  return '';
+  return;
 };

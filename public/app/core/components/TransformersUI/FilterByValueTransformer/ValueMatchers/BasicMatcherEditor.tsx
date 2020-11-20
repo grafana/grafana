@@ -71,6 +71,33 @@ export const getBasicValueMatchers = (): Array<ValueMatcherUIRegistryItem<BasicV
       }),
     },
     {
+      name: 'Is greater or equal',
+      id: ValueMatcherID.greaterOrEqual,
+      component: basicMatcherEditor<number>({
+        validator: options => {
+          return !isNaN(options.value);
+        },
+      }),
+    },
+    {
+      name: 'Is lower',
+      id: ValueMatcherID.lower,
+      component: basicMatcherEditor<number>({
+        validator: options => {
+          return !isNaN(options.value);
+        },
+      }),
+    },
+    {
+      name: 'Is lower or equal',
+      id: ValueMatcherID.lowerOrEqual,
+      component: basicMatcherEditor<number>({
+        validator: options => {
+          return !isNaN(options.value);
+        },
+      }),
+    },
+    {
       name: 'Is equal',
       id: ValueMatcherID.equal,
       component: basicMatcherEditor<any>({

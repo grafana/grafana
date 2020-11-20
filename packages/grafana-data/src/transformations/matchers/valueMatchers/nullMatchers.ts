@@ -20,4 +20,21 @@ const isNullValueMatcher: ValueMatcherInfo<ValueMatcherOptions> = {
   getDefaultOptions: () => ({}),
 };
 
-export const getNullValueMatchers = (): ValueMatcherInfo[] => [isNullValueMatcher];
+const isNotNullValueMatcher: ValueMatcherInfo<ValueMatcherOptions> = {
+  id: ValueMatcherID.isNotNull,
+  name: 'Is not null',
+  description: 'Match where value for given field is not null.',
+  get: () => {
+    return (valueIndex: number, field: Field) => {
+      const value = field.values.get(valueIndex);
+      return value !== null;
+    };
+  },
+  getOptionsDisplayText: () => {
+    return `Matches all rows where field is not null.`;
+  },
+  isApplicable: () => true,
+  getDefaultOptions: () => ({}),
+};
+
+export const getNullValueMatchers = (): ValueMatcherInfo[] => [isNullValueMatcher, isNotNullValueMatcher];
