@@ -17,6 +17,7 @@ const isNullValueMatcher: ValueMatcherInfo<ValueMatcherOptions> = {
     return `Matches all rows where field is null.`;
   },
   isApplicable: () => true,
+  getDefaultOptions: () => ({}),
 };
 
 export const getNullValueMatchers = (): ValueMatcherInfo[] => [isNullValueMatcher];

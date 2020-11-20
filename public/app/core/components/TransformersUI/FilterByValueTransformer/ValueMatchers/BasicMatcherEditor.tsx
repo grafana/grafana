@@ -3,19 +3,18 @@ import { Input } from '@grafana/ui';
 import { BasicValueMatcherOptions } from '@grafana/data/src/transformations/matchers/valueMatchers/types';
 import { ValueMatcherUIProps, ValueMatcherUIRegistryItem, ValueMatcherValidator } from './types';
 import { ValueMatcherID } from '@grafana/data';
-import { isNumber, isUndefined } from 'lodash';
+import { convertToType } from './utils';
 
-interface EditorConfig<T> {
-  defaultValue: T;
+interface BasicEditorConfig {
   validator: ValueMatcherValidator<BasicValueMatcherOptions>;
 }
 
 export function basicMatcherEditor<T = any>(
-  config: EditorConfig<T>
+  config: BasicEditorConfig
 ): React.FC<ValueMatcherUIProps<BasicValueMatcherOptions<T>>> {
-  return ({ options, onChange }) => {
-    const { validator, defaultValue } = config;
-    const [isInvalid, setInvalid] = useState(validator(options));
+  return ({ options, onChange, field }) => {
+    const { validator } = config;
+    const [isInvalid, setInvalid] = useState(!validator(options));
 
     const onChangeValue = useCallback(
       (event: React.FormEvent<HTMLInputElement>) => {
@@ -34,12 +33,15 @@ export function basicMatcherEditor<T = any>(
         if (isInvalid) {
           return;
         }
+
+        const { value } = event.currentTarget;
+
         onChange({
           ...options,
-          value: convertToType(defaultValue, event.currentTarget.value),
+          value: convertToType(value, field),
         });
       },
-      [options, onChange, isInvalid]
+      [options, onChange, isInvalid, field]
     );
 
     return (
@@ -47,7 +49,7 @@ export function basicMatcherEditor<T = any>(
         <Input
           className="flex-grow-1"
           invalid={isInvalid}
-          defaultValue={String(options.value ?? defaultValue)}
+          defaultValue={String(options.value)}
           placeholder="Value"
           onChange={onChangeValue}
           onBlur={onChangeOptions}
@@ -57,28 +59,29 @@ export function basicMatcherEditor<T = any>(
   };
 }
 
-function convertToType<T>(defaultValue: T, value?: string) {
-  if (isUndefined(value)) {
-    return defaultValue;
-  }
-
-  if (isNumber(defaultValue)) {
-    return (parseInt(value, 10) as any) as T;
-  }
-
-  return (value as any) as T;
-}
-
 export const getBasicValueMatchers = (): Array<ValueMatcherUIRegistryItem<BasicValueMatcherOptions>> => {
   return [
     {
       name: 'Is greater',
       id: ValueMatcherID.greater,
       component: basicMatcherEditor<number>({
-        defaultValue: 0,
         validator: options => {
           return !isNaN(options.value);
         },
+      }),
+    },
+    {
+      name: 'Is equal',
+      id: ValueMatcherID.equal,
+      component: basicMatcherEditor<any>({
+        validator: () => true,
+      }),
+    },
+    {
+      name: 'Is not equal',
+      id: ValueMatcherID.notEqual,
+      component: basicMatcherEditor<any>({
+        validator: () => true,
       }),
     },
   ];

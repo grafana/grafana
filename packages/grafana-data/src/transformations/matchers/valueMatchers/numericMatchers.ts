@@ -20,6 +20,7 @@ const isGreaterValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<number>> 
     return `Matches all rows where field value is greater than: ${options.value}.`;
   },
   isApplicable: field => field.type === FieldType.number,
+  getDefaultOptions: field => ({ value: 0 }),
 };
 
 export const getNumericValueMatchers = (): ValueMatcherInfo[] => [isGreaterValueMatcher];

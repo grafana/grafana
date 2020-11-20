@@ -9,6 +9,8 @@ import {
   DataFrame,
   SelectableValue,
   FieldType,
+  ValueMatcherID,
+  valueMatchers,
 } from '@grafana/data';
 import { Button, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 import cloneDeep from 'lodash/cloneDeep';
@@ -19,7 +21,6 @@ import {
   FilterByValueType,
 } from '@grafana/data/src/transformations/transformers/filterByValue';
 
-import { ValueFilterID } from '@grafana/data/src/transformations/valueFilters';
 import { DataFrameFieldsInfo, FilterByValueFilterEditor } from './FilterByValueFilterEditor';
 
 const filterTypes: Array<SelectableValue<FilterByValueType>> = [
@@ -38,19 +39,23 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
   const fieldsInfo = useFieldsInfo(input);
 
   const onAddFilter = useCallback(() => {
+    const frame = input[0];
+    const field = frame.fields[1];
     const filters = cloneDeep(options.filters);
+    const matcher = valueMatchers.get(ValueMatcherID.greater);
+
     filters.push({
-      fieldName: '',
+      fieldName: getFieldDisplayName(field, frame, input),
       config: {
-        id: ValueFilterID.greater,
-        options: {},
+        id: matcher.id,
+        options: matcher.getDefaultOptions(field),
       },
     });
     onChange({ ...options, filters });
-  }, [onChange, options]);
+  }, [onChange, options, valueMatchers, input]);
 
   const onDeleteFilter = useCallback(
-    (index: number) => () => {
+    (index: number) => {
       let filters = cloneDeep(options.filters);
       filters.splice(index, 1);
       onChange({ ...options, filters });

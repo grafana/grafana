@@ -30,8 +30,6 @@ export const FilterByValueFilterEditor: React.FC<Props> = props => {
   const matcherId = getSelectedMatcherId(filter, matcherOptions);
   const editor = valueMatchersUI.getIfExists(matcherId);
 
-  console.log('mactcherId', matcherId);
-
   if (!editor || !editor.component) {
     return null;
   }
@@ -57,14 +55,25 @@ export const FilterByValueFilterEditor: React.FC<Props> = props => {
       onChange({
         ...filter,
         config: {
-          id: selectable?.value,
+          id: selectable.value,
         },
       });
     },
     [onChange, filter]
   );
 
-  const onChangeMatcherOptions = useCallback(() => {}, [onChange, filter]);
+  const onChangeMatcherOptions = useCallback(
+    options => {
+      onChange({
+        ...filter,
+        config: {
+          ...filter.config,
+          options,
+        },
+      });
+    },
+    [onChange, filter]
+  );
 
   return (
     <div className="gf-form-inline">
@@ -91,7 +100,7 @@ export const FilterByValueFilterEditor: React.FC<Props> = props => {
         />
       </div>
       <div className="gf-form gf-form--grow gf-form-spacing ">
-        <editor.component options={filter.config.options} onChange={onChangeMatcherOptions} />
+        <editor.component field={field} options={filter.config.options ?? {}} onChange={onChangeMatcherOptions} />
       </div>
       <div className="gf-form">
         <Button icon="times" onClick={onDelete} style={{ height: '100%' }} size="sm" variant="secondary" />
