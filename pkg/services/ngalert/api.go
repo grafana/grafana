@@ -181,7 +181,7 @@ func (ng *AlertNG) createAlertDefinitionEndpoint(c *models.ReqContext, cmd saveA
 func (ng *AlertNG) listAlertDefinitions(c *models.ReqContext) api.Response {
 	cmd := listAlertDefinitionsCommand{OrgID: c.SignedInUser.OrgId}
 
-	if err := ng.getAlertDefinitions(&cmd); err != nil {
+	if err := ng.getOrgAlertDefinitions(&cmd); err != nil {
 		return api.Error(500, "Failed to list alert definitions", err)
 	}
 

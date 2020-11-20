@@ -14,7 +14,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func mockTimeNow() {
+	var timeSeed int64
+	timeNow = func() time.Time {
+		fakeNow := time.Unix(timeSeed, 0)
+		timeSeed++
+		return fakeNow
+	}
+}
+
+func resetTimeNow() {
+	timeNow = time.Now
+}
+
 func TestCreatingAlertDefinition(t *testing.T) {
+	mockTimeNow()
+	defer resetTimeNow()
+
 	t.Run("should fail gracefully when creating alert definition with invalid relative time range", func(t *testing.T) {
 		ng := setupTestEnv(t)
 		q := saveAlertDefinitionCommand{
@@ -36,11 +52,15 @@ func TestCreatingAlertDefinition(t *testing.T) {
 		}
 		err := ng.saveAlertDefinition(&q)
 		require.NoError(t, err)
+		assert.Equal(t, time.Unix(1, 0).Unix(), q.Result.Updated)
 	})
 
 }
 
 func TestUpdatingAlertDefinition(t *testing.T) {
+	mockTimeNow()
+	defer resetTimeNow()
+
 	t.Run("zero rows affected when updating unknown alert", func(t *testing.T) {
 		ng := setupTestEnv(t)
 
@@ -75,6 +95,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 	t.Run("updating successfully existing alert", func(t *testing.T) {
 		ng := setupTestEnv(t)
 		alertDefinition := createTestAlertDefinition(t, ng)
+		created := alertDefinition.Updated
 
 		q := updateAlertDefinitionCommand{
 			ID:    (*alertDefinition).Id,
@@ -103,6 +124,8 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), q.RowsAffected)
 		assert.Equal(t, int64(1), q.Result.Id)
+		assert.Greater(t, q.Result.Updated, created)
+		updated := q.Result.Updated
 
 		getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: (*alertDefinition).Id}
 		err = ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery)
@@ -110,6 +133,8 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		assert.Equal(t, "something completely different", getAlertDefinitionByIDQuery.Result.Name)
 		assert.Equal(t, "B", getAlertDefinitionByIDQuery.Result.Condition)
 		assert.Equal(t, 1, len(getAlertDefinitionByIDQuery.Result.Data))
+		assert.Greater(t, getAlertDefinitionByIDQuery.Result.Updated, created)
+		assert.Equal(t, updated, getAlertDefinitionByIDQuery.Result.Updated)
 	})
 }
 

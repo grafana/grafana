@@ -106,8 +106,8 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 	})
 }
 
-// getAlertDefinitions is a handler for retrieving alert definitions of specific organisation.
-func (ng *AlertNG) getAlertDefinitions(cmd *listAlertDefinitionsCommand) error {
+// getOrgAlertDefinitions is a handler for retrieving alert definitions of specific organisation.
+func (ng *AlertNG) getOrgAlertDefinitions(cmd *listAlertDefinitionsCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertDefinitions := make([]*AlertDefinition, 0)
 		q := "SELECT * FROM alert_definition WHERE org_id = ?"
@@ -116,6 +116,19 @@ func (ng *AlertNG) getAlertDefinitions(cmd *listAlertDefinitionsCommand) error {
 		}
 
 		cmd.Result = alertDefinitions
+		return nil
+	})
+}
+
+func (ng *AlertNG) getUpdatedAlertDefinitions(cmd listUpdatedAlertDefinitionsCommand) error {
+	alertIDs := make([]*int64, 0)
+	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		q := "SELECT id FROM alert_definition WHERE updated >= ?"
+		if err := sess.SQL(q, cmd.Since.Unix()).Find(&alertIDs); err != nil {
+			return err
+		}
+
+		cmd.Result = alertIDs
 		return nil
 	})
 }

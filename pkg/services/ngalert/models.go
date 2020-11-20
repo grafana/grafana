@@ -15,6 +15,7 @@ type AlertDefinition struct {
 	Name      string
 	Condition string
 	Data      []eval.AlertQuery
+	Updated   int64
 }
 
 var (
@@ -87,4 +88,10 @@ type listAlertDefinitionsCommand struct {
 	OrgID int64 `json:"-"`
 
 	Result []*AlertDefinition
+}
+
+type listUpdatedAlertDefinitionsCommand struct {
+	Since time.Time `json:"-"`
+
+	Result []*int64
 }

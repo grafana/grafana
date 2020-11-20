@@ -1,6 +1,8 @@
 package ngalert
 
 import (
+	"time"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -68,6 +70,15 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 
 	// create indices
 	mg.AddMigration("add index alert_definition org_id", migrator.NewAddIndexMigration(alertDefinition, alertDefinition.Indices[0]))
+
+	now := timeNow()
+	mg.AddMigration("add column updated", migrator.NewAddColumnMigration(alertDefinition, &migrator.Column{
+		Name: "updated", Type: migrator.DB_BigInt, Nullable: false, Default: fmt.Sprintf("%d", now.Unix()),
+	}))
+
+	mg.AddMigration("add index alert_definition updated", migrator.NewAddIndexMigration(alertDefinition, &migrator.Index{
+		Cols: []string{"updated"}, Type: migrator.IndexType,
+	}))
 }
 
 // LoadAlertCondition returns a Condition object for the given alertDefinitionID.
