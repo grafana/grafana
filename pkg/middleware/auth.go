@@ -55,11 +55,16 @@ func notAuthorized(c *models.ReqContext) {
 	}
 
 	// remove any forceLogin=true params
-	re := regexp.MustCompile(`&?forceLogin=true`)
-	redirectTo = re.ReplaceAllString(redirectTo, "")
+	redirectTo = removeForceLoginParams(redirectTo)
 
 	WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, newCookieOptions)
 	c.Redirect(setting.AppSubUrl + "/login")
+}
+
+var forceLoginParamsRegexp = regexp.MustCompile(`&?forceLogin=true`)
+
+func removeForceLoginParams(str string) string {
+	return forceLoginParamsRegexp.ReplaceAllString(str, "")
 }
 
 func EnsureEditorOrViewerCanEdit(c *models.ReqContext) {
