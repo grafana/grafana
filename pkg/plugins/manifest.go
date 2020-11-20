@@ -209,7 +209,7 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) (*PluginSignatu
 	if len(unsignedFiles) > 0 {
 		log.Warn("The following files were not included in the signature", "plugin", plugin.Id, "files", unsignedFiles)
 		return &PluginSignatureState{
-			Status: PluginSignatureInvalid,
+			Status: PluginSignatureModified,
 		}, nil
 	}
 

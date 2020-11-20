@@ -235,6 +235,46 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, "Will Browne", Plugins[pluginId].SignatureOrg)
 		assert.False(t, Plugins[pluginId].IsCorePlugin)
 	})
+
+	t.Run("With back-end plugin with modified v2 signature (missing file from plugin dir)", func(t *testing.T) {
+		origAppUrl := setting.AppUrl
+		origPluginsPath := setting.PluginsPath
+		t.Cleanup(func() {
+			setting.AppUrl = origAppUrl
+			setting.PluginsPath = origPluginsPath
+		})
+		setting.AppUrl = "http://localhost:3000/"
+		setting.PluginsPath = "testdata/invalid-v2-signature"
+
+		pm := &PluginManager{
+			Cfg:                  &setting.Cfg{},
+			BackendPluginManager: &fakeBackendPluginManager{},
+		}
+		err := pm.Init()
+		require.NoError(t, err)
+		assert.Equal(t, []error{fmt.Errorf(`plugin "test"'s signature has been modified`)}, pm.scanningErrors)
+		assert.Nil(t, Plugins[("test")])
+	})
+
+	t.Run("With back-end plugin with modified v2 signature (unaccounted file in plugin dir)", func(t *testing.T) {
+		origAppUrl := setting.AppUrl
+		origPluginsPath := setting.PluginsPath
+		t.Cleanup(func() {
+			setting.AppUrl = origAppUrl
+			setting.PluginsPath = origPluginsPath
+		})
+		setting.AppUrl = "http://localhost:3000/"
+		setting.PluginsPath = "testdata/invalid-v2-signature-2"
+
+		pm := &PluginManager{
+			Cfg:                  &setting.Cfg{},
+			BackendPluginManager: &fakeBackendPluginManager{},
+		}
+		err := pm.Init()
+		require.NoError(t, err)
+		assert.Equal(t, []error{fmt.Errorf(`plugin "test"'s signature has been modified`)}, pm.scanningErrors)
+		assert.Nil(t, Plugins[("test")])
+	})
 }
 
 func TestPluginManager_IsBackendOnlyPlugin(t *testing.T) {
