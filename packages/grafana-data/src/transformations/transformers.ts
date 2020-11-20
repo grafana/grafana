@@ -14,6 +14,7 @@ import { labelsToFieldsTransformer } from './transformers/labelsToFields';
 import { ensureColumnsTransformer } from './transformers/ensureColumns';
 import { groupByTransformer } from './transformers/groupBy';
 import { mergeTransformer } from './transformers/merge';
+import { renameByRegexTransformer } from './transformers/renameByRegex';
 
 export const standardTransformers = {
   noopTransformer,
@@ -33,4 +34,5 @@ export const standardTransformers = {
   ensureColumnsTransformer,
   groupByTransformer,
   mergeTransformer,
+  renameByRegexTransformer,
 };
