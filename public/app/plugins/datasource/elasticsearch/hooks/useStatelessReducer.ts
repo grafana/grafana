@@ -38,7 +38,7 @@ export const useDispatch = <T extends Action = Action>(): ((action: T) => void) 
   const dispatch = useContext(DispatchContext);
 
   if (!dispatch) {
-    throw new Error('Use DisparchContext first.');
+    throw new Error('Use DispatchContext first.');
   }
 
   return dispatch;
