@@ -4,12 +4,11 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 // validateAlertDefinition validates that the alert definition contains at least one alert query
 // and that alert queries refer to existing datasources.
-func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, signedInUser *models.SignedInUser, skipCache bool) error {
+func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition) error {
 	if len(alertDefinition.Data) == 0 {
 		return fmt.Errorf("no queries or expressions are found")
 	}
@@ -24,7 +23,7 @@ func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, sig
 			return nil
 		}
 
-		_, err = ng.DatasourceCache.GetDatasource(datasourceID, signedInUser, skipCache)
+		_, err = ng.DatasourceCache.GetDatasource(datasourceID, alertDefinition.OrgId, false)
 		if err != nil {
 			return err
 		}

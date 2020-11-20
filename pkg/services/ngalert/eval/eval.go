@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 // invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.
@@ -86,7 +85,6 @@ func (c Condition) IsValid() bool {
 // AlertExecCtx is the context provided for executing an alert condition.
 type AlertExecCtx struct {
 	AlertDefitionID int64
-	SignedInUser    *models.SignedInUser
 
 	Ctx context.Context
 }

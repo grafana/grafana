@@ -50,7 +50,6 @@ type saveAlertDefinitionCommand struct {
 	OrgID        int64                `json:"-"`
 	Condition    condition            `json:"condition"`
 	SignedInUser *models.SignedInUser `json:"-"`
-	SkipCache    bool                 `json:"-"`
 
 	Result *AlertDefinition
 }
@@ -68,7 +67,6 @@ type updateAlertDefinitionCommand struct {
 	OrgID        int64                `json:"-"`
 	Condition    condition            `json:"condition"`
 	SignedInUser *models.SignedInUser `json:"-"`
-	SkipCache    bool                 `json:"-"`
 
 	RowsAffected int64
 	Result       *AlertDefinition

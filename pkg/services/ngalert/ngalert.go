@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -72,14 +71,14 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 }
 
 // LoadAlertCondition returns a Condition object for the given alertDefinitionID.
-func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64, signedInUser *models.SignedInUser, skipCache bool) (*eval.Condition, error) {
+func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64) (*eval.Condition, error) {
 	getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: alertDefinitionID}
 	if err := ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery); err != nil {
 		return nil, err
 	}
 	alertDefinition := getAlertDefinitionByIDQuery.Result
 
-	err := ng.validateAlertDefinition(alertDefinition, signedInUser, skipCache)
+	err := ng.validateAlertDefinition(alertDefinition)
 	if err != nil {
 		return nil, err
 	}

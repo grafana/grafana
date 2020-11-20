@@ -11,7 +11,7 @@ import (
 )
 
 type CacheService interface {
-	GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
+	GetDatasource(datasourceID int64, orgId int64, skipCache bool) (*models.DataSource, error)
 }
 
 type CacheServiceImpl struct {
@@ -33,7 +33,7 @@ func (dc *CacheServiceImpl) Init() error {
 
 func (dc *CacheServiceImpl) GetDatasource(
 	datasourceID int64,
-	user *models.SignedInUser,
+	orgID int64,
 	skipCache bool,
 ) (*models.DataSource, error) {
 	cacheKey := fmt.Sprintf("ds-%d", datasourceID)
@@ -41,14 +41,14 @@ func (dc *CacheServiceImpl) GetDatasource(
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(cacheKey); found {
 			ds := cached.(*models.DataSource)
-			if ds.OrgId == user.OrgId {
+			if ds.OrgId == orgID {
 				return ds, nil
 			}
 		}
 	}
 
-	plog.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.OrgId)
-	ds, err := dc.SQLStore.GetDataSourceByID(datasourceID, user.OrgId)
+	plog.Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", orgID)
+	ds, err := dc.SQLStore.GetDataSourceByID(datasourceID, orgID)
 	if err != nil {
 		return nil, err
 	}

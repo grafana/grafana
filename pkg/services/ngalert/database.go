@@ -59,7 +59,7 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 			Data:      cmd.Condition.QueriesAndExpressions,
 		}
 
-		if err := ng.validateAlertDefinition(alertDefinition, cmd.SignedInUser, cmd.SkipCache); err != nil {
+		if err := ng.validateAlertDefinition(alertDefinition); err != nil {
 			return err
 		}
 
@@ -87,7 +87,7 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 			Data:      cmd.Condition.QueriesAndExpressions,
 		}
 
-		if err := ng.validateAlertDefinition(alertDefinition, cmd.SignedInUser, cmd.SkipCache); err != nil {
+		if err := ng.validateAlertDefinition(alertDefinition); err != nil {
 			return err
 		}
 
