@@ -134,24 +134,24 @@ func toFolderError(err error) Response {
 		return Error(dashboardErr.StatusCode, err.Error(), err)
 	}
 
-	if err == models.ErrFolderTitleEmpty ||
-		err == models.ErrFolderSameNameExists ||
-		err == models.ErrFolderWithSameUIDExists ||
-		err == models.ErrDashboardTypeMismatch ||
-		err == models.ErrDashboardInvalidUid ||
-		err == models.ErrDashboardUidTooLong {
+	if errors.Is(err, models.ErrFolderTitleEmpty) ||
+		errors.Is(err, models.ErrFolderSameNameExists) ||
+		errors.Is(err, models.ErrFolderWithSameUIDExists) ||
+		errors.Is(err, models.ErrDashboardTypeMismatch) ||
+		errors.Is(err, models.ErrDashboardInvalidUid) ||
+		errors.Is(err, models.ErrDashboardUidTooLong) {
 		return Error(400, err.Error(), nil)
 	}
 
-	if err == models.ErrFolderAccessDenied {
+	if errors.Is(err, models.ErrFolderAccessDenied) {
 		return Error(403, "Access denied", err)
 	}
 
-	if err == models.ErrFolderNotFound {
+	if errors.Is(err, models.ErrFolderNotFound) {
 		return JSON(404, util.DynMap{"status": "not-found", "message": models.ErrFolderNotFound.Error()})
 	}
 
-	if err == models.ErrFolderVersionMismatch {
+	if errors.Is(err, models.ErrFolderVersionMismatch) {
 		return JSON(412, util.DynMap{"status": "version-mismatch", "message": models.ErrFolderVersionMismatch.Error()})
 	}
 

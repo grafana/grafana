@@ -33,7 +33,7 @@ describe('running queries', () => {
     const initialState = {
       explore: {
         [exploreId]: {
-          datasourceInstance: 'test-datasource',
+          datasourceInstance: { name: 'testDs' },
           initialized: true,
           loading: true,
           querySubscription: unsubscribable,

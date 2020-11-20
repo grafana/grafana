@@ -132,11 +132,11 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 
 	res, _ := services.ReadPlugin(pluginFolder, pluginName)
 	for _, v := range res.Dependencies.Plugins {
-		if err := InstallPlugin(v.Id, "", c, client); err != nil {
-			return errutil.Wrapf(err, "failed to install plugin '%s'", v.Id)
+		if err := InstallPlugin(v.ID, "", c, client); err != nil {
+			return errutil.Wrapf(err, "failed to install plugin '%s'", v.ID)
 		}
 
-		logger.Infof("Installed dependency: %v ✔\n", v.Id)
+		logger.Infof("Installed dependency: %v ✔\n", v.ID)
 	}
 
 	return err

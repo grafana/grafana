@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { css, cx } from 'emotion';
 import tinycolor from 'tinycolor2';
 
-import { Themeable, withTheme, getLogRowStyles, Icon } from '@grafana/ui';
+import { LogMessageAnsi, Themeable, withTheme, getLogRowStyles, Icon } from '@grafana/ui';
 import { GrafanaTheme, LogRowModel, TimeZone, dateTimeFormat } from '@grafana/data';
 
 import { ElapsedTime } from './ElapsedTime';
@@ -151,7 +151,7 @@ class LiveLogs extends PureComponent<Props, State> {
               return (
                 <tr className={cx(logsRow, styles.logsRowFade)} key={row.uid}>
                   <td className={cx(logsRowLocalTime)}>{dateTimeFormat(row.timeEpochMs, { timeZone })}</td>
-                  <td className={cx(logsRowMessage)}>{row.entry}</td>
+                  <td className={cx(logsRowMessage)}>{row.hasAnsi ? <LogMessageAnsi value={row.raw} /> : row.entry}</td>
                 </tr>
               );
             })}

@@ -155,6 +155,33 @@ Along with metrics, Explore allows you to investigate your logs with the followi
 
 Results of log queries are shown as histograms in the graph and individual logs are displayed below. If the data source does not send histogram data for the requested time range, the logs model computes a time series based on the log row counts bucketed by an automatically calculated time interval and the start of the histogram is then anchored by the first log row's timestamp from the result. The end of the time series is anchored to the time picker's **To** range.
 
+#### Log level
+
+For logs where a **level** label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we parse the log to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with **unknown** log level.
+
+**Supported log levels and mapping of log level abbreviation and expressions:**
+
+
+|  Supported expressions      | Log level     | Color       |
+| --------------------------- |:-------------:| -----------:|
+| emerg                       | critical      | purple      |
+| fatal                       | critical      | purple      |
+| alert                       | critical      | purple      |
+| crit                        | critical      | purple      |
+| critical                    | critical      | purple      |
+| err                         | error         | red         |
+| eror                        | error         | red         |
+| error                       | error         | red         |
+| warn                        | warning       | yellow      |
+| warning                     | warning       | yellow      |
+| info                        | info          | green       |
+| information                 | info          | green       |
+| notice                      | info          | green       |
+| dbug                        | debug         | blue        |
+| debug                       | debug         | blue        |
+| trace                       | trace         | light blue  |
+| *                           | unknown       | grey        |
+
 ### Visualization options
 
 You can customize how logs are displayed and select which columns are shown.

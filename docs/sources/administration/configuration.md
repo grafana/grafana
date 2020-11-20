@@ -960,7 +960,7 @@ Sets a global limit on number of users that can be logged in at one time. Defaul
 
 ## [alerting]
 
-For more information about the Alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/alerts-overview.md" >}}).
+For more information about the Alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
 
 ### enabled
 
@@ -1153,6 +1153,10 @@ This is the sampler configuration parameter. Depending on the value of `sampler_
   is received from the mothership
 
 May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
+
+### sampling_server_url
+
+sampling_server_url is the URL of a sampling manager providing a sampling strategy.
 
 ### zipkin_propagation
 

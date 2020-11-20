@@ -17,7 +17,7 @@ import _isEqual from 'lodash/isEqual';
 // @ts-ignore
 import { getTraceSpanIdsAsTree } from '../selectors/trace';
 import { getConfigValue } from '../utils/config/get-config';
-import { TraceKeyValuePair, TraceSpan, TraceSpanData, Trace, TraceData } from '@grafana/data';
+import { TraceKeyValuePair, TraceSpan, Trace, TraceViewData } from '@grafana/data';
 // @ts-ignore
 import TreeNode from '../utils/TreeNode';
 
@@ -71,12 +71,11 @@ export function orderTags(spanTags: TraceKeyValuePair[], topPrefixes?: string[])
  * NOTE: Mutates `data` - Transform the HTTP response data into the form the app
  * generally requires.
  */
-export default function transformTraceData(data: TraceData & { spans: TraceSpanData[] }): Trace | null {
-  let { traceID } = data;
-  if (!traceID) {
+export default function transformTraceData(data: TraceViewData | undefined): Trace | null {
+  if (!data?.traceID) {
     return null;
   }
-  traceID = traceID.toLowerCase();
+  const traceID = data.traceID.toLowerCase();
 
   let traceEndTime = 0;
   let traceStartTime = Number.MAX_SAFE_INTEGER;

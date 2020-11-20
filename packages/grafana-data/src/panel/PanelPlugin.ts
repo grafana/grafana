@@ -196,7 +196,7 @@ export class PanelPlugin<TOptions = any, TFieldConfigOptions extends object = an
    *
    * This is a good place to support any changes to the options model
    */
-  setMigrationHandler(handler: PanelMigrationHandler) {
+  setMigrationHandler(handler: PanelMigrationHandler<TOptions>) {
     this.onPanelMigration = handler;
     return this;
   }

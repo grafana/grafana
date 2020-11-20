@@ -4,12 +4,13 @@ import { GrafanaPlugin, PluginMeta } from './plugin';
 import { PanelData } from './panel';
 import { LogRowModel } from './logs';
 import { AnnotationEvent, AnnotationSupport } from './annotations';
-import { KeyValue, LoadingState, TableData, TimeSeries, DataTopic } from './data';
+import { DataTopic, KeyValue, LoadingState, TableData, TimeSeries } from './data';
 import { DataFrame, DataFrameDTO } from './dataFrame';
 import { RawTimeRange, TimeRange } from './time';
 import { ScopedVars } from './ScopedVars';
 import { CoreApp } from './app';
 import { LiveChannelSupport } from './live';
+import { CustomVariableSupport, DataSourceVariableSupport, StandardVariableSupport } from './variables';
 
 export interface DataSourcePluginOptionsEditorProps<JSONData = DataSourceJsonData, SecureJSONData = {}> {
   options: DataSourceSettings<JSONData, SecureJSONData>;
@@ -79,6 +80,9 @@ export class DataSourcePlugin<
     return this;
   }
 
+  /*
+   * @deprecated -- prefer using {@link StandardVariableSupport} or {@link CustomVariableSupport} or {@link DataSourceVariableSupport} in data source instead
+   * */
   setVariableQueryEditor(VariableQueryEditor: any) {
     this.components.VariableQueryEditor = VariableQueryEditor;
     return this;
@@ -295,6 +299,15 @@ export abstract class DataSourceApi<
    * @alpha -- experimental
    */
   channelSupport?: LiveChannelSupport;
+
+  /**
+   * Defines new variable support
+   * @alpha -- experimental
+   */
+  variables?:
+    | StandardVariableSupport<DataSourceApi<TQuery, TOptions>>
+    | CustomVariableSupport<DataSourceApi<TQuery, TOptions>>
+    | DataSourceVariableSupport<DataSourceApi<TQuery, TOptions>>;
 }
 
 export interface MetadataInspectorProps<
@@ -311,12 +324,13 @@ export interface MetadataInspectorProps<
 export interface QueryEditorProps<
   DSType extends DataSourceApi<TQuery, TOptions>,
   TQuery extends DataQuery = DataQuery,
-  TOptions extends DataSourceJsonData = DataSourceJsonData
+  TOptions extends DataSourceJsonData = DataSourceJsonData,
+  TVQuery extends DataQuery = TQuery
 > {
   datasource: DSType;
-  query: TQuery;
+  query: TVQuery;
   onRunQuery: () => void;
-  onChange: (value: TQuery) => void;
+  onChange: (value: TVQuery) => void;
   onBlur?: () => void;
   /**
    * Contains query response filtered by refId of QueryResultBase and possible query error

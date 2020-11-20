@@ -96,6 +96,7 @@ export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesTo
 export { Collapse, ControlledCollapse } from './Collapse/Collapse';
 export { CollapsableSection } from './Collapse/CollapsableSection';
 export { LogLabels } from './Logs/LogLabels';
+export { LogMessageAnsi } from './Logs/LogMessageAnsi';
 export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
@@ -206,10 +207,9 @@ const LegacyForms = {
 export { LegacyForms, LegacyInputStatus };
 
 // WIP, need renames and exports cleanup
-export { GraphCustomFieldConfig, AxisSide } from './uPlot/types';
+export { GraphFieldConfig, graphFieldOptions } from './uPlot/config';
 export { UPlotChart } from './uPlot/Plot';
 export * from './uPlot/geometries';
-export { usePlotConfigContext } from './uPlot/context';
 export * from './uPlot/plugins';
 export { useRefreshAfterGraphRendered } from './uPlot/hooks';
 export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';

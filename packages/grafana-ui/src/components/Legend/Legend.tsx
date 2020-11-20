@@ -11,7 +11,6 @@ export const generateLegendItems = (numberOfSeries: number, statsToDisplay?: Dis
     return {
       label: `${alphabet[i].toUpperCase()}-series`,
       color: tinycolor.fromRatio({ h: i / alphabet.length, s: 1, v: 1 }).toHexString(),
-      isVisible: true,
       yAxis: 1,
       displayValues: statsToDisplay || [],
     };
@@ -21,9 +20,9 @@ export const generateLegendItems = (numberOfSeries: number, statsToDisplay?: Dis
 export enum LegendDisplayMode {
   List = 'list',
   Table = 'table',
+  Hidden = 'hidden',
 }
 export interface LegendBasicOptions {
-  isVisible: boolean;
   displayMode: LegendDisplayMode;
 }
 
@@ -40,8 +39,8 @@ export interface LegendOptions extends LegendBasicOptions, LegendRenderOptions {
 export interface LegendItem {
   label: string;
   color: string;
-  isVisible: boolean;
   yAxis: number;
+  disabled?: boolean;
   displayValues?: DisplayValue[];
 }
 

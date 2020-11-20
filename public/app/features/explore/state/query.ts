@@ -342,7 +342,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       liveStreaming: live,
     };
 
-    const datasourceName = exploreItemState.requestedDatasourceName;
+    const datasourceName = datasourceInstance.name;
     const timeZone = getTimeZone(getState().user);
     const transaction = buildQueryTransaction(queries, queryOptions, range, scanning, timeZone);
 

@@ -574,7 +574,9 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
 			} else {
-				c.JsonOK("OK")
+				resp := make(map[string]interface{})
+				resp["message"] = "OK"
+				c.JSON(200, resp)
 			}
 		}
 
