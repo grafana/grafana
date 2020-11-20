@@ -60,7 +60,7 @@ export function mergeDataFrames(frames: DataFrame[]): AlignedFrameWithGapTest | 
     if (timeField !== undefined && frame.fields.length > 1) {
       // push time field
       if (alignedFrame.fields.length === 0) {
-        alignedFrame.fields.push({ ...timeField, values: new ArrayVector(alignedData[seriesIdx++] as any) });
+        alignedFrame.fields.push({ ...timeField, values: new ArrayVector(alignedData[seriesIdx++]) });
       }
 
       // push numeric fields
@@ -68,7 +68,7 @@ export function mergeDataFrames(frames: DataFrame[]): AlignedFrameWithGapTest | 
         const field = frame.fields[j];
 
         if (field.type === FieldType.number) {
-          alignedFrame.fields.push({ ...field, values: new ArrayVector(alignedData[seriesIdx++] as any) });
+          alignedFrame.fields.push({ ...field, values: new ArrayVector(alignedData[seriesIdx++]) });
         }
       }
 
@@ -103,7 +103,7 @@ export function outerJoinValues(tables: AlignedData[]): AlignedDataWithGapTest {
     }
 
     for (let j = 1; j < t.length; j++) {
-      let ys = t[j] as number[];
+      let ys = t[j];
 
       for (let i = 0; i < len; i++) {
         if (ys[i] == null) {
@@ -129,7 +129,7 @@ export function outerJoinValues(tables: AlignedData[]): AlignedDataWithGapTest {
     let xs = t[0];
 
     for (let j = 1; j < t.length; j++) {
-      let ys = t[j] as number[];
+      let ys = t[j];
 
       let yVals = Array(alignedLen).fill(null);
 
