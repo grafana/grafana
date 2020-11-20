@@ -15,6 +15,7 @@ import {
 import { Registry } from '../utils/Registry';
 import { getNullValueMatchers } from './matchers/valueMatchers/nullMatchers';
 import { getNumericValueMatchers } from './matchers/valueMatchers/numericMatchers';
+import { getEqualValueMatchers } from './matchers/valueMatchers/equalMatchers';
 
 export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
   return [
@@ -33,7 +34,7 @@ export const frameMatchers = new Registry<FrameMatcherInfo>(() => {
 });
 
 export const valueMatchers = new Registry<ValueMatcherInfo>(() => {
-  return [...getNullValueMatchers(), ...getNumericValueMatchers()];
+  return [...getNullValueMatchers(), ...getNumericValueMatchers(), ...getEqualValueMatchers()];
 });
 
 export function getFieldMatcher(config: MatcherConfig): FieldMatcher {

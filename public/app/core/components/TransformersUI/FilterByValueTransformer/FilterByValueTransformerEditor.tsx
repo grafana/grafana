@@ -154,10 +154,6 @@ const useFieldsInfo = (data: DataFrame[]): DataFrameFieldsInfo => {
 
     return data.reduce((meta: DataFrameFieldsInfo, frame) => {
       return frame.fields.reduce((meta, field) => {
-        if (field.type === FieldType.time) {
-          return meta;
-        }
-
         const fieldName = getFieldDisplayName(field, frame, data);
 
         if (meta.fieldByDisplayName[fieldName]) {
