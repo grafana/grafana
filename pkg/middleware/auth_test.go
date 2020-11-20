@@ -112,10 +112,10 @@ func TestRemoveForceLoginparams(t *testing.T) {
 		inp string
 		exp string
 	}{
-		{inp: "http://localhost_3000/?forceLogin=true", exp: "http://localhost_3000/?"},
-		{inp: "http://localhost_3000/d/dash/dash-title?ordId=1&forceLogin=true", exp: "http://localhost_3000/d/dash/dash-title?ordId=1"},
-		{inp: "http://localhost_3000/?kiosk&forceLogin=true", exp: "http://localhost_3000/?kiosk"},
-		{inp: "http://localhost_3000/d/dash/dash-title?ordId=1&kiosk&forceLogin=true", exp: "http://localhost_3000/d/dash/dash-title?ordId=1&kiosk"},
+		{inp: "/?forceLogin=true", exp: "/?"},
+		{inp: "/d/dash/dash-title?ordId=1&forceLogin=true", exp: "/d/dash/dash-title?ordId=1"},
+		{inp: "/?kiosk&forceLogin=true", exp: "/?kiosk"},
+		{inp: "/d/dash/dash-title?ordId=1&kiosk&forceLogin=true", exp: "/d/dash/dash-title?ordId=1&kiosk"},
 	}
 	for i, tc := range tcs {
 		t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
