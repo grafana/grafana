@@ -6,7 +6,7 @@ import {
   TransformerUIProps,
   stringToJsRegex,
 } from '@grafana/data';
-import { Field, Input, HorizontalGroup } from '@grafana/ui';
+import { Field, Input } from '@grafana/ui';
 import { css } from 'emotion';
 import { RenameByRegexTransformerOptions } from '@grafana/data/src/transformations/transformers/renameByRegex';
 
