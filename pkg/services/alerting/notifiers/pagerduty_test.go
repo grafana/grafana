@@ -157,14 +157,14 @@ func TestPagerdutyNotifier(t *testing.T) {
 						},
 					},
 					"payload": map[string]interface{}{
-						"component":      "Grafana",
-						"source":         "<<PRESENCE>>",
+						"component": "Grafana",
+						"source":    "<<PRESENCE>>",
 						"custom_details": map[string]interface{}{
 							"state": "alerting",
 						},
-						"severity":       "critical",
-						"summary":        "someRule - someMessage",
-						"timestamp":      "<<PRESENCE>>",
+						"severity":  "critical",
+						"summary":   "someRule - someMessage",
+						"timestamp": "<<PRESENCE>>",
 					},
 					"routing_key": "abcdefgh0123456789",
 				}, payload.Interface(), cmp.Comparer(presenceComparer))
