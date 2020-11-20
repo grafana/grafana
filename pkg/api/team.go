@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -17,7 +19,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext, cmd models.CreateTeamComm
 	}
 
 	if err := hs.Bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrTeamNameTaken {
+		if errors.Is(err, models.ErrTeamNameTaken) {
 			return Error(409, "Team name taken", err)
 		}
 		return Error(500, "Failed to create Team", err)
@@ -59,7 +61,7 @@ func (hs *HTTPServer) UpdateTeam(c *models.ReqContext, cmd models.UpdateTeamComm
 	}
 
 	if err := hs.Bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrTeamNameTaken {
+		if errors.Is(err, models.ErrTeamNameTaken) {
 			return Error(400, "Team name taken", err)
 		}
 		return Error(500, "Failed to update Team", err)
@@ -79,7 +81,7 @@ func (hs *HTTPServer) DeleteTeamByID(c *models.ReqContext) Response {
 	}
 
 	if err := hs.Bus.Dispatch(&models.DeleteTeamCommand{OrgId: orgId, Id: teamId}); err != nil {
-		if err == models.ErrTeamNotFound {
+		if errors.Is(err, models.ErrTeamNotFound) {
 			return Error(404, "Failed to delete Team. ID not found", nil)
 		}
 		return Error(500, "Failed to delete Team", err)
@@ -131,7 +133,7 @@ func GetTeamByID(c *models.ReqContext) Response {
 	query := models.GetTeamByIdQuery{OrgId: c.OrgId, Id: c.ParamsInt64(":teamId")}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrTeamNotFound {
+		if errors.Is(err, models.ErrTeamNotFound) {
 			return Error(404, "Team not found", err)
 		}
 

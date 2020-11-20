@@ -164,7 +164,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       isLive,
       isPaused,
       originPanelId,
-      datasourceLoading,
       containerWidth,
       onChangeTimeZone,
     } = this.props;
@@ -217,7 +216,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                     onChange={this.onChangeDatasource}
                     datasources={getExploreDatasources()}
                     current={this.getSelectedDatasource()}
-                    showLoading={datasourceLoading === true}
                     hideTextValue={showSmallDataSourcePicker}
                   />
                 </div>
@@ -342,7 +340,6 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     isPaused,
     originPanelId,
     queries,
-    datasourceLoading,
     containerWidth,
   } = exploreItem;
 
@@ -362,7 +359,6 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     originPanelId,
     queries,
     syncedTimes,
-    datasourceLoading: datasourceLoading ?? undefined,
     containerWidth,
   };
 };

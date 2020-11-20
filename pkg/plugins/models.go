@@ -49,6 +49,7 @@ func (e duplicatePluginError) Error() string {
 }
 
 func (e duplicatePluginError) Is(err error) bool {
+	// nolint:errorlint
 	_, ok := err.(duplicatePluginError)
 	return ok
 }
