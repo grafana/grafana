@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -192,6 +193,7 @@ func TestCreatingAlertInstance(t *testing.T) {
 		}
 		err := ng.saveAlertInstance(&q)
 		require.NoError(t, err)
+		spew.Dump(q.Result)
 	})
 
 }

@@ -94,9 +94,9 @@ type listAlertDefinitionsCommand struct {
 
 // AlertInstance represent a single alert instance.
 type AlertInstance struct {
-	ID                int64
-	OrgID             int64 `xorm:"org_id"`
-	AlertDefinitionID int64 `xorm:"alert_definition_id"`
+	Key               string // AlertDefinitionId + Labels
+	OrgID             int64  `xorm:"org_id"`
+	AlertDefinitionID int64  `xorm:"alert_definition_id"`
 	Labels            data.Labels
 	CurrentState      InstanceStateType
 	CurrentStateSince time.Time

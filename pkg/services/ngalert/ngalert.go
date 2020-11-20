@@ -73,7 +73,7 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	alertInstance := migrator.Table{
 		Name: "alert_instance",
 		Columns: []*migrator.Column{
-			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "key", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "alert_definition_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "labels", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
@@ -82,7 +82,7 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 			{Name: "last_eval_time", Type: migrator.DB_DateTime, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"org_id"}, Type: migrator.IndexType},
+			{Cols: []string{"org_id"}, Type: migrator.IndexType}, // TODO Figure out index for key (within orgId)
 		},
 	}
 

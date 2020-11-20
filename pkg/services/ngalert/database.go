@@ -133,6 +133,10 @@ func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 			LastEvalTime:      time.Now(), // TODO: Probably better to pass in to the command for more accurate timestamp
 		}
 
+		if err := alertInstance.SetKey(); err != nil {
+			return err
+		}
+
 		if err := ng.validateAlertInstance(alertInstance); err != nil {
 			return err
 		}
