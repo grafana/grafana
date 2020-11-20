@@ -11,7 +11,7 @@ import (
 func RateLimit(rps, burst int) macaron.Handler {
 	l := rate.NewLimiter(rate.Limit(rps), burst)
 	return func(c *models.ReqContext) {
-		if l.Allow() {
+		if !l.Allow() {
 			c.JsonApiErr(429, "Rate limit reached.", nil)
 			return
 		}
