@@ -1,6 +1,6 @@
 import { DataFrame, FieldType, getTimeField, ArrayVector } from '@grafana/data';
-import { AlignedDataWithGapTest, AlignedFrameWithGapTest } from '../uPlot/types';
-import uPlot, { AlignedData } from 'uplot';
+import { AlignedFrameWithGapTest } from '../uPlot/types';
+import uPlot, { AlignedData, AlignedDataWithGapTest } from 'uplot';
 
 // very time oriented for now
 export function mergeDataFrames(frames: DataFrame[]): AlignedFrameWithGapTest | null {
@@ -44,10 +44,8 @@ export function mergeDataFrames(frames: DataFrame[]): AlignedFrameWithGapTest | 
 
   // the outerJoined frame we're gonna poop out
   let alignedFrame: DataFrame = {
-    name: '<multiple>',
-    refId: '<multiple>',
     fields: [],
-    length: alignedData[0].length,
+    length: alignedData![0].length,
   };
 
   // populate the alignedFrame with original Fields but with aligned values
@@ -60,7 +58,7 @@ export function mergeDataFrames(frames: DataFrame[]): AlignedFrameWithGapTest | 
     if (timeField !== undefined && frame.fields.length > 1) {
       // push time field
       if (alignedFrame.fields.length === 0) {
-        alignedFrame.fields.push({ ...timeField, values: new ArrayVector(alignedData[seriesIdx++]) });
+        alignedFrame.fields.push({ ...timeField, values: new ArrayVector(alignedData![seriesIdx++]) });
       }
 
       // push numeric fields
@@ -68,11 +66,11 @@ export function mergeDataFrames(frames: DataFrame[]): AlignedFrameWithGapTest | 
         const field = frame.fields[j];
 
         if (field.type === FieldType.number) {
-          alignedFrame.fields.push({ ...field, values: new ArrayVector(alignedData[seriesIdx++]) });
+          alignedFrame.fields.push({ ...field, values: new ArrayVector(alignedData![seriesIdx++]) });
         }
       }
 
-      valuesFromFrames.push(alignedData);
+      valuesFromFrames.push(alignedData!);
     }
   }
 
@@ -142,7 +140,7 @@ export function outerJoinValues(tables: AlignedData[]): AlignedDataWithGapTest {
   });
 
   return {
-    data,
+    data: data,
     isGap(u: uPlot, seriesIdx: number, dataIdx: number) {
       // u.data has to be AlignedDate
       let xVal = u.data[0][dataIdx];

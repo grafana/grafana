@@ -54,7 +54,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     );
   }
 
-  const { frame: alignedFrame, isGap } = alignedFrameWithGapTest;
+  const alignedFrame = alignedFrameWithGapTest.frame;
 
   const configBuilder = useMemo(() => {
     const builder = new UPlotConfigBuilder();
@@ -133,7 +133,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         fill: customConfig.fillAlpha !== undefined,
         fillOpacity: customConfig.fillAlpha,
         fillColor: seriesColor,
-        isGap,
       });
 
       if (hasLegend) {
@@ -165,7 +164,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     <VizLayout width={width} height={height} legend={legendElement}>
       {(vizWidth: number, vizHeight: number) => (
         <UPlotChart
-          data={alignedFrame}
+          data={alignedFrameWithGapTest}
           config={configBuilder}
           width={vizWidth}
           height={vizHeight}

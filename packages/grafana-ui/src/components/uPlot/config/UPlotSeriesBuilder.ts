@@ -13,7 +13,6 @@ export interface SeriesProps {
   fill?: boolean;
   fillOpacity?: number;
   fillColor?: string;
-  isGap?: Series.isGap;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {

@@ -16,7 +16,7 @@ export interface PlotPluginProps {
 }
 
 export interface PlotProps {
-  data: DataFrame;
+  data: AlignedFrameWithGapTest;
   timeRange: TimeRange;
   timeZone: TimeZone;
   width: number;
@@ -32,11 +32,6 @@ export interface PlotProps {
 export abstract class PlotConfigBuilder<P, T> {
   constructor(protected props: P) {}
   abstract getConfig(): T;
-}
-
-export interface AlignedDataWithGapTest {
-  data: AlignedData;
-  isGap: Series.isGap;
 }
 
 export interface AlignedFrameWithGapTest {

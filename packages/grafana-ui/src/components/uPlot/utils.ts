@@ -1,8 +1,8 @@
 import throttle from 'lodash/throttle';
 import isEqual from 'lodash/isEqual';
 import omit from 'lodash/omit';
-import { DataFrame, rangeUtil, RawTimeRange } from '@grafana/data';
-import { AlignedData, Options } from 'uplot';
+import { rangeUtil, RawTimeRange } from '@grafana/data';
+import { Options } from 'uplot';
 import { PlotPlugin, PlotProps } from './types';
 
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
@@ -36,10 +36,6 @@ export const buildPlotConfig = (props: PlotProps, plugins: Record<string, PlotPl
     })),
     hooks: {},
   } as any;
-};
-
-export const preparePlotData = (alignedFrame: DataFrame): AlignedData => {
-  return alignedFrame.fields.map(f => f.values.toArray()) as AlignedData;
 };
 
 const isPlottingTime = (config: Options) => {
