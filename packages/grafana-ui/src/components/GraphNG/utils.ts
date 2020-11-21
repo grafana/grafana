@@ -91,7 +91,7 @@ export function outerJoinValues(tables: AlignedData[]): AlignedDataWithGapTest {
   let xVals: Set<number> = new Set();
   let xNulls: Array<Set<number>> = [new Set()];
 
-  tables.forEach(t => {
+  for (const t of tables) {
     let xs = t[0];
     let len = xs.length;
     let nulls: Set<number> = new Set();
@@ -111,7 +111,7 @@ export function outerJoinValues(tables: AlignedData[]): AlignedDataWithGapTest {
     }
 
     xNulls.push(nulls);
-  });
+  }
 
   let data: AlignedData = [Array.from(xVals).sort((a, b) => a - b)];
 
@@ -123,7 +123,7 @@ export function outerJoinValues(tables: AlignedData[]): AlignedDataWithGapTest {
     xIdxs.set(data[0][i], i);
   }
 
-  tables.forEach(t => {
+  for (const t of tables) {
     let xs = t[0];
 
     for (let j = 1; j < t.length; j++) {
@@ -137,7 +137,7 @@ export function outerJoinValues(tables: AlignedData[]): AlignedDataWithGapTest {
 
       data.push(yVals);
     }
-  });
+  }
 
   return {
     data: data,
