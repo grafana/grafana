@@ -3,6 +3,7 @@ import flatten from 'app/core/utils/flatten';
 import * as queryDef from './query_def';
 import TableModel from 'app/core/table_model';
 import {
+  dateTime,
   DataQueryResponse,
   DataFrame,
   toDataFrame,
@@ -10,12 +11,17 @@ import {
   MutableDataFrame,
   PreferredVisualisationType,
 } from '@grafana/data';
-import { ElasticsearchAggregation } from './types';
+import { ElasticsearchAggregation, ElasticsearchQueryType } from './types';
 
 export class ElasticResponse {
-  constructor(private targets: any, private response: any) {
+  constructor(
+    private targets: any,
+    private response: any,
+    private targetType: ElasticsearchQueryType = ElasticsearchQueryType.Lucene
+  ) {
     this.targets = targets;
     this.response = response;
+    this.targetType = targetType;
   }
 
   processMetrics(esAgg: any, target: any, seriesList: any, props: any) {
@@ -394,8 +400,21 @@ export class ElasticResponse {
     return result;
   }
 
+  getInvalidPPLQuery(response: any) {
+    const result: any = {};
+    result.message = 'Invalid time series query';
+
+    if (response.$$config) {
+      result.config = response.$$config;
+    }
+
+    return result;
+  }
+
   getTimeSeries() {
-    if (this.targets.some((target: any) => target.metrics.some((metric: any) => metric.type === 'raw_data'))) {
+    if (this.targetType === ElasticsearchQueryType.PPL) {
+      return this.processPPLResponseToSeries();
+    } else if (this.targets.some((target: any) => target.metrics.some((metric: any) => metric.type === 'raw_data'))) {
       return this.processResponseToDataFrames(false);
     }
     return this.processResponseToSeries();
@@ -478,7 +497,7 @@ export class ElasticResponse {
       }
     }
 
-    return { data: dataFrame };
+    return { data: dataFrame, key: this.targets[0]?.refId };
   }
 
   processResponseToSeries = () => {
@@ -516,7 +535,40 @@ export class ElasticResponse {
       }
     }
 
-    return { data: seriesList };
+    return { data: seriesList, key: this.targets[0]?.refId };
+  };
+
+  processPPLResponseToSeries = () => {
+    const target = this.targets[0];
+    const response = this.response;
+    // We check if any valid date type is contained in the response
+    const timeFieldIndex = _.findIndex(
+      response.schema,
+      (field: { type: string }) =>
+        field.type === 'timestamp' || field.type === 'datetime' || field.type === 'date' || field.type === 'time'
+    );
+    const valueIndex = timeFieldIndex === 0 ? 1 : 0;
+
+    //time series response should include a value field and timestamp
+    if (timeFieldIndex === -1 || response.datarows[0].length !== 2 || isNaN(response.datarows[0][valueIndex])) {
+      throw this.getInvalidPPLQuery(this.response);
+    }
+
+    const datapoints = _.map(response.datarows, datarow => {
+      const newDatarow = _.clone(datarow);
+      const [timestamp] = newDatarow.splice(timeFieldIndex, 1);
+      newDatarow.push(dateTime(timestamp).unix() * 1000);
+      return newDatarow;
+    });
+
+    const newSeries = {
+      datapoints,
+      props: response.schema,
+      refId: target.refId,
+      target: response.schema[valueIndex].name,
+    };
+
+    return { data: [newSeries], key: this.targets[0]?.refId };
   };
 }
 
