@@ -1,14 +1,14 @@
 import React from 'react';
-import uPlot from 'uplot';
+import uPlot, { Options, AlignedData, Series, Hooks } from 'uplot';
 import { DataFrame, TimeRange, TimeZone } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
-export type PlotSeriesConfig = Pick<uPlot.Options, 'series' | 'scales' | 'axes'>;
+export type PlotSeriesConfig = Pick<Options, 'series' | 'scales' | 'axes'>;
 export type PlotPlugin = {
   id: string;
   /** can mutate provided opts as necessary */
-  opts?: (self: uPlot, opts: uPlot.Options) => void;
-  hooks: uPlot.PluginHooks;
+  opts?: (self: uPlot, opts: Options) => void;
+  hooks: Hooks.ArraysOrFuncs;
 };
 
 export interface PlotPluginProps {
@@ -16,7 +16,7 @@ export interface PlotPluginProps {
 }
 
 export interface PlotProps {
-  data: DataFrame;
+  data: AlignedFrameWithGapTest;
   timeRange: TimeRange;
   timeZone: TimeZone;
   width: number;
@@ -24,7 +24,7 @@ export interface PlotProps {
   config: UPlotConfigBuilder;
   children?: React.ReactElement[];
   /** Callback performed when uPlot data is updated */
-  onDataUpdate?: (data: uPlot.AlignedData) => {};
+  onDataUpdate?: (data: AlignedData) => {};
   /** Callback performed when uPlot is (re)initialized */
   onPlotInit?: () => {};
 }
@@ -34,9 +34,7 @@ export abstract class PlotConfigBuilder<P, T> {
   abstract getConfig(): T;
 }
 
-export enum AxisSide {
-  Top, // 0
-  Right, // 1
-  Bottom, // 2
-  Left, // 3
+export interface AlignedFrameWithGapTest {
+  frame: DataFrame;
+  isGap: Series.isGap;
 }
