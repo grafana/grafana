@@ -1,8 +1,8 @@
 import throttle from 'lodash/throttle';
 import isEqual from 'lodash/isEqual';
 import omit from 'lodash/omit';
-import { DataFrame, FieldType, getTimeField, rangeUtil, RawTimeRange } from '@grafana/data';
-import uPlot from 'uplot';
+import { rangeUtil, RawTimeRange } from '@grafana/data';
+import { Options } from 'uplot';
 import { PlotPlugin, PlotProps } from './types';
 
 const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|H|h|AA|aa|a|mm|m|ss|s|fff)\b/g;
@@ -16,7 +16,7 @@ export function rangeToMinMax(timeRange: RawTimeRange): [number, number] {
   return [v.from.valueOf() / 1000, v.to.valueOf() / 1000];
 }
 
-export const buildPlotConfig = (props: PlotProps, plugins: Record<string, PlotPlugin>): uPlot.Options => {
+export const buildPlotConfig = (props: PlotProps, plugins: Record<string, PlotPlugin>): Options => {
   return {
     width: props.width,
     height: props.height,
@@ -38,40 +38,7 @@ export const buildPlotConfig = (props: PlotProps, plugins: Record<string, PlotPl
   } as any;
 };
 
-export const preparePlotData = (data: DataFrame): uPlot.AlignedData => {
-  const plotData: any[] = [];
-
-  // Prepare x axis
-  let { timeIndex } = getTimeField(data);
-  let xvals = data.fields[timeIndex!].values.toArray();
-
-  if (!isNaN(timeIndex!)) {
-    xvals = xvals.map(v => v / 1000);
-  }
-
-  plotData.push(xvals);
-
-  for (let i = 0; i < data.fields.length; i++) {
-    const field = data.fields[i];
-
-    // already handled time and we ignore non-numeric fields
-    if (i === timeIndex || field.type !== FieldType.number) {
-      continue;
-    }
-
-    let values = field.values.toArray();
-
-    if (field.config.custom?.nullValues === 'asZero') {
-      values = values.map(v => (v === null ? 0 : v));
-    }
-
-    plotData.push(values);
-  }
-
-  return plotData;
-};
-
-const isPlottingTime = (config: uPlot.Options) => {
+const isPlottingTime = (config: Options) => {
   let isTimeSeries = false;
 
   if (!config.scales) {
@@ -93,7 +60,7 @@ const isPlottingTime = (config: uPlot.Options) => {
  * Based on two config objects indicates whether or not uPlot needs reinitialisation
  * This COULD be done based on data frames, but keeping it this way for now as a simplification
  */
-export const shouldInitialisePlot = (prevConfig?: uPlot.Options, config?: uPlot.Options) => {
+export const shouldInitialisePlot = (prevConfig?: Options, config?: Options) => {
   if (!config && !prevConfig) {
     return false;
   }

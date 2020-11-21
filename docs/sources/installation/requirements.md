@@ -32,7 +32,7 @@ Minimum recommended CPU: 1
 Some features might require more memory or CPUs. Features require more resources include:
 
 - [Server side rendering of images]({{< relref "../administration/image_rendering/#requirements" >}})
-- [Alerting]({{< relref "../alerting/alerts-overview" >}})
+- [Alerting]({{< relref "../alerting" >}})
 - [Data source proxy]({{< relref "../http_api/data_source" >}})
 
 ## Supported databases

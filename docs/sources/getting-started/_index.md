@@ -28,7 +28,7 @@ Refer to [Explore]({{< relref "../explore/index.md" >}}) for more information.
 
 If you're using Grafana alerting, then you can have alerts sent through a number of different [alert notifiers]({{< relref "../alerting/notifications.md" >}}), including PagerDuty, SMS, email, VictorOps, OpsGenie, or Slack.
 
-Alert hooks allow you to create different notifiers with a bit of code if you prefer some other channels of communication. Visually define [alert rules]({{< relref "../alerting/alerts-overview.md" >}}) for your most important metrics.
+Alert hooks allow you to create different notifiers with a bit of code if you prefer some other channels of communication. Visually define [alert rules]({{< relref "../alerting/_index.md" >}}) for your most important metrics.
 
 ## Annotations
 

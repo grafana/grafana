@@ -428,7 +428,18 @@ describe('shared actions', () => {
           )
           .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), 'constant1'), true)
           .thenDispatchedActionsShouldEqual(
-            changeVariableNameSucceeded({ type: 'constant', id: NEW_VARIABLE_ID, data: { newName: 'constant1' } })
+            addVariable({
+              type: 'constant',
+              id: 'constant1',
+              data: {
+                global: false,
+                index: 1,
+                model: { ...constant, name: 'constant1', id: 'constant1', global: false, index: 1 },
+              },
+            }),
+            changeVariableNameSucceeded({ type: 'constant', id: 'constant1', data: { newName: 'constant1' } }),
+            setIdInEditor({ id: 'constant1' }),
+            removeVariable({ type: 'constant', id: NEW_VARIABLE_ID, data: { reIndex: false } })
           );
       });
     });
