@@ -7,9 +7,8 @@ import {
   getFieldColorModeForField,
   getFieldDisplayName,
   getTimeField,
-  TIME_SERIES_TIME_FIELD_NAME,
 } from '@grafana/data';
-import { alignAndSortDataFramesByFieldName } from './utils';
+import { mergeTimeSeriesData } from './utils';
 import { UPlotChart } from '../uPlot/Plot';
 import { PlotProps } from '../uPlot/types';
 import { AxisPlacement, getUPlotSideFromAxis, GraphFieldConfig, GraphMode, PointMode } from '../uPlot/config';
@@ -43,11 +42,11 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   ...plotProps
 }) => {
   const theme = useTheme();
-  const alignedData = useMemo(() => alignAndSortDataFramesByFieldName(data, TIME_SERIES_TIME_FIELD_NAME), [data]);
+  const alignedFrameWithGapTest = useMemo(() => mergeTimeSeriesData(data), [data]);
   const legendItemsRef = useRef<LegendItem[]>([]);
   const hasLegend = legend && legend.displayMode !== LegendDisplayMode.Hidden;
 
-  if (!alignedData) {
+  if (alignedFrameWithGapTest == null) {
     return (
       <div className="panel-empty">
         <p>No data found in response</p>
@@ -55,10 +54,12 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     );
   }
 
+  const alignedFrame = alignedFrameWithGapTest.frame;
+
   const configBuilder = useMemo(() => {
     const builder = new UPlotConfigBuilder();
 
-    let { timeIndex } = getTimeField(alignedData);
+    let { timeIndex } = getTimeField(alignedFrame);
 
     if (timeIndex === undefined) {
       timeIndex = 0; // assuming first field represents x-domain
@@ -85,8 +86,8 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     let hasLeftAxis = false;
     let hasYAxis = false;
 
-    for (let i = 0; i < alignedData.fields.length; i++) {
-      const field = alignedData.fields[i];
+    for (let i = 0; i < alignedFrame.fields.length; i++) {
+      const field = alignedFrame.fields[i];
       const config = field.config as FieldConfig<GraphFieldConfig>;
       const customConfig = config.custom || defaultConfig;
 
@@ -137,7 +138,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       if (hasLegend) {
         legendItems.push({
           color: seriesColor,
-          label: getFieldDisplayName(field, alignedData),
+          label: getFieldDisplayName(field, alignedFrame),
           yAxis: side === AxisPlacement.Right ? 3 : 1,
         });
       }
@@ -147,7 +148,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
     legendItemsRef.current = legendItems;
     return builder;
-  }, [alignedData, hasLegend]);
+  }, [alignedFrameWithGapTest, hasLegend]);
 
   let legendElement: React.ReactElement | undefined;
 
@@ -163,7 +164,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     <VizLayout width={width} height={height} legend={legendElement}>
       {(vizWidth: number, vizHeight: number) => (
         <UPlotChart
-          data={alignedData}
+          data={alignedFrameWithGapTest}
           config={configBuilder}
           width={vizWidth}
           height={vizHeight}

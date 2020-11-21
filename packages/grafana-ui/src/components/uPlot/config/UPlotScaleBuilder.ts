@@ -1,4 +1,4 @@
-import uPlot from 'uplot';
+import { Scale } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 
 export interface ScaleProps {
@@ -6,7 +6,7 @@ export interface ScaleProps {
   isTime?: boolean;
 }
 
-export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, uPlot.Scale> {
+export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
   getConfig() {
     const { isTime, scaleKey } = this.props;
     return {

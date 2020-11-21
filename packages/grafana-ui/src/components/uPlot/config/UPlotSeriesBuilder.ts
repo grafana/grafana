@@ -1,5 +1,5 @@
 import tinycolor from 'tinycolor2';
-import uPlot from 'uplot';
+import { Series } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 
 export interface SeriesProps {
@@ -15,7 +15,7 @@ export interface SeriesProps {
   fillColor?: string;
 }
 
-export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, uPlot.Series> {
+export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   getConfig() {
     const { line, lineColor, lineWidth, points, pointColor, pointSize, fillColor, fillOpacity, scaleKey } = this.props;
 
