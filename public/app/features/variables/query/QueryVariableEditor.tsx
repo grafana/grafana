@@ -62,7 +62,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   }
 
   getSelectedDataSourceValue = (): string => {
-    if (!this.props.editor.extended?.dataSources.length) {
+    if (!this.props.editor.extended?.dataSources?.length) {
       return '';
     }
     const foundItem = this.props.editor.extended?.dataSources.find(ds => ds.value === this.props.variable.datasource);
@@ -201,7 +201,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                     selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect
                   }
                 >
-                  {this.props.editor.extended?.dataSources.length &&
+                  {this.props.editor.extended?.dataSources?.length &&
                     this.props.editor.extended?.dataSources.map(ds => (
                       <option key={ds.value ?? ''} value={ds.value ?? ''} label={ds.name}>
                         {ds.name}

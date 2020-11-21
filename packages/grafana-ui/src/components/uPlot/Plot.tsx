@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { usePrevious } from 'react-use';
-import uPlot from 'uplot';
+import uPlot, { Options, AlignedData, AlignedDataWithGapTest } from 'uplot';
 import { buildPlotContext, PlotContext } from './context';
-import { pluginLog, preparePlotData, shouldInitialisePlot } from './utils';
+import { pluginLog, shouldInitialisePlot } from './utils';
 import { usePlotConfig } from './hooks';
 import { PlotProps } from './types';
 
@@ -12,7 +12,7 @@ import { PlotProps } from './types';
 export const UPlotChart: React.FC<PlotProps> = props => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [plotInstance, setPlotInstance] = useState<uPlot>();
-  const plotData = useRef<uPlot.AlignedData>();
+  const plotData = useRef<AlignedDataWithGapTest>();
 
   // uPlot config API
   const { currentConfig, registerPlugin } = usePlotConfig(props.width, props.height, props.timeZone, props.config);
@@ -33,11 +33,12 @@ export const UPlotChart: React.FC<PlotProps> = props => {
       return;
     }
     pluginLog('uPlot core', false, 'updating plot data(throttled log!)', plotData.current);
+
     // If config hasn't changed just update uPlot's data
     plotInstance.setData(plotData.current);
 
     if (props.onDataUpdate) {
-      props.onDataUpdate(plotData.current);
+      props.onDataUpdate(plotData.current.data!);
     }
   }, [plotInstance, props.onDataUpdate]);
 
@@ -50,7 +51,10 @@ export const UPlotChart: React.FC<PlotProps> = props => {
   }, [plotInstance]);
 
   useLayoutEffect(() => {
-    plotData.current = preparePlotData(props.data);
+    plotData.current = {
+      data: props.data.frame.fields.map(f => f.values.toArray()) as AlignedData,
+      isGap: props.data.isGap,
+    };
   }, [props.data]);
 
   // Decides if plot should update data or re-initialise
@@ -62,7 +66,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 
     // Do nothing if there is data vs series config mismatch. This may happen when the data was updated and made this
     // effect fire before the config update triggered the effect.
-    if (currentConfig.series.length !== plotData.current.length) {
+    if (currentConfig.series.length !== plotData.current.data!.length) {
       return;
     }
 
@@ -70,7 +74,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
       if (!canvasRef.current) {
         throw new Error('Missing Canvas component as a child of the plot.');
       }
-      const instance = initPlot(plotData.current, currentConfig, canvasRef.current);
+      const instance = initPlot(plotData.current.data!, currentConfig, canvasRef.current);
 
       if (props.onPlotInit) {
         props.onPlotInit();
@@ -106,7 +110,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 };
 
 // Main function initialising uPlot. If final config is not settled it will do nothing
-function initPlot(data: uPlot.AlignedData, config: uPlot.Options, ref: HTMLDivElement) {
+function initPlot(data: AlignedData, config: Options, ref: HTMLDivElement) {
   pluginLog('uPlot core', false, 'initialized with', data, config);
   return new uPlot(config, data, ref);
 }

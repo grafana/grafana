@@ -207,6 +207,12 @@ var (
 	ImageUploadProvider string
 )
 
+// AddChangePasswordLink returns if login form is disabled or not since
+// the same intention can be used to hide both features.
+func AddChangePasswordLink() bool {
+	return !DisableLoginForm
+}
+
 // TODO move all global vars to this struct
 type Cfg struct {
 	Raw    *ini.File

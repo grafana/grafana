@@ -159,7 +159,7 @@ Not all metrics returned by the Azure Monitor API have values. To make it easier
 
 ### Azure Monitor alerting
 
-Grafana alerting is supported for the Azure Monitor service. This is not Azure Alerts support. For more information about Grafana alerting, refer to [how alerting in Grafana works]({{< relref "../alerting/alerts-overview.md" >}}).
+Grafana alerting is supported for the Azure Monitor service. This is not Azure Alerts support. For more information about Grafana alerting, refer to [how alerting in Grafana works]({{< relref "../alerting/_index.md" >}}).
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 
@@ -221,7 +221,7 @@ Examples:
 
 ### Application Insights alerting
 
-Grafana alerting is supported for Application Insights. This is not Azure Alerts support. For more information about Grafana alerting, refer to [Alerts overview]({{< relref "../alerting/alerts-overview.md" >}}).
+Grafana alerting is supported for Application Insights. This is not Azure Alerts support. For more information about Grafana alerting, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 
@@ -369,7 +369,7 @@ If you're not currently logged in to the Azure Portal, then the link opens the l
 
 > Only available in Grafana v7.0+.
 
-Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works in [Alerting rules]({{< relref "../alerting/alerts-overview.md" >}}).
+Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works in [Alerting rules]({{< relref "../alerting/_index.md" >}}).
 
 ## Query the Application Insights Analytics service
 
