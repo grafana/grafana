@@ -1,11 +1,10 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import uPlot from 'uplot';
+import uPlot, { AlignedData, AlignedDataWithGapTest } from 'uplot';
 import { buildPlotContext, PlotContext } from './context';
-import { pluginLog, preparePlotData } from './utils';
+import { pluginLog } from './utils';
 import { usePlotConfig } from './hooks';
 import { PlotProps } from './types';
-import usePrevious from 'react-use/lib/usePrevious';
-import isEqual from 'lodash/isEqual';
+import { usePrevious } from 'react-use';
 
 // uPlot abstraction responsible for plot initialisation, setup and refresh
 // Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
@@ -13,8 +12,8 @@ import isEqual from 'lodash/isEqual';
 export const UPlotChart: React.FC<PlotProps> = props => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [plotInstance, setPlotInstance] = useState<uPlot>();
-  const plotData = preparePlotData(props.data);
-  const previousData = usePrevious(plotData);
+  const plotData = useRef<AlignedDataWithGapTest>();
+  const previousConfig = usePrevious(props.config);
 
   // uPlot config API
   const { currentConfig, registerPlugin } = usePlotConfig(props.width, props.height, props.timeZone, props.config);
@@ -26,14 +25,23 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     if (!canvasRef.current) {
       throw new Error('Missing Canvas component as a child of the plot.');
     }
-    const instance = initPlot(plotData, currentConfig, canvasRef.current);
 
-    if (props.onPlotInit) {
-      props.onPlotInit();
-    }
+    pluginLog('UPlotChart: init uPlot', false, 'initialized with', plotData.current, currentConfig);
+    const instance = new uPlot(currentConfig, plotData.current, canvasRef.current);
 
     setPlotInstance(instance);
-  }, [setPlotInstance, currentConfig, props.onPlotInit]);
+  }, [setPlotInstance, currentConfig]);
+
+  useLayoutEffect(() => {
+    plotData.current = {
+      data: props.data.frame.fields.map(f => f.values.toArray()) as AlignedData,
+      isGap: props.data.isGap,
+    };
+
+    if (plotInstance && previousConfig === props.config) {
+      updateData(plotInstance, plotData.current.data);
+    }
+  }, [props.data]);
 
   const getPlotInstance = useCallback(() => {
     if (!plotInstance) {
@@ -42,15 +50,6 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 
     return plotInstance;
   }, [plotInstance]);
-
-  useLayoutEffect(() => {
-    if (!isEqual(plotData, previousData)) {
-      updateData(plotInstance, plotData);
-      if (props.onDataUpdate) {
-        props.onDataUpdate(plotData);
-      }
-    }
-  }, [plotData, plotInstance, props.onDataUpdate]);
 
   useLayoutEffect(() => {
     initializePlot();
@@ -86,14 +85,8 @@ export const UPlotChart: React.FC<PlotProps> = props => {
   );
 };
 
-// Main function initialising uPlot. If final config is not settled it will do nothing
-function initPlot(data: uPlot.AlignedData, config: uPlot.Options, ref: HTMLDivElement) {
-  pluginLog('uPlot core', false, 'initialized with', data, config);
-  return new uPlot(config, data, ref);
-}
-
 // Callback executed when there was no change in plot config
-function updateData(plotInstance?: uPlot, data?: uPlot.AlignedData) {
+function updateData(plotInstance?: uPlot, data?: AlignedData | null) {
   if (!plotInstance || !data) {
     return;
   }

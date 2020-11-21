@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PlotPlugin } from './types';
 import { pluginLog } from './utils';
-import uPlot from 'uplot';
+import uPlot, { Options } from 'uplot';
 import { getTimeZoneInfo, TimeZone } from '@grafana/data';
 import { usePlotPluginContext } from './context';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
@@ -108,7 +108,7 @@ export const DEFAULT_PLOT_CONFIG = {
 //pass plain confsig object,memoize!
 export const usePlotConfig = (width: number, height: number, timeZone: TimeZone, configBuilder: UPlotConfigBuilder) => {
   const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
-  const [currentConfig, setCurrentConfig] = useState<uPlot.Options>();
+  const [currentConfig, setCurrentConfig] = useState<Options>();
 
   const tzDate = useMemo(() => {
     let fmt = undefined;
