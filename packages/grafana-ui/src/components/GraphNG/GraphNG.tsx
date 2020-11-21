@@ -128,7 +128,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         line: (customConfig.mode ?? GraphMode.Line) === GraphMode.Line,
         lineColor: seriesColor,
         lineWidth: customConfig.lineWidth,
-        points: customConfig.points !== PointMode.Never,
+        points: customConfig.points,
         pointSize: customConfig.pointRadius,
         pointColor: seriesColor,
         fill: customConfig.fillAlpha !== undefined,
