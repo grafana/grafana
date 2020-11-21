@@ -1,11 +1,13 @@
 package middleware
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -103,4 +105,23 @@ func TestMiddlewareAuth(t *testing.T) {
 			})
 		})
 	})
+}
+
+func TestRemoveForceLoginparams(t *testing.T) {
+	tcs := []struct {
+		inp string
+		exp string
+	}{
+		{inp: "/?forceLogin=true", exp: "/?"},
+		{inp: "/d/dash/dash-title?ordId=1&forceLogin=true", exp: "/d/dash/dash-title?ordId=1"},
+		{inp: "/?kiosk&forceLogin=true", exp: "/?kiosk"},
+		{inp: "/d/dash/dash-title?ordId=1&kiosk&forceLogin=true", exp: "/d/dash/dash-title?ordId=1&kiosk"},
+		{inp: "/d/dash/dash-title?ordId=1&forceLogin=true&kiosk", exp: "/d/dash/dash-title?ordId=1&kiosk"},
+		{inp: "/d/dash/dash-title?forceLogin=true&kiosk", exp: "/d/dash/dash-title?&kiosk"},
+	}
+	for i, tc := range tcs {
+		t.Run(fmt.Sprintf("testcase %d", i), func(t *testing.T) {
+			require.Equal(t, tc.exp, removeForceLoginParams(tc.inp))
+		})
+	}
 }
