@@ -110,10 +110,11 @@ function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
 function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: number, foundIncr: number): string[] {
   const timeZone = (self.axes[axisIdx] as any).timeZone;
   const scale = self.scales.x;
-  const range = (scale?.max ?? 0) - (scale?.min ?? 0);
+  const range = (scale?.max ?? 0) - (scale?.min ?? 0) / 1000;
   const oneDay = 86400;
   const oneYear = 31536000;
 
+  foundIncr = foundIncr / 1000;
   let format = systemDateFormats.interval.minute;
 
   if (foundIncr <= 45) {
@@ -128,7 +129,7 @@ function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: 
     format = systemDateFormats.interval.month;
   }
 
-  return splits.map(v => dateTimeFormat(v * 1000, { format, timeZone }));
+  return splits.map(v => dateTimeFormat(v, { format, timeZone }));
 }
 
 export function getUPlotSideFromAxis(axis: AxisPlacement) {
