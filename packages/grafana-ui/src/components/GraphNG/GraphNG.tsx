@@ -8,7 +8,7 @@ import {
   getFieldDisplayName,
   getTimeField,
 } from '@grafana/data';
-import { mergeDataFrames } from './utils';
+import { mergeTimeSeriesData } from './utils';
 import { UPlotChart } from '../uPlot/Plot';
 import { PlotProps } from '../uPlot/types';
 import { AxisPlacement, getUPlotSideFromAxis, GraphFieldConfig, GraphMode, PointMode } from '../uPlot/config';
@@ -42,7 +42,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   ...plotProps
 }) => {
   const theme = useTheme();
-  const alignedFrameWithGapTest = useMemo(() => mergeDataFrames(data), [data]);
+  const alignedFrameWithGapTest = useMemo(() => mergeTimeSeriesData(data), [data]);
   const legendItemsRef = useRef<LegendItem[]>([]);
   const hasLegend = legend && legend.displayMode !== LegendDisplayMode.Hidden;
 

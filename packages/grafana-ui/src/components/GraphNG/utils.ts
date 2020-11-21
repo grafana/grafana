@@ -1,36 +1,62 @@
-import { DataFrame, FieldType, getTimeField, ArrayVector } from '@grafana/data';
+import {
+  DataFrame,
+  FieldType,
+  getTimeField,
+  ArrayVector,
+  NullValueMode,
+  getFieldDisplayName,
+  Field,
+} from '@grafana/data';
 import { AlignedFrameWithGapTest } from '../uPlot/types';
 import uPlot, { AlignedData, AlignedDataWithGapTest } from 'uplot';
 
-// very time oriented for now
-export function mergeDataFrames(frames: DataFrame[]): AlignedFrameWithGapTest | null {
-  let valuesFromFrames: AlignedData[] = [];
+/**
+ * Returns a single DataFrame with:
+ * - A shared time column
+ * - only numeric fields
+ *
+ * The input expects all frames to have a time field with values in ascending order
+ *
+ * @alpha
+ */
+export function mergeTimeSeriesData(frames: DataFrame[]): AlignedFrameWithGapTest | null {
+  const valuesFromFrames: AlignedData[] = [];
+  const sourceFields: Field[] = [];
 
-  for (let i = 0; i < frames.length; i++) {
-    const frame = frames[i];
+  for (const frame of frames) {
+    const { timeField } = getTimeField(frame);
+    if (!timeField) {
+      continue;
+    }
 
-    let { timeField } = getTimeField(frame);
+    const alignedData: AlignedData = [
+      timeField.values.toArray(), // The x axis (time)
+    ];
 
-    // walk all temporal frames
-    if (timeField !== undefined && frame.fields.length > 1) {
-      // push time values
-      let alignedData: AlignedData = [timeField.values.toArray()];
-
-      // push numeric values
-      for (let j = 0; j < frame.fields.length; j++) {
-        const field = frame.fields[j];
-
-        if (field.type === FieldType.number) {
-          let values = field.values.toArray();
-
-          if (field.config.custom?.nullValues === 'asZero') {
-            values = values.map(v => (v === null ? 0 : v));
-          }
-
-          alignedData.push(values);
-        }
+    // find numeric fields
+    for (const field of frame.fields) {
+      if (field.type !== FieldType.number) {
+        continue;
       }
 
+      let values = field.values.toArray();
+      if (field.config.nullValueMode === NullValueMode.AsZero) {
+        values = values.map(v => (v === null ? 0 : v));
+      }
+      alignedData.push(values);
+
+      // Add the first time field
+      if (sourceFields.length < 1) {
+        sourceFields.push(timeField);
+      }
+
+      // This will cache an appropriate field name in the field state
+      getFieldDisplayName(field, frame, frames);
+      sourceFields.push(field);
+    }
+
+    // Timeseries has tima and at least one number
+    if (alignedData.length > 1) {
       valuesFromFrames.push(alignedData);
     }
   }
@@ -40,42 +66,21 @@ export function mergeDataFrames(frames: DataFrame[]): AlignedFrameWithGapTest | 
   }
 
   // do the actual alignment (outerJoin on the first arrays)
-  let { data: alignedData, isGap } = outerJoinValues(valuesFromFrames);
+  const { data: alignedData, isGap } = outerJoinValues(valuesFromFrames);
 
-  // the outerJoined frame we're gonna poop out
-  let alignedFrame: DataFrame = {
-    fields: [],
-    length: alignedData![0].length,
-  };
-
-  // populate the alignedFrame with original Fields but with aligned values
-  for (let i = 0, seriesIdx = 0; i < frames.length; i++) {
-    const frame = frames[i];
-
-    let { timeField } = getTimeField(frame);
-
-    // walk all temporal frames
-    if (timeField !== undefined && frame.fields.length > 1) {
-      // push time field
-      if (alignedFrame.fields.length === 0) {
-        alignedFrame.fields.push({ ...timeField, values: new ArrayVector(alignedData![seriesIdx++]) });
-      }
-
-      // push numeric fields
-      for (let j = 0; j < frame.fields.length; j++) {
-        const field = frame.fields[j];
-
-        if (field.type === FieldType.number) {
-          alignedFrame.fields.push({ ...field, values: new ArrayVector(alignedData![seriesIdx++]) });
-        }
-      }
-
-      valuesFromFrames.push(alignedData!);
-    }
+  if (alignedData!.length !== sourceFields.length) {
+    throw new Error('outerJoinValues lost a field?');
   }
 
+  // Replace the values from the outer-join field
   return {
-    frame: alignedFrame,
+    frame: {
+      length: alignedData![0].length,
+      fields: alignedData!.map((vals, idx) => ({
+        ...sourceFields[idx],
+        values: new ArrayVector(vals),
+      })),
+    },
     isGap,
   };
 }
