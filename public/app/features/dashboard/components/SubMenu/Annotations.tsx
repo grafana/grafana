@@ -1,9 +1,10 @@
 import React, { FunctionComponent, useEffect, useState } from 'react';
 import { LegacyForms } from '@grafana/ui';
+import { AnnotationQuery } from '@grafana/data';
 const { Switch } = LegacyForms;
 
 interface Props {
-  annotations: any[];
+  annotations: AnnotationQuery[];
   onAnnotationChanged: (annotation: any) => void;
 }
 
