@@ -2,6 +2,7 @@ import { dateTimeFormat, GrafanaTheme, systemDateFormats, TimeZone } from '@graf
 import uPlot, { Axis } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 import { measureText } from '../../../utils/measureText';
+import { AxisPlacement } from '../config';
 
 export interface AxisProps {
   scaleKey: string;
@@ -10,7 +11,7 @@ export interface AxisProps {
   stroke?: string;
   show?: boolean;
   size?: number;
-  side?: Axis.Side;
+  placement?: AxisPlacement;
   grid?: boolean;
   formatValue?: (v: any) => string;
   values?: any;
@@ -24,7 +25,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       scaleKey,
       label,
       show = true,
-      side = 3,
+      placement = AxisPlacement.Auto,
       grid = true,
       formatValue,
       values,
@@ -40,7 +41,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       label,
       show,
       stroke,
-      side,
+      side: getUPlotSideFromAxis(placement),
       font: '12px Roboto',
       size: calculateAxisSize,
       grid: {
@@ -128,4 +129,18 @@ function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: 
   }
 
   return splits.map(v => dateTimeFormat(v * 1000, { format, timeZone }));
+}
+
+export function getUPlotSideFromAxis(axis: AxisPlacement) {
+  switch (axis) {
+    case AxisPlacement.Top:
+      return 0;
+    case AxisPlacement.Right:
+      return 1;
+    case AxisPlacement.Bottom:
+      return 2;
+    case AxisPlacement.Left:
+  }
+
+  return 3; // default everythign to the left
 }

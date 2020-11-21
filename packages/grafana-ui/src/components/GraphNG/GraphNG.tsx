@@ -12,7 +12,7 @@ import {
 import { mergeTimeSeriesData } from './utils';
 import { UPlotChart } from '../uPlot/Plot';
 import { PlotProps } from '../uPlot/types';
-import { AxisPlacement, getUPlotSideFromAxis, GraphFieldConfig, GraphMode, PointMode } from '../uPlot/config';
+import { AxisPlacement, GraphFieldConfig, GraphMode, PointMode } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
@@ -79,7 +79,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     builder.addAxis({
       scaleKey: 'x',
       isTime: true,
-      side: getUPlotSideFromAxis(AxisPlacement.Bottom),
+      placement: AxisPlacement.Bottom,
       timeZone,
       theme,
     });
@@ -100,10 +100,10 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       const fmt = field.display ?? defaultFormatter;
       const scale = config.unit || '__fixed';
-      const side = customConfig.axisPlacement ?? (hasLeftAxis ? AxisPlacement.Right : AxisPlacement.Left);
+      const placement = getAxisPlacement(customConfig.axisPlacement, hasLeftAxis);
 
       if (!builder.hasScale(scale) && customConfig.axisPlacement !== AxisPlacement.Hidden) {
-        if (side === AxisPlacement.Left) {
+        if (placement === AxisPlacement.Left) {
           hasLeftAxis = true;
         }
 
@@ -111,7 +111,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         builder.addAxis({
           scaleKey: scale,
           label: customConfig.axisLabel,
-          side: getUPlotSideFromAxis(side),
+          placement: placement,
           grid: !hasYAxis,
           formatValue: v => formattedValueToString(fmt(v)),
           theme,
@@ -142,7 +142,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         legendItems.push({
           color: seriesColor,
           label: getFieldDisplayName(field, alignedFrame),
-          yAxis: side === AxisPlacement.Right ? 3 : 1,
+          yAxis: placement === AxisPlacement.Right ? 3 : 1,
         });
       }
 
@@ -181,3 +181,13 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     </VizLayout>
   );
 };
+
+function getAxisPlacement(placement: AxisPlacement | undefined, hasLeftAxisAlready: boolean): AxisPlacement {
+  placement = placement ?? AxisPlacement.Auto;
+
+  if (placement === AxisPlacement.Auto) {
+    return hasLeftAxisAlready ? AxisPlacement.Right : AxisPlacement.Left;
+  }
+
+  return placement;
+}
