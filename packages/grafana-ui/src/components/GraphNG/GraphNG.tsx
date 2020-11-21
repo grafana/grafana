@@ -107,7 +107,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
           hasLeftAxis = true;
         }
 
-        builder.addScale({ scaleKey: scale });
+        builder.addScale({ scaleKey: scale, min: field.config.min, max: field.config.max });
         builder.addAxis({
           scaleKey: scale,
           label: customConfig.axisLabel,
