@@ -55,7 +55,7 @@ utilize Grafana's built-in support for assuming roles.
 
 Here is a minimal policy example:
 
-```bash
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -109,11 +109,11 @@ The `Assume Role ARN` field allows you to specify which IAM role to assume, if a
 
 The Grafana process in the container runs as user 472 (called "grafana"). When Kubernetes mounts your projected credentials, they will by default only be available to the root user. In order to allow user 472 to access the credentials (and avoid it falling back to the IAM role attached to the EC2 instance), you will need to provide a [security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for your pod.
 
-```
+```yaml
 securityContext:
-	fsGroup: 472
-	runAsUser: 472
-	runAsGroup: 472
+  fsGroup: 472
+  runAsUser: 472
+  runAsGroup: 472
 ```
 
 ### AWS credentials file
@@ -218,7 +218,7 @@ If you're not currently logged in to the CloudWatch console, the link will forwa
 ### Alerting
 
 Since CloudWatch Logs queries can return numeric data, for example through the use of the `stats` command, alerts are supported.
-See the [Alerting]({{< relref "../alerting/alerts-overview.md" >}}) documentation for more on Grafana alerts.
+See the [Alerting]({{< relref "../alerting/_index.md" >}}) documentation for more on Grafana alerts.
 
 ## Curated dashboards
 
@@ -347,7 +347,7 @@ Some queries accept filters in JSON format and Grafana supports the conversion o
 
 If `env = 'production', 'staging'`, following query will return ARNs of EC2 instances which `Environment` tag is `production` or `staging`.
 
-```
+```javascript
 resource_arns(us-east-1, ec2:instance, {"Environment":${env:json}})
 ```
 

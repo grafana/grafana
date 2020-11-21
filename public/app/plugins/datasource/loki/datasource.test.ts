@@ -1,7 +1,6 @@
 import { of, throwError } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { omit } from 'lodash';
-import { AnnotationQueryRequest, CoreApp, DataFrame, dateTime, FieldCache, TimeRange } from '@grafana/data';
+import { AnnotationQueryRequest, CoreApp, DataFrame, dateTime, FieldCache, TimeRange, TimeSeries } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 
 import LokiDatasource from './datasource';
@@ -26,7 +25,7 @@ const timeSrvStub = {
   }),
 };
 
-const testResponse: FetchResponse<LokiResponse> = {
+const testLogsResponse: FetchResponse<LokiResponse> = {
   data: {
     data: {
       resultType: LokiResultType.Stream,
@@ -45,6 +44,29 @@ const testResponse: FetchResponse<LokiResponse> = {
   status: 200,
   statusText: 'Success',
   type: 'default',
+  url: '',
+  config: ({} as unknown) as BackendSrvRequest,
+};
+
+const testMetricsResponse: FetchResponse<LokiResponse> = {
+  data: {
+    data: {
+      resultType: LokiResultType.Matrix,
+      result: [
+        {
+          metric: {},
+          values: [[1605715380, '1.1']],
+        },
+      ],
+    },
+    status: 'success',
+  },
+  ok: true,
+  headers: ({} as unknown) as Headers,
+  redirected: false,
+  status: 200,
+  statusText: 'OK',
+  type: 'basic',
   url: '',
   config: ({} as unknown) as BackendSrvRequest,
 };
@@ -96,7 +118,7 @@ describe('LokiDatasource', () => {
     });
   });
 
-  describe('when querying with limits', () => {
+  describe('when doing logs queries with limits', () => {
     const runLimitTest = async ({
       maxDataPoints = 123,
       queryMaxLines,
@@ -121,7 +143,7 @@ describe('LokiDatasource', () => {
       const options = getQueryOptions<LokiQuery>({ targets: [{ expr, refId: 'B', maxLines: queryMaxLines }] });
       options.maxDataPoints = maxDataPoints;
 
-      fetchMock.mockImplementation(() => of(testResponse));
+      fetchMock.mockImplementation(() => of(testLogsResponse));
 
       await expect(ds.query(options).pipe(take(1))).toEmitValuesWith(() => {
         expect(fetchMock.mock.calls.length).toBe(1);
@@ -151,10 +173,10 @@ describe('LokiDatasource', () => {
   });
 
   describe('when querying', () => {
-    function setup(expr: string, app: CoreApp) {
+    function setup(expr: string, app: CoreApp, instant?: boolean, range?: boolean) {
       const ds = createLokiDSForTests();
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr, refId: 'B' }],
+        targets: [{ expr, refId: 'B', instant, range }],
         app,
       });
       ds.runInstantQuery = jest.fn(() => of({ data: [] }));
@@ -162,68 +184,95 @@ describe('LokiDatasource', () => {
       return { ds, options };
     }
 
-    it('should run range and instant query in Explore if running metric query', async () => {
-      const { ds, options } = setup('rate({job="grafana"}[10m])', CoreApp.Explore);
+    const metricsQuery = 'rate({job="grafana"}[10m])';
+    const logsQuery = '{job="grafana"} |= "foo"';
+
+    it('should run logs instant if only instant is selected', async () => {
+      const { ds, options } = setup(logsQuery, CoreApp.Explore, true, false);
       await ds.query(options).toPromise();
       expect(ds.runInstantQuery).toBeCalled();
-      expect(ds.runRangeQuery).toBeCalled();
+      expect(ds.runRangeQuery).not.toBeCalled();
     });
 
-    it('should run only range query in Explore if running logs query', async () => {
-      const { ds, options } = setup('{job="grafana"}', CoreApp.Explore);
+    it('should run metrics instant if only instant is selected', async () => {
+      const { ds, options } = setup(metricsQuery, CoreApp.Explore, true, false);
+      await ds.query(options).toPromise();
+      expect(ds.runInstantQuery).toBeCalled();
+      expect(ds.runRangeQuery).not.toBeCalled();
+    });
+
+    it('should run only logs range query if only range is selected', async () => {
+      const { ds, options } = setup(logsQuery, CoreApp.Explore, false, true);
       await ds.query(options).toPromise();
       expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
-    it('should run only range query in Dashboard', async () => {
-      const { ds, options } = setup('rate({job="grafana"}[10m])', CoreApp.Dashboard);
+    it('should run only metrics range query if only range is selected', async () => {
+      const { ds, options } = setup(metricsQuery, CoreApp.Explore, false, true);
       await ds.query(options).toPromise();
       expect(ds.runInstantQuery).not.toBeCalled();
       expect(ds.runRangeQuery).toBeCalled();
     });
 
-    it('should return series data for both queries in Explore if metrics query', async () => {
+    it('should run only logs range query if no query type is selected in Explore', async () => {
+      const { ds, options } = setup(logsQuery, CoreApp.Explore);
+      await ds.query(options).toPromise();
+      expect(ds.runInstantQuery).not.toBeCalled();
+      expect(ds.runRangeQuery).toBeCalled();
+    });
+
+    it('should run only metrics range query if no query type is selected in Explore', async () => {
+      const { ds, options } = setup(metricsQuery, CoreApp.Explore);
+      await ds.query(options).toPromise();
+      expect(ds.runInstantQuery).not.toBeCalled();
+      expect(ds.runRangeQuery).toBeCalled();
+    });
+
+    it('should run only logs range query in Dashboard', async () => {
+      const { ds, options } = setup(logsQuery, CoreApp.Dashboard);
+      await ds.query(options).toPromise();
+      expect(ds.runInstantQuery).not.toBeCalled();
+      expect(ds.runRangeQuery).toBeCalled();
+    });
+
+    it('should run only metrics range query in Dashboard', async () => {
+      const { ds, options } = setup(metricsQuery, CoreApp.Dashboard);
+      await ds.query(options).toPromise();
+      expect(ds.runInstantQuery).not.toBeCalled();
+      expect(ds.runRangeQuery).toBeCalled();
+    });
+
+    it('should return series data for metrics range queries', async () => {
       const ds = createLokiDSForTests();
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: 'rate({job="grafana"} |= "foo" [10m])', refId: 'B' }],
+        targets: [{ expr: metricsQuery, refId: 'B', range: true }],
         app: CoreApp.Explore,
       });
 
-      fetchMock
-        .mockImplementationOnce(() => of(testResponse))
-        .mockImplementation(() => of(omit(testResponse, 'data.status')));
+      fetchMock.mockImplementation(() => of(testMetricsResponse));
 
       await expect(ds.query(options)).toEmitValuesWith(received => {
-        // first result always comes from runInstantQuery
-        const firstResult = received[0];
-        expect(firstResult).toEqual({ data: [], key: 'B_instant' });
+        const result = received[0];
+        const timeSeries = result.data[0] as TimeSeries;
 
-        // second result always comes from runRangeQuery
-        const secondResult = received[1];
-        const dataFrame = secondResult.data[0] as DataFrame;
-        const fieldCache = new FieldCache(dataFrame);
-
-        expect(fieldCache.getFieldByName('line')?.values.get(0)).toBe('hello');
-        expect(dataFrame.meta?.limit).toBe(500);
-        expect(dataFrame.meta?.searchWords).toEqual([]);
+        expect(timeSeries.meta?.preferredVisualisationType).toBe('graph');
+        expect(timeSeries.refId).toBe('B');
+        expect(timeSeries.datapoints[0]).toEqual([1.1, 1605715380000]);
       });
     });
 
-    it('should return series data for range query in Dashboard', async () => {
+    it('should return series data for logs range query', async () => {
       const ds = createLokiDSForTests();
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: '{job="grafana"} |= "foo"', refId: 'B' }],
+        targets: [{ expr: logsQuery, refId: 'B' }],
       });
 
-      fetchMock
-        .mockImplementationOnce(() => of(testResponse))
-        .mockImplementation(() => of(omit(testResponse, 'data.status')));
+      fetchMock.mockImplementation(() => of(testLogsResponse));
 
       await expect(ds.query(options)).toEmitValuesWith(received => {
-        // first result will come from runRangeQuery
-        const firstResult = received[0];
-        const dataFrame = firstResult.data[0] as DataFrame;
+        const result = received[0];
+        const dataFrame = result.data[0] as DataFrame;
         const fieldCache = new FieldCache(dataFrame);
 
         expect(fieldCache.getFieldByName('line')?.values.get(0)).toBe('hello');
