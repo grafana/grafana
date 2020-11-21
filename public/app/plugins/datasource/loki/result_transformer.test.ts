@@ -61,10 +61,10 @@ describe('loki result transformer', () => {
     });
   });
 
-  describe('lokiStreamsToDataframes', () => {
+  describe('lokiStreamsToDataFrames', () => {
     it('should enhance data frames', () => {
       jest.spyOn(ResultTransformer, 'enhanceDataFrame');
-      const dataFrames = ResultTransformer.lokiStreamsToDataframes(lokiResponse, { refId: 'B' }, 500, {
+      const dataFrames = ResultTransformer.lokiStreamsToDataFrames(lokiResponse, { refId: 'B' }, 500, {
         derivedFields: [
           {
             matcherRegex: 'trace=(w+)',
