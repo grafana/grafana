@@ -1,11 +1,11 @@
 import React from 'react';
 import { ContextMenuPlugin, TooltipPlugin, ZoomPlugin, GraphNG } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
-import { Options } from './types';
+import { GraphOptions } from './types';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 
-interface GraphPanelProps extends PanelProps<Options> {}
+interface GraphPanelProps extends PanelProps<GraphOptions> {}
 
 export const GraphPanel: React.FC<GraphPanelProps> = ({
   data,

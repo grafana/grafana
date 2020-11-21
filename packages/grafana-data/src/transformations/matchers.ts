@@ -11,12 +11,14 @@ import {
   FrameMatcher,
 } from '../types/transformations';
 import { Registry } from '../utils/Registry';
+import { getSimpleFieldMatchers } from './matchers/simpleFieldMatcher';
 
 export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
   return [
     ...getFieldPredicateMatchers(), // Predicates
     ...getFieldTypeMatchers(), // by type
     ...getFieldNameMatchers(), // by name
+    ...getSimpleFieldMatchers(), // first
   ];
 });
 

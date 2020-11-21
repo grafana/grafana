@@ -14,6 +14,7 @@ export enum FieldMatcherID {
   // Specific Types
   numeric = 'numeric',
   time = 'time',
+  first = 'first',
 
   // With arguments
   byType = 'byType',
