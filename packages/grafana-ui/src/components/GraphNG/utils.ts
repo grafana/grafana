@@ -98,8 +98,6 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     throw new Error('outerJoinValues lost a field?');
   }
 
-  console.log('ALIGNED', sourceFields);
-
   // Replace the values from the outer-join field
   return {
     frame: {
