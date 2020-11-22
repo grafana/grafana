@@ -20,6 +20,7 @@ export interface NewsItem {
 export interface RssFeed {
   title?: string;
   description?: string;
+  feedUrl: string;
   items: RssItem[];
 }
 

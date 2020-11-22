@@ -7,13 +7,17 @@ export function feedToDataFrame(feed: RssFeed): DataFrame {
   const link = new ArrayVector<string>([]);
   const content = new ArrayVector<string>([]);
 
+  // regex and url for handling feeds with relative paths in <item> <link>
+  const r = new RegExp('^(?:[a-z]+:)?//', 'i');
+  const base_url = new URL(feed.feedUrl).protocol + '//' + new URL(feed.feedUrl).host;
+
   for (const item of feed.items) {
     const val = dateTime(item.pubDate);
 
     try {
       date.buffer.push(val.valueOf());
       title.buffer.push(item.title);
-      link.buffer.push(item.link);
+      link.buffer.push(r.test(item.link) ? item.link : base_url + item.link);
 
       if (item.content) {
         const body = item.content.replace(/<\/?[^>]+(>|$)/g, '');
