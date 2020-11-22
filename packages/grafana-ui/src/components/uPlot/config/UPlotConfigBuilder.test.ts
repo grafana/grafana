@@ -3,6 +3,7 @@
 import { UPlotConfigBuilder } from './UPlotConfigBuilder';
 import { GrafanaTheme } from '@grafana/data';
 import { expect } from '../../../../../../public/test/lib/common';
+import { AxisPlacement, PointMode } from '../config';
 
 describe('UPlotConfigBuilder', () => {
   describe('scales config', () => {
@@ -17,21 +18,25 @@ describe('UPlotConfigBuilder', () => {
         isTime: false,
       });
       expect(builder.getConfig()).toMatchInlineSnapshot(`
-      Object {
-        "axes": Array [],
-        "scales": Object {
-          "scale-x": Object {
-            "time": true,
+        Object {
+          "axes": Array [],
+          "scales": Object {
+            "scale-x": Object {
+              "max": undefined,
+              "min": undefined,
+              "time": true,
+            },
+            "scale-y": Object {
+              "max": undefined,
+              "min": undefined,
+              "time": false,
+            },
           },
-          "scale-y": Object {
-            "time": false,
-          },
-        },
-        "series": Array [
-          Object {},
-        ],
-      }
-    `);
+          "series": Array [
+            Object {},
+          ],
+        }
+      `);
     });
 
     it('prevents duplicate scales', () => {
@@ -55,7 +60,7 @@ describe('UPlotConfigBuilder', () => {
       scaleKey: 'scale-x',
       label: 'test label',
       timeZone: 'browser',
-      side: 2,
+      placement: AxisPlacement.Bottom,
       isTime: false,
       formatValue: () => 'test value',
       grid: false,
@@ -99,6 +104,7 @@ describe('UPlotConfigBuilder', () => {
       }
     `);
   });
+
   it('allows series configuration', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
@@ -106,7 +112,7 @@ describe('UPlotConfigBuilder', () => {
       fill: true,
       fillColor: '#ff0000',
       fillOpacity: 0.5,
-      points: true,
+      points: PointMode.Auto,
       pointSize: 5,
       pointColor: '#00ff00',
       line: true,
@@ -123,7 +129,7 @@ describe('UPlotConfigBuilder', () => {
           Object {
             "fill": "rgba(255, 0, 0, 0.5)",
             "points": Object {
-              "show": true,
+              "fill": "#00ff00",
               "size": 5,
               "stroke": "#00ff00",
             },
