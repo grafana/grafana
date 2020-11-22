@@ -105,6 +105,23 @@ describe('UPlotConfigBuilder', () => {
     `);
   });
 
+  it('Handles auto axis placement', () => {
+    const builder = new UPlotConfigBuilder();
+    builder.addAxis({
+      scaleKey: 'y1',
+      placement: AxisPlacement.Auto,
+      theme: { isDark: true, palette: { gray25: '#ffffff' } } as GrafanaTheme,
+    });
+    builder.addAxis({
+      scaleKey: 'y2',
+      placement: AxisPlacement.Auto,
+      theme: { isDark: true, palette: { gray25: '#ffffff' } } as GrafanaTheme,
+    });
+
+    expect(builder.getAxisPlacement('y1')).toBe(AxisPlacement.Left);
+    expect(builder.getAxisPlacement('y2')).toBe(AxisPlacement.Right);
+  });
+
   it('allows series configuration', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
