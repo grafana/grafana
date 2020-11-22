@@ -35,6 +35,10 @@ func init() {
 						Value: "PUT",
 						Label: "PUT",
 					},
+					{
+						Value: "GET",
+						Label: "GET",
+					},
 				},
 				PropertyName: "httpMethod",
 			},
