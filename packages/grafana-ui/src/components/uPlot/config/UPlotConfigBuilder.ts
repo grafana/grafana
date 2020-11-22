@@ -28,7 +28,8 @@ export class UPlotConfigBuilder {
   }
 
   getAxisPlacement(scaleKey: string): AxisPlacement {
-    return this.axes[scaleKey].props.placement!;
+    const axis = this.axes[scaleKey];
+    return axis?.props.placement! ?? AxisPlacement.Left;
   }
 
   addSeries(props: SeriesProps) {
