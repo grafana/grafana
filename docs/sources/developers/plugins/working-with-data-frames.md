@@ -1,6 +1,5 @@
 +++
 title = "Working with data frames"
-type = "docs"
 +++
 
 # Working with data frames

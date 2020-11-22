@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,11 +16,11 @@ func TestAnnotationCleanUp(t *testing.T) {
 	fakeSQL := InitTestDB(t)
 
 	t.Cleanup(func() {
-		_ = fakeSQL.WithDbSession(context.Background(), func(session *DBSession) error {
+		err := fakeSQL.WithDbSession(context.Background(), func(session *DBSession) error {
 			_, err := session.Exec("DELETE FROM annotation")
-			require.Nil(t, err, "cleaning up all annotations should not cause problems")
 			return err
 		})
+		assert.NoError(t, err)
 	})
 
 	createTestAnnotations(t, fakeSQL, 21, 6)
@@ -95,11 +96,11 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 	fakeSQL := InitTestDB(t)
 
 	t.Cleanup(func() {
-		_ = fakeSQL.WithDbSession(context.Background(), func(session *DBSession) error {
+		err := fakeSQL.WithDbSession(context.Background(), func(session *DBSession) error {
 			_, err := session.Exec("DELETE FROM annotation")
-			require.Nil(t, err, "cleaning up all annotations should not cause problems")
 			return err
 		})
+		assert.NoError(t, err)
 	})
 
 	// create some test annotations
@@ -137,10 +138,10 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 
 	countOld, err := session.Where("alert_id = 10").Count(&annotations.Item{})
 	require.NoError(t, err)
-	require.Equal(t, int64(0), countOld, "the two first annotations should have been deleted.")
+	require.Equal(t, int64(0), countOld, "the two first annotations should have been deleted")
 }
 
-func assertAnnotationCount(t *testing.T, fakeSQL *SqlStore, sql string, expectedCount int64) {
+func assertAnnotationCount(t *testing.T, fakeSQL *SQLStore, sql string, expectedCount int64) {
 	t.Helper()
 
 	session := fakeSQL.NewSession()
@@ -150,7 +151,7 @@ func assertAnnotationCount(t *testing.T, fakeSQL *SqlStore, sql string, expected
 	require.Equal(t, expectedCount, count)
 }
 
-func createTestAnnotations(t *testing.T, sqlstore *SqlStore, expectedCount int, oldAnnotations int) {
+func createTestAnnotations(t *testing.T, sqlstore *SQLStore, expectedCount int, oldAnnotations int) {
 	t.Helper()
 
 	cutoffDate := time.Now()

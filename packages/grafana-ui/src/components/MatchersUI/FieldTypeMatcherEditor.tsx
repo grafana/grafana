@@ -4,15 +4,15 @@ import { FieldMatcherID, fieldMatchers, SelectableValue, FieldType, DataFrame } 
 import { Select } from '../Select/Select';
 
 export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>(props => {
-  const { data, options } = props;
+  const { data, options, onChange: onChangeFromProps } = props;
   const counts = useFieldCounts(data);
   const selectOptions = useSelectOptions(counts, options);
 
   const onChange = useCallback(
     (selection: SelectableValue<string>) => {
-      return props.onChange(selection.value!);
+      return onChangeFromProps(selection.value!);
     },
-    [counts, props.onChange]
+    [onChangeFromProps]
   );
 
   const selectedOption = selectOptions.find(v => v.value === options);

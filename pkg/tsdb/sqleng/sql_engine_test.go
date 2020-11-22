@@ -307,27 +307,17 @@ func TestSqlEngine(t *testing.T) {
 				for _, f := range fixtures {
 					value, _ := ConvertSqlValueColumnToFloat("col", f)
 
-					if !value.Valid {
-						t.Fatalf("Failed to convert %T value, expected a valid float value", f)
-					}
-
-					if value.Float64 != null.FloatFrom(1).Float64 {
-						t.Fatalf("Failed to convert %T value, expected a float value of 1.000, but got %v", f, value)
-					}
+					So(value.Valid, ShouldBeTrue)
+					So(value.Float64, ShouldEqual, null.FloatFrom(1).Float64)
 				}
 			})
 
 			Convey("When converting nil pointer values to float should return expected value", func() {
 				for _, f := range nilPointerFixtures {
 					value, err := ConvertSqlValueColumnToFloat("col", f)
+					So(err, ShouldBeNil)
 
-					if err != nil {
-						t.Fatalf("Failed to convert %T value, expected a non nil error, but got %v", f, err)
-					}
-
-					if value.Valid {
-						t.Fatalf("Failed to convert %T value, expected an invalid float value", f)
-					}
+					So(value.Valid, ShouldBeFalse)
 				}
 			})
 		})

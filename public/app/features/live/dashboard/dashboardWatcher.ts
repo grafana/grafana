@@ -168,7 +168,6 @@ export function getDashboardChannelsFeature(): CoreGrafanaLiveFeature {
   const dashboardConfig: LiveChannelConfig = {
     path: '${uid}',
     description: 'Dashboard change events',
-    variables: [{ value: 'uid', label: '${uid}', description: 'unique id for a dashboard' }],
     hasPresence: true,
     canPublish: () => true,
   };

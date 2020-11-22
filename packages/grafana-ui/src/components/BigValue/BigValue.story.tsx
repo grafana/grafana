@@ -34,8 +34,9 @@ export default {
   },
 };
 
-export const basic = () => {
+export const Basic = () => {
   const { value, title, colorMode, graphMode, height, width, color, textMode, justifyMode } = getKnobs();
+  const theme = useTheme();
   const sparkline = {
     xMin: 0,
     xMax: 5,
@@ -51,8 +52,7 @@ export const basic = () => {
 
   return (
     <BigValue
-      // eslint-disable-next-line react-hooks/rules-of-hooks
-      theme={useTheme()}
+      theme={theme}
       width={width}
       height={height}
       colorMode={colorMode}

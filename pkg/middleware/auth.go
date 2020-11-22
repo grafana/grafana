@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -53,16 +54,17 @@ func notAuthorized(c *models.ReqContext) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
 	}
 
-	// remove forceLogin query param if it exists
-	if parsed, err := url.ParseRequestURI(redirectTo); err == nil {
-		params := parsed.Query()
-		params.Del("forceLogin")
-		parsed.RawQuery = params.Encode()
-		WriteCookie(c.Resp, "redirect_to", url.QueryEscape(parsed.String()), 0, newCookieOptions)
-	} else {
-		c.Logger.Debug("Failed parsing request URI; redirect cookie will not be set", "redirectTo", redirectTo, "error", err)
-	}
+	// remove any forceLogin=true params
+	redirectTo = removeForceLoginParams(redirectTo)
+
+	WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, newCookieOptions)
 	c.Redirect(setting.AppSubUrl + "/login")
+}
+
+var forceLoginParamsRegexp = regexp.MustCompile(`&?forceLogin=true`)
+
+func removeForceLoginParams(str string) string {
+	return forceLoginParamsRegexp.ReplaceAllString(str, "")
 }
 
 func EnsureEditorOrViewerCanEdit(c *models.ReqContext) {
@@ -93,6 +95,14 @@ func Auth(options *AuthOptions) macaron.Handler {
 			forceLoginParam, err := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin"))
 			if err == nil {
 				forceLogin = forceLoginParam
+			}
+
+			if !forceLogin {
+				orgIDValue := c.Req.URL.Query().Get("orgId")
+				orgID, err := strconv.ParseInt(orgIDValue, 10, 64)
+				if err == nil && orgID > 0 && orgID != c.OrgId {
+					forceLogin = true
+				}
 			}
 		}
 		requireLogin := !c.AllowAnonymous || forceLogin

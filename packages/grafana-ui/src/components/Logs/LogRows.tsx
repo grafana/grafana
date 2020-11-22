@@ -117,7 +117,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
 
     // For horizontal scrolling we can't use CustomScrollbar as it causes the problem with logs context - it is not visible
     // for top log rows. Therefore we use CustomScrollbar only in LogsPanel and for Explore, we use custom css styling.
-    const horizontalScrollWindow = wrapLogMessage && !disableCustomHorizontalScroll ? '' : logsRowsHorizontalScroll;
+    const horizontalScrollWindow = wrapLogMessage || disableCustomHorizontalScroll ? '' : logsRowsHorizontalScroll;
 
     // Staged rendering
     const processedRows = dedupedRows ? dedupedRows : [];

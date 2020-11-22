@@ -24,6 +24,7 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
     {
       id: FieldColorModeId.Thresholds,
       name: 'From thresholds',
+      isByValue: true,
       description: 'Derive colors from thresholds',
       getCalculator: (_field, theme) => {
         return (_value, _percent, threshold) => {
@@ -67,18 +68,18 @@ export const fieldColorModeRegistry = new Registry<FieldColorMode>(() => {
       colors: ['green', 'yellow', 'red'],
     }),
     new FieldColorSchemeMode({
+      id: 'continuous-RdYlGr',
+      name: 'Red-Yellow-Green',
+      isContinuous: true,
+      isByValue: true,
+      colors: ['red', 'yellow', 'green'],
+    }),
+    new FieldColorSchemeMode({
       id: 'continuous-BlYlRd',
       name: 'Blue-Yellow-Red',
       isContinuous: true,
       isByValue: true,
       colors: ['dark-blue', 'super-light-yellow', 'dark-red'],
-    }),
-    new FieldColorSchemeMode({
-      id: 'continuous-RdYlBl',
-      name: 'Red-Yellow-Blue',
-      isContinuous: true,
-      isByValue: true,
-      colors: ['dark-red', 'super-light-yellow', 'dark-blue'],
     }),
     new FieldColorSchemeMode({
       id: 'continuous-YlRd',

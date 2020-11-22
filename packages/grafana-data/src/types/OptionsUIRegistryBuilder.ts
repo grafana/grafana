@@ -1,6 +1,11 @@
 import { ComponentType } from 'react';
 import { RegistryItem, Registry } from '../utils/Registry';
-import { NumberFieldConfigSettings, SelectFieldConfigSettings, StringFieldConfigSettings } from '../field';
+import {
+  NumberFieldConfigSettings,
+  SliderFieldConfigSettings,
+  SelectFieldConfigSettings,
+  StringFieldConfigSettings,
+} from '../field';
 
 /**
  * Option editor registry item
@@ -68,6 +73,10 @@ export interface OptionsUIRegistryBuilderAPI<
   T extends OptionsEditorItem<TOptions, any, TEditorProps, any>
 > {
   addNumberInput?<TSettings extends NumberFieldConfigSettings = NumberFieldConfigSettings>(
+    config: OptionEditorConfig<TOptions, TSettings, number>
+  ): this;
+
+  addSliderInput?<TSettings extends SliderFieldConfigSettings = SliderFieldConfigSettings>(
     config: OptionEditorConfig<TOptions, TSettings, number>
   ): this;
 

@@ -14,7 +14,7 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
-func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SqlStore) error) func(context *cli.Context) error {
+func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore.SQLStore) error) func(context *cli.Context) error {
 	return func(context *cli.Context) error {
 		cmd := &utils.ContextCommandLine{Context: context}
 		debug := cmd.Bool("debug")
@@ -34,7 +34,7 @@ func runDbCommand(command func(commandLine utils.CommandLine, sqlStore *sqlstore
 			cfg.LogConfigSources()
 		}
 
-		engine := &sqlstore.SqlStore{}
+		engine := &sqlstore.SQLStore{}
 		engine.Cfg = cfg
 		engine.Bus = bus.GetBus()
 		if err := engine.Init(); err != nil {

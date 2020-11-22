@@ -19,7 +19,6 @@ load(
     'build_docker_images_step',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
-    'get_windows_steps',
     'benchmark_ldap_step',
     'ldap_service',
     'integration_test_services',
@@ -50,7 +49,6 @@ def pr_pipelines(edition):
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
     ]
-    windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
     if edition == 'enterprise':
         steps.append(benchmark_ldap_step())
         services.append(ldap_service())
@@ -60,10 +58,6 @@ def pr_pipelines(edition):
     return [
         pipeline(
             name='test-pr', edition=edition, trigger=trigger, services=services, steps=steps,
-            ver_mode=ver_mode,
-        ),
-        pipeline(
-            name='windows-pr', edition=edition, trigger=trigger, steps=windows_steps, platform='windows',
             ver_mode=ver_mode,
         ),
     ]

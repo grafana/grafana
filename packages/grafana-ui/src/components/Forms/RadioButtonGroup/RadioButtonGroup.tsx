@@ -56,7 +56,7 @@ export function RadioButtonGroup<T>({
   fullWidth = false,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
-    (option: SelectableValue<T>) => {
+    (option: SelectableValue) => {
       return () => {
         if (onChange) {
           onChange(option.value);

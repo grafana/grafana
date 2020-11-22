@@ -1,6 +1,6 @@
 import React, { FC, MouseEvent, useCallback } from 'react';
 import { css } from 'emotion';
-import { getTagColorsFromName, Icon, useStyles } from '@grafana/ui';
+import { getTagColorsFromName, Icon, Tooltip, useStyles } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { GrafanaTheme } from '@grafana/data';
 
@@ -11,9 +11,10 @@ interface Props {
   text: string;
   tags: VariableTag[];
   loading: boolean;
+  onCancel: () => void;
 }
 
-export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, tags, text }) => {
+export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, tags, text, onCancel }) => {
   const styles = useStyles(getStyles);
   const onClick = useCallback(
     (event: MouseEvent<HTMLAnchorElement>) => {
@@ -32,7 +33,7 @@ export const VariableLink: FC<Props> = ({ loading, onClick: propsOnClick, tags, 
         title={text}
       >
         <VariableLinkText tags={tags} text={text} />
-        <Icon className="spin-clockwise" name="sync" size="xs" />
+        <LoadingIndicator onCancel={onCancel} />
       </div>
     );
   }
@@ -68,6 +69,22 @@ const VariableLinkText: FC<Pick<Props, 'tags' | 'text'>> = ({ tags, text }) => {
         );
       })}
     </span>
+  );
+};
+
+const LoadingIndicator: FC<Pick<Props, 'onCancel'>> = ({ onCancel }) => {
+  const onClick = useCallback(
+    (event: MouseEvent) => {
+      event.preventDefault();
+      onCancel();
+    },
+    [onCancel]
+  );
+
+  return (
+    <Tooltip content="Cancel query">
+      <Icon className="spin-clockwise" name="sync" size="xs" onClick={onClick} />
+    </Tooltip>
   );
 };
 

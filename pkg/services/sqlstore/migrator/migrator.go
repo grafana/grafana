@@ -1,6 +1,7 @@
 package migrator
 
 import (
+	"errors"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -20,8 +21,8 @@ type Migrator struct {
 
 type MigrationLog struct {
 	Id          int64
-	MigrationId string
-	Sql         string
+	MigrationID string `xorm:"migration_id"`
+	SQL         string `xorm:"sql"`
 	Success     bool
 	Error       string
 	Timestamp   time.Time
@@ -65,7 +66,7 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 		if !logItem.Success {
 			continue
 		}
-		logMap[logItem.MigrationId] = logItem
+		logMap[logItem.MigrationID] = logItem
 	}
 
 	return logMap, nil
@@ -87,11 +88,11 @@ func (mg *Migrator) Start() error {
 			continue
 		}
 
-		sql := m.Sql(mg.Dialect)
+		sql := m.SQL(mg.Dialect)
 
 		record := MigrationLog{
-			MigrationId: m.Id(),
-			Sql:         sql,
+			MigrationID: m.Id(),
+			SQL:         sql,
 			Timestamp:   time.Now(),
 		}
 
@@ -122,7 +123,7 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 
 	condition := m.GetCondition()
 	if condition != nil {
-		sql, args := condition.Sql(mg.Dialect)
+		sql, args := condition.SQL(mg.Dialect)
 
 		if sql != "" {
 			mg.Logger.Debug("Executing migration condition sql", "id", m.Id(), "sql", sql, "args", args)
@@ -144,7 +145,7 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 		mg.Logger.Debug("Executing code migration", "id", m.Id())
 		err = codeMigration.Exec(sess, mg)
 	} else {
-		sql := m.Sql(mg.Dialect)
+		sql := m.SQL(mg.Dialect)
 		mg.Logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
 		_, err = sess.Exec(sql)
 	}
@@ -168,8 +169,8 @@ func (mg *Migrator) inTransaction(callback dbTransactionFunc) error {
 	}
 
 	if err := callback(sess); err != nil {
-		if rollErr := sess.Rollback(); err != rollErr {
-			return errutil.Wrapf(err, "Failed to roll back transaction due to error: %s", rollErr)
+		if rollErr := sess.Rollback(); !errors.Is(err, rollErr) {
+			return errutil.Wrapf(err, "failed to roll back transaction due to error: %s", rollErr)
 		}
 
 		return err

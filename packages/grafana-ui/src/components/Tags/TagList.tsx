@@ -29,7 +29,9 @@ const getStyles = () => {
       flex-wrap: wrap;
     `,
     tag: css`
-      margin-left: 6px;
+      &:not(:first-child) {
+        margin-left: 6px;
+      }
     `,
   };
 };

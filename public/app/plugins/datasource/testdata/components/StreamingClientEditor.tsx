@@ -40,7 +40,7 @@ export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
               <Input
                 width={32}
                 type="number"
-                id={`stream.${id}`}
+                id={`stream.${id}-${query.refId}`}
                 name={id}
                 min={min}
                 step={step}
@@ -57,7 +57,7 @@ export const StreamingClientEditor = ({ onChange, query }: EditorProps) => {
           <Input
             type="text"
             name="url"
-            id="stream.url"
+            id={`stream.url-${query.refId}`}
             value={query?.stream?.url}
             placeholder="Fetch URL"
             onChange={onChange}

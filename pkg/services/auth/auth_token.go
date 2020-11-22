@@ -26,7 +26,7 @@ var getTime = time.Now
 const urgentRotateTime = 1 * time.Minute
 
 type UserAuthTokenService struct {
-	SQLStore          *sqlstore.SqlStore            `inject:""`
+	SQLStore          *sqlstore.SQLStore            `inject:""`
 	ServerLockService *serverlock.ServerLockService `inject:""`
 	Cfg               *setting.Cfg                  `inject:""`
 	log               log.Logger

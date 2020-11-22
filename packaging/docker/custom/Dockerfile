@@ -6,10 +6,11 @@ USER root
 
 ARG GF_INSTALL_IMAGE_RENDERER_PLUGIN="false"
 
+ARG GF_GID="0"
 ENV GF_PATHS_PLUGINS="/var/lib/grafana-plugins"
 
 RUN mkdir -p "$GF_PATHS_PLUGINS" && \
-    chown -R grafana:grafana "$GF_PATHS_PLUGINS"
+    chown -R grafana:${GF_GID} "$GF_PATHS_PLUGINS"
 
 RUN if [ $GF_INSTALL_IMAGE_RENDERER_PLUGIN = "true" ]; then \
     echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \

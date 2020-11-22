@@ -63,7 +63,13 @@ export abstract class BigValueLayout {
       fontSize: this.valueFontSize,
       fontWeight: 500,
       lineHeight: LINE_HEIGHT,
+      position: 'relative',
+      zIndex: 1,
     };
+
+    if (this.justifyCenter) {
+      styles.textAlign = 'center';
+    }
 
     switch (this.props.colorMode) {
       case BigValueColorMode.Value:

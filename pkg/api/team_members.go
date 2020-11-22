@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -39,11 +41,11 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext, cmd models.AddTeamMemb
 	}
 
 	if err := hs.Bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrTeamNotFound {
+		if errors.Is(err, models.ErrTeamNotFound) {
 			return Error(404, "Team not found", nil)
 		}
 
-		if err == models.ErrTeamMemberAlreadyAdded {
+		if errors.Is(err, models.ErrTeamMemberAlreadyAdded) {
 			return Error(400, "User is already added to this team", nil)
 		}
 
@@ -73,7 +75,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext, cmd models.UpdateTe
 	cmd.OrgId = orgId
 
 	if err := hs.Bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrTeamMemberNotFound {
+		if errors.Is(err, models.ErrTeamMemberNotFound) {
 			return Error(404, "Team member not found.", nil)
 		}
 		return Error(500, "Failed to update team member.", err)
@@ -97,11 +99,11 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) Response {
 	}
 
 	if err := hs.Bus.Dispatch(&models.RemoveTeamMemberCommand{OrgId: orgId, TeamId: teamId, UserId: userId, ProtectLastAdmin: protectLastAdmin}); err != nil {
-		if err == models.ErrTeamNotFound {
+		if errors.Is(err, models.ErrTeamNotFound) {
 			return Error(404, "Team not found", nil)
 		}
 
-		if err == models.ErrTeamMemberNotFound {
+		if errors.Is(err, models.ErrTeamMemberNotFound) {
 			return Error(404, "Team member not found", nil)
 		}
 

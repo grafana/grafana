@@ -1,10 +1,6 @@
 +++
 title = "Dashboard management maturity model"
 description = "Explanation of dashboard management maturity model"
-type = "docs"
-[menu.docs]
-identifier = "best-management-for-maturity-model"
-parent = "best-practices"
 weight = 400
 +++
 
@@ -35,8 +31,8 @@ At this stage, you are starting to manage your dashboard use with methodical das
 
 How can you tell you are here?
 
-- Prevent sprawl by using template variables. For example, you don't need a separate dashboard for each node, you can use query variables. Even better, you can make the data source a template variable too, so you can reuse the same dashboard across different clusters and monitoring backends. 
-  
+- Prevent sprawl by using template variables. For example, you don't need a separate dashboard for each node, you can use query variables. Even better, you can make the data source a template variable too, so you can reuse the same dashboard across different clusters and monitoring backends.
+
   Refer to the list of [Variable examples]({{< relref "../variables/variable-examples.md" >}}) if you want some ideas.
 
 - Methodical dashboards according to an [observability strategy]({{< relref "common-observability-strategies.md" >}}).
@@ -49,7 +45,7 @@ How can you tell you are here?
   {{< imgbox max-width="100%" img="/img/docs/best-practices/service-hierarchy-example.png" caption="Example of a service hierarchy" >}}
 
 - Compare like to like: split service dashboards when the magnitude differs. Make sure aggregated metrics don't drown out important information.
-- Expressive charts with meaningful use of color and normalizing axes where you can. 
+- Expressive charts with meaningful use of color and normalizing axes where you can.
   - Example of meaningful color: Blue means it's good, red means it's bad. [Thresholds]({{< relref "../panels/thresholds.md" >}}) can help with that.
   - Example of normalizing axes: When comparing CPU usage, measure by percentage rather than raw number, because machines can have a different number of cores. Normalizing CPU usage by the number of cores reduces cognitive load because the viewer can trust that at 100% all cores are being used, without having to know the number of CPUs.
 - Directed browsing cuts down on "guessing."

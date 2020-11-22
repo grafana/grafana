@@ -44,15 +44,16 @@ var customMetricsDimensionsMap = make(map[string]map[string]map[string]*customMe
 var metricsMap = map[string][]string{
 	"AWS/ACMPrivateCA":            {"CRLGenerated", "Failure", "MisconfiguredCRLBucket", "Success", "Time"},
 	"AWS/AmazonMQ":                {"BurstBalance", "ConsumerCount", "CpuCreditBalance", "CpuUtilization", "CurrentConnectionsCount", "DequeueCount", "DispatchCount", "EnqueueCount", "EnqueueTime", "EstablishedConnectionsCount", "ExpiredCount", "HeapUsage", "InactiveDurableTopicSubscribersCount", "InFlightCount", "JobSchedulerStorePercentUsage", "JournalFilesForFastRecovery", "JournalFilesForFullRecovery", "MemoryUsage", "NetworkIn", "NetworkOut", "OpenTransactionCount", "ProducerCount", "QueueSize", "ReceiveCount", "StorePercentUsage", "TempPercentUsage", "TotalConsumerCount", "TotalDequeueCount", "TotalEnqueueCount", "TotalMessageCount", "TotalProducerCount", "VolumeReadOps", "VolumeWriteOps"},
-	"AWS/ApiGateway":              {"4XXError", "5XXError", "CacheHitCount", "CacheMissCount", "Count", "IntegrationLatency", "Latency"},
+	"AWS/ApiGateway":              {"4xx", "4XXError", "5xx", "5XXError", "CacheHitCount", "CacheMissCount", "Count", "DataProcessed", "IntegrationLatency", "Latency"},
 	"AWS/AppStream":               {"ActualCapacity", "AvailableCapacity", "CapacityUtilization", "DesiredCapacity", "InUseCapacity", "InsufficientCapacityError", "PendingCapacity", "RunningCapacity"},
 	"AWS/AppSync":                 {"4XXError", "5XXError", "Latency"},
 	"AWS/ApplicationELB":          {"ActiveConnectionCount", "ClientTLSNegotiationErrorCount", "ConsumedLCUs", "ELBAuthError", "ELBAuthFailure", "ELBAuthLatency", "ELBAuthRefreshTokenSuccess", "ELBAuthSuccess", "ELBAuthUserClaimsSizeExceeded", "HTTPCode_ELB_3XX_Count", "HTTPCode_ELB_4XX_Count", "HTTPCode_ELB_5XX_Count", "HTTPCode_Target_2XX_Count", "HTTPCode_Target_3XX_Count", "HTTPCode_Target_4XX_Count", "HTTPCode_Target_5XX_Count", "HTTP_Fixed_Response_Count", "HTTP_Redirect_Count", "HTTP_Redirect_Url_Limit_Exceeded_Count", "HealthyHostCount", "IPv6ProcessedBytes", "IPv6RequestCount", "LambdaInternalError", "LambdaTargetProcessedBytes", "LambdaUserError", "NewConnectionCount", "NonStickyRequestCount", "ProcessedBytes", "RejectedConnectionCount", "RequestCount", "RequestCountPerTarget", "RuleEvaluations", "StandardProcessedBytes", "TargetConnectionErrorCount", "TargetResponseTime", "TargetTLSNegotiationErrorCount", "UnHealthyHostCount"},
-	"AWS/Athena":                  {"DataScannedInBytes", "EngineExecutionTime", "QueryPlanningTime", "QueryQueueTime", "QueryState", "QueryType", "ServiceProcessingTime", "TotalExecutionTime", "WorkGroup"},
+	"AWS/Athena":                  {"EngineExecutionTime", "QueryPlanningTime", "QueryQueueTime", "ProcessedBytes", "ServiceProcessingTime", "TotalExecutionTime"},
 	"AWS/AutoScaling":             {"GroupDesiredCapacity", "GroupInServiceInstances", "GroupMaxSize", "GroupMinSize", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"},
 	"AWS/Billing":                 {"EstimatedCharges"},
 	"AWS/Chatbot":                 {"EventsThrottled", "EventsProcessed", "MessageDeliverySuccess", "MessageDeliveryFailure", "UnsupportedEvents"},
-	"AWS/CloudFront":              {"4xxErrorRate", "5xxErrorRate", "BytesDownloaded", "BytesUploaded", "Requests", "TotalErrorRate", "CacheHitRate", "OriginLatency"},
+	"AWS/ClientVPN":               {"ActiveConnectionsCount", "AuthenticationFailures", "CrlDaysToExpiry", "EgressBytes", "EgressPackets", "IngressBytes", "IngressPackets", "SelfServicePortalClientConfigurationDownloads"},
+	"AWS/CloudFront":              {"4xxErrorRate", "5xxErrorRate", "BytesDownloaded", "BytesUploaded", "Requests", "TotalErrorRate", "CacheHitRate", "OriginLatency", "401ErrorRate", "403ErrorRate", "404ErrorRate", "502ErrorRate", "503ErrorRate", "504ErrorRate"},
 	"AWS/CloudHSM":                {"HsmKeysSessionOccupied", "HsmKeysTokenOccupied", "HsmSessionCount", "HsmSslCtxsOccupied", "HsmTemperature", "HsmUnhealthy", "HsmUsersAvailable", "HsmUsersMax", "InterfaceEth2OctetsInput", "InterfaceEth2OctetsOutput"},
 	"AWS/CloudSearch":             {"IndexUtilization", "Partitions", "SearchableDocuments", "SuccessfulRequests"},
 	"AWS/CodeBuild":               {"BuildDuration", "Builds", "DownloadSourceDuration", "Duration", "FailedBuilds", "FinalizingDuration", "InstallDuration", "PostBuildDuration", "PreBuildDuration", "ProvisioningDuration", "QueuedDuration", "SubmittedDuration", "SucceededBuilds", "UploadArtifactsDuration"},
@@ -139,13 +140,15 @@ var metricsMap = map[string][]string{
 var dimensionsMap = map[string][]string{
 	"AWS/ACMPrivateCA":            {},
 	"AWS/AmazonMQ":                {"Broker", "NetworkConnector", "Queue", "Topic"},
-	"AWS/ApiGateway":              {"ApiName", "Method", "Resource", "Stage"},
+	"AWS/ApiGateway":              {"ApiId", "ApiName", "Method", "Resource", "Stage"},
 	"AWS/AppStream":               {"Fleet"},
 	"AWS/AppSync":                 {"GraphQLAPIId"},
 	"AWS/ApplicationELB":          {"AvailabilityZone", "LoadBalancer", "TargetGroup"},
+	"AWS/Athena":                  {"QueryState", "QueryType", "WorkGroup"},
 	"AWS/AutoScaling":             {"AutoScalingGroupName"},
 	"AWS/Billing":                 {"Currency", "LinkedAccount", "ServiceName"},
 	"AWS/Chatbot":                 {"ConfigurationName"},
+	"AWS/ClientVPN":               {"Endpoint"},
 	"AWS/CloudFront":              {"DistributionId", "Region"},
 	"AWS/CloudHSM":                {"ClusterId", "HsmId", "Region"},
 	"AWS/CloudSearch":             {"ClientId", "DomainName"},
@@ -173,7 +176,7 @@ var dimensionsMap = map[string][]string{
 	"AWS/ElasticInference":        {"ElasticInferenceAcceleratorId", "InstanceId"},
 	"AWS/ElasticMapReduce":        {"ClusterId", "JobFlowId", "JobId"},
 	"AWS/ElasticTranscoder":       {"Operation", "PipelineId"},
-	"AWS/Events":                  {"RuleName"},
+	"AWS/Events":                  {"EventBusName", "RuleName"},
 	"AWS/FSx":                     {"FileSystemId"},
 	"AWS/Firehose":                {"DeliveryStreamName"},
 	"AWS/GameLift":                {"FleetId", "InstanceType", "MatchmakingConfigurationName", "MatchmakingConfigurationName-RuleName", "MetricGroups", "OperatingSystem", "QueueName"},
@@ -414,10 +417,7 @@ func (e *cloudWatchExecutor) handleGetDimensions(ctx context.Context, parameters
 		}
 	} else {
 		var err error
-		dsInfo := e.getDSInfo(region)
-		dsInfo.Namespace = namespace
-
-		if dimensionValues, err = e.getDimensionsForCustomMetrics(region); err != nil {
+		if dimensionValues, err = e.getDimensionsForCustomMetrics(region, namespace); err != nil {
 			return nil, errutil.Wrap("unable to call AWS API", err)
 		}
 	}
@@ -702,15 +702,14 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(region string, filters [
 	return &resp, nil
 }
 
-func (e *cloudWatchExecutor) getAllMetrics(region string) (cloudwatch.ListMetricsOutput, error) {
+func (e *cloudWatchExecutor) getAllMetrics(region, namespace string) (cloudwatch.ListMetricsOutput, error) {
 	client, err := e.getCWClient(region)
 	if err != nil {
 		return cloudwatch.ListMetricsOutput{}, err
 	}
 
-	dsInfo := e.getDSInfo(region)
 	params := &cloudwatch.ListMetricsInput{
-		Namespace: aws.String(dsInfo.Namespace),
+		Namespace: aws.String(namespace),
 	}
 
 	plog.Debug("Listing metrics pages")
@@ -739,7 +738,6 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string
 	defer metricsCacheLock.Unlock()
 
 	dsInfo := e.getDSInfo(region)
-	dsInfo.Namespace = namespace
 
 	if _, ok := customMetricsMetricsMap[dsInfo.Profile]; !ok {
 		customMetricsMetricsMap[dsInfo.Profile] = make(map[string]map[string]*customMetricsCache)
@@ -747,36 +745,36 @@ func (e *cloudWatchExecutor) getMetricsForCustomMetrics(region, namespace string
 	if _, ok := customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region]; !ok {
 		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*customMetricsCache)
 	}
-	if _, ok := customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace]; !ok {
-		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace] = &customMetricsCache{}
-		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
+	if _, ok := customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace]; !ok {
+		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace] = &customMetricsCache{}
+		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = make([]string, 0)
 	}
 
-	if customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire.After(time.Now()) {
-		return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
+	if customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire.After(time.Now()) {
+		return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, nil
 	}
-	result, err := e.getAllMetrics(region)
+	result, err := e.getAllMetrics(region, namespace)
 	if err != nil {
 		return []string{}, err
 	}
 
-	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
-	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire = time.Now().Add(5 * time.Minute)
+	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = make([]string, 0)
+	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire = time.Now().Add(5 * time.Minute)
 
 	for _, metric := range result.Metrics {
-		if isDuplicate(customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *metric.MetricName) {
+		if isDuplicate(customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, *metric.MetricName) {
 			continue
 		}
-		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = append(
-			customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *metric.MetricName)
+		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = append(
+			customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, *metric.MetricName)
 	}
 
-	return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
+	return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, nil
 }
 
 var dimensionsCacheLock sync.Mutex
 
-func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region string) ([]string, error) {
+func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region, namespace string) ([]string, error) {
 	dimensionsCacheLock.Lock()
 	defer dimensionsCacheLock.Unlock()
 
@@ -788,32 +786,32 @@ func (e *cloudWatchExecutor) getDimensionsForCustomMetrics(region string) ([]str
 	if _, ok := customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region]; !ok {
 		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*customMetricsCache)
 	}
-	if _, ok := customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace]; !ok {
-		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace] = &customMetricsCache{}
-		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
+	if _, ok := customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace]; !ok {
+		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace] = &customMetricsCache{}
+		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = make([]string, 0)
 	}
 
-	if customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire.After(time.Now()) {
-		return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
+	if customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire.After(time.Now()) {
+		return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, nil
 	}
-	result, err := e.getAllMetrics(region)
+	result, err := e.getAllMetrics(region, namespace)
 	if err != nil {
 		return []string{}, err
 	}
-	customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
-	customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire = time.Now().Add(5 * time.Minute)
+	customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = make([]string, 0)
+	customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Expire = time.Now().Add(5 * time.Minute)
 
 	for _, metric := range result.Metrics {
 		for _, dimension := range metric.Dimensions {
-			if isDuplicate(customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *dimension.Name) {
+			if isDuplicate(customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, *dimension.Name) {
 				continue
 			}
-			customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = append(
-				customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *dimension.Name)
+			customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache = append(
+				customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, *dimension.Name)
 		}
 	}
 
-	return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
+	return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][namespace].Cache, nil
 }
 
 func isDuplicate(nameList []string, target string) bool {

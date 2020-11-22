@@ -9,6 +9,7 @@ import {
   calculateStats,
   getLogLevelFromKey,
   sortLogsResult,
+  checkLogsError,
 } from './logs';
 
 describe('getLoglevel()', () => {
@@ -350,5 +351,17 @@ describe('sortLogsResult', () => {
         hasUniqueLabels: false,
       });
     });
+  });
+});
+
+describe('checkLogsError()', () => {
+  const log = ({
+    labels: {
+      __error__: 'Error Message',
+      foo: 'boo',
+    },
+  } as any) as LogRowModel;
+  test('should return correct error if error is present', () => {
+    expect(checkLogsError(log)).toStrictEqual({ hasError: true, errorMessage: 'Error Message' });
   });
 });

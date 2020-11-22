@@ -1,9 +1,5 @@
 +++
 title = "Transformation types and options"
-type = "docs"
-[menu.docs]
-identifier = "transformation_types_and_options"
-parent = "transformations"
 weight = 300
 +++
 

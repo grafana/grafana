@@ -2,13 +2,10 @@
 title = "What's new in Grafana v5.1"
 description = "Feature and improvement highlights for Grafana v5.1"
 keywords = ["grafana", "new", "documentation", "5.1", "release notes"]
-type = "docs"
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v5-1/"]
-[menu.docs]
-name = "Version 5.1"
-identifier = "v5.1"
-parent = "whatsnew"
-weight = -7
+weight = -15
+[_build]
+list = false
 +++
 
 # What's new in Grafana v5.1
@@ -42,7 +39,7 @@ Version | User    | User ID
 < 5.1   | grafana | 104
 >= 5.1  | grafana | 472
 
-Please read the [updated documentation](/installation/docker/#migration-from-a-previous-version-of-the-docker-container-to-5-1-or-later) which includes migration instructions and more information.
+Please read the [updated documentation](/installation/docker/#migrate-to-v51-or-later) which includes migration instructions and more information.
 
 ## Prometheus
 

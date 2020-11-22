@@ -1,6 +1,6 @@
 import { isNumber, isString } from 'lodash';
 import { useEffect } from 'react';
-import uPlot from 'uplot';
+import uPlot, { Options } from 'uplot';
 import { usePlotPluginContext } from '../context';
 import { PlotPluginProps } from '../types';
 
@@ -14,7 +14,7 @@ export const BarChartPlugin: React.FC<BarChartPluginProps> = ({ id }) => {
     return pluginsApi.registerPlugin({
       id: pluginId,
       hooks: {},
-      opts: (self: uPlot, opts: uPlot.Options) => {
+      opts: (self: uPlot, opts: Options) => {
         for (let index = 1; index < opts.series.length; index++) {
           const serie = opts.series[index];
 

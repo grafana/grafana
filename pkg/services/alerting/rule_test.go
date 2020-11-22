@@ -7,6 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type FakeCondition struct{}
@@ -34,15 +36,15 @@ func TestAlertRuleFrequencyParsing(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		r, err := getTimeDurationStringToSeconds(tc.input)
-		if err != tc.err {
-			t.Errorf("expected error: '%v' got: '%v'", tc.err, err)
-			return
-		}
-
-		if r != tc.result {
-			t.Errorf("expected result: %d got %d", tc.result, r)
-		}
+		t.Run(tc.input, func(t *testing.T) {
+			r, err := getTimeDurationStringToSeconds(tc.input)
+			if tc.err == nil {
+				require.NoError(t, err)
+			} else {
+				require.EqualError(t, err, tc.err.Error())
+			}
+			assert.Equal(t, tc.result, r)
+		})
 	}
 }
 
@@ -100,7 +102,7 @@ func TestAlertRuleModel(t *testing.T) {
 					Settings: alertJSON,
 				}
 
-				alertRule, err := NewRuleFromDBAlert(alert)
+				alertRule, err := NewRuleFromDBAlert(alert, false)
 				So(err, ShouldBeNil)
 
 				So(len(alertRule.Conditions), ShouldEqual, 1)
@@ -142,7 +144,7 @@ func TestAlertRuleModel(t *testing.T) {
 				Settings: alertJSON,
 			}
 
-			alertRule, err := NewRuleFromDBAlert(alert)
+			alertRule, err := NewRuleFromDBAlert(alert, false)
 			Convey("swallows the error", func() {
 				So(err, ShouldBeNil)
 				So(alertRule.Notifications, ShouldNotContain, "999")
@@ -175,7 +177,7 @@ func TestAlertRuleModel(t *testing.T) {
 				Settings: alertJSON,
 			}
 
-			alertRule, err := NewRuleFromDBAlert(alert)
+			alertRule, err := NewRuleFromDBAlert(alert, false)
 			So(err, ShouldBeNil)
 			So(alertRule.Frequency, ShouldEqual, 60)
 		})
@@ -213,7 +215,7 @@ func TestAlertRuleModel(t *testing.T) {
 				Settings: alertJSON,
 			}
 
-			_, err := NewRuleFromDBAlert(alert)
+			_, err := NewRuleFromDBAlert(alert, false)
 			So(err, ShouldNotBeNil)
 			So(err.Error(), ShouldEqual, "alert validation error: Neither id nor uid is specified in 'notifications' block, type assertion to string failed AlertId: 1 PanelId: 1 DashboardId: 1")
 		})

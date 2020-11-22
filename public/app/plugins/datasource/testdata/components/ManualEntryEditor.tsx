@@ -42,7 +42,7 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
                 width={32}
                 type="number"
                 placeholder="value"
-                id="newPointValue"
+                id={`newPointValue-${query.refId}`}
                 name="newPointValue"
                 ref={register}
               />
@@ -50,7 +50,7 @@ export const ManualEntryEditor = ({ onChange, query, onRunQuery }: Props) => {
             <InlineField label="Time" labelWidth={14}>
               <Input
                 width={32}
-                id="newPointTime"
+                id={`newPointTime-${query.refId}`}
                 placeholder="time"
                 name="newPointTime"
                 ref={register}

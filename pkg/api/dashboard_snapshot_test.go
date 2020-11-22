@@ -4,23 +4,38 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/securedata"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/securedata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestDashboardSnapshotApiEndpoint(t *testing.T) {
-	Convey("Given a single snapshot", t, func() {
-		var externalRequest *http.Request
-		jsonModel, _ := simplejson.NewJson([]byte(`{"id":100}`))
+func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
+	setupRemoteServer := func(fn func(http.ResponseWriter, *http.Request)) *httptest.Server {
+		s := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			fn(rw, r)
+		}))
+		t.Cleanup(s.Close)
+		return s
+	}
+
+	jsonModel, err := simplejson.NewJson([]byte(`{"id":100}`))
+	require.NoError(t, err)
+
+	viewerRole := models.ROLE_VIEWER
+	editorRole := models.ROLE_EDITOR
+	aclMockResp := []*models.DashboardAclInfoDTO{}
+
+	setUpSnapshotTest := func(t *testing.T) *models.DashboardSnapshot {
+		t.Helper()
 
 		mockSnapshotResult := &models.DashboardSnapshot{
 			Id:        1,
@@ -41,9 +56,6 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		viewerRole := models.ROLE_VIEWER
-		editorRole := models.ROLE_EDITOR
-		aclMockResp := []*models.DashboardAclInfoDTO{}
 		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
 			query.Result = aclMockResp
 			return nil
@@ -55,185 +67,199 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		setupRemoteServer := func(fn func(http.ResponseWriter, *http.Request)) *httptest.Server {
-			return httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-				fn(rw, r)
-			}))
+		return mockSnapshotResult
+	}
+
+	t.Run("When user has editor role and is not in the ACL", func(t *testing.T) {
+		loggedInUserScenarioWithRole(t, "Should not be able to delete snapshot when calling DELETE on",
+			"DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+				mockSnapshotResult := setUpSnapshotTest(t)
+
+				var externalRequest *http.Request
+				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
+					externalRequest = req
+				})
+
+				mockSnapshotResult.ExternalDeleteUrl = ts.URL
+				sc.handlerFunc = DeleteDashboardSnapshot
+				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
+
+				assert.Equal(t, 403, sc.resp.Code)
+				require.Nil(t, externalRequest)
+			})
+	})
+
+	t.Run("When user is anonymous", func(t *testing.T) {
+		anonymousUserScenario(t, "Should be able to delete a snapshot when calling GET on", "GET",
+			"/api/snapshots-delete/12345", "/api/snapshots-delete/:deleteKey", func(sc *scenarioContext) {
+				mockSnapshotResult := setUpSnapshotTest(t)
+
+				var externalRequest *http.Request
+				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
+					rw.WriteHeader(200)
+					externalRequest = req
+				})
+
+				mockSnapshotResult.ExternalDeleteUrl = ts.URL
+				sc.handlerFunc = DeleteDashboardSnapshotByDeleteKey
+				sc.fakeReqWithParams("GET", sc.url, map[string]string{"deleteKey": "12345"}).exec()
+
+				require.Equal(t, 200, sc.resp.Code)
+				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+				require.NoError(t, err)
+
+				assert.True(t, strings.HasPrefix(respJSON.Get("message").MustString(), "Snapshot deleted"))
+
+				assert.Equal(t, http.MethodGet, externalRequest.Method)
+				assert.Equal(t, ts.URL, fmt.Sprintf("http://%s", externalRequest.Host))
+				assert.Equal(t, "/", externalRequest.URL.EscapedPath())
+			})
+	})
+
+	t.Run("When user is editor and dashboard has default ACL", func(t *testing.T) {
+		aclMockResp = []*models.DashboardAclInfoDTO{
+			{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
+			{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 		}
 
-		Convey("When user has editor role and is not in the ACL", func() {
-			Convey("Should not be able to delete snapshot", func() {
-				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
-					ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
-						externalRequest = req
-					})
+		loggedInUserScenarioWithRole(t, "Should be able to delete a snapshot when calling DELETE on", "DELETE",
+			"/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+				mockSnapshotResult := setUpSnapshotTest(t)
 
-					mockSnapshotResult.ExternalDeleteUrl = ts.URL
-					sc.handlerFunc = DeleteDashboardSnapshot
-					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
-
-					So(sc.resp.Code, ShouldEqual, 403)
-					So(externalRequest, ShouldBeNil)
+				var externalRequest *http.Request
+				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
+					rw.WriteHeader(200)
+					externalRequest = req
 				})
+
+				mockSnapshotResult.ExternalDeleteUrl = ts.URL
+				sc.handlerFunc = DeleteDashboardSnapshot
+				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
+
+				assert.Equal(t, 200, sc.resp.Code)
+				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+				require.NoError(t, err)
+
+				assert.True(t, strings.HasPrefix(respJSON.Get("message").MustString(), "Snapshot deleted"))
+				assert.Equal(t, ts.URL, fmt.Sprintf("http://%s", externalRequest.Host))
+				assert.Equal(t, "/", externalRequest.URL.EscapedPath())
 			})
-		})
+	})
 
-		Convey("When user is anonymous", func() {
-			Convey("Should be able to delete snapshot by deleteKey", func() {
-				anonymousUserScenario("When calling GET on", "GET", "/api/snapshots-delete/12345", "/api/snapshots-delete/:deleteKey", func(sc *scenarioContext) {
-					ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
-						rw.WriteHeader(200)
-						externalRequest = req
-					})
+	t.Run("When user is editor and creator of the snapshot", func(t *testing.T) {
+		aclMockResp = []*models.DashboardAclInfoDTO{}
+		loggedInUserScenarioWithRole(t, "Should be able to delete a snapshot when calling DELETE on",
+			"DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+				mockSnapshotResult := setUpSnapshotTest(t)
 
-					mockSnapshotResult.ExternalDeleteUrl = ts.URL
-					sc.handlerFunc = DeleteDashboardSnapshotByDeleteKey
-					sc.fakeReqWithParams("GET", sc.url, map[string]string{"deleteKey": "12345"}).exec()
+				mockSnapshotResult.UserId = testUserID
+				mockSnapshotResult.External = false
 
-					So(sc.resp.Code, ShouldEqual, 200)
-					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-					So(err, ShouldBeNil)
+				sc.handlerFunc = DeleteDashboardSnapshot
+				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
 
-					So(respJSON.Get("message").MustString(), ShouldStartWith, "Snapshot deleted")
+				assert.Equal(t, 200, sc.resp.Code)
+				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+				require.NoError(t, err)
 
-					So(externalRequest.Method, ShouldEqual, http.MethodGet)
-					So(fmt.Sprintf("http://%s", externalRequest.Host), ShouldEqual, ts.URL)
-					So(externalRequest.URL.EscapedPath(), ShouldEqual, "/")
+				assert.True(t, strings.HasPrefix(respJSON.Get("message").MustString(), "Snapshot deleted"))
+			})
+	})
+
+	t.Run("When deleting an external snapshot", func(t *testing.T) {
+		aclMockResp = []*models.DashboardAclInfoDTO{}
+		var writeErr error
+		loggedInUserScenarioWithRole(t,
+			"Should gracefully delete local snapshot when remote snapshot has already been removed when calling DELETE on",
+			"DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+				mockSnapshotResult := setUpSnapshotTest(t)
+				mockSnapshotResult.UserId = testUserID
+
+				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
+					_, writeErr = rw.Write([]byte(`{"message":"Failed to get dashboard snapshot"}`))
+					rw.WriteHeader(500)
 				})
+
+				mockSnapshotResult.ExternalDeleteUrl = ts.URL
+				sc.handlerFunc = DeleteDashboardSnapshot
+				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
+
+				require.NoError(t, writeErr)
+				assert.Equal(t, 200, sc.resp.Code)
 			})
-		})
 
-		Convey("When user is editor and dashboard has default ACL", func() {
-			aclMockResp = []*models.DashboardAclInfoDTO{
-				{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
-				{Role: &editorRole, Permission: models.PERMISSION_EDIT},
-			}
+		loggedInUserScenarioWithRole(t,
+			"Should fail to delete local snapshot when an unexpected 500 error occurs when calling DELETE on", "DELETE",
+			"/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+				mockSnapshotResult := setUpSnapshotTest(t)
+				mockSnapshotResult.UserId = testUserID
 
-			Convey("Should be able to delete a snapshot", func() {
-				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
-					ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
-						rw.WriteHeader(200)
-						externalRequest = req
-					})
-
-					mockSnapshotResult.ExternalDeleteUrl = ts.URL
-					sc.handlerFunc = DeleteDashboardSnapshot
-					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
-
-					So(sc.resp.Code, ShouldEqual, 200)
-					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-					So(err, ShouldBeNil)
-
-					So(respJSON.Get("message").MustString(), ShouldStartWith, "Snapshot deleted")
-					So(fmt.Sprintf("http://%s", externalRequest.Host), ShouldEqual, ts.URL)
-					So(externalRequest.URL.EscapedPath(), ShouldEqual, "/")
-				})
-			})
-		})
-
-		Convey("When user is editor and is the creator of the snapshot", func() {
-			aclMockResp = []*models.DashboardAclInfoDTO{}
-			mockSnapshotResult.UserId = TestUserID
-			mockSnapshotResult.External = false
-
-			Convey("Should be able to delete a snapshot", func() {
-				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
-					sc.handlerFunc = DeleteDashboardSnapshot
-					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
-
-					So(sc.resp.Code, ShouldEqual, 200)
-					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-					So(err, ShouldBeNil)
-
-					So(respJSON.Get("message").MustString(), ShouldStartWith, "Snapshot deleted")
-				})
-			})
-		})
-
-		Convey("When deleting an external snapshot", func() {
-			aclMockResp = []*models.DashboardAclInfoDTO{}
-			mockSnapshotResult.UserId = TestUserID
-
-			Convey("Should gracefully delete local snapshot when remote snapshot has already been removed", func() {
 				var writeErr error
-				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
-					ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
-						_, writeErr = rw.Write([]byte(`{"message":"Failed to get dashboard snapshot"}`))
-						rw.WriteHeader(500)
-					})
-
-					mockSnapshotResult.ExternalDeleteUrl = ts.URL
-					sc.handlerFunc = DeleteDashboardSnapshot
-					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
-
-					So(writeErr, ShouldBeNil)
-					So(sc.resp.Code, ShouldEqual, 200)
+				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
+					rw.WriteHeader(500)
+					_, writeErr = rw.Write([]byte(`{"message":"Unexpected"}`))
 				})
+
+				t.Log("Setting external delete URL", "url", ts.URL)
+				mockSnapshotResult.ExternalDeleteUrl = ts.URL
+				sc.handlerFunc = DeleteDashboardSnapshot
+				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
+
+				require.NoError(t, writeErr)
+				assert.Equal(t, 500, sc.resp.Code)
 			})
 
-			Convey("Should fail to delete local snapshot when an unexpected 500 error occurs", func() {
-				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
-					var writeErr error
-					ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
-						rw.WriteHeader(500)
-						_, writeErr = rw.Write([]byte(`{"message":"Unexpected"}`))
-					})
+		loggedInUserScenarioWithRole(t,
+			"Should fail to delete local snapshot when an unexpected remote error occurs when calling DELETE on",
+			"DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+				mockSnapshotResult := setUpSnapshotTest(t)
+				mockSnapshotResult.UserId = testUserID
 
-					mockSnapshotResult.ExternalDeleteUrl = ts.URL
-					sc.handlerFunc = DeleteDashboardSnapshot
-					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
-
-					So(writeErr, ShouldBeNil)
-					So(sc.resp.Code, ShouldEqual, 500)
+				ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
+					rw.WriteHeader(404)
 				})
+
+				mockSnapshotResult.ExternalDeleteUrl = ts.URL
+				sc.handlerFunc = DeleteDashboardSnapshot
+				sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
+
+				assert.Equal(t, 500, sc.resp.Code)
 			})
 
-			Convey("Should fail to delete local snapshot when an unexpected remote error occurs", func() {
-				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
-					ts := setupRemoteServer(func(rw http.ResponseWriter, req *http.Request) {
-						rw.WriteHeader(404)
-					})
+		loggedInUserScenarioWithRole(t, "Should be able to read a snapshot's unencrypted data when calling GET on",
+			"GET", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
+				setUpSnapshotTest(t)
 
-					mockSnapshotResult.ExternalDeleteUrl = ts.URL
-					sc.handlerFunc = DeleteDashboardSnapshot
-					sc.fakeReqWithParams("DELETE", sc.url, map[string]string{"key": "12345"}).exec()
+				sc.handlerFunc = GetDashboardSnapshot
+				sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
 
-					So(sc.resp.Code, ShouldEqual, 500)
-				})
+				assert.Equal(t, 200, sc.resp.Code)
+				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+				require.NoError(t, err)
+
+				dashboard := respJSON.Get("dashboard")
+				id := dashboard.Get("id")
+
+				assert.Equal(t, int64(100), id.MustInt64())
 			})
 
-			Convey("Should be able to read a snapshot's un-encrypted data", func() {
-				loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
-					sc.handlerFunc = GetDashboardSnapshot
-					sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
-
-					So(sc.resp.Code, ShouldEqual, 200)
-					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-					So(err, ShouldBeNil)
-
-					dashboard := respJSON.Get("dashboard")
-					id := dashboard.Get("id")
-
-					So(id.MustInt64(), ShouldEqual, 100)
-				})
-			})
-
-			Convey("Should be able to read a snapshot's encrypted data", func() {
+		loggedInUserScenarioWithRole(t, "Should be able to read a snapshot's encrypted data When calling GET on",
+			"GET", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				origSecret := setting.SecretKey
 				setting.SecretKey = "dashboard_snapshot_api_test"
 				t.Cleanup(func() {
 					setting.SecretKey = origSecret
 				})
 
-				dashboardId := 123
-				jsonModel, err := simplejson.NewJson([]byte(fmt.Sprintf(`{"id":%d}`, dashboardId)))
-				So(err, ShouldBeNil)
+				const dashboardID int64 = 123
+				jsonModel, err := simplejson.NewJson([]byte(fmt.Sprintf(`{"id":%d}`, dashboardID)))
+				require.NoError(t, err)
 
 				jsonModelEncoded, err := jsonModel.Encode()
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				encrypted, err := securedata.Encrypt(jsonModelEncoded)
-				So(err, ShouldBeNil)
+				require.NoError(t, err)
 
 				// mock snapshot with encrypted dashboard info
 				mockSnapshotResult := &models.DashboardSnapshot{
@@ -242,21 +268,20 @@ func TestDashboardSnapshotApiEndpoint(t *testing.T) {
 					Expires:            time.Now().Add(time.Duration(1000) * time.Second),
 				}
 
+				setUpSnapshotTest(t)
+
 				bus.AddHandler("test", func(query *models.GetDashboardSnapshotQuery) error {
 					query.Result = mockSnapshotResult
 					return nil
 				})
 
-				loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/snapshots/12345", "/api/snapshots/:key", models.ROLE_EDITOR, func(sc *scenarioContext) {
-					sc.handlerFunc = GetDashboardSnapshot
-					sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
+				sc.handlerFunc = GetDashboardSnapshot
+				sc.fakeReqWithParams("GET", sc.url, map[string]string{"key": "12345"}).exec()
 
-					So(sc.resp.Code, ShouldEqual, 200)
-					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-					So(err, ShouldBeNil)
-					So(respJSON.Get("dashboard").Get("id").MustInt64(), ShouldEqual, dashboardId)
-				})
+				assert.Equal(t, 200, sc.resp.Code)
+				respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
+				require.NoError(t, err)
+				assert.Equal(t, dashboardID, respJSON.Get("dashboard").Get("id").MustInt64())
 			})
-		})
 	})
 }

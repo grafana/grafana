@@ -6,7 +6,7 @@ import { copyPanel, duplicatePanel, removePanel, sharePanel } from 'app/features
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { contextSrv } from '../../../core/services/context_srv';
-import { navigateToExplore } from '../../explore/state/actions';
+import { navigateToExplore } from '../../explore/state/main';
 import { getExploreUrl } from '../../../core/utils/explore';
 import { getTimeSrv } from '../services/TimeSrv';
 import { PanelCtrl } from '../../panel/panel_ctrl';

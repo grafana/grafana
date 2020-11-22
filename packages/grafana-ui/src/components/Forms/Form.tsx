@@ -33,7 +33,7 @@ export function Form<T>({
     if (validateOnMount) {
       triggerValidation(validateFieldsOnMount);
     }
-  }, []);
+  }, [triggerValidation, validateFieldsOnMount, validateOnMount]);
 
   return (
     <form

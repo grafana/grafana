@@ -121,6 +121,12 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
     }
   }
 
+  const tsField = data.fields[0];
+  const tsNsField = data.fields[1];
+  const lineField = data.fields[2];
+  const labelsField = data.fields[3];
+  const idField = data.fields[4];
+
   for (const stream of streams) {
     // Find unique labels
     const unique = findUniqueLabels(stream.stream, baseLabels);
@@ -131,11 +137,11 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
 
     // Add each line
     for (const [ts, line] of stream.values) {
-      data.values.ts.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
-      data.values.tsNs.add(ts);
-      data.values.line.add(line);
-      data.values.labels.add(unique);
-      data.values.id.add(createUid(ts, allLabelsString, line));
+      tsField.values.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
+      tsNsField.values.add(ts);
+      lineField.values.add(line);
+      labelsField.values.add(unique);
+      idField.values.add(createUid(ts, allLabelsString, line));
     }
   }
 }
@@ -299,7 +305,7 @@ function lokiStatsToMetaStat(stats: LokiStats | undefined): QueryResultMetaStat[
   return result;
 }
 
-export function lokiStreamsToDataframes(
+export function lokiStreamsToDataFrames(
   response: LokiStreamResponse,
   target: { refId: string; expr?: string },
   limit: number,
@@ -324,6 +330,10 @@ export function lokiStreamsToDataframes(
   const series: DataFrame[] = data.map(stream => {
     const dataFrame = lokiStreamResultToDataFrame(stream, reverse);
     enhanceDataFrame(dataFrame, config);
+
+    if (meta.custom && dataFrame.fields.some(f => f.labels && Object.keys(f.labels).some(l => l === '__error__'))) {
+      meta.custom.error = 'Error when parsing some of the logs';
+    }
 
     return {
       ...dataFrame,
@@ -462,7 +472,7 @@ export function processRangeQueryResponse(
   switch (response.data.resultType) {
     case LokiResultType.Stream:
       return of({
-        data: lokiStreamsToDataframes(response as LokiStreamResponse, target, limit, config, reverse),
+        data: lokiStreamsToDataFrames(response as LokiStreamResponse, target, limit, config, reverse),
         key: `${target.refId}_log`,
       });
 

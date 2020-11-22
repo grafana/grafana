@@ -125,7 +125,7 @@ func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 		if col != nil {
 			fb.timeColumn = col.Name()
 			fb.timeDisplay = "Time"
-			if "_time" != fb.timeColumn {
+			if fb.timeColumn != "_time" {
 				fb.timeDisplay = col.Name()
 			}
 			return nil

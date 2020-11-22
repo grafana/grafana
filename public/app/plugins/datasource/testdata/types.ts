@@ -25,6 +25,7 @@ export interface TestDataQuery extends DataQuery {
   labels?: string;
   lines?: number;
   levelColumn?: boolean;
+  channel?: string; // for grafana live
 }
 
 export interface StreamingQuery {

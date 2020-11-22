@@ -2,11 +2,7 @@
 title = "Azure Monitor"
 description = "Guide for using Azure Monitor in Grafana"
 keywords = ["grafana", "microsoft", "azure", "monitor", "application", "insights", "log", "analytics", "guide"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/datasources/azuremonitor"]
-[menu.docs]
-name = "Azure Monitor"
-parent = "datasources"
 weight = 300
 +++
 
@@ -47,7 +43,7 @@ The data source can access metrics from four different services. You can configu
 
    - The Subscription Id can be changed per query. Save the data source and refresh the page to see the list of subscriptions available for the specified Client Id.
 
-1. If you are also using the Azure Log Analytics service, then you need to specify these two config values (or you can reuse the Client Id and Secret from the previous step).
+1. If you are also using the Azure Log Analytics service, then you need to specify these two configuration values (or you can reuse the Client Id and Secret from the previous step).
 
    - Client Id (Azure Active Directory -> App Registrations -> Choose your app -> Application ID)
    - Client Secret (Azure Active Directory -> App Registrations -> Choose your app -> Keys -> Create a key -> Use client secret)
@@ -133,17 +129,17 @@ The Azure Monitor data source Plugin provides the following queries you can spec
 
 | Name                                                                                               | Description                                                                     |
 | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| _Subscriptions()_                                                                                  | Returns a list of subscriptions.                                                |
-| _ResourceGroups()_                                                                                 | Returns a list of resource groups.                                              |
-| _ResourceGroups(12345678-aaaa-bbbb-cccc-123456789aaa)_                                             | Returns a list of resource groups for a specified subscription.                 |
-| _Namespaces(aResourceGroup)_                                                                       | Returns a list of namespaces for the specified resource group.                  |
-| _Namespaces(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup)_                                 | Returns a list of namespaces for the specified resource group and subscription. |
-| _ResourceNames(aResourceGroup, aNamespace)_                                                        | Returns a list of resource names.                                               |
-| _ResourceNames(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace)_                  | Returns a list of resource names for a specified subscription.                  |
-| _MetricNamespace(aResourceGroup, aNamespace, aResourceName)_                                       | Returns a list of metric namespaces.                                            |
-| _MetricNamespace(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace, aResourceName)_ | Returns a list of metric namespaces for a specified subscription.               |
-| _MetricNames(aResourceGroup, aNamespace, aResourceName)_                                           | Returns a list of metric names.                                                 |
-| _MetricNames(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace, aResourceName)_     | Returns a list of metric names for a specified subscription.                    |
+| `Subscriptions()`                                                                                  | Returns a list of subscriptions.                                                |
+| `ResourceGroups()`                                                                                 | Returns a list of resource groups.                                              |
+| `ResourceGroups(12345678-aaaa-bbbb-cccc-123456789aaa)`                                             | Returns a list of resource groups for a specified subscription.                 |
+| `Namespaces(aResourceGroup)`                                                                       | Returns a list of namespaces for the specified resource group.                  |
+| `Namespaces(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup)`                                 | Returns a list of namespaces for the specified resource group and subscription. |
+| `ResourceNames(aResourceGroup, aNamespace)`                                                        | Returns a list of resource names.                                               |
+| `ResourceNames(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace)`                  | Returns a list of resource names for a specified subscription.                  |
+| `MetricNamespace(aResourceGroup, aNamespace, aResourceName)`                                       | Returns a list of metric namespaces.                                            |
+| `MetricNamespace(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace, aResourceName)` | Returns a list of metric namespaces for a specified subscription.               |
+| `MetricNames(aResourceGroup, aNamespace, aResourceName)`                                           | Returns a list of metric names.                                                 |
+| `MetricNames(12345678-aaaa-bbbb-cccc-123456789aaa, aResourceGroup, aNamespace, aResourceName)`     | Returns a list of metric names for a specified subscription.                    |
 
 Examples:
 
@@ -163,7 +159,7 @@ Not all metrics returned by the Azure Monitor API have values. To make it easier
 
 ### Azure Monitor alerting
 
-Grafana alerting is supported for the Azure Monitor service. This is not Azure Alerts support. For more information about Grafana alerting, refer to [how alerting in Grafana works]({{< relref "../alerting/alerts-overview.md" >}}).
+Grafana alerting is supported for the Azure Monitor service. This is not Azure Alerts support. For more information about Grafana alerting, refer to [how alerting in Grafana works]({{< relref "../alerting/_index.md" >}}).
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 
@@ -212,8 +208,8 @@ Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentatio
 
 | Name                               | Description                                                  |
 | ---------------------------------- | ------------------------------------------------------------ |
-| _AppInsightsMetricNames()_         | Returns a list of metric names.                              |
-| _AppInsightsGroupBys(aMetricName)_ | Returns a list of "group bys" for the specified metric name. |
+| `AppInsightsMetricNames()`         | Returns a list of metric names.                              |
+| `AppInsightsGroupBys(aMetricName)` | Returns a list of "group bys" for the specified metric name. |
 
 Examples:
 
@@ -225,7 +221,7 @@ Examples:
 
 ### Application Insights alerting
 
-Grafana alerting is supported for Application Insights. This is not Azure Alerts support. For more information about Grafana alerting, refer to [Alerts overview]({{< relref "../alerting/alerts-overview.md" >}}).
+Grafana alerting is supported for Application Insights. This is not Azure Alerts support. For more information about Grafana alerting, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
 
 {{< docs-imagebox img="/img/docs/v60/azuremonitor-alerting.png" class="docs-image--no-shadow" caption="Azure Monitor Alerting" >}}
 
@@ -327,22 +323,22 @@ types of template variables.
 
 | Name                                               | Description                                                                                            |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| _workspaces()_                                     | Returns a list of workspaces for the default subscription.                                             |
-| _workspaces(12345678-aaaa-bbbb-cccc-123456789aaa)_ | Returns a list of workspaces for the specified subscription (the parameter can be quoted or unquoted). |
+| `workspaces()`                                     | Returns a list of workspaces for the default subscription.                                             |
+| `workspaces(12345678-aaaa-bbbb-cccc-123456789aaa)` | Returns a list of workspaces for the specified subscription (the parameter can be quoted or unquoted). |
 
 Example variable queries:
 
 <!-- prettier-ignore-start -->
 | Query                                                                                   | Description                                               |
 | --------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| _subscriptions()_                                                                       | Returns a list of Azure subscriptions                     |
-| _workspaces()_                                                                          | Returns a list of workspaces for default subscription     |
-| _workspaces("12345678-aaaa-bbbb-cccc-123456789aaa")_                                    | Returns a list of workspaces for a specified subscription |
-| _workspaces("$subscription")_                                                           | With template variable for the subscription parameter     |
-| _workspace("myWorkspace").Heartbeat \| distinct Computer_                               | Returns a list of Virtual Machines                        |
-| _workspace("$workspace").Heartbeat \| distinct Computer_                                | Returns a list of Virtual Machines with template variable |
-| _workspace("$workspace").Perf \| distinct ObjectName_                                   | Returns a list of objects from the Perf table             |
-| _workspace("$workspace").Perf \| where ObjectName == "$object" \| distinct CounterName_ | Returns a list of metric names from the Perf table        |
+| `subscriptions()`                                                                       | Returns a list of Azure subscriptions                     |
+| `workspaces()`                                                                          | Returns a list of workspaces for default subscription     |
+| `workspaces("12345678-aaaa-bbbb-cccc-123456789aaa")`                                    | Returns a list of workspaces for a specified subscription |
+| `workspaces("$subscription")`                                                           | With template variable for the subscription parameter     |
+| `workspace("myWorkspace").Heartbeat \| distinct Computer`                               | Returns a list of Virtual Machines                        |
+| `workspace("$workspace").Heartbeat \| distinct Computer`                                | Returns a list of Virtual Machines with template variable |
+| `workspace("$workspace").Perf \| distinct ObjectName`                                   | Returns a list of objects from the Perf table             |
+| `workspace("$workspace").Perf \| where ObjectName == "$object" \| distinct CounterName` | Returns a list of metric names from the Perf table        |
 
 <!-- prettier-ignore-end -->
 
@@ -373,7 +369,7 @@ If you're not currently logged in to the Azure Portal, then the link opens the l
 
 > Only available in Grafana v7.0+.
 
-Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works in [Alerting rules]({{< relref "../alerting/alerts-overview.md" >}}).
+Grafana alerting is supported for Application Insights. This is not Azure Alerts support. Read more about how alerting in Grafana works in [Alerting rules]({{< relref "../alerting/_index.md" >}}).
 
 ## Query the Application Insights Analytics service
 

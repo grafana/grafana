@@ -115,7 +115,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       }
     }
 
-    return { text, numeric, prefix, suffix, ...scaleFunc(0) };
+    return { text, numeric, prefix, suffix, ...scaleFunc(-Infinity) };
   };
 }
 
@@ -143,7 +143,7 @@ export function getDecimalsForValue(value: number, decimalOverride?: DecimalCoun
     return { decimals: decimalOverride, scaledDecimals: null };
   }
 
-  let dec = -Math.floor(Math.log(value) / Math.LN10) + 1;
+  let dec = -Math.floor(Math.log(Math.abs(value)) / Math.LN10) + 1;
   const magn = Math.pow(10, -dec);
   const norm = value / magn; // norm is between 1.0 and 10.0
   let size;

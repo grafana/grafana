@@ -3,10 +3,6 @@ title = "HTTP Snapshot API "
 description = "Grafana HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "snapshot"]
 aliases = ["/docs/grafana/latest/http_api/snapshot/"]
-type = "docs"
-[menu.docs]
-name = "Snapshot"
-parent = "http_api"
 +++
 
 # Snapshot API
