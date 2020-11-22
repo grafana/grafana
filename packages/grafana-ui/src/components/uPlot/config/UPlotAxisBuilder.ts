@@ -8,7 +8,6 @@ export interface AxisProps {
   scaleKey: string;
   theme: GrafanaTheme;
   label?: string;
-  stroke?: string;
   show?: boolean;
   size?: number;
   placement?: AxisPlacement;
@@ -33,14 +32,13 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       timeZone,
       theme,
     } = this.props;
-    const stroke = this.props.stroke || theme.colors.text;
     const gridColor = theme.isDark ? theme.palette.gray25 : theme.palette.gray90;
 
     let config: Axis = {
       scale: scaleKey,
       label,
       show,
-      stroke,
+      stroke: theme.colors.text,
       side: getUPlotSideFromAxis(placement),
       font: '12px Roboto',
       size: calculateAxisSize,

@@ -119,13 +119,14 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       const colorMode = getFieldColorModeForField(field);
       const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
+      const pointsMode = customConfig.mode === GraphMode.Points ? PointMode.Always : customConfig.points;
 
       builder.addSeries({
         scaleKey: scale,
         line: (customConfig.mode ?? GraphMode.Line) === GraphMode.Line,
         lineColor: seriesColor,
         lineWidth: customConfig.lineWidth,
-        points: customConfig.points,
+        points: pointsMode,
         pointSize: customConfig.pointRadius,
         pointColor: seriesColor,
         fill: customConfig.fillAlpha !== undefined,

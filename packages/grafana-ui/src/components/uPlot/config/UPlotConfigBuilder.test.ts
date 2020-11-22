@@ -66,8 +66,7 @@ describe('UPlotConfigBuilder', () => {
       grid: false,
       show: true,
       size: 1,
-      stroke: '#ff0000',
-      theme: { isDark: true, palette: { gray25: '#ffffff' } } as GrafanaTheme,
+      theme: { isDark: true, palette: { gray25: '#ffffff' }, colors: { text: 'gray' } } as GrafanaTheme,
       values: [],
     });
 
@@ -87,7 +86,7 @@ describe('UPlotConfigBuilder', () => {
             "side": 2,
             "size": [Function],
             "space": [Function],
-            "stroke": "#ff0000",
+            "stroke": "gray",
             "ticks": Object {
               "show": true,
               "stroke": "#ffffff",

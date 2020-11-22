@@ -1,5 +1,5 @@
 import React from 'react';
-import uPlot, { Options, AlignedData, Series, Hooks } from 'uplot';
+import uPlot, { Options, Series, Hooks } from 'uplot';
 import { DataFrame, TimeRange, TimeZone } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
@@ -23,10 +23,6 @@ export interface PlotProps {
   height: number;
   config: UPlotConfigBuilder;
   children?: React.ReactElement[];
-  /** Callback performed when uPlot data is updated */
-  onDataUpdate?: (data: AlignedData) => {};
-  /** Callback performed when uPlot is (re)initialized */
-  onPlotInit?: () => {};
 }
 
 export abstract class PlotConfigBuilder<P, T> {
