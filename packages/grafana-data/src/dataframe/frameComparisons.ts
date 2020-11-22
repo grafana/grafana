@@ -100,7 +100,6 @@ export function shallowCompare<T extends {}>(a: T, b: T, cmp?: (valA: any, valB:
     }
     //@ts-ignore
     if (a[key] !== b[key]) {
-      console.log(a[key], b[key]);
       return false;
     }
   }
