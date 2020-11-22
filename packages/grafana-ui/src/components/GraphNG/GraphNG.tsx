@@ -86,7 +86,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
     let seriesIdx = 0;
     const legendItems: LegendItem[] = [];
-    let hasYAxis = false;
 
     for (let i = 0; i < alignedFrame.fields.length; i++) {
       const field = alignedFrame.fields[i];
@@ -107,11 +106,9 @@ export const GraphNG: React.FC<GraphNGProps> = ({
           scaleKey: scale,
           label: customConfig.axisLabel,
           placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-          grid: !hasYAxis,
           formatValue: v => formattedValueToString(fmt(v)),
           theme,
         });
-        hasYAxis = true;
       }
 
       // need to update field state here because we use a transform to merge framesP
