@@ -86,7 +86,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
     let seriesIdx = 0;
     const legendItems: LegendItem[] = [];
-    let hasLeftAxis = false;
     let hasYAxis = false;
 
     for (let i = 0; i < alignedFrame.fields.length; i++) {
@@ -100,18 +99,14 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       const fmt = field.display ?? defaultFormatter;
       const scale = config.unit || '__fixed';
-      const placement = getAxisPlacement(customConfig.axisPlacement, hasLeftAxis);
+      const isNewScale = !builder.hasScale(scale);
 
-      if (!builder.hasScale(scale) && customConfig.axisPlacement !== AxisPlacement.Hidden) {
-        if (placement === AxisPlacement.Left) {
-          hasLeftAxis = true;
-        }
-
+      if (isNewScale && customConfig.axisPlacement !== AxisPlacement.Hidden) {
         builder.addScale({ scaleKey: scale, min: field.config.min, max: field.config.max });
         builder.addAxis({
           scaleKey: scale,
           label: customConfig.axisLabel,
-          placement: placement,
+          placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
           grid: !hasYAxis,
           formatValue: v => formattedValueToString(fmt(v)),
           theme,
@@ -139,10 +134,12 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       });
 
       if (hasLegend.current) {
+        const axisPlacement = builder.getAxisPlacement(scale);
+
         legendItems.push({
           color: seriesColor,
           label: getFieldDisplayName(field, alignedFrame),
-          yAxis: placement === AxisPlacement.Right ? 3 : 1,
+          yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
         });
       }
 
@@ -181,13 +178,3 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     </VizLayout>
   );
 };
-
-function getAxisPlacement(placement: AxisPlacement | undefined, hasLeftAxisAlready: boolean): AxisPlacement {
-  placement = placement ?? AxisPlacement.Auto;
-
-  if (placement === AxisPlacement.Auto) {
-    return hasLeftAxisAlready ? AxisPlacement.Right : AxisPlacement.Left;
-  }
-
-  return placement;
-}

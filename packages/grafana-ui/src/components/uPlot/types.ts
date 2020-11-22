@@ -30,7 +30,7 @@ export interface PlotProps {
 }
 
 export abstract class PlotConfigBuilder<P, T> {
-  constructor(protected props: P) {}
+  constructor(public props: P) {}
   abstract getConfig(): T;
 }
 
