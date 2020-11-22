@@ -1,5 +1,5 @@
 import React, { FC, useCallback } from 'react';
-import { ValuePicker } from '@grafana/ui';
+import { Select } from '@grafana/ui';
 import { DataFrame, MatcherConfig, SelectableValue } from '@grafana/data';
 
 import { fieldDimensionMatchersUI } from '@grafana/ui/src/components/MatchersUI/fieldMatchersUI';
@@ -12,7 +12,7 @@ export interface Props {
 
 export const FieldMatcherEditor: FC<Props> = ({ data, value, onChange }) => {
   const matcherUi = fieldDimensionMatchersUI.get(value.id);
-  const matcherOptions = fieldDimensionMatchersUI.selectOptions().options;
+  const matcherInfo = fieldDimensionMatchersUI.selectOptions([value.id]);
 
   const onMatcherConfigChange = useCallback(
     (options: any) => {
@@ -42,15 +42,8 @@ export const FieldMatcherEditor: FC<Props> = ({ data, value, onChange }) => {
   );
 
   return (
-    <div>
-      <ValuePicker
-        label={matcherUi.name || 'Field Matcher'}
-        variant="secondary"
-        icon="plus"
-        options={matcherOptions}
-        onChange={onMatcherTypeChange}
-        isFullWidth={true}
-      />
+    <p>
+      <Select options={matcherInfo.options} value={matcherInfo.current} onChange={onMatcherTypeChange} />
 
       {matcherUi && (
         <matcherUi.component
@@ -60,6 +53,6 @@ export const FieldMatcherEditor: FC<Props> = ({ data, value, onChange }) => {
           onChange={option => onMatcherConfigChange(option)}
         />
       )}
-    </div>
+    </p>
   );
 };

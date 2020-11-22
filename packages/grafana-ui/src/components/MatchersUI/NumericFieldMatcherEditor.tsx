@@ -7,7 +7,7 @@ export const NumericFieldMatcherEditor = () => {
 };
 
 export const numericFieldsMatcherItem: FieldMatcherUIRegistryItem<string> = {
-  id: FieldMatcherID.byName,
+  id: FieldMatcherID.numeric,
   component: NumericFieldMatcherEditor,
   matcher: fieldMatchers.get(FieldMatcherID.numeric),
   name: 'Numeric fields',

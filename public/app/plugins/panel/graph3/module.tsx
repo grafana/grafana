@@ -10,7 +10,7 @@ import {
 import { TimeSeriesEditor } from './editor/TimeSeriesEditor';
 import { XYPlotEditor } from './editor/XYPlotEditor';
 import { GraphPanel } from './GraphPanel';
-import { GraphOptions, GraphType, XYPlotConfig } from './types';
+import { GraphOptions, GraphType, defaultXYPlotConfig } from './types';
 
 export const plugin = new PanelPlugin<GraphOptions, GraphFieldConfig>(GraphPanel)
   .useFieldConfig({
@@ -145,7 +145,7 @@ export const plugin = new PanelPlugin<GraphOptions, GraphFieldConfig>(GraphPanel
         id: 'xyPlotConfig',
         path: 'xy',
         name: 'X vs Y plot',
-        defaultValue: {} as XYPlotConfig,
+        defaultValue: defaultXYPlotConfig,
         editor: XYPlotEditor,
         showIf: c => c.type === GraphType.XYPlot,
       })

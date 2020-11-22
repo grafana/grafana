@@ -2,13 +2,13 @@ import React, { useMemo, useRef } from 'react';
 import {
   DataFrame,
   FieldConfig,
+  FieldMatcher,
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
   getFieldDisplayName,
-  getTimeField,
 } from '@grafana/data';
-import { mergeTimeSeriesData } from './utils';
+import { alignDataFrames } from './utils';
 import { UPlotChart } from '../uPlot/Plot';
 import { PlotProps } from '../uPlot/types';
 import { AxisPlacement, getUPlotSideFromAxis, GraphFieldConfig, GraphMode, PointMode } from '../uPlot/config';
@@ -20,9 +20,15 @@ import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
+export interface XYFieldMatchers {
+  x: FieldMatcher;
+  y: FieldMatcher;
+}
+
 interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
   data: DataFrame[];
   legend?: LegendOptions;
+  fields?: XYFieldMatchers; // default will assume timeseries data
 }
 
 const defaultConfig: GraphFieldConfig = {
@@ -33,6 +39,7 @@ const defaultConfig: GraphFieldConfig = {
 
 export const GraphNG: React.FC<GraphNGProps> = ({
   data,
+  fields,
   children,
   width,
   height,
@@ -42,7 +49,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   ...plotProps
 }) => {
   const theme = useTheme();
-  const alignedFrameWithGapTest = useMemo(() => mergeTimeSeriesData(data), [data]);
+  const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
   const legendItemsRef = useRef<LegendItem[]>([]);
   const hasLegend = legend && legend.displayMode !== LegendDisplayMode.Hidden;
 
@@ -59,27 +66,31 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   const configBuilder = useMemo(() => {
     const builder = new UPlotConfigBuilder();
 
-    let { timeIndex } = getTimeField(alignedFrame);
-
-    if (timeIndex === undefined) {
-      timeIndex = 0; // assuming first field represents x-domain
-      builder.addScale({
-        scaleKey: 'x',
-      });
-    } else {
+    // X is the first field in the alligned frame
+    const xField = alignedFrame.fields[0];
+    if (xField.type === FieldType.time) {
       builder.addScale({
         scaleKey: 'x',
         isTime: true,
       });
+      builder.addAxis({
+        scaleKey: 'x',
+        isTime: true,
+        side: getUPlotSideFromAxis(AxisPlacement.Bottom),
+        timeZone,
+        theme,
+      });
+    } else {
+      // Not time!
+      builder.addScale({
+        scaleKey: 'x',
+      });
+      builder.addAxis({
+        scaleKey: 'x',
+        side: getUPlotSideFromAxis(AxisPlacement.Bottom),
+        theme,
+      });
     }
-
-    builder.addAxis({
-      scaleKey: 'x',
-      isTime: true,
-      side: getUPlotSideFromAxis(AxisPlacement.Bottom),
-      timeZone,
-      theme,
-    });
 
     let seriesIdx = 0;
     const legendItems: LegendItem[] = [];
@@ -91,7 +102,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       const config = field.config as FieldConfig<GraphFieldConfig>;
       const customConfig = config.custom || defaultConfig;
 
-      if (i === timeIndex || field.type !== FieldType.number) {
+      if (field === xField || field.type !== FieldType.number) {
         continue;
       }
 

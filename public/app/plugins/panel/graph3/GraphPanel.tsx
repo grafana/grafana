@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ContextMenuPlugin, TooltipPlugin, ZoomPlugin, GraphNG } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
 import { GraphOptions } from './types';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
+import { configToXYFieldMatchers } from './dims';
 
 interface GraphPanelProps extends PanelProps<GraphOptions> {}
 
@@ -16,9 +17,12 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
   options,
   onChangeTimeRange,
 }) => {
+  const fields = useMemo(() => configToXYFieldMatchers(options), [options]);
+
   return (
     <GraphNG
       data={data.series}
+      fields={fields}
       timeRange={timeRange}
       timeZone={timeZone}
       width={width}
