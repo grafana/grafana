@@ -79,7 +79,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 
   return (
     <PlotContext.Provider value={plotCtx}>
-      <div ref={plotCtx.canvasRef} />
+      <div ref={plotCtx.canvasRef} data-testid="uplot-main-div" />
       {props.children}
     </PlotContext.Provider>
   );
