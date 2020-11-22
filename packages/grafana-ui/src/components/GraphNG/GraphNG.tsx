@@ -55,7 +55,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
   const theme = useTheme();
   const legendItemsRef = useRef<LegendItem[]>([]);
-  const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
+  const hasLegend = legend && legend.displayMode !== LegendDisplayMode.Hidden;
   const alignedFrame = alignedFrameWithGapTest.frame;
   const configRev = useRevision(alignedFrame, compareDataFrameStructures);
 
@@ -131,7 +131,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         fillColor: seriesColor,
       });
 
-      if (hasLegend.current) {
+      if (hasLegend) {
         const axisPlacement = builder.getAxisPlacement(scale);
 
         legendItems.push({
@@ -146,7 +146,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
     legendItemsRef.current = legendItems;
     return builder;
-  }, [configRev]);
+  }, [configRev, hasLegend]);
 
   let legendElement: React.ReactElement | undefined;
 
