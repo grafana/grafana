@@ -1335,9 +1335,9 @@ describe('ElasticResponse', () => {
     ];
     const response = {
       datarows: [
-        ['test-data1', 'message1', { coordinates: { points: { lat: 5, lon: 10 } } }],
-        ['test-data2', 'message2', { coordinates: { points: { lat: 6, lon: 11 } } }],
-        ['test-data3', 'message3', { coordinates: { points: { lat: 7, lon: 12 } } }],
+        ['test-data1', 'message1', { coordinates: { lat: 5, lon: 10 } }],
+        ['test-data2', 'message2', { coordinates: { lat: 6, lon: 11 } }],
+        ['test-data3', 'message3', { coordinates: { lat: 7, lon: 12 } }],
       ],
       schema: [
         { name: 'data', type: 'string' },
