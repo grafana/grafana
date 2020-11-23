@@ -143,11 +143,11 @@ interface MyProps {
 
 ### Controls
 
-The [controls addon](https://storybook.js.org/docs/react/essentials/controls) provides a way to interact with a component's properties dynamically and requires much less code than knobs. As such we're deprecating knobs in favour of using controls.
+The [controls addon](https://storybook.js.org/docs/react/essentials/controls) provides a way to interact with a component's properties dynamically and requires much less code than knobs. We're deprecating knobs in favor of using controls.
 
 #### Migrating a story from Knobs to Controls
 
-The [button story](https://github.com/grafana/grafana/blob/master/packages/grafana-ui/src/components/Button/Button.story.tsx) has been migrated as a test. Here's a basic guide on how to migrate a story to controls.
+As a test, we migrated the [button story](https://github.com/grafana/grafana/blob/master/packages/grafana-ui/src/components/Button/Button.story.tsx). Here's the guide on how to migrate a story to controls.
 
 1.  Remove the `@storybook/addon-knobs` dependency.
 2.  Import the Story type from `@storybook/react`
@@ -158,7 +158,7 @@ The [button story](https://github.com/grafana/grafana/blob/master/packages/grafa
 
     `import { Props } from './Component'`
 
-4.  Add the Story type to all stories in the file, replace the props sent to the component
+4.  Add the Story type to all stories in the file, then replace the props sent to the component
     and remove any knobs.
 
     Before
