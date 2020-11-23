@@ -1,5 +1,6 @@
 import * as queryDef from './query_def';
 import { ElasticsearchAggregation, ElasticsearchQueryType } from './types';
+import { dateTime, dateMath } from '@grafana/data';
 
 export class ElasticQueryBuilder {
   timeField: string;
@@ -422,6 +423,29 @@ export class ElasticQueryBuilder {
   }
 
   addPPLAdhocFilters(queryString: any, adhocFilters: any) {
+    let i, adhocquery;
+    let filter = [];
+
+    for (i = 0; i < adhocFilters.length; i++) {
+      filter.push('`' + adhocFilters[i].key + '`');
+      if (dateMath.isValid(adhocFilters[i].value)) {
+        const validTime = dateTime(adhocFilters[i].value).format('YYYY-MM-DD HH:mm:ss.SSSSSS');
+        let timeFilter = "timestamp('$validTime')";
+        timeFilter = timeFilter.replace(/\$validTime/g, validTime);
+        filter.push(timeFilter);
+      } else if (typeof adhocFilters[i].value === 'string') {
+        filter.push("'" + adhocFilters[i].value + "'");
+      } else {
+        filter.push(adhocFilters[i].value);
+      }
+      adhocquery = filter.join(adhocFilters[i].operator);
+      if (i > 0) {
+        queryString += ' and ' + adhocquery;
+      } else {
+        queryString += ' | where ' + adhocquery;
+      }
+      filter = [];
+    }
     return queryString;
   }
 
