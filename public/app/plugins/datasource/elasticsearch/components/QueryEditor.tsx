@@ -2,16 +2,17 @@ import React, { FunctionComponent, useCallback } from 'react';
 import { QueryEditorProps } from '@grafana/data';
 import { ElasticDatasource } from '../datasource';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../types';
-
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
-import { QueryEditorForm } from './QueryEditorForm';
+import { InlineField, InlineFieldRow, Input, QueryField } from '@grafana/ui';
+import { changeAliasPattern, changeQuery } from './state';
+import { MetricAggregationsEditor } from './MetricAggregationsEditor';
+import { BucketAggregationsEditor } from './BucketAggregationsEditor';
+import { useDispatch } from '../hooks/useStatelessReducer';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
 
-// We could memoize the editor if we rafactor onChange to not be an anonymous function
 export const QueryEditor: FunctionComponent<ElasticQueryEditorProps> = ({
   query,
-  // onChange is an anonymous function, if we can change it we could avoid to rerender the form on every update
   onChange,
   datasource,
   onRunQuery,
@@ -28,5 +29,37 @@ export const QueryEditor: FunctionComponent<ElasticQueryEditorProps> = ({
     <ElasticsearchProvider datasource={datasource} onChange={onQueryChange} query={query}>
       <QueryEditorForm value={query} />
     </ElasticsearchProvider>
+  );
+};
+
+interface Props {
+  value: ElasticsearchQuery;
+}
+
+const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
+  const dispatch = useDispatch();
+
+  return (
+    <>
+      <InlineFieldRow>
+        <InlineField label="Query" labelWidth={15} grow>
+          <QueryField
+            query={value.query}
+            // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender
+            // And slate will claim the focus, making it impossible to leave the field.
+            onBlur={() => {}}
+            onChange={query => dispatch(changeQuery(query))}
+            placeholder="Lucene Query"
+            portalOrigin="elasticsearch"
+          />
+        </InlineField>
+        <InlineField label="Alias" labelWidth={15}>
+          <Input placeholder="Alias Pattern" onBlur={e => dispatch(changeAliasPattern(e.currentTarget.value))} />
+        </InlineField>
+      </InlineFieldRow>
+
+      <MetricAggregationsEditor value={value.metrics || []} />
+      <BucketAggregationsEditor value={value.bucketAggs || []} />
+    </>
   );
 };
