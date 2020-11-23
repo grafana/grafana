@@ -24,13 +24,17 @@ import {
   QueryResultMeta,
   ScopedVars,
   TimeRange,
-  CoreApp,
 } from '@grafana/data';
 import { getTemplateSrv, TemplateSrv, BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
 import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
-import { lokiResultsToTableModel, lokiStreamResultToDataFrame, processRangeQueryResponse } from './result_transformer';
+import {
+  lokiResultsToTableModel,
+  lokiStreamResultToDataFrame,
+  lokiStreamsToDataFrames,
+  processRangeQueryResponse,
+} from './result_transformer';
 import { getHighlighterExpressionsFromQuery } from './query_utils';
 
 import {
@@ -99,12 +103,11 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       }));
 
     for (const target of filteredTargets) {
-      // In explore we want to show result of metrics instant query in a table under the graph panel to mimic behaviour of prometheus.
-      // We don't want to do that in dashboards though as user would have to pick the correct data frame.
-      if (options.app === CoreApp.Explore && isMetricsQuery(target.expr)) {
+      if (target.instant) {
         subQueries.push(this.runInstantQuery(target, options, filteredTargets.length));
+      } else {
+        subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
       }
-      subQueries.push(this.runRangeQuery(target, options, filteredTargets.length));
     }
 
     // No valid targets, return the empty result to save a round trip.
@@ -124,12 +127,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     responseListLength: number
   ): Observable<DataQueryResponse> => {
     const timeNs = this.getTime(options.range.to, true);
+    const queryLimit = isMetricsQuery(target.expr) ? options.maxDataPoints : target.maxLines;
     const query = {
       query: target.expr,
       time: `${timeNs + (1e9 - (timeNs % 1e9))}`,
-      limit: Math.min(options.maxDataPoints || Infinity, this.maxLines),
+      limit: Math.min(queryLimit || Infinity, this.maxLines),
     };
-    /** Show results of Loki instant queries only in table */
+
+    /** Used only for results of metrics instant queries */
     const meta: QueryResultMeta = {
       preferredVisualisationType: 'table',
     };
@@ -138,7 +143,14 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       map((response: { data: LokiResponse }) => {
         if (response.data.data.resultType === LokiResultType.Stream) {
           return {
-            data: [],
+            data: response.data
+              ? lokiStreamsToDataFrames(
+                  response.data as LokiStreamResponse,
+                  target,
+                  query.limit,
+                  this.instanceSettings.jsonData
+                )
+              : [],
             key: `${target.refId}_instant`,
           };
         }

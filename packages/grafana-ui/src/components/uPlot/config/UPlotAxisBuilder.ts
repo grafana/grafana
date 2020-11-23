@@ -1,6 +1,6 @@
 import { dateTimeFormat, GrafanaTheme, systemDateFormats, TimeZone } from '@grafana/data';
-import uPlot from 'uplot';
-import { AxisSide, PlotConfigBuilder } from '../types';
+import uPlot, { Axis } from 'uplot';
+import { PlotConfigBuilder } from '../types';
 import { measureText } from '../../../utils/measureText';
 
 export interface AxisProps {
@@ -10,7 +10,7 @@ export interface AxisProps {
   stroke?: string;
   show?: boolean;
   size?: number;
-  side?: AxisSide;
+  side?: Axis.Side;
   grid?: boolean;
   formatValue?: (v: any) => string;
   values?: any;
@@ -18,8 +18,8 @@ export interface AxisProps {
   timeZone?: TimeZone;
 }
 
-export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, uPlot.Axis> {
-  getConfig(): uPlot.Axis {
+export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
+  getConfig(): Axis {
     const {
       scaleKey,
       label,
@@ -35,7 +35,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, uPlot.Axis> {
     const stroke = this.props.stroke || theme.colors.text;
     const gridColor = theme.isDark ? theme.palette.gray25 : theme.palette.gray90;
 
-    let config: uPlot.Axis = {
+    let config: Axis = {
       scale: scaleKey,
       label,
       show,
