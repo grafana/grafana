@@ -97,7 +97,7 @@ func TestExecuteSingle(t *testing.T) {
 func TestExecuteMultiple(t *testing.T) {
 	t.Run("Multiple Test", func(t *testing.T) {
 		dr := verifyGoldenResponse(t, "multiple")
-		require.Len(t, dr.Frames, 4)
+		require.Len(t, dr.Frames, 3)
 		require.Contains(t, dr.Frames[0].Name, "test")
 		require.Len(t, dr.Frames[0].Fields[1].Labels, 2)
 		require.Equal(t, "Time", dr.Frames[0].Fields[0].Name)
