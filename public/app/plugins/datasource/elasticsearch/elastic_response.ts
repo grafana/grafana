@@ -633,15 +633,6 @@ const flattenResponses = (responses: any): { docs: Array<Record<string, any>>; f
   let flattenSchema: string[] = [];
 
   for (const response of responses) {
-    //initial flatten of the datarows which contains extra types if it's a nested object
-    Object.keys(response).forEach(key => {
-      const type = Object.prototype.toString.call(response[key]);
-      const isobject = type === '[object Object]';
-      if (isobject) {
-        response[key] = flattenDataRows(response[key]);
-      }
-    });
-
     const doc = flatten(response);
 
     for (const schema of Object.keys(doc)) {
@@ -652,45 +643,6 @@ const flattenResponses = (responses: any): { docs: Array<Record<string, any>>; f
     docs.push(doc);
   }
   return { docs, flattenSchema };
-};
-
-/**
- * Inital flatten of datarows which can be nested.
- * When nested, datarows return additional types to the nested fields which should be ignored
- * This flattens it so that it is one level deep and the keys are:
- * `level1Name.level3Name...`.
- * @param datarow
- */
-const flattenDataRows = (datarow: object): any => {
-  const delimiter = '.';
-  let depth = 1;
-  const output: any = {};
-
-  function step(object: any, prev: string | null) {
-    Object.keys(object).forEach(key => {
-      const value = object[key];
-      const isobject = Object.prototype.toString.call(value) === '[object Object]';
-      let newKey = '';
-
-      //only flatten the fields
-      if (depth % 2 === 0) {
-        newKey = prev ? prev : newKey;
-      } else {
-        newKey = prev ? prev + delimiter + key : key;
-      }
-      //keep iterating until the end of the nested object
-      if (isobject && Object.keys(value).length) {
-        ++depth;
-        return step(value, newKey);
-      }
-      //reset the depth if end is reached
-      depth = 1;
-      output[newKey] = value;
-    });
-  }
-  step(datarow, null);
-
-  return output;
 };
 
 /**
