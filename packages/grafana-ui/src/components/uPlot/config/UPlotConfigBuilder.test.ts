@@ -22,13 +22,11 @@ describe('UPlotConfigBuilder', () => {
           "axes": Array [],
           "scales": Object {
             "scale-x": Object {
-              "max": undefined,
-              "min": undefined,
+              "range": undefined,
               "time": true,
             },
             "scale-y": Object {
-              "max": undefined,
-              "min": undefined,
+              "range": undefined,
               "time": false,
             },
           },
