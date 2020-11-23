@@ -73,16 +73,16 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	alertInstance := migrator.Table{
 		Name: "alert_instance",
 		Columns: []*migrator.Column{
-			{Name: "key", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "alert_definition_id", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "labels", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "labels", Type: migrator.DB_Text, Nullable: false},
+			{Name: "labels_hash", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "current_state", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "current_state_since", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "last_eval_time", Type: migrator.DB_DateTime, Nullable: false},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"org_id"}, Type: migrator.IndexType}, // TODO Figure out index for key (within orgId)
+			{Cols: []string{"alert_definition_id", "labels_hash"}, Type: migrator.UniqueIndex}, // TODO Figure out index for key (within orgId)
 		},
 	}
 
@@ -90,7 +90,7 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("create alert_instance table", migrator.NewAddTableMigration(alertInstance))
 
 	// create indices
-	mg.AddMigration("add index alert_instance org_id", migrator.NewAddIndexMigration(alertInstance, alertInstance.Indices[0]))
+	mg.AddMigration("add unique index alert_instance alert_defintion_id labels_hash", migrator.NewAddIndexMigration(alertInstance, alertInstance.Indices[0]))
 }
 
 // LoadAlertCondition returns a Condition object for the given alertDefinitionID.

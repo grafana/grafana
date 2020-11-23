@@ -193,7 +193,7 @@ func TestCreatingAlertInstance(t *testing.T) {
 		}
 		err := ng.saveAlertInstance(&q)
 		require.NoError(t, err)
-		spew.Dump(q.Result)
+		spew.Dump(q)
 	})
 
 }

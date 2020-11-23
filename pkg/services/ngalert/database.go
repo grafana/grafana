@@ -2,8 +2,10 @@ package ngalert
 
 import (
 	"context"
+	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -123,7 +125,7 @@ func (ng *AlertNG) getAlertDefinitions(cmd *listAlertDefinitionsCommand) error {
 
 // saveAlertDefinition is a handler for saving a new alert definition.
 func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
-	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertInstance := &AlertInstance{
 			OrgID:             cmd.OrgID,
 			Labels:            cmd.Labels,
@@ -133,7 +135,8 @@ func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 			LastEvalTime:      time.Now(), // TODO: Probably better to pass in to the command for more accurate timestamp
 		}
 
-		if err := alertInstance.SetKey(); err != nil {
+		labelTupleJSON, err := alertInstance.SetLabelsHash()
+		if err != nil {
 			return err
 		}
 
@@ -141,11 +144,43 @@ func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 			return err
 		}
 
-		if _, err := sess.Insert(alertInstance); err != nil {
+		s := strings.Builder{}
+		params := make([]interface{}, 0)
+
+		s.WriteString(`INSERT INTO alert_instance 
+			(org_id, alert_definition_id, labels, labels_hash, current_state, current_state_since, last_eval_time) VALUES (?, ?, ?, ?, ?, ?, ?)
+			ON CONFLICT(alert_definition_id, labels_hash) DO UPDATE SET 
+				org_id=excluded.org_id, 
+				alert_definition_id=excluded.alert_definition_id, 
+				labels=excluded.labels, 
+				labels=excluded.labels_hash, 
+				current_state=excluded.current_state, 
+				current_state_since=excluded.current_state_since, 
+				last_eval_time=excluded.last_eval_time`)
+
+		params = append(params, cmd.OrgID, cmd.AlertDefinitionID, labelTupleJSON, alertInstance.LabelsHash, cmd.State, time.Now(), time.Now())
+
+		// if _, err := sess.Insert(alertInstance); err != nil {
+		// 	return err
+		// }
+
+		// results := make([]*AlertInstance, 0)
+		// if err := sess.SQL(s.String(), params...).Find(&results); err != nil {
+		// 	return err
+		// }
+
+		res, err := sess.SQL(s.String(), params...).Query()
+		if err != nil {
 			return err
 		}
 
-		cmd.Result = alertInstance
+		spew.Dump(res)
+
+		// if len(results) == 0 {
+		// 	cmd.Result = nil
+		// } else {
+		// 	cmd.Result = results[0]
+		// }
 		return nil
 	})
 }
