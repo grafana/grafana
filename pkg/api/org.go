@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -23,7 +25,7 @@ func GetOrgByID(c *models.ReqContext) Response {
 func GetOrgByName(c *models.ReqContext) Response {
 	query := models.GetOrgByNameQuery{Name: c.Params(":name")}
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrOrgNotFound {
+		if errors.Is(err, models.ErrOrgNotFound) {
 			return Error(404, "Organization not found", err)
 		}
 
@@ -50,7 +52,7 @@ func getOrgHelper(orgID int64) Response {
 	query := models.GetOrgByIdQuery{Id: orgID}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrOrgNotFound {
+		if errors.Is(err, models.ErrOrgNotFound) {
 			return Error(404, "Organization not found", err)
 		}
 
@@ -82,7 +84,7 @@ func CreateOrg(c *models.ReqContext, cmd models.CreateOrgCommand) Response {
 
 	cmd.UserId = c.UserId
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrOrgNameTaken {
+		if errors.Is(err, models.ErrOrgNameTaken) {
 			return Error(409, "Organization name taken", err)
 		}
 		return Error(500, "Failed to create organization", err)
@@ -109,7 +111,7 @@ func UpdateOrg(c *models.ReqContext, form dtos.UpdateOrgForm) Response {
 func updateOrgHelper(form dtos.UpdateOrgForm, orgID int64) Response {
 	cmd := models.UpdateOrgCommand{Name: form.Name, OrgId: orgID}
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrOrgNameTaken {
+		if errors.Is(err, models.ErrOrgNameTaken) {
 			return Error(400, "Organization name taken", err)
 		}
 		return Error(500, "Failed to update organization", err)
@@ -151,7 +153,7 @@ func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgID int64) Respons
 // GET /api/orgs/:orgId
 func DeleteOrgByID(c *models.ReqContext) Response {
 	if err := bus.Dispatch(&models.DeleteOrgCommand{Id: c.ParamsInt64(":orgId")}); err != nil {
-		if err == models.ErrOrgNotFound {
+		if errors.Is(err, models.ErrOrgNotFound) {
 			return Error(404, "Failed to delete organization. ID not found", nil)
 		}
 		return Error(500, "Failed to update organization", err)

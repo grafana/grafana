@@ -7,6 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type FakeCondition struct{}
@@ -34,15 +36,15 @@ func TestAlertRuleFrequencyParsing(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		r, err := getTimeDurationStringToSeconds(tc.input)
-		if err != tc.err {
-			t.Errorf("expected error: '%v' got: '%v'", tc.err, err)
-			return
-		}
-
-		if r != tc.result {
-			t.Errorf("expected result: %d got %d", tc.result, r)
-		}
+		t.Run(tc.input, func(t *testing.T) {
+			r, err := getTimeDurationStringToSeconds(tc.input)
+			if tc.err == nil {
+				require.NoError(t, err)
+			} else {
+				require.EqualError(t, err, tc.err.Error())
+			}
+			assert.Equal(t, tc.result, r)
+		})
 	}
 }
 

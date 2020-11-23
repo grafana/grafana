@@ -117,8 +117,7 @@ func (fr *FileReader) startWalkingDisk() error {
 // storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
 func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.FileInfo, dashboardRefs map[string]*models.DashboardProvisioning, sanityChecker *provisioningSanityChecker) error {
 	folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
-
-	if err != nil && err != ErrFolderNameMissing {
+	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 		return err
 	}
 
@@ -145,7 +144,7 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk
 		}
 
 		folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService, folderName)
-		if err != nil && err != ErrFolderNameMissing {
+		if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 			return fmt.Errorf("can't provision folder %q from file system structure: %w", folderName, err)
 		}
 
@@ -264,12 +263,12 @@ func getOrCreateFolderID(cfg *config, service dashboards.DashboardProvisioningSe
 	cmd := &models.GetDashboardQuery{Slug: models.SlugifyTitle(folderName), OrgId: cfg.OrgID}
 	err := bus.Dispatch(cmd)
 
-	if err != nil && err != models.ErrDashboardNotFound {
+	if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
 		return 0, err
 	}
 
 	// dashboard folder not found. create one.
-	if err == models.ErrDashboardNotFound {
+	if errors.Is(err, models.ErrDashboardNotFound) {
 		dash := &dashboards.SaveDashboardDTO{}
 		dash.Dashboard = models.NewDashboardFolder(folderName)
 		dash.Dashboard.IsFolder = true

@@ -1,6 +1,7 @@
 package migrator
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -172,7 +173,8 @@ func (db *PostgresDialect) TruncateDBTables() error {
 }
 
 func (db *PostgresDialect) isThisError(err error, errcode string) bool {
-	if driverErr, ok := err.(*pq.Error); ok {
+	var driverErr *pq.Error
+	if errors.As(err, &driverErr) {
 		if string(driverErr.Code) == errcode {
 			return true
 		}
@@ -182,7 +184,8 @@ func (db *PostgresDialect) isThisError(err error, errcode string) bool {
 }
 
 func (db *PostgresDialect) ErrorMessage(err error) string {
-	if driverErr, ok := err.(*pq.Error); ok {
+	var driverErr *pq.Error
+	if errors.As(err, &driverErr) {
 		return driverErr.Message
 	}
 	return ""

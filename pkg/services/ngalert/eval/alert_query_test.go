@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,8 +33,8 @@ func TestAlertQuery(t *testing.T) {
 				}`),
 			},
 			expectedIsExpression: true,
-			expectedDatasource:   "__expr__",
-			expectedDatasourceID: int64(DefaultExprDatasourceID),
+			expectedDatasource:   expr.DatasourceName,
+			expectedDatasourceID: int64(expr.DatasourceID),
 			expectedMaxPoints:    int64(defaultMaxDataPoints),
 			expectedIntervalMS:   int64(defaultIntervalMS),
 		},
