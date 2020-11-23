@@ -419,4 +419,8 @@ export class ElasticQueryBuilder {
       aggs: this.build(target, null, querystring).aggs,
     };
   }
+
+  buildPPLQuery(target: any, adhocFilters?: any, queryString?: string) {
+    return { query: queryString };
+  }
 }

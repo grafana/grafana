@@ -45,4 +45,16 @@ export class IndexPattern {
 
     return indexList;
   }
+
+  getPPLIndexPattern() {
+    // PPL currently does not support multi-indexing through lists, so a wildcard
+    // pattern is used to match all patterns and relies on the time range filter
+    // to filter out the incorrect indexes.
+    if (!this.interval) {
+      return this.pattern;
+    }
+
+    const indexPattern = this.pattern.match(/\[(.*)\]/)[1] + '*';
+    return indexPattern;
+  }
 }

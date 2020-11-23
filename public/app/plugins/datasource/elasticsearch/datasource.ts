@@ -1,15 +1,19 @@
 import angular from 'angular';
 import _ from 'lodash';
+import { from, merge, of, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import {
   DataSourceApi,
   DataSourceInstanceSettings,
   DataQueryRequest,
   DataQueryResponse,
   DataFrame,
+  LoadingState,
   ScopedVars,
   DataLink,
   PluginMeta,
   DataQuery,
+  dateTime,
 } from '@grafana/data';
 import LanguageProvider from './language_provider';
 import { ElasticResponse } from './elastic_response';
@@ -20,7 +24,7 @@ import * as queryDef from './query_def';
 import { getBackendSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
+import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery, ElasticsearchQueryType } from './types';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -52,6 +56,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   logLevelField?: string;
   dataLinks: DataLinkConfig[];
   languageProvider: LanguageProvider;
+  pplSupportEnabled?: boolean;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
@@ -78,7 +83,6 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     this.logMessageField = settingsData.logMessageField || '';
     this.logLevelField = settingsData.logLevelField || '';
     this.dataLinks = settingsData.dataLinks || [];
-
     if (this.logMessageField === '') {
       this.logMessageField = undefined;
     }
@@ -309,18 +313,28 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   private interpolateLuceneQuery(queryString: string, scopedVars: ScopedVars) {
-    // Elasticsearch queryString should always be '*' if empty string
+    // Elasticsearch Lucene queryString should always be '*' if empty string
     return this.templateSrv.replace(queryString, scopedVars, 'lucene') || '*';
+  }
+
+  private interpolatePPLQuery(queryString: string, scopedVars: ScopedVars) {
+    return this.templateSrv.replace(queryString, scopedVars, 'pipe');
   }
 
   interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length > 0) {
       expandedQueries = queries.map(query => {
+        let interpolatedQuery;
+        if (query.queryType === ElasticsearchQueryType.PPL) {
+          interpolatedQuery = this.interpolatePPLQuery(query.query || '', scopedVars);
+        } else {
+          interpolatedQuery = this.interpolateLuceneQuery(query.query || '', scopedVars);
+        }
         const expandedQuery = {
           ...query,
           datasource: this.name,
-          query: this.interpolateLuceneQuery(query.query || '', scopedVars),
+          query: interpolatedQuery,
         };
 
         for (let bucketAgg of query.bucketAggs || []) {
@@ -374,47 +388,60 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return angular.toJson(queryHeader);
   }
 
-  query(options: DataQueryRequest<ElasticsearchQuery>): Promise<DataQueryResponse> {
-    let payload = '';
+  query(options: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
     const targets = this.interpolateVariablesInQueries(_.cloneDeep(options.targets), options.scopedVars);
-    const sentTargets: ElasticsearchQuery[] = [];
 
-    // add global adhoc filters to timeFilter
-    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    const luceneTargets: ElasticsearchQuery[] = [];
+    const pplTargets: ElasticsearchQuery[] = [];
 
     for (const target of targets) {
       if (target.hide) {
         continue;
       }
 
-      let queryObj;
-      if (target.isLogsQuery || queryDef.hasMetricOfType(target, 'logs')) {
-        target.bucketAggs = [queryDef.defaultBucketAgg()];
-        target.metrics = [];
-        // Setting this for metrics queries that are typed as logs
-        target.isLogsQuery = true;
-        queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, target.query);
-      } else {
-        if (target.alias) {
-          target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
-        }
-
-        queryObj = this.queryBuilder.build(target, adhocFilters, target.query);
+      switch (target.queryType) {
+        case ElasticsearchQueryType.PPL:
+          pplTargets.push(target);
+          break;
+        case ElasticsearchQueryType.Lucene:
+        default:
+          luceneTargets.push(target);
       }
-
-      const esQuery = angular.toJson(queryObj);
-
-      const searchType = queryObj.size === 0 && this.esVersion < 5 ? 'count' : 'query_then_fetch';
-      const header = this.getQueryHeader(searchType, options.range.from, options.range.to);
-      payload += header + '\n';
-
-      payload += esQuery + '\n';
-
-      sentTargets.push(target);
     }
 
-    if (sentTargets.length === 0) {
-      return Promise.resolve({ data: [] });
+    const subQueries: Array<Observable<DataQueryResponse>> = [];
+    const luceneResponses = this.executeLuceneQueries(luceneTargets, options);
+    const pplResponses = this.executePPLQueries(pplTargets, options);
+    if (luceneResponses) {
+      subQueries.push(luceneResponses);
+    }
+    if (pplResponses) {
+      subQueries.push(pplResponses);
+    }
+    if (subQueries.length === 0) {
+      return of({
+        data: [],
+        state: LoadingState.Done,
+      });
+    }
+    return merge(...subQueries);
+  }
+
+  /**
+   * Execute all Lucene queries. Returns an Observable to be merged.
+   */
+  private executeLuceneQueries(
+    targets: ElasticsearchQuery[],
+    options: DataQueryRequest<ElasticsearchQuery>
+  ): Observable<DataQueryResponse> | undefined {
+    if (targets.length === 0) {
+      return;
+    }
+
+    let payload = '';
+
+    for (const target of targets) {
+      payload += this.createLuceneQuery(target, options);
     }
 
     // We replace the range here for actual values. We need to replace it together with enclosing "" so that we replace
@@ -425,21 +452,115 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     payload = payload.replace(/"\$timeTo"/g, options.range.to.valueOf().toString());
     payload = this.templateSrv.replace(payload, options.scopedVars);
 
-    const url = this.getMultiSearchUrl();
+    return from(this.post(this.getMultiSearchUrl(), payload)).pipe(
+      map((res: any) => {
+        const er = new ElasticResponse(targets, res);
 
-    return this.post(url, payload).then((res: any) => {
-      const er = new ElasticResponse(sentTargets, res);
-
-      if (sentTargets.some(target => target.isLogsQuery)) {
-        const response = er.getLogs(this.logMessageField, this.logLevelField);
-        for (const dataFrame of response.data) {
-          enhanceDataFrame(dataFrame, this.dataLinks);
+        if (targets.some(target => target.isLogsQuery)) {
+          const response = er.getLogs(this.logMessageField, this.logLevelField);
+          for (const dataFrame of response.data) {
+            enhanceDataFrame(dataFrame, this.dataLinks);
+          }
+          return response;
         }
-        return response;
-      }
 
-      return er.getTimeSeries();
-    });
+        return er.getTimeSeries();
+      })
+    );
+  }
+
+  /**
+   * Execute all PPL queries. Returns an Observable to be merged.
+   */
+  private executePPLQueries(
+    targets: ElasticsearchQuery[],
+    options: DataQueryRequest<ElasticsearchQuery>
+  ): Observable<DataQueryResponse> | undefined {
+    if (targets.length === 0) {
+      return;
+    }
+
+    const subQueries: Array<Observable<DataQueryResponse>> = [];
+
+    for (const target of targets) {
+      let payload = this.createPPLQuery(target, options);
+
+      const rangeFrom = dateTime(options.range.from.valueOf()).format('YYYY-MM-DD HH:mm:ss');
+      const rangeTo = dateTime(options.range.to.valueOf()).format('YYYY-MM-DD HH:mm:ss');
+      // Replace the range here for actual values.
+      payload = payload.replace(/\$timeTo/g, rangeTo);
+      payload = payload.replace(/\$timeFrom/g, rangeFrom);
+      payload = payload.replace(/\$timestamp/g, `\`${this.timeField}\``);
+      subQueries.push(
+        from(this.post(this.getPPLUrl(), payload)).pipe(
+          map((res: any) => {
+            const er = new ElasticResponse(targets, res, ElasticsearchQueryType.PPL);
+
+            if (targets.some(target => target.isLogsQuery)) {
+              const response = er.getLogs(this.logMessageField, this.logLevelField);
+              for (const dataFrame of response.data) {
+                enhanceDataFrame(dataFrame, this.dataLinks);
+              }
+              return response;
+            } else if (targets.some(target => target.format === 'table')) {
+              return er.getTable();
+            }
+            return er.getTimeSeries();
+          })
+        )
+      );
+    }
+    return merge(...subQueries);
+  }
+
+  /**
+   * Creates the payload string for a Lucene query
+   */
+  private createLuceneQuery(target: ElasticsearchQuery, options: DataQueryRequest<ElasticsearchQuery>): string {
+    let queryString = this.templateSrv.replace(target.query, options.scopedVars, 'lucene');
+    // add global adhoc filters to timeFilter
+    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    // Elasticsearch queryString should always be '*' if empty string
+    if (!queryString || queryString === '') {
+      queryString = '*';
+    }
+
+    let queryObj;
+    if (target.isLogsQuery || queryDef.hasMetricOfType(target, 'logs')) {
+      target.bucketAggs = [queryDef.defaultBucketAgg()];
+      target.metrics = [];
+      // Setting this for metrics queries that are typed as logs
+      target.isLogsQuery = true;
+      queryObj = this.queryBuilder.getLogsQuery(target, adhocFilters, queryString);
+    } else {
+      if (target.alias) {
+        target.alias = this.templateSrv.replace(target.alias, options.scopedVars, 'lucene');
+      }
+      queryObj = this.queryBuilder.build(target, adhocFilters, queryString);
+    }
+
+    const esQuery = angular.toJson(queryObj);
+    const searchType = queryObj.size === 0 && this.esVersion < 5 ? 'count' : 'query_then_fetch';
+    const header = this.getQueryHeader(searchType, options.range.from, options.range.to);
+    return header + '\n' + esQuery + '\n';
+  }
+
+  /**
+   * Creates the payload string for a PPL query
+   */
+  private createPPLQuery(target: ElasticsearchQuery, options: DataQueryRequest<ElasticsearchQuery>): string {
+    let queryString = this.templateSrv.replace(target.query, options.scopedVars, 'pipe');
+    let queryObj;
+
+    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+
+    // Elasticsearch PPL queryString should always be 'source=indexName' if empty string
+    if (!queryString || queryString === '') {
+      queryString = `source=\`${this.indexPattern.getPPLIndexPattern()}\``;
+    }
+
+    queryObj = this.queryBuilder.buildPPLQuery(target, adhocFilters, queryString);
+    return angular.toJson(queryObj);
   }
 
   isMetadataField(fieldName: string) {
@@ -563,9 +684,13 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   getMultiSearchUrl() {
     if (this.esVersion >= 70 && this.maxConcurrentShardRequests) {
       return `_msearch?max_concurrent_shard_requests=${this.maxConcurrentShardRequests}`;
+    } else {
+      return '_msearch';
     }
+  }
 
-    return '_msearch';
+  getPPLUrl() {
+    return '_opendistro/_ppl';
   }
 
   metricFindQuery(query: any) {

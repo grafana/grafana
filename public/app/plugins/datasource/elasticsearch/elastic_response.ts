@@ -10,12 +10,17 @@ import {
   MutableDataFrame,
   PreferredVisualisationType,
 } from '@grafana/data';
-import { ElasticsearchAggregation } from './types';
+import { ElasticsearchAggregation, ElasticsearchQueryType } from './types';
 
 export class ElasticResponse {
-  constructor(private targets: any, private response: any) {
+  constructor(
+    private targets: any,
+    private response: any,
+    private targetType: ElasticsearchQueryType = ElasticsearchQueryType.Lucene
+  ) {
     this.targets = targets;
     this.response = response;
+    this.targetType = targetType;
   }
 
   processMetrics(esAgg: any, target: any, seriesList: any, props: any) {
@@ -395,14 +400,23 @@ export class ElasticResponse {
   }
 
   getTimeSeries() {
-    if (this.targets.some((target: any) => target.metrics.some((metric: any) => metric.type === 'raw_data'))) {
+    if (this.targetType === ElasticsearchQueryType.PPL) {
+      return { data: [] };
+    } else if (this.targets.some((target: any) => target.metrics.some((metric: any) => metric.type === 'raw_data'))) {
       return this.processResponseToDataFrames(false);
     }
     return this.processResponseToSeries();
   }
 
   getLogs(logMessageField?: string, logLevelField?: string): DataQueryResponse {
+    if (this.targetType === ElasticsearchQueryType.PPL) {
+      return { data: [] };
+    }
     return this.processResponseToDataFrames(true, logMessageField, logLevelField);
+  }
+
+  getTable(): DataQueryResponse {
+    return { data: [] };
   }
 
   processResponseToDataFrames(
