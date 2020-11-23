@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -118,6 +119,25 @@ func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON.Set("monitoring_tool", "Grafana v"+setting.BuildVersion)
 	bodyJSON.Set("alert_url", ruleURL)
 	bodyJSON.Set("metrics", fields)
+
+	for _, tag := range evalContext.Rule.AlertRuleTags {
+		// Override tags appropriately if they are in the PagerDuty v2 API
+		switch strings.ToLower(tag.Key) {
+		case "severity":
+			// Only set severity if it's one of the PD supported enum values
+			// Info, Warning, Error, or Critical (case insensitive)
+			switch sev := strings.ToUpper(tag.Value); sev {
+			case "INFO":
+				fallthrough
+			case "WARNING":
+				fallthrough
+			case "CRITICAL":
+				bodyJSON.Set("message_type", sev)
+			default:
+				vn.log.Warn("Ignoring invalid severity tag", "severity", sev)
+			}
+		}
+	}
 
 	if evalContext.Error != nil {
 		bodyJSON.Set("error_message", evalContext.Error.Error())
