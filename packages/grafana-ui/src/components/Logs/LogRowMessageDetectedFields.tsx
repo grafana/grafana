@@ -12,7 +12,7 @@ export interface Props extends Themeable {
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
-class UnThemedLogRowMessageParsed extends PureComponent<Props> {
+class UnThemedLogRowMessageDetectedFields extends PureComponent<Props> {
   render() {
     const { row, showDetectedFields, getFieldLinks } = this.props;
     const fields = getAllFields(row, getFieldLinks);
@@ -37,5 +37,5 @@ class UnThemedLogRowMessageParsed extends PureComponent<Props> {
   }
 }
 
-export const LogRowMessageParsed = withTheme(UnThemedLogRowMessageParsed);
-LogRowMessageParsed.displayName = 'LogRowMessageParsed';
+export const LogRowMessageDetectedFields = withTheme(UnThemedLogRowMessageDetectedFields);
+LogRowMessageDetectedFields.displayName = 'LogRowMessageDetectedFields';

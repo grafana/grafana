@@ -29,7 +29,7 @@ import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 //Components
 import { LogDetails } from './LogDetails';
-import { LogRowMessageParsed } from './LogRowMessageParsed';
+import { LogRowMessageDetectedFields } from './LogRowMessageDetectedFields';
 import { LogRowMessage } from './LogRowMessage';
 import { LogLabels } from './LogLabels';
 
@@ -199,7 +199,11 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             </td>
           )}
           {showDetectedFields && showDetectedFields.length > 0 ? (
-            <LogRowMessageParsed row={row} showDetectedFields={showDetectedFields!} getFieldLinks={getFieldLinks} />
+            <LogRowMessageDetectedFields
+              row={row}
+              showDetectedFields={showDetectedFields!}
+              getFieldLinks={getFieldLinks}
+            />
           ) : (
             <LogRowMessage
               highlighterExpressions={highlighterExpressions}
