@@ -14,7 +14,8 @@ import (
 )
 
 type execFunc func() *httptest.ResponseRecorder
-type rateLimiterScenarioFunc func(c execFunc)
+type advanceTimeFunc func(deltaTime time.Duration)
+type rateLimiterScenarioFunc func(c execFunc, t advanceTimeFunc)
 
 func rateLimiterScenario(t *testing.T, desc string, rps int, burst int, fn rateLimiterScenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
@@ -29,7 +30,10 @@ func rateLimiterScenario(t *testing.T, desc string, rps int, burst int, fn rateL
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 		}))
 		m.Use(GetContextHandler(nil, nil, nil))
-		m.Get("/foo", RateLimit(rps, burst), defaultHandler)
+
+		currentTime := time.Now()
+
+		m.Get("/foo", RateLimit(rps, burst, func() time.Time { return currentTime }), defaultHandler)
 
 		fn(func() *httptest.ResponseRecorder {
 			resp := httptest.NewRecorder()
@@ -37,12 +41,14 @@ func rateLimiterScenario(t *testing.T, desc string, rps int, burst int, fn rateL
 			require.NoError(t, err)
 			m.ServeHTTP(resp, req)
 			return resp
+		}, func(deltaTime time.Duration) {
+			currentTime = currentTime.Add(deltaTime)
 		})
 	})
 }
 
 func TestRateLimitMiddleware(t *testing.T) {
-	rateLimiterScenario(t, "rate limit calls, with burst", 10, 10, func(doReq execFunc) {
+	rateLimiterScenario(t, "rate limit calls, with burst", 10, 10, func(doReq execFunc, advanceTime advanceTimeFunc) {
 		// first 10 calls succeed
 		for i := 0; i < 10; i++ {
 			resp := doReq()
@@ -53,8 +59,8 @@ func TestRateLimitMiddleware(t *testing.T) {
 		resp := doReq()
 		assert.Equal(t, 429, resp.Code)
 
-		// wait 1 second for limiter tokens to appear, check that requests are accepted again
-		time.Sleep(1 * time.Second)
+		// check that requests are accepted again in 1 sec
+		advanceTime(1 * time.Second)
 
 		for i := 0; i < 10; i++ {
 			resp := doReq()
@@ -62,7 +68,7 @@ func TestRateLimitMiddleware(t *testing.T) {
 		}
 	})
 
-	rateLimiterScenario(t, "rate limit calls, no burst", 10, 1, func(doReq execFunc) {
+	rateLimiterScenario(t, "rate limit calls, no burst", 10, 1, func(doReq execFunc, advanceTime advanceTimeFunc) {
 		// first calls succeeds
 		resp := doReq()
 		assert.Equal(t, 200, resp.Code)
@@ -73,7 +79,7 @@ func TestRateLimitMiddleware(t *testing.T) {
 
 		// but spacing calls out works
 		for i := 0; i < 10; i++ {
-			time.Sleep(100 * time.Millisecond)
+			advanceTime(100 * time.Millisecond)
 			resp := doReq()
 			assert.Equal(t, 200, resp.Code)
 		}
