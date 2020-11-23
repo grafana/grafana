@@ -146,9 +146,10 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsAuth                 | boolean | _All_                                                            | Enable TLS authentication using client cert configured in secure json data                  |
 | tlsAuthWithCACert       | boolean | _All_                                                            | Enable TLS authentication using CA cert                                                     |
 | tlsSkipVerify           | boolean | _All_                                                            | Controls whether a client verifies the server's certificate chain and host name.            |
-| servername              | string  | _All_                                                            | Optional. Controls the server name used for certificate common name/subject alternative name verification. Empty defaults to using the datasource url. |
+| serverName              | string  | _All_                                                            | Optional. Controls the server name used for certificate common name/subject alternative name verification. Empty defaults to using the data
+source URL. |
 | graphiteVersion         | string  | Graphite                                                         | Graphite version                                                                            |
-| timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL  | Lowest interval/step value that should be used for this data source                         |
+| timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL, and MSSQL  | Lowest interval/step value that should be used for this data source                         |
 | httpMode                | string  | Influxdb                                                          | HTTP Method. 'GET', 'POST', defaults to GET                                                |
 | httpMethod              | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to GET                                                |
 | esVersion               | number  | Elasticsearch                                                    | Elasticsearch version as a number (2/5/56/60/70)                                            |
