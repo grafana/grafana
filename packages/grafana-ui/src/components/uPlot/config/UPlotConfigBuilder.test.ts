@@ -72,13 +72,15 @@ describe('UPlotConfigBuilder', () => {
       Object {
         "axes": Array [
           Object {
-            "font": "12px Roboto",
+            "font": "12px 'Roboto'",
             "grid": Object {
               "show": false,
               "stroke": "#ffffff",
               "width": 1,
             },
             "label": "test label",
+            "labelFont": "12px 'Roboto'",
+            "labelSize": 18,
             "scale": "scale-x",
             "show": true,
             "side": 2,
