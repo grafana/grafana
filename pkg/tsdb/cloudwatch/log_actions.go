@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -258,11 +259,11 @@ func (e *cloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cl
 
 	response, err := logsClient.StopQueryWithContext(ctx, queryInput)
 	if err != nil {
-		awsErr, ok := err.(awserr.Error)
 		// If the query has already stopped by the time CloudWatch receives the stop query request,
 		// an "InvalidParameterException" error is returned. For our purposes though the query has been
 		// stopped, so we ignore the error.
-		if ok && awsErr.Code() == "InvalidParameterException" {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "InvalidParameterException" {
 			response = &cloudwatchlogs.StopQueryOutput{Success: aws.Bool(false)}
 			err = nil
 		}

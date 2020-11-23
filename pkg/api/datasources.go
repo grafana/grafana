@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -64,7 +65,7 @@ func GetDataSourceById(c *models.ReqContext) Response {
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrDataSourceNotFound {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return Error(404, "Data source not found", nil)
 		}
 		return Error(500, "Failed to query datasources", err)
@@ -111,7 +112,7 @@ func DeleteDataSourceByName(c *models.ReqContext) Response {
 
 	getCmd := &models.GetDataSourceByNameQuery{Name: name, OrgId: c.OrgId}
 	if err := bus.Dispatch(getCmd); err != nil {
-		if err == models.ErrDataSourceNotFound {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return Error(404, "Data source not found", nil)
 		}
 		return Error(500, "Failed to delete datasource", err)
@@ -153,7 +154,7 @@ func AddDataSource(c *models.ReqContext, cmd models.AddDataSourceCommand) Respon
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrDataSourceNameExists || err == models.ErrDataSourceUidExists {
+		if errors.Is(err, models.ErrDataSourceNameExists) || errors.Is(err, models.ErrDataSourceUidExists) {
 			return Error(409, err.Error(), err)
 		}
 
@@ -184,7 +185,7 @@ func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) 
 
 	err = bus.Dispatch(&cmd)
 	if err != nil {
-		if err == models.ErrDataSourceUpdatingOldVersion {
+		if errors.Is(err, models.ErrDataSourceUpdatingOldVersion) {
 			return Error(500, "Failed to update datasource. Reload new version and try again", err)
 		}
 		return Error(500, "Failed to update datasource", err)
@@ -196,7 +197,7 @@ func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) 
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrDataSourceNotFound {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return Error(404, "Data source not found", nil)
 		}
 		return Error(500, "Failed to query datasources", err)
@@ -254,7 +255,7 @@ func GetDataSourceByName(c *models.ReqContext) Response {
 	query := models.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrDataSourceNotFound {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return Error(404, "Data source not found", nil)
 		}
 		return Error(500, "Failed to query datasources", err)
@@ -269,7 +270,7 @@ func GetDataSourceIdByName(c *models.ReqContext) Response {
 	query := models.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrDataSourceNotFound {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return Error(404, "Data source not found", nil)
 		}
 		return Error(500, "Failed to query datasources", err)
@@ -288,7 +289,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 	datasourceID := c.ParamsInt64(":id")
 	ds, err := hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 	if err != nil {
-		if err == models.ErrDataSourceAccessDenied {
+		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			c.JsonApiErr(403, "Access denied to datasource", err)
 			return
 		}
@@ -355,7 +356,7 @@ func (hs *HTTPServer) CheckDatasourceHealth(c *models.ReqContext) Response {
 
 	ds, err := hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 	if err != nil {
-		if err == models.ErrDataSourceAccessDenied {
+		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			return Error(403, "Access denied to datasource", err)
 		}
 		return Error(500, "Unable to load datasource metadata", err)

@@ -58,6 +58,35 @@ func addAlertMigrations(mg *Migrator) {
 	mg.AddMigration("Create alert_rule_tag table v1", NewAddTableMigration(alertRuleTagTable))
 	mg.AddMigration("Add unique index alert_rule_tag.alert_id_tag_id", NewAddIndexMigration(alertRuleTagTable, alertRuleTagTable.Indices[0]))
 
+	// drop alert_rule_tag indexes
+	addDropAllIndicesMigrations(mg, "v1", alertRuleTagTable)
+	// rename table
+	addTableRenameMigration(mg, "alert_rule_tag", "alert_rule_tag_v1", "v1")
+
+	// alert_rule_tag V2
+	alertRuleTagTableV2 := Table{
+		Name: "alert_rule_tag",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "alert_id", Type: DB_BigInt, Nullable: false},
+			{Name: "tag_id", Type: DB_BigInt, Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"alert_id", "tag_id"}, Type: UniqueIndex},
+		},
+	}
+	// recreate table
+	mg.AddMigration("Create alert_rule_tag table v2", NewAddTableMigration(alertRuleTagTableV2))
+	// recreate indices
+	addTableIndicesMigrations(mg, "Add unique index alert_rule_tag.alert_id_tag_id V2", alertRuleTagTableV2)
+	// copy data
+	mg.AddMigration("copy alert_rule_tag v1 to v2", NewCopyTableDataMigration("alert_rule_tag", "alert_rule_tag_v1", map[string]string{
+		"alert_id": "alert_id",
+		"tag_id":   "tag_id",
+	}))
+
+	mg.AddMigration("drop table alert_rule_tag_v1", NewDropTableMigration("alert_rule_tag_v1"))
+
 	alert_notification := Table{
 		Name: "alert_notification",
 		Columns: []*Column{

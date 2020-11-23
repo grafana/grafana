@@ -32,10 +32,6 @@ func (q *UserQuota) ToMap() map[string]int64 {
 	return quotaToMap(*q)
 }
 
-func (q *GlobalQuota) ToMap() map[string]int64 {
-	return quotaToMap(*q)
-}
-
 func quotaToMap(q interface{}) map[string]int64 {
 	qMap := make(map[string]int64)
 	typ := reflect.TypeOf(q)

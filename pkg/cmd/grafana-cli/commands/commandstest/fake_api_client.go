@@ -12,9 +12,9 @@ type FakeGrafanaComClient struct {
 	ListAllPluginsFunc func(repoUrl string) (models.PluginRepo, error)
 }
 
-func (client *FakeGrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plugin, error) {
+func (client *FakeGrafanaComClient) GetPlugin(pluginID, repoUrl string) (models.Plugin, error) {
 	if client.GetPluginFunc != nil {
-		return client.GetPluginFunc(pluginId, repoUrl)
+		return client.GetPluginFunc(pluginID, repoUrl)
 	}
 
 	return models.Plugin{}, nil
@@ -28,9 +28,9 @@ func (client *FakeGrafanaComClient) DownloadFile(pluginName string, tmpFile *os.
 	return nil
 }
 
-func (client *FakeGrafanaComClient) ListAllPlugins(repoUrl string) (models.PluginRepo, error) {
+func (client *FakeGrafanaComClient) ListAllPlugins(repoURL string) (models.PluginRepo, error) {
 	if client.ListAllPluginsFunc != nil {
-		return client.ListAllPluginsFunc(repoUrl)
+		return client.ListAllPluginsFunc(repoURL)
 	}
 	return models.PluginRepo{}, nil
 }

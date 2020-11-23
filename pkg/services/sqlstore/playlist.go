@@ -108,7 +108,7 @@ func GetPlaylist(query *models.GetPlaylistByIdQuery) error {
 }
 
 func DeletePlaylist(cmd *models.DeletePlaylistCommand) error {
-	if cmd.Id == 0 {
+	if cmd.Id == 0 || cmd.OrgId == 0 {
 		return models.ErrCommandValidationFailed
 	}
 

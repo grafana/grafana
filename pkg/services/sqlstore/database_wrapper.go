@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"errors"
 	"time"
 
 	"github.com/gchaincl/sqlhooks"
@@ -87,7 +88,7 @@ func (h *databaseQueryWrapper) After(ctx context.Context, query string, args ...
 func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query string, args ...interface{}) error {
 	status := "error"
 	// https://golang.org/pkg/database/sql/driver/#ErrSkip
-	if err == nil || err == driver.ErrSkip {
+	if err == nil || errors.Is(err, driver.ErrSkip) {
 		status = "success"
 	}
 

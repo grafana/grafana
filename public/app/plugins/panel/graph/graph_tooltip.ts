@@ -102,17 +102,11 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
         minTime = pointTime;
       }
 
-      if (series.stack) {
-        if (panel.tooltip.value_type === 'individual') {
-          value = series.data[hoverIndex][1];
-        } else if (!series.stack) {
-          value = series.data[hoverIndex][1];
-        } else {
-          lastValue += series.data[hoverIndex][1];
-          value = lastValue;
-        }
-      } else {
-        value = series.data[hoverIndex][1];
+      value = series.data[hoverIndex][1];
+
+      if (series.stack && value !== null && panel.tooltip.value_type !== 'individual') {
+        lastValue += value;
+        value = lastValue;
       }
 
       // Highlighting multiple Points depending on the plot type
