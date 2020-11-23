@@ -36,11 +36,11 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
 
     let config: Axis = {
       scale: scaleKey,
-      label,
       show,
       stroke: theme.colors.text,
       side: getUPlotSideFromAxis(placement),
-      font: '12px Roboto',
+      font: `12px 'Roboto'`,
+      labelFont: `12px 'Roboto'`,
       size: calculateAxisSize,
       grid: {
         show: grid,
@@ -55,6 +55,11 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       values: values,
       space: calculateSpace,
     };
+
+    if (label !== undefined && label !== null && label.length > 0) {
+      config.label = label;
+      config.labelSize = 18;
+    }
 
     if (values) {
       config.values = values;
@@ -101,7 +106,8 @@ function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
     }
   }
 
-  return measureText(maxLength, 12).width - 8;
+  let axisWidth = measureText(maxLength, 12).width + 18;
+  return axisWidth;
 }
 
 /** Format time axis ticks */
