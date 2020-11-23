@@ -16,6 +16,8 @@ type AlertDefinition struct {
 	Condition string
 	Data      []eval.AlertQuery
 	Updated   int64
+	// Interval in seconds
+	Interval int64
 }
 
 var (
@@ -93,5 +95,9 @@ type listAlertDefinitionsCommand struct {
 type listUpdatedAlertDefinitionsCommand struct {
 	Since time.Time `json:"-"`
 
-	Result []*int64
+	Result []alertDefinitionListDTO
+}
+type alertDefinitionListDTO struct {
+	id       int64
+	interval string
 }

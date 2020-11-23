@@ -3,6 +3,7 @@ package ngalert
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 
@@ -46,7 +47,7 @@ func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertCond
 		toStr = "now"
 	}
 
-	execResult, err := dto.Condition.Execute(alertExecCtx, fromStr, toStr)
+	execResult, err := dto.Condition.Execute(alertExecCtx, time.Now())
 	if err != nil {
 		return api.Error(400, "Failed to execute conditions", err)
 	}
@@ -82,7 +83,7 @@ func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) api.Respons
 		toStr = "now"
 	}
 
-	df, err := ng.alertDefinitionEval(alertDefinitionID, fromStr, toStr)
+	df, err := ng.alertDefinitionEval(alertDefinitionID, time.Now())
 	if err != nil {
 		return api.Error(400, "Failed to encode result dataframes", err)
 	}
@@ -92,7 +93,7 @@ func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) api.Respons
 	})
 }
 
-func (ng *AlertNG) alertDefinitionEval(alertDefinitionID int64, fromStr string, toStr string) (*tsdb.DataFrames, error) {
+func (ng *AlertNG) alertDefinitionEval(alertDefinitionID int64, now time.Time) (*tsdb.DataFrames, error) {
 	conditions, err := ng.LoadAlertCondition(alertDefinitionID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load conditions: %w", err)
@@ -103,7 +104,7 @@ func (ng *AlertNG) alertDefinitionEval(alertDefinitionID int64, fromStr string, 
 
 	alertExecCtx := eval.AlertExecCtx{AlertDefitionID: alertDefinitionID, Ctx: alertCtx}
 
-	execResult, err := conditions.Execute(alertExecCtx, fromStr, toStr)
+	execResult, err := conditions.Execute(alertExecCtx, now)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute conditions: %w", err)
 	}

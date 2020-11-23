@@ -1,6 +1,8 @@
 package ngalert
 
 import (
+	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -21,6 +23,7 @@ type AlertNG struct {
 	RouteRegister   routing.RouteRegister    `inject:""`
 	SQLStore        *sqlstore.SQLStore       `inject:""`
 	log             log.Logger
+	schedule        schedule
 }
 
 func init() {
@@ -33,6 +36,12 @@ func (ng *AlertNG) Init() error {
 
 	ng.registerAPIEndpoints()
 
+	ng.schedule = schedule{
+		baseInterval: time.Second,
+		channelMap:   channelMap{definionCh: make(map[int64]definitionCh)},
+		stop:         make(chan int64),
+	}
+	ng.schedule.ctx, ng.schedule.cancelFunc = context.WithCancel(context.Background())
 	return nil
 }
 
@@ -78,6 +87,10 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 
 	mg.AddMigration("add index alert_definition updated", migrator.NewAddIndexMigration(alertDefinition, &migrator.Index{
 		Cols: []string{"updated"}, Type: migrator.IndexType,
+	}))
+
+	mg.AddMigration("add column interval", migrator.NewAddColumnMigration(alertDefinition, &migrator.Column{
+		Name: "interval", Type: migrator.DB_BigInt, Nullable: false, Default: "60",
 	}))
 }
 

@@ -120,15 +120,15 @@ func (ng *AlertNG) getOrgAlertDefinitions(cmd *listAlertDefinitionsCommand) erro
 	})
 }
 
-func (ng *AlertNG) getUpdatedAlertDefinitions(cmd listUpdatedAlertDefinitionsCommand) error {
-	alertIDs := make([]*int64, 0)
+func (ng *AlertNG) getAlertDefinitions(cmd *listAlertDefinitionsCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		q := "SELECT id FROM alert_definition WHERE updated >= ?"
-		if err := sess.SQL(q, cmd.Since.Unix()).Find(&alertIDs); err != nil {
+		alerts := make([]*AlertDefinition, 0)
+		q := "SELECT id, interval FROM alert_definition"
+		if err := sess.SQL(q).Find(&alerts); err != nil {
 			return err
 		}
 
-		cmd.Result = alertIDs
+		cmd.Result = alerts
 		return nil
 	})
 }

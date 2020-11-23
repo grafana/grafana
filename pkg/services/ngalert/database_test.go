@@ -167,7 +167,7 @@ func TestDeletingAlertDefinition(t *testing.T) {
 	})
 }
 
-func setupTestEnv(t *testing.T) AlertNG {
+func setupTestEnv(t *testing.T) *AlertNG {
 	sqlStore := sqlstore.InitTestDB(t)
 	cfg := setting.Cfg{}
 	cfg.FeatureToggles = map[string]bool{"ngalert": true}
@@ -175,10 +175,10 @@ func setupTestEnv(t *testing.T) AlertNG {
 		SQLStore: sqlStore,
 		Cfg:      &cfg,
 	}
-	return ng
+	return &ng
 }
 
-func createTestAlertDefinition(t *testing.T, ng AlertNG) *AlertDefinition {
+func createTestAlertDefinition(t *testing.T, ng *AlertNG) *AlertDefinition {
 	cmd := saveAlertDefinitionCommand{
 		OrgID: 1,
 		Name:  "an alert definition",

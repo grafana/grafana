@@ -90,7 +90,7 @@ type AlertExecCtx struct {
 }
 
 // Execute runs the Condition's expressions or queries.
-func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*ExecutionResults, error) {
+func (c *Condition) Execute(ctx AlertExecCtx, now time.Time) (*ExecutionResults, error) {
 	result := ExecutionResults{}
 	if !c.IsValid() {
 		return nil, fmt.Errorf("invalid conditions")
@@ -125,7 +125,7 @@ func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*Execution
 			RefID:         q.RefID,
 			MaxDataPoints: maxDatapoints,
 			QueryType:     q.QueryType,
-			TimeRange:     q.RelativeTimeRange.toTimeRange(time.Now()),
+			TimeRange:     q.RelativeTimeRange.toTimeRange(now),
 		})
 	}
 
