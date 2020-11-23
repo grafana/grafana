@@ -109,6 +109,8 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 				if tick.Unix()%item.Interval == 0 {
 					readyToRun = append(readyToRun, readyToRunItem{id: item.Id, definitionCh: definitionCh})
 				}
+
+				delete(registeredDefinitions, item.Id)
 			}
 
 			if len(readyToRun) == 0 {
@@ -120,9 +122,6 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 			// send loop is only required for distribute evaluations across time within an interval
 			for _, item := range readyToRun {
 				item.definitionCh.ch <- &evalContext{now: tick}
-
-				delete(registeredDefinitions, item.id)
-
 				time.Sleep(time.Duration(step))
 			}
 
