@@ -91,13 +91,3 @@ type listAlertDefinitionsCommand struct {
 
 	Result []*AlertDefinition
 }
-
-type listUpdatedAlertDefinitionsCommand struct {
-	Since time.Time `json:"-"`
-
-	Result []alertDefinitionListDTO
-}
-type alertDefinitionListDTO struct {
-	id       int64
-	interval string
-}

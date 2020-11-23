@@ -14,7 +14,7 @@ func (ng *AlertNG) definitionRoutine(definitionID int64, evalCh <-chan *evalCont
 
 	evalRunning := false
 	var lastEvalStarted, lastEvalEnded time.Time
-	//TODO retry
+	// TODO retry
 	for {
 		select {
 		case ctx := <-evalCh:
@@ -39,7 +39,7 @@ func (ng *AlertNG) definitionRoutine(definitionID int64, evalCh <-chan *evalCont
 			}
 		case id := <-ng.schedule.stop:
 			if id == definitionID {
-				//TODO what if it's running
+				// TODO what if it's running
 				return
 			}
 		}
@@ -65,7 +65,7 @@ type schedule struct {
 	// update a specific routine if it is
 	channelMap channelMap
 
-	//broadcast channel for stopping definition routines
+	// broadcast channel for stopping definition routines
 	stop chan int64
 
 	cancelFunc context.CancelFunc
@@ -82,15 +82,15 @@ func (sched *schedule) stopDefinitionRoutine(definitionID int64) {
 // Run starts the scheduler
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.log.Debug("ngalert starting")
-	heartbeat := time.Tick(ng.schedule.baseInterval)
+	heartbeat := time.NewTicker(ng.schedule.baseInterval)
 	var lastFetchTime time.Time
 	for {
 		select {
-		case tick := <-heartbeat:
+		case tick := <-heartbeat.C:
 			alertDefinitions := ng.fetchAlertDefinitions(lastFetchTime)
 			ng.log.Debug("alert definitions fetched", "count", len(alertDefinitions))
 
-			//this is used for identify deleted alert definitions
+			// this is used for identify deleted alert definitions
 			registeredDefinitions := ng.schedule.channelMap.keyMap()
 
 			type readyToRunItem struct {
@@ -117,7 +117,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 
 			step := int(ng.schedule.baseInterval.Nanoseconds()) / len(readyToRun)
 
-			//send loop is only required for swifting alert definition evaluations
+			// send loop is only required for distribute evaluations across time within an interval
 			for _, item := range readyToRun {
 				item.definitionCh.ch <- &evalContext{now: tick}
 
@@ -126,9 +126,10 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 				time.Sleep(time.Duration(step))
 			}
 
-			//the remaining definitions are the deleted ones
+			// the remaining definitions are the deleted ones
 			for id := range registeredDefinitions {
 				ng.schedule.stopDefinitionRoutine(id)
+				ng.schedule.channelMap.del(id)
 			}
 
 			lastFetchTime = tick
@@ -138,10 +139,9 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 			return ng.schedule.ctx.Err()
 		}
 	}
-
 }
 
-//Close sends a signal for closing all routines and waits for them to get closed.
+// Close sends a signal for closing all routines and waits for them to get closed.
 func (ng *AlertNG) Close() {
 	ng.schedule.cancelFunc()
 	ng.schedule.alertDefinitionsRunning.Wait()
@@ -199,7 +199,7 @@ func (chm *channelMap) iter() <-chan int64 {
 }
 
 func (chm *channelMap) keyMap() map[int64]struct{} {
-	definitionsIDs := make(map[int64]struct{}, 0)
+	definitionsIDs := make(map[int64]struct{})
 	for definitionID := range chm.iter() {
 		definitionsIDs[definitionID] = struct{}{}
 	}

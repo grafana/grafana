@@ -37,17 +37,7 @@ func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertCond
 
 	alertExecCtx := eval.AlertExecCtx{Ctx: alertCtx}
 
-	fromStr := c.Query("from")
-	if fromStr == "" {
-		fromStr = "now-3h"
-	}
-
-	toStr := c.Query("to")
-	if toStr == "" {
-		toStr = "now"
-	}
-
-	execResult, err := dto.Condition.Execute(alertExecCtx, time.Now())
+	execResult, err := dto.Condition.Execute(alertExecCtx, timeNow())
 	if err != nil {
 		return api.Error(400, "Failed to execute conditions", err)
 	}
@@ -73,21 +63,14 @@ func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertCond
 func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) api.Response {
 	alertDefinitionID := c.ParamsInt64(":alertDefinitionId")
 
-	fromStr := c.Query("from")
-	if fromStr == "" {
-		fromStr = "now-3h"
+	df, err := ng.alertDefinitionEval(alertDefinitionID, timeNow())
+	if err != nil {
+		return api.Error(400, "Failed to evaludate alert", err)
 	}
-
-	toStr := c.Query("to")
-	if toStr == "" {
-		toStr = "now"
-	}
-
-	df, err := ng.alertDefinitionEval(alertDefinitionID, time.Now())
+	instances, err := (*df).Encoded()
 	if err != nil {
 		return api.Error(400, "Failed to encode result dataframes", err)
 	}
-	instances, err := (*df).Encoded()
 	return api.JSON(200, util.DynMap{
 		"instances": instances,
 	})
