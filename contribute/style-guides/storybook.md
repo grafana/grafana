@@ -189,7 +189,7 @@ The [button story](https://github.com/grafana/grafana/blob/master/packages/grafa
     };
     ```
 
-6.  If the component has advanced props type (ie. other than string, number, boolean). You need to
+6.  If the component has advanced props type (ie. other than string, number, boolean), you need to
     specify these in an `argTypes`. This is done in the default export of the story.
 
     ```tsx
