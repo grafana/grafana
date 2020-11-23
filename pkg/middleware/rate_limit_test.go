@@ -53,7 +53,7 @@ func TestRateLimitMiddleware(t *testing.T) {
 		resp := doReq()
 		assert.Equal(t, 429, resp.Code)
 
-		// wait 1 for limiter tokens to appear, check that requests are accepted again
+		// wait 1 second for limiter tokens to appear, check that requests are accepted again
 		time.Sleep(1 * time.Second)
 
 		for i := 0; i < 10; i++ {
