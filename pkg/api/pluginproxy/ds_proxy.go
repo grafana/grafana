@@ -257,8 +257,8 @@ func (proxy *DataSourceProxy) validateRequest() error {
 		if proxy.ctx.Req.Request.Method == "PUT" {
 			return errors.New("puts not allowed on proxied Elasticsearch datasource")
 		}
-		if proxy.ctx.Req.Request.Method == "POST" && proxy.proxyPath != "_msearch" {
-			return errors.New("posts not allowed on proxied Elasticsearch datasource except on /_msearch")
+		if proxy.ctx.Req.Request.Method == "POST" && !(proxy.proxyPath == "_msearch" || proxy.proxyPath == "_opendistro/_ppl") {
+			return errors.New("posts not allowed on proxied Elasticsearch datasource except on /_msearch or /_opendistro/_ppl")
 		}
 	}
 

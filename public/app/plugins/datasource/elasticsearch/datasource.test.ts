@@ -1,4 +1,5 @@
 import angular from 'angular';
+import { first } from 'rxjs/operators';
 import {
   ArrayVector,
   CoreApp,
@@ -15,7 +16,7 @@ import { ElasticDatasource, enhanceDataFrame } from './datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
-import { ElasticsearchOptions, ElasticsearchQuery } from './types';
+import { ElasticsearchOptions, ElasticsearchQuery, ElasticsearchQueryType } from './types';
 
 const ELASTICSEARCH_MOCK_URL = 'http://elasticsearch.local';
 
@@ -154,7 +155,10 @@ describe('ElasticDatasource', function(this: any) {
         ],
       };
 
-      result = await ctx.ds.query(query);
+      result = await ctx.ds
+        .query(query)
+        .pipe(first())
+        .toPromise();
 
       parts = requestOptions.data.split('\n');
       header = angular.fromJson(parts[0]);
@@ -215,7 +219,10 @@ describe('ElasticDatasource', function(this: any) {
       };
 
       const queryBuilderSpy = jest.spyOn(ctx.ds.queryBuilder, 'getLogsQuery');
-      const response = await ctx.ds.query(query);
+      const response = await ctx.ds
+        .query(query)
+        .pipe(first())
+        .toPromise();
       return { queryBuilderSpy, response };
     }
 
@@ -842,6 +849,102 @@ describe('ElasticDatasource', function(this: any) {
     });
   });
 
+  describe('When issuing PPL query', () => {
+    async function setupDataSource(targets: ElasticsearchQuery[]) {
+      let payloads: any[] = [];
+
+      createDatasource({
+        url: ELASTICSEARCH_MOCK_URL,
+        database: 'test',
+        jsonData: { esVersion: 70, pplSupportEnabled: true } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
+
+      datasourceRequestMock.mockImplementation(options => {
+        const requestOptions = options;
+        const parts = requestOptions.data.split('\n');
+        const payload = angular.fromJson(parts[0]);
+        payloads.push(payload);
+        return Promise.resolve({ data: { responses: [] } });
+      });
+
+      const query = {
+        range: {
+          from: dateTime([2015, 4, 30, 10]),
+          to: dateTime([2015, 5, 1, 10]),
+        },
+        targets,
+      };
+
+      const queryBuilderSpy = jest.spyOn(ctx.ds.queryBuilder, 'buildPPLQuery');
+      await ctx.ds.query(query);
+      return { queryBuilderSpy, payloads };
+    }
+
+    it('should change empty PPL query to query configured index', async () => {
+      const targets = [
+        {
+          queryType: ElasticsearchQueryType.PPL,
+          query: '',
+          refId: '',
+          isLogsQuery: false,
+        },
+      ];
+      const { payloads } = await setupDataSource(targets);
+      expect(payloads[0].query.startsWith('source=`test`')).toBe(true);
+    });
+
+    it('should call buildPPLQuery()', async () => {
+      const targets = [
+        {
+          queryType: ElasticsearchQueryType.PPL,
+          query: '',
+          refId: '',
+          isLogsQuery: false,
+        },
+      ];
+      const { queryBuilderSpy } = await setupDataSource(targets);
+      expect(queryBuilderSpy).toHaveBeenCalled();
+    });
+
+    it('should handle multiple PPL queries', async () => {
+      const targets = [
+        {
+          queryType: ElasticsearchQueryType.PPL,
+          query: '',
+          refId: 'A',
+          isLogsQuery: false,
+        },
+        {
+          queryType: ElasticsearchQueryType.PPL,
+          query: '',
+          refId: 'B',
+          isLogsQuery: false,
+        },
+      ];
+      await setupDataSource(targets);
+      expect(datasourceRequestMock).toBeCalledTimes(2);
+    });
+
+    it('should handle both Lucene and PPL queries together', async () => {
+      const targets = [
+        {
+          queryType: ElasticsearchQueryType.PPL,
+          query: '',
+          refId: 'A',
+          isLogsQuery: false,
+        },
+        {
+          queryType: ElasticsearchQueryType.Lucene,
+          query: '*',
+          refId: 'B',
+          isLogsQuery: false,
+        },
+      ];
+      await setupDataSource(targets);
+      expect(datasourceRequestMock).toBeCalledTimes(2);
+    });
+  });
+
   describe('query', () => {
     it('should replace range as integer not string', () => {
       const dataSource = new ElasticDatasource(
@@ -865,32 +968,45 @@ describe('ElasticDatasource', function(this: any) {
     });
   });
 
-  it('should correctly interpolate variables in query', () => {
-    const query = {
-      alias: '',
-      bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
-      metrics: [{ type: 'count', id: '1' }],
-      query: '$var',
-    };
+  describe('interpolateVariablesInQueries', () => {
+    it('should correctly interpolate variables in query', () => {
+      const query = {
+        alias: '',
+        bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
+        metrics: [{ type: 'count', id: '1' }],
+        query: '$var',
+      };
 
-    const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
+      const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
 
-    expect(interpolatedQuery.query).toBe('resolvedVariable');
-    expect(interpolatedQuery.bucketAggs[0].settings.filters[0].query).toBe('resolvedVariable');
-  });
+      expect(interpolatedQuery.query).toBe('resolvedVariable');
+      expect(interpolatedQuery.bucketAggs[0].settings.filters[0].query).toBe('resolvedVariable');
+    });
 
-  it('should correctly handle empty query strings', () => {
-    const query = {
-      alias: '',
-      bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '', label: '' }] }, id: '1' }],
-      metrics: [{ type: 'count', id: '1' }],
-      query: '',
-    };
+    it('should correctly handle empty Lucene query strings', () => {
+      const query = {
+        alias: '',
+        bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '', label: '' }] }, id: '1' }],
+        metrics: [{ type: 'count', id: '1' }],
+        query: '',
+      };
 
-    const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
+      const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
 
-    expect(interpolatedQuery.query).toBe('*');
-    expect(interpolatedQuery.bucketAggs[0].settings.filters[0].query).toBe('*');
+      expect(interpolatedQuery.query).toBe('*');
+      expect(interpolatedQuery.bucketAggs[0].settings.filters[0].query).toBe('*');
+    });
+
+    it('should correctly handle empty PPL query strings', () => {
+      const query = {
+        queryType: ElasticsearchQueryType.PPL,
+        query: '',
+      };
+
+      const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
+
+      expect(interpolatedQuery.query).toBe('');
+    });
   });
 });
 
