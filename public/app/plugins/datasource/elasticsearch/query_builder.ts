@@ -188,6 +188,7 @@ export class ElasticQueryBuilder {
     target.metrics = target.metrics || [queryDef.defaultMetricAgg()];
     target.bucketAggs = target.bucketAggs || [queryDef.defaultBucketAgg()];
     target.timeField = this.timeField;
+    target.queryType = ElasticsearchQueryType.Lucene;
 
     let i, j, pv, nestedAggs, metric;
     const query = {
@@ -420,6 +421,10 @@ export class ElasticQueryBuilder {
     };
   }
 
+  addPPLAdhocFilters(queryString: any, adhocFilters: any) {
+    return queryString;
+  }
+
   buildPPLQuery(target: any, adhocFilters?: any, queryString?: string) {
     // make sure query has defaults
     target.format = target.format || queryDef.defaultPPLFormat();
@@ -430,6 +435,9 @@ export class ElasticQueryBuilder {
       target.isLogsQuery = true;
     } else {
       target.isLogsQuery = false;
+    }
+    if (adhocFilters) {
+      queryString = this.addPPLAdhocFilters(queryString, adhocFilters);
     }
 
     const timeRangeFilter = " | where $timestamp > timestamp('$timeFrom') and $timestamp < timestamp('$timeTo')";
