@@ -14,7 +14,7 @@ import { DataFrame } from '../types/dataFrame';
  *
  * @beta
  */
-export function compareDataFrameStructures(a: DataFrame, b: DataFrame): boolean {
+export function compareDataFrameStructures(a: DataFrame, b: DataFrame, skipProperties?: string[]): boolean {
   if (a === b) {
     return true;
   }
@@ -31,12 +31,22 @@ export function compareDataFrameStructures(a: DataFrame, b: DataFrame): boolean 
     const cfgA = fA.config as any;
     const cfgB = fB.config as any;
 
-    const keys = Object.keys(cfgA);
-    if (keys.length !== Object.keys(cfgB).length) {
+    let aKeys = Object.keys(cfgA);
+    let bKeys = Object.keys(cfgB);
+
+    if (skipProperties) {
+      aKeys = aKeys.filter(k => skipProperties.indexOf(k) < 0);
+      bKeys = aKeys.filter(k => skipProperties.indexOf(k) < 0);
+    }
+    if (aKeys.length !== bKeys.length) {
       return false;
     }
 
-    for (const key of keys) {
+    for (const key of aKeys) {
+      if (skipProperties && skipProperties.indexOf(key) > -1) {
+        continue;
+      }
+
       if (!cfgB.hasOwnProperty(key)) {
         return false;
       }
