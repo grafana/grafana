@@ -50,10 +50,6 @@ type MetricRequest struct {
 	Debug   bool               `json:"debug"`
 }
 
-type UserStars struct {
-	DashboardIds map[string]bool `json:"dashboardIds"`
-}
-
 func GetGravatarUrl(text string) string {
 	if setting.DisableGravatar {
 		return setting.AppSubUrl + "/public/img/user_profile.png"

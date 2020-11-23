@@ -147,7 +147,7 @@ func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission models.Pe
 
 	// validate that duplicate permissions don't exists
 	for _, p := range updatePermissions {
-		aclItem := &models.DashboardAclInfoDTO{DashboardId: p.DashboardId, UserId: p.UserId, TeamId: p.TeamId, Role: p.Role, Permission: p.Permission}
+		aclItem := &models.DashboardAclInfoDTO{DashboardId: p.DashboardID, UserId: p.UserID, TeamId: p.TeamID, Role: p.Role, Permission: p.Permission}
 		if aclItem.IsDuplicateOf(everyoneWithAdminRole) {
 			return false, ErrGuardianPermissionExists
 		}
@@ -192,7 +192,7 @@ func (g *dashboardGuardianImpl) GetAcl() ([]*models.DashboardAclInfoDTO, error) 
 		return g.acl, nil
 	}
 
-	query := models.GetDashboardAclInfoListQuery{DashboardId: g.dashId, OrgId: g.orgId}
+	query := models.GetDashboardAclInfoListQuery{DashboardID: g.dashId, OrgID: g.orgId}
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
 	}
@@ -213,6 +213,7 @@ func (g *dashboardGuardianImpl) getTeams() ([]*models.TeamDTO, error) {
 	return query.Result, err
 }
 
+// nolint:unused
 type FakeDashboardGuardian struct {
 	DashId                           int64
 	OrgId                            int64
@@ -255,6 +256,7 @@ func (g *FakeDashboardGuardian) GetAcl() ([]*models.DashboardAclInfoDTO, error) 
 	return g.GetAclValue, nil
 }
 
+// nolint:unused
 func MockDashboardGuardian(mock *FakeDashboardGuardian) {
 	New = func(dashId int64, orgId int64, user *models.SignedInUser) DashboardGuardian {
 		mock.OrgId = orgId

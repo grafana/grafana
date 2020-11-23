@@ -23,7 +23,7 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	}
 
 	if len(route.URL) > 0 {
-		interpolatedURL, err := InterpolateString(route.URL, data)
+		interpolatedURL, err := interpolateString(route.URL, data)
 		if err != nil {
 			logger.Error("Error interpolating proxy url", "error", err)
 			return
@@ -83,36 +83,4 @@ func ApplyRoute(ctx context.Context, req *http.Request, proxyPath string, route 
 	}
 
 	logger.Info("Requesting", "url", req.URL.String())
-}
-
-func addQueryString(req *http.Request, route *plugins.AppPluginRoute, data templateData) error {
-	q := req.URL.Query()
-	for _, param := range route.URLParams {
-		interpolatedName, err := InterpolateString(param.Name, data)
-		if err != nil {
-			return err
-		}
-
-		interpolatedContent, err := InterpolateString(param.Content, data)
-		if err != nil {
-			return err
-		}
-
-		q.Add(interpolatedName, interpolatedContent)
-	}
-	req.URL.RawQuery = q.Encode()
-
-	return nil
-}
-
-func addHeaders(reqHeaders *http.Header, route *plugins.AppPluginRoute, data templateData) error {
-	for _, header := range route.Headers {
-		interpolated, err := InterpolateString(header.Content, data)
-		if err != nil {
-			return err
-		}
-		reqHeaders.Add(header.Name, interpolated)
-	}
-
-	return nil
 }

@@ -76,8 +76,7 @@ var (
 	DB_Integer   = "INTEGER"
 	DB_BigInt    = "BIGINT"
 
-	DB_Enum = "ENUM"
-	DB_Set  = "SET"
+	DB_Set = "SET"
 
 	DB_Char       = "CHAR"
 	DB_Varchar    = "VARCHAR"

@@ -272,7 +272,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
       <>
         <div className="gf-form" style={{ marginTop: '40px' }}>
           <div className="gf-form-row">
-            <a href={snapshotUrl} className="large share-modal-link" target="_blank">
+            <a href={snapshotUrl} className="large share-modal-link" target="_blank" rel="noreferrer">
               <Icon name="external-link-alt" /> {snapshotUrl}
             </a>
             <br />

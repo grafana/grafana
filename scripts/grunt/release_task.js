@@ -4,10 +4,10 @@ module.exports = function(grunt) {
   'use strict';
 
   // build then zip
-  grunt.registerTask('release', ['build', 'build-post-process', 'compress:release']);
+  grunt.registerTask('release', ['build', 'build-post-process']);
 
   // package into archives
-  grunt.registerTask('package', ['clean:temp', 'build-post-process', 'compress:release']);
+  grunt.registerTask('package', ['clean:temp', 'build-post-process']);
 
   grunt.registerTask('build-post-process', function() {
     grunt.config('copy.public_to_temp', {

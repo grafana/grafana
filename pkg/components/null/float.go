@@ -134,20 +134,6 @@ func (f Float) FullString() string {
 	return fmt.Sprintf("%f", f.Float64)
 }
 
-// SetValid changes this Float's value and also sets it to be non-null.
-func (f *Float) SetValid(n float64) {
-	f.Float64 = n
-	f.Valid = true
-}
-
-// Ptr returns a pointer to this Float's value, or a nil pointer if this Float is null.
-func (f Float) Ptr() *float64 {
-	if !f.Valid {
-		return nil
-	}
-	return &f.Float64
-}
-
 // IsZero returns true for invalid Floats, for future omitempty support (Go 1.4?)
 // A non-null Float with a 0 value will not be considered zero.
 func (f Float) IsZero() bool {

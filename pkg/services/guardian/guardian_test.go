@@ -1,6 +1,7 @@
 package guardian
 
 import (
+	"errors"
 	"fmt"
 	"runtime"
 	"testing"
@@ -300,7 +301,7 @@ func (sc *scenarioContext) verifyDuplicatePermissionsShouldNotBeAllowed() {
 		sc.updatePermissions = p
 		_, err := sc.g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, p)
 
-		if err != ErrGuardianPermissionExists {
+		if !errors.Is(err, ErrGuardianPermissionExists) {
 			sc.reportFailure(tc, ErrGuardianPermissionExists, err)
 		}
 		sc.reportSuccess()
@@ -314,8 +315,7 @@ func (sc *scenarioContext) verifyDuplicatePermissionsShouldNotBeAllowed() {
 		}
 		sc.updatePermissions = p
 		_, err := sc.g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, p)
-
-		if err != ErrGuardianPermissionExists {
+		if !errors.Is(err, ErrGuardianPermissionExists) {
 			sc.reportFailure(tc, ErrGuardianPermissionExists, err)
 		}
 		sc.reportSuccess()
@@ -330,7 +330,7 @@ func (sc *scenarioContext) verifyDuplicatePermissionsShouldNotBeAllowed() {
 		sc.updatePermissions = p
 		_, err := sc.g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, p)
 
-		if err != ErrGuardianPermissionExists {
+		if !errors.Is(err, ErrGuardianPermissionExists) {
 			sc.reportFailure(tc, ErrGuardianPermissionExists, err)
 		}
 		sc.reportSuccess()
@@ -344,8 +344,7 @@ func (sc *scenarioContext) verifyDuplicatePermissionsShouldNotBeAllowed() {
 		}
 		sc.updatePermissions = p
 		_, err := sc.g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, p)
-
-		if err != ErrGuardianPermissionExists {
+		if !errors.Is(err, ErrGuardianPermissionExists) {
 			sc.reportFailure(tc, ErrGuardianPermissionExists, err)
 		}
 		sc.reportSuccess()
@@ -358,8 +357,7 @@ func (sc *scenarioContext) verifyDuplicatePermissionsShouldNotBeAllowed() {
 		}
 		sc.updatePermissions = p
 		_, err := sc.g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, p)
-
-		if err != ErrGuardianPermissionExists {
+		if !errors.Is(err, ErrGuardianPermissionExists) {
 			sc.reportFailure(tc, ErrGuardianPermissionExists, err)
 		}
 		sc.reportSuccess()
@@ -402,7 +400,6 @@ func (sc *scenarioContext) verifyUpdateDashboardPermissionsShouldBeAllowed(pt pe
 
 			sc.updatePermissions = permissionList
 			ok, err := sc.g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, permissionList)
-
 			if err != nil {
 				sc.reportFailure(tc, nil, err)
 			}
@@ -442,7 +439,6 @@ func (sc *scenarioContext) verifyUpdateDashboardPermissionsShouldNotBeAllowed(pt
 
 			sc.updatePermissions = permissionList
 			ok, err := sc.g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, permissionList)
-
 			if err != nil {
 				sc.reportFailure(tc, nil, err)
 			}
@@ -505,7 +501,6 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsShouldBeAllowed(
 
 			sc.updatePermissions = permissionList
 			ok, err := sc.g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, permissionList)
-
 			if err != nil {
 				sc.reportFailure(tc, nil, err)
 			}
@@ -568,7 +563,6 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsShouldNotBeAllow
 
 			sc.updatePermissions = permissionList
 			ok, err := sc.g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, permissionList)
-
 			if err != nil {
 				sc.reportFailure(tc, nil, err)
 			}
@@ -616,8 +610,7 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsWithOverrideShou
 
 			sc.updatePermissions = permissionList
 			_, err := sc.g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, permissionList)
-
-			if err != ErrGuardianOverride {
+			if !errors.Is(err, ErrGuardianOverride) {
 				sc.reportFailure(tc, ErrGuardianOverride, err)
 			}
 			sc.reportSuccess()
@@ -665,7 +658,6 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsWithOverrideShou
 			}
 			sc.updatePermissions = permissionList
 			ok, err := sc.g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, permissionList)
-
 			if err != nil {
 				sc.reportFailure(tc, nil, err)
 			}

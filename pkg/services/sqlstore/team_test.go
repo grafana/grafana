@@ -242,7 +242,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				So(err, ShouldBeNil)
 				err = AddTeamMember(&models.AddTeamMemberCommand{OrgId: testOrgId, TeamId: groupId, UserId: userIds[2]})
 				So(err, ShouldBeNil)
-				err = testHelperUpdateDashboardAcl(1, models.DashboardAcl{DashboardId: 1, OrgId: testOrgId, Permission: models.PERMISSION_EDIT, TeamId: groupId})
+				err = testHelperUpdateDashboardAcl(1, models.DashboardAcl{DashboardID: 1, OrgID: testOrgId, Permission: models.PERMISSION_EDIT, TeamID: groupId})
 				So(err, ShouldBeNil)
 				err = DeleteTeam(&models.DeleteTeamCommand{OrgId: testOrgId, Id: groupId})
 				So(err, ShouldBeNil)
@@ -251,7 +251,7 @@ func TestTeamCommandsAndQueries(t *testing.T) {
 				err = GetTeamById(query)
 				So(err, ShouldEqual, models.ErrTeamNotFound)
 
-				permQuery := &models.GetDashboardAclInfoListQuery{DashboardId: 1, OrgId: testOrgId}
+				permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: testOrgId}
 				err = GetDashboardAclInfoList(permQuery)
 				So(err, ShouldBeNil)
 

@@ -56,5 +56,5 @@ Our Grafana Fundamentals tutorial is a great place to start, or you can learn mo
 - [Transform]({{< relref "transformations/_index.md" >}}) your data.
 - [Configure]({{< relref "field-options/_index.md" >}}) how your results are displayed in the visualization.
 
-- If you made a graph panel, set up an [alert]({{< relref "../alerting/alerts-overview.md" >}}).
+- If you made a graph panel, set up an [alert]({{< relref "../alerting/_index.md" >}}).
 - Create [templates and variables]({{< relref "../variables/_index.md" >}}).

@@ -86,6 +86,7 @@ require (
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	golang.org/x/sys v0.0.0-20201022201747-fb209a7c41cd // indirect
 	golang.org/x/tools v0.0.0-20201023150057-2f4fa188d925 // indirect
+	gonum.org/v1/gonum v0.6.0
 	google.golang.org/api v0.33.0
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20201022181438-0ff5f38871d5 // indirect
