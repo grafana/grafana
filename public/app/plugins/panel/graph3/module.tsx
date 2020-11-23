@@ -69,7 +69,6 @@ export const plugin = new PanelPlugin<GraphOptions, GraphFieldConfig>(GraphPanel
         .addRadio({
           path: 'points',
           name: 'Points',
-          description: 'NOTE: auto vs always are currently the same',
           defaultValue: graphFieldOptions.points[0].value,
           settings: {
             options: graphFieldOptions.points,
