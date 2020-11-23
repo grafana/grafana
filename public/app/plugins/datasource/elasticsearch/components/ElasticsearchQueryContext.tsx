@@ -5,7 +5,7 @@ import { ElasticsearchQuery } from '../types';
 
 import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
 import { reducer as bucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
-import { aliasPatternReducer, queryReducer } from './state';
+import { aliasPatternReducer, queryReducer, initQuery } from './state';
 
 const DatasourceContext = createContext<ElasticDatasource | undefined>(undefined);
 const QueryContext = createContext<ElasticsearchQuery | undefined>(undefined);
@@ -25,6 +25,14 @@ export const ElasticsearchProvider: FunctionComponent<Props> = ({ children, onCh
   });
 
   const dispatch = useStatelessReducer(newState => onChange({ ...query, ...newState }), query, reducer);
+
+  // This initializes the query by dispatching an init action to each reducer.
+  // useStatelessReducer will then call `onChange` with the newly generated query
+  if (!query.metrics && !query.bucketAggs) {
+    dispatch(initQuery());
+
+    return null;
+  }
 
   return (
     <DatasourceContext.Provider value={datasource}>

@@ -58,8 +58,8 @@ const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
         </InlineField>
       </InlineFieldRow>
 
-      <MetricAggregationsEditor value={value.metrics || []} />
-      <BucketAggregationsEditor value={value.bucketAggs || []} />
+      <MetricAggregationsEditor value={value.metrics!} />
+      <BucketAggregationsEditor value={value.bucketAggs!} />
     </>
   );
 };

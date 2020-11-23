@@ -3,6 +3,7 @@ import { ElasticsearchQuery } from '../../../types';
 import { ChangeMetricTypeAction, CHANGE_METRIC_TYPE } from '../../MetricAggregationsEditor/state/types';
 import { metricAggregationConfig } from '../../MetricAggregationsEditor/utils';
 import { BucketAggregation } from '../aggregations';
+import { INIT, InitAction } from '../../state';
 import {
   ADD_BUCKET_AGG,
   REMOVE_BUCKET_AGG,
@@ -14,7 +15,7 @@ import {
 
 export const reducer = (
   state: BucketAggregation[],
-  action: BucketAggregationAction | ChangeMetricTypeAction
+  action: BucketAggregationAction | ChangeMetricTypeAction | InitAction
 ): ElasticsearchQuery['bucketAggs'] => {
   switch (action.type) {
     case ADD_BUCKET_AGG:
@@ -96,6 +97,9 @@ export const reducer = (
           },
         };
       });
+
+    case INIT:
+      return [defaultBucketAgg()];
 
     default:
       return state;

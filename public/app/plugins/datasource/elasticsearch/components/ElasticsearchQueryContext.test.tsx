@@ -4,6 +4,12 @@ import { ElasticsearchProvider, useDatasource, useQuery } from './ElasticsearchQ
 import { ElasticsearchQuery } from '../types';
 import { ElasticDatasource } from '../datasource';
 
+const query: ElasticsearchQuery = {
+  refId: 'A',
+  metrics: [{ id: '1', type: 'count' }],
+  bucketAggs: [{ type: 'date_histogram', id: '2' }],
+};
+
 describe('ElasticsearchQueryContext', () => {
   describe('useQuery Hook', () => {
     it('Should throw when used outside of ElasticsearchQueryContext', () => {
@@ -13,8 +19,6 @@ describe('ElasticsearchQueryContext', () => {
     });
 
     it('Should return the current query object', () => {
-      const query: ElasticsearchQuery = { refId: 'A' };
-
       const wrapper: FunctionComponent = ({ children }) => (
         <ElasticsearchProvider datasource={{} as ElasticDatasource} query={query} onChange={() => {}}>
           {children}
@@ -40,7 +44,7 @@ describe('ElasticsearchQueryContext', () => {
       const datasource = {} as ElasticDatasource;
 
       const wrapper: FunctionComponent = ({ children }) => (
-        <ElasticsearchProvider datasource={datasource} query={{} as ElasticsearchQuery} onChange={() => {}}>
+        <ElasticsearchProvider datasource={datasource} query={query} onChange={() => {}}>
           {children}
         </ElasticsearchProvider>
       );

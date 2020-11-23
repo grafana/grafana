@@ -1,7 +1,10 @@
 import { Action } from '../hooks/useStatelessReducer';
 
+export const INIT = 'init';
 const CHANGE_QUERY = 'change_query';
 const CHANGE_ALIAS_PATTERN = 'change_alias_pattern';
+
+export interface InitAction extends Action<typeof INIT> {}
 
 interface ChangeQueryAction extends Action<typeof CHANGE_QUERY> {
   payload: {
@@ -14,6 +17,8 @@ interface ChangeAliasPatternAction extends Action<typeof CHANGE_ALIAS_PATTERN> {
     aliasPattern: string;
   };
 }
+
+export const initQuery = (): InitAction => ({ type: INIT });
 
 export const changeQuery = (query: string): ChangeQueryAction => ({
   type: CHANGE_QUERY,
@@ -29,19 +34,27 @@ export const changeAliasPattern = (aliasPattern: string): ChangeAliasPatternActi
   },
 });
 
-export const queryReducer = (prevQuery: string, action: ChangeQueryAction) => {
+export const queryReducer = (prevQuery: string, action: ChangeQueryAction | InitAction) => {
   switch (action.type) {
     case CHANGE_QUERY:
       return action.payload.query;
+
+    case INIT:
+      return '';
+
     default:
       return prevQuery;
   }
 };
 
-export const aliasPatternReducer = (prevAliasPattern: string, action: ChangeAliasPatternAction) => {
+export const aliasPatternReducer = (prevAliasPattern: string, action: ChangeAliasPatternAction | InitAction) => {
   switch (action.type) {
     case CHANGE_ALIAS_PATTERN:
       return action.payload.aliasPattern;
+
+    case INIT:
+      return '';
+
     default:
       return prevAliasPattern;
   }

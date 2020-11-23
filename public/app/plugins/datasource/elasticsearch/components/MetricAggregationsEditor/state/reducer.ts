@@ -1,5 +1,6 @@
 import { defaultMetricAgg } from '../../../query_def';
 import { ElasticsearchQuery } from '../../../types';
+import { INIT, InitAction } from '../../state';
 import { isMetricAggregationWithMeta, isMetricAggregationWithSettings, MetricAggregation } from '../aggregations';
 import { getChildren, metricAggregationConfig } from '../utils';
 import {
@@ -14,7 +15,10 @@ import {
   CHANGE_METRIC_ATTRIBUTE,
 } from './types';
 
-export const reducer = (state: MetricAggregation[], action: MetricAggregationAction): ElasticsearchQuery['metrics'] => {
+export const reducer = (
+  state: MetricAggregation[],
+  action: MetricAggregationAction | InitAction
+): ElasticsearchQuery['metrics'] => {
   switch (action.type) {
     case ADD_METRIC:
       const nextId = parseInt(state[state.length - 1]?.id || '0', 10) + 1;
@@ -143,6 +147,9 @@ export const reducer = (state: MetricAggregation[], action: MetricAggregationAct
           [action.payload.attribute]: action.payload.newValue,
         };
       });
+
+    case INIT:
+      return [defaultMetricAgg()];
 
     default:
       return state;
