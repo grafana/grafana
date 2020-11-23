@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import {
   compareDataFrameStructures,
   DataFrame,
@@ -57,7 +57,11 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   const legendItemsRef = useRef<LegendItem[]>([]);
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
   const alignedFrame = alignedFrameWithGapTest.frame;
-  const configRev = useRevision(alignedFrame, compareDataFrameStructures);
+  const compareFrames = useCallback(
+    (a: DataFrame, b: DataFrame) => compareDataFrameStructures(a, b, ['min', 'max']),
+    []
+  );
+  const configRev = useRevision(alignedFrame, compareFrames);
 
   const configBuilder = useMemo(() => {
     const builder = new UPlotConfigBuilder();

@@ -5,6 +5,9 @@ import { pluginLog } from './utils';
 import { usePlotConfig } from './hooks';
 import { PlotProps } from './types';
 import { usePrevious } from 'react-use';
+import { DataFrame, FieldType } from '@grafana/data';
+import isNumber from 'lodash/isNumber';
+import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
 // uPlot abstraction responsible for plot initialisation, setup and refresh
 // Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
@@ -32,17 +35,6 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     setPlotInstance(instance);
   }, [setPlotInstance, currentConfig]);
 
-  useLayoutEffect(() => {
-    plotData.current = {
-      data: props.data.frame.fields.map(f => f.values.toArray()) as AlignedData,
-      isGap: props.data.isGap,
-    };
-
-    if (plotInstance && previousConfig === props.config) {
-      updateData(plotInstance, plotData.current.data);
-    }
-  }, [props.data]);
-
   const getPlotInstance = useCallback(() => {
     if (!plotInstance) {
       throw new Error("Plot hasn't initialised yet");
@@ -50,6 +42,17 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 
     return plotInstance;
   }, [plotInstance]);
+
+  useLayoutEffect(() => {
+    plotData.current = {
+      data: props.data.frame.fields.map(f => f.values.toArray()) as AlignedData,
+      isGap: props.data.isGap,
+    };
+
+    if (plotInstance && previousConfig === props.config) {
+      updateData(props.data.frame, props.config, plotInstance, plotData.current.data);
+    }
+  }, [props.data, props.config]);
 
   useLayoutEffect(() => {
     initializePlot();
@@ -86,11 +89,39 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 };
 
 // Callback executed when there was no change in plot config
-function updateData(plotInstance?: uPlot, data?: AlignedData | null) {
+function updateData(frame: DataFrame, config: UPlotConfigBuilder, plotInstance?: uPlot, data?: AlignedData | null) {
   if (!plotInstance || !data) {
     return;
   }
   pluginLog('uPlot core', false, 'updating plot data(throttled log!)', data);
+  updateScales(frame, config, plotInstance);
   // If config hasn't changed just update uPlot's data
   plotInstance.setData(data);
+}
+
+function updateScales(frame: DataFrame, config: UPlotConfigBuilder, plotInstance: uPlot) {
+  let yRange: [number, number] | undefined = undefined;
+
+  for (let i = 0; i < frame.fields.length; i++) {
+    if (frame.fields[i].type !== FieldType.number) {
+      continue;
+    }
+    if (isNumber(frame.fields[i].config.min) && isNumber(frame.fields[i].config.max)) {
+      yRange = [frame.fields[i].config.min!, frame.fields[i].config.max!];
+      break;
+    }
+  }
+
+  const scalesConfig = config.getConfig().scales;
+
+  if (scalesConfig && yRange) {
+    for (const scale in scalesConfig) {
+      if (!scalesConfig.hasOwnProperty(scale)) {
+        continue;
+      }
+      if (scale !== 'x') {
+        plotInstance.setScale(scale, { min: yRange[0], max: yRange[1] });
+      }
+    }
+  }
 }
