@@ -183,7 +183,7 @@ func (sc *scenarioContext) defaultPermissionScenario(pt permissionType, flag per
 		toDto(newViewerRolePermission(defaultDashboardID, models.PERMISSION_VIEW)),
 	}
 
-	permissionScenario("and existing permissions is the default permissions (everyone with editor role can edit, everyone with viewer role can view)",
+	permissionScenario("and existing permissions are the default permissions (everyone with editor role can edit, everyone with viewer role can view)",
 		dashboardID, sc, existingPermissions, func(sc *scenarioContext) {
 			sc.expectedFlags = flag
 			sc.verifyExpectedPermissionsFlags()
