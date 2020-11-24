@@ -35,8 +35,8 @@
     "start:ignoreTheme": "grafana-toolkit core:start --hot",
     "start:noTsCheck": "grafana-toolkit core:start --noTsCheck",
     "stats": "webpack --mode production --config scripts/webpack/webpack.prod.js --profile --json > compilation-stats.json",
-    "storybook": "cd packages/grafana-ui && yarn storybook --ci",
-    "storybook:build": "cd packages/grafana-ui && yarn storybook:build",
+    "storybook": "yarn workspace @grafana/ui storybook --ci",
+    "storybook:build": "yarn workspace @grafana/ui storybook:build",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
     "typecheck": "tsc --noEmit",
     "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
@@ -45,7 +45,7 @@
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/latest/guides/whats-new-in-v7-3/",
-    "releaseNotesUrl": "https://community.grafana.com/t/release-notes-v7-3-x/37993"
+    "releaseNotesUrl": "https://grafana.com/docs/grafana/latest/release-notes/"
   },
   "husky": {
     "hooks": {
@@ -308,7 +308,10 @@
     ],
     "nohoist": [
       "**/@types/*",
-      "**/@types/*/**"
+      "**/@types/*/**",
+      "@storybook",
+      "**/@storybook",
+      "**/@storybook/**"
     ]
   },
   "_moduleAliases": {
