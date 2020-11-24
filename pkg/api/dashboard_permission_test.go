@@ -209,14 +209,19 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			}
 
 			for _, cmd := range cmds {
-				updateDashboardPermissionScenario(t, "When calling POST on", "/api/dashboards/id/1/permissions",
-					"/api/dashboards/id/:id/permissions", cmd, func(sc *scenarioContext) {
+				updateDashboardPermissionScenario(t, updatePermissionContext{
+					desc:         "When calling POST on",
+					url:          "/api/dashboards/id/1/permissions",
+					routePattern: "/api/dashboards/id/:id/permissions",
+					cmd:          cmd,
+					fn: func(sc *scenarioContext) {
 						callUpdateDashboardPermissions(sc)
 						assert.Equal(t, 400, sc.resp.Code)
 						respJSON, err := jsonMap(sc.resp.Body.Bytes())
 						require.NoError(t, err)
 						assert.Equal(t, models.ErrPermissionsWithRoleNotAllowed.Error(), respJSON["error"])
-					})
+					},
+				}, hs)
 			}
 		})
 

@@ -225,14 +225,19 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		}
 
 		for _, cmd := range cmds {
-			updateFolderPermissionScenario(t, "When calling POST on", "/api/folders/uid/permissions",
-				"/api/folders/:uid/permissions", cmd, func(sc *scenarioContext) {
+			updateFolderPermissionScenario(t, updatePermissionContext{
+				desc:         "When calling POST on",
+				url:          "/api/folders/uid/permissions",
+				routePattern: "/api/folders/:uid/permissions",
+				cmd:          cmd,
+				fn: func(sc *scenarioContext) {
 					callUpdateFolderPermissions(sc)
 					assert.Equal(t, 400, sc.resp.Code)
 					respJSON, err := jsonMap(sc.resp.Body.Bytes())
 					require.NoError(t, err)
 					assert.Equal(t, models.ErrPermissionsWithRoleNotAllowed.Error(), respJSON["error"])
-				})
+				},
+			}, hs)
 		}
 	})
 
