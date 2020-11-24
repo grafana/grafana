@@ -21,7 +21,7 @@ package main
 	// 1 for shared crosshair.
 	// 2 for shared crosshair AND shared tooltip.
 	graphTooltip: int & >=0 & <=2 | *0
-	// Time range for dashboard, i.e. last 6 hours, last 7 days, etc
+	// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
 	time?: {
 		from: string | *"now-6h"
 		to:   string | *"now"
@@ -32,7 +32,7 @@ package main
 		collapse: bool | *false
 		// Whether timepicker is enabled or not.
 		enable: bool | *true
-		// Whether timepcker is visible or not.
+		// Whether timepicker is visible or not.
 		hidden: bool | *false
 		// Selectable intervals for auto-refresh.
 		refresh_intervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]

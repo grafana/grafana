@@ -5,7 +5,7 @@ package panels
 #Row: {
 	// Whether the row is collapsed or not.
 	collapsed: bool | *true
-	// Name of default datasource.
+	// Name of default data source.
 	datasource?: string
 	// Grid position.
 	gridPos?: gridPos
