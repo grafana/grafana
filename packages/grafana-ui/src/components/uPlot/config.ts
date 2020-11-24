@@ -9,19 +9,6 @@ export enum AxisPlacement {
   Hidden = 'hidden',
 }
 
-export function getUPlotSideFromAxis(axis: AxisPlacement) {
-  switch (axis) {
-    case AxisPlacement.Top:
-      return 0;
-    case AxisPlacement.Right:
-      return 1;
-    case AxisPlacement.Bottom:
-      return 2;
-    case AxisPlacement.Left:
-  }
-  return 3; // default everythign to the left
-}
-
 export enum PointMode {
   Auto = 'auto', // will show points when the density is low or line is hidden
   Always = 'always',
