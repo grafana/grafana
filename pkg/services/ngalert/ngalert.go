@@ -41,8 +41,13 @@ func (ng *AlertNG) Init() error {
 		channelMap:   channelMap{definionCh: make(map[int64]definitionCh)},
 		stop:         make(chan int64),
 	}
-	ng.schedule.ctx, ng.schedule.cancelFunc = context.WithCancel(context.Background())
 	return nil
+}
+
+// Run starts the scheduler
+func (ng *AlertNG) Run(ctx context.Context) error {
+	ng.log.Debug("ngalert starting")
+	return ng.alertingTicker(ctx)
 }
 
 // IsDisabled returns true if the alerting service is disable for this instance.

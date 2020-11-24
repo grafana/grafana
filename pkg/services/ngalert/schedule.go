@@ -4,12 +4,11 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 )
 
-func (ng *AlertNG) definitionRoutine(definitionID int64, evalCh <-chan *evalContext) {
-	ng.schedule.alertDefinitionsRunning.Add(1)
-	defer ng.schedule.alertDefinitionsRunning.Done()
-
+func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID int64, evalCh <-chan *evalContext) error {
 	ng.log.Debug("alert definition routine started", "definitionID", definitionID)
 
 	evalRunning := false
@@ -40,8 +39,10 @@ func (ng *AlertNG) definitionRoutine(definitionID int64, evalCh <-chan *evalCont
 		case id := <-ng.schedule.stop:
 			if id == definitionID {
 				// TODO what if it's running
-				return
+				return nil
 			}
+		case <-grafanaCtx.Done():
+			return grafanaCtx.Err()
 		}
 	}
 }
@@ -67,21 +68,10 @@ type schedule struct {
 
 	// broadcast channel for stopping definition routines
 	stop chan int64
-
-	cancelFunc context.CancelFunc
-
-	ctx context.Context
-
-	alertDefinitionsRunning sync.WaitGroup
 }
 
-func (sched *schedule) stopDefinitionRoutine(definitionID int64) {
-	sched.stop <- definitionID
-}
-
-// Run starts the scheduler
-func (ng *AlertNG) Run(ctx context.Context) error {
-	ng.log.Debug("ngalert starting")
+func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
+	dispatcherGroup, ctx := errgroup.WithContext(grafanaCtx)
 	heartbeat := time.NewTicker(ng.schedule.baseInterval)
 	var lastFetchTime time.Time
 	for {
@@ -90,7 +80,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 			alertDefinitions := ng.fetchAlertDefinitions(lastFetchTime)
 			ng.log.Debug("alert definitions fetched", "count", len(alertDefinitions))
 
-			// this is used for identify deleted alert definitions
+			// this is used for identifying deleted alert definitions
 			registeredDefinitions := ng.schedule.channelMap.keyMap()
 
 			type readyToRunItem struct {
@@ -103,7 +93,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 				definitionCh := ng.schedule.channelMap.getOrCreateChannel(item.Id)
 
 				if newRoutine {
-					go ng.definitionRoutine(item.Id, definitionCh.ch)
+					dispatcherGroup.Go(func() error { return ng.definitionRoutine(ctx, item.Id, definitionCh.ch) })
 				}
 
 				if tick.Unix()%item.Interval == 0 {
@@ -119,7 +109,7 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 
 			step := int(ng.schedule.baseInterval.Nanoseconds()) / len(readyToRun)
 
-			// send loop is only required for distribute evaluations across time within an interval
+			// second loop is only required for distribute evaluations across time within an interval
 			for _, item := range readyToRun {
 				item.definitionCh.ch <- &evalContext{now: tick}
 				time.Sleep(time.Duration(step))
@@ -127,23 +117,15 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 
 			// the remaining definitions are the deleted ones
 			for id := range registeredDefinitions {
-				ng.schedule.stopDefinitionRoutine(id)
+				ng.schedule.stop <- id
 				ng.schedule.channelMap.del(id)
 			}
-
 			lastFetchTime = tick
-		case <-ng.schedule.ctx.Done():
-			ng.log.Info("Stopping main schedule routine")
-			ng.Close()
-			return ng.schedule.ctx.Err()
+		case <-grafanaCtx.Done():
+			err := dispatcherGroup.Wait()
+			return err
 		}
 	}
-}
-
-// Close sends a signal for closing all routines and waits for them to get closed.
-func (ng *AlertNG) Close() {
-	ng.schedule.cancelFunc()
-	ng.schedule.alertDefinitionsRunning.Wait()
 }
 
 type channelMap struct {
@@ -151,7 +133,7 @@ type channelMap struct {
 	definionCh map[int64]definitionCh
 }
 
-// getChannel returns the channel for the specific alert definition
+// getOrCreateChannel returns the channel for the specific alert definition
 // if it does not exists creates one and returns it
 func (chm *channelMap) getOrCreateChannel(definitionID int64) definitionCh {
 	chm.mu.Lock()
