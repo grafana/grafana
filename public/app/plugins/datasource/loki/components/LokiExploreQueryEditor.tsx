@@ -74,6 +74,7 @@ export function LokiExploreQueryEditor(props: Props) {
           onQueryTypeChange={onQueryTypeChange}
           onLineLimitChange={onMaxLinesChange}
           onKeyDownFunc={onReturnKeyDown}
+          onBlur={() => {}}
         />
       }
     />

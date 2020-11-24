@@ -11,10 +11,12 @@ export interface LokiExploreExtraFieldProps {
   onLineLimitChange: (e: React.SyntheticEvent<HTMLInputElement>) => void;
   onKeyDownFunc: (e: React.KeyboardEvent<HTMLInputElement>) => void;
   onQueryTypeChange: (value: string) => void;
+  runOnBlur?: boolean;
+  onRunQuery: () => void;
 }
 
 export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
-  const { onLineLimitChange, onKeyDownFunc, lineLimitValue, queryType, onQueryTypeChange } = props;
+  const { onLineLimitChange, onKeyDownFunc, lineLimitValue, queryType, onQueryTypeChange, onBlur } = props;
 
   const rangeOptions = [
     { value: 'range', label: 'Range' },
@@ -41,7 +43,14 @@ export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
           Query type
         </InlineFormLabel>
 
-        <RadioButtonGroup options={rangeOptions} value={queryType} onChange={onQueryTypeChange} />
+        <RadioButtonGroup
+          options={rangeOptions}
+          value={queryType}
+          onChange={(e: string) => {
+            onQueryTypeChange(e);
+            props.onRunQuery();
+          }}
+        />
       </div>
       {/*Line limit field*/}
       <div
@@ -63,6 +72,10 @@ export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
           onChange={onLineLimitChange}
           onKeyDown={onKeyDownFunc}
           value={lineLimitValue}
+          onBlur={e => {
+            onLineLimitChange(e);
+            props.onRunQuery();
+          }}
         />
       </div>
     </div>
