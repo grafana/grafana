@@ -4,6 +4,8 @@ description = "Feature and improvement highlights for Grafana v7"
 keywords = ["grafana", "new", "documentation", "7.0", "release notes"]
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-0/"]
 weight = -27
+[_build]
+list = false
 +++
 
 # What's new in Grafana v7.0
@@ -140,7 +142,7 @@ Plugins can be monitored with the new metrics and health check capabilities. The
 
 With this release, we are deprecating the unofficial first version of backend plugins which will be removed in a future release.
 
-To learn more, start with the [overview]({{< relref "../developers/plugins/backend/_index.md" >}}). Next, in this [tutorial](https://grafana.com/tutorials/build-a-data-source-backend-plugin/) you'll learn how to build a backend for a data source plugin and enable it for use with [Grafana Alerting]({{< relref "../alerting/alerts-overview.md" >}}). Make sure to keep an eye out for additional documentation and tutorials that will be published after the Grafana v7.0 release.
+To learn more, start with the [overview]({{< relref "../developers/plugins/backend/_index.md" >}}). Next, in this [tutorial](https://grafana.com/tutorials/build-a-data-source-backend-plugin/) you'll learn how to build a backend for a data source plugin and enable it for use with [Grafana Alerting]({{< relref "../alerting/_index.md" >}}). Make sure to keep an eye out for additional documentation and tutorials that will be published after the Grafana v7.0 release.
 
 ## New tutorials
 

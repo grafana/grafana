@@ -50,10 +50,6 @@ type MetricRequest struct {
 	Debug   bool               `json:"debug"`
 }
 
-type UserStars struct {
-	DashboardIds map[string]bool `json:"dashboardIds"`
-}
-
 func GetGravatarUrl(text string) string {
 	if setting.DisableGravatar {
 		return setting.AppSubUrl + "/public/img/user_profile.png"
@@ -78,4 +74,16 @@ func GetGravatarUrlWithDefault(text string, defaultText string) string {
 	text = regNonAlphaNumeric.ReplaceAllString(defaultText, "") + "@localhost"
 
 	return GetGravatarUrl(text)
+}
+
+func IsHiddenUser(userLogin string, signedInUser *models.SignedInUser, cfg *setting.Cfg) bool {
+	if signedInUser.IsGrafanaAdmin || userLogin == signedInUser.Login {
+		return false
+	}
+
+	if _, hidden := cfg.HiddenUsers[userLogin]; hidden {
+		return true
+	}
+
+	return false
 }

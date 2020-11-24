@@ -273,7 +273,7 @@ export function SelectBase<T>({
                   menuIsOpen,
                 })
               );
-              return <IndicatorsContainer {...props} children={indicatorChildren} />;
+              return <IndicatorsContainer {...props}>{indicatorChildren}</IndicatorsContainer>;
             }
 
             return <IndicatorsContainer {...props} />;

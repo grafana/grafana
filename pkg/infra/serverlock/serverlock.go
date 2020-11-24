@@ -98,7 +98,7 @@ func (sl *ServerLockService) getOrCreate(ctx context.Context, actionName string)
 		}
 
 		lockRow := &serverLock{
-			OperationUid:  actionName,
+			OperationUID:  actionName,
 			LastExecution: 0,
 		}
 

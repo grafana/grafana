@@ -35,7 +35,7 @@
     "action": "updateLabels",
     "addLabel": "needs more info",
     "removeLabel": "bot/needs more info",
-    "comment": "Thanks for creating this issue! We think it's missing some basic information. \r\n\r\nFollow the issue template and add additional information that will help us replicate the problem. \r\n- For data visualization issues: \r\n- Query results from the inspect drawer (data tab & query inspector)\r\n- Panel settings can be extracted in the panel inspect drawer JSON tab\r\n\r\nFor dashboard related issues: \r\n- Dashboard JSON can be found in the dashboard settings JSON model view\r\n\r\nFor authentication and alerting issues, Grafana server logs are useful. \r\n\r\nHappy graphing!"
+    "comment": "Thanks for creating this issue! We think it's missing some basic information. \r\n\r\nFollow the issue template and add additional information that will help us replicate the problem. \r\nFor data visualization issues: \r\n- Query results from the inspect drawer (data tab & query inspector)\r\n- Panel settings can be extracted in the panel inspect drawer JSON tab\r\n\r\nFor dashboard related issues: \r\n- Dashboard JSON can be found in the dashboard settings JSON model view\r\n\r\nFor authentication and alerting issues, Grafana server logs are useful. \r\n\r\nHappy graphing!"
   },
   {
     "type": "label",

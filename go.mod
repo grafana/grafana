@@ -22,7 +22,6 @@ require (
 	github.com/centrifugal/centrifuge v0.13.0
 	github.com/crewjam/saml v0.4.1
 	github.com/davecgh/go-spew v1.1.1
-	github.com/deepmap/oapi-codegen v1.3.11 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20200620013148-b91950f658ec
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/inject v0.0.0-20180706035515-f23751cae28b
@@ -50,7 +49,7 @@ require (
 	github.com/hashicorp/go-plugin v1.2.2
 	github.com/hashicorp/go-version v1.2.0
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
-	github.com/influxdata/influxdb-client-go/v2 v2.0.1
+	github.com/influxdata/influxdb-client-go/v2 v2.2.0
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/jonboulle/clockwork v0.2.1 // indirect
 	github.com/jung-kurt/gofpdf v1.10.1
@@ -86,6 +85,7 @@ require (
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	golang.org/x/sys v0.0.0-20201022201747-fb209a7c41cd // indirect
 	golang.org/x/tools v0.0.0-20201023150057-2f4fa188d925 // indirect
+	gonum.org/v1/gonum v0.6.0
 	google.golang.org/api v0.33.0
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20201022181438-0ff5f38871d5 // indirect
