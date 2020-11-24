@@ -735,7 +735,7 @@ export class HeatmapRenderer {
   }
 
   onMouseLeave() {
-    this.ctrl.dashboard.$emit(new LegacyGraphHoverClearEvent());
+    this.ctrl.dashboard.events.publish(new LegacyGraphHoverClearEvent());
     this.clearCrosshair();
   }
 
@@ -781,7 +781,7 @@ export class HeatmapRenderer {
     // Set minimum offset to prevent showing legend from another panel
     pos.panelRelY = Math.max(pos.offset.y / this.height, 0.001);
     // broadcast to other graph panels that we are hovering
-    this.ctrl.dashboard.events.emit$(new LegacyGraphHoverEvent({ pos: pos, panel: this.panel }));
+    this.ctrl.dashboard.events.publish(new LegacyGraphHoverEvent({ pos: pos, panel: this.panel }));
   }
 
   limitSelection(x2: number) {
