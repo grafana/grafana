@@ -37,7 +37,7 @@ func init() {
 			Help:      "Histogram of latencies for HTTP requests.",
 			Buckets:   defBuckets,
 		},
-		[]string{"handler"},
+		[]string{"handler", "code", "method"},
 	)
 
 	prometheus.MustRegister(httpRequestsInFlight, httpRequestDurationHistogram)
@@ -60,7 +60,10 @@ func RequestMetrics(cfg *setting.Cfg) func(handler string) macaron.Handler {
 
 			// enable histogram and disable summaries + counters for http requests.
 			if cfg.IsHTTPRequestHistogramEnabled() {
-				histogram := httpRequestDurationHistogram.WithLabelValues(handler)
+				// avoiding the sanitize functions for in the new instrumentation
+				// since they dont make much sense. We should remove them later.
+				histogram := httpRequestDurationHistogram.
+					WithLabelValues(handler, strconv.Itoa(rw.Status()), req.Method)
 				if traceID, ok := cw.ExtractSampledTraceID(c.Req.Context()); ok {
 					// Need to type-convert the Observer to an
 					// ExemplarObserver. This will always work for a
