@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
 import { css } from 'emotion';
 import { IconName, stylesFactory, Tab, TabContent, TabsBar } from '@grafana/ui';
-import { QueriesTab } from '../../panel_editor/QueriesTab';
+import { QueriesTab } from 'app/features/query/components/QueriesTab';
 import { AlertTab } from 'app/features/alerting/AlertTab';
 import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
 import { DashboardModel, PanelModel } from '../../state';

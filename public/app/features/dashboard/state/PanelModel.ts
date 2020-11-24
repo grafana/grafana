@@ -27,7 +27,7 @@ import {
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
-import { PanelQueryRunner } from './PanelQueryRunner';
+import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { CoreEvents } from '../../../types';
 

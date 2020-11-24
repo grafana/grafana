@@ -7,7 +7,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 // Types
-import { PanelModel } from '../state/PanelModel';
+import { PanelModel } from '../../dashboard/state/PanelModel';
 
 import { ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import {
@@ -23,7 +23,7 @@ import {
 import { QueryEditorRowTitle } from './QueryEditorRowTitle';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
-import { DashboardModel } from '../state/DashboardModel';
+import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
