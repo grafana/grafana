@@ -15,8 +15,8 @@ import lightTheme from '../../../public/sass/grafana.light.scss';
 // @ts-ignore
 import darkTheme from '../../../public/sass/grafana.dark.scss';
 import { GrafanaLight, GrafanaDark } from './storybookTheme';
-import { configure, addDecorator, addParameters } from '@storybook/react';
-import { withKnobs } from '@storybook/addon-knobs';
+import { configure } from '@storybook/react';
+import addons from '@storybook/addons';
 
 const handleThemeChange = (theme: any) => {
   if (theme !== 'light') {
@@ -27,37 +27,36 @@ const handleThemeChange = (theme: any) => {
     lightTheme.use();
   }
 };
-addDecorator(withTheme(handleThemeChange));
-addDecorator(withKnobs);
-addDecorator(withPaddedStory);
 
-addParameters({
+addons.setConfig({
+  showRoots: false,
+  theme: GrafanaDark,
+});
+
+export const decorators = [withTheme(handleThemeChange), withPaddedStory];
+
+export const parameters = {
   info: {},
+  docs: {
+    theme: GrafanaDark,
+  },
   darkMode: {
     dark: GrafanaDark,
     light: GrafanaLight,
   },
   options: {
-    theme: GrafanaDark,
     showPanel: true,
-    showRoots: true,
     panelPosition: 'right',
     showNav: true,
     isFullscreen: false,
     isToolshown: true,
-    storySort: (a: any, b: any) => {
-      if (a[1].kind.split('/')[0] === 'Docs Overview') {
-        return -1;
-      } else if (b[1].kind.split('/')[0] === 'Docs Overview') {
-        return 1;
-      }
-      return a[1].id.localeCompare(b[1].id);
+    storySort: {
+      method: 'alphabetical',
+      // Order Docs Overview and Docs Overview/Intro story first
+      order: ['Docs Overview', ['Intro']],
     },
   },
   knobs: {
     escapeHTML: false,
   },
-});
-
-// @ts-ignore
-configure(require.context('../src', true, /\.story\.(js|jsx|ts|tsx|mdx)$/), module);
+};

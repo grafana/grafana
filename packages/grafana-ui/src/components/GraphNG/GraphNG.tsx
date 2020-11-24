@@ -27,7 +27,7 @@ export interface XYFieldMatchers {
   y: FieldMatcher;
 }
 
-interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
+export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
   data: DataFrame[];
   legend?: LegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data

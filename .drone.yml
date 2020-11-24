@@ -434,6 +434,7 @@ steps:
       from_secret: gcp_key
   depends_on:
   - build-storybook
+  - end-to-end-tests
 
 - name: build-frontend-docs
   image: grafana/build-container:1.2.29
@@ -933,18 +934,6 @@ steps:
   - mysql-integration-tests
   - postgres-integration-tests
 
-- name: release-npm-packages
-  image: grafana/build-container:1.2.29
-  commands:
-  - ./node_modules/.bin/lerna bootstrap
-  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
-  - ./scripts/build/release-packages.sh ${DRONE_TAG}
-  environment:
-    NPM_TOKEN:
-      from_secret: npm_token
-  depends_on:
-  - end-to-end-tests
-
 - name: publish-storybook
   image: grafana/grafana-ci-deploy:1.2.7
   commands:
@@ -957,6 +946,19 @@ steps:
       from_secret: gcp_key
   depends_on:
   - build-storybook
+  - end-to-end-tests
+
+- name: release-npm-packages
+  image: grafana/build-container:1.2.29
+  commands:
+  - ./node_modules/.bin/lerna bootstrap
+  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
+  - ./scripts/build/release-packages.sh ${DRONE_TAG}
+  environment:
+    NPM_TOKEN:
+      from_secret: npm_token
+  depends_on:
+  - publish-storybook
 
 services:
 - name: postgres
@@ -1699,17 +1701,6 @@ steps:
   - mysql-integration-tests
   - postgres-integration-tests
 
-- name: release-npm-packages
-  image: grafana/build-container:1.2.29
-  commands:
-  - ./node_modules/.bin/lerna bootstrap
-  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
-  environment:
-    NPM_TOKEN:
-      from_secret: npm_token
-  depends_on:
-  - end-to-end-tests
-
 - name: publish-storybook
   image: grafana/grafana-ci-deploy:1.2.7
   commands:
@@ -1719,6 +1710,18 @@ steps:
       from_secret: gcp_key
   depends_on:
   - build-storybook
+  - end-to-end-tests
+
+- name: release-npm-packages
+  image: grafana/build-container:1.2.29
+  commands:
+  - ./node_modules/.bin/lerna bootstrap
+  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
+  environment:
+    NPM_TOKEN:
+      from_secret: npm_token
+  depends_on:
+  - publish-storybook
 
 services:
 - name: postgres
