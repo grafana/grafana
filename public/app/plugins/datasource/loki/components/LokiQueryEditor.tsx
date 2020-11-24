@@ -48,52 +48,8 @@ export class LokiQueryEditor extends PureComponent<Props, State> {
     this.props.onRunQuery();
   };
 
-  onChangeQueryLimit = (value: string) => {
-    const { query, onChange } = this.props;
-    const nextQuery = { ...query, maxLines: this.preprocessMaxLines(value) };
-    onChange(nextQuery);
-  };
-
-  onQueryTypeChange = (value: string) => {
-    const { query, onChange } = this.props;
-    let nextQuery;
-    if (value === 'instant') {
-      nextQuery = { ...query, instant: true, range: false };
-    } else {
-      nextQuery = { ...query, instant: false, range: true };
-    }
-    onChange(nextQuery);
-  };
-
-  preprocessMaxLines = (value: string) => {
-    if (value.length === 0) {
-      // empty input - falls back to dataSource.maxLines limit
-      return NaN;
-    } else if (value.length > 0 && (isNaN(+value) || +value < 0)) {
-      // input with at least 1 character and that is either incorrect (value in the input field is not a number) or negative
-      // falls back to the limit of 0 lines
-      return 0;
-    } else {
-      // default case - correct input
-      return +value;
-    }
-  };
-
-  onMaxLinesChange = (e: React.SyntheticEvent<HTMLInputElement>) => {
-    const { query } = this.props;
-    if (query.maxLines !== this.preprocessMaxLines(e.currentTarget.value)) {
-      this.onChangeQueryLimit(e.currentTarget.value);
-    }
-  };
-
-  onReturnKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      this.props.onRunQuery();
-    }
-  };
-
   render() {
-    const { datasource, query, data, range } = this.props;
+    const { datasource, query, data, range, onRunQuery, onChange } = this.props;
     const { legendFormat } = this.state;
 
     return (
@@ -129,11 +85,10 @@ export class LokiQueryEditor extends PureComponent<Props, State> {
           <LokiExploreExtraField
             lineLimitValue={query?.maxLines?.toString() || ''}
             queryType={query.instant ? 'instant' : 'range'}
-            onQueryTypeChange={this.onQueryTypeChange}
-            onLineLimitChange={this.onMaxLinesChange}
-            onKeyDownFunc={this.onReturnKeyDown}
+            query={query}
             runOnBlur={true}
-            onRunQuery={this.props.onRunQuery}
+            onRunQuery={onRunQuery}
+            onChange={onChange}
           />
         </div>
       </div>
