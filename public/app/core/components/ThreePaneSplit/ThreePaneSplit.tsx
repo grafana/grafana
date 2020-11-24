@@ -13,15 +13,15 @@ enum Pane {
 interface Props {
   horizontalSplitComponents: React.ReactNode[];
   rightPaneComponent: React.ReactNode;
-  uiState: { topPaneSize: number | string; rightPaneSize: number | string };
-  rightPanelVisible?: boolean;
+  uiState: { topPaneSize: number; rightPaneSize: number };
+  rightPaneVisible?: boolean;
   updateUiState: (uiState: { topPaneSize?: number; rightPaneSize?: number }) => void;
 }
 
 export class ThreePaneSplit extends PureComponent<Props> {
   rafToken = createRef<number>();
   static defaultProps = {
-    rightPanelVisible: true,
+    rightPaneVisible: true,
   };
 
   componentDidMount() {
@@ -95,7 +95,7 @@ export class ThreePaneSplit extends PureComponent<Props> {
   }
 
   render() {
-    const { rightPanelVisible, rightPaneComponent, uiState } = this.props;
+    const { rightPaneVisible, rightPaneComponent, uiState } = this.props;
     // Limit options pane width to 90% of screen.
     const maxWidth = window.innerWidth * 0.9;
     const styles = getStyles(config.theme);
@@ -106,7 +106,7 @@ export class ThreePaneSplit extends PureComponent<Props> {
         ? (uiState.rightPaneSize as number) * window.innerWidth
         : (uiState.rightPaneSize as number);
 
-    if (!rightPanelVisible) {
+    if (!rightPaneVisible) {
       return this.renderHorizontalSplit();
     }
 

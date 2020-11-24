@@ -305,7 +305,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
             rightPaneComponent={this.renderOptionsPane()}
             uiState={uiState}
             updateUiState={updatePanelEditorUIState}
-            rightPanelVisible={uiState.isPanelOptionsVisible}
+            rightPaneVisible={uiState.isPanelOptionsVisible}
           />
         </div>
       </div>
