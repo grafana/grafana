@@ -1,6 +1,7 @@
 package conditions
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -158,7 +159,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 
 	resp, err := c.HandleRequest(context.Ctx, getDsInfo.Result, req)
 	if err != nil {
-		if err == gocontext.DeadlineExceeded {
+		if errors.Is(err, gocontext.DeadlineExceeded) {
 			return nil, fmt.Errorf("alert execution exceeded the timeout")
 		}
 

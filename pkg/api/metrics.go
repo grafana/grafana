@@ -5,8 +5,8 @@ import (
 	"errors"
 	"sort"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -29,13 +29,13 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 		User:      c.SignedInUser,
 	}
 
-	expr := false
+	hasExpr := false
 	var ds *models.DataSource
 	for i, query := range reqDto.Queries {
 		hs.log.Debug("Processing metrics query", "query", query)
 		name := query.Get("datasource").MustString("")
-		if name == "__expr__" {
-			expr = true
+		if name == expr.DatasourceName {
+			hasExpr = true
 		}
 
 		datasourceID, err := query.Get("datasourceId").Int64()
@@ -44,7 +44,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 			return Error(400, "Query missing data source ID", nil)
 		}
 
-		if i == 0 && !expr {
+		if i == 0 && !hasExpr {
 			ds, err = hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 			if err != nil {
 				hs.log.Debug("Encountered error getting data source", "err", err)
@@ -70,7 +70,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 
 	var resp *tsdb.Response
 	var err error
-	if !expr {
+	if !hasExpr {
 		resp, err = tsdb.HandleRequest(c.Req.Context(), ds, request)
 		if err != nil {
 			return Error(500, "Metric request error", err)
@@ -80,7 +80,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 			return Error(404, "Expressions feature toggle is not enabled", nil)
 		}
 
-		resp, err = plugins.Transform.Transform(c.Req.Context(), request)
+		resp, err = expr.WrapTransformData(c.Req.Context(), request)
 		if err != nil {
 			return Error(500, "Transform request error", err)
 		}
@@ -114,7 +114,7 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 
 	ds, err := hs.DatasourceCache.GetDatasource(datasourceId, c.SignedInUser, c.SkipCache)
 	if err != nil {
-		if err == models.ErrDataSourceAccessDenied {
+		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			return Error(403, "Access denied to datasource", err)
 		}
 		return Error(500, "Unable to load datasource meta data", err)

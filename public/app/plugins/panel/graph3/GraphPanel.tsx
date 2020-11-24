@@ -28,8 +28,8 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
       <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
       <ZoomPlugin onZoom={onChangeTimeRange} />
       <ContextMenuPlugin />
-      {data.annotations && <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} />}
-      {data.annotations && <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} />}
+      {data.annotations ? <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} /> : <></>}
+      {data.annotations ? <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} /> : <></>}
     </GraphNG>
   );
 };

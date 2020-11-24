@@ -1,10 +1,16 @@
+import { Observable, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { SelectableValue } from '@grafana/data';
+import { FetchResponse, getBackendSrv } from '@grafana/runtime';
+
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
-import { SelectableValue } from '@grafana/data';
-import { getBackendSrv } from '@grafana/runtime';
-
 import { formatCloudMonitoringError } from './functions';
 import { MetricDescriptor } from './types';
+
+export interface PostResponse {
+  results: Record<string, any>;
+}
 
 interface Options {
   responseMap?: (res: any) => SelectableValue<string> | MetricDescriptor;
@@ -25,48 +31,56 @@ export default class Api {
     };
   }
 
-  async get(path: string, options?: Options): Promise<Array<SelectableValue<string>> | MetricDescriptor[]> {
-    try {
-      const { useCache, responseMap, baseUrl } = { ...this.defaultOptions, ...options };
+  get(path: string, options?: Options): Promise<Array<SelectableValue<string>> | MetricDescriptor[]> {
+    const { useCache, responseMap, baseUrl } = { ...this.defaultOptions, ...options };
 
-      if (useCache && this.cache[path]) {
-        return this.cache[path];
-      }
+    if (useCache && this.cache[path]) {
+      return Promise.resolve(this.cache[path]);
+    }
 
-      const response = await getBackendSrv().datasourceRequest({
+    return getBackendSrv()
+      .fetch<Record<string, any>>({
         url: baseUrl + path,
         method: 'GET',
-      });
+      })
+      .pipe(
+        map(response => {
+          const responsePropName = path.match(/([^\/]*)\/*$/)![1];
+          let res = [];
+          if (response && response.data && response.data[responsePropName]) {
+            res = response.data[responsePropName].map(responseMap);
+          }
 
-      const responsePropName = path.match(/([^\/]*)\/*$/)![1];
-      let res = [];
-      if (response && response.data && response.data[responsePropName]) {
-        res = response.data[responsePropName].map(responseMap);
-      }
+          if (useCache) {
+            this.cache[path] = res;
+          }
 
-      if (useCache) {
-        this.cache[path] = res;
-      }
-
-      return res;
-    } catch (error) {
-      appEvents.emit(CoreEvents.dsRequestError, { error: { data: { error: formatCloudMonitoringError(error) } } });
-      return [];
-    }
+          return res;
+        }),
+        catchError(error => {
+          appEvents.emit(CoreEvents.dsRequestError, {
+            error: { data: { error: formatCloudMonitoringError(error) } },
+          });
+          return of([]);
+        })
+      )
+      .toPromise();
   }
 
-  async post(data: { [key: string]: any }) {
-    return getBackendSrv().datasourceRequest({
+  post(data: Record<string, any>): Observable<FetchResponse<PostResponse>> {
+    return getBackendSrv().fetch<PostResponse>({
       url: '/api/tsdb/query',
       method: 'POST',
       data,
     });
   }
 
-  async test(projectName: string) {
-    return getBackendSrv().datasourceRequest({
-      url: `${this.baseUrl}${projectName}/metricDescriptors`,
-      method: 'GET',
-    });
+  test(projectName: string) {
+    return getBackendSrv()
+      .fetch<any>({
+        url: `${this.baseUrl}${projectName}/metricDescriptors`,
+        method: 'GET',
+      })
+      .toPromise();
   }
 }

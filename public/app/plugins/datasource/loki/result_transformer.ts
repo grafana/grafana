@@ -305,7 +305,7 @@ function lokiStatsToMetaStat(stats: LokiStats | undefined): QueryResultMetaStat[
   return result;
 }
 
-export function lokiStreamsToDataframes(
+export function lokiStreamsToDataFrames(
   response: LokiStreamResponse,
   target: { refId: string; expr?: string },
   limit: number,
@@ -472,7 +472,7 @@ export function processRangeQueryResponse(
   switch (response.data.resultType) {
     case LokiResultType.Stream:
       return of({
-        data: lokiStreamsToDataframes(response as LokiStreamResponse, target, limit, config, reverse),
+        data: lokiStreamsToDataFrames(response as LokiStreamResponse, target, limit, config, reverse),
         key: `${target.refId}_log`,
       });
 

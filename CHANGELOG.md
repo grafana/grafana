@@ -54,14 +54,11 @@ In order not to break all angular panel plugins and data sources we have some cu
 
 # 7.3.3 (2020-11-17)
 
-### Features / Enhancements
-
-* **Provisioning**: Pin application to the sidebar when it's enabled. [#29084](https://github.com/grafana/grafana/pull/29084), [@alexanderzobnin](https://github.com/alexanderzobnin)
-
-### Bug Fixes
+### Bug fixes
 
 * **Cloud monitoring**: Fix for multi-value template variable for project selector. [#29042](https://github.com/grafana/grafana/pull/29042), [@papagian](https://github.com/papagian)
-* **LogsPanel**: Fix scrolling in dashboards. [#28974](https://github.com/grafana/grafana/pull/28974), [@aocenas](https://github.com/aocenas)
+* **LogsPanel**: Fixes problem dragging scrollbar inside logs panel. [#28974](https://github.com/grafana/grafana/pull/28974), [@aocenas](https://github.com/aocenas)
+* **Provisioning**: Fixes application not pinned to the sidebar when it's enabled. [#29084](https://github.com/grafana/grafana/pull/29084), [@alexanderzobnin](https://github.com/alexanderzobnin)
 * **StatPanel**: Fixes hanging issue when all values are zero. [#29077](https://github.com/grafana/grafana/pull/29077), [@torkelo](https://github.com/torkelo)
 * **Thresholds**: Fixes color assigned to null values. [#29010](https://github.com/grafana/grafana/pull/29010), [@torkelo](https://github.com/torkelo)
 
@@ -142,6 +139,7 @@ In order not to break all angular panel plugins and data sources we have some cu
 ### Breaking changes
 
 - **CloudWatch**: The AWS CloudWatch data source's authentication scheme has changed. See the [upgrade notes](https://grafana.com/docs/grafana/latest/installation/upgrading/#upgrading-to-v73) for details and how this may affect you.
+- **Docker**: The Grafana docker image will run with the root group instead of the Grafana group. This may break builds for users who extend the official Docker images. Refer to the [upgrade notes](https://grafana.com/docs/grafana/latest/installation/upgrading/#upgrading-to-v73) for details.
 
 ### Features / Enhancements
 * **Alerting**: Add labels to name when converting data frame to series. [#28085](https://github.com/grafana/grafana/pull/28085), [@kylebrandt](https://github.com/kylebrandt)
@@ -2253,4 +2251,4 @@ repo on July 1st. Make sure you have switched to the new repo by then. The new r
 - **Text Panel**: The text panel does no longer by default allow unsanitized HTML. [#4117](https://github.com/grafana/grafana/issues/4117). This means that if you have text panels with scripts tags they will no longer work as before. To enable unsafe javascript execution in text panels enable the settings `disable_sanitize_html` under the section `[panels]` in your Grafana ini file, or set env variable `GF_PANELS_DISABLE_SANITIZE_HTML=true`.
 - **Dashboard**: Panel property `minSpan` replaced by `maxPerRow`. Dashboard migration will automatically migrate all dashboard panels using the `minSpan` property to the new `maxPerRow` property [#12991](https://github.com/grafana/grafana/pull/12991)
 
-For older release notes [CHANGELOG_ARCHIVE.md](https://github.com/grafana/grafana/blob/master/CHANGELOG_ARCHIVE.md)
+For older release notes, refer to the [CHANGELOG_ARCHIVE.md](https://github.com/grafana/grafana/blob/master/CHANGELOG_ARCHIVE.md)
