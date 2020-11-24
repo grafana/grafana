@@ -79,7 +79,7 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBC').should('be.visible');
   });
 
-  it.only('options set in url that do not exist should load correct options', () => {
+  it('options set in url that do not exist should load correct options', () => {
     e2e.flows.login('admin', 'admin');
     // @ts-ignore some typing issue
     e2e().on('uncaught:exception', err => {
