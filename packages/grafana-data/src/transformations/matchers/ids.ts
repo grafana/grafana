@@ -15,7 +15,7 @@ export enum FieldMatcherID {
   numeric = 'numeric',
   time = 'time', // Can be multiple times
   first = 'first',
-  firstTime = 'firstTimeField', // Only the first fime field
+  firstTimeField = 'firstTimeField', // Only the first fime field
 
   // With arguments
   byType = 'byType',

@@ -47,7 +47,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
   // Default to timeseries config
   if (!fields) {
     fields = {
-      x: fieldMatchers.get(FieldMatcherID.firstTime).get({}),
+      x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
       y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
     };
   }
