@@ -69,13 +69,13 @@ Pass the plugins you want installed to Docker with the `GF_INSTALL_PLUGINS` envi
 
 ```bash
 docker run -d \
--p 3000:3000 \
---name=grafana \
--e "GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource" \
-grafana/grafana
+  -p 3000:3000 \
+  --name=grafana \
+  -e "GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource" \
+  grafana/grafana
 ```
 
-> If you need to specify the version of a plugin, then you can add it to the `GF_INSTALL_PLUGINS` environment variable. Otherwise, the latest will be assumed. For example: `-e "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`.
+> **Note:** If you need to specify the version of a plugin, then you can add it to the `GF_INSTALL_PLUGINS` environment variable. Otherwise, the latest is used. For example: `-e "GF_INSTALL_PLUGINS=grafana-clock-panel 1.0.1,grafana-simple-json-datasource 1.3.5"`.
 
 ### Install plugins from other sources
 
@@ -85,17 +85,17 @@ You can install plugins from custom URLs by specifying the URL like this: `GF_IN
 
 ```bash
 docker run -d \
--p 3000:3000 \
---name=grafana \
--e "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin" \
-grafana/grafana
+  -p 3000:3000 \
+  --name=grafana \
+  -e "GF_INSTALL_PLUGINS=http://plugin-domain.com/my-custom-plugin.zip;custom-plugin" \
+  grafana/grafana
 ```
 
  ## Build and run a Docker image with pre-installed plugins
 
 You can build your own customized image that includes plugins. This saves time if you are creating multiple images and you want them all to have the same plugins installed on build.
 
-In the [Grafana GitHub repository](https://github.com/grafana/grafana/tree/master/packaging/docker) there is a folder called `custom/` which includes two Dockerfiles, `Dockerfile` and `ubuntu.Dockerfile`, that can be used to build a custom Grafana image. It accepts `GRAFANA_VERSION`, `GF_INSTALL_PLUGINS`, and `GF_INSTALL_IMAGE_RENDERER_PLUGIN` as build arguments.
+In the [Grafana GitHub repository](https://github.com/grafana/grafana) there is a folder called `packaging/docker/custom/`, which includes two Dockerfiles, `Dockerfile` and `ubuntu.Dockerfile`, that can be used to build a custom Grafana image. It accepts `GRAFANA_VERSION`, `GF_INSTALL_PLUGINS`, and `GF_INSTALL_IMAGE_RENDERER_PLUGIN` as build arguments.
 
 ### Build with pre-installed plugins
 
@@ -103,11 +103,11 @@ In the [Grafana GitHub repository](https://github.com/grafana/grafana/tree/maste
 
 Example of how to build and run:
 ```bash
-cd custom
+cd packaging/docker/custom
 docker build \
---build-arg "GRAFANA_VERSION=latest" \
---build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource" \
--t grafana-custom -f Dockerfile .
+  --build-arg "GRAFANA_VERSION=latest" \
+  --build-arg "GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource" \
+  -t grafana-custom -f Dockerfile .
 
 docker run -d -p 3000:3000 --name=grafana grafana-custom
 ```
@@ -118,15 +118,15 @@ Replace `Dockerfile` in above example with `ubuntu.Dockerfile` to build a custom
 
 > Only available in Grafana v6.5 and later. This is experimental.
 
-The [Grafana Image Renderer plugin]({{< relref "../administration/image_rendering/#grafana-image-renderer-plugin" >}}) does not currently work if it is installed in Grafana Docker image. You can build a custom Docker image by using the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument. This installs additional dependencies needed for the Grafana Image Renderer plugin to run.
+The [Grafana Image Renderer plugin]({{< relref "../administration/image_rendering/#grafana-image-renderer-plugin" >}}) does not currently work if it is installed in a Grafana Docker image. You can build a custom Docker image by using the `GF_INSTALL_IMAGE_RENDERER_PLUGIN` build argument. This installs additional dependencies needed for the Grafana Image Renderer plugin to run.
 
 Example of how to build and run:
 ```bash
-cd custom
+cd packaging/docker/custom
 docker build \
---build-arg "GRAFANA_VERSION=latest" \
---build-arg "GF_INSTALL_IMAGE_RENDERER_PLUGIN=true" \
--t grafana-custom -f Dockerfile .
+  --build-arg "GRAFANA_VERSION=latest" \
+  --build-arg "GF_INSTALL_IMAGE_RENDERER_PLUGIN=true" \
+  -t grafana-custom -f Dockerfile .
 
 docker run -d -p 3000:3000 --name=grafana grafana-custom
 ```
