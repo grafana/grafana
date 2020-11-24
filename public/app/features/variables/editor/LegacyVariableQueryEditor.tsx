@@ -32,7 +32,7 @@ export const LegacyVariableQueryEditor: FC<VariableQueryProps> = ({ onChange, qu
       onBlur={onBlur}
       required
       labelWidth={20}
-      aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput}
+      ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput}
     />
   );
 };

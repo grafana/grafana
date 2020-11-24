@@ -36,7 +36,7 @@ export class ConstantVariableEditor extends PureComponent<Props> {
           onChange={this.onChange}
           onBlur={this.onBlur}
           labelWidth={20}
-          aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInput}
+          ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInput}
           grow
         />
       </VerticalGroup>

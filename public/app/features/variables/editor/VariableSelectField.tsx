@@ -31,14 +31,15 @@ export function VariableSelectField({
       <InlineFormLabel width={labelWidth ?? 6} tooltip={tooltip}>
         {name}
       </InlineFormLabel>
-      <Select
-        onChange={onChange}
-        value={value}
-        width={width ?? 25}
-        options={options}
-        aria-label={ariaLabel}
-        className={styles.selectContainer}
-      />
+      <div aria-label={ariaLabel}>
+        <Select
+          onChange={onChange}
+          value={value}
+          width={width ?? 25}
+          options={options}
+          className={styles.selectContainer}
+        />
+      </div>
     </>
   );
 }

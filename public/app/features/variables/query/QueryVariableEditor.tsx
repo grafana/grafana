@@ -211,7 +211,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                   options={dsOptions}
                   onChange={this.onDataSourceChange}
                   labelWidth={10}
-                  aria-label={
+                  ariaLabel={
                     selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect
                   }
                 />
@@ -221,7 +221,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                   options={refreshOptions}
                   onChange={this.onRefreshChange}
                   labelWidth={10}
-                  aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect}
+                  ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect}
                   tooltip="When to update the values of this variable."
                 />
               </InlineFieldRow>
@@ -247,7 +247,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                   ).
                 </div>
               }
-              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput}
+              ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput}
               grow
             />
             <VariableSelectField
@@ -256,7 +256,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
               options={sortOptions}
               onChange={this.onSortChange}
               labelWidth={10}
-              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelect}
+              ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelect}
               tooltip="How to sort the values of this variable."
             />
           </VerticalGroup>
@@ -273,7 +273,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
               value={this.props.variable.useTags}
               name="Enabled"
               onChange={this.onUseTagsChange}
-              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsEnabledSwitch}
+              ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsEnabledSwitch}
             />
             {this.props.variable.useTags ? (
               <VerticalGroup spacing="none">
@@ -283,7 +283,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                   placeholder="metric name or tags query"
                   onChange={this.onTagsQueryChange}
                   onBlur={this.onTagsQueryBlur}
-                  aria-label={
+                  ariaLabel={
                     selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsTagsQueryInput
                   }
                   labelWidth={20}
@@ -295,7 +295,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                   placeholder="apps.$tag.*"
                   onChange={this.onTagValuesQueryChange}
                   onBlur={this.onTagValuesQueryBlur}
-                  aria-label={
+                  ariaLabel={
                     selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsTagsValuesQueryInput
                   }
                   labelWidth={20}

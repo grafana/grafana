@@ -1,4 +1,5 @@
 import { e2e } from '@grafana/e2e';
+import { selectOption } from '@grafana/e2e/src/flows';
 
 // skipped scenario helper because of some perf issue upgrading cypress to 4.5.0 and splitted the whole test into smaller
 // several it functions. Very important to keep the order of these it functions because they have dependency in the order
@@ -167,8 +168,8 @@ const assertDefaultsForNewVariable = () => {
     expect(input.val()).equals('');
   });
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect().within(select => {
-    e2e()
-      .get('option:selected')
+    e2e.components.Select.singleValue()
+      .should('be.visible')
       .should('have.text', 'Query');
   });
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput().within(input => {
@@ -176,31 +177,24 @@ const assertDefaultsForNewVariable = () => {
     expect(input.val()).equals('');
   });
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect().within(select => {
-    e2e()
-      .get('option:selected')
-      .should('have.text', '');
+    e2e.components.Select.singleValue().should('have.text', '');
   });
 
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect().within(select => {
-    e2e()
-      .get('option:selected')
-      .should('have.text', '');
+    e2e.components.Select.singleValue().should('have.text', '');
   });
 
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput().should('not.exist');
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect().within(select => {
-    e2e()
-      .get('option:selected')
-      .should('have.text', 'Never');
+    e2e.components.Select.singleValue().should('have.text', 'Never');
   });
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput().within(input => {
-    expect(input.attr('placeholder')).equals('/.*-(.*)-.*/');
+    const placeholder = '/.*-(?<text>.*)-(?<value>.*)-.*/';
+    expect(input.attr('placeholder')).equals(placeholder);
     expect(input.val()).equals('');
   });
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelect().within(select => {
-    e2e()
-      .get('option:selected')
-      .should('have.text', 'Disabled');
+    e2e.components.Select.singleValue().should('have.text', 'Disabled');
   });
   e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch().within(select => {
     e2e()
@@ -225,9 +219,13 @@ const createQueryVariable = ({ name, label, dataSourceName, query }: CreateQuery
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().should('be.visible');
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput().type(name);
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput().type(label);
-  e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
-    .select(`${dataSourceName}`)
-    .blur();
+
+  selectOption({
+    container: e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect(),
+    clickToOpen: true,
+    forceClickOption: true,
+    optionText: `${dataSourceName}`,
+  });
   e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput()
     .type(query)
     .blur();
@@ -595,13 +593,22 @@ const assertUpdateItem = (data: VariablesData[]) => {
     .should('have.value', itemToUpdate.label)
     .clear()
     .type(updatedItem.label);
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect().select('Constant');
+  selectOption({
+    container: e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect(),
+    optionText: 'Constant',
+    scrollIntoView: false,
+  });
   e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect().within(select => {
-    e2e()
-      .get('option:selected')
+    e2e.components.Select.singleValue()
+      .should('be.visible')
       .should('have.text', 'Variable');
   });
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect().select('');
+  selectOption({
+    container: e2e.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect(),
+    optionText: '',
+    optionIndex: 0,
+    scrollIntoView: false,
+  });
   e2e.pages.Dashboard.Settings.Variables.Edit.ConstantVariable.constantOptionsQueryInput().type(updatedItem.query);
 
   e2e.components.BackButton.backArrow()
