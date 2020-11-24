@@ -63,11 +63,18 @@ func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertCond
 func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) api.Response {
 	alertDefinitionID := c.ParamsInt64(":alertDefinitionId")
 
-	df, err := ng.alertDefinitionEval(alertDefinitionID, timeNow())
+	evalResults, err := ng.alertDefinitionEval(alertDefinitionID, timeNow())
 	if err != nil {
 		return api.Error(400, "Failed to evaludate alert", err)
 	}
-	instances, err := (*df).Encoded()
+	frame := evalResults.AsDataFrame()
+
+	df := tsdb.NewDecodedDataFrames([]*data.Frame{&frame})
+	if err != nil {
+		return api.Error(400, "Failed to instantiate Dataframes from the decoded frames", err)
+	}
+
+	instances, err := df.Encoded()
 	if err != nil {
 		return api.Error(400, "Failed to encode result dataframes", err)
 	}
@@ -76,7 +83,7 @@ func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) api.Respons
 	})
 }
 
-func (ng *AlertNG) alertDefinitionEval(alertDefinitionID int64, now time.Time) (*tsdb.DataFrames, error) {
+func (ng *AlertNG) alertDefinitionEval(alertDefinitionID int64, now time.Time) (eval.Results, error) {
 	conditions, err := ng.LoadAlertCondition(alertDefinitionID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load conditions: %w", err)
@@ -96,14 +103,7 @@ func (ng *AlertNG) alertDefinitionEval(alertDefinitionID int64, now time.Time) (
 	if err != nil {
 		return nil, fmt.Errorf("failed to evaluate results: %w", err)
 	}
-
-	frame := evalResults.AsDataFrame()
-
-	df := tsdb.NewDecodedDataFrames([]*data.Frame{&frame})
-	if err != nil {
-		return nil, fmt.Errorf("failed to evaluate alert definition: %w", err)
-	}
-	return &df, nil
+	return evalResults, nil
 }
 
 // getAlertDefinitionEndpoint handles GET /api/alert-definitions/:alertDefinitionId.

@@ -19,21 +19,15 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID in
 		case ctx := <-evalCh:
 			if !evalRunning {
 				lastEvalStarted = timeNow()
-				res, err := ng.alertDefinitionEval(definitionID, ctx.now)
+				results, err := ng.alertDefinitionEval(definitionID, ctx.now)
 				lastEvalEnded = timeNow()
 				if err != nil {
-					ng.log.Info("alert definition evaluation failed", "definitionID", definitionID, "duration", lastEvalEnded.Sub(lastEvalStarted), "error", err)
+					ng.log.Info("failed to evaluate alert definition", "definitionID", definitionID, "duration", lastEvalEnded.Sub(lastEvalStarted), "error", err)
 					continue
 				}
-				df, err := (*res).Decoded()
-				if err != nil {
-					ng.log.Info("alert definition decoding result failed", "definitionID", definitionID, "duration", lastEvalEnded.Sub(lastEvalStarted), "error", err)
+				for _, r := range results {
+					ng.log.Info("alert definition result", "definitionID", definitionID, "duration", lastEvalEnded.Sub(lastEvalStarted), "instance", r.Instance, "state", r.State.String())
 				}
-				s, err := df[0].StringTable(-1, -1)
-				if err != nil {
-					ng.log.Info("alert definition dataframe result conversion to string failed", "definitionID", definitionID, "duration", lastEvalEnded.Sub(lastEvalStarted), "error", err)
-				}
-				ng.log.Info("alert definition result", "definitionID", definitionID, "duration", lastEvalEnded.Sub(lastEvalStarted), "res", s)
 				evalRunning = false
 			}
 		case id := <-ng.schedule.stop:
