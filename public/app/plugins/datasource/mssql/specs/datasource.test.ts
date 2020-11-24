@@ -1,10 +1,12 @@
+import { of } from 'rxjs';
+import { dateTime } from '@grafana/data';
+
 import { MssqlDatasource } from '../datasource';
 import { TimeSrvStub } from 'test/specs/helpers';
-
-import { dateTime } from '@grafana/data';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
-import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer'; // will use the version in __mocks__
+import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
+import { FetchResponse } from '@grafana/runtime'; // will use the version in __mocks__
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -13,7 +15,7 @@ jest.mock('@grafana/runtime', () => ({
 
 describe('MSSQLDatasource', () => {
   const templateSrv: TemplateSrv = new TemplateSrv();
-  const datasourceRequestMock = jest.spyOn(backendSrv, 'datasourceRequest');
+  const fetchMock = jest.spyOn(backendSrv, 'fetch');
 
   const ctx: any = {
     timeSrv: new TimeSrvStub(),
@@ -61,7 +63,7 @@ describe('MSSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: any) => Promise.resolve({ data: response, status: 200 }));
+      fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
       return ctx.ds.annotationQuery(options).then((data: any) => {
         results = data;
@@ -107,7 +109,7 @@ describe('MSSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: any) => Promise.resolve({ data: response, status: 200 }));
+      fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
       return ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
@@ -146,7 +148,7 @@ describe('MSSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: any) => Promise.resolve({ data: response, status: 200 }));
+      fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
       return ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
@@ -187,7 +189,7 @@ describe('MSSQLDatasource', () => {
     };
 
     beforeEach(() => {
-      datasourceRequestMock.mockImplementation((options: any) => Promise.resolve({ data: response, status: 200 }));
+      fetchMock.mockImplementation(() => of(createFetchResponse(response)));
       return ctx.ds.metricFindQuery(query).then((data: any) => {
         results = data;
       });
@@ -201,7 +203,6 @@ describe('MSSQLDatasource', () => {
   });
 
   describe('When performing metricFindQuery', () => {
-    let results: any;
     const query = 'select * from atable';
     const response = {
       results: {
@@ -227,19 +228,17 @@ describe('MSSQLDatasource', () => {
     beforeEach(() => {
       ctx.timeSrv.setTime(time);
 
-      datasourceRequestMock.mockImplementation((options: any) => {
-        results = options.data;
-        return Promise.resolve({ data: response, status: 200 });
-      });
+      fetchMock.mockImplementation(() => of(createFetchResponse(response)));
 
       return ctx.ds.metricFindQuery(query);
     });
 
     it('should pass timerange to datasourceRequest', () => {
-      expect(results.from).toBe(time.from.valueOf().toString());
-      expect(results.to).toBe(time.to.valueOf().toString());
-      expect(results.queries.length).toBe(1);
-      expect(results.queries[0].rawSql).toBe(query);
+      expect(fetchMock).toBeCalledTimes(1);
+      expect(fetchMock.mock.calls[0][0].data.from).toBe(time.from.valueOf().toString());
+      expect(fetchMock.mock.calls[0][0].data.to).toBe(time.to.valueOf().toString());
+      expect(fetchMock.mock.calls[0][0].data.queries.length).toBe(1);
+      expect(fetchMock.mock.calls[0][0].data.queries[0].rawSql).toBe(query);
     });
   });
 
@@ -335,3 +334,17 @@ describe('MSSQLDatasource', () => {
     });
   });
 });
+
+function createFetchResponse<T>(data: T): FetchResponse<T> {
+  return {
+    data,
+    status: 200,
+    url: 'http://localhost:3000/api/query',
+    config: { url: 'http://localhost:3000/api/query' },
+    type: 'basic',
+    statusText: 'Ok',
+    redirected: false,
+    headers: ({} as unknown) as Headers,
+    ok: true,
+  };
+}

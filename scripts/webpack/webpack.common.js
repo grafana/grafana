@@ -65,7 +65,7 @@ module.exports = {
     new MonacoWebpackPlugin({
       // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
       filename: 'monaco-[name].worker.js',
-      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql'],
+      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql', 'javascript'],
       features: [
         '!accessibilityHelp',
         'bracketMatching',

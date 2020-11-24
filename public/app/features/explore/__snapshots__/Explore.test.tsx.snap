@@ -17,7 +17,7 @@ exports[`Explore should render component 1`] = `
     >
       <QueryRows
         exploreEvents={
-          Emitter {
+          EventBusSrv {
             "emitter": EventEmitter {
               "_events": Object {},
               "_eventsCount": 0,

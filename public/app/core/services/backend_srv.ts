@@ -11,8 +11,7 @@ import { DashboardSearchHit } from 'app/features/search/types';
 import { FolderDTO } from 'app/types';
 import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
-import { Emitter } from '../utils/emitter';
-import { parseInitFromOptions, parseUrlFromOptions } from '../utils/fetch';
+import { parseInitFromOptions, parseResponseBody, parseUrlFromOptions } from '../utils/fetch';
 import { isDataQuery, isLocalUrl } from '../utils/query';
 import { FetchQueue } from './FetchQueue';
 import { ResponseQueue } from './ResponseQueue';
@@ -22,7 +21,7 @@ const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
 
 export interface BackendSrvDependencies {
   fromFetch: (input: string | Request, init?: RequestInit) => Observable<Response>;
-  appEvents: Emitter;
+  appEvents: typeof appEvents;
   contextSrv: ContextSrv;
   logout: () => void;
 }
@@ -176,15 +175,8 @@ export class BackendSrv implements BackendService {
     return this.dependencies.fromFetch(url, init).pipe(
       mergeMap(async response => {
         const { status, statusText, ok, headers, url, type, redirected } = response;
-        const textData = await response.text(); // this could be just a string, prometheus requests for instance
-        let data: T;
 
-        try {
-          data = JSON.parse(textData); // majority of the requests this will be something that can be parsed
-        } catch {
-          data = textData as any;
-        }
-
+        const data = await parseResponseBody<T>(response, options.responseType);
         const fetchResponse: FetchResponse<T> = {
           status,
           statusText,

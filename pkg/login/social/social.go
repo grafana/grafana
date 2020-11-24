@@ -243,7 +243,7 @@ func GetOAuthHttpClient(name string) (*http.Client, error) {
 	name = strings.TrimPrefix(name, "oauth_")
 	info, ok := setting.OAuthService.OAuthInfos[name]
 	if !ok {
-		return nil, fmt.Errorf("Could not find %s in OAuth Settings", name)
+		return nil, fmt.Errorf("could not find %q in OAuth Settings", name)
 	}
 
 	// handle call back
@@ -261,7 +261,7 @@ func GetOAuthHttpClient(name string) (*http.Client, error) {
 		cert, err := tls.LoadX509KeyPair(info.TlsClientCert, info.TlsClientKey)
 		if err != nil {
 			logger.Error("Failed to setup TlsClientCert", "oauth", name, "error", err)
-			return nil, fmt.Errorf("Failed to setup TlsClientCert")
+			return nil, fmt.Errorf("failed to setup TlsClientCert: %w", err)
 		}
 
 		tr.TLSClientConfig.Certificates = append(tr.TLSClientConfig.Certificates, cert)
@@ -271,7 +271,7 @@ func GetOAuthHttpClient(name string) (*http.Client, error) {
 		caCert, err := ioutil.ReadFile(info.TlsClientCa)
 		if err != nil {
 			logger.Error("Failed to setup TlsClientCa", "oauth", name, "error", err)
-			return nil, fmt.Errorf("Failed to setup TlsClientCa")
+			return nil, fmt.Errorf("failed to setup TlsClientCa: %w", err)
 		}
 		caCertPool := x509.NewCertPool()
 		caCertPool.AppendCertsFromPEM(caCert)
@@ -285,7 +285,7 @@ func GetConnector(name string) (SocialConnector, error) {
 	provider := strings.TrimPrefix(name, "oauth_")
 	connector, ok := SocialMap[provider]
 	if !ok {
-		return nil, fmt.Errorf("Failed to find oauth provider for %s", name)
+		return nil, fmt.Errorf("failed to find oauth provider for %q", name)
 	}
 	return connector, nil
 }

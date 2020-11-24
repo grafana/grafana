@@ -193,7 +193,7 @@ func parseResponse(value model.Value, query *PrometheusQuery) (*tsdb.QueryResult
 
 	data, ok := value.(model.Matrix)
 	if !ok {
-		return queryRes, fmt.Errorf("Unsupported result format: %s", value.Type().String())
+		return queryRes, fmt.Errorf("unsupported result format: %q", value.Type().String())
 	}
 
 	for _, v := range data {

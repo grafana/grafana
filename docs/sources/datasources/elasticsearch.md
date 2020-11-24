@@ -2,11 +2,7 @@
 title = "Elasticsearch"
 description = "Guide for using Elasticsearch in Grafana"
 keywords = ["grafana", "elasticsearch", "guide"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/datasources/elasticsearch"]
-[menu.docs]
-name = "Elasticsearch"
-parent = "datasources"
 weight = 400
 +++
 
@@ -95,7 +91,7 @@ For example, if you're using a default setup of Filebeat for shipping logs to El
 
 Data links create a link from a specified field that can be accessed in logs view in Explore.
 
-Each data link configuration consists of: 
+Each data link configuration consists of:
 - **Field -** Name of the field used by the data link.
 - **URL/query -** If the link is external, then enter the full link URL. If the link is internal link, then this input serves as query for the target data source. In both cases, you can interpolate the value from the field with `${__value.raw }` macro.
 - **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.
@@ -248,3 +244,19 @@ datasources:
       logMessageField: message
       logLevelField: fields.level
 ```
+
+## Amazon Elasticsearch Service
+
+AWS users using Amazon's Elasticsearch Service can use Grafana's Elasticsearch data source to visualize Elasticsearch data.
+If you are using an AWS Identity and Access Management (IAM) policy to control access to your Amazon Elasticsearch Service domain, then you must use AWS Signature Version 4 (AWS SigV4) to sign all requests to that domain.
+For more details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
+
+### AWS Signature Version 4 authentication
+
+> **Note:** Only available in Grafana v7.3+.
+
+In order to sign requests to your Amazon Elasticsearch Service domain, SigV4 can be enabled in the Grafana [configuration]({{< relref "../administration/configuration.md#sigv4_auth_enabled" >}}).
+
+Once AWS SigV4 is enabled, it can be configured on the Elasticsearch data source configuration page. Refer to [Cloudwatch authentication]({{<relref "./cloudwatch.md#authentication" >}}) for more information about authentication options.
+
+{{< docs-imagebox img="/img/docs/v73/elasticsearch-sigv4-config-editor.png" max-width="500px" class="docs-image--no-shadow" caption="SigV4 configuration for AWS Elasticsearch Service" >}}

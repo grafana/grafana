@@ -1,6 +1,8 @@
 package dashboards
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -209,31 +211,31 @@ func dashToFolder(dash *models.Dashboard) *models.Folder {
 }
 
 func toFolderError(err error) error {
-	if err == models.ErrDashboardTitleEmpty {
+	if errors.Is(err, models.ErrDashboardTitleEmpty) {
 		return models.ErrFolderTitleEmpty
 	}
 
-	if err == models.ErrDashboardUpdateAccessDenied {
+	if errors.Is(err, models.ErrDashboardUpdateAccessDenied) {
 		return models.ErrFolderAccessDenied
 	}
 
-	if err == models.ErrDashboardWithSameNameInFolderExists {
+	if errors.Is(err, models.ErrDashboardWithSameNameInFolderExists) {
 		return models.ErrFolderSameNameExists
 	}
 
-	if err == models.ErrDashboardWithSameUIDExists {
+	if errors.Is(err, models.ErrDashboardWithSameUIDExists) {
 		return models.ErrFolderWithSameUIDExists
 	}
 
-	if err == models.ErrDashboardVersionMismatch {
+	if errors.Is(err, models.ErrDashboardVersionMismatch) {
 		return models.ErrFolderVersionMismatch
 	}
 
-	if err == models.ErrDashboardNotFound {
+	if errors.Is(err, models.ErrDashboardNotFound) {
 		return models.ErrFolderNotFound
 	}
 
-	if err == models.ErrDashboardFailedGenerateUniqueUid {
+	if errors.Is(err, models.ErrDashboardFailedGenerateUniqueUid) {
 		err = models.ErrFolderFailedGenerateUniqueUid
 	}
 

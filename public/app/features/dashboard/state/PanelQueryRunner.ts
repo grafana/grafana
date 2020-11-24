@@ -197,7 +197,7 @@ export class PanelQueryRunner {
     }
 
     this.subscription = observable.subscribe({
-      next: (data: PanelData) => {
+      next: data => {
         this.lastResult = preProcessPanelData(data, this.lastResult);
         // Store preprocessed query results for applying overrides later on in the pipeline
         this.subject.next(this.lastResult);

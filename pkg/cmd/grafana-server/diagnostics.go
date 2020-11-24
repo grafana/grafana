@@ -30,7 +30,7 @@ func (pd *profilingDiagnostics) overrideWithEnv() error {
 	if enabledEnv != "" {
 		enabled, err := strconv.ParseBool(enabledEnv)
 		if err != nil {
-			return fmt.Errorf("Failed to parse %s environment variable as bool", profilingEnabledEnvName)
+			return fmt.Errorf("failed to parse %s environment variable as bool", profilingEnabledEnvName)
 		}
 		pd.enabled = enabled
 	}
@@ -39,7 +39,7 @@ func (pd *profilingDiagnostics) overrideWithEnv() error {
 	if portEnv != "" {
 		port, parseErr := strconv.ParseUint(portEnv, 0, 64)
 		if parseErr != nil {
-			return fmt.Errorf("Failed to parse %s environment variable to unsigned integer", profilingPortEnvName)
+			return fmt.Errorf("failed to parse %s environment variable to unsigned integer", profilingPortEnvName)
 		}
 		pd.port = port
 	}
@@ -64,7 +64,7 @@ func (td *tracingDiagnostics) overrideWithEnv() error {
 	if enabledEnv != "" {
 		enabled, err := strconv.ParseBool(enabledEnv)
 		if err != nil {
-			return fmt.Errorf("Failed to parse %s environment variable as bool", tracingEnabledEnvName)
+			return fmt.Errorf("failed to parse %s environment variable as bool", tracingEnabledEnvName)
 		}
 		td.enabled = enabled
 	}

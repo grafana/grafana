@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -27,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -54,14 +54,30 @@ var plog = log.New("tsdb.cloudwatch")
 var aliasFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 
 func init() {
-	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
-		return newExecutor(), nil
+	registry.Register(&registry.Descriptor{
+		Name:         "CloudWatchService",
+		InitPriority: registry.Low,
+		Instance:     &CloudWatchService{},
 	})
 }
 
-func newExecutor() *cloudWatchExecutor {
+type CloudWatchService struct {
+	LogsService *LogsService `inject:""`
+}
+
+func (s *CloudWatchService) Init() error {
+	plog.Debug("initing")
+
+	tsdb.RegisterTsdbQueryEndpoint("cloudwatch", func(ds *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
+		return newExecutor(s.LogsService), nil
+	})
+
+	return nil
+}
+
+func newExecutor(logsService *LogsService) *cloudWatchExecutor {
 	return &cloudWatchExecutor{
-		logsClientsByRegion: map[string]cloudwatchlogsiface.CloudWatchLogsAPI{},
+		logsService: logsService,
 	}
 }
 
@@ -69,10 +85,10 @@ func newExecutor() *cloudWatchExecutor {
 type cloudWatchExecutor struct {
 	*models.DataSource
 
-	ec2Client           ec2iface.EC2API
-	rgtaClient          resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
-	logsClientsByRegion map[string]cloudwatchlogsiface.CloudWatchLogsAPI
-	mtx                 sync.Mutex
+	ec2Client  ec2iface.EC2API
+	rgtaClient resourcegroupstaggingapiiface.ResourceGroupsTaggingAPIAPI
+
+	logsService *LogsService
 }
 
 func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error) {
@@ -187,20 +203,12 @@ func (e *cloudWatchExecutor) getCWClient(region string) (cloudwatchiface.CloudWa
 }
 
 func (e *cloudWatchExecutor) getCWLogsClient(region string) (cloudwatchlogsiface.CloudWatchLogsAPI, error) {
-	e.mtx.Lock()
-	defer e.mtx.Unlock()
-
-	if logsClient, ok := e.logsClientsByRegion[region]; ok {
-		return logsClient, nil
-	}
-
 	sess, err := e.newSession(region)
 	if err != nil {
 		return nil, err
 	}
 
 	logsClient := newCWLogsClient(sess)
-	e.logsClientsByRegion[region] = logsClient
 
 	return logsClient, nil
 }
@@ -301,6 +309,8 @@ func (e *cloudWatchExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 		result, err = e.executeAnnotationQuery(ctx, queryContext)
 	case "logAction":
 		result, err = e.executeLogActions(ctx, queryContext)
+	case "liveLogAction":
+		result, err = e.executeLiveLogQuery(ctx, queryContext)
 	case "timeSeriesQuery":
 		fallthrough
 	default:

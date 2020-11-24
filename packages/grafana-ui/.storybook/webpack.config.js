@@ -103,7 +103,7 @@ module.exports = ({ config, mode }) => {
     minimize: isProductionBuild,
     minimizer: isProductionBuild
       ? [
-          new TerserPlugin({ cache: false, parallel: false, sourceMap: false, exclude: /monaco/ }),
+          new TerserPlugin({ cache: false, parallel: false, sourceMap: false, exclude: /monaco|bizcharts/ }),
           new OptimizeCSSAssetsPlugin({}),
         ]
       : [],

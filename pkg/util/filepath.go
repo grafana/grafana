@@ -50,7 +50,7 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 	}
 	err := walkFn(resolvedPath, info, nil)
 	if err != nil {
-		if info.IsDir() && err == ErrWalkSkipDir {
+		if info.IsDir() && errors.Is(err, ErrWalkSkipDir) {
 			err = nil
 		}
 		return err
@@ -63,7 +63,7 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 		// vout("SymLink Path: %v, links to: %v", resolvedPath, path2)
 		if symlinkPathsFollowed != nil {
 			if _, ok := symlinkPathsFollowed[path2]; ok {
-				errMsg := "Potential SymLink Infinite Loop. Path: %v, Link To: %v"
+				errMsg := "potential symLink infinite loop, path: %v, link to: %v"
 				return fmt.Errorf(errMsg, resolvedPath, path2)
 			}
 			symlinkPathsFollowed[path2] = true

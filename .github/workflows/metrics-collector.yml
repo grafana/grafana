@@ -8,7 +8,7 @@
 #
 # https://github.com/grafana/grafana-github-actions/blob/main/metrics-collector/index.ts
 #
-name: Github issue metrics collection 
+name: Github issue metrics collection
 on:
   schedule:
     - cron: "*/10 * * * *"
@@ -32,3 +32,4 @@ jobs:
         with:
           metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
           token: ${{secrets.GH_BOT_ACCESS_TOKEN}}
+          configPath: "metrics-collector"

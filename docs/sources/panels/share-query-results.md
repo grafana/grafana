@@ -1,9 +1,5 @@
 +++
 title = "Share query results"
-type = "docs"
-[menu.docs]
-identifier = "share-query-results"
-parent = "panels"
 weight = 310
 +++
 

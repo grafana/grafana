@@ -20,11 +20,13 @@ import {
   identityOverrideProcessor,
   TimeZone,
   FieldColor,
+  FieldColorConfigSettings,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
 import {
   NumberValueEditor,
+  SliderValueEditor,
   RadioButtonGroup,
   StringValueEditor,
   StringArrayEditor,
@@ -203,15 +205,18 @@ export const getStandardFieldConfigs = () => {
     getItemsCount: value => (value ? value.length : 0),
   };
 
-  const color: FieldConfigPropertyItem<any, FieldColor | undefined, {}> = {
+  const color: FieldConfigPropertyItem<any, FieldColor | undefined, FieldColorConfigSettings> = {
     id: 'color',
     path: 'color',
     name: 'Color scheme',
-    description: 'Select palette, gradient or single color',
     editor: standardEditorsRegistry.get('fieldColor').editor as any,
     override: standardEditorsRegistry.get('fieldColor').editor as any,
     process: identityOverrideProcessor,
     shouldApply: () => true,
+    settings: {
+      byValueSupport: true,
+      preferThresholdsMode: true,
+    },
     category,
   };
 
@@ -227,6 +232,13 @@ export const getStandardOptionEditors = () => {
     name: 'Number',
     description: 'Allows numeric values input',
     editor: NumberValueEditor as any,
+  };
+
+  const slider: StandardEditorsRegistryItem<number> = {
+    id: 'slider',
+    name: 'Slider',
+    description: 'Allows numeric values input',
+    editor: SliderValueEditor as any,
   };
 
   const text: StandardEditorsRegistryItem<string> = {
@@ -323,6 +335,7 @@ export const getStandardOptionEditors = () => {
   return [
     text,
     number,
+    slider,
     boolean,
     radio,
     select,

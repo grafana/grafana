@@ -56,19 +56,6 @@ export interface DataSourceResponse<T> {
 
 type DataSourceResponsePayload = DataSourceResponse<any>;
 
-export interface SaveDashboardPayload {
-  overwrite?: boolean;
-  folderId?: number;
-  makeEditable?: boolean;
-}
-
-export interface GraphHoverPayload {
-  pos: any;
-  panel: {
-    id: number;
-  };
-}
-
 export interface ToggleKioskModePayload {
   exit?: boolean;
 }
@@ -90,26 +77,16 @@ export interface DashScrollPayload {
   pos?: number;
 }
 
+export interface PanelChangeViewPayload {}
+
 /**
  * Events
  */
 
-export const showDashSearch = eventFactory<ShowDashSearchPayload>('show-dash-search');
-export const hideDashSearch = eventFactory('hide-dash-search');
-export const hideDashEditor = eventFactory('hide-dash-editor');
-export const dashScroll = eventFactory<DashScrollPayload>('dash-scroll');
 export const dashLinksUpdated = eventFactory('dash-links-updated');
-export const saveDashboard = eventFactory<SaveDashboardPayload>('save-dashboard');
-export const dashboardFetchStart = eventFactory('dashboard-fetch-start');
 export const dashboardSaved = eventFactory<DashboardModel>('dashboard-saved');
 export const removePanel = eventFactory<number>('remove-panel');
-
 export const searchQuery = eventFactory('search-query');
-
-export const locationChange = eventFactory<LocationChangePayload>('location-change');
-
-export const timepickerOpen = eventFactory('timepickerOpen');
-export const timepickerClosed = eventFactory('timepickerClosed');
 
 export const showModal = eventFactory<ShowModalPayload>('show-modal');
 export const showConfirmModal = eventFactory<ShowConfirmModalPayload>('confirm-modal');
@@ -118,9 +95,6 @@ export const showModalReact = eventFactory<ShowModalReactPayload>('show-modal-re
 
 export const dsRequestResponse = eventFactory<DataSourceResponsePayload>('ds-request-response');
 export const dsRequestError = eventFactory<any>('ds-request-error');
-
-export const graphHover = eventFactory<GraphHoverPayload>('graph-hover');
-export const graphHoverClear = eventFactory('graph-hover-clear');
 
 export const toggleSidemenuMobile = eventFactory('toggle-sidemenu-mobile');
 export const toggleSidemenuHidden = eventFactory('toggle-sidemenu-hidden');
@@ -148,12 +122,6 @@ export const zoomOut = eventFactory<number>('zoom-out');
 export const shiftTime = eventFactory<number>('shift-time');
 
 export const elasticQueryUpdated = eventFactory('elastic-query-updated');
-
-export const layoutModeChanged = eventFactory<string>('layout-mode-changed');
-
-export const jsonDiffReady = eventFactory('json-diff-ready');
-
-export const closeTimepicker = eventFactory('closeTimepicker');
 
 export const routeUpdated = eventFactory('$routeUpdate');
 

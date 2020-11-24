@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func (ss *SqlStore) addUserQueryAndCommandHandlers() {
+func (ss *SQLStore) addUserQueryAndCommandHandlers() {
 	ss.Bus.AddHandler(ss.GetSignedInUserWithCache)
 
 	bus.AddHandler("sql", GetUserById)
@@ -360,7 +360,7 @@ func newSignedInUserCacheKey(orgID, userID int64) string {
 	return fmt.Sprintf("signed-in-user-%d-%d", userID, orgID)
 }
 
-func (ss *SqlStore) GetSignedInUserWithCache(query *models.GetSignedInUserQuery) error {
+func (ss *SQLStore) GetSignedInUserWithCache(query *models.GetSignedInUserQuery) error {
 	cacheKey := newSignedInUserCacheKey(query.OrgId, query.UserId)
 	if cached, found := ss.CacheService.Get(cacheKey); found {
 		query.Result = cached.(*models.SignedInUser)
@@ -383,7 +383,7 @@ func GetSignedInUser(query *models.GetSignedInUserQuery) error {
 		orgId = strconv.FormatInt(query.OrgId, 10)
 	}
 
-	var rawSql = `SELECT
+	var rawSQL = `SELECT
 		u.id             as user_id,
 		u.is_admin       as is_grafana_admin,
 		u.email          as email,
@@ -402,11 +402,11 @@ func GetSignedInUser(query *models.GetSignedInUserQuery) error {
 	sess := x.Table("user")
 	switch {
 	case query.UserId > 0:
-		sess.SQL(rawSql+"WHERE u.id=?", query.UserId)
+		sess.SQL(rawSQL+"WHERE u.id=?", query.UserId)
 	case query.Login != "":
-		sess.SQL(rawSql+"WHERE u.login=?", query.Login)
+		sess.SQL(rawSQL+"WHERE u.login=?", query.Login)
 	case query.Email != "":
-		sess.SQL(rawSql+"WHERE u.email=?", query.Email)
+		sess.SQL(rawSQL+"WHERE u.email=?", query.Email)
 	}
 
 	var user models.SignedInUser

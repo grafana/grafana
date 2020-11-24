@@ -1,6 +1,6 @@
-import { sharedSingleStatMigrationHandler, BigValueTextMode } from '@grafana/ui';
+import { BigValueTextMode, sharedSingleStatMigrationHandler } from '@grafana/ui';
 import { PanelPlugin } from '@grafana/data';
-import { StatPanelOptions, addStandardDataReduceOptions } from './types';
+import { addStandardDataReduceOptions, StatPanelOptions } from './types';
 import { StatPanel } from './StatPanel';
 import { statPanelChangedHandler } from './StatMigrations';
 

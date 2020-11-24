@@ -16,15 +16,18 @@ import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
 import { useHoverIndentGuide } from './useHoverIndentGuide';
 import { colors, useTheme } from '@grafana/ui';
-import { TraceData, TraceSpanData, Trace, TraceSpan, TraceKeyValuePair, TraceLink } from '@grafana/data';
+import { TraceViewData, Trace, TraceSpan, TraceKeyValuePair, TraceLink } from '@grafana/data';
 import { createSpanLinkFactory } from './createSpanLink';
 
 type Props = {
-  trace: TraceData & { spans: TraceSpanData[] };
+  trace?: TraceViewData;
   splitOpenFn: (options: { datasourceUid: string; query: any }) => void;
 };
 
 export function TraceView(props: Props) {
+  if (!props.trace?.traceID) {
+    return null;
+  }
   const { expandOne, collapseOne, childrenToggle, collapseAll, childrenHiddenIDs, expandAll } = useChildrenState();
   const {
     detailStates,

@@ -100,7 +100,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
                 authProvider => authProvider.value === dataSourceConfig.jsonData.sigV4AuthType
               )}
               options={authProviderOptions}
-              defaultValue={dataSourceConfig.jsonData.sigV4AuthType || 'keys'}
+              defaultValue={dataSourceConfig.jsonData.sigV4AuthType || authProviderOptions[0]}
               onChange={option => {
                 onJsonDataChange('sigV4AuthType', option.value);
               }}

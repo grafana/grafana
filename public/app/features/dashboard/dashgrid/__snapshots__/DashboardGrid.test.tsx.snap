@@ -68,7 +68,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "autoUpdate": undefined,
           "description": undefined,
           "editable": true,
-          "events": Emitter {
+          "events": EventBusSrv {
             "emitter": EventEmitter {
               "_events": Object {
                 "panel-added": EE {
@@ -123,7 +123,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             PanelModel {
               "cachedPluginOptions": Object {},
               "datasource": null,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -151,7 +151,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             PanelModel {
               "cachedPluginOptions": Object {},
               "datasource": null,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -179,7 +179,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             PanelModel {
               "cachedPluginOptions": Object {},
               "datasource": null,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -207,7 +207,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             PanelModel {
               "cachedPluginOptions": Object {},
               "datasource": null,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -258,7 +258,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
         PanelModel {
           "cachedPluginOptions": Object {},
           "datasource": null,
-          "events": Emitter {
+          "events": EventBusSrv {
             "emitter": EventEmitter {
               "_events": Object {},
               "_eventsCount": 0,
@@ -310,7 +310,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "autoUpdate": undefined,
           "description": undefined,
           "editable": true,
-          "events": Emitter {
+          "events": EventBusSrv {
             "emitter": EventEmitter {
               "_events": Object {
                 "panel-added": EE {
@@ -365,7 +365,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             PanelModel {
               "cachedPluginOptions": Object {},
               "datasource": null,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -393,7 +393,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             PanelModel {
               "cachedPluginOptions": Object {},
               "datasource": null,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -421,7 +421,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             PanelModel {
               "cachedPluginOptions": Object {},
               "datasource": null,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -449,7 +449,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             PanelModel {
               "cachedPluginOptions": Object {},
               "datasource": null,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -500,7 +500,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
         PanelModel {
           "cachedPluginOptions": Object {},
           "datasource": null,
-          "events": Emitter {
+          "events": EventBusSrv {
             "emitter": EventEmitter {
               "_events": Object {},
               "_eventsCount": 0,
@@ -552,7 +552,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "autoUpdate": undefined,
           "description": undefined,
           "editable": true,
-          "events": Emitter {
+          "events": EventBusSrv {
             "emitter": EventEmitter {
               "_events": Object {
                 "panel-added": EE {
@@ -607,7 +607,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             PanelModel {
               "cachedPluginOptions": Object {},
               "datasource": null,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -635,7 +635,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             PanelModel {
               "cachedPluginOptions": Object {},
               "datasource": null,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -663,7 +663,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             PanelModel {
               "cachedPluginOptions": Object {},
               "datasource": null,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -691,7 +691,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             PanelModel {
               "cachedPluginOptions": Object {},
               "datasource": null,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -742,7 +742,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
         PanelModel {
           "cachedPluginOptions": Object {},
           "datasource": null,
-          "events": Emitter {
+          "events": EventBusSrv {
             "emitter": EventEmitter {
               "_events": Object {},
               "_eventsCount": 0,
@@ -794,7 +794,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
           "autoUpdate": undefined,
           "description": undefined,
           "editable": true,
-          "events": Emitter {
+          "events": EventBusSrv {
             "emitter": EventEmitter {
               "_events": Object {
                 "panel-added": EE {
@@ -849,7 +849,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             PanelModel {
               "cachedPluginOptions": Object {},
               "datasource": null,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -877,7 +877,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             PanelModel {
               "cachedPluginOptions": Object {},
               "datasource": null,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -905,7 +905,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             PanelModel {
               "cachedPluginOptions": Object {},
               "datasource": null,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -933,7 +933,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             PanelModel {
               "cachedPluginOptions": Object {},
               "datasource": null,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -984,7 +984,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
         PanelModel {
           "cachedPluginOptions": Object {},
           "datasource": null,
-          "events": Emitter {
+          "events": EventBusSrv {
             "emitter": EventEmitter {
               "_events": Object {},
               "_eventsCount": 0,

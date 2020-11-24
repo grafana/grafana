@@ -11,24 +11,23 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/macaron.v1"
 )
 
-func loggedInUserScenario(desc string, url string, fn scenarioFunc) {
-	loggedInUserScenarioWithRole(desc, "GET", url, url, models.ROLE_EDITOR, fn)
+func loggedInUserScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
+	loggedInUserScenarioWithRole(t, desc, "GET", url, url, models.ROLE_EDITOR, fn)
 }
 
-func loggedInUserScenarioWithRole(desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc) {
-	Convey(desc+" "+url, func() {
+func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc) {
+	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
-		sc := setupScenarioContext(url)
+		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
-			sc.context.UserId = TestUserID
-			sc.context.OrgId = TestOrgID
+			sc.context.UserId = testUserID
+			sc.context.OrgId = testOrgID
 			sc.context.OrgRole = role
 			if sc.handlerFunc != nil {
 				return sc.handlerFunc(sc.context)
@@ -48,11 +47,11 @@ func loggedInUserScenarioWithRole(desc string, method string, url string, routeP
 	})
 }
 
-func anonymousUserScenario(desc string, method string, url string, routePattern string, fn scenarioFunc) {
-	Convey(desc+" "+url, func() {
+func anonymousUserScenario(t *testing.T, desc string, method string, url string, routePattern string, fn scenarioFunc) {
+	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
-		sc := setupScenarioContext(url)
+		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
 			sc.context = c
 			if sc.handlerFunc != nil {
@@ -76,7 +75,7 @@ func anonymousUserScenario(desc string, method string, url string, routePattern 
 func (sc *scenarioContext) fakeReq(method, url string) *scenarioContext {
 	sc.resp = httptest.NewRecorder()
 	req, err := http.NewRequest(method, url, nil)
-	So(err, ShouldBeNil)
+	require.NoError(sc.t, err)
 	sc.req = req
 
 	return sc
@@ -141,9 +140,10 @@ func (sc *scenarioContext) exec() {
 type scenarioFunc func(c *scenarioContext)
 type handlerFunc func(c *models.ReqContext) Response
 
-func setupScenarioContext(url string) *scenarioContext {
+func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	sc := &scenarioContext{
 		url: url,
+		t:   t,
 	}
 	viewsPath, _ := filepath.Abs("../../public/views")
 

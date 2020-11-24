@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { dateTimeFormat } from '@grafana/data';
 import { LdapUserSyncInfo } from 'app/types';
-import { Icon } from '@grafana/ui';
+import { Spinner } from '@grafana/ui';
 
 interface Props {
   disableSync: boolean;
@@ -45,7 +45,7 @@ export class UserSyncInfo extends PureComponent<Props, State> {
       <>
         <button className={`btn btn-secondary pull-right`} onClick={this.onSyncClick} disabled={isDisabled}>
           <span className="btn-title">Sync user</span>
-          {isSyncing && <Icon name="fa fa-spinner" className="fa-fw fa-spin run-icon" />}
+          {isSyncing && <Spinner inline={true} />}
         </button>
 
         <div className="clearfix" />

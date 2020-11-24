@@ -10,7 +10,8 @@
 
 <div ng-if="ctrl.mode === 'list'">
   <div ng-if="ctrl.loading">
-    <icon name="'fa fa-spinner'" class="fa-spin"></icon>
+  <spinner inline="true" />
+  </spinner>
     <em>Fetching history list&hellip;</em>
   </div>
 
@@ -63,7 +64,8 @@
       </table>
 
       <div ng-if="ctrl.appending">
-        <icon name="'fa fa-spinner'" class="fa-spin"></icon>
+        <spinner inline="true" />
+        </spinner>
         <em>Fetching more entries&hellip;</em>
       </div>
 
@@ -97,7 +99,8 @@
 
 <div ng-if="ctrl.mode === 'compare'">
   <div ng-if="ctrl.loading">
-    <icon name="'fa fa-spinner'" class="fa-spin"></icon>
+    <spinner inline="true" />
+    </spinner>
     <em>Fetching changes&hellip;</em>
   </div>
 

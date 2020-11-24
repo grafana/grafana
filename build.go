@@ -37,6 +37,7 @@ var (
 	libc    string
 	pkgArch string
 	version string = "v1"
+	buildTags []string
 	// deb & rpm does not support semver so have to handle their version a little differently
 	linuxPackageVersion   string = "v1"
 	linuxPackageIteration string = ""
@@ -59,11 +60,13 @@ func main() {
 	log.SetFlags(0)
 
 	var buildIdRaw string
+	var buildTagsRaw string
 
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
 	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
 	flag.StringVar(&gocc, "cc", "", "CC")
 	flag.StringVar(&libc, "libc", "", "LIBC")
+	flag.StringVar(&buildTagsRaw, "build-tags", "", "Sets custom build tags")
 	flag.BoolVar(&cgo, "cgo-enabled", cgo, "Enable cgo")
 	flag.StringVar(&pkgArch, "pkg-arch", "", "PKG ARCH")
 	flag.BoolVar(&race, "race", race, "Use race detector")
@@ -89,6 +92,10 @@ func main() {
 		return
 	}
 
+	if len(buildTagsRaw) > 0 {
+		buildTags = strings.Split(buildTagsRaw, ",")
+	}
+
 	log.Printf("Version: %s, Linux Version: %s, Package Iteration: %s\n", version, linuxPackageVersion, linuxPackageIteration)
 
 	if flag.NArg() == 0 {
@@ -105,16 +112,16 @@ func main() {
 
 		case "build-srv", "build-server":
 			clean()
-			doBuild("grafana-server", "./pkg/cmd/grafana-server", []string{})
+			doBuild("grafana-server", "./pkg/cmd/grafana-server", buildTags)
 
 		case "build-cli":
 			clean()
-			doBuild("grafana-cli", "./pkg/cmd/grafana-cli", []string{})
+			doBuild("grafana-cli", "./pkg/cmd/grafana-cli", buildTags)
 
 		case "build":
 			//clean()
 			for _, binary := range binaries {
-				doBuild(binary, "./pkg/cmd/"+binary, []string{})
+				doBuild(binary, "./pkg/cmd/"+binary, buildTags)
 			}
 
 		case "build-frontend":
@@ -451,7 +458,12 @@ func gruntBuildArg(task string) []string {
 }
 
 func setup() {
-	runPrint("go", "install", "-v", "./pkg/cmd/grafana-server")
+	args := []string{"install", "-v"}
+	if goos == windows {
+		args = append(args, "-buildmode=exe")
+	}
+	args = append(args, "./pkg/cmd/grafana-server")
+	runPrint("go", args...)
 }
 
 func printGeneratedVersion() {
@@ -460,7 +472,12 @@ func printGeneratedVersion() {
 
 func test(pkg string) {
 	setBuildEnv()
-	runPrint("go", "test", "-short", "-timeout", "60s", pkg)
+	args := []string{"test", "-short", "-timeout", "60s"}
+	if goos == windows {
+		args = append(args, "-buildmode=exe")
+	}
+	args = append(args, pkg)
+	runPrint("go", args...)
 }
 
 func doBuild(binaryName, pkg string, tags []string) {
@@ -482,6 +499,10 @@ func doBuild(binaryName, pkg string, tags []string) {
 		rmr(binary, binary+".md5")
 	}
 	args := []string{"build", "-ldflags", ldflags()}
+	if goos == windows {
+		// Work around a linking error on Windows: "export ordinal too large"
+		args = append(args, "-buildmode=exe")
+	}
 	if len(tags) > 0 {
 		args = append(args, "-tags", strings.Join(tags, ","))
 	}

@@ -24,7 +24,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         "autoUpdate": undefined,
         "description": undefined,
         "editable": true,
-        "events": Emitter {
+        "events": EventBusSrv {
           "emitter": EventEmitter {
             "_events": Object {},
             "_eventsCount": 0,
@@ -53,7 +53,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           PanelModel {
             "cachedPluginOptions": Object {},
             "datasource": null,
-            "events": Emitter {
+            "events": EventBusSrv {
               "emitter": EventEmitter {
                 "_events": Object {},
                 "_eventsCount": 0,
@@ -120,6 +120,19 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         className="dashboard-content"
       >
         <SubMenu
+          annotations={
+            Array [
+              Object {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard",
+              },
+            ]
+          }
           dashboard={
             DashboardModel {
               "annotations": Object {
@@ -138,7 +151,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "autoUpdate": undefined,
               "description": undefined,
               "editable": true,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -167,7 +180,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 PanelModel {
                   "cachedPluginOptions": Object {},
                   "datasource": null,
-                  "events": Emitter {
+                  "events": EventBusSrv {
                     "emitter": EventEmitter {
                       "_events": Object {},
                       "_eventsCount": 0,
@@ -233,7 +246,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "autoUpdate": undefined,
               "description": undefined,
               "editable": true,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -262,7 +275,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 PanelModel {
                   "cachedPluginOptions": Object {},
                   "datasource": null,
-                  "events": Emitter {
+                  "events": EventBusSrv {
                     "emitter": EventEmitter {
                       "_events": Object {},
                       "_eventsCount": 0,
@@ -332,9 +345,8 @@ exports[`DashboardPage Dashboard is fetching slowly Should render slow init stat
         justify="center"
         spacing="xs"
       >
-        <Icon
-          className="fa-spin"
-          name="fa fa-spinner"
+        <Component
+          inline={true}
         />
          
         Fetching
@@ -384,7 +396,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "autoUpdate": undefined,
         "description": undefined,
         "editable": true,
-        "events": Emitter {
+        "events": EventBusSrv {
           "emitter": EventEmitter {
             "_events": Object {},
             "_eventsCount": 0,
@@ -413,7 +425,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           PanelModel {
             "cachedPluginOptions": Object {},
             "datasource": null,
-            "events": Emitter {
+            "events": EventBusSrv {
               "emitter": EventEmitter {
                 "_events": Object {},
                 "_eventsCount": 0,
@@ -480,6 +492,19 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         className="dashboard-content"
       >
         <SubMenu
+          annotations={
+            Array [
+              Object {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard",
+              },
+            ]
+          }
           dashboard={
             DashboardModel {
               "annotations": Object {
@@ -498,7 +523,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "autoUpdate": undefined,
               "description": undefined,
               "editable": true,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -527,7 +552,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 PanelModel {
                   "cachedPluginOptions": Object {},
                   "datasource": null,
-                  "events": Emitter {
+                  "events": EventBusSrv {
                     "emitter": EventEmitter {
                       "_events": Object {},
                       "_eventsCount": 0,
@@ -593,7 +618,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "autoUpdate": undefined,
               "description": undefined,
               "editable": true,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -622,7 +647,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 PanelModel {
                   "cachedPluginOptions": Object {},
                   "datasource": null,
-                  "events": Emitter {
+                  "events": EventBusSrv {
                     "emitter": EventEmitter {
                       "_events": Object {},
                       "_eventsCount": 0,
@@ -693,7 +718,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "autoUpdate": undefined,
         "description": undefined,
         "editable": true,
-        "events": Emitter {
+        "events": EventBusSrv {
           "emitter": EventEmitter {
             "_events": Object {},
             "_eventsCount": 0,
@@ -722,7 +747,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           PanelModel {
             "cachedPluginOptions": Object {},
             "datasource": null,
-            "events": Emitter {
+            "events": EventBusSrv {
               "emitter": EventEmitter {
                 "_events": Object {},
                 "_eventsCount": 0,

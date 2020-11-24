@@ -86,10 +86,10 @@ const getStoriesKnobs = () => {
   const legendPlacement = select<LegendPlacement>(
     'Legend placement',
     {
-      under: 'under',
+      bottom: 'under',
       right: 'right',
     },
-    'under'
+    'bottom'
   );
   const renderLegendAsTable = select<any>(
     'Render legend as',
@@ -123,8 +123,7 @@ export const graphWithLegend = () => {
       }
       return s;
     }),
-    displayMode: renderLegendAsTable ? LegendDisplayMode.Table : LegendDisplayMode.List,
-    isLegendVisible: true,
+    legendDisplayMode: renderLegendAsTable ? LegendDisplayMode.Table : LegendDisplayMode.List,
     onToggleSort: () => {},
     timeRange: {
       from: dateTime(1546372800000),
