@@ -33,7 +33,7 @@ export const frameMatchers = new Registry<FrameMatcherInfo>(() => {
 export function getFieldMatcher(config: MatcherConfig): FieldMatcher {
   const info = fieldMatchers.get(config.id);
   if (!info) {
-    throw new Error('Unknown Matcher: ' + config.id);
+    throw new Error(`Unknown Matcher: ${config.id} // ${fieldMatchers.list().map(v => v.id)}`);
   }
   return info.get(config.options);
 }
