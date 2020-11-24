@@ -33,7 +33,7 @@ type getAlertDefinitionByIDQuery struct {
 	Result *AlertDefinition
 }
 
-type deleteAlertDefinitionByIDQuery struct {
+type deleteAlertDefinitionByIDCommand struct {
 	ID    int64
 	OrgID int64
 
@@ -86,7 +86,7 @@ type evalAlertConditionCommand struct {
 	Now       time.Time      `json:"now"`
 }
 
-type listAlertDefinitionsCommand struct {
+type listAlertDefinitionsQuery struct {
 	OrgID int64 `json:"-"`
 
 	Result []*AlertDefinition

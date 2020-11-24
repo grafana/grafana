@@ -20,9 +20,9 @@ func getAlertDefinitionByID(alertDefinitionID int64, sess *sqlstore.DBSession) (
 
 // deleteAlertDefinitionByID is a handler for deleting an alert definition.
 // It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
-func (ng *AlertNG) deleteAlertDefinitionByID(query *deleteAlertDefinitionByIDQuery) error {
+func (ng *AlertNG) deleteAlertDefinitionByID(cmd *deleteAlertDefinitionByIDCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		res, err := sess.Exec("DELETE FROM alert_definition WHERE id = ?", query.ID)
+		res, err := sess.Exec("DELETE FROM alert_definition WHERE id = ?", cmd.ID)
 		if err != nil {
 			return err
 		}
@@ -31,7 +31,7 @@ func (ng *AlertNG) deleteAlertDefinitionByID(query *deleteAlertDefinitionByIDQue
 		if err != nil {
 			return err
 		}
-		query.RowsAffected = rowsAffected
+		cmd.RowsAffected = rowsAffected
 		return nil
 	})
 }
@@ -107,20 +107,20 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 }
 
 // getOrgAlertDefinitions is a handler for retrieving alert definitions of specific organisation.
-func (ng *AlertNG) getOrgAlertDefinitions(cmd *listAlertDefinitionsCommand) error {
+func (ng *AlertNG) getOrgAlertDefinitions(query *listAlertDefinitionsQuery) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertDefinitions := make([]*AlertDefinition, 0)
 		q := "SELECT * FROM alert_definition WHERE org_id = ?"
-		if err := sess.SQL(q, cmd.OrgID).Find(&alertDefinitions); err != nil {
+		if err := sess.SQL(q, query.OrgID).Find(&alertDefinitions); err != nil {
 			return err
 		}
 
-		cmd.Result = alertDefinitions
+		query.Result = alertDefinitions
 		return nil
 	})
 }
 
-func (ng *AlertNG) getAlertDefinitions(cmd *listAlertDefinitionsCommand) error {
+func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alerts := make([]*AlertDefinition, 0)
 		q := "SELECT id, interval FROM alert_definition"
@@ -128,7 +128,7 @@ func (ng *AlertNG) getAlertDefinitions(cmd *listAlertDefinitionsCommand) error {
 			return err
 		}
 
-		cmd.Result = alerts
+		query.Result = alerts
 		return nil
 	})
 }

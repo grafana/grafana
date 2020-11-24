@@ -42,7 +42,7 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID in
 }
 
 func (ng *AlertNG) fetchAlertDefinitions(since time.Time) []*AlertDefinition {
-	cmd := listAlertDefinitionsCommand{}
+	cmd := listAlertDefinitionsQuery{}
 	err := ng.getAlertDefinitions(&cmd) // tmp
 	if err != nil {
 		ng.log.Error("failed to fetch updated alert definitions", "since", since, "err", err)

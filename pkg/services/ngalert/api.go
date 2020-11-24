@@ -125,7 +125,7 @@ func (ng *AlertNG) getAlertDefinitionEndpoint(c *models.ReqContext) api.Response
 func (ng *AlertNG) deleteAlertDefinitionEndpoint(c *models.ReqContext) api.Response {
 	alertDefinitionID := c.ParamsInt64(":alertDefinitionId")
 
-	query := deleteAlertDefinitionByIDQuery{
+	query := deleteAlertDefinitionByIDCommand{
 		ID:    alertDefinitionID,
 		OrgID: c.SignedInUser.OrgId,
 	}
@@ -163,11 +163,11 @@ func (ng *AlertNG) createAlertDefinitionEndpoint(c *models.ReqContext, cmd saveA
 
 // listAlertDefinitions handles GET /api/alert-definitions.
 func (ng *AlertNG) listAlertDefinitions(c *models.ReqContext) api.Response {
-	cmd := listAlertDefinitionsCommand{OrgID: c.SignedInUser.OrgId}
+	query := listAlertDefinitionsQuery{OrgID: c.SignedInUser.OrgId}
 
-	if err := ng.getOrgAlertDefinitions(&cmd); err != nil {
+	if err := ng.getOrgAlertDefinitions(&query); err != nil {
 		return api.Error(500, "Failed to list alert definitions", err)
 	}
 
-	return api.JSON(200, util.DynMap{"results": cmd.Result})
+	return api.JSON(200, util.DynMap{"results": query.Result})
 }
