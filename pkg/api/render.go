@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -66,22 +67,20 @@ func (hs *HTTPServer) RenderToPng(c *models.ReqContext) {
 		DeviceScaleFactor: scale,
 		Headers:           headers,
 	})
-
-	if err != nil && err == rendering.ErrTimeout {
-		c.Handle(500, err.Error(), err)
-		return
-	}
-
-	if err != nil && err == rendering.ErrPhantomJSNotInstalled {
-		if strings.HasPrefix(runtime.GOARCH, "arm") {
-			c.Handle(500, "Rendering failed - PhantomJS isn't included in arm build per default", err)
-		} else {
-			c.Handle(500, "Rendering failed - PhantomJS isn't installed correctly", err)
-		}
-		return
-	}
-
 	if err != nil {
+		if errors.Is(err, rendering.ErrTimeout) {
+			c.Handle(500, err.Error(), err)
+			return
+		}
+		if errors.Is(err, rendering.ErrPhantomJSNotInstalled) {
+			if strings.HasPrefix(runtime.GOARCH, "arm") {
+				c.Handle(500, "Rendering failed - PhantomJS isn't included in arm build per default", err)
+			} else {
+				c.Handle(500, "Rendering failed - PhantomJS isn't installed correctly", err)
+			}
+			return
+		}
+
 		c.Handle(500, "Rendering failed.", err)
 		return
 	}

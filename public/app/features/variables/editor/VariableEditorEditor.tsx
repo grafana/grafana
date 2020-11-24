@@ -5,11 +5,11 @@ import { Button, Icon, InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { variableAdapters } from '../adapters';
-import { NEW_VARIABLE_ID, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
+import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { VariableHide, VariableModel } from '../types';
 import { appEvents } from '../../../core/core';
 import { VariableValuesPreview } from './VariableValuesPreview';
-import { changeVariableName, onEditorAdd, onEditorUpdate, variableEditorMount, variableEditorUnMount } from './actions';
+import { changeVariableName, onEditorUpdate, variableEditorMount, variableEditorUnMount } from './actions';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../types';
 import { VariableEditorState } from './reducer';
@@ -18,6 +18,7 @@ import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { OnPropChangeArguments } from './types';
 import { changeVariableProp, changeVariableType } from '../state/sharedReducer';
 import { updateOptions } from '../state/actions';
+import { getVariableTypes } from '../utils';
 import { VariableTextField } from './VariableTextField';
 import { VariableSelectField } from './VariableSelectField';
 import { VariableSectionHeader } from './VariableSectionHeader';
@@ -38,7 +39,6 @@ interface DispatchProps {
   changeVariableName: typeof changeVariableName;
   changeVariableProp: typeof changeVariableProp;
   onEditorUpdate: typeof onEditorUpdate;
-  onEditorAdd: typeof onEditorAdd;
   changeVariableType: typeof changeVariableType;
   updateOptions: typeof updateOptions;
 }
@@ -109,13 +109,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
       return;
     }
 
-    if (this.props.variable.id !== NEW_VARIABLE_ID) {
-      await this.props.onEditorUpdate(this.props.identifier);
-    }
-
-    if (this.props.variable.id === NEW_VARIABLE_ID) {
-      await this.props.onEditorAdd(this.props.identifier);
-    }
+    await this.props.onEditorUpdate(this.props.identifier);
   };
 
   render() {
@@ -124,9 +118,8 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
     if (!EditorToRender) {
       return null;
     }
-    const newVariable = this.props.variable.id && this.props.variable.id === NEW_VARIABLE_ID;
     const loading = variable.state === LoadingState.Loading;
-    const typeOptions = variableAdapters.list().map(({ id, name }) => ({ label: name, value: id }));
+    const typeOptions = getVariableTypes();
     const typeValue = typeOptions.find(o => o.value === this.props.variable.type) ?? { label: 'Query', value: 'query' };
     const typeTooltip = variableAdapters.get(this.props.variable.type).description;
     const hideOptions = [
@@ -203,7 +196,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                 aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
                 disabled={loading}
               >
-                {newVariable ? 'Add' : 'Update'}
+                Update
                 {loading ? (
                   <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} />
                 ) : null}
@@ -227,7 +220,6 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   changeVariableName,
   changeVariableProp,
   onEditorUpdate,
-  onEditorAdd,
   changeVariableType,
   updateOptions,
 };

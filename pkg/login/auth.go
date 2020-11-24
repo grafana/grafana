@@ -39,7 +39,8 @@ func AuthenticateUser(query *models.LoginUserQuery) error {
 	}
 
 	err := loginUsingGrafanaDB(query)
-	if err == nil || (err != models.ErrUserNotFound && err != ErrInvalidCredentials && err != ErrUserDisabled) {
+	if err == nil || (!errors.Is(err, models.ErrUserNotFound) && !errors.Is(err, ErrInvalidCredentials) &&
+		!errors.Is(err, ErrUserDisabled)) {
 		query.AuthModule = "grafana"
 		return err
 	}
@@ -47,16 +48,16 @@ func AuthenticateUser(query *models.LoginUserQuery) error {
 	ldapEnabled, ldapErr := loginUsingLDAP(query)
 	if ldapEnabled {
 		query.AuthModule = models.AuthModuleLDAP
-		if ldapErr == nil || ldapErr != ldap.ErrInvalidCredentials {
+		if ldapErr == nil || !errors.Is(ldapErr, ldap.ErrInvalidCredentials) {
 			return ldapErr
 		}
 
-		if err != ErrUserDisabled || ldapErr != ldap.ErrInvalidCredentials {
+		if !errors.Is(err, ErrUserDisabled) || !errors.Is(ldapErr, ldap.ErrInvalidCredentials) {
 			err = ldapErr
 		}
 	}
 
-	if err == ErrInvalidCredentials || err == ldap.ErrInvalidCredentials {
+	if errors.Is(err, ErrInvalidCredentials) || errors.Is(err, ldap.ErrInvalidCredentials) {
 		if err := saveInvalidLoginAttempt(query); err != nil {
 			loginLogger.Error("Failed to save invalid login attempt", "err", err)
 		}

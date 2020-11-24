@@ -177,7 +177,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   render() {
-    const dsOptions = this.props.editor.extended?.dataSources.length
+    const dsOptions = this.props.editor.extended?.dataSources?.length
       ? this.props.editor.extended?.dataSources.map(ds => ({ label: ds.name, value: ds.value ?? '' }))
       : [];
     const dsValue = dsOptions.find(o => o.value === this.props.variable.datasource) ?? dsOptions[0];

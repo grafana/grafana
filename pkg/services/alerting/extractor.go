@@ -167,7 +167,7 @@ func (e *DashAlertExtractor) getAlertFromPanels(jsonWithPanels *simplejson.Json,
 			}
 
 			if err := bus.Dispatch(&dsFilterQuery); err != nil {
-				if err != bus.ErrHandlerNotFound {
+				if !errors.Is(err, bus.ErrHandlerNotFound) {
 					return nil, err
 				}
 			} else {
