@@ -38,7 +38,7 @@ export const frameMatchers = new Registry<FrameMatcherInfo>(() => {
 
 /**
  * Resolves a field matcher from the registry for given config.
- * If no matcher can be found an error will be thrown.
+ * Will throw an error if matcher can not be resolved.
  * @public
  */
 export function getFieldMatcher(config: MatcherConfig): FieldMatcher {
@@ -51,7 +51,7 @@ export function getFieldMatcher(config: MatcherConfig): FieldMatcher {
 
 /**
  * Resolves a frame matcher from the registry for given config.
- * If no matcher can be found an error will be thrown.
+ * Will throw an error if matcher can not be resolved.
  * @public
  */
 export function getFrameMatchers(config: MatcherConfig): FrameMatcher {
