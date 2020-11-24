@@ -5,9 +5,15 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
   ExtraFieldElement={
     <Memo(LokiExploreExtraField)
       lineLimitValue="0"
-      onKeyDownFunc={[Function]}
-      onLineLimitChange={[Function]}
-      onQueryTypeChange={[Function]}
+      onChange={[MockFunction]}
+      onRunQuery={[MockFunction]}
+      query={
+        Object {
+          "expr": "",
+          "maxLines": 0,
+          "refId": "A",
+        }
+      }
       queryType="range"
     />
   }

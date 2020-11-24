@@ -43,6 +43,20 @@ exports[`Render LokiQueryEditor with legend should render 1`] = `
         value="My Legend"
       />
     </div>
+    <LokiExploreExtraField
+      lineLimitValue=""
+      onChange={[MockFunction]}
+      onRunQuery={[MockFunction]}
+      query={
+        Object {
+          "expr": "",
+          "legendFormat": "My Legend",
+          "refId": "A",
+        }
+      }
+      queryType="range"
+      runOnBlur={true}
+    />
   </div>
 </div>
 `;
@@ -90,6 +104,20 @@ exports[`Render LokiQueryEditor with legend should update timerange 1`] = `
         value="My Legend"
       />
     </div>
+    <LokiExploreExtraField
+      lineLimitValue=""
+      onChange={[MockFunction]}
+      onRunQuery={[MockFunction]}
+      query={
+        Object {
+          "expr": "",
+          "legendFormat": "My Legend",
+          "refId": "A",
+        }
+      }
+      queryType="range"
+      runOnBlur={true}
+    />
   </div>
 </div>
 `;
