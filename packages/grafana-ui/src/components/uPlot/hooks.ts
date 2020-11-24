@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PlotPlugin } from './types';
 import { pluginLog } from './utils';
-import uPlot from 'uplot';
+import uPlot, { Options } from 'uplot';
 import { getTimeZoneInfo, TimeZone } from '@grafana/data';
 import { usePlotPluginContext } from './context';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
+import usePrevious from 'react-use/lib/usePrevious';
 
 export const usePlotPlugins = () => {
   /**
@@ -104,9 +105,10 @@ export const DEFAULT_PLOT_CONFIG = {
   hooks: {},
 };
 
+//pass plain confsig object,memoize!
 export const usePlotConfig = (width: number, height: number, timeZone: TimeZone, configBuilder: UPlotConfigBuilder) => {
   const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
-  const [currentConfig, setCurrentConfig] = useState<uPlot.Options>();
+  const [currentConfig, setCurrentConfig] = useState<Options>();
 
   const tzDate = useMemo(() => {
     let fmt = undefined;
@@ -124,7 +126,6 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
     if (!arePluginsReady) {
       return;
     }
-
     setCurrentConfig({
       ...DEFAULT_PLOT_CONFIG,
       width,
@@ -135,7 +136,7 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
       tzDate,
       ...configBuilder.getConfig(),
     });
-  }, [arePluginsReady, plugins, width, height, configBuilder]);
+  }, [arePluginsReady, plugins, width, height, tzDate, configBuilder]);
 
   return {
     registerPlugin,
@@ -171,3 +172,17 @@ export const useRefreshAfterGraphRendered = (pluginId: string) => {
 
   return renderToken;
 };
+
+export function useRevision<T>(dep: T, cmp: (prev: T, next: T) => boolean) {
+  const [rev, setRev] = useState(0);
+  const prevDep = usePrevious(dep);
+
+  useEffect(() => {
+    const hasConfigChanged = prevDep ? !cmp(prevDep, dep) : true;
+    if (hasConfigChanged) {
+      setRev(r => r + 1);
+    }
+  }, [dep]);
+
+  return rev;
+}

@@ -29,7 +29,7 @@ import { selectThemeVariant } from '../../themes/selectThemeVariant';
 
 //Components
 import { LogDetails } from './LogDetails';
-import { LogRowMessageParsed } from './LogRowMessageParsed';
+import { LogRowMessageDetectedFields } from './LogRowMessageDetectedFields';
 import { LogRowMessage } from './LogRowMessage';
 import { LogLabels } from './LogLabels';
 
@@ -50,9 +50,9 @@ interface Props extends Themeable {
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
-  showParsedFields?: string[];
-  onClickShowParsedField?: (key: string) => void;
-  onClickHideParsedField?: (key: string) => void;
+  showDetectedFields?: string[];
+  onClickShowDetectedField?: (key: string) => void;
+  onClickHideDetectedField?: (key: string) => void;
 }
 
 interface State {
@@ -149,8 +149,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       getRows,
       onClickFilterLabel,
       onClickFilterOutLabel,
-      onClickShowParsedField,
-      onClickHideParsedField,
+      onClickShowDetectedField,
+      onClickHideDetectedField,
       highlighterExpressions,
       allowDetails,
       row,
@@ -158,7 +158,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       showContextToggle,
       showLabels,
       showTime,
-      showParsedFields,
+      showDetectedFields,
       wrapLogMessage,
       theme,
       getFieldLinks,
@@ -198,8 +198,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               <LogLabels labels={row.uniqueLabels} />
             </td>
           )}
-          {showParsedFields && showParsedFields.length > 0 ? (
-            <LogRowMessageParsed row={row} showParsedFields={showParsedFields!} getFieldLinks={getFieldLinks} />
+          {showDetectedFields && showDetectedFields.length > 0 ? (
+            <LogRowMessageDetectedFields
+              row={row}
+              showDetectedFields={showDetectedFields!}
+              getFieldLinks={getFieldLinks}
+            />
           ) : (
             <LogRowMessage
               highlighterExpressions={highlighterExpressions}
@@ -225,12 +229,12 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             getFieldLinks={getFieldLinks}
             onClickFilterLabel={onClickFilterLabel}
             onClickFilterOutLabel={onClickFilterOutLabel}
-            onClickShowParsedField={onClickShowParsedField}
-            onClickHideParsedField={onClickHideParsedField}
+            onClickShowDetectedField={onClickShowDetectedField}
+            onClickHideDetectedField={onClickHideDetectedField}
             getRows={getRows}
             row={row}
             hasError={hasError}
-            showParsedFields={showParsedFields}
+            showDetectedFields={showDetectedFields}
           />
         )}
       </>
