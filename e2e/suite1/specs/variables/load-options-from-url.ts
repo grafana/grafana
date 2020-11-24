@@ -19,6 +19,15 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A')
       .should('be.visible')
       .click();
+
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
+      .should('be.visible')
+      .within(() => {
+        e2e()
+          .get('.variable-option')
+          .should('have.length', 4);
+      });
+
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible');
@@ -27,6 +36,15 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA')
       .should('be.visible')
       .click();
+
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
+      .should('be.visible')
+      .within(() => {
+        e2e()
+          .get('.variable-option')
+          .should('have.length', 4);
+      });
+
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AA').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AB').should('be.visible');
@@ -35,6 +53,15 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
       .should('be.visible')
       .click();
+
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
+      .should('be.visible')
+      .within(() => {
+        e2e()
+          .get('.variable-option')
+          .should('have.length', 4);
+      });
+
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AAA').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AAB').should('be.visible');
@@ -57,6 +84,15 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B')
       .should('be.visible')
       .click();
+
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
+      .should('be.visible')
+      .within(() => {
+        e2e()
+          .get('.variable-option')
+          .should('have.length', 4);
+      });
+
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible');
@@ -65,6 +101,15 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB')
       .should('be.visible')
       .click();
+
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
+      .should('be.visible')
+      .within(() => {
+        e2e()
+          .get('.variable-option')
+          .should('have.length', 4);
+      });
+
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BA').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').should('be.visible');
@@ -73,6 +118,15 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BBB')
       .should('be.visible')
       .click();
+
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
+      .should('be.visible')
+      .within(() => {
+        e2e()
+          .get('.variable-option')
+          .should('have.length', 4);
+      });
+
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBA').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBB').should('be.visible');
@@ -106,6 +160,15 @@ describe('Variables - Load options from Url', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('X')
       .should('be.visible')
       .click();
+
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
+      .should('be.visible')
+      .within(() => {
+        e2e()
+          .get('.variable-option')
+          .should('have.length', 4);
+      });
+
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible');

@@ -145,7 +145,7 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('AAC').should('be.visible');
   });
 
-  it.only('removing a value that is part of dependents options should remove the new values dependant options', () => {
+  it('removing a value that is part of dependents options should remove the new values dependant options', () => {
     e2e.flows.login('admin', 'admin');
     e2e.flows.openDashboard({
       uid: `${PAGE_UNDER_TEST}?var-datacenter=A&var-datacenter=B&var-server=AA&var-server=BB&var-pod=AAA&var-pod=BBB`,
