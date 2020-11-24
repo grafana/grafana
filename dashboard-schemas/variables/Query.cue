@@ -2,7 +2,7 @@ package variables
 
 // Query variables allow you to write a data source query that can return a
 // list of metric names, tag values, or keys.
-#Query: variable & {
+#Query: _variable & {
 	// Data source to use.
 	datasource: string
 	// Definition.
