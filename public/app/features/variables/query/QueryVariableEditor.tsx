@@ -18,9 +18,11 @@ import { changeVariableMultiValue } from '../state/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { isLegacyQueryEditor, isQueryEditor } from '../guard';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
-import { VariableSelectField } from '../editor/VariableSelectField';
 import { VariableTextField } from '../editor/VariableTextField';
 import { VariableSwitchField } from '../editor/VariableSwitchField';
+import { QueryVariableDatasourceSelect } from './QueryVariableDatasourceSelect';
+import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
+import { QueryVariableSortSelect } from './QueryVariableSortSelect';
 
 export interface OwnProps extends VariableEditorProps<QueryVariableModel> {}
 
@@ -177,27 +179,6 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
   };
 
   render() {
-    const dsOptions = this.props.editor.extended?.dataSources?.length
-      ? this.props.editor.extended?.dataSources.map(ds => ({ label: ds.name, value: ds.value ?? '' }))
-      : [];
-    const dsValue = dsOptions.find(o => o.value === this.props.variable.datasource) ?? dsOptions[0];
-    const refreshOptions = [
-      { label: 'Never', value: VariableRefresh.never },
-      { label: 'On Dashboard Load', value: VariableRefresh.onDashboardLoad },
-      { label: 'On Time Range Change', value: VariableRefresh.onTimeRangeChanged },
-    ];
-    const refreshValue = refreshOptions.find(o => o.value === this.props.variable.refresh) ?? refreshOptions[0];
-    const sortOptions = [
-      { label: 'Disabled', value: VariableSort.disabled },
-      { label: 'Alphabetical (asc)', value: VariableSort.alphabeticalAsc },
-      { label: 'Alphabetical (desc)', value: VariableSort.alphabeticalDesc },
-      { label: 'Numerical (asc)', value: VariableSort.numericalAsc },
-      { label: 'Numerical (desc)', value: VariableSort.numericalDesc },
-      { label: 'Alphabetical (case-insensitive, asc)', value: VariableSort.alphabeticalCaseInsensitiveAsc },
-      { label: 'Alphabetical (case-insensitive, desc)', value: VariableSort.alphabeticalCaseInsensitiveDesc },
-    ];
-    const sortValue = sortOptions.find(o => o.value === this.props.variable.sort) ?? sortOptions[0];
-
     return (
       <VerticalGroup spacing="xs">
         <VariableSectionHeader name="Query Options" />
@@ -205,25 +186,12 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
           <VerticalGroup spacing="none">
             <VerticalGroup spacing="xs">
               <InlineFieldRow>
-                <VariableSelectField
-                  name="Data source"
-                  value={dsValue}
-                  options={dsOptions}
+                <QueryVariableDatasourceSelect
                   onChange={this.onDataSourceChange}
-                  labelWidth={10}
-                  ariaLabel={
-                    selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect
-                  }
+                  datasource={this.props.variable.datasource}
+                  dataSources={this.props.editor.extended?.dataSources}
                 />
-                <VariableSelectField
-                  name="Refresh"
-                  value={refreshValue}
-                  options={refreshOptions}
-                  onChange={this.onRefreshChange}
-                  labelWidth={10}
-                  ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect}
-                  tooltip="When to update the values of this variable."
-                />
+                <QueryVariableRefreshSelect onChange={this.onRefreshChange} refresh={this.props.variable.refresh} />
               </InlineFieldRow>
               <div style={{ flexDirection: 'column' }}>{this.renderQueryEditor()}</div>
             </VerticalGroup>
@@ -250,15 +218,7 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
               ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput}
               grow
             />
-            <VariableSelectField
-              name="Sort"
-              value={sortValue}
-              options={sortOptions}
-              onChange={this.onSortChange}
-              labelWidth={10}
-              ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelect}
-              tooltip="How to sort the values of this variable."
-            />
+            <QueryVariableSortSelect onChange={this.onSortChange} sort={this.props.variable.sort} />
           </VerticalGroup>
 
           <SelectionOptionsEditor
