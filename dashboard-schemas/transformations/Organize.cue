@@ -1,7 +1,7 @@
 package transformations
 
 // Reorder, hide, or rename fields/columns.
-#  Organize: {
+#Organize: {
 	// Transformation ID.
 	id: string | *"organize"
 	// Configuration options.
