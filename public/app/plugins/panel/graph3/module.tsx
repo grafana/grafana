@@ -7,12 +7,10 @@ import {
   AxisPlacement,
   graphFieldOptions,
 } from '@grafana/ui/src/components/uPlot/config';
-import { TimeSeriesEditor } from './editor/TimeSeriesEditor';
-import { XYPlotEditor } from './editor/XYPlotEditor';
 import { GraphPanel } from './GraphPanel';
-import { GraphOptions, GraphType, defaultXYPlotConfig } from './types';
+import { Options } from './types';
 
-export const plugin = new PanelPlugin<GraphOptions, GraphFieldConfig>(GraphPanel)
+export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -119,38 +117,6 @@ export const plugin = new PanelPlugin<GraphOptions, GraphFieldConfig>(GraphPanel
     },
   })
   .setPanelOptions(builder => {
-    if (false) {
-      // Too ugly for master just yet
-      builder
-        .addRadio({
-          path: 'type',
-          name: 'Graph Type',
-          description: '',
-          defaultValue: GraphType.Timeseries,
-          settings: {
-            options: [
-              { value: GraphType.Timeseries, label: 'Timeseries', description: 'Time vs numberic values' },
-              { value: GraphType.XYPlot, label: 'X vs Y Plot' },
-            ],
-          },
-        })
-        .addCustomEditor({
-          id: 'timeSeriesConfig',
-          path: 'timeseries', // no value actually set
-          name: 'Fields',
-          defaultValue: undefined,
-          editor: TimeSeriesEditor,
-          showIf: c => !c.type || c.type === GraphType.Timeseries,
-        })
-        .addCustomEditor({
-          id: 'xyPlotConfig',
-          path: 'xy',
-          name: 'X vs Y plot',
-          defaultValue: defaultXYPlotConfig,
-          editor: XYPlotEditor,
-          showIf: c => c.type === GraphType.XYPlot,
-        });
-    }
     builder
       .addRadio({
         path: 'tooltipOptions.mode',
