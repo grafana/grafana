@@ -121,7 +121,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 			}
 		}
 
-		if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
+		if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
 			if err := hs.ValidateRedirectTo(redirectTo); err != nil {
 				// the user is already logged so instead of rendering the login page with error
 				// it should be redirected to the home page.
@@ -229,7 +229,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 		"message": "Logged in",
 	}
 
-	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
+	if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
 		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
 			result["redirectUrl"] = redirectTo
 		} else {

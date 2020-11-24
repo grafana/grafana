@@ -1,5 +1,6 @@
 import tinycolor from 'tinycolor2';
 import { Series } from 'uplot';
+import { PointMode } from '../config';
 import { PlotConfigBuilder } from '../types';
 
 export interface SeriesProps {
@@ -7,7 +8,7 @@ export interface SeriesProps {
   line?: boolean;
   lineColor?: string;
   lineWidth?: number;
-  points?: boolean;
+  points?: PointMode;
   pointSize?: number;
   pointColor?: string;
   fill?: boolean;
@@ -26,15 +27,20 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
         }
       : {};
 
-    const pointsConfig = points
-      ? {
-          points: {
-            show: true,
-            size: pointSize,
-            stroke: pointColor,
-          },
-        }
-      : {};
+    const pointsConfig: Partial<Series> = {
+      points: {
+        stroke: pointColor,
+        fill: pointColor,
+        size: pointSize,
+      },
+    };
+
+    // we cannot set points.show property above (even to undefined) as that will clear uPlot's default auto behavior
+    if (points === PointMode.Never) {
+      pointsConfig.points!.show = false;
+    } else if (points === PointMode.Always) {
+      pointsConfig.points!.show = true;
+    }
 
     const areaConfig =
       fillOpacity !== undefined
