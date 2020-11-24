@@ -13,24 +13,16 @@ const getKnobs = () => {
     max: number('max', 100),
     step: boolean('enable step', false),
     orientation: select('orientation', ['horizontal', 'vertical'], 'horizontal'),
-    reverse: boolean('reverse', true),
-    singleValue: boolean('single value', false),
+    reverse: boolean('reverse', false),
   };
 };
 
 const SliderWrapper = () => {
-  const { min, max, orientation, reverse, singleValue, step } = getKnobs();
+  const { min, max, orientation, reverse, step } = getKnobs();
   const stepValue = step ? 10 : undefined;
   return (
     <div style={{ width: '200px', height: '200px' }}>
-      <Slider
-        min={min}
-        max={max}
-        step={stepValue}
-        orientation={orientation}
-        value={singleValue ? [10] : undefined}
-        reverse={reverse}
-      />
+      <Slider min={min} max={max} step={stepValue} orientation={orientation} value={10} reverse={reverse} />
     </div>
   );
 };

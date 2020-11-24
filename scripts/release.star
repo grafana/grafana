@@ -26,7 +26,6 @@ load(
     'frontend_metrics_step',
     'publish_storybook_step',
     'upload_packages_step',
-    'publish_packages_step',
     'notify_pipeline',
     'integration_test_services',
 )
@@ -143,10 +142,23 @@ def release_pipelines(ver_mode='release', trigger=None):
                         'GRAFANA_COM_API_KEY': {
                             'from_secret': 'grafana_api_key',
                         },
+                        'GCP_KEY': {
+                            'from_secret': 'gcp_key',
+                        },
+                        'GPG_PRIV_KEY': {
+                            'from_secret': 'gpg_priv_key',
+                        },
+                        'GPG_PUB_KEY': {
+                            'from_secret': 'gpg_pub_key',
+                        },
+                        'GPG_KEY_PASSWORD': {
+                            'from_secret': 'gpg_key_password',
+                        },
                     },
                     'commands': [
-                        './bin/grabpl publish-packages --edition oss ${DRONE_TAG}',
-                        './bin/grabpl publish-packages --edition enterprise ${DRONE_TAG}',
+                        'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
+                        './bin/grabpl publish-packages --edition oss --gcp-key /tmp/gcpkey.json ${DRONE_TAG}',
+                        './bin/grabpl publish-packages --edition enterprise --gcp-key /tmp/gcpkey.json ${DRONE_TAG}',
                     ],
                 },
             ], depends_on=[p['name'] for p in oss_pipelines + enterprise_pipelines], install_deps=False,

@@ -105,11 +105,11 @@ func (s *SocialGitlab) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 
 	err = json.Unmarshal(response.Body, &data)
 	if err != nil {
-		return nil, fmt.Errorf("Error getting user info: %s", err)
+		return nil, fmt.Errorf("error getting user info: %s", err)
 	}
 
 	if data.State != "active" {
-		return nil, fmt.Errorf("User %s is inactive", data.Username)
+		return nil, fmt.Errorf("user %s is inactive", data.Username)
 	}
 
 	groups := s.GetGroups(client)

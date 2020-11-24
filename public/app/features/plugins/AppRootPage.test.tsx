@@ -106,8 +106,8 @@ describe('AppRootPage', () => {
 
     // check that plugin and nav links were rendered, and plugin is mounted only once
     await screen.findByText('my great plugin');
-    await screen.findByRole('link', { name: /A page/ });
-    await screen.findByRole('link', { name: /Another page/ });
+    await screen.findAllByRole('link', { name: /A page/ });
+    await screen.findAllByRole('link', { name: /Another page/ });
     expect(timesMounted).toEqual(1);
   });
 });

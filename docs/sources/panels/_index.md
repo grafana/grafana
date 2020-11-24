@@ -1,9 +1,7 @@
 +++
 title = "Panels"
-type = "docs"
-[menu.docs]
-identifier = "panels"
-weight = 4
+aliases = ["/docs/grafana/latest/features/panels/panels/"]
+weight = 70
 +++
 
 # Panel overview

@@ -194,7 +194,7 @@ export const safeParseJson = (text?: string): any | undefined => {
   }
 
   try {
-    return JSON.parse(decodeURI(text));
+    return JSON.parse(text);
   } catch (error) {
     console.error(error);
   }
@@ -243,7 +243,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const queries = parsedSegments.filter(segment => !isSegment(segment, 'ui', 'originPanelId'));
+  const queries = parsedSegments.filter(segment => !isSegment(segment, 'ui', 'originPanelId', 'mode'));
 
   const originPanelId = parsedSegments.filter(segment => isSegment(segment, 'originPanelId'))[0];
   return { datasource, queries, range, originPanelId };

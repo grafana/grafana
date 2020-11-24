@@ -59,8 +59,7 @@ e2e.scenario({
     e2e.components.DashboardLinks.dropDown()
       .should('be.visible')
       .click()
-      .wait('@tagsTemplatingSearch')
-      .wait('@tagsDemoSearch');
+      .wait('@tagsTemplatingSearch');
 
     // verify all links, should have p2 value
     verifyLinks('p2');

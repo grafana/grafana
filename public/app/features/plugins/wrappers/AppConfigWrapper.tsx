@@ -20,11 +20,11 @@ interface State {
 
 export class AppConfigCtrlWrapper extends PureComponent<Props, State> {
   element: HTMLElement | null = null;
+  model: PluginMeta;
 
   // Needed for angular scope
   preUpdateHook = () => Promise.resolve();
   postUpdateHook = () => Promise.resolve();
-  model: PluginMeta;
 
   constructor(props: Props) {
     super(props);
@@ -51,7 +51,11 @@ export class AppConfigCtrlWrapper extends PureComponent<Props, State> {
 
     const loader = getAngularLoader();
     const template = '<plugin-component type="app-config-ctrl"></plugin-component>';
-    const scopeProps = { ctrl: this };
+    const scopeProps = {
+      ctrl: this,
+      // used by angular injectorMonkeyPatch to detect this scenario
+      isAppConfigCtrl: true,
+    };
     const angularCtrl = loader.load(this.element, scopeProps, template);
 
     this.setState({ angularCtrl });

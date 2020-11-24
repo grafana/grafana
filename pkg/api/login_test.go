@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -18,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -84,7 +84,7 @@ func TestLoginErrorCookieApiEndpoint(t *testing.T) {
 	mockViewIndex()
 	defer resetViewIndex()
 
-	sc := setupScenarioContext("/login")
+	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
 		License: &licensing.OSSLicensingService{},
@@ -138,7 +138,7 @@ func TestLoginViewRedirect(t *testing.T) {
 
 	mockViewIndex()
 	defer resetViewIndex()
-	sc := setupScenarioContext("/login")
+	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
 		License: &licensing.OSSLicensingService{},
@@ -254,12 +254,12 @@ func TestLoginViewRedirect(t *testing.T) {
 	}
 
 	for _, c := range redirectCases {
-		hs.Cfg.AppUrl = c.appURL
-		hs.Cfg.AppSubUrl = c.appSubURL
+		hs.Cfg.AppURL = c.appURL
+		hs.Cfg.AppSubURL = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
 			expCookiePath := "/"
-			if len(hs.Cfg.AppSubUrl) > 0 {
-				expCookiePath = hs.Cfg.AppSubUrl
+			if len(hs.Cfg.AppSubURL) > 0 {
+				expCookiePath = hs.Cfg.AppSubURL
 			}
 			cookie := http.Cookie{
 				Name:     "redirect_to",
@@ -314,10 +314,11 @@ func TestLoginPostRedirect(t *testing.T) {
 
 	mockViewIndex()
 	defer resetViewIndex()
-	sc := setupScenarioContext("/login")
+	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
 		log:              &FakeLogger{},
 		Cfg:              setting.NewCfg(),
+		HooksService:     &hooks.HooksService{},
 		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
 	}
@@ -422,12 +423,12 @@ func TestLoginPostRedirect(t *testing.T) {
 	}
 
 	for _, c := range redirectCases {
-		hs.Cfg.AppUrl = c.appURL
-		hs.Cfg.AppSubUrl = c.appSubURL
+		hs.Cfg.AppURL = c.appURL
+		hs.Cfg.AppSubURL = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
 			expCookiePath := "/"
-			if len(hs.Cfg.AppSubUrl) > 0 {
-				expCookiePath = hs.Cfg.AppSubUrl
+			if len(hs.Cfg.AppSubURL) > 0 {
+				expCookiePath = hs.Cfg.AppSubURL
 			}
 			cookie := http.Cookie{
 				Name:     "redirect_to",
@@ -471,7 +472,7 @@ func TestLoginOAuthRedirect(t *testing.T) {
 	mockSetIndexViewData()
 	defer resetSetIndexViewData()
 
-	sc := setupScenarioContext("/login")
+	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
 		License: &licensing.OSSLicensingService{},
@@ -506,7 +507,7 @@ func TestLoginInternal(t *testing.T) {
 
 	mockViewIndex()
 	defer resetViewIndex()
-	sc := setupScenarioContext("/login")
+	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
 		License: &licensing.OSSLicensingService{},
@@ -536,7 +537,7 @@ func TestLoginInternal(t *testing.T) {
 }
 
 func TestAuthProxyLoginEnableLoginTokenDisabled(t *testing.T) {
-	sc := setupAuthProxyLoginTest(false)
+	sc := setupAuthProxyLoginTest(t, false)
 
 	assert.Equal(t, sc.resp.Code, 302)
 	location, ok := sc.resp.Header()["Location"]
@@ -548,7 +549,7 @@ func TestAuthProxyLoginEnableLoginTokenDisabled(t *testing.T) {
 }
 
 func TestAuthProxyLoginWithEnableLoginToken(t *testing.T) {
-	sc := setupAuthProxyLoginTest(true)
+	sc := setupAuthProxyLoginTest(t, true)
 
 	assert.Equal(t, sc.resp.Code, 302)
 	location, ok := sc.resp.Header()["Location"]
@@ -560,11 +561,11 @@ func TestAuthProxyLoginWithEnableLoginToken(t *testing.T) {
 	assert.Equal(t, "grafana_session=; Path=/; Max-Age=0; HttpOnly", setCookie[0])
 }
 
-func setupAuthProxyLoginTest(enableLoginToken bool) *scenarioContext {
+func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioContext {
 	mockSetIndexViewData()
 	defer resetSetIndexViewData()
 
-	sc := setupScenarioContext("/login")
+	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
 		Cfg:              setting.NewCfg(),
 		License:          &licensing.OSSLicensingService{},
@@ -591,22 +592,23 @@ func setupAuthProxyLoginTest(enableLoginToken bool) *scenarioContext {
 	return sc
 }
 
-type loginLogTestReceiver struct {
-	cmd *models.SendLoginLogCommand
+type loginHookTest struct {
+	info *models.LoginInfo
 }
 
-func (r *loginLogTestReceiver) SaveLoginLog(ctx context.Context, cmd *models.SendLoginLogCommand) error {
-	r.cmd = cmd
-	return nil
+func (r *loginHookTest) LoginHook(loginInfo *models.LoginInfo, req *models.ReqContext) {
+	r.info = loginInfo
 }
 
-func TestLoginPostSendLoginLog(t *testing.T) {
-	sc := setupScenarioContext("/login")
+func TestLoginPostRunLokingHook(t *testing.T) {
+	sc := setupScenarioContext(t, "/login")
+	hookService := &hooks.HooksService{}
 	hs := &HTTPServer{
 		log:              log.New("test"),
 		Cfg:              setting.NewCfg(),
 		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
+		HooksService:     hookService,
 	}
 
 	sc.defaultHandler = Wrap(func(w http.ResponseWriter, c *models.ReqContext) Response {
@@ -617,28 +619,26 @@ func TestLoginPostSendLoginLog(t *testing.T) {
 		return hs.LoginPost(c, cmd)
 	})
 
-	testReceiver := loginLogTestReceiver{}
-	bus.AddHandlerCtx("login-log-receiver", testReceiver.SaveLoginLog)
-
-	type sendLoginLogCase struct {
-		desc       string
-		authUser   *models.User
-		authModule string
-		authErr    error
-		cmd        models.SendLoginLogCommand
-	}
+	testHook := loginHookTest{}
+	hookService.AddLoginHook(testHook.LoginHook)
 
 	testUser := &models.User{
 		Id:    42,
 		Email: "",
 	}
 
-	testCases := []sendLoginLogCase{
+	testCases := []struct {
+		desc       string
+		authUser   *models.User
+		authModule string
+		authErr    error
+		info       models.LoginInfo
+	}{
 		{
 			desc:    "invalid credentials",
 			authErr: login.ErrInvalidCredentials,
-			cmd: models.SendLoginLogCommand{
-				LogAction:  "login",
+			info: models.LoginInfo{
+				AuthModule: "",
 				HTTPStatus: 401,
 				Error:      login.ErrInvalidCredentials,
 			},
@@ -646,8 +646,8 @@ func TestLoginPostSendLoginLog(t *testing.T) {
 		{
 			desc:    "user disabled",
 			authErr: login.ErrUserDisabled,
-			cmd: models.SendLoginLogCommand{
-				LogAction:  "login",
+			info: models.LoginInfo{
+				AuthModule: "",
 				HTTPStatus: 401,
 				Error:      login.ErrUserDisabled,
 			},
@@ -656,8 +656,8 @@ func TestLoginPostSendLoginLog(t *testing.T) {
 			desc:       "valid Grafana user",
 			authUser:   testUser,
 			authModule: "grafana",
-			cmd: models.SendLoginLogCommand{
-				LogAction:  "login-grafana",
+			info: models.LoginInfo{
+				AuthModule: "grafana",
 				User:       testUser,
 				HTTPStatus: 200,
 			},
@@ -666,8 +666,8 @@ func TestLoginPostSendLoginLog(t *testing.T) {
 			desc:       "valid LDAP user",
 			authUser:   testUser,
 			authModule: "ldap",
-			cmd: models.SendLoginLogCommand{
-				LogAction:  "login-ldap",
+			info: models.LoginInfo{
+				AuthModule: "ldap",
 				User:       testUser,
 				HTTPStatus: 200,
 			},
@@ -685,15 +685,15 @@ func TestLoginPostSendLoginLog(t *testing.T) {
 			sc.m.Post(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertions("POST", sc.url).exec()
 
-			cmd := testReceiver.cmd
-			assert.Equal(t, c.cmd.LogAction, cmd.LogAction)
-			assert.Equal(t, "admin", cmd.LoginUsername)
-			assert.Equal(t, c.cmd.HTTPStatus, cmd.HTTPStatus)
-			assert.Equal(t, c.cmd.Error, cmd.Error)
+			info := testHook.info
+			assert.Equal(t, c.info.AuthModule, info.AuthModule)
+			assert.Equal(t, "admin", info.LoginUsername)
+			assert.Equal(t, c.info.HTTPStatus, info.HTTPStatus)
+			assert.Equal(t, c.info.Error, info.Error)
 
-			if c.cmd.User != nil {
-				require.NotEmpty(t, cmd.User)
-				assert.Equal(t, c.cmd.User.Id, cmd.User.Id)
+			if c.info.User != nil {
+				require.NotEmpty(t, info.User)
+				assert.Equal(t, c.info.User.Id, info.User.Id)
 			}
 		})
 	}

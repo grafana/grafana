@@ -12,11 +12,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
-	"github.com/go-macaron/session"
 	"github.com/prometheus/common/model"
 	ini "gopkg.in/ini.v1"
 
@@ -76,14 +74,10 @@ var (
 	PluginsPath    string
 	CustomInitPath = "conf/custom.ini"
 
-	// Log settings.
-	LogConfigs []util.DynMap
-
-	// Http server options
+	// HTTP server options
 	Protocol                       Scheme
 	Domain                         string
 	HttpAddr, HttpPort             string
-	SshPort                        int
 	CertFile, KeyFile              string
 	SocketPath                     string
 	RouterLogging                  bool
@@ -169,14 +163,8 @@ var (
 	// Basic Auth
 	BasicAuthEnabled bool
 
-	// Session settings.
-	SessionOptions         session.Options
-	SessionConnMaxLifetime int64
-
 	// Global setting objects.
-	Raw          *ini.File
-	ConfRootPath string
-	IsWindows    bool
+	Raw *ini.File
 
 	// for logging purposes
 	configFiles                  []string
@@ -195,7 +183,7 @@ var (
 	LDAPAllowSignup       bool
 	LDAPActiveSyncEnabled bool
 
-	// QUOTA
+	// Quota
 	Quota QuotaSettings
 
 	// Alerting
@@ -216,13 +204,14 @@ var (
 	// Grafana.NET URL
 	GrafanaComUrl string
 
-	// S3 temp image store
-	S3TempImageStoreBucketUrl string
-	S3TempImageStoreAccessKey string
-	S3TempImageStoreSecretKey string
-
 	ImageUploadProvider string
 )
+
+// AddChangePasswordLink returns if login form is disabled or not since
+// the same intention can be used to hide both features.
+func AddChangePasswordLink() bool {
+	return !DisableLoginForm
+}
 
 // TODO move all global vars to this struct
 type Cfg struct {
@@ -230,8 +219,8 @@ type Cfg struct {
 	Logger log.Logger
 
 	// HTTP Server Settings
-	AppUrl           string
-	AppSubUrl        string
+	AppURL           string
+	AppSubURL        string
 	ServeFromSubPath bool
 	StaticRootPath   string
 	Protocol         Scheme
@@ -273,6 +262,7 @@ type Cfg struct {
 	PluginsAppsSkipVerifyTLS bool
 	PluginSettings           PluginSettings
 	PluginsAllowUnsigned     []string
+	MarketplaceURL           string
 	DisableSanitizeHtml      bool
 	EnterpriseLicensePath    string
 
@@ -318,44 +308,40 @@ type Cfg struct {
 
 	// User
 	UserInviteMaxLifetime time.Duration
+	HiddenUsers           map[string]struct{}
 
 	// Annotations
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
 	DashboardAnnotationCleanupSettings AnnotationCleanupSettings
 	APIAnnotationCleanupSettings       AnnotationCleanupSettings
+
+	// Sentry config
+	Sentry Sentry
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.
-func (c Cfg) IsExpressionsEnabled() bool {
-	return c.FeatureToggles["expressions"]
+func (cfg Cfg) IsExpressionsEnabled() bool {
+	return cfg.FeatureToggles["expressions"]
 }
 
 // IsLiveEnabled returns if grafana live should be enabled
-func (c Cfg) IsLiveEnabled() bool {
-	return c.FeatureToggles["live"]
+func (cfg Cfg) IsLiveEnabled() bool {
+	return cfg.FeatureToggles["live"]
 }
 
 // IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
-func (c Cfg) IsNgAlertEnabled() bool {
-	return c.FeatureToggles["ngalert"]
+func (cfg Cfg) IsNgAlertEnabled() bool {
+	return cfg.FeatureToggles["ngalert"]
 }
 
-func (c Cfg) IsDatabaseMetricsEnabled() bool {
-	return c.FeatureToggles["database_metrics"]
-}
-
-func (c Cfg) IsHTTPRequestHistogramEnabled() bool {
-	return c.FeatureToggles["http_request_histogram"]
+func (cfg Cfg) IsHTTPRequestHistogramEnabled() bool {
+	return cfg.FeatureToggles["http_request_histogram"]
 }
 
 type CommandLineArgs struct {
 	Config   string
 	HomePath string
 	Args     []string
-}
-
-func init() {
-	IsWindows = runtime.GOOS == "windows"
 }
 
 func parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
@@ -452,7 +438,7 @@ func (cfg *Cfg) readAnnotationSettings() {
 	alertingSection := cfg.Raw.Section("alerting")
 
 	var newAnnotationCleanupSettings = func(section *ini.Section, maxAgeField string) AnnotationCleanupSettings {
-		maxAge, err := gtime.ParseInterval(section.Key(maxAgeField).MustString(""))
+		maxAge, err := gtime.ParseDuration(section.Key(maxAgeField).MustString(""))
 		if err != nil {
 			maxAge = 0
 		}
@@ -553,7 +539,7 @@ func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 
 	userConfig, err := ini.Load(configFile)
 	if err != nil {
-		return fmt.Errorf("Failed to parse %v, %v", configFile, err)
+		return fmt.Errorf("failed to parse %q: %w", configFile, err)
 	}
 
 	userConfig.BlockMode = false
@@ -705,7 +691,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 
 	cfg.Raw = iniFile
 
-	// Temporary keep global, to make refactor in steps
+	// Temporarily keep global, to make refactor in steps
 	Raw = cfg.Raw
 
 	cfg.BuildVersion = BuildVersion
@@ -796,6 +782,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		plug = strings.TrimSpace(plug)
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
+	cfg.MarketplaceURL = pluginsSection.Key("marketplace_url").MustString("https://grafana.com/grafana/plugins/")
 	cfg.Protocol = Protocol
 
 	// Read and populate feature toggles list
@@ -846,6 +833,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	}
 
 	cfg.readDateFormats()
+	cfg.readSentryConfig()
 
 	return nil
 }
@@ -1018,7 +1006,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		maxInactiveDaysVal = "7d"
 	}
 	maxInactiveDurationVal := valueAsString(auth, "login_maximum_inactive_lifetime_duration", maxInactiveDaysVal)
-	cfg.LoginMaxInactiveLifetime, err = gtime.ParseInterval(maxInactiveDurationVal)
+	cfg.LoginMaxInactiveLifetime, err = gtime.ParseDuration(maxInactiveDurationVal)
 	if err != nil {
 		return err
 	}
@@ -1031,7 +1019,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		maxLifetimeDaysVal = "7d"
 	}
 	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", maxLifetimeDaysVal)
-	cfg.LoginMaxLifetime, err = gtime.ParseInterval(maxLifetimeDurationVal)
+	cfg.LoginMaxLifetime, err = gtime.ParseDuration(maxLifetimeDurationVal)
 	if err != nil {
 		return err
 	}
@@ -1121,7 +1109,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.EditorsCanAdmin = users.Key("editors_can_admin").MustBool(false)
 
 	userInviteMaxLifetimeVal := valueAsString(users, "user_invite_max_lifetime_duration", "24h")
-	userInviteMaxLifetimeDuration, err := gtime.ParseInterval(userInviteMaxLifetimeVal)
+	userInviteMaxLifetimeDuration, err := gtime.ParseDuration(userInviteMaxLifetimeVal)
 	if err != nil {
 		return err
 	}
@@ -1129,6 +1117,13 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.UserInviteMaxLifetime = userInviteMaxLifetimeDuration
 	if cfg.UserInviteMaxLifetime < time.Minute*15 {
 		return errors.New("the minimum supported value for the `user_invite_max_lifetime_duration` configuration is 15m (15 minutes)")
+	}
+
+	cfg.HiddenUsers = make(map[string]struct{})
+	hiddenUsers := users.Key("hidden_users").MustString("")
+	for _, user := range strings.Split(hiddenUsers, ",") {
+		user = strings.TrimSpace(user)
+		cfg.HiddenUsers[user] = struct{}{}
 	}
 
 	return nil
@@ -1199,8 +1194,8 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 	}
 	ServeFromSubPath = server.Key("serve_from_sub_path").MustBool(false)
 
-	cfg.AppUrl = AppUrl
-	cfg.AppSubUrl = AppSubUrl
+	cfg.AppURL = AppUrl
+	cfg.AppSubURL = AppSubUrl
 	cfg.ServeFromSubPath = ServeFromSubPath
 
 	Protocol = HTTPScheme

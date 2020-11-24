@@ -119,5 +119,5 @@ compilation-stats.json
 # report dumping the whole system env
 /report.*.json
 
-# auto generated front end docs
-/docs/sources/packages_api/*
+# auto generated frontend docs
+/docs/sources/packages_api

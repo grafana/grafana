@@ -140,10 +140,16 @@ export const run = (includeInternalScripts = false) => {
   program
     .command('plugin:build')
     .option('--maxJestWorkers <num>|<string>', 'Limit number of Jest workers spawned')
-    .description('Prepares plugin dist package')
     .option('--coverage', 'Run code coverage', false)
+    .option('--preserveConsole', 'Preserves console calls', false)
+    .description('Prepares plugin dist package')
     .action(async cmd => {
-      await execTask(pluginBuildTask)({ coverage: cmd.coverage, silent: true, maxJestWorkers: cmd.maxJestWorkers });
+      await execTask(pluginBuildTask)({
+        coverage: cmd.coverage,
+        silent: true,
+        maxJestWorkers: cmd.maxJestWorkers,
+        preserveConsole: cmd.preserveConsole,
+      });
     });
 
   program

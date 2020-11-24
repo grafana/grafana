@@ -68,14 +68,14 @@ var sqlStoreTestCases = []sqlStoreTest{
 	},
 }
 
-func TestSqlConnectionString(t *testing.T) {
+func TestSQLConnectionString(t *testing.T) {
 	Convey("Testing SQL Connection Strings", t, func() {
 		t.Helper()
 
 		for _, testCase := range sqlStoreTestCases {
 			Convey(testCase.name, func() {
-				sqlstore := &SqlStore{}
-				sqlstore.Cfg = makeSqlStoreTestConfig(testCase.dbType, testCase.dbHost)
+				sqlstore := &SQLStore{}
+				sqlstore.Cfg = makeSQLStoreTestConfig(testCase.dbType, testCase.dbHost)
 				sqlstore.readConfig()
 
 				connStr, err := sqlstore.buildConnectionString()
@@ -89,7 +89,7 @@ func TestSqlConnectionString(t *testing.T) {
 	})
 }
 
-func makeSqlStoreTestConfig(dbType string, host string) *setting.Cfg {
+func makeSQLStoreTestConfig(dbType string, host string) *setting.Cfg {
 	cfg := setting.NewCfg()
 
 	sec, err := cfg.Raw.NewSection("database")

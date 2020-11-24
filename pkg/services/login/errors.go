@@ -3,7 +3,7 @@ package login
 import "errors"
 
 var (
-	ErrInvalidCredentials = errors.New("Invalid Username or Password")
-	ErrUsersQuotaReached  = errors.New("Users quota reached")
-	ErrGettingUserQuota   = errors.New("Error getting user quota")
+	ErrInvalidCredentials = errors.New("invalid username or password")
+	ErrUsersQuotaReached  = errors.New("users quota reached")
+	ErrGettingUserQuota   = errors.New("error getting user quota")
 )

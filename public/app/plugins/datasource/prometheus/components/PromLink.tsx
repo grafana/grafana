@@ -64,7 +64,7 @@ export default class PromLink extends Component<Props, State> {
     const { href } = this.state;
 
     return (
-      <a href={href} target="_blank" rel="noopener">
+      <a href={href} target="_blank" rel="noopener noreferrer">
         Prometheus
       </a>
     );

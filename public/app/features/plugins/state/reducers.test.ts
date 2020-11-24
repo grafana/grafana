@@ -40,6 +40,7 @@ describe('pluginsReducer', () => {
               type: PluginType.app,
             },
           ],
+          errors: [],
         });
     });
   });

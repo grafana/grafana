@@ -32,7 +32,7 @@ func TestParseIPAddress_Invalid(t *testing.T) {
 	}{
 		{
 			input: "[::1",
-			err:   "failed to split network address \"[::1\" by host and port: Malformed IPv6 address: '[::1'",
+			err:   "failed to split network address \"[::1\" by host and port: malformed IPv6 address: '[::1'",
 		},
 		{
 			input: "::1]",
@@ -40,7 +40,7 @@ func TestParseIPAddress_Invalid(t *testing.T) {
 		},
 		{
 			input: "",
-			err:   "failed to split network address \"\" by host and port: Input is empty",
+			err:   "failed to split network address \"\" by host and port: input is empty",
 		},
 	}
 	for _, testcase := range tests {

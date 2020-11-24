@@ -32,7 +32,7 @@ func TestAlertingDataAccess(t *testing.T) {
 	Convey("Testing Alerting data access", t, func() {
 		InitTestDB(t)
 
-		testDash := insertTestDashboard("dashboard with alerts", 1, 0, false, "alert")
+		testDash := insertTestDashboard(t, "dashboard with alerts", 1, 0, false, "alert")
 		evalData, _ := simplejson.NewJson([]byte(`{"test": "test"}`))
 		items := []*models.Alert{
 			{
@@ -273,7 +273,7 @@ func TestPausingAlerts(t *testing.T) {
 	Convey("Given an alert", t, func() {
 		InitTestDB(t)
 
-		testDash := insertTestDashboard("dashboard with alerts", 1, 0, false, "alert")
+		testDash := insertTestDashboard(t, "dashboard with alerts", 1, 0, false, "alert")
 		alert, _ := insertTestAlert("Alerting title", "Alerting message", testDash.OrgId, testDash.Id, simplejson.New())
 
 		stateDateBeforePause := alert.NewStateDate

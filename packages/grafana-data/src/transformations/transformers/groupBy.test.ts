@@ -7,14 +7,13 @@ import { DataTransformerID } from './ids';
 import { ArrayVector } from '../../vector';
 import { ReducerID } from '../fieldReducer';
 import { DataTransformerConfig } from '@grafana/data';
-import { observableTester } from '../../utils/tests/observableTester';
 
 describe('GroupBy transformer', () => {
   beforeAll(() => {
     mockTransformationsRegistry([groupByTransformer]);
   });
 
-  it('should not apply transformation if config is missing group by fields', done => {
+  it('should not apply transformation if config is missing group by fields', async () => {
     const testSeries = toDataFrame({
       name: 'A',
       fields: [
@@ -36,16 +35,13 @@ describe('GroupBy transformer', () => {
       },
     };
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [testSeries]),
-      expect: result => {
-        expect(result[0]).toBe(testSeries);
-      },
-      done,
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith(received => {
+      const result = received[0];
+      expect(result[0]).toBe(testSeries);
     });
   });
 
-  it('should group values by message', done => {
+  it('should group values by message', async () => {
     const testSeries = toDataFrame({
       name: 'A',
       fields: [
@@ -67,25 +63,22 @@ describe('GroupBy transformer', () => {
       },
     };
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [testSeries]),
-      expect: result => {
-        const expected: Field[] = [
-          {
-            name: 'message',
-            type: FieldType.string,
-            values: new ArrayVector(['one', 'two', 'three']),
-            config: {},
-          },
-        ];
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith(received => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: new ArrayVector(['one', 'two', 'three']),
+          config: {},
+        },
+      ];
 
-        expect(result[0].fields).toEqual(expected);
-      },
-      done,
+      expect(result[0].fields).toEqual(expected);
     });
   });
 
-  it('should group values by message and summarize values', done => {
+  it('should group values by message and summarize values', async () => {
     const testSeries = toDataFrame({
       name: 'A',
       fields: [
@@ -111,31 +104,28 @@ describe('GroupBy transformer', () => {
       },
     };
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [testSeries]),
-      expect: result => {
-        const expected: Field[] = [
-          {
-            name: 'message',
-            type: FieldType.string,
-            values: new ArrayVector(['one', 'two', 'three']),
-            config: {},
-          },
-          {
-            name: 'values (sum)',
-            type: FieldType.number,
-            values: new ArrayVector([1, 4, 9]),
-            config: {},
-          },
-        ];
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith(received => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: new ArrayVector(['one', 'two', 'three']),
+          config: {},
+        },
+        {
+          name: 'values (sum)',
+          type: FieldType.number,
+          values: new ArrayVector([1, 4, 9]),
+          config: {},
+        },
+      ];
 
-        expect(result[0].fields).toEqual(expected);
-      },
-      done,
+      expect(result[0].fields).toEqual(expected);
     });
   });
 
-  it('should group by and compute a few calculations for each group of values', done => {
+  it('should group by and compute a few calculations for each group of values', async () => {
     const testSeries = toDataFrame({
       name: 'A',
       fields: [
@@ -165,43 +155,40 @@ describe('GroupBy transformer', () => {
       },
     };
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], [testSeries]),
-      expect: result => {
-        const expected: Field[] = [
-          {
-            name: 'message',
-            type: FieldType.string,
-            values: new ArrayVector(['one', 'two', 'three']),
-            config: {},
-          },
-          {
-            name: 'time (count)',
-            type: FieldType.number,
-            values: new ArrayVector([1, 2, 3]),
-            config: {},
-          },
-          {
-            name: 'time (last)',
-            type: FieldType.time,
-            values: new ArrayVector([3000, 5000, 8000]),
-            config: {},
-          },
-          {
-            name: 'values (sum)',
-            type: FieldType.number,
-            values: new ArrayVector([1, 4, 9]),
-            config: {},
-          },
-        ];
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith(received => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: new ArrayVector(['one', 'two', 'three']),
+          config: {},
+        },
+        {
+          name: 'time (count)',
+          type: FieldType.number,
+          values: new ArrayVector([1, 2, 3]),
+          config: {},
+        },
+        {
+          name: 'time (last)',
+          type: FieldType.time,
+          values: new ArrayVector([3000, 5000, 8000]),
+          config: {},
+        },
+        {
+          name: 'values (sum)',
+          type: FieldType.number,
+          values: new ArrayVector([1, 4, 9]),
+          config: {},
+        },
+      ];
 
-        expect(result[0].fields).toEqual(expected);
-      },
-      done,
+      expect(result[0].fields).toEqual(expected);
     });
   });
 
-  it('should group values in data frames induvidually', done => {
+  it('should group values in data frames individually', async () => {
     const testSeries = [
       toDataFrame({
         name: 'A',
@@ -237,43 +224,40 @@ describe('GroupBy transformer', () => {
       },
     };
 
-    observableTester().subscribeAndExpectOnNext({
-      observable: transformDataFrame([cfg], testSeries),
-      expect: result => {
-        const expectedA: Field[] = [
-          {
-            name: 'message',
-            type: FieldType.string,
-            values: new ArrayVector(['one', 'two', 'three']),
-            config: {},
-          },
-          {
-            name: 'values (sum)',
-            type: FieldType.number,
-            values: new ArrayVector([1, 4, 9]),
-            config: {},
-          },
-        ];
+    await expect(transformDataFrame([cfg], testSeries)).toEmitValuesWith(received => {
+      const result = received[0];
+      const expectedA: Field[] = [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: new ArrayVector(['one', 'two', 'three']),
+          config: {},
+        },
+        {
+          name: 'values (sum)',
+          type: FieldType.number,
+          values: new ArrayVector([1, 4, 9]),
+          config: {},
+        },
+      ];
 
-        const expectedB: Field[] = [
-          {
-            name: 'message',
-            type: FieldType.string,
-            values: new ArrayVector(['one', 'two', 'three']),
-            config: {},
-          },
-          {
-            name: 'values (sum)',
-            type: FieldType.number,
-            values: new ArrayVector([0, 7, 8]),
-            config: {},
-          },
-        ];
+      const expectedB: Field[] = [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: new ArrayVector(['one', 'two', 'three']),
+          config: {},
+        },
+        {
+          name: 'values (sum)',
+          type: FieldType.number,
+          values: new ArrayVector([0, 7, 8]),
+          config: {},
+        },
+      ];
 
-        expect(result[0].fields).toEqual(expectedA);
-        expect(result[1].fields).toEqual(expectedB);
-      },
-      done,
+      expect(result[0].fields).toEqual(expectedA);
+      expect(result[1].fields).toEqual(expectedB);
     });
   });
 });
