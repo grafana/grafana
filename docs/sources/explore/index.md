@@ -210,17 +210,17 @@ Log data can be very repetitive and Explore can help by hiding duplicate log lin
 
 You can change the order of received logs from the default descending order (newest first) to ascending order (oldest first).
 
-### Labels and parsed fields
+### Labels and detected fields
 
-Each log row has an extendable area with its labels and parsed fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
+Each log row has an extendable area with its labels and detected fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
 
-### Toggle parsed fields
+### Toggle detected fields
 
 > **Note:** This feature is only available in Grafana 7.2+.
 
-If your logs are structured in `json` or `logfmt`, then you can show or hide parsed fields. Expand a log line and then click the eye icon to show or hide fields.
+If your logs are structured in `json` or `logfmt`, then you can show or hide detected fields. Expand a log line and then click the eye icon to show or hide fields.
 
-{{< docs-imagebox img="/img/docs/explore/parsed-fields-7-2.gif" max-width="800px" caption="Toggling parsed fields in Explore" >}}
+{{< docs-imagebox img="/img/docs/explore/parsed-fields-7-2.gif" max-width="800px" caption="Toggling detected fields in Explore" >}}
 
 ### Loki-specific features
 
