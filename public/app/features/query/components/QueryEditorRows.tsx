@@ -20,7 +20,7 @@ interface Props {
 
   // Dashboard Configs
   panel: PanelModel;
-  dashboard: DashboardModel;
+  dashboard?: DashboardModel;
 
   // Query Response Data
   data: PanelData;

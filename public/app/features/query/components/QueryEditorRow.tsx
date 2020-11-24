@@ -30,7 +30,7 @@ interface Props {
   panel: PanelModel;
   data: PanelData;
   query: DataQuery;
-  dashboard: DashboardModel;
+  dashboard?: DashboardModel;
   dataSourceValue: string | null;
   inMixedMode?: boolean;
   id: string;
@@ -79,7 +79,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       datasource: datasource,
       target: query,
       panel: panel,
-      dashboard: dashboard,
+      dashboard: dashboard!,
       refresh: () => panel.refresh(),
       render: () => panel.render(),
       events: panel.events,

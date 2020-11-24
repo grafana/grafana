@@ -31,7 +31,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   panel: PanelModel;
-  dashboard: DashboardModel;
+  dashboard?: DashboardModel;
 }
 
 interface State {
