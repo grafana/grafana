@@ -84,20 +84,12 @@ describe('GraphNG', () => {
   describe('config update', () => {
     it('should skip plot intialization for width and height equal 0', () => {
       const { data, timeRange } = mockData();
-      const onPlotInitSpy = jest.fn();
 
-      render(
-        <GraphNG
-          data={[data]}
-          timeRange={timeRange}
-          timeZone={'browser'}
-          width={0}
-          height={0}
-          onPlotInit={onPlotInitSpy}
-        />
+      const { queryAllByTestId } = render(
+        <GraphNG data={[data]} timeRange={timeRange} timeZone={'browser'} width={0} height={0} />
       );
 
-      expect(onPlotInitSpy).not.toBeCalled();
+      expect(queryAllByTestId('uplot-main-div')).toHaveLength(1);
     });
 
     // it('reinitializes plot when number of series change', () => {
