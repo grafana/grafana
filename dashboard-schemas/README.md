@@ -60,3 +60,12 @@ be a base schema for panels. `#Gauge` extends `#panel` with the following:
 	...
 }
 ```
+
+## Exporting OpenAPI
+
+[OpenAPI](https://swagger.io/specification/) schemas can be exported from these CUE sources. Use the `cue`
+command as follows, to generate OpenAPI JSON to stdout:
+
+```
+cue export --out openapi -o - ./dashboard-schemas/...
+```
