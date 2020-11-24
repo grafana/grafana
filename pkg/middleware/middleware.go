@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
@@ -182,7 +184,7 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 			"err", err,
 		)
 
-		if err == models.ErrUserNotFound {
+		if errors.Is(err, models.ErrUserNotFound) {
 			err = login.ErrInvalidCredentials
 		}
 		ctx.JsonApiErr(401, errStringInvalidUsernamePassword, err)
@@ -250,11 +252,17 @@ func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.User
 
 		// if the request is cancelled by the client we should not try
 		// to rotate the token since the client would not accept any result.
-		if ctx.Context.Req.Context().Err() == context.Canceled {
+		if errors.Is(ctx.Context.Req.Context().Err(), context.Canceled) {
 			return
 		}
 
-		rotated, err := authTokenService.TryRotateToken(ctx.Req.Context(), token, ctx.RemoteAddr(), ctx.Req.UserAgent())
+		addr := ctx.RemoteAddr()
+		ip, err := network.GetIPFromAddress(addr)
+		if err != nil {
+			ctx.Logger.Debug("Failed to get client IP address", "addr", addr, "err", err)
+			ip = nil
+		}
+		rotated, err := authTokenService.TryRotateToken(ctx.Req.Context(), token, ip, ctx.Req.UserAgent())
 		if err != nil {
 			ctx.Logger.Error("Failed to rotate token", "error", err)
 			return

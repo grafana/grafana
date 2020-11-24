@@ -80,6 +80,10 @@ export type TraceData = {
   warnings?: string[] | null;
 };
 
+export type TraceViewData = TraceData & {
+  spans: TraceSpanData[];
+};
+
 export type Trace = TraceData & {
   duration: number;
   endTime: number;

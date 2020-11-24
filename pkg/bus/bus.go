@@ -3,14 +3,12 @@ package bus
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 )
 
 // HandlerFunc defines a handler function interface.
 type HandlerFunc interface{}
-
-// CtxHandlerFunc defines a context handler function.
-type CtxHandlerFunc func()
 
 // Msg defines a message interface.
 type Msg interface{}
@@ -143,9 +141,13 @@ func (b *InProcBus) Publish(msg Msg) error {
 
 	for _, listenerHandler := range listeners {
 		ret := reflect.ValueOf(listenerHandler).Call(params)
-		err := ret[0].Interface()
-		if err != nil {
-			return err.(error)
+		e := ret[0].Interface()
+		if e != nil {
+			err, ok := e.(error)
+			if ok {
+				return err
+			}
+			return fmt.Errorf("expected listener to return an error, got '%T'", e)
 		}
 	}
 
@@ -202,14 +204,6 @@ func DispatchCtx(ctx context.Context, msg Msg) error {
 
 func Publish(msg Msg) error {
 	return globalBus.Publish(msg)
-}
-
-// InTransaction starts a transaction and store it in the context.
-// The caller can then pass a function with multiple DispatchCtx calls that
-// all will be executed in the same transaction. InTransaction will rollback if the
-// callback returns an error.
-func InTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	return globalBus.InTransaction(ctx, fn)
 }
 
 func ClearBusHandlers() {

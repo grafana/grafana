@@ -55,10 +55,45 @@ describe('LiveLogs', () => {
     expect(wrapper.contains('log message 5')).toBeTruthy();
     expect(wrapper.contains('log message 6')).toBeTruthy();
   });
+
+  it('renders ansi logs', () => {
+    const rows: LogRowModel[] = [
+      makeLog({ uid: '1' }),
+      makeLog({ hasAnsi: true, raw: 'log message \u001B[31m2\u001B[0m', uid: '2' }),
+      makeLog({ hasAnsi: true, raw: 'log message \u001B[31m3\u001B[0m', uid: '3' }),
+    ];
+    const wrapper = mount(
+      <LiveLogsWithTheme
+        logRows={rows}
+        timeZone={'utc'}
+        stopLive={() => {}}
+        onPause={() => {}}
+        onResume={() => {}}
+        isPaused={true}
+      />
+    );
+
+    expect(wrapper.contains('log message 1')).toBeTruthy();
+    expect(wrapper.contains('log message 2')).not.toBeTruthy();
+    expect(wrapper.contains('log message 3')).not.toBeTruthy();
+    expect(wrapper.find('LogMessageAnsi')).toHaveLength(2);
+    expect(
+      wrapper
+        .find('LogMessageAnsi')
+        .first()
+        .prop('value')
+    ).toBe('log message \u001B[31m2\u001B[0m');
+    expect(
+      wrapper
+        .find('LogMessageAnsi')
+        .last()
+        .prop('value')
+    ).toBe('log message \u001B[31m3\u001B[0m');
+  });
 });
 
-const makeLog = (overides: Partial<LogRowModel>): LogRowModel => {
-  const uid = overides.uid || '1';
+const makeLog = (overrides: Partial<LogRowModel>): LogRowModel => {
+  const uid = overrides.uid || '1';
   const entry = `log message ${uid}`;
   return {
     uid,
@@ -75,6 +110,6 @@ const makeLog = (overides: Partial<LogRowModel>): LogRowModel => {
     timeEpochNs: '1000000',
     timeLocal: '',
     timeUtc: '',
-    ...overides,
+    ...overrides,
   };
 };

@@ -125,7 +125,7 @@ func (fb *frameBuilder) Init(metadata *query.FluxTableMetadata) error {
 		if col != nil {
 			fb.timeColumn = col.Name()
 			fb.timeDisplay = "Time"
-			if "_time" != fb.timeColumn {
+			if fb.timeColumn != "_time" {
 				fb.timeDisplay = col.Name()
 			}
 			return nil
@@ -209,9 +209,10 @@ func (fb *frameBuilder) Append(record *query.FluxRecord) error {
 			// set the labels
 			labels := make(map[string]string)
 			for _, name := range fb.labels {
-				val, ok := record.ValueByKey(name).(string)
-				if ok {
-					labels[name] = val
+				val := record.ValueByKey(name)
+				str := fmt.Sprintf("%v", val)
+				if val != nil && str != "" {
+					labels[name] = str
 				}
 			}
 			fb.active.Fields[1].Labels = labels

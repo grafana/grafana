@@ -85,8 +85,8 @@ export const InputWithAutoFocus = () => {
   const [inputComponents, setInputComponents] = useState<any>([]);
   return (
     <SegmentFrame>
-      {inputComponents.map((InputComponent: any) => (
-        <InputComponent initialValue="test"></InputComponent>
+      {inputComponents.map((InputComponent: any, i: number) => (
+        <InputComponent initialValue="test" key={i} />
       ))}
       <a
         className="gf-form-label query-part"

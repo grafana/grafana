@@ -864,6 +864,34 @@ describe('ElasticDatasource', function(this: any) {
       expect(typeof JSON.parse(query.split('\n')[1]).query.bool.filter[0].range['@time'].gte).toBe('number');
     });
   });
+
+  it('should correctly interpolate variables in query', () => {
+    const query = {
+      alias: '',
+      bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '$var', label: '' }] }, id: '1' }],
+      metrics: [{ type: 'count', id: '1' }],
+      query: '$var',
+    };
+
+    const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
+
+    expect(interpolatedQuery.query).toBe('resolvedVariable');
+    expect(interpolatedQuery.bucketAggs[0].settings.filters[0].query).toBe('resolvedVariable');
+  });
+
+  it('should correctly handle empty query strings', () => {
+    const query = {
+      alias: '',
+      bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '', label: '' }] }, id: '1' }],
+      metrics: [{ type: 'count', id: '1' }],
+      query: '',
+    };
+
+    const interpolatedQuery = ctx.ds.interpolateVariablesInQueries([query], {})[0];
+
+    expect(interpolatedQuery.query).toBe('*');
+    expect(interpolatedQuery.bucketAggs[0].settings.filters[0].query).toBe('*');
+  });
 });
 
 describe('enhanceDataFrame', () => {

@@ -10,7 +10,7 @@ type TestDB struct {
 	ConnStr    string
 }
 
-func Sqlite3TestDB() TestDB {
+func SQLite3TestDB() TestDB {
 	// To run all tests in a local test database, set ConnStr to "grafana_test.db"
 	return TestDB{
 		DriverName: "sqlite3",

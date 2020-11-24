@@ -31,29 +31,33 @@ const AlertRuleItem = ({ rule, search, onTogglePause }: Props) => {
         width: 100%;
       `}
     >
-      <Card
-        heading={<a href={ruleUrl}>{renderText(rule.name)}</a>}
-        image={
+      <Card heading={<a href={ruleUrl}>{renderText(rule.name)}</a>}>
+        <Card.Figure>
           <Icon size="xl" name={rule.stateIcon as IconName} className={`alert-rule-item__icon ${rule.stateClass}`} />
-        }
-        metadata={[
+        </Card.Figure>
+        <Card.Meta>
           <span key="state">
             <span key="text" className={`${rule.stateClass}`}>
               {renderText(rule.stateText)}{' '}
             </span>
             for {rule.stateAge}
-          </span>,
-          rule.info ? renderText(rule.info) : null,
-        ]}
-        actions={[
-          <Button variant="secondary" icon={rule.state === 'paused' ? 'play' : 'pause'} onClick={onTogglePause}>
+          </span>
+          {rule.info ? renderText(rule.info) : null}
+        </Card.Meta>
+        <Card.Actions>
+          <Button
+            key="play"
+            variant="secondary"
+            icon={rule.state === 'paused' ? 'play' : 'pause'}
+            onClick={onTogglePause}
+          >
             {rule.state === 'paused' ? 'Resume' : 'Pause'}
-          </Button>,
-          <LinkButton variant="secondary" href={ruleUrl} icon="cog">
+          </Button>
+          <LinkButton key="edit" variant="secondary" href={ruleUrl} icon="cog">
             Edit alert
-          </LinkButton>,
-        ]}
-      />
+          </LinkButton>
+        </Card.Actions>
+      </Card>
     </li>
   );
 };

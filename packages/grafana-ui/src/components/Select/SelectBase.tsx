@@ -9,6 +9,7 @@ import { default as ReactAsyncSelect } from '@torkelo/react-select/async';
 import { default as AsyncCreatable } from '@torkelo/react-select/async-creatable';
 
 import { Icon } from '../Icon/Icon';
+import { Spinner } from '../Spinner/Spinner';
 import { css, cx } from 'emotion';
 import resetSelectStyles from './resetSelectStyles';
 import { SelectMenu, SelectMenuOptions } from './SelectMenu';
@@ -272,7 +273,7 @@ export function SelectBase<T>({
                   menuIsOpen,
                 })
               );
-              return <IndicatorsContainer {...props} children={indicatorChildren} />;
+              return <IndicatorsContainer {...props}>{indicatorChildren}</IndicatorsContainer>;
             }
 
             return <IndicatorsContainer {...props} />;
@@ -294,7 +295,7 @@ export function SelectBase<T>({
             );
           },
           LoadingIndicator: (props: any) => {
-            return <Icon className="fa-spin" name="fa fa-spinner" />;
+            return <Spinner inline={true} />;
           },
           LoadingMessage: (props: any) => {
             return <div className={styles.loadingMessage}>{loadingMessage}</div>;

@@ -68,7 +68,7 @@ func (e *GraphiteExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 
 	if target == "" {
 		glog.Error("No targets in query model", "models without targets", strings.Join(emptyQueries, "\n"))
-		return nil, errors.New("No query target found for the alert rule")
+		return nil, errors.New("no query target found for the alert rule")
 	}
 
 	formData["target"] = []string{target}
@@ -140,7 +140,7 @@ func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDT
 
 	if res.StatusCode/100 != 2 {
 		glog.Info("Request failed", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf("Request failed status: %v", res.Status)
+		return nil, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	var data []TargetResponseDTO
@@ -163,7 +163,7 @@ func (e *GraphiteExecutor) createRequest(dsInfo *models.DataSource, data url.Val
 	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(data.Encode()))
 	if err != nil {
 		glog.Info("Failed to create request", "error", err)
-		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")

@@ -18,6 +18,7 @@ import { RadioButtonGroup } from '../Forms/RadioButtonGroup/RadioButtonGroup';
 import { Button } from '../Button';
 import { FullWidthButtonContainer } from '../Button/FullWidthButtonContainer';
 import { Label } from '../Forms/Label';
+import { isNumber } from 'lodash';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
   { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },
@@ -249,13 +250,15 @@ function toThresholdsWithKey(steps?: Threshold[]): ThresholdWithKey[] {
     steps = [{ value: -Infinity, color: 'green' }];
   }
 
-  return steps.map(t => {
-    return {
-      color: t.color,
-      value: t.value === null ? -Infinity : t.value,
-      key: counter++,
-    };
-  });
+  return steps
+    .filter((t, i) => isNumber(t.value) || i === 0)
+    .map(t => {
+      return {
+        color: t.color,
+        value: t.value === null ? -Infinity : t.value,
+        key: counter++,
+      };
+    });
 }
 
 export function thresholdsWithoutKey(thresholds: ThresholdsConfig, steps: ThresholdWithKey[]): ThresholdsConfig {

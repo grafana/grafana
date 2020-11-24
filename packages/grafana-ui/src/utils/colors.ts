@@ -122,7 +122,7 @@ function hslToHex(color: any) {
 
 export function getTextColorForBackground(color: string) {
   const b = tinycolor(color).getBrightness();
-  return b > 150 ? lightTheme.colors.textStrong : darkTheme.colors.textStrong;
+  return b > 180 ? lightTheme.colors.textStrong : darkTheme.colors.textStrong;
 }
 
 export let sortedColors = sortColorsByHue(colors);

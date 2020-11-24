@@ -21,7 +21,7 @@ export default {
   },
 };
 
-const IconWrapper: React.FC<{ name: IconName }> = ({ name }) => {
+const IconWrapper = ({ name }: { name: IconName }) => {
   const theme = useTheme();
   const borderColor = selectThemeVariant(
     {

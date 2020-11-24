@@ -2,12 +2,7 @@
 title = "Graphite"
 description = "Guide for using graphite in Grafana"
 keywords = ["grafana", "graphite", "guide"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/datasources/graphite"]
-[menu.docs]
-name = "Graphite"
-identifier = "graphite"
-parent = "datasources"
 weight = 600
 +++
 

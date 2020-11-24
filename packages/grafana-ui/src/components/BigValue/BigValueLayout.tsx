@@ -1,6 +1,7 @@
 // Libraries
-import React, { CSSProperties, Suspense } from 'react';
+import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
+import { Chart, Geom } from 'bizcharts';
 
 // Utils
 import { formattedValueToString, DisplayValue, getColorForTheme } from '@grafana/data';
@@ -12,16 +13,6 @@ import { getTextColorForBackground } from '../../utils';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
-
-const Chart = React.lazy(async () => {
-  const { Chart } = await import(/* webpackChunkName: "bizcharts" */ 'bizcharts');
-  return { default: Chart };
-});
-
-const Geom = React.lazy(async () => {
-  const { Geom } = await import(/* webpackChunkName: "bizcharts" */ 'bizcharts');
-  return { default: Geom };
-});
 
 export abstract class BigValueLayout {
   titleFontSize: number;
@@ -72,7 +63,13 @@ export abstract class BigValueLayout {
       fontSize: this.valueFontSize,
       fontWeight: 500,
       lineHeight: LINE_HEIGHT,
+      position: 'relative',
+      zIndex: 1,
     };
+
+    if (this.justifyCenter) {
+      styles.textAlign = 'center';
+    }
 
     switch (this.props.colorMode) {
       case BigValueColorMode.Value:
@@ -175,19 +172,17 @@ export abstract class BigValueLayout {
     }
 
     return (
-      <Suspense fallback={<div>Loading chart...</div>}>
-        <Chart
-          height={this.chartHeight}
-          width={this.chartWidth}
-          data={data}
-          animate={false}
-          padding={[4, 0, 0, 0]}
-          scale={scales}
-          style={this.getChartStyles()}
-        >
-          {this.renderGeom()}
-        </Chart>
-      </Suspense>
+      <Chart
+        height={this.chartHeight}
+        width={this.chartWidth}
+        data={data}
+        animate={false}
+        padding={[4, 0, 0, 0]}
+        scale={scales}
+        style={this.getChartStyles()}
+      >
+        {this.renderGeom()}
+      </Chart>
     );
   }
 
@@ -220,10 +215,10 @@ export abstract class BigValueLayout {
     lineStyle.stroke = lineColor;
 
     return (
-      <Suspense fallback={<div>Loading chart...</div>}>
+      <>
         <Geom type="area" position="time*value" size={0} color={fillColor} style={lineStyle} shape="smooth" />
         <Geom type="line" position="time*value" size={1} color={lineColor} style={lineStyle} shape="smooth" />
-      </Suspense>
+      </>
     );
   }
 

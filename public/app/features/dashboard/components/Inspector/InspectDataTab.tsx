@@ -11,7 +11,7 @@ import {
   toCSV,
   transformDataFrame,
 } from '@grafana/data';
-import { Button, Container, Field, HorizontalGroup, Icon, Select, Switch, Table, VerticalGroup } from '@grafana/ui';
+import { Button, Container, Field, HorizontalGroup, Spinner, Select, Switch, Table, VerticalGroup } from '@grafana/ui';
 import { CSVConfig } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -261,7 +261,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     if (isLoading) {
       return (
         <div>
-          Loading <Icon name="fa fa-spinner" className="fa-spin" size="lg" />
+          <Spinner inline={true} /> Loading
         </div>
       );
     }

@@ -1,9 +1,8 @@
 import React, { PureComponent } from 'react';
-import { LegacyForms, Icon } from '@grafana/ui';
+import { Select, Icon } from '@grafana/ui';
 import { SelectableValue } from '@grafana/data';
 import { dashboardPermissionLevels, DashboardAcl, PermissionLevel } from 'app/types/acl';
 import { FolderInfo } from 'app/types';
-const { Select } = LegacyForms;
 
 const setClassNameHelper = (inherited: boolean) => {
   return inherited ? 'gf-form-disabled' : '';
@@ -75,16 +74,14 @@ export default class PermissionsListItem extends PureComponent<Props> {
         </td>
         <td className="query-keyword">Can</td>
         <td>
-          <div className="gf-form">
-            <Select
-              isSearchable={false}
-              options={dashboardPermissionLevels}
-              onChange={this.onPermissionChanged}
-              isDisabled={item.inherited}
-              className="gf-form-select-box__control--menu-right"
-              value={currentPermissionLevel}
-            />
-          </div>
+          <Select
+            isSearchable={false}
+            options={dashboardPermissionLevels}
+            onChange={this.onPermissionChanged}
+            disabled={item.inherited}
+            value={currentPermissionLevel}
+            width={25}
+          />
         </td>
         <td>
           {!item.inherited ? (

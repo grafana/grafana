@@ -1,32 +1,35 @@
 import React from 'react';
-import { shallow } from 'enzyme';
-import { LokiExploreExtraField, LokiExploreExtraFieldProps } from './LokiExploreExtraField';
+import { render, screen } from '@testing-library/react';
+import { LokiExploreExtraFieldProps, LokiExploreExtraField } from './LokiExploreExtraField';
 
 const setup = (propOverrides?: LokiExploreExtraFieldProps) => {
-  const label = 'Loki Explore Extra Field';
-  const value = '123';
-  const type = 'number';
-  const min = 0;
-  const onChangeFunc = jest.fn();
+  const queryType = 'range';
+  const lineLimitValue = '1';
+  const onLineLimitChange = jest.fn();
+  const onQueryTypeChange = jest.fn();
   const onKeyDownFunc = jest.fn();
 
   const props: any = {
-    label,
-    value,
-    type,
-    min,
-    onChangeFunc,
+    queryType,
+    lineLimitValue,
+    onLineLimitChange,
+    onQueryTypeChange,
     onKeyDownFunc,
   };
 
   Object.assign(props, propOverrides);
 
-  return shallow(<LokiExploreExtraField {...props} />);
+  return render(<LokiExploreExtraField {...props} />);
 };
 
 describe('LokiExploreExtraField', () => {
-  it('should render component', () => {
-    const wrapper = setup();
-    expect(wrapper).toMatchSnapshot();
+  it('should render step field', () => {
+    setup();
+    expect(screen.getByTestId('lineLimitField')).toBeInTheDocument();
+  });
+
+  it('should render query type field', () => {
+    setup();
+    expect(screen.getByTestId('queryTypeField')).toBeInTheDocument();
   });
 });

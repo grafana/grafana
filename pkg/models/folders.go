@@ -8,13 +8,13 @@ import (
 
 // Typed errors
 var (
-	ErrFolderNotFound                = errors.New("Folder not found")
-	ErrFolderVersionMismatch         = errors.New("The folder has been changed by someone else")
-	ErrFolderTitleEmpty              = errors.New("Folder title cannot be empty")
-	ErrFolderWithSameUIDExists       = errors.New("A folder/dashboard with the same uid already exists")
-	ErrFolderSameNameExists          = errors.New("A folder or dashboard in the general folder with the same name already exists")
-	ErrFolderFailedGenerateUniqueUid = errors.New("Failed to generate unique folder id")
-	ErrFolderAccessDenied            = errors.New("Access denied to folder")
+	ErrFolderNotFound                = errors.New("folder not found")
+	ErrFolderVersionMismatch         = errors.New("the folder has been changed by someone else")
+	ErrFolderTitleEmpty              = errors.New("folder title cannot be empty")
+	ErrFolderWithSameUIDExists       = errors.New("a folder/dashboard with the same uid already exists")
+	ErrFolderSameNameExists          = errors.New("a folder or dashboard in the general folder with the same name already exists")
+	ErrFolderFailedGenerateUniqueUid = errors.New("failed to generate unique folder ID")
+	ErrFolderAccessDenied            = errors.New("access denied to folder")
 )
 
 type Folder struct {

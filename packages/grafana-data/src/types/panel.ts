@@ -4,6 +4,7 @@ import { ScopedVars } from './ScopedVars';
 import { LoadingState } from './data';
 import { DataFrame } from './dataFrame';
 import { AbsoluteTimeRange, TimeRange, TimeZone } from './time';
+import { EventBus } from '../events';
 import { FieldConfigSource } from './fieldOverrides';
 import { Registry } from '../utils';
 import { StandardEditorProps } from '../field';
@@ -76,6 +77,9 @@ export interface PanelProps<T = any> {
 
   /** Panel title */
   title: string;
+
+  /** EventBus  */
+  eventBus: EventBus;
 
   /** Panel options change handler */
   onOptionsChange: (options: T) => void;

@@ -52,26 +52,24 @@ export const Alert: FC<Props> = ({
   const styles = getStyles(theme, severity, !!buttonContent);
 
   return (
-    <div className={styles.container}>
-      <div className={styles.alert} aria-label={selectors.components.Alert.alert(severity)}>
-        <div className={styles.icon}>
-          <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
-        </div>
-        <div className={styles.body}>
-          <div className={styles.title}>{title}</div>
-          {children && <div>{children}</div>}
-        </div>
-        {/* If onRemove is specified, giving preference to onRemove */}
-        {onRemove ? (
-          <button type="button" className={styles.close} onClick={onRemove}>
-            {buttonContent || <Icon name="times" size="lg" />}
-          </button>
-        ) : onButtonClick ? (
-          <button type="button" className="btn btn-outline-danger" onClick={onButtonClick}>
-            {buttonText}
-          </button>
-        ) : null}
+    <div className={styles.alert} aria-label={selectors.components.Alert.alert(severity)}>
+      <div className={styles.icon}>
+        <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
       </div>
+      <div className={styles.body}>
+        <div className={styles.title}>{title}</div>
+        {children && <div>{children}</div>}
+      </div>
+      {/* If onRemove is specified, giving preference to onRemove */}
+      {onRemove ? (
+        <button type="button" className={styles.close} onClick={onRemove}>
+          {buttonContent || <Icon name="times" size="lg" />}
+        </button>
+      ) : onButtonClick ? (
+        <button type="button" className="btn btn-outline-danger" onClick={onButtonClick}>
+          {buttonText}
+        </button>
+      ) : null}
     </div>
   );
 };
@@ -84,9 +82,6 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
   `;
 
   return {
-    container: css`
-      z-index: ${theme.zIndex.tooltip};
-    `,
     alert: css`
       padding: 15px 20px;
       margin-bottom: ${theme.spacing.xs};

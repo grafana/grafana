@@ -1,7 +1,6 @@
 +++
 title = "Backend plugins"
 keywords = ["grafana", "plugins", "backend", "plugin", "backend-plugins", "documentation"]
-type = "docs"
 aliases = ["/docs/grafana/latest/plugins/developing/backend-plugins-guide/"]
 +++
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -249,7 +250,8 @@ func TestMiddlewareContext(t *testing.T) {
 				}, nil
 			}
 
-			sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *models.UserToken, clientIP, userAgent string) (bool, error) {
+			sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *models.UserToken,
+				clientIP net.IP, userAgent string) (bool, error) {
 				userToken.UnhashedToken = "rotated"
 				return true, nil
 			}
@@ -546,7 +548,9 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 		defer bus.ClearBusHandlers()
 
 		setting.LoginCookieName = "grafana_session"
-		setting.LoginMaxLifetime, _ = gtime.ParseInterval("30d")
+		var err error
+		setting.LoginMaxLifetime, err = gtime.ParseDuration("30d")
+		require.NoError(t, err)
 
 		sc := &scenarioContext{}
 
@@ -572,7 +576,9 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
 			} else {
-				c.JsonOK("OK")
+				resp := make(map[string]interface{})
+				resp["message"] = "OK"
+				c.JSON(200, resp)
 			}
 		}
 
@@ -589,7 +595,8 @@ func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 
 	tryRotateCallCount := 0
 	uts := &auth.FakeUserAuthTokenService{
-		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
+		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP net.IP,
+			userAgent string) (bool, error) {
 			tryRotateCallCount++
 			return false, nil
 		},
@@ -609,7 +616,8 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	uts := &auth.FakeUserAuthTokenService{
-		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
+		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP net.IP,
+			userAgent string) (bool, error) {
 			newToken, err := util.RandomHex(16)
 			require.NoError(t, err)
 			token.AuthToken = newToken
@@ -637,7 +645,11 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 
 func initTokenRotationTest(ctx context.Context) (*models.ReqContext, *httptest.ResponseRecorder, error) {
 	setting.LoginCookieName = "login_token"
-	setting.LoginMaxLifetime, _ = gtime.ParseInterval("7d")
+	var err error
+	setting.LoginMaxLifetime, err = gtime.ParseDuration("7d")
+	if err != nil {
+		return nil, nil, err
+	}
 
 	rr := httptest.NewRecorder()
 	req, err := http.NewRequestWithContext(ctx, "", "", nil)
