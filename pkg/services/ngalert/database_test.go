@@ -142,7 +142,7 @@ func TestDeletingAlertDefinition(t *testing.T) {
 	t.Run("zero rows affected when deleting unknown alert", func(t *testing.T) {
 		ng := setupTestEnv(t)
 
-		q := deleteAlertDefinitionByIDQuery{
+		q := deleteAlertDefinitionByIDCommand{
 			ID:    1,
 			OrgID: 1,
 		}
@@ -156,7 +156,7 @@ func TestDeletingAlertDefinition(t *testing.T) {
 		ng := setupTestEnv(t)
 		alertDefinition := createTestAlertDefinition(t, ng)
 
-		q := deleteAlertDefinitionByIDQuery{
+		q := deleteAlertDefinitionByIDCommand{
 			ID:    (*alertDefinition).Id,
 			OrgID: 1,
 		}
