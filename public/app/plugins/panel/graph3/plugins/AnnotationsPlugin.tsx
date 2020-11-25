@@ -1,5 +1,5 @@
 import { DataFrame, DataFrameView, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
-import { EventsCanvas, usePlotContext, usePlotPluginContext, useTheme } from '@grafana/ui';
+import { EventsCanvas, usePlotContext, useTheme } from '@grafana/ui';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { AnnotationMarker } from './AnnotationMarker';
 
@@ -17,7 +17,6 @@ interface AnnotationsDataFrameViewDTO {
 export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotations, timeZone }) => {
   const pluginId = 'AnnotationsPlugin';
   const plotCtx = usePlotContext();
-  const pluginsApi = usePlotPluginContext();
 
   const theme = useTheme();
   const annotationsRef = useRef<Array<DataFrameView<AnnotationsDataFrameViewDTO>>>();
@@ -45,7 +44,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
   }, [plotCtx.isPlotReady, annotations]);
 
   useEffect(() => {
-    const unregister = pluginsApi.registerPlugin({
+    const unregister = plotCtx.registerPlugin({
       id: pluginId,
       hooks: {
         // Render annotation lines on the canvas

@@ -38,12 +38,10 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
   let size: VizSize | null = null;
 
   const vizStyle: CSSProperties = {
-    flexGrow: 1,
+    flexGrow: 2,
   };
 
-  const legendStyle: CSSProperties = {
-    flexGrow: 1,
-  };
+  const legendStyle: CSSProperties = {};
 
   switch (position) {
     case 'bottom':
@@ -62,6 +60,16 @@ export const VizLayout: VizLayoutComponentType = ({ width, height, legend, child
         size = { width: width - legendMeasure.width, height };
       }
       break;
+  }
+
+  // This happens when position is switched from bottom to right
+  // Then we preserve old with for one render cycle until lenged is measured in it's new position
+  if (size?.width === 0) {
+    size.width = width;
+  }
+
+  if (size?.height === 0) {
+    size.height = height;
   }
 
   return (

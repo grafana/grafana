@@ -35,6 +35,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/auth"
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
+	_ "github.com/grafana/grafana/pkg/services/ngalert"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
 	_ "github.com/grafana/grafana/pkg/services/provisioning"
 	_ "github.com/grafana/grafana/pkg/services/rendering"
@@ -186,7 +187,7 @@ func (s *Server) Run() (err error) {
 				// Mark that we are in shutdown mode
 				// So no more services are started
 				s.shutdownInProgress = true
-				if err != context.Canceled {
+				if !errors.Is(err, context.Canceled) {
 					// Server has crashed.
 					s.log.Error("Stopped "+descriptor.Name, "reason", err)
 				} else {
@@ -233,7 +234,7 @@ func (s *Server) Shutdown(reason string) {
 func (s *Server) ExitCode(reason error) int {
 	code := 1
 
-	if reason == context.Canceled && s.shutdownReason != "" {
+	if errors.Is(reason, context.Canceled) && s.shutdownReason != "" {
 		reason = fmt.Errorf(s.shutdownReason)
 		code = 0
 	}

@@ -90,7 +90,7 @@ The test suite consists of three types of tests: _Frontend tests_, _backend test
 We use [jest](https://jestjs.io/) for our frontend tests. Run them using Yarn:
 
 ```
-yarn jest
+yarn test
 ```
 
 ### Run backend tests

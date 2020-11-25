@@ -1,11 +1,7 @@
 +++
 title = "TestData"
 keywords = ["grafana", "dashboard", "documentation", "panels", "testdata"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/datasources/testdata"]
-[menu.docs]
-name = "TestData"
-parent = "datasources"
 weight = 1400
 +++
 
@@ -17,9 +13,9 @@ This makes it much easier to verify functionality since the data can be shared v
 
 ## Enable
 
-The `TestData DB` data source is not enabled by default. To enable it: 
+The `TestData DB` data source is not enabled by default. To enable it:
 
-1. In the **Configuration** menu (small gear on the left side of the screen), click **Data Sources**. 
+1. In the **Configuration** menu (small gear on the left side of the screen), click **Data Sources**.
 1. Click **Add Data Source**.
 1. Search and click `TestData DB`.
 1. Click **Save & Test** to enable it.
@@ -39,7 +35,7 @@ Once you provided the numbers, `TestData DB` distributes them evenly based on th
 
 ## Dashboards
 
-`TestData DB` also contains some dashboards with examples. 
+`TestData DB` also contains some dashboards with examples.
 1. Click **Configuration** > **Data Sources** > **TestData DB** > **Dashboards**.
 1. **Import** the **Simple Streaming Example** dashboard.
 

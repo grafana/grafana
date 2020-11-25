@@ -1,18 +1,14 @@
 +++
-title = "Getting started with Grafana"
+title = "With Grafana"
 description = "Guide for getting started with Grafana"
 keywords = ["grafana", "intro", "guide", "started"]
-type = "docs"
 aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
-[menu.docs]
-identifier = "getting_started-grafana"
-parent = "guides"
 weight = 200
 +++
 
 # Getting started with Grafana
 
-This topic helps you get started with Grafana and build your first dashboard. To learn more about Grafana, refer to [What is Grafana?]({{< relref "what-is-grafana.md" >}}).
+This topic helps you get started with Grafana and build your first dashboard. To learn more about Grafana, refer to [What is Grafana?]({{< relref "_index.md" >}}).
 
 ## Step 1: Install Grafana
 
@@ -43,13 +39,12 @@ To create your first dashboard:
 
 ## Next steps
 
- Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/index.md" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../features/datasources/data-sources.md" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../features/datasources/add-a-data-source.md" >}}). The following topics will be of interest to you:  
+ Continue to experiment with what you have built, try the [explore workflow]({{< relref "../explore/index.md" >}}) or another visualization feature. Refer to [Data sources]({{< relref "../datasources" >}}) for a list of supported data sources and instructions on how to [add a data source]({{< relref "../datasources/add-a-data-source.md" >}}). The following topics will be of interest to you:
 
-- [Panels]({{< relref "../panels/panels-overview.md" >}})
+- [Panels]({{< relref "../panels/_index.md" >}})
 - [Dashboards]({{< relref "../dashboards/_index.md" >}})
 - [Keyboard shortcuts]({{< relref "../dashboards/shortcuts.md" >}})
 - [Plugins](https://grafana.com/grafana/plugins?orderBy=weight&direction=asc)
-
 
 ### Admins
 

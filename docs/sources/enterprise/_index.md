@@ -2,11 +2,7 @@
 title = "Grafana Enterprise"
 description = "Grafana Enterprise overview"
 keywords = ["grafana", "documentation", "datasource", "permissions", "ldap", "licensing", "enterprise", "insights", "reporting"]
-type = "docs"
-[menu.docs]
-name = "Grafana Enterprise"
-identifier = "enterprise"
-weight = 100
+weight = 150
 +++
 
 # Grafana Enterprise

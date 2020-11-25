@@ -73,7 +73,7 @@ export class IntervalVariableEditor extends PureComponent<Props> {
               labelClass="width-9"
               checked={this.props.variable.auto}
               onChange={this.onAutoChange}
-              tooltip={'Enables multiple values to be selected at the same time'}
+              tooltip={'Interval will be dynamically calculated by dividing time range by the count specified'}
             />
 
             {this.props.variable.auto && (

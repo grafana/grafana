@@ -1,11 +1,11 @@
 import React, { PureComponent } from 'react';
 import appEvents from 'app/core/app_events';
 import { CoreEvents } from 'app/types';
-import { MetricQueryEditor, QueryTypeSelector, SLOQueryEditor, Help } from './';
+import { Help, MetricQueryEditor, QueryTypeSelector, SLOQueryEditor } from './';
 import { CloudMonitoringQuery, MetricQuery, QueryType, SLOQuery } from '../types';
 import { defaultQuery } from './MetricQueryEditor';
 import { defaultQuery as defaultSLOQuery } from './SLOQueryEditor';
-import { toOption, formatCloudMonitoringError } from '../functions';
+import { formatCloudMonitoringError, toOption } from '../functions';
 import CloudMonitoringDatasource from '../datasource';
 import { ExploreQueryFieldProps } from '@grafana/data';
 
@@ -71,7 +71,7 @@ export class QueryEditor extends PureComponent<Props, State> {
     const variableOptionGroup = {
       label: 'Template Variables',
       expanded: false,
-      options: datasource.variables.map(toOption),
+      options: datasource.getVariables().map(toOption),
     };
 
     return (

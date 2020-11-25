@@ -1,10 +1,7 @@
 +++
 title = "Search"
 keywords = ["grafana", "dashboard", "documentation", "search"]
-type = "docs"
 aliases =["/docs/grafana/latest/reference/search/"]
-[menu.docs]
-parent = "dashboard_features"
 weight = 5
 +++
 

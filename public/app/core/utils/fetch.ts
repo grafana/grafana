@@ -91,6 +91,33 @@ export const parseBody = (options: BackendSrvRequest, isAppJson: boolean) => {
   return isAppJson ? JSON.stringify(options.data) : new URLSearchParams(options.data);
 };
 
+export async function parseResponseBody<T>(
+  response: Response,
+  responseType?: 'json' | 'text' | 'arraybuffer' | 'blob'
+): Promise<T> {
+  if (responseType) {
+    switch (responseType) {
+      case 'arraybuffer':
+        return response.arrayBuffer() as any;
+
+      case 'blob':
+        return response.blob() as any;
+
+      case 'json':
+        return response.json();
+
+      case 'text':
+        return response.text() as any;
+    }
+  }
+
+  const textData = await response.text(); // this could be just a string, prometheus requests for instance
+  try {
+    return JSON.parse(textData); // majority of the requests this will be something that can be parsed
+  } catch {}
+  return textData as any;
+}
+
 export function serializeParams(data: Record<string, any>): string {
   return Object.keys(data)
     .map(key => {

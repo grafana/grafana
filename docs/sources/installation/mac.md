@@ -2,9 +2,6 @@
 title = "Install on macOS"
 description = "Installing Grafana on macOS"
 keywords = ["grafana", "configuration", "documentation", "mac", "homebrew", "osx"]
-type = "docs"
-[menu.docs]
-parent = "installation"
 weight = 500
 +++
 
@@ -18,7 +15,7 @@ This page explains how to install Grafana and get the service running on your ma
 
 Use [Homebrew](http://brew.sh/) to install the most recent released version of Grafana using Homebrew package.
 
-1. On the Homberew homepage, search for Grafana. The last stable and released version is listed.  
+1. On the Homberew homepage, search for Grafana. The last stable and released version is listed.
 1. Open a terminal and enter:
     ```
    brew update

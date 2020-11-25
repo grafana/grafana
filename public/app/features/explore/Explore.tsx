@@ -22,6 +22,7 @@ import {
   LogsModel,
   EventBusExtended,
   EventBusSrv,
+  TraceViewData,
 } from '@grafana/data';
 
 import store from 'app/core/store';
@@ -30,18 +31,10 @@ import QueryRows from './QueryRows';
 import TableContainer from './TableContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import ExploreQueryInspector from './ExploreQueryInspector';
-import {
-  addQueryRow,
-  changeSize,
-  initializeExplore,
-  modifyQueries,
-  refreshExplore,
-  scanStart,
-  setQueries,
-  updateTimeRange,
-  splitOpen,
-} from './state/actions';
-
+import { splitOpen } from './state/main';
+import { changeSize, initializeExplore, refreshExplore } from './state/explorePane';
+import { updateTimeRange } from './state/time';
+import { scanStopAction, addQueryRow, modifyQueries, setQueries, scanStart } from './state/query';
 import { ExploreId, ExploreItemState, ExploreUpdateState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 import {
@@ -56,7 +49,6 @@ import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
-import { scanStopAction } from './state/actionTypes';
 import { ExploreGraphPanel } from './ExploreGraphPanel';
 //TODO:unification
 import { TraceView } from './TraceView/TraceView';
@@ -410,7 +402,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                             // If there is not data (like 404) we show a separate error so no need to show anything here
                             queryResponse.series[0] && (
                               <TraceView
-                                trace={queryResponse.series[0].fields[0].values.get(0) as any}
+                                trace={queryResponse.series[0].fields[0].values.get(0) as TraceViewData | undefined}
                                 splitOpenFn={splitOpen}
                               />
                             )}

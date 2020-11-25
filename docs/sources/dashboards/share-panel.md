@@ -1,10 +1,7 @@
 +++
 title = "Share panel"
 keywords = ["grafana", "dashboard", "documentation", "sharing"]
-type = "docs"
 aliases = ["/docs/grafana/latest/reference/share_panel/"]
-[menu.docs]
-parent = "dashboard_features"
 weight = 600
 +++
 

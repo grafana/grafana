@@ -30,11 +30,15 @@ func getProfileNode(c *models.ReqContext) *dtos.NavLink {
 		{
 			Text: "Preferences", Id: "profile-settings", Url: setting.AppSubUrl + "/profile", Icon: "sliders-v-alt",
 		},
-		{
+	}
+
+	if setting.AddChangePasswordLink() {
+		children = append(children, &dtos.NavLink{
 			Text: "Change Password", Id: "change-password", Url: setting.AppSubUrl + "/profile/password",
 			Icon: "lock", HideFromMenu: true,
-		},
+		})
 	}
+
 	if !setting.DisableSignoutMenu {
 		// add sign out first
 		children = append(children, &dtos.NavLink{
@@ -403,6 +407,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		AppleTouchIcon:          "public/img/apple-touch-icon.png",
 		AppTitle:                "Grafana",
 		NavTree:                 navTree,
+		Sentry:                  &hs.Cfg.Sentry,
 	}
 
 	if setting.DisableGravatar {

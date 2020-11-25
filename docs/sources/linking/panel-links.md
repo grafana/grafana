@@ -2,10 +2,7 @@
 title = "Panel links"
 description = ""
 keywords = ["grafana", "linking", "create links", "link panels", "link dashboards", "navigate"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/navigation-links/"]
-[menu.docs]
-parent = "linking"
 weight = 300
 +++
 
@@ -34,14 +31,14 @@ Click the icon on the top left corner of a panel to see available panel links.
 
 ## Update a panel link
 
-1. On the Panel tab, find the link that you want to make changes to. 
-1. Click the Edit (pencil) icon to open the Edit link window. 
+1. On the Panel tab, find the link that you want to make changes to.
+1. Click the Edit (pencil) icon to open the Edit link window.
 1. Make any necessary changes.
 1. Click **Save** to save changes and close the window.
 1. Click **Save** in the upper right to save your changes to the dashboard.
 
 ## Delete a panel link
 
-1. On the Panel tab, find the link that you want to delete. 
-1. Click the **X** icon next to the link you want to delete. 
+1. On the Panel tab, find the link that you want to delete.
+1. Click the **X** icon next to the link you want to delete.
 1. Click **Save** in the upper right to save your changes to the dashboard.
