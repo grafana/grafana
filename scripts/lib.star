@@ -1,5 +1,5 @@
-grabpl_version = '0.5.28'
-build_image = 'grafana/build-container:1.2.29'
+grabpl_version = '0.5.29'
+build_image = 'grafana/build-container:1.2.30'
 publish_image = 'grafana/grafana-ci-deploy:1.2.7'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 alpine_image = 'alpine:3.12'
@@ -510,18 +510,7 @@ def shellcheck_step():
         'depends_on': [
             'initialize',
         ],
-        'environment': {
-            'VERSION': '0.7.1',
-            'CHKSUM': 'beca3d7819a6bdcfbd044576df4fc284053b48f468b2f03428fe66f4ceb2c05d9b5411357fa15003cb0' +
-                '311406c255084cf7283a3b8fce644c340c2f6aa910b9f',
-        },
         'commands': [
-            'curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/shellcheck-' +
-                'v$${VERSION}.linux.x86_64.tar.xz',
-            'echo $$CHKSUM shellcheck-v$${VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status',
-            'tar xf shellcheck-v$${VERSION}.linux.x86_64.tar.xz',
-            'mv shellcheck-v$${VERSION}/shellcheck /usr/local/bin/',
-            'rm -rf shellcheck-v$${VERSION}*',
             './bin/grabpl shellcheck',
         ],
     }
