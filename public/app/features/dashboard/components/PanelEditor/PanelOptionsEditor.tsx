@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import {
   DataFrame,
+  EventBus,
   InterpolateFunction,
   PanelOptionsEditorItem,
   PanelPlugin,
@@ -17,6 +18,7 @@ interface PanelOptionsEditorProps<TOptions> {
   plugin: PanelPlugin;
   data?: DataFrame[];
   replaceVariables: InterpolateFunction;
+  eventBus: EventBus;
   options: TOptions;
   onChange: (options: TOptions) => void;
 }
@@ -26,6 +28,7 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
   options,
   onChange,
   data,
+  eventBus,
   replaceVariables,
 }) => {
   const optionEditors = useMemo<Record<string, PanelOptionsEditorItem[]>>(() => {
@@ -43,6 +46,7 @@ export const PanelOptionsEditor: React.FC<PanelOptionsEditorProps<any>> = ({
     data: data || [],
     replaceVariables,
     options,
+    eventBus,
     getSuggestions: (scope?: VariableSuggestionsScope) => {
       return getPanelOptionsVariableSuggestions(plugin, data);
     },

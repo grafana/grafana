@@ -1,6 +1,10 @@
 import React, { ChangeEvent, PureComponent } from 'react';
+import { VerticalGroup } from '@grafana/ui';
+
 import { TextBoxVariableModel } from '../types';
 import { VariableEditorProps } from '../editor/types';
+import { VariableSectionHeader } from '../editor/VariableSectionHeader';
+import { VariableTextField } from '../editor/VariableTextField';
 
 export interface Props extends VariableEditorProps<TextBoxVariableModel> {}
 export class TextBoxVariableEditor extends PureComponent<Props> {
@@ -15,20 +19,18 @@ export class TextBoxVariableEditor extends PureComponent<Props> {
   render() {
     const { query } = this.props.variable;
     return (
-      <div className="gf-form-group">
-        <h5 className="section-heading">Text options</h5>
-        <div className="gf-form">
-          <span className="gf-form-label">Default value</span>
-          <input
-            type="text"
-            className="gf-form-input"
-            value={query}
-            onChange={this.onQueryChange}
-            onBlur={this.onQueryBlur}
-            placeholder="default value, if any"
-          />
-        </div>
-      </div>
+      <VerticalGroup spacing="xs">
+        <VariableSectionHeader name="Text Options" />
+        <VariableTextField
+          value={query}
+          name="Default value"
+          placeholder="default value, if any"
+          onChange={this.onQueryChange}
+          onBlur={this.onQueryBlur}
+          labelWidth={20}
+          grow
+        />
+      </VerticalGroup>
     );
   }
 }
