@@ -12,7 +12,7 @@ Microsoft SQL Server is a popular relational database management system that is 
 
 This topic walks you through the steps to create a series of dashboards in Grafana to display metrics from a MS SQL Server database. You can also configure the MS SQL Server data source on a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance without having to host Grafana yourself.
 
-## Step 1: Install Grafana and build your first dashboard
+## Step 1. Install Grafana and build your first dashboard
 
 Use the instructions in [Getting started with Grafana]({{< relref "getting-started.md" >}}) to:
 - Install Grafana.
