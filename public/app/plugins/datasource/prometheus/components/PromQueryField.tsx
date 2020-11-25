@@ -12,7 +12,7 @@ import {
   BracesPlugin,
 } from '@grafana/ui';
 
-import { LanguageMap, Grammar, languages as prismLanguages } from 'prismjs';
+import { LanguageMap, languages as prismLanguages } from 'prismjs';
 
 // dom also includes Element polyfills
 import { PromQuery, PromOptions, PromMetricsMetadata } from '../types';
