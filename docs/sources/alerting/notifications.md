@@ -132,7 +132,7 @@ This behavior will become the default in a future version of Grafana.
 
 ### VictorOps
 
-To set up VictorOps, provide the URL from the Grafana Integration and substitue `$routing_key` with the routing key.
+To set up VictorOps, provide the URL from the Grafana Integration and substitute `$routing_key` with the routing key.
 
 Setting | Description
 ---------- | -----------

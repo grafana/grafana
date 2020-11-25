@@ -107,7 +107,6 @@ func TestVictoropsNotifier(t *testing.T) {
 				}, payload.Interface(), cmp.Comparer(presenceComparerInt))
 				So(diff, ShouldBeEmpty)
 			})
-
 		})
 	})
 }

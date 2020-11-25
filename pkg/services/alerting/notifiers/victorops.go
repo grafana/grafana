@@ -118,9 +118,7 @@ func (vn *VictoropsNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	bodyJSON.Set("metrics", fields)
 
 	for _, tag := range evalContext.Rule.AlertRuleTags {
-		// Override tags appropriately if they are in the PagerDuty v2 API
-		switch strings.ToLower(tag.Key) {
-		case "severity":
+		if strings.ToLower(tag.Key) == "severity" {
 			// Only set severity if it's one of the PD supported enum values
 			// Info, Warning, Error, or Critical (case insensitive)
 			switch sev := strings.ToUpper(tag.Value); sev {
