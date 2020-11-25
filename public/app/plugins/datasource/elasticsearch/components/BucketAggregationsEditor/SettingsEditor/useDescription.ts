@@ -67,8 +67,8 @@ export const useDescription = (bucketAgg: BucketAggregation): string => {
     }
 
     case 'date_histogram': {
-      const interval = bucketAgg.settings?.interval || 1000;
-      const minDocCount = bucketAgg.settings?.min_doc_count || 1;
+      const interval = bucketAgg.settings?.interval || 'auto';
+      const minDocCount = bucketAgg.settings?.min_doc_count || 0;
       const trimEdges = bucketAgg.settings?.trimEdges || 0;
 
       let description = `Interval: ${interval}`;
