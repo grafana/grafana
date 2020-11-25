@@ -137,7 +137,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
           onlyIn: (node: any) => node.type === 'code_block',
           getSyntax: (node: any) => 'promql',
         },
-        { ...(prismLanguages as LanguageMap), promql: this.props.datasource.languageProvider.syntax as Grammar }
+        { ...(prismLanguages as LanguageMap), promql: this.props.datasource.languageProvider.syntax }
       ),
     ];
 
