@@ -19,7 +19,7 @@ export interface Token {
 /**
  * A Slate plugin to highlight code syntax.
  */
-export function SlatePrism(optsParam: OptionsFormat = {}, prismLanguages = Prism.languages): Plugin {
+export function SlatePrism(optsParam: OptionsFormat = {}, prismLanguages = Prism.languages as LanguageMap): Plugin {
   const opts: Options = new Options(optsParam);
 
   return {

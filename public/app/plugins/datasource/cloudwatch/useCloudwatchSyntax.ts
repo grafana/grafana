@@ -44,7 +44,6 @@ const useCloudwatchSyntax = (languageProvider: CloudWatchLanguageProvider, langu
   useEffect(() => {
     if (languageProviderInitialized) {
       const syntax = languageProvider.getSyntax();
-      Prism.languages[PRISM_SYNTAX] = syntax;
       setSyntax(syntax);
     }
   }, [languageProviderInitialized, languageProvider]);
