@@ -108,6 +108,7 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
             fields.push({
               ...field,
               values: new ArrayVector(buffer),
+              config: {},
             });
           }
 

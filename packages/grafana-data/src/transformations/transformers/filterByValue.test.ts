@@ -1,10 +1,17 @@
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { Field, FieldType } from '../../types';
+import { DataTransformerConfig, Field, FieldType, MatcherConfig } from '../../types';
 import { ArrayVector } from '../../vector';
 import { transformDataFrame } from '../transformDataFrame';
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { filterByValueTransformer } from './filterByValue';
+import {
+  FilterByValueMatch,
+  filterByValueTransformer,
+  FilterByValueTransformerOptions,
+  FilterByValueType,
+} from './filterByValue';
 import { DataTransformerID } from './ids';
+import { ValueMatcherID } from '../matchers/ids';
+import { BasicValueMatcherOptions } from '../matchers/valueMatchers/types';
 
 const seriesAWithSingleField = toDataFrame({
   name: 'A',
@@ -20,122 +27,193 @@ describe('FilterByValue transformer', () => {
     mockTransformationsRegistry([filterByValueTransformer]);
   });
 
-  it('should exclude values', () => {
-    const cfg = {
-      id: DataTransformerID.filterByValue,
-      options: {
-        mode: 'exclude',
-        match: 'all',
-        filters: [],
-      },
+  it('should exclude values', async () => {
+    const lower: MatcherConfig<BasicValueMatcherOptions<number>> = {
+      id: ValueMatcherID.lower,
+      options: { value: 6 },
     };
 
-    const expected: Field[] = [
-      {
-        name: 'time',
-        type: FieldType.time,
-        values: new ArrayVector([6000, 7000]),
-        state: { displayName: 'time' },
-        config: {},
-      },
-      {
-        name: 'numbers',
-        type: FieldType.number,
-        values: new ArrayVector([6, 7]),
-        state: { displayName: 'numbers' },
-        config: {},
-      },
-    ];
-
-    expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith(received => {
-      const processed = received[0];
-      expect(processed.length).toEqual(1);
-      expect(processed[0].fields).toEqual(expected);
-    });
-  });
-
-  it('should include values', () => {
-    const valueFilters = [,];
-
-    const cfg = {
+    const cfg: DataTransformerConfig<FilterByValueTransformerOptions> = {
       id: DataTransformerID.filterByValue,
       options: {
-        type: 'include',
-        match: 'all',
-        valueFilters: [
+        type: FilterByValueType.exclude,
+        match: FilterByValueMatch.all,
+        filters: [
           {
             fieldName: 'numbers',
-            filterExpression: '5',
-            filterType: ValueFilterID.lowerOrEqual,
+            config: lower,
           },
         ],
       },
     };
 
-    const processed = transformDataFrame([cfg], [seriesAWithSingleField]);
-    const expected: Field[] = [
-      {
-        name: 'time',
-        type: FieldType.time,
-        values: new ArrayVector([1000, 2000, 3000, 4000, 5000]),
-        state: { displayName: 'time' },
-        config: {},
-      },
-      {
-        name: 'numbers',
-        type: FieldType.number,
-        values: new ArrayVector([1, 2, 3, 4, 5]),
-        state: { displayName: 'numbers' },
-        config: {},
-      },
-    ];
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith(received => {
+      const processed = received[0];
 
-    expect(processed.length).toEqual(1);
-    expect(processed[0].fields).toEqual(expected);
+      expect(processed.length).toEqual(1);
+      expect(processed[0].fields).toEqual([
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: new ArrayVector([6000, 7000]),
+          state: { displayName: 'time' },
+          config: {},
+        },
+        {
+          name: 'numbers',
+          type: FieldType.number,
+          values: new ArrayVector([6, 7]),
+          state: { displayName: 'numbers' },
+          config: {},
+        },
+      ]);
+    });
   });
 
-  it('should match any condition', () => {
-    const valueFilters = [
-      {
-        fieldName: 'numbers',
-        filterExpression: '4',
-        filterType: ValueFilterID.lowerOrEqual,
-      },
-      {
-        fieldName: 'numbers',
-        filterExpression: '7',
-        filterType: ValueFilterID.equal,
-      },
-    ];
+  it('should include values', async () => {
+    const lowerOrEqual: MatcherConfig<BasicValueMatcherOptions<number>> = {
+      id: ValueMatcherID.lowerOrEqual,
+      options: { value: 5 },
+    };
 
-    const cfg = {
+    const cfg: DataTransformerConfig<FilterByValueTransformerOptions> = {
       id: DataTransformerID.filterByValue,
       options: {
-        type: 'include',
-        match: 'any',
-        valueFilters,
+        type: FilterByValueType.include,
+        match: FilterByValueMatch.all,
+        filters: [
+          {
+            fieldName: 'numbers',
+            config: lowerOrEqual,
+          },
+        ],
       },
     };
 
-    const processed = transformDataFrame([cfg], [seriesAWithSingleField]);
-    const expected: Field[] = [
-      {
-        name: 'time',
-        type: FieldType.time,
-        values: new ArrayVector([1000, 2000, 3000, 4000, 7000]),
-        state: { displayName: 'time' },
-        config: {},
-      },
-      {
-        name: 'numbers',
-        type: FieldType.number,
-        values: new ArrayVector([1, 2, 3, 4, 7]),
-        state: { displayName: 'numbers' },
-        config: {},
-      },
-    ];
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith(received => {
+      const processed = received[0];
 
-    expect(processed.length).toEqual(1);
-    expect(processed[0].fields).toEqual(expected);
+      expect(processed.length).toEqual(1);
+      expect(processed[0].fields).toEqual([
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: new ArrayVector([1000, 2000, 3000, 4000, 5000]),
+          state: { displayName: 'time' },
+          config: {},
+        },
+        {
+          name: 'numbers',
+          type: FieldType.number,
+          values: new ArrayVector([1, 2, 3, 4, 5]),
+          state: { displayName: 'numbers' },
+          config: {},
+        },
+      ]);
+    });
+  });
+
+  it('should match any condition', async () => {
+    const lowerOrEqual: MatcherConfig<BasicValueMatcherOptions<number>> = {
+      id: ValueMatcherID.lowerOrEqual,
+      options: { value: 4 },
+    };
+
+    const equal: MatcherConfig<BasicValueMatcherOptions<number>> = {
+      id: ValueMatcherID.equal,
+      options: { value: 7 },
+    };
+
+    const cfg: DataTransformerConfig<FilterByValueTransformerOptions> = {
+      id: DataTransformerID.filterByValue,
+      options: {
+        type: FilterByValueType.include,
+        match: FilterByValueMatch.any,
+        filters: [
+          {
+            fieldName: 'numbers',
+            config: lowerOrEqual,
+          },
+          {
+            fieldName: 'numbers',
+            config: equal,
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith(received => {
+      const processed = received[0];
+
+      expect(processed.length).toEqual(1);
+      expect(processed[0].fields).toEqual([
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: new ArrayVector([1000, 2000, 3000, 4000, 7000]),
+          state: { displayName: 'time' },
+          config: {},
+        },
+        {
+          name: 'numbers',
+          type: FieldType.number,
+          values: new ArrayVector([1, 2, 3, 4, 7]),
+          state: { displayName: 'numbers' },
+          config: {},
+        },
+      ]);
+    });
+  });
+
+  it('should match all condition', async () => {
+    const greaterOrEqual: MatcherConfig<BasicValueMatcherOptions<number>> = {
+      id: ValueMatcherID.greaterOrEqual,
+      options: { value: 4 },
+    };
+
+    const lowerOrEqual: MatcherConfig<BasicValueMatcherOptions<number>> = {
+      id: ValueMatcherID.lowerOrEqual,
+      options: { value: 5 },
+    };
+
+    const cfg: DataTransformerConfig<FilterByValueTransformerOptions> = {
+      id: DataTransformerID.filterByValue,
+      options: {
+        type: FilterByValueType.include,
+        match: FilterByValueMatch.all,
+        filters: [
+          {
+            fieldName: 'numbers',
+            config: lowerOrEqual,
+          },
+          {
+            fieldName: 'numbers',
+            config: greaterOrEqual,
+          },
+        ],
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith(received => {
+      const processed = received[0];
+
+      expect(processed.length).toEqual(1);
+      expect(processed[0].fields).toEqual([
+        {
+          name: 'time',
+          type: FieldType.time,
+          values: new ArrayVector([4000, 5000]),
+          state: { displayName: 'time' },
+          config: {},
+        },
+        {
+          name: 'numbers',
+          type: FieldType.number,
+          values: new ArrayVector([4, 5]),
+          state: { displayName: 'numbers' },
+          config: {},
+        },
+      ]);
+    });
   });
 });
