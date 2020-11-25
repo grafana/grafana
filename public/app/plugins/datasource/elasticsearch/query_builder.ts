@@ -431,27 +431,24 @@ export class ElasticQueryBuilder {
     target.queryType = ElasticsearchQueryType.PPL;
 
     // set isLogsQuery depending on the format
-    if (target.format === 'logs') {
-      target.isLogsQuery = true;
-    } else {
-      target.isLogsQuery = false;
-    }
+    target.isLogsQuery = target.format === 'logs';
+
     if (adhocFilters) {
       queryString = this.addPPLAdhocFilters(queryString, adhocFilters);
     }
 
-    const timeRangeFilter = " | where $timestamp > timestamp('$timeFrom') and $timestamp < timestamp('$timeTo')";
+    const timeRangeFilter = " where $timestamp > timestamp('$timeFrom') and $timestamp < timestamp('$timeTo')";
     //time range filter must be placed before other query filters
     if (queryString) {
       const separatorIndex = queryString.indexOf('|');
       if (separatorIndex === -1) {
-        queryString = queryString.trimEnd() + timeRangeFilter;
+        queryString = [queryString.trimEnd(), timeRangeFilter].join(' |');
       } else {
-        queryString =
-          queryString.slice(0, separatorIndex).trimEnd() +
-          timeRangeFilter +
-          ' |' +
-          queryString.slice(separatorIndex + 1);
+        queryString = [
+          queryString.slice(0, separatorIndex).trimEnd(),
+          timeRangeFilter,
+          queryString.slice(separatorIndex + 1),
+        ].join(' |');
       }
     }
 
