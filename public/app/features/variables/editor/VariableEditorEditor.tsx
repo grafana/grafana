@@ -18,11 +18,11 @@ import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { OnPropChangeArguments } from './types';
 import { changeVariableProp, changeVariableType } from '../state/sharedReducer';
 import { updateOptions } from '../state/actions';
-import { getVariableTypes } from '../utils';
 import { VariableTextField } from './VariableTextField';
-import { VariableSelectField } from './VariableSelectField';
 import { VariableSectionHeader } from './VariableSectionHeader';
 import { hasOptions } from '../guard';
+import { VariableTypeSelect } from './VariableTypeSelect';
+import { VariableHideSelect } from './VariableHideSelect';
 
 export interface OwnProps {
   identifier: VariableIdentifier;
@@ -119,15 +119,6 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
       return null;
     }
     const loading = variable.state === LoadingState.Loading;
-    const typeOptions = getVariableTypes();
-    const typeValue = typeOptions.find(o => o.value === this.props.variable.type) ?? { label: 'Query', value: 'query' };
-    const typeTooltip = variableAdapters.get(this.props.variable.type).description;
-    const hideOptions = [
-      { label: '', value: VariableHide.dontHide },
-      { label: 'Label', value: VariableHide.hideLabel },
-      { label: 'Variable', value: VariableHide.hideVariable },
-    ];
-    const hideValue = hideOptions.find(o => o.value === variable.hide) ?? hideOptions[0];
 
     return (
       <div>
@@ -144,14 +135,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                   required
                   ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput}
                 />
-                <VariableSelectField
-                  name="Type"
-                  value={typeValue}
-                  options={typeOptions}
-                  onChange={this.onTypeChange}
-                  tooltip={typeTooltip}
-                  ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect}
-                />
+                <VariableTypeSelect onChange={this.onTypeChange} type={this.props.variable.type} />
               </InlineFieldRow>
 
               {this.props.editor.errors.name && (
@@ -168,13 +152,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                   placeholder="optional display name"
                   ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput}
                 />
-                <VariableSelectField
-                  name="Hide"
-                  value={hideValue}
-                  options={hideOptions}
-                  onChange={this.onHideChange}
-                  ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect}
-                />
+                <VariableHideSelect onChange={this.onHideChange} hide={this.props.variable.hide} />
               </InlineFieldRow>
 
               <VariableTextField

@@ -1,5 +1,5 @@
 import React, { FormEvent, PropsWithChildren, ReactElement, useCallback } from 'react';
-import { InlineField, TextArea, useStyles } from '@grafana/ui';
+import { HorizontalGroup, InlineField, TextArea, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 
@@ -38,7 +38,7 @@ export function VariableTextAreaField({
   }, []);
 
   return (
-    <div className="gf-form">
+    <HorizontalGroup spacing="none">
       <InlineField
         label={name}
         labelWidth={labelWidth ?? 12}
@@ -59,7 +59,7 @@ export function VariableTextAreaField({
         cols={width}
         className={styles.textarea}
       />
-    </div>
+    </HorizontalGroup>
   );
 }
 
