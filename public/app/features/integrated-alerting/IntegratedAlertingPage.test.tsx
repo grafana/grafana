@@ -1,16 +1,19 @@
 import React from 'react';
-import { shallow } from 'enzyme';
+import { mount } from 'enzyme';
 import IntegratedAlertingPage from './IntegratedAlertingPage';
+import { Messages } from './IntegratedAlerting.messages';
 
 describe('IntegratedAlertingPage', () => {
-  it('Should render passed chidren correctly', () => {
-    const wrapper = shallow(
-      <IntegratedAlertingPage>
-        <span>test</span>
-      </IntegratedAlertingPage>
-    );
+  it('should render component correctly', () => {
+    const wrapper = mount(<IntegratedAlertingPage />);
+    const tabs = wrapper.find('ul');
 
-    expect(wrapper.find('span')).toHaveLength(1);
-    expect(wrapper.find('span').text()).toEqual('test');
+    expect(tabs.children().length).toBe(4);
+    expect(
+      tabs
+        .find('li')
+        .at(0)
+        .text()
+    ).toEqual(Messages.tabs.alerts);
   });
 });
