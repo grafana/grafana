@@ -9,14 +9,13 @@ weight = 400
 # Getting started with Grafana and MS SQL Server
 
 Microsoft SQL Server is a popular relational database management system that is widely used in development and production environments. This topic walks you through the steps to create a series of dashboards in Grafana to display metrics from a MS SQL Server database. You can also configure the MS SQL Server data source on a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance without having to host Grafana yourself.
-
 ## Step 1. Install Grafana and build your first dashboard
 
 Use the instructions in [Getting started with Grafana]({{< relref "getting-started.md" >}}) to:
 - Install Grafana.
 - Log in to Grafana.
 - Create your first dashboard.
-**Note:** You must install Grafana 5.1+ in order to use the integrated MSSQL data source.
+> **Note:** You must install Grafana 5.1+ in order to use the integrated MSSQL data source.
 
 ## Step 2. Download MS SQL Server
 
@@ -35,7 +34,7 @@ Otherwise, follow the instructions below to install and configure MS SQL Server 
 1. Clone the [grafana/grafana](https://github.com/grafana/grafana/tree/master) repository to your local system.
 1. Install Docker or verify that it is installed on your machine.
 1. Within your local `grafana` repository, change directory to [devenv](https://github.com/grafana/grafana/tree/master/devenv).
-1. Run the bash command to setup datasources and dashboards.
+1. Run the bash command to setup data sources and dashboards.
    ```
     ./setup.sh
    ```
@@ -53,8 +52,8 @@ To add MS SQL Server data source:
 
 1. In the Grafana side menu, hover your cursor over the **Configuration** (gear) icon and then click **Data Sources**.
 1. Filter by `mssql` and select the **Microsoft SQL Server** option.
-1. Click **Add data source** button in the top right header to open the configuration page.
-1. Enter the information specified in the table below, then click **Save & Test** at the bottom of the page.
+2. Click **Add data source** in the top right header to open the configuration page.
+3. Enter the information specified in the table below, then click **Save & Test**.
    
  Name           | Description
 ------------   | -------------
@@ -64,7 +63,7 @@ To add MS SQL Server data source:
 `User`         | Database user's login/username.
 `Password`     | Database user's password. 
 
-For installations from the [grafana/grafana](https://github.com/grafana/grafana/tree/master) repository, `gdev-mssql` data source is available. Once you add this datasource, the `Datasource tests - MSSQL` dashboard with three panels showing metrics generated from test database is available.
+For installations from the [grafana/grafana](https://github.com/grafana/grafana/tree/master) repository, `gdev-mssql` data source is available. Once you add this data source, the `Datasource tests - MSSQL` dashboard with three panels showing metrics generated from test database is available.
 
 <img src="/img/docs/getting-started/gdev-sql-dashboard.png" class="no-shadow" width="700px">
 
