@@ -19,9 +19,16 @@ export const reducer = (
 ): ElasticsearchQuery['bucketAggs'] => {
   switch (action.type) {
     case ADD_BUCKET_AGG:
-      // TODO: if last is date histogram add it before
-      const nextId = parseInt(state[state.length - 1]?.id || '0', 10) + 1;
-      return [...state, defaultBucketAgg(nextId.toString())];
+      const ids = state.map(agg => parseInt(agg.id, 10));
+      const nextId = (Math.max(...ids, 0) + 1).toString();
+
+      // If the last bucket aggregation is a `date_histogram` we add the new one before it.
+      const lastAgg = state[state.length - 1];
+      if (lastAgg?.type === 'date_histogram') {
+        return [...state.slice(0, state.length - 1), { id: nextId, type: 'terms' }, lastAgg];
+      }
+
+      return [...state, defaultBucketAgg(nextId)];
 
     case REMOVE_BUCKET_AGG:
       return state.filter(bucketAgg => bucketAgg.id !== action.payload.id);

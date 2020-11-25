@@ -18,7 +18,7 @@ describe('Bucket Aggregations Reducer', () => {
       .whenActionIsDispatched(addBucketAggregation())
       .thenStateShouldEqual([defaultBucketAgg('1')])
       .whenActionIsDispatched(addBucketAggregation())
-      .thenStateShouldEqual([defaultBucketAgg('1'), defaultBucketAgg('2')]);
+      .thenStateShouldEqual([{ id: '2', type: 'terms' }, defaultBucketAgg('1')]);
   });
 
   it('Should correctly remove aggregations', () => {
