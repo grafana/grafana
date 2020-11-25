@@ -18,6 +18,7 @@ Use the instructions in [Getting started with Grafana]({{< relref "getting-start
 - Install Grafana.
 - Log in to Grafana.
 - Create your first dashboard.
+**Note:** You must install Grafana 5.1+ in order to use the integrated MSSQL data source.
 
 ## Step 2: Download MS SQL Server
 
