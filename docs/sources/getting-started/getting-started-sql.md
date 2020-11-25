@@ -59,7 +59,7 @@ This creates an image of the SQL Server database and runs it as a Docker contain
 
 To add MS SQL Server data source:
 
-1. In the Grafana side menu, go to  **Configuration** and click **Data Sources** option.
+1. In the Grafana side menu, hover your cursor over the **Configuration** (gear) icon and then click **Data Sources**.
 2. Filter by `mssql` and select the **Microsoft SQL Server** option.
 3. Click **Add data source** button in the top right header to open the configuration page.
 4. Enter the information specified in the table below, then click **Save & Test** at the bottom of the page.
