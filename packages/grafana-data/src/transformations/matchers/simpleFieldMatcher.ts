@@ -19,7 +19,7 @@ const firstFieldMatcher: FieldMatcherInfo = {
 };
 
 const firstTimeFieldMatcher: FieldMatcherInfo = {
-  id: FieldMatcherID.firstTime,
+  id: FieldMatcherID.firstTimeField,
   name: 'First time field',
   description: 'The first field of type time in a frame',
 

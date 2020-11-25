@@ -1,6 +1,6 @@
 package panels
 
-panel: {
+_panel: {
 	// Panel title.
 	title?: string
 	// Description.
@@ -10,9 +10,9 @@ panel: {
 	// Name of default datasource.
 	datasource?: string
 	// Grid position.
-	gridPos?: gridPos
+	gridPos?: _gridPos
 	// Panel links.
-	links?: [...panelLink]
+	links?: [..._panelLink]
 	// Name of template variable to repeat for.
 	repeat?: string
 	// Direction to repeat in if 'repeat' is set.
