@@ -77,7 +77,7 @@ number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 se
 
 ### Piped processing language (PPL) support
 
-PPL support can be enabled in the datasource configuration setting when Elasticsearch version is set to 7.0+. See [Open Distro for Elasticsearch SQL plugin](https://opendistro.github.io/for-elasticsearch-docs/docs/install/plugins/#sql) for plugin installation guide and [plugin compatibility](https://opendistro.github.io/for-elasticsearch-docs/docs/install/plugins/#plugin-compatibility) for version compatibility information.
+PPL is available starting opendistro_sql 1.11.0.0. PPL support for Grafana can be enabled in the datasource configuration setting when Elasticsearch version is set to 7.0+. See [Open Distro for Elasticsearch SQL plugin](https://opendistro.github.io/for-elasticsearch-docs/docs/install/plugins/#sql) for plugin installation guide and [plugin compatibility](https://opendistro.github.io/for-elasticsearch-docs/docs/install/plugins/#plugin-compatibility) for version compatibility information.
 
 If PPL support is enabled, the Elasticsearch query editor will give you the option of using PPL query syntax instead of Lucene.
 
