@@ -457,7 +457,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           itemsWrapperClassName={styles.rowsWrapper}
           getKeyFromIndex={this.getKeyFromIndex}
           getIndexFromKey={this.getIndexFromKey}
-          windowScroller
+          windowScroller={false}
         />
       </div>
     );

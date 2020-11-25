@@ -67,7 +67,7 @@ type TListViewProps = {
   itemsWrapperClassName?: string;
   /**
    * When adding new items to the DOM, this is the number of items to add above
-   * and below the current view. E.g. if list is 100 items and is srcolled
+   * and below the current view. E.g. if list is 100 items and is scrolled
    * halfway down (so items [46, 55] are in view), then when a new range of
    * items is rendered, it will render items `46 - viewBuffer` to
    * `55 + viewBuffer`.
@@ -97,7 +97,7 @@ const DEFAULT_INITIAL_DRAW = 300;
  * Virtualized list view component, for the most part, only renders the window
  * of items that are in-view with some buffer before and after. Listens for
  * scroll events and updates which items are rendered. See react-virtualized
- * for a suite of components with similar, but generalized, functinality.
+ * for a suite of components with similar, but generalized, functionality.
  * https://github.com/bvaughn/react-virtualized
  *
  * Note: Presently, ListView cannot be a PureComponent. This is because ListView
@@ -374,8 +374,8 @@ export default class ListView extends React.Component<TListViewProps> {
   };
 
   /**
-   * Get the height of the element at index `i`; first check the known heigths,
-   * fallbck to `.props.itemHeightGetter(...)`.
+   * Get the height of the element at index `i`; first check the known heights,
+   * fallback to `.props.itemHeightGetter(...)`.
    */
   _getHeight = (i: number) => {
     const key = this.props.getKeyFromIndex(i);
