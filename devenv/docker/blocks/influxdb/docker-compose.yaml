@@ -5,6 +5,9 @@
       - '2004:2004'
       - '8083:8083'
       - '8086:8086'
+    environment:
+      INFLUXDB_ADMIN_USER: grafana
+      INFLUXDB_ADMIN_PASSWORD: grafana
     volumes:
       - ./docker/blocks/influxdb/influxdb.conf:/etc/influxdb/influxdb.conf
 

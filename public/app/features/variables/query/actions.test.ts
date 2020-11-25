@@ -756,6 +756,7 @@ function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableMode
     includeAll: true,
     state: LoadingState.NotStarted,
     error: null,
+    description: null,
     ...(extend ?? {}),
   };
 }
