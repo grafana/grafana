@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
@@ -255,7 +256,13 @@ func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.User
 			return
 		}
 
-		rotated, err := authTokenService.TryRotateToken(ctx.Req.Context(), token, ctx.RemoteAddr(), ctx.Req.UserAgent())
+		addr := ctx.RemoteAddr()
+		ip, err := network.GetIPFromAddress(addr)
+		if err != nil {
+			ctx.Logger.Debug("Failed to get client IP address", "addr", addr, "err", err)
+			ip = nil
+		}
+		rotated, err := authTokenService.TryRotateToken(ctx.Req.Context(), token, ip, ctx.Req.UserAgent())
 		if err != nil {
 			ctx.Logger.Error("Failed to rotate token", "error", err)
 			return
