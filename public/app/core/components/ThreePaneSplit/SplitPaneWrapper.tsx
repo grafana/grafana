@@ -1,4 +1,4 @@
-import React, { createRef, MutableRefObject, PureComponent } from 'react';
+import React, { createRef, MutableRefObject, PureComponent, ReactNode } from 'react';
 import SplitPane from 'react-split-pane';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
@@ -11,14 +11,14 @@ enum Pane {
 }
 
 interface Props {
-  horizontalSplitComponents: React.ReactNode[];
-  rightPaneComponent: React.ReactNode;
+  leftPaneComponents: ReactNode[] | ReactNode;
+  rightPaneComponents: ReactNode;
   uiState: { topPaneSize: number; rightPaneSize: number };
   rightPaneVisible?: boolean;
   updateUiState: (uiState: { topPaneSize?: number; rightPaneSize?: number }) => void;
 }
 
-export class ThreePaneSplit extends PureComponent<Props> {
+export class SplitPaneWrapper extends PureComponent<Props> {
   rafToken = createRef<number>();
   static defaultProps = {
     rightPaneVisible: true,
@@ -66,7 +66,7 @@ export class ThreePaneSplit extends PureComponent<Props> {
   };
 
   renderHorizontalSplit() {
-    const { horizontalSplitComponents, uiState } = this.props;
+    const { leftPaneComponents, uiState } = this.props;
     const styles = getStyles(config.theme);
     const topPaneSize =
       uiState.topPaneSize >= 1 ? (uiState.topPaneSize as number) : (uiState.topPaneSize as number) * window.innerHeight;
@@ -78,24 +78,28 @@ export class ThreePaneSplit extends PureComponent<Props> {
      */
     const maxHeight = window.innerHeight - 120;
 
-    return (
-      <SplitPane
-        split="horizontal"
-        maxSize={maxHeight}
-        primary="first"
-        size={topPaneSize < 200 ? 200 : topPaneSize}
-        pane2Style={{ minHeight: 0 }}
-        resizerClassName={styles.resizerH}
-        onDragStarted={this.onDragStarted}
-        onDragFinished={size => this.onDragFinished(Pane.Top, size)}
-      >
-        {horizontalSplitComponents}
-      </SplitPane>
-    );
+    if (Array.isArray(leftPaneComponents)) {
+      return (
+        <SplitPane
+          split="horizontal"
+          maxSize={maxHeight}
+          primary="first"
+          size={topPaneSize < 200 ? 200 : topPaneSize}
+          pane2Style={{ minHeight: 0 }}
+          resizerClassName={styles.resizerH}
+          onDragStarted={this.onDragStarted}
+          onDragFinished={size => this.onDragFinished(Pane.Top, size)}
+        >
+          {leftPaneComponents}
+        </SplitPane>
+      );
+    }
+
+    return leftPaneComponents;
   }
 
   render() {
-    const { rightPaneVisible, rightPaneComponent, uiState } = this.props;
+    const { rightPaneVisible, rightPaneComponents, uiState } = this.props;
     // Limit options pane width to 90% of screen.
     const maxWidth = window.innerWidth * 0.9;
     const styles = getStyles(config.theme);
@@ -121,7 +125,7 @@ export class ThreePaneSplit extends PureComponent<Props> {
         onDragFinished={size => this.onDragFinished(Pane.Right, size)}
       >
         {this.renderHorizontalSplit()}
-        {rightPaneComponent}
+        {rightPaneComponents}
       </SplitPane>
     );
   }

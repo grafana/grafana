@@ -18,7 +18,7 @@ import { OptionsPaneContent } from './OptionsPaneContent';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
-import { ThreePaneSplit } from 'app/core/components/ThreePaneSplit/ThreePaneSplit';
+import { SplitPaneWrapper } from 'app/core/components/ThreePaneSplit/SplitPaneWrapper';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
@@ -170,16 +170,19 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   renderPanelAndEditor(styles: EditorStyles) {
     const { panel, dashboard, tabs } = this.props;
 
-    return [
-      this.renderPanel(styles),
-      <div
-        className={styles.tabsWrapper}
-        aria-label={selectors.components.PanelEditor.DataPane.content}
-        key="panel-editor-tabs"
-      >
-        <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} />
-      </div>,
-    ];
+    if (tabs.length > 0) {
+      return [
+        this.renderPanel(styles),
+        <div
+          className={styles.tabsWrapper}
+          aria-label={selectors.components.PanelEditor.DataPane.content}
+          key="panel-editor-tabs"
+        >
+          <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} />
+        </div>,
+      ];
+    }
+    return this.renderPanel(styles);
   }
 
   renderTemplateVariables(styles: EditorStyles) {
@@ -300,9 +303,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
         {this.editorToolbar(styles)}
         <div className={styles.verticalSplitPanesWrapper}>
-          <ThreePaneSplit
-            horizontalSplitComponents={this.renderPanelAndEditor(styles)}
-            rightPaneComponent={this.renderOptionsPane()}
+          <SplitPaneWrapper
+            leftPaneComponents={this.renderPanelAndEditor(styles)}
+            rightPaneComponents={this.renderOptionsPane()}
             uiState={uiState}
             updateUiState={updatePanelEditorUIState}
             rightPaneVisible={uiState.isPanelOptionsVisible}
