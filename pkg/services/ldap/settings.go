@@ -3,6 +3,7 @@ package ldap
 import (
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"sync"
 
 	"github.com/BurntSushi/toml"
@@ -118,7 +119,7 @@ func readConfig(configFile string) (*Config, error) {
 
 	logger.Info("LDAP enabled, reading config file", "file", configFile)
 
-	fileBytes, err := ioutil.ReadFile(configFile)
+	fileBytes, err := ioutil.ReadFile(filepath.Clean(configFile))
 	if err != nil {
 		return nil, errutil.Wrap("Failed to load LDAP config file", err)
 	}

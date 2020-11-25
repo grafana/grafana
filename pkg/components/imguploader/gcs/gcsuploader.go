@@ -149,7 +149,7 @@ func (u *Uploader) uploadFile(
 	key string,
 ) error {
 	u.log.Debug("Opening image file", "path", imageDiskPath)
-	fileReader, err := os.Open(imageDiskPath)
+	fileReader, err := os.Open(filepath.Clean(imageDiskPath))
 	if err != nil {
 		return err
 	}

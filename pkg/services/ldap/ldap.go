@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"math"
 	"net"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -95,7 +96,7 @@ func (server *Server) Dial() error {
 	if server.Config.RootCACert != "" {
 		certPool = x509.NewCertPool()
 		for _, caCertFile := range strings.Split(server.Config.RootCACert, " ") {
-			pem, err := ioutil.ReadFile(caCertFile)
+			pem, err := ioutil.ReadFile(filepath.Clean(caCertFile))
 			if err != nil {
 				return err
 			}

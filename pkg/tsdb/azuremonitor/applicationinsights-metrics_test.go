@@ -175,7 +175,7 @@ func loadInsightsMetricsResponse(name string) (MetricsResult, error) {
 	var mr MetricsResult
 
 	path := filepath.Join("testdata", name)
-	f, err := os.Open(path)
+	f, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		return mr, err
 	}

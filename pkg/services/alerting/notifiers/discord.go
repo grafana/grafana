@@ -5,6 +5,7 @@ import (
 	"io"
 	"mime/multipart"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -158,7 +159,7 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 }
 
 func (dn *DiscordNotifier) embedImage(cmd *models.SendWebhookSync, imagePath string, existingJSONBody []byte) error {
-	f, err := os.Open(imagePath)
+	f, err := os.Open(filepath.Clean(imagePath))
 	if err != nil {
 		if os.IsNotExist(err) {
 			cmd.Body = string(existingJSONBody)

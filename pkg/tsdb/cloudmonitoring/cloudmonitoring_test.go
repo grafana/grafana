@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"math"
 	"net/url"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"testing"
@@ -989,7 +990,7 @@ func TestCloudMonitoring(t *testing.T) {
 func loadTestFile(path string) (cloudMonitoringResponse, error) {
 	var data cloudMonitoringResponse
 
-	jsonBody, err := ioutil.ReadFile(path)
+	jsonBody, err := ioutil.ReadFile(filepath.Clean(path))
 	if err != nil {
 		return data, err
 	}

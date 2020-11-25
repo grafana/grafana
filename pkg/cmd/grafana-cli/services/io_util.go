@@ -3,6 +3,7 @@ package services
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 )
 
 type IoUtilImp struct {
@@ -21,5 +22,5 @@ func (i IoUtilImp) ReadDir(path string) ([]os.FileInfo, error) {
 }
 
 func (i IoUtilImp) ReadFile(filename string) ([]byte, error) {
-	return ioutil.ReadFile(filename)
+	return ioutil.ReadFile(filepath.Clean(filename))
 }

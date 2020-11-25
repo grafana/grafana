@@ -3,6 +3,7 @@ package alerting
 import (
 	"encoding/json"
 	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -19,7 +20,7 @@ func TestAlertingUsageStats(t *testing.T) {
 
 	ae.Bus.AddHandler(func(query *models.GetAllAlertsQuery) error {
 		var createFake = func(file string) *simplejson.Json {
-			content, err := ioutil.ReadFile(file)
+			content, err := ioutil.ReadFile(filepath.Clean(file))
 			require.NoError(t, err, "expected to be able to read file")
 
 			j, _ := simplejson.NewJson(content)

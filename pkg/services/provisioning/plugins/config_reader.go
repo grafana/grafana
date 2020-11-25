@@ -69,7 +69,7 @@ func (cr *configReaderImpl) parsePluginConfig(path string, file os.FileInfo) (*p
 		return nil, err
 	}
 
-	yamlFile, err := ioutil.ReadFile(filename)
+	yamlFile, err := ioutil.ReadFile(filepath.Clean(filename))
 	if err != nil {
 		return nil, err
 	}

@@ -19,7 +19,7 @@ type configReader struct {
 
 func (cr *configReader) parseConfigs(file os.FileInfo) ([]*config, error) {
 	filename, _ := filepath.Abs(filepath.Join(cr.path, file.Name()))
-	yamlFile, err := ioutil.ReadFile(filename)
+	yamlFile, err := ioutil.ReadFile(filepath.Clean(filename))
 	if err != nil {
 		return nil, err
 	}

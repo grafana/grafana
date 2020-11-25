@@ -500,7 +500,7 @@ func loadTestFile(name string) (AzureMonitorResponse, error) {
 	var azData AzureMonitorResponse
 
 	path := filepath.Join("testdata", name)
-	jsonBody, err := ioutil.ReadFile(path)
+	jsonBody, err := ioutil.ReadFile(filepath.Clean(path))
 	if err != nil {
 		return azData, err
 	}

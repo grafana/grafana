@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -76,7 +77,7 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 	key := u.path + rand + pngExt
 	log.Debugf("Uploading image to s3. bucket = %s, path = %s", u.bucket, key)
 
-	file, err := os.Open(imageDiskPath)
+	file, err := os.Open(filepath.Clean(imageDiskPath))
 	if err != nil {
 		return "", err
 	}

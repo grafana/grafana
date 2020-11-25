@@ -342,7 +342,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 		filePath = filepath.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
 	}
 
-	file, err := os.Open(filePath)
+	file, err := os.Open(filepath.Clean(filePath))
 	if err != nil {
 		return Error(500, "Failed to load home dashboard", err)
 	}

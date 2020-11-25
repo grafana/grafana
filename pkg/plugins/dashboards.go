@@ -97,7 +97,7 @@ func loadPluginDashboard(pluginId, path string) (*models.Dashboard, error) {
 	}
 
 	dashboardFilePath := filepath.Join(plugin.PluginDir, path)
-	reader, err := os.Open(dashboardFilePath)
+	reader, err := os.Open(filepath.Clean(dashboardFilePath))
 	if err != nil {
 		return nil, err
 	}

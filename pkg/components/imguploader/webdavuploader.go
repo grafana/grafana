@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -55,7 +56,7 @@ func (u *WebdavUploader) Upload(ctx context.Context, pa string) (string, error) 
 	filename += pngExt
 	url.Path = path.Join(url.Path, filename)
 
-	imgData, err := ioutil.ReadFile(pa)
+	imgData, err := ioutil.ReadFile(filepath.Clean(pa))
 	if err != nil {
 		return "", err
 	}

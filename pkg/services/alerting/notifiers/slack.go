@@ -353,7 +353,7 @@ func generateSlackBody(file string, token string, recipient string) (map[string]
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
 	// Add the generated image file
-	f, err := os.Open(file)
+	f, err := os.Open(filepath.Clean(file))
 	if err != nil {
 		return nil, b, err
 	}

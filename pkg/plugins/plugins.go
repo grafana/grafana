@@ -269,7 +269,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 			}
 		}
 
-		reader, err := os.Open(jsonFPath)
+		reader, err := os.Open(filepath.Clean(jsonFPath))
 		if err != nil {
 			return err
 		}
@@ -339,7 +339,7 @@ func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) err
 func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	s.log.Debug("Loading plugin", "path", pluginJSONFilePath)
 	currentDir := filepath.Dir(pluginJSONFilePath)
-	reader, err := os.Open(pluginJSONFilePath)
+	reader, err := os.Open(filepath.Clean(pluginJSONFilePath))
 	if err != nil {
 		return err
 	}
@@ -480,7 +480,7 @@ func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 		return make([]byte, 0), nil
 	}
 
-	data, err := ioutil.ReadFile(path)
+	data, err := ioutil.ReadFile(filepath.Clean(path))
 	if err != nil {
 		return nil, err
 	}

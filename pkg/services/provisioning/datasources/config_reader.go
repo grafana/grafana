@@ -49,7 +49,7 @@ func (cr *configReader) readConfig(path string) ([]*configs, error) {
 
 func (cr *configReader) parseDatasourceConfig(path string, file os.FileInfo) (*configs, error) {
 	filename, _ := filepath.Abs(filepath.Join(path, file.Name()))
-	yamlFile, err := ioutil.ReadFile(filename)
+	yamlFile, err := ioutil.ReadFile(filepath.Clean(filename))
 	if err != nil {
 		return nil, err
 	}

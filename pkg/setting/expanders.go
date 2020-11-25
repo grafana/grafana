@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strings"
@@ -138,7 +139,7 @@ func (e fileExpander) Expand(s string) (string, error) {
 		return "", err
 	}
 
-	f, err := ioutil.ReadFile(s)
+	f, err := ioutil.ReadFile(filepath.Clean(s))
 	if err != nil {
 		return "", err
 	}

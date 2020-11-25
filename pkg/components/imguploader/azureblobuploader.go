@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -45,7 +46,7 @@ func (az *AzureBlobUploader) Upload(ctx context.Context, imageDiskPath string) (
 	// setup client
 	blob := NewStorageClient(az.account_name, az.account_key)
 
-	file, err := os.Open(imageDiskPath)
+	file, err := os.Open(filepath.Clean(imageDiskPath))
 	if err != nil {
 		return "", err
 	}

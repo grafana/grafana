@@ -343,7 +343,7 @@ type dashboardJSONFile struct {
 }
 
 func (fr *FileReader) readDashboardFromFile(path string, lastModified time.Time, folderID int64) (*dashboardJSONFile, error) {
-	reader, err := os.Open(path)
+	reader, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		return nil, err
 	}

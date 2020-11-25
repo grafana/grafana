@@ -225,7 +225,7 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 			return fmt.Errorf("filepath: %q tries to write outside of plugin directory: %q, this can be a security risk",
 				zf.Name, filepath.Join(filePath, pluginName))
 		}
-		newFile := filepath.Join(filePath, newFileName)
+		newFile := filepath.Join(filepath.Clean(filePath), newFileName)
 
 		if zf.FileInfo().IsDir() {
 			if err := os.MkdirAll(newFile, 0755); err != nil {
@@ -291,7 +291,7 @@ func extractFile(file *zip.File, filePath string) (err error) {
 		fileMode = os.FileMode(0755)
 	}
 
-	dst, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileMode)
+	dst, err := os.OpenFile(filepath.Clean(filePath), os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileMode)
 	if err != nil {
 		if os.IsPermission(err) {
 			return fmt.Errorf(permissionsDeniedMessage, filePath)

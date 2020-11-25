@@ -156,7 +156,7 @@ func loadLogAnalyticsTestFileWithNumber(name string) (AzureLogAnalyticsResponse,
 	var data AzureLogAnalyticsResponse
 
 	path := filepath.Join("testdata", name)
-	f, err := os.Open(path)
+	f, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		return data, err
 	}

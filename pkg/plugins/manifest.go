@@ -87,7 +87,7 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) PluginSignature
 	log.Debug("Getting signature state of plugin", "plugin", plugin.Id, "isBackend", plugin.Backend)
 	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
 
-	byteValue, err := ioutil.ReadFile(manifestPath)
+	byteValue, err := ioutil.ReadFile(filepath.Clean(manifestPath))
 	if err != nil || len(byteValue) < 10 {
 		log.Debug("Plugin is unsigned", "id", plugin.Id)
 		return PluginSignatureUnsigned
@@ -109,7 +109,7 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) PluginSignature
 	for p, hash := range manifest.Files {
 		// Open the file
 		fp := filepath.Join(plugin.PluginDir, p)
-		f, err := os.Open(fp)
+		f, err := os.Open(filepath.Clean(fp))
 		if err != nil {
 			return PluginSignatureModified
 		}

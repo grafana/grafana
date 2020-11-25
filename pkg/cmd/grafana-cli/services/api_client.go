@@ -46,7 +46,7 @@ func (client *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plug
 func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File, url string, checksum string) (err error) {
 	// Try handling url like local file path first
 	if _, err := os.Stat(url); err == nil {
-		f, err := os.Open(url)
+		f, err := os.Open(path.Clean(url))
 		if err != nil {
 			return errutil.Wrap("Failed to read plugin archive", err)
 		}
