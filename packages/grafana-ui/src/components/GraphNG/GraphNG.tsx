@@ -22,7 +22,7 @@ import { useRevision } from '../uPlot/hooks';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
-interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
+export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
   data: DataFrame[];
   legend?: LegendOptions;
 }

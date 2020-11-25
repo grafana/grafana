@@ -77,14 +77,30 @@ The following sections provide general guidelines on topics specific to Grafana 
 
 - Write headings in sentence case, not title case.
   - This is sentence case
-  - This Is Title Case
+  - This is Title Case
 - Task topic headings start with a verb.
-  - Write a query. Create a dashboard.
+  - Write a query
+  - Create a dashboard
 - Concept and reference topic headings should be nouns or gerunds. Examples: Contributing to docs, Visualizations, Style guide
+
+#### Heading don'ts
+
 - Avoid stacked headings, which is following one heading with another heading.
 - Avoid skipping heading levels. For example, an h1 should be followed by an h2 rather than an h3.
 - Avoid having just one lower-level heading. For example, h1, h2, h2, h3, h3, h2, h2 is a good order. Do not go h1, h2, h3, h2, h3, h2.
-- Don't include parenthetical words like (Important!) in headings.
+- Avoid using hyphens in headings.
+- Do not include parenthetical words like (Important!) in headings.
+
+#### Step-by-step headings
+
+In most cases, headings should not be numbered steps.
+
+However, sometimes we need to use headings as numbered steps. This is mostly in cases where each step is complex or a series of other procedures. For example, in [Getting started with Grafana and Prometheus](https://grafana.com/docs/grafana/latest/getting-started/getting-started-prometheus/).
+
+If that is the case, then use the following format for headings:
+
+##### Step 1. Install the software
+##### Step 2. Run the software
 
 ### Images
 
