@@ -85,7 +85,7 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
           onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
           getSyntax: (node: Node) => 'logql',
         },
-        { ...(prismLanguages as LanguageMap), logql: this.props.datasource.languageProvider.getSyntax() as Grammar }
+        { ...(prismLanguages as LanguageMap), logql: this.props.datasource.languageProvider.getSyntax() }
       ),
     ];
   }
