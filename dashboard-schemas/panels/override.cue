@@ -1,6 +1,6 @@
 package panels
 
-override: {
+_override: {
 	matcher: {
 		id:      string
 		options: string

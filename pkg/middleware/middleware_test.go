@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -249,7 +250,8 @@ func TestMiddlewareContext(t *testing.T) {
 				}, nil
 			}
 
-			sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *models.UserToken, clientIP, userAgent string) (bool, error) {
+			sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *models.UserToken,
+				clientIP net.IP, userAgent string) (bool, error) {
 				userToken.UnhashedToken = "rotated"
 				return true, nil
 			}
@@ -593,7 +595,8 @@ func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 
 	tryRotateCallCount := 0
 	uts := &auth.FakeUserAuthTokenService{
-		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
+		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP net.IP,
+			userAgent string) (bool, error) {
 			tryRotateCallCount++
 			return false, nil
 		},
@@ -613,7 +616,8 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	uts := &auth.FakeUserAuthTokenService{
-		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
+		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP net.IP,
+			userAgent string) (bool, error) {
 			newToken, err := util.RandomHex(16)
 			require.NoError(t, err)
 			token.AuthToken = newToken
