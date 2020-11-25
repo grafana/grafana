@@ -37,7 +37,9 @@ e2e.scenario({
         e2e.components.Tab.active().within((li: JQuery<HTMLLIElement>) => {
           expect(li.text()).equals('Transform0'); // there's no transform so therefore Transform + 0
         });
-        e2e.components.TransformTab.content().should('be.visible');
+        e2e.components.TransformTab.content()
+          .scrollIntoView()
+          .should('be.visible');
         e2e.components.QueryTab.content().should('not.be.visible');
         e2e.components.AlertTab.content().should('not.be.visible');
 
