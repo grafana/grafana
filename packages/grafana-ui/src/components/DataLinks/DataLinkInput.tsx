@@ -39,7 +39,7 @@ const plugins = [
       onlyIn: (node: any) => node.type === 'code_block',
       getSyntax: () => 'links',
     },
-    { ...(prismLanguages as LanguageMap), links: datalinksSyntax as Grammar }
+    { ...(prismLanguages as LanguageMap), links: datalinksSyntax }
   ),
 ];
 
