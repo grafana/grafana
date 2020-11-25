@@ -102,7 +102,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
           onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
           getSyntax: (node: Node) => 'cloudwatch',
         },
-        { ...(prismLanguages as LanguageMap), cloudwatch: syntax as Grammar }
+        { ...(prismLanguages as LanguageMap), cloudwatch: syntax }
       ),
     ];
   }
