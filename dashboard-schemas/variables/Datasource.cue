@@ -2,7 +2,7 @@ package variables
 
 // Data source variables allow you to quickly change the data source for an
 // entire dashboard.
-#Datasource: variable & {
+#Datasource: _variable & {
 	// Data source type.
 	query: string
 	// Query value.
