@@ -8,7 +8,7 @@ package panels
 	// Name of default data source.
 	datasource?: string
 	// Grid position.
-	gridPos?: gridPos
+	gridPos?: _gridPos
 	// Dashboard panels.
 	panels?: [...{}]
 	// Name of template variable to repeat for.
