@@ -5,7 +5,7 @@ import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider'
 import { useLokiLabels } from 'app/plugins/datasource/loki/components/useLokiLabels';
 import { useRefMounted } from 'app/core/hooks/useRefMounted';
 
-const PRISM_SYNTAX = 'promql';
+const PRISM_SYNTAX = 'logql';
 
 /**
  * Initialise the language provider. Returns a languageProviderInitialized boolean cause there does not seem other way
