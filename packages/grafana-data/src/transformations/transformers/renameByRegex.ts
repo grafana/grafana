@@ -7,6 +7,12 @@ export interface RenameByRegexTransformerOptions {
   renamePattern: string;
 }
 
+/**
+ * Replaces the name of a frame by applying a regular expression to match the name
+ * and a pattern for the replacement.
+ *
+ * @public
+ */
 export const renameByRegexTransformer: DataTransformerInfo<RenameByRegexTransformerOptions> = {
   id: DataTransformerID.renameByRegex,
   name: 'Rename fields by regex',
