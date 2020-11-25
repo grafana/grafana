@@ -132,7 +132,10 @@ func (auth *AuthProxy) IsAllowedIP() (bool, *Error) {
 		proxyObjs = append(proxyObjs, result)
 	}
 
-	sourceIP, _, _ := net.SplitHostPort(ip)
+	sourceIP, _, err := net.SplitHostPort(ip)
+	if err != nil {
+		return false, newError("could not parse address", err)
+	}
 	sourceObj := net.ParseIP(sourceIP)
 
 	for _, proxyObj := range proxyObjs {
@@ -141,11 +144,10 @@ func (auth *AuthProxy) IsAllowedIP() (bool, *Error) {
 		}
 	}
 
-	err := fmt.Errorf(
+	err = fmt.Errorf(
 		"request for user (%s) from %s is not from the authentication proxy", auth.header,
 		sourceIP,
 	)
-
 	return false, newError("Proxy authentication required", err)
 }
 
