@@ -60,7 +60,7 @@ describe('value greater than or equal matcher', () => {
   ];
 
   const matcher = getValueMatcher({
-    id: ValueMatcherID.greater,
+    id: ValueMatcherID.greaterOrEqual,
     options: {
       value: 11,
     },
@@ -104,7 +104,7 @@ describe('value lower than matcher', () => {
   ];
 
   const matcher = getValueMatcher({
-    id: ValueMatcherID.greater,
+    id: ValueMatcherID.lower,
     options: {
       value: 11,
     },
@@ -148,7 +148,7 @@ describe('value lower than or equal matcher', () => {
   ];
 
   const matcher = getValueMatcher({
-    id: ValueMatcherID.greater,
+    id: ValueMatcherID.lowerOrEqual,
     options: {
       value: 11,
     },

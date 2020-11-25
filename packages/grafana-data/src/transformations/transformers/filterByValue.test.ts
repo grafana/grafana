@@ -30,7 +30,6 @@ describe('FilterByValue transformer', () => {
       },
     };
 
-    const processed = transformDataFrame([cfg], [seriesAWithSingleField]);
     const expected: Field[] = [
       {
         name: 'time',
@@ -48,8 +47,11 @@ describe('FilterByValue transformer', () => {
       },
     ];
 
-    expect(processed.length).toEqual(1);
-    expect(processed[0].fields).toEqual(expected);
+    expect(transformDataFrame([cfg], [seriesAWithSingleField])).toEmitValuesWith(received => {
+      const processed = received[0];
+      expect(processed.length).toEqual(1);
+      expect(processed[0].fields).toEqual(expected);
+    });
   });
 
   it('should include values', () => {

@@ -68,7 +68,7 @@ describe('value not equals matcher', () => {
   ];
 
   const matcher = getValueMatcher({
-    id: ValueMatcherID.equal,
+    id: ValueMatcherID.notEqual,
     options: {
       value: 23,
     },
