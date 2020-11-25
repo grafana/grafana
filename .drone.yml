@@ -2240,7 +2240,7 @@ depends_on:
 ---
 kind: pipeline
 type: docker
-name: oss-build-version-branch
+name: oss-build-release-branch
 
 platform:
   os: linux
@@ -2459,6 +2459,19 @@ steps:
   - test-backend
   - test-frontend
 
+- name: upload-packages
+  image: grafana/grafana-ci-deploy:1.2.7
+  commands:
+  - ./bin/grabpl upload-packages --edition oss
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  depends_on:
+  - package
+  - end-to-end-tests
+  - mysql-integration-tests
+  - postgres-integration-tests
+
 services:
 - name: postgres
   image: postgres:12.3-alpine
@@ -2482,7 +2495,7 @@ trigger:
 ---
 kind: pipeline
 type: docker
-name: oss-windows-version-branch
+name: oss-windows-release-branch
 
 platform:
   os: windows
@@ -2522,12 +2535,12 @@ trigger:
   - refs/heads/v*
 
 depends_on:
-- oss-build-version-branch
+- oss-build-release-branch
 
 ---
 kind: pipeline
 type: docker
-name: enterprise-build-version-branch
+name: enterprise-build-release-branch
 
 platform:
   os: linux
@@ -2767,6 +2780,19 @@ steps:
   - test-backend
   - test-frontend
 
+- name: upload-packages
+  image: grafana/grafana-ci-deploy:1.2.7
+  commands:
+  - ./bin/grabpl upload-packages --edition enterprise
+  environment:
+    GCP_GRAFANA_UPLOAD_KEY:
+      from_secret: gcp_key
+  depends_on:
+  - package
+  - end-to-end-tests
+  - mysql-integration-tests
+  - postgres-integration-tests
+
 services:
 - name: postgres
   image: postgres:12.3-alpine
@@ -2790,7 +2816,7 @@ trigger:
 ---
 kind: pipeline
 type: docker
-name: enterprise-windows-version-branch
+name: enterprise-windows-release-branch
 
 platform:
   os: windows
@@ -2851,12 +2877,12 @@ trigger:
   - refs/heads/v*
 
 depends_on:
-- enterprise-build-version-branch
+- enterprise-build-release-branch
 
 ---
 kind: pipeline
 type: docker
-name: notify-version-branch
+name: notify-release-branch
 
 platform:
   os: linux
@@ -2878,9 +2904,9 @@ trigger:
   - failure
 
 depends_on:
-- oss-build-version-branch
-- oss-windows-version-branch
-- enterprise-build-version-branch
-- enterprise-windows-version-branch
+- oss-build-release-branch
+- oss-windows-release-branch
+- enterprise-build-release-branch
+- enterprise-windows-release-branch
 
 ...
