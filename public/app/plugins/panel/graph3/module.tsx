@@ -72,9 +72,9 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           },
         })
         .addSliderInput({
-          path: 'pointRadius',
-          name: 'Point radius',
-          defaultValue: 4,
+          path: 'pointSize',
+          name: 'Point size',
+          defaultValue: 5,
           settings: {
             min: 1,
             max: 10,
