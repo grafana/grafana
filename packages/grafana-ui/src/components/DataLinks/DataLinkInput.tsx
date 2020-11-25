@@ -6,7 +6,7 @@ import { SelectionReference } from './SelectionReference';
 import { Portal, getFormStyles } from '../index';
 
 // @ts-ignore
-import { Grammar, LanguageMap, languages as prismLanguages } from 'prismjs';
+import Prism, { Grammar, LanguageMap } from 'prismjs';
 import { Editor } from '@grafana/slate-react';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
@@ -39,7 +39,7 @@ const plugins = [
       onlyIn: (node: any) => node.type === 'code_block',
       getSyntax: () => 'links',
     },
-    { ...(prismLanguages as LanguageMap), links: datalinksSyntax }
+    { ...(Prism.languages as LanguageMap), links: datalinksSyntax }
   ),
 ];
 
