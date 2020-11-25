@@ -1,7 +1,7 @@
 +++
 title = "With Grafana and MS SQL"
 description = "Guide for getting started with Grafana"
-keywords = ["grafana", "intro", "guide", "started"]
+keywords = ["grafana", "intro", "guide", "started", "SQL", "MSSQL"]
 aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
 weight = 400
 +++
