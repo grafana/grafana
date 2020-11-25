@@ -74,3 +74,11 @@ export function loadNotificationChannel(id: number): ThunkResult<void> {
     dispatch(notificationChannelLoaded(notificationChannel));
   };
 }
+
+export function createAlertDefinition(alertDefinition: any): ThunkResult<void> {
+  return async dispatch => {
+    await getBackendSrv().post(`/api/alert-definitions`, alertDefinition);
+    appEvents.emit(AppEvents.alertSuccess, ['Alert definition created']);
+    dispatch(updateLocation({ path: 'alerting/list' }));
+  };
+}

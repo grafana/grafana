@@ -108,6 +108,19 @@ const notificationChannelSlice = createSlice({
   },
 });
 
+const alertDefinitionSlice = createSlice({
+  name: 'alertDefinition',
+  initialState: {},
+  reducers: {
+    setAlertDefinition: (state, action: PayloadAction<any>) => {
+      return { ...state, alertDefinition: action.payload };
+    },
+    updateAlertDefinition: (state, action: PayloadAction<any>) => {
+      return { ...state, alertDefinition: action.payload };
+    },
+  },
+});
+
 export const { loadAlertRules, loadedAlertRules, setSearchQuery } = alertRulesSlice.actions;
 
 export const {
@@ -118,10 +131,12 @@ export const {
 
 export const alertRulesReducer = alertRulesSlice.reducer;
 export const notificationChannelReducer = notificationChannelSlice.reducer;
+export const alertDefinitionsReducer = alertDefinitionSlice.reducer;
 
 export default {
   alertRules: alertRulesReducer,
   notificationChannel: notificationChannelReducer,
+  alertDefinitions: alertDefinitionsReducer,
 };
 
 function migrateSecureFields(

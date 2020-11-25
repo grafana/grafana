@@ -132,3 +132,8 @@ export interface AlertNotification {
   id: number;
   type: string;
 }
+
+export interface AlertDefinition {
+  name: string;
+  queries: { ref: {} };
+}

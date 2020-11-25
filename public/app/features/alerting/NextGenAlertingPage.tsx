@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
-import { connect, MapStateToProps } from 'react-redux';
+import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import SplitPane from 'react-split-pane';
 import { DataSourceSelectItem } from '@grafana/data';
 import { AlertingToolbar } from './components/AlertingToolbar';
@@ -8,13 +8,16 @@ import { AlertingQueryEditor } from './components/AlertingQueryEditor';
 import { AlertDefinition } from './components/AlertDefinition';
 import { AlertingQueryPreview } from './components/AlertingQueryPreview';
 import { getDatasourceSrv } from '../plugins/datasource_srv';
+import { createAlertDefinition } from './state/actions';
 import { StoreState } from '../../types';
 
 interface OwnProps {}
 
 interface ConnectedProps {}
 
-interface DispatchProps {}
+interface DispatchProps {
+  createAlertDefinition: typeof createAlertDefinition;
+}
 
 interface State {
   dataSources: DataSourceSelectItem[];
@@ -64,4 +67,8 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = s
   return {};
 };
 
-export default hot(module)(connect(mapStateToProps)(NextGenAlertingPage));
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
+  createAlertDefinition,
+};
+
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NextGenAlertingPage));
