@@ -6,31 +6,31 @@ import { LokiQuery } from '../types';
 // Types
 import { InlineFormLabel, RadioButtonGroup } from '@grafana/ui';
 
-export interface LokiExploreExtraFieldProps {
+export interface LokiOptionFieldsProps {
   lineLimitValue: string;
-  queryType: string;
+  queryType: LokiQueryType;
   query: LokiQuery;
-  onRunQuery: () => void;
   onChange: (value: LokiQuery) => void;
+  onRunQuery: () => void;
   runOnBlur?: boolean;
 }
 
-export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
-  const { lineLimitValue, queryType, query, onRunQuery, runOnBlur } = props;
+type LokiQueryType = 'instant' | 'range';
 
-  const rangeOptions = [
-    { value: 'range', label: 'Range' },
-    { value: 'instant', label: 'Instant' },
-  ];
+const queryTypeOptions = [
+  { value: 'range', label: 'Range' },
+  { value: 'instant', label: 'Instant' },
+];
+
+export function LokiOptionFields(props: LokiOptionFieldsProps) {
+  const { lineLimitValue, queryType, query, onRunQuery, runOnBlur, onChange } = props;
 
   function onChangeQueryLimit(value: string) {
-    const { query, onChange } = props;
     const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };
     onChange(nextQuery);
   }
 
-  function onQueryTypeChange(value: string) {
-    const { query, onChange } = props;
+  function onQueryTypeChange(value: LokiQueryType) {
     let nextQuery;
     if (value === 'instant') {
       nextQuery = { ...query, instant: true, range: false };
@@ -87,12 +87,12 @@ export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
         </InlineFormLabel>
 
         <RadioButtonGroup
-          options={rangeOptions}
+          options={queryTypeOptions}
           value={queryType}
-          onChange={(e: string) => {
-            onQueryTypeChange(e);
+          onChange={(type: LokiQueryType) => {
+            onQueryTypeChange(type);
             if (runOnBlur) {
-              props.onRunQuery();
+              onRunQuery();
             }
           }}
         />
@@ -128,4 +128,4 @@ export function LokiExploreExtraField(props: LokiExploreExtraFieldProps) {
   );
 }
 
-export default memo(LokiExploreExtraField);
+export default memo(LokiOptionFields);
