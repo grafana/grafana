@@ -62,7 +62,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
       isGap: props.data.isGap,
     };
     if (plotInstance && shouldUpdate) {
-      updateData(props.data.frame, props.config, plotInstance, plotData.current);
+      updateData(props.data.frame, props.config, plotInstance, plotData.current.data);
     }
   }, [props.data, props.config]);
 
