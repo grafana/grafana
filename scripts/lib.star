@@ -301,6 +301,7 @@ def publish_storybook_step(edition, ver_mode):
         'image': publish_image,
         'depends_on': [
             'build-storybook',
+            'end-to-end-tests',
         ],
         'environment': {
             'GCP_KEY': {
