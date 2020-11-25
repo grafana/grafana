@@ -57,15 +57,14 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   const legendItemsRef = useRef<LegendItem[]>([]);
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
   const alignedFrame = alignedFrameWithGapTest.frame;
-  const compareFrames = useCallback(
-    (a: DataFrame, b: DataFrame) => compareDataFrameStructures(a, b, ['min', 'max']),
-    []
-  );
+  const compareFrames = useCallback((a: DataFrame, b: DataFrame) => {
+    return compareDataFrameStructures(a, b, ['min', 'max']);
+  }, []);
+
   const configRev = useRevision(alignedFrame, compareFrames);
 
   const configBuilder = useMemo(() => {
     const builder = new UPlotConfigBuilder();
-
     let { timeIndex } = getTimeField(alignedFrame);
 
     if (timeIndex === undefined) {

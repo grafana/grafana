@@ -4,10 +4,10 @@ import { buildPlotContext, PlotContext } from './context';
 import { pluginLog } from './utils';
 import { usePlotConfig } from './hooks';
 import { PlotProps } from './types';
-import { usePrevious } from 'react-use';
 import { DataFrame, FieldType } from '@grafana/data';
 import isNumber from 'lodash/isNumber';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
+import isEqual from 'lodash/isEqual';
 
 // uPlot abstraction responsible for plot initialisation, setup and refresh
 // Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
@@ -16,8 +16,6 @@ export const UPlotChart: React.FC<PlotProps> = props => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const [plotInstance, setPlotInstance] = useState<uPlot>();
   const plotData = useRef<AlignedDataWithGapTest>();
-  const previousConfig = usePrevious(props.config);
-
   // uPlot config API
   const { currentConfig, registerPlugin } = usePlotConfig(props.width, props.height, props.timeZone, props.config);
 
@@ -30,7 +28,20 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     }
 
     pluginLog('UPlotChart: init uPlot', false, 'initialized with', plotData.current, currentConfig);
-    const instance = new uPlot(currentConfig, plotData.current, canvasRef.current);
+    const instance = new uPlot(
+      {
+        ...currentConfig,
+        hooks: {
+          init: [
+            u => {
+              u.root.setAttribute('data-testid', 'uplot-root');
+            },
+          ],
+        },
+      },
+      plotData.current,
+      canvasRef.current
+    );
 
     setPlotInstance(instance);
   }, [setPlotInstance, currentConfig]);
@@ -44,13 +55,14 @@ export const UPlotChart: React.FC<PlotProps> = props => {
   }, [plotInstance]);
 
   useLayoutEffect(() => {
+    const data = props.data.frame.fields.map(f => f.values.toArray()) as AlignedData;
+    const shouldUpdate = !isEqual(plotData?.current?.data, data);
     plotData.current = {
-      data: props.data.frame.fields.map(f => f.values.toArray()) as AlignedData,
+      data,
       isGap: props.data.isGap,
     };
-
-    if (plotInstance && previousConfig === props.config) {
-      updateData(props.data.frame, props.config, plotInstance, plotData.current.data);
+    if (plotInstance && shouldUpdate) {
+      updateData(props.data.frame, props.config, plotInstance, plotData.current);
     }
   }, [props.data, props.config]);
 
