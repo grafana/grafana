@@ -18,7 +18,12 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) Response {
 		return Error(500, "Failed to get Team Members", err)
 	}
 
+	filteredMembers := make([]*models.TeamMemberDTO, 0, len(query.Result))
 	for _, member := range query.Result {
+		if dtos.IsHiddenUser(member.Login, c.SignedInUser, hs.Cfg) {
+			continue
+		}
+
 		member.AvatarUrl = dtos.GetGravatarUrl(member.Email)
 		member.Labels = []string{}
 
@@ -26,9 +31,11 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) Response {
 			authProvider := GetAuthProviderLabel(member.AuthModule)
 			member.Labels = append(member.Labels, authProvider)
 		}
+
+		filteredMembers = append(filteredMembers, member)
 	}
 
-	return JSON(200, query.Result)
+	return JSON(200, filteredMembers)
 }
 
 // POST /api/teams/:teamId/members

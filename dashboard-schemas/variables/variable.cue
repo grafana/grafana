@@ -1,6 +1,6 @@
 package variables
 
-variable: {
+_variable: {
 	// Currently selected value.
 	current: {
 		selected: bool | *false
