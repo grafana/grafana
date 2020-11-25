@@ -2,11 +2,7 @@
 title = "Elasticsearch"
 description = "Guide for using Elasticsearch in Grafana"
 keywords = ["grafana", "elasticsearch", "guide"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/datasources/elasticsearch"]
-[menu.docs]
-name = "Elasticsearch"
-parent = "datasources"
 weight = 400
 +++
 
@@ -95,7 +91,7 @@ For example, if you're using a default setup of Filebeat for shipping logs to El
 
 Data links create a link from a specified field that can be accessed in logs view in Explore.
 
-Each data link configuration consists of: 
+Each data link configuration consists of:
 - **Field -** Name of the field used by the data link.
 - **URL/query -** If the link is external, then enter the full link URL. If the link is internal link, then this input serves as query for the target data source. In both cases, you can interpolate the value from the field with `${__value.raw }` macro.
 - **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.

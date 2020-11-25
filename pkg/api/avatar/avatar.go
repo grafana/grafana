@@ -50,20 +50,20 @@ func New(hash string) *Avatar {
 	}
 }
 
-func (this *Avatar) Expired() bool {
-	return time.Since(this.timestamp) > (time.Minute * 10)
+func (a *Avatar) Expired() bool {
+	return time.Since(a.timestamp) > (time.Minute * 10)
 }
 
-func (this *Avatar) Encode(wr io.Writer) error {
-	_, err := wr.Write(this.data.Bytes())
+func (a *Avatar) Encode(wr io.Writer) error {
+	_, err := wr.Write(a.data.Bytes())
 	return err
 }
 
-func (this *Avatar) Update() (err error) {
+func (a *Avatar) Update() (err error) {
 	select {
 	case <-time.After(time.Second * 3):
-		err = fmt.Errorf("get gravatar image %s timeout", this.hash)
-	case err = <-thunder.GoFetch(gravatarSource+this.hash+"?"+this.reqParams, this):
+		err = fmt.Errorf("get gravatar image %s timeout", a.hash)
+	case err = <-thunder.GoFetch(gravatarSource+a.hash+"?"+a.reqParams, a):
 	}
 	return err
 }
@@ -75,7 +75,7 @@ type CacheServer struct {
 
 var validMD5 = regexp.MustCompile("^[a-fA-F0-9]{32}$")
 
-func (this *CacheServer) Handler(ctx *models.ReqContext) {
+func (a *CacheServer) Handler(ctx *models.ReqContext) {
 	hash := ctx.Params("hash")
 
 	if len(hash) != 32 || !validMD5.MatchString(hash) {
@@ -84,7 +84,7 @@ func (this *CacheServer) Handler(ctx *models.ReqContext) {
 	}
 
 	var avatar *Avatar
-	obj, exists := this.cache.Get(hash)
+	obj, exists := a.cache.Get(hash)
 	if exists {
 		avatar = obj.(*Avatar)
 	} else {
@@ -95,14 +95,14 @@ func (this *CacheServer) Handler(ctx *models.ReqContext) {
 		// The cache item is either expired or newly created, update it from the server
 		if err := avatar.Update(); err != nil {
 			log.Tracef("avatar update error: %v", err)
-			avatar = this.notFound
+			avatar = a.notFound
 		}
 	}
 
 	if avatar.notFound {
-		avatar = this.notFound
+		avatar = a.notFound
 	} else if !exists {
-		if err := this.cache.Add(hash, avatar, gocache.DefaultExpiration); err != nil {
+		if err := a.cache.Add(hash, avatar, gocache.DefaultExpiration); err != nil {
 			log.Tracef("Error adding avatar to cache: %s", err)
 		}
 	}
@@ -195,9 +195,9 @@ type thunderTask struct {
 	err error
 }
 
-func (this *thunderTask) Fetch() {
-	this.err = this.fetch()
-	this.Done()
+func (a *thunderTask) Fetch() {
+	a.err = a.fetch()
+	a.Done()
 }
 
 var client = &http.Client{
@@ -205,11 +205,11 @@ var client = &http.Client{
 	Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 }
 
-func (this *thunderTask) fetch() error {
-	this.Avatar.timestamp = time.Now()
+func (a *thunderTask) fetch() error {
+	a.Avatar.timestamp = time.Now()
 
-	log.Debugf("avatar.fetch(fetch new avatar): %s", this.Url)
-	req, _ := http.NewRequest("GET", this.Url, nil)
+	log.Debugf("avatar.fetch(fetch new avatar): %s", a.Url)
+	req, _ := http.NewRequest("GET", a.Url, nil)
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/jpeg,image/png,*/*;q=0.8")
 	req.Header.Set("Accept-Encoding", "deflate,sdch")
 	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.8")
@@ -217,19 +217,19 @@ func (this *thunderTask) fetch() error {
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/33.0.1750.154 Safari/537.36")
 	resp, err := client.Do(req)
 	if err != nil {
-		this.Avatar.notFound = true
+		a.Avatar.notFound = true
 		return fmt.Errorf("gravatar unreachable, %v", err)
 	}
 
 	defer resp.Body.Close()
 
 	if resp.StatusCode != 200 {
-		this.Avatar.notFound = true
+		a.Avatar.notFound = true
 		return fmt.Errorf("status code: %d", resp.StatusCode)
 	}
 
-	this.Avatar.data = &bytes.Buffer{}
-	writer := bufio.NewWriter(this.Avatar.data)
+	a.Avatar.data = &bytes.Buffer{}
+	writer := bufio.NewWriter(a.Avatar.data)
 
 	_, err = io.Copy(writer, resp.Body)
 	return err

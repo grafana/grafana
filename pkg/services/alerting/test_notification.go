@@ -89,7 +89,7 @@ func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 	}
 	ctx.IsTestRun = true
 	ctx.Firing = true
-	ctx.Error = fmt.Errorf("This is only a test")
+	ctx.Error = fmt.Errorf("this is only a test")
 	ctx.EvalMatches = evalMatchesBasedOnState()
 
 	return ctx

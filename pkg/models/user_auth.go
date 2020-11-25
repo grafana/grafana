@@ -36,6 +36,15 @@ type ExternalUserInfo struct {
 	IsDisabled     bool
 }
 
+type LoginInfo struct {
+	AuthModule    string
+	User          *User
+	ExternalUser  ExternalUserInfo
+	LoginUsername string
+	HTTPStatus    int
+	Error         error
+}
+
 // ---------------------
 // COMMANDS
 
@@ -63,16 +72,6 @@ type UpdateAuthInfoCommand struct {
 
 type DeleteAuthInfoCommand struct {
 	UserAuth *UserAuth
-}
-
-type SendLoginLogCommand struct {
-	ReqContext    *ReqContext
-	LogAction     string
-	User          *User
-	ExternalUser  *ExternalUserInfo
-	LoginUsername string
-	HTTPStatus    int
-	Error         error
 }
 
 // ----------------------

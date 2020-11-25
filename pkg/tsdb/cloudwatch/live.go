@@ -55,19 +55,13 @@ func (s *LogQueryRunnerSupplier) GetHandlerForPath(path string) (models.ChannelH
 	}, nil
 }
 
-// GetChannelOptions gets channel options.
-// It's called fast and often.
-func (r *logQueryRunner) GetChannelOptions(id string) centrifuge.ChannelOptions {
-	return centrifuge.ChannelOptions{}
-}
-
 // OnSubscribe publishes results from the corresponding CloudWatch Logs query to the provided channel
-func (r *logQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) error {
+func (r *logQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
 	r.runningMu.Lock()
 	defer r.runningMu.Unlock()
 
 	if _, ok := r.running[e.Channel]; ok {
-		return nil
+		return centrifuge.SubscribeReply{}, nil
 	}
 
 	r.running[e.Channel] = true
@@ -77,12 +71,12 @@ func (r *logQueryRunner) OnSubscribe(c *centrifuge.Client, e centrifuge.Subscrib
 		}
 	}()
 
-	return nil
+	return centrifuge.SubscribeReply{}, nil
 }
 
-// AllowBroadcast checks if a message from the websocket can be broadcast on this channel
-func (r *logQueryRunner) AllowBroadcast(c *centrifuge.Client, e centrifuge.PublishEvent) error {
-	return fmt.Errorf("can not publish")
+// OnPublish checks if a message from the websocket can be broadcast on this channel
+func (r *logQueryRunner) OnPublish(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
+	return centrifuge.PublishReply{}, fmt.Errorf("can not publish")
 }
 
 func (r *logQueryRunner) publishResults(channelName string) error {

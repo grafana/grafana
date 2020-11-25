@@ -1,4 +1,3 @@
-import { appendTransformer } from './transformers/append';
 import { reduceTransformer } from './transformers/reduce';
 import { concatenateTransformer } from './transformers/concat';
 import { calculateFieldTransformer } from './transformers/calculateField';
@@ -24,7 +23,6 @@ export const standardTransformers = {
   filterFramesByRefIdTransformer,
   orderFieldsTransformer,
   organizeFieldsTransformer,
-  appendTransformer,
   reduceTransformer,
   concatenateTransformer,
   calculateFieldTransformer,

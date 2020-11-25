@@ -52,7 +52,7 @@ func TestBuilder_EqualResults_Basic(t *testing.T) {
 
 	res := []sqlstore.DashboardSearchProjection{}
 	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		sql, params := builder.ToSql(limit, page)
+		sql, params := builder.ToSQL(limit, page)
 		return sess.SQL(sql, params...).Find(&res)
 	})
 	require.NoError(t, err)
@@ -92,18 +92,18 @@ func TestBuilder_Pagination(t *testing.T) {
 	resPg2 := []sqlstore.DashboardSearchProjection{}
 	resPg3 := []sqlstore.DashboardSearchProjection{}
 	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		sql, params := builder.ToSql(15, 1)
+		sql, params := builder.ToSQL(15, 1)
 		err := sess.SQL(sql, params...).Find(&resPg1)
 		if err != nil {
 			return err
 		}
-		sql, params = builder.ToSql(15, 2)
+		sql, params = builder.ToSQL(15, 2)
 		err = sess.SQL(sql, params...).Find(&resPg2)
 		if err != nil {
 			return err
 		}
 
-		sql, params = builder.ToSql(15, 3)
+		sql, params = builder.ToSQL(15, 3)
 		return sess.SQL(sql, params...).Find(&resPg3)
 	})
 	require.NoError(t, err)
@@ -146,7 +146,7 @@ func TestBuilder_Permissions(t *testing.T) {
 
 	res := []sqlstore.DashboardSearchProjection{}
 	err = db.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		sql, params := builder.ToSql(limit, page)
+		sql, params := builder.ToSQL(limit, page)
 		return sess.SQL(sql, params...).Find(&res)
 	})
 	require.NoError(t, err)
@@ -154,7 +154,7 @@ func TestBuilder_Permissions(t *testing.T) {
 	assert.Len(t, res, 0)
 }
 
-func setupTestEnvironment(t *testing.T) *sqlstore.SqlStore {
+func setupTestEnvironment(t *testing.T) *sqlstore.SQLStore {
 	t.Helper()
 	store := sqlstore.InitTestDB(t)
 	dialect = store.Dialect

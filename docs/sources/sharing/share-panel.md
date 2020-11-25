@@ -1,9 +1,6 @@
 +++
 title = "Share a Panel"
 keywords = ["grafana", "dashboard", "documentation", "sharing"]
-type = "docs"
-[menu.docs]
-parent = "dashboard_features"
 weight = 6
 draft = "true"
 +++

@@ -15,7 +15,7 @@ func TestAnnotations(t *testing.T) {
 	mockTimeNow()
 	defer resetTimeNow()
 	InitTestDB(t)
-	repo := SqlAnnotationRepo{}
+	repo := SQLAnnotationRepo{}
 
 	t.Run("Testing annotation create, read, update and delete", func(t *testing.T) {
 		t.Cleanup(func() {

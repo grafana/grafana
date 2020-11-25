@@ -31,7 +31,6 @@ var (
 	Plugins      map[string]*PluginBase
 	PluginTypes  map[string]interface{}
 	Renderer     *RendererPlugin
-	Transform    *TransformPlugin
 
 	GrafanaLatestVersion string
 	GrafanaHasUpdate     bool
@@ -40,14 +39,17 @@ var (
 	pluginScanningErrors map[string]*PluginError
 )
 
+type unsignedPluginConditionFunc = func(plugin *PluginBase) bool
+
 type PluginScanner struct {
-	pluginPath           string
-	errors               []error
-	backendPluginManager backendplugin.Manager
-	cfg                  *setting.Cfg
-	requireSigned        bool
-	log                  log.Logger
-	plugins              map[string]*PluginBase
+	pluginPath                    string
+	errors                        []error
+	backendPluginManager          backendplugin.Manager
+	cfg                           *setting.Cfg
+	requireSigned                 bool
+	log                           log.Logger
+	plugins                       map[string]*PluginBase
+	allowUnsignedPluginsCondition unsignedPluginConditionFunc
 }
 
 type PluginManager struct {
@@ -55,6 +57,10 @@ type PluginManager struct {
 	Cfg                  *setting.Cfg          `inject:""`
 	log                  log.Logger
 	scanningErrors       []error
+
+	// AllowUnsignedPluginsCondition changes the policy for allowing unsigned plugins. Signature validation only runs when plugins are starting
+	// and running plugins will not be terminated if they violate the new policy.
+	AllowUnsignedPluginsCondition unsignedPluginConditionFunc
 }
 
 func init() {
@@ -75,7 +81,6 @@ func (pm *PluginManager) Init() error {
 		"datasource": DataSourcePlugin{},
 		"app":        AppPlugin{},
 		"renderer":   RendererPlugin{},
-		"transform":  TransformPlugin{},
 	}
 	pluginScanningErrors = map[string]*PluginError{}
 
@@ -187,12 +192,13 @@ func (pm *PluginManager) scanPluginPaths() error {
 // scan a directory for plugins.
 func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 	scanner := &PluginScanner{
-		pluginPath:           pluginDir,
-		backendPluginManager: pm.BackendPluginManager,
-		cfg:                  pm.Cfg,
-		requireSigned:        requireSigned,
-		log:                  pm.log,
-		plugins:              map[string]*PluginBase{},
+		pluginPath:                    pluginDir,
+		backendPluginManager:          pm.BackendPluginManager,
+		cfg:                           pm.Cfg,
+		requireSigned:                 requireSigned,
+		log:                           pm.log,
+		plugins:                       map[string]*PluginBase{},
+		allowUnsignedPluginsCondition: pm.AllowUnsignedPluginsCondition,
 	}
 
 	// 1st pass: Scan plugins, also mapping plugins to their respective directories
@@ -302,7 +308,7 @@ func (pm *PluginManager) GetDatasource(pluginID string) (*DataSourcePlugin, bool
 	return ds, exist
 }
 
-func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err error) error {
+func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) error {
 	// We scan all the subfolders for plugin.json (with some exceptions) so that we also load embedded plugins, for
 	// example https://github.com/raintank/worldping-app/tree/master/dist/grafana-worldmap-panel worldmap panel plugin
 	// is embedded in worldping app.
@@ -322,9 +328,9 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 		return nil
 	}
 
-	if err := scanner.loadPlugin(currentPath); err != nil {
-		scanner.log.Error("Failed to load plugin", "error", err, "pluginPath", filepath.Dir(currentPath))
-		scanner.errors = append(scanner.errors, err)
+	if err := s.loadPlugin(currentPath); err != nil {
+		s.log.Error("Failed to load plugin", "error", err, "pluginPath", filepath.Dir(currentPath))
+		s.errors = append(s.errors, err)
 	}
 
 	return nil
@@ -349,16 +355,6 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 		return errors.New("did not find type or id properties in plugin.json")
 	}
 
-	// The expressions feature toggle corresponds to transform plug-ins.
-	if pluginCommon.Type == "transform" {
-		isEnabled := s.cfg.IsExpressionsEnabled()
-		if !isEnabled {
-			s.log.Debug("Transform plugin is disabled since the expressions feature toggle is not enabled",
-				"pluginID", pluginCommon.Id)
-			return nil
-		}
-	}
-
 	pluginCommon.PluginDir = filepath.Dir(pluginJSONFilePath)
 	pluginCommon.Signature = getPluginSignatureState(s.log, &pluginCommon)
 
@@ -367,8 +363,8 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	return nil
 }
 
-func (scanner *PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
-	return pluginType == "renderer" || pluginType == "transform"
+func (*PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
+	return pluginType == "renderer"
 }
 
 // validateSignature validates a plugin's signature.
@@ -405,21 +401,13 @@ func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
 
 	switch plugin.Signature {
 	case PluginSignatureUnsigned:
-		allowUnsigned := false
-		for _, plug := range s.cfg.PluginsAllowUnsigned {
-			if plug == plugin.Id {
-				allowUnsigned = true
-				break
-			}
-		}
-		if setting.Env != setting.Dev && !allowUnsigned {
+		if allowed := s.allowUnsigned(plugin); !allowed {
 			s.log.Debug("Plugin is unsigned", "id", plugin.Id)
 			s.errors = append(s.errors, fmt.Errorf("plugin %q is unsigned", plugin.Id))
 			return &PluginError{
 				ErrorCode: signatureMissing,
 			}
 		}
-
 		s.log.Warn("Running an unsigned backend plugin", "pluginID", plugin.Id, "pluginDir",
 			plugin.PluginDir)
 		return nil
@@ -438,6 +426,24 @@ func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
 	default:
 		panic(fmt.Sprintf("Plugin %q has unrecognized plugin signature state %q", plugin.Id, plugin.Signature))
 	}
+}
+
+func (s *PluginScanner) allowUnsigned(plugin *PluginBase) bool {
+	if s.allowUnsignedPluginsCondition != nil {
+		return s.allowUnsignedPluginsCondition(plugin)
+	}
+
+	if setting.Env == setting.Dev {
+		return true
+	}
+
+	for _, plug := range s.cfg.PluginsAllowUnsigned {
+		if plug == plugin.Id {
+			return true
+		}
+	}
+
+	return false
 }
 
 func ScanningErrors() []PluginError {

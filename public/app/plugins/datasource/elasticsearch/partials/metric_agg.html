@@ -10,11 +10,17 @@
 		</label>
 	</div>
 
-	<div class="gf-form">
+	<div class="gf-form" ng-if="isValidAgg">
 		<metric-segment-model property="agg.type" options="metricAggTypes" on-change="onTypeChange()" custom="false" css-class="width-10"></metric-segment-model>
 		<metric-segment-model ng-if="aggDef.requiresField" property="agg.field" get-options="getFieldsInternal()" on-change="onChange()" css-class="width-12"></metric-segment-model>
 		<metric-segment-model ng-if="aggDef.isPipelineAgg && !aggDef.supportsMultipleBucketPaths" property="agg.pipelineAgg" options="pipelineAggOptions" on-change="onChangeInternal()" custom="false" css-class="width-12"></metric-segment-model>
 	</div>
+
+  <div class="gf-form gf-form--grow" ng-if="!isValidAgg">
+    <label class="gf-form-label gf-form-label--grow">
+      <em>This aggregation is no longer supported by your version of Elasticsearch</em>
+    </label>
+  </div>
 
   <div class="gf-form gf-form--grow" ng-if="aggDef.isPipelineAgg && aggDef.supportsMultipleBucketPaths">
 		<label class="gf-form-label gf-form-label--grow">
@@ -26,7 +32,7 @@
 		</label>
 	</div>
 
-	<div class="gf-form gf-form--grow">
+	<div class="gf-form gf-form--grow" ng-if="isValidAgg">
 		<label class="gf-form-label gf-form-label--grow">
 			<a ng-click="toggleOptions()" ng-if="settingsLinkText">
 				<icon name="'angle-down'" ng-show="showOptions"></icon>
@@ -70,6 +76,25 @@
 		<label class="gf-form-label width-10">Format</label>
 		<input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.format" ng-blur="onChangeInternal()" spellcheck='false'>
 	</div>
+
+  <div ng-if="agg.type === 'moving_fn'">
+
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Window</label>
+      <input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.window" ng-blur="onChangeInternal()" spellcheck='false'>
+    </div>
+
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Script</label>
+      <input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.script" ng-blur="onChangeInternal()" spellcheck='false' placeholder="eg. MovingFunctions.unweightedAvg(values)">
+    </div>
+
+    <div class="gf-form offset-width-7">
+      <label class="gf-form-label width-10">Shift</label>
+      <input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.shift" ng-blur="onChangeInternal()" spellcheck='false'>
+    </div>
+
+  </div>
 
   <div ng-if="agg.type === 'moving_avg'">
     <div class="gf-form offset-width-7">

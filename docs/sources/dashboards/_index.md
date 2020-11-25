@@ -1,10 +1,7 @@
 +++
-title = "Dashboard overview"
-type = "docs"
+title = "Dashboards"
 aliases = ["/docs/grafana/latest/features/dashboard/dashboards/"]
-[menu.docs]
-identifier = "dashboards"
-weight = 100
+weight = 80
 +++
 
 # Dashboard overview

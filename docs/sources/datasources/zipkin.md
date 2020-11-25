@@ -2,11 +2,7 @@
 title = "Zipkin"
 description = "Guide for using Zipkin in Grafana"
 keywords = ["grafana", "zipkin", "guide", "tracing"]
-type = "docs"
 aliases = ["/docs/grafana/latest/datasources/zipkin"]
-[menu.docs]
-name = "Zipkin"
-parent = "datasources"
 weight = 1500
 +++
 
@@ -36,7 +32,7 @@ Querying and displaying traces from Zipkin is available via [Explore]({{< relref
 
 The Zipkin query editor allows you to query by trace ID directly or selecting a trace from trace selector. To query by trace ID, insert the ID into the text input.
 
-{{< docs-imagebox img="/img/docs/v70/zipkin-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor with trace selector expanded" >}} 
+{{< docs-imagebox img="/img/docs/v70/zipkin-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor with trace selector expanded" >}}
 
 Use the trace selector to pick particular trace from all traces logged in the time range you have selected in Explore. The trace selector has three levels of nesting:
 1. The service you are interested in.

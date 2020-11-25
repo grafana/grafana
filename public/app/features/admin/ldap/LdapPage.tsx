@@ -86,7 +86,9 @@ export class LdapPage extends PureComponent<Props, State> {
           <>
             {ldapError && ldapError.title && (
               <div className="gf-form-group">
-                <Alert title={ldapError.title} severity={AppNotificationSeverity.Error} children={ldapError.body} />
+                <Alert title={ldapError.title} severity={AppNotificationSeverity.Error}>
+                  {ldapError.body}
+                </Alert>
               </div>
             )}
 
@@ -116,9 +118,10 @@ export class LdapPage extends PureComponent<Props, State> {
                 <Alert
                   title={userError.title}
                   severity={AppNotificationSeverity.Error}
-                  children={userError.body}
                   onRemove={this.onClearUserError}
-                />
+                >
+                  {userError.body}
+                </Alert>
               </div>
             )}
             {ldapUser && <LdapUserInfo ldapUser={ldapUser} showAttributeMapping={true} />}

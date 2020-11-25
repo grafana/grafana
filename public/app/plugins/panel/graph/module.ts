@@ -12,11 +12,11 @@ import { axesEditorComponent } from './axes_editor';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
-import { PanelEvents, PanelPlugin, DataFrame, FieldConfigProperty, getColorForTheme } from '@grafana/data';
+import { DataFrame, FieldConfigProperty, getColorForTheme, PanelEvents, PanelPlugin } from '@grafana/data';
 
 import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { graphPanelMigrationHandler } from './GraphMigrations';
-import { DataWarning, GraphPanelOptions, GraphFieldConfig } from './types';
+import { DataWarning, GraphFieldConfig, GraphPanelOptions } from './types';
 
 import { auto } from 'angular';
 import { AnnotationsSrv } from 'app/features/annotations/all';
@@ -388,10 +388,14 @@ export class GraphCtrl extends MetricsPanelCtrl {
 // Use new react style configuration
 export const plugin = new PanelPlugin<GraphPanelOptions, GraphFieldConfig>(null)
   .useFieldConfig({
-    standardOptions: [
-      FieldConfigProperty.DisplayName,
-      FieldConfigProperty.Unit,
-      FieldConfigProperty.Links, // previously saved as dataLinks on options
+    disableStandardOptions: [
+      FieldConfigProperty.NoValue,
+      FieldConfigProperty.Thresholds,
+      FieldConfigProperty.Max,
+      FieldConfigProperty.Min,
+      FieldConfigProperty.Decimals,
+      FieldConfigProperty.Color,
+      FieldConfigProperty.Mappings,
     ],
   })
   .setMigrationHandler(graphPanelMigrationHandler);

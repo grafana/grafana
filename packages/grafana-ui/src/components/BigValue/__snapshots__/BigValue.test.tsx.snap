@@ -35,6 +35,7 @@ exports[`BigValue Render with basic options should render 1`] = `
           "fontWeight": 500,
           "lineHeight": 1.2,
           "position": "relative",
+          "textAlign": "center",
           "zIndex": 1,
         }
       }

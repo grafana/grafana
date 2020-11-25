@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -16,7 +18,12 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) Response {
 		return Error(500, "Failed to get Team Members", err)
 	}
 
+	filteredMembers := make([]*models.TeamMemberDTO, 0, len(query.Result))
 	for _, member := range query.Result {
+		if dtos.IsHiddenUser(member.Login, c.SignedInUser, hs.Cfg) {
+			continue
+		}
+
 		member.AvatarUrl = dtos.GetGravatarUrl(member.Email)
 		member.Labels = []string{}
 
@@ -24,9 +31,11 @@ func (hs *HTTPServer) GetTeamMembers(c *models.ReqContext) Response {
 			authProvider := GetAuthProviderLabel(member.AuthModule)
 			member.Labels = append(member.Labels, authProvider)
 		}
+
+		filteredMembers = append(filteredMembers, member)
 	}
 
-	return JSON(200, query.Result)
+	return JSON(200, filteredMembers)
 }
 
 // POST /api/teams/:teamId/members
@@ -39,11 +48,11 @@ func (hs *HTTPServer) AddTeamMember(c *models.ReqContext, cmd models.AddTeamMemb
 	}
 
 	if err := hs.Bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrTeamNotFound {
+		if errors.Is(err, models.ErrTeamNotFound) {
 			return Error(404, "Team not found", nil)
 		}
 
-		if err == models.ErrTeamMemberAlreadyAdded {
+		if errors.Is(err, models.ErrTeamMemberAlreadyAdded) {
 			return Error(400, "User is already added to this team", nil)
 		}
 
@@ -73,7 +82,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *models.ReqContext, cmd models.UpdateTe
 	cmd.OrgId = orgId
 
 	if err := hs.Bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrTeamMemberNotFound {
+		if errors.Is(err, models.ErrTeamMemberNotFound) {
 			return Error(404, "Team member not found.", nil)
 		}
 		return Error(500, "Failed to update team member.", err)
@@ -97,11 +106,11 @@ func (hs *HTTPServer) RemoveTeamMember(c *models.ReqContext) Response {
 	}
 
 	if err := hs.Bus.Dispatch(&models.RemoveTeamMemberCommand{OrgId: orgId, TeamId: teamId, UserId: userId, ProtectLastAdmin: protectLastAdmin}); err != nil {
-		if err == models.ErrTeamNotFound {
+		if errors.Is(err, models.ErrTeamNotFound) {
 			return Error(404, "Team not found", nil)
 		}
 
-		if err == models.ErrTeamMemberNotFound {
+		if errors.Is(err, models.ErrTeamMemberNotFound) {
 			return Error(404, "Team member not found", nil)
 		}
 

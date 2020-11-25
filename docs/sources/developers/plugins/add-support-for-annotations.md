@@ -1,13 +1,12 @@
 +++
 title = "Add support for annotations"
-type = "docs"
 +++
 
 # Add support for annotations
 
 This guide explains how to add support for [annotations]({{< relref "../../dashboards/annotations.md" >}}) to an existing data source plugin.
 
-This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "../../../../../tutorials/build-a-data-source-plugin.md" >}}).
+This guide assumes that you're already familiar with how to [Build a data source plugin]({{< relref "/tutorials/build-a-data-source-plugin.md" >}}).
 
 Data sources in Grafana can support [Annotations]({{< relref "../../dashboards/annotations.md" >}}) by handling _annotation queries_.
 

@@ -294,13 +294,8 @@ func SlugifyTitle(title string) string {
 }
 
 // GetUrl return the html url for a folder if it's folder, otherwise for a dashboard
-func (dash *Dashboard) GetUrl() string {
-	return GetDashboardFolderUrl(dash.IsFolder, dash.Uid, dash.Slug)
-}
-
-// Return the html url for a dashboard
-func (d *Dashboard) GenerateUrl() string {
-	return GetDashboardUrl(d.Uid, d.Slug)
+func (d *Dashboard) GetUrl() string {
+	return GetDashboardFolderUrl(d.IsFolder, d.Uid, d.Slug)
 }
 
 // GetDashboardFolderUrl return the html url for a folder if it's folder, otherwise for a dashboard

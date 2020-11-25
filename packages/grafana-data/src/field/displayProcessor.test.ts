@@ -16,9 +16,8 @@ function getDisplayProcessorFromConfig(config: FieldConfig) {
 function assertSame(input: any, processors: DisplayProcessor[], match: DisplayValue) {
   processors.forEach(processor => {
     const value = processor(input);
-    expect(value.text).toEqual(match.text);
-    if (match.hasOwnProperty('numeric')) {
-      expect(value.numeric).toEqual(match.numeric);
+    for (const key of Object.keys(match)) {
+      expect((value as any)[key]).toEqual((match as any)[key]);
     }
   });
 }
@@ -86,6 +85,27 @@ describe('Process simple display values', () => {
 
   it('boolean false', () => {
     assertSame(false, processors, { text: 'false', numeric: 0 });
+  });
+});
+
+describe('Process null values', () => {
+  const processors = [
+    getDisplayProcessorFromConfig({
+      min: 0,
+      max: 100,
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: '#000' },
+          { value: 0, color: '#100' },
+          { value: 100, color: '#200' },
+        ],
+      },
+    }),
+  ];
+
+  it('Null should get -Infinity (base) color', () => {
+    assertSame(null, processors, { text: '', numeric: NaN, color: '#000' });
   });
 });
 

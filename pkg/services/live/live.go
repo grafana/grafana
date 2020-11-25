@@ -74,20 +74,6 @@ func (g *GrafanaLive) Init() error {
 	// cfg.LogLevel = centrifuge.LogLevelDebug
 	cfg.LogHandler = handleLog
 
-	// This function is called fast and often -- it must be sychronized
-	cfg.ChannelOptionsFunc = func(channel string) (centrifuge.ChannelOptions, bool, error) {
-		handler, err := g.GetChannelHandler(channel)
-		if err != nil {
-			logger.Error("ChannelOptionsFunc", "channel", channel, "err", err)
-			if err.Error() == "404" { // ????
-				return centrifuge.ChannelOptions{}, false, nil
-			}
-			return centrifuge.ChannelOptions{}, true, err
-		}
-		opts := handler.GetChannelOptions(channel)
-		return opts, true, nil
-	}
-
 	// Node is the core object in Centrifuge library responsible for many useful
 	// things. For example Node allows to publish messages to channels from server
 	// side with its Publish method, but in this example we will publish messages
@@ -115,57 +101,29 @@ func (g *GrafanaLive) Init() error {
 	// inside handler must be synchronized since it will be called concurrently from
 	// different goroutines (belonging to different client connections). This is also
 	// true for other event handlers.
-	node.OnConnect(func(c *centrifuge.Client) {
-		// In our example transport will always be Websocket but it can also be SockJS.
-		transportName := c.Transport().Name()
+	node.OnConnect(func(client *centrifuge.Client) {
+		logger.Debug("Client connected", "user", client.UserID())
 
-		// In our example clients connect with JSON protocol but it can also be Protobuf.
-		transportEncoding := c.Transport().Encoding()
-		logger.Debug("client connected", "transport", transportName, "encoding", transportEncoding)
-	})
+		client.OnSubscribe(func(e centrifuge.SubscribeEvent, cb centrifuge.SubscribeCallback) {
+			handler, err := g.GetChannelHandler(e.Channel)
+			if err != nil {
+				cb(centrifuge.SubscribeReply{}, err)
+			} else {
+				cb(handler.OnSubscribe(client, e))
+			}
+		})
 
-	// Set Disconnect handler to react on client disconnect events.
-	node.OnDisconnect(func(c *centrifuge.Client, e centrifuge.DisconnectEvent) {
-		logger.Info("client disconnected")
-	})
-
-	// Set SubscribeHandler to react on every channel subscription attempt
-	// initiated by client. Here you can theoretically return an error or
-	// disconnect client from server if needed. But now we just accept
-	// all subscriptions to all channels. In real life you may use a more
-	// complex permission check here.
-	node.OnSubscribe(func(c *centrifuge.Client, e centrifuge.SubscribeEvent) (centrifuge.SubscribeReply, error) {
-		reply := centrifuge.SubscribeReply{}
-
-		handler, err := g.GetChannelHandler(e.Channel)
-		if err != nil {
-			return reply, err
-		}
-
-		err = handler.OnSubscribe(c, e)
-		if err != nil {
-			return reply, err
-		}
-
-		return reply, nil
-	})
-
-	node.OnUnsubscribe(func(c *centrifuge.Client, e centrifuge.UnsubscribeEvent) {
-		logger.Debug("unsubscribe from channel", "channel", e.Channel, "user", c.UserID())
-	})
-
-	// Called when a client writes to the websocket channel.
-	// In general, we should prefer writing to the HTTP API, but this
-	// allows some simple prototypes to work quickly
-	node.OnPublish(func(c *centrifuge.Client, e centrifuge.PublishEvent) (centrifuge.PublishReply, error) {
-		reply := centrifuge.PublishReply{}
-		handler, err := g.GetChannelHandler(e.Channel)
-		if err != nil {
-			return reply, err
-		}
-
-		err = handler.AllowBroadcast(c, e)
-		return centrifuge.PublishReply{}, err
+		// Called when a client writes to the websocket channel.
+		// In general, we should prefer writing to the HTTP API, but this
+		// allows some simple prototypes to work quickly
+		client.OnPublish(func(e centrifuge.PublishEvent, cb centrifuge.PublishCallback) {
+			handler, err := g.GetChannelHandler(e.Channel)
+			if err != nil {
+				cb(centrifuge.PublishReply{}, err)
+			} else {
+				cb(handler.OnPublish(client, e))
+			}
+		})
 	})
 
 	// Run node. This method does not block.

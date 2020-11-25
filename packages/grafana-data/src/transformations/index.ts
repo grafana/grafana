@@ -10,3 +10,4 @@ export {
   standardTransformersRegistry,
 } from './standardTransformersRegistry';
 export { RegexpOrNamesMatcherOptions } from './matchers/nameMatcher';
+export { outerJoinDataFrames } from './transformers/seriesToColumns';

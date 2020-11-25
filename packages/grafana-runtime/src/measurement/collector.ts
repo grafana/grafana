@@ -45,6 +45,7 @@ export class MeasurementCache {
   addMeasurement(m: Measurement, action: MeasurementAction): DataFrame {
     const key = m.labels ? formatLabels(m.labels) : '';
     let frame = this.frames[key];
+
     if (!frame) {
       frame = new CircularDataFrame(this.config);
       frame.name = this.name;
@@ -52,14 +53,17 @@ export class MeasurementCache {
         name: 'time',
         type: FieldType.time,
       });
+
       for (const [key, value] of Object.entries(m.values)) {
         frame.addFieldFor(value, key).labels = m.labels;
       }
+
       frame.meta = {
         custom: {
           labels: m.labels,
         },
       };
+
       this.frames[key] = frame;
     }
 
@@ -71,7 +75,7 @@ export class MeasurementCache {
     }
 
     // Add the timestamp
-    frame.values['time'].add(m.time || Date.now());
+    frame.fields[0].values.add(m.time || Date.now());
 
     // Attach field config to the current fields
     if (m.config) {
@@ -85,13 +89,14 @@ export class MeasurementCache {
 
     // Append all values (a row)
     for (const [key, value] of Object.entries(m.values)) {
-      let v = frame.values[key];
-      if (!v) {
+      const existingField = frame.fields.find(v => v.name === key);
+      if (!existingField) {
         const f = frame.addFieldFor(value, key);
         f.labels = m.labels;
-        v = f.values;
+        f.values.add(value);
+      } else {
+        existingField.values.add(value);
       }
-      v.add(value);
     }
 
     // Make sure all fields have the same length
