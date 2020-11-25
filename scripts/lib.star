@@ -118,6 +118,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
             'rm dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz',
             'yarn install --frozen-lockfile --no-progress',
         ])
+
     if edition == 'enterprise':
         source_commit = ''
         if ver_mode == 'release':
@@ -612,7 +613,17 @@ def e2e_tests_server_step():
         ],
     }
 
-def e2e_tests_step():
+def e2e_tests_step(ver_mode):
+    commands = [
+            # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
+            # even though the Yarn cache directory is beneath /usr/local/share somewhere
+            './node_modules/.bin/cypress install',
+            './bin/grabpl e2e-tests',
+    ]
+
+    if ver_mode == 'pr':
+        commands.extend(['./node_modules/.bin/lhci autorun --collect.url=http://localhost:${PORT:-${DEFAULT_PORT:-3001}} || echo "LHCI failed!"'])
+
     return {
         'name': 'end-to-end-tests',
         'image': 'grafana/ci-e2e:12.19.0-1',
@@ -622,12 +633,7 @@ def e2e_tests_step():
         'environment': {
             'HOST': 'end-to-end-tests-server',
         },
-        'commands': [
-            # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
-            # even though the Yarn cache directory is beneath /usr/local/share somewhere
-            './node_modules/.bin/cypress install',
-            './bin/grabpl e2e-tests',
-        ],
+        'commands': commands,
     }
 
 def build_docs_website_step():

@@ -73,7 +73,7 @@ def get_steps(edition, ver_mode):
         build_plugins_step(edition=edition, sign=True),
         package_step(edition=edition, ver_mode=ver_mode),
         e2e_tests_server_step(),
-        e2e_tests_step(),
+        e2e_tests_step(ver_mode=ver_mode),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=should_publish),

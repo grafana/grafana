@@ -42,7 +42,7 @@ def pr_pipelines(edition):
         build_plugins_step(edition=edition),
         package_step(edition=edition, ver_mode=ver_mode, variants=variants),
         e2e_tests_server_step(),
-        e2e_tests_step(),
+        e2e_tests_step(ver_mode=ver_mode),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         build_frontend_docs_step(edition=edition),
         build_docs_website_step(),

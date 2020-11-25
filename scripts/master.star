@@ -51,7 +51,7 @@ def get_steps(edition, is_downstream=False):
         build_plugins_step(edition=edition, sign=True),
         package_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         e2e_tests_server_step(),
-        e2e_tests_step(),
+        e2e_tests_step(ver_mode=ver_mode),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         publish_storybook_step(edition=edition, ver_mode=ver_mode),
         build_frontend_docs_step(edition=edition),

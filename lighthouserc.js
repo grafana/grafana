@@ -1,8 +1,8 @@
 module.exports = {
   ci: {
     collect: {
-      startServerCommand: './bin/grafana-server',
-      url: ['http://localhost:3000'],
+      startServerCommand: './e2e/start-server',
+      url: ['http://localhost'],
     },
     upload: {
       target: 'temporary-public-storage',
