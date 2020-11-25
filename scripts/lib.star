@@ -1,4 +1,4 @@
-grabpl_version = '0.5.28'
+grabpl_version = '0.5.29'
 build_image = 'grafana/build-container:1.2.30'
 publish_image = 'grafana/grafana-ci-deploy:1.2.7'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -125,7 +125,7 @@ def init_steps(edition, platform, ver_mode, is_downstream=False, install_deps=Tr
             source_commit = ' ${DRONE_TAG}'
         elif ver_mode == 'test-release':
             committish = 'master'
-        elif ver_mode == 'version-branch':
+        elif ver_mode == 'release-branch':
             committish = '${DRONE_BRANCH}'
         else:
             if is_downstream:
@@ -532,7 +532,7 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
         variants_str = ' --variants {}'.format(','.join(variants))
     else:
         variants_str = ''
-    if ver_mode in ('master', 'release', 'test-release', 'version-branch'):
+    if ver_mode in ('master', 'release', 'test-release', 'release-branch'):
         sign_args = ' --sign'
         env = {
             'GRAFANA_API_KEY': {
@@ -870,7 +870,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
         },
     ]
     if (ver_mode == 'master' and (edition != 'enterprise' or is_downstream)) or ver_mode in (
-        'release', 'test-release', 'version-branch',
+        'release', 'test-release', 'release-branch',
     ):
         bucket_part = ''
         bucket = 'grafana-downloads'
@@ -926,7 +926,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             committish = '${DRONE_TAG}'
         elif ver_mode == 'test-release':
             committish = 'master'
-        elif ver_mode == 'version-branch':
+        elif ver_mode == 'release-branch':
             committish = '$$env:DRONE_BRANCH'
         else:
             committish = '$$env:DRONE_COMMIT'

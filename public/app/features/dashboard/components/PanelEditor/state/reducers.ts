@@ -17,9 +17,9 @@ export interface PanelEditorUIState {
   /* Visualization options pane visibility */
   isPanelOptionsVisible: boolean;
   /* Pixels or percentage */
-  rightPaneSize: number | string;
+  rightPaneSize: number;
   /* Pixels or percentage */
-  topPaneSize: number | string;
+  topPaneSize: number;
   /* Visualization size mode */
   mode: DisplayMode;
 }
