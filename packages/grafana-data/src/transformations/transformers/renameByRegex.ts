@@ -2,6 +2,11 @@ import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
 import { map } from 'rxjs/operators';
 
+/**
+ * Options for renameByRegexTransformer
+ *
+ * @public
+ */
 export interface RenameByRegexTransformerOptions {
   regex: string;
   renamePattern: string;
