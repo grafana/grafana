@@ -24,7 +24,7 @@ Use the instructions in [Getting started with Grafana]({{< relref "getting-start
 
 MS SQL Server can be installed on many different operating systems. Refer to the [MS SQL Server downloads page](https://www.microsoft.com/en-us/sql-server/sql-server-downloads), for a complete list of all available options.
 
-Alternately, install MS SQL Server using the resources available in [grafana/grafana](https://github.com/grafana/grafana) GitHub repository (recommended). Here you will find a collection of supported data sources, including MS SQL Server, along with test data and pre-configured dashboards for use.
+Alternately, if you are working on Mac or Linux, then you can install MS SQL Server using the resources available in [grafana/grafana](https://github.com/grafana/grafana) GitHub repository (recommended). Here you will find a collection of supported data sources, including MS SQL Server, along with test data and pre-configured dashboards for use.
 
 > **Note:** Installing MS SQL Server on Windows from the [grafana/grafana](https://github.com/grafana/grafana/tree/master/devenv) GitHub repository is not supported at this time.
 
