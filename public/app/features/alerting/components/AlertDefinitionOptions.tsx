@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { Collapse, Field, Input, Label, TextArea, useStyles } from '@grafana/ui';
 
-export const AlertDefinition = () => {
+export const AlertDefinitionOptions = () => {
   const styles = useStyles(getStyles);
   const [isOpen, setIsOpen] = useState(true);
   return (

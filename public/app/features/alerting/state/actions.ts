@@ -1,9 +1,17 @@
 import { AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
-import { AlertRuleDTO, NotifierDTO, ThunkResult } from 'app/types';
 import { appEvents } from 'app/core/core';
 import { updateLocation } from 'app/core/actions';
-import { notificationChannelLoaded, loadAlertRules, loadedAlertRules, setNotificationChannels } from './reducers';
+import store from 'app/core/store';
+import {
+  notificationChannelLoaded,
+  loadAlertRules,
+  loadedAlertRules,
+  setNotificationChannels,
+  setUiState,
+  ALERT_DEFINITION_UI_STATE_STORAGE_KEY,
+} from './reducers';
+import { AlertDefinitionUiState, AlertRuleDTO, NotifierDTO, ThunkResult } from 'app/types';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
   return async dispatch => {
@@ -80,5 +88,18 @@ export function createAlertDefinition(alertDefinition: any): ThunkResult<void> {
     await getBackendSrv().post(`/api/alert-definitions`, alertDefinition);
     appEvents.emit(AppEvents.alertSuccess, ['Alert definition created']);
     dispatch(updateLocation({ path: 'alerting/list' }));
+  };
+}
+
+export function updateAlertDefinitionUiState(uiState: Partial<AlertDefinitionUiState>): ThunkResult<void> {
+  return (dispatch, getStore) => {
+    const nextState = { ...getStore().alertDefinition.uiState, ...uiState };
+    dispatch(setUiState(nextState));
+
+    try {
+      store.setObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, nextState);
+    } catch (error) {
+      console.error(error);
+    }
   };
 }

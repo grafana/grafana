@@ -133,7 +133,17 @@ export interface AlertNotification {
   type: string;
 }
 
+export interface AlertDefinitionState {
+  uiState: AlertDefinitionUiState;
+  alertDefinition: AlertDefinition;
+}
+
 export interface AlertDefinition {
   name: string;
   queries: { ref: {} };
+}
+
+export interface AlertDefinitionUiState {
+  rightPaneSize: number;
+  topPaneSize: number;
 }

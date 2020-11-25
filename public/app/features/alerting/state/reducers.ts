@@ -1,4 +1,10 @@
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { dateTime } from '@grafana/data';
+import alertDef from './alertDef';
 import {
+  AlertDefinition,
+  AlertDefinitionState,
+  AlertDefinitionUiState,
   AlertRule,
   AlertRuleDTO,
   AlertRulesState,
@@ -6,9 +12,10 @@ import {
   NotificationChannelState,
   NotifierDTO,
 } from 'app/types';
-import alertDef from './alertDef';
-import { dateTime } from '@grafana/data';
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import store from 'app/core/store';
+
+export const ALERT_DEFINITION_UI_STATE_STORAGE_KEY = 'grafana.alerting.alertDefinition.ui';
+const DEFAULT_ALERT_DEFINITION_UI_STATE: AlertDefinitionUiState = { rightPaneSize: 400, topPaneSize: 0.45 };
 
 export const initialState: AlertRulesState = {
   items: [],
@@ -20,6 +27,11 @@ export const initialChannelState: NotificationChannelState = {
   notificationChannelTypes: [],
   notificationChannel: {},
   notifiers: [],
+};
+
+export const initialAlertDefinitionState: AlertDefinitionState = {
+  alertDefinition: {} as AlertDefinition,
+  uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
 };
 
 function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
@@ -110,13 +122,16 @@ const notificationChannelSlice = createSlice({
 
 const alertDefinitionSlice = createSlice({
   name: 'alertDefinition',
-  initialState: {},
+  initialState: initialAlertDefinitionState,
   reducers: {
     setAlertDefinition: (state, action: PayloadAction<any>) => {
       return { ...state, alertDefinition: action.payload };
     },
     updateAlertDefinition: (state, action: PayloadAction<any>) => {
       return { ...state, alertDefinition: action.payload };
+    },
+    setUiState: (state, action: PayloadAction<AlertDefinitionUiState>) => {
+      return { ...state, uiState: { ...state.uiState, ...action.payload } };
     },
   },
 });
@@ -129,6 +144,8 @@ export const {
   resetSecureField,
 } = notificationChannelSlice.actions;
 
+export const { setUiState } = alertDefinitionSlice.actions;
+
 export const alertRulesReducer = alertRulesSlice.reducer;
 export const notificationChannelReducer = notificationChannelSlice.reducer;
 export const alertDefinitionsReducer = alertDefinitionSlice.reducer;
@@ -136,7 +153,7 @@ export const alertDefinitionsReducer = alertDefinitionSlice.reducer;
 export default {
   alertRules: alertRulesReducer,
   notificationChannel: notificationChannelReducer,
-  alertDefinitions: alertDefinitionsReducer,
+  alertDefinition: alertDefinitionsReducer,
 };
 
 function migrateSecureFields(
