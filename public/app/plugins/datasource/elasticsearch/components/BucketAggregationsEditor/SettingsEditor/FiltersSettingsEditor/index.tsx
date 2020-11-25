@@ -1,4 +1,4 @@
-import { InlineField, Input, QueryField } from '@grafana/ui';
+import { InlineField, Input } from '@grafana/ui';
 import { css } from 'emotion';
 import React, { FunctionComponent } from 'react';
 import { AddRemove } from '../../../AddRemove';
@@ -31,6 +31,7 @@ export const FiltersSettingsEditor: FunctionComponent<Props> = ({ value }) => {
           flex-direction: column;
         `}
       >
+        {/* FIXME: Check if this default is really needed */}
         {(value.settings?.filters || [defaultFilter()]).map((filter, index) => (
           <div
             key={index}
@@ -44,13 +45,11 @@ export const FiltersSettingsEditor: FunctionComponent<Props> = ({ value }) => {
               `}
             >
               <InlineField label="Query" labelWidth={10}>
-                <QueryField
+                <Input
+                  /* FIXME: QueryField was causing some issues, need to investigate.  */
                   placeholder="Lucene Query"
-                  portalOrigin="elasticsearch"
-                  // FIXME: There's a weird thing happening with this field:
-                  // when an error is thrown it becomes impossible to remove focus from this element
-                  onChange={query => dispatch(changeFilter(index, { ...filter, query }))}
-                  query={filter.query}
+                  onBlur={e => dispatch(changeFilter(index, { ...filter, query: e.target.value! }))}
+                  defaultValue={filter.query}
                 />
               </InlineField>
             </div>

@@ -2,7 +2,7 @@ import { defaultBucketAgg } from '../../../query_def';
 import { ElasticsearchQuery } from '../../../types';
 import { ChangeMetricTypeAction, CHANGE_METRIC_TYPE } from '../../MetricAggregationsEditor/state/types';
 import { metricAggregationConfig } from '../../MetricAggregationsEditor/utils';
-import { BucketAggregation } from '../aggregations';
+import { BucketAggregation, Terms } from '../aggregations';
 import { INIT, InitAction } from '../../state';
 import {
   ADD_BUCKET_AGG,
@@ -12,6 +12,7 @@ import {
   CHANGE_BUCKET_AGG_SETTING,
   BucketAggregationAction,
 } from './types';
+import { bucketAggregationConfig } from '../utils';
 
 export const reducer = (
   state: BucketAggregation[],
@@ -21,14 +22,19 @@ export const reducer = (
     case ADD_BUCKET_AGG:
       const ids = state.map(agg => parseInt(agg.id, 10));
       const nextId = (Math.max(...ids, 0) + 1).toString();
+      const newAgg: Terms = {
+        id: nextId,
+        type: 'terms',
+        settings: bucketAggregationConfig['terms'].defaultSettings,
+      };
 
       // If the last bucket aggregation is a `date_histogram` we add the new one before it.
       const lastAgg = state[state.length - 1];
       if (lastAgg?.type === 'date_histogram') {
-        return [...state.slice(0, state.length - 1), { id: nextId, type: 'terms' }, lastAgg];
+        return [...state.slice(0, state.length - 1), newAgg, lastAgg];
       }
 
-      return [...state, defaultBucketAgg(nextId)];
+      return [...state, newAgg];
 
     case REMOVE_BUCKET_AGG:
       return state.filter(bucketAgg => bucketAgg.id !== action.payload.id);
@@ -40,15 +46,16 @@ export const reducer = (
         }
 
         /*
-            TODO: The previous version of the query editor was keeping some of the old bucket aggregation's configurations
-            in the new selected one (such as field or some settings).
-            It the future would be nice to have the same behavior but it's hard without a proper definition,
-            as Elasticsearch will error sometimes if some settings are not compatible.
-          */
+          TODO: The previous version of the query editor was keeping some of the old bucket aggregation's configurations
+          in the new selected one (such as field or some settings).
+          It the future would be nice to have the same behavior but it's hard without a proper definition,
+          as Elasticsearch will error sometimes if some settings are not compatible.
+        */
         return {
           id: bucketAgg.id,
           type: action.payload.newType,
-        };
+          settings: bucketAggregationConfig[action.payload.newType].defaultSettings,
+        } as BucketAggregation;
       });
 
     case CHANGE_BUCKET_AGG_FIELD:

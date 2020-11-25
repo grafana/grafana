@@ -1,25 +1,47 @@
 import { BucketsConfiguration } from '../../types';
+import { defaultFilter } from './SettingsEditor/FiltersSettingsEditor/utils';
 
 export const bucketAggregationConfig: BucketsConfiguration = {
   terms: {
     label: 'Terms',
     requiresField: true,
+    defaultSettings: {
+      min_doc_count: '0',
+      size: '10',
+      order: 'desc',
+      orderBy: '_term',
+    },
   },
   filters: {
     label: 'Filters',
     requiresField: false,
+    defaultSettings: {
+      filters: [defaultFilter()],
+    },
   },
   geohash_grid: {
     label: 'Geo Hash Grid',
     requiresField: true,
+    defaultSettings: {
+      precision: '3',
+    },
   },
   date_histogram: {
     label: 'Date Histogram',
     requiresField: true,
+    defaultSettings: {
+      interval: 'auto',
+      min_doc_count: '0',
+      trimEdges: '0',
+    },
   },
   histogram: {
     label: 'Histogram',
     requiresField: true,
+    defaultSettings: {
+      interval: '1000',
+      min_doc_count: '0',
+    },
   },
 };
 
@@ -41,8 +63,8 @@ export const sizeOptions = [
 ];
 
 export const orderByOptions = [
-  { label: 'Doc Count', value: '_count' },
   { label: 'Term value', value: '_term' },
+  { label: 'Doc Count', value: '_count' },
 ];
 
 export const intervalOptions = [

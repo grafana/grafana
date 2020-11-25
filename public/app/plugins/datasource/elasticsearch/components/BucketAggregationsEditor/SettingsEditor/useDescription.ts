@@ -5,9 +5,10 @@ import { orderByOptions, orderOptions } from '../utils';
 
 const hasValue = (value: string) => (object: { value: string }) => object.value === value;
 
-// FIXME: All the defaults and validations down here should be defined somewhere else
-// as they are also the defaults that are gonna be applied to the query.
-// In the previous version, the same methos was taking care of describing the settings and setting defaults.
+// FIXME: We should apply the same defaults we have in bucketAggregationsConfig here instead of "custom" values
+// as they might get out of sync.
+// The reason we need them is that even though after the refactoring each setting is created with its default value,
+// queries created with the old version might not have them.
 export const useDescription = (bucketAgg: BucketAggregation): string => {
   const { metrics } = useQuery();
 
@@ -25,7 +26,7 @@ export const useDescription = (bucketAgg: BucketAggregation): string => {
       }
 
       if (minDocCount > 0) {
-        description += `Min Doc Count: ${minDocCount}`;
+        description += `Min Doc Count: ${minDocCount}, `;
       }
 
       description += 'Order by: ';

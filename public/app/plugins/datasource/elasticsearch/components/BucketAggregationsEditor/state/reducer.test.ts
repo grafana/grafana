@@ -1,7 +1,7 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
-import { defaultBucketAgg } from '../../../query_def';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
 import { BucketAggregation, DateHistogram } from '../aggregations';
+import { bucketAggregationConfig } from '../utils';
 import {
   addBucketAggregation,
   changeBucketAggregationField,
@@ -16,9 +16,12 @@ describe('Bucket Aggregations Reducer', () => {
     reducerTester()
       .givenReducer(reducer, [])
       .whenActionIsDispatched(addBucketAggregation())
-      .thenStateShouldEqual([defaultBucketAgg('1')])
+      .thenStateShouldEqual([{ id: '1', type: 'terms', settings: bucketAggregationConfig['terms'].defaultSettings }])
       .whenActionIsDispatched(addBucketAggregation())
-      .thenStateShouldEqual([{ id: '2', type: 'terms' }, defaultBucketAgg('1')]);
+      .thenStateShouldEqual([
+        { id: '1', type: 'terms', settings: bucketAggregationConfig['terms'].defaultSettings },
+        { id: '2', type: 'terms', settings: bucketAggregationConfig['terms'].defaultSettings },
+      ]);
   });
 
   it('Should correctly remove aggregations', () => {
@@ -48,12 +51,16 @@ describe('Bucket Aggregations Reducer', () => {
       type: 'date_histogram',
     };
 
-    const expectedSecondAggregation: BucketAggregation = { ...secondAggregation, type: 'histogram' };
+    const expectedSecondAggregation: BucketAggregation = {
+      ...secondAggregation,
+      type: 'histogram',
+      settings: bucketAggregationConfig['histogram'].defaultSettings,
+    };
 
     reducerTester()
       .givenReducer(reducer, [firstAggregation, secondAggregation])
       .whenActionIsDispatched(changeBucketAggregationType(secondAggregation.id, expectedSecondAggregation.type))
-      .thenStateShouldEqual([firstAggregation, { ...secondAggregation, type: expectedSecondAggregation.type }]);
+      .thenStateShouldEqual([firstAggregation, expectedSecondAggregation]);
   });
 
   it("Should correctly change aggregation's field", () => {

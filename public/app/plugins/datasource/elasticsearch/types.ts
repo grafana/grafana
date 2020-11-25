@@ -28,12 +28,16 @@ interface MetricConfiguration {
   hasMeta: boolean;
 }
 
-interface BucketConfiguration {
+type BucketConfiguration<T extends BucketAggregationType> = {
   label: string;
   requiresField: boolean;
-}
+  defaultSettings: Extract<BucketAggregation, { type: T }>['settings'];
+};
+
 export type MetricsConfiguration = Record<MetricAggregationType, MetricConfiguration>;
-export type BucketsConfiguration = Record<BucketAggregationType, BucketConfiguration>;
+export type BucketsConfiguration = {
+  [P in BucketAggregationType]: BucketConfiguration<P>;
+};
 
 export interface ElasticsearchAggregation {
   id: string;

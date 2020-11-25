@@ -1,33 +1,15 @@
-import { SelectableValue } from '@grafana/data';
 import { InlineField, Input, Select } from '@grafana/ui';
 import React, { ComponentProps, FunctionComponent } from 'react';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { BucketAggregation } from '../aggregations';
-import { intervalOptions, orderByOptions, orderOptions, sizeOptions } from '../utils';
+import { bucketAggregationConfig, intervalOptions, orderByOptions, orderOptions, sizeOptions } from '../utils';
 import { FiltersSettingsEditor } from './FiltersSettingsEditor';
 import { useDescription } from './useDescription';
 
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 16,
-};
-
-const selectDefaultValue = (options: SelectableValue[], value?: string | SelectableValue): SelectableValue => {
-  if (!value) {
-    return options[0];
-  }
-
-  const option = options.find(o => o.value === value);
-  if (option) {
-    return option;
-  }
-
-  if (typeof value === 'string') {
-    return { value, label: value };
-  }
-
-  return value;
 };
 
 interface Props {
@@ -46,7 +28,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
             <Select
               onChange={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'order', e.value!))}
               options={orderOptions}
-              defaultValue={bucketAgg.settings?.order}
+              value={bucketAgg.settings?.order || bucketAggregationConfig[bucketAgg.type].defaultSettings?.order}
             />
           </InlineField>
 
@@ -54,7 +36,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
             <Select
               onChange={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'size', e.value!))}
               options={sizeOptions}
-              defaultValue={bucketAgg.settings?.size}
+              value={bucketAgg.settings?.size || bucketAggregationConfig[bucketAgg.type].defaultSettings?.size}
               allowCustomValue
             />
           </InlineField>
@@ -62,7 +44,10 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
           <InlineField label="Min Doc Count" {...inlineFieldProps}>
             <Input
               onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
-              defaultValue={bucketAgg.settings?.min_doc_count ?? '0'}
+              defaultValue={
+                bucketAgg.settings?.min_doc_count ||
+                bucketAggregationConfig[bucketAgg.type].defaultSettings?.min_doc_count
+              }
             />
           </InlineField>
 
@@ -71,14 +56,16 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
               onChange={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'orderBy', e.value!))}
               // TODO: This can also select from previously selected metrics
               options={orderByOptions}
-              defaultValue={bucketAgg.settings?.orderBy}
+              value={bucketAgg.settings?.orderBy || bucketAggregationConfig[bucketAgg.type].defaultSettings?.orderBy}
             />
           </InlineField>
 
           <InlineField label="Missing" {...inlineFieldProps}>
             <Input
               onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'missing', e.target.value!))}
-              defaultValue={bucketAgg.settings?.missing}
+              defaultValue={
+                bucketAgg.settings?.missing || bucketAggregationConfig[bucketAgg.type].defaultSettings?.missing
+              }
             />
           </InlineField>
         </>
@@ -88,7 +75,9 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
         <InlineField label="Precision" {...inlineFieldProps}>
           <Input
             onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'precision', e.target.value!))}
-            defaultValue={bucketAgg.settings?.precision ?? '3'}
+            defaultValue={
+              bucketAgg.settings?.precision || bucketAggregationConfig[bucketAgg.type].defaultSettings?.precision
+            }
           />
         </InlineField>
       )}
@@ -100,7 +89,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
               onChange={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'interval', e.value!))}
               options={intervalOptions}
               // TODO: Not sure we have a better way of handling custom values
-              defaultValue={selectDefaultValue(intervalOptions, bucketAgg.settings?.interval)}
+              value={bucketAgg.settings?.interval || bucketAggregationConfig[bucketAgg.type].defaultSettings?.interval}
               allowCustomValue
             />
           </InlineField>
@@ -108,14 +97,19 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
           <InlineField label="Min Doc Count" {...inlineFieldProps}>
             <Input
               onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
-              defaultValue={bucketAgg.settings?.min_doc_count ?? '0'}
+              defaultValue={
+                bucketAgg.settings?.min_doc_count ||
+                bucketAggregationConfig[bucketAgg.type].defaultSettings?.min_doc_count
+              }
             />
           </InlineField>
 
           <InlineField label="Trim Edges" {...inlineFieldProps} tooltip="Trim the edges on the timeseries datapoints">
             <Input
               onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'trimEdges', e.target.value!))}
-              defaultValue={bucketAgg.settings?.trimEdges}
+              defaultValue={
+                bucketAgg.settings?.trimEdges || bucketAggregationConfig[bucketAgg.type].defaultSettings?.trimEdges
+              }
             />
           </InlineField>
 
@@ -126,7 +120,9 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
           >
             <Input
               onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'offset', e.target.value!))}
-              defaultValue={bucketAgg.settings?.offset}
+              defaultValue={
+                bucketAgg.settings?.offset || bucketAggregationConfig[bucketAgg.type].defaultSettings?.offset
+              }
             />
           </InlineField>
         </>
@@ -135,19 +131,21 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
       {bucketAgg.type === 'histogram' && (
         <>
           <InlineField label="Interval" {...inlineFieldProps}>
-            <Select
-              onChange={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'interval', e.value!))}
-              options={intervalOptions}
-              // TODO: Not sure we have a better way of handling custom values
-              defaultValue={selectDefaultValue(intervalOptions, bucketAgg.settings?.interval)}
-              allowCustomValue
+            <Input
+              onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'interval', e.target.value!))}
+              defaultValue={
+                bucketAgg.settings?.interval || bucketAggregationConfig[bucketAgg.type].defaultSettings?.interval
+              }
             />
           </InlineField>
 
           <InlineField label="Min Doc Count" {...inlineFieldProps}>
             <Input
               onBlur={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'min_doc_count', e.target.value!))}
-              defaultValue={bucketAgg.settings?.min_doc_count ?? '0'}
+              defaultValue={
+                bucketAgg.settings?.min_doc_count ||
+                bucketAggregationConfig[bucketAgg.type].defaultSettings?.min_doc_count
+              }
             />
           </InlineField>
         </>
