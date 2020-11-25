@@ -673,7 +673,10 @@ export const completeVariableLoading = (identifier: VariableIdentifier): ThunkRe
   }
 };
 
-export function upgradeLegacyQueries(identifier: VariableIdentifier): ThunkResult<void> {
+export function upgradeLegacyQueries(
+  identifier: VariableIdentifier,
+  getDatasourceSrvFunc: typeof getDatasourceSrv = getDatasourceSrv
+): ThunkResult<void> {
   return async function(dispatch, getState) {
     const variable = getVariable<QueryVariableModel>(identifier.id, getState());
 
@@ -681,7 +684,7 @@ export function upgradeLegacyQueries(identifier: VariableIdentifier): ThunkResul
       return;
     }
 
-    const datasource = await getDatasourceSrv().get(variable.datasource ?? '');
+    const datasource = await getDatasourceSrvFunc().get(variable.datasource ?? '');
 
     if (hasLegacyVariableSupport(datasource)) {
       return;
