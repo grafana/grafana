@@ -58,24 +58,30 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
 
         for (const frame of data) {
           const fieldIndexByName = groupFieldIndexByName(frame, data);
+          const matchers = createFilterValueMatchers(filters, fieldIndexByName);
 
           for (let index = 0; index < frame.length; index++) {
             if (rows.has(index)) {
               continue;
             }
 
-            const checkIfFilterIsMatchingRow = (filter: FilterByValueFilter): boolean => {
-              const matcher = getValueMatcher(filter.config);
-              const fieldIndex = fieldIndexByName[filter.fieldName] ?? -1;
-              if (fieldIndex < 0) {
-                return false;
-              }
-              return matcher(index, frame.fields[fieldIndex], frame, data);
-            };
+            let matching = true;
 
-            const matching = matchAll
-              ? filters.every(checkIfFilterIsMatchingRow)
-              : !!filters.find(checkIfFilterIsMatchingRow);
+            for (const matcher of matchers) {
+              const match = matcher(index, frame, data);
+
+              if (!matchAll && match) {
+                matching = true;
+                break;
+              }
+
+              if (matchAll && !match) {
+                matching = false;
+                break;
+              }
+
+              matching = match;
+            }
 
             if (matching) {
               rows.add(index);
@@ -123,6 +129,25 @@ export const filterByValueTransformer: DataTransformerInfo<FilterByValueTransfor
       })
     );
   },
+};
+
+const createFilterValueMatchers = (
+  filters: FilterByValueFilter[],
+  fieldIndexByName: Record<string, number>
+): Array<(index: number, frame: DataFrame, data: DataFrame[]) => boolean> => {
+  const noop = () => false;
+
+  return filters.map(filter => {
+    const fieldIndex = fieldIndexByName[filter.fieldName] ?? -1;
+
+    if (fieldIndex < 0) {
+      console.warn(`[FilterByValue] Could not find index for field name: ${filter.fieldName}`);
+      return noop;
+    }
+
+    const matcher = getValueMatcher(filter.config);
+    return (index, frame, data) => matcher(index, frame.fields[fieldIndex], frame, data);
+  });
 };
 
 const groupFieldIndexByName = (frame: DataFrame, data: DataFrame[]): Record<string, number> => {
