@@ -129,6 +129,17 @@ Move any existing rules using `custom_details.myMetric` to `custom_details.queri
 This behavior will become the default in a future version of Grafana.
 
 > Using `dedup_key` tag will override Grafana generated `dedup_key` with a custom key.
+
+### VictorOps
+
+To set up VictorOps, provide the URL from the Grafana Integration and substitue `$routing_key` with the routing key.
+
+Setting | Description
+---------- | -----------
+Auto resolve incidents | Resolve incidents in VictorOps once the alert goes back to ok
+
+>**Note:** The tag `Severity` has special meaning in the [VictorOps Incident Fields](https://help.victorops.com/knowledge-base/incident-fields-glossary/). If an alert panel defines this tag key, then it is transposed to the root of the event sent to VictorOps.
+
 ### Webhook
 
 The webhook notification is a simple way to send information about a state change over HTTP to a custom endpoint.

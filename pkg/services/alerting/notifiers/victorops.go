@@ -75,19 +75,16 @@ type VictoropsNotifier struct {
 	log             log.Logger
 }
 
-// Notify sends notification to Victorops via POST to URL endpoint
-func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
-	vn.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.ID, "notification", vn.Name)
-
+func (vn *VictoropsNotifier) buildEventPayload(evalContext *alerting.EvalContext) (*simplejson.Json, error) {
 	ruleURL, err := evalContext.GetRuleURL()
 	if err != nil {
 		vn.log.Error("Failed get rule link", "error", err)
-		return err
+		return nil, err
 	}
 
 	if evalContext.Rule.State == models.AlertStateOK && !vn.AutoResolve {
 		vn.log.Info("Not alerting VictorOps", "state", evalContext.Rule.State, "auto resolve", vn.AutoResolve)
-		return nil
+		return nil, nil
 	}
 
 	messageType := AlertStateCritical // Default to alerting and change based on state checks (Ensures string type)
@@ -145,6 +142,18 @@ func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	if vn.NeedsImage() && evalContext.ImagePublicURL != "" {
 		bodyJSON.Set("image_url", evalContext.ImagePublicURL)
+	}
+
+	return bodyJSON, nil
+}
+
+// Notify sends notification to Victorops via POST to URL endpoint
+func (vn *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
+	vn.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.ID, "notification", vn.Name)
+
+	bodyJSON, err := vn.buildEventPayload(evalContext)
+	if err != nil {
+		return err
 	}
 
 	data, _ := bodyJSON.MarshalJSON()
