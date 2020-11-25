@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import Prism, { Grammar } from 'prismjs';
+import { Grammar } from 'prismjs';
 import { AbsoluteTimeRange } from '@grafana/data';
 import { useRefMounted } from 'app/core/hooks/useRefMounted';
 import { CloudWatchLanguageProvider } from './language_provider';
-
-const PRISM_SYNTAX = 'cloudwatch';
 
 /**
  * Initialise the language provider. Returns a languageProviderInitialized boolean cause there does not seem other way
