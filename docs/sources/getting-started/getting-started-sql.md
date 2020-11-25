@@ -8,11 +8,11 @@ weight = 400
 
 # Getting started with Grafana and MS SQL Server
 
-Microsoft SQL Server is a popular relational database management system that is used by ??. Grafana ships with a built-in Microsoft SQL Server (MSSQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database.
+Microsoft SQL Server is a popular relational database management system that is widely used in development and production environments. Grafana ships with a built-in Microsoft SQL Server (MSSQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database.
 
 > **Note:** The plugin is available in Grafana v5.1+.
 
-You can also configure a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance to display system metrics without having to host Grafana yourself.
+You can also configure the MS SQL Server data source on a [Grafana Cloud](https://grafana.com/docs/grafana-cloud/) instance without having to host Grafana yourself.
 
 ## Step 1: Install Grafana and build your first dashboard
 
@@ -23,48 +23,64 @@ Use the instructions in [Getting started with Grafana]({{< relref "getting-start
 
 ## Step 2: Download MS SQL Server
 
-MS SQL Server can be installed on many operating systems. Refer to the [MS SQL Server download page](https://www.microsoft.com/en-us/sql-server/sql-server-downloads), which lists all stable versions of Prometheus components. 
+MS SQL Server can be installed on many different operating systems. Refer to the [MS SQL Server downloads page](https://www.microsoft.com/en-us/sql-server/sql-server-downloads), for a complete list of all available options.
 
-Alternately, you can install the MS SQL  data source along with test data from Grafana devenv. 
+Alternately, install MS SQL Server using the resources available in [grafana/grafana](https://github.com/grafana/grafana) GitHub repository (recommended). Here you will find a collection of supported data sources, including MS SQL Server, along with test data and pre-configured dashboards for use.
+
+> **Note:** Installing MS SQL Server on Windows from the [grafana/grafana](https://github.com/grafana/grafana/tree/master/devenv) GitHub repository is not supported at this time.
 
 ## Step 3: Install MS SQL Server
 
-Prometheus node_exporter is a widely used tool that exposes system metrics. Install node_exporter on all hosts you want to monitor. For instructions on how to install node_exporter, refer to the [Installing and running the node_exporter](https://prometheus.io/docs/guides/node-exporter/#installing-and-running-the-node-exporter) section in Prometheus documentation.
+You can install MS SQL Server on the host running Grafana or on a remote server. To install the software from the [downloads page](https://www.microsoft.com/en-us/sql-server/sql-server-downloads), follow their setup prompts.
 
-> **Note**: The instructions in the referenced topic are intended for Linux users. You may have to alter the instructions slightly depending on your operating system. For example, if you are on Windows, use the [windows_exporter](https://github.com/prometheus-community/windows_exporter) instead.
+Otherwise, follow the instructions below to install and configure MS SQL Server from the [grafana/grafana](https://github.com/grafana/grafana/tree/master) repository.
 
-## Step 4: Install and configure Prometheus
+1. Clone the [grafana/grafana](https://github.com/grafana/grafana/tree/master) repository to your local system.
 
-1. Install Prometheus following instructions in the [Installation](https://prometheus.io/docs/prometheus/latest/installation/) topic in the Prometheus documentation.
+1. Install Docker or verify that it is installed on your machine.
 
-1. Configure Prometheus to monitor the hosts where you installed node_exporter. In order to do this, modify Prometheus's configuration file. By default, Prometheus looks for the file `prometheus.yml` in the current working directory. This behavior can be changed via the `--config.file` command line flag. For example, some Prometheus installers use it to set the configuration file to `/etc/prometheus/prometheus.yml`. Here is an example of the code you will need to add.
+1. Within your local `grafana` repository, change directory to [devenv](https://github.com/grafana/grafana/tree/master/devenv).
 
+1. Run the bash command to setup datasources and dashboards in your Grafana.
    ```
-    # A scrape configuration containing exactly one endpoint to scrape from node_exporter running on a host:
-    scrape_configs:
-        # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
-        - job_name: 'node'
-
-        # metrics_path defaults to '/metrics'
-        # scheme defaults to 'http'.
-
-        static_configs:
-        - targets: ['<hostname>:9100']
+    ./setup.sh
    ```
 
-1. Start the Prometheus service:
+1. Restart the Grafana server.
+
+1. Change directory back to [master](https://github.com/grafana/grafana/tree/master/devenv).
+
+1. Run the make command to create the MS SQL Server database.
    ```
-    ./prometheus --config.file=./prometheus.yml
+    make devenv sources=mssql
    ```
+This creates an image of the SQL Server database and runs it as a Docker container.
 
-## Step 5: Check Prometheus metrics in Grafana Explore view
+## Step 4: Adding the MS SQL data source
 
-In your Grafana instance, go to the [Explore]({{< relref "../explore/index.md" >}}) view and build queries to experiment with the metrics you want to monitor. Here you can also debug issues related to collecting metrics from Prometheus. Pay special attention to the [Prometheus-specific features]({{< relref "../explore/_index.md#prometheus-specific-features" >}}) to avail custom querying experience for Prometheus.
+When you add the MS SQL data source, you will find recommended dashboards for use.
 
-## Step 6: Start building dashboards
+To add MS SQL Server data source:
 
-Now that you have a curated list of queries, create [dashboards]({{< relref "../dashboards/_index.md" >}}) to render system metrics monitored by Prometheus. When you install Prometheus and node_exporter or windows_exporter, you will find recommended dashboards for use.
+1. In the Grafana side menu, go to  **Configuration** and click **Data Sources** option.
+2. Filter by `mssql` and select the **Microsoft SQL Server** option.
+3. Click **Add data source** button in the top right header to open the configuration page.
+4. Enter the information specified in the table below, then click **Save & Test** at the bottom of the page.
+   
+ Name           | Description
+------------   | -------------
+`Name`         | The data source name. This is how you refer to the data source in panels and queries.
+`Host`         | The IP address/hostname and optional port of your MS SQL instance. If port is omitted, the default 1433 will be used.
+`Database`     | Name of your MS SQL database.
+`User`         | Database user's login/username.
+`Password`     | Database user's password. 
 
-The following image shows a dashboard with three panels showing some system metrics.
+If you installed MS SQL Server database from [grafana/grafana](https://github.com/grafana/grafana/tree/master) GitHub repository, the `gdev-mssql` data source is created during installation. Check the data source settings, and search for available dashboards that are available for use. The following image shows a dashboard with three panels showing some metrics generated from test data.
 
 {{< imgbox max-width="800px" img="/img/docs/getting-started/simple_grafana_prom_dashboard.png" caption="Alerting overview" >}}
+
+
+
+
+Try to edit a panel using byupdating the query options.  
+
