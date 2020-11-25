@@ -75,12 +75,15 @@ To add MS SQL Server data source:
 `User`         | Database user's login/username.
 `Password`     | Database user's password. 
 
-If you installed MS SQL Server database from [grafana/grafana](https://github.com/grafana/grafana/tree/master) GitHub repository, the `gdev-mssql` data source is created during installation. Check the data source settings, and search for available dashboards that are available for use. The following image shows a dashboard with three panels showing some metrics generated from test data.
-
-{{< imgbox max-width="800px" img="/img/docs/getting-started/simple_grafana_prom_dashboard.png" caption="Alerting overview" >}}
+> **Note:** If you installed MS SQL Server database from [grafana/grafana](https://github.com/grafana/grafana/tree/master) GitHub repository, the `gdev-mssql` data source is created during installation. Check the data source settings, and search for available dashboards for use.
 
 
+The following image shows a dashboard with three panels showing some metrics generated from test data.
 
+## Step 5: Start building dashboards
 
-Try to edit a panel using byupdating the query options.  
+In your Grafana instance, go to the [Explore]({{< relref "../explore/index.md" >}}) view and build queries to experiment with the metrics you want to monitor. Once you have a curated list of queries, create [dashboards]({{< relref "../dashboards/_index.md" >}}) to render system metrics monitored by Prometheus. When you install Prometheus and node_exporter or windows_exporter, you will find recommended dashboards for use.
 
+The following image shows a dashboard with three panels showing some system metrics.
+
+{{< imgbox align="center" max-width="800px" img="/img/docs/getting-started/simple_grafana_prom_dashboard.png" caption="SQL Server dashboards" >}}
