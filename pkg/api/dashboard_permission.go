@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/guardian"
 )
 
-func GetDashboardPermissionList(c *models.ReqContext) Response {
+func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) Response {
 	dashID := c.ParamsInt64(":dashboardId")
 
 	_, rsp := getDashboardHelper(c.OrgId, "", dashID, "")
@@ -29,7 +29,12 @@ func GetDashboardPermissionList(c *models.ReqContext) Response {
 		return Error(500, "Failed to get dashboard permissions", err)
 	}
 
+	filteredAcls := make([]*models.DashboardAclInfoDTO, 0, len(acl))
 	for _, perm := range acl {
+		if dtos.IsHiddenUser(perm.UserLogin, c.SignedInUser, hs.Cfg) {
+			continue
+		}
+
 		perm.UserAvatarUrl = dtos.GetGravatarUrl(perm.UserEmail)
 
 		if perm.TeamId > 0 {
@@ -38,12 +43,14 @@ func GetDashboardPermissionList(c *models.ReqContext) Response {
 		if perm.Slug != "" {
 			perm.Url = models.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
 		}
+
+		filteredAcls = append(filteredAcls, perm)
 	}
 
-	return JSON(200, acl)
+	return JSON(200, filteredAcls)
 }
 
-func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
+func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
 	if err := validatePermissionsUpdate(apiCmd); err != nil {
 		return Error(400, err.Error(), err)
 	}
@@ -75,6 +82,12 @@ func UpdateDashboardPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboar
 			Updated:     time.Now(),
 		})
 	}
+
+	hiddenACL, err := g.GetHiddenACL(hs.Cfg)
+	if err != nil {
+		return Error(500, "Error while retrieving hidden permissions", err)
+	}
+	cmd.Items = append(cmd.Items, hiddenACL...)
 
 	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
 		if err != nil {

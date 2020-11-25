@@ -112,6 +112,8 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) Response {
 		UserIdFilter: userIdFilter,
 		Page:         page,
 		Limit:        perPage,
+		SignedInUser: c.SignedInUser,
+		HiddenUsers:  hs.Cfg.HiddenUsers,
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -129,8 +131,13 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) Response {
 }
 
 // GET /api/teams/:teamId
-func GetTeamByID(c *models.ReqContext) Response {
-	query := models.GetTeamByIdQuery{OrgId: c.OrgId, Id: c.ParamsInt64(":teamId")}
+func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) Response {
+	query := models.GetTeamByIdQuery{
+		OrgId:        c.OrgId,
+		Id:           c.ParamsInt64(":teamId"),
+		SignedInUser: c.SignedInUser,
+		HiddenUsers:  hs.Cfg.HiddenUsers,
+	}
 
 	if err := bus.Dispatch(&query); err != nil {
 		if errors.Is(err, models.ErrTeamNotFound) {
