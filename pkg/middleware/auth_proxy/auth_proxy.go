@@ -2,6 +2,7 @@ package authproxy
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"net"
@@ -131,7 +132,10 @@ func (auth *AuthProxy) IsAllowedIP() (bool, *Error) {
 		proxyObjs = append(proxyObjs, result)
 	}
 
-	sourceIP, _, _ := net.SplitHostPort(ip)
+	sourceIP, _, err := net.SplitHostPort(ip)
+	if err != nil {
+		return false, newError("could not parse address", err)
+	}
 	sourceObj := net.ParseIP(sourceIP)
 
 	for _, proxyObj := range proxyObjs {
@@ -140,11 +144,10 @@ func (auth *AuthProxy) IsAllowedIP() (bool, *Error) {
 		}
 	}
 
-	err := fmt.Errorf(
+	err = fmt.Errorf(
 		"request for user (%s) from %s is not from the authentication proxy", auth.header,
 		sourceIP,
 	)
-
 	return false, newError("Proxy authentication required", err)
 }
 
@@ -180,12 +183,12 @@ func (auth *AuthProxy) Login(logger log.Logger, ignoreCache bool) (int64, *Error
 	}
 
 	if isLDAPEnabled() {
-		id, e := auth.LoginViaLDAP()
-		if e != nil {
-			if e == ldap.ErrInvalidCredentials {
+		id, err := auth.LoginViaLDAP()
+		if err != nil {
+			if errors.Is(err, ldap.ErrInvalidCredentials) {
 				return 0, newError("proxy authentication required", ldap.ErrInvalidCredentials)
 			}
-			return 0, newError("failed to get the user", e)
+			return 0, newError("failed to get the user", err)
 		}
 
 		return id, nil

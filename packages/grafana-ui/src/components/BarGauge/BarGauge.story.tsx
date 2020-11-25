@@ -1,10 +1,11 @@
+import React from 'react';
 import { number, text } from '@storybook/addon-knobs';
 import { BarGauge, BarGaugeDisplayMode } from '@grafana/ui';
 import { VizOrientation, ThresholdsMode, Field, FieldType, getDisplayProcessor } from '@grafana/data';
 import { Props } from './BarGauge';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { renderComponentWithTheme } from '../../utils/storybook/withTheme';
 import mdx from './BarGauge.mdx';
+import { useTheme } from '../../themes';
 
 const getKnobs = () => {
   return {
@@ -31,51 +32,56 @@ export default {
 };
 
 function addBarGaugeStory(overrides: Partial<Props>) {
-  const {
-    value,
-    title,
-    minValue,
-    maxValue,
-    threshold1Color,
-    threshold2Color,
-    threshold1Value,
-    threshold2Value,
-  } = getKnobs();
+  return () => {
+    const theme = useTheme();
 
-  const field: Partial<Field> = {
-    type: FieldType.number,
-    config: {
-      min: minValue,
-      max: maxValue,
-      thresholds: {
-        mode: ThresholdsMode.Absolute,
-        steps: [
-          { value: -Infinity, color: 'green' },
-          { value: threshold1Value, color: threshold1Color },
-          { value: threshold2Value, color: threshold2Color },
-        ],
+    const {
+      value,
+      title,
+      minValue,
+      maxValue,
+      threshold1Color,
+      threshold2Color,
+      threshold1Value,
+      threshold2Value,
+    } = getKnobs();
+
+    const field: Partial<Field> = {
+      type: FieldType.number,
+      config: {
+        min: minValue,
+        max: maxValue,
+        thresholds: {
+          mode: ThresholdsMode.Absolute,
+          steps: [
+            { value: -Infinity, color: 'green' },
+            { value: threshold1Value, color: threshold1Color },
+            { value: threshold2Value, color: threshold2Color },
+          ],
+        },
       },
-    },
-  };
-  field.display = getDisplayProcessor({ field });
+    };
+    field.display = getDisplayProcessor({ field });
 
-  const props: Props = {
-    theme: {} as any,
-    width: 300,
-    height: 300,
-    value: {
-      text: value.toString(),
-      title: title,
-      numeric: value,
-    },
-    orientation: VizOrientation.Vertical,
-    displayMode: BarGaugeDisplayMode.Basic,
-    field: field.config!,
-    display: field.display!,
-  };
+    const props: Props = {
+      theme,
+      width: 300,
+      height: 300,
+      value: {
+        text: value.toString(),
+        title: title,
+        numeric: value,
+      },
+      orientation: VizOrientation.Vertical,
+      displayMode: BarGaugeDisplayMode.Basic,
+      field: field.config!,
+      display: field.display!,
+    };
 
-  Object.assign(props, overrides);
-  return renderComponentWithTheme(BarGauge, props);
+    Object.assign(props, overrides);
+
+    return <BarGauge {...props} />;
+  };
 }
 
 export const gradientVertical = addBarGaugeStory({

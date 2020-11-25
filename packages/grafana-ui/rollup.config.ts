@@ -43,7 +43,7 @@ const buildCjsPackage = ({ env }) => {
         // When 'rollup-plugin-commonjs' fails to properly convert the CommonJS modules to ES6 one has to manually name the exports
         // https://github.com/rollup/rollup-plugin-commonjs#custom-named-exports
         namedExports: {
-          '../../node_modules/lodash/lodash.js': [
+          'node_modules/lodash/lodash.js': [
             'flatten',
             'find',
             'upperFirst',
@@ -82,8 +82,7 @@ const buildCjsPackage = ({ env }) => {
             'useAbsoluteLayout',
             'useFilters',
           ],
-          '../../node_modules/rc-tooltip/node_modules/react-is/index.js': ['isMemo'],
-          '../../node_modules/rc-motion/node_modules/react-is/index.js': ['isMemo'],
+          '../../node_modules/react-is/index.js': ['isMemo'],
         },
       }),
       resolve(),

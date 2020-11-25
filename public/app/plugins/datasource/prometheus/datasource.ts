@@ -171,8 +171,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
       target.requestId = options.panelId + target.refId;
 
-      if (target.range && target.instant) {
-        // If running both (only available in Explore) - instant and range query, prepare both targets
+      // In Explore, we run both (instant and range) queries if both are true (selected) or both are undefined (legacy Explore queries)
+      if (options.app === CoreApp.Explore && target.range === target.instant) {
         // Create instant target
         const instantTarget: any = cloneDeep(target);
         instantTarget.format = 'table';
@@ -194,8 +194,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           this.createQuery(instantTarget, options, start, end),
           this.createQuery(rangeTarget, options, start, end)
         );
-      } else if (target.instant && options.app === CoreApp.Explore) {
         // If running only instant query in Explore, format as table
+      } else if (target.instant && options.app === CoreApp.Explore) {
         const instantTarget: any = cloneDeep(target);
         instantTarget.format = 'table';
         queries.push(this.createQuery(instantTarget, options, start, end));

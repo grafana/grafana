@@ -475,11 +475,11 @@ func (server *Server) AdminBind() error {
 func (server *Server) userBind(path, password string) error {
 	err := server.Connection.Bind(path, password)
 	if err != nil {
-		if ldapErr, ok := err.(*ldap.Error); ok {
-			if ldapErr.ResultCode == 49 {
-				return ErrInvalidCredentials
-			}
+		var ldapErr *ldap.Error
+		if errors.As(err, &ldapErr) && ldapErr.ResultCode == 49 {
+			return ErrInvalidCredentials
 		}
+
 		return err
 	}
 
