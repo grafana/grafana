@@ -8,7 +8,7 @@ weight = 400
 
 # Getting started with Grafana and MS SQL Server
 
-Microsoft SQL Server is a popular relational database management system that is widely used in development and production environments. Grafana ships with a built-in Microsoft SQL Server (MSSQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database.
+Microsoft SQL Server is a popular relational database management system that is widely used in development and production environments. Grafana ships with a built-in Microsoft SQL Server (MSSQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. This topic walks you through the steps to create a series of dashboards in Grafana to display metrics from a MS SQL Server database.
 
 > **Note:** The plugin is available in Grafana v5.1+.
 
