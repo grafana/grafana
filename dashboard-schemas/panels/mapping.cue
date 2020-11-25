@@ -1,6 +1,6 @@
 package panels
 
-mapping: {
+_mapping: {
 	id:       int
 	from:     string
 	operator: string
