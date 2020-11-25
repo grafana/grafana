@@ -53,8 +53,13 @@ func addOrgUserHelper(cmd models.AddOrgUserCommand) Response {
 }
 
 // GET /api/org/users
-func GetOrgUsersForCurrentOrg(c *models.ReqContext) Response {
-	result, err := getOrgUsersHelper(c.OrgId, c.Query("query"), c.QueryInt("limit"))
+func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) Response {
+	result, err := hs.getOrgUsersHelper(&models.GetOrgUsersQuery{
+		OrgId: c.OrgId,
+		Query: c.Query("query"),
+		Limit: c.QueryInt("limit"),
+	}, c.SignedInUser)
+
 	if err != nil {
 		return Error(500, "Failed to get users for current organization", err)
 	}
@@ -63,7 +68,7 @@ func GetOrgUsersForCurrentOrg(c *models.ReqContext) Response {
 }
 
 // GET /api/org/users/lookup
-func GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) Response {
+func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) Response {
 	isAdmin, err := isOrgAdminFolderAdminOrTeamAdmin(c)
 	if err != nil {
 		return Error(500, "Failed to get users for current organization", err)
@@ -73,7 +78,12 @@ func GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) Response {
 		return Error(403, "Permission denied", nil)
 	}
 
-	orgUsers, err := getOrgUsersHelper(c.OrgId, c.Query("query"), c.QueryInt("limit"))
+	orgUsers, err := hs.getOrgUsersHelper(&models.GetOrgUsersQuery{
+		OrgId: c.OrgId,
+		Query: c.Query("query"),
+		Limit: c.QueryInt("limit"),
+	}, c.SignedInUser)
+
 	if err != nil {
 		return Error(500, "Failed to get users for current organization", err)
 	}
@@ -114,8 +124,13 @@ func isOrgAdminFolderAdminOrTeamAdmin(c *models.ReqContext) (bool, error) {
 }
 
 // GET /api/orgs/:orgId/users
-func GetOrgUsers(c *models.ReqContext) Response {
-	result, err := getOrgUsersHelper(c.ParamsInt64(":orgId"), "", 0)
+func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) Response {
+	result, err := hs.getOrgUsersHelper(&models.GetOrgUsersQuery{
+		OrgId: c.ParamsInt64(":orgId"),
+		Query: "",
+		Limit: 0,
+	}, c.SignedInUser)
+
 	if err != nil {
 		return Error(500, "Failed to get users for organization", err)
 	}
@@ -123,22 +138,22 @@ func GetOrgUsers(c *models.ReqContext) Response {
 	return JSON(200, result)
 }
 
-func getOrgUsersHelper(orgID int64, query string, limit int) ([]*models.OrgUserDTO, error) {
-	q := models.GetOrgUsersQuery{
-		OrgId: orgID,
-		Query: query,
-		Limit: limit,
-	}
-
-	if err := bus.Dispatch(&q); err != nil {
+func (hs *HTTPServer) getOrgUsersHelper(query *models.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*models.OrgUserDTO, error) {
+	if err := bus.Dispatch(query); err != nil {
 		return nil, err
 	}
 
-	for _, user := range q.Result {
+	filteredUsers := make([]*models.OrgUserDTO, 0, len(query.Result))
+	for _, user := range query.Result {
+		if dtos.IsHiddenUser(user.Login, signedInUser, hs.Cfg) {
+			continue
+		}
 		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
+
+		filteredUsers = append(filteredUsers, user)
 	}
 
-	return q.Result, nil
+	return filteredUsers, nil
 }
 
 // PATCH /api/org/users/:userId

@@ -7,6 +7,7 @@ load(
     'lint_backend_step',
     'codespell_step',
     'shellcheck_step',
+    'dashboard_schemas_check',
     'test_backend_step',
     'test_frontend_step',
     'build_backend_step',
@@ -45,7 +46,8 @@ def release_npm_packages_step(edition, ver_mode):
         'name': 'release-npm-packages',
         'image': build_image,
         'depends_on': [
-            'end-to-end-tests',
+            # Has to run after publish-storybook since this step cleans the files publish-storybook depends on
+            'publish-storybook',
         ],
         'environment': {
             'NPM_TOKEN': {
@@ -60,6 +62,7 @@ def get_steps(edition, ver_mode, publish):
         lint_backend_step(edition),
         codespell_step(),
         shellcheck_step(),
+        dashboard_schemas_check(),
         test_backend_step(),
         test_frontend_step(),
         build_backend_step(edition=edition, ver_mode=ver_mode),
@@ -78,8 +81,8 @@ def get_steps(edition, ver_mode, publish):
     if publish:
         steps.extend([
             upload_packages_step(edition=edition, ver_mode=ver_mode),
-            release_npm_packages_step(edition=edition, ver_mode=ver_mode),
             publish_storybook_step(edition=edition, ver_mode=ver_mode),
+            release_npm_packages_step(edition=edition, ver_mode=ver_mode),
         ])
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
 

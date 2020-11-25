@@ -28,6 +28,7 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
+			sc.context.Login = testUserLogin
 			sc.context.OrgRole = role
 			if sc.handlerFunc != nil {
 				return sc.handlerFunc(sc.context)
