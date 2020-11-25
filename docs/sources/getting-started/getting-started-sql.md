@@ -87,4 +87,4 @@ Now that you have gained some idea of using the pre-packaged MSSQL data source a
 
 To fetch data from your own instance of MS SQL Server, add the data source using instrucitons in Step 4 of this topic. In Grafana [Explore]({{< relref "../explore/index.md" >}}) build queries to experiment with the metrics you want to monitor. Once you have a curated list of queries, create [dashboards]({{< relref "../dashboards/_index.md" >}}) to render metrics from the SQL Server database.
 
-For troubleshooting, user permissions, known issues and query examples, refer to [Using Microsoft SQL Server in Grafana]({{< relref "../datasources/mssql.md" >}}).
+For troubleshooting, user permissions, known issues, and query examples, refer to [Using Microsoft SQL Server in Grafana]({{< relref "../datasources/mssql.md" >}}).
