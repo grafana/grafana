@@ -20,7 +20,7 @@ function buildBarsPaths(u: uPlot, seriesIdx: number, idx0: number, idx1: number)
   //@ts-ignore
   let fillTo = series.fillTo(u, seriesIdx, series.min, series.max);
 
-  let y0Pos = u.valToPos(fillTo, scaleKey, true);
+  let y0Pos = Math.round(u.valToPos(fillTo, scaleKey, true));
   let colWid = u.bbox.width / (idx1 - idx0);
 
   let stroke = new Path2D();
@@ -80,7 +80,10 @@ function buildStaircasePaths(u: uPlot, seriesIdx: number, idx0: number, idx1: nu
 
   const fill = new Path2D(stroke);
 
-  let minY = Math.round(u.valToPos(u.scales[scaleY].min!, scaleY, true));
+  //@ts-ignore
+  let fillTo = s.fillTo(u, seriesIdx, s.min, s.max);
+
+  let minY = Math.round(u.valToPos(fillTo, scaleY, true));
   let minX = Math.round(u.valToPos(u.scales[scaleX].min!, scaleX, true));
   let maxX = Math.round(u.valToPos(u.scales[scaleX].max!, scaleX, true));
 
@@ -194,9 +197,12 @@ function buildSmoothPaths(u: uPlot, seriesIdx: number, idx0: number, idx1: numbe
 
   const fill = new Path2D(stroke);
 
-  let minY = u.valToPos(u.scales[scaleY].min!, scaleY, true);
-  let minX = u.valToPos(u.scales[scaleX].min!, scaleX, true);
-  let maxX = u.valToPos(u.scales[scaleX].max!, scaleX, true);
+  //@ts-ignore
+  let fillTo = s.fillTo(u, seriesIdx, s.min, s.max);
+
+  let minY = Math.round(u.valToPos(fillTo, scaleY, true));
+  let minX = Math.round(u.valToPos(u.scales[scaleX].min!, scaleX, true));
+  let maxX = Math.round(u.valToPos(u.scales[scaleX].max!, scaleX, true));
 
   fill.lineTo(maxX, minY);
   fill.lineTo(minX, minY);
