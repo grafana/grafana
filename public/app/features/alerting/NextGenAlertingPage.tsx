@@ -1,7 +1,9 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { DataSourceSelectItem } from '@grafana/data';
+import { css } from 'emotion';
+import { DataSourceSelectItem, GrafanaTheme } from '@grafana/data';
+import { stylesFactory } from '@grafana/ui';
 import { AlertingToolbar } from './components/AlertingToolbar';
 import { AlertingQueryEditor } from './components/AlertingQueryEditor';
 import { AlertDefinitionOptions } from './components/AlertDefinitionOptions';
@@ -10,6 +12,7 @@ import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { createAlertDefinition, updateAlertDefinitionUiState } from './state/actions';
 import { AlertDefinition, AlertDefinitionUiState, StoreState } from '../../types';
 import { SplitPaneWrapper } from '../../core/components/ThreePaneSplit/SplitPaneWrapper';
+import { config } from 'app/core/config';
 
 interface OwnProps {}
 
@@ -42,8 +45,10 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
 
   render() {
     const { uiState, updateAlertDefinitionUiState } = this.props;
+    const styles = getStyles(config.theme);
+
     return (
-      <div>
+      <div className={styles.wrapper}>
         <AlertingToolbar />
         <SplitPaneWrapper
           leftPaneComponents={[
@@ -76,3 +81,11 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NextGenAlertingPage));
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    wrapper: css`
+      background-color: ${theme.colors.dashboardBg};
+    `,
+  };
+});

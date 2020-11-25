@@ -33,6 +33,7 @@ export const AlertingToolbar = () => {
 const getStyles = (theme: GrafanaTheme) => {
   return {
     toolbar: css`
+      background-color: ${theme.colors.panelBg};
       padding: ${theme.spacing.sm} ${theme.spacing.md} 0;
       font-size: ${theme.typography.size.lg};
       display: flex;

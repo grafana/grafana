@@ -26,8 +26,7 @@ export const AlertingQueryEditor: FC<Props> = ({ dataSources, onChangeDataSource
 const getStyles = (theme: GrafanaTheme) => {
   return {
     container: css`
-      padding: 0 ${theme.spacing.md};
-      background-color: ${theme.colors.panelBg};
+      padding-left: ${theme.spacing.md};
     `,
     editorWrapper: css`
       border: 1px solid ${theme.colors.panelBorder};

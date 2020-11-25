@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { Collapse, Field, Input, Label, TextArea, useStyles } from '@grafana/ui';
 
 export const AlertDefinitionOptions = () => {
   const styles = useStyles(getStyles);
-  const [isOpen, setIsOpen] = useState(true);
   return (
     <div className={styles.container}>
-      <Collapse label="Alert definition" isOpen={isOpen} onToggle={setIsOpen}>
+      <Collapse label="Alert definition" isOpen={true}>
         <Field label="Name">
           <Input width={25} />
         </Field>
@@ -24,7 +23,7 @@ export const AlertDefinitionOptions = () => {
 const getStyles = (theme: GrafanaTheme) => {
   return {
     container: css`
-      padding: 0 ${theme.spacing.md};
+      padding: ${theme.spacing.md};
       background-color: ${theme.colors.panelBg};
     `,
   };
