@@ -219,6 +219,8 @@ func parseResponse(value model.Value, query *PrometheusQuery) (*tsdb.QueryResult
 }
 
 func IsAPIError(err error) bool {
+	// Have to use errors.As to compare Prometheus errors, since errors.Is won't work due to Prometheus
+	// errors being pointers and errors.Is ends up comparing them by pointer address
 	var e *apiv1.Error
 	return errors.As(err, &e)
 }
