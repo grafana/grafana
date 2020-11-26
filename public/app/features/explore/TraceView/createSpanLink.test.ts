@@ -1,16 +1,8 @@
-import { createSpanLinkFactory } from './createSpanLink';
-import { config, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { DataSourceInstanceSettings, ScopedVars } from '@grafana/data';
+import { setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
+import { createSpanLinkFactory } from './createSpanLink';
 
 describe('createSpanLinkFactory', () => {
-  beforeAll(() => {
-    config.featureToggles.traceToLogs = true;
-  });
-
-  afterAll(() => {
-    config.featureToggles.traceToLogs = false;
-  });
-
   it('returns undefined if there is no loki data source', () => {
     setDataSourceSrv({
       getExternal() {

@@ -1,8 +1,8 @@
-import React from 'react';
-import { config, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { DataLink, dateTime, Field, mapInternalLinkToExplore, TimeRange, TraceSpan } from '@grafana/data';
-import { LokiQuery } from '../../../plugins/datasource/loki/types';
+import { getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
+import React from 'react';
+import { LokiQuery } from '../../../plugins/datasource/loki/types';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
@@ -10,10 +10,6 @@ import { Icon } from '@grafana/ui';
  * with useMemo.
  */
 export function createSpanLinkFactory(splitOpenFn: (options: { datasourceUid: string; query: any }) => void) {
-  if (!config.featureToggles.traceToLogs) {
-    return undefined;
-  }
-
   // Right now just hardcoded for first loki DS we can find
   const lokiDs = getDataSourceSrv()
     .getExternal()
