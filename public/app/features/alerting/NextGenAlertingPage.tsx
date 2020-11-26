@@ -3,8 +3,8 @@ import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { DataSourceSelectItem, GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
-import { AlertingToolbar } from './components/AlertingToolbar';
+import { Button, Icon, stylesFactory } from '@grafana/ui';
+import { PageToolbar } from 'app/core/components/PageToolbar/PageToolbar';
 import { AlertingQueryEditor } from './components/AlertingQueryEditor';
 import { AlertDefinitionOptions } from './components/AlertDefinitionOptions';
 import { AlertingQueryPreview } from './components/AlertingQueryPreview';
@@ -43,13 +43,40 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
     });
   }
 
+  renderToolbarActions() {
+    return [
+      <Button variant="destructive" key="discard">
+        Discard
+      </Button>,
+      <Button variant="primary" key="save">
+        Save
+      </Button>,
+      <Button variant="secondary" key="test">
+        Test
+      </Button>,
+    ];
+  }
+
   render() {
     const { uiState, updateAlertDefinitionUiState } = this.props;
     const styles = getStyles(config.theme);
 
     return (
       <div className={styles.wrapper}>
-        <AlertingToolbar />
+        <PageToolbar
+          title="Alert editor"
+          titlePrefix={
+            <Icon
+              name="bell"
+              size="lg"
+              className={css`
+                margin-right: 6px;
+                margin-bottom: 3px;
+              `}
+            />
+          }
+          actions={this.renderToolbarActions()}
+        />
         <SplitPaneWrapper
           leftPaneComponents={[
             <AlertingQueryPreview key="queryPreview" />,

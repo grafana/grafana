@@ -24,7 +24,6 @@ const getStyles = (theme: GrafanaTheme) => {
   return {
     container: css`
       padding: ${theme.spacing.md};
-      background-color: ${theme.colors.panelBg};
     `,
   };
 };
