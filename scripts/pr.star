@@ -23,6 +23,7 @@ load(
     'benchmark_ldap_step',
     'ldap_service',
     'integration_test_services',
+    'release_next_npm_packages_step',
 )
 
 ver_mode = 'pr'
@@ -50,6 +51,7 @@ def pr_pipelines(edition):
         build_docker_images_step(edition=edition, ver_mode=ver_mode, archs=['amd64',]),
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
+        release_next_npm_packages_step(edition),
     ]
     if edition == 'enterprise':
         steps.append(benchmark_ldap_step())
