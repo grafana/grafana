@@ -3,6 +3,12 @@ import { appEvents } from 'app/core/core';
 import { CoreEvents } from 'app/types';
 import { textUtil, systemDateFormats, LegacyGraphHoverClearEvent, LegacyGraphHoverEvent } from '@grafana/data';
 
+enum TooltipMode {
+  One = 0,
+  AllSeries = 1,
+  AllSeriesButOnlyTheNonnullValues = 2,
+}
+
 export default function GraphTooltip(this: any, elem: any, dashboard: any, scope: any, getSeriesFn: any) {
   const self = this;
   const ctrl = scope.ctrl;
@@ -104,6 +110,11 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
 
       value = series.data[hoverIndex][1];
 
+      if (value === null && panel.tooltip.shared === TooltipMode.AllSeriesButOnlyTheNonnullValues) {
+        results[0].push({ hidden: true, value: null });
+        continue;
+      }
+
       if (series.stack && value !== null && panel.tooltip.value_type !== 'individual') {
         lastValue += value;
         value = lastValue;
@@ -190,7 +201,8 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
     const xAxes = plot.getXAxes();
     const xMode = xAxes[0].options.mode;
     const seriesList = getSeriesFn();
-    let allSeriesMode = panel.tooltip.shared;
+    let seriesMode: TooltipMode =
+      panel.tooltip.shared === false ? 0 : panel.tooltip.shared === true ? 1 : panel.tooltip.shared;
     let group, value, absoluteTime, hoverInfo, i, series, seriesHtml, tooltipFormat;
 
     // if panelRelY is defined another panel wants us to show a tooltip
@@ -214,7 +226,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
       }
 
       plot.setCrosshair(pos);
-      allSeriesMode = true;
+      seriesMode = TooltipMode.AllSeries;
 
       if (dashboard.sharedCrosshairModeOnly()) {
         // if only crosshair mode we are done
@@ -232,7 +244,7 @@ export default function GraphTooltip(this: any, elem: any, dashboard: any, scope
       tooltipFormat = systemDateFormats.fullDate;
     }
 
-    if (allSeriesMode) {
+    if (seriesMode === TooltipMode.AllSeries || seriesMode === TooltipMode.AllSeriesButOnlyTheNonnullValues) {
       plot.unhighlight();
 
       const seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);

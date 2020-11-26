@@ -130,7 +130,7 @@
       <select
         class="gf-form-input"
         ng-model="ctrl.panel.tooltip.shared"
-        ng-options="f.value as f.text for f in [{text: 'All series', value: true}, {text: 'Single', value: false}]"
+        ng-options="f.value as f.text for f in [{text: 'All series', value: 1}, {text: 'Single', value: 0}, {text: 'Nonnull', value: 2}]"
         ng-change="ctrl.render()"
       ></select>
     </div>

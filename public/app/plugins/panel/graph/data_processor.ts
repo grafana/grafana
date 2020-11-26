@@ -107,7 +107,7 @@ export class DataProcessor {
         this.panel.lines = true;
         this.panel.points = false;
         this.panel.legend.show = true;
-        this.panel.tooltip.shared = true;
+        this.panel.tooltip.shared = 1;
         this.panel.xaxis.values = [];
         break;
       }
@@ -117,7 +117,7 @@ export class DataProcessor {
         this.panel.points = false;
         this.panel.stack = false;
         this.panel.legend.show = false;
-        this.panel.tooltip.shared = false;
+        this.panel.tooltip.shared = 0;
         this.panel.xaxis.values = ['total'];
         break;
       }
@@ -127,7 +127,7 @@ export class DataProcessor {
         this.panel.points = false;
         this.panel.stack = false;
         this.panel.legend.show = false;
-        this.panel.tooltip.shared = false;
+        this.panel.tooltip.shared = 0;
         break;
       }
     }

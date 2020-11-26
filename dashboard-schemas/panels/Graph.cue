@@ -120,10 +120,12 @@ package panels
 	timeShift: string
 	// Tooltip settings.
 	tooltip: {
-		// * true - The hover tooltip shows all series in the graph.  Grafana
+		// * 1 - The hover tooltip shows all series in the graph.  Grafana
 		// highlights the series that you are hovering over in bold in the series
 		// list in the tooltip.
-		// * false - The hover tooltip shows only a single series, the one that you
+		// * 2 - The hover tooltip shows all series in the graph but filters out
+		// null values.
+		// * 0 - The hover tooltip shows only a single series, the one that you
 		// are hovering over on the graph.
 		shared: bool | *true
 		// * 0 (none) - The order of the series in the tooltip is determined by the
