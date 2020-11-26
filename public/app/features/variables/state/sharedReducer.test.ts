@@ -15,13 +15,7 @@ import {
   variableStateFetching,
   variableStateNotStarted,
 } from './sharedReducer';
-import {
-  ConstantVariableModel,
-  QueryVariableModel,
-  TextBoxVariableModel,
-  VariableHide,
-  VariableOption,
-} from '../types';
+import { ConstantVariableModel, QueryVariableModel, VariableHide, VariableOption } from '../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from './types';
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from '../query/adapter';
@@ -31,14 +25,8 @@ import { initialVariablesState, VariablesState } from './variablesReducer';
 import { changeVariableNameSucceeded } from '../editor/reducer';
 import { createConstantVariableAdapter } from '../constant/adapter';
 import { initialConstantVariableModelState } from '../constant/reducer';
-import { createTextBoxVariableAdapter } from '../textbox/adapter';
-import { initialTextBoxVariableModelState } from '../textbox/reducer';
 
-variableAdapters.setInit(() => [
-  createQueryVariableAdapter(),
-  createConstantVariableAdapter(),
-  createTextBoxVariableAdapter(),
-]);
+variableAdapters.setInit(() => [createQueryVariableAdapter(), createConstantVariableAdapter()]);
 
 describe('sharedReducer', () => {
   describe('when addVariable is dispatched', () => {
@@ -99,39 +87,6 @@ describe('sharedReducer', () => {
         .whenActionIsDispatched(addVariable(payload))
         .thenStateShouldEqual({
           ['constant']: expected,
-        });
-    });
-  });
-
-  describe('when addVariable is dispatched for a textbox model', () => {
-    it('then state should be correct', () => {
-      const model: any = {
-        name: 'textbox',
-        type: 'textbox',
-        query: 'a textbox',
-        current: { selected: true, text: 'A', value: 'A' },
-        options: [{ selected: true, text: 'A', value: 'A' }],
-      };
-
-      const expected: TextBoxVariableModel = {
-        ...initialTextBoxVariableModelState,
-        id: 'textbox',
-        global: true,
-        index: 0,
-        name: 'textbox',
-        type: 'textbox',
-        query: 'a textbox',
-        current: { selected: true, text: 'a textbox', value: 'a textbox' },
-        options: [{ selected: true, text: 'a textbox', value: 'a textbox' }],
-      };
-
-      const payload = toVariablePayload({ id: 'textbox', type: 'textbox' }, { global: true, index: 0, model });
-
-      reducerTester<VariablesState>()
-        .givenReducer(sharedReducer, { ...initialVariablesState })
-        .whenActionIsDispatched(addVariable(payload))
-        .thenStateShouldEqual({
-          ['textbox']: expected,
         });
     });
   });
