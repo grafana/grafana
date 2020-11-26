@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -13,7 +14,7 @@ func TestSensuGoNotifier(t *testing.T) {
 	json := `{ }`
 
 	settingsJSON, err := simplejson.NewJson([]byte(json))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	model := &models.AlertNotification{
 		Name:     "Sensu Go",
 		Type:     "sensugo",
@@ -21,7 +22,7 @@ func TestSensuGoNotifier(t *testing.T) {
 	}
 
 	_, err = NewSensuGoNotifier(model)
-	assert.Error(t, err)
+	require.Error(t, err)
 
 	json = `
 	{
@@ -34,7 +35,7 @@ func TestSensuGoNotifier(t *testing.T) {
 	}`
 
 	settingsJSON, err = simplejson.NewJson([]byte(json))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	model = &models.AlertNotification{
 		Name:     "Sensu Go",
 		Type:     "sensugo",
@@ -42,7 +43,7 @@ func TestSensuGoNotifier(t *testing.T) {
 	}
 
 	not, err := NewSensuGoNotifier(model)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	sensuGoNotifier := not.(*SensuGoNotifier)
 
 	assert.Equal(t, "Sensu Go", sensuGoNotifier.Name)
