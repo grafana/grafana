@@ -747,13 +747,13 @@ def release_next_npm_packages_step(edition):
             'end-to-end-tests',
         ],
         'environment': {
-            'NPM_TOKEN': {
-                'from_secret': 'npm_token',
+            'GITHUB_PACKAGE_TOKEN': {
+                'from_secret': 'github_package_token',
             },
         },
         'commands': [
             './node_modules/.bin/lerna bootstrap',
-            'echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc',
+            'echo "//npm.pkg.github.com/:_authToken=$${GITHUB_PACKAGE_TOKEN} >> ~/.npmrc',
             './scripts/circle-release-next-packages.sh',
         ],
     }
