@@ -146,7 +146,8 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	// get user info
 	userInfo, err := connect.UserInfo(client, token)
 	if err != nil {
-		if sErr, ok := err.(*social.Error); ok {
+		var sErr *social.Error
+		if errors.As(err, &sErr) {
 			hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, sErr)
 		} else {
 			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{

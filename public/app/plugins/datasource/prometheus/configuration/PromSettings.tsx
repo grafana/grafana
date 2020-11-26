@@ -90,7 +90,7 @@ export const PromSettings = (props: Props) => {
             <FormField
               label="Custom query parameters"
               labelWidth={14}
-              tooltip="Add Custom parameters to Prometheus or Thanos queries."
+              tooltip="Add Custom parameters to all Prometheus or Thanos queries."
               inputEl={
                 <Input
                   className="width-25"

@@ -134,12 +134,11 @@ func (w *FileLogWriter) lineCounter() (int, error) {
 		c, err := r.Read(buf)
 		count += bytes.Count(buf[:c], []byte{'\n'})
 		switch {
-		case err == io.EOF:
+		case errors.Is(err, io.EOF):
 			if err := r.Close(); err != nil {
 				return count, err
 			}
 			return count, nil
-
 		case err != nil:
 			return count, err
 		}

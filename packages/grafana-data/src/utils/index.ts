@@ -17,4 +17,3 @@ export { locationUtil } from './location';
 export { urlUtil, UrlQueryMap, UrlQueryValue } from './url';
 export { DataLinkBuiltInVars, mapInternalLinkToExplore } from './dataLinks';
 export { DocsId } from './docs';
-export { observableTester } from './tests/observableTester';
