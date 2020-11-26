@@ -37,6 +37,14 @@ export interface PanelEditorState {
 }
 
 export const initialState = (): PanelEditorState => {
+  const storedUiState = store.getObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, DEFAULT_PANEL_EDITOR_UI_STATE);
+
+  let migratedState = { ...storedUiState };
+
+  if (typeof storedUiState.topPaneSize === 'string') {
+    migratedState = { ...storedUiState, topPaneSize: parseFloat(storedUiState.topPaneSize) / 100 };
+  }
+
   return {
     getPanel: () => new PanelModel({}),
     getSourcePanel: () => new PanelModel({}),
@@ -50,7 +58,7 @@ export const initialState = (): PanelEditorState => {
     isOpen: false,
     ui: {
       ...DEFAULT_PANEL_EDITOR_UI_STATE,
-      ...store.getObject(PANEL_EDITOR_UI_STATE_STORAGE_KEY, DEFAULT_PANEL_EDITOR_UI_STATE),
+      ...migratedState,
     },
   };
 };
