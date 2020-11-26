@@ -26,6 +26,6 @@ else
   prepare_version_commit
 
   echo $'\nPublishing packages'
-  yarn packages:publishCanary --registry https://npm.pkg.github.com
+  yarn packages:publishCanary
 fi
 
