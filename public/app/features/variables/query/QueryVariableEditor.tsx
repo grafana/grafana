@@ -1,9 +1,9 @@
 import React, { ChangeEvent, PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { InlineFormLabel, LegacyForms } from '@grafana/ui';
+import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv } from '@grafana/runtime';
-import { LoadingState } from '@grafana/data';
+import { LoadingState, SelectableValue } from '@grafana/data';
 
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
@@ -17,8 +17,12 @@ import { toVariableIdentifier } from '../state/types';
 import { changeVariableMultiValue } from '../state/actions';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { isLegacyQueryEditor, isQueryEditor } from '../guard';
-
-const { Switch } = LegacyForms;
+import { VariableSectionHeader } from '../editor/VariableSectionHeader';
+import { VariableTextField } from '../editor/VariableTextField';
+import { VariableSwitchField } from '../editor/VariableSwitchField';
+import { QueryVariableDatasourceSelect } from './QueryVariableDatasourceSelect';
+import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
+import { QueryVariableSortSelect } from './QueryVariableSortSelect';
 
 export interface OwnProps extends VariableEditorProps<QueryVariableModel> {}
 
@@ -61,18 +65,9 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     }
   }
 
-  getSelectedDataSourceValue = (): string => {
-    if (!this.props.editor.extended?.dataSources?.length) {
-      return '';
-    }
-    const foundItem = this.props.editor.extended?.dataSources.find(ds => ds.value === this.props.variable.datasource);
-    const value = foundItem ? foundItem.value : this.props.editor.extended?.dataSources[0].value;
-    return value ?? '';
-  };
-
-  onDataSourceChange = (event: ChangeEvent<HTMLSelectElement>) => {
+  onDataSourceChange = (option: SelectableValue<string>) => {
     this.props.onPropChange({ propName: 'query', propValue: '' });
-    this.props.onPropChange({ propName: 'datasource', propValue: event.target.value });
+    this.props.onPropChange({ propName: 'datasource', propValue: option.value });
   };
 
   onLegacyQueryChange = async (query: any, definition: string) => {
@@ -126,12 +121,12 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     }
   };
 
-  onRefreshChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    this.props.onPropChange({ propName: 'refresh', propValue: parseInt(event.target.value, 10) });
+  onRefreshChange = (option: SelectableValue<VariableRefresh>) => {
+    this.props.onPropChange({ propName: 'refresh', propValue: option.value });
   };
 
-  onSortChange = async (event: ChangeEvent<HTMLSelectElement>) => {
-    this.props.onPropChange({ propName: 'sort', propValue: parseInt(event.target.value, 10), updateOptions: true });
+  onSortChange = async (option: SelectableValue<VariableSort>) => {
+    this.props.onPropChange({ propName: 'sort', propValue: option.value, updateOptions: true });
   };
 
   onSelectionOptionsChange = async ({ propValue, propName }: OnPropChangeArguments<VariableWithMultiSupport>) => {
@@ -185,62 +180,28 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
 
   render() {
     return (
-      <>
-        <div className="gf-form-group">
-          <h5 className="section-heading">Query Options</h5>
-          <div className="gf-form-inline">
-            <div className="gf-form max-width-21">
-              <span className="gf-form-label width-10">Data source</span>
-              <div className="gf-form-select-wrapper max-width-14">
-                <select
-                  className="gf-form-input"
-                  value={this.getSelectedDataSourceValue()}
+      <VerticalGroup spacing="xs">
+        <VariableSectionHeader name="Query Options" />
+        <VerticalGroup spacing="md">
+          <VerticalGroup spacing="none">
+            <VerticalGroup spacing="xs">
+              <InlineFieldRow>
+                <QueryVariableDatasourceSelect
                   onChange={this.onDataSourceChange}
-                  required
-                  aria-label={
-                    selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect
-                  }
-                >
-                  {this.props.editor.extended?.dataSources?.length &&
-                    this.props.editor.extended?.dataSources.map(ds => (
-                      <option key={ds.value ?? ''} value={ds.value ?? ''} label={ds.name}>
-                        {ds.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="gf-form max-width-22">
-              <InlineFormLabel width={10} tooltip={'When to update the values of this variable.'}>
-                Refresh
-              </InlineFormLabel>
-              <div className="gf-form-select-wrapper width-15">
-                <select
-                  className="gf-form-input"
-                  value={this.props.variable.refresh}
-                  onChange={this.onRefreshChange}
-                  aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect}
-                >
-                  <option label="Never" value={VariableRefresh.never}>
-                    Never
-                  </option>
-                  <option label="On Dashboard Load" value={VariableRefresh.onDashboardLoad}>
-                    On Dashboard Load
-                  </option>
-                  <option label="On Time Range Change" value={VariableRefresh.onTimeRangeChanged}>
-                    On Time Range Change
-                  </option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {this.renderQueryEditor()}
-
-          <div className="gf-form">
-            <InlineFormLabel
-              width={10}
+                  datasource={this.props.variable.datasource}
+                  dataSources={this.props.editor.extended?.dataSources}
+                />
+                <QueryVariableRefreshSelect onChange={this.onRefreshChange} refresh={this.props.variable.refresh} />
+              </InlineFieldRow>
+              <div style={{ flexDirection: 'column' }}>{this.renderQueryEditor()}</div>
+            </VerticalGroup>
+            <VariableTextField
+              value={this.state.regex ?? this.props.variable.regex}
+              name="Regex"
+              placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
+              onChange={this.onRegExChange}
+              onBlur={this.onRegExBlur}
+              labelWidth={20}
               tooltip={
                 <div>
                   Optional, if you want to extract part of a series name or metric node segment. Named capture groups
@@ -254,114 +215,57 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
                   ).
                 </div>
               }
-            >
-              Regex
-            </InlineFormLabel>
-            <input
-              type="text"
-              className="gf-form-input"
-              placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
-              value={this.state.regex ?? this.props.variable.regex}
-              onChange={this.onRegExChange}
-              onBlur={this.onRegExBlur}
-              aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput}
+              ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInput}
+              grow
             />
-          </div>
-          <div className="gf-form max-width-21">
-            <InlineFormLabel width={10} tooltip={'How to sort the values of this variable.'}>
-              Sort
-            </InlineFormLabel>
-            <div className="gf-form-select-wrapper max-width-14">
-              <select
-                className="gf-form-input"
-                value={this.props.variable.sort}
-                onChange={this.onSortChange}
-                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelect}
-              >
-                <option label="Disabled" value={VariableSort.disabled}>
-                  Disabled
-                </option>
-                <option label="Alphabetical (asc)" value={VariableSort.alphabeticalAsc}>
-                  Alphabetical (asc)
-                </option>
-                <option label="Alphabetical (desc)" value={VariableSort.alphabeticalDesc}>
-                  Alphabetical (desc)
-                </option>
-                <option label="Numerical (asc)" value={VariableSort.numericalAsc}>
-                  Numerical (asc)
-                </option>
-                <option label="Numerical (desc)" value={VariableSort.numericalDesc}>
-                  Numerical (desc)
-                </option>
-                <option
-                  label="Alphabetical (case-insensitive, asc)"
-                  value={VariableSort.alphabeticalCaseInsensitiveAsc}
-                >
-                  Alphabetical (case-insensitive, asc)
-                </option>
-                <option
-                  label="Alphabetical (case-insensitive, desc)"
-                  value={VariableSort.alphabeticalCaseInsensitiveDesc}
-                >
-                  Alphabetical (case-insensitive, desc)
-                </option>
-              </select>
-            </div>
-          </div>
-        </div>
+            <QueryVariableSortSelect onChange={this.onSortChange} sort={this.props.variable.sort} />
+          </VerticalGroup>
 
-        <SelectionOptionsEditor
-          variable={this.props.variable}
-          onPropChange={this.onSelectionOptionsChange}
-          onMultiChanged={this.props.changeVariableMultiValue}
-        />
+          <SelectionOptionsEditor
+            variable={this.props.variable}
+            onPropChange={this.onSelectionOptionsChange}
+            onMultiChanged={this.props.changeVariableMultiValue}
+          />
 
-        <div className="gf-form-group">
-          <h5>Value groups/tags (Experimental feature)</h5>
-          <div
-            aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsEnabledSwitch}
-          >
-            <Switch
-              label="Enabled"
-              label-class="width-10"
-              checked={this.props.variable.useTags}
+          <VerticalGroup spacing="none">
+            <h5>Value groups/tags (Experimental feature)</h5>
+            <VariableSwitchField
+              value={this.props.variable.useTags}
+              name="Enabled"
               onChange={this.onUseTagsChange}
+              ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsEnabledSwitch}
             />
-          </div>
-          {this.props.variable.useTags && (
-            <>
-              <div className="gf-form last">
-                <span className="gf-form-label width-10">Tags query</span>
-                <input
-                  type="text"
-                  className="gf-form-input"
+            {this.props.variable.useTags ? (
+              <VerticalGroup spacing="none">
+                <VariableTextField
                   value={this.state.tagsQuery ?? this.props.variable.tagsQuery}
+                  name="Tags query"
                   placeholder="metric name or tags query"
                   onChange={this.onTagsQueryChange}
                   onBlur={this.onTagsQueryBlur}
-                  aria-label={
+                  ariaLabel={
                     selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsTagsQueryInput
                   }
+                  labelWidth={20}
+                  grow
                 />
-              </div>
-              <div className="gf-form">
-                <li className="gf-form-label width-10">Tag values query</li>
-                <input
-                  type="text"
-                  className="gf-form-input"
+                <VariableTextField
                   value={this.state.tagValuesQuery ?? this.props.variable.tagValuesQuery}
+                  name="Tag values query"
                   placeholder="apps.$tag.*"
                   onChange={this.onTagValuesQueryChange}
                   onBlur={this.onTagValuesQueryBlur}
-                  aria-label={
+                  ariaLabel={
                     selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.valueGroupsTagsTagsValuesQueryInput
                   }
+                  labelWidth={20}
+                  grow
                 />
-              </div>
-            </>
-          )}
-        </div>
-      </>
+              </VerticalGroup>
+            ) : null}
+          </VerticalGroup>
+        </VerticalGroup>
+      </VerticalGroup>
     );
   }
 }

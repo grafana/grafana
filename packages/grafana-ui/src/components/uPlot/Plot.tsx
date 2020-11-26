@@ -8,6 +8,7 @@ import { DataFrame, FieldType } from '@grafana/data';
 import isNumber from 'lodash/isNumber';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import isEqual from 'lodash/isEqual';
+import usePrevious from 'react-use/lib/usePrevious';
 
 // uPlot abstraction responsible for plot initialisation, setup and refresh
 // Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
