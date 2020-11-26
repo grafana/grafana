@@ -18,7 +18,7 @@ import { OptionsPaneContent } from './OptionsPaneContent';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
-import { SplitPaneWrapper } from 'app/core/components/ThreePaneSplit/SplitPaneWrapper';
+import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
