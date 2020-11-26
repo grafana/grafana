@@ -87,7 +87,7 @@ func NewSensuGoNotifier(model *models.AlertNotification) (alerting.Notifier, err
 		Check:        model.Settings.Get("check").MustString(),
 		Namespace:    model.Settings.Get("namespace").MustString(),
 		Handler:      model.Settings.Get("handler").MustString(),
-		APIKey:       model.DecryptedValue("apikey", model.Settings.Get("apikey").MustString()),
+		APIKey:       apikey,
 		log:          log.New("alerting.notifier.sensugo"),
 	}, nil
 }
