@@ -9,7 +9,7 @@ import {
 } from 'd3-force';
 import useMeasure from 'react-use/lib/useMeasure';
 import { response } from './x-ray-response';
-import { Button } from '@grafana/ui';
+import { Button } from '../Button';
 import { usePanning } from './usePanning';
 
 type NodeDatum = SimulationNodeDatum & { id: string; name: string; type: string; incoming: number };
@@ -21,7 +21,7 @@ type Props = {
 export function GraphView(props: Props) {
   const [nodes, setNodes] = useState<NodeDatum[]>([]);
   const [links, setLinks] = useState<LinkDatum[]>([]);
-  const [scale, setScale] = useState(1);
+  const [scale, setScale] = useState(0.5);
   const [measureRef, { width, height }] = useMeasure();
   const [showConfig, setShowConfig] = useState(false);
   const [config, setConfig] = useState({
@@ -64,7 +64,7 @@ export function GraphView(props: Props) {
   }, [config, props.services, useTestData]);
 
   return (
-    <div ref={measureRef} style={{ height: 600, width: '100%', overflow: 'hidden', position: 'relative' }}>
+    <div ref={measureRef} style={{ height: '100%', width: '100%', overflow: 'hidden', position: 'relative' }}>
       <svg
         ref={panRef}
         viewBox={`${-(width / 2)} ${-(height / 2)} ${width} ${height}`}
@@ -119,13 +119,13 @@ export function GraphView(props: Props) {
               Show test data
               <input type={'checkbox'} checked={useTestData} onChange={e => setUseTestData(e.currentTarget.checked)} />
             </div>
-            {Object.keys(config).map((k: keyof typeof config) => (
+            {Object.keys(config).map(k => (
               <div key={k}>
                 {k}
                 <input
                   style={{ width: 50 }}
                   type={'number'}
-                  value={config[k]}
+                  value={config[k as keyof typeof config]}
                   onChange={e => setConfig({ ...config, [k]: e.target.value })}
                 />
               </div>

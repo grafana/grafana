@@ -54,7 +54,7 @@ import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
-import { GraphView } from './ServiceGraph/GraphView';
+import { GraphView } from '@grafana/ui/src/components/ServiceMap/GraphView';
 // import { GraphViewCy } from './ServiceGraph/GraphViewCy';
 // import { GraphViewPlexus } from './ServiceGraph/GraphViewPlexus';
 // import { GraphViewDagre } from './ServiceGraph/GraphViewDagre';
@@ -414,7 +414,9 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                             )}
                           {/* TODO: This will break when we show map together with trace */}
                           {showServiceMap && queryResponse.series[0] && (
-                            <GraphView services={queryResponse.series[0].fields[0].values.toArray()} />
+                            <div style={{ height: 600 }}>
+                              <GraphView services={queryResponse.series[0].fields[0].values.toArray()} />
+                            </div>
                             /*<GraphViewDagre />*/
                             /*<GraphViewCy />*/
                             /*<GraphViewPlexus />*/

@@ -4,7 +4,7 @@ import { SimulationNodeDatum, SimulationLinkDatum } from 'd3-force';
 import useMeasure from 'react-use/lib/useMeasure';
 import { response } from './x-ray-response';
 import cytoscape, { ElementDefinition } from 'cytoscape';
-import { Button } from '@grafana/ui';
+import { Button } from '../../src/index';
 
 type NodeDatum = SimulationNodeDatum & { id: string; name: string; type: string; incoming: number };
 type LinkDatum = SimulationLinkDatum<NodeDatum>;

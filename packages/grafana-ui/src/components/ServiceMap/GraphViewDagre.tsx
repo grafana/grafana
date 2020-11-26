@@ -3,7 +3,7 @@ import { SimulationNodeDatum } from 'd3-force';
 import dagre, { GraphEdge, GraphLabel } from 'dagre';
 import useMeasure from 'react-use/lib/useMeasure';
 import { response } from './x-ray-response';
-import { Button } from '@grafana/ui';
+import { Button } from '../../src/index';
 
 type NodeDatum = SimulationNodeDatum & { id: string; name: string; type: string; incoming: number };
 
