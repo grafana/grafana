@@ -1,5 +1,5 @@
 import { QueryRunners } from './queryRunners';
-import { DefaultTimeRange, observableTester, VariableSupportType } from '@grafana/data';
+import { DefaultTimeRange, VariableSupportType } from '@grafana/data';
 import { VariableRefresh } from '../types';
 import { of } from 'rxjs';
 
@@ -41,17 +41,14 @@ describe('QueryRunners', () => {
       });
       const observable = runner.runRequest(runnerArgs, request);
 
-      it('then it should return correct observable', done => {
-        observableTester().subscribeAndExpectOnNext({
-          observable,
-          expect: values => {
-            expect(values).toEqual({
-              series: [{ text: 'A', value: 'A' }],
-              state: 'Done',
-              timeRange: { from: {}, raw: { from: '6h', to: 'now' }, to: {} },
-            });
-          },
-          done,
+      it('then it should return correct observable', async () => {
+        await expect(observable).toEmitValuesWith(received => {
+          const value = received[0];
+          expect(value).toEqual({
+            series: [{ text: 'A', value: 'A' }],
+            state: 'Done',
+            timeRange: { from: {}, raw: { from: '6h', to: 'now' }, to: {} },
+          });
         });
       });
 
@@ -86,17 +83,14 @@ describe('QueryRunners', () => {
       });
       const observable = runner.runRequest(runnerArgs, request);
 
-      it('then it should return correct observable', done => {
-        observableTester().subscribeAndExpectOnNext({
-          observable,
-          expect: values => {
-            expect(values).toEqual({
-              series: [{ text: 'A', value: 'A' }],
-              state: 'Done',
-              timeRange: { from: {}, raw: { from: '6h', to: 'now' }, to: {} },
-            });
-          },
-          done,
+      it('then it should return correct observable', async () => {
+        await expect(observable).toEmitValuesWith(received => {
+          const values = received[0];
+          expect(values).toEqual({
+            series: [{ text: 'A', value: 'A' }],
+            state: 'Done',
+            timeRange: { from: {}, raw: { from: '6h', to: 'now' }, to: {} },
+          });
         });
       });
 
@@ -161,13 +155,10 @@ describe('QueryRunners', () => {
       });
       const observable = runner.runRequest(runnerArgs, request);
 
-      it('then it should return correct observable', done => {
-        observableTester().subscribeAndExpectOnNext({
-          observable,
-          expect: value => {
-            expect(value).toEqual({});
-          },
-          done,
+      it('then it should return correct observable', async () => {
+        await expect(observable).toEmitValuesWith(received => {
+          const value = received[0];
+          expect(value).toEqual({});
         });
       });
 
@@ -183,13 +174,10 @@ describe('QueryRunners', () => {
       });
       const observable = runner.runRequest(runnerArgs, request);
 
-      it('then it should return correct observable', done => {
-        observableTester().subscribeAndExpectOnNext({
-          observable,
-          expect: value => {
-            expect(value).toEqual({});
-          },
-          done,
+      it('then it should return correct observable', async () => {
+        await expect(observable).toEmitValuesWith(received => {
+          const value = received[0];
+          expect(value).toEqual({});
         });
       });
 
@@ -234,13 +222,10 @@ describe('QueryRunners', () => {
       const { runner, request, runnerArgs, runRequest, datasource } = getCustomTestContext();
       const observable = runner.runRequest(runnerArgs, request);
 
-      it('then it should return correct observable', done => {
-        observableTester().subscribeAndExpectOnNext({
-          observable,
-          expect: value => {
-            expect(value).toEqual({});
-          },
-          done,
+      it('then it should return correct observable', async () => {
+        await expect(observable).toEmitValuesWith(received => {
+          const value = received[0];
+          expect(value).toEqual({});
         });
       });
 
@@ -285,13 +270,10 @@ describe('QueryRunners', () => {
       const { runner, request, runnerArgs, runRequest, datasource } = getDatasourceTestContext();
       const observable = runner.runRequest(runnerArgs, request);
 
-      it('then it should return correct observable', done => {
-        observableTester().subscribeAndExpectOnNext({
-          observable,
-          expect: value => {
-            expect(value).toEqual({});
-          },
-          done,
+      it('then it should return correct observable', async () => {
+        await expect(observable).toEmitValuesWith(received => {
+          const value = received[0];
+          expect(value).toEqual({});
         });
       });
 

@@ -1,64 +1,90 @@
 import {
   DataFrame,
-  FieldType,
-  getTimeField,
   ArrayVector,
   NullValueMode,
   getFieldDisplayName,
   Field,
+  fieldMatchers,
+  FieldMatcherID,
 } from '@grafana/data';
 import { AlignedFrameWithGapTest } from '../uPlot/types';
 import uPlot, { AlignedData, AlignedDataWithGapTest } from 'uplot';
+import { XYFieldMatchers } from './GraphNG';
+
+// the results ofter passing though data
+export interface XYDimensionFields {
+  x: Field[];
+  y: Field[];
+}
+
+export function mapDimesions(match: XYFieldMatchers, frame: DataFrame, frames?: DataFrame[]): XYDimensionFields {
+  const out: XYDimensionFields = {
+    x: [],
+    y: [],
+  };
+  for (const field of frame.fields) {
+    if (match.x(field, frame, frames ?? [])) {
+      out.x.push(field);
+    }
+    if (match.y(field, frame, frames ?? [])) {
+      out.y.push(field);
+    }
+  }
+  return out;
+}
 
 /**
  * Returns a single DataFrame with:
  * - A shared time column
  * - only numeric fields
  *
- * The input expects all frames to have a time field with values in ascending order
- *
  * @alpha
  */
-export function mergeTimeSeriesData(frames: DataFrame[]): AlignedFrameWithGapTest | null {
+export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): AlignedFrameWithGapTest | null {
   const valuesFromFrames: AlignedData[] = [];
   const sourceFields: Field[] = [];
 
+  // Default to timeseries config
+  if (!fields) {
+    fields = {
+      x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
+      y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
+    };
+  }
+
   for (const frame of frames) {
-    const { timeField } = getTimeField(frame);
-    if (!timeField) {
-      continue;
+    const dims = mapDimesions(fields, frame, frames);
+    if (!(dims.x.length && dims.y.length)) {
+      continue; // both x and y matched something!
+    }
+
+    if (dims.x.length > 1) {
+      throw new Error('Only a single x field is supported');
+    }
+
+    // Add the first X axis
+    if (!sourceFields.length) {
+      sourceFields.push(dims.x[0]);
     }
 
     const alignedData: AlignedData = [
-      timeField.values.toArray(), // The x axis (time)
+      dims.x[0].values.toArray(), // The x axis (time)
     ];
 
-    // find numeric fields
-    for (const field of frame.fields) {
-      if (field.type !== FieldType.number) {
-        continue;
-      }
-
+    // Add the Y values
+    for (const field of dims.y) {
       let values = field.values.toArray();
       if (field.config.nullValueMode === NullValueMode.AsZero) {
         values = values.map(v => (v === null ? 0 : v));
       }
       alignedData.push(values);
 
-      // Add the first time field
-      if (sourceFields.length < 1) {
-        sourceFields.push(timeField);
-      }
-
       // This will cache an appropriate field name in the field state
       getFieldDisplayName(field, frame, frames);
       sourceFields.push(field);
     }
 
-    // Timeseries has tima and at least one number
-    if (alignedData.length > 1) {
-      valuesFromFrames.push(alignedData);
-    }
+    valuesFromFrames.push(alignedData);
   }
 
   if (valuesFromFrames.length === 0) {

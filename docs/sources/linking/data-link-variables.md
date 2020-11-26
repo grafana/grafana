@@ -27,13 +27,13 @@ These variables allow you to include the current time range in the data link URL
 Series specific variables are available under ``__series`` namespace:
 
 - ``__series.name`` - series name to the URL
-- ``__series.labels.<LABEL>`` - label's value to the URL. If your label contains dots, then use ``__series.labels["<LABEL>"]`` syntax.
 
 ## Field variables
 
 Field-specific variables are available under ``__field`` namespace:
 
 - ``__field.name`` - the name of the field
+- ``__field.labels.<LABEL>`` - label's value to the URL. If your label contains dots, then use ``__field.labels["<LABEL>"]`` syntax.
 
 ## Value variables
 
