@@ -293,7 +293,6 @@ describe('applyFieldOverrides', () => {
       replaceVariables: (undefined as any) as InterpolateFunction,
       getDataSourceSettingsByUid: undefined as any,
       theme: getTestTheme(),
-      autoMinMax: true,
     })[0];
     const valueColumn = data.fields[1];
     const config = valueColumn.config;
@@ -317,7 +316,6 @@ describe('applyFieldOverrides', () => {
       }) as InterpolateFunction,
       getDataSourceSettingsByUid: undefined as any,
       theme: getTestTheme(),
-      autoMinMax: true,
       fieldConfigRegistry: customFieldRegistry,
     })[0];
 
