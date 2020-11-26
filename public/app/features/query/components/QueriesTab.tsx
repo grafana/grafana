@@ -2,7 +2,6 @@
 import React, { PureComponent } from 'react';
 // Components
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
-import { QueryOptions } from './QueryOptions';
 import { Button, CustomScrollbar, HorizontalGroup, Modal, stylesFactory, Field } from '@grafana/ui';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
@@ -33,7 +32,7 @@ interface Props {
   dashboard?: DashboardModel;
   queryRunner: PanelQueryRunner;
   queries: DataQuery[];
-  datasourceName: string | null;
+  dataSourceName: string | null;
   onRunQueries: () => void;
   onQueriesChange: (queries: DataQuery[]) => void;
   onDataSourceChange: (ds: DataSourceSelectItem, queries: DataQuery[]) => void;
@@ -59,7 +58,7 @@ export class QueriesTab extends PureComponent<Props, State> {
 
   state: State = {
     isLoadingHelp: false,
-    dataSourceItem: this.findCurrentDataSource(this.props.datasourceName),
+    dataSourceItem: this.findCurrentDataSource(this.props.dataSourceName),
     helpContent: null,
     isPickerOpen: false,
     isAddingMixed: false,
@@ -73,7 +72,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    const { queryRunner, datasourceName } = this.props;
+    const { queryRunner, dataSourceName: datasourceName } = this.props;
 
     this.querySubscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
       next: (data: PanelData) => this.onPanelDataUpdate(data),
@@ -262,7 +261,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderQueries() {
-    const { onQueriesChange, dashboard, queries } = this.props;
+    const { onQueriesChange, dashboard, queries, onRunQueries } = this.props;
     const { dataSourceItem, data } = this.state;
 
     // if (isSharedDashboardQuery(dataSourceItem.name)) {
@@ -276,6 +275,7 @@ export class QueriesTab extends PureComponent<Props, State> {
           datasource={dataSourceItem}
           onQueriesChange={onQueriesChange}
           onAddQuery={this.onAddQuery}
+          onRunQueries={onRunQueries}
           dashboard={dashboard}
           data={data}
         />

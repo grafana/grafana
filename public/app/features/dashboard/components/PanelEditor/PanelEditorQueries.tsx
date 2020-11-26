@@ -13,6 +13,7 @@ export class PanelEditorQueries extends PureComponent<Props> {
     const { panel } = this.props;
 
     panel.datasource = ds.value;
+    panel.targets = queries;
     panel.refresh();
 
     this.forceUpdate();
@@ -36,7 +37,7 @@ export class PanelEditorQueries extends PureComponent<Props> {
 
     return (
       <QueriesTab
-        datasourceName={panel.datasource}
+        dataSourceName={panel.datasource}
         queryRunner={panel.getQueryRunner()}
         queries={panel.targets}
         onQueriesChange={this.onQueriesChange}

@@ -15,6 +15,7 @@ interface Props {
   // Query editing
   onQueriesChange: (queries: DataQuery[]) => void;
   onAddQuery: (query: DataQuery) => void;
+  onRunQueries: () => void;
 
   // Dashboard Configs
   //panel: PanelModel;
@@ -72,6 +73,7 @@ export class QueryEditorRows extends PureComponent<Props> {
 
   render() {
     const { props } = this;
+
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
         <Droppable droppableId="transformations-list" direction="vertical">
@@ -84,13 +86,13 @@ export class QueryEditorRows extends PureComponent<Props> {
                     id={query.refId}
                     index={index}
                     key={query.refId}
-                    panel={props.panel}
                     dashboard={props.dashboard}
                     data={props.data}
                     query={query}
                     onChange={query => this.onChangeQuery(query, index)}
                     onRemoveQuery={this.onRemoveQuery}
-                    onAddQuery={this.onAddQuery}
+                    onAddQuery={this.props.onAddQuery}
+                    onRunQuery={this.props.onRunQueries}
                     inMixedMode={props.datasource.meta.mixed}
                   />
                 ))}
