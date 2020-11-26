@@ -10,7 +10,7 @@ export interface ScaleProps {
 
 export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
   getConfig() {
-    const { isTime, scaleKey, min, max } = this.props;
+    const { isTime, scaleKey } = this.props;
     if (isTime) {
       return {
         [scaleKey]: {
@@ -21,8 +21,9 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     return {
       [scaleKey]: {
         range: (u: uPlot, initMin: number, initMax: number) => {
-          const [rmin, rmax] = uPlot.rangeNum(initMin, initMax, 0.05 as any, true);
-          return [min ?? rmin, max ?? rmax];
+          const { min, max } = this.props;
+          const [smin, smax] = uPlot.rangeNum(initMin, initMax, 0.05 as any, true);
+          return [min ?? smin, max ?? smax];
         },
       },
     };
