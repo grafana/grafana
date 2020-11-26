@@ -753,7 +753,7 @@ def release_next_npm_packages_step(edition):
         },
         'commands': [
             './node_modules/.bin/lerna bootstrap',
-            'echo "//npm.pkg.github.com/:_authToken=$${GITHUB_PACKAGE_TOKEN} >> ~/.npmrc',
+            'echo "//npm.pkg.github.com/:_authToken=$${GITHUB_PACKAGE_TOKEN}" >> ~/.npmrc',
             './scripts/circle-release-next-packages.sh',
         ],
     }
