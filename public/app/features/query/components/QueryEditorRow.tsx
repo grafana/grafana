@@ -81,7 +81,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       panel: panel,
       dashboard: dashboard!,
       refresh: () => panel.refresh(),
-      render: () => panel.render(),
+      render: () => () => console.log('legacy render function called, it does nothing'),
       events: panel.events,
       range: getTimeSrv().timeRange(),
     };
@@ -141,13 +141,16 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     if (!this.element) {
       return;
     }
+
     if (this.angularQueryEditor) {
       this.angularQueryEditor.destroy();
       this.angularQueryEditor = null;
     }
+
     const loader = getAngularLoader();
     const template = '<plugin-component type="query-ctrl" />';
     const scopeProps = { ctrl: this.getAngularQueryComponentScope() };
+
     this.angularQueryEditor = loader.load(this.element, scopeProps, template);
     this.angularScope = scopeProps.ctrl;
   };

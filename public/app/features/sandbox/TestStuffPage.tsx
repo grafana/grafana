@@ -10,7 +10,7 @@ export const TestStuffPage: FC = () => {
   const [state] = useState<State>(getDefaultState());
 
   return (
-    <div style={{ padding: '50px' }}>
+    <div style={{ padding: '50px', height: '100%', flexGrow: 1 }} className="page-scrollbar-wrapper">
       <h2>Hello</h2>
 
       <QueriesTab panel={state.panel} />
