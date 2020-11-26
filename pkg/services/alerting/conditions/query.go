@@ -366,9 +366,8 @@ func toCustomError(err error) error {
 	}
 
 	// is Prometheus error
-	var e prometheus.PrometheusError
-	if errors.As(err, &e) {
-		return err
+	if prometheus.IsAPIError(err) {
+		return prometheus.WrapAPIError(err)
 	}
 
 	// generic fallback

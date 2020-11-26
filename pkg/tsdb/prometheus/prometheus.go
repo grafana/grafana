@@ -21,8 +21,6 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-type PrometheusError error
-
 type PrometheusExecutor struct {
 	Transport http.RoundTripper
 }
@@ -118,7 +116,7 @@ func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 		value, _, err := client.QueryRange(ctx, query.Expr, timeRange)
 
 		if err != nil {
-			return nil, wrapAsPrometheusError(err)
+			return nil, err
 		}
 
 		queryResult, err := parseResponse(value, query)
@@ -220,7 +218,12 @@ func parseResponse(value model.Value, query *PrometheusQuery) (*tsdb.QueryResult
 	return queryRes, nil
 }
 
-func wrapAsPrometheusError(err error) PrometheusError {
+func IsAPIError(err error) bool {
+	var e *apiv1.Error
+	return errors.As(err, &e)
+}
+
+func WrapAPIError(err error) error {
 	var e *apiv1.Error
 	if errors.As(err, &e) {
 		return fmt.Errorf("%s: %s", e.Msg, e.Detail)
