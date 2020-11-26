@@ -103,11 +103,14 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 			}
 			readyToRun := make([]readyToRunItem, 0)
 			for _, item := range alertDefinitions {
-				newRoutine := !ng.schedule.channelMap.exists(item.Id)
-				definitionCh := ng.schedule.channelMap.getOrCreateChannel(item.Id)
+				itemID := item.Id
+				newRoutine := !ng.schedule.channelMap.exists(itemID)
+				definitionCh := ng.schedule.channelMap.getOrCreateChannel(itemID)
 
 				if newRoutine {
-					dispatcherGroup.Go(func() error { return ng.definitionRoutine(ctx, item.Id, definitionCh.ch) })
+					dispatcherGroup.Go(func() error {
+						return ng.definitionRoutine(ctx, itemID, definitionCh.ch)
+					})
 				}
 
 				if tick.Unix()%item.Interval == 0 {
