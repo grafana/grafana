@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { PlotPlugin } from './types';
 import { pluginLog } from './utils';
 import uPlot, { Options } from 'uplot';
@@ -108,8 +108,10 @@ export const DEFAULT_PLOT_CONFIG = {
 //pass plain confsig object,memoize!
 export const usePlotConfig = (width: number, height: number, timeZone: TimeZone, configBuilder: UPlotConfigBuilder) => {
   const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
-  const [currentConfig, setCurrentConfig] = useState<Options>();
+  const [isConfigReady, setIsConfigReady] = useState(false);
+  // const [currentConfig, setCurrentConfig] = useState<Options>();
 
+  const currentConfig = useRef<Options>();
   const tzDate = useMemo(() => {
     let fmt = undefined;
 
@@ -122,11 +124,19 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
     return fmt;
   }, [timeZone]);
 
-  useEffect(() => {
+  // useEffect(() => {
+  //   console.log('are plugins ready effect', arePluginsReady);
+  // }, [arePluginsReady]);
+  //
+  // useLayoutEffect(() => {
+  //   console.log('are plugins ready layout effect', arePluginsReady);
+  // }, [arePluginsReady]);
+  useLayoutEffect(() => {
+    console.log('are plugins ready layout effect', arePluginsReady);
     if (!arePluginsReady) {
       return;
     }
-    setCurrentConfig({
+    currentConfig.current = {
       ...DEFAULT_PLOT_CONFIG,
       width,
       height,
@@ -136,10 +146,12 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
       })),
       tzDate,
       ...configBuilder.getConfig(),
-    });
+    };
+    setIsConfigReady(true);
   }, [arePluginsReady, plugins, width, height, tzDate, configBuilder]);
 
   return {
+    isConfigReady,
     registerPlugin,
     currentConfig,
   };
@@ -179,7 +191,7 @@ export function useRevision<T>(dep: T, cmp: (prev: T, next: T) => boolean) {
   const prevDep = usePrevious(dep);
 
   useEffect(() => {
-    const hasConfigChanged = prevDep ? !cmp(prevDep, dep) : true;
+    const hasConfigChanged = prevDep ? !cmp(prevDep, dep) : false;
     if (hasConfigChanged) {
       setRev(r => r + 1);
     }
@@ -187,3 +199,31 @@ export function useRevision<T>(dep: T, cmp: (prev: T, next: T) => boolean) {
 
   return rev;
 }
+//
+// export function useRevisionArray<T extends any[]>(dep: T, cmp?: (prev: T, next: T) => boolean) {
+//   const [rev, setRev] = useState([]);
+//   const prevDep = usePrevious(dep);
+//
+//   const compare = cmp
+//     ? cmp
+//     : (a: any[], b: any[]) => {
+//         const res = new Array(a.length);
+//
+//         for (let i = 0; i < a.length; i++) {
+//           if (a[i] !== b[1]) {
+//             res[i] = false;
+//           } else {
+//             res[i] = false;
+//           }
+//         }
+//
+//         return res;
+//       };
+//
+//   useEffect(() => {
+//     const res = prevDep ? !compare(prevDep, dep) : ;
+//
+//   }, [dep]);
+//
+//   return rev;
+// }
