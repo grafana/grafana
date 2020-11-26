@@ -215,6 +215,18 @@ steps:
   - test-backend
   - test-frontend
 
+- name: release-next-npm-packages
+  image: grafana/build-container:1.2.30
+  commands:
+  - ./node_modules/.bin/lerna bootstrap
+  - echo "//npm.pkg.github.com/:_authToken=$${GITHUB_PACKAGE_TOKEN} >> ~/.npmrc
+  - ./scripts/circle-release-next-packages.sh
+  environment:
+    GITHUB_PACKAGE_TOKEN:
+      from_secret: github_package_token
+  depends_on:
+  - end-to-end-tests
+
 services:
 - name: postgres
   image: postgres:12.3-alpine
@@ -510,11 +522,11 @@ steps:
   image: grafana/build-container:1.3.0
   commands:
   - ./node_modules/.bin/lerna bootstrap
-  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
+  - echo "//npm.pkg.github.com/:_authToken=$${GITHUB_PACKAGE_TOKEN} >> ~/.npmrc
   - ./scripts/circle-release-next-packages.sh
   environment:
-    NPM_TOKEN:
-      from_secret: npm_token
+    GITHUB_PACKAGE_TOKEN:
+      from_secret: github_package_token
   depends_on:
   - end-to-end-tests
 
