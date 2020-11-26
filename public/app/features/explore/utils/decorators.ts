@@ -23,7 +23,7 @@ import { LegendDisplayMode } from '@grafana/ui';
  * dataFrames with different type of data. This is later used for type specific processing. As we use this in
  * Observable pipeline, it decorates the existing panelData to pass the results to later processing stages.
  */
-export const decorateWithGraphLogsTraceAndTable = (data: PanelData): ExplorePanelData => {
+export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData => {
   if (data.error) {
     return {
       ...data,
@@ -31,6 +31,7 @@ export const decorateWithGraphLogsTraceAndTable = (data: PanelData): ExplorePane
       tableFrames: [],
       logsFrames: [],
       traceFrames: [],
+      serviceMapFrames: [],
       graphResult: null,
       tableResult: null,
       logsResult: null,
@@ -41,6 +42,7 @@ export const decorateWithGraphLogsTraceAndTable = (data: PanelData): ExplorePane
   const tableFrames: DataFrame[] = [];
   const logsFrames: DataFrame[] = [];
   const traceFrames: DataFrame[] = [];
+  const serviceMapFrames: DataFrame[] = [];
 
   for (const frame of data.series) {
     switch (frame.meta?.preferredVisualisationType) {
@@ -55,6 +57,9 @@ export const decorateWithGraphLogsTraceAndTable = (data: PanelData): ExplorePane
         break;
       case 'table':
         tableFrames.push(frame);
+        break;
+      case 'serviceMap':
+        serviceMapFrames.push(frame);
         break;
       default:
         if (isTimeSeries(frame)) {
@@ -73,6 +78,7 @@ export const decorateWithGraphLogsTraceAndTable = (data: PanelData): ExplorePane
     tableFrames,
     logsFrames,
     traceFrames,
+    serviceMapFrames,
     graphResult: null,
     tableResult: null,
     logsResult: null,

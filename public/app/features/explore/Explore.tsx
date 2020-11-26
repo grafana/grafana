@@ -54,6 +54,10 @@ import { ExploreGraphPanel } from './ExploreGraphPanel';
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
+import { GraphView } from './ServiceGraph/GraphView';
+// import { GraphViewCy } from './ServiceGraph/GraphViewCy';
+// import { GraphViewPlexus } from './ServiceGraph/GraphViewPlexus';
+// import { GraphViewDagre } from './ServiceGraph/GraphViewDagre';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -114,6 +118,7 @@ export interface ExploreProps {
   showTable: boolean;
   showLogs: boolean;
   showTrace: boolean;
+  showServiceMap: boolean;
   splitOpen: typeof splitOpen;
 }
 
@@ -304,6 +309,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       showTable,
       showLogs,
       showTrace,
+      showServiceMap,
       splitOpen,
     } = this.props;
     const { openDrawer } = this.state;
@@ -406,6 +412,13 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                                 splitOpenFn={splitOpen}
                               />
                             )}
+                          {/* TODO: This will break when we show map together with trace */}
+                          {showServiceMap && queryResponse.series[0] && (
+                            <GraphView services={queryResponse.series[0].fields[0].values.toArray()} />
+                            /*<GraphViewDagre />*/
+                            /*<GraphViewCy />*/
+                            /*<GraphViewPlexus />*/
+                          )}
                         </>
                       )}
                       {showRichHistory && (
@@ -459,6 +472,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     loading,
     absoluteRange,
     queryResponse,
+    showServiceMap,
   } = item;
 
   const { datasource, queries, range: urlRange, originPanelId } = (urlState || {}) as ExploreUrlState;
@@ -491,6 +505,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showMetrics,
     showTable,
     showTrace,
+    showServiceMap,
   };
 }
 

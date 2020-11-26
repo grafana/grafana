@@ -173,6 +173,7 @@ export interface ExploreItemState {
   showMetrics?: boolean;
   showTable?: boolean;
   showTrace?: boolean;
+  showServiceMap?: boolean;
 }
 
 export interface ExploreUpdateState {
@@ -216,6 +217,7 @@ export interface ExplorePanelData extends PanelData {
   tableFrames: DataFrame[];
   logsFrames: DataFrame[];
   traceFrames: DataFrame[];
+  serviceMapFrames: DataFrame[];
   graphResult: GraphSeriesXY[] | null;
   tableResult: DataFrame | null;
   logsResult: LogsModel | null;

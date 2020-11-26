@@ -29,7 +29,7 @@ import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { notifyApp } from '../../../core/actions';
 import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
 import {
-  decorateWithGraphLogsTraceAndTable,
+  decorateWithFrameTypeMetadata,
   decorateWithGraphResult,
   decorateWithLogsResult,
   decorateWithTableResult,
@@ -356,7 +356,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
         // actually can see what is happening.
         live ? throttleTime(500) : identity,
         map((data: PanelData) => preProcessPanelData(data, queryResponse)),
-        map(decorateWithGraphLogsTraceAndTable),
+        map(decorateWithFrameTypeMetadata),
         map(decorateWithGraphResult),
         map(decorateWithLogsResult({ absoluteRange, refreshInterval })),
         mergeMap(decorateWithTableResult)
@@ -642,7 +642,17 @@ export const processQueryResponse = (
   action: PayloadAction<QueryEndedPayload>
 ): ExploreItemState => {
   const { response } = action.payload;
-  const { request, state: loadingState, series, error, graphResult, logsResult, tableResult, traceFrames } = response;
+  const {
+    request,
+    state: loadingState,
+    series,
+    error,
+    graphResult,
+    logsResult,
+    tableResult,
+    traceFrames,
+    serviceMapFrames,
+  } = response;
 
   if (error) {
     if (error.type === DataQueryErrorType.Timeout) {
@@ -695,5 +705,6 @@ export const processQueryResponse = (
     showMetrics: !!graphResult,
     showTable: !!tableResult,
     showTrace: !!traceFrames.length,
+    showServiceMap: !!serviceMapFrames.length,
   };
 };

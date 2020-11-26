@@ -15,10 +15,11 @@
         "react/no-unescaped-entities": "off",
         "react/display-name": "off",
         "react/no-deprecated": "off",
-        "react/no-unknown-property": "off", 
+        "react/no-unknown-property": "off",
         "react/no-children-prop": "off",
         "react/no-find-dom-node": "off",
-        "react/no-render-return-value": "off"
+        "react/no-render-return-value": "off",
+        "@typescript-eslint/array-type": "off",
       }
     }
   ]
