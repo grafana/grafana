@@ -21,6 +21,7 @@ import {
   VariableModel,
   VariableQueryEditorType,
   VariableWithMultiSupport,
+  VariableWithOptions,
 } from './types';
 import { VariableQueryProps } from '../../types';
 import { LEGACY_VARIABLE_QUERY_EDITOR_NAME } from './editor/LegacyVariableQueryEditor';
@@ -40,6 +41,15 @@ export const isConstant = (model: VariableModel): model is ConstantVariableModel
 export const isMulti = (model: VariableModel): model is VariableWithMultiSupport => {
   const withMulti = model as VariableWithMultiSupport;
   return withMulti.hasOwnProperty('multi') && typeof withMulti.multi === 'boolean';
+};
+
+export const hasOptions = (model: VariableModel): model is VariableWithOptions => {
+  if (!model) {
+    return false;
+  }
+
+  const withOptions = model as VariableWithOptions;
+  return withOptions.hasOwnProperty('options') && typeof withOptions.options === 'object';
 };
 
 interface DataSourceWithLegacyVariableSupport<

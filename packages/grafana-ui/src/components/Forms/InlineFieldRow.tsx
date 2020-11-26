@@ -1,4 +1,4 @@
-import React, { FC, ReactNode, HTMLProps } from 'react';
+import React, { FC, HTMLProps, ReactNode } from 'react';
 import { css, cx } from 'emotion';
 import { useStyles } from '../../themes';
 
@@ -18,6 +18,7 @@ export const InlineFieldRow: FC<Props> = ({ children, className, ...htmlProps })
 const getStyles = () => {
   return {
     container: css`
+      label: InlineFieldRow;
       display: flex;
       flex-direction: row;
       flex-wrap: wrap;
