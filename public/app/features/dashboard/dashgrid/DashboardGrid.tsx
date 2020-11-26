@@ -102,9 +102,9 @@ export interface Props {
 }
 
 export class DashboardGrid extends PureComponent<Props> {
-  panelMap: { [id: string]: PanelModel };
-  panelRef: { [id: string]: HTMLElement } = {};
-  eventSubs: Subscription = new Subscription();
+  private panelMap: { [id: string]: PanelModel };
+  private panelRef: { [id: string]: HTMLElement } = {};
+  private eventSubs = new Subscription();
 
   componentDidMount() {
     const { dashboard } = this.props;

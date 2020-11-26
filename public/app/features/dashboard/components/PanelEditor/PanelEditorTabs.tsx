@@ -6,8 +6,9 @@ import { QueriesTab } from '../../panel_editor/QueriesTab';
 import { AlertTab } from 'app/features/alerting/AlertTab';
 import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
 import { DashboardModel, PanelModel } from '../../state';
-import { CoreEvents } from 'app/types';
 import { PanelEditorTab, PanelEditorTabId } from './types';
+import { Subscription } from 'rxjs';
+import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 
 interface PanelEditorTabsProps {
   panel: PanelModel;
@@ -17,16 +18,16 @@ interface PanelEditorTabsProps {
 }
 
 export class PanelEditorTabs extends PureComponent<PanelEditorTabsProps> {
+  private eventSubs = new Subscription();
+
   componentDidMount() {
-    const { panel } = this.props;
-    panel.on(CoreEvents.queryChanged, this.triggerForceUpdate);
-    panel.on(CoreEvents.transformationChanged, this.triggerForceUpdate);
+    const { events } = this.props.panel;
+    this.eventSubs.add(events.subscribe(PanelQueriesChangedEvent, this.triggerForceUpdate));
+    this.eventSubs.add(events.subscribe(PanelTransformationsChangedEvent, this.triggerForceUpdate));
   }
 
   componentWillUnmount() {
-    const { panel } = this.props;
-    panel.off(CoreEvents.queryChanged, this.triggerForceUpdate);
-    panel.off(CoreEvents.transformationChanged, this.triggerForceUpdate);
+    this.eventSubs.unsubscribe();
   }
 
   triggerForceUpdate = () => {

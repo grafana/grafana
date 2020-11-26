@@ -121,8 +121,21 @@ export const elasticQueryUpdated = eventFactory('elastic-query-updated');
 
 export const routeUpdated = eventFactory('$routeUpdate');
 
-export const queryChanged = eventFactory('queryChanged');
-export const transformationChanged = eventFactory('transformationChanged');
+/**
+ * Used for syncing queries badge count in panel edit queries tab
+ * Think we can get rid of this soon
+ */
+export class PanelQueriesChangedEvent extends BusEventBase {
+  static type = 'panel-queries-changed';
+}
+
+/**
+ * Used for syncing transformations badge count in panel edit transform tab
+ * Think we can get rid of this soon
+ */
+export class PanelTransformationsChangedEvent extends BusEventBase {
+  static type = 'panel-transformations-changed';
+}
 
 /**
  * Used internally by DashboardModel to commmunicate with DashboardGrid that it needs to re-render
