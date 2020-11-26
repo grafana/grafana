@@ -225,7 +225,7 @@ func IsAPIError(err error) bool {
 	return errors.As(err, &e)
 }
 
-func WrapAPIError(err error) error {
+func ConvertAPIError(err error) error {
 	var e *apiv1.Error
 	if errors.As(err, &e) {
 		return fmt.Errorf("%s: %s", e.Msg, e.Detail)
