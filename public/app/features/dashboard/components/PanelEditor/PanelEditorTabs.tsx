@@ -2,13 +2,13 @@ import React, { PureComponent } from 'react';
 import { config } from 'app/core/config';
 import { css } from 'emotion';
 import { IconName, stylesFactory, Tab, TabContent, TabsBar } from '@grafana/ui';
-import { QueriesTab } from '../../panel_editor/QueriesTab';
 import { AlertTab } from 'app/features/alerting/AlertTab';
 import { TransformationsEditor } from '../TransformationsEditor/TransformationsEditor';
 import { DashboardModel, PanelModel } from '../../state';
 import { PanelEditorTab, PanelEditorTabId } from './types';
 import { Subscription } from 'rxjs';
 import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
+import { PanelEditorQueries } from './PanelEditorQueries';
 
 interface PanelEditorTabsProps {
   panel: PanelModel;
@@ -76,7 +76,7 @@ export class PanelEditorTabs extends PureComponent<PanelEditorTabsProps> {
           })}
         </TabsBar>
         <TabContent className={styles.tabContent}>
-          {activeTab.id === PanelEditorTabId.Query && <QueriesTab panel={panel} dashboard={dashboard} />}
+          {activeTab.id === PanelEditorTabId.Query && <PanelEditorQueries panel={panel} dashboard={dashboard} />}
           {activeTab.id === PanelEditorTabId.Alert && <AlertTab panel={panel} dashboard={dashboard} />}
           {activeTab.id === PanelEditorTabId.Transform && <TransformationsEditor panel={panel} />}
         </TabContent>
