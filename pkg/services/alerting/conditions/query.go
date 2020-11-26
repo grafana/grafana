@@ -1,9 +1,12 @@
 package conditions
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
+
+	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 
 	gocontext "context"
 
@@ -113,7 +116,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {
-		return nil, fmt.Errorf("Could not find datasource %v", err)
+		return nil, fmt.Errorf("could not find datasource: %w", err)
 	}
 
 	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange, context.IsDebug)
@@ -158,11 +161,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 
 	resp, err := c.HandleRequest(context.Ctx, getDsInfo.Result, req)
 	if err != nil {
-		if err == gocontext.DeadlineExceeded {
-			return nil, fmt.Errorf("Alert execution exceeded the timeout")
-		}
-
-		return nil, fmt.Errorf("tsdb.HandleRequest() error %v", err)
+		return nil, toCustomError(err)
 	}
 
 	for _, v := range resp.Results {
@@ -358,4 +357,19 @@ func FrameToSeriesSlice(frame *data.Frame) (tsdb.TimeSeriesSlice, error) {
 	}
 
 	return seriesSlice, nil
+}
+
+func toCustomError(err error) error {
+	// is context timeout
+	if errors.Is(err, gocontext.DeadlineExceeded) {
+		return fmt.Errorf("alert execution exceeded the timeout")
+	}
+
+	// is Prometheus error
+	if prometheus.IsAPIError(err) {
+		return prometheus.ConvertAPIError(err)
+	}
+
+	// generic fallback
+	return fmt.Errorf("tsdb.HandleRequest() error %v", err)
 }
