@@ -286,8 +286,6 @@ export class DashboardModel {
   }
 
   panelInitialized(panel: PanelModel) {
-    panel.initialized();
-
     const lastResult = panel.getQueryRunner().getLastResult();
 
     if (!this.otherPanelInFullscreen(panel) && !lastResult) {

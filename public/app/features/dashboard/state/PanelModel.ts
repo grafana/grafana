@@ -27,7 +27,7 @@ import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
 import { PanelQueryRunner } from './PanelQueryRunner';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
+import { PanelOptionsChangedEvent, PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 
 export interface GridPos {
   x: number;
@@ -214,6 +214,7 @@ export class PanelModel implements DataConfigSource {
 
   updateOptions(options: object) {
     this.options = options;
+    this.events.publish(new PanelOptionsChangedEvent());
     this.render();
   }
 
@@ -284,10 +285,6 @@ export class PanelModel implements DataConfigSource {
     } else {
       this.events.emit(PanelEvents.render);
     }
-  }
-
-  initialized() {
-    this.events.emit(PanelEvents.panelInitialized);
   }
 
   private getOptionsToRemember() {
