@@ -24,7 +24,7 @@ import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { getFieldMatcher } from '../transformations';
 import { FieldMatcherID } from '../transformations/matchers/ids';
-import { findNumericFieldMinMax } from './rangeUtils';
+import { FieldMinMaxInfo, findNumericFieldMinMax } from './scale';
 
 /**
  * Options for how to turn DataFrames into an array of display values
@@ -109,7 +109,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
     const scopedVars: ScopedVars = {};
     const defaultDisplayName = getTitleTemplate(calcs);
 
-    let range: GlobalMinMa | undefined = undefined;
+    let range: FieldMinMaxInfo | undefined = undefined;
 
     for (let s = 0; s < data.length && !hitLimit; s++) {
       const series = data[s]; // Name is already set

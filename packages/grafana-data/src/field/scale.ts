@@ -34,7 +34,7 @@ export function getScaleCalculator(field: Field, theme: GrafanaTheme): ScaleCalc
   };
 }
 
-interface FieldMinMaxInfo {
+export interface FieldMinMaxInfo {
   min?: number | null;
   max?: number | null;
   delta: number;
@@ -71,12 +71,7 @@ function getMinMaxAndDelta(field: Field): FieldMinMaxInfo {
   };
 }
 
-interface GlobalMinMax {
-  min?: number | null;
-  max?: number | null;
-}
-
-export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
+export function findNumericFieldMinMax(data: DataFrame[]): FieldMinMaxInfo {
   let min: number | null = null;
   let max: number | null = null;
 
@@ -100,5 +95,5 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
     }
   }
 
-  return { min, max };
+  return { min, max, delta: 0 };
 }
