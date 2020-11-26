@@ -1,7 +1,7 @@
 import { MetaAnalyticsEventName, reportMetaAnalytics } from '@grafana/runtime';
 import { CoreApp, DataQueryRequest, DataSourceApi, dateTime, LoadingState, PanelData } from '@grafana/data';
-import { emitDataRequestEvent } from './analyticsProcessor';
-import { DashboardModel } from './DashboardModel';
+import { emitDataRequestEvent } from './queryAnalytics';
+import { DashboardModel } from '../../dashboard/state/DashboardModel';
 
 beforeEach(() => {
   jest.clearAllMocks();
