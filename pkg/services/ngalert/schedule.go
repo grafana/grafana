@@ -13,23 +13,41 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID in
 
 	evalRunning := false
 	var lastEvalStarted, lastEvalEnded time.Time
-	// TODO retry
+	var attempt int64
 	for {
 		select {
 		case ctx := <-evalCh:
-			if !evalRunning {
+			if evalRunning {
+				continue
+			}
+
+			evaluate := func(attempt int64) error {
 				lastEvalStarted = timeNow()
 				results, err := ng.alertDefinitionEval(definitionID, ctx.now)
 				lastEvalEnded = timeNow()
 				if err != nil {
-					ng.log.Info("failed to evaluate alert definition", "definitionID", definitionID, "duration", lastEvalEnded.Sub(lastEvalStarted), "error", err)
-					continue
+					ng.log.Info("failed to evaluate alert definition", "definitionID", definitionID, "attempt", attempt, "duration", lastEvalEnded.Sub(lastEvalStarted), "error", err)
+					return err
 				}
 				for _, r := range results {
 					ng.log.Info("alert definition result", "definitionID", definitionID, "duration", lastEvalEnded.Sub(lastEvalStarted), "instance", r.Instance, "state", r.State.String())
 				}
-				evalRunning = false
+				return nil
 			}
+
+			func() {
+				evalRunning = true
+				defer func() {
+					evalRunning = false
+				}()
+
+				for attempt = 0; attempt < ng.schedule.maxAttempts; attempt++ {
+					err := evaluate(attempt)
+					if err == nil {
+						break
+					}
+				}
+			}()
 		case id := <-ng.schedule.stop:
 			if id == definitionID {
 				// TODO what if it's running
@@ -62,6 +80,8 @@ type schedule struct {
 
 	// broadcast channel for stopping definition routines
 	stop chan int64
+
+	maxAttempts int64
 }
 
 func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {

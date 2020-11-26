@@ -16,6 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+const maxAttempts int64 = 3
+
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
 	Cfg             *setting.Cfg             `inject:""`
@@ -40,6 +42,7 @@ func (ng *AlertNG) Init() error {
 		baseInterval: time.Second,
 		channelMap:   channelMap{definionCh: make(map[int64]definitionCh)},
 		stop:         make(chan int64),
+		maxAttempts:  maxAttempts,
 	}
 	return nil
 }
