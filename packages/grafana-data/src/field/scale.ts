@@ -1,6 +1,6 @@
 import { isNumber } from 'lodash';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
-import { Field, FieldType, GrafanaTheme, Threshold } from '../types';
+import { DataFrame, Field, FieldType, GrafanaTheme, Threshold } from '../types';
 import { getFieldColorModeForField } from './fieldColor';
 import { getActiveThresholdForValue } from './thresholds';
 
@@ -69,4 +69,36 @@ function getMinMaxAndDelta(field: Field): FieldMinMaxInfo {
     max,
     delta: max! - min!,
   };
+}
+
+interface GlobalMinMax {
+  min?: number | null;
+  max?: number | null;
+}
+
+export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
+  let min: number | null = null;
+  let max: number | null = null;
+
+  const reducers = [ReducerID.min, ReducerID.max];
+
+  for (const frame of data) {
+    for (const field of frame.fields) {
+      if (field.type === FieldType.number) {
+        const stats = reduceField({ field, reducers });
+        const statsMin = stats[ReducerID.min];
+        const statsMax = stats[ReducerID.max];
+
+        if (min === null || statsMin < min) {
+          min = statsMin;
+        }
+
+        if (max === null || statsMax > max) {
+          max = statsMax;
+        }
+      }
+    }
+  }
+
+  return { min, max };
 }

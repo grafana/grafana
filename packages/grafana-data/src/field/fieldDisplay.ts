@@ -1,5 +1,6 @@
 import toString from 'lodash/toString';
 import isEmpty from 'lodash/isEmpty';
+import isNumber from 'lodash/isNumber';
 
 import { getDisplayProcessor } from './displayProcessor';
 import { getFlotPairs } from '../utils/flotPairs';
@@ -23,6 +24,7 @@ import { ScopedVars } from '../types/ScopedVars';
 import { getTimeField } from '../dataframe/processDataFrame';
 import { getFieldMatcher } from '../transformations';
 import { FieldMatcherID } from '../transformations/matchers/ids';
+import { findNumericFieldMinMax } from './rangeUtils';
 
 /**
  * Options for how to turn DataFrames into an array of display values
@@ -107,6 +109,8 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
     const scopedVars: ScopedVars = {};
     const defaultDisplayName = getTitleTemplate(calcs);
 
+    let range: GlobalMinMa | undefined = undefined;
+
     for (let s = 0; s < data.length && !hitLimit; s++) {
       const series = data[s]; // Name is already set
 
@@ -114,12 +118,29 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
       const view = new DataFrameView(series);
 
       for (let i = 0; i < series.fields.length && !hitLimit; i++) {
-        const field = series.fields[i];
-        const fieldLinksSupplier = field.getLinks;
+        let field = series.fields[i];
 
         // To filter out time field, need an option for this
         if (!fieldMatcher(field, series, data)) {
           continue;
+        }
+        const fieldLinksSupplier = field.getLinks;
+
+        // Use aSet the Min/Max value automatically
+        if (options.autoMinMax && field.type === FieldType.number) {
+          if (!isNumber(field.config.min) || !isNumber(field.config.max)) {
+            let config = { ...field.config };
+            if (!range) {
+              range = findNumericFieldMinMax(options.data!); // Global value
+            }
+            if (!isNumber(config.min)) {
+              config.min = range.min;
+            }
+            if (!isNumber(config.max)) {
+              config.max = range.max;
+            }
+            field = { ...field, config };
+          }
         }
 
         const config = field.config; // already set by the prepare task

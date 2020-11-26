@@ -65,7 +65,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
   const alignedFrame = alignedFrameWithGapTest.frame;
   const compareFrames = useCallback(
-    (a: DataFrame, b: DataFrame) => compareDataFrameStructures(a, b, ['min', 'max']),
+    (a: DataFrame, b: DataFrame) => compareDataFrameStructures(a, b, []), //  ['min', 'max']),
     []
   );
   const configRev = useRevision(alignedFrame, compareFrames);

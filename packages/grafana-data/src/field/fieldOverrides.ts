@@ -17,7 +17,7 @@ import {
   TimeZone,
   ValueLinkConfig,
 } from '../types';
-import { fieldMatchers, reduceField, ReducerID } from '../transformations';
+import { fieldMatchers } from '../transformations';
 import { FieldMatcher } from '../types/transformations';
 import isNumber from 'lodash/isNumber';
 import set from 'lodash/set';
@@ -40,38 +40,6 @@ interface OverrideProps {
   properties: DynamicConfigValue[];
 }
 
-interface GlobalMinMax {
-  min?: number | null;
-  max?: number | null;
-}
-
-export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
-  let min: number | null = null;
-  let max: number | null = null;
-
-  const reducers = [ReducerID.min, ReducerID.max];
-
-  for (const frame of data) {
-    for (const field of frame.fields) {
-      if (field.type === FieldType.number) {
-        const stats = reduceField({ field, reducers });
-        const statsMin = stats[ReducerID.min];
-        const statsMax = stats[ReducerID.max];
-
-        if (min === null || statsMin < min) {
-          min = statsMin;
-        }
-
-        if (max === null || statsMax > max) {
-          max = statsMax;
-        }
-      }
-    }
-  }
-
-  return { min, max };
-}
-
 /**
  * Return a copy of the DataFrame with all rules applied
  */
@@ -88,7 +56,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   const fieldConfigRegistry = options.fieldConfigRegistry ?? standardFieldConfigEditorRegistry;
 
   let seriesIndex = 0;
-  let range: GlobalMinMax | undefined = undefined;
 
   // Prepare the Matchers
   const override: OverrideProps[] = [];
@@ -174,21 +141,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         }
         if (!isNumber(config.max)) {
           config.max = 1;
-        }
-      }
-
-      // Set the Min/Max value automatically
-      if (options.autoMinMax && field.type === FieldType.number) {
-        if (!isNumber(config.min) || !isNumber(config.max)) {
-          if (!range) {
-            range = findNumericFieldMinMax(options.data!); // Global value
-          }
-          if (!isNumber(config.min)) {
-            config.min = range.min;
-          }
-          if (!isNumber(config.max)) {
-            config.max = range.max;
-          }
         }
       }
 
