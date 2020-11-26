@@ -91,7 +91,7 @@ type TListViewProps = {
   windowScroller?: boolean;
 };
 
-const DEFAULT_INITIAL_DRAW = 300;
+const DEFAULT_INITIAL_DRAW = 100;
 
 /**
  * Virtualized list view component, for the most part, only renders the window
@@ -159,7 +159,7 @@ export default class ListView extends React.Component<TListViewProps> {
   /**
    * HTMLElement holding the scroller.
    */
-  _wrapperElm: HTMLElement | TNil;
+  _wrapperElm: Element | TNil;
   /**
    * HTMLElement holding the rendered items.
    */
@@ -195,6 +195,8 @@ export default class ListView extends React.Component<TListViewProps> {
   }
 
   componentDidMount() {
+    // The wrapper element should be the one that handles the scrolling. Once we are not using scroll-canvas we can remove this.
+    this._wrapperElm = document.getElementsByClassName('scroll-canvas')[0];
     if (this.props.windowScroller) {
       if (this._wrapperElm) {
         const { top } = this._wrapperElm.getBoundingClientRect();
@@ -202,6 +204,8 @@ export default class ListView extends React.Component<TListViewProps> {
       }
       window.addEventListener('scroll', this._onScroll);
       this._windowScrollListenerAdded = true;
+    } else {
+      this._wrapperElm.addEventListener('scroll', this._onScroll);
     }
   }
 
@@ -214,6 +218,8 @@ export default class ListView extends React.Component<TListViewProps> {
   componentWillUnmount() {
     if (this._windowScrollListenerAdded) {
       window.removeEventListener('scroll', this._onScroll);
+    } else {
+      this._wrapperElm?.removeEventListener('scroll', this._onScroll);
     }
   }
 
@@ -308,8 +314,11 @@ export default class ListView extends React.Component<TListViewProps> {
   };
 
   _initWrapper = (elm: HTMLElement | TNil) => {
+    if (!this.props.windowScroller) {
+      return;
+    }
     this._wrapperElm = elm;
-    if (!this.props.windowScroller && elm) {
+    if (elm) {
       this._viewHeight = elm.clientHeight;
     }
   };

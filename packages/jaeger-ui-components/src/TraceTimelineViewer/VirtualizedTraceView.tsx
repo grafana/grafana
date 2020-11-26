@@ -452,8 +452,8 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           dataLength={this.rowStates.length}
           itemHeightGetter={this.getRowHeight}
           itemRenderer={this.renderRow}
-          viewBuffer={300}
-          viewBufferMin={100}
+          viewBuffer={50}
+          viewBufferMin={50}
           itemsWrapperClassName={styles.rowsWrapper}
           getKeyFromIndex={this.getKeyFromIndex}
           getIndexFromKey={this.getIndexFromKey}
