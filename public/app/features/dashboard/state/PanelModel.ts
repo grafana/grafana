@@ -10,7 +10,6 @@ import {
   DataLink,
   DataQuery,
   DataTransformerConfig,
-  eventFactory,
   FieldColorConfigSettings,
   FieldColorModeId,
   fieldColorModeRegistry,
@@ -30,9 +29,6 @@ import config from 'app/core/config';
 import { PanelQueryRunner } from './PanelQueryRunner';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { CoreEvents } from '../../../types';
-
-export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
-export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
 
 export interface GridPos {
   x: number;

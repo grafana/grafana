@@ -1,4 +1,4 @@
-import { eventFactory, TimeRange } from '@grafana/data';
+import { BusEventBase, eventFactory, TimeRange } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 /**
@@ -106,10 +106,6 @@ export const toggleKioskMode = eventFactory<ToggleKioskModePayload>('toggle-kios
 export const toggleViewMode = eventFactory('toggle-view-mode');
 
 export const timeRangeUpdated = eventFactory<TimeRange>('time-range-updated');
-
-export const repeatsProcessed = eventFactory('repeats-processed');
-export const rowExpanded = eventFactory('row-expanded');
-export const rowCollapsed = eventFactory('row-collapsed');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
 export const submenuVisibilityChanged = eventFactory<boolean>('submenu-visibility-changed');
 
@@ -127,3 +123,10 @@ export const routeUpdated = eventFactory('$routeUpdate');
 
 export const queryChanged = eventFactory('queryChanged');
 export const transformationChanged = eventFactory('transformationChanged');
+
+/**
+ * Used internally by DashboardModel to commmunicate with DashboardGrid that it needs to re-render
+ */
+export class DashboardPanelsChangedEvent extends BusEventBase {
+  static type = 'dashboard-panels-changed';
+}
