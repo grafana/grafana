@@ -5,13 +5,14 @@ import { css } from 'emotion';
 import { DataSourceSelectItem, GrafanaTheme } from '@grafana/data';
 import { Button, Icon, stylesFactory } from '@grafana/ui';
 import { PageToolbar } from 'app/core/components/PageToolbar/PageToolbar';
+import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { AlertingQueryEditor } from './components/AlertingQueryEditor';
 import { AlertDefinitionOptions } from './components/AlertDefinitionOptions';
 import { AlertingQueryPreview } from './components/AlertingQueryPreview';
 import { getDatasourceSrv } from '../plugins/datasource_srv';
 import { createAlertDefinition, updateAlertDefinitionUiState } from './state/actions';
 import { AlertDefinition, AlertDefinitionUiState, StoreState } from '../../types';
-import { SplitPaneWrapper } from '../../core/components/ThreePaneSplit/SplitPaneWrapper';
+
 import { config } from 'app/core/config';
 
 interface OwnProps {}
