@@ -191,15 +191,19 @@ DingTalk supports the following "message type": `text`, `link` and `markdown`. O
 
 In Lark/Feishu PC Client:
 
-1. Select one chat group. Click "Settings" icon on right of the panel.
+1. Select one chat group, then click the "Settings" icon on the right of the panel.
 
-1. Click "BOTs" tab, then click "Add Bot" at the bottom of the panel.
+1. Click the "BOTs" tab, then click "Add Bot" at the bottom of the panel.
 
-1. In "Add Bot" panel, select "Custom Bot". You can customize "Display Name" and "Description" of the bot. Click "Add".
+1. In the "Add Bot" panel, select "Custom Bot". You can customize "Display Name" and "Description" of the bot. 
 
-1. There will be a webhook URL in the panel, looks like this: https://open.larksuite.com/open-apis/bot/v2/hook/xxxxxxxxx or https://open.feishu.cn/open-apis/bot/hook/xxxxxxxxx. Copy this URL to the Grafana Lark/Feishu setting page and then click "Finish".
+1. Click "Add".
 
-Lark/Feishu support the following "message types": `text`, `post`, `share_chat`, `image` and `interactive`. Only the `text` message type is supported currently.
+There will be a webhook URL in the panel, looks like this: https://open.larksuite.com/open-apis/bot/v2/hook/xxxxxxxxx or https://open.feishu.cn/open-apis/bot/hook/xxxxxxxxx. 
+
+1. Copy this URL to the Grafana Lark/Feishu setting page and then click "Finish".
+
+Lark/Feishu supports the following "message types": `text`, `post`, `share_chat`, `image` and `interactive`. Only the `text` message type is supported currently.
 
 ### Kafka
 
