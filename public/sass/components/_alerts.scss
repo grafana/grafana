@@ -17,6 +17,7 @@
   display: flex;
   flex-direction: row;
   align-items: center;
+  overflow-wrap: break-word;
 }
 
 // Alternate styles
@@ -78,6 +79,7 @@
 
 .alert-body {
   flex-grow: 1;
+  width: 50%;
 }
 
 .alert-icon-on-top {
