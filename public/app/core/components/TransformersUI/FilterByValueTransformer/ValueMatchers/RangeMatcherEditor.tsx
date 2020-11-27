@@ -1,18 +1,14 @@
 import React, { useCallback, useState } from 'react';
 import { Input } from '@grafana/ui';
 import { RangeValueMatcherOptions } from '@grafana/data/src/transformations/matchers/valueMatchers/types';
-import { ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
+import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
 import { ValueMatcherID } from '@grafana/data';
 import { convertToType } from './utils';
-
-interface RangeEditorConfig {
-  validator: (value: any) => boolean;
-}
 
 type PropNames = 'from' | 'to';
 
 export function rangeMatcherEditor<T = any>(
-  config: RangeEditorConfig
+  config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<RangeValueMatcherOptions<T>>> {
   return ({ options, onChange, field }) => {
     const { validator } = config;
@@ -48,9 +44,9 @@ export function rangeMatcherEditor<T = any>(
     );
 
     return (
-      <div className="gf-form gf-form--grow gf-form-spacing ">
+      <div className="gf-form gf-form--grow">
         <Input
-          className="flex-grow-1"
+          className="flex-grow-1 gf-form-spacing"
           invalid={isInvalid['from']}
           defaultValue={String(options.from)}
           placeholder="From"

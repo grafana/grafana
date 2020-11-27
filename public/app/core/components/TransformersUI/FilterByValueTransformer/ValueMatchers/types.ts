@@ -10,3 +10,7 @@ export interface ValueMatcherUIProps<TOptions> {
 }
 
 export type ValueMatcherValidator<TOption> = (options: TOption) => boolean;
+
+export interface ValueMatcherEditorConfig {
+  validator: (value: any) => boolean;
+}

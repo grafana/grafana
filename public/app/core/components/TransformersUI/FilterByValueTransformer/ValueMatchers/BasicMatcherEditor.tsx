@@ -1,29 +1,21 @@
 import React, { useCallback, useState } from 'react';
 import { Input } from '@grafana/ui';
 import { BasicValueMatcherOptions } from '@grafana/data/src/transformations/matchers/valueMatchers/types';
-import { ValueMatcherUIProps, ValueMatcherUIRegistryItem, ValueMatcherValidator } from './types';
+import { ValueMatcherEditorConfig, ValueMatcherUIProps, ValueMatcherUIRegistryItem } from './types';
 import { ValueMatcherID } from '@grafana/data';
 import { convertToType } from './utils';
 
-interface BasicEditorConfig {
-  validator: ValueMatcherValidator<BasicValueMatcherOptions>;
-}
-
 export function basicMatcherEditor<T = any>(
-  config: BasicEditorConfig
+  config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<BasicValueMatcherOptions<T>>> {
   return ({ options, onChange, field }) => {
     const { validator } = config;
-    const [isInvalid, setInvalid] = useState(!validator(options));
+    const { value } = options;
+    const [isInvalid, setInvalid] = useState(!validator(value));
 
     const onChangeValue = useCallback(
       (event: React.FormEvent<HTMLInputElement>) => {
-        setInvalid(
-          !validator({
-            ...options,
-            value: event.currentTarget.value,
-          })
-        );
+        setInvalid(!validator(event.currentTarget.value));
       },
       [setInvalid, validator]
     );
@@ -45,11 +37,11 @@ export function basicMatcherEditor<T = any>(
     );
 
     return (
-      <div className="gf-form gf-form--grow gf-form-spacing ">
+      <div className="gf-form gf-form--grow">
         <Input
           className="flex-grow-1"
           invalid={isInvalid}
-          defaultValue={String(options.value)}
+          defaultValue={String(value)}
           placeholder="Value"
           onChange={onChangeValue}
           onBlur={onChangeOptions}
@@ -65,36 +57,28 @@ export const getBasicValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Basi
       name: 'Is greater',
       id: ValueMatcherID.greater,
       component: basicMatcherEditor<number>({
-        validator: options => {
-          return !isNaN(options.value);
-        },
+        validator: value => !isNaN(value),
       }),
     },
     {
       name: 'Is greater or equal',
       id: ValueMatcherID.greaterOrEqual,
       component: basicMatcherEditor<number>({
-        validator: options => {
-          return !isNaN(options.value);
-        },
+        validator: value => !isNaN(value),
       }),
     },
     {
       name: 'Is lower',
       id: ValueMatcherID.lower,
       component: basicMatcherEditor<number>({
-        validator: options => {
-          return !isNaN(options.value);
-        },
+        validator: value => !isNaN(value),
       }),
     },
     {
       name: 'Is lower or equal',
       id: ValueMatcherID.lowerOrEqual,
       component: basicMatcherEditor<number>({
-        validator: options => {
-          return !isNaN(options.value);
-        },
+        validator: value => !isNaN(value),
       }),
     },
     {
