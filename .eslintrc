@@ -16,7 +16,6 @@
         "react-hooks/exhaustive-deps": "off",
         "react/prop-types": "off",
         "react/no-unescaped-entities": "off",
-        "react/display-name": "off",
         "react/no-deprecated": "off",
         "react/no-unknown-property": "off",
         "react/no-children-prop": "off",
