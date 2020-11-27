@@ -50,7 +50,8 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID in
 			}()
 		case id := <-ng.schedule.stop:
 			if id == definitionID {
-				// TODO what if it's running
+				ng.log.Debug("stopping alert definition routine", "definitionID", definitionID)
+				// interrupt evaluation if it's running
 				return nil
 			}
 		case <-grafanaCtx.Done():
@@ -120,11 +121,10 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 				delete(registeredDefinitions, item.Id)
 			}
 
-			if len(readyToRun) == 0 {
-				continue
+			step := 0
+			if len(readyToRun) > 0 {
+				step = int(ng.schedule.baseInterval.Nanoseconds()) / len(readyToRun)
 			}
-
-			step := int(ng.schedule.baseInterval.Nanoseconds()) / len(readyToRun)
 
 			// second loop is only required for distribute evaluations across time within an interval
 			for _, item := range readyToRun {
