@@ -12,7 +12,7 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID in
 	ng.log.Debug("alert definition routine started", "definitionID", definitionID)
 
 	evalRunning := false
-	var lastEvalStarted, lastEvalEnded time.Time
+	var start, end time.Time
 	var attempt int64
 	for {
 		select {
@@ -22,15 +22,15 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID in
 			}
 
 			evaluate := func(attempt int64) error {
-				lastEvalStarted = timeNow()
+				start = timeNow()
 				results, err := ng.alertDefinitionEval(definitionID, ctx.now)
-				lastEvalEnded = timeNow()
+				end = timeNow()
 				if err != nil {
-					ng.log.Info("failed to evaluate alert definition", "definitionID", definitionID, "attempt", attempt, "duration", lastEvalEnded.Sub(lastEvalStarted), "error", err)
+					ng.log.Error("failed to evaluate alert definition", "definitionID", definitionID, "attempt", attempt, "duration", end.Sub(start), "error", err)
 					return err
 				}
 				for _, r := range results {
-					ng.log.Info("alert definition result", "definitionID", definitionID, "duration", lastEvalEnded.Sub(lastEvalStarted), "instance", r.Instance, "state", r.State.String())
+					ng.log.Info("alert definition result", "definitionID", definitionID, "attempt", attempt, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
 				}
 				return nil
 			}
@@ -95,7 +95,10 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 			alertDefinitions := ng.fetchAlertDefinitions(lastFetchTime)
 			ng.log.Debug("alert definitions fetched", "count", len(alertDefinitions))
 
-			// this is used for identifying deleted alert definitions
+			// registeredDefinitions is a map used for finding deleted alert definitions
+			// initially it is assigned to all known alert definitions from the previous cycle
+			// each alert definition found also in this cycle is removed
+			// so, at the end, the remaining registered alert definitions are the deleted ones
 			registeredDefinitions := ng.schedule.channelMap.keyMap()
 
 			type readyToRunItem struct {
@@ -118,7 +121,8 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 					readyToRun = append(readyToRun, readyToRunItem{id: itemID, definitionCh: definitionCh})
 				}
 
-				delete(registeredDefinitions, item.Id)
+				// remove the alert definition from the registered alert definitions
+				delete(registeredDefinitions, itemID)
 			}
 
 			step := 0
@@ -132,7 +136,7 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 				time.Sleep(time.Duration(step))
 			}
 
-			// the remaining definitions are the deleted ones
+			// unregister and stop routines of the deleted alert definitions
 			for id := range registeredDefinitions {
 				ng.schedule.stop <- id
 				ng.schedule.channelMap.del(id)
