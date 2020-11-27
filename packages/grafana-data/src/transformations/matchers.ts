@@ -17,6 +17,7 @@ import { getNullValueMatchers } from './matchers/valueMatchers/nullMatchers';
 import { getNumericValueMatchers } from './matchers/valueMatchers/numericMatchers';
 import { getEqualValueMatchers } from './matchers/valueMatchers/equalMatchers';
 import { getRangeValueMatchers } from './matchers/valueMatchers/rangeMatcher';
+import { getSimpleFieldMatchers } from './matchers/simpleFieldMatcher';
 
 /**
  * Registry that contains all of the built in field matchers.
@@ -27,6 +28,7 @@ export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
     ...getFieldPredicateMatchers(), // Predicates
     ...getFieldTypeMatchers(), // by type
     ...getFieldNameMatchers(), // by name
+    ...getSimpleFieldMatchers(), // first
   ];
 });
 

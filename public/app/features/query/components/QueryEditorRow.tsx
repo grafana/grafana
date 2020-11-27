@@ -7,7 +7,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 // Types
-import { PanelModel } from '../state/PanelModel';
+import { PanelModel } from '../../dashboard/state/PanelModel';
 
 import { ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import {
@@ -23,14 +23,14 @@ import {
 import { QueryEditorRowTitle } from './QueryEditorRowTitle';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
-import { DashboardModel } from '../state/DashboardModel';
+import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   panel: PanelModel;
   data: PanelData;
   query: DataQuery;
-  dashboard: DashboardModel;
+  dashboard?: DashboardModel;
   dataSourceValue: string | null;
   inMixedMode?: boolean;
   id: string;
@@ -79,9 +79,9 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       datasource: datasource,
       target: query,
       panel: panel,
-      dashboard: dashboard,
+      dashboard: dashboard!,
       refresh: () => panel.refresh(),
-      render: () => panel.render(),
+      render: () => () => console.log('legacy render function called, it does nothing'),
       events: panel.events,
       range: getTimeSrv().timeRange(),
     };
@@ -141,13 +141,16 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     if (!this.element) {
       return;
     }
+
     if (this.angularQueryEditor) {
       this.angularQueryEditor.destroy();
       this.angularQueryEditor = null;
     }
+
     const loader = getAngularLoader();
     const template = '<plugin-component type="query-ctrl" />';
     const scopeProps = { ctrl: this.getAngularQueryComponentScope() };
+
     this.angularQueryEditor = loader.load(this.element, scopeProps, template);
     this.angularScope = scopeProps.ctrl;
   };
