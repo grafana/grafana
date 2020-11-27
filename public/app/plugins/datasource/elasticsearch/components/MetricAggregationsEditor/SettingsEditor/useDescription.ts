@@ -13,19 +13,14 @@ export const useDescription = (metric: MetricAggregation): string => {
       return `Precision threshold: ${precisionThreshold}`;
     }
 
-    case 'percentiles': {
-      // TODO: Elastic default is different. Which one should we keep?
-      // if the following, change SettingsEditor accordingly
-      const percents = metric.settings?.percents || [25, 50, 75, 95, 99];
-      return `Values: ${percents}`;
-    }
+    case 'percentiles':
+      if (metric.settings?.percents && metric.settings?.percents?.length >= 1) {
+        return `Values: ${metric.settings?.percents}`;
+      }
+
+      return 'Percents: Default';
 
     case 'extended_stats': {
-      // TODO: those defaults needs to go somewhere else
-      // if (_.keys($scope.agg.meta).length === 0) {
-      //   $scope.agg.meta.std_deviation_bounds_lower = true;
-      //   $scope.agg.meta.std_deviation_bounds_upper = true;
-      // }
       const selectedStats = Object.entries(metric.meta || {})
         .map(([key, value]) => value && extendedStats.find(hasValue(key))?.label)
         .filter(Boolean);
