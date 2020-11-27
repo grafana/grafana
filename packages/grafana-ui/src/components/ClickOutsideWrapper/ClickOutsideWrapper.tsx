@@ -1,5 +1,4 @@
-import { PureComponent } from 'react';
-import ReactDOM from 'react-dom';
+import React, { PureComponent, createRef } from 'react';
 
 export interface Props {
   /**
@@ -28,6 +27,7 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
     parent: window,
     useCapture: false,
   };
+  myRef = createRef<HTMLElement>();
   state = {
     hasEventListener: false,
   };
@@ -48,7 +48,7 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
   }
 
   onOutsideClick = (event: any) => {
-    const domNode = ReactDOM.findDOMNode(this) as Element;
+    const domNode = this.myRef.current;
 
     if (!domNode || !domNode.contains(event.target)) {
       this.props.onClick();
@@ -56,6 +56,13 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
   };
 
   render() {
-    return this.props.children;
+    const ChildComponentWithRef = React.forwardRef((props, ref) =>
+      React.cloneElement(this.props.children as React.ReactElement<any>, {
+        ref,
+      })
+    );
+    ChildComponentWithRef.displayName = 'ChildComponentWithRef';
+
+    return <ChildComponentWithRef ref={this.myRef} />;
   }
 }
