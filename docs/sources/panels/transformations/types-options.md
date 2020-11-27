@@ -310,7 +310,7 @@ Consider the following data set:
 | 2020-07-07 10:31:22 | 20          | 85
 | 2020-07-07 09:30:57 | 19          | 101
 
-If you **Include** the data points that have a temperature lower than 30°C. The configuration will look as followed:
+If you **Include** the data points that have a temperature below 30°C, the configuration will look as follows:
 
 - Filter Type: `Include`
 - Condition: Rows where `Temperature` matches `Lower Than` `100`
@@ -326,7 +326,7 @@ And you will get the following result, where only the temperatures below 30°C a
 | 2020-07-07 10:31:22 | 20          | 85
 | 2020-07-07 09:30:57 | 19          | 101
 
-You can add more than one condition to the filter. We could want to include the data only if the altitude is higher than 100. To do that we can add a condition to get the following configuration:
+You can add more than one condition to the filter. For example, you might want to include the data only if the altitude is greater than 100. To do so, add that condition to the following configuration:
 
 - Filter type: `Include` rows that `Match All` conditions
 - Condition 1: Rows where `Temperature` matches `Lower` than `30`
