@@ -47,7 +47,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: alertDefinitionPreviewTabs;
       width: 100%;
       height: 100%;
-      padding-left: ${theme.spacing.md};
+      padding: ${theme.spacing.md} 0 0 ${theme.spacing.md};
     `,
     tabContent: css`
       background: ${theme.colors.panelBg};

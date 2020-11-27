@@ -66,17 +66,9 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
       <div className={styles.wrapper}>
         <PageToolbar
           title="Alert editor"
-          titlePrefix={
-            <Icon
-              name="bell"
-              size="lg"
-              className={css`
-                margin-right: 6px;
-                margin-bottom: 3px;
-              `}
-            />
-          }
+          titlePrefix={<Icon name="bell" size="lg" />}
           actions={this.renderToolbarActions()}
+          titlePadding="sm"
         />
         <SplitPaneWrapper
           leftPaneComponents={[

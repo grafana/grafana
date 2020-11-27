@@ -23,7 +23,7 @@ export const AlertDefinitionOptions = () => {
 const getStyles = (theme: GrafanaTheme) => {
   return {
     container: css`
-      padding: ${theme.spacing.md};
+      padding: ${theme.spacing.md} 0;
     `,
   };
 };

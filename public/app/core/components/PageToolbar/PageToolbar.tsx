@@ -1,16 +1,17 @@
 import React, { FC, ReactNode } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { HorizontalGroup, stylesFactory, useStyles } from '@grafana/ui';
+import { HorizontalGroup, stylesFactory, useTheme } from '@grafana/ui';
 
 interface Props {
   title: string;
   titlePrefix?: ReactNode;
   actions: ReactNode[];
+  titlePadding?: 'sm' | 'lg';
 }
 
-export const PageToolbar: FC<Props> = ({ actions, title, titlePrefix }) => {
-  const styles = useStyles(getStyles);
+export const PageToolbar: FC<Props> = ({ actions, title, titlePrefix, titlePadding = 'lg' }) => {
+  const styles = getStyles(useTheme(), titlePadding);
   return (
     <div className={styles.toolbarWrapper}>
       <HorizontalGroup justify="space-between" align="center">
@@ -28,7 +29,9 @@ export const PageToolbar: FC<Props> = ({ actions, title, titlePrefix }) => {
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = stylesFactory((theme: GrafanaTheme, padding: string) => {
+  const titlePadding = padding === 'sm' ? theme.spacing.sm : theme.spacing.md;
+
   return {
     toolbarWrapper: css`
       display: flex;
@@ -42,7 +45,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     toolbarTitle: css`
       font-size: ${theme.typography.size.lg};
-      padding-left: ${theme.spacing.md};
+      padding-left: ${titlePadding};
     `,
   };
 });
