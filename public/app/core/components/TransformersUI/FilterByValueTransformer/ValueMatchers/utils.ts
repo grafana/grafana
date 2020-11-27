@@ -21,10 +21,6 @@ export function convertToType(value: any, field: Field): any {
       }
       return String(value);
 
-    case FieldType.time:
-      // parse date.
-      return Date.now();
-
     default:
       return value;
   }
