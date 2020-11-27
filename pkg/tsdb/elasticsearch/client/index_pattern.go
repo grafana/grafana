@@ -247,72 +247,97 @@ var datePatternReplacements = map[string]string{
 }
 
 func formatDate(t time.Time, pattern string) string {
-	var datePattern string
+	var formattedDatePatterns []string
+	var bases []string
 	base := ""
-	ltr := false
+	isBaseFirst := false
 
-	if strings.HasPrefix(pattern, "[") {
-		parts := strings.Split(strings.TrimLeft(pattern, "["), "]")
-		base = parts[0]
-		if len(parts) == 2 {
-			datePattern = parts[1]
+	baseStart := strings.Index(pattern, "[")
+	for baseStart != -1 {
+		var datePattern string
+
+		baseEnd := strings.Index(pattern, "]")
+		base = pattern[baseStart+1 : baseEnd]
+		bases = append(bases, base)
+		if baseStart == 0 {
+			isBaseFirst = true
 		} else {
-			datePattern = base
-			base = ""
+			datePattern = pattern[:baseStart]
+			formatted := t.Format(patternToLayout(datePattern))
+			formattedDatePatterns = append(formattedDatePatterns, formatted)
 		}
-		ltr = true
-	} else if strings.HasSuffix(pattern, "]") {
-		parts := strings.Split(strings.TrimRight(pattern, "]"), "[")
-		datePattern = parts[0]
-		if len(parts) == 2 {
-			base = parts[1]
+
+		if len(pattern) <= baseEnd+1 {
+			break
+		}
+		pattern = pattern[baseEnd+1:]
+
+		baseStart = strings.Index(pattern, "[")
+		if baseStart == -1 {
+			datePattern = pattern
 		} else {
-			base = ""
+			datePattern = pattern[:baseStart]
+			pattern = pattern[baseStart:]
+			baseStart = 0
 		}
-		ltr = false
+		formatted := t.Format(patternToLayout(datePattern))
+		formattedDatePatterns = append(formattedDatePatterns, formatted)
 	}
 
-	formatted := t.Format(patternToLayout(datePattern))
+	isoYear, isoWeek := t.ISOWeek()
+	isoYearShort := fmt.Sprintf("%d", isoYear)[2:4]
+	day := t.Weekday()
+	dayOfWeekIso := int(day)
+	if day == time.Sunday {
+		dayOfWeekIso = 7
+	}
+	quarter := 4
+	switch t.Month() {
+	case time.January, time.February, time.March:
+		quarter = 1
+	case time.April, time.May, time.June:
+		quarter = 2
+	case time.July, time.August, time.September:
+		quarter = 3
+	}
 
-	if strings.Contains(formatted, "<std") {
-		isoYear, isoWeek := t.ISOWeek()
-		isoYearShort := fmt.Sprintf("%d", isoYear)[2:4]
+	for i, formatted := range formattedDatePatterns {
+		if !strings.Contains(formatted, "<std") {
+			continue
+		}
 		formatted = strings.ReplaceAll(formatted, "<stdIsoYear>", fmt.Sprintf("%d", isoYear))
 		formatted = strings.ReplaceAll(formatted, "<stdIsoYearShort>", isoYearShort)
 		formatted = strings.ReplaceAll(formatted, "<stdWeekOfYear>", fmt.Sprintf("%02d", isoWeek))
-
 		formatted = strings.ReplaceAll(formatted, "<stdUnix>", fmt.Sprintf("%d", t.Unix()))
-
-		day := t.Weekday()
-		dayOfWeekIso := int(day)
-		if day == time.Sunday {
-			dayOfWeekIso = 7
-		}
-
 		formatted = strings.ReplaceAll(formatted, "<stdDayOfWeek>", fmt.Sprintf("%d", day))
 		formatted = strings.ReplaceAll(formatted, "<stdDayOfWeekISO>", fmt.Sprintf("%d", dayOfWeekIso))
 		formatted = strings.ReplaceAll(formatted, "<stdDayOfYear>", fmt.Sprintf("%d", t.YearDay()))
-
-		quarter := 4
-
-		switch t.Month() {
-		case time.January, time.February, time.March:
-			quarter = 1
-		case time.April, time.May, time.June:
-			quarter = 2
-		case time.July, time.August, time.September:
-			quarter = 3
-		}
-
 		formatted = strings.ReplaceAll(formatted, "<stdQuarter>", fmt.Sprintf("%d", quarter))
 		formatted = strings.ReplaceAll(formatted, "<stdHourNoZero>", fmt.Sprintf("%d", t.Hour()))
+
+		formattedDatePatterns[i] = formatted
 	}
 
-	if ltr {
-		return base + formatted
+	var fullPattern []string
+	var i int
+
+	minLen := min(len(formattedDatePatterns), len(bases))
+	for i = 0; i < minLen; i++ {
+		if isBaseFirst {
+			fullPattern = append(fullPattern, bases[i], formattedDatePatterns[i])
+		} else {
+			fullPattern = append(fullPattern, formattedDatePatterns[i], bases[i])
+		}
+	}
+	formattedDatePatterns = formattedDatePatterns[i:]
+	bases = bases[i:]
+	if len(bases) == 0 {
+		fullPattern = append(fullPattern, formattedDatePatterns...)
+	} else {
+		fullPattern = append(fullPattern, bases...)
 	}
 
-	return formatted + base
+	return strings.Join(fullPattern, "")
 }
 
 func patternToLayout(pattern string) string {
@@ -328,4 +353,11 @@ func patternToLayout(pattern string) string {
 	}
 
 	return pattern
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
