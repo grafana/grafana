@@ -114,8 +114,8 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 					})
 				}
 
-				if tick.Unix()%item.Interval == 0 {
-					readyToRun = append(readyToRun, readyToRunItem{id: item.Id, definitionCh: definitionCh})
+				if item.Interval != 0 && tick.Unix()%item.Interval == 0 {
+					readyToRun = append(readyToRun, readyToRunItem{id: itemID, definitionCh: definitionCh})
 				}
 
 				delete(registeredDefinitions, item.Id)
