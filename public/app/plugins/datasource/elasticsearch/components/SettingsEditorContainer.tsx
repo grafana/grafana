@@ -29,7 +29,13 @@ export const SettingsEditorContainer: FunctionComponent<Props> = ({ label, child
         onClick={() => setOpen(!open)}
         aria-expanded={open}
       >
-        <Icon name={open ? 'angle-down' : 'angle-right'} aria-hidden="true" />
+        <Icon
+          name={open ? 'angle-down' : 'angle-right'}
+          aria-hidden="true"
+          className={css`
+            margin-right: 4px;
+          `}
+        />
         {label}
       </button>
 
