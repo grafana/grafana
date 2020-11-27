@@ -2,6 +2,7 @@ package dtos
 
 import (
 	"github.com/grafana/grafana/pkg/setting"
+
 	"html/template"
 )
 
