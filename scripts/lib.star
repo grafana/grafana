@@ -736,12 +736,12 @@ def mysql_integration_tests_step():
         ],
     }
 
-def release_next_npm_packages_step(edition):
+def release_canary_npm_packages_step(edition):
     if edition == 'enterprise':
         return None
 
     return {
-        'name': 'release-next-npm-packages',
+        'name': 'release-canary-npm-packages',
         'image': build_image,
         'depends_on': [
             'end-to-end-tests',
@@ -752,10 +752,9 @@ def release_next_npm_packages_step(edition):
             },
         },
         'commands': [
-            './node_modules/.bin/lerna bootstrap',
             'echo "@grafana:registry=https://npm.pkg.github.com" >> ~/.npmrc',
             'echo "//npm.pkg.github.com/:_authToken=$${GITHUB_PACKAGE_TOKEN}" >> ~/.npmrc',
-            './scripts/circle-release-next-packages.sh',
+            './scripts/circle-release-canary-packages.sh',
         ],
     }
 
