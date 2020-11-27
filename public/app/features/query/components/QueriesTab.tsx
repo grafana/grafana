@@ -10,7 +10,6 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import config from 'app/core/config';
 // Types
-import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import {
   DataQuery,
   DataSourceSelectItem,
@@ -29,10 +28,11 @@ import { selectors } from '@grafana/e2e-selectors';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 
 interface Props {
-  dashboard?: DashboardModel;
   queryRunner: PanelQueryRunner;
   queries: DataQuery[];
   dataSourceName: string | null;
+  renderQueryOptions: () => React.ReactNode;
+  onOpenQueryInspector?: () => void;
   onRunQueries: () => void;
   onQueriesChange: (queries: DataQuery[]) => void;
   onDataSourceChange: (ds: DataSourceSelectItem, queries: DataQuery[]) => void;
@@ -143,14 +143,6 @@ export class QueriesTab extends PureComponent<Props, State> {
     });
   };
 
-  openQueryInspector = () => {
-    // const { panel } = this.props;
-    // getLocationSrv().update({
-    //   query: { inspect: panel.id, inspectTab: 'query' },
-    //   partial: true,
-    // });
-  };
-
   onAddQueryClick = () => {
     if (this.state.dataSourceItem.meta.mixed) {
       this.setState({ isAddingMixed: true });
@@ -171,7 +163,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderTopSection(styles: QueriesTabStyls) {
-    // const { panel } = this.props;
+    const { onOpenQueryInspector, renderQueryOptions } = this.props;
     const { dataSourceItem, dataSource, dataSourceError } = this.state;
 
     if (!dataSource) {
@@ -198,18 +190,18 @@ export class QueriesTab extends PureComponent<Props, State> {
               onClick={this.onOpenHelp}
             />
           </div>
-          <div className={styles.dataSourceRowItemOptions}>
-            {/* <QueryOptions panel={panel} dataSource={dataSource} data={data} /> */}
-          </div>
-          <div className={styles.dataSourceRowItem}>
-            <Button
-              variant="secondary"
-              onClick={this.openQueryInspector}
-              aria-label={selectors.components.QueryTab.queryInspectorButton}
-            >
-              Query inspector
-            </Button>
-          </div>
+          <div className={styles.dataSourceRowItemOptions}>{renderQueryOptions()}</div>
+          {onOpenQueryInspector && (
+            <div className={styles.dataSourceRowItem}>
+              <Button
+                variant="secondary"
+                onClick={onOpenQueryInspector}
+                aria-label={selectors.components.QueryTab.queryInspectorButton}
+              >
+                Query inspector
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -261,7 +253,7 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderQueries() {
-    const { onQueriesChange, dashboard, queries, onRunQueries } = this.props;
+    const { onQueriesChange, queries, onRunQueries } = this.props;
     const { dataSourceItem, data } = this.state;
 
     // if (isSharedDashboardQuery(dataSourceItem.name)) {
@@ -276,7 +268,6 @@ export class QueriesTab extends PureComponent<Props, State> {
           onQueriesChange={onQueriesChange}
           onAddQuery={this.onAddQuery}
           onRunQueries={onRunQueries}
-          dashboard={dashboard}
           data={data}
         />
       </div>

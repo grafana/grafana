@@ -3,7 +3,6 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { DataQuery, PanelData, DataSourceSelectItem } from '@grafana/data';
-import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { QueryEditorRow } from './QueryEditorRow';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
@@ -16,10 +15,6 @@ interface Props {
   onQueriesChange: (queries: DataQuery[]) => void;
   onAddQuery: (query: DataQuery) => void;
   onRunQueries: () => void;
-
-  // Dashboard Configs
-  //panel: PanelModel;
-  dashboard?: DashboardModel;
 
   // Query Response Data
   data: PanelData;
@@ -86,7 +81,6 @@ export class QueryEditorRows extends PureComponent<Props> {
                     id={query.refId}
                     index={index}
                     key={query.refId}
-                    dashboard={props.dashboard}
                     data={props.data}
                     query={query}
                     onChange={query => this.onChangeQuery(query, index)}

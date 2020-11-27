@@ -27,7 +27,6 @@ import { PanelModel } from 'app/features/dashboard/state';
 interface Props {
   data: PanelData;
   query: DataQuery;
-  dashboard?: DashboardModel;
   dataSourceValue: string | null;
   inMixedMode?: boolean;
   id: string;
@@ -70,15 +69,16 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 
   getAngularQueryComponentScope(): AngularQueryComponentScope {
-    const { query, dashboard, onRunQuery } = this.props;
+    const { query, onRunQuery } = this.props;
     const { datasource } = this.state;
     const panel = new PanelModel({});
+    const dashboard = new DashboardModel({});
 
     return {
       datasource: datasource,
       target: query,
       panel: panel,
-      dashboard: dashboard!,
+      dashboard: dashboard,
       refresh: () => onRunQuery,
       render: () => () => console.log('legacy render function called, it does nothing'),
       events: panel.events,

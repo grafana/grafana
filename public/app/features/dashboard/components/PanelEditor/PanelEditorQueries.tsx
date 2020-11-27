@@ -1,11 +1,12 @@
 import React, { PureComponent } from 'react';
 import { QueriesTab } from 'app/features/query/components/QueriesTab';
-import { DashboardModel, PanelModel } from '../../state';
-import { DataQuery, DataSourceSelectItem } from '@grafana/data';
+import { QueryOptions } from 'app/features/query/components/QueryOptions';
+import { PanelModel } from '../../state';
+import { DataQuery, DataSourceApi, DataSourceSelectItem } from '@grafana/data';
+import { getLocationSrv } from '@grafana/runtime';
 
 interface Props {
   panel: PanelModel;
-  dashboard: DashboardModel;
 }
 
 export class PanelEditorQueries extends PureComponent<Props> {
@@ -32,8 +33,19 @@ export class PanelEditorQueries extends PureComponent<Props> {
     this.forceUpdate();
   };
 
+  onOpenQueryInspector = () => {
+    getLocationSrv().update({
+      query: { inspect: this.props.panel.id, inspectTab: 'query' },
+      partial: true,
+    });
+  };
+
+  renderQueryOptions = (ds: DataSourceApi, data: PanelData) => {
+    return <QueryOptions panel={panel} dataSource={ds} data={data} />;
+  };
+
   render() {
-    const { panel, dashboard } = this.props;
+    const { panel } = this.props;
 
     return (
       <QueriesTab
@@ -43,7 +55,7 @@ export class PanelEditorQueries extends PureComponent<Props> {
         onQueriesChange={this.onQueriesChange}
         onDataSourceChange={this.onDataSourceChange}
         onRunQueries={this.onRunQueries}
-        dashboard={dashboard}
+        onOpenQueryInspector={this.onOpenQueryInspector}
       />
     );
   }
