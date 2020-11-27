@@ -1,45 +1,42 @@
-import { Icon } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
+import { Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import React, { FunctionComponent, useState } from 'react';
 
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    wrapper: css`
+      display: flex;
+      flex-direction: column;
+    `,
+    settingsWrapper: css`
+      padding-top: ${theme.spacing.xs};
+    `,
+    icon: css`
+      margin-right: ${theme.spacing.xs};
+    `,
+    button: css`
+      justify-content: start;
+    `,
+  };
+});
 interface Props {
   label: string;
 }
+
 export const SettingsEditorContainer: FunctionComponent<Props> = ({ label, children }) => {
   const [open, setOpen] = useState(false);
 
+  const styles = getStyles(useTheme());
+
   return (
-    <div
-      className={css`
-        display: flex;
-        flex-direction: column;
-      `}
-    >
-      <button
-        className={cx(
-          'gf-form-label',
-          css`
-            justify-content: start;
-          `,
-          open &&
-            css`
-              margin: 0 4px 4px 0;
-            `
-        )}
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-      >
-        <Icon
-          name={open ? 'angle-down' : 'angle-right'}
-          aria-hidden="true"
-          className={css`
-            margin-right: 4px;
-          `}
-        />
+    <div className={styles.wrapper}>
+      <button className={cx('gf-form-label', styles.button)} onClick={() => setOpen(!open)} aria-expanded={open}>
+        <Icon name={open ? 'angle-down' : 'angle-right'} aria-hidden="true" className={styles.icon} />
         {label}
       </button>
 
-      {open && children}
+      {open && <div className={styles.settingsWrapper}>{children}</div>}
     </div>
   );
 };
