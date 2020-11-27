@@ -54,7 +54,8 @@ export const reducer = (
           return {
             id: metric.id,
             type: action.payload.type,
-          };
+            ...metricAggregationConfig[action.payload.type].defaults,
+          } as MetricAggregation;
         });
 
     case CHANGE_METRIC_FIELD:

@@ -12,6 +12,7 @@ import {
 } from './actions';
 import { Derivative, ExtendedStats, MetricAggregation } from '../aggregations';
 import { defaultMetricAgg } from '../../../query_def';
+import { metricAggregationConfig } from '../utils';
 
 describe('Metric Aggregations Reducer', () => {
   it('should correctly add new aggregations', () => {
@@ -88,7 +89,11 @@ describe('Metric Aggregations Reducer', () => {
         type: 'count',
       };
 
-      const expectedAggregation: MetricAggregation = { ...secondAggregation, type: 'raw_data' };
+      const expectedAggregation: MetricAggregation = {
+        ...secondAggregation,
+        type: 'raw_data',
+        ...metricAggregationConfig['raw_data'].defaults,
+      };
 
       reducerTester()
         .givenReducer(reducer, [firstAggregation, secondAggregation])

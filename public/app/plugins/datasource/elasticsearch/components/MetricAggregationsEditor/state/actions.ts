@@ -69,7 +69,7 @@ export const changeMetricSetting = <T extends MetricAggregationWithSettings, K e
   metric: T,
   settingName: K,
   // Maybe this could have been NonNullable<T['settings']>[K], but it doesn't seem to work really well
-  newValue: string | string[]
+  newValue: NonNullable<T['settings']>[K]
 ): ChangeMetricSettingAction<T> => ({
   type: CHANGE_METRIC_SETTING,
   payload: {

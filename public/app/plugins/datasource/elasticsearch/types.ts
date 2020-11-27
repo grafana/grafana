@@ -13,7 +13,7 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   dataLinks?: DataLinkConfig[];
 }
 
-interface MetricConfiguration {
+interface MetricConfiguration<T extends MetricAggregationType> {
   label: string;
   requiresField: boolean;
   supportsInlineScript: boolean;
@@ -26,6 +26,7 @@ interface MetricConfiguration {
   isSingleMetric?: boolean;
   hasSettings: boolean;
   hasMeta: boolean;
+  defaults: Omit<Extract<MetricAggregation, { type: T }>, 'id' | 'type'>;
 }
 
 type BucketConfiguration<T extends BucketAggregationType> = {
@@ -34,7 +35,10 @@ type BucketConfiguration<T extends BucketAggregationType> = {
   defaultSettings: Extract<BucketAggregation, { type: T }>['settings'];
 };
 
-export type MetricsConfiguration = Record<MetricAggregationType, MetricConfiguration>;
+export type MetricsConfiguration = {
+  [P in MetricAggregationType]: MetricConfiguration<P>;
+};
+
 export type BucketsConfiguration = {
   [P in BucketAggregationType]: BucketConfiguration<P>;
 };

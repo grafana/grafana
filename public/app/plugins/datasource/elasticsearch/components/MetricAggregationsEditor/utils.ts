@@ -5,6 +5,7 @@ import {
   MetricAggregation,
   PipelineMetricAggregationType,
 } from './aggregations';
+import { defaultPipelineVariable } from './SettingsEditor/BucketScriptSettingsEditor/utils';
 
 export const metricAggregationConfig: MetricsConfiguration = {
   count: {
@@ -16,6 +17,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasSettings: false,
     hasMeta: false,
     supportsInlineScript: false,
+    defaults: {},
   },
   avg: {
     label: 'Average',
@@ -26,6 +28,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMultipleBucketPaths: false,
     hasSettings: true,
     hasMeta: false,
+    defaults: {},
   },
   sum: {
     label: 'Sum',
@@ -36,6 +39,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMultipleBucketPaths: false,
     hasSettings: true,
     hasMeta: false,
+    defaults: {},
   },
   max: {
     label: 'Max',
@@ -46,6 +50,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMultipleBucketPaths: false,
     hasSettings: true,
     hasMeta: false,
+    defaults: {},
   },
   min: {
     label: 'Min',
@@ -56,6 +61,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMultipleBucketPaths: false,
     hasSettings: true,
     hasMeta: false,
+    defaults: {},
   },
   extended_stats: {
     label: 'Extended Stats',
@@ -66,6 +72,12 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMultipleBucketPaths: false,
     hasSettings: true,
     hasMeta: true,
+    defaults: {
+      meta: {
+        std_deviation_bounds_lower: true,
+        std_deviation_bounds_upper: true,
+      },
+    },
   },
   percentiles: {
     label: 'Percentiles',
@@ -76,6 +88,11 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsMultipleBucketPaths: false,
     hasSettings: true,
     hasMeta: false,
+    defaults: {
+      settings: {
+        percents: ['25', '50', '75', '95', '99'],
+      },
+    },
   },
   cardinality: {
     label: 'Unique Count',
@@ -86,6 +103,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasSettings: true,
     supportsInlineScript: false,
     hasMeta: false,
+    defaults: {},
   },
   moving_avg: {
     label: 'Moving Average',
@@ -97,6 +115,12 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasSettings: true,
     supportsInlineScript: false,
     hasMeta: false,
+    defaults: {
+      settings: {
+        model: 'simple',
+        window: 5,
+      },
+    },
   },
   moving_fn: {
     // TODO: Check this
@@ -109,6 +133,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasMeta: false,
     hasSettings: true,
     minVersion: 70,
+    defaults: {},
   },
   derivative: {
     label: 'Derivative',
@@ -120,6 +145,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasSettings: true,
     supportsInlineScript: false,
     hasMeta: false,
+    defaults: {},
   },
   cumulative_sum: {
     label: 'Cumulative Sum',
@@ -131,6 +157,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasSettings: true,
     supportsInlineScript: false,
     hasMeta: false,
+    defaults: {},
   },
   bucket_script: {
     label: 'Bucket Script',
@@ -142,6 +169,9 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasSettings: true,
     supportsInlineScript: false,
     hasMeta: false,
+    defaults: {
+      pipelineVariables: [defaultPipelineVariable()],
+    },
   },
   raw_document: {
     label: 'Raw Document (legacy)',
@@ -153,6 +183,11 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasSettings: true,
     supportsInlineScript: false,
     hasMeta: false,
+    defaults: {
+      settings: {
+        size: '500',
+      },
+    },
   },
   raw_data: {
     label: 'Raw Data',
@@ -164,6 +199,11 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasSettings: false,
     supportsInlineScript: false,
     hasMeta: false,
+    defaults: {
+      settings: {
+        size: '500',
+      },
+    },
   },
   logs: {
     label: 'Logs',
@@ -174,6 +214,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasSettings: true,
     supportsInlineScript: false,
     hasMeta: false,
+    defaults: {},
   },
 };
 
@@ -217,12 +258,4 @@ export const getChildren = (metric: MetricAggregation, metrics: MetricAggregatio
   });
 
   return [...children, ...children.flatMap(child => getChildren(child, metrics))];
-};
-
-/**
- * Checks if a string is a valid number
- * @param stringNumber
- */
-export const isValidNumber = (stringNumber: string) => {
-  return !isNaN(+(stringNumber ?? 0));
 };

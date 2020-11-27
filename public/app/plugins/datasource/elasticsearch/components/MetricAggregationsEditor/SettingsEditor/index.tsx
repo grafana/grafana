@@ -1,6 +1,6 @@
-import { InlineField, Input, Select, Switch } from '@grafana/ui';
+import { InlineField, Input, Switch } from '@grafana/ui';
 import React, { FunctionComponent, ComponentProps } from 'react';
-import { extendedStats, movingAvgModelOptions, movingAvgModelSettings } from '../../../query_def';
+import { extendedStats } from '../../../query_def';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { changeMetricMeta, changeMetricSetting } from '../state/actions';
 import {
@@ -8,13 +8,13 @@ import {
   isMetricAggregationWithInlineScript,
   isMetricAggregationWithMissingSupport,
 } from '../aggregations';
-import { isValidNumber } from '../utils';
 import { BucketScriptSettingsEditor } from './BucketScriptSettingsEditor';
 import { SettingField } from './SettingField';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { useDescription } from './useDescription';
+import { MovingAverageSettingsEditor } from './MovingAverageSettingsEditor';
 
-// TODO" Move this somewhere and share it with BucketsAggregation Editor
+// TODO: Move this somewhere and share it with BucketsAggregation Editor
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
   labelWidth: 16,
 };
@@ -34,51 +34,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
 
       {metric.type === 'cumulative_sum' && <SettingField label="Format" metric={metric} settingName="format" />}
 
-      {metric.type === 'moving_avg' && (
-        <>
-          <InlineField label="Model" {...inlineFieldProps}>
-            <Select
-              onChange={value => dispatch(changeMetricSetting(metric, 'model', value.value!))}
-              options={movingAvgModelOptions}
-              defaultValue={
-                movingAvgModelOptions.find(m => m.value === metric.settings?.model) || movingAvgModelOptions[0]
-              }
-            />
-          </InlineField>
-          <InlineField
-            label="Window"
-            {...inlineFieldProps}
-            invalid={!!metric.settings?.window && !isValidNumber(metric.settings?.window)}
-          >
-            <Input
-              defaultValue={metric.settings?.window || '5'}
-              onBlur={e => dispatch(changeMetricSetting(metric, 'window', e.target.value))}
-            />
-          </InlineField>
-
-          <SettingField label="Predict" metric={metric} settingName="predict" />
-
-          {movingAvgModelSettings[metric.settings?.model || 'simple'].map(modelOption => {
-            // FIXME: This is kinda ugly and types are not perfect. Need to give it a second shot.
-            const InputComponent = modelOption.type === 'boolean' ? Switch : Input;
-            const componentChangeEvent = modelOption.type === 'boolean' ? 'onChange' : 'onBlur';
-            const eventAttr = modelOption.type === 'boolean' ? 'checked' : 'value';
-            const componentChangeHandler = (e: any) =>
-              dispatch(changeMetricSetting(metric, modelOption.value, (e.target as any)[eventAttr]));
-
-            return (
-              <InlineField label={modelOption.label} {...inlineFieldProps} key={modelOption.value}>
-                <InputComponent
-                  defaultValue={metric.settings?.[modelOption.value]}
-                  {...{
-                    [componentChangeEvent]: componentChangeHandler,
-                  }}
-                />
-              </InlineField>
-            );
-          })}
-        </>
-      )}
+      {metric.type === 'moving_avg' && <MovingAverageSettingsEditor metric={metric} />}
 
       {metric.type === 'moving_fn' && (
         <>
@@ -111,8 +67,10 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
           {extendedStats.map(stat => (
             <InlineField label={stat.label} {...inlineFieldProps} key={stat.value}>
               <Switch
-                onChange={e => dispatch(changeMetricMeta(metric, stat.value, (e.target as any).checked))}
-                value={metric.meta?.[stat.value] ?? stat.default}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  dispatch(changeMetricMeta(metric, stat.value, e.target.checked))
+                }
+                value={!!metric.meta?.[stat.value]}
               />
             </InlineField>
           ))}

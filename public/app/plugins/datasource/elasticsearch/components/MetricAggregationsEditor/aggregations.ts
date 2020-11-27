@@ -99,7 +99,6 @@ export type ExtendedStatMetaType =
 export interface ExtendedStat {
   label: string;
   value: ExtendedStatMetaType;
-  default: boolean;
 }
 
 export interface ExtendedStats extends MetricAggregationWithField, MetricAggregationWithInlineScript {
@@ -165,47 +164,71 @@ export interface MovingAverageModelOption {
   value: MovingAverageModel;
 }
 
-type MovingAverageSettingsKey = 'alpha' | 'beta' | 'gamma' | 'period' | 'pad' | 'minimize';
+interface BaseMovingAverageModelSettings {
+  model: MovingAverageModel;
+  window: number;
+  predict: number;
+}
 
-type BaseMovingAverageModelSettings = {
-  model?: MovingAverageModel;
-  window?: string;
-  predict?: string;
-} & { [P in MovingAverageSettingsKey]?: string };
+interface MovingAverageSimpleModelSettings extends BaseMovingAverageModelSettings {
+  model: 'simple';
+}
+
+interface MovingAverageLinearModelSettings extends BaseMovingAverageModelSettings {
+  model: 'linear';
+}
 
 interface MovingAverageEWMAModelSettings extends BaseMovingAverageModelSettings {
-  alpha: string;
-  minimize: string;
+  model: 'ewma';
+  alpha: number;
+  minimize: boolean;
 }
 interface MovingAverageHoltModelSettings extends BaseMovingAverageModelSettings {
-  alpha: string;
-  beta: string;
-  minimize: string;
+  model: 'holt';
+  settings: {
+    alpha?: number;
+    beta?: number;
+  };
+  minimize: boolean;
 }
 interface MovingAverageHoltWintersModelSettings extends BaseMovingAverageModelSettings {
-  alpha: string;
-  beta: string;
-  gamma: string;
-  period: string;
-  pad: string;
-  minimize: string;
+  model: 'holt_winters';
+  settings: {
+    alpha?: number;
+    beta?: number;
+    gamma?: number;
+    period?: number;
+    pad?: boolean;
+  };
+  minimize: boolean;
 }
 
-type MovingAverageModelSettings =
-  | Partial<MovingAverageEWMAModelSettings>
-  | Partial<MovingAverageHoltModelSettings>
-  | Partial<MovingAverageHoltWintersModelSettings>;
+export type MovingAverageModelSettings<T extends MovingAverageModel = MovingAverageModel> = Partial<
+  Extract<
+    | MovingAverageSimpleModelSettings
+    | MovingAverageLinearModelSettings
+    | MovingAverageEWMAModelSettings
+    | MovingAverageHoltModelSettings
+    | MovingAverageHoltWintersModelSettings,
+    { model: T }
+  >
+>;
 
-export interface MovingAverageSettingDefinition {
-  label: string;
-  value: keyof MovingAverageModelSettings;
-  type?: 'boolean' | 'string';
-}
-
-interface MovingAverage extends BasePipelineMetricAggregation {
+export interface MovingAverage<T extends MovingAverageModel = MovingAverageModel>
+  extends BasePipelineMetricAggregation {
   type: 'moving_avg';
-  settings?: MovingAverageModelSettings;
+  settings?: MovingAverageModelSettings<T>;
 }
+
+export const isEWMAMovingAverage = (metric: MovingAverage | MovingAverage<'ewma'>): metric is MovingAverage<'ewma'> =>
+  metric.settings?.model === 'ewma';
+
+export const isHoltMovingAverage = (metric: MovingAverage | MovingAverage<'holt'>): metric is MovingAverage<'holt'> =>
+  metric.settings?.model === 'holt';
+
+export const isHoltWintersMovingAverage = (
+  metric: MovingAverage | MovingAverage<'holt_winters'>
+): metric is MovingAverage<'holt_winters'> => metric.settings?.model === 'holt_winters';
 
 interface MovingFunction extends BasePipelineMetricAggregation {
   type: 'moving_fn';

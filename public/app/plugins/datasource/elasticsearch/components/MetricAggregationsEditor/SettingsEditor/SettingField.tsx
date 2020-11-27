@@ -28,7 +28,7 @@ export function SettingField<T extends MetricAggregationWithSettings, K extends 
     <InlineField label={label} labelWidth={16} tooltip={tooltip}>
       <Input
         placeholder={placeholder}
-        onBlur={e => dispatch(changeMetricSetting(metric, settingName, e.target.value))}
+        onBlur={e => dispatch(changeMetricSetting(metric, settingName, e.target.value as any))}
         defaultValue={settings?.[settingName as keyof typeof settings]}
       />
     </InlineField>
