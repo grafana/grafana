@@ -105,7 +105,7 @@ export const FilterByValueFilterEditor: React.FC<Props> = props => {
         <editor.component field={field} options={filter.config.options ?? {}} onChange={onChangeMatcherOptions} />
       </div>
       <div className="gf-form">
-        <Button icon="times" onClick={onDelete} style={{ height: '100%' }} size="sm" variant="secondary" />
+        <Button icon="times" onClick={onDelete} size="md" variant="secondary" />
       </div>
     </div>
   );
