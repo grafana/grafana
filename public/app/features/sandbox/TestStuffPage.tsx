@@ -2,12 +2,14 @@ import { ApplyFieldOverrideOptions, DataQuery, DataSourceSelectItem, DataTransfo
 import { config } from 'app/core/config';
 import React, { FC, useState } from 'react';
 import { QueriesTab } from '../query/components/QueriesTab';
+import { QueryGroupOptions } from '../query/components/QueryGroupOptions';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 
 interface State {
   queries: DataQuery[];
   queryRunner: PanelQueryRunner;
   dataSourceName: string | null;
+  queryOptions: QueryGroupOptions;
 }
 
 export const TestStuffPage: FC = () => {
@@ -30,17 +32,26 @@ export const TestStuffPage: FC = () => {
     });
   };
 
+  const onQueryOptionsChange = (queryOptions: QueryGroupOptions) => {
+    setState({
+      ...state,
+      queryOptions,
+    });
+  };
+
   return (
     <div style={{ padding: '50px', height: '100%', flexGrow: 1 }} className="page-scrollbar-wrapper">
       <h2>Hello</h2>
 
       <QueriesTab
+        options={state.queryOptions}
         dataSourceName={state.dataSourceName}
         queryRunner={state.queryRunner}
         queries={state.queries}
         onDataSourceChange={onDataSourceChange}
         onRunQueries={onRunQueries}
         onQueriesChange={onQueriesChange}
+        onOptionsChange={onQueryOptionsChange}
       />
     </div>
   );
@@ -66,6 +77,9 @@ export function getDefaultState(): State {
     queries: [],
     dataSourceName: 'gdev-testdata',
     queryRunner: new PanelQueryRunner(dataConfig),
+    queryOptions: {
+      maxDataPoints: 100,
+    },
   };
 }
 

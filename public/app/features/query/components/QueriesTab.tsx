@@ -21,21 +21,23 @@ import {
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
-import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
-import { css } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
+import { QueryGroupOptions, QueryGroupOptionsEditor } from './QueryGroupOptions';
+import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
+import { css } from 'emotion';
 
 interface Props {
   queryRunner: PanelQueryRunner;
   queries: DataQuery[];
   dataSourceName: string | null;
-  renderQueryOptions: () => React.ReactNode;
+  options: QueryGroupOptions;
   onOpenQueryInspector?: () => void;
   onRunQueries: () => void;
   onQueriesChange: (queries: DataQuery[]) => void;
   onDataSourceChange: (ds: DataSourceSelectItem, queries: DataQuery[]) => void;
+  onOptionsChange: (options: QueryGroupOptions) => void;
 }
 
 interface State {
@@ -163,8 +165,8 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderTopSection(styles: QueriesTabStyls) {
-    const { onOpenQueryInspector, renderQueryOptions } = this.props;
-    const { dataSourceItem, dataSource, dataSourceError } = this.state;
+    const { onOpenQueryInspector, options, onOptionsChange } = this.props;
+    const { dataSourceItem, dataSource, dataSourceError, data } = this.state;
 
     if (!dataSource) {
       return null;
@@ -190,7 +192,9 @@ export class QueriesTab extends PureComponent<Props, State> {
               onClick={this.onOpenHelp}
             />
           </div>
-          <div className={styles.dataSourceRowItemOptions}>{renderQueryOptions()}</div>
+          <div className={styles.dataSourceRowItemOptions}>
+            <QueryGroupOptionsEditor options={options} dataSource={dataSource} data={data} onChange={onOptionsChange} />
+          </div>
           {onOpenQueryInspector && (
             <div className={styles.dataSourceRowItem}>
               <Button
