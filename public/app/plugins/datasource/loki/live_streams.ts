@@ -1,8 +1,8 @@
 import { DataFrame, FieldType, parseLabels, KeyValue, CircularDataFrame } from '@grafana/data';
-import { Observable, throwError } from 'rxjs';
+import { Observable, throwError, timer } from 'rxjs';
 import { webSocket } from 'rxjs/webSocket';
 import { LokiTailResponse } from './types';
-import { finalize, map, catchError } from 'rxjs/operators';
+import { finalize, map, retryWhen, mergeMap } from 'rxjs/operators';
 import { appendResponseToBufferedData } from './result_transformer';
 
 /**
@@ -42,9 +42,19 @@ export class LiveStreams {
         appendResponseToBufferedData(response, data);
         return [data];
       }),
-      catchError(err => {
-        return throwError(`error: ${err.reason}`);
-      }),
+      retryWhen((attempts: Observable<any>) =>
+        attempts.pipe(
+          mergeMap(error => {
+            // Code 1006 is used to indicate that a connection was closed abnormally.
+            // If connection was closed abnormally, we wish to retry, otherwise throw error.
+            if (error.code === 1006) {
+              console.log('Reconnecting websocket...');
+              return timer(1000);
+            }
+            return throwError(`error: ${error.reason}`);
+          })
+        )
+      ),
       finalize(() => {
         delete this.streams[target.url];
       })

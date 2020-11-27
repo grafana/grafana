@@ -124,12 +124,12 @@ class LiveLogs extends PureComponent<Props, State> {
     }
   };
 
-  rowsToRender = () => {
+  rowsToRender = (): LogRowModel[] | null => {
     const { isPaused } = this.props;
     let { logRowsToRender: rowsToRender = [] } = this.state;
     if (!isPaused) {
       // A perf optimisation here. Show just 100 rows when streaming and full length when the streaming is paused.
-      rowsToRender = rowsToRender.slice(-100);
+      rowsToRender = rowsToRender?.slice(-100);
     }
     return rowsToRender;
   };
@@ -147,7 +147,7 @@ class LiveLogs extends PureComponent<Props, State> {
             className={cx(['logs-rows', styles.logsRowsLive])}
             ref={this.scrollContainerRef}
           >
-            {this.rowsToRender().map((row: LogRowModel) => {
+            {this.rowsToRender()?.map((row: LogRowModel) => {
               return (
                 <tr className={cx(logsRow, styles.logsRowFade)} key={row.uid}>
                   <td className={cx(logsRowLocalTime)}>{dateTimeFormat(row.timeEpochMs, { timeZone })}</td>
