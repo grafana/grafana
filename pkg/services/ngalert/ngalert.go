@@ -3,7 +3,6 @@ package ngalert
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 
@@ -42,10 +41,9 @@ func (ng *AlertNG) Init() error {
 	ng.registerAPIEndpoints()
 
 	ng.schedule = schedule{
-		baseInterval: time.Second,
-		channelMap:   channelMap{definionCh: make(map[int64]definitionCh)},
-		stop:         make(chan int64),
-		maxAttempts:  maxAttempts,
+		channelMap:  channelMap{definionCh: make(map[int64]definitionCh)},
+		stop:        make(chan int64),
+		maxAttempts: maxAttempts,
 	}
 	return nil
 }

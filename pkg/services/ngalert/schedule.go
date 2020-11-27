@@ -5,6 +5,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -26,11 +28,11 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID in
 				results, err := ng.alertDefinitionEval(definitionID, ctx.now)
 				end = timeNow()
 				if err != nil {
-					ng.log.Error("failed to evaluate alert definition", "definitionID", definitionID, "attempt", attempt, "duration", end.Sub(start), "error", err)
+					ng.log.Error("failed to evaluate alert definition", "definitionID", definitionID, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
 					return err
 				}
 				for _, r := range results {
-					ng.log.Info("alert definition result", "definitionID", definitionID, "attempt", attempt, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
+					ng.log.Info("alert definition result", "definitionID", definitionID, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
 				}
 				return nil
 			}
@@ -60,11 +62,11 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID in
 	}
 }
 
-func (ng *AlertNG) fetchAlertDefinitions(since time.Time) []*AlertDefinition {
+func (ng *AlertNG) fetchAlertDefinitions(now time.Time) []*AlertDefinition {
 	cmd := listAlertDefinitionsQuery{}
 	err := ng.getAlertDefinitions(&cmd) // tmp
 	if err != nil {
-		ng.log.Error("failed to fetch updated alert definitions", "since", since, "err", err)
+		ng.log.Error("failed to fetch updated alert definitions", "now", now, "err", err)
 		return nil
 	}
 	return cmd.Result
@@ -87,12 +89,14 @@ type schedule struct {
 
 func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 	dispatcherGroup, ctx := errgroup.WithContext(grafanaCtx)
-	heartbeat := time.NewTicker(ng.schedule.baseInterval)
-	var lastFetchTime time.Time
+	c := clock.New()
+	// alerting.Ticker ticks every second
+	heartbeat := alerting.NewTicker(time.Now(), time.Second*0, c)
 	for {
 		select {
 		case tick := <-heartbeat.C:
-			alertDefinitions := ng.fetchAlertDefinitions(lastFetchTime)
+			start := c.Now()
+			alertDefinitions := ng.fetchAlertDefinitions(tick)
 			ng.log.Debug("alert definitions fetched", "count", len(alertDefinitions))
 
 			// registeredDefinitions is a map used for finding deleted alert definitions
@@ -124,16 +128,18 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 				// remove the alert definition from the registered alert definitions
 				delete(registeredDefinitions, itemID)
 			}
+			lostTime := c.Now().Sub(start)
 
-			step := 0
+			var step int64 = 0
 			if len(readyToRun) > 0 {
-				step = int(ng.schedule.baseInterval.Nanoseconds()) / len(readyToRun)
+				step = (time.Second.Nanoseconds() - lostTime.Nanoseconds()) / int64(len(readyToRun))
 			}
 
-			// second loop is only required for distribute evaluations across time within an interval
-			for _, item := range readyToRun {
-				item.definitionCh.ch <- &evalContext{now: tick}
-				time.Sleep(time.Duration(step))
+			for i := range readyToRun {
+				item := readyToRun[i]
+				c.AfterFunc(time.Duration(int64(i)*step), func() {
+					item.definitionCh.ch <- &evalContext{now: tick}
+				})
 			}
 
 			// unregister and stop routines of the deleted alert definitions
@@ -141,7 +147,6 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 				ng.schedule.stop <- id
 				ng.schedule.channelMap.del(id)
 			}
-			lastFetchTime = tick
 		case <-grafanaCtx.Done():
 			err := dispatcherGroup.Wait()
 			return err
