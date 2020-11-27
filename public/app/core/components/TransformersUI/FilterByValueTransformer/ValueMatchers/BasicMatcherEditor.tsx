@@ -8,7 +8,7 @@ export function basicMatcherEditor<T = any>(
   config: ValueMatcherEditorConfig
 ): React.FC<ValueMatcherUIProps<BasicValueMatcherOptions<T>>> {
   return ({ options, onChange, field }) => {
-    const { validator } = config;
+    const { validator, converter = convertToType } = config;
     const { value } = options;
     const [isInvalid, setInvalid] = useState(!validator(value));
 
@@ -29,10 +29,10 @@ export function basicMatcherEditor<T = any>(
 
         onChange({
           ...options,
-          value: convertToType(value, field),
+          value: converter(value, field),
         });
       },
-      [options, onChange, isInvalid, field]
+      [options, onChange, isInvalid, field, converter]
     );
 
     return (
@@ -97,6 +97,7 @@ export const getBasicValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Basi
       id: ValueMatcherID.regex,
       component: basicMatcherEditor<string>({
         validator: () => true,
+        converter: (value: any) => String(value),
       }),
     },
   ];

@@ -8,9 +8,7 @@ export interface ValueMatcherUIProps<TOptions> {
   onChange: (options: TOptions) => void;
   field: Field;
 }
-
-export type ValueMatcherValidator<TOption> = (options: TOption) => boolean;
-
 export interface ValueMatcherEditorConfig {
   validator: (value: any) => boolean;
+  converter?: (value: any, field: Field) => any;
 }

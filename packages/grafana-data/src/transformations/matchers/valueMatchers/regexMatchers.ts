@@ -8,9 +8,10 @@ const regexValueMatcher: ValueMatcherInfo<BasicValueMatcherOptions<string>> = {
   name: 'Regex',
   description: 'Match when field value is matching regex.',
   get: options => {
+    const regex = new RegExp(options.value);
+
     return (valueIndex: number, field: Field) => {
       const value = field.values.get(valueIndex);
-      const regex = new RegExp(options.value);
       return regex.test(value);
     };
   },
