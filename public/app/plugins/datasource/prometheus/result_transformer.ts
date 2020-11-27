@@ -238,7 +238,7 @@ function getValueField({
     name: valueName,
     type: FieldType.number,
     config: {
-      displayName,
+      displayNameFromDS: displayName,
     },
     labels,
     values: new ArrayVector<number | null>(data.map(val => (parseValue ? parseSampleValue(val[1]) : val[1]))),
