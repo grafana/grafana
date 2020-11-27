@@ -9,6 +9,6 @@ _link: {
 	url: string
 }
 
-panelLink: _link
+_panelLink: _link
 
-dataLink: _link
+_dataLink: _link

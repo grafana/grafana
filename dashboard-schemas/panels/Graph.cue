@@ -1,6 +1,6 @@
 package panels
 
-#Graph: panel & {
+#Graph: _panel & {
 	// Display values as a bar chart.
 	bars: bool | *false
 	// Dashed line length.
@@ -17,7 +17,7 @@ package panels
 		// Defaults.
 		defaults: custom: {}
 		// Overrides.
-		overrides: [...override]
+		overrides: [..._override]
 	}
 	// Amount of color fill for a series. Expects a value between 0 and 1.
 	fill: number & >=0 & <=1 | *1
@@ -66,7 +66,7 @@ package panels
 	// Options.
 	options: {
 		// Data links.
-		dataLinks: [...dataLink]
+		dataLinks: [..._dataLink]
 	}
 	// Available when `stack` is true. Each series is drawn as a percentage of the
 	// total of all series.
@@ -111,7 +111,7 @@ package panels
 	// Draws adjacent points as staircase.
 	steppedLine: bool | *false
 	// Threshold config.
-	thresholds: thresholds
+	thresholds: _thresholds
 	// Time from.
 	timeFrom: string
 	// Time regions.

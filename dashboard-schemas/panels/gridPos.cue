@@ -1,6 +1,6 @@
 package panels
 
-gridPos: {
+_gridPos: {
 	// Panel height.
 	h: int & >0 | *9
 	// Panel width.

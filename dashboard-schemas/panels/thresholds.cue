@@ -1,6 +1,6 @@
 package panels
 
-thresholds: {
+_thresholds: {
 	// Threshold mode.
 	mode: string | *"absolute"
 	// Threshold steps.

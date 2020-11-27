@@ -73,13 +73,25 @@ RUN cd /tmp && \
     rm -rf /tmp/x86_64-centos6-linux-gnu/ && \
     rm -rf /tmp/crosstool-ng-${CTNG}
 
-ARG GOLANGCILINT_VERSION=1.32.2
-ARG GOLANGCILINT_CHKSUM=e7ab86d833bf9faed39801ab3b5cd294f026d26f9a7da63a42390943ead486cc
+ARG GOLANGCILINT_VERSION=1.33.0
+ARG GOLANGCILINT_CHKSUM=e2d6082f1df53c5d2c280765000f9e82783ea909ba419c6c4e172936b076031e
 
 RUN curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
 RUN echo ${GOLANGCILINT_CHKSUM} golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
 RUN tar xf golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
 RUN mv golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64/golangci-lint /tmp/
+
+ARG SHELLCHECK_VERSION=0.7.1
+ARG SHELLCHECK_CHKSUM=beca3d7819a6bdcfbd044576df4fc284053b48f468b2f03428fe66f4ceb2c05d9b5411357fa15003cb0311406c255084cf7283a3b8fce644c340c2f6aa910b9f
+RUN curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz
+RUN echo $SHELLCHECK_CHKSUM shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status
+RUN tar xf shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz && mv shellcheck-v${SHELLCHECK_VERSION}/shellcheck /tmp/
+
+ARG CUE_VERSION=0.3.0-alpha5
+ARG CUE_CHKSUM=9d3131e470cdb5182afd9966688f1c052d383145cce005a947156b5591da39b7
+RUN curl -fLO https://github.com/cuelang/cue/releases/download/v${CUE_VERSION}/cue_${CUE_VERSION}_Linux_x86_64.tar.gz
+RUN echo $CUE_CHKSUM cue_${CUE_VERSION}_Linux_x86_64.tar.gz | sha256sum --check --strict --status
+RUN tar xf cue_${CUE_VERSION}_Linux_x86_64.tar.gz -C /tmp cue
 
 # Base image to crossbuild grafana.
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
@@ -96,7 +108,9 @@ ENV GOVERSION=1.15.5 \
 ARG DEBIAN_FRONTEND=noninteractive
 
 COPY --from=toolchain /tmp/x86_64-centos6-linux-gnu.tar.xz /tmp/osxcross.tar.xz /tmp/
-COPY --from=toolchain /tmp/golangci-lint /usr/local/bin
+COPY --from=toolchain /tmp/golangci-lint /usr/local/bin/
+COPY --from=toolchain /tmp/shellcheck /usr/local/bin/
+COPY --from=toolchain /tmp/cue /usr/local/bin/
 
 RUN apt-get update && \
     apt-get install -yq  \
