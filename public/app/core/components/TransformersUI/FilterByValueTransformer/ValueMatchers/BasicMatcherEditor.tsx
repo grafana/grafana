@@ -92,5 +92,12 @@ export const getBasicValueMatchersUI = (): Array<ValueMatcherUIRegistryItem<Basi
         validator: () => true,
       }),
     },
+    {
+      name: 'Regex',
+      id: ValueMatcherID.regex,
+      component: basicMatcherEditor<string>({
+        validator: () => true,
+      }),
+    },
   ];
 };
