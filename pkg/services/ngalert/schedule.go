@@ -73,9 +73,6 @@ func (ng *AlertNG) fetchAlertDefinitions(now time.Time) []*AlertDefinition {
 }
 
 type schedule struct {
-	// base tick rate (fastest possible configured check)
-	baseInterval time.Duration
-
 	// each alert definition gets its own channel and
 	// routine. Will need lock as well. A map so when can
 	// update a specific routine if it is
