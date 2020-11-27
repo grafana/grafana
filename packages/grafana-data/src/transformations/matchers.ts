@@ -44,6 +44,10 @@ export const frameMatchers = new Registry<FrameMatcherInfo>(() => {
   ];
 });
 
+/**
+ * Registry that contains all of the built in value matchers.
+ * @public
+ */
 export const valueMatchers = new Registry<ValueMatcherInfo>(() => {
   return [
     ...getNullValueMatchers(),
@@ -79,6 +83,11 @@ export function getFrameMatchers(config: MatcherConfig): FrameMatcher {
   return info.get(config.options);
 }
 
+/**
+ * Resolves a value matcher from the registry for given config.
+ * Will throw an error if matcher can not be resolved.
+ * @public
+ */
 export function getValueMatcher(config: MatcherConfig): ValueMatcher {
   const info = valueMatchers.get(config.id);
   if (!info) {
