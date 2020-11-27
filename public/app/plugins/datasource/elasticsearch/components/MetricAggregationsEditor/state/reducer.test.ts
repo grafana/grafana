@@ -27,9 +27,9 @@ describe('Metric Aggregations Reducer', () => {
 
     reducerTester()
       .givenReducer(reducer, [])
-      .whenActionIsDispatched(addMetric())
+      .whenActionIsDispatched(addMetric(firstAggregation.id))
       .thenStateShouldEqual([firstAggregation])
-      .whenActionIsDispatched(addMetric())
+      .whenActionIsDispatched(addMetric(secondAggregation.id))
       .thenStateShouldEqual([firstAggregation, secondAggregation]);
   });
 

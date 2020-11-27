@@ -9,9 +9,10 @@ import { BucketAggregation } from './aggregations';
 
 interface Props {
   value: BucketAggregation[];
+  nextId: BucketAggregation['id'];
 }
 
-export const BucketAggregationsEditor: FunctionComponent<Props> = ({ value }) => {
+export const BucketAggregationsEditor: FunctionComponent<Props> = ({ value, nextId }) => {
   const dispatch = useDispatch<BucketAggregationAction>();
 
   return (
@@ -23,7 +24,7 @@ export const BucketAggregationsEditor: FunctionComponent<Props> = ({ value }) =>
           <AddRemove
             index={index}
             elements={value}
-            onAdd={() => dispatch(addBucketAggregation())}
+            onAdd={() => dispatch(addBucketAggregation(nextId))}
             onRemove={() => dispatch(removeBucketAggregation(bucketAgg.id))}
           />
         </InlineFieldRow>

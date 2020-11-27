@@ -6,5 +6,6 @@ export const describeMetric = (metric: MetricAggregation) => {
     return metricAggregationConfig[metric.type].label;
   }
 
+  // TODO: field might be undefined
   return `${metricAggregationConfig[metric.type].label} ${metric.field}`;
 };

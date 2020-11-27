@@ -16,9 +16,11 @@ export const CHANGE_METRIC_META = '@metrics/change_meta';
 export const CHANGE_METRIC_ATTRIBUTE = '@metrics/change_attr';
 export const TOGGLE_METRIC_VISIBILITY = '@metrics/toggle_visibility';
 
-//
-// Action Types
-export interface AddMetricAction extends Action<typeof ADD_METRIC> {}
+export interface AddMetricAction extends Action<typeof ADD_METRIC> {
+  payload: {
+    id: MetricAggregation['id'];
+  };
+}
 
 export interface RemoveMetricAction extends Action<typeof REMOVE_METRIC> {
   payload: {

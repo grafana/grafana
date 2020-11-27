@@ -10,9 +10,10 @@ import { MetricAggregation } from './aggregations';
 
 interface Props {
   value: MetricAggregation[];
+  nextId: MetricAggregation['id'];
 }
 
-export const MetricAggregationsEditor: FunctionComponent<Props> = ({ value }) => {
+export const MetricAggregationsEditor: FunctionComponent<Props> = ({ value, nextId }) => {
   const dispatch = useDispatch<MetricAggregationAction>();
 
   return (
@@ -25,7 +26,7 @@ export const MetricAggregationsEditor: FunctionComponent<Props> = ({ value }) =>
             <AddRemove
               index={index}
               elements={value}
-              onAdd={() => dispatch(addMetric())}
+              onAdd={() => dispatch(addMetric(nextId))}
               onRemove={() => dispatch(removeMetric(metric.id))}
             />
           )}

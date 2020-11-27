@@ -8,6 +8,7 @@ import { changeAliasPattern, changeQuery } from './state';
 import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
 import { useDispatch } from '../hooks/useStatelessReducer';
+import { useNextId } from '../hooks/useNextId';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
 
@@ -38,6 +39,7 @@ interface Props {
 
 const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
   const dispatch = useDispatch();
+  const nextId = useNextId();
 
   return (
     <>
@@ -58,8 +60,8 @@ const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
         </InlineField>
       </InlineFieldRow>
 
-      <MetricAggregationsEditor value={value.metrics!} />
-      <BucketAggregationsEditor value={value.bucketAggs!} />
+      <MetricAggregationsEditor value={value.metrics!} nextId={nextId} />
+      <BucketAggregationsEditor value={value.bucketAggs!} nextId={nextId} />
     </>
   );
 };

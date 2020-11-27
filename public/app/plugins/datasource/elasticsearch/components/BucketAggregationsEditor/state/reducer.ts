@@ -20,10 +20,8 @@ export const reducer = (
 ): ElasticsearchQuery['bucketAggs'] => {
   switch (action.type) {
     case ADD_BUCKET_AGG:
-      const ids = state.map(agg => parseInt(agg.id, 10));
-      const nextId = (Math.max(...ids, 0) + 1).toString();
       const newAgg: Terms = {
-        id: nextId,
+        id: action.payload.id,
         type: 'terms',
         settings: bucketAggregationConfig['terms'].defaultSettings,
       };

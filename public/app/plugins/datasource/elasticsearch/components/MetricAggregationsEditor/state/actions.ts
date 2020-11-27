@@ -15,8 +15,11 @@ import {
   ChangeMetricMetaAction,
 } from './types';
 
-export const addMetric = (): MetricAggregationAction => ({
+export const addMetric = (id: MetricAggregation['id']): MetricAggregationAction => ({
   type: ADD_METRIC,
+  payload: {
+    id,
+  },
 });
 
 export const removeMetric = (id: MetricAggregation['id']): MetricAggregationAction => ({

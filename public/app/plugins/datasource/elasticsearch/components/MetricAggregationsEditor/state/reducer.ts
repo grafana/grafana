@@ -21,8 +21,7 @@ export const reducer = (
 ): ElasticsearchQuery['metrics'] => {
   switch (action.type) {
     case ADD_METRIC:
-      const nextId = parseInt(state[state.length - 1]?.id || '0', 10) + 1;
-      return [...state, defaultMetricAgg(nextId.toString())];
+      return [...state, defaultMetricAgg(action.payload.id)];
 
     case REMOVE_METRIC:
       const metricToRemove = state.find(m => m.id === action.payload.id)!;

@@ -13,15 +13,24 @@ import { reducer } from './reducer';
 
 describe('Bucket Aggregations Reducer', () => {
   it('Should correctly add new aggregations', () => {
+    const firstAggregation: BucketAggregation = {
+      id: '1',
+      type: 'terms',
+      settings: bucketAggregationConfig['terms'].defaultSettings,
+    };
+
+    const secondAggregation: BucketAggregation = {
+      id: '1',
+      type: 'terms',
+      settings: bucketAggregationConfig['terms'].defaultSettings,
+    };
+
     reducerTester()
       .givenReducer(reducer, [])
-      .whenActionIsDispatched(addBucketAggregation())
-      .thenStateShouldEqual([{ id: '1', type: 'terms', settings: bucketAggregationConfig['terms'].defaultSettings }])
-      .whenActionIsDispatched(addBucketAggregation())
-      .thenStateShouldEqual([
-        { id: '1', type: 'terms', settings: bucketAggregationConfig['terms'].defaultSettings },
-        { id: '2', type: 'terms', settings: bucketAggregationConfig['terms'].defaultSettings },
-      ]);
+      .whenActionIsDispatched(addBucketAggregation(firstAggregation.id))
+      .thenStateShouldEqual([firstAggregation])
+      .whenActionIsDispatched(addBucketAggregation(secondAggregation.id))
+      .thenStateShouldEqual([firstAggregation, secondAggregation]);
   });
 
   it('Should correctly remove aggregations', () => {
