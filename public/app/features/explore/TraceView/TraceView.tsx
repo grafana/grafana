@@ -18,6 +18,8 @@ import { useHoverIndentGuide } from './useHoverIndentGuide';
 import { colors, useTheme } from '@grafana/ui';
 import { TraceViewData, Trace, TraceSpan, TraceKeyValuePair, TraceLink } from '@grafana/data';
 import { createSpanLinkFactory } from './createSpanLink';
+import { useSelector } from 'react-redux';
+import { StoreState } from 'app/types';
 
 type Props = {
   trace?: TraceViewData;
@@ -54,6 +56,9 @@ export function TraceView(props: Props) {
 
   const traceProp = useMemo(() => transformTraceData(props.trace), [props.trace]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
+  const lokiDs = useSelector((state: StoreState) => {
+    return (state.explore.left.datasourceInstance as any).instanceSettings.jsonData?.tracesToLogs?.datasourceUid;
+  });
 
   const theme = useTheme();
   const traceTheme = useMemo(
@@ -82,7 +87,7 @@ export function TraceView(props: Props) {
     [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp?.traceID]
   );
 
-  const createSpanLink = useMemo(() => createSpanLinkFactory(props.splitOpenFn), [props.splitOpenFn]);
+  const createSpanLink = useMemo(() => createSpanLinkFactory(props.splitOpenFn, lokiDs), [props.splitOpenFn]);
 
   if (!traceProp) {
     return null;

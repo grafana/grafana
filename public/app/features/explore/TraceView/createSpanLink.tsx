@@ -9,13 +9,13 @@ import { LokiQuery } from '../../../plugins/datasource/loki/types';
  * the trace view won't create any links and to capture the datasource and split function making it easier to memoize
  * with useMemo.
  */
-export function createSpanLinkFactory(splitOpenFn: (options: { datasourceUid: string; query: any }) => void) {
+export function createSpanLinkFactory(
+  splitOpenFn: (options: { datasourceUid: string; query: any }) => void,
+  lokiDsUId?: string
+) {
   // Right now just hardcoded for first loki DS we can find
-  const lokiDs = getDataSourceSrv()
-    .getExternal()
-    .find(ds => ds.meta.id === 'loki');
 
-  if (!lokiDs) {
+  if (!lokiDsUId) {
     return undefined;
   }
 
@@ -26,10 +26,10 @@ export function createSpanLinkFactory(splitOpenFn: (options: { datasourceUid: st
     // it manually here instead of leaving it for the data source to supply the config.
 
     const dataLink: DataLink<LokiQuery> = {
-      title: lokiDs.name,
+      title: 'name',
       url: '',
       internal: {
-        datasourceUid: lokiDs.uid,
+        datasourceUid: lokiDsUId,
         query: {
           expr: getLokiQueryFromSpan(span),
           refId: '',
