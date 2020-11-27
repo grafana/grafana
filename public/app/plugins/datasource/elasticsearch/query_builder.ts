@@ -423,28 +423,24 @@ export class ElasticQueryBuilder {
   }
 
   addPPLAdhocFilters(queryString: any, adhocFilters: any) {
-    let i, adhocquery;
-    let filter = [];
+    let i, value, adhocquery;
 
     for (i = 0; i < adhocFilters.length; i++) {
-      filter.push('`' + adhocFilters[i].key + '`');
       if (dateMath.isValid(adhocFilters[i].value)) {
         const validTime = dateTime(adhocFilters[i].value).format('YYYY-MM-DD HH:mm:ss.SSSSSS');
-        let timeFilter = "timestamp('$validTime')";
-        timeFilter = timeFilter.replace(/\$validTime/g, validTime);
-        filter.push(timeFilter);
+        value = `timestamp('${validTime}')`;
       } else if (typeof adhocFilters[i].value === 'string') {
-        filter.push("'" + adhocFilters[i].value + "'");
+        value = `'${adhocFilters[i].value}'`;
       } else {
-        filter.push(adhocFilters[i].value);
+        value = adhocFilters[i].value;
       }
-      adhocquery = filter.join(adhocFilters[i].operator);
+      adhocquery = `\`${adhocFilters[i].key}\` ${adhocFilters[i].operator} ${value}`;
+
       if (i > 0) {
         queryString += ' and ' + adhocquery;
       } else {
         queryString += ' | where ' + adhocquery;
       }
-      filter = [];
     }
     return queryString;
   }
