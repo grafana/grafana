@@ -80,9 +80,9 @@ export const FilterByValueFilterEditor: React.FC<Props> = props => {
   return (
     <div className="gf-form-inline">
       <div className="gf-form gf-form-spacing">
-        <div className="gf-form-label width-4">Field</div>
+        <div className="gf-form-label width-7">Field</div>
         <Select
-          className="width-24"
+          className="min-width-15 max-width-24"
           placeholder="Field Name"
           options={fieldsAsOptions}
           value={filter.fieldName}
@@ -91,9 +91,9 @@ export const FilterByValueFilterEditor: React.FC<Props> = props => {
         />
       </div>
       <div className="gf-form gf-form-spacing">
-        <div className="gf-form-label width-8">Match</div>
+        <div className="gf-form-label">Match</div>
         <Select
-          className="width-8"
+          className="width-12"
           placeholder="Select test"
           options={matcherOptions}
           value={matcherId}
@@ -101,11 +101,12 @@ export const FilterByValueFilterEditor: React.FC<Props> = props => {
           menuPlacement="bottom"
         />
       </div>
-      <div className="gf-form gf-form--grow gf-form-spacing ">
+      <div className="gf-form gf-form--grow gf-form-spacing">
+        <div className="gf-form-label">Value</div>
         <editor.component field={field} options={filter.config.options ?? {}} onChange={onChangeMatcherOptions} />
       </div>
       <div className="gf-form">
-        <Button icon="times" onClick={onDelete} size="md" variant="secondary" />
+        <Button icon="times" onClick={onDelete} variant="secondary" />
       </div>
     </div>
   );

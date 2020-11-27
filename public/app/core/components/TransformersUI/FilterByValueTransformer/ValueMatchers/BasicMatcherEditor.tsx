@@ -36,16 +36,14 @@ export function basicMatcherEditor<T = any>(
     );
 
     return (
-      <div className="gf-form gf-form--grow">
-        <Input
-          className="flex-grow-1"
-          invalid={isInvalid}
-          defaultValue={String(value)}
-          placeholder="Value"
-          onChange={onChangeValue}
-          onBlur={onChangeOptions}
-        />
-      </div>
+      <Input
+        className="flex-grow-1"
+        invalid={isInvalid}
+        defaultValue={String(options.value)}
+        placeholder="Value"
+        onChange={onChangeValue}
+        onBlur={onChangeOptions}
+      />
     );
   };
 }

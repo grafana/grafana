@@ -24,8 +24,8 @@ import {
 import { DataFrameFieldsInfo, FilterByValueFilterEditor } from './FilterByValueFilterEditor';
 
 const filterTypes: Array<SelectableValue<FilterByValueType>> = [
-  { label: 'Include values', value: FilterByValueType.include },
-  { label: 'Exclude values', value: FilterByValueType.exclude },
+  { label: 'Include', value: FilterByValueType.include },
+  { label: 'Exclude', value: FilterByValueType.exclude },
 ];
 
 const filterMatch: Array<SelectableValue<FilterByValueMatch>> = [
@@ -100,12 +100,16 @@ export const FilterByValueTransformerEditor: React.FC<TransformerUIProps<FilterB
   return (
     <div>
       <div className="gf-form gf-form-inline">
-        <div className="gf-form-label">Filter type</div>
-        <RadioButtonGroup options={filterTypes} value={options.type} onChange={onChangeType} />
+        <div className="gf-form-label width-8">Filter type</div>
+        <div className="width-15">
+          <RadioButtonGroup options={filterTypes} value={options.type} onChange={onChangeType} fullWidth />
+        </div>
       </div>
       <div className="gf-form gf-form-inline">
-        <div className="gf-form-label gf-form--grow">Conditions</div>
-        <RadioButtonGroup options={filterMatch} value={options.match} onChange={onChangeMatch} />
+        <div className="gf-form-label width-8">Conditions</div>
+        <div className="width-15">
+          <RadioButtonGroup options={filterMatch} value={options.match} onChange={onChangeMatch} fullWidth />
+        </div>
       </div>
       <div className={styles.conditions}>
         {options.filters.map((filter, idx) => (
