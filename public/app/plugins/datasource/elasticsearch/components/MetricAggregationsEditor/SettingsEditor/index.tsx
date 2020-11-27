@@ -1,5 +1,5 @@
 import { InlineField, Input, Switch } from '@grafana/ui';
-import React, { FunctionComponent, ComponentProps } from 'react';
+import React, { FunctionComponent, ComponentProps, useState } from 'react';
 import { extendedStats } from '../../../query_def';
 import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { changeMetricMeta, changeMetricSetting } from '../state/actions';
@@ -7,12 +7,14 @@ import {
   MetricAggregation,
   isMetricAggregationWithInlineScript,
   isMetricAggregationWithMissingSupport,
+  ExtendedStat,
 } from '../aggregations';
 import { BucketScriptSettingsEditor } from './BucketScriptSettingsEditor';
 import { SettingField } from './SettingField';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { useDescription } from './useDescription';
 import { MovingAverageSettingsEditor } from './MovingAverageSettingsEditor';
+import { uniqueId } from 'lodash';
 
 // TODO: Move this somewhere and share it with BucketsAggregation Editor
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
@@ -65,14 +67,12 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
       {metric.type === 'extended_stats' && (
         <>
           {extendedStats.map(stat => (
-            <InlineField label={stat.label} {...inlineFieldProps} key={stat.value}>
-              <Switch
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  dispatch(changeMetricMeta(metric, stat.value, e.target.checked))
-                }
-                value={!!metric.meta?.[stat.value]}
-              />
-            </InlineField>
+            <ExtendedStatSetting
+              key={stat.value}
+              stat={stat}
+              onChange={checked => dispatch(changeMetricMeta(metric, stat.value, checked))}
+              value={!!metric.meta?.[stat.value]}
+            />
           ))}
 
           <SettingField label="Sigma" metric={metric} settingName="sigma" placeholder="3" />
@@ -104,5 +104,21 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
         />
       )}
     </SettingsEditorContainer>
+  );
+};
+
+interface ExtendedStatSettingProps {
+  stat: ExtendedStat;
+  onChange: (checked: boolean) => void;
+  value: boolean;
+}
+const ExtendedStatSetting: FunctionComponent<ExtendedStatSettingProps> = ({ stat, onChange, value }) => {
+  // this is needed for the htmlFor prop in the label so that clicking the lable will toggle the switch state.
+  const [id] = useState(uniqueId(`es-field-id-`));
+
+  return (
+    <InlineField label={stat.label} {...inlineFieldProps} key={stat.value}>
+      <Switch id={id} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)} value={value} />
+    </InlineField>
   );
 };
