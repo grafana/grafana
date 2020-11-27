@@ -48,7 +48,7 @@ export function rangeMatcherEditor<T = any>(
     );
 
     return (
-      <div className="gf-form gf-form--grow gf-form-spacing ">
+      <>
         <Input
           className="flex-grow-1"
           invalid={isInvalid['from']}
@@ -66,7 +66,7 @@ export function rangeMatcherEditor<T = any>(
           onChange={event => onChangeValue(event, 'to')}
           onBlur={event => onChangeOptions(event, 'to')}
         />
-      </div>
+      </>
     );
   };
 }
