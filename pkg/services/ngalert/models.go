@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
@@ -49,10 +48,10 @@ type condition struct {
 
 // saveAlertDefinitionCommand is the query for saving a new alert definition.
 type saveAlertDefinitionCommand struct {
-	Name         string               `json:"name"`
-	OrgID        int64                `json:"-"`
-	Condition    condition            `json:"condition"`
-	SignedInUser *models.SignedInUser `json:"-"`
+	Name              string    `json:"name"`
+	OrgID             int64     `json:"-"`
+	Condition         condition `json:"condition"`
+	IntervalInSeconds *int64    `json:"interval"`
 
 	Result *AlertDefinition
 }
@@ -65,11 +64,11 @@ func (cmd *saveAlertDefinitionCommand) IsValid() bool {
 
 // updateAlertDefinitionCommand is the query for updating an existing alert definition.
 type updateAlertDefinitionCommand struct {
-	ID           int64                `json:"-"`
-	Name         string               `json:"name"`
-	OrgID        int64                `json:"-"`
-	Condition    condition            `json:"condition"`
-	SignedInUser *models.SignedInUser `json:"-"`
+	ID                int64     `json:"-"`
+	Name              string    `json:"name"`
+	OrgID             int64     `json:"-"`
+	Condition         condition `json:"condition"`
+	IntervalInSeconds *int64    `json:"interval"`
 
 	RowsAffected int64
 	Result       *AlertDefinition

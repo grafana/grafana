@@ -16,7 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const maxAttempts int64 = 3
+const (
+	maxAttempts              int64 = 3
+	defaultIntervalInSeconds int64 = 60
+)
 
 // AlertNG is the service for evaluating the condition of an alert definition.
 type AlertNG struct {
@@ -98,7 +101,7 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	}))
 
 	mg.AddMigration("add column interval", migrator.NewAddColumnMigration(alertDefinition, &migrator.Column{
-		Name: "interval", Type: migrator.DB_BigInt, Nullable: false, Default: "60",
+		Name: "interval", Type: migrator.DB_BigInt, Nullable: false, Default: fmt.Sprintf("%d", defaultIntervalInSeconds),
 	}))
 }
 

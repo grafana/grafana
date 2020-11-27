@@ -52,11 +52,16 @@ func (ng *AlertNG) getAlertDefinitionByID(query *getAlertDefinitionByIDQuery) er
 // saveAlertDefinition is a handler for saving a new alert definition.
 func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		intervalInSeconds := defaultIntervalInSeconds
+		if cmd.IntervalInSeconds != nil {
+			intervalInSeconds = *cmd.IntervalInSeconds
+		}
 		alertDefinition := &AlertDefinition{
 			OrgId:     cmd.OrgID,
 			Name:      cmd.Name,
 			Condition: cmd.Condition.RefID,
 			Data:      cmd.Condition.QueriesAndExpressions,
+			Interval:  intervalInSeconds,
 		}
 
 		if err := ng.validateAlertDefinition(alertDefinition); err != nil {
@@ -85,6 +90,9 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 			Name:      cmd.Name,
 			Condition: cmd.Condition.RefID,
 			Data:      cmd.Condition.QueriesAndExpressions,
+		}
+		if cmd.IntervalInSeconds != nil {
+			alertDefinition.Interval = *cmd.IntervalInSeconds
 		}
 
 		if err := ng.validateAlertDefinition(alertDefinition); err != nil {

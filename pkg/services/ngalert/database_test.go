@@ -31,30 +31,59 @@ func TestCreatingAlertDefinition(t *testing.T) {
 	mockTimeNow()
 	defer resetTimeNow()
 
-	t.Run("should fail gracefully when creating alert definition with invalid relative time range", func(t *testing.T) {
-		ng := setupTestEnv(t)
-		q := saveAlertDefinitionCommand{
-			OrgID: 1,
-			Name:  "something completely different",
-			Condition: condition{
-				RefID: "B",
-				QueriesAndExpressions: []eval.AlertQuery{
-					{
-						Model: json.RawMessage(`{
-							"datasource": "__expr__",
-							"type":"math",
-							"expression":"2 + 3 > 1"
-						}`),
-						RefID: "B",
+	var customInterval int64 = 120
+	testCases := []struct {
+		desc                 string
+		inputInterval        *int64
+		expectedInterval     int64
+		expectedUpdatedEpoch int64
+	}{
+		{
+			desc:                 "should create successfuly an alert definition with default interval",
+			inputInterval:        nil,
+			expectedInterval:     defaultIntervalInSeconds,
+			expectedUpdatedEpoch: time.Unix(1, 0).Unix(),
+		},
+		{
+			desc:                 "should create successfuly an alert definition with custom interval",
+			inputInterval:        &customInterval,
+			expectedInterval:     customInterval,
+			expectedUpdatedEpoch: time.Unix(2, 0).Unix(),
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			ng := setupTestEnv(t)
+			q := saveAlertDefinitionCommand{
+				OrgID: 1,
+				Name:  "something completely different",
+				Condition: condition{
+					RefID: "B",
+					QueriesAndExpressions: []eval.AlertQuery{
+						{
+							Model: json.RawMessage(`{
+								"datasource": "__expr__",
+								"type":"math",
+								"expression":"2 + 3 > 1"
+							}`),
+							RefID: "B",
+							RelativeTimeRange: eval.RelativeTimeRange{
+								From: eval.Duration(time.Duration(5) * time.Hour),
+								To:   eval.Duration(time.Duration(3) * time.Hour),
+							},
+						},
 					},
 				},
-			},
-		}
-		err := ng.saveAlertDefinition(&q)
-		require.NoError(t, err)
-		assert.Equal(t, time.Unix(1, 0).Unix(), q.Result.Updated)
-	})
-
+			}
+			if tc.inputInterval != nil {
+				q.IntervalInSeconds = tc.inputInterval
+			}
+			err := ng.saveAlertDefinition(&q)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedUpdatedEpoch, q.Result.Updated)
+			assert.Equal(t, tc.expectedInterval, q.Result.Interval)
+		})
+	}
 }
 
 func TestUpdatingAlertDefinition(t *testing.T) {
@@ -92,10 +121,32 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		assert.Equal(t, int64(0), q.RowsAffected)
 	})
 
-	t.Run("updating successfully existing alert", func(t *testing.T) {
+	t.Run("updating existing alert", func(t *testing.T) {
 		ng := setupTestEnv(t)
-		alertDefinition := createTestAlertDefinition(t, ng)
+		var initialInterval int64 = 120
+		alertDefinition := createTestAlertDefinition(t, ng, &initialInterval)
 		created := alertDefinition.Updated
+
+		var customInterval int64 = 30
+		testCases := []struct {
+			desc                 string
+			inputInterval        *int64
+			expectedInterval     int64
+			expectedUpdatedEpoch int64
+		}{
+			{
+				desc:                 "should not update previous interval if it's not provided",
+				inputInterval:        nil,
+				expectedInterval:     initialInterval,
+				expectedUpdatedEpoch: time.Unix(1, 0).Unix(),
+			},
+			{
+				desc:                 "should update interval if it's provided",
+				inputInterval:        &customInterval,
+				expectedInterval:     customInterval,
+				expectedUpdatedEpoch: time.Unix(2, 0).Unix(),
+			},
+		}
 
 		q := updateAlertDefinitionCommand{
 			ID:    (*alertDefinition).Id,
@@ -120,21 +171,34 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 			},
 		}
 
-		err := ng.updateAlertDefinition(&q)
-		require.NoError(t, err)
-		assert.Equal(t, int64(1), q.RowsAffected)
-		assert.Equal(t, int64(1), q.Result.Id)
-		assert.Greater(t, q.Result.Updated, created)
-		updated := q.Result.Updated
+		lastUpdated := created
+		for _, tc := range testCases {
+			t.Run(tc.desc, func(t *testing.T) {
+				if tc.inputInterval != nil {
+					q.IntervalInSeconds = tc.inputInterval
+				}
+				err := ng.updateAlertDefinition(&q)
+				require.NoError(t, err)
+				assert.Equal(t, int64(1), q.RowsAffected)
+				assert.Equal(t, int64(1), q.Result.Id)
+				assert.Greater(t, q.Result.Updated, lastUpdated)
+				updated := q.Result.Updated
 
-		getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: (*alertDefinition).Id}
-		err = ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery)
-		require.NoError(t, err)
-		assert.Equal(t, "something completely different", getAlertDefinitionByIDQuery.Result.Name)
-		assert.Equal(t, "B", getAlertDefinitionByIDQuery.Result.Condition)
-		assert.Equal(t, 1, len(getAlertDefinitionByIDQuery.Result.Data))
-		assert.Greater(t, getAlertDefinitionByIDQuery.Result.Updated, created)
-		assert.Equal(t, updated, getAlertDefinitionByIDQuery.Result.Updated)
+				getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: (*alertDefinition).Id}
+				err = ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery)
+				require.NoError(t, err)
+				assert.Equal(t, "something completely different", getAlertDefinitionByIDQuery.Result.Name)
+				assert.Equal(t, "B", getAlertDefinitionByIDQuery.Result.Condition)
+				assert.Equal(t, 1, len(getAlertDefinitionByIDQuery.Result.Data))
+				assert.Greater(t, getAlertDefinitionByIDQuery.Result.Updated, lastUpdated)
+				assert.Equal(t, updated, getAlertDefinitionByIDQuery.Result.Updated)
+				assert.Equal(t, tc.expectedInterval, getAlertDefinitionByIDQuery.Result.Interval)
+
+				lastUpdated = updated
+			})
+
+		}
+
 	})
 }
 
@@ -154,7 +218,7 @@ func TestDeletingAlertDefinition(t *testing.T) {
 
 	t.Run("deleting successfully existing alert", func(t *testing.T) {
 		ng := setupTestEnv(t)
-		alertDefinition := createTestAlertDefinition(t, ng)
+		alertDefinition := createTestAlertDefinition(t, ng, nil)
 
 		q := deleteAlertDefinitionByIDCommand{
 			ID:    (*alertDefinition).Id,
@@ -178,7 +242,7 @@ func setupTestEnv(t *testing.T) *AlertNG {
 	return &ng
 }
 
-func createTestAlertDefinition(t *testing.T, ng *AlertNG) *AlertDefinition {
+func createTestAlertDefinition(t *testing.T, ng *AlertNG, intervalInSeconds *int64) *AlertDefinition {
 	cmd := saveAlertDefinitionCommand{
 		OrgID: 1,
 		Name:  "an alert definition",
@@ -199,6 +263,7 @@ func createTestAlertDefinition(t *testing.T, ng *AlertNG) *AlertDefinition {
 				},
 			},
 		},
+		IntervalInSeconds: intervalInSeconds,
 	}
 	err := ng.saveAlertDefinition(&cmd)
 	require.NoError(t, err)
