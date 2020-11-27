@@ -17,7 +17,6 @@
         "react/prop-types": "off",
         "react/no-unescaped-entities": "off",
         "react/no-unknown-property": "off",
-        "react/no-children-prop": "off",
         "no-only-tests/no-only-tests": "error"
       }
     }
