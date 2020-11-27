@@ -17,6 +17,7 @@ export const getStandardTransformers = (): Array<TransformerRegistyItem<any>> =>
     reduceTransformRegistryItem,
     filterFieldsByNameTransformRegistryItem,
     filterFramesByRefIdTransformRegistryItem,
+    filterByValueTransformRegistryItem,
     organizeFieldsTransformRegistryItem,
     seriesToFieldsTransformerRegistryItem,
     seriesToRowsTransformerRegistryItem,
@@ -25,6 +26,5 @@ export const getStandardTransformers = (): Array<TransformerRegistyItem<any>> =>
     labelsToFieldsTransformerRegistryItem,
     groupByTransformRegistryItem,
     mergeTransformerRegistryItem,
-    filterByValueTransformRegistryItem,
   ];
 };
