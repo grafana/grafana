@@ -722,7 +722,10 @@ describe('ElasticResponse', () => {
               type: 'filters',
               settings: {
                 // TODO: Check if label is required
-                filters: [{ query: '@metric:cpu' }, { query: '@metric:logins.count' }],
+                filters: [
+                  { query: '@metric:cpu', label: '' },
+                  { query: '@metric:logins.count', label: '' },
+                ],
               },
             },
             { type: 'date_histogram', field: '@timestamp', id: '3' },
