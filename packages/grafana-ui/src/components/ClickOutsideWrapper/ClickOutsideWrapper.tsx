@@ -27,7 +27,7 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
     parent: window,
     useCapture: false,
   };
-  myRef = createRef<HTMLElement>();
+  myRef = createRef<HTMLDivElement>();
   state = {
     hasEventListener: false,
   };
@@ -56,13 +56,6 @@ export class ClickOutsideWrapper extends PureComponent<Props, State> {
   };
 
   render() {
-    const ChildComponentWithRef = React.forwardRef((props, ref) =>
-      React.cloneElement(this.props.children as React.ReactElement<any>, {
-        ref,
-      })
-    );
-    ChildComponentWithRef.displayName = 'ChildComponentWithRef';
-
-    return <ChildComponentWithRef ref={this.myRef} />;
+    return <div ref={this.myRef}>{this.props.children}</div>;
   }
 }
