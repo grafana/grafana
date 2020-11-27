@@ -136,7 +136,8 @@ export const filterByValueTransformRegistryItem: TransformerRegistyItem<FilterBy
   editor: FilterByValueTransformerEditor,
   transformation: standardTransformers.filterByValueTransformer,
   name: standardTransformers.filterByValueTransformer.name,
-  description: standardTransformers.filterByValueTransformer.description,
+  description:
+    'Removes rows of the query results using user definied filters. This is useful if you can not filter your data in the data source.',
 };
 
 const getEditorStyles = stylesFactory(() => ({
