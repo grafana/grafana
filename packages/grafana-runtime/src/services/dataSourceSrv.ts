@@ -29,6 +29,11 @@ export interface DataSourceSrv {
    * Get all data sources except for internal ones that usually should not be listed like mixed data source.
    */
   getExternal(): DataSourceInstanceSettings[];
+
+  /**
+   * Get settings by name or uid
+   */
+  getSettingsFor(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined;
 }
 
 let singletonInstance: DataSourceSrv;
