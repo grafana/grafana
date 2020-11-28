@@ -37,6 +37,7 @@ import {
   LokiStreamResponse,
   LokiStats,
 } from './types';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 /**
  * Transforms LokiStreamResult structure into a dataFrame. Used when doing standard queries and newer version of Loki.
@@ -387,9 +388,13 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
  * Transform derivedField config into dataframe field with config that contains link.
  */
 function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Field<any, ArrayVector> {
+  const dataSourceSrv = getDatasourceSrv();
+
   const dataLinks = derivedFieldConfigs.reduce((acc, derivedFieldConfig) => {
     // Having field.datasourceUid means it is an internal link.
     if (derivedFieldConfig.datasourceUid) {
+      const dsSettings = dataSourceSrv.getDataSourceSettingsByUid(derivedFieldConfig.datasourceUid);
+
       acc.push({
         // Will be filled out later
         title: '',
@@ -398,6 +403,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
         internal: {
           query: { query: derivedFieldConfig.url },
           datasourceUid: derivedFieldConfig.datasourceUid,
+          datasourceName: dsSettings?.name ?? 'Data source not found',
         },
       });
     } else if (derivedFieldConfig.url) {

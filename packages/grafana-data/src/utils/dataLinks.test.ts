@@ -23,7 +23,6 @@ describe('mapInternalLinkToExplore', () => {
       },
       {
         replaceVariables: val => val,
-        getDataSourceSettingsByUid: uid => ({ name: 'testDS' } as any),
       }
     );
 
