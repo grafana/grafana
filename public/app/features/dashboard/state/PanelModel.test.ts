@@ -7,13 +7,11 @@ import {
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   PanelData,
-  DataSourceInstanceSettings,
   FieldColorModeId,
   FieldColorConfigSettings,
 } from '@grafana/data';
 import { ComponentClass } from 'react';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { setDataSourceSrv } from '@grafana/runtime';
 
 class TablePanelCtrl {}
 
