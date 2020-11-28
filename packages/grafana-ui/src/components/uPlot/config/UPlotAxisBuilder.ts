@@ -1,4 +1,4 @@
-import { dateTimeFormat, GrafanaTheme, systemDateFormats, TimeZone } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import uPlot, { Axis } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 import { measureText } from '../../../utils/measureText';
@@ -15,7 +15,6 @@ export interface AxisProps {
   formatValue?: (v: any) => string;
   values?: any;
   isTime?: boolean;
-  timeZone?: TimeZone;
 }
 
 export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
@@ -29,7 +28,6 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       formatValue,
       values,
       isTime,
-      timeZone,
       theme,
     } = this.props;
 
@@ -65,13 +63,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
     if (values) {
       config.values = values;
     } else if (isTime) {
-      config.values = formatTime;
+      config.values = timeAxisTickFormats;
     } else if (formatValue) {
       config.values = (u: uPlot, vals: any[]) => vals.map(v => formatValue(v));
     }
-
-    // store timezone
-    (config as any).timeZone = timeZone;
 
     return config;
   }
@@ -83,7 +78,7 @@ function calculateSpace(self: uPlot, axisIdx: number, scaleMin: number, scaleMax
 
   // For x-axis (bottom) we need bigger spacing between labels
   if (axis.side === 2) {
-    return 50;
+    return 55;
   }
 
   return 30;
@@ -112,33 +107,27 @@ function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
 }
 
 /** Format time axis ticks */
-function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: number, foundIncr: number): string[] {
-  const timeZone = (self.axes[axisIdx] as any).timeZone;
-  const scale = self.scales.x;
-  const range = ((scale?.max ?? 0) - (scale?.min ?? 0)) / 1e3;
-  const oneDay = 86400;
-  const oneYear = 31536000;
+/*eslint-disable */
+const ms = 1;
+const s  = 1e3;
+const m  = s * 60;
+const h  = m * 60;
+const d  = h * 24;
+const mo = d * 28;
+const y  = d * 365;
 
-  foundIncr /= 1e3;
+const _ = null;
 
-  let format = systemDateFormats.interval.minute;
-
-  if (foundIncr < 1) {
-    format = systemDateFormats.interval.second.replace('ss', 'ss.SS');
-  } else if (foundIncr <= 45) {
-    format = systemDateFormats.interval.second;
-  } else if (foundIncr <= 7200 || range <= oneDay) {
-    format = systemDateFormats.interval.minute;
-  } else if (foundIncr <= 80000) {
-    format = systemDateFormats.interval.hour;
-  } else if (foundIncr <= 2419200 || range <= oneYear) {
-    format = systemDateFormats.interval.day;
-  } else if (foundIncr <= 31536000) {
-    format = systemDateFormats.interval.month;
-  }
-
-  return splits.map(v => dateTimeFormat(v, { format, timeZone }));
-}
+const timeAxisTickFormats = [
+    [y,    "{YYYY}",                 _,  _,  _,  _,  _,  _,  1],
+    [mo,   "{YYYY}-{MM}",            _,  _,  _,  _,  _,  _,  1],
+    [d,    "{MM}/{DD}",              _,  _,  _,  _,  _,  _,  1],
+    [h,    "{MM}/{DD} {HH}:{mm}",    _,  _,  _,  _,  _,  _,  1],
+    [m,    "{HH}:{mm}",              _,  _,  _,  _,  _,  _,  1],
+    [s,    "{HH}:{mm}:{ss}",         _,  _,  _,  _,  _,  _,  1],
+    [ms,   "{HH}:{mm}:{ss}.{fff}",   _,  _,  _,  _,  _,  _,  1],
+  ];
+/*eslint-enable */
 
 export function getUPlotSideFromAxis(axis: AxisPlacement) {
   switch (axis) {

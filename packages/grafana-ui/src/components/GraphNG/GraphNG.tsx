@@ -84,7 +84,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         scaleKey: 'x',
         isTime: true,
         placement: AxisPlacement.Bottom,
-        timeZone,
         theme,
       });
     } else {
