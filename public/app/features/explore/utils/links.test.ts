@@ -1,17 +1,6 @@
 import { getFieldLinksForExplore } from './links';
-import {
-  ArrayVector,
-  DataLink,
-  DataSourceInstanceSettings,
-  dateTime,
-  Field,
-  FieldType,
-  LinkModel,
-  ScopedVars,
-  TimeRange,
-} from '@grafana/data';
+import { ArrayVector, DataLink, dateTime, Field, FieldType, LinkModel, ScopedVars, TimeRange } from '@grafana/data';
 import { setLinkSrv } from '../../panel/panellinks/link_srv';
-import { setDataSourceSrv } from '@grafana/runtime';
 
 describe('getFieldLinksForExplore', () => {
   it('returns correct link model for external link', () => {

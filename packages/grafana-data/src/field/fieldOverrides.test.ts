@@ -594,7 +594,7 @@ describe('getLinksSupplier', () => {
                 title: '',
                 internal: {
                   datasourceUid: '0',
-                  datasourceName: 'hello',
+                  datasourceName: 'testDS',
                   query: '12345',
                 },
               },

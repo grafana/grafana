@@ -19,7 +19,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, getDataSourceSrv } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import {
@@ -37,7 +37,6 @@ import {
   LokiStreamResponse,
   LokiStats,
 } from './types';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 /**
  * Transforms LokiStreamResult structure into a dataFrame. Used when doing standard queries and newer version of Loki.
@@ -388,7 +387,7 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
  * Transform derivedField config into dataframe field with config that contains link.
  */
 function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Field<any, ArrayVector> {
-  const dataSourceSrv = getDatasourceSrv();
+  const dataSourceSrv = getDataSourceSrv();
 
   const dataLinks = derivedFieldConfigs.reduce((acc, derivedFieldConfig) => {
     // Having field.datasourceUid means it is an internal link.
