@@ -57,7 +57,7 @@ export class DatasourceSrv implements DataSourceService {
       return this.get(this.defaultName);
     }
 
-    // for check if nameOrUid matches a uid and then get the name
+    // Check if nameOrUid matches a uid and then get the name
     const byUid = this.settingsMapByUid[nameOrUid];
     if (byUid) {
       nameOrUid = byUid.name;
