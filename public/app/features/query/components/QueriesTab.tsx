@@ -11,8 +11,8 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import config from 'app/core/config';
 // Types
-import { PanelModel } from '../state/PanelModel';
-import { DashboardModel } from '../state/DashboardModel';
+import { PanelModel } from '../../dashboard/state/PanelModel';
+import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import {
   DataQuery,
   DataSourceSelectItem,
@@ -31,7 +31,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 interface Props {
   panel: PanelModel;
-  dashboard: DashboardModel;
+  dashboard?: DashboardModel;
 }
 
 interface State {
@@ -151,10 +151,6 @@ export class QueriesTab extends PureComponent<Props, State> {
       query: { inspect: panel.id, inspectTab: 'query' },
       partial: true,
     });
-  };
-
-  renderHelp = () => {
-    return;
   };
 
   /**

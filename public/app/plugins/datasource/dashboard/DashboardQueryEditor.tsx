@@ -11,7 +11,8 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PanelModel } from 'app/features/dashboard/state';
 import { SHARED_DASHBODARD_QUERY } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { filterPanelDataToQuery } from 'app/features/dashboard/panel_editor/QueryEditorRow';
+import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
+
 const { Select } = LegacyForms;
 
 type ResultInfo = {

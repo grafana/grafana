@@ -2,7 +2,7 @@ import { applyFieldOverrides, DefaultTimeRange, LoadingState, PanelData } from '
 import { config } from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { DashboardModel, PanelModel } from '../state';
-import { getProcessedDataFrames } from '../state/runRequest';
+import { getProcessedDataFrames } from '../../query/state/runRequest';
 
 export function loadSnapshotData(panel: PanelModel, dashboard: DashboardModel): PanelData {
   const data = getProcessedDataFrames(panel.snapshotData);
