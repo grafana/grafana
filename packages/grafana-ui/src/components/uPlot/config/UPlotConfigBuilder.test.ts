@@ -25,7 +25,6 @@ describe('UPlotConfigBuilder', () => {
               "time": true,
             },
             "scale-y": Object {
-              "time": false,
               "range": [Function],
             },
           },
