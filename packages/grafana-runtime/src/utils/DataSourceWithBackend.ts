@@ -9,7 +9,6 @@ import {
 } from '@grafana/data';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { config } from '..';
 import { getBackendSrv, getDataSourceSrv } from '../services';
 import { toDataQueryResponse } from './queryResponse';
 
