@@ -18,7 +18,7 @@ func TestTransaction(t *testing.T) {
 	ss := InitTestDB(t)
 
 	Convey("InTransaction", t, func() {
-		cmd := &models.AddApiKeyCommand{Key: "secret-key", Name: "key", OrgId: 1}
+		cmd := &models.AddApiKeyCommand{Name: "key", OrgId: 1}
 
 		err := AddApiKey(cmd)
 		So(err, ShouldBeNil)

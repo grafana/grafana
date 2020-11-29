@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -48,7 +47,27 @@ func DeleteAPIKey(c *models.ReqContext) Response {
 	return Success("API key deleted")
 }
 
-func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyCommand) Response {
+func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, dtoCmd dtos.AddApiKeyCommand) Response {
+	cmd := models.AddApiKeyCommand{
+		Name:          dtoCmd.Name,
+		Role:          dtoCmd.Role,
+		OrgId:         c.OrgId,
+		SecondsToLive: dtoCmd.SecondsToLive,
+	}
+	return hs.addAPIKey(cmd)
+}
+
+func (hs *HTTPServer) AddAPIKeyForOrg(c *models.ReqContext, dtoCmd dtos.AddApiKeyForOrgCommand) Response {
+	cmd := models.AddApiKeyCommand{
+		Name:          dtoCmd.Name,
+		Role:          dtoCmd.Role,
+		OrgId:         dtoCmd.OrgId,
+		SecondsToLive: dtoCmd.SecondsToLive,
+	}
+	return hs.addAPIKey(cmd)
+}
+
+func (hs *HTTPServer) addAPIKey(cmd models.AddApiKeyCommand) Response {
 	if !cmd.Role.IsValid() {
 		return Error(400, "Invalid role specified", nil)
 	}
@@ -61,14 +80,6 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 			return Error(400, "Number of seconds before expiration is greater than the global limit", nil)
 		}
 	}
-	cmd.OrgId = c.OrgId
-
-	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
-	if err != nil {
-		return Error(500, "Generating API key failed", err)
-	}
-
-	cmd.Key = newKeyInfo.HashedKey
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if errors.Is(err, models.ErrInvalidApiKeyExpiration) {
@@ -83,7 +94,7 @@ func (hs *HTTPServer) AddAPIKey(c *models.ReqContext, cmd models.AddApiKeyComman
 	result := &dtos.NewApiKeyResult{
 		ID:   cmd.Result.Id,
 		Name: cmd.Result.Name,
-		Key:  newKeyInfo.ClientSecret,
+		Key:  cmd.Result.Key,
 	}
 
 	return JSON(200, result)

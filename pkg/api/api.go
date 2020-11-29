@@ -232,7 +232,7 @@ func (hs *HTTPServer) registerRoutes() {
 		// auth api keys
 		apiRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
 			keysRoute.Get("/", Wrap(GetAPIKeys))
-			keysRoute.Post("/", quota("api_key"), bind(models.AddApiKeyCommand{}), Wrap(hs.AddAPIKey))
+			keysRoute.Post("/", quota("api_key"), bind(dtos.AddApiKeyCommand{}), Wrap(hs.AddAPIKey))
 			keysRoute.Delete("/:id", Wrap(DeleteAPIKey))
 		}, reqOrgAdmin)
 
@@ -420,6 +420,13 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/ldap/sync/:id", Wrap(hs.PostSyncUserWithLDAP))
 		adminRoute.Get("/ldap/:username", Wrap(hs.GetUserFromLDAP))
 		adminRoute.Get("/ldap/status", Wrap(hs.GetLDAPStatus))
+
+		// auth api keys
+		adminRoute.Group("/auth/keys", func(keysRoute routing.RouteRegister) {
+			// TODO: GET // keysRoute.Get("/:orgId", Wrap(GetAPIKeysForOrg))
+			keysRoute.Post("/", bind(dtos.AddApiKeyForOrgCommand{}), Wrap(hs.AddAPIKeyForOrg))
+			// TODO: DELETE // keysRoute.Delete("/:orgId/:id", Wrap(DeleteAPIKeyForOrg))
+		})
 	}, reqGrafanaAdmin)
 
 	// rendering

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -36,6 +37,11 @@ func DeleteApiKeyCtx(ctx context.Context, cmd *models.DeleteApiKeyCommand) error
 }
 
 func AddApiKey(cmd *models.AddApiKeyCommand) error {
+	newKeyInfo, err := apikeygen.New(cmd.OrgId, cmd.Name)
+	if err != nil {
+		return err
+	}
+
 	return inTransaction(func(sess *DBSession) error {
 		key := models.ApiKey{OrgId: cmd.OrgId, Name: cmd.Name}
 		exists, _ := sess.Get(&key)
@@ -55,7 +61,7 @@ func AddApiKey(cmd *models.AddApiKeyCommand) error {
 			OrgId:   cmd.OrgId,
 			Name:    cmd.Name,
 			Role:    cmd.Role,
-			Key:     cmd.Key,
+			Key:     newKeyInfo.HashedKey,
 			Created: updated,
 			Updated: updated,
 			Expires: expires,
@@ -64,7 +70,11 @@ func AddApiKey(cmd *models.AddApiKeyCommand) error {
 		if _, err := sess.Insert(&t); err != nil {
 			return err
 		}
-		cmd.Result = &t
+		cmd.Result = &models.ApiKeyClientSecret{
+			Id:   t.Id,
+			Name: t.Name,
+			Key:  newKeyInfo.ClientSecret,
+		}
 		return nil
 	})
 }

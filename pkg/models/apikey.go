@@ -20,16 +20,21 @@ type ApiKey struct {
 	Expires *int64
 }
 
+type ApiKeyClientSecret struct {
+	Id   int64
+	Name string
+	Key  string
+}
+
 // ---------------------
 // COMMANDS
 type AddApiKeyCommand struct {
-	Name          string   `json:"name" binding:"Required"`
-	Role          RoleType `json:"role" binding:"Required"`
-	OrgId         int64    `json:"-"`
-	Key           string   `json:"-"`
-	SecondsToLive int64    `json:"secondsToLive"`
+	Name          string
+	Role          RoleType
+	OrgId         int64
+	SecondsToLive int64
 
-	Result *ApiKey `json:"-"`
+	Result *ApiKeyClientSecret
 }
 
 type DeleteApiKeyCommand struct {
