@@ -31,36 +31,10 @@ const precommitRunner: TaskRunner<PrecommitOptions> = async () => {
     .filter(file => nodeVersionFiles.indexOf(file.path) !== -1)
     .map(f => f.path);
 
-  const gruntTasks = [];
-
   if (affectedNodeVersionFiles.length > 0) {
     await execTask(nodeVersionCheckerTask)({});
   }
 
-  if (sassFiles.length > 0) {
-    gruntTasks.push('sasslint');
-  }
-
-  if (testFiles.length) {
-    gruntTasks.push('no-only-tests');
-  }
-
-  if (goTestFiles.length) {
-    gruntTasks.push('no-focus-convey-tests');
-  }
-
-  if (gruntTasks.length > 0) {
-    console.log(chalk.yellow(`Precommit checks: ${gruntTasks.join(', ')}`));
-    const task = execa('grunt', gruntTasks);
-    // @ts-ignore
-    const stream = task.stdout;
-    if (stream) {
-      stream.pipe(process.stdout);
-    }
-    return task;
-  }
-
-  console.log(chalk.yellow('Skipping precommit checks, no front-end changes detected'));
   return undefined;
 };
 

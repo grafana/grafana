@@ -5,6 +5,11 @@
 .container {
   @include make-container();
   @include make-container-max-widths();
+  width: 10px;
+  width: 10px;
+}
+
+.empty {
 }
 
 // Fluid container
