@@ -97,6 +97,8 @@ func (m *SigV4Middleware) signer() (*v4.Signer, error) {
 		c = credentials.NewStaticCredentials(m.Config.AccessKey, m.Config.SecretKey, "")
 	case Credentials:
 		c = credentials.NewSharedCredentials("", m.Config.Profile)
+	default:
+		panic(fmt.Sprintf("Unexpected auth type %q", authType))
 	}
 
 	// passing nil credentials will force AWS to allow a more complete credential chain vs the explicit default
