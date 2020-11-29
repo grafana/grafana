@@ -28,6 +28,7 @@ export const getVariableState = (
       global: false,
       state: LoadingState.NotStarted,
       error: null,
+      description: null,
     };
   }
 
@@ -43,6 +44,7 @@ export const getVariableState = (
       global: false,
       state: LoadingState.NotStarted,
       error: null,
+      description: null,
     };
   }
 

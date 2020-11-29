@@ -111,7 +111,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       if (data && Object.keys(data).length) {
         options.url =
           options.url +
-          '?' +
+          (options.url.search(/\?/) >= 0 ? '&' : '?') +
           Object.entries(data)
             .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
             .join('&');
@@ -134,7 +134,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   // Use this for tab completion features, wont publish response to other components
   metadataRequest<T = any>(url: string) {
-    return this._request<T>(url, null, { method: 'GET', hideFromInspector: true }).toPromise(); // toPromise until we change getTagValues, getTagKeys to Observable
+    const data: any = {};
+    for (const [key, value] of this.customQueryParameters) {
+      if (data[key] == null) {
+        data[key] = value;
+      }
+    }
+    return this._request<T>(url, data, { method: 'GET', hideFromInspector: true }).toPromise(); // toPromise until we change getTagValues, getTagKeys to Observable
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {

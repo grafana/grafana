@@ -6,7 +6,7 @@ import { TimeSrvStub } from 'test/specs/helpers';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { initialCustomVariableModelState } from '../../../../features/variables/custom/reducer';
-import { FetchResponse } from '@grafana/runtime'; // will use the version in __mocks__
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
@@ -334,17 +334,3 @@ describe('MSSQLDatasource', () => {
     });
   });
 });
-
-function createFetchResponse<T>(data: T): FetchResponse<T> {
-  return {
-    data,
-    status: 200,
-    url: 'http://localhost:3000/api/query',
-    config: { url: 'http://localhost:3000/api/query' },
-    type: 'basic',
-    statusText: 'Ok',
-    redirected: false,
-    headers: ({} as unknown) as Headers,
-    ok: true,
-  };
-}

@@ -3,7 +3,7 @@ title = "Time series dimensions"
 description = "time series dimensions"
 keywords = ["grafana", "intro", "guide", "concepts", "timeseries", "labels"]
 aliases = ["/docs/grafana/latest/guides/timeseries-dimensions"]
-weight = 500
+weight = 600
 +++
 
 # Time series dimensions

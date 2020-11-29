@@ -16,7 +16,7 @@ import {
 } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
-import { PanelQueryRunner } from '../dashboard/state/PanelQueryRunner';
+import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
