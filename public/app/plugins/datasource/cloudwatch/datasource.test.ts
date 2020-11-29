@@ -1,52 +1,48 @@
 import { of } from 'rxjs';
 import { setBackendSrv } from '@grafana/runtime';
-import { dateTime, DefaultTimeRange, observableTester } from '@grafana/data';
+import { dateTime, DefaultTimeRange } from '@grafana/data';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
 import { CloudWatchDatasource } from './datasource';
 
 describe('datasource', () => {
   describe('query', () => {
-    it('should return error if log query and log groups is not specified', done => {
+    it('should return error if log query and log groups is not specified', async () => {
       const { datasource } = setup();
+      const observable = datasource.query({
+        targets: [
+          {
+            queryMode: 'Logs' as 'Logs',
+          },
+        ],
+      } as any);
 
-      observableTester().subscribeAndExpectOnNext({
-        observable: datasource.query({
-          targets: [
-            {
-              queryMode: 'Logs' as 'Logs',
-            },
-          ],
-        } as any),
-        expect: response => {
-          expect(response.error?.message).toBe('Log group is required');
-        },
-        done,
+      await expect(observable).toEmitValuesWith(received => {
+        const response = received[0];
+        expect(response.error?.message).toBe('Log group is required');
       });
     });
 
-    it('should return empty response if queries are hidden', done => {
+    it('should return empty response if queries are hidden', async () => {
       const { datasource } = setup();
+      const observable = datasource.query({
+        targets: [
+          {
+            queryMode: 'Logs' as 'Logs',
+            hide: true,
+          },
+        ],
+      } as any);
 
-      observableTester().subscribeAndExpectOnNext({
-        observable: datasource.query({
-          targets: [
-            {
-              queryMode: 'Logs' as 'Logs',
-              hide: true,
-            },
-          ],
-        } as any),
-        expect: response => {
-          expect(response.data).toEqual([]);
-        },
-        done,
+      await expect(observable).toEmitValuesWith(received => {
+        const response = received[0];
+        expect(response.data).toEqual([]);
       });
     });
   });
 
   describe('performTimeSeriesQuery', () => {
-    it('should return the same length of data as result', done => {
+    it('should return the same length of data as result', async () => {
       const { datasource } = setup({
         data: {
           results: {
@@ -58,20 +54,19 @@ describe('datasource', () => {
       const buildCloudwatchConsoleUrlMock = jest.spyOn(datasource, 'buildCloudwatchConsoleUrl');
       buildCloudwatchConsoleUrlMock.mockImplementation(() => '');
 
-      observableTester().subscribeAndExpectOnNext({
-        observable: datasource.performTimeSeriesQuery(
-          {
-            queries: [
-              { datasourceId: 1, refId: 'a' },
-              { datasourceId: 1, refId: 'b' },
-            ],
-          } as any,
-          { from: dateTime(), to: dateTime() } as any
-        ),
-        expect: response => {
-          expect(response.data.length).toEqual(2);
-        },
-        done,
+      const observable = datasource.performTimeSeriesQuery(
+        {
+          queries: [
+            { datasourceId: 1, refId: 'a' },
+            { datasourceId: 1, refId: 'b' },
+          ],
+        } as any,
+        { from: dateTime(), to: dateTime() } as any
+      );
+
+      await expect(observable).toEmitValuesWith(received => {
+        const response = received[0];
+        expect(response.data.length).toEqual(2);
       });
     });
   });
