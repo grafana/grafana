@@ -71,6 +71,7 @@ describe('sharedReducer', () => {
             global: false,
             state: LoadingState.NotStarted,
             error: null,
+            description: null,
           },
           '2': {
             id: '2',
@@ -83,6 +84,7 @@ describe('sharedReducer', () => {
             global: false,
             state: LoadingState.NotStarted,
             error: null,
+            description: null,
           },
         });
     });
@@ -107,6 +109,7 @@ describe('sharedReducer', () => {
             global: false,
             state: LoadingState.NotStarted,
             error: null,
+            description: null,
           },
           '2': {
             id: '2',
@@ -119,6 +122,7 @@ describe('sharedReducer', () => {
             global: false,
             state: LoadingState.NotStarted,
             error: null,
+            description: null,
           },
         });
     });
@@ -143,6 +147,7 @@ describe('sharedReducer', () => {
             global: false,
             state: LoadingState.NotStarted,
             error: null,
+            description: null,
           },
           '1': {
             id: '1',
@@ -155,6 +160,7 @@ describe('sharedReducer', () => {
             global: false,
             state: LoadingState.NotStarted,
             error: null,
+            description: null,
           },
           '2': {
             id: '2',
@@ -167,6 +173,7 @@ describe('sharedReducer', () => {
             global: false,
             state: LoadingState.NotStarted,
             error: null,
+            description: null,
           },
           '11': {
             ...initialQueryVariableModelState,
@@ -198,6 +205,7 @@ describe('sharedReducer', () => {
             global: false,
             state: LoadingState.NotStarted,
             error: null,
+            description: null,
           },
           '1': {
             id: '1',
@@ -210,6 +218,7 @@ describe('sharedReducer', () => {
             global: false,
             state: LoadingState.NotStarted,
             error: null,
+            description: null,
           },
           '2': {
             id: '2',
@@ -222,6 +231,7 @@ describe('sharedReducer', () => {
             global: false,
             state: LoadingState.NotStarted,
             error: null,
+            description: null,
           },
         });
     });

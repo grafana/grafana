@@ -1,6 +1,6 @@
 import angular from 'angular';
 import castArray from 'lodash/castArray';
-import { LoadingState, TimeRange, UrlQueryMap, UrlQueryValue } from '@grafana/data';
+import { DataQuery, LoadingState, TimeRange, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 
 import {
   DashboardVariableModel,
@@ -39,7 +39,7 @@ import {
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
-import { isMulti } from '../guard';
+import { hasLegacyVariableSupport, hasStandardVariableSupport, isMulti, isQuery } from '../guard';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { createErrorNotification } from '../../../core/copy/appNotification';
@@ -54,6 +54,7 @@ import { cleanVariables } from './variablesReducer';
 import isEqual from 'lodash/isEqual';
 import { getCurrentText, getVariableRefresh } from '../utils';
 import { store } from 'app/store/store';
+import { getDatasourceSrv } from '../../plugins/datasource_srv';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -99,8 +100,11 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
 
     getTemplateSrv().updateTimeRange(getTimeSrv().timeRange());
 
-    for (let index = 0; index < getVariables(getState()).length; index++) {
-      dispatch(variableStateNotStarted(toVariablePayload(getVariables(getState())[index])));
+    const variables = getVariables(getState());
+    for (let index = 0; index < variables.length; index++) {
+      const variable = variables[index];
+      dispatch(upgradeLegacyQueries(toVariableIdentifier(variable)));
+      dispatch(variableStateNotStarted(toVariablePayload(variable)));
     }
   };
 };
@@ -668,3 +672,45 @@ export const completeVariableLoading = (identifier: VariableIdentifier): ThunkRe
     dispatch(variableStateCompleted(toVariablePayload(variableInState)));
   }
 };
+
+export function upgradeLegacyQueries(
+  identifier: VariableIdentifier,
+  getDatasourceSrvFunc: typeof getDatasourceSrv = getDatasourceSrv
+): ThunkResult<void> {
+  return async function(dispatch, getState) {
+    const variable = getVariable<QueryVariableModel>(identifier.id, getState());
+
+    if (!isQuery(variable)) {
+      return;
+    }
+
+    const datasource = await getDatasourceSrvFunc().get(variable.datasource ?? '');
+
+    if (hasLegacyVariableSupport(datasource)) {
+      return;
+    }
+
+    if (!hasStandardVariableSupport(datasource)) {
+      return;
+    }
+
+    if (isDataQueryType(variable.query)) {
+      return;
+    }
+
+    const query = {
+      refId: `${datasource.name}-${identifier.id}-Variable-Query`,
+      query: variable.query,
+    };
+
+    dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
+  };
+}
+
+function isDataQueryType(query: any): query is DataQuery {
+  if (!query) {
+    return false;
+  }
+
+  return query.hasOwnProperty('refId') && typeof query.refId === 'string';
+}

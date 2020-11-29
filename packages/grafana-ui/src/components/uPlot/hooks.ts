@@ -5,6 +5,7 @@ import uPlot, { Options } from 'uplot';
 import { getTimeZoneInfo, TimeZone } from '@grafana/data';
 import { usePlotPluginContext } from './context';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
+import usePrevious from 'react-use/lib/usePrevious';
 
 export const usePlotPlugins = () => {
   /**
@@ -104,6 +105,7 @@ export const DEFAULT_PLOT_CONFIG = {
   hooks: {},
 };
 
+//pass plain confsig object,memoize!
 export const usePlotConfig = (width: number, height: number, timeZone: TimeZone, configBuilder: UPlotConfigBuilder) => {
   const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
   const [currentConfig, setCurrentConfig] = useState<Options>();
@@ -114,7 +116,7 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
     const tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
 
     if (tz) {
-      fmt = (ts: number) => uPlot.tzDate(new Date(ts * 1e3), tz);
+      fmt = (ts: number) => uPlot.tzDate(new Date(ts), tz);
     }
 
     return fmt;
@@ -124,18 +126,18 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
     if (!arePluginsReady) {
       return;
     }
-
     setCurrentConfig({
       ...DEFAULT_PLOT_CONFIG,
       width,
       height,
+      ms: 1,
       plugins: Object.entries(plugins).map(p => ({
         hooks: p[1].hooks,
       })),
       tzDate,
       ...configBuilder.getConfig(),
     });
-  }, [arePluginsReady, plugins, width, height, configBuilder]);
+  }, [arePluginsReady, plugins, width, height, tzDate, configBuilder]);
 
   return {
     registerPlugin,
@@ -171,3 +173,17 @@ export const useRefreshAfterGraphRendered = (pluginId: string) => {
 
   return renderToken;
 };
+
+export function useRevision<T>(dep: T, cmp: (prev: T, next: T) => boolean) {
+  const [rev, setRev] = useState(0);
+  const prevDep = usePrevious(dep);
+
+  useEffect(() => {
+    const hasConfigChanged = prevDep ? !cmp(prevDep, dep) : true;
+    if (hasConfigChanged) {
+      setRev(r => r + 1);
+    }
+  }, [dep]);
+
+  return rev;
+}
