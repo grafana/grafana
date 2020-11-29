@@ -17,7 +17,7 @@ import {
   PanelData,
   ScopedVars,
 } from '@grafana/data';
-import { DashboardModel } from './index';
+import { DashboardModel } from '../../dashboard/state/index';
 import { setDataSourceSrv, setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
 

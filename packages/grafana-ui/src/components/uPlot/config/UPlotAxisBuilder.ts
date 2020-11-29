@@ -32,6 +32,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       timeZone,
       theme,
     } = this.props;
+
     const gridColor = theme.isDark ? theme.palette.gray25 : theme.palette.gray90;
 
     let config: Axis = {
@@ -82,7 +83,7 @@ function calculateSpace(self: uPlot, axisIdx: number, scaleMin: number, scaleMax
 
   // For x-axis (bottom) we need bigger spacing between labels
   if (axis.side === 2) {
-    return 60;
+    return 50;
   }
 
   return 30;
@@ -114,11 +115,12 @@ function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
 function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: number, foundIncr: number): string[] {
   const timeZone = (self.axes[axisIdx] as any).timeZone;
   const scale = self.scales.x;
-  const range = (scale?.max ?? 0) - (scale?.min ?? 0) / 1000;
+  const range = ((scale?.max ?? 0) - (scale?.min ?? 0)) / 1e3;
   const oneDay = 86400;
   const oneYear = 31536000;
 
-  foundIncr = foundIncr / 1000;
+  foundIncr /= 1e3;
+
   let format = systemDateFormats.interval.minute;
 
   if (foundIncr < 1) {

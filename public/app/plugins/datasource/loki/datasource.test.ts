@@ -11,6 +11,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { CustomVariableModel } from '../../../features/variables/types';
 import { initialCustomVariableModelState } from '../../../features/variables/custom/reducer';
 import { makeMockLokiDatasource } from './mocks';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 jest.mock('@grafana/runtime', () => ({
   // @ts-ignore
@@ -592,18 +593,4 @@ function makeMetadataAndVersionsMocks() {
     mocks.push(mock);
   }
   return mocks;
-}
-
-function createFetchResponse<T>(data: T): FetchResponse<T> {
-  return {
-    data,
-    status: 200,
-    url: 'http://localhost:3000/api/query',
-    config: { url: 'http://localhost:3000/api/query' },
-    type: 'basic',
-    statusText: 'Ok',
-    redirected: false,
-    headers: ({} as unknown) as Headers,
-    ok: true,
-  };
 }

@@ -6,9 +6,7 @@ import {
   DataSourceInstanceSettings,
   dateMath,
   getFrameDisplayName,
-  observableTester,
 } from '@grafana/data';
-import { FetchResponse } from '@grafana/runtime';
 
 import * as redux from 'app/store/store';
 import '../datasource';
@@ -22,6 +20,7 @@ import { getTemplateSrvDependencies } from 'test/helpers/getTemplateSrvDependenc
 import { CustomVariableModel, initialVariableModelState, VariableHide } from '../../../../features/variables/types';
 
 import * as rxjsUtils from '../utils/rxjs/increasingInterval';
+import { createFetchResponse } from 'test/helpers/createFetchResponse';
 
 jest.mock('rxjs/operators', () => {
   const operators = jest.requireActual('rxjs/operators');
@@ -358,29 +357,25 @@ describe('CloudWatchDatasource', () => {
       },
     };
 
-    it('should generate the correct query', done => {
+    it('should generate the correct query', async () => {
       const { ds, fetchMock } = getTestContext({ response });
 
-      observableTester().subscribeAndExpectOnComplete({
-        observable: ds.query(query),
-        expect: () => {
-          expect(fetchMock.mock.calls[0][0].data.queries).toMatchObject(
-            expect.arrayContaining([
-              expect.objectContaining({
-                namespace: query.targets[0].namespace,
-                metricName: query.targets[0].metricName,
-                dimensions: { InstanceId: ['i-12345678'] },
-                statistics: query.targets[0].statistics,
-                period: query.targets[0].period,
-              }),
-            ])
-          );
-        },
-        done,
+      await expect(ds.query(query)).toEmitValuesWith(() => {
+        expect(fetchMock.mock.calls[0][0].data.queries).toMatchObject(
+          expect.arrayContaining([
+            expect.objectContaining({
+              namespace: query.targets[0].namespace,
+              metricName: query.targets[0].metricName,
+              dimensions: { InstanceId: ['i-12345678'] },
+              statistics: query.targets[0].statistics,
+              period: query.targets[0].period,
+            }),
+          ])
+        );
       });
     });
 
-    it('should generate the correct query with interval variable', done => {
+    it('should generate the correct query with interval variable', async () => {
       const period: CustomVariableModel = {
         ...initialVariableModelState,
         id: 'period',
@@ -418,12 +413,8 @@ describe('CloudWatchDatasource', () => {
 
       const { ds, fetchMock } = getTestContext({ response, templateSrv });
 
-      observableTester().subscribeAndExpectOnComplete({
-        observable: ds.query(query),
-        expect: () => {
-          expect(fetchMock.mock.calls[0][0].data.queries[0].period).toEqual('600');
-        },
-        done,
+      await expect(ds.query(query)).toEmitValuesWith(() => {
+        expect(fetchMock.mock.calls[0][0].data.queries[0].period).toEqual('600');
       });
     });
 
@@ -451,39 +442,33 @@ describe('CloudWatchDatasource', () => {
       expect(ds.query.bind(ds, query)).toThrow(/Invalid extended statistics/);
     });
 
-    it('should return series list', done => {
+    it('should return series list', async () => {
       const { ds } = getTestContext({ response });
 
-      observableTester().subscribeAndExpectOnNext({
-        observable: ds.query(query),
-        expect: result => {
-          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
-          expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
-        },
-        done,
+      await expect(ds.query(query)).toEmitValuesWith(received => {
+        const result = received[0];
+        expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
+        expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
       });
     });
 
     describe('a correct cloudwatch url should be built for each time series in the response', () => {
-      it('should be built correctly if theres one search expressions returned in meta for a given query row', done => {
+      it('should be built correctly if theres one search expressions returned in meta for a given query row', async () => {
         const { ds } = getTestContext({ response });
 
         response.results['A'].meta.gmdMeta = [{ Expression: `REMOVE_EMPTY(SEARCH('some expression'))`, Period: '300' }];
 
-        observableTester().subscribeAndExpectOnNext({
-          observable: ds.query(query),
-          expect: result => {
-            expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
-            expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
-            expect(decodeURIComponent(result.data[0].fields[1].config.links[0].url)).toContain(
-              `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'some expression\'))"}]}`
-            );
-          },
-          done,
+        await expect(ds.query(query)).toEmitValuesWith(received => {
+          const result = received[0];
+          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
+          expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
+          expect(decodeURIComponent(result.data[0].fields[1].config.links[0].url)).toContain(
+            `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'some expression\'))"}]}`
+          );
         });
       });
 
-      it('should be built correctly if theres two search expressions returned in meta for a given query row', done => {
+      it('should be built correctly if theres two search expressions returned in meta for a given query row', async () => {
         const { ds } = getTestContext({ response });
 
         response.results['A'].meta.gmdMeta = [
@@ -491,49 +476,40 @@ describe('CloudWatchDatasource', () => {
           { Expression: `REMOVE_EMPTY(SEARCH('second expression'))` },
         ];
 
-        observableTester().subscribeAndExpectOnNext({
-          observable: ds.query(query),
-          expect: result => {
-            expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
-            expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
-            expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
-              `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'first expression\'))"},{"expression":"REMOVE_EMPTY(SEARCH(\'second expression\'))"}]}`
-            );
-          },
-          done,
+        await expect(ds.query(query)).toEmitValuesWith(received => {
+          const result = received[0];
+          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
+          expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
+          expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
+            `region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"A","start":"2016-12-31T15:00:00.000Z","end":"2016-12-31T16:00:00.000Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH(\'first expression\'))"},{"expression":"REMOVE_EMPTY(SEARCH(\'second expression\'))"}]}`
+          );
         });
       });
 
-      it('should be built correctly if the query is a metric stat query', done => {
+      it('should be built correctly if the query is a metric stat query', async () => {
         const { ds } = getTestContext({ response });
 
         response.results['A'].meta.gmdMeta = [{ Period: '300' }];
 
-        observableTester().subscribeAndExpectOnNext({
-          observable: ds.query(query),
-          expect: result => {
-            expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
-            expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
-            expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
-              `region=us-east-1#metricsV2:graph={\"view\":\"timeSeries\",\"stacked\":false,\"title\":\"A\",\"start\":\"2016-12-31T15:00:00.000Z\",\"end\":\"2016-12-31T16:00:00.000Z\",\"region\":\"us-east-1\",\"metrics\":[[\"AWS/EC2\",\"CPUUtilization\",\"InstanceId\",\"i-12345678\",{\"stat\":\"Average\",\"period\":\"300\"}]]}`
-            );
-          },
-          done,
+        await expect(ds.query(query)).toEmitValuesWith(received => {
+          const result = received[0];
+          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
+          expect(result.data[0].fields[1].config.links[0].title).toBe('View in CloudWatch console');
+          expect(decodeURIComponent(result.data[0].fields[0].config.links[0].url)).toContain(
+            `region=us-east-1#metricsV2:graph={\"view\":\"timeSeries\",\"stacked\":false,\"title\":\"A\",\"start\":\"2016-12-31T15:00:00.000Z\",\"end\":\"2016-12-31T16:00:00.000Z\",\"region\":\"us-east-1\",\"metrics\":[[\"AWS/EC2\",\"CPUUtilization\",\"InstanceId\",\"i-12345678\",{\"stat\":\"Average\",\"period\":\"300\"}]]}`
+          );
         });
       });
 
-      it('should not be added at all if query is a math expression', done => {
+      it('should not be added at all if query is a math expression', async () => {
         const { ds } = getTestContext({ response });
 
         query.targets[0].expression = 'a * 2';
         response.results['A'].meta.searchExpressions = [];
 
-        observableTester().subscribeAndExpectOnNext({
-          observable: ds.query(query),
-          expect: result => {
-            expect(result.data[0].fields[1].config.links).toBeUndefined();
-          },
-          done,
+        await expect(ds.query(query)).toEmitValuesWith(received => {
+          const result = received[0];
+          expect(result.data[0].fields[1].config.links).toBeUndefined();
         });
       });
     });
@@ -602,19 +578,15 @@ describe('CloudWatchDatasource', () => {
         } as any);
       });
 
-      it('should display one alert error message per region+datasource combination', done => {
+      it('should display one alert error message per region+datasource combination', async () => {
         const { ds } = getTestContext({ response: backendErrorResponse, throws: true });
         const memoizedDebounceSpy = jest.spyOn(ds, 'debouncedAlert');
 
-        observableTester().subscribeAndExpectOnError({
-          observable: ds.query(query),
-          expect: err => {
-            expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-1');
-            expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-2');
-            expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'eu-north-1');
-            expect(memoizedDebounceSpy).toBeCalledTimes(3);
-          },
-          done,
+        await expect(ds.query(query)).toEmitValuesWith(received => {
+          expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-1');
+          expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'us-east-2');
+          expect(memoizedDebounceSpy).toHaveBeenCalledWith('TestDatasource', 'eu-north-1');
+          expect(memoizedDebounceSpy).toBeCalledTimes(3);
         });
       });
     });
@@ -666,7 +638,7 @@ describe('CloudWatchDatasource', () => {
       expect(ds.getActualRegion('some-fake-region-1')).toBe('some-fake-region-1');
     });
 
-    it('should query for the datasource region if empty or "default"', done => {
+    it('should query for the datasource region if empty or "default"', async () => {
       const { ds, instanceSettings } = getTestContext();
       const performTimeSeriesQueryMock = jest.spyOn(ds, 'performTimeSeriesQuery').mockReturnValue(of({}));
 
@@ -689,14 +661,10 @@ describe('CloudWatchDatasource', () => {
         ],
       };
 
-      observableTester().subscribeAndExpectOnComplete({
-        observable: ds.query(query),
-        expect: () => {
-          expect(performTimeSeriesQueryMock.mock.calls[0][0].queries[0].region).toBe(
-            instanceSettings.jsonData.defaultRegion
-          );
-        },
-        done,
+      await expect(ds.query(query)).toEmitValuesWith(() => {
+        expect(performTimeSeriesQueryMock.mock.calls[0][0].queries[0].region).toBe(
+          instanceSettings.jsonData.defaultRegion
+        );
       });
     });
   });
@@ -809,16 +777,13 @@ describe('CloudWatchDatasource', () => {
       },
     };
 
-    it('should return series list', done => {
+    it('should return series list', async () => {
       const { ds } = getTestContext({ response });
 
-      observableTester().subscribeAndExpectOnNext({
-        observable: ds.query(query),
-        expect: result => {
-          expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
-          expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
-        },
-        done,
+      await expect(ds.query(query)).toEmitValuesWith(received => {
+        const result = received[0];
+        expect(getFrameDisplayName(result.data[0])).toBe(response.results.A.series[0].name);
+        expect(result.data[0].fields[1].values.buffer[0]).toBe(response.results.A.series[0].points[0][0]);
       });
     });
   });
@@ -892,7 +857,7 @@ describe('CloudWatchDatasource', () => {
       templateSrv.init(variables);
     });
 
-    it('should generate the correct query for single template variable', done => {
+    it('should generate the correct query for single template variable', async () => {
       const { ds, fetchMock } = getTestContext({ templateSrv });
       const query: any = {
         range: defaultTimeRange,
@@ -913,16 +878,12 @@ describe('CloudWatchDatasource', () => {
         ],
       };
 
-      observableTester().subscribeAndExpectOnComplete({
-        observable: ds.query(query),
-        expect: () => {
-          expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
-        },
-        done,
+      await expect(ds.query(query)).toEmitValuesWith(() => {
+        expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
       });
     });
 
-    it('should generate the correct query in the case of one multilple template variables', done => {
+    it('should generate the correct query in the case of one multilple template variables', async () => {
       const { ds, fetchMock } = getTestContext({ templateSrv });
       const query: any = {
         range: defaultTimeRange,
@@ -949,18 +910,14 @@ describe('CloudWatchDatasource', () => {
         },
       };
 
-      observableTester().subscribeAndExpectOnComplete({
-        observable: ds.query(query),
-        expect: () => {
-          expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
-          expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
-          expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
-        },
-        done,
+      await expect(ds.query(query)).toEmitValuesWith(() => {
+        expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
+        expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
+        expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
       });
     });
 
-    it('should generate the correct query in the case of multilple multi template variables', done => {
+    it('should generate the correct query in the case of multilple multi template variables', async () => {
       const { ds, fetchMock } = getTestContext({ templateSrv });
       const query: any = {
         range: defaultTimeRange,
@@ -983,18 +940,14 @@ describe('CloudWatchDatasource', () => {
         ],
       };
 
-      observableTester().subscribeAndExpectOnComplete({
-        observable: ds.query(query),
-        expect: () => {
-          expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
-          expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
-          expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim4']).toStrictEqual(['var4-foo', 'var4-baz']);
-        },
-        done,
+      await expect(ds.query(query)).toEmitValuesWith(() => {
+        expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
+        expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
+        expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim4']).toStrictEqual(['var4-foo', 'var4-baz']);
       });
     });
 
-    it('should generate the correct query for multilple template variables, lack scopedVars', done => {
+    it('should generate the correct query for multilple template variables, lack scopedVars', async () => {
       const { ds, fetchMock } = getTestContext({ templateSrv });
       const query: any = {
         range: defaultTimeRange,
@@ -1020,14 +973,10 @@ describe('CloudWatchDatasource', () => {
         },
       };
 
-      observableTester().subscribeAndExpectOnComplete({
-        observable: ds.query(query),
-        expect: () => {
-          expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
-          expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
-          expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
-        },
-        done,
+      await expect(ds.query(query)).toEmitValuesWith(() => {
+        expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim1']).toStrictEqual(['var1-foo']);
+        expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim2']).toStrictEqual(['var2-foo']);
+        expect(fetchMock.mock.calls[0][0].data.queries[0].dimensions['dim3']).toStrictEqual(['var3-foo', 'var3-baz']);
       });
     });
   });
@@ -1212,18 +1161,4 @@ function genMockFrames(numResponses: number): DataFrame[] {
   }
 
   return mockFrames;
-}
-
-function createFetchResponse<T>(data: T): FetchResponse<T> {
-  return {
-    data,
-    status: 200,
-    url: 'http://localhost:3000/api/query',
-    config: { url: 'http://localhost:3000/api/query' },
-    type: 'basic',
-    statusText: 'Ok',
-    redirected: false,
-    headers: ({} as unknown) as Headers,
-    ok: true,
-  };
 }
