@@ -14,6 +14,7 @@ import {
   getFieldColorMode,
   getColorForTheme,
   FALLBACK_COLOR,
+  FontSizeOptions,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -42,6 +43,7 @@ export interface Props extends Themeable {
   display?: DisplayProcessor;
   value: DisplayValue;
   orientation: VizOrientation;
+  fontSize?: FontSizeOptions;
   itemSpacing?: number;
   lcdCellWidth?: number;
   displayMode: BarGaugeDisplayMode;
@@ -172,7 +174,7 @@ export class BarGauge extends PureComponent<Props> {
   }
 
   renderRetroBars(): ReactNode {
-    const { field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth } = this.props;
+    const { field, value, itemSpacing, alignmentFactors, orientation, lcdCellWidth, fontSize } = this.props;
     const {
       valueHeight,
       valueWidth,
@@ -193,7 +195,7 @@ export class BarGauge extends PureComponent<Props> {
     const valueColor = getValueColor(this.props);
 
     const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
-    const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
+    const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation, fontSize);
 
     const containerStyles: CSSProperties = {
       width: `${wrapperWidth}px`,
@@ -270,7 +272,7 @@ function isVertical(orientation: VizOrientation) {
 }
 
 function calculateTitleDimensions(props: Props): TitleDimensions {
-  const { height, width, alignmentFactors, orientation } = props;
+  const { height, width, alignmentFactors, orientation, fontSize } = props;
   const title = alignmentFactors ? alignmentFactors.title : props.value.title;
 
   if (!title) {
@@ -279,7 +281,7 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
 
   if (isVertical(orientation)) {
     return {
-      fontSize: 14,
+      fontSize: fontSize?.title ?? 14,
       width: width,
       height: 14 * TITLE_LINE_HEIGHT,
       placement: 'below',
@@ -292,7 +294,7 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
     const titleHeight = Math.max(Math.min(height * maxTitleHeightRatio, MAX_VALUE_HEIGHT), 17);
 
     return {
-      fontSize: titleHeight / TITLE_LINE_HEIGHT,
+      fontSize: fontSize?.title ?? titleHeight / TITLE_LINE_HEIGHT,
       width: 0,
       height: titleHeight,
       placement: 'above',
@@ -306,7 +308,7 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
   const textSize = measureText(title, titleFontSize);
 
   return {
-    fontSize: titleFontSize,
+    fontSize: fontSize?.title ?? titleFontSize,
     height: 0,
     width: textSize.width + 15,
     placement: 'left',
@@ -420,14 +422,14 @@ export function getValuePercent(value: number, minValue: number, maxValue: numbe
  * Only exported to for unit test
  */
 export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles {
-  const { displayMode, field, value, alignmentFactors, orientation, theme } = props;
+  const { displayMode, field, value, alignmentFactors, orientation, theme, fontSize } = props;
   const { valueWidth, valueHeight, maxBarHeight, maxBarWidth } = calculateBarAndValueDimensions(props);
 
   const valuePercent = getValuePercent(value.numeric, field.min!, field.max!);
   const valueColor = getValueColor(props);
 
   const valueToBaseSizeOn = alignmentFactors ? alignmentFactors : value;
-  const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation);
+  const valueStyles = getValueStyles(valueToBaseSizeOn, valueColor, valueWidth, valueHeight, orientation, fontSize);
 
   const isBasic = displayMode === 'basic';
   const wrapperStyles: CSSProperties = {
@@ -581,7 +583,8 @@ function getValueStyles(
   color: string,
   width: number,
   height: number,
-  orientation: VizOrientation
+  orientation: VizOrientation,
+  fontSize?: FontSizeOptions
 ): CSSProperties {
   const styles: CSSProperties = {
     color,
@@ -597,15 +600,12 @@ function getValueStyles(
   const formattedValueString = formattedValueToString(value);
 
   if (isVertical(orientation)) {
-    styles.fontSize = calculateFontSize(formattedValueString, textWidth, height, VALUE_LINE_HEIGHT);
+    styles.fontSize = fontSize?.value ?? calculateFontSize(formattedValueString, textWidth, height, VALUE_LINE_HEIGHT);
     styles.justifyContent = `center`;
   } else {
-    styles.fontSize = calculateFontSize(
-      formattedValueString,
-      textWidth - VALUE_LEFT_PADDING * 2,
-      height,
-      VALUE_LINE_HEIGHT
-    );
+    styles.fontSize =
+      fontSize?.value ??
+      calculateFontSize(formattedValueString, textWidth - VALUE_LEFT_PADDING * 2, height, VALUE_LINE_HEIGHT);
     styles.justifyContent = `flex-end`;
     styles.paddingLeft = `${VALUE_LEFT_PADDING}px`;
     styles.paddingRight = `${VALUE_LEFT_PADDING}px`;

@@ -27,7 +27,8 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
     const { timeRange, options } = this.props;
-    const { value, alignmentFactors, width, height, count } = valueProps;
+    const { value, width, height, count } = valueProps;
+    let { alignmentFactors } = valueProps;
     const { openMenu, targetClassName } = menuProps;
     let sparkline: BigValueSparkline | undefined;
 
@@ -44,6 +45,10 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
       if (calc === ReducerID.last) {
         sparkline.highlightIndex = sparkline.data.length - 1;
       }
+    }
+
+    if (options.fontSize) {
+      alignmentFactors = { ...alignmentFactors, fontSize: options.fontSize };
     }
 
     return (

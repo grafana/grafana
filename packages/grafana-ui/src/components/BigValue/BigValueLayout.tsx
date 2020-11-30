@@ -29,7 +29,7 @@ export abstract class BigValueLayout {
   textValues: BigValueTextValues;
 
   constructor(private props: Props) {
-    const { width, height, value, theme } = props;
+    const { width, height, value, theme, fontSize } = props;
 
     this.valueColor = getColorForTheme(value.color || 'green', theme);
     this.panelPadding = height > 100 ? 12 : 8;
@@ -43,6 +43,18 @@ export abstract class BigValueLayout {
     this.chartWidth = 0;
     this.maxTextWidth = width - this.panelPadding * 2;
     this.maxTextHeight = height - this.panelPadding * 2;
+
+    // Explicit font sizing
+    if (fontSize) {
+      if (fontSize.title) {
+        this.titleFontSize = fontSize.title;
+        this.titleToAlignTo = undefined;
+      }
+      if (fontSize.value) {
+        this.valueFontSize = fontSize.value;
+        this.valueToAlignTo = '';
+      }
+    }
   }
 
   getTitleStyles(): CSSProperties {
@@ -292,6 +304,7 @@ export class WideWithChartLayout extends BigValueLayout {
     super(props);
 
     const { width, height } = props;
+
     const chartHeightPercent = 0.5;
     const titleWidthPercent = 0.6;
     const valueWidthPercent = 1 - titleWidthPercent;
@@ -300,7 +313,7 @@ export class WideWithChartLayout extends BigValueLayout {
     this.chartWidth = width;
     this.chartHeight = height * chartHeightPercent;
 
-    if (this.titleToAlignTo && this.titleToAlignTo.length > 0) {
+    if (this.titleToAlignTo?.length) {
       this.titleFontSize = calculateFontSize(
         this.titleToAlignTo,
         this.maxTextWidth * titleWidthPercent,
@@ -310,12 +323,14 @@ export class WideWithChartLayout extends BigValueLayout {
       );
     }
 
-    this.valueFontSize = calculateFontSize(
-      this.valueToAlignTo,
-      this.maxTextWidth * valueWidthPercent,
-      this.maxTextHeight * chartHeightPercent,
-      LINE_HEIGHT
-    );
+    if (this.valueToAlignTo.length) {
+      this.valueFontSize = calculateFontSize(
+        this.valueToAlignTo,
+        this.maxTextWidth * valueWidthPercent,
+        this.maxTextHeight * chartHeightPercent,
+        LINE_HEIGHT
+      );
+    }
   }
 
   getValueAndTitleContainerStyles() {
@@ -350,7 +365,7 @@ export class StackedWithChartLayout extends BigValueLayout {
     this.chartHeight = height * chartHeightPercent;
     this.chartWidth = width;
 
-    if (this.titleToAlignTo && this.titleToAlignTo.length > 0) {
+    if (this.titleToAlignTo?.length) {
       this.titleFontSize = calculateFontSize(
         this.titleToAlignTo,
         this.maxTextWidth,
@@ -362,12 +377,14 @@ export class StackedWithChartLayout extends BigValueLayout {
       titleHeight = this.titleFontSize * LINE_HEIGHT;
     }
 
-    this.valueFontSize = calculateFontSize(
-      this.valueToAlignTo,
-      this.maxTextWidth,
-      this.maxTextHeight - this.chartHeight - titleHeight,
-      LINE_HEIGHT
-    );
+    if (this.valueToAlignTo.length) {
+      this.valueFontSize = calculateFontSize(
+        this.valueToAlignTo,
+        this.maxTextWidth,
+        this.maxTextHeight - this.chartHeight - titleHeight,
+        LINE_HEIGHT
+      );
+    }
 
     // make title fontsize it's a bit smaller than valueFontSize
     this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
@@ -398,7 +415,7 @@ export class StackedWithNoChartLayout extends BigValueLayout {
     const titleHeightPercent = 0.15;
     let titleHeight = 0;
 
-    if (this.titleToAlignTo && this.titleToAlignTo.length > 0) {
+    if (this.titleToAlignTo?.length) {
       this.titleFontSize = calculateFontSize(
         this.titleToAlignTo,
         this.maxTextWidth,
@@ -410,12 +427,14 @@ export class StackedWithNoChartLayout extends BigValueLayout {
       titleHeight = this.titleFontSize * LINE_HEIGHT;
     }
 
-    this.valueFontSize = calculateFontSize(
-      this.valueToAlignTo,
-      this.maxTextWidth,
-      this.maxTextHeight - titleHeight,
-      LINE_HEIGHT
-    );
+    if (this.valueToAlignTo.length) {
+      this.valueFontSize = calculateFontSize(
+        this.valueToAlignTo,
+        this.maxTextWidth,
+        this.maxTextHeight - titleHeight,
+        LINE_HEIGHT
+      );
+    }
 
     // make title fontsize it's a bit smaller than valueFontSize
     this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);

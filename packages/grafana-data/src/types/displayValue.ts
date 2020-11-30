@@ -19,6 +19,17 @@ export interface DisplayValue extends FormattedValue {
 }
 
 /**
+ * Explicit control for font sizing
+ */
+export interface FontSizeOptions {
+  /* If true show each row value */
+  title?: number;
+
+  /** if showing all values limit */
+  value?: number;
+}
+
+/**
  * These represents the display value with the longest title and text.
  * Used to align widths and heights when displaying multiple DisplayValues
  */

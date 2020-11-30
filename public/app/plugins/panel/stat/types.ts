@@ -25,7 +25,8 @@ export interface StatPanelOptions extends SingleStatBaseOptions {
 export function addStandardDataReduceOptions(
   builder: PanelOptionsEditorBuilder<SingleStatBaseOptions>,
   includeOrientation = true,
-  includeFieldMatcher = true
+  includeFieldMatcher = true,
+  includeFontSizes = true
 ) {
   builder.addRadio({
     path: 'reduceOptions.values',
@@ -106,6 +107,34 @@ export function addStandardDataReduceOptions(
         ],
       },
       defaultValue: 'auto',
+    });
+  }
+
+  if (includeFontSizes) {
+    builder.addNumberInput({
+      path: 'fontSize.title',
+      category: ['Font Size'],
+      name: 'Title',
+      settings: {
+        placeholder: 'Auto',
+        integer: false,
+        min: 1,
+        max: 200,
+      },
+      defaultValue: undefined,
+    });
+
+    builder.addNumberInput({
+      path: 'fontSize.value',
+      category: ['Font Size'],
+      name: 'Value',
+      settings: {
+        placeholder: 'Auto',
+        integer: false,
+        min: 1,
+        max: 200,
+      },
+      defaultValue: undefined,
     });
   }
 }
