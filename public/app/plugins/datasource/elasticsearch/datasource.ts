@@ -360,11 +360,12 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     );
   }
 
-  getQueryHeader(searchType: any, timeFrom: any, timeTo: any) {
+  getQueryHeader(searchType: any, timeFrom: any, timeTo: any, indexPatternOverride: string | undefined) {
+    const index = indexPatternOverride || this.indexPattern.getIndexList(timeFrom, timeTo);
     const queryHeader: any = {
       search_type: searchType,
       ignore_unavailable: true,
-      index: this.indexPattern.getIndexList(timeFrom, timeTo),
+      index,
     };
 
     if (this.esVersion >= 56 && this.esVersion < 70) {
@@ -405,7 +406,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       const esQuery = angular.toJson(queryObj);
 
       const searchType = queryObj.size === 0 && this.esVersion < 5 ? 'count' : 'query_then_fetch';
-      const header = this.getQueryHeader(searchType, options.range.from, options.range.to);
+      const header = this.getQueryHeader(searchType, options.range.from, options.range.to, target.indexPatternOverride);
       payload += header + '\n';
 
       payload += esQuery + '\n';

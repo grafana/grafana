@@ -9,6 +9,10 @@
 			<label class="gf-form-label query-keyword">Alias</label>
 			<input type="text" class="gf-form-input" ng-model="ctrl.target.alias" spellcheck='false' placeholder="alias patterns" ng-blur="ctrl.refresh()" pattern='[^<>&\\"]+'>
 		</div>
+		<div class="gf-form max-width-grow">
+			<label class="gf-form-label query-keyword width-7">Index Pattern</label>
+			<input type="text" class="gf-form-input" ng-model="ctrl.target.indexPatternOverride" spellcheck='false' placeholder="index pattern override" ng-blur="ctrl.refresh()">
+		</div>
 	</div>
 
 	<div ng-repeat="agg in ctrl.target.metrics">
