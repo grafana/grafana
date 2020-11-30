@@ -12,7 +12,7 @@ import { RouteParams } from './types';
 
 describe('Search utils', () => {
   describe('getFlattenedSections', () => {
-    it.only('should return an array of items plus children for expanded items', () => {
+    it('should return an array of items plus children for expanded items', () => {
       const flatSections = getFlattenedSections(sections as any[]);
       expect(flatSections).toHaveLength(10);
       expect(flatSections).toEqual([
