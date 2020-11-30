@@ -5,7 +5,6 @@ import chalk from 'chalk';
 import { startTask } from './tasks/core.start';
 import { changelogTask } from './tasks/changelog';
 import { cherryPickTask } from './tasks/cherrypick';
-import { precommitTask } from './tasks/precommit';
 import { templateTask } from './tasks/template';
 import { pluginBuildTask } from './tasks/plugin.build';
 import { toolkitBuildTask } from './tasks/toolkit.build';
