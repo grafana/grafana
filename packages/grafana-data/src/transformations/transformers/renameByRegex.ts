@@ -1,6 +1,8 @@
 import { DataTransformerID } from './ids';
 import { DataTransformerInfo } from '../../types/transformations';
 import { map } from 'rxjs/operators';
+import { DataFrame } from '../../types/dataFrame';
+import { getFieldDisplayName } from '../../field/fieldState';
 
 /**
  * Options for renameByRegexTransformer
@@ -37,19 +39,24 @@ export const renameByRegexTransformer: DataTransformerInfo<RenameByRegexTransfor
         if (!Array.isArray(data) || data.length === 0) {
           return data;
         }
-
-        return data.map(frame => {
-          const { name } = frame;
-          const regex = new RegExp(options.regex);
-          if (typeof name === 'string' && name.length !== 0 && regex.test(name)) {
-            const newName = name.replace(regex, options.renamePattern);
-            return {
-              ...frame,
-              name: newName,
-            };
-          }
-          return { ...frame };
-        });
+        return data.map(renameFieldsByRegex(options));
       })
     ),
+};
+
+const renameFieldsByRegex = (options: RenameByRegexTransformerOptions) => (frame: DataFrame) => {
+  const regex = new RegExp(options.regex);
+  const fields = frame.fields.map(field => {
+    const displayName = getFieldDisplayName(field, frame);
+    if (!regex.test(displayName)) {
+      return field;
+    }
+    const newDisplayName = displayName.replace(regex, options.renamePattern);
+    return {
+      ...field,
+      config: { ...field.config, displayName: newDisplayName },
+      state: { ...field.state, displayName: newDisplayName },
+    };
+  });
+  return { ...frame, fields };
 };
