@@ -13,5 +13,5 @@ list = false
 * **Dashboard**: Fixes kiosk state after being redirected to login page and back. [#29273](https://github.com/grafana/grafana/pull/29273), [@torkelo](https://github.com/torkelo)
 * **InfluxDB**: Update flux library to fix support for boolean label values. [#29310](https://github.com/grafana/grafana/pull/29310), [@ryantxu](https://github.com/ryantxu)
 * **Security**: Fixes minor security issue with alert notification webhooks that allowed GET & DELETE requests. [#29330](https://github.com/grafana/grafana/pull/29330), [@wbrowne](https://github.com/wbrowne)
-* **Table**: Fix incorrect condition for rendering table filter. [#29165](https://github.com/grafana/grafana/pull/29165), [@dprokop](https://github.com/dprokop)
+* **Table**: Fixes issues with phantom extra 0 for zero values. [#29165](https://github.com/grafana/grafana/pull/29165), [@dprokop](https://github.com/dprokop)
 

@@ -68,6 +68,7 @@ export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
         }
         case ArrowType.Timestamp: {
           type = FieldType.time;
+          values = new NumberColumn(col); // Cast to number
           break;
         }
         case ArrowType.Utf8: {
