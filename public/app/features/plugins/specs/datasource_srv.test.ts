@@ -13,11 +13,11 @@ const templateSrv: any = {
       },
     },
   ],
-  replace: v => v,
+  replace: (v: string) => v,
 };
 
 class TestDataSource {
-  constructor(private instanceSettings: DataSourceInstanceSettings) {}
+  constructor(public instanceSettings: DataSourceInstanceSettings) {}
 }
 
 jest.mock('../plugin_loader', () => ({
