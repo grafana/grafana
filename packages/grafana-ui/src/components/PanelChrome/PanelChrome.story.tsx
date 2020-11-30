@@ -2,7 +2,7 @@ import React, { CSSProperties } from 'react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { PanelChrome, useTheme } from '@grafana/ui';
 import { Props } from './PanelChrome';
-import { VerticalGroup } from '../Layout/Layout';
+import { HorizontalGroup, VerticalGroup } from '../Layout/Layout';
 import { merge } from 'lodash';
 import { GrafanaTheme } from '@grafana/data';
 
@@ -17,8 +17,8 @@ export default {
 
 function renderPanel(name: string, overrides: Partial<Props>, theme: GrafanaTheme) {
   const props: Props = {
-    width: 600,
-    height: 100,
+    width: 400,
+    height: 130,
     title: 'Default title',
     children: () => undefined,
   };
@@ -46,12 +46,20 @@ export const StandardPanel = () => {
 
   return (
     <div style={{ background: theme.colors.dashboardBg, padding: 100 }}>
-      <VerticalGroup spacing="md">
-        {renderPanel('Default panel', {}, theme)}
-        {renderPanel('No padding', { padding: 'none' }, theme)}
-        {renderPanel('No title', { title: '' }, theme)}
-        {renderPanel('Very long title', { title: 'Very long title that should get ellipsis', width: 200 }, theme)}
-      </VerticalGroup>
+      <HorizontalGroup spacing="md">
+        <VerticalGroup spacing="md">
+          {renderPanel('Default panel', {}, theme)}
+          {renderPanel('No padding', { padding: 'none' }, theme)}
+        </VerticalGroup>
+        <VerticalGroup spacing="md">
+          {renderPanel('No title', { title: '' }, theme)}
+          {renderPanel(
+            'Very long title',
+            { title: 'Very long title that should get ellipsis when there is no more space' },
+            theme
+          )}
+        </VerticalGroup>
+      </HorizontalGroup>
     </div>
   );
 };

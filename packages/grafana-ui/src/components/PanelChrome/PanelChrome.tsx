@@ -11,6 +11,10 @@ export interface Props {
   children: (innerWidth: number, innerHeight: number) => React.ReactNode;
 }
 
+/* export interface PanelStateIcon {} */
+
+/* export const enum PanelState {} */
+
 export type PanelPadding = 'none' | 'md';
 
 export const PanelChrome: React.FC<Props> = ({ title, children, width, height, padding = 'md' }) => {
