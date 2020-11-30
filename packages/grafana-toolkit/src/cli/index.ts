@@ -21,6 +21,7 @@ import { pluginCreateTask } from './tasks/plugin.create';
 import { pluginSignTask } from './tasks/plugin.sign';
 import { bundleManagedTask } from './tasks/plugin/bundle.managed';
 import { componentCreateTask } from './tasks/component.create';
+import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -74,10 +75,10 @@ export const run = (includeInternalScripts = false) => {
       });
 
     program
-      .command('precommit')
-      .description('Executes checks')
+      .command('node-version-check')
+      .description('Verify node version')
       .action(async cmd => {
-        await execTask(precommitTask)({});
+        await execTask(nodeVersionCheckerTask)({});
       });
 
     program
