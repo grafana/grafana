@@ -15,8 +15,8 @@ export interface RenameByRegexTransformerOptions {
 }
 
 /**
- * Replaces the name of a frame by applying a regular expression to match the name
- * and a pattern for the replacement.
+ * Replaces the displayName of a field by applying a regular expression
+ * to match the name and a pattern for the replacement.
  *
  * @public
  */
