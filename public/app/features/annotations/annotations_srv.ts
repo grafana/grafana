@@ -25,7 +25,7 @@ import { Observable, of } from 'rxjs';
 import { map, mergeMap } from 'rxjs/operators';
 import { AnnotationQueryOptions, AnnotationQueryResponse } from './types';
 import { standardAnnotationSupport } from './standardAnnotationSupport';
-import { runRequest } from '../dashboard/state/runRequest';
+import { runRequest } from '../query/state/runRequest';
 
 let counter = 100;
 function getNextRequestId() {

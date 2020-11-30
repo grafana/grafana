@@ -11,7 +11,7 @@ import {
 import { Observable, Subscriber, Subscription } from 'rxjs';
 import { runRequest } from './runRequest';
 import { deepFreeze } from '../../../../test/core/redux/reducerTester';
-import { DashboardModel } from './DashboardModel';
+import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { setEchoSrv } from '@grafana/runtime';
 import { Echo } from '../../../core/services/echo/Echo';
 

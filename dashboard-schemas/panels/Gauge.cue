@@ -2,7 +2,7 @@ package panels
 
 // Gauge is a single value panel that can repeat a gauge for every series,
 // column or row.
-#Gauge: panel & {
+#Gauge: _panel & {
 	// Field config.
 	fieldConfig: {
 		// Defaults.
@@ -22,14 +22,14 @@ package panels
 			// What to show when there is no value.
 			noValue: string
 			// Threshold config.
-			thresholds: thresholds
+			thresholds: _thresholds
 			// Mappings.
-			mappings: [...mapping]
+			mappings: [..._mapping]
 			// Data Links.
-			links: [...dataLink]
+			links: [..._dataLink]
 		}
 		// Overrides.
-		overrides: [...override]
+		overrides: [..._override]
 	}
 	// Options.
 	options: {

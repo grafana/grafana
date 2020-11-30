@@ -8,7 +8,7 @@ import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
 import { Switch, Input, InlineField, InlineFormLabel, stylesFactory } from '@grafana/ui';
 
 // Types
-import { PanelModel } from '../state';
+import { PanelModel } from '../../dashboard/state';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { config } from 'app/core/config';
 import { css } from 'emotion';

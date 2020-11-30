@@ -31,7 +31,7 @@ import { convertOldAngularValueMapping } from '@grafana/ui';
 import config from 'app/core/config';
 import { MetricsPanelCtrl } from 'app/plugins/sdk';
 import { LinkSrv } from 'app/features/panel/panellinks/link_srv';
-import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
+import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 
 const BASE_FONT_SIZE = 38;
 
