@@ -183,7 +183,6 @@ describe('applyFieldOverrides', () => {
           overrides: [],
         },
         replaceVariables: (value: any) => value,
-        getDataSourceSettingsByUid: undefined as any,
         theme: getTestTheme(),
         fieldConfigRegistry: new FieldConfigOptionsRegistry(),
       });
@@ -245,7 +244,6 @@ describe('applyFieldOverrides', () => {
         overrides: [],
       },
       fieldConfigRegistry: customFieldRegistry,
-      getDataSourceSettingsByUid: undefined as any,
       replaceVariables: v => v,
       theme: getTestTheme(),
     })[0];
@@ -263,7 +261,6 @@ describe('applyFieldOverrides', () => {
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
-      getDataSourceSettingsByUid: undefined as any,
       theme: getTestTheme(),
       fieldConfigRegistry: customFieldRegistry,
     })[0];
@@ -291,7 +288,6 @@ describe('applyFieldOverrides', () => {
       data: [f0], // the frame
       fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
-      getDataSourceSettingsByUid: undefined as any,
       theme: getTestTheme(),
     })[0];
     const valueColumn = data.fields[1];
@@ -314,7 +310,6 @@ describe('applyFieldOverrides', () => {
         replaceVariablesCalls.push(variables);
         return value;
       }) as InterpolateFunction,
-      getDataSourceSettingsByUid: undefined as any,
       theme: getTestTheme(),
       fieldConfigRegistry: customFieldRegistry,
     })[0];
@@ -565,7 +560,6 @@ describe('getLinksSupplier', () => {
       {},
       replaceSpy,
       // this is used only for internal links so isn't needed here
-      () => ({} as any),
       {
         theme: getTestTheme(),
       }
@@ -598,6 +592,7 @@ describe('getLinksSupplier', () => {
                 title: '',
                 internal: {
                   datasourceUid: '0',
+                  datasourceName: 'testDS',
                   query: '12345',
                 },
               },
@@ -613,7 +608,6 @@ describe('getLinksSupplier', () => {
       {},
       // We do not need to interpolate anything for this test
       (value, vars, format) => value,
-      uid => ({ name: 'testDS' } as any),
       { theme: getTestTheme() }
     );
     const links = supplier({ valueRowIndex: 0 });
