@@ -2,7 +2,7 @@
 
 exports[`Render LokiQueryEditor with legend should render 1`] = `
 <div>
-  <Component
+  <LokiQueryField
     datasource={Object {}}
     history={Array []}
     onChange={[Function]}
@@ -27,13 +27,13 @@ exports[`Render LokiQueryEditor with legend should render 1`] = `
     <div
       className="gf-form"
     >
-      <Component
+      <FormLabel
         tooltip="Controls the name of the time series, using name or pattern. For example
         {{hostname}} will be replaced with label value for the label hostname. The legend only applies to metric queries."
         width={7}
       >
         Legend
-      </Component>
+      </FormLabel>
       <input
         className="gf-form-input"
         onBlur={[Function]}
@@ -49,7 +49,7 @@ exports[`Render LokiQueryEditor with legend should render 1`] = `
 
 exports[`Render LokiQueryEditor with legend should update timerange 1`] = `
 <div>
-  <Component
+  <LokiQueryField
     datasource={Object {}}
     history={Array []}
     onChange={[Function]}
@@ -74,13 +74,13 @@ exports[`Render LokiQueryEditor with legend should update timerange 1`] = `
     <div
       className="gf-form"
     >
-      <Component
+      <FormLabel
         tooltip="Controls the name of the time series, using name or pattern. For example
         {{hostname}} will be replaced with label value for the label hostname. The legend only applies to metric queries."
         width={7}
       >
         Legend
-      </Component>
+      </FormLabel>
       <input
         className="gf-form-input"
         onBlur={[Function]}

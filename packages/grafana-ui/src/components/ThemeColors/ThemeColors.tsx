@@ -31,7 +31,7 @@ const DemoBox: FC<DemoBoxProps> = ({ bg, border, children }) => {
           padding-bottom: 16px;
         `}
       >
-        {name}
+        {window.name}
       </div>
       {children}
     </div>

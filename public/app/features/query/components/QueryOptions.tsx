@@ -151,7 +151,6 @@ export class QueryOptions extends PureComponent<Props, State> {
             type="text"
             className="width-6"
             placeholder="60"
-            name={name}
             spellCheck={false}
             onBlur={this.onDataSourceOptionBlur('cacheTimeout')}
             onChange={this.onDataSourceOptionChange('cacheTimeout')}
@@ -186,7 +185,6 @@ export class QueryOptions extends PureComponent<Props, State> {
             type="number"
             className="width-6"
             placeholder={`${realMd}`}
-            name={name}
             spellCheck={false}
             onBlur={this.onMaxDataPointsBlur}
             onChange={this.onDataSourceOptionChange('maxDataPoints')}
@@ -229,7 +227,6 @@ export class QueryOptions extends PureComponent<Props, State> {
               type="text"
               className="width-6"
               placeholder={`${minIntervalOnDs}`}
-              name={name}
               spellCheck={false}
               onBlur={this.onDataSourceOptionBlur('interval')}
               onChange={this.onDataSourceOptionChange('interval')}

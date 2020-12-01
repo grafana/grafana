@@ -337,22 +337,22 @@ exports[`DashboardPage Dashboard is fetching slowly Should render slow init stat
   <div
     className="dashboard-loading__text"
   >
-    <Component
+    <VerticalGroup
       spacing="md"
     >
-      <Component
+      <HorizontalGroup
         align="center"
         justify="center"
         spacing="xs"
       >
-        <Component
+        <Spinner
           inline={true}
         />
          
         Fetching
-      </Component>
+      </HorizontalGroup>
        
-      <Component
+      <HorizontalGroup
         align="center"
         justify="center"
       >
@@ -364,8 +364,8 @@ exports[`DashboardPage Dashboard is fetching slowly Should render slow init stat
         >
           Cancel loading dashboard
         </Button>
-      </Component>
-    </Component>
+      </HorizontalGroup>
+    </VerticalGroup>
   </div>
 </div>
 `;

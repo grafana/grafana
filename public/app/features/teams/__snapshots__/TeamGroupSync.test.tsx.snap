@@ -23,7 +23,7 @@ exports[`Render should render component 1`] = `
       className="page-action-bar__spacer"
     />
   </div>
-  <Component
+  <SlideDown
     in={false}
   >
     <div
@@ -68,7 +68,7 @@ exports[`Render should render component 1`] = `
         </div>
       </form>
     </div>
-  </Component>
+  </SlideDown>
   <EmptyListCTA
     buttonIcon="users-alt"
     buttonTitle="Add Group"
@@ -114,7 +114,7 @@ exports[`Render should render groups table 1`] = `
        Add group
     </button>
   </div>
-  <Component
+  <SlideDown
     in={false}
   >
     <div
@@ -159,7 +159,7 @@ exports[`Render should render groups table 1`] = `
         </div>
       </form>
     </div>
-  </Component>
+  </SlideDown>
   <div
     className="admin-list-table"
   >
