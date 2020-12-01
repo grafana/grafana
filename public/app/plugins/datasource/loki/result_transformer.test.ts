@@ -38,7 +38,7 @@ jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getDataSourceSrv: () => {
     return {
-      getDataSourceSettingsByUid: () => {
+      getInstanceSettings: () => {
         return { name: 'Loki1' };
       },
     };

@@ -392,7 +392,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
   const dataLinks = derivedFieldConfigs.reduce((acc, derivedFieldConfig) => {
     // Having field.datasourceUid means it is an internal link.
     if (derivedFieldConfig.datasourceUid) {
-      const dsSettings = dataSourceSrv.getDataSourceSettingsByUid(derivedFieldConfig.datasourceUid);
+      const dsSettings = dataSourceSrv.getInstanceSettings(derivedFieldConfig.datasourceUid);
 
       acc.push({
         // Will be filled out later

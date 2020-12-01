@@ -41,7 +41,7 @@ describe('createSpanLinkFactory', () => {
           } as DataSourceInstanceSettings,
         ];
       },
-      getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
+      getInstanceSettings(uid: string): DataSourceInstanceSettings | undefined {
         if (uid === 'lokiUid') {
           return {
             name: 'loki1',

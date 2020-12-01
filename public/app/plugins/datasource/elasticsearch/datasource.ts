@@ -677,7 +677,7 @@ export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig
     let link: DataLink;
 
     if (dataLinkConfig.datasourceUid) {
-      const dsSettings = dataSourceSrv.getDataSourceSettingsByUid(dataLinkConfig.datasourceUid);
+      const dsSettings = dataSourceSrv.getInstanceSettings(dataLinkConfig.datasourceUid);
 
       link = {
         title: '',

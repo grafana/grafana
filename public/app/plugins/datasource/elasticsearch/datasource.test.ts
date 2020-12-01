@@ -24,7 +24,7 @@ jest.mock('@grafana/runtime', () => ({
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {
-      getDataSourceSettingsByUid: () => {
+      getInstanceSettings: () => {
         return { name: 'elastic25' };
       },
     };
