@@ -360,7 +360,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     );
   }
 
-  getQueryHeader(searchType: any, timeFrom: any, timeTo: any, indexPatternOverride: string | undefined) {
+  getQueryHeader(searchType: any, timeFrom: any, timeTo: any, indexPatternOverride?: string) {
     const index = indexPatternOverride || this.indexPattern.getIndexList(timeFrom, timeTo);
     const queryHeader: any = {
       search_type: searchType,
