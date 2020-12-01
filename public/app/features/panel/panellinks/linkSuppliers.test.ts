@@ -92,7 +92,6 @@ describe('getFieldLinksSupplier', () => {
       replaceVariables: (val: string) => val,
       timeZone: 'utc',
       theme: getTheme(),
-      autoMinMax: true,
     })[0];
 
     const rowIndex = 0;

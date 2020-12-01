@@ -22,6 +22,7 @@ export function WrapInProvider(store: any, Component: any, props: any) {
 }
 
 export const provideModalsContext = (component: any) => {
+  // eslint-disable-next-line react/display-name
   return (props: any) => (
     <ModalsProvider>
       <>

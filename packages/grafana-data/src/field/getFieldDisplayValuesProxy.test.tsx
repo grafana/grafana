@@ -31,7 +31,6 @@ describe('getFieldDisplayValuesProxy', () => {
     replaceVariables: (val: string) => val,
     timeZone: 'utc',
     theme: getTestTheme(),
-    autoMinMax: true,
   })[0];
 
   it('should define all display functions', () => {

@@ -289,16 +289,15 @@ describe('applyFieldOverrides', () => {
       fieldConfig: src as FieldConfigSource, // defaults + overrides
       replaceVariables: (undefined as any) as InterpolateFunction,
       theme: getTestTheme(),
-      autoMinMax: true,
     })[0];
     const valueColumn = data.fields[1];
-    const config = valueColumn.config;
+    const range = valueColumn.state!.range!;
 
     // Keep max from the original setting
-    expect(config.max).toEqual(0);
+    expect(range.max).toEqual(0);
 
     // Don't Automatically pick the min value
-    expect(config.min).toEqual(-20);
+    expect(range.min).toEqual(-20);
   });
 
   it('getLinks should use applied field config', () => {
@@ -312,7 +311,6 @@ describe('applyFieldOverrides', () => {
         return value;
       }) as InterpolateFunction,
       theme: getTestTheme(),
-      autoMinMax: true,
       fieldConfigRegistry: customFieldRegistry,
     })[0];
 

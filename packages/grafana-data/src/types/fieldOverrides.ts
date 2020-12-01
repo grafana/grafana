@@ -108,7 +108,6 @@ export interface ApplyFieldOverrideOptions {
   replaceVariables: InterpolateFunction;
   theme: GrafanaTheme;
   timeZone?: TimeZone;
-  autoMinMax?: boolean;
   fieldConfigRegistry?: FieldConfigOptionsRegistry;
 }
 

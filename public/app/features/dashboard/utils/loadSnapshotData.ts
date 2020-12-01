@@ -15,7 +15,6 @@ export function loadSnapshotData(panel: PanelModel, dashboard: DashboardModel): 
         defaults: {},
         overrides: [],
       },
-      autoMinMax: true,
       replaceVariables: panel.replaceVariables,
       fieldConfigRegistry: panel.plugin!.fieldConfigRegistry,
       theme: config.theme,
