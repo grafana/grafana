@@ -109,6 +109,7 @@ export const Components = {
     transformationEditorDebugger: (name: string) => `Transformation editor debugger ${name}`,
   },
   Transforms: {
+    card: (name: string) => `New transform ${name}`,
     Reduce: {
       modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',

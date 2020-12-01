@@ -14,6 +14,7 @@ import { labelsToFieldsTransformer } from './transformers/labelsToFields';
 import { ensureColumnsTransformer } from './transformers/ensureColumns';
 import { groupByTransformer } from './transformers/groupBy';
 import { mergeTransformer } from './transformers/merge';
+import { filterByValueTransformer } from './transformers/filterByValue';
 
 export const standardTransformers = {
   noopTransformer,
@@ -21,6 +22,7 @@ export const standardTransformers = {
   filterFieldsByNameTransformer,
   filterFramesTransformer,
   filterFramesByRefIdTransformer,
+  filterByValueTransformer,
   orderFieldsTransformer,
   organizeFieldsTransformer,
   reduceTransformer,
