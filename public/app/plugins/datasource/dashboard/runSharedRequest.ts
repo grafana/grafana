@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { QueryRunnerOptions } from 'app/features/dashboard/state/PanelQueryRunner';
+import { QueryRunnerOptions } from 'app/features/query/state/PanelQueryRunner';
 import { DashboardQuery, SHARED_DASHBODARD_QUERY } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { LoadingState, DefaultTimeRange, DataQuery, PanelData, DataSourceApi, DataQueryRequest } from '@grafana/data';
