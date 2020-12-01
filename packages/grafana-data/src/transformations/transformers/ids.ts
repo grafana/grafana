@@ -16,6 +16,7 @@ export enum DataTransformerID {
   filterFieldsByName = 'filterFieldsByName',
   filterFrames = 'filterFrames',
   filterByRefId = 'filterByRefId',
+  filterByValue = 'filterByValue',
   noop = 'noop',
   ensureColumns = 'ensureColumns',
   groupBy = 'groupBy',
