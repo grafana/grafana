@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	authproxy "github.com/grafana/grafana/pkg/middleware/auth_proxy"
+	"github.com/grafana/grafana/pkg/middleware/authproxy"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
