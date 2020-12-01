@@ -116,7 +116,7 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
     const tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
 
     if (tz) {
-      fmt = (ts: number) => uPlot.tzDate(new Date(ts * 1e3), tz);
+      fmt = (ts: number) => uPlot.tzDate(new Date(ts), tz);
     }
 
     return fmt;
@@ -130,6 +130,7 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
       ...DEFAULT_PLOT_CONFIG,
       width,
       height,
+      ms: 1,
       plugins: Object.entries(plugins).map(p => ({
         hooks: p[1].hooks,
       })),

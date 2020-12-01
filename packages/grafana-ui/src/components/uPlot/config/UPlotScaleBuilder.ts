@@ -1,5 +1,4 @@
-import isNumber from 'lodash/isNumber';
-import { Scale } from 'uplot';
+import uPlot, { Scale } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 
 export interface ScaleProps {
@@ -11,12 +10,21 @@ export interface ScaleProps {
 
 export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
   getConfig() {
-    const { isTime, scaleKey, min, max } = this.props;
-    const range = isNumber(min) && isNumber(max) ? [min, max] : undefined;
+    const { isTime, scaleKey } = this.props;
+    if (isTime) {
+      return {
+        [scaleKey]: {
+          time: true, // TODO?  this should be based on the query range, not the data
+        },
+      };
+    }
     return {
       [scaleKey]: {
-        time: !!isTime,
-        range,
+        range: (u: uPlot, dataMin: number, dataMax: number) => {
+          const { min, max } = this.props;
+          const [smin, smax] = uPlot.rangeNum(min ?? dataMin, max ?? dataMax, 0.1 as any, true);
+          return [min ?? smin, max ?? smax];
+        },
       },
     };
   }

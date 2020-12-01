@@ -30,10 +30,10 @@ var (
 )
 
 func init() {
-	bus.AddHandler("alerting", handleNotificationTestCommand)
+	bus.AddHandlerCtx("alerting", handleNotificationTestCommand)
 }
 
-func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
+func handleNotificationTestCommand(ctx context.Context, cmd *NotificationTestCommand) error {
 	notifier := newNotificationService(nil)
 
 	model := &models.AlertNotification{

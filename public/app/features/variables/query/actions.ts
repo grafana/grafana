@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceApi, DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSelectItem } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
 
 import { updateOptions } from '../state/actions';
@@ -9,7 +9,6 @@ import { getVariable } from '../state/selectors';
 import { addVariableEditorError, changeVariableEditorExtended, removeVariableEditorError } from '../editor/reducer';
 import { changeVariableProp } from '../state/sharedReducer';
 import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
-import { hasLegacyVariableSupport, hasStandardVariableSupport } from '../guard';
 import { getVariableQueryEditor } from '../editor/getVariableQueryEditor';
 import { Subscription } from 'rxjs';
 import { getVariableQueryRunner } from './VariableQueryRunner';
@@ -26,7 +25,6 @@ export const updateQueryVariableOptions = (
         dispatch(removeVariableEditorError({ errorProp: 'update' }));
       }
       const datasource = await getDatasourceSrv().get(variableInState.datasource ?? '');
-      dispatch(upgradeLegacyQueries(identifier, datasource));
 
       // we need to await the result from variableQueryRunner before moving on otherwise variables dependent on this
       // variable will have the wrong current value as input
@@ -157,36 +155,4 @@ export function flattenQuery(query: any): any {
   }, {} as Record<string, any>);
 
   return flattened;
-}
-
-export function upgradeLegacyQueries(identifier: VariableIdentifier, datasource: DataSourceApi): ThunkResult<void> {
-  return function(dispatch, getState) {
-    if (hasLegacyVariableSupport(datasource)) {
-      return;
-    }
-
-    if (!hasStandardVariableSupport(datasource)) {
-      return;
-    }
-
-    const variable = getVariable<QueryVariableModel>(identifier.id, getState());
-    if (isDataQuery(variable.query)) {
-      return;
-    }
-
-    const query = {
-      refId: `${datasource.name}-${identifier.id}-Variable-Query`,
-      query: variable.query,
-    };
-
-    dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
-  };
-}
-
-function isDataQuery(query: any): query is DataQuery {
-  if (!query) {
-    return false;
-  }
-
-  return query.hasOwnProperty('refId') && typeof query.refId === 'string';
 }

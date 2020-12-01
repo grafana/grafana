@@ -1,5 +1,5 @@
 import { of, throwError } from 'rxjs';
-import { DataSourceInstanceSettings, observableTester, toUtc } from '@grafana/data';
+import { DataSourceInstanceSettings, toUtc } from '@grafana/data';
 
 import CloudMonitoringDataSource from '../datasource';
 import { metricDescriptors } from './testData';
@@ -84,7 +84,7 @@ describe('CloudMonitoringDataSource', () => {
 
   describe('When performing query', () => {
     describe('and no time series data is returned', () => {
-      it('should return a list of datapoints', done => {
+      it('should return a list of datapoints', async () => {
         const options = {
           range: {
             from: toUtc('2017-08-22T20:00:00Z'),
@@ -116,12 +116,9 @@ describe('CloudMonitoringDataSource', () => {
 
         const { ds } = getTestcontext({ response });
 
-        observableTester().subscribeAndExpectOnNext({
-          expect: results => {
-            expect(results.data.length).toBe(0);
-          },
-          observable: ds.query(options as any),
-          done,
+        await expect(ds.query(options as any)).toEmitValuesWith(received => {
+          const results = received[0];
+          expect(results.data.length).toBe(0);
         });
       });
     });
