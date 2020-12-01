@@ -57,7 +57,6 @@ export class GaugePanel extends PureComponent<PanelProps<GaugeOptions>> {
       replaceVariables,
       theme: config.theme,
       data: data.series,
-      autoMinMax: true,
       timeZone,
     });
   };
