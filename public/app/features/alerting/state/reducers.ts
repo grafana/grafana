@@ -127,8 +127,8 @@ const alertDefinitionSlice = createSlice({
     setAlertDefinition: (state, action: PayloadAction<any>) => {
       return { ...state, alertDefinition: action.payload };
     },
-    updateAlertDefinition: (state, action: PayloadAction<any>) => {
-      return { ...state, alertDefinition: action.payload };
+    updateAlertDefinition: (state, action: PayloadAction<Partial<AlertDefinition>>) => {
+      return { ...state, alertDefinition: { ...state.alertDefinition, ...action.payload } };
     },
     setUiState: (state, action: PayloadAction<AlertDefinitionUiState>) => {
       return { ...state, uiState: { ...state.uiState, ...action.payload } };
@@ -144,7 +144,7 @@ export const {
   resetSecureField,
 } = notificationChannelSlice.actions;
 
-export const { setUiState } = alertDefinitionSlice.actions;
+export const { setUiState, updateAlertDefinition } = alertDefinitionSlice.actions;
 
 export const alertRulesReducer = alertRulesSlice.reducer;
 export const notificationChannelReducer = notificationChannelSlice.reducer;

@@ -1,21 +1,26 @@
-import React from 'react';
+import React, { FC, FormEvent } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { Collapse, Field, Input, Label, TextArea, useStyles } from '@grafana/ui';
+import { Field, Input, Label, TextArea, useStyles } from '@grafana/ui';
+import { AlertDefinition } from 'app/types';
 
-export const AlertDefinitionOptions = () => {
+interface Props {
+  alertDefinition: AlertDefinition;
+  onChange: (event: FormEvent) => void;
+}
+
+export const AlertDefinitionOptions: FC<Props> = ({ alertDefinition, onChange }) => {
   const styles = useStyles(getStyles);
   return (
     <div className={styles.container}>
-      <Collapse label="Alert definition" isOpen={true}>
-        <Field label="Name">
-          <Input width={25} />
-        </Field>
-        <Field label="Description" description="What does the alert do and why was it created">
-          <TextArea rows={5} width={25} />
-        </Field>
-        <Label>Evaluate</Label>
-      </Collapse>
+      <h4>Alert definition</h4>
+      <Field label="Name">
+        <Input width={25} name="name" value={alertDefinition.name} onChange={onChange} />
+      </Field>
+      <Field label="Description" description="What does the alert do and why was it created">
+        <TextArea rows={5} width={25} name="description" value={alertDefinition.description} onChange={onChange} />
+      </Field>
+      <Label>Evaluate</Label>
     </div>
   );
 };
@@ -23,7 +28,8 @@ export const AlertDefinitionOptions = () => {
 const getStyles = (theme: GrafanaTheme) => {
   return {
     container: css`
-      padding: ${theme.spacing.md} 0;
+      padding: ${theme.spacing.md};
+      background-color: ${theme.colors.panelBg};
     `,
   };
 };

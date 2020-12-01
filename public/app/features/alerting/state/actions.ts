@@ -10,8 +10,9 @@ import {
   setNotificationChannels,
   setUiState,
   ALERT_DEFINITION_UI_STATE_STORAGE_KEY,
+  updateAlertDefinition,
 } from './reducers';
-import { AlertDefinitionUiState, AlertRuleDTO, NotifierDTO, ThunkResult } from 'app/types';
+import { AlertDefinition, AlertDefinitionUiState, AlertRuleDTO, NotifierDTO, ThunkResult } from 'app/types';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
   return async dispatch => {
@@ -83,8 +84,28 @@ export function loadNotificationChannel(id: number): ThunkResult<void> {
   };
 }
 
-export function createAlertDefinition(alertDefinition: any): ThunkResult<void> {
-  return async dispatch => {
+export function createAlertDefinition(): ThunkResult<void> {
+  return async (dispatch, getStore) => {
+    const alertDefinition: AlertDefinition = {
+      ...getStore().alertDefinition.alertDefinition,
+      condition: {
+        ref: 'A',
+        queriesAndExpressions: [
+          {
+            model: {
+              expression: '2 + 2 > 1',
+              type: 'math',
+              datasource: '__expr__',
+            },
+            relativeTimeRange: {
+              From: 500,
+              To: 0,
+            },
+            refId: 'A',
+          },
+        ],
+      },
+    };
     await getBackendSrv().post(`/api/alert-definitions`, alertDefinition);
     appEvents.emit(AppEvents.alertSuccess, ['Alert definition created']);
     dispatch(updateLocation({ path: 'alerting/list' }));
@@ -101,5 +122,11 @@ export function updateAlertDefinitionUiState(uiState: Partial<AlertDefinitionUiS
     } catch (error) {
       console.error(error);
     }
+  };
+}
+
+export function updateAlertDefinitionOption(alertDefinition: Partial<AlertDefinition>): ThunkResult<void> {
+  return dispatch => {
+    dispatch(updateAlertDefinition(alertDefinition));
   };
 }

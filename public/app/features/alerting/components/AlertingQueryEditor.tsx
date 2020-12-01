@@ -1,24 +1,16 @@
-import React, { FC, useState } from 'react';
+import React, { FC } from 'react';
 import { css } from 'emotion';
-import { DataSourceSelectItem, GrafanaTheme } from '@grafana/data';
-import { Collapse, useStyles } from '@grafana/ui';
-import DataSourcePicker from '../../../core/components/Select/DataSourcePicker';
+import { GrafanaTheme } from '@grafana/data';
+import { useStyles } from '@grafana/ui';
 
-interface Props {
-  dataSources: DataSourceSelectItem[];
-  onChangeDataSource: (item: DataSourceSelectItem) => void;
-}
+interface Props {}
 
-export const AlertingQueryEditor: FC<Props> = ({ dataSources, onChangeDataSource }) => {
+export const AlertingQueryEditor: FC<Props> = () => {
   const styles = useStyles(getStyles);
-
-  const [isOpen, setIsOpen] = useState(true);
 
   return (
     <div className={styles.container}>
-      <Collapse label="Queries" collapsible isOpen={isOpen} onToggle={setIsOpen}>
-        <DataSourcePicker datasources={dataSources} onChange={() => {}} />
-      </Collapse>
+      <h4>Queries</h4>
     </div>
   );
 };
@@ -27,6 +19,7 @@ const getStyles = (theme: GrafanaTheme) => {
   return {
     container: css`
       padding-left: ${theme.spacing.md};
+      background-color: ${theme.colors.panelBg};
     `,
     editorWrapper: css`
       border: 1px solid ${theme.colors.panelBorder};

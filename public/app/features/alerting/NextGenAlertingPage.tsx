@@ -1,16 +1,15 @@
-import React, { PureComponent } from 'react';
+import React, { FormEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
-import { DataSourceSelectItem, GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme } from '@grafana/data';
 import { Button, Icon, stylesFactory } from '@grafana/ui';
 import { PageToolbar } from 'app/core/components/PageToolbar/PageToolbar';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { AlertingQueryEditor } from './components/AlertingQueryEditor';
 import { AlertDefinitionOptions } from './components/AlertDefinitionOptions';
 import { AlertingQueryPreview } from './components/AlertingQueryPreview';
-import { getDatasourceSrv } from '../plugins/datasource_srv';
-import { createAlertDefinition, updateAlertDefinitionUiState } from './state/actions';
+import { updateAlertDefinitionOption, createAlertDefinition, updateAlertDefinitionUiState } from './state/actions';
 import { AlertDefinition, AlertDefinitionUiState, StoreState } from '../../types';
 
 import { config } from 'app/core/config';
@@ -25,41 +24,46 @@ interface ConnectedProps {
 interface DispatchProps {
   createAlertDefinition: typeof createAlertDefinition;
   updateAlertDefinitionUiState: typeof updateAlertDefinitionUiState;
+  updateAlertDefinitionOption: typeof updateAlertDefinitionOption;
 }
 
-interface State {
-  dataSources: DataSourceSelectItem[];
-}
+interface State {}
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class NextGenAlertingPage extends PureComponent<Props, State> {
   state = { dataSources: [] };
 
-  componentDidMount() {
-    const dataSources = getDatasourceSrv().getMetricSources();
+  onChangeAlertOption = (event: FormEvent<HTMLFormElement>) => {
+    this.props.updateAlertDefinitionOption({ [event.currentTarget.name]: event.currentTarget.value });
+  };
 
-    this.setState({
-      dataSources,
-    });
-  }
+  onSaveAlert = () => {
+    const { createAlertDefinition } = this.props;
+
+    createAlertDefinition();
+  };
+
+  onDiscard = () => {};
+
+  onTest = () => {};
 
   renderToolbarActions() {
     return [
-      <Button variant="destructive" key="discard">
+      <Button variant="destructive" key="discard" onClick={this.onDiscard}>
         Discard
       </Button>,
-      <Button variant="primary" key="save">
+      <Button variant="primary" key="save" onClick={this.onSaveAlert}>
         Save
       </Button>,
-      <Button variant="secondary" key="test">
+      <Button variant="secondary" key="test" onClick={this.onTest}>
         Test
       </Button>,
     ];
   }
 
   render() {
-    const { uiState, updateAlertDefinitionUiState } = this.props;
+    const { uiState, updateAlertDefinitionUiState, alertDefinition } = this.props;
     const styles = getStyles(config.theme);
 
     return (
@@ -71,17 +75,12 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
           titlePadding="sm"
         />
         <SplitPaneWrapper
-          leftPaneComponents={[
-            <AlertingQueryPreview key="queryPreview" />,
-            <AlertingQueryEditor
-              dataSources={this.state.dataSources}
-              onChangeDataSource={() => {}}
-              key="queryEditor"
-            />,
-          ]}
+          leftPaneComponents={[<AlertingQueryPreview key="queryPreview" />, <AlertingQueryEditor key="queryEditor" />]}
           uiState={uiState}
           updateUiState={updateAlertDefinitionUiState}
-          rightPaneComponents={<AlertDefinitionOptions />}
+          rightPaneComponents={
+            <AlertDefinitionOptions alertDefinition={alertDefinition} onChange={this.onChangeAlertOption} />
+          }
         />
       </div>
     );
@@ -98,6 +97,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = s
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   createAlertDefinition,
   updateAlertDefinitionUiState,
+  updateAlertDefinitionOption,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NextGenAlertingPage));

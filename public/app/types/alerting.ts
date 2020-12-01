@@ -139,8 +139,10 @@ export interface AlertDefinitionState {
 }
 
 export interface AlertDefinition {
+  id: number;
   name: string;
-  queries: { ref: {} };
+  description: string;
+  condition: { ref: string; queriesAndExpressions: any[] };
 }
 
 export interface AlertDefinitionUiState {
