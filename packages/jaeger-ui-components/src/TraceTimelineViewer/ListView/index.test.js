@@ -69,7 +69,7 @@ describe('<ListView>', () => {
     itemsWrapperClassName: 'SomeClassName',
     viewBuffer: 10,
     viewBufferMin: 5,
-    windowScroller: false,
+    windowScroller: true,
   };
 
   describe('shallow tests', () => {
@@ -152,10 +152,6 @@ describe('<ListView>', () => {
         instance = wrapper.instance();
       });
 
-      it('getViewHeight() returns the viewHeight', () => {
-        expect(instance.getViewHeight()).toBe(clientHeight);
-      });
-
       it('getBottomVisibleIndex() returns a number', () => {
         const n = instance.getBottomVisibleIndex();
         expect(Number.isNaN(n)).toBe(false);
@@ -233,9 +229,9 @@ describe('<ListView>', () => {
           },
         });
         const hasChanged = instance._isViewChanged();
+        expect(hasChanged).toBe(true);
         expect(spyFns.clientHeight).toHaveBeenCalled();
         expect(spyFns.scrollTop).toHaveBeenCalled();
-        expect(hasChanged).toBe(true);
       });
     });
   });

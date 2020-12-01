@@ -2,7 +2,6 @@
 import sortBy from 'lodash/sortBy';
 import coreModule from 'app/core/core_module';
 // Services & Utils
-import config from 'app/core/config';
 import { importDataSourcePlugin } from './plugin_loader';
 import {
   DataSourceSrv as DataSourceService,
@@ -18,47 +17,74 @@ import { expressionDatasource } from 'app/features/expressions/ExpressionDatasou
 import { DataSourceVariableModel } from '../variables/types';
 
 export class DatasourceSrv implements DataSourceService {
-  datasources: Record<string, DataSourceApi> = {};
+  private datasources: Record<string, DataSourceApi> = {};
+  private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
+  private settingsMapByUid: Record<string, DataSourceInstanceSettings> = {};
+  private defaultName = '';
 
   /** @ngInject */
   constructor(
     private $injector: auto.IInjectorService,
     private $rootScope: GrafanaRootScope,
     private templateSrv: TemplateSrv
-  ) {
-    this.init();
-  }
+  ) {}
 
-  init() {
+  init(settingsMapByName: Record<string, DataSourceInstanceSettings>, defaultName: string) {
     this.datasources = {};
+    this.settingsMapByUid = {};
+    this.settingsMapByName = settingsMapByName;
+    this.defaultName = defaultName;
+
+    for (const dsSettings of Object.values(settingsMapByName)) {
+      this.settingsMapByUid[dsSettings.uid] = dsSettings;
+    }
   }
 
   getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
-    return Object.values(config.datasources).find(ds => ds.uid === uid);
+    return this.settingsMapByUid[uid];
   }
 
-  get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
-    if (!name) {
-      return this.get(config.defaultDatasource);
+  getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined {
+    if (nameOrUid === 'default' || nameOrUid === null || nameOrUid === undefined) {
+      return this.settingsMapByName[this.defaultName];
+    }
+
+    return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid];
+  }
+
+  get(nameOrUid?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
+    if (!nameOrUid) {
+      return this.get(this.defaultName);
+    }
+
+    // Check if nameOrUid matches a uid and then get the name
+    const byUid = this.settingsMapByUid[nameOrUid];
+    if (byUid) {
+      nameOrUid = byUid.name;
+    }
+
+    // This check is duplicated below, this is here mainly as performance optimization to skip interpolation
+    if (this.datasources[nameOrUid]) {
+      return Promise.resolve(this.datasources[nameOrUid]);
     }
 
     // Interpolation here is to support template variable in data source selection
-    name = this.templateSrv.replace(name, scopedVars, (value: any[]) => {
+    nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, (value: any[]) => {
       if (Array.isArray(value)) {
         return value[0];
       }
       return value;
     });
 
-    if (name === 'default') {
-      return this.get(config.defaultDatasource);
+    if (nameOrUid === 'default') {
+      return this.get(this.defaultName);
     }
 
-    if (this.datasources[name]) {
-      return Promise.resolve(this.datasources[name]);
+    if (this.datasources[nameOrUid]) {
+      return Promise.resolve(this.datasources[nameOrUid]);
     }
 
-    return this.loadDatasource(name);
+    return this.loadDatasource(nameOrUid);
   }
 
   async loadDatasource(name: string): Promise<DataSourceApi<any, any>> {
@@ -68,7 +94,7 @@ export class DatasourceSrv implements DataSourceService {
       return Promise.resolve(expressionDatasource);
     }
 
-    const dsConfig = config.datasources[name];
+    const dsConfig = this.settingsMapByName[name];
     if (!dsConfig) {
       return Promise.reject({ message: `Datasource named ${name} was not found` });
     }
@@ -101,8 +127,7 @@ export class DatasourceSrv implements DataSourceService {
   }
 
   getAll(): DataSourceInstanceSettings[] {
-    const { datasources } = config;
-    return Object.keys(datasources).map(name => datasources[name]);
+    return Object.values(this.settingsMapByName);
   }
 
   getExternal(): DataSourceInstanceSettings[] {
@@ -115,7 +140,7 @@ export class DatasourceSrv implements DataSourceService {
 
     this.addDataSourceVariables(sources);
 
-    Object.values(config.datasources).forEach(value => {
+    Object.values(this.settingsMapByName).forEach(value => {
       if (value.meta?.annotations) {
         sources.push(value);
       }
@@ -127,7 +152,7 @@ export class DatasourceSrv implements DataSourceService {
   getMetricSources(options?: { skipVariables?: boolean }) {
     const metricSources: DataSourceSelectItem[] = [];
 
-    Object.entries(config.datasources).forEach(([key, value]) => {
+    Object.entries(this.settingsMapByName).forEach(([key, value]) => {
       if (value.meta?.metrics) {
         let metricSource: DataSourceSelectItem = { value: key, name: key, meta: value.meta, sort: key };
 
@@ -142,7 +167,7 @@ export class DatasourceSrv implements DataSourceService {
 
         metricSources.push(metricSource);
 
-        if (key === config.defaultDatasource) {
+        if (key === this.defaultName) {
           metricSource = { value: null, name: 'default', meta: value.meta, sort: key };
           metricSources.push(metricSource);
         }
@@ -172,9 +197,9 @@ export class DatasourceSrv implements DataSourceService {
       .getVariables()
       .filter(variable => variable.type === 'datasource')
       .forEach((variable: DataSourceVariableModel) => {
-        const first = variable.current.value === 'default' ? config.defaultDatasource : variable.current.value;
+        const first = variable.current.value === 'default' ? this.defaultName : variable.current.value;
         const index = (first as unknown) as string;
-        const ds = config.datasources[index];
+        const ds = this.settingsMapByName[index];
 
         if (ds) {
           const key = `$${variable.name}`;

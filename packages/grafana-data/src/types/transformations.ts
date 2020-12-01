@@ -25,8 +25,14 @@ export interface DataTransformerConfig<TOptions = any> {
   options: TOptions;
 }
 
-export type FieldMatcher = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => boolean;
 export type FrameMatcher = (frame: DataFrame) => boolean;
+export type FieldMatcher = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => boolean;
+
+/**
+ * Value matcher type to describe the matcher function
+ * @public
+ */
+export type ValueMatcher = (valueIndex: number, field: Field, frame: DataFrame, allFrames: DataFrame[]) => boolean;
 
 export interface FieldMatcherInfo<TOptions = any> extends RegistryItemWithOptions<TOptions> {
   get: (options: TOptions) => FieldMatcher;
@@ -36,6 +42,16 @@ export interface FrameMatcherInfo<TOptions = any> extends RegistryItemWithOption
   get: (options: TOptions) => FrameMatcher;
 }
 
+/**
+ * Registry item to represent all the different valu matchers supported
+ * in the Grafana platform.
+ * @public
+ */
+export interface ValueMatcherInfo<TOptions = any> extends RegistryItemWithOptions<TOptions> {
+  get: (options: TOptions) => ValueMatcher;
+  isApplicable: (field: Field) => boolean;
+  getDefaultOptions: (field: Field) => TOptions;
+}
 export interface MatcherConfig<TOptions = any> {
   id: string;
   options?: TOptions;

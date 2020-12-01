@@ -6,7 +6,7 @@ import kbn from 'app/core/utils/kbn';
 // Types
 import { PanelModel } from './PanelModel';
 import { DashboardModel } from './DashboardModel';
-import { DataLinkBuiltInVars, DataLink, urlUtil } from '@grafana/data';
+import { DataLink, DataLinkBuiltInVars, urlUtil } from '@grafana/data';
 // Constants
 import {
   DEFAULT_PANEL_SPAN,
@@ -16,9 +16,9 @@ import {
   GRID_COLUMN_COUNT,
   MIN_PANEL_HEIGHT,
 } from 'app/core/constants';
-import { isMulti, isQuery } from 'app/features/variables/guard';
+import { isConstant, isMulti, isQuery } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
-import { VariableTag } from '../../variables/types';
+import { VariableHide, VariableTag } from '../../variables/types';
 
 export class DashboardMigrator {
   dashboard: DashboardModel;
@@ -31,7 +31,7 @@ export class DashboardMigrator {
     let i, j, k, n;
     const oldVersion = this.dashboard.schemaVersion;
     const panelUpgrades = [];
-    this.dashboard.schemaVersion = 26;
+    this.dashboard.schemaVersion = 27;
 
     if (oldVersion === this.dashboard.schemaVersion) {
       return;
@@ -573,6 +573,21 @@ export class DashboardMigrator {
         panel.type = 'text';
         delete panel.options.angular;
       });
+    }
+
+    if (oldVersion < 27) {
+      for (const variable of this.dashboard.templating.list) {
+        if (!isConstant(variable)) {
+          continue;
+        }
+
+        if (variable.hide === VariableHide.dontHide || variable.hide === VariableHide.hideLabel) {
+          variable.type = 'textbox';
+        }
+
+        variable.current = { selected: true, text: variable.query ?? '', value: variable.query ?? '' };
+        variable.options = [variable.current];
+      }
     }
 
     if (panelUpgrades.length === 0) {

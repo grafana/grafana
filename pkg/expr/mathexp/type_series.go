@@ -46,6 +46,8 @@ func SeriesFromFrame(frame *data.Frame) (s Series, err error) {
 			s.ValueIsNullabe = true
 			foundValue = true
 			s.ValueIdx = i
+		default:
+			// Handle default case
 		}
 	}
 	if !foundTime {

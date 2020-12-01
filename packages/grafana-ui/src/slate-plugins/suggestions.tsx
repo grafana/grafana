@@ -189,7 +189,7 @@ export function SuggestionsPlugin({
       },
     },
 
-    renderEditor: (props, editor, next) => {
+    renderEditor(props, editor, next) {
       if (editor.value.selection.isExpanded) {
         return next();
       }

@@ -182,16 +182,17 @@ export class DashboardExporter {
               name: refName,
               type: 'constant',
               label: variable.label || variable.name,
-              value: variable.current.value,
+              value: variable.query,
               description: '',
             });
             // update current and option
             variable.query = '${' + refName + '}';
-            variable.options[0] = variable.current = {
+            variable.current = {
               value: variable.query,
               text: variable.query,
               selected: false,
             };
+            variable.options = [variable.current];
           }
         }
 
