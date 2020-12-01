@@ -138,7 +138,7 @@ Setting | Description
 ---------- | -----------
 Auto resolve incidents | Resolve incidents in VictorOps once the alert goes back to `OK`.
 
->**Note:** The tag `Severity` has special meaning in the [VictorOps Incident Fields](https://help.victorops.com/knowledge-base/incident-fields-glossary/). If an alert panel defines this tag key, then it is transposed to the root of the event sent to VictorOps.
+>**Note:** The tag `Severity` has special meaning in the [VictorOps Incident Fields](https://help.victorops.com/knowledge-base/incident-fields-glossary/). If an alert panel defines this tag key, then it replaces the `message_type` in the root of the event sent to VictorOps.
 
 ### Webhook
 
