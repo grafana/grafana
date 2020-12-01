@@ -29,7 +29,6 @@ describe('getFieldDisplayValuesProxy', () => {
       overrides: [],
     },
     replaceVariables: (val: string) => val,
-    getDataSourceSettingsByUid: (val: string) => ({} as any),
     timeZone: 'utc',
     theme: getTestTheme(),
   })[0];

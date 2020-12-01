@@ -26,7 +26,6 @@ import {
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 
 export interface GridPos {
@@ -462,7 +461,6 @@ export class PanelModel implements DataConfigSource {
     return {
       fieldConfig: this.fieldConfig,
       replaceVariables: this.replaceVariables,
-      getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid.bind(getDatasourceSrv()),
       fieldConfigRegistry: this.plugin.fieldConfigRegistry,
       theme: config.theme,
     };
