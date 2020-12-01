@@ -9,9 +9,11 @@ export interface SeriesProps extends LineConfig, AreaConfig, PointsConfig {
 }
 
 function buildBarsPaths(u: uPlot, seriesIdx: number, idx0: number, idx1: number): Series.Paths {
-  let series = u.series[seriesIdx];
-  let xScaleKey = u.series[0].scale as string;
-  let yScaleKey = series.scale as string;
+  const series = u.series[seriesIdx];
+  const xdata = u.data[0];
+  const ydata = u.data[seriesIdx];
+  const scaleX = u.series[0].scale as string;
+  const scaleY = series.scale as string;
 
   const gapFactor = 0.25;
 
@@ -21,7 +23,7 @@ function buildBarsPaths(u: uPlot, seriesIdx: number, idx0: number, idx1: number)
   //@ts-ignore
   let fillTo = series.fillTo(u, seriesIdx, series.min, series.max);
 
-  let y0Pos = u.valToPos(fillTo, yScaleKey, true);
+  let y0Pos = u.valToPos(fillTo, scaleY, true);
   let colWid = u.bbox.width / (idx1 - idx0);
 
   let strokeWidth = Math.round(series.width! * devicePixelRatio);
@@ -31,17 +33,17 @@ function buildBarsPaths(u: uPlot, seriesIdx: number, idx0: number, idx1: number)
   let stroke = new Path2D();
 
   for (let i = idx0; i <= idx1; i++) {
-    let yVal = u.data[seriesIdx][i];
+    let yVal = ydata[i];
 
     if (yVal == null) {
       continue;
     }
 
-    let xVal = u.scales.x.distr === 2 ? i : u.data[0][i];
+    let xVal = u.scales.x.distr === 2 ? i : xdata[i];
 
     // TODO: all xPos can be pre-computed once for all series in aligned set
-    let xPos = u.valToPos(xVal, xScaleKey, true);
-    let yPos = u.valToPos(yVal, yScaleKey, true);
+    let xPos = u.valToPos(xVal, scaleX, true);
+    let yPos = u.valToPos(yVal, scaleY, true);
 
     let lft = Math.round(xPos - barWid / 2);
     let btm = Math.round(Math.max(yPos, y0Pos));
@@ -60,11 +62,11 @@ function buildBarsPaths(u: uPlot, seriesIdx: number, idx0: number, idx1: number)
 }
 
 function buildStaircasePaths(u: uPlot, seriesIdx: number, idx0: number, idx1: number): Series.Paths {
-  const s = u.series[seriesIdx];
+  const series = u.series[seriesIdx];
   const xdata = u.data[0];
   const ydata = u.data[seriesIdx];
-  const scaleX = 'x';
-  const scaleY = s.scale as string;
+  const scaleX = u.series[0].scale as string;
+  const scaleY = series.scale as string;
 
   const stroke = new Path2D();
   stroke.moveTo(Math.round(u.valToPos(xdata[0], scaleX, true)), Math.round(u.valToPos(ydata[0]!, scaleY, true)));
@@ -86,7 +88,7 @@ function buildStaircasePaths(u: uPlot, seriesIdx: number, idx0: number, idx1: nu
   const fill = new Path2D(stroke);
 
   //@ts-ignore
-  let fillTo = s.fillTo(u, seriesIdx, s.min, s.max);
+  let fillTo = series.fillTo(u, seriesIdx, series.min, series.max);
 
   let minY = Math.round(u.valToPos(fillTo, scaleY, true));
   let minX = Math.round(u.valToPos(u.scales[scaleX].min!, scaleX, true));
