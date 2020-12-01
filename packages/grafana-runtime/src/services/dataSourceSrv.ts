@@ -17,6 +17,7 @@ export interface DataSourceSrv {
 
   /**
    * Returns metadata based on UID.
+   * @deprecated use getInstanceSettings
    */
   getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined;
 
@@ -29,6 +30,11 @@ export interface DataSourceSrv {
    * Get all data sources except for internal ones that usually should not be listed like mixed data source.
    */
   getExternal(): DataSourceInstanceSettings[];
+
+  /**
+   * Get settings and plugin metadata by name or uid
+   */
+  getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined;
 }
 
 let singletonInstance: DataSourceSrv;
