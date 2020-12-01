@@ -17,7 +17,6 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  overflow-wrap: break-word;
 }
 
 // Alternate styles
@@ -78,8 +77,9 @@
 }
 
 .alert-body {
+  overflow-wrap: break-word;
+  word-break: break-word;
   flex-grow: 1;
-  min-width: 0;
 }
 
 .alert-icon-on-top {

@@ -107,6 +107,8 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
     body: css`
       flex-grow: 1;
       margin: 0 ${theme.spacing.md} 0 0;
+      overflow-wrap: break-word;
+      word-break: break-word;
 
       a {
         color: ${white};
