@@ -115,22 +115,62 @@ function buildStaircasePaths(u: uPlot, seriesIdx: number, idx0: number, idx1: nu
  * @param  {Array} data - Array of points, each point in object literal holding x/y values
  * @return {String} d - SVG string with cubic bezier curves representing the Catmull-Rom Spline
  */
-function catmullRomFitting(data: Array<{ x: number; y: number }>, alpha: number) {
+function catmullRomFitting(xCoords: number[], yCoords: number[], alpha: number) {
   const path = new Path2D();
 
-  let p0, p1, p2, p3, bp1, bp2, d1, d2, d3, A, B, N, M, d3powA, d2powA, d3pow2A, d2pow2A, d1pow2A, d1powA;
+  const dataLen = xCoords.length;
 
-  path.moveTo(Math.round(data[0].x), Math.round(data[0].y));
+  let p0x,
+    p0y,
+    p1x,
+    p1y,
+    p2x,
+    p2y,
+    p3x,
+    p3y,
+    bp1x,
+    bp1y,
+    bp2x,
+    bp2y,
+    d1,
+    d2,
+    d3,
+    A,
+    B,
+    N,
+    M,
+    d3powA,
+    d2powA,
+    d3pow2A,
+    d2pow2A,
+    d1pow2A,
+    d1powA;
 
-  for (let i = 0; i < data.length - 1; i++) {
-    p0 = i === 0 ? data[0] : data[i - 1];
-    p1 = data[i];
-    p2 = data[i + 1];
-    p3 = i + 2 < data.length ? data[i + 2] : p2;
+  path.moveTo(Math.round(xCoords[0]), Math.round(yCoords[0]));
 
-    d1 = Math.sqrt(Math.pow(p0.x - p1.x, 2) + Math.pow(p0.y - p1.y, 2));
-    d2 = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
-    d3 = Math.sqrt(Math.pow(p2.x - p3.x, 2) + Math.pow(p2.y - p3.y, 2));
+  for (let i = 0; i < dataLen - 1; i++) {
+    let p0i = i === 0 ? 0 : i - 1;
+
+    p0x = xCoords[p0i];
+    p0y = yCoords[p0i];
+
+    p1x = xCoords[i];
+    p1y = yCoords[i];
+
+    p2x = xCoords[i + 1];
+    p2y = yCoords[i + 1];
+
+    if (i + 2 < dataLen) {
+      p3x = xCoords[i + 2];
+      p3y = yCoords[i + 2];
+    } else {
+      p3x = p2x;
+      p3y = p2y;
+    }
+
+    d1 = Math.sqrt(Math.pow(p0x - p1x, 2) + Math.pow(p0y - p1y, 2));
+    d2 = Math.sqrt(Math.pow(p1x - p2x, 2) + Math.pow(p1y - p2y, 2));
+    d3 = Math.sqrt(Math.pow(p2x - p3x, 2) + Math.pow(p2y - p3y, 2));
 
     // Catmull-Rom to Cubic Bezier conversion matrix
 
@@ -163,49 +203,53 @@ function catmullRomFitting(data: Array<{ x: number; y: number }>, alpha: number)
       M = 1 / M;
     }
 
-    bp1 = {
-      x: (-d2pow2A * p0.x + A * p1.x + d1pow2A * p2.x) * N,
-      y: (-d2pow2A * p0.y + A * p1.y + d1pow2A * p2.y) * N,
-    };
+    bp1x = (-d2pow2A * p0x + A * p1x + d1pow2A * p2x) * N;
+    bp1y = (-d2pow2A * p0y + A * p1y + d1pow2A * p2y) * N;
 
-    bp2 = {
-      x: (d3pow2A * p1.x + B * p2.x - d2pow2A * p3.x) * M,
-      y: (d3pow2A * p1.y + B * p2.y - d2pow2A * p3.y) * M,
-    };
+    bp2x = (d3pow2A * p1x + B * p2x - d2pow2A * p3x) * M;
+    bp2y = (d3pow2A * p1y + B * p2y - d2pow2A * p3y) * M;
 
-    if (bp1.x === 0 && bp1.y === 0) {
-      bp1 = p1;
+    if (bp1x === 0 && bp1y === 0) {
+      bp1x = p1x;
+      bp1y = p1y;
     }
 
-    if (bp2.x === 0 && bp2.y === 0) {
-      bp2 = p2;
+    if (bp2x === 0 && bp2y === 0) {
+      bp2x = p2x;
+      bp2y = p2y;
     }
 
-    path.bezierCurveTo(bp1.x, bp1.y, bp2.x, bp2.y, p2.x, p2.y);
+    path.bezierCurveTo(bp1x, bp1y, bp2x, bp2y, p2x, p2y);
   }
 
   return path;
 }
 
 function buildSmoothPaths(u: uPlot, seriesIdx: number, idx0: number, idx1: number): Series.Paths {
-  const s = u.series[seriesIdx];
+  const series = u.series[seriesIdx];
   const xdata = u.data[0];
   const ydata = u.data[seriesIdx];
-  const scaleX = 'x';
-  const scaleY = s.scale as string;
+  const scaleX = u.series[0].scale as string;
+  const scaleY = series.scale as string;
 
-  const stroke = catmullRomFitting(
-    xdata.map((x, i) => ({
-      x: u.valToPos(xdata[i], scaleX, true),
-      y: u.valToPos(ydata[i]!, scaleY, true),
-    })),
-    0.5
-  );
+  const alpha = 0.5;
+
+  let xCoords = [];
+  let yCoords = [];
+
+  for (let i = idx0; i <= idx1; i++) {
+    if (ydata[i] != null) {
+      xCoords.push(u.valToPos(xdata[i], scaleX, true));
+      yCoords.push(u.valToPos(ydata[i]!, scaleY, true));
+    }
+  }
+
+  const stroke = catmullRomFitting(xCoords, yCoords, alpha);
 
   const fill = new Path2D(stroke);
 
   //@ts-ignore
-  let fillTo = s.fillTo(u, seriesIdx, s.min, s.max);
+  let fillTo = series.fillTo(u, seriesIdx, series.min, series.max);
 
   let minY = Math.round(u.valToPos(fillTo, scaleY, true));
   let minX = Math.round(u.valToPos(u.scales[scaleX].min!, scaleX, true));
