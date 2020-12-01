@@ -45,7 +45,7 @@ func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *models.ReqCon
 	}
 
 	// Check if allowed to continue with this IP
-	if result, err := auth.IsAllowedIP(); !result {
+	if err := auth.IsAllowedIP(); err != nil {
 		logger.Error(
 			"Failed to check whitelisted IP addresses",
 			"message", err.Error(),
