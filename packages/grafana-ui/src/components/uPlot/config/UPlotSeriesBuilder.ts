@@ -265,7 +265,11 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     };
 
     // we cannot set points.show property above (even to undefined) as that will clear uPlot's default auto behavior
-    if (points === PointMode.Never) {
+    if (points === PointMode.Auto) {
+      if (mode === GraphMode.Bars) {
+        pointsConfig.points!.show = false;
+      }
+    } else if (points === PointMode.Never) {
       pointsConfig.points!.show = false;
     } else if (points === PointMode.Always) {
       pointsConfig.points!.show = true;
