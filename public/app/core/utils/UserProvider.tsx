@@ -73,7 +73,7 @@ export class UserProvider extends PureComponent<Props, State> {
     },
   };
 
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     if (this.props.userId) {
       this.loadUser();
     }
