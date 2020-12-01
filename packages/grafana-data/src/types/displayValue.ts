@@ -19,14 +19,14 @@ export interface DisplayValue extends FormattedValue {
 }
 
 /**
- * Explicit control for font sizing
+ * Explicit control for text settings
  */
-export interface FontSizeOptions {
-  /* If true show each row value */
-  title?: number;
+export interface TextDisplayOptions {
+  /* Explicit text size */
+  titleSize?: number;
 
-  /** if showing all values limit */
-  value?: number;
+  /* Explicit text size */
+  valueSize?: number;
 }
 
 /**

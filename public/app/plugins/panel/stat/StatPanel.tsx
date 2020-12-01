@@ -56,7 +56,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         justifyMode={options.justifyMode}
         textMode={this.getTextMode()}
         alignmentFactors={alignmentFactors}
-        fontSize={options.fontSize}
+        text={options.text}
         width={width}
         height={height}
         theme={config.theme}

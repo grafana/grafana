@@ -10,7 +10,7 @@ import {
   getColorForTheme,
   FieldColorModeId,
   FALLBACK_COLOR,
-  FontSizeOptions,
+  TextDisplayOptions,
 } from '@grafana/data';
 import { Themeable } from '../../types';
 import { calculateFontSize } from '../../utils/measureText';
@@ -22,7 +22,7 @@ export interface Props extends Themeable {
   showThresholdLabels: boolean;
   width: number;
   value: DisplayValue;
-  fontSize?: FontSizeOptions;
+  text?: TextDisplayOptions;
   onClick?: React.MouseEventHandler<HTMLElement>;
   className?: string;
 }
@@ -110,7 +110,7 @@ export class Gauge extends PureComponent<Props> {
     // remove gauge & marker width (on left and right side)
     // and 10px is some padding that flot adds to the outer canvas
     const valueWidth = valueWidthBase - ((gaugeWidth + (showThresholdMarkers ? thresholdMarkersWidth : 0)) * 2 + 10);
-    const fontSize = this.props.fontSize?.value ?? calculateFontSize(text, valueWidth, dimension, 1, gaugeWidth * 1.7);
+    const fontSize = this.props.text?.valueSize ?? calculateFontSize(text, valueWidth, dimension, 1, gaugeWidth * 1.7);
     const thresholdLabelFontSize = fontSize / 2.5;
 
     let min = field.min!;
@@ -182,7 +182,7 @@ export class Gauge extends PureComponent<Props> {
   }
 
   renderVisualization = () => {
-    const { width, value, height, onClick, fontSize } = this.props;
+    const { width, value, height, onClick, text } = this.props;
     const autoProps = calculateGaugeAutoProps(width, height, value.title);
 
     return (
@@ -196,7 +196,7 @@ export class Gauge extends PureComponent<Props> {
           <div
             style={{
               textAlign: 'center',
-              fontSize: fontSize?.title ?? autoProps.titleFontSize,
+              fontSize: text?.titleSize ?? autoProps.titleFontSize,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',

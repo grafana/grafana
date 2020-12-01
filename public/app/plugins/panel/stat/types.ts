@@ -26,7 +26,7 @@ export function addStandardDataReduceOptions(
   builder: PanelOptionsEditorBuilder<SingleStatBaseOptions>,
   includeOrientation = true,
   includeFieldMatcher = true,
-  includeFontSizes = true
+  includeTextSizes = true
 ) {
   builder.addRadio({
     path: 'reduceOptions.values',
@@ -110,10 +110,10 @@ export function addStandardDataReduceOptions(
     });
   }
 
-  if (includeFontSizes) {
+  if (includeTextSizes) {
     builder.addNumberInput({
-      path: 'fontSize.title',
-      category: ['Font Size'],
+      path: 'text.titleSize',
+      category: ['Text size'],
       name: 'Title',
       settings: {
         placeholder: 'Auto',
@@ -125,8 +125,8 @@ export function addStandardDataReduceOptions(
     });
 
     builder.addNumberInput({
-      path: 'fontSize.value',
-      category: ['Font Size'],
+      path: 'text.valueSize',
+      category: ['Text size'],
       name: 'Value',
       settings: {
         placeholder: 'Auto',

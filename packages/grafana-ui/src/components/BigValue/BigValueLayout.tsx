@@ -29,7 +29,7 @@ export abstract class BigValueLayout {
   textValues: BigValueTextValues;
 
   constructor(private props: Props) {
-    const { width, height, value, theme, fontSize } = props;
+    const { width, height, value, theme, text } = props;
 
     this.valueColor = getColorForTheme(value.color || 'green', theme);
     this.panelPadding = height > 100 ? 12 : 8;
@@ -45,13 +45,13 @@ export abstract class BigValueLayout {
     this.maxTextHeight = height - this.panelPadding * 2;
 
     // Explicit font sizing
-    if (fontSize) {
-      if (fontSize.title) {
-        this.titleFontSize = fontSize.title;
+    if (text) {
+      if (text.titleSize) {
+        this.titleFontSize = text.titleSize;
         this.titleToAlignTo = undefined;
       }
-      if (fontSize.value) {
-        this.valueFontSize = fontSize.value;
+      if (text.valueSize) {
+        this.valueFontSize = text.valueSize;
         this.valueToAlignTo = '';
       }
     }

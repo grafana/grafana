@@ -16,15 +16,13 @@ import {
   ThresholdsConfig,
   validateFieldConfig,
   FieldColorModeId,
-  FontSizeOptions,
+  TextDisplayOptions,
 } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
   reduceOptions: ReduceDataOptions;
   orientation: VizOrientation;
-
-  /** Explicit font size settings */
-  fontSize?: FontSizeOptions;
+  text?: TextDisplayOptions;
 }
 
 const optionsToKeep = ['reduceOptions', 'orientation'];
