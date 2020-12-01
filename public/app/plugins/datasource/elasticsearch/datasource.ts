@@ -17,7 +17,7 @@ import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
 import { toUtc } from '@grafana/data';
 import * as queryDef from './query_def';
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
@@ -661,29 +661,41 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
  * Exported for tests.
  */
 export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig[]) {
-  if (dataLinks.length) {
-    for (const field of dataFrame.fields) {
-      const dataLinkConfig = dataLinks.find(dataLink => field.name && field.name.match(dataLink.field));
-      if (dataLinkConfig) {
-        let link: DataLink;
-        if (dataLinkConfig.datasourceUid) {
-          link = {
-            title: '',
-            url: '',
-            internal: {
-              query: { query: dataLinkConfig.url },
-              datasourceUid: dataLinkConfig.datasourceUid,
-            },
-          };
-        } else {
-          link = {
-            title: '',
-            url: dataLinkConfig.url,
-          };
-        }
-        field.config = field.config || {};
-        field.config.links = [...(field.config.links || []), link];
-      }
+  const dataSourceSrv = getDataSourceSrv();
+
+  if (!dataLinks.length) {
+    return;
+  }
+
+  for (const field of dataFrame.fields) {
+    const dataLinkConfig = dataLinks.find(dataLink => field.name && field.name.match(dataLink.field));
+
+    if (!dataLinkConfig) {
+      continue;
     }
+
+    let link: DataLink;
+
+    if (dataLinkConfig.datasourceUid) {
+      const dsSettings = dataSourceSrv.getInstanceSettings(dataLinkConfig.datasourceUid);
+
+      link = {
+        title: '',
+        url: '',
+        internal: {
+          query: { query: dataLinkConfig.url },
+          datasourceUid: dataLinkConfig.datasourceUid,
+          datasourceName: dsSettings?.name ?? 'Data source not found',
+        },
+      };
+    } else {
+      link = {
+        title: '',
+        url: dataLinkConfig.url,
+      };
+    }
+
+    field.config = field.config || {};
+    field.config.links = [...(field.config.links || []), link];
   }
 }
