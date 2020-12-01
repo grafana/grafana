@@ -109,6 +109,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		if err := hs.configureHttps(); err != nil {
 			return err
 		}
+	default:
 	}
 
 	listener, err := hs.getListener()
