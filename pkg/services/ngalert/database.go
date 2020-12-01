@@ -2,6 +2,7 @@ package ngalert
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -144,19 +145,44 @@ func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 			return err
 		}
 
+		spew.Dump(ng.SQLStore.Dialect.DriverName())
+
 		s := strings.Builder{}
 		params := make([]interface{}, 0)
 
-		s.WriteString(`INSERT INTO alert_instance 
-			(org_id, alert_definition_id, labels, labels_hash, current_state, current_state_since, last_eval_time) VALUES (?, ?, ?, ?, ?, ?, ?)
-			ON CONFLICT(alert_definition_id, labels_hash) DO UPDATE SET 
-				org_id=excluded.org_id, 
-				alert_definition_id=excluded.alert_definition_id, 
-				labels=excluded.labels, 
-				labels=excluded.labels_hash, 
-				current_state=excluded.current_state, 
-				current_state_since=excluded.current_state_since, 
+		// This is the wrong way I imagine....
+		switch ng.SQLStore.Dialect.DriverName() {
+		// sqlite3 on conflict syntax is relatively new (3.24.0 / 2018)
+		case "sqlite3", "postgres":
+			s.WriteString(`INSERT INTO alert_instance
+			(org_id, alert_definition_id, labels, labels_hash, current_state, current_state_since, last_eval_time)
+				VALUES (?, ?, ?, ?, ?, ?, ?)
+			ON CONFLICT(alert_definition_id, labels_hash) DO UPDATE SET
+				org_id=excluded.org_id,
+				alert_definition_id=excluded.alert_definition_id,
+				labels=excluded.labels,
+				labels_hash=excluded.labels_hash,
+				current_state=excluded.current_state,
+				current_state_since=excluded.current_state_since,
 				last_eval_time=excluded.last_eval_time`)
+
+		case "mysql":
+			s.WriteString(`INSERT INTO alert_instance
+			(org_id, alert_definition_id, labels, labels_hash, current_state, current_state_since, last_eval_time)
+				VALUES (?, ?, ?, ?, ?, ?, ?)
+			ON DUPLICATE KEY UPDATE
+				org_id=VALUES(org_id),
+				alert_definition_id=VALUES(alert_definition_id),
+				labels=VALUES(labels),
+				labels_hash=VALUES(labels_hash),
+				current_state=VALUES(current_state),
+				current_state_since=VALUES(current_state_since),
+				last_eval_time=VALUES(last_eval_time)
+			`)
+
+		default:
+			return fmt.Errorf("unsupported database type for alert instances: %v", ng.SQLStore.Dialect.DriverName())
+		}
 
 		params = append(params, cmd.OrgID, cmd.AlertDefinitionID, labelTupleJSON, alertInstance.LabelsHash, cmd.State, time.Now(), time.Now())
 
