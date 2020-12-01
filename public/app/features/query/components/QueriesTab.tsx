@@ -25,7 +25,7 @@ import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expre
 import { selectors } from '@grafana/e2e-selectors';
 import { PanelQueryRunner } from '../state/PanelQueryRunner';
 import { QueryGroupOptions, QueryGroupOptionsEditor } from './QueryGroupOptions';
-import { isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
+import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { css } from 'emotion';
 
 interface Props {
@@ -260,9 +260,9 @@ export class QueriesTab extends PureComponent<Props, State> {
     const { onQueriesChange, queries, onRunQueries } = this.props;
     const { dataSourceItem, data } = this.state;
 
-    // if (isSharedDashboardQuery(dataSourceItem.name)) {
-    //   return <DashboardQueryEditor panel={panel} panelData={data} onChange={query => this.onUpdateQueries([query])} />;
-    // }
+    if (isSharedDashboardQuery(dataSourceItem.name)) {
+      return <DashboardQueryEditor queries={queries} panelData={data} onChange={onQueriesChange} />;
+    }
 
     return (
       <div aria-label={selectors.components.QueryTab.content}>
