@@ -88,6 +88,22 @@ func (vn *VictoropsNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	}
 
 	messageType := AlertStateCritical // Default to alerting and change based on state checks (Ensures string type)
+	for _, tag := range evalContext.Rule.AlertRuleTags {
+		if strings.ToLower(tag.Key) == "severity" {
+			// Only set severity if it's one of the PD supported enum values
+			// Info, Warning, Error, or Critical (case insensitive)
+			switch sev := strings.ToUpper(tag.Value); sev {
+			case "INFO":
+				fallthrough
+			case "WARNING":
+				fallthrough
+			case "CRITICAL":
+				messageType = sev
+			default:
+				vn.log.Warn("Ignoring invalid severity tag", "severity", sev)
+			}
+		}
+	}
 
 	if evalContext.Rule.State == models.AlertStateNoData { // translate 'NODATA' to set alert
 		messageType = vn.NoDataAlertType
@@ -116,23 +132,6 @@ func (vn *VictoropsNotifier) buildEventPayload(evalContext *alerting.EvalContext
 	bodyJSON.Set("monitoring_tool", "Grafana v"+setting.BuildVersion)
 	bodyJSON.Set("alert_url", ruleURL)
 	bodyJSON.Set("metrics", fields)
-
-	for _, tag := range evalContext.Rule.AlertRuleTags {
-		if strings.ToLower(tag.Key) == "severity" {
-			// Only set severity if it's one of the PD supported enum values
-			// Info, Warning, Error, or Critical (case insensitive)
-			switch sev := strings.ToUpper(tag.Value); sev {
-			case "INFO":
-				fallthrough
-			case "WARNING":
-				fallthrough
-			case "CRITICAL":
-				bodyJSON.Set("message_type", sev)
-			default:
-				vn.log.Warn("Ignoring invalid severity tag", "severity", sev)
-			}
-		}
-	}
 
 	if evalContext.Error != nil {
 		bodyJSON.Set("error_message", evalContext.Error.Error())

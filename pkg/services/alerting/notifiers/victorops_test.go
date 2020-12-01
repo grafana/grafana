@@ -107,6 +107,54 @@ func TestVictoropsNotifier(t *testing.T) {
 				}, payload.Interface(), cmp.Comparer(presenceComparerInt))
 				So(diff, ShouldBeEmpty)
 			})
+			Convey("resolving with severity works properly", func() {
+				json := `
+				{
+					"url": "http://google.com"
+				}`
+
+				settingsJSON, err := simplejson.NewJson([]byte(json))
+				So(err, ShouldBeNil)
+
+				model := &models.AlertNotification{
+					Name:     "victorops_testing",
+					Type:     "victorops",
+					Settings: settingsJSON,
+				}
+
+				not, err := NewVictoropsNotifier(model)
+				So(err, ShouldBeNil)
+
+				victoropsNotifier := not.(*VictoropsNotifier)
+
+				evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
+					ID:      0,
+					Name:    "someRule",
+					Message: "someMessage",
+					State:   models.AlertStateOK,
+					AlertRuleTags: []*models.Tag{
+						{Key: "keyOnly"},
+						{Key: "severity", Value: "warning"},
+					},
+				})
+				evalContext.IsTestRun = true
+
+				payload, err := victoropsNotifier.buildEventPayload(evalContext)
+				So(err, ShouldBeNil)
+
+				diff := cmp.Diff(map[string]interface{}{
+					"alert_url":           "",
+					"entity_display_name": "[OK] someRule",
+					"entity_id":           "someRule",
+					"message_type":        "RECOVERY",
+					"metrics":             map[string]interface{}{},
+					"monitoring_tool":     "Grafana v",
+					"state_message":       "someMessage",
+					"state_start_time":    int64(-1),
+					"timestamp":           int64(-1),
+				}, payload.Interface(), cmp.Comparer(presenceComparerInt))
+				So(diff, ShouldBeEmpty)
+			})
 		})
 	})
 }
