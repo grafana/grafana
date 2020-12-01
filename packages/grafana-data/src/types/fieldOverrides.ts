@@ -117,7 +117,6 @@ export interface ApplyFieldOverrideOptions {
   getDataSourceSettingsByUid: (uid: string) => DataSourceInstanceSettings | undefined;
   theme: GrafanaTheme;
   timeZone?: TimeZone;
-  autoMinMax?: boolean;
   fieldConfigRegistry?: FieldConfigOptionsRegistry;
 }
 
