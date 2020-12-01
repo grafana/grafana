@@ -63,7 +63,7 @@ func RequestMetrics(cfg *setting.Cfg) func(handler string) macaron.Handler {
 				// avoiding the sanitize functions for in the new instrumentation
 				// since they dont make much sense. We should remove them later.
 				histogram := httpRequestDurationHistogram.
-					WithLabelValues(handler, strconv.Itoa(rw.Status()), req.Method)
+					WithLabelValues(req.URL.String(), strconv.Itoa(rw.Status()), req.Method)
 				if traceID, ok := cw.ExtractSampledTraceID(c.Req.Context()); ok {
 					// Need to type-convert the Observer to an
 					// ExemplarObserver. This will always work for a
@@ -76,8 +76,8 @@ func RequestMetrics(cfg *setting.Cfg) func(handler string) macaron.Handler {
 				histogram.Observe(time.Since(now).Seconds())
 			} else {
 				duration := time.Since(now).Nanoseconds() / int64(time.Millisecond)
-				metrics.MHttpRequestTotal.WithLabelValues(handler, code, method).Inc()
-				metrics.MHttpRequestSummary.WithLabelValues(handler, code, method).Observe(float64(duration))
+				metrics.MHttpRequestTotal.WithLabelValues(req.URL.String(), code, method).Inc()
+				metrics.MHttpRequestSummary.WithLabelValues(req.URL.String(), code, method).Observe(float64(duration))
 			}
 
 			switch {
