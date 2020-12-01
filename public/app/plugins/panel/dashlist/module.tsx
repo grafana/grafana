@@ -54,7 +54,7 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
         name: 'Tags',
         description: '',
         defaultValue: [],
-        editor: function RenderTagsInput(props) {
+        editor(props) {
           return <TagsInput tags={props.value} onChange={props.onChange} />;
         },
       });
