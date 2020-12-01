@@ -232,6 +232,8 @@ func (rs *RenderingService) getURL(path string) string {
 		protocol = "http"
 	case setting.HTTP2Scheme, setting.HTTPSScheme:
 		protocol = "https"
+	default:
+		// TODO: Handle other schemes?
 	}
 
 	subPath := ""

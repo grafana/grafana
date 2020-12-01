@@ -104,6 +104,7 @@ func getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
 						Text: include.Name,
 					}
 				}
+				link.Icon = include.Icon
 				appLink.Children = append(appLink.Children, link)
 			}
 
