@@ -39,6 +39,7 @@ export interface VariableAdapter<Model extends VariableModel> {
   picker: ComponentType<VariablePickerProps>;
   editor: ComponentType<VariableEditorProps>;
   reducer: Reducer<VariablesState>;
+  beforeAdding?: (model: any) => any;
 }
 
 export type VariableModels =
