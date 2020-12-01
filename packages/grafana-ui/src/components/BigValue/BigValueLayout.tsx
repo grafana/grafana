@@ -247,9 +247,9 @@ export class WideNoChartLayout extends BigValueLayout {
   constructor(props: Props) {
     super(props);
 
-    const valueWidthPercent = 0.3;
+    const valueWidthPercent = this.titleToAlignTo?.length ? 0.3 : 1.0;
 
-    if (this.titleToAlignTo && this.titleToAlignTo.length > 0) {
+    if (this.valueToAlignTo.length) {
       // initial value size
       this.valueFontSize = calculateFontSize(
         this.valueToAlignTo,
@@ -257,7 +257,9 @@ export class WideNoChartLayout extends BigValueLayout {
         this.maxTextHeight,
         LINE_HEIGHT
       );
+    }
 
+    if (this.titleToAlignTo?.length) {
       // How big can we make the title and still have it fit
       this.titleFontSize = calculateFontSize(
         this.titleToAlignTo,
@@ -269,9 +271,6 @@ export class WideNoChartLayout extends BigValueLayout {
 
       // make sure it's a bit smaller than valueFontSize
       this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
-    } else {
-      // if no title wide
-      this.valueFontSize = calculateFontSize(this.valueToAlignTo, this.maxTextWidth, this.maxTextHeight, LINE_HEIGHT);
     }
   }
 
@@ -373,9 +372,8 @@ export class StackedWithChartLayout extends BigValueLayout {
         LINE_HEIGHT,
         MAX_TITLE_SIZE
       );
-
-      titleHeight = this.titleFontSize * LINE_HEIGHT;
     }
+    titleHeight = this.titleFontSize * LINE_HEIGHT;
 
     if (this.valueToAlignTo.length) {
       this.valueFontSize = calculateFontSize(
@@ -387,7 +385,9 @@ export class StackedWithChartLayout extends BigValueLayout {
     }
 
     // make title fontsize it's a bit smaller than valueFontSize
-    this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
+    if (this.titleToAlignTo?.length) {
+      this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
+    }
 
     // make chart take up unused space
     this.chartHeight = height - this.titleFontSize * LINE_HEIGHT - this.valueFontSize * LINE_HEIGHT;
