@@ -89,7 +89,6 @@ export class PanelQueryRunner {
               ...processedData,
               series: applyFieldOverrides({
                 timeZone: timeZone,
-                autoMinMax: true,
                 data: processedData.series,
                 ...fieldConfig,
               }),
