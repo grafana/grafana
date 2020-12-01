@@ -2,7 +2,6 @@
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import isString from 'lodash/isString';
-import { selectors } from '@grafana/e2e-selectors';
 // Components
 import Page from 'app/core/components/Page/Page';
 import { GenericDataSourcePlugin, PluginSettings } from './PluginSettings';
@@ -204,11 +203,7 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
         <div className="gf-form-group">
           {testingStatus && testingStatus.message && (
-            <Alert
-              severity={testingStatus.status === 'error' ? 'error' : 'success'}
-              title={testingStatus.message}
-              aria-label={selectors.pages.DataSource.alert}
-            />
+            <Alert severity={testingStatus.status === 'error' ? 'error' : 'success'} title={testingStatus.message} />
           )}
         </div>
 
