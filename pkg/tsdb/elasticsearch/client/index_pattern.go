@@ -291,7 +291,7 @@ func formatDate(t time.Time, pattern string) string {
 	if day == time.Sunday {
 		dayOfWeekIso = 7
 	}
-	quarter := 4
+	var quarter int
 	switch t.Month() {
 	case time.January, time.February, time.March:
 		quarter = 1
@@ -299,6 +299,8 @@ func formatDate(t time.Time, pattern string) string {
 		quarter = 2
 	case time.July, time.August, time.September:
 		quarter = 3
+	default:
+		quarter = 4
 	}
 
 	for i, formatted := range formattedDatePatterns {

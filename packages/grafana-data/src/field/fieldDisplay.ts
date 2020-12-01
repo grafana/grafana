@@ -77,7 +77,6 @@ export interface GetFieldDisplayValuesOptions {
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
   theme: GrafanaTheme;
-  autoMinMax?: boolean;
   timeZone?: TimeZone;
 }
 
@@ -122,7 +121,11 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           continue;
         }
 
-        const config = field.config; // already set by the prepare task
+        let config = field.config; // already set by the prepare task
+        if (field.state?.range) {
+          // Us the global min/max values
+          config = { ...config, ...field.state?.range };
+        }
         const displayName = field.config.displayName ?? defaultDisplayName;
 
         const display =
