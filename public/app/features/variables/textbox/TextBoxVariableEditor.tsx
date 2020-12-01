@@ -5,6 +5,7 @@ import { TextBoxVariableModel } from '../types';
 import { VariableEditorProps } from '../editor/types';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableTextField } from '../editor/VariableTextField';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props extends VariableEditorProps<TextBoxVariableModel> {}
 
@@ -32,6 +33,7 @@ export function TextBoxVariableEditor({ onPropChange, variable: { query } }: Pro
         onBlur={onBlur}
         labelWidth={20}
         grow
+        ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.TextBoxVariable.textBoxOptionsQueryInput}
       />
     </VerticalGroup>
   );

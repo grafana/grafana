@@ -100,6 +100,9 @@ export const Pages = {
           ConstantVariable: {
             constantOptionsQueryInput: 'Variable editor Form Constant Query field',
           },
+          TextBoxVariable: {
+            textBoxOptionsQueryInput: 'Variable editor Form TextBox Query field',
+          },
         },
       },
     },
