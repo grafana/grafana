@@ -173,7 +173,7 @@ func (auth *AuthProxy) getKey() string {
 }
 
 // Login logs in user ID by whatever means possible.
-func (auth *AuthProxy) Login(logger log.Logger, ignoreCache bool) (int64, *Error) {
+func (auth *AuthProxy) Login(logger log.Logger, ignoreCache bool) (int64, error) {
 	if !ignoreCache {
 		// Error here means absent cache - we don't need to handle that
 		id, err := auth.GetUserViaCache(logger)
