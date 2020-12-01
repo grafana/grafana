@@ -12,16 +12,20 @@ function buildBarsPaths(u: uPlot, seriesIdx: number, idx0: number, idx1: number)
   let series = u.series[seriesIdx];
   let scaleKey = series.scale as string;
 
-  const gapPct = 0.1;
+  const gapFactor = 0.25;
 
-  let gap = Math.round((u.width * gapPct) / (idx1 - idx0));
+  let gap = (u.width * gapFactor) / (idx1 - idx0);
   let maxWidth = Infinity;
 
   //@ts-ignore
   let fillTo = series.fillTo(u, seriesIdx, series.min, series.max);
 
-  let y0Pos = Math.round(u.valToPos(fillTo, scaleKey, true));
+  let y0Pos = u.valToPos(fillTo, scaleKey, true);
   let colWid = u.bbox.width / (idx1 - idx0);
+
+  let strokeWidth = series.width! * devicePixelRatio;
+
+  let wid = Math.min(maxWidth, colWid - gap) - strokeWidth;
 
   let stroke = new Path2D();
 
@@ -38,12 +42,12 @@ function buildBarsPaths(u: uPlot, seriesIdx: number, idx0: number, idx1: number)
     let xPos = u.valToPos(xVal, 'x', true);
     let yPos = u.valToPos(yVal, scaleKey, true);
 
-    let wid = Math.min(maxWidth, colWid - gap);
     let lft = xPos - wid / 2;
     let btm = Math.min(yPos, y0Pos);
     let top = Math.max(yPos, y0Pos);
+    let hgt = btm - top;
 
-    stroke.rect(Math.round(lft), Math.round(top), Math.round(wid), Math.round(btm - top));
+    stroke.rect(lft, top, wid, hgt);
   }
 
   let fill = series.fill != null ? new Path2D(stroke) : undefined;
