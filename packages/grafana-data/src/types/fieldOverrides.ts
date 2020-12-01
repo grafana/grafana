@@ -122,5 +122,5 @@ export enum FieldConfigProperty {
   Mappings = 'mappings',
   Links = 'links',
   Color = 'color',
-  NullValuesMode = 'nullValueMode',
+  NullValueMode = 'nullValueMode',
 }
