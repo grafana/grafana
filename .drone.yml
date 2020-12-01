@@ -215,18 +215,6 @@ steps:
   - test-backend
   - test-frontend
 
-- name: release-canary-npm-packages
-  image: grafana/build-container:1.3.0
-  commands:
-  - echo "@grafana:registry=https://npm.pkg.github.com" >> ~/.npmrc
-  - echo "//npm.pkg.github.com/:_authToken=$${GITHUB_PACKAGE_TOKEN}" >> ~/.npmrc
-  - ./scripts/circle-release-canary-packages.sh
-  environment:
-    GITHUB_PACKAGE_TOKEN:
-      from_secret: github_package_token
-  depends_on:
-  - end-to-end-tests
-
 services:
 - name: postgres
   image: postgres:12.3-alpine
