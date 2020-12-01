@@ -28,6 +28,7 @@ import { getDataSourceLoadingNav } from '../state/navModel';
 import PluginStateinfo from 'app/features/plugins/PluginStateInfo';
 import { dataSourceLoaded, setDataSourceName, setIsDefault } from '../state/reducers';
 import { connectWithCleanUp } from 'app/core/components/connectWithCleanUp';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   navModel: NavModel;
@@ -203,7 +204,11 @@ export class DataSourceSettingsPage extends PureComponent<Props> {
 
         <div className="gf-form-group">
           {testingStatus && testingStatus.message && (
-            <Alert severity={testingStatus.status === 'error' ? 'error' : 'success'} title={testingStatus.message} />
+            <Alert
+              severity={testingStatus.status === 'error' ? 'error' : 'success'}
+              title={testingStatus.message}
+              aria-label={selectors.pages.DataSource.alert}
+            />
           )}
         </div>
 
