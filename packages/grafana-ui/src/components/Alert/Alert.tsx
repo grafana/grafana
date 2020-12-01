@@ -68,6 +68,8 @@ export const Alert: FC<Props> = React.forwardRef<HTMLElement, Props>(
   }
 );
 
+Alert.displayName = 'Alert';
+
 const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean) => {
   const { white } = theme.palette;
   const severityColors = getColorsFromSeverity(severity, theme);
