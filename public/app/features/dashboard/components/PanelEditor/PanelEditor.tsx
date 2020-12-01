@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { css, cx } from 'emotion';
-import { Unsubscribable } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -18,7 +18,7 @@ import { OptionsPaneContent } from './OptionsPaneContent';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
-import { SplitPaneWrapper } from 'app/core/components/ThreePaneSplit/SplitPaneWrapper';
+import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
@@ -36,6 +36,7 @@ import { CoreEvents, LocationState, StoreState } from 'app/types';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { VariableModel } from 'app/features/variables/types';
 import { DashboardModel, PanelModel } from '../../state';
+import { PanelOptionsChangedEvent } from 'app/types/events';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -64,14 +65,29 @@ interface DispatchProps {
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export class PanelEditorUnconnected extends PureComponent<Props> {
-  querySubscription: Unsubscribable;
+  private eventSubs?: Subscription;
 
   componentDidMount() {
     this.props.initPanelEditor(this.props.sourcePanel, this.props.dashboard);
   }
+
+  componentDidUpdate() {
+    const { panel, initDone } = this.props;
+
+    if (initDone && !this.eventSubs) {
+      this.eventSubs = new Subscription();
+      this.eventSubs.add(panel.events.subscribe(PanelOptionsChangedEvent, this.triggerForceUpdate));
+    }
+  }
+
   componentWillUnmount() {
     this.props.panelEditorCleanUp();
+    this.eventSubs?.unsubscribe();
   }
+
+  triggerForceUpdate = () => {
+    this.forceUpdate();
+  };
 
   onPanelExit = () => {
     this.props.updateLocation({
@@ -113,8 +129,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   onPanelOptionsChanged = (options: any) => {
+    // we do not need to trigger force update here as the function call below
+    // fires PanelOptionsChangedEvent which we subscribe to above
     this.props.panel.updateOptions(options);
-    this.forceUpdate();
   };
 
   onPanelConfigChanged = (configKey: string, value: any) => {

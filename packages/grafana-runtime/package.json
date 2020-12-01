@@ -31,7 +31,7 @@
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@rollup/plugin-commonjs": "11.0.2",
     "@rollup/plugin-node-resolve": "7.1.1",
-    "@types/jest": "26.0.0",
+    "@types/jest": "26.0.15",
     "@types/rollup-plugin-visualizer": "2.6.0",
     "@types/systemjs": "^0.20.6",
     "lodash": "4.17.19",
