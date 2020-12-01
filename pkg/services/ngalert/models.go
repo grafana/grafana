@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
@@ -96,7 +95,7 @@ type listAlertDefinitionsCommand struct {
 type AlertInstance struct {
 	OrgID             int64 `xorm:"org_id"`
 	AlertDefinitionID int64 `xorm:"alert_definition_id"`
-	Labels            data.Labels
+	Labels            InstanceLabels
 	LabelsHash        string
 	CurrentState      InstanceStateType
 	CurrentStateSince time.Time
@@ -107,12 +106,10 @@ type AlertInstance struct {
 type saveAlertInstanceCommand struct {
 	OrgID             int64 `json:"-"`
 	AlertDefinitionID int64
-	Labels            data.Labels
+	Labels            InstanceLabels
 	State             InstanceStateType
 	SignedInUser      *models.SignedInUser `json:"-"`
 	SkipCache         bool                 `json:"-"`
-
-	Result *AlertInstance
 }
 
 type InstanceStateType string
@@ -125,4 +122,13 @@ const (
 func (i InstanceStateType) IsValid() bool {
 	return i == InstateStateFiring ||
 		i == InstateStateNormal
+}
+
+// getAlertDefinitionByIDQuery is the query for retrieving/deleting an alert definition by ID.
+type getAlertInstanceCommand struct {
+	OrgID             int64
+	AlertDefinitionID int64
+	Labels            InstanceLabels
+
+	Result *AlertInstance
 }

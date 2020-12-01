@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
@@ -127,31 +126,32 @@ func (ng *AlertNG) getAlertDefinitions(cmd *listAlertDefinitionsCommand) error {
 // saveAlertDefinition is a handler for saving a new alert definition.
 func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+
+		labelTupleJSON, labelsHash, err := SetLabelsHash(cmd.Labels)
+		if err != nil {
+			return err
+		}
+
 		alertInstance := &AlertInstance{
 			OrgID:             cmd.OrgID,
 			Labels:            cmd.Labels,
+			LabelsHash:        labelsHash,
 			CurrentState:      cmd.State,
 			AlertDefinitionID: cmd.AlertDefinitionID,
 			CurrentStateSince: time.Now(),
 			LastEvalTime:      time.Now(), // TODO: Probably better to pass in to the command for more accurate timestamp
 		}
 
-		labelTupleJSON, err := alertInstance.SetLabelsHash()
-		if err != nil {
-			return err
-		}
-
 		if err := ng.validateAlertInstance(alertInstance); err != nil {
 			return err
 		}
 
-		spew.Dump(ng.SQLStore.Dialect.DriverName())
-
 		s := strings.Builder{}
-		params := make([]interface{}, 0)
+
+		dName := ng.SQLStore.Dialect.DriverName()
 
 		// This is the wrong way I imagine....
-		switch ng.SQLStore.Dialect.DriverName() {
+		switch dName {
 		// sqlite3 on conflict syntax is relatively new (3.24.0 / 2018)
 		case "sqlite3", "postgres":
 			s.WriteString(`INSERT INTO alert_instance
@@ -164,7 +164,12 @@ func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 				labels_hash=excluded.labels_hash,
 				current_state=excluded.current_state,
 				current_state_since=excluded.current_state_since,
-				last_eval_time=excluded.last_eval_time`)
+				last_eval_time=excluded.last_eval_time
+				`)
+
+			// if dName == "postgres" {
+			// 	s.WriteString(` RETURNING *`)
+			// }
 
 		case "mysql":
 			s.WriteString(`INSERT INTO alert_instance
@@ -177,36 +182,52 @@ func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 				labels_hash=VALUES(labels_hash),
 				current_state=VALUES(current_state),
 				current_state_since=VALUES(current_state_since),
-				last_eval_time=VALUES(last_eval_time)
+				last_eval_time=VALUES(last_eval_time);
 			`)
 
 		default:
 			return fmt.Errorf("unsupported database type for alert instances: %v", ng.SQLStore.Dialect.DriverName())
 		}
 
-		params = append(params, cmd.OrgID, cmd.AlertDefinitionID, labelTupleJSON, alertInstance.LabelsHash, cmd.State, time.Now(), time.Now())
+		params := append(make([]interface{}, 0), cmd.OrgID, cmd.AlertDefinitionID, labelTupleJSON, alertInstance.LabelsHash, cmd.State, time.Now(), time.Now())
 
-		// if _, err := sess.Insert(alertInstance); err != nil {
-		// 	return err
-		// }
-
-		// results := make([]*AlertInstance, 0)
-		// if err := sess.SQL(s.String(), params...).Find(&results); err != nil {
-		// 	return err
-		// }
-
-		res, err := sess.SQL(s.String(), params...).Query()
+		_, err = sess.SQL(s.String(), params...).Query()
 		if err != nil {
 			return err
 		}
 
-		spew.Dump(res)
+		return nil
+	})
+}
 
-		// if len(results) == 0 {
-		// 	cmd.Result = nil
-		// } else {
-		// 	cmd.Result = results[0]
-		// }
+// getAlertDefinitions is a handler for retrieving alert definitions of specific organisation.
+func (ng *AlertNG) getAlertInstance(cmd *getAlertInstanceCommand) error {
+	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		instance := AlertInstance{}
+		s := strings.Builder{}
+		s.WriteString(`SELECT * FROM alert_instance
+			WHERE
+				org_id=? AND
+				alert_definition_id=? AND
+				labels_hash=?
+		`)
+
+		_, hash, err := SetLabelsHash(cmd.Labels)
+		if err != nil {
+			return err
+		}
+
+		params := append(make([]interface{}, 0), cmd.OrgID, cmd.AlertDefinitionID, hash)
+
+		has, err := sess.SQL(s.String(), params...).Get(&instance)
+		if !has {
+			return fmt.Errorf("instance not found for labels %v (hash: %v), alert defintion id %v", cmd.Labels, hash, cmd.AlertDefinitionID)
+		}
+		if err != nil {
+			return err
+		}
+
+		cmd.Result = &instance
 		return nil
 	})
 }
