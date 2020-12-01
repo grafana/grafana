@@ -1,6 +1,7 @@
 import { DataLink, dateTime, Field, mapInternalLinkToExplore, TimeRange, TraceSpan } from '@grafana/data';
-import { getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import React from 'react';
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
 
@@ -11,11 +12,16 @@ import { LokiQuery } from '../../../plugins/datasource/loki/types';
  */
 export function createSpanLinkFactory(
   splitOpenFn: (options: { datasourceUid: string; query: any }) => void,
-  lokiDsUId?: string
+  dataSourceUid?: string
 ) {
-  // Right now just hardcoded for first loki DS we can find
+  // We should return if dataSourceUid is undefined otherwise getInstanceSettings would return testDataSource
+  if (!dataSourceUid) {
+    return undefined;
+  }
 
-  if (!lokiDsUId) {
+  const dataSourceSettings = getDatasourceSrv().getInstanceSettings(dataSourceUid);
+
+  if (!dataSourceSettings) {
     return undefined;
   }
 
@@ -26,11 +32,11 @@ export function createSpanLinkFactory(
     // it manually here instead of leaving it for the data source to supply the config.
 
     const dataLink: DataLink<LokiQuery> = {
-      title: lokiDs.name,
+      title: dataSourceSettings.name,
       url: '',
       internal: {
-        datasourceUid: lokiDs.uid,
-        datasourceName: lokiDs.name,
+        datasourceUid: dataSourceSettings.uid,
+        datasourceName: dataSourceSettings.name,
         query: {
           expr: getLokiQueryFromSpan(span),
           refId: '',

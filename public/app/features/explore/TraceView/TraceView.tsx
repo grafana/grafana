@@ -56,7 +56,7 @@ export function TraceView(props: Props) {
 
   const traceProp = useMemo(() => transformTraceData(props.trace), [props.trace]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
-  const lokiDs = useSelector((state: StoreState) => {
+  const dataSourceUid = useSelector((state: StoreState) => {
     return (state.explore.left.datasourceInstance as any).instanceSettings.jsonData?.tracesToLogs?.datasourceUid;
   });
 
@@ -87,7 +87,7 @@ export function TraceView(props: Props) {
     [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp?.traceID]
   );
 
-  const createSpanLink = useMemo(() => createSpanLinkFactory(props.splitOpenFn, lokiDs), [props.splitOpenFn]);
+  const createSpanLink = useMemo(() => createSpanLinkFactory(props.splitOpenFn, dataSourceUid), [props.splitOpenFn]);
   const scrollElement = document.getElementsByClassName('scroll-canvas')[0];
 
   if (!traceProp) {
