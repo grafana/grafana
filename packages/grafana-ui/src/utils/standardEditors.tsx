@@ -197,7 +197,7 @@ export const getStandardFieldConfigs = () => {
     id: 'nullValueMode',
     path: 'nullValueMode',
     name: 'Null values',
-    description: 'Behavior when data includes null values',
+    description: 'Behavior for null values in the data',
 
     editor: standardEditorsRegistry.get('radio').editor as any,
     override: standardEditorsRegistry.get('radio').editor as any,
@@ -206,8 +206,8 @@ export const getStandardFieldConfigs = () => {
     settings: {
       options: [
         { label: 'Gaps', value: NullValueMode.Null },
-        { label: 'Connected', value: NullValueMode.Ignore, description: 'Ignore the values from any calculation' },
-        { label: 'Zero', value: NullValueMode.AsZero },
+        { label: 'Ignore', value: NullValueMode.Ignore, description: 'Ignore the values from any calculation' },
+        { label: 'Zeros', value: NullValueMode.AsZero },
       ],
     },
     shouldApply: () => true,
