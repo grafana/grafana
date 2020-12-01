@@ -1,43 +1,47 @@
-import React, { ChangeEvent, FocusEvent, KeyboardEvent, PureComponent } from 'react';
+import React, { ChangeEvent, FocusEvent, KeyboardEvent, ReactElement, useCallback, useState } from 'react';
 
 import { TextBoxVariableModel } from '../types';
-import { toVariableIdentifier, toVariablePayload } from '../state/types';
-import { dispatch } from '../../../store/store';
+import { toVariablePayload } from '../state/types';
 import { changeVariableProp } from '../state/sharedReducer';
 import { VariablePickerProps } from '../pickers/types';
-import { updateOptions } from '../state/actions';
+import { Input } from '@grafana/ui';
+import { variableAdapters } from '../adapters';
+import { useDispatch } from 'react-redux';
 
 export interface Props extends VariablePickerProps<TextBoxVariableModel> {}
 
-export class TextBoxVariablePicker extends PureComponent<Props> {
-  onQueryChange = (event: ChangeEvent<HTMLInputElement>) => {
-    dispatch(
-      changeVariableProp(toVariablePayload(this.props.variable, { propName: 'query', propValue: event.target.value }))
-    );
-  };
+export function TextBoxVariablePicker({ variable }: Props): ReactElement {
+  const {
+    id,
+    type,
+    current: { value },
+  } = variable;
 
-  onQueryBlur = (event: FocusEvent<HTMLInputElement>) => {
-    if (this.props.variable.current.value !== this.props.variable.query) {
-      dispatch(updateOptions(toVariableIdentifier(this.props.variable)));
+  const dispatch = useDispatch();
+  const [updatedValue, setUpdatedValue] = useState(value);
+
+  const updateVariable = useCallback(() => {
+    if (value === updatedValue) {
+      return;
     }
-  };
 
-  onQueryKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.keyCode === 13 && this.props.variable.current.value !== this.props.variable.query) {
-      dispatch(updateOptions(toVariableIdentifier(this.props.variable)));
-    }
-  };
+    dispatch(changeVariableProp(toVariablePayload({ id, type }, { propName: 'query', propValue: updatedValue })));
+    variableAdapters.get(type).updateOptions(variable);
+  }, [dispatch, id, type, value, updatedValue]);
 
-  render() {
-    return (
-      <input
-        type="text"
-        value={this.props.variable.query}
-        className="gf-form-input width-12"
-        onChange={this.onQueryChange}
-        onBlur={this.onQueryBlur}
-        onKeyDown={this.onQueryKeyDown}
-      />
-    );
-  }
+  const onChange = useCallback((event: ChangeEvent<HTMLInputElement>) => setUpdatedValue(event.target.value), [
+    setUpdatedValue,
+  ]);
+
+  const onBlur = useCallback((e: FocusEvent<HTMLInputElement>) => updateVariable(), [updateVariable, updatedValue]);
+  const onKeyDown = useCallback(
+    (event: KeyboardEvent<HTMLInputElement>) => {
+      if (event.keyCode === 13) {
+        updateVariable();
+      }
+    },
+    [updateVariable, updatedValue]
+  );
+
+  return <Input type="text" value={updatedValue} onChange={onChange} onBlur={onBlur} onKeyDown={onKeyDown} />;
 }
