@@ -2,11 +2,8 @@
 
 exports[`<ListView> shallow tests matches a snapshot 1`] = `
 <div
-  onScroll={[Function]}
   style={
     Object {
-      "height": "100%",
-      "overflowY": "auto",
       "position": "relative",
     }
   }
