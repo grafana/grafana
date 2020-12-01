@@ -17,6 +17,7 @@ export interface DataSourceSrv {
 
   /**
    * Returns metadata based on UID.
+   * @deprecated use getSettingsFor
    */
   getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined;
 
@@ -31,7 +32,7 @@ export interface DataSourceSrv {
   getExternal(): DataSourceInstanceSettings[];
 
   /**
-   * Get settings by name or uid
+   * Get settings and plugin metadata by name or uid
    */
   getSettingsFor(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined;
 }
