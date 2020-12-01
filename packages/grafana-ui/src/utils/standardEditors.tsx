@@ -10,6 +10,7 @@ import {
   StandardEditorsRegistryItem,
   StringFieldConfigSettings,
   stringOverrideProcessor,
+  SelectFieldConfigSettings,
   ThresholdsConfig,
   ThresholdsFieldConfigSettings,
   thresholdsOverrideProcessor,
@@ -21,6 +22,8 @@ import {
   TimeZone,
   FieldColor,
   FieldColorConfigSettings,
+  NullValueMode,
+  selectOverrideProcessor,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
@@ -190,6 +193,28 @@ export const getStandardFieldConfigs = () => {
     category,
   };
 
+  const nullValue: FieldConfigPropertyItem<any, NullValueMode, SelectFieldConfigSettings<NullValueMode>> = {
+    id: 'nullValueMode',
+    path: 'nullValueMode',
+    name: 'Null values',
+    description: 'Behavior when data includes null values',
+
+    editor: standardEditorsRegistry.get('radio').editor as any,
+    override: standardEditorsRegistry.get('radio').editor as any,
+    process: selectOverrideProcessor,
+
+    settings: {
+      options: [
+        { label: 'Gaps', value: NullValueMode.Null },
+        { label: 'Connected', value: NullValueMode.Ignore, description: 'Ignore the values from any calculation' },
+        { label: 'Zero', value: NullValueMode.AsZero },
+      ],
+    },
+    shouldApply: () => true,
+    category,
+    defaultValue: NullValueMode.Null,
+  };
+
   const links: FieldConfigPropertyItem<any, DataLink[], StringFieldConfigSettings> = {
     id: 'links',
     path: 'links',
@@ -220,7 +245,7 @@ export const getStandardFieldConfigs = () => {
     category,
   };
 
-  return [unit, min, max, decimals, displayName, noValue, color, thresholds, mappings, links];
+  return [unit, min, max, decimals, displayName, noValue, color, thresholds, mappings, links, nullValue];
 };
 
 /**
