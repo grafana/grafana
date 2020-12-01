@@ -3,7 +3,7 @@
  *
  * @beta
  */
-export interface OptionsEditorConfig<TOptions, TSettings = any, TValue = any> {
+export interface OptionEditorConfig<TOptions, TSettings = any, TValue = any> {
   /**
    * Path of the option property to control.
    *
@@ -48,8 +48,6 @@ export interface OptionsEditorConfig<TOptions, TSettings = any, TValue = any> {
 
   /**
    * Function that enables configuration of when option editor should be shown based on current panel option properties.
-   *
-   * @param currentConfig Current panel options
    */
-  showIf?: (currentConfig: TOptions) => boolean | undefined;
+  showIf?: (currentOptions: TOptions) => boolean | undefined;
 }

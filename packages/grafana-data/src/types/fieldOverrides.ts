@@ -3,7 +3,7 @@ import { MatcherConfig, FieldConfig, Field, DataFrame, GrafanaTheme, TimeZone } 
 import { InterpolateFunction } from './panel';
 import { StandardEditorProps, FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
-import { OptionsEditorConfig } from './options';
+import { OptionEditorConfig } from './options';
 
 export interface DynamicConfigValue {
   id: string;
@@ -42,7 +42,7 @@ export interface FieldOverrideEditorProps<TValue, TSettings> extends Omit<Standa
 }
 
 export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any>
-  extends OptionsEditorConfig<TOptions, TSettings, TValue> {
+  extends OptionEditorConfig<TOptions, TSettings, TValue> {
   /**
    * Function that allows specifying whether or not this field config should apply to a given field.
    * @param field

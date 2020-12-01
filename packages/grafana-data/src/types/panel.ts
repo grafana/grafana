@@ -9,7 +9,7 @@ import { FieldConfigSource } from './fieldOverrides';
 import { Registry } from '../utils';
 import { StandardEditorProps } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
-import { OptionsEditorConfig } from './options';
+import { OptionEditorConfig } from './options';
 
 export type InterpolateFunction = (value: string, scopedVars?: ScopedVars, format?: string | Function) => string;
 
@@ -142,7 +142,7 @@ export interface PanelOptionsEditorItem<TOptions = any, TValue = any, TSettings 
   extends OptionsEditorItem<TOptions, TSettings, PanelOptionsEditorProps<TValue>, TValue> {}
 
 export interface PanelOptionsEditorConfig<TOptions, TSettings = any, TValue = any>
-  extends OptionsEditorConfig<TOptions, TSettings, TValue> {}
+  extends OptionEditorConfig<TOptions, TSettings, TValue> {}
 
 /**
  * @internal

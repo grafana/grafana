@@ -6,14 +6,14 @@ import {
   SelectFieldConfigSettings,
   StringFieldConfigSettings,
 } from '../field';
-import { OptionsEditorConfig } from './options';
+import { OptionEditorConfig } from './options';
 
 /**
  * Option editor registry item
  */
 export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue>
   extends RegistryItem,
-    OptionsEditorConfig<TOptions, TSettings, TValue> {
+    OptionEditorConfig<TOptions, TSettings, TValue> {
   /**
    * React component used to edit the options property
    */
@@ -23,17 +23,6 @@ export interface OptionsEditorItem<TOptions, TSettings, TEditorProps, TValue>
    * @param value
    */
   getItemsCount?: (value?: TValue) => number;
-}
-
-/**
- * Configuration of option editor registry item
- */
-interface OptionEditorConfig<TOptions, TSettings, TValue = any> {
-  id: keyof TOptions & string;
-  name: string;
-  description?: string;
-  settings?: TSettings;
-  defaultValue?: TValue;
 }
 
 /**
