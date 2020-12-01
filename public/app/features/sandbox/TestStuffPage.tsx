@@ -100,7 +100,6 @@ export function getDefaultState(): State {
       overrides: [],
     },
     replaceVariables: (v: string) => v,
-    getDataSourceSettingsByUid: (uid: string) => undefined,
     theme: config.theme,
   };
 
