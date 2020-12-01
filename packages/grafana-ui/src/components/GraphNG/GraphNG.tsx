@@ -74,7 +74,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   const configBuilder = useMemo(() => {
     const builder = new UPlotConfigBuilder();
 
-    console.log('new uilder');
     // X is the first field in the alligned frame
     const xField = alignedFrame.fields[0];
     if (xField.type === FieldType.time) {

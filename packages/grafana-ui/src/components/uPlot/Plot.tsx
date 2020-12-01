@@ -1,4 +1,4 @@
-import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import uPlot, { AlignedData, AlignedDataWithGapTest, Options } from 'uplot';
 import { buildPlotContext, PlotContext } from './context';
 import { pluginLog } from './utils';
@@ -15,9 +15,7 @@ import usePrevious from 'react-use/lib/usePrevious';
 export const UPlotChart: React.FC<PlotProps> = props => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const plotInstance = useRef<uPlot>();
-  const plotData = useRef<AlignedDataWithGapTest>();
   const prevProps = usePrevious(props);
-  const prevBuilder = usePrevious(props.config);
   const { isConfigReady, currentConfig, registerPlugin } = usePlotConfig(
     props.width,
     props.height,
@@ -41,8 +39,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 
     // 1. When config is ready and there is no uPlot instance, create new uPlot and return
     if (isConfigReady && !plotInstance.current) {
-      plotData.current = prepareData(props.data);
-      plotInstance.current = initializePlot(plotData.current, currentConfig.current, canvasRef.current);
+      plotInstance.current = initializePlot(prepareData(props.data), currentConfig.current, canvasRef.current);
       return;
     }
 
@@ -57,19 +54,21 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     }
 
     // 3. When config or timezone has changed, re-initialize plot
-    if (isConfigReady && (props.config !== prevBuilder || prevProps.timeZone !== props.timeZone)) {
+    if (isConfigReady && (props.config !== prevProps.config || props.timeZone !== prevProps.timeZone)) {
       if (plotInstance.current) {
         pluginLog('uPlot core', false, 'destroying instance');
         plotInstance.current.destroy();
       }
-      plotInstance.current = initializePlot(plotData.current!, currentConfig.current, canvasRef.current);
+      plotInstance.current = initializePlot(prepareData(props.data), currentConfig.current, canvasRef.current);
       return;
     }
 
     // 4. Otherwise, assume only data has changed and update uPlot data
-    plotData.current = prepareData(props.data);
-    updateData(props.data.frame, props.config, plotInstance.current, plotData.current!.data);
+    updateData(props.data.frame, props.config, plotInstance.current, prepareData(props.data).data);
   }, [props, isConfigReady]);
+
+  // When component unmounts, clean the existing uPlot instance
+  useEffect(() => () => plotInstance.current?.destroy(), []);
 
   // Memoize plot context
   const plotCtx = useMemo(() => {
