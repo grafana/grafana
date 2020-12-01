@@ -26,7 +26,7 @@ describe('getAlertingValidationMessage', () => {
         getExternal(): DataSourceInstanceSettings[] {
           return [];
         },
-        getSettingsFor: (() => {}) as any,
+        getInstanceSettings: (() => {}) as any,
         getAll(): DataSourceInstanceSettings[] {
           return [];
         },
@@ -67,7 +67,7 @@ describe('getAlertingValidationMessage', () => {
           return Promise.resolve(alertingDatasource);
         },
         getDataSourceSettingsByUid(): any {},
-        getSettingsFor: (() => {}) as any,
+        getInstanceSettings: (() => {}) as any,
         getExternal(): DataSourceInstanceSettings[] {
           return [];
         },
@@ -98,7 +98,7 @@ describe('getAlertingValidationMessage', () => {
       const datasourceSrv: DataSourceSrv = {
         get: getMock,
         getDataSourceSettingsByUid(): any {},
-        getSettingsFor: (() => {}) as any,
+        getInstanceSettings: (() => {}) as any,
         getExternal(): DataSourceInstanceSettings[] {
           return [];
         },
@@ -131,7 +131,7 @@ describe('getAlertingValidationMessage', () => {
       const datasourceSrv: DataSourceSrv = {
         get: getMock,
         getDataSourceSettingsByUid(): any {},
-        getSettingsFor: (() => {}) as any,
+        getInstanceSettings: (() => {}) as any,
         getExternal(): DataSourceInstanceSettings[] {
           return [];
         },
@@ -164,7 +164,7 @@ describe('getAlertingValidationMessage', () => {
       const datasourceSrv: DataSourceSrv = {
         get: getMock,
         getDataSourceSettingsByUid(): any {},
-        getSettingsFor: (() => {}) as any,
+        getInstanceSettings: (() => {}) as any,
         getExternal(): DataSourceInstanceSettings[] {
           return [];
         },
