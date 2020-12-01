@@ -73,7 +73,7 @@ export class DataSourceWithBackend<
       }
 
       if (q.datasource) {
-        const ds = getDataSourceSrv().getSettingsFor(q.datasource);
+        const ds = getDataSourceSrv().getInstanceSettings(q.datasource);
 
         if (!ds) {
           throw new Error('Unknown Datasource: ' + q.datasource);

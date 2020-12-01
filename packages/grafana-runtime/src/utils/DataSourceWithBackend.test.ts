@@ -21,7 +21,7 @@ jest.mock('../services', () => ({
   getBackendSrv: () => backendSrv,
   getDataSourceSrv: () => {
     return {
-      getSettingsFor: () => ({ id: 8674 }),
+      getInstanceSettings: () => ({ id: 8674 }),
     };
   },
 }));

@@ -44,7 +44,7 @@ export class DatasourceSrv implements DataSourceService {
     return this.settingsMapByUid[uid];
   }
 
-  getSettingsFor(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined {
+  getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined {
     if (nameOrUid === 'default' || nameOrUid === null || nameOrUid === undefined) {
       return this.settingsMapByName[this.defaultName];
     }
