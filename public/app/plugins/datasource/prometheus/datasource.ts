@@ -25,7 +25,6 @@ import { catchError, filter, map, tap } from 'rxjs/operators';
 import addLabelToQuery from './add_label_to_query';
 import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
-import PrometheusMetricFindQuery from './metric_find_query';
 import { getQueryHints } from './query_hints';
 import { getOriginalMetricName, renderTemplate, transform } from './result_transformer';
 import {
@@ -39,6 +38,8 @@ import {
   PromScalarData,
   PromVectorData,
 } from './types';
+import { PrometheusVariableSupport } from './variables';
+import PrometheusMetricFindQuery from './metric_find_query';
 
 export const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 
@@ -78,6 +79,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.languageProvider = new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
+
+    this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
   }
 
   init = () => {
@@ -108,7 +111,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       if (data && Object.keys(data).length) {
         options.url =
           options.url +
-          '?' +
+          (options.url.search(/\?/) >= 0 ? '&' : '?') +
           Object.entries(data)
             .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
             .join('&');
@@ -131,7 +134,13 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   // Use this for tab completion features, wont publish response to other components
   metadataRequest<T = any>(url: string) {
-    return this._request<T>(url, null, { method: 'GET', hideFromInspector: true }).toPromise(); // toPromise until we change getTagValues, getTagKeys to Observable
+    const data: any = {};
+    for (const [key, value] of this.customQueryParameters) {
+      if (data[key] == null) {
+        data[key] = value;
+      }
+    }
+    return this._request<T>(url, data, { method: 'GET', hideFromInspector: true }).toPromise(); // toPromise until we change getTagValues, getTagKeys to Observable
   }
 
   interpolateQueryExpr(value: string | string[] = [], variable: any) {
@@ -168,8 +177,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
       target.requestId = options.panelId + target.refId;
 
-      if (target.range && target.instant) {
-        // If running both (only available in Explore) - instant and range query, prepare both targets
+      // In Explore, we run both (instant and range) queries if both are true (selected) or both are undefined (legacy Explore queries)
+      if (options.app === CoreApp.Explore && target.range === target.instant) {
         // Create instant target
         const instantTarget: any = cloneDeep(target);
         instantTarget.format = 'table';
@@ -191,8 +200,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
           this.createQuery(instantTarget, options, start, end),
           this.createQuery(rangeTarget, options, start, end)
         );
-      } else if (target.instant && options.app === CoreApp.Explore) {
         // If running only instant query in Explore, format as table
+      } else if (target.instant && options.app === CoreApp.Explore) {
         const instantTarget: any = cloneDeep(target);
         instantTarget.format = 'table';
         queries.push(this.createQuery(instantTarget, options, start, end));

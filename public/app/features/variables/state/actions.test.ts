@@ -58,8 +58,9 @@ import {
 import { initialState } from '../pickers/OptionsPicker/reducer';
 import { cleanVariables } from './variablesReducer';
 import { expect } from '../../../../test/lib/common';
-import { VariableRefresh } from '../types';
+import { ConstantVariableModel, VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
+import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -178,6 +179,7 @@ describe('shared actions', () => {
 
     // Fix for https://github.com/grafana/grafana/issues/28791
     it('fix for https://github.com/grafana/grafana/issues/28791', async () => {
+      setVariableQueryRunner(new VariableQueryRunner());
       const stats = queryBuilder()
         .withId('stats')
         .withName('stats')
@@ -397,7 +399,15 @@ describe('shared actions', () => {
               data: {
                 global: false,
                 index: 1,
-                model: { ...constant, name: 'constant1', id: 'constant1', global: false, index: 1 },
+                model: {
+                  ...constant,
+                  name: 'constant1',
+                  id: 'constant1',
+                  global: false,
+                  index: 1,
+                  current: { selected: true, text: '', value: '' },
+                  options: [{ selected: true, text: '', value: '' }],
+                } as ConstantVariableModel,
               },
             }),
             changeVariableNameSucceeded({ type: 'constant', id: 'constant1', data: { newName: 'constant1' } }),
@@ -426,7 +436,26 @@ describe('shared actions', () => {
           )
           .whenActionIsDispatched(changeVariableName(toVariableIdentifier(constant), 'constant1'), true)
           .thenDispatchedActionsShouldEqual(
-            changeVariableNameSucceeded({ type: 'constant', id: NEW_VARIABLE_ID, data: { newName: 'constant1' } })
+            addVariable({
+              type: 'constant',
+              id: 'constant1',
+              data: {
+                global: false,
+                index: 1,
+                model: {
+                  ...constant,
+                  name: 'constant1',
+                  id: 'constant1',
+                  global: false,
+                  index: 1,
+                  current: { selected: true, text: '', value: '' },
+                  options: [{ selected: true, text: '', value: '' }],
+                } as ConstantVariableModel,
+              },
+            }),
+            changeVariableNameSucceeded({ type: 'constant', id: 'constant1', data: { newName: 'constant1' } }),
+            setIdInEditor({ id: 'constant1' }),
+            removeVariable({ type: 'constant', id: NEW_VARIABLE_ID, data: { reIndex: false } })
           );
       });
     });

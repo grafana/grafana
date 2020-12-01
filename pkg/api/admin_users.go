@@ -95,7 +95,7 @@ func AdminUpdateUserPermissions(c *models.ReqContext, form dtos.AdminUpdateUserP
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrLastGrafanaAdmin {
+		if errors.Is(err, models.ErrLastGrafanaAdmin) {
 			return Error(400, models.ErrLastGrafanaAdmin.Error(), nil)
 		}
 
@@ -111,7 +111,7 @@ func AdminDeleteUser(c *models.ReqContext) Response {
 	cmd := models.DeleteUserCommand{UserId: userID}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrUserNotFound {
+		if errors.Is(err, models.ErrUserNotFound) {
 			return Error(404, models.ErrUserNotFound.Error(), nil)
 		}
 		return Error(500, "Failed to delete user", err)
@@ -126,13 +126,13 @@ func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) Response {
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.Dispatch(authInfoQuery); err != models.ErrUserNotFound {
+	if err := bus.Dispatch(authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
 		return Error(500, "Could not disable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: true}
 	if err := bus.Dispatch(&disableCmd); err != nil {
-		if err == models.ErrUserNotFound {
+		if errors.Is(err, models.ErrUserNotFound) {
 			return Error(404, models.ErrUserNotFound.Error(), nil)
 		}
 		return Error(500, "Failed to disable user", err)
@@ -152,13 +152,13 @@ func AdminEnableUser(c *models.ReqContext) Response {
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.Dispatch(authInfoQuery); err != models.ErrUserNotFound {
+	if err := bus.Dispatch(authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
 		return Error(500, "Could not enable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: false}
 	if err := bus.Dispatch(&disableCmd); err != nil {
-		if err == models.ErrUserNotFound {
+		if errors.Is(err, models.ErrUserNotFound) {
 			return Error(404, models.ErrUserNotFound.Error(), nil)
 		}
 		return Error(500, "Failed to enable user", err)

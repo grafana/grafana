@@ -13,6 +13,7 @@ import { VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
 import { customBuilder, queryBuilder } from '../shared/testing/builders';
 import { variablesInitTransaction } from './transactionReducer';
+import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
@@ -94,6 +95,7 @@ describe('processVariable', () => {
       .build();
 
     const list = [custom, queryDependsOnCustom, queryNoDepends];
+    setVariableQueryRunner(new VariableQueryRunner());
 
     return {
       custom,

@@ -5,7 +5,7 @@ import coreModule from 'app/core/core_module';
 import { DashboardModel } from 'app/features/dashboard/state';
 import DatasourceSrv from '../plugins/datasource_srv';
 import appEvents from 'app/core/app_events';
-import { AppEvents } from '@grafana/data';
+import { AnnotationQuery, AppEvents } from '@grafana/data';
 
 // Registeres the angular directive
 import './components/StandardAnnotationQueryEditor';
@@ -13,7 +13,6 @@ import './components/StandardAnnotationQueryEditor';
 export class AnnotationsEditorCtrl {
   mode: any;
   datasources: any;
-  annotations: any[];
   currentAnnotation: any;
   currentDatasource: any;
   currentIsNew: any;
@@ -59,7 +58,7 @@ export class AnnotationsEditorCtrl {
     this.dashboard = $scope.dashboard;
     this.mode = 'list';
     this.datasources = datasourceSrv.getAnnotationSources();
-    this.annotations = this.dashboard.annotations.list;
+    this.dashboard.annotations.list = this.dashboard.annotations.list ?? [];
     this.reset();
 
     this.onColorChange = this.onColorChange.bind(this);
@@ -75,17 +74,25 @@ export class AnnotationsEditorCtrl {
   /**
    * Called from the react editor
    */
-  onAnnotationChange = (annotation: any) => {
-    const currentIndex = this.dashboard.annotations.list.indexOf(this.currentAnnotation);
-    if (currentIndex >= 0) {
-      this.dashboard.annotations.list[currentIndex] = annotation;
-    } else {
+  onAnnotationChange = (annotation: AnnotationQuery) => {
+    let replaced = false;
+
+    this.dashboard.annotations.list = this.dashboard.annotations.list.map(a => {
+      if (a.name !== annotation.name) {
+        return a;
+      }
+      replaced = true;
+      return annotation;
+    });
+
+    if (!replaced) {
       console.warn('updating annotatoin, but not in the dashboard', annotation);
     }
+
     this.currentAnnotation = annotation;
   };
 
-  edit(annotation: any) {
+  edit(annotation: AnnotationQuery) {
     this.currentAnnotation = annotation;
     this.currentAnnotation.showIn = this.currentAnnotation.showIn || 0;
     this.currentIsNew = false;
@@ -102,6 +109,7 @@ export class AnnotationsEditorCtrl {
   }
 
   update() {
+    this.dashboard.annotations.list = [...this.dashboard.annotations.list];
     this.reset();
     this.mode = 'list';
   }
@@ -116,25 +124,27 @@ export class AnnotationsEditorCtrl {
   }
 
   move(index: number, dir: number) {
-    // @ts-ignore
-    _.move(this.annotations, index, index + dir);
+    const list = [...this.dashboard.annotations.list];
+    Array.prototype.splice.call(list, index + dir, 0, Array.prototype.splice.call(list, index, 1)[0]);
+    this.dashboard.annotations.list = list;
   }
 
   add() {
-    const sameName: any = _.find(this.annotations, { name: this.currentAnnotation.name });
+    const sameName: any = _.find(this.dashboard.annotations.list, { name: this.currentAnnotation.name });
     if (sameName) {
       appEvents.emit(AppEvents.alertWarning, ['Validation', 'Annotations with the same name already exists']);
       return;
     }
-    this.annotations.push(this.currentAnnotation);
+    this.dashboard.annotations.list = [...this.dashboard.annotations.list, this.currentAnnotation];
     this.reset();
     this.mode = 'list';
     this.dashboard.updateSubmenuVisibility();
   }
 
-  removeAnnotation(annotation: any) {
-    const index = _.indexOf(this.annotations, annotation);
-    this.annotations.splice(index, 1);
+  removeAnnotation(annotation: AnnotationQuery) {
+    this.dashboard.annotations.list = this.dashboard.annotations.list.filter(a => {
+      return a.name !== annotation.name;
+    });
     this.dashboard.updateSubmenuVisibility();
   }
 

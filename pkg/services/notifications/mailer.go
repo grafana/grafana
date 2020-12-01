@@ -88,7 +88,6 @@ func (ns *NotificationService) setFiles(
 
 func (ns *NotificationService) createDialer() (*gomail.Dialer, error) {
 	host, port, err := net.SplitHostPort(ns.Cfg.Smtp.Host)
-
 	if err != nil {
 		return nil, err
 	}

@@ -12,7 +12,7 @@ import { InspectStatsTab } from './InspectStatsTab';
 import { QueryInspector } from './QueryInspector';
 import { InspectTab } from './types';
 import { DashboardModel, PanelModel } from '../../state';
-import { GetDataOptions } from '../../state/PanelQueryRunner';
+import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 
 interface Props {
   dashboard: DashboardModel;

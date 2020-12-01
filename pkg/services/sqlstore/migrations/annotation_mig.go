@@ -82,6 +82,36 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("Create annotation_tag table v2", NewAddTableMigration(annotationTagTable))
 	mg.AddMigration("Add unique index annotation_tag.annotation_id_tag_id", NewAddIndexMigration(annotationTagTable, annotationTagTable.Indices[0]))
 
+	// drop dashboard indexes
+	addDropAllIndicesMigrations(mg, "v2", annotationTagTable)
+	// rename table
+	addTableRenameMigration(mg, "annotation_tag", "annotation_tag_v2", "v2")
+
+	// annotation_tag v3
+	annotationTagTableV3 := Table{
+		Name: "annotation_tag",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "annotation_id", Type: DB_BigInt, Nullable: false},
+			{Name: "tag_id", Type: DB_BigInt, Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"annotation_id", "tag_id"}, Type: UniqueIndex},
+		},
+	}
+
+	// recreate table
+	mg.AddMigration("Create annotation_tag table v3", NewAddTableMigration(annotationTagTableV3))
+	// recreate indices
+	addTableIndicesMigrations(mg, "Add unique index annotation_tag.annotation_id_tag_id V3", annotationTagTableV3)
+	// copy data
+	mg.AddMigration("copy annotation_tag v2 to v3", NewCopyTableDataMigration("annotation_tag", "annotation_tag_v2", map[string]string{
+		"annotation_id": "annotation_id",
+		"tag_id":        "tag_id",
+	}))
+
+	mg.AddMigration("drop table annotation_tag_v2", NewDropTableMigration("annotation_tag_v2"))
+
 	//
 	// clear alert text
 	//

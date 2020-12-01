@@ -13,6 +13,7 @@ import {
   GrafanaTheme,
   InterpolateFunction,
   LinkModel,
+  NumericRange,
   ScopedVars,
   TimeZone,
   ValueLinkConfig,
@@ -40,14 +41,9 @@ interface OverrideProps {
   properties: DynamicConfigValue[];
 }
 
-interface GlobalMinMax {
-  min: number;
-  max: number;
-}
-
-export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
-  let min = Number.MAX_VALUE;
-  let max = Number.MIN_VALUE;
+export function findNumericFieldMinMax(data: DataFrame[]): NumericRange {
+  let min: number | null = null;
+  let max: number | null = null;
 
   const reducers = [ReducerID.min, ReducerID.max];
 
@@ -58,26 +54,18 @@ export function findNumericFieldMinMax(data: DataFrame[]): GlobalMinMax {
         const statsMin = stats[ReducerID.min];
         const statsMax = stats[ReducerID.max];
 
-        if (statsMin !== undefined && statsMin !== null && statsMin < min) {
+        if (min === null || statsMin < min) {
           min = statsMin;
         }
 
-        if (statsMax !== undefined && statsMax !== null && statsMax > max) {
+        if (max === null || statsMax > max) {
           max = statsMax;
         }
       }
     }
   }
 
-  if (min === Number.MAX_VALUE) {
-    min = Number.MIN_VALUE;
-  }
-
-  if (max === Number.MIN_VALUE) {
-    max = Number.MAX_VALUE;
-  }
-
-  return { min, max };
+  return { min, max, delta: (max ?? 0) - (min ?? 0) };
 }
 
 /**
@@ -96,7 +84,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
   const fieldConfigRegistry = options.fieldConfigRegistry ?? standardFieldConfigEditorRegistry;
 
   let seriesIndex = 0;
-  let range: GlobalMinMax | undefined = undefined;
+  let globalRange: NumericRange | undefined = undefined;
 
   // Prepare the Matchers
   const override: OverrideProps[] = [];
@@ -186,18 +174,14 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       }
 
       // Set the Min/Max value automatically
-      if (options.autoMinMax && field.type === FieldType.number) {
-        if (!isNumber(config.min) || !isNumber(config.max)) {
-          if (!range) {
-            range = findNumericFieldMinMax(options.data!); // Global value
-          }
-          if (!isNumber(config.min)) {
-            config.min = range.min;
-          }
-          if (!isNumber(config.max)) {
-            config.max = range.max;
-          }
+      let range: NumericRange | undefined = undefined;
+      if (field.type === FieldType.number) {
+        if (!globalRange && (!isNumber(config.min) || !isNumber(config.max))) {
+          globalRange = findNumericFieldMinMax(options.data!);
         }
+        const min = config.min ?? globalRange!.min;
+        const max = config.max ?? globalRange!.max;
+        range = { min, max, delta: max! - min! };
       }
 
       // Some color modes needs series index to assign field color so we count
@@ -215,6 +199,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
           ...field.state,
           displayName: null,
           seriesIndex,
+          range,
         },
       };
 

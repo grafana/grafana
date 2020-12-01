@@ -88,6 +88,17 @@ describe('Global MinMax', () => {
     expect(minmax.max).toEqual(1234);
   });
 
+  it('find global min max when all values are zero', () => {
+    const f0 = new ArrayDataFrame<{ title: string; value: number; value2: number | null }>([
+      { title: 'AAA', value: 0, value2: 0 },
+      { title: 'CCC', value: 0, value2: 0 },
+    ]);
+
+    const minmax = findNumericFieldMinMax([f0]);
+    expect(minmax.min).toEqual(0);
+    expect(minmax.max).toEqual(0);
+  });
+
   describe('when value is null', () => {
     it('then global min max should be null', () => {
       const frame = toDataFrame({
@@ -98,8 +109,8 @@ describe('Global MinMax', () => {
       });
       const { min, max } = findNumericFieldMinMax([frame]);
 
-      expect(min).toBe(Number.MIN_VALUE);
-      expect(max).toBe(Number.MAX_VALUE);
+      expect(min).toBe(null);
+      expect(max).toBe(null);
     });
   });
 
@@ -282,16 +293,15 @@ describe('applyFieldOverrides', () => {
       replaceVariables: (undefined as any) as InterpolateFunction,
       getDataSourceSettingsByUid: undefined as any,
       theme: getTestTheme(),
-      autoMinMax: true,
     })[0];
     const valueColumn = data.fields[1];
-    const config = valueColumn.config;
+    const range = valueColumn.state!.range!;
 
     // Keep max from the original setting
-    expect(config.max).toEqual(0);
+    expect(range.max).toEqual(0);
 
     // Don't Automatically pick the min value
-    expect(config.min).toEqual(-20);
+    expect(range.min).toEqual(-20);
   });
 
   it('getLinks should use applied field config', () => {
@@ -306,7 +316,6 @@ describe('applyFieldOverrides', () => {
       }) as InterpolateFunction,
       getDataSourceSettingsByUid: undefined as any,
       theme: getTestTheme(),
-      autoMinMax: true,
       fieldConfigRegistry: customFieldRegistry,
     })[0];
 

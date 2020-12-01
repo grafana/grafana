@@ -128,10 +128,6 @@ func aliasRenderer(query *Query, queryContext *tsdb.TsdbQuery, part *QueryPart, 
 	return fmt.Sprintf(`%s AS "%s"`, innerExpr, part.Params[0])
 }
 
-func (r QueryDefinition) Render(query *Query, queryContext *tsdb.TsdbQuery, part *QueryPart, innerExpr string) string {
-	return r.Renderer(query, queryContext, part, innerExpr)
-}
-
 func NewQueryPart(typ string, params []string) (*QueryPart, error) {
 	def, exist := renders[typ]
 	if !exist {

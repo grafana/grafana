@@ -65,3 +65,5 @@ export const SelectMenuOptions = React.forwardRef<HTMLDivElement, React.PropsWit
     );
   }
 );
+
+SelectMenuOptions.displayName = 'SelectMenuOptions';

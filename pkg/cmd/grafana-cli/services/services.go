@@ -84,7 +84,7 @@ func ReadPlugin(pluginDir, pluginName string) (models.InstalledPlugin, error) {
 		res.Info.Version = "0.0.0"
 	}
 
-	if res.Id == "" {
+	if res.ID == "" {
 		return models.InstalledPlugin{}, errors.New("could not find plugin " + pluginName + " in " + pluginDir)
 	}
 

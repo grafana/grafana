@@ -479,6 +479,17 @@ The following sections detail the supported settings and secure settings for eac
 | username |                |
 | password | yes            |
 
+#### Alert notification `sensugo`
+
+| Name      | Secure setting |
+| --------  | -------------- |
+| url       |                |
+| apikey    | yes            |
+| entity    |                |
+| check     |                |
+| handler   |                |
+| namespace |                |
+
 #### Alert notification `prometheus-alertmanager`
 
 | Name              | Secure setting |

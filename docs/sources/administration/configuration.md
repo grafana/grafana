@@ -960,7 +960,7 @@ Sets a global limit on number of users that can be logged in at one time. Defaul
 
 ## [alerting]
 
-For more information about the Alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/alerts-overview.md" >}}).
+For more information about the Alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
 
 ### enabled
 

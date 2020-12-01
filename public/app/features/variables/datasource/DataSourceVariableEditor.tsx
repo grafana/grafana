@@ -1,16 +1,20 @@
 import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
+import { MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
 
 import { DataSourceVariableModel, VariableWithMultiSupport } from '../types';
 import { OnPropChangeArguments, VariableEditorProps } from '../editor/types';
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
-import { InlineFormLabel } from '@grafana/ui';
 import { VariableEditorState } from '../editor/reducer';
 import { DataSourceVariableEditorState } from './reducer';
 import { initDataSourceVariableEditor } from './actions';
-import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../types';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { changeVariableMultiValue } from '../state/actions';
+import { VariableSectionHeader } from '../editor/VariableSectionHeader';
+import { VariableSelectField } from '../editor/VariableSelectField';
+import { SelectableValue } from '@grafana/data';
+import { VariableTextField } from '../editor/VariableTextField';
 
 export interface OwnProps extends VariableEditorProps<DataSourceVariableModel> {}
 
@@ -58,66 +62,58 @@ export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
     return value ?? '';
   };
 
-  onDataSourceTypeChanged = (event: ChangeEvent<HTMLSelectElement>) => {
-    this.props.onPropChange({ propName: 'query', propValue: event.target.value, updateOptions: true });
+  onDataSourceTypeChanged = (option: SelectableValue<string>) => {
+    this.props.onPropChange({ propName: 'query', propValue: option.value, updateOptions: true });
   };
 
   render() {
+    const typeOptions = this.props.editor.extended?.dataSourceTypes?.length
+      ? this.props.editor.extended?.dataSourceTypes?.map(ds => ({ value: ds.value ?? '', label: ds.text }))
+      : [];
+    const typeValue = typeOptions.find(o => o.value === this.props.variable.query) ?? typeOptions[0];
+
     return (
-      <>
-        <div className="gf-form-group">
-          <h5 className="section-heading">Data source options</h5>
-
-          <div className="gf-form">
-            <label className="gf-form-label width-12">Type</label>
-            <div className="gf-form-select-wrapper max-width-18">
-              <select
-                className="gf-form-input"
-                value={this.getSelectedDataSourceTypeValue()}
+      <VerticalGroup spacing="xs">
+        <VariableSectionHeader name="Data source options" />
+        <VerticalGroup spacing="md">
+          <VerticalGroup spacing="xs">
+            <InlineFieldRow>
+              <VariableSelectField
+                name="Type"
+                value={typeValue}
+                options={typeOptions}
                 onChange={this.onDataSourceTypeChanged}
-              >
-                {this.props.editor.extended?.dataSourceTypes?.length &&
-                  this.props.editor.extended?.dataSourceTypes?.map(ds => (
-                    <option key={ds.value ?? ''} value={ds.value ?? ''} label={ds.text}>
-                      {ds.text}
-                    </option>
-                  ))}
-              </select>
-            </div>
-          </div>
+                labelWidth={10}
+              />
+            </InlineFieldRow>
+            <InlineFieldRow>
+              <VariableTextField
+                value={this.props.variable.regex}
+                name="Instance name filter"
+                placeholder="/.*-(.*)-.*/"
+                onChange={this.onRegExChange}
+                onBlur={this.onRegExBlur}
+                labelWidth={20}
+                tooltip={
+                  <div>
+                    Regex filter for which data source instances to choose from in the variable value dropdown. Leave
+                    empty for all.
+                    <br />
+                    <br />
+                    Example: <code>/^prod/</code>
+                  </div>
+                }
+              />
+            </InlineFieldRow>
+          </VerticalGroup>
 
-          <div className="gf-form">
-            <InlineFormLabel
-              width={12}
-              tooltip={
-                <div>
-                  Regex filter for which data source instances to choose from in the variable value dropdown. Leave
-                  empty for all.
-                  <br />
-                  <br />
-                  Example: <code>/^prod/</code>
-                </div>
-              }
-            >
-              Instance name filter
-            </InlineFormLabel>
-            <input
-              type="text"
-              className="gf-form-input max-width-18"
-              placeholder="/.*-(.*)-.*/"
-              value={this.props.variable.regex}
-              onChange={this.onRegExChange}
-              onBlur={this.onRegExBlur}
-            />
-          </div>
-        </div>
-
-        <SelectionOptionsEditor
-          variable={this.props.variable}
-          onPropChange={this.onSelectionOptionsChange}
-          onMultiChanged={this.props.changeVariableMultiValue}
-        />
-      </>
+          <SelectionOptionsEditor
+            variable={this.props.variable}
+            onPropChange={this.onSelectionOptionsChange}
+            onMultiChanged={this.props.changeVariableMultiValue}
+          />
+        </VerticalGroup>
+      </VerticalGroup>
     );
   }
 }

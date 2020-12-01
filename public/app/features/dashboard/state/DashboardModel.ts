@@ -7,7 +7,7 @@ import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERT
 import { contextSrv } from 'app/core/services/context_srv';
 import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
-import { GridPos, panelAdded, PanelModel, panelRemoved } from './PanelModel';
+import { GridPos, PanelModel } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import {
   AppEvent,
@@ -27,6 +27,7 @@ import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
+import { DashboardPanelsChangedEvent } from 'app/types/events';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -285,8 +286,6 @@ export class DashboardModel {
   }
 
   panelInitialized(panel: PanelModel) {
-    panel.initialized();
-
     const lastResult = panel.getQueryRunner().getLastResult();
 
     if (!this.otherPanelInFullscreen(panel) && !lastResult) {
@@ -379,13 +378,11 @@ export class DashboardModel {
   addPanel(panelData: any) {
     panelData.id = this.getNextPanelId();
 
-    const panel = new PanelModel(panelData);
-
-    this.panels.unshift(panel);
+    this.panels.unshift(new PanelModel(panelData));
 
     this.sortPanelsByGridPos();
 
-    this.events.emit(panelAdded, panel);
+    this.events.publish(new DashboardPanelsChangedEvent());
   }
 
   sortPanelsByGridPos() {
@@ -422,7 +419,7 @@ export class DashboardModel {
     _.pull(this.panels, ...panelsToRemove);
     panelsToRemove.map(p => p.destroy());
     this.sortPanelsByGridPos();
-    this.events.emit(CoreEvents.repeatsProcessed);
+    this.events.publish(new DashboardPanelsChangedEvent());
   }
 
   processRepeats() {
@@ -442,7 +439,7 @@ export class DashboardModel {
     }
 
     this.sortPanelsByGridPos();
-    this.events.emit(CoreEvents.repeatsProcessed);
+    this.events.publish(new DashboardPanelsChangedEvent());
   }
 
   cleanUpRowRepeats(rowPanels: PanelModel[]) {
@@ -681,9 +678,8 @@ export class DashboardModel {
   }
 
   removePanel(panel: PanelModel) {
-    const index = _.indexOf(this.panels, panel);
-    this.panels.splice(index, 1);
-    this.events.emit(panelRemoved, panel);
+    this.panels = this.panels.filter(item => item !== panel);
+    this.events.publish(new DashboardPanelsChangedEvent());
   }
 
   removeRow(row: PanelModel, removePanels: boolean) {
@@ -848,7 +844,7 @@ export class DashboardModel {
       this.sortPanelsByGridPos();
 
       // emit change event
-      this.events.emit(CoreEvents.rowExpanded);
+      this.events.publish(new DashboardPanelsChangedEvent());
       return;
     }
 
@@ -861,7 +857,7 @@ export class DashboardModel {
     row.collapsed = true;
 
     // emit change event
-    this.events.emit(CoreEvents.rowCollapsed);
+    this.events.publish(new DashboardPanelsChangedEvent());
   }
 
   /**

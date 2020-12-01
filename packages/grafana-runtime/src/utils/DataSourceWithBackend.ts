@@ -9,8 +9,7 @@ import {
 } from '@grafana/data';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
-import { config } from '..';
-import { getBackendSrv } from '../services';
+import { getBackendSrv, getDataSourceSrv } from '../services';
 import { toDataQueryResponse } from './queryResponse';
 
 const ExpressionDatasourceID = '__expr__';
@@ -57,34 +56,37 @@ export class DataSourceWithBackend<
    */
   query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
     const { intervalMs, maxDataPoints, range, requestId } = request;
-    const orgId = config.bootData.user.orgId;
     let targets = request.targets;
+
     if (this.filterQuery) {
       targets = targets.filter(q => this.filterQuery!(q));
     }
+
     const queries = targets.map(q => {
       let datasourceId = this.id;
+
       if (q.datasource === ExpressionDatasourceID) {
         return {
           ...q,
           datasourceId,
-          orgId,
         };
       }
+
       if (q.datasource) {
-        const dsName = q.datasource === 'default' ? config.defaultDatasource : q.datasource;
-        const ds = config.datasources[dsName];
+        const ds = getDataSourceSrv().getInstanceSettings(q.datasource);
+
         if (!ds) {
           throw new Error('Unknown Datasource: ' + q.datasource);
         }
+
         datasourceId = ds.id;
       }
+
       return {
         ...this.applyTemplateVariables(q, request.scopedVars),
         datasourceId,
         intervalMs,
         maxDataPoints,
-        orgId,
       };
     });
 
@@ -93,9 +95,8 @@ export class DataSourceWithBackend<
       return of({ data: [] });
     }
 
-    const body: any = {
-      queries,
-    };
+    const body: any = { queries };
+
     if (range) {
       body.range = range;
       body.from = range.from.valueOf().toString();

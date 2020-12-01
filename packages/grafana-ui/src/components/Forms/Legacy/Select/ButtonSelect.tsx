@@ -11,6 +11,7 @@ interface ButtonComponentProps {
   iconClass?: string;
 }
 
+// eslint-disable-next-line react/display-name
 const ButtonComponent = (buttonProps: ButtonComponentProps) => (props: any) => {
   const { label, className, iconClass } = buttonProps;
 

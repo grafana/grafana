@@ -187,7 +187,7 @@ func (s *Server) Run() (err error) {
 				// Mark that we are in shutdown mode
 				// So no more services are started
 				s.shutdownInProgress = true
-				if err != context.Canceled {
+				if !errors.Is(err, context.Canceled) {
 					// Server has crashed.
 					s.log.Error("Stopped "+descriptor.Name, "reason", err)
 				} else {
@@ -234,7 +234,7 @@ func (s *Server) Shutdown(reason string) {
 func (s *Server) ExitCode(reason error) int {
 	code := 1
 
-	if reason == context.Canceled && s.shutdownReason != "" {
+	if errors.Is(reason, context.Canceled) && s.shutdownReason != "" {
 		reason = fmt.Errorf(s.shutdownReason)
 		code = 0
 	}
@@ -273,7 +273,7 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 	objs := []interface{}{
 		bus.GetBus(),
 		s.cfg,
-		routing.NewRouteRegister(middleware.RequestMetrics(s.cfg), middleware.RequestTracing),
+		routing.NewRouteRegister(middleware.RequestTracing, middleware.RequestMetrics(s.cfg)),
 		localcache.New(5*time.Minute, 10*time.Minute),
 		s,
 	}

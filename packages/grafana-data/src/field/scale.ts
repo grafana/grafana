@@ -1,6 +1,6 @@
 import { isNumber } from 'lodash';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
-import { Field, FieldType, GrafanaTheme, Threshold } from '../types';
+import { Field, FieldConfig, FieldType, GrafanaTheme, NumericRange, Threshold } from '../types';
 import { getFieldColorModeForField } from './fieldColor';
 import { getActiveThresholdForValue } from './thresholds';
 
@@ -15,7 +15,7 @@ export type ScaleCalculator = (value: number) => ScaledValue;
 export function getScaleCalculator(field: Field, theme: GrafanaTheme): ScaleCalculator {
   const mode = getFieldColorModeForField(field);
   const getColor = mode.getCalculator(field, theme);
-  const info = getMinMaxAndDelta(field);
+  const info = field.state?.range ?? getMinMaxAndDelta(field);
 
   return (value: number) => {
     let percent = 0;
@@ -34,13 +34,7 @@ export function getScaleCalculator(field: Field, theme: GrafanaTheme): ScaleCalc
   };
 }
 
-interface FieldMinMaxInfo {
-  min?: number | null;
-  max?: number | null;
-  delta: number;
-}
-
-function getMinMaxAndDelta(field: Field): FieldMinMaxInfo {
+function getMinMaxAndDelta(field: Field): NumericRange {
   if (field.type !== FieldType.number) {
     return { min: 0, max: 100, delta: 100 };
   }
@@ -69,4 +63,16 @@ function getMinMaxAndDelta(field: Field): FieldMinMaxInfo {
     max,
     delta: max! - min!,
   };
+}
+
+export function getFieldConfigWithMinMax(field: Field, local?: boolean): FieldConfig {
+  const { config } = field;
+  let { min, max } = config;
+  if (isNumber(min) && !isNumber(max)) {
+    return config; // noop
+  }
+  if (local || !field.state?.range) {
+    return { ...config, ...getMinMaxAndDelta(field) };
+  }
+  return { ...config, ...field.state.range };
 }

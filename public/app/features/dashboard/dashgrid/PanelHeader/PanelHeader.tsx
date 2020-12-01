@@ -140,7 +140,7 @@ export class PanelHeader extends PureComponent<Props, State> {
             <Icon name={iconName} style={{ marginRight: '8px' }} />
           </div>
         ) : (
-          <a className="panel-info-notice" href={notice.link} target="_blank">
+          <a className="panel-info-notice" href={notice.link} target="_blank" rel="noreferrer">
             <Icon name={iconName} style={{ marginRight: '8px' }} />
           </a>
         )}
