@@ -89,6 +89,11 @@ type TListViewProps = {
    * - Ref:https://github.com/bvaughn/react-virtualized/blob/497e2a1942529560681d65a9ef9f5e9c9c9a49ba/docs/WindowScroller.md
    */
   windowScroller?: boolean;
+  /**
+   * You need to pass in scrollElement when windowScroller is set to false.
+   * This element is responsible for tracking scrolling for lazy loading.
+   */
+  scrollElement?: Element;
 };
 
 const DEFAULT_INITIAL_DRAW = 100;
@@ -157,7 +162,7 @@ export default class ListView extends React.Component<TListViewProps> {
   _windowScrollListenerAdded: boolean;
   _htmlElm: HTMLElement;
   /**
-   * HTMLElement holding the scroller.
+   * Element holding the scroller.
    */
   _wrapperElm: Element | TNil;
   /**
@@ -204,8 +209,8 @@ export default class ListView extends React.Component<TListViewProps> {
       this._windowScrollListenerAdded = true;
     } else {
       // The wrapper element should be the one that handles the scrolling. Once we are not using scroll-canvas we can remove this.
-      this._wrapperElm = document.getElementsByClassName('scroll-canvas')[0];
-      this._wrapperElm.addEventListener('scroll', this._onScroll);
+      this._wrapperElm = this.props.scrollElement;
+      this._wrapperElm?.addEventListener('scroll', this._onScroll);
     }
   }
 

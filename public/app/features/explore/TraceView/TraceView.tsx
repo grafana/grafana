@@ -83,6 +83,7 @@ export function TraceView(props: Props) {
   );
 
   const createSpanLink = useMemo(() => createSpanLinkFactory(props.splitOpenFn), [props.splitOpenFn]);
+  const scrollElement = document.getElementsByClassName('scroll-canvas')[0];
 
   if (!traceProp) {
     return null;
@@ -148,6 +149,7 @@ export function TraceView(props: Props) {
           )}
           uiFind={search}
           createSpanLink={createSpanLink}
+          scrollElement={scrollElement}
         />
       </UIElementsContext.Provider>
     </ThemeProvider>
