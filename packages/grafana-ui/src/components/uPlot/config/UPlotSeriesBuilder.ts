@@ -10,7 +10,8 @@ export interface SeriesProps extends LineConfig, AreaConfig, PointsConfig {
 
 function buildBarsPaths(u: uPlot, seriesIdx: number, idx0: number, idx1: number): Series.Paths {
   let series = u.series[seriesIdx];
-  let scaleKey = series.scale as string;
+  let xScaleKey = u.series[0].scale as string;
+  let yScaleKey = series.scale as string;
 
   const gapFactor = 0.25;
 
@@ -20,12 +21,12 @@ function buildBarsPaths(u: uPlot, seriesIdx: number, idx0: number, idx1: number)
   //@ts-ignore
   let fillTo = series.fillTo(u, seriesIdx, series.min, series.max);
 
-  let y0Pos = u.valToPos(fillTo, scaleKey, true);
+  let y0Pos = u.valToPos(fillTo, yScaleKey, true);
   let colWid = u.bbox.width / (idx1 - idx0);
 
   let strokeWidth = Math.round(series.width! * devicePixelRatio);
 
-  let wid = Math.round(Math.min(maxWidth, colWid - gap) - strokeWidth);
+  let barWid = Math.round(Math.min(maxWidth, colWid - gap) - strokeWidth);
 
   let stroke = new Path2D();
 
@@ -39,15 +40,15 @@ function buildBarsPaths(u: uPlot, seriesIdx: number, idx0: number, idx1: number)
     let xVal = u.scales.x.distr === 2 ? i : u.data[0][i];
 
     // TODO: all xPos can be pre-computed once for all series in aligned set
-    let xPos = u.valToPos(xVal, 'x', true);
-    let yPos = u.valToPos(yVal, scaleKey, true);
+    let xPos = u.valToPos(xVal, xScaleKey, true);
+    let yPos = u.valToPos(yVal, yScaleKey, true);
 
-    let lft = Math.round(xPos - wid / 2);
+    let lft = Math.round(xPos - barWid / 2);
     let btm = Math.round(Math.max(yPos, y0Pos));
     let top = Math.round(Math.min(yPos, y0Pos));
-    let hgt = btm - top;
+    let barHgt = btm - top;
 
-    stroke.rect(lft, top, wid, hgt);
+    stroke.rect(lft, top, barWid, barHgt);
   }
 
   let fill = series.fill != null ? new Path2D(stroke) : undefined;
