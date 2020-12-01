@@ -17,7 +17,6 @@ import { panelAdded, panelRemoved } from '../state/PanelModel';
 
 let lastGridWidth = 1200;
 let ignoreNextWidthChange = false;
-let inHome = false;
 
 interface GridWrapperProps {
   size: { width: number };
@@ -34,23 +33,20 @@ interface GridWrapperProps {
   viewPanel: PanelModel | null;
 }
 
-function GridWrapper(
-  this: any,
-  {
-    size,
-    layout,
-    onLayoutChange,
-    children,
-    onDragStop,
-    onResize,
-    onResizeStop,
-    onWidthChange,
-    className,
-    isResizable,
-    isDraggable,
-    viewPanel,
-  }: GridWrapperProps
-) {
+function GridWrapper({
+  size,
+  layout,
+  onLayoutChange,
+  children,
+  onDragStop,
+  onResize,
+  onResizeStop,
+  onWidthChange,
+  className,
+  isResizable,
+  isDraggable,
+  viewPanel,
+}: GridWrapperProps) {
   const width = size.width > 0 ? size.width : lastGridWidth;
 
   // logic to ignore width changes (optimization)
@@ -86,9 +82,6 @@ function GridWrapper(
       onResizeStop={onResizeStop}
       onDragStop={onDragStop}
       onLayoutChange={onLayoutChange}
-      autoSize={inHome}
-      verticalCompact={true}
-      compactType={'vertical'}
     >
       {children}
     </ReactGridLayout>
@@ -108,11 +101,11 @@ export interface Props {
 export class DashboardGrid extends PureComponent<Props> {
   panelMap: { [id: string]: PanelModel };
   panelRef: { [id: string]: HTMLElement } = {};
+  homeDashboard: boolean;
 
   componentDidMount() {
     const { dashboard } = this.props;
-    console.log(dashboard);
-    inHome = dashboard.uid === '7iOhKpdMH';
+    this.homeDashboard = dashboard.uid === '7iOhKpdMH';
     dashboard.on(panelAdded, this.triggerForceUpdate);
     dashboard.on(panelRemoved, this.triggerForceUpdate);
     dashboard.on(CoreEvents.repeatsProcessed, this.triggerForceUpdate);
@@ -151,7 +144,7 @@ export class DashboardGrid extends PureComponent<Props> {
       };
 
       if (panel.type === 'row') {
-        panelPos.w = inHome ? 6 : GRID_COLUMN_COUNT;
+        panelPos.w = GRID_COLUMN_COUNT;
         panelPos.h = 1;
         panelPos.isResizable = false;
         panelPos.isDraggable = panel.collapsed;
@@ -282,6 +275,14 @@ export class DashboardGrid extends PureComponent<Props> {
   }
 
   render() {
+    if (!this.homeDashboard) {
+      return this.renderGrid();
+    } else {
+      return this.renderRowGrid();
+    }
+  }
+
+  renderGrid() {
     const { dashboard, viewPanel } = this.props;
 
     return (
@@ -300,6 +301,102 @@ export class DashboardGrid extends PureComponent<Props> {
         {this.renderPanels()}
       </SizedReactLayoutGrid>
     );
+  }
+
+  renderRowGrid() {
+    const { dashboard } = this.props;
+    const panelsRepeat = dashboard.panels.filter(value => value.type !== 'row' && value.type !== 'dashlist');
+    console.log(panelsRepeat);
+    const panels: Array<{ scope: string; panels: PanelModel[] }> = this.groupPanelsByVar(panelsRepeat);
+    console.log(panels);
+    return (
+      <div className="home-panel-vis">
+        <div className="row">
+          {dashboard.panels
+            .filter(value => value.type === 'dashlist')
+            .map((panel, index) => {
+              panel.gridPos.h = 400;
+              return (
+                <div
+                  className={this.setClassByPanelType(panel)}
+                  id={'col' + index}
+                  key={panel.id}
+                  style={{ height: '400px', padding: 0 }}
+                >
+                  <DashboardPanel
+                    panel={panel}
+                    dashboard={this.props.dashboard}
+                    isEditing={false}
+                    isViewing={true}
+                    isInView={true}
+                  />
+                </div>
+              );
+            })}
+        </div>
+        <div className="row">
+          {panels.map((repeat, index) => {
+            return (
+              <div
+                className={'col-lg-3 col-md-4 col-sm-12'}
+                id={'col' + index}
+                key={index}
+                style={{ height: '100%', padding: 0 }}
+              >
+                <a className="dashboard-row__title pointer" style={{ paddingLeft: '15px' }}>
+                  {repeat.scope}
+                </a>
+                {repeat.panels.map((panel: PanelModel, indexPanel: number) => {
+                  panel.gridPos.h = 180;
+                  return (
+                    <div
+                      className={'col-lg-12 col-md-12 col-sm-12'}
+                      id={'col' + indexPanel}
+                      key={panel.id}
+                      style={{ height: '180px', padding: 0 }}
+                    >
+                      <DashboardPanel
+                        panel={panel}
+                        dashboard={this.props.dashboard}
+                        isEditing={false}
+                        isViewing={true}
+                        isInView={true}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  groupPanelsByVar(panels: PanelModel[]): Array<{ scope: string; panels: PanelModel[] }> {
+    const scopeVars: Array<{ scope: string; panels: PanelModel[] }> = [];
+    for (const panel of panels) {
+      const repeat = panel.repeat;
+      if (repeat) {
+        const indexScope = scopeVars.findIndex(value => value.scope === panel.scopedVars[repeat].value);
+        if (indexScope === -1) {
+          scopeVars.push({ scope: panel.scopedVars[repeat].value, panels: [panel] });
+        } else {
+          scopeVars[indexScope].panels.push(panel);
+        }
+      } else {
+        scopeVars.push({ scope: 'Server', panels: [panel] });
+      }
+    }
+    return scopeVars;
+  }
+
+  setClassByPanelType(panel: PanelModel) {
+    if (panel.type === 'dashlist') {
+      return 'col-lg-6 col-md-6 col-sm-12';
+    } else {
+      return 'col-lg-3 col-md-3 col-sm-12';
+    }
   }
 }
 
