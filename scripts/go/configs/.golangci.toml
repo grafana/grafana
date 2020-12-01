@@ -8,6 +8,9 @@ min-confidence = 3
 min-len = 5
 min-occurrences = 5
 
+[linters-settings.exhaustive]
+default-signifies-exhaustive = true
+
 [linters]
 disable-all = true
 enable = [
@@ -39,6 +42,7 @@ enable = [
   "varcheck",
   "whitespace",
   "gocyclo",
+  "exhaustive",
   "typecheck",
   "asciicheck",
   "errorlint",

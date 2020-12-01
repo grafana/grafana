@@ -139,10 +139,10 @@ function transformToDataFrame(data: MatrixOrVectorResult, options: TransformOpti
       dps.push([t, null]);
     }
     fields.push(getTimeField(dps, true));
-    fields.push(getValueField({ data: dps, parseValue: false, labels, displayName: name }));
+    fields.push(getValueField({ data: dps, parseValue: false, labels, displayNameFromDS: name }));
   } else {
     fields.push(getTimeField([data.value]));
-    fields.push(getValueField({ data: [data.value], labels, displayName: name }));
+    fields.push(getValueField({ data: [data.value], labels, displayNameFromDS: name }));
   }
 
   return {
@@ -224,7 +224,7 @@ type ValueFieldOptions = {
   valueName?: string;
   parseValue?: boolean;
   labels?: Labels;
-  displayName?: string;
+  displayNameFromDS?: string;
 };
 
 function getValueField({
@@ -232,13 +232,13 @@ function getValueField({
   valueName = TIME_SERIES_VALUE_FIELD_NAME,
   parseValue = true,
   labels,
-  displayName,
+  displayNameFromDS,
 }: ValueFieldOptions): MutableField {
   return {
     name: valueName,
     type: FieldType.number,
     config: {
-      displayName,
+      displayNameFromDS,
     },
     labels,
     values: new ArrayVector<number | null>(data.map(val => (parseValue ? parseSampleValue(val[1]) : val[1]))),

@@ -80,9 +80,8 @@ const getRadioButtonStyles = stylesFactory((theme: GrafanaTheme, size: RadioButt
       background: ${bg};
       cursor: pointer;
       z-index: 1;
-      flex-grow: ${fullWidth ? 1 : 0};
+      flex: ${fullWidth ? `1 0 0` : 0};
       text-align: center;
-
       user-select: none;
 
       &:hover {

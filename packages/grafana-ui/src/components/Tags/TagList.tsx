@@ -21,6 +21,8 @@ export const TagList: FC<Props> = memo(({ tags, onClick, className }) => {
   );
 });
 
+TagList.displayName = 'TagList';
+
 const getStyles = () => {
   return {
     wrapper: css`
