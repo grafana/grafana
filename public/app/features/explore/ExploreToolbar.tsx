@@ -27,6 +27,7 @@ import { LiveTailControls } from './useLiveTailControls';
 import { getExploreDatasources } from './state/selectors';
 import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
 import { cancelQueries, clearQueries, runQueries } from './state/query';
+import { getDatasourceSrv } from '../plugins/datasource_srv';
 
 const { ButtonSelect } = LegacyForms;
 
@@ -141,11 +142,15 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
     });
   }
 
-  getSelectedDatasource = () => {
-    const { datasourceName } = this.props;
-    const exploreDatasources = getExploreDatasources();
-    return datasourceName ? exploreDatasources.find(datasource => datasource.name === datasourceName) : undefined;
-  };
+  getSelectedDatasource() {
+    const ds = getDatasourceSrv().getInstanceSettings(this.props.datasourceName);
+
+    if (ds) {
+      return { value: ds.uid, name: ds.name, meta: ds.meta };
+    }
+
+    return undefined;
+  }
 
   render() {
     const {

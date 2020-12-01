@@ -6,69 +6,77 @@ import { HorizontalGroup, Select } from '@grafana/ui';
 import { SelectableValue, DataSourceSelectItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { isUnsignedPluginSignature, PluginSignatureBadge } from '../../../features/plugins/PluginSignatureBadge';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 export interface Props {
   onChange: (ds: DataSourceSelectItem) => void;
-  datasources: DataSourceSelectItem[];
-  current?: DataSourceSelectItem | null;
+  current: string | null;
   hideTextValue?: boolean;
   onBlur?: () => void;
   autoFocus?: boolean;
   openMenuOnFocus?: boolean;
-  showLoading?: boolean;
   placeholder?: string;
   invalid?: boolean;
 }
 
 export class DataSourcePicker extends PureComponent<Props> {
+  dataSourceSrv = getDatasourceSrv();
   static defaultProps: Partial<Props> = {
     autoFocus: false,
     openMenuOnFocus: false,
     placeholder: 'Select datasource',
   };
 
-  searchInput: HTMLElement;
-
   constructor(props: Props) {
     super(props);
   }
 
   onChange = (item: SelectableValue<string>) => {
-    const ds = this.props.datasources.find(ds => ds.name === item.value);
+    const ds = this.dataSourceSrv.getInstanceSettings(item.value);
 
     if (ds) {
-      this.props.onChange(ds);
+      this.props.onChange({
+        value: ds.isDefault ? null : ds.name,
+        name: ds.name,
+        meta: ds.meta,
+        sort: '',
+      });
     }
   };
 
-  render() {
-    const {
-      datasources,
-      current,
-      autoFocus,
-      hideTextValue,
-      onBlur,
-      openMenuOnFocus,
-      showLoading,
-      placeholder,
-      invalid,
-    } = this.props;
+  private getCurrentValue() {
+    const { current, hideTextValue } = this.props;
+    const ds = this.dataSourceSrv.getInstanceSettings(current);
 
-    const options = datasources.map(ds => ({
+    if (ds) {
+      return {
+        label: ds.name.substr(0, 37),
+        value: ds.name,
+        imgUrl: ds.meta.info.logos.small,
+        hideText: hideTextValue,
+        meta: ds.meta,
+      };
+    }
+
+    return {
+      label: (current ?? 'no name') + ' (not found)',
+      value: current,
+      imgUrl: '',
+      hideText: hideTextValue,
+    };
+  }
+
+  render() {
+    const { autoFocus, onBlur, openMenuOnFocus, placeholder, invalid } = this.props;
+
+    const options = this.dataSourceSrv.getMetricSources().map(ds => ({
       value: ds.name,
       label: ds.name,
       imgUrl: ds.meta.info.logos.small,
       meta: ds.meta,
     }));
 
-    const value = current && {
-      label: current.name.substr(0, 37),
-      value: current.name,
-      imgUrl: current.meta.info.logos.small,
-      loading: showLoading,
-      hideText: hideTextValue,
-      meta: current.meta,
-    };
+    const value = this.getCurrentValue();
 
     return (
       <div aria-label={selectors.components.DataSourcePicker.container}>
@@ -89,7 +97,7 @@ export class DataSourcePicker extends PureComponent<Props> {
           value={value}
           invalid={invalid}
           getOptionLabel={o => {
-            if (isUnsignedPluginSignature(o.meta.signature) && o !== value) {
+            if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
               return (
                 <HorizontalGroup align="center" justify="space-between">
                   <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />

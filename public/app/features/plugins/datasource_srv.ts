@@ -149,7 +149,7 @@ export class DatasourceSrv implements DataSourceService {
     return sources;
   }
 
-  getMetricSources(options?: { skipVariables?: boolean }) {
+  getMetricSources(options?: { skipVariables?: boolean }): DataSourceSelectItem[] {
     const metricSources: DataSourceSelectItem[] = [];
 
     Object.entries(this.settingsMapByName).forEach(([key, value]) => {
