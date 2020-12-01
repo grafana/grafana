@@ -23,6 +23,7 @@ export enum FieldMatcherID {
   byNames = 'byNames',
   byRegexp = 'byRegexp',
   byRegexpOrNames = 'byRegexpOrNames',
+  byFrameRefID = 'byFrameRefID',
   // byIndex = 'byIndex',
   // byLabel = 'byLabel',
 }
@@ -35,4 +36,20 @@ export enum FrameMatcherID {
   byRefId = 'byRefId',
   byIndex = 'byIndex',
   byLabel = 'byLabel',
+}
+
+/**
+ * @public
+ */
+export enum ValueMatcherID {
+  regex = 'regex',
+  isNull = 'isNull',
+  isNotNull = 'isNotNull',
+  greater = 'greater',
+  greaterOrEqual = 'greaterOrEqual',
+  lower = 'lower',
+  lowerOrEqual = 'lowerOrEqual',
+  equal = 'equal',
+  notEqual = 'notEqual',
+  between = 'between',
 }

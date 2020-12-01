@@ -138,6 +138,8 @@ func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		color = "gray"
 	case models.AlertStateAlerting:
 		color = "red"
+	default:
+		// Handle other cases?
 	}
 
 	// Add a card with link to the dashboard

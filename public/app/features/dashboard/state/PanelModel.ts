@@ -5,12 +5,10 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
 import {
-  AppEvent,
   DataConfigSource,
   DataLink,
   DataQuery,
   DataTransformerConfig,
-  eventFactory,
   FieldColorConfigSettings,
   FieldColorModeId,
   fieldColorModeRegistry,
@@ -27,12 +25,9 @@ import {
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
-import { PanelQueryRunner } from './PanelQueryRunner';
+import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { CoreEvents } from '../../../types';
-
-export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
-export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
+import { PanelOptionsChangedEvent, PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 
 export interface GridPos {
   x: number;
@@ -219,6 +214,7 @@ export class PanelModel implements DataConfigSource {
 
   updateOptions(options: object) {
     this.options = options;
+    this.events.publish(new PanelOptionsChangedEvent());
     this.render();
   }
 
@@ -289,10 +285,6 @@ export class PanelModel implements DataConfigSource {
     } else {
       this.events.emit(PanelEvents.render);
     }
-  }
-
-  initialized() {
-    this.events.emit(PanelEvents.panelInitialized);
   }
 
   private getOptionsToRemember() {
@@ -418,7 +410,7 @@ export class PanelModel implements DataConfigSource {
   }
 
   updateQueries(queries: DataQuery[]) {
-    this.events.emit(CoreEvents.queryChanged);
+    this.events.publish(new PanelQueriesChangedEvent());
     this.targets = queries;
   }
 
@@ -501,9 +493,9 @@ export class PanelModel implements DataConfigSource {
   }
 
   setTransformations(transformations: DataTransformerConfig[]) {
-    this.events.emit(CoreEvents.transformationChanged);
     this.transformations = transformations;
     this.resendLastResult();
+    this.events.publish(new PanelTransformationsChangedEvent());
   }
 
   replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {
@@ -528,14 +520,6 @@ export class PanelModel implements DataConfigSource {
    * */
   getSavedId(): number {
     return this.editSourceId ?? this.id;
-  }
-
-  on<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
-    this.events.on(event, callback);
-  }
-
-  off<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
-    this.events.off(event, callback);
   }
 }
 
