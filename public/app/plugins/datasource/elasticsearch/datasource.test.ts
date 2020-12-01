@@ -22,6 +22,13 @@ const ELASTICSEARCH_MOCK_URL = 'http://elasticsearch.local';
 jest.mock('@grafana/runtime', () => ({
   ...((jest.requireActual('@grafana/runtime') as unknown) as object),
   getBackendSrv: () => backendSrv,
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: () => {
+        return { name: 'elastic25' };
+      },
+    };
+  },
 }));
 
 describe('ElasticDatasource', function(this: any) {
@@ -932,6 +939,7 @@ describe('enhanceDataFrame', () => {
       url: '',
       internal: {
         query: { query: 'query' },
+        datasourceName: 'elastic25',
         datasourceUid: 'dsUid',
       },
     });

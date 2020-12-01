@@ -26,21 +26,28 @@ export function createSpanLinkFactory(
     // it manually here instead of leaving it for the data source to supply the config.
 
     const dataLink: DataLink<LokiQuery> = {
-      title: 'name',
+      title: lokiDs.name,
       url: '',
       internal: {
-        datasourceUid: lokiDsUId,
+        datasourceUid: lokiDs.uid,
+        datasourceName: lokiDs.name,
         query: {
           expr: getLokiQueryFromSpan(span),
           refId: '',
         },
       },
     };
-    const link = mapInternalLinkToExplore(dataLink, {}, getTimeRangeFromSpan(span), {} as Field, {
+
+    const link = mapInternalLinkToExplore({
+      link: dataLink,
+      internalLink: dataLink.internal!,
+      scopedVars: {},
+      range: getTimeRangeFromSpan(span),
+      field: {} as Field,
       onClickFn: splitOpenFn,
       replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-      getDataSourceSettingsByUid: getDataSourceSrv().getDataSourceSettingsByUid.bind(getDataSourceSrv()),
     });
+
     return {
       href: link.href,
       onClick: link.onClick,
