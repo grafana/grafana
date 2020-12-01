@@ -109,7 +109,6 @@ export const DEFAULT_PLOT_CONFIG = {
 export const usePlotConfig = (width: number, height: number, timeZone: TimeZone, configBuilder: UPlotConfigBuilder) => {
   const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
   const [isConfigReady, setIsConfigReady] = useState(false);
-  // const [currentConfig, setCurrentConfig] = useState<Options>();
 
   const currentConfig = useRef<Options>();
   const tzDate = useMemo(() => {
@@ -124,15 +123,7 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
     return fmt;
   }, [timeZone]);
 
-  // useEffect(() => {
-  //   console.log('are plugins ready effect', arePluginsReady);
-  // }, [arePluginsReady]);
-  //
-  // useLayoutEffect(() => {
-  //   console.log('are plugins ready layout effect', arePluginsReady);
-  // }, [arePluginsReady]);
   useLayoutEffect(() => {
-    console.log('are plugins ready layout effect', arePluginsReady);
     if (!arePluginsReady) {
       return;
     }
@@ -147,6 +138,7 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
       tzDate,
       ...configBuilder.getConfig(),
     };
+
     setIsConfigReady(true);
   }, [arePluginsReady, plugins, width, height, tzDate, configBuilder]);
 
@@ -199,31 +191,3 @@ export function useRevision<T>(dep: T, cmp: (prev: T, next: T) => boolean) {
 
   return rev;
 }
-//
-// export function useRevisionArray<T extends any[]>(dep: T, cmp?: (prev: T, next: T) => boolean) {
-//   const [rev, setRev] = useState([]);
-//   const prevDep = usePrevious(dep);
-//
-//   const compare = cmp
-//     ? cmp
-//     : (a: any[], b: any[]) => {
-//         const res = new Array(a.length);
-//
-//         for (let i = 0; i < a.length; i++) {
-//           if (a[i] !== b[1]) {
-//             res[i] = false;
-//           } else {
-//             res[i] = false;
-//           }
-//         }
-//
-//         return res;
-//       };
-//
-//   useEffect(() => {
-//     const res = prevDep ? !compare(prevDep, dep) : ;
-//
-//   }, [dep]);
-//
-//   return rev;
-// }
