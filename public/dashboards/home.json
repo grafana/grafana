@@ -1,80 +1,617 @@
 {
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 4,
+  "iteration": 1605509891734,
   "links": [],
   "panels": [
     {
-      "datasource": null,
+      "datasource": "Microsoft SQL Server",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "folderId": null,
       "gridPos": {
-        "h": 3,
-        "w": 24,
+        "h": 7,
+        "w": 12,
         "x": 0,
         "y": 0
       },
-      "id": 1,
-      "title": "",
-      "transparent": false,
-      "type": "welcome"
-    },
-    {
-      "datasource": null,
-      "folderId": 0,
-      "gridPos": {
-        "h": 15,
-        "w": 12,
-        "x": 0,
-        "y": 4
-      },
       "headings": true,
-      "id": 2,
-      "limit": 30,
-      "links": [],
-      "options": {},
+      "id": 14,
+      "limit": 10,
       "query": "",
-      "recent": true,
-      "search": false,
-      "starred": true,
-      "tags": [],
-      "title": "Dashboards",
+      "recent": false,
+      "search": true,
+      "starred": false,
+      "tags": ["Reliability"],
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Reliability",
       "type": "dashlist"
     },
     {
-      "datasource": null,
-      "folderId": 0,
+      "datasource": "Microsoft SQL Server",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "folderId": null,
       "gridPos": {
-        "h": 15,
+        "h": 7,
         "w": 12,
         "x": 12,
-        "y": 4
+        "y": 0
       },
       "headings": true,
-      "id": 3,
-      "limit": 30,
-      "links": [],
-      "options": {},
+      "id": 19,
+      "limit": 10,
       "query": "",
-      "recent": true,
-      "search": false,
-      "starred": true,
-      "tags": [],
-      "title": "Alerts",
-      "type": "alertlist"
+      "recent": false,
+      "search": true,
+      "starred": false,
+      "tags": ["Performance"],
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Performance",
+      "type": "dashlist"
+    },
+    {
+      "collapsed": false,
+      "datasource": "Microsoft SQL Server",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 7
+      },
+      "id": 8,
+      "panels": [],
+      "repeat": "Server",
+      "scopedVars": {
+        "Server": {
+          "selected": false,
+          "text": "WIN-NB5JO47RNDR",
+          "value": "WIN-NB5JO47RNDR"
+        }
+      },
+      "title": "$Server",
+      "type": "row"
+    },
+    {
+      "datasource": "Microsoft SQL Server",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": null
+          },
+          "links": [
+            {
+              "title": "View Server",
+              "url": "http://localhost:3000/d/ylOageWMk/server-overview?orgId=1&var-Server=$Server"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 0,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["last"],
+          "fields": "",
+          "values": false
+        }
+      },
+      "pluginVersion": "7.1.0-pre",
+      "repeat": null,
+      "scopedVars": {
+        "Server": {
+          "selected": false,
+          "text": "WIN-NB5JO47RNDR",
+          "value": "WIN-NB5JO47RNDR"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "format": "table",
+          "rawSql": "SELECT\n  $__timeEpoch([Timestamp]),\n  [CpuUtilization] as value,\n  'CPU Utilization %' as metric\nFROM  [WindowsServer_CPU] A\nINNER JOIN [WindowsServers] B\nON A.[ServerId] = B.[Id]\nWHERE $__timeFilter([Timestamp])\nAND B.Name = $Server\nORDER BY\n  [Timestamp] ASC",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "CPU Utilization",
+      "type": "stat"
+    },
+    {
+      "datasource": "Microsoft SQL Server",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 300
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 2,
+        "y": 8
+      },
+      "id": 2,
+      "maxPerRow": 4,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        }
+      },
+      "pluginVersion": "7.1.0-pre",
+      "repeat": null,
+      "repeatDirection": "v",
+      "scopedVars": {
+        "Server": {
+          "selected": false,
+          "text": "WIN-NB5JO47RNDR",
+          "value": "WIN-NB5JO47RNDR"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  $__timeEpoch(Timestamp),\n  CAST([Value] AS INT) as value,\n  'Page Life Expectancy' as metric\nFROM MetricValue_ServerMetrics \nWHERE    metric = 'Page life expectancy'\nAND server_name = $Server\nAND $__timeFilter(Timestamp)\n\n\n",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Page Life Expectancy",
+      "type": "stat"
+    },
+    {
+      "datasource": "Microsoft SQL Server",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "center",
+            "displayMode": "color-background"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "value"
+            },
+            "properties": [
+              {
+                "id": "custom.align",
+                "value": "center"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 13
+      },
+      "id": 6,
+      "options": {
+        "frameIndex": 1,
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "7.1.0-pre",
+      "scopedVars": {
+        "Server": {
+          "selected": false,
+          "text": "WIN-NB5JO47RNDR",
+          "value": "WIN-NB5JO47RNDR"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "format": "table",
+          "rawSql": "select 'Failed jobs' as Metric \r\n,count(DISTINCT job_name) as Value\r\nFROM [MetricValue_ServerAgent]\r\nWHERE [run_status] = 1\r\nand system_latest = 1\r\nand run_datetime  > DATEADD(day, -1, GETDATE()) \r\nand server_name = $Server\r\nUNION ALL \r\nSELECT 'Alerts' as Metric,\r\n Value\r\nFROM [MetricValue_ServerMetrics]\r\nwhere [system_latest] = 1\r\nand Metric = 'Alerts Count'\r\nand server_name = $Server",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Overview",
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "datasource": "Microsoft SQL Server",
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 20,
+      "panels": [],
+      "repeat": null,
+      "repeatIteration": 1605509891734,
+      "repeatPanelId": 8,
+      "scopedVars": {
+        "Server": {
+          "selected": false,
+          "text": "WIN-76E30Q7JQ9C",
+          "value": "WIN-76E30Q7JQ9C"
+        }
+      },
+      "title": "$Server",
+      "type": "row"
+    },
+    {
+      "datasource": "Microsoft SQL Server",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": null
+          },
+          "links": [
+            {
+              "title": "View Server",
+              "url": "http://localhost:3000/d/ylOageWMk/server-overview?orgId=1&var-Server=$Server"
+            }
+          ],
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "blue",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 0,
+        "y": 18
+      },
+      "id": 21,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["last"],
+          "fields": "",
+          "values": false
+        }
+      },
+      "pluginVersion": "7.1.0-pre",
+      "repeat": null,
+      "repeatIteration": 1605509891734,
+      "repeatPanelId": 4,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "Server": {
+          "selected": false,
+          "text": "WIN-76E30Q7JQ9C",
+          "value": "WIN-76E30Q7JQ9C"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "format": "table",
+          "rawSql": "SELECT\n  $__timeEpoch([Timestamp]),\n  [CpuUtilization] as value,\n  'CPU Utilization %' as metric\nFROM  [WindowsServer_CPU] A\nINNER JOIN [WindowsServers] B\nON A.[ServerId] = B.[Id]\nWHERE $__timeFilter([Timestamp])\nAND B.Name = $Server\nORDER BY\n  [Timestamp] ASC",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "CPU Utilization",
+      "type": "stat"
+    },
+    {
+      "datasource": "Microsoft SQL Server",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 300
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 2,
+        "y": 18
+      },
+      "id": 22,
+      "maxPerRow": 4,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": ["lastNotNull"],
+          "fields": "",
+          "values": false
+        }
+      },
+      "pluginVersion": "7.1.0-pre",
+      "repeat": null,
+      "repeatDirection": "v",
+      "repeatIteration": 1605509891734,
+      "repeatPanelId": 2,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "Server": {
+          "selected": false,
+          "text": "WIN-76E30Q7JQ9C",
+          "value": "WIN-76E30Q7JQ9C"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "format": "time_series",
+          "rawSql": "SELECT\n  $__timeEpoch(Timestamp),\n  CAST([Value] AS INT) as value,\n  'Page Life Expectancy' as metric\nFROM MetricValue_ServerMetrics \nWHERE    metric = 'Page life expectancy'\nAND server_name = $Server\nAND $__timeFilter(Timestamp)\n\n\n",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Page Life Expectancy",
+      "type": "stat"
+    },
+    {
+      "datasource": "Microsoft SQL Server",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "center",
+            "displayMode": "color-background"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "value"
+            },
+            "properties": [
+              {
+                "id": "custom.align",
+                "value": "center"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 23
+      },
+      "id": 23,
+      "options": {
+        "frameIndex": 1,
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "7.1.0-pre",
+      "repeatIteration": 1605509891734,
+      "repeatPanelId": 6,
+      "repeatedByRow": true,
+      "scopedVars": {
+        "Server": {
+          "selected": false,
+          "text": "WIN-76E30Q7JQ9C",
+          "value": "WIN-76E30Q7JQ9C"
+        }
+      },
+      "targets": [
+        {
+          "alias": "",
+          "format": "table",
+          "rawSql": "select 'Failed jobs' as Metric \r\n,count(DISTINCT job_name) as Value\r\nFROM [MetricValue_ServerAgent]\r\nWHERE [run_status] = 1\r\nand system_latest = 1\r\nand run_datetime  > DATEADD(day, -1, GETDATE()) \r\nand server_name = $Server\r\nUNION ALL \r\nSELECT 'Alerts' as Metric,\r\n Value\r\nFROM [MetricValue_ServerMetrics]\r\nwhere [system_latest] = 1\r\nand Metric = 'Alerts Count'\r\nand server_name = $Server",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Overview",
+      "type": "table"
     }
   ],
-  "schemaVersion": 22,
+  "refresh": false,
+  "schemaVersion": 26,
+  "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "allValue": "",
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Microsoft SQL Server",
+        "definition": "SELECT [Name] FROM SQLServers",
+        "hide": 0,
+        "includeAll": true,
+        "label": null,
+        "multi": true,
+        "name": "Server",
+        "options": [],
+        "query": "SELECT [Name] FROM SQLServers",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
   },
   "time": {
-    "from": "now-24h",
+    "from": "now-6h",
     "to": "now"
   },
   "timepicker": {
-    "hidden": false,
-    "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
-    "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"],
-    "type": "timepicker"
+    "refresh_intervals": ["10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
   },
-  "timezone": "browser",
+  "timezone": "",
   "title": "Home",
-  "editable": false
+  "uid": "7iOhKpdMH",
+  "version": 24
 }

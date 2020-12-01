@@ -8,6 +8,13 @@
     margin: 0 $dashboard-padding;
     padding-top: $dashboard-padding;
   }
+
+  &--render-in-home {
+    flex: 1 1 0;
+    height: 100% !important;
+    margin: 0 !important;
+    padding-top: 0 !important;
+  }
 }
 
 .panel-editor__scroll {

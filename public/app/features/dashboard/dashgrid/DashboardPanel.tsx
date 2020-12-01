@@ -23,6 +23,7 @@ export interface OwnProps {
   isEditing: boolean;
   isViewing: boolean;
   isInView: boolean;
+  renderInHome?: boolean;
 }
 
 export interface ConnectedProps {
@@ -114,7 +115,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   }
 
   render() {
-    const { isViewing, plugin } = this.props;
+    const { isViewing, plugin, renderInHome } = this.props;
     const { isLazy } = this.state;
 
     // if we have not loaded plugin exports yet, wait
@@ -130,6 +131,7 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
     const panelWrapperClass = classNames({
       'panel-wrapper': true,
       'panel-wrapper--view': isViewing,
+      'panel-wrapper--render-in-home': renderInHome,
     });
 
     return (

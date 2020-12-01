@@ -64,7 +64,6 @@ function GridWrapper({
      moving panels. https://github.com/grafana/grafana/issues/18497
   */
   const draggable = width <= 420 ? false : isDraggable;
-
   return (
     <ReactGridLayout
       width={lastGridWidth}
@@ -306,22 +305,20 @@ export class DashboardGrid extends PureComponent<Props> {
   renderRowGrid() {
     const { dashboard } = this.props;
     const panelsRepeat = dashboard.panels.filter(value => value.type !== 'row' && value.type !== 'dashlist');
-    console.log(panelsRepeat);
     const panels: Array<{ scope: string; panels: PanelModel[] }> = this.groupPanelsByVar(panelsRepeat);
-    console.log(panels);
     return (
-      <div className="home-panel-vis">
+      <div className="home-panel-vis" style={{ paddingBottom: '20px' }}>
         <div className="row">
           {dashboard.panels
             .filter(value => value.type === 'dashlist')
             .map((panel, index) => {
-              panel.gridPos.h = 400;
+              // panel.gridPos.h = 350;
               return (
                 <div
                   className={this.setClassByPanelType(panel)}
                   id={'col' + index}
                   key={panel.id}
-                  style={{ height: '400px', padding: 0 }}
+                  style={{ minHeight: '300px', padding: 0 }}
                 >
                   <DashboardPanel
                     panel={panel}
@@ -334,37 +331,35 @@ export class DashboardGrid extends PureComponent<Props> {
               );
             })}
         </div>
-        <div className="row">
+        <div className="row flew-wrap" style={{ margin: 0 }}>
           {panels.map((repeat, index) => {
             return (
-              <div
-                className={'col-lg-3 col-md-4 col-sm-12'}
-                id={'col' + index}
-                key={index}
-                style={{ height: '100%', padding: 0 }}
-              >
-                <a className="dashboard-row__title pointer" style={{ paddingLeft: '15px' }}>
-                  {repeat.scope}
-                </a>
-                {repeat.panels.map((panel: PanelModel, indexPanel: number) => {
-                  panel.gridPos.h = 180;
-                  return (
-                    <div
-                      className={'col-lg-12 col-md-12 col-sm-12'}
-                      id={'col' + indexPanel}
-                      key={panel.id}
-                      style={{ height: '180px', padding: 0 }}
-                    >
-                      <DashboardPanel
-                        panel={panel}
-                        dashboard={this.props.dashboard}
-                        isEditing={false}
-                        isViewing={true}
-                        isInView={true}
-                      />
-                    </div>
-                  );
-                })}
+              <div id={'col' + index} key={index} style={{ height: '100%', width: '250px', margin: '15px' }}>
+                <a className="dashboard-row__title pointer">{repeat.scope}</a>
+                <div className="row p-2 row-panel">
+                  {repeat.panels.map((panel: PanelModel, indexPanel: number) => {
+                    return (
+                      <div
+                        id={'col' + indexPanel}
+                        key={panel.id}
+                        style={{
+                          height: indexPanel === 2 ? '180px' : '150px',
+                          padding: '5px',
+                          width: indexPanel === 2 ? '250px' : '125px',
+                        }}
+                      >
+                        <DashboardPanel
+                          panel={panel}
+                          dashboard={this.props.dashboard}
+                          isEditing={false}
+                          isViewing={true}
+                          isInView={true}
+                          renderInHome={true}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}
@@ -376,7 +371,7 @@ export class DashboardGrid extends PureComponent<Props> {
   groupPanelsByVar(panels: PanelModel[]): Array<{ scope: string; panels: PanelModel[] }> {
     const scopeVars: Array<{ scope: string; panels: PanelModel[] }> = [];
     for (const panel of panels) {
-      const repeat = panel.repeat;
+      const repeat = panel.repeat ? panel.repeat : 'Server';
       if (repeat) {
         const indexScope = scopeVars.findIndex(value => value.scope === panel.scopedVars[repeat].value);
         if (indexScope === -1) {
@@ -396,6 +391,30 @@ export class DashboardGrid extends PureComponent<Props> {
       return 'col-lg-6 col-md-6 col-sm-12';
     } else {
       return 'col-lg-3 col-md-3 col-sm-12';
+    }
+  }
+
+  setClassByPanelIndex(index: number) {
+    if (index === 2) {
+      return 'col-lg-12 col-md-12 col-sm-12';
+    } else {
+      return 'col-lg-6 col-md-6 col-sm-12';
+    }
+  }
+
+  setHeightByPanelIndex(index: number) {
+    if (index === 2) {
+      return '180px';
+    } else {
+      return '150px';
+    }
+  }
+
+  setPanelHeightByPanelIndex(index: number) {
+    if (index === 2) {
+      return '180px';
+    } else {
+      return '150px';
     }
   }
 }
