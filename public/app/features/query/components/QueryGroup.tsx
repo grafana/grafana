@@ -53,7 +53,7 @@ interface State {
   isHelpOpen: boolean;
 }
 
-export class QueriesTab extends PureComponent<Props, State> {
+export class QueryGroup extends PureComponent<Props, State> {
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
   backendSrv = backendSrv;
   querySubscription: Unsubscribable | null;

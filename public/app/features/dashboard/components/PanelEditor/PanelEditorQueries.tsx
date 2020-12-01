@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { QueriesTab } from 'app/features/query/components/QueriesTab';
+import { QueryGroup } from 'app/features/query/components/QueryGroup';
 import { QueryGroupOptions } from 'app/features/query/components/QueryGroupOptions';
 import { PanelModel } from '../../state';
 import { DataQuery, DataSourceSelectItem } from '@grafana/data';
@@ -80,7 +80,7 @@ export class PanelEditorQueries extends PureComponent<Props, State> {
     const { options } = this.state;
 
     return (
-      <QueriesTab
+      <QueryGroup
         dataSourceName={panel.datasource}
         options={options}
         queryRunner={panel.getQueryRunner()}

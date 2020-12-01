@@ -11,7 +11,7 @@ import { GraphNG, Table } from '@grafana/ui';
 import { config } from 'app/core/config';
 import React, { FC, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
-import { QueriesTab } from '../query/components/QueriesTab';
+import { QueryGroup } from '../query/components/QueryGroup';
 import { QueryGroupOptions } from '../query/components/QueryGroupOptions';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 
@@ -66,7 +66,7 @@ export const TestStuffPage: FC = () => {
     <div style={{ padding: '30px 50px' }} className="page-scrollbar-wrapper">
       <h3>New page</h3>
       <div>
-        <QueriesTab
+        <QueryGroup
           options={queryOptions}
           dataSourceName={dataSourceName}
           queryRunner={queryRunner}
