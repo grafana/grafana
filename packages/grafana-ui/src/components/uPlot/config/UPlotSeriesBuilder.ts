@@ -23,9 +23,9 @@ function buildBarsPaths(u: uPlot, seriesIdx: number, idx0: number, idx1: number)
   let y0Pos = u.valToPos(fillTo, scaleKey, true);
   let colWid = u.bbox.width / (idx1 - idx0);
 
-  let strokeWidth = series.width! * devicePixelRatio;
+  let strokeWidth = Math.round(series.width! * devicePixelRatio);
 
-  let wid = Math.min(maxWidth, colWid - gap) - strokeWidth;
+  let wid = Math.round(Math.min(maxWidth, colWid - gap) - strokeWidth);
 
   let stroke = new Path2D();
 
@@ -42,9 +42,9 @@ function buildBarsPaths(u: uPlot, seriesIdx: number, idx0: number, idx1: number)
     let xPos = u.valToPos(xVal, 'x', true);
     let yPos = u.valToPos(yVal, scaleKey, true);
 
-    let lft = xPos - wid / 2;
-    let btm = Math.min(yPos, y0Pos);
-    let top = Math.max(yPos, y0Pos);
+    let lft = Math.round(xPos - wid / 2);
+    let btm = Math.round(Math.max(yPos, y0Pos));
+    let top = Math.round(Math.min(yPos, y0Pos));
     let hgt = btm - top;
 
     stroke.rect(lft, top, wid, hgt);
