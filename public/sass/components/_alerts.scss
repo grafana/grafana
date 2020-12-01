@@ -79,7 +79,7 @@
 
 .alert-body {
   flex-grow: 1;
-  width: 50%;
+  min-width: 0;
 }
 
 .alert-icon-on-top {
