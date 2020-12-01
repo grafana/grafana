@@ -40,7 +40,6 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 		Email:      extUser.Email,
 		Login:      extUser.Login,
 	}
-
 	if err := bus.Dispatch(userQuery); err != nil {
 		if !errors.Is(err, models.ErrUserNotFound) {
 			return err
