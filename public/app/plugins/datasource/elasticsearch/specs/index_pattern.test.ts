@@ -69,8 +69,15 @@ describe('IndexPattern', () => {
       });
     });
 
-    describe('daily', () => {
+    describe('daily interval pattern prefix', () => {
       test('should return correct index pattern', () => {
+        const pattern = new IndexPattern('YYYY.MM.DD[-asd]', 'Daily');
+        expect(pattern.getPPLIndexPattern()).toEqual('*-asd');
+      });
+    });
+
+    describe('daily interval pattern suffix', () => {
+      test('should return correct index with time pattern suffix', () => {
         const pattern = new IndexPattern('[asd-]YYYY.MM.DD', 'Daily');
         expect(pattern.getPPLIndexPattern()).toEqual('asd-*');
       });

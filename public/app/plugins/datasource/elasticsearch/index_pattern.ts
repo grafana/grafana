@@ -54,7 +54,13 @@ export class IndexPattern {
       return this.pattern;
     }
 
-    const indexPattern = this.pattern.match(/\[(.*)\]/)[1] + '*';
+    let indexPattern = this.pattern.match(/\[(.*?)\]/)[1];
+
+    if (this.pattern.startsWith('[')) {
+      indexPattern = indexPattern + '*';
+    } else if (this.pattern.endsWith(']')) {
+      indexPattern = '*' + indexPattern;
+    }
     return indexPattern;
   }
 }
