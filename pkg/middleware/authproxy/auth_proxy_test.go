@@ -119,8 +119,8 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 	require.NoError(t, err)
 	setting.AuthProxyHeaderName = "X-Killa"
 
-	name := "markelog"
-	req.Header.Add(setting.AuthProxyHeaderName, name)
+	const headerName = "markelog"
+	req.Header.Add(setting.AuthProxyHeaderName, headerName)
 
 	t.Run("Logs in via LDAP", func(t *testing.T) {
 		const id int64 = 42
