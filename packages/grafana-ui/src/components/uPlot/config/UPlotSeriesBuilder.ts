@@ -234,37 +234,26 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     let lineConfig: Partial<Series> = {};
 
-    if (mode !== GraphMode.Points) {
+    if (mode === GraphMode.Points) {
+      lineConfig.paths = () => null;
+    } else {
       lineConfig.stroke = lineColor;
       lineConfig.width = lineWidth;
       lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
         let pathsBuilder = self.paths;
 
-        if (mode === GraphMode.Bars && self.data[0].length < self.width) {
+        if (mode === GraphMode.Bars) {
           pathsBuilder = buildBarsPaths;
-        }
-
-        if (
-          mode === GraphMode.Line &&
-          lineInterpolation === LineInterpolation.Staircase &&
-          self.data[0].length < self.width
-        ) {
-          pathsBuilder = buildStaircasePaths;
-        }
-
-        if (
-          mode === GraphMode.Line &&
-          lineInterpolation === LineInterpolation.Smooth &&
-          self.data[0].length < self.width
-        ) {
-          pathsBuilder = buildSmoothPaths;
+        } else if (mode === GraphMode.Line) {
+          if (lineInterpolation === LineInterpolation.Staircase) {
+            pathsBuilder = buildStaircasePaths;
+          } else if (lineInterpolation === LineInterpolation.Smooth) {
+            pathsBuilder = buildSmoothPaths;
+          }
         }
 
         return pathsBuilder(self, seriesIdx, idx0, idx1);
       };
-    } else {
-      //@ts-ignore
-      lineConfig.paths = () => null;
     }
 
     const pointsConfig: Partial<Series> = {
