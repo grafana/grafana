@@ -189,7 +189,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
     return false;
   }
 
-  componentWillUpdate(nextProps: VirtualizedTraceViewProps) {
+  UNSAFE_componentWillUpdate(nextProps: VirtualizedTraceViewProps) {
     const { childrenHiddenIDs, detailStates, registerAccessors, trace, currentViewRangeTime } = this.props;
     const {
       currentViewRangeTime: nextViewRangeTime,

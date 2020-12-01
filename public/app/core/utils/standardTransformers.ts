@@ -2,6 +2,7 @@ import { TransformerRegistyItem } from '@grafana/data';
 import { reduceTransformRegistryItem } from '../components/TransformersUI/ReduceTransformerEditor';
 import { filterFieldsByNameTransformRegistryItem } from '../components/TransformersUI/FilterByNameTransformerEditor';
 import { filterFramesByRefIdTransformRegistryItem } from '../components/TransformersUI/FilterByRefIdTransformerEditor';
+import { filterByValueTransformRegistryItem } from '../components/TransformersUI/FilterByValueTransformer/FilterByValueTransformerEditor';
 import { organizeFieldsTransformRegistryItem } from '../components/TransformersUI/OrganizeFieldsTransformerEditor';
 import { seriesToFieldsTransformerRegistryItem } from '../components/TransformersUI/SeriesToFieldsTransformerEditor';
 import { calculateFieldTransformRegistryItem } from '../components/TransformersUI/CalculateFieldTransformerEditor';
@@ -16,6 +17,7 @@ export const getStandardTransformers = (): Array<TransformerRegistyItem<any>> =>
     reduceTransformRegistryItem,
     filterFieldsByNameTransformRegistryItem,
     filterFramesByRefIdTransformRegistryItem,
+    filterByValueTransformRegistryItem,
     organizeFieldsTransformRegistryItem,
     seriesToFieldsTransformerRegistryItem,
     seriesToRowsTransformerRegistryItem,

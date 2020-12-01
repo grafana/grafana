@@ -16,7 +16,9 @@ const props: Props = {
   } as any,
   crossSeriesReducer: '',
   groupBys: [],
-  children: renderProps => <div />,
+  children(renderProps) {
+    return <div />;
+  },
   templateVariableOptions: [],
 };
 
