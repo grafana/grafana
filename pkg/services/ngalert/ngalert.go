@@ -86,7 +86,6 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 
 	// create table
 	mg.AddMigration("create alert_instance table", migrator.NewAddTableMigration(alertInstance))
-
 }
 
 // LoadAlertCondition returns a Condition object for the given alertDefinitionID.

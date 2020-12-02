@@ -110,6 +110,7 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 }
 
 // getAlertDefinitions is a handler for retrieving alert definitions of specific organisation.
+// nolint:unused
 func (ng *AlertNG) getAlertDefinitions(cmd *listAlertDefinitionsCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertDefinitions := make([]*AlertDefinition, 0)
@@ -124,9 +125,9 @@ func (ng *AlertNG) getAlertDefinitions(cmd *listAlertDefinitionsCommand) error {
 }
 
 // saveAlertDefinition is a handler for saving a new alert definition.
+// nolint:unused
 func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-
 		labelTupleJSON, labelsHash, err := cmd.Labels.StringAndHash()
 		if err != nil {
 			return err
@@ -201,6 +202,7 @@ func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 }
 
 // getAlertDefinitions is a handler for retrieving alert definitions of specific organisation.
+// nolint:unused
 func (ng *AlertNG) getAlertInstance(cmd *getAlertInstanceCommand) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		instance := AlertInstance{}
@@ -221,7 +223,7 @@ func (ng *AlertNG) getAlertInstance(cmd *getAlertInstanceCommand) error {
 
 		has, err := sess.SQL(s.String(), params...).Get(&instance)
 		if !has {
-			return fmt.Errorf("instance not found for labels %v (hash: %v), alert defintion id %v", cmd.Labels, hash, cmd.AlertDefinitionID)
+			return fmt.Errorf("instance not found for labels %v (hash: %v), alert definition id %v", cmd.Labels, hash, cmd.AlertDefinitionID)
 		}
 		if err != nil {
 			return err

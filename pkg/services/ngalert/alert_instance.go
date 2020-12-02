@@ -1,6 +1,7 @@
 package ngalert
 
 import (
+	// nolint:gosec
 	"crypto/sha1"
 	"encoding/json"
 	"fmt"
@@ -48,7 +49,9 @@ func (il *InstanceLabels) StringAndHash() (string, string, error) {
 	}
 
 	h := sha1.New()
-	h.Write(b)
+	if _, err := h.Write(b); err != nil {
+		return "", "", err
+	}
 
 	return string(b), fmt.Sprintf("%x", h.Sum(nil)), nil
 }

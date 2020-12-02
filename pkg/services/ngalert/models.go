@@ -104,6 +104,7 @@ type AlertInstance struct {
 }
 
 // saveAlertInstanceCommand is the query for saving a new alert instance.
+// nolint:unused
 type saveAlertInstanceCommand struct {
 	OrgID             int64 `json:"-"`
 	AlertDefinitionID int64
@@ -113,19 +114,25 @@ type saveAlertInstanceCommand struct {
 	SkipCache         bool                 `json:"-"`
 }
 
+// InstanceStateType is an enum for instance states.
 type InstanceStateType string
 
 const (
-	InstateStateFiring InstanceStateType = "firing"
-	InstateStateNormal InstanceStateType = "normal"
+	// InstanceStateFiring is for a firing alert.
+	InstanceStateFiring InstanceStateType = "firing"
+	// InstanceStateNormal is for a normal alert.
+	InstanceStateNormal InstanceStateType = "normal"
 )
 
+// IsValid checks that the value of InstanceStateType is a valid
+// string.
 func (i InstanceStateType) IsValid() bool {
-	return i == InstateStateFiring ||
-		i == InstateStateNormal
+	return i == InstanceStateFiring ||
+		i == InstanceStateNormal
 }
 
 // getAlertDefinitionByIDQuery is the query for retrieving/deleting an alert definition by ID.
+// nolint:unused
 type getAlertInstanceCommand struct {
 	OrgID             int64
 	AlertDefinitionID int64
