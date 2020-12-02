@@ -10,6 +10,7 @@ import { MetricAggregationAction } from './state/types';
 import { metricAggregationConfig } from './utils';
 import { changeMetricField, changeMetricType } from './state/actions';
 import { MetricPicker } from '../MetricPicker';
+import { segmentStyles } from '../styles';
 import {
   isMetricAggregationWithField,
   isMetricAggregationWithSettings,
@@ -88,7 +89,7 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
   return (
     <>
       <Segment
-        className={cx(styles.color)}
+        className={cx(styles.color, segmentStyles)}
         options={getTypeOptions(previousMetrics, datasource.esVersion)}
         onChange={e => dispatch(changeMetricType(value.id, e.value!))}
         value={toOption(value)}
@@ -96,17 +97,17 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
 
       {isMetricAggregationWithField(value) && !isPipelineAggregation(value) && (
         <SegmentAsync
-          className={cx(styles.color)}
+          className={cx(styles.color, segmentStyles)}
           loadOptions={getFields}
           onChange={e => dispatch(changeMetricField(value.id, e.value!))}
-          placeholder="Select Metric"
+          placeholder="Select Field"
           value={value.field}
         />
       )}
 
       {isPipelineAggregation(value) && !isPipelineAggregationWithMultipleBucketPaths(value) && (
         <MetricPicker
-          className={cx(styles.color)}
+          className={cx(styles.color, segmentStyles)}
           onChange={e => dispatch(changeMetricField(value.id, e.value?.id!))}
           options={previousMetrics}
           value={value.field}

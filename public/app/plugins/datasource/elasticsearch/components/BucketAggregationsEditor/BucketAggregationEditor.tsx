@@ -3,6 +3,7 @@ import { Segment, SegmentAsync } from '@grafana/ui';
 import React, { FunctionComponent } from 'react';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { useDatasource } from '../ElasticsearchQueryContext';
+import { segmentStyles } from '../styles';
 import { BucketAggregation, BucketAggregationType, isBucketAggregationWithField } from './aggregations';
 import { SettingsEditor } from './SettingsEditor';
 import { changeBucketAggregationField, changeBucketAggregationType } from './state/actions';
@@ -53,6 +54,7 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
   return (
     <>
       <Segment
+        className={segmentStyles}
         options={bucketAggOptions}
         onChange={e => dispatch(changeBucketAggregationType(value.id, e.value!))}
         value={toOption(value)}
@@ -60,6 +62,7 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
 
       {isBucketAggregationWithField(value) && (
         <SegmentAsync
+          className={segmentStyles}
           loadOptions={getFields}
           onChange={e => dispatch(changeBucketAggregationField(value.id, e.value))}
           placeholder="Select Field"

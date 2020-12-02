@@ -2,6 +2,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import React, { FunctionComponent, useState } from 'react';
+import { segmentStyles } from './styles';
 
 const getStyles = stylesFactory((theme: GrafanaTheme, hidden: boolean) => {
   return {
@@ -35,9 +36,9 @@ export const SettingsEditorContainer: FunctionComponent<Props> = ({ label, child
   const styles = getStyles(useTheme(), hidden);
 
   return (
-    <div className={styles.wrapper}>
+    <div className={cx(styles.wrapper)}>
       <button
-        className={cx('gf-form-label query-part', styles.button)}
+        className={cx('gf-form-label query-part', styles.button, segmentStyles)}
         onClick={() => setOpen(!open)}
         aria-expanded={open}
       >
