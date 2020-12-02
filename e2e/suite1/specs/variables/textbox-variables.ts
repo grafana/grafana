@@ -36,7 +36,7 @@ describe('TextBox - load options scenarios', function() {
   });
 });
 
-describe('TextBox - change query scenarios', function() {
+describe.skip('TextBox - change query scenarios', function() {
   it('when changing the query value and not saving current as default should revert query value', function() {
     copyExistingDashboard();
 
@@ -94,7 +94,7 @@ describe('TextBox - change query scenarios', function() {
   });
 });
 
-describe('TextBox - change picker value scenarios', function() {
+describe.skip('TextBox - change picker value scenarios', function() {
   it('when changing the input value and not saving current as default should revert query value', function() {
     copyExistingDashboard();
 
