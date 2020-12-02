@@ -1,7 +1,8 @@
-import { DataFrame, FieldType, parseLabels, KeyValue, CircularDataFrame } from '@grafana/data';
+import { DataFrame, FieldType, parseLabels, KeyValue, CircularDataFrame, AppEvents } from '@grafana/data';
 import { Observable, throwError, timer } from 'rxjs';
 import { webSocket } from 'rxjs/webSocket';
 import { LokiTailResponse } from './types';
+import appEvents from 'app/core/app_events';
 import { finalize, map, retryWhen, mergeMap } from 'rxjs/operators';
 import { appendResponseToBufferedData } from './result_transformer';
 
@@ -44,12 +45,19 @@ export class LiveStreams {
       }),
       retryWhen((attempts: Observable<any>) =>
         attempts.pipe(
-          mergeMap(error => {
+          mergeMap((error, i) => {
             // Code 1006 is used to indicate that a connection was closed abnormally.
             // If connection was closed abnormally, we wish to retry, otherwise throw error.
+            const retryAttempt = i + 1;
             if (error.code === 1006) {
-              console.log('Reconnecting websocket...');
-              return timer(1000);
+              if (retryAttempt > 10) {
+                // If more than 10 times retried, show user warning, but keep reconnecting
+                appEvents.emit(AppEvents.alertWarning, [
+                  'Websocket connection is being disrupted. We keep reconnecting but consider starting new live tailing again.',
+                ]);
+              }
+              // Retry every 5s
+              return timer(5000);
             }
             return throwError(`error: ${error.reason}`);
           })
