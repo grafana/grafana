@@ -3,18 +3,7 @@ import { setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
 import { createSpanLinkFactory } from './createSpanLink';
 
 describe('createSpanLinkFactory', () => {
-  it('returns undefined if there is no loki data source', () => {
-    setDataSourceSrv({
-      getExternal() {
-        return [
-          {
-            meta: {
-              id: 'not loki',
-            },
-          } as DataSourceInstanceSettings,
-        ];
-      },
-    } as any);
+  it('returns undefined if there is no data source uid', () => {
     const splitOpenFn = jest.fn();
     const createLink = createSpanLinkFactory(splitOpenFn);
     expect(createLink).not.toBeDefined();
@@ -22,17 +11,6 @@ describe('createSpanLinkFactory', () => {
 
   it('creates correct link', () => {
     setDataSourceSrv({
-      getExternal() {
-        return [
-          {
-            name: 'loki1',
-            uid: 'lokiUid',
-            meta: {
-              id: 'loki',
-            },
-          } as DataSourceInstanceSettings,
-        ];
-      },
       getInstanceSettings(uid: string): DataSourceInstanceSettings | undefined {
         if (uid === 'lokiUid') {
           return {
@@ -50,7 +28,7 @@ describe('createSpanLinkFactory', () => {
     } as any);
 
     const splitOpenFn = jest.fn();
-    const createLink = createSpanLinkFactory(splitOpenFn);
+    const createLink = createSpanLinkFactory(splitOpenFn, 'lokiUid');
     expect(createLink).toBeDefined();
     const linkDef = createLink!({
       startTime: new Date('2020-10-14T01:00:00Z').valueOf() * 1000,

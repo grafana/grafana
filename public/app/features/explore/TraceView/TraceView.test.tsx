@@ -5,6 +5,10 @@ import { TraceView } from './TraceView';
 import { TracePageHeader, TraceTimelineViewer } from '@jaegertracing/jaeger-ui-components';
 import { TraceSpanData, TraceData } from '@grafana/data';
 
+jest.mock('react-redux', () => ({
+  useSelector: jest.fn(() => undefined),
+}));
+
 function renderTraceView() {
   const wrapper = shallow(<TraceView trace={response} splitOpenFn={() => {}} />);
   return {
