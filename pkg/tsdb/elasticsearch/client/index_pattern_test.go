@@ -274,6 +274,44 @@ func TestIndexPattern(t *testing.T) {
 			So(intervals[4], ShouldEqual, time.Date(2018, 1, 1, 0, 0, 0, 0, time.UTC))
 		})
 	})
+
+	Convey("PPL static index patterns", t, func() {
+		pplIndexScenario(noInterval, "data-*", func(indices string) {
+			So(indices, ShouldEqual, "data-*")
+		})
+
+		pplIndexScenario(noInterval, "es-index-name", func(indices string) {
+			So(indices, ShouldEqual, "es-index-name")
+		})
+	})
+
+	Convey("PPL dynamic index patterns", t, func() {
+
+		pplIndexScenario(intervalHourly, "[data-]YYYY.MM.DD.HH", func(indices string) {
+			So(indices, ShouldEqual, "data-*")
+		})
+
+		pplIndexScenario(intervalHourly, "YYYY.MM.DD.HH[-data]", func(indices string) {
+			So(indices, ShouldEqual, "*-data")
+		})
+
+		pplIndexScenario(intervalDaily, "[data-]YYYY.MM.DD", func(indices string) {
+			So(indices, ShouldEqual, "data-*")
+		})
+
+		pplIndexScenario(intervalDaily, "YYYY.MM.DD[-data]", func(indices string) {
+			So(indices, ShouldEqual, "*-data")
+		})
+
+		pplIndexScenario(intervalWeekly, "[data-]GGGG.WW", func(indices string) {
+			So(indices, ShouldEqual, "data-*")
+		})
+
+		pplIndexScenario(intervalWeekly, "GGGG.WW[-data]", func(indices string) {
+			So(indices, ShouldEqual, "*-data")
+		})
+	})
+
 }
 
 func indexPatternScenario(interval string, pattern string, timeRange *tsdb.TimeRange, fn func(indices []string)) {
@@ -284,5 +322,16 @@ func indexPatternScenario(interval string, pattern string, timeRange *tsdb.TimeR
 		indices, err := ip.GetIndices(timeRange)
 		So(err, ShouldBeNil)
 		fn(indices)
+	})
+}
+
+func pplIndexScenario(interval string, pattern string, fn func(index string)) {
+	Convey(fmt.Sprintf("Index pattern (interval=%s, index=%s", interval, pattern), func() {
+		ip, err := newIndexPattern(interval, pattern)
+		So(err, ShouldBeNil)
+		So(ip, ShouldNotBeNil)
+		index, err := ip.GetPPLIndex()
+		So(err, ShouldBeNil)
+		fn(index)
 	})
 }

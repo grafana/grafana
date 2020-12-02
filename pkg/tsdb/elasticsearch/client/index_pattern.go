@@ -20,6 +20,7 @@ const (
 
 type indexPattern interface {
 	GetIndices(timeRange *tsdb.TimeRange) ([]string, error)
+	GetPPLIndex() (string, error)
 }
 
 var newIndexPattern = func(interval string, pattern string) (indexPattern, error) {
@@ -36,6 +37,11 @@ type staticIndexPattern struct {
 
 func (ip *staticIndexPattern) GetIndices(timeRange *tsdb.TimeRange) ([]string, error) {
 	return []string{ip.indexName}, nil
+}
+
+//PPL static index pattern returns the indexName string
+func (ip *staticIndexPattern) GetPPLIndex() (string, error) {
+	return ip.indexName, nil
 }
 
 type intervalGenerator interface {
@@ -84,6 +90,22 @@ func (ip *dynamicIndexPattern) GetIndices(timeRange *tsdb.TimeRange) ([]string, 
 	}
 
 	return indices, nil
+}
+
+/// PPL currently does not support multi-indexing through lists, so a wildcard
+// pattern is used to match all patterns and relies on the time range filter
+// to filter out the incorrect indecies.
+func (ip *dynamicIndexPattern) GetPPLIndex() (string, error) {
+	index := ""
+
+	if strings.HasPrefix(ip.pattern, "[") {
+		parts := strings.Split(strings.TrimLeft(ip.pattern, "["), "]")
+		index = parts[0] + "*"
+	} else if strings.HasSuffix(ip.pattern, "]") {
+		parts := strings.Split(strings.TrimRight(ip.pattern, "]"), "[")
+		index = "*" + parts[1]
+	}
+	return index, nil
 }
 
 type hourlyInterval struct{}
