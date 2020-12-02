@@ -9,8 +9,13 @@ import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPane
 import { AlertingQueryEditor } from './components/AlertingQueryEditor';
 import { AlertDefinitionOptions } from './components/AlertDefinitionOptions';
 import { AlertingQueryPreview } from './components/AlertingQueryPreview';
-import { updateAlertDefinitionOption, createAlertDefinition, updateAlertDefinitionUiState } from './state/actions';
-import { AlertDefinition, AlertDefinitionUiState, StoreState } from '../../types';
+import {
+  updateAlertDefinitionOption,
+  createAlertDefinition,
+  updateAlertDefinitionUiState,
+  loadNotificationTypes,
+} from './state/actions';
+import { AlertDefinition, AlertDefinitionUiState, NotificationChannelType, StoreState } from '../../types';
 
 import { config } from 'app/core/config';
 
@@ -19,12 +24,14 @@ interface OwnProps {}
 interface ConnectedProps {
   alertDefinition: AlertDefinition;
   uiState: AlertDefinitionUiState;
+  notificationChannelTypes: NotificationChannelType[];
 }
 
 interface DispatchProps {
   createAlertDefinition: typeof createAlertDefinition;
   updateAlertDefinitionUiState: typeof updateAlertDefinitionUiState;
   updateAlertDefinitionOption: typeof updateAlertDefinitionOption;
+  loadNotificationTypes: typeof loadNotificationTypes;
 }
 
 interface State {}
@@ -33,6 +40,10 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 
 class NextGenAlertingPage extends PureComponent<Props, State> {
   state = { dataSources: [] };
+
+  componentDidMount() {
+    this.props.loadNotificationTypes();
+  }
 
   onChangeAlertOption = (event: FormEvent<HTMLFormElement>) => {
     this.props.updateAlertDefinitionOption({ [event.currentTarget.name]: event.currentTarget.value });
@@ -63,7 +74,7 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { uiState, updateAlertDefinitionUiState, alertDefinition } = this.props;
+    const { alertDefinition, notificationChannelTypes, uiState, updateAlertDefinitionUiState } = this.props;
     const styles = getStyles(config.theme);
 
     return (
@@ -79,7 +90,11 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
           uiState={uiState}
           updateUiState={updateAlertDefinitionUiState}
           rightPaneComponents={
-            <AlertDefinitionOptions alertDefinition={alertDefinition} onChange={this.onChangeAlertOption} />
+            <AlertDefinitionOptions
+              alertDefinition={alertDefinition}
+              onChange={this.onChangeAlertOption}
+              notificationChannelTypes={notificationChannelTypes}
+            />
           }
         />
       </div>
@@ -91,6 +106,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = s
   return {
     uiState: state.alertDefinition.uiState,
     alertDefinition: state.alertDefinition.alertDefinition,
+    notificationChannelTypes: state.notificationChannel.notificationChannelTypes,
   };
 };
 
@@ -98,6 +114,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   createAlertDefinition,
   updateAlertDefinitionUiState,
   updateAlertDefinitionOption,
+  loadNotificationTypes,
 };
 
 export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(NextGenAlertingPage));
