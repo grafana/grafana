@@ -35,7 +35,6 @@ func TestAnnotationCleanUp(t *testing.T) {
 		alertAnnotationCount     int64
 		dashboardAnnotationCount int64
 		APIAnnotationCount       int64
-		annotationTagCount       int64
 	}{
 		{
 			name: "default settings should not delete any annotations",
@@ -47,7 +46,6 @@ func TestAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     7,
 			dashboardAnnotationCount: 7,
 			APIAnnotationCount:       7,
-			annotationTagCount:       42,
 		},
 		{
 			name: "should remove annotations created before cut off point",
@@ -59,7 +57,6 @@ func TestAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     5,
 			dashboardAnnotationCount: 5,
 			APIAnnotationCount:       5,
-			annotationTagCount:       30,
 		},
 		{
 			name: "should only keep three annotations",
@@ -71,7 +68,6 @@ func TestAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     3,
 			dashboardAnnotationCount: 3,
 			APIAnnotationCount:       3,
-			annotationTagCount:       18,
 		},
 		{
 			name: "running the max count delete again should not remove any annotations",
@@ -83,7 +79,6 @@ func TestAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     3,
 			dashboardAnnotationCount: 3,
 			APIAnnotationCount:       3,
-			annotationTagCount:       18,
 		},
 	}
 
@@ -96,7 +91,12 @@ func TestAnnotationCleanUp(t *testing.T) {
 			assertAnnotationCount(t, fakeSQL, alertAnnotationType, test.alertAnnotationCount)
 			assertAnnotationCount(t, fakeSQL, dashboardAnnotationType, test.dashboardAnnotationCount)
 			assertAnnotationCount(t, fakeSQL, apiAnnotationType, test.APIAnnotationCount)
-			assertAnnotationTagCount(t, fakeSQL, test.annotationTagCount)
+
+			// we create two records in annotation_tag for each sample annotation
+			expectedAnnotationTagCount := (test.alertAnnotationCount +
+				test.dashboardAnnotationCount +
+				test.APIAnnotationCount) * 2
+			assertAnnotationTagCount(t, fakeSQL, expectedAnnotationTagCount)
 		})
 	}
 }
