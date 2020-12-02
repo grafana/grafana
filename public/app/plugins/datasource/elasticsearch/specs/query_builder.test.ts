@@ -196,7 +196,6 @@ describe('ElasticQueryBuilder', () => {
               id: '2',
               type: 'filters',
               settings: {
-                // TODO: Check if label can be undefined
                 filters: [
                   { query: '@metric:cpu', label: '' },
                   { query: '@metric:logins.count', label: '' },
@@ -331,7 +330,6 @@ describe('ElasticQueryBuilder', () => {
             {
               id: '4',
               type: 'moving_avg',
-              // TODO: This Moving Average is "broken" as it doesn't have a `field` property
             },
           ],
           bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],

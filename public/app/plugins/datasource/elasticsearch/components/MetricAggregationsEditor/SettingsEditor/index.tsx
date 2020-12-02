@@ -15,6 +15,7 @@ import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { useDescription } from './useDescription';
 import { MovingAverageSettingsEditor } from './MovingAverageSettingsEditor';
 import { uniqueId } from 'lodash';
+import { metricAggregationConfig } from '../utils';
 
 // TODO: Move this somewhere and share it with BucketsAggregation Editor
 const inlineFieldProps: Partial<ComponentProps<typeof InlineField>> = {
@@ -54,8 +55,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
         <InlineField label="Size" {...inlineFieldProps}>
           <Input
             onBlur={e => dispatch(changeMetricSetting(metric, 'size', e.target.value))}
-            // TODO: this should be set somewhere else
-            defaultValue={metric.settings?.size ?? '500'}
+            defaultValue={metric.settings?.size ?? metricAggregationConfig['raw_data'].defaults.settings?.size}
           />
         </InlineField>
       )}
@@ -71,7 +71,11 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
               key={stat.value}
               stat={stat}
               onChange={checked => dispatch(changeMetricMeta(metric, stat.value, checked))}
-              value={!!metric.meta?.[stat.value]}
+              value={
+                metric.meta?.[stat.value] !== undefined
+                  ? !!metric.meta?.[stat.value]
+                  : !!metricAggregationConfig['extended_stats'].defaults.meta?.[stat.value]
+              }
             />
           ))}
 
@@ -83,7 +87,9 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
         <InlineField label="Percentiles" {...inlineFieldProps}>
           <Input
             onBlur={e => dispatch(changeMetricSetting(metric, 'percents', e.target.value.split(',').filter(Boolean)))}
-            defaultValue={metric.settings?.percents}
+            defaultValue={
+              metric.settings?.percents || metricAggregationConfig['percentiles'].defaults.settings?.percents
+            }
             placeholder="1,5,25,50,75,95,99"
           />
         </InlineField>
@@ -98,7 +104,6 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
           label="Missing"
           metric={metric}
           settingName="missing"
-          // TODO: This should be better formatted.
           tooltip="The missing parameter defines how documents that are missing a value should be treated. By default
             they will be ignored but it is also possible to treat them as if they had a value"
         />

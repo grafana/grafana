@@ -1,7 +1,7 @@
 import { describeMetric } from '../../../utils';
 import { useQuery } from '../../ElasticsearchQueryContext';
 import { BucketAggregation } from '../aggregations';
-import { orderByOptions, orderOptions } from '../utils';
+import { bucketAggregationConfig, orderByOptions, orderOptions } from '../utils';
 
 const hasValue = (value: string) => (object: { value: string }) => object.value === value;
 
@@ -56,10 +56,8 @@ export const useDescription = (bucketAgg: BucketAggregation): string => {
     }
 
     case 'filters': {
-      // TODO: Check if this was intentional, as the previous version has some unused logic.
-      // TODO: Also, this default should get applied
-      const filters = bucketAgg.settings?.filters || [{ query: '*', label: '' }];
-      return `Filter Queries (${filters.length})`;
+      const filters = bucketAgg.settings?.filters || bucketAggregationConfig['filters'].defaultSettings?.filters;
+      return `Filter Queries (${filters!.length})`;
     }
 
     case 'geohash_grid': {

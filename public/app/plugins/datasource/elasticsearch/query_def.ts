@@ -41,16 +41,12 @@ export function hasMetricOfType(target: any, type: string): boolean {
   return target && target.metrics && target.metrics.some((m: any) => m.type === type);
 }
 
-/**
- * @deprecated TODO: Remove this, we should rely on type guards if possible
- */
+// Even if we have type guards when building a query, we currently have no way of getting this information from the response.
+// We should try to find a better (type safe) way of doing the followinf 2.
 export function isPipelineAgg(metricType: MetricAggregationType) {
   return metricType in pipelineOptions;
 }
 
-/**
- * @deprecated TODO: Remove this, we should rely on type guards if possible
- */
 export function isPipelineAggWithMultipleBucketPaths(metricType: MetricAggregationType) {
   return !!metricAggregationConfig[metricType].supportsMultipleBucketPaths;
 }

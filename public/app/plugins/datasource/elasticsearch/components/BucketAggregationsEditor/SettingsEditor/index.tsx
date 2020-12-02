@@ -92,7 +92,6 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
             <Select
               onChange={e => dispatch(changeBucketAggregationSetting(bucketAgg, 'interval', e.value!))}
               options={intervalOptions}
-              // TODO: Not sure we have a better way of handling custom values
               value={bucketAgg.settings?.interval || bucketAggregationConfig[bucketAgg.type].defaultSettings?.interval}
               allowCustomValue
             />

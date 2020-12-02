@@ -721,7 +721,6 @@ describe('ElasticResponse', () => {
               id: '2',
               type: 'filters',
               settings: {
-                // TODO: Check if label is required
                 filters: [
                   { query: '@metric:cpu', label: '' },
                   { query: '@metric:logins.count', label: '' },

@@ -22,7 +22,6 @@ interface MetricConfiguration<T extends MetricAggregationType> {
   minVersion?: number;
   maxVersion?: number;
   supportsMultipleBucketPaths: boolean;
-  // TODO: Maybe isSinglemetric is not necessary
   isSingleMetric?: boolean;
   hasSettings: boolean;
   hasMeta: boolean;

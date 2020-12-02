@@ -63,11 +63,10 @@ describe('ElasticDatasource', function(this: any) {
 
   const timeSrv: any = createTimeSrv('now-1h');
 
-  // TODO: This is temporary, when refactoring this test suite we should remove this cast.
   interface TestContext {
     ds: ElasticDatasource;
   }
-  const ctx: TestContext = {} as TestContext;
+  const ctx = {} as TestContext;
 
   function createTimeSrv(from: string) {
     const srv: any = {
@@ -277,7 +276,6 @@ describe('ElasticDatasource', function(this: any) {
             query: 'test',
           },
         ],
-        // TODO: Remove this cast
       } as DataQueryRequest<ElasticsearchQuery>;
 
       ctx.ds.query(query);
@@ -747,7 +745,6 @@ describe('ElasticDatasource', function(this: any) {
             query: 'test',
           },
         ],
-        // TODO: Remove this cast
       } as DataQueryRequest<ElasticsearchQuery>;
 
       ctx.ds.query(query);
