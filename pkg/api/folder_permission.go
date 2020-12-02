@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetFolderPermissionList(c *models.ReqContext) Response {
+func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) Response {
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
 	folder, err := s.GetFolderByUID(c.Params(":uid"))
 
@@ -31,7 +31,12 @@ func GetFolderPermissionList(c *models.ReqContext) Response {
 		return Error(500, "Failed to get folder permissions", err)
 	}
 
+	filteredAcls := make([]*models.DashboardAclInfoDTO, 0, len(acl))
 	for _, perm := range acl {
+		if dtos.IsHiddenUser(perm.UserLogin, c.SignedInUser, hs.Cfg) {
+			continue
+		}
+
 		perm.FolderId = folder.Id
 		perm.DashboardId = 0
 
@@ -44,12 +49,14 @@ func GetFolderPermissionList(c *models.ReqContext) Response {
 		if perm.Slug != "" {
 			perm.Url = models.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
 		}
+
+		filteredAcls = append(filteredAcls, perm)
 	}
 
-	return JSON(200, acl)
+	return JSON(200, filteredAcls)
 }
 
-func UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
+func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) Response {
 	if err := validatePermissionsUpdate(apiCmd); err != nil {
 		return Error(400, err.Error(), err)
 	}
@@ -86,6 +93,12 @@ func UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAc
 			Updated:     time.Now(),
 		})
 	}
+
+	hiddenACL, err := g.GetHiddenACL(hs.Cfg)
+	if err != nil {
+		return Error(500, "Error while retrieving hidden permissions", err)
+	}
+	cmd.Items = append(cmd.Items, hiddenACL...)
 
 	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, cmd.Items); err != nil || !okToUpdate {
 		if err != nil {

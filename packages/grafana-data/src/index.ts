@@ -13,4 +13,9 @@ export * from './text';
 export * from './valueFormats';
 export * from './field';
 export * from './events';
+export {
+  ValueMatcherOptions,
+  BasicValueMatcherOptions,
+  RangeValueMatcherOptions,
+} from './transformations/matchers/valueMatchers/types';
 export { PanelPlugin } from './panel/PanelPlugin';

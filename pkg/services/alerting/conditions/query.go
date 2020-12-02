@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/tsdb/prometheus"
+
 	gocontext "context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -159,11 +161,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 
 	resp, err := c.HandleRequest(context.Ctx, getDsInfo.Result, req)
 	if err != nil {
-		if errors.Is(err, gocontext.DeadlineExceeded) {
-			return nil, fmt.Errorf("alert execution exceeded the timeout")
-		}
-
-		return nil, fmt.Errorf("tsdb.HandleRequest() error %v", err)
+		return nil, toCustomError(err)
 	}
 
 	for _, v := range resp.Results {
@@ -359,4 +357,19 @@ func FrameToSeriesSlice(frame *data.Frame) (tsdb.TimeSeriesSlice, error) {
 	}
 
 	return seriesSlice, nil
+}
+
+func toCustomError(err error) error {
+	// is context timeout
+	if errors.Is(err, gocontext.DeadlineExceeded) {
+		return fmt.Errorf("alert execution exceeded the timeout")
+	}
+
+	// is Prometheus error
+	if prometheus.IsAPIError(err) {
+		return prometheus.ConvertAPIError(err)
+	}
+
+	// generic fallback
+	return fmt.Errorf("tsdb.HandleRequest() error %v", err)
 }

@@ -112,7 +112,13 @@ describe('<KeyValuesTable>', () => {
     const overlay = shallow(dropdown.prop('overlay'));
     // We have some wrappers here that dynamically inject specific component so we need to traverse a bit
     // here
-    const menu = shallow(overlay.prop('children')({ Menu: ({ children }) => <div>{children}</div> }));
+    const menu = shallow(
+      overlay.prop('children')({
+        Menu({ children }) {
+          return <div>{children}</div>;
+        },
+      })
+    );
     const anchors = menu.find(LinkValue);
     expect(anchors).toHaveLength(2);
     const firstAnchor = anchors.first();
