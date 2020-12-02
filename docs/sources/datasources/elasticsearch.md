@@ -75,11 +75,11 @@ number followed by a valid time identifier, e.g. `1m` (1 minute) or `30s` (30 se
 | `s`        | second      |
 | `ms`       | millisecond |
 
-### Piped processing language (PPL) support
+### Piped Processing Language (PPL) support
 
-PPL is available starting opendistro_sql 1.11.0.0. PPL support for Grafana can be enabled in the datasource configuration setting when Elasticsearch version is set to 7.0+. See [Open Distro for Elasticsearch SQL plugin](https://opendistro.github.io/for-elasticsearch-docs/docs/install/plugins/#sql) for plugin installation guide and [plugin compatibility](https://opendistro.github.io/for-elasticsearch-docs/docs/install/plugins/#plugin-compatibility) for version compatibility information.
+PPL is available starting opendistro_sql 1.11.0.0. PPL support for Grafana can be enabled in the data source configuration setting when Elasticsearch version is set to 7.0+. See [Open Distro for Elasticsearch SQL plugin](https://opendistro.github.io/for-elasticsearch-docs/docs/install/plugins/#sql) for plugin installation guide and [plugin compatibility](https://opendistro.github.io/for-elasticsearch-docs/docs/install/plugins/#plugin-compatibility) for version compatibility information.
 
-If PPL support is enabled, the Elasticsearch query editor will give you the option of using PPL query syntax instead of Lucene.
+If PPL support is enabled, then the Elasticsearch query editor provides the option of using PPL query syntax instead of Lucene.
 
 ### Logs (BETA)
 
@@ -106,17 +106,20 @@ Each data link configuration consists of:
 
 ![Elasticsearch Query Editor](/img/docs/elasticsearch/query_editor.png)
 
-The Elasticsearch query editor allows you to select multiple metrics and group by multiple terms or filters. Use the plus and minus icons to the right to add/remove
+The Elasticsearch query editor allows you to select multiple metrics and group by multiple terms or filters. Use the plus and minus icons to the right to add or remove
 metrics or group by clauses. Some metrics and group by clauses haves options, click the option text to expand the row to view and edit metric or group by options.
 
 ## PPL Query editor
 
-The Elasticsearch query editor allows you to write PPL queries if PPL support is enabled. Select PPL in the dropdown menu next to the query input field to switch to the PPL query editor.
-PPL queries can be written in the query input field.
-If the input field is empty, a default query of `source=<index>` will be used, where `<index>` is the index configured in the data source settings.
-There are three query format options available: `Table`, `Logs`, and `Time series`.
-For `Table` and `Logs` formats, any PPL query can be used. For `Time series` format, the PPL query must return two fields.
-One field must have a type of either `date`, `time`, `datetime`, or `timestamp`. The other field must have numeric datatype as values.
+The Elasticsearch query editor allows you to write PPL queries. Select PPL in the drop-down menu next to the query input field to switch to the PPL query editor.
+
+Write PPL queries in the query input field.
+
+If the input field is empty, then a default query of `source=<index>` is used, where `<index>` is the index configured in the data source settings.
+There are three query format options available: 
+- **Table -** Accepts any PPL query.
+- **Logs -** Accepts any PPL query.
+- **Time series -** The PPL query must return two fields. One field must have a `date`, `time`, `datetime`, or `timestamp` data type. The other field must contain a value with a numeric data type.
 
 ## Series naming and alias patterns
 
