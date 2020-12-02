@@ -24,6 +24,7 @@ import { SortedVector } from '../vector/SortedVector';
 import { ArrayDataFrame } from './ArrayDataFrame';
 import { getFieldDisplayName } from '../field/fieldState';
 import { fieldIndexComparer } from '../field/fieldComparers';
+import { vectorToArray } from '../vector/vectorToArray';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
@@ -443,11 +444,16 @@ export function getDataFrameRow(data: DataFrame, row: number): any[] {
  */
 export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
   const fields: FieldDTO[] = data.fields.map(f => {
+    let values = f.values.toArray();
+    // The byte buffers serialize like objects
+    if (values instanceof Float64Array) {
+      values = vectorToArray(f.values);
+    }
     return {
       name: f.name,
       type: f.type,
       config: f.config,
-      values: f.values.toArray(),
+      values,
       labels: f.labels,
     };
   });

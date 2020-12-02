@@ -76,7 +76,7 @@ describe('GEL Utils', () => {
               "labels": undefined,
               "name": "",
               "type": "number",
-              "values": Array [
+              "values": Float64Array [
                 3,
                 3,
                 3,
@@ -142,7 +142,7 @@ describe('GEL Utils', () => {
               "labels": undefined,
               "name": "numbers",
               "type": "number",
-              "values": Array [
+              "values": Float64Array [
                 1,
                 3,
               ],

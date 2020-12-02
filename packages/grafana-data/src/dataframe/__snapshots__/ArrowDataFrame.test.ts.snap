@@ -291,7 +291,7 @@ Object {
       "labels": undefined,
       "name": "float64_values",
       "type": "number",
-      "values": Float64Array [
+      "values": Array [
         5e-324,
         -9007199254740991,
         1,
