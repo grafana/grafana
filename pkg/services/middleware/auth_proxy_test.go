@@ -33,7 +33,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 		cmd.Result = &models.User{Id: userID}
 		return nil
 	}
-	getSignedUserHandler := func(cmd *models.GetSignedInUserQuery) error {
+	getUserHandler := func(cmd *models.GetSignedInUserQuery) error {
 		// Simulate that the cached user ID is stale
 		if cmd.UserId != userID {
 			return models.ErrUserNotFound
@@ -86,7 +86,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	require.NoError(t, err)
 
 	bus.AddHandler("", upsertHandler)
-	bus.AddHandler("", getSignedUserHandler)
+	bus.AddHandler("", getUserHandler)
 	t.Cleanup(func() {
 		bus.ClearBusHandlers()
 	})

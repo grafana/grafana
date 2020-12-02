@@ -17,7 +17,6 @@ package middleware
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"

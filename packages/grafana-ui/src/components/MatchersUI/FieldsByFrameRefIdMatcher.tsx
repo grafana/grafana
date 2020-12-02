@@ -26,6 +26,8 @@ export const FieldsByFrameRefIdMatcher = memo<MatcherUIProps<string>>(props => {
   return <Select value={selectedOption} options={selectOptions} onChange={onChange} />;
 });
 
+FieldsByFrameRefIdMatcher.displayName = 'FieldsByFrameRefIdMatcher';
+
 /**
  * Registry item for UI to configure "fields by frame refId"-matcher.
  * @public

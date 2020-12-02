@@ -17,7 +17,7 @@ type Descriptor struct {
 var services []*Descriptor
 
 func RegisterServiceWithPriority(instance Service, priority Priority) {
-	services = append(services, &Descriptor{
+	Register(&Descriptor{
 		Name:         reflect.TypeOf(instance).Elem().Name(),
 		Instance:     instance,
 		InitPriority: priority,
@@ -25,12 +25,11 @@ func RegisterServiceWithPriority(instance Service, priority Priority) {
 }
 
 func RegisterService(instance Service) {
-	desc := &Descriptor{
+	Register(&Descriptor{
 		Name:         reflect.TypeOf(instance).Elem().Name(),
 		Instance:     instance,
 		InitPriority: Medium,
-	}
-	Register(desc)
+	})
 }
 
 func Register(descriptor *Descriptor) {

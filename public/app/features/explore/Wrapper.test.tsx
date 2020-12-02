@@ -28,7 +28,9 @@ type Mock = jest.Mock;
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,
-    default: (props: any) => <div>{props.children({ width: 1000 })}</div>,
+    default(props: any) {
+      return <div>{props.children({ width: 1000 })}</div>;
+    },
   };
 });
 
@@ -273,11 +275,13 @@ function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: nu
     },
     api: {
       components: {
-        QueryEditor: (props: QueryEditorProps<LokiDatasource, LokiQuery>) => (
-          <div>
-            {name} Editor input: {props.query.expr}
-          </div>
-        ),
+        QueryEditor(props: QueryEditorProps<LokiDatasource, LokiQuery>) {
+          return (
+            <div>
+              {name} Editor input: {props.query.expr}
+            </div>
+          );
+        },
       },
       name: name,
       query: jest.fn(),

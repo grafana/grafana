@@ -60,7 +60,7 @@ type SQLStore struct {
 }
 
 // Register registers the SQLStore service with the DI system.
-func (ss *SqlStore) Register() {
+func (ss *SQLStore) Register() {
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.

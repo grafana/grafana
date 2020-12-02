@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/middleware/authproxy"
@@ -260,7 +261,7 @@ func (s *MiddlewareService) initContextWithAuthProxy(ctx *models.ReqContext, org
 	}
 
 	// Check if allowed to continue with this IP
-	if result, err := auth.IsAllowedIP(); !result {
+	if err := auth.IsAllowedIP(); err != nil {
 		logger.Error(
 			"Failed to check whitelisted IP addresses",
 			"message", err.Error(),
@@ -384,8 +385,14 @@ func (s *MiddlewareService) rotateEndOfRequestFunc(ctx *models.ReqContext, token
 			return
 		}
 
+		addr := ctx.RemoteAddr()
+		ip, err := network.GetIPFromAddress(addr)
+		if err != nil {
+			s.logger.Debug("Failed to get IP from client address", "addr", addr)
+			ip = nil
+		}
 		rotated, err := s.AuthTokenService.TryRotateToken(
-			ctx.Req.Context(), token, ctx.RemoteAddr(), ctx.Req.UserAgent(),
+			ctx.Req.Context(), token, ip, ctx.Req.UserAgent(),
 		)
 		if err != nil {
 			ctx.Logger.Error("Failed to rotate token", "error", err)
