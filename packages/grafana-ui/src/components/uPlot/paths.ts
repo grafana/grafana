@@ -1,6 +1,6 @@
 import uPlot, { Series } from 'uplot';
 
-export function Bars(u: uPlot, seriesIdx: number, idx0: number, idx1: number): Series.Paths {
+export const barsBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
   const series = u.series[seriesIdx];
   const xdata = u.data[0];
   const ydata = u.data[seriesIdx];
@@ -51,9 +51,9 @@ export function Bars(u: uPlot, seriesIdx: number, idx0: number, idx1: number): S
     stroke,
     fill,
   };
-}
+};
 
-export function Staircase(u: uPlot, seriesIdx: number, idx0: number, idx1: number): Series.Paths {
+export const staircaseBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
   const series = u.series[seriesIdx];
   const xdata = u.data[0];
   const ydata = u.data[seriesIdx];
@@ -93,7 +93,7 @@ export function Staircase(u: uPlot, seriesIdx: number, idx0: number, idx1: numbe
     stroke,
     fill,
   };
-}
+};
 
 // adapted from https://gist.github.com/nicholaswmin/c2661eb11cad5671d816 (MIT)
 /**
@@ -217,7 +217,7 @@ function catmullRomFitting(xCoords: number[], yCoords: number[], alpha: number) 
   return path;
 }
 
-export function Smooth(u: uPlot, seriesIdx: number, idx0: number, idx1: number): Series.Paths {
+export const smoothBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
   const series = u.series[seriesIdx];
   const xdata = u.data[0];
   const ydata = u.data[seriesIdx];
@@ -254,4 +254,4 @@ export function Smooth(u: uPlot, seriesIdx: number, idx0: number, idx1: number):
     stroke,
     fill,
   };
-}
+};
