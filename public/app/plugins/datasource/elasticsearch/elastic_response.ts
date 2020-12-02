@@ -541,31 +541,19 @@ export class ElasticResponse {
   processPPLResponseToSeries = () => {
     const target = this.targets[0];
     const response = this.response;
-    // We check if any valid date type is contained in the response
-    const timeFieldIndex = _.findIndex(
-      response.schema,
-      (field: { type: string }) =>
-        field.type === 'timestamp' || field.type === 'datetime' || field.type === 'date' || field.type === 'time'
-    );
-    const valueIndex = timeFieldIndex === 0 ? 1 : 0;
+    // Get the data points and target that will be inputted to newSeries
+    const { datapoints, targetVal, invalidTS } = getPPLDatapoints(response);
 
-    //time series response should include a value field and timestamp
-    if (timeFieldIndex === -1 || response.datarows[0].length !== 2 || isNaN(response.datarows[0][valueIndex])) {
+    // We throw an error if the inputted query is not valid
+    if (invalidTS) {
       throw this.getInvalidPPLQuery(this.response);
     }
-
-    const datapoints = _.map(response.datarows, datarow => {
-      const newDatarow = _.clone(datarow);
-      const [timestamp] = newDatarow.splice(timeFieldIndex, 1);
-      newDatarow.push(dateTime(timestamp).unix() * 1000);
-      return newDatarow;
-    });
 
     const newSeries = {
       datapoints,
       props: response.schema,
       refId: target.refId,
-      target: response.schema[valueIndex].name,
+      target: targetVal,
     };
 
     return { data: [newSeries], key: this.targets[0]?.refId };
@@ -612,6 +600,39 @@ const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames
 
   propNames.sort();
   return { docs, propNames };
+};
+
+/**
+ * Returns the datapoints and target needed for parsing PPL time series response.
+ * Also checks to ensure the query is a valid time series query
+ * @param responses
+ */
+const getPPLDatapoints = (response: any): { datapoints: any; targetVal: any; invalidTS: boolean } => {
+  let invalidTS = false;
+
+  // We check if a valid date type is contained in the response
+  const timeFieldIndex = _.findIndex(
+    response.schema,
+    (field: { type: string }) => field.type === 'timestamp' || field.type === 'datetime' || field.type === 'date'
+  );
+
+  const valueIndex = timeFieldIndex === 0 ? 1 : 0;
+
+  //time series response should include a value field and timestamp
+  if (timeFieldIndex === -1 || response.datarows[0].length !== 2 || isNaN(response.datarows[0][valueIndex])) {
+    invalidTS = true;
+  }
+
+  const datapoints = _.map(response.datarows, datarow => {
+    const newDatarow = _.clone(datarow);
+    const [timestamp] = newDatarow.splice(timeFieldIndex, 1);
+    newDatarow.push(dateTime(timestamp).unix() * 1000);
+    return newDatarow;
+  });
+
+  const targetVal = response.schema[valueIndex].name;
+
+  return { datapoints, targetVal, invalidTS };
 };
 
 /**
