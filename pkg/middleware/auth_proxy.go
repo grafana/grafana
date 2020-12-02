@@ -5,23 +5,46 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	authproxy "github.com/grafana/grafana/pkg/middleware/auth_proxy"
+	"github.com/grafana/grafana/pkg/middleware/authproxy"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var header = setting.AuthProxyHeaderName
 
-func logUserIn(auth *authproxy.AuthProxy, username string, logger log.Logger, ignoreCache bool) (int64, *authproxy.Error) {
+func logUserIn(auth *authproxy.AuthProxy, username string, logger log.Logger, ignoreCache bool) (int64, error) {
 	logger.Debug("Trying to log user in", "username", username, "ignoreCache", ignoreCache)
 	// Try to log in user via various providers
-	id, e := auth.Login(logger, ignoreCache)
-	if e != nil {
-		logger.Error("Failed to login", "username", username, "message", e.Error(), "error", e.DetailsError,
+	id, err := auth.Login(logger, ignoreCache)
+	if err != nil {
+		details := err
+		var e authproxy.Error
+		if errors.As(err, &e) {
+			details = e.DetailsError
+		}
+		logger.Error("Failed to login", "username", username, "message", err.Error(), "error", details,
 			"ignoreCache", ignoreCache)
-		return 0, e
+		return 0, err
 	}
 	return id, nil
+}
+
+// handleError calls ctx.Handle with the error message and the underlying error.
+// If the error is of type authproxy.Error, its DetailsError is unwrapped and passed to ctx.Handle.
+// If a callback is provided, it's called with either err.DetailsError, if err is of type
+// authproxy.Error, otherwise err itself.
+func handleError(ctx *models.ReqContext, err error, statusCode int, cb func(err error)) {
+	details := err
+	var e authproxy.Error
+	if errors.As(err, &e) {
+		details = e.DetailsError
+	}
+
+	ctx.Handle(statusCode, err.Error(), details)
+
+	if cb != nil {
+		cb(details)
+	}
 }
 
 func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *models.ReqContext, orgID int64) bool {
@@ -45,19 +68,16 @@ func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *models.ReqCon
 	}
 
 	// Check if allowed to continue with this IP
-	if result, err := auth.IsAllowedIP(); !result {
-		logger.Error(
-			"Failed to check whitelisted IP addresses",
-			"message", err.Error(),
-			"error", err.DetailsError,
-		)
-		ctx.Handle(407, err.Error(), err.DetailsError)
+	if err := auth.IsAllowedIP(); err != nil {
+		handleError(ctx, err, 407, func(details error) {
+			logger.Error("Failed to check whitelisted IP addresses", "message", err.Error(), "error", details)
+		})
 		return true
 	}
 
-	id, e := logUserIn(auth, username, logger, false)
-	if e != nil {
-		ctx.Handle(407, e.Error(), e.DetailsError)
+	id, err := logUserIn(auth, username, logger, false)
+	if err != nil {
+		handleError(ctx, err, 407, nil)
 		return true
 	}
 
@@ -76,15 +96,16 @@ func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *models.ReqCon
 				logger.Error("Got unexpected error when removing user from auth cache", "error", err)
 			}
 		}
-		id, e = logUserIn(auth, username, logger, true)
-		if e != nil {
-			ctx.Handle(407, e.Error(), e.DetailsError)
+		id, err = logUserIn(auth, username, logger, true)
+		if err != nil {
+			handleError(ctx, err, 407, nil)
 			return true
 		}
 
-		user, e = auth.GetSignedUser(id)
-		if e != nil {
-			ctx.Handle(407, e.Error(), e.DetailsError)
+		user, err = auth.GetSignedUser(id)
+		if err != nil {
+			handleError(ctx, err, 407, nil)
+
 			return true
 		}
 	}
@@ -96,14 +117,15 @@ func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *models.ReqCon
 	ctx.IsSignedIn = true
 
 	// Remember user data in cache
-	if e := auth.Remember(id); e != nil {
-		logger.Error(
-			"Failed to store user in cache",
-			"username", username,
-			"message", e.Error(),
-			"error", e.DetailsError,
-		)
-		ctx.Handle(500, e.Error(), e.DetailsError)
+	if err := auth.Remember(id); err != nil {
+		handleError(ctx, err, 500, func(details error) {
+			logger.Error(
+				"Failed to store user in cache",
+				"username", username,
+				"message", e.Error(),
+				"error", details,
+			)
+		})
 		return true
 	}
 

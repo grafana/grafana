@@ -5,6 +5,7 @@ import { connectWithProvider } from 'app/core/utils/connectWithReduxStore';
 import { provideModalsContext } from 'app/routes/ReactContainer';
 import { SaveDashboardAsModal } from './SaveDashboardAsModal';
 import { SaveDashboardModalProxy } from './SaveDashboardModalProxy';
+import { selectors } from '@grafana/e2e-selectors';
 
 interface SaveDashboardButtonProps {
   dashboard: DashboardModel;
@@ -30,6 +31,7 @@ export const SaveDashboardButton: React.FC<SaveDashboardButtonProps> = ({ dashbo
                 onDismiss: hideModal,
               });
             }}
+            aria-label={selectors.pages.Dashboard.Settings.General.saveDashBoard}
           >
             Save dashboard
           </Button>
@@ -63,6 +65,7 @@ export const SaveDashboardAsButton: React.FC<SaveDashboardButtonProps & { varian
               // In Dashboard Settings in sidebar we need to use new form but with inverse variant to make it look like it should
               // Everywhere else we use old button component :(
               variant={variant as ButtonVariant}
+              aria-label={selectors.pages.Dashboard.Settings.General.saveAsDashBoard}
             >
               Save As...
             </Button>
