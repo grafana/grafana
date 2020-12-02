@@ -314,3 +314,53 @@ func (a *PipelineAggregation) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal(root)
 }
+
+type pplresponse struct {
+	httpResponse *http.Response
+	reqInfo      *PPLRequestInfo
+}
+
+type PPLRequestInfo struct {
+	Method string `json:"method"`
+	Url    string `json:"url"`
+	Data   string `json:"data"`
+}
+
+type PPLResponseInfo struct {
+	Status int              `json:"status"`
+	Data   *simplejson.Json `json:"data"`
+}
+
+type PPLDebugInfo struct {
+	Request  *PPLRequestInfo  `json:"request"`
+	Response *PPLResponseInfo `json:"response"`
+}
+
+// PPLQuery represents the PPL query object
+type PPLQuery struct {
+	Query string
+}
+
+// MarshalJSON returns the JSON encoding of the PPL query string filter.
+func (f *PPLQuery) MarshalJSON() ([]byte, error) {
+	root := map[string]interface{}{
+		"query": f.Query,
+	}
+
+	return json.Marshal(root)
+}
+
+type Datarow []interface{}
+
+// PPLResponseData represents a PPL response
+type PPLResponseData struct {
+	Schema   []map[string]interface{} `json:"schema"`
+	Datarows []Datarow                `json:"datarows"`
+}
+
+// PPLResponse represents a PPL response
+type PPLResponse struct {
+	Status    int                `json:"status,omitempty"`
+	Responses []*PPLResponseData `json:"responses"`
+	DebugInfo *PPLDebugInfo      `json:"-"`
+}
