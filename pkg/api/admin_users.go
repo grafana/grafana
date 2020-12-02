@@ -95,7 +95,7 @@ func AdminUpdateUserPermissions(c *models.ReqContext, form dtos.AdminUpdateUserP
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrLastGrafanaAdmin {
+		if errors.Is(err, models.ErrLastGrafanaAdmin) {
 			return Error(400, models.ErrLastGrafanaAdmin.Error(), nil)
 		}
 
@@ -111,7 +111,7 @@ func AdminDeleteUser(c *models.ReqContext) Response {
 	cmd := models.DeleteUserCommand{UserId: userID}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrUserNotFound {
+		if errors.Is(err, models.ErrUserNotFound) {
 			return Error(404, models.ErrUserNotFound.Error(), nil)
 		}
 		return Error(500, "Failed to delete user", err)
@@ -121,24 +121,24 @@ func AdminDeleteUser(c *models.ReqContext) Response {
 }
 
 // POST /api/admin/users/:id/disable
-func (server *HTTPServer) AdminDisableUser(c *models.ReqContext) Response {
+func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) Response {
 	userID := c.ParamsInt64(":id")
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.Dispatch(authInfoQuery); err != models.ErrUserNotFound {
+	if err := bus.Dispatch(authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
 		return Error(500, "Could not disable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: true}
 	if err := bus.Dispatch(&disableCmd); err != nil {
-		if err == models.ErrUserNotFound {
+		if errors.Is(err, models.ErrUserNotFound) {
 			return Error(404, models.ErrUserNotFound.Error(), nil)
 		}
 		return Error(500, "Failed to disable user", err)
 	}
 
-	err := server.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userID)
+	err := hs.AuthTokenService.RevokeAllUserTokens(c.Req.Context(), userID)
 	if err != nil {
 		return Error(500, "Failed to disable user", err)
 	}
@@ -152,13 +152,13 @@ func AdminEnableUser(c *models.ReqContext) Response {
 
 	// External users shouldn't be disabled from API
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
-	if err := bus.Dispatch(authInfoQuery); err != models.ErrUserNotFound {
+	if err := bus.Dispatch(authInfoQuery); !errors.Is(err, models.ErrUserNotFound) {
 		return Error(500, "Could not enable external user", nil)
 	}
 
 	disableCmd := models.DisableUserCommand{UserId: userID, IsDisabled: false}
 	if err := bus.Dispatch(&disableCmd); err != nil {
-		if err == models.ErrUserNotFound {
+		if errors.Is(err, models.ErrUserNotFound) {
 			return Error(404, models.ErrUserNotFound.Error(), nil)
 		}
 		return Error(500, "Failed to enable user", err)
@@ -168,24 +168,24 @@ func AdminEnableUser(c *models.ReqContext) Response {
 }
 
 // POST /api/admin/users/:id/logout
-func (server *HTTPServer) AdminLogoutUser(c *models.ReqContext) Response {
+func (hs *HTTPServer) AdminLogoutUser(c *models.ReqContext) Response {
 	userID := c.ParamsInt64(":id")
 
 	if c.UserId == userID {
 		return Error(400, "You cannot logout yourself", nil)
 	}
 
-	return server.logoutUserFromAllDevicesInternal(c.Req.Context(), userID)
+	return hs.logoutUserFromAllDevicesInternal(c.Req.Context(), userID)
 }
 
 // GET /api/admin/users/:id/auth-tokens
-func (server *HTTPServer) AdminGetUserAuthTokens(c *models.ReqContext) Response {
+func (hs *HTTPServer) AdminGetUserAuthTokens(c *models.ReqContext) Response {
 	userID := c.ParamsInt64(":id")
-	return server.getUserAuthTokensInternal(c, userID)
+	return hs.getUserAuthTokensInternal(c, userID)
 }
 
 // POST /api/admin/users/:id/revoke-auth-token
-func (server *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext, cmd models.RevokeAuthTokenCmd) Response {
+func (hs *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext, cmd models.RevokeAuthTokenCmd) Response {
 	userID := c.ParamsInt64(":id")
-	return server.revokeUserAuthTokenInternal(c, userID, cmd)
+	return hs.revokeUserAuthTokenInternal(c, userID, cmd)
 }

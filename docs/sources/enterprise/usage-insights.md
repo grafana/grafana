@@ -3,10 +3,6 @@ title = "Usage-insights"
 description = "Usage-insights"
 keywords = ["grafana", "usage-insights", "enterprise"]
 aliases = ["/docs/grafana/latest/enterprise/usage-insights/"]
-type = "docs"
-[menu.docs]
-name = "Usage-insights"
-parent = "enterprise"
 weight = 700
 +++
 
@@ -24,7 +20,7 @@ Usage insights allow you to have a better understanding of how your Grafana inst
 
 The presence indicator is visible to all signed-in users on all dashboards. It shows the avatars of users who interacted with the dashboard recently (last 10 minutes by default). You can see the user's name by hovering your cursor over the user's avatar. The avatars come from [Gravatar](https://gravatar.com) based on the user's email.
 
-When more users are active on a dashboard than can fit in the presence indicator section, click on the `+X` icon that opens [dashboard insights]({{< relref "#dashboard-insights" >}}) to see more details about recent user activity. 
+When more users are active on a dashboard than can fit in the presence indicator section, click on the `+X` icon that opens [dashboard insights]({{< relref "#dashboard-insights" >}}) to see more details about recent user activity.
 
 {{< docs-imagebox img="/img/docs/enterprise/presence_indicators.png" max-width="400px" class="docs-image--no-shadow" >}}
 

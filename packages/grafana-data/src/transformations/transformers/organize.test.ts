@@ -8,7 +8,6 @@ import {
 } from '@grafana/data';
 import { organizeFieldsTransformer, OrganizeFieldsTransformerOptions } from './organize';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { observableTester } from '../../utils/tests/observableTester';
 
 describe('OrganizeFields Transformer', () => {
   beforeAll(() => {
@@ -25,7 +24,7 @@ describe('OrganizeFields Transformer', () => {
       ],
     });
 
-    it('should order and filter according to config', done => {
+    it('should order and filter according to config', async () => {
       const cfg: DataTransformerConfig<OrganizeFieldsTransformerOptions> = {
         id: DataTransformerID.organize,
         options: {
@@ -43,36 +42,33 @@ describe('OrganizeFields Transformer', () => {
         },
       };
 
-      observableTester().subscribeAndExpectOnNext({
-        observable: transformDataFrame([cfg], [data]),
-        expect: data => {
-          const organized = data[0];
-          expect(organized.fields).toEqual([
-            {
-              config: {},
-              labels: undefined,
-              name: 'temperature',
-              state: {
-                displayName: 'temperature',
-              },
-              type: FieldType.number,
-              values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith(received => {
+        const data = received[0];
+        const organized = data[0];
+        expect(organized.fields).toEqual([
+          {
+            config: {},
+            labels: undefined,
+            name: 'temperature',
+            state: {
+              displayName: 'temperature',
             },
-            {
-              config: {
-                displayName: 'renamed_humidity',
-              },
-              labels: undefined,
-              name: 'humidity',
-              state: {
-                displayName: 'renamed_humidity',
-              },
-              type: FieldType.number,
-              values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6]),
+            type: FieldType.number,
+            values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
+          },
+          {
+            config: {
+              displayName: 'renamed_humidity',
             },
-          ]);
-        },
-        done,
+            labels: undefined,
+            name: 'humidity',
+            state: {
+              displayName: 'renamed_humidity',
+            },
+            type: FieldType.number,
+            values: new ArrayVector([10000.3, 10000.4, 10000.5, 10000.6]),
+          },
+        ]);
       });
     });
   });
@@ -87,7 +83,7 @@ describe('OrganizeFields Transformer', () => {
       ],
     });
 
-    it('should append fields missing in config at the end', done => {
+    it('should append fields missing in config at the end', async () => {
       const cfg: DataTransformerConfig<OrganizeFieldsTransformerOptions> = {
         id: DataTransformerID.organize,
         options: {
@@ -105,36 +101,33 @@ describe('OrganizeFields Transformer', () => {
         },
       };
 
-      observableTester().subscribeAndExpectOnNext({
-        observable: transformDataFrame([cfg], [data]),
-        expect: data => {
-          const organized = data[0];
-          expect(organized.fields).toEqual([
-            {
-              labels: undefined,
-              config: {
-                displayName: 'renamed_time',
-              },
-              name: 'time',
-              state: {
-                displayName: 'renamed_time',
-              },
-              type: FieldType.time,
-              values: new ArrayVector([3000, 4000, 5000, 6000]),
+      await expect(transformDataFrame([cfg], [data])).toEmitValuesWith(received => {
+        const data = received[0];
+        const organized = data[0];
+        expect(organized.fields).toEqual([
+          {
+            labels: undefined,
+            config: {
+              displayName: 'renamed_time',
             },
-            {
-              config: {},
-              labels: undefined,
-              name: 'pressure',
-              state: {
-                displayName: 'pressure',
-              },
-              type: FieldType.number,
-              values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
+            name: 'time',
+            state: {
+              displayName: 'renamed_time',
             },
-          ]);
-        },
-        done,
+            type: FieldType.time,
+            values: new ArrayVector([3000, 4000, 5000, 6000]),
+          },
+          {
+            config: {},
+            labels: undefined,
+            name: 'pressure',
+            state: {
+              displayName: 'pressure',
+            },
+            type: FieldType.number,
+            values: new ArrayVector([10.3, 10.4, 10.5, 10.6]),
+          },
+        ]);
       });
     });
   });

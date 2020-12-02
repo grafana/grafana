@@ -27,7 +27,7 @@ describe('searchForTags', () => {
     it('then tags from link should be used in search and limit should be 100', async () => {
       const { link, backendSrv } = setupTestContext();
 
-      const results = await searchForTags(link, { getBackendSrv: () => backendSrv });
+      const results = await searchForTags(link.tags, { getBackendSrv: () => backendSrv });
 
       expect(results.length).toEqual(0);
       expect(backendSrv.search).toHaveBeenCalledWith({ tag: ['A', 'B'], limit: 100 });

@@ -1,7 +1,7 @@
 +++
 title = "Developers"
-type = "docs"
 aliases = ["/docs/plugins/developing/"]
+weight = 190
 +++
 
 # Developers

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -20,7 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	authproxy "github.com/grafana/grafana/pkg/middleware/auth_proxy"
+	"github.com/grafana/grafana/pkg/middleware/authproxy"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -249,7 +250,8 @@ func TestMiddlewareContext(t *testing.T) {
 				}, nil
 			}
 
-			sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *models.UserToken, clientIP, userAgent string) (bool, error) {
+			sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *models.UserToken,
+				clientIP net.IP, userAgent string) (bool, error) {
 				userToken.UnhashedToken = "rotated"
 				return true, nil
 			}
@@ -574,7 +576,9 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
 			} else {
-				c.JsonOK("OK")
+				resp := make(map[string]interface{})
+				resp["message"] = "OK"
+				c.JSON(200, resp)
 			}
 		}
 
@@ -591,7 +595,8 @@ func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 
 	tryRotateCallCount := 0
 	uts := &auth.FakeUserAuthTokenService{
-		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
+		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP net.IP,
+			userAgent string) (bool, error) {
 			tryRotateCallCount++
 			return false, nil
 		},
@@ -611,7 +616,8 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	require.NoError(t, err)
 
 	uts := &auth.FakeUserAuthTokenService{
-		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP, userAgent string) (bool, error) {
+		TryRotateTokenProvider: func(ctx context.Context, token *models.UserToken, clientIP net.IP,
+			userAgent string) (bool, error) {
 			newToken, err := util.RandomHex(16)
 			require.NoError(t, err)
 			token.AuthToken = newToken

@@ -70,7 +70,7 @@ func NewImageUploader() (ImageUploader, error) {
 
 		url := webdavSec.Key("url").String()
 		if url == "" {
-			return nil, fmt.Errorf("Could not find url key for image.uploader.webdav")
+			return nil, fmt.Errorf("could not find URL key for image.uploader.webdav")
 		}
 
 		public_url := webdavSec.Key("public_url").String()
@@ -153,5 +153,5 @@ func getRegionAndBucketFromUrl(url string) (*s3Info, error) {
 		return info, nil
 	}
 
-	return nil, fmt.Errorf("Could not find bucket setting for image.uploader.s3")
+	return nil, fmt.Errorf("could not find bucket setting for image.uploader.s3")
 }

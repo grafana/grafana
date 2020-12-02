@@ -243,11 +243,17 @@ class GraphElement {
       return;
     }
 
-    if ((pos.ctrlKey || pos.metaKey) && (this.dashboard.meta.canEdit || this.dashboard.meta.canMakeEditable)) {
+    if (pos.ctrlKey || pos.metaKey) {
       // Skip if range selected (added in "plotselected" event handler)
       if (pos.x !== pos.x1) {
         return;
       }
+
+      // skip if dashboard is not saved yet (exists in db) or user cannot edit
+      if (!this.dashboard.id || (!this.dashboard.meta.canEdit && !this.dashboard.meta.canMakeEditable)) {
+        return;
+      }
+
       setTimeout(() => {
         this.eventManager.updateTime({ from: pos.x, to: null });
       }, 100);

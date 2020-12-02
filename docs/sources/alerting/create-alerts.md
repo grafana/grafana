@@ -2,11 +2,6 @@
 title = "Create alerts"
 description = "Configure alert rules"
 keywords = ["grafana", "alerting", "guide", "rules"]
-type = "docs"
-[menu.docs]
-name = "Create alerts"
-identifier = "create-alerts"
-parent = "alerting"
 weight = 200
 +++
 

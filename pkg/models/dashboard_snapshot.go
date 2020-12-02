@@ -90,7 +90,6 @@ type GetDashboardSnapshotQuery struct {
 	Result *DashboardSnapshot
 }
 
-type DashboardSnapshots []*DashboardSnapshot
 type DashboardSnapshotsList []*DashboardSnapshotDTO
 
 type GetDashboardSnapshotsQuery struct {

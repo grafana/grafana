@@ -11,16 +11,9 @@ import { DataQuery, RawTimeRange, TimeRange, TimeZone } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
-import {
-  cancelQueries,
-  changeDatasource,
-  changeRefreshInterval,
-  clearQueries,
-  runQueries,
-  splitClose,
-  splitOpen,
-  syncTimes,
-} from './state/actions';
+import { changeDatasource } from './state/datasource';
+import { splitClose, splitOpen } from './state/main';
+import { syncTimes, changeRefreshInterval } from './state/time';
 import { updateLocation } from 'app/core/actions';
 import { getTimeZone } from '../profile/state/selectors';
 import { updateTimeZoneForSession } from '../profile/state/reducers';
@@ -33,6 +26,7 @@ import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
 import { getExploreDatasources } from './state/selectors';
 import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
+import { cancelQueries, clearQueries, runQueries } from './state/query';
 
 const { ButtonSelect } = LegacyForms;
 
@@ -170,7 +164,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       isLive,
       isPaused,
       originPanelId,
-      datasourceLoading,
       containerWidth,
       onChangeTimeZone,
     } = this.props;
@@ -223,7 +216,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                     onChange={this.onChangeDatasource}
                     datasources={getExploreDatasources()}
                     current={this.getSelectedDatasource()}
-                    showLoading={datasourceLoading === true}
                     hideTextValue={showSmallDataSourcePicker}
                   />
                 </div>
@@ -348,7 +340,6 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     isPaused,
     originPanelId,
     queries,
-    datasourceLoading,
     containerWidth,
   } = exploreItem;
 
@@ -368,7 +359,6 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     originPanelId,
     queries,
     syncedTimes,
-    datasourceLoading: datasourceLoading ?? undefined,
     containerWidth,
   };
 };

@@ -53,3 +53,5 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false 
     </div>
   );
 });
+
+TimeRangeOption.displayName = 'TimeRangeOption';

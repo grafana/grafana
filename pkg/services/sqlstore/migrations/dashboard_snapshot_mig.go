@@ -50,7 +50,7 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 	addTableIndicesMigrations(mg, "v5", snapshotV5)
 
 	// change column type of dashboard
-	mg.AddMigration("alter dashboard_snapshot to mediumtext v2", NewRawSqlMigration("").
+	mg.AddMigration("alter dashboard_snapshot to mediumtext v2", NewRawSQLMigration("").
 		Mysql("ALTER TABLE dashboard_snapshot MODIFY dashboard MEDIUMTEXT;"))
 
 	mg.AddMigration("Update dashboard_snapshot table charset", NewTableCharsetMigration("dashboard_snapshot", []*Column{
@@ -69,6 +69,6 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 		Name: "dashboard_encrypted", Type: DB_Blob, Nullable: true,
 	}))
 
-	mg.AddMigration("Change dashboard_encrypted column to MEDIUMBLOB", NewRawSqlMigration("").
+	mg.AddMigration("Change dashboard_encrypted column to MEDIUMBLOB", NewRawSQLMigration("").
 		Mysql("ALTER TABLE dashboard_snapshot MODIFY dashboard_encrypted MEDIUMBLOB;"))
 }

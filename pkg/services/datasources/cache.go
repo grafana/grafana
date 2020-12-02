@@ -16,7 +16,7 @@ type CacheService interface {
 
 type CacheServiceImpl struct {
 	CacheService *localcache.CacheService `inject:""`
-	SQLStore     *sqlstore.SqlStore       `inject:""`
+	SQLStore     *sqlstore.SQLStore       `inject:""`
 }
 
 func init() {

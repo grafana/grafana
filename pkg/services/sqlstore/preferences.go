@@ -10,13 +10,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func (ss *SqlStore) addPreferencesQueryAndCommandHandlers() {
+func (ss *SQLStore) addPreferencesQueryAndCommandHandlers() {
 	bus.AddHandler("sql", GetPreferences)
 	bus.AddHandler("sql", ss.GetPreferencesWithDefaults)
 	bus.AddHandler("sql", SavePreferences)
 }
 
-func (ss *SqlStore) GetPreferencesWithDefaults(query *models.GetPreferencesWithDefaultsQuery) error {
+func (ss *SQLStore) GetPreferencesWithDefaults(query *models.GetPreferencesWithDefaultsQuery) error {
 	params := make([]interface{}, 0)
 	filter := ""
 

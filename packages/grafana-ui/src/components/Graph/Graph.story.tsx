@@ -117,7 +117,7 @@ export const withTooltip = () => {
   );
 };
 
-const CustomGraphTooltip: React.FC<TooltipContentProps> = ({ activeDimensions }) => {
+const CustomGraphTooltip = ({ activeDimensions }: TooltipContentProps) => {
   return (
     <div style={{ height: '200px' }}>
       <div>Showing currently active active dimensions:</div>

@@ -4,7 +4,6 @@
 # -------------------------------------------------------------------------
 title = "plugin.json"
 keywords = ["grafana", "plugins", "documentation"]
-type = "docs"
 aliases = ["/docs/grafana/latest/plugins/developing/plugin.json/"]
 +++
 
@@ -69,6 +68,7 @@ Plugin dependencies.
 | `name`       | string  | No       |             |
 | `role`       | string  | No       |             |
 | `type`       | string  | No       |             |
+| `icon`       | string  | No       |             |
 
 ## info
 

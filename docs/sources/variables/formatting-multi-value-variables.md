@@ -1,9 +1,5 @@
 +++
 title = "Formatting multi-value variables"
-type = "docs"
-[menu.docs]
-identifier = "format-multi-value-variables"
-parent = "variables"
 weight = 600
 +++
 

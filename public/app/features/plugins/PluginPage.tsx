@@ -287,7 +287,7 @@ class PluginPage extends PureComponent<Props, State> {
           {info.links.map(link => {
             return (
               <li key={link.url}>
-                <a href={link.url} className="external-link" target="_blank" rel="noopener">
+                <a href={link.url} className="external-link" target="_blank" rel="noreferrer noopener">
                   {link.name}
                 </a>
               </li>
@@ -314,7 +314,7 @@ class PluginPage extends PureComponent<Props, State> {
         aria-label={selectors.pages.PluginPage.signatureInfo}
         severity={plugin.meta.signature !== PluginSignatureStatus.valid ? 'warning' : 'info'}
         urlTitle="Read more about plugins signing"
-        url="https://grafana.com/docs/grafana/latest/plugins/plugin-signature-verification/"
+        url="https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/"
       >
         <PluginSignatureBadge
           status={plugin.meta.signature}
@@ -346,16 +346,12 @@ class PluginPage extends PureComponent<Props, State> {
             <div className="sidebar-container">
               <div className="sidebar-content">
                 {plugin.loadError && (
-                  <Alert
-                    severity={AppNotificationSeverity.Error}
-                    title="Error Loading Plugin"
-                    children={
-                      <>
-                        Check the server startup logs for more information. <br />
-                        If this plugin was loaded from git, make sure it was compiled.
-                      </>
-                    }
-                  />
+                  <Alert severity={AppNotificationSeverity.Error} title="Error Loading Plugin">
+                    <>
+                      Check the server startup logs for more information. <br />
+                      If this plugin was loaded from git, make sure it was compiled.
+                    </>
+                  </Alert>
                 )}
                 {this.renderPluginNotice()}
                 {this.renderBody()}

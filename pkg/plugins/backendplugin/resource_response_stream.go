@@ -23,7 +23,7 @@ type callResourceResponseStream struct {
 
 func (s *callResourceResponseStream) Send(res *backend.CallResourceResponse) error {
 	if s.closed {
-		return errors.New("Cannot send to a closed stream")
+		return errors.New("cannot send to a closed stream")
 	}
 
 	select {
@@ -48,7 +48,7 @@ func (s *callResourceResponseStream) Recv() (*backend.CallResourceResponse, erro
 
 func (s *callResourceResponseStream) Close() error {
 	if s.closed {
-		return errors.New("Cannot close a closed stream")
+		return errors.New("cannot close a closed stream")
 	}
 
 	close(s.stream)

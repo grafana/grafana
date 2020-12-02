@@ -37,6 +37,9 @@ export const Components = {
       BarGauge: {
         value: 'Bar gauge value',
       },
+      Text: {
+        container: () => '.markdown-html',
+      },
     },
   },
   Drawer: {
@@ -109,6 +112,7 @@ export const Components = {
     transformationEditorDebugger: (name: string) => `Transformation editor debugger ${name}`,
   },
   Transforms: {
+    card: (name: string) => `New transform ${name}`,
     Reduce: {
       modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',
