@@ -752,8 +752,6 @@ def release_canary_npm_packages_step(edition):
             },
         },
         'commands': [
-            'echo "@grafana:registry=https://npm.pkg.github.com" >> ~/.npmrc',
-            'echo "//npm.pkg.github.com/:_authToken=$${GITHUB_PACKAGE_TOKEN}" >> ~/.npmrc',
             './scripts/circle-release-canary-packages.sh',
         ],
     }
