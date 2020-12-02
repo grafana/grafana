@@ -42,7 +42,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       side: getUPlotSideFromAxis(placement),
       font: `12px 'Roboto'`,
       labelFont: `12px 'Roboto'`,
-      size: calculateAxisSize,
+      size: this.props.size ?? calculateAxisSize,
       grid: {
         show: grid,
         stroke: gridColor,

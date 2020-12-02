@@ -122,6 +122,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         builder.addAxis({
           scaleKey: scale,
           label: customConfig.axisLabel,
+          size: customConfig.axisWidth,
           placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
           formatValue: v => formattedValueToString(fmt(v)),
           theme,
