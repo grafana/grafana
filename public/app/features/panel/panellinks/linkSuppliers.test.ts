@@ -90,7 +90,6 @@ describe('getFieldLinksSupplier', () => {
         overrides: [],
       },
       replaceVariables: (val: string) => val,
-      getDataSourceSettingsByUid: (val: string) => ({} as any),
       timeZone: 'utc',
       theme: getTheme(),
     })[0];

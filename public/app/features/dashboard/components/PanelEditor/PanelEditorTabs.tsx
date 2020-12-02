@@ -76,7 +76,7 @@ export class PanelEditorTabs extends PureComponent<PanelEditorTabsProps> {
           })}
         </TabsBar>
         <TabContent className={styles.tabContent}>
-          {activeTab.id === PanelEditorTabId.Query && <PanelEditorQueries panel={panel} dashboard={dashboard} />}
+          {activeTab.id === PanelEditorTabId.Query && <PanelEditorQueries panel={panel} />}
           {activeTab.id === PanelEditorTabId.Alert && <AlertTab panel={panel} dashboard={dashboard} />}
           {activeTab.id === PanelEditorTabId.Transform && <TransformationsEditor panel={panel} />}
         </TabContent>

@@ -1,7 +1,6 @@
 import React, { FC, useState, useCallback, useEffect } from 'react';
 import { ConfirmModal, Button, LinkButton } from '@grafana/ui';
 import { getBackendSrv } from '@grafana/runtime';
-import { noop } from 'rxjs';
 import { Snapshot } from '../types';
 
 interface Props {
@@ -28,11 +27,12 @@ export const SnapshotListTable: FC<Props> = ({ url }) => {
 
   const doRemoveSnapshot = useCallback(
     async (snapshot: Snapshot) => {
-      setSnapshots(snapshots.filter(ss => ss.key !== snapshot.key));
+      const filteredSnapshots = snapshots.filter(ss => ss.key !== snapshot.key);
+      setSnapshots(filteredSnapshots);
       await getBackendSrv()
         .delete(`/api/snapshots/${snapshot.key}`)
-        .then(noop, () => {
-          setSnapshots(snapshots.concat(snapshot));
+        .catch(() => {
+          setSnapshots(snapshots);
         });
     },
     [snapshots]
@@ -59,9 +59,9 @@ export const SnapshotListTable: FC<Props> = ({ url }) => {
           </tr>
         </thead>
         <tbody>
-          {snapshots.map((snapshot, key) => {
+          {snapshots.map(snapshot => {
             return (
-              <tr key={key}>
+              <tr key={snapshot.key}>
                 <td>
                   <a href={snapshot.url}>{snapshot.name}</a>
                 </td>

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -272,21 +271,6 @@ func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.User
 			WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetime)
 		}
 	}
-}
-
-func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetime time.Duration) {
-	if setting.Env == setting.Dev {
-		ctx.Logger.Info("New token", "unhashed token", value)
-	}
-
-	var maxAge int
-	if maxLifetime <= 0 {
-		maxAge = -1
-	} else {
-		maxAge = int(maxLifetime.Seconds())
-	}
-
-	WriteCookie(ctx.Resp, setting.LoginCookieName, url.QueryEscape(value), maxAge, newCookieOptions)
 }
 
 func AddDefaultResponseHeaders() macaron.Handler {
