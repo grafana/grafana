@@ -10,6 +10,7 @@ interface Props {
 }
 
 export const AlertDefinitionOptions: FC<Props> = ({ alertDefinition, onChange }) => {
+  console.log(alertDefinition);
   const styles = useStyles(getStyles);
   return (
     <div className={styles.container}>

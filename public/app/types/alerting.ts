@@ -142,7 +142,12 @@ export interface AlertDefinition {
   id: number;
   name: string;
   description: string;
-  condition: { ref: string; queriesAndExpressions: any[] };
+  condition: AlertCondition;
+}
+
+export interface AlertCondition {
+  ref: string;
+  queriesAndExpressions: any[];
 }
 
 export interface AlertDefinitionUiState {

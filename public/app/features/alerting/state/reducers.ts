@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { dateTime } from '@grafana/data';
 import alertDef from './alertDef';
 import {
+  AlertCondition,
   AlertDefinition,
   AlertDefinitionState,
   AlertDefinitionUiState,
@@ -30,7 +31,12 @@ export const initialChannelState: NotificationChannelState = {
 };
 
 export const initialAlertDefinitionState: AlertDefinitionState = {
-  alertDefinition: {} as AlertDefinition,
+  alertDefinition: {
+    id: 0,
+    name: '',
+    description: '',
+    condition: {} as AlertCondition,
+  },
   uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
 };
 
