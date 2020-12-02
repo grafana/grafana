@@ -15,7 +15,7 @@ import { Tag } from '..';
 export interface Props extends Themeable {
   parsedValue: string;
   parsedKey: string;
-  wrapLogMessage: boolean;
+  wrapLogMessage?: boolean;
   isLabel?: boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
