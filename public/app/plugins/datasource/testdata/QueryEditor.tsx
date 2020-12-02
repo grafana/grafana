@@ -168,7 +168,7 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
                 <br />
                 {`{ key = "value", key2 = "value" }`}
                 <br />
-                key="value", key2="value"
+                key=&quot;value&quot;, key2=&quot;value&quot;
                 <br />
                 key=value, key2=value
                 <br />

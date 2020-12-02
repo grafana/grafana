@@ -30,6 +30,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   }
   let editor;
 
+  // eslint-disable-next-line react/display-name
   const renderLabel = (includeDescription = true, includeCounter = false) => (isExpanded = false) => (
     <HorizontalGroup justify="space-between">
       <Label description={includeDescription ? item.description : undefined}>

@@ -40,6 +40,8 @@ export const SearchWrapper: FC<Props> = memo(({ search, folder, updateLocation }
   return isOpen ? <DashboardSearch onCloseSearch={closeSearch} folder={folder} /> : null;
 });
 
+SearchWrapper.displayName = 'SearchWrapper';
+
 const mapStateToProps: MapStateToProps<{}, OwnProps, StoreState> = (state: StoreState) => {
   const { search, folder } = getLocationQuery(state.location);
   return { search, folder };

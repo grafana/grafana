@@ -32,6 +32,7 @@ export const renderComponentWithTheme = (component: React.ComponentType<any>, pr
   );
 };
 
+// eslint-disable-next-line react/display-name
 export const withTheme = (handleSassThemeChange: SassThemeChangeHandler) => (story: RenderFunction) => (
   <ThemeableStory handleSassThemeChange={handleSassThemeChange}>{story()}</ThemeableStory>
 );
