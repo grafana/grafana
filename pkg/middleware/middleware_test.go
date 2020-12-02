@@ -346,7 +346,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		assert.False(t, sc.context.IsSignedIn)
 		assert.Equal(t, int64(0), sc.context.UserId)
-		assert.Empty(t, sc.context.UserToken)
+		assert.Nil(t, sc.context.UserToken)
 	})
 
 	middlewareScenario(t, "When anonymous access is enabled", func(sc *scenarioContext) {
