@@ -334,8 +334,14 @@ func (cfg Cfg) IsNgAlertEnabled() bool {
 	return cfg.FeatureToggles["ngalert"]
 }
 
+// IsHTTPRequestHistogramEnabled returns whether the http_request_histogram feature is enabled.
 func (cfg Cfg) IsHTTPRequestHistogramEnabled() bool {
 	return cfg.FeatureToggles["http_request_histogram"]
+}
+
+// IsPanelLibraryEnabled returns whether the panel library feature is enabled.
+func (cfg Cfg) IsPanelLibraryEnabled() bool {
+	return cfg.FeatureToggles["panelLibrary"]
 }
 
 type CommandLineArgs struct {
