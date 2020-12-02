@@ -85,8 +85,10 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
   form();
 
   e2e.pages.DataSource.saveAndTest().click();
-  e2e.pages.DataSource.alert().should('exist');
-  e2e.pages.DataSource.alertMessage().contains(expectedAlertMessage); // assertion
+  e2e.pages.DataSource.alert()
+    .should('exist')
+    .contains(expectedAlertMessage); // assertion
+
   e2e().logToConsole('Added data source with name:', name);
 
   return e2e()

@@ -14,12 +14,12 @@ import {
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   DateTimeInput,
+  EventBusExtended,
+  EventBusSrv,
   PanelEvents,
   TimeRange,
   TimeZone,
   UrlQueryValue,
-  EventBusSrv,
-  EventBusExtended,
 } from '@grafana/data';
 import { CoreEvents, DashboardMeta, KIOSK_MODE_TV } from 'app/types';
 import { GetVariables, getVariables } from 'app/features/variables/state/selectors';
@@ -236,7 +236,9 @@ export class DashboardModel {
     const currentVariables = this.getVariablesFromState();
 
     copy.templating = {
-      list: currentVariables.map(variable => variableAdapters.get(variable.type).getSaveModel(variable)),
+      list: currentVariables.map(variable =>
+        variableAdapters.get(variable.type).getSaveModel(variable, defaults.saveVariables)
+      ),
     };
 
     if (!defaults.saveVariables) {

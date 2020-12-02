@@ -14,7 +14,6 @@ export const Pages = {
     delete: 'Data source settings page Delete button',
     saveAndTest: 'Data source settings page Save and Test button',
     alert: 'Data source settings page Alert',
-    alertMessage: 'Data source settings page Alert message',
   },
   DataSources: {
     url: '/datasources',
@@ -99,6 +98,9 @@ export const Pages = {
           },
           ConstantVariable: {
             constantOptionsQueryInput: 'Variable editor Form Constant Query field',
+          },
+          TextBoxVariable: {
+            textBoxOptionsQueryInput: 'Variable editor Form TextBox Query field',
           },
         },
       },
