@@ -141,6 +141,7 @@ describe('UPlotConfigBuilder', () => {
           Object {},
           Object {
             "fill": "rgba(255, 0, 0, 0.5)",
+            "paths": [Function],
             "points": Object {
               "fill": "#00ff00",
               "size": 5,
