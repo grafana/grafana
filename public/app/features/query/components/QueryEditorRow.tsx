@@ -69,17 +69,20 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 
   getAngularQueryComponentScope(): AngularQueryComponentScope {
-    const { query, onRunQuery } = this.props;
+    const { query, onChange } = this.props;
     const { datasource } = this.state;
     const panel = new PanelModel({});
-    const dashboard = new DashboardModel({});
+    const dashboard = {} as DashboardModel;
 
     return {
       datasource: datasource,
       target: query,
       panel: panel,
       dashboard: dashboard,
-      refresh: () => onRunQuery,
+      refresh: () => {
+        // Old angular editors modify the query model and just call refresh
+        onChange(query);
+      },
       render: () => () => console.log('legacy render function called, it does nothing'),
       events: panel.events,
       range: getTimeSrv().timeRange(),
