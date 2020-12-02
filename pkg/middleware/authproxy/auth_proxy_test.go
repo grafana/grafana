@@ -13,7 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"gopkg.in/macaron.v1"
 )
 
@@ -68,134 +69,142 @@ func prepareMiddleware(t *testing.T, req *http.Request, store *remotecache.Remot
 
 func TestMiddlewareContext(t *testing.T) {
 	logger := log.New("test")
-	Convey("auth_proxy helper", t, func() {
-		req, err := http.NewRequest("POST", "http://example.com", nil)
-		So(err, ShouldBeNil)
-		setting.AuthProxyHeaderName = "X-Killa"
+	req, err := http.NewRequest("POST", "http://example.com", nil)
+	require.NoError(t, err)
+	setting.AuthProxyHeaderName = "X-Killa"
+	store := remotecache.NewFakeStore(t)
+
+	name := "markelog"
+	req.Header.Add(setting.AuthProxyHeaderName, name)
+
+	t.Run("When the cache only contains the main header with a simple cache key", func(t *testing.T) {
+		const id int64 = 33
+		// Set cache key
+		key := fmt.Sprintf(CachePrefix, HashCacheKey(name))
+		err := store.Set(key, id, 0)
+		require.NoError(t, err)
+
+		// Set up the middleware
+		auth := prepareMiddleware(t, req, store)
+		assert.Equal(t, "auth-proxy-sync-ttl:0a7f3374e9659b10980fd66247b0cf2f", auth.getKey())
+
+		gotID, err := auth.Login(logger, false)
+		require.NoError(t, err)
+
+		assert.Equal(t, id, gotID)
+	})
+
+	t.Run("When the cache key contains additional headers", func(t *testing.T) {
+		const id int64 = 33
+		setting.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS"}
+		group := "grafana-core-team"
+		req.Header.Add("X-WEBAUTH-GROUPS", group)
+
+		key := fmt.Sprintf(CachePrefix, HashCacheKey(name+"-"+group))
+		err := store.Set(key, id, 0)
+		require.NoError(t, err)
+
+		auth := prepareMiddleware(t, req, store)
+		assert.Equal(t, "auth-proxy-sync-ttl:14f69b7023baa0ac98c96b31cec07bc0", auth.getKey())
+
+		gotID, err := auth.Login(logger, false)
+		require.NoError(t, err)
+		assert.Equal(t, id, gotID)
+	})
+}
+
+func TestMiddlewareContext_ldap(t *testing.T) {
+	logger := log.New("test")
+	req, err := http.NewRequest("POST", "http://example.com", nil)
+	require.NoError(t, err)
+	setting.AuthProxyHeaderName = "X-Killa"
+
+	const headerName = "markelog"
+	req.Header.Add(setting.AuthProxyHeaderName, headerName)
+
+	t.Run("Logs in via LDAP", func(t *testing.T) {
+		const id int64 = 42
+
+		bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
+			cmd.Result = &models.User{
+				Id: id,
+			}
+
+			return nil
+		})
+
+		isLDAPEnabled = func() bool {
+			return true
+		}
+
+		stub := &fakeMultiLDAP{
+			ID: id,
+		}
+
+		getLDAPConfig = func() (*ldap.Config, error) {
+			config := &ldap.Config{
+				Servers: []*ldap.ServerConfig{
+					{
+						SearchBaseDNs: []string{"BaseDNHere"},
+					},
+				},
+			}
+			return config, nil
+		}
+
+		newLDAP = func(servers []*ldap.ServerConfig) multildap.IMultiLDAP {
+			return stub
+		}
+
+		defer func() {
+			newLDAP = multildap.New
+			isLDAPEnabled = ldap.IsEnabled
+			getLDAPConfig = ldap.GetConfig
+		}()
+
 		store := remotecache.NewFakeStore(t)
 
-		name := "markelog"
-		req.Header.Add(setting.AuthProxyHeaderName, name)
+		auth := prepareMiddleware(t, req, store)
 
-		Convey("when the cache only contains the main header", func() {
-			Convey("with a simple cache key", func() {
-				// Set cache key
-				key := fmt.Sprintf(CachePrefix, HashCacheKey(name))
-				err := store.Set(key, int64(33), 0)
-				So(err, ShouldBeNil)
+		gotID, err := auth.Login(logger, false)
+		require.NoError(t, err)
 
-				// Set up the middleware
-				auth := prepareMiddleware(t, req, store)
-				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:0a7f3374e9659b10980fd66247b0cf2f")
+		assert.Equal(t, id, gotID)
+		assert.True(t, stub.userCalled)
+	})
 
-				id, err := auth.Login(logger, false)
-				So(err, ShouldBeNil)
+	t.Run("Gets nice error if ldap is enabled but not configured", func(t *testing.T) {
+		const id int64 = 42
+		isLDAPEnabled = func() bool {
+			return true
+		}
 
-				So(id, ShouldEqual, 33)
-			})
+		getLDAPConfig = func() (*ldap.Config, error) {
+			return nil, errors.New("something went wrong")
+		}
 
-			Convey("when the cache key contains additional headers", func() {
-				setting.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS"}
-				group := "grafana-core-team"
-				req.Header.Add("X-WEBAUTH-GROUPS", group)
+		defer func() {
+			newLDAP = multildap.New
+			isLDAPEnabled = ldap.IsEnabled
+			getLDAPConfig = ldap.GetConfig
+		}()
 
-				key := fmt.Sprintf(CachePrefix, HashCacheKey(name+"-"+group))
-				err := store.Set(key, int64(33), 0)
-				So(err, ShouldBeNil)
+		store := remotecache.NewFakeStore(t)
 
-				auth := prepareMiddleware(t, req, store)
-				So(auth.getKey(), ShouldEqual, "auth-proxy-sync-ttl:14f69b7023baa0ac98c96b31cec07bc0")
+		auth := prepareMiddleware(t, req, store)
 
-				id, err := auth.Login(logger, false)
-				So(err, ShouldBeNil)
-				So(id, ShouldEqual, 33)
-			})
-		})
+		stub := &fakeMultiLDAP{
+			ID: id,
+		}
 
-		Convey("LDAP", func() {
-			Convey("logs in via LDAP", func() {
-				bus.AddHandler("test", func(cmd *models.UpsertUserCommand) error {
-					cmd.Result = &models.User{
-						Id: 42,
-					}
+		newLDAP = func(servers []*ldap.ServerConfig) multildap.IMultiLDAP {
+			return stub
+		}
 
-					return nil
-				})
+		gotID, err := auth.Login(logger, false)
+		require.EqualError(t, err, "failed to get the user")
 
-				isLDAPEnabled = func() bool {
-					return true
-				}
-
-				stub := &fakeMultiLDAP{
-					ID: 42,
-				}
-
-				getLDAPConfig = func() (*ldap.Config, error) {
-					config := &ldap.Config{
-						Servers: []*ldap.ServerConfig{
-							{
-								SearchBaseDNs: []string{"BaseDNHere"},
-							},
-						},
-					}
-					return config, nil
-				}
-
-				newLDAP = func(servers []*ldap.ServerConfig) multildap.IMultiLDAP {
-					return stub
-				}
-
-				defer func() {
-					newLDAP = multildap.New
-					isLDAPEnabled = ldap.IsEnabled
-					getLDAPConfig = ldap.GetConfig
-				}()
-
-				store := remotecache.NewFakeStore(t)
-
-				auth := prepareMiddleware(t, req, store)
-
-				id, err := auth.Login(logger, false)
-
-				So(err, ShouldBeNil)
-				So(id, ShouldEqual, 42)
-				So(stub.userCalled, ShouldEqual, true)
-			})
-
-			Convey("gets nice error if ldap is enabled but not configured", func() {
-				isLDAPEnabled = func() bool {
-					return true
-				}
-
-				getLDAPConfig = func() (*ldap.Config, error) {
-					return nil, errors.New("Something went wrong")
-				}
-
-				defer func() {
-					newLDAP = multildap.New
-					isLDAPEnabled = ldap.IsEnabled
-					getLDAPConfig = ldap.GetConfig
-				}()
-
-				store := remotecache.NewFakeStore(t)
-
-				auth := prepareMiddleware(t, req, store)
-
-				stub := &fakeMultiLDAP{
-					ID: 42,
-				}
-
-				newLDAP = func(servers []*ldap.ServerConfig) multildap.IMultiLDAP {
-					return stub
-				}
-
-				id, err := auth.Login(logger, false)
-
-				So(err, ShouldNotBeNil)
-				So(err.Error(), ShouldContainSubstring, "failed to get the user")
-				So(id, ShouldNotEqual, 42)
-				So(stub.loginCalled, ShouldEqual, false)
-			})
-		})
+		assert.NotEqual(t, id, gotID)
+		assert.False(t, stub.loginCalled)
 	})
 }
