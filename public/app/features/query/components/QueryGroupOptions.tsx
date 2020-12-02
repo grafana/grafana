@@ -2,7 +2,7 @@
 import React, { PureComponent, ChangeEvent, FocusEvent } from 'react';
 
 // Utils
-import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
+import { rangeUtil, PanelData, DataSourceApi, DataQuery } from '@grafana/data';
 
 // Components
 import { Switch, Input, InlineField, InlineFormLabel, stylesFactory } from '@grafana/ui';
@@ -13,6 +13,8 @@ import { config } from 'app/core/config';
 import { css } from 'emotion';
 
 export interface QueryGroupOptions {
+  queries: DataQuery[];
+  dataSource: QueryGroupDataSource;
   maxDataPoints?: number | null;
   minInterval?: string | null;
   cacheTimeout?: string | null;
@@ -21,6 +23,12 @@ export interface QueryGroupOptions {
     shift?: string | null;
     hide?: boolean;
   };
+}
+
+interface QueryGroupDataSource {
+  name?: string | null;
+  uid?: string;
+  default?: boolean;
 }
 
 interface Props {

@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { css } from 'emotion';
 import { Button, DataLinkInput, stylesFactory, LegacyForms } from '@grafana/ui';
-const { Switch, FormField } = LegacyForms;
 import { VariableSuggestion } from '@grafana/data';
-import { DataSourceSelectItem } from '@grafana/data';
-
 import { DerivedFieldConfig } from '../types';
 import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { usePrevious } from 'react-use';
+
+const { Switch, FormField } = LegacyForms;
 
 const getStyles = stylesFactory(() => ({
   row: css`
