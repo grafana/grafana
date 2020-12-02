@@ -45,6 +45,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     wordBreakAll: css`
       label: wordBreakAll;
+      white-space: pre-wrap;
       word-break: break-all;
     `,
     showingField: css`
