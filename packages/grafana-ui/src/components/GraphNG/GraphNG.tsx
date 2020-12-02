@@ -160,7 +160,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
     legendItemsRef.current = legendItems;
     return builder;
-  }, [configRev]);
+  }, [configRev, timeZone]);
 
   if (alignedFrameWithGapTest == null) {
     return (
