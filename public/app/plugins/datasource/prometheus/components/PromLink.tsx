@@ -18,6 +18,14 @@ interface State {
 export default class PromLink extends Component<Props, State> {
   state: State = { href: '' };
 
+  async componentDidMount() {
+    const { panelData } = this.props;
+    if (panelData) {
+      const href = await this.getExternalLink(panelData);
+      this.setState({ href });
+    }
+  }
+
   async componentDidUpdate(prevProps: Props) {
     const { panelData } = this.props;
 

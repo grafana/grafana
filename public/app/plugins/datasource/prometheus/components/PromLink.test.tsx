@@ -17,6 +17,7 @@ const getPanelData = () => ({
     },
   },
 });
+
 describe('PromLink component', () => {
   it('should show different link when there are 2 components with the same panel data', async () => {
     const Comp = () => (
@@ -54,5 +55,27 @@ describe('PromLink component', () => {
         .last()
         .getDOMNode<HTMLAnchorElement>().href
     ).toMatch('prom2');
+  });
+  it('should show correct link after component mounts', async () => {
+    const Comp = () => (
+      <div>
+        <PromLink
+          datasource={
+            { getPrometheusTime: () => 123, createQuery: () => ({ expr: 'up', step: 15 }), directUrl: 'prom1' } as any
+          }
+          panelData={getPanelData() as any}
+          query={{} as any}
+        />
+      </div>
+    );
+    const wrapper = mount(<Comp />);
+    await Promise.resolve();
+
+    expect(
+      wrapper
+        .find('a')
+        .first()
+        .getDOMNode<HTMLAnchorElement>().href
+    ).toMatch('prom1');
   });
 });
