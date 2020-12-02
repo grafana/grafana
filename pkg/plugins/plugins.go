@@ -145,7 +145,7 @@ func (pm *PluginManager) Init() error {
 
 	for _, p := range Plugins {
 		if p.IsCorePlugin {
-			p.Signature = PluginSignatureInternal
+			p.Signature = pluginSignatureInternal
 		} else {
 			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
 		}
@@ -358,13 +358,13 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	plugin.PluginDir = filepath.Dir(pluginJSONFilePath)
 	plugin.Files, err = collectPluginFilesWithin(plugin.PluginDir)
 	if err != nil {
-		s.log.Debug("Could not collect plugin file information in directory", "pluginID", plugin.Id, "dir", plugin.PluginDir)
+		s.log.Warn("Could not collect plugin file information in directory", "pluginID", plugin.Id, "dir", plugin.PluginDir)
 		return err
 	}
 
 	signatureState, err := getPluginSignatureState(s.log, &plugin)
 	if err != nil {
-		s.log.Debug("Could not get plugin signature state", "pluginID", plugin.Id, "err", err)
+		s.log.Warn("Could not get plugin signature state", "pluginID", plugin.Id, "err", err)
 		return err
 	}
 	plugin.Signature = signatureState.Status
@@ -382,21 +382,21 @@ func (*PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
 
 // validateSignature validates a plugin's signature.
 func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
-	if plugin.Signature == PluginSignatureValid {
+	if plugin.Signature == pluginSignatureValid {
 		s.log.Debug("Plugin has valid signature", "id", plugin.Id)
 		return nil
 	}
 
 	if plugin.Root != nil {
 		// If a descendant plugin with invalid signature, set signature to that of root
-		if plugin.IsCorePlugin || plugin.Signature == PluginSignatureInternal {
+		if plugin.IsCorePlugin || plugin.Signature == pluginSignatureInternal {
 			s.log.Debug("Not setting descendant plugin's signature to that of root since it's core or internal",
 				"plugin", plugin.Id, "signature", plugin.Signature, "isCore", plugin.IsCorePlugin)
 		} else {
 			s.log.Debug("Setting descendant plugin's signature to that of root", "plugin", plugin.Id,
 				"root", plugin.Root.Id, "signature", plugin.Signature, "rootSignature", plugin.Root.Signature)
 			plugin.Signature = plugin.Root.Signature
-			if plugin.Signature == PluginSignatureValid {
+			if plugin.Signature == pluginSignatureValid {
 				s.log.Debug("Plugin has valid signature (inherited from root)", "id", plugin.Id)
 				return nil
 			}
@@ -413,7 +413,7 @@ func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
 	}
 
 	switch plugin.Signature {
-	case PluginSignatureUnsigned:
+	case pluginSignatureUnsigned:
 		if allowed := s.allowUnsigned(plugin); !allowed {
 			s.log.Debug("Plugin is unsigned", "id", plugin.Id)
 			s.errors = append(s.errors, fmt.Errorf("plugin %q is unsigned", plugin.Id))
@@ -424,13 +424,13 @@ func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
 		s.log.Warn("Running an unsigned backend plugin", "pluginID", plugin.Id, "pluginDir",
 			plugin.PluginDir)
 		return nil
-	case PluginSignatureInvalid:
+	case pluginSignatureInvalid:
 		s.log.Debug("Plugin %q has an invalid signature", plugin.Id)
 		s.errors = append(s.errors, fmt.Errorf("plugin %q has an invalid signature", plugin.Id))
 		return &PluginError{
 			ErrorCode: signatureInvalid,
 		}
-	case PluginSignatureModified:
+	case pluginSignatureModified:
 		s.log.Debug("Plugin %q has a modified signature", plugin.Id)
 		s.errors = append(s.errors, fmt.Errorf("plugin %q's signature has been modified", plugin.Id))
 		return &PluginError{

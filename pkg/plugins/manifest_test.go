@@ -50,7 +50,9 @@ NR7DnB0CCQHO+4FlSPtXFTzNepoc+CytQyDAeOLMLmf2Tqhk2YShk+G/YlVX
 		assert.Equal(t, "1.0.0-dev", manifest.Version)
 		assert.Equal(t, int64(1586817677115), manifest.Time)
 		assert.Equal(t, "7e4d0c6a708866e7", manifest.KeyID)
-		expectedFiles := []string{"LICENSE", "README.md", "gfx_sheets_darwin_amd64", "gfx_sheets_linux_amd64", "gfx_sheets_windows_amd64.exe", "module.js", "module.js.LICENSE.txt", "module.js.map", "plugin.json"}
+		expectedFiles := []string{"LICENSE", "README.md", "gfx_sheets_darwin_amd64", "gfx_sheets_linux_amd64",
+			"gfx_sheets_windows_amd64.exe", "module.js", "module.js.LICENSE.txt", "module.js.map", "plugin.json",
+		}
 		assert.Equal(t, expectedFiles, fileList(manifest))
 	})
 
@@ -102,10 +104,10 @@ khdr/tZ1PDgRxMqB/u+Vtbpl0xSxgblnrDOYMSI=
 		assert.Equal(t, int64(1605807018050), manifest.Time)
 		assert.Equal(t, "7e4d0c6a708866e7", manifest.KeyID)
 		assert.Equal(t, "2.0.0", manifest.ManifestVersion)
-		assert.Equal(t, Private, manifest.SignatureType)
+		assert.Equal(t, privateType, manifest.SignatureType)
 		assert.Equal(t, "willbrowne", manifest.SignedByOrg)
 		assert.Equal(t, "Will Browne", manifest.SignedByOrgName)
-		assert.Equal(t, []string{"http://localhost:3000/"}, manifest.RootUrls)
+		assert.Equal(t, []string{"http://localhost:3000/"}, manifest.RootURLs)
 		assert.Equal(t, []string{"plugin.json"}, fileList(manifest))
 	})
 }

@@ -30,20 +30,18 @@ type PluginSignatureState struct {
 type PluginSignatureStatus string
 
 const (
-	PluginSignatureInternal PluginSignatureStatus = "internal" // core plugin, no signature
-	PluginSignatureValid    PluginSignatureStatus = "valid"    // signed and accurate MANIFEST
-	PluginSignatureInvalid  PluginSignatureStatus = "invalid"  // invalid signature
-	PluginSignatureModified PluginSignatureStatus = "modified" // valid signature, but content mismatch
-	PluginSignatureUnsigned PluginSignatureStatus = "unsigned" // no MANIFEST file
+	pluginSignatureInternal PluginSignatureStatus = "internal" // core plugin, no signature
+	pluginSignatureValid    PluginSignatureStatus = "valid"    // signed and accurate MANIFEST
+	pluginSignatureInvalid  PluginSignatureStatus = "invalid"  // invalid signature
+	pluginSignatureModified PluginSignatureStatus = "modified" // valid signature, but content mismatch
+	pluginSignatureUnsigned PluginSignatureStatus = "unsigned" // no MANIFEST file
 )
 
 type PluginSignatureType string
 
 const (
-	Grafana    PluginSignatureType = "grafana"
-	Commercial PluginSignatureType = "commercial"
-	Community  PluginSignatureType = "community"
-	Private    PluginSignatureType = "private"
+	grafanaType PluginSignatureType = "grafana"
+	privateType PluginSignatureType = "private"
 )
 
 type PluginNotFoundError struct {

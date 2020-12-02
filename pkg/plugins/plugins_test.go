@@ -180,17 +180,17 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, "Test", Plugins[pluginId].Name)
 		assert.Equal(t, pluginId, Plugins[pluginId].Id)
 		assert.Equal(t, "1.0.0", Plugins[pluginId].Info.Version)
-		assert.Equal(t, PluginSignatureValid, Plugins[pluginId].Signature)
-		assert.Equal(t, Grafana, Plugins[pluginId].SignatureType)
+		assert.Equal(t, pluginSignatureValid, Plugins[pluginId].Signature)
+		assert.Equal(t, grafanaType, Plugins[pluginId].SignatureType)
 		assert.Equal(t, "Grafana Labs", Plugins[pluginId].SignatureOrg)
 		assert.False(t, Plugins[pluginId].IsCorePlugin)
 	})
 
 	t.Run("With back-end plugin with invalid v2 private signature (mismatched root URL)", func(t *testing.T) {
-		origAppUrl := setting.AppUrl
+		origAppURL := setting.AppUrl
 		origPluginsPath := setting.PluginsPath
 		t.Cleanup(func() {
-			setting.AppUrl = origAppUrl
+			setting.AppUrl = origAppURL
 			setting.PluginsPath = origPluginsPath
 		})
 		setting.AppUrl = "http://localhost:1234"
@@ -207,10 +207,10 @@ func TestPluginManager_Init(t *testing.T) {
 	})
 
 	t.Run("With back-end plugin with valid v2 private signature", func(t *testing.T) {
-		origAppUrl := setting.AppUrl
+		origAppURL := setting.AppUrl
 		origPluginsPath := setting.PluginsPath
 		t.Cleanup(func() {
-			setting.AppUrl = origAppUrl
+			setting.AppUrl = origAppURL
 			setting.PluginsPath = origPluginsPath
 		})
 		setting.AppUrl = "http://localhost:3000/"
@@ -230,17 +230,17 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Equal(t, "Test", Plugins[pluginId].Name)
 		assert.Equal(t, pluginId, Plugins[pluginId].Id)
 		assert.Equal(t, "1.0.0", Plugins[pluginId].Info.Version)
-		assert.Equal(t, PluginSignatureValid, Plugins[pluginId].Signature)
-		assert.Equal(t, Private, Plugins[pluginId].SignatureType)
+		assert.Equal(t, pluginSignatureValid, Plugins[pluginId].Signature)
+		assert.Equal(t, privateType, Plugins[pluginId].SignatureType)
 		assert.Equal(t, "Will Browne", Plugins[pluginId].SignatureOrg)
 		assert.False(t, Plugins[pluginId].IsCorePlugin)
 	})
 
 	t.Run("With back-end plugin with modified v2 signature (missing file from plugin dir)", func(t *testing.T) {
-		origAppUrl := setting.AppUrl
+		origAppURL := setting.AppUrl
 		origPluginsPath := setting.PluginsPath
 		t.Cleanup(func() {
-			setting.AppUrl = origAppUrl
+			setting.AppUrl = origAppURL
 			setting.PluginsPath = origPluginsPath
 		})
 		setting.AppUrl = "http://localhost:3000/"
@@ -257,10 +257,10 @@ func TestPluginManager_Init(t *testing.T) {
 	})
 
 	t.Run("With back-end plugin with modified v2 signature (unaccounted file in plugin dir)", func(t *testing.T) {
-		origAppUrl := setting.AppUrl
+		origAppURL := setting.AppUrl
 		origPluginsPath := setting.PluginsPath
 		t.Cleanup(func() {
-			setting.AppUrl = origAppUrl
+			setting.AppUrl = origAppURL
 			setting.PluginsPath = origPluginsPath
 		})
 		setting.AppUrl = "http://localhost:3000/"
