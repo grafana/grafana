@@ -14,7 +14,6 @@ import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSupplie
 import { getPanelMenu } from 'app/features/dashboard/utils/getPanelMenu';
 import { updateLocation } from 'app/core/actions';
 import { css } from 'emotion';
-import { truncateNumber } from '../../utils/truncator';
 
 export interface Props {
   panel: PanelModel;
