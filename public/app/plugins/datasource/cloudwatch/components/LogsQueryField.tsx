@@ -24,7 +24,7 @@ import syntax from '../syntax';
 import { ExploreQueryFieldProps, AbsoluteTimeRange, SelectableValue, AppEvents } from '@grafana/data';
 import { CloudWatchQuery, CloudWatchLogsQuery } from '../types';
 import { CloudWatchDatasource } from '../datasource';
-import Prism, { Grammar } from 'prismjs';
+import { Grammar, LanguageMap, languages as prismLanguages } from 'prismjs';
 import { CloudWatchLanguageProvider } from '../language_provider';
 import { css } from 'emotion';
 import { ExploreId } from 'app/types';
@@ -95,13 +95,15 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   constructor(props: CloudWatchLogsQueryFieldProps, context: React.Context<any>) {
     super(props, context);
 
-    Prism.languages['cloudwatch'] = syntax;
     this.plugins = [
       BracesPlugin(),
-      SlatePrism({
-        onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
-        getSyntax: (node: Node) => 'cloudwatch',
-      }),
+      SlatePrism(
+        {
+          onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
+          getSyntax: (node: Node) => 'cloudwatch',
+        },
+        { ...(prismLanguages as LanguageMap), cloudwatch: syntax }
+      ),
     ];
   }
 

@@ -44,7 +44,7 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
         name: 'Folder',
         id: 'folderId',
         defaultValue: null,
-        editor: props => {
+        editor: function RenderFolderPicker(props) {
           return <FolderPicker initialTitle="All" enableReset={true} onChange={({ id }) => props.onChange(id)} />;
         },
       })
@@ -54,7 +54,7 @@ export const plugin = new PanelPlugin<DashListOptions>(DashList)
         name: 'Tags',
         description: '',
         defaultValue: [],
-        editor: props => {
+        editor(props) {
           return <TagsInput tags={props.value} onChange={props.onChange} />;
         },
       });

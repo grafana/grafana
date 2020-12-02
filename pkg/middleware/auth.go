@@ -57,7 +57,7 @@ func notAuthorized(c *models.ReqContext) {
 	// remove any forceLogin=true params
 	redirectTo = removeForceLoginParams(redirectTo)
 
-	WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, newCookieOptions)
+	WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
