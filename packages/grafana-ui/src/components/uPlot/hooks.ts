@@ -105,7 +105,6 @@ export const DEFAULT_PLOT_CONFIG = {
   hooks: {},
 };
 
-//pass plain confsig object,memoize!
 export const usePlotConfig = (width: number, height: number, timeZone: TimeZone, configBuilder: UPlotConfigBuilder) => {
   const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
   const [isConfigReady, setIsConfigReady] = useState(false);
