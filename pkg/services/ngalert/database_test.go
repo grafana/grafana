@@ -187,7 +187,7 @@ func TestCreatingAndGettingAlertInstance(t *testing.T) {
 		saveCmd := &saveAlertInstanceCommand{
 			OrgID:             1,
 			AlertDefinitionID: 1,
-			State:             InstateStateFiring,
+			State:             InstanceStateFiring,
 			Labels:            InstanceLabels{"test": "testValue"},
 		}
 		err := ng.saveAlertInstance(saveCmd)
@@ -213,7 +213,7 @@ func TestCreatingAndGettingAlertInstance(t *testing.T) {
 		saveCmd := &saveAlertInstanceCommand{
 			OrgID:             1,
 			AlertDefinitionID: 1,
-			State:             InstateStateFiring,
+			State:             InstanceStateFiring,
 		}
 		err := ng.saveAlertInstance(saveCmd)
 		require.NoError(t, err)
