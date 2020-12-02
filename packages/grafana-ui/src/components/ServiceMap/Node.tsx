@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, MouseEvent } from 'react';
 import { getRatios, Stats } from './statsUtils';
 import { NodeDatum } from './types';
 
@@ -6,8 +6,9 @@ export function Node(props: {
   node: NodeDatum;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
+  onClick: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
 }) {
-  const { node, onMouseEnter, onMouseLeave } = props;
+  const { node, onMouseEnter, onMouseLeave, onClick } = props;
   const [hovering, setHovering] = useState(false);
   if (!(node.x !== undefined && node.y !== undefined)) {
     return null;
@@ -24,6 +25,10 @@ export function Node(props: {
         onMouseLeave(node.id);
       }}
       style={{ cursor: 'pointer' }}
+      onClick={event => {
+        console.log('onclick');
+        onClick(event, node);
+      }}
     >
       <ResponseTypeCircle node={node} />
       <circle fill={'#fff'} r={58} cx={node.x} cy={node.y} />

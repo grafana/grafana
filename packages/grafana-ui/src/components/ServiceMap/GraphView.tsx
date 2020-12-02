@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, MouseEvent } from 'react';
 import { forceSimulation, forceLink, forceManyBody, forceCollide } from 'd3-force';
 import useMeasure from 'react-use/lib/useMeasure';
 import { response } from './x-ray-response';
@@ -8,6 +8,7 @@ import { computeStats } from './statsUtils';
 import { Node } from './Node';
 import { Link } from './Link';
 import { ViewControls } from './ViewControls';
+import { ContextMenu } from '..';
 
 interface Config extends Record<string, number> {
   collide: number;
@@ -38,6 +39,9 @@ export function GraphView(props: Props) {
   const { nodes: rawNodes, links: rawLinks } = useMemo(() => processServices(services), [services]);
   const { nodes, links } = useLayout(rawNodes, rawLinks, config);
 
+  const [openedNode, setOpenedNode] = useState<{ node: NodeDatum; event: MouseEvent } | undefined>(undefined);
+  const onNodeOpen = useCallback((event, node) => setOpenedNode({ node, event }), []);
+
   return (
     <div ref={measureRef} style={{ height: '100%', width: '100%', overflow: 'hidden', position: 'relative' }}>
       <svg
@@ -64,7 +68,7 @@ export function GraphView(props: Props) {
             />
           ))}
           {nodes.map(n => (
-            <Node key={n.id} node={n} onMouseEnter={setNodeHover} onMouseLeave={clearNodeHover} />
+            <Node key={n.id} node={n} onMouseEnter={setNodeHover} onMouseLeave={clearNodeHover} onClick={onNodeOpen} />
           ))}
 
           {/*<Node*/}
@@ -98,6 +102,20 @@ export function GraphView(props: Props) {
           useTestData={useTestData}
         />
       </div>
+      {openedNode && (
+        <ContextMenu
+          renderHeader={() => <div>{openedNode.node.name}</div>}
+          items={[
+            {
+              label: 'label test',
+              items: [{ label: 'link1' }],
+            },
+          ]}
+          onClose={() => setOpenedNode(undefined)}
+          x={openedNode.event.pageX}
+          y={openedNode.event.pageY}
+        />
+      )}
     </div>
   );
 }
