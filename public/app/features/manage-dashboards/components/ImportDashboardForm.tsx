@@ -11,7 +11,7 @@ import {
   Legend,
 } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
+import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
 import { validateTitle, validateUid } from '../utils/validation';
 
@@ -106,7 +106,7 @@ export const ImportDashboardForm: FC<Props> = ({
               <InputControl
                 as={DataSourcePicker}
                 name={`${dataSourceOption}`}
-                datasources={input.options}
+                current={input.value}
                 control={control}
                 placeholder={input.info}
                 rules={{ required: true }}

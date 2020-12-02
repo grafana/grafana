@@ -3,7 +3,7 @@ import { css } from 'emotion';
 import { Button, DataLinkInput, stylesFactory, LegacyForms } from '@grafana/ui';
 import { VariableSuggestion } from '@grafana/data';
 import { DerivedFieldConfig } from '../types';
-import DataSourcePicker from 'app/core/components/Select/DataSourcePicker';
+import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { usePrevious } from 'react-use';
 
 const { Switch, FormField } = LegacyForms;

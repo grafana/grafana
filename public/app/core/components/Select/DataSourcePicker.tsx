@@ -19,6 +19,8 @@ export interface Props {
   invalid?: boolean;
   tracing?: boolean;
   mixed?: boolean;
+  builtIn?: boolean;
+  metrics?: boolean;
 }
 
 export interface State {
@@ -79,10 +81,7 @@ export class DataSourcePicker extends PureComponent<Props, State> {
     };
   }
 
-  render() {
-    const { autoFocus, onBlur, openMenuOnFocus, placeholder, invalid } = this.props;
-    const { error } = this.state;
-
+  getDataSources() {
     const options = this.dataSourceSrv.getMetricSources().map(ds => ({
       value: ds.name,
       label: ds.name,
@@ -90,6 +89,13 @@ export class DataSourcePicker extends PureComponent<Props, State> {
       meta: ds.meta,
     }));
 
+    return options;
+  }
+
+  render() {
+    const { autoFocus, onBlur, openMenuOnFocus, placeholder, invalid } = this.props;
+    const { error } = this.state;
+    const options = this.getDataSources();
     const value = this.getCurrentValue();
 
     return (
@@ -127,5 +133,3 @@ export class DataSourcePicker extends PureComponent<Props, State> {
     );
   }
 }
-
-export default DataSourcePicker;
