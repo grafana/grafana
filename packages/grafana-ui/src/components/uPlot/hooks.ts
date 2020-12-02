@@ -178,13 +178,14 @@ export const useRefreshAfterGraphRendered = (pluginId: string) => {
   return renderToken;
 };
 
-export function useRevision<T>(dep: T, cmp: (prev: T, next: T) => boolean) {
+export function useRevision<T>(dep?: T | null, cmp?: (prev?: T | null, next?: T | null) => boolean) {
   const [rev, setRev] = useState(0);
   const prevDep = usePrevious(dep);
+  const comparator = cmp ? cmp : (a?: T | null, b?: T | null) => a === b;
 
-  useEffect(() => {
-    const hasConfigChanged = prevDep ? !cmp(prevDep, dep) : false;
-    if (hasConfigChanged) {
+  useLayoutEffect(() => {
+    const hasChange = !comparator(prevDep, dep);
+    if (hasChange) {
       setRev(r => r + 1);
     }
   }, [dep]);
