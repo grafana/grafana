@@ -33,7 +33,7 @@ export const AlertDefinitionOptions: FC<Props> = ({ alertDefinition, notificatio
         {notificationChannelTypes.length > 0 && (
           <>
             <Field label="Notification channel">
-              <Select options={mapChannelsToSelectableValue(notificationChannelTypes)} onChange={onChange} />
+              <Select options={mapChannelsToSelectableValue(notificationChannelTypes, false)} onChange={onChange} />
             </Field>
           </>
         )}
