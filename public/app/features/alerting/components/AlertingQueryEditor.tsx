@@ -9,16 +9,21 @@ export const AlertingQueryEditor: FC<Props> = () => {
   const styles = useStyles(getStyles);
 
   return (
-    <div className={styles.container}>
-      <h4>Queries</h4>
+    <div className={styles.wrapper}>
+      <div className={styles.container}>
+        <h4>Queries</h4>
+      </div>
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme) => {
   return {
-    container: css`
+    wrapper: css`
       padding-left: ${theme.spacing.md};
+    `,
+    container: css`
+      padding: ${theme.spacing.md};
       background-color: ${theme.colors.panelBg};
     `,
     editorWrapper: css`

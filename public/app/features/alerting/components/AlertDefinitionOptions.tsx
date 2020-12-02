@@ -15,33 +15,38 @@ export const AlertDefinitionOptions: FC<Props> = ({ alertDefinition, notificatio
   const styles = useStyles(getStyles);
 
   return (
-    <div className={styles.container}>
-      <h4>Alert definition</h4>
-      <Field label="Name">
-        <Input width={25} name="name" value={alertDefinition.name} onChange={onChange} />
-      </Field>
-      <Field label="Description" description="What does the alert do and why was it created">
-        <TextArea rows={5} width={25} name="description" value={alertDefinition.description} onChange={onChange} />
-      </Field>
-      <Field label="Evaluate">
-        <span>Every For</span>
-      </Field>
-      <Field label="Conditions">
-        <div></div>
-      </Field>
-      {notificationChannelTypes.length > 0 && (
-        <>
-          <Field label="Notification channel">
-            <Select options={mapChannelsToSelectableValue(notificationChannelTypes)} onChange={onChange} />
-          </Field>
-        </>
-      )}
+    <div style={{ paddingTop: '16px' }}>
+      <div className={styles.container}>
+        <h4>Alert definition</h4>
+        <Field label="Name">
+          <Input width={25} name="name" value={alertDefinition.name} onChange={onChange} />
+        </Field>
+        <Field label="Description" description="What does the alert do and why was it created">
+          <TextArea rows={5} width={25} name="description" value={alertDefinition.description} onChange={onChange} />
+        </Field>
+        <Field label="Evaluate">
+          <span>Every For</span>
+        </Field>
+        <Field label="Conditions">
+          <div></div>
+        </Field>
+        {notificationChannelTypes.length > 0 && (
+          <>
+            <Field label="Notification channel">
+              <Select options={mapChannelsToSelectableValue(notificationChannelTypes)} onChange={onChange} />
+            </Field>
+          </>
+        )}
+      </div>
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme) => {
   return {
+    wrapper: css`
+      padding-top: ${theme.spacing.md};
+    `,
     container: css`
       padding: ${theme.spacing.md};
       background-color: ${theme.colors.panelBg};
