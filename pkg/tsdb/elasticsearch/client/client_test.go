@@ -367,6 +367,59 @@ func TestClient(t *testing.T) {
 			})
 		})
 	})
+
+	Convey("Test PPL elasticsearch client", t, func() {
+		httpClientScenario(t, "Given a fake http client and a v7.0 client with response", &models.DataSource{
+			Database: "[metrics-]YYYY.MM.DD",
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion": 70,
+				"timeField": "@timestamp",
+				"interval":  "Daily",
+			}),
+		}, func(sc *scenarioContext) {
+			sc.responseBody = `{
+				"responses": [
+					{
+						"schema": [{"name": "count(data)", "type": "string"}, {"name": "timestamp", "type": "timestamp"}],
+						"datarows":  [
+							["2020-12-01 00:39:02.912Z", "1"],
+							["2020-12-01 03:26:21.326Z", "2"],
+							["2020-12-01 03:34:43.399Z", "3"]
+					   ]
+					}
+				]
+			}`
+
+			Convey("When executing PPL", func() {
+				ppl, err := createPPLForTest(sc.client)
+				So(err, ShouldBeNil)
+				res, err := sc.client.ExecutePPLQuery(ppl)
+				So(err, ShouldBeNil)
+
+				Convey("Should send correct request and payload", func() {
+					So(sc.request, ShouldNotBeNil)
+					So(sc.request.Method, ShouldEqual, http.MethodPost)
+					So(sc.request.URL.Path, ShouldEqual, "/_opendistro/_ppl")
+
+					So(sc.requestBody, ShouldNotBeNil)
+
+					bodyBytes := sc.requestBody.Bytes()
+
+					jBody, err := simplejson.NewJson(bodyBytes)
+					So(err, ShouldBeNil)
+
+					Convey("Should replace index pattern with wildcard", func() {
+						So(jBody.Get("query").MustString(), ShouldEqual, "source = metrics-* | where `@timestamp` > timestamp('$timeTo') and `@timestamp` < timestamp('$timeFrom')")
+
+					})
+				})
+				Convey("Should parse response", func() {
+					So(res.Responses, ShouldHaveLength, 1)
+					So(res.Status, ShouldEqual, 200)
+				})
+			})
+		})
+	})
 }
 
 func createMultisearchForTest(c Client) (*MultiSearchRequest, error) {
@@ -380,6 +433,12 @@ func createMultisearchForTest(c Client) (*MultiSearchRequest, error) {
 		})
 	})
 	return msb.Build()
+}
+
+func createPPLForTest(c Client) (*PPLQuery, error) {
+	b := c.PPL()
+	b.AddPPLQueryString(c.GetTimeField(), "$timeTo", "$timeFrom", "")
+	return b.Build()
 }
 
 type scenarioContext struct {
