@@ -34,7 +34,7 @@ export interface QueryRunnerOptions<
 > {
   datasource: string | DataSourceApi<TQuery, TOptions> | null;
   queries: TQuery[];
-  panelId: number;
+  panelId?: number;
   dashboardId?: number;
   timezone: TimeZone;
   timeRange: TimeRange;

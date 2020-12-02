@@ -6,9 +6,6 @@ import _ from 'lodash';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-// Types
-import { PanelModel } from '../../dashboard/state/PanelModel';
-
 import { ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
 import {
   DataQuery,
@@ -25,12 +22,11 @@ import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOp
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { selectors } from '@grafana/e2e-selectors';
+import { PanelModel } from 'app/features/dashboard/state';
 
 interface Props {
-  panel: PanelModel;
   data: PanelData;
   query: DataQuery;
-  dashboard?: DashboardModel;
   dataSourceValue: string | null;
   inMixedMode?: boolean;
   id: string;
@@ -38,6 +34,7 @@ interface Props {
   onAddQuery: (query?: DataQuery) => void;
   onRemoveQuery: (query: DataQuery) => void;
   onChange: (query: DataQuery) => void;
+  onRunQuery: () => void;
 }
 
 interface State {
@@ -72,15 +69,20 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 
   getAngularQueryComponentScope(): AngularQueryComponentScope {
-    const { panel, query, dashboard } = this.props;
+    const { query, onChange } = this.props;
     const { datasource } = this.state;
+    const panel = new PanelModel({});
+    const dashboard = {} as DashboardModel;
 
     return {
       datasource: datasource,
       target: query,
       panel: panel,
-      dashboard: dashboard!,
-      refresh: () => panel.refresh(),
+      dashboard: dashboard,
+      refresh: () => {
+        // Old angular editors modify the query model and just call refresh
+        onChange(query);
+      },
       render: () => () => console.log('legacy render function called, it does nothing'),
       events: panel.events,
       range: getTimeSrv().timeRange(),
@@ -88,12 +90,12 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   }
 
   async loadDatasource() {
-    const { query, panel, dataSourceValue } = this.props;
+    const { query, dataSourceValue } = this.props;
     const dataSourceSrv = getDatasourceSrv();
     let datasource;
 
     try {
-      const datasourceName = dataSourceValue || query.datasource || panel.datasource;
+      const datasourceName = dataSourceValue || query.datasource;
       datasource = await dataSourceSrv.get(datasourceName);
     } catch (error) {
       datasource = await dataSourceSrv.get();
@@ -108,7 +110,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   componentDidUpdate(prevProps: Props) {
     const { loadedDataSourceValue } = this.state;
-    const { data, query, panel } = this.props;
+    const { data, query } = this.props;
 
     if (data !== prevProps.data) {
       this.setState({ data: filterPanelDataToQuery(data, query.refId) });
@@ -118,7 +120,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
       }
 
       if (this.angularQueryEditor) {
-        notifyAngularQueryEditorsOfData(panel, data, this.angularQueryEditor);
+        notifyAngularQueryEditorsOfData(this.angularScope?.panel!, data, this.angularQueryEditor);
       }
     }
 
@@ -161,7 +163,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   onRunQuery = () => {
-    this.props.panel.refresh();
+    this.props.onRunQuery();
   };
 
   renderPluginEditor = () => {

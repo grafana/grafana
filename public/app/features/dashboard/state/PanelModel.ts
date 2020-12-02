@@ -132,8 +132,8 @@ export class PanelModel implements DataConfigSource {
   };
   fieldConfig: FieldConfigSource;
 
-  maxDataPoints?: number;
-  interval?: string;
+  maxDataPoints?: number | null;
+  interval?: string | null;
   description?: string;
   links?: DataLink[];
   transparent: boolean;
