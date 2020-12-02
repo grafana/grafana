@@ -1,3 +1,5 @@
+// +build integration
+
 package sqlstore
 
 import (
@@ -25,6 +27,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 
 	createTestAnnotations(t, fakeSQL, 21, 6)
 	assertAnnotationCount(t, fakeSQL, "", 21)
+	assertAnnotationTagCount(t, fakeSQL, 42)
 
 	tests := []struct {
 		name                     string
@@ -32,6 +35,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 		alertAnnotationCount     int64
 		dashboardAnnotationCount int64
 		APIAnnotationCount       int64
+		annotationTagCount       int64
 	}{
 		{
 			name: "default settings should not delete any annotations",
@@ -43,6 +47,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     7,
 			dashboardAnnotationCount: 7,
 			APIAnnotationCount:       7,
+			annotationTagCount:       42,
 		},
 		{
 			name: "should remove annotations created before cut off point",
@@ -54,6 +59,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     5,
 			dashboardAnnotationCount: 5,
 			APIAnnotationCount:       5,
+			annotationTagCount:       30,
 		},
 		{
 			name: "should only keep three annotations",
@@ -65,6 +71,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     3,
 			dashboardAnnotationCount: 3,
 			APIAnnotationCount:       3,
+			annotationTagCount:       18,
 		},
 		{
 			name: "running the max count delete again should not remove any annotations",
@@ -76,6 +83,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     3,
 			dashboardAnnotationCount: 3,
 			APIAnnotationCount:       3,
+			annotationTagCount:       18,
 		},
 	}
 
@@ -88,6 +96,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 			assertAnnotationCount(t, fakeSQL, alertAnnotationType, test.alertAnnotationCount)
 			assertAnnotationCount(t, fakeSQL, dashboardAnnotationType, test.dashboardAnnotationCount)
 			assertAnnotationCount(t, fakeSQL, apiAnnotationType, test.APIAnnotationCount)
+			assertAnnotationTagCount(t, fakeSQL, test.annotationTagCount)
 		})
 	}
 }
@@ -151,6 +160,17 @@ func assertAnnotationCount(t *testing.T, fakeSQL *SQLStore, sql string, expected
 	require.Equal(t, expectedCount, count)
 }
 
+func assertAnnotationTagCount(t *testing.T, fakeSQL *SQLStore, expectedCount int64) {
+	t.Helper()
+
+	session := fakeSQL.NewSession()
+	defer session.Close()
+
+	count, err := session.SQL("select count(*) from annotation_tag").Count()
+	require.NoError(t, err)
+	require.Equal(t, expectedCount, count)
+}
+
 func createTestAnnotations(t *testing.T, sqlstore *SQLStore, expectedCount int, oldAnnotations int) {
 	t.Helper()
 
@@ -187,6 +207,14 @@ func createTestAnnotations(t *testing.T, sqlstore *SQLStore, expectedCount int, 
 
 		_, err := sqlstore.NewSession().Insert(a)
 		require.NoError(t, err, "should be able to save annotation", err)
+
+		// mimick the SQL annotation Save logic by writing records to the annotation_tag table
+		// we need to ensure they get deleted when we clean up annotations
+		sess := sqlstore.NewSession()
+		for tagID := range []int{1, 2} {
+			_, err = sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", a.Id, tagID)
+			require.NoError(t, err, "should be able to save annotation tag ID", err)
+		}
 	}
 }
 

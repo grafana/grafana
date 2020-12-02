@@ -34,7 +34,12 @@ func (acs *AnnotationCleanupService) CleanAnnotations(ctx context.Context, cfg *
 		return err
 	}
 
-	return acs.cleanAnnotations(ctx, cfg.DashboardAnnotationCleanupSettings, dashboardAnnotationType)
+	err = acs.cleanAnnotations(ctx, cfg.DashboardAnnotationCleanupSettings, dashboardAnnotationType)
+	if err != nil {
+		return err
+	}
+
+	return acs.cleanOrphanedAnnotationTags(ctx)
 }
 
 func (acs *AnnotationCleanupService) cleanAnnotations(ctx context.Context, cfg setting.AnnotationCleanupSettings, annotationType string) error {
@@ -56,6 +61,11 @@ func (acs *AnnotationCleanupService) cleanAnnotations(ctx context.Context, cfg s
 	}
 
 	return nil
+}
+
+func (acs *AnnotationCleanupService) cleanOrphanedAnnotationTags(ctx context.Context) error {
+	sql := "DELETE FROM annotation_tag WHERE NOT EXISTS (SELECT null FROM annotation WHERE annotation_tag.annotation_id = annotation.id)"
+	return acs.executeUntilDoneOrCancelled(ctx, sql)
 }
 
 func (acs *AnnotationCleanupService) executeUntilDoneOrCancelled(ctx context.Context, sql string) error {
