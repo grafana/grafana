@@ -2,11 +2,8 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { PanelModel } from '../../dashboard/state/PanelModel';
 import { DataQuery, PanelData, DataSourceSelectItem } from '@grafana/data';
-import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { QueryEditorRow } from './QueryEditorRow';
-import { addQuery } from 'app/core/utils/query';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 interface Props {
@@ -15,35 +12,21 @@ interface Props {
   datasource: DataSourceSelectItem;
 
   // Query editing
-  onChangeQueries: (queries: DataQuery[]) => void;
-  onScrollBottom: () => void;
-
-  // Dashboard Configs
-  panel: PanelModel;
-  dashboard?: DashboardModel;
+  onQueriesChange: (queries: DataQuery[]) => void;
+  onAddQuery: (query: DataQuery) => void;
+  onRunQueries: () => void;
 
   // Query Response Data
   data: PanelData;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
-  onAddQuery = (query?: Partial<DataQuery>) => {
-    const { queries, onChangeQueries } = this.props;
-    onChangeQueries(addQuery(queries, query));
-    this.props.onScrollBottom();
-  };
-
   onRemoveQuery = (query: DataQuery) => {
-    const { queries, onChangeQueries, panel } = this.props;
-    const removed = queries.filter(q => {
-      return q !== query;
-    });
-    onChangeQueries(removed);
-    panel.refresh();
+    this.props.onQueriesChange(this.props.queries.filter(item => item !== query));
   };
 
   onChangeQuery(query: DataQuery, index: number) {
-    const { queries, onChangeQueries } = this.props;
+    const { queries, onQueriesChange } = this.props;
 
     const old = queries[index];
 
@@ -54,7 +37,7 @@ export class QueryEditorRows extends PureComponent<Props> {
     }
 
     // update query in array
-    onChangeQueries(
+    onQueriesChange(
       queries.map((item, itemIndex) => {
         if (itemIndex === index) {
           return query;
@@ -65,7 +48,7 @@ export class QueryEditorRows extends PureComponent<Props> {
   }
 
   onDragEnd = (result: DropResult) => {
-    const { queries, onChangeQueries, panel } = this.props;
+    const { queries, onQueriesChange } = this.props;
 
     if (!result || !result.destination) {
       return;
@@ -80,12 +63,12 @@ export class QueryEditorRows extends PureComponent<Props> {
     const update = Array.from(queries);
     const [removed] = update.splice(startIndex, 1);
     update.splice(endIndex, 0, removed);
-    onChangeQueries(update);
-    panel.refresh();
+    onQueriesChange(update);
   };
 
   render() {
     const { props } = this;
+
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
         <Droppable droppableId="transformations-list" direction="vertical">
@@ -98,13 +81,12 @@ export class QueryEditorRows extends PureComponent<Props> {
                     id={query.refId}
                     index={index}
                     key={query.refId}
-                    panel={props.panel}
-                    dashboard={props.dashboard}
                     data={props.data}
                     query={query}
                     onChange={query => this.onChangeQuery(query, index)}
                     onRemoveQuery={this.onRemoveQuery}
-                    onAddQuery={this.onAddQuery}
+                    onAddQuery={this.props.onAddQuery}
+                    onRunQuery={this.props.onRunQueries}
                     inMixedMode={props.datasource.meta.mixed}
                   />
                 ))}

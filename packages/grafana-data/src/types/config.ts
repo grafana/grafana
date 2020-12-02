@@ -35,6 +35,7 @@ export interface FeatureToggles {
   live: boolean;
   expressions: boolean;
   ngalert: boolean;
+  panelLibrary: boolean;
 
   /**
    * @remarks

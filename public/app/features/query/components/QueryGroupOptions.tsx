@@ -8,51 +8,47 @@ import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
 import { Switch, Input, InlineField, InlineFormLabel, stylesFactory } from '@grafana/ui';
 
 // Types
-import { PanelModel } from '../../dashboard/state';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { config } from 'app/core/config';
 import { css } from 'emotion';
 
-const timeRangeValidation = (value: string) => {
-  if (!value) {
-    return true;
-  }
-  return rangeUtil.isValidTimeSpan(value);
-};
-
-const emptyToNull = (value: string) => {
-  return value === '' ? null : value;
-};
+export interface QueryGroupOptions {
+  maxDataPoints?: number | null;
+  minInterval?: string | null;
+  cacheTimeout?: string | null;
+  timeRange?: {
+    from?: string | null;
+    shift?: string | null;
+    hide?: boolean;
+  };
+}
 
 interface Props {
-  panel: PanelModel;
+  options: QueryGroupOptions;
   dataSource: DataSourceApi;
   data: PanelData;
+  onChange: (options: QueryGroupOptions) => void;
 }
 
 interface State {
-  relativeTime: string;
-  timeShift: string;
-  cacheTimeout: string;
-  maxDataPoints: number | string;
-  interval: string;
-  hideTimeOverride: boolean;
+  timeRangeFrom: string;
+  timeRangeShift: string;
+  timeRangeHide: boolean;
   isOpen: boolean;
   relativeTimeIsValid: boolean;
   timeShiftIsValid: boolean;
 }
 
-export class QueryOptions extends PureComponent<Props, State> {
+export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
+    const { options } = props;
+
     this.state = {
-      relativeTime: props.panel.timeFrom || '',
-      timeShift: props.panel.timeShift || '',
-      cacheTimeout: props.panel.cacheTimeout || '',
-      maxDataPoints: props.panel.maxDataPoints ?? '',
-      interval: props.panel.interval || '',
-      hideTimeOverride: props.panel.hideTimeOverride || false,
+      timeRangeFrom: options.timeRange?.from || '',
+      timeRangeShift: options.timeRange?.shift || '',
+      timeRangeHide: options.timeRange?.hide ?? false,
       isOpen: false,
       relativeTimeIsValid: true,
       timeShiftIsValid: true,
@@ -61,79 +57,103 @@ export class QueryOptions extends PureComponent<Props, State> {
 
   onRelativeTimeChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({
-      relativeTime: event.target.value,
+      timeRangeFrom: event.target.value,
     });
   };
 
   onTimeShiftChange = (event: ChangeEvent<HTMLInputElement>) => {
     this.setState({
-      timeShift: event.target.value,
+      timeRangeShift: event.target.value,
     });
   };
 
   onOverrideTime = (event: FocusEvent<HTMLInputElement>) => {
-    const { value } = event.target;
-    const { panel } = this.props;
-    const emptyToNullValue = emptyToNull(value);
-    const isValid = timeRangeValidation(value);
+    const { options, onChange } = this.props;
 
-    if (isValid && panel.timeFrom !== emptyToNullValue) {
-      panel.timeFrom = emptyToNullValue;
-      panel.refresh();
+    const newValue = emptyToNull(event.target.value);
+    const isValid = timeRangeValidation(newValue);
+
+    if (isValid && options.timeRange?.from !== newValue) {
+      onChange({
+        ...options,
+        timeRange: {
+          ...(options.timeRange ?? {}),
+          from: newValue,
+        },
+      });
     }
+
     this.setState({ relativeTimeIsValid: isValid });
   };
 
   onTimeShift = (event: FocusEvent<HTMLInputElement>) => {
-    const { value } = event.target;
-    const { panel } = this.props;
-    const emptyToNullValue = emptyToNull(value);
-    const isValid = timeRangeValidation(value);
+    const { options, onChange } = this.props;
 
-    if (isValid && panel.timeShift !== emptyToNullValue) {
-      panel.timeShift = emptyToNullValue;
-      panel.refresh();
+    const newValue = emptyToNull(event.target.value);
+    const isValid = timeRangeValidation(newValue);
+
+    if (isValid && options.timeRange?.shift !== newValue) {
+      onChange({
+        ...options,
+        timeRange: {
+          ...(options.timeRange ?? {}),
+          shift: newValue,
+        },
+      });
     }
+
     this.setState({ timeShiftIsValid: isValid });
   };
 
   onToggleTimeOverride = () => {
-    const { panel } = this.props;
-    this.setState({ hideTimeOverride: !this.state.hideTimeOverride }, () => {
-      panel.hideTimeOverride = this.state.hideTimeOverride;
-      panel.refresh();
+    const { onChange, options } = this.props;
+
+    this.setState({ timeRangeHide: !this.state.timeRangeHide }, () => {
+      onChange({
+        ...options,
+        timeRange: {
+          ...(options.timeRange ?? {}),
+          hide: this.state.timeRangeHide,
+        },
+      });
     });
   };
 
-  onDataSourceOptionBlur = (panelKey: string) => () => {
-    const { panel } = this.props;
-
-    // @ts-ignore
-    panel[panelKey] = this.state[panelKey];
-    panel.refresh();
+  onCacheTimeoutBlur = (event: ChangeEvent<HTMLInputElement>) => {
+    const { options, onChange } = this.props;
+    onChange({
+      ...options,
+      cacheTimeout: emptyToNull(event.target.value),
+    });
   };
 
-  onDataSourceOptionChange = (panelKey: string) => (event: ChangeEvent<HTMLInputElement>) => {
-    this.setState({ ...this.state, [panelKey]: event.target.value });
-  };
+  onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
+    const { options, onChange } = this.props;
 
-  onMaxDataPointsBlur = () => {
-    const { panel } = this.props;
+    let maxDataPoints: number | null = parseInt(event.target.value as string, 10);
 
-    const maxDataPoints = parseInt(this.state.maxDataPoints as string, 10);
-
-    if (isNaN(maxDataPoints)) {
-      delete panel.maxDataPoints;
-    } else {
-      panel.maxDataPoints = maxDataPoints;
+    if (isNaN(maxDataPoints) || maxDataPoints === 0) {
+      maxDataPoints = null;
     }
 
-    panel.refresh();
+    onChange({
+      ...options,
+      maxDataPoints: maxDataPoints,
+    });
+  };
+
+  onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {
+    const { options, onChange } = this.props;
+
+    onChange({
+      ...options,
+      minInterval: emptyToNull(event.target.value),
+    });
   };
 
   renderCacheTimeoutOption() {
-    const { dataSource } = this.props;
-    const { cacheTimeout } = this.state;
+    const { dataSource, options } = this.props;
+
     const tooltip = `If your time series store has a query cache this option can override the default cache timeout. Specify a
     numeric value in seconds.`;
 
@@ -153,9 +173,8 @@ export class QueryOptions extends PureComponent<Props, State> {
             placeholder="60"
             name={name}
             spellCheck={false}
-            onBlur={this.onDataSourceOptionBlur('cacheTimeout')}
-            onChange={this.onDataSourceOptionChange('cacheTimeout')}
-            value={cacheTimeout}
+            onBlur={this.onCacheTimeoutBlur}
+            defaultValue={options.cacheTimeout ?? ''}
           />
         </div>
       </div>
@@ -163,10 +182,10 @@ export class QueryOptions extends PureComponent<Props, State> {
   }
 
   renderMaxDataPointsOption() {
-    const { data } = this.props;
-    const { maxDataPoints } = this.state;
+    const { data, options } = this.props;
     const realMd = data.request?.maxDataPoints;
-    const isAuto = maxDataPoints === '';
+    const value = options.maxDataPoints ?? '';
+    const isAuto = value === '';
 
     return (
       <div className="gf-form-inline">
@@ -189,8 +208,7 @@ export class QueryOptions extends PureComponent<Props, State> {
             name={name}
             spellCheck={false}
             onBlur={this.onMaxDataPointsBlur}
-            onChange={this.onDataSourceOptionChange('maxDataPoints')}
-            value={maxDataPoints}
+            defaultValue={value}
           />
           {isAuto && (
             <>
@@ -204,8 +222,7 @@ export class QueryOptions extends PureComponent<Props, State> {
   }
 
   renderIntervalOption() {
-    const { data, dataSource } = this.props;
-    const { interval } = this.state;
+    const { data, dataSource, options } = this.props;
     const realInterval = data.request?.interval;
     const minIntervalOnDs = dataSource.interval ?? 'No limit';
 
@@ -231,9 +248,8 @@ export class QueryOptions extends PureComponent<Props, State> {
               placeholder={`${minIntervalOnDs}`}
               name={name}
               spellCheck={false}
-              onBlur={this.onDataSourceOptionBlur('interval')}
-              onChange={this.onDataSourceOptionChange('interval')}
-              value={interval}
+              onBlur={this.onMinIntervalBlur}
+              defaultValue={options.minInterval ?? ''}
             />
           </div>
         </div>
@@ -268,19 +284,19 @@ export class QueryOptions extends PureComponent<Props, State> {
   };
 
   renderCollapsedText(styles: StylesType): React.ReactNode | undefined {
-    const { data } = this.props;
-    const { isOpen, maxDataPoints, interval } = this.state;
+    const { data, options } = this.props;
+    const { isOpen } = this.state;
 
     if (isOpen) {
       return undefined;
     }
 
-    let mdDesc = maxDataPoints;
-    if (maxDataPoints === '' && data.request) {
+    let mdDesc = options.maxDataPoints ?? '';
+    if (mdDesc === '' && data.request) {
       mdDesc = `auto = ${data.request.maxDataPoints}`;
     }
 
-    let intervalDesc = interval;
+    let intervalDesc = options.minInterval;
     if (data.request) {
       intervalDesc = `${data.request.interval}`;
     }
@@ -294,8 +310,8 @@ export class QueryOptions extends PureComponent<Props, State> {
   }
 
   render() {
-    const { hideTimeOverride, relativeTimeIsValid, timeShiftIsValid } = this.state;
-    const { relativeTime, timeShift, isOpen } = this.state;
+    const { timeRangeHide: hideTimeOverride, relativeTimeIsValid, timeShiftIsValid } = this.state;
+    const { timeRangeFrom: relativeTime, timeRangeShift: timeShift, isOpen } = this.state;
     const styles = getStyles();
 
     return (
@@ -348,6 +364,18 @@ export class QueryOptions extends PureComponent<Props, State> {
     );
   }
 }
+
+const timeRangeValidation = (value: string | null) => {
+  if (!value) {
+    return true;
+  }
+
+  return rangeUtil.isValidTimeSpan(value);
+};
+
+const emptyToNull = (value: string) => {
+  return value === '' ? null : value;
+};
 
 const getStyles = stylesFactory(() => {
   const { theme } = config;

@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { LokiExploreExtraFieldProps, LokiExploreExtraField } from './LokiExploreExtraField';
+import { LokiOptionFieldsProps, LokiOptionFields } from './LokiOptionFields';
 
-const setup = (propOverrides?: LokiExploreExtraFieldProps) => {
+const setup = (propOverrides?: LokiOptionFieldsProps) => {
   const queryType = 'range';
   const lineLimitValue = '1';
   const onLineLimitChange = jest.fn();
@@ -19,10 +19,10 @@ const setup = (propOverrides?: LokiExploreExtraFieldProps) => {
 
   Object.assign(props, propOverrides);
 
-  return render(<LokiExploreExtraField {...props} />);
+  return render(<LokiOptionFields {...props} />);
 };
 
-describe('LokiExploreExtraField', () => {
+describe('LokiOptionFields', () => {
   it('should render step field', () => {
     setup();
     expect(screen.getByTestId('lineLimitField')).toBeInTheDocument();
