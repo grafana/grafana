@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	authproxy "github.com/grafana/grafana/pkg/middleware/auth_proxy"
+	"github.com/grafana/grafana/pkg/middleware/authproxy"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -29,7 +29,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 		cmd.Result = &models.User{Id: userID}
 		return nil
 	}
-	getSignedUserHandler := func(cmd *models.GetSignedInUserQuery) error {
+	getUserHandler := func(cmd *models.GetSignedInUserQuery) error {
 		// Simulate that the cached user ID is stale
 		if cmd.UserId != userID {
 			return models.ErrUserNotFound
@@ -46,7 +46,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	origEnabled := setting.AuthProxyEnabled
 	origHeaderProperty := setting.AuthProxyHeaderProperty
 	bus.AddHandler("", upsertHandler)
-	bus.AddHandler("", getSignedUserHandler)
+	bus.AddHandler("", getUserHandler)
 	t.Cleanup(func() {
 		setting.AuthProxyHeaderName = origHeaderName
 		setting.AuthProxyEnabled = origEnabled

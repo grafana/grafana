@@ -77,6 +77,16 @@ func TestIndexPattern(t *testing.T) {
 			So(indices[0], ShouldEqual, "2018-data")
 		})
 
+		indexPatternScenario(intervalDaily, "YYYY[-data-]MM.DD", tsdb.NewTimeRange(from, to), func(indices []string) {
+			So(indices, ShouldHaveLength, 1)
+			So(indices[0], ShouldEqual, "2018-data-05.15")
+		})
+
+		indexPatternScenario(intervalDaily, "[data-]YYYY[-moredata-]MM.DD", tsdb.NewTimeRange(from, to), func(indices []string) {
+			So(indices, ShouldHaveLength, 1)
+			So(indices[0], ShouldEqual, "data-2018-moredata-05.15")
+		})
+
 		Convey("Should return 01 week", func() {
 			from = fmt.Sprintf("%d", time.Date(2018, 1, 15, 17, 50, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))
 			to = fmt.Sprintf("%d", time.Date(2018, 1, 15, 17, 55, 0, 0, time.UTC).UnixNano()/int64(time.Millisecond))

@@ -58,7 +58,7 @@ import {
 import { initialState } from '../pickers/OptionsPicker/reducer';
 import { cleanVariables } from './variablesReducer';
 import { expect } from '../../../../test/lib/common';
-import { VariableRefresh } from '../types';
+import { ConstantVariableModel, VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
 
@@ -399,7 +399,15 @@ describe('shared actions', () => {
               data: {
                 global: false,
                 index: 1,
-                model: { ...constant, name: 'constant1', id: 'constant1', global: false, index: 1 },
+                model: {
+                  ...constant,
+                  name: 'constant1',
+                  id: 'constant1',
+                  global: false,
+                  index: 1,
+                  current: { selected: true, text: '', value: '' },
+                  options: [{ selected: true, text: '', value: '' }],
+                } as ConstantVariableModel,
               },
             }),
             changeVariableNameSucceeded({ type: 'constant', id: 'constant1', data: { newName: 'constant1' } }),
@@ -434,7 +442,15 @@ describe('shared actions', () => {
               data: {
                 global: false,
                 index: 1,
-                model: { ...constant, name: 'constant1', id: 'constant1', global: false, index: 1 },
+                model: {
+                  ...constant,
+                  name: 'constant1',
+                  id: 'constant1',
+                  global: false,
+                  index: 1,
+                  current: { selected: true, text: '', value: '' },
+                  options: [{ selected: true, text: '', value: '' }],
+                } as ConstantVariableModel,
               },
             }),
             changeVariableNameSucceeded({ type: 'constant', id: 'constant1', data: { newName: 'constant1' } }),

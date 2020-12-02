@@ -7,14 +7,14 @@ COPY packages packages
 
 RUN yarn install --pure-lockfile --no-progress
 
-COPY Gruntfile.js tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
+COPY tsconfig.json .eslintrc .editorconfig .browserslistrc .prettierrc.js ./
 COPY public public
 COPY tools tools
 COPY scripts scripts
 COPY emails emails
 
 ENV NODE_ENV production
-RUN ./node_modules/.bin/grunt build
+RUN yarn build
 
 FROM golang:1.15.1-alpine3.12 as go-builder
 

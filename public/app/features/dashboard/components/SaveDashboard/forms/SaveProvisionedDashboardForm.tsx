@@ -31,8 +31,8 @@ export const SaveProvisionedDashboardForm: React.FC<SaveDashboardFormProps> = ({
     <>
       <VerticalGroup spacing="lg">
         <small>
-          This dashboard cannot be saved from Grafana's UI since it has been provisioned from another source. Copy the
-          JSON or save it to a file below. Then you can update your dashboard in corresponding provisioning source.
+          This dashboard cannot be saved from Grafana&apos;s UI since it has been provisioned from another source. Copy
+          the JSON or save it to a file below. Then you can update your dashboard in corresponding provisioning source.
           <br />
           <i>
             See{' '}

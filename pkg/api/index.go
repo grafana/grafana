@@ -104,6 +104,7 @@ func getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
 						Text: include.Name,
 					}
 				}
+				link.Icon = include.Icon
 				appLink.Children = append(appLink.Children, link)
 			}
 
@@ -163,7 +164,15 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		{Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true},
 		{Text: "Manage", Id: "manage-dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "sitemap"},
 		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "presentation-play"},
-		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "camera"},
+	}
+
+	if c.IsSignedIn {
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+			Text: "Snapshots",
+			Id:   "snapshots",
+			Url:  setting.AppSubUrl + "/dashboard/snapshots",
+			Icon: "camera",
+		})
 	}
 
 	navTree = append(navTree, &dtos.NavLink{

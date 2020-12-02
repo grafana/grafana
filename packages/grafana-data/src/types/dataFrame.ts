@@ -127,6 +127,13 @@ export interface FieldState {
   calcs?: FieldCalcs;
 
   /**
+   * The numeric range for values in this field.  This value will respect the min/max
+   * set in field config, or when set to `auto` this will have the min/max for all data
+   * in the response
+   */
+  range?: NumericRange;
+
+  /**
    * Appropriate values for templating
    */
   scopedVars?: ScopedVars;
@@ -136,6 +143,12 @@ export interface FieldState {
    * Useful for assigning color to series by looking up a color in a palette using this index
    */
   seriesIndex?: number;
+}
+
+export interface NumericRange {
+  min?: number | null;
+  max?: number | null;
+  delta: number;
 }
 
 export interface DataFrame extends QueryResultBase {
