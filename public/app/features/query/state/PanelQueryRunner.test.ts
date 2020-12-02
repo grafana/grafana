@@ -88,11 +88,8 @@ function describeQueryRunnerScenario(description: string, scenarioFn: ScenarioFn
         },
       ],
     };
-    setDataSourceSrv({
-      getDataSourceSettingsByUid() {
-        return {} as any;
-      },
-    } as any);
+
+    setDataSourceSrv({} as any);
 
     beforeEach(async () => {
       setEchoSrv(new Echo());
@@ -241,7 +238,6 @@ describe('PanelQueryRunner', () => {
           overrides: [],
         },
         replaceVariables: v => v,
-        getDataSourceSettingsByUid: undefined as any,
         theme: {} as GrafanaTheme,
       }),
       getTransformations: () => undefined,
@@ -306,7 +302,6 @@ describe('PanelQueryRunner', () => {
           overrides: [],
         },
         replaceVariables: v => v,
-        getDataSourceSettingsByUid: undefined as any,
         theme: {} as GrafanaTheme,
       }),
       // @ts-ignore
@@ -349,7 +344,6 @@ describe('PanelQueryRunner', () => {
           overrides: [],
         },
         replaceVariables: v => v,
-        getDataSourceSettingsByUid: undefined as any,
         theme: {} as GrafanaTheme,
       }),
       // @ts-ignore

@@ -1,3 +1,4 @@
+import { Grammar } from 'prismjs';
 import { CompletionItem } from '@grafana/ui';
 
 export const RATE_RANGES: CompletionItem[] = [
@@ -376,7 +377,7 @@ export const FUNCTIONS = [
   },
 ];
 
-const tokenizer = {
+const tokenizer: Grammar = {
   comment: {
     pattern: /#.*/,
   },
