@@ -31,7 +31,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
   const description = useDescription(metric);
 
   return (
-    <SettingsEditorContainer label={description}>
+    <SettingsEditorContainer label={description} hidden={metric.hide}>
       {metric.type === 'derivative' && <SettingField label="Unit" metric={metric} settingName="unit" />}
 
       {metric.type === 'cumulative_sum' && <SettingField label="Format" metric={metric} settingName="format" />}
