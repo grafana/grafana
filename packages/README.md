@@ -41,7 +41,7 @@ As mentioned above the `canary` releases are published to the Github package reg
 //npm.pkg.github.com/:_authToken={INSERT_GH_TOKEN_HERE}
 ```
 
-3. Update the package.json of your project to use either the `canary` channel or a version of the `canary channel
+3. Update the package.json of your project to use either the `canary` channel or a version of the `canary` channel
 
 ```json
 // plugin's package.json
