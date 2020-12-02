@@ -95,7 +95,8 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     let datasource;
 
     try {
-      datasource = await dataSourceSrv.get(query.datasource || dataSourceValue);
+      const datasourceName = dataSourceValue || query.datasource;
+      datasource = await dataSourceSrv.get(datasourceName);
     } catch (error) {
       datasource = await dataSourceSrv.get();
     }

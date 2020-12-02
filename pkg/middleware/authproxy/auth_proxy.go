@@ -114,11 +114,11 @@ func (auth *AuthProxy) HasHeader() bool {
 }
 
 // IsAllowedIP compares presented IP with the whitelist one
-func (auth *AuthProxy) IsAllowedIP() (bool, *Error) {
+func (auth *AuthProxy) IsAllowedIP() *Error {
 	ip := auth.ctx.Req.RemoteAddr
 
 	if len(strings.TrimSpace(auth.whitelistIP)) == 0 {
-		return true, nil
+		return nil
 	}
 
 	proxies := strings.Split(auth.whitelistIP, ",")
@@ -126,7 +126,7 @@ func (auth *AuthProxy) IsAllowedIP() (bool, *Error) {
 	for _, proxy := range proxies {
 		result, err := coerceProxyAddress(proxy)
 		if err != nil {
-			return false, newError("Could not get the network", err)
+			return newError("could not get the network", err)
 		}
 
 		proxyObjs = append(proxyObjs, result)
@@ -134,13 +134,13 @@ func (auth *AuthProxy) IsAllowedIP() (bool, *Error) {
 
 	sourceIP, _, err := net.SplitHostPort(ip)
 	if err != nil {
-		return false, newError("could not parse address", err)
+		return newError("could not parse address", err)
 	}
 	sourceObj := net.ParseIP(sourceIP)
 
 	for _, proxyObj := range proxyObjs {
 		if proxyObj.Contains(sourceObj) {
-			return true, nil
+			return nil
 		}
 	}
 
@@ -148,7 +148,7 @@ func (auth *AuthProxy) IsAllowedIP() (bool, *Error) {
 		"request for user (%s) from %s is not from the authentication proxy", auth.header,
 		sourceIP,
 	)
-	return false, newError("Proxy authentication required", err)
+	return newError("proxy authentication required", err)
 }
 
 func HashCacheKey(key string) string {
@@ -232,7 +232,7 @@ func (auth *AuthProxy) RemoveUserFromCache(logger log.Logger) error {
 func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 	config, err := getLDAPConfig()
 	if err != nil {
-		return 0, newError("Failed to get LDAP config", nil)
+		return 0, newError("failed to get LDAP config", nil)
 	}
 
 	extUser, _, err := newLDAP(config.Servers).User(auth.header)
@@ -273,7 +273,7 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		extUser.Email = auth.header
 		extUser.Login = auth.header
 	default:
-		return 0, newError("Auth proxy header property invalid", nil)
+		return 0, newError("auth proxy header property invalid", nil)
 	}
 
 	auth.headersIterator(func(field string, header string) {
