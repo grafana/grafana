@@ -30,8 +30,7 @@ func TestPPLRequest(t *testing.T) {
 			})
 
 			Convey("When adding default query", func() {
-				query := b.PPLQuery()
-				query.AddPPLQueryString(timeField, "$timeTo", "$timeFrom", "")
+				b.AddPPLQueryString(timeField, "$timeTo", "$timeFrom", "")
 
 				Convey("When building PPL request", func() {
 					pr, err := b.Build()
@@ -52,8 +51,7 @@ func TestPPLRequest(t *testing.T) {
 				})
 			})
 			Convey("When adding PPL query", func() {
-				query := b.PPLQuery()
-				query.AddPPLQueryString(timeField, "$timeTo", "$timeFrom", "source = index | fields test")
+				b.AddPPLQueryString(timeField, "$timeTo", "$timeFrom", "source = index | fields test")
 
 				Convey("When building PPL request", func() {
 					pr, err := b.Build()

@@ -19,21 +19,15 @@ func NewPPLQueryBuilder(index string) *PPLQueryBuilder {
 	return builder
 }
 
-// PPLQuery creates and returns a query builder
-func (b *PPLQueryBuilder) PPLQuery() *PPLQueryBuilder {
+// Build builds and return a PPL query object
+func (b *PPLQueryBuilder) Build() (*PPLQuery, error) {
 	if b == nil {
 		b = NewPPLQueryBuilder(b.index)
 	}
-	return b
-}
 
-// Build builds and return a PPL query object
-func (b *PPLQueryBuilder) Build() (*PPLQuery, error) {
-	q := PPLQuery{}
-
-	q.Query = b.pplQuery
-
-	return &q, nil
+	return &PPLQuery{
+		Query: b.pplQuery,
+	}, nil
 }
 
 // AddPPLQueryString adds a new PPL query string with time range filter
