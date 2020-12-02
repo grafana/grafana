@@ -2,7 +2,10 @@ package middleware
 
 import (
 	"net/http"
+	"net/url"
+	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,14 +29,18 @@ func newCookieOptions() CookieOptions {
 	}
 }
 
-type GetCookieOptionsFunc func() CookieOptions
+type getCookieOptionsFunc func() CookieOptions
 
-func DeleteCookie(w http.ResponseWriter, name string, getCookieOptionsFunc GetCookieOptionsFunc) {
-	WriteCookie(w, name, "", -1, getCookieOptionsFunc)
+func DeleteCookie(w http.ResponseWriter, name string, getCookieOptions getCookieOptionsFunc) {
+	WriteCookie(w, name, "", -1, getCookieOptions)
 }
 
-func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, getCookieOptionsFunc GetCookieOptionsFunc) {
-	options := getCookieOptionsFunc()
+func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, getCookieOptions getCookieOptionsFunc) {
+	if getCookieOptions == nil {
+		getCookieOptions = newCookieOptions
+	}
+
+	options := getCookieOptions()
 	cookie := http.Cookie{
 		Name:     name,
 		MaxAge:   maxAge,
@@ -46,4 +53,19 @@ func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, g
 		cookie.SameSite = options.SameSiteMode
 	}
 	http.SetCookie(w, &cookie)
+}
+
+func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetime time.Duration) {
+	if setting.Env == setting.Dev {
+		ctx.Logger.Info("New token", "unhashed token", value)
+	}
+
+	var maxAge int
+	if maxLifetime <= 0 {
+		maxAge = -1
+	} else {
+		maxAge = int(maxLifetime.Seconds())
+	}
+
+	WriteCookie(ctx.Resp, setting.LoginCookieName, url.QueryEscape(value), maxAge, nil)
 }

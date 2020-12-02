@@ -17,31 +17,31 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-type TestMultiLDAP struct {
+type fakeMultiLDAP struct {
 	multildap.MultiLDAP
 	ID          int64
 	userCalled  bool
 	loginCalled bool
 }
 
-func (stub *TestMultiLDAP) Login(query *models.LoginUserQuery) (
+func (m *fakeMultiLDAP) Login(query *models.LoginUserQuery) (
 	*models.ExternalUserInfo, error,
 ) {
-	stub.loginCalled = true
+	m.loginCalled = true
 	result := &models.ExternalUserInfo{
-		UserId: stub.ID,
+		UserId: m.ID,
 	}
 	return result, nil
 }
 
-func (stub *TestMultiLDAP) User(login string) (
+func (m *fakeMultiLDAP) User(login string) (
 	*models.ExternalUserInfo,
 	ldap.ServerConfig,
 	error,
 ) {
-	stub.userCalled = true
+	m.userCalled = true
 	result := &models.ExternalUserInfo{
-		UserId: stub.ID,
+		UserId: m.ID,
 	}
 	return result, ldap.ServerConfig{}, nil
 }
@@ -126,7 +126,7 @@ func TestMiddlewareContext(t *testing.T) {
 					return true
 				}
 
-				stub := &TestMultiLDAP{
+				stub := &fakeMultiLDAP{
 					ID: 42,
 				}
 
@@ -181,7 +181,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 				auth := prepareMiddleware(t, req, store)
 
-				stub := &TestMultiLDAP{
+				stub := &fakeMultiLDAP{
 					ID: 42,
 				}
 

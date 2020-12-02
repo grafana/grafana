@@ -2,7 +2,6 @@ import {
   ApplyFieldOverrideOptions,
   DataFrame,
   DataLink,
-  DataSourceInstanceSettings,
   DynamicConfigValue,
   Field,
   FieldColorModeId,
@@ -130,7 +129,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
         data: options.data!,
         dataFrameIndex: index,
         replaceVariables: options.replaceVariables,
-        getDataSourceSettingsByUid: options.getDataSourceSettingsByUid,
         fieldConfigRegistry: fieldConfigRegistry,
       };
 
@@ -211,17 +209,10 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       });
 
       // Attach data links supplier
-      newField.getLinks = getLinksSupplier(
-        newFrame,
-        newField,
-        fieldScopedVars,
-        context.replaceVariables,
-        context.getDataSourceSettingsByUid,
-        {
-          theme: options.theme,
-          timeZone: options.timeZone,
-        }
-      );
+      newField.getLinks = getLinksSupplier(newFrame, newField, fieldScopedVars, context.replaceVariables, {
+        theme: options.theme,
+        timeZone: options.timeZone,
+      });
 
       return newField;
     });
@@ -336,7 +327,6 @@ export const getLinksSupplier = (
   field: Field,
   fieldScopedVars: ScopedVars,
   replaceVariables: InterpolateFunction,
-  getDataSourceSettingsByUid: (uid: string) => DataSourceInstanceSettings | undefined,
   options: {
     theme: GrafanaTheme;
     timeZone?: TimeZone;
@@ -401,9 +391,13 @@ export const getLinksSupplier = (
 
     if (link.internal) {
       // For internal links at the moment only destination is Explore.
-      return mapInternalLinkToExplore(link, variables, {} as any, field, {
+      return mapInternalLinkToExplore({
+        link,
+        internalLink: link.internal,
+        scopedVars: variables,
+        field,
+        range: {} as any,
         replaceVariables,
-        getDataSourceSettingsByUid,
       });
     } else {
       let href = locationUtil.assureBaseUrl(link.url.replace(/\n/g, ''));

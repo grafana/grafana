@@ -286,12 +286,12 @@ datasources:
       httpMode: GET
 ```
 
-### InfluxDB 2.x example
+### InfluxDB 2.x for Flux example
 ```yaml
 apiVersion: 1
 
 datasources:
-  - name: InfluxDB_v2
+  - name: InfluxDB_v2_Flux
     type: influxdb
     access: proxy
     url: http://localhost:8086
@@ -302,4 +302,23 @@ datasources:
       organization: organization
       defaultBucket: bucket
       tlsSkipVerify: true
+```
+
+### InfluxDB 2.x for InfluxQl example
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB_v2_InfluxQL
+    type: influxdb
+    access: proxy
+    url: http://localhost:8086
+    # This database should be mapped to a bucket
+    database: site
+    jsonData:
+      httpMode: GET
+      httpHeaderName1: 'Authorization'
+    secureJsonData:
+      httpHeaderValue1: 'Token <token>'
+
 ```
