@@ -37,7 +37,7 @@ const emptyResults = {
 
 /* eslint-enable */
 
-describe('GEL Utils', () => {
+describe('Query Response parser', () => {
   test('should parse output with dataframe', () => {
     const res = toDataQueryResponse(resp);
     const frames = res.data;
@@ -76,7 +76,7 @@ describe('GEL Utils', () => {
               "labels": undefined,
               "name": "",
               "type": "number",
-              "values": Float64Array [
+              "values": Array [
                 3,
                 3,
                 3,
@@ -142,7 +142,7 @@ describe('GEL Utils', () => {
               "labels": undefined,
               "name": "numbers",
               "type": "number",
-              "values": Float64Array [
+              "values": Array [
                 1,
                 3,
               ],
