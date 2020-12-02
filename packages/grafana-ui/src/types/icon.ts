@@ -34,6 +34,7 @@ export type IconName =
   | 'exclamation-triangle'
   | 'times'
   | 'signin'
+  | 'signout'
   | 'cloud-upload'
   | 'step-backward'
   | 'square-shape'

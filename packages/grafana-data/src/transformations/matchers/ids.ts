@@ -37,3 +37,19 @@ export enum FrameMatcherID {
   byIndex = 'byIndex',
   byLabel = 'byLabel',
 }
+
+/**
+ * @public
+ */
+export enum ValueMatcherID {
+  regex = 'regex',
+  isNull = 'isNull',
+  isNotNull = 'isNotNull',
+  greater = 'greater',
+  greaterOrEqual = 'greaterOrEqual',
+  lower = 'lower',
+  lowerOrEqual = 'lowerOrEqual',
+  equal = 'equal',
+  notEqual = 'notEqual',
+  between = 'between',
+}
