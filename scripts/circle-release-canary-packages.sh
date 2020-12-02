@@ -20,12 +20,15 @@ else
   echo "Changes detected in ${count} packages"
   echo "Starting to release latest canary version"
 
+  echo "@grafana:registry=https://npm.pkg.github.com" >> ~/.npmrc
+  echo "//npm.pkg.github.com/:_authToken=${GITHUB_PACKAGE_TOKEN}" >> ~/.npmrc
+
   # For some reason the --no-git-reset is not working as described so
   # to get lerna to publish the packages we need to do a commit to the
   # repository. We will not push this commit to the origin repository.
   prepare_version_commit
 
   echo $'\nPublishing packages'
-  yarn packages:publishCanary
+  yarn packages:publishCanary --registry https://npm.pkg.github.com
 fi
 
