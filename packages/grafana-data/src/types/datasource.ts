@@ -583,7 +583,6 @@ export interface DataSourceSelectItem {
   name: string;
   value: string | null;
   meta: DataSourcePluginMeta;
-  sort: string;
 }
 
 /**

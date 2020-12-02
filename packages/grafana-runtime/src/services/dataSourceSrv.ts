@@ -21,6 +21,11 @@ export interface DataSourceSrv {
   getAll(): DataSourceInstanceSettings[];
 
   /**
+   * Get a list of data sources
+   */
+  getList(filters?: GetDataSourceListFilters): DataSourceInstanceSettings[];
+
+  /**
    * Get all data sources except for internal ones that usually should not be listed like mixed data source.
    */
   getExternal(): DataSourceInstanceSettings[];
@@ -29,6 +34,16 @@ export interface DataSourceSrv {
    * Get settings and plugin metadata by name or uid
    */
   getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined;
+}
+
+/** @public */
+export interface GetDataSourceListFilters {
+  mixed?: boolean;
+  metrics?: boolean;
+  tracing?: boolean;
+  annotations?: boolean;
+  dashboard?: boolean;
+  variables?: boolean;
 }
 
 let singletonInstance: DataSourceSrv;

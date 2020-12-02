@@ -57,7 +57,7 @@ export const initQueryVariableEditor = (identifier: VariableIdentifier): ThunkRe
     .getMetricSources()
     .filter(ds => !ds.meta.mixed && ds.value !== null);
 
-  const defaultDatasource: DataSourceSelectItem = { name: '', value: '', meta: {} as DataSourcePluginMeta, sort: '' };
+  const defaultDatasource: DataSourceSelectItem = { name: '', value: '', meta: {} as DataSourcePluginMeta };
   const allDataSources = [defaultDatasource].concat(dataSources);
   dispatch(changeVariableEditorExtended({ propName: 'dataSources', propValue: allDataSources }));
 

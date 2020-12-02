@@ -4,6 +4,7 @@ import coreModule from 'app/core/core_module';
 // Services & Utils
 import { importDataSourcePlugin } from './plugin_loader';
 import {
+  GetDataSourceListFilters,
   DataSourceSrv as DataSourceService,
   getDataSourceSrv as getDataSourceService,
   TemplateSrv,
@@ -49,6 +50,10 @@ export class DatasourceSrv implements DataSourceService {
       return this.settingsMapByName[this.defaultName];
     }
 
+    if (nameOrUid[0] === '$') {
+      nameOrUid = this.templateSrv.replace(nameOrUid, {}, variableInterpolation);
+    }
+
     return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid];
   }
 
@@ -69,12 +74,7 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     // Interpolation here is to support template variable in data source selection
-    nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, (value: any[]) => {
-      if (Array.isArray(value)) {
-        return value[0];
-      }
-      return value;
-    });
+    nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolation);
 
     if (nameOrUid === 'default') {
       return this.get(this.defaultName);
@@ -130,88 +130,99 @@ export class DatasourceSrv implements DataSourceService {
     return Object.values(this.settingsMapByName);
   }
 
+  getList(filters: GetDataSourceListFilters = {}): DataSourceInstanceSettings[] {
+    const base = Object.values(this.settingsMapByName).filter(x => {
+      if (x.meta.id === 'grafana' || x.meta.id === 'mixed' || x.meta.id === 'dashboard') {
+        return false;
+      }
+      if (filters.metrics && !x.meta.metrics) {
+        return false;
+      }
+      if (filters.tracing && !x.meta.tracing) {
+        return false;
+      }
+      if (filters.annotations && !x.meta.annotations) {
+        return false;
+      }
+      return true;
+    });
+
+    if (filters.variables) {
+      for (const variable of this.templateSrv.getVariables().filter(variable => variable.type === 'datasource')) {
+        const dsVar = variable as DataSourceVariableModel;
+        const first = dsVar.current.value === 'default' ? this.defaultName : dsVar.current.value;
+        const dsName = (first as unknown) as string;
+        const dsSettings = this.settingsMapByName[dsName];
+
+        if (dsSettings) {
+          const key = `$\{${variable.name}\}`;
+          base.push({
+            ...dsSettings,
+            name: key,
+          });
+        }
+      }
+    }
+
+    const sorted = base.sort((a, b) => {
+      if (a.name.toLowerCase() > b.name.toLowerCase()) {
+        return 1;
+      }
+      if (a.name.toLowerCase() < b.name.toLowerCase()) {
+        return -1;
+      }
+      return 0;
+    });
+
+    if (filters.mixed) {
+      base.push(this.getInstanceSettings('-- Mixed --')!);
+    }
+
+    if (filters.dashboard) {
+      base.push(this.getInstanceSettings('-- Dashboard --')!);
+    }
+
+    if (!filters.tracing) {
+      base.push(this.getInstanceSettings('-- Grafana --')!);
+    }
+
+    return sorted;
+  }
+
   getExternal(): DataSourceInstanceSettings[] {
     const datasources = this.getAll().filter(ds => !ds.meta.builtIn);
     return sortBy(datasources, ['name']);
   }
 
   getAnnotationSources() {
-    const sources: any[] = [];
-
-    this.addDataSourceVariables(sources);
-
-    Object.values(this.settingsMapByName).forEach(value => {
-      if (value.meta?.annotations) {
-        sources.push(value);
-      }
+    return this.getList({ annotations: true, variables: true }).map(x => {
+      return {
+        name: x.name,
+        value: x.isDefault ? null : x.name,
+        meta: x.meta,
+      };
     });
-
-    return sources;
   }
 
+  /**
+   * @deprecated use getList
+   * */
   getMetricSources(options?: { skipVariables?: boolean }): DataSourceSelectItem[] {
-    const metricSources: DataSourceSelectItem[] = [];
-
-    Object.entries(this.settingsMapByName).forEach(([key, value]) => {
-      if (value.meta?.metrics) {
-        let metricSource: DataSourceSelectItem = { value: key, name: key, meta: value.meta, sort: key };
-
-        //Make sure grafana and mixed are sorted at the bottom
-        if (value.meta.id === 'grafana') {
-          metricSource.sort = String.fromCharCode(253);
-        } else if (value.meta.id === 'dashboard') {
-          metricSource.sort = String.fromCharCode(254);
-        } else if (value.meta.id === 'mixed') {
-          metricSource.sort = String.fromCharCode(255);
-        }
-
-        metricSources.push(metricSource);
-
-        if (key === this.defaultName) {
-          metricSource = { value: null, name: 'default', meta: value.meta, sort: key };
-          metricSources.push(metricSource);
-        }
-      }
+    return this.getList({ metrics: true, variables: options?.skipVariables! }).map(x => {
+      return {
+        name: x.name,
+        value: x.isDefault ? null : x.name,
+        meta: x.meta,
+      };
     });
-
-    if (!options || !options.skipVariables) {
-      this.addDataSourceVariables(metricSources);
-    }
-
-    metricSources.sort((a, b) => {
-      if (a.sort.toLowerCase() > b.sort.toLowerCase()) {
-        return 1;
-      }
-      if (a.sort.toLowerCase() < b.sort.toLowerCase()) {
-        return -1;
-      }
-      return 0;
-    });
-
-    return metricSources;
   }
+}
 
-  addDataSourceVariables(list: any[]) {
-    // look for data source variables
-    this.templateSrv
-      .getVariables()
-      .filter(variable => variable.type === 'datasource')
-      .forEach((variable: DataSourceVariableModel) => {
-        const first = variable.current.value === 'default' ? this.defaultName : variable.current.value;
-        const index = (first as unknown) as string;
-        const ds = this.settingsMapByName[index];
-
-        if (ds) {
-          const key = `$${variable.name}`;
-          list.push({
-            name: key,
-            value: key,
-            meta: ds.meta,
-            sort: key,
-          });
-        }
-      });
+export function variableInterpolation(value: any[]) {
+  if (Array.isArray(value)) {
+    return value[0];
   }
+  return value;
 }
 
 export const getDatasourceSrv = (): DatasourceSrv => {
