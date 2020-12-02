@@ -107,6 +107,9 @@ func perFloat(val Value, floatF func(x float64) float64) (Value, error) {
 			}
 		}
 		newVal = newSeries
+	default:
+		// TODO: Should we deal with TypeString, TypeVariantSet?
 	}
+
 	return newVal, nil
 }

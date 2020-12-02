@@ -2,16 +2,6 @@
 
 exports[`LokiExploreQueryEditor should render component 1`] = `
 <Component
-  ExtraFieldElement={
-    <Memo(LokiExploreExtraField)
-      label="Line limit"
-      min={0}
-      onChangeFunc={[Function]}
-      onKeyDownFunc={[Function]}
-      type="number"
-      value="0"
-    />
-  }
   data={
     Object {
       "request": Object {

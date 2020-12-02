@@ -18,10 +18,10 @@ interface State {
 export class QueryEditor extends PureComponent<Props, State> {
   state: State = { lastQueryError: '' };
 
-  async UNSAFE_componentWillMount() {
+  async UNSAFE_UNSAFE_componentWillMount() {
     const { datasource, query } = this.props;
 
-    // Unfortunately, migrations like this need to go componentWillMount. As soon as there's
+    // Unfortunately, migrations like this need to go UNSAFE_componentWillMount. As soon as there's
     // migration hook for this module.ts, we can do the migrations there instead.
     if (!this.props.query.hasOwnProperty('metricQuery')) {
       const { hide, refId, datasource, key, queryType, maxLines, metric, ...metricQuery } = this.props.query as any;

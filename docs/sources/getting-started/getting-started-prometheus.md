@@ -1,5 +1,5 @@
 +++
-title = "Getting started with Grafana and Prometheus"
+title = "With Grafana and Prometheus"
 description = "Guide for getting started with Grafana"
 keywords = ["grafana", "intro", "guide", "started"]
 aliases = ["/docs/grafana/latest/guides/gettingstarted","/docs/grafana/latest/guides/getting_started"]
@@ -65,4 +65,4 @@ Now that you have a curated list of queries, create [dashboards]({{< relref "../
 
 The following image shows a dashboard with three panels showing some system metrics.
 
-{{< imgbox max-width="800px" img="/img/docs/getting-started/simple_grafana_prom_dashboard.png" caption="Alerting overview" >}}
+<img width="850px" src="/img/docs/getting-started/simple_grafana_prom_dashboard.png" caption="Prometheus dashboards" >

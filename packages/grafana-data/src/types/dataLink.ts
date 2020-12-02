@@ -36,10 +36,14 @@ export interface DataLink<T extends DataQuery = any> {
   // datas ource that we want to show to the user. Usually this results in a link to explore but can also lead to
   // more custom onClick behaviour if needed.
   // @internal and subject to change in future releases
-  internal?: {
-    query: T;
-    datasourceUid: string;
-  };
+  internal?: InternalDataLink<T>;
+}
+
+/** @internal */
+export interface InternalDataLink<T extends DataQuery = any> {
+  query: T;
+  datasourceUid: string;
+  datasourceName: string;
 }
 
 export type LinkTarget = '_blank' | '_self' | undefined;

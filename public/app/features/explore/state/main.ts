@@ -109,7 +109,7 @@ export function splitOpen<T extends DataQuery = any>(options?: {
         } as DataQuery,
       ];
 
-      const dataSourceSettings = getDatasourceSrv().getDataSourceSettingsByUid(options.datasourceUid);
+      const dataSourceSettings = getDatasourceSrv().getInstanceSettings(options.datasourceUid);
 
       await dispatch(changeDatasource(ExploreId.right, dataSourceSettings!.name));
       await dispatch(setQueriesAction({ exploreId: ExploreId.right, queries }));

@@ -1,10 +1,11 @@
 import isString from 'lodash/isString';
-import { ScopedVars } from '@grafana/data';
+import { ScopedVars, VariableType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import { ALL_VARIABLE_TEXT } from './state/types';
 import { QueryVariableModel, VariableModel, VariableRefresh } from './types';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
+import { variableAdapters } from './adapters';
 
 /*
  * This regex matches 3 types of variable reference with an optional format specifier
@@ -145,4 +146,14 @@ export function getVariableRefresh(variable: VariableModel): VariableRefresh {
   }
 
   return queryVariable.refresh;
+}
+
+export function getVariableTypes(): Array<{ label: string; value: VariableType }> {
+  return variableAdapters
+    .list()
+    .filter(v => v.id !== 'system')
+    .map(({ id, name }) => ({
+      label: name,
+      value: id,
+    }));
 }

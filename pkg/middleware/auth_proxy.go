@@ -5,7 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	authproxy "github.com/grafana/grafana/pkg/middleware/auth_proxy"
+	"github.com/grafana/grafana/pkg/middleware/authproxy"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -45,7 +45,7 @@ func initContextWithAuthProxy(store *remotecache.RemoteCache, ctx *models.ReqCon
 	}
 
 	// Check if allowed to continue with this IP
-	if result, err := auth.IsAllowedIP(); !result {
+	if err := auth.IsAllowedIP(); err != nil {
 		logger.Error(
 			"Failed to check whitelisted IP addresses",
 			"message", err.Error(),
