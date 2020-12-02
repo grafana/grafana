@@ -49,6 +49,7 @@ func (e duplicatePluginError) Error() string {
 }
 
 func (e duplicatePluginError) Is(err error) bool {
+	// nolint:errorlint
 	_, ok := err.(duplicatePluginError)
 	return ok
 }
@@ -132,6 +133,7 @@ type PluginInclude struct {
 	AddToNav   bool            `json:"addToNav"`
 	DefaultNav bool            `json:"defaultNav"`
 	Slug       string          `json:"slug"`
+	Icon       string          `json:"icon"`
 
 	Id string `json:"-"`
 }

@@ -2,6 +2,7 @@ package rendering
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"net/url"
@@ -136,7 +137,7 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 	elapsedTime := time.Since(startTime).Milliseconds()
 	result, err := rs.render(ctx, opts)
 	if err != nil {
-		if err == ErrTimeout {
+		if errors.Is(err, ErrTimeout) {
 			metrics.MRenderingRequestTotal.WithLabelValues("timeout").Inc()
 			metrics.MRenderingSummary.WithLabelValues("timeout").Observe(float64(elapsedTime))
 		} else {
@@ -231,6 +232,8 @@ func (rs *RenderingService) getURL(path string) string {
 		protocol = "http"
 	case setting.HTTP2Scheme, setting.HTTPSScheme:
 		protocol = "https"
+	default:
+		// TODO: Handle other schemes?
 	}
 
 	subPath := ""

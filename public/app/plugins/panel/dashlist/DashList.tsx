@@ -27,8 +27,9 @@ async function fetchDashboards(options: DashListOptions) {
   }
 
   let recentDashboards: Promise<Dashboard[]> = Promise.resolve([]);
+  let dashIds: number[] = [];
   if (options.showRecentlyViewed) {
-    const dashIds = take(impressionSrv.getDashboardOpened(), options.maxItems);
+    dashIds = take<number>(impressionSrv.getDashboardOpened(), options.maxItems);
     recentDashboards = getBackendSrv().search({ dashboardIds: dashIds, limit: options.maxItems });
   }
 
@@ -46,24 +47,29 @@ async function fetchDashboards(options: DashListOptions) {
   }
 
   const [starred, searched, recent] = await Promise.all([starredDashboards, searchedDashboards, recentDashboards]);
-  const dashMap = starred.reduce(
-    (acc, dash) => Object.assign(acc, { [dash.id]: dash }),
-    {} as Record<number, Dashboard>
-  );
+
+  // We deliberately deal with recent dashboards first so that the order of dash IDs is preserved
+  let dashMap = new Map<number, Dashboard>();
+  for (const dashId of dashIds) {
+    const dash = recent.find(d => d.id === dashId);
+    if (dash) {
+      dashMap.set(dashId, { ...dash, isRecent: true });
+    }
+  }
 
   searched.forEach(dash => {
-    if (dashMap.hasOwnProperty(dash.id)) {
-      dashMap[dash.id].isSearchResult = true;
+    if (dashMap.has(dash.id)) {
+      dashMap.get(dash.id)!.isSearchResult = true;
     } else {
-      dashMap[dash.id] = { ...dash, isSearchResult: true };
+      dashMap.set(dash.id, { ...dash, isSearchResult: true });
     }
   });
 
-  recent.forEach(dash => {
-    if (dashMap.hasOwnProperty(dash.id)) {
-      dashMap[dash.id].isRecent = true;
+  starred.forEach(dash => {
+    if (dashMap.has(dash.id)) {
+      dashMap.get(dash.id)!.isStarred = true;
     } else {
-      dashMap[dash.id] = { ...dash, isRecent: true };
+      dashMap.set(dash.id, { ...dash, isStarred: true });
     }
   });
 
@@ -71,7 +77,7 @@ async function fetchDashboards(options: DashListOptions) {
 }
 
 export function DashList(props: PanelProps<DashListOptions>) {
-  const [dashboards, setDashboards] = useState<Record<number, Dashboard>>({});
+  const [dashboards, setDashboards] = useState(new Map<number, Dashboard>());
   useEffect(() => {
     fetchDashboards(props.options).then(dashes => {
       setDashboards(dashes);
@@ -91,11 +97,13 @@ export function DashList(props: PanelProps<DashListOptions>) {
     e.stopPropagation();
 
     const isStarred = await getDashboardSrv().starDashboard(dash.id.toString(), dash.isStarred);
-    setDashboards(Object.assign({}, dashboards, { [dash.id]: { ...dash, isStarred } }));
+    const updatedDashboards = new Map(dashboards);
+    updatedDashboards.set(dash.id, { ...dash, isStarred });
+    setDashboards(updatedDashboards);
   };
 
   const [starredDashboards, recentDashboards, searchedDashboards] = useMemo(() => {
-    const dashboardList = Object.values(dashboards);
+    const dashboardList = [...dashboards.values()];
     return [
       dashboardList.filter(dash => dash.isStarred),
       dashboardList.filter(dash => dash.isRecent),

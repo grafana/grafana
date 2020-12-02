@@ -1,7 +1,6 @@
-import config from 'app/core/config';
 import 'app/features/plugins/datasource_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DataSourcePluginMeta, PluginMeta } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourcePlugin, DataSourcePluginMeta, PluginMeta } from '@grafana/data';
 
 // Datasource variable $datasource with current value 'BBB'
 const templateSrv: any = {
@@ -14,41 +13,72 @@ const templateSrv: any = {
       },
     },
   ],
+  replace: (v: string) => v,
 };
+
+class TestDataSource {
+  constructor(public instanceSettings: DataSourceInstanceSettings) {}
+}
+
+jest.mock('../plugin_loader', () => ({
+  importDataSourcePlugin: () => {
+    return Promise.resolve(new DataSourcePlugin(TestDataSource as any));
+  },
+}));
 
 describe('datasource_srv', () => {
   const _datasourceSrv = new DatasourceSrv({} as any, {} as any, templateSrv);
+  const datasources = {
+    buildIn: {
+      id: 1,
+      uid: '1',
+      type: 'b',
+      name: 'buildIn',
+      meta: { builtIn: true } as DataSourcePluginMeta,
+      jsonData: {},
+    },
+    external1: {
+      id: 2,
+      uid: '2',
+      type: 'e',
+      name: 'external1',
+      meta: { builtIn: false } as DataSourcePluginMeta,
+      jsonData: {},
+    },
+    external2: {
+      id: 3,
+      uid: '3',
+      type: 'e2',
+      name: 'external2',
+      meta: {} as PluginMeta,
+      jsonData: {},
+    },
+  };
 
-  describe('when loading external datasources', () => {
-    beforeEach(() => {
-      config.datasources = {
-        buildInDs: {
-          id: 1,
-          uid: '1',
-          type: 'b',
-          name: 'buildIn',
-          meta: { builtIn: true } as DataSourcePluginMeta,
-          jsonData: {},
-        },
-        nonBuildIn: {
-          id: 2,
-          uid: '2',
-          type: 'e',
-          name: 'external1',
-          meta: { builtIn: false } as DataSourcePluginMeta,
-          jsonData: {},
-        },
-        nonExplore: {
-          id: 3,
-          uid: '3',
-          type: 'e2',
-          name: 'external2',
-          meta: {} as PluginMeta,
-          jsonData: {},
-        },
-      };
+  beforeEach(() => {
+    _datasourceSrv.init(datasources, 'external1');
+  });
+
+  describe('when getting data source class instance', () => {
+    it('should load plugin and create instance and set meta', async () => {
+      const ds = (await _datasourceSrv.get('external1')) as any;
+      expect(ds.meta).toBe(datasources.external1.meta);
+      expect(ds.instanceSettings).toBe(datasources.external1);
+
+      // validate that it caches instance
+      const ds2 = await _datasourceSrv.get('external1');
+      expect(ds).toBe(ds2);
     });
 
+    it('should be able to load data source using uid as well', async () => {
+      const dsByUid = await _datasourceSrv.get('2');
+      const dsByName = await _datasourceSrv.get('external1');
+      expect(dsByUid.meta).toBe(datasources.external1.meta);
+      expect(dsByUid).toBe(dsByName);
+    });
+  });
+
+  describe('when getting external metric sources', () => {
     it('should return list of explore sources', () => {
       const externalSources = _datasourceSrv.getExternal();
       expect(externalSources.length).toBe(2);
@@ -59,45 +89,48 @@ describe('datasource_srv', () => {
 
   describe('when loading metric sources', () => {
     let metricSources: any;
-    const unsortedDatasources = {
-      mmm: {
-        type: 'test-db',
-        meta: { metrics: { m: 1 } },
-      },
-      '--Grafana--': {
-        type: 'grafana',
-        meta: { builtIn: true, metrics: { m: 1 }, id: 'grafana' },
-      },
-      '--Mixed--': {
-        type: 'test-db',
-        meta: { builtIn: true, metrics: { m: 1 }, id: 'mixed' },
-      },
-      ZZZ: {
-        type: 'test-db',
-        meta: { metrics: { m: 1 } },
-      },
-      aaa: {
-        type: 'test-db',
-        meta: { metrics: { m: 1 } },
-      },
-      BBB: {
-        type: 'test-db',
-        meta: { metrics: { m: 1 } },
-      },
-    };
+
     beforeEach(() => {
-      config.datasources = unsortedDatasources as any;
+      _datasourceSrv.init(
+        {
+          mmm: {
+            type: 'test-db',
+            meta: { metrics: true } as any,
+          },
+          '--Grafana--': {
+            type: 'grafana',
+            meta: { builtIn: true, metrics: true, id: 'grafana' },
+          },
+          '--Mixed--': {
+            type: 'test-db',
+            meta: { builtIn: true, metrics: true, id: 'mixed' },
+          },
+          ZZZ: {
+            type: 'test-db',
+            meta: { metrics: true },
+          },
+          aaa: {
+            type: 'test-db',
+            meta: { metrics: true },
+          },
+          BBB: {
+            type: 'test-db',
+            meta: { metrics: true },
+          },
+        } as any,
+        'BBB'
+      );
       metricSources = _datasourceSrv.getMetricSources({});
-      config.defaultDatasource = 'BBB';
     });
 
     it('should return a list of sources sorted case insensitively with builtin sources last', () => {
       expect(metricSources[1].name).toBe('aaa');
       expect(metricSources[2].name).toBe('BBB');
-      expect(metricSources[3].name).toBe('mmm');
-      expect(metricSources[4].name).toBe('ZZZ');
-      expect(metricSources[5].name).toBe('--Grafana--');
-      expect(metricSources[6].name).toBe('--Mixed--');
+      expect(metricSources[3].name).toBe('default');
+      expect(metricSources[4].name).toBe('mmm');
+      expect(metricSources[5].name).toBe('ZZZ');
+      expect(metricSources[6].name).toBe('--Grafana--');
+      expect(metricSources[7].name).toBe('--Mixed--');
     });
 
     it('should set default data source', () => {

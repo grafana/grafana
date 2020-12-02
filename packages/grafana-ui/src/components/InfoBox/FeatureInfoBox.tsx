@@ -28,6 +28,7 @@ export const FeatureInfoBox = React.memo(
     return <InfoBox branded title={titleEl} urlTitle="Read documentation" {...otherProps} />;
   })
 );
+FeatureInfoBox.displayName = 'FeatureInfoBox';
 
 const getFeatureInfoBoxStyles = stylesFactory((theme: GrafanaTheme) => {
   return {

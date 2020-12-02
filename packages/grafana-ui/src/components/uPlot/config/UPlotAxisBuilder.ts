@@ -1,16 +1,16 @@
 import { dateTimeFormat, GrafanaTheme, systemDateFormats, TimeZone } from '@grafana/data';
-import uPlot from 'uplot';
-import { AxisSide, PlotConfigBuilder } from '../types';
+import uPlot, { Axis } from 'uplot';
+import { PlotConfigBuilder } from '../types';
 import { measureText } from '../../../utils/measureText';
+import { AxisPlacement } from '../config';
 
 export interface AxisProps {
   scaleKey: string;
   theme: GrafanaTheme;
   label?: string;
-  stroke?: string;
   show?: boolean;
   size?: number;
-  side?: AxisSide;
+  placement?: AxisPlacement;
   grid?: boolean;
   formatValue?: (v: any) => string;
   values?: any;
@@ -18,13 +18,13 @@ export interface AxisProps {
   timeZone?: TimeZone;
 }
 
-export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, uPlot.Axis> {
-  getConfig(): uPlot.Axis {
+export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
+  getConfig(): Axis {
     const {
       scaleKey,
       label,
       show = true,
-      side = 3,
+      placement = AxisPlacement.Auto,
       grid = true,
       formatValue,
       values,
@@ -32,16 +32,16 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, uPlot.Axis> {
       timeZone,
       theme,
     } = this.props;
-    const stroke = this.props.stroke || theme.colors.text;
+
     const gridColor = theme.isDark ? theme.palette.gray25 : theme.palette.gray90;
 
-    let config: uPlot.Axis = {
+    let config: Axis = {
       scale: scaleKey,
-      label,
       show,
-      stroke,
-      side,
-      font: '12px Roboto',
+      stroke: theme.colors.text,
+      side: getUPlotSideFromAxis(placement),
+      font: `12px 'Roboto'`,
+      labelFont: `12px 'Roboto'`,
       size: calculateAxisSize,
       grid: {
         show: grid,
@@ -56,6 +56,11 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, uPlot.Axis> {
       values: values,
       space: calculateSpace,
     };
+
+    if (label !== undefined && label !== null && label.length > 0) {
+      config.label = label;
+      config.labelSize = 18;
+    }
 
     if (values) {
       config.values = values;
@@ -78,7 +83,7 @@ function calculateSpace(self: uPlot, axisIdx: number, scaleMin: number, scaleMax
 
   // For x-axis (bottom) we need bigger spacing between labels
   if (axis.side === 2) {
-    return 60;
+    return 50;
   }
 
   return 30;
@@ -102,20 +107,25 @@ function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
     }
   }
 
-  return measureText(maxLength, 12).width - 8;
+  let axisWidth = measureText(maxLength, 12).width + 18;
+  return axisWidth;
 }
 
 /** Format time axis ticks */
 function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: number, foundIncr: number): string[] {
   const timeZone = (self.axes[axisIdx] as any).timeZone;
   const scale = self.scales.x;
-  const range = (scale?.max ?? 0) - (scale?.min ?? 0);
+  const range = ((scale?.max ?? 0) - (scale?.min ?? 0)) / 1e3;
   const oneDay = 86400;
   const oneYear = 31536000;
 
+  foundIncr /= 1e3;
+
   let format = systemDateFormats.interval.minute;
 
-  if (foundIncr <= 45) {
+  if (foundIncr < 1) {
+    format = systemDateFormats.interval.second.replace('ss', 'ss.SS');
+  } else if (foundIncr <= 45) {
     format = systemDateFormats.interval.second;
   } else if (foundIncr <= 7200 || range <= oneDay) {
     format = systemDateFormats.interval.minute;
@@ -127,5 +137,19 @@ function formatTime(self: uPlot, splits: number[], axisIdx: number, foundSpace: 
     format = systemDateFormats.interval.month;
   }
 
-  return splits.map(v => dateTimeFormat(v * 1000, { format, timeZone }));
+  return splits.map(v => dateTimeFormat(v, { format, timeZone }));
+}
+
+export function getUPlotSideFromAxis(axis: AxisPlacement) {
+  switch (axis) {
+    case AxisPlacement.Top:
+      return 0;
+    case AxisPlacement.Right:
+      return 1;
+    case AxisPlacement.Bottom:
+      return 2;
+    case AxisPlacement.Left:
+  }
+
+  return 3; // default everythign to the left
 }

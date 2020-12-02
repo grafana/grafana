@@ -1,32 +1,47 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import {
+  compareDataFrameStructures,
   DataFrame,
   FieldConfig,
+  FieldMatcher,
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
   getFieldDisplayName,
-  getTimeField,
-  TIME_SERIES_TIME_FIELD_NAME,
 } from '@grafana/data';
-import { alignAndSortDataFramesByFieldName } from './utils';
+import { alignDataFrames } from './utils';
 import { UPlotChart } from '../uPlot/Plot';
-import { AxisSide, GraphCustomFieldConfig, PlotProps } from '../uPlot/types';
+import { PlotProps } from '../uPlot/types';
+import { AxisPlacement, GraphFieldConfig, GraphMode, PointMode } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
 import { GraphLegend } from '../Graph/GraphLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+import { useRevision } from '../uPlot/hooks';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
-interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
+export interface XYFieldMatchers {
+  x: FieldMatcher;
+  y: FieldMatcher;
+}
+
+export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
   data: DataFrame[];
   legend?: LegendOptions;
+  fields?: XYFieldMatchers; // default will assume timeseries data
 }
+
+const defaultConfig: GraphFieldConfig = {
+  mode: GraphMode.Line,
+  points: PointMode.Auto,
+  axisPlacement: AxisPlacement.Auto,
+};
 
 export const GraphNG: React.FC<GraphNGProps> = ({
   data,
+  fields,
   children,
   width,
   height,
@@ -35,67 +50,76 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   timeZone,
   ...plotProps
 }) => {
+  const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
   const theme = useTheme();
-  const alignedData = useMemo(() => alignAndSortDataFramesByFieldName(data, TIME_SERIES_TIME_FIELD_NAME), [data]);
   const legendItemsRef = useRef<LegendItem[]>([]);
-  const hasLegend = legend && legend.displayMode !== LegendDisplayMode.Hidden;
+  const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
+  const alignedFrame = alignedFrameWithGapTest?.frame;
 
-  if (!alignedData) {
-    return (
-      <div className="panel-empty">
-        <p>No data found in response</p>
-      </div>
-    );
-  }
+  const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
+    if (a && b) {
+      return compareDataFrameStructures(a, b, ['min', 'max']);
+    }
+    return false;
+  }, []);
+
+  const configRev = useRevision(alignedFrame, compareFrames);
 
   const configBuilder = useMemo(() => {
     const builder = new UPlotConfigBuilder();
 
-    let { timeIndex } = getTimeField(alignedData);
+    if (!alignedFrame) {
+      return builder;
+    }
 
-    if (timeIndex === undefined) {
-      timeIndex = 0; // assuming first field represents x-domain
-      builder.addScale({
-        scaleKey: 'x',
-      });
-    } else {
+    // X is the first field in the alligned frame
+    const xField = alignedFrame.fields[0];
+    if (xField.type === FieldType.time) {
       builder.addScale({
         scaleKey: 'x',
         isTime: true,
       });
+      builder.addAxis({
+        scaleKey: 'x',
+        isTime: true,
+        placement: AxisPlacement.Bottom,
+        timeZone,
+        theme,
+      });
+    } else {
+      // Not time!
+      builder.addScale({
+        scaleKey: 'x',
+      });
+      builder.addAxis({
+        scaleKey: 'x',
+        placement: AxisPlacement.Bottom,
+        theme,
+      });
     }
-
-    builder.addAxis({
-      scaleKey: 'x',
-      isTime: true,
-      side: AxisSide.Bottom,
-      timeZone,
-      theme,
-    });
 
     let seriesIdx = 0;
     const legendItems: LegendItem[] = [];
 
-    for (let i = 0; i < alignedData.fields.length; i++) {
-      const field = alignedData.fields[i];
-      const config = field.config as FieldConfig<GraphCustomFieldConfig>;
-      const customConfig = config.custom;
+    for (let i = 0; i < alignedFrame.fields.length; i++) {
+      const field = alignedFrame.fields[i];
+      const config = field.config as FieldConfig<GraphFieldConfig>;
+      const customConfig = config.custom || defaultConfig;
 
-      if (i === timeIndex || field.type !== FieldType.number) {
+      if (field === xField || field.type !== FieldType.number) {
         continue;
       }
 
       const fmt = field.display ?? defaultFormatter;
       const scale = config.unit || '__fixed';
+      const isNewScale = !builder.hasScale(scale);
 
-      if (!builder.hasScale(scale)) {
-        builder.addScale({ scaleKey: scale });
+      if (isNewScale && customConfig.axisPlacement !== AxisPlacement.Hidden) {
+        builder.addScale({ scaleKey: scale, min: field.config.min, max: field.config.max });
         builder.addAxis({
           scaleKey: scale,
-          label: config.custom?.axis?.label,
-          size: config.custom?.axis?.width,
-          side: config.custom?.axis?.side || AxisSide.Left,
-          grid: config.custom?.axis?.grid,
+          label: customConfig.axisLabel,
+          placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
           formatValue: v => formattedValueToString(fmt(v)),
           theme,
         });
@@ -106,25 +130,28 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       const colorMode = getFieldColorModeForField(field);
       const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
+      const pointsMode = customConfig.mode === GraphMode.Points ? PointMode.Always : customConfig.points;
 
       builder.addSeries({
         scaleKey: scale,
-        line: customConfig?.line?.show,
+        line: (customConfig.mode ?? GraphMode.Line) === GraphMode.Line,
         lineColor: seriesColor,
-        lineWidth: customConfig?.line?.width,
-        points: customConfig?.points?.show,
-        pointSize: customConfig?.points?.radius,
+        lineWidth: customConfig.lineWidth,
+        points: pointsMode,
+        pointSize: customConfig.pointRadius,
         pointColor: seriesColor,
-        fill: customConfig?.fill?.alpha !== undefined,
-        fillOpacity: customConfig?.fill?.alpha,
+        fill: customConfig.fillAlpha !== undefined,
+        fillOpacity: customConfig.fillAlpha,
         fillColor: seriesColor,
       });
 
-      if (hasLegend) {
+      if (hasLegend.current) {
+        const axisPlacement = builder.getAxisPlacement(scale);
+
         legendItems.push({
           color: seriesColor,
-          label: getFieldDisplayName(field, alignedData),
-          yAxis: customConfig?.axis?.side === 1 ? 3 : 1,
+          label: getFieldDisplayName(field, alignedFrame),
+          yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
         });
       }
 
@@ -133,7 +160,15 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
     legendItemsRef.current = legendItems;
     return builder;
-  }, [alignedData, hasLegend]);
+  }, [configRev, timeZone]);
+
+  if (alignedFrameWithGapTest == null) {
+    return (
+      <div className="panel-empty">
+        <p>No data found in response</p>
+      </div>
+    );
+  }
 
   let legendElement: React.ReactElement | undefined;
 
@@ -149,7 +184,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     <VizLayout width={width} height={height} legend={legendElement}>
       {(vizWidth: number, vizHeight: number) => (
         <UPlotChart
-          data={alignedData}
+          data={alignedFrameWithGapTest}
           config={configBuilder}
           width={vizWidth}
           height={vizHeight}

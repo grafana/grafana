@@ -2,13 +2,14 @@ package api
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/models"
 )
 
 func (hs *HTTPServer) AdminProvisioningReloadDashboards(c *models.ReqContext) Response {
 	err := hs.ProvisioningService.ProvisionDashboards()
-	if err != nil && err != context.Canceled {
+	if err != nil && !errors.Is(err, context.Canceled) {
 		return Error(500, "", err)
 	}
 	return Success("Dashboards config reloaded")
