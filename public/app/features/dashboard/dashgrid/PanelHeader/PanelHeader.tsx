@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import { isEqual } from 'lodash';
 import { DataLink, LoadingState, PanelData, PanelMenuItem, QueryResultMetaNotice, ScopedVars } from '@grafana/data';
 import { AngularComponent, config, getTemplateSrv } from '@grafana/runtime';
 import { ClickOutsideWrapper, Icon, IconName, Tooltip, stylesFactory } from '@grafana/ui';
@@ -15,6 +14,7 @@ import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSupplie
 import { getPanelMenu } from 'app/features/dashboard/utils/getPanelMenu';
 import { updateLocation } from 'app/core/actions';
 import { css } from 'emotion';
+import { truncateNumber } from '../../utils/truncator';
 
 export interface Props {
   panel: PanelModel;
@@ -52,17 +52,24 @@ export class PanelHeader extends PureComponent<Props, State> {
 
   eventToClickCoordinates = (event: React.MouseEvent<HTMLDivElement>) => {
     return {
-      x: event.clientX,
-      y: event.clientY,
+      x: this.truncate(event.clientX, 0),
+      y: this.truncate(event.clientY, 0),
     };
   };
+
+  truncate(input: number, digits: number): number {
+    const step = Math.pow(10, digits || 0);
+    const temp = Math.trunc(step * input);
+
+    return temp / step;
+  }
 
   onMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
     this.clickCoordinates = this.eventToClickCoordinates(event);
   };
 
   isClick = (clickCoordinates: ClickCoordinates) => {
-    return isEqual(clickCoordinates, this.clickCoordinates);
+    return clickCoordinates.x === this.clickCoordinates.x && clickCoordinates.y === this.clickCoordinates.y;
   };
 
   onMenuToggle = (event: React.MouseEvent<HTMLDivElement>) => {
