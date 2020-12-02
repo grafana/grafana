@@ -2,17 +2,14 @@
 import React, { PureComponent } from 'react';
 // Components
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
-import { QueryOptions } from './QueryOptions';
 import { Button, CustomScrollbar, HorizontalGroup, Modal, stylesFactory, Field } from '@grafana/ui';
-import { getLocationSrv, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryEditorRows } from './QueryEditorRows';
 // Services
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { backendSrv } from 'app/core/services/backend_srv';
 import config from 'app/core/config';
 // Types
-import { PanelModel } from '../../dashboard/state/PanelModel';
-import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import {
   DataQuery,
   DataSourceSelectItem,
@@ -24,14 +21,23 @@ import {
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
 import { Unsubscribable } from 'rxjs';
-import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
 import { expressionDatasource, ExpressionDatasourceID } from 'app/features/expressions/ExpressionDatasource';
-import { css } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
+import { PanelQueryRunner } from '../state/PanelQueryRunner';
+import { QueryGroupOptions, QueryGroupOptionsEditor } from './QueryGroupOptions';
+import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
+import { css } from 'emotion';
 
 interface Props {
-  panel: PanelModel;
-  dashboard?: DashboardModel;
+  queryRunner: PanelQueryRunner;
+  queries: DataQuery[];
+  dataSourceName: string | null;
+  options: QueryGroupOptions;
+  onOpenQueryInspector?: () => void;
+  onRunQueries: () => void;
+  onQueriesChange: (queries: DataQuery[]) => void;
+  onDataSourceChange: (ds: DataSourceSelectItem, queries: DataQuery[]) => void;
+  onOptionsChange: (options: QueryGroupOptions) => void;
 }
 
 interface State {
@@ -47,14 +53,14 @@ interface State {
   isHelpOpen: boolean;
 }
 
-export class QueriesTab extends PureComponent<Props, State> {
+export class QueryGroup extends PureComponent<Props, State> {
   datasources: DataSourceSelectItem[] = getDatasourceSrv().getMetricSources();
   backendSrv = backendSrv;
   querySubscription: Unsubscribable | null;
 
   state: State = {
     isLoadingHelp: false,
-    dataSourceItem: this.findCurrentDataSource(),
+    dataSourceItem: this.findCurrentDataSource(this.props.dataSourceName),
     helpContent: null,
     isPickerOpen: false,
     isAddingMixed: false,
@@ -68,15 +74,14 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   async componentDidMount() {
-    const { panel } = this.props;
-    const queryRunner = panel.getQueryRunner();
+    const { queryRunner, dataSourceName: datasourceName } = this.props;
 
     this.querySubscription = queryRunner.getData({ withTransforms: false, withFieldConfig: false }).subscribe({
       next: (data: PanelData) => this.onPanelDataUpdate(data),
     });
 
     try {
-      const ds = await getDataSourceSrv().get(panel.datasource);
+      const ds = await getDataSourceSrv().get(datasourceName);
       this.setState({ dataSource: ds });
     } catch (error) {
       const ds = await getDataSourceSrv().get();
@@ -96,71 +101,48 @@ export class QueriesTab extends PureComponent<Props, State> {
     this.setState({ data });
   }
 
-  findCurrentDataSource(dataSourceName: string | null = this.props.panel.datasource): DataSourceSelectItem {
+  findCurrentDataSource(dataSourceName: string | null): DataSourceSelectItem {
     return this.datasources.find(datasource => datasource.value === dataSourceName) || this.datasources[0];
   }
 
   onChangeDataSource = async (newDsItem: DataSourceSelectItem) => {
-    const { panel } = this.props;
+    let { queries } = this.props;
     const { dataSourceItem } = this.state;
 
     // switching to mixed
     if (newDsItem.meta.mixed) {
-      // Set the datasource on all targets
-      panel.targets.forEach(target => {
-        if (target.datasource !== ExpressionDatasourceID) {
-          target.datasource = panel.datasource;
-          if (!target.datasource) {
-            target.datasource = config.defaultDatasource;
+      for (const query of queries) {
+        if (query.datasource !== ExpressionDatasourceID) {
+          query.datasource = query.datasource;
+          if (!query.datasource) {
+            query.datasource = config.defaultDatasource;
           }
         }
-      });
+      }
     } else if (dataSourceItem) {
       // if switching from mixed
       if (dataSourceItem.meta.mixed) {
         // Remove the explicit datasource
-        for (const target of panel.targets) {
-          if (target.datasource !== ExpressionDatasourceID) {
-            delete target.datasource;
+        for (const query of queries) {
+          if (query.datasource !== ExpressionDatasourceID) {
+            delete query.datasource;
           }
         }
       } else if (dataSourceItem.meta.id !== newDsItem.meta.id) {
         // we are changing data source type, clear queries
-        panel.targets = [{ refId: 'A' }];
+        queries = [{ refId: 'A' }];
       }
     }
 
     const dataSource = await getDataSourceSrv().get(newDsItem.value);
 
-    panel.datasource = newDsItem.value;
+    this.props.onDataSourceChange(newDsItem, queries);
 
-    this.setState(
-      {
-        dataSourceItem: newDsItem,
-        dataSource: dataSource,
-        dataSourceError: undefined,
-      },
-      () => panel.refresh()
-    );
-  };
-
-  openQueryInspector = () => {
-    const { panel } = this.props;
-
-    getLocationSrv().update({
-      query: { inspect: panel.id, inspectTab: 'query' },
-      partial: true,
+    this.setState({
+      dataSourceItem: newDsItem,
+      dataSource: dataSource,
+      dataSourceError: undefined,
     });
-  };
-
-  /**
-   * Sets the queries for the panel
-   */
-  onUpdateQueries = (queries: DataQuery[]) => {
-    this.props.panel.updateQueries(queries);
-
-    // Need to force update to rerender query rows.
-    this.forceUpdate();
   };
 
   onAddQueryClick = () => {
@@ -169,12 +151,12 @@ export class QueriesTab extends PureComponent<Props, State> {
       return;
     }
 
-    this.onUpdateQueries(addQuery(this.props.panel.targets));
+    this.props.onQueriesChange(addQuery(this.props.queries));
     this.onScrollBottom();
   };
 
   onAddExpressionClick = () => {
-    this.onUpdateQueries(addQuery(this.props.panel.targets, expressionDatasource.newQuery()));
+    this.props.onQueriesChange(addQuery(this.props.queries, expressionDatasource.newQuery()));
     this.onScrollBottom();
   };
 
@@ -183,8 +165,8 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderTopSection(styles: QueriesTabStyls) {
-    const { panel } = this.props;
-    const { dataSourceItem, data, dataSource, dataSourceError } = this.state;
+    const { onOpenQueryInspector, options, onOptionsChange } = this.props;
+    const { dataSourceItem, dataSource, dataSourceError, data } = this.state;
 
     if (!dataSource) {
       return null;
@@ -211,17 +193,19 @@ export class QueriesTab extends PureComponent<Props, State> {
             />
           </div>
           <div className={styles.dataSourceRowItemOptions}>
-            <QueryOptions panel={panel} dataSource={dataSource} data={data} />
+            <QueryGroupOptionsEditor options={options} dataSource={dataSource} data={data} onChange={onOptionsChange} />
           </div>
-          <div className={styles.dataSourceRowItem}>
-            <Button
-              variant="secondary"
-              onClick={this.openQueryInspector}
-              aria-label={selectors.components.QueryTab.queryInspectorButton}
-            >
-              Query inspector
-            </Button>
-          </div>
+          {onOpenQueryInspector && (
+            <div className={styles.dataSourceRowItem}>
+              <Button
+                variant="secondary"
+                onClick={onOpenQueryInspector}
+                aria-label={selectors.components.QueryTab.queryInspectorButton}
+              >
+                Query inspector
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -253,18 +237,18 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   onAddMixedQuery = (datasource: any) => {
-    this.props.panel.targets = addQuery(this.props.panel.targets, { datasource: datasource.name });
+    this.onAddQuery({ datasource: datasource.name });
     this.setState({ isAddingMixed: false, scrollTop: this.state.scrollTop + 10000 });
-    this.forceUpdate();
   };
 
   onMixedPickerBlur = () => {
     this.setState({ isAddingMixed: false });
   };
 
-  onQueryChange = (query: DataQuery, index: number) => {
-    this.props.panel.changeQuery(query, index);
-    this.forceUpdate();
+  onAddQuery = (query: Partial<DataQuery>) => {
+    const { queries, onQueriesChange } = this.props;
+    onQueriesChange(addQuery(queries, query));
+    this.onScrollBottom();
   };
 
   setScrollTop = (event: React.MouseEvent<HTMLElement>) => {
@@ -273,22 +257,21 @@ export class QueriesTab extends PureComponent<Props, State> {
   };
 
   renderQueries() {
-    const { panel, dashboard } = this.props;
+    const { onQueriesChange, queries, onRunQueries } = this.props;
     const { dataSourceItem, data } = this.state;
 
     if (isSharedDashboardQuery(dataSourceItem.name)) {
-      return <DashboardQueryEditor panel={panel} panelData={data} onChange={query => this.onUpdateQueries([query])} />;
+      return <DashboardQueryEditor queries={queries} panelData={data} onChange={onQueriesChange} />;
     }
 
     return (
       <div aria-label={selectors.components.QueryTab.content}>
         <QueryEditorRows
-          queries={panel.targets}
+          queries={queries}
           datasource={dataSourceItem}
-          onChangeQueries={this.onUpdateQueries}
-          onScrollBottom={this.onScrollBottom}
-          panel={panel}
-          dashboard={dashboard}
+          onQueriesChange={onQueriesChange}
+          onAddQuery={this.onAddQuery}
+          onRunQueries={onRunQueries}
           data={data}
         />
       </div>
