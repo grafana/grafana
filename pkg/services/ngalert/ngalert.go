@@ -78,8 +78,8 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 			{Name: "labels", Type: migrator.DB_Text, Nullable: false},
 			{Name: "labels_hash", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "current_state", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "current_state_since", Type: migrator.DB_DateTime, Nullable: false},
-			{Name: "last_eval_time", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "current_state_since", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "last_eval_time", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		PrimaryKeys: []string{"alert_definition_id", "labels_hash"},
 	}

@@ -182,7 +182,7 @@ func createTestAlertDefinition(t *testing.T, ng AlertNG) *AlertDefinition {
 }
 
 func TestCreatingAndGettingAlertInstance(t *testing.T) {
-	t.Run("can save new alert instance", func(t *testing.T) {
+	t.Run("can save and read new alert instance", func(t *testing.T) {
 		ng := setupTestEnv(t)
 		saveCmd := &saveAlertInstanceCommand{
 			OrgID:             1,
@@ -204,6 +204,31 @@ func TestCreatingAndGettingAlertInstance(t *testing.T) {
 
 		spew.Dump(getCmd.Result)
 
+		require.Equal(t, saveCmd.Labels, getCmd.Result.Labels)
+
+	})
+
+	t.Run("can save and read new alert instance with no labels", func(t *testing.T) {
+		ng := setupTestEnv(t)
+		saveCmd := &saveAlertInstanceCommand{
+			OrgID:             1,
+			AlertDefinitionID: 1,
+			State:             InstateStateFiring,
+		}
+		err := ng.saveAlertInstance(saveCmd)
+		require.NoError(t, err)
+
+		getCmd := &getAlertInstanceCommand{
+			OrgID:             1,
+			AlertDefinitionID: 1,
+		}
+
+		err = ng.getAlertInstance(getCmd)
+		require.NoError(t, err)
+
+		spew.Dump(getCmd.Result)
+
+		require.Equal(t, saveCmd.AlertDefinitionID, getCmd.Result.AlertDefinitionID)
 		require.Equal(t, saveCmd.Labels, getCmd.Result.Labels)
 
 	})

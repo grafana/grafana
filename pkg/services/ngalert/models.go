@@ -2,6 +2,7 @@ package ngalert
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -98,8 +99,8 @@ type AlertInstance struct {
 	Labels            InstanceLabels
 	LabelsHash        string
 	CurrentState      InstanceStateType
-	CurrentStateSince time.Time
-	LastEvalTime      time.Time
+	CurrentStateSince EpochTime
+	LastEvalTime      EpochTime
 }
 
 // saveAlertInstanceCommand is the query for saving a new alert instance.
@@ -131,4 +132,41 @@ type getAlertInstanceCommand struct {
 	Labels            InstanceLabels
 
 	Result *AlertInstance
+}
+
+// EpochTime defines a time.Time encoded into the database as unix epoch timestamp.
+type EpochTime time.Time
+
+// FromDB deserializes time stored as a unix timestamp in the database to EpochTime,
+// which has the underlying type of time.Time.
+// FromDB is part of the xorm Conversion interface.
+func (et *EpochTime) FromDB(b []byte) error {
+	i, err := strconv.ParseInt(string(b), 10, 64)
+	if err != nil {
+		return err
+	}
+
+	*et = EpochTime(time.Unix(i, 0))
+
+	return nil
+}
+
+// ToDB is not implemented as serialization is handled with manual SQL queries).
+// ToDB is part of the xorm Conversion interface.
+func (et *EpochTime) ToDB() ([]byte, error) {
+	// Currently handled manually in sql command, needed to fulfill the xorm
+	// converter interface it seems
+	return []byte{}, fmt.Errorf("database serialization of alerting ng Instance labels is not implemented")
+}
+
+// Time returns EpochTime as a time.Time
+func (et *EpochTime) Time() time.Time {
+	if et == nil {
+		return time.Time{}
+	}
+	return time.Time(*et)
+}
+
+func (et *EpochTime) String() string {
+	return et.Time().String()
 }

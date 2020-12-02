@@ -9,8 +9,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
+// InstanceLabels is an extension to data.Labels with methods
+// for database serialization.
 type InstanceLabels data.Labels
 
+// FromDB loads labels stored in the database as json tuples into InstanceLabels.
+// FromDB is part of the xorm Conversion interface.
 func (il *InstanceLabels) FromDB(b []byte) error {
 	tl := &tupleLabels{}
 	err := json.Unmarshal(b, tl)
@@ -25,17 +29,18 @@ func (il *InstanceLabels) FromDB(b []byte) error {
 	return nil
 }
 
+// ToDB is not implemented as serialization is handled with manual SQL queries).
+// ToDB is part of the xorm Conversion interface.
 func (il *InstanceLabels) ToDB() ([]byte, error) {
 	// Currently handled manually in sql command, needed to fulfill the xorm
 	// converter interface it seems
-	return []byte{}, nil
+	return []byte{}, fmt.Errorf("database serialization of alerting ng Instance labels is not implemented")
 }
 
-// SetLabelsHash sets a key for the alert instance based on the alert
-// id and labels and returns the json representation of the labels used
-// to create the Hash.
-func SetLabelsHash(labels InstanceLabels) (string, string, error) {
-	tl := labelsToTupleLabels(labels)
+// StringAndHash returns a the json representation of the labels as tuples
+// sorted by key. It also returns the a hash of that representation.
+func (il *InstanceLabels) StringAndHash() (string, string, error) {
+	tl := labelsToTupleLabels(*il)
 
 	b, err := json.Marshal(tl)
 	if err != nil {
@@ -70,6 +75,9 @@ func (t *tupleLabels) sortBtKey() {
 
 // labelsToTupleLabels converts Labels (map[string]string) to tupleLabels.
 func labelsToTupleLabels(l InstanceLabels) tupleLabels {
+	if l == nil {
+		return nil
+	}
 	t := make(tupleLabels, 0, len(l))
 	for k, v := range l {
 		t = append(t, tupleLabel{k, v})
@@ -80,6 +88,9 @@ func labelsToTupleLabels(l InstanceLabels) tupleLabels {
 
 // tupleLabelsToLabels converts tupleLabels to Labels (map[string]string), erroring if there are duplicate keys.
 func tupleLablesToLabels(tuples tupleLabels) (InstanceLabels, error) {
+	if tuples == nil {
+		return nil, nil
+	}
 	labels := make(map[string]string)
 	for _, tuple := range tuples {
 		if key, ok := labels[tuple[0]]; ok {

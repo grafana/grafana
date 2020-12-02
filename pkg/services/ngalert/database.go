@@ -127,7 +127,7 @@ func (ng *AlertNG) getAlertDefinitions(cmd *listAlertDefinitionsCommand) error {
 func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 
-		labelTupleJSON, labelsHash, err := SetLabelsHash(cmd.Labels)
+		labelTupleJSON, labelsHash, err := cmd.Labels.StringAndHash()
 		if err != nil {
 			return err
 		}
@@ -138,8 +138,8 @@ func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 			LabelsHash:        labelsHash,
 			CurrentState:      cmd.State,
 			AlertDefinitionID: cmd.AlertDefinitionID,
-			CurrentStateSince: time.Now(),
-			LastEvalTime:      time.Now(), // TODO: Probably better to pass in to the command for more accurate timestamp
+			CurrentStateSince: EpochTime(time.Now()),
+			LastEvalTime:      EpochTime(time.Now()), // TODO: Probably better to pass in to the command for more accurate timestamp
 		}
 
 		if err := ng.validateAlertInstance(alertInstance); err != nil {
@@ -189,7 +189,7 @@ func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 			return fmt.Errorf("unsupported database type for alert instances: %v", ng.SQLStore.Dialect.DriverName())
 		}
 
-		params := append(make([]interface{}, 0), cmd.OrgID, cmd.AlertDefinitionID, labelTupleJSON, alertInstance.LabelsHash, cmd.State, time.Now(), time.Now())
+		params := append(make([]interface{}, 0), cmd.OrgID, cmd.AlertDefinitionID, labelTupleJSON, alertInstance.LabelsHash, cmd.State, time.Now().Unix(), time.Now().Unix())
 
 		_, err = sess.SQL(s.String(), params...).Query()
 		if err != nil {
@@ -212,7 +212,7 @@ func (ng *AlertNG) getAlertInstance(cmd *getAlertInstanceCommand) error {
 				labels_hash=?
 		`)
 
-		_, hash, err := SetLabelsHash(cmd.Labels)
+		_, hash, err := cmd.Labels.StringAndHash()
 		if err != nil {
 			return err
 		}
