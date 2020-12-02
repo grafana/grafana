@@ -20,7 +20,7 @@ import { Plugin, Node } from 'slate';
 import { DOMUtil } from '@grafana/ui';
 import { ExploreQueryFieldProps, AbsoluteTimeRange } from '@grafana/data';
 import { LokiQuery, LokiOptions } from '../types';
-import { Grammar } from 'prismjs';
+import { Grammar, LanguageMap, languages as prismLanguages } from 'prismjs';
 import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
 import LokiDatasource from '../datasource';
 import LokiOptionFields from './LokiOptionFields';
@@ -82,10 +82,13 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
 
     this.plugins = [
       BracesPlugin(),
-      SlatePrism({
-        onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
-        getSyntax: (node: Node) => 'promql',
-      }),
+      SlatePrism(
+        {
+          onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
+          getSyntax: (node: Node) => 'logql',
+        },
+        { ...(prismLanguages as LanguageMap), logql: this.props.datasource.languageProvider.getSyntax() }
+      ),
     ];
   }
 
