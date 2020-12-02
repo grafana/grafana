@@ -62,16 +62,16 @@ type Error struct {
 	DetailsError error
 }
 
-// newError creates the Error
-func newError(message string, err error) *Error {
-	return &Error{
+// newError returns an Error.
+func newError(message string, err error) Error {
+	return Error{
 		Message:      message,
 		DetailsError: err,
 	}
 }
 
-// Error returns a Error error string
-func (err *Error) Error() string {
+// Error returns the error message.
+func (err Error) Error() string {
 	return err.Message
 }
 
@@ -114,7 +114,7 @@ func (auth *AuthProxy) HasHeader() bool {
 }
 
 // IsAllowedIP compares presented IP with the whitelist one
-func (auth *AuthProxy) IsAllowedIP() *Error {
+func (auth *AuthProxy) IsAllowedIP() error {
 	ip := auth.ctx.Req.RemoteAddr
 
 	if len(strings.TrimSpace(auth.whitelistIP)) == 0 {
@@ -144,11 +144,10 @@ func (auth *AuthProxy) IsAllowedIP() *Error {
 		}
 	}
 
-	err = fmt.Errorf(
+	return newError("proxy authentication required", fmt.Errorf(
 		"request for user (%s) from %s is not from the authentication proxy", auth.header,
 		sourceIP,
-	)
-	return newError("proxy authentication required", err)
+	))
 }
 
 func HashCacheKey(key string) string {
@@ -173,7 +172,7 @@ func (auth *AuthProxy) getKey() string {
 }
 
 // Login logs in user ID by whatever means possible.
-func (auth *AuthProxy) Login(logger log.Logger, ignoreCache bool) (int64, *Error) {
+func (auth *AuthProxy) Login(logger log.Logger, ignoreCache bool) (int64, error) {
 	if !ignoreCache {
 		// Error here means absent cache - we don't need to handle that
 		id, err := auth.GetUserViaCache(logger)
@@ -229,15 +228,15 @@ func (auth *AuthProxy) RemoveUserFromCache(logger log.Logger) error {
 }
 
 // LoginViaLDAP logs in user via LDAP request
-func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
+func (auth *AuthProxy) LoginViaLDAP() (int64, error) {
 	config, err := getLDAPConfig()
 	if err != nil {
-		return 0, newError("failed to get LDAP config", nil)
+		return 0, newError("failed to get LDAP config", err)
 	}
 
 	extUser, _, err := newLDAP(config.Servers).User(auth.header)
 	if err != nil {
-		return 0, newError(err.Error(), nil)
+		return 0, err
 	}
 
 	// Have to sync grafana and LDAP user during log in
@@ -246,9 +245,8 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, *Error) {
 		SignupAllowed: auth.LDAPAllowSignup,
 		ExternalUser:  extUser,
 	}
-	err = bus.Dispatch(upsert)
-	if err != nil {
-		return 0, newError(err.Error(), nil)
+	if err := bus.Dispatch(upsert); err != nil {
+		return 0, err
 	}
 
 	return upsert.Result.Id, nil
@@ -273,7 +271,7 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		extUser.Email = auth.header
 		extUser.Login = auth.header
 	default:
-		return 0, newError("auth proxy header property invalid", nil)
+		return 0, fmt.Errorf("auth proxy header property invalid")
 	}
 
 	auth.headersIterator(func(field string, header string) {
@@ -314,21 +312,21 @@ func (auth *AuthProxy) headersIterator(fn func(field string, header string)) {
 }
 
 // GetSignedUser gets full signed user info.
-func (auth *AuthProxy) GetSignedUser(userID int64) (*models.SignedInUser, *Error) {
+func (auth *AuthProxy) GetSignedUser(userID int64) (*models.SignedInUser, error) {
 	query := &models.GetSignedInUserQuery{
 		OrgId:  auth.orgID,
 		UserId: userID,
 	}
 
 	if err := bus.Dispatch(query); err != nil {
-		return nil, newError(err.Error(), nil)
+		return nil, err
 	}
 
 	return query.Result, nil
 }
 
 // Remember user in cache
-func (auth *AuthProxy) Remember(id int64) *Error {
+func (auth *AuthProxy) Remember(id int64) error {
 	key := auth.getKey()
 
 	// Check if user already in cache
@@ -341,7 +339,7 @@ func (auth *AuthProxy) Remember(id int64) *Error {
 
 	err := auth.store.Set(key, id, expiration)
 	if err != nil {
-		return newError(err.Error(), nil)
+		return err
 	}
 
 	return nil
