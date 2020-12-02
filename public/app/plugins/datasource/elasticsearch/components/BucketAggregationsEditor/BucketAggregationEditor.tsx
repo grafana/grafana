@@ -1,10 +1,8 @@
 import { MetricFindValue, SelectableValue } from '@grafana/data';
-import { InlineField, Segment, SegmentAsync } from '@grafana/ui';
-import React, { ComponentProps, FunctionComponent } from 'react';
+import { Segment, SegmentAsync } from '@grafana/ui';
+import React, { FunctionComponent } from 'react';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { useDatasource } from '../ElasticsearchQueryContext';
-import { QueryEditorRow } from '../QueryEditorRow';
-import { marginZero } from '../styles';
 import { BucketAggregation, BucketAggregationType, isBucketAggregationWithField } from './aggregations';
 import { SettingsEditor } from './SettingsEditor';
 import { changeBucketAggregationField, changeBucketAggregationType } from './state/actions';
@@ -30,10 +28,9 @@ const toOption = (bucketAgg: BucketAggregation) => ({
 
 interface QueryMetricEditorProps {
   value: BucketAggregation;
-  label: ComponentProps<typeof InlineField>['label'];
 }
 
-export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> = ({ value, label }) => {
+export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> = ({ value }) => {
   const datasource = useDatasource();
   const dispatch = useDispatch<BucketAggregationAction>();
 
@@ -54,15 +51,12 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
   };
 
   return (
-    <QueryEditorRow>
-      <InlineField label={label} labelWidth={15}>
-        <Segment
-          className={marginZero}
-          options={bucketAggOptions}
-          onChange={e => dispatch(changeBucketAggregationType(value.id, e.value!))}
-          value={toOption(value)}
-        />
-      </InlineField>
+    <>
+      <Segment
+        options={bucketAggOptions}
+        onChange={e => dispatch(changeBucketAggregationType(value.id, e.value!))}
+        value={toOption(value)}
+      />
 
       {isBucketAggregationWithField(value) && (
         <SegmentAsync
@@ -74,6 +68,6 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
       )}
 
       <SettingsEditor bucketAgg={value} />
-    </QueryEditorRow>
+    </>
   );
 };

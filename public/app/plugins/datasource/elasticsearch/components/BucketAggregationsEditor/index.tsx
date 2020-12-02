@@ -1,33 +1,36 @@
 import React, { FunctionComponent } from 'react';
-import { InlineFieldRow } from '@grafana/ui';
-import { AddRemove } from '../AddRemove';
 import { BucketAggregationEditor } from './BucketAggregationEditor';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { addBucketAggregation, removeBucketAggregation } from './state/actions';
 import { BucketAggregationAction } from './state/types';
 import { BucketAggregation } from './aggregations';
+import { useQuery } from '../ElasticsearchQueryContext';
+import { QueryEditorRow } from '../QueryEditorRow';
+import { IconButton } from '../IconButton';
 
 interface Props {
-  value: BucketAggregation[];
   nextId: BucketAggregation['id'];
 }
 
-export const BucketAggregationsEditor: FunctionComponent<Props> = ({ value, nextId }) => {
+export const BucketAggregationsEditor: FunctionComponent<Props> = ({ nextId }) => {
   const dispatch = useDispatch<BucketAggregationAction>();
+  const { bucketAggs } = useQuery();
+  const totalBucketAggs = bucketAggs?.length || 0;
 
   return (
     <>
-      {value.map((bucketAgg, index) => (
-        <InlineFieldRow key={bucketAgg.id}>
-          <BucketAggregationEditor value={bucketAgg} label={index === 0 ? 'Group By' : 'Then By'} />
+      {bucketAggs!.map((bucketAgg, index) => (
+        <QueryEditorRow
+          key={bucketAgg.id}
+          label={index === 0 ? 'Group By' : 'Then By'}
+          onRemoveClick={totalBucketAggs > 1 && (() => dispatch(removeBucketAggregation(bucketAgg.id)))}
+        >
+          <BucketAggregationEditor value={bucketAgg} />
 
-          <AddRemove
-            index={index}
-            elements={value}
-            onAdd={() => dispatch(addBucketAggregation(nextId))}
-            onRemove={() => dispatch(removeBucketAggregation(bucketAgg.id))}
-          />
-        </InlineFieldRow>
+          {index === 0 && (
+            <IconButton iconName="plus" onClick={() => dispatch(addBucketAggregation(nextId))} label="add" />
+          )}
+        </QueryEditorRow>
       ))}
     </>
   );

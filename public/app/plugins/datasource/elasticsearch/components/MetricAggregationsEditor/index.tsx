@@ -1,36 +1,39 @@
 import React, { FunctionComponent } from 'react';
-import { InlineFieldRow } from '@grafana/ui';
-import { AddRemove } from '../AddRemove';
 import { MetricEditor } from './MetricEditor';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { MetricAggregationAction } from './state/types';
 import { metricAggregationConfig } from './utils';
-import { addMetric, removeMetric } from './state/actions';
+import { addMetric, removeMetric, toggleMetricVisibility } from './state/actions';
 import { MetricAggregation } from './aggregations';
+import { useQuery } from '../ElasticsearchQueryContext';
+import { QueryEditorRow } from '../QueryEditorRow';
+import { IconButton } from '../IconButton';
 
 interface Props {
-  value: MetricAggregation[];
   nextId: MetricAggregation['id'];
 }
 
-export const MetricAggregationsEditor: FunctionComponent<Props> = ({ value, nextId }) => {
+export const MetricAggregationsEditor: FunctionComponent<Props> = ({ nextId }) => {
   const dispatch = useDispatch<MetricAggregationAction>();
+  const { metrics } = useQuery();
+  const totalMetrics = metrics?.length || 0;
 
   return (
     <>
-      {value.map((metric, index) => (
-        <InlineFieldRow key={metric.id}>
+      {metrics?.map((metric, index) => (
+        <QueryEditorRow
+          key={metric.id}
+          label={`Metric (${metric.id})`}
+          hidden={metric.hide}
+          onHideClick={() => dispatch(toggleMetricVisibility(metric.id))}
+          onRemoveClick={totalMetrics > 1 && (() => dispatch(removeMetric(metric.id)))}
+        >
           <MetricEditor value={metric} />
 
-          {!metricAggregationConfig[metric.type].isSingleMetric && (
-            <AddRemove
-              index={index}
-              elements={value}
-              onAdd={() => dispatch(addMetric(nextId))}
-              onRemove={() => dispatch(removeMetric(metric.id))}
-            />
+          {!metricAggregationConfig[metric.type].isSingleMetric && index === 0 && (
+            <IconButton iconName="plus" onClick={() => dispatch(addMetric(nextId))} label="add" />
           )}
-        </InlineFieldRow>
+        </QueryEditorRow>
       ))}
     </>
   );

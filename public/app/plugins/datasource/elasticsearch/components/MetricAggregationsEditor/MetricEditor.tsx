@@ -1,18 +1,15 @@
 import { MetricFindValue, SelectableValue } from '@grafana/data';
-import { InlineField, Segment, SegmentAsync, useTheme } from '@grafana/ui';
+import { Segment, SegmentAsync, useTheme } from '@grafana/ui';
 import { cx } from 'emotion';
 import React, { FunctionComponent } from 'react';
 import { useDatasource, useQuery } from '../ElasticsearchQueryContext';
 import { useDispatch } from '../../hooks/useStatelessReducer';
 import { getStyles } from './styles';
-import { marginZero } from '../styles';
-import { ToggleVisibilityButton } from '../ToggleVisibilityButton';
 import { SettingsEditor } from './SettingsEditor';
 import { MetricAggregationAction } from './state/types';
 import { metricAggregationConfig } from './utils';
-import { changeMetricField, changeMetricType, toggleMetricVisibility } from './state/actions';
+import { changeMetricField, changeMetricType } from './state/actions';
 import { MetricPicker } from '../MetricPicker';
-import { QueryEditorRow } from '../QueryEditorRow';
 import {
   isMetricAggregationWithField,
   isMetricAggregationWithSettings,
@@ -89,15 +86,13 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
   };
 
   return (
-    <QueryEditorRow>
-      <InlineField label={`Metric (${value.id})`} labelWidth={15} className={cx(styles.color)}>
-        <Segment
-          className={cx(styles.color, marginZero)}
-          options={getTypeOptions(previousMetrics, datasource.esVersion)}
-          onChange={e => dispatch(changeMetricType(value.id, e.value!))}
-          value={toOption(value)}
-        />
-      </InlineField>
+    <>
+      <Segment
+        className={cx(styles.color)}
+        options={getTypeOptions(previousMetrics, datasource.esVersion)}
+        onChange={e => dispatch(changeMetricType(value.id, e.value!))}
+        value={toOption(value)}
+      />
 
       {isMetricAggregationWithField(value) && !isPipelineAggregation(value) && (
         <SegmentAsync
@@ -119,8 +114,6 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
       )}
 
       {isMetricAggregationWithSettings(value) && <SettingsEditor metric={value} previousMetrics={previousMetrics} />}
-
-      <ToggleVisibilityButton onClick={() => dispatch(toggleMetricVisibility(value.id))} hide={!!value.hide} />
-    </QueryEditorRow>
+    </>
   );
 };
