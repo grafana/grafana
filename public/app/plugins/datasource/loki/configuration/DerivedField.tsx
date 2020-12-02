@@ -128,14 +128,15 @@ export const DerivedField = (props: Props) => {
         />
 
         {showInternalLink && (
-          <DataSourceSection
-            onChange={datasourceUid => {
+          <DataSourcePicker
+            tracing={true}
+            onChange={ds =>
               onChange({
                 ...value,
-                datasourceUid,
-              });
-            }}
-            datasourceUid={value.datasourceUid}
+                datasourceUid: ds.uid,
+              })
+            }
+            current={value.datasourceUid}
           />
         )}
       </div>
@@ -143,33 +144,28 @@ export const DerivedField = (props: Props) => {
   );
 };
 
-type DataSourceSectionProps = {
-  datasourceUid?: string;
-  onChange: (uid: string) => void;
-};
+// const DataSourceSection = (props: DataSourceSectionProps) => {
+//   const { datasourceUid, onChange } = props;
+//   const datasources: DataSourceSelectItem[] = getDatasourceSrv()
+//     .getExternal()
+//     // At this moment only Jaeger and Zipkin datasource is supported as the link target.
+//     .filter(ds => ds.meta.tracing)
+//     .map(
+//       ds =>
+//         ({
+//           value: ds.uid,
+//           name: ds.name,
+//           meta: ds.meta,
+//         } as DataSourceSelectItem)
+//     );
 
-const DataSourceSection = (props: DataSourceSectionProps) => {
-  const { datasourceUid, onChange } = props;
-  const datasources: DataSourceSelectItem[] = getDatasourceSrv()
-    .getExternal()
-    // At this moment only Jaeger and Zipkin datasource is supported as the link target.
-    .filter(ds => ds.meta.tracing)
-    .map(
-      ds =>
-        ({
-          value: ds.uid,
-          name: ds.name,
-          meta: ds.meta,
-        } as DataSourceSelectItem)
-    );
-
-  let selectedDatasource = datasourceUid && datasources.find(d => d.value === datasourceUid);
-  return (
-    <DataSourcePicker
-      // Uid and value should be always set in the db and so in the items.
-      onChange={ds => onChange(ds.value!)}
-      datasources={datasources}
-      current={selectedDatasource || undefined}
-    />
-  );
-};
+//   let selectedDatasource = datasourceUid && datasources.find(d => d.value === datasourceUid);
+//   return (
+//     <DataSourcePicker
+//       // Uid and value should be always set in the db and so in the items.
+//       onChange={ds => onChange(ds.value!)}
+//       datasources={datasources}
+//       current={selectedDatasource || undefined}
+//     />
+//   );
+// };
