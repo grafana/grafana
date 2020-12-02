@@ -119,4 +119,3 @@ aliases = ["/docs/grafana/v1.1", "/docs/grafana/latest/guides/reference/admin", 
       <h5>OpenTSDB</h5>
     </a>
 </div>
-
