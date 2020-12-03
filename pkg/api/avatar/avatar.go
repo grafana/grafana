@@ -132,7 +132,7 @@ func newNotFound() *Avatar {
 	avatar := &Avatar{notFound: true}
 
 	// load user_profile png into buffer
-	// It's safe to ignore this gosec warning since the variable part of the file path comes from a configuration
+	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
 	// variable.
 	// nolint:gosec
 	path := filepath.Join(setting.StaticRootPath, "img", "user_profile.png")
