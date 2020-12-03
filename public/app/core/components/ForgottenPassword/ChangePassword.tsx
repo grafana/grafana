@@ -1,4 +1,4 @@
-import React, { FC, SyntheticEvent } from 'react';
+import React, { FC, SyntheticEvent, KeyboardEvent } from 'react';
 import { Tooltip, Form, Field, Input, VerticalGroup, Button, LinkButton } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { submitButton } from '../Login/LoginForm';
@@ -15,6 +15,11 @@ interface PasswordDTO {
 export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
   const submit = (passwords: PasswordDTO) => {
     onSubmit(passwords.newPassword);
+  };
+  const onSkipKeypress = (event: KeyboardEvent) => {
+    if (event.key === 'Enter' && onSkip) {
+      onSkip(event);
+    }
   };
   return (
     <Form onSubmit={submit}>
@@ -50,7 +55,12 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
                 content="If you skip you will be prompted to change password next time you log in."
                 placement="bottom"
               >
-                <LinkButton variant="link" onClick={onSkip} aria-label={selectors.pages.Login.skip}>
+                <LinkButton
+                  variant="link"
+                  onClick={onSkip}
+                  onKeyPress={onSkipKeypress}
+                  aria-label={selectors.pages.Login.skip}
+                >
                   Skip
                 </LinkButton>
               </Tooltip>
