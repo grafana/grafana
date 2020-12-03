@@ -3,7 +3,7 @@ import { mergeMap } from 'rxjs/operators';
 import * as rxJsWebSocket from 'rxjs/webSocket';
 import { LiveStreams } from './live_streams';
 import { DataFrame, DataFrameView, formatLabels, Labels } from '@grafana/data';
-import { noop } from 'lodash';
+import { noop, isEqual } from 'lodash';
 import { LokiTailResponse } from './types';
 
 let fakeSocket: Subject<any>;
@@ -109,11 +109,20 @@ describe('Live Stream Tests', () => {
   it('should reconnect when abnormal error', async () => {
     const abnormalError = new Error('weird error') as any;
     abnormalError.code = 1006;
-    const logStream = of({
+    const logStreamBeforeError = of({
       streams: [
         {
           stream: { filename: '/var/log/sntpc.log', job: 'varlogs' },
           values: [['1567025440118944705', 'Kittens']],
+        },
+      ],
+      dropped_entries: null,
+    });
+    const logStreamAfterError = of({
+      streams: [
+        {
+          stream: { filename: '/var/log/sntpc.log', job: 'varlogs' },
+          values: [['1567025440118944705', 'Doggos']],
         },
       ],
       dropped_entries: null,
@@ -124,18 +133,20 @@ describe('Live Stream Tests', () => {
       mergeMap(() => {
         // When subscribed first time, return logStream and errorStream
         if (retries++ === 0) {
-          return concat(logStream, errorStream);
+          return concat(logStreamBeforeError, errorStream);
         }
         // When re-subsribed after abnormal error, return just logStream
-        return logStream;
+        return logStreamAfterError;
       })
     ) as any;
     const liveStreams = new LiveStreams();
     await expect(liveStreams.getStream(makeTarget('url_to_match'), 100)).toEmitValuesWith(received => {
-      const dataBefore = received[0];
+      const datBefore = received[0];
       const dataAfter = received[1];
-      expect(dataBefore).not.toBe(undefined);
-      expect(dataAfter).not.toBe(undefined);
+
+      expect(received.length).toBe(2);
+      expect(datBefore[0].fields[2].values).toContain('Kittens');
+      expect(dataAfter[0].fields[2].values).toContain('Doggos');
       expect(retries).toBe(2);
     });
   });
