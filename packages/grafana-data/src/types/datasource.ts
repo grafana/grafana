@@ -75,8 +75,8 @@ export class DataSourcePlugin<
     return this;
   }
 
-  setExploreStartPage(ExploreStartPage: ComponentType<ExploreStartPageProps>) {
-    this.components.ExploreStartPage = ExploreStartPage;
+  setQueryEditorHelp(QueryEditorHelp: ComponentType<QueryEditorHelpProps>) {
+    this.components.QueryEditorHelp = QueryEditorHelp;
     return this;
   }
 
@@ -99,8 +99,8 @@ export class DataSourcePlugin<
     this.components.QueryCtrl = pluginExports.QueryCtrl;
     this.components.AnnotationsQueryCtrl = pluginExports.AnnotationsQueryCtrl;
     this.components.ExploreQueryField = pluginExports.ExploreQueryField;
-    this.components.ExploreStartPage = pluginExports.ExploreStartPage;
     this.components.QueryEditor = pluginExports.QueryEditor;
+    this.components.QueryEditorHelp = pluginExports.QueryEditorHelp;
     this.components.VariableQueryEditor = pluginExports.VariableQueryEditor;
   }
 }
@@ -140,7 +140,7 @@ export interface DataSourcePluginComponents<
   ExploreQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreMetricsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
   ExploreLogsQueryField?: ComponentType<ExploreQueryFieldProps<DSType, TQuery, TOptions>>;
-  ExploreStartPage?: ComponentType<ExploreStartPageProps>;
+  QueryEditorHelp?: ComponentType<QueryEditorHelpProps>;
   ConfigEditor?: ComponentType<DataSourcePluginOptionsEditorProps<TOptions, TSecureOptions>>;
   MetadataInspector?: ComponentType<MetadataInspectorProps<DSType, TQuery, TOptions>>;
 }
@@ -363,7 +363,7 @@ export interface ExploreQueryFieldProps<
   exploreId?: any;
 }
 
-export interface ExploreStartPageProps {
+export interface QueryEditorHelpProps {
   datasource: DataSourceApi;
   onClickExample: (query: DataQuery) => void;
   exploreId?: any;

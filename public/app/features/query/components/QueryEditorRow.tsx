@@ -291,7 +291,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     }
 
     const editor = this.renderPluginEditor();
-    const DatasourceCheatsheet = datasource.components?.ExploreStartPage;
+    const DatasourceCheatsheet = datasource.components?.QueryEditorHelp;
 
     return (
       <div aria-label={selectors.components.QueryEditorRows.rows}>

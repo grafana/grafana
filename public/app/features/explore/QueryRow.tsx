@@ -150,7 +150,7 @@ export class QueryRow extends PureComponent<QueryRowProps, QueryRowState> {
       );
     }
 
-    const DatasourceCheatsheet = datasourceInstance.components?.ExploreStartPage;
+    const DatasourceCheatsheet = datasourceInstance.components?.QueryEditorHelp;
     return (
       <>
         {QueryEditor}

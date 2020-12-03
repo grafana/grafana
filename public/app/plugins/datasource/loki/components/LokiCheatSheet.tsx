@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { shuffle } from 'lodash';
-import { ExploreStartPageProps, DataQuery } from '@grafana/data';
+import { QueryEditorHelpProps, DataQuery } from '@grafana/data';
 import LokiLanguageProvider from '../language_provider';
 
 const DEFAULT_EXAMPLES = ['{job="default/prometheus"}'];
@@ -32,7 +32,7 @@ const LOGQL_EXAMPLES = [
   },
 ];
 
-export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps, { userExamples: string[] }> {
+export default class LokiCheatSheet extends PureComponent<QueryEditorHelpProps, { userExamples: string[] }> {
   userLabelTimer: NodeJS.Timeout;
   state = {
     userExamples: DEFAULT_EXAMPLES,

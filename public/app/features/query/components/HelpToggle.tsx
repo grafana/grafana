@@ -1,13 +1,18 @@
-import { Icon } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
+import { Icon, InfoBox, stylesFactory, useTheme } from '@grafana/ui';
 import { css, cx } from 'emotion';
 import React, { useState } from 'react';
 
-const helpStyle = css`
-  margin-top: 4px;
-`;
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  infoBox: css`
+    margin-top: ${theme.spacing.xs};
+  `,
+}));
 
 export const HelpToggle: React.FunctionComponent = ({ children }) => {
   const [isHelpVisible, setIsHelpVisible] = useState(false);
+  const theme = useTheme();
+  const styles = getStyles(theme);
 
   return (
     <>
@@ -15,7 +20,7 @@ export const HelpToggle: React.FunctionComponent = ({ children }) => {
         Help
         <Icon name={isHelpVisible ? 'angle-down' : 'angle-right'} />
       </button>
-      {isHelpVisible && <div className={cx('grafana-info-box', 'grafana-info-box--max-lg', helpStyle)}>{children}</div>}
+      {isHelpVisible && <InfoBox className={cx(styles.infoBox)}>{children}</InfoBox>}
     </>
   );
 };
