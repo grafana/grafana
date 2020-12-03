@@ -26,7 +26,7 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
 
   const dispatch = useStatelessReducer(
     newState => upperStateDispatch(changeMetricAttribute(value, 'pipelineVariables', newState)),
-    value.pipelineVariables || [],
+    value.pipelineVariables,
     reducer
   );
 

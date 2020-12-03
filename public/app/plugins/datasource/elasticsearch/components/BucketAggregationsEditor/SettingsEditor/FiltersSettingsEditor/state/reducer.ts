@@ -2,7 +2,7 @@ import { Filter } from '../../../aggregations';
 import { defaultFilter } from '../utils';
 import { ADD_FILTER, CHANGE_FILTER, FilterAction, REMOVE_FILTER } from './types';
 
-export const reducer = (state: Filter[], action: FilterAction) => {
+export const reducer = (state: Filter[] = [], action: FilterAction) => {
   switch (action.type) {
     case ADD_FILTER:
       return [...state, defaultFilter()];
