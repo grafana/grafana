@@ -83,6 +83,10 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           },
           showIf: c => c.points !== PointMode.Never,
         })
+        .addBooleanSwitch({
+          path: 'spanNulls',
+          name: 'Span null values',
+        })
         .addRadio({
           path: 'axisPlacement',
           name: 'Placement',

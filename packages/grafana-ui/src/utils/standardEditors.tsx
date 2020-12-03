@@ -205,9 +205,11 @@ export const getStandardFieldConfigs = () => {
 
     settings: {
       options: [
-        { label: 'Gaps', value: NullValueMode.Null },
-        { label: 'Ignore', value: NullValueMode.Ignore, description: 'Ignore the values from any calculation' },
-        { label: 'Zeros', value: NullValueMode.AsZero },
+        { label: 'Null', value: NullValueMode.Null },
+        // The "connectd" of "span gaps" behavior is moved to graph settings.
+        // This option should either be a boolean or removed an just "AzZero" added as a transformer
+        // { label: 'Ignore', value: NullValueMode.Ignore, description: 'Ignore the values from any calculation' },
+        { label: 'Zero', value: NullValueMode.AsZero },
       ],
     },
     shouldApply: () => true,

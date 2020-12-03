@@ -33,6 +33,7 @@ export interface GraphFieldConfig {
   lineMode?: LineInterpolation;
   lineWidth?: number; // pixels
   fillAlpha?: number; // 0-1
+  spanNulls?: boolean;
 
   points?: PointMode;
   pointRadius?: number; // pixels
