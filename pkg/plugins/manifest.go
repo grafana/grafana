@@ -154,11 +154,7 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) (*PluginSignatu
 		}
 	}
 
-	// Track which plugin files are included in the signature
-	pluginFileInSignature := make(map[string]bool, len(plugin.Files))
-	for _, f := range plugin.Files {
-		pluginFileInSignature[f] = false
-	}
+	manifestFiles := make(map[string]bool, len(manifest.Files))
 
 	// Verify the manifest contents
 	log.Debug("Verifying contents of plugin manifest", "plugin", plugin.Id)
@@ -188,22 +184,24 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) (*PluginSignatu
 				Status: pluginSignatureModified,
 			}, nil
 		}
-		pluginFileInSignature[p] = true
+		manifestFiles[p] = true
 	}
 
-	// Track files that were found but not listed in the manifest
-	var unsignedFiles []string
-	for f := range pluginFileInSignature {
-		if inSignature := pluginFileInSignature[f]; !inSignature && manifest.isV2() {
-			unsignedFiles = append(unsignedFiles, f)
+	if manifest.isV2() {
+		// Track files that were missing from the manifest
+		var unsignedFiles []string
+		for _, f := range plugin.Files {
+			if exists := manifestFiles[f]; !exists {
+				unsignedFiles = append(unsignedFiles, f)
+			}
 		}
-	}
 
-	if len(unsignedFiles) > 0 {
-		log.Warn("The following files were not included in the signature", "plugin", plugin.Id, "files", unsignedFiles)
-		return &PluginSignatureState{
-			Status: pluginSignatureModified,
-		}, nil
+		if len(unsignedFiles) > 0 {
+			log.Warn("The following files were not included in the signature", "plugin", plugin.Id, "files", unsignedFiles)
+			return &PluginSignatureState{
+				Status: pluginSignatureModified,
+			}, nil
+		}
 	}
 
 	// Everything OK
