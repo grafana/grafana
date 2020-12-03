@@ -272,8 +272,8 @@ describe('query actions', () => {
   describe('when initQueryVariableEditor is dispatched', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true, useTags: false });
-      const defaultMetricSource = { name: '', value: '', meta: {}, sort: '' };
-      const testMetricSource = { name: 'test', value: 'test', meta: {}, sort: '' };
+      const defaultMetricSource = { name: '', value: '', meta: {} };
+      const testMetricSource = { name: 'test', value: 'test', meta: {} };
       const editor = {};
 
       mocks.datasourceSrv.getMetricSources = jest.fn().mockReturnValue([testMetricSource]);
@@ -305,8 +305,8 @@ describe('query actions', () => {
   describe('when initQueryVariableEditor is dispatched and metricsource without value is available', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true, useTags: false });
-      const defaultMetricSource = { name: '', value: '', meta: {}, sort: '' };
-      const testMetricSource = { name: 'test', value: (null as unknown) as string, meta: {}, sort: '' };
+      const defaultMetricSource = { name: '', value: '', meta: {} };
+      const testMetricSource = { name: 'test', value: (null as unknown) as string, meta: {} };
       const editor = {};
 
       mocks.datasourceSrv.getMetricSources = jest.fn().mockReturnValue([testMetricSource]);
@@ -338,7 +338,7 @@ describe('query actions', () => {
   describe('when initQueryVariableEditor is dispatched and no metric sources was found', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true, useTags: false });
-      const defaultDatasource = { name: '', value: '', meta: {}, sort: '' };
+      const defaultDatasource = { name: '', value: '', meta: {} };
       const editor = {};
 
       mocks.datasourceSrv.getMetricSources = jest.fn().mockReturnValue([]);
@@ -370,7 +370,7 @@ describe('query actions', () => {
   describe('when initQueryVariableEditor is dispatched and variable dont have datasource', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ datasource: undefined });
-      const ds = { name: '', value: '', meta: {}, sort: '' };
+      const ds = { name: '', value: '', meta: {} };
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
