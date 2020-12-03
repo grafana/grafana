@@ -54,10 +54,13 @@ func GetContextHandler(
 			Logger:         log.New("context"),
 		}
 
-		orgId := int64(0)
-		orgIdHeader := ctx.Req.Header.Get("X-Grafana-Org-Id")
-		if orgIdHeader != "" {
-			orgId, _ = strconv.ParseInt(orgIdHeader, 10, 64)
+		orgID := int64(0)
+		orgIDHeader := ctx.Req.Header.Get("X-Grafana-Org-Id")
+		if orgIDHeader != "" {
+			orgIDParsed, err := strconv.ParseInt(orgIDHeader, 10, 64)
+			if err == nil {
+				orgID = orgIDParsed
+			}
 		}
 
 		// the order in which these are tested are important
@@ -68,9 +71,9 @@ func GetContextHandler(
 		switch {
 		case initContextWithRenderAuth(ctx, renderService):
 		case initContextWithApiKey(ctx):
-		case initContextWithBasicAuth(ctx, orgId):
-		case initContextWithAuthProxy(remoteCache, ctx, orgId):
-		case initContextWithToken(ats, ctx, orgId):
+		case initContextWithBasicAuth(ctx, orgID):
+		case initContextWithAuthProxy(remoteCache, ctx, orgID):
+		case initContextWithToken(ats, ctx, orgID):
 		case initContextWithAnonymousUser(ctx):
 		}
 
