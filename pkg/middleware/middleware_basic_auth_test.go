@@ -41,7 +41,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
 
 		assert.Equal(t, 200, sc.resp.Code)
-		assert.Equal(t, true, sc.context.IsSignedIn)
+		assert.True(t, sc.context.IsSignedIn)
 		assert.Equal(t, orgID, sc.context.OrgId)
 		assert.Equal(t, models.ROLE_EDITOR, sc.context.OrgRole)
 	})
@@ -73,7 +73,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		authHeader := util.GetBasicAuthHeader("myUser", password)
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
 
-		assert.Equal(t, true, sc.context.IsSignedIn)
+		assert.True(t, sc.context.IsSignedIn)
 		assert.Equal(t, orgID, sc.context.OrgId)
 		assert.Equal(t, id, sc.context.UserId)
 	})
@@ -105,7 +105,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		authHeader := util.GetBasicAuthHeader("myUser", password)
 		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).exec()
 
-		assert.Equal(t, true, sc.context.IsSignedIn)
+		assert.True(t, sc.context.IsSignedIn)
 		assert.Equal(t, id, sc.context.UserId)
 	})
 

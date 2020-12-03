@@ -179,7 +179,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		assert.Equal(t, 200, sc.resp.Code)
 
-		assert.Equal(t, true, sc.context.IsSignedIn)
+		assert.True(t, sc.context.IsSignedIn)
 		assert.Equal(t, orgID, sc.context.OrgId)
 		assert.Equal(t, models.ROLE_EDITOR, sc.context.OrgRole)
 	})
@@ -276,7 +276,7 @@ func TestMiddlewareContext(t *testing.T) {
 			http.SameSiteStrictMode,
 		}
 		for _, sameSiteMode := range sameSiteModes {
-			t.Run(fmt.Sprintf("same site mode %d", sameSiteMode), func(t *testing.T) {
+			t.Run(fmt.Sprintf("Same site mode %d", sameSiteMode), func(t *testing.T) {
 				origCookieSameSiteMode := setting.CookieSameSiteMode
 				t.Cleanup(func() {
 					setting.CookieSameSiteMode = origCookieSameSiteMode
@@ -407,8 +407,8 @@ func TestMiddlewareContext(t *testing.T) {
 		setting.AuthProxyHeaderProperty = "username"
 		setting.AuthProxyHeaders = map[string]string{"Groups": "X-WEBAUTH-GROUPS"}
 
-		name := "markelog"
-		group := "grafana-core-team"
+		const hdrName = "markelog"
+		const group = "grafana-core-team"
 
 		middlewareScenario(t, "Should not sync the user if it's in the cache", func(sc *scenarioContext) {
 			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
@@ -416,13 +416,13 @@ func TestMiddlewareContext(t *testing.T) {
 				return nil
 			})
 
-			key := fmt.Sprintf(authproxy.CachePrefix, authproxy.HashCacheKey(name+"-"+group))
+			key := fmt.Sprintf(authproxy.CachePrefix, authproxy.HashCacheKey(hdrName+"-"+group))
 			err := sc.remoteCacheService.Set(key, userID, 0)
 			require.NoError(t, err)
 			sc.fakeReq("GET", "/")
 
-			sc.req.Header.Add(setting.AuthProxyHeaderName, name)
-			sc.req.Header.Add("X-WEBAUTH-GROUPS", group)
+			sc.req.Header.Set(setting.AuthProxyHeaderName, hdrName)
+			sc.req.Header.Set("X-WEBAUTH-GROUPS", group)
 			sc.exec()
 
 			assert.True(t, sc.context.IsSignedIn)
@@ -448,7 +448,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+			sc.req.Header.Set(setting.AuthProxyHeaderName, hdrName)
 			sc.exec()
 
 			assert.False(t, *actualAuthProxyAutoSignUp)
@@ -480,7 +480,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+			sc.req.Header.Set(setting.AuthProxyHeaderName, hdrName)
 			sc.exec()
 
 			assert.True(t, sc.context.IsSignedIn)
@@ -509,7 +509,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+			sc.req.Header.Set(setting.AuthProxyHeaderName, hdrName)
 			sc.exec()
 
 			assert.True(t, sc.context.IsSignedIn)
@@ -538,7 +538,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+			sc.req.Header.Set(setting.AuthProxyHeaderName, hdrName)
 			sc.req.RemoteAddr = "[2001::23]:12345"
 			sc.exec()
 
@@ -568,7 +568,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+			sc.req.Header.Set(setting.AuthProxyHeaderName, hdrName)
 			sc.req.RemoteAddr = "[2001::23]:12345"
 			sc.exec()
 
@@ -582,7 +582,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+			sc.req.Header.Set(setting.AuthProxyHeaderName, hdrName)
 			sc.exec()
 
 			assert.Equal(t, 407, sc.resp.Code)
@@ -595,7 +595,7 @@ func TestMiddlewareContext(t *testing.T) {
 			})
 
 			sc.fakeReq("GET", "/")
-			sc.req.Header.Add(setting.AuthProxyHeaderName, name)
+			sc.req.Header.Set(setting.AuthProxyHeaderName, hdrName)
 			sc.exec()
 
 			assert.Equal(t, 407, sc.resp.Code)
