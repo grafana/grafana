@@ -9,7 +9,7 @@ import { getColorsFromSeverity } from '../../utils/colors';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
-export interface Props extends HTMLAttributes<HTMLElement> {
+export interface Props extends HTMLAttributes<HTMLDivElement> {
   title: string;
   /** On click handler for alert button, mostly used for dismissing the alert */
   onRemove?: (event: React.MouseEvent) => void;
@@ -39,13 +39,13 @@ function getIconFromSeverity(severity: AlertVariant): string {
   }
 }
 
-export const Alert: FC<Props> = React.forwardRef<HTMLElement, Props>(
-  ({ title, buttonText, onButtonClick, onRemove, children, buttonContent, severity = 'error', ...restProps }) => {
+export const Alert: FC<Props> = React.forwardRef<HTMLDivElement, Props>(
+  ({ title, buttonText, onButtonClick, onRemove, children, buttonContent, severity = 'error', ...restProps }, ref) => {
     const theme = useTheme();
     const styles = getStyles(theme, severity, !!buttonContent);
 
     return (
-      <div className={styles.alert} aria-label={selectors.components.Alert.alert(severity)} {...restProps}>
+      <div ref={ref} className={styles.alert} aria-label={selectors.components.Alert.alert(severity)} {...restProps}>
         <div className={styles.icon}>
           <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
         </div>
