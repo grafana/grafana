@@ -210,6 +210,8 @@ export const TimePickerButtonLabel = memo<LabelProps>(({ hideText, value, timeZo
   );
 });
 
+TimePickerButtonLabel.displayName = 'TimePickerButtonLabel';
+
 const formattedRange = (value: TimeRange, timeZone?: TimeZone) => {
   const adjustedTimeRange = {
     to: dateMath.isMathString(value.raw.to) ? value.raw.to : value.to,

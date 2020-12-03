@@ -54,6 +54,7 @@ const SelectButton = React.forwardRef<HTMLButtonElement, SelectButtonProps>(
     );
   }
 );
+SelectButton.displayName = 'SelectButton';
 
 export function ButtonSelect<T>({
   placeholder,
@@ -75,6 +76,7 @@ export function ButtonSelect<T>({
   return (
     <SelectBase
       {...selectProps}
+      // eslint-disable-next-line react/display-name
       renderControl={React.forwardRef<any, CustomControlProps<T>>(({ onBlur, onClick, value, isOpen }, ref) => {
         return (
           <SelectButton {...buttonProps} ref={ref} onBlur={onBlur} onClick={onClick} isOpen={isOpen}>

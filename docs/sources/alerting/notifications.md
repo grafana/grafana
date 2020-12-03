@@ -64,6 +64,7 @@ OpsGenie | `opsgenie` | yes, external only | yes
 Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
 Pushover | `pushover` | yes | no
 Sensu | `sensu` | yes, external only | no
+[Sensu Go](#sensu-go) | `sensugo` | yes, external only | no
 [Slack](#slack) | `slack` | yes | no
 Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
@@ -211,6 +212,10 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 ### Zenduty
 
 [Zenduty](https://www.zenduty.com) is an incident alerting and response orchestration platform that not alerts the right teams via SMS, Phone(Voice), Email, Slack, Microsoft Teams and Push notifications(Android/iOS) whenever a Grafana alert is triggered, but also helps you rapidly triage and remediate critical, user impacting incidents. Grafana alert are sent to Zenduty through Grafana's native webhook dispatcher. Refer the Zenduty-Grafana [integration documentation](https://docs.zenduty.com/docs/grafana) for configuring the integration.
+
+### Sensu Go
+
+[Sensu](https://sensu.io) is a complete solution for monitoring and observability at scale. Sensu Go is designed to give you visibility into everything you care about: traditional server closets, containers, applications, the cloud, and more. Grafana notifications can be sent to Sensu Go as events via the API. This operation requires an API Key. Refer to the [Sensu Go documentation](https://docs.sensu.io/sensu-go/latest/operations/control-access/use-apikeys/#api-key-authentication) for information on creating this key.
 
 ## Enable images in notifications {#external-image-store}
 

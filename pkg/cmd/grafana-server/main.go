@@ -116,7 +116,11 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 		if err != nil {
 			panic(err)
 		}
-		defer f.Close()
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Error("Failed to write trace diagnostics", "path", traceDiagnostics.file, "err", err)
+			}
+		}()
 
 		if err := trace.Start(f); err != nil {
 			panic(err)
