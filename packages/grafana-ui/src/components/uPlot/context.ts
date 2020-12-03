@@ -21,8 +21,7 @@ interface PlotPluginsContextType {
 }
 
 interface PlotContextType extends PlotPluginsContextType {
-  isPlotReady: boolean;
-  getPlotInstance: () => uPlot;
+  getPlotInstance: () => uPlot | undefined;
   getSeries: () => Series[];
   getCanvas: () => PlotCanvasContextType;
   canvasRef: any;
@@ -127,27 +126,25 @@ export const usePlotData = (): PlotDataAPI => {
 };
 
 export const buildPlotContext = (
-  isPlotReady: boolean,
   canvasRef: any,
   data: AlignedFrameWithGapTest,
   registerPlugin: any,
-  getPlotInstance: () => uPlot
+  getPlotInstance: () => uPlot | undefined
 ): PlotContextType => {
   return {
-    isPlotReady,
     canvasRef,
     data,
     registerPlugin,
     getPlotInstance,
-    getSeries: () => getPlotInstance().series,
+    getSeries: () => getPlotInstance()!.series,
     getCanvas: () => ({
-      width: getPlotInstance().width,
-      height: getPlotInstance().height,
+      width: getPlotInstance()!.width,
+      height: getPlotInstance()!.height,
       plot: {
-        width: getPlotInstance().bbox.width / window.devicePixelRatio,
-        height: getPlotInstance().bbox.height / window.devicePixelRatio,
-        top: getPlotInstance().bbox.top / window.devicePixelRatio,
-        left: getPlotInstance().bbox.left / window.devicePixelRatio,
+        width: getPlotInstance()!.bbox.width / window.devicePixelRatio,
+        height: getPlotInstance()!.bbox.height / window.devicePixelRatio,
+        top: getPlotInstance()!.bbox.top / window.devicePixelRatio,
+        left: getPlotInstance()!.bbox.left / window.devicePixelRatio,
       },
     }),
   };

@@ -8,6 +8,7 @@ import { DataFrame, FieldType } from '@grafana/data';
 import isNumber from 'lodash/isNumber';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import usePrevious from 'react-use/lib/usePrevious';
+import { css } from 'emotion';
 
 // uPlot abstraction responsible for plot initialisation, setup and refresh
 // Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
@@ -23,10 +24,6 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     props.config
   );
   const getPlotInstance = useCallback(() => {
-    if (!plotInstance.current) {
-      throw new Error("Plot hasn't initialised yet");
-    }
-
     return plotInstance.current;
   }, []);
 
@@ -72,13 +69,19 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 
   // Memoize plot context
   const plotCtx = useMemo(() => {
-    return buildPlotContext(Boolean(plotInstance.current), canvasRef, props.data, registerPlugin, getPlotInstance);
+    return buildPlotContext(canvasRef, props.data, registerPlugin, getPlotInstance);
   }, [plotInstance, canvasRef, props.data, registerPlugin, getPlotInstance]);
 
   return (
     <PlotContext.Provider value={plotCtx}>
-      <div ref={plotCtx.canvasRef} data-testid="uplot-main-div" />
-      {props.children}
+      <div
+        className={css`
+          position: relative;
+        `}
+      >
+        <div ref={plotCtx.canvasRef} data-testid="uplot-main-div" />
+        {props.children}
+      </div>
     </PlotContext.Provider>
   );
 };
