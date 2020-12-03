@@ -83,7 +83,7 @@ function calculateSpace(self: uPlot, axisIdx: number, scaleMin: number, scaleMax
 
   // For x-axis (bottom) we need bigger spacing between labels
   if (axis.side === 2) {
-    return 50;
+    return 55;
   }
 
   return 30;

@@ -33,28 +33,27 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           },
         })
         .addRadio({
-          path: 'lineMode',
+          path: 'lineInterpolation',
           name: 'Line interpolation',
-          description: 'NOTE: not implemented yet',
-          defaultValue: graphFieldOptions.lineMode[0].value,
+          defaultValue: graphFieldOptions.lineInterpolation[0].value,
           settings: {
-            options: graphFieldOptions.lineMode,
+            options: graphFieldOptions.lineInterpolation,
           },
-          showIf: c => !(c.mode === GraphMode.Bar || c.mode === GraphMode.Points),
+          showIf: c => c.mode === GraphMode.Line,
         })
         .addSliderInput({
           path: 'lineWidth',
           name: 'Line width',
           defaultValue: 1,
           settings: {
-            min: 1,
+            min: 0,
             max: 10,
             step: 1,
           },
-          showIf: c => !(c.mode === GraphMode.Bar || c.mode === GraphMode.Points),
+          showIf: c => c.mode !== GraphMode.Points,
         })
         .addSliderInput({
-          path: 'fillAlpha',
+          path: 'fillOpacity',
           name: 'Fill area opacity',
           defaultValue: 0.1,
           settings: {
@@ -62,7 +61,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             max: 1,
             step: 0.1,
           },
-          showIf: c => !(c.mode === GraphMode.Bar || c.mode === GraphMode.Points),
+          showIf: c => c.mode !== GraphMode.Points,
         })
         .addRadio({
           path: 'points',
@@ -73,9 +72,9 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           },
         })
         .addSliderInput({
-          path: 'pointRadius',
-          name: 'Point radius',
-          defaultValue: 4,
+          path: 'pointSize',
+          name: 'Point size',
+          defaultValue: 5,
           settings: {
             min: 1,
             max: 10,

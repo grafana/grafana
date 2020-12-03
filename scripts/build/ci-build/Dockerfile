@@ -100,7 +100,7 @@ FROM debian:stretch-20201012
 ENV GOVERSION=1.15.5 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=12.19.1-1nodesource1 \
+    NODEVERSION=14.15.1-1nodesource1 \
     YARNVERSION=1.22.5-1 \
     GO111MODULE=on
 
@@ -135,7 +135,7 @@ RUN apt-get update && \
         unzip &&        \
     gem install -N fpm && \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil && \
-    curl -fsL https://deb.nodesource.com/setup_12.x | bash - && \
+    curl -fsL https://deb.nodesource.com/setup_14.x | bash - && \
     apt-get update && apt-get install -yq nodejs=${NODEVERSION} && \
     curl -fsS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \

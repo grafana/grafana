@@ -1,4 +1,4 @@
-FROM node:12.19.0-slim AS js-builder
+FROM node:14.15.1-slim AS js-builder
 
 WORKDIR /usr/src/app/
 
