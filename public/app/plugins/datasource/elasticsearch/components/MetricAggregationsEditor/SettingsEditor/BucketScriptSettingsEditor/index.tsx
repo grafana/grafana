@@ -1,4 +1,4 @@
-import React, { Fragment, FunctionComponent } from 'react';
+import React, { Fragment, FunctionComponent, useEffect } from 'react';
 import { Input, InlineLabel } from '@grafana/ui';
 import { MetricAggregationAction } from '../../state/types';
 import { changeMetricAttribute } from '../../state/actions';
@@ -6,7 +6,6 @@ import { css } from 'emotion';
 import { AddRemove } from '../../../AddRemove';
 import { useStatelessReducer, useDispatch } from '../../../../hooks/useStatelessReducer';
 import { MetricPicker } from '../../../MetricPicker';
-import { defaultPipelineVariable } from './utils';
 import { reducer } from './state/reducer';
 import {
   addPipelineVariable,
@@ -31,6 +30,14 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
     reducer
   );
 
+  // The model might not have pipeline variables (or an empty array of pipeline vars) in it because of the way it was built in previous versions of the datasource.
+  // If this is the case we add a default one.
+  useEffect(() => {
+    if (!value.pipelineVariables?.length) {
+      dispatch(addPipelineVariable());
+    }
+  }, []);
+
   return (
     <>
       <div
@@ -47,8 +54,7 @@ export const BucketScriptSettingsEditor: FunctionComponent<Props> = ({ value, pr
             margin-bottom: 4px;
           `}
         >
-          {(value.pipelineVariables || [defaultPipelineVariable()]).map((pipelineVar, index) => (
-            // FIXME: name is totally arbitrary and can be duplicated, we should use another key
+          {value.pipelineVariables!.map((pipelineVar, index) => (
             <Fragment key={pipelineVar.name}>
               <div
                 className={css`
