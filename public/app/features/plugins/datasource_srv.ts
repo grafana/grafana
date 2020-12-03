@@ -16,6 +16,7 @@ import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 // Pretend Datasource
 import { expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DataSourceVariableModel } from '../variables/types';
+import { cloneDeep } from 'lodash';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {};
@@ -50,8 +51,18 @@ export class DatasourceSrv implements DataSourceService {
       return this.settingsMapByName[this.defaultName];
     }
 
+    // Complex logic to support template variable data source names
+    // For this we just pick the current or first data source in the variable
     if (nameOrUid[0] === '$') {
-      nameOrUid = this.templateSrv.replace(nameOrUid, {}, variableInterpolation);
+      const interpolatedName = this.templateSrv.replace(nameOrUid, {}, variableInterpolation);
+      const dsSettings = this.settingsMapByUid[interpolatedName] ?? this.settingsMapByName[interpolatedName];
+      if (!dsSettings) {
+        return undefined;
+      }
+      // The return name or uid needs preservet string containing the variable
+      const clone = cloneDeep(dsSettings);
+      clone.name = nameOrUid;
+      return clone;
     }
 
     return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid];

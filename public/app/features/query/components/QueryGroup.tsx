@@ -175,7 +175,14 @@ export class QueryGroup extends PureComponent<Props, State> {
       <div>
         <div className={styles.dataSourceRow}>
           <div className={styles.dataSourceRowItem}>
-            <DataSourcePicker onChange={this.onChangeDataSource} current={options.dataSource.name} />
+            <DataSourcePicker
+              onChange={this.onChangeDataSource}
+              current={options.dataSource.name}
+              metrics={true}
+              mixed={true}
+              dashboard={true}
+              variables={true}
+            />
           </div>
           {dataSource && (
             <>

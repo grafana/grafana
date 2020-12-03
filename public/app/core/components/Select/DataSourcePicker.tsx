@@ -7,6 +7,7 @@ import { SelectableValue, DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { isUnsignedPluginSignature, PluginSignatureBadge } from '../../../features/plugins/PluginSignatureBadge';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { css } from 'emotion';
 
 export interface Props {
   onChange: (ds: DataSourceInstanceSettings) => void;
@@ -16,11 +17,12 @@ export interface Props {
   autoFocus?: boolean;
   openMenuOnFocus?: boolean;
   placeholder?: string;
-  invalid?: boolean;
   tracing?: boolean;
   mixed?: boolean;
-  builtIn?: boolean;
+  dashboard?: boolean;
   metrics?: boolean;
+  annotations?: boolean;
+  variables?: boolean;
 }
 
 export interface State {
@@ -74,33 +76,49 @@ export class DataSourcePicker extends PureComponent<Props, State> {
     }
 
     return {
-      label: (current ?? 'no name') + ' (not found)',
+      label: current ?? 'no name',
       value: current,
       imgUrl: '',
       hideText: hideTextValue,
     };
   }
 
-  getDataSources() {
-    const options = this.dataSourceSrv.getMetricSources().map(ds => ({
-      value: ds.name,
-      label: ds.name,
-      imgUrl: ds.meta.info.logos.small,
-      meta: ds.meta,
-    }));
+  getDataSourceOptions() {
+    const { tracing, metrics, mixed, dashboard, variables, annotations } = this.props;
+    const options = this.dataSourceSrv
+      .getList({
+        tracing,
+        metrics,
+        dashboard,
+        mixed,
+        variables,
+        annotations,
+      })
+      .map(ds => ({
+        value: ds.name,
+        label: ds.name,
+        imgUrl: ds.meta.info.logos.small,
+        meta: ds.meta,
+      }));
 
     return options;
   }
 
   render() {
-    const { autoFocus, onBlur, openMenuOnFocus, placeholder, invalid } = this.props;
+    const { autoFocus, onBlur, openMenuOnFocus, placeholder } = this.props;
     const { error } = this.state;
-    const options = this.getDataSources();
+    const options = this.getDataSourceOptions();
     const value = this.getCurrentValue();
 
     return (
       <div aria-label={selectors.components.DataSourcePicker.container}>
-        <Field invalid={!!error} error={error}>
+        <Field
+          invalid={!!error}
+          error={error}
+          className={css`
+            margin-bottom: 0;
+          `}
+        >
           <Select
             className="ds-picker select-container"
             isMulti={false}
@@ -116,7 +134,7 @@ export class DataSourcePicker extends PureComponent<Props, State> {
             placeholder={placeholder}
             noOptionsMessage="No datasources found"
             value={value}
-            invalid={invalid}
+            invalid={!!error}
             getOptionLabel={o => {
               if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
                 return (

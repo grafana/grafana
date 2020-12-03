@@ -108,7 +108,9 @@ describe('datasource_srv', () => {
       });
 
       it('should work with variable', () => {
-        expect(dataSourceSrv.getInstanceSettings('${datasource}')).toBe(dataSourceSrv.getInstanceSettings('BBB'));
+        const ds = dataSourceSrv.getInstanceSettings('${datasource}');
+        expect(ds?.name).toBe('${datasource}');
+        expect(ds?.uid).toBe('uid-code-BBB');
       });
     });
 
