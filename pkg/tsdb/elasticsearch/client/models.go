@@ -350,12 +350,20 @@ func (f *PPLRequest) MarshalJSON() ([]byte, error) {
 	return json.Marshal(root)
 }
 
-type Datarow []interface{}
-
 // PPLResponse represents a PPL response
 type PPLResponse struct {
-	Status    int                      `json:"status,omitempty"`
-	Schema    []map[string]interface{} `json:"schema"`
-	Datarows  []Datarow                `json:"datarows"`
-	DebugInfo *PPLDebugInfo            `json:"-"`
+	Status    int                    `json:"status,omitempty"`
+	Error     map[string]interface{} `json:"error"`
+	Schema    []FieldSchema          `json:"schema"`
+	Datarows  []Datarow              `json:"datarows"`
+	DebugInfo *PPLDebugInfo          `json:"-"`
 }
+
+// FieldSchema represents the schema for a single field from the PPL response result set
+type FieldSchema struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+// Datarow represents a datarow from the PPL response result set
+type Datarow []interface{}
