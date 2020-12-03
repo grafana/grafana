@@ -15,7 +15,7 @@ import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { DashboardInput, DashboardInputs, DataSourceInput, ImportDashboardDTO } from '../state/reducers';
 import { validateTitle, validateUid } from '../utils/validation';
 
-interface Props extends Omit<FormAPI<ImportDashboardDTO>, 'formState' | 'watch'> {
+interface Props extends Omit<FormAPI<ImportDashboardDTO>, 'formState'> {
   uidReset: boolean;
   inputs: DashboardInputs;
   initialFolderId: number;
@@ -36,8 +36,10 @@ export const ImportDashboardForm: FC<Props> = ({
   onUidReset,
   onCancel,
   onSubmit,
+  watch,
 }) => {
   const [isSubmitted, setSubmitted] = useState(false);
+  const watchDataSources = watch('dataSources');
 
   /*
     This useEffect is needed for overwriting a dashboard. It
@@ -96,7 +98,7 @@ export const ImportDashboardForm: FC<Props> = ({
       {inputs.dataSources &&
         inputs.dataSources.map((input: DataSourceInput, index: number) => {
           const dataSourceOption = `dataSources[${index}]`;
-          const current = getValues().dataSources ?? [];
+          const current = watchDataSources ?? [];
           return (
             <Field
               label={input.label}
@@ -106,6 +108,8 @@ export const ImportDashboardForm: FC<Props> = ({
             >
               <InputControl
                 as={DataSourcePicker}
+                noDefault={true}
+                pluginId={input.pluginId}
                 name={`${dataSourceOption}`}
                 current={current[index]?.name}
                 control={control}

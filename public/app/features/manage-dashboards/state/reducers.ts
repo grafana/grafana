@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { DataSourceSelectItem, DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/data';
 
 export enum DashboardSource {
   Gcom = 0,
@@ -30,7 +30,6 @@ export interface DashboardInput {
 
 export interface DataSourceInput extends DashboardInput {
   pluginId: string;
-  options: DataSourceSelectItem[];
 }
 
 export interface DashboardInputs {

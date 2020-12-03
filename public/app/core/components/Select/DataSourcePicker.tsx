@@ -22,6 +22,8 @@ export interface Props {
   metrics?: boolean;
   annotations?: boolean;
   variables?: boolean;
+  pluginId?: string;
+  noDefault?: boolean;
 }
 
 export interface State {
@@ -61,7 +63,12 @@ export class DataSourcePicker extends PureComponent<Props, State> {
   };
 
   private getCurrentValue() {
-    const { current, hideTextValue } = this.props;
+    const { current, hideTextValue, noDefault } = this.props;
+
+    if (!current && noDefault) {
+      return null;
+    }
+
     const ds = this.dataSourceSrv.getInstanceSettings(current);
 
     if (ds) {
@@ -83,7 +90,7 @@ export class DataSourcePicker extends PureComponent<Props, State> {
   }
 
   getDataSourceOptions() {
-    const { tracing, metrics, mixed, dashboard, variables, annotations } = this.props;
+    const { tracing, metrics, mixed, dashboard, variables, annotations, pluginId } = this.props;
     const options = this.dataSourceSrv
       .getList({
         tracing,
@@ -92,6 +99,7 @@ export class DataSourcePicker extends PureComponent<Props, State> {
         mixed,
         variables,
         annotations,
+        pluginId,
       })
       .map(ds => ({
         value: ds.name,
