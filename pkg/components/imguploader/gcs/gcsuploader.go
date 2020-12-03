@@ -153,7 +153,11 @@ func (u *Uploader) uploadFile(
 	if err != nil {
 		return err
 	}
-	defer fileReader.Close()
+	defer func() {
+		if err := fileReader.Close(); err != nil {
+			u.log.Warn("Failed to close file", "err", err, "path", imageDiskPath)
+		}
+	}()
 
 	// Set public access if not generating a signed URL
 	pubAcc := !u.enableSignedURLs

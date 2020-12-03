@@ -113,7 +113,11 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) PluginSignature
 		if err != nil {
 			return PluginSignatureModified
 		}
-		defer f.Close()
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Warn("Failed to close plugin file", "path", fp, "err", err)
+			}
+		}()
 
 		h := sha256.New()
 		if _, err := io.Copy(h, f); err != nil {
