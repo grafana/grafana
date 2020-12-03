@@ -80,6 +80,10 @@ func Warnf(format string, v ...interface{}) {
 	Root.Warn(message)
 }
 
+func Error(msg string, args ...interface{}) {
+	Root.Error(msg, args...)
+}
+
 func Errorf(skip int, format string, v ...interface{}) {
 	Root.Error(fmt.Sprintf(format, v...))
 }

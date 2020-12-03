@@ -96,7 +96,12 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 	if err != nil {
 		return nil, err
 	}
-	defer out.Close()
+	defer func() {
+		if err := out.Close(); err != nil {
+			// We already close the file explicitly in the non-error path, so shouldn't be a problem
+			rs.log.Warn("Failed to close file", "path", filePath, "err", err)
+		}
+	}()
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
 		// check that we didn't timeout while receiving the response.
@@ -106,6 +111,9 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 		}
 		rs.log.Error("Remote rendering request failed", "error", err)
 		return nil, fmt.Errorf("remote rendering request failed: %w", err)
+	}
+	if err := out.Close(); err != nil {
+		return nil, fmt.Errorf("failed to write to %q: %w", filePath, err)
 	}
 
 	return &RenderResult{FilePath: filePath}, err
