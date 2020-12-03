@@ -245,19 +245,30 @@ export const smoothBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, i
   const scaleX = u.series[0].scale as string;
   const scaleY = series.scale as string;
 
-  const alpha = 0.5;
+  // find first non-null dataPt
+  while (ydata[idx0] == null) {
+    idx0++;
+  }
+
+  // find last-null dataPt
+  while (ydata[idx1] == null) {
+    idx1--;
+  }
+
+  let firstXPos = Math.round(u.valToPos(xdata[idx0], scaleX, true));
+  let prevXPos = firstXPos;
 
   let xCoords = [];
   let yCoords = [];
 
   for (let i = idx0; i <= idx1; i++) {
     if (ydata[i] != null) {
-      xCoords.push(u.valToPos(xdata[i], scaleX, true));
+      xCoords.push((prevXPos = u.valToPos(xdata[i], scaleX, true)));
       yCoords.push(u.valToPos(ydata[i]!, scaleY, true));
     }
   }
 
-  const stroke = catmullRomFitting(xCoords, yCoords, alpha);
+  const stroke = catmullRomFitting(xCoords, yCoords, 0.5);
 
   const fill = new Path2D(stroke);
 
@@ -265,11 +276,9 @@ export const smoothBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, i
   let fillTo = series.fillTo(u, seriesIdx, series.min, series.max);
 
   let minY = Math.round(u.valToPos(fillTo, scaleY, true));
-  let minX = Math.round(u.valToPos(u.scales[scaleX].min!, scaleX, true));
-  let maxX = Math.round(u.valToPos(u.scales[scaleX].max!, scaleX, true));
 
-  fill.lineTo(maxX, minY);
-  fill.lineTo(minX, minY);
+  fill.lineTo(prevXPos, minY);
+  fill.lineTo(firstXPos, minY);
 
   return {
     stroke,
