@@ -63,6 +63,7 @@ OpsGenie | `opsgenie` | yes, external only | yes
 [Pagerduty](#pagerduty) | `pagerduty` | yes, external only | yes
 Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
 Pushover | `pushover` | yes | no
+[Rundeck](#rundeck) | `rundeck` | no | no
 Sensu | `sensu` | yes, external only | no
 [Sensu Go](#sensu-go) | `sensugo` | yes, external only | no
 [Slack](#slack) | `slack` | yes | no
@@ -216,6 +217,9 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 ### Sensu Go
 
 [Sensu](https://sensu.io) is a complete solution for monitoring and observability at scale. Sensu Go is designed to give you visibility into everything you care about: traditional server closets, containers, applications, the cloud, and more. Grafana notifications can be sent to Sensu Go as events via the API. This operation requires an API Key. Refer to the [Sensu Go documentation](https://docs.sensu.io/sensu-go/latest/operations/control-access/use-apikeys/#api-key-authentication) for information on creating this key.
+
+### Rundeck
+[Rundeck](https://rundeck.com) is runbook automation. Alert notifications can be used to trigger Rundeck job executions.
 
 ## Enable images in notifications {#external-image-store}
 
