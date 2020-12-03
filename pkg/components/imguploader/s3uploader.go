@@ -80,12 +80,17 @@ func (u *S3Uploader) Upload(ctx context.Context, imageDiskPath string) (string, 
 	if err != nil {
 		return "", err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			u.log.Warn("Failed to close file", "path", imageDiskPath, "err", err)
+		}
+	}()
 
 	sess, err = session.NewSession(cfg)
 	if err != nil {
 		return "", err
 	}
+
 	uploader := s3manager.NewUploader(sess)
 	result, err := uploader.UploadWithContext(ctx, &s3manager.UploadInput{
 		Bucket:      aws.String(u.bucket),
