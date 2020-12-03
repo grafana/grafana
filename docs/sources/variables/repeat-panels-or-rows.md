@@ -1,5 +1,5 @@
 +++
-title = "Variables"
+title = "Repeat panels or rows"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable", "repeat"]
 weight = 800
 +++

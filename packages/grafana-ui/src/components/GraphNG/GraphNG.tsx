@@ -104,7 +104,10 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     for (let i = 0; i < alignedFrame.fields.length; i++) {
       const field = alignedFrame.fields[i];
       const config = field.config as FieldConfig<GraphFieldConfig>;
-      const customConfig = config.custom || defaultConfig;
+      const customConfig: GraphFieldConfig = {
+        ...defaultConfig,
+        ...config.custom,
+      };
 
       if (field === xField || field.type !== FieldType.number) {
         continue;
@@ -134,14 +137,14 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       builder.addSeries({
         scaleKey: scale,
-        line: (customConfig.mode ?? GraphMode.Line) === GraphMode.Line,
+        mode: customConfig.mode!,
         lineColor: seriesColor,
         lineWidth: customConfig.lineWidth,
+        lineInterpolation: customConfig.lineInterpolation,
         points: pointsMode,
-        pointSize: customConfig.pointRadius,
+        pointSize: customConfig.pointSize,
         pointColor: seriesColor,
-        fill: customConfig.fillAlpha !== undefined,
-        fillOpacity: customConfig.fillAlpha,
+        fillOpacity: customConfig.fillOpacity,
         fillColor: seriesColor,
       });
 
