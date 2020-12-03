@@ -72,21 +72,20 @@ func (ng *AlertNG) listAlertInstances(cmd *listAlertInstancesCommand) error {
 
 		s := strings.Builder{}
 		params := make([]interface{}, 0)
-		addParam := func(p interface{}) {
-			params = append(params, p)
+
+		addToQuery := func(stmt string, p ...interface{}) {
+			s.WriteString(stmt)
+			params = append(params, p...)
 		}
 
-		s.WriteString("SELECT * FROM alert_instance WHERE org_id = ?")
-		addParam(cmd.OrgID)
+		addToQuery("SELECT * FROM alert_instance WHERE org_id = ?", cmd.OrgID)
 
 		if cmd.AlertDefinitionID != 0 {
-			s.WriteString(` AND alert_definition_id = ?`)
-			addParam(cmd.AlertDefinitionID)
+			addToQuery(` AND alert_definition_id = ?`, cmd.AlertDefinitionID)
 		}
 
 		if cmd.State != "" {
-			s.WriteString(` AND current_state = ?`)
-			addParam(cmd.State)
+			addToQuery(` AND current_state = ?`, cmd.State)
 		}
 
 		if err := sess.SQL(s.String(), params...).Find(&alertInstances); err != nil {
