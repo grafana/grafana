@@ -201,7 +201,8 @@ func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 	})
 }
 
-// getAlertDefinitions is a handler for retrieving alert definitions of specific organisation.
+// getAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
+// the hash of the labels.
 // nolint:unused
 func (ng *AlertNG) getAlertInstance(cmd *getAlertInstanceCommand) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
@@ -230,6 +231,41 @@ func (ng *AlertNG) getAlertInstance(cmd *getAlertInstanceCommand) error {
 		}
 
 		cmd.Result = &instance
+		return nil
+	})
+}
+
+// listAlertInstances is a handler for retrieving alert instances within specific organisation
+// based on various filters.
+// nolint:unused
+func (ng *AlertNG) listAlertInstances(cmd *listAlertInstancesCommand) error {
+	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		alertInstances := make([]*AlertInstance, 0)
+
+		s := strings.Builder{}
+		params := append(make([]interface{}, 0))
+		addParam := func(p interface{}) {
+			params = append(params, p)
+		}
+
+		s.WriteString("SELECT * FROM alert_instance WHERE org_id = ?")
+		addParam(cmd.OrgID)
+
+		if cmd.AlertDefinitionID != 0 {
+			s.WriteString(` AND alert_definition_id = ?`)
+			addParam(cmd.AlertDefinitionID)
+		}
+
+		if cmd.State != "" {
+			s.WriteString(` AND current_state = ?`)
+			addParam(cmd.State)
+		}
+
+		if err := sess.SQL(s.String(), params...).Find(&alertInstances); err != nil {
+			return err
+		}
+
+		cmd.Result = alertInstances
 		return nil
 	})
 }

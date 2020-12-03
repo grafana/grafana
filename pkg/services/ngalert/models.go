@@ -114,6 +114,18 @@ type saveAlertInstanceCommand struct {
 	SkipCache         bool                 `json:"-"`
 }
 
+// listAlertInstancesCommand is the query list alert Instances.
+// nolint:unused
+type listAlertInstancesCommand struct {
+	OrgID             int64 `json:"-"`
+	AlertDefinitionID int64
+	State             InstanceStateType
+	SignedInUser      *models.SignedInUser `json:"-"`
+	SkipCache         bool                 `json:"-"`
+
+	Result []*AlertInstance
+}
+
 // InstanceStateType is an enum for instance states.
 type InstanceStateType string
 
