@@ -37,6 +37,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
 	_ "github.com/grafana/grafana/pkg/services/ngalert"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
+	_ "github.com/grafana/grafana/pkg/services/panellib"
 	_ "github.com/grafana/grafana/pkg/services/provisioning"
 	_ "github.com/grafana/grafana/pkg/services/rendering"
 	_ "github.com/grafana/grafana/pkg/services/search"
