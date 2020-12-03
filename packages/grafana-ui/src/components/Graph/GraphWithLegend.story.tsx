@@ -8,7 +8,7 @@ import { LegendPlacement, LegendDisplayMode } from '../Legend/Legend';
 import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId } from '@grafana/data';
 
 export default {
-  title: 'Visualizations/Graph',
+  title: 'Visualizations/Graph/GraphWithLegend',
   component: GraphWithLegend,
   decorator: [withCenteredStory],
 };

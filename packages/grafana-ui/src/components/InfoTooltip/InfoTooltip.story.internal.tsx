@@ -5,7 +5,7 @@ import { InfoTooltip } from './InfoTooltip';
 import { Tooltip } from '../Chart/Tooltip';
 
 export default {
-  title: 'Overlays/Tooltip',
+  title: 'Overlays/TooltipInternal',
   component: Tooltip,
   decorators: [withCenteredStory],
 };

@@ -19,7 +19,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, getDataSourceSrv } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import {
@@ -305,7 +305,7 @@ function lokiStatsToMetaStat(stats: LokiStats | undefined): QueryResultMetaStat[
   return result;
 }
 
-export function lokiStreamsToDataframes(
+export function lokiStreamsToDataFrames(
   response: LokiStreamResponse,
   target: { refId: string; expr?: string },
   limit: number,
@@ -387,9 +387,13 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
  * Transform derivedField config into dataframe field with config that contains link.
  */
 function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Field<any, ArrayVector> {
+  const dataSourceSrv = getDataSourceSrv();
+
   const dataLinks = derivedFieldConfigs.reduce((acc, derivedFieldConfig) => {
     // Having field.datasourceUid means it is an internal link.
     if (derivedFieldConfig.datasourceUid) {
+      const dsSettings = dataSourceSrv.getInstanceSettings(derivedFieldConfig.datasourceUid);
+
       acc.push({
         // Will be filled out later
         title: '',
@@ -398,6 +402,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
         internal: {
           query: { query: derivedFieldConfig.url },
           datasourceUid: derivedFieldConfig.datasourceUid,
+          datasourceName: dsSettings?.name ?? 'Data source not found',
         },
       });
     } else if (derivedFieldConfig.url) {
@@ -472,7 +477,7 @@ export function processRangeQueryResponse(
   switch (response.data.resultType) {
     case LokiResultType.Stream:
       return of({
-        data: lokiStreamsToDataframes(response as LokiStreamResponse, target, limit, config, reverse),
+        data: lokiStreamsToDataFrames(response as LokiStreamResponse, target, limit, config, reverse),
         key: `${target.refId}_log`,
       });
 

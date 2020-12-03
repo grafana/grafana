@@ -207,6 +207,12 @@ var (
 	ImageUploadProvider string
 )
 
+// AddChangePasswordLink returns if login form is disabled or not since
+// the same intention can be used to hide both features.
+func AddChangePasswordLink() bool {
+	return !DisableLoginForm
+}
+
 // TODO move all global vars to this struct
 type Cfg struct {
 	Raw    *ini.File
@@ -302,6 +308,7 @@ type Cfg struct {
 
 	// User
 	UserInviteMaxLifetime time.Duration
+	HiddenUsers           map[string]struct{}
 
 	// Annotations
 	AlertingAnnotationCleanupSetting   AnnotationCleanupSettings
@@ -327,8 +334,14 @@ func (cfg Cfg) IsNgAlertEnabled() bool {
 	return cfg.FeatureToggles["ngalert"]
 }
 
+// IsHTTPRequestHistogramEnabled returns whether the http_request_histogram feature is enabled.
 func (cfg Cfg) IsHTTPRequestHistogramEnabled() bool {
 	return cfg.FeatureToggles["http_request_histogram"]
+}
+
+// IsPanelLibraryEnabled returns whether the panel library feature is enabled.
+func (cfg Cfg) IsPanelLibraryEnabled() bool {
+	return cfg.FeatureToggles["panelLibrary"]
 }
 
 type CommandLineArgs struct {
@@ -1110,6 +1123,13 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.UserInviteMaxLifetime = userInviteMaxLifetimeDuration
 	if cfg.UserInviteMaxLifetime < time.Minute*15 {
 		return errors.New("the minimum supported value for the `user_invite_max_lifetime_duration` configuration is 15m (15 minutes)")
+	}
+
+	cfg.HiddenUsers = make(map[string]struct{})
+	hiddenUsers := users.Key("hidden_users").MustString("")
+	for _, user := range strings.Split(hiddenUsers, ",") {
+		user = strings.TrimSpace(user)
+		cfg.HiddenUsers[user] = struct{}{}
 	}
 
 	return nil

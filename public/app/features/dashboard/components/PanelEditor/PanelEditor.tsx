@@ -1,9 +1,8 @@
-import React, { createRef, MutableRefObject, PureComponent } from 'react';
+import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import SplitPane from 'react-split-pane';
 import { css, cx } from 'emotion';
-import { Unsubscribable } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -19,6 +18,7 @@ import { OptionsPaneContent } from './OptionsPaneContent';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
+import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
 
@@ -36,6 +36,7 @@ import { CoreEvents, LocationState, StoreState } from 'app/types';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { VariableModel } from 'app/features/variables/types';
 import { DashboardModel, PanelModel } from '../../state';
+import { PanelOptionsChangedEvent } from 'app/types/events';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -64,27 +65,28 @@ interface DispatchProps {
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export class PanelEditorUnconnected extends PureComponent<Props> {
-  querySubscription: Unsubscribable;
-  rafToken = createRef<number>();
+  private eventSubs?: Subscription;
 
   componentDidMount() {
     this.props.initPanelEditor(this.props.sourcePanel, this.props.dashboard);
+  }
 
-    window.addEventListener('resize', this.updateSplitPaneSize);
+  componentDidUpdate() {
+    const { panel, initDone } = this.props;
+
+    if (initDone && !this.eventSubs) {
+      this.eventSubs = new Subscription();
+      this.eventSubs.add(panel.events.subscribe(PanelOptionsChangedEvent, this.triggerForceUpdate));
+    }
   }
 
   componentWillUnmount() {
     this.props.panelEditorCleanUp();
-    window.removeEventListener('resize', this.updateSplitPaneSize);
+    this.eventSubs?.unsubscribe();
   }
 
-  updateSplitPaneSize = () => {
-    if (this.rafToken.current !== undefined) {
-      window.cancelAnimationFrame(this.rafToken.current!);
-    }
-    (this.rafToken as MutableRefObject<number>).current = window.requestAnimationFrame(() => {
-      this.forceUpdate();
-    });
+  triggerForceUpdate = () => {
+    this.forceUpdate();
   };
 
   onPanelExit = () => {
@@ -127,8 +129,9 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   onPanelOptionsChanged = (options: any) => {
+    // we do not need to trigger force update here as the function call below
+    // fires PanelOptionsChangedEvent which we subscribe to above
     this.props.panel.updateOptions(options);
-    this.forceUpdate();
   };
 
   onPanelConfigChanged = (configKey: string, value: any) => {
@@ -136,30 +139,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.props.panel[configKey] = value;
     this.props.panel.render();
     this.forceUpdate();
-  };
-
-  onDragFinished = (pane: Pane, size?: number) => {
-    document.body.style.cursor = 'auto';
-
-    // When the drag handle is just clicked size is undefined
-    if (!size) {
-      return;
-    }
-
-    const { updatePanelEditorUIState } = this.props;
-    if (pane === Pane.Top) {
-      updatePanelEditorUIState({
-        topPaneSize: size / window.innerHeight,
-      });
-    } else {
-      updatePanelEditorUIState({
-        rightPaneSize: size / window.innerWidth,
-      });
-    }
-  };
-
-  onDragStarted = () => {
-    document.body.style.cursor = 'row-resize';
   };
 
   onDisplayModeChange = (mode: DisplayMode) => {
@@ -177,7 +156,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   renderPanel = (styles: EditorStyles) => {
     const { dashboard, panel, tabs, uiState } = this.props;
     return (
-      <div className={cx(styles.mainPaneWrapper, tabs.length === 0 && styles.mainPaneWrapperNoTabs)}>
+      <div className={cx(styles.mainPaneWrapper, tabs.length === 0 && styles.mainPaneWrapperNoTabs)} key="panel">
         {this.renderPanelToolbar(styles)}
         <div className={styles.panelWrapper}>
           <AutoSizer>
@@ -205,38 +184,22 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   };
 
-  renderHorizontalSplit(styles: EditorStyles) {
-    const { dashboard, panel, tabs, uiState } = this.props;
-    /*
-      Guesstimate the height of the browser window minus
-      panel toolbar and editor toolbar (~120px). This is to prevent resizing
-      the preview window beyond the browser window.
-     */
-    const windowHeight = window.innerHeight - 120;
-    const size = uiState.topPaneSize >= 1 ? uiState.topPaneSize : (uiState.topPaneSize as number) * window.innerHeight;
+  renderPanelAndEditor(styles: EditorStyles) {
+    const { panel, dashboard, tabs } = this.props;
 
-    return tabs.length > 0 ? (
-      <SplitPane
-        split="horizontal"
-        minSize={200}
-        maxSize={windowHeight}
-        primary="first"
-        size={size}
-        /* Use persisted state for default size */
-        defaultSize={uiState.topPaneSize}
-        pane2Style={{ minHeight: 0 }}
-        resizerClassName={styles.resizerH}
-        onDragStarted={this.onDragStarted}
-        onDragFinished={size => this.onDragFinished(Pane.Top, size)}
-      >
-        {this.renderPanel(styles)}
-        <div className={styles.tabsWrapper} aria-label={selectors.components.PanelEditor.DataPane.content}>
+    if (tabs.length > 0) {
+      return [
+        this.renderPanel(styles),
+        <div
+          className={styles.tabsWrapper}
+          aria-label={selectors.components.PanelEditor.DataPane.content}
+          key="panel-editor-tabs"
+        >
           <PanelEditorTabs panel={panel} dashboard={dashboard} tabs={tabs} onChangeTab={this.onChangeTab} />
-        </div>
-      </SplitPane>
-    ) : (
-      this.renderPanel(styles)
-    );
+        </div>,
+      ];
+    }
+    return this.renderPanel(styles);
   }
 
   renderTemplateVariables(styles: EditorStyles) {
@@ -319,8 +282,13 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
-  renderOptionsPane(width: number) {
-    const { plugin, dashboard, panel } = this.props;
+  renderOptionsPane() {
+    const { plugin, dashboard, panel, uiState } = this.props;
+
+    const rightPaneSize =
+      uiState.rightPaneSize <= 1
+        ? (uiState.rightPaneSize as number) * window.innerWidth
+        : (uiState.rightPaneSize as number);
 
     if (!plugin) {
       return <div />;
@@ -331,7 +299,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         plugin={plugin}
         dashboard={dashboard}
         panel={panel}
-        width={width}
+        width={rightPaneSize}
         onClose={this.onTogglePanelOptions}
         onFieldConfigsChange={this.onFieldConfigChange}
         onPanelOptionsChanged={this.onPanelOptionsChanged}
@@ -340,39 +308,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
-  renderWithOptionsPane(styles: EditorStyles) {
-    const { uiState } = this.props;
-
-    // Limit options pane width to 90% of screen.
-    const maxWidth = window.innerWidth * 0.9;
-
-    // Need to handle when width is relative. ie a percentage of the viewport
-    const width =
-      uiState.rightPaneSize <= 1
-        ? (uiState.rightPaneSize as number) * window.innerWidth
-        : (uiState.rightPaneSize as number);
-
-    return (
-      <SplitPane
-        split="vertical"
-        minSize={300}
-        maxSize={maxWidth}
-        size={width >= 300 ? width : 300}
-        primary="second"
-        /* Use persisted state for default size */
-        defaultSize={uiState.rightPaneSize}
-        resizerClassName={styles.resizerV}
-        onDragStarted={() => (document.body.style.cursor = 'col-resize')}
-        onDragFinished={size => this.onDragFinished(Pane.Right, size)}
-      >
-        {this.renderHorizontalSplit(styles)}
-        {this.renderOptionsPane(width)}
-      </SplitPane>
-    );
-  }
-
   render() {
-    const { initDone, uiState } = this.props;
+    const { initDone, updatePanelEditorUIState, uiState } = this.props;
     const styles = getStyles(config.theme, this.props);
 
     if (!initDone) {
@@ -383,7 +320,13 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
         {this.editorToolbar(styles)}
         <div className={styles.verticalSplitPanesWrapper}>
-          {uiState.isPanelOptionsVisible ? this.renderWithOptionsPane(styles) : this.renderHorizontalSplit(styles)}
+          <SplitPaneWrapper
+            leftPaneComponents={this.renderPanelAndEditor(styles)}
+            rightPaneComponents={this.renderOptionsPane()}
+            uiState={uiState}
+            updateUiState={updatePanelEditorUIState}
+            rightPaneVisible={uiState.isPanelOptionsVisible}
+          />
         </div>
       </div>
     );
@@ -416,34 +359,12 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
 
 export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEditorUnconnected);
 
-enum Pane {
-  Right,
-  Top,
-}
-
 /*
  * Styles
  */
 export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
   const { uiState } = props;
-  const handleColor = theme.palette.blue95;
   const paneSpacing = theme.spacing.md;
-
-  const resizer = css`
-    font-style: italic;
-    background: transparent;
-    border-top: 0;
-    border-right: 0;
-    border-bottom: 0;
-    border-left: 0;
-    border-color: transparent;
-    border-style: solid;
-    transition: 0.2s border-color ease-in-out;
-
-    &:hover {
-      border-color: ${handleColor};
-    }
-  `;
 
   return {
     wrapper: css`
@@ -488,27 +409,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       width: 100%;
       padding-left: ${paneSpacing};
     `,
-    resizerV: cx(
-      resizer,
-      css`
-        cursor: col-resize;
-        width: ${paneSpacing};
-        border-right-width: 1px;
-        margin-top: 18px;
-      `
-    ),
-    resizerH: cx(
-      resizer,
-      css`
-        height: ${paneSpacing};
-        cursor: row-resize;
-        position: relative;
-        top: 0px;
-        z-index: 1;
-        border-top-width: 1px;
-        margin-left: ${paneSpacing};
-      `
-    ),
     tabsWrapper: css`
       height: 100%;
       width: 100%;

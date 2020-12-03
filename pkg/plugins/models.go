@@ -151,6 +151,7 @@ type PluginInclude struct {
 	AddToNav   bool            `json:"addToNav"`
 	DefaultNav bool            `json:"defaultNav"`
 	Slug       string          `json:"slug"`
+	Icon       string          `json:"icon"`
 
 	Id string `json:"-"`
 }

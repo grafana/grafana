@@ -273,7 +273,11 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 		if err != nil {
 			return err
 		}
-		defer reader.Close()
+		defer func() {
+			if err := reader.Close(); err != nil {
+				scanner.log.Warn("Failed to close JSON file", "path", jsonFPath, "err", err)
+			}
+		}()
 
 		jsonParser := json.NewDecoder(reader)
 
@@ -343,7 +347,11 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	if err != nil {
 		return err
 	}
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			s.log.Warn("Failed to close JSON file", "path", pluginJSONFilePath, "err", err)
+		}
+	}()
 
 	jsonParser := json.NewDecoder(reader)
 	pluginCommon := PluginBase{}

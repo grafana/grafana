@@ -107,10 +107,7 @@ func GetConfig() (*Config, error) {
 	loadingMutex.Lock()
 	defer loadingMutex.Unlock()
 
-	var err error
-	config, err = readConfig(setting.LDAPConfigFile)
-
-	return config, err
+	return readConfig(setting.LDAPConfigFile)
 }
 
 func readConfig(configFile string) (*Config, error) {
