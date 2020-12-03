@@ -70,22 +70,8 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	// create indices
 	mg.AddMigration("add index alert_definition org_id", migrator.NewAddIndexMigration(alertDefinition, alertDefinition.Indices[0]))
 
-	alertInstance := migrator.Table{
-		Name: "alert_instance",
-		Columns: []*migrator.Column{
-			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "alert_definition_id", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "labels", Type: migrator.DB_Text, Nullable: false},
-			{Name: "labels_hash", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "current_state", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
-			{Name: "current_state_since", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "last_eval_time", Type: migrator.DB_BigInt, Nullable: false},
-		},
-		PrimaryKeys: []string{"alert_definition_id", "labels_hash"},
-	}
-
-	// create table
-	mg.AddMigration("create alert_instance table", migrator.NewAddTableMigration(alertInstance))
+	// Create alert_instance table
+	alertInstanceMigration(mg)
 }
 
 // LoadAlertCondition returns a Condition object for the given alertDefinitionID.

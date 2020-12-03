@@ -31,22 +31,3 @@ func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, sig
 	}
 	return nil
 }
-
-// validateAlertInstance validates that the alert instance contains an alert definition id,
-// and state.
-// nolint:unused
-func (ng *AlertNG) validateAlertInstance(alertInstance *AlertInstance) error {
-	if alertInstance == nil {
-		return fmt.Errorf("alert instance is invalid because it is nil")
-	}
-
-	if alertInstance.AlertDefinitionID == 0 {
-		return fmt.Errorf("alert instance is invalid due to missing alert definition id")
-	}
-
-	if !alertInstance.CurrentState.IsValid() {
-		return fmt.Errorf("alert instance is invalid because the state '%v' is invalid", alertInstance.CurrentState)
-	}
-
-	return nil
-}
