@@ -215,6 +215,10 @@ One word, not two.
 
 - Read the full changelog.
 
+**Exception:**
+
+- When referring to the file containing the official changelog, use the filename: `CHANGELOG.md`.
+
 #### checkout, check out
 
 Two words if used as a verb, one word if used as a noun.
