@@ -13,6 +13,7 @@ import {
   BucketAggregationAction,
 } from './types';
 import { bucketAggregationConfig } from '../utils';
+import { removeEmpty } from '../../../utils';
 
 export const reducer = (
   state: BucketAggregation[],
@@ -87,20 +88,10 @@ export const reducer = (
           return bucketAgg;
         }
 
-        // FIXME: this can be done in a better way, also romeving empty objects
-        // Also, can be extracted to be in common with the one for metrics
-        const newSettings = Object.entries({
+        const newSettings = removeEmpty({
           ...bucketAgg.settings,
           [action.payload.settingName]: action.payload.newValue,
-        }).reduce((acc, [key, value]) => {
-          if (value?.length === 0) {
-            return { ...acc };
-          }
-          return {
-            ...acc,
-            [key]: value,
-          };
-        }, {});
+        });
 
         return {
           ...bucketAgg,

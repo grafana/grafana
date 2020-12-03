@@ -1,5 +1,6 @@
 import { defaultMetricAgg } from '../../../query_def';
 import { ElasticsearchQuery } from '../../../types';
+import { removeEmpty } from '../../../utils';
 import { INIT, InitAction } from '../../state';
 import { isMetricAggregationWithMeta, isMetricAggregationWithSettings, MetricAggregation } from '../aggregations';
 import { getChildren, metricAggregationConfig } from '../utils';
@@ -89,19 +90,10 @@ export const reducer = (
 
         // TODO: Here, instead of this if statement, we should assert that metric is MetricAggregationWithSettings
         if (isMetricAggregationWithSettings(metric)) {
-          // FIXME: this can be done in a better way, also romeving empty objects
-          const newSettings = Object.entries({
+          const newSettings = removeEmpty({
             ...metric.settings,
             [action.payload.settingName]: action.payload.newValue,
-          }).reduce((acc, [key, value]) => {
-            if (value?.length === 0) {
-              return { ...acc };
-            }
-            return {
-              ...acc,
-              [key]: value,
-            };
-          }, {});
+          });
 
           return {
             ...metric,

@@ -517,7 +517,6 @@ describe('ElasticDatasource', function(this: any) {
     });
 
     it('should return fields of the newest available index', async () => {
-      // FIXME: Double check this.
       const twoDaysBefore = toUtc()
         .subtract(2, 'day')
         .format('YYYY.MM.DD');

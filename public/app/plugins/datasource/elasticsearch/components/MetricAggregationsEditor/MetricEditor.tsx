@@ -74,7 +74,7 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
     query.metrics!.findIndex(m => m.id === value.id)
   );
 
-  // FIXME: This could be common with the one in BucketAggregationEditor
+  // TODO: This could be common with the one in BucketAggregationEditor
   const getFields = async () => {
     const get = () => {
       if (value.type === 'cardinality') {
