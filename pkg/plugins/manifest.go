@@ -87,6 +87,9 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) PluginSignature
 	log.Debug("Getting signature state of plugin", "plugin", plugin.Id, "isBackend", plugin.Backend)
 	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
 
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
+	// on plugin the folder structure on disk and not user input.
 	byteValue, err := ioutil.ReadFile(manifestPath)
 	if err != nil || len(byteValue) < 10 {
 		log.Debug("Plugin is unsigned", "id", plugin.Id)
@@ -109,6 +112,10 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) PluginSignature
 	for p, hash := range manifest.Files {
 		// Open the file
 		fp := filepath.Join(plugin.PluginDir, p)
+
+		// nolint:gosec
+		// We can ignore the gosec G304 warning on this one because `fp` is based
+		// on the manifest file for a plugin and not user input.
 		f, err := os.Open(fp)
 		if err != nil {
 			return PluginSignatureModified
