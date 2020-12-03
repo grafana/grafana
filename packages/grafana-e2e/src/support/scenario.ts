@@ -24,7 +24,9 @@ export const e2eScenario = ({
     } else {
       before(() => {
         e2e.flows.login(e2e.env('USERNAME'), e2e.env('PASSWORD'));
+        e2e().logToConsole('Before Scenario');
         cy.getCookie('grafana_session', { log: true }).then(cookie => {
+          e2e().logToConsole('Set Extra Headers');
           // @ts-ignore
           process.env.LHCI_EXTRA_HEADERS = `{"Cookie":{"grafana_session":"${cookie?.value}"}}`;
         });
