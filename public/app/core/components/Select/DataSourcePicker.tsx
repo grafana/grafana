@@ -103,7 +103,7 @@ export class DataSourcePicker extends PureComponent<Props, State> {
       })
       .map(ds => ({
         value: ds.name,
-        label: ds.name,
+        label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
         imgUrl: ds.meta.info.logos.small,
         meta: ds.meta,
       }));
