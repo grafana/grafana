@@ -14,7 +14,7 @@ func TestPPLRequest(t *testing.T) {
 		timeField := "@timestamp"
 		index := "default_index"
 		Convey("Given new PPL request builder", func() {
-			b := NewPPLQueryBuilder(index)
+			b := NewPPLRequestBuilder(index)
 
 			Convey("When building PPL request", func() {
 				pr, err := b.Build()

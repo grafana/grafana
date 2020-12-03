@@ -408,7 +408,7 @@ func TestClient(t *testing.T) {
 					jBody, err := simplejson.NewJson(bodyBytes)
 					So(err, ShouldBeNil)
 
-					Convey("Should replace index pattern with wildcard", func() {
+					Convey("and replace index pattern with wildcard", func() {
 						So(jBody.Get("query").MustString(), ShouldEqual, "source = metrics-* | where `@timestamp` > timestamp('$timeTo') and `@timestamp` < timestamp('$timeFrom')")
 
 					})
@@ -435,7 +435,7 @@ func createMultisearchForTest(c Client) (*MultiSearchRequest, error) {
 	return msb.Build()
 }
 
-func createPPLForTest(c Client) (*PPLQuery, error) {
+func createPPLForTest(c Client) (*PPLRequest, error) {
 	b := c.PPL()
 	b.AddPPLQueryString(c.GetTimeField(), "$timeTo", "$timeFrom", "")
 	return b.Build()

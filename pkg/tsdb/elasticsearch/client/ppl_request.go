@@ -5,33 +5,33 @@ import (
 	"strings"
 )
 
-// PPLFilterQueryBuilder represents a PPL query builder
-type PPLQueryBuilder struct {
+// PPLRequestBuilder represents a PPL request builder
+type PPLRequestBuilder struct {
 	index    string
 	pplQuery string
 }
 
-// NewPPLQueryBuilder create a new PPL query builder
-func NewPPLQueryBuilder(index string) *PPLQueryBuilder {
-	builder := &PPLQueryBuilder{
+// NewPPLRequestBuilder create a new PPL request builder
+func NewPPLRequestBuilder(index string) *PPLRequestBuilder {
+	builder := &PPLRequestBuilder{
 		index: index,
 	}
 	return builder
 }
 
 // Build builds and return a PPL query object
-func (b *PPLQueryBuilder) Build() (*PPLQuery, error) {
+func (b *PPLRequestBuilder) Build() (*PPLRequest, error) {
 	if b == nil {
-		b = NewPPLQueryBuilder(b.index)
+		b = NewPPLRequestBuilder(b.index)
 	}
 
-	return &PPLQuery{
+	return &PPLRequest{
 		Query: b.pplQuery,
 	}, nil
 }
 
 // AddPPLQueryString adds a new PPL query string with time range filter
-func (b *PPLQueryBuilder) AddPPLQueryString(timeField, lte, gte, querystring string) *PPLQueryBuilder {
+func (b *PPLRequestBuilder) AddPPLQueryString(timeField, lte, gte, querystring string) *PPLRequestBuilder {
 	res := []string{}
 	timeFilter := fmt.Sprintf(" where `%s` > timestamp('%s') and `%s` < timestamp('%s')", timeField, lte, timeField, gte)
 

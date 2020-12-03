@@ -39,8 +39,8 @@ type Client interface {
 	GetIndex() string
 	ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearchResponse, error)
 	MultiSearch() *MultiSearchRequestBuilder
-	ExecutePPLQuery(r *PPLQuery) (*PPLResponse, error)
-	PPL() *PPLQueryBuilder
+	ExecutePPLQuery(r *PPLRequest) (*PPLResponse, error)
+	PPL() *PPLRequestBuilder
 	EnableDebug()
 }
 
@@ -436,7 +436,7 @@ func (c *baseClientImpl) executePPLQueryRequest(method, uriPath string, body []b
 	}, nil
 }
 
-func (c *baseClientImpl) ExecutePPLQuery(r *PPLQuery) (*PPLResponse, error) {
+func (c *baseClientImpl) ExecutePPLQuery(r *PPLRequest) (*PPLResponse, error) {
 	clientLog.Debug("Executing PPL", "PPL requests")
 
 	req := createPPLRequest(r)
@@ -497,13 +497,13 @@ func (c *baseClientImpl) ExecutePPLQuery(r *PPLQuery) (*PPLResponse, error) {
 	return &pr, nil
 }
 
-func createPPLRequest(requests *PPLQuery) *pplRequest {
+func createPPLRequest(requests *PPLRequest) *pplRequest {
 	ppl := pplRequest{
 		body: requests,
 	}
 	return &ppl
 }
 
-func (c *baseClientImpl) PPL() *PPLQueryBuilder {
-	return NewPPLQueryBuilder(c.GetIndex())
+func (c *baseClientImpl) PPL() *PPLRequestBuilder {
+	return NewPPLRequestBuilder(c.GetIndex())
 }

@@ -336,13 +336,13 @@ type PPLDebugInfo struct {
 	Response *PPLResponseInfo `json:"response"`
 }
 
-// PPLQuery represents the PPL query object
-type PPLQuery struct {
+// PPLRequest represents the PPL query object
+type PPLRequest struct {
 	Query string
 }
 
 // MarshalJSON returns the JSON encoding of the PPL query string filter.
-func (f *PPLQuery) MarshalJSON() ([]byte, error) {
+func (f *PPLRequest) MarshalJSON() ([]byte, error) {
 	root := map[string]interface{}{
 		"query": f.Query,
 	}
