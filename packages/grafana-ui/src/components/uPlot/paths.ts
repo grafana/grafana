@@ -61,20 +61,43 @@ export const staircaseBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number
   const scaleY = series.scale as string;
 
   const stroke = new Path2D();
-  stroke.moveTo(Math.round(u.valToPos(xdata[0], scaleX, true)), Math.round(u.valToPos(ydata[0]!, scaleY, true)));
 
-  for (let i = idx0; i <= idx1 - 1; i++) {
-    let x0 = Math.round(u.valToPos(xdata[i], scaleX, true));
-    let y0 = Math.round(u.valToPos(ydata[i]!, scaleY, true));
-    let x1 = Math.round(u.valToPos(xdata[i + 1], scaleX, true));
-    let y1 = Math.round(u.valToPos(ydata[i + 1]!, scaleY, true));
+  // find first non-null dataPt
+  while (ydata[idx0] == null) {
+    idx0++;
+  }
 
-    stroke.lineTo(x0, y0);
-    stroke.lineTo(x1, y0);
+  // find last-null dataPt
+  while (ydata[idx1] == null) {
+    idx1--;
+  }
 
-    if (i === idx1 - 1) {
-      stroke.lineTo(x1, y1);
+  let prevYPos = Math.round(u.valToPos(ydata[idx0]!, scaleY, true));
+  let firstXPos = Math.round(u.valToPos(xdata[idx0], scaleX, true));
+  let prevXPos = firstXPos;
+
+  stroke.moveTo(firstXPos, prevYPos);
+
+  for (let i = idx0 + 1; i <= idx1; i++) {
+    let yVal1 = ydata[i];
+
+    if (yVal1 == null) {
+      //@ts-ignore
+      if (series.isGap(u, seriesIdx, i)) {
+        // TODO: build up gaps array here
+      }
+
+      continue;
     }
+
+    let x1 = Math.round(u.valToPos(xdata[i], scaleX, true));
+    let y1 = Math.round(u.valToPos(yVal1, scaleY, true));
+
+    stroke.lineTo(x1, prevYPos);
+    stroke.lineTo(x1, y1);
+
+    prevYPos = y1;
+    prevXPos = x1;
   }
 
   const fill = new Path2D(stroke);
@@ -83,11 +106,9 @@ export const staircaseBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number
   let fillTo = series.fillTo(u, seriesIdx, series.min, series.max);
 
   let minY = Math.round(u.valToPos(fillTo, scaleY, true));
-  let minX = Math.round(u.valToPos(u.scales[scaleX].min!, scaleX, true));
-  let maxX = Math.round(u.valToPos(u.scales[scaleX].max!, scaleX, true));
 
-  fill.lineTo(maxX, minY);
-  fill.lineTo(minX, minY);
+  fill.lineTo(prevXPos, minY);
+  fill.lineTo(firstXPos, minY);
 
   return {
     stroke,
