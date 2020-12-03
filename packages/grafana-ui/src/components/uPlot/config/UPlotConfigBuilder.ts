@@ -11,6 +11,9 @@ export class UPlotConfigBuilder {
 
   hasLeftAxis = false;
 
+  /** flag when the xscale should update with timeRange */
+  xScaleIsTimeRange = false;
+
   addAxis(props: AxisProps) {
     props.placement = props.placement ?? AxisPlacement.Auto;
 

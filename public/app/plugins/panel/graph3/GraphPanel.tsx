@@ -16,6 +16,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
   options,
   onChangeTimeRange,
 }) => {
+  console.log('PANEL x range!!!', { f: timeRange.from.valueOf(), t: timeRange.to.valueOf() });
   return (
     <GraphNG
       data={data.series}

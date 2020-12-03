@@ -75,6 +75,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     // X is the first field in the alligned frame
     const xField = alignedFrame.fields[0];
     if (xField.type === FieldType.time) {
+      builder.xScaleIsTimeRange = true;
       builder.addScale({
         scaleKey: 'x',
         isTime: true,

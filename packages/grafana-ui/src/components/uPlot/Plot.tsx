@@ -4,8 +4,7 @@ import { buildPlotContext, PlotContext } from './context';
 import { pluginLog } from './utils';
 import { usePlotConfig } from './hooks';
 import { AlignedFrameWithGapTest, PlotProps } from './types';
-import { DataFrame, FieldType } from '@grafana/data';
-import isNumber from 'lodash/isNumber';
+import { DataFrame } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import usePrevious from 'react-use/lib/usePrevious';
 
@@ -30,6 +29,16 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     return plotInstance.current;
   }, []);
 
+  const updateTimeScale = () => {
+    if (plotInstance.current && props.config.xScaleIsTimeRange) {
+      const { timeRange } = props;
+      plotInstance.current.setScale('x', {
+        min: timeRange.from.valueOf(),
+        max: timeRange.to.valueOf(),
+      });
+    }
+  };
+
   // Effect responsible for uPlot updates/initialization logic. It's performed whenever component's props have changed
   useLayoutEffect(() => {
     // 0. Exit early if the component is not ready to initialize uPlot
@@ -40,6 +49,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     // 1. When config is ready and there is no uPlot instance, create new uPlot and return
     if (isConfigReady && !plotInstance.current) {
       plotInstance.current = initializePlot(prepareData(props.data), currentConfig.current, canvasRef.current);
+      updateTimeScale();
       return;
     }
 
@@ -60,11 +70,13 @@ export const UPlotChart: React.FC<PlotProps> = props => {
         plotInstance.current.destroy();
       }
       plotInstance.current = initializePlot(prepareData(props.data), currentConfig.current, canvasRef.current);
+      updateTimeScale();
       return;
     }
 
     // 4. Otherwise, assume only data has changed and update uPlot data
-    updateData(props.data.frame, props.config, plotInstance.current, prepareData(props.data).data);
+    updateData(props.data.frame, props.config, plotInstance.current, prepareData(props.data));
+    updateTimeScale();
   }, [props, isConfigReady]);
 
   // When component unmounts, clean the existing uPlot instance
@@ -95,38 +107,15 @@ function initializePlot(data: AlignedDataWithGapTest, config: Options, el: HTMLD
   return new uPlot(config, data, el);
 }
 
-function updateData(frame: DataFrame, config: UPlotConfigBuilder, plotInstance?: uPlot, data?: AlignedData | null) {
+function updateData(
+  frame: DataFrame,
+  config: UPlotConfigBuilder,
+  plotInstance?: uPlot,
+  data?: AlignedDataWithGapTest | null
+) {
   if (!plotInstance || !data) {
     return;
   }
   pluginLog('uPlot core', false, 'updating plot data(throttled log!)', data);
-  updateScales(frame, config, plotInstance);
   plotInstance.setData(data);
-}
-
-function updateScales(frame: DataFrame, config: UPlotConfigBuilder, plotInstance: uPlot) {
-  let yRange: [number, number] | undefined = undefined;
-
-  for (let i = 0; i < frame.fields.length; i++) {
-    if (frame.fields[i].type !== FieldType.number) {
-      continue;
-    }
-    if (isNumber(frame.fields[i].config.min) && isNumber(frame.fields[i].config.max)) {
-      yRange = [frame.fields[i].config.min!, frame.fields[i].config.max!];
-      break;
-    }
-  }
-
-  const scalesConfig = config.getConfig().scales;
-
-  if (scalesConfig && yRange) {
-    for (const scale in scalesConfig) {
-      if (!scalesConfig.hasOwnProperty(scale)) {
-        continue;
-      }
-      if (scale !== 'x') {
-        plotInstance.setScale(scale, { min: yRange[0], max: yRange[1] });
-      }
-    }
-  }
 }
