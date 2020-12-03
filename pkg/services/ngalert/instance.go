@@ -2,6 +2,7 @@ package ngalert
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -13,8 +14,8 @@ type AlertInstance struct {
 	Labels            InstanceLabels
 	LabelsHash        string
 	CurrentState      InstanceStateType
-	CurrentStateSince EpochTime
-	LastEvalTime      EpochTime
+	CurrentStateSince time.Time
+	LastEvalTime      time.Time
 }
 
 // InstanceStateType is an enum for instance states.

@@ -112,8 +112,8 @@ func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 			LabelsHash:        labelsHash,
 			CurrentState:      cmd.State,
 			AlertDefinitionID: cmd.AlertDefinitionID,
-			CurrentStateSince: EpochTime(time.Now()),
-			LastEvalTime:      EpochTime(time.Now()), // TODO: Probably better to pass in to the command for more accurate timestamp
+			CurrentStateSince: time.Now(),
+			LastEvalTime:      time.Now(), // TODO: Probably better to pass in to the command for more accurate timestamp
 		}
 
 		if err := validateAlertInstance(alertInstance); err != nil {
