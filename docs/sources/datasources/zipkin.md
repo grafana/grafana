@@ -3,7 +3,7 @@ title = "Zipkin"
 description = "Guide for using Zipkin in Grafana"
 keywords = ["grafana", "zipkin", "guide", "tracing"]
 aliases = ["/docs/grafana/latest/datasources/zipkin"]
-weight = 1500
+weight = 1600
 +++
 
 # Zipkin data source
@@ -12,17 +12,19 @@ Grafana ships with built-in support for Zipkin, an open source, distributed trac
 Just add it as a data source and you are ready to query your traces in [Explore]({{< relref "../explore" >}}).
 
 ## Adding the data source
+
 To access Zipkin settings, click the **Configuration** (gear) icon, then click **Data Sources**, and then click **Zipkin**.
 
-| Name            | Description                                                                                                                           |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `Name`          | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                       |
-| `Default`       | Default data source means that it will be pre-selected for new panels.                                                                |
-| `URL`           | The URL of the Zipkin instance, e.g., `http://localhost:9411`                                                                         |
-| `Access`        | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. |
-| `Basic Auth`    | Enable basic authentication to the Zipkin data source.                                                                                |
-| `User`          | User name for basic authentication.                                                                                                   |
-| `Password`      | Password for basic authentication.                                                                                                    |
+| Name          | Description                                                                                                                           |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `Name`        | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                       |
+| `Default`     | Default data source means that it will be pre-selected for new panels.                                                                |
+| `URL`         | The URL of the Zipkin instance, e.g., `http://localhost:9411`                                                                         |
+| `Access`      | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. |
+| `Basic Auth`  | Enable basic authentication to the Zipkin data source.                                                                                |
+| `User`        | User name for basic authentication.                                                                                                   |
+| `Password`    | Password for basic authentication.                                                                                                    |
+| `Data source` | Data source for trace to logs feature.                                                                                                |
 
 ## Query traces
 
@@ -35,6 +37,7 @@ The Zipkin query editor allows you to query by trace ID directly or selecting a 
 {{< docs-imagebox img="/img/docs/v70/zipkin-query-editor-open.png" class="docs-image--no-shadow" caption="Screenshot of the Zipkin query editor with trace selector expanded" >}}
 
 Use the trace selector to pick particular trace from all traces logged in the time range you have selected in Explore. The trace selector has three levels of nesting:
+
 1. The service you are interested in.
 1. Particular operation is part of the selected service
 1. Specific trace in which the selected operation occurred, represented by the root operation name and trace duration.

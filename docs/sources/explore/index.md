@@ -258,6 +258,8 @@ You can visualize traces from tracing data sources in explore. Data sources curr
 
 - [Jaeger]({{< relref "../datasources/jaeger.md" >}})
 - [Zipkin]({{< relref "../datasources/zipkin.md" >}})
+- [Tempo]({{< relref "../datasources/tempo.md" >}})
+- [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
 
 For information about how to use the query editor see documentation for specific data source.
 
@@ -299,6 +301,12 @@ Clicking anywhere on the span row shows span details.
 - Tags: Any tags associated with this span.
 - Process metadata: Metadata about the process that logged this span.
 - Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations.
+
+##### Trace to logs
+
+> This feature is only available in Grafana 7.4 and above.
+
+Trace to logs let's you navigate from a trace span to the selected data source's log.
 
 ## Navigating between Explore and a dashboard
 
