@@ -64,6 +64,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   }, []);
 
   const configRev = useRevision(alignedFrame, compareFrames);
+  console.log('configRev', configRev);
 
   const configBuilder = useMemo(() => {
     const builder = new UPlotConfigBuilder();
@@ -115,6 +116,22 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       const fmt = field.display ?? defaultFormatter;
       const scaleKey = config.unit || '__fixed';
+      const colorMode = getFieldColorModeForField(field);
+      const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
+
+      if (!customConfig.fieldVisibility.showInGraph) {
+        if (hasLegend.current) {
+          const axisPlacement = builder.getAxisPlacement(scaleKey);
+
+          legendItems.push({
+            color: seriesColor,
+            label: getFieldDisplayName(field, alignedFrame),
+            yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
+          });
+        }
+
+        continue;
+      }
 
       if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
         // The builder will manage unique scaleKeys and combine where appropriate
@@ -132,8 +149,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       // need to update field state here because we use a transform to merge framesP
       field.state = { ...field.state, seriesIndex: seriesIdx };
 
-      const colorMode = getFieldColorModeForField(field);
-      const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
       const pointsMode = customConfig.mode === GraphMode.Points ? PointMode.Always : customConfig.points;
 
       builder.addSeries({

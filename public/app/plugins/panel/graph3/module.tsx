@@ -7,6 +7,7 @@ import {
   AxisPlacement,
   graphFieldOptions,
 } from '@grafana/ui/src/components/uPlot/config';
+import { FieldVisibilityConfigEditor } from './FieldVisibilityConfigEditor';
 import { GraphPanel } from './GraphPanel';
 import { Options } from './types';
 
@@ -111,6 +112,27 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             placeholder: 'Auto',
           },
           showIf: c => c.axisPlacement !== AxisPlacement.Hidden,
+        })
+        .addCustomEditor({
+          id: 'fieldVisibility',
+          name: 'Field visibility',
+          path: 'fieldVisibility',
+          defaultValue: {
+            showInTooltip: true,
+            showInGraph: true,
+            showInLegend: true,
+          },
+          settings: {
+            descriptions: {
+              showInTooltip: 'Show in tooltip',
+              showInLegend: 'Show in legend',
+              showInGraph: 'Show in graph',
+            },
+          },
+          editor: FieldVisibilityConfigEditor,
+          override: FieldVisibilityConfigEditor,
+          shouldApply: () => true,
+          process: value => value,
         });
     },
   })

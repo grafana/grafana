@@ -1,4 +1,5 @@
 import { SelectableValue } from '@grafana/data';
+import { Record } from 'immutable';
 
 export enum AxisPlacement {
   Auto = 'auto', // First axis on the left, the rest on the right
@@ -52,8 +53,15 @@ export interface AxisConfig {
   axisWidth?: number; // pixels ideally auto?
 }
 
+export interface FieldVisibility extends Record<string, any> {
+  showInTooltip: boolean;
+  showInLegend: boolean;
+  showInGraph: boolean;
+}
+
 export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, AxisConfig {
   mode?: GraphMode;
+  fieldVisibility: FieldVisibility;
 }
 
 export const graphFieldOptions = {
