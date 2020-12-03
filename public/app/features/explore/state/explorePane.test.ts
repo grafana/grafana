@@ -10,7 +10,6 @@ import {
   refreshExplore,
 } from './explorePane';
 import { setQueriesAction } from './query';
-import * as DatasourceSrv from 'app/features/plugins/datasource_srv';
 import { makeExplorePaneState, makeInitialUpdateState } from './utils';
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { setDataSourceSrv } from '@grafana/runtime';
