@@ -12,7 +12,7 @@ import {
   BracesPlugin,
 } from '@grafana/ui';
 
-import Prism from 'prismjs';
+import { LanguageMap, languages as prismLanguages } from 'prismjs';
 
 // dom also includes Element polyfills
 import { PromQuery, PromOptions, PromMetricsMetadata } from '../types';
@@ -22,7 +22,6 @@ import { DOMUtil, SuggestionsState } from '@grafana/ui';
 import { PrometheusDatasource } from '../datasource';
 
 const HISTOGRAM_GROUP = '__histograms__';
-const PRISM_SYNTAX = 'promql';
 export const RECORDING_RULES_GROUP = '__recording_rules__';
 
 function getChooserText(metricsLookupDisabled: boolean, hasSyntax: boolean, metrics: string[]) {
@@ -133,10 +132,13 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
 
     this.plugins = [
       BracesPlugin(),
-      SlatePrism({
-        onlyIn: (node: any) => node.type === 'code_block',
-        getSyntax: (node: any) => 'promql',
-      }),
+      SlatePrism(
+        {
+          onlyIn: (node: any) => node.type === 'code_block',
+          getSyntax: (node: any) => 'promql',
+        },
+        { ...(prismLanguages as LanguageMap), promql: this.props.datasource.languageProvider.syntax }
+      ),
     ];
 
     this.state = {
@@ -222,7 +224,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       datasource: { languageProvider },
     } = this.props;
 
-    Prism.languages[PRISM_SYNTAX] = languageProvider.syntax;
     this.languageProviderInitializationPromise = makePromiseCancelable(languageProvider.start());
 
     try {

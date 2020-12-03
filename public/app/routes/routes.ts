@@ -237,6 +237,14 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
         component: () => SafeDynamicImport(import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
       },
     })
+    .when('/sandbox/test', {
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "sandbox" */ 'app/features/sandbox/TestStuffPage')),
+      },
+    })
     .when('/a/:pluginId/', {
       // Someday * and will get a ReactRouter under that path!
       template: '<react-container />',

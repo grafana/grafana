@@ -40,3 +40,5 @@ export const TabsBar = React.forwardRef<HTMLDivElement, Props>(({ children, clas
     </div>
   );
 });
+
+TabsBar.displayName = 'TabsBar';

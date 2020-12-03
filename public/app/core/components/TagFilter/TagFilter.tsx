@@ -79,7 +79,7 @@ export const TagFilter: FC<Props> = ({
       MultiValueLabel: (): any => {
         return null; // We want the whole tag to be clickable so we use MultiValueRemove instead
       },
-      MultiValueRemove: (props: any) => {
+      MultiValueRemove(props: any) {
         const { data } = props;
 
         return (

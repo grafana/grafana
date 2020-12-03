@@ -25,7 +25,7 @@ load(
     'enterprise_downstream_step',
     'frontend_metrics_step',
     'publish_storybook_step',
-    'release_next_npm_packages_step',
+    'release_canary_npm_packages_step',
     'upload_packages_step',
     'deploy_to_kubernetes_step',
     'publish_packages_step',
@@ -60,7 +60,7 @@ def get_steps(edition, is_downstream=False):
         build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=publish),
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
-        release_next_npm_packages_step(edition),
+        release_canary_npm_packages_step(edition),
         upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         deploy_to_kubernetes_step(edition=edition, is_downstream=is_downstream),
     ]

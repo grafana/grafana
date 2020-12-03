@@ -8,12 +8,16 @@ export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
   private axes: Record<string, UPlotAxisBuilder> = {};
   private scales: UPlotScaleBuilder[] = [];
-  private registeredScales: string[] = [];
 
   hasLeftAxis = false;
 
   addAxis(props: AxisProps) {
     props.placement = props.placement ?? AxisPlacement.Auto;
+
+    if (this.axes[props.scaleKey]) {
+      this.axes[props.scaleKey].merge(props);
+      return;
+    }
 
     // Handle auto placement logic
     if (props.placement === AxisPlacement.Auto) {
@@ -36,13 +40,14 @@ export class UPlotConfigBuilder {
     this.series.push(new UPlotSeriesBuilder(props));
   }
 
+  /** Add or update the scale with the scale key */
   addScale(props: ScaleProps) {
-    this.registeredScales.push(props.scaleKey);
+    const current = this.scales.find(v => v.props.scaleKey === props.scaleKey);
+    if (current) {
+      current.merge(props);
+      return;
+    }
     this.scales.push(new UPlotScaleBuilder(props));
-  }
-
-  hasScale(scaleKey: string) {
-    return this.registeredScales.indexOf(scaleKey) > -1;
   }
 
   getConfig() {

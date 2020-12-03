@@ -2,7 +2,7 @@ import React from 'react';
 import { mount, shallow } from 'enzyme';
 import { act } from 'react-dom/test-utils';
 import LokiExploreQueryEditor from './LokiExploreQueryEditor';
-import { LokiExploreExtraField } from './LokiExploreExtraField';
+import { LokiOptionFields } from './LokiOptionFields';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
 import { ExploreMode, LoadingState, PanelData, toUtc, TimeRange } from '@grafana/data';
@@ -93,7 +93,7 @@ describe('LokiExploreQueryEditor', () => {
     // @ts-ignore strict null error TS2345: Argument of type '() => Promise<void>' is not assignable to parameter of type '() => void | undefined'.
     await act(async () => {
       const wrapper = setup(mount);
-      expect(wrapper.find(LokiExploreExtraField).length).toBe(1);
+      expect(wrapper.find(LokiOptionFields).length).toBe(1);
     });
   });
 });

@@ -42,11 +42,9 @@ func (m *postgresMacroEngine) Interpolate(query *tsdb.Query, timeRange *tsdb.Tim
 		if groups[1] == "__timeGroup" {
 			if index := strings.Index(sql, groups[0]); index >= 0 {
 				index += len(groups[0])
-				if len(sql) > index {
-					// check for character after macro expression
-					if sql[index] == ',' {
-						groups[1] = "__timeGroupAlias"
-					}
+				// check for character after macro expression
+				if len(sql) > index && sql[index] == ',' {
+					groups[1] = "__timeGroupAlias"
 				}
 			}
 		}
