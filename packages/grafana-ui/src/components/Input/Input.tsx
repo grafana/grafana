@@ -1,4 +1,4 @@
-import React, { HTMLProps, ReactNode } from 'react';
+import React, { HTMLProps, ReactNode, useRef, useCallback, RefObject } from 'react';
 import { GrafanaTheme } from '@grafana/data';
 import { css, cx } from 'emotion';
 import { getFocusStyle, sharedInputStyle } from '../Forms/commonStyles';
@@ -214,7 +214,19 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
 });
 
 export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
-  const { className, addonAfter, addonBefore, prefix, suffix, invalid, loading, width = 0, ...restProps } = props;
+  const {
+    className,
+    type,
+    addonAfter,
+    addonBefore,
+    prefix,
+    suffix,
+    invalid,
+    loading,
+    onBlur,
+    width = 0,
+    ...restProps
+  } = props;
   /**
    * Prefix & suffix are positioned absolutely within inputWrapper. We use client rects below to apply correct padding to the input
    * when prefix/suffix is larger than default (28px = 16px(icon) + 12px(left/right paddings)).
@@ -225,6 +237,21 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
 
   const theme = useTheme();
   const styles = getInputStyles({ theme, invalid: !!invalid, width });
+  const innerRef = useRef<HTMLInputElement>(null);
+
+  const onNumberInputBlur = useCallback(
+    (e: React.FocusEvent<HTMLInputElement>) => {
+      if (isNaN(parseInt(e.target.value, 10))) {
+        // Force UI change for Firefox and Safari issue #29207
+        ((ref as RefObject<HTMLInputElement>) || innerRef).current!.value = '';
+      }
+
+      if (onBlur) {
+        onBlur(e);
+      }
+    },
+    [onBlur]
+  );
 
   return (
     <div className={cx(styles.wrapper, className)}>
@@ -238,9 +265,12 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
         )}
 
         <input
-          ref={ref}
+          // Default ref is null, using innerRef here to ensure element reference exists for onNumberInputBlur
+          ref={ref || innerRef}
+          type={type}
           className={styles.input}
           {...restProps}
+          onBlur={type === 'number' ? onNumberInputBlur : onBlur}
           style={{
             paddingLeft: prefixRect ? prefixRect.width : undefined,
             paddingRight: suffixRect ? suffixRect.width : undefined,
