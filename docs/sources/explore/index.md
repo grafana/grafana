@@ -304,13 +304,13 @@ Clicking anywhere on the span row shows span details.
 
 ##### Trace to logs
 
-> This feature is only available in Grafana 7.4 and above.
+> This feature is only available in Grafana 7.4+.
 
-Trace to logs let's you navigate from a trace span to the selected data source's log.
+Trace to logs allows you to navigate from a trace span to the selected data source's log.
 
-## Navigating between Explore and a dashboard
+## Navigate between Explore and a dashboard
 
-To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard
+To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard.
 after navigating to Explore from the panel's dropdown.
 
 {{< docs-imagebox img="/img/docs/v64/panel_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the panel dropdown" >}}

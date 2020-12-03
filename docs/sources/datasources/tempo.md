@@ -10,13 +10,13 @@ weight = 1400
 
 Grafana ships with built-in support for Tempo a high volume, minimal dependency trace storage, OSS tracing solution from Grafana Labs. Add it as a data source, and you are ready to query your traces in [Explore]({{< relref "../explore/index.md" >}}).
 
-## Adding the data source
+## Add data source
 
 To access Tempo settings, click the **Configuration** (gear) icon, then click **Data Sources** > **Tempo**.
 
 | Name          | Description                                                                                         |
 | ------------- | --------------------------------------------------------------------------------------------------- |
-| `Name`        | The data source name using which you will refer to the data source in panels, queries, and Explore. |
+| `Name`        | The name using which you will refer to the data source in panels, queries, and Explore. |
 | `Default`     | The default data source will be pre-selected for new panels.                                        |
 | `URL`         | The URL of the Tempo instance, e.g., `http://localhost:16686`                                       |
 | `Basic Auth`  | Enable basic authentication to the Tempo data source.                                               |
