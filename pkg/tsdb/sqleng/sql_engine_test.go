@@ -67,16 +67,14 @@ func TestSqlEngine(t *testing.T) {
 			ConvertSqlTimeColumnToEpochMs(fixtures, i)
 		}
 
-		t.Run("When converting them should return epoch time with millisecond precision", func(t *testing.T) {
-			expected := float64(dt.UnixNano()) / float64(time.Millisecond)
-			expectedEarly := float64(earlyDt.UnixNano()) / float64(time.Millisecond)
+		expected := float64(dt.UnixNano()) / float64(time.Millisecond)
+		expectedEarly := float64(earlyDt.UnixNano()) / float64(time.Millisecond)
 
-			require.Equal(t, expected, fixtures[0].(float64))
-			require.Equal(t, expected, fixtures[1].(float64))
-			require.Equal(t, expectedEarly, fixtures[2].(float64))
-			require.Equal(t, expectedEarly, fixtures[3].(float64))
-			require.Nil(t, fixtures[4])
-		})
+		require.Equal(t, expected, fixtures[0].(float64))
+		require.Equal(t, expected, fixtures[1].(float64))
+		require.Equal(t, expectedEarly, fixtures[2].(float64))
+		require.Equal(t, expectedEarly, fixtures[3].(float64))
+		require.Nil(t, fixtures[4])
 	})
 
 	t.Run("Given row values with int64 as time columns", func(t *testing.T) {
@@ -98,15 +96,13 @@ func TestSqlEngine(t *testing.T) {
 			ConvertSqlTimeColumnToEpochMs(fixtures, i)
 		}
 
-		t.Run("When converting them should return epoch time with millisecond precision", func(t *testing.T) {
-			require.Equal(t, tSeconds*1e3, fixtures[0].(int64))
-			require.Equal(t, tSeconds*1e3, fixtures[1].(int64))
-			require.Equal(t, tMilliseconds, fixtures[2].(int64))
-			require.Equal(t, tMilliseconds, fixtures[3].(int64))
-			require.Equal(t, tMilliseconds, fixtures[4].(int64))
-			require.Equal(t, tMilliseconds, fixtures[5].(int64))
-			require.Nil(t, fixtures[6])
-		})
+		require.Equal(t, tSeconds*1e3, fixtures[0].(int64))
+		require.Equal(t, tSeconds*1e3, fixtures[1].(int64))
+		require.Equal(t, tMilliseconds, fixtures[2].(int64))
+		require.Equal(t, tMilliseconds, fixtures[3].(int64))
+		require.Equal(t, tMilliseconds, fixtures[4].(int64))
+		require.Equal(t, tMilliseconds, fixtures[5].(int64))
+		require.Nil(t, fixtures[6])
 	})
 
 	t.Run("Given row values with uint64 as time columns", func(t *testing.T) {
@@ -128,15 +124,13 @@ func TestSqlEngine(t *testing.T) {
 			ConvertSqlTimeColumnToEpochMs(fixtures, i)
 		}
 
-		t.Run("When converting them should return epoch time with millisecond precision", func(t *testing.T) {
-			require.Equal(t, int64(tSeconds*1e3), fixtures[0].(int64))
-			require.Equal(t, int64(tSeconds*1e3), fixtures[1].(int64))
-			require.Equal(t, int64(tMilliseconds), fixtures[2].(int64))
-			require.Equal(t, int64(tMilliseconds), fixtures[3].(int64))
-			require.Equal(t, int64(tMilliseconds), fixtures[4].(int64))
-			require.Equal(t, int64(tMilliseconds), fixtures[5].(int64))
-			require.Nil(t, fixtures[6])
-		})
+		require.Equal(t, int64(tSeconds*1e3), fixtures[0].(int64))
+		require.Equal(t, int64(tSeconds*1e3), fixtures[1].(int64))
+		require.Equal(t, int64(tMilliseconds), fixtures[2].(int64))
+		require.Equal(t, int64(tMilliseconds), fixtures[3].(int64))
+		require.Equal(t, int64(tMilliseconds), fixtures[4].(int64))
+		require.Equal(t, int64(tMilliseconds), fixtures[5].(int64))
+		require.Nil(t, fixtures[6])
 	})
 
 	t.Run("Given row values with int32 as time columns", func(t *testing.T) {
@@ -152,11 +146,9 @@ func TestSqlEngine(t *testing.T) {
 			ConvertSqlTimeColumnToEpochMs(fixtures, i)
 		}
 
-		t.Run("When converting them should return epoch time with millisecond precision", func(t *testing.T) {
-			require.Equal(t, dt.Unix()*1e3, fixtures[0].(int64))
-			require.Equal(t, dt.Unix()*1e3, fixtures[1].(int64))
-			require.Nil(t, fixtures[2])
-		})
+		require.Equal(t, dt.Unix()*1e3, fixtures[0].(int64))
+		require.Equal(t, dt.Unix()*1e3, fixtures[1].(int64))
+		require.Nil(t, fixtures[2])
 	})
 
 	t.Run("Given row values with uint32 as time columns", func(t *testing.T) {
@@ -172,11 +164,9 @@ func TestSqlEngine(t *testing.T) {
 			ConvertSqlTimeColumnToEpochMs(fixtures, i)
 		}
 
-		t.Run("When converting them should return epoch time with millisecond precision", func(t *testing.T) {
-			require.Equal(t, dt.Unix()*1e3, fixtures[0].(int64))
-			require.Equal(t, dt.Unix()*1e3, fixtures[1].(int64))
-			require.Nil(t, fixtures[2])
-		})
+		require.Equal(t, dt.Unix()*1e3, fixtures[0].(int64))
+		require.Equal(t, dt.Unix()*1e3, fixtures[1].(int64))
+		require.Nil(t, fixtures[2])
 	})
 
 	t.Run("Given row values with float64 as time columns", func(t *testing.T) {
@@ -198,15 +188,13 @@ func TestSqlEngine(t *testing.T) {
 			ConvertSqlTimeColumnToEpochMs(fixtures, i)
 		}
 
-		t.Run("When converting them should return epoch time with millisecond precision", func(t *testing.T) {
-			require.Equal(t, tMilliseconds, fixtures[0].(float64))
-			require.Equal(t, tMilliseconds, fixtures[1].(float64))
-			require.Equal(t, tMilliseconds, fixtures[2].(float64))
-			require.Equal(t, tMilliseconds, fixtures[3].(float64))
-			require.Equal(t, tMilliseconds, fixtures[4].(float64))
-			require.Equal(t, tMilliseconds, fixtures[5].(float64))
-			require.Nil(t, fixtures[6])
-		})
+		require.Equal(t, tMilliseconds, fixtures[0].(float64))
+		require.Equal(t, tMilliseconds, fixtures[1].(float64))
+		require.Equal(t, tMilliseconds, fixtures[2].(float64))
+		require.Equal(t, tMilliseconds, fixtures[3].(float64))
+		require.Equal(t, tMilliseconds, fixtures[4].(float64))
+		require.Equal(t, tMilliseconds, fixtures[5].(float64))
+		require.Nil(t, fixtures[6])
 	})
 
 	t.Run("Given row values with float32 as time columns", func(t *testing.T) {
@@ -222,11 +210,9 @@ func TestSqlEngine(t *testing.T) {
 			ConvertSqlTimeColumnToEpochMs(fixtures, i)
 		}
 
-		t.Run("When converting them should return epoch time with millisecond precision", func(t *testing.T) {
-			require.Equal(t, float64(tSeconds)*1e3, fixtures[0].(float64))
-			require.Equal(t, float64(tSeconds)*1e3, fixtures[1].(float64))
-			require.Nil(t, fixtures[2])
-		})
+		require.Equal(t, float64(tSeconds)*1e3, fixtures[0].(float64))
+		require.Equal(t, float64(tSeconds)*1e3, fixtures[1].(float64))
+		require.Nil(t, fixtures[2])
 	})
 
 	t.Run("Given row with value columns", func(t *testing.T) {
@@ -296,21 +282,17 @@ func TestSqlEngine(t *testing.T) {
 		nilPointerFixtures[10] = uint16NilPointer
 		nilPointerFixtures[11] = uint8NilPointer
 
-		t.Run("When converting values to float should return expected value", func(t *testing.T) {
-			for _, f := range fixtures {
-				value, err := ConvertSqlValueColumnToFloat("col", f)
-				require.NoError(t, err)
-				require.True(t, value.Valid)
-				require.Equal(t, null.FloatFrom(1).Float64, value.Float64)
-			}
-		})
+		for _, f := range fixtures {
+			value, err := ConvertSqlValueColumnToFloat("col", f)
+			require.NoError(t, err)
+			require.True(t, value.Valid)
+			require.Equal(t, null.FloatFrom(1).Float64, value.Float64)
+		}
 
-		t.Run("When converting nil pointer values to float should return expected value", func(t *testing.T) {
-			for _, f := range nilPointerFixtures {
-				value, err := ConvertSqlValueColumnToFloat("col", f)
-				require.NoError(t, err)
-				require.False(t, value.Valid)
-			}
-		})
+		for _, f := range nilPointerFixtures {
+			value, err := ConvertSqlValueColumnToFloat("col", f)
+			require.NoError(t, err)
+			require.False(t, value.Valid)
+		}
 	})
 }
