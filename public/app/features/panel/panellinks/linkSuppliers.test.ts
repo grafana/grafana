@@ -90,10 +90,8 @@ describe('getFieldLinksSupplier', () => {
         overrides: [],
       },
       replaceVariables: (val: string) => val,
-      getDataSourceSettingsByUid: (val: string) => ({} as any),
       timeZone: 'utc',
       theme: getTheme(),
-      autoMinMax: true,
     })[0];
 
     const rowIndex = 0;

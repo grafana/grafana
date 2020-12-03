@@ -53,3 +53,5 @@ export const Tooltip: FC<TooltipProps> = React.memo(({ children, theme, ...contr
     </PopoverController>
   );
 });
+
+Tooltip.displayName = 'Tooltip';

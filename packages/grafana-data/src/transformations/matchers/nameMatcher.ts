@@ -66,6 +66,28 @@ const regexpFieldNameMatcher: FieldMatcherInfo<string> = {
   },
 };
 
+/**
+ * Field matcher that will match all fields that exists in a
+ * data frame with configured refId.
+ * @public
+ */
+const fieldsInFrameMatcher: FieldMatcherInfo<string> = {
+  id: FieldMatcherID.byFrameRefID,
+  name: 'Fields by frame refId',
+  description: 'match all fields returned in data frame with refId.',
+  defaultOptions: '',
+
+  get: (refId: string): FieldMatcher => {
+    return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
+      return frame.refId === refId;
+    };
+  },
+
+  getOptionsDisplayText: (refId: string): string => {
+    return `Math all fields returned by query with reference ID: ${refId}`;
+  },
+};
+
 const regexpOrMultipleNamesMatcher: FieldMatcherInfo<RegexpOrNamesMatcherOptions> = {
   id: FieldMatcherID.byRegexpOrNames,
   name: 'Field Name by Regexp or Names',
@@ -127,7 +149,13 @@ const frameNameMatcher: FrameMatcherInfo<string> = {
  * Registry Initialization
  */
 export function getFieldNameMatchers(): FieldMatcherInfo[] {
-  return [fieldNameMatcher, regexpFieldNameMatcher, multipleFieldNamesMatcher, regexpOrMultipleNamesMatcher];
+  return [
+    fieldNameMatcher,
+    regexpFieldNameMatcher,
+    multipleFieldNamesMatcher,
+    regexpOrMultipleNamesMatcher,
+    fieldsInFrameMatcher,
+  ];
 }
 
 export function getFrameNameMatchers(): FrameMatcherInfo[] {

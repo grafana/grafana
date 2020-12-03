@@ -1,10 +1,13 @@
 import React, { ChangeEvent, FocusEvent, PureComponent } from 'react';
+import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
 
 import { IntervalVariableModel } from '../types';
 import { VariableEditorProps } from '../editor/types';
-import { InlineFormLabel, LegacyForms } from '@grafana/ui';
-
-const { Switch } = LegacyForms;
+import { VariableSectionHeader } from '../editor/VariableSectionHeader';
+import { VariableTextField } from '../editor/VariableTextField';
+import { VariableSwitchField } from '../editor/VariableSwitchField';
+import { VariableSelectField } from '../editor/VariableSelectField';
+import { SelectableValue } from '@grafana/data';
 
 export interface Props extends VariableEditorProps<IntervalVariableModel> {}
 
@@ -32,10 +35,10 @@ export class IntervalVariableEditor extends PureComponent<Props> {
     });
   };
 
-  onAutoCountChanged = (event: ChangeEvent<HTMLSelectElement>) => {
+  onAutoCountChanged = (option: SelectableValue<number>) => {
     this.props.onPropChange({
       propName: 'auto_count',
-      propValue: event.target.value,
+      propValue: option.value,
       updateOptions: true,
     });
   };
@@ -49,73 +52,59 @@ export class IntervalVariableEditor extends PureComponent<Props> {
   };
 
   render() {
+    const { variable } = this.props;
+    const stepOptions = [1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 200, 300, 400, 500].map(count => ({
+      label: `${count}`,
+      value: count,
+    }));
+    const stepValue = stepOptions.find(o => o.value === variable.auto_count) ?? stepOptions[0];
+
     return (
-      <>
-        <div className="gf-form-group">
-          <h5 className="section-heading">Interval Options</h5>
-
-          <div className="gf-form">
-            <span className="gf-form-label width-9">Values</span>
-            <input
-              type="text"
-              className="gf-form-input"
-              value={this.props.variable.query}
-              placeholder="1m,10m,1h,6h,1d,7d"
-              onChange={this.onQueryChanged}
-              onBlur={this.onQueryBlur}
-              required
-            />
-          </div>
-
-          <div className="gf-form-inline">
-            <Switch
-              label="Auto Option"
-              labelClass="width-9"
-              checked={this.props.variable.auto}
+      <VerticalGroup spacing="xs">
+        <VariableSectionHeader name="Interval Options" />
+        <VerticalGroup spacing="none">
+          <VariableTextField
+            value={this.props.variable.query}
+            name="Values"
+            placeholder="1m,10m,1h,6h,1d,7d"
+            onChange={this.onQueryChanged}
+            onBlur={this.onQueryBlur}
+            labelWidth={20}
+            grow
+            required
+          />
+          <InlineFieldRow>
+            <VariableSwitchField
+              value={this.props.variable.auto}
+              name="Auto Option"
+              tooltip="Interval will be dynamically calculated by dividing time range by the count specified"
               onChange={this.onAutoChange}
-              tooltip={'Interval will be dynamically calculated by dividing time range by the count specified'}
             />
-
-            {this.props.variable.auto && (
+            {this.props.variable.auto ? (
               <>
-                <div className="gf-form">
-                  <InlineFormLabel
-                    width={9}
-                    tooltip={'How many times should the current time range be divided to calculate the value'}
-                  >
-                    Step count
-                  </InlineFormLabel>
-                  <div className="gf-form-select-wrapper max-width-10">
-                    <select
-                      className="gf-form-input"
-                      value={this.props.variable.auto_count}
-                      onChange={this.onAutoCountChanged}
-                    >
-                      {[1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 100, 200, 300, 400, 500].map(count => (
-                        <option key={`auto_count_key-${count}`} label={`${count}`}>
-                          {count}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="gf-form">
-                  <InlineFormLabel width={9} tooltip={'The calculated value will not go below this threshold'}>
-                    Min interval
-                  </InlineFormLabel>
-                  <input
-                    type="text"
-                    className="gf-form-input max-width-10"
-                    value={this.props.variable.auto_min}
-                    onChange={this.onAutoMinChanged}
-                    placeholder="10s"
-                  />
-                </div>
+                <VariableSelectField
+                  name="Step count"
+                  value={stepValue}
+                  options={stepOptions}
+                  onChange={this.onAutoCountChanged}
+                  tooltip="How many times should the current time range be divided to calculate the value"
+                  labelWidth={7}
+                  width={9}
+                />
+                <VariableTextField
+                  value={this.props.variable.auto_min}
+                  name="Min interval"
+                  placeholder="10s"
+                  onChange={this.onAutoMinChanged}
+                  tooltip="The calculated value will not go below this threshold"
+                  labelWidth={13}
+                  width={11}
+                />
               </>
-            )}
-          </div>
-        </div>
-      </>
+            ) : null}
+          </InlineFieldRow>
+        </VerticalGroup>
+      </VerticalGroup>
     );
   }
 }
