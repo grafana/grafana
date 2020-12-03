@@ -80,6 +80,7 @@ export type IconName =
   | 'compass'
   | 'sliders-v-alt'
   | 'bell'
+  | 'bell-slash'
   | 'database'
   | 'user'
   | 'camera'
@@ -198,6 +199,7 @@ export const getAvailableIcons = (): IconName[] => [
   'compass',
   'sliders-v-alt',
   'bell',
+  'bell-slash',
   'database',
   'user',
   'camera',
