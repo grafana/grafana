@@ -1,33 +1,31 @@
-package librarypanel
+package librarypanels
 
 import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// LibraryPanel is the service the Panel Library feature.
-type LibraryPanel struct {
-	Cfg      *setting.Cfg       `inject:""`
-	SQLStore *sqlstore.SQLStore `inject:""`
-	log      log.Logger
+// LibraryPanelService is the service for the Panel Library feature.
+type LibraryPanelService struct {
+	Cfg *setting.Cfg `inject:""`
+	log log.Logger
 }
 
 func init() {
-	registry.RegisterService(&LibraryPanel{})
+	registry.RegisterService(&LibraryPanelService{})
 }
 
 // Init initializes the LibraryPanel service
-func (pl *LibraryPanel) Init() error {
+func (pl *LibraryPanelService) Init() error {
 	pl.log = log.New("library_panel")
 
 	return nil
 }
 
-// IsEnabled returns true if the LibraryPanel service is enabled for this instance.
-func (pl *LibraryPanel) IsEnabled() bool {
+// IsEnabled returns true if the Panel Library feature is enabled for this instance.
+func (pl *LibraryPanelService) IsEnabled() bool {
 	if pl.Cfg == nil {
 		return false
 	}
@@ -37,12 +35,12 @@ func (pl *LibraryPanel) IsEnabled() bool {
 
 // AddMigration defines database migrations.
 // If Panel Library is not enabled does nothing.
-func (pl *LibraryPanel) AddMigration(mg *migrator.Migrator) {
+func (pl *LibraryPanelService) AddMigration(mg *migrator.Migrator) {
 	if !pl.IsEnabled() {
 		return
 	}
 
-	library_panelV1 := migrator.Table{
+	libraryPanelV1 := migrator.Table{
 		Name: "library_panel",
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
@@ -57,5 +55,5 @@ func (pl *LibraryPanel) AddMigration(mg *migrator.Migrator) {
 		},
 	}
 
-	mg.AddMigration("create library_panel table v1", migrator.NewAddTableMigration(library_panelV1))
+	mg.AddMigration("create library_panel table v1", migrator.NewAddTableMigration(libraryPanelV1))
 }
