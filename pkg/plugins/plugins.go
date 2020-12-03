@@ -271,7 +271,7 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 
 		// nolint:gosec
 		// We can ignore the gosec G304 warning on this one because `jsonFPath` is based
-		// on plugin folder structure on disk and not user input.
+		// on plugin the folder structure on disk and not user input.
 		reader, err := os.Open(jsonFPath)
 		if err != nil {
 			return err
@@ -337,7 +337,7 @@ func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) err
 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `currentPath` is based
-	// on plugin folder structure on disk and not user input.
+	// on plugin the folder structure on disk and not user input.
 	if err := s.loadPlugin(currentPath); err != nil {
 		s.log.Error("Failed to load plugin", "error", err, "pluginPath", filepath.Dir(currentPath))
 		s.errors = append(s.errors, err)
@@ -479,7 +479,7 @@ func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `plug.PluginDir` is based
-	// on plugin folder structure on disk and not user input.
+	// on plugin the folder structure on disk and not user input.
 	path := filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToUpper(name)))
 	exists, err := fs.Exists(path)
 	if err != nil {
