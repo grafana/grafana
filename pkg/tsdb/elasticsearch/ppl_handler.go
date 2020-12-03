@@ -19,7 +19,10 @@ var newPPLHandler = func(client es.Client, tsdbQuery *tsdb.TsdbQuery) *pplHandle
 	}
 }
 
-func (h *pplHandler) processQuery(q *Query, from, to string) error {
+func (h *pplHandler) processQuery(q *Query) error {
+	from := h.tsdbQuery.TimeRange.MustGetFrom().Local().Format("2006-01-02 15:04:05")
+	to := h.tsdbQuery.TimeRange.MustGetTo().Local().Format("2006-01-02 15:04:05")
+
 	builder := h.client.PPL()
 	builder.AddPPLQueryString(h.client.GetTimeField(), to, from, q.RawQuery)
 	h.builders[q.RefID] = builder

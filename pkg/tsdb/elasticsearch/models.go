@@ -19,7 +19,7 @@ type Query struct {
 
 // queryHandler is an interface for handling queries of the same type
 type queryHandler interface {
-	processQuery(q *Query, from, to string) error
+	processQuery(q *Query) error
 	executeQueries() (*tsdb.Response, error)
 }
 

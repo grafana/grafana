@@ -1,7 +1,6 @@
 package elasticsearch
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -35,11 +34,8 @@ func (e *timeSeriesQuery) execute() (*tsdb.Response, error) {
 		return nil, err
 	}
 
-	from := fmt.Sprintf("%d", e.tsdbQuery.TimeRange.GetFromAsMsEpoch())
-	to := fmt.Sprintf("%d", e.tsdbQuery.TimeRange.GetToAsMsEpoch())
-
 	for _, q := range queries {
-		if err := handlers[q.QueryType].processQuery(q, from, to); err != nil {
+		if err := handlers[q.QueryType].processQuery(q); err != nil {
 			return nil, err
 		}
 	}

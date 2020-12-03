@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -26,7 +27,10 @@ var newLuceneHandler = func(client es.Client, tsdbQuery *tsdb.TsdbQuery, interva
 	}
 }
 
-func (h *luceneHandler) processQuery(q *Query, from, to string) error {
+func (h *luceneHandler) processQuery(q *Query) error {
+	from := fmt.Sprintf("%d", h.tsdbQuery.TimeRange.GetFromAsMsEpoch())
+	to := fmt.Sprintf("%d", h.tsdbQuery.TimeRange.GetToAsMsEpoch())
+
 	minInterval, err := h.client.GetMinInterval(q.Interval)
 	if err != nil {
 		return err
