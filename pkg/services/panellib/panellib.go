@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// PanelLib is the service the Panel Libary feature.
+// PanelLib is the service the Panel Library feature.
 type PanelLib struct {
 	Cfg      *setting.Cfg       `inject:""`
 	SQLStore *sqlstore.SQLStore `inject:""`
