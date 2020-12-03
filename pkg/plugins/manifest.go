@@ -97,14 +97,14 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 }
 
 // getPluginSignatureState returns the signature state for a plugin.
-func getPluginSignatureState(log log.Logger, plugin *PluginBase) (*PluginSignatureState, error) {
+func getPluginSignatureState(log log.Logger, plugin *PluginBase) (PluginSignatureState, error) {
 	log.Debug("Getting signature state of plugin", "plugin", plugin.Id, "isBackend", plugin.Backend)
 	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
 
 	byteValue, err := ioutil.ReadFile(manifestPath)
 	if err != nil || len(byteValue) < 10 {
 		log.Debug("Plugin is unsigned", "id", plugin.Id)
-		return &PluginSignatureState{
+		return PluginSignatureState{
 			Status: pluginSignatureUnsigned,
 		}, nil
 	}
@@ -112,14 +112,14 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) (*PluginSignatu
 	manifest, err := readPluginManifest(byteValue)
 	if err != nil {
 		log.Debug("Plugin signature invalid", "id", plugin.Id)
-		return &PluginSignatureState{
+		return PluginSignatureState{
 			Status: pluginSignatureInvalid,
 		}, nil
 	}
 
 	// Make sure the versions all match
 	if manifest.Plugin != plugin.Id || manifest.Version != plugin.Info.Version {
-		return &PluginSignatureState{
+		return PluginSignatureState{
 			Status: pluginSignatureModified,
 		}, nil
 	}
@@ -128,7 +128,7 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) (*PluginSignatu
 	if manifest.SignatureType == privateType {
 		appURL, err := url.Parse(setting.AppUrl)
 		if err != nil {
-			return nil, err
+			return PluginSignatureState{}, err
 		}
 
 		foundMatch := false
@@ -136,7 +136,7 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) (*PluginSignatu
 			rootURL, err := url.Parse(u)
 			if err != nil {
 				log.Warn("Could not parse plugin root URL", "plugin", plugin.Id, "rootUrl", rootURL)
-				return nil, err
+				return PluginSignatureState{}, err
 			}
 			if rootURL.Scheme == appURL.Scheme &&
 				rootURL.Host == appURL.Host &&
@@ -148,7 +148,7 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) (*PluginSignatu
 
 		if !foundMatch {
 			log.Warn("Could not find root URL that matches running application URL", "plugin", plugin.Id, "appUrl", appURL, "rootUrls", manifest.RootURLs)
-			return &PluginSignatureState{
+			return PluginSignatureState{
 				Status: pluginSignatureInvalid,
 			}, nil
 		}
@@ -164,7 +164,7 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) (*PluginSignatu
 		f, err := os.Open(fp)
 		if err != nil {
 			log.Warn("Plugin file listed in the manifest was not found", "plugin", plugin.Id, "filename", p, "dir", plugin.PluginDir)
-			return &PluginSignatureState{
+			return PluginSignatureState{
 				Status: pluginSignatureModified,
 			}, nil
 		}
@@ -177,14 +177,14 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) (*PluginSignatu
 		h := sha256.New()
 		if _, err := io.Copy(h, f); err != nil {
 			log.Warn("Couldn't read plugin file", "plugin", plugin.Id, "filename", fp)
-			return &PluginSignatureState{
+			return PluginSignatureState{
 				Status: pluginSignatureModified,
 			}, nil
 		}
 		sum := hex.EncodeToString(h.Sum(nil))
 		if sum != hash {
 			log.Warn("Plugin file's signature has been modified versus manifest", "plugin", plugin.Id, "filename", fp)
-			return &PluginSignatureState{
+			return PluginSignatureState{
 				Status: pluginSignatureModified,
 			}, nil
 		}
@@ -192,17 +192,17 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) (*PluginSignatu
 	}
 
 	if manifest.isV2() {
-		// Track files that were missing from the manifest
+		// Track files missing from the manifest
 		var unsignedFiles []string
 		for _, f := range plugin.Files {
-			if exists := manifestFiles[f]; !exists {
+			if _, exists := manifestFiles[f]; !exists {
 				unsignedFiles = append(unsignedFiles, f)
 			}
 		}
 
 		if len(unsignedFiles) > 0 {
 			log.Warn("The following files were not included in the signature", "plugin", plugin.Id, "files", unsignedFiles)
-			return &PluginSignatureState{
+			return PluginSignatureState{
 				Status: pluginSignatureModified,
 			}, nil
 		}
@@ -210,7 +210,7 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) (*PluginSignatu
 
 	// Everything OK
 	log.Debug("Plugin signature valid", "id", plugin.Id)
-	return &PluginSignatureState{
+	return PluginSignatureState{
 		Status:     pluginSignatureValid,
 		Type:       manifest.SignatureType,
 		SigningOrg: manifest.SignedByOrgName,

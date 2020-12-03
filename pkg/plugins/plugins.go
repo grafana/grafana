@@ -513,6 +513,9 @@ func collectPluginFilesWithin(rootDir string) ([]string, error) {
 	var files []string
 
 	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 		if !info.IsDir() && info.Name() != "MANIFEST.txt" {
 			file, err := filepath.Rel(rootDir, path)
 			if err != nil {
