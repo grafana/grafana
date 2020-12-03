@@ -20,6 +20,8 @@ import { TraceViewData, Trace, TraceSpan, TraceKeyValuePair, TraceLink } from '@
 import { createSpanLinkFactory } from './createSpanLink';
 import { useSelector } from 'react-redux';
 import { StoreState } from 'app/types';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { TraceToLogsData } from 'app/core/components/TraceToLogsSettings';
 
 type Props = {
   trace?: TraceViewData;
@@ -56,9 +58,9 @@ export function TraceView(props: Props) {
 
   const traceProp = useMemo(() => transformTraceData(props.trace), [props.trace]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
-  const dataSourceUid = useSelector((state: StoreState) => {
-    return (state.explore.left.datasourceInstance as any).instanceSettings.jsonData?.tracesToLogs?.datasourceUid;
-  });
+  const dataSourceName = useSelector((state: StoreState) => state.explore.left.datasourceInstance?.name);
+  const logDataSourceUid = (getDatasourceSrv().getInstanceSettings(dataSourceName)?.jsonData as TraceToLogsData)
+    ?.tracesToLogs?.datasourceUid;
 
   const theme = useTheme();
   const traceTheme = useMemo(
@@ -87,7 +89,10 @@ export function TraceView(props: Props) {
     [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp?.traceID]
   );
 
-  const createSpanLink = useMemo(() => createSpanLinkFactory(props.splitOpenFn, dataSourceUid), [props.splitOpenFn]);
+  const createSpanLink = useMemo(() => createSpanLinkFactory(props.splitOpenFn, logDataSourceUid), [
+    props.splitOpenFn,
+    logDataSourceUid,
+  ]);
   const scrollElement = document.getElementsByClassName('scroll-canvas')[0];
 
   if (!traceProp) {
