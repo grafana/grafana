@@ -300,7 +300,7 @@ Query B:
 | 3.2     | 5      |
 
 
-The result would be:
+After you concatenate the fields, the data frame would be:
 
 | Temp    | Uptime  | AQI     | Errors |
 | ------- | ------- | ------- | ------ |
