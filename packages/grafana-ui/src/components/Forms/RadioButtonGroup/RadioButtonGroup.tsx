@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 import uniqueId from 'lodash/uniqueId';
 import { SelectableValue } from '@grafana/data';
 import { RadioButtonSize, RadioButton } from './RadioButton';
@@ -44,6 +44,7 @@ interface RadioButtonGroupProps<T> {
   onChange?: (value?: T) => void;
   size?: RadioButtonSize;
   fullWidth?: boolean;
+  className?: string;
 }
 
 export function RadioButtonGroup<T>({
@@ -53,6 +54,7 @@ export function RadioButtonGroup<T>({
   disabled,
   disabledOptions,
   size = 'md',
+  className,
   fullWidth = false,
 }: RadioButtonGroupProps<T>) {
   const handleOnChange = useCallback(
@@ -70,7 +72,7 @@ export function RadioButtonGroup<T>({
   const styles = getRadioButtonGroupStyles();
 
   return (
-    <div className={styles.radioGroup}>
+    <div className={cx(styles.radioGroup, className)}>
       {options.map((o, i) => {
         const isItemDisabled = disabledOptions && o.value && disabledOptions.includes(o.value);
         return (

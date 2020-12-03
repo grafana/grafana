@@ -123,13 +123,13 @@ func (w *FileLogWriter) createLogFile() (*os.File, error) {
 }
 
 func (w *FileLogWriter) lineCounter() (int, error) {
-	r, err := os.OpenFile(w.Filename, os.O_RDONLY, 0644)
+	r, err := os.Open(w.Filename)
 	if err != nil {
-		return 0, fmt.Errorf("lineCounter Open File : %s", err)
+		return 0, fmt.Errorf("failed to open file %q: %w", w.Filename, err)
 	}
+
 	buf := make([]byte, 32*1024)
 	count := 0
-
 	for {
 		c, err := r.Read(buf)
 		count += bytes.Count(buf[:c], []byte{'\n'})

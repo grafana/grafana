@@ -48,7 +48,11 @@ func (h *DashboardHandler) publish(event dashboardEvent) error {
 	if err != nil {
 		return err
 	}
-	return h.Publisher("grafana/dashboard/"+event.UID, msg)
+	err = h.Publisher("grafana/dashboard/uid/"+event.UID, msg)
+	if err != nil {
+		return err
+	}
+	return h.Publisher("grafana/dashboard/changes", msg)
 }
 
 // DashboardSaved will broadcast to all connected dashboards

@@ -1,16 +1,9 @@
 import { ComponentType } from 'react';
-import {
-  MatcherConfig,
-  FieldConfig,
-  Field,
-  DataFrame,
-  GrafanaTheme,
-  TimeZone,
-  DataSourceInstanceSettings,
-} from '../types';
+import { MatcherConfig, FieldConfig, Field, DataFrame, GrafanaTheme, TimeZone } from '../types';
 import { InterpolateFunction } from './panel';
 import { StandardEditorProps, FieldConfigOptionsRegistry, StandardEditorContext } from '../field';
 import { OptionsEditorItem } from './OptionsUIRegistryBuilder';
+import { OptionEditorConfig } from './options';
 
 export interface DynamicConfigValue {
   id: string;
@@ -48,51 +41,13 @@ export interface FieldOverrideEditorProps<TValue, TSettings> extends Omit<Standa
   context: FieldOverrideContext;
 }
 
-export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any> {
-  /**
-   * Path of the field config property to control.
-   *
-   * @example
-   * Given field config object of a type:
-   * ```ts
-   * interface CustomFieldConfig {
-   *   a: {
-   *     b: string;
-   *   }
-   * }
-   * ```
-   *
-   * path can be either 'a' or 'a.b'.
-   */
-  path: (keyof TOptions & string) | string;
-  /**
-   * Name of the field config property. Will be displayed in the UI as form element label.
-   */
-  name: string;
-  /**
-   * Description of the field config property. Will be displayed in the UI as form element description.
-   */
-  description?: string;
-  /**
-   * Array of strings representing category of the field config property. First element in the array will make option render as collapsible section.
-   */
-  category?: string[];
-  /**
-   * Custom settings of the editor.
-   */
-  settings?: TSettings;
+export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any>
+  extends OptionEditorConfig<TOptions, TSettings, TValue> {
   /**
    * Function that allows specifying whether or not this field config should apply to a given field.
    * @param field
    */
   shouldApply?: (field: Field) => boolean;
-  defaultValue?: TValue;
-  /**
-   * Function that enables configuration of when field config property editor should be shown based on current panel field config.
-   *
-   * @param currentConfig Current field config values
-   */
-  showIf?: (currentConfig: TOptions) => boolean;
 }
 
 export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings extends {} = any>
@@ -114,10 +69,8 @@ export interface ApplyFieldOverrideOptions {
   data?: DataFrame[];
   fieldConfig: FieldConfigSource;
   replaceVariables: InterpolateFunction;
-  getDataSourceSettingsByUid: (uid: string) => DataSourceInstanceSettings | undefined;
   theme: GrafanaTheme;
   timeZone?: TimeZone;
-  autoMinMax?: boolean;
   fieldConfigRegistry?: FieldConfigOptionsRegistry;
 }
 

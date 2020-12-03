@@ -1,6 +1,9 @@
 {
   "extends": ["@grafana/eslint-config"],
   "root": true,
+  "plugins": [
+    "no-only-tests"
+  ],
   "overrides": [
     {
       "files": [
@@ -12,13 +15,7 @@
         "react-hooks/rules-of-hooks": "off",
         "react-hooks/exhaustive-deps": "off",
         "react/prop-types": "off",
-        "react/no-unescaped-entities": "off",
-        "react/display-name": "off",
-        "react/no-deprecated": "off",
-        "react/no-unknown-property": "off", 
-        "react/no-children-prop": "off",
-        "react/no-find-dom-node": "off",
-        "react/no-render-return-value": "off"
+        "no-only-tests/no-only-tests": "error"
       }
     }
   ]
