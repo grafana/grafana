@@ -273,7 +273,7 @@ class GraphElement {
         const hasLinksValue = hasLinks(field);
         if (hasLinksValue) {
           // Append the configured links to the panel datalinks
-          links = [...links, ...field.config.links];
+          links = [...links, ...field.config.links!];
         }
         const fieldConfig = {
           decimals: yAxisConfig.decimals,
