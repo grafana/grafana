@@ -1,4 +1,4 @@
-package panellib
+package librarypanel
 
 import (
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -8,26 +8,26 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// PanelLib is the service the Panel Library feature.
-type PanelLib struct {
+// LibraryPanel is the service the Panel Library feature.
+type LibraryPanel struct {
 	Cfg      *setting.Cfg       `inject:""`
 	SQLStore *sqlstore.SQLStore `inject:""`
 	log      log.Logger
 }
 
 func init() {
-	registry.RegisterService(&PanelLib{})
+	registry.RegisterService(&LibraryPanel{})
 }
 
-// Init initializes the PanelLib Service.
-func (pl *PanelLib) Init() error {
-	pl.log = log.New("panellib")
+// Init initializes the LibraryPanel service
+func (pl *LibraryPanel) Init() error {
+	pl.log = log.New("library_panel")
 
 	return nil
 }
 
-// IsEnabled returns true if the PanelLib service is enabled for this instance.
-func (pl *PanelLib) IsEnabled() bool {
+// IsEnabled returns true if the LibraryPanel service is enabled for this instance.
+func (pl *LibraryPanel) IsEnabled() bool {
 	if pl.Cfg == nil {
 		return false
 	}
@@ -37,13 +37,13 @@ func (pl *PanelLib) IsEnabled() bool {
 
 // AddMigration defines database migrations.
 // If Panel Library is not enabled does nothing.
-func (pl *PanelLib) AddMigration(mg *migrator.Migrator) {
+func (pl *LibraryPanel) AddMigration(mg *migrator.Migrator) {
 	if !pl.IsEnabled() {
 		return
 	}
 
-	panellibV1 := migrator.Table{
-		Name: "panellib",
+	library_panelV1 := migrator.Table{
+		Name: "library_panel",
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
@@ -57,5 +57,5 @@ func (pl *PanelLib) AddMigration(mg *migrator.Migrator) {
 		},
 	}
 
-	mg.AddMigration("create panellib table v1", migrator.NewAddTableMigration(panellibV1))
+	mg.AddMigration("create library_panel table v1", migrator.NewAddTableMigration(library_panelV1))
 }
