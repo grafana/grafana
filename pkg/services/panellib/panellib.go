@@ -42,8 +42,6 @@ func (pl *PanelLib) AddMigration(mg *migrator.Migrator) {
 		return
 	}
 
-	mg.AddMigration("drop old table panellib", migrator.NewDropTableMigration("panellib"))
-
 	panellibV1 := migrator.Table{
 		Name: "panellib",
 		Columns: []*migrator.Column{
