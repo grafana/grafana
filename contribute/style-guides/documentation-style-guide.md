@@ -207,6 +207,14 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 Grafana products has some words, abbreviations, and terms particular to the Grafana discourse community.
 
+#### changelog
+
+One word, not two.
+
+**Example**
+
+- Read the full changelog.
+
 #### checkout, check out
 
 Two words if used as a verb, one word if used as a noun.
