@@ -1,6 +1,14 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import { DataLink, LoadingState, PanelData, PanelMenuItem, QueryResultMetaNotice, ScopedVars } from '@grafana/data';
+import {
+  DataLink,
+  LoadingState,
+  numberUtil,
+  PanelData,
+  PanelMenuItem,
+  QueryResultMetaNotice,
+  ScopedVars,
+} from '@grafana/data';
 import { AngularComponent, config, getTemplateSrv } from '@grafana/runtime';
 import { ClickOutsideWrapper, Icon, IconName, Tooltip, stylesFactory } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
@@ -51,17 +59,10 @@ export class PanelHeader extends PureComponent<Props, State> {
 
   eventToClickCoordinates = (event: React.MouseEvent<HTMLDivElement>) => {
     return {
-      x: this.truncate(event.clientX, 0),
-      y: this.truncate(event.clientY, 0),
+      x: Math.floor(event.clientX),
+      y: Math.floor(event.clientY),
     };
   };
-
-  truncate(input: number, digits: number): number {
-    const step = Math.pow(10, digits || 0);
-    const temp = Math.trunc(step * input);
-
-    return temp / step;
-  }
 
   onMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
     this.clickCoordinates = this.eventToClickCoordinates(event);
