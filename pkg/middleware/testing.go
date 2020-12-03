@@ -29,6 +29,7 @@ type scenarioContext struct {
 	url                  string
 	userAuthTokenService *auth.FakeUserAuthTokenService
 	remoteCacheService   *remotecache.RemoteCache
+	cfg                  *setting.Cfg
 
 	req *http.Request
 }
@@ -94,9 +95,9 @@ func (sc *scenarioContext) exec() {
 	}
 
 	if sc.tokenSessionCookie != "" {
-		sc.t.Log(`Adding cookie`, "name", setting.LoginCookieName, "value", sc.tokenSessionCookie)
+		sc.t.Log(`Adding cookie`, "name", sc.cfg.LoginCookieName, "value", sc.tokenSessionCookie)
 		sc.req.AddCookie(&http.Cookie{
-			Name:  setting.LoginCookieName,
+			Name:  sc.cfg.LoginCookieName,
 			Value: sc.tokenSessionCookie,
 		})
 	}

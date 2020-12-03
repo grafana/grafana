@@ -134,7 +134,16 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 			return nil
 		})
 
-		isLDAPEnabled = func() bool {
+		origIsLDAPEnabled := isLDAPEnabled
+		origGetLDAPConfig := getLDAPConfig
+		origNewLDAP := newLDAP
+		t.Cleanup(func() {
+			newLDAP = origNewLDAP
+			isLDAPEnabled = origIsLDAPEnabled
+			getLDAPConfig = origGetLDAPConfig
+		})
+
+		isLDAPEnabled = func(*setting.Cfg) bool {
 			return true
 		}
 
@@ -142,7 +151,7 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 			ID: id,
 		}
 
-		getLDAPConfig = func() (*ldap.Config, error) {
+		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			config := &ldap.Config{
 				Servers: []*ldap.ServerConfig{
 					{
@@ -157,12 +166,6 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 			return stub
 		}
 
-		defer func() {
-			newLDAP = multildap.New
-			isLDAPEnabled = ldap.IsEnabled
-			getLDAPConfig = ldap.GetConfig
-		}()
-
 		cache := remotecache.NewFakeStore(t)
 
 		auth := prepareMiddleware(t, cache, nil)
@@ -176,19 +179,22 @@ func TestMiddlewareContext_ldap(t *testing.T) {
 
 	t.Run("Gets nice error if LDAP is enabled, but not configured", func(t *testing.T) {
 		const id int64 = 42
-		isLDAPEnabled = func() bool {
+		origIsLDAPEnabled := isLDAPEnabled
+		origNewLDAP := newLDAP
+		origGetLDAPConfig := getLDAPConfig
+		t.Cleanup(func() {
+			isLDAPEnabled = origIsLDAPEnabled
+			newLDAP = origNewLDAP
+			getLDAPConfig = origGetLDAPConfig
+		})
+
+		isLDAPEnabled = func(*setting.Cfg) bool {
 			return true
 		}
 
-		getLDAPConfig = func() (*ldap.Config, error) {
+		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return nil, errors.New("something went wrong")
 		}
-
-		defer func() {
-			newLDAP = multildap.New
-			isLDAPEnabled = ldap.IsEnabled
-			getLDAPConfig = ldap.GetConfig
-		}()
 
 		cache := remotecache.NewFakeStore(t)
 

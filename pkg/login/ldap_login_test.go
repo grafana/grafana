@@ -20,7 +20,7 @@ func TestLDAPLogin(t *testing.T) {
 
 			LDAPLoginScenario("When login", func(sc *LDAPLoginScenarioContext) {
 				sc.withLoginResult(false)
-				getLDAPConfig = func() (*ldap.Config, error) {
+				getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 					config := &ldap.Config{
 						Servers: []*ldap.ServerConfig{},
 					}
@@ -150,7 +150,10 @@ func LDAPLoginScenario(desc string, fn LDAPLoginScenarioFunc) {
 			LDAPAuthenticatorMock: mock,
 		}
 
-		getLDAPConfig = func() (*ldap.Config, error) {
+		origNewLDAP := newLDAP
+		origGetLDAPConfig := getLDAPConfig
+
+		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			config := &ldap.Config{
 				Servers: []*ldap.ServerConfig{
 					{
@@ -167,8 +170,8 @@ func LDAPLoginScenario(desc string, fn LDAPLoginScenarioFunc) {
 		}
 
 		defer func() {
-			newLDAP = multildap.New
-			getLDAPConfig = multildap.GetConfig
+			newLDAP = origNewLDAP
+			getLDAPConfig = origGetLDAPConfig
 		}()
 
 		fn(sc)

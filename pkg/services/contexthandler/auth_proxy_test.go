@@ -45,6 +45,53 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 		}
 		return nil
 	}
+	bus.AddHandler("", upsertHandler)
+	bus.AddHandler("", getUserHandler)
+	t.Cleanup(func() {
+		bus.ClearBusHandlers()
+	})
+
+	svc := getContextHandler(t)
+
+	req, err := http.NewRequest("POST", "http://example.com", nil)
+	require.NoError(t, err)
+	ctx := &models.ReqContext{
+		Context: &macaron.Context{
+			Req: macaron.Request{
+				Request: req,
+			},
+			Data: map[string]interface{}{},
+		},
+		Logger: log.New("Test"),
+	}
+	req.Header.Set(svc.Cfg.AuthProxyHeaderName, name)
+	key := fmt.Sprintf(authproxy.CachePrefix, authproxy.HashCacheKey(name))
+
+	t.Logf("Injecting stale user ID in cache with key %q", key)
+	err = svc.RemoteCache.Set(key, int64(33), 0)
+	require.NoError(t, err)
+
+	authEnabled := svc.initContextWithAuthProxy(ctx, orgID)
+	require.True(t, authEnabled)
+
+	require.Equal(t, userID, ctx.SignedInUser.UserId)
+	require.True(t, ctx.IsSignedIn)
+
+	i, err := svc.RemoteCache.Get(key)
+	require.NoError(t, err)
+	require.Equal(t, userID, i.(int64))
+}
+
+type fakeRenderService struct {
+	rendering.Service
+}
+
+func (s *fakeRenderService) Init() error {
+	return nil
+}
+
+func getContextHandler(t *testing.T) *ContextHandler {
+	t.Helper()
 
 	sqlStore := sqlstore.InitTestDB(t)
 	remoteCacheSvc := &remotecache.RemoteCache{}
@@ -85,45 +132,5 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	bus.AddHandler("", upsertHandler)
-	bus.AddHandler("", getUserHandler)
-	t.Cleanup(func() {
-		bus.ClearBusHandlers()
-	})
-
-	req, err := http.NewRequest("POST", "http://example.com", nil)
-	require.NoError(t, err)
-	ctx := &models.ReqContext{
-		Context: &macaron.Context{
-			Req: macaron.Request{
-				Request: req,
-			},
-			Data: map[string]interface{}{},
-		},
-		Logger: log.New("Test"),
-	}
-	req.Header.Set(cfg.AuthProxyHeaderName, name)
-	key := fmt.Sprintf(authproxy.CachePrefix, authproxy.HashCacheKey(name))
-
-	t.Logf("Injecting stale user ID in cache with key %q", key)
-	err = remoteCacheSvc.Set(key, int64(33), 0)
-	require.NoError(t, err)
-
-	authEnabled := svc.initContextWithAuthProxy(ctx, orgID)
-	require.True(t, authEnabled)
-
-	require.Equal(t, userID, ctx.SignedInUser.UserId)
-	require.True(t, ctx.IsSignedIn)
-
-	i, err := remoteCacheSvc.Get(key)
-	require.NoError(t, err)
-	require.Equal(t, userID, i.(int64))
-}
-
-type fakeRenderService struct {
-	rendering.Service
-}
-
-func (s *fakeRenderService) Init() error {
-	return nil
+	return svc
 }

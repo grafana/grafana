@@ -216,7 +216,7 @@ func (h *ContextHandler) initContextWithBasicAuth(ctx *models.ReqContext, orgID 
 			"err", err,
 		)
 
-		if err == models.ErrUserNotFound {
+		if errors.Is(err, models.ErrUserNotFound) {
 			err = login.ErrInvalidCredentials
 		}
 		ctx.JsonApiErr(401, InvalidUsernamePassword, err)
@@ -285,7 +285,7 @@ func (h *ContextHandler) rotateEndOfRequestFunc(ctx *models.ReqContext, authToke
 
 		// if the request is cancelled by the client we should not try
 		// to rotate the token since the client would not accept any result.
-		if ctx.Context.Req.Context().Err() == context.Canceled {
+		if errors.Is(ctx.Context.Req.Context().Err(), context.Canceled) {
 			return
 		}
 
@@ -347,7 +347,7 @@ func logUserIn(auth *authproxy.AuthProxy, username string, logger log.Logger, ig
 	return id, nil
 }
 
-func handleError(ctx *models.ReqContext, err error, statusCode int) error {
+func handleError(ctx *models.ReqContext, err error, statusCode int, cb func(error)) {
 	details := err
 	var e authproxy.Error
 	if errors.As(err, &e) {
@@ -355,7 +355,9 @@ func handleError(ctx *models.ReqContext, err error, statusCode int) error {
 	}
 	ctx.Handle(statusCode, err.Error(), details)
 
-	return details
+	if cb != nil {
+		cb(details)
+	}
 }
 
 func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID int64) bool {
@@ -382,14 +384,15 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 
 	// Check if allowed to continue with this IP
 	if err := auth.IsAllowedIP(); err != nil {
-		details := handleError(ctx, err, 407)
-		logger.Error("Failed to check whitelisted IP addresses", "message", err.Error(), "error", details)
+		handleError(ctx, err, 407, func(details error) {
+			logger.Error("Failed to check whitelisted IP addresses", "message", err.Error(), "error", details)
+		})
 		return true
 	}
 
 	id, err := logUserIn(auth, username, logger, false)
 	if err != nil {
-		handleError(ctx, err, 407)
+		handleError(ctx, err, 407, nil)
 		return true
 	}
 
@@ -410,13 +413,13 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 		}
 		id, err = logUserIn(auth, username, logger, true)
 		if err != nil {
-			handleError(ctx, err, 407)
+			handleError(ctx, err, 407, nil)
 			return true
 		}
 
 		user, err = auth.GetSignedInUser(id)
 		if err != nil {
-			handleError(ctx, err, 407)
+			handleError(ctx, err, 407, nil)
 			return true
 		}
 	}
@@ -429,13 +432,14 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 
 	// Remember user data in cache
 	if err := auth.Remember(id); err != nil {
-		details := handleError(ctx, err, 500)
-		logger.Error(
-			"Failed to store user in cache",
-			"username", username,
-			"message", err.Error(),
-			"error", details,
-		)
+		handleError(ctx, err, 500, func(details error) {
+			logger.Error(
+				"Failed to store user in cache",
+				"username", username,
+				"message", err.Error(),
+				"error", details,
+			)
+		})
 		return true
 	}
 

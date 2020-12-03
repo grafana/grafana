@@ -1108,7 +1108,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
 	cfg.AnonymousEnabled = AnonymousEnabled
 	AnonymousOrgName = valueAsString(iniFile.Section("auth.anonymous"), "org_name", "")
-	cfg.AnonymousOrgName = cfg.AnonymousOrgName
+	cfg.AnonymousOrgName = AnonymousOrgName
 	AnonymousOrgRole = valueAsString(iniFile.Section("auth.anonymous"), "org_role", "")
 	cfg.AnonymousOrgRole = AnonymousOrgRole
 	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)

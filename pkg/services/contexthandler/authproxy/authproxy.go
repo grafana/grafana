@@ -33,7 +33,13 @@ const (
 var getLDAPConfig = ldap.GetConfig
 
 // isLDAPEnabled checks if LDAP is enabled
-var isLDAPEnabled = ldap.IsEnabled
+var isLDAPEnabled = func(cfg *setting.Cfg) bool {
+	if cfg != nil {
+		return cfg.LDAPEnabled
+	}
+
+	return setting.LDAPEnabled
+}
 
 // newLDAP creates multiple LDAP instance
 var newLDAP = multildap.New
@@ -49,13 +55,9 @@ type AuthProxy struct {
 	orgID       int64
 	header      string
 
-	enabled             bool
-	LDAPAllowSignup     bool
-	AuthProxyAutoSignUp bool
-	whitelistIP         string
-	headerType          string
-	headers             map[string]string
-	cacheTTL            int
+	enabled         bool
+	LDAPAllowSignup bool
+	cacheTTL        int
 }
 
 // Error auth proxy specific error
@@ -89,18 +91,14 @@ type Options struct {
 func New(cfg *setting.Cfg, options *Options) *AuthProxy {
 	header := options.Ctx.Req.Header.Get(cfg.AuthProxyHeaderName)
 	return &AuthProxy{
-		remoteCache:         options.RemoteCache,
-		cfg:                 cfg,
-		ctx:                 options.Ctx,
-		orgID:               options.OrgID,
-		header:              header,
-		enabled:             cfg.AuthProxyEnabled,
-		headerType:          cfg.AuthProxyHeaderProperty,
-		headers:             cfg.AuthProxyHeaders,
-		whitelistIP:         cfg.AuthProxyWhitelist,
-		cacheTTL:            cfg.AuthProxySyncTTL,
-		LDAPAllowSignup:     cfg.LDAPAllowSignup,
-		AuthProxyAutoSignUp: cfg.AuthProxyAutoSignUp,
+		remoteCache:     options.RemoteCache,
+		cfg:             cfg,
+		ctx:             options.Ctx,
+		orgID:           options.OrgID,
+		header:          header,
+		enabled:         cfg.AuthProxyEnabled,
+		cacheTTL:        cfg.AuthProxySyncTTL,
+		LDAPAllowSignup: cfg.LDAPAllowSignup,
 	}
 }
 
@@ -119,11 +117,11 @@ func (auth *AuthProxy) HasHeader() bool {
 func (auth *AuthProxy) IsAllowedIP() error {
 	ip := auth.ctx.Req.RemoteAddr
 
-	if len(strings.TrimSpace(auth.whitelistIP)) == 0 {
+	if len(strings.TrimSpace(auth.cfg.AuthProxyWhitelist)) == 0 {
 		return nil
 	}
 
-	proxies := strings.Split(auth.whitelistIP, ",")
+	proxies := strings.Split(auth.cfg.AuthProxyWhitelist, ",")
 	var proxyObjs []*net.IPNet
 	for _, proxy := range proxies {
 		result, err := coerceProxyAddress(proxy)
@@ -183,7 +181,7 @@ func (auth *AuthProxy) Login(logger log.Logger, ignoreCache bool) (int64, error)
 		}
 	}
 
-	if isLDAPEnabled() {
+	if isLDAPEnabled(auth.cfg) {
 		id, err := auth.LoginViaLDAP()
 		if err != nil {
 			if errors.Is(err, ldap.ErrInvalidCredentials) {
@@ -231,12 +229,13 @@ func (auth *AuthProxy) RemoveUserFromCache(logger log.Logger) error {
 
 // LoginViaLDAP logs in user via LDAP request
 func (auth *AuthProxy) LoginViaLDAP() (int64, error) {
-	config, err := getLDAPConfig()
+	config, err := getLDAPConfig(auth.cfg)
 	if err != nil {
 		return 0, newError("failed to get LDAP config", err)
 	}
 
-	extUser, _, err := newLDAP(config.Servers).User(auth.header)
+	mldap := newLDAP(config.Servers)
+	extUser, _, err := mldap.User(auth.header)
 	if err != nil {
 		return 0, err
 	}
@@ -261,7 +260,7 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		AuthId:     auth.header,
 	}
 
-	switch auth.headerType {
+	switch auth.cfg.AuthProxyHeaderProperty {
 	case "username":
 		extUser.Login = auth.header
 
@@ -301,8 +300,7 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 // headersIterator iterates over all non-empty supported additional headers
 func (auth *AuthProxy) headersIterator(fn func(field string, header string)) {
 	for _, field := range supportedHeaderFields {
-		h := auth.headers[field]
-
+		h := auth.cfg.AuthProxyHeaders[field]
 		if h == "" {
 			continue
 		}
