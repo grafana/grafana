@@ -180,7 +180,9 @@ const ContextMenuItemComponent: React.FC<ContextMenuItemProps> = React.memo(
           target={target}
           className={cx(className, styles.link)}
           onClick={e => {
-            if (onClick) {
+            // We want to allow user to open link in a new tab but only if there is an url
+            if ((!url || !(e.ctrlKey || e.metaKey || e.shiftKey)) && onClick) {
+              e.preventDefault();
               onClick(e);
             }
           }}

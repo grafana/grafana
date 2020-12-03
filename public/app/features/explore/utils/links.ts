@@ -1,4 +1,4 @@
-import { Field, LinkModel, TimeRange, mapInternalLinkToExplore } from '@grafana/data';
+import { Field, LinkModel, TimeRange, mapInternalLinkToExplore, ScopedVars } from '@grafana/data';
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
 import { getTemplateSrv } from '@grafana/runtime';
 import { splitOpen } from '../state/main';
@@ -14,9 +14,10 @@ export const getFieldLinksForExplore = (
   field: Field,
   rowIndex: number,
   splitOpenFn: typeof splitOpen,
-  range: TimeRange
+  range: TimeRange,
+  vars: ScopedVars = {}
 ): Array<LinkModel<Field>> => {
-  const scopedVars: any = {};
+  const scopedVars: any = { ...vars };
   scopedVars['__value'] = {
     value: {
       raw: field.values.get(rowIndex),

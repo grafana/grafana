@@ -214,3 +214,6 @@ export * from './uPlot/plugins';
 export { useRefreshAfterGraphRendered } from './uPlot/hooks';
 export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';
 export { GraphNG } from './GraphNG/GraphNG';
+// TODO: rename
+export { GraphView } from './ServiceMap/GraphView';
+export { NodeDatum as ServiceMapNodeDatum } from './ServiceMap/types';

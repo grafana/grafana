@@ -9,6 +9,7 @@ import { Node } from './Node';
 import { Link } from './Link';
 import { ViewControls } from './ViewControls';
 import { ContextMenu } from '..';
+import { LinkModel } from '@grafana/data';
 
 interface Config extends Record<string, number> {
   collide: number;
@@ -18,6 +19,7 @@ interface Config extends Record<string, number> {
 
 interface Props {
   services: any[];
+  getLinks: (node: NodeDatum) => LinkModel[];
 }
 export function GraphView(props: Props) {
   const [scale, setScale] = useState(0.5);
@@ -107,8 +109,12 @@ export function GraphView(props: Props) {
           renderHeader={() => <div>{openedNode.node.name}</div>}
           items={[
             {
-              label: 'label test',
-              items: [{ label: 'link1' }],
+              label: 'Open in Explore',
+              items: props.getLinks(openedNode.node).map(link => ({
+                label: link.title,
+                url: link.href,
+                onClick: link.onClick,
+              })),
             },
           ]}
           onClose={() => setOpenedNode(undefined)}
@@ -157,7 +163,7 @@ function useLayout(rawNodes: NodeDatum[], rawLinks: LinkDatum[], config: Config)
 
 function processServices(services: XrayService[]): { nodes: NodeDatum[]; links: LinkDatum[] } {
   const { nodes, links } = services.reduce(
-    (acc: any, service: any) => {
+    (acc: any, service: any, index: number) => {
       const links = service.Edges.map((e: XrayEdge) => {
         return {
           source: service.ReferenceId,
@@ -168,10 +174,11 @@ function processServices(services: XrayService[]): { nodes: NodeDatum[]; links: 
 
       acc.links.push(...links);
 
-      const node = {
+      const node: NodeDatum = {
         name: service.Name,
         type: service.Type,
         id: service.ReferenceId,
+        dataFrameRowIndex: index,
         incoming: 0,
         stats: computeStats(service),
       };

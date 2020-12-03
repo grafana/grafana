@@ -43,6 +43,7 @@ export type NodeDatum = SimulationNodeDatum & {
   id: string;
   name: string;
   type: string;
+  dataFrameRowIndex: number;
   incoming: number;
   stats?: Stats;
 };
