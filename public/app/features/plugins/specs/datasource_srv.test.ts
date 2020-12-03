@@ -74,7 +74,7 @@ describe('datasource_srv', () => {
       type: 'jaeger-db',
       name: 'Jaeger',
       uid: 'uid-code-Jaeger',
-      meta: { tracing: true },
+      meta: { tracing: true, id: 'jaeger' },
     },
   };
 
@@ -134,6 +134,12 @@ describe('datasource_srv', () => {
     it('Can get list of data sources with annotation: true', () => {
       const list = dataSourceSrv.getList({ annotations: true });
       expect(list[0].name).toBe('mmm');
+    });
+
+    it('Can get get list and filter by pluginId', () => {
+      const list = dataSourceSrv.getList({ pluginId: 'jaeger' });
+      expect(list[0].name).toBe('Jaeger');
+      expect(list.length).toBe(1);
     });
 
     it('Can get list  of data sources with metrics: true, builtIn: true, mixed: true', () => {

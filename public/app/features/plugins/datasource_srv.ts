@@ -1,5 +1,4 @@
 // Libraries
-import sortBy from 'lodash/sortBy';
 import coreModule from 'app/core/core_module';
 // Services & Utils
 import { importDataSourcePlugin } from './plugin_loader';
@@ -155,6 +154,9 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.annotations && !x.meta.annotations) {
         return false;
       }
+      if (filters.pluginId && x.meta.id !== filters.pluginId) {
+        return false;
+      }
       return true;
     });
 
@@ -185,26 +187,33 @@ export class DatasourceSrv implements DataSourceService {
       return 0;
     });
 
-    if (filters.mixed) {
-      base.push(this.getInstanceSettings('-- Mixed --')!);
-    }
+    if (!filters.pluginId) {
+      if (filters.mixed) {
+        base.push(this.getInstanceSettings('-- Mixed --')!);
+      }
 
-    if (filters.dashboard) {
-      base.push(this.getInstanceSettings('-- Dashboard --')!);
-    }
+      if (filters.dashboard) {
+        base.push(this.getInstanceSettings('-- Dashboard --')!);
+      }
 
-    if (!filters.tracing) {
-      base.push(this.getInstanceSettings('-- Grafana --')!);
+      if (!filters.tracing) {
+        base.push(this.getInstanceSettings('-- Grafana --')!);
+      }
     }
 
     return sorted;
   }
 
+  /**
+   * @deprecated use getList
+   * */
   getExternal(): DataSourceInstanceSettings[] {
-    const datasources = this.getAll().filter(ds => !ds.meta.builtIn);
-    return sortBy(datasources, ['name']);
+    return this.getList();
   }
 
+  /**
+   * @deprecated use getList
+   * */
   getAnnotationSources() {
     return this.getList({ annotations: true, variables: true }).map(x => {
       return {
