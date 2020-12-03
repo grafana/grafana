@@ -23,7 +23,7 @@ export interface LokiLiveTarget {
 export class LiveStreams {
   private streams: KeyValue<Observable<DataFrame[]>> = {};
 
-  getStream(target: LokiLiveTarget): Observable<DataFrame[]> {
+  getStream(target: LokiLiveTarget, retryInterval = 5000): Observable<DataFrame[]> {
     let stream = this.streams[target.url];
 
     if (stream) {
@@ -57,7 +57,7 @@ export class LiveStreams {
                 ]);
               }
               // Retry every 5s
-              return timer(5000);
+              return timer(retryInterval);
             }
             return throwError(`error: ${error.reason}`);
           })

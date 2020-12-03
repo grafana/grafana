@@ -1,4 +1,5 @@
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, of, throwError, concat } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
 import * as rxJsWebSocket from 'rxjs/webSocket';
 import { LiveStreams } from './live_streams';
 import { DataFrame, DataFrameView, formatLabels, Labels } from '@grafana/data';
@@ -104,6 +105,39 @@ describe('Live Stream Tests', () => {
     });
     subscription.unsubscribe();
     expect(unsubscribed).toBe(true);
+  });
+  it('should reconnect when abnormal error', async () => {
+    const abnormalError = new Error('weird error') as any;
+    abnormalError.code = 1006;
+    const logStream = of({
+      streams: [
+        {
+          stream: { filename: '/var/log/sntpc.log', job: 'varlogs' },
+          values: [['1567025440118944705', 'Kittens']],
+        },
+      ],
+      dropped_entries: null,
+    });
+    const errorStream = throwError(abnormalError);
+    let retries = 0;
+    fakeSocket = of({}).pipe(
+      mergeMap(() => {
+        // When subscribed first time, return logStream and errorStream
+        if (retries++ === 0) {
+          return concat(logStream, errorStream);
+        }
+        // When re-subsribed after abnormal error, return just logStream
+        return logStream;
+      })
+    ) as any;
+    const liveStreams = new LiveStreams();
+    await expect(liveStreams.getStream(makeTarget('url_to_match'), 100)).toEmitValuesWith(received => {
+      const dataBefore = received[0];
+      const dataAfter = received[1];
+      expect(dataBefore).not.toBe(undefined);
+      expect(dataAfter).not.toBe(undefined);
+      expect(retries).toBe(2);
+    });
   });
 });
 
