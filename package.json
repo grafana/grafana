@@ -309,9 +309,9 @@
     "puppeteer": "node_modules/puppeteer-core"
   },
   "engines": {
-    "node": ">= 12"
+    "node": ">= 14"
   },
   "volta": {
-    "node": "12.19.1"
+    "node": "14.15.1"
   }
 }

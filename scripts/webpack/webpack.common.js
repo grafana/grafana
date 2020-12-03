@@ -48,6 +48,9 @@ module.exports = {
       // storybook v6 bump caused the app to bundle multiple versions of react breaking hooks
       // make sure to resolve only from the project: https://github.com/facebook/react/issues/13991#issuecomment-435587809
       react: path.resolve(__dirname, '../../node_modules/react'),
+      // some of data source pluginis use global Prism object to add the language definition
+      // we want to have same Prism object in core and in grafana/ui
+      prismjs: path.resolve(__dirname, '../../node_modules/prismjs'),
     },
     modules: [
       'node_modules',

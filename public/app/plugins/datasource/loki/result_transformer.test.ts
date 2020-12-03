@@ -33,6 +33,18 @@ const lokiResponse: LokiStreamResponse = {
   },
 };
 
+jest.mock('@grafana/runtime', () => ({
+  // @ts-ignore
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: () => {
+        return { name: 'Loki1' };
+      },
+    };
+  },
+}));
+
 describe('loki result transformer', () => {
   beforeAll(() => {
     setTemplateSrv(new TemplateSrv());
@@ -167,12 +179,12 @@ describe('enhanceDataFrame', () => {
     expect(fc.getFieldByName('trace2')!.config.links!.length).toBe(2);
     expect(fc.getFieldByName('trace2')!.config.links![0]).toEqual({
       title: '',
-      internal: { datasourceUid: 'uid', query: { query: 'test' } },
+      internal: { datasourceName: 'Loki1', datasourceUid: 'uid', query: { query: 'test' } },
       url: '',
     });
     expect(fc.getFieldByName('trace2')!.config.links![1]).toEqual({
       title: '',
-      internal: { datasourceUid: 'uid2', query: { query: 'test' } },
+      internal: { datasourceName: 'Loki1', datasourceUid: 'uid2', query: { query: 'test' } },
       url: '',
     });
   });

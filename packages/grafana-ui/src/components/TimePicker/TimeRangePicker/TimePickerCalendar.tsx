@@ -231,6 +231,8 @@ export const TimePickerCalendar = memo<Props>(props => {
   );
 });
 
+TimePickerCalendar.displayName = 'TimePickerCalendar';
+
 const Header = memo<Props>(({ onClose }) => {
   const theme = useTheme();
   const styles = getHeaderStyles(theme);
@@ -242,6 +244,8 @@ const Header = memo<Props>(({ onClose }) => {
     </div>
   );
 });
+
+Header.displayName = 'Header';
 
 const Body = memo<Props>(({ onChange, from, to, timeZone }) => {
   const value = inputToValue(from, to);
@@ -265,6 +269,8 @@ const Body = memo<Props>(({ onChange, from, to, timeZone }) => {
   );
 });
 
+Body.displayName = 'Body';
+
 const Footer = memo<Props>(({ onClose, onApply }) => {
   const theme = useTheme();
   const styles = getFooterStyles(theme);
@@ -280,6 +286,8 @@ const Footer = memo<Props>(({ onClose, onApply }) => {
     </div>
   );
 });
+
+Footer.displayName = 'Footer';
 
 export function inputToValue(from: DateTime, to: DateTime, invalidDateDefault: Date = new Date()): Date[] {
   const fromAsDate = from.toDate();

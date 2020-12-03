@@ -82,7 +82,9 @@ export class GrafanaLiveDataSourceScope extends GrafanaLiveScope {
     if (this.names) {
       return Promise.resolve(this.names);
     }
+
     const names: Array<SelectableValue<string>> = [];
+
     for (const [key, ds] of Object.entries(config.datasources)) {
       if (ds.meta.live) {
         try {
@@ -99,6 +101,7 @@ export class GrafanaLiveDataSourceScope extends GrafanaLiveScope {
         }
       }
     }
+
     return (this.names = names);
   }
 }

@@ -9,6 +9,5 @@ export function prepDataForStorybook(data: DataFrame[], theme: GrafanaTheme) {
     },
     theme,
     replaceVariables: (value: string) => value,
-    getDataSourceSettingsByUid: (value: string) => ({} as any),
   });
 }

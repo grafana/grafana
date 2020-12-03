@@ -34,17 +34,24 @@ export function createSpanLinkFactory(splitOpenFn: (options: { datasourceUid: st
       url: '',
       internal: {
         datasourceUid: lokiDs.uid,
+        datasourceName: lokiDs.name,
         query: {
           expr: getLokiQueryFromSpan(span),
           refId: '',
         },
       },
     };
-    const link = mapInternalLinkToExplore(dataLink, {}, getTimeRangeFromSpan(span), {} as Field, {
+
+    const link = mapInternalLinkToExplore({
+      link: dataLink,
+      internalLink: dataLink.internal!,
+      scopedVars: {},
+      range: getTimeRangeFromSpan(span),
+      field: {} as Field,
       onClickFn: splitOpenFn,
       replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-      getDataSourceSettingsByUid: getDataSourceSrv().getDataSourceSettingsByUid.bind(getDataSourceSrv()),
     });
+
     return {
       href: link.href,
       onClick: link.onClick,

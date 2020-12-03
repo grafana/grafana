@@ -37,6 +37,9 @@ export const Components = {
       BarGauge: {
         value: 'Bar gauge value',
       },
+      Text: {
+        container: () => '.markdown-html',
+      },
     },
   },
   Drawer: {
