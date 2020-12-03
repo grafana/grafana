@@ -1,14 +1,6 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import {
-  DataLink,
-  LoadingState,
-  numberUtil,
-  PanelData,
-  PanelMenuItem,
-  QueryResultMetaNotice,
-  ScopedVars,
-} from '@grafana/data';
+import { DataLink, LoadingState, PanelData, PanelMenuItem, QueryResultMetaNotice, ScopedVars } from '@grafana/data';
 import { AngularComponent, config, getTemplateSrv } from '@grafana/runtime';
 import { ClickOutsideWrapper, Icon, IconName, Tooltip, stylesFactory } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
