@@ -104,3 +104,9 @@ func describeMetric(metricType, field string) string {
 	}
 	return text + " " + field
 }
+
+// PPL date time type formats
+const (
+	pplTSFormat   = "2006-01-02 15:04:05.000000"
+	pplDateFormat = "2006-01-02"
+)

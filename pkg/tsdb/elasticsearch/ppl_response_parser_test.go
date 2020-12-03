@@ -11,11 +11,6 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-const (
-	pplTSFormat   = "2006-01-02 15:04:05.000000"
-	pplDateFormat = "2006-01-02"
-)
-
 func TestPPLResponseParser(t *testing.T) {
 	Convey("PPL response parser test", t, func() {
 		Convey("Simple time series query", func() {
