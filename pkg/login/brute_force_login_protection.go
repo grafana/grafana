@@ -13,13 +13,17 @@ var (
 	loginAttemptsWindow           = time.Minute * 5
 )
 
-var validateLoginAttempts = func(username string) error {
-	if setting.DisableBruteForceLoginProtection {
+var validateLoginAttempts = func(query *models.LoginUserQuery) error {
+	if query.Cfg != nil {
+		if query.Cfg.DisableBruteForceLoginProtection {
+			return nil
+		}
+	} else if setting.DisableBruteForceLoginProtection {
 		return nil
 	}
 
 	loginAttemptCountQuery := models.GetUserLoginAttemptCountQuery{
-		Username: username,
+		Username: query.Username,
 		Since:    time.Now().Add(-loginAttemptsWindow),
 	}
 
@@ -35,7 +39,11 @@ var validateLoginAttempts = func(username string) error {
 }
 
 var saveInvalidLoginAttempt = func(query *models.LoginUserQuery) error {
-	if setting.DisableBruteForceLoginProtection {
+	if query.Cfg != nil {
+		if query.Cfg.DisableBruteForceLoginProtection {
+			return nil
+		}
+	} else if setting.DisableBruteForceLoginProtection {
 		return nil
 	}
 

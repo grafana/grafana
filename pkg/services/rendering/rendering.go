@@ -25,12 +25,13 @@ import (
 func init() {
 	remotecache.Register(&RenderUser{})
 	registry.Register(&registry.Descriptor{
-		Name:         "RenderingService",
+		Name:         ServiceName,
 		Instance:     &RenderingService{},
 		InitPriority: registry.High,
 	})
 }
 
+const ServiceName = "RenderingService"
 const renderKeyPrefix = "render-%s"
 
 type RenderUser struct {
