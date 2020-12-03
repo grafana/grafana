@@ -117,7 +117,7 @@ describe('datasource_srv', () => {
     describe('when getting external metric sources', () => {
       it('should return list of explore sources', () => {
         const externalSources = dataSourceSrv.getExternal();
-        expect(externalSources.length).toBe(5);
+        expect(externalSources.length).toBe(6);
       });
     });
 
