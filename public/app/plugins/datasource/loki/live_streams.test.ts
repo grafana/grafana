@@ -3,7 +3,7 @@ import { mergeMap } from 'rxjs/operators';
 import * as rxJsWebSocket from 'rxjs/webSocket';
 import { LiveStreams } from './live_streams';
 import { DataFrame, DataFrameView, formatLabels, Labels } from '@grafana/data';
-import { noop, isEqual } from 'lodash';
+import { noop } from 'lodash';
 import { LokiTailResponse } from './types';
 
 let fakeSocket: Subject<any>;
