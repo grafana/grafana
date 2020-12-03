@@ -1,6 +1,6 @@
-import { InlineField, Input } from '@grafana/ui';
+import { InlineField, Input, QueryField } from '@grafana/ui';
 import { css } from 'emotion';
-import React, { FunctionComponent } from 'react';
+import React, { FunctionComponent, useEffect } from 'react';
 import { AddRemove } from '../../../AddRemove';
 import { useDispatch, useStatelessReducer } from '../../../../hooks/useStatelessReducer';
 import { Filters } from '../../aggregations';
@@ -8,7 +8,6 @@ import { changeBucketAggregationSetting } from '../../state/actions';
 import { BucketAggregationAction } from '../../state/types';
 import { addFilter, changeFilter, removeFilter } from './state/actions';
 import { reducer as filtersReducer } from './state/reducer';
-import { defaultFilter } from './utils';
 
 interface Props {
   value: Filters;
@@ -19,9 +18,17 @@ export const FiltersSettingsEditor: FunctionComponent<Props> = ({ value }) => {
 
   const dispatch = useStatelessReducer(
     newState => upperStateDispatch(changeBucketAggregationSetting(value, 'filters', newState)),
-    value.settings?.filters || [],
+    value.settings?.filters,
     filtersReducer
   );
+
+  // The model might not have filters (or an empty array of filters) in it because of the way it was built in previous versions of the datasource.
+  // If this is the case we add a default one.
+  useEffect(() => {
+    if (!value.settings?.filters?.length) {
+      dispatch(addFilter());
+    }
+  }, []);
 
   return (
     <>
@@ -31,8 +38,7 @@ export const FiltersSettingsEditor: FunctionComponent<Props> = ({ value }) => {
           flex-direction: column;
         `}
       >
-        {/* FIXME: Check if this default is really needed */}
-        {(value.settings?.filters || [defaultFilter()]).map((filter, index) => (
+        {value.settings?.filters!.map((filter, index) => (
           <div
             key={index}
             className={css`
@@ -45,11 +51,12 @@ export const FiltersSettingsEditor: FunctionComponent<Props> = ({ value }) => {
               `}
             >
               <InlineField label="Query" labelWidth={10}>
-                <Input
-                  /* FIXME: QueryField was causing some issues, need to investigate.  */
+                <QueryField
                   placeholder="Lucene Query"
-                  onBlur={e => dispatch(changeFilter(index, { ...filter, query: e.target.value! }))}
-                  defaultValue={filter.query}
+                  portalOrigin="elasticsearch"
+                  onBlur={() => {}}
+                  onChange={query => dispatch(changeFilter(index, { ...filter, query }))}
+                  query={filter.query}
                 />
               </InlineField>
             </div>
