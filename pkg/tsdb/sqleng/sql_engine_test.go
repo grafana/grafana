@@ -229,32 +229,42 @@ func TestSqlEngine(t *testing.T) {
 		uint16Value := uint16(1)
 		uint8Value := uint8(1)
 
-		fixtures := make([]interface{}, 24)
-		fixtures[0] = intValue
-		fixtures[1] = &intValue
-		fixtures[2] = int64Value
-		fixtures[3] = &int64Value
-		fixtures[4] = int32Value
-		fixtures[5] = &int32Value
-		fixtures[6] = int16Value
-		fixtures[7] = &int16Value
-		fixtures[8] = int8Value
-		fixtures[9] = &int8Value
-		fixtures[10] = float64Value
-		fixtures[11] = &float64Value
-		fixtures[12] = float32Value
-		fixtures[13] = &float32Value
-		fixtures[14] = uintValue
-		fixtures[15] = &uintValue
-		fixtures[16] = uint64Value
-		fixtures[17] = &uint64Value
-		fixtures[18] = uint32Value
-		fixtures[19] = &uint32Value
-		fixtures[20] = uint16Value
-		fixtures[21] = &uint16Value
-		fixtures[22] = uint8Value
-		fixtures[23] = &uint8Value
+		fixtures := []interface{}{
+			intValue,
+			&intValue,
+			int64Value,
+			&int64Value,
+			int32Value,
+			&int32Value,
+			int16Value,
+			&int16Value,
+			int8Value,
+			&int8Value,
+			float64Value,
+			&float64Value,
+			float32Value,
+			&float32Value,
+			uintValue,
+			&uintValue,
+			uint64Value,
+			&uint64Value,
+			uint32Value,
+			&uint32Value,
+			uint16Value,
+			&uint16Value,
+			uint8Value,
+			&uint8Value,
+		}
 
+		for _, f := range fixtures {
+			value, err := ConvertSqlValueColumnToFloat("col", f)
+			require.NoError(t, err)
+			require.True(t, value.Valid)
+			require.Equal(t, null.FloatFrom(1).Float64, value.Float64)
+		}
+	})
+
+	t.Run("Given row with nil value columns", func(t *testing.T) {
 		var intNilPointer *int
 		var int64NilPointer *int64
 		var int32NilPointer *int32
@@ -268,28 +278,22 @@ func TestSqlEngine(t *testing.T) {
 		var uint16NilPointer *uint16
 		var uint8NilPointer *uint8
 
-		nilPointerFixtures := make([]interface{}, 12)
-		nilPointerFixtures[0] = intNilPointer
-		nilPointerFixtures[1] = int64NilPointer
-		nilPointerFixtures[2] = int32NilPointer
-		nilPointerFixtures[3] = int16NilPointer
-		nilPointerFixtures[4] = int8NilPointer
-		nilPointerFixtures[5] = float64NilPointer
-		nilPointerFixtures[6] = float32NilPointer
-		nilPointerFixtures[7] = uintNilPointer
-		nilPointerFixtures[8] = uint64NilPointer
-		nilPointerFixtures[9] = uint32NilPointer
-		nilPointerFixtures[10] = uint16NilPointer
-		nilPointerFixtures[11] = uint8NilPointer
-
-		for _, f := range fixtures {
-			value, err := ConvertSqlValueColumnToFloat("col", f)
-			require.NoError(t, err)
-			require.True(t, value.Valid)
-			require.Equal(t, null.FloatFrom(1).Float64, value.Float64)
+		fixtures := []interface{}{
+			intNilPointer,
+			int64NilPointer,
+			int32NilPointer,
+			int16NilPointer,
+			int8NilPointer,
+			float64NilPointer,
+			float32NilPointer,
+			uintNilPointer,
+			uint64NilPointer,
+			uint32NilPointer,
+			uint16NilPointer,
+			uint8NilPointer,
 		}
 
-		for _, f := range nilPointerFixtures {
+		for _, f := range fixtures {
 			value, err := ConvertSqlValueColumnToFloat("col", f)
 			require.NoError(t, err)
 			require.False(t, value.Valid)
