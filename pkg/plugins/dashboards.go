@@ -91,7 +91,6 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 
 func loadPluginDashboard(pluginId, path string) (*models.Dashboard, error) {
 	plugin, exists := Plugins[pluginId]
-
 	if !exists {
 		return nil, PluginNotFoundError{pluginId}
 	}
@@ -102,7 +101,11 @@ func loadPluginDashboard(pluginId, path string) (*models.Dashboard, error) {
 		return nil, err
 	}
 
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			plog.Warn("Failed to close file", "path", dashboardFilePath, "err", err)
+		}
+	}()
 
 	data, err := simplejson.NewFromReader(reader)
 	if err != nil {

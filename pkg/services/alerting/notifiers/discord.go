@@ -2,6 +2,7 @@ package notifiers
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"os"
@@ -168,12 +169,20 @@ func (dn *DiscordNotifier) embedImage(cmd *models.SendWebhookSync, imagePath str
 			return err
 		}
 	}
-
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			dn.log.Warn("Failed to close file", "path", imagePath, "err", err)
+		}
+	}()
 
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
-
+	defer func() {
+		if err := w.Close(); err != nil {
+			// Should be OK since we already close it on non-error path
+			dn.log.Warn("Failed to close multipart writer", "err", err)
+		}
+	}()
 	fw, err := w.CreateFormField("payload_json")
 	if err != nil {
 		return err
@@ -192,7 +201,9 @@ func (dn *DiscordNotifier) embedImage(cmd *models.SendWebhookSync, imagePath str
 		return err
 	}
 
-	w.Close()
+	if err := w.Close(); err != nil {
+		return fmt.Errorf("failed to close multipart writer: %w", err)
+	}
 
 	cmd.Body = b.String()
 	cmd.ContentType = w.FormDataContentType()
