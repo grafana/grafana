@@ -1,10 +1,15 @@
-import { Filters, Histogram, DateHistogram, Terms } from './components/BucketAggregationsEditor/aggregations';
+import {
+  Filters,
+  Histogram,
+  DateHistogram,
+  Terms,
+} from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import {
   isMetricAggregationWithField,
   isMetricAggregationWithSettings,
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
-} from './components/MetricAggregationsEditor/aggregations';
+} from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { defaultBucketAgg, defaultMetricAgg, findMetricById } from './query_def';
 import { ElasticsearchQuery } from './types';
 

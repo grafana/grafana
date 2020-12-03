@@ -18,7 +18,7 @@ import { backendSrv } from 'app/core/services/backend_srv'; // will use the vers
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { ElasticsearchOptions, ElasticsearchQuery } from './types';
-import { Filters } from './components/BucketAggregationsEditor/aggregations';
+import { Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 
 const ELASTICSEARCH_MOCK_URL = 'http://elasticsearch.local';
 

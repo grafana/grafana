@@ -21,13 +21,13 @@ import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
-import { metricAggregationConfig } from './components/MetricAggregationsEditor/utils';
+import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
   isMetricAggregationWithField,
   isPipelineAggregationWithMultipleBucketPaths,
-} from './components/MetricAggregationsEditor/aggregations';
-import { bucketAggregationConfig } from './components/BucketAggregationsEditor/utils';
-import { isBucketAggregationWithField } from './components/BucketAggregationsEditor/aggregations';
+} from './components/QueryEditor/MetricAggregationsEditor/aggregations';
+import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
+import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.

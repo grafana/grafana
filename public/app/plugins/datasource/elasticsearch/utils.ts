@@ -1,5 +1,8 @@
-import { isMetricAggregationWithField, MetricAggregation } from './components/MetricAggregationsEditor/aggregations';
-import { metricAggregationConfig } from './components/MetricAggregationsEditor/utils';
+import {
+  isMetricAggregationWithField,
+  MetricAggregation,
+} from './components/QueryEditor/MetricAggregationsEditor/aggregations';
+import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
 export const describeMetric = (metric: MetricAggregation) => {
   if (!isMetricAggregationWithField(metric)) {

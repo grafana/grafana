@@ -11,9 +11,12 @@ import {
   PreferredVisualisationType,
 } from '@grafana/data';
 import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
-import { ExtendedStatMetaType, isMetricAggregationWithField } from './components/MetricAggregationsEditor/aggregations';
+import {
+  ExtendedStatMetaType,
+  isMetricAggregationWithField,
+} from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { describeMetric } from './utils';
-import { metricAggregationConfig } from './components/MetricAggregationsEditor/utils';
+import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
 export class ElasticResponse {
   constructor(private targets: ElasticsearchQuery[], private response: any) {

@@ -1,11 +1,11 @@
-import { BucketAggregation } from './components/BucketAggregationsEditor/aggregations';
+import { BucketAggregation } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import {
   ExtendedStat,
   MetricAggregation,
   MovingAverageModelOption,
   MetricAggregationType,
-} from './components/MetricAggregationsEditor/aggregations';
-import { metricAggregationConfig, pipelineOptions } from './components/MetricAggregationsEditor/utils';
+} from './components/QueryEditor/MetricAggregationsEditor/aggregations';
+import { metricAggregationConfig, pipelineOptions } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
 export const extendedStats: ExtendedStat[] = [
   { label: 'Avg', value: 'avg' },

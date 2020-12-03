@@ -3,7 +3,7 @@ import { css, cx } from 'emotion';
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 import { describeMetric } from '../utils';
-import { MetricAggregation } from './MetricAggregationsEditor/aggregations';
+import { MetricAggregation } from './QueryEditor/MetricAggregationsEditor/aggregations';
 
 const noWrap = css`
   white-space: nowrap;
