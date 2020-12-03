@@ -352,15 +352,10 @@ func (f *PPLRequest) MarshalJSON() ([]byte, error) {
 
 type Datarow []interface{}
 
-// PPLResponseData represents a PPL response
-type PPLResponseData struct {
-	Schema   []map[string]interface{} `json:"schema"`
-	Datarows []Datarow                `json:"datarows"`
-}
-
 // PPLResponse represents a PPL response
 type PPLResponse struct {
-	Status    int                `json:"status,omitempty"`
-	Responses []*PPLResponseData `json:"responses"`
-	DebugInfo *PPLDebugInfo      `json:"-"`
+	Status    int                      `json:"status,omitempty"`
+	Schema    []map[string]interface{} `json:"schema"`
+	Datarows  []Datarow                `json:"datarows"`
+	DebugInfo *PPLDebugInfo            `json:"-"`
 }

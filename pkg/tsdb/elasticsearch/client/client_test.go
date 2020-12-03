@@ -378,15 +378,11 @@ func TestClient(t *testing.T) {
 			}),
 		}, func(sc *scenarioContext) {
 			sc.responseBody = `{
-				"responses": [
-					{
-						"schema": [{"name": "count(data)", "type": "string"}, {"name": "timestamp", "type": "timestamp"}],
-						"datarows":  [
-							["2020-12-01 00:39:02.912Z", "1"],
-							["2020-12-01 03:26:21.326Z", "2"],
-							["2020-12-01 03:34:43.399Z", "3"]
-					   ]
-					}
+				"schema": [{"name": "count(data)", "type": "string"}, {"name": "timestamp", "type": "timestamp"}],
+				"datarows":  [
+					["2020-12-01 00:39:02.912Z", "1"],
+					["2020-12-01 03:26:21.326Z", "2"],
+					["2020-12-01 03:34:43.399Z", "3"]
 				]
 			}`
 
@@ -414,7 +410,8 @@ func TestClient(t *testing.T) {
 					})
 				})
 				Convey("Should parse response", func() {
-					So(res.Responses, ShouldHaveLength, 1)
+					So(res.Schema, ShouldHaveLength, 2)
+					So(res.Datarows, ShouldHaveLength, 3)
 					So(res.Status, ShouldEqual, 200)
 				})
 			})
