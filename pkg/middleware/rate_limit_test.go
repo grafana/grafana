@@ -19,20 +19,19 @@ type rateLimiterScenarioFunc func(c execFunc, t advanceTimeFunc)
 
 func rateLimiterScenario(t *testing.T, desc string, rps int, burst int, fn rateLimiterScenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
-		m := macaron.New()
 		defaultHandler := func(c *models.ReqContext) {
 			resp := make(map[string]interface{})
 			resp["message"] = "OK"
 			c.JSON(200, resp)
 		}
+		currentTime := time.Now()
+
+		m := macaron.New()
 		m.Use(macaron.Renderer(macaron.RenderOptions{
 			Directory: "",
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 		}))
 		m.Use(GetContextHandler(nil, nil, nil))
-
-		currentTime := time.Now()
-
 		m.Get("/foo", RateLimit(rps, burst, func() time.Time { return currentTime }), defaultHandler)
 
 		fn(func() *httptest.ResponseRecorder {
