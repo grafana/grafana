@@ -107,9 +107,8 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           path: 'axisWidth',
           name: 'Width',
           category: ['Axis'],
-          defaultValue: 60,
           settings: {
-            placeholder: '60',
+            placeholder: 'Auto',
           },
           showIf: c => c.axisPlacement !== AxisPlacement.Hidden,
         });
