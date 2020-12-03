@@ -6,10 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 
-	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -399,27 +397,6 @@ func TestPPLResponseParser(t *testing.T) {
 }
 
 func newPPLResponseParserForTest(tsdbQueries map[string]string, responseBody string) (*pplResponseParser, error) {
-	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
-	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
-	fromStr := fmt.Sprintf("%d", from.UnixNano()/int64(time.Millisecond))
-	toStr := fmt.Sprintf("%d", to.UnixNano()/int64(time.Millisecond))
-	tsdbQuery := &tsdb.TsdbQuery{
-		Queries:   []*tsdb.Query{},
-		TimeRange: tsdb.NewTimeRange(fromStr, toStr),
-	}
-
-	for refID, tsdbQueryBody := range tsdbQueries {
-		tsdbQueryJSON, err := simplejson.NewJson([]byte(tsdbQueryBody))
-		if err != nil {
-			return nil, err
-		}
-
-		tsdbQuery.Queries = append(tsdbQuery.Queries, &tsdb.Query{
-			Model: tsdbQueryJSON,
-			RefId: refID,
-		})
-	}
-
 	var response es.PPLResponse
 	err := json.Unmarshal([]byte(responseBody), &response)
 	if err != nil {
@@ -432,13 +409,7 @@ func newPPLResponseParserForTest(tsdbQueries map[string]string, responseBody str
 		},
 	}
 
-	tsQueryParser := newTimeSeriesQueryParser()
-	queries, err := tsQueryParser.parse(tsdbQuery)
-	if err != nil {
-		return nil, err
-	}
-
-	return newPPLResponseParser(&response, queries[0]), nil
+	return newPPLResponseParser(&response), nil
 }
 
 func formatUnixMs(ms int64, format string) string {

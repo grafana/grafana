@@ -13,13 +13,11 @@ import (
 
 type pplResponseParser struct {
 	Response *es.PPLResponse
-	Target   *Query
 }
 
-var newPPLResponseParser = func(response *es.PPLResponse, target *Query) *pplResponseParser {
+var newPPLResponseParser = func(response *es.PPLResponse) *pplResponseParser {
 	return &pplResponseParser{
 		Response: response,
-		Target:   target,
 	}
 }
 

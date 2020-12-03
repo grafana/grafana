@@ -823,10 +823,11 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 	Convey("Test time series query parser", t, func() {
 		p := newTimeSeriesQueryParser()
 
-		Convey("Should be able to parse query", func() {
+		Convey("Should be able to parse Lucene query", func() {
 			body := `{
 				"timeField": "@timestamp",
 				"query": "@metric:cpu",
+				"queryType": "lucene",
 				"alias": "{{@hostname}} {{metric}}",
 				"metrics": [
 					{
@@ -883,6 +884,7 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 
 			So(q.TimeField, ShouldEqual, "@timestamp")
 			So(q.RawQuery, ShouldEqual, "@metric:cpu")
+			So(q.QueryType, ShouldEqual, "lucene")
 			So(q.Alias, ShouldEqual, "{{@hostname}} {{metric}}")
 
 			So(q.Metrics, ShouldHaveLength, 2)
@@ -915,6 +917,43 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 			So(q.BucketAggs[1].Settings.Get("interval").MustString(), ShouldEqual, "5m")
 			So(q.BucketAggs[1].Settings.Get("min_doc_count").MustInt64(), ShouldEqual, 0)
 			So(q.BucketAggs[1].Settings.Get("trimEdges").MustInt64(), ShouldEqual, 0)
+		})
+
+		Convey("Should default queryType to Lucene", func() {
+			body := `{
+				"timeField": "@timestamp",
+				"query": "*"
+			}`
+			tsdbQuery, err := newTsdbQuery(body)
+			So(err, ShouldBeNil)
+			queries, err := p.parse(tsdbQuery)
+			So(err, ShouldBeNil)
+			So(queries, ShouldHaveLength, 1)
+
+			q := queries[0]
+
+			So(q.TimeField, ShouldEqual, "@timestamp")
+			So(q.RawQuery, ShouldEqual, "*")
+			So(q.QueryType, ShouldEqual, "lucene")
+		})
+
+		Convey("Should be able to parse PPL query", func() {
+			body := `{
+				"timeField": "@timestamp",
+				"query": "source=index",
+				"queryType": "PPL"
+			}`
+			tsdbQuery, err := newTsdbQuery(body)
+			So(err, ShouldBeNil)
+			queries, err := p.parse(tsdbQuery)
+			So(err, ShouldBeNil)
+			So(queries, ShouldHaveLength, 1)
+
+			q := queries[0]
+
+			So(q.TimeField, ShouldEqual, "@timestamp")
+			So(q.RawQuery, ShouldEqual, "source=index")
+			So(q.QueryType, ShouldEqual, "PPL")
 		})
 	})
 }

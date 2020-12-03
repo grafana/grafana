@@ -2,17 +2,25 @@ package elasticsearch
 
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 // Query represents the time series query model of the datasource
 type Query struct {
 	TimeField  string       `json:"timeField"`
 	RawQuery   string       `json:"query"`
+	QueryType  string       `json:"queryType"`
 	BucketAggs []*BucketAgg `json:"bucketAggs"`
 	Metrics    []*MetricAgg `json:"metrics"`
 	Alias      string       `json:"alias"`
 	Interval   string
 	RefID      string
+}
+
+// queryHandler is an interface for handling queries of the same type
+type queryHandler interface {
+	processQuery(q *Query, from, to string) error
+	executeQueries() (*tsdb.Response, error)
 }
 
 // BucketAgg represents a bucket aggregation of the time series query model of the datasource
