@@ -2,12 +2,11 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { Field, HorizontalGroup, Select } from '@grafana/ui';
+import { HorizontalGroup, Select } from '@grafana/ui';
 import { SelectableValue, DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { isUnsignedPluginSignature, PluginSignatureBadge } from '../../../features/plugins/PluginSignatureBadge';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { css } from 'emotion';
 
 export interface Props {
   onChange: (ds: DataSourceInstanceSettings) => void;
@@ -76,7 +75,7 @@ export class DataSourcePicker extends PureComponent<Props, State> {
     }
 
     return {
-      label: current ?? 'no name',
+      label: (current ?? 'no name') + ' - not found',
       value: current,
       imgUrl: '',
       hideText: hideTextValue,
@@ -112,41 +111,33 @@ export class DataSourcePicker extends PureComponent<Props, State> {
 
     return (
       <div aria-label={selectors.components.DataSourcePicker.container}>
-        <Field
+        <Select
+          className="ds-picker select-container"
+          isMulti={false}
+          isClearable={false}
+          backspaceRemovesValue={false}
+          onChange={this.onChange}
+          options={options}
+          autoFocus={autoFocus}
+          onBlur={onBlur}
+          openMenuOnFocus={openMenuOnFocus}
+          maxMenuHeight={500}
+          menuPlacement="bottom"
+          placeholder={placeholder}
+          noOptionsMessage="No datasources found"
+          value={value}
           invalid={!!error}
-          error={error}
-          className={css`
-            margin-bottom: 0;
-          `}
-        >
-          <Select
-            className="ds-picker select-container"
-            isMulti={false}
-            isClearable={false}
-            backspaceRemovesValue={false}
-            onChange={this.onChange}
-            options={options}
-            autoFocus={autoFocus}
-            onBlur={onBlur}
-            openMenuOnFocus={openMenuOnFocus}
-            maxMenuHeight={500}
-            menuPlacement="bottom"
-            placeholder={placeholder}
-            noOptionsMessage="No datasources found"
-            value={value}
-            invalid={!!error}
-            getOptionLabel={o => {
-              if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
-                return (
-                  <HorizontalGroup align="center" justify="space-between">
-                    <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />
-                  </HorizontalGroup>
-                );
-              }
-              return o.label || '';
-            }}
-          />
-        </Field>
+          getOptionLabel={o => {
+            if (o.meta && isUnsignedPluginSignature(o.meta.signature) && o !== value) {
+              return (
+                <HorizontalGroup align="center" justify="space-between">
+                  <span>{o.label}</span> <PluginSignatureBadge status={o.meta.signature} />
+                </HorizontalGroup>
+              );
+            }
+            return o.label || '';
+          }}
+        />
       </div>
     );
   }

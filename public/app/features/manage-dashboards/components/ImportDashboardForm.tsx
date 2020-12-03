@@ -96,6 +96,7 @@ export const ImportDashboardForm: FC<Props> = ({
       {inputs.dataSources &&
         inputs.dataSources.map((input: DataSourceInput, index: number) => {
           const dataSourceOption = `dataSources[${index}]`;
+          const current = getValues().dataSources ?? [];
           return (
             <Field
               label={input.label}
@@ -106,7 +107,7 @@ export const ImportDashboardForm: FC<Props> = ({
               <InputControl
                 as={DataSourcePicker}
                 name={`${dataSourceOption}`}
-                current={input.value}
+                current={current[index]?.name}
                 control={control}
                 placeholder={input.info}
                 rules={{ required: true }}

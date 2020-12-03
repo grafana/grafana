@@ -1,4 +1,4 @@
-import { AppEvents, DataSourceInstanceSettings, DataSourceSelectItem, locationUtil } from '@grafana/data';
+import { AppEvents, DataSourceInstanceSettings, locationUtil } from '@grafana/data';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import config from 'app/core/config';
 import {
@@ -73,13 +73,13 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
     const inputs = getState().importDashboard.inputs;
 
     let inputsToPersist = [] as any[];
-    importDashboardForm.dataSources?.forEach((dataSource: DataSourceSelectItem, index: number) => {
+    importDashboardForm.dataSources?.forEach((dataSource: DataSourceInstanceSettings, index: number) => {
       const input = inputs.dataSources[index];
       inputsToPersist.push({
         name: input.name,
         type: input.type,
         pluginId: input.pluginId,
-        value: dataSource.value,
+        value: dataSource.name,
       });
     });
 
