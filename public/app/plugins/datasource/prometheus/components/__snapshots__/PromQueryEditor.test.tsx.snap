@@ -164,7 +164,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         tooltip="Link to Graph in Prometheus"
         width={10}
       >
-        <PromLink
+        <Memo(PromLink)
           datasource={
             Object {
               "createQuery": [MockFunction],
