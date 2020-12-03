@@ -61,7 +61,6 @@ describe('UPlotConfigBuilder', () => {
       formatValue: () => 'test value',
       grid: false,
       show: true,
-      size: 1,
       theme: { isDark: true, palette: { gray25: '#ffffff' }, colors: { text: 'gray' } } as GrafanaTheme,
       values: [],
     });
