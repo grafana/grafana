@@ -25,18 +25,19 @@ func (et *EpochTime) FromDB(b []byte) error {
 	return nil
 }
 
-// ToDB is not implemented as serialization is handled with manual SQL queries).
+// ToDB is not implemented as serialization is handled with manual SQL queries.
 // ToDB is part of the xorm Conversion interface.
+// This is never called, as it seems xorm's setColumnTime will call .Unix() if source type
+// it time and the destination type a number type.
 func (et *EpochTime) ToDB() ([]byte, error) {
-	// Currently handled manually in sql command, needed to fulfill the xorm
-	// converter interface it seems
-	return []byte{}, fmt.Errorf("database serialization of alerting ng Instance labels is not implemented")
+	return nil, fmt.Errorf("database serialization of alerting ng Instance labels is not implemented")
 }
 
-// Time returns EpochTime as a time.Time
+// Time returns EpochTime as a time.Time.
+// If the time is nil, a time.Time at epoch 0 is returned.
 func (et *EpochTime) Time() time.Time {
 	if et == nil {
-		return time.Time{}
+		return time.Unix(0, 0)
 	}
 	return time.Time(*et)
 }
