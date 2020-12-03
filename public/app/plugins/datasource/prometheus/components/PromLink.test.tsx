@@ -39,7 +39,7 @@ describe('PromLink', () => {
   it('should show correct link for 1 component', async () => {
     render(
       <div>
-        <PromLink datasource={getDataSource()} panelData={getPanelData()} query={{} as PromQuery}></PromLink>
+        <PromLink datasource={getDataSource()} panelData={getPanelData()} query={{} as PromQuery} />
       </div>
     );
     expect(screen.getByText('Prometheus')).toHaveAttribute(
@@ -50,12 +50,8 @@ describe('PromLink', () => {
   it('should show different link when there are 2 components with the same panel data', () => {
     render(
       <div>
-        <PromLink datasource={getDataSource()} panelData={getPanelData()} query={{} as PromQuery}></PromLink>
-        <PromLink
-          datasource={getDataSource({ directUrl: 'prom2' })}
-          panelData={getPanelData()}
-          query={{} as any}
-        ></PromLink>
+        <PromLink datasource={getDataSource()} panelData={getPanelData()} query={{} as PromQuery} />
+        <PromLink datasource={getDataSource({ directUrl: 'prom2' })} panelData={getPanelData()} query={{} as any} />
       </div>
     );
     const promLinkButtons = screen.getAllByText('Prometheus');
