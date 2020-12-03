@@ -47,14 +47,14 @@ func (exception *frontendSentryException) FmtStacktraces() string {
 	return strings.Join(stacktraces, "\n\n")
 }
 
-func addEventContextToLogContext(rootPrefix string, logCtx *log15.Ctx, eventCtx *map[string]interface{}) {
-	for key, element := range *eventCtx {
+func addEventContextToLogContext(rootPrefix string, logCtx log15.Ctx, eventCtx map[string]interface{}) {
+	for key, element := range eventCtx {
 		prefix := fmt.Sprintf("%s_%s", rootPrefix, key)
 		switch v := element.(type) {
 		case map[string]interface{}:
-			addEventContextToLogContext(prefix, logCtx, &v)
+			addEventContextToLogContext(prefix, logCtx, v)
 		default:
-			(*logCtx)[prefix] = fmt.Sprintf("%v", v)
+			logCtx[prefix] = fmt.Sprintf("%v", v)
 		}
 	}
 }
@@ -68,9 +68,7 @@ func (event *frontendSentryEvent) ToLogContext() log15.Ctx {
 	if event.Exception != nil {
 		ctx["stacktrace"] = event.Exception.FmtStacktraces()
 	}
-	if event.Contexts != nil {
-		addEventContextToLogContext("context", &ctx, &event.Contexts)
-	}
+	addEventContextToLogContext("context", ctx, event.Contexts)
 	if len(event.User.Email) > 0 {
 		ctx["user_email"] = event.User.Email
 		ctx["user_id"] = event.User.ID
