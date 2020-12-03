@@ -331,6 +331,8 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 func (sn *SlackNotifier) slackFileUpload(evalContext *alerting.EvalContext, log log.Logger, url string, recipient string, token string) error {
 	if evalContext.ImageOnDiskPath == "" {
+		// nolint:gosec
+		// We can ignore the gosec G304 warning on this one because `setting.HomePath` comes from Grafanas configuration file.
 		evalContext.ImageOnDiskPath = filepath.Join(setting.HomePath, "public/img/mixed_styles.png")
 	}
 	log.Info("Uploading to slack via file.upload API")
