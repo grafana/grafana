@@ -2,7 +2,6 @@ package ngalert
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -90,49 +89,4 @@ type listAlertDefinitionsCommand struct {
 	OrgID int64 `json:"-"`
 
 	Result []*AlertDefinition
-}
-
-// EpochTime defines a time.Time encoded into the database (via xorm) and JSON as a unix epoch timestamp.
-type EpochTime time.Time
-
-// FromDB deserializes time stored as a unix timestamp in the database to EpochTime,
-// which has the underlying type of time.Time.
-// FromDB is part of the xorm Conversion interface.
-func (et *EpochTime) FromDB(b []byte) error {
-	i, err := strconv.ParseInt(string(b), 10, 64)
-	if err != nil {
-		return fmt.Errorf("error reading EpochTime type from database: %w", err)
-	}
-
-	*et = EpochTime(time.Unix(i, 0))
-
-	return nil
-}
-
-// ToDB is not implemented as serialization is handled with manual SQL queries).
-// ToDB is part of the xorm Conversion interface.
-func (et *EpochTime) ToDB() ([]byte, error) {
-	// Currently handled manually in sql command, needed to fulfill the xorm
-	// converter interface it seems
-	return []byte{}, fmt.Errorf("database serialization of alerting ng Instance labels is not implemented")
-}
-
-// Time returns EpochTime as a time.Time
-func (et *EpochTime) Time() time.Time {
-	if et == nil {
-		return time.Time{}
-	}
-	return time.Time(*et)
-}
-
-func (et *EpochTime) String() string {
-	return et.Time().String()
-}
-
-func (et *EpochTime) UnmarshalJSON(b []byte) error {
-	return et.FromDB(b)
-}
-
-func (et *EpochTime) MarshalJSON() ([]byte, error) {
-	return []byte(strconv.FormatInt(et.Time().Unix(), 10)), nil
 }
