@@ -6,9 +6,9 @@ import { GrafanaTheme } from '@grafana/data';
 import { Button, Icon, stylesFactory } from '@grafana/ui';
 import { PageToolbar } from 'app/core/components/PageToolbar/PageToolbar';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
-import { AlertingQueryEditor } from './components/AlertingQueryEditor';
+import AlertingQueryEditor from './components/AlertingQueryEditor';
 import { AlertDefinitionOptions } from './components/AlertDefinitionOptions';
-import { AlertingQueryPreview } from './components/AlertingQueryPreview';
+import AlertingQueryPreview from './components/AlertingQueryPreview';
 import {
   updateAlertDefinitionOption,
   createAlertDefinition,

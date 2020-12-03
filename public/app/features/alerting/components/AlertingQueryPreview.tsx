@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { PureComponent } from 'react';
+import { connect, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
-import { TabsBar, TabContent, Tab, stylesFactory, useStyles } from '@grafana/ui';
+import { GrafanaTheme, PanelData } from '@grafana/data';
+import { TabsBar, TabContent, Tab, stylesFactory } from '@grafana/ui';
+import { config } from 'app/core/config';
+import { StoreState } from '../../../types';
 
 enum Tabs {
   Query = 'query',
@@ -13,31 +16,63 @@ const tabs = [
   { id: Tabs.Instance, text: 'Alerting instance', active: false },
 ];
 
-export const AlertingQueryPreview = ({}) => {
-  const styles = useStyles(getStyles);
-  const [activeTab, changeTab] = useState<string>('query');
+interface OwnProps {}
 
-  return (
-    <div className={styles.wrapper}>
-      <TabsBar>
-        {tabs.map((tab, index) => {
-          return (
-            <Tab
-              key={`${tab.id}-${index}`}
-              label={tab.text}
-              onChangeTab={() => changeTab(tab.id)}
-              active={activeTab === tab.id}
-            />
-          );
-        })}
-      </TabsBar>
-      <TabContent className={styles.tabContent}>
-        {activeTab === Tabs.Query && <div>Query result</div>}
-        {activeTab === Tabs.Instance && <div>Instance something something dark side</div>}
-      </TabContent>
-    </div>
-  );
+interface ConnectedProps {
+  data: PanelData[];
+}
+
+interface DispatchProps {}
+
+type Props = ConnectedProps & DispatchProps & OwnProps;
+
+interface State {
+  activeTab: string;
+}
+
+export class AlertingQueryPreview extends PureComponent<Props, State> {
+  state = {
+    activeTab: 'query',
+  };
+
+  onChangeTab = (tab: string) => {
+    this.setState({ activeTab: tab });
+  };
+
+  render() {
+    const { activeTab } = this.state;
+    const styles = getStyles(config.theme);
+
+    return (
+      <div className={styles.wrapper}>
+        <TabsBar>
+          {tabs.map((tab, index) => {
+            return (
+              <Tab
+                key={`${tab.id}-${index}`}
+                label={tab.text}
+                onChangeTab={() => this.onChangeTab(tab.id)}
+                active={activeTab === tab.id}
+              />
+            );
+          })}
+        </TabsBar>
+        <TabContent className={styles.tabContent}>
+          {activeTab === Tabs.Query && <div>Query result</div>}
+          {activeTab === Tabs.Instance && <div>Instance something something dark side</div>}
+        </TabContent>
+      </div>
+    );
+  }
+}
+
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
+  return {
+    data: state.alertDefinition.data,
+  };
 };
+
+export default connect(mapStateToProps)(AlertingQueryPreview);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   const tabBarHeight = 42;
