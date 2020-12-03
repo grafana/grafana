@@ -29,7 +29,7 @@ const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Query" labelWidth={15} grow>
+        <InlineField label="Query" labelWidth={17} grow>
           <QueryField
             query={value.query}
             // By default QueryField calls onChange if onBlur is not defined, this will trigger a rerender

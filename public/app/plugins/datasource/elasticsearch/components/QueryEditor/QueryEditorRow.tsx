@@ -1,4 +1,5 @@
-import { IconButton, useTheme } from '@grafana/ui';
+import { GrafanaTheme } from '@grafana/data';
+import { IconButton, stylesFactory, useTheme } from '@grafana/ui';
 import { getInlineLabelStyles } from '@grafana/ui/src/components/Forms/InlineLabel';
 import { css, cx } from 'emotion';
 import { noop } from 'lodash';
@@ -26,6 +27,7 @@ export const QueryEditorRow: FunctionComponent<Props> = ({
   hidden = false,
 }) => {
   const theme = useTheme();
+  const styles = getStyles(theme);
 
   return (
     <fieldset
@@ -35,7 +37,7 @@ export const QueryEditorRow: FunctionComponent<Props> = ({
       `}
     >
       <div className={cx(flex)}>
-        <div className={cx(getInlineLabelStyles(theme, 15).label)}>
+        <div className={cx(getInlineLabelStyles(theme, 17).label)}>
           <legend
             className={css`
               font-size: ${theme.typography.size.sm};
@@ -55,12 +57,18 @@ export const QueryEditorRow: FunctionComponent<Props> = ({
               <IconButton
                 name={hidden ? 'eye-slash' : 'eye'}
                 onClick={onHideClick}
+                surface="header"
+                size="sm"
                 aria-pressed={hidden}
                 aria-label="hide metric"
+                className={styles.icon}
               />
             )}
             <IconButton
               name="trash-alt"
+              surface="header"
+              size="sm"
+              className={styles.icon}
               onClick={onRemoveClick || noop}
               disabled={!onRemoveClick}
               aria-label="remove metric"
@@ -72,3 +80,12 @@ export const QueryEditorRow: FunctionComponent<Props> = ({
     </fieldset>
   );
 };
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    icon: css`
+      color: ${theme.colors.textWeak};
+      margin-left: ${theme.spacing.xxs};
+    `,
+  };
+});
