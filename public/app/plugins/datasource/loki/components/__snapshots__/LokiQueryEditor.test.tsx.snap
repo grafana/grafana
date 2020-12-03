@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render LokiQueryEditor with legend should render 1`] = `
-<Component
+<LokiQueryField
   ExtraFieldElement={
     <div
       className="gf-form-inline"
@@ -9,13 +9,13 @@ exports[`Render LokiQueryEditor with legend should render 1`] = `
       <div
         className="gf-form"
       >
-        <Unknown
+        <FormLabel
           tooltip="Controls the name of the time series, using name or pattern. For example
         {{hostname}} will be replaced with label value for the label hostname. The legend only applies to metric queries."
           width={6}
         >
           Legend
-        </Unknown>
+        </FormLabel>
         <input
           className="gf-form-input"
           onBlur={[MockFunction]}
@@ -50,7 +50,7 @@ exports[`Render LokiQueryEditor with legend should render 1`] = `
 `;
 
 exports[`Render LokiQueryEditor with legend should update timerange 1`] = `
-<Component
+<LokiQueryField
   ExtraFieldElement={
     <div
       className="gf-form-inline"
@@ -58,13 +58,13 @@ exports[`Render LokiQueryEditor with legend should update timerange 1`] = `
       <div
         className="gf-form"
       >
-        <Unknown
+        <FormLabel
           tooltip="Controls the name of the time series, using name or pattern. For example
         {{hostname}} will be replaced with label value for the label hostname. The legend only applies to metric queries."
           width={6}
         >
           Legend
-        </Unknown>
+        </FormLabel>
         <input
           className="gf-form-input"
           onBlur={[MockFunction]}
