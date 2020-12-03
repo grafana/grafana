@@ -141,12 +141,13 @@ describe('Live Stream Tests', () => {
     ) as any;
     const liveStreams = new LiveStreams();
     await expect(liveStreams.getStream(makeTarget('url_to_match'), 100)).toEmitValuesWith(received => {
-      const datBefore = received[0];
-      const dataAfter = received[1];
+      const data = received[0];
+      const view = new DataFrameView(data[0]);
+      const firstLog = { ...view.get(0) };
+      const secondLog = { ...view.get(1) };
 
-      expect(received.length).toBe(2);
-      expect(datBefore[0].fields[2].values).toContain('Kittens');
-      expect(dataAfter[0].fields[2].values).toContain('Doggos');
+      expect(firstLog.line).toBe('Kittens');
+      expect(secondLog.line).toBe('Doggos');
       expect(retries).toBe(2);
     });
   });
