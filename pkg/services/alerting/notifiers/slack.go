@@ -321,7 +321,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 	if sn.Token != "" && sn.UploadImage {
-		err = slackFileUpload(evalContext, sn.log, "https://slack.com/api/files.upload", sn.Recipient, sn.Token)
+		err = sn.slackFileUpload(evalContext, sn.log, "https://slack.com/api/files.upload", sn.Recipient, sn.Token)
 		if err != nil {
 			return err
 		}
@@ -329,12 +329,12 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	return nil
 }
 
-func slackFileUpload(evalContext *alerting.EvalContext, log log.Logger, url string, recipient string, token string) error {
+func (sn *SlackNotifier) slackFileUpload(evalContext *alerting.EvalContext, log log.Logger, url string, recipient string, token string) error {
 	if evalContext.ImageOnDiskPath == "" {
 		evalContext.ImageOnDiskPath = filepath.Join(setting.HomePath, "public/img/mixed_styles.png")
 	}
 	log.Info("Uploading to slack via file.upload API")
-	headers, uploadBody, err := generateSlackBody(evalContext.ImageOnDiskPath, token, recipient)
+	headers, uploadBody, err := sn.generateSlackBody(evalContext.ImageOnDiskPath, token, recipient)
 	if err != nil {
 		return err
 	}
@@ -346,37 +346,47 @@ func slackFileUpload(evalContext *alerting.EvalContext, log log.Logger, url stri
 	return nil
 }
 
-func generateSlackBody(file string, token string, recipient string) (map[string]string, bytes.Buffer, error) {
+func (sn *SlackNotifier) generateSlackBody(path string, token string, recipient string) (map[string]string, bytes.Buffer, error) {
 	// Slack requires all POSTs to files.upload to present
 	// an "application/x-www-form-urlencoded" encoded querystring
 	// See https://api.slack.com/methods/files.upload
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
+	defer func() {
+		if err := w.Close(); err != nil {
+			// Shouldn't matter since we already close w explicitly on the non-error path
+			sn.log.Warn("Failed to close multipart writer", "err", err)
+		}
+	}()
+
 	// Add the generated image file
-	f, err := os.Open(file)
+	f, err := os.Open(path)
 	if err != nil {
 		return nil, b, err
 	}
-	defer f.Close()
-	fw, err := w.CreateFormFile("file", file)
+	defer func() {
+		if err := f.Close(); err != nil {
+			sn.log.Warn("Failed to close file", "path", path, "err", err)
+		}
+	}()
+	fw, err := w.CreateFormFile("file", path)
 	if err != nil {
 		return nil, b, err
 	}
-	_, err = io.Copy(fw, f)
-	if err != nil {
+	if _, err := io.Copy(fw, f); err != nil {
 		return nil, b, err
 	}
 	// Add the authorization token
-	err = w.WriteField("token", token)
-	if err != nil {
+	if err := w.WriteField("token", token); err != nil {
 		return nil, b, err
 	}
 	// Add the channel(s) to POST to
-	err = w.WriteField("channels", recipient)
-	if err != nil {
+	if err := w.WriteField("channels", recipient); err != nil {
 		return nil, b, err
 	}
-	w.Close()
+	if err := w.Close(); err != nil {
+		return nil, b, fmt.Errorf("failed to close multipart writer: %w", err)
+	}
 	headers := map[string]string{
 		"Content-Type":  w.FormDataContentType(),
 		"Authorization": "auth_token=\"" + token + "\"",

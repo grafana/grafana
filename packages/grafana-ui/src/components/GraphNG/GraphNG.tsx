@@ -114,14 +114,15 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       }
 
       const fmt = field.display ?? defaultFormatter;
-      const scale = config.unit || '__fixed';
-      const isNewScale = !builder.hasScale(scale);
+      const scaleKey = config.unit || '__fixed';
 
-      if (isNewScale && customConfig.axisPlacement !== AxisPlacement.Hidden) {
-        builder.addScale({ scaleKey: scale, min: field.config.min, max: field.config.max });
+      if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
+        // The builder will manage unique scaleKeys and combine where appropriate
+        builder.addScale({ scaleKey, min: field.config.min, max: field.config.max });
         builder.addAxis({
-          scaleKey: scale,
+          scaleKey,
           label: customConfig.axisLabel,
+          size: customConfig.axisWidth,
           placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
           formatValue: v => formattedValueToString(fmt(v)),
           theme,
@@ -136,7 +137,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       const pointsMode = customConfig.mode === GraphMode.Points ? PointMode.Always : customConfig.points;
 
       builder.addSeries({
-        scaleKey: scale,
+        scaleKey,
         mode: customConfig.mode!,
         lineColor: seriesColor,
         lineWidth: customConfig.lineWidth,
@@ -149,7 +150,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       });
 
       if (hasLegend.current) {
-        const axisPlacement = builder.getAxisPlacement(scale);
+        const axisPlacement = builder.getAxisPlacement(scaleKey);
 
         legendItems.push({
           color: seriesColor,
