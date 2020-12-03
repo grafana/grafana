@@ -38,9 +38,9 @@ func (i InstanceStateType) IsValid() bool {
 // nolint:unused
 type saveAlertInstanceCommand struct {
 	OrgID             int64 `json:"-"`
-	AlertDefinitionID int64
+	AlertDefinitionID int64 `json:"alertDefintionId"`
 	Labels            InstanceLabels
-	State             InstanceStateType
+	State             InstanceStateType    `json:"state"`
 	SignedInUser      *models.SignedInUser `json:"-"`
 	SkipCache         bool                 `json:"-"`
 }

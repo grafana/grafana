@@ -92,7 +92,7 @@ type listAlertDefinitionsCommand struct {
 	Result []*AlertDefinition
 }
 
-// EpochTime defines a time.Time encoded into the database as unix epoch timestamp.
+// EpochTime defines a time.Time encoded into the database (via xorm) and JSON as a unix epoch timestamp.
 type EpochTime time.Time
 
 // FromDB deserializes time stored as a unix timestamp in the database to EpochTime,
@@ -101,7 +101,7 @@ type EpochTime time.Time
 func (et *EpochTime) FromDB(b []byte) error {
 	i, err := strconv.ParseInt(string(b), 10, 64)
 	if err != nil {
-		return err
+		return fmt.Errorf("error reading EpochTime type from database: %w", err)
 	}
 
 	*et = EpochTime(time.Unix(i, 0))
@@ -127,4 +127,12 @@ func (et *EpochTime) Time() time.Time {
 
 func (et *EpochTime) String() string {
 	return et.Time().String()
+}
+
+func (et *EpochTime) UnmarshalJSON(b []byte) error {
+	return et.FromDB(b)
+}
+
+func (et *EpochTime) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.FormatInt(et.Time().Unix(), 10)), nil
 }

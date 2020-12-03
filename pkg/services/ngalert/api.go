@@ -26,6 +26,11 @@ func (ng *AlertNG) registerAPIEndpoints() {
 		alertDefinitions.Post("/", middleware.ReqSignedIn, binding.Bind(saveAlertDefinitionCommand{}), api.Wrap(ng.createAlertDefinitionEndpoint))
 		alertDefinitions.Put("/:alertDefinitionId", ng.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionCommand{}), api.Wrap(ng.updateAlertDefinitionEndpoint))
 	})
+
+	ng.RouteRegister.Group("/api/alert-instances", func(alertInstances routing.RouteRegister) {
+		alertInstances.Get("", middleware.ReqSignedIn, api.Wrap(ng.listAlertInstancesEndpoint))
+		alertInstances.Post("", middleware.ReqSignedIn, binding.Bind(saveAlertInstanceCommand{}), api.Wrap(ng.saveAlertInstanceEndpoint))
+	})
 }
 
 // conditionEval handles POST /api/alert-definitions/eval.
