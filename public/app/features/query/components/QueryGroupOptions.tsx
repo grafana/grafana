@@ -171,7 +171,6 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
             type="text"
             className="width-6"
             placeholder="60"
-            name={name}
             spellCheck={false}
             onBlur={this.onCacheTimeoutBlur}
             defaultValue={options.cacheTimeout ?? ''}
@@ -205,7 +204,6 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
             type="number"
             className="width-6"
             placeholder={`${realMd}`}
-            name={name}
             spellCheck={false}
             onBlur={this.onMaxDataPointsBlur}
             defaultValue={value}
@@ -246,7 +244,6 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
               type="text"
               className="width-6"
               placeholder={`${minIntervalOnDs}`}
-              name={name}
               spellCheck={false}
               onBlur={this.onMinIntervalBlur}
               defaultValue={options.minInterval ?? ''}

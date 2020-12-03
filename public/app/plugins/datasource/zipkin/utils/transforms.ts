@@ -52,7 +52,7 @@ function transformSpan(span: ZipkinSpan): TraceSpanData {
         type: 'string',
         value: span.kind,
       },
-      ...jaegerSpan.tags,
+      ...(jaegerSpan.tags ?? []),
     ];
   }
 
