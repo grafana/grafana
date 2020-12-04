@@ -10,7 +10,7 @@ interface Props {
 }
 
 /**
- * A component used to show add & remove buttons for mutable lists ov values. Wether to show or not the add or the remove buttons
+ * A component used to show add & remove buttons for mutable lists of values. Wether to show or not the add or the remove buttons
  * depends on the `index` and `elements` props. This enforces a consistent experience whenever this pattern is used.
  */
 export const AddRemove: FunctionComponent<Props> = ({ index, onAdd, onRemove, elements }) => {

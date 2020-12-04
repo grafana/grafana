@@ -118,7 +118,7 @@ interface ExtendedStatSettingProps {
   value: boolean;
 }
 const ExtendedStatSetting: FunctionComponent<ExtendedStatSettingProps> = ({ stat, onChange, value }) => {
-  // this is needed for the htmlFor prop in the label so that clicking the lable will toggle the switch state.
+  // this is needed for the htmlFor prop in the label so that clicking the label will toggle the switch state.
   const [id] = useState(uniqueId(`es-field-id-`));
 
   return (

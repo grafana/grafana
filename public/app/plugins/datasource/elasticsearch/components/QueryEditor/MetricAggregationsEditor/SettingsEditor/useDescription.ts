@@ -5,7 +5,7 @@ const hasValue = (value: string) => (object: { value: string }) => object.value 
 
 // FIXME: All the defaults and validations down here should be defined somewhere else
 // as they are also the defaults that are gonna be applied to the query.
-// In the previous version, the same methos was taking care of describing the settings and setting defaults.
+// In the previous version, the same method was taking care of describing the settings and setting defaults.
 export const useDescription = (metric: MetricAggregation): string => {
   switch (metric.type) {
     case 'cardinality': {

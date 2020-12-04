@@ -9,7 +9,7 @@ interface Props {
   metric: MovingAverage;
 }
 
-// The way we handle changes for those settings is not ideal compaared to the other components in the editor
+// The way we handle changes for those settings is not ideal compared to the other components in the editor
 export const MovingAverageSettingsEditor: FunctionComponent<Props> = ({ metric }) => {
   const dispatch = useDispatch();
 

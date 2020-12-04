@@ -44,7 +44,7 @@ const getTypeOptions = (
   previousMetrics: MetricAggregation[],
   esVersion: number
 ): Array<SelectableValue<MetricAggregationType>> => {
-  // we'll include Pipeline Aggeregations only if at least one previous metric is a "Basic" one
+  // we'll include Pipeline Aggregations only if at least one previous metric is a "Basic" one
   const includePipelineAggregations = previousMetrics.some(isBasicAggregation);
 
   return (
@@ -54,7 +54,7 @@ const getTypeOptions = (
         // TODO: Double check this
         return esVersion >= minVersion && esVersion <= maxVersion;
       })
-      // Filtering out Pipeline Aggragations if there's no basic metric selected before
+      // Filtering out Pipeline Aggregations if there's no basic metric selected before
       .filter(([_, config]) => includePipelineAggregations || !config.isPipelineAgg)
       .map(([key, { label }]) => ({
         label,

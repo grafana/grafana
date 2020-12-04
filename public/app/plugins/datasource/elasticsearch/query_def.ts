@@ -42,7 +42,7 @@ export function hasMetricOfType(target: any, type: string): boolean {
 }
 
 // Even if we have type guards when building a query, we currently have no way of getting this information from the response.
-// We should try to find a better (type safe) way of doing the followinf 2.
+// We should try to find a better (type safe) way of doing the following 2.
 export function isPipelineAgg(metricType: MetricAggregationType) {
   return metricType in pipelineOptions;
 }
