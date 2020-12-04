@@ -9,6 +9,11 @@ export interface ScaleProps {
 }
 
 export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
+  merge(props: ScaleProps) {
+    this.props.min = optMinMax('min', this.props.min, props.min);
+    this.props.max = optMinMax('max', this.props.max, props.max);
+  }
+
   getConfig() {
     const { isTime, scaleKey } = this.props;
     if (isTime) {
@@ -28,4 +33,19 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       },
     };
   }
+}
+
+export function optMinMax(minmax: 'min' | 'max', a?: number | null, b?: number | null): undefined | number | null {
+  const hasA = !(a === undefined || a === null);
+  const hasB = !(b === undefined || b === null);
+  if (hasA) {
+    if (!hasB) {
+      return a;
+    }
+    if (minmax === 'min') {
+      return a! < b! ? a : b;
+    }
+    return a! > b! ? a : b;
+  }
+  return b;
 }
