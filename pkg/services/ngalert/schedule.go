@@ -90,9 +90,10 @@ type schedule struct {
 	maxAttempts int64
 
 	clock clock.Clock
+
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
-	// message from intervalReqCh is handled.
+	// message from evalApplied is handled.
 	evalApplied func(int64)
 }
 
