@@ -184,8 +184,6 @@ var (
 	GrafanaComUrl string
 
 	ImageUploadProvider string
-
-	DefaultTheme string
 )
 
 // AddChangePasswordLink returns if login form is disabled or not since
@@ -1134,7 +1132,6 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")
 	cfg.DefaultTheme = valueAsString(users, "default_theme", "")
-	DefaultTheme = cfg.DefaultTheme
 	ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
 	ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
 	ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
