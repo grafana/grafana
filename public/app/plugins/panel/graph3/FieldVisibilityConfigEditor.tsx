@@ -3,14 +3,11 @@ import { FieldConfigEditorProps, SelectableValue } from '@grafana/data';
 import { MultiSelect } from '@grafana/ui';
 import { SeriesConfig } from '@grafana/ui/src/components/uPlot/config';
 
-interface DisplayConfigEditorSettings {
+interface SeriesConfigEditorSettings {
   descriptions: Record<string, string>;
 }
 
-export const DisplayConfigEditor: React.FC<FieldConfigEditorProps<
-  SeriesConfig,
-  DisplayConfigEditorSettings
->> = props => {
+export const SeriesConfigEditor: React.FC<FieldConfigEditorProps<SeriesConfig, SeriesConfigEditorSettings>> = props => {
   const { settings } = props.item;
   const values: string[] = [];
   const options: Array<SelectableValue<string>> = [];
