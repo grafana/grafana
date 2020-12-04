@@ -346,7 +346,7 @@ You can specify a regular expression, which is only applied to matches, along wi
 
 Here is an example where we are stripping the prefix from event types, in the before you can see everything is prefixed with `system.`
 
-{{< docs-imagebox img="/img/docs/transformations/rename-by-regex-before.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+{{< docs-imagebox img="/img/docs/transformations/rename-by-regex-before-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
 With the transformation applied, you can see we are left with just the remainder of the string.
 
