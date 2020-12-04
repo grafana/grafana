@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	authLogin "github.com/grafana/grafana/pkg/login"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -27,7 +27,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 
 	const id int64 = 12
 
-	middlewareScenario(t, "Valid API key", func(sc *scenarioContext) {
+	middlewareScenario(t, "Valid API key", func(t *testing.T, sc *scenarioContext) {
 		const orgID int64 = 2
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
@@ -46,7 +46,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		assert.Equal(t, models.ROLE_EDITOR, sc.context.OrgRole)
 	})
 
-	middlewareScenario(t, "Handle auth", func(sc *scenarioContext) {
+	middlewareScenario(t, "Handle auth", func(t *testing.T, sc *scenarioContext) {
 		const password = "MyPass"
 		const salt = "Salt"
 		const orgID int64 = 2
@@ -78,11 +78,11 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		assert.Equal(t, id, sc.context.UserId)
 	})
 
-	middlewareScenario(t, "Auth sequence", func(sc *scenarioContext) {
+	middlewareScenario(t, "Auth sequence", func(t *testing.T, sc *scenarioContext) {
 		const password = "MyPass"
 		const salt = "Salt"
 
-		authLogin.Init()
+		login.Init()
 
 		bus.AddHandler("user-query", func(query *models.GetUserByLoginQuery) error {
 			encoded, err := util.EncodePassword(password, salt)
@@ -109,7 +109,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		assert.Equal(t, id, sc.context.UserId)
 	})
 
-	middlewareScenario(t, "Should return error if user is not found", func(sc *scenarioContext) {
+	middlewareScenario(t, "Should return error if user is not found", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/")
 		sc.req.SetBasicAuth("user", "password")
 		sc.exec()
@@ -121,7 +121,7 @@ func TestMiddlewareBasicAuth(t *testing.T) {
 		assert.Equal(t, errStringInvalidUsernamePassword, sc.respJson["message"])
 	})
 
-	middlewareScenario(t, "Should return error if user & password do not match", func(sc *scenarioContext) {
+	middlewareScenario(t, "Should return error if user & password do not match", func(t *testing.T, sc *scenarioContext) {
 		bus.AddHandler("user-query", func(loginUserQuery *models.GetUserByLoginQuery) error {
 			return nil
 		})

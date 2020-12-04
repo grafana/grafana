@@ -50,7 +50,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 	})
 	setting.ErrTemplateName = errorTemplate
 
-	middlewareScenario(t, "middleware should get correct x-xss-protection header", func(sc *scenarioContext) {
+	middlewareScenario(t, "middleware should get correct x-xss-protection header", func(t *testing.T, sc *scenarioContext) {
 		origXSSProtectionHeader := setting.XSSProtectionHeader
 		t.Cleanup(func() {
 			setting.XSSProtectionHeader = origXSSProtectionHeader
@@ -60,7 +60,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 		assert.Equal(t, "1; mode=block", sc.resp.Header().Get("X-XSS-Protection"))
 	})
 
-	middlewareScenario(t, "middleware should not get x-xss-protection when disabled", func(sc *scenarioContext) {
+	middlewareScenario(t, "middleware should not get x-xss-protection when disabled", func(t *testing.T, sc *scenarioContext) {
 		origXSSProtectionHeader := setting.XSSProtectionHeader
 		t.Cleanup(func() {
 			setting.XSSProtectionHeader = origXSSProtectionHeader
@@ -70,7 +70,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 		assert.Empty(t, sc.resp.Header().Get("X-XSS-Protection"))
 	})
 
-	middlewareScenario(t, "middleware should add correct Strict-Transport-Security header", func(sc *scenarioContext) {
+	middlewareScenario(t, "middleware should add correct Strict-Transport-Security header", func(t *testing.T, sc *scenarioContext) {
 		origStrictTransportSecurity := setting.StrictTransportSecurity
 		origProtocol := setting.Protocol
 		origStrictTransportSecurityMaxAge := setting.StrictTransportSecurityMaxAge
@@ -101,31 +101,33 @@ func TestMiddlewareContext(t *testing.T) {
 	})
 	setting.ErrTemplateName = errorTemplate
 
-	middlewareScenario(t, "middleware should add context to injector", func(sc *scenarioContext) {
+	middlewareScenario(t, "middleware should add context to injector", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/").exec()
 		assert.NotNil(t, sc.context)
 	})
 
-	middlewareScenario(t, "Default middleware should allow get request", func(sc *scenarioContext) {
+	middlewareScenario(t, "Default middleware should allow get request", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/").exec()
 		assert.Equal(t, 200, sc.resp.Code)
 	})
 
-	middlewareScenario(t, "middleware should add Cache-Control header for requests to API", func(sc *scenarioContext) {
+	middlewareScenario(t, "middleware should add Cache-Control header for requests to API", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/api/search").exec()
 		assert.Equal(t, "no-cache", sc.resp.Header().Get("Cache-Control"))
 		assert.Equal(t, "no-cache", sc.resp.Header().Get("Pragma"))
 		assert.Equal(t, "-1", sc.resp.Header().Get("Expires"))
 	})
 
-	middlewareScenario(t, "middleware should not add Cache-Control header for requests to datasource proxy API", func(sc *scenarioContext) {
+	middlewareScenario(t, "middleware should not add Cache-Control header for requests to datasource proxy API", func(
+		t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/api/datasources/proxy/1/test").exec()
 		assert.Empty(t, sc.resp.Header().Get("Cache-Control"))
 		assert.Empty(t, sc.resp.Header().Get("Pragma"))
 		assert.Empty(t, sc.resp.Header().Get("Expires"))
 	})
 
-	middlewareScenario(t, "middleware should add Cache-Control header for requests with html response", func(sc *scenarioContext) {
+	middlewareScenario(t, "middleware should add Cache-Control header for requests with html response", func(
+		t *testing.T, sc *scenarioContext) {
 		sc.handler(func(c *models.ReqContext) {
 			data := &dtos.IndexViewData{
 				User:     &dtos.CurrentUser{},
@@ -141,12 +143,14 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, "-1", sc.resp.Header().Get("Expires"))
 	})
 
-	middlewareScenario(t, "middleware should add X-Frame-Options header with deny for request when not allowing embedding", func(sc *scenarioContext) {
+	middlewareScenario(t, "middleware should add X-Frame-Options header with deny for request when not allowing embedding", func(
+		t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/api/search").exec()
 		assert.Equal(t, "deny", sc.resp.Header().Get("X-Frame-Options"))
 	})
 
-	middlewareScenario(t, "middleware should not add X-Frame-Options header for request when allowing embedding", func(sc *scenarioContext) {
+	middlewareScenario(t, "middleware should not add X-Frame-Options header for request when allowing embedding", func(
+		t *testing.T, sc *scenarioContext) {
 		origAllowEmbedding := setting.AllowEmbedding
 		t.Cleanup(func() {
 			setting.AllowEmbedding = origAllowEmbedding
@@ -156,7 +160,7 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Empty(t, sc.resp.Header().Get("X-Frame-Options"))
 	})
 
-	middlewareScenario(t, "Invalid api key", func(sc *scenarioContext) {
+	middlewareScenario(t, "Invalid api key", func(t *testing.T, sc *scenarioContext) {
 		sc.apiKey = "invalid_key_test"
 		sc.fakeReq("GET", "/").exec()
 
@@ -165,7 +169,7 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, errStringInvalidAPIKey, sc.respJson["message"])
 	})
 
-	middlewareScenario(t, "Valid api key", func(sc *scenarioContext) {
+	middlewareScenario(t, "Valid api key", func(t *testing.T, sc *scenarioContext) {
 		const orgID int64 = 12
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
@@ -184,7 +188,7 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, models.ROLE_EDITOR, sc.context.OrgRole)
 	})
 
-	middlewareScenario(t, "Valid api key, but does not match db hash", func(sc *scenarioContext) {
+	middlewareScenario(t, "Valid api key, but does not match db hash", func(t *testing.T, sc *scenarioContext) {
 		keyhash := "Something_not_matching"
 
 		bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
@@ -198,7 +202,7 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, errStringInvalidAPIKey, sc.respJson["message"])
 	})
 
-	middlewareScenario(t, "Valid api key, but expired", func(sc *scenarioContext) {
+	middlewareScenario(t, "Valid api key, but expired", func(t *testing.T, sc *scenarioContext) {
 		mockGetTime()
 		defer resetGetTime()
 
@@ -219,7 +223,8 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, "Expired API key", sc.respJson["message"])
 	})
 
-	middlewareScenario(t, "Non-expired auth token in cookie which not are being rotated", func(sc *scenarioContext) {
+	middlewareScenario(t, "Non-expired auth token in cookie which not are being rotated", func(
+		t *testing.T, sc *scenarioContext) {
 		const userID int64 = 12
 
 		sc.withTokenSessionCookie("token")
@@ -245,7 +250,7 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, "", sc.resp.Header().Get("Set-Cookie"))
 	})
 
-	middlewareScenario(t, "Non-expired auth token in cookie which are being rotated", func(sc *scenarioContext) {
+	middlewareScenario(t, "Non-expired auth token in cookie which are being rotated", func(t *testing.T, sc *scenarioContext) {
 		const userID int64 = 12
 
 		sc.withTokenSessionCookie("token")
@@ -335,7 +340,7 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 	})
 
-	middlewareScenario(t, "Invalid/expired auth token in cookie", func(sc *scenarioContext) {
+	middlewareScenario(t, "Invalid/expired auth token in cookie", func(t *testing.T, sc *scenarioContext) {
 		sc.withTokenSessionCookie("token")
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*models.UserToken, error) {
@@ -349,7 +354,7 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Nil(t, sc.context.UserToken)
 	})
 
-	middlewareScenario(t, "When anonymous access is enabled", func(sc *scenarioContext) {
+	middlewareScenario(t, "When anonymous access is enabled", func(t *testing.T, sc *scenarioContext) {
 		const orgID int64 = 2
 
 		origAnonymousEnabled := setting.AnonymousEnabled
@@ -410,7 +415,7 @@ func TestMiddlewareContext(t *testing.T) {
 		const hdrName = "markelog"
 		const group = "grafana-core-team"
 
-		middlewareScenario(t, "Should not sync the user if it's in the cache", func(sc *scenarioContext) {
+		middlewareScenario(t, "Should not sync the user if it's in the cache", func(t *testing.T, sc *scenarioContext) {
 			bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
 				query.Result = &models.SignedInUser{OrgId: orgID, UserId: query.UserId}
 				return nil
@@ -430,7 +435,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Equal(t, orgID, sc.context.OrgId)
 		})
 
-		middlewareScenario(t, "Should respect auto signup option", func(sc *scenarioContext) {
+		middlewareScenario(t, "Should respect auto signup option", func(t *testing.T, sc *scenarioContext) {
 			origLDAPEnabled = setting.LDAPEnabled
 			origAuthProxyAutoSignUp = setting.AuthProxyAutoSignUp
 			t.Cleanup(func() {
@@ -456,7 +461,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Nil(t, sc.context)
 		})
 
-		middlewareScenario(t, "Should create an user from a header", func(sc *scenarioContext) {
+		middlewareScenario(t, "Should create an user from a header", func(t *testing.T, sc *scenarioContext) {
 			origLDAPEnabled = setting.LDAPEnabled
 			origAuthProxyAutoSignUp = setting.AuthProxyAutoSignUp
 			t.Cleanup(func() {
@@ -488,7 +493,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Equal(t, orgID, sc.context.OrgId)
 		})
 
-		middlewareScenario(t, "Should get an existing user from header", func(sc *scenarioContext) {
+		middlewareScenario(t, "Should get an existing user from header", func(t *testing.T, sc *scenarioContext) {
 			const userID int64 = 12
 			const orgID int64 = 2
 
@@ -517,7 +522,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Equal(t, orgID, sc.context.OrgId)
 		})
 
-		middlewareScenario(t, "Should allow the request from whitelist IP", func(sc *scenarioContext) {
+		middlewareScenario(t, "Should allow the request from whitelist IP", func(t *testing.T, sc *scenarioContext) {
 			origAuthProxyWhitelist = setting.AuthProxyWhitelist
 			origLDAPEnabled = setting.LDAPEnabled
 			t.Cleanup(func() {
@@ -547,7 +552,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Equal(t, orgID, sc.context.OrgId)
 		})
 
-		middlewareScenario(t, "Should not allow the request from whitelist IP", func(sc *scenarioContext) {
+		middlewareScenario(t, "Should not allow the request from whitelist IP", func(t *testing.T, sc *scenarioContext) {
 			origAuthProxyWhitelist = setting.AuthProxyWhitelist
 			origLDAPEnabled = setting.LDAPEnabled
 			t.Cleanup(func() {
@@ -576,7 +581,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Nil(t, sc.context)
 		})
 
-		middlewareScenario(t, "Should return 407 status code if LDAP says no", func(sc *scenarioContext) {
+		middlewareScenario(t, "Should return 407 status code if LDAP says no", func(t *testing.T, sc *scenarioContext) {
 			bus.AddHandler("LDAP", func(cmd *models.UpsertUserCommand) error {
 				return errors.New("Do not add user")
 			})
@@ -589,7 +594,7 @@ func TestMiddlewareContext(t *testing.T) {
 			assert.Nil(t, sc.context)
 		})
 
-		middlewareScenario(t, "Should return 407 status code if there is cache mishap", func(sc *scenarioContext) {
+		middlewareScenario(t, "Should return 407 status code if there is cache mishap", func(t *testing.T, sc *scenarioContext) {
 			bus.AddHandler("Do not have the user", func(query *models.GetSignedInUserQuery) error {
 				return errors.New("Do not add user")
 			})
@@ -653,7 +658,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc) {
 
 		sc.m.Get("/", sc.defaultHandler)
 
-		fn(sc)
+		fn(t, sc)
 	})
 }
 
