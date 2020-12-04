@@ -56,3 +56,8 @@ func (t *Ticker) run() {
 		}
 	}
 }
+
+// ResetOffset resets the offset.
+func (t *Ticker) ResetOffset(duration time.Duration) {
+	t.newOffset <- duration
+}

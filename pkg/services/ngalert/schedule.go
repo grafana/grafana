@@ -41,6 +41,9 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID in
 				evalRunning = true
 				defer func() {
 					evalRunning = false
+					if ng.schedule.evalApplied != nil {
+						ng.schedule.evalApplied(definitionID)
+					}
 				}()
 
 				for attempt = 0; attempt < ng.schedule.maxAttempts; attempt++ {
@@ -87,6 +90,10 @@ type schedule struct {
 	maxAttempts int64
 
 	clock clock.Clock
+	// evalApplied is only used for tests: test code can set it to non-nil
+	// function, and then it'll be called from the event loop whenever the
+	// message from intervalReqCh is handled.
+	evalApplied func(int64)
 }
 
 func (ng *AlertNG) alertingTicker(grafanaCtx context.Context, heartbeat *alerting.Ticker) error {

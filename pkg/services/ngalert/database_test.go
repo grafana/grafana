@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -124,7 +122,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 	t.Run("updating existing alert", func(t *testing.T) {
 		ng := setupTestEnv(t)
 		var initialInterval int64 = 120
-		alertDefinition := createTestAlertDefinition(t, ng, &initialInterval)
+		alertDefinition := createTestAlertDefinition(t, ng, initialInterval)
 		created := alertDefinition.Updated
 
 		var customInterval int64 = 30
@@ -218,7 +216,7 @@ func TestDeletingAlertDefinition(t *testing.T) {
 
 	t.Run("deleting successfully existing alert", func(t *testing.T) {
 		ng := setupTestEnv(t)
-		alertDefinition := createTestAlertDefinition(t, ng, nil)
+		alertDefinition := createTestAlertDefinition(t, ng, 60)
 
 		q := deleteAlertDefinitionByIDCommand{
 			ID:    (*alertDefinition).Id,
@@ -229,43 +227,4 @@ func TestDeletingAlertDefinition(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), q.RowsAffected)
 	})
-}
-
-func setupTestEnv(t *testing.T) *AlertNG {
-	sqlStore := sqlstore.InitTestDB(t)
-	cfg := setting.Cfg{}
-	cfg.FeatureToggles = map[string]bool{"ngalert": true}
-	ng := AlertNG{
-		SQLStore: sqlStore,
-		Cfg:      &cfg,
-	}
-	return &ng
-}
-
-func createTestAlertDefinition(t *testing.T, ng *AlertNG, intervalInSeconds *int64) *AlertDefinition {
-	cmd := saveAlertDefinitionCommand{
-		OrgID: 1,
-		Name:  "an alert definition",
-		Condition: condition{
-			RefID: "A",
-			QueriesAndExpressions: []eval.AlertQuery{
-				{
-					Model: json.RawMessage(`{
-						"datasource": "__expr__",
-						"type":"math",
-						"expression":"2 + 2 > 1"
-					}`),
-					RelativeTimeRange: eval.RelativeTimeRange{
-						From: eval.Duration(5 * time.Hour),
-						To:   eval.Duration(3 * time.Hour),
-					},
-					RefID: "A",
-				},
-			},
-		},
-		IntervalInSeconds: intervalInSeconds,
-	}
-	err := ng.saveAlertDefinition(&cmd)
-	require.NoError(t, err)
-	return cmd.Result
 }
