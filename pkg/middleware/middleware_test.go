@@ -72,7 +72,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 	middlewareScenario(t, "middleware should add correct Strict-Transport-Security header", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Equal(t, "max-age=64000", sc.resp.Header().Get("Strict-Transport-Security"))
-		setting.StrictTransportSecurityPreload = true
+		sc.cfg.StrictTransportSecurityPreload = true
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Equal(t, "max-age=64000; preload", sc.resp.Header().Get("Strict-Transport-Security"))
 		setting.StrictTransportSecuritySubDomains = true

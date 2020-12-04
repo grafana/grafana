@@ -45,7 +45,7 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) macaron.Handler {
 func addSecurityHeaders(w macaron.ResponseWriter, cfg *setting.Cfg) {
 	if (cfg.Protocol == setting.HTTPSScheme || cfg.Protocol == setting.HTTP2Scheme) && cfg.StrictTransportSecurity {
 		strictHeaderValues := []string{fmt.Sprintf("max-age=%v", cfg.StrictTransportSecurityMaxAge)}
-		if setting.StrictTransportSecurityPreload {
+		if cfg.StrictTransportSecurityPreload {
 			strictHeaderValues = append(strictHeaderValues, "preload")
 		}
 		if setting.StrictTransportSecuritySubDomains {

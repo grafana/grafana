@@ -97,7 +97,6 @@ var (
 	CookieSecure                      bool
 	CookieSameSiteDisabled            bool
 	CookieSameSiteMode                http.SameSite
-	StrictTransportSecurityPreload    bool
 	StrictTransportSecuritySubDomains bool
 
 	// Snapshots
@@ -1014,8 +1013,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
 	cfg.StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
 	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
-	StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
-	cfg.StrictTransportSecurityPreload = StrictTransportSecurityPreload
+	cfg.StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
 	StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
 	cfg.StrictTransportSecuritySubDomains = StrictTransportSecuritySubDomains
 
