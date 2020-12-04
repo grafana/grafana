@@ -58,7 +58,6 @@ the result would be:
 | AQI     | 6.5     | 3.2     |
 | Errors  | 15      | 5       |
 
-
 The **Reduce fields** with the **Last** calculation,
 results in two frames, each with one row:
 
