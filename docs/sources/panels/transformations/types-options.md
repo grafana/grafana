@@ -307,7 +307,6 @@ After you concatenate the fields, the data frame would be:
 | 15.4    | 1230233 | 3.2     | 5      |
 
 
-
 ## Series to rows
 
 > **Note:** This transformation is only available in Grafana 7.1+.
