@@ -45,10 +45,11 @@ export class LiveStreams {
       retryWhen((attempts: Observable<any>) =>
         attempts.pipe(
           mergeMap((error, i) => {
-            // Code 1006 is used to indicate that a connection was closed abnormally.
-            // If connection was closed abnormally, we wish to retry, otherwise throw error.
             const retryAttempt = i + 1;
-            if (error.code === 1006) {
+            // Code 1006 is used to indicate that a connection was closed abnormally.
+            // Added hard limit of 30 on number of retries.
+            // If connection was closed abnormally, and we wish to retry, otherwise throw error.
+            if (error.code === 1006 && retryAttempt < 30) {
               if (retryAttempt > 10) {
                 // If more than 10 times retried, consol.warn, but keep reconnecting
                 console.warn(
