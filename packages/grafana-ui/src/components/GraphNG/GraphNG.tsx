@@ -51,6 +51,8 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   timeZone,
   ...plotProps
 }) => {
+  console.log('GraphNG (top)', timeRange.from.valueOf(), timeRange.to.valueOf());
+
   const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
   const theme = useTheme();
   const legendItemsRef = useRef<LegendItem[]>([]);
@@ -88,7 +90,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         range: () => {
           const r = currentTimeRange.current!;
           const arr = [r.from.valueOf(), r.to.valueOf()];
-          console.log('ARR', arr[0], arr[1]);
+          console.log('GraphNG (range)', arr[0], arr[1]);
           return arr;
         },
       });
