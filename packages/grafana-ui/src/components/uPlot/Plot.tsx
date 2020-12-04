@@ -25,16 +25,6 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     return plotInstance.current;
   }, []);
 
-  const updateTimeScale = () => {
-    if (plotInstance.current && props.config.xScaleIsTimeRange) {
-      const { timeRange } = props;
-      plotInstance.current.setScale('x', {
-        min: timeRange.from.valueOf(),
-        max: timeRange.to.valueOf(),
-      });
-    }
-  };
-
   // Effect responsible for uPlot updates/initialization logic. It's performed whenever component's props have changed
   useLayoutEffect(() => {
     // 0. Exit early if the component is not ready to initialize uPlot
@@ -45,7 +35,6 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     // 1. When config is ready and there is no uPlot instance, create new uPlot and return
     if (isConfigReady && !plotInstance.current) {
       plotInstance.current = initializePlot(prepareData(props.data), currentConfig.current, canvasRef.current);
-      updateTimeScale();
       return;
     }
 
@@ -66,13 +55,11 @@ export const UPlotChart: React.FC<PlotProps> = props => {
         plotInstance.current.destroy();
       }
       plotInstance.current = initializePlot(prepareData(props.data), currentConfig.current, canvasRef.current);
-      updateTimeScale();
       return;
     }
 
     // 4. Otherwise, assume only data has changed and update uPlot data
     updateData(props.data.frame, props.config, plotInstance.current, prepareData(props.data));
-    updateTimeScale();
   }, [props, isConfigReady]);
 
   // When component unmounts, clean the existing uPlot instance

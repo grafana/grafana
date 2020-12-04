@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   compareDataFrameStructures,
   DataFrame,
@@ -8,6 +8,7 @@ import {
   formattedValueToString,
   getFieldColorModeForField,
   getFieldDisplayName,
+  TimeRange,
 } from '@grafana/data';
 import { alignDataFrames } from './utils';
 import { UPlotChart } from '../uPlot/Plot';
@@ -58,10 +59,16 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
   const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
     if (a && b) {
-      return compareDataFrameStructures(a, b, ['min', 'max']);
+      return compareDataFrameStructures(a, b);
     }
     return false;
   }, []);
+
+  // reference change will not triger re-render
+  const currentTimeRange = useRef<TimeRange>();
+  useEffect(() => {
+    currentTimeRange.current = timeRange;
+  }, [timeRange]);
 
   const configRev = useRevision(alignedFrame, compareFrames);
 
@@ -75,10 +82,15 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     // X is the first field in the alligned frame
     const xField = alignedFrame.fields[0];
     if (xField.type === FieldType.time) {
-      builder.xScaleIsTimeRange = true;
       builder.addScale({
         scaleKey: 'x',
         isTime: true,
+        range: () => {
+          const r = currentTimeRange.current!;
+          const arr = [r.from.valueOf(), r.to.valueOf()];
+          console.log('ARR', arr[0], arr[1]);
+          return arr;
+        },
       });
       builder.addAxis({
         scaleKey: 'x',
