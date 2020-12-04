@@ -2,14 +2,14 @@
 import React, { PureComponent } from 'react';
 
 // Types
-import { DataQuery, PanelData, DataSourceSelectItem } from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, PanelData } from '@grafana/data';
 import { QueryEditorRow } from './QueryEditorRow';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 interface Props {
   // The query configuration
   queries: DataQuery[];
-  datasource: DataSourceSelectItem;
+  dsSettings: DataSourceInstanceSettings;
 
   // Query editing
   onQueriesChange: (queries: DataQuery[]) => void;
@@ -67,7 +67,7 @@ export class QueryEditorRows extends PureComponent<Props> {
   };
 
   render() {
-    const { props } = this;
+    const { dsSettings, data, queries } = this.props;
 
     return (
       <DragDropContext onDragEnd={this.onDragEnd}>
@@ -75,19 +75,18 @@ export class QueryEditorRows extends PureComponent<Props> {
           {provided => {
             return (
               <div ref={provided.innerRef} {...provided.droppableProps}>
-                {props.queries.map((query, index) => (
+                {queries.map((query, index) => (
                   <QueryEditorRow
-                    dataSourceValue={query.datasource || props.datasource.value}
+                    dsSettings={dsSettings}
                     id={query.refId}
                     index={index}
                     key={query.refId}
-                    data={props.data}
+                    data={data}
                     query={query}
                     onChange={query => this.onChangeQuery(query, index)}
                     onRemoveQuery={this.onRemoveQuery}
                     onAddQuery={this.props.onAddQuery}
                     onRunQuery={this.props.onRunQueries}
-                    inMixedMode={props.datasource.meta.mixed}
                   />
                 ))}
                 {provided.placeholder}

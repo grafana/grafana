@@ -1,3 +1,5 @@
+import { Components } from './components';
+
 export const Pages = {
   Login: {
     url: '/login',
@@ -87,7 +89,7 @@ export const Pages = {
             submitButton: 'Variable editor Submit button',
           },
           QueryVariable: {
-            queryOptionsDataSourceSelect: 'Variable editor Form Query DataSource select',
+            queryOptionsDataSourceSelect: Components.DataSourcePicker.container,
             queryOptionsRefreshSelect: 'Variable editor Form Query Refresh select',
             queryOptionsRegExInput: 'Variable editor Form Query RegEx field',
             queryOptionsSortSelect: 'Variable editor Form Query Sort select',
