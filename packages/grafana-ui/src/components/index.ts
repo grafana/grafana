@@ -217,3 +217,4 @@ export { GraphNG } from './GraphNG/GraphNG';
 // TODO: rename
 export { GraphView } from './ServiceMap/GraphView';
 export { NodeDatum as ServiceMapNodeDatum } from './ServiceMap/types';
+export { LinkDatum as ServiceMapLinkDatum } from './ServiceMap/types';

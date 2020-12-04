@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo, useCallback, MouseEvent } from 'react';
 import { forceSimulation, forceLink, forceManyBody, forceCollide } from 'd3-force';
 import useMeasure from 'react-use/lib/useMeasure';
-import { response } from './x-ray-response';
+// import { response } from './x-ray-response';
 import { usePanning } from './usePanning';
 import { LinkDatum, NodeDatum, XrayEdge, XrayService } from './types';
 import { computeStats } from './statsUtils';
@@ -9,7 +9,7 @@ import { Node } from './Node';
 import { Link } from './Link';
 import { ViewControls } from './ViewControls';
 import { ContextMenu } from '..';
-import { LinkModel } from '@grafana/data';
+import { DataFrame, DataFrameView, LinkModel } from '@grafana/data';
 
 interface Config extends Record<string, number> {
   collide: number;
@@ -18,8 +18,10 @@ interface Config extends Record<string, number> {
 }
 
 interface Props {
-  services: any[];
-  getLinks: (node: NodeDatum) => LinkModel[];
+  services: DataFrame;
+  edges: DataFrame;
+  getNodeLinks: (node: NodeDatum) => LinkModel[];
+  getEdgeLinks: (node: LinkDatum) => LinkModel[];
 }
 export function GraphView(props: Props) {
   const [scale, setScale] = useState(0.5);
@@ -37,12 +39,18 @@ export function GraphView(props: Props) {
   const panRef = React.useRef<SVGSVGElement>(null);
   const { position: panPosition, isPanning } = usePanning(panRef);
 
-  const services = useTestData ? response.Services : props.services;
-  const { nodes: rawNodes, links: rawLinks } = useMemo(() => processServices(services), [services]);
+  // const services = useTestData ? response.Services : props.services;
+  const { nodes: rawNodes, links: rawLinks } = useMemo(() => processServices(props.services, props.edges), [
+    props.services,
+    props.edges,
+  ]);
   const { nodes, links } = useLayout(rawNodes, rawLinks, config);
 
   const [openedNode, setOpenedNode] = useState<{ node: NodeDatum; event: MouseEvent } | undefined>(undefined);
   const onNodeOpen = useCallback((event, node) => setOpenedNode({ node, event }), []);
+
+  const [openedEdge, setOpenedEdge] = useState<{ edge: LinkDatum; event: MouseEvent } | undefined>(undefined);
+  const onEdgeOpen = useCallback((event, edge) => setOpenedEdge({ edge, event }), []);
 
   return (
     <div ref={measureRef} style={{ height: '100%', width: '100%', overflow: 'hidden', position: 'relative' }}>
@@ -67,6 +75,7 @@ export function GraphView(props: Props) {
               key={index}
               link={l}
               showStats={(l.source as NodeDatum).id === nodeHover || (l.target as NodeDatum).id === nodeHover}
+              onClick={onEdgeOpen}
             />
           ))}
           {nodes.map(n => (
@@ -110,7 +119,7 @@ export function GraphView(props: Props) {
           items={[
             {
               label: 'Open in Explore',
-              items: props.getLinks(openedNode.node).map(link => ({
+              items: props.getNodeLinks(openedNode.node).map(link => ({
                 label: link.title,
                 url: link.href,
                 onClick: link.onClick,
@@ -120,6 +129,29 @@ export function GraphView(props: Props) {
           onClose={() => setOpenedNode(undefined)}
           x={openedNode.event.pageX}
           y={openedNode.event.pageY}
+        />
+      )}
+
+      {openedEdge && (
+        <ContextMenu
+          renderHeader={() => (
+            <div>
+              {(openedEdge.edge.source as NodeDatum).name} {'->'} {(openedEdge.edge.target as NodeDatum).name}
+            </div>
+          )}
+          items={[
+            {
+              label: 'Open in Explore',
+              items: props.getEdgeLinks(openedEdge.edge).map(link => ({
+                label: link.title,
+                url: link.href,
+                onClick: link.onClick,
+              })),
+            },
+          ]}
+          onClose={() => setOpenedEdge(undefined)}
+          x={openedEdge.event.pageX}
+          y={openedEdge.event.pageY}
         />
       )}
     </div>
@@ -161,44 +193,35 @@ function useLayout(rawNodes: NodeDatum[], rawLinks: LinkDatum[], config: Config)
   return { nodes, links };
 }
 
-function processServices(services: XrayService[]): { nodes: NodeDatum[]; links: LinkDatum[] } {
-  const { nodes, links } = services.reduce(
-    (acc: any, service: any, index: number) => {
-      const links = service.Edges.map((e: XrayEdge) => {
-        return {
-          source: service.ReferenceId,
-          target: e.ReferenceId,
-          stats: computeStats(e),
-        };
-      });
+function processServices(services: DataFrame, edges: DataFrame): { nodes: NodeDatum[]; links: LinkDatum[] } {
+  const servicesView = new DataFrameView<{ name: string; id: string; data: XrayService }>(services);
+  const servicesMap = servicesView.toArray().reduce((acc, s, index) => {
+    acc[s.id] = {
+      name: s.name,
+      type: s.data.Type,
+      id: s.id,
+      dataFrameRowIndex: index,
+      incoming: 0,
+      stats: computeStats(s.data),
+    };
+    return acc;
+  }, {} as { [id: string]: NodeDatum });
 
-      acc.links.push(...links);
+  const edgesView = new DataFrameView<{ source: string; target: string; data: XrayEdge }>(edges);
+  const edgesMapped = edgesView.toArray().map((edge, index) => {
+    servicesMap[edge.target].incoming++;
 
-      const node: NodeDatum = {
-        name: service.Name,
-        type: service.Type,
-        id: service.ReferenceId,
-        dataFrameRowIndex: index,
-        incoming: 0,
-        stats: computeStats(service),
-      };
-      acc.nodes = {
-        ...acc.nodes,
-        [node.id]: node,
-      };
-
-      return acc;
-    },
-    { nodes: {}, links: [] }
-  );
-
-  for (const link of links) {
-    nodes[link.target].incoming++;
-  }
+    return {
+      dataFrameRowIndex: index,
+      source: edge.source,
+      target: edge.target,
+      stats: computeStats(edge.data),
+    } as LinkDatum;
+  });
 
   return {
-    nodes: Object.values(nodes),
-    links,
+    nodes: Object.values(servicesMap),
+    links: edgesMapped,
   };
 }
 

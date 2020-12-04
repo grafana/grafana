@@ -180,9 +180,7 @@ const ContextMenuItemComponent: React.FC<ContextMenuItemProps> = React.memo(
           target={target}
           className={cx(className, styles.link)}
           onClick={e => {
-            // We want to allow user to open link in a new tab but only if there is an url
-            if ((!url || !(e.ctrlKey || e.metaKey || e.shiftKey)) && onClick) {
-              e.preventDefault();
+            if (onClick) {
               onClick(e);
             }
           }}
@@ -221,13 +219,17 @@ const ContextMenuGroupComponent: React.FC<ContextMenuGroupProps> = ({ group, onC
               target={item.target}
               icon={item.icon}
               onClick={(e: React.MouseEvent<HTMLElement>) => {
-                if (item.onClick) {
-                  item.onClick(e);
-                }
+                // We want to allow user to open link in a new tab but only if there is an url
+                if ((!item.url || !(e.ctrlKey || e.metaKey || e.shiftKey)) && item.onClick) {
+                  e.preventDefault();
+                  if (item.onClick) {
+                    item.onClick(e);
+                  }
 
-                // Typically closes the context menu
-                if (onClick) {
-                  onClick();
+                  // Typically closes the context menu
+                  if (onClick) {
+                    onClick();
+                  }
                 }
               }}
             />

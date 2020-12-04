@@ -49,4 +49,5 @@ export type NodeDatum = SimulationNodeDatum & {
 };
 export type LinkDatum = SimulationLinkDatum<NodeDatum> & {
   stats?: Stats;
+  dataFrameRowIndex: number;
 };

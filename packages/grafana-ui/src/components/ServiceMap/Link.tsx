@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, MouseEvent } from 'react';
 import { capitalize } from 'lodash';
 import { LinkDatum, NodeDatum } from './types';
 import { getRatios } from './statsUtils';
 
-export function Link(props: { link: LinkDatum; showStats: boolean }) {
-  const { link, showStats } = props;
+interface Props {
+  link: LinkDatum;
+  showStats: boolean;
+  onClick: (event: MouseEvent<SVGElement>, link: LinkDatum) => void;
+}
+export function Link(props: Props) {
+  const { link, showStats, onClick } = props;
   const { source, target } = link as { source: NodeDatum; target: NodeDatum };
   const [hovering, setHovering] = useState(false);
 
@@ -31,7 +36,7 @@ export function Link(props: { link: LinkDatum; showStats: boolean }) {
     : statLine(firstNonSuccess, link.stats![firstNonSuccess]);
 
   return (
-    <g>
+    <g onClick={event => onClick(event, link)} style={{ cursor: 'pointer' }}>
       <line
         strokeWidth={hovering || showStats ? 2 : 1}
         stroke={'#999'}

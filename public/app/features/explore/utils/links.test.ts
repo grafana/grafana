@@ -8,7 +8,7 @@ describe('getFieldLinksForExplore', () => {
       title: 'external',
       url: 'http://regionalhost',
     });
-    const links = getFieldLinksForExplore(field, 0, jest.fn(), range);
+    const links = getFieldLinksForExplore({ field, rowIndex: 0, splitOpenFn: jest.fn(), range });
 
     expect(links[0].href).toBe('http://regionalhost');
     expect(links[0].title).toBe('external');
@@ -19,7 +19,7 @@ describe('getFieldLinksForExplore', () => {
       title: '',
       url: 'http://regionalhost',
     });
-    const links = getFieldLinksForExplore(field, 0, jest.fn(), range);
+    const links = getFieldLinksForExplore({ field, rowIndex: 0, splitOpenFn: jest.fn(), range });
 
     expect(links[0].href).toBe('http://regionalhost');
     expect(links[0].title).toBe('regionalhost');
@@ -36,7 +36,7 @@ describe('getFieldLinksForExplore', () => {
       },
     });
     const splitfn = jest.fn();
-    const links = getFieldLinksForExplore(field, 0, splitfn, range);
+    const links = getFieldLinksForExplore({ field, rowIndex: 0, splitOpenFn: splitfn, range });
 
     expect(links[0].href).toBe(
       '/explore?left={"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}]}'

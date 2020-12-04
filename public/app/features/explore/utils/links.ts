@@ -10,14 +10,15 @@ import { splitOpen } from '../state/main';
  * appropriately. This is for example used for transition from log with traceId to trace datasource to show that
  * trace.
  */
-export const getFieldLinksForExplore = (
-  field: Field,
-  rowIndex: number,
-  splitOpenFn: typeof splitOpen,
-  range: TimeRange,
-  vars: ScopedVars = {}
-): Array<LinkModel<Field>> => {
-  const scopedVars: any = { ...vars };
+export const getFieldLinksForExplore = (options: {
+  field: Field;
+  rowIndex: number;
+  splitOpenFn?: typeof splitOpen;
+  range: TimeRange;
+  vars?: ScopedVars;
+}): Array<LinkModel<Field>> => {
+  const { field, vars, splitOpenFn, range, rowIndex } = options;
+  const scopedVars: any = { ...(vars || {}) };
   scopedVars['__value'] = {
     value: {
       raw: field.values.get(rowIndex),

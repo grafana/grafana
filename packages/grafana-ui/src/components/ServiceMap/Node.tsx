@@ -26,7 +26,6 @@ export function Node(props: {
       }}
       style={{ cursor: 'pointer' }}
       onClick={event => {
-        console.log('onclick');
         onClick(event, node);
       }}
     >
