@@ -76,15 +76,6 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 	})
 
 	middlewareScenario(t, "middleware should add correct Strict-Transport-Security header", func(t *testing.T, sc *scenarioContext) {
-		origStrictTransportSecurity := setting.StrictTransportSecurity
-		origStrictTransportSecurityMaxAge := setting.StrictTransportSecurityMaxAge
-		t.Cleanup(func() {
-			setting.StrictTransportSecurity = origStrictTransportSecurity
-			setting.StrictTransportSecurityMaxAge = origStrictTransportSecurityMaxAge
-		})
-		setting.StrictTransportSecurity = true
-		setting.StrictTransportSecurityMaxAge = 64000
-
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Equal(t, "max-age=64000", sc.resp.Header().Get("Strict-Transport-Security"))
 		setting.StrictTransportSecurityPreload = true
@@ -95,6 +86,8 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 		assert.Equal(t, "max-age=64000; preload; includeSubDomains", sc.resp.Header().Get("Strict-Transport-Security"))
 	}, func(cfg *setting.Cfg) {
 		cfg.Protocol = setting.HTTPSScheme
+		cfg.StrictTransportSecurity = true
+		cfg.StrictTransportSecurityMaxAge = 64000
 	})
 }
 

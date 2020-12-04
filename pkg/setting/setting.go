@@ -102,8 +102,6 @@ var (
 	AllowEmbedding                    bool
 	XSSProtectionHeader               bool
 	ContentTypeProtectionHeader       bool
-	StrictTransportSecurity           bool
-	StrictTransportSecurityMaxAge     int
 	StrictTransportSecurityPreload    bool
 	StrictTransportSecuritySubDomains bool
 
@@ -1022,10 +1020,8 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.ContentTypeProtectionHeader = ContentTypeProtectionHeader
 	XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
 	cfg.XSSProtectionHeader = XSSProtectionHeader
-	StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
-	cfg.StrictTransportSecurity = StrictTransportSecurity
-	StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
-	cfg.StrictTransportSecurityMaxAge = StrictTransportSecurityMaxAge
+	cfg.StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
+	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
 	StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
 	cfg.StrictTransportSecurityPreload = StrictTransportSecurityPreload
 	StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
