@@ -1,5 +1,5 @@
 import React, { FormEvent, PropsWithChildren, ReactElement, useCallback } from 'react';
-import { HorizontalGroup, InlineField, TextArea, useStyles } from '@grafana/ui';
+import { InlineField, TextArea, useStyles } from '@grafana/ui';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 
@@ -38,16 +38,7 @@ export function VariableTextAreaField({
   }, []);
 
   return (
-    <HorizontalGroup spacing="none">
-      <InlineField
-        label={name}
-        labelWidth={labelWidth ?? 12}
-        grow={false}
-        tooltip={tooltip}
-        className={styles.inlineFieldOverride}
-      >
-        <span hidden />
-      </InlineField>
+    <InlineField label={name} labelWidth={labelWidth ?? 12} tooltip={tooltip}>
       <TextArea
         rows={getLineCount(value)}
         value={value}
@@ -59,15 +50,12 @@ export function VariableTextAreaField({
         cols={width}
         className={styles.textarea}
       />
-    </HorizontalGroup>
+    </InlineField>
   );
 }
 
 function getStyles(theme: GrafanaTheme) {
   return {
-    inlineFieldOverride: css`
-      margin: 0;
-    `,
     textarea: css`
       white-space: pre-wrap;
       min-height: 32px;

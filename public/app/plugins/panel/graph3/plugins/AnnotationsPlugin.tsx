@@ -32,7 +32,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
   );
 
   useEffect(() => {
-    if (plotCtx.isPlotReady) {
+    if (plotCtx.getPlotInstance()) {
       const views: Array<DataFrameView<AnnotationsDataFrameViewDTO>> = [];
 
       for (const frame of annotations) {
@@ -41,7 +41,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
 
       annotationsRef.current = views;
     }
-  }, [plotCtx.isPlotReady, annotations]);
+  }, [plotCtx, annotations]);
 
   useEffect(() => {
     const unregister = plotCtx.registerPlugin({
@@ -93,13 +93,14 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
 
   const mapAnnotationToXYCoords = useCallback(
     (annotation: AnnotationsDataFrameViewDTO) => {
-      if (!annotation.time) {
+      const plotInstance = plotCtx.getPlotInstance();
+      if (!annotation.time || !plotInstance) {
         return undefined;
       }
 
       return {
-        x: plotCtx.getPlotInstance().valToPos(annotation.time / 1000, 'x'),
-        y: plotCtx.getPlotInstance().bbox.height / window.devicePixelRatio + 4,
+        x: plotInstance.valToPos(annotation.time, 'x'),
+        y: plotInstance.bbox.height / window.devicePixelRatio + 4,
       };
     },
     [plotCtx.getPlotInstance]

@@ -1,9 +1,9 @@
 import React, { ChangeEvent, PureComponent } from 'react';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { InlineFieldRow, VerticalGroup } from '@grafana/ui';
+import { InlineField, InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { getTemplateSrv } from '@grafana/runtime';
-import { LoadingState, SelectableValue } from '@grafana/data';
+import { DataSourceInstanceSettings, LoadingState, SelectableValue } from '@grafana/data';
 
 import { SelectionOptionsEditor } from '../editor/SelectionOptionsEditor';
 import { QueryVariableModel, VariableRefresh, VariableSort, VariableWithMultiSupport } from '../types';
@@ -20,9 +20,9 @@ import { isLegacyQueryEditor, isQueryEditor } from '../guard';
 import { VariableSectionHeader } from '../editor/VariableSectionHeader';
 import { VariableTextField } from '../editor/VariableTextField';
 import { VariableSwitchField } from '../editor/VariableSwitchField';
-import { QueryVariableDatasourceSelect } from './QueryVariableDatasourceSelect';
 import { QueryVariableRefreshSelect } from './QueryVariableRefreshSelect';
 import { QueryVariableSortSelect } from './QueryVariableSortSelect';
+import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 
 export interface OwnProps extends VariableEditorProps<QueryVariableModel> {}
 
@@ -65,9 +65,12 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     }
   }
 
-  onDataSourceChange = (option: SelectableValue<string>) => {
+  onDataSourceChange = (dsSettings: DataSourceInstanceSettings) => {
     this.props.onPropChange({ propName: 'query', propValue: '' });
-    this.props.onPropChange({ propName: 'datasource', propValue: option.value });
+    this.props.onPropChange({
+      propName: 'datasource',
+      propValue: dsSettings.isDefault ? null : dsSettings.name,
+    });
   };
 
   onLegacyQueryChange = async (query: any, definition: string) => {
@@ -182,19 +185,19 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
     return (
       <VerticalGroup spacing="xs">
         <VariableSectionHeader name="Query Options" />
-        <VerticalGroup spacing="md">
+        <VerticalGroup spacing="lg">
           <VerticalGroup spacing="none">
-            <VerticalGroup spacing="xs">
-              <InlineFieldRow>
-                <QueryVariableDatasourceSelect
+            <InlineFieldRow>
+              <InlineField label="Data source" labelWidth={20}>
+                <DataSourcePicker
+                  current={this.props.variable.datasource}
                   onChange={this.onDataSourceChange}
-                  datasource={this.props.variable.datasource}
-                  dataSources={this.props.editor.extended?.dataSources}
+                  variables={true}
                 />
-                <QueryVariableRefreshSelect onChange={this.onRefreshChange} refresh={this.props.variable.refresh} />
-              </InlineFieldRow>
-              <div style={{ flexDirection: 'column' }}>{this.renderQueryEditor()}</div>
-            </VerticalGroup>
+              </InlineField>
+              <QueryVariableRefreshSelect onChange={this.onRefreshChange} refresh={this.props.variable.refresh} />
+            </InlineFieldRow>
+            <div style={{ flexDirection: 'column' }}>{this.renderQueryEditor()}</div>
             <VariableTextField
               value={this.state.regex ?? this.props.variable.regex}
               name="Regex"
