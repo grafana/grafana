@@ -75,7 +75,7 @@ export const SelectionPlugin: React.FC<SelectionPluginProps> = ({ onSelect, onDi
     };
   }, []);
 
-  if (!plotCtx.isPlotReady || !children || !selection) {
+  if (!plotCtx.getPlotInstance() || !children || !selection) {
     return null;
   }
 

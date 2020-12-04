@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { PlotPlugin } from './types';
 import { pluginLog } from './utils';
 import uPlot, { Options } from 'uplot';
@@ -105,11 +105,11 @@ export const DEFAULT_PLOT_CONFIG = {
   hooks: {},
 };
 
-//pass plain confsig object,memoize!
 export const usePlotConfig = (width: number, height: number, timeZone: TimeZone, configBuilder: UPlotConfigBuilder) => {
   const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
-  const [currentConfig, setCurrentConfig] = useState<Options>();
+  const [isConfigReady, setIsConfigReady] = useState(false);
 
+  const currentConfig = useRef<Options>();
   const tzDate = useMemo(() => {
     let fmt = undefined;
 
@@ -122,11 +122,11 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
     return fmt;
   }, [timeZone]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!arePluginsReady) {
       return;
     }
-    setCurrentConfig({
+    currentConfig.current = {
       ...DEFAULT_PLOT_CONFIG,
       width,
       height,
@@ -136,10 +136,13 @@ export const usePlotConfig = (width: number, height: number, timeZone: TimeZone,
       })),
       tzDate,
       ...configBuilder.getConfig(),
-    });
+    };
+
+    setIsConfigReady(true);
   }, [arePluginsReady, plugins, width, height, tzDate, configBuilder]);
 
   return {
+    isConfigReady,
     registerPlugin,
     currentConfig,
   };
@@ -174,13 +177,14 @@ export const useRefreshAfterGraphRendered = (pluginId: string) => {
   return renderToken;
 };
 
-export function useRevision<T>(dep: T, cmp: (prev: T, next: T) => boolean) {
+export function useRevision<T>(dep?: T | null, cmp?: (prev?: T | null, next?: T | null) => boolean) {
   const [rev, setRev] = useState(0);
   const prevDep = usePrevious(dep);
+  const comparator = cmp ? cmp : (a?: T | null, b?: T | null) => a === b;
 
-  useEffect(() => {
-    const hasConfigChanged = prevDep ? !cmp(prevDep, dep) : true;
-    if (hasConfigChanged) {
+  useLayoutEffect(() => {
+    const hasChange = !comparator(prevDep, dep);
+    if (hasChange) {
       setRev(r => r + 1);
     }
   }, [dep]);

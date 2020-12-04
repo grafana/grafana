@@ -1,5 +1,5 @@
 grabpl_version = '0.5.29'
-build_image = 'grafana/build-container:1.2.30'
+build_image = 'grafana/build-container:1.3.0'
 publish_image = 'grafana/grafana-ci-deploy:1.2.7'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
 alpine_image = 'alpine:3.12'
@@ -736,25 +736,23 @@ def mysql_integration_tests_step():
         ],
     }
 
-def release_next_npm_packages_step(edition):
+def release_canary_npm_packages_step(edition):
     if edition == 'enterprise':
         return None
 
     return {
-        'name': 'release-next-npm-packages',
+        'name': 'release-canary-npm-packages',
         'image': build_image,
         'depends_on': [
             'end-to-end-tests',
         ],
         'environment': {
-            'NPM_TOKEN': {
-                'from_secret': 'npm_token',
+            'GITHUB_PACKAGE_TOKEN': {
+                'from_secret': 'github_package_token',
             },
         },
         'commands': [
-            './node_modules/.bin/lerna bootstrap',
-            'echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc',
-            './scripts/circle-release-next-packages.sh',
+            './scripts/circle-release-canary-packages.sh',
         ],
     }
 
