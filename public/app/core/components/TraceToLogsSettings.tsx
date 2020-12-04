@@ -1,12 +1,10 @@
 import {
   DataSourceJsonData,
   DataSourcePluginOptionsEditorProps,
-  DataSourceSelectItem,
   GrafanaTheme,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { InlineField, useStyles } from '@grafana/ui';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { css } from 'emotion';
 import React from 'react';
 import { DataSourcePicker } from './Select/DataSourcePicker';
@@ -22,19 +20,6 @@ export interface TraceToLogsData extends DataSourceJsonData {
 interface Props extends DataSourcePluginOptionsEditorProps<TraceToLogsData> {}
 
 export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
-  const datasources: DataSourceSelectItem[] = getDatasourceSrv()
-    .getExternal()
-    .filter(ds => ds.meta.id === 'loki')
-    .map(
-      ds =>
-        ({
-          value: ds.uid,
-          name: ds.name,
-          meta: ds.meta,
-        } as DataSourceSelectItem)
-    );
-  let selectedDatasource = datasources.find(d => d.value === options.jsonData.tracesToLogs?.datasourceUid);
-
   const styles = useStyles(getStyles);
 
   return (
@@ -47,11 +32,12 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
 
       <InlineField label="Data source" tooltip="The data source the trace is going to navigate to">
         <DataSourcePicker
-          datasources={datasources}
-          current={selectedDatasource}
+          pluginId="loki"
+          current={options.jsonData.tracesToLogs?.datasourceUid}
+          noDefault={true}
           onChange={ds =>
             updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
-              datasourceUid: ds.value!,
+              datasourceUid: ds.uid,
             })
           }
         />
