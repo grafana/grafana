@@ -59,6 +59,7 @@ func TestLoginAttemptsValidation(t *testing.T) {
 					Username:  "user",
 					Password:  "pwd",
 					IpAddress: "192.168.1.1:56433",
+					Cfg:       setting.NewCfg(),
 				})
 				So(err, ShouldBeNil)
 

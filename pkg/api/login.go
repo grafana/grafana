@@ -196,6 +196,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 		Username:   cmd.User,
 		Password:   cmd.Password,
 		IpAddress:  c.Req.RemoteAddr,
+		Cfg:        hs.Cfg,
 	}
 
 	err := bus.Dispatch(authQuery)

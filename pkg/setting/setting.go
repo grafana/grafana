@@ -89,14 +89,13 @@ var (
 	EnforceDomain                  bool
 
 	// Security settings.
-	SecretKey                        string
-	DisableGravatar                  bool
-	EmailCodeValidMinutes            int
-	DataProxyWhiteList               map[string]bool
-	DisableBruteForceLoginProtection bool
-	CookieSecure                     bool
-	CookieSameSiteDisabled           bool
-	CookieSameSiteMode               http.SameSite
+	SecretKey              string
+	DisableGravatar        bool
+	EmailCodeValidMinutes  int
+	DataProxyWhiteList     map[string]bool
+	CookieSecure           bool
+	CookieSameSiteDisabled bool
+	CookieSameSiteMode     http.SameSite
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -971,7 +970,6 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	SecretKey = valueAsString(security, "secret_key", "")
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 	cfg.DisableBruteForceLoginProtection = security.Key("disable_brute_force_login_protection").MustBool(false)
-	DisableBruteForceLoginProtection = cfg.DisableBruteForceLoginProtection
 
 	CookieSecure = security.Key("cookie_secure").MustBool(false)
 	cfg.CookieSecure = CookieSecure

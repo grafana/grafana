@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -14,11 +13,7 @@ var (
 )
 
 var validateLoginAttempts = func(query *models.LoginUserQuery) error {
-	if query.Cfg != nil {
-		if query.Cfg.DisableBruteForceLoginProtection {
-			return nil
-		}
-	} else if setting.DisableBruteForceLoginProtection {
+	if query.Cfg.DisableBruteForceLoginProtection {
 		return nil
 	}
 
@@ -39,11 +34,7 @@ var validateLoginAttempts = func(query *models.LoginUserQuery) error {
 }
 
 var saveInvalidLoginAttempt = func(query *models.LoginUserQuery) error {
-	if query.Cfg != nil {
-		if query.Cfg.DisableBruteForceLoginProtection {
-			return nil
-		}
-	} else if setting.DisableBruteForceLoginProtection {
+	if query.Cfg.DisableBruteForceLoginProtection {
 		return nil
 	}
 
