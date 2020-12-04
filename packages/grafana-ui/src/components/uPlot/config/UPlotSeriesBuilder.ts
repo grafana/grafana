@@ -1,7 +1,7 @@
 import tinycolor from 'tinycolor2';
 import uPlot, { Series } from 'uplot';
 import { GraphMode, LineConfig, AreaConfig, PointsConfig, PointMode, LineInterpolation } from '../config';
-import { barsBuilder, smoothBuilder, staircaseBuilder } from '../paths';
+import { barsBuilder, smoothBuilder, stepBeforeBuilder, stepAfterBuilder } from '../paths';
 import { PlotConfigBuilder } from '../types';
 
 export interface SeriesProps extends LineConfig, AreaConfig, PointsConfig {
@@ -44,8 +44,10 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
         if (mode === GraphMode.Bars) {
           pathsBuilder = barsBuilder;
         } else if (mode === GraphMode.Line) {
-          if (lineInterpolation === LineInterpolation.Staircase) {
-            pathsBuilder = staircaseBuilder;
+          if (lineInterpolation === LineInterpolation.StepBefore) {
+            pathsBuilder = stepBeforeBuilder;
+          } else if (lineInterpolation === LineInterpolation.StepAfter) {
+            pathsBuilder = stepAfterBuilder;
           } else if (lineInterpolation === LineInterpolation.Smooth) {
             pathsBuilder = smoothBuilder;
           }

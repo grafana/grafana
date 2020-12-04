@@ -60,87 +60,115 @@ export const barsBuilder: Series.PathBuilder = (
   };
 };
 
-export const staircaseBuilder: Series.PathBuilder = (
-  u: uPlot,
-  seriesIdx: number,
-  idx0: number,
-  idx1: number,
-  extendGap: Series.ExtendGap,
-  buildClip: Series.BuildClip
-) => {
-  const series = u.series[seriesIdx];
-  const xdata = u.data[0];
-  const ydata = u.data[seriesIdx];
-  const scaleX = u.series[0].scale as string;
-  const scaleY = series.scale as string;
+/*
+const enum StepSide {
+  Before,
+  After,
+}
+*/
 
-  const stroke = new Path2D();
+export const stepBeforeBuilder = stepBuilderFactory(false);
+export const stepAfterBuilder = stepBuilderFactory(true);
 
-  // find first non-null dataPt
-  while (ydata[idx0] == null) {
-    idx0++;
-  }
+// babel does not support inlined const enums, so this uses a boolean flag for perf
+// possible workaround: https://github.com/dosentmatter/babel-plugin-const-enum
+function stepBuilderFactory(after: boolean): Series.PathBuilder {
+  return (
+    u: uPlot,
+    seriesIdx: number,
+    idx0: number,
+    idx1: number,
+    extendGap: Series.ExtendGap,
+    buildClip: Series.BuildClip
+  ) => {
+    const series = u.series[seriesIdx];
+    const xdata = u.data[0];
+    const ydata = u.data[seriesIdx];
+    const scaleX = u.series[0].scale as string;
+    const scaleY = series.scale as string;
+    const halfStroke = series.width! / 2;
 
-  // find last-null dataPt
-  while (ydata[idx1] == null) {
-    idx1--;
-  }
+    const stroke = new Path2D();
 
-  let gaps: Series.Gaps = [];
-  let inGap = false;
-  let prevYPos = Math.round(u.valToPos(ydata[idx0]!, scaleY, true));
-  let firstXPos = Math.round(u.valToPos(xdata[idx0], scaleX, true));
-  let prevXPos = firstXPos;
+    // find first non-null dataPt
+    while (ydata[idx0] == null) {
+      idx0++;
+    }
 
-  stroke.moveTo(firstXPos, prevYPos);
+    // find last-null dataPt
+    while (ydata[idx1] == null) {
+      idx1--;
+    }
 
-  for (let i = idx0 + 1; i <= idx1; i++) {
-    let yVal1 = ydata[i];
+    let gaps: Series.Gaps = [];
+    let inGap = false;
+    let prevYPos = Math.round(u.valToPos(ydata[idx0]!, scaleY, true));
+    let firstXPos = Math.round(u.valToPos(xdata[idx0], scaleX, true));
+    let prevXPos = firstXPos;
 
-    let x1 = Math.round(u.valToPos(xdata[i], scaleX, true));
+    stroke.moveTo(firstXPos, prevYPos);
 
-    if (yVal1 == null) {
-      //@ts-ignore
-      if (series.isGap(u, seriesIdx, i)) {
-        extendGap(gaps, prevXPos + 1, x1);
-        inGap = true;
+    for (let i = idx0 + 1; i <= idx1; i++) {
+      let yVal1 = ydata[i];
+
+      let x1 = Math.round(u.valToPos(xdata[i], scaleX, true));
+
+      if (yVal1 == null) {
+        //@ts-ignore
+        if (series.isGap(u, seriesIdx, i)) {
+          extendGap(gaps, prevXPos, x1);
+          inGap = true;
+        }
+
+        continue;
       }
 
-      continue;
+      let y1 = Math.round(u.valToPos(yVal1, scaleY, true));
+
+      if (inGap) {
+        extendGap(gaps, prevXPos, x1);
+
+        // don't clip vertical extenders
+        if (prevYPos !== y1) {
+          let lastGap = gaps[gaps.length - 1];
+          lastGap[0] += halfStroke;
+          lastGap[1] -= halfStroke;
+        }
+
+        inGap = false;
+      }
+
+      if (after) {
+        stroke.lineTo(x1, prevYPos);
+      } else {
+        stroke.lineTo(prevXPos, y1);
+      }
+
+      stroke.lineTo(x1, y1);
+
+      prevYPos = y1;
+      prevXPos = x1;
     }
 
-    if (inGap) {
-      extendGap(gaps, prevXPos + 1, x1 + 1);
-      inGap = false;
-    }
+    const fill = new Path2D(stroke);
 
-    let y1 = Math.round(u.valToPos(yVal1, scaleY, true));
+    //@ts-ignore
+    let fillTo = series.fillTo(u, seriesIdx, series.min, series.max);
 
-    stroke.lineTo(x1, prevYPos);
-    stroke.lineTo(x1, y1);
+    let minY = Math.round(u.valToPos(fillTo, scaleY, true));
 
-    prevYPos = y1;
-    prevXPos = x1;
-  }
+    fill.lineTo(prevXPos, minY);
+    fill.lineTo(firstXPos, minY);
 
-  const fill = new Path2D(stroke);
+    let clip = !series.spanGaps ? buildClip(gaps) : null;
 
-  //@ts-ignore
-  let fillTo = series.fillTo(u, seriesIdx, series.min, series.max);
-
-  let minY = Math.round(u.valToPos(fillTo, scaleY, true));
-
-  fill.lineTo(prevXPos, minY);
-  fill.lineTo(firstXPos, minY);
-
-  let clip = !series.spanGaps ? buildClip(gaps) : null;
-
-  return {
-    stroke,
-    fill,
-    clip,
+    return {
+      stroke,
+      fill,
+      clip,
+    };
   };
-};
+}
 
 // adapted from https://gist.github.com/nicholaswmin/c2661eb11cad5671d816 (MIT)
 /**
