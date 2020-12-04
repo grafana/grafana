@@ -75,7 +75,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 		sc.cfg.StrictTransportSecurityPreload = true
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Equal(t, "max-age=64000; preload", sc.resp.Header().Get("Strict-Transport-Security"))
-		setting.StrictTransportSecuritySubDomains = true
+		sc.cfg.StrictTransportSecuritySubDomains = true
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Equal(t, "max-age=64000; preload; includeSubDomains", sc.resp.Header().Get("Strict-Transport-Security"))
 	}, func(cfg *setting.Cfg) {

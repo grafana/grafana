@@ -48,7 +48,7 @@ func addSecurityHeaders(w macaron.ResponseWriter, cfg *setting.Cfg) {
 		if cfg.StrictTransportSecurityPreload {
 			strictHeaderValues = append(strictHeaderValues, "preload")
 		}
-		if setting.StrictTransportSecuritySubDomains {
+		if cfg.StrictTransportSecuritySubDomains {
 			strictHeaderValues = append(strictHeaderValues, "includeSubDomains")
 		}
 		w.Header().Add("Strict-Transport-Security", strings.Join(strictHeaderValues, "; "))

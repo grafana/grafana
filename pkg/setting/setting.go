@@ -89,15 +89,14 @@ var (
 	EnforceDomain                  bool
 
 	// Security settings.
-	SecretKey                         string
-	DisableGravatar                   bool
-	EmailCodeValidMinutes             int
-	DataProxyWhiteList                map[string]bool
-	DisableBruteForceLoginProtection  bool
-	CookieSecure                      bool
-	CookieSameSiteDisabled            bool
-	CookieSameSiteMode                http.SameSite
-	StrictTransportSecuritySubDomains bool
+	SecretKey                        string
+	DisableGravatar                  bool
+	EmailCodeValidMinutes            int
+	DataProxyWhiteList               map[string]bool
+	DisableBruteForceLoginProtection bool
+	CookieSecure                     bool
+	CookieSameSiteDisabled           bool
+	CookieSameSiteMode               http.SameSite
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -1014,8 +1013,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
 	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
 	cfg.StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
-	StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
-	cfg.StrictTransportSecuritySubDomains = StrictTransportSecuritySubDomains
+	cfg.StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
 
 	// read data source proxy whitelist
 	DataProxyWhiteList = make(map[string]bool)
