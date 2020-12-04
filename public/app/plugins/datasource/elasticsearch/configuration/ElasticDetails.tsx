@@ -34,7 +34,7 @@ export const ElasticDetails = (props: Props) => {
 
       <div className="gf-form-group">
         <div className="gf-form-inline">
-          <div className="gf-form max-width-25">
+          <div className="gf-form">
             <FormField
               labelWidth={10}
               inputWidth={15}
@@ -46,7 +46,7 @@ export const ElasticDetails = (props: Props) => {
             />
           </div>
 
-          <div className="gf-form width-14">
+          <div className="gf-form">
             <FormField
               labelWidth={10}
               label="Pattern"
