@@ -398,7 +398,7 @@ func TestMiddlewareContext(t *testing.T) {
 			sc.exec()
 
 			assert.False(t, *actualAuthProxyAutoSignUp)
-			assert.Equal(t, sc.resp.Code, 407)
+			assert.Equal(t, 407, sc.resp.Code)
 			assert.Nil(t, sc.context)
 		}, func(cfg *setting.Cfg) {
 			configure(cfg)
