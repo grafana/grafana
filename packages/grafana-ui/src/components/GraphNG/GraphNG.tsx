@@ -69,6 +69,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   // reference change will not triger re-render
   const currentTimeRange = useRef<TimeRange>();
   useEffect(() => {
+    console.log('GraphNG (useEffect)', timeRange.from.valueOf(), timeRange.to.valueOf());
     currentTimeRange.current = timeRange;
   }, [timeRange]);
 
