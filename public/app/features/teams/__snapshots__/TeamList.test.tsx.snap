@@ -41,7 +41,7 @@ exports[`Render should render teams table 1`] = `
       <div
         className="gf-form gf-form--grow"
       >
-        <Component
+        <FilterInput
           inputClassName="gf-form-input"
           labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}
@@ -132,7 +132,7 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <Component
+              <DeleteButton
                 disabled={false}
                 onConfirm={[Function]}
                 size="sm"
@@ -184,7 +184,7 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <Component
+              <DeleteButton
                 disabled={false}
                 onConfirm={[Function]}
                 size="sm"
@@ -236,7 +236,7 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <Component
+              <DeleteButton
                 disabled={false}
                 onConfirm={[Function]}
                 size="sm"
@@ -288,7 +288,7 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <Component
+              <DeleteButton
                 disabled={false}
                 onConfirm={[Function]}
                 size="sm"
@@ -340,7 +340,7 @@ exports[`Render should render teams table 1`] = `
             <td
               className="text-right"
             >
-              <Component
+              <DeleteButton
                 disabled={false}
                 onConfirm={[Function]}
                 size="sm"
@@ -376,7 +376,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
       <div
         className="gf-form gf-form--grow"
       >
-        <Component
+        <FilterInput
           inputClassName="gf-form-input"
           labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}
@@ -467,7 +467,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
             <td
               className="text-right"
             >
-              <Component
+              <DeleteButton
                 disabled={true}
                 onConfirm={[Function]}
                 size="sm"
@@ -503,7 +503,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
       <div
         className="gf-form gf-form--grow"
       >
-        <Component
+        <FilterInput
           inputClassName="gf-form-input"
           labelClassName="gf-form--has-input-icon gf-form--grow"
           onChange={[Function]}
@@ -594,7 +594,7 @@ exports[`Render when feature toggle editorsCanAdmin is turned on and signedin us
             <td
               className="text-right"
             >
-              <Component
+              <DeleteButton
                 disabled={true}
                 onConfirm={[Function]}
                 size="sm"

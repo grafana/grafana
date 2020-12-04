@@ -57,7 +57,7 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
         }
         visible={false}
       />
-      <Component
+      <TimeRangeList
         onSelect={[Function]}
         options={Array []}
         timeZone="utc"
@@ -76,7 +76,7 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
       <div
         className="css-1ogeuxc"
       />
-      <Component
+      <TimeRangeList
         onSelect={[Function]}
         options={Array []}
         timeZone="utc"
@@ -94,7 +94,7 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
       />
     </CustomScrollbar>
   </div>
-  <Component
+  <TimePickerFooter
     onChangeTimeZone={[Function]}
     timeZone="utc"
   />
@@ -158,7 +158,7 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
         }
         visible={true}
       />
-      <Component
+      <TimeRangeList
         onSelect={[Function]}
         options={Array []}
         timeZone="utc"
@@ -177,7 +177,7 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
       <div
         className="css-1ogeuxc"
       />
-      <Component
+      <TimeRangeList
         onSelect={[Function]}
         options={Array []}
         timeZone="utc"
@@ -325,7 +325,7 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
         }
         visible={false}
       />
-      <Component
+      <TimeRangeList
         onSelect={[Function]}
         options={Array []}
         timeZone="utc"
@@ -344,7 +344,7 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
       <div
         className="css-1ogeuxc"
       />
-      <Component
+      <TimeRangeList
         onSelect={[Function]}
         options={Array []}
         timeZone="utc"
@@ -362,7 +362,7 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
       />
     </CustomScrollbar>
   </div>
-  <Component
+  <TimePickerFooter
     onChangeTimeZone={[Function]}
     timeZone="utc"
   />

@@ -343,11 +343,17 @@ type dashboardJSONFile struct {
 }
 
 func (fr *FileReader) readDashboardFromFile(path string, lastModified time.Time, folderID int64) (*dashboardJSONFile, error) {
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `path` comes from the provisioning configuration file.
 	reader, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			fr.log.Warn("Failed to close file", "path", path, "err", err)
+		}
+	}()
 
 	all, err := ioutil.ReadAll(reader)
 	if err != nil {

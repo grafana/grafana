@@ -52,6 +52,9 @@ func stack(skip int) []byte {
 		// Print this much at least.  If we can't find the source, it won't show.
 		fmt.Fprintf(buf, "%s:%d (0x%x)\n", file, line, pc)
 		if file != lastFile {
+			// We can ignore the gosec G304 warning on this one because `file`
+			// comes from the runtime.Caller() function.
+			// nolint:gosec
 			data, err := ioutil.ReadFile(file)
 			if err != nil {
 				continue
