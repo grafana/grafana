@@ -1,38 +1,20 @@
 import { PanelModel } from '@grafana/data';
-import { graphPanelChangedHandler } from './migrations.ts';
-import { BigValueGraphMode, BigValueColorMode } from '@grafana/ui';
-import { BigValueTextMode } from '@grafana/ui/src/components/BigValue/BigValue';
+import { graphPanelChangedHandler } from './migrations';
 
-const sheetsExample = {
+const stairscase = {
   aliasColors: {},
-  bars: false,
   dashLength: 10,
-  dashes: false,
-  datasource: 'Google Sheets',
-  fieldConfig: {
-    defaults: {
-      custom: {},
-    },
-    overrides: [],
-  },
-  fill: 1,
-  fillGradient: 0,
-  gridPos: {
-    h: 15,
-    w: 24,
-    x: 0,
-    y: 0,
-  },
-  hiddenSeries: false,
-  id: 23763571993,
+  fill: 5,
+  fillGradient: 6,
   legend: {
-    avg: false,
-    current: false,
-    max: false,
-    min: false,
+    avg: true,
+    current: true,
+    max: true,
+    min: true,
     show: true,
-    total: false,
-    values: false,
+    total: true,
+    values: true,
+    alignAsTable: true,
   },
   lines: true,
   linewidth: 1,
@@ -40,43 +22,13 @@ const sheetsExample = {
   options: {
     alertThreshold: true,
   },
-  percentage: false,
-  pluginVersion: '7.4.0-pre',
   pointradius: 2,
-  points: true,
-  renderer: 'flot',
-  seriesOverrides: [
-    {
-      alias: 'A-series1',
-      bars: true,
-      lines: false,
-      points: false,
-    },
-    {
-      alias: 'A-series2',
-      steppedLine: true,
-    },
-    {
-      alias: 'A-series4',
-      lines: false,
-    },
-  ],
+  seriesOverrides: [],
   spaceLength: 10,
-  stack: false,
-  steppedLine: false,
-  targets: [
-    {
-      cacheDurationSeconds: 300,
-      refId: 'A',
-      spreadsheet: '1OSA1BEgeUN28EXI86iZl2oU3q66uQ88pF1JsbMFq87A',
-      useTimeFilter: true,
-    },
-  ],
+  steppedLine: true,
   thresholds: [],
-  timeFrom: null,
   timeRegions: [],
-  timeShift: null,
-  title: 'Flot',
+  title: 'Panel Title',
   tooltip: {
     shared: true,
     sort: 0,
@@ -92,6 +44,7 @@ const sheetsExample = {
   },
   yaxes: [
     {
+      $$hashKey: 'object:42',
       format: 'short',
       label: null,
       logBase: 1,
@@ -100,6 +53,7 @@ const sheetsExample = {
       show: true,
     },
     {
+      $$hashKey: 'object:43',
       format: 'short',
       label: null,
       logBase: 1,
@@ -112,15 +66,91 @@ const sheetsExample = {
     align: false,
     alignLevel: null,
   },
+  timeFrom: null,
+  timeShift: null,
+  bars: false,
+  dashes: false,
+  hiddenSeries: false,
+  percentage: false,
+  points: false,
+  stack: false,
+  decimals: 1,
+  datasource: null,
 };
 
 describe('Graph Migrations', () => {
-  it('change from flot to uplot graph', () => {
+  it('simple bars', () => {
     const old: any = {
-      angular: sheetsExample,
+      angular: {
+        bars: true,
+      },
     };
     const panel = {} as PanelModel;
     const options = graphPanelChangedHandler(panel, 'graph', old);
-    expect(options).toMatchInlineSnapshot();
+    expect(panel).toMatchInlineSnapshot(`
+      Object {
+        "fieldConfig": Object {
+          "defaults": Object {
+            "custom": Object {
+              "lineWidth": undefined,
+              "mode": "bars",
+              "pointSize": undefined,
+            },
+            "decimals": undefined,
+            "nullValueMode": undefined,
+          },
+          "overrides": Array [],
+        },
+      }
+    `);
+    expect(options).toMatchInlineSnapshot(`
+      Object {
+        "graph": Object {},
+        "legend": Object {
+          "displayMode": "list",
+          "placement": "bottom",
+        },
+        "tooltipOptions": Object {
+          "mode": "single",
+        },
+      }
+    `);
+  });
+
+  it('stairscase', () => {
+    const old: any = {
+      angular: stairscase,
+    };
+    const panel = {} as PanelModel;
+    const options = graphPanelChangedHandler(panel, 'graph', old);
+    expect(panel).toMatchInlineSnapshot(`
+      Object {
+        "fieldConfig": Object {
+          "defaults": Object {
+            "custom": Object {
+              "lineInterpolation": "staircase",
+              "lineWidth": undefined,
+              "mode": "line",
+              "pointSize": 2,
+            },
+            "decimals": 1,
+            "nullValueMode": "null",
+          },
+          "overrides": Array [],
+        },
+      }
+    `);
+    expect(options).toMatchInlineSnapshot(`
+      Object {
+        "graph": Object {},
+        "legend": Object {
+          "displayMode": "list",
+          "placement": "bottom",
+        },
+        "tooltipOptions": Object {
+          "mode": "single",
+        },
+      }
+    `);
   });
 });
