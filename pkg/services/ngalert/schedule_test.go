@@ -36,7 +36,8 @@ func TestAlertingTicker(t *testing.T) {
 	ticker := alerting.NewTicker(mockedClock.Now(), time.Second*0, mockedClock, 1)
 	ctx := context.Background()
 	go func() {
-		ng.alertingTicker(ctx, ticker)
+		err := ng.alertingTicker(ctx, ticker)
+		require.NoError(t, err)
 	}()
 	runtime.Gosched()
 
