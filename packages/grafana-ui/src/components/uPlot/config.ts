@@ -55,6 +55,8 @@ export interface AxisConfig {
 
 export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, AxisConfig {
   mode?: GraphMode;
+
+  spanNulls?: boolean;
 }
 
 export const graphFieldOptions = {
