@@ -140,12 +140,11 @@ var (
 	AnonymousOrgRole string
 
 	// Auth proxy settings
-	AuthProxyEnabled          bool
-	AuthProxyHeaderProperty   string
-	AuthProxyEnableLoginToken bool
-	AuthProxySyncTtl          int
-	AuthProxyWhitelist        string
-	AuthProxyHeaders          map[string]string
+	AuthProxyEnabled        bool
+	AuthProxyHeaderProperty string
+	AuthProxySyncTtl        int
+	AuthProxyWhitelist      string
+	AuthProxyHeaders        map[string]string
 
 	// Basic Auth
 	BasicAuthEnabled bool
@@ -1104,8 +1103,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	AuthProxyHeaderProperty = valueAsString(authProxy, "header_property", "")
 	cfg.AuthProxyHeaderProperty = AuthProxyHeaderProperty
 	cfg.AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
-	AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
-	cfg.AuthProxyEnableLoginToken = AuthProxyEnableLoginToken
+	cfg.AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
 
 	ldapSyncVal := authProxy.Key("ldap_sync_ttl").MustInt()
 	syncVal := authProxy.Key("sync_ttl").MustInt()
