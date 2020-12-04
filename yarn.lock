@@ -25667,10 +25667,10 @@ update-notifier@^2.5.0:
     semver-diff "^2.0.0"
     xdg-basedir "^3.0.0"
 
-uplot@1.4.6:
-  version "1.4.6"
-  resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.4.6.tgz#52b6812c06b8d3cb89d4a8d053f45415cb5d9a13"
-  integrity sha512-nw3LdjLFhAqKQF/Rv7QjZICVnjJemOQVj2L3b7889gHBrnC1LwltkzTcawDcbMe6pxo++0KVev9xSC0YCw+m5w==
+uplot@1.4.7:
+  version "1.4.7"
+  resolved "https://registry.yarnpkg.com/uplot/-/uplot-1.4.7.tgz#feab0cf48b569184bfefacf29308deb021bad765"
+  integrity sha512-zyVwJWuZ5/DOULPpJZb8XhVsSFgWXvitPg1acAwIjZEblUfKAwvfHXA6+Gz6JruCWCokNyC4f3ZGgMcqT0Bv0Q==
 
 upper-case@^1.1.1:
   version "1.1.3"
