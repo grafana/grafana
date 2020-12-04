@@ -55,9 +55,8 @@ type AuthProxy struct {
 	orgID       int64
 	header      string
 
-	enabled         bool
-	LDAPAllowSignup bool
-	cacheTTL        int
+	enabled  bool
+	cacheTTL int
 }
 
 // Error auth proxy specific error
@@ -91,14 +90,13 @@ type Options struct {
 func New(cfg *setting.Cfg, options *Options) *AuthProxy {
 	header := options.Ctx.Req.Header.Get(cfg.AuthProxyHeaderName)
 	return &AuthProxy{
-		remoteCache:     options.RemoteCache,
-		cfg:             cfg,
-		ctx:             options.Ctx,
-		orgID:           options.OrgID,
-		header:          header,
-		enabled:         cfg.AuthProxyEnabled,
-		cacheTTL:        cfg.AuthProxySyncTTL,
-		LDAPAllowSignup: cfg.LDAPAllowSignup,
+		remoteCache: options.RemoteCache,
+		cfg:         cfg,
+		ctx:         options.Ctx,
+		orgID:       options.OrgID,
+		header:      header,
+		enabled:     cfg.AuthProxyEnabled,
+		cacheTTL:    cfg.AuthProxySyncTTL,
 	}
 }
 
@@ -243,7 +241,7 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, error) {
 	// Have to sync grafana and LDAP user during log in
 	upsert := &models.UpsertUserCommand{
 		ReqContext:    auth.ctx,
-		SignupAllowed: auth.LDAPAllowSignup,
+		SignupAllowed: auth.cfg.LDAPAllowSignup,
 		ExternalUser:  extUser,
 	}
 	if err := bus.Dispatch(upsert); err != nil {
