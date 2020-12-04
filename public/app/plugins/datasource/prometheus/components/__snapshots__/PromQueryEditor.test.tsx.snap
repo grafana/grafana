@@ -25,13 +25,13 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
     <div
       className="gf-form"
     >
-      <Component
+      <FormLabel
         tooltip="Controls the name of the time series, using name or pattern. For example
         {{hostname}} will be replaced with label value for the label hostname."
         width={7}
       >
         Legend
-      </Component>
+      </FormLabel>
       <input
         className="gf-form-input"
         onBlur={[Function]}
@@ -44,7 +44,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
     <div
       className="gf-form"
     >
-      <Component
+      <FormLabel
         tooltip={
           <React.Fragment>
             An additional lower limit for the step parameter of the Prometheus query and for the
@@ -62,7 +62,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         width={7}
       >
         Min step
-      </Component>
+      </FormLabel>
       <input
         className="gf-form-input width-8"
         onBlur={[Function]}
@@ -160,11 +160,11 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
         label="Instant"
         onChange={[Function]}
       />
-      <Component
+      <FormLabel
         tooltip="Link to Graph in Prometheus"
         width={10}
       >
-        <PromLink
+        <Memo(PromLink)
           datasource={
             Object {
               "createQuery": [MockFunction],
@@ -180,7 +180,7 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
             }
           }
         />
-      </Component>
+      </FormLabel>
     </div>
   </div>
 </div>

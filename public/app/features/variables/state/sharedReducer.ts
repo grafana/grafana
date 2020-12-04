@@ -16,8 +16,11 @@ const sharedReducerSlice = createSlice({
   reducers: {
     addVariable: (state: VariablesState, action: PayloadAction<VariablePayload<AddVariable>>) => {
       const id = action.payload.id ?? action.payload.data.model.name; // for testing purposes we can call this with an id
-      const initialState = cloneDeep(variableAdapters.get(action.payload.type).initialState);
-      const model = cloneDeep(action.payload.data.model);
+      const adapter = variableAdapters.get(action.payload.type);
+      const initialState = cloneDeep(adapter.initialState);
+      const model = adapter.beforeAdding
+        ? adapter.beforeAdding(action.payload.data.model)
+        : cloneDeep(action.payload.data.model);
 
       const variable = {
         ...lodashDefaults({}, model, initialState),

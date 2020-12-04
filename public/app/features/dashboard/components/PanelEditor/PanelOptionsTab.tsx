@@ -88,6 +88,7 @@ export const PanelOptionsTab: FC<Props> = ({
         replaceVariables={panel.replaceVariables}
         plugin={plugin}
         data={data?.series}
+        eventBus={dashboard.events}
       />
     );
   }

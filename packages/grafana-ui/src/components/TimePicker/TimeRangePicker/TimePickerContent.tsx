@@ -283,8 +283,8 @@ const EmptyRecentList = memo(() => {
     <div className={styles.container}>
       <div>
         <span>
-          It looks like you haven't used this timer picker before. As soon as you enter some time intervals, recently
-          used intervals will appear here.
+          It looks like you haven&apos;t used this timer picker before. As soon as you enter some time intervals,
+          recently used intervals will appear here.
         </span>
       </div>
       <div>
@@ -307,3 +307,5 @@ function mapToHistoryOptions(ranges?: TimeRange[], timeZone?: TimeZone): TimeOpt
   }
   return ranges.slice(ranges.length - 4).map(range => mapRangeToTimeOption(range, timeZone));
 }
+
+EmptyRecentList.displayName = 'EmptyRecentList';

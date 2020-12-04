@@ -20,9 +20,9 @@ export interface Props extends Themeable {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
-  showParsedFields?: string[];
-  onClickShowParsedField?: (key: string) => void;
-  onClickHideParsedField?: (key: string) => void;
+  showDetectedFields?: string[];
+  onClickShowDetectedField?: (key: string) => void;
+  onClickHideDetectedField?: (key: string) => void;
 }
 
 interface State {
@@ -61,16 +61,16 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   showField = () => {
-    const { onClickShowParsedField, parsedKey } = this.props;
-    if (onClickShowParsedField) {
-      onClickShowParsedField(parsedKey);
+    const { onClickShowDetectedField, parsedKey } = this.props;
+    if (onClickShowDetectedField) {
+      onClickShowDetectedField(parsedKey);
     }
   };
 
   hideField = () => {
-    const { onClickHideParsedField, parsedKey } = this.props;
-    if (onClickHideParsedField) {
-      onClickHideParsedField(parsedKey);
+    const { onClickHideDetectedField, parsedKey } = this.props;
+    if (onClickHideDetectedField) {
+      onClickHideDetectedField(parsedKey);
     }
   };
 
@@ -107,12 +107,12 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   }
 
   render() {
-    const { theme, parsedKey, parsedValue, isLabel, links, showParsedFields } = this.props;
+    const { theme, parsedKey, parsedValue, isLabel, links, showDetectedFields } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
     const toggleFieldButton =
-      !isLabel && showParsedFields && showParsedFields.includes(parsedKey) ? (
+      !isLabel && showDetectedFields && showDetectedFields.includes(parsedKey) ? (
         <IconButton name="eye" className={styles.showingField} title="Hide this field" onClick={this.hideField} />
       ) : (
         <IconButton name="eye" title="Show this field instead of the message" onClick={this.showField} />
@@ -121,7 +121,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     return (
       <tr className={cx(style.logDetailsValue, { [styles.noHoverBackground]: showFieldsStats })}>
         {/* Action buttons - show stats/filter results */}
-        <td className={style.logsDetailsIcon} colSpan={isLabel ? undefined : 2}>
+        <td className={style.logsDetailsIcon}>
           <IconButton name="signal" title={'Ad-hoc statistics'} onClick={this.showStats} />
         </td>
 
@@ -138,7 +138,9 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
         {!isLabel && (
           <>
-            <td className={style.logsDetailsIcon}>{toggleFieldButton}</td>
+            <td className={style.logsDetailsIcon} colSpan={2}>
+              {toggleFieldButton}
+            </td>
           </>
         )}
 

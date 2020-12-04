@@ -45,7 +45,13 @@ exports[`PromExploreQueryEditor should render component 1`] = `
       },
     }
   }
-  datasource={Object {}}
+  datasource={
+    Object {
+      "languageProvider": Object {
+        "syntax": [Function],
+      },
+    }
+  }
   history={Array []}
   onBlur={[Function]}
   onChange={[MockFunction]}

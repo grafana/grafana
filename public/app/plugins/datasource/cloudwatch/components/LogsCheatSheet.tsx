@@ -192,7 +192,7 @@ const CLIQ_EXAMPLES: QueryExample[] = [
 ];
 
 function renderHighlightedMarkup(code: string, keyPrefix: string) {
-  const grammar = Prism.languages['cloudwatch'] ?? tokenizer;
+  const grammar = tokenizer;
   const tokens = flattenTokens(Prism.tokenize(code, grammar));
   const spans = tokens
     .filter(token => typeof token !== 'string')

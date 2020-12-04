@@ -6,14 +6,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTestdataScenarios(t *testing.T) {
-	Convey("random walk ", t, func() {
+	t.Run("random walk ", func(t *testing.T) {
 		scenario := ScenarioRegistry["random_walk"]
 
-		Convey("Should start at the requested value", func() {
+		t.Run("Should start at the requested value", func(t *testing.T) {
 			req := &tsdb.TsdbQuery{
 				TimeRange: tsdb.NewFakeTimeRange("5m", "now", time.Now()),
 				Queries: []*tsdb.Query{
@@ -24,17 +24,17 @@ func TestTestdataScenarios(t *testing.T) {
 			query.Model.Set("startValue", 1.234)
 
 			result := scenario.Handler(req.Queries[0], req)
-			points := result.Series[0].Points
+			require.NotNil(t, result.Series)
 
-			So(result.Series, ShouldNotBeNil)
-			So(points[0][0].Float64, ShouldEqual, 1.234)
+			points := result.Series[0].Points
+			require.Equal(t, 1.234, points[0][0].Float64)
 		})
 	})
 
-	Convey("random walk table", t, func() {
+	t.Run("random walk table", func(t *testing.T) {
 		scenario := ScenarioRegistry["random_walk_table"]
 
-		Convey("Should return a table that looks like value/min/max", func() {
+		t.Run("Should return a table that looks like value/min/max", func(t *testing.T) {
 			req := &tsdb.TsdbQuery{
 				TimeRange: tsdb.NewFakeTimeRange("5m", "now", time.Now()),
 				Queries: []*tsdb.Query{
@@ -45,18 +45,18 @@ func TestTestdataScenarios(t *testing.T) {
 			result := scenario.Handler(req.Queries[0], req)
 			table := result.Tables[0]
 
-			So(len(table.Rows), ShouldBeGreaterThan, 50)
+			require.Greater(t, len(table.Rows), 50)
 			for _, row := range table.Rows {
 				value := row[1]
 				min := row[2]
 				max := row[3]
 
-				So(min, ShouldBeLessThan, value)
-				So(max, ShouldBeGreaterThan, value)
+				require.Less(t, min, value)
+				require.Greater(t, max, value)
 			}
 		})
 
-		Convey("Should return a table with some nil values", func() {
+		t.Run("Should return a table with some nil values", func(t *testing.T) {
 			req := &tsdb.TsdbQuery{
 				TimeRange: tsdb.NewFakeTimeRange("5m", "now", time.Now()),
 				Queries: []*tsdb.Query{
@@ -73,7 +73,7 @@ func TestTestdataScenarios(t *testing.T) {
 			nil2 := false
 			nil3 := false
 
-			So(len(table.Rows), ShouldBeGreaterThan, 50)
+			require.Greater(t, len(table.Rows), 50)
 			for _, row := range table.Rows {
 				if row[1] == nil {
 					nil1 = true
@@ -86,41 +86,37 @@ func TestTestdataScenarios(t *testing.T) {
 				}
 			}
 
-			So(nil1, ShouldBeTrue)
-			So(nil2, ShouldBeTrue)
-			So(nil3, ShouldBeTrue)
+			require.True(t, nil1)
+			require.True(t, nil2)
+			require.True(t, nil3)
 		})
 	})
 }
 
-func TestToLabels(t *testing.T) {
-	Convey("read labels", t, func() {
-		tags := make(map[string]string)
-		tags["job"] = "foo"
-		tags["instance"] = "bar"
+func TestParseLabels(t *testing.T) {
+	expectedTags := map[string]string{
+		"job":      "foo",
+		"instance": "bar",
+	}
 
-		query1 := tsdb.Query{
-			Model: simplejson.NewFromAny(map[string]interface{}{
-				"labels": `{job="foo", instance="bar"}`,
-			}),
-		}
+	query1 := tsdb.Query{
+		Model: simplejson.NewFromAny(map[string]interface{}{
+			"labels": `{job="foo", instance="bar"}`,
+		}),
+	}
+	require.Equal(t, expectedTags, parseLabels(&query1))
 
-		So(parseLabels(&query1), ShouldResemble, tags)
+	query2 := tsdb.Query{
+		Model: simplejson.NewFromAny(map[string]interface{}{
+			"labels": `job=foo, instance=bar`,
+		}),
+	}
+	require.Equal(t, expectedTags, parseLabels(&query2))
 
-		query2 := tsdb.Query{
-			Model: simplejson.NewFromAny(map[string]interface{}{
-				"labels": `job=foo, instance=bar`,
-			}),
-		}
-
-		So(parseLabels(&query2), ShouldResemble, tags)
-
-		query3 := tsdb.Query{
-			Model: simplejson.NewFromAny(map[string]interface{}{
-				"labels": `job = foo,instance = bar`,
-			}),
-		}
-
-		So(parseLabels(&query3), ShouldResemble, tags)
-	})
+	query3 := tsdb.Query{
+		Model: simplejson.NewFromAny(map[string]interface{}{
+			"labels": `job = foo,instance = bar`,
+		}),
+	}
+	require.Equal(t, expectedTags, parseLabels(&query3))
 }

@@ -18,6 +18,7 @@ export const FieldTypeMatcherEditor = memo<MatcherUIProps<string>>(props => {
   const selectedOption = selectOptions.find(v => v.value === options);
   return <Select value={selectedOption} options={selectOptions} onChange={onChange} />;
 });
+FieldTypeMatcherEditor.displayName = 'FieldTypeMatcherEditor';
 
 const allTypes: Array<SelectableValue<FieldType>> = [
   { value: FieldType.number, label: 'Numeric' },

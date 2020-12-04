@@ -1,6 +1,4 @@
 import throttle from 'lodash/throttle';
-import isEqual from 'lodash/isEqual';
-import omit from 'lodash/omit';
 import { rangeUtil, RawTimeRange } from '@grafana/data';
 import { Options } from 'uplot';
 import { PlotPlugin, PlotProps } from './types';
@@ -38,7 +36,7 @@ export const buildPlotConfig = (props: PlotProps, plugins: Record<string, PlotPl
   } as any;
 };
 
-const isPlottingTime = (config: Options) => {
+export const isPlottingTime = (config: Options) => {
   let isTimeSeries = false;
 
   if (!config.scales) {
@@ -54,63 +52,6 @@ const isPlottingTime = (config: Options) => {
   }
 
   return isTimeSeries;
-};
-
-/**
- * Based on two config objects indicates whether or not uPlot needs reinitialisation
- * This COULD be done based on data frames, but keeping it this way for now as a simplification
- */
-export const shouldInitialisePlot = (prevConfig?: Options, config?: Options) => {
-  if (!config && !prevConfig) {
-    return false;
-  }
-
-  if (config) {
-    if (config.width === 0 || config.height === 0) {
-      return false;
-    }
-    if (!prevConfig) {
-      return true;
-    }
-  }
-
-  if (isPlottingTime(config!) && prevConfig!.tzDate !== config!.tzDate) {
-    return true;
-  }
-
-  // reinitialise when number of series, scales or axes changes
-  if (
-    prevConfig!.series?.length !== config!.series?.length ||
-    prevConfig!.axes?.length !== config!.axes?.length ||
-    prevConfig!.scales?.length !== config!.scales?.length
-  ) {
-    return true;
-  }
-
-  let idx = 0;
-
-  // reinitialise when any of the series config changes
-  if (config!.series && prevConfig!.series) {
-    for (const series of config!.series) {
-      if (!isEqual(series, prevConfig!.series[idx])) {
-        return true;
-      }
-      idx++;
-    }
-  }
-
-  if (config!.axes && prevConfig!.axes) {
-    idx = 0;
-    for (const axis of config!.axes) {
-      // Comparing axes config, skipping values property as it changes across config builds - probably need to be more clever
-      if (!isEqual(omit(axis, 'values', 'size'), omit(prevConfig!.axes[idx], 'values', 'size'))) {
-        return true;
-      }
-      idx++;
-    }
-  }
-
-  return false;
 };
 
 // Dev helpers

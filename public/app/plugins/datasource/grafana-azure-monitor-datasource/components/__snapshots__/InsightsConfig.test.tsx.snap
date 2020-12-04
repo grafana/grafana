@@ -16,11 +16,11 @@ exports[`Render should disable insights api key input 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-12"
         >
           API Key
-        </Component>
+        </FormLabel>
         <Input
           className="width-25"
           disabled={true}
@@ -49,11 +49,11 @@ exports[`Render should disable insights api key input 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-12"
         >
           Application ID
-        </Component>
+        </FormLabel>
         <div
           className="width-15"
         >
@@ -84,11 +84,11 @@ exports[`Render should enable insights api key input 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-12"
         >
           API Key
-        </Component>
+        </FormLabel>
         <div
           className="width-15"
         >
@@ -106,11 +106,11 @@ exports[`Render should enable insights api key input 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-12"
         >
           Application ID
-        </Component>
+        </FormLabel>
         <div
           className="width-15"
         >
@@ -141,11 +141,11 @@ exports[`Render should render component 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-12"
         >
           API Key
-        </Component>
+        </FormLabel>
         <div
           className="width-15"
         >
@@ -163,11 +163,11 @@ exports[`Render should render component 1`] = `
       <div
         className="gf-form"
       >
-        <Component
+        <FormLabel
           className="width-12"
         >
           Application ID
-        </Component>
+        </FormLabel>
         <div
           className="width-15"
         >

@@ -1,7 +1,6 @@
-import config from 'app/core/config';
 import 'app/features/plugins/datasource_srv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
-import { DataSourcePluginMeta, PluginMeta } from '@grafana/data';
+import { DataSourceInstanceSettings, DataSourcePlugin } from '@grafana/data';
 
 // Datasource variable $datasource with current value 'BBB'
 const templateSrv: any = {
@@ -14,100 +13,200 @@ const templateSrv: any = {
       },
     },
   ],
+  replace: (v: string) => {
+    return v.replace('${datasource}', 'BBB');
+  },
 };
 
+class TestDataSource {
+  constructor(public instanceSettings: DataSourceInstanceSettings) {}
+}
+
+jest.mock('../plugin_loader', () => ({
+  importDataSourcePlugin: () => {
+    return Promise.resolve(new DataSourcePlugin(TestDataSource as any));
+  },
+}));
+
 describe('datasource_srv', () => {
-  const _datasourceSrv = new DatasourceSrv({} as any, {} as any, templateSrv);
+  const dataSourceSrv = new DatasourceSrv({} as any, {} as any, templateSrv);
+  const dataSourceInit = {
+    mmm: {
+      type: 'test-db',
+      name: 'mmm',
+      uid: 'uid-code-mmm',
+      meta: { metrics: true, annotations: true } as any,
+    },
+    '-- Grafana --': {
+      type: 'grafana',
+      name: '-- Grafana --',
+      meta: { builtIn: true, metrics: true, id: 'grafana' },
+    },
+    '-- Dashboard --': {
+      type: 'dashboard',
+      name: '-- Dashboard --',
+      meta: { builtIn: true, metrics: true, id: 'dashboard' },
+    },
+    '-- Mixed --': {
+      type: 'test-db',
+      name: '-- Mixed --',
+      meta: { builtIn: true, metrics: true, id: 'mixed' },
+    },
+    ZZZ: {
+      type: 'test-db',
+      name: 'ZZZ',
+      uid: 'uid-code-ZZZ',
+      meta: { metrics: true },
+    },
+    aaa: {
+      type: 'test-db',
+      name: 'aaa',
+      uid: 'uid-code-aaa',
+      meta: { metrics: true },
+    },
+    BBB: {
+      type: 'test-db',
+      name: 'BBB',
+      uid: 'uid-code-BBB',
+      meta: { metrics: true },
+    },
+    Jaeger: {
+      type: 'jaeger-db',
+      name: 'Jaeger',
+      uid: 'uid-code-Jaeger',
+      meta: { tracing: true, id: 'jaeger' },
+    },
+  };
 
-  describe('when loading external datasources', () => {
+  describe('Given a list of data sources', () => {
     beforeEach(() => {
-      config.datasources = {
-        buildInDs: {
-          id: 1,
-          uid: '1',
-          type: 'b',
-          name: 'buildIn',
-          meta: { builtIn: true } as DataSourcePluginMeta,
-          jsonData: {},
-        },
-        nonBuildIn: {
-          id: 2,
-          uid: '2',
-          type: 'e',
-          name: 'external1',
-          meta: { builtIn: false } as DataSourcePluginMeta,
-          jsonData: {},
-        },
-        nonExplore: {
-          id: 3,
-          uid: '3',
-          type: 'e2',
-          name: 'external2',
-          meta: {} as PluginMeta,
-          jsonData: {},
-        },
-      };
+      dataSourceSrv.init(dataSourceInit as any, 'BBB');
     });
 
-    it('should return list of explore sources', () => {
-      const externalSources = _datasourceSrv.getExternal();
-      expect(externalSources.length).toBe(2);
-      expect(externalSources[0].name).toBe('external1');
-      expect(externalSources[1].name).toBe('external2');
-    });
-  });
+    describe('when getting data source class instance', () => {
+      it('should load plugin and create instance and set meta', async () => {
+        const ds = (await dataSourceSrv.get('mmm')) as any;
+        expect(ds.meta).toBe(dataSourceInit.mmm.meta);
+        expect(ds.instanceSettings).toBe(dataSourceInit.mmm);
 
-  describe('when loading metric sources', () => {
-    let metricSources: any;
-    const unsortedDatasources = {
-      mmm: {
-        type: 'test-db',
-        meta: { metrics: { m: 1 } },
-      },
-      '--Grafana--': {
-        type: 'grafana',
-        meta: { builtIn: true, metrics: { m: 1 }, id: 'grafana' },
-      },
-      '--Mixed--': {
-        type: 'test-db',
-        meta: { builtIn: true, metrics: { m: 1 }, id: 'mixed' },
-      },
-      ZZZ: {
-        type: 'test-db',
-        meta: { metrics: { m: 1 } },
-      },
-      aaa: {
-        type: 'test-db',
-        meta: { metrics: { m: 1 } },
-      },
-      BBB: {
-        type: 'test-db',
-        meta: { metrics: { m: 1 } },
-      },
-    };
-    beforeEach(() => {
-      config.datasources = unsortedDatasources as any;
-      metricSources = _datasourceSrv.getMetricSources({});
-      config.defaultDatasource = 'BBB';
+        // validate that it caches instance
+        const ds2 = await dataSourceSrv.get('mmm');
+        expect(ds).toBe(ds2);
+      });
+
+      it('should be able to load data source using uid as well', async () => {
+        const dsByUid = await dataSourceSrv.get('uid-code-mmm');
+        const dsByName = await dataSourceSrv.get('mmm');
+        expect(dsByUid.meta).toBe(dsByName.meta);
+        expect(dsByUid).toBe(dsByName);
+      });
     });
 
-    it('should return a list of sources sorted case insensitively with builtin sources last', () => {
-      expect(metricSources[1].name).toBe('aaa');
-      expect(metricSources[2].name).toBe('BBB');
-      expect(metricSources[3].name).toBe('mmm');
-      expect(metricSources[4].name).toBe('ZZZ');
-      expect(metricSources[5].name).toBe('--Grafana--');
-      expect(metricSources[6].name).toBe('--Mixed--');
+    describe('when getting instance settings', () => {
+      it('should work by name or uid', () => {
+        expect(dataSourceSrv.getInstanceSettings('mmm')).toBe(dataSourceSrv.getInstanceSettings('uid-code-mmm'));
+      });
+
+      it('should work with variable', () => {
+        const ds = dataSourceSrv.getInstanceSettings('${datasource}');
+        expect(ds?.name).toBe('${datasource}');
+        expect(ds?.uid).toBe('uid-code-BBB');
+      });
     });
 
-    it('should set default data source', () => {
-      expect(metricSources[3].name).toBe('default');
-      expect(metricSources[3].sort).toBe('BBB');
+    describe('when getting external metric sources', () => {
+      it('should return list of explore sources', () => {
+        const externalSources = dataSourceSrv.getExternal();
+        expect(externalSources.length).toBe(6);
+      });
     });
 
-    it('should set default inject the variable datasources', () => {
-      expect(metricSources[0].name).toBe('$datasource');
-      expect(metricSources[0].sort).toBe('$datasource');
+    it('Can get list of data sources with variables: true', () => {
+      const list = dataSourceSrv.getList({ metrics: true, variables: true });
+      expect(list[0].name).toBe('${datasource}');
+    });
+
+    it('Can get list of data sources with tracing: true', () => {
+      const list = dataSourceSrv.getList({ tracing: true });
+      expect(list[0].name).toBe('Jaeger');
+    });
+
+    it('Can get list of data sources with annotation: true', () => {
+      const list = dataSourceSrv.getList({ annotations: true });
+      expect(list[0].name).toBe('mmm');
+    });
+
+    it('Can get get list and filter by pluginId', () => {
+      const list = dataSourceSrv.getList({ pluginId: 'jaeger' });
+      expect(list[0].name).toBe('Jaeger');
+      expect(list.length).toBe(1);
+    });
+
+    it('Can get list  of data sources with metrics: true, builtIn: true, mixed: true', () => {
+      expect(dataSourceSrv.getList({ metrics: true, dashboard: true, mixed: true })).toMatchInlineSnapshot(`
+        Array [
+          Object {
+            "meta": Object {
+              "metrics": true,
+            },
+            "name": "aaa",
+            "type": "test-db",
+            "uid": "uid-code-aaa",
+          },
+          Object {
+            "meta": Object {
+              "metrics": true,
+            },
+            "name": "BBB",
+            "type": "test-db",
+            "uid": "uid-code-BBB",
+          },
+          Object {
+            "meta": Object {
+              "annotations": true,
+              "metrics": true,
+            },
+            "name": "mmm",
+            "type": "test-db",
+            "uid": "uid-code-mmm",
+          },
+          Object {
+            "meta": Object {
+              "metrics": true,
+            },
+            "name": "ZZZ",
+            "type": "test-db",
+            "uid": "uid-code-ZZZ",
+          },
+          Object {
+            "meta": Object {
+              "builtIn": true,
+              "id": "mixed",
+              "metrics": true,
+            },
+            "name": "-- Mixed --",
+            "type": "test-db",
+          },
+          Object {
+            "meta": Object {
+              "builtIn": true,
+              "id": "dashboard",
+              "metrics": true,
+            },
+            "name": "-- Dashboard --",
+            "type": "dashboard",
+          },
+          Object {
+            "meta": Object {
+              "builtIn": true,
+              "id": "grafana",
+              "metrics": true,
+            },
+            "name": "-- Grafana --",
+            "type": "grafana",
+          },
+        ]
+      `);
     });
   });
 });

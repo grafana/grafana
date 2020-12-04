@@ -164,7 +164,7 @@ export const HEADER_ITEMS = [
   {
     key: 'timestamp',
     label: 'Trace Start',
-    renderer: (trace: Trace, styles?: ReturnType<typeof getStyles>) => {
+    renderer(trace: Trace, styles?: ReturnType<typeof getStyles>) {
       const dateStr = formatDatetime(trace.startTime);
       const match = dateStr.match(/^(.+)(:\d\d\.\d+)$/);
       return match ? (

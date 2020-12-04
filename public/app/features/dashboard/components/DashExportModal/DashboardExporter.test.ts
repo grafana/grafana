@@ -56,6 +56,7 @@ describe('given dashboard with repeated panels', () => {
             type: 'constant',
             current: { value: 'collectd', text: 'collectd' },
             options: [],
+            query: 'collectd',
           },
           {
             name: 'ds',
