@@ -217,7 +217,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 	upsertCmd := &models.UpsertUserCommand{
 		ReqContext:    c,
 		ExternalUser:  user,
-		SignupAllowed: setting.LDAPAllowSignup,
+		SignupAllowed: hs.Cfg.LDAPAllowSignup,
 	}
 
 	err = bus.Dispatch(upsertCmd)

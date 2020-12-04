@@ -117,7 +117,6 @@ var (
 	VerifyEmailEnabled      bool
 	LoginHint               string
 	PasswordHint            string
-	DefaultTheme            string
 	DisableLoginForm        bool
 	DisableSignoutMenu      bool
 	SignoutRedirectUrl      string
@@ -1133,8 +1132,7 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 
 	LoginHint = valueAsString(users, "login_hint", "")
 	PasswordHint = valueAsString(users, "password_hint", "")
-	DefaultTheme = valueAsString(users, "default_theme", "")
-	cfg.DefaultTheme = DefaultTheme
+	cfg.DefaultTheme = valueAsString(users, "default_theme", "")
 	ExternalUserMngLinkUrl = valueAsString(users, "external_manage_link_url", "")
 	ExternalUserMngLinkName = valueAsString(users, "external_manage_link_name", "")
 	ExternalUserMngInfo = valueAsString(users, "external_manage_info", "")
