@@ -6,10 +6,10 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 )
 
-// validateAlertDefinition validates that the alert definition contains at least one alert query
-// and that alert queries refer to existing datasources.
-func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition) error {
-	if len(alertDefinition.Data) == 0 {
+// validateAlertDefinition validates that the alert definition that alert queries refer to existing datasources.
+// if requireData is true checks that it contains at least one alert query
+func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, requireData bool) error {
+	if !requireData && len(alertDefinition.Data) == 0 {
 		return fmt.Errorf("no queries or expressions are found")
 	}
 

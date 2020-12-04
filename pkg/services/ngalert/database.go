@@ -64,7 +64,7 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 			Interval:  intervalInSeconds,
 		}
 
-		if err := ng.validateAlertDefinition(alertDefinition); err != nil {
+		if err := ng.validateAlertDefinition(alertDefinition, false); err != nil {
 			return err
 		}
 
@@ -95,7 +95,7 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 			alertDefinition.Interval = *cmd.IntervalInSeconds
 		}
 
-		if err := ng.validateAlertDefinition(alertDefinition); err != nil {
+		if err := ng.validateAlertDefinition(alertDefinition, true); err != nil {
 			return err
 		}
 

@@ -118,7 +118,7 @@ func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64) (*eval.Condition,
 	}
 	alertDefinition := getAlertDefinitionByIDQuery.Result
 
-	err := ng.validateAlertDefinition(alertDefinition)
+	err := ng.validateAlertDefinition(alertDefinition, true)
 	if err != nil {
 		return nil, err
 	}
