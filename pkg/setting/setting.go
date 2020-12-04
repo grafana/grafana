@@ -142,7 +142,6 @@ var (
 	// Auth proxy settings
 	AuthProxyEnabled          bool
 	AuthProxyHeaderProperty   string
-	AuthProxyAutoSignUp       bool
 	AuthProxyEnableLoginToken bool
 	AuthProxySyncTtl          int
 	AuthProxyWhitelist        string
@@ -1104,8 +1103,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	cfg.AuthProxyHeaderName = valueAsString(authProxy, "header_name", "")
 	AuthProxyHeaderProperty = valueAsString(authProxy, "header_property", "")
 	cfg.AuthProxyHeaderProperty = AuthProxyHeaderProperty
-	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
-	cfg.AuthProxyAutoSignUp = AuthProxyAutoSignUp
+	cfg.AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
 	AuthProxyEnableLoginToken = authProxy.Key("enable_login_token").MustBool(false)
 	cfg.AuthProxyEnableLoginToken = AuthProxyEnableLoginToken
 
