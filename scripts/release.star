@@ -35,10 +35,8 @@ def release_npm_packages_step(edition, ver_mode):
     if edition == 'enterprise':
         return None
 
-    commands = []
-
     if ver_mode == 'release':
-        commands.append('./scripts/build/release-packages.sh ${DRONE_TAG}')
+        commands = ['./scripts/build/release-packages.sh ${DRONE_TAG}']
 
     return {
         'name': 'release-npm-packages',
