@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { PropsWithChildren, useContext } from 'react';
 import { LegendComponentProps, LegendItem } from './Legend';
 import { InlineList } from '../List/InlineList';
 import { List } from '../List/List';
@@ -29,20 +29,20 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-export const LegendList: React.FunctionComponent<LegendComponentProps> = ({
+export function LegendList<T extends LegendItem>({
   items,
   itemRenderer,
   placement,
   className,
-}) => {
+}: PropsWithChildren<LegendComponentProps<T>>) {
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme);
 
-  const renderItem = (item: LegendItem, index: number) => {
+  const renderItem = (item: T, index: number) => {
     return <span className={styles.item}>{itemRenderer ? itemRenderer(item, index) : item.label}</span>;
   };
 
-  const getItemKey = (item: LegendItem) => `${item.label}`;
+  const getItemKey = (item: T) => `${item.label}`;
 
   return placement === 'bottom' ? (
     <div className={cx(styles.wrapper, className)}>
@@ -56,6 +56,6 @@ export const LegendList: React.FunctionComponent<LegendComponentProps> = ({
   ) : (
     <List items={items} renderItem={renderItem} getItemKey={getItemKey} className={className} />
   );
-};
+}
 
 LegendList.displayName = 'LegendList';

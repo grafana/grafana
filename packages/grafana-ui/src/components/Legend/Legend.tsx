@@ -44,14 +44,14 @@ export interface LegendItem {
   displayValues?: DisplayValue[];
 }
 
-export interface LegendComponentProps {
+export interface LegendComponentProps<T extends LegendItem = LegendItem> {
   className?: string;
-  items: LegendItem[];
+  items: T[];
   placement: LegendPlacement;
   // Function to render given item
-  itemRenderer?: (item: LegendItem, index: number) => JSX.Element;
+  itemRenderer?: (item: T, index: number) => JSX.Element;
 }
 
-export interface LegendProps extends LegendComponentProps {}
+export interface LegendProps<T extends LegendItem = LegendItem> extends LegendComponentProps<T> {}
 
 export { LegendList, LegendTable };

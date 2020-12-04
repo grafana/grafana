@@ -7,7 +7,7 @@ import {
   AxisPlacement,
   graphFieldOptions,
 } from '@grafana/ui/src/components/uPlot/config';
-import { SeriesConfigEditor } from './FieldVisibilityConfigEditor';
+import { SeriesConfigEditor } from './SeriesConfigEditor';
 import { GraphPanel } from './GraphPanel';
 import { Options } from './types';
 

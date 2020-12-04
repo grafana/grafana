@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useRef } from 'react';
 import {
   compareDataFrameStructures,
   DataFrame,
+  Field,
   FieldConfig,
   FieldMatcher,
   FieldType,
@@ -26,11 +27,15 @@ export interface XYFieldMatchers {
   x: FieldMatcher;
   y: FieldMatcher;
 }
-
 export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
   data: DataFrame[];
   legend?: LegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
+  onLegendClick?: (legend: GraphNGLegendItem) => void;
+}
+
+export interface GraphNGLegendItem extends LegendItem {
+  field: Field;
 }
 
 const defaultConfig: GraphFieldConfig = {
@@ -53,11 +58,12 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   legend,
   timeRange,
   timeZone,
+  onLegendClick,
   ...plotProps
 }) => {
   const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
   const theme = useTheme();
-  const legendItemsRef = useRef<LegendItem[]>([]);
+  const legendItemsRef = useRef<GraphNGLegendItem[]>([]);
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
   const alignedFrame = alignedFrameWithGapTest?.frame;
 
@@ -105,7 +111,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     }
 
     let seriesIdx = 0;
-    const legendItems: LegendItem[] = [];
+    const legendItems: GraphNGLegendItem[] = [];
 
     for (let i = 0; i < alignedFrame.fields.length; i++) {
       const field = alignedFrame.fields[i];
@@ -124,20 +130,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       const colorMode = getFieldColorModeForField(field);
       const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
 
-      if (!customConfig.seriesConfig.displayInGraph) {
-        if (hasLegend.current && customConfig.seriesConfig.displayInLegend) {
-          const axisPlacement = builder.getAxisPlacement(scaleKey);
-
-          legendItems.push({
-            color: seriesColor,
-            label: getFieldDisplayName(field, alignedFrame),
-            yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
-          });
-        }
-
-        continue;
-      }
-
       if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
         // The builder will manage unique scaleKeys and combine where appropriate
         builder.addScale({ scaleKey, min: field.config.min, max: field.config.max });
@@ -154,25 +146,28 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       // need to update field state here because we use a transform to merge framesP
       field.state = { ...field.state, seriesIndex: seriesIdx };
 
-      const pointsMode = customConfig.mode === GraphMode.Points ? PointMode.Always : customConfig.points;
+      if (customConfig.seriesConfig.displayInGraph) {
+        const pointsMode = customConfig.mode === GraphMode.Points ? PointMode.Always : customConfig.points;
 
-      builder.addSeries({
-        scaleKey,
-        mode: customConfig.mode!,
-        lineColor: seriesColor,
-        lineWidth: customConfig.lineWidth,
-        lineInterpolation: customConfig.lineInterpolation,
-        points: pointsMode,
-        pointSize: customConfig.pointSize,
-        pointColor: seriesColor,
-        fillOpacity: customConfig.fillOpacity,
-        fillColor: seriesColor,
-      });
+        builder.addSeries({
+          scaleKey,
+          mode: customConfig.mode!,
+          lineColor: seriesColor,
+          lineWidth: customConfig.lineWidth,
+          lineInterpolation: customConfig.lineInterpolation,
+          points: pointsMode,
+          pointSize: customConfig.pointSize,
+          pointColor: seriesColor,
+          fillOpacity: customConfig.fillOpacity,
+          fillColor: seriesColor,
+        });
+      }
 
       if (hasLegend.current && customConfig.seriesConfig.displayInLegend) {
         const axisPlacement = builder.getAxisPlacement(scaleKey);
 
         legendItems.push({
+          field: field,
           color: seriesColor,
           label: getFieldDisplayName(field, alignedFrame),
           yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
@@ -199,7 +194,12 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   if (hasLegend && legendItemsRef.current.length > 0) {
     legendElement = (
       <VizLayout.Legend position={legend!.placement} maxHeight="35%" maxWidth="60%">
-        <GraphLegend placement={legend!.placement} items={legendItemsRef.current} displayMode={legend!.displayMode} />
+        <GraphLegend
+          onLabelClick={onLegendClick}
+          placement={legend!.placement}
+          items={legendItemsRef.current}
+          displayMode={legend!.displayMode}
+        />
       </VizLayout.Legend>
     );
   }
