@@ -1,9 +1,10 @@
 import { FieldConfig, FieldConfigSource, NullValueMode, PanelModel, fieldReducers } from '@grafana/data';
 import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
-import { DrawStyle, LineInterpolation } from '@grafana/ui/src/components/uPlot/config';
+import { AxisPlacement, DrawStyle, LineInterpolation } from '@grafana/ui/src/components/uPlot/config';
 import { Options } from './types';
 import omitBy from 'lodash/omitBy';
 import isNil from 'lodash/isNil';
+import { isNumber, isString } from 'lodash';
 
 /**
  * This is called when the panel changes from another panel
@@ -25,7 +26,7 @@ export const graphPanelChangedHandler = (
 
 export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSource; options: Options } {
   const overrides = angular.fieldConfig?.overrides ?? [];
-  const yaxes = angular.yaxis ?? [];
+  const yaxes = angular.yaxes ?? [];
   let y1 = getFieldConfigFromOldAxis(yaxes[0]);
   if (angular.fieldConfig?.defaults) {
     y1 = {
@@ -86,19 +87,35 @@ function getFieldConfigFromOldAxis(obj: any): FieldConfig<GraphFieldConfig> {
   if (!obj) {
     return {};
   }
-  const graph: GraphFieldConfig = {};
+  const graph: GraphFieldConfig = {
+    axisPlacement: obj.show ? AxisPlacement.Auto : AxisPlacement.Hidden,
+  };
   if (obj.label) {
     graph.axisLabel = obj.label;
   }
   return omitBy(
     {
       unit: obj.format,
+      decimals: validNumber(obj.decimals),
+      min: validNumber(obj.min),
+      max: validNumber(obj.max),
       custom: graph,
-      min: +obj.min ?? undefined,
-      max: +obj.max ?? undefined,
     },
     isNil
   );
+}
+
+function validNumber(val: any): number | undefined {
+  if (isNumber(val)) {
+    return val;
+  }
+  if (isString(val)) {
+    const num = Number(val);
+    if (!isNaN(num)) {
+      return num;
+    }
+  }
+  return undefined;
 }
 
 function getReducersFromLegend(obj: Record<string, any>): string[] {

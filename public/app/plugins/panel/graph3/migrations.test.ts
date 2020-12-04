@@ -89,7 +89,7 @@ const stairscase = {
       logBase: 1,
       max: null,
       min: null,
-      show: true,
+      show: false,
     },
     {
       $$hashKey: 'object:43',

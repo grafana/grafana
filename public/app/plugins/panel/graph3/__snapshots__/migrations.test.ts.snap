@@ -29,6 +29,7 @@ Object {
   "fieldConfig": Object {
     "defaults": Object {
       "custom": Object {
+        "axisPlacement": "hidden",
         "drawStyle": "line",
         "fillOpacity": 5,
         "lineInterpolation": "stepAfter",
@@ -37,7 +38,7 @@ Object {
       },
       "displayName": "DISPLAY NAME",
       "nullValueMode": "null",
-      "unit": "areaF2",
+      "unit": "short",
     },
     "overrides": Array [],
   },
@@ -59,12 +60,18 @@ Object {
   "fieldConfig": Object {
     "defaults": Object {
       "custom": Object {
+        "axisLabel": "Y111",
+        "axisPlacement": "auto",
         "drawStyle": "line",
         "fillOpacity": 1,
         "pointSize": 2,
         "spanNulls": true,
       },
+      "decimals": 3,
+      "max": 1000,
+      "min": 0,
       "nullValueMode": "null",
+      "unit": "areaMI2",
     },
     "overrides": Array [],
   },
