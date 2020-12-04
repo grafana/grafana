@@ -8,7 +8,7 @@ import { PageToolbar } from 'app/core/components/PageToolbar/PageToolbar';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import AlertingQueryEditor from './components/AlertingQueryEditor';
 import { AlertDefinitionOptions } from './components/AlertDefinitionOptions';
-import AlertingQueryPreview from './components/AlertingQueryPreview';
+import { AlertingQueryPreview } from './components/AlertingQueryPreview';
 import {
   updateAlertDefinitionOption,
   createAlertDefinition,
@@ -18,6 +18,7 @@ import {
 import { AlertDefinition, AlertDefinitionUiState, NotificationChannelType, StoreState } from '../../types';
 
 import { config } from 'app/core/config';
+import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 
 interface OwnProps {}
 
@@ -25,6 +26,7 @@ interface ConnectedProps {
   alertDefinition: AlertDefinition;
   uiState: AlertDefinitionUiState;
   notificationChannelTypes: NotificationChannelType[];
+  queryRunner: PanelQueryRunner;
 }
 
 interface DispatchProps {
@@ -74,7 +76,13 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
   }
 
   render() {
-    const { alertDefinition, notificationChannelTypes, uiState, updateAlertDefinitionUiState } = this.props;
+    const {
+      alertDefinition,
+      notificationChannelTypes,
+      uiState,
+      updateAlertDefinitionUiState,
+      queryRunner,
+    } = this.props;
     const styles = getStyles(config.theme);
 
     return (
@@ -86,7 +94,10 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
           titlePadding="sm"
         />
         <SplitPaneWrapper
-          leftPaneComponents={[<AlertingQueryPreview key="queryPreview" />, <AlertingQueryEditor key="queryEditor" />]}
+          leftPaneComponents={[
+            <AlertingQueryPreview key="queryPreview" queryRunner={queryRunner} />,
+            <AlertingQueryEditor key="queryEditor" />,
+          ]}
           uiState={uiState}
           updateUiState={updateAlertDefinitionUiState}
           rightPaneComponents={
@@ -107,6 +118,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = s
     uiState: state.alertDefinition.uiState,
     alertDefinition: state.alertDefinition.alertDefinition,
     notificationChannelTypes: state.notificationChannel.notificationChannelTypes,
+    queryRunner: state.alertDefinition.queryRunner,
   };
 };
 
