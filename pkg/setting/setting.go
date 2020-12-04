@@ -136,7 +136,6 @@ var (
 	SigV4AuthEnabled bool
 
 	AnonymousEnabled bool
-	AnonymousOrgName string
 	AnonymousOrgRole string
 
 	// Auth proxy settings
@@ -1081,8 +1080,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
 	cfg.AnonymousEnabled = AnonymousEnabled
-	AnonymousOrgName = valueAsString(iniFile.Section("auth.anonymous"), "org_name", "")
-	cfg.AnonymousOrgName = AnonymousOrgName
+	cfg.AnonymousOrgName = valueAsString(iniFile.Section("auth.anonymous"), "org_name", "")
 	AnonymousOrgRole = valueAsString(iniFile.Section("auth.anonymous"), "org_role", "")
 	cfg.AnonymousOrgRole = AnonymousOrgRole
 	cfg.AnonymousHideVersion = iniFile.Section("auth.anonymous").Key("hide_version").MustBool(false)
