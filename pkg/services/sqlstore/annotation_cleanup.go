@@ -64,7 +64,8 @@ func (acs *AnnotationCleanupService) cleanAnnotations(ctx context.Context, cfg s
 }
 
 func (acs *AnnotationCleanupService) cleanOrphanedAnnotationTags(ctx context.Context) error {
-	sql := "DELETE FROM annotation_tag WHERE NOT EXISTS (SELECT null FROM annotation WHERE annotation_tag.annotation_id = annotation.id)"
+	deleteQuery := `DELETE FROM annotation_tag WHERE id IN ( SELECT id FROM (SELECT id FROM annotation_tag WHERE NOT EXISTS (SELECT 1 FROM annotation a WHERE annotation_id = a.id) %s) a)`
+	sql := fmt.Sprintf(deleteQuery, dialect.Limit(acs.batchSize))
 	return acs.executeUntilDoneOrCancelled(ctx, sql)
 }
 
