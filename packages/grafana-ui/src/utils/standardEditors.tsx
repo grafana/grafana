@@ -10,7 +10,6 @@ import {
   StandardEditorsRegistryItem,
   StringFieldConfigSettings,
   stringOverrideProcessor,
-  SelectFieldConfigSettings,
   ThresholdsConfig,
   ThresholdsFieldConfigSettings,
   thresholdsOverrideProcessor,
@@ -22,8 +21,6 @@ import {
   TimeZone,
   FieldColor,
   FieldColorConfigSettings,
-  NullValueMode,
-  selectOverrideProcessor,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
@@ -193,30 +190,6 @@ export const getStandardFieldConfigs = () => {
     category,
   };
 
-  const nullValue: FieldConfigPropertyItem<any, NullValueMode, SelectFieldConfigSettings<NullValueMode>> = {
-    id: 'nullValueMode',
-    path: 'nullValueMode',
-    name: 'Null values',
-    description: 'Behavior for null values in the data',
-
-    editor: standardEditorsRegistry.get('radio').editor as any,
-    override: standardEditorsRegistry.get('radio').editor as any,
-    process: selectOverrideProcessor,
-
-    settings: {
-      options: [
-        { label: 'Null', value: NullValueMode.Null },
-        // The "connectd" of "span gaps" behavior is moved to graph settings.
-        // This option should either be a boolean or removed an just "AzZero" added as a transformer
-        // { label: 'Ignore', value: NullValueMode.Ignore, description: 'Ignore the values from any calculation' },
-        { label: 'Zero', value: NullValueMode.AsZero },
-      ],
-    },
-    shouldApply: () => true,
-    category,
-    defaultValue: NullValueMode.Null,
-  };
-
   const links: FieldConfigPropertyItem<any, DataLink[], StringFieldConfigSettings> = {
     id: 'links',
     path: 'links',
@@ -247,7 +220,7 @@ export const getStandardFieldConfigs = () => {
     category,
   };
 
-  return [unit, min, max, decimals, displayName, noValue, color, thresholds, mappings, links, nullValue];
+  return [unit, min, max, decimals, displayName, noValue, color, thresholds, mappings, links];
 };
 
 /**

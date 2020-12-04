@@ -396,7 +396,6 @@ export const plugin = new PanelPlugin<GraphPanelOptions, GraphFieldConfig>(null)
       FieldConfigProperty.Decimals,
       FieldConfigProperty.Color,
       FieldConfigProperty.Mappings,
-      FieldConfigProperty.NullValueMode,
     ],
   })
   .setMigrationHandler(graphPanelMigrationHandler);

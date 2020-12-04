@@ -1,13 +1,10 @@
-import { FieldConfigProperty, PanelPlugin } from '@grafana/data';
+import { PanelPlugin } from '@grafana/data';
 import { GaugePanel } from './GaugePanel';
 import { GaugeOptions } from './types';
 import { addStandardDataReduceOptions } from '../stat/types';
 import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './GaugeMigrations';
 
 export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
-  .useFieldConfig({
-    disableStandardOptions: [FieldConfigProperty.NullValueMode],
-  })
   .setPanelOptions(builder => {
     addStandardDataReduceOptions(builder, false);
     builder
