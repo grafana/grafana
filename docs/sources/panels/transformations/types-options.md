@@ -350,5 +350,4 @@ Here is an example where we are stripping the prefix from event types, in the be
 
 With the transformation applied, you can see we are left with just the remainder of the string.
 
-{{< docs-imagebox img="/img/docs/transformations/rename-by-regex-after.png" class="docs-image--no-shadow" max-width= "1100px" >}}
-
+{{< docs-imagebox img="/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
