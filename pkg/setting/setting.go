@@ -97,7 +97,6 @@ var (
 	CookieSecure                      bool
 	CookieSameSiteDisabled            bool
 	CookieSameSiteMode                http.SameSite
-	XSSProtectionHeader               bool
 	ContentTypeProtectionHeader       bool
 	StrictTransportSecurityPreload    bool
 	StrictTransportSecuritySubDomains bool
@@ -1014,8 +1013,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 
 	ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
 	cfg.ContentTypeProtectionHeader = ContentTypeProtectionHeader
-	XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
-	cfg.XSSProtectionHeader = XSSProtectionHeader
+	cfg.XSSProtectionHeader = security.Key("x_xss_protection").MustBool(true)
 	cfg.StrictTransportSecurity = security.Key("strict_transport_security").MustBool(false)
 	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
 	StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)

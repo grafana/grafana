@@ -56,23 +56,17 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 	setting.ErrTemplateName = errorTemplate
 
 	middlewareScenario(t, "middleware should get correct x-xss-protection header", func(t *testing.T, sc *scenarioContext) {
-		origXSSProtectionHeader := setting.XSSProtectionHeader
-		t.Cleanup(func() {
-			setting.XSSProtectionHeader = origXSSProtectionHeader
-		})
-		setting.XSSProtectionHeader = true
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Equal(t, "1; mode=block", sc.resp.Header().Get("X-XSS-Protection"))
+	}, func(cfg *setting.Cfg) {
+		cfg.XSSProtectionHeader = true
 	})
 
 	middlewareScenario(t, "middleware should not get x-xss-protection when disabled", func(t *testing.T, sc *scenarioContext) {
-		origXSSProtectionHeader := setting.XSSProtectionHeader
-		t.Cleanup(func() {
-			setting.XSSProtectionHeader = origXSSProtectionHeader
-		})
-		setting.XSSProtectionHeader = false
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Empty(t, sc.resp.Header().Get("X-XSS-Protection"))
+	}, func(cfg *setting.Cfg) {
+		cfg.XSSProtectionHeader = false
 	})
 
 	middlewareScenario(t, "middleware should add correct Strict-Transport-Security header", func(t *testing.T, sc *scenarioContext) {

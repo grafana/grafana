@@ -58,7 +58,7 @@ func addSecurityHeaders(w macaron.ResponseWriter, cfg *setting.Cfg) {
 		w.Header().Add("X-Content-Type-Options", "nosniff")
 	}
 
-	if setting.XSSProtectionHeader {
+	if cfg.XSSProtectionHeader {
 		w.Header().Add("X-XSS-Protection", "1; mode=block")
 	}
 }
