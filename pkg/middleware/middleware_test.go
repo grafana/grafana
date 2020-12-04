@@ -148,13 +148,10 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "middleware should not add X-Frame-Options header for request when allowing embedding", func(
 		t *testing.T, sc *scenarioContext) {
-		origAllowEmbedding := setting.AllowEmbedding
-		t.Cleanup(func() {
-			setting.AllowEmbedding = origAllowEmbedding
-		})
-		setting.AllowEmbedding = true
 		sc.fakeReq("GET", "/api/search").exec()
 		assert.Empty(t, sc.resp.Header().Get("X-Frame-Options"))
+	}, func(cfg *setting.Cfg) {
+		cfg.AllowEmbedding = true
 	})
 
 	middlewareScenario(t, "Invalid api key", func(t *testing.T, sc *scenarioContext) {

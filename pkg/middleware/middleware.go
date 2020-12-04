@@ -32,7 +32,7 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) macaron.Handler {
 				AddNoCacheHeaders(ctx.Resp)
 			}
 
-			if !setting.AllowEmbedding {
+			if !cfg.AllowEmbedding {
 				AddXFrameOptionsDenyHeader(w)
 			}
 

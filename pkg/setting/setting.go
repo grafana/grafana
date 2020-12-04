@@ -97,7 +97,6 @@ var (
 	CookieSecure                      bool
 	CookieSameSiteDisabled            bool
 	CookieSameSiteMode                http.SameSite
-	AllowEmbedding                    bool
 	XSSProtectionHeader               bool
 	ContentTypeProtectionHeader       bool
 	StrictTransportSecurityPreload    bool
@@ -1011,8 +1010,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 			cfg.CookieSameSiteMode = CookieSameSiteMode
 		}
 	}
-	AllowEmbedding = security.Key("allow_embedding").MustBool(false)
-	cfg.AllowEmbedding = AllowEmbedding
+	cfg.AllowEmbedding = security.Key("allow_embedding").MustBool(false)
 
 	ContentTypeProtectionHeader = security.Key("x_content_type_options").MustBool(true)
 	cfg.ContentTypeProtectionHeader = ContentTypeProtectionHeader
