@@ -45,10 +45,11 @@ func (ng *AlertNG) Init() error {
 	ng.registerAPIEndpoints()
 
 	ng.schedule = schedule{
-		channelMap:  channelMap{definionCh: make(map[int64]definitionCh)},
-		stop:        make(chan int64),
-		maxAttempts: maxAttempts,
-		clock:       clock.New(),
+		channelMap:   channelMap{definionCh: make(map[int64]definitionCh)},
+		stop:         make(chan int64),
+		maxAttempts:  maxAttempts,
+		clock:        clock.New(),
+		baseInterval: time.Second,
 	}
 	return nil
 }
