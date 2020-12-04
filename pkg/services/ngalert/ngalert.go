@@ -3,7 +3,11 @@ package ngalert
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/grafana/grafana/pkg/services/alerting"
+
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -44,6 +48,7 @@ func (ng *AlertNG) Init() error {
 		channelMap:  channelMap{definionCh: make(map[int64]definitionCh)},
 		stop:        make(chan int64),
 		maxAttempts: maxAttempts,
+		clock:       clock.New(),
 	}
 	return nil
 }
@@ -51,7 +56,9 @@ func (ng *AlertNG) Init() error {
 // Run starts the scheduler
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.log.Debug("ngalert starting")
-	return ng.alertingTicker(ctx)
+	baseInterval := int64(ng.schedule.baseInterval.Seconds())
+	ticker := alerting.NewTicker(ng.schedule.clock.Now(), time.Second*0, ng.schedule.clock, baseInterval)
+	return ng.alertingTicker(ctx, ticker)
 }
 
 // IsDisabled returns true if the alerting service is disable for this instance.

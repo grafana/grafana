@@ -17,21 +17,23 @@ import (
 //   - adjusting offset over time to compensate for storage backing up or getting fast and providing lower latency
 //   you specify a lastProcessed timestamp as well as an offset at creation, or runtime
 type Ticker struct {
-	C         chan time.Time
-	clock     clock.Clock
-	last      time.Time
-	offset    time.Duration
-	newOffset chan time.Duration
+	C           chan time.Time
+	clock       clock.Clock
+	last        time.Time
+	offset      time.Duration
+	newOffset   chan time.Duration
+	intervalSec int64
 }
 
 // NewTicker returns a ticker that ticks on second marks or very shortly after, and never drops ticks
-func NewTicker(last time.Time, initialOffset time.Duration, c clock.Clock) *Ticker {
+func NewTicker(last time.Time, initialOffset time.Duration, c clock.Clock, intervalSec int64) *Ticker {
 	t := &Ticker{
-		C:         make(chan time.Time),
-		clock:     c,
-		last:      last,
-		offset:    initialOffset,
-		newOffset: make(chan time.Duration),
+		C:           make(chan time.Time),
+		clock:       c,
+		last:        last,
+		offset:      initialOffset,
+		newOffset:   make(chan time.Duration),
+		intervalSec: intervalSec,
 	}
 	go t.run()
 	return t
@@ -39,7 +41,7 @@ func NewTicker(last time.Time, initialOffset time.Duration, c clock.Clock) *Tick
 
 func (t *Ticker) run() {
 	for {
-		next := t.last.Add(time.Duration(1) * time.Second)
+		next := t.last.Add(time.Duration(t.intervalSec) * time.Second)
 		diff := t.clock.Now().Add(-t.offset).Sub(next)
 		if diff >= 0 {
 			t.C <- next

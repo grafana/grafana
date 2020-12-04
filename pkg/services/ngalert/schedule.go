@@ -73,6 +73,9 @@ func (ng *AlertNG) fetchAlertDefinitions(now time.Time) []*AlertDefinition {
 }
 
 type schedule struct {
+	// base tick rate (fastest possible configured check)
+	baseInterval time.Duration
+
 	// each alert definition gets its own channel and
 	// routine. Will need lock as well. A map so when can
 	// update a specific routine if it is
@@ -82,13 +85,13 @@ type schedule struct {
 	stop chan int64
 
 	maxAttempts int64
+
+	clock clock.Clock
 }
 
-func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
+func (ng *AlertNG) alertingTicker(grafanaCtx context.Context, heartbeat *alerting.Ticker) error {
 	dispatcherGroup, ctx := errgroup.WithContext(grafanaCtx)
-	c := clock.New()
-	// alerting.Ticker ticks every second
-	heartbeat := alerting.NewTicker(time.Now(), time.Second*0, c)
+	c := ng.schedule.clock
 	for {
 		select {
 		case tick := <-heartbeat.C:
