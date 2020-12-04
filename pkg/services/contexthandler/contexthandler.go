@@ -4,7 +4,6 @@ package contexthandler
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -363,7 +362,6 @@ func handleError(ctx *models.ReqContext, err error, statusCode int, cb func(erro
 func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID int64) bool {
 	username := ctx.Req.Header.Get(h.Cfg.AuthProxyHeaderName)
 	auth := authproxy.New(h.Cfg, &authproxy.Options{
-		SQLStore:    h.SQLStore,
 		RemoteCache: h.RemoteCache,
 		Ctx:         ctx,
 		OrgID:       orgID,
@@ -378,7 +376,6 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 
 	// If there is no header - we can't move forward
 	if !auth.HasHeader() {
-		fmt.Printf("No header\n")
 		return false
 	}
 

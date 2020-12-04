@@ -85,8 +85,7 @@ type LoginUserQuery struct {
 	User       *User
 	IpAddress  string
 	AuthModule string
-	// Cfg is an optional configuration.
-	Cfg *setting.Cfg
+	Cfg        *setting.Cfg
 }
 
 type GetUserByAuthInfoQuery struct {

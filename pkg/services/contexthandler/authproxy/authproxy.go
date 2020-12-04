@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/multildap"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -54,9 +53,6 @@ type AuthProxy struct {
 	ctx         *models.ReqContext
 	orgID       int64
 	header      string
-
-	enabled  bool
-	cacheTTL int
 }
 
 // Error auth proxy specific error
@@ -80,7 +76,6 @@ func (err Error) Error() string {
 
 // Options for the AuthProxy
 type Options struct {
-	SQLStore    *sqlstore.SQLStore
 	RemoteCache *remotecache.RemoteCache
 	Ctx         *models.ReqContext
 	OrgID       int64
@@ -95,15 +90,13 @@ func New(cfg *setting.Cfg, options *Options) *AuthProxy {
 		ctx:         options.Ctx,
 		orgID:       options.OrgID,
 		header:      header,
-		enabled:     cfg.AuthProxyEnabled,
-		cacheTTL:    cfg.AuthProxySyncTTL,
 	}
 }
 
 // IsEnabled checks if the proxy auth is enabled
 func (auth *AuthProxy) IsEnabled() bool {
 	// Bail if the setting is not enabled
-	return auth.enabled
+	return auth.cfg.AuthProxyEnabled
 }
 
 // HasHeader checks if the we have specified header
@@ -111,7 +104,7 @@ func (auth *AuthProxy) HasHeader() bool {
 	return len(auth.header) != 0
 }
 
-// IsAllowedIP compares presented IP with whitelisted one.
+// IsAllowedIP returns whether provided IP is whitelisted.
 func (auth *AuthProxy) IsAllowedIP() error {
 	ip := auth.ctx.Req.RemoteAddr
 
@@ -333,7 +326,7 @@ func (auth *AuthProxy) Remember(id int64) error {
 		return nil
 	}
 
-	expiration := time.Duration(auth.cacheTTL) * time.Minute
+	expiration := time.Duration(auth.cfg.AuthProxySyncTTL) * time.Minute
 
 	err := auth.remoteCache.Set(key, id, expiration)
 	if err != nil {
