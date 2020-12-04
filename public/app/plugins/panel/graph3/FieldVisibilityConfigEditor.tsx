@@ -1,15 +1,15 @@
 import React, { useCallback } from 'react';
 import { FieldConfigEditorProps, SelectableValue } from '@grafana/data';
 import { MultiSelect } from '@grafana/ui';
-import { FieldVisibility } from '@grafana/ui/src/components/uPlot/config';
+import { SeriesConfig } from '@grafana/ui/src/components/uPlot/config';
 
-interface FieldVisibilitySettings {
+interface DisplayConfigEditorSettings {
   descriptions: Record<string, string>;
 }
 
-export const FieldVisibilityConfigEditor: React.FC<FieldConfigEditorProps<
-  FieldVisibility,
-  FieldVisibilitySettings
+export const DisplayConfigEditor: React.FC<FieldConfigEditorProps<
+  SeriesConfig,
+  DisplayConfigEditorSettings
 >> = props => {
   const { settings } = props.item;
   const values: string[] = [];
@@ -17,7 +17,7 @@ export const FieldVisibilityConfigEditor: React.FC<FieldConfigEditorProps<
 
   for (const key in props.value) {
     options.push({
-      label: settings?.descriptions[key],
+      label: settings?.descriptions[key] ?? key,
       value: key,
     });
 

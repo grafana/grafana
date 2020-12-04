@@ -37,6 +37,11 @@ const defaultConfig: GraphFieldConfig = {
   mode: GraphMode.Line,
   points: PointMode.Auto,
   axisPlacement: AxisPlacement.Auto,
+  seriesConfig: {
+    displayInGraph: true,
+    displayInLegend: true,
+    displayInTooltip: true,
+  },
 };
 
 export const GraphNG: React.FC<GraphNGProps> = ({
@@ -119,8 +124,8 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       const colorMode = getFieldColorModeForField(field);
       const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
 
-      if (!customConfig.fieldVisibility.showInGraph) {
-        if (hasLegend.current) {
+      if (!customConfig.seriesConfig.displayInGraph) {
+        if (hasLegend.current && customConfig.seriesConfig.displayInLegend) {
           const axisPlacement = builder.getAxisPlacement(scaleKey);
 
           legendItems.push({
@@ -164,7 +169,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         fillColor: seriesColor,
       });
 
-      if (hasLegend.current) {
+      if (hasLegend.current && customConfig.seriesConfig.displayInLegend) {
         const axisPlacement = builder.getAxisPlacement(scaleKey);
 
         legendItems.push({
