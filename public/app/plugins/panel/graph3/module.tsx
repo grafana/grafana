@@ -83,6 +83,17 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           showIf: c => c.points !== PointMode.Never,
         })
         .addRadio({
+          path: 'spanNulls',
+          name: 'Null values',
+          defaultValue: false,
+          settings: {
+            options: [
+              { label: 'Gaps', value: false },
+              { label: 'Connected', value: true },
+            ],
+          },
+        })
+        .addRadio({
           path: 'axisPlacement',
           name: 'Placement',
           category: ['Axis'],
