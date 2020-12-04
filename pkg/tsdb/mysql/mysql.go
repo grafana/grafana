@@ -140,8 +140,10 @@ func (t *mysqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.Co
 }
 
 func (t *mysqlQueryResultTransformer) TransformQueryError(err error) error {
-	if driverErr, ok := err.(*mysql.MySQLError); ok {
-		if driverErr.Number != mysqlerr.ER_PARSE_ERROR && driverErr.Number != mysqlerr.ER_BAD_FIELD_ERROR && driverErr.Number != mysqlerr.ER_NO_SUCH_TABLE {
+	var driverErr *mysql.MySQLError
+	if errors.As(err, &driverErr) {
+		if driverErr.Number != mysqlerr.ER_PARSE_ERROR && driverErr.Number != mysqlerr.ER_BAD_FIELD_ERROR &&
+			driverErr.Number != mysqlerr.ER_NO_SUCH_TABLE {
 			t.log.Error("query error", "err", err)
 			return errQueryFailed
 		}

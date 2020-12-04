@@ -50,7 +50,7 @@ func walk(path string, info os.FileInfo, resolvedPath string, symlinkPathsFollow
 	}
 	err := walkFn(resolvedPath, info, nil)
 	if err != nil {
-		if info.IsDir() && err == ErrWalkSkipDir {
+		if info.IsDir() && errors.Is(err, ErrWalkSkipDir) {
 			err = nil
 		}
 		return err

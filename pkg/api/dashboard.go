@@ -498,7 +498,7 @@ func CalculateDashboardDiff(c *models.ReqContext, apiOptions dtos.CalculateDiffO
 
 	result, err := dashdiffs.CalculateDiff(&options)
 	if err != nil {
-		if err == models.ErrDashboardVersionNotFound {
+		if errors.Is(err, models.ErrDashboardVersionNotFound) {
 			return Error(404, "Dashboard version not found", err)
 		}
 		return Error(500, "Unable to compute diff", err)

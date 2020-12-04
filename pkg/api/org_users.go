@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -35,7 +37,7 @@ func addOrgUserHelper(cmd models.AddOrgUserCommand) Response {
 	cmd.UserId = userToAdd.Id
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrOrgUserAlreadyAdded {
+		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {
 			return JSON(409, util.DynMap{
 				"message": "User is already member of this organization",
 				"userId":  cmd.UserId,
@@ -159,7 +161,7 @@ func updateOrgUserHelper(cmd models.UpdateOrgUserCommand) Response {
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrLastOrgAdmin {
+		if errors.Is(err, models.ErrLastOrgAdmin) {
 			return Error(400, "Cannot change role so that there is no organization admin left", nil)
 		}
 		return Error(500, "Failed update org user", err)
@@ -187,7 +189,7 @@ func RemoveOrgUser(c *models.ReqContext) Response {
 
 func removeOrgUserHelper(cmd *models.RemoveOrgUserCommand) Response {
 	if err := bus.Dispatch(cmd); err != nil {
-		if err == models.ErrLastOrgAdmin {
+		if errors.Is(err, models.ErrLastOrgAdmin) {
 			return Error(400, "Cannot remove last organization admin", nil)
 		}
 		return Error(500, "Failed to remove user from organization", err)

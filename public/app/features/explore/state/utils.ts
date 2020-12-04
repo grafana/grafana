@@ -1,6 +1,17 @@
-import { EventBusExtended, DefaultTimeRange, LoadingState, LogsDedupStrategy, PanelData } from '@grafana/data';
+import {
+  EventBusExtended,
+  DefaultTimeRange,
+  LoadingState,
+  LogsDedupStrategy,
+  PanelData,
+  DataSourceApi,
+  HistoryItem,
+} from '@grafana/data';
 
 import { ExploreItemState, ExploreUpdateState } from 'app/types/explore';
+import { getDatasourceSrv } from '../../plugins/datasource_srv';
+import store from '../../../core/store';
+import { lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -20,8 +31,6 @@ export const makeInitialUpdateState = (): ExploreUpdateState => ({
 export const makeExplorePaneState = (): ExploreItemState => ({
   containerWidth: 0,
   datasourceInstance: null,
-  requestedDatasourceName: null,
-  datasourceLoading: null,
   datasourceMissing: false,
   history: [],
   queries: [],
@@ -57,3 +66,25 @@ export const createEmptyQueryResponse = (): PanelData => ({
   series: [],
   timeRange: DefaultTimeRange,
 });
+
+export async function loadAndInitDatasource(
+  orgId: number,
+  datasourceName?: string
+): Promise<{ history: HistoryItem[]; instance: DataSourceApi }> {
+  const instance = await getDatasourceSrv().get(datasourceName);
+  if (instance.init) {
+    try {
+      instance.init();
+    } catch (err) {
+      // TODO: should probably be handled better
+      console.error(err);
+    }
+  }
+
+  const historyKey = `grafana.explore.history.${instance.meta?.id}`;
+  const history = store.getObject(historyKey, []);
+  // Save last-used datasource
+
+  store.set(lastUsedDatasourceKeyForOrgId(orgId), instance.name);
+  return { history, instance };
+}
