@@ -68,7 +68,8 @@ JSON Body schema:
       "deleteKey":"XXXXXXX",
       "deleteUrl":"myurl/api/snapshots-delete/XXXXXXX",
       "key":"YYYYYYY",
-      "url":"myurl/dashboard/snapshot/YYYYYYY"
+      "url":"myurl/dashboard/snapshot/YYYYYYY",
+      "id": 1,
     }
 ```
 
@@ -192,7 +193,7 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"Snapshot deleted. It might take an hour before it's cleared from any CDN caches."}
+{"message":"Snapshot deleted. It might take an hour before it's cleared from any CDN caches.", "id": 1}
 ```
 
 ## Delete Snapshot by deleteKey
@@ -214,5 +215,5 @@ Accept: application/json
 HTTP/1.1 200
 Content-Type: application/json
 
-{"message":"Snapshot deleted. It might take an hour before it's cleared from any CDN caches."}
+{"message":"Snapshot deleted. It might take an hour before it's cleared from any CDN caches.", "id": 1}
 ```
