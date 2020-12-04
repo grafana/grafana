@@ -49,7 +49,7 @@ The reduce transformer has two modes:
 
 
 For example, if you used the **First** and **Last** calculation with a **Series to rows** transformation, then 
-the result would be
+the result would be:
 
 | Field   | First   | Last    | 
 | ------- | ------- | ------- | 
