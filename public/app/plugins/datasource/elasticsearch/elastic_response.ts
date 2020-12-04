@@ -619,7 +619,11 @@ const getPPLDatapoints = (response: any): { datapoints: any; targetVal: any; inv
   const valueIndex = timeFieldIndex === 0 ? 1 : 0;
 
   //time series response should include a value field and timestamp
-  if (timeFieldIndex === -1 || response.datarows[0].length !== 2 || isNaN(response.datarows[0][valueIndex])) {
+  if (
+    timeFieldIndex === -1 ||
+    response.datarows[0].length !== 2 ||
+    typeof response.datarows[0][valueIndex] !== 'number'
+  ) {
     invalidTS = true;
   }
 
