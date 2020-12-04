@@ -229,38 +229,43 @@ func TestSqlEngine(t *testing.T) {
 		uint16Value := uint16(1)
 		uint8Value := uint8(1)
 
-		fixtures := []interface{}{
-			intValue,
-			&intValue,
-			int64Value,
-			&int64Value,
-			int32Value,
-			&int32Value,
-			int16Value,
-			&int16Value,
-			int8Value,
-			&int8Value,
-			float64Value,
-			&float64Value,
-			float32Value,
-			&float32Value,
-			uintValue,
-			&uintValue,
-			uint64Value,
-			&uint64Value,
-			uint32Value,
-			&uint32Value,
-			uint16Value,
-			&uint16Value,
-			uint8Value,
-			&uint8Value,
+		testCases := []struct {
+			name  string
+			value interface{}
+		}{
+			{"intValue", intValue},
+			{"&intValue", &intValue},
+			{"int64Value", int64Value},
+			{"&int64Value", &int64Value},
+			{"int32Value", int32Value},
+			{"&int32Value", &int32Value},
+			{"int16Value", int16Value},
+			{"&int16Value", &int16Value},
+			{"int8Value", int8Value},
+			{"&int8Value", &int8Value},
+			{"float64Value", float64Value},
+			{"&float64Value", &float64Value},
+			{"float32Value", float32Value},
+			{"&float32Value", &float32Value},
+			{"uintValue", uintValue},
+			{"&uintValue", &uintValue},
+			{"uint64Value", uint64Value},
+			{"&uint64Value", &uint64Value},
+			{"uint32Value", uint32Value},
+			{"&uint32Value", &uint32Value},
+			{"uint16Value", uint16Value},
+			{"&uint16Value", &uint16Value},
+			{"uint8Value", uint8Value},
+			{"&uint8Value", &uint8Value},
 		}
 
-		for _, f := range fixtures {
-			value, err := ConvertSqlValueColumnToFloat("col", f)
-			require.NoError(t, err)
-			require.True(t, value.Valid)
-			require.Equal(t, null.FloatFrom(1).Float64, value.Float64)
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				value, err := ConvertSqlValueColumnToFloat("col", tc.value)
+				require.NoError(t, err)
+				require.True(t, value.Valid)
+				require.Equal(t, null.FloatFrom(1).Float64, value.Float64)
+			})
 		}
 	})
 
@@ -278,25 +283,30 @@ func TestSqlEngine(t *testing.T) {
 		var uint16NilPointer *uint16
 		var uint8NilPointer *uint8
 
-		fixtures := []interface{}{
-			intNilPointer,
-			int64NilPointer,
-			int32NilPointer,
-			int16NilPointer,
-			int8NilPointer,
-			float64NilPointer,
-			float32NilPointer,
-			uintNilPointer,
-			uint64NilPointer,
-			uint32NilPointer,
-			uint16NilPointer,
-			uint8NilPointer,
+		testCases := []struct {
+			name  string
+			value interface{}
+		}{
+			{"intNilPointer", intNilPointer},
+			{"int64NilPointer", int64NilPointer},
+			{"int32NilPointer", int32NilPointer},
+			{"int16NilPointer", int16NilPointer},
+			{"int8NilPointer", int8NilPointer},
+			{"float64NilPointer", float64NilPointer},
+			{"float32NilPointer", float32NilPointer},
+			{"uintNilPointer", uintNilPointer},
+			{"uint64NilPointer", uint64NilPointer},
+			{"uint32NilPointer", uint32NilPointer},
+			{"uint16NilPointer", uint16NilPointer},
+			{"uint8NilPointer", uint8NilPointer},
 		}
 
-		for _, f := range fixtures {
-			value, err := ConvertSqlValueColumnToFloat("col", f)
-			require.NoError(t, err)
-			require.False(t, value.Valid)
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				value, err := ConvertSqlValueColumnToFloat("col", tc.value)
+				require.NoError(t, err)
+				require.False(t, value.Valid)
+			})
 		}
 	})
 }
