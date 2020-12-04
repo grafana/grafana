@@ -1,9 +1,9 @@
 // Libraries
-import sortBy from 'lodash/sortBy';
 import coreModule from 'app/core/core_module';
 // Services & Utils
 import { importDataSourcePlugin } from './plugin_loader';
 import {
+  GetDataSourceListFilters,
   DataSourceSrv as DataSourceService,
   getDataSourceSrv as getDataSourceService,
   TemplateSrv,
@@ -15,6 +15,7 @@ import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 // Pretend Datasource
 import { expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DataSourceVariableModel } from '../variables/types';
+import { cloneDeep } from 'lodash';
 
 export class DatasourceSrv implements DataSourceService {
   private datasources: Record<string, DataSourceApi> = {};
@@ -49,6 +50,20 @@ export class DatasourceSrv implements DataSourceService {
       return this.settingsMapByName[this.defaultName];
     }
 
+    // Complex logic to support template variable data source names
+    // For this we just pick the current or first data source in the variable
+    if (nameOrUid[0] === '$') {
+      const interpolatedName = this.templateSrv.replace(nameOrUid, {}, variableInterpolation);
+      const dsSettings = this.settingsMapByUid[interpolatedName] ?? this.settingsMapByName[interpolatedName];
+      if (!dsSettings) {
+        return undefined;
+      }
+      // The return name or uid needs preservet string containing the variable
+      const clone = cloneDeep(dsSettings);
+      clone.name = nameOrUid;
+      return clone;
+    }
+
     return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid];
   }
 
@@ -69,12 +84,7 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     // Interpolation here is to support template variable in data source selection
-    nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, (value: any[]) => {
-      if (Array.isArray(value)) {
-        return value[0];
-      }
-      return value;
-    });
+    nameOrUid = this.templateSrv.replace(nameOrUid, scopedVars, variableInterpolation);
 
     if (nameOrUid === 'default') {
       return this.get(this.defaultName);
@@ -130,88 +140,109 @@ export class DatasourceSrv implements DataSourceService {
     return Object.values(this.settingsMapByName);
   }
 
-  getExternal(): DataSourceInstanceSettings[] {
-    const datasources = this.getAll().filter(ds => !ds.meta.builtIn);
-    return sortBy(datasources, ['name']);
-  }
-
-  getAnnotationSources() {
-    const sources: any[] = [];
-
-    this.addDataSourceVariables(sources);
-
-    Object.values(this.settingsMapByName).forEach(value => {
-      if (value.meta?.annotations) {
-        sources.push(value);
+  getList(filters: GetDataSourceListFilters = {}): DataSourceInstanceSettings[] {
+    const base = Object.values(this.settingsMapByName).filter(x => {
+      if (x.meta.id === 'grafana' || x.meta.id === 'mixed' || x.meta.id === 'dashboard') {
+        return false;
       }
+      if (filters.metrics && !x.meta.metrics) {
+        return false;
+      }
+      if (filters.tracing && !x.meta.tracing) {
+        return false;
+      }
+      if (filters.annotations && !x.meta.annotations) {
+        return false;
+      }
+      if (filters.pluginId && x.meta.id !== filters.pluginId) {
+        return false;
+      }
+      return true;
     });
 
-    return sources;
-  }
+    if (filters.variables) {
+      for (const variable of this.templateSrv.getVariables().filter(variable => variable.type === 'datasource')) {
+        const dsVar = variable as DataSourceVariableModel;
+        const first = dsVar.current.value === 'default' ? this.defaultName : dsVar.current.value;
+        const dsName = (first as unknown) as string;
+        const dsSettings = this.settingsMapByName[dsName];
 
-  getMetricSources(options?: { skipVariables?: boolean }) {
-    const metricSources: DataSourceSelectItem[] = [];
-
-    Object.entries(this.settingsMapByName).forEach(([key, value]) => {
-      if (value.meta?.metrics) {
-        let metricSource: DataSourceSelectItem = { value: key, name: key, meta: value.meta, sort: key };
-
-        //Make sure grafana and mixed are sorted at the bottom
-        if (value.meta.id === 'grafana') {
-          metricSource.sort = String.fromCharCode(253);
-        } else if (value.meta.id === 'dashboard') {
-          metricSource.sort = String.fromCharCode(254);
-        } else if (value.meta.id === 'mixed') {
-          metricSource.sort = String.fromCharCode(255);
-        }
-
-        metricSources.push(metricSource);
-
-        if (key === this.defaultName) {
-          metricSource = { value: null, name: 'default', meta: value.meta, sort: key };
-          metricSources.push(metricSource);
+        if (dsSettings) {
+          const key = `$\{${variable.name}\}`;
+          base.push({
+            ...dsSettings,
+            name: key,
+          });
         }
       }
-    });
-
-    if (!options || !options.skipVariables) {
-      this.addDataSourceVariables(metricSources);
     }
 
-    metricSources.sort((a, b) => {
-      if (a.sort.toLowerCase() > b.sort.toLowerCase()) {
+    const sorted = base.sort((a, b) => {
+      if (a.name.toLowerCase() > b.name.toLowerCase()) {
         return 1;
       }
-      if (a.sort.toLowerCase() < b.sort.toLowerCase()) {
+      if (a.name.toLowerCase() < b.name.toLowerCase()) {
         return -1;
       }
       return 0;
     });
 
-    return metricSources;
+    if (!filters.pluginId) {
+      if (filters.mixed) {
+        base.push(this.getInstanceSettings('-- Mixed --')!);
+      }
+
+      if (filters.dashboard) {
+        base.push(this.getInstanceSettings('-- Dashboard --')!);
+      }
+
+      if (!filters.tracing) {
+        base.push(this.getInstanceSettings('-- Grafana --')!);
+      }
+    }
+
+    return sorted;
   }
 
-  addDataSourceVariables(list: any[]) {
-    // look for data source variables
-    this.templateSrv
-      .getVariables()
-      .filter(variable => variable.type === 'datasource')
-      .forEach((variable: DataSourceVariableModel) => {
-        const first = variable.current.value === 'default' ? this.defaultName : variable.current.value;
-        const index = (first as unknown) as string;
-        const ds = this.settingsMapByName[index];
-
-        if (ds) {
-          const key = `$${variable.name}`;
-          list.push({
-            name: key,
-            value: key,
-            meta: ds.meta,
-            sort: key,
-          });
-        }
-      });
+  /**
+   * @deprecated use getList
+   * */
+  getExternal(): DataSourceInstanceSettings[] {
+    return this.getList();
   }
+
+  /**
+   * @deprecated use getList
+   * */
+  getAnnotationSources() {
+    return this.getList({ annotations: true, variables: true }).map(x => {
+      return {
+        name: x.name,
+        value: x.isDefault ? null : x.name,
+        meta: x.meta,
+      };
+    });
+  }
+
+  /**
+   * @deprecated use getList
+   * */
+  getMetricSources(options?: { skipVariables?: boolean }): DataSourceSelectItem[] {
+    return this.getList({ metrics: true, variables: !options?.skipVariables }).map(x => {
+      return {
+        name: x.name,
+        value: x.isDefault ? null : x.name,
+        meta: x.meta,
+      };
+    });
+  }
+}
+
+export function variableInterpolation(value: any[]) {
+  if (Array.isArray(value)) {
+    return value[0];
+  }
+  return value;
 }
 
 export const getDatasourceSrv = (): DatasourceSrv => {
