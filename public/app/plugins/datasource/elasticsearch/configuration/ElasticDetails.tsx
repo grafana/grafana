@@ -76,32 +76,30 @@ export const ElasticDetails = (props: Props) => {
         </div>
 
         <div className="gf-form">
-          <span className="gf-form-select-wrapper">
-            <FormField
-              labelWidth={10}
-              label="Version"
-              inputEl={
-                <Select
-                  options={esVersions}
-                  onChange={option => {
-                    const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
-                      value.jsonData.maxConcurrentShardRequests,
-                      option.value!
-                    );
-                    onChange({
-                      ...value,
-                      jsonData: {
-                        ...value.jsonData,
-                        esVersion: option.value!,
-                        maxConcurrentShardRequests,
-                      },
-                    });
-                  }}
-                  value={esVersions.find(version => version.value === value.jsonData.esVersion)}
-                />
-              }
-            />
-          </span>
+          <FormField
+            labelWidth={10}
+            label="Version"
+            inputEl={
+              <Select
+                options={esVersions}
+                onChange={option => {
+                  const maxConcurrentShardRequests = getMaxConcurrenShardRequestOrDefault(
+                    value.jsonData.maxConcurrentShardRequests,
+                    option.value!
+                  );
+                  onChange({
+                    ...value,
+                    jsonData: {
+                      ...value.jsonData,
+                      esVersion: option.value!,
+                      maxConcurrentShardRequests,
+                    },
+                  });
+                }}
+                value={esVersions.find(version => version.value === value.jsonData.esVersion)}
+              />
+            }
+          />
         </div>
         {value.jsonData.esVersion >= 56 && (
           <div className="gf-form max-width-30">
