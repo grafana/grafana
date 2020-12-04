@@ -7,34 +7,72 @@ weight = 300
 
 Grafana comes with the following transformations:
 
-  - [Reduce](#reduce)
-  - [Filter by name](#filter-by-name)
-  - [Filter data by query](#filter-data-by-query)
-  - [Organize fields](#organize-fields)
-  - [Outer join](#join-by-field-outer-join)
-  - [Series to rows](#series-to-rows)
-  - [Add field from calculation](#add-field-from-calculation)
-  - [Labels to fields](#labels-to-fields)
-  - [Group by](#group-by)
-  - [Merge](#merge)
+- [Reduce](#reduce)
+- [Filter by name](#filter-by-name)
+- [Filter data by query](#filter-data-by-query)
+- [Filter data by value](#filter-data-by-value)
+- [Organize fields](#organize-fields)
+- [Outer join](#join-by-field-outer-join)
+- [Series to rows](#series-to-rows)
+- [Add field from calculation](#add-field-from-calculation)
+- [Labels to fields](#labels-to-fields)
+- [Concatenate fields](#concatenate-fields)
+- [Group by](#group-by)
+- [Merge](#merge)
 
 Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
 
 ## Reduce
 
-Apply a _Reduce_ transformation when you want to simplify your results down to one value. Reduce removes the time component. If visualized as a table, it reduces a column down to one row (value).
+The _Reduce_ transformation will apply a calculation to each field in the frame and return a single value.  Time fields are removed when applying
+this transformation.  
 
-In the **Calculations** field, enter one or more calculation types. Click to see a list of calculation choices. For information about available calculations, refer to the [Calculation list]({{< relref "../calculations-list.md" >}}).
+Consider the input:
 
-Once you select at least one calculation, Grafana reduces the results down to one value using the calculation you select. If you select more than one calculation, then more than one value is displayed.
+Query A:
 
-Here's an example of a table with time series data. Before I apply the transformation, you can see all the data organized by time.
+| Time                | Temp    | Uptime  |
+| ------------------- | ------- | ------- |
+| 2020-07-07 11:34:20 | 12.3    | 256122  |
+| 2020-07-07 11:24:20 | 15.4    | 1230233 |
 
-{{< docs-imagebox img="/img/docs/transformations/reduce-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+Query B:
 
-After I apply the transformation, there is no time value and each column has been reduced to one row showing the results of the calculations that I chose.
+| Time                | AQI     | Errors |
+| ------------------- | ------- | ------ |
+| 2020-07-07 11:34:20 | 6.5     | 15     |
+| 2020-07-07 11:24:20 | 3.2     | 5      |
 
-{{< docs-imagebox img="/img/docs/transformations/reduce-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+The reduce transformer has two modes:
+- **Series to rows -** Creates a row for each field and a column for each calculation.
+- **Reduce fields -** Keeps the existing frame structure, but collapses each field into a single value.
+
+For example, if you used the **First** and **Last** calculation with a **Series to rows** transformation, then 
+the result would be:
+
+| Field   | First   | Last    | 
+| ------- | ------- | ------- | 
+| Temp    | 12.3    | 15.4    |
+| Uptime  | 256122  | 1230233 |
+| AQI     | 6.5     | 3.2     |
+| Errors  | 15      | 5       |
+
+The **Reduce fields** with the **Last** calculation,
+results in two frames, each with one row:
+
+Query A:
+
+| Temp    | Uptime  |
+| ------- | ------- |
+| 15.4    | 1230233 |
+
+Query B:
+
+| AQI     | Errors |
+| ------- | ------ |
+| 3.2     | 5      |
+
+
 
 ## Merge
 
@@ -138,7 +176,8 @@ Use this transformation to add a new field calculated from two other fields. Eac
   - **Reduce row -** Apply selected calculation on each row of selected fields independently.
   - **Binary option -** Apply basic math operation(sum, multiply, etc) on values in a single row from two selected fields.
 - **Field name -** Select the names of fields you want to use in the calculation for the new field.
-- **Calculation -** Select a calculation to use when Grafana creates the new field. Click in the field to see a list of calculation choices. For information about available calculations, refer to the [Calculation list]({{< relref "../calculations-list.md" >}}).
+- **Calculation -** If you select **Reduce row** mode, then the **Calculation** field appears. Click in the field to see a list of calculation choices you can use to create the new field. For information about available calculations, refer to the [Calculation list]({{< relref "../calculations-list.md" >}}).
+- **Operation -** If you select **Binary option** mode, then the **Operation** fields appear. These fields allow you  to do basic math operations on values in a single row from two selected fields. You can also use numerical values for binary operations.
 - **Alias -** (Optional) Enter the name of your new field. If you leave this blank, then the field will be named to match the calculation.
 - **Replace all fields -** (Optional) Select this option if you want to hide all other fields and display only your calculated field in the visualization.
 
@@ -184,7 +223,7 @@ After I apply the transformation, my labels appear in the table as fields.
 
 > **Note:** This transformation is only available in Grafana 7.2+.
 
-This transformation groups the data by a specified field (column) value and processes calculations on each group.  Click to see a list of calculation choices. For information about available calculations, refer to the [List of calculations]({{< relref "../calculations-list.md" >}}).
+This transformation groups the data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to the [List of calculations]({{< relref "../calculations-list.md" >}}).
 
 Here's an example of original data.
 
@@ -202,17 +241,17 @@ Here's an example of original data.
 
 This transformation goes in two steps. First you specify one or multiple fields to group the data by. This will group all the same values of those fields together, as if you sorted them. For instance if we group by the Server ID field, then it would group the data this way:
 
-| Time                | Server ID    | CPU Temperature | Server Status |
-| ------------------- | ------------ | --------------- | ------------- |
-| 2020-07-07 11:34:20 | **server 1** | 80              | Shutdown      |
-| 2020-07-07 09:28:06 | **server 1** | 80              | OK            |
-| 2020-07-07 09:23:07 | **server 1** | 86              | OK            |
-| 2020-07-07 10:32:20 | server 2 | 90 | Overload |
-| 2020-07-07 09:30:05 | server 2 | 88 | OK |
-| 2020-07-07 09:25:05 | server 2 | 88 | OK |
-| 2020-07-07 11:34:20 | **_server 3_** | 62 | OK |
-| 2020-07-07 10:31:22 | **_server 3_** | 55 | OK |
-| 2020-07-07 09:30:57 | **_server 3_** | 62 | Rebooting |
+| Time                | Server ID      | CPU Temperature | Server Status |
+| ------------------- | -------------- | --------------- | ------------- |
+| 2020-07-07 11:34:20 | **server 1**   | 80              | Shutdown      |
+| 2020-07-07 09:28:06 | **server 1**   | 80              | OK            |
+| 2020-07-07 09:23:07 | **server 1**   | 86              | OK            |
+| 2020-07-07 10:32:20 | server 2       | 90              | Overload      |
+| 2020-07-07 09:30:05 | server 2       | 88              | OK            |
+| 2020-07-07 09:25:05 | server 2       | 88              | OK            |
+| 2020-07-07 11:34:20 | **_server 3_** | 62              | OK            |
+| 2020-07-07 10:31:22 | **_server 3_** | 55              | OK            |
+| 2020-07-07 09:30:57 | **_server 3_** | 62              | Rebooting     |
 
 All rows with the same value of Server ID are grouped together.
 
@@ -240,11 +279,36 @@ We would then get :
 
 This transformation allows you to extract some key information out of your time series and display them in a convenient way.
 
+## Concatenate fields
+
+> **Note:** This transformation is only available in Grafana 7.3+.
+
+This transformation combines all fields from all frames into one result.  Consider:
+
+Query A:
+
+| Temp    | Uptime  |
+| ------- | ------- |
+| 15.4    | 1230233 |
+
+Query B:
+
+| AQI     | Errors |
+| ------- | ------ |
+| 3.2     | 5      |
+
+
+After you concatenate the fields, the data frame would be:
+
+| Temp    | Uptime  | AQI     | Errors |
+| ------- | ------- | ------- | ------ |
+| 15.4    | 1230233 | 3.2     | 5      |
+
 ## Series to rows
 
 > **Note:** This transformation is only available in Grafana 7.1+.
 
-Use this transformation to combine the result from multiple time series  data queries into one single result. This is helpful when using the table panel visualization.
+Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization.
 
 The result from this transformation will contain three columns: Time, Metric, and Value. The Metric column is added so you easily can see from which query the metric originates from. Customize this value by defining Label on the source query.
 
@@ -276,3 +340,61 @@ Here is the result after applying the Series to rows transformation.
 | 2020-07-07 10:31:22 | Temperature | 22    |
 | 2020-07-07 09:30:57 | Humidity    | 33    |
 | 2020-07-07 09:30:05 | Temperature | 19    |
+
+## Filter by value
+
+This transformation allows you to filter your data directly in Grafana and remove some data points from your query result. You have the option to include or exclude data that match one or more conditions you define. The conditions are applied on a selected field.
+
+The available conditions are:
+
+- **Regex**: match a regex expression
+- **Is Null**: match if the value is null
+- **Is Not Null**: match if the value is not null
+- **Equal**: match if the value is equal to the specified value
+- **Different**: match if the value is different than the specified value
+- **Greater**\*: match if the value is greater than the specified value
+- **Lower**\*: match if the value is lower than the specified value
+- **Greater or equal**\*: match if the value is greater or equal
+- **Lower or equal**\*: match if the value is lower or equal
+- **Range**\*: match a range between a specified minimum and maximum, min and max included
+
+\* Those conditions are only available for number fields.
+
+Consider the following data set:
+
+| Time                | Temperature | Altitude |
+| ------------------- | ----------- | -------- |
+| 2020-07-07 11:34:23 | 32          | 101      |
+| 2020-07-07 11:34:22 | 28          | 125      |
+| 2020-07-07 11:34:21 | 26          | 110      |
+| 2020-07-07 11:34:20 | 23          | 98       |
+| 2020-07-07 10:32:24 | 31          | 95       |
+| 2020-07-07 10:31:22 | 20          | 85       |
+| 2020-07-07 09:30:57 | 19          | 101      |
+
+If you **Include** the data points that have a temperature below 30°C, the configuration will look as follows:
+
+- Filter Type: `Include`
+- Condition: Rows where `Temperature` matches `Lower Than` `100`
+
+And you will get the following result, where only the temperatures below 30°C are included:
+
+| Time                | Temperature | Altitude |
+| ------------------- | ----------- | -------- |
+| 2020-07-07 11:34:22 | 28          | 125      |
+| 2020-07-07 11:34:21 | 26          | 110      |
+| 2020-07-07 11:34:20 | 23          | 98       |
+| 2020-07-07 10:31:22 | 20          | 85       |
+| 2020-07-07 09:30:57 | 19          | 101      |
+
+You can add more than one condition to the filter. For example, you might want to include the data only if the altitude is greater than 100. To do so, add that condition to the following configuration:
+
+- Filter type: `Include` rows that `Match All` conditions
+- Condition 1: Rows where `Temperature` matches `Lower` than `30`
+- Condition 2: Rows where `Altitude` matches `Greater` than `100`
+
+When you have more than one condition, you can choose if you want the action (include / exclude) to be applied on rows that **Match all** conditions or **Match any** of the conditions you added.
+
+In the example above we chose **Match all** because we wanted to include the rows that have a temperature lower than 30 _AND_ an altitude higher than 100. If we wanted to include the rows that have a temperature lower than 30 _OR_ an altitude higher than 100 instead, then we would select **Match any**. This would include the first row in the original data, which has a temperature of 32°C (does not match the first condition) but an altitude of 101 (which matches the second condition), so it is included.
+
+Conditions that are invalid or incompletely configured are ignored.

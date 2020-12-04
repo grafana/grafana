@@ -3,16 +3,16 @@ import {
   compareDataFrameStructures,
   DataFrame,
   FieldConfig,
+  FieldMatcher,
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
   getFieldDisplayName,
-  getTimeField,
 } from '@grafana/data';
-import { mergeTimeSeriesData } from './utils';
+import { alignDataFrames } from './utils';
 import { UPlotChart } from '../uPlot/Plot';
 import { PlotProps } from '../uPlot/types';
-import { AxisPlacement, GraphFieldConfig, GraphMode, PointMode } from '../uPlot/config';
+import { AxisPlacement, GraphFieldConfig, DrawStyle, PointMode } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
@@ -22,19 +22,26 @@ import { useRevision } from '../uPlot/hooks';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
+export interface XYFieldMatchers {
+  x: FieldMatcher;
+  y: FieldMatcher;
+}
+
 export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
   data: DataFrame[];
   legend?: LegendOptions;
+  fields?: XYFieldMatchers; // default will assume timeseries data
 }
 
 const defaultConfig: GraphFieldConfig = {
-  mode: GraphMode.Line,
+  drawStyle: DrawStyle.Line,
   points: PointMode.Auto,
   axisPlacement: AxisPlacement.Auto,
 };
 
 export const GraphNG: React.FC<GraphNGProps> = ({
   data,
+  fields,
   children,
   width,
   height,
@@ -43,50 +50,53 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   timeZone,
   ...plotProps
 }) => {
-  const alignedFrameWithGapTest = useMemo(() => mergeTimeSeriesData(data), [data]);
-
-  if (alignedFrameWithGapTest == null) {
-    return (
-      <div className="panel-empty">
-        <p>No data found in response</p>
-      </div>
-    );
-  }
-
+  const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
   const theme = useTheme();
   const legendItemsRef = useRef<LegendItem[]>([]);
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
-  const alignedFrame = alignedFrameWithGapTest.frame;
-  const compareFrames = useCallback(
-    (a: DataFrame, b: DataFrame) => compareDataFrameStructures(a, b, ['min', 'max']),
-    []
-  );
+  const alignedFrame = alignedFrameWithGapTest?.frame;
+
+  const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
+    if (a && b) {
+      return compareDataFrameStructures(a, b, ['min', 'max']);
+    }
+    return false;
+  }, []);
+
   const configRev = useRevision(alignedFrame, compareFrames);
 
   const configBuilder = useMemo(() => {
     const builder = new UPlotConfigBuilder();
 
-    let { timeIndex } = getTimeField(alignedFrame);
+    if (!alignedFrame) {
+      return builder;
+    }
 
-    if (timeIndex === undefined) {
-      timeIndex = 0; // assuming first field represents x-domain
-      builder.addScale({
-        scaleKey: 'x',
-      });
-    } else {
+    // X is the first field in the alligned frame
+    const xField = alignedFrame.fields[0];
+    if (xField.type === FieldType.time) {
       builder.addScale({
         scaleKey: 'x',
         isTime: true,
       });
+      builder.addAxis({
+        scaleKey: 'x',
+        isTime: true,
+        placement: AxisPlacement.Bottom,
+        timeZone,
+        theme,
+      });
+    } else {
+      // Not time!
+      builder.addScale({
+        scaleKey: 'x',
+      });
+      builder.addAxis({
+        scaleKey: 'x',
+        placement: AxisPlacement.Bottom,
+        theme,
+      });
     }
-
-    builder.addAxis({
-      scaleKey: 'x',
-      isTime: true,
-      placement: AxisPlacement.Bottom,
-      timeZone,
-      theme,
-    });
 
     let seriesIdx = 0;
     const legendItems: LegendItem[] = [];
@@ -94,21 +104,25 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     for (let i = 0; i < alignedFrame.fields.length; i++) {
       const field = alignedFrame.fields[i];
       const config = field.config as FieldConfig<GraphFieldConfig>;
-      const customConfig = config.custom || defaultConfig;
+      const customConfig: GraphFieldConfig = {
+        ...defaultConfig,
+        ...config.custom,
+      };
 
-      if (i === timeIndex || field.type !== FieldType.number) {
+      if (field === xField || field.type !== FieldType.number) {
         continue;
       }
 
       const fmt = field.display ?? defaultFormatter;
-      const scale = config.unit || '__fixed';
-      const isNewScale = !builder.hasScale(scale);
+      const scaleKey = config.unit || '__fixed';
 
-      if (isNewScale && customConfig.axisPlacement !== AxisPlacement.Hidden) {
-        builder.addScale({ scaleKey: scale, min: field.config.min, max: field.config.max });
+      if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
+        // The builder will manage unique scaleKeys and combine where appropriate
+        builder.addScale({ scaleKey, min: field.config.min, max: field.config.max });
         builder.addAxis({
-          scaleKey: scale,
+          scaleKey,
           label: customConfig.axisLabel,
+          size: customConfig.axisWidth,
           placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
           formatValue: v => formattedValueToString(fmt(v)),
           theme,
@@ -120,23 +134,23 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       const colorMode = getFieldColorModeForField(field);
       const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
-      const pointsMode = customConfig.mode === GraphMode.Points ? PointMode.Always : customConfig.points;
+      const pointsMode = customConfig.drawStyle === DrawStyle.Points ? PointMode.Always : customConfig.points;
 
       builder.addSeries({
-        scaleKey: scale,
-        line: (customConfig.mode ?? GraphMode.Line) === GraphMode.Line,
+        scaleKey,
+        drawStyle: customConfig.drawStyle!,
         lineColor: seriesColor,
         lineWidth: customConfig.lineWidth,
+        lineInterpolation: customConfig.lineInterpolation,
         points: pointsMode,
-        pointSize: customConfig.pointRadius,
+        pointSize: customConfig.pointSize,
         pointColor: seriesColor,
-        fill: customConfig.fillAlpha !== undefined,
-        fillOpacity: customConfig.fillAlpha,
+        fillOpacity: customConfig.fillOpacity,
         fillColor: seriesColor,
       });
 
       if (hasLegend.current) {
-        const axisPlacement = builder.getAxisPlacement(scale);
+        const axisPlacement = builder.getAxisPlacement(scaleKey);
 
         legendItems.push({
           color: seriesColor,
@@ -150,7 +164,15 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
     legendItemsRef.current = legendItems;
     return builder;
-  }, [configRev]);
+  }, [configRev, timeZone]);
+
+  if (alignedFrameWithGapTest == null) {
+    return (
+      <div className="panel-empty">
+        <p>No data found in response</p>
+      </div>
+    );
+  }
 
   let legendElement: React.ReactElement | undefined;
 

@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
-import Prism, { Grammar } from 'prismjs';
+import { Grammar } from 'prismjs';
 import { AbsoluteTimeRange } from '@grafana/data';
 import LokiLanguageProvider from 'app/plugins/datasource/loki/language_provider';
 import { useLokiLabels } from 'app/plugins/datasource/loki/components/useLokiLabels';
 import { useRefMounted } from 'app/core/hooks/useRefMounted';
-
-const PRISM_SYNTAX = 'promql';
 
 /**
  * Initialise the language provider. Returns a languageProviderInitialized boolean cause there does not seem other way
@@ -45,7 +43,6 @@ const useLokiSyntax = (languageProvider: LokiLanguageProvider, languageProviderI
   useEffect(() => {
     if (languageProviderInitialized) {
       const syntax = languageProvider.getSyntax();
-      Prism.languages[PRISM_SYNTAX] = syntax;
       setSyntax(syntax);
     }
   }, [languageProviderInitialized, languageProvider]);

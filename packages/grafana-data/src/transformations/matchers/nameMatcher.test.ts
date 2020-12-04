@@ -306,3 +306,31 @@ describe('Field Regexp or Names Matcher', () => {
     }
   });
 });
+
+describe('Fields returned by query with refId', () => {
+  it('Match all fields in frame with refId: A', () => {
+    const data = [
+      toDataFrame({
+        refId: 'A',
+        fields: [{ name: 'field_1' }, { name: 'field_2' }],
+      }),
+      toDataFrame({
+        refId: 'B',
+        fields: [{ name: 'field_1' }, { name: 'field_2' }],
+      }),
+    ];
+
+    const matcher = getFieldMatcher({
+      id: FieldMatcherID.byFrameRefID,
+      options: 'A',
+    });
+
+    const frameA = data[0];
+    expect(matcher(frameA.fields[0], frameA, data)).toBe(true);
+    expect(matcher(frameA.fields[1], frameA, data)).toBe(true);
+
+    const frameB = data[1];
+    expect(matcher(frameB.fields[0], frameB, data)).toBe(false);
+    expect(matcher(frameB.fields[1], frameB, data)).toBe(false);
+  });
+});
