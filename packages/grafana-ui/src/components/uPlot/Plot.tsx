@@ -8,7 +8,6 @@ import { DataFrame, FieldType } from '@grafana/data';
 import isNumber from 'lodash/isNumber';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import usePrevious from 'react-use/lib/usePrevious';
-import { css } from 'emotion';
 
 // uPlot abstraction responsible for plot initialisation, setup and refresh
 // Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
@@ -74,11 +73,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 
   return (
     <PlotContext.Provider value={plotCtx}>
-      <div
-        className={css`
-          position: relative;
-        `}
-      >
+      <div style={{ position: 'relative' }}>
         <div ref={plotCtx.canvasRef} data-testid="uplot-main-div" />
         {props.children}
       </div>
