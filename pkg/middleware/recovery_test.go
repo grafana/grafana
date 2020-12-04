@@ -16,8 +16,6 @@ import (
 )
 
 func TestRecoveryMiddleware(t *testing.T) {
-	setting.ErrTemplateName = "error-template"
-
 	t.Run("Given an API route that panics", func(t *testing.T) {
 		apiURL := "/api/whatever"
 		recoveryScenario(t, "recovery middleware should return json", apiURL, func(t *testing.T, sc *scenarioContext) {
@@ -53,6 +51,7 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		defer bus.ClearBusHandlers()
 
 		cfg := setting.NewCfg()
+		cfg.ErrTemplateName = "error-template"
 		sc := &scenarioContext{
 			t:   t,
 			url: url,
@@ -63,7 +62,7 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		require.NoError(t, err)
 
 		sc.m = macaron.New()
-		sc.m.Use(Recovery())
+		sc.m.Use(Recovery(cfg))
 
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
 		sc.m.Use(macaron.Renderer(macaron.RenderOptions{

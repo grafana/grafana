@@ -301,7 +301,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.Use(middleware.Gziper())
 	}
 
-	m.Use(middleware.Recovery())
+	m.Use(middleware.Recovery(hs.Cfg))
 
 	for _, route := range plugins.StaticRoutes {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)

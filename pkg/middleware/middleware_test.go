@@ -30,8 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const errorTemplate = "error-template"
-
 func fakeGetTime(t *testing.T) {
 	t.Helper()
 
@@ -49,12 +47,6 @@ func fakeGetTime(t *testing.T) {
 }
 
 func TestMiddleWareSecurityHeaders(t *testing.T) {
-	origErrTemplateName := setting.ErrTemplateName
-	t.Cleanup(func() {
-		setting.ErrTemplateName = origErrTemplateName
-	})
-	setting.ErrTemplateName = errorTemplate
-
 	middlewareScenario(t, "middleware should get correct x-xss-protection header", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Equal(t, "1; mode=block", sc.resp.Header().Get("X-XSS-Protection"))
@@ -86,12 +78,6 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 }
 
 func TestMiddlewareContext(t *testing.T) {
-	origErrTemplateName := setting.ErrTemplateName
-	t.Cleanup(func() {
-		setting.ErrTemplateName = origErrTemplateName
-	})
-	setting.ErrTemplateName = errorTemplate
-
 	middlewareScenario(t, "middleware should add context to injector", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/").exec()
 		assert.NotNil(t, sc.context)
