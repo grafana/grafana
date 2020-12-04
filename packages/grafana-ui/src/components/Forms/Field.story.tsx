@@ -9,7 +9,6 @@ export default {
   component: Field,
   argTypes: {
     children: { control: { disable: true } },
-    horizontal: { control: { disable: true } },
     className: { control: { disable: true } },
   },
   parameters: {
@@ -22,15 +21,13 @@ export default {
   },
 };
 
-export const Simple: Story<FieldProps> = args => {
-  return (
-    <div style={{ width: '300px' }}>
-      <Field {...args}>
-        <Input id="thisField" />
-      </Field>
-    </div>
-  );
-};
+export const Simple: Story<FieldProps> = args => (
+  <div>
+    <Field {...args}>
+      <Input id="thisField" />
+    </Field>
+  </div>
+);
 
 Simple.args = {
   label: 'Graphite API key',
@@ -39,13 +36,14 @@ Simple.args = {
   invalid: false,
   loading: false,
   error: 'Not valid input',
+  horizontal: false,
 };
 
 export const HorizontalLayout: Story<FieldProps> = args => {
   const [checked, setChecked] = useState(false);
   const onChange = useCallback(e => setChecked(e.currentTarget.checked), [setChecked]);
   return (
-    <div style={{ width: '300px' }}>
+    <div>
       <Field {...args}>
         <Switch checked={checked} onChange={onChange} />
       </Field>
@@ -60,4 +58,5 @@ HorizontalLayout.args = {
   invalid: false,
   loading: false,
   error: 'Not valid input',
+  horizontal: true,
 };

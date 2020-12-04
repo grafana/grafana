@@ -26,10 +26,7 @@ export default {
   },
 };
 
-export const Simple: Story<ButtonProps> = ({ children, ...args }) => {
-  return <Button {...args}>{children}</Button>;
-};
-
+export const Simple: Story<ButtonProps> = ({ children, ...args }) => <Button {...args}>{children}</Button>;
 Simple.args = {
   variant: 'primary',
   size: 'md',
