@@ -11,7 +11,7 @@ import (
 )
 
 func TestOrgRedirectMiddleware(t *testing.T) {
-	middlewareScenario(t, "when setting a correct org for the user", func(sc *scenarioContext) {
+	middlewareScenario(t, "when setting a correct org for the user", func(t *testing.T, sc *scenarioContext) {
 		sc.withTokenSessionCookie("token")
 		bus.AddHandler("test", func(query *models.SetUsingOrgCommand) error {
 			return nil
@@ -35,7 +35,7 @@ func TestOrgRedirectMiddleware(t *testing.T) {
 		assert.Equal(t, 302, sc.resp.Code)
 	})
 
-	middlewareScenario(t, "when setting an invalid org for user", func(sc *scenarioContext) {
+	middlewareScenario(t, "when setting an invalid org for user", func(t *testing.T, sc *scenarioContext) {
 		sc.withTokenSessionCookie("token")
 		bus.AddHandler("test", func(query *models.SetUsingOrgCommand) error {
 			return fmt.Errorf("")

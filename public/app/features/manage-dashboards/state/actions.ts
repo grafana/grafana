@@ -1,6 +1,5 @@
-import { AppEvents, DataSourceInstanceSettings, DataSourceSelectItem, locationUtil } from '@grafana/data';
+import { AppEvents, DataSourceInstanceSettings, locationUtil } from '@grafana/data';
 import { getBackendSrv } from 'app/core/services/backend_srv';
-import config from 'app/core/config';
 import {
   clearDashboard,
   setInputs,
@@ -13,6 +12,7 @@ import { updateLocation } from 'app/core/actions';
 import { ThunkResult, FolderInfo, DashboardDTO, DashboardDataDTO } from 'app/types';
 import { appEvents } from '../../../core/core';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 export function fetchGcomDashboard(id: string): ThunkResult<void> {
   return async dispatch => {
@@ -73,13 +73,13 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
     const inputs = getState().importDashboard.inputs;
 
     let inputsToPersist = [] as any[];
-    importDashboardForm.dataSources?.forEach((dataSource: DataSourceSelectItem, index: number) => {
+    importDashboardForm.dataSources?.forEach((dataSource: DataSourceInstanceSettings, index: number) => {
       const input = inputs.dataSources[index];
       inputsToPersist.push({
         name: input.name,
         type: input.type,
         pluginId: input.pluginId,
-        value: dataSource.value,
+        value: dataSource.name,
       });
     });
 
@@ -105,19 +105,13 @@ export function importDashboard(importDashboardForm: ImportDashboardDTO): ThunkR
 }
 
 const getDataSourceOptions = (input: { pluginId: string; pluginName: string }, inputModel: any) => {
-  const sources = Object.values(config.datasources).filter(
-    (val: DataSourceInstanceSettings) => val.type === input.pluginId
-  );
+  const sources = getDataSourceSrv().getList({ pluginId: input.pluginId });
 
   if (sources.length === 0) {
     inputModel.info = 'No data sources of type ' + input.pluginName + ' found';
   } else if (!inputModel.info) {
     inputModel.info = 'Select a ' + input.pluginName + ' data source';
   }
-
-  inputModel.options = sources.map(val => {
-    return { name: val.name, value: val.name, meta: val.meta };
-  });
 };
 
 export function moveDashboards(dashboardUids: string[], toFolder: FolderInfo) {

@@ -15,9 +15,7 @@ export function createSpanLinkFactory(splitOpenFn: (options: { datasourceUid: st
   }
 
   // Right now just hardcoded for first loki DS we can find
-  const lokiDs = getDataSourceSrv()
-    .getExternal()
-    .find(ds => ds.meta.id === 'loki');
+  const lokiDs = getDataSourceSrv().getList({ pluginId: 'loki' })[0];
 
   if (!lokiDs) {
     return undefined;

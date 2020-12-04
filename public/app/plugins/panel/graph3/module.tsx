@@ -3,7 +3,7 @@ import { LegendDisplayMode } from '@grafana/ui';
 import {
   GraphFieldConfig,
   PointMode,
-  GraphMode,
+  DrawStyle,
   AxisPlacement,
   graphFieldOptions,
 } from '@grafana/ui/src/components/uPlot/config';
@@ -27,11 +27,11 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
     useCustomConfig: builder => {
       builder
         .addRadio({
-          path: 'mode',
-          name: 'Display',
-          defaultValue: graphFieldOptions.mode[0].value,
+          path: 'drawStyle',
+          name: 'Style',
+          defaultValue: graphFieldOptions.drawStyle[0].value,
           settings: {
-            options: graphFieldOptions.mode,
+            options: graphFieldOptions.drawStyle,
           },
         })
         .addRadio({
@@ -41,7 +41,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           settings: {
             options: graphFieldOptions.lineInterpolation,
           },
-          showIf: c => c.mode === GraphMode.Line,
+          showIf: c => c.drawStyle === DrawStyle.Line,
         })
         .addSliderInput({
           path: 'lineWidth',
@@ -52,7 +52,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             max: 10,
             step: 1,
           },
-          showIf: c => c.mode !== GraphMode.Points,
+          showIf: c => c.drawStyle !== DrawStyle.Points,
         })
         .addSliderInput({
           path: 'fillOpacity',
@@ -63,7 +63,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             max: 1,
             step: 0.1,
           },
-          showIf: c => c.mode !== GraphMode.Points,
+          showIf: c => c.drawStyle !== DrawStyle.Points,
         })
         .addRadio({
           path: 'points',
@@ -83,6 +83,17 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             step: 1,
           },
           showIf: c => c.points !== PointMode.Never,
+        })
+        .addRadio({
+          path: 'spanNulls',
+          name: 'Null values',
+          defaultValue: false,
+          settings: {
+            options: [
+              { label: 'Gaps', value: false },
+              { label: 'Connected', value: true },
+            ],
+          },
         })
         .addRadio({
           path: 'axisPlacement',
