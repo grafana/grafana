@@ -16,7 +16,7 @@ func (hs *HTTPServer) registerRoutes() {
 	reqEditorRole := middleware.ReqEditorRole
 	reqOrgAdmin := middleware.ReqOrgAdmin
 	reqCanAccessTeams := middleware.AdminOrFeatureEnabled(hs.Cfg.EditorsCanAdmin)
-	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
+	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn()
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
 	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
 	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL()
