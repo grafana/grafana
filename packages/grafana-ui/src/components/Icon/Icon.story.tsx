@@ -1,5 +1,6 @@
 import React, { ChangeEvent, useState } from 'react';
 import { css } from 'emotion';
+import debounce from 'lodash/debounce';
 
 import { Input, Field, Icon } from '@grafana/ui';
 import { getAvailableIcons, IconName } from '../../types';
@@ -64,9 +65,9 @@ const icons = getAvailableIcons().sort((a, b) => a.localeCompare(b));
 export const IconsOverview = () => {
   const [filter, setFilter] = useState('');
 
-  const searchIcon = (event: ChangeEvent<HTMLInputElement>) => {
+  const searchIcon = debounce((event: ChangeEvent<HTMLInputElement>) => {
     setFilter(event.target.value);
-  };
+  }, 250);
 
   return (
     <div
@@ -91,9 +92,9 @@ export const IconsOverview = () => {
       >
         {icons
           .filter(val => val.includes(filter))
-          .map(i => {
-            return <IconWrapper name={i} key={i} />;
-          })}
+          .map(i => (
+            <IconWrapper name={i} key={i} />
+          ))}
       </div>
     </div>
   );
