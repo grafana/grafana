@@ -134,8 +134,6 @@ func TestDataSourceProxyCache(t *testing.T) {
 		tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
 		So(err, ShouldBeNil)
 
-		So(err, ShouldBeNil)
-
 		ds := DataSource{
 			Id:       1,
 			Url:      "http://k8s:8001",
