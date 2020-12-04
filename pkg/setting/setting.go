@@ -78,7 +78,6 @@ var (
 	Domain                         string
 	HttpAddr, HttpPort             string
 	CertFile, KeyFile              string
-	RouterLogging                  bool
 	DataProxyLogging               bool
 	DataProxyTimeout               int
 	DataProxyTLSHandshakeTimeout   int
@@ -1285,8 +1284,7 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.Domain = Domain
 	HttpAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
 	HttpPort = valueAsString(server, "http_port", "3000")
-	RouterLogging = server.Key("router_logging").MustBool(false)
-	cfg.RouterLogging = RouterLogging
+	cfg.RouterLogging = server.Key("router_logging").MustBool(false)
 
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
 	EnforceDomain = server.Key("enforce_domain").MustBool(false)

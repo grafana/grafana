@@ -26,7 +26,7 @@ import (
 	"gopkg.in/macaron.v1"
 )
 
-func Logger() macaron.Handler {
+func Logger(cfg *setting.Cfg) macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		start := time.Now()
 		c.Data["perfmon.start"] = start
@@ -43,7 +43,7 @@ func Logger() macaron.Handler {
 
 		status := rw.Status()
 		if status == 200 || status == 304 {
-			if !setting.RouterLogging {
+			if !cfg.RouterLogging {
 				return
 			}
 		}

@@ -295,7 +295,7 @@ func (hs *HTTPServer) applyRoutes() {
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m := hs.macaron
 
-	m.Use(middleware.Logger())
+	m.Use(middleware.Logger(hs.Cfg))
 
 	if setting.EnableGzip {
 		m.Use(middleware.Gziper())
