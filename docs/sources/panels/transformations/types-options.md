@@ -344,7 +344,7 @@ Use this transformation to rename parts of the query results using a regular exp
 
 You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to `([^\.]+)\..+` and the replacement pattern to `$1`, `web-01.example.com` would become `web-01`.
 
-Here is an example where we are stripping the prefix from event types, in the before you can see everything is prefixed with `system.`
+In the following example, we are stripping the prefix from event types. In the before image, you can see everything is prefixed with `system.`
 
 {{< docs-imagebox img="/img/docs/transformations/rename-by-regex-before-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
 
