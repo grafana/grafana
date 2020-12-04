@@ -92,6 +92,7 @@ export const DataLink = (props: Props) => {
 
       <div className={styles.row}>
         <Switch
+          labelClass={'width-6'}
           label="Internal link"
           checked={showInternalLink}
           onChange={() => {
