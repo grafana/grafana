@@ -228,7 +228,7 @@ export class DatasourceSrv implements DataSourceService {
    * @deprecated use getList
    * */
   getMetricSources(options?: { skipVariables?: boolean }): DataSourceSelectItem[] {
-    return this.getList({ metrics: true, variables: options?.skipVariables! }).map(x => {
+    return this.getList({ metrics: true, variables: !options?.skipVariables }).map(x => {
       return {
         name: x.name,
         value: x.isDefault ? null : x.name,

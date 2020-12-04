@@ -6,7 +6,7 @@ import { HorizontalGroup, Select } from '@grafana/ui';
 import { SelectableValue, DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { isUnsignedPluginSignature, PluginSignatureBadge } from '../../../features/plugins/PluginSignatureBadge';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 export interface Props {
   onChange: (ds: DataSourceInstanceSettings) => void;
@@ -31,7 +31,7 @@ export interface State {
 }
 
 export class DataSourcePicker extends PureComponent<Props, State> {
-  dataSourceSrv = getDatasourceSrv();
+  dataSourceSrv = getDataSourceSrv();
 
   static defaultProps: Partial<Props> = {
     autoFocus: false,
