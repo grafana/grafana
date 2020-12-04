@@ -89,15 +89,15 @@ func TestMiddlewareAuth(t *testing.T) {
 
 	middlewareScenario(t, "Snapshot public mode disabled and unauthenticated request should return 401", func(
 		t *testing.T, sc *scenarioContext) {
-		sc.m.Get("/api/snapshot", SnapshotPublicModeOrSignedIn(), sc.defaultHandler)
+		sc.m.Get("/api/snapshot", SnapshotPublicModeOrSignedIn(sc.cfg), sc.defaultHandler)
 		sc.fakeReq("GET", "/api/snapshot").exec()
 		assert.Equal(t, 401, sc.resp.Code)
 	})
 
 	middlewareScenario(t, "Snapshot public mode enabled and unauthenticated request should return 200", func(
 		t *testing.T, sc *scenarioContext) {
-		setting.SnapshotPublicMode = true
-		sc.m.Get("/api/snapshot", SnapshotPublicModeOrSignedIn(), sc.defaultHandler)
+		sc.cfg.SnapshotPublicMode = true
+		sc.m.Get("/api/snapshot", SnapshotPublicModeOrSignedIn(sc.cfg), sc.defaultHandler)
 		sc.fakeReq("GET", "/api/snapshot").exec()
 		assert.Equal(t, 200, sc.resp.Code)
 	})

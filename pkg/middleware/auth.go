@@ -119,9 +119,9 @@ func AdminOrFeatureEnabled(enabled bool) macaron.Handler {
 	}
 }
 
-func SnapshotPublicModeOrSignedIn() macaron.Handler {
+func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) macaron.Handler {
 	return func(c *models.ReqContext) {
-		if setting.SnapshotPublicMode {
+		if cfg.SnapshotPublicMode {
 			return
 		}
 
