@@ -24,7 +24,7 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 		fakeDash.HasAcl = false
 		fakeDash.Uid = util.GenerateShortUID()
 
-		middlewareScenario(t, "GET dashboard by legacy url", func(sc *scenarioContext) {
+		middlewareScenario(t, "GET dashboard by legacy url", func(t *testing.T, sc *scenarioContext) {
 			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
 				query.Result = fakeDash
 				return nil
@@ -43,7 +43,7 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 			assert.Equal(t, 2, len(redirectURL.Query()))
 		})
 
-		middlewareScenario(t, "GET dashboard solo by legacy url", func(sc *scenarioContext) {
+		middlewareScenario(t, "GET dashboard solo by legacy url", func(t *testing.T, sc *scenarioContext) {
 			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
 				query.Result = fakeDash
 				return nil
@@ -65,7 +65,7 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 		})
 	})
 
-	middlewareScenario(t, "GET dashboard by legacy edit url", func(sc *scenarioContext) {
+	middlewareScenario(t, "GET dashboard by legacy edit url", func(t *testing.T, sc *scenarioContext) {
 		sc.m.Get("/d/:uid/:slug", RedirectFromLegacyPanelEditURL(), sc.defaultHandler)
 
 		sc.fakeReqWithParams("GET", "/d/asd/dash?orgId=1&panelId=12&fullscreen&edit", map[string]string{}).exec()

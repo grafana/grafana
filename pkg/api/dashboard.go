@@ -341,6 +341,9 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 		filePath = filepath.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
 	}
 
+	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
+	// variable
+	// nolint:gosec
 	file, err := os.Open(filePath)
 	if err != nil {
 		return Error(500, "Failed to load home dashboard", err)

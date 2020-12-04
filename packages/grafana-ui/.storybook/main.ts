@@ -26,7 +26,9 @@ module.exports = {
     check: true,
     reactDocgen: 'react-docgen-typescript',
     reactDocgenTypescriptOptions: {
+      tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
       shouldExtractLiteralValuesFromEnum: true,
+      shouldRemoveUndefinedFromOptional: true,
       propFilter: (prop: any) => (prop.parent ? !/node_modules/.test(prop.parent.fileName) : true),
     },
   },
@@ -42,21 +44,6 @@ module.exports = {
             options: {
               transpileOnly: true,
               configFile: path.resolve(__dirname, 'tsconfig.json'),
-            },
-          },
-          {
-            loader: require.resolve('react-docgen-typescript-loader'),
-            options: {
-              tsconfigPath: path.resolve(__dirname, 'tsconfig.json'),
-              // https://github.com/styleguidist/react-docgen-typescript#parseroptions
-              // @ts-ignore
-              propFilter: prop => {
-                if (prop.parent) {
-                  return !prop.parent.fileName.includes('node_modules/@types/react/');
-                }
-
-                return true;
-              },
             },
           },
         ],

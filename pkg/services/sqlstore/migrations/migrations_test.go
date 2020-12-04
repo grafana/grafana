@@ -5,56 +5,45 @@ import (
 
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
-
-	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestMigrations(t *testing.T) {
-	testDBs := []sqlutil.TestDB{
-		sqlutil.SQLite3TestDB(),
-	}
+	testDB := sqlutil.SQLite3TestDB()
+	const query = `select count(*) as count from migration_log`
+	result := struct{ Count int }{}
 
-	for _, testDB := range testDBs {
-		sql := `select count(*) as count from migration_log`
-		r := struct {
-			Count int64
-		}{}
+	x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
+	require.NoError(t, err)
 
-		Convey("Initial "+testDB.DriverName+" migration", t, func() {
-			x, err := xorm.NewEngine(testDB.DriverName, testDB.ConnStr)
-			So(err, ShouldBeNil)
+	err = NewDialect(x).CleanDB()
+	require.NoError(t, err)
 
-			err = NewDialect(x).CleanDB()
-			So(err, ShouldBeNil)
+	_, err = x.SQL(query).Get(&result)
+	require.Error(t, err)
 
-			_, err = x.SQL(sql).Get(&r)
-			So(err, ShouldNotBeNil)
+	mg := NewMigrator(x)
+	AddMigrations(mg)
+	expectedMigrations := mg.MigrationsCount()
 
-			mg := NewMigrator(x)
-			AddMigrations(mg)
+	err = mg.Start()
+	require.NoError(t, err)
 
-			err = mg.Start()
-			So(err, ShouldBeNil)
+	has, err := x.SQL(query).Get(&result)
+	require.NoError(t, err)
+	require.True(t, has)
 
-			has, err := x.SQL(sql).Get(&r)
-			So(err, ShouldBeNil)
-			So(has, ShouldBeTrue)
-			// we currently skip to migrations. We should rewrite skipped migrations to write in the log as well.
-			// until then we have to keep this
-			expectedMigrations := mg.MigrationsCount()
-			So(r.Count, ShouldEqual, expectedMigrations)
+	require.Equal(t, expectedMigrations, result.Count)
 
-			mg = NewMigrator(x)
-			AddMigrations(mg)
+	mg = NewMigrator(x)
+	AddMigrations(mg)
 
-			err = mg.Start()
-			So(err, ShouldBeNil)
+	err = mg.Start()
+	require.NoError(t, err)
 
-			has, err = x.SQL(sql).Get(&r)
-			So(err, ShouldBeNil)
-			So(has, ShouldBeTrue)
-			So(r.Count, ShouldEqual, expectedMigrations)
-		})
-	}
+	has, err = x.SQL(query).Get(&result)
+	require.NoError(t, err)
+	require.True(t, has)
+	require.Equal(t, expectedMigrations, result.Count)
 }

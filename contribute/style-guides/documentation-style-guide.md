@@ -132,9 +132,12 @@ Git is always capitalized, unless part of a code block. GitHub is the correct sp
 
 In general, "integration" is not capitalized. Only capitalize it if it is capitalized in the UI or part of a proper noun, like the name of a specific integration.
 
+The first letter of the name of an integration is always capitalized, even if the original named source is lowercase.
+
 **Examples:**
 - MySQL Integration
 - CockroachDB Integration
+- Etcd Integration
 - I installed an integration on my local Grafana.
 
 ### Links and references
