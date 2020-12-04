@@ -272,7 +272,7 @@ func (hs *HTTPServer) configureHttp2() error {
 }
 
 func (hs *HTTPServer) newMacaron() *macaron.Macaron {
-	macaron.Env = setting.Env
+	macaron.Env = hs.Cfg.Env
 	m := macaron.New()
 
 	// automatically set HEAD for every GET
@@ -430,7 +430,7 @@ func (hs *HTTPServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, 
 		}
 	}
 
-	if setting.Env == setting.Dev {
+	if hs.Cfg.Env == setting.Dev {
 		headers = func(c *macaron.Context) {
 			c.Resp.Header().Set("Cache-Control", "max-age=0, must-revalidate, no-cache")
 		}

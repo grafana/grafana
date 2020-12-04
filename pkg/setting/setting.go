@@ -933,7 +933,7 @@ func (cfg *Cfg) LogConfigSources() {
 	cfg.Logger.Info("Path Logs", "path", cfg.LogsPath)
 	cfg.Logger.Info("Path Plugins", "path", PluginsPath)
 	cfg.Logger.Info("Path Provisioning", "path", cfg.ProvisioningPath)
-	cfg.Logger.Info("App mode " + Env)
+	cfg.Logger.Info("App mode " + cfg.Env)
 }
 
 type DynamicSection struct {

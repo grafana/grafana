@@ -136,7 +136,7 @@ func Recovery(cfg *setting.Cfg) macaron.Handler {
 				c.Data["AppSubUrl"] = setting.AppSubUrl
 				c.Data["Theme"] = setting.DefaultTheme
 
-				if setting.Env == setting.Dev {
+				if cfg.Env == setting.Dev {
 					if err, ok := r.(error); ok {
 						c.Data["Title"] = err.Error()
 					}
