@@ -23,8 +23,9 @@ export enum GraphMode {
 
 export enum LineInterpolation {
   Linear = 'linear',
-  Staircase = 'staircase', // https://leeoniya.github.io/uPlot/demos/line-stepped.html
-  Smooth = 'smooth', // https://leeoniya.github.io/uPlot/demos/line-smoothing.html
+  Smooth = 'smooth',
+  StepBefore = 'stepBefore',
+  StepAfter = 'stepAfter',
 }
 
 export interface LineConfig {
@@ -54,6 +55,8 @@ export interface AxisConfig {
 
 export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, AxisConfig {
   mode?: GraphMode;
+
+  spanNulls?: boolean;
 }
 
 export const graphFieldOptions = {
@@ -65,8 +68,9 @@ export const graphFieldOptions = {
 
   lineInterpolation: [
     { label: 'Linear', value: LineInterpolation.Linear },
-    { label: 'Staircase', value: LineInterpolation.Staircase },
     { label: 'Smooth', value: LineInterpolation.Smooth },
+    { label: 'Step Before', value: LineInterpolation.StepBefore },
+    { label: 'Step After', value: LineInterpolation.StepAfter },
   ] as Array<SelectableValue<LineInterpolation>>,
 
   points: [
