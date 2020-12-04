@@ -77,15 +77,12 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 
 	middlewareScenario(t, "middleware should add correct Strict-Transport-Security header", func(t *testing.T, sc *scenarioContext) {
 		origStrictTransportSecurity := setting.StrictTransportSecurity
-		origProtocol := setting.Protocol
 		origStrictTransportSecurityMaxAge := setting.StrictTransportSecurityMaxAge
 		t.Cleanup(func() {
 			setting.StrictTransportSecurity = origStrictTransportSecurity
-			setting.Protocol = origProtocol
 			setting.StrictTransportSecurityMaxAge = origStrictTransportSecurityMaxAge
 		})
 		setting.StrictTransportSecurity = true
-		setting.Protocol = setting.HTTPSScheme
 		setting.StrictTransportSecurityMaxAge = 64000
 
 		sc.fakeReq("GET", "/api/").exec()
@@ -96,6 +93,8 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 		setting.StrictTransportSecuritySubDomains = true
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Equal(t, "max-age=64000; preload; includeSubDomains", sc.resp.Header().Get("Strict-Transport-Security"))
+	}, func(cfg *setting.Cfg) {
+		cfg.Protocol = setting.HTTPSScheme
 	})
 }
 
@@ -588,7 +587,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		require.NoError(t, err)
 
 		sc.m = macaron.New()
-		sc.m.Use(AddDefaultResponseHeaders())
+		sc.m.Use(AddDefaultResponseHeaders(cfg))
 		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
 			Directory: viewsPath,
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},

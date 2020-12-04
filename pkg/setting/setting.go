@@ -75,11 +75,9 @@ var (
 	CustomInitPath = "conf/custom.ini"
 
 	// HTTP server options
-	Protocol                       Scheme
 	Domain                         string
 	HttpAddr, HttpPort             string
 	CertFile, KeyFile              string
-	SocketPath                     string
 	RouterLogging                  bool
 	DataProxyLogging               bool
 	DataProxyTimeout               int
@@ -831,8 +829,6 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		cfg.PluginsAllowUnsigned = append(cfg.PluginsAllowUnsigned, plug)
 	}
 	cfg.MarketplaceURL = pluginsSection.Key("marketplace_url").MustString("https://grafana.com/grafana/plugins/")
-	cfg.Protocol = Protocol
-	cfg.SocketPath = SocketPath
 
 	// Read and populate feature toggles list
 	featureTogglesSection := iniFile.Section("feature_toggles")
@@ -1271,22 +1267,22 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.AppSubURL = AppSubUrl
 	cfg.ServeFromSubPath = ServeFromSubPath
 
-	Protocol = HTTPScheme
+	cfg.Protocol = HTTPScheme
 	protocolStr := valueAsString(server, "protocol", "http")
 
 	if protocolStr == "https" {
-		Protocol = HTTPSScheme
+		cfg.Protocol = HTTPSScheme
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
 	}
 	if protocolStr == "h2" {
-		Protocol = HTTP2Scheme
+		cfg.Protocol = HTTP2Scheme
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
 	}
 	if protocolStr == "socket" {
-		Protocol = SocketScheme
-		SocketPath = server.Key("socket").String()
+		cfg.Protocol = SocketScheme
+		cfg.SocketPath = server.Key("socket").String()
 	}
 
 	Domain = valueAsString(server, "domain", "localhost")

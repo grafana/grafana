@@ -102,7 +102,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		Addr:    net.JoinHostPort(setting.HttpAddr, setting.HttpPort),
 		Handler: hs.macaron,
 	}
-	switch setting.Protocol {
+	switch hs.Cfg.Protocol {
 	case setting.HTTP2Scheme:
 		if err := hs.configureHttp2(); err != nil {
 			return err
@@ -120,7 +120,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	}
 
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
-		setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
+		hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -135,7 +135,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		}
 	}()
 
-	switch setting.Protocol {
+	switch hs.Cfg.Protocol {
 	case setting.HTTPScheme, setting.SocketScheme:
 		if err := hs.httpSrv.Serve(listener); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
@@ -153,7 +153,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 			return err
 		}
 	default:
-		panic(fmt.Sprintf("Unhandled protocol %q", setting.Protocol))
+		panic(fmt.Sprintf("Unhandled protocol %q", hs.Cfg.Protocol))
 	}
 
 	wg.Wait()
@@ -166,7 +166,7 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 		return hs.Listener, nil
 	}
 
-	switch setting.Protocol {
+	switch hs.Cfg.Protocol {
 	case setting.HTTPScheme, setting.HTTPSScheme, setting.HTTP2Scheme:
 		listener, err := net.Listen("tcp", hs.httpSrv.Addr)
 		if err != nil {
@@ -174,20 +174,20 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 		}
 		return listener, nil
 	case setting.SocketScheme:
-		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: setting.SocketPath, Net: "unix"})
+		listener, err := net.ListenUnix("unix", &net.UnixAddr{Name: hs.Cfg.SocketPath, Net: "unix"})
 		if err != nil {
-			return nil, errutil.Wrapf(err, "failed to open listener for socket %s", setting.SocketPath)
+			return nil, errutil.Wrapf(err, "failed to open listener for socket %s", hs.Cfg.SocketPath)
 		}
 
 		// Make socket writable by group
-		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
+		if err := os.Chmod(hs.Cfg.SocketPath, 0660); err != nil {
 			return nil, errutil.Wrapf(err, "failed to change socket permissions")
 		}
 
 		return listener, nil
 	default:
-		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
-		return nil, fmt.Errorf("invalid protocol %q", setting.Protocol)
+		hs.log.Error("Invalid protocol", "protocol", hs.Cfg.Protocol)
+		return nil, fmt.Errorf("invalid protocol %q", hs.Cfg.Protocol)
 	}
 }
 
@@ -317,7 +317,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
 	}
 
-	m.Use(middleware.AddDefaultResponseHeaders())
+	m.Use(middleware.AddDefaultResponseHeaders(hs.Cfg))
 
 	if setting.ServeFromSubPath && setting.AppSubUrl != "" {
 		m.SetURLPrefix(setting.AppSubUrl)

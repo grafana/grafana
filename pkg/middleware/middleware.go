@@ -20,7 +20,7 @@ var (
 	ReqOrgAdmin   = RoleAuth(models.ROLE_ADMIN)
 )
 
-func AddDefaultResponseHeaders() macaron.Handler {
+func AddDefaultResponseHeaders(cfg *setting.Cfg) macaron.Handler {
 	return func(ctx *macaron.Context) {
 		ctx.Resp.Before(func(w macaron.ResponseWriter) {
 			// if response has already been written, skip.
@@ -36,14 +36,14 @@ func AddDefaultResponseHeaders() macaron.Handler {
 				AddXFrameOptionsDenyHeader(w)
 			}
 
-			AddSecurityHeaders(w)
+			addSecurityHeaders(w, cfg)
 		})
 	}
 }
 
-// AddSecurityHeaders adds various HTTP(S) response headers that enable various security protections behaviors in the client's browser.
-func AddSecurityHeaders(w macaron.ResponseWriter) {
-	if (setting.Protocol == setting.HTTPSScheme || setting.Protocol == setting.HTTP2Scheme) &&
+// addSecurityHeaders adds various HTTP(S) response headers that enable various security protections behaviors in the client's browser.
+func addSecurityHeaders(w macaron.ResponseWriter, cfg *setting.Cfg) {
+	if (cfg.Protocol == setting.HTTPSScheme || cfg.Protocol == setting.HTTP2Scheme) &&
 		setting.StrictTransportSecurity {
 		strictHeaderValues := []string{fmt.Sprintf("max-age=%v", setting.StrictTransportSecurityMaxAge)}
 		if setting.StrictTransportSecurityPreload {

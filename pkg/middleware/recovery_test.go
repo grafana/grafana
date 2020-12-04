@@ -52,9 +52,11 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
+		cfg := setting.NewCfg()
 		sc := &scenarioContext{
 			t:   t,
 			url: url,
+			cfg: cfg,
 		}
 
 		viewsPath, err := filepath.Abs("../../public/views")
@@ -63,7 +65,7 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		sc.m = macaron.New()
 		sc.m.Use(Recovery())
 
-		sc.m.Use(AddDefaultResponseHeaders())
+		sc.m.Use(AddDefaultResponseHeaders(cfg))
 		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
 			Directory: viewsPath,
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
