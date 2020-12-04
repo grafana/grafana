@@ -28,3 +28,5 @@ const getStyles = stylesFactory(() => ({
     }
   `,
 }));
+
+SearchCheckbox.displayName = 'SearchCheckbox';

@@ -212,7 +212,7 @@ export const processVariableDependencies = async (variable: VariableModel, state
     return;
   }
 
-  await new Promise(resolve => {
+  await new Promise<void>(resolve => {
     const unsubscribe = store.subscribe(() => {
       if (!isWaitingForDependencies(dependencies, store.getState())) {
         unsubscribe();
