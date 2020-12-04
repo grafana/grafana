@@ -24,7 +24,7 @@ export const graphPanelChangedHandler = (
 };
 
 export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSource; options: Options } {
-  const overrides = angular.fieldConfig.overrides ?? [];
+  const overrides = angular.fieldConfig?.overrides ?? [];
   const yaxes = angular.yaxis ?? [];
   let y1 = getFieldConfigFromOldAxis(yaxes[0]);
   if (angular.fieldConfig?.defaults) {
