@@ -1,62 +1,62 @@
 import React, { useState, useCallback } from 'react';
-import { boolean, number, text } from '@storybook/addon-knobs';
-import { Field, Input, Switch } from '@grafana/ui';
+import { Story } from '@storybook/react';
+import { Field, FieldProps } from './Field';
+import { Input, Switch } from '..';
 import mdx from './Field.mdx';
 
 export default {
   title: 'Forms/Field',
   component: Field,
+  argTypes: {
+    children: { control: { disable: true } },
+    className: { control: { disable: true } },
+  },
   parameters: {
     docs: {
       page: mdx,
     },
+    knobs: {
+      disabled: true,
+    },
   },
 };
 
-const getKnobs = () => {
-  const CONTAINER_GROUP = 'Container options';
-  // ---
-  const containerWidth = number(
-    'Container width',
-    300,
-    {
-      range: true,
-      min: 100,
-      max: 500,
-      step: 10,
-    },
-    CONTAINER_GROUP
-  );
+export const Simple: Story<FieldProps> = args => (
+  <div>
+    <Field {...args}>
+      <Input id="thisField" />
+    </Field>
+  </div>
+);
 
-  const BEHAVIOUR_GROUP = 'Behaviour props';
-  const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
-  const invalid = boolean('Invalid', false, BEHAVIOUR_GROUP);
-  const loading = boolean('Loading', false, BEHAVIOUR_GROUP);
-  const error = text('Error message', '', BEHAVIOUR_GROUP);
-
-  return { containerWidth, disabled, invalid, loading, error };
+Simple.args = {
+  label: 'Graphite API key',
+  description: 'Your Graphite instance API key',
+  disabled: false,
+  invalid: false,
+  loading: false,
+  error: 'Not valid input',
+  horizontal: false,
 };
 
-export const Simple = () => {
-  const { containerWidth, ...otherProps } = getKnobs();
-  return (
-    <div style={{ width: containerWidth }}>
-      <Field label="Graphite API key" description="Your Graphite instance API key" {...otherProps}>
-        <Input id="thisField" />
-      </Field>
-    </div>
-  );
-};
-
-export const HorizontalLayout = () => {
+export const HorizontalLayout: Story<FieldProps> = args => {
   const [checked, setChecked] = useState(false);
   const onChange = useCallback(e => setChecked(e.currentTarget.checked), [setChecked]);
-  const { containerWidth, ...otherProps } = getKnobs();
   return (
-    <div style={{ width: containerWidth }}>
-      <Field horizontal label="Show labels" description="Display thresholds's labels" {...otherProps}>
+    <div>
+      <Field {...args}>
         <Switch checked={checked} onChange={onChange} />
       </Field>
     </div>
   );
+};
+
+HorizontalLayout.args = {
+  label: 'Show labels',
+  description: 'Display threshold labels',
+  disabled: false,
+  invalid: false,
+  loading: false,
+  error: 'Not valid input',
+  horizontal: true,
 };
