@@ -2,7 +2,6 @@ import React, { PureComponent } from 'react';
 import { QueryGroup } from 'app/features/query/components/QueryGroup';
 import { QueryGroupOptions } from 'app/features/query/components/QueryGroupOptions';
 import { PanelModel } from '../../state';
-import { DataQuery, DataSourceSelectItem } from '@grafana/data';
 import { getLocationSrv } from '@grafana/runtime';
 
 interface Props {
@@ -22,6 +21,10 @@ export class PanelEditorQueries extends PureComponent<Props, State> {
 
   buildQueryOptions({ panel }: Props): QueryGroupOptions {
     return {
+      dataSource: {
+        name: panel.datasource,
+      },
+      queries: panel.targets,
       maxDataPoints: panel.maxDataPoints,
       minInterval: panel.interval,
       timeRange: {
@@ -32,27 +35,8 @@ export class PanelEditorQueries extends PureComponent<Props, State> {
     };
   }
 
-  onDataSourceChange = (ds: DataSourceSelectItem, queries: DataQuery[]) => {
-    const { panel } = this.props;
-
-    panel.datasource = ds.value;
-    panel.targets = queries;
-    panel.refresh();
-
-    this.forceUpdate();
-  };
-
   onRunQueries = () => {
     this.props.panel.refresh();
-  };
-
-  onQueriesChange = (queries: DataQuery[]) => {
-    const { panel } = this.props;
-
-    panel.targets = queries;
-    panel.refresh();
-
-    this.forceUpdate();
   };
 
   onOpenQueryInspector = () => {
@@ -62,9 +46,11 @@ export class PanelEditorQueries extends PureComponent<Props, State> {
     });
   };
 
-  onQueryOptionsChange = (options: QueryGroupOptions) => {
+  onOptionsChange = (options: QueryGroupOptions) => {
     const { panel } = this.props;
 
+    panel.datasource = options.dataSource.default ? null : options.dataSource.name!;
+    panel.targets = options.queries;
     panel.timeFrom = options.timeRange?.from;
     panel.timeShift = options.timeRange?.shift;
     panel.hideTimeOverride = options.timeRange?.hide;
@@ -81,15 +67,11 @@ export class PanelEditorQueries extends PureComponent<Props, State> {
 
     return (
       <QueryGroup
-        dataSourceName={panel.datasource}
         options={options}
         queryRunner={panel.getQueryRunner()}
-        queries={panel.targets}
-        onQueriesChange={this.onQueriesChange}
-        onDataSourceChange={this.onDataSourceChange}
         onRunQueries={this.onRunQueries}
         onOpenQueryInspector={this.onOpenQueryInspector}
-        onOptionsChange={this.onQueryOptionsChange}
+        onOptionsChange={this.onOptionsChange}
       />
     );
   }
