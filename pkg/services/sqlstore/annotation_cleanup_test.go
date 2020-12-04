@@ -35,6 +35,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 		alertAnnotationCount     int64
 		dashboardAnnotationCount int64
 		APIAnnotationCount       int64
+		affectedAnnotations      int64
 	}{
 		{
 			name: "default settings should not delete any annotations",
@@ -46,6 +47,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     7,
 			dashboardAnnotationCount: 7,
 			APIAnnotationCount:       7,
+			affectedAnnotations:      0,
 		},
 		{
 			name: "should remove annotations created before cut off point",
@@ -57,6 +59,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     5,
 			dashboardAnnotationCount: 5,
 			APIAnnotationCount:       5,
+			affectedAnnotations:      6,
 		},
 		{
 			name: "should only keep three annotations",
@@ -68,6 +71,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     3,
 			dashboardAnnotationCount: 3,
 			APIAnnotationCount:       3,
+			affectedAnnotations:      6,
 		},
 		{
 			name: "running the max count delete again should not remove any annotations",
@@ -79,14 +83,18 @@ func TestAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     3,
 			dashboardAnnotationCount: 3,
 			APIAnnotationCount:       3,
+			affectedAnnotations:      0,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			cleaner := &AnnotationCleanupService{batchSize: 1, log: log.New("test-logger")}
-			err := cleaner.CleanAnnotations(context.Background(), test.cfg)
+			affectedAnnotations, affectedAnnotationTags, err := cleaner.CleanAnnotations(context.Background(), test.cfg)
 			require.NoError(t, err)
+
+			assert.Equal(t, test.affectedAnnotations, affectedAnnotations)
+			assert.Equal(t, test.affectedAnnotations*2, affectedAnnotationTags)
 
 			assertAnnotationCount(t, fakeSQL, alertAnnotationType, test.alertAnnotationCount)
 			assertAnnotationCount(t, fakeSQL, dashboardAnnotationType, test.dashboardAnnotationCount)
@@ -137,7 +145,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 
 	// run the clean up task to keep one annotation.
 	cleaner := &AnnotationCleanupService{batchSize: 1, log: log.New("test-logger")}
-	err = cleaner.cleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
+	_, err = cleaner.cleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
 	require.NoError(t, err)
 
 	// assert that the last annotations were kept
