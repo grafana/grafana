@@ -31,9 +31,9 @@ func (b *PPLRequestBuilder) Build() (*PPLRequest, error) {
 }
 
 // AddPPLQueryString adds a new PPL query string with time range filter
-func (b *PPLRequestBuilder) AddPPLQueryString(timeField, lte, gte, querystring string) *PPLRequestBuilder {
+func (b *PPLRequestBuilder) AddPPLQueryString(timeField, to, from, querystring string) *PPLRequestBuilder {
 	res := []string{}
-	timeFilter := fmt.Sprintf(" where `%s` > timestamp('%s') and `%s` < timestamp('%s')", timeField, lte, timeField, gte)
+	timeFilter := fmt.Sprintf(" where `%s` > timestamp('%s') and `%s` < timestamp('%s')", timeField, from, timeField, to)
 
 	// Sets a default query if the query string is empty
 	if len(strings.TrimSpace(querystring)) == 0 {
