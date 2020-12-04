@@ -431,7 +431,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
    * they can change over requested time.
    * @param name
    */
-  fetchSeriesLabels = async (match: string, absoluteRange: AbsoluteTimeRange): Promise<Record<string, string[]>> => {
+  fetchSeriesLabels = async (match: string, absoluteRange = this.initialRange): Promise<Record<string, string[]>> => {
     const rangeParams = absoluteRange ? rangeToParams(absoluteRange) : { start: 0, end: 0 };
     const url = '/loki/api/v1/series';
     const { start, end } = rangeParams;
