@@ -340,7 +340,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 
 	// needs to be after context handler
 	if setting.EnforceDomain {
-		m.Use(middleware.ValidateHostHeader(setting.Domain))
+		m.Use(middleware.ValidateHostHeader(hs.Cfg.Domain))
 	}
 
 	m.Use(middleware.HandleNoCacheHeader())

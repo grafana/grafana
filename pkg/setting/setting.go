@@ -75,7 +75,6 @@ var (
 	CustomInitPath = "conf/custom.ini"
 
 	// HTTP server options
-	Domain                         string
 	HttpAddr, HttpPort             string
 	CertFile, KeyFile              string
 	DataProxyLogging               bool
@@ -1280,8 +1279,7 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 		cfg.SocketPath = server.Key("socket").String()
 	}
 
-	Domain = valueAsString(server, "domain", "localhost")
-	cfg.Domain = Domain
+	cfg.Domain = valueAsString(server, "domain", "localhost")
 	HttpAddr = valueAsString(server, "http_addr", DefaultHTTPAddr)
 	HttpPort = valueAsString(server, "http_port", "3000")
 	cfg.RouterLogging = server.Key("router_logging").MustBool(false)

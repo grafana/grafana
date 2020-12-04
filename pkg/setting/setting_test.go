@@ -133,7 +133,7 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			So(Domain, ShouldEqual, "test2")
+			So(cfg.Domain, ShouldEqual, "test2")
 		})
 
 		Convey("Defaults can be overridden in specified config file", func() {
