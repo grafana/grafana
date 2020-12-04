@@ -1,8 +1,7 @@
-import { DataFrame, FieldType, parseLabels, KeyValue, CircularDataFrame, AppEvents } from '@grafana/data';
+import { DataFrame, FieldType, parseLabels, KeyValue, CircularDataFrame } from '@grafana/data';
 import { Observable, throwError, timer } from 'rxjs';
 import { webSocket } from 'rxjs/webSocket';
 import { LokiTailResponse } from './types';
-import appEvents from 'app/core/app_events';
 import { finalize, map, retryWhen, mergeMap } from 'rxjs/operators';
 import { appendResponseToBufferedData } from './result_transformer';
 
@@ -51,10 +50,10 @@ export class LiveStreams {
             const retryAttempt = i + 1;
             if (error.code === 1006) {
               if (retryAttempt > 10) {
-                // If more than 10 times retried, show user warning, but keep reconnecting
-                appEvents.emit(AppEvents.alertWarning, [
-                  'Websocket connection is being disrupted. We keep reconnecting but consider starting new live tailing again.',
-                ]);
+                // If more than 10 times retried, consol.warn, but keep reconnecting
+                console.warn(
+                  `Websocket connection is being disrupted. We keep reconnecting but consider starting new live tailing again. Error: ${error.reason}`
+                );
               }
               // Retry every 5s
               return timer(retryInterval);
