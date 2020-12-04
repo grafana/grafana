@@ -11,7 +11,8 @@ export const useNextId = (): MetricAggregation['id'] | BucketAggregation['id'] =
   const { metrics, bucketAggs } = useQuery();
 
   return useMemo(
-    () => (Math.max(...metrics?.map(toId).map(toInt), ...bucketAggs?.map(toId).map(toInt)) + 1).toString(),
+    () =>
+      (Math.max(...[...(metrics?.map(toId) || ['0']), ...(bucketAggs?.map(toId) || ['0'])].map(toInt)) + 1).toString(),
     [metrics, bucketAggs]
   );
 };
