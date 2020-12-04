@@ -290,11 +290,20 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
 
   // if height above 40 put text to above bar
   if (height > 40) {
+    if (text?.titleSize) {
+      return {
+        fontSize: text?.titleSize,
+        width: 0,
+        height: text.titleSize * TITLE_LINE_HEIGHT,
+        placement: 'above',
+      };
+    }
+
     const maxTitleHeightRatio = 0.45;
     const titleHeight = Math.max(Math.min(height * maxTitleHeightRatio, MAX_VALUE_HEIGHT), 17);
 
     return {
-      fontSize: text?.titleSize ?? titleHeight / TITLE_LINE_HEIGHT,
+      fontSize: titleHeight / TITLE_LINE_HEIGHT,
       width: 0,
       height: titleHeight,
       placement: 'above',
