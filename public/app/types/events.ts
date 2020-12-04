@@ -117,8 +117,6 @@ export const zoomOut = eventFactory<number>('zoom-out');
 
 export const shiftTime = eventFactory<number>('shift-time');
 
-export const elasticQueryUpdated = eventFactory('elastic-query-updated');
-
 export const routeUpdated = eventFactory('$routeUpdate');
 
 /**

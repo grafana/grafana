@@ -1,6 +1,13 @@
 import uPlot, { Series } from 'uplot';
 
-export const barsBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
+export const barsBuilder: Series.PathBuilder = (
+  u: uPlot,
+  seriesIdx: number,
+  idx0: number,
+  idx1: number,
+  extendGap: Series.ExtendGap,
+  buildClip: Series.BuildClip
+) => {
   const series = u.series[seriesIdx];
   const xdata = u.data[0];
   const ydata = u.data[seriesIdx];
@@ -53,47 +60,115 @@ export const barsBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, idx
   };
 };
 
-export const staircaseBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
-  const series = u.series[seriesIdx];
-  const xdata = u.data[0];
-  const ydata = u.data[seriesIdx];
-  const scaleX = u.series[0].scale as string;
-  const scaleY = series.scale as string;
+/*
+const enum StepSide {
+  Before,
+  After,
+}
+*/
 
-  const stroke = new Path2D();
-  stroke.moveTo(Math.round(u.valToPos(xdata[0], scaleX, true)), Math.round(u.valToPos(ydata[0]!, scaleY, true)));
+export const stepBeforeBuilder = stepBuilderFactory(false);
+export const stepAfterBuilder = stepBuilderFactory(true);
 
-  for (let i = idx0; i <= idx1 - 1; i++) {
-    let x0 = Math.round(u.valToPos(xdata[i], scaleX, true));
-    let y0 = Math.round(u.valToPos(ydata[i]!, scaleY, true));
-    let x1 = Math.round(u.valToPos(xdata[i + 1], scaleX, true));
-    let y1 = Math.round(u.valToPos(ydata[i + 1]!, scaleY, true));
+// babel does not support inlined const enums, so this uses a boolean flag for perf
+// possible workaround: https://github.com/dosentmatter/babel-plugin-const-enum
+function stepBuilderFactory(after: boolean): Series.PathBuilder {
+  return (
+    u: uPlot,
+    seriesIdx: number,
+    idx0: number,
+    idx1: number,
+    extendGap: Series.ExtendGap,
+    buildClip: Series.BuildClip
+  ) => {
+    const series = u.series[seriesIdx];
+    const xdata = u.data[0];
+    const ydata = u.data[seriesIdx];
+    const scaleX = u.series[0].scale as string;
+    const scaleY = series.scale as string;
+    const halfStroke = series.width! / 2;
 
-    stroke.lineTo(x0, y0);
-    stroke.lineTo(x1, y0);
+    const stroke = new Path2D();
 
-    if (i === idx1 - 1) {
-      stroke.lineTo(x1, y1);
+    // find first non-null dataPt
+    while (ydata[idx0] == null) {
+      idx0++;
     }
-  }
 
-  const fill = new Path2D(stroke);
+    // find last-null dataPt
+    while (ydata[idx1] == null) {
+      idx1--;
+    }
 
-  //@ts-ignore
-  let fillTo = series.fillTo(u, seriesIdx, series.min, series.max);
+    let gaps: Series.Gaps = [];
+    let inGap = false;
+    let prevYPos = Math.round(u.valToPos(ydata[idx0]!, scaleY, true));
+    let firstXPos = Math.round(u.valToPos(xdata[idx0], scaleX, true));
+    let prevXPos = firstXPos;
 
-  let minY = Math.round(u.valToPos(fillTo, scaleY, true));
-  let minX = Math.round(u.valToPos(u.scales[scaleX].min!, scaleX, true));
-  let maxX = Math.round(u.valToPos(u.scales[scaleX].max!, scaleX, true));
+    stroke.moveTo(firstXPos, prevYPos);
 
-  fill.lineTo(maxX, minY);
-  fill.lineTo(minX, minY);
+    for (let i = idx0 + 1; i <= idx1; i++) {
+      let yVal1 = ydata[i];
 
-  return {
-    stroke,
-    fill,
+      let x1 = Math.round(u.valToPos(xdata[i], scaleX, true));
+
+      if (yVal1 == null) {
+        //@ts-ignore
+        if (series.isGap(u, seriesIdx, i)) {
+          extendGap(gaps, prevXPos, x1);
+          inGap = true;
+        }
+
+        continue;
+      }
+
+      let y1 = Math.round(u.valToPos(yVal1, scaleY, true));
+
+      if (inGap) {
+        extendGap(gaps, prevXPos, x1);
+
+        // don't clip vertical extenders
+        if (prevYPos !== y1) {
+          let lastGap = gaps[gaps.length - 1];
+          lastGap[0] += halfStroke;
+          lastGap[1] -= halfStroke;
+        }
+
+        inGap = false;
+      }
+
+      if (after) {
+        stroke.lineTo(x1, prevYPos);
+      } else {
+        stroke.lineTo(prevXPos, y1);
+      }
+
+      stroke.lineTo(x1, y1);
+
+      prevYPos = y1;
+      prevXPos = x1;
+    }
+
+    const fill = new Path2D(stroke);
+
+    //@ts-ignore
+    let fillTo = series.fillTo(u, seriesIdx, series.min, series.max);
+
+    let minY = Math.round(u.valToPos(fillTo, scaleY, true));
+
+    fill.lineTo(prevXPos, minY);
+    fill.lineTo(firstXPos, minY);
+
+    let clip = !series.spanGaps ? buildClip(gaps) : null;
+
+    return {
+      stroke,
+      fill,
+      clip,
+    };
   };
-};
+}
 
 // adapted from https://gist.github.com/nicholaswmin/c2661eb11cad5671d816 (MIT)
 /**
@@ -217,26 +292,63 @@ function catmullRomFitting(xCoords: number[], yCoords: number[], alpha: number) 
   return path;
 }
 
-export const smoothBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
+export const smoothBuilder: Series.PathBuilder = (
+  u: uPlot,
+  seriesIdx: number,
+  idx0: number,
+  idx1: number,
+  extendGap: Series.ExtendGap,
+  buildClip: Series.BuildClip
+) => {
   const series = u.series[seriesIdx];
   const xdata = u.data[0];
   const ydata = u.data[seriesIdx];
   const scaleX = u.series[0].scale as string;
   const scaleY = series.scale as string;
 
-  const alpha = 0.5;
+  // find first non-null dataPt
+  while (ydata[idx0] == null) {
+    idx0++;
+  }
+
+  // find last-null dataPt
+  while (ydata[idx1] == null) {
+    idx1--;
+  }
+
+  let gaps: Series.Gaps = [];
+  let inGap = false;
+  let firstXPos = Math.round(u.valToPos(xdata[idx0], scaleX, true));
+  let prevXPos = firstXPos;
 
   let xCoords = [];
   let yCoords = [];
 
   for (let i = idx0; i <= idx1; i++) {
-    if (ydata[i] != null) {
-      xCoords.push(u.valToPos(xdata[i], scaleX, true));
+    let yVal = ydata[i];
+    let xVal = xdata[i];
+    let xPos = u.valToPos(xVal, scaleX, true);
+
+    if (yVal == null) {
+      //@ts-ignore
+      if (series.isGap(u, seriesIdx, i)) {
+        extendGap(gaps, prevXPos + 1, xPos);
+        inGap = true;
+      }
+
+      continue;
+    } else {
+      if (inGap) {
+        extendGap(gaps, prevXPos + 1, xPos + 1);
+        inGap = false;
+      }
+
+      xCoords.push((prevXPos = xPos));
       yCoords.push(u.valToPos(ydata[i]!, scaleY, true));
     }
   }
 
-  const stroke = catmullRomFitting(xCoords, yCoords, alpha);
+  const stroke = catmullRomFitting(xCoords, yCoords, 0.5);
 
   const fill = new Path2D(stroke);
 
@@ -244,14 +356,15 @@ export const smoothBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, i
   let fillTo = series.fillTo(u, seriesIdx, series.min, series.max);
 
   let minY = Math.round(u.valToPos(fillTo, scaleY, true));
-  let minX = Math.round(u.valToPos(u.scales[scaleX].min!, scaleX, true));
-  let maxX = Math.round(u.valToPos(u.scales[scaleX].max!, scaleX, true));
 
-  fill.lineTo(maxX, minY);
-  fill.lineTo(minX, minY);
+  fill.lineTo(prevXPos, minY);
+  fill.lineTo(firstXPos, minY);
+
+  let clip = !series.spanGaps ? buildClip(gaps) : null;
 
   return {
     stroke,
     fill,
+    clip,
   };
 };

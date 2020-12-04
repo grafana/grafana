@@ -35,12 +35,10 @@ def release_npm_packages_step(edition, ver_mode):
     if edition == 'enterprise':
         return None
 
-    commands = [
-        './node_modules/.bin/lerna bootstrap',
-        'echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc',
-    ]
     if ver_mode == 'release':
-        commands.append('./scripts/build/release-packages.sh ${DRONE_TAG}')
+        commands = ['./scripts/build/release-packages.sh ${DRONE_TAG}']
+    else:
+        commands = []
 
     return {
         'name': 'release-npm-packages',
