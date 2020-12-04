@@ -146,7 +146,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		if isDefault, _ := dsM["isDefault"].(bool); isDefault {
 			defaultDS = n
 		}
-		delete(dsM, "isDefault")
 
 		meta := dsM["meta"].(*plugins.DataSourcePlugin)
 		if meta.Preload {
