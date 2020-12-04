@@ -31,7 +31,14 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     } else {
       lineConfig.stroke = lineColor;
       lineConfig.width = lineWidth;
-      lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
+      lineConfig.paths = (
+        self: uPlot,
+        seriesIdx: number,
+        idx0: number,
+        idx1: number,
+        extendGap: Series.ExtendGap,
+        buildClip: Series.BuildClip
+      ) => {
         let pathsBuilder = self.paths;
 
         if (mode === GraphMode.Bars) {
@@ -44,7 +51,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
           }
         }
 
-        return pathsBuilder(self, seriesIdx, idx0, idx1);
+        return pathsBuilder(self, seriesIdx, idx0, idx1, extendGap, buildClip);
       };
     }
 

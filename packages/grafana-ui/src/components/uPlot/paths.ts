@@ -1,6 +1,13 @@
 import uPlot, { Series } from 'uplot';
 
-export const barsBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
+export const barsBuilder: Series.PathBuilder = (
+  u: uPlot,
+  seriesIdx: number,
+  idx0: number,
+  idx1: number,
+  extendGap: Series.ExtendGap,
+  buildClip: Series.BuildClip
+) => {
   const series = u.series[seriesIdx];
   const xdata = u.data[0];
   const ydata = u.data[seriesIdx];
@@ -53,7 +60,14 @@ export const barsBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, idx
   };
 };
 
-export const staircaseBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
+export const staircaseBuilder: Series.PathBuilder = (
+  u: uPlot,
+  seriesIdx: number,
+  idx0: number,
+  idx1: number,
+  extendGap: Series.ExtendGap,
+  buildClip: Series.BuildClip
+) => {
   const series = u.series[seriesIdx];
   const xdata = u.data[0];
   const ydata = u.data[seriesIdx];
@@ -72,6 +86,8 @@ export const staircaseBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number
     idx1--;
   }
 
+  let gaps: Series.Gaps = [];
+  let inGap = false;
   let prevYPos = Math.round(u.valToPos(ydata[idx0]!, scaleY, true));
   let firstXPos = Math.round(u.valToPos(xdata[idx0], scaleX, true));
   let prevXPos = firstXPos;
@@ -81,16 +97,23 @@ export const staircaseBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number
   for (let i = idx0 + 1; i <= idx1; i++) {
     let yVal1 = ydata[i];
 
+    let x1 = Math.round(u.valToPos(xdata[i], scaleX, true));
+
     if (yVal1 == null) {
       //@ts-ignore
       if (series.isGap(u, seriesIdx, i)) {
-        // TODO: build up gaps array here
+        extendGap(gaps, prevXPos + 1, x1);
+        inGap = true;
       }
 
       continue;
     }
 
-    let x1 = Math.round(u.valToPos(xdata[i], scaleX, true));
+    if (inGap) {
+      extendGap(gaps, prevXPos + 1, x1 + 1);
+      inGap = false;
+    }
+
     let y1 = Math.round(u.valToPos(yVal1, scaleY, true));
 
     stroke.lineTo(x1, prevYPos);
@@ -110,9 +133,12 @@ export const staircaseBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number
   fill.lineTo(prevXPos, minY);
   fill.lineTo(firstXPos, minY);
 
+  let clip = !series.spanGaps ? buildClip(gaps) : null;
+
   return {
     stroke,
     fill,
+    clip,
   };
 };
 
@@ -238,7 +264,14 @@ function catmullRomFitting(xCoords: number[], yCoords: number[], alpha: number) 
   return path;
 }
 
-export const smoothBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
+export const smoothBuilder: Series.PathBuilder = (
+  u: uPlot,
+  seriesIdx: number,
+  idx0: number,
+  idx1: number,
+  extendGap: Series.ExtendGap,
+  buildClip: Series.BuildClip
+) => {
   const series = u.series[seriesIdx];
   const xdata = u.data[0];
   const ydata = u.data[seriesIdx];
@@ -255,6 +288,8 @@ export const smoothBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, i
     idx1--;
   }
 
+  let gaps: Series.Gaps = [];
+  let inGap = false;
   let firstXPos = Math.round(u.valToPos(xdata[idx0], scaleX, true));
   let prevXPos = firstXPos;
 
@@ -262,8 +297,25 @@ export const smoothBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, i
   let yCoords = [];
 
   for (let i = idx0; i <= idx1; i++) {
-    if (ydata[i] != null) {
-      xCoords.push((prevXPos = u.valToPos(xdata[i], scaleX, true)));
+    let yVal = ydata[i];
+    let xVal = xdata[i];
+    let xPos = u.valToPos(xVal, scaleX, true);
+
+    if (yVal == null) {
+      //@ts-ignore
+      if (series.isGap(u, seriesIdx, i)) {
+        extendGap(gaps, prevXPos + 1, xPos);
+        inGap = true;
+      }
+
+      continue;
+    } else {
+      if (inGap) {
+        extendGap(gaps, prevXPos + 1, xPos + 1);
+        inGap = false;
+      }
+
+      xCoords.push((prevXPos = xPos));
       yCoords.push(u.valToPos(ydata[i]!, scaleY, true));
     }
   }
@@ -280,8 +332,11 @@ export const smoothBuilder: Series.PathBuilder = (u: uPlot, seriesIdx: number, i
   fill.lineTo(prevXPos, minY);
   fill.lineTo(firstXPos, minY);
 
+  let clip = !series.spanGaps ? buildClip(gaps) : null;
+
   return {
     stroke,
     fill,
+    clip,
   };
 };
