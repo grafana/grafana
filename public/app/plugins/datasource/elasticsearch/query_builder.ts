@@ -1,5 +1,17 @@
-import * as queryDef from './query_def';
-import { ElasticsearchAggregation } from './types';
+import {
+  Filters,
+  Histogram,
+  DateHistogram,
+  Terms,
+} from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+import {
+  isMetricAggregationWithField,
+  isMetricAggregationWithSettings,
+  isPipelineAggregation,
+  isPipelineAggregationWithMultipleBucketPaths,
+} from './components/QueryEditor/MetricAggregationsEditor/aggregations';
+import { defaultBucketAgg, defaultMetricAgg, findMetricById } from './query_def';
+import { ElasticsearchQuery } from './types';
 
 export class ElasticQueryBuilder {
   timeField: string;
@@ -21,15 +33,18 @@ export class ElasticQueryBuilder {
     return filter;
   }
 
-  buildTermsAgg(aggDef: ElasticsearchAggregation, queryNode: { terms?: any; aggs?: any }, target: { metrics: any[] }) {
-    let metricRef, metric, y;
+  buildTermsAgg(aggDef: Terms, queryNode: { terms?: any; aggs?: any }, target: ElasticsearchQuery) {
+    let metricRef;
     queryNode.terms = { field: aggDef.field };
 
     if (!aggDef.settings) {
       return queryNode;
     }
 
-    queryNode.terms.size = parseInt(aggDef.settings.size, 10) === 0 ? 500 : parseInt(aggDef.settings.size, 10);
+    // TODO: This default should be somewhere else together with the one used in the UI
+    const size = aggDef.settings?.size ? parseInt(aggDef.settings.size, 10) : 500;
+    queryNode.terms.size = size === 0 ? 500 : size;
+
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
       if (aggDef.settings.orderBy === '_term' && this.esVersion >= 60) {
@@ -41,12 +56,13 @@ export class ElasticQueryBuilder {
       // if metric ref, look it up and add it to this agg level
       metricRef = parseInt(aggDef.settings.orderBy, 10);
       if (!isNaN(metricRef)) {
-        for (y = 0; y < target.metrics.length; y++) {
-          metric = target.metrics[y];
+        for (let metric of target.metrics || []) {
           if (metric.id === aggDef.settings.orderBy) {
             queryNode.aggs = {};
             queryNode.aggs[metric.id] = {};
-            queryNode.aggs[metric.id][metric.type] = { field: metric.field };
+            if (isMetricAggregationWithField(metric)) {
+              queryNode.aggs[metric.id][metric.type] = { field: metric.field };
+            }
             break;
           }
         }
@@ -68,7 +84,7 @@ export class ElasticQueryBuilder {
     return queryNode;
   }
 
-  getDateHistogramAgg(aggDef: ElasticsearchAggregation) {
+  getDateHistogramAgg(aggDef: DateHistogram) {
     const esAgg: any = {};
     const settings = aggDef.settings || {};
     esAgg.interval = settings.interval;
@@ -85,33 +101,24 @@ export class ElasticQueryBuilder {
       esAgg.interval = '$__interval';
     }
 
-    if (settings.missing) {
-      esAgg.missing = settings.missing;
-    }
-
     return esAgg;
   }
 
-  getHistogramAgg(aggDef: ElasticsearchAggregation) {
+  getHistogramAgg(aggDef: Histogram) {
     const esAgg: any = {};
     const settings = aggDef.settings || {};
     esAgg.interval = settings.interval;
     esAgg.field = aggDef.field;
     esAgg.min_doc_count = settings.min_doc_count || 0;
 
-    if (settings.missing) {
-      esAgg.missing = settings.missing;
-    }
     return esAgg;
   }
 
-  getFiltersAgg(aggDef: ElasticsearchAggregation) {
-    const filterObj: any = {};
-    for (let i = 0; i < aggDef.settings.filters.length; i++) {
-      const query = aggDef.settings.filters[i].query;
-      let label = aggDef.settings.filters[i].label;
-      label = label === '' || label === undefined ? query : label;
-      filterObj[label] = {
+  getFiltersAgg(aggDef: Filters) {
+    const filterObj: Record<string, { query_string: { query: string; analyze_wildcard: boolean } }> = {};
+
+    for (let { query, label } of aggDef.settings?.filters || []) {
+      filterObj[label || query] = {
         query_string: {
           query: query,
           analyze_wildcard: true,
@@ -183,10 +190,10 @@ export class ElasticQueryBuilder {
     }
   }
 
-  build(target: any, adhocFilters?: any, queryString?: string) {
+  build(target: ElasticsearchQuery, adhocFilters?: any, queryString?: string) {
     // make sure query has defaults;
-    target.metrics = target.metrics || [queryDef.defaultMetricAgg()];
-    target.bucketAggs = target.bucketAggs || [queryDef.defaultBucketAgg()];
+    target.metrics = target.metrics || [defaultMetricAgg()];
+    target.bucketAggs = target.bucketAggs || [defaultBucketAgg()];
     target.timeField = this.timeField;
 
     let i, j, pv, nestedAggs, metric;
@@ -224,14 +231,17 @@ export class ElasticQueryBuilder {
      */
     if (target.metrics?.[0]?.type === 'raw_document' || target.metrics?.[0]?.type === 'raw_data') {
       metric = target.metrics[0];
-      const size = (metric.settings && metric.settings.size !== 0 && metric.settings.size) || 500;
-      return this.documentQuery(query, size);
+
+      // TODO: This default should be somewhere else together with the one used in the UI
+      const size = metric.settings?.size ? parseInt(metric.settings.size, 10) : 500;
+
+      return this.documentQuery(query, size || 500);
     }
 
     nestedAggs = query;
 
     for (i = 0; i < target.bucketAggs.length; i++) {
-      const aggDef: any = target.bucketAggs[i];
+      const aggDef = target.bucketAggs[i];
       const esAgg: any = {};
 
       switch (aggDef.type) {
@@ -254,7 +264,7 @@ export class ElasticQueryBuilder {
         case 'geohash_grid': {
           esAgg['geohash_grid'] = {
             field: aggDef.field,
-            precision: aggDef.settings.precision,
+            precision: aggDef.settings?.precision,
           };
           break;
         }
@@ -276,8 +286,8 @@ export class ElasticQueryBuilder {
       const aggField: any = {};
       let metricAgg: any = null;
 
-      if (queryDef.isPipelineAgg(metric.type)) {
-        if (queryDef.isPipelineAggWithMultipleBucketPaths(metric.type)) {
+      if (isPipelineAggregation(metric)) {
+        if (isPipelineAggregationWithMultipleBucketPaths(metric)) {
           if (metric.pipelineVariables) {
             metricAgg = {
               buckets_path: {},
@@ -287,7 +297,7 @@ export class ElasticQueryBuilder {
               pv = metric.pipelineVariables[j];
 
               if (pv.name && pv.pipelineAgg && /^\d*$/.test(pv.pipelineAgg)) {
-                const appliedAgg = queryDef.findMetricById(target.metrics, pv.pipelineAgg);
+                const appliedAgg = findMetricById(target.metrics, pv.pipelineAgg);
                 if (appliedAgg) {
                   if (appliedAgg.type === 'count') {
                     metricAgg.buckets_path[pv.name] = '_count';
@@ -301,28 +311,27 @@ export class ElasticQueryBuilder {
             continue;
           }
         } else {
-          if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
-            const appliedAgg = queryDef.findMetricById(target.metrics, metric.pipelineAgg);
+          if (metric.field && /^\d*$/.test(metric.field)) {
+            const appliedAgg = findMetricById(target.metrics, metric.field);
             if (appliedAgg) {
               if (appliedAgg.type === 'count') {
                 metricAgg = { buckets_path: '_count' };
               } else {
-                metricAgg = { buckets_path: metric.pipelineAgg };
+                metricAgg = { buckets_path: metric.field };
               }
             }
           } else {
             continue;
           }
         }
-      } else {
+      } else if (isMetricAggregationWithField(metric)) {
         metricAgg = { field: metric.field };
       }
 
-      for (const prop in metric.settings) {
-        if (metric.settings.hasOwnProperty(prop) && metric.settings[prop] !== null) {
-          metricAgg[prop] = metric.settings[prop];
-        }
-      }
+      metricAgg = {
+        ...metricAgg,
+        ...(isMetricAggregationWithSettings(metric) && metric.settings),
+      };
 
       aggField[metric.type] = metricAgg;
       nestedAggs.aggs[metric.id] = aggField;
@@ -391,7 +400,7 @@ export class ElasticQueryBuilder {
     return query;
   }
 
-  getLogsQuery(target: any, adhocFilters?: any, querystring?: string) {
+  getLogsQuery(target: ElasticsearchQuery, adhocFilters?: any, querystring?: string) {
     let query: any = {
       size: 0,
       query: {

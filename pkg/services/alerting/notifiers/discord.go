@@ -159,6 +159,9 @@ func (dn *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 }
 
 func (dn *DiscordNotifier) embedImage(cmd *models.SendWebhookSync, imagePath string, existingJSONBody []byte) error {
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `imagePath` comes
+	// from the alert `evalContext` that generates the images.
 	f, err := os.Open(imagePath)
 	if err != nil {
 		if os.IsNotExist(err) {

@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import { isEqual } from 'lodash';
 import { DataLink, LoadingState, PanelData, PanelMenuItem, QueryResultMetaNotice, ScopedVars } from '@grafana/data';
 import { AngularComponent, config, getTemplateSrv } from '@grafana/runtime';
 import { ClickOutsideWrapper, Icon, IconName, Tooltip, stylesFactory } from '@grafana/ui';
@@ -52,8 +51,8 @@ export class PanelHeader extends PureComponent<Props, State> {
 
   eventToClickCoordinates = (event: React.MouseEvent<HTMLDivElement>) => {
     return {
-      x: event.clientX,
-      y: event.clientY,
+      x: Math.floor(event.clientX),
+      y: Math.floor(event.clientY),
     };
   };
 
@@ -62,7 +61,7 @@ export class PanelHeader extends PureComponent<Props, State> {
   };
 
   isClick = (clickCoordinates: ClickCoordinates) => {
-    return isEqual(clickCoordinates, this.clickCoordinates);
+    return clickCoordinates.x === this.clickCoordinates.x && clickCoordinates.y === this.clickCoordinates.y;
   };
 
   onMenuToggle = (event: React.MouseEvent<HTMLDivElement>) => {

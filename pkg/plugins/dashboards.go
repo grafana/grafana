@@ -95,6 +95,10 @@ func loadPluginDashboard(pluginId, path string) (*models.Dashboard, error) {
 		return nil, PluginNotFoundError{pluginId}
 	}
 
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `plugin.PluginDir` is based
+	// on plugin folder structure on disk and not user input. `path` comes from the
+	// `plugin.json` configuration file for the loaded plugin
 	dashboardFilePath := filepath.Join(plugin.PluginDir, path)
 	reader, err := os.Open(dashboardFilePath)
 	if err != nil {
