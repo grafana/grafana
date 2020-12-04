@@ -10,6 +10,7 @@ export default {
   argTypes: {
     children: { control: { disable: true } },
     horizontal: { control: { disable: true } },
+    className: { control: { disable: true } },
   },
   parameters: {
     docs: {
@@ -37,7 +38,7 @@ Simple.args = {
   disabled: false,
   invalid: false,
   loading: false,
-  error: '',
+  error: 'Not valid input',
 };
 
 export const HorizontalLayout: Story<FieldProps> = args => {
@@ -58,5 +59,5 @@ HorizontalLayout.args = {
   disabled: false,
   invalid: false,
   loading: false,
-  error: '',
+  error: 'Not valid input',
 };
