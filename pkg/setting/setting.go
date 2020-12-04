@@ -143,7 +143,6 @@ var (
 	AuthProxyEnabled        bool
 	AuthProxyHeaderProperty string
 	AuthProxySyncTtl        int
-	AuthProxyHeaders        map[string]string
 
 	// Basic Auth
 	BasicAuthEnabled bool
@@ -1117,17 +1116,15 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.AuthProxyWhitelist = valueAsString(authProxy, "whitelist", "")
 
-	AuthProxyHeaders = make(map[string]string)
+	cfg.AuthProxyHeaders = make(map[string]string)
 	headers := valueAsString(authProxy, "headers", "")
 
 	for _, propertyAndHeader := range util.SplitString(headers) {
 		split := strings.SplitN(propertyAndHeader, ":", 2)
 		if len(split) == 2 {
-			AuthProxyHeaders[split[0]] = split[1]
+			cfg.AuthProxyHeaders[split[0]] = split[1]
 		}
 	}
-
-	cfg.AuthProxyHeaders = AuthProxyHeaders
 
 	return nil
 }
