@@ -5,6 +5,7 @@ import { addStandardDataReduceOptions } from '../stat/types';
 import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './GaugeMigrations';
 
 export const plugin = new PanelPlugin<GaugeOptions>(GaugePanel)
+  .useFieldConfig()
   .setPanelOptions(builder => {
     addStandardDataReduceOptions(builder, false);
     builder
