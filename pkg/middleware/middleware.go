@@ -54,7 +54,7 @@ func addSecurityHeaders(w macaron.ResponseWriter, cfg *setting.Cfg) {
 		w.Header().Add("Strict-Transport-Security", strings.Join(strictHeaderValues, "; "))
 	}
 
-	if setting.ContentTypeProtectionHeader {
+	if cfg.ContentTypeProtectionHeader {
 		w.Header().Add("X-Content-Type-Options", "nosniff")
 	}
 
