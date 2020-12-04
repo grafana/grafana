@@ -1,7 +1,46 @@
 import { PanelModel } from '@grafana/data';
 import { graphPanelChangedHandler } from './migrations';
 
+describe('Graph Migrations', () => {
+  it('simple bars', () => {
+    const old: any = {
+      angular: {
+        bars: true,
+      },
+    };
+    const panel = {} as PanelModel;
+    panel.options = graphPanelChangedHandler(panel, 'graph', old);
+    expect(panel).toMatchSnapshot();
+  });
+
+  it('stairscase', () => {
+    const old: any = {
+      angular: stairscase,
+    };
+    const panel = {} as PanelModel;
+    panel.options = graphPanelChangedHandler(panel, 'graph', old);
+    expect(panel).toMatchSnapshot();
+  });
+
+  it('twoYAxis', () => {
+    const old: any = {
+      angular: twoYAxis,
+    };
+    const panel = {} as PanelModel;
+    panel.options = graphPanelChangedHandler(panel, 'graph', old);
+    expect(panel).toMatchSnapshot();
+  });
+});
+
 const stairscase = {
+  fieldConfig: {
+    defaults: {
+      custom: {},
+      unit: 'areaF2',
+      displayName: 'DISPLAY NAME',
+    },
+    overrides: [],
+  },
   aliasColors: {},
   dashLength: 10,
   fill: 5,
@@ -78,79 +117,87 @@ const stairscase = {
   datasource: null,
 };
 
-describe('Graph Migrations', () => {
-  it('simple bars', () => {
-    const old: any = {
-      angular: {
-        bars: true,
-      },
-    };
-    const panel = {} as PanelModel;
-    const options = graphPanelChangedHandler(panel, 'graph', old);
-    expect(panel).toMatchInlineSnapshot(`
-      Object {
-        "fieldConfig": Object {
-          "defaults": Object {
-            "custom": Object {
-              "lineWidth": undefined,
-              "mode": "bars",
-              "pointSize": undefined,
-            },
-            "decimals": undefined,
-            "nullValueMode": undefined,
-          },
-          "overrides": Array [],
-        },
-      }
-    `);
-    expect(options).toMatchInlineSnapshot(`
-      Object {
-        "graph": Object {},
-        "legend": Object {
-          "displayMode": "list",
-          "placement": "bottom",
-        },
-        "tooltipOptions": Object {
-          "mode": "single",
-        },
-      }
-    `);
-  });
-
-  it('stairscase', () => {
-    const old: any = {
-      angular: stairscase,
-    };
-    const panel = {} as PanelModel;
-    const options = graphPanelChangedHandler(panel, 'graph', old);
-    expect(panel).toMatchInlineSnapshot(`
-      Object {
-        "fieldConfig": Object {
-          "defaults": Object {
-            "custom": Object {
-              "lineInterpolation": "staircase",
-              "lineWidth": undefined,
-              "mode": "line",
-              "pointSize": 2,
-            },
-            "decimals": 1,
-            "nullValueMode": "null",
-          },
-          "overrides": Array [],
-        },
-      }
-    `);
-    expect(options).toMatchInlineSnapshot(`
-      Object {
-        "graph": Object {},
-        "legend": Object {
-          "displayMode": "list",
-          "placement": "bottom",
-        },
-        "tooltipOptions": Object {
-          "mode": "single",
-        },
-      }
-    `);
-  });
-});
+const twoYAxis = {
+  yaxes: [
+    {
+      label: 'Y111',
+      show: true,
+      logBase: 10,
+      min: '0',
+      max: '1000',
+      format: 'areaMI2',
+      $$hashKey: 'object:19',
+      decimals: 3,
+    },
+    {
+      label: 'Y222',
+      show: true,
+      logBase: 1,
+      min: '-10',
+      max: '25',
+      format: 'degree',
+      $$hashKey: 'object:20',
+      decimals: 2,
+    },
+  ],
+  xaxis: {
+    show: true,
+    mode: 'time',
+    name: null,
+    values: [],
+    buckets: null,
+  },
+  yaxis: {
+    align: false,
+    alignLevel: null,
+  },
+  lines: true,
+  fill: 1,
+  linewidth: 1,
+  dashLength: 10,
+  spaceLength: 10,
+  pointradius: 2,
+  legend: {
+    show: true,
+    values: false,
+    min: false,
+    max: false,
+    current: false,
+    total: false,
+    avg: false,
+  },
+  nullPointMode: 'null',
+  tooltip: {
+    value_type: 'individual',
+    shared: true,
+    sort: 0,
+  },
+  aliasColors: {},
+  seriesOverrides: [
+    {
+      alias: 'B-series',
+      yaxis: 2,
+    },
+  ],
+  thresholds: [],
+  timeRegions: [],
+  targets: [
+    {
+      refId: 'A',
+    },
+    {
+      refId: 'B',
+    },
+  ],
+  fillGradient: 0,
+  dashes: false,
+  hiddenSeries: false,
+  points: false,
+  bars: false,
+  stack: false,
+  percentage: false,
+  steppedLine: false,
+  timeFrom: null,
+  timeShift: null,
+  datasource: null,
+};

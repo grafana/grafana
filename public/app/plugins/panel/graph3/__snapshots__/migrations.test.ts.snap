@@ -1,0 +1,80 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Graph Migrations simple bars 1`] = `
+Object {
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "drawStyle": "bars",
+        "spanNulls": false,
+      },
+    },
+    "overrides": Array [],
+  },
+  "options": Object {
+    "graph": Object {},
+    "legend": Object {
+      "displayMode": "list",
+      "placement": "bottom",
+    },
+    "tooltipOptions": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations stairscase 1`] = `
+Object {
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "drawStyle": "line",
+        "fillOpacity": 5,
+        "lineInterpolation": "stepAfter",
+        "pointSize": 2,
+        "spanNulls": true,
+      },
+      "nullValueMode": "null",
+    },
+    "overrides": Array [],
+  },
+  "options": Object {
+    "graph": Object {},
+    "legend": Object {
+      "displayMode": "list",
+      "placement": "bottom",
+    },
+    "tooltipOptions": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations twoYAxis 1`] = `
+Object {
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "drawStyle": "line",
+        "fillOpacity": 1,
+        "pointSize": 2,
+        "spanNulls": true,
+      },
+      "nullValueMode": "null",
+    },
+    "overrides": Array [],
+  },
+  "options": Object {
+    "graph": Object {},
+    "legend": Object {
+      "displayMode": "list",
+      "placement": "bottom",
+    },
+    "tooltipOptions": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
