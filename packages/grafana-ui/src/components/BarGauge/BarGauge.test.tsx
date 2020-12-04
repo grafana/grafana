@@ -165,7 +165,7 @@ describe('BarGauge', () => {
         orientation: VizOrientation.Horizontal,
       });
       const styles = getTitleStyles(props);
-      expect(styles.title.width).toBe('17px');
+      expect(styles.title.width).toBe('18px');
 
       const props2 = getProps({
         height: 30,

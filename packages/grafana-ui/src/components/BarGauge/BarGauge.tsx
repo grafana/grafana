@@ -280,10 +280,11 @@ function calculateTitleDimensions(props: Props): TitleDimensions {
   }
 
   if (isVertical(orientation)) {
+    const fontSize = text?.titleSize ?? 14;
     return {
-      fontSize: text?.titleSize ?? 14,
+      fontSize: fontSize,
       width: width,
-      height: 14 * TITLE_LINE_HEIGHT,
+      height: fontSize * TITLE_LINE_HEIGHT,
       placement: 'below',
     };
   }
@@ -381,7 +382,7 @@ interface BarAndValueDimensions {
 }
 
 function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
-  const { height, width, orientation } = props;
+  const { height, width, orientation, text } = props;
   const titleDim = calculateTitleDimensions(props);
 
   let maxBarHeight = 0;
@@ -392,14 +393,23 @@ function calculateBarAndValueDimensions(props: Props): BarAndValueDimensions {
   let wrapperHeight = 0;
 
   if (isVertical(orientation)) {
-    valueHeight = Math.min(Math.max(height * 0.1, MIN_VALUE_HEIGHT), MAX_VALUE_HEIGHT);
+    if (text?.valueSize) {
+      valueHeight = text.valueSize * VALUE_LINE_HEIGHT;
+    } else {
+      valueHeight = Math.min(Math.max(height * 0.1, MIN_VALUE_HEIGHT), MAX_VALUE_HEIGHT);
+    }
     valueWidth = width;
     maxBarHeight = height - (titleDim.height + valueHeight);
     maxBarWidth = width;
     wrapperWidth = width;
     wrapperHeight = height - titleDim.height;
   } else {
-    valueHeight = height - titleDim.height;
+    if (text?.valueSize) {
+      valueHeight = text.valueSize * VALUE_LINE_HEIGHT;
+    } else {
+      valueHeight = height - titleDim.height;
+    }
+
     valueWidth = Math.max(Math.min(width * 0.2, MAX_VALUE_WIDTH), MIN_VALUE_WIDTH);
     maxBarHeight = height - titleDim.height;
     maxBarWidth = width - valueWidth - titleDim.width;
