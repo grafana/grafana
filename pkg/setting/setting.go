@@ -125,7 +125,7 @@ var (
 	OAuthAutoLogin          bool
 	ViewersCanEdit          bool
 
-	// Http auth
+	// HTTP auth
 	AdminUser        string
 	AdminPassword    string
 	LoginCookieName  string
