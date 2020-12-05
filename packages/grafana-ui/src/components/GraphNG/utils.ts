@@ -80,7 +80,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       }
       alignedData.push(values);
 
-      if (field.config.custom.spanNulls) {
+      if (field.config.custom?.spanNulls) {
         spanNulls = true;
       }
 
