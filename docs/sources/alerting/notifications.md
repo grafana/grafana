@@ -17,9 +17,9 @@ This is done from the Notification channels page.
 
 ## Add a notification channel
 
-1. In the Grafana side bar, hover your cursor over the **Alerting** (bell) icon and then click **Notification channels**.
-1. Click **Add channel**.
-1. Fill out the fields or select options described below.
+Step 1. In the Grafana side bar, hover your cursor over the **Alerting** (bell) icon and then click **Notification channels**.
+Step 2. Click **Add channel**.
+Step 3. Fill out the fields or select options described below.
 
 ## New notification channel fields
 
@@ -170,17 +170,17 @@ Example json body:
 
 In DingTalk PC Client:
 
-1. Click "more" icon on upper right of the panel.
+Step 1. Click "more" icon on upper right of the panel.
 
-1. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
+Step 2. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
 
-1. In the  "Robot Manage" panel, select "customized: customized robot with Webhook".
+Step 3. In the  "Robot Manage" panel, select "customized: customized robot with Webhook".
 
-1. In the next new panel named "robot detail", click "Add" button.
+Step 4. In the next new panel named "robot detail", click "Add" button.
 
-1. In "Add Robot" panel, input a nickname for the robot and select a "message group" which the robot will join in. click "next".
+Step 5. In "Add Robot" panel, input a nickname for the robot and select a "message group" which the robot will join in. click "next".
 
-1. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the Grafana DingTalk setting page and then click "finish".
+Step 6. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the Grafana DingTalk setting page and then click "finish".
 
 DingTalk supports the following "message type": `text`, `link` and `markdown`. Only the `link` message type is supported.
 
@@ -191,7 +191,7 @@ There are a couple of configuration options which need to be set up in Grafana U
 
 1. Kafka REST Proxy endpoint.
 
-1. Kafka Topic.
+2. Kafka Topic.
 
 Once these two properties are set, you can send the alerts to Kafka for further processing or throttling.
 
