@@ -130,6 +130,7 @@ describe('UPlotConfigBuilder', () => {
       pointColor: '#00ff00',
       lineColor: '#0000ff',
       lineWidth: 1,
+      spanNulls: false,
     });
 
     expect(builder.getConfig()).toMatchInlineSnapshot(`

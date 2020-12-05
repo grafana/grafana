@@ -79,7 +79,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     // Add the Y values
     for (const field of dims.y) {
       let values = field.values.toArray();
-      let spanNulls = field.config.custom.spanNulls;
+      let spanNulls = field.config.custom.spanNulls || false;
 
       if (field.config.nullValueMode === NullValueMode.AsZero) {
         values = values.map(v => (v === null ? 0 : v));
