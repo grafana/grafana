@@ -9,7 +9,7 @@ export enum AxisPlacement {
   Hidden = 'hidden',
 }
 
-export enum ShowPoints {
+export enum PointVisibility {
   Auto = 'auto', // will show points when the density is low or line is hidden
   Never = 'never',
   Always = 'always',
@@ -40,7 +40,7 @@ export interface AreaConfig {
 }
 
 export interface PointsConfig {
-  showPoints?: ShowPoints;
+  showPoints?: PointVisibility;
   pointSize?: number;
   pointColor?: string;
   pointSymbol?: string; // eventually dot,star, etc
@@ -73,10 +73,10 @@ export const graphFieldOptions = {
   ] as Array<SelectableValue<LineInterpolation>>,
 
   showPoints: [
-    { label: 'Auto', value: ShowPoints.Auto, description: 'Show points when the density is low' },
-    { label: 'Always', value: ShowPoints.Always },
-    { label: 'Never', value: ShowPoints.Never },
-  ] as Array<SelectableValue<ShowPoints>>,
+    { label: 'Auto', value: PointVisibility.Auto, description: 'Show points when the density is low' },
+    { label: 'Always', value: PointVisibility.Always },
+    { label: 'Never', value: PointVisibility.Never },
+  ] as Array<SelectableValue<PointVisibility>>,
 
   axisPlacement: [
     { label: 'Auto', value: AxisPlacement.Auto, description: 'First field on the left, everything else on the right' },

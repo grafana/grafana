@@ -2,7 +2,7 @@ import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/dat
 import { LegendDisplayMode } from '@grafana/ui';
 import {
   GraphFieldConfig,
-  ShowPoints,
+  PointVisibility,
   DrawStyle,
   AxisPlacement,
   graphFieldOptions,
@@ -80,7 +80,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             max: 10,
             step: 1,
           },
-          showIf: c => c.showPoints !== ShowPoints.Never,
+          showIf: c => c.showPoints !== PointVisibility.Never,
         })
         .addRadio({
           path: 'spanNulls',

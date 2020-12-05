@@ -1,6 +1,6 @@
 import tinycolor from 'tinycolor2';
 import uPlot, { Series } from 'uplot';
-import { DrawStyle, LineConfig, AreaConfig, PointsConfig, ShowPoints, LineInterpolation } from '../config';
+import { DrawStyle, LineConfig, AreaConfig, PointsConfig, PointVisibility, LineInterpolation } from '../config';
 import { barsBuilder, smoothBuilder, stepBeforeBuilder, stepAfterBuilder } from '../paths';
 import { PlotConfigBuilder } from '../types';
 
@@ -66,13 +66,13 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     };
 
     // we cannot set points.show property above (even to undefined) as that will clear uPlot's default auto behavior
-    if (showPoints === ShowPoints.Auto) {
+    if (showPoints === PointVisibility.Auto) {
       if (drawStyle === DrawStyle.Bars) {
         pointsConfig.points!.show = false;
       }
-    } else if (showPoints === ShowPoints.Never) {
+    } else if (showPoints === PointVisibility.Never) {
       pointsConfig.points!.show = false;
-    } else if (showPoints === ShowPoints.Always) {
+    } else if (showPoints === PointVisibility.Always) {
       pointsConfig.points!.show = true;
     }
 
