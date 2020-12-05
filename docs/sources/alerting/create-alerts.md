@@ -17,11 +17,11 @@ Currently only the graph panel supports alert rules.
 
 ## Add or edit an alert rule
 
-1. Navigate to the panel you want to add or edit an alert rule for, click the title, and then click **Edit**.
-1. On the Alert tab, click **Create Alert**. If an alert already exists for this panel, then you can just edit the fields on the Alert tab.
-1. Fill out the fields. Descriptions are listed below in [Alert rule fields](#alert-rule-fields).
-1. When you have finished writing your rule, click **Save** in the upper right corner to save alert rule and the dashboard.
-1. (Optional but recommended) Click **Test rule** to make sure the rule returns the results you expect.
+Step 1. Navigate to the panel you want to add or edit an alert rule for, click the title, and then click **Edit**.
+Step 2. On the Alert tab, click **Create Alert**. If an alert already exists for this panel, then you can just edit the fields on the Alert tab.
+Step 3. Fill out the fields. Descriptions are listed below in [Alert rule fields](#alert-rule-fields).
+Step 4. When you have finished writing your rule, click **Save** in the upper right corner to save alert rule and the dashboard.
+Step 5. (Optional but recommended) Click **Test rule** to make sure the rule returns the results you expect.
 
 ## Delete an alert
 
@@ -55,7 +55,7 @@ Below you can see an example timeline of an alert using the `For` setting. At ~1
 Currently the only condition type that exists is a `Query` condition that allows you to
 specify a query letter, time range and an aggregation function.
 
-#### Query condition example
+### Query condition example
 
 ```sql
 avg() OF query(A, 15m, now) IS BELOW 14
