@@ -1524,7 +1524,10 @@
       },
       {
         "allValue": null,
-        "current": {},
+        "current": {
+          "text": "us-east-2",
+          "value": "us-east-2"
+        },
         "datasource": "$datasource",
         "definition": "regions()",
         "hide": 0,
