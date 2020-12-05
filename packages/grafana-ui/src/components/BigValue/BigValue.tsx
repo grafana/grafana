@@ -1,6 +1,6 @@
 // Library
 import React, { PureComponent } from 'react';
-import { DisplayValue, GraphSeriesValue, DisplayValueAlignmentFactors } from '@grafana/data';
+import { DisplayValue, GraphSeriesValue, DisplayValueAlignmentFactors, TextDisplayOptions } from '@grafana/data';
 
 // Types
 import { Themeable } from '../../types';
@@ -64,6 +64,8 @@ export interface Props extends Themeable {
   justifyMode?: BigValueJustifyMode;
   /** Factors that should influence the positioning of the text  */
   alignmentFactors?: DisplayValueAlignmentFactors;
+  /** Explicit font size control */
+  text?: TextDisplayOptions;
   /** Specify which text should be visible in the BigValue */
   textMode?: BigValueTextMode;
 
