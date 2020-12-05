@@ -43,6 +43,7 @@ export function mapDimesions(match: XYFieldMatchers, frame: DataFrame, frames?: 
 export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): AlignedFrameWithGapTest | null {
   const valuesFromFrames: AlignedData[] = [];
   const sourceFields: Field[] = [];
+  let spanNulls = false;
 
   // Default to timeseries config
   if (!fields) {
@@ -79,6 +80,10 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       }
       alignedData.push(values);
 
+      if (field.config.custom.spanNulls) {
+        spanNulls = true;
+      }
+
       // This will cache an appropriate field name in the field state
       getFieldDisplayName(field, frame, frames);
       sourceFields.push(field);
@@ -92,10 +97,20 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
   }
 
   // do the actual alignment (outerJoin on the first arrays)
-  const { data: alignedData, isGap } = outerJoinValues(valuesFromFrames);
+  let { data: alignedData, isGap } = outerJoinValues(valuesFromFrames);
 
   if (alignedData!.length !== sourceFields.length) {
     throw new Error('outerJoinValues lost a field?');
+  }
+
+  // Wrap the gap function when span nulls exists
+  if (spanNulls) {
+    isGap = (u: uPlot, seriesIdx: number, dataIdx: number) => {
+      if (sourceFields[seriesIdx].config?.custom?.spanNulls) {
+        return false;
+      }
+      return isGap(u, seriesIdx, dataIdx);
+    };
   }
 
   // Replace the values from the outer-join field

@@ -21,5 +21,9 @@ func (i IoUtilImp) ReadDir(path string) ([]os.FileInfo, error) {
 }
 
 func (i IoUtilImp) ReadFile(filename string) ([]byte, error) {
+	// We can ignore the gosec G304 warning on this one, since the variable part of the file path stems
+	// from command line flag "pluginsDir". If the user shouldn't be reading from this directory, they shouldn't have
+	// the permission in the file system.
+	// nolint:gosec
 	return ioutil.ReadFile(filename)
 }

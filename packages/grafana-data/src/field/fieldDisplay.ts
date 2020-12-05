@@ -160,7 +160,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             });
 
             values.push({
-              name,
+              name: '',
               field: config,
               display: displayValue,
               view,
