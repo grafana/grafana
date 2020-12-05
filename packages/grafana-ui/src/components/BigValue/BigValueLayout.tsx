@@ -18,7 +18,7 @@ import { calculateFontSize } from '../../utils/measureText';
 import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
 import { getTextColorForBackground } from '../../utils';
 import { GraphNG } from '../GraphNG/GraphNG';
-import { AxisPlacement, GraphFieldConfig } from '../uPlot/config';
+import { AxisPlacement } from '../uPlot/config';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
