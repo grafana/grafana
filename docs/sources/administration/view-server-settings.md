@@ -13,8 +13,8 @@ If you are a Grafana server admin, then you can use the Settings tab to view the
 
 ## View server settings
 
-1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
-1. Hover your cursor over the **Server Admin** (shield) icon in the side menu and then click the **Settings** tab.
+Step 1. Log in to your Grafana server with an account that has the Grafana Admin flag set.
+Step 2. Hover your cursor over the **Server Admin** (shield) icon in the side menu and then click the **Settings** tab.
 
 ## Available settings
 

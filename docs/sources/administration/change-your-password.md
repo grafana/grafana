@@ -13,11 +13,11 @@ You can change your password in the Change Password tab.
 
 ## Change your password
 
-1. Hover your mouse over your user icon in the lower left corner of the screen.
-1. Click **Change Password**. Grafana opens the Change Password tab.
-1. Enter your **Old password** to authorize the change.
-1. Enter your **New password** and then **Confirm password**.
-1. Click **Change Password**.
+Step 1. Hover your mouse over your user icon in the lower left corner of the screen.
+Step 2. Click **Change Password**. Grafana opens the Change Password tab.
+Step 3. Enter your **Old password** to authorize the change.
+Step 4. Enter your **New password** and then **Confirm password**.
+Step 5. Click **Change Password**.
 
 ## Admin user management resources
 

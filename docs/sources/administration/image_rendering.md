@@ -79,21 +79,21 @@ docker-compose up
 
 The following example describes how to build and run the remote HTTP rendering service as a standalone Node.js application and configure Grafana appropriately.
 
-1. Clone the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) Git repository.
-1. Install dependencies and build:
+Step 1. Clone the [Grafana image renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer) Git repository.
+Step 2. Install dependencies and build:
 
     ```bash
     yarn install --pure-lockfile
     yarn run build
     ```
 
-1. Run the server:
+Step 3. Run the server:
 
     ```bash
     node build/app.js server --port=8081
     ```
 
-1. Update Grafana configuration:
+Step 4. Update Grafana configuration:
 
     ```
     [rendering]
@@ -101,7 +101,7 @@ The following example describes how to build and run the remote HTTP rendering s
     callback_url = http://localhost:3000/
     ```
 
-1. Restart Grafana.
+Step 5. Restart Grafana.
 
 ## PhantomJS
 
