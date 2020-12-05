@@ -10,7 +10,6 @@ import {
   IndexVector,
   DefaultTimeZone,
   DataFrame,
-  FieldConfig,
 } from '@grafana/data';
 import { calculateFontSize } from '../../utils/measureText';
 
