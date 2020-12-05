@@ -69,7 +69,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     // Add the first X axis
     if (!sourceFields.length) {
       sourceFields.push(dims.x[0]);
-      skipGapsFrame.push(false);
+      skipGapsFrame.push(true);
     }
 
     const alignedData: AlignedData = [
