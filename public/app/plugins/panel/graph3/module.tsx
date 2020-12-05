@@ -92,6 +92,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
               { label: 'Connected', value: true },
             ],
           },
+          showIf: c => c.drawStyle === DrawStyle.Line,
         })
         .addRadio({
           path: 'axisPlacement',
