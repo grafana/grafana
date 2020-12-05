@@ -83,7 +83,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
 
       if (field.config.nullValueMode === NullValueMode.AsZero) {
         values = values.map(v => (v === null ? 0 : v));
-        spanNulls = false;
+        spanNulls = true;
       }
 
       alignedData.push(values);
