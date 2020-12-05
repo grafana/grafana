@@ -6,6 +6,7 @@ Object {
     "defaults": Object {
       "custom": Object {
         "drawStyle": "bars",
+        "points": "never",
         "spanNulls": false,
       },
     },
@@ -31,9 +32,10 @@ Object {
       "custom": Object {
         "axisPlacement": "hidden",
         "drawStyle": "line",
-        "fillOpacity": 5,
+        "fillOpacity": 0.5,
         "lineInterpolation": "stepAfter",
         "pointSize": 2,
+        "points": "never",
         "spanNulls": true,
       },
       "displayName": "DISPLAY NAME",
@@ -63,8 +65,9 @@ Object {
         "axisLabel": "Y111",
         "axisPlacement": "auto",
         "drawStyle": "line",
-        "fillOpacity": 1,
+        "fillOpacity": 0.1,
         "pointSize": 2,
+        "points": "never",
         "spanNulls": true,
       },
       "decimals": 3,
@@ -73,7 +76,36 @@ Object {
       "nullValueMode": "null",
       "unit": "areaMI2",
     },
-    "overrides": Array [],
+    "overrides": Array [
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "B-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "unit",
+            "value": "degree",
+          },
+          Object {
+            "id": "decimals",
+            "value": 2,
+          },
+          Object {
+            "id": "min",
+            "value": -10,
+          },
+          Object {
+            "id": "max",
+            "value": 25,
+          },
+          Object {
+            "id": "custom.axisLabel",
+            "value": "Y222",
+          },
+        ],
+      },
+    ],
   },
   "options": Object {
     "graph": Object {},

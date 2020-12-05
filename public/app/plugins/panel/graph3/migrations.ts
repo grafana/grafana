@@ -1,6 +1,15 @@
-import { FieldConfig, FieldConfigSource, NullValueMode, PanelModel, fieldReducers } from '@grafana/data';
+import {
+  FieldConfig,
+  FieldConfigSource,
+  NullValueMode,
+  PanelModel,
+  fieldReducers,
+  ConfigOverrideRule,
+  FieldMatcherID,
+  DynamicConfigValue,
+} from '@grafana/data';
 import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
-import { AxisPlacement, DrawStyle, LineInterpolation } from '@grafana/ui/src/components/uPlot/config';
+import { AxisPlacement, DrawStyle, LineInterpolation, PointMode } from '@grafana/ui/src/components/uPlot/config';
 import { Options } from './types';
 import omitBy from 'lodash/omitBy';
 import isNil from 'lodash/isNil';
@@ -25,7 +34,7 @@ export const graphPanelChangedHandler = (
 };
 
 export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSource; options: Options } {
-  const overrides = angular.fieldConfig?.overrides ?? [];
+  const overrides: ConfigOverrideRule[] = angular.fieldConfig?.overrides ?? [];
   const yaxes = angular.yaxes ?? [];
   let y1 = getFieldConfigFromOldAxis(yaxes[0]);
   if (angular.fieldConfig?.defaults) {
@@ -34,13 +43,83 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
       ...y1, // Keep the y-axis unit and custom
     };
   }
-  //const y2 = getFieldConfigFromOldAxis(yaxes[1]);
+
+  // "seriesOverrides": [
+  //   {
+  //     "$$hashKey": "object:183",
+  //     "alias": "B-series",
+  //     "fill": 3,
+  //     "nullPointMode": "null as zero",
+  //     "lines": true,
+  //     "linewidth": 2
+  //   }
+  // ],
+  if (angular.seriesOverrides?.length) {
+    for (const seriesOverride of angular.seriesOverrides) {
+      if (!seriesOverride.alias) {
+        continue; // the matcher config
+      }
+      const rule: ConfigOverrideRule = {
+        matcher: {
+          id: FieldMatcherID.byName,
+          options: seriesOverride.alias,
+        },
+        properties: [],
+      };
+      for (const p of Object.keys(seriesOverride)) {
+        const v = seriesOverride[p];
+        switch (p) {
+          // Ignore
+          case 'alias':
+          case '$$hashKey':
+            break;
+          // Link to y axis settings
+          case 'yaxis':
+            if (2 === v) {
+              const y2 = getFieldConfigFromOldAxis(yaxes[1]);
+              fillY2DynamicValues(y1, y2, rule.properties);
+            }
+            break;
+          case 'fill':
+            rule.properties.push({
+              id: 'custom.fillOpacity',
+              value: v / 10.0, // was 0-10
+            });
+            break;
+          case 'lineWidth':
+            rule.properties.push({
+              id: 'custom.lineWidth',
+              value: v,
+            });
+            break;
+          case 'pointradius':
+            rule.properties.push({
+              id: 'custom.pointSize',
+              value: v,
+            });
+            break;
+          default:
+            console.log('Ignore override migration:', seriesOverride.alias, p, v);
+        }
+      }
+      if (rule.properties.length) {
+        overrides.push(rule);
+      }
+    }
+  }
 
   const graph = y1.custom ?? ({} as GraphFieldConfig);
   graph.drawStyle = angular.bars ? DrawStyle.Bars : angular.lines ? DrawStyle.Line : DrawStyle.Points;
+  if (angular.points) {
+    graph.points = PointMode.Always;
+  } else if (graph.drawStyle !== DrawStyle.Points) {
+    graph.points = PointMode.Never;
+  }
   graph.lineWidth = angular.lineWidth;
   graph.pointSize = angular.pointradius;
-  graph.fillOpacity = angular.fill;
+  if (isNumber(angular.fill)) {
+    graph.fillOpacity = angular.fill / 10; // fill is 0-10
+  }
   graph.spanNulls = angular.nullPointMode === NullValueMode.Null;
   if (angular.steppedLine) {
     graph.lineInterpolation = LineInterpolation.StepAfter;
@@ -103,6 +182,36 @@ function getFieldConfigFromOldAxis(obj: any): FieldConfig<GraphFieldConfig> {
     },
     isNil
   );
+}
+
+function fillY2DynamicValues(
+  y1: FieldConfig<GraphFieldConfig>,
+  y2: FieldConfig<GraphFieldConfig>,
+  props: DynamicConfigValue[]
+) {
+  // The standard properties
+  for (const key of Object.keys(y2)) {
+    const value = (y2 as any)[key];
+    if (key !== 'custom' && value !== (y1 as any)[key]) {
+      props.push({
+        id: key,
+        value,
+      });
+    }
+  }
+
+  // Add any custom property
+  const y1G = y1.custom ?? {};
+  const y2G = y2.custom ?? {};
+  for (const key of Object.keys(y2G)) {
+    const value = (y2G as any)[key];
+    if (value !== (y1G as any)[key]) {
+      props.push({
+        id: `custom.${key}`,
+        value,
+      });
+    }
+  }
 }
 
 function validNumber(val: any): number | undefined {
