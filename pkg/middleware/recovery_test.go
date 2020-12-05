@@ -20,7 +20,7 @@ func TestRecoveryMiddleware(t *testing.T) {
 
 	t.Run("Given an API route that panics", func(t *testing.T) {
 		apiURL := "/api/whatever"
-		recoveryScenario(t, "recovery middleware should return json", apiURL, func(sc *scenarioContext) {
+		recoveryScenario(t, "recovery middleware should return json", apiURL, func(t *testing.T, sc *scenarioContext) {
 			sc.handlerFunc = panicHandler
 			sc.fakeReq("GET", apiURL).exec()
 			sc.req.Header.Add("content-type", "application/json")
@@ -33,7 +33,7 @@ func TestRecoveryMiddleware(t *testing.T) {
 
 	t.Run("Given a non-API route that panics", func(t *testing.T) {
 		apiURL := "/whatever"
-		recoveryScenario(t, "recovery middleware should return html", apiURL, func(sc *scenarioContext) {
+		recoveryScenario(t, "recovery middleware should return html", apiURL, func(t *testing.T, sc *scenarioContext) {
 			sc.handlerFunc = panicHandler
 			sc.fakeReq("GET", apiURL).exec()
 
@@ -85,6 +85,6 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 
 		sc.m.Get(url, sc.defaultHandler)
 
-		fn(sc)
+		fn(t, sc)
 	})
 }

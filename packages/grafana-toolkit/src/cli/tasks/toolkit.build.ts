@@ -22,7 +22,7 @@ const compile = () =>
 
 const savePackage = ({ path, pkg }: { path: string; pkg: {} }) =>
   useSpinner('Updating package.json', async () => {
-    new Promise((resolve, reject) => {
+    new Promise<void>((resolve, reject) => {
       fs.writeFile(path, JSON.stringify(pkg, null, 2), err => {
         if (err) {
           reject(err);
@@ -61,7 +61,7 @@ const copyFiles = () => {
 
   return useSpinner(`Moving ${files.join(', ')} files`, async () => {
     const promises = files.map(file => {
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         const basedir = path.dirname(`${distDir}/${file}`);
         if (!fs.existsSync(basedir)) {
           fs.mkdirSync(basedir, { recursive: true });
@@ -85,7 +85,7 @@ const copySassFiles = () => {
   return useSpinner(`Copy scss files ${files.join(', ')} files`, async () => {
     const sassDir = path.resolve(cwd, '../../public/sass/');
     const promises = files.map(file => {
-      return new Promise((resolve, reject) => {
+      return new Promise<void>((resolve, reject) => {
         const name = file.replace('.generated', '');
         fs.copyFile(`${sassDir}/${file}`, `${distDir}/sass/${name}`, err => {
           if (err) {

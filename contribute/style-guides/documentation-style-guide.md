@@ -115,7 +115,6 @@ If that is the case, then use the following format for headings:
 
 - Grafana, Loki, and Prometheus are always capitalized unless part of a code block.
 - API names are always Title Case, followed by "API"—for example, "Dashboard Permissions API"
-- Git is always capitalized, unless part of a code block.
 - Abbreviations are always capitalized (such as API, HTTP, ID, JSON, SQL, or URL) unless they are part of a code block.
 - Menu and submenu titles always use sentence case: capitalize the first word, and lowercase the rest.
   - "Dashboards" when referring to the submenu title.
@@ -124,6 +123,22 @@ If that is the case, then use the following format for headings:
   - Lowercase "dashboard" when referring to a dashboard generally.
   - Lowercase "dashboards" when referring to multiple dashboards.
 - **Exceptions:** If a term is lowercased in the Grafana UI, then match the UI.
+
+#### Git, GitHub
+
+Git is always capitalized, unless part of a code block. GitHub is the correct spelling and capitalization.
+
+#### Integrations
+
+In general, "integration" is not capitalized. Only capitalize it if it is capitalized in the UI or part of a proper noun, like the name of a specific integration.
+
+The first letter of the name of an integration is always capitalized, even if the original named source is lowercase.
+
+**Examples:**
+- MySQL Integration
+- CockroachDB Integration
+- Etcd Integration
+- I installed an integration on my local Grafana.
 
 ### Links and references
 
