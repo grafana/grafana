@@ -12,7 +12,7 @@ import {
 import { alignDataFrames } from './utils';
 import { UPlotChart } from '../uPlot/Plot';
 import { PlotProps } from '../uPlot/types';
-import { AxisPlacement, GraphFieldConfig, DrawStyle, PointMode } from '../uPlot/config';
+import { AxisPlacement, GraphFieldConfig, DrawStyle, ShowPoints } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
@@ -35,7 +35,7 @@ export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
 
 const defaultConfig: GraphFieldConfig = {
   drawStyle: DrawStyle.Line,
-  points: PointMode.Auto,
+  showPoints: ShowPoints.Auto,
   axisPlacement: AxisPlacement.Auto,
 };
 
@@ -134,7 +134,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       const colorMode = getFieldColorModeForField(field);
       const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
-      const pointsMode = customConfig.drawStyle === DrawStyle.Points ? PointMode.Always : customConfig.points;
+      const showPoints = customConfig.drawStyle === DrawStyle.Points ? ShowPoints.Always : customConfig.showPoints;
 
       builder.addSeries({
         scaleKey,
@@ -142,7 +142,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         lineColor: seriesColor,
         lineWidth: customConfig.lineWidth,
         lineInterpolation: customConfig.lineInterpolation,
-        points: pointsMode,
+        showPoints,
         pointSize: customConfig.pointSize,
         pointColor: seriesColor,
         fillOpacity: customConfig.fillOpacity,

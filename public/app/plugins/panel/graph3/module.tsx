@@ -2,7 +2,7 @@ import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/dat
 import { LegendDisplayMode } from '@grafana/ui';
 import {
   GraphFieldConfig,
-  PointMode,
+  ShowPoints,
   DrawStyle,
   AxisPlacement,
   graphFieldOptions,
@@ -64,11 +64,11 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           showIf: c => c.drawStyle !== DrawStyle.Points,
         })
         .addRadio({
-          path: 'points',
-          name: 'Points',
-          defaultValue: graphFieldOptions.points[0].value,
+          path: 'showPoints',
+          name: 'Show points',
+          defaultValue: graphFieldOptions.showPoints[0].value,
           settings: {
-            options: graphFieldOptions.points,
+            options: graphFieldOptions.showPoints,
           },
         })
         .addSliderInput({
@@ -80,7 +80,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             max: 10,
             step: 1,
           },
-          showIf: c => c.points !== PointMode.Never,
+          showIf: c => c.showPoints !== ShowPoints.Never,
         })
         .addRadio({
           path: 'spanNulls',
