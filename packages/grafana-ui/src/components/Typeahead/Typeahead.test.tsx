@@ -3,7 +3,7 @@ import { mount } from 'enzyme';
 
 import { Typeahead, State } from './Typeahead';
 import { TypeaheadItem } from './TypeaheadItem';
-import {CompletionItemGroup, CompletionItemKind} from '../../types';
+import { CompletionItemGroup, CompletionItemKind } from '../../types';
 
 describe('Typeahead', () => {
   const completionItemGroups = [{ label: 'my group', items: [{ label: 'first item' }] }];
