@@ -3,12 +3,16 @@ import { first } from 'rxjs/operators';
 import {
   ArrayVector,
   CoreApp,
+  DataFrame,
   DataQueryRequest,
+  DataQueryResponse,
   DataSourceInstanceSettings,
   dateMath,
   dateTime,
   Field,
+  FieldCache,
   MutableDataFrame,
+  TimeSeries,
   toUtc,
 } from '@grafana/data';
 import _ from 'lodash';
@@ -849,25 +853,18 @@ describe('ElasticDatasource', function(this: any) {
     });
   });
 
-  describe('When issuing PPL query', () => {
-    async function setupDataSource(targets: ElasticsearchQuery[]) {
-      let payloads: any[] = [];
+  describe('PPL Queries', () => {
+    const defaultPPLQuery =
+      "source=`test` | where `@time` > timestamp('2015-05-30 10:00:00') and `@time` < timestamp('2015-06-01 10:00:00')";
 
+    function setup(targets: ElasticsearchQuery[]) {
       createDatasource({
         url: ELASTICSEARCH_MOCK_URL,
         database: 'test',
-        jsonData: { esVersion: 70, pplSupportEnabled: true } as ElasticsearchOptions,
+        jsonData: { esVersion: 70, timeField: '@time' } as ElasticsearchOptions,
       } as DataSourceInstanceSettings<ElasticsearchOptions>);
 
-      datasourceRequestMock.mockImplementation(options => {
-        const requestOptions = options;
-        const parts = requestOptions.data.split('\n');
-        const payload = angular.fromJson(parts[0]);
-        payloads.push(payload);
-        return Promise.resolve({ data: { responses: [] } });
-      });
-
-      const query = {
+      const options = {
         range: {
           from: dateTime([2015, 4, 30, 10]),
           to: dateTime([2015, 5, 1, 10]),
@@ -875,38 +872,12 @@ describe('ElasticDatasource', function(this: any) {
         targets,
       };
 
-      const queryBuilderSpy = jest.spyOn(ctx.ds.queryBuilder, 'buildPPLQuery');
-      await ctx.ds.query(query);
-      return { queryBuilderSpy, payloads };
+      return { ds: ctx.ds, options };
     }
 
-    it('should change empty PPL query to query configured index', async () => {
-      const targets = [
-        {
-          queryType: ElasticsearchQueryType.PPL,
-          query: '',
-          refId: '',
-          isLogsQuery: false,
-        },
-      ];
-      const { payloads } = await setupDataSource(targets);
-      expect(payloads[0].query.startsWith('source=`test`')).toBe(true);
-    });
+    describe('When issuing empty PPL Query', () => {
+      const payloads: any[] = [];
 
-    it('should call buildPPLQuery()', async () => {
-      const targets = [
-        {
-          queryType: ElasticsearchQueryType.PPL,
-          query: '',
-          refId: '',
-          isLogsQuery: false,
-        },
-      ];
-      const { queryBuilderSpy } = await setupDataSource(targets);
-      expect(queryBuilderSpy).toHaveBeenCalled();
-    });
-
-    it('should handle multiple PPL queries', async () => {
       const targets = [
         {
           queryType: ElasticsearchQueryType.PPL,
@@ -914,18 +885,284 @@ describe('ElasticDatasource', function(this: any) {
           refId: 'A',
           isLogsQuery: false,
         },
+      ];
+
+      beforeAll(() => {
+        datasourceRequestMock.mockImplementation(options => {
+          payloads.push(options);
+          return Promise.resolve({ data: { schema: [], datarows: [] } });
+        });
+      });
+
+      it('should send the correct data source request', async () => {
+        const { ds, options } = setup(targets);
+        await ds.query(options).toPromise();
+        expect(payloads.length).toBe(1);
+        expect(payloads[0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/_opendistro/_ppl`);
+        expect(JSON.parse(payloads[0].data).query).toBe(defaultPPLQuery);
+      });
+
+      it('should handle the data source response', async () => {
+        const { ds, options } = setup(targets);
+        await expect(ds.query(options)).toEmitValuesWith(received => {
+          const result = received[0];
+          expect(result).toEqual(
+            expect.objectContaining({
+              data: [],
+            })
+          );
+        });
+      });
+    });
+
+    describe('When issuing table format PPL Query', () => {
+      const payloads: any[] = [];
+
+      const targets = [
         {
           queryType: ElasticsearchQueryType.PPL,
-          query: '',
-          refId: 'B',
+          query: 'source=`test` | where age > 21 | fields firstname, lastname',
+          refId: 'A',
+          format: 'table',
           isLogsQuery: false,
         },
       ];
-      await setupDataSource(targets);
-      expect(datasourceRequestMock).toBeCalledTimes(2);
+
+      const pplTableResponse = {
+        data: {
+          schema: [
+            {
+              name: 'firstname',
+              type: 'string',
+            },
+            {
+              name: 'lastname',
+              type: 'string',
+            },
+          ],
+          datarows: [
+            ['Amber', 'Duke'],
+            ['Hattie', 'Bond'],
+          ],
+          size: 2,
+          total: 2,
+        },
+      };
+
+      beforeAll(() => {
+        datasourceRequestMock.mockImplementation(options => {
+          payloads.push(options);
+          return Promise.resolve(pplTableResponse);
+        });
+      });
+
+      it('should send the correct data source request', async () => {
+        const { ds, options } = setup(targets);
+        await ds.query(options).toPromise();
+        const expectedQuery = `${defaultPPLQuery} | where age > 21 | fields firstname, lastname`;
+        expect(payloads.length).toBe(1);
+        expect(payloads[0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/_opendistro/_ppl`);
+        expect(JSON.parse(payloads[0].data).query).toBe(expectedQuery);
+      });
+
+      it('should handle the data source response', async () => {
+        const { ds, options } = setup(targets);
+        await expect(ds.query(options)).toEmitValuesWith((received: DataQueryResponse[]) => {
+          const result = received[0];
+          const dataFrame = result.data[0] as DataFrame;
+          expect(dataFrame.length).toBe(2);
+          expect(dataFrame.refId).toBe('A');
+          const fieldCache = new FieldCache(dataFrame);
+          const field = fieldCache.getFieldByName('lastname');
+          expect(field?.values.toArray()).toEqual(['Duke', 'Bond']);
+        });
+      });
     });
 
-    it('should handle both Lucene and PPL queries together', async () => {
+    describe('When issuing logs format PPL Query', () => {
+      const payloads: any[] = [];
+
+      const targets = [
+        {
+          queryType: ElasticsearchQueryType.PPL,
+          query: 'source=`test` | fields clientip, response',
+          refId: 'B',
+          format: 'logs',
+          isLogsQuery: false,
+        },
+      ];
+
+      const pplLogsResponse = {
+        data: {
+          schema: [
+            {
+              name: 'clientip',
+              type: 'string',
+            },
+            {
+              name: 'response',
+              type: 'string',
+            },
+          ],
+          datarows: [
+            ['10.0.0.1', '200'],
+            ['10.0.0.2', '200'],
+          ],
+          size: 2,
+          total: 2,
+        },
+      };
+
+      beforeAll(() => {
+        datasourceRequestMock.mockImplementation(options => {
+          payloads.push(options);
+          return Promise.resolve(pplLogsResponse);
+        });
+      });
+
+      it('should send the correct data source request', async () => {
+        const { ds, options } = setup(targets);
+        await ds.query(options).toPromise();
+        const expectedQuery = `${defaultPPLQuery} | fields clientip, response`;
+        expect(payloads.length).toBe(1);
+        expect(payloads[0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/_opendistro/_ppl`);
+        expect(JSON.parse(payloads[0].data).query).toBe(expectedQuery);
+      });
+
+      it('should handle the data source response', async () => {
+        const { ds, options } = setup(targets);
+        await expect(ds.query(options)).toEmitValuesWith((received: DataQueryResponse[]) => {
+          const result = received[0];
+          const dataFrame = result.data[0] as DataFrame;
+          expect(dataFrame.length).toBe(2);
+          expect(dataFrame.refId).toBe('B');
+          expect(dataFrame.meta?.preferredVisualisationType).toBe('logs');
+          const fieldCache = new FieldCache(dataFrame);
+          const field = fieldCache.getFieldByName('clientip');
+          expect(field?.values.toArray()).toEqual(['10.0.0.1', '10.0.0.2']);
+        });
+      });
+    });
+
+    describe('When issuing time series format PPL Query', () => {
+      const payloads: any[] = [];
+
+      const targets = [
+        {
+          queryType: ElasticsearchQueryType.PPL,
+          query: 'source=`test` | stats count(response) by timestamp',
+          refId: 'C',
+          format: 'time_series',
+          isLogsQuery: false,
+        },
+      ];
+
+      const pplTimeSeriesResponse = {
+        data: {
+          schema: [
+            {
+              name: 'count(response)',
+              type: 'integer',
+            },
+            {
+              name: 'time',
+              type: 'timestamp',
+            },
+          ],
+          datarows: [[4, '2015-06-01 00:00:00']],
+          size: 1,
+          total: 1,
+        },
+      };
+
+      beforeAll(() => {
+        datasourceRequestMock.mockImplementation(options => {
+          payloads.push(options);
+          return Promise.resolve(pplTimeSeriesResponse);
+        });
+      });
+
+      it('should send the correct data source request', async () => {
+        const { ds, options } = setup(targets);
+        await ds.query(options).toPromise();
+        const expectedQuery = `${defaultPPLQuery} | stats count(response) by timestamp`;
+        expect(payloads.length).toBe(1);
+        expect(payloads[0].url).toBe(`${ELASTICSEARCH_MOCK_URL}/_opendistro/_ppl`);
+        expect(JSON.parse(payloads[0].data).query).toBe(expectedQuery);
+      });
+
+      it('should handle the data source response', async () => {
+        const { ds, options } = setup(targets);
+        await expect(ds.query(options)).toEmitValuesWith((received: DataQueryResponse[]) => {
+          const result = received[0];
+          const timeSeries = result.data[0] as TimeSeries;
+          expect(timeSeries.datapoints.length).toBe(1);
+          expect(timeSeries.refId).toBe('C');
+          expect(timeSeries.target).toEqual('count(response)');
+        });
+      });
+    });
+
+    describe('When issuing two PPL Queries', () => {
+      const payloads: any[] = [];
+
+      const targets = [
+        {
+          queryType: ElasticsearchQueryType.PPL,
+          query: 'source=`test` | fields firstname',
+          refId: 'A',
+          format: 'table',
+          isLogsQuery: false,
+        },
+        {
+          queryType: ElasticsearchQueryType.PPL,
+          query: 'source=`test` | fields lastname',
+          refId: 'B',
+          format: 'table',
+          isLogsQuery: false,
+        },
+      ];
+
+      beforeAll(() => {
+        datasourceRequestMock.mockImplementation(options => {
+          payloads.push(options);
+          return Promise.resolve({ data: { schema: [], datarows: [] } });
+        });
+      });
+
+      it('should send the correct data source requests', async () => {
+        const { ds, options } = setup(targets);
+        await ds.query(options).toPromise();
+        const firstExpectedQuery = `${defaultPPLQuery} | fields firstname`;
+        const secondExpectedQuery = `${defaultPPLQuery} | fields lastname`;
+
+        expect(payloads.length).toBe(2);
+        expect(payloads.some(payload => JSON.parse(payload.data).query === firstExpectedQuery));
+        expect(payloads.some(payload => JSON.parse(payload.data).query === secondExpectedQuery));
+      });
+
+      it('should handle the data source responses', async () => {
+        const { ds, options } = setup(targets);
+        await expect(ds.query(options)).toEmitValuesWith((received: DataQueryResponse[]) => {
+          expect(received.length).toBe(2);
+          expect(received).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                data: [],
+              }),
+              expect.objectContaining({
+                data: [],
+              }),
+            ])
+          );
+          expect(received[0].key && received[1].key && received[0].key !== received[1].key).toBe(true);
+        });
+      });
+    });
+
+    describe('When issuing PPL query and Lucene query', () => {
+      const payloads: any[] = [];
+
       const targets = [
         {
           queryType: ElasticsearchQueryType.PPL,
@@ -940,8 +1177,113 @@ describe('ElasticDatasource', function(this: any) {
           isLogsQuery: false,
         },
       ];
-      await setupDataSource(targets);
-      expect(datasourceRequestMock).toBeCalledTimes(2);
+
+      beforeAll(() => {
+        datasourceRequestMock.mockImplementation(options => {
+          payloads.push(options);
+          if (options.url === `${ELASTICSEARCH_MOCK_URL}/_opendistro/_ppl`) {
+            return Promise.resolve({ data: { schema: [], datarows: [] } });
+          } else {
+            return Promise.resolve({ data: { responses: [] } });
+          }
+        });
+      });
+
+      it('should send the correct data source requests', async () => {
+        const { ds, options } = setup(targets);
+        await ds.query(options).toPromise();
+        expect(payloads.length).toBe(2);
+        expect(payloads).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ url: `${ELASTICSEARCH_MOCK_URL}/_opendistro/_ppl` }),
+            expect.objectContaining({ url: `${ELASTICSEARCH_MOCK_URL}/_msearch` }),
+          ])
+        );
+      });
+
+      it('should handle the data source responses', async () => {
+        const { ds, options } = setup(targets);
+        await expect(ds.query(options)).toEmitValuesWith((received: DataQueryResponse[]) => {
+          expect(received.length).toBe(2);
+          expect(received).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                data: [],
+              }),
+              expect.objectContaining({
+                data: [],
+              }),
+            ])
+          );
+          expect(received[0].key && received[1].key && received[0].key !== received[1].key).toBe(true);
+        });
+      });
+    });
+
+    describe('When getting an error with reason in data source response', () => {
+      const targets = [
+        {
+          queryType: ElasticsearchQueryType.PPL,
+          query: '',
+          refId: 'A',
+          isLogsQuery: false,
+        },
+      ];
+
+      beforeAll(() => {
+        datasourceRequestMock.mockImplementation(() => {
+          return Promise.resolve({
+            data: {
+              error: {
+                reason: 'Error occurred in Elasticsearch engine: no such index [unknown]',
+                details: 'org.elasticsearch.index.IndexNotFoundException: no such index [unknown]',
+                type: 'IndexNotFoundException',
+              },
+              status: 404,
+            },
+          });
+        });
+      });
+
+      it('should process it properly', async () => {
+        const { ds, options } = setup(targets);
+        await expect(ds.query(options).toPromise()).rejects.toEqual(
+          expect.objectContaining({
+            message: 'Error occurred in Elasticsearch engine: no such index [unknown]',
+          })
+        );
+      });
+    });
+
+    describe('When getting an empty error in data source response', () => {
+      const targets = [
+        {
+          queryType: ElasticsearchQueryType.PPL,
+          query: '',
+          refId: 'A',
+          isLogsQuery: false,
+        },
+      ];
+
+      beforeAll(() => {
+        datasourceRequestMock.mockImplementation(() => {
+          return Promise.resolve({
+            data: {
+              error: {},
+              status: 404,
+            },
+          });
+        });
+      });
+
+      it('should properly throw an unknown error', async () => {
+        const { ds, options } = setup(targets);
+        await expect(ds.query(options).toPromise()).rejects.toEqual(
+          expect.objectContaining({
+            message: 'Unknown elastic error response',
+          })
+        );
+      });
     });
   });
 

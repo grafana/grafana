@@ -572,6 +572,10 @@ export class ElasticResponse {
     logMessageField?: string,
     logLevelField?: string
   ): DataQueryResponse {
+    if (this.response.error) {
+      throw this.getErrorFromElasticResponse(this.response, this.response.error);
+    }
+
     const dataFrame: DataFrame[] = [];
 
     //map the schema into an array of string containing its name
@@ -580,10 +584,6 @@ export class ElasticResponse {
     const response = _.map(this.response.datarows, arr => _.zipObject(schema, arr));
     //flatten the response
     const { flattenSchema, docs } = flattenResponses(response);
-
-    if (this.response.datarows.error) {
-      throw this.getErrorFromElasticResponse(this.response, this.response.datarows.error);
-    }
 
     if (response.length > 0) {
       let series = createEmptyDataFrame(
@@ -712,7 +712,7 @@ const getPPLDatapoints = (response: any): { datapoints: any; targetVal: any; inv
     return newDatarow;
   });
 
-  const targetVal = response.schema[valueIndex].name;
+  const targetVal = response.schema[valueIndex]?.name;
 
   return { datapoints, targetVal, invalidTS };
 };
