@@ -174,10 +174,33 @@ Change the organization role assigned to a user account.
 1. In the Organisations section, click **Change role** next to the organization that you want to change the user role for.
 1. Select the new role and then click **Save**.
 
-## View user sessions
+## View and manage user sessions
 
+See when a user last logged in and information about how they logged in. You can also force the account to log out of Grafana.
 
+1. [View the user account list](#view-the-user-account-list).
+1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+1. Scroll down to the Sessions section to view sessions associated with this user account. 
+## Force a user to log out of Grafana
 
-## Force user logout
+If you suspect a user account is compromised or is no longer authorized to access the Grafana server, then you can force logout the account.
 
-Force logout from one or all devices, available in the sessions
+### Force logout of one device
+
+Log the user account out of one specific device that is logged in to Grafana.
+
+1. [View the user account list](#view-the-user-account-list).
+1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+1. Scroll down to the Sessions section.
+1. Click **Force logout** next to the session entry that you want logged out of Grafana.
+1. Click **Confirm logout**.
+
+### Force logout from all devices
+
+Log the user account out of all devices that are logged in to Grafana.
+
+1. [View the user account list](#view-the-user-account-list).
+1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+1. Scroll down to the Sessions section.
+1. Click **Force logout from all devices**.
+1. Click **Force logout**.
