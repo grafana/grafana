@@ -2,12 +2,12 @@ package login
 
 import (
 	"errors"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -185,7 +185,7 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 	logger.Debug("Syncing organization roles", "id", user.Id, "extOrgRoles", extUser.OrgRoles)
 
 	// don't sync org roles if none is specified
-	if len(extUser.OrgRoles) == 0 {
+	if len(extUser.OrgRoles) == 0 || setting.DisableRoleSync {
 		logger.Debug("Not syncing organization roles since external user doesn't have any")
 		return nil
 	}
