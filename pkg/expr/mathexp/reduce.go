@@ -11,7 +11,7 @@ func Sum(v *data.Field) *float64 {
 	var sum float64
 	for i := 0; i < v.Len(); i++ {
 		if f, ok := v.At(i).(*float64); ok {
-			if f == nil {
+			if f == nil || math.IsNaN(*f) {
 				nan := math.NaN()
 				return &nan
 			}
