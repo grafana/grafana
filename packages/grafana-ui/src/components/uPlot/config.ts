@@ -15,7 +15,7 @@ export enum PointMode {
   Always = 'always',
 }
 
-export enum GraphMode {
+export enum DrawStyle {
   Line = 'line', // default
   Bars = 'bars', // will also have a gap percent
   Points = 'points', // Only show points
@@ -23,14 +23,16 @@ export enum GraphMode {
 
 export enum LineInterpolation {
   Linear = 'linear',
-  Staircase = 'staircase', // https://leeoniya.github.io/uPlot/demos/line-stepped.html
-  Smooth = 'smooth', // https://leeoniya.github.io/uPlot/demos/line-smoothing.html
+  Smooth = 'smooth',
+  StepBefore = 'stepBefore',
+  StepAfter = 'stepAfter',
 }
 
 export interface LineConfig {
   lineColor?: string;
   lineWidth?: number;
   lineInterpolation?: LineInterpolation;
+  spanNulls?: boolean;
 }
 
 export interface AreaConfig {
@@ -53,20 +55,21 @@ export interface AxisConfig {
 }
 
 export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, AxisConfig {
-  mode?: GraphMode;
+  drawStyle?: DrawStyle;
 }
 
 export const graphFieldOptions = {
-  mode: [
-    { label: 'Lines', value: GraphMode.Line },
-    { label: 'Bars', value: GraphMode.Bars },
-    { label: 'Points', value: GraphMode.Points },
-  ] as Array<SelectableValue<GraphMode>>,
+  drawStyle: [
+    { label: 'Lines', value: DrawStyle.Line },
+    { label: 'Bars', value: DrawStyle.Bars },
+    { label: 'Points', value: DrawStyle.Points },
+  ] as Array<SelectableValue<DrawStyle>>,
 
   lineInterpolation: [
     { label: 'Linear', value: LineInterpolation.Linear },
-    { label: 'Staircase', value: LineInterpolation.Staircase },
     { label: 'Smooth', value: LineInterpolation.Smooth },
+    { label: 'Step Before', value: LineInterpolation.StepBefore },
+    { label: 'Step After', value: LineInterpolation.StepAfter },
   ] as Array<SelectableValue<LineInterpolation>>,
 
   points: [
