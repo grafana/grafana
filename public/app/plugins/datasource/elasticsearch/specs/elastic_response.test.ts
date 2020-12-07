@@ -1,6 +1,7 @@
 import { DataFrameView, FieldCache, KeyValue, MutableDataFrame } from '@grafana/data';
 import { ElasticResponse } from '../elastic_response';
 import flatten from 'app/core/utils/flatten';
+import { ElasticsearchQueryType } from '../types';
 
 describe('ElasticResponse', () => {
   let targets: any;
@@ -1318,6 +1319,112 @@ describe('ElasticResponse', () => {
       const fieldCache = new FieldCache(result.data[0]);
       const field = fieldCache.getFieldByName('level');
       expect(field?.values.toArray()).toEqual(['debug', 'info']);
+    });
+  });
+
+  describe('PPL log query response', () => {
+    const targets: any = [
+      {
+        refId: 'A',
+        isLogsQuery: true,
+        queryType: ElasticsearchQueryType.PPL,
+        timeField: 'timestamp',
+        format: 'table',
+        query: 'source=sample_data_logs',
+      },
+    ];
+    const response = {
+      datarows: [
+        ['test-data1', 'message1', { coordinates: { lat: 5, lon: 10 } }],
+        ['test-data2', 'message2', { coordinates: { lat: 6, lon: 11 } }],
+        ['test-data3', 'message3', { coordinates: { lat: 7, lon: 12 } }],
+      ],
+      schema: [
+        { name: 'data', type: 'string' },
+        { name: 'message', type: 'string' },
+        { name: 'geo', type: 'struct' },
+      ],
+    };
+    const targetType = ElasticsearchQueryType.PPL;
+    it('should return all data', () => {
+      const result = new ElasticResponse(targets, response, targetType).getLogs();
+      expect(result.data.length).toBe(1);
+      const logResults = result.data[0] as MutableDataFrame;
+      const fields = logResults.fields.map(f => {
+        return {
+          name: f.name,
+          type: f.type,
+        };
+      });
+      expect(fields).toContainEqual({ name: 'data', type: 'string' });
+      expect(fields).toContainEqual({ name: 'message', type: 'string' });
+      expect(fields).toContainEqual({ name: 'geo.coordinates.lat', type: 'string' });
+      expect(fields).toContainEqual({ name: 'geo.coordinates.lon', type: 'string' });
+
+      let rows = new DataFrameView(logResults);
+      expect(rows.length).toBe(3);
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows.get(i);
+        expect(r.data).toEqual(response.datarows[i][0]);
+        expect(r.message).toEqual(response.datarows[i][1]);
+      }
+    });
+  });
+
+  describe('PPL table query response', () => {
+    const targets: any = [
+      {
+        refId: 'A',
+        context: 'explore',
+        interval: '10s',
+        isLogsQuery: false,
+        query: 'source=sample_data | stats count(test) by timestamp',
+        queryType: ElasticsearchQueryType.PPL,
+        timeField: 'timestamp',
+        format: 'table',
+      },
+    ];
+    const response = {
+      datarows: [
+        [5, '2020-11-01 00:39:02.912Z'],
+        [1, '2020-11-01 03:26:21.326Z'],
+        [4, '2020-11-01 03:34:43.399Z'],
+      ],
+      schema: [
+        { name: 'test', type: 'string' },
+        { name: 'timestamp', type: 'timestamp' },
+      ],
+    };
+    const targetType = ElasticsearchQueryType.PPL;
+
+    it('should create dataframes with filterable fields', () => {
+      const result = new ElasticResponse(targets, response, targetType).getTable();
+      for (const field of result.data[0].fields) {
+        expect(field.config.filterable).toBe(true);
+      }
+    });
+    it('should return all data', () => {
+      const result = new ElasticResponse(targets, response, targetType).getTable();
+      expect(result.data.length).toBe(1);
+      const logResults = result.data[0] as MutableDataFrame;
+      const fields = logResults.fields.map(f => {
+        return {
+          name: f.name,
+          type: f.type,
+        };
+      });
+      expect(fields).toEqual([
+        { name: 'test', type: 'string' },
+        { name: 'timestamp', type: 'string' },
+      ]);
+
+      let rows = new DataFrameView(logResults);
+      expect(rows.length).toBe(3);
+      for (let i = 0; i < rows.length; i++) {
+        const r = rows.get(i);
+        expect(r.test).toEqual(response.datarows[i][0]);
+        expect(r.timestamp).toEqual(response.datarows[i][1]);
+      }
     });
   });
 });
