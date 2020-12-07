@@ -1480,6 +1480,15 @@ describe('ElasticResponse', () => {
       expect(result.data[0].datapoints[0][0]).toBe(5);
       expect(result.data[0].datapoints[0][1]).toBe(1604206800000);
     });
+
+    const response3 = {
+      datarows: [],
+      schema: [],
+    };
+    it('should return no data', () => {
+      const result = new ElasticResponse(targets, response3, targetType).getTimeSeries();
+      expect(result.data.length).toBe(0);
+    });
   });
 
   describe('Invalid PPL time series query response', () => {

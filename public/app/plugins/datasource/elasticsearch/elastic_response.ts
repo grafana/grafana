@@ -549,22 +549,30 @@ export class ElasticResponse {
   processPPLResponseToSeries = () => {
     const target = this.targets[0];
     const response = this.response;
-    // Get the data points and target that will be inputted to newSeries
-    const { datapoints, targetVal, invalidTS } = getPPLDatapoints(response);
+    const seriesList = [];
 
-    // We throw an error if the inputted query is not valid
-    if (invalidTS) {
-      throw this.getInvalidPPLQuery(this.response);
+    if (response.datarows.length > 0) {
+      // Handle error from Elasticsearch
+      if (response.error) {
+        throw this.getErrorFromElasticResponse(this.response, response.error);
+      }
+      // Get the data points and target that will be inputted to newSeries
+      const { datapoints, targetVal, invalidTS } = getPPLDatapoints(response);
+
+      // We throw an error if the inputted query is not valid
+      if (invalidTS) {
+        throw this.getInvalidPPLQuery(this.response);
+      }
+
+      const newSeries = {
+        datapoints,
+        props: response.schema,
+        refId: target.refId,
+        target: targetVal,
+      };
+      seriesList.push(newSeries);
     }
-
-    const newSeries = {
-      datapoints,
-      props: response.schema,
-      refId: target.refId,
-      target: targetVal,
-    };
-
-    return { data: [newSeries], key: this.targets[0]?.refId };
+    return { data: seriesList, key: this.targets[0]?.refId };
   };
 
   processPPLResponseToDataFrames(
