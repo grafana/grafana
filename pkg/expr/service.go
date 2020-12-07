@@ -19,8 +19,8 @@ type Service struct {
 }
 
 // BuildPipeline builds a pipeline from a request.
-func (s *Service) BuildPipeline(queries []backend.DataQuery) (DataPipeline, error) {
-	return buildPipeline(queries)
+func (s *Service) BuildPipeline(req *backend.QueryDataRequest) (DataPipeline, error) {
+	return buildPipeline(req)
 }
 
 // ExecutePipeline executes an expression pipeline and returns all the results.

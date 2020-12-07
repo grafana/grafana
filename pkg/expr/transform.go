@@ -73,7 +73,7 @@ func TransformData(ctx context.Context, req *backend.QueryDataRequest) (*backend
 	svc := Service{}
 	// Build the pipeline from the request, checking for ordering issues (e.g. loops)
 	// and parsing graph nodes from the queries.
-	pipeline, err := svc.BuildPipeline(req.Queries)
+	pipeline, err := svc.BuildPipeline(req)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
