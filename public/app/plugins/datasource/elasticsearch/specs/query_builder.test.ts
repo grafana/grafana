@@ -1,4 +1,5 @@
 import { ElasticQueryBuilder } from '../query_builder';
+import { ElasticsearchQueryType } from '../types';
 
 describe('ElasticQueryBuilder', () => {
   const builder = new ElasticQueryBuilder({ timeField: '@timestamp', esVersion: 2 });
@@ -600,6 +601,52 @@ describe('ElasticQueryBuilder', () => {
           expect(query.query.bool.filter[2].range['key4'].gt).toBe('value4');
           expect(query.query.bool.filter[3].regexp['key5']).toBe('value5');
           expect(query.query.bool.filter[4].bool.must_not.regexp['key6']).toBe('value6');
+        });
+      });
+
+      describe('build Logs PPL query', () => {
+        const target = {
+          queryType: ElasticsearchQueryType.PPL,
+          format: 'logs',
+          isLogsQuery: false,
+        };
+
+        it('should return default query and set isLogsQuery to true', () => {
+          const query = builder.buildPPLQuery(target, null, 'source=test');
+
+          const expectedQuery = {
+            query: "source=test | where $timestamp > timestamp('$timeFrom') and $timestamp < timestamp('$timeTo')",
+          };
+          expect(query).toEqual(expectedQuery);
+          expect(target.isLogsQuery).toEqual(true);
+        });
+
+        it('should return the query string', () => {
+          const query = builder.buildPPLQuery(target, null, 'source=test | where age > 18 | fields firstname');
+
+          const expectedQuery = {
+            query:
+              "source=test | where $timestamp > timestamp('$timeFrom') and $timestamp < timestamp('$timeTo') | where age > 18 | fields firstname",
+          };
+          expect(query).toEqual(expectedQuery);
+        });
+      });
+
+      describe('build PPL time series query', () => {
+        const target = {
+          queryType: ElasticsearchQueryType.PPL,
+          format: 'time_series',
+          isLogsQuery: false,
+        };
+
+        it('should return default query', () => {
+          const query = builder.buildPPLQuery(target, null, 'source=test');
+
+          const expectedQuery = {
+            query: "source=test | where $timestamp > timestamp('$timeFrom') and $timestamp < timestamp('$timeTo')",
+          };
+          expect(query).toEqual(expectedQuery);
+          expect(target.isLogsQuery).toEqual(false);
         });
       });
     });
