@@ -26,8 +26,6 @@ type LibraryPanel struct {
 var (
 	// errLibraryPanelAlreadyAdded is an error when you add a library panel that already exists.
 	errLibraryPanelAlreadyAdded = fmt.Errorf("library panel with that title already exists")
-	// errLibraryPanelNotFound is an error for an unknown library panel definition.
-	errLibraryPanelNotFound = fmt.Errorf("could not find library panel definition")
 )
 
 // Commands

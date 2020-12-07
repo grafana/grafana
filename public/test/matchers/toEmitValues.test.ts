@@ -137,12 +137,3 @@ describe('toEmitValues matcher', () => {
     });
   });
 });
-
-describe.only('demo testing observables', () => {
-  it('toEmitValues demo', async () => {
-    const observable = of(1, 'a', 'I');
-  });
-  it('toEmitValuesWith demo', async () => {
-    const observable = of(1, 'a', 'I');
-  });
-});
