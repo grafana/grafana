@@ -1,6 +1,6 @@
 import { Field, LinkModel, TimeRange, mapInternalLinkToExplore } from '@grafana/data';
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
-import { getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv } from '@grafana/runtime';
 import { splitOpen } from '../state/main';
 
 /**
@@ -33,10 +33,14 @@ export const getFieldLinksForExplore = (
           }
           return linkModel;
         } else {
-          return mapInternalLinkToExplore(link, scopedVars, range, field, {
+          return mapInternalLinkToExplore({
+            link,
+            internalLink: link.internal,
+            scopedVars: scopedVars,
+            range,
+            field,
             onClickFn: splitOpenFn,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-            getDataSourceSettingsByUid: getDataSourceSrv().getDataSourceSettingsByUid.bind(getDataSourceSrv()),
           });
         }
       })

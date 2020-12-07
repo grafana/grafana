@@ -1,5 +1,6 @@
 +++
-title = "Build a plugin."
+title = "Build a plugin"
+aliases = ["/docs/grafana/latest/plugins/developing/"]
 +++
 
 # Build a plugin

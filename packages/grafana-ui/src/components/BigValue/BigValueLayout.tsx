@@ -29,7 +29,7 @@ export abstract class BigValueLayout {
   textValues: BigValueTextValues;
 
   constructor(private props: Props) {
-    const { width, height, value, theme } = props;
+    const { width, height, value, theme, text } = props;
 
     this.valueColor = getColorForTheme(value.color || 'green', theme);
     this.panelPadding = height > 100 ? 12 : 8;
@@ -43,6 +43,18 @@ export abstract class BigValueLayout {
     this.chartWidth = 0;
     this.maxTextWidth = width - this.panelPadding * 2;
     this.maxTextHeight = height - this.panelPadding * 2;
+
+    // Explicit font sizing
+    if (text) {
+      if (text.titleSize) {
+        this.titleFontSize = text.titleSize;
+        this.titleToAlignTo = undefined;
+      }
+      if (text.valueSize) {
+        this.valueFontSize = text.valueSize;
+        this.valueToAlignTo = '';
+      }
+    }
   }
 
   getTitleStyles(): CSSProperties {
@@ -235,9 +247,9 @@ export class WideNoChartLayout extends BigValueLayout {
   constructor(props: Props) {
     super(props);
 
-    const valueWidthPercent = 0.3;
+    const valueWidthPercent = this.titleToAlignTo?.length ? 0.3 : 1.0;
 
-    if (this.titleToAlignTo && this.titleToAlignTo.length > 0) {
+    if (this.valueToAlignTo.length) {
       // initial value size
       this.valueFontSize = calculateFontSize(
         this.valueToAlignTo,
@@ -245,7 +257,9 @@ export class WideNoChartLayout extends BigValueLayout {
         this.maxTextHeight,
         LINE_HEIGHT
       );
+    }
 
+    if (this.titleToAlignTo?.length) {
       // How big can we make the title and still have it fit
       this.titleFontSize = calculateFontSize(
         this.titleToAlignTo,
@@ -257,9 +271,6 @@ export class WideNoChartLayout extends BigValueLayout {
 
       // make sure it's a bit smaller than valueFontSize
       this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
-    } else {
-      // if no title wide
-      this.valueFontSize = calculateFontSize(this.valueToAlignTo, this.maxTextWidth, this.maxTextHeight, LINE_HEIGHT);
     }
   }
 
@@ -292,6 +303,7 @@ export class WideWithChartLayout extends BigValueLayout {
     super(props);
 
     const { width, height } = props;
+
     const chartHeightPercent = 0.5;
     const titleWidthPercent = 0.6;
     const valueWidthPercent = 1 - titleWidthPercent;
@@ -300,7 +312,7 @@ export class WideWithChartLayout extends BigValueLayout {
     this.chartWidth = width;
     this.chartHeight = height * chartHeightPercent;
 
-    if (this.titleToAlignTo && this.titleToAlignTo.length > 0) {
+    if (this.titleToAlignTo?.length) {
       this.titleFontSize = calculateFontSize(
         this.titleToAlignTo,
         this.maxTextWidth * titleWidthPercent,
@@ -310,12 +322,14 @@ export class WideWithChartLayout extends BigValueLayout {
       );
     }
 
-    this.valueFontSize = calculateFontSize(
-      this.valueToAlignTo,
-      this.maxTextWidth * valueWidthPercent,
-      this.maxTextHeight * chartHeightPercent,
-      LINE_HEIGHT
-    );
+    if (this.valueToAlignTo.length) {
+      this.valueFontSize = calculateFontSize(
+        this.valueToAlignTo,
+        this.maxTextWidth * valueWidthPercent,
+        this.maxTextHeight * chartHeightPercent,
+        LINE_HEIGHT
+      );
+    }
   }
 
   getValueAndTitleContainerStyles() {
@@ -350,7 +364,7 @@ export class StackedWithChartLayout extends BigValueLayout {
     this.chartHeight = height * chartHeightPercent;
     this.chartWidth = width;
 
-    if (this.titleToAlignTo && this.titleToAlignTo.length > 0) {
+    if (this.titleToAlignTo?.length) {
       this.titleFontSize = calculateFontSize(
         this.titleToAlignTo,
         this.maxTextWidth,
@@ -358,19 +372,22 @@ export class StackedWithChartLayout extends BigValueLayout {
         LINE_HEIGHT,
         MAX_TITLE_SIZE
       );
+    }
+    titleHeight = this.titleFontSize * LINE_HEIGHT;
 
-      titleHeight = this.titleFontSize * LINE_HEIGHT;
+    if (this.valueToAlignTo.length) {
+      this.valueFontSize = calculateFontSize(
+        this.valueToAlignTo,
+        this.maxTextWidth,
+        this.maxTextHeight - this.chartHeight - titleHeight,
+        LINE_HEIGHT
+      );
     }
 
-    this.valueFontSize = calculateFontSize(
-      this.valueToAlignTo,
-      this.maxTextWidth,
-      this.maxTextHeight - this.chartHeight - titleHeight,
-      LINE_HEIGHT
-    );
-
     // make title fontsize it's a bit smaller than valueFontSize
-    this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
+    if (this.titleToAlignTo?.length) {
+      this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
+    }
 
     // make chart take up unused space
     this.chartHeight = height - this.titleFontSize * LINE_HEIGHT - this.valueFontSize * LINE_HEIGHT;
@@ -398,7 +415,7 @@ export class StackedWithNoChartLayout extends BigValueLayout {
     const titleHeightPercent = 0.15;
     let titleHeight = 0;
 
-    if (this.titleToAlignTo && this.titleToAlignTo.length > 0) {
+    if (this.titleToAlignTo?.length) {
       this.titleFontSize = calculateFontSize(
         this.titleToAlignTo,
         this.maxTextWidth,
@@ -410,12 +427,14 @@ export class StackedWithNoChartLayout extends BigValueLayout {
       titleHeight = this.titleFontSize * LINE_HEIGHT;
     }
 
-    this.valueFontSize = calculateFontSize(
-      this.valueToAlignTo,
-      this.maxTextWidth,
-      this.maxTextHeight - titleHeight,
-      LINE_HEIGHT
-    );
+    if (this.valueToAlignTo.length) {
+      this.valueFontSize = calculateFontSize(
+        this.valueToAlignTo,
+        this.maxTextWidth,
+        this.maxTextHeight - titleHeight,
+        LINE_HEIGHT
+      );
+    }
 
     // make title fontsize it's a bit smaller than valueFontSize
     this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);

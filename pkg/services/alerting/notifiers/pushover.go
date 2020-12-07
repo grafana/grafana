@@ -292,7 +292,11 @@ func (pn *PushoverNotifier) genPushoverBody(evalContext *alerting.EvalContext, m
 		if err != nil {
 			return nil, b, err
 		}
-		defer f.Close()
+		defer func() {
+			if err := f.Close(); err != nil {
+				pn.log.Warn("Failed to close file", "path", evalContext.ImageOnDiskPath, "err", err)
+			}
+		}()
 
 		fw, err := w.CreateFormFile("attachment", evalContext.ImageOnDiskPath)
 		if err != nil {

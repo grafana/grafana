@@ -65,17 +65,19 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
 
   const mapExemplarToXYCoords = useCallback(
     (exemplar: ExemplarsDataFrameViewDTO) => {
-      if (!exemplar.time) {
+      const plotInstance = plotCtx.getPlotInstance();
+
+      if (!exemplar.time || !plotCtx.isPlotReady || !plotInstance) {
         return undefined;
       }
 
       return {
-        x: plotCtx.getPlotInstance().valToPos(exemplar.time / 1000, 'x'),
+        x: plotInstance.valToPos(exemplar.time, 'x'),
         // exemplar.y is a temporary mock for an examplar. This Needs to be calculated according to examplar scale!
-        y: Math.floor((exemplar.y * plotCtx.getPlotInstance().bbox.height) / window.devicePixelRatio),
+        y: Math.floor((exemplar.y * plotInstance.bbox.height) / window.devicePixelRatio),
       };
     },
-    [plotCtx.getPlotInstance]
+    [plotCtx.isPlotReady, plotCtx.getPlotInstance]
   );
 
   const renderMarker = useCallback(
