@@ -62,7 +62,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   const legendItemsRef = useRef<LegendItem[]>([]);
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
   const alignedFrame = alignedFrameWithGapTest?.frame;
-  const getOriginalIndex = alignedFrameWithGapTest?.getOriginalIndex;
+  const getFieldIndexRef = alignedFrameWithGapTest?.getFieldIndexRef;
 
   const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
     if (a && b) {
@@ -73,23 +73,19 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
   const onLabelClick = useCallback(
     (legend: LegendItem, event: React.MouseEvent) => {
-      if (!onLegendClick || !getOriginalIndex) {
+      const { seriesRef } = legend;
+
+      if (!onLegendClick || !seriesRef) {
         return;
       }
 
-      const index = getOriginalIndex(legend.yAxis);
-
-      if (!index) {
-        return;
-      }
-
-      const frame = data[index.frameIndex];
-      const field = frame.fields[index.fieldIndex];
+      const frame = data[seriesRef.frameIndex];
+      const field = frame.fields[seriesRef.fieldIndex];
       const mode = mapMouseEventToMode(event);
 
-      onLegendClick({ frame, field, data, mode });
+      onLegendClick({ field, frame, data, mode });
     },
-    [onLegendClick, getOriginalIndex, data]
+    [onLegendClick, data]
   );
 
   const configRev = useRevision(alignedFrame, compareFrames);
@@ -182,8 +178,11 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       if (hasLegend.current && customConfig.seriesConfig.displayInLegend) {
         const axisPlacement = builder.getAxisPlacement(scaleKey);
+        // we need to add this as dep or move it to be done outside.
+        const ref = getFieldIndexRef ? getFieldIndexRef(i) : undefined;
 
         legendItems.push({
+          seriesRef: ref,
           color: seriesColor,
           label: getFieldDisplayName(field, alignedFrame),
           yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,

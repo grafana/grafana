@@ -43,7 +43,7 @@ export function mapDimesions(match: XYFieldMatchers, frame: DataFrame, frames?: 
 export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): AlignedFrameWithGapTest | null {
   const valuesFromFrames: AlignedData[] = [];
   const sourceFields: Field[] = [];
-  const alignedToOriginal: Record<number, FieldIndexRef> = {};
+  const sourceFieldsRefs: Record<number, FieldIndexRef> = {};
 
   // Default to timeseries config
   if (!fields) {
@@ -57,7 +57,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     const frame = frames[frameIndex];
     const dims = mapDimesions(fields, frame, frames);
     if (!(dims.x.length && dims.y.length)) {
-      continue; // both x and y matched something!
+      continue; // no numeric and no time fields
     }
 
     if (dims.x.length > 1) {
@@ -73,21 +73,27 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       dims.x[0].values.toArray(), // The x axis (time)
     ];
 
-    // Add the Y values
-    for (let fieldIndex = 0; fieldIndex < dims.y.length; fieldIndex++) {
-      const field = dims.y[fieldIndex];
+    for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
+      const field = frame.fields[fieldIndex];
+
+      if (!fields.y(field, frame, frames)) {
+        continue;
+      }
+
       let values = field.values.toArray();
       if (field.config.nullValueMode === NullValueMode.AsZero) {
         values = values.map(v => (v === null ? 0 : v));
       }
 
-      alignedToOriginal[alignedData.length] = { fieldIndex, frameIndex };
+      const alignedFieldIndex = (valuesFromFrames.length + 1) * alignedData.length;
+      sourceFieldsRefs[alignedFieldIndex] = { fieldIndex, frameIndex };
       alignedData.push(values);
 
       // This will cache an appropriate field name in the field state
       getFieldDisplayName(field, frame, frames);
       sourceFields.push(field);
     }
+
     valuesFromFrames.push(alignedData);
   }
 
@@ -112,7 +118,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       })),
     },
     isGap,
-    getOriginalIndex: (yDim: number) => alignedToOriginal[yDim],
+    getFieldIndexRef: (alignedFieldIndex: number) => sourceFieldsRefs[alignedFieldIndex],
   };
 }
 

@@ -38,5 +38,5 @@ export interface FieldIndexRef {
 export interface AlignedFrameWithGapTest {
   frame: DataFrame;
   isGap: Series.isGap;
-  getOriginalIndex: (yDim: number) => FieldIndexRef | undefined;
+  getFieldIndexRef: (alignedFieldIndex: number) => FieldIndexRef | undefined;
 }

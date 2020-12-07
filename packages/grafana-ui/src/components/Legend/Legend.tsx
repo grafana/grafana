@@ -36,12 +36,18 @@ export type LegendPlacement = 'bottom' | 'right';
 
 export interface LegendOptions extends LegendBasicOptions, LegendRenderOptions {}
 
+export interface LegendSeriesRef {
+  fieldIndex: number;
+  frameIndex: number;
+}
+
 export interface LegendItem {
   label: string;
   color: string;
   yAxis: number;
   disabled?: boolean;
   displayValues?: DisplayValue[];
+  seriesRef?: LegendSeriesRef;
 }
 
 export interface LegendComponentProps {
