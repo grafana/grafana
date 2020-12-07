@@ -539,7 +539,8 @@ export class ElasticResponse {
   };
 
   processPPLResponseToSeries = () => {
-    const target = this.targets[0];
+    // Each target is inputted separately from Elasticdatasource for PPL
+    const target = this.targets;
     const response = this.response;
     // Get the data points and target that will be inputted to newSeries
     const { datapoints, targetVal, invalidTS } = getPPLDatapoints(response);
@@ -556,7 +557,7 @@ export class ElasticResponse {
       target: targetVal,
     };
 
-    return { data: [newSeries], key: this.targets[0]?.refId };
+    return { data: [newSeries], key: target.refId };
   };
 }
 
