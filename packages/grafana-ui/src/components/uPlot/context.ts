@@ -21,6 +21,7 @@ interface PlotPluginsContextType {
 }
 
 interface PlotContextType extends PlotPluginsContextType {
+  isPlotReady: boolean;
   getPlotInstance: () => uPlot | undefined;
   getSeries: () => Series[];
   getCanvas: () => PlotCanvasContextType;
@@ -126,12 +127,14 @@ export const usePlotData = (): PlotDataAPI => {
 };
 
 export const buildPlotContext = (
+  isPlotReady: boolean,
   canvasRef: any,
   data: AlignedFrameWithGapTest,
   registerPlugin: any,
   getPlotInstance: () => uPlot | undefined
 ): PlotContextType => {
   return {
+    isPlotReady,
     canvasRef,
     data,
     registerPlugin,

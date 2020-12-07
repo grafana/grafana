@@ -32,7 +32,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
   );
 
   useEffect(() => {
-    if (plotCtx.getPlotInstance()) {
+    if (plotCtx.isPlotReady) {
       const views: Array<DataFrameView<AnnotationsDataFrameViewDTO>> = [];
 
       for (const frame of annotations) {
@@ -41,7 +41,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
 
       annotationsRef.current = views;
     }
-  }, [plotCtx, annotations]);
+  }, [plotCtx.isPlotReady, annotations]);
 
   useEffect(() => {
     const unregister = plotCtx.registerPlugin({
@@ -70,7 +70,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
                 continue;
               }
 
-              const xpos = u.valToPos(annotation.time / 1000, 'x', true);
+              const xpos = u.valToPos(annotation.time, 'x', true);
               ctx.beginPath();
               ctx.lineWidth = 2;
               ctx.strokeStyle = theme.palette.red;
