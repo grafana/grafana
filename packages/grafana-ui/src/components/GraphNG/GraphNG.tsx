@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import {
   compareDataFrameStructures,
   DataFrame,
@@ -51,8 +51,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   timeZone,
   ...plotProps
 }) => {
-  console.log('GraphNG (top)', timeRange.from.valueOf(), timeRange.to.valueOf());
-
   const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
   const theme = useTheme();
   const legendItemsRef = useRef<LegendItem[]>([]);
@@ -67,9 +65,8 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   }, []);
 
   // reference change will not triger re-render
-  const currentTimeRange = useRef<TimeRange>();
-  useEffect(() => {
-    console.log('GraphNG (useEffect)', timeRange.from.valueOf(), timeRange.to.valueOf());
+  const currentTimeRange = useRef<TimeRange>(timeRange);
+  useLayoutEffect(() => {
     currentTimeRange.current = timeRange;
   }, [timeRange]);
 
@@ -90,9 +87,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         isTime: true,
         range: () => {
           const r = currentTimeRange.current!;
-          const arr = [r.from.valueOf(), r.to.valueOf()];
-          console.log('GraphNG (range)', arr[0], arr[1]);
-          return arr;
+          return [r.from.valueOf(), r.to.valueOf()];
         },
       });
       builder.addAxis({
