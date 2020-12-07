@@ -10,7 +10,6 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { AxisSide } from '@grafana/ui';
 import { groupBy } from 'lodash';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -93,14 +92,8 @@ export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelDat
         color: {
           mode: FieldColorModeId.PaletteClassic,
         },
-        custom: {
-          axis: { label: '', side: AxisSide.Left, width: 60, grid: true },
-          bars: { show: false },
-          line: { show: true, width: 1 },
-
-          nullValues: 'null',
-          points: { show: false, radius: 4 },
-        },
+        // Seems like we have to pass an empty custom object to have the defaults
+        custom: {},
         ...valueField.config,
       };
     }

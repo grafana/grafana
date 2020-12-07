@@ -208,7 +208,6 @@ export { LegacyForms, LegacyInputStatus };
 
 // WIP, need renames and exports cleanup
 export { GraphFieldConfig, graphFieldOptions } from './uPlot/config';
-export { AxisSide } from './uPlot/types';
 export { UPlotChart } from './uPlot/Plot';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';
