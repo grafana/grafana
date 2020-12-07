@@ -11,7 +11,6 @@ import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from 
 import { getTextColorForBackground } from '../../utils';
 import { DrawStyle, GraphFieldConfig } from '../uPlot/config';
 import { Sparkline } from '../Sparkline/Sparkline';
-import { css } from 'emotion';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
