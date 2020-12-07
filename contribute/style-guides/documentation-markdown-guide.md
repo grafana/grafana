@@ -137,7 +137,7 @@ You can also use HTML such as the following:
      style="float: left; margin-right: 5px;" />
 ```
 
-In most cases, use the markdown syntax rather than the HTML syntax. Only use the HTML if you need to change the image in ways unsupported by markdown.
+In most cases, use the markdown syntax rather than the HTML syntax. Only use the HTML if you need to change the image in ways unsupported by Markdown.
 
 ## Comments
 
