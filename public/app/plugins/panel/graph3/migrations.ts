@@ -86,6 +86,23 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
               value: v / 10.0, // was 0-10
             });
             break;
+          case 'bars':
+            if (v) {
+              rule.properties.push({
+                id: 'custom.drawStyle',
+                value: DrawStyle.Bars,
+              });
+              rule.properties.push({
+                id: 'custom.fillOpacity',
+                value: 1, // solid bars
+              });
+            } else {
+              rule.properties.push({
+                id: 'custom.drawStyle',
+                value: DrawStyle.Line, // Change from bars
+              });
+            }
+            break;
           case 'lineWidth':
             rule.properties.push({
               id: 'custom.lineWidth',
