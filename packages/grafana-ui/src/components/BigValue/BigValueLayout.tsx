@@ -11,6 +11,7 @@ import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from 
 import { getTextColorForBackground } from '../../utils';
 import { DrawStyle, GraphFieldConfig } from '../uPlot/config';
 import { Sparkline } from '../Sparkline/Sparkline';
+import { css } from 'emotion';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
@@ -187,16 +188,17 @@ export abstract class BigValueLayout {
     };
 
     return (
-      <Sparkline
-        height={this.chartHeight}
-        width={this.chartWidth}
-        sparkline={sparkline}
-        config={config}
-        theme={this.props.theme}
-      />
+      <div style={this.getChartStyles()}>
+        <Sparkline
+          height={this.chartHeight}
+          width={this.chartWidth}
+          sparkline={sparkline}
+          config={config}
+          theme={this.props.theme}
+        />
+      </div>
     );
   }
-
   getChartStyles(): CSSProperties {
     return {
       position: 'absolute',
