@@ -28,6 +28,8 @@ Grafana displays all user accounts on the server, listed in alphabetical order b
 
 {{< docs-imagebox img="/img/docs/manage-users/server-user-list-7-3.png" max-width="1200px">}}
 
+<img src="/img/docs/manage-users/server-user-list-7-3.png" max-width="1200px">
+
 ## View user account details
 
 See all details associated with a specific user account.
