@@ -1,9 +1,10 @@
 import React, { useCallback } from 'react';
 import { ContextMenuPlugin, TooltipPlugin, ZoomPlugin, GraphNG, GraphNGLegendEvent } from '@grafana/ui';
-import { FieldMatcherID, getFieldDisplayName, PanelProps } from '@grafana/data';
+import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
+import { displayConfigFactory } from './configFactory';
 
 interface GraphPanelProps extends PanelProps<Options> {}
 
@@ -20,31 +21,8 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
 }) => {
   const onLegendClick = useCallback(
     (event: GraphNGLegendEvent) => {
-      const { field, frame, data } = event;
-      const displayName = getFieldDisplayName(field, frame, data);
-
-      onFieldConfigChange({
-        ...fieldConfig,
-        overrides: [
-          ...fieldConfig.overrides,
-          {
-            matcher: {
-              id: FieldMatcherID.byRegexp,
-              options: `^(?!${displayName}$).*$`,
-            },
-            properties: [
-              {
-                id: 'custom.seriesConfig',
-                value: {
-                  displayInGraph: false,
-                  displayInLegend: true,
-                  displayInTooltip: true,
-                },
-              },
-            ],
-          },
-        ],
-      });
+      const config = displayConfigFactory(event, fieldConfig);
+      onFieldConfigChange(config);
     },
     [fieldConfig, onFieldConfigChange]
   );
