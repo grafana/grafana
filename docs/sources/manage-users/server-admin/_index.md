@@ -5,22 +5,9 @@ weight = 100
 
 # Server admin tasks
 
-Server admin user manage users
-- View user list
-- View user record
-- Edit user record
-- Add user
-- Delete user
-- Disable user account
-- Edit user information, including password
-- Add/remove server admin flag
-- Add/remove user to organisation
-- Change organization role
-- View user sessions
+Grafana Server Admins use the **Server Admin** menu to manage user accounts and organizations set up on the Grafana server.
 
-Server admin manage organization
-- View organization list
-- Create  organization
-- Delete organization
-- Change organization name
-- Almost identical user mgmt tasks as org admin when they drill down to the organization page via Server Admin
+They perform tasks described in the following pages:
+
+- [Manage users as a Server Admin]({{< relref "server-admin-manage-users.md" >}}) - Describes user management tasks that Grafana Server Admins can perform.
+- [Manage organizations as a Server Admin]({{< relref "server-admin-manage-orgs.md" >}}) - Describes organization management tasks that Grafana Server Admins can perform.
