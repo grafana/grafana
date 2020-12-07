@@ -15,11 +15,10 @@ The highest and broadest level of user group in Grafana is the server. Every use
 
 Grafana Server Admins are user accounts that have the Grafana Admin option set to **Yes**. They can manage individual user accounts and organizations on their server.
 
-Server Admins can perform the following tasks:
+Server Admins can:
 
-LINK TO MANAGE USERS IN SERVER
-- [Add or remove a user]({{< relref "./add-or-remove-user.md" >}})
-- [Enable or disable a user]({{< relref "./enable-or-disable-user.md" >}})
+- [Manage users]({{< relref "server-admin-manage-users.md" >}})
+- [Manage organizations]({{< relref "server-admin-manage-orgs.md" >}})
 
 ## Organization
 
