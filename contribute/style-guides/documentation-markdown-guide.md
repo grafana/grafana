@@ -116,6 +116,8 @@ Build a list of points - an unordered or unnumbered list - by using "\-" (hyphen
 
 ## Images
 
+_Do not_ use image shortcodes at this time.
+
 Include images in a document using the following syntax:
 
 ```
