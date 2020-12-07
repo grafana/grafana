@@ -16,7 +16,7 @@ In order to perform any of these tasks, you must be logged in to Grafana on an a
 
 See a complete list of users with accounts on your Grafana server.
 
-{{< docs/shared "view-server-user-list" >}}
+{{< docs/list "manage-users/view-server-user-list" >}}
 
 Grafana displays all user accounts on the server, listed in alphabetical order by user name. The following information is displayed:
 - **Login -** The value in the **Username** field of the account.
@@ -32,7 +32,7 @@ Grafana displays all user accounts on the server, listed in alphabetical order b
 
 See all details associated with a specific user account.
 
-{{< docs/shared "view-server-user-list" >}}
+{{< docs/list "manage-users/view-server-user-list" >}}
 1. Click the user account you wish to view. If necessary, use the search field at the top of the tab to search for the specific user account that you need.
 
 Each user account contains the following sections.
