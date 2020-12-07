@@ -1,13 +1,14 @@
 package librarypanels
 
 import (
+	"testing"
+	"time"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestAddLibraryPanel(t *testing.T) {
