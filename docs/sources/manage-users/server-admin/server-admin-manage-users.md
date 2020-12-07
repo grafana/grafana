@@ -50,7 +50,7 @@ This section of the account contains basic user information. Users can change va
 
 ### Permissions
 
-This indicates whether the user account has the Grafana Admin flag applied or not.
+This indicates whether the user account has the Grafana Admin flag applied or not. If it is **Yes**, then the user is a Grafana Server Admin.
 
 {{< docs-imagebox img="/img/docs/manage-users/server-admin-permissions-7-3.png" max-width="1200px">}}
 
@@ -62,7 +62,7 @@ This section lists the organizations the user account belongs to and the roles t
 
 ### Sessions
 
-See recent sessions that the user was logged on, including when they logged on and information about the system the logged on with. You can force logouts from 
+See recent sessions that the user was logged on, including when they logged on and information about the system the logged on with. You can force logouts if necessary.
 
 {{< docs-imagebox img="/img/docs/manage-users/server-admin-sessions-7-3.png" max-width="1200px">}}
 
@@ -81,8 +81,9 @@ Create a new user account at the server level.
 
 The user can change all this information after they log in. For instructions, refer to [Change your information](NEED LINK) and [Change your password](NEED Link).
 
-## Edit a user account 
+## Edit a user account
 
+Change information or settings in an individual user account.
 ### Edit user information
 
 Edit information on an existing user account, including the user name, email, username, and password.
@@ -133,13 +134,49 @@ Reactivate a disabled user account.
 
 ## Add/remove Grafana Admin flag
 
+Give or remove the Grafana Server Admin role from a user account.
+
+1. [View the user account list](#view-the-user-account-list).
+1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+1. In the Permissions section, click **Change**.
+1. Click **Yes** or **No**, depending on whether or not you want this user account to have the Grafana Server Admin role.
+1. Click **Change**.
+
+The next time this user logs in, their permissions will be updated.
+
 ## Add a user to an organization
+
+Add a user account to an existing organization. User accounts can belong to multiple organizations, but each user account must belong to at least one organization.
+
+1. [View the user account list](#view-the-user-account-list).
+1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+1. In the Organisations section, click **Add user to organisation**.
+1. In the **Add to an organization** window:
+   1. Select the **Organisation** that you are adding the user to.
+   1. Select the **Role** that the user should have in the organization.
+   1. Click **Add to organisation**. 
 
 ## Remove a user from an organization
 
+Remove a user account from an organization that it is currently assigned to.
+
+1. [View the user account list](#view-the-user-account-list).
+1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+1. In the Organisations section, click **Remove from organisation** next to the organization that you want to remove the user from.
+1. Click **Confirm removal**.
+
 ## Change organization role
 
+Change the organization role assigned to a user account.
+
+1. [View the user account list](#view-the-user-account-list).
+1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+1. In the Organisations section, click **Change role** next to the organization that you want to change the user role for.
+1. Select the new role and then click **Save**.
+
 ## View user sessions
+
+
 
 ## Force user logout
 
