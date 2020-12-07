@@ -68,7 +68,9 @@ export class UPlotConfigBuilder {
     config.scales = this.scales.reduce((acc, s) => {
       return { ...acc, ...s.getConfig() };
     }, {});
-    config.cursor = this.cursor;
+    if (this.cursor) {
+      config.cursor = this.cursor;
+    }
     return config;
   }
 }
