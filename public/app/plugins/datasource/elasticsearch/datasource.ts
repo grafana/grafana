@@ -494,15 +494,15 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
       subQueries.push(
         from(this.post(this.getPPLUrl(), payload)).pipe(
           map((res: any) => {
-            const er = new ElasticResponse(targets, res, ElasticsearchQueryType.PPL);
+            const er = new ElasticResponse(target, res, ElasticsearchQueryType.PPL);
 
-            if (targets.some(target => target.isLogsQuery)) {
+            if (target.isLogsQuery) {
               const response = er.getLogs(this.logMessageField, this.logLevelField);
               for (const dataFrame of response.data) {
                 enhanceDataFrame(dataFrame, this.dataLinks);
               }
               return response;
-            } else if (targets.some(target => target.format === 'table')) {
+            } else if (target.format === 'table') {
               return er.getTable();
             }
             return er.getTimeSeries();
