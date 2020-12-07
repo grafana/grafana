@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// AnnotationCleanupService is responseible for cleaning old annotations.
+// AnnotationCleanupService is responsible for cleaning old annotations.
 type AnnotationCleanupService struct {
 	batchSize int64
 	log       log.Logger
@@ -23,7 +23,9 @@ const (
 
 // CleanAnnotations deletes old annotations created by alert rules, API
 // requests and human made in the UI. It subsequently deletes orphaned rows
-// from the annotation_tag table.
+// from the annotation_tag table. Cleanup actions are performed in batches
+// so that no query takes too long to complete.
+//
 // Returns the number of annotation and annotation_tag rows deleted. If an
 // error occurs, it returns the number of rows affected so far.
 func (acs *AnnotationCleanupService) CleanAnnotations(ctx context.Context, cfg *setting.Cfg) (int64, int64, error) {
@@ -45,8 +47,6 @@ func (acs *AnnotationCleanupService) CleanAnnotations(ctx context.Context, cfg *
 	if err != nil {
 		return totalCleanedAnnotations, 0, err
 	}
-
-	acs.log.Debug("Finished cleaning annotations. Now cleaning orphaned records from annotation_tag")
 
 	affected, err = acs.cleanOrphanedAnnotationTags(ctx)
 	return totalCleanedAnnotations, affected, err
