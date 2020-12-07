@@ -934,7 +934,7 @@ Requests per second limit enforced per an extended period, for Grafana backend l
 
 ### log_endpoint_burst_limit
 
-Maximim requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log`. Default is `15`.
+Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log`. Default is `15`.
 
 <hr>
 
