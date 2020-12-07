@@ -217,7 +217,7 @@ func (rs *RenderingService) getFilePathForNewImage() (string, error) {
 }
 
 func (rs *RenderingService) getURL(path string) string {
-	if rs.Cfg.RendererUrl != "" {
+	if rs.Cfg.RendererCallbackUrl != "" {
 		// The backend rendering service can potentially be remote.
 		// So we need to use the root_url to ensure the rendering service
 		// can reach this Grafana instance.
