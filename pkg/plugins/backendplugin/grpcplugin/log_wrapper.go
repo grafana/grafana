@@ -51,6 +51,8 @@ func (lw logWrapper) Log(level hclog.Level, msg string, args ...interface{}) {
 		lw.Warn(msg, args...)
 	case hclog.Error:
 		lw.Error(msg, args...)
+	default:
+		// TODO: Handle hclog.NoLevel
 	}
 }
 

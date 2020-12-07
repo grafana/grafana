@@ -54,6 +54,7 @@ export default class SupportedNamespaces {
       'Microsoft.Network/trafficManagerProfiles',
       'Microsoft.Network/networkWatchers/connectionMonitors',
       'Microsoft.Network/frontdoors',
+      'Microsoft.Network/natGateways',
       'Microsoft.NotificationHubs/namespaces/notificationHubs',
       'Microsoft.OperationalInsights/workspaces',
       'Microsoft.PowerBIDedicated/capacities',

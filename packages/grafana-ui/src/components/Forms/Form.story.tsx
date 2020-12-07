@@ -197,7 +197,7 @@ export const AsyncValidation = () => {
 
 const validateAsync = (shouldPass: boolean) => async () => {
   try {
-    await new Promise<ValidateResult>((resolve, reject) => {
+    await new Promise<ValidateResult | void>((resolve, reject) => {
       setTimeout(() => {
         if (shouldPass) {
           resolve();

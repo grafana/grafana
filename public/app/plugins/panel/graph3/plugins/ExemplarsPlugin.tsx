@@ -31,16 +31,18 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
 
   const mapExemplarToXYCoords = useCallback(
     (exemplar: ExemplarsDataFrameViewDTO) => {
-      if (!exemplar.time) {
+      const plotInstance = plotCtx.getPlotInstance();
+
+      if (!exemplar.time || !plotCtx.isPlotReady || !plotInstance) {
         return undefined;
       }
 
       return {
-        x: plotCtx.getPlotInstance().valToPos(exemplar.time / 1000, 'x'),
-        y: plotCtx.getPlotInstance().valToPos(exemplar.y, '__fixed'),
+        x: plotInstance.valToPos(exemplar.time, 'x'),
+        y: plotInstance.valToPos(exemplar.y, '__fixed'),
       };
     },
-    [plotCtx.getPlotInstance]
+    [plotCtx.isPlotReady, plotCtx.getPlotInstance]
   );
 
   const renderMarker = useCallback(

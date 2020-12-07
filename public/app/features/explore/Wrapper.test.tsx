@@ -28,7 +28,9 @@ type Mock = jest.Mock;
 jest.mock('react-virtualized-auto-sizer', () => {
   return {
     __esModule: true,
-    default: (props: any) => <div>{props.children({ width: 1000 })}</div>,
+    default(props: any) {
+      return <div>{props.children({ width: 1000 })}</div>;
+    },
   };
 });
 
@@ -218,10 +220,12 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
   const dsSettings = options?.datasources || defaultDatasources;
 
   setDataSourceSrv({
-    getExternal(): DataSourceInstanceSettings[] {
+    getList(): DataSourceInstanceSettings[] {
       return dsSettings.map(d => d.settings);
     },
-
+    getInstanceSettings(name: string) {
+      return dsSettings.map(d => d.settings).find(x => x.name === name);
+    },
     get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
       return Promise.resolve((name ? dsSettings.find(d => d.api.name === name) : dsSettings[0])!.api);
     },
@@ -273,11 +277,13 @@ function makeDatasourceSetup({ name = 'loki', id = 1 }: { name?: string; id?: nu
     },
     api: {
       components: {
-        QueryEditor: (props: QueryEditorProps<LokiDatasource, LokiQuery>) => (
-          <div>
-            {name} Editor input: {props.query.expr}
-          </div>
-        ),
+        QueryEditor(props: QueryEditorProps<LokiDatasource, LokiQuery>) {
+          return (
+            <div>
+              {name} Editor input: {props.query.expr}
+            </div>
+          );
+        },
       },
       name: name,
       query: jest.fn(),

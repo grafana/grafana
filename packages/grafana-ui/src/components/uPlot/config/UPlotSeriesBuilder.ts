@@ -1,40 +1,81 @@
 import tinycolor from 'tinycolor2';
-import uPlot from 'uplot';
+import uPlot, { Series } from 'uplot';
+import { DrawStyle, LineConfig, AreaConfig, PointsConfig, PointMode, LineInterpolation } from '../config';
+import { barsBuilder, smoothBuilder, stepBeforeBuilder, stepAfterBuilder } from '../paths';
 import { PlotConfigBuilder } from '../types';
 
-export interface SeriesProps {
+export interface SeriesProps extends LineConfig, AreaConfig, PointsConfig {
+  drawStyle: DrawStyle;
   scaleKey: string;
-  line?: boolean;
-  lineColor?: string;
-  lineWidth?: number;
-  points?: boolean;
-  pointSize?: number;
-  pointColor?: string;
-  fill?: boolean;
-  fillOpacity?: number;
-  fillColor?: string;
 }
 
-export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, uPlot.Series> {
+export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   getConfig() {
-    const { line, lineColor, lineWidth, points, pointColor, pointSize, fillColor, fillOpacity, scaleKey } = this.props;
+    const {
+      drawStyle,
+      lineInterpolation,
+      lineColor,
+      lineWidth,
+      points,
+      pointColor,
+      pointSize,
+      fillColor,
+      fillOpacity,
+      scaleKey,
+      spanNulls,
+    } = this.props;
 
-    const lineConfig = line
-      ? {
-          stroke: lineColor,
-          width: lineWidth,
-        }
-      : {};
+    let lineConfig: Partial<Series> = {};
 
-    const pointsConfig = points
-      ? {
-          points: {
-            show: true,
-            size: pointSize,
-            stroke: pointColor,
-          },
+    if (drawStyle === DrawStyle.Points) {
+      lineConfig.paths = () => null;
+    } else {
+      lineConfig.stroke = lineColor;
+      lineConfig.width = lineWidth;
+      lineConfig.paths = (
+        self: uPlot,
+        seriesIdx: number,
+        idx0: number,
+        idx1: number,
+        extendGap: Series.ExtendGap,
+        buildClip: Series.BuildClip
+      ) => {
+        let pathsBuilder = self.paths;
+
+        if (drawStyle === DrawStyle.Bars) {
+          pathsBuilder = barsBuilder;
+        } else if (drawStyle === DrawStyle.Line) {
+          if (lineInterpolation === LineInterpolation.StepBefore) {
+            pathsBuilder = stepBeforeBuilder;
+          } else if (lineInterpolation === LineInterpolation.StepAfter) {
+            pathsBuilder = stepAfterBuilder;
+          } else if (lineInterpolation === LineInterpolation.Smooth) {
+            pathsBuilder = smoothBuilder;
+          }
         }
-      : {};
+
+        return pathsBuilder(self, seriesIdx, idx0, idx1, extendGap, buildClip);
+      };
+    }
+
+    const pointsConfig: Partial<Series> = {
+      points: {
+        stroke: pointColor,
+        fill: pointColor,
+        size: pointSize,
+      },
+    };
+
+    // we cannot set points.show property above (even to undefined) as that will clear uPlot's default auto behavior
+    if (points === PointMode.Auto) {
+      if (drawStyle === DrawStyle.Bars) {
+        pointsConfig.points!.show = false;
+      }
+    } else if (points === PointMode.Never) {
+      pointsConfig.points!.show = false;
+    } else if (points === PointMode.Always) {
+      pointsConfig.points!.show = true;
+    }
 
     const areaConfig =
       fillOpacity !== undefined
@@ -47,6 +88,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, uPlot.Ser
 
     return {
       scale: scaleKey,
+      spanGaps: spanNulls,
       ...lineConfig,
       ...pointsConfig,
       ...areaConfig,

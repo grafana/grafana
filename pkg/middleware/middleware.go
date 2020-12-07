@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
@@ -54,10 +54,13 @@ func GetContextHandler(
 			Logger:         log.New("context"),
 		}
 
-		orgId := int64(0)
-		orgIdHeader := ctx.Req.Header.Get("X-Grafana-Org-Id")
-		if orgIdHeader != "" {
-			orgId, _ = strconv.ParseInt(orgIdHeader, 10, 64)
+		orgID := int64(0)
+		orgIDHeader := ctx.Req.Header.Get("X-Grafana-Org-Id")
+		if orgIDHeader != "" {
+			orgIDParsed, err := strconv.ParseInt(orgIDHeader, 10, 64)
+			if err == nil {
+				orgID = orgIDParsed
+			}
 		}
 
 		// the order in which these are tested are important
@@ -68,9 +71,9 @@ func GetContextHandler(
 		switch {
 		case initContextWithRenderAuth(ctx, renderService):
 		case initContextWithApiKey(ctx):
-		case initContextWithBasicAuth(ctx, orgId):
-		case initContextWithAuthProxy(remoteCache, ctx, orgId):
-		case initContextWithToken(ats, ctx, orgId):
+		case initContextWithBasicAuth(ctx, orgID):
+		case initContextWithAuthProxy(remoteCache, ctx, orgID):
+		case initContextWithToken(ats, ctx, orgID):
 		case initContextWithAnonymousUser(ctx):
 		}
 
@@ -255,7 +258,13 @@ func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.User
 			return
 		}
 
-		rotated, err := authTokenService.TryRotateToken(ctx.Req.Context(), token, ctx.RemoteAddr(), ctx.Req.UserAgent())
+		addr := ctx.RemoteAddr()
+		ip, err := network.GetIPFromAddress(addr)
+		if err != nil {
+			ctx.Logger.Debug("Failed to get client IP address", "addr", addr, "err", err)
+			ip = nil
+		}
+		rotated, err := authTokenService.TryRotateToken(ctx.Req.Context(), token, ip, ctx.Req.UserAgent())
 		if err != nil {
 			ctx.Logger.Error("Failed to rotate token", "error", err)
 			return
@@ -265,21 +274,6 @@ func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.User
 			WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetime)
 		}
 	}
-}
-
-func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetime time.Duration) {
-	if setting.Env == setting.Dev {
-		ctx.Logger.Info("New token", "unhashed token", value)
-	}
-
-	var maxAge int
-	if maxLifetime <= 0 {
-		maxAge = -1
-	} else {
-		maxAge = int(maxLifetime.Seconds())
-	}
-
-	WriteCookie(ctx.Resp, setting.LoginCookieName, url.QueryEscape(value), maxAge, newCookieOptions)
 }
 
 func AddDefaultResponseHeaders() macaron.Handler {

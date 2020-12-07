@@ -68,6 +68,7 @@ Plugin dependencies.
 | `name`       | string  | No       |             |
 | `role`       | string  | No       |             |
 | `type`       | string  | No       |             |
+| `icon`       | string  | No       |             |
 
 ## info
 
