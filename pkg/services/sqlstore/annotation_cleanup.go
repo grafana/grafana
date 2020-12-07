@@ -21,8 +21,11 @@ const (
 	apiAnnotationType       = "alert_id = 0 AND dashboard_id = 0"
 )
 
-// CleanAnnotations deletes old annotations created by
-// alert rules, API requests and human made in the UI.
+// CleanAnnotations deletes old annotations created by alert rules, API
+// requests and human made in the UI. It subsequently deletes orphaned rows
+// from the annotation_tag table.
+// Returns the number of annotation and annotation_tag rows deleted. If an
+// error occurs, it returns the number of rows affected so far.
 func (acs *AnnotationCleanupService) CleanAnnotations(ctx context.Context, cfg *setting.Cfg) (int64, int64, error) {
 	var totalCleanedAnnotations int64
 	affected, err := acs.cleanAnnotations(ctx, cfg.AlertingAnnotationCleanupSetting, alertAnnotationType)
