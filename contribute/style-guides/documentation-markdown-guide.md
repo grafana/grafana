@@ -132,10 +132,12 @@ This follows the format of "!", alt text wrapped in "[]" and the link URL wrappe
 
 You can also use HTML such as the following:
 ```
-<img src="markdownmonstericon.png"
-     alt="Markdown Monster icon"
-     style="float: left; margin-right: 10px;" />
+<img src="example.png"
+     alt="Example image"
+     style="float: left; margin-right: 5px;" />
 ```
+
+In most cases, use the markdown syntax rather than the HTML syntax. Only use the HTML if you need to change the image in ways unsupported by markdown.
 
 ## Comments
 
