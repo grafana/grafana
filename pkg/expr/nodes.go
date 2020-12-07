@@ -137,7 +137,7 @@ func (dn *DSNode) NodeType() NodeType {
 	return TypeDatasourceNode
 }
 
-func buildDSNode(dp *simple.DirectedGraph, rn *rawNode) (*DSNode, error) {
+func buildDSNode(dp *simple.DirectedGraph, rn *rawNode, orgID int64) (*DSNode, error) {
 	encodedQuery, err := json.Marshal(rn.Query)
 	if err != nil {
 		return nil, err
@@ -148,6 +148,7 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode) (*DSNode, error) {
 			id:    dp.NewNode().ID(),
 			refID: rn.RefID,
 		},
+		orgID:      orgID,
 		query:      json.RawMessage(encodedQuery),
 		queryType:  rn.QueryType,
 		intervalMS: defaultIntervalMS,
@@ -164,16 +165,6 @@ func buildDSNode(dp *simple.DirectedGraph, rn *rawNode) (*DSNode, error) {
 		return nil, fmt.Errorf("expected datasourceId to be a float64, got type %T for refId %v", rawDsID, rn.RefID)
 	}
 	dsNode.datasourceID = int64(floatDsID)
-
-	rawOrgID, ok := rn.Query["orgId"]
-	if !ok {
-		return nil, fmt.Errorf("no orgId in expression data source request command for refId %v", rn.RefID)
-	}
-	floatOrgID, ok := rawOrgID.(float64)
-	if !ok {
-		return nil, fmt.Errorf("expected orgId to be a float64, got type %T for refId %v", rawOrgID, rn.RefID)
-	}
-	dsNode.orgID = int64(floatOrgID)
 
 	var floatIntervalMS float64
 	if rawIntervalMS := rn.Query["intervalMs"]; ok {
