@@ -4,12 +4,36 @@ import (
 	"context"
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
+
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-// AddLibraryPanel function adds a LibraryPanel
-func (lps *LibraryPanelService) addLibraryPanel(cmd *addLibraryPanelCommand) error {
-	return lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+type LibraryPanelRepository interface {
+	addLibraryPanel(cmd *addLibraryPanelCommand) error
+}
+
+type SQLLibraryPanelRepository struct {
+	cfg      *setting.Cfg
+	sqlStore *sqlstore.SQLStore
+}
+
+func NewRepository(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore) LibraryPanelRepository {
+	repository := SQLLibraryPanelRepository{
+		cfg:      cfg,
+		sqlStore: sqlStore,
+	}
+
+	return &repository
+}
+
+// addLibraryPanel function adds a LibraryPanel
+func (repo *SQLLibraryPanelRepository) addLibraryPanel(cmd *addLibraryPanelCommand) error {
+	if !repo.cfg.IsPanelLibraryEnabled() {
+		return nil
+	}
+
+	return repo.sqlStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		libraryPanel := &LibraryPanel{
 			OrgId:    cmd.OrgId,
 			FolderId: cmd.FolderId,
