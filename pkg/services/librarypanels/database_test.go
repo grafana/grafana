@@ -2,6 +2,7 @@ package librarypanels
 
 import (
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
@@ -36,9 +37,29 @@ func TestAddLibraryPanel(t *testing.T) {
 }
 
 func setupTestEnv(t *testing.T, orgRole models.RoleType) (LibraryPanelService, models.SignedInUser) {
-	cfg := setting.Cfg{}
+	cfg := setting.NewCfg()
 	cfg.FeatureToggles = map[string]bool{"panelLibrary": true}
-	sqlStore := sqlstore.InitTestDBWithCfg(t, &cfg)
+
+	lps := LibraryPanelService{
+		SQLStore: nil,
+		Cfg:      cfg,
+	}
+
+	overrideServiceFunc := func(d registry.Descriptor) (*registry.Descriptor, bool) {
+		descriptor := registry.Descriptor{
+			Name:         "LibraryPanelService",
+			Instance:     &lps,
+			InitPriority: 0,
+		}
+
+		return &descriptor, true
+	}
+
+	registry.RegisterOverride(overrideServiceFunc)
+
+	sqlStore := sqlstore.InitTestDB(t)
+	lps.SQLStore = sqlStore
+
 	user := models.SignedInUser{
 		UserId:         1,
 		OrgId:          1,
@@ -55,9 +76,6 @@ func setupTestEnv(t *testing.T, orgRole models.RoleType) (LibraryPanelService, m
 		LastSeenAt:     time.Now(),
 		Teams:          nil,
 	}
-	lps := LibraryPanelService{
-		SQLStore: sqlStore,
-		Cfg:      &cfg,
-	}
+
 	return lps, user
 }

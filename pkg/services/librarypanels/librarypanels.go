@@ -25,9 +25,7 @@ func init() {
 func (lps *LibraryPanelService) Init() error {
 	lps.log = log.New("librarypanels")
 
-	if lps.IsEnabled() {
-		lps.registerAPIEndpoints()
-	}
+	lps.registerAPIEndpoints()
 
 	return nil
 }
@@ -35,7 +33,7 @@ func (lps *LibraryPanelService) Init() error {
 // IsEnabled returns true if the Panel Library feature is enabled for this instance.
 func (lps *LibraryPanelService) IsEnabled() bool {
 	if lps.Cfg == nil {
-		return true // used for test purposes only
+		return false
 	}
 
 	return lps.Cfg.IsPanelLibraryEnabled()
