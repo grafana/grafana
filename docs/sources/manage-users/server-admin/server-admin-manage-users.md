@@ -182,7 +182,8 @@ See when a user last logged in and information about how they logged in. You can
 
 1. [View the user account list](#view-the-user-account-list).
 1. Click the user account that you want to edit. If necessary, use the search field to find the account.
-1. Scroll down to the Sessions section to view sessions associated with this user account. 
+1. Scroll down to the Sessions section to view sessions associated with this user account.
+
 ## Force a user to log out of Grafana
 
 If you suspect a user account is compromised or is no longer authorized to access the Grafana server, then you can force logout the account.
