@@ -3,11 +3,13 @@ import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '../config';
+import { Cursor } from 'uplot';
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
   private axes: Record<string, UPlotAxisBuilder> = {};
   private scales: UPlotScaleBuilder[] = [];
+  private cursor: Cursor | undefined;
 
   hasLeftAxis = false;
 
@@ -41,6 +43,10 @@ export class UPlotConfigBuilder {
     return axis?.props.placement! ?? AxisPlacement.Left;
   }
 
+  setCursor(cursor?: Cursor) {
+    this.cursor = cursor;
+  }
+
   addSeries(props: SeriesProps) {
     this.series.push(new UPlotSeriesBuilder(props));
   }
@@ -62,6 +68,7 @@ export class UPlotConfigBuilder {
     config.scales = this.scales.reduce((acc, s) => {
       return { ...acc, ...s.getConfig() };
     }, {});
+    config.cursor = this.cursor;
     return config;
   }
 }

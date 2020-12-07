@@ -77,6 +77,11 @@ export class Sparkline extends PureComponent<Props, State> {
   prepareConfig = (data: DataFrame, props: Props) => {
     const { theme } = this.props;
     const builder = new UPlotConfigBuilder();
+    builder.setCursor({
+      show: true,
+      x: false, // no crosshairs
+      y: false,
+    });
 
     // X is the first field in the alligned frame
     const xField = data.fields[0];
