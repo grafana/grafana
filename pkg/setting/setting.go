@@ -334,6 +334,11 @@ func (cfg Cfg) IsNgAlertEnabled() bool {
 	return cfg.FeatureToggles["ngalert"]
 }
 
+// IsDatabaseMetricsEnabled returns whether the database instrumentation feature is enabled.
+func (cfg Cfg) IsDatabaseMetricsEnabled() bool {
+	return cfg.FeatureToggles["database_metrics"]
+}
+
 // IsHTTPRequestHistogramEnabled returns whether the http_request_histogram feature is enabled.
 func (cfg Cfg) IsHTTPRequestHistogramEnabled() bool {
 	return cfg.FeatureToggles["http_request_histogram"]
