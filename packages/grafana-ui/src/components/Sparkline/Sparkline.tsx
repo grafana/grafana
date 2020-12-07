@@ -9,7 +9,7 @@ import {
   getFieldColorModeForField,
   FieldConfig,
 } from '@grafana/data';
-import { AxisPlacement, DrawStyle, GraphFieldConfig, PointMode } from '../uPlot/config';
+import { AxisPlacement, DrawStyle, GraphFieldConfig, PointVisibility } from '../uPlot/config';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { UPlotChart } from '../uPlot/Plot';
 import { Themeable } from '../../types';
@@ -28,7 +28,7 @@ interface State {
 
 const defaultConfig: GraphFieldConfig = {
   drawStyle: DrawStyle.Line,
-  points: PointMode.Auto,
+  showPoints: PointVisibility.Auto,
   axisPlacement: AxisPlacement.Hidden,
 };
 
@@ -111,14 +111,14 @@ export class Sparkline extends PureComponent<Props, State> {
 
       const colorMode = getFieldColorModeForField(field);
       const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
-      const pointsMode = customConfig.drawStyle === DrawStyle.Points ? PointMode.Always : customConfig.points;
+      const pointsMode = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
       builder.addSeries({
         scaleKey,
         drawStyle: customConfig.drawStyle!,
         lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,
         lineInterpolation: customConfig.lineInterpolation,
-        points: pointsMode,
+        showPoints: pointsMode,
         pointSize: customConfig.pointSize,
         pointColor: customConfig.pointColor ?? seriesColor,
         fillOpacity: customConfig.fillOpacity,
@@ -137,7 +137,7 @@ export class Sparkline extends PureComponent<Props, State> {
       <UPlotChart
         data={{
           frame: data,
-          isGap: () => true,
+          isGap: () => true, // any null is a gap
         }}
         config={configBuilder}
         width={width}
