@@ -43,6 +43,8 @@ func (acs *AnnotationCleanupService) CleanAnnotations(ctx context.Context, cfg *
 		return totalCleanedAnnotations, 0, err
 	}
 
+	acs.log.Debug("Finished cleaning annotations. Now cleaning orphaned records from annotation_tag")
+
 	affected, err = acs.cleanOrphanedAnnotationTags(ctx)
 	return totalCleanedAnnotations, affected, err
 }
@@ -98,7 +100,7 @@ func (acs *AnnotationCleanupService) executeUntilDoneOrCancelled(ctx context.Con
 				return err
 			})
 			if err != nil {
-				return 0, err
+				return totalAffected, err
 			}
 
 			if affected == 0 {
