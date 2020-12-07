@@ -43,10 +43,9 @@ export class Sparkline extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(oldProps: Props) {
-    const cfgChanged = oldProps.config !== this.props.config;
-    if (oldProps.sparkline !== this.props.sparkline || cfgChanged) {
+    if (oldProps.sparkline !== this.props.sparkline) {
       const data = this.perepareData(this.props);
-      if (cfgChanged || !compareDataFrameStructures(this.state.data, data)) {
+      if (!compareDataFrameStructures(this.state.data, data)) {
         const configBuilder = this.prepareConfig(data, this.props);
         this.setState({ data, configBuilder });
       } else {
@@ -78,6 +77,7 @@ export class Sparkline extends PureComponent<Props, State> {
   prepareConfig = (data: DataFrame, props: Props) => {
     const { theme } = this.props;
     const builder = new UPlotConfigBuilder();
+    debugger;
 
     // X is the first field in the alligned frame
     const xField = data.fields[0];
@@ -90,7 +90,6 @@ export class Sparkline extends PureComponent<Props, State> {
     //   theme,
     //   placement: AxisPlacement.Hidden,
     // });
-
     for (let i = 0; i < data.fields.length; i++) {
       const field = data.fields[i];
       const config = field.config as FieldConfig<GraphFieldConfig>;
@@ -114,22 +113,19 @@ export class Sparkline extends PureComponent<Props, State> {
       const colorMode = getFieldColorModeForField(field);
       const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
       const pointsMode = customConfig.drawStyle === DrawStyle.Points ? PointMode.Always : customConfig.points;
-
       builder.addSeries({
         scaleKey,
         drawStyle: customConfig.drawStyle!,
-        lineColor: seriesColor,
+        lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,
         lineInterpolation: customConfig.lineInterpolation,
         points: pointsMode,
         pointSize: customConfig.pointSize,
-        pointColor: seriesColor,
+        pointColor: customConfig.pointColor ?? seriesColor,
         fillOpacity: customConfig.fillOpacity,
-        fillColor: seriesColor,
+        fillColor: customConfig.fillColor ?? seriesColor,
       });
     }
-
-    console.log('BUILDER', builder);
 
     return builder;
   };
