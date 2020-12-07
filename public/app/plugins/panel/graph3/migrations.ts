@@ -86,6 +86,12 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
               value: v / 10.0, // was 0-10
             });
             break;
+          case 'points':
+            rule.properties.push({
+              id: 'custom.showPoints',
+              value: v ? PointVisibility.Always : PointVisibility.Never,
+            });
+            break;
           case 'bars':
             if (v) {
               rule.properties.push({

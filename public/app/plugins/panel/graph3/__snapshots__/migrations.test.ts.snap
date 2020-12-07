@@ -6,7 +6,8 @@ Object {
     "defaults": Object {
       "custom": Object {
         "drawStyle": "bars",
-        "points": "never",
+        "fillOpacity": 1,
+        "showPoints": "never",
         "spanNulls": false,
       },
     },
@@ -35,7 +36,7 @@ Object {
         "fillOpacity": 0.5,
         "lineInterpolation": "stepAfter",
         "pointSize": 2,
-        "points": "never",
+        "showPoints": "never",
         "spanNulls": true,
       },
       "displayName": "DISPLAY NAME",
@@ -67,7 +68,7 @@ Object {
         "drawStyle": "line",
         "fillOpacity": 0.1,
         "pointSize": 2,
-        "points": "never",
+        "showPoints": "never",
         "spanNulls": true,
       },
       "decimals": 3,
