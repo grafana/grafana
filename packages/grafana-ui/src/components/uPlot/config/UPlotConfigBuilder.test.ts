@@ -3,7 +3,7 @@
 import { UPlotConfigBuilder } from './UPlotConfigBuilder';
 import { GrafanaTheme } from '@grafana/data';
 import { expect } from '../../../../../../public/test/lib/common';
-import { AxisPlacement, DrawStyle, PointMode } from '../config';
+import { AxisPlacement, DrawStyle, PointVisibility } from '../config';
 
 describe('UPlotConfigBuilder', () => {
   describe('scales config', () => {
@@ -127,7 +127,7 @@ describe('UPlotConfigBuilder', () => {
       scaleKey: 'scale-x',
       fillColor: '#ff0000',
       fillOpacity: 0.5,
-      points: PointMode.Auto,
+      showPoints: PointVisibility.Auto,
       pointSize: 5,
       pointColor: '#00ff00',
       lineColor: '#0000ff',
