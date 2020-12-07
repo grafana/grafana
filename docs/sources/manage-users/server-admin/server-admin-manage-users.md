@@ -1,6 +1,5 @@
 +++
 title = "Server Admin - Manage users"
-type = "docs"
 weight = 100
 +++
 
