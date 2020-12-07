@@ -855,7 +855,7 @@ describe('ElasticDatasource', function(this: any) {
 
   describe('PPL Queries', () => {
     const defaultPPLQuery =
-      "source=`test` | where `@time` > timestamp('2015-05-30 10:00:00') and `@time` < timestamp('2015-06-01 10:00:00')";
+      "source=`test` | where `@time` >= timestamp('2015-05-30 10:00:00') and `@time` <= timestamp('2015-06-01 10:00:00')";
 
     function setup(targets: ElasticsearchQuery[]) {
       createDatasource({

@@ -457,7 +457,7 @@ export class ElasticQueryBuilder {
       queryString = this.addPPLAdhocFilters(queryString, adhocFilters);
     }
 
-    const timeRangeFilter = " where $timestamp > timestamp('$timeFrom') and $timestamp < timestamp('$timeTo')";
+    const timeRangeFilter = " where $timestamp >= timestamp('$timeFrom') and $timestamp <= timestamp('$timeTo')";
     //time range filter must be placed before other query filters
     if (queryString) {
       const separatorIndex = queryString.indexOf('|');
