@@ -9,7 +9,7 @@ import {
   DynamicConfigValue,
 } from '@grafana/data';
 import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
-import { AxisPlacement, DrawStyle, LineInterpolation, PointMode } from '@grafana/ui/src/components/uPlot/config';
+import { AxisPlacement, DrawStyle, LineInterpolation, PointVisibility } from '@grafana/ui/src/components/uPlot/config';
 import { Options } from './types';
 import omitBy from 'lodash/omitBy';
 import isNil from 'lodash/isNil';
@@ -111,10 +111,14 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   const graph = y1.custom ?? ({} as GraphFieldConfig);
   graph.drawStyle = angular.bars ? DrawStyle.Bars : angular.lines ? DrawStyle.Line : DrawStyle.Points;
   if (angular.points) {
-    graph.points = PointMode.Always;
+    graph.showPoints = PointVisibility.Always;
   } else if (graph.drawStyle !== DrawStyle.Points) {
-    graph.points = PointMode.Never;
+    graph.showPoints = PointVisibility.Never;
   }
+  if (graph.drawStyle === DrawStyle.Bars) {
+    graph.fillOpacity = 1.0; // bars were always
+  }
+
   graph.lineWidth = angular.lineWidth;
   graph.pointSize = angular.pointradius;
   if (isNumber(angular.fill)) {
