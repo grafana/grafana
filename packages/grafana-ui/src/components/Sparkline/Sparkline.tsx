@@ -82,13 +82,24 @@ export class Sparkline extends PureComponent<Props, State> {
     const xField = data.fields[0];
     builder.addScale({
       scaleKey: 'x',
-      isTime: xField.type === FieldType.time,
+      isTime: false, //xField.type === FieldType.time,
+      range: () => {
+        const { sparkline } = this.props;
+        if (sparkline.x) {
+          if (sparkline.timeRange && sparkline.x.type === FieldType.time) {
+            return [sparkline.timeRange.from.valueOf(), sparkline.timeRange.to.valueOf()];
+          }
+          const vals = sparkline.x.values;
+          return [vals.get(0), vals.get(vals.length - 1)];
+        }
+        return [0, sparkline.y.values.length - 1];
+      },
     });
-    // builder.addAxis({
-    //   scaleKey: 'x',
-    //   theme,
-    //   placement: AxisPlacement.Hidden,
-    // });
+    builder.addAxis({
+      scaleKey: 'x',
+      theme,
+      placement: AxisPlacement.Hidden,
+    });
     for (let i = 0; i < data.fields.length; i++) {
       const field = data.fields[i];
       const config = field.config as FieldConfig<GraphFieldConfig>;
@@ -103,11 +114,11 @@ export class Sparkline extends PureComponent<Props, State> {
 
       const scaleKey = config.unit || '__fixed';
       builder.addScale({ scaleKey, min: field.config.min, max: field.config.max });
-      // builder.addAxis({
-      //   scaleKey,
-      //   theme,
-      //   placement: AxisPlacement.Hidden,
-      // });
+      builder.addAxis({
+        scaleKey,
+        theme,
+        placement: AxisPlacement.Hidden,
+      });
 
       const colorMode = getFieldColorModeForField(field);
       const seriesColor = colorMode.getCalculator(field, theme)(0, 0);

@@ -28,6 +28,11 @@ export class UPlotConfigBuilder {
       this.hasLeftAxis = true;
     }
 
+    if (props.placement === AxisPlacement.Hidden) {
+      props.show = false;
+      props.size = 0;
+    }
+
     this.axes[props.scaleKey] = new UPlotAxisBuilder(props);
   }
 
@@ -57,7 +62,6 @@ export class UPlotConfigBuilder {
     config.scales = this.scales.reduce((acc, s) => {
       return { ...acc, ...s.getConfig() };
     }, {});
-
     return config;
   }
 }
