@@ -34,8 +34,10 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
   };
 
   const onServerNameLabelChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
-    const newJsonData = { ...dataSourceConfig.jsonData };
-    newJsonData['serverName'] = event.currentTarget.value;
+    const newJsonData = {
+      ...dataSourceConfig.jsonData,
+      serverName: event.currentTarget.value,
+    };
 
     onChange({
       ...dataSourceConfig,
@@ -81,7 +83,7 @@ export const TLSAuthSettings: React.FC<HttpSettingsBaseProps> = ({ dataSourceCon
               <FormField
                 label="ServerName"
                 labelWidth={7}
-                inputWidth={14}
+                inputWidth={30}
                 placeholder="domain.example.com"
                 value={hasServerName && dataSourceConfig.jsonData.serverName}
                 onChange={onServerNameLabelChange}
