@@ -64,6 +64,18 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           showIf: c => c.drawStyle !== DrawStyle.Points,
         })
         .addRadio({
+          path: 'spanNulls',
+          name: 'Null values',
+          defaultValue: false,
+          settings: {
+            options: [
+              { label: 'Gaps', value: false },
+              { label: 'Connected', value: true },
+            ],
+          },
+          showIf: c => c.drawStyle === DrawStyle.Line,
+        })
+        .addRadio({
           path: 'showPoints',
           name: 'Show points',
           defaultValue: graphFieldOptions.showPoints[0].value,
@@ -81,17 +93,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             step: 1,
           },
           showIf: c => c.showPoints !== PointVisibility.Never,
-        })
-        .addRadio({
-          path: 'spanNulls',
-          name: 'Null values',
-          defaultValue: false,
-          settings: {
-            options: [
-              { label: 'Gaps', value: false },
-              { label: 'Connected', value: true },
-            ],
-          },
         })
         .addRadio({
           path: 'axisPlacement',

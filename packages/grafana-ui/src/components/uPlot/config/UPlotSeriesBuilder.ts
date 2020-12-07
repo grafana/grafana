@@ -22,6 +22,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       fillColor,
       fillOpacity,
       scaleKey,
+      spanNulls,
     } = this.props;
 
     let lineConfig: Partial<Series> = {};
@@ -87,6 +88,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     return {
       scale: scaleKey,
+      spanGaps: spanNulls,
       ...lineConfig,
       ...pointsConfig,
       ...areaConfig,
