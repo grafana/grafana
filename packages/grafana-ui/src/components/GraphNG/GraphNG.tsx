@@ -147,6 +147,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         pointColor: seriesColor,
         fillOpacity: customConfig.fillOpacity,
         fillColor: seriesColor,
+        spanNulls: customConfig.spanNulls || false,
       });
 
       if (hasLegend.current) {

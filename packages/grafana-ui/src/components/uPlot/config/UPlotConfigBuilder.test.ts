@@ -130,6 +130,7 @@ describe('UPlotConfigBuilder', () => {
       pointColor: '#00ff00',
       lineColor: '#0000ff',
       lineWidth: 1,
+      spanNulls: false,
     });
 
     expect(builder.getConfig()).toMatchInlineSnapshot(`
@@ -147,6 +148,7 @@ describe('UPlotConfigBuilder', () => {
               "stroke": "#00ff00",
             },
             "scale": "scale-x",
+            "spanGaps": false,
             "stroke": "#0000ff",
             "width": 1,
           },
