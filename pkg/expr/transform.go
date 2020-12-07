@@ -154,7 +154,7 @@ func QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.Que
 		}
 		queries[i] = &tsdb.Query{
 			RefId:         query.RefID,
-			IntervalMs:    query.Interval.Microseconds(),
+			IntervalMs:    query.Interval.Milliseconds(),
 			MaxDataPoints: query.MaxDataPoints,
 			QueryType:     query.QueryType,
 			DataSource:    getDsInfo.Result,
