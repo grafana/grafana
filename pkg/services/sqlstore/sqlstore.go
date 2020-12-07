@@ -346,6 +346,15 @@ var testSQLStore *SQLStore
 
 // InitTestDB initializes the test DB.
 func InitTestDB(t ITestDB) *SQLStore {
+	return initTestDB(t, nil)
+}
+
+// InitTestDBWithCfg initializes the test DB with Cfg.
+func InitTestDBWithCfg(t ITestDB, cfg *setting.Cfg) *SQLStore {
+	return initTestDB(t, nil)
+}
+
+func initTestDB(t ITestDB, cfg *setting.Cfg) *SQLStore {
 	t.Helper()
 	if testSQLStore == nil {
 		testSQLStore = &SQLStore{}
@@ -362,7 +371,14 @@ func InitTestDB(t ITestDB) *SQLStore {
 		}
 
 		// set test db config
-		testSQLStore.Cfg = setting.NewCfg()
+		if cfg == nil {
+			testSQLStore.Cfg = setting.NewCfg()
+		}
+
+		if cfg != nil {
+			testSQLStore.Cfg = cfg
+		}
+
 		sec, err := testSQLStore.Cfg.Raw.NewSection("database")
 		if err != nil {
 			t.Fatalf("Failed to create section: %s", err)

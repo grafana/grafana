@@ -20,6 +20,11 @@ export async function getVariableQueryEditor<
   datasource: DataSourceApi<TQuery, TOptions>,
   importDataSourcePluginFunc = importDataSourcePlugin
 ): Promise<VariableQueryEditorType> {
+  if (hasLegacyVariableSupport(datasource)) {
+    const dsPlugin = await importDataSourcePluginFunc(datasource.meta!);
+    return dsPlugin.components.VariableQueryEditor ?? LegacyVariableQueryEditor;
+  }
+
   if (hasCustomVariableSupport(datasource)) {
     return datasource.variables.editor;
   }
@@ -36,11 +41,6 @@ export async function getVariableQueryEditor<
 
   if (hasStandardVariableSupport(datasource)) {
     return StandardVariableQueryEditor;
-  }
-
-  if (hasLegacyVariableSupport(datasource)) {
-    const dsPlugin = await importDataSourcePluginFunc(datasource.meta!);
-    return dsPlugin.components.VariableQueryEditor ?? LegacyVariableQueryEditor;
   }
 
   return null;
