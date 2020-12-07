@@ -259,7 +259,7 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
     return this.streams.getStream(liveTarget).pipe(
       map(data => ({
-        data,
+        data: data || [],
         key: `loki-${liveTarget.refId}`,
         state: LoadingState.Streaming,
       }))
