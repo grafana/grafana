@@ -11,50 +11,64 @@ export enum AxisPlacement {
 
 export enum PointMode {
   Auto = 'auto', // will show points when the density is low or line is hidden
-  Always = 'always',
   Never = 'never',
+  Always = 'always',
 }
 
 export enum GraphMode {
   Line = 'line', // default
-  Bar = 'bar', // will also have a gap percent
+  Bars = 'bars', // will also have a gap percent
   Points = 'points', // Only show points
 }
 
 export enum LineInterpolation {
   Linear = 'linear',
-  Staircase = 'staircase', // https://leeoniya.github.io/uPlot/demos/line-stepped.html
-  Smooth = 'smooth', // https://leeoniya.github.io/uPlot/demos/line-smoothing.html
+  Smooth = 'smooth',
+  StepBefore = 'stepBefore',
+  StepAfter = 'stepAfter',
 }
 
-export interface GraphFieldConfig {
-  mode: GraphMode;
+export interface LineConfig {
+  lineColor?: string;
+  lineWidth?: number;
+  lineInterpolation?: LineInterpolation;
+}
 
-  lineMode?: LineInterpolation;
-  lineWidth?: number; // pixels
-  fillAlpha?: number; // 0-1
+export interface AreaConfig {
+  fillColor?: string;
+  fillOpacity?: number;
+}
 
+export interface PointsConfig {
   points?: PointMode;
-  pointRadius?: number; // pixels
-  symbol?: string; // eventually dot,star, etc
+  pointSize?: number;
+  pointColor?: string;
+  pointSymbol?: string; // eventually dot,star, etc
+}
 
-  // Axis is actually unique based on the unit... not each field!
+// Axis is actually unique based on the unit... not each field!
+export interface AxisConfig {
   axisPlacement?: AxisPlacement;
   axisLabel?: string;
   axisWidth?: number; // pixels ideally auto?
 }
 
+export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, AxisConfig {
+  mode?: GraphMode;
+}
+
 export const graphFieldOptions = {
   mode: [
     { label: 'Lines', value: GraphMode.Line },
-    { label: 'Bars', value: GraphMode.Bar },
+    { label: 'Bars', value: GraphMode.Bars },
     { label: 'Points', value: GraphMode.Points },
   ] as Array<SelectableValue<GraphMode>>,
 
-  lineMode: [
+  lineInterpolation: [
     { label: 'Linear', value: LineInterpolation.Linear },
-    { label: 'Staircase', value: LineInterpolation.Staircase },
     { label: 'Smooth', value: LineInterpolation.Smooth },
+    { label: 'Step Before', value: LineInterpolation.StepBefore },
+    { label: 'Step After', value: LineInterpolation.StepAfter },
   ] as Array<SelectableValue<LineInterpolation>>,
 
   points: [

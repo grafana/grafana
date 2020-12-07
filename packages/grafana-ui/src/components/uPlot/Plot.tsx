@@ -23,10 +23,6 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     props.config
   );
   const getPlotInstance = useCallback(() => {
-    if (!plotInstance.current) {
-      throw new Error("Plot hasn't initialised yet");
-    }
-
     return plotInstance.current;
   }, []);
 
@@ -72,13 +68,15 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 
   // Memoize plot context
   const plotCtx = useMemo(() => {
-    return buildPlotContext(Boolean(plotInstance.current), canvasRef, props.data, registerPlugin, getPlotInstance);
+    return buildPlotContext(canvasRef, props.data, registerPlugin, getPlotInstance);
   }, [plotInstance, canvasRef, props.data, registerPlugin, getPlotInstance]);
 
   return (
     <PlotContext.Provider value={plotCtx}>
-      <div ref={plotCtx.canvasRef} data-testid="uplot-main-div" />
-      {props.children}
+      <div style={{ position: 'relative' }}>
+        <div ref={plotCtx.canvasRef} data-testid="uplot-main-div" />
+        {props.children}
+      </div>
     </PlotContext.Provider>
   );
 };

@@ -9,12 +9,12 @@ export abstract class GrafanaLiveScope {
   /**
    * Load the real namespaces
    */
-  abstract async getChannelSupport(namespace: string): Promise<LiveChannelSupport | undefined>;
+  abstract getChannelSupport(namespace: string): Promise<LiveChannelSupport | undefined>;
 
   /**
    * List the possible values within this scope
    */
-  abstract async listNamespaces(): Promise<Array<SelectableValue<string>>>;
+  abstract listNamespaces(): Promise<Array<SelectableValue<string>>>;
 }
 
 export interface CoreGrafanaLiveFeature {

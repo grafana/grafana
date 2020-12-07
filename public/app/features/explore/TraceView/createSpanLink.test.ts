@@ -13,14 +13,8 @@ describe('createSpanLinkFactory', () => {
 
   it('returns undefined if there is no loki data source', () => {
     setDataSourceSrv({
-      getExternal() {
-        return [
-          {
-            meta: {
-              id: 'not loki',
-            },
-          } as DataSourceInstanceSettings,
-        ];
+      getList() {
+        return [];
       },
     } as any);
     const splitOpenFn = jest.fn();
@@ -30,7 +24,7 @@ describe('createSpanLinkFactory', () => {
 
   it('creates correct link', () => {
     setDataSourceSrv({
-      getExternal() {
+      getList() {
         return [
           {
             name: 'loki1',
