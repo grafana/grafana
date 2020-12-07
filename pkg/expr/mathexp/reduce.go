@@ -35,7 +35,7 @@ func Min(fv *data.Field) *float64 {
 	}
 	for i := 0; i < fv.Len(); i++ {
 		if v, ok := fv.At(i).(*float64); ok {
-			if v == nil {
+			if v == nil || math.IsNaN(*v) {
 				nan := math.NaN()
 				return &nan
 			}
@@ -55,7 +55,7 @@ func Max(fv *data.Field) *float64 {
 	}
 	for i := 0; i < fv.Len(); i++ {
 		if v, ok := fv.At(i).(*float64); ok {
-			if v == nil {
+			if v == nil || math.IsNaN(*v) {
 				nan := math.NaN()
 				return &nan
 			}
