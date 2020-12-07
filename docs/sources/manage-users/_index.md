@@ -7,7 +7,7 @@ weight = 50
 
 Grafana offers several options for grouping users. Each level has different tools for managing user accounts and different tasks that they can perform.
 
-One of the most important user management tasks is assigning roles, which govern what [permissions]({{< relref "../permissions/_index.md" >}}) a user has. The correct permissions ensure that users only have access to the resources they need.
+One of the most important user management tasks is assigning roles, which govern what [permissions]({{< relref "../permissions/_index.md" >}}) a user has. The correct permissions ensure that users only have access to only the resources they need.
 
 ## Server
 
@@ -30,28 +30,15 @@ Members of organizations have permissions based on their _role_ in the organizat
 
 Organization Admins are user accounts that are assigned the Admin role for an organization. They can manage their users and teams in their organization.
 
-Organization Admins can perform the following tasks:
-
-LINK TO ORG MANAGE USER TASKS
-
 ## Teams
 
 Teams are groups of users that are all members of the same organization. Teams allow you to grant permissions for a group of users. Teams are most often used to manage [permissions for folders and dashboards]({{< relref "../permissions/dashboard_folder_permissions.md" >}}). Enterprise users might use them to apply [data source permissions]({{< relref "../enterprise/datasource_permissions.md" >}}).
 
-Teams are mostly managed by Organization Admins, but if the Grafana server setting [editors_can_admin]({{< relref "../administration/configuration.md#editors_can_admin" >}}) is applied, then users assigned the Team Admin role can manage teams in their organization and users assigned to their teams as well.
-
-Organization Admins and Team Admins can perform the following tasks:
-
-- [Create or remove a team]({{< relref "./create-or-remove-team.md" >}})
-- [Add or remove a user from a team]({{< relref "./add-or-remove-user-from-team.md" >}})
-- FINISH LIST
+Teams are mostly managed by Organization Admins, but if the Grafana server setting [editors_can_admin]({{< relref "../administration/configuration.md#editors_can_admin" >}}) is applied, then users assigned the Team Admin role can also manage teams in their organization and users assigned to their teams.
 
 ## Users
 
-Users are named accounts in Grafana that can be granted permissions to access resources throughout Grafana. All users can manage their own user accounts to a certain extent.
-
-All users can perform the following tasks:
-- LIST TASKS
+Users are named accounts in Grafana with granted permissions to access resources throughout Grafana. All users can manage their own user accounts to a certain extent.
 
 ## Learn more
 
