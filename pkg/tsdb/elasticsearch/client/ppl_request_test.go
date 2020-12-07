@@ -38,7 +38,7 @@ func TestPPLRequest(t *testing.T) {
 
 					Convey("Should have query string filter", func() {
 						f := pr.Query
-						So(f, ShouldEqual, "source = default_index | where `@timestamp` > timestamp('$timeFrom') and `@timestamp` < timestamp('$timeTo')")
+						So(f, ShouldEqual, "source = default_index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo')")
 					})
 
 					Convey("When marshal to JSON should generate correct json", func() {
@@ -46,7 +46,7 @@ func TestPPLRequest(t *testing.T) {
 						So(err, ShouldBeNil)
 						json, err := simplejson.NewJson(body)
 						So(err, ShouldBeNil)
-						So(json.Get("query").Interface(), ShouldEqual, "source = default_index | where `@timestamp` > timestamp('$timeFrom') and `@timestamp` < timestamp('$timeTo')")
+						So(json.Get("query").Interface(), ShouldEqual, "source = default_index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo')")
 					})
 				})
 			})
@@ -59,7 +59,7 @@ func TestPPLRequest(t *testing.T) {
 
 					Convey("Should have query string filter", func() {
 						f := pr.Query
-						So(f, ShouldEqual, "source = index | where `@timestamp` > timestamp('$timeFrom') and `@timestamp` < timestamp('$timeTo') | fields test")
+						So(f, ShouldEqual, "source = index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo') | fields test")
 					})
 
 					Convey("When marshal to JSON should generate correct json", func() {
@@ -67,7 +67,7 @@ func TestPPLRequest(t *testing.T) {
 						So(err, ShouldBeNil)
 						json, err := simplejson.NewJson(body)
 						So(err, ShouldBeNil)
-						So(json.Get("query").Interface(), ShouldEqual, "source = index | where `@timestamp` > timestamp('$timeFrom') and `@timestamp` < timestamp('$timeTo') | fields test")
+						So(json.Get("query").Interface(), ShouldEqual, "source = index | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo') | fields test")
 					})
 				})
 			})

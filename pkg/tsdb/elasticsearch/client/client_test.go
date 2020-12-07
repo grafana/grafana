@@ -405,7 +405,7 @@ func TestClient(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					Convey("and replace index pattern with wildcard", func() {
-						So(jBody.Get("query").MustString(), ShouldEqual, "source = metrics-* | where `@timestamp` > timestamp('$timeFrom') and `@timestamp` < timestamp('$timeTo')")
+						So(jBody.Get("query").MustString(), ShouldEqual, "source = metrics-* | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo')")
 
 					})
 				})
