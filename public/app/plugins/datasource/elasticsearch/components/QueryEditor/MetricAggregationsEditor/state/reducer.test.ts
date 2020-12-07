@@ -13,6 +13,7 @@ import {
 import { Derivative, ExtendedStats, MetricAggregation } from '../aggregations';
 import { defaultMetricAgg } from '../../../../query_def';
 import { metricAggregationConfig } from '../utils';
+import { initQuery } from '../../state';
 
 describe('Metric Aggregations Reducer', () => {
   it('should correctly add new aggregations', () => {
@@ -218,5 +219,12 @@ describe('Metric Aggregations Reducer', () => {
       .givenReducer(reducer, initialState)
       .whenActionIsDispatched({ type: 'THIS ACTION SHOULD NOT HAVE ANY EFFECT IN THIS REDUCER' })
       .thenStateShouldEqual(initialState);
+  });
+
+  it('Should correctly initialize first Metric Aggregation', () => {
+    reducerTester()
+      .givenReducer(reducer, [])
+      .whenActionIsDispatched(initQuery())
+      .thenStateShouldEqual([defaultMetricAgg('1')]);
   });
 });
