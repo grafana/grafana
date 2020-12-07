@@ -539,6 +539,8 @@ export class ElasticResponse {
   ): DataQueryResponse {
     const dataFrame: DataFrame[] = [];
 
+    // Each target is inputted separately from Elasticdatasource for PPL
+    const target = this.targets;
     //map the schema into an array of string containing its name
     const schema = this.response.schema.map((a: { name: any }) => a.name);
     //combine the schema key and response value
@@ -553,7 +555,7 @@ export class ElasticResponse {
     if (response.length > 0) {
       let series = createEmptyDataFrame(
         flattenSchema,
-        this.targets[0].timeField,
+        target.timeField,
         isLogsRequest,
         this.targetType,
         logMessageField,
@@ -571,11 +573,10 @@ export class ElasticResponse {
       if (isLogsRequest) {
         series = addPreferredVisualisationType(series, 'logs');
       }
-      const target = this.targets[0];
       series.refId = target.refId;
       dataFrame.push(series);
     }
-    return { data: dataFrame, key: this.targets[0]?.refId };
+    return { data: dataFrame, key: target?.refId };
   }
 }
 
