@@ -2,8 +2,8 @@ import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/dat
 import { LegendDisplayMode } from '@grafana/ui';
 import {
   GraphFieldConfig,
-  PointMode,
-  GraphMode,
+  PointVisibility,
+  DrawStyle,
   AxisPlacement,
   graphFieldOptions,
 } from '@grafana/ui/src/components/uPlot/config';
@@ -25,11 +25,11 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
     useCustomConfig: builder => {
       builder
         .addRadio({
-          path: 'mode',
-          name: 'Display',
-          defaultValue: graphFieldOptions.mode[0].value,
+          path: 'drawStyle',
+          name: 'Style',
+          defaultValue: graphFieldOptions.drawStyle[0].value,
           settings: {
-            options: graphFieldOptions.mode,
+            options: graphFieldOptions.drawStyle,
           },
         })
         .addRadio({
@@ -39,7 +39,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           settings: {
             options: graphFieldOptions.lineInterpolation,
           },
-          showIf: c => c.mode === GraphMode.Line,
+          showIf: c => c.drawStyle === DrawStyle.Line,
         })
         .addSliderInput({
           path: 'lineWidth',
@@ -50,7 +50,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             max: 10,
             step: 1,
           },
-          showIf: c => c.mode !== GraphMode.Points,
+          showIf: c => c.drawStyle !== DrawStyle.Points,
         })
         .addSliderInput({
           path: 'fillOpacity',
@@ -61,14 +61,26 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             max: 1,
             step: 0.1,
           },
-          showIf: c => c.mode !== GraphMode.Points,
+          showIf: c => c.drawStyle !== DrawStyle.Points,
         })
         .addRadio({
-          path: 'points',
-          name: 'Points',
-          defaultValue: graphFieldOptions.points[0].value,
+          path: 'spanNulls',
+          name: 'Null values',
+          defaultValue: false,
           settings: {
-            options: graphFieldOptions.points,
+            options: [
+              { label: 'Gaps', value: false },
+              { label: 'Connected', value: true },
+            ],
+          },
+          showIf: c => c.drawStyle === DrawStyle.Line,
+        })
+        .addRadio({
+          path: 'showPoints',
+          name: 'Show points',
+          defaultValue: graphFieldOptions.showPoints[0].value,
+          settings: {
+            options: graphFieldOptions.showPoints,
           },
         })
         .addSliderInput({
@@ -80,7 +92,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             max: 10,
             step: 1,
           },
-          showIf: c => c.points !== PointMode.Never,
+          showIf: c => c.showPoints !== PointVisibility.Never,
         })
         .addRadio({
           path: 'axisPlacement',
