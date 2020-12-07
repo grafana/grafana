@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useContext } from 'react';
+import React, { useContext } from 'react';
 import { LegendProps, LegendItem, LegendDisplayMode } from '../Legend/Legend';
 import { GraphLegendListItem, GraphLegendTableRow } from './GraphLegendItem';
 import { SeriesColorChangeHandler, SeriesAxisToggleHandler } from './GraphWithLegend';
@@ -9,17 +9,17 @@ import sortBy from 'lodash/sortBy';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { css } from 'emotion';
 
-export interface GraphLegendProps<T extends LegendItem> extends LegendProps<T> {
+export interface GraphLegendProps extends LegendProps {
   displayMode: LegendDisplayMode;
   sortBy?: string;
   sortDesc?: boolean;
   onSeriesColorChange?: SeriesColorChangeHandler;
   onSeriesAxisToggle?: SeriesAxisToggleHandler;
   onToggleSort?: (sortBy: string) => void;
-  onLabelClick?: (item: T, event: React.MouseEvent<HTMLElement>) => void;
+  onLabelClick?: (item: LegendItem, event: React.MouseEvent<HTMLElement>) => void;
 }
 
-export function GraphLegend<T extends LegendItem = LegendItem>({
+export const GraphLegend: React.FunctionComponent<GraphLegendProps> = ({
   items,
   displayMode,
   sortBy: sortKey,
@@ -29,7 +29,7 @@ export function GraphLegend<T extends LegendItem = LegendItem>({
   placement,
   className,
   ...graphLegendItemProps
-}: PropsWithChildren<GraphLegendProps<T>>) {
+}) => {
   const theme = useContext(ThemeContext);
 
   if (displayMode === LegendDisplayMode.Table) {
@@ -111,6 +111,6 @@ export function GraphLegend<T extends LegendItem = LegendItem>({
       )}
     />
   );
-}
+};
 
 GraphLegend.displayName = 'GraphLegend';

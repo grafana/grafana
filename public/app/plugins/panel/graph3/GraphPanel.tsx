@@ -1,10 +1,9 @@
-import React from 'react';
-import { ContextMenuPlugin, TooltipPlugin, ZoomPlugin, GraphNG } from '@grafana/ui';
-import { FieldMatcherID, PanelProps } from '@grafana/data';
+import React, { useCallback } from 'react';
+import { ContextMenuPlugin, TooltipPlugin, ZoomPlugin, GraphNG, GraphNGLegendEvent } from '@grafana/ui';
+import { FieldMatcherID, getFieldDisplayName, PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
-import { GraphNGLegendItem } from '@grafana/ui/src/components/GraphNG/GraphNG';
 
 interface GraphPanelProps extends PanelProps<Options> {}
 
@@ -19,6 +18,37 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
   onChangeTimeRange,
   onFieldConfigChange,
 }) => {
+  const onLegendClick = useCallback(
+    (event: GraphNGLegendEvent) => {
+      const { field, frame, data } = event;
+      const displayName = getFieldDisplayName(field, frame, data);
+
+      onFieldConfigChange({
+        ...fieldConfig,
+        overrides: [
+          ...fieldConfig.overrides,
+          {
+            matcher: {
+              id: FieldMatcherID.byRegexp,
+              options: `^(?!${displayName}$).*$`,
+            },
+            properties: [
+              {
+                id: 'custom.seriesConfig',
+                value: {
+                  displayInGraph: false,
+                  displayInLegend: true,
+                  displayInTooltip: true,
+                },
+              },
+            ],
+          },
+        ],
+      });
+    },
+    [fieldConfig, onFieldConfigChange]
+  );
+
   return (
     <GraphNG
       data={data.series}
@@ -27,30 +57,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
       width={width}
       height={height}
       legend={options.legend}
-      onLegendClick={(legend: GraphNGLegendItem) => {
-        onFieldConfigChange({
-          ...fieldConfig,
-          overrides: [
-            ...fieldConfig.overrides,
-            {
-              matcher: {
-                id: FieldMatcherID.byRegexp,
-                options: `^(?!${legend.label}$).*$`,
-              },
-              properties: [
-                {
-                  id: 'custom.seriesConfig',
-                  value: {
-                    displayInGraph: false,
-                    displayInLegend: true,
-                    displayInTooltip: true,
-                  },
-                },
-              ],
-            },
-          ],
-        });
-      }}
+      onLegendClick={onLegendClick}
     >
       <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
       <ZoomPlugin onZoom={onChangeTimeRange} />

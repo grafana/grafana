@@ -30,7 +30,13 @@ export abstract class PlotConfigBuilder<P, T> {
   abstract getConfig(): T;
 }
 
+export interface FieldIndexRef {
+  frameIndex: number;
+  fieldIndex: number;
+}
+
 export interface AlignedFrameWithGapTest {
   frame: DataFrame;
   isGap: Series.isGap;
+  getOriginalIndex: (yDim: number) => FieldIndexRef | undefined;
 }

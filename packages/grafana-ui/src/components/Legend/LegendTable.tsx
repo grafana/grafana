@@ -1,17 +1,17 @@
-import React, { PropsWithChildren, useContext } from 'react';
+import React, { useContext } from 'react';
 import { css, cx } from 'emotion';
-import { LegendComponentProps, LegendItem } from './Legend';
+import { LegendComponentProps } from './Legend';
 import { Icon } from '../Icon/Icon';
 import { ThemeContext } from '../../themes/ThemeContext';
 
-export interface LegendTableProps<T extends LegendItem> extends LegendComponentProps<T> {
+export interface LegendTableProps extends LegendComponentProps {
   columns: string[];
   sortBy?: string;
   sortDesc?: boolean;
   onToggleSort?: (sortBy: string) => void;
 }
 
-export function LegendTable<T extends LegendItem>({
+export const LegendTable: React.FunctionComponent<LegendTableProps> = ({
   items,
   columns,
   sortBy,
@@ -19,7 +19,7 @@ export function LegendTable<T extends LegendItem>({
   itemRenderer,
   className,
   onToggleSort,
-}: PropsWithChildren<LegendTableProps<T>>) {
+}) => {
   const theme = useContext(ThemeContext);
 
   return (
@@ -79,4 +79,4 @@ export function LegendTable<T extends LegendItem>({
       </tbody>
     </table>
   );
-}
+};

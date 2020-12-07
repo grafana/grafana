@@ -7,7 +7,7 @@ import {
   fieldMatchers,
   FieldMatcherID,
 } from '@grafana/data';
-import { AlignedFrameWithGapTest } from '../uPlot/types';
+import { AlignedFrameWithGapTest, FieldIndexRef } from '../uPlot/types';
 import uPlot, { AlignedData, AlignedDataWithGapTest } from 'uplot';
 import { XYFieldMatchers } from './GraphNG';
 
@@ -43,6 +43,7 @@ export function mapDimesions(match: XYFieldMatchers, frame: DataFrame, frames?: 
 export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): AlignedFrameWithGapTest | null {
   const valuesFromFrames: AlignedData[] = [];
   const sourceFields: Field[] = [];
+  const alignedToOriginal: Record<number, FieldIndexRef> = {};
 
   // Default to timeseries config
   if (!fields) {
@@ -52,7 +53,8 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     };
   }
 
-  for (const frame of frames) {
+  for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
+    const frame = frames[frameIndex];
     const dims = mapDimesions(fields, frame, frames);
     if (!(dims.x.length && dims.y.length)) {
       continue; // both x and y matched something!
@@ -72,18 +74,20 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     ];
 
     // Add the Y values
-    for (const field of dims.y) {
+    for (let fieldIndex = 0; fieldIndex < dims.y.length; fieldIndex++) {
+      const field = dims.y[fieldIndex];
       let values = field.values.toArray();
       if (field.config.nullValueMode === NullValueMode.AsZero) {
         values = values.map(v => (v === null ? 0 : v));
       }
+
+      alignedToOriginal[alignedData.length] = { fieldIndex, frameIndex };
       alignedData.push(values);
 
       // This will cache an appropriate field name in the field state
       getFieldDisplayName(field, frame, frames);
       sourceFields.push(field);
     }
-
     valuesFromFrames.push(alignedData);
   }
 
@@ -108,6 +112,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       })),
     },
     isGap,
+    getOriginalIndex: (yDim: number) => alignedToOriginal[yDim],
   };
 }
 

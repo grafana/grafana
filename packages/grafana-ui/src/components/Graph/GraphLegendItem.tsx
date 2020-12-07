@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useContext } from 'react';
+import React, { useContext } from 'react';
 import { css, cx } from 'emotion';
 import { LegendSeriesIcon } from '../Legend/LegendSeriesIcon';
 import { LegendItem } from '../Legend/Legend';
@@ -8,21 +8,21 @@ import { ThemeContext } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes';
 import { GrafanaTheme, formattedValueToString } from '@grafana/data';
 
-export interface GraphLegendItemProps<T extends LegendItem> {
+export interface GraphLegendItemProps {
   key?: React.Key;
-  item: T;
+  item: LegendItem;
   className?: string;
-  onLabelClick?: (item: T, event: React.MouseEvent<HTMLDivElement>) => void;
+  onLabelClick?: (item: LegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
   onSeriesColorChange?: SeriesColorChangeHandler;
   onToggleAxis?: () => void;
 }
 
-export function GraphLegendListItem<T extends LegendItem>({
+export const GraphLegendListItem: React.FunctionComponent<GraphLegendItemProps> = ({
   item,
   onSeriesColorChange,
   onToggleAxis,
   onLabelClick,
-}: PropsWithChildren<GraphLegendItemProps<T>>) {
+}) => {
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme);
   return (
@@ -52,7 +52,7 @@ export function GraphLegendListItem<T extends LegendItem>({
       {item.displayValues && <LegendStatsList stats={item.displayValues} />}
     </>
   );
-}
+};
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -86,13 +86,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export function GraphLegendTableRow<T extends LegendItem>({
+export const GraphLegendTableRow: React.FunctionComponent<GraphLegendItemProps> = ({
   item,
   onSeriesColorChange,
   onToggleAxis,
   onLabelClick,
   className,
-}: PropsWithChildren<GraphLegendItemProps<T>>) {
+}) => {
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme);
   return (
@@ -132,4 +132,4 @@ export function GraphLegendTableRow<T extends LegendItem>({
         })}
     </tr>
   );
-}
+};

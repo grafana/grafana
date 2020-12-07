@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useRef } from 'react';
 import {
   compareDataFrameStructures,
   DataFrame,
-  Field,
   FieldConfig,
   FieldMatcher,
   FieldType,
@@ -20,6 +19,7 @@ import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
 import { GraphLegend } from '../Graph/GraphLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
+import { GraphNGLegendEvent, GraphNGLegendEventMode } from './types';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -31,11 +31,7 @@ export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
   data: DataFrame[];
   legend?: LegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
-  onLegendClick?: (legend: GraphNGLegendItem) => void;
-}
-
-export interface GraphNGLegendItem extends LegendItem {
-  field: Field;
+  onLegendClick?: (event: GraphNGLegendEvent) => void;
 }
 
 const defaultConfig: GraphFieldConfig = {
@@ -63,9 +59,10 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 }) => {
   const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
   const theme = useTheme();
-  const legendItemsRef = useRef<GraphNGLegendItem[]>([]);
+  const legendItemsRef = useRef<LegendItem[]>([]);
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
   const alignedFrame = alignedFrameWithGapTest?.frame;
+  const getOriginalIndex = alignedFrameWithGapTest?.getOriginalIndex;
 
   const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
     if (a && b) {
@@ -74,8 +71,28 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     return false;
   }, []);
 
+  const onLabelClick = useCallback(
+    (legend: LegendItem, event: React.MouseEvent) => {
+      if (!onLegendClick || !getOriginalIndex) {
+        return;
+      }
+
+      const index = getOriginalIndex(legend.yAxis);
+
+      if (!index) {
+        return;
+      }
+
+      const frame = data[index.frameIndex];
+      const field = frame.fields[index.fieldIndex];
+      const mode = mapMouseEventToMode(event);
+
+      onLegendClick({ frame, field, data, mode });
+    },
+    [onLegendClick, getOriginalIndex, data]
+  );
+
   const configRev = useRevision(alignedFrame, compareFrames);
-  console.log('configRev', configRev);
 
   const configBuilder = useMemo(() => {
     const builder = new UPlotConfigBuilder();
@@ -111,7 +128,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     }
 
     let seriesIdx = 0;
-    const legendItems: GraphNGLegendItem[] = [];
+    const legendItems: LegendItem[] = [];
 
     for (let i = 0; i < alignedFrame.fields.length; i++) {
       const field = alignedFrame.fields[i];
@@ -167,7 +184,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         const axisPlacement = builder.getAxisPlacement(scaleKey);
 
         legendItems.push({
-          field: field,
           color: seriesColor,
           label: getFieldDisplayName(field, alignedFrame),
           yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
@@ -195,7 +211,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     legendElement = (
       <VizLayout.Legend position={legend!.placement} maxHeight="35%" maxWidth="60%">
         <GraphLegend
-          onLabelClick={onLegendClick}
+          onLabelClick={onLabelClick}
           placement={legend!.placement}
           items={legendItemsRef.current}
           displayMode={legend!.displayMode}
@@ -221,4 +237,11 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       )}
     </VizLayout>
   );
+};
+
+const mapMouseEventToMode = (event: React.MouseEvent): GraphNGLegendEventMode => {
+  if (event.ctrlKey || event.metaKey || event.shiftKey) {
+    return GraphNGLegendEventMode.append;
+  }
+  return GraphNGLegendEventMode.select;
 };
