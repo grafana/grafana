@@ -1427,4 +1427,106 @@ describe('ElasticResponse', () => {
       }
     });
   });
+
+  describe('PPL time series query response', () => {
+    const targets: any = [
+      {
+        refId: 'A',
+        context: 'explore',
+        interval: '10s',
+        isLogsQuery: true,
+        query: 'source=sample_data | stats count(test) by timestamp',
+        queryType: ElasticsearchQueryType.PPL,
+        timeField: 'timestamp',
+        format: 'time_series',
+      },
+    ];
+    const targetType = ElasticsearchQueryType.PPL;
+
+    const response = {
+      datarows: [
+        [5, '2020-11-01 00:39:02.912Z'],
+        [1, '2020-11-01 03:26:21.326Z'],
+        [4, '2020-11-01 03:34:43.399Z'],
+      ],
+      schema: [
+        { name: 'test', type: 'int' },
+        { name: 'timeName', type: 'timestamp' },
+      ],
+    };
+    it('should return series', () => {
+      const result = new ElasticResponse(targets, response, targetType).getTimeSeries();
+      expect(result.data.length).toBe(1);
+      expect(result.data[0].datapoints.length).toBe(3);
+      expect(result.data[0].datapoints[0][0]).toBe(5);
+      expect(result.data[0].datapoints[0][1]).toBe(1604191142000);
+    });
+
+    const response2 = {
+      datarows: [
+        ['2020-11-01', 5],
+        ['2020-11-02', 1],
+        ['2020-11-03', 4],
+      ],
+      schema: [
+        { name: 'timeName', type: 'date' },
+        { name: 'test', type: 'int' },
+      ],
+    };
+    it('should return series', () => {
+      const result = new ElasticResponse(targets, response2, targetType).getTimeSeries();
+      expect(result.data.length).toBe(1);
+      expect(result.data[0].datapoints.length).toBe(3);
+      expect(result.data[0].datapoints[0][0]).toBe(5);
+      expect(result.data[0].datapoints[0][1]).toBe(1604206800000);
+    });
+  });
+
+  describe('Invalid PPL time series query response', () => {
+    const targets: any = [
+      {
+        refId: 'A',
+        isLogsQuery: true,
+        query: 'source=sample_data | stats count(test) by data',
+        queryType: ElasticsearchQueryType.PPL,
+        timeField: 'timestamp',
+        format: 'time_series',
+      },
+    ];
+    const targetType = ElasticsearchQueryType.PPL;
+
+    const response1 = {
+      datarows: [
+        [5, '5000'],
+        [1, '1000'],
+        [4, '4000'],
+      ],
+      schema: [
+        { name: 'test', type: 'int' },
+        { name: 'data', type: 'string' },
+      ],
+    };
+    it('should return invalid query error due to no timestamp', () => {
+      expect(() => new ElasticResponse(targets, response1, targetType).getTimeSeries()).toThrowError(
+        'Invalid time series query'
+      );
+    });
+
+    const response2 = {
+      datarows: [
+        ['1', '2020-11-01 00:39:02.912Z'],
+        ['2', '2020-11-01 03:26:21.326Z'],
+        ['3', '2020-11-01 03:34:43.399Z'],
+      ],
+      schema: [
+        { name: 'data', type: 'string' },
+        { name: 'time', type: 'timestamp' },
+      ],
+    };
+    it('should return invalid query error due to no numerical column', () => {
+      expect(() => new ElasticResponse(targets, response2, targetType).getTimeSeries()).toThrowError(
+        'Invalid time series query'
+      );
+    });
+  });
 });
