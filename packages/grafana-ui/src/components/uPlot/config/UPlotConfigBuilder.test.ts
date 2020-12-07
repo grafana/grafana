@@ -3,7 +3,7 @@
 import { UPlotConfigBuilder } from './UPlotConfigBuilder';
 import { GrafanaTheme } from '@grafana/data';
 import { expect } from '../../../../../../public/test/lib/common';
-import { AxisPlacement, GraphMode, PointMode } from '../config';
+import { AxisPlacement, DrawStyle, PointMode } from '../config';
 
 describe('UPlotConfigBuilder', () => {
   describe('scales config', () => {
@@ -123,7 +123,7 @@ describe('UPlotConfigBuilder', () => {
   it('allows series configuration', () => {
     const builder = new UPlotConfigBuilder();
     builder.addSeries({
-      mode: GraphMode.Line,
+      drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
       fillColor: '#ff0000',
       fillOpacity: 0.5,
@@ -132,6 +132,7 @@ describe('UPlotConfigBuilder', () => {
       pointColor: '#00ff00',
       lineColor: '#0000ff',
       lineWidth: 1,
+      spanNulls: false,
     });
 
     expect(builder.getConfig()).toMatchInlineSnapshot(`
@@ -149,6 +150,7 @@ describe('UPlotConfigBuilder', () => {
               "stroke": "#00ff00",
             },
             "scale": "scale-x",
+            "spanGaps": false,
             "stroke": "#0000ff",
             "width": 1,
           },

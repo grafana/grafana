@@ -1,4 +1,5 @@
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, of, throwError, concat } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
 import * as rxJsWebSocket from 'rxjs/webSocket';
 import { LiveStreams } from './live_streams';
 import { DataFrame, DataFrameView, formatLabels, Labels } from '@grafana/data';
@@ -104,6 +105,51 @@ describe('Live Stream Tests', () => {
     });
     subscription.unsubscribe();
     expect(unsubscribed).toBe(true);
+  });
+  it('should reconnect when abnormal error', async () => {
+    const abnormalError = new Error('weird error') as any;
+    abnormalError.code = 1006;
+    const logStreamBeforeError = of({
+      streams: [
+        {
+          stream: { filename: '/var/log/sntpc.log', job: 'varlogs' },
+          values: [['1567025440118944705', 'Kittens']],
+        },
+      ],
+      dropped_entries: null,
+    });
+    const logStreamAfterError = of({
+      streams: [
+        {
+          stream: { filename: '/var/log/sntpc.log', job: 'varlogs' },
+          values: [['1567025440118944705', 'Doggos']],
+        },
+      ],
+      dropped_entries: null,
+    });
+    const errorStream = throwError(abnormalError);
+    let retries = 0;
+    fakeSocket = of({}).pipe(
+      mergeMap(() => {
+        // When subscribed first time, return logStream and errorStream
+        if (retries++ === 0) {
+          return concat(logStreamBeforeError, errorStream);
+        }
+        // When re-subsribed after abnormal error, return just logStream
+        return logStreamAfterError;
+      })
+    ) as any;
+    const liveStreams = new LiveStreams();
+    await expect(liveStreams.getStream(makeTarget('url_to_match'), 100)).toEmitValuesWith(received => {
+      const data = received[0];
+      const view = new DataFrameView(data[0]);
+      const firstLog = { ...view.get(0) };
+      const secondLog = { ...view.get(1) };
+
+      expect(firstLog.line).toBe('Kittens');
+      expect(secondLog.line).toBe('Doggos');
+      expect(retries).toBe(2);
+    });
   });
 });
 
