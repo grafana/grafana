@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import uPlot, { AlignedData, AlignedDataWithGapTest, Options } from 'uplot';
 import { buildPlotContext, PlotContext } from './context';
 import { pluginLog } from './utils';
@@ -15,6 +15,7 @@ import usePrevious from 'react-use/lib/usePrevious';
 export const UPlotChart: React.FC<PlotProps> = props => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const plotInstance = useRef<uPlot>();
+  const [isPlotReady, setIsPlotReady] = useState(false);
   const prevProps = usePrevious(props);
   const { isConfigReady, currentConfig, registerPlugin } = usePlotConfig(
     props.width,
@@ -36,6 +37,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     // 1. When config is ready and there is no uPlot instance, create new uPlot and return
     if (isConfigReady && !plotInstance.current) {
       plotInstance.current = initializePlot(prepareData(props.data), currentConfig.current, canvasRef.current);
+      setIsPlotReady(true);
       return;
     }
 
@@ -68,8 +70,8 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 
   // Memoize plot context
   const plotCtx = useMemo(() => {
-    return buildPlotContext(canvasRef, props.data, registerPlugin, getPlotInstance);
-  }, [plotInstance, canvasRef, props.data, registerPlugin, getPlotInstance]);
+    return buildPlotContext(isPlotReady, canvasRef, props.data, registerPlugin, getPlotInstance);
+  }, [plotInstance, canvasRef, props.data, registerPlugin, getPlotInstance, isPlotReady]);
 
   return (
     <PlotContext.Provider value={plotCtx}>
