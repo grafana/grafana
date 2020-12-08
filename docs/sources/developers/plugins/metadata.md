@@ -68,16 +68,16 @@ Plugin dependency. Used to display information about plugin dependencies in the 
 
 ### Properties
 
-| Property     | Type    | Required | Description                                                                                                                                                                                |
-|--------------|---------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `addToNav`   | boolean | No       | Add the include to the side menu.                                                                                                                                                          |
-| `component`  | string  | No       | (Legacy) The Angular component to use for a page.                                                                                                                                          |
-| `defaultNav` | boolean | No       | Page or dashboard when user clicks the icon in the side menu.                                                                                                                              |
-| `icon`       | string  | No       | Icon to use in the menu. For information on available icon, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview). |
-| `name`       | string  | No       |                                                                                                                                                                                            |
-| `path`       | string  | No       | Used for app plugins.                                                                                                                                                                      |
-| `role`       | string  | No       |                                                                                                                                                                                            |
-| `type`       | string  | No       |                                                                                                                                                                                            |
+| Property     | Type    | Required | Description                                                                                                                                                                                     |
+|--------------|---------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `addToNav`   | boolean | No       | Add the include to the side menu.                                                                                                                                                               |
+| `component`  | string  | No       | (Legacy) The Angular component to use for a page.                                                                                                                                               |
+| `defaultNav` | boolean | No       | Page or dashboard when user clicks the icon in the side menu.                                                                                                                                   |
+| `icon`       | string  | No       | Icon to use in the side menu. For information on available icon, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview). |
+| `name`       | string  | No       |                                                                                                                                                                                                 |
+| `path`       | string  | No       | Used for app plugins.                                                                                                                                                                           |
+| `role`       | string  | No       |                                                                                                                                                                                                 |
+| `type`       | string  | No       |                                                                                                                                                                                                 |
 
 ## info
 
@@ -92,7 +92,7 @@ Metadata for the plugin. Some fields are used on the plugins page in Grafana and
 | `updated`     | string                   | **Yes**  | Date when this plugin was built.                                                                                              |
 | `version`     | string                   | **Yes**  | Project version of this commit, e.g. `6.7.x`.                                                                                 |
 | `author`      | [object](#author)        | No       | Information about the plugin author.                                                                                          |
-| `build`       | [object](#build)         | No       |                                                                                                                               |
+| `build`       | [object](#build)         | No       | Build information                                                                                                             |
 | `description` | string                   | No       | Description of plugin. Used on the plugins page in Grafana and for search on grafana.com.                                     |
 | `links`       | [object](#links)[]       | No       | An array of link objects to be displayed on this plugin's project page in the form `{name: 'foo', url: 'http://example.com'}` |
 | `screenshots` | [object](#screenshots)[] | No       | An array of screenshot objects in the form `{name: 'bar', path: 'img/screenshot.png'}`                                        |
@@ -110,6 +110,8 @@ Information about the plugin author.
 | `url`    | string | No       | Link to author's website. |
 
 ### build
+
+Build information
 
 #### Properties
 

@@ -91,7 +91,7 @@
           },
           "icon": {
             "type": "string",
-            "description": "Icon to use in the menu. For information on available icon, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)."
+            "description": "Icon to use in the side menu. For information on available icon, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)."
           }
         }
       }
