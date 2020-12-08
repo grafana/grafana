@@ -196,7 +196,7 @@ Log the user account out of one specific device that is logged in to Grafana.
 1. Click **Force logout** next to the session entry that you want logged out of Grafana.
 1. Click **Confirm logout**.
 
-### Force logout from all devices
+### Force logout of all devices
 
 Log the user account out of all devices that are logged in to Grafana.
 
