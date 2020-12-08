@@ -7,6 +7,8 @@ import {
   ConfigOverrideRule,
   FieldMatcherID,
   DynamicConfigValue,
+  FieldConfigProperty,
+  FieldColorModeId,
 } from '@grafana/data';
 import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
 import { AxisPlacement, DrawStyle, LineInterpolation, PointVisibility } from '@grafana/ui/src/components/uPlot/config';
@@ -54,6 +56,30 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   //     "linewidth": 2
   //   }
   // ],
+
+  if (angular.aliasColors) {
+    for (const alias of Object.keys(angular.aliasColors)) {
+      const color = angular.aliasColors[alias];
+      if (color) {
+        overrides.push({
+          matcher: {
+            id: FieldMatcherID.byName,
+            options: alias,
+          },
+          properties: [
+            {
+              id: FieldConfigProperty.Color,
+              value: {
+                mode: FieldColorModeId.Fixed,
+                fixedColor: color,
+              },
+            },
+          ],
+        });
+      }
+    }
+  }
+
   if (angular.seriesOverrides?.length) {
     for (const seriesOverride of angular.seriesOverrides) {
       if (!seriesOverride.alias) {
@@ -109,7 +135,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
               });
             }
             break;
-          case 'lineWidth':
+          case 'linewidth':
             rule.properties.push({
               id: 'custom.lineWidth',
               value: v,
@@ -118,7 +144,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
           case 'pointradius':
             rule.properties.push({
               id: 'custom.pointSize',
-              value: v,
+              value: 2 + v * 2,
             });
             break;
           default:
@@ -138,18 +164,20 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   } else if (graph.drawStyle !== DrawStyle.Points) {
     graph.showPoints = PointVisibility.Never;
   }
-  if (graph.drawStyle === DrawStyle.Bars) {
-    graph.fillOpacity = 1.0; // bars were always
-  }
 
-  graph.lineWidth = angular.lineWidth;
-  graph.pointSize = angular.pointradius;
+  graph.lineWidth = angular.linewidth;
+  if (isNumber(angular.pointradius)) {
+    graph.pointSize = 2 + angular.pointradius * 2;
+  }
   if (isNumber(angular.fill)) {
     graph.fillOpacity = angular.fill / 10; // fill is 0-10
   }
   graph.spanNulls = angular.nullPointMode === NullValueMode.Null;
   if (angular.steppedLine) {
     graph.lineInterpolation = LineInterpolation.StepAfter;
+  }
+  if (graph.drawStyle === DrawStyle.Bars) {
+    graph.fillOpacity = 1.0; // bars were always
   }
   y1.custom = omitBy(graph, isNil);
   y1.nullValueMode = angular.nullPointMode as NullValueMode;
