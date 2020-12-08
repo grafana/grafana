@@ -169,7 +169,7 @@ func (mg *Migrator) inTransaction(callback dbTransactionFunc) error {
 	}
 
 	if err := callback(sess); err != nil {
-		if rollErr := sess.Rollback(); !errors.Is(err, rollErr) {
+		if rollErr := sess.Rollback(); rollErr != nil && !errors.Is(err, rollErr) {
 			return errutil.Wrapf(err, "failed to roll back transaction due to error: %s", rollErr)
 		}
 
