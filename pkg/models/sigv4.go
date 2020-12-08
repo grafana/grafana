@@ -24,7 +24,11 @@ const (
 	Credentials AuthType = "credentials"
 )
 
+// Host header is likely not necessary here
+// (see https://github.com/golang/go/blob/cad6d1fef5147d31e94ee83934c8609d3ad150b7/src/net/http/request.go#L92)
+// but adding for completeness
 var permittedHeaders = map[string]struct{}{
+	"Host":            {},
 	"Uber-Trace-Id":   {},
 	"User-Agent":      {},
 	"Accept":          {},
