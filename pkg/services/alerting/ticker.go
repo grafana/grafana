@@ -23,9 +23,10 @@ type Ticker struct {
 	offset      time.Duration
 	newOffset   chan time.Duration
 	intervalSec int64
+	paused      bool
 }
 
-// NewTicker returns a ticker that ticks on second marks or very shortly after, and never drops ticks
+// NewTicker returns a ticker that ticks on intervalSec marks or very shortly after, and never drops ticks
 func NewTicker(last time.Time, initialOffset time.Duration, c clock.Clock, intervalSec int64) *Ticker {
 	t := &Ticker{
 		C:           make(chan time.Time),
@@ -44,7 +45,9 @@ func (t *Ticker) run() {
 		next := t.last.Add(time.Duration(t.intervalSec) * time.Second)
 		diff := t.clock.Now().Add(-t.offset).Sub(next)
 		if diff >= 0 {
-			t.C <- next
+			if !t.paused {
+				t.C <- next
+			}
 			t.last = next
 			continue
 		}
@@ -60,4 +63,14 @@ func (t *Ticker) run() {
 // ResetOffset resets the offset.
 func (t *Ticker) ResetOffset(duration time.Duration) {
 	t.newOffset <- duration
+}
+
+// Pause unpauses the ticker and  ticks will be sent.
+func (t *Ticker) Pause() {
+	t.paused = true
+}
+
+// Unpause unpauses the ticker and  ticks will be sent.
+func (t *Ticker) Unpause() {
+	t.paused = false
 }

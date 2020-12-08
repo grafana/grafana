@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/alerting"
-
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 
@@ -31,7 +29,7 @@ type AlertNG struct {
 	RouteRegister   routing.RouteRegister    `inject:""`
 	SQLStore        *sqlstore.SQLStore       `inject:""`
 	log             log.Logger
-	schedule        schedule
+	schedule        *schedule
 }
 
 func init() {
@@ -43,23 +41,14 @@ func (ng *AlertNG) Init() error {
 	ng.log = log.New("ngalert")
 
 	ng.registerAPIEndpoints()
-
-	ng.schedule = schedule{
-		channelMap:   channelMap{definionCh: make(map[int64]definitionCh)},
-		stop:         make(chan int64),
-		maxAttempts:  maxAttempts,
-		clock:        clock.New(),
-		baseInterval: time.Second,
-	}
 	return nil
 }
 
 // Run starts the scheduler
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.log.Debug("ngalert starting")
-	baseInterval := int64(ng.schedule.baseInterval.Seconds())
-	ticker := alerting.NewTicker(ng.schedule.clock.Now(), time.Second*0, ng.schedule.clock, baseInterval)
-	return ng.alertingTicker(ctx, ticker)
+	ng.schedule = newScheduler(clock.New(), time.Second, ng.log, nil)
+	return ng.alertingTicker(ctx)
 }
 
 // IsDisabled returns true if the alerting service is disable for this instance.

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -17,15 +17,10 @@ func TestAlertingTicker(t *testing.T) {
 	ng := setupTestEnv(t)
 	mockedClock := clock.NewMock()
 	evalAppliedCh := make(chan int64)
-	ng.schedule = schedule{
-		channelMap:  channelMap{definionCh: make(map[int64]definitionCh)},
-		stop:        make(chan int64),
-		maxAttempts: maxAttempts,
-		clock:       mockedClock,
-		evalApplied: func(alertDefID int64) {
-			evalAppliedCh <- alertDefID
-		},
-	}
+
+	ng.schedule = newScheduler(mockedClock, time.Second, log.New("ngalert.schedule.test"), func(alertDefID int64) {
+		evalAppliedCh <- alertDefID
+	})
 
 	// create alert definition with zero interval (should never run)
 	initialAlertDef := createTestAlertDefinition(t, ng, 0)
@@ -33,23 +28,23 @@ func TestAlertingTicker(t *testing.T) {
 	// create alert definition with one second interval
 	alertDefWithOneSecInterval := createTestAlertDefinition(t, ng, 1)
 
-	ticker := alerting.NewTicker(mockedClock.Now(), time.Second*0, mockedClock, 1)
 	ctx := context.Background()
 	go func() {
-		err := ng.alertingTicker(ctx, ticker)
+		err := ng.alertingTicker(ctx)
 		require.NoError(t, err)
 	}()
 	runtime.Gosched()
 
 	// this is required for unblocking Ticker.run() if the tick was too young
-	ticker.ResetOffset(0 * time.Second)
+	err := ng.schedule.resetHeartbeatInterval(0 * time.Second)
+	require.NoError(t, err)
 
 	advanceClock(t, mockedClock)
 	assertEvalRun(t, evalAppliedCh, alertDefWithOneSecInterval.ID)
 
 	// change alert definition interval to three seconds
 	var threeSecInterval int64 = 3
-	err := ng.updateAlertDefinition(&updateAlertDefinitionCommand{
+	err = ng.updateAlertDefinition(&updateAlertDefinitionCommand{
 		ID:                initialAlertDef.ID,
 		IntervalInSeconds: &threeSecInterval,
 	})

@@ -28,6 +28,11 @@ func (ng *AlertNG) registerAPIEndpoints() {
 		alertDefinitions.Post("/", middleware.ReqSignedIn, binding.Bind(saveAlertDefinitionCommand{}), api.Wrap(ng.createAlertDefinitionEndpoint))
 		alertDefinitions.Put("/:alertDefinitionId", ng.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionCommand{}), api.Wrap(ng.updateAlertDefinitionEndpoint))
 	})
+
+	ng.RouteRegister.Group("/api/ngalert/", func(schedulerRouter routing.RouteRegister) {
+		schedulerRouter.Post("/pause", api.Wrap(ng.pauseScheduler))
+		schedulerRouter.Post("/unpause", api.Wrap(ng.unpauseScheduler))
+	}, middleware.ReqOrgAdmin)
 }
 
 // conditionEvalEndpoint handles POST /api/alert-definitions/eval.
@@ -168,4 +173,20 @@ func (ng *AlertNG) listAlertDefinitions(c *models.ReqContext) api.Response {
 	}
 
 	return api.JSON(200, util.DynMap{"results": query.Result})
+}
+
+func (ng *AlertNG) pauseScheduler() api.Response {
+	err := ng.schedule.pause()
+	if err != nil {
+		return api.Error(500, "Failed to pause scheduler", err)
+	}
+	return api.JSON(200, util.DynMap{"message": "alert definition scheduler paused"})
+}
+
+func (ng *AlertNG) unpauseScheduler() api.Response {
+	err := ng.schedule.unpause()
+	if err != nil {
+		return api.Error(500, "Failed to unpause scheduler", err)
+	}
+	return api.JSON(200, util.DynMap{"message": "alert definition scheduler unpaused"})
 }

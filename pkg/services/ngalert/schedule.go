@@ -2,10 +2,12 @@ package ngalert
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"golang.org/x/sync/errgroup"
 )
@@ -79,9 +81,7 @@ type schedule struct {
 	// base tick rate (fastest possible configured check)
 	baseInterval time.Duration
 
-	// each alert definition gets its own channel and
-	// routine. Will need lock as well. A map so when can
-	// update a specific routine if it is
+	// each alert definition gets its own channel and routine
 	channelMap channelMap
 
 	// broadcast channel for stopping definition routines
@@ -91,18 +91,65 @@ type schedule struct {
 
 	clock clock.Clock
 
+	heartbeat *alerting.Ticker
+
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from evalApplied is handled.
 	evalApplied func(int64)
+
+	log log.Logger
 }
 
-func (ng *AlertNG) alertingTicker(grafanaCtx context.Context, heartbeat *alerting.Ticker) error {
+// newScheduler returns a new schedule.
+func newScheduler(c clock.Clock, baseInterval time.Duration, logger log.Logger, evalApplied func(int64)) *schedule {
+	ticker := alerting.NewTicker(c.Now(), time.Second*0, c, int64(baseInterval.Seconds()))
+	sch := schedule{
+		channelMap:   channelMap{definionCh: make(map[int64]definitionCh)},
+		stop:         make(chan int64),
+		maxAttempts:  maxAttempts,
+		clock:        c,
+		baseInterval: baseInterval,
+		log:          logger,
+		heartbeat:    ticker,
+		evalApplied:  evalApplied,
+	}
+	return &sch
+}
+
+func (sch *schedule) pause() error {
+	if sch == nil {
+		return fmt.Errorf("scheduler is not initialised")
+	}
+	sch.heartbeat.Pause()
+	sch.log.Info("alert definition scheduler paused", "now", sch.clock.Now())
+	return nil
+}
+
+func (sch *schedule) unpause() error {
+	if sch == nil {
+		return fmt.Errorf("scheduler is not initialised")
+	}
+	sch.heartbeat.Unpause()
+	sch.log.Info("alert definition scheduler unpaused", "now", sch.clock.Now())
+	return nil
+}
+
+func (sch *schedule) resetHeartbeatInterval(duration time.Duration) error {
+	if sch == nil {
+		return fmt.Errorf("scheduler is not initialised")
+	}
+	sch.heartbeat.ResetOffset(duration)
+	sch.log.Info("alert definition scheduler interval reset", "now", sch.clock.Now(), "duration", duration)
+	return nil
+}
+
+func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 	dispatcherGroup, ctx := errgroup.WithContext(grafanaCtx)
 	c := ng.schedule.clock
 	for {
 		select {
-		case tick := <-heartbeat.C:
+		case tick := <-ng.schedule.heartbeat.C:
 			start := c.Now()
 			alertDefinitions := ng.fetchAlertDefinitions(tick)
 			ng.log.Debug("alert definitions fetched", "count", len(alertDefinitions))
