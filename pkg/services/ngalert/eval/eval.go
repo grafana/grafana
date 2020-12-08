@@ -35,6 +35,7 @@ func (e *invalidEvalResultFormatError) Unwrap() error {
 // of the query or expression that will be evaluated.
 type Condition struct {
 	RefID string `json:"refId"`
+	OrgID int64  `json:"-"`
 
 	QueriesAndExpressions []AlertQuery `json:"queriesAndExpressions"`
 }

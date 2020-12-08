@@ -101,20 +101,21 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 }
 
 // LoadAlertCondition returns a Condition object for the given alertDefinitionID.
-func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64) (*eval.Condition, int64, error) {
+func (ng *AlertNG) LoadAlertCondition(alertDefinitionID int64) (*eval.Condition, error) {
 	getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: alertDefinitionID}
 	if err := ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery); err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	alertDefinition := getAlertDefinitionByIDQuery.Result
 
 	err := ng.validateAlertDefinition(alertDefinition, true)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	return &eval.Condition{
 		RefID:                 alertDefinition.Condition,
+		OrgID:                 alertDefinition.OrgID,
 		QueriesAndExpressions: alertDefinition.Data,
-	}, alertDefinition.OrgID, nil
+	}, nil
 }
