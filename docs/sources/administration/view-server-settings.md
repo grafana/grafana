@@ -2,11 +2,6 @@
 title = "View server settings"
 description = "How to view server settings in the Grafana UI"
 keywords = ["grafana", "configuration", "server", "settings"]
-type = "docs"
-[menu.docs]
-name = "Configuration"
-identifier = "config"
-parent = "admin"
 weight = 350
 +++
 

@@ -2,11 +2,7 @@
 title = "Cloud Monitoring"
 description = "Guide for using Google Cloud Monitoring in Grafana"
 keywords = ["grafana", "stackdriver", "google", "guide", "cloud", "monitoring"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/datasources/stackdriver", "/docs/grafana/latest/features/datasources/cloudmonitoring/"]
-[menu.docs]
-name = "Google Cloud Monitoring"
-parent = "datasources"
 weight = 200
 +++
 

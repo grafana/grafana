@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -31,7 +32,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/login"
-	eval "github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -73,7 +73,6 @@ type HTTPServer struct {
 	BackendPluginManager backendplugin.Manager            `inject:""`
 	PluginManager        *plugins.PluginManager           `inject:""`
 	SearchService        *search.SearchService            `inject:""`
-	AlertNG              *eval.AlertNG                    `inject:""`
 	ShortURLService      *shorturls.ShortURLService       `inject:""`
 	Live                 *live.GrafanaLive                `inject:""`
 	Listener             net.Listener
@@ -110,6 +109,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		if err := hs.configureHttps(); err != nil {
 			return err
 		}
+	default:
 	}
 
 	listener, err := hs.getListener()
@@ -136,7 +136,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	switch setting.Protocol {
 	case setting.HTTPScheme, setting.SocketScheme:
 		if err := hs.httpSrv.Serve(listener); err != nil {
-			if err == http.ErrServerClosed {
+			if errors.Is(err, http.ErrServerClosed) {
 				hs.log.Debug("server was shutdown gracefully")
 				return nil
 			}
@@ -144,7 +144,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		}
 	case setting.HTTP2Scheme, setting.HTTPSScheme:
 		if err := hs.httpSrv.ServeTLS(listener, setting.CertFile, setting.KeyFile); err != nil {
-			if err == http.ErrServerClosed {
+			if errors.Is(err, http.ErrServerClosed) {
 				hs.log.Debug("server was shutdown gracefully")
 				return nil
 			}
@@ -214,7 +214,6 @@ func (hs *HTTPServer) configureHttps() error {
 			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
 			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-			tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
 			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
 			tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
 			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
@@ -250,7 +249,7 @@ func (hs *HTTPServer) configureHttp2() error {
 
 	tlsCfg := &tls.Config{
 		MinVersion:               tls.VersionTLS12,
-		PreferServerCipherSuites: false,
+		PreferServerCipherSuites: true,
 		CipherSuites: []uint16{
 			tls.TLS_CHACHA20_POLY1305_SHA256,
 			tls.TLS_AES_128_GCM_SHA256,
@@ -288,7 +287,7 @@ func (hs *HTTPServer) applyRoutes() {
 	// then custom app proxy routes
 	hs.initAppPluginRoutes(hs.macaron)
 	// lastly not found route
-	hs.macaron.NotFound(hs.NotFoundHandler)
+	hs.macaron.NotFound(middleware.ReqSignedIn, hs.NotFoundHandler)
 }
 
 func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
@@ -368,7 +367,7 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 	}
 
 	promhttp.
-		HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{}).
+		HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}).
 		ServeHTTP(ctx.Resp, ctx.Req.Request)
 }
 

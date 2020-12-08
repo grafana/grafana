@@ -7,7 +7,7 @@ import { css } from 'emotion';
 
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { Icon, IconButton, LegacyForms, SetInterval, Tooltip } from '@grafana/ui';
-import { DataQuery, RawTimeRange, TimeRange, TimeZone } from '@grafana/data';
+import { DataQuery, DataSourceInstanceSettings, RawTimeRange, TimeRange, TimeZone } from '@grafana/data';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
 import { StoreState } from 'app/types/store';
 import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
@@ -24,7 +24,6 @@ import { LiveTailButton } from './LiveTailButton';
 import { ResponsiveButton } from './ResponsiveButton';
 import { RunButton } from './RunButton';
 import { LiveTailControls } from './useLiveTailControls';
-import { getExploreDatasources } from './state/selectors';
 import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
 import { cancelQueries, clearQueries, runQueries } from './state/query';
 
@@ -81,8 +80,8 @@ interface DispatchProps {
 type Props = StateProps & DispatchProps & OwnProps;
 
 export class UnConnectedExploreToolbar extends PureComponent<Props> {
-  onChangeDatasource = async (option: { value: any }) => {
-    this.props.changeDatasource(this.props.exploreId, option.value, { importQueries: true });
+  onChangeDatasource = async (dsSettings: DataSourceInstanceSettings) => {
+    this.props.changeDatasource(this.props.exploreId, dsSettings.name, { importQueries: true });
   };
 
   onClearAll = () => {
@@ -141,12 +140,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
     });
   }
 
-  getSelectedDatasource = () => {
-    const { datasourceName } = this.props;
-    const exploreDatasources = getExploreDatasources();
-    return datasourceName ? exploreDatasources.find(datasource => datasource.name === datasourceName) : undefined;
-  };
-
   render() {
     const {
       datasourceMissing,
@@ -164,7 +157,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       isLive,
       isPaused,
       originPanelId,
-      datasourceLoading,
       containerWidth,
       onChangeTimeZone,
     } = this.props;
@@ -215,9 +207,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                 >
                   <DataSourcePicker
                     onChange={this.onChangeDatasource}
-                    datasources={getExploreDatasources()}
-                    current={this.getSelectedDatasource()}
-                    showLoading={datasourceLoading === true}
+                    current={this.props.datasourceName}
                     hideTextValue={showSmallDataSourcePicker}
                   />
                 </div>
@@ -342,7 +332,6 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     isPaused,
     originPanelId,
     queries,
-    datasourceLoading,
     containerWidth,
   } = exploreItem;
 
@@ -362,7 +351,6 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     originPanelId,
     queries,
     syncedTimes,
-    datasourceLoading: datasourceLoading ?? undefined,
     containerWidth,
   };
 };

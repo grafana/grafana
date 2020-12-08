@@ -37,7 +37,7 @@ const emptyResults = {
 
 /* eslint-enable */
 
-describe('GEL Utils', () => {
+describe('Query Response parser', () => {
   test('should parse output with dataframe', () => {
     const res = toDataQueryResponse(resp);
     const frames = res.data;

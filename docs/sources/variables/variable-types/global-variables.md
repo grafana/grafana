@@ -1,11 +1,7 @@
 +++
 title = "Global variables"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable", "global", "standard"]
-type = "docs"
 aliases = ["/docs/grafana/latest/variables/global-variables.md"]
-[menu.docs]
-identifier = "global-variable"
-parent = "variable-types"
 weight = 900
 +++
 
@@ -28,7 +24,7 @@ Grafana has two built in time range variables: `$__from` and `$__to`. They are c
 | Syntax                   | Example result           | Description |
 | ------------------------ | ------------------------ | ----------- |
 | `${__from}`              | 1594671549254            | Unix millisecond epoch |
-| `${__from:date}`         | 2020-07-13T20:19:09.254Z | No args, defaults to ISO 8601/RFC 3339 | 
+| `${__from:date}`         | 2020-07-13T20:19:09.254Z | No args, defaults to ISO 8601/RFC 3339 |
 | `${__from:date:iso}`     | 2020-07-13T20:19:09.254Z | ISO 8601/RFC 3339 |
 | `${__from:date:seconds}` | 1594671549               | Unix seconds epoch |
 | `${__from:date:YYYY-MM}` | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) |

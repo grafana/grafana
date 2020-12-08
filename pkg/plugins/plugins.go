@@ -31,7 +31,6 @@ var (
 	Plugins      map[string]*PluginBase
 	PluginTypes  map[string]interface{}
 	Renderer     *RendererPlugin
-	Transform    *TransformPlugin
 
 	GrafanaLatestVersion string
 	GrafanaHasUpdate     bool
@@ -82,7 +81,6 @@ func (pm *PluginManager) Init() error {
 		"datasource": DataSourcePlugin{},
 		"app":        AppPlugin{},
 		"renderer":   RendererPlugin{},
-		"transform":  TransformPlugin{},
 	}
 	pluginScanningErrors = map[string]*PluginError{}
 
@@ -271,11 +269,18 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 			}
 		}
 
+		// nolint:gosec
+		// We can ignore the gosec G304 warning on this one because `jsonFPath` is based
+		// on plugin the folder structure on disk and not user input.
 		reader, err := os.Open(jsonFPath)
 		if err != nil {
 			return err
 		}
-		defer reader.Close()
+		defer func() {
+			if err := reader.Close(); err != nil {
+				scanner.log.Warn("Failed to close JSON file", "path", jsonFPath, "err", err)
+			}
+		}()
 
 		jsonParser := json.NewDecoder(reader)
 
@@ -330,6 +335,9 @@ func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) err
 		return nil
 	}
 
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `currentPath` is based
+	// on plugin the folder structure on disk and not user input.
 	if err := s.loadPlugin(currentPath); err != nil {
 		s.log.Error("Failed to load plugin", "error", err, "pluginPath", filepath.Dir(currentPath))
 		s.errors = append(s.errors, err)
@@ -345,7 +353,11 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	if err != nil {
 		return err
 	}
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			s.log.Warn("Failed to close JSON file", "path", pluginJSONFilePath, "err", err)
+		}
+	}()
 
 	jsonParser := json.NewDecoder(reader)
 	pluginCommon := PluginBase{}
@@ -357,16 +369,6 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 		return errors.New("did not find type or id properties in plugin.json")
 	}
 
-	// The expressions feature toggle corresponds to transform plug-ins.
-	if pluginCommon.Type == "transform" {
-		isEnabled := s.cfg.IsExpressionsEnabled()
-		if !isEnabled {
-			s.log.Debug("Transform plugin is disabled since the expressions feature toggle is not enabled",
-				"pluginID", pluginCommon.Id)
-			return nil
-		}
-	}
-
 	pluginCommon.PluginDir = filepath.Dir(pluginJSONFilePath)
 	pluginCommon.Signature = getPluginSignatureState(s.log, &pluginCommon)
 
@@ -376,7 +378,7 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 }
 
 func (*PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
-	return pluginType == "renderer" || pluginType == "transform"
+	return pluginType == "renderer"
 }
 
 // validateSignature validates a plugin's signature.
@@ -475,6 +477,9 @@ func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 		return nil, PluginNotFoundError{pluginId}
 	}
 
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `plug.PluginDir` is based
+	// on plugin the folder structure on disk and not user input.
 	path := filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToUpper(name)))
 	exists, err := fs.Exists(path)
 	if err != nil {
@@ -492,6 +497,9 @@ func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 		return make([]byte, 0), nil
 	}
 
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `plug.PluginDir` is based
+	// on plugin the folder structure on disk and not user input.
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err

@@ -8,7 +8,6 @@ import (
 )
 
 type AlertStateType string
-type AlertSeverityType string
 type NoDataOption string
 type ExecutionErrorOption string
 
@@ -93,10 +92,6 @@ func (a *Alert) ValidToSave() bool {
 	return a.DashboardId != 0 && a.OrgId != 0 && a.PanelId != 0
 }
 
-func (a *Alert) ShouldUpdateState(newState AlertStateType) bool {
-	return a.State != newState
-}
-
 func (a *Alert) ContainsUpdates(other *Alert) bool {
 	result := false
 	result = result || a.Name != other.Name
@@ -130,24 +125,6 @@ func (a *Alert) GetTagsFromSettings() []*Tag {
 		}
 	}
 	return tags
-}
-
-type AlertingClusterInfo struct {
-	ServerId       string
-	ClusterSize    int
-	UptimePosition int
-}
-
-type HeartBeat struct {
-	Id       int64
-	ServerId string
-	Updated  time.Time
-	Created  time.Time
-}
-
-type HeartBeatCommand struct {
-	ServerId string
-	Result   AlertingClusterInfo
 }
 
 type SaveAlertsCommand struct {

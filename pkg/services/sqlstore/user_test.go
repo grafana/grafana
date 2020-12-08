@@ -287,7 +287,7 @@ func TestUserDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				err = testHelperUpdateDashboardAcl(1, models.DashboardAcl{
-					DashboardId: 1, OrgId: users[0].OrgId, UserId: users[1].Id,
+					DashboardID: 1, OrgID: users[0].OrgId, UserID: users[1].Id,
 					Permission: models.PERMISSION_EDIT,
 				})
 				So(err, ShouldBeNil)
@@ -308,7 +308,7 @@ func TestUserDataAccess(t *testing.T) {
 
 						So(len(query.Result), ShouldEqual, 1)
 
-						permQuery := &models.GetDashboardAclInfoListQuery{DashboardId: 1, OrgId: users[0].OrgId}
+						permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: users[0].OrgId}
 						err = GetDashboardAclInfoList(permQuery)
 						So(err, ShouldBeNil)
 

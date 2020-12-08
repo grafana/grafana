@@ -2,11 +2,7 @@
 title = "InfluxDB"
 description = "Guide for using InfluxDB in Grafana"
 keywords = ["grafana", "influxdb", "guide", "flux"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/datasources/influxdb"]
-[menu.docs]
-name = "InfluxDB"
-parent = "datasources"
 weight = 700
 +++
 
@@ -68,7 +64,7 @@ Identifier   | Description
 
 {{< docs-imagebox img="/img/docs/v45/influxdb_query_still.png" class="docs-image--no-shadow" animated-gif="/img/docs/v45/influxdb_query.gif" >}}
 
-You can access the InfluxDB editor under the metrics tab when you are in the edit mode of the Graph or Singlestat panels. 
+You can access the InfluxDB editor under the metrics tab when you are in the edit mode of the Graph or Singlestat panels.
 Enter edit mode by clicking the panel title and clicking **Edit**. The editor allows you to select metrics and tags.
 
 ### Filter data (WHERE)
@@ -180,7 +176,7 @@ You can view the interpolated version of a query with the Query Inspector.
 
 > Only available in Grafana v6.3+.
 
-Querying and displaying log data from InfluxDB is available in [Explore]({{< relref "../explore" >}}), and in the [logs panel]({{< relref "../panels/visualizations/logs-panel.md" >}}) in dashboards. 
+Querying and displaying log data from InfluxDB is available in [Explore]({{< relref "../explore" >}}), and in the [logs panel]({{< relref "../panels/visualizations/logs-panel.md" >}}) in dashboards.
 Select the InfluxDB data source, and then enter a query to display your logs.
 
 ### Log Queries
@@ -290,12 +286,12 @@ datasources:
       httpMode: GET
 ```
 
-### InfluxDB 2.x example
+### InfluxDB 2.x for Flux example
 ```yaml
 apiVersion: 1
 
 datasources:
-  - name: InfluxDB_v2
+  - name: InfluxDB_v2_Flux
     type: influxdb
     access: proxy
     url: http://localhost:8086
@@ -306,4 +302,23 @@ datasources:
       organization: organization
       defaultBucket: bucket
       tlsSkipVerify: true
+```
+
+### InfluxDB 2.x for InfluxQl example
+```yaml
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB_v2_InfluxQL
+    type: influxdb
+    access: proxy
+    url: http://localhost:8086
+    # This database should be mapped to a bucket
+    database: site
+    jsonData:
+      httpMode: GET
+      httpHeaderName1: 'Authorization'
+    secureJsonData:
+      httpHeaderValue1: 'Token <token>'
+
 ```

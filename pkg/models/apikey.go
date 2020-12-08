@@ -32,14 +32,6 @@ type AddApiKeyCommand struct {
 	Result *ApiKey `json:"-"`
 }
 
-type UpdateApiKeyCommand struct {
-	Id   int64    `json:"id"`
-	Name string   `json:"name"`
-	Role RoleType `json:"role"`
-
-	OrgId int64 `json:"-"`
-}
-
 type DeleteApiKeyCommand struct {
 	Id    int64 `json:"id"`
 	OrgId int64 `json:"-"`

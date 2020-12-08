@@ -1,5 +1,3 @@
-import { Pages } from './pages';
-
 export const Components = {
   DataSource: {
     TestData: {
@@ -37,6 +35,9 @@ export const Components = {
       BarGauge: {
         value: 'Bar gauge value',
       },
+      Text: {
+        container: () => '.markdown-html',
+      },
     },
   },
   Drawer: {
@@ -54,8 +55,8 @@ export const Components = {
     },
     OptionsPane: {
       content: 'Panel editor option pane content',
-      close: Pages.Dashboard.Toolbar.toolbarItems('Close options pane'),
-      open: Pages.Dashboard.Toolbar.toolbarItems('Open options pane'),
+      close: 'Dashboard navigation bar button Close options pane',
+      open: 'Dashboard navigation bar button Open options pane',
       select: 'Panel editor option pane select',
       tab: (title: string) => `Panel editor option pane tab ${title}`,
     },
@@ -109,6 +110,7 @@ export const Components = {
     transformationEditorDebugger: (name: string) => `Transformation editor debugger ${name}`,
   },
   Transforms: {
+    card: (name: string) => `New transform ${name}`,
     Reduce: {
       modeLabel: 'Transform mode label',
       calculationsLabel: 'Transform calculations label',

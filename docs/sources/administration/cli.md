@@ -2,9 +2,6 @@
 title = "Grafana CLI"
 description = "Guide to using grafana-cli"
 keywords = ["grafana", "cli", "grafana-cli", "command line interface"]
-type = "docs"
-[menu.docs]
-parent = "admin"
 weight = 8
 +++
 

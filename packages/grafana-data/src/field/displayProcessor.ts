@@ -115,7 +115,7 @@ export function getDisplayProcessor(options?: DisplayProcessorOptions): DisplayP
       }
     }
 
-    return { text, numeric, prefix, suffix, ...scaleFunc(0) };
+    return { text, numeric, prefix, suffix, ...scaleFunc(-Infinity) };
   };
 }
 

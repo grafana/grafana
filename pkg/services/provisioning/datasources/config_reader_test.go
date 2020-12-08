@@ -35,7 +35,6 @@ func TestDatasourceAsConfig(t *testing.T) {
 		bus.AddHandler("test", mockInsert)
 		bus.AddHandler("test", mockUpdate)
 		bus.AddHandler("test", mockGet)
-		bus.AddHandler("test", mockGetAll)
 		bus.AddHandler("test", mockGetOrg)
 
 		Convey("apply default values when missing", func() {
@@ -279,11 +278,6 @@ func mockUpdate(cmd *models.UpdateDataSourceCommand) error {
 
 func mockInsert(cmd *models.AddDataSourceCommand) error {
 	fakeRepo.inserted = append(fakeRepo.inserted, cmd)
-	return nil
-}
-
-func mockGetAll(cmd *models.GetAllDataSourcesQuery) error {
-	cmd.Result = fakeRepo.loadAll
 	return nil
 }
 

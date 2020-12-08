@@ -64,7 +64,16 @@ type FakeLogger struct {
 	log.Logger
 }
 
-func (stub *FakeLogger) Info(testMessage string, ctx ...interface{}) {
+func (fl *FakeLogger) Debug(testMessage string, ctx ...interface{}) {
+}
+
+func (fl *FakeLogger) Info(testMessage string, ctx ...interface{}) {
+}
+
+func (fl *FakeLogger) Warn(testMessage string, ctx ...interface{}) {
+}
+
+func (fl *FakeLogger) Error(testMessage string, ctx ...interface{}) {
 }
 
 type redirectCase struct {
@@ -84,7 +93,7 @@ func TestLoginErrorCookieApiEndpoint(t *testing.T) {
 	mockViewIndex()
 	defer resetViewIndex()
 
-	sc := setupScenarioContext("/login")
+	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
 		License: &licensing.OSSLicensingService{},
@@ -138,7 +147,7 @@ func TestLoginViewRedirect(t *testing.T) {
 
 	mockViewIndex()
 	defer resetViewIndex()
-	sc := setupScenarioContext("/login")
+	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
 		License: &licensing.OSSLicensingService{},
@@ -254,12 +263,12 @@ func TestLoginViewRedirect(t *testing.T) {
 	}
 
 	for _, c := range redirectCases {
-		hs.Cfg.AppUrl = c.appURL
-		hs.Cfg.AppSubUrl = c.appSubURL
+		hs.Cfg.AppURL = c.appURL
+		hs.Cfg.AppSubURL = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
 			expCookiePath := "/"
-			if len(hs.Cfg.AppSubUrl) > 0 {
-				expCookiePath = hs.Cfg.AppSubUrl
+			if len(hs.Cfg.AppSubURL) > 0 {
+				expCookiePath = hs.Cfg.AppSubURL
 			}
 			cookie := http.Cookie{
 				Name:     "redirect_to",
@@ -314,7 +323,7 @@ func TestLoginPostRedirect(t *testing.T) {
 
 	mockViewIndex()
 	defer resetViewIndex()
-	sc := setupScenarioContext("/login")
+	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
 		log:              &FakeLogger{},
 		Cfg:              setting.NewCfg(),
@@ -423,12 +432,12 @@ func TestLoginPostRedirect(t *testing.T) {
 	}
 
 	for _, c := range redirectCases {
-		hs.Cfg.AppUrl = c.appURL
-		hs.Cfg.AppSubUrl = c.appSubURL
+		hs.Cfg.AppURL = c.appURL
+		hs.Cfg.AppSubURL = c.appSubURL
 		t.Run(c.desc, func(t *testing.T) {
 			expCookiePath := "/"
-			if len(hs.Cfg.AppSubUrl) > 0 {
-				expCookiePath = hs.Cfg.AppSubUrl
+			if len(hs.Cfg.AppSubURL) > 0 {
+				expCookiePath = hs.Cfg.AppSubURL
 			}
 			cookie := http.Cookie{
 				Name:     "redirect_to",
@@ -472,7 +481,7 @@ func TestLoginOAuthRedirect(t *testing.T) {
 	mockSetIndexViewData()
 	defer resetSetIndexViewData()
 
-	sc := setupScenarioContext("/login")
+	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
 		License: &licensing.OSSLicensingService{},
@@ -507,7 +516,7 @@ func TestLoginInternal(t *testing.T) {
 
 	mockViewIndex()
 	defer resetViewIndex()
-	sc := setupScenarioContext("/login")
+	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
 		Cfg:     setting.NewCfg(),
 		License: &licensing.OSSLicensingService{},
@@ -537,7 +546,7 @@ func TestLoginInternal(t *testing.T) {
 }
 
 func TestAuthProxyLoginEnableLoginTokenDisabled(t *testing.T) {
-	sc := setupAuthProxyLoginTest(false)
+	sc := setupAuthProxyLoginTest(t, false)
 
 	assert.Equal(t, sc.resp.Code, 302)
 	location, ok := sc.resp.Header()["Location"]
@@ -549,7 +558,7 @@ func TestAuthProxyLoginEnableLoginTokenDisabled(t *testing.T) {
 }
 
 func TestAuthProxyLoginWithEnableLoginToken(t *testing.T) {
-	sc := setupAuthProxyLoginTest(true)
+	sc := setupAuthProxyLoginTest(t, true)
 
 	assert.Equal(t, sc.resp.Code, 302)
 	location, ok := sc.resp.Header()["Location"]
@@ -561,11 +570,11 @@ func TestAuthProxyLoginWithEnableLoginToken(t *testing.T) {
 	assert.Equal(t, "grafana_session=; Path=/; Max-Age=0; HttpOnly", setCookie[0])
 }
 
-func setupAuthProxyLoginTest(enableLoginToken bool) *scenarioContext {
+func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioContext {
 	mockSetIndexViewData()
 	defer resetSetIndexViewData()
 
-	sc := setupScenarioContext("/login")
+	sc := setupScenarioContext(t, "/login")
 	hs := &HTTPServer{
 		Cfg:              setting.NewCfg(),
 		License:          &licensing.OSSLicensingService{},
@@ -601,7 +610,7 @@ func (r *loginHookTest) LoginHook(loginInfo *models.LoginInfo, req *models.ReqCo
 }
 
 func TestLoginPostRunLokingHook(t *testing.T) {
-	sc := setupScenarioContext("/login")
+	sc := setupScenarioContext(t, "/login")
 	hookService := &hooks.HooksService{}
 	hs := &HTTPServer{
 		log:              log.New("test"),

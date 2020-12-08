@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -31,7 +32,7 @@ func getFSDataSources(c *models.ReqContext, enabledPlugins *plugins.EnabledPlugi
 		}
 
 		if err := bus.Dispatch(&dsFilterQuery); err != nil {
-			if err != bus.ErrHandlerNotFound {
+			if !errors.Is(err, bus.ErrHandlerNotFound) {
 				return nil, err
 			}
 
@@ -145,7 +146,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		if isDefault, _ := dsM["isDefault"].(bool); isDefault {
 			defaultDS = n
 		}
-		delete(dsM, "isDefault")
 
 		meta := dsM["meta"].(*plugins.DataSourcePlugin)
 		if meta.Preload {
@@ -240,6 +240,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"featureToggles":    hs.Cfg.FeatureToggles,
 		"rendererAvailable": hs.RenderService.IsAvailable(),
 		"http2Enabled":      hs.Cfg.Protocol == setting.HTTP2Scheme,
+		"sentry":            hs.Cfg.Sentry,
 		"marketplaceUrl":    hs.Cfg.MarketplaceURL,
 	}
 

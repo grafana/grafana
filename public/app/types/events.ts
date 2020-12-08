@@ -1,4 +1,4 @@
-import { eventFactory, TimeRange } from '@grafana/data';
+import { BusEventBase, eventFactory, TimeRange } from '@grafana/data';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 /**
@@ -106,10 +106,6 @@ export const toggleKioskMode = eventFactory<ToggleKioskModePayload>('toggle-kios
 export const toggleViewMode = eventFactory('toggle-view-mode');
 
 export const timeRangeUpdated = eventFactory<TimeRange>('time-range-updated');
-
-export const repeatsProcessed = eventFactory('repeats-processed');
-export const rowExpanded = eventFactory('row-expanded');
-export const rowCollapsed = eventFactory('row-collapsed');
 export const templateVariableValueUpdated = eventFactory('template-variable-value-updated');
 export const submenuVisibilityChanged = eventFactory<boolean>('submenu-visibility-changed');
 
@@ -121,9 +117,34 @@ export const zoomOut = eventFactory<number>('zoom-out');
 
 export const shiftTime = eventFactory<number>('shift-time');
 
-export const elasticQueryUpdated = eventFactory('elastic-query-updated');
-
 export const routeUpdated = eventFactory('$routeUpdate');
 
-export const queryChanged = eventFactory('queryChanged');
-export const transformationChanged = eventFactory('transformationChanged');
+/**
+ * Used for syncing queries badge count in panel edit queries tab
+ * Think we can get rid of this soon
+ */
+export class PanelQueriesChangedEvent extends BusEventBase {
+  static type = 'panel-queries-changed';
+}
+
+/**
+ * Used for syncing transformations badge count in panel edit transform tab
+ * Think we can get rid of this soon
+ */
+export class PanelTransformationsChangedEvent extends BusEventBase {
+  static type = 'panel-transformations-changed';
+}
+
+/**
+ * Used by panel editor to know when panel plugin it'self trigger option updates
+ */
+export class PanelOptionsChangedEvent extends BusEventBase {
+  static type = 'panels-options-changed';
+}
+
+/**
+ * Used internally by DashboardModel to commmunicate with DashboardGrid that it needs to re-render
+ */
+export class DashboardPanelsChangedEvent extends BusEventBase {
+  static type = 'dashboard-panels-changed';
+}

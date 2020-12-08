@@ -138,6 +138,8 @@ func (e fileExpander) Expand(s string) (string, error) {
 		return "", err
 	}
 
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `s` comes from configuration section keys
 	f, err := ioutil.ReadFile(s)
 	if err != nil {
 		return "", err

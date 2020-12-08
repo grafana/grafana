@@ -17,7 +17,7 @@ func init() {
 }
 
 type ShortURLService struct {
-	SQLStore *sqlstore.SqlStore `inject:""`
+	SQLStore *sqlstore.SQLStore `inject:""`
 }
 
 func (s *ShortURLService) Init() error {

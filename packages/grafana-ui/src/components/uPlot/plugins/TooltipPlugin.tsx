@@ -25,7 +25,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
   return (
     <CursorPlugin id={pluginId}>
       {({ focusedSeriesIdx, focusedPointIdx, coords }) => {
-        if (!plotContext.isPlotReady) {
+        if (!plotContext.getPlotInstance()) {
           return null;
         }
 

@@ -3,7 +3,10 @@ package bus
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
+
+	"github.com/opentracing/opentracing-go"
 )
 
 // HandlerFunc defines a handler function interface.
@@ -83,6 +86,11 @@ func (b *InProcBus) SetTransactionManager(tm TransactionManager) {
 func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 
+	span, ctx := opentracing.StartSpanFromContext(ctx, "bus - "+msgName)
+	defer span.Finish()
+
+	span.SetTag("msg", msgName)
+
 	var handler = b.handlersWithCtx[msgName]
 	if handler == nil {
 		return ErrHandlerNotFound
@@ -140,9 +148,13 @@ func (b *InProcBus) Publish(msg Msg) error {
 
 	for _, listenerHandler := range listeners {
 		ret := reflect.ValueOf(listenerHandler).Call(params)
-		err := ret[0].Interface()
-		if err != nil {
-			return err.(error)
+		e := ret[0].Interface()
+		if e != nil {
+			err, ok := e.(error)
+			if ok {
+				return err
+			}
+			return fmt.Errorf("expected listener to return an error, got '%T'", e)
 		}
 	}
 

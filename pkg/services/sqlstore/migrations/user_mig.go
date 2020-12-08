@@ -132,7 +132,7 @@ type AddMissingUserSaltAndRandsMigration struct {
 	MigrationBase
 }
 
-func (m *AddMissingUserSaltAndRandsMigration) Sql(dialect Dialect) string {
+func (m *AddMissingUserSaltAndRandsMigration) SQL(dialect Dialect) string {
 	return "code migration"
 }
 

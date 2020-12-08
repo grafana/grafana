@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/md5"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -25,9 +26,8 @@ type GrafanaComClient struct {
 func (client *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plugin, error) {
 	logger.Debugf("getting plugin metadata from: %v pluginId: %v \n", repoUrl, pluginId)
 	body, err := sendRequestGetBytes(HttpClient, repoUrl, "repo", pluginId)
-
 	if err != nil {
-		if err == ErrNotFoundError {
+		if errors.Is(err, ErrNotFoundError) {
 			return models.Plugin{}, errutil.Wrap("Failed to find requested plugin, check if the plugin_id is correct", err)
 		}
 		return models.Plugin{}, errutil.Wrap("Failed to send request", err)
@@ -44,8 +44,11 @@ func (client *GrafanaComClient) GetPlugin(pluginId, repoUrl string) (models.Plug
 }
 
 func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File, url string, checksum string) (err error) {
-	// Try handling url like local file path first
+	// Try handling URL as a local file path first
 	if _, err := os.Stat(url); err == nil {
+		// We can ignore this gosec G304 warning since `url` stems from command line flag "pluginUrl". If the
+		// user shouldn't be able to read the file, it should be handled through filesystem permissions.
+		// nolint:gosec
 		f, err := os.Open(url)
 		if err != nil {
 			return errutil.Wrap("Failed to read plugin archive", err)

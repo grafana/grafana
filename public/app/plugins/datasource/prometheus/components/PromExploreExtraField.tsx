@@ -23,7 +23,7 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
 
     return (
       <div aria-label="Prometheus extra field" className="gf-form-inline">
-        {/*QueryTypeField */}
+        {/*Query type field*/}
         <div
           data-testid="queryTypeField"
           className={cx(
@@ -34,7 +34,12 @@ export const PromExploreExtraField: React.FC<PromExploreExtraFieldProps> = memo(
           )}
           aria-label="Query type field"
         >
-          <InlineFormLabel width={5}>Query type</InlineFormLabel>
+          <InlineFormLabel
+            width="auto"
+            tooltip="Choose the type of query you would like to run. An instant query queries against a single point in time. A range query queries over a range of time. With both, you'll run two queries - one instant and one range. "
+          >
+            Query type
+          </InlineFormLabel>
 
           <RadioButtonGroup options={rangeOptions} value={queryType} onChange={onQueryTypeChange} />
         </div>

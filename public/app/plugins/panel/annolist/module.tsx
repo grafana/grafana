@@ -60,7 +60,7 @@ export const plugin = new PanelPlugin<AnnoOptions>(AnnoListPanel)
         path: 'tags',
         name: 'Tags',
         description: '',
-        editor: props => {
+        editor(props) {
           return <TagsInput tags={props.value} onChange={props.onChange} />;
         },
       })

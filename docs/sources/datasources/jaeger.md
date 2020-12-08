@@ -2,11 +2,7 @@
 title = "Jaeger"
 description = "Guide for using Jaeger in Grafana"
 keywords = ["grafana", "jaeger", "guide", "tracing"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/datasources/jaeger"]
-[menu.docs]
-name = "Jaeger"
-parent = "datasources"
 weight = 800
 +++
 

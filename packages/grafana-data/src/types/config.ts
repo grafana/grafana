@@ -37,6 +37,7 @@ export interface FeatureToggles {
   ngalert: boolean;
   // Just for demo at the moment
   traceToLogs: boolean;
+  panelLibrary: boolean;
 
   /**
    * @remarks
@@ -57,6 +58,18 @@ export interface LicenseInfo {
   stateInfo: string;
   hasValidLicense: boolean;
   edition: string;
+}
+
+/**
+ * Describes Sentry integration config
+ *
+ * @public
+ */
+export interface SentryConfig {
+  enabled: boolean;
+  dsn: string;
+  customEndpoint: string;
+  sampleRate: number;
 }
 
 /**
@@ -105,4 +118,5 @@ export interface GrafanaConfig {
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
   dateFormats?: SystemDateFormatSettings;
+  sentry: SentryConfig;
 }
