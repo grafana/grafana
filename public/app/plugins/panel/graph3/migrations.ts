@@ -8,7 +8,6 @@ import {
   FieldMatcherID,
   DynamicConfigValue,
   FieldConfigProperty,
-  FieldColor,
   FieldColorModeId,
 } from '@grafana/data';
 import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
@@ -136,7 +135,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
               });
             }
             break;
-          case 'lineWidth':
+          case 'linewidth':
             rule.properties.push({
               id: 'custom.lineWidth',
               value: v,
@@ -166,8 +165,10 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     graph.showPoints = PointVisibility.Never;
   }
 
-  graph.lineWidth = angular.lineWidth;
-  graph.pointSize = 2 + angular.pointradius * 2;
+  graph.lineWidth = angular.linewidth;
+  if (isNumber(angular.pointradius)) {
+    graph.pointSize = 2 + angular.pointradius * 2;
+  }
   if (isNumber(angular.fill)) {
     graph.fillOpacity = angular.fill / 10; // fill is 0-10
   }
