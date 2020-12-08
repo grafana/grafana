@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -334,7 +333,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
 			return JSON(200, &dashRedirect)
 		}
-		log.Warnf("Failed to get slug from database, %s", err.Error())
+		hs.log.Warn("Failed to get slug from database", "err", err)
 	}
 
 	filePath := hs.Cfg.DefaultHomeDashboardPath
@@ -342,11 +341,18 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 		filePath = filepath.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
 	}
 
+	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
+	// variable
+	// nolint:gosec
 	file, err := os.Open(filePath)
 	if err != nil {
 		return Error(500, "Failed to load home dashboard", err)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			hs.log.Warn("Failed to close dashboard file", "path", filePath, "err", err)
+		}
+	}()
 
 	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.IsHome = true

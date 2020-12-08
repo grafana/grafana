@@ -25,7 +25,7 @@ const CHEAT_SHEET_ITEMS = [
   },
 ];
 
-export default (props: ExploreStartPageProps) => (
+const PromCheatSheet = (props: ExploreStartPageProps) => (
   <div>
     <h2>PromQL Cheat Sheet</h2>
     {CHEAT_SHEET_ITEMS.map((item, index) => (
@@ -44,3 +44,5 @@ export default (props: ExploreStartPageProps) => (
     ))}
   </div>
 );
+
+export default PromCheatSheet;

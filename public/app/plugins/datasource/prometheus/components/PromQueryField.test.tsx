@@ -17,6 +17,7 @@ describe('PromQueryField', () => {
     const datasource = ({
       languageProvider: {
         start: () => Promise.resolve([]),
+        syntax: () => {},
       },
     } as unknown) as DataSourceInstanceSettings<PromOptions>;
 
@@ -35,10 +36,16 @@ describe('PromQueryField', () => {
   });
 
   it('renders a disabled metrics chooser if lookups are disabled in datasource settings', () => {
+    const datasource = ({
+      languageProvider: {
+        start: () => Promise.resolve([]),
+        syntax: () => {},
+      },
+    } as unknown) as DataSourceInstanceSettings<PromOptions>;
     const queryField = render(
       <PromQueryField
         // @ts-ignore
-        datasource={{ lookupsDisabled: true }}
+        datasource={{ ...datasource, lookupsDisabled: true }}
         query={{ expr: '', refId: '' }}
         onRunQuery={() => {}}
         onChange={() => {}}

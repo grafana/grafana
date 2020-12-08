@@ -444,6 +444,8 @@ func (sc *scenarioContext) verifyUpdateDashboardPermissionsShouldNotBeAllowed(pt
 					newDefaultUserPermission(dashboardID, p),
 					newCustomTeamPermission(dashboardID, otherTeamID, p),
 				}...)
+			default:
+				// TODO: Handle other cases?
 			}
 
 			sc.updatePermissions = permissionList

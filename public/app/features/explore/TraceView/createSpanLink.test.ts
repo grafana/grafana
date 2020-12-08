@@ -13,14 +13,8 @@ describe('createSpanLinkFactory', () => {
 
   it('returns undefined if there is no loki data source', () => {
     setDataSourceSrv({
-      getExternal() {
-        return [
-          {
-            meta: {
-              id: 'not loki',
-            },
-          } as DataSourceInstanceSettings,
-        ];
+      getList() {
+        return [];
       },
     } as any);
     const splitOpenFn = jest.fn();
@@ -30,7 +24,7 @@ describe('createSpanLinkFactory', () => {
 
   it('creates correct link', () => {
     setDataSourceSrv({
-      getExternal() {
+      getList() {
         return [
           {
             name: 'loki1',
@@ -41,10 +35,10 @@ describe('createSpanLinkFactory', () => {
           } as DataSourceInstanceSettings,
         ];
       },
-      getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
+      getInstanceSettings(uid: string): DataSourceInstanceSettings | undefined {
         if (uid === 'lokiUid') {
           return {
-            name: 'Loki1',
+            name: 'loki1',
           } as any;
         }
         return undefined;
@@ -82,7 +76,7 @@ describe('createSpanLinkFactory', () => {
     } as any);
 
     expect(linkDef.href).toBe(
-      `/explore?left={"range":{"from":"20201014T000000","to":"20201014T010006"},"datasource":"Loki1","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"}","refId":""}]}`
+      `/explore?left={"range":{"from":"20201014T000000","to":"20201014T010006"},"datasource":"loki1","queries":[{"expr":"{cluster=\\"cluster1\\", hostname=\\"hostname1\\"}","refId":""}]}`
     );
   });
 });

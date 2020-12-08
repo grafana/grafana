@@ -1,4 +1,12 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import {
+  BucketAggregation,
+  BucketAggregationType,
+} from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+import {
+  MetricAggregation,
+  MetricAggregationType,
+} from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 
 export interface ElasticsearchOptions extends DataSourceJsonData {
   timeField: string;
@@ -12,21 +20,51 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   pplSupportEnabled?: boolean;
 }
 
+interface MetricConfiguration<T extends MetricAggregationType> {
+  label: string;
+  requiresField: boolean;
+  supportsInlineScript: boolean;
+  supportsMissing: boolean;
+  isPipelineAgg: boolean;
+  minVersion?: number;
+  maxVersion?: number;
+  supportsMultipleBucketPaths: boolean;
+  isSingleMetric?: boolean;
+  hasSettings: boolean;
+  hasMeta: boolean;
+  defaults: Omit<Extract<MetricAggregation, { type: T }>, 'id' | 'type'>;
+}
+
+type BucketConfiguration<T extends BucketAggregationType> = {
+  label: string;
+  requiresField: boolean;
+  defaultSettings: Extract<BucketAggregation, { type: T }>['settings'];
+};
+
+export type MetricsConfiguration = {
+  [P in MetricAggregationType]: MetricConfiguration<P>;
+};
+
+export type BucketsConfiguration = {
+  [P in BucketAggregationType]: BucketConfiguration<P>;
+};
+
 export interface ElasticsearchAggregation {
   id: string;
-  type: string;
-  settings?: any;
+  type: MetricAggregationType | BucketAggregationType;
+  settings?: unknown;
   field?: string;
-  pipelineVariables?: Array<{ name?: string; pipelineAgg?: string }>;
+  hide: boolean;
 }
 
 export interface ElasticsearchQuery extends DataQuery {
-  isLogsQuery: boolean;
+  isLogsQuery?: boolean;
   alias?: string;
   query?: string;
+  bucketAggs?: BucketAggregation[];
+  metrics?: MetricAggregation[];
+  timeField?: string;
   queryType?: ElasticsearchQueryType;
-  bucketAggs?: ElasticsearchAggregation[];
-  metrics?: ElasticsearchAggregation[];
   format?: string;
 }
 

@@ -147,19 +147,20 @@ Since not all datasources have the same configuration settings we only have the 
 | tlsAuthWithCACert       | boolean | _All_                                                            | Enable TLS authentication using CA cert                                                     |
 | tlsSkipVerify           | boolean | _All_                                                            | Controls whether a client verifies the server's certificate chain and host name.            |
 | graphiteVersion         | string  | Graphite                                                         | Graphite version                                                                            |
-| timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL  | Lowest interval/step value that should be used for this data source                         |
-| httpMode                | string  | Influxdb                                                          | HTTP Method. 'GET', 'POST', defaults to GET                                                |
-| httpMethod              | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to GET                                                |
+| timeInterval            | string  | Prometheus, Elasticsearch, InfluxDB, MySQL, PostgreSQL and MSSQL | Lowest interval/step value that should be used for this data source.                         |
+| httpMode                | string  | Influxdb                                                         | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
+| httpMethod              | string  | Prometheus                                                       | HTTP Method. 'GET', 'POST', defaults to GET                                                 |
 | esVersion               | number  | Elasticsearch                                                    | Elasticsearch version as a number (2/5/56/60/70)                                            |
 | timeField               | string  | Elasticsearch                                                    | Which field that should be used as timestamp                                                |
 | interval                | string  | Elasticsearch                                                    | Index date time format. nil(No Pattern), 'Hourly', 'Daily', 'Weekly', 'Monthly' or 'Yearly' |
 | logMessageField         | string  | Elasticsearch                                                    | Which field should be used as the log message                                               |
 | logLevelField           | string  | Elasticsearch                                                    | Which field should be used to indicate the priority of the log message                      |
-| sigV4AuthType                | string  | Elasticsearch                                                       | SigV4 auth provider. default/credentials/keys                                                     |
-| sigV4ExternalId              | string  | Elasticsearch                                                       | Optional SigV4 External ID                                                                         |
-| sigV4AssumeRoleArn           | string  | Elasticsearch                                                       | Optional SigV4 ARN role to assume                                                                 |
-| sigV4Region           | string  | Elasticsearch                                                       | SigV4 AWS region                                                                 |
-| sigV4Profile                 | string  | Elasticsearch                                                       | Optional SigV4  credentials profile                                                                |
+| sigV4Auth               | boolean | Elasticsearch                                                    | Enable usage of SigV4                                                                       |
+| sigV4AuthType           | string  | Elasticsearch                                                    | SigV4 auth provider. default/credentials/keys                                               |
+| sigV4ExternalId         | string  | Elasticsearch                                                    | Optional SigV4 External ID                                                                  |
+| sigV4AssumeRoleArn      | string  | Elasticsearch                                                    | Optional SigV4 ARN role to assume                                                           |
+| sigV4Region             | string  | Elasticsearch                                                    | SigV4 AWS region                                                                            |
+| sigV4Profile            | string  | Elasticsearch                                                    | Optional SigV4  credentials profile                                                         |
 | authType                | string  | Cloudwatch                                                       | Auth provider. default/credentials/keys                                                     |
 | externalId              | string  | Cloudwatch                                                       | Optional External ID                                                                        |
 | assumeRoleArn           | string  | Cloudwatch                                                       | Optional ARN role to assume                                                                 |
@@ -194,7 +195,7 @@ Secure json data is a map of settings that will be encrypted with [secret key]({
 | basicAuthPassword | string | _All_      | password for basic authentication       |
 | accessKey         | string | Cloudwatch | Access key for connecting to Cloudwatch |
 | secretKey         | string | Cloudwatch | Secret key for connecting to Cloudwatch |
-| sigV4AccessKey     | string | Elasticsearch | SigV4 access key. Required when using keys auth provider |
+| sigV4AccessKey    | string | Elasticsearch | SigV4 access key. Required when using keys auth provider |
 | sigV4SecretKey    | string | Elasticsearch | SigV4 secret key. Required when using keys auth provider |
 
 #### Custom HTTP headers for datasources
@@ -478,6 +479,17 @@ The following sections detail the supported settings and secure settings for eac
 | handler  |                |
 | username |                |
 | password | yes            |
+
+#### Alert notification `sensugo`
+
+| Name      | Secure setting |
+| --------  | -------------- |
+| url       |                |
+| apikey    | yes            |
+| entity    |                |
+| check     |                |
+| handler   |                |
+| namespace |                |
 
 #### Alert notification `prometheus-alertmanager`
 

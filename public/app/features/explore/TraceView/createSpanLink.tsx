@@ -15,9 +15,7 @@ export function createSpanLinkFactory(splitOpenFn: (options: { datasourceUid: st
   }
 
   // Right now just hardcoded for first loki DS we can find
-  const lokiDs = getDataSourceSrv()
-    .getExternal()
-    .find(ds => ds.meta.id === 'loki');
+  const lokiDs = getDataSourceSrv().getList({ pluginId: 'loki' })[0];
 
   if (!lokiDs) {
     return undefined;
@@ -34,17 +32,24 @@ export function createSpanLinkFactory(splitOpenFn: (options: { datasourceUid: st
       url: '',
       internal: {
         datasourceUid: lokiDs.uid,
+        datasourceName: lokiDs.name,
         query: {
           expr: getLokiQueryFromSpan(span),
           refId: '',
         },
       },
     };
-    const link = mapInternalLinkToExplore(dataLink, {}, getTimeRangeFromSpan(span), {} as Field, {
+
+    const link = mapInternalLinkToExplore({
+      link: dataLink,
+      internalLink: dataLink.internal!,
+      scopedVars: {},
+      range: getTimeRangeFromSpan(span),
+      field: {} as Field,
       onClickFn: splitOpenFn,
       replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-      getDataSourceSettingsByUid: getDataSourceSrv().getDataSourceSettingsByUid.bind(getDataSourceSrv()),
     });
+
     return {
       href: link.href,
       onClick: link.onClick,
