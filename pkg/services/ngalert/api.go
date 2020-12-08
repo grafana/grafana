@@ -40,7 +40,7 @@ func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertCond
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	defer cancelFn()
 
-	alertExecCtx := eval.AlertExecCtx{Ctx: alertCtx}
+	alertExecCtx := eval.AlertExecCtx{Ctx: alertCtx, OrgID: c.SignedInUser.OrgId}
 
 	execResult, err := dto.Condition.Execute(alertExecCtx, timeNow())
 	if err != nil {
@@ -89,7 +89,7 @@ func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) api.Respons
 }
 
 func (ng *AlertNG) alertDefinitionEval(alertDefinitionID int64, now time.Time) (eval.Results, error) {
-	conditions, err := ng.LoadAlertCondition(alertDefinitionID)
+	conditions, orgID, err := ng.LoadAlertCondition(alertDefinitionID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load conditions: %w", err)
 	}
@@ -97,7 +97,7 @@ func (ng *AlertNG) alertDefinitionEval(alertDefinitionID int64, now time.Time) (
 	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
 	defer cancelFn()
 
-	alertExecCtx := eval.AlertExecCtx{AlertDefitionID: alertDefinitionID, Ctx: alertCtx}
+	alertExecCtx := eval.AlertExecCtx{OrgID: orgID, Ctx: alertCtx}
 
 	execResult, err := conditions.Execute(alertExecCtx, now)
 	if err != nil {

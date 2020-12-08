@@ -84,7 +84,7 @@ func (c Condition) IsValid() bool {
 
 // AlertExecCtx is the context provided for executing an alert condition.
 type AlertExecCtx struct {
-	AlertDefitionID int64
+	OrgID int64
 
 	Ctx context.Context
 }
@@ -94,11 +94,12 @@ func (c *Condition) Execute(ctx AlertExecCtx, now time.Time) (*ExecutionResults,
 	result := ExecutionResults{}
 	if !c.IsValid() {
 		return nil, fmt.Errorf("invalid conditions")
+		// TODO: Things probably
 	}
 
 	queryDataReq := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			// TODO: Things probably
+			OrgID: ctx.OrgID,
 		},
 		Queries: []backend.DataQuery{},
 	}
