@@ -1,5 +1,5 @@
 +++
-title = "Server Admin - Manage users"
+title = "Manage users"
 weight = 100
 aliases =["/docs/grafana/latest/manage-users/add-or-remove-user/","/docs/grafana/latest/manage-users/enable-or-disable-user/"]
 +++
@@ -16,7 +16,7 @@ In order to perform any of these tasks, you must be logged in to Grafana on an a
 
 See a complete list of users with accounts on your Grafana server.
 
-{{< docs/list "manage-users/view-server-user-list" >}}
+{{< docs/shared "manage-users/view-server-user-list" >}}
 
 Grafana displays all user accounts on the server, listed in alphabetical order by user name. The following information is displayed:
 - **Login -** The value in the **Username** field of the account.
@@ -25,8 +25,6 @@ Grafana displays all user accounts on the server, listed in alphabetical order b
 - **Seen -** How long ago the user logged in. If they have never logged in, then the default longest time (10y) is displayed.
 - **Server Admin status -** If the user account has **Grafana Admin** option set, then a shield icon is displayed.
 - **Account status -** If the account is disabled, then the **Disabled** label is displayed.
-
-{{< docs-imagebox img="/img/docs/manage-users/server-user-list-7-3.png" max-width="1200px">}}
 
 <img src="/img/docs/manage-users/server-user-list-7-3.png" max-width="1200px">
 
