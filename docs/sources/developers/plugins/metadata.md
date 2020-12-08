@@ -15,60 +15,69 @@ The plugin.json file is required for all plugins. When Grafana starts, it scans 
 
 | Property        | Type                    | Required | Description                                                                                                                                                                                                                                                                                                                                                                                             |
 |-----------------|-------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `dependencies`  | [object](#dependencies) | **Yes**  | Plugin dependencies.                                                                                                                                                                                                                                                                                                                                                                                    |
+| `dependencies`  | [object](#dependencies) | **Yes**  | Dependencies needed by the plugin.                                                                                                                                                                                                                                                                                                                                                                      |
 | `id`            | string                  | **Yes**  | Unique name of the plugin. If the plugin is published on grafana.com, then the plugin id has to follow the naming conventions.                                                                                                                                                                                                                                                                          |
 | `info`          | [object](#info)         | **Yes**  | Metadata for the plugin. Some fields are used on the plugins page in Grafana and others on grafana.com if the plugin is published.                                                                                                                                                                                                                                                                      |
 | `name`          | string                  | **Yes**  | Human-readable name of the plugin that is shown to the user in the UI.                                                                                                                                                                                                                                                                                                                                  |
-| `type`          | string                  | **Yes**  | Plugin type. Possible values are `app`, `datasource`, and `panel`.                                                                                                                                                                                                                                                                                                                                      |
+| `type`          | string                  | **Yes**  | Plugin type. Possible values are: `app`, `datasource`, `panel`.                                                                                                                                                                                                                                                                                                                                         |
 | `$schema`       | string                  | No       | Schema definition for the plugin.json file                                                                                                                                                                                                                                                                                                                                                              |
 | `alerting`      | boolean                 | No       | For data source plugins. If the plugin supports alerting.                                                                                                                                                                                                                                                                                                                                               |
 | `annotations`   | boolean                 | No       | For data source plugins. If the plugin supports annotation queries.                                                                                                                                                                                                                                                                                                                                     |
 | `backend`       | boolean                 | No       | If the plugin has a backend component.                                                                                                                                                                                                                                                                                                                                                                  |
-| `category`      | string                  | No       | Plugin category used on the Add data source page. Possible values are: `tsdb`, `logging`, `cloud`, `tracing`, `sql`, `enterprise` and `other`.                                                                                                                                                                                                                                                          |
+| `category`      | string                  | No       | Plugin category used on the Add data source page. Possible values are: `tsdb`, `logging`, `cloud`, `tracing`, `sql`, `enterprise`, `other`.                                                                                                                                                                                                                                                             |
 | `executable`    | string                  | No       | The first part of the file name of the backend component executable. There can be multiple executables built for different operating system and architecture. Grafana will check for executables named `<executable>_<$GOOS>_<lower case $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`. Combination of $GOOS and $GOARCH can be found here: https://golang.org/doc/install/source#environment. |
 | `hiddenQueries` | boolean                 | No       |                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `includes`      | [object](#includes)[]   | No       |                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `includes`      | [object](#includes)[]   | No       | Resources to include in plugin.                                                                                                                                                                                                                                                                                                                                                                         |
 | `logs`          | boolean                 | No       | For data source plugins. If the plugin supports logs.                                                                                                                                                                                                                                                                                                                                                   |
 | `metrics`       | boolean                 | No       | For data source plugins. If the plugin supports metric queries. Used in the Explore feature.                                                                                                                                                                                                                                                                                                            |
-| `mixed`         | boolean                 | No       | Not to be used by external plugins. Special property for the built-in mixed plugin.                                                                                                                                                                                                                                                                                                                     |
-| `module`        | string                  | No       |                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `partials`      | [object](#partials)     | No       |                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `preload`       | boolean                 | No       | Initialize plugin on startup. By default, the plugin initializes on first use.                                                                                                                                                                                                                                                                                                                          |
 | `queryOptions`  | [object](#queryoptions) | No       | For data source plugins. There is a query options section in the plugin's query editor and these options can be turned on if needed.                                                                                                                                                                                                                                                                    |
 | `routes`        | [object](#routes)[]     | No       | For data source plugins. Proxy routes used for plugin authentication and adding headers to HTTP requests made by the plugin. For more information, refer to [Authentication for data source plugins](https://grafana.com/docs/grafana/latest/developers/plugins/authentication/).                                                                                                                       |
 | `skipDataQuery` | boolean                 | No       | For panel plugins. Hides the query editor.                                                                                                                                                                                                                                                                                                                                                              |
-| `sort`          | number                  | No       | Internal property for sorting. Cannot be used as will be overwritten by Grafana.                                                                                                                                                                                                                                                                                                                        |
-| `state`         | string                  | No       | Marks a plugin as a pre-release.                                                                                                                                                                                                                                                                                                                                                                        |
-| `staticRoot`    | string                  | No       |                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `state`         | string                  | No       | Marks a plugin as a pre-release. Possible values are: `alpha`, `beta`.                                                                                                                                                                                                                                                                                                                                  |
 | `streaming`     | boolean                 | No       | For data source plugins. If the plugin supports streaming.                                                                                                                                                                                                                                                                                                                                              |
 | `tables`        | boolean                 | No       |                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `tracing`       | boolean                 | No       | For data source plugins. If the plugin supports tracing.                                                                                                                                                                                                                                                                                                                                                |
 
 ## dependencies
 
-Plugin dependencies.
+Dependencies needed by the plugin.
 
 ### Properties
 
-| Property            | Type     | Required | Description                                                                                                                   |
-|---------------------|----------|----------|-------------------------------------------------------------------------------------------------------------------------------|
-| `grafanaDependency` | string   | **Yes**  | Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.                                 |
-| `grafanaVersion`    | string   | No       | (Deprecated) Required Grafana version for this plugin, e.g. `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or v7.x.x. |
-| `plugins`           | string[] | No       | An array of required plugins on which this plugin depends.                                                                    |
+| Property            | Type                 | Required | Description                                                                                                                   |
+|---------------------|----------------------|----------|-------------------------------------------------------------------------------------------------------------------------------|
+| `grafanaDependency` | string               | **Yes**  | Required Grafana version for this plugin. Validated using https://github.com/npm/node-semver.                                 |
+| `grafanaVersion`    | string               | No       | (Deprecated) Required Grafana version for this plugin, e.g. `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or v7.x.x. |
+| `plugins`           | [object](#plugins)[] | No       | An array of required plugins on which this plugin depends.                                                                    |
+
+### plugins
+
+Plugin dependency. Used to display information about plugin dependencies in the Grafana UI.
+
+#### Properties
+
+| Property  | Type   | Required | Description                                        |
+|-----------|--------|----------|----------------------------------------------------|
+| `id`      | string | **Yes**  |                                                    |
+| `name`    | string | **Yes**  |                                                    |
+| `type`    | string | **Yes**  | Possible values are: `app`, `datasource`, `panel`. |
+| `version` | string | **Yes**  |                                                    |
 
 ## includes
 
 ### Properties
 
-| Property     | Type    | Required | Description |
-|--------------|---------|----------|-------------|
-| `addToNav`   | boolean | No       |             |
-| `component`  | string  | No       |             |
-| `defaultNav` | boolean | No       |             |
-| `name`       | string  | No       |             |
-| `role`       | string  | No       |             |
-| `type`       | string  | No       |             |
-| `icon`       | string  | No       |             |
+| Property     | Type    | Required | Description                                                                                                                                                                                     |
+|--------------|---------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `addToNav`   | boolean | No       | Add the include to the side menu.                                                                                                                                                               |
+| `component`  | string  | No       | (Legacy) The Angular component to use for a page.                                                                                                                                               |
+| `defaultNav` | boolean | No       | Page or dashboard when user clicks the icon in the side menu.                                                                                                                                   |
+| `icon`       | string  | No       | Icon to use in the side menu. For information on available icon, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview). |
+| `name`       | string  | No       |                                                                                                                                                                                                 |
+| `path`       | string  | No       | Used for app plugins.                                                                                                                                                                           |
+| `role`       | string  | No       | Possible values are: `Admin`, `Editor`, `Viewer`.                                                                                                                                               |
+| `type`       | string  | No       | Possible values are: `dashboard`, `page`, `panel`, `datasource`.                                                                                                                                |
 
 ## info
 
@@ -83,6 +92,7 @@ Metadata for the plugin. Some fields are used on the plugins page in Grafana and
 | `updated`     | string                   | **Yes**  | Date when this plugin was built.                                                                                              |
 | `version`     | string                   | **Yes**  | Project version of this commit, e.g. `6.7.x`.                                                                                 |
 | `author`      | [object](#author)        | No       | Information about the plugin author.                                                                                          |
+| `build`       | [object](#build)         | No       | Build information                                                                                                             |
 | `description` | string                   | No       | Description of plugin. Used on the plugins page in Grafana and for search on grafana.com.                                     |
 | `links`       | [object](#links)[]       | No       | An array of link objects to be displayed on this plugin's project page in the form `{name: 'foo', url: 'http://example.com'}` |
 | `screenshots` | [object](#screenshots)[] | No       | An array of screenshot objects in the form `{name: 'bar', path: 'img/screenshot.png'}`                                        |
@@ -98,6 +108,21 @@ Information about the plugin author.
 | `email`  | string | No       | Author's name.            |
 | `name`   | string | No       | Author's name.            |
 | `url`    | string | No       | Link to author's website. |
+
+### build
+
+Build information
+
+#### Properties
+
+| Property | Type   | Required | Description                                          |
+|----------|--------|----------|------------------------------------------------------|
+| `branch` | string | No       | Git branch the plugin was built from.                |
+| `hash`   | string | No       | Git hash of the commit the plugin was built from     |
+| `number` | number | No       |                                                      |
+| `pr`     | number | No       | GitHub pull request the plugin was built from        |
+| `repo`   | string | No       |                                                      |
+| `time`   | number | No       | Time when the plugin was built, as a Unix timestamp. |
 
 ### links
 
@@ -127,14 +152,6 @@ SVG images that are used as plugin icons.
 |----------|--------|----------|-------------|
 | `name`   | string | No       |             |
 | `path`   | string | No       |             |
-
-## partials
-
-### Properties
-
-| Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
-| `config` | string | No       |             |
 
 ## queryOptions
 
