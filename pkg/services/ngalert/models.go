@@ -17,6 +17,23 @@ type AlertDefinition struct {
 	Updated   int64
 	// Interval in seconds
 	Interval int64
+	Version  int
+}
+
+// AlertDefinitionVersion is the model for alert definition versions in Alerting NG.
+type AlertDefinitionVersion struct {
+	ID                int64 `xorm:"pk autoincr 'id'"`
+	AlertDefinitionID int64 `xorm:"alert_definition_id"`
+	ParentVersion     int
+	RestoredFrom      int
+	Version           int
+
+	Created   time.Time
+	Name      string
+	Condition string
+	Data      []eval.AlertQuery
+	// Interval in seconds
+	Interval int64
 }
 
 var (

@@ -2,6 +2,8 @@ package ngalert
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -56,12 +58,15 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 		if cmd.IntervalInSeconds != nil {
 			intervalInSeconds = *cmd.IntervalInSeconds
 		}
+
+		initialVersion := 1
 		alertDefinition := &AlertDefinition{
 			OrgID:     cmd.OrgID,
 			Name:      cmd.Name,
 			Condition: cmd.Condition.RefID,
 			Data:      cmd.Condition.QueriesAndExpressions,
 			Interval:  intervalInSeconds,
+			Version:   initialVersion,
 		}
 
 		if err := ng.validateAlertDefinition(alertDefinition, false); err != nil {
@@ -73,6 +78,18 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 		}
 
 		if _, err := sess.Insert(alertDefinition); err != nil {
+			return err
+		}
+
+		alertDefVersion := AlertDefinitionVersion{
+			AlertDefinitionID: alertDefinition.ID,
+			Version:           alertDefinition.Version,
+			Created:           time.Unix(alertDefinition.Updated, 0),
+			Name:              alertDefinition.Name,
+			Data:              alertDefinition.Data,
+			Interval:          alertDefinition.Interval,
+		}
+		if _, err := sess.Insert(alertDefVersion); err != nil {
 			return err
 		}
 
@@ -103,8 +120,33 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 			return err
 		}
 
+		existingAlertDefinition, err := getAlertDefinitionByID(alertDefinition.ID, sess)
+		if err != nil {
+			if errors.Is(err, errAlertDefinitionNotFound) {
+				cmd.Result = alertDefinition
+				cmd.RowsAffected = 0
+				return nil
+			}
+			return err
+		}
+
+		alertDefinition.Version = existingAlertDefinition.Version + 1
+
 		affectedRows, err := sess.ID(cmd.ID).Update(alertDefinition)
 		if err != nil {
+			return err
+		}
+
+		alertDefVersion := AlertDefinitionVersion{
+			AlertDefinitionID: alertDefinition.ID,
+			ParentVersion:     existingAlertDefinition.Version,
+			Version:           alertDefinition.Version,
+			Created:           time.Unix(alertDefinition.Updated, 0),
+			Name:              alertDefinition.Name,
+			Data:              alertDefinition.Data,
+			Interval:          alertDefinition.Interval,
+		}
+		if _, err := sess.Insert(alertDefVersion); err != nil {
 			return err
 		}
 

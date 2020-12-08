@@ -66,7 +66,11 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	if ng.IsDisabled() {
 		return
 	}
+	addAlertDefinitionMigrations(mg)
+	addAlertDefinitionVersionMigrations(mg)
+}
 
+func addAlertDefinitionMigrations(mg *migrator.Migrator) {
 	alertDefinition := migrator.Table{
 		Name: "alert_definition",
 		Columns: []*migrator.Column{
@@ -98,6 +102,61 @@ func (ng *AlertNG) AddMigration(mg *migrator.Migrator) {
 	mg.AddMigration("add column interval", migrator.NewAddColumnMigration(alertDefinition, &migrator.Column{
 		Name: "interval", Type: migrator.DB_BigInt, Nullable: false, Default: fmt.Sprintf("%d", defaultIntervalInSeconds),
 	}))
+
+	mg.AddMigration("add column version", migrator.NewAddColumnMigration(alertDefinition, &migrator.Column{
+		Name: "version", Type: migrator.DB_Int, Nullable: false, Default: "0",
+	}))
+}
+
+func addAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
+	alertDefinitionVersion := migrator.Table{
+		Name: "alert_definition_version",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "alert_definition_id", Type: migrator.DB_BigInt},
+			{Name: "parent_version", Type: migrator.DB_Int, Nullable: false},
+			{Name: "restored_from", Type: migrator.DB_Int, Nullable: false},
+			{Name: "version", Type: migrator.DB_Int, Nullable: false},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "name", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "condition", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "data", Type: migrator.DB_Text, Nullable: false},
+			{Name: "interval", Type: migrator.DB_BigInt, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"alert_definition_id", "version"}, Type: migrator.UniqueIndex},
+		},
+	}
+	mg.AddMigration("create alert_definition_version table v1", migrator.NewAddTableMigration(alertDefinitionVersion))
+	mg.AddMigration("add unique index alert_definition_version.alert_definition_id and versionn", migrator.NewAddIndexMigration(alertDefinitionVersion, alertDefinitionVersion.Indices[0]))
+
+	const rawSQL = `INSERT INTO alert_definition_version
+	(
+		alert_definition_id,
+		version,
+		parent_version,
+		restored_from,
+		created,
+		name,
+		condition,
+		data,
+		interval
+	)
+	SELECT
+		alert_definition.id,
+		alert_definition.version,
+		alert_definition.version,
+		alert_definition.version,
+		alert_definition.updated,
+		alert_definition.name,
+		alert_definition.condition,
+		alert_definition.data,
+		alert_definition.interval
+	FROM alert_definition;`
+	mg.AddMigration("save existing alert_definition data in alert_definition_version table v1", migrator.NewRawSQLMigration(rawSQL))
+
+	const setVersionTo1WhereZeroSQL = `UPDATE alert_definition SET version = 1 WHERE version = 0`
+	mg.AddMigration("Set alert_definition version to 1 where 0", migrator.NewRawSQLMigration(setVersionTo1WhereZeroSQL))
 }
 
 // LoadAlertCondition returns a Condition object for the given alertDefinitionID.

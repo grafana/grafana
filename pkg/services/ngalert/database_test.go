@@ -80,6 +80,7 @@ func TestCreatingAlertDefinition(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, tc.expectedUpdatedEpoch, q.Result.Updated)
 			assert.Equal(t, tc.expectedInterval, q.Result.Interval)
+			assert.Equal(t, int64(1), q.Result.Version)
 		})
 	}
 }
@@ -124,6 +125,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		var initialInterval int64 = 120
 		alertDefinition := createTestAlertDefinition(t, ng, initialInterval)
 		created := alertDefinition.Updated
+		previousVersion := alertDefinition.Version
 
 		var customInterval int64 = 30
 		testCases := []struct {
@@ -181,6 +183,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				assert.Equal(t, int64(1), q.Result.ID)
 				assert.Greater(t, q.Result.Updated, lastUpdated)
 				updated := q.Result.Updated
+				assert.Equal(t, previousVersion+1, q.Result.Version)
 
 				getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: (*alertDefinition).ID}
 				err = ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery)
@@ -191,8 +194,10 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				assert.Greater(t, getAlertDefinitionByIDQuery.Result.Updated, lastUpdated)
 				assert.Equal(t, updated, getAlertDefinitionByIDQuery.Result.Updated)
 				assert.Equal(t, tc.expectedInterval, getAlertDefinitionByIDQuery.Result.Interval)
+				assert.Equal(t, previousVersion+1, getAlertDefinitionByIDQuery.Result.Version)
 
 				lastUpdated = updated
+				previousVersion = getAlertDefinitionByIDQuery.Result.Version
 			})
 
 		}
