@@ -77,21 +77,23 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       pointsConfig.points!.show = true;
     }
 
-    const areaConfig =
-      fillOpacity !== undefined
-        ? {
-            fill: tinycolor(fillColor)
+    let fillConfig: any | undefined;
+    if (fillColor && fillOpacity !== 0) {
+      fillConfig = {
+        fill: fillOpacity
+          ? tinycolor(fillColor)
               .setAlpha(fillOpacity)
-              .toRgbString(),
-          }
-        : { fill: undefined };
+              .toRgbString()
+          : fillColor,
+      };
+    }
 
     return {
       scale: scaleKey,
       spanGaps: spanNulls,
       ...lineConfig,
       ...pointsConfig,
-      ...areaConfig,
+      ...fillConfig,
     };
   }
 }
