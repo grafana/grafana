@@ -22,7 +22,7 @@ Grafana displays all organizations set up on the server, listed in alphabetical 
 - **Id -** The ID number of the organization.
 - **Name -** The name of the organization.
 
-<img src="/img/docs/manage-users/server-org-list-7-3.png" max-width="1200px">
+![Server Admin organization list](/img/docs/manage-users/server-org-list-7-3.png)
 
 ## Create organization
 
