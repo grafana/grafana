@@ -42,7 +42,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
 
   // THIS EVENT ONLY MOCKS EXEMPLAR Y VALUE!!!! TO BE REMOVED WHEN WE GET CORRECT EXEMPLARS SHAPE VIA PROPS
   useEffect(() => {
-    if (plotCtx.getPlotInstance()) {
+    if (plotCtx.isPlotReady) {
       const mocks: DataFrame[] = [];
 
       for (const frame of exemplars) {
@@ -61,22 +61,23 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
 
       setExemplarsMock(mocks);
     }
-  }, [plotCtx, exemplars]);
+  }, [plotCtx.isPlotReady, exemplars]);
 
   const mapExemplarToXYCoords = useCallback(
     (exemplar: ExemplarsDataFrameViewDTO) => {
       const plotInstance = plotCtx.getPlotInstance();
-      if (!exemplar.time || !plotInstance) {
+
+      if (!exemplar.time || !plotCtx.isPlotReady || !plotInstance) {
         return undefined;
       }
 
       return {
-        x: plotInstance.valToPos(exemplar.time / 1000, 'x'),
+        x: plotInstance.valToPos(exemplar.time, 'x'),
         // exemplar.y is a temporary mock for an examplar. This Needs to be calculated according to examplar scale!
         y: Math.floor((exemplar.y * plotInstance.bbox.height) / window.devicePixelRatio),
       };
     },
-    [plotCtx.getPlotInstance]
+    [plotCtx.isPlotReady, plotCtx.getPlotInstance]
   );
 
   const renderMarker = useCallback(
