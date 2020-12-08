@@ -68,15 +68,16 @@ Plugin dependency. Used to display information about plugin dependencies in the 
 
 ### Properties
 
-| Property     | Type    | Required | Description                                                   |
-|--------------|---------|----------|---------------------------------------------------------------|
-| `addToNav`   | boolean | No       | Add the include to the side menu.                             |
-| `component`  | string  | No       | (Legacy) The Angular component to use for a page.             |
-| `defaultNav` | boolean | No       | Page or dashboard when user clicks the icon in the side menu. |
-| `name`       | string  | No       |                                                               |
-| `path`       | string  | No       | Used for app plugins.                                         |
-| `role`       | string  | No       |                                                               |
-| `type`       | string  | No       |                                                               |
+| Property     | Type    | Required | Description                                                                                                                                                                                |
+|--------------|---------|----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `addToNav`   | boolean | No       | Add the include to the side menu.                                                                                                                                                          |
+| `component`  | string  | No       | (Legacy) The Angular component to use for a page.                                                                                                                                          |
+| `defaultNav` | boolean | No       | Page or dashboard when user clicks the icon in the side menu.                                                                                                                              |
+| `icon`       | string  | No       | Icon to use in the menu. For information on available icon, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview). |
+| `name`       | string  | No       |                                                                                                                                                                                            |
+| `path`       | string  | No       | Used for app plugins.                                                                                                                                                                      |
+| `role`       | string  | No       |                                                                                                                                                                                            |
+| `type`       | string  | No       |                                                                                                                                                                                            |
 
 ## info
 
@@ -112,14 +113,14 @@ Information about the plugin author.
 
 #### Properties
 
-| Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
-| `branch` | string | No       |             |
-| `hash`   | string | No       |             |
-| `number` | number | No       |             |
-| `pr`     | number | No       |             |
-| `repo`   | string | No       |             |
-| `time`   | number | No       |             |
+| Property | Type   | Required | Description                                          |
+|----------|--------|----------|------------------------------------------------------|
+| `branch` | string | No       | Git branch the plugin was built from.                |
+| `hash`   | string | No       | Git hash of the commit the plugin was built from     |
+| `number` | number | No       |                                                      |
+| `pr`     | number | No       | GitHub pull request the plugin was built from        |
+| `repo`   | string | No       |                                                      |
+| `time`   | number | No       | Time when the plugin was built, as a Unix timestamp. |
 
 ### links
 

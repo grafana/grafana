@@ -88,6 +88,10 @@
           "defaultNav": {
             "type": "boolean",
             "description": "Page or dashboard when user clicks the icon in the side menu."
+          },
+          "icon": {
+            "type": "string",
+            "description": "Icon to use in the menu. For information on available icon, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)."
           }
         }
       }
@@ -196,7 +200,7 @@
           "properties": {
             "time": {
               "type": "number",
-              "description": ""
+              "description": "Time when the plugin was built, as a Unix timestamp."
             },
             "repo": {
               "type": "string",
@@ -204,11 +208,11 @@
             },
             "branch": {
               "type": "string",
-              "description": ""
+              "description": "Git branch the plugin was built from."
             },
             "hash": {
               "type": "string",
-              "description": ""
+              "description": "Git hash of the commit the plugin was built from"
             },
             "number": {
               "type": "number",
@@ -216,7 +220,7 @@
             },
             "pr": {
               "type": "number",
-              "description": ""
+              "description": "GitHub pull request the plugin was built from"
             }
           }
         },
