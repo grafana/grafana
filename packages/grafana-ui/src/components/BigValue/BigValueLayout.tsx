@@ -172,12 +172,8 @@ export abstract class BigValueLayout {
           .toRgbString();
     }
 
+    // The graph field configuration applied to Y values
     const config: FieldConfig<GraphFieldConfig> = {
-      // When the line/fill color is set, this should not be necessary
-      // color: {
-      //   mode: FieldColorModeId.Fixed,
-      //   fixedColor: this.valueColor,
-      // },
       custom: {
         drawStyle: DrawStyle.Line,
         lineWidth: 1,
