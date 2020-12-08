@@ -147,7 +147,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		}
 
 		q := updateAlertDefinitionCommand{
-			ID:    (*alertDefinition).Id,
+			ID:    (*alertDefinition).ID,
 			OrgID: 1,
 			Name:  "something completely different",
 			Condition: condition{
@@ -178,11 +178,11 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				err := ng.updateAlertDefinition(&q)
 				require.NoError(t, err)
 				assert.Equal(t, int64(1), q.RowsAffected)
-				assert.Equal(t, int64(1), q.Result.Id)
+				assert.Equal(t, int64(1), q.Result.ID)
 				assert.Greater(t, q.Result.Updated, lastUpdated)
 				updated := q.Result.Updated
 
-				getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: (*alertDefinition).Id}
+				getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: (*alertDefinition).ID}
 				err = ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery)
 				require.NoError(t, err)
 				assert.Equal(t, "something completely different", getAlertDefinitionByIDQuery.Result.Name)
@@ -219,7 +219,7 @@ func TestDeletingAlertDefinition(t *testing.T) {
 		alertDefinition := createTestAlertDefinition(t, ng, 60)
 
 		q := deleteAlertDefinitionByIDCommand{
-			ID:    (*alertDefinition).Id,
+			ID:    (*alertDefinition).ID,
 			OrgID: 1,
 		}
 

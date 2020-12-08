@@ -145,7 +145,7 @@ func (ng *AlertNG) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd updat
 		return api.Error(500, "Failed to update alert definition", err)
 	}
 
-	return api.JSON(200, util.DynMap{"affectedRows": cmd.RowsAffected, "id": cmd.Result.Id})
+	return api.JSON(200, util.DynMap{"affectedRows": cmd.RowsAffected, "id": cmd.Result.ID})
 }
 
 // createAlertDefinitionEndpoint handles POST /api/alert-definitions.
@@ -156,7 +156,7 @@ func (ng *AlertNG) createAlertDefinitionEndpoint(c *models.ReqContext, cmd saveA
 		return api.Error(500, "Failed to create alert definition", err)
 	}
 
-	return api.JSON(200, util.DynMap{"id": cmd.Result.Id})
+	return api.JSON(200, util.DynMap{"id": cmd.Result.ID})
 }
 
 // listAlertDefinitions handles GET /api/alert-definitions.

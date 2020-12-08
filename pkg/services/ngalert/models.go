@@ -9,8 +9,8 @@ import (
 
 // AlertDefinition is the model for alert definitions in Alerting NG.
 type AlertDefinition struct {
-	Id        int64
-	OrgId     int64
+	ID        int64 `xorm:"pk autoincr 'id'"`
+	OrgID     int64 `xorm:"org_id"`
 	Name      string
 	Condition string
 	Data      []eval.AlertQuery

@@ -23,7 +23,7 @@ func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, req
 			return nil
 		}
 
-		_, err = ng.DatasourceCache.GetDatasource(datasourceID, alertDefinition.OrgId, false)
+		_, err = ng.DatasourceCache.GetDatasource(datasourceID, alertDefinition.OrgID, false)
 		if err != nil {
 			return err
 		}

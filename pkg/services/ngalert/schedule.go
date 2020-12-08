@@ -119,7 +119,7 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context, heartbeat *alertin
 			}
 			readyToRun := make([]readyToRunItem, 0)
 			for _, item := range alertDefinitions {
-				itemID := item.Id
+				itemID := item.ID
 				newRoutine := !ng.schedule.channelMap.exists(itemID)
 				definitionCh := ng.schedule.channelMap.getOrCreateChannel(itemID)
 

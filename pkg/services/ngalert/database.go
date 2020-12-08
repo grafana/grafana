@@ -57,7 +57,7 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 			intervalInSeconds = *cmd.IntervalInSeconds
 		}
 		alertDefinition := &AlertDefinition{
-			OrgId:     cmd.OrgID,
+			OrgID:     cmd.OrgID,
 			Name:      cmd.Name,
 			Condition: cmd.Condition.RefID,
 			Data:      cmd.Condition.QueriesAndExpressions,
@@ -86,7 +86,7 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertDefinition := &AlertDefinition{
-			Id:        cmd.ID,
+			ID:        cmd.ID,
 			Name:      cmd.Name,
 			Condition: cmd.Condition.RefID,
 			Data:      cmd.Condition.QueriesAndExpressions,

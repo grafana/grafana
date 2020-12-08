@@ -45,41 +45,41 @@ func TestAlertingTicker(t *testing.T) {
 	ticker.ResetOffset(0 * time.Second)
 
 	advanceClock(t, mockedClock)
-	assertEvalRun(t, evalAppliedCh, alertDefWithOneSecInterval.Id)
+	assertEvalRun(t, evalAppliedCh, alertDefWithOneSecInterval.ID)
 
 	// change alert definition interval to three seconds
 	var threeSecInterval int64 = 3
 	err := ng.updateAlertDefinition(&updateAlertDefinitionCommand{
-		ID:                initialAlertDef.Id,
+		ID:                initialAlertDef.ID,
 		IntervalInSeconds: &threeSecInterval,
 	})
 	require.NoError(t, err)
-	t.Logf("alert definition: %d interval reset to: %d", initialAlertDef.Id, threeSecInterval)
+	t.Logf("alert definition: %d interval reset to: %d", initialAlertDef.ID, threeSecInterval)
 
 	// advance clock one second and trigger next tick
 	advanceClock(t, mockedClock)
-	assertEvalRun(t, evalAppliedCh, alertDefWithOneSecInterval.Id)
+	assertEvalRun(t, evalAppliedCh, alertDefWithOneSecInterval.ID)
 
 	advanceClock(t, mockedClock)
 	step := 500 * time.Millisecond
 
 	// wait enough for both alert definition evaluations
 	mockedClock.AfterFunc(step, func() {
-		assertEvalRun(t, evalAppliedCh, alertDefWithOneSecInterval.Id, initialAlertDef.Id)
+		assertEvalRun(t, evalAppliedCh, alertDefWithOneSecInterval.ID, initialAlertDef.ID)
 	})
 
 	advanceClock(t, mockedClock)
-	assertEvalRun(t, evalAppliedCh, alertDefWithOneSecInterval.Id)
+	assertEvalRun(t, evalAppliedCh, alertDefWithOneSecInterval.ID)
 
-	err = ng.deleteAlertDefinitionByID(&deleteAlertDefinitionByIDCommand{ID: alertDefWithOneSecInterval.Id})
+	err = ng.deleteAlertDefinitionByID(&deleteAlertDefinitionByIDCommand{ID: alertDefWithOneSecInterval.ID})
 	require.NoError(t, err)
-	t.Logf("alert definition: %d deleted", alertDefWithOneSecInterval.Id)
+	t.Logf("alert definition: %d deleted", alertDefWithOneSecInterval.ID)
 
 	advanceClock(t, mockedClock)
 	assertEvalRun(t, evalAppliedCh)
 
 	advanceClock(t, mockedClock)
-	assertEvalRun(t, evalAppliedCh, initialAlertDef.Id)
+	assertEvalRun(t, evalAppliedCh, initialAlertDef.ID)
 }
 
 // assertEvalRun blocks if does not receive the expected number of ids.
