@@ -23,7 +23,7 @@ func TestMetricDataQueryBuilder_buildSearchExpression(t *testing.T) {
 			}
 
 			res := buildSearchExpression(query, "Average")
-			assert.Equal(t, `REMOVE_EMPTY(SEARCH('{AWS/EC2,"LoadBalancer"} MetricName="CPUUtilization" "LoadBalancer"=("lb1" OR "lb2" OR "lb3")', 'Average', 300))`, res)
+			assert.Equal(t, `REMOVE_EMPTY(SEARCH('{"AWS/EC2","LoadBalancer"} MetricName="CPUUtilization" "LoadBalancer"=("lb1" OR "lb2" OR "lb3")', 'Average', 300))`, res)
 		})
 
 		t.Run("Query has three dimension values for two given dimension keys", func(t *testing.T) {
@@ -40,7 +40,7 @@ func TestMetricDataQueryBuilder_buildSearchExpression(t *testing.T) {
 			}
 
 			res := buildSearchExpression(query, "Average")
-			assert.Equal(t, `REMOVE_EMPTY(SEARCH('{AWS/EC2,"InstanceId","LoadBalancer"} MetricName="CPUUtilization" "InstanceId"=("i-123" OR "i-456" OR "i-789") "LoadBalancer"=("lb1" OR "lb2" OR "lb3")', 'Average', 300))`, res)
+			assert.Equal(t, `REMOVE_EMPTY(SEARCH('{"AWS/EC2","InstanceId","LoadBalancer"} MetricName="CPUUtilization" "InstanceId"=("i-123" OR "i-456" OR "i-789") "LoadBalancer"=("lb1" OR "lb2" OR "lb3")', 'Average', 300))`, res)
 		})
 
 		t.Run("No OR operator was added if a star was used for dimension value", func(t *testing.T) {
@@ -72,7 +72,7 @@ func TestMetricDataQueryBuilder_buildSearchExpression(t *testing.T) {
 			}
 
 			res := buildSearchExpression(query, "Average")
-			assert.Equal(t, `REMOVE_EMPTY(SEARCH('{AWS/EC2,"LoadBalancer"} MetricName="CPUUtilization"', 'Average', 300))`, res)
+			assert.Equal(t, `REMOVE_EMPTY(SEARCH('{"AWS/EC2","LoadBalancer"} MetricName="CPUUtilization"', 'Average', 300))`, res)
 		})
 
 		t.Run("Query has three dimension values for two given dimension keys, and one value is a star", func(t *testing.T) {
@@ -89,7 +89,7 @@ func TestMetricDataQueryBuilder_buildSearchExpression(t *testing.T) {
 			}
 
 			res := buildSearchExpression(query, "Average")
-			assert.Equal(t, `REMOVE_EMPTY(SEARCH('{AWS/EC2,"InstanceId","LoadBalancer"} MetricName="CPUUtilization" "LoadBalancer"=("lb1" OR "lb2" OR "lb3")', 'Average', 300))`, res)
+			assert.Equal(t, `REMOVE_EMPTY(SEARCH('{"AWS/EC2","InstanceId","LoadBalancer"} MetricName="CPUUtilization" "LoadBalancer"=("lb1" OR "lb2" OR "lb3")', 'Average', 300))`, res)
 		})
 
 		t.Run("Query has a dimension key with a space", func(t *testing.T) {
@@ -105,7 +105,24 @@ func TestMetricDataQueryBuilder_buildSearchExpression(t *testing.T) {
 			}
 
 			res := buildSearchExpression(query, "Average")
-			assert.Equal(t, `REMOVE_EMPTY(SEARCH('{AWS/Kafka,"Cluster Name"} MetricName="CpuUser" "Cluster Name"="dev-cluster"', 'Average', 300))`, res)
+			assert.Equal(t, `REMOVE_EMPTY(SEARCH('{"AWS/Kafka","Cluster Name"} MetricName="CpuUser" "Cluster Name"="dev-cluster"', 'Average', 300))`, res)
+		})
+
+		t.Run("Query has a custom namespace contains spaces", func(t *testing.T) {
+			query := &cloudWatchQuery{
+				Namespace:  "Test-API Cache by Minute",
+				MetricName: "CpuUser",
+				Dimensions: map[string][]string{
+					"LoadBalancer": {"lb1", "lb2", "lb3"},
+					"InstanceId":   {"i-123", "*", "i-789"},
+				},
+				Period:     300,
+				Expression: "",
+				MatchExact: matchExact,
+			}
+
+			res := buildSearchExpression(query, "Average")
+			assert.Equal(t, `REMOVE_EMPTY(SEARCH('{"Test-API Cache by Minute","InstanceId","LoadBalancer"} MetricName="CpuUser" "LoadBalancer"=("lb1" OR "lb2" OR "lb3")', 'Average', 300))`, res)
 		})
 	})
 
