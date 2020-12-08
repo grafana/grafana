@@ -4,20 +4,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
 
-func TestAddLibraryPanel(t *testing.T) {
+func TestCreateLibraryPanel(t *testing.T) {
 	t.Run("should fail if library panel already exists", func(t *testing.T) {
-		lps, user := setupTestEnv(t, models.ROLE_EDITOR)
-		command := addLibraryPanelCommand{
-			OrgId:        1,
-			FolderId:     1,
-			SignedInUser: &user,
+		lps, context := setupTestEnv(t, models.ROLE_EDITOR)
+		command := AddLibraryPanelCommand{
+			OrgID:        1,
+			FolderID:     1,
+			SignedInUser: context.SignedInUser,
 			Title:        "Text - Library Panel",
 			Model: []byte(`
 	{
@@ -29,18 +30,19 @@ func TestAddLibraryPanel(t *testing.T) {
 `),
 		}
 
-		noErr := lps.addLibraryPanel(&command)
-		require.NoError(t, noErr)
+		response, err := lps.Create(&context, command)
+		require.NoError(t, err)
+		require.NotNil(t, response)
 
-		err := lps.addLibraryPanel(&command)
-		require.Error(t, err)
+		response, err = lps.Create(&context, command)
+		require.EqualError(t, err, errLibraryPanelAlreadyAdded.Error())
+		require.Nil(t, response)
+
+		t.Cleanup(registry.ClearOverrides)
 	})
 }
 
-func setupTestEnv(t *testing.T, orgRole models.RoleType) (LibraryPanelService, models.SignedInUser) {
-	cfg := setting.NewCfg()
-	cfg.FeatureToggles = map[string]bool{"panelLibrary": true}
-
+func setupMigrations(cfg *setting.Cfg) LibraryPanelService {
 	lps := LibraryPanelService{
 		SQLStore: nil,
 		Cfg:      cfg,
@@ -58,8 +60,17 @@ func setupTestEnv(t *testing.T, orgRole models.RoleType) (LibraryPanelService, m
 
 	registry.RegisterOverride(overrideServiceFunc)
 
+	return lps
+}
+
+func setupTestEnv(t *testing.T, orgRole models.RoleType) (LibraryPanelService, models.ReqContext) {
+	cfg := setting.NewCfg()
+	cfg.FeatureToggles = map[string]bool{"panelLibrary": true}
+
+	service := setupMigrations(cfg)
+
 	sqlStore := sqlstore.InitTestDB(t)
-	lps.SQLStore = sqlStore
+	service.SQLStore = sqlStore
 
 	user := models.SignedInUser{
 		UserId:         1,
@@ -78,5 +89,16 @@ func setupTestEnv(t *testing.T, orgRole models.RoleType) (LibraryPanelService, m
 		Teams:          nil,
 	}
 
-	return lps, user
+	context := models.ReqContext{
+		Context:        nil,
+		SignedInUser:   &user,
+		UserToken:      nil,
+		IsSignedIn:     false,
+		IsRenderCall:   false,
+		AllowAnonymous: false,
+		SkipCache:      false,
+		Logger:         nil,
+	}
+
+	return service, context
 }

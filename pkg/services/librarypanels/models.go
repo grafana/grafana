@@ -10,9 +10,9 @@ import (
 
 // LibraryPanel is the model for library panel definitions.
 type LibraryPanel struct {
-	Id       int64
-	OrgId    int64
-	FolderId int64
+	ID       int64 `xorm:"pk autoincr 'id'"`
+	OrgID    int64 `xorm:"org_id"`
+	FolderID int64 `xorm:"folder_id"`
 	Title    string
 	Model    json.RawMessage
 
@@ -30,10 +30,10 @@ var (
 
 // Commands
 
-// addLibraryPanelCommand is the command for adding a LibraryPanel
-type addLibraryPanelCommand struct {
-	OrgId        int64                `json:"-"`
-	FolderId     int64                `json:"folderId"`
+// AddLibraryPanelCommand is the command for adding a LibraryPanel
+type AddLibraryPanelCommand struct {
+	OrgID        int64                `json:"-"`
+	FolderID     int64                `json:"folderId"`
 	Title        string               `json:"title"`
 	SignedInUser *models.SignedInUser `json:"-"`
 	Model        json.RawMessage      `json:"model"`

@@ -7,12 +7,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-// AddLibraryPanel function adds a LibraryPanel
-func (lps *LibraryPanelService) addLibraryPanel(cmd *addLibraryPanelCommand) error {
+// createLibraryPanel function adds a LibraryPanel
+func (lps *LibraryPanelService) createLibraryPanel(cmd *AddLibraryPanelCommand) error {
 	return lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		libraryPanel := &LibraryPanel{
-			OrgId:    cmd.OrgId,
-			FolderId: cmd.FolderId,
+			OrgID:    cmd.OrgID,
+			FolderID: cmd.FolderID,
 			Title:    cmd.Title,
 			Model:    cmd.Model,
 
@@ -23,7 +23,7 @@ func (lps *LibraryPanelService) addLibraryPanel(cmd *addLibraryPanelCommand) err
 			UpdatedBy: cmd.SignedInUser.UserId,
 		}
 
-		if res, err := session.Query("SELECT 1 from library_panel WHERE org_id=? and folder_id=? and title=?", cmd.OrgId, cmd.FolderId, cmd.Title); err != nil {
+		if res, err := session.Query("SELECT 1 from library_panel WHERE org_id=? and folder_id=? and title=?", cmd.OrgID, cmd.FolderID, cmd.Title); err != nil {
 			return err
 		} else if len(res) == 1 {
 			return errLibraryPanelAlreadyAdded

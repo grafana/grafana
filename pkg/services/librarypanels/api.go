@@ -15,18 +15,17 @@ func (lps *LibraryPanelService) registerAPIEndpoints() {
 	}
 
 	lps.RouteRegister.Group("/api/library-panels", func(libraryPanels routing.RouteRegister) {
-		libraryPanels.Post("/", middleware.ReqSignedIn, binding.Bind(addLibraryPanelCommand{}), api.Wrap(lps.addLibraryPanelEndpoint))
+		libraryPanels.Post("/", middleware.ReqSignedIn, binding.Bind(AddLibraryPanelCommand{}), api.Wrap(lps.createHandler))
 	})
 }
 
-// addLibraryPanelEndpoint handles POST /api/library-panels.
-func (lps *LibraryPanelService) addLibraryPanelEndpoint(c *models.ReqContext, cmd addLibraryPanelCommand) api.Response {
-	cmd.OrgId = c.SignedInUser.OrgId
-	cmd.SignedInUser = c.SignedInUser
+// createHandler handles POST /api/library-panels.
+func (lps *LibraryPanelService) createHandler(c *models.ReqContext, cmd AddLibraryPanelCommand) api.Response {
+	panel, err := lps.Create(c, cmd)
 
-	if err := lps.addLibraryPanel(&cmd); err != nil {
+	if err != nil {
 		return api.Error(500, "Failed to create library panel", err)
 	}
 
-	return api.JSON(200, util.DynMap{"id": cmd.Result.Id})
+	return api.JSON(200, util.DynMap{"panel": panel})
 }
