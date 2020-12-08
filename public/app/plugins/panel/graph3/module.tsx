@@ -8,9 +8,11 @@ import {
   graphFieldOptions,
 } from '@grafana/ui/src/components/uPlot/config';
 import { GraphPanel } from './GraphPanel';
+import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
+  .setPanelChangeHandler(graphPanelChangedHandler)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
