@@ -59,8 +59,8 @@ export function TraceView(props: Props) {
   const traceProp = useMemo(() => transformTraceData(props.trace), [props.trace]);
   const { search, setSearch, spanFindMatches } = useSearch(traceProp?.spans);
   const dataSourceName = useSelector((state: StoreState) => state.explore.left.datasourceInstance?.name);
-  const logDataSourceUid = (getDatasourceSrv().getInstanceSettings(dataSourceName)?.jsonData as TraceToLogsData)
-    ?.tracesToLogs?.datasourceUid;
+  const traceToLogsOptions = (getDatasourceSrv().getInstanceSettings(dataSourceName)?.jsonData as TraceToLogsData)
+    ?.tracesToLogs;
 
   const theme = useTheme();
   const traceTheme = useMemo(
@@ -89,9 +89,9 @@ export function TraceView(props: Props) {
     [childrenHiddenIDs, detailStates, hoverIndentGuideIds, spanNameColumnWidth, traceProp?.traceID]
   );
 
-  const createSpanLink = useMemo(() => createSpanLinkFactory(props.splitOpenFn, logDataSourceUid), [
+  const createSpanLink = useMemo(() => createSpanLinkFactory(props.splitOpenFn, traceToLogsOptions), [
     props.splitOpenFn,
-    logDataSourceUid,
+    traceToLogsOptions,
   ]);
   const scrollElement = document.getElementsByClassName('scroll-canvas')[0];
 
