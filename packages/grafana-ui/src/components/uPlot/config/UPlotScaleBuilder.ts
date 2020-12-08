@@ -6,6 +6,7 @@ export interface ScaleProps {
   isTime?: boolean;
   min?: number | null;
   max?: number | null;
+  range?: () => number[]; // min/max
 }
 
 export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
@@ -14,22 +15,19 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     this.props.max = optMinMax('max', this.props.max, props.max);
   }
 
+  // uPlot range function
+  range = (u: uPlot, dataMin: number, dataMax: number) => {
+    const { min, max } = this.props;
+    const [smin, smax] = uPlot.rangeNum(min ?? dataMin, max ?? dataMax, 0.1 as any, true);
+    return [min ?? smin, max ?? smax];
+  };
+
   getConfig() {
-    const { isTime, scaleKey } = this.props;
-    if (isTime) {
-      return {
-        [scaleKey]: {
-          time: true, // TODO?  this should be based on the query range, not the data
-        },
-      };
-    }
+    const { isTime, scaleKey, range } = this.props;
     return {
       [scaleKey]: {
-        range: (u: uPlot, dataMin: number, dataMax: number) => {
-          const { min, max } = this.props;
-          const [smin, smax] = uPlot.rangeNum(min ?? dataMin, max ?? dataMax, 0.1 as any, true);
-          return [min ?? smin, max ?? smax];
-        },
+        time: isTime,
+        range: range ?? this.range,
       },
     };
   }
