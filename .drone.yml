@@ -506,15 +506,13 @@ steps:
   - test-backend
   - test-frontend
 
-- name: release-next-npm-packages
+- name: release-canary-npm-packages
   image: grafana/build-container:1.3.0
   commands:
-  - ./node_modules/.bin/lerna bootstrap
-  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
-  - ./scripts/circle-release-next-packages.sh
+  - ./scripts/circle-release-canary-packages.sh
   environment:
-    NPM_TOKEN:
-      from_secret: npm_token
+    GITHUB_PACKAGE_TOKEN:
+      from_secret: github_package_token
   depends_on:
   - end-to-end-tests
 
@@ -951,8 +949,6 @@ steps:
 - name: release-npm-packages
   image: grafana/build-container:1.3.0
   commands:
-  - ./node_modules/.bin/lerna bootstrap
-  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
   - ./scripts/build/release-packages.sh ${DRONE_TAG}
   environment:
     NPM_TOKEN:
@@ -1732,9 +1728,6 @@ steps:
 
 - name: release-npm-packages
   image: grafana/build-container:1.3.0
-  commands:
-  - ./node_modules/.bin/lerna bootstrap
-  - echo "//registry.npmjs.org/:_authToken=$${NPM_TOKEN}" >> ~/.npmrc
   environment:
     NPM_TOKEN:
       from_secret: npm_token

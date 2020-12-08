@@ -46,10 +46,9 @@ describe('Variables - Add variable', () => {
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsDataSourceSelect()
       .should('be.visible')
       .within(select => {
-        e2e.components.Select.singleValue().should('have.text', '');
+        e2e.components.Select.singleValue().should('have.text', 'gdev-testdata');
       });
 
-    e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsQueryInput().should('not.exist');
     e2e.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelect()
       .should('be.visible')
       .within(select => {

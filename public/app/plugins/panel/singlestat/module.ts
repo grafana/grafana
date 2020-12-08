@@ -52,10 +52,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   data: Partial<ShowData> = {};
 
-  fontSizes: any[];
+  fontSizes: any[] = [];
   fieldNames: string[] = [];
 
-  invalidGaugeRange: boolean;
+  invalidGaugeRange = false;
   panel: any;
   events: any;
   valueNameOptions: any[] = [

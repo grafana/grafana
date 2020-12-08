@@ -3,17 +3,23 @@ import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '../config';
+import { Cursor } from 'uplot';
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
   private axes: Record<string, UPlotAxisBuilder> = {};
   private scales: UPlotScaleBuilder[] = [];
-  private registeredScales: string[] = [];
+  private cursor: Cursor | undefined;
 
   hasLeftAxis = false;
 
   addAxis(props: AxisProps) {
     props.placement = props.placement ?? AxisPlacement.Auto;
+
+    if (this.axes[props.scaleKey]) {
+      this.axes[props.scaleKey].merge(props);
+      return;
+    }
 
     // Handle auto placement logic
     if (props.placement === AxisPlacement.Auto) {
@@ -24,6 +30,11 @@ export class UPlotConfigBuilder {
       this.hasLeftAxis = true;
     }
 
+    if (props.placement === AxisPlacement.Hidden) {
+      props.show = false;
+      props.size = 0;
+    }
+
     this.axes[props.scaleKey] = new UPlotAxisBuilder(props);
   }
 
@@ -32,17 +43,22 @@ export class UPlotConfigBuilder {
     return axis?.props.placement! ?? AxisPlacement.Left;
   }
 
+  setCursor(cursor?: Cursor) {
+    this.cursor = cursor;
+  }
+
   addSeries(props: SeriesProps) {
     this.series.push(new UPlotSeriesBuilder(props));
   }
 
+  /** Add or update the scale with the scale key */
   addScale(props: ScaleProps) {
-    this.registeredScales.push(props.scaleKey);
+    const current = this.scales.find(v => v.props.scaleKey === props.scaleKey);
+    if (current) {
+      current.merge(props);
+      return;
+    }
     this.scales.push(new UPlotScaleBuilder(props));
-  }
-
-  hasScale(scaleKey: string) {
-    return this.registeredScales.indexOf(scaleKey) > -1;
   }
 
   getConfig() {
@@ -52,7 +68,9 @@ export class UPlotConfigBuilder {
     config.scales = this.scales.reduce((acc, s) => {
       return { ...acc, ...s.getConfig() };
     }, {});
-
+    if (this.cursor) {
+      config.cursor = this.cursor;
+    }
     return config;
   }
 }
