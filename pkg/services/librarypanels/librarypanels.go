@@ -14,8 +14,6 @@ type LibraryPanelService struct {
 	Cfg           *setting.Cfg          `inject:""`
 	SQLStore      *sqlstore.SQLStore    `inject:""`
 	RouteRegister routing.RouteRegister `inject:""`
-	api           LibraryPanelApi
-	repository    LibraryPanelRepository
 	log           log.Logger
 }
 
@@ -24,19 +22,27 @@ func init() {
 }
 
 // Init initializes the LibraryPanel service
-func (service *LibraryPanelService) Init() error {
-	service.log = log.New("libraryPanels")
-	service.repository = NewRepository(service.Cfg, service.SQLStore)
-	service.api = NewApi(service.RouteRegister, service.Cfg, service.repository)
-	service.api.registerAPIEndpoints()
+func (lps *LibraryPanelService) Init() error {
+	lps.log = log.New("librarypanels")
+
+	lps.registerAPIEndpoints()
 
 	return nil
 }
 
+// IsEnabled returns true if the Panel Library feature is enabled for this instance.
+func (lps *LibraryPanelService) IsEnabled() bool {
+	if lps.Cfg == nil {
+		return false
+	}
+
+	return lps.Cfg.IsPanelLibraryEnabled()
+}
+
 // AddMigration defines database migrations.
 // If Panel Library is not enabled does nothing.
-func (service *LibraryPanelService) AddMigration(mg *migrator.Migrator) {
-	if !service.Cfg.IsPanelLibraryEnabled() {
+func (lps *LibraryPanelService) AddMigration(mg *migrator.Migrator) {
+	if !lps.IsEnabled() {
 		return
 	}
 
