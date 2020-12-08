@@ -16,4 +16,10 @@ export const plugin = new DataSourcePlugin<CloudWatchDatasource, CloudWatchQuery
   .setQueryEditor(PanelQueryEditor)
   .setExploreMetricsQueryField(PanelQueryEditor)
   .setExploreLogsQueryField(CloudWatchLogsQueryEditor)
-  .setAnnotationQueryCtrl(CloudWatchAnnotationsQueryCtrl);
+  .setAnnotationQueryCtrl(CloudWatchAnnotationsQueryCtrl)
+  .setChannelSupport({
+    getChannelConfig: (path: string) => ({
+      path,
+    }),
+    getSupportedPaths: () => [],
+  });

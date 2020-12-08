@@ -35,102 +35,88 @@ describe('ensureColumns transformer', () => {
     mockTransformationsRegistry([ensureColumnsTransformer, seriesToColumnsTransformer]);
   });
 
-  it('will transform to columns if time field exists and multiple frames', () => {
+  it('will transform to columns if time field exists and multiple frames', async () => {
     const cfg = {
       id: DataTransformerID.ensureColumns,
       options: {},
     };
 
     const data = [seriesA, seriesBC];
-    const filtered = transformDataFrame([cfg], data);
 
-    expect(filtered.length).toEqual(1);
-    expect(filtered[0]).toMatchInlineSnapshot(`
-      Object {
-        "fields": Array [
-          Object {
-            "config": Object {},
-            "labels": undefined,
-            "name": "TheTime",
-            "type": "time",
-            "values": Array [
-              1000,
-              2000,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {},
-            "name": "A",
-            "type": "number",
-            "values": Array [
-              1,
-              100,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {},
-            "name": "B",
-            "type": "number",
-            "values": Array [
-              2,
-              200,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {},
-            "name": "C",
-            "type": "number",
-            "values": Array [
-              3,
-              300,
-            ],
-          },
-          Object {
-            "config": Object {},
-            "labels": Object {},
-            "name": "D",
-            "type": "string",
-            "values": Array [
-              "first",
-              "second",
-            ],
-          },
-        ],
-        "meta": Object {
-          "transformations": Array [
-            "ensureColumns",
+    await expect(transformDataFrame([cfg], data)).toEmitValuesWith(received => {
+      const filtered = received[0];
+      expect(filtered.length).toEqual(1);
+
+      const frame = filtered[0];
+      expect(frame.fields.length).toEqual(5);
+      expect(filtered[0]).toEqual(
+        toDataFrame({
+          fields: [
+            {
+              name: 'TheTime',
+              type: 'time',
+              config: {},
+              values: [1000, 2000],
+              labels: undefined,
+            },
+            {
+              name: 'A',
+              type: 'number',
+              config: {},
+              values: [1, 100],
+              labels: {},
+            },
+            {
+              name: 'B',
+              type: 'number',
+              config: {},
+              values: [2, 200],
+              labels: {},
+            },
+            {
+              name: 'C',
+              type: 'number',
+              config: {},
+              values: [3, 300],
+              labels: {},
+            },
+            {
+              name: 'D',
+              type: 'string',
+              config: {},
+              values: ['first', 'second'],
+              labels: {},
+            },
           ],
-        },
-        "name": undefined,
-        "refId": undefined,
-      }
-    `);
+          meta: {
+            transformations: ['ensureColumns'],
+          },
+          name: undefined,
+          refId: undefined,
+        })
+      );
+    });
   });
 
-  it('will not transform to columns if time field is missing for any of the series', () => {
+  it('will not transform to columns if time field is missing for any of the series', async () => {
     const cfg = {
       id: DataTransformerID.ensureColumns,
       options: {},
     };
 
     const data = [seriesBC, seriesNoTime];
-    const filtered = transformDataFrame([cfg], data);
 
-    expect(filtered).toEqual(data);
+    await expect(transformDataFrame([cfg], data)).toEmitValues([data]);
   });
 
-  it('will not transform to columns if only one series', () => {
+  it('will not transform to columns if only one series', async () => {
     const cfg = {
       id: DataTransformerID.ensureColumns,
       options: {},
     };
 
     const data = [seriesBC];
-    const filtered = transformDataFrame([cfg], data);
 
-    expect(filtered).toEqual(data);
+    await expect(transformDataFrame([cfg], data)).toEmitValues([data]);
   });
 });

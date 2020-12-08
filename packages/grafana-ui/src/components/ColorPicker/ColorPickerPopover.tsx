@@ -4,7 +4,7 @@ import { PopoverContentProps } from '../Tooltip/Tooltip';
 import SpectrumPalette from './SpectrumPalette';
 import { Themeable } from '../../types/theme';
 import { warnAboutColorPickerPropsDeprecation } from './warnAboutColorPickerPropsDeprecation';
-import { GrafanaThemeType, getColorName, getColorFromHexRgbOrName } from '@grafana/data';
+import { GrafanaThemeType, getColorForTheme } from '@grafana/data';
 
 export type ColorPickerChangeHandler = (color: string) => void;
 
@@ -57,7 +57,7 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
     if (enableNamedColors) {
       return changeHandler(color);
     }
-    changeHandler(getColorFromHexRgbOrName(color, theme.type));
+    changeHandler(getColorForTheme(color, theme));
   };
 
   onTabChange = (tab: PickerType | keyof T) => {
@@ -72,9 +72,7 @@ export class ColorPickerPopover<T extends CustomPickersDescriptor> extends React
       case 'spectrum':
         return <SpectrumPalette color={color} onChange={this.handleChange} theme={theme} />;
       case 'palette':
-        return (
-          <NamedColorsPalette color={getColorName(color, theme.type)} onChange={this.handleChange} theme={theme} />
-        );
+        return <NamedColorsPalette color={color} onChange={this.handleChange} theme={theme} />;
       default:
         return this.renderCustomPicker(activePicker);
     }

@@ -19,7 +19,7 @@ func init() {
 	Register(CacheableStruct{})
 }
 
-func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SqlStore) CacheStorage {
+func createTestClient(t *testing.T, opts *setting.RemoteCacheOptions, sqlstore *sqlstore.SQLStore) CacheStorage {
 	t.Helper()
 
 	dc := &RemoteCache{
@@ -83,7 +83,7 @@ func canNotFetchExpiredItems(t *testing.T, client CacheStorage) {
 	err := client.Set("key1", cacheableStruct, time.Second)
 	assert.Equal(t, err, nil)
 
-	//not sure how this can be avoided when testing redis/memcached :/
+	// not sure how this can be avoided when testing redis/memcached :/
 	<-time.After(time.Second + time.Millisecond)
 
 	// should not be able to read that value since its expired

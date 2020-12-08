@@ -99,6 +99,10 @@ type TProps = TExtractUiFindFromStateReturn & {
   removeHoverIndentGuideId: (spanID: string) => void;
   linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
   theme: Theme;
+  createSpanLink?: (
+    span: TraceSpan
+  ) => { href: string; onClick?: (e: React.MouseEvent) => void; content: React.ReactNode };
+  scrollElement?: Element;
 };
 
 type State = {

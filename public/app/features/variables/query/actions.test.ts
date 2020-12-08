@@ -1,14 +1,25 @@
+import { DefaultTimeRange, LoadingState } from '@grafana/data';
+
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { getRootReducer } from '../state/helpers';
 import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE, toVariablePayload } from '../state/types';
-import { addVariable, changeVariableProp, setCurrentVariableValue } from '../state/sharedReducer';
+import {
+  addVariable,
+  changeVariableProp,
+  setCurrentVariableValue,
+  variableStateCompleted,
+  variableStateFailed,
+  variableStateFetching,
+} from '../state/sharedReducer';
 import { TemplatingState } from '../state/reducers';
 import {
   changeQueryVariableDataSource,
   changeQueryVariableQuery,
+  flattenQuery,
+  hasSelfReferencingQuery,
   initQueryVariableEditor,
   updateQueryVariableOptions,
 } from './actions';
@@ -19,27 +30,29 @@ import {
   removeVariableEditorError,
   setIdInEditor,
 } from '../editor/reducer';
-import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
+import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
 import { expect } from 'test/lib/common';
+import { updateOptions } from '../state/actions';
+import { notifyApp } from '../../../core/reducers/appNotification';
+import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
+import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { setVariableQueryRunner, VariableQueryRunner } from './VariableQueryRunner';
+import { setDataSourceSrv } from '@grafana/runtime';
 
 const mocks: Record<string, any> = {
   datasource: {
     metricFindQuery: jest.fn().mockResolvedValue([]),
   },
-  datasourceSrv: {
-    getMetricSources: jest.fn().mockReturnValue([]),
+  dataSourceSrv: {
+    get: (name: string) => Promise.resolve(mocks[name]),
+    getList: jest.fn().mockReturnValue([]),
   },
   pluginLoader: {
     importDataSourcePlugin: jest.fn().mockResolvedValue({ components: {} }),
   },
 };
 
-jest.mock('../../plugins/datasource_srv', () => ({
-  getDatasourceSrv: jest.fn(() => ({
-    get: jest.fn((name: string) => mocks[name]),
-    getMetricSources: () => mocks.datasourceSrv.getMetricSources(),
-  })),
-}));
+setDataSourceSrv(mocks.dataSourceSrv as any);
 
 jest.mock('../../plugins/plugin_loader', () => ({
   importDataSourcePlugin: () => mocks.pluginLoader.importDataSourcePlugin(),
@@ -50,6 +63,20 @@ jest.mock('../../templating/template_srv', () => ({
 }));
 
 describe('query actions', () => {
+  let originalTimeSrv: TimeSrv;
+
+  beforeEach(() => {
+    originalTimeSrv = getTimeSrv();
+    setTimeSrv(({
+      timeRange: jest.fn().mockReturnValue(DefaultTimeRange),
+    } as unknown) as TimeSrv);
+    setVariableQueryRunner(new VariableQueryRunner());
+  });
+
+  afterEach(() => {
+    setTimeSrv(originalTimeSrv);
+  });
+
   variableAdapters.setInit(() => [createQueryVariableAdapter()]);
 
   describe('when updateQueryVariableOptions is dispatched for variable with tags and includeAll', () => {
@@ -68,15 +95,11 @@ describe('query actions', () => {
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
       const update = { results: optionsMetrics, templatedRegex: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [updateOptions, updateTags, setCurrentAction] = actions;
-        const expectedNumberOfActions = 3;
-
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
-        expect(updateTags).toEqual(updateVariableTags(toVariablePayload(variable, tagsMetrics)));
-        expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        updateVariableOptions(toVariablePayload(variable, update)),
+        updateVariableTags(toVariablePayload(variable, tagsMetrics)),
+        setCurrentVariableValue(toVariablePayload(variable, { option }))
+      );
     });
   });
 
@@ -123,14 +146,10 @@ describe('query actions', () => {
       const option = createOption('A');
       const update = { results: optionsMetrics, templatedRegex: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [updateOptions, setCurrentAction] = actions;
-        const expectedNumberOfActions = 2;
-
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
-        expect(setCurrentAction).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        updateVariableOptions(toVariablePayload(variable, update)),
+        setCurrentVariableValue(toVariablePayload(variable, { option }))
+      );
     });
   });
 
@@ -215,6 +234,7 @@ describe('query actions', () => {
   });
 
   describe('when updateQueryVariableOptions is dispatched and fails for variable open in editor', () => {
+    silenceConsoleOutput();
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true, useTags: false });
       const error = { message: 'failed to fetch metrics' };
@@ -225,15 +245,23 @@ describe('query actions', () => {
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
         .whenActionIsDispatched(setIdInEditor({ id: variable.id }))
-        .whenAsyncActionIsDispatched(updateQueryVariableOptions(toVariablePayload(variable)), true);
+        .whenAsyncActionIsDispatched(updateOptions(toVariablePayload(variable)), true);
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [clearErrors, errorOccurred] = actions;
-        const expectedNumberOfActions = 2;
+      tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
+        const expectedNumberOfActions = 5;
 
-        expect(errorOccurred).toEqual(addVariableEditorError({ errorProp: 'update', errorText: error.message }));
-        expect(clearErrors).toEqual(removeVariableEditorError({ errorProp: 'update' }));
-        return actions.length === expectedNumberOfActions;
+        expect(dispatchedActions[0]).toEqual(variableStateFetching(toVariablePayload(variable)));
+        expect(dispatchedActions[1]).toEqual(removeVariableEditorError({ errorProp: 'update' }));
+        expect(dispatchedActions[2]).toEqual(addVariableEditorError({ errorProp: 'update', errorText: error.message }));
+        expect(dispatchedActions[3]).toEqual(
+          variableStateFailed(toVariablePayload(variable, { error: { message: 'failed to fetch metrics' } }))
+        );
+        expect(dispatchedActions[4].type).toEqual(notifyApp.type);
+        expect(dispatchedActions[4].payload.title).toEqual('Templating [0]');
+        expect(dispatchedActions[4].payload.text).toEqual('Error updating options: failed to fetch metrics');
+        expect(dispatchedActions[4].payload.severity).toEqual('error');
+
+        return dispatchedActions.length === expectedNumberOfActions;
       });
     });
   });
@@ -241,11 +269,10 @@ describe('query actions', () => {
   describe('when initQueryVariableEditor is dispatched', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true, useTags: false });
-      const defaultMetricSource = { name: '', value: '', meta: {}, sort: '' };
-      const testMetricSource = { name: 'test', value: 'test', meta: {}, sort: '' };
+      const testMetricSource = { name: 'test', value: 'test', meta: {} };
       const editor = {};
 
-      mocks.datasourceSrv.getMetricSources = jest.fn().mockReturnValue([testMetricSource]);
+      mocks.dataSourceSrv.getList = jest.fn().mockReturnValue([testMetricSource]);
       mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
         components: { VariableQueryEditor: editor },
       });
@@ -256,12 +283,9 @@ describe('query actions', () => {
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [updateDatasources, setDatasource, setEditor] = actions;
-        const expectedNumberOfActions = 3;
+        const [setDatasource, setEditor] = actions;
+        const expectedNumberOfActions = 2;
 
-        expect(updateDatasources).toEqual(
-          changeVariableEditorExtended({ propName: 'dataSources', propValue: [defaultMetricSource, testMetricSource] })
-        );
         expect(setDatasource).toEqual(
           changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })
         );
@@ -274,11 +298,10 @@ describe('query actions', () => {
   describe('when initQueryVariableEditor is dispatched and metricsource without value is available', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true, useTags: false });
-      const defaultMetricSource = { name: '', value: '', meta: {}, sort: '' };
-      const testMetricSource = { name: 'test', value: (null as unknown) as string, meta: {}, sort: '' };
+      const testMetricSource = { name: 'test', value: (null as unknown) as string, meta: {} };
       const editor = {};
 
-      mocks.datasourceSrv.getMetricSources = jest.fn().mockReturnValue([testMetricSource]);
+      mocks.dataSourceSrv.getList = jest.fn().mockReturnValue([testMetricSource]);
       mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
         components: { VariableQueryEditor: editor },
       });
@@ -289,12 +312,9 @@ describe('query actions', () => {
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [updateDatasources, setDatasource, setEditor] = actions;
-        const expectedNumberOfActions = 3;
+        const [setDatasource, setEditor] = actions;
+        const expectedNumberOfActions = 2;
 
-        expect(updateDatasources).toEqual(
-          changeVariableEditorExtended({ propName: 'dataSources', propValue: [defaultMetricSource] })
-        );
         expect(setDatasource).toEqual(
           changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })
         );
@@ -307,10 +327,9 @@ describe('query actions', () => {
   describe('when initQueryVariableEditor is dispatched and no metric sources was found', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ includeAll: true, useTags: false });
-      const defaultDatasource = { name: '', value: '', meta: {}, sort: '' };
       const editor = {};
 
-      mocks.datasourceSrv.getMetricSources = jest.fn().mockReturnValue([]);
+      mocks.dataSourceSrv.getList = jest.fn().mockReturnValue([]);
       mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
         components: { VariableQueryEditor: editor },
       });
@@ -321,12 +340,9 @@ describe('query actions', () => {
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [updateDatasources, setDatasource, setEditor] = actions;
-        const expectedNumberOfActions = 3;
+        const [setDatasource, setEditor] = actions;
+        const expectedNumberOfActions = 2;
 
-        expect(updateDatasources).toEqual(
-          changeVariableEditorExtended({ propName: 'dataSources', propValue: [defaultDatasource] })
-        );
         expect(setDatasource).toEqual(
           changeVariableEditorExtended({ propName: 'dataSource', propValue: mocks['datasource'] })
         );
@@ -339,7 +355,6 @@ describe('query actions', () => {
   describe('when initQueryVariableEditor is dispatched and variable dont have datasource', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ datasource: undefined });
-      const ds = { name: '', value: '', meta: {}, sort: '' };
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
@@ -347,10 +362,10 @@ describe('query actions', () => {
         .whenAsyncActionIsDispatched(initQueryVariableEditor(toVariablePayload(variable)), true);
 
       tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [updateDatasources] = actions;
+        const [setDatasource] = actions;
         const expectedNumberOfActions = 1;
 
-        expect(updateDatasources).toEqual(changeVariableEditorExtended({ propName: 'dataSources', propValue: [ds] }));
+        expect(setDatasource).toEqual(changeVariableEditorExtended({ propName: 'dataSource', propValue: undefined }));
         return actions.length === expectedNumberOfActions;
       });
     });
@@ -389,7 +404,7 @@ describe('query actions', () => {
   describe('when changeQueryVariableDataSource is dispatched and editor is not configured', () => {
     it('then correct actions are dispatched', async () => {
       const variable = createVariable({ datasource: 'other' });
-      const editor = DefaultVariableQueryEditor;
+      const editor = LegacyVariableQueryEditor;
 
       mocks.pluginLoader.importDataSourcePlugin = jest.fn().mockResolvedValue({
         components: {},
@@ -435,23 +450,16 @@ describe('query actions', () => {
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
       const update = { results: optionsMetrics, templatedRegex: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [clearError, changeQuery, changeDefinition, updateOptions, updateTags, setOption] = actions;
-        const expectedNumberOfActions = 6;
-
-        expect(clearError).toEqual(removeVariableEditorError({ errorProp: 'query' }));
-        expect(changeQuery).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query }))
-        );
-        expect(changeDefinition).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
-        );
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
-        expect(updateTags).toEqual(updateVariableTags(toVariablePayload(variable, tagsMetrics)));
-        expect(setOption).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        removeVariableEditorError({ errorProp: 'query' }),
+        changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query })),
+        changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition })),
+        variableStateFetching(toVariablePayload(variable)),
+        updateVariableOptions(toVariablePayload(variable, update)),
+        updateVariableTags(toVariablePayload(variable, tagsMetrics)),
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        variableStateCompleted(toVariablePayload(variable))
+      );
     });
   });
 
@@ -473,22 +481,15 @@ describe('query actions', () => {
       const option = createOption(ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE);
       const update = { results: optionsMetrics, templatedRegex: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [clearError, changeQuery, changeDefinition, updateOptions, setOption] = actions;
-        const expectedNumberOfActions = 5;
-
-        expect(clearError).toEqual(removeVariableEditorError({ errorProp: 'query' }));
-        expect(changeQuery).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query }))
-        );
-        expect(changeDefinition).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
-        );
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
-        expect(setOption).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        removeVariableEditorError({ errorProp: 'query' }),
+        changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query })),
+        changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition })),
+        variableStateFetching(toVariablePayload(variable)),
+        updateVariableOptions(toVariablePayload(variable, update)),
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        variableStateCompleted(toVariablePayload(variable))
+      );
     });
   });
 
@@ -509,22 +510,15 @@ describe('query actions', () => {
       const option = createOption('A');
       const update = { results: optionsMetrics, templatedRegex: '' };
 
-      tester.thenDispatchedActionsPredicateShouldEqual(actions => {
-        const [clearError, changeQuery, changeDefinition, updateOptions, setOption] = actions;
-        const expectedNumberOfActions = 5;
-
-        expect(clearError).toEqual(removeVariableEditorError({ errorProp: 'query' }));
-        expect(changeQuery).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query }))
-        );
-        expect(changeDefinition).toEqual(
-          changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition }))
-        );
-        expect(updateOptions).toEqual(updateVariableOptions(toVariablePayload(variable, update)));
-        expect(setOption).toEqual(setCurrentVariableValue(toVariablePayload(variable, { option })));
-
-        return actions.length === expectedNumberOfActions;
-      });
+      tester.thenDispatchedActionsShouldEqual(
+        removeVariableEditorError({ errorProp: 'query' }),
+        changeVariableProp(toVariablePayload(variable, { propName: 'query', propValue: query })),
+        changeVariableProp(toVariablePayload(variable, { propName: 'definition', propValue: definition })),
+        variableStateFetching(toVariablePayload(variable)),
+        updateVariableOptions(toVariablePayload(variable, update)),
+        setCurrentVariableValue(toVariablePayload(variable, { option })),
+        variableStateCompleted(toVariablePayload(variable))
+      );
     });
   });
 
@@ -547,6 +541,162 @@ describe('query actions', () => {
 
         expect(editorError).toEqual(addVariableEditorError({ errorProp: 'query', errorText }));
         return actions.length === expectedNumberOfActions;
+      });
+    });
+  });
+
+  describe('hasSelfReferencingQuery', () => {
+    it('when called with a string', () => {
+      const query = '$query';
+      const name = 'query';
+
+      expect(hasSelfReferencingQuery(name, query)).toBe(true);
+    });
+
+    it('when called with an array', () => {
+      const query = ['$query'];
+      const name = 'query';
+
+      expect(hasSelfReferencingQuery(name, query)).toBe(true);
+    });
+
+    it('when called with a simple object', () => {
+      const query = { a: '$query' };
+      const name = 'query';
+
+      expect(hasSelfReferencingQuery(name, query)).toBe(true);
+    });
+
+    it('when called with a complex object', () => {
+      const query = {
+        level2: {
+          level3: {
+            query: 'query3',
+            refId: 'C',
+            num: 2,
+            bool: true,
+            arr: [
+              { query: 'query4', refId: 'D', num: 4, bool: true },
+              {
+                query: 'query5',
+                refId: 'E',
+                num: 5,
+                bool: true,
+                arr: [{ query: '$query', refId: 'F', num: 6, bool: true }],
+              },
+            ],
+          },
+          query: 'query2',
+          refId: 'B',
+          num: 1,
+          bool: false,
+        },
+        query: 'query1',
+        refId: 'A',
+        num: 0,
+        bool: true,
+        arr: [
+          { query: 'query7', refId: 'G', num: 7, bool: true },
+          {
+            query: 'query8',
+            refId: 'H',
+            num: 8,
+            bool: true,
+            arr: [{ query: 'query9', refId: 'I', num: 9, bool: true }],
+          },
+        ],
+      };
+      const name = 'query';
+
+      expect(hasSelfReferencingQuery(name, query)).toBe(true);
+    });
+
+    it('when called with a number', () => {
+      const query = 1;
+      const name = 'query';
+
+      expect(hasSelfReferencingQuery(name, query)).toBe(false);
+    });
+  });
+
+  describe('flattenQuery', () => {
+    it('when called with a complex object', () => {
+      const query = {
+        level2: {
+          level3: {
+            query: '${query3}',
+            refId: 'C',
+            num: 2,
+            bool: true,
+            arr: [
+              { query: '${query4}', refId: 'D', num: 4, bool: true },
+              {
+                query: '${query5}',
+                refId: 'E',
+                num: 5,
+                bool: true,
+                arr: [{ query: '${query6}', refId: 'F', num: 6, bool: true }],
+              },
+            ],
+          },
+          query: '${query2}',
+          refId: 'B',
+          num: 1,
+          bool: false,
+        },
+        query: '${query1}',
+        refId: 'A',
+        num: 0,
+        bool: true,
+        arr: [
+          { query: '${query7}', refId: 'G', num: 7, bool: true },
+          {
+            query: '${query8}',
+            refId: 'H',
+            num: 8,
+            bool: true,
+            arr: [{ query: '${query9}', refId: 'I', num: 9, bool: true }],
+          },
+        ],
+      };
+
+      expect(flattenQuery(query)).toEqual({
+        query: '${query1}',
+        refId: 'A',
+        num: 0,
+        bool: true,
+        level2_query: '${query2}',
+        level2_refId: 'B',
+        level2_num: 1,
+        level2_bool: false,
+        level2_level3_query: '${query3}',
+        level2_level3_refId: 'C',
+        level2_level3_num: 2,
+        level2_level3_bool: true,
+        level2_level3_arr_0_query: '${query4}',
+        level2_level3_arr_0_refId: 'D',
+        level2_level3_arr_0_num: 4,
+        level2_level3_arr_0_bool: true,
+        level2_level3_arr_1_query: '${query5}',
+        level2_level3_arr_1_refId: 'E',
+        level2_level3_arr_1_num: 5,
+        level2_level3_arr_1_bool: true,
+        level2_level3_arr_1_arr_0_query: '${query6}',
+        level2_level3_arr_1_arr_0_refId: 'F',
+        level2_level3_arr_1_arr_0_num: 6,
+        level2_level3_arr_1_arr_0_bool: true,
+        arr_0_query: '${query7}',
+        arr_0_refId: 'G',
+        arr_0_num: 7,
+        arr_0_bool: true,
+        arr_1_query: '${query8}',
+        arr_1_refId: 'H',
+        arr_1_num: 8,
+        arr_1_bool: true,
+        arr_1_arr_0_query: '${query9}',
+        arr_1_arr_0_refId: 'I',
+        arr_1_arr_0_num: 9,
+        arr_1_arr_0_bool: true,
       });
     });
   });
@@ -588,6 +738,9 @@ function createVariable(extend?: Partial<QueryVariableModel>): QueryVariableMode
     regex: '',
     multi: true,
     includeAll: true,
+    state: LoadingState.NotStarted,
+    error: null,
+    description: null,
     ...(extend ?? {}),
   };
 }

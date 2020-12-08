@@ -74,7 +74,7 @@ export class Help extends React.Component<Props, State> {
               keys any way you want by using alias patterns.
               <br /> <br />
               Example:
-              <code>{`${'{{metricDescriptor.name}} - {{metricDescriptor.label.instance_name}}'}`}</code>
+              <code>{`${'{{metric.name}} - {{metric.label.instance_name}}'}`}</code>
               <br />
               Result: &nbsp;&nbsp;<code>cpu/usage_time - server1-europe-west-1</code>
               <br />
@@ -83,18 +83,18 @@ export class Help extends React.Component<Props, State> {
               <br />
               <ul>
                 <li>
-                  <code>{`${'{{metricDescriptor.type}}'}`}</code> = metric type e.g.
+                  <code>{`${'{{metric.type}}'}`}</code> = metric type e.g.
                   compute.googleapis.com/instance/cpu/usage_time
                 </li>
                 <li>
-                  <code>{`${'{{metricDescriptor.name}}'}`}</code> = name part of metric e.g. instance/cpu/usage_time
+                  <code>{`${'{{metric.name}}'}`}</code> = name part of metric e.g. instance/cpu/usage_time
                 </li>
                 <li>
-                  <code>{`${'{{metricDescriptor.service}}'}`}</code> = service part of metric e.g. compute
+                  <code>{`${'{{metric.service}}'}`}</code> = service part of metric e.g. compute
                 </li>
                 <li>
-                  <code>{`${'{{metricDescriptor.label.label_name}}'}`}</code> = Metric label metadata e.g.
-                  metricDescriptor.label.instance_name
+                  <code>{`${'{{metric.label.label_name}}'}`}</code> = Metric label metadata e.g.
+                  metric.label.instance_name
                 </li>
                 <li>
                   <code>{`${'{{resource.label.label_name}}'}`}</code> = Resource label metadata e.g. resource.label.zone

@@ -103,7 +103,7 @@ func (e *CloudMonitoringExecutor) getGCEDefaultProject(ctx context.Context, tsdb
 
 	gceDefaultProject, err := e.getDefaultProject(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
+		return nil, fmt.Errorf("failed to retrieve default project from GCE metadata server, error: %w", err)
 	}
 
 	queryResult.Meta.Set("defaultProject", gceDefaultProject)
@@ -287,7 +287,7 @@ func (e *CloudMonitoringExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*cl
 		sq.Target = target
 		sq.Params = params
 
-		if setting.Env == setting.DEV {
+		if setting.Env == setting.Dev {
 			slog.Debug("CloudMonitoring request", "params", params)
 		}
 
@@ -302,7 +302,7 @@ func migrateLegacyQueryModel(query *tsdb.Query) {
 	if mq == nil {
 		migratedModel := simplejson.NewFromAny(map[string]interface{}{
 			"queryType":   metricQueryType,
-			"metricQuery": query.Model,
+			"metricQuery": query.Model.MustMap(),
 		})
 		query.Model = migratedModel
 	}
@@ -320,7 +320,7 @@ func interpolateFilterWildcards(value string) string {
 	matches := strings.Count(value, "*")
 	switch {
 	case matches == 2 && strings.HasSuffix(value, "*") && strings.HasPrefix(value, "*"):
-		value = strings.Replace(value, "*", "", -1)
+		value = strings.ReplaceAll(value, "*", "")
 		value = fmt.Sprintf(`has_substring("%s")`, value)
 	case matches == 1 && strings.HasPrefix(value, "*"):
 		value = strings.Replace(value, "*", "", 1)
@@ -332,8 +332,8 @@ func interpolateFilterWildcards(value string) string {
 		value = string(wildcardRegexRe.ReplaceAllFunc([]byte(value), func(in []byte) []byte {
 			return []byte(strings.Replace(string(in), string(in), `\\`+string(in), 1))
 		}))
-		value = strings.Replace(value, "*", ".*", -1)
-		value = strings.Replace(value, `"`, `\\"`, -1)
+		value = strings.ReplaceAll(value, "*", ".*")
+		value = strings.ReplaceAll(value, `"`, `\\"`)
 		value = fmt.Sprintf(`monitoring.regex.full_match("^%s$")`, value)
 	}
 
@@ -502,11 +502,43 @@ func (e *CloudMonitoringExecutor) unmarshalResponse(res *http.Response) (cloudMo
 	return data, nil
 }
 
+func handleDistributionSeries(series timeSeries, defaultMetricName string, seriesLabels map[string]string,
+	query *cloudMonitoringQuery, queryRes *tsdb.QueryResult) {
+	points := make([]tsdb.TimePoint, 0)
+	for i := len(series.Points) - 1; i >= 0; i-- {
+		point := series.Points[i]
+		value := point.Value.DoubleValue
+
+		if series.ValueType == "INT64" {
+			parsedValue, err := strconv.ParseFloat(point.Value.IntValue, 64)
+			if err == nil {
+				value = parsedValue
+			}
+		}
+
+		if series.ValueType == "BOOL" {
+			if point.Value.BoolValue {
+				value = 1
+			} else {
+				value = 0
+			}
+		}
+
+		points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.Interval.EndTime).Unix())*1000))
+	}
+
+	metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, nil, query)
+
+	queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
+		Name:   metricName,
+		Points: points,
+	})
+}
+
 func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, query *cloudMonitoringQuery) error {
 	labels := make(map[string]map[string]bool)
 
 	for _, series := range data.TimeSeries {
-		points := make([]tsdb.TimePoint, 0)
 		seriesLabels := make(map[string]string)
 		defaultMetricName := series.Metric.Type
 		labels["resource.type"] = map[string]bool{series.Resource.Type: true}
@@ -566,34 +598,7 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, data
 
 		// reverse the order to be ascending
 		if series.ValueType != "DISTRIBUTION" {
-			for i := len(series.Points) - 1; i >= 0; i-- {
-				point := series.Points[i]
-				value := point.Value.DoubleValue
-
-				if series.ValueType == "INT64" {
-					parsedValue, err := strconv.ParseFloat(point.Value.IntValue, 64)
-					if err == nil {
-						value = parsedValue
-					}
-				}
-
-				if series.ValueType == "BOOL" {
-					if point.Value.BoolValue {
-						value = 1
-					} else {
-						value = 0
-					}
-				}
-
-				points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.Interval.EndTime).Unix())*1000))
-			}
-
-			metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, nil, query)
-
-			queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-				Name:   metricName,
-				Points: points,
-			})
+			handleDistributionSeries(series, defaultMetricName, seriesLabels, query, queryRes)
 		} else {
 			buckets := make(map[int]*tsdb.TimeSeries)
 
@@ -764,7 +769,7 @@ func (e *CloudMonitoringExecutor) createRequest(ctx context.Context, dsInfo *mod
 	req, err := http.NewRequest(http.MethodGet, "https://monitoring.googleapis.com/", nil)
 	if err != nil {
 		slog.Error("Failed to create request", "error", err)
-		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -773,7 +778,7 @@ func (e *CloudMonitoringExecutor) createRequest(ctx context.Context, dsInfo *mod
 	// find plugin
 	plugin, ok := plugins.DataSources[dsInfo.Type]
 	if !ok {
-		return nil, errors.New("Unable to find datasource plugin CloudMonitoring")
+		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
 	}
 
 	var cloudMonitoringRoute *plugins.AppPluginRoute
@@ -794,14 +799,14 @@ func (e *CloudMonitoringExecutor) getDefaultProject(ctx context.Context) (string
 	if authenticationType == gceAuthentication {
 		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
 		if err != nil {
-			return "", fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
+			return "", fmt.Errorf("failed to retrieve default project from GCE metadata server: %w", err)
 		}
 		token, err := defaultCredentials.TokenSource.Token()
 		if err != nil {
-			return "", fmt.Errorf("Failed to retrieve GCP credential token. error: %v", err)
+			return "", fmt.Errorf("failed to retrieve GCP credential token: %w", err)
 		}
 		if !token.Valid() {
-			return "", errors.New("Failed to validate GCP credentials")
+			return "", errors.New("failed to validate GCP credentials")
 		}
 
 		return defaultCredentials.ProjectID, nil

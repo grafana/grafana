@@ -17,12 +17,16 @@ import {
   ValueMappingFieldConfigSettings,
   valueMappingsOverrideProcessor,
   ThresholdsMode,
+  identityOverrideProcessor,
   TimeZone,
+  FieldColor,
+  FieldColorConfigSettings,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
 import {
   NumberValueEditor,
+  SliderValueEditor,
   RadioButtonGroup,
   StringValueEditor,
   StringArrayEditor,
@@ -34,6 +38,7 @@ import { ThresholdsValueEditor } from '../components/OptionsUI/thresholds';
 import { UnitValueEditor } from '../components/OptionsUI/units';
 import { DataLinksValueEditor } from '../components/OptionsUI/links';
 import { ColorValueEditor } from '../components/OptionsUI/color';
+import { FieldColorEditor } from '../components/OptionsUI/fieldColor';
 import { StatsPickerEditor } from '../components/OptionsUI/stats';
 
 /**
@@ -146,7 +151,7 @@ export const getStandardFieldConfigs = () => {
         { value: 80, color: 'red' },
       ],
     },
-    shouldApply: field => field.type === FieldType.number,
+    shouldApply: () => true,
     category: ['Thresholds'],
     getItemsCount: value => (value ? value.steps.length : 0),
   };
@@ -200,22 +205,22 @@ export const getStandardFieldConfigs = () => {
     getItemsCount: value => (value ? value.length : 0),
   };
 
-  // const color: FieldConfigPropertyItem<any, string, StringFieldConfigSettings> = {
-  //   id: 'color',
-  //   path: 'color',
-  //   name: 'Color',
-  //   description: 'Customise color',
-  //   editor: standardEditorsRegistry.get('color').editor as any,
-  //   override: standardEditorsRegistry.get('color').editor as any,
-  //   process: identityOverrideProcessor,
-  //   settings: {
-  //     placeholder: '-',
-  //   },
-  //   shouldApply: () => true,
-  //   category: ['Color & thresholds'],
-  // };
+  const color: FieldConfigPropertyItem<any, FieldColor | undefined, FieldColorConfigSettings> = {
+    id: 'color',
+    path: 'color',
+    name: 'Color scheme',
+    editor: standardEditorsRegistry.get('fieldColor').editor as any,
+    override: standardEditorsRegistry.get('fieldColor').editor as any,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+    settings: {
+      byValueSupport: true,
+      preferThresholdsMode: true,
+    },
+    category,
+  };
 
-  return [unit, min, max, decimals, displayName, noValue, thresholds, mappings, links];
+  return [unit, min, max, decimals, displayName, noValue, color, thresholds, mappings, links];
 };
 
 /**
@@ -227,6 +232,13 @@ export const getStandardOptionEditors = () => {
     name: 'Number',
     description: 'Allows numeric values input',
     editor: NumberValueEditor as any,
+  };
+
+  const slider: StandardEditorsRegistryItem<number> = {
+    id: 'slider',
+    name: 'Slider',
+    description: 'Allows numeric values input',
+    editor: SliderValueEditor as any,
   };
 
   const text: StandardEditorsRegistryItem<string> = {
@@ -247,7 +259,9 @@ export const getStandardOptionEditors = () => {
     id: 'boolean',
     name: 'Boolean',
     description: 'Allows boolean values input',
-    editor: props => <Switch {...props} onChange={e => props.onChange(e.currentTarget.checked)} />,
+    editor(props) {
+      return <Switch {...props} onChange={e => props.onChange(e.currentTarget.checked)} />;
+    },
   };
 
   const select: StandardEditorsRegistryItem<any> = {
@@ -261,7 +275,9 @@ export const getStandardOptionEditors = () => {
     id: 'radio',
     name: 'Radio',
     description: 'Allows option selection',
-    editor: props => <RadioButtonGroup {...props} options={props.item.settings?.options} />,
+    editor(props) {
+      return <RadioButtonGroup {...props} options={props.item.settings?.options} />;
+    },
   };
 
   const unit: StandardEditorsRegistryItem<string> = {
@@ -289,7 +305,16 @@ export const getStandardOptionEditors = () => {
     id: 'color',
     name: 'Color',
     description: 'Allows color selection',
-    editor: ColorValueEditor as any,
+    editor(props) {
+      return <ColorValueEditor value={props.value} onChange={props.onChange} />;
+    },
+  };
+
+  const fieldColor: StandardEditorsRegistryItem<FieldColor> = {
+    id: 'fieldColor',
+    name: 'Field Color',
+    description: 'Field color selection',
+    editor: FieldColorEditor as any,
   };
 
   const links: StandardEditorsRegistryItem<DataLink[]> = {
@@ -316,6 +341,7 @@ export const getStandardOptionEditors = () => {
   return [
     text,
     number,
+    slider,
     boolean,
     radio,
     select,
@@ -323,9 +349,10 @@ export const getStandardOptionEditors = () => {
     mappings,
     thresholds,
     links,
-    color,
     statsPicker,
     strings,
     timeZone,
+    fieldColor,
+    color,
   ];
 };

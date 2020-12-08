@@ -5,11 +5,11 @@ import _ from 'lodash';
 import { DataQuery, DataSourceApi, dateTimeFormat, AppEvents, urlUtil, ExploreUrlState } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import store from 'app/core/store';
-import { getExploreDatasources } from '../../features/explore/state/selectors';
 
 // Types
 import { RichHistoryQuery } from 'app/types/explore';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 const RICH_HISTORY_KEY = 'grafana.explore.richHistory';
 
@@ -170,26 +170,12 @@ export const sortQueries = (array: RichHistoryQuery[], sortOrder: SortOrder) => 
   return array.sort(sortFunc);
 };
 
-export const copyStringToClipboard = (string: string) => {
-  const el = document.createElement('textarea');
-  el.value = string;
-  document.body.appendChild(el);
-  el.select();
-  document.execCommand('copy');
-  document.body.removeChild(el);
-};
-
 export const createUrlFromRichHistory = (query: RichHistoryQuery) => {
   const exploreState: ExploreUrlState = {
     /* Default range, as we are not saving timerange in rich history */
     range: { from: 'now-1h', to: 'now' },
     datasource: query.datasourceName,
     queries: query.queries,
-    ui: {
-      showingGraph: true,
-      showingLogs: true,
-      showingTable: true,
-    },
     context: 'explore',
   };
 
@@ -289,22 +275,21 @@ export function mapQueriesToHeadings(query: RichHistoryQuery[], sortOrder: SortO
  * exploreDatasources add generic datasource image and add property isRemoved = true.
  */
 export function createDatasourcesList(queriesDatasources: string[]) {
-  const exploreDatasources = getExploreDatasources();
   const datasources: Array<{ label: string; value: string; imgUrl: string; isRemoved: boolean }> = [];
 
-  queriesDatasources.forEach(queryDsName => {
-    const index = exploreDatasources.findIndex(exploreDs => exploreDs.name === queryDsName);
-    if (index !== -1) {
+  queriesDatasources.forEach(dsName => {
+    const dsSettings = getDataSourceSrv().getInstanceSettings(dsName);
+    if (dsSettings) {
       datasources.push({
-        label: queryDsName,
-        value: queryDsName,
-        imgUrl: exploreDatasources[index].meta.info.logos.small,
+        label: dsSettings.name,
+        value: dsSettings.name,
+        imgUrl: dsSettings.meta.info.logos.small,
         isRemoved: false,
       });
     } else {
       datasources.push({
-        label: queryDsName,
-        value: queryDsName,
+        label: dsName,
+        value: dsName,
         imgUrl: 'public/img/icn-datasource.svg',
         isRemoved: true,
       });

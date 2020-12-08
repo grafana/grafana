@@ -2,6 +2,7 @@ package rendering
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"net/url"
@@ -64,7 +65,7 @@ func (rs *RenderingService) Init() error {
 		// RendererCallbackUrl has already been passed, it won't generate an error.
 		u, _ := url.Parse(rs.Cfg.RendererCallbackUrl)
 		rs.domain = u.Hostname()
-	case setting.HttpAddr != setting.DEFAULT_HTTP_ADDR:
+	case setting.HttpAddr != setting.DefaultHTTPAddr:
 		rs.domain = setting.HttpAddr
 	default:
 		rs.domain = "localhost"
@@ -136,7 +137,7 @@ func (rs *RenderingService) Render(ctx context.Context, opts Opts) (*RenderResul
 	elapsedTime := time.Since(startTime).Milliseconds()
 	result, err := rs.render(ctx, opts)
 	if err != nil {
-		if err == ErrTimeout {
+		if errors.Is(err, ErrTimeout) {
 			metrics.MRenderingRequestTotal.WithLabelValues("timeout").Inc()
 			metrics.MRenderingSummary.WithLabelValues("timeout").Observe(float64(elapsedTime))
 		} else {
@@ -227,15 +228,17 @@ func (rs *RenderingService) getURL(path string) string {
 
 	protocol := setting.Protocol
 	switch setting.Protocol {
-	case setting.HTTP:
+	case setting.HTTPScheme:
 		protocol = "http"
-	case setting.HTTP2, setting.HTTPS:
+	case setting.HTTP2Scheme, setting.HTTPSScheme:
 		protocol = "https"
+	default:
+		// TODO: Handle other schemes?
 	}
 
 	subPath := ""
 	if rs.Cfg.ServeFromSubPath {
-		subPath = rs.Cfg.AppSubUrl
+		subPath = rs.Cfg.AppSubURL
 	}
 
 	// &render=1 signals to the legacy redirect layer to

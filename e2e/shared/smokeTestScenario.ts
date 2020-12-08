@@ -11,7 +11,18 @@ export const smokeTestScenario = {
     e2e.pages.Dashboard.Toolbar.toolbarItems('Add panel').click();
     e2e.pages.AddDashboard.addNewPanel().click();
 
-    e2e.components.DataSource.TestData.QueryTab.scenarioSelect().select('CSV Metric Values');
+    e2e.components.DataSource.TestData.QueryTab.scenarioSelectContainer()
+      .should('be.visible')
+      .within(() => {
+        e2e.components.Select.input()
+          .should('be.visible')
+          .click();
+
+        cy.contains('CSV Metric Values')
+          .scrollIntoView()
+          .should('be.visible')
+          .click();
+      });
 
     // Make sure the graph renders via checking legend
     e2e.components.Panels.Visualization.Graph.Legend.legendItemAlias('A-series').should('be.visible');

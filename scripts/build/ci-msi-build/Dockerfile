@@ -1,13 +1,13 @@
-FROM mcr.microsoft.com/windows:1809
+FROM grafana/wix-toolset-ci:v3
 
-WORKDIR C:\\App
+RUN mkdir -p /tmp/dist /tmp/cache && \
+    cd /tmp/dist && \
+    wget https://dl.grafana.com/enterprise/master/grafana-enterprise-6.6.0-ca61af52pre.windows-amd64.zip && \
+    unzip -l *.zip
 
-RUN powershell Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force
-RUN powershell Invoke-Expression (New-Object System.Net.WebClient).DownloadString('https://get.scoop.sh')
-RUN powershell scoop install wixtoolset@3.11.2
-#RUN powershell Enable-WindowsOptionalFeature -Online -FeatureName "NetFx3"
-#RUN powershell invoke-webrequest https://github.com/wixtoolset/wix3/releases/download/wix3112rtm/wix311-binaries.zip -outfile wix311.zip
-#RUN powershell expand-archive wix311.zip
-#RUN powershell rm wix311.zip
-#RUN powershell [Environment]::SetEnvironmentVariable \
-#     ("Path", $env:Path + ';C:\\App\\wix311', [System.EnvironmentVariableTarget]::Machine)
+COPY . /package-grafana
+WORKDIR /package-grafana
+
+RUN cp ./msigenerator/cache/nssm-2.24.zip /tmp/cache
+
+RUN cd msigenerator && python3 generator/build.py

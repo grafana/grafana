@@ -9,6 +9,12 @@ const EXAMPLES_LIMIT = 5;
 
 const LOGQL_EXAMPLES = [
   {
+    title: 'Log pipeline',
+    expression: '{job="mysql"} |= "metrics" | logfmt | duration > 10s',
+    label:
+      'This query targets the MySQL job, filters out logs that don’t contain the word "metrics" and parses each log line to extract more labels and filters with them.',
+  },
+  {
     title: 'Count over time',
     expression: 'count_over_time({job="mysql"}[5m])',
     label: 'This query counts all the log lines within the last five minutes for the MySQL job.',
@@ -108,7 +114,7 @@ export default class LokiCheatSheet extends PureComponent<ExploreStartPageProps,
           {this.renderExpression('{app="cassandra"} |= "exact match"')}
           {this.renderExpression('{app="cassandra"} != "do not match"')}
           <div className="cheat-sheet-item__label">
-            <a href="https://github.com/grafana/loki/blob/master/docs/logql.md#filter-expression" target="logql">
+            <a href="https://grafana.com/docs/loki/latest/logql/#log-pipeline" target="logql">
               LogQL
             </a>{' '}
             supports exact and regular expression filters.

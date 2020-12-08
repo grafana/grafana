@@ -2,14 +2,14 @@ import _ from 'lodash';
 import LRU from 'lru-cache';
 import { Value } from 'slate';
 
-import { dateTime, LanguageProvider, HistoryItem } from '@grafana/data';
-import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
+import { dateTime, HistoryItem, LanguageProvider } from '@grafana/data';
+import { CompletionItem, CompletionItemGroup, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
-import { parseSelector, processLabels, processHistogramLabels, fixSummariesMetadata } from './language_utils';
+import { fixSummariesMetadata, parseSelector, processHistogramLabels, processLabels } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 import { PrometheusDatasource } from './datasource';
-import { PromQuery, PromMetricsMetadata } from './types';
+import { PromMetricsMetadata, PromQuery } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
@@ -101,9 +101,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   request = async (url: string, defaultValue: any): Promise<any> => {
     try {
       const res = await this.datasource.metadataRequest(url);
-      const body = await (res.data || res.json());
-
-      return body.data;
+      return res.data.data;
     } catch (error) {
       console.error(error);
     }
@@ -116,7 +114,14 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       return [];
     }
 
-    this.metrics = await this.request('/api/v1/label/__name__/values', []);
+    const tRange = this.datasource.getTimeRange();
+    const params = new URLSearchParams({
+      start: tRange['start'].toString(),
+      end: tRange['end'].toString(),
+    });
+    const url = `/api/v1/label/__name__/values?${params.toString()}`;
+
+    this.metrics = await this.request(url, []);
     this.lookupsDisabled = this.metrics.length > this.lookupMetricsThreshold;
     this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
     this.processHistogramMetrics(this.metrics);
@@ -406,7 +411,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   fetchLabelValues = async (key: string): Promise<Record<string, string[]>> => {
-    const data = await this.request(`/api/v1/label/${key}/values`, []);
+    const tRange = this.datasource.getTimeRange();
+    const params = new URLSearchParams({
+      start: tRange['start'].toString(),
+      end: tRange['end'].toString(),
+    });
+    const url = `/api/v1/label/${key}/values?${params.toString()}`;
+    const data = await this.request(url, []);
     return { [key]: data };
   };
 

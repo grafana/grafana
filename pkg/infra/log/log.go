@@ -36,13 +36,6 @@ func New(logger string, ctx ...interface{}) Logger {
 	return Root.New(params...)
 }
 
-// NewWithLevel returns a new logger with a certain level.
-func NewWithLevel(name string, level log15.Lvl) Logger {
-	logger := Root.New("logger", name)
-	logger.SetHandler(log15.LvlFilterHandler(level, log15.StreamHandler(os.Stdout, getLogFormat("console"))))
-	return logger
-}
-
 func Tracef(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
@@ -87,12 +80,12 @@ func Warnf(format string, v ...interface{}) {
 	Root.Warn(message)
 }
 
-func Errorf(skip int, format string, v ...interface{}) {
-	Root.Error(fmt.Sprintf(format, v...))
+func Error(msg string, args ...interface{}) {
+	Root.Error(msg, args...)
 }
 
-func Criticalf(skip int, format string, v ...interface{}) {
-	Root.Crit(fmt.Sprintf(format, v...))
+func Errorf(skip int, format string, v ...interface{}) {
+	Root.Error(fmt.Sprintf(format, v...))
 }
 
 func Fatalf(skip int, format string, v ...interface{}) {
@@ -112,25 +105,6 @@ func Reload() {
 	for _, logger := range loggersToReload {
 		logger.Reload()
 	}
-}
-
-func GetLogLevelFor(name string) Lvl {
-	if level, ok := filters[name]; ok {
-		switch level {
-		case log15.LvlWarn:
-			return LvlWarn
-		case log15.LvlInfo:
-			return LvlInfo
-		case log15.LvlError:
-			return LvlError
-		case log15.LvlCrit:
-			return LvlCrit
-		default:
-			return LvlDebug
-		}
-	}
-
-	return LvlInfo
 }
 
 var logLevels = map[string]log15.Lvl{

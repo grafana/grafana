@@ -8,7 +8,7 @@ import { OptionsPicker } from '../pickers';
 import { ALL_VARIABLE_TEXT, toVariableIdentifier } from '../state/types';
 import { DataSourceVariableEditor } from './DataSourceVariableEditor';
 import { updateDataSourceVariableOptions } from './actions';
-import { containsVariable } from '../utils';
+import { containsVariable, isAllVariable } from '../utils';
 
 export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVariableModel> => {
   return {
@@ -35,11 +35,11 @@ export const createDataSourceVariableAdapter = (): VariableAdapter<DataSourceVar
       await dispatch(updateDataSourceVariableOptions(toVariableIdentifier(variable)));
     },
     getSaveModel: variable => {
-      const { index, id, initLock, global, ...rest } = cloneDeep(variable);
+      const { index, id, state, global, ...rest } = cloneDeep(variable);
       return { ...rest, options: [] };
     },
     getValueForUrl: variable => {
-      if (variable.current.text === ALL_VARIABLE_TEXT) {
+      if (isAllVariable(variable)) {
         return ALL_VARIABLE_TEXT;
       }
       return variable.current.value;

@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
+// registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
 	reqSignedIn := middleware.ReqSignedIn
 	reqGrafanaAdmin := middleware.ReqGrafanaAdmin
@@ -32,8 +33,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/invite/:code", hs.Index)
 
 	// authed views
+	r.Get("/", reqSignedIn, hs.Index)
 	r.Get("/profile/", reqSignedIn, hs.Index)
 	r.Get("/profile/password", reqSignedIn, hs.Index)
+	r.Get("/.well-known/change-password", redirectToChangePassword)
 	r.Get("/profile/switch-org/:id", reqSignedIn, hs.ChangeActiveOrgAndRedirectToHome)
 	r.Get("/org/", reqOrgAdmin, hs.Index)
 	r.Get("/org/new", reqGrafanaAdmin, hs.Index)
@@ -56,7 +59,6 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/admin/orgs", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/orgs/edit/:id", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/stats", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin/live", reqGrafanaAdmin, hs.Index)
 	r.Get("/admin/ldap", reqGrafanaAdmin, hs.Index)
 
 	r.Get("/styleguide", reqSignedIn, hs.Index)
@@ -71,6 +73,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/d/:uid", reqSignedIn, redirectFromLegacyPanelEditURL, hs.Index)
 	r.Get("/dashboard/db/:slug", reqSignedIn, redirectFromLegacyDashboardURL, hs.Index)
 	r.Get("/dashboard/script/*", reqSignedIn, hs.Index)
+	r.Get("/dashboard/new", reqSignedIn, hs.Index)
 	r.Get("/dashboard-solo/snapshot/*", hs.Index)
 	r.Get("/d-solo/:uid/:slug", reqSignedIn, hs.Index)
 	r.Get("/d-solo/:uid", reqSignedIn, hs.Index)
@@ -79,6 +82,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/import/dashboard", reqSignedIn, hs.Index)
 	r.Get("/dashboards/", reqSignedIn, hs.Index)
 	r.Get("/dashboards/*", reqSignedIn, hs.Index)
+	r.Get("/goto/:uid", reqSignedIn, hs.redirectFromShortURL, hs.Index)
 
 	r.Get("/explore", reqSignedIn, middleware.EnsureEditorOrViewerCanEdit, hs.Index)
 
@@ -88,6 +92,7 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/alerting/*", reqEditorRole, hs.Index)
 
 	// sign up
+	r.Get("/verify", hs.Index)
 	r.Get("/signup", hs.Index)
 	r.Get("/api/user/signup/options", Wrap(GetSignUpOptions))
 	r.Post("/api/user/signup", quota("user"), bind(dtos.SignUpForm{}), Wrap(SignUp))
@@ -165,7 +170,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// team without requirement of user to be org admin
 		apiRoute.Group("/teams", func(teamsRoute routing.RouteRegister) {
-			teamsRoute.Get("/:teamId", Wrap(GetTeamByID))
+			teamsRoute.Get("/:teamId", Wrap(hs.GetTeamByID))
 			teamsRoute.Get("/search", Wrap(hs.SearchTeams))
 		})
 
@@ -179,7 +184,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
 			orgRoute.Put("/", bind(dtos.UpdateOrgForm{}), Wrap(UpdateOrgCurrent))
 			orgRoute.Put("/address", bind(dtos.UpdateOrgAddressForm{}), Wrap(UpdateOrgAddressCurrent))
-			orgRoute.Get("/users", Wrap(GetOrgUsersForCurrentOrg))
+			orgRoute.Get("/users", Wrap(hs.GetOrgUsersForCurrentOrg))
 			orgRoute.Post("/users", quota("user"), bind(models.AddOrgUserCommand{}), Wrap(AddOrgUserToCurrentOrg))
 			orgRoute.Patch("/users/:userId", bind(models.UpdateOrgUserCommand{}), Wrap(UpdateOrgUserForCurrentOrg))
 			orgRoute.Delete("/users/:userId", Wrap(RemoveOrgUserForCurrentOrg))
@@ -196,7 +201,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// current org without requirement of user to be org admin
 		apiRoute.Group("/org", func(orgRoute routing.RouteRegister) {
-			orgRoute.Get("/users/lookup", Wrap(GetOrgUsersForCurrentOrgLookup))
+			orgRoute.Get("/users/lookup", Wrap(hs.GetOrgUsersForCurrentOrgLookup))
 		})
 
 		// create new org
@@ -211,7 +216,7 @@ func (hs *HTTPServer) registerRoutes() {
 			orgsRoute.Put("/", bind(dtos.UpdateOrgForm{}), Wrap(UpdateOrg))
 			orgsRoute.Put("/address", bind(dtos.UpdateOrgAddressForm{}), Wrap(UpdateOrgAddress))
 			orgsRoute.Delete("/", Wrap(DeleteOrgByID))
-			orgsRoute.Get("/users", Wrap(GetOrgUsers))
+			orgsRoute.Get("/users", Wrap(hs.GetOrgUsers))
 			orgsRoute.Post("/users", bind(models.AddOrgUserCommand{}), Wrap(AddOrgUser))
 			orgsRoute.Patch("/users/:userId", bind(models.UpdateOrgUserCommand{}), Wrap(UpdateOrgUser))
 			orgsRoute.Delete("/users/:userId", Wrap(RemoveOrgUser))
@@ -255,6 +260,7 @@ func (hs *HTTPServer) registerRoutes() {
 		apiRoute.Get("/plugins/:pluginId/health", Wrap(hs.CheckHealth))
 		apiRoute.Any("/plugins/:pluginId/resources", hs.CallResource)
 		apiRoute.Any("/plugins/:pluginId/resources/*", hs.CallResource)
+		apiRoute.Any("/plugins/errors", Wrap(hs.GetPluginErrorsList))
 
 		apiRoute.Group("/plugins", func(pluginRoute routing.RouteRegister) {
 			pluginRoute.Get("/:pluginId/dashboards/", Wrap(GetPluginDashboards))
@@ -281,8 +287,8 @@ func (hs *HTTPServer) registerRoutes() {
 				folderUidRoute.Delete("/", Wrap(DeleteFolder))
 
 				folderUidRoute.Group("/permissions", func(folderPermissionRoute routing.RouteRegister) {
-					folderPermissionRoute.Get("/", Wrap(GetFolderPermissionList))
-					folderPermissionRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), Wrap(UpdateFolderPermissions))
+					folderPermissionRoute.Get("/", Wrap(hs.GetFolderPermissionList))
+					folderPermissionRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), Wrap(hs.UpdateFolderPermissions))
 				})
 			})
 		})
@@ -308,8 +314,8 @@ func (hs *HTTPServer) registerRoutes() {
 				dashIdRoute.Post("/restore", bind(dtos.RestoreDashboardVersionCommand{}), Wrap(hs.RestoreDashboardVersion))
 
 				dashIdRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
-					dashboardPermissionRoute.Get("/", Wrap(GetDashboardPermissionList))
-					dashboardPermissionRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), Wrap(UpdateDashboardPermissions))
+					dashboardPermissionRoute.Get("/", Wrap(hs.GetDashboardPermissionList))
+					dashboardPermissionRoute.Post("/", bind(dtos.UpdateDashboardAclCommand{}), Wrap(hs.UpdateDashboardPermissions))
 				})
 			})
 		})
@@ -383,6 +389,9 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// error test
 		r.Get("/metrics/error", Wrap(GenerateError))
+
+		// short urls
+		apiRoute.Post("/short-urls", bind(dtos.CreateShortURLCmd{}), Wrap(hs.createShortURL))
 	}, reqSignedIn)
 
 	// admin api
@@ -423,17 +432,13 @@ func (hs *HTTPServer) registerRoutes() {
 	avatarCacheServer := avatar.NewCacheServer()
 	r.Get("/avatar/:hash", avatarCacheServer.Handler)
 
-	// Live streaming
-	if hs.Live != nil {
-		r.Any("/live/*", hs.Live.Handler)
-	}
-
 	// Snapshots
 	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, bind(models.CreateDashboardSnapshotCommand{}), CreateDashboardSnapshot)
 	r.Get("/api/snapshot/shared-options/", reqSignedIn, GetSharingOptions)
-	r.Get("/api/snapshots/:key", GetDashboardSnapshot)
+	r.Get("/api/snapshots/:key", Wrap(GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, Wrap(DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqEditorRole, Wrap(DeleteDashboardSnapshot))
 
-	r.Get("/*", reqSignedIn, hs.Index)
+	// Frontend logs
+	r.Post("/log", bind(frontendSentryEvent{}), Wrap(hs.logFrontendMessage))
 }

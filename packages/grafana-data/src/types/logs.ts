@@ -27,10 +27,12 @@ export enum LogLevel {
   unknown = 'unknown',
 }
 
+// Used for meta information such as common labels or returned log rows in logs view in Explore
 export enum LogsMetaKind {
   Number,
   String,
   LabelsMap,
+  Error,
 }
 
 export enum LogsSortOrder {

@@ -24,6 +24,7 @@ import { SortedVector } from '../vector/SortedVector';
 import { ArrayDataFrame } from './ArrayDataFrame';
 import { getFieldDisplayName } from '../field/fieldState';
 import { fieldIndexComparer } from '../field/fieldComparers';
+import { vectorToArray } from '../vector/vectorToArray';
 
 function convertTableToDataFrame(table: TableData): DataFrame {
   const fields = table.columns.map(c => {
@@ -95,7 +96,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   ];
 
   if (timeSeries.title) {
-    (fields[1].config as FieldConfig).displayName = timeSeries.title;
+    (fields[1].config as FieldConfig).displayNameFromDS = timeSeries.title;
   }
 
   return {
@@ -444,16 +445,10 @@ export function getDataFrameRow(data: DataFrame, row: number): any[] {
 export function toDataFrameDTO(data: DataFrame): DataFrameDTO {
   const fields: FieldDTO[] = data.fields.map(f => {
     let values = f.values.toArray();
-    if (!Array.isArray(values)) {
-      // Apache arrow will pack objects into typed arrays
-      // Float64Array, etc
-      // TODO: Float64Array could be used directly
-      values = [];
-      for (let i = 0; i < f.values.length; i++) {
-        values.push(f.values.get(i));
-      }
+    // The byte buffers serialize like objects
+    if (values instanceof Float64Array) {
+      values = vectorToArray(f.values);
     }
-
     return {
       name: f.name,
       type: f.type,

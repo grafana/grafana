@@ -5,6 +5,7 @@ import { ElasticsearchOptions } from '../types';
 import { defaultMaxConcurrentShardRequests, ElasticDetails } from './ElasticDetails';
 import { LogsConfig } from './LogsConfig';
 import { DataLinks } from './DataLinks';
+import { config } from 'app/core/config';
 
 export type Props = DataSourcePluginOptionsEditorProps<ElasticsearchOptions>;
 export const ConfigEditor = (props: Props) => {
@@ -34,6 +35,7 @@ export const ConfigEditor = (props: Props) => {
         dataSourceConfig={options}
         showAccessOptions={true}
         onChange={onOptionsChange}
+        sigV4AuthToggleEnabled={config.sigV4AuthEnabled}
       />
 
       <ElasticDetails value={options} onChange={onOptionsChange} />

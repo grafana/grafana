@@ -1,11 +1,7 @@
 +++
 title = "Enable or disable a user"
 keywords = ["grafana", "configuration", "documentation", "users"]
-type = "docs"
-[menu.docs]
-identifier = "enable-or-disable-user"
-parent = "manage-users"
-weight = 10
+weight = 200
 +++
 
 # Enable or disable a user

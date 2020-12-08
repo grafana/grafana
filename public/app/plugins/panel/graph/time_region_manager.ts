@@ -1,6 +1,7 @@
 import 'vendor/flot/jquery.flot';
 import _ from 'lodash';
-import { GrafanaThemeType, getColorFromHexRgbOrName, dateTime, DateTime, AbsoluteTimeRange } from '@grafana/data';
+import { getColorForTheme, dateTime, DateTime, AbsoluteTimeRange, GrafanaTheme } from '@grafana/data';
+import { config } from 'app/core/config';
 
 type TimeRegionColorDefinition = {
   fill: string | null;
@@ -42,27 +43,27 @@ export function getColorModes() {
   });
 }
 
-function getColor(timeRegion: any, theme: GrafanaThemeType): TimeRegionColorDefinition {
+function getColor(timeRegion: any, theme: GrafanaTheme): TimeRegionColorDefinition {
   if (Object.keys(colorModes).indexOf(timeRegion.colorMode) === -1) {
     timeRegion.colorMode = 'red';
   }
 
   if (timeRegion.colorMode === 'custom') {
     return {
-      fill: timeRegion.fill && timeRegion.fillColor ? getColorFromHexRgbOrName(timeRegion.fillColor, theme) : null,
-      line: timeRegion.line && timeRegion.lineColor ? getColorFromHexRgbOrName(timeRegion.lineColor, theme) : null,
+      fill: timeRegion.fill && timeRegion.fillColor ? getColorForTheme(timeRegion.fillColor, theme) : null,
+      line: timeRegion.line && timeRegion.lineColor ? getColorForTheme(timeRegion.lineColor, theme) : null,
     };
   }
 
   const colorMode = colorModes[timeRegion.colorMode];
 
   if (colorMode.themeDependent === true) {
-    return theme === GrafanaThemeType.Light ? colorMode.lightColor : colorMode.darkColor;
+    return theme.isLight ? colorMode.lightColor : colorMode.darkColor;
   }
 
   return {
-    fill: timeRegion.fill ? getColorFromHexRgbOrName(colorMode.color.fill, theme) : null,
-    line: timeRegion.fill ? getColorFromHexRgbOrName(colorMode.color.line, theme) : null,
+    fill: timeRegion.fill ? getColorForTheme(colorMode.color.fill, theme) : null,
+    line: timeRegion.fill ? getColorForTheme(colorMode.color.line, theme) : null,
   };
 }
 
@@ -70,7 +71,7 @@ export class TimeRegionManager {
   plot: any;
   timeRegions: any;
 
-  constructor(private panelCtrl: any, private theme: GrafanaThemeType = GrafanaThemeType.Dark) {}
+  constructor(private panelCtrl: any) {}
 
   draw(plot: any) {
     this.timeRegions = this.panelCtrl.panel.timeRegions;
@@ -204,7 +205,7 @@ export class TimeRegionManager {
         fromStart.add(24, 'hours');
       }
 
-      timeRegionColor = getColor(timeRegion, this.theme);
+      timeRegionColor = getColor(timeRegion, config.theme);
 
       for (let j = 0; j < regions.length; j++) {
         const r = regions[j];

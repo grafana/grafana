@@ -20,6 +20,9 @@ export interface Props extends Themeable {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
+  showDetectedFields?: string[];
+  onClickShowDetectedField?: (key: string) => void;
+  onClickHideDetectedField?: (key: string) => void;
 }
 
 interface State {
@@ -44,6 +47,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       label: wordBreakAll;
       word-break: break-all;
     `,
+    showingField: css`
+      color: ${theme.palette.blue95};
+    `,
   };
 });
 
@@ -52,6 +58,20 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     showFieldsStats: false,
     fieldCount: 0,
     fieldStats: null,
+  };
+
+  showField = () => {
+    const { onClickShowDetectedField, parsedKey } = this.props;
+    if (onClickShowDetectedField) {
+      onClickShowDetectedField(parsedKey);
+    }
+  };
+
+  hideField = () => {
+    const { onClickHideDetectedField, parsedKey } = this.props;
+    if (onClickHideDetectedField) {
+      onClickHideDetectedField(parsedKey);
+    }
   };
 
   filterLabel = () => {
@@ -87,14 +107,21 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   }
 
   render() {
-    const { theme, parsedKey, parsedValue, isLabel, links } = this.props;
+    const { theme, parsedKey, parsedValue, isLabel, links, showDetectedFields } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
+    const toggleFieldButton =
+      !isLabel && showDetectedFields && showDetectedFields.includes(parsedKey) ? (
+        <IconButton name="eye" className={styles.showingField} title="Hide this field" onClick={this.hideField} />
+      ) : (
+        <IconButton name="eye" title="Show this field instead of the message" onClick={this.showField} />
+      );
+
     return (
       <tr className={cx(style.logDetailsValue, { [styles.noHoverBackground]: showFieldsStats })}>
         {/* Action buttons - show stats/filter results */}
-        <td className={style.logsDetailsIcon} colSpan={isLabel ? undefined : 3}>
+        <td className={style.logsDetailsIcon}>
           <IconButton name="signal" title={'Ad-hoc statistics'} onClick={this.showStats} />
         </td>
 
@@ -105,6 +132,14 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
             </td>
             <td className={style.logsDetailsIcon}>
               <IconButton name="search-minus" title="Filter out value" onClick={this.filterOutLabel} />
+            </td>
+          </>
+        )}
+
+        {!isLabel && (
+          <>
+            <td className={style.logsDetailsIcon} colSpan={2}>
+              {toggleFieldButton}
             </td>
           </>
         )}
@@ -156,6 +191,7 @@ function FieldLink({ link }: FieldLinkProps) {
     <a
       href={link.href}
       target={'_blank'}
+      rel="noreferrer"
       onClick={
         link.onClick
           ? event => {

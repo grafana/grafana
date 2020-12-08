@@ -16,7 +16,7 @@ export default {
 
 const sizes: RadioButtonSize[] = ['sm', 'md'];
 
-export const simple = () => {
+export const Simple = () => {
   const [selected, setSelected] = useState('graphite');
   const BEHAVIOUR_GROUP = 'Behaviour props';
   const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);
@@ -42,7 +42,7 @@ export const simple = () => {
   );
 };
 
-export const fullWidth = () => {
+export const FullWidth = () => {
   const [selected, setSelected] = useState('elastic');
   const BEHAVIOUR_GROUP = 'Behaviour props';
   const disabled = boolean('Disabled', false, BEHAVIOUR_GROUP);

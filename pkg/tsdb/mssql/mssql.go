@@ -29,7 +29,7 @@ func newMssqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 	if err != nil {
 		return nil, err
 	}
-	if setting.Env == setting.DEV {
+	if setting.Env == setting.Dev {
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
 

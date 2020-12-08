@@ -19,7 +19,7 @@ import TimelineHeaderRow from './TimelineHeaderRow';
 import TimelineColumnResizer from './TimelineColumnResizer';
 import TimelineViewingLayer from './TimelineViewingLayer';
 import Ticks from '../Ticks';
-import TimelineCollapser from './TimelineCollapser';
+import { TimelineCollapser } from './TimelineCollapser';
 
 describe('<TimelineHeaderRow>', () => {
   let wrapper;

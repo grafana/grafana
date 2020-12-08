@@ -12,12 +12,11 @@ import { TimeRange } from '@grafana/data';
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 
 // Components
-import { RefreshPicker, withTheme, stylesFactory, Themeable } from '@grafana/ui';
+import { RefreshPicker, withTheme, stylesFactory, Themeable, defaultIntervals } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 
 // Utils & Services
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { defaultIntervals } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { appEvents } from 'app/core/core';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {

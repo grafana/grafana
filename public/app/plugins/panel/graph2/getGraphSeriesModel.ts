@@ -12,14 +12,14 @@ import {
   getSeriesTimeStep,
   TimeZone,
   hasMsResolution,
-  MS_DATE_TIME_FORMAT,
-  DEFAULT_DATE_TIME_FORMAT,
+  systemDateFormats,
   FieldColor,
-  FieldColorMode,
+  FieldColorModeId,
   FieldConfigSource,
   getFieldDisplayName,
 } from '@grafana/data';
 
+import { config } from 'app/core/config';
 import { SeriesOptions, GraphOptions, GraphLegendEditorLegendOptions } from './types';
 
 export const getGraphSeriesModel = (
@@ -39,6 +39,7 @@ export const getGraphSeriesModel = (
         decimals: legendOptions.decimals,
       },
     },
+    theme: config.theme,
     timeZone,
   });
 
@@ -83,7 +84,7 @@ export const getGraphSeriesModel = (
         if (seriesOptions[field.name] && seriesOptions[field.name].color) {
           // Case when panel has settings provided via SeriesOptions, i.e. graph panel
           color = {
-            mode: FieldColorMode.Fixed,
+            mode: FieldColorModeId.Fixed,
             fixedColor: seriesOptions[field.name].color,
           };
         } else if (field.config && field.config.color) {
@@ -91,7 +92,7 @@ export const getGraphSeriesModel = (
           color = field.config.color;
         } else {
           color = {
-            mode: FieldColorMode.Fixed,
+            mode: FieldColorModeId.Fixed,
             fixedColor: colors[graphs.length % colors.length],
           };
         }
@@ -105,7 +106,7 @@ export const getGraphSeriesModel = (
             }
           : { ...field.config, color };
 
-        field.display = getDisplayProcessor({ field, timeZone });
+        field.display = getDisplayProcessor({ field, timeZone, theme: config.theme });
 
         // Time step is used to determine bars width when graph is rendered as bar chart
         const timeStep = getSeriesTimeStep(timeField);
@@ -117,9 +118,10 @@ export const getGraphSeriesModel = (
             ...timeField,
             type: timeField.type,
             config: {
-              unit: `time:${useMsDateFormat ? MS_DATE_TIME_FORMAT : DEFAULT_DATE_TIME_FORMAT}`,
+              unit: systemDateFormats.getTimeFieldUnit(useMsDateFormat),
             },
           },
+          theme: config.theme,
         });
 
         graphs.push({

@@ -6,7 +6,7 @@ import { SelectionReference } from './SelectionReference';
 import { Portal, getFormStyles } from '../index';
 
 // @ts-ignore
-import Prism from 'prismjs';
+import Prism, { Grammar, LanguageMap } from 'prismjs';
 import { Editor } from '@grafana/slate-react';
 import { Value } from 'slate';
 import Plain from 'slate-plain-serializer';
@@ -27,11 +27,20 @@ interface DataLinkInputProps {
   placeholder?: string;
 }
 
+const datalinksSyntax: Grammar = {
+  builtInVariable: {
+    pattern: /(\${\S+?})/,
+  },
+};
+
 const plugins = [
-  SlatePrism({
-    onlyIn: (node: any) => node.type === 'code_block',
-    getSyntax: () => 'links',
-  }),
+  SlatePrism(
+    {
+      onlyIn: (node: any) => node.type === 'code_block',
+      getSyntax: () => 'links',
+    },
+    { ...(Prism.languages as LanguageMap), links: datalinksSyntax }
+  ),
 ];
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
@@ -56,19 +65,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-export const enableDatalinksPrismSyntax = () => {
-  Prism.languages['links'] = {
-    builtInVariable: {
-      pattern: /(\${\S+?})/,
-    },
-  };
-};
-
 // This memoised also because rerendering the slate editor grabs focus which created problem in some cases this
 // was used and changes to different state were propagated here.
 export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
   ({ value, onChange, suggestions, placeholder = 'http://your-grafana.com/d/000000010/annotations' }) => {
-    enableDatalinksPrismSyntax();
     const editorRef = useRef<Editor>() as RefObject<Editor>;
     const theme = useContext(ThemeContext);
     const styles = getStyles(theme);
@@ -82,7 +82,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     stateRef.current = { showingSuggestions, suggestions, suggestionsIndex, linkUrl, onChange };
 
     // SelectionReference is used to position the variables suggestion relatively to current DOM selection
-    const selectionRef = useMemo(() => new SelectionReference(), [setShowingSuggestions, linkUrl]);
+    const selectionRef = useMemo(() => new SelectionReference(), []);
 
     const onKeyDown = React.useCallback((event: KeyboardEvent, next: () => any) => {
       if (!stateRef.current.showingSuggestions) {
@@ -149,11 +149,25 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
                 <ReactPopper
                   referenceElement={selectionRef}
                   placement="top-end"
-                  modifiers={{
-                    preventOverflow: { enabled: true, boundariesElement: 'window' },
-                    arrow: { enabled: false },
-                    offset: { offset: 250 }, // width of the suggestions menu
-                  }}
+                  modifiers={[
+                    {
+                      name: 'preventOverflow',
+                      enabled: true,
+                      options: {
+                        rootBoundary: 'viewport',
+                      },
+                    },
+                    {
+                      name: 'arrow',
+                      enabled: false,
+                    },
+                    {
+                      name: 'offset',
+                      options: {
+                        offset: [250, 0],
+                      },
+                    },
+                  ]}
                 >
                   {({ ref, style, placement }) => {
                     return (

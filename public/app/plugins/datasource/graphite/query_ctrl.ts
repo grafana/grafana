@@ -7,7 +7,7 @@ import { QueryCtrl } from 'app/plugins/sdk';
 import appEvents from 'app/core/app_events';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 import { auto } from 'angular';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 import { AppEvents } from '@grafana/data';
 
 const GRAPHITE_TAG_OPERATORS = ['=', '!=', '=~', '!=~'];

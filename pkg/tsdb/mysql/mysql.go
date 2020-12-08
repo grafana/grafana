@@ -25,7 +25,7 @@ func init() {
 }
 
 func characterEscape(s string, escapeChar string) string {
-	return strings.Replace(s, escapeChar, url.QueryEscape(escapeChar), -1)
+	return strings.ReplaceAll(s, escapeChar, url.QueryEscape(escapeChar))
 }
 
 func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
@@ -57,7 +57,7 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 		cnnstr += "&tls=" + tlsConfigString
 	}
 
-	if setting.Env == setting.DEV {
+	if setting.Env == setting.Dev {
 		logger.Debug("getEngine", "connection", cnnstr)
 	}
 
@@ -140,8 +140,10 @@ func (t *mysqlQueryResultTransformer) TransformQueryResult(columnTypes []*sql.Co
 }
 
 func (t *mysqlQueryResultTransformer) TransformQueryError(err error) error {
-	if driverErr, ok := err.(*mysql.MySQLError); ok {
-		if driverErr.Number != mysqlerr.ER_PARSE_ERROR && driverErr.Number != mysqlerr.ER_BAD_FIELD_ERROR && driverErr.Number != mysqlerr.ER_NO_SUCH_TABLE {
+	var driverErr *mysql.MySQLError
+	if errors.As(err, &driverErr) {
+		if driverErr.Number != mysqlerr.ER_PARSE_ERROR && driverErr.Number != mysqlerr.ER_BAD_FIELD_ERROR &&
+			driverErr.Number != mysqlerr.ER_NO_SUCH_TABLE {
 			t.log.Error("query error", "err", err)
 			return errQueryFailed
 		}
@@ -150,4 +152,4 @@ func (t *mysqlQueryResultTransformer) TransformQueryError(err error) error {
 	return err
 }
 
-var errQueryFailed = errors.New("Query failed. Please inspect Grafana server log for details")
+var errQueryFailed = errors.New("query failed - please inspect Grafana server log for details")

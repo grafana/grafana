@@ -72,7 +72,7 @@ type routeRegister struct {
 }
 
 func (rr *routeRegister) Insert(pattern string, fn func(RouteRegister), handlers ...macaron.Handler) {
-	//loop over all groups at current level
+	// loop over all groups at current level
 	for _, g := range rr.groups {
 		// apply routes if the prefix matches the pattern
 		if g.prefix == pattern {
@@ -118,22 +118,24 @@ func (rr *routeRegister) Register(router Router) {
 
 func (rr *routeRegister) route(pattern, method string, handlers ...macaron.Handler) {
 	h := make([]macaron.Handler, 0)
+	fullPattern := rr.prefix + pattern
+
 	for _, fn := range rr.namedMiddleware {
-		h = append(h, fn(pattern))
+		h = append(h, fn(fullPattern))
 	}
 
 	h = append(h, rr.subfixHandlers...)
 	h = append(h, handlers...)
 
 	for _, r := range rr.routes {
-		if r.pattern == rr.prefix+pattern && r.method == method {
+		if r.pattern == fullPattern && r.method == method {
 			panic("cannot add duplicate route")
 		}
 	}
 
 	rr.routes = append(rr.routes, route{
 		method:   method,
-		pattern:  rr.prefix + pattern,
+		pattern:  fullPattern,
 		handlers: h,
 	})
 }

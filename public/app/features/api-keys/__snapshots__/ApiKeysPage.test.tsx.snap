@@ -43,24 +43,27 @@ exports[`Render should render CTA if there are no API keys 1`] = `
       proTip="Remember you can provide view-only API access to other applications."
       title="You haven't added any API Keys yet."
     />
-    <Component
+    <SlideDown
       in={false}
     >
       <div
-        className="cta-form"
+        className="gf-form-inline cta-form"
       >
-        <IconButton
+        <button
           className="cta-form__close btn btn-transparent"
-          name="times"
           onClick={[Function]}
-        />
-        <h5>
-          Add API Key
-        </h5>
+        >
+          <Icon
+            name="times"
+          />
+        </button>
         <form
           className="gf-form-group"
           onSubmit={[Function]}
         >
+          <h5>
+            Add API Key
+          </h5>
           <div
             className="gf-form-inline"
           >
@@ -123,11 +126,11 @@ exports[`Render should render CTA if there are no API keys 1`] = `
             <div
               className="gf-form max-width-21"
             >
-              <Component
+              <FormLabel
                 tooltip="The api key life duration. For example 1d if your key is going to last for one day. All the supported units are: s,m,h,d,w,M,y"
               >
                 Time to live
-              </Component>
+              </FormLabel>
               <Input
                 className="gf-form-input"
                 onChange={[Function]}
@@ -158,7 +161,7 @@ exports[`Render should render CTA if there are no API keys 1`] = `
           </div>
         </form>
       </div>
-    </Component>
+    </SlideDown>
   </PageContents>
 </Page>
 `;

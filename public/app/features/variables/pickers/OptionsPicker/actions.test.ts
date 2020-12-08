@@ -1,7 +1,7 @@
 import { reduxTester } from '../../../../../test/core/redux/reduxTester';
 import { getRootReducer } from '../../state/helpers';
 import { TemplatingState } from '../../state/reducers';
-import { QueryVariableModel, VariableHide, VariableRefresh, VariableSort } from '../../types';
+import { initialVariableModelState, QueryVariableModel, VariableRefresh, VariableSort } from '../../types';
 import {
   hideOptions,
   moveOptionsHighlight,
@@ -69,8 +69,6 @@ describe('options picker actions', () => {
       tester.thenDispatchedActionsShouldEqual(
         setCurrentVariableValue(toVariablePayload(variable, { option })),
         changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' })),
-        setCurrentVariableValue(toVariablePayload(variable, { option })),
-        updateLocation({ query: { 'var-Constant': ['A'] } }),
         hideOptions()
       );
     });
@@ -194,9 +192,9 @@ describe('options picker actions', () => {
         toggleOption({ option: options[1], forceSelect: true, clearOthers }),
         setCurrentVariableValue(toVariablePayload(variable, { option })),
         changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' })),
+        hideOptions(),
         setCurrentVariableValue(toVariablePayload(variable, { option })),
-        updateLocation({ query: { 'var-Constant': ['B'] } }),
-        hideOptions()
+        updateLocation({ query: { 'var-Constant': ['B'] } })
       );
     });
   });
@@ -219,7 +217,7 @@ describe('options picker actions', () => {
 
   describe('when commitChangesToVariable is dispatched with no changes', () => {
     it('then correct actions are dispatched', async () => {
-      const options = [createOption('A'), createOption('B'), createOption('C')];
+      const options = [createOption('A', 'A', true), createOption('B'), createOption('C')];
       const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
 
       const tester = await reduxTester<{ templating: TemplatingState }>()
@@ -229,17 +227,15 @@ describe('options picker actions', () => {
         .whenAsyncActionIsDispatched(commitChangesToVariable(), true);
 
       const option = {
-        ...createOption([]),
+        ...createOption(['A']),
         selected: true,
-        value: [] as any[],
+        value: ['A'] as any[],
         tags: [] as any[],
       };
 
       tester.thenDispatchedActionsShouldEqual(
         setCurrentVariableValue(toVariablePayload(variable, { option })),
         changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' })),
-        setCurrentVariableValue(toVariablePayload(variable, { option })),
-        updateLocation({ query: { 'var-Constant': [] } }),
         hideOptions()
       );
     });
@@ -247,7 +243,7 @@ describe('options picker actions', () => {
 
   describe('when commitChangesToVariable is dispatched with changes', () => {
     it('then correct actions are dispatched', async () => {
-      const options = [createOption('A'), createOption('B'), createOption('C')];
+      const options = [createOption('A', 'A', true), createOption('B'), createOption('C')];
       const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
       const clearOthers = false;
 
@@ -260,25 +256,25 @@ describe('options picker actions', () => {
         .whenAsyncActionIsDispatched(commitChangesToVariable(), true);
 
       const option = {
-        ...createOption(['A']),
+        ...createOption([]),
         selected: true,
-        value: ['A'],
+        value: [],
         tags: [] as any[],
       };
 
       tester.thenDispatchedActionsShouldEqual(
         setCurrentVariableValue(toVariablePayload(variable, { option })),
         changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' })),
+        hideOptions(),
         setCurrentVariableValue(toVariablePayload(variable, { option })),
-        updateLocation({ query: { 'var-Constant': ['A'] } }),
-        hideOptions()
+        updateLocation({ query: { 'var-Constant': [] } })
       );
     });
   });
 
   describe('when commitChangesToVariable is dispatched with changes and list of options is filtered', () => {
     it('then correct actions are dispatched', async () => {
-      const options = [createOption('A'), createOption('B'), createOption('C')];
+      const options = [createOption('A', 'A', true), createOption('B'), createOption('C')];
       const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
       const clearOthers = false;
 
@@ -292,18 +288,18 @@ describe('options picker actions', () => {
         .whenAsyncActionIsDispatched(commitChangesToVariable(), true);
 
       const option = {
-        ...createOption(['A']),
+        ...createOption([]),
         selected: true,
-        value: ['A'],
+        value: [],
         tags: [] as any[],
       };
 
       tester.thenDispatchedActionsShouldEqual(
         setCurrentVariableValue(toVariablePayload(variable, { option })),
         changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: 'C' })),
+        hideOptions(),
         setCurrentVariableValue(toVariablePayload(variable, { option })),
-        updateLocation({ query: { 'var-Constant': ['A'] } }),
-        hideOptions()
+        updateLocation({ query: { 'var-Constant': [] } })
       );
     });
   });
@@ -408,17 +404,14 @@ describe('options picker actions', () => {
 
 function createMultiVariable(extend?: Partial<QueryVariableModel>): QueryVariableModel {
   return {
+    ...initialVariableModelState,
     type: 'query',
     id: '0',
-    global: false,
+    index: 0,
     current: createOption([]),
     options: [],
     query: 'options-query',
     name: 'Constant',
-    label: '',
-    hide: VariableHide.dontHide,
-    skipUrlSync: false,
-    index: 0,
     datasource: 'datasource',
     definition: '',
     sort: VariableSort.alphabeticalAsc,

@@ -1,37 +1,68 @@
+import { MonoTypeOperatorFunction, Observable, of } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
+
 import { DataFrame, DataTransformerConfig } from '../types';
-import { standardTransformersRegistry } from './standardTransformersRegistry';
+import { standardTransformersRegistry, TransformerRegistyItem } from './standardTransformersRegistry';
 
-/**
- * Apply configured transformations to the input data
- */
-export function transformDataFrame(options: DataTransformerConfig[], data: DataFrame[]): DataFrame[] {
-  let processed = data;
-  for (const config of options) {
-    const info = standardTransformersRegistry.get(config.id);
+const getOperator = (config: DataTransformerConfig): MonoTypeOperatorFunction<DataFrame[]> => source => {
+  const info = standardTransformersRegistry.get(config.id);
 
-    if (!info) {
-      return data;
-    }
+  if (!info) {
+    return source;
+  }
 
-    const defaultOptions = info.transformation.defaultOptions ?? {};
-    const options = { ...defaultOptions, ...config.options };
-    const transformer = info.transformation.transformer(options);
-    const after = transformer(processed);
+  const defaultOptions = info.transformation.defaultOptions ?? {};
+  const options = { ...defaultOptions, ...config.options };
 
-    // Add a key to the metadata if the data changed
-    if (after && after !== processed) {
+  return source.pipe(
+    mergeMap(before => of(before).pipe(info.transformation.operator(options), postProcessTransform(before, info)))
+  );
+};
+
+const postProcessTransform = (
+  before: DataFrame[],
+  info: TransformerRegistyItem<any>
+): MonoTypeOperatorFunction<DataFrame[]> => source =>
+  source.pipe(
+    map(after => {
+      if (after === before) {
+        return after;
+      }
+
+      // Add a key to the metadata if the data changed
       for (const series of after) {
         if (!series.meta) {
           series.meta = {};
         }
+
         if (!series.meta.transformations) {
           series.meta.transformations = [info.id];
         } else {
           series.meta.transformations = [...series.meta.transformations, info.id];
         }
       }
-      processed = after;
-    }
+
+      return after;
+    })
+  );
+
+/**
+ * Apply configured transformations to the input data
+ */
+export function transformDataFrame(options: DataTransformerConfig[], data: DataFrame[]): Observable<DataFrame[]> {
+  const stream = of<DataFrame[]>(data);
+
+  if (!options.length) {
+    return stream;
   }
-  return processed;
+
+  const operators: Array<MonoTypeOperatorFunction<DataFrame[]>> = [];
+
+  for (let index = 0; index < options.length; index++) {
+    const config = options[index];
+    operators.push(getOperator(config));
+  }
+
+  // @ts-ignore TypeScript has a hard time understanding this construct
+  return stream.pipe.apply(stream, operators);
 }

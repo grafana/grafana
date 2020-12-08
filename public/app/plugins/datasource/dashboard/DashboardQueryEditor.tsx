@@ -11,7 +11,8 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PanelModel } from 'app/features/dashboard/state';
 import { SHARED_DASHBODARD_QUERY } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
-import { filterPanelDataToQuery } from 'app/features/dashboard/panel_editor/QueryEditorRow';
+import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
+
 const { Select } = LegacyForms;
 
 type ResultInfo = {
@@ -27,9 +28,9 @@ function getQueryDisplayText(query: DataQuery): string {
 }
 
 interface Props {
-  panel: PanelModel;
+  queries: DataQuery[];
   panelData: PanelData;
-  onChange: (query: DashboardQuery) => void;
+  onChange: (queries: DataQuery[]) => void;
 }
 
 type State = {
@@ -47,8 +48,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
   }
 
   getQuery(): DashboardQuery {
-    const { panel } = this.props;
-    return panel.targets[0] as DashboardQuery;
+    return this.props.queries[0] as DashboardQuery;
   }
 
   async componentDidMount() {
@@ -56,10 +56,14 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
   }
 
   async componentDidUpdate(prevProps: Props) {
-    const { panelData } = this.props;
+    const { panelData, queries } = this.props;
+
+    if (queries.length < 0) {
+      return;
+    }
 
     if (!prevProps || prevProps.panelData !== panelData) {
-      const query = this.props.panel.targets[0] as DashboardQuery;
+      const query = queries[0] as DashboardQuery;
       const defaultDS = await getDatasourceSrv().get();
       const dashboard = getDashboardSrv().getCurrent();
       const panel = dashboard.getPanelById(query.panelId ?? -124134);
@@ -96,10 +100,7 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
     const { onChange } = this.props;
     const query = this.getQuery();
     query.panelId = id;
-    onChange(query);
-
-    // Update the
-    this.props.panel.refresh();
+    onChange([query]);
   };
 
   renderQueryData(editURL: string) {

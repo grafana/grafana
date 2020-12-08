@@ -6,6 +6,9 @@
  */
 import { UrlQueryMap } from '@grafana/data';
 
+/**
+ * @public
+ */
 export interface LocationUpdate {
   /**
    * Target path where you automatically wants to navigate the user.
@@ -53,7 +56,7 @@ let singletonInstance: LocationSrv;
 
 /**
  * Used during startup by Grafana to set the LocationSrv so it is available
- * via the the {@link getLocationSrv} to the rest of the application.
+ * via the {@link getLocationSrv} to the rest of the application.
  *
  * @internal
  */

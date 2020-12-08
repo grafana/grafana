@@ -5,7 +5,8 @@ import { contextSrv } from 'app/core/core';
 import { tickStep } from 'app/core/utils/ticks';
 import { getColorScale, getOpacityScale } from './color_scale';
 import coreModule from 'app/core/core_module';
-import { PanelEvents, GrafanaThemeType, getColorFromHexRgbOrName } from '@grafana/data';
+import { PanelEvents, getColorForTheme } from '@grafana/data';
+import { config } from 'app/core/config';
 
 const LEGEND_HEIGHT_PX = 6;
 const LEGEND_WIDTH_PX = 100;
@@ -272,13 +273,7 @@ function drawSimpleOpacityLegend(elem: JQuery, options: { colorScale: string; ex
       .attr('width', rangeStep)
       .attr('height', legendHeight)
       .attr('stroke-width', 0)
-      .attr(
-        'fill',
-        getColorFromHexRgbOrName(
-          options.cardColor,
-          contextSrv.user.lightTheme ? GrafanaThemeType.Light : GrafanaThemeType.Dark
-        )
-      )
+      .attr('fill', getColorForTheme(options.cardColor, config.theme))
       .style('opacity', d => legendOpacityScale(d));
   }
 }

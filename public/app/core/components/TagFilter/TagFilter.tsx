@@ -79,7 +79,7 @@ export const TagFilter: FC<Props> = ({
       MultiValueLabel: (): any => {
         return null; // We want the whole tag to be clickable so we use MultiValueRemove instead
       },
-      MultiValueRemove: (props: any) => {
+      MultiValueRemove(props: any) {
         const { data } = props;
 
         return (
@@ -93,7 +93,7 @@ export const TagFilter: FC<Props> = ({
   };
 
   return (
-    <div className={styles.tagFilter}>
+    <div className={styles.tagFilter} aria-label="Tag filter">
       {isClearable && tags.length > 0 && (
         <span className={styles.clear} onClick={() => onTagChange([])}>
           Clear tags

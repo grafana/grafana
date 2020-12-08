@@ -2,6 +2,7 @@ package cloudwatch
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 
@@ -53,7 +54,10 @@ func (e *cloudWatchExecutor) executeLogActions(ctx context.Context, queryContext
 				}
 			}
 
-			resultChan <- &tsdb.QueryResult{RefId: query.RefId, Dataframes: tsdb.NewDecodedDataFrames(data.Frames{dataframe})}
+			resultChan <- &tsdb.QueryResult{
+				RefId:      query.RefId,
+				Dataframes: tsdb.NewDecodedDataFrames(data.Frames{dataframe}),
+			}
 			return nil
 		})
 	}
@@ -165,7 +169,7 @@ func (e *cloudWatchExecutor) handleDescribeLogGroups(ctx context.Context,
 
 	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
 	var err error
-	if len(logGroupNamePrefix) < 1 {
+	if len(logGroupNamePrefix) == 0 {
 		response, err = logsClient.DescribeLogGroupsWithContext(ctx, &cloudwatchlogs.DescribeLogGroupsInput{
 			Limit: aws.Int64(parameters.Get("limit").MustInt64(50)),
 		})
@@ -255,11 +259,11 @@ func (e *cloudWatchExecutor) executeStopQuery(ctx context.Context, logsClient cl
 
 	response, err := logsClient.StopQueryWithContext(ctx, queryInput)
 	if err != nil {
-		awsErr, ok := err.(awserr.Error)
 		// If the query has already stopped by the time CloudWatch receives the stop query request,
 		// an "InvalidParameterException" error is returned. For our purposes though the query has been
 		// stopped, so we ignore the error.
-		if ok && awsErr.Code() == "InvalidParameterException" {
+		var awsErr awserr.Error
+		if errors.As(err, &awsErr) && awsErr.Code() == "InvalidParameterException" {
 			response = &cloudwatchlogs.StopQueryOutput{Success: aws.Bool(false)}
 			err = nil
 		}

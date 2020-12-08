@@ -1,17 +1,6 @@
 import { getFieldLinksForExplore } from './links';
-import {
-  ArrayVector,
-  DataLink,
-  DataSourceInstanceSettings,
-  dateTime,
-  Field,
-  FieldType,
-  LinkModel,
-  ScopedVars,
-  TimeRange,
-} from '@grafana/data';
+import { ArrayVector, DataLink, dateTime, Field, FieldType, LinkModel, ScopedVars, TimeRange } from '@grafana/data';
 import { setLinkSrv } from '../../panel/panellinks/link_srv';
-import { setDataSourceSrv } from '@grafana/runtime';
 
 describe('getFieldLinksForExplore', () => {
   it('returns correct link model for external link', () => {
@@ -43,13 +32,14 @@ describe('getFieldLinksForExplore', () => {
       internal: {
         query: { query: 'query_1' },
         datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
       },
     });
     const splitfn = jest.fn();
     const links = getFieldLinksForExplore(field, 0, splitfn, range);
 
     expect(links[0].href).toBe(
-      '/explore?left={"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}],"ui":{"showingGraph":true,"showingTable":true,"showingLogs":true}}'
+      '/explore?left={"range":{"from":"now-1h","to":"now"},"datasource":"test_ds","queries":[{"query":"query_1"}]}'
     );
     expect(links[0].title).toBe('test_ds');
 
@@ -57,7 +47,11 @@ describe('getFieldLinksForExplore', () => {
       links[0].onClick({});
     }
 
-    expect(splitfn).toBeCalledWith({ datasourceUid: 'uid_1', query: { query: 'query_1' } });
+    expect(splitfn).toBeCalledWith({
+      datasourceUid: 'uid_1',
+      query: { query: 'query_1' },
+      range,
+    });
   });
 });
 
@@ -78,18 +72,7 @@ function setup(link: DataLink) {
       return link.url;
     },
   });
-  setDataSourceSrv({
-    getDataSourceSettingsByUid(uid: string) {
-      return {
-        id: 1,
-        uid: 'uid_1',
-        type: 'metrics',
-        name: 'test_ds',
-        meta: {},
-        jsonData: {},
-      } as DataSourceInstanceSettings;
-    },
-  } as any);
+
   const field: Field<string> = {
     name: 'flux-dimensions',
     type: FieldType.string,
@@ -100,8 +83,8 @@ function setup(link: DataLink) {
   };
 
   const range: TimeRange = {
-    from: dateTime(),
-    to: dateTime(),
+    from: dateTime('2020-10-14T00:00:00'),
+    to: dateTime('2020-10-14T01:00:00'),
     raw: {
       from: 'now-1h',
       to: 'now',

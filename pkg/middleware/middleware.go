@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -13,7 +13,9 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
+	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
@@ -52,10 +54,13 @@ func GetContextHandler(
 			Logger:         log.New("context"),
 		}
 
-		orgId := int64(0)
-		orgIdHeader := ctx.Req.Header.Get("X-Grafana-Org-Id")
-		if orgIdHeader != "" {
-			orgId, _ = strconv.ParseInt(orgIdHeader, 10, 64)
+		orgID := int64(0)
+		orgIDHeader := ctx.Req.Header.Get("X-Grafana-Org-Id")
+		if orgIDHeader != "" {
+			orgIDParsed, err := strconv.ParseInt(orgIDHeader, 10, 64)
+			if err == nil {
+				orgID = orgIDParsed
+			}
 		}
 
 		// the order in which these are tested are important
@@ -66,9 +71,9 @@ func GetContextHandler(
 		switch {
 		case initContextWithRenderAuth(ctx, renderService):
 		case initContextWithApiKey(ctx):
-		case initContextWithBasicAuth(ctx, orgId):
-		case initContextWithAuthProxy(remoteCache, ctx, orgId):
-		case initContextWithToken(ats, ctx, orgId):
+		case initContextWithBasicAuth(ctx, orgID):
+		case initContextWithAuthProxy(remoteCache, ctx, orgID):
+		case initContextWithToken(ats, ctx, orgID):
 		case initContextWithAnonymousUser(ctx):
 		}
 
@@ -178,8 +183,12 @@ func initContextWithBasicAuth(ctx *models.ReqContext, orgId int64) bool {
 		ctx.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,
+			"err", err,
 		)
 
+		if errors.Is(err, models.ErrUserNotFound) {
+			err = login.ErrInvalidCredentials
+		}
 		ctx.JsonApiErr(401, errStringInvalidUsernamePassword, err)
 		return true
 	}
@@ -245,36 +254,26 @@ func rotateEndOfRequestFunc(ctx *models.ReqContext, authTokenService models.User
 
 		// if the request is cancelled by the client we should not try
 		// to rotate the token since the client would not accept any result.
-		if ctx.Context.Req.Context().Err() == context.Canceled {
+		if errors.Is(ctx.Context.Req.Context().Err(), context.Canceled) {
 			return
 		}
 
-		rotated, err := authTokenService.TryRotateToken(ctx.Req.Context(), token, ctx.RemoteAddr(), ctx.Req.UserAgent())
+		addr := ctx.RemoteAddr()
+		ip, err := network.GetIPFromAddress(addr)
+		if err != nil {
+			ctx.Logger.Debug("Failed to get client IP address", "addr", addr, "err", err)
+			ip = nil
+		}
+		rotated, err := authTokenService.TryRotateToken(ctx.Req.Context(), token, ip, ctx.Req.UserAgent())
 		if err != nil {
 			ctx.Logger.Error("Failed to rotate token", "error", err)
 			return
 		}
 
 		if rotated {
-			WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetimeDays)
+			WriteSessionCookie(ctx, token.UnhashedToken, setting.LoginMaxLifetime)
 		}
 	}
-}
-
-func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetimeDays int) {
-	if setting.Env == setting.DEV {
-		ctx.Logger.Info("New token", "unhashed token", value)
-	}
-
-	var maxAge int
-	if maxLifetimeDays <= 0 {
-		maxAge = -1
-	} else {
-		maxAgeHours := (time.Duration(setting.LoginMaxLifetimeDays) * 24 * time.Hour) + time.Hour
-		maxAge = int(maxAgeHours.Seconds())
-	}
-
-	WriteCookie(ctx.Resp, setting.LoginCookieName, url.QueryEscape(value), maxAge, newCookieOptions)
 }
 
 func AddDefaultResponseHeaders() macaron.Handler {
@@ -300,7 +299,8 @@ func AddDefaultResponseHeaders() macaron.Handler {
 
 // AddSecurityHeaders adds various HTTP(S) response headers that enable various security protections behaviors in the client's browser.
 func AddSecurityHeaders(w macaron.ResponseWriter) {
-	if (setting.Protocol == setting.HTTPS || setting.Protocol == setting.HTTP2) && setting.StrictTransportSecurity {
+	if (setting.Protocol == setting.HTTPSScheme || setting.Protocol == setting.HTTP2Scheme) &&
+		setting.StrictTransportSecurity {
 		strictHeaderValues := []string{fmt.Sprintf("max-age=%v", setting.StrictTransportSecurityMaxAge)}
 		if setting.StrictTransportSecurityPreload {
 			strictHeaderValues = append(strictHeaderValues, "preload")
