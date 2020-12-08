@@ -19,6 +19,7 @@ import (
 	_ "github.com/russellhaering/goxmldsig"
 	_ "github.com/stretchr/testify/require"
 	_ "github.com/timberio/go-datemath"
+	_ "golang.org/x/time/rate"
 	_ "gopkg.in/square/go-jose.v2"
 )
 
