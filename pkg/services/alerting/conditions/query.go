@@ -333,7 +333,7 @@ func FrameToSeriesSlice(frame *data.Frame) (tsdb.TimeSeriesSlice, error) {
 		switch {
 		case field.Config != nil && field.Config.DisplayName != "":
 			ts.Name = field.Config.DisplayName
-		case field.Labels != nil && len(field.Labels) > 0:
+		case len(field.Labels) > 0:
 			ts.Tags = field.Labels.Copy()
 			// Tags are appended to the name so they are eventually included in EvalMatch's Metric property
 			// for display in notifications.
