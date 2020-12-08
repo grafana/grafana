@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/grafana/grafana/pkg/models"
 )
 
 // LibraryPanel is the model for library panel definitions.
@@ -30,13 +28,9 @@ var (
 
 // Commands
 
-// AddLibraryPanelCommand is the command for adding a LibraryPanel
-type AddLibraryPanelCommand struct {
-	OrgID        int64                `json:"-"`
-	FolderID     int64                `json:"folderId"`
-	Title        string               `json:"title"`
-	SignedInUser *models.SignedInUser `json:"-"`
-	Model        json.RawMessage      `json:"model"`
-
-	Result *LibraryPanel
+// addLibraryPanelCommand is the command for adding a LibraryPanel
+type addLibraryPanelCommand struct {
+	FolderID int64           `json:"folderId"`
+	Title    string          `json:"title"`
+	Model    json.RawMessage `json:"model"`
 }

@@ -15,11 +15,9 @@ import (
 func TestCreateLibraryPanel(t *testing.T) {
 	t.Run("should fail if library panel already exists", func(t *testing.T) {
 		lps, context := setupTestEnv(t, models.ROLE_EDITOR)
-		command := AddLibraryPanelCommand{
-			OrgID:        1,
-			FolderID:     1,
-			SignedInUser: context.SignedInUser,
-			Title:        "Text - Library Panel",
+		command := addLibraryPanelCommand{
+			FolderID: 1,
+			Title:    "Text - Library Panel",
 			Model: []byte(`
 	{
       "datasource": "${DS_GDEV-TESTDATA}",
@@ -30,13 +28,11 @@ func TestCreateLibraryPanel(t *testing.T) {
 `),
 		}
 
-		response, err := lps.Create(&context, command)
-		require.NoError(t, err)
-		require.NotNil(t, response)
+		response := lps.createHandler(&context, command)
+		require.Equal(t, 200, response.Status())
 
-		response, err = lps.Create(&context, command)
-		require.EqualError(t, err, errLibraryPanelAlreadyAdded.Error())
-		require.Nil(t, response)
+		response = lps.createHandler(&context, command)
+		require.Equal(t, 500, response.Status())
 
 		t.Cleanup(registry.ClearOverrides)
 	})

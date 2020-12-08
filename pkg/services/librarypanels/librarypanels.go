@@ -3,7 +3,6 @@ package librarypanels
 import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -63,16 +62,4 @@ func (lps *LibraryPanelService) AddMigration(mg *migrator.Migrator) {
 	}
 
 	mg.AddMigration("create library_panel table v1", migrator.NewAddTableMigration(libraryPanelV1))
-}
-
-// Create function stores a Library Panel
-func (lps *LibraryPanelService) Create(c *models.ReqContext, cmd AddLibraryPanelCommand) (*LibraryPanel, error) {
-	cmd.OrgID = c.SignedInUser.OrgId
-	cmd.SignedInUser = c.SignedInUser
-
-	if err := lps.createLibraryPanel(&cmd); err != nil {
-		return nil, err
-	}
-
-	return cmd.Result, nil
 }

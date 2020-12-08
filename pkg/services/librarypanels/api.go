@@ -15,13 +15,13 @@ func (lps *LibraryPanelService) registerAPIEndpoints() {
 	}
 
 	lps.RouteRegister.Group("/api/library-panels", func(libraryPanels routing.RouteRegister) {
-		libraryPanels.Post("/", middleware.ReqSignedIn, binding.Bind(AddLibraryPanelCommand{}), api.Wrap(lps.createHandler))
+		libraryPanels.Post("/", middleware.ReqSignedIn, binding.Bind(addLibraryPanelCommand{}), api.Wrap(lps.createHandler))
 	})
 }
 
 // createHandler handles POST /api/library-panels.
-func (lps *LibraryPanelService) createHandler(c *models.ReqContext, cmd AddLibraryPanelCommand) api.Response {
-	panel, err := lps.Create(c, cmd)
+func (lps *LibraryPanelService) createHandler(c *models.ReqContext, cmd addLibraryPanelCommand) api.Response {
+	panel, err := lps.createLibraryPanel(c, &cmd)
 
 	if err != nil {
 		return api.Error(500, "Failed to create library panel", err)
