@@ -1,5 +1,5 @@
 +++
-title = "Server Admin - Manage organization"
+title = "Manage organization"
 weight = 200
 +++
 

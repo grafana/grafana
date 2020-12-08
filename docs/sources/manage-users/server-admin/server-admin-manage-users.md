@@ -27,6 +27,7 @@ Grafana displays all user accounts on the server, listed in alphabetical order b
 - **Account status -** If the account is disabled, then the **Disabled** label is displayed.
 
 ![Server Admin user list](/img/docs/manage-users/server-user-list-7-3.png)
+
 ## View user account details
 
 See all details associated with a specific user account.
@@ -45,25 +46,25 @@ This section of the account contains basic user information. Users can change va
 - **Username**
 - **Password**
 
-{{< docs-imagebox img="/img/docs/manage-users/server-admin-user-information-7-3.png" max-width="1200px">}}
+![Server Admin user information section](/img/docs/manage-users/server-admin-user-information-7-3.png)
 
 ### Permissions
 
 This indicates whether the user account has the Grafana Admin flag applied or not. If it is **Yes**, then the user is a Grafana Server Admin.
 
-{{< docs-imagebox img="/img/docs/manage-users/server-admin-permissions-7-3.png" max-width="1200px">}}
+![Server Admin Permissions section](/img/docs/manage-users/server-admin-permissions-7-3.png)
 
 ### Organisations
 
 This section lists the organizations the user account belongs to and the roles they hold within each organization.
 
-{{< docs-imagebox img="/img/docs/manage-users/server-admin-organisations-7-3.png" max-width="1200px">}}
+![Server Admin Organizations section](/img/docs/manage-users/server-admin-organisations-7-3.png)
 
 ### Sessions
 
 See recent sessions that the user was logged on, including when they logged on and information about the system the logged on with. You can force logouts if necessary.
 
-{{< docs-imagebox img="/img/docs/manage-users/server-admin-sessions-7-3.png" max-width="1200px">}}
+![Server Admin Sessions section](/img/docs/manage-users/server-admin-sessions-7-3.png)
 
 ## Add a user account
 
@@ -78,11 +79,12 @@ Create a new user account at the server level.
    - **Password -** Required.
 1. Click **Create user**.
 
-The user can change all this information after they log in. For instructions, refer to [Change your information](NEED LINK) and [Change your password](NEED Link).
+The user can change all this information after they log in. For instructions, refer to [Edit your Grafana profile]({{< relref "../../administration/preferences.md#edit-your-grafana-profile" >}}) and [Change your password]({{< relref "../../administration/change-your-password.md" >}}).
 
 ## Edit a user account
 
 Change information or settings in an individual user account.
+
 ### Edit user information
 
 Edit information on an existing user account, including the user name, email, username, and password.
@@ -152,7 +154,7 @@ Add a user account to an existing organization. User accounts can belong to mult
 1. In the **Add to an organization** window:
    1. Select the **Organisation** that you are adding the user to.
    1. Select the **Role** that the user should have in the organization.
-   1. Click **Add to organisation**. 
+   1. Click **Add to organisation**.
 
 ## Remove a user from an organization
 
