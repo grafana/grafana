@@ -19,9 +19,20 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
   }
 
   // uPlot range function
-  range = (u: uPlot, dataMin: number, dataMax: number) => {
+  range = (u: uPlot, dataMin: number, dataMax: number, scaleKey: string) => {
     const { min, max } = this.props;
-    const [smin, smax] = uPlot.rangeNum(min ?? dataMin, max ?? dataMax, 0.1 as any, true);
+
+    const scale = u.scales[scaleKey];
+
+    let smin, smax;
+
+    if (scale.distr === 1) {
+      [smin, smax] = uPlot.rangeNum(min ?? dataMin, max ?? dataMax, 0.1 as any, true);
+    } else if (scale.distr === 3) {
+      /**@ts-ignore (uPlot 1.4.7 typings are wrong and exclude logBase arg) */
+      [smin, smax] = uPlot.rangeLog(min ?? dataMin, max ?? dataMax, scale.log, true);
+    }
+
     return [min ?? smin, max ?? smax];
   };
 
