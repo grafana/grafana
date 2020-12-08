@@ -7,13 +7,15 @@
   "repository": "github:grafana/grafana",
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
-    "build": "grunt build",
+    "build": "node ./node_modules/webpack/bin/webpack.js --config scripts/webpack/webpack.prod.js",
     "dev": "webpack --progress --colors --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
     "e2e:debug": "./e2e/start-and-run-suite debug",
     "e2e:dev": "./e2e/start-and-run-suite dev",
     "test": "jest --notify --watch",
-    "lint": "eslint . --ext .js,.tsx,.ts --cache",
+    "lint": "yarn run lint:ts && yarn run lint:sass",
+    "lint:ts": "eslint . --ext .js,.tsx,.ts --cache",
+    "lint:sass": "yarn run sass-lint -c public/sass/.sass-lint.yml 'public/sass/**/*.scss, packages/**/*.scss' -v -i '**/node_modules/**/*.scss'",
     "test:ci": "mkdir -p reports/junit && export JEST_JUNIT_OUTPUT_DIR=reports/junit && jest --ci --reporters=default --reporters=jest-junit -w ${TEST_MAX_WORKERS:-100%}",
     "lint:fix": "yarn lint --fix",
     "packages:build": "lerna run clean && lerna run build --ignore @grafana-plugins/input-datasource",
@@ -27,7 +29,7 @@
     "packages:publishDev": "lerna publish from-package --contents dist --dist-tag dev --yes --registry http://grafana-npm.local:4873 --force-publish=*",
     "packages:typecheck": "lerna run typecheck",
     "packages:clean": "lerna run clean",
-    "precommit": "grafana-toolkit precommit",
+    "precommit": "yarn run lint-staged",
     "prettier:check": "prettier --list-different \"**/*.{ts,tsx,scss}\"",
     "prettier:write": "prettier --list-different \"**/*.{ts,tsx,scss}\" --write",
     "start": "grafana-toolkit core:start --watchTheme",
@@ -38,10 +40,10 @@
     "storybook": "yarn workspace @grafana/ui storybook --ci",
     "storybook:build": "yarn workspace @grafana/ui storybook:build",
     "themes:generate": "ts-node --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
     "watch": "yarn start -d watch,start core:start --watchTheme",
-    "ci:test-frontend": "yarn run prettier:check && yarn run packages:typecheck && yarn run typecheck && yarn grunt no-only-tests && yarn run test:ci"
+    "ci:test-frontend": "yarn run prettier:check && yarn run typecheck && yarn run lint && yarn run test:ci && yarn grafana-toolkit node-version-check"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/latest/guides/whats-new-in-v7-3/",
@@ -49,7 +51,7 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "lint-staged && npm run precommit"
+      "pre-commit": "yarn run precommit"
     }
   },
   "lint-staged": {
@@ -72,7 +74,7 @@
     "@babel/preset-react": "7.8.3",
     "@babel/preset-typescript": "7.8.3",
     "@emotion/core": "10.0.27",
-    "@grafana/api-documenter": "7.11.1",
+    "@grafana/api-documenter": "7.11.2",
     "@grafana/api-extractor": "7.10.1",
     "@grafana/eslint-config": "2.0.6",
     "@rtsao/plugin-proposal-class-properties": "7.0.1-patch.1",
@@ -90,7 +92,7 @@
     "@types/enzyme-adapter-react-16": "1.0.6",
     "@types/file-saver": "2.0.1",
     "@types/is-hotkey": "0.1.1",
-    "@types/jest": "26.0.0",
+    "@types/jest": "26.0.15",
     "@types/jquery": "3.3.38",
     "@types/lodash": "4.14.149",
     "@types/lru-cache": "^5.1.0",
@@ -102,7 +104,7 @@
     "@types/react": "16.9.9",
     "@types/react-beautiful-dnd": "12.1.2",
     "@types/react-dom": "16.9.9",
-    "@types/react-grid-layout": "0.16.7",
+    "@types/react-grid-layout": "1.1.1",
     "@types/react-redux": "7.1.7",
     "@types/react-select": "3.0.8",
     "@types/react-test-renderer": "16.9.2",
@@ -124,7 +126,7 @@
     "autoprefixer": "9.7.4",
     "axios": "0.19.2",
     "babel-core": "7.0.0-bridge.0",
-    "babel-jest": "26.0.1",
+    "babel-jest": "26.6.3",
     "babel-loader": "8.0.6",
     "babel-plugin-angularjs-annotate": "0.10.0",
     "clean-webpack-plugin": "3.0.0",
@@ -134,9 +136,10 @@
     "es-abstract": "1.18.0-next.1",
     "es6-promise": "4.2.8",
     "es6-shim": "0.35.5",
-    "eslint": "7.4.0",
+    "eslint": "^7.14.0",
     "eslint-config-prettier": "6.11.0",
     "eslint-plugin-jsdoc": "28.6.1",
+    "eslint-plugin-no-only-tests": "^2.4.0",
     "eslint-plugin-prettier": "3.1.4",
     "eslint-plugin-react": "7.21.5",
     "eslint-plugin-react-hooks": "4.1.2",
@@ -146,24 +149,12 @@
     "fork-ts-checker-webpack-plugin": "5.0.0",
     "gaze": "1.1.3",
     "glob": "7.1.6",
-    "grunt": "1.0.4",
-    "grunt-angular-templates": "1.1.0",
-    "grunt-cli": "1.3.2",
-    "grunt-contrib-clean": "2.0.0",
-    "grunt-contrib-copy": "1.0.0",
-    "grunt-exec": "3.0.0",
-    "grunt-newer": "1.3.0",
-    "grunt-notify": "0.4.5",
-    "grunt-postcss": "0.9.0",
-    "grunt-sass-lint": "0.2.4",
-    "grunt-usemin": "3.1.1",
-    "grunt-webpack": "3.1.3",
     "html-loader": "0.5.5",
     "html-webpack-harddisk-plugin": "1.0.1",
     "html-webpack-plugin": "3.2.0",
     "husky": "4.2.1",
-    "jest": "26.4.2",
-    "jest-canvas-mock": "2.2.0",
+    "jest": "26.6.3",
+    "jest-canvas-mock": "2.3.0",
     "jest-date-mock": "1.0.8",
     "jest-matcher-utils": "26.0.0",
     "lerna": "^3.20.2",
@@ -193,10 +184,10 @@
     "sinon": "8.1.1",
     "style-loader": "1.1.3",
     "terser-webpack-plugin": "2.3.5",
-    "ts-jest": "26.3.0",
-    "ts-node": "8.8.1",
-    "tslib": "2.0.1",
-    "typescript": "4.0.2",
+    "ts-jest": "26.4.4",
+    "ts-node": "9.0.0",
+    "tslib": "2.0.3",
+    "typescript": "4.1.2",
     "webpack": "4.41.5",
     "webpack-bundle-analyzer": "3.6.0",
     "webpack-cleanup-plugin": "0.5.1",
@@ -267,7 +258,7 @@
     "react": "17.0.1",
     "react-beautiful-dnd": "13.0.0",
     "react-dom": "17.0.1",
-    "react-grid-layout": "0.17.1",
+    "react-grid-layout": "1.2.0",
     "react-highlight-words": "0.16.0",
     "react-loadable": "5.5.0",
     "react-popper": "2.2.4",
@@ -318,9 +309,9 @@
     "puppeteer": "node_modules/puppeteer-core"
   },
   "engines": {
-    "node": ">= 12"
+    "node": ">= 14"
   },
   "volta": {
-    "node": "12.19.1"
+    "node": "14.15.1"
   }
 }

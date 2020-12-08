@@ -98,8 +98,12 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   );
 
   let configPropertiesOptions = registry.list().map(item => {
+    let label = item.name;
+    if (item.category && item.category.length > 1) {
+      label = [...item.category!.slice(1), item.name].join(' > ');
+    }
     return {
-      label: item.name,
+      label,
       value: item.id,
       description: item.description,
     };

@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/require"
 )
 
 // NewFakeStore creates store for testing
@@ -26,9 +27,7 @@ func NewFakeStore(t *testing.T) *RemoteCache {
 	}
 
 	err := dc.Init()
-	if err != nil {
-		t.Fatalf("failed to init remote cache for test. error: %v", err)
-	}
+	require.NoError(t, err, "Failed to init remote cache for test")
 
 	return dc
 }

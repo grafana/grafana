@@ -56,6 +56,7 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
         justifyMode={options.justifyMode}
         textMode={this.getTextMode()}
         alignmentFactors={alignmentFactors}
+        text={options.text}
         width={width}
         height={height}
         theme={config.theme}
@@ -103,7 +104,6 @@ export class StatPanel extends PureComponent<PanelProps<StatPanelOptions>> {
       theme: config.theme,
       data: data.series,
       sparkline: options.graphMode !== BigValueGraphMode.None,
-      autoMinMax: true,
       timeZone,
     });
   };

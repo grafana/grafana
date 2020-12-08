@@ -237,26 +237,28 @@ export function SelectBase<T>({
           MenuList: SelectMenu,
           Group: SelectOptionGroup,
           ValueContainer,
-          Placeholder: (props: any) => (
-            <div
-              {...props.innerProps}
-              className={cx(
-                css(props.getStyles('placeholder', props)),
-                css`
-                  display: inline-block;
-                  color: ${theme.colors.formInputPlaceholderText};
-                  position: absolute;
-                  top: 50%;
-                  transform: translateY(-50%);
-                  box-sizing: border-box;
-                  line-height: 1;
-                `
-              )}
-            >
-              {props.children}
-            </div>
-          ),
-          IndicatorsContainer: (props: any) => {
+          Placeholder(props: any) {
+            return (
+              <div
+                {...props.innerProps}
+                className={cx(
+                  css(props.getStyles('placeholder', props)),
+                  css`
+                    display: inline-block;
+                    color: ${theme.colors.formInputPlaceholderText};
+                    position: absolute;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    box-sizing: border-box;
+                    line-height: 1;
+                  `
+                )}
+              >
+                {props.children}
+              </div>
+            );
+          },
+          IndicatorsContainer(props: any) {
             const { selectProps } = props;
             const { value, showAllSelectedWhenOpen, maxVisibleValues, menuIsOpen } = selectProps;
 
@@ -278,10 +280,12 @@ export function SelectBase<T>({
 
             return <IndicatorsContainer {...props} />;
           },
-          IndicatorSeparator: () => <></>,
+          IndicatorSeparator() {
+            return <></>;
+          },
           Control: CustomControl,
           Option: SelectMenuOptions,
-          ClearIndicator: (props: any) => {
+          ClearIndicator(props: any) {
             const { clearValue } = props;
             return (
               <Icon
@@ -294,20 +298,22 @@ export function SelectBase<T>({
               />
             );
           },
-          LoadingIndicator: (props: any) => {
+          LoadingIndicator(props: any) {
             return <Spinner inline={true} />;
           },
-          LoadingMessage: (props: any) => {
+          LoadingMessage(props: any) {
             return <div className={styles.loadingMessage}>{loadingMessage}</div>;
           },
-          NoOptionsMessage: (props: any) => {
+          NoOptionsMessage(props: any) {
             return (
               <div className={styles.loadingMessage} aria-label="No options provided">
                 {noOptionsMessage}
               </div>
             );
           },
-          DropdownIndicator: (props: any) => <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />,
+          DropdownIndicator(props: any) {
+            return <DropdownIndicator isOpen={props.selectProps.menuIsOpen} />;
+          },
           SingleValue: SingleValue,
           MultiValueContainer: MultiValueContainer,
           MultiValueRemove: MultiValueRemove,
