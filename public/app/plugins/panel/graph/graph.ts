@@ -58,7 +58,7 @@ class GraphElement {
   annotations: object[];
   panel: any;
   plot: any;
-  sortedSeries: any[];
+  sortedSeries?: any[];
   data: any[];
   panelWidth: number;
   eventManager: EventManager;

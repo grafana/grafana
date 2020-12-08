@@ -18,7 +18,7 @@
     },
     "type": {
       "type": "string",
-      "description": "Plugin type. Possible values are `app`, `datasource`, and `panel`.",
+      "description": "Plugin type.",
       "enum": ["app", "datasource", "panel"]
     },
     "name": {
@@ -27,7 +27,7 @@
     },
     "category": {
       "type": "string",
-      "description": "Plugin category used on the Add data source page. Possible values are: `tsdb`, `logging`, `cloud`, `tracing`, `sql`, `enterprise` and `other`.",
+      "description": "Plugin category used on the Add data source page.",
       "enum": ["tsdb", "logging", "cloud", "tracing", "sql", "enterprise", "other"]
     },
     "annotations": {
@@ -57,27 +57,41 @@
     },
     "includes": {
       "type": "array",
+      "description": "Resources to include in plugin.",
       "items": {
         "type": "object",
         "additionalItems": false,
         "properties": {
           "type": {
-            "type": "string"
+            "type": "string",
+            "enum": ["dashboard", "page", "panel", "datasource"]
           },
           "name": {
             "type": "string"
           },
           "component": {
-            "type": "string"
+            "type": "string",
+            "description": "(Legacy) The Angular component to use for a page."
           },
           "role": {
-            "type": "string"
+            "type": "string",
+            "enum": ["Admin", "Editor", "Viewer"]
+          },
+          "path": {
+            "type": "string",
+            "description": "Used for app plugins."
           },
           "addToNav": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Add the include to the side menu."
           },
           "defaultNav": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Page or dashboard when user clicks the icon in the side menu."
+          },
+          "icon": {
+            "type": "string",
+            "description": "Icon to use in the side menu. For information on available icon, refer to [Icons Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview)."
           }
         }
       }
@@ -90,33 +104,9 @@
       "type": "boolean",
       "description": "For panel plugins. Hides the query editor."
     },
-    "partials": {
-      "type": "object",
-      "additionalItems": false,
-      "properties": {
-        "config": {
-          "type": "string"
-        }
-      }
-    },
     "metrics": {
       "type": "boolean",
       "description": "For data source plugins. If the plugin supports metric queries. Used in the Explore feature."
-    },
-    "mixed": {
-      "type": "boolean",
-      "description": "Not to be used by external plugins. Special property for the built-in mixed plugin."
-    },
-    "module": {
-      "type": "string",
-      "description": ""
-    },
-    "sort": {
-      "type": "number",
-      "description": "Internal property for sorting. Cannot be used as will be overwritten by Grafana."
-    },
-    "staticRoot": {
-      "type": "string"
     },
     "streaming": {
       "type": "boolean",
@@ -134,7 +124,7 @@
     },
     "dependencies": {
       "type": "object",
-      "description": "Plugin dependencies.",
+      "description": "Dependencies needed by the plugin.",
       "required": ["grafanaDependency"],
       "additionalProperties": false,
       "properties": {
@@ -151,8 +141,27 @@
         "plugins": {
           "type": "array",
           "description": "An array of required plugins on which this plugin depends.",
+          "additionalItems": false,
           "items": {
-            "type": "string"
+            "type": "object",
+            "description": "Plugin dependency. Used to display information about plugin dependencies in the Grafana UI.",
+            "required": ["id", "name", "type", "version"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[0-9a-z]+\\-([0-9a-z]+\\-)?(app|panel|datasource)$"
+              },
+              "type": {
+                "type": "string",
+                "enum": ["app", "datasource", "panel"]
+              },
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "string"
+              }
+            }
           }
         }
       }
@@ -181,6 +190,37 @@
               "type": "string",
               "description": "Link to author's website.",
               "format": "uri"
+            }
+          }
+        },
+        "build": {
+          "type": "object",
+          "description": "Build information",
+          "additionalProperties": false,
+          "properties": {
+            "time": {
+              "type": "number",
+              "description": "Time when the plugin was built, as a Unix timestamp."
+            },
+            "repo": {
+              "type": "string",
+              "description": ""
+            },
+            "branch": {
+              "type": "string",
+              "description": "Git branch the plugin was built from."
+            },
+            "hash": {
+              "type": "string",
+              "description": "Git hash of the commit the plugin was built from"
+            },
+            "number": {
+              "type": "number",
+              "description": ""
+            },
+            "pr": {
+              "type": "number",
+              "description": "GitHub pull request the plugin was built from"
             }
           }
         },
