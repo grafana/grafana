@@ -26,8 +26,7 @@ Grafana displays all user accounts on the server, listed in alphabetical order b
 - **Server Admin status -** If the user account has **Grafana Admin** option set, then a shield icon is displayed.
 - **Account status -** If the account is disabled, then the **Disabled** label is displayed.
 
-<img src="/img/docs/manage-users/server-user-list-7-3.png" max-width="1200px">
-
+![Server Admin user list](/img/docs/manage-users/server-user-list-7-3.png)
 ## View user account details
 
 See all details associated with a specific user account.
@@ -70,7 +69,7 @@ See recent sessions that the user was logged on, including when they logged on a
 
 Create a new user account at the server level.
 
-1. [View the user account list](#view-the-user-account-list).
+{{< docs/list "manage-users/view-server-user-list" >}}
 1. Click **New user**.
 1. Enter the following information:
    - **Name -** Required.
@@ -88,8 +87,7 @@ Change information or settings in an individual user account.
 
 Edit information on an existing user account, including the user name, email, username, and password.
 
-1. [View the user account list](#view-the-user-account-list).
-1. Click the user account that you want to edit. If necessary, use the search field to find the account.
+{{< docs/list "manage-users/view-server-user-list-search" >}}
 1. In the User information section, click **Edit** next to the field that you want to change.
 1. Enter the new value and then click **Save**.
 
