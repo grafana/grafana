@@ -59,9 +59,9 @@ export interface QueryResultMeta {
   path?: string;
 
   /**
-   * defautls to '/'
+   * defaults to '/'
    */
-  pathSeperator?: string;
+  pathSeparator?: string;
 
   /**
    * Legacy data source specific, should be moved to custom
