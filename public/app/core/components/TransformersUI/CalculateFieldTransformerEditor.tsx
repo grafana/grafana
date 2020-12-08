@@ -15,14 +15,17 @@ import {
   TransformerRegistyItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
+import { Icon, FilterPill, HorizontalGroup, InlineLabel, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
 import {
   BinaryOptions,
   CalculateFieldMode,
   CalculateFieldTransformerOptions,
   getNameFromOptions,
+  MathOptions,
   ReduceOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
+
+import { parseEquation } from '@grafana/data/src/utils/math';
 
 import defaults from 'lodash/defaults';
 
@@ -37,6 +40,7 @@ interface CalculateFieldTransformerEditorState {
 const calculationModes = [
   { value: CalculateFieldMode.BinaryOperation, label: 'Binary operation' },
   { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
+  { value: CalculateFieldMode.MathField, label: 'Math' },
 ];
 
 export class CalculateFieldTransformerEditor extends React.PureComponent<
@@ -328,6 +332,96 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
     );
   }
 
+  onEquationChanged = (evt: ChangeEvent<HTMLInputElement>) => {
+    const { options } = this.props;
+    const math = { ...defaults(options.math, { expr: '', symbols: {} }) };
+    math.expr = evt.target.value;
+    this.props.onChange({
+      ...options,
+      math,
+    });
+  };
+
+  onMathSymbolChanged = (k: string, v?: string) => {
+    const { options } = this.props;
+    const math = { ...defaults(options.math, { expr: '', symbols: {} }) };
+    if (v) {
+      math.symbols[k] = v;
+    } else {
+      delete math.symbols[k];
+    }
+    this.props.onChange({
+      ...options,
+      math,
+    });
+  };
+
+  renderMathOperation(options?: MathOptions) {
+    options = defaults(options, { expr: '', symbols: {} })!;
+
+    const info = parseEquation(options.expr);
+
+    const allNames = this.state.names.map(n => ({
+      value: n,
+      label: n,
+    }));
+    const byKey: Record<string, SelectableValue<string>> = {};
+    for (const [key, value] of Object.entries(options.symbols)) {
+      if (value) {
+        let found = allNames.find(v => v.value === value);
+        if (!found) {
+          found = { value, label: value };
+          allNames.push(found);
+        }
+        byKey[key] = found;
+      }
+    }
+
+    return (
+      <>
+        <div className="gf-form-inline">
+          <div className="gf-form">
+            <div className="gf-form-label width-8">Equation</div>
+          </div>
+          <div className="gf-form">
+            <Input
+              className="width-18"
+              value={options.expr ?? ''}
+              placeholder="Enter an equation"
+              onChange={this.onEquationChanged}
+            />
+          </div>
+          {info.err && (
+            <div className="gf-form">
+              <InlineLabel>
+                <Icon name="exclamation-triangle" />
+              </InlineLabel>
+            </div>
+          )}
+        </div>
+        {info.symbols.map(k => (
+          <div key={k} className="gf-form-inline">
+            <div className="gf-form">
+              <div className="gf-form-label query-keyword width-8">{k}</div>
+            </div>
+            <div className="gf-form">
+              <Select
+                allowCustomValue={true}
+                placeholder={k}
+                className="min-width-10"
+                options={allNames}
+                value={byKey[k] || ''}
+                onChange={v => this.onMathSymbolChanged(k, v.value)}
+                menuPlacement="bottom"
+              />
+            </div>
+          </div>
+        ))}
+        {info.err && <pre>{JSON.stringify(info, null, 2)}</pre>}
+      </>
+    );
+  }
+
   //---------------------------------------------------------
   // Render
   //---------------------------------------------------------
@@ -353,6 +447,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         </div>
         {mode === CalculateFieldMode.BinaryOperation && this.renderBinaryOperation(options.binary)}
         {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
+        {mode === CalculateFieldMode.MathField && this.renderMathOperation(options.math)}
         <div className="gf-form-inline">
           <div className="gf-form">
             <div className="gf-form-label width-8">Alias</div>
