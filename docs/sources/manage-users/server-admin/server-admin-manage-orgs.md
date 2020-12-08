@@ -37,7 +37,7 @@ Two things happen:
 - Grafana creates a new organization with you as the sole member and Admin.
 - Grafana opens the new organization [Preferences tab]({{< relref "../../administration/preferences.md" >}}).
 
-You can now add users or perform other [Organization Admin tasks]({{< relref "/org-admin/_index.md" >}}).
+You can now add users or perform other Organization Admin tasks.
 
 ## Delete organization
 
