@@ -4,6 +4,7 @@ import {
   MetricAggregation,
   MovingAverageModelOption,
   MetricAggregationType,
+  isMetricAggregationWithSettings,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig, pipelineOptions } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
@@ -49,4 +50,18 @@ export function isPipelineAgg(metricType: MetricAggregationType) {
 
 export function isPipelineAggWithMultipleBucketPaths(metricType: MetricAggregationType) {
   return !!metricAggregationConfig[metricType].supportsMultipleBucketPaths;
+}
+
+export function transformSettings(metric: MetricAggregation) {
+  if (isMetricAggregationWithSettings(metric) && metric.settings) {
+    const metricConfig = metricAggregationConfig[metric.type];
+    const settings = { ...metric.settings } as Record<string, any>;
+    const transformedKeys = Object.keys(metricConfig.transform ?? {}).reduce((acc, key) => {
+      const fn = metricConfig.transform?.[key] ?? ((v: any) => v);
+      acc[key] = fn(settings[key]);
+      return acc;
+    }, {} as Record<string, any>);
+    return { ...metric.settings, ...transformedKeys };
+  }
+  return {};
 }

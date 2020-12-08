@@ -147,6 +147,21 @@ export const metricAggregationConfig: MetricsConfiguration = {
     hasMeta: false,
     defaults: {},
   },
+  serial_diff: {
+    label: 'Serial Difference',
+    requiresField: true,
+    isPipelineAgg: true,
+    minVersion: 2,
+    supportsMissing: false,
+    supportsMultipleBucketPaths: false,
+    hasSettings: true,
+    supportsInlineScript: false,
+    hasMeta: false,
+    defaults: {},
+    transform: {
+      lag: (value: string) => parseInt(value, 10),
+    },
+  },
   cumulative_sum: {
     label: 'Cumulative Sum',
     requiresField: true,
@@ -236,6 +251,7 @@ export const pipelineOptions: PipelineOptions = {
   ],
   moving_fn: [{ label: 'window', default: 5 }, { label: 'script' }],
   derivative: [{ label: 'unit' }],
+  serial_diff: [{ label: 'lag' }],
   cumulative_sum: [{ label: 'format' }],
   bucket_script: [],
 };
