@@ -195,7 +195,7 @@
         },
         "build": {
           "type": "object",
-          "description": "",
+          "description": "Build information",
           "additionalProperties": false,
           "properties": {
             "time": {
