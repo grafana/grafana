@@ -1,5 +1,6 @@
 import uPlot, { Scale } from 'uplot';
 import { PlotConfigBuilder } from '../types';
+import { ScaleDistribution } from '../config';
 
 export interface ScaleProps {
   scaleKey: string;
@@ -7,6 +8,8 @@ export interface ScaleProps {
   min?: number | null;
   max?: number | null;
   range?: () => number[]; // min/max
+  distribution?: ScaleDistribution;
+  log?: number;
 }
 
 export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
@@ -24,10 +27,18 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
 
   getConfig() {
     const { isTime, scaleKey, range } = this.props;
+    const distribution = !isTime
+      ? {
+          distr: this.props.distribution === ScaleDistribution.Logarithmic ? 3 : 1,
+          log: this.props.distribution === ScaleDistribution.Logarithmic ? this.props.log || 2 : undefined,
+        }
+      : {};
+
     return {
       [scaleKey]: {
         time: isTime,
         range: range ?? this.range,
+        ...distribution,
       },
     };
   }
