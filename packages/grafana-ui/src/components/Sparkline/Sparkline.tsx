@@ -35,7 +35,8 @@ const defaultConfig: GraphFieldConfig = {
 export class Sparkline extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
-    const data = this.perepareData(props);
+
+    const data = this.prepareData(props);
     this.state = {
       data,
       configBuilder: this.prepareConfig(data, props),
@@ -44,7 +45,7 @@ export class Sparkline extends PureComponent<Props, State> {
 
   componentDidUpdate(oldProps: Props) {
     if (oldProps.sparkline !== this.props.sparkline) {
-      const data = this.perepareData(this.props);
+      const data = this.prepareData(this.props);
       if (!compareDataFrameStructures(this.state.data, data)) {
         const configBuilder = this.prepareConfig(data, this.props);
         this.setState({ data, configBuilder });
@@ -54,13 +55,14 @@ export class Sparkline extends PureComponent<Props, State> {
     }
   }
 
-  perepareData = (props: Props): DataFrame => {
-    const { sparkline } = this.props;
+  prepareData(props: Props): DataFrame {
+    const { sparkline } = props;
     const length = sparkline.y.values.length;
     const yFieldConfig = {
       ...sparkline.y.config,
       ...this.props.config,
     };
+
     return {
       refId: 'sparkline',
       fields: [
@@ -72,11 +74,12 @@ export class Sparkline extends PureComponent<Props, State> {
       ],
       length,
     };
-  };
+  }
 
-  prepareConfig = (data: DataFrame, props: Props) => {
+  prepareConfig(data: DataFrame, props: Props) {
     const { theme } = this.props;
     const builder = new UPlotConfigBuilder();
+
     builder.setCursor({
       show: true,
       x: false, // no crosshairs
@@ -100,11 +103,13 @@ export class Sparkline extends PureComponent<Props, State> {
         return [0, sparkline.y.values.length - 1];
       },
     });
+
     builder.addAxis({
       scaleKey: 'x',
       theme,
       placement: AxisPlacement.Hidden,
     });
+
     for (let i = 0; i < data.fields.length; i++) {
       const field = data.fields[i];
       const config = field.config as FieldConfig<GraphFieldConfig>;
@@ -143,7 +148,7 @@ export class Sparkline extends PureComponent<Props, State> {
     }
 
     return builder;
-  };
+  }
 
   render() {
     const { data, configBuilder } = this.state;
