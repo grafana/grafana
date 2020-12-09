@@ -1,5 +1,6 @@
 import { map, mergeMap, throttleTime } from 'rxjs/operators';
 import { identity, Unsubscribable } from 'rxjs';
+import { isEqual } from 'lodash';
 import {
   DataQuery,
   DataQueryErrorType,
@@ -466,18 +467,19 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
   }
 
   if (changeQueryAction.match(action)) {
-    const { queries } = state;
+    const { queries, queryKeys: currentQueryKeys } = state;
     const { query, index } = action.payload;
 
     // Override path: queries are completely reset
     const nextQuery: DataQuery = generateNewKeyAndAddRefIdIfMissing(query, queries, index);
     const nextQueries = [...queries];
     nextQueries[index] = nextQuery;
+    const nextQueryKeys = getQueryKeys(nextQueries, state.datasourceInstance);
 
     return {
       ...state,
       queries: nextQueries,
-      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
+      queryKeys: isEqual(currentQueryKeys, nextQueryKeys) ? currentQueryKeys : nextQueryKeys,
     };
   }
 
