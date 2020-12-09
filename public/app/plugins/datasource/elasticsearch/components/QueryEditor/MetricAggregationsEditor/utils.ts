@@ -158,9 +158,6 @@ export const metricAggregationConfig: MetricsConfiguration = {
     supportsInlineScript: false,
     hasMeta: false,
     defaults: {},
-    transform: {
-      lag: (value: string) => parseInt(value, 10),
-    },
   },
   cumulative_sum: {
     label: 'Cumulative Sum',

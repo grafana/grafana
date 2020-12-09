@@ -330,7 +330,7 @@ export class ElasticQueryBuilder {
 
       metricAgg = {
         ...metricAgg,
-        ...(isMetricAggregationWithSettings(metric) && transformSettings(metric)),
+        ...(isMetricAggregationWithSettings(metric) && metric.settings),
       };
 
       aggField[metric.type] = metricAgg;
