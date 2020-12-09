@@ -74,7 +74,7 @@ export interface SeriesConfig extends Record<string, any> {
  */
 export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, AxisConfig {
   drawStyle?: DrawStyle;
-  seriesConfig: SeriesConfig;
+  seriesConfig?: SeriesConfig;
 }
 
 export const graphFieldOptions = {

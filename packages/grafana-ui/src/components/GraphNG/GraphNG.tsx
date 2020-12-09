@@ -170,7 +170,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       // need to update field state here because we use a transform to merge framesP
       field.state = { ...field.state, seriesIndex: seriesIdx };
 
-      if (customConfig.seriesConfig.displayInGraph) {
+      if (customConfig.seriesConfig?.displayInGraph) {
         const colorMode = getFieldColorModeForField(field);
         const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
         const showPoints =
@@ -189,22 +189,9 @@ export const GraphNG: React.FC<GraphNGProps> = ({
           fillColor: seriesColor,
           spanNulls: customConfig.spanNulls || false,
         });
-
-        builder.addSeries({
-          scaleKey,
-          mode: customConfig.mode!,
-          lineColor: seriesColor,
-          lineWidth: customConfig.lineWidth,
-          lineInterpolation: customConfig.lineInterpolation,
-          points: pointsMode,
-          pointSize: customConfig.pointSize,
-          pointColor: seriesColor,
-          fillOpacity: customConfig.fillOpacity,
-          fillColor: seriesColor,
-        });
       }
 
-      if (hasLegend.current && customConfig.seriesConfig.displayInLegend) {
+      if (hasLegend.current && customConfig.seriesConfig?.displayInLegend) {
         const axisPlacement = builder.getAxisPlacement(scaleKey);
         // we need to add this as dep or move it to be done outside.
         const ref = getFieldIndexRef ? getFieldIndexRef(i) : undefined;
