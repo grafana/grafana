@@ -1,6 +1,6 @@
 {
   "name": "@grafana-plugins/input-datasource",
-  "version": "7.3.4",
+  "version": "7.3.5",
   "description": "Input Datasource",
   "private": true,
   "repository": {
@@ -16,9 +16,9 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@grafana/data": "7.3.4",
-    "@grafana/toolkit": "7.3.4",
-    "@grafana/ui": "7.3.4"
+    "@grafana/data": "7.3.5",
+    "@grafana/toolkit": "7.3.5",
+    "@grafana/ui": "7.3.5"
   },
   "volta": {
     "node": "12.16.2"
