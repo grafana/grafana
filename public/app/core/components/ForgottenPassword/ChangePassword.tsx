@@ -16,11 +16,6 @@ export const ChangePassword: FC<Props> = ({ onSubmit, onSkip }) => {
   const submit = (passwords: PasswordDTO) => {
     onSubmit(passwords.newPassword);
   };
-  // const onSkipKeypress = (event: KeyboardEvent) => {
-  //   if (event.key === 'Enter' && onSkip) {
-  //     onSkip(event);
-  //   }
-  // };
   return (
     <Form onSubmit={submit}>
       {({ errors, register, getValues }) => (
