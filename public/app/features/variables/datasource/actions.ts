@@ -2,7 +2,7 @@ import { toVariablePayload, VariableIdentifier } from '../state/types';
 import { ThunkResult } from '../../../types';
 import { createDataSourceOptions } from './reducer';
 import { validateVariableSelectionState } from '../state/actions';
-import { DataSourceInstanceSettings, DataSourceSelectItem, stringToJsRegex } from '@grafana/data';
+import { DataSourceInstanceSettings, stringToJsRegex } from '@grafana/data';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { getVariable } from '../state/selectors';
 import { DataSourceVariableModel } from '../types';
@@ -37,12 +37,9 @@ export const updateDataSourceVariableOptions = (
 export const initDataSourceVariableEditor = (
   dependencies: DataSourceVariableActionDependencies = { getDatasourceSrv: getDatasourceSrv }
 ): ThunkResult<void> => dispatch => {
-  const dataSources: DataSourceSelectItem[] = dependencies
+  const dataSources = dependencies
     .getDatasourceSrv()
     .getList({ metrics: true, variables: true })
-    .filter(setting => {
-      return !setting.meta.mixed && !setting.isDefault;
-    })
     .map(toDataSourceSelectItem);
   const dataSourceTypes = _(dataSources)
     .uniqBy('meta.id')

@@ -143,15 +143,9 @@ describe('data source actions', () => {
   describe('when initDataSourceVariableEditor is dispatched', () => {
     it('then the correct actions are dispatched', async () => {
       const meta = getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' });
-      const mixedMeta = getMockPlugin(({
-        name: 'mixed-data-name',
-        id: 'mixed-data-id',
-        mixed: true,
-      } as unknown) as DataSourcePluginMeta);
       const sources: DataSourceInstanceSettings[] = [
         getDataSourceInstanceSetting('first-name', meta),
         getDataSourceInstanceSetting('second-name', meta),
-        getDataSourceInstanceSetting('mixed-name', mixedMeta),
       ];
 
       const { dependencies, getListMock, getDatasourceSrvMock } = getTestContext({ sources });
