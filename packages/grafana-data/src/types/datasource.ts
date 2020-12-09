@@ -567,6 +567,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   username?: string;
   password?: string; // when access is direct, for some legacy datasources
   database?: string;
+  isDefault?: boolean;
 
   /**
    * This is the full Authorization header if basic auth is enabled.
@@ -582,7 +583,6 @@ export interface DataSourceSelectItem {
   name: string;
   value: string | null;
   meta: DataSourcePluginMeta;
-  sort: string;
 }
 
 /**

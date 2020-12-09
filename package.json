@@ -43,7 +43,7 @@
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "plugins:build-bundled": "grafana-toolkit plugin:bundle-managed",
     "watch": "yarn start -d watch,start core:start --watchTheme",
-    "ci:test-frontend": "yarn run prettier:check && yarn run typecheck && yarn run lint && yarn run test:ci && yarn grafana-toolkit node-version-check"
+    "ci:test-frontend": "yarn run prettier:check && yarn run typecheck && yarn run lint && yarn run test:ci && yarn grafana-toolkit node-version-check && ./scripts/ci-check-strict.sh"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/latest/guides/whats-new-in-v7-3/",
@@ -185,9 +185,9 @@
     "style-loader": "1.1.3",
     "terser-webpack-plugin": "2.3.5",
     "ts-jest": "26.4.4",
-    "ts-node": "8.8.1",
-    "tslib": "2.0.1",
-    "typescript": "4.0.2",
+    "ts-node": "9.0.0",
+    "tslib": "2.0.3",
+    "typescript": "4.1.2",
     "webpack": "4.41.5",
     "webpack-bundle-analyzer": "3.6.0",
     "webpack-cleanup-plugin": "0.5.1",

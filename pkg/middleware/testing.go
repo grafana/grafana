@@ -109,5 +109,5 @@ func (sc *scenarioContext) exec() {
 	}
 }
 
-type scenarioFunc func(c *scenarioContext)
+type scenarioFunc func(t *testing.T, c *scenarioContext)
 type handlerFunc func(c *models.ReqContext)

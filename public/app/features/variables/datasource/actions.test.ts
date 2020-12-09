@@ -27,13 +27,11 @@ describe('data source actions', () => {
             name: 'first-name',
             value: 'first-value',
             meta: getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' }),
-            sort: '',
           },
           {
             name: 'second-name',
             value: 'second-value',
             meta: getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' }),
-            sort: '',
           },
         ];
 
@@ -80,13 +78,11 @@ describe('data source actions', () => {
             name: 'first-name',
             value: 'first-value',
             meta: getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' }),
-            sort: '',
           },
           {
             name: 'second-name',
             value: 'second-value',
             meta: getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' }),
-            sort: '',
           },
         ];
 
@@ -134,13 +130,11 @@ describe('data source actions', () => {
           name: 'first-name',
           value: 'first-value',
           meta: getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' }),
-          sort: '',
         },
         {
           name: 'second-name',
           value: 'second-value',
           meta: getMockPlugin({ name: 'mock-data-name', id: 'mock-data-id' }),
-          sort: '',
         },
         {
           name: 'mixed-name',
@@ -150,7 +144,6 @@ describe('data source actions', () => {
             id: 'mixed-data-id',
             mixed: true,
           } as unknown) as DataSourcePluginMeta),
-          sort: '',
         },
       ];
 

@@ -4,11 +4,11 @@ exports[`FormField should render component with custom inputEl 1`] = `
 <div
   className="form-field"
 >
-  <Component
+  <FormLabel
     width={11}
   >
     Test
-  </Component>
+  </FormLabel>
   <span>
     Input
   </span>
@@ -22,11 +22,11 @@ exports[`FormField should render component with default inputEl 1`] = `
 <div
   className="form-field"
 >
-  <Component
+  <FormLabel
     width={11}
   >
     Test
-  </Component>
+  </FormLabel>
   <input
     className="gf-form-input width-12"
     onChange={[MockFunction]}

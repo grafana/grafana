@@ -115,6 +115,8 @@ func readConfig(configFile string) (*Config, error) {
 
 	logger.Info("LDAP enabled, reading config file", "file", configFile)
 
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `filename` comes from grafana configuration file
 	fileBytes, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		return nil, errutil.Wrap("Failed to load LDAP config file", err)

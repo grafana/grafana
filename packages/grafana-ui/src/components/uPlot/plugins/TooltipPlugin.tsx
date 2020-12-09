@@ -12,6 +12,9 @@ interface TooltipPluginProps {
   timeZone: TimeZone;
 }
 
+/**
+ * @alpha
+ */
 export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', timeZone }) => {
   const pluginId = 'PlotTooltip';
   const plotContext = usePlotContext();
@@ -25,7 +28,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
   return (
     <CursorPlugin id={pluginId}>
       {({ focusedSeriesIdx, focusedPointIdx, coords }) => {
-        if (!plotContext.isPlotReady) {
+        if (!plotContext.getPlotInstance()) {
           return null;
         }
 

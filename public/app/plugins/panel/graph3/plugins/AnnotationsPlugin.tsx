@@ -70,7 +70,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
                 continue;
               }
 
-              const xpos = u.valToPos(annotation.time / 1000, 'x', true);
+              const xpos = u.valToPos(annotation.time, 'x', true);
               ctx.beginPath();
               ctx.lineWidth = 2;
               ctx.strokeStyle = theme.palette.red;
@@ -93,13 +93,14 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
 
   const mapAnnotationToXYCoords = useCallback(
     (annotation: AnnotationsDataFrameViewDTO) => {
-      if (!annotation.time) {
+      const plotInstance = plotCtx.getPlotInstance();
+      if (!annotation.time || !plotInstance) {
         return undefined;
       }
 
       return {
-        x: plotCtx.getPlotInstance().valToPos(annotation.time / 1000, 'x'),
-        y: plotCtx.getPlotInstance().bbox.height / window.devicePixelRatio + 4,
+        x: plotInstance.valToPos(annotation.time, 'x'),
+        y: plotInstance.bbox.height / window.devicePixelRatio + 4,
       };
     },
     [plotCtx.getPlotInstance]

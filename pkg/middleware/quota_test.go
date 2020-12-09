@@ -42,7 +42,7 @@ func TestMiddlewareQuota(t *testing.T) {
 	quotaFn := Quota(qs)
 
 	t.Run("With user not logged in", func(t *testing.T) {
-		middlewareScenario(t, "and global quota not reached", func(sc *scenarioContext) {
+		middlewareScenario(t, "and global quota not reached", func(t *testing.T, sc *scenarioContext) {
 			bus.AddHandler("globalQuota", func(query *models.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
@@ -54,10 +54,10 @@ func TestMiddlewareQuota(t *testing.T) {
 
 			sc.m.Get("/user", quotaFn("user"), sc.defaultHandler)
 			sc.fakeReq("GET", "/user").exec()
-			assert.Equal(sc.t, 200, sc.resp.Code)
+			assert.Equal(t, 200, sc.resp.Code)
 		})
 
-		middlewareScenario(t, "and global quota reached", func(sc *scenarioContext) {
+		middlewareScenario(t, "and global quota reached", func(t *testing.T, sc *scenarioContext) {
 			bus.AddHandler("globalQuota", func(query *models.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
@@ -78,7 +78,7 @@ func TestMiddlewareQuota(t *testing.T) {
 			assert.Equal(t, 403, sc.resp.Code)
 		})
 
-		middlewareScenario(t, "and global session quota not reached", func(sc *scenarioContext) {
+		middlewareScenario(t, "and global session quota not reached", func(t *testing.T, sc *scenarioContext) {
 			bus.AddHandler("globalQuota", func(query *models.GetGlobalQuotaByTargetQuery) error {
 				query.Result = &models.GlobalQuotaDTO{
 					Target: query.Target,
@@ -99,7 +99,7 @@ func TestMiddlewareQuota(t *testing.T) {
 			assert.Equal(t, 200, sc.resp.Code)
 		})
 
-		middlewareScenario(t, "and global session quota reached", func(sc *scenarioContext) {
+		middlewareScenario(t, "and global session quota reached", func(t *testing.T, sc *scenarioContext) {
 			origSession := setting.Quota.Global.Session
 			t.Cleanup(func() {
 				setting.Quota.Global.Session = origSession
@@ -108,11 +108,11 @@ func TestMiddlewareQuota(t *testing.T) {
 
 			sc.m.Get("/user", quotaFn("session"), sc.defaultHandler)
 			sc.fakeReq("GET", "/user").exec()
-			assert.Equal(sc.t, 403, sc.resp.Code)
+			assert.Equal(t, 403, sc.resp.Code)
 		})
 	})
 
-	middlewareScenario(t, "with user logged in", func(sc *scenarioContext) {
+	middlewareScenario(t, "with user logged in", func(t *testing.T, sc *scenarioContext) {
 		sc.withTokenSessionCookie("token")
 		bus.AddHandler("test", func(query *models.GetSignedInUserQuery) error {
 			query.Result = &models.SignedInUser{OrgId: 2, UserId: 12}
