@@ -30,8 +30,8 @@ interface DispatchProps {
 type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export class DataSourceVariableEditorUnConnected extends PureComponent<Props> {
-  async componentDidMount() {
-    await this.props.initDataSourceVariableEditor();
+  componentDidMount() {
+    this.props.initDataSourceVariableEditor();
   }
 
   onRegExChange = (event: ChangeEvent<HTMLInputElement>) => {
