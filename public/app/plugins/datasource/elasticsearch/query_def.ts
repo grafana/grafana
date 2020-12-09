@@ -4,7 +4,6 @@ import {
   MetricAggregation,
   MovingAverageModelOption,
   MetricAggregationType,
-  isMetricAggregationWithSettings,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { metricAggregationConfig, pipelineOptions } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
