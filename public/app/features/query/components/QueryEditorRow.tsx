@@ -6,7 +6,7 @@ import _ from 'lodash';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { ErrorBoundaryAlert, HorizontalGroup } from '@grafana/ui';
+import { ErrorBoundaryAlert, HorizontalGroup, InfoBox } from '@grafana/ui';
 import {
   DataQuery,
   DataSourceApi,
@@ -22,7 +22,6 @@ import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOp
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { selectors } from '@grafana/e2e-selectors';
-import { HelpToggle } from './HelpToggle';
 import { PanelModel } from 'app/features/dashboard/state';
 
 interface Props {
@@ -44,6 +43,7 @@ interface State {
   hasTextEditMode: boolean;
   data?: PanelData;
   isOpen?: boolean;
+  showingHelp: boolean;
 }
 
 export class QueryEditorRow extends PureComponent<Props, State> {
@@ -57,6 +57,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     hasTextEditMode: false,
     data: undefined,
     isOpen: true,
+    showingHelp: false,
   };
 
   componentDidMount() {
@@ -220,6 +221,12 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     this.forceUpdate();
   };
 
+  onToggleHelp = () => {
+    this.setState(state => ({
+      showingHelp: !state.showingHelp,
+    }));
+  };
+
   renderCollapsedText(): string | null {
     const { datasource } = this.state;
     if (datasource?.getQueryDisplayText) {
@@ -234,11 +241,16 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   renderActions = (props: { isOpen: boolean; openRow: () => void }) => {
     const { query } = this.props;
-    const { hasTextEditMode } = this.state;
+    const { hasTextEditMode, datasource } = this.state;
     const isDisabled = query.hide;
+
+    const hasEditorHelp = datasource?.components?.QueryEditorHelp;
 
     return (
       <HorizontalGroup width="auto">
+        {hasEditorHelp && (
+          <QueryOperationAction title="Toggle data source help" icon="question-circle" onClick={this.onToggleHelp} />
+        )}
         {hasTextEditMode && (
           <QueryOperationAction
             title="Toggle text edit mode"
@@ -278,7 +290,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   render() {
     const { query, id, index, onChange } = this.props;
-    const { datasource } = this.state;
+    const { datasource, showingHelp } = this.state;
     const isDisabled = query.hide;
 
     const rowClasses = classNames('query-editor-row', {
@@ -305,12 +317,12 @@ export class QueryEditorRow extends PureComponent<Props, State> {
         >
           <div className={rowClasses}>
             <ErrorBoundaryAlert>
-              {editor}
-              {DatasourceCheatsheet && (
-                <HelpToggle>
+              {showingHelp && DatasourceCheatsheet && (
+                <InfoBox onDismiss={this.onToggleHelp}>
                   <DatasourceCheatsheet onClickExample={query => onChange(query)} datasource={datasource} />
-                </HelpToggle>
+                </InfoBox>
               )}
+              {editor}
             </ErrorBoundaryAlert>
           </div>
         </QueryOperationRow>
