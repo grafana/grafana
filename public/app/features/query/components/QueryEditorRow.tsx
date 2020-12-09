@@ -16,6 +16,7 @@ import {
   TimeRange,
   toLegacyResponseData,
   EventBusExtended,
+  DataSourceInstanceSettings,
 } from '@grafana/data';
 import { QueryEditorRowTitle } from './QueryEditorRowTitle';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
@@ -27,8 +28,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 interface Props {
   data: PanelData;
   query: DataQuery;
-  dataSourceValue: string | null;
-  inMixedMode?: boolean;
+  dsSettings: DataSourceInstanceSettings;
   id: string;
   index: number;
   onAddQuery: (query?: DataQuery) => void;
@@ -38,7 +38,7 @@ interface Props {
 }
 
 interface State {
-  loadedDataSourceValue: string | null | undefined;
+  loadedDataSourceIdentifier?: string | null;
   datasource: DataSourceApi | null;
   hasTextEditMode: boolean;
   data?: PanelData;
@@ -52,7 +52,6 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   state: State = {
     datasource: null,
-    loadedDataSourceValue: undefined,
     hasTextEditMode: false,
     data: undefined,
     isOpen: true,
@@ -89,27 +88,31 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     };
   }
 
+  getQueryDataSourceIdentifier(): string | null | undefined {
+    const { query, dsSettings } = this.props;
+    return query.datasource ?? dsSettings.uid;
+  }
+
   async loadDatasource() {
-    const { query, dataSourceValue } = this.props;
     const dataSourceSrv = getDatasourceSrv();
-    let datasource;
+    let datasource: DataSourceApi;
+    const dataSourceIdentifier = this.getQueryDataSourceIdentifier();
 
     try {
-      const datasourceName = dataSourceValue || query.datasource;
-      datasource = await dataSourceSrv.get(datasourceName);
+      datasource = await dataSourceSrv.get(dataSourceIdentifier);
     } catch (error) {
       datasource = await dataSourceSrv.get();
     }
 
     this.setState({
       datasource,
-      loadedDataSourceValue: this.props.dataSourceValue,
+      loadedDataSourceIdentifier: dataSourceIdentifier,
       hasTextEditMode: _.has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
     });
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { loadedDataSourceValue } = this.state;
+    const { datasource, loadedDataSourceIdentifier } = this.state;
     const { data, query } = this.props;
 
     if (data !== prevProps.data) {
@@ -125,7 +128,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     }
 
     // check if we need to load another datasource
-    if (loadedDataSourceValue !== this.props.dataSourceValue) {
+    if (datasource && loadedDataSourceIdentifier !== this.getQueryDataSourceIdentifier()) {
       if (this.angularQueryEditor) {
         this.angularQueryEditor.destroy();
         this.angularQueryEditor = null;
@@ -137,6 +140,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     if (!this.element || this.angularQueryEditor) {
       return;
     }
+
     this.renderAngularQueryEditor();
   }
 
@@ -259,14 +263,14 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   renderTitle = (props: { isOpen: boolean; openRow: () => void }) => {
-    const { query, inMixedMode } = this.props;
+    const { query, dsSettings } = this.props;
     const { datasource } = this.state;
     const isDisabled = query.hide;
 
     return (
       <QueryEditorRowTitle
         query={query}
-        inMixedMode={inMixedMode}
+        inMixedMode={dsSettings.meta.mixed}
         datasource={datasource!}
         disabled={isDisabled}
         onClick={e => this.onToggleEditMode(e, props)}

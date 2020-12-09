@@ -2,7 +2,7 @@ import React from 'react';
 import { UPlotChart } from './Plot';
 import { act, render } from '@testing-library/react';
 import { ArrayVector, dateTime, FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
-import { GraphFieldConfig, GraphMode } from '../uPlot/config';
+import { GraphFieldConfig, DrawStyle } from '../uPlot/config';
 import uPlot from 'uplot';
 import createMockRaf from 'mock-raf';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
@@ -40,7 +40,7 @@ const mockData = () => {
     values: new ArrayVector([10, 20, 5]),
     config: {
       custom: {
-        mode: GraphMode.Line,
+        drawStyle: DrawStyle.Line,
       },
     } as FieldConfig<GraphFieldConfig>,
   });

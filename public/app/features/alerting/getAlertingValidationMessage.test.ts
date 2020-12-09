@@ -22,13 +22,10 @@ describe('getAlertingValidationMessage', () => {
       const getMock = jest.fn().mockResolvedValue(datasource);
       const datasourceSrv: DataSourceSrv = {
         get: getMock,
-        getExternal(): DataSourceInstanceSettings[] {
+        getList(): DataSourceInstanceSettings[] {
           return [];
         },
         getInstanceSettings: (() => {}) as any,
-        getAll(): DataSourceInstanceSettings[] {
-          return [];
-        },
       };
       const targets: ElasticsearchQuery[] = [
         { refId: 'A', query: '@hostname:$hostname', isLogsQuery: false },
@@ -66,10 +63,7 @@ describe('getAlertingValidationMessage', () => {
           return Promise.resolve(alertingDatasource);
         },
         getInstanceSettings: (() => {}) as any,
-        getExternal(): DataSourceInstanceSettings[] {
-          return [];
-        },
-        getAll(): DataSourceInstanceSettings[] {
+        getList(): DataSourceInstanceSettings[] {
           return [];
         },
       };
@@ -96,10 +90,7 @@ describe('getAlertingValidationMessage', () => {
       const datasourceSrv: DataSourceSrv = {
         get: getMock,
         getInstanceSettings: (() => {}) as any,
-        getExternal(): DataSourceInstanceSettings[] {
-          return [];
-        },
-        getAll(): DataSourceInstanceSettings[] {
+        getList(): DataSourceInstanceSettings[] {
           return [];
         },
       };
@@ -128,10 +119,7 @@ describe('getAlertingValidationMessage', () => {
       const datasourceSrv: DataSourceSrv = {
         get: getMock,
         getInstanceSettings: (() => {}) as any,
-        getExternal(): DataSourceInstanceSettings[] {
-          return [];
-        },
-        getAll(): DataSourceInstanceSettings[] {
+        getList(): DataSourceInstanceSettings[] {
           return [];
         },
       };
@@ -160,10 +148,7 @@ describe('getAlertingValidationMessage', () => {
       const datasourceSrv: DataSourceSrv = {
         get: getMock,
         getInstanceSettings: (() => {}) as any,
-        getExternal(): DataSourceInstanceSettings[] {
-          return [];
-        },
-        getAll(): DataSourceInstanceSettings[] {
+        getList(): DataSourceInstanceSettings[] {
           return [];
         },
       };

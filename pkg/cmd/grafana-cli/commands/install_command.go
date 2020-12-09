@@ -291,6 +291,10 @@ func extractFile(file *zip.File, filePath string) (err error) {
 		fileMode = os.FileMode(0755)
 	}
 
+	// We can ignore the gosec G304 warning on this one, since the variable part of the file path stems
+	// from command line flag "pluginsDir", and the only possible damage would be writing to the wrong directory.
+	// If the user shouldn't be writing to this directory, they shouldn't have the permission in the file system.
+	// nolint:gosec
 	dst, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileMode)
 	if err != nil {
 		if os.IsPermission(err) {

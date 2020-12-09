@@ -44,6 +44,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
   const valuesFromFrames: AlignedData[] = [];
   const sourceFields: Field[] = [];
   const sourceFieldsRefs: Record<number, FieldIndexRef> = {};
+  const skipGaps: boolean[][] = [];
 
   // Default to timeseries config
   if (!fields) {
@@ -56,6 +57,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
   for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
     const frame = frames[frameIndex];
     const dims = mapDimesions(fields, frame, frames);
+
     if (!(dims.x.length && dims.y.length)) {
       continue; // no numeric and no time fields
     }
@@ -64,9 +66,12 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       throw new Error('Only a single x field is supported');
     }
 
+    let skipGapsFrame: boolean[] = [];
+
     // Add the first X axis
     if (!sourceFields.length) {
       sourceFields.push(dims.x[0]);
+      skipGapsFrame.push(true);
     }
 
     const alignedData: AlignedData = [
@@ -81,13 +86,18 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       }
 
       let values = field.values.toArray();
+      let spanNulls = field.config.custom.spanNulls || false;
+
       if (field.config.nullValueMode === NullValueMode.AsZero) {
         values = values.map(v => (v === null ? 0 : v));
+        spanNulls = true;
       }
 
       const alignedFieldIndex = (valuesFromFrames.length + 1) * alignedData.length;
       sourceFieldsRefs[alignedFieldIndex] = { fieldIndex, frameIndex };
+
       alignedData.push(values);
+      skipGapsFrame.push(spanNulls);
 
       // This will cache an appropriate field name in the field state
       getFieldDisplayName(field, frame, frames);
@@ -95,6 +105,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     }
 
     valuesFromFrames.push(alignedData);
+    skipGaps.push(skipGapsFrame);
   }
 
   if (valuesFromFrames.length === 0) {
@@ -102,7 +113,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
   }
 
   // do the actual alignment (outerJoin on the first arrays)
-  const { data: alignedData, isGap } = outerJoinValues(valuesFromFrames);
+  let { data: alignedData, isGap } = outerJoinValues(valuesFromFrames, skipGaps);
 
   if (alignedData!.length !== sourceFields.length) {
     throw new Error('outerJoinValues lost a field?');
@@ -122,18 +133,20 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
   };
 }
 
-export function outerJoinValues(tables: AlignedData[]): AlignedDataWithGapTest {
+// skipGaps is a tables-matched bool array indicating which series can skip storing indices of original nulls
+export function outerJoinValues(tables: AlignedData[], skipGaps?: boolean[][]): AlignedDataWithGapTest {
   if (tables.length === 1) {
     return {
       data: tables[0],
-      isGap: () => true,
+      isGap: skipGaps ? (u: uPlot, seriesIdx: number, dataIdx: number) => !skipGaps[0][seriesIdx] : () => true,
     };
   }
 
   let xVals: Set<number> = new Set();
   let xNulls: Array<Set<number>> = [new Set()];
 
-  for (const t of tables) {
+  for (let ti = 0; ti < tables.length; ti++) {
+    let t = tables[ti];
     let xs = t[0];
     let len = xs.length;
     let nulls: Set<number> = new Set();
@@ -143,11 +156,13 @@ export function outerJoinValues(tables: AlignedData[]): AlignedDataWithGapTest {
     }
 
     for (let j = 1; j < t.length; j++) {
-      let ys = t[j];
+      if (skipGaps == null || !skipGaps[ti][j]) {
+        let ys = t[j];
 
-      for (let i = 0; i < len; i++) {
-        if (ys[i] == null) {
-          nulls.add(xs[i]);
+        for (let i = 0; i < len; i++) {
+          if (ys[i] == null) {
+            nulls.add(xs[i]);
+          }
         }
       }
     }

@@ -1,8 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Render should render component 1`] = `
-<Component>
-  <Component
+<VerticalGroup>
+  <FieldSet
     label="Team Settings"
   >
     <Form
@@ -20,9 +20,9 @@ exports[`Render should render component 1`] = `
     >
       <Component />
     </Form>
-  </Component>
+  </FieldSet>
   <SharedPreferences
     resourceUri="teams/1"
   />
-</Component>
+</VerticalGroup>
 `;
