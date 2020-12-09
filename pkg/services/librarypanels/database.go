@@ -10,8 +10,8 @@ import (
 )
 
 // createLibraryPanel function adds a LibraryPanel
-func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd *addLibraryPanelCommand) (*LibraryPanel, error) {
-	libraryPanel := &LibraryPanel{
+func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd addLibraryPanelCommand) (LibraryPanel, error) {
+	libraryPanel := LibraryPanel{
 		OrgID:    c.SignedInUser.OrgId,
 		FolderID: cmd.FolderID,
 		Title:    cmd.Title,
@@ -31,15 +31,11 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd *ad
 			return errLibraryPanelAlreadyAdded
 		}
 
-		if _, err := session.Insert(libraryPanel); err != nil {
+		if _, err := session.Insert(&libraryPanel); err != nil {
 			return err
 		}
 		return nil
 	})
 
-	if err != nil {
-		return nil, err
-	}
-
-	return libraryPanel, nil
+	return libraryPanel, err
 }

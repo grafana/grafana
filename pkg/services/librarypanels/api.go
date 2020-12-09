@@ -21,10 +21,10 @@ func (lps *LibraryPanelService) registerAPIEndpoints() {
 
 // createHandler handles POST /api/library-panels.
 func (lps *LibraryPanelService) createHandler(c *models.ReqContext, cmd addLibraryPanelCommand) api.Response {
-	panel, err := lps.createLibraryPanel(c, &cmd)
+	panel, err := lps.createLibraryPanel(c, cmd)
 
 	if err != nil {
-		return api.Error(500, "Failed to create library panel", err)
+		return api.Error(400, "Failed to create library panel", err)
 	}
 
 	return api.JSON(200, util.DynMap{"panel": panel})

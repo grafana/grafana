@@ -32,7 +32,7 @@ func TestCreateLibraryPanel(t *testing.T) {
 		require.Equal(t, 200, response.Status())
 
 		response = lps.createHandler(&context, command)
-		require.Equal(t, 500, response.Status())
+		require.Equal(t, 400, response.Status())
 
 		t.Cleanup(registry.ClearOverrides)
 	})
