@@ -4,7 +4,13 @@ import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { BucketAggregation } from '../aggregations';
-import { bucketAggregationConfig, createOrderByOptions, intervalOptions, orderOptions, sizeOptions } from '../utils';
+import {
+  bucketAggregationConfig,
+  createOrderByOptionsFromMetrics,
+  intervalOptions,
+  orderOptions,
+  sizeOptions,
+} from '../utils';
 import { FiltersSettingsEditor } from './FiltersSettingsEditor';
 import { useDescription } from './useDescription';
 import { useQuery } from '../../ElasticsearchQueryContext';
@@ -21,7 +27,7 @@ export const SettingsEditor: FunctionComponent<Props> = ({ bucketAgg }) => {
   const dispatch = useDispatch();
   const { metrics } = useQuery();
   const settingsDescription = useDescription(bucketAgg);
-  const orderBy = createOrderByOptions(metrics);
+  const orderBy = createOrderByOptionsFromMetrics(metrics);
 
   return (
     <SettingsEditorContainer label={settingsDescription}>

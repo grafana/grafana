@@ -126,7 +126,10 @@ function createOrderByOptionsForPercentiles(metric: Percentiles): OrderByOption[
   });
 }
 
-export const createOrderByOptions = (metrics: MetricAggregation[] = []): OrderByOption[] => {
+/**
+ * This creates all the valid order by options based on the metrics
+ */
+export const createOrderByOptionsFromMetrics = (metrics: MetricAggregation[] = []): OrderByOption[] => {
   const metricOptions: OrderByOption[] = [];
   metrics.forEach(metric => {
     if (metric.type === 'extended_stats') {
