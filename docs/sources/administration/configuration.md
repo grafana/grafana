@@ -441,7 +441,8 @@ Google Tag Manager ID, only enabled if you enter an ID here.
 
 > Only available in Grafana v6.5+.
 
-Disable creation of admin user on first start of Grafana. Default is `false`.
+Disable creation of Server Admin user on first start of Grafana. Default is `false`.
+  Note: By setting this attribute non local Server Admin user is required for Grafana Server.  Local users can only be created by Server Admin.  Org Admins that authenticate via LDAP, OAUTH or SAML can not create local users on Grafana Server.  
 
 ### admin_user
 
