@@ -1,5 +1,5 @@
 import React from 'react';
-import { TooltipPlugin, ZoomPlugin, GraphNG } from '@grafana/ui';
+import { TooltipPlugin, ZoomPlugin, GraphNG, MenuItemsGroup } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
@@ -17,6 +17,20 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
   options,
   onChangeTimeRange,
 }) => {
+  const defaultContextMenuLinks: MenuItemsGroup[] = [
+    {
+      items: [
+        {
+          label: 'Add annotation',
+          icon: 'comment-alt',
+          onClick: () => {
+            alert('TODO');
+          },
+        },
+      ],
+    },
+  ];
+
   return (
     <GraphNG
       data={data.series}
@@ -28,7 +42,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
     >
       <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
       <ZoomPlugin onZoom={onChangeTimeRange} />
-      <ContextMenuPlugin timeZone={timeZone} />
+      <ContextMenuPlugin timeZone={timeZone} defaultItems={defaultContextMenuLinks} />
       {data.annotations ? <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} /> : <></>}
       {data.annotations ? <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} /> : <></>}
     </GraphNG>
