@@ -25,7 +25,6 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd *ad
 	}
 
 	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-
 		if res, err := session.Query("SELECT 1 from library_panel WHERE org_id=? and folder_id=? and title=?", c.SignedInUser.OrgId, cmd.FolderID, cmd.Title); err != nil {
 			return err
 		} else if len(res) == 1 {
