@@ -30,6 +30,9 @@ interface SelectionPluginProps extends PlotPluginProps {
   children?: (api: SelectionPluginAPI) => JSX.Element;
 }
 
+/**
+ * @alpha
+ */
 export const SelectionPlugin: React.FC<SelectionPluginProps> = ({ onSelect, onDismiss, lazy, id, children }) => {
   const pluginId = `SelectionPlugin:${id}`;
   const plotCtx = usePlotContext();
