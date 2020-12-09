@@ -12,6 +12,7 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { defaultBucketAgg, defaultMetricAgg, findMetricById } from './query_def';
 import { ElasticsearchQuery } from './types';
+import { convertOrderByToMetricId } from './utils';
 
 export class ElasticQueryBuilder {
   timeField: string;
@@ -34,7 +35,6 @@ export class ElasticQueryBuilder {
   }
 
   buildTermsAgg(aggDef: Terms, queryNode: { terms?: any; aggs?: any }, target: ElasticsearchQuery) {
-    let metricRef;
     queryNode.terms = { field: aggDef.field };
 
     if (!aggDef.settings) {
@@ -54,10 +54,10 @@ export class ElasticQueryBuilder {
       }
 
       // if metric ref, look it up and add it to this agg level
-      metricRef = parseInt(aggDef.settings.orderBy, 10);
-      if (!isNaN(metricRef)) {
+      const metricId = convertOrderByToMetricId(aggDef.settings.orderBy);
+      if (metricId) {
         for (let metric of target.metrics || []) {
-          if (metric.id === aggDef.settings.orderBy) {
+          if (metric.id === metricId) {
             queryNode.aggs = {};
             queryNode.aggs[metric.id] = {};
             if (isMetricAggregationWithField(metric)) {

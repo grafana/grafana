@@ -96,6 +96,7 @@ export type ExtendedStatMetaType =
   | 'std_deviation'
   | 'std_deviation_bounds_upper'
   | 'std_deviation_bounds_lower';
+
 export interface ExtendedStat {
   label: string;
   value: ExtendedStatMetaType;
@@ -113,7 +114,7 @@ export interface ExtendedStats extends MetricAggregationWithField, MetricAggrega
   };
 }
 
-interface Percentiles extends MetricAggregationWithField, MetricAggregationWithInlineScript {
+export interface Percentiles extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'percentiles';
   settings?: {
     percents?: string[];
