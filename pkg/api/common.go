@@ -145,6 +145,11 @@ func (r *RedirectResponse) WriteTo(ctx *models.ReqContext) {
 	ctx.Redirect(r.location)
 }
 
+// Status gets the response's status.
+func (*RedirectResponse) Status() int {
+	return http.StatusFound
+}
+
 func Redirect(location string) *RedirectResponse {
 	return &RedirectResponse{location: location}
 }
