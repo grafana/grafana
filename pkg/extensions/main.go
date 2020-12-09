@@ -5,7 +5,9 @@ import (
 	// remove the cron (v1) dependency
 
 	_ "github.com/beevik/etree"
+	_ "github.com/cortexproject/cortex/pkg/util"
 	_ "github.com/crewjam/saml"
+	_ "github.com/go-kit/kit/log"
 	_ "github.com/gobwas/glob"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/licensing"
