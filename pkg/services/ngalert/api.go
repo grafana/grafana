@@ -1,19 +1,13 @@
 package ngalert
 
 import (
-	"context"
-	"fmt"
-	"time"
-
-	"github.com/grafana/grafana/pkg/services/ngalert/eval"
-
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -37,19 +31,9 @@ func (ng *AlertNG) registerAPIEndpoints() {
 
 // conditionEvalEndpoint handles POST /api/alert-definitions/eval.
 func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertConditionCommand) api.Response {
-	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
-	defer cancelFn()
-
-	alertExecCtx := eval.AlertExecCtx{Ctx: alertCtx, OrgID: c.SignedInUser.OrgId}
-
-	execResult, err := dto.Condition.Execute(alertExecCtx, timeNow())
+	evalResults, err := eval.ConditionEval(&dto.Condition, timeNow())
 	if err != nil {
-		return api.Error(400, "Failed to execute conditions", err)
-	}
-
-	evalResults, err := eval.EvaluateExecutionResult(execResult)
-	if err != nil {
-		return api.Error(400, "Failed to evaluate results", err)
+		return api.Error(400, "Failed to evaluate conditions", err)
 	}
 
 	frame := evalResults.AsDataFrame()
@@ -68,7 +52,12 @@ func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertCond
 func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) api.Response {
 	alertDefinitionID := c.ParamsInt64(":alertDefinitionId")
 
-	evalResults, err := ng.alertDefinitionEval(alertDefinitionID, timeNow())
+	condition, err := ng.LoadAlertCondition(alertDefinitionID)
+	if err != nil {
+		return api.Error(400, "Failed to load alert definition conditions", err)
+	}
+
+	evalResults, err := eval.ConditionEval(condition, timeNow())
 	if err != nil {
 		return api.Error(400, "Failed to evaludate alert", err)
 	}
@@ -86,29 +75,6 @@ func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) api.Respons
 	return api.JSON(200, util.DynMap{
 		"instances": instances,
 	})
-}
-
-func (ng *AlertNG) alertDefinitionEval(alertDefinitionID int64, now time.Time) (eval.Results, error) {
-	conditions, err := ng.LoadAlertCondition(alertDefinitionID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load conditions: %w", err)
-	}
-
-	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
-	defer cancelFn()
-
-	alertExecCtx := eval.AlertExecCtx{OrgID: conditions.OrgID, Ctx: alertCtx}
-
-	execResult, err := conditions.Execute(alertExecCtx, now)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute conditions: %w", err)
-	}
-
-	evalResults, err := eval.EvaluateExecutionResult(execResult)
-	if err != nil {
-		return nil, fmt.Errorf("failed to evaluate results: %w", err)
-	}
-	return evalResults, nil
 }
 
 // getAlertDefinitionEndpoint handles GET /api/alert-definitions/:alertDefinitionId.

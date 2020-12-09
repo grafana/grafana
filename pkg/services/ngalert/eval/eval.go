@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.
@@ -90,8 +91,8 @@ type AlertExecCtx struct {
 	Ctx context.Context
 }
 
-// Execute runs the Condition's expressions or queries.
-func (c *Condition) Execute(ctx AlertExecCtx, now time.Time) (*ExecutionResults, error) {
+// execute runs the Condition's expressions or queries.
+func (c *Condition) execute(ctx AlertExecCtx, now time.Time) (*ExecutionResults, error) {
 	result := ExecutionResults{}
 	if !c.IsValid() {
 		return nil, fmt.Errorf("invalid conditions")
@@ -152,9 +153,9 @@ func (c *Condition) Execute(ctx AlertExecCtx, now time.Time) (*ExecutionResults,
 	return &result, nil
 }
 
-// EvaluateExecutionResult takes the ExecutionResult, and returns a frame where
+// evaluateExecutionResult takes the ExecutionResult, and returns a frame where
 // each column is a string type that holds a string representing its state.
-func EvaluateExecutionResult(results *ExecutionResults) (Results, error) {
+func evaluateExecutionResult(results *ExecutionResults) (Results, error) {
 	evalResults := make([]result, 0)
 	labels := make(map[string]bool)
 	for _, f := range results.Results {
@@ -205,4 +206,23 @@ func (evalResults Results) AsDataFrame() data.Frame {
 	}
 	f := data.NewFrame("", fields...)
 	return *f
+}
+
+// ConditionEval executes conditions and evaluates the result.
+func ConditionEval(condition *Condition, now time.Time) (Results, error) {
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
+	defer cancelFn()
+
+	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx}
+
+	execResult, err := condition.execute(alertExecCtx, now)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute conditions: %w", err)
+	}
+
+	evalResults, err := evaluateExecutionResult(execResult)
+	if err != nil {
+		return nil, fmt.Errorf("failed to evaluate results: %w", err)
+	}
+	return evalResults, nil
 }

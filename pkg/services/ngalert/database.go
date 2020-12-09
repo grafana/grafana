@@ -59,7 +59,7 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 			intervalInSeconds = *cmd.IntervalInSeconds
 		}
 
-		initialVersion := 1
+		var initialVersion int64 = 1
 		alertDefinition := &AlertDefinition{
 			OrgID:     cmd.OrgID,
 			Name:      cmd.Name,
@@ -173,7 +173,7 @@ func (ng *AlertNG) getOrgAlertDefinitions(query *listAlertDefinitionsQuery) erro
 func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alerts := make([]*AlertDefinition, 0)
-		q := "SELECT id, interval FROM alert_definition"
+		q := "SELECT id, interval, version FROM alert_definition"
 		if err := sess.SQL(q).Find(&alerts); err != nil {
 			return err
 		}
