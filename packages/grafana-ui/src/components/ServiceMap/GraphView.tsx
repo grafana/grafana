@@ -113,48 +113,64 @@ export function GraphView(props: Props) {
           useTestData={useTestData}
         />
       </div>
+
       {openedNode && (
-        <ContextMenu
-          renderHeader={() => <div>{openedNode.node.name}</div>}
-          items={[
-            {
-              label: 'Open in Explore',
-              items: props.getNodeLinks(openedNode.node).map(link => ({
-                label: link.title,
-                url: link.href,
-                onClick: link.onClick,
-              })),
-            },
-          ]}
+        <GraphContextMenu
+          event={openedNode.event}
           onClose={() => setOpenedNode(undefined)}
-          x={openedNode.event.pageX}
-          y={openedNode.event.pageY}
+          links={props.getNodeLinks(openedNode.node)}
+          header={<div>{openedNode.node.name}</div>}
         />
       )}
 
       {openedEdge && (
-        <ContextMenu
-          renderHeader={() => (
+        <GraphContextMenu
+          event={openedEdge.event}
+          onClose={() => setOpenedEdge(undefined)}
+          links={props.getEdgeLinks(openedEdge.edge)}
+          header={
             <div>
               {(openedEdge.edge.source as NodeDatum).name} {'->'} {(openedEdge.edge.target as NodeDatum).name}
             </div>
-          )}
-          items={[
-            {
-              label: 'Open in Explore',
-              items: props.getEdgeLinks(openedEdge.edge).map(link => ({
-                label: link.title,
-                url: link.href,
-                onClick: link.onClick,
-              })),
-            },
-          ]}
-          onClose={() => setOpenedEdge(undefined)}
-          x={openedEdge.event.pageX}
-          y={openedEdge.event.pageY}
+          }
         />
       )}
     </div>
+  );
+}
+
+function GraphContextMenu({
+  header,
+  onClose,
+  links,
+  event,
+}: {
+  header: React.ReactNode;
+  onClose: () => void;
+  links: LinkModel[];
+  event: MouseEvent;
+}) {
+  if (!links.length) {
+    return null;
+  }
+
+  return (
+    <ContextMenu
+      renderHeader={() => header}
+      items={[
+        {
+          label: 'Open in Explore',
+          items: links.map(link => ({
+            label: link.title,
+            url: link.href,
+            onClick: link.onClick,
+          })),
+        },
+      ]}
+      onClose={onClose}
+      x={event.pageX}
+      y={event.pageY}
+    />
   );
 }
 
