@@ -912,6 +912,8 @@ Syslog tag. By default, the process's `argv[0]` is used.
 
 ## [log.frontend]
 
+**Note:** This feature is available in Grafana 7.4+.
+
 ### enabled
 
 Sentry javascript agent is initialized. Default is `false`.
