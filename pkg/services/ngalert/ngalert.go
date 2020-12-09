@@ -117,7 +117,7 @@ func addAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
 			{Name: "parent_version", Type: migrator.DB_Int, Nullable: false},
 			{Name: "restored_from", Type: migrator.DB_Int, Nullable: false},
 			{Name: "version", Type: migrator.DB_Int, Nullable: false},
-			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "condition", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "data", Type: migrator.DB_Text, Nullable: false},

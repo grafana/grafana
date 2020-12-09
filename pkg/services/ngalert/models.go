@@ -28,7 +28,7 @@ type AlertDefinitionVersion struct {
 	RestoredFrom      int64
 	Version           int64
 
-	Created   time.Time
+	Created   int64
 	Name      string
 	Condition string
 	Data      []eval.AlertQuery

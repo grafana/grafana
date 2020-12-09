@@ -3,7 +3,6 @@ package ngalert
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -84,7 +83,7 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 		alertDefVersion := AlertDefinitionVersion{
 			AlertDefinitionID: alertDefinition.ID,
 			Version:           alertDefinition.Version,
-			Created:           time.Unix(alertDefinition.Updated, 0),
+			Created:           alertDefinition.Updated,
 			Name:              alertDefinition.Name,
 			Data:              alertDefinition.Data,
 			Interval:          alertDefinition.Interval,
@@ -141,7 +140,7 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 			AlertDefinitionID: alertDefinition.ID,
 			ParentVersion:     existingAlertDefinition.Version,
 			Version:           alertDefinition.Version,
-			Created:           time.Unix(alertDefinition.Updated, 0),
+			Created:           alertDefinition.Updated,
 			Name:              alertDefinition.Name,
 			Data:              alertDefinition.Data,
 			Interval:          alertDefinition.Interval,
