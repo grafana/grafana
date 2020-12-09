@@ -1,5 +1,14 @@
-import { ConfigOverrideRule, FieldConfigSource, FieldMatcherID, getFieldDisplayName } from '@grafana/data';
+import {
+  FieldConfigSource,
+  FieldMatcherID,
+  getFieldDisplayName,
+  isSystemOverride,
+  SystemConfigOverrideRule,
+} from '@grafana/data';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from '@grafana/ui';
+
+const displayOverrideRef = 'series_display';
+const isDisplayOverride = isSystemOverride(displayOverrideRef);
 
 export const displayConfigFactory = (
   event: GraphNGLegendEvent,
@@ -7,12 +16,9 @@ export const displayConfigFactory = (
 ): FieldConfigSource<any> => {
   const { field, frame, data, mode } = event;
   const { overrides } = fieldConfig;
-  const displayName = getFieldDisplayName(field, frame, data);
 
-  // currently we assume that the last config is the one
-  // toggling the series visibility. Should be replaced by
-  // some logic that try to find the "system" config in the list.
-  const currentIndex = overrides.length - 1;
+  const displayName = getFieldDisplayName(field, frame, data);
+  const currentIndex = overrides.findIndex(isDisplayOverride);
 
   if (currentIndex < 0) {
     const override = createFreshOverride(displayName);
@@ -24,7 +30,7 @@ export const displayConfigFactory = (
   }
 
   const overridesCopy = Array.from(overrides);
-  const [current] = overridesCopy.splice(currentIndex, 1);
+  const [current] = overridesCopy.splice(currentIndex, 1) as SystemConfigOverrideRule[];
 
   if (mode === GraphNGLegendEventMode.select) {
     const override = createFreshOverride(displayName);
@@ -43,8 +49,9 @@ export const displayConfigFactory = (
   };
 };
 
-const createFreshOverride = (displayName: string): ConfigOverrideRule => {
+const createFreshOverride = (displayName: string): SystemConfigOverrideRule => {
   return {
+    __systemRef: displayOverrideRef,
     matcher: {
       id: FieldMatcherID.byRegexp,
       options: `^(?!${displayName}$).*$`,
@@ -62,7 +69,7 @@ const createFreshOverride = (displayName: string): ConfigOverrideRule => {
   };
 };
 
-const createExtendedOverride = (current: ConfigOverrideRule, displayName: string): ConfigOverrideRule => {
+const createExtendedOverride = (current: SystemConfigOverrideRule, displayName: string): SystemConfigOverrideRule => {
   const property = current.properties.find(p => p.id === 'custom.seriesConfig') ?? {
     id: 'custom.seriesConfig',
     value: {
@@ -75,6 +82,7 @@ const createExtendedOverride = (current: ConfigOverrideRule, displayName: string
   const combined = combinedMatcher(current, displayName);
 
   return {
+    __systemRef: displayOverrideRef,
     matcher: {
       id: FieldMatcherID.byRegexp,
       options: `^(?!${combined}$).*$`,
@@ -91,7 +99,7 @@ const createExtendedOverride = (current: ConfigOverrideRule, displayName: string
   };
 };
 
-const combinedMatcher = (current: ConfigOverrideRule, displayName: string): string => {
+const combinedMatcher = (current: SystemConfigOverrideRule, displayName: string): string => {
   const match = /^\^\(\?\!([\w|-]+)\$\)\.\*\$$/.exec(current.matcher.options);
 
   if (match?.length === 2) {

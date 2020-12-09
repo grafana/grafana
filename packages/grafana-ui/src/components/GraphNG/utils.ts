@@ -85,6 +85,26 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
         values = values.map(v => (v === null ? 0 : v));
       }
 
+      // // data frame 1
+      // 0: a // time
+      // 1: b // number
+      // 2: c // number
+
+      // // data frame 2
+      // 0: d // time
+      // 1: e // string
+      // 2: f // number
+
+      // // aligned data
+      // 0: a
+      // 1: b
+      // 2: c
+      // 3: f
+
+      // // index
+      // [0] -> 0,0
+      // [3] -> 1,2
+
       const alignedFieldIndex = (valuesFromFrames.length + 1) * alignedData.length;
       sourceFieldsRefs[alignedFieldIndex] = { fieldIndex, frameIndex };
       alignedData.push(values);

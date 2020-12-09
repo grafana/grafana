@@ -15,6 +15,26 @@ export interface ConfigOverrideRule {
   properties: DynamicConfigValue[];
 }
 
+/**
+ * Describes config override rules created when interacting with Grafana.
+ *
+ * @public
+ */
+export interface SystemConfigOverrideRule extends ConfigOverrideRule {
+  __systemRef: string;
+}
+
+/**
+ * Guard functionality to check if an override rule is of type {@link SystemConfigOverrideRule}.
+ * It will only return true if the {@link SystemConfigOverrideRule} has the passed systemRef.
+ *
+ * @param ref system override reference
+ */
+export function isSystemOverride<T extends SystemConfigOverrideRule>(ref: string) {
+  return (override: ConfigOverrideRule): override is T => {
+    return (override as T)?.__systemRef === ref;
+  };
+}
 export interface FieldConfigSource<TOptions extends object = any> {
   // Defaults applied to all numeric fields
   defaults: FieldConfig<TOptions>;
