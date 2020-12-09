@@ -47,13 +47,15 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
       </div>
 
       <div className="gf-form">
-        <InlineFormLabel tooltip="Tags that will be used in the Loki query">Tags</InlineFormLabel>
+        <InlineFormLabel tooltip="Tags that will be used in the Loki query. Default tags: 'cluster', 'hostname', 'namespace', 'pod'">
+          Tags
+        </InlineFormLabel>
         <TagsInput
           tags={options.jsonData.tracesToLogs?.tags}
-          onChange={ds =>
+          onChange={tags =>
             updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'tracesToLogs', {
               datasourceUid: options.jsonData.tracesToLogs?.datasourceUid,
-              tags: ds,
+              tags: tags,
             })
           }
         />

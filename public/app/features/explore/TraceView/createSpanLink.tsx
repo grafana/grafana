@@ -70,7 +70,7 @@ const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'];
 
 function getLokiQueryFromSpan(span: TraceSpan, keys?: string[]): string {
   const keysToCheck = keys?.length ? keys : defaultKeys;
-  const tags = span.process.tags.reduce((acc, tag) => {
+  const tags = [...span.process.tags, ...span.tags].reduce((acc, tag) => {
     if (keysToCheck.includes(tag.key)) {
       acc.push(`${tag.key}="${tag.value}"`);
     }

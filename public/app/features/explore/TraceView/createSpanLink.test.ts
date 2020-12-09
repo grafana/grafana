@@ -34,6 +34,12 @@ describe('createSpanLinkFactory', () => {
       const linkDef = createLink!({
         startTime: new Date('2020-10-14T01:00:00Z').valueOf() * 1000,
         duration: 1000 * 1000,
+        tags: [
+          {
+            key: 'host',
+            value: 'host',
+          },
+        ],
         process: {
           tags: [
             {
@@ -64,6 +70,12 @@ describe('createSpanLinkFactory', () => {
       const linkDef = createLink!({
         startTime: new Date('2020-10-14T01:00:00Z').valueOf() * 1000,
         duration: 1000 * 1000,
+        tags: [
+          {
+            key: 'host',
+            value: 'host',
+          },
+        ],
         process: {
           tags: [
             {
@@ -80,6 +92,41 @@ describe('createSpanLinkFactory', () => {
 
       expect(linkDef.href).toBe(
         `/explore?left={"range":{"from":"20201014T000000","to":"20201014T010006"},"datasource":"loki1","queries":[{"expr":"{ip=\\"192.168.0.1\\"}","refId":""}]}`
+      );
+    });
+
+    it('from tags and process tags as well', () => {
+      const splitOpenFn = jest.fn();
+      const createLink = createSpanLinkFactory(splitOpenFn, {
+        datasourceUid: 'lokiUid',
+        tags: ['ip', 'host'],
+      });
+      expect(createLink).toBeDefined();
+      const linkDef = createLink!({
+        startTime: new Date('2020-10-14T01:00:00Z').valueOf() * 1000,
+        duration: 1000 * 1000,
+        tags: [
+          {
+            key: 'host',
+            value: 'host',
+          },
+        ],
+        process: {
+          tags: [
+            {
+              key: 'hostname',
+              value: 'hostname1',
+            },
+            {
+              key: 'ip',
+              value: '192.168.0.1',
+            },
+          ],
+        } as any,
+      } as any);
+
+      expect(linkDef.href).toBe(
+        `/explore?left={"range":{"from":"20201014T000000","to":"20201014T010006"},"datasource":"loki1","queries":[{"expr":"{ip=\\"192.168.0.1\\", host=\\"host\\"}","refId":""}]}`
       );
     });
   });
