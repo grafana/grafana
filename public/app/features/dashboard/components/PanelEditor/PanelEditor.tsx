@@ -1,38 +1,41 @@
-import React, { PureComponent } from 'react';
-import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
-import { Button, HorizontalGroup, Icon, RadioButtonGroup, stylesFactory } from '@grafana/ui';
-import { css, cx } from 'emotion';
-import config from 'app/core/config';
-import AutoSizer from 'react-virtualized-auto-sizer';
-
-import { PanelModel } from '../../state/PanelModel';
-import { DashboardModel } from '../../state/DashboardModel';
-import { DashboardPanel } from '../../dashgrid/DashboardPanel';
-
-import SplitPane from 'react-split-pane';
-import { StoreState } from '../../../../types/store';
+import React, { createRef, MutableRefObject, PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
-import { updateLocation } from '../../../../core/reducers/location';
+import AutoSizer from 'react-virtualized-auto-sizer';
+import SplitPane from 'react-split-pane';
+import { css, cx } from 'emotion';
 import { Unsubscribable } from 'rxjs';
-import { DisplayMode, displayModes, PanelEditorTab } from './types';
+
+import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { Button, HorizontalGroup, Icon, RadioButtonGroup, stylesFactory } from '@grafana/ui';
+
+import config from 'app/core/config';
+import { appEvents } from 'app/core/core';
+import { calculatePanelSize } from './utils';
+
 import { PanelEditorTabs } from './PanelEditorTabs';
 import { DashNavTimeControls } from '../DashNav/DashNavTimeControls';
-import { CoreEvents, LocationState } from 'app/types';
-import { calculatePanelSize } from './utils';
-import { initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
-import { PanelEditorUIState, setDiscardChanges } from './state/reducers';
-import { getPanelEditorTabs } from './state/selectors';
-import { getPanelStateById } from '../../state/selectors';
 import { OptionsPaneContent } from './OptionsPaneContent';
-import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
-import { VariableModel } from 'app/features/variables/types';
-import { getVariables } from 'app/features/variables/state/selectors';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
-import { appEvents } from 'app/core/core';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
-import { selectors } from '@grafana/e2e-selectors';
+import { DashboardPanel } from '../../dashgrid/DashboardPanel';
+
+import { initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from './state/actions';
+
+import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
+import { updateLocation } from 'app/core/reducers/location';
+import { PanelEditorUIState, setDiscardChanges } from './state/reducers';
+
+import { getPanelEditorTabs } from './state/selectors';
+import { getPanelStateById } from '../../state/selectors';
+import { getVariables } from 'app/features/variables/state/selectors';
+
+import { CoreEvents, LocationState, StoreState } from 'app/types';
+import { DisplayMode, displayModes, PanelEditorTab } from './types';
+import { VariableModel } from 'app/features/variables/types';
+import { DashboardModel, PanelModel } from '../../state';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -62,14 +65,27 @@ type Props = OwnProps & ConnectedProps & DispatchProps;
 
 export class PanelEditorUnconnected extends PureComponent<Props> {
   querySubscription: Unsubscribable;
+  rafToken = createRef<number>();
 
   componentDidMount() {
     this.props.initPanelEditor(this.props.sourcePanel, this.props.dashboard);
+
+    window.addEventListener('resize', this.updateSplitPaneSize);
   }
 
   componentWillUnmount() {
     this.props.panelEditorCleanUp();
+    window.removeEventListener('resize', this.updateSplitPaneSize);
   }
+
+  updateSplitPaneSize = () => {
+    if (this.rafToken.current !== undefined) {
+      window.cancelAnimationFrame(this.rafToken.current!);
+    }
+    (this.rafToken as MutableRefObject<number>).current = window.requestAnimationFrame(() => {
+      this.forceUpdate();
+    });
+  };
 
   onPanelExit = () => {
     this.props.updateLocation({
@@ -131,11 +147,16 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       return;
     }
 
-    const targetPane = pane === Pane.Top ? 'topPaneSize' : 'rightPaneSize';
     const { updatePanelEditorUIState } = this.props;
-    updatePanelEditorUIState({
-      [targetPane]: size,
-    });
+    if (pane === Pane.Top) {
+      updatePanelEditorUIState({
+        topPaneSize: size / window.innerHeight,
+      });
+    } else {
+      updatePanelEditorUIState({
+        rightPaneSize: size / window.innerWidth,
+      });
+    }
   };
 
   onDragStarted = () => {
@@ -187,11 +208,21 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
   renderHorizontalSplit(styles: EditorStyles) {
     const { dashboard, panel, tabs, uiState } = this.props;
+    /*
+      Guesstimate the height of the browser window minus
+      panel toolbar and editor toolbar (~120px). This is to prevent resizing
+      the preview window beyond the browser window.
+     */
+    const windowHeight = window.innerHeight - 120;
+    const size = uiState.topPaneSize >= 1 ? uiState.topPaneSize : (uiState.topPaneSize as number) * window.innerHeight;
+
     return tabs.length > 0 ? (
       <SplitPane
         split="horizontal"
         minSize={200}
+        maxSize={windowHeight}
         primary="first"
+        size={size}
         /* Use persisted state for default size */
         defaultSize={uiState.topPaneSize}
         pane2Style={{ minHeight: 0 }}
@@ -289,8 +320,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
-  renderOptionsPane() {
-    const { plugin, dashboard, panel, uiState } = this.props;
+  renderOptionsPane(width: number) {
+    const { plugin, dashboard, panel } = this.props;
 
     if (!plugin) {
       return <div />;
@@ -301,7 +332,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         plugin={plugin}
         dashboard={dashboard}
         panel={panel}
-        width={uiState.rightPaneSize as number}
+        width={width}
         onClose={this.onTogglePanelOptions}
         onFieldConfigsChange={this.onFieldConfigChange}
         onPanelOptionsChanged={this.onPanelOptionsChanged}
@@ -313,10 +344,21 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   renderWithOptionsPane(styles: EditorStyles) {
     const { uiState } = this.props;
 
+    // Limit options pane width to 90% of screen.
+    const maxWidth = window.innerWidth * 0.9;
+
+    // Need to handle when width is relative. ie a percentage of the viewport
+    const width =
+      uiState.rightPaneSize <= 1
+        ? (uiState.rightPaneSize as number) * window.innerWidth
+        : (uiState.rightPaneSize as number);
+
     return (
       <SplitPane
         split="vertical"
         minSize={300}
+        maxSize={maxWidth}
+        size={width >= 300 ? width : 300}
         primary="second"
         /* Use persisted state for default size */
         defaultSize={uiState.rightPaneSize}
@@ -325,7 +367,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         onDragFinished={size => this.onDragFinished(Pane.Right, size)}
       >
         {this.renderHorizontalSplit(styles)}
-        {this.renderOptionsPane()}
+        {this.renderOptionsPane(width)}
       </SplitPane>
     );
   }
