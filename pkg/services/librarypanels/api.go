@@ -1,6 +1,8 @@
 package librarypanels
 
 import (
+	"errors"
+
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
