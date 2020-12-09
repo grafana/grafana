@@ -98,8 +98,7 @@ func getContextHandler(t *testing.T) *ContextHandler {
 
 	cfg := setting.NewCfg()
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
-		Name:    "database",
-		ConnStr: "",
+		Name: "database",
 	}
 	cfg.AuthProxyHeaderName = "X-Killa"
 	cfg.AuthProxyEnabled = true

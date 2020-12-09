@@ -153,8 +153,7 @@ func getContextHandler(t *testing.T) *contexthandler.ContextHandler {
 	remoteCacheSvc := &remotecache.RemoteCache{}
 	cfg := setting.NewCfg()
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
-		Name:    "database",
-		ConnStr: "",
+		Name: "database",
 	}
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
@@ -195,14 +194,12 @@ func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	viewsPath, err := filepath.Abs("../../public/views")
 	require.NoError(t, err)
 
-	ctxHdlr := getContextHandler(t)
-
 	sc.m = macaron.New()
 	sc.m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory: viewsPath,
 		Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 	}))
-	sc.m.Use(ctxHdlr.Middleware)
+	sc.m.Use(getContextHandler(t).Middleware)
 
 	return sc
 }

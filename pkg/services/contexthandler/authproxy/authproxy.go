@@ -104,7 +104,7 @@ func (auth *AuthProxy) HasHeader() bool {
 	return len(auth.header) != 0
 }
 
-// IsAllowedIP returns whether provided IP is whitelisted.
+// IsAllowedIP returns whether provided IP is allowed.
 func (auth *AuthProxy) IsAllowedIP() error {
 	ip := auth.ctx.Req.RemoteAddr
 

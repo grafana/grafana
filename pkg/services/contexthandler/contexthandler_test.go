@@ -69,7 +69,6 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	for _, c := range resp.Cookies() {
 		if c.Name == "login_token" {
 			foundLoginCookie = true
-
 			require.NotEqual(t, token.AuthToken, c.Value, "Auth token is still the same")
 		}
 	}
