@@ -28,6 +28,9 @@ export enum LineInterpolation {
   StepAfter = 'stepAfter',
 }
 
+/**
+ * @alpha
+ */
 export interface LineConfig {
   lineColor?: string;
   lineWidth?: number;
@@ -35,11 +38,17 @@ export interface LineConfig {
   spanNulls?: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface AreaConfig {
   fillColor?: string;
   fillOpacity?: number;
 }
 
+/**
+ * @alpha
+ */
 export interface PointsConfig {
   showPoints?: PointVisibility;
   pointSize?: number;
@@ -54,6 +63,9 @@ export interface AxisConfig {
   axisWidth?: number; // pixels ideally auto?
 }
 
+/**
+ * @alpha
+ */
 export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, AxisConfig {
   drawStyle?: DrawStyle;
 }
