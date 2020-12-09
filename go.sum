@@ -248,6 +248,7 @@ github.com/coreos/go-systemd v0.0.0-20191104093116-d3cd4ed1dbcf/go.mod h1:F5haX7
 github.com/coreos/pkg v0.0.0-20160727233714-3ac0863d7acf/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
 github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
 github.com/cortexproject/cortex v0.6.1-0.20200228110116-92ab6cbe0995/go.mod h1:3Xa3DjJxtpXqxcMGdk850lcIRb81M0fyY1MQ6udY134=
+github.com/cortexproject/cortex v1.2.1-0.20200803161316-7014ff11ed70 h1:bb36PT92p0jXS/8a0ftfudnD9qle3hnSInV2Z9E9Wx8=
 github.com/cortexproject/cortex v1.2.1-0.20200803161316-7014ff11ed70/go.mod h1:PVPxNLrxKH+yc8asaJOxuz7TiRmMizFfnSMOnRzM6oM=
 github.com/cortexproject/cortex v1.2.1-0.20200805064754-d8edc95e2c91/go.mod h1:PVPxNLrxKH+yc8asaJOxuz7TiRmMizFfnSMOnRzM6oM=
 github.com/cortexproject/cortex v1.3.1-0.20200923145333-8587ea61fe17/go.mod h1:dJ9gpW7dzQ7z09cKtNN9PfebumgyO4dtNdFQ6eQEed0=
