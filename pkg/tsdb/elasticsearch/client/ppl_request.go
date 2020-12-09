@@ -21,10 +21,6 @@ func NewPPLRequestBuilder(index string) *PPLRequestBuilder {
 
 // Build builds and return a PPL query object
 func (b *PPLRequestBuilder) Build() (*PPLRequest, error) {
-	if b == nil {
-		b = NewPPLRequestBuilder(b.index)
-	}
-
 	return &PPLRequest{
 		Query: b.pplQuery,
 	}, nil

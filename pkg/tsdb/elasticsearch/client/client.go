@@ -342,8 +342,8 @@ type pplRequest struct {
 	body interface{}
 }
 
-func (c *baseClientImpl) executePPLRequest(uriPath string, requests *pplRequest) (*pplresponse, error) {
-	bytes, err := c.encodePPLRequests(requests)
+func (c *baseClientImpl) executePPLRequest(uriPath string, request *pplRequest) (*pplresponse, error) {
+	bytes, err := c.encodePPLRequests(request)
 	if err != nil {
 		return nil, err
 	}
@@ -354,24 +354,20 @@ func (c *baseClientImpl) encodePPLRequests(requests *pplRequest) ([]byte, error)
 	clientLog.Debug("Encoding PPL requests to json", "PPL requests")
 	start := time.Now()
 
-	payload := bytes.Buffer{}
-
 	reqBody, err := json.Marshal(requests.body)
 	if err != nil {
 		return nil, err
 	}
 
 	body := string(reqBody)
-	//replace the escape characters in time range filtering
+	//replace the escaped characters in time range filtering
 	body = strings.ReplaceAll(body, "\\u003c", "<")
 	body = strings.ReplaceAll(body, "\\u003e", ">")
-
-	payload.WriteString(body + "\n")
 
 	elapsed := time.Since(start)
 	clientLog.Debug("Encoded PPL requests to json", "took", elapsed)
 
-	return payload.Bytes(), nil
+	return []byte(body + "\n"), nil
 }
 
 func (c *baseClientImpl) executePPLQueryRequest(method, uriPath string, body []byte) (*pplresponse, error) {
@@ -397,7 +393,7 @@ func (c *baseClientImpl) executePPLQueryRequest(method, uriPath string, body []b
 	if c.debugEnabled {
 		reqInfo = &PPLRequestInfo{
 			Method: req.Method,
-			Url:    req.URL.String(),
+			URL:    req.URL.String(),
 			Data:   string(body),
 		}
 	}
@@ -444,28 +440,28 @@ func (c *baseClientImpl) ExecutePPLQuery(r *PPLRequest) (*PPLResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	res := clientRes.httpResponse
-	defer res.Body.Close()
+	resp := clientRes.httpResponse
+	defer resp.Body.Close()
 
-	clientLog.Debug("Received PPL response", "code", res.StatusCode, "status", res.Status, "content-length", res.ContentLength)
+	clientLog.Debug("Received PPL response", "code", resp.StatusCode, "status", resp.Status, "content-length", resp.ContentLength)
 
 	start := time.Now()
 	clientLog.Debug("Decoding PPL json response")
 
 	var bodyBytes []byte
 	if c.debugEnabled {
-		tmpBytes, err := ioutil.ReadAll(res.Body)
+		tmpBytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			clientLog.Error("failed to read http response bytes", "error", err)
 		} else {
 			bodyBytes = make([]byte, len(tmpBytes))
 			copy(bodyBytes, tmpBytes)
-			res.Body = ioutil.NopCloser(bytes.NewBuffer(tmpBytes))
+			resp.Body = ioutil.NopCloser(bytes.NewBuffer(tmpBytes))
 		}
 	}
 
 	var pr PPLResponse
-	dec := json.NewDecoder(res.Body)
+	dec := json.NewDecoder(resp.Body)
 	err = dec.Decode(&pr)
 	if err != nil {
 		return nil, err
@@ -474,7 +470,7 @@ func (c *baseClientImpl) ExecutePPLQuery(r *PPLRequest) (*PPLResponse, error) {
 	elapsed := time.Since(start)
 	clientLog.Debug("Decoded PPL json response", "took", elapsed)
 
-	pr.Status = res.StatusCode
+	pr.Status = resp.StatusCode
 
 	if c.debugEnabled {
 		bodyJSON, err := simplejson.NewFromReader(bytes.NewBuffer(bodyBytes))
@@ -488,20 +484,21 @@ func (c *baseClientImpl) ExecutePPLQuery(r *PPLRequest) (*PPLResponse, error) {
 		pr.DebugInfo = &PPLDebugInfo{
 			Request: clientRes.reqInfo,
 			Response: &PPLResponseInfo{
-				Status: res.StatusCode,
+				Status: resp.StatusCode,
 				Data:   data,
 			},
 		}
 	}
-
+	if err != nil {
+		return nil, err
+	}
 	return &pr, nil
 }
 
-func createPPLRequest(requests *PPLRequest) *pplRequest {
-	ppl := pplRequest{
-		body: requests,
+func createPPLRequest(request *PPLRequest) *pplRequest {
+	return &pplRequest{
+		body: request,
 	}
-	return &ppl
 }
 
 func (c *baseClientImpl) PPL() *PPLRequestBuilder {
