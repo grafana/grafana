@@ -35,7 +35,8 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
         })
         .addCustomEditor({
           id: 'seriesConfig',
-          name: 'Display > Series in area',
+          name: 'Show series in area',
+          category: ['Display'],
           path: 'seriesConfig',
           defaultValue: {
             displayInTooltip: true,

@@ -25,7 +25,7 @@ export const displayConfigFactory = (
 
     return {
       ...fieldConfig,
-      overrides: [...fieldConfig.overrides, override],
+      overrides: [override, ...fieldConfig.overrides],
     };
   }
 
@@ -37,7 +37,7 @@ export const displayConfigFactory = (
 
     return {
       ...fieldConfig,
-      overrides: [...overridesCopy, override],
+      overrides: [override, ...overridesCopy],
     };
   }
 
@@ -45,7 +45,7 @@ export const displayConfigFactory = (
 
   return {
     ...fieldConfig,
-    overrides: [...overridesCopy, override],
+    overrides: [override, ...overridesCopy],
   };
 };
 
