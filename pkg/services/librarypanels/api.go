@@ -24,7 +24,10 @@ func (lps *LibraryPanelService) createHandler(c *models.ReqContext, cmd addLibra
 	panel, err := lps.createLibraryPanel(c, cmd)
 
 	if err != nil {
-		return api.Error(400, "Failed to create library panel", err)
+		if errors.Is(err, errLibraryPanelAlreadyAdded) {
+			return api.Error(400, errLibraryPanelAlreadyAdded.Error(), err)
+		}
+		return api.Error(500, "Failed to create library panel", err)
 	}
 
 	return api.JSON(200, util.DynMap{"panel": panel})
