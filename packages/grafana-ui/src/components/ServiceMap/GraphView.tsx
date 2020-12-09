@@ -37,7 +37,7 @@ export function GraphView(props: Props) {
   const clearNodeHover = useCallback(() => setNodeHover(undefined), []);
 
   const panRef = React.useRef<SVGSVGElement>(null);
-  const { position: panPosition, isPanning } = usePanning(panRef);
+  const { position: panPosition, isPanning } = usePanning(panRef, scale);
 
   // const services = useTestData ? response.Services : props.services;
   const { nodes: rawNodes, links: rawLinks } = useMemo(() => processServices(props.services, props.edges), [
@@ -66,7 +66,7 @@ export function GraphView(props: Props) {
       >
         <g
           style={{
-            transform: `scale(${scale}) translate(${panPosition.x / scale}px, ${panPosition.y / scale}px)`,
+            transform: `scale(${scale}) translate(${panPosition.x}px, ${panPosition.y}px)`,
           }}
         >
           <LinkArrowMarker />

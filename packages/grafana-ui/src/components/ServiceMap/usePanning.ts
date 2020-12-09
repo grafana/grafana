@@ -13,8 +13,11 @@ export interface State {
 /**
  * Based on https://github.com/streamich/react-use/blob/master/src/useSlider.ts
  * Returns position x/y coordinates which can be directly used in transform: translate().
+ * @param ref
+ * @param scale can be used when we want to scale the movement if we are moving a scaled element. We need to do it
+ *   here because we don't wont to change the pos when scale changes.
  */
-export function usePanning(ref: RefObject<Element>): State {
+export function usePanning(ref: RefObject<Element>, scale = 1): State {
   const isMounted = useMountedState();
   const isPanning = useRef(false);
   const frame = useRef(0);
@@ -32,7 +35,7 @@ export function usePanning(ref: RefObject<Element>): State {
   });
 
   useEffect(() => {
-    const startPanning = (event: MouseEvent | TouchEvent) => {
+    const startPanning = (event: Event) => {
       if (!isPanning.current && isMounted()) {
         isPanning.current = true;
         // Snapshot the current position of both mouse pointer and the element
@@ -51,7 +54,7 @@ export function usePanning(ref: RefObject<Element>): State {
       }
     };
 
-    const onPanStart = (event: MouseEvent | TouchEvent) => {
+    const onPanStart = (event: Event) => {
       startPanning(event);
       onPan(event);
     };
@@ -70,7 +73,7 @@ export function usePanning(ref: RefObject<Element>): State {
       document.removeEventListener('touchend', stopPanning);
     };
 
-    const onPan = (event: MouseEvent | TouchEvent) => {
+    const onPan = (event: Event) => {
       cancelAnimationFrame(frame.current);
       const pos = getEventXY(event);
 
@@ -82,8 +85,8 @@ export function usePanning(ref: RefObject<Element>): State {
 
           // Add the diff to the position from the moment we started panning.
           currentPosition.current = {
-            x: prevPosition.current.x + xDiff,
-            y: prevPosition.current.y + yDiff,
+            x: prevPosition.current.x + xDiff / scale,
+            y: prevPosition.current.y + yDiff / scale,
           };
           setState(state => ({
             ...state,
@@ -105,12 +108,12 @@ export function usePanning(ref: RefObject<Element>): State {
         ref.current.removeEventListener('touchstart', onPanStart);
       }
     };
-  }, [ref]);
+  }, [ref, scale]);
 
   return state;
 }
 
-function getEventXY(event: MouseEvent | TouchEvent): { x: number; y: number } {
+function getEventXY(event: Event): { x: number; y: number } {
   if ((event as any).changedTouches) {
     const e = event as TouchEvent;
     return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
