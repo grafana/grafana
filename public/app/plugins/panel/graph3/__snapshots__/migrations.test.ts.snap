@@ -1,0 +1,172 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Graph Migrations simple bars 1`] = `
+Object {
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "drawStyle": "bars",
+        "fillOpacity": 1,
+        "showPoints": "never",
+        "spanNulls": false,
+      },
+    },
+    "overrides": Array [],
+  },
+  "options": Object {
+    "graph": Object {},
+    "legend": Object {
+      "displayMode": "list",
+      "placement": "bottom",
+    },
+    "tooltipOptions": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations stairscase 1`] = `
+Object {
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisPlacement": "hidden",
+        "drawStyle": "line",
+        "fillOpacity": 0.5,
+        "lineInterpolation": "stepAfter",
+        "lineWidth": 1,
+        "pointSize": 6,
+        "showPoints": "never",
+        "spanNulls": true,
+      },
+      "displayName": "DISPLAY NAME",
+      "nullValueMode": "null",
+      "unit": "short",
+    },
+    "overrides": Array [],
+  },
+  "options": Object {
+    "graph": Object {},
+    "legend": Object {
+      "displayMode": "list",
+      "placement": "bottom",
+    },
+    "tooltipOptions": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations stepped line 1`] = `
+Object {
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisPlacement": "auto",
+        "drawStyle": "line",
+        "fillOpacity": 0.5,
+        "lineInterpolation": "stepAfter",
+        "lineWidth": 5,
+        "pointSize": 6,
+        "showPoints": "never",
+        "spanNulls": true,
+      },
+      "nullValueMode": "null",
+      "unit": "short",
+    },
+    "overrides": Array [
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "A-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "red",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  "options": Object {
+    "graph": Object {},
+    "legend": Object {
+      "displayMode": "list",
+      "placement": "bottom",
+    },
+    "tooltipOptions": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
+exports[`Graph Migrations twoYAxis 1`] = `
+Object {
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisLabel": "Y111",
+        "axisPlacement": "auto",
+        "drawStyle": "line",
+        "fillOpacity": 0.1,
+        "lineWidth": 1,
+        "pointSize": 6,
+        "showPoints": "never",
+        "spanNulls": true,
+      },
+      "decimals": 3,
+      "max": 1000,
+      "min": 0,
+      "nullValueMode": "null",
+      "unit": "areaMI2",
+    },
+    "overrides": Array [
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "B-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "unit",
+            "value": "degree",
+          },
+          Object {
+            "id": "decimals",
+            "value": 2,
+          },
+          Object {
+            "id": "min",
+            "value": -10,
+          },
+          Object {
+            "id": "max",
+            "value": 25,
+          },
+          Object {
+            "id": "custom.axisLabel",
+            "value": "Y222",
+          },
+        ],
+      },
+    ],
+  },
+  "options": Object {
+    "graph": Object {},
+    "legend": Object {
+      "displayMode": "list",
+      "placement": "bottom",
+    },
+    "tooltipOptions": Object {
+      "mode": "single",
+    },
+  },
+}
+`;

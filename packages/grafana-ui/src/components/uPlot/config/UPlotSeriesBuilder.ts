@@ -1,6 +1,6 @@
 import tinycolor from 'tinycolor2';
 import uPlot, { Series } from 'uplot';
-import { DrawStyle, LineConfig, AreaConfig, PointsConfig, PointMode, LineInterpolation } from '../config';
+import { DrawStyle, LineConfig, AreaConfig, PointsConfig, PointVisibility, LineInterpolation } from '../config';
 import { barsBuilder, smoothBuilder, stepBeforeBuilder, stepAfterBuilder } from '../paths';
 import { PlotConfigBuilder } from '../types';
 
@@ -16,12 +16,13 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       lineInterpolation,
       lineColor,
       lineWidth,
-      points,
+      showPoints,
       pointColor,
       pointSize,
       fillColor,
       fillOpacity,
       scaleKey,
+      spanNulls,
     } = this.props;
 
     let lineConfig: Partial<Series> = {};
@@ -66,30 +67,33 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     };
 
     // we cannot set points.show property above (even to undefined) as that will clear uPlot's default auto behavior
-    if (points === PointMode.Auto) {
+    if (showPoints === PointVisibility.Auto) {
       if (drawStyle === DrawStyle.Bars) {
         pointsConfig.points!.show = false;
       }
-    } else if (points === PointMode.Never) {
+    } else if (showPoints === PointVisibility.Never) {
       pointsConfig.points!.show = false;
-    } else if (points === PointMode.Always) {
+    } else if (showPoints === PointVisibility.Always) {
       pointsConfig.points!.show = true;
     }
 
-    const areaConfig =
-      fillOpacity !== undefined
-        ? {
-            fill: tinycolor(fillColor)
+    let fillConfig: any | undefined;
+    if (fillColor && fillOpacity !== 0) {
+      fillConfig = {
+        fill: fillOpacity
+          ? tinycolor(fillColor)
               .setAlpha(fillOpacity)
-              .toRgbString(),
-          }
-        : { fill: undefined };
+              .toRgbString()
+          : fillColor,
+      };
+    }
 
     return {
       scale: scaleKey,
+      spanGaps: spanNulls,
       ...lineConfig,
       ...pointsConfig,
-      ...areaConfig,
+      ...fillConfig,
     };
   }
 }

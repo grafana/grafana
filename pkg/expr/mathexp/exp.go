@@ -505,7 +505,7 @@ func (e *State) walkFunc(node *parse.FuncNode) (Results, error) {
 		case *parse.VarNode:
 			v = e.Vars[t.Name]
 		case *parse.ScalarNode:
-			v = t.Float64
+			v = NewScalarResults(&t.Float64)
 		case *parse.FuncNode:
 			v, err = e.walkFunc(t)
 		case *parse.UnaryNode:

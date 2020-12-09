@@ -116,11 +116,28 @@ Build a list of points - an unordered or unnumbered list - by using "\-" (hyphen
 
 ## Images
 
+_Do not_ use image shortcodes at this time.
+
 Include images in a document using the following syntax:
 
-**Example** \!\[Grafana Logo](/link/to/grafanalogo/logo.png)
+```
+![Alt text](link to image, starting with /img/docs/ if it is to an internal image)
+```
+
+**Examples:** 
+- \!\[Grafana Logo](/link/to/grafanalogo/logo.png)
+- \!\[Example](/img/docs/folder_name/alert_test_rule.png)
 
 This follows the format of "!", alt text wrapped in "[]" and the link URL wrapped in "()".
+
+You can also use HTML such as the following:
+```
+<img src="example.png"
+     alt="Example image"
+     style="float: left; margin-right: 5px;" />
+```
+
+In most cases, use the markdown syntax rather than the HTML syntax. Only use the HTML if you need to change the image in ways unsupported by Markdown.
 
 ## Comments
 
