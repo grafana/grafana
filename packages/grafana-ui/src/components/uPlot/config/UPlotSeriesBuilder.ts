@@ -87,7 +87,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
               .toRgbString()
           : fillColor,
       };
-      fillConfig.fill = getCanvasGradient(fillColor, 0, 200);
+      fillConfig.fill = getCanvasGradient(fillColor, 1, 200);
     }
 
     return {
