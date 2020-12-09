@@ -97,10 +97,8 @@ func (m *SigV4Middleware) signer() (*v4.Signer, error) {
 		c = credentials.NewStaticCredentials(m.Config.AccessKey, m.Config.SecretKey, "")
 	case Credentials:
 		c = credentials.NewSharedCredentials("", m.Config.Profile)
-	}
-
-	// passing nil credentials will force AWS to allow a more complete credential chain vs the explicit default
-	if c == nil {
+	case Default:
+		// passing nil credentials will force AWS to allow a more complete credential chain vs the explicit default
 		s, err := session.NewSession(&aws.Config{
 			Region: aws.String(m.Config.Region),
 		})
