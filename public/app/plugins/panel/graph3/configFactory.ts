@@ -33,6 +33,15 @@ export const displayConfigFactory = (
   const [current] = overridesCopy.splice(currentIndex, 1) as SystemConfigOverrideRule[];
 
   if (mode === GraphNGLegendEventMode.select) {
+    const existing = matchersInConfig(current);
+
+    if (existing.find(name => name === displayName)) {
+      return {
+        ...fieldConfig,
+        overrides: overridesCopy,
+      };
+    }
+
     const override = createFreshOverride(displayName);
 
     return {
@@ -79,13 +88,20 @@ const createExtendedOverride = (current: SystemConfigOverrideRule, displayName: 
     },
   };
 
-  const combined = combinedMatcher(current, displayName);
+  const existing = matchersInConfig(current);
+  const index = existing.findIndex(name => name === displayName);
+
+  if (index < 0) {
+    existing.push(displayName);
+  } else {
+    existing.splice(index, 1);
+  }
 
   return {
     __systemRef: displayOverrideRef,
     matcher: {
       id: FieldMatcherID.byRegexp,
-      options: `^(?!${combined}$).*$`,
+      options: `^(?!${existing.join('|')}$).*$`,
     },
     properties: [
       {
@@ -99,12 +115,12 @@ const createExtendedOverride = (current: SystemConfigOverrideRule, displayName: 
   };
 };
 
-const combinedMatcher = (current: SystemConfigOverrideRule, displayName: string): string => {
+const matchersInConfig = (current: SystemConfigOverrideRule): string[] => {
   const match = /^\^\(\?\!([\w|-]+)\$\)\.\*\$$/.exec(current.matcher.options);
 
   if (match?.length === 2) {
-    return `${displayName}|${match[1]}`;
+    return match[1].split('|');
   }
 
-  return displayName;
+  return [];
 };
