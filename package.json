@@ -3,7 +3,7 @@
   "license": "Apache-2.0",
   "private": true,
   "name": "grafana",
-  "version": "7.3.4",
+  "version": "7.3.5",
   "repository": "github:grafana/grafana",
   "scripts": {
     "api-tests": "jest --notify --watch --config=devenv/e2e-api-tests/jest.js",
