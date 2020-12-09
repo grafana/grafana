@@ -185,7 +185,7 @@ function useLayout(rawNodes: NodeDatum[], rawLinks: LinkDatum[], config: Config)
     simulation.tick(300);
     // could use a center force but that dose not work well if we want to fix some nodes somewhere (not doing that
     // right now though)
-    centerNodes(nodes);
+    centerNodes(rawNodes);
     setNodes(rawNodes);
     setLinks(rawLinks);
   }, [config, rawNodes, rawLinks]);
