@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "Apache-2.0",
   "name": "@grafana/e2e",
-  "version": "7.3.4",
+  "version": "7.3.5",
   "description": "Grafana End-to-End Test Library",
   "keywords": [
     "cli",
@@ -44,7 +44,7 @@
   "types": "src/index.ts",
   "dependencies": {
     "@cypress/webpack-preprocessor": "4.1.3",
-    "@grafana/e2e-selectors": "7.3.4",
+    "@grafana/e2e-selectors": "7.3.5",
     "@grafana/tsconfig": "^1.0.0-rc1",
     "@mochajs/json-file-reporter": "^1.2.0",
     "blink-diff": "1.0.13",
