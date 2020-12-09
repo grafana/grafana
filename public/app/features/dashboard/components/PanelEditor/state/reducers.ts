@@ -41,7 +41,6 @@ export const initialState = (): PanelEditorState => {
 
   let migratedState = { ...storedUiState };
 
-
   if (typeof storedUiState.topPaneSize === 'string') {
     migratedState = { ...storedUiState, topPaneSize: parseFloat(storedUiState.topPaneSize) / 100 };
   }
