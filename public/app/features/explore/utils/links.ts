@@ -1,6 +1,14 @@
-import { Field, LinkModel, TimeRange, mapInternalLinkToExplore, ScopedVars } from '@grafana/data';
+import {
+  Field,
+  LinkModel,
+  TimeRange,
+  mapInternalLinkToExplore,
+  ScopedVars,
+  DataFrame,
+  getFieldDisplayValuesProxy,
+} from '@grafana/data';
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
-import { getTemplateSrv } from '@grafana/runtime';
+import { config, getTemplateSrv } from '@grafana/runtime';
 import { splitOpen } from '../state/main';
 
 /**
@@ -16,8 +24,9 @@ export const getFieldLinksForExplore = (options: {
   splitOpenFn?: typeof splitOpen;
   range: TimeRange;
   vars?: ScopedVars;
+  dataFrame?: DataFrame;
 }): Array<LinkModel<Field>> => {
-  const { field, vars, splitOpenFn, range, rowIndex } = options;
+  const { field, vars, splitOpenFn, range, rowIndex, dataFrame } = options;
   const scopedVars: any = { ...(vars || {}) };
   scopedVars['__value'] = {
     value: {
@@ -25,6 +34,19 @@ export const getFieldLinksForExplore = (options: {
     },
     text: 'Raw value',
   };
+
+  if (dataFrame) {
+    scopedVars['__data'] = {
+      value: {
+        name: dataFrame.name,
+        refId: dataFrame.refId,
+        fields: getFieldDisplayValuesProxy(dataFrame, rowIndex, {
+          theme: config.theme,
+        }),
+      },
+      text: 'Data',
+    };
+  }
 
   return field.config.links
     ? field.config.links.map(link => {
