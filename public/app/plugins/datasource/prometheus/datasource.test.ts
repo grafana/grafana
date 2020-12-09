@@ -69,59 +69,33 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('Query', () => {
-    it('returns empty array when no queries', done => {
-      expect.assertions(2);
-
-      ds.query(createDataRequest([])).subscribe({
-        next(next) {
-          expect(next.data).toEqual([]);
-          expect(next.state).toBe(LoadingState.Done);
-        },
-        complete() {
-          done();
-        },
+    it('returns empty array when no queries', async () => {
+      await expect(ds.query(createDataRequest([]))).toEmitValuesWith(response => {
+        expect(response[0].data).toEqual([]);
+        expect(response[0].state).toBe(LoadingState.Done);
       });
     });
 
-    it('performs time series queries', done => {
-      expect.assertions(2);
-
-      ds.query(createDataRequest([{}])).subscribe({
-        next(next) {
-          expect(next.data.length).not.toBe(0);
-          expect(next.state).toBe(LoadingState.Done);
-        },
-        complete() {
-          done();
-        },
+    it('performs time series queries', async () => {
+      await expect(ds.query(createDataRequest([{}]))).toEmitValuesWith(response => {
+        expect(response[0].data.length).not.toBe(0);
+        expect(response[0].state).toBe(LoadingState.Done);
       });
     });
 
-    it('with 2 queries and used from Explore, sends results as they arrive', done => {
-      expect.assertions(4);
-
-      const responseStatus = [LoadingState.Loading, LoadingState.Done];
-      ds.query(createDataRequest([{}, {}], { app: CoreApp.Explore })).subscribe({
-        next(next) {
-          expect(next.data.length).not.toBe(0);
-          expect(next.state).toBe(responseStatus.shift());
-        },
-        complete() {
-          done();
-        },
+    it('with 2 queries and used from Explore, sends results as they arrive', async () => {
+      await expect(ds.query(createDataRequest([{}, {}], { app: CoreApp.Explore }))).toEmitValuesWith(response => {
+        expect(response[0].data.length).not.toBe(0);
+        expect(response[0].state).toBe(LoadingState.Loading);
+        // We will run exemplar query 2 times thats why only the 4th query will return as done
+        expect(response[3].state).toBe(LoadingState.Done);
       });
     });
 
-    it('with 2 queries and used from Panel, waits for all to finish until sending Done status', done => {
-      expect.assertions(2);
-      ds.query(createDataRequest([{}, {}], { app: CoreApp.Dashboard })).subscribe({
-        next(next) {
-          expect(next.data.length).not.toBe(0);
-          expect(next.state).toBe(LoadingState.Done);
-        },
-        complete() {
-          done();
-        },
+    it('with 2 queries and used from Panel, waits for all to finish until sending Done status', async () => {
+      await expect(ds.query(createDataRequest([{}, {}], { app: CoreApp.Dashboard }))).toEmitValuesWith(response => {
+        expect(response[0].data.length).not.toBe(0);
+        expect(response[0].state).toBe(LoadingState.Done);
       });
     });
   });
@@ -160,7 +134,7 @@ describe('PrometheusDatasource', () => {
         targets: [{ expr: 'test{job="testjob"}', format: 'time_series' }],
         interval: '60s',
       } as any);
-      expect(fetchMock.mock.calls.length).toBe(1);
+      expect(fetchMock.mock.calls.length).toBe(2);
       expect(fetchMock.mock.calls[0][0].url).toBe(
         'proxied/api/v1/query_range?query=test%7Bjob%3D%22testjob%22%7D&start=60&end=180&step=60&customQuery=123'
       );
@@ -228,7 +202,7 @@ describe('PrometheusDatasource', () => {
       };
     });
 
-    it('should convert cumullative histogram to ordinary', () => {
+    it('should convert cumulative histogram to ordinary', async () => {
       const resultMock = [
         {
           metric: { __name__: 'metric', job: 'testjob', le: '10' },
@@ -254,38 +228,18 @@ describe('PrometheusDatasource', () => {
       ];
       const responseMock = { data: { data: { result: resultMock } } };
 
-      const expected = [
-        {
-          target: '10',
-          datapoints: [
-            [10, 1443454528000],
-            [10, 1443454528000],
-          ],
-        },
-        {
-          target: '20',
-          datapoints: [
-            [10, 1443454528000],
-            [0, 1443454528000],
-          ],
-        },
-        {
-          target: '30',
-          datapoints: [
-            [5, 1443454528000],
-            [0, 1443454528000],
-          ],
-        },
-      ];
-
-      ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of([responseMock]));
-      ds.query(query).subscribe((result: any) => {
-        const results = result.data;
-        return expect(results).toMatchObject(expected);
+      ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of(responseMock));
+      // return nothing for exemplar query
+      fetchMock.mockImplementation(() => of({ data: { data: undefined } }));
+      await expect(ds.query(query)).toEmitValuesWith(result => {
+        const results = result[0].data;
+        expect(results[0].fields[1].values.toArray()).toEqual([10, 10]);
+        expect(results[1].fields[1].values.toArray()).toEqual([10, 0]);
+        expect(results[2].fields[1].values.toArray()).toEqual([5, 0]);
       });
     });
 
-    it('should sort series by label value', () => {
+    it('should sort series by label value', async () => {
       const resultMock = [
         {
           metric: { __name__: 'metric', job: 'testjob', le: '2' },
@@ -320,10 +274,12 @@ describe('PrometheusDatasource', () => {
 
       const expected = ['1', '2', '4', '+Inf'];
 
-      ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of([responseMock]));
-      ds.query(query).subscribe((result: any) => {
-        const seriesLabels = _.map(result.data, 'target');
-        return expect(seriesLabels).toEqual(expected);
+      ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of(responseMock));
+      // return nothing for exemplar query
+      fetchMock.mockImplementation(() => of({ data: { data: undefined } }));
+      await expect(ds.query(query)).toEmitValuesWith(result => {
+        const seriesLabels = _.map(result[0].data, 'name');
+        expect(seriesLabels).toEqual(expected);
       });
     });
   });
@@ -619,7 +575,7 @@ describe('PrometheusDatasource', () => {
 
       it('should return series list', async () => {
         const frame = toDataFrame(results.data[0]);
-        expect(results.data.length).toBe(1);
+        expect(results.data.length).toBe(2);
         expect(getFieldDisplayName(frame.fields[1], frame)).toBe('test{job="testjob"}');
       });
     });
@@ -695,9 +651,9 @@ describe('PrometheusDatasource', () => {
     });
 
     it('should be same length', () => {
-      expect(results.data.length).toBe(2);
+      expect(results.data.length).toBe(4);
       expect(results.data[0].length).toBe((end - start) / step + 1);
-      expect(results.data[1].length).toBe((end - start) / step + 1);
+      expect(results.data[2].length).toBe((end - start) / step + 1);
     });
 
     it('should fill null until first datapoint in response', () => {
@@ -764,7 +720,7 @@ describe('PrometheusDatasource', () => {
 
     it('should return series list', () => {
       const frame = toDataFrame(results.data[0]);
-      expect(results.data.length).toBe(1);
+      expect(results.data.length).toBe(2);
       expect(frame.name).toBe('test{job="testjob"}');
       expect(getFieldDisplayName(frame.fields[1], frame)).toBe('test{job="testjob"}');
     });
@@ -1700,7 +1656,7 @@ describe('PrometheusDatasource for POST', () => {
 
     it('should return series list', () => {
       const frame = toDataFrame(results.data[0]);
-      expect(results.data.length).toBe(1);
+      expect(results.data.length).toBe(2);
       expect(getFieldDisplayName(frame.fields[1], frame)).toBe('test{job="testjob"}');
     });
   });
@@ -1767,8 +1723,8 @@ describe('prepareTargets', () => {
 
       const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target);
 
-      expect(queries.length).toBe(1);
-      expect(activeTargets.length).toBe(1);
+      expect(queries.length).toBe(2);
+      expect(activeTargets.length).toBe(2);
       expect(queries[0]).toEqual({
         end,
         expr: 'up',
@@ -1799,8 +1755,8 @@ describe('prepareTargets', () => {
 
         const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
 
-        expect(queries.length).toBe(2);
-        expect(activeTargets.length).toBe(2);
+        expect(queries.length).toBe(3);
+        expect(activeTargets.length).toBe(3);
         expect(queries[0]).toEqual({
           end,
           expr: 'up',
@@ -1888,8 +1844,9 @@ describe('prepareTargets', () => {
 
       const { queries, activeTargets, panelId, end, start } = getPrepareTargetsContext(target, CoreApp.Explore);
 
-      expect(queries.length).toBe(1);
-      expect(activeTargets.length).toBe(1);
+      // 2 queries because of the exemplar query
+      expect(queries.length).toBe(2);
+      expect(activeTargets.length).toBe(2);
       expect(queries[0]).toEqual({
         end,
         expr: 'up',
