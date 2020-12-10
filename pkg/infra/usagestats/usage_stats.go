@@ -72,6 +72,15 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 	metrics["stats.edition.oss.count"] = getOssEditionCount()
 	metrics["stats.edition.enterprise.count"] = getEnterpriseEditionCount()
 
+	for name, fn := range uss.externalMetrics {
+		result, err := fn()
+		if err != nil {
+			metricsLogger.Error("Failed to fetch additional metric", "name", name, "error", err)
+			continue
+		}
+		metrics[name] = result
+	}
+
 	userCount := statsQuery.Result.Users
 	avgAuthTokensPerUser := statsQuery.Result.AuthTokens
 	if userCount != 0 {
@@ -170,6 +179,9 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 	authTypes["basic_auth"] = setting.BasicAuthEnabled
 	authTypes["ldap"] = setting.LDAPEnabled
 	authTypes["auth_proxy"] = setting.AuthProxyEnabled
+	if setting.IsEnterprise {
+		authTypes["saml"] = uss.Cfg.SAMLEnabled
+	}
 
 	for provider, enabled := range uss.oauthProviders {
 		authTypes["oauth_"+provider] = enabled
@@ -184,6 +196,10 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 	}
 
 	return report, nil
+}
+
+func (uss *UsageStatsService) RegisterMetricFunc(name string, fn MetricFunc) {
+	uss.externalMetrics[name] = fn
 }
 
 func (uss *UsageStatsService) sendUsageStats() {

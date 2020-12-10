@@ -30,8 +30,11 @@ type UsageStatsService struct {
 
 	log log.Logger
 
-	oauthProviders map[string]bool
+	oauthProviders  map[string]bool
+	externalMetrics map[string]MetricFunc
 }
+
+type MetricFunc func() (interface{}, error)
 
 func (uss *UsageStatsService) Init() error {
 	uss.log = log.New("infra.usagestats")
