@@ -1,20 +1,11 @@
 // Library
 import React, { PureComponent } from 'react';
-import { DisplayValue, GraphSeriesValue, DisplayValueAlignmentFactors } from '@grafana/data';
+import { DisplayValue, DisplayValueAlignmentFactors, FieldSparkline, TextDisplayOptions } from '@grafana/data';
 
 // Types
 import { Themeable } from '../../types';
 import { buildLayout } from './BigValueLayout';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
-
-export interface BigValueSparkline {
-  data: GraphSeriesValue[][];
-  xMin?: number | null;
-  xMax?: number | null;
-  yMin?: number | null;
-  yMax?: number | null;
-  highlightIndex?: number;
-}
 
 export enum BigValueColorMode {
   Value = 'value',
@@ -51,7 +42,7 @@ export interface Props extends Themeable {
   /** Value displayed as Big Value */
   value: DisplayValue;
   /** Sparkline values for showing a graph under/behind the value  */
-  sparkline?: BigValueSparkline;
+  sparkline?: FieldSparkline;
   /** onClick handler for the value */
   onClick?: React.MouseEventHandler<HTMLElement>;
   /** Custom styling */
@@ -64,6 +55,8 @@ export interface Props extends Themeable {
   justifyMode?: BigValueJustifyMode;
   /** Factors that should influence the positioning of the text  */
   alignmentFactors?: DisplayValueAlignmentFactors;
+  /** Explicit font size control */
+  text?: TextDisplayOptions;
   /** Specify which text should be visible in the BigValue */
   textMode?: BigValueTextMode;
 
