@@ -152,6 +152,10 @@ func LDAPLoginScenario(desc string, fn LDAPLoginScenarioFunc) {
 
 		origNewLDAP := newLDAP
 		origGetLDAPConfig := getLDAPConfig
+		defer func() {
+			newLDAP = origNewLDAP
+			getLDAPConfig = origGetLDAPConfig
+		}()
 
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			config := &ldap.Config{
@@ -168,11 +172,6 @@ func LDAPLoginScenario(desc string, fn LDAPLoginScenarioFunc) {
 		newLDAP = func(server []*ldap.ServerConfig) multildap.IMultiLDAP {
 			return mock
 		}
-
-		defer func() {
-			newLDAP = origNewLDAP
-			getLDAPConfig = origGetLDAPConfig
-		}()
 
 		fn(sc)
 	})
