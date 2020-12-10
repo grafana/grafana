@@ -152,7 +152,7 @@ Interpolation result: "test1 + test2"
 
 ## Replace
 
-Formats single- and multi-valued variables by replacing text. Accepts one to three arguments and allows escaping of colons using backslashes. When called with two or more arguments, the first 2 arguments follow the semantics of `String.prototype.replace()`. When called with an odd number of arguments, the rightmost argument should be either `upper` or `lower`, which will change the case of the result string.
+Replaces text with single and multi-valued variables. It accepts one to three arguments and allows the escaping of colons using backslashes. When called with two or more arguments, the first two arguments follow the semantics of `String.prototype.replace(. ) `. When called with an odd number of arguments, the rightmost argument should be either `upper` or `lower`, which will change the case of the result string.
 
 ```bash
 servers = ["value1", "values2"]
