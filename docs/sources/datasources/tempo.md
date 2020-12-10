@@ -14,16 +14,23 @@ Grafana ships with built-in support for Tempo a high volume, minimal dependency 
 
 To access Tempo settings, click the **Configuration** (gear) icon, then click **Data Sources** > **Tempo**.
 
-| Name          | Description                                                                                          |
-| ------------- | ---------------------------------------------------------------------------------------------------- |
-| `Name`        | The name using which you will refer to the data source in panels, queries, and Explore.              |
-| `Default`     | The default data source will be pre-selected for new panels.                                         |
-| `URL`         | The URL of the Tempo instance, e.g., `http://localhost:16686`                                        |
-| `Basic Auth`  | Enable basic authentication to the Tempo data source.                                                |
-| `User`        | User name for basic authentication.                                                                  |
-| `Password`    | Password for basic authentication.                                                                   |
-| `Data source` | Data source for trace to logs feature.                                                               |
-| `Tags`        | The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`. |
+| Name         | Description                                                                             |
+| ------------ | --------------------------------------------------------------------------------------- |
+| `Name`       | The name using which you will refer to the data source in panels, queries, and Explore. |
+| `Default`    | The default data source will be pre-selected for new panels.                            |
+| `URL`        | The URL of the Tempo instance, e.g., `http://localhost:16686`                           |
+| `Basic Auth` | Enable basic authentication to the Tempo data source.                                   |
+| `User`       | User name for basic authentication.                                                     |
+| `Password`   | Password for basic authentication.                                                      |
+
+### Trace to logs
+
+{{< docs-imagebox img="/img/docs/v74/trace-to-logs-settings.png" class="docs-image--no-shadow" caption="Screenshot of the trace to logs settings" >}}
+
+This is a configuration for the [trace to logs feature]({{< relref "../explore/index.md#trace-to-logs" >}}). Select target data source (at this moment limited to Loki data sources) and select which tags will be used in the logs query.
+
+- **Data source -** Target data source.
+- **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
 
 ## Query traces
 
