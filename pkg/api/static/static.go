@@ -16,7 +16,6 @@
 package httpstatic
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -24,10 +23,13 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+
 	"gopkg.in/macaron.v1"
 )
 
 var Root string
+var logger = log.New("static")
 
 func init() {
 	var err error
@@ -134,7 +136,11 @@ func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) boo
 	if err != nil {
 		return false
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			logger.Warn("Failed to close file", "err", err)
+		}
+	}()
 
 	fi, err := f.Stat()
 	if err != nil {
@@ -154,7 +160,11 @@ func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) boo
 		if err != nil {
 			return false // Discard error.
 		}
-		defer f.Close()
+		defer func() {
+			if err := f.Close(); err != nil {
+				logger.Warn("Failed to close file", "err", err)
+			}
+		}()
 
 		fi, err = f.Stat()
 		if err != nil || fi.IsDir() {
@@ -163,7 +173,7 @@ func staticHandler(ctx *macaron.Context, log *log.Logger, opt StaticOptions) boo
 	}
 
 	if !opt.SkipLogging {
-		log.Println("[Static] Serving " + file)
+		logger.Info("[Static] Serving " + file)
 	}
 
 	// Add an Expires header to the static content

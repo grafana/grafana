@@ -80,13 +80,17 @@ func TestMiddlewareContext(t *testing.T) {
 	t.Run("When the cache only contains the main header with a simple cache key", func(t *testing.T) {
 		const id int64 = 33
 		// Set cache key
-		key := fmt.Sprintf(CachePrefix, HashCacheKey(name))
-		err := store.Set(key, id, 0)
+		h, err := HashCacheKey(name)
+		require.NoError(t, err)
+		key := fmt.Sprintf(CachePrefix, h)
+		err = store.Set(key, id, 0)
 		require.NoError(t, err)
 
 		// Set up the middleware
 		auth := prepareMiddleware(t, req, store)
-		assert.Equal(t, "auth-proxy-sync-ttl:0a7f3374e9659b10980fd66247b0cf2f", auth.getKey())
+		key, err = auth.getKey()
+		require.NoError(t, err)
+		assert.Equal(t, "auth-proxy-sync-ttl:0a7f3374e9659b10980fd66247b0cf2f", key)
 
 		gotID, err := auth.Login(logger, false)
 		require.NoError(t, err)
@@ -100,12 +104,16 @@ func TestMiddlewareContext(t *testing.T) {
 		group := "grafana-core-team"
 		req.Header.Add("X-WEBAUTH-GROUPS", group)
 
-		key := fmt.Sprintf(CachePrefix, HashCacheKey(name+"-"+group))
-		err := store.Set(key, id, 0)
+		h, err := HashCacheKey(name + "-" + group)
+		require.NoError(t, err)
+		key := fmt.Sprintf(CachePrefix, h)
+		err = store.Set(key, id, 0)
 		require.NoError(t, err)
 
 		auth := prepareMiddleware(t, req, store)
-		assert.Equal(t, "auth-proxy-sync-ttl:14f69b7023baa0ac98c96b31cec07bc0", auth.getKey())
+		key, err = auth.getKey()
+		require.NoError(t, err)
+		assert.Equal(t, "auth-proxy-sync-ttl:14f69b7023baa0ac98c96b31cec07bc0", key)
 
 		gotID, err := auth.Login(logger, false)
 		require.NoError(t, err)

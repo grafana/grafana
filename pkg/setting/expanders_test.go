@@ -39,12 +39,14 @@ func TestExpandVar_FileSuccessful(t *testing.T) {
 	file := f.Name()
 
 	defer func() {
-		os.Remove(file)
+		err := os.Remove(file)
+		require.NoError(t, err)
 	}()
 
 	_, err = f.WriteString("hello, world")
 	require.NoError(t, err)
-	f.Close()
+	err = f.Close()
+	require.NoError(t, err)
 
 	got, err := ExpandVar(fmt.Sprintf("$__file{%s}", file))
 	assert.NoError(t, err)

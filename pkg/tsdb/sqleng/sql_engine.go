@@ -174,7 +174,11 @@ func (e *sqlQueryEndpoint) Query(ctx context.Context, dsInfo *models.DataSource,
 				return
 			}
 
-			defer rows.Close()
+			defer func() {
+				if err := rows.Close(); err != nil {
+					e.log.Warn("Failed to close rows", "err", err)
+				}
+			}()
 
 			format := query.Model.Get("format").MustString("time_series")
 

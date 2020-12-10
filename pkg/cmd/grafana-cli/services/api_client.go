@@ -94,14 +94,20 @@ func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File
 	if err != nil {
 		return errutil.Wrap("Failed to send request", err)
 	}
-	defer bodyReader.Close()
+	defer func() {
+		if err := bodyReader.Close(); err != nil {
+			logger.Warn("Failed to close body", "err", err)
+		}
+	}()
 
 	w := bufio.NewWriter(tmpFile)
 	h := md5.New()
 	if _, err = io.Copy(w, io.TeeReader(bodyReader, h)); err != nil {
 		return errutil.Wrap("Failed to compute MD5 checksum", err)
 	}
-	w.Flush()
+	if err := w.Flush(); err != nil {
+		return fmt.Errorf("failed to write to %q: %w", tmpFile.Name(), err)
+	}
 	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", h.Sum(nil)) {
 		return fmt.Errorf("expected MD5 checksum does not match the downloaded archive - please contact security@grafana.com")
 	}
@@ -131,7 +137,11 @@ func sendRequestGetBytes(client http.Client, repoUrl string, subPaths ...string)
 	if err != nil {
 		return []byte{}, err
 	}
-	defer bodyReader.Close()
+	defer func() {
+		if err := bodyReader.Close(); err != nil {
+			logger.Warn("Failed to close stream", "err", err)
+		}
+	}()
 	return ioutil.ReadAll(bodyReader)
 }
 

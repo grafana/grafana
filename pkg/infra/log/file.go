@@ -228,8 +228,8 @@ func (w *FileLogWriter) deleteOldLog() {
 }
 
 // destroy file logger, close file writer.
-func (w *FileLogWriter) Close() {
-	w.mw.fd.Close()
+func (w *FileLogWriter) Close() error {
+	return w.mw.fd.Close()
 }
 
 // flush file logger.

@@ -39,7 +39,10 @@ func TestLoadingSettings(t *testing.T) {
 			if err != nil {
 				t.Errorf("failed to load defaults.ini file: %v", err)
 			}
-			defer file.Close()
+			defer func() {
+				err := file.Close()
+				So(err, ShouldBeNil)
+			}()
 
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {

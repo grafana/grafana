@@ -94,11 +94,16 @@ func Fatalf(skip int, format string, v ...interface{}) {
 	os.Exit(1)
 }
 
-func Close() {
+func Close() error {
+	var err error
 	for _, logger := range loggersToClose {
-		logger.Close()
+		if e := logger.Close(); e != nil && err == nil {
+			err = e
+		}
 	}
 	loggersToClose = make([]DisposableHandler, 0)
+
+	return err
 }
 
 func Reload() {

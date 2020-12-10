@@ -240,10 +240,14 @@ func TestValues(t *testing.T) {
 		})
 
 		Reset(func() {
-			os.Unsetenv("INT")
-			os.Unsetenv("STRING")
-			os.Unsetenv("EMPTYSTRING")
-			os.Unsetenv("BOOL")
+			err := os.Unsetenv("INT")
+			So(err, ShouldBeNil)
+			err = os.Unsetenv("STRING")
+			So(err, ShouldBeNil)
+			err = os.Unsetenv("EMPTYSTRING")
+			So(err, ShouldBeNil)
+			err = os.Unsetenv("BOOL")
+			So(err, ShouldBeNil)
 		})
 	})
 }

@@ -257,6 +257,11 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 		childCtx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		stream := newCallResourceResponseStream(childCtx)
+		defer func() {
+			if err := stream.Close(); err != nil {
+				m.logger.Warn("Failed to close stream", "err", err)
+			}
+		}()
 		var wg sync.WaitGroup
 		wg.Add(1)
 		var flushStreamErr error
@@ -265,12 +270,15 @@ func (m *manager) callResourceInternal(w http.ResponseWriter, req *http.Request,
 			wg.Done()
 		}()
 
-		innerErr := p.CallResource(req.Context(), crReq, stream)
-		stream.Close()
-		if innerErr != nil {
-			return innerErr
+		if err := p.CallResource(req.Context(), crReq, stream); err != nil {
+			return err
 		}
+		if err := stream.Close(); err != nil {
+			return err
+		}
+
 		wg.Wait()
+
 		return flushStreamErr
 	})
 }

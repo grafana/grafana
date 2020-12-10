@@ -92,7 +92,11 @@ func (pm *PluginManager) checkForUpdates() {
 		return
 	}
 
-	defer resp2.Body.Close()
+	defer func() {
+		if err := resp2.Body.Close(); err != nil {
+			pm.log.Warn("Failed to close body", "err", err)
+		}
+	}()
 	body, err = ioutil.ReadAll(resp2.Body)
 	if err != nil {
 		log.Tracef("Update check failed, reading response from github.com, %v", err.Error())

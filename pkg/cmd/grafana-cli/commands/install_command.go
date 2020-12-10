@@ -111,11 +111,17 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 	if err != nil {
 		return errutil.Wrap("failed to create temporary file", err)
 	}
-	defer os.Remove(tmpFile.Name())
+	defer func() {
+		if err := os.Remove(tmpFile.Name()); err != nil {
+			logger.Warn("Failed to remove temporary file", "file", tmpFile.Name(), "err", err)
+		}
+	}()
 
 	err = client.DownloadFile(pluginName, tmpFile, downloadURL, checksum)
 	if err != nil {
-		tmpFile.Close()
+		if err := tmpFile.Close(); err != nil {
+			logger.Warn("Failed to close file", "err", err)
+		}
 		return errutil.Wrap("failed to download plugin archive", err)
 	}
 	err = tmpFile.Close()
