@@ -115,9 +115,9 @@ func (e *State) walkUnary(node *parse.UnaryNode) (Results, error) {
 				newVal = NewScalar(e.RefID, &newF)
 			}
 		case Number:
-			newVal, err = unaryNumber(rt, node.OpStr)
+			newVal, err = e.unaryNumber(rt, node.OpStr)
 		case Series:
-			newVal, err = unarySeries(rt, node.OpStr)
+			newVal, err = e.unarySeries(rt, node.OpStr)
 		default:
 			return newResults, fmt.Errorf("can not perform a unary operation on type %v", rt.Type())
 		}
@@ -129,8 +129,8 @@ func (e *State) walkUnary(node *parse.UnaryNode) (Results, error) {
 	return newResults, nil
 }
 
-func unarySeries(s Series, op string) (Series, error) {
-	newSeries := NewSeries(s.GetName(), s.GetLabels(), s.TimeIdx, s.TimeIsNullable, s.ValueIdx, s.ValueIsNullabe, s.Len())
+func (e *State) unarySeries(s Series, op string) (Series, error) {
+	newSeries := NewSeries(e.RefID, s.GetLabels(), s.TimeIdx, s.TimeIsNullable, s.ValueIdx, s.ValueIsNullabe, s.Len())
 	for i := 0; i < s.Len(); i++ {
 		t, f := s.GetPoint(i)
 		if f == nil {
@@ -150,8 +150,8 @@ func unarySeries(s Series, op string) (Series, error) {
 	return newSeries, nil
 }
 
-func unaryNumber(n Number, op string) (Number, error) {
-	newNumber := NewNumber(n.GetName(), n.GetLabels())
+func (e *State) unaryNumber(n Number, op string) (Number, error) {
+	newNumber := NewNumber(e.RefID, n.GetLabels())
 
 	f := n.GetFloat64Value()
 	if f != nil {

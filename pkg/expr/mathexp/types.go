@@ -30,7 +30,6 @@ type Value interface {
 	Value() interface{}
 	GetLabels() data.Labels
 	SetLabels(data.Labels)
-	GetName() string
 	AsDataFrame() *data.Frame
 }
 
@@ -48,8 +47,6 @@ func (s Scalar) Value() interface{} { return s }
 func (s Scalar) GetLabels() data.Labels { return nil }
 
 func (s Scalar) SetLabels(ls data.Labels) {}
-
-func (s Scalar) GetName() string { return s.Frame.Name }
 
 // AsDataFrame returns the underlying *data.Frame.
 func (s Scalar) AsDataFrame() *data.Frame { return s.Frame }
@@ -86,8 +83,6 @@ func (n Number) Value() interface{} { return &n }
 func (n Number) GetLabels() data.Labels { return n.Frame.Fields[0].Labels }
 
 func (n Number) SetLabels(ls data.Labels) { n.Frame.Fields[0].Labels = ls }
-
-func (n Number) GetName() string { return n.Frame.Name }
 
 // AsDataFrame returns the underlying *data.Frame.
 func (n Number) AsDataFrame() *data.Frame { return n.Frame }
