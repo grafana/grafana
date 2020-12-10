@@ -55,17 +55,17 @@ func (s Scalar) GetName() string { return s.Frame.Name }
 func (s Scalar) AsDataFrame() *data.Frame { return s.Frame }
 
 // NewScalar creates a Scalar holding value f.
-func NewScalar(f *float64) Scalar {
+func NewScalar(name string, f *float64) Scalar {
 	frame := data.NewFrame("",
-		data.NewField("Scalar", nil, []*float64{f}),
+		data.NewField(name, nil, []*float64{f}),
 	)
 	return Scalar{frame}
 }
 
 // NewScalarResults creates a Results holding a single Scalar
-func NewScalarResults(f *float64) Results {
+func NewScalarResults(name string, f *float64) Results {
 	return Results{
-		Values: []Value{NewScalar(f)},
+		Values: []Value{NewScalar(name, f)},
 	}
 }
 

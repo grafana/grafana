@@ -80,7 +80,7 @@ func errRecover(errp *error, s *State) {
 func (e *State) walk(node parse.Node) (res Results, err error) {
 	switch node := node.(type) {
 	case *parse.ScalarNode:
-		res = NewScalarResults(&node.Float64)
+		res = NewScalarResults(e.RefID, &node.Float64)
 	case *parse.VarNode:
 		res = e.Vars[node.Name]
 	case *parse.BinaryNode:
@@ -105,14 +105,14 @@ func (e *State) walkUnary(node *parse.UnaryNode) (Results, error) {
 		var newVal Value
 		switch rt := val.(type) {
 		case Scalar:
-			newVal = NewScalar(nil)
+			newVal = NewScalar(e.RefID, nil)
 			f := rt.GetFloat64Value()
 			if f != nil {
 				newF, err := unaryOp(node.OpStr, *f)
 				if err != nil {
 					return newResults, err
 				}
-				newVal = NewScalar(&newF)
+				newVal = NewScalar(e.RefID, &newF)
 			}
 		case Number:
 			newVal, err = unaryNumber(rt, node.OpStr)
@@ -264,7 +264,7 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 			case Scalar:
 				bFloat := bt.GetFloat64Value()
 				if aFloat == nil || bFloat == nil {
-					value = NewScalar(nil)
+					value = NewScalar(e.RefID, nil)
 					break
 				}
 				f := math.NaN()
@@ -274,7 +274,7 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 						return res, err
 					}
 				}
-				value = NewScalar(&f)
+				value = NewScalar(e.RefID, &f)
 			// Scalar op Scalar
 			case Number:
 				value, err = e.biScalarNumber(uni.Labels, node.OpStr, bt, aFloat, false)
@@ -506,7 +506,7 @@ func (e *State) walkFunc(node *parse.FuncNode) (Results, error) {
 		case *parse.VarNode:
 			v = e.Vars[t.Name]
 		case *parse.ScalarNode:
-			v = NewScalarResults(&t.Float64)
+			v = NewScalarResults(e.RefID, &t.Float64)
 		case *parse.FuncNode:
 			v, err = e.walkFunc(t)
 		case *parse.UnaryNode:

@@ -24,7 +24,7 @@ func TestScalarExpr(t *testing.T) {
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
 			resultIs:  assert.Equal,
-			Results:   Results{[]Value{NewScalar(float64Pointer(1.0))}},
+			Results:   Results{[]Value{NewScalar("", float64Pointer(1.0))}},
 		},
 		{
 			name:      "unary: scalar",
@@ -33,7 +33,7 @@ func TestScalarExpr(t *testing.T) {
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
 			resultIs:  assert.Equal,
-			Results:   Results{[]Value{NewScalar(float64Pointer(0.0))}},
+			Results:   Results{[]Value{NewScalar("", float64Pointer(0.0))}},
 		},
 		{
 			name:      "binary: scalar Op scalar",
@@ -42,7 +42,7 @@ func TestScalarExpr(t *testing.T) {
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
 			resultIs:  assert.Equal,
-			Results:   Results{[]Value{NewScalar(float64Pointer(2.0))}},
+			Results:   Results{[]Value{NewScalar("", float64Pointer(2.0))}},
 		},
 		{
 			name:      "binary: scalar Op scalar - divide by zero",
@@ -51,7 +51,7 @@ func TestScalarExpr(t *testing.T) {
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
 			resultIs:  assert.Equal,
-			Results:   Results{[]Value{NewScalar(float64Pointer(math.Inf(1)))}},
+			Results:   Results{[]Value{NewScalar("", float64Pointer(math.Inf(1)))}},
 		},
 		{
 			name:      "binary: scalar Op number",
