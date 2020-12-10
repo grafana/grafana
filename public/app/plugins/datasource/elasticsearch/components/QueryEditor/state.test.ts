@@ -1,6 +1,13 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
 import { ElasticsearchQuery } from '../../types';
-import { aliasPatternReducer, changeAliasPattern, changeQuery, queryReducer } from './state';
+import {
+  aliasPatternReducer,
+  changeAliasPattern,
+  changeIndexPatternOverride,
+  changeQuery,
+  indexPatternOverrideReducer,
+  queryReducer,
+} from './state';
 
 describe('Query Reducer', () => {
   it('Should correctly set `query`', () => {
@@ -37,6 +44,26 @@ describe('Alias Pattern Reducer', () => {
 
     reducerTester()
       .givenReducer(aliasPatternReducer, initialState)
+      .whenActionIsDispatched({ type: 'THIS ACTION SHOULD NOT HAVE ANY EFFECT IN THIS REDUCER' })
+      .thenStateShouldEqual(initialState);
+  });
+});
+
+describe('Index Pattern Override Reducer', () => {
+  it('Should correctly set `indexPatternOverride`', () => {
+    const expectedIndexPatternOverride: ElasticsearchQuery['indexPatternOverride'] = 'example-*';
+
+    reducerTester()
+      .givenReducer(indexPatternOverrideReducer, '')
+      .whenActionIsDispatched(changeIndexPatternOverride(expectedIndexPatternOverride))
+      .thenStateShouldEqual(expectedIndexPatternOverride);
+  });
+
+  it('Should not change state with other action types', () => {
+    const initialState: ElasticsearchQuery['indexPatternOverride'] = 'example-*';
+
+    reducerTester()
+      .givenReducer(indexPatternOverrideReducer, initialState)
       .whenActionIsDispatched({ type: 'THIS ACTION SHOULD NOT HAVE ANY EFFECT IN THIS REDUCER' })
       .thenStateShouldEqual(initialState);
   });

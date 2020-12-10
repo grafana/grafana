@@ -4,7 +4,7 @@ import { ElasticDatasource } from '../../datasource';
 import { ElasticsearchOptions, ElasticsearchQuery } from '../../types';
 import { ElasticsearchProvider } from './ElasticsearchQueryContext';
 import { InlineField, InlineFieldRow, Input, QueryField } from '@grafana/ui';
-import { changeAliasPattern, changeQuery } from './state';
+import { changeAliasPattern, changeIndexPatternOverride, changeQuery } from './state';
 import { MetricAggregationsEditor } from './MetricAggregationsEditor';
 import { BucketAggregationsEditor } from './BucketAggregationsEditor';
 import { useDispatch } from '../../hooks/useStatelessReducer';
@@ -41,7 +41,18 @@ const QueryEditorForm: FunctionComponent<Props> = ({ value }) => {
           />
         </InlineField>
         <InlineField label="Alias" labelWidth={15}>
-          <Input placeholder="Alias Pattern" onBlur={e => dispatch(changeAliasPattern(e.currentTarget.value))} />
+          <Input
+            placeholder="Alias Pattern"
+            value={value.alias}
+            onBlur={e => dispatch(changeAliasPattern(e.currentTarget.value))}
+          />
+        </InlineField>
+        <InlineField label="Index Pattern" labelWidth={15}>
+          <Input
+            placeholder="Index Pattern Override"
+            value={value.indexPatternOverride}
+            onBlur={e => dispatch(changeIndexPatternOverride(e.currentTarget.value))}
+          />
         </InlineField>
       </InlineFieldRow>
 

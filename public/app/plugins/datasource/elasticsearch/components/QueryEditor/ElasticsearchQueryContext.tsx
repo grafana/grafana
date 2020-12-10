@@ -5,7 +5,7 @@ import { ElasticsearchQuery } from '../../types';
 
 import { reducer as metricsReducer } from './MetricAggregationsEditor/state/reducer';
 import { reducer as bucketAggsReducer } from './BucketAggregationsEditor/state/reducer';
-import { aliasPatternReducer, queryReducer, initQuery } from './state';
+import { aliasPatternReducer, queryReducer, initQuery, indexPatternOverrideReducer } from './state';
 
 const DatasourceContext = createContext<ElasticDatasource | undefined>(undefined);
 const QueryContext = createContext<ElasticsearchQuery | undefined>(undefined);
@@ -20,6 +20,7 @@ export const ElasticsearchProvider: FunctionComponent<Props> = ({ children, onCh
   const reducer = combineReducers({
     query: queryReducer,
     alias: aliasPatternReducer,
+    indexPatternOverride: indexPatternOverrideReducer,
     metrics: metricsReducer,
     bucketAggs: bucketAggsReducer,
   });
