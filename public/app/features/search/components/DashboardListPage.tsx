@@ -41,6 +41,7 @@ export const DashboardListPage: FC<Props> = memo(({ navModel, uid, url }) => {
     </Page>
   );
 });
+DashboardListPage.displayName = 'DashboardListPage';
 
 const mapStateToProps: MapStateToProps<Props, {}, StoreState> = state => {
   return {

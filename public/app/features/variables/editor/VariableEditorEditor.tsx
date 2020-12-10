@@ -152,7 +152,11 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
                   placeholder="optional display name"
                   ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput}
                 />
-                <VariableHideSelect onChange={this.onHideChange} hide={this.props.variable.hide} />
+                <VariableHideSelect
+                  onChange={this.onHideChange}
+                  hide={this.props.variable.hide}
+                  type={this.props.variable.type}
+                />
               </InlineFieldRow>
 
               <VariableTextField

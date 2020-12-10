@@ -51,7 +51,6 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
         variantStyles: css`
           &:focus {
             outline: none;
-            box-shadow: none;
           }
         `,
       };

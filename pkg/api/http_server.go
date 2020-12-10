@@ -109,6 +109,7 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 		if err := hs.configureHttps(); err != nil {
 			return err
 		}
+	default:
 	}
 
 	listener, err := hs.getListener()
@@ -177,6 +178,7 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 		}
 
 		// Make socket writable by group
+		// nolint:gosec
 		if err := os.Chmod(setting.SocketPath, 0660); err != nil {
 			return nil, errutil.Wrapf(err, "failed to change socket permissions")
 		}
@@ -366,7 +368,7 @@ func (hs *HTTPServer) metricsEndpoint(ctx *macaron.Context) {
 	}
 
 	promhttp.
-		HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{}).
+		HandlerFor(prometheus.DefaultGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}).
 		ServeHTTP(ctx.Resp, ctx.Req.Request)
 }
 

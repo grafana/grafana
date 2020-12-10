@@ -87,6 +87,9 @@ export const VisualizationTabUnconnected = React.forwardRef<HTMLInputElement, Pr
     );
   }
 );
+
+VisualizationTabUnconnected.displayName = 'VisualizationTabUnconnected';
+
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     icon: css`

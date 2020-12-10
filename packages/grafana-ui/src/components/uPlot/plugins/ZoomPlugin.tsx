@@ -8,6 +8,9 @@ interface ZoomPluginProps {
 // min px width that triggers zoom
 const MIN_ZOOM_DIST = 5;
 
+/**
+ * @alpha
+ */
 export const ZoomPlugin: React.FC<ZoomPluginProps> = ({ onZoom }) => {
   return (
     <SelectionPlugin

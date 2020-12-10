@@ -61,13 +61,11 @@ class DashboardWatcher {
       this.channel = live.getChannel({
         scope: LiveChannelScope.Grafana,
         namespace: 'dashboard',
-        path: uid,
+        path: `uid/${uid}`,
       });
       this.channel.getStream().subscribe(this.observer);
       this.uid = uid;
     }
-
-    console.log('Watch', uid);
   }
 
   leave() {

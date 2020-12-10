@@ -16,7 +16,7 @@ type Repository interface {
 
 // AnnotationCleaner is responsible for cleaning up old annotations
 type AnnotationCleaner interface {
-	CleanAnnotations(ctx context.Context, cfg *setting.Cfg) error
+	CleanAnnotations(ctx context.Context, cfg *setting.Cfg) (int64, int64, error)
 }
 
 type ItemQuery struct {

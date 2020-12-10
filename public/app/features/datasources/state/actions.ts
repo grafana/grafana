@@ -214,7 +214,7 @@ function updateFrontendSettings() {
     .then((settings: any) => {
       config.datasources = settings.datasources;
       config.defaultDatasource = settings.defaultDatasource;
-      getDatasourceSrv().init();
+      getDatasourceSrv().init(config.datasources, settings.defaultDatasource);
     });
 }
 
