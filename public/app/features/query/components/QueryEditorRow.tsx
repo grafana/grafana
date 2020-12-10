@@ -90,7 +90,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   getQueryDataSourceIdentifier(): string | null | undefined {
     const { query, dsSettings } = this.props;
-    return query.datasource ?? dsSettings.uid;
+    return query.datasource ?? dsSettings.name;
   }
 
   async loadDatasource() {

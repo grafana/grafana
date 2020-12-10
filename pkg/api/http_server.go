@@ -180,6 +180,7 @@ func (hs *HTTPServer) getListener() (net.Listener, error) {
 		}
 
 		// Make socket writable by group
+		// nolint:gosec
 		if err := os.Chmod(hs.Cfg.SocketPath, 0660); err != nil {
 			return nil, errutil.Wrapf(err, "failed to change socket permissions")
 		}
