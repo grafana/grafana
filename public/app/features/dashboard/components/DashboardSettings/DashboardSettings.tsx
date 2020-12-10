@@ -111,6 +111,11 @@ export class DashboardSettings extends PureComponent<Props> {
     const pages = this.getPages();
     const currentPage = pages.find(page => page.id === editview) ?? this.getGeneralPage();
 
+    // Used for side menu buttons
+    // this.canSaveAs = contextSrv.hasEditPermissionInFolders;
+    // this.canSave = this.dashboard.meta.canSave;
+    // this.canDelete = this.dashboard.meta.canSave
+
     return (
       <div className="dashboard-settings">
         <div className="navbar navbar--edit">
@@ -130,6 +135,7 @@ export class DashboardSettings extends PureComponent<Props> {
                   className={cx('dashboard-settings__nav-item', { active: page.id === editview })}
                   aria-label={selectors.pages.Dashboard.Settings.General.sectionItems(page.title)}
                   onClick={() => this.onChangePage(page.id)}
+                  key={page.id}
                 >
                   <Icon name={page.icon} style={{ marginRight: '4px' }} />
                   {page.title}

@@ -1,17 +1,31 @@
 import React, { PureComponent } from 'react';
-import { selectors } from '@grafana/e2e-selectors';
 import { DashboardModel } from '../../state/DashboardModel';
+import { AngularComponent, getAngularLoader } from '@grafana/runtime';
+import './SettingsCtrl';
 
 interface Props {
   dashboard: DashboardModel;
 }
 
 export class GeneralSettings extends PureComponent<Props> {
+  element?: HTMLElement | null;
+  angularCmp?: AngularComponent;
+
+  componentDidMount() {
+    const loader = getAngularLoader();
+
+    const template = '<dashboard-settings dashboard="dashboard" />';
+    const scopeProps = { dashboard: this.props.dashboard };
+    this.angularCmp = loader.load(this.element, scopeProps, template);
+  }
+
+  componentWillUnmount() {
+    if (this.angularCmp) {
+      this.angularCmp.destroy();
+    }
+  }
+
   render() {
-    return (
-      <h3 className="dashboard-settings__header" aria-label={selectors.pages.Dashboard.Settings.General.title}>
-        General
-      </h3>
-    );
+    return <div ref={ref => (this.element = ref)} />;
   }
 }
