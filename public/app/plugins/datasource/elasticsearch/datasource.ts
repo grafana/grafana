@@ -320,27 +320,54 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return this.templateSrv.replace(queryString, scopedVars, 'lucene') || '*';
   }
 
-  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
-    let expandedQueries = queries;
-    if (queries && queries.length > 0) {
-      expandedQueries = queries.map(query => {
-        const expandedQuery = {
-          ...query,
-          datasource: this.name,
-          query: this.interpolateLuceneQuery(query.query || '', scopedVars),
-        };
-
-        for (let bucketAgg of query.bucketAggs || []) {
-          if (bucketAgg.type === 'filters') {
-            for (let filter of bucketAgg.settings?.filters || []) {
-              filter.query = this.interpolateLuceneQuery(filter.query, scopedVars);
-            }
-          }
-        }
-        return expandedQuery;
-      });
+  private interpolateObject(obj: any, scopedVars: ScopedVars): any {
+    if (Array.isArray(obj)) {
+      return this.interpolateArray(obj, scopedVars);
     }
-    return expandedQueries;
+
+    return Object.entries(obj)
+      .map(([k, v]) => {
+        if (Array.isArray(v)) {
+          return [k, this.interpolateArray(v, scopedVars)];
+        }
+
+        if (typeof v === 'object') {
+          return [k, this.interpolateObject(v, scopedVars)];
+        }
+
+        // TODO: Here v might be a number. as of now we should only interpolate strings as numbers are treated differently.
+        if (k === 'query') {
+          // As of now, the only fields in the query model we know being a lucene query are all called 'field'.
+          // (filters bucket aggregation)
+          return [k, this.interpolateLuceneQuery(v as string, scopedVars)];
+        }
+
+        return [k, this.templateSrv.replace(v as string, scopedVars)];
+      })
+      .reduce((acc, [k, v]) => ({ ...acc, [k]: v }), obj);
+  }
+
+  private interpolateArray(arr: any[], scopedVars: ScopedVars): any[] {
+    return arr.map(item => {
+      if (Array.isArray(item)) {
+        return this.interpolateArray(item, scopedVars);
+      }
+
+      return this.interpolateObject(item, scopedVars);
+    });
+  }
+
+  interpolateVariablesInQueries(queries: ElasticsearchQuery[], scopedVars: ScopedVars): ElasticsearchQuery[] {
+    return queries.map(query => {
+      return {
+        ...query,
+        // TODO: Check if datasource is needed
+        datasource: this.name,
+        query: this.interpolateLuceneQuery(query.query || '', scopedVars),
+        metrics: this.interpolateArray(query.metrics || [], scopedVars),
+        bucketAggs: this.interpolateArray(query.bucketAggs || [], scopedVars),
+      };
+    });
   }
 
   testDatasource() {

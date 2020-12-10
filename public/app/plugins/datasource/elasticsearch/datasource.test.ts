@@ -865,7 +865,7 @@ describe('ElasticDatasource', function(this: any) {
     expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('resolvedVariable');
   });
 
-  it('should correctly handle empty query strings', () => {
+  it.only('should correctly handle empty query strings', () => {
     const query: ElasticsearchQuery = {
       refId: 'A',
       bucketAggs: [{ type: 'filters', settings: { filters: [{ query: '', label: '' }] }, id: '1' }],
