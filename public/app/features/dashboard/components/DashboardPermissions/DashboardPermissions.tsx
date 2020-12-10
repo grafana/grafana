@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
-import { Tooltip, Icon } from '@grafana/ui';
+import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
+import { Tooltip, Icon, Button } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { StoreState, FolderInfo } from 'app/types';
 import { DashboardAcl, PermissionLevel, NewDashboardAclItem } from 'app/types/acl';
@@ -12,23 +13,30 @@ import {
 import PermissionList from 'app/core/components/PermissionList/PermissionList';
 import AddPermission from 'app/core/components/PermissionList/AddPermission';
 import PermissionsInfo from 'app/core/components/PermissionList/PermissionsInfo';
-import { connectWithStore } from 'app/core/utils/connectWithReduxStore';
 
-export interface Props {
+export interface OwnProps {
   dashboardId: number;
   folder?: FolderInfo;
+}
+
+export interface ConnectedProps {
   permissions: DashboardAcl[];
+}
+
+export interface DispatchProps {
   getDashboardPermissions: typeof getDashboardPermissions;
   updateDashboardPermission: typeof updateDashboardPermission;
   removeDashboardPermission: typeof removeDashboardPermission;
   addDashboardPermission: typeof addDashboardPermission;
 }
 
+export type Props = OwnProps & ConnectedProps & DispatchProps;
+
 export interface State {
   isAdding: boolean;
 }
 
-export class DashboardPermissions extends PureComponent<Props, State> {
+export class DashboardPermissionsUnconnected extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
@@ -74,9 +82,9 @@ export class DashboardPermissions extends PureComponent<Props, State> {
               <Icon className="icon--has-hover page-sub-heading-icon" name="question-circle" />
             </Tooltip>
             <div className="page-action-bar__spacer" />
-            <button className="btn btn-primary pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
+            <Button className="pull-right" onClick={this.onOpenAddPermissions} disabled={isAdding}>
               Add Permission
-            </button>
+            </Button>
           </div>
         </div>
         <SlideDown in={isAdding}>
@@ -94,15 +102,15 @@ export class DashboardPermissions extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = (state: StoreState) => ({
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
   permissions: state.dashboard.permissions,
 });
 
-const mapDispatchToProps = {
+const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   getDashboardPermissions,
   addDashboardPermission,
   removeDashboardPermission,
   updateDashboardPermission,
 };
 
-export default connectWithStore(DashboardPermissions, mapStateToProps, mapDispatchToProps);
+export const DashboardPermissions = connect(mapStateToProps, mapDispatchToProps)(DashboardPermissionsUnconnected);

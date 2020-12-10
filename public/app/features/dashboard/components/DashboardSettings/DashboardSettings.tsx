@@ -9,7 +9,7 @@ import { GeneralSettings } from './GeneralSettings';
 import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
-import DashboardPermissions from '../DashboardPermissions/DashboardPermissions';
+import { DashboardPermissions } from '../DashboardPermissions/DashboardPermissions';
 
 export interface Props {
   dashboard: DashboardModel;
