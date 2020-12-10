@@ -1,5 +1,5 @@
 +++
-title = "Org Admin - Manage users"
+title = "Manage organization users"
 weight = 200
 +++
 
