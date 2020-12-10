@@ -406,7 +406,6 @@ func TestClient(t *testing.T) {
 
 					Convey("and replace index pattern with wildcard", func() {
 						So(jBody.Get("query").MustString(), ShouldEqual, "source = metrics-* | where `@timestamp` >= timestamp('$timeFrom') and `@timestamp` <= timestamp('$timeTo')")
-
 					})
 				})
 				Convey("Should parse response", func() {

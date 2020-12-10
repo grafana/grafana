@@ -39,7 +39,7 @@ func (ip *staticIndexPattern) GetIndices(timeRange *tsdb.TimeRange) ([]string, e
 	return []string{ip.indexName}, nil
 }
 
-//PPL static index pattern returns the indexName string
+// PPL static index pattern returns the indexName string
 func (ip *staticIndexPattern) GetPPLIndex() (string, error) {
 	return ip.indexName, nil
 }
@@ -92,7 +92,7 @@ func (ip *dynamicIndexPattern) GetIndices(timeRange *tsdb.TimeRange) ([]string, 
 	return indices, nil
 }
 
-/// PPL currently does not support multi-indexing through lists, so a wildcard
+// PPL currently does not support multi-indexing through lists, so a wildcard
 // pattern is used to match all patterns and relies on the time range filter
 // to filter out the incorrect indecies.
 func (ip *dynamicIndexPattern) GetPPLIndex() (string, error) {

@@ -286,7 +286,6 @@ func TestIndexPattern(t *testing.T) {
 	})
 
 	Convey("PPL dynamic index patterns", t, func() {
-
 		pplIndexScenario(intervalHourly, "[data-]YYYY.MM.DD.HH", func(indices string) {
 			So(indices, ShouldEqual, "data-*")
 		})
@@ -311,7 +310,6 @@ func TestIndexPattern(t *testing.T) {
 			So(indices, ShouldEqual, "*-data")
 		})
 	})
-
 }
 
 func indexPatternScenario(interval string, pattern string, timeRange *tsdb.TimeRange, fn func(indices []string)) {

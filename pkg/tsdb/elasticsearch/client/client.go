@@ -360,7 +360,7 @@ func (c *baseClientImpl) encodePPLRequests(requests *pplRequest) ([]byte, error)
 	}
 
 	body := string(reqBody)
-	//replace the escaped characters in time range filtering
+	// replace the escaped characters in time range filtering
 	body = strings.ReplaceAll(body, "\\u003c", "<")
 	body = strings.ReplaceAll(body, "\\u003e", ">")
 
