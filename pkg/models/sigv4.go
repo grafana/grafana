@@ -24,6 +24,17 @@ const (
 	Credentials AuthType = "credentials"
 )
 
+// Host header is likely not necessary here
+// (see https://github.com/golang/go/blob/cad6d1fef5147d31e94ee83934c8609d3ad150b7/src/net/http/request.go#L92)
+// but adding for completeness
+var permittedHeaders = map[string]struct{}{
+	"Host":            {},
+	"Uber-Trace-Id":   {},
+	"User-Agent":      {},
+	"Accept":          {},
+	"Accept-Encoding": {},
+}
+
 type SigV4Middleware struct {
 	Config *Config
 	Next   http.RoundTripper
@@ -72,18 +83,7 @@ func (m *SigV4Middleware) signRequest(req *http.Request) (http.Header, error) {
 		req.URL.RawPath = rest.EscapePath(req.URL.RawPath, false)
 	}
 
-	// if X-Forwarded-For header is present, omit during signing step as it breaks AWS request verification
-	forwardHeader := req.Header.Get("X-Forwarded-For")
-	if forwardHeader != "" {
-		req.Header.Del("X-Forwarded-For")
-
-		header, err := signer.Sign(req, bytes.NewReader(body), awsServiceNamespace(m.Config.DatasourceType), m.Config.Region, time.Now().UTC())
-
-		// reset pre-existing X-Forwarded-For header value
-		req.Header.Set("X-Forwarded-For", forwardHeader)
-
-		return header, err
-	}
+	stripHeaders(req)
 
 	return signer.Sign(req, bytes.NewReader(body), awsServiceNamespace(m.Config.DatasourceType), m.Config.Region, time.Now().UTC())
 }
@@ -111,6 +111,8 @@ func (m *SigV4Middleware) signer() (*v4.Signer, error) {
 		}
 
 		return v4.NewSigner(s.Config.Credentials), nil
+	case "":
+		return nil, fmt.Errorf("invalid SigV4 auth type")
 	}
 
 	if m.Config.AssumeRoleARN != "" {
@@ -147,5 +149,13 @@ func awsServiceNamespace(dsType string) string {
 		return "aps"
 	default:
 		panic(fmt.Sprintf("Unsupported datasource %s", dsType))
+	}
+}
+
+func stripHeaders(req *http.Request) {
+	for h := range req.Header {
+		if _, exists := permittedHeaders[h]; !exists {
+			req.Header.Del(h)
+		}
 	}
 }
