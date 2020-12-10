@@ -103,7 +103,6 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
     const variables = getVariables(getState());
     for (let index = 0; index < variables.length; index++) {
       const variable = variables[index];
-      dispatch(upgradeLegacyQueries(toVariableIdentifier(variable)));
       dispatch(variableStateNotStarted(toVariablePayload(variable)));
     }
   };
@@ -427,9 +426,9 @@ export const setOptionAsCurrent = (
   current: VariableOption,
   emitChanges: boolean
 ): ThunkResult<Promise<void>> => {
-  return dispatch => {
+  return async dispatch => {
     dispatch(setCurrentVariableValue(toVariablePayload(identifier, { option: current })));
-    return dispatch(variableUpdated(identifier, emitChanges));
+    return await dispatch(variableUpdated(identifier, emitChanges));
   };
 };
 
@@ -459,13 +458,14 @@ export const variableUpdated = (
   identifier: VariableIdentifier,
   emitChangeEvents: boolean
 ): ThunkResult<Promise<void>> => {
-  return (dispatch, getState) => {
+  return async (dispatch, getState) => {
     const variableInState = getVariable(identifier.id, getState());
 
     // if we're initializing variables ignore cascading update because we are in a boot up scenario
     if (getState().templating.transaction.status === TransactionStatus.Fetching) {
       if (getVariableRefresh(variableInState) === VariableRefresh.never) {
         // for variable types with updates that go the setValueFromUrl path in the update let's make sure their state is set to Done.
+        await dispatch(upgradeLegacyQueries(toVariableIdentifier(variableInState)));
         dispatch(completeVariableLoading(identifier));
       }
       return Promise.resolve();
@@ -639,6 +639,7 @@ export const updateOptions = (identifier: VariableIdentifier, rethrow = false): 
   const variableInState = getVariable(identifier.id, getState());
   try {
     dispatch(variableStateFetching(toVariablePayload(variableInState)));
+    await dispatch(upgradeLegacyQueries(toVariableIdentifier(variableInState)));
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
     dispatch(completeVariableLoading(identifier));
   } catch (error) {
@@ -684,26 +685,31 @@ export function upgradeLegacyQueries(
       return;
     }
 
-    const datasource = await getDatasourceSrvFunc().get(variable.datasource ?? '');
+    try {
+      const datasource = await getDatasourceSrvFunc().get(variable.datasource ?? '');
 
-    if (hasLegacyVariableSupport(datasource)) {
-      return;
+      if (hasLegacyVariableSupport(datasource)) {
+        return;
+      }
+
+      if (!hasStandardVariableSupport(datasource)) {
+        return;
+      }
+
+      if (isDataQueryType(variable.query)) {
+        return;
+      }
+
+      const query = {
+        refId: `${datasource.name}-${identifier.id}-Variable-Query`,
+        query: variable.query,
+      };
+
+      dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
+    } catch (err) {
+      dispatch(notifyApp(createVariableErrorNotification('Failed to upgrade legacy queries', err)));
+      console.error(err);
     }
-
-    if (!hasStandardVariableSupport(datasource)) {
-      return;
-    }
-
-    if (isDataQueryType(variable.query)) {
-      return;
-    }
-
-    const query = {
-      refId: `${datasource.name}-${identifier.id}-Variable-Query`,
-      query: variable.query,
-    };
-
-    dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
   };
 }
 
