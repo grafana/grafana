@@ -15,7 +15,7 @@ import (
 )
 
 func TestCreateLibraryPanel(t *testing.T) {
-	libraryPanelScenario(t, "When an admin tries to create a panel library", "then it should fail if library panel already exists", func(t *testing.T) {
+	libraryPanelScenario(t, "When an admin tries to create a library panel", "then it should fail if library panel already exists", func(t *testing.T) {
 		lps, context := setupTestEnv(t, models.ROLE_ADMIN, map[string]string{})
 		command := getCreateCommand(1, "Text - Library Panel")
 
@@ -28,14 +28,14 @@ func TestCreateLibraryPanel(t *testing.T) {
 }
 
 func TestDeleteLibraryPanel(t *testing.T) {
-	libraryPanelScenario(t, "When an admin tries to delete a panel library that does not exist", "then it should fail", func(t *testing.T) {
+	libraryPanelScenario(t, "When an admin tries to delete a library panel that does not exist", "then it should fail", func(t *testing.T) {
 		lps, context := setupTestEnv(t, models.ROLE_ADMIN, map[string]string{":panelId": "74"})
 
 		response := lps.deleteHandler(&context)
 		require.Equal(t, 404, response.Status())
 	})
 
-	libraryPanelScenario(t, "When an admin tries to delete a panel library that exists", "then it should succeed", func(t *testing.T) {
+	libraryPanelScenario(t, "When an admin tries to delete a library panel that exists", "then it should succeed", func(t *testing.T) {
 		lps, context := setupTestEnv(t, models.ROLE_ADMIN, map[string]string{":panelId": "1"})
 		command := getCreateCommand(1, "Text - Library Panel")
 
