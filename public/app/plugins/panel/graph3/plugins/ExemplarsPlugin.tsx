@@ -1,5 +1,5 @@
 import { DataFrame, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
-import { EventsCanvas, usePlotContext } from '@grafana/ui';
+import { EventsCanvas, FIXED_UNIT, usePlotContext } from '@grafana/ui';
 import React, { useCallback } from 'react';
 import { ExemplarMarker } from './ExemplarMarker';
 
@@ -37,9 +37,22 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
         return undefined;
       }
 
+      // TODO: We should make sure that we don't hard code unit here
+      const yMin = plotInstance.scales[FIXED_UNIT].min;
+      const yMax = plotInstance.scales[FIXED_UNIT].max;
+
+      let y = exemplar.y;
+      if (yMin != null && y < yMin) {
+        y = yMin;
+      }
+
+      if (yMax != null && y > yMax) {
+        y = yMax;
+      }
+
       return {
         x: plotInstance.valToPos(exemplar.time, 'x'),
-        y: plotInstance.valToPos(exemplar.y, '__fixed'),
+        y: plotInstance.valToPos(y, FIXED_UNIT),
       };
     },
     [plotCtx.isPlotReady, plotCtx.getPlotInstance]

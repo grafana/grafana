@@ -39,6 +39,8 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Auto,
 };
 
+export const FIXED_UNIT = '__fixed';
+
 export const GraphNG: React.FC<GraphNGProps> = ({
   data,
   fields,
@@ -114,7 +116,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       }
 
       const fmt = field.display ?? defaultFormatter;
-      const scaleKey = config.unit || '__fixed';
+      const scaleKey = config.unit || FIXED_UNIT;
 
       if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
         // The builder will manage unique scaleKeys and combine where appropriate
