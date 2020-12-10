@@ -32,7 +32,7 @@ export const getFieldStyles = stylesFactory((theme: GrafanaTheme) => {
     field: css`
       display: flex;
       flex-direction: column;
-      margin-bottom: ${theme.spacing.formSpacingBase * 2}px;
+      margin-bottom: ${theme.spacing.formInputMargin};
     `,
     fieldHorizontal: css`
       flex-direction: row;

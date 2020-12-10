@@ -1,0 +1,16 @@
+# InlineFieldRow
+Used to align multiple `InlineField` components in one row. The row will wrap if the width of the children exceeds its own. Equivalent to the div with `gf-form-inline` class name.
+Multiple `InlineFieldRow`s vertically stack on each other.
+
+### Usage
+
+```jsx
+<InlineFieldRow>
+  <InlineField label="Label Row 1">
+    <Input placeholder="Label" />
+  </InlineField>
+  <InlineField label="Label Row 1">
+    <Input placeholder="Label" />
+  </InlineField>
+</InlineFieldRow>
+```

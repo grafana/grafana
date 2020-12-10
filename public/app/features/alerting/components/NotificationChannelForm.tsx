@@ -7,6 +7,8 @@ import { NotificationSettings } from './NotificationSettings';
 import { BasicSettings } from './BasicSettings';
 import { ChannelSettings } from './ChannelSettings';
 
+import config from 'app/core/config';
+
 interface Props extends Omit<FormAPI<NotificationChannelDTO>, 'formState'> {
   selectableChannels: Array<SelectableValue<string>>;
   selectedChannel?: NotificationChannelType;
@@ -36,9 +38,22 @@ export const NotificationChannelForm: FC<Props> = ({
 }) => {
   const styles = getStyles(useTheme());
 
+  /*
+   Finds fields that have dependencies on other fields and removes duplicates.
+   Needs to be prefixed with settings.
+  */
+  const fieldsToWatch =
+    new Set(
+      selectedChannel?.options
+        .filter(o => o.showWhen.field)
+        .map(option => {
+          return `settings.${option.showWhen.field}`;
+        })
+    ) || [];
+
   useEffect(() => {
-    watch(['type', 'settings.priority', 'sendReminder', 'uploadImage']);
-  }, []);
+    watch(['type', 'sendReminder', 'uploadImage', ...fieldsToWatch]);
+  }, [fieldsToWatch]);
 
   const currentFormValues = getValues();
 
@@ -89,7 +104,7 @@ export const NotificationChannelForm: FC<Props> = ({
           <Button type="button" variant="secondary" onClick={() => onTestChannel(getValues({ nest: true }))}>
             Test
           </Button>
-          <a href="/alerting/notifications">
+          <a href={`${config.appSubUrl}/alerting/notifications`}>
             <Button type="button" variant="secondary">
               Back
             </Button>

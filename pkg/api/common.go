@@ -10,9 +10,6 @@ import (
 )
 
 var (
-	NotFound = func() Response {
-		return Error(404, "Not found", nil)
-	}
 	ServerError = func(err error) Response {
 		return Error(500, "Server error", err)
 	}
@@ -20,6 +17,8 @@ var (
 
 type Response interface {
 	WriteTo(ctx *models.ReqContext)
+	// Status gets the response's status.
+	Status() int
 }
 
 type NormalResponse struct {
@@ -44,6 +43,11 @@ func Wrap(action interface{}) macaron.Handler {
 	}
 }
 
+// Status gets the response's status.
+func (r *NormalResponse) Status() int {
+	return r.status
+}
+
 func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 	if r.err != nil {
 		ctx.Logger.Error(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr())
@@ -59,16 +63,12 @@ func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 	}
 }
 
-func (r *NormalResponse) Cache(ttl string) *NormalResponse {
-	return r.Header("Cache-Control", "public,max-age="+ttl)
-}
-
 func (r *NormalResponse) Header(key, value string) *NormalResponse {
 	r.header.Set(key, value)
 	return r
 }
 
-// Empty create an empty response
+// Empty creates an empty response.
 func Empty(status int) *NormalResponse {
 	return Respond(status, nil)
 }
@@ -101,7 +101,7 @@ func Error(status int, message string, err error) *NormalResponse {
 	}
 
 	if err != nil {
-		if setting.Env != setting.PROD {
+		if setting.Env != setting.Prod {
 			data["error"] = err.Error()
 		}
 	}
@@ -143,6 +143,11 @@ type RedirectResponse struct {
 
 func (r *RedirectResponse) WriteTo(ctx *models.ReqContext) {
 	ctx.Redirect(r.location)
+}
+
+// Status gets the response's status.
+func (*RedirectResponse) Status() int {
+	return http.StatusFound
 }
 
 func Redirect(location string) *RedirectResponse {

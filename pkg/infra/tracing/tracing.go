@@ -25,6 +25,7 @@ type TracingService struct {
 	customTags               map[string]string
 	samplerType              string
 	samplerParam             float64
+	samplingServerURL        string
 	log                      log.Logger
 	closer                   io.Closer
 	zipkinPropagation        bool
@@ -60,6 +61,7 @@ func (ts *TracingService) parseSettings() {
 	ts.samplerParam = section.Key("sampler_param").MustFloat64(1)
 	ts.zipkinPropagation = section.Key("zipkin_propagation").MustBool(false)
 	ts.disableSharedZipkinSpans = section.Key("disable_shared_zipkin_spans").MustBool(false)
+	ts.samplingServerURL = section.Key("sampling_server_url").MustString("")
 }
 
 func (ts *TracingService) initJaegerCfg() (jaegercfg.Configuration, error) {
@@ -67,8 +69,9 @@ func (ts *TracingService) initJaegerCfg() (jaegercfg.Configuration, error) {
 		ServiceName: "grafana",
 		Disabled:    !ts.enabled,
 		Sampler: &jaegercfg.SamplerConfig{
-			Type:  ts.samplerType,
-			Param: ts.samplerParam,
+			Type:              ts.samplerType,
+			Param:             ts.samplerParam,
+			SamplingServerURL: ts.samplingServerURL,
 		},
 		Reporter: &jaegercfg.ReporterConfig{
 			LogSpans:           false,

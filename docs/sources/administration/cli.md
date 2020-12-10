@@ -2,9 +2,6 @@
 title = "Grafana CLI"
 description = "Guide to using grafana-cli"
 keywords = ["grafana", "cli", "grafana-cli", "command line interface"]
-type = "docs"
-[menu.docs]
-parent = "admin"
 weight = 8
 +++
 
@@ -112,7 +109,7 @@ grafana-cli --debug plugins install <plugin-id>
 
 `--configOverrides` is a command line argument that acts like an environmental variable override.
 
-For example, you can use it to redirect logging to another file (maybe to log plugin installations in Grafana Cloud) or when resetting the admin password and you have non-default values for some important config value (like where the database is located).
+For example, you can use it to redirect logging to another file (maybe to log plugin installations in Grafana Cloud) or when resetting the admin password and you have non-default values for some important configuration value (like where the database is located).
 
 **Example:**
 ```bash
@@ -205,7 +202,7 @@ If there are two flags being used to set the homepath and the config file path, 
 To correct this, use the `--homepath` global option to specify the Grafana default homepath for this command:
 
 ```bash
-grafana-cli --homepath "/usr/share/grafana" admin reset-admin-password <new password>
+grafana-cli admin reset-admin-password --homepath "/usr/share/grafana" <new password>
 ```
 
 If you have not lost the admin password, we recommend that you change the user password either in the User Preferences or in the Server Admin > User tab.

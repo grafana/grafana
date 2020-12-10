@@ -45,6 +45,12 @@ module.exports = {
       // rc-trigger uses babel-runtime which has internal dependency to core-js@2
       // this alias maps that dependency to core-js@t3
       'core-js/library/fn': 'core-js/stable',
+      // storybook v6 bump caused the app to bundle multiple versions of react breaking hooks
+      // make sure to resolve only from the project: https://github.com/facebook/react/issues/13991#issuecomment-435587809
+      react: path.resolve(__dirname, '../../node_modules/react'),
+      // some of data source pluginis use global Prism object to add the language definition
+      // we want to have same Prism object in core and in grafana/ui
+      prismjs: path.resolve(__dirname, '../../node_modules/prismjs'),
     },
     modules: [
       'node_modules',
@@ -65,7 +71,7 @@ module.exports = {
     new MonacoWebpackPlugin({
       // available options are documented at https://github.com/Microsoft/monaco-editor-webpack-plugin#options
       filename: 'monaco-[name].worker.js',
-      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql'],
+      languages: ['json', 'markdown', 'html', 'sql', 'mysql', 'pgsql', 'javascript'],
       features: [
         '!accessibilityHelp',
         'bracketMatching',
@@ -180,6 +186,12 @@ module.exports = {
       chunks: 'all',
       minChunks: 1,
       cacheGroups: {
+        unicons: {
+          test: /[\\/]node_modules[\\/]@iconscout[\\/]react-unicons[\\/].*[jt]sx?$/,
+          chunks: 'initial',
+          priority: 20,
+          enforce: true,
+        },
         moment: {
           test: /[\\/]node_modules[\\/]moment[\\/].*[jt]sx?$/,
           chunks: 'initial',

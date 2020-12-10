@@ -120,11 +120,11 @@ const renderForm = (defaultValues?: Partial<FormDTO>) => (
   </Form>
 );
 
-export const basic = () => {
+export const Basic = () => {
   return <>{renderForm()}</>;
 };
 
-export const defaultValues = () => {
+export const DefaultValues = () => {
   const defaultValues = [
     {
       name: 'Roger Waters',
@@ -162,7 +162,7 @@ export const defaultValues = () => {
   );
 };
 
-export const asyncValidation = () => {
+export const AsyncValidation = () => {
   const passAsyncValidation = boolean('Pass username validation', true);
   return (
     <>
@@ -197,7 +197,7 @@ export const asyncValidation = () => {
 
 const validateAsync = (shouldPass: boolean) => async () => {
   try {
-    await new Promise<ValidateResult>((resolve, reject) => {
+    await new Promise<ValidateResult | void>((resolve, reject) => {
       setTimeout(() => {
         if (shouldPass) {
           resolve();

@@ -42,11 +42,11 @@ type AzureMonitorResponse struct {
 			} `json:"metadatavalues"`
 			Data []struct {
 				TimeStamp time.Time `json:"timeStamp"`
-				Average   float64   `json:"average,omitempty"`
-				Total     float64   `json:"total,omitempty"`
-				Count     float64   `json:"count,omitempty"`
-				Maximum   float64   `json:"maximum,omitempty"`
-				Minimum   float64   `json:"minimum,omitempty"`
+				Average   *float64  `json:"average,omitempty"`
+				Total     *float64  `json:"total,omitempty"`
+				Count     *float64  `json:"count,omitempty"`
+				Maximum   *float64  `json:"maximum,omitempty"`
+				Minimum   *float64  `json:"minimum,omitempty"`
 			} `json:"data"`
 		} `json:"timeseries"`
 	} `json:"value"`
@@ -54,24 +54,12 @@ type AzureMonitorResponse struct {
 	Resourceregion string `json:"resourceregion"`
 }
 
-//ApplicationInsightsQueryResponse is the json response from the Application Insights API
-type ApplicationInsightsQueryResponse struct {
-	Tables []struct {
-		Name    string `json:"name"`
-		Columns []struct {
-			Name string `json:"name"`
-			Type string `json:"type"`
-		} `json:"columns"`
-		Rows [][]interface{} `json:"rows"`
-	} `json:"tables"`
-}
-
 // AzureLogAnalyticsResponse is the json response object from the Azure Log Analytics API.
 type AzureLogAnalyticsResponse struct {
 	Tables []AzureLogAnalyticsTable `json:"tables"`
 }
 
-//AzureLogAnalyticsTable is the table format for Log Analytics responses
+// AzureLogAnalyticsTable is the table format for Log Analytics responses
 type AzureLogAnalyticsTable struct {
 	Name    string `json:"name"`
 	Columns []struct {

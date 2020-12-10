@@ -12,4 +12,6 @@ export interface HttpSettingsProps extends HttpSettingsBaseProps {
   defaultUrl: string;
   /** Show the http access help box */
   showAccessOptions?: boolean;
+  /** Show the SigV4 auth toggle option */
+  sigV4AuthToggleEnabled?: boolean;
 }

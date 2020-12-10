@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -31,7 +32,7 @@ func getFSDataSources(c *models.ReqContext, enabledPlugins *plugins.EnabledPlugi
 		}
 
 		if err := bus.Dispatch(&dsFilterQuery); err != nil {
-			if err != bus.ErrHandlerNotFound {
+			if !errors.Is(err, bus.ErrHandlerNotFound) {
 				return nil, err
 			}
 
@@ -145,7 +146,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		if isDefault, _ := dsM["isDefault"].(bool); isDefault {
 			defaultDS = n
 		}
-		delete(dsM, "isDefault")
 
 		meta := dsM["meta"].(*plugins.DataSourcePlugin)
 		if meta.Preload {
@@ -173,6 +173,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"sort":          getPanelSort(panel.Id),
 			"skipDataQuery": panel.SkipDataQuery,
 			"state":         panel.State,
+			"signature":     panel.Signature,
 		}
 	}
 
@@ -203,6 +204,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"alertingMinInterval":        setting.AlertingMinInterval,
 		"autoAssignOrg":              setting.AutoAssignOrg,
 		"verifyEmailEnabled":         setting.VerifyEmailEnabled,
+		"sigV4AuthEnabled":           setting.SigV4AuthEnabled,
 		"exploreEnabled":             setting.ExploreEnabled,
 		"googleAnalyticsId":          setting.GoogleAnalyticsId,
 		"disableLoginForm":           setting.DisableLoginForm,
@@ -228,14 +230,18 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"isEnterprise":  hs.License.HasValidLicense(),
 		},
 		"licenseInfo": map[string]interface{}{
-			"hasLicense": hs.License.HasLicense(),
-			"expiry":     hs.License.Expiry(),
-			"stateInfo":  hs.License.StateInfo(),
-			"licenseUrl": hs.License.LicenseURL(c.SignedInUser),
+			"hasLicense":      hs.License.HasLicense(),
+			"hasValidLicense": hs.License.HasValidLicense(),
+			"expiry":          hs.License.Expiry(),
+			"stateInfo":       hs.License.StateInfo(),
+			"licenseUrl":      hs.License.LicenseURL(c.SignedInUser),
+			"edition":         hs.License.Edition(),
 		},
 		"featureToggles":    hs.Cfg.FeatureToggles,
 		"rendererAvailable": hs.RenderService.IsAvailable(),
-		"http2Enabled":      hs.Cfg.Protocol == setting.HTTP2,
+		"http2Enabled":      hs.Cfg.Protocol == setting.HTTP2Scheme,
+		"sentry":            hs.Cfg.Sentry,
+		"marketplaceUrl":    hs.Cfg.MarketplaceURL,
 	}
 
 	return jsonObj, nil

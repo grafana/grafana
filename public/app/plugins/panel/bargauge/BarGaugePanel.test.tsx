@@ -97,6 +97,7 @@ function createBarGaugePanelWithData(data: PanelData): ReactWrapper<PanelProps<B
       width={532}
       transparent={false}
       height={250}
+      eventBus={{} as any}
     />
   );
 }

@@ -1,16 +1,17 @@
+import { Observable, of, OperatorFunction } from 'rxjs';
+import { map, mergeMap } from 'rxjs/operators';
 import {
-  DataFrame,
+  AnnotationEvent,
+  AnnotationEventFieldSource,
+  AnnotationEventMappings,
   AnnotationQuery,
   AnnotationSupport,
-  PanelData,
-  transformDataFrame,
-  FieldType,
+  DataFrame,
   Field,
-  KeyValue,
-  AnnotationEvent,
-  AnnotationEventMappings,
+  FieldType,
   getFieldDisplayName,
-  AnnotationEventFieldSource,
+  KeyValue,
+  standardTransformers,
 } from '@grafana/data';
 
 import isString from 'lodash/isString';
@@ -43,31 +44,33 @@ export const standardAnnotationSupport: AnnotationSupport = {
   /**
    * When the standard frame > event processing is insufficient, this allows explicit control of the mappings
    */
-  processEvents: (anno: AnnotationQuery, data: DataFrame) => {
-    return getAnnotationsFromFrame(data, anno.mappings);
+  processEvents: (anno: AnnotationQuery, data: DataFrame[]) => {
+    return getAnnotationsFromData(data, anno.mappings);
   },
 };
 
 /**
  * Flatten all panel data into a single frame
  */
-export function singleFrameFromPanelData(rsp: PanelData): DataFrame | undefined {
-  if (!rsp?.series?.length) {
-    return undefined;
-  }
-  if (rsp.series.length === 1) {
-    return rsp.series[0];
-  }
 
-  return transformDataFrame(
-    [
-      {
-        id: 'seriesToColumns',
-        options: { byField: 'Time' },
-      },
-    ],
-    rsp.series
-  )[0];
+export function singleFrameFromPanelData(): OperatorFunction<DataFrame[], DataFrame | undefined> {
+  return source =>
+    source.pipe(
+      mergeMap(data => {
+        if (!data?.length) {
+          return of(undefined);
+        }
+
+        if (data.length === 1) {
+          return of(data[0]);
+        }
+
+        return of(data).pipe(
+          standardTransformers.mergeTransformer.operator({}),
+          map(d => d[0])
+        );
+      })
+    );
 }
 
 interface AnnotationEventFieldSetter {
@@ -108,81 +111,102 @@ export const annotationEventNames: AnnotationFieldInfo[] = [
   // { key: 'email' },
 ];
 
-export function getAnnotationsFromFrame(frame: DataFrame, options?: AnnotationEventMappings): AnnotationEvent[] {
-  if (!frame?.length) {
-    return [];
-  }
-
-  let hasTime = false;
-  let hasText = false;
-  const byName: KeyValue<Field> = {};
-  for (const f of frame.fields) {
-    const name = getFieldDisplayName(f, frame);
-    byName[name.toLowerCase()] = f;
-  }
-
-  if (!options) {
-    options = {};
-  }
-
-  const fields: AnnotationEventFieldSetter[] = [];
-  for (const evts of annotationEventNames) {
-    const opt = options[evts.key] || {}; //AnnotationEventFieldMapping
-    if (opt.source === AnnotationEventFieldSource.Skip) {
-      continue;
-    }
-    const setter: AnnotationEventFieldSetter = { key: evts.key, split: evts.split };
-
-    if (opt.source === AnnotationEventFieldSource.Text) {
-      setter.text = opt.value;
-    } else {
-      const lower = (opt.value || evts.key).toLowerCase();
-      setter.field = byName[lower];
-      if (!setter.field && evts.field) {
-        setter.field = evts.field(frame);
+export function getAnnotationsFromData(
+  data: DataFrame[],
+  options?: AnnotationEventMappings
+): Observable<AnnotationEvent[]> {
+  return of(data).pipe(
+    singleFrameFromPanelData(),
+    map(frame => {
+      if (!frame?.length) {
+        return [];
       }
-    }
 
-    if (setter.field || setter.text) {
-      fields.push(setter);
-      if (setter.key === 'time') {
-        hasTime = true;
-      } else if (setter.key === 'text') {
-        hasText = true;
+      let hasTime = false;
+      let hasText = false;
+      const byName: KeyValue<Field> = {};
+
+      for (const f of frame.fields) {
+        const name = getFieldDisplayName(f, frame);
+        byName[name.toLowerCase()] = f;
       }
-    }
-  }
 
-  if (!hasTime || !hasText) {
-    return []; // throw an error?
-  }
+      if (!options) {
+        options = {};
+      }
 
-  // Add each value to the string
-  const events: AnnotationEvent[] = [];
-  for (let i = 0; i < frame.length; i++) {
-    const anno: AnnotationEvent = {};
-    for (const f of fields) {
-      let v: any = undefined;
-      if (f.text) {
-        v = f.text; // TODO support templates!
-      } else if (f.field) {
-        v = f.field.values.get(i);
-        if (v !== undefined && f.regex) {
-          const match = f.regex.exec(v);
-          if (match) {
-            v = match[1] ? match[1] : match[0];
+      const fields: AnnotationEventFieldSetter[] = [];
+
+      for (const evts of annotationEventNames) {
+        const opt = options[evts.key] || {}; //AnnotationEventFieldMapping
+
+        if (opt.source === AnnotationEventFieldSource.Skip) {
+          continue;
+        }
+
+        const setter: AnnotationEventFieldSetter = { key: evts.key, split: evts.split };
+
+        if (opt.source === AnnotationEventFieldSource.Text) {
+          setter.text = opt.value;
+        } else {
+          const lower = (opt.value || evts.key).toLowerCase();
+          setter.field = byName[lower];
+
+          if (!setter.field && evts.field) {
+            setter.field = evts.field(frame);
+          }
+        }
+
+        if (setter.field || setter.text) {
+          fields.push(setter);
+          if (setter.key === 'time') {
+            hasTime = true;
+          } else if (setter.key === 'text') {
+            hasText = true;
           }
         }
       }
 
-      if (v !== undefined) {
-        if (f.split) {
-          v = (v as string).split(',');
-        }
-        (anno as any)[f.key] = v;
+      if (!hasTime || !hasText) {
+        return []; // throw an error?
       }
-    }
-    events.push(anno);
-  }
-  return events;
+
+      // Add each value to the string
+      const events: AnnotationEvent[] = [];
+
+      for (let i = 0; i < frame.length; i++) {
+        const anno: AnnotationEvent = {
+          type: 'default',
+          color: 'red',
+        };
+
+        for (const f of fields) {
+          let v: any = undefined;
+
+          if (f.text) {
+            v = f.text; // TODO support templates!
+          } else if (f.field) {
+            v = f.field.values.get(i);
+            if (v !== undefined && f.regex) {
+              const match = f.regex.exec(v);
+              if (match) {
+                v = match[1] ? match[1] : match[0];
+              }
+            }
+          }
+
+          if (v !== null && v !== undefined) {
+            if (f.split && typeof v === 'string') {
+              v = v.split(',');
+            }
+            (anno as any)[f.key] = v;
+          }
+        }
+
+        events.push(anno);
+      }
+
+      return events;
+    })
+  );
 }

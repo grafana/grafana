@@ -6,9 +6,8 @@ import { v4 as uuidv4 } from 'uuid';
 
 export interface AddAnnotationConfig {
   dataSource: string;
+  dataSourceForm?: () => void;
   name: string;
-  sources?: string;
-  tags?: string;
 }
 
 export interface AddDashboardConfig {
@@ -111,7 +110,7 @@ const addAnnotation = (config: AddAnnotationConfig, isFirst: boolean) => {
       .click();
   }
 
-  const { dataSource, name, sources, tags } = config;
+  const { dataSource, dataSourceForm, name } = config;
 
   // @todo add to e2e-selectors and `aria-label`
   e2e()
@@ -125,20 +124,8 @@ const addAnnotation = (config: AddAnnotationConfig, isFirst: boolean) => {
     .find('input')
     .type(name);
 
-  if (sources) {
-    // @todo add to e2e-selectors and `aria-label`
-    e2e()
-      .contains('.gf-form', 'Sources')
-      .find('input')
-      .type(sources);
-  }
-
-  if (tags) {
-    // @todo add to e2e-selectors and `aria-label`
-    e2e()
-      .contains('.gf-form', 'Tags')
-      .find('input')
-      .type(tags);
+  if (dataSourceForm) {
+    dataSourceForm();
   }
 
   // @todo add to e2e-selectors and `aria-label`
@@ -230,7 +217,7 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
       }
     });
 
-  e2e.pages.Dashboard.Settings.Variables.Edit.General.addButton().click();
+  e2e.pages.Dashboard.Settings.Variables.Edit.General.submitButton().click();
 
   return fullConfig;
 };

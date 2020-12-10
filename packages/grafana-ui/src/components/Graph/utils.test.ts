@@ -3,11 +3,11 @@ import {
   toDataFrame,
   FieldType,
   FieldCache,
-  FieldColorMode,
-  getColorFromHexRgbOrName,
-  GrafanaThemeType,
+  FieldColorModeId,
   Field,
+  getColorForTheme,
 } from '@grafana/data';
+import { getTheme } from '../../themes';
 import { getMultiSeriesGraphHoverInfo, findHoverIndexFromData, graphTimeFormat } from './utils';
 
 const mockResult = (
@@ -34,7 +34,7 @@ const aSeries = toDataFrame({
       name: 'value',
       type: FieldType.number,
       values: [10, 20, 10],
-      config: { color: { mode: FieldColorMode.Fixed, fixedColor: 'red' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' } },
     },
   ],
 });
@@ -45,7 +45,7 @@ const bSeries = toDataFrame({
       name: 'value',
       type: FieldType.number,
       values: [30, 60, 30],
-      config: { color: { mode: FieldColorMode.Fixed, fixedColor: 'blue' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' } },
     },
   ],
 });
@@ -57,13 +57,13 @@ const cSeries = toDataFrame({
       name: 'value',
       type: FieldType.number,
       values: [30, 30],
-      config: { color: { mode: FieldColorMode.Fixed, fixedColor: 'yellow' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'yellow' } },
     },
   ],
 });
 
 function getFixedThemedColor(field: Field): string {
-  return getColorFromHexRgbOrName(field.config.color!.fixedColor!, GrafanaThemeType.Dark);
+  return getColorForTheme(field.config.color!.fixedColor!, getTheme());
 }
 
 describe('Graph utils', () => {

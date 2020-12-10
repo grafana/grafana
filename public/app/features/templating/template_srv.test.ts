@@ -95,11 +95,18 @@ describe('templateSrv', () => {
       expect(target).toBe('this.asd.filters');
     });
 
-    it('should replace ${test:glob} with scoped text', () => {
+    it('should replace ${test.name} with scoped text', () => {
+      const target = _templateSrv.replaceWithText('this.${test.name}.filters', {
+        test: { value: { name: 'mupp' }, text: 'asd' },
+      });
+      expect(target).toBe('this.mupp.filters');
+    });
+
+    it('should not replace ${test:glob} with scoped text', () => {
       const target = _templateSrv.replaceWithText('this.${test:glob}.filters', {
         test: { value: 'mupp', text: 'asd' },
       });
-      expect(target).toBe('this.asd.filters');
+      expect(target).toBe('this.mupp.filters');
     });
   });
 
@@ -595,6 +602,45 @@ describe('templateSrv', () => {
     });
   });
 
+  describe('replaceWithText can pass all / multi value', () => {
+    beforeEach(() => {
+      initTemplateSrv([
+        {
+          type: 'query',
+          name: 'server',
+          current: { value: ['server1', 'server2'], text: ['Server 1', 'Server 2'] },
+        },
+        {
+          type: 'textbox',
+          name: 'empty_on_init',
+          current: { value: '', text: '' },
+        },
+        {
+          type: 'query',
+          name: 'databases',
+          current: { value: '$__all', text: '' },
+          options: [{ value: '$__all' }, { value: 'db1', text: 'Database 1' }, { value: 'db2', text: 'Database 2' }],
+        },
+      ]);
+      _templateSrv.updateIndex();
+    });
+
+    it('should replace with text with variable label', () => {
+      const target = _templateSrv.replaceWithText('Server: $server');
+      expect(target).toBe('Server: Server 1 + Server 2');
+    });
+
+    it('should replace empty string-values with an empty string', () => {
+      const target = _templateSrv.replaceWithText('Hello $empty_on_init');
+      expect(target).toBe('Hello ');
+    });
+
+    it('should replace $__all with All', () => {
+      const target = _templateSrv.replaceWithText('Db: $databases');
+      expect(target).toBe('Db: All');
+    });
+  });
+
   describe('built in interval variables', () => {
     beforeEach(() => {
       initTemplateSrv([]);
@@ -639,6 +685,37 @@ describe('templateSrv', () => {
     it('should replace ${__from:date:YYYY-MM} using custom format', () => {
       const target = _templateSrv.replace('${__from:date:YYYY-MM}');
       expect(target).toBe('2020-07');
+    });
+  });
+
+  describe('handle objects gracefully', () => {
+    beforeEach(() => {
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value: { test: 'A' } } }]);
+    });
+
+    it('should not pass object to custom function', () => {
+      let passedValue: any = null;
+      _templateSrv.replace('this.${test}.filters', {}, (value: any) => {
+        passedValue = value;
+      });
+
+      expect(passedValue).toBe('[object Object]');
+    });
+  });
+
+  describe('handle objects gracefully and call toString if defined', () => {
+    beforeEach(() => {
+      const value = { test: 'A', toString: () => 'hello' };
+      initTemplateSrv([{ type: 'query', name: 'test', current: { value } }]);
+    });
+
+    it('should not pass object to custom function', () => {
+      let passedValue: any = null;
+      _templateSrv.replace('this.${test}.filters', {}, (value: any) => {
+        passedValue = value;
+      });
+
+      expect(passedValue).toBe('hello');
     });
   });
 });

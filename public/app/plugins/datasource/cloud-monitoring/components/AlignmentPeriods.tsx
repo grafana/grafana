@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import _ from 'lodash';
 
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 import { SelectableValue, rangeUtil } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 import { alignmentPeriods, alignOptions } from '../constants';

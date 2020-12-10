@@ -24,7 +24,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         "autoUpdate": undefined,
         "description": undefined,
         "editable": true,
-        "events": Emitter {
+        "events": EventBusSrv {
           "emitter": EventEmitter {
             "_events": Object {},
             "_eventsCount": 0,
@@ -53,7 +53,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           PanelModel {
             "cachedPluginOptions": Object {},
             "datasource": null,
-            "events": Emitter {
+            "events": EventBusSrv {
               "emitter": EventEmitter {
                 "_events": Object {},
                 "_eventsCount": 0,
@@ -80,7 +80,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         ],
         "refresh": undefined,
         "revision": undefined,
-        "schemaVersion": 26,
+        "schemaVersion": 27,
         "snapshot": undefined,
         "style": "dark",
         "tags": Array [],
@@ -111,6 +111,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
       autoHideDuration={200}
       autoHideTimeout={200}
       className="custom-scrollbar--page"
+      hideHorizontalTrack={true}
       hideTracksWhenNotNeeded={false}
       setScrollTop={[Function]}
       updateAfterMountMs={500}
@@ -119,6 +120,19 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
         className="dashboard-content"
       >
         <SubMenu
+          annotations={
+            Array [
+              Object {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard",
+              },
+            ]
+          }
           dashboard={
             DashboardModel {
               "annotations": Object {
@@ -137,7 +151,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "autoUpdate": undefined,
               "description": undefined,
               "editable": true,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -166,7 +180,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 PanelModel {
                   "cachedPluginOptions": Object {},
                   "datasource": null,
-                  "events": Emitter {
+                  "events": EventBusSrv {
                     "emitter": EventEmitter {
                       "_events": Object {},
                       "_eventsCount": 0,
@@ -193,7 +207,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 26,
+              "schemaVersion": 27,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -232,7 +246,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               "autoUpdate": undefined,
               "description": undefined,
               "editable": true,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -261,7 +275,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 PanelModel {
                   "cachedPluginOptions": Object {},
                   "datasource": null,
-                  "events": Emitter {
+                  "events": EventBusSrv {
                     "emitter": EventEmitter {
                       "_events": Object {},
                       "_eventsCount": 0,
@@ -288,7 +302,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 26,
+              "schemaVersion": 27,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -323,23 +337,22 @@ exports[`DashboardPage Dashboard is fetching slowly Should render slow init stat
   <div
     className="dashboard-loading__text"
   >
-    <Component
+    <VerticalGroup
       spacing="md"
     >
-      <Component
+      <HorizontalGroup
         align="center"
         justify="center"
         spacing="xs"
       >
-        <Icon
-          className="fa-spin"
-          name="fa fa-spinner"
+        <Spinner
+          inline={true}
         />
          
         Fetching
-      </Component>
+      </HorizontalGroup>
        
-      <Component
+      <HorizontalGroup
         align="center"
         justify="center"
       >
@@ -351,8 +364,8 @@ exports[`DashboardPage Dashboard is fetching slowly Should render slow init stat
         >
           Cancel loading dashboard
         </Button>
-      </Component>
-    </Component>
+      </HorizontalGroup>
+    </VerticalGroup>
   </div>
 </div>
 `;
@@ -383,7 +396,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "autoUpdate": undefined,
         "description": undefined,
         "editable": true,
-        "events": Emitter {
+        "events": EventBusSrv {
           "emitter": EventEmitter {
             "_events": Object {},
             "_eventsCount": 0,
@@ -412,7 +425,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           PanelModel {
             "cachedPluginOptions": Object {},
             "datasource": null,
-            "events": Emitter {
+            "events": EventBusSrv {
               "emitter": EventEmitter {
                 "_events": Object {},
                 "_eventsCount": 0,
@@ -439,7 +452,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         ],
         "refresh": undefined,
         "revision": undefined,
-        "schemaVersion": 26,
+        "schemaVersion": 27,
         "snapshot": undefined,
         "style": "dark",
         "tags": Array [],
@@ -470,6 +483,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
       autoHideDuration={200}
       autoHideTimeout={200}
       className="custom-scrollbar--page"
+      hideHorizontalTrack={true}
       hideTracksWhenNotNeeded={false}
       setScrollTop={[Function]}
       updateAfterMountMs={500}
@@ -478,6 +492,19 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         className="dashboard-content"
       >
         <SubMenu
+          annotations={
+            Array [
+              Object {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard",
+              },
+            ]
+          }
           dashboard={
             DashboardModel {
               "annotations": Object {
@@ -496,7 +523,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "autoUpdate": undefined,
               "description": undefined,
               "editable": true,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -525,7 +552,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 PanelModel {
                   "cachedPluginOptions": Object {},
                   "datasource": null,
-                  "events": Emitter {
+                  "events": EventBusSrv {
                     "emitter": EventEmitter {
                       "_events": Object {},
                       "_eventsCount": 0,
@@ -552,7 +579,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 26,
+              "schemaVersion": 27,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -591,7 +618,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               "autoUpdate": undefined,
               "description": undefined,
               "editable": true,
-              "events": Emitter {
+              "events": EventBusSrv {
                 "emitter": EventEmitter {
                   "_events": Object {},
                   "_eventsCount": 0,
@@ -620,7 +647,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 PanelModel {
                   "cachedPluginOptions": Object {},
                   "datasource": null,
-                  "events": Emitter {
+                  "events": EventBusSrv {
                     "emitter": EventEmitter {
                       "_events": Object {},
                       "_eventsCount": 0,
@@ -647,7 +674,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
               ],
               "refresh": undefined,
               "revision": undefined,
-              "schemaVersion": 26,
+              "schemaVersion": 27,
               "snapshot": undefined,
               "style": "dark",
               "tags": Array [],
@@ -691,7 +718,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "autoUpdate": undefined,
         "description": undefined,
         "editable": true,
-        "events": Emitter {
+        "events": EventBusSrv {
           "emitter": EventEmitter {
             "_events": Object {},
             "_eventsCount": 0,
@@ -720,7 +747,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           PanelModel {
             "cachedPluginOptions": Object {},
             "datasource": null,
-            "events": Emitter {
+            "events": EventBusSrv {
               "emitter": EventEmitter {
                 "_events": Object {},
                 "_eventsCount": 0,
@@ -747,7 +774,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         ],
         "refresh": undefined,
         "revision": undefined,
-        "schemaVersion": 26,
+        "schemaVersion": 27,
         "snapshot": undefined,
         "style": "dark",
         "tags": Array [],

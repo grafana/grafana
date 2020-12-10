@@ -32,7 +32,7 @@ export const createCustomVariableAdapter = (): VariableAdapter<CustomVariableMod
       await dispatch(updateCustomVariableOptions(toVariableIdentifier(variable)));
     },
     getSaveModel: variable => {
-      const { index, id, initLock, global, ...rest } = cloneDeep(variable);
+      const { index, id, state, global, ...rest } = cloneDeep(variable);
       return rest;
     },
     getValueForUrl: variable => {

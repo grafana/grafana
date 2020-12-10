@@ -54,3 +54,5 @@ export const ResponsiveButton = forwardRef<HTMLButtonElement, Props>((props, ref
     </div>
   );
 });
+
+ResponsiveButton.displayName = 'ResponsiveButton';

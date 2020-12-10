@@ -33,7 +33,7 @@ export const createQueryVariableAdapter = (): VariableAdapter<QueryVariableModel
       await dispatch(updateQueryVariableOptions(toVariableIdentifier(variable), searchFilter));
     },
     getSaveModel: variable => {
-      const { index, id, initLock, global, queryValue, ...rest } = cloneDeep(variable);
+      const { index, id, state, global, queryValue, ...rest } = cloneDeep(variable);
       // remove options
       if (variable.refresh !== VariableRefresh.never) {
         return { ...rest, options: [] };

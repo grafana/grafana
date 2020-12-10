@@ -22,7 +22,9 @@ interface DataResponse {
 }
 
 /**
- * Parse the results from `/api/ds/query
+ * Parse the results from /api/ds/query into a DataQueryResponse
+ *
+ * @public
  */
 export function toDataQueryResponse(res: any): DataQueryResponse {
   const rsp: DataQueryResponse = { data: [], state: LoadingState.Done };
@@ -94,6 +96,8 @@ export function toDataQueryResponse(res: any): DataQueryResponse {
 /**
  * Convert an object into a DataQueryError -- if this is an HTTP response,
  * it will put the correct values in the error field
+ *
+ * @public
  */
 export function toDataQueryError(err: any): DataQueryError {
   const error = (err || {}) as DataQueryError;
@@ -119,7 +123,11 @@ export function toDataQueryError(err: any): DataQueryError {
   return error;
 }
 
-/** Return the first string or non-time field as the value */
+/**
+ * Return the first string or non-time field as the value
+ *
+ * @beta
+ */
 export function frameToMetricFindValue(frame: DataFrame): MetricFindValue[] {
   if (!frame || !frame.length) {
     return [];

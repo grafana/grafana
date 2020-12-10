@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"testing"
@@ -29,7 +30,7 @@ func TestPluginManager_Init(t *testing.T) {
 	setting.StaticRootPath, err = filepath.Abs("../../public/")
 	require.NoError(t, err)
 	setting.Raw = ini.Empty()
-	setting.Env = setting.PROD
+	setting.Env = setting.Prod
 
 	t.Run("Base case", func(t *testing.T) {
 		pm := &PluginManager{
@@ -141,27 +142,21 @@ func TestPluginManager_Init(t *testing.T) {
 		assert.Empty(t, fm.registeredPlugins)
 	})
 
-	t.Run("Transform plugins should be loaded when expressions feature is on", func(t *testing.T) {
+	t.Run("With nested plugin duplicating parent", func(t *testing.T) {
 		origPluginsPath := setting.PluginsPath
 		t.Cleanup(func() {
 			setting.PluginsPath = origPluginsPath
 		})
-		setting.PluginsPath = "testdata/behind-feature-flag"
+		setting.PluginsPath = "testdata/duplicate-plugins"
 
-		fm := &fakeBackendPluginManager{}
 		pm := &PluginManager{
-			Cfg: &setting.Cfg{
-				FeatureToggles: map[string]bool{
-					"expressions": true,
-				},
-			},
-			BackendPluginManager: fm,
+			Cfg: &setting.Cfg{},
 		}
 		err := pm.Init()
 		require.NoError(t, err)
 
-		require.Empty(t, pm.scanningErrors)
-		assert.Equal(t, []string{"gel"}, fm.registeredPlugins)
+		assert.Len(t, pm.scanningErrors, 1)
+		assert.True(t, errors.Is(pm.scanningErrors[0], duplicatePluginError{}))
 	})
 }
 

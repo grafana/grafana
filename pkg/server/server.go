@@ -22,7 +22,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	_ "github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	_ "github.com/grafana/grafana/pkg/infra/remotecache"
 	_ "github.com/grafana/grafana/pkg/infra/serverlock"
 	_ "github.com/grafana/grafana/pkg/infra/tracing"
@@ -35,6 +35,8 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/auth"
 	_ "github.com/grafana/grafana/pkg/services/cleanup"
+	_ "github.com/grafana/grafana/pkg/services/librarypanels"
+	_ "github.com/grafana/grafana/pkg/services/ngalert"
 	_ "github.com/grafana/grafana/pkg/services/notifications"
 	_ "github.com/grafana/grafana/pkg/services/provisioning"
 	_ "github.com/grafana/grafana/pkg/services/rendering"
@@ -117,6 +119,9 @@ func (s *Server) init(cfg *Config) error {
 
 	s.loadConfiguration()
 	s.writePIDFile()
+	if err := metrics.SetEnvironmentInformation(s.cfg.MetricsGrafanaEnvironmentInfo); err != nil {
+		return err
+	}
 
 	login.Init()
 	social.NewOAuthService()
@@ -179,11 +184,11 @@ func (s *Server) Run() (err error) {
 			}
 
 			err := service.Run(s.context)
-			// Mark that we are in shutdown mode
-			// So no more services are started
-			s.shutdownInProgress = true
 			if err != nil {
-				if err != context.Canceled {
+				// Mark that we are in shutdown mode
+				// So no more services are started
+				s.shutdownInProgress = true
+				if !errors.Is(err, context.Canceled) {
 					// Server has crashed.
 					s.log.Error("Stopped "+descriptor.Name, "reason", err)
 				} else {
@@ -230,7 +235,7 @@ func (s *Server) Shutdown(reason string) {
 func (s *Server) ExitCode(reason error) int {
 	code := 1
 
-	if reason == context.Canceled && s.shutdownReason != "" {
+	if errors.Is(reason, context.Canceled) && s.shutdownReason != "" {
 		reason = fmt.Errorf(s.shutdownReason)
 		code = 0
 	}
@@ -269,7 +274,7 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 	objs := []interface{}{
 		bus.GetBus(),
 		s.cfg,
-		routing.NewRouteRegister(middleware.RequestMetrics, middleware.RequestTracing),
+		routing.NewRouteRegister(middleware.RequestTracing, middleware.RequestMetrics(s.cfg)),
 		localcache.New(5*time.Minute, 10*time.Minute),
 		s,
 	}
@@ -289,7 +294,7 @@ func (s *Server) buildServiceGraph(services []*registry.Descriptor) error {
 
 	// Resolve services and their dependencies.
 	if err := serviceGraph.Populate(); err != nil {
-		return errutil.Wrapf(err, "Failed to populate service dependency")
+		return errutil.Wrapf(err, "Failed to populate service dependencies")
 	}
 
 	return nil

@@ -1,5 +1,5 @@
 import { Observable, Subject } from 'rxjs';
-import { filter, finalize } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 import { FetchQueue } from './FetchQueue';
 
@@ -27,17 +27,7 @@ export class ResponseQueue {
       // Let the fetchQueue know that this id has started data fetching.
       fetchQueue.setInProgress(id);
 
-      this.responses.next({
-        id,
-        observable: fetch(options).pipe(
-          // finalize is called whenever this observable is unsubscribed/errored/completed/canceled
-          // https://rxjs.dev/api/operators/finalize
-          finalize(() => {
-            // Let the fetchQueue know that this id is done.
-            fetchQueue.setDone(id);
-          })
-        ),
-      });
+      this.responses.next({ id, observable: fetch(options) });
     });
   }
 

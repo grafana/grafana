@@ -1,12 +1,15 @@
 import _ from 'lodash';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
+import { getBackendSrv } from '@grafana/runtime';
+import { DataQueryResponse, ScopedVars } from '@grafana/data';
+
 import ResponseParser from './response_parser';
 import PostgresQuery from 'app/plugins/datasource/postgres/postgres_query';
-import { getBackendSrv } from '@grafana/runtime';
-import { ScopedVars } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
+import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 //Types
-import { PostgresQueryForInterpolation } from './types';
+import { PostgresMetricFindValue, PostgresQueryForInterpolation } from './types';
 import { getSearchFilterScopedVar } from '../../../features/variables/utils';
 
 export class PostgresDatasource {
@@ -17,11 +20,10 @@ export class PostgresDatasource {
   queryModel: PostgresQuery;
   interval: string;
 
-  /** @ngInject */
   constructor(
     instanceSettings: { name: any; id?: any; jsonData?: any },
-    private templateSrv: TemplateSrv,
-    private timeSrv: TimeSrv
+    private readonly templateSrv: TemplateSrv = getTemplateSrv(),
+    private readonly timeSrv: TimeSrv = getTimeSrv()
   ) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
@@ -31,7 +33,7 @@ export class PostgresDatasource {
     this.interval = (instanceSettings.jsonData || {}).timeInterval || '1m';
   }
 
-  interpolateVariable = (value: string, variable: { multi: any; includeAll: any }) => {
+  interpolateVariable = (value: string | string[], variable: { multi: any; includeAll: any }) => {
     if (typeof value === 'string') {
       if (variable.multi || variable.includeAll) {
         return this.queryModel.quoteLiteral(value);
@@ -69,7 +71,7 @@ export class PostgresDatasource {
     return expandedQueries;
   }
 
-  query(options: any) {
+  query(options: any): Observable<DataQueryResponse> {
     const queries = _.filter(options.targets, target => {
       return target.hide !== true;
     }).map(target => {
@@ -86,11 +88,11 @@ export class PostgresDatasource {
     });
 
     if (queries.length === 0) {
-      return Promise.resolve({ data: [] });
+      return of({ data: [] });
     }
 
     return getBackendSrv()
-      .datasourceRequest({
+      .fetch({
         url: '/api/tsdb/query',
         method: 'POST',
         data: {
@@ -99,7 +101,7 @@ export class PostgresDatasource {
           queries: queries,
         },
       })
-      .then(this.responseParser.processQueryResult);
+      .pipe(map(this.responseParser.processQueryResult));
   }
 
   annotationQuery(options: any) {
@@ -117,7 +119,7 @@ export class PostgresDatasource {
     };
 
     return getBackendSrv()
-      .datasourceRequest({
+      .fetch({
         url: '/api/tsdb/query',
         method: 'POST',
         data: {
@@ -126,10 +128,14 @@ export class PostgresDatasource {
           queries: [query],
         },
       })
-      .then((data: any) => this.responseParser.transformAnnotationResponse(options, data));
+      .pipe(map((data: any) => this.responseParser.transformAnnotationResponse(options, data)))
+      .toPromise();
   }
 
-  metricFindQuery(query: string, optionalOptions: { variable?: any; searchFilter?: string }) {
+  metricFindQuery(
+    query: string,
+    optionalOptions: { variable?: any; searchFilter?: string }
+  ): Promise<PostgresMetricFindValue[]> {
     let refId = 'tempvar';
     if (optionalOptions && optionalOptions.variable && optionalOptions.variable.name) {
       refId = optionalOptions.variable.name;
@@ -156,12 +162,13 @@ export class PostgresDatasource {
     };
 
     return getBackendSrv()
-      .datasourceRequest({
+      .fetch({
         url: '/api/tsdb/query',
         method: 'POST',
         data: data,
       })
-      .then((data: any) => this.responseParser.parseMetricFindQueryResult(refId, data));
+      .pipe(map((data: any) => this.responseParser.parseMetricFindQueryResult(refId, data)))
+      .toPromise();
   }
 
   getVersion() {

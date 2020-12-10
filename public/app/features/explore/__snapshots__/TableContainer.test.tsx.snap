@@ -2,11 +2,9 @@
 
 exports[`TableContainer should render component 1`] = `
 <Collapse
-  collapsible={true}
   isOpen={true}
   label="Table"
   loading={false}
-  onToggle={[Function]}
 >
   <Memo(MetaInfoText)
     metaItems={

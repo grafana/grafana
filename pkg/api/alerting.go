@@ -1,6 +1,7 @@
 package api
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -139,10 +140,11 @@ func AlertTest(c *models.ReqContext, dto dtos.AlertTestCommand) Response {
 	}
 
 	if err := bus.Dispatch(&backendCmd); err != nil {
-		if validationErr, ok := err.(alerting.ValidationError); ok {
+		var validationErr alerting.ValidationError
+		if errors.As(err, &validationErr) {
 			return Error(422, validationErr.Error(), nil)
 		}
-		if err == models.ErrDataSourceAccessDenied {
+		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			return Error(403, "Access denied to datasource", err)
 		}
 		return Error(500, "Failed to test rule", err)
@@ -273,6 +275,9 @@ func CreateAlertNotification(c *models.ReqContext, cmd models.CreateAlertNotific
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if errors.Is(err, models.ErrAlertNotificationWithSameNameExists) || errors.Is(err, models.ErrAlertNotificationWithSameUIDExists) {
+			return Error(409, "Failed to create alert notification", err)
+		}
 		return Error(500, "Failed to create alert notification", err)
 	}
 
@@ -288,7 +293,7 @@ func UpdateAlertNotification(c *models.ReqContext, cmd models.UpdateAlertNotific
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrAlertNotificationNotFound {
+		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return Error(404, err.Error(), err)
 		}
 		return Error(500, "Failed to update alert notification", err)
@@ -316,7 +321,7 @@ func UpdateAlertNotificationByUID(c *models.ReqContext, cmd models.UpdateAlertNo
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrAlertNotificationNotFound {
+		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return Error(404, err.Error(), nil)
 		}
 		return Error(500, "Failed to update alert notification", err)
@@ -389,7 +394,7 @@ func DeleteAlertNotification(c *models.ReqContext) Response {
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrAlertNotificationNotFound {
+		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return Error(404, err.Error(), nil)
 		}
 		return Error(500, "Failed to delete alert notification", err)
@@ -405,7 +410,7 @@ func DeleteAlertNotificationByUID(c *models.ReqContext) Response {
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrAlertNotificationNotFound {
+		if errors.Is(err, models.ErrAlertNotificationNotFound) {
 			return Error(404, err.Error(), nil)
 		}
 		return Error(500, "Failed to delete alert notification", err)
@@ -417,7 +422,7 @@ func DeleteAlertNotificationByUID(c *models.ReqContext) Response {
 	})
 }
 
-//POST /api/alert-notifications/test
+// POST /api/alert-notifications/test
 func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) Response {
 	cmd := &alerting.NotificationTestCommand{
 		OrgID:          c.OrgId,
@@ -428,8 +433,8 @@ func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) Re
 		SecureSettings: dto.SecureSettings,
 	}
 
-	if err := bus.Dispatch(cmd); err != nil {
-		if err == models.ErrSmtpNotEnabled {
+	if err := bus.DispatchCtx(c.Req.Context(), cmd); err != nil {
+		if errors.Is(err, models.ErrSmtpNotEnabled) {
 			return Error(412, err.Error(), err)
 		}
 		return Error(500, "Failed to send alert notifications", err)
@@ -438,7 +443,7 @@ func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) Re
 	return Success("Test notification sent")
 }
 
-//POST /api/alerts/:alertId/pause
+// POST /api/alerts/:alertId/pause
 func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 	alertID := c.ParamsInt64("alertId")
 	result := make(map[string]interface{})
@@ -491,7 +496,7 @@ func PauseAlert(c *models.ReqContext, dto dtos.PauseAlertCommand) Response {
 	return JSON(200, result)
 }
 
-//POST /api/admin/pause-all-alerts
+// POST /api/admin/pause-all-alerts
 func PauseAllAlerts(c *models.ReqContext, dto dtos.PauseAllAlertsCommand) Response {
 	updateCmd := models.PauseAllAlertCommand{
 		Paused: dto.Paused,

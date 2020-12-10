@@ -30,11 +30,15 @@ func getProfileNode(c *models.ReqContext) *dtos.NavLink {
 		{
 			Text: "Preferences", Id: "profile-settings", Url: setting.AppSubUrl + "/profile", Icon: "sliders-v-alt",
 		},
-		{
+	}
+
+	if setting.AddChangePasswordLink() {
+		children = append(children, &dtos.NavLink{
 			Text: "Change Password", Id: "change-password", Url: setting.AppSubUrl + "/profile/password",
 			Icon: "lock", HideFromMenu: true,
-		},
+		})
 	}
+
 	if !setting.DisableSignoutMenu {
 		// add sign out first
 		children = append(children, &dtos.NavLink{
@@ -100,6 +104,7 @@ func getAppLinks(c *models.ReqContext) ([]*dtos.NavLink, error) {
 						Text: include.Name,
 					}
 				}
+				link.Icon = include.Icon
 				appLink.Children = append(appLink.Children, link)
 			}
 
@@ -159,7 +164,15 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		{Text: "Divider", Divider: true, Id: "divider", HideFromTabs: true},
 		{Text: "Manage", Id: "manage-dashboards", Url: setting.AppSubUrl + "/dashboards", Icon: "sitemap"},
 		{Text: "Playlists", Id: "playlists", Url: setting.AppSubUrl + "/playlists", Icon: "presentation-play"},
-		{Text: "Snapshots", Id: "snapshots", Url: setting.AppSubUrl + "/dashboard/snapshots", Icon: "camera"},
+	}
+
+	if c.IsSignedIn {
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{
+			Text: "Snapshots",
+			Id:   "snapshots",
+			Url:  setting.AppSubUrl + "/dashboard/snapshots",
+			Icon: "camera",
+		})
 	}
 
 	navTree = append(navTree, &dtos.NavLink{
@@ -287,12 +300,6 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "graph-bar"},
 		}
 
-		if hs.Live != nil {
-			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
-				Text: "Live", Id: "live", Url: setting.AppSubUrl + "/admin/live", Icon: "water",
-			})
-		}
-
 		if setting.LDAPEnabled {
 			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 				Text: "LDAP", Id: "ldap", Url: setting.AppSubUrl + "/admin/ldap", Icon: "book",
@@ -409,6 +416,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		AppleTouchIcon:          "public/img/apple-touch-icon.png",
 		AppTitle:                "Grafana",
 		NavTree:                 navTree,
+		Sentry:                  &hs.Cfg.Sentry,
 	}
 
 	if setting.DisableGravatar {

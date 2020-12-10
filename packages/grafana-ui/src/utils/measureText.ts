@@ -1,6 +1,9 @@
 let canvas: HTMLCanvasElement | null = null;
 const cache: Record<string, TextMetrics> = {};
 
+/**
+ * @beta
+ */
 export function measureText(text: string, fontSize: number): TextMetrics {
   const fontStyle = `${fontSize}px 'Roboto'`;
   const cacheKey = text + fontStyle;
@@ -26,6 +29,9 @@ export function measureText(text: string, fontSize: number): TextMetrics {
   return metrics;
 }
 
+/**
+ * @beta
+ */
 export function calculateFontSize(text: string, width: number, height: number, lineHeight: number, maxSize?: number) {
   // calculate width in 14px
   const textSize = measureText(text, 14);

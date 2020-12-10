@@ -5,17 +5,20 @@ import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { useTheme } from '../../themes/ThemeContext';
 import { GrafanaTheme } from '@grafana/data';
 import { IconSize, IconName } from '../../types';
+import mdx from './IconButton.mdx';
 
 export default {
   title: 'Buttons/IconButton',
   component: IconButton,
   decorators: [withCenteredStory],
   parameters: {
-    docs: {},
+    docs: {
+      page: mdx,
+    },
   },
 };
 
-export const simple = () => {
+export const Simple = () => {
   const theme = useTheme();
 
   return (
@@ -59,6 +62,7 @@ function renderScenario(surface: string, theme: GrafanaTheme, sizes: IconSize[],
         }
       `}
     >
+      <div>Surface: {surface}</div>
       {icons.map(icon => {
         return sizes.map(size => (
           <span key={icon + size}>

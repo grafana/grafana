@@ -3,7 +3,7 @@ import { mount } from 'enzyme';
 import { ExploreId } from '../../../types/explore';
 import { SortOrder } from 'app/core/utils/richHistory';
 import { RichHistoryQueriesTab, Props } from './RichHistoryQueriesTab';
-import { Slider } from '@grafana/ui';
+import { RangeSlider } from '@grafana/ui';
 
 jest.mock('../state/selectors', () => ({ getExploreDatasources: jest.fn() }));
 
@@ -30,7 +30,7 @@ describe('RichHistoryQueriesTab', () => {
   describe('slider', () => {
     it('should render slider', () => {
       const wrapper = setup();
-      expect(wrapper.find(Slider)).toHaveLength(1);
+      expect(wrapper.find(RangeSlider)).toHaveLength(1);
     });
     it('should render slider with correct timerange', () => {
       const wrapper = setup();

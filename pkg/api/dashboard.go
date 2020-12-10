@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -16,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -49,7 +47,9 @@ func dashboardGuardianResponse(err error) Response {
 }
 
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) Response {
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
+	slug := c.Params(":slug")
+	uid := c.Params(":uid")
+	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
 	if rsp != nil {
 		return rsp
 	}
@@ -262,6 +262,17 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext, cmd models.SaveDashboa
 		}
 	}
 
+	// Tell everyone listening that the dashboard changed
+	if hs.Live.IsEnabled() {
+		err := hs.Live.GrafanaScope.Dashboards.DashboardSaved(
+			dashboard.Uid,
+			c.UserId,
+		)
+		if err != nil {
+			hs.log.Warn("unable to broadcast save event", "uid", dashboard.Uid, "error", err)
+		}
+	}
+
 	c.TimeRequest(metrics.MApiDashboardSave)
 	return JSON(200, util.DynMap{
 		"status":  "success",
@@ -322,19 +333,26 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
 			return JSON(200, &dashRedirect)
 		}
-		log.Warnf("Failed to get slug from database, %s", err.Error())
+		hs.log.Warn("Failed to get slug from database", "err", err)
 	}
 
 	filePath := hs.Cfg.DefaultHomeDashboardPath
 	if filePath == "" {
-		filePath = path.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
+		filePath = filepath.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
 	}
 
+	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
+	// variable
+	// nolint:gosec
 	file, err := os.Open(filePath)
 	if err != nil {
 		return Error(500, "Failed to load home dashboard", err)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			hs.log.Warn("Failed to close dashboard file", "path", filePath, "err", err)
+		}
+	}()
 
 	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.IsHome = true
@@ -346,14 +364,20 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 		return Error(500, "Failed to load home dashboard", err)
 	}
 
-	if c.HasUserRole(models.ROLE_ADMIN) && !c.HasHelpFlag(models.HelpFlagGettingStartedPanelDismissed) {
-		addGettingStartedPanelToHomeDashboard(dash.Dashboard)
-	}
+	hs.addGettingStartedPanelToHomeDashboard(c, dash.Dashboard)
 
 	return JSON(200, &dash)
 }
 
-func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
+func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext, dash *simplejson.Json) {
+	// We only add this getting started panel for Admins who have not dismissed it,
+	// and if a custom default home dashboard hasn't been configured
+	if !c.HasUserRole(models.ROLE_ADMIN) ||
+		c.HasHelpFlag(models.HelpFlagGettingStartedPanelDismissed) ||
+		hs.Cfg.DefaultHomeDashboardPath != "" {
+		return
+	}
+
 	panels := dash.Get("panels").MustArray()
 
 	newpanel := simplejson.NewFromAny(map[string]interface{}{
@@ -480,7 +504,7 @@ func CalculateDashboardDiff(c *models.ReqContext, apiOptions dtos.CalculateDiffO
 
 	result, err := dashdiffs.CalculateDiff(&options)
 	if err != nil {
-		if err == models.ErrDashboardVersionNotFound {
+		if errors.Is(err, models.ErrDashboardVersionNotFound) {
 			return Error(404, "Dashboard version not found", err)
 		}
 		return Error(500, "Unable to compute diff", err)

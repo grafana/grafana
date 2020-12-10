@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { HTMLProps } from 'react';
 import { cx } from 'emotion';
 import _ from 'lodash';
 import { SelectableValue } from '@grafana/data';
 import { SegmentSelect, useExpandableLabel, SegmentProps } from './';
 
-export interface SegmentSyncProps<T> extends SegmentProps<T> {
+export interface SegmentSyncProps<T> extends SegmentProps<T>, Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: T | SelectableValue<T>;
   onChange: (item: SelectableValue<T>) => void;
   options: Array<SelectableValue<T>>;
@@ -18,6 +18,7 @@ export function Segment<T>({
   className,
   allowCustomValue,
   placeholder,
+  ...rest
 }: React.PropsWithChildren<SegmentSyncProps<T>>) {
   const [Label, width, expanded, setExpanded] = useExpandableLabel(false);
 
@@ -38,6 +39,7 @@ export function Segment<T>({
 
   return (
     <SegmentSelect
+      {...rest}
       value={value && !_.isObject(value) ? { value } : value}
       options={options}
       width={width}

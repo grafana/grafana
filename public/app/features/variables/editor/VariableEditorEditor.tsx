@@ -1,15 +1,15 @@
 import React, { ChangeEvent, FormEvent, PureComponent } from 'react';
 import isEqual from 'lodash/isEqual';
-import { AppEvents, VariableType } from '@grafana/data';
-import { InlineFormLabel } from '@grafana/ui';
+import { AppEvents, LoadingState, SelectableValue, VariableType } from '@grafana/data';
+import { Button, Icon, InlineFieldRow, VerticalGroup } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { variableAdapters } from '../adapters';
-import { NEW_VARIABLE_ID, toVariablePayload, VariableIdentifier } from '../state/types';
+import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import { VariableHide, VariableModel } from '../types';
 import { appEvents } from '../../../core/core';
 import { VariableValuesPreview } from './VariableValuesPreview';
-import { changeVariableName, onEditorAdd, onEditorUpdate, variableEditorMount, variableEditorUnMount } from './actions';
+import { changeVariableName, onEditorUpdate, variableEditorMount, variableEditorUnMount } from './actions';
 import { MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { StoreState } from '../../../types';
 import { VariableEditorState } from './reducer';
@@ -17,6 +17,12 @@ import { getVariable } from '../state/selectors';
 import { connectWithStore } from '../../../core/utils/connectWithReduxStore';
 import { OnPropChangeArguments } from './types';
 import { changeVariableProp, changeVariableType } from '../state/sharedReducer';
+import { updateOptions } from '../state/actions';
+import { VariableTextField } from './VariableTextField';
+import { VariableSectionHeader } from './VariableSectionHeader';
+import { hasOptions } from '../guard';
+import { VariableTypeSelect } from './VariableTypeSelect';
+import { VariableHideSelect } from './VariableHideSelect';
 
 export interface OwnProps {
   identifier: VariableIdentifier;
@@ -33,8 +39,8 @@ interface DispatchProps {
   changeVariableName: typeof changeVariableName;
   changeVariableProp: typeof changeVariableProp;
   onEditorUpdate: typeof onEditorUpdate;
-  onEditorAdd: typeof onEditorAdd;
   changeVariableType: typeof changeVariableType;
+  updateOptions: typeof updateOptions;
 }
 
 type Props = OwnProps & ConnectedProps & DispatchProps;
@@ -61,11 +67,11 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
     this.props.changeVariableName(this.props.identifier, event.target.value);
   };
 
-  onTypeChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    event.preventDefault();
-    this.props.changeVariableType(
-      toVariablePayload(this.props.identifier, { newType: event.target.value as VariableType })
-    );
+  onTypeChange = (option: SelectableValue<VariableType>) => {
+    if (!option.value) {
+      return;
+    }
+    this.props.changeVariableType(toVariablePayload(this.props.identifier, { newType: option.value }));
   };
 
   onLabelChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -75,12 +81,17 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
     );
   };
 
-  onHideChange = (event: ChangeEvent<HTMLSelectElement>) => {
-    event.preventDefault();
+  onDescriptionChange = (event: ChangeEvent<HTMLInputElement>) => {
+    this.props.changeVariableProp(
+      toVariablePayload(this.props.identifier, { propName: 'description', propValue: event.target.value })
+    );
+  };
+
+  onHideChange = (option: SelectableValue<VariableHide>) => {
     this.props.changeVariableProp(
       toVariablePayload(this.props.identifier, {
         propName: 'hide',
-        propValue: parseInt(event.target.value, 10) as VariableHide,
+        propValue: option.value,
       })
     );
   };
@@ -88,7 +99,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
   onPropChanged = async ({ propName, propValue, updateOptions = false }: OnPropChangeArguments) => {
     this.props.changeVariableProp(toVariablePayload(this.props.identifier, { propName, propValue }));
     if (updateOptions) {
-      await variableAdapters.get(this.props.variable.type).updateOptions(this.props.variable);
+      await this.props.updateOptions(toVariableIdentifier(this.props.variable));
     }
   };
 
@@ -98,128 +109,82 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props> {
       return;
     }
 
-    if (this.props.variable.id !== NEW_VARIABLE_ID) {
-      await this.props.onEditorUpdate(this.props.identifier);
-    }
-
-    if (this.props.variable.id === NEW_VARIABLE_ID) {
-      await this.props.onEditorAdd(this.props.identifier);
-    }
+    await this.props.onEditorUpdate(this.props.identifier);
   };
 
   render() {
+    const { variable } = this.props;
     const EditorToRender = variableAdapters.get(this.props.variable.type).editor;
     if (!EditorToRender) {
       return null;
     }
-    const newVariable = this.props.variable.id && this.props.variable.id === NEW_VARIABLE_ID;
+    const loading = variable.state === LoadingState.Loading;
 
     return (
       <div>
         <form aria-label="Variable editor Form" onSubmit={this.onHandleSubmit}>
-          <h5 className="section-heading">General</h5>
-          <div className="gf-form-group">
-            <div className="gf-form-inline">
-              <div className="gf-form max-width-19">
-                <span className="gf-form-label width-6">Name</span>
-                <input
-                  type="text"
-                  className="gf-form-input"
-                  name="name"
-                  placeholder="name"
-                  required
+          <VerticalGroup spacing="lg">
+            <VerticalGroup spacing="none">
+              <VariableSectionHeader name="General" />
+              <InlineFieldRow>
+                <VariableTextField
                   value={this.props.editor.name}
                   onChange={this.onNameChange}
-                  aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput}
+                  name="Name"
+                  placeholder="name"
+                  required
+                  ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalNameInput}
                 />
-              </div>
-              <div className="gf-form max-width-19">
-                <InlineFormLabel width={6} tooltip={variableAdapters.get(this.props.variable.type).description}>
-                  Type
-                </InlineFormLabel>
-                <div className="gf-form-select-wrapper max-width-17">
-                  <select
-                    className="gf-form-input"
-                    value={this.props.variable.type}
-                    onChange={this.onTypeChange}
-                    aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelect}
-                  >
-                    {variableAdapters.list().map(({ id, name }) => (
-                      <option key={id} label={name} value={id}>
-                        {name}
-                      </option>
-                    ))}
-                  </select>
+                <VariableTypeSelect onChange={this.onTypeChange} type={this.props.variable.type} />
+              </InlineFieldRow>
+
+              {this.props.editor.errors.name && (
+                <div className="gf-form">
+                  <span className="gf-form-label gf-form-label--error">{this.props.editor.errors.name}</span>
                 </div>
-              </div>
-            </div>
+              )}
 
-            {this.props.editor.errors.name && (
-              <div className="gf-form">
-                <span className="gf-form-label gf-form-label--error">{this.props.editor.errors.name}</span>
-              </div>
-            )}
-
-            <div className="gf-form-inline">
-              <div className="gf-form max-width-19">
-                <span className="gf-form-label width-6">Label</span>
-                <input
-                  type="text"
-                  className="gf-form-input"
+              <InlineFieldRow>
+                <VariableTextField
                   value={this.props.variable.label ?? ''}
                   onChange={this.onLabelChange}
+                  name="Label"
                   placeholder="optional display name"
-                  aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput}
+                  ariaLabel={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInput}
                 />
-              </div>
-              <div className="gf-form max-width-19">
-                <span className="gf-form-label width-6">Hide</span>
-                <div className="gf-form-select-wrapper max-width-15">
-                  <select
-                    className="gf-form-input"
-                    value={this.props.variable.hide}
-                    onChange={this.onHideChange}
-                    aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalHideSelect}
-                  >
-                    <option label="" value={VariableHide.dontHide}>
-                      {''}
-                    </option>
-                    <option label="Label" value={VariableHide.hideLabel}>
-                      Label
-                    </option>
-                    <option label="Variable" value={VariableHide.hideVariable}>
-                      Variable
-                    </option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
+                <VariableHideSelect
+                  onChange={this.onHideChange}
+                  hide={this.props.variable.hide}
+                  type={this.props.variable.type}
+                />
+              </InlineFieldRow>
 
-          {EditorToRender && <EditorToRender variable={this.props.variable} onPropChange={this.onPropChanged} />}
+              <VariableTextField
+                name="Description"
+                value={variable.description ?? ''}
+                placeholder="descriptive text"
+                onChange={this.onDescriptionChange}
+                grow
+              />
+            </VerticalGroup>
 
-          <VariableValuesPreview variable={this.props.variable} />
+            {EditorToRender && <EditorToRender variable={this.props.variable} onPropChange={this.onPropChanged} />}
 
-          <div className="gf-form-button-row p-y-0">
-            {!newVariable && (
-              <button
+            {hasOptions(this.props.variable) ? <VariableValuesPreview variable={this.props.variable} /> : null}
+
+            <VerticalGroup spacing="none">
+              <Button
                 type="submit"
-                className="btn btn-primary"
-                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.updateButton}
+                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.submitButton}
+                disabled={loading}
               >
                 Update
-              </button>
-            )}
-            {newVariable && (
-              <button
-                type="submit"
-                className="btn btn-primary"
-                aria-label={selectors.pages.Dashboard.Settings.Variables.Edit.General.addButton}
-              >
-                Add
-              </button>
-            )}
-          </div>
+                {loading ? (
+                  <Icon className="spin-clockwise" name="sync" size="sm" style={{ marginLeft: '2px' }} />
+                ) : null}
+              </Button>
+            </VerticalGroup>
+          </VerticalGroup>
         </form>
       </div>
     );
@@ -237,8 +202,8 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   changeVariableName,
   changeVariableProp,
   onEditorUpdate,
-  onEditorAdd,
   changeVariableType,
+  updateOptions,
 };
 
 export const VariableEditorEditor = connectWithStore(

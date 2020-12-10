@@ -5,6 +5,7 @@ import {
   getColumns,
   getFilteredOptions,
   getTextAlign,
+  rowToFieldValue,
   sortOptions,
   valuesToOptions,
 } from './utils';
@@ -66,33 +67,93 @@ describe('Table utils', () => {
     it('Should set textAlign to right for number values', () => {
       const data = getData();
       const textAlign = getTextAlign(data.fields[1]);
-      expect(textAlign).toBe('right');
+      expect(textAlign).toBe('flex-end');
     });
   });
 
   describe('filterByValue', () => {
-    it.each`
-      rows                                                                        | id     | filterValues                        | expected
-      ${[]}                                                                       | ${'0'} | ${[{ value: 'a' }]}                 | ${[]}
-      ${[{ values: { 0: 'a' } }]}                                                 | ${'0'} | ${null}                             | ${[{ values: { 0: 'a' } }]}
-      ${[{ values: { 0: 'a' } }]}                                                 | ${'0'} | ${undefined}                        | ${[{ values: { 0: 'a' } }]}
-      ${[{ values: { 0: 'a' } }]}                                                 | ${'1'} | ${[{ value: 'b' }]}                 | ${[]}
-      ${[{ values: { 0: 'a' } }]}                                                 | ${'0'} | ${[{ value: 'a' }]}                 | ${[{ values: { 0: 'a' } }]}
-      ${[{ values: { 0: 'a' } }, { values: { 1: 'a' } }]}                         | ${'0'} | ${[{ value: 'a' }]}                 | ${[{ values: { 0: 'a' } }]}
-      ${[{ values: { 0: 'a' } }, { values: { 0: 'b' } }, { values: { 0: 'c' } }]} | ${'0'} | ${[{ value: 'a' }, { value: 'b' }]} | ${[{ values: { 0: 'a' } }, { values: { 0: 'b' } }]}
-    `(
-      "when called with rows: '$rows.toString()', id: '$id' and filterValues: '$filterValues' then result should be '$expected'",
-      ({ rows, id, filterValues, expected }) => {
-        expect(filterByValue(rows, id, filterValues)).toEqual(expected);
-      }
-    );
+    describe('happy path', () => {
+      const field: any = { values: new ArrayVector(['a', 'aa', 'ab', 'b', 'ba', 'bb', 'c']) };
+      const rows: any = [
+        { index: 0, values: { 0: 'a' } },
+        { index: 1, values: { 0: 'aa' } },
+        { index: 2, values: { 0: 'ab' } },
+        { index: 3, values: { 0: 'b' } },
+        { index: 4, values: { 0: 'ba' } },
+        { index: 5, values: { 0: 'bb' } },
+        { index: 6, values: { 0: 'c' } },
+      ];
+      const filterValues = [{ value: 'a' }, { value: 'b' }, { value: 'c' }];
+
+      const result = filterByValue(field)(rows, '0', filterValues);
+
+      expect(result).toEqual([
+        { index: 0, values: { 0: 'a' } },
+        { index: 3, values: { 0: 'b' } },
+        { index: 6, values: { 0: 'c' } },
+      ]);
+    });
+
+    describe('fast exit cases', () => {
+      describe('no rows', () => {
+        it('should return empty array', () => {
+          const field: any = { values: new ArrayVector(['a']) };
+          const rows: any = [];
+          const filterValues = [{ value: 'a' }];
+
+          const result = filterByValue(field)(rows, '', filterValues);
+
+          expect(result).toEqual([]);
+        });
+      });
+
+      describe('no filterValues', () => {
+        it('should return rows', () => {
+          const field: any = { values: new ArrayVector(['a']) };
+          const rows: any = [{}];
+          const filterValues = undefined;
+
+          const result = filterByValue(field)(rows, '', filterValues);
+
+          expect(result).toEqual([{}]);
+        });
+      });
+
+      describe('no field', () => {
+        it('should return rows', () => {
+          const field = undefined;
+          const rows: any = [{}];
+          const filterValues = [{ value: 'a' }];
+
+          const result = filterByValue(field)(rows, '', filterValues);
+
+          expect(result).toEqual([{}]);
+        });
+      });
+
+      describe('missing id in values', () => {
+        it('should return rows', () => {
+          const field: any = { values: new ArrayVector(['a', 'b', 'c']) };
+          const rows: any = [
+            { index: 0, values: { 0: 'a' } },
+            { index: 1, values: { 0: 'b' } },
+            { index: 2, values: { 0: 'c' } },
+          ];
+          const filterValues = [{ value: 'a' }, { value: 'b' }, { value: 'c' }];
+
+          const result = filterByValue(field)(rows, '1', filterValues);
+
+          expect(result).toEqual([]);
+        });
+      });
+    });
   });
 
   describe('calculateUniqueFieldValues', () => {
     describe('when called without field', () => {
       it('then it should return an empty object', () => {
         const field = undefined;
-        const rows = [{ id: 0 }];
+        const rows = [{ index: 0 }];
 
         const result = calculateUniqueFieldValues(rows, field);
 
@@ -142,15 +203,15 @@ describe('Table utils', () => {
             text: `${value}.0`,
           })),
         };
-        const rows: any[] = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+        const rows: any[] = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }, { index: 4 }];
 
         const result = calculateUniqueFieldValues(rows, field);
 
         expect(field.display).toHaveBeenCalledTimes(5);
         expect(result).toEqual({
-          '1.0': 1,
-          '2.0': 2,
-          '3.0': 3,
+          '1.0': '1.0',
+          '2.0': '2.0',
+          '3.0': '3.0',
         });
       });
     });
@@ -163,7 +224,7 @@ describe('Table utils', () => {
           name: 'value',
           type: FieldType.number,
         };
-        const rows: any[] = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+        const rows: any[] = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }, { index: 4 }];
 
         const result = calculateUniqueFieldValues(rows, field);
 
@@ -182,7 +243,7 @@ describe('Table utils', () => {
             name: 'value',
             type: FieldType.number,
           };
-          const rows: any[] = [{ id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }];
+          const rows: any[] = [{ index: 0 }, { index: 1 }, { index: 2 }, { index: 3 }, { index: 4 }];
 
           const result = calculateUniqueFieldValues(rows, field);
 
@@ -192,6 +253,59 @@ describe('Table utils', () => {
             '3': 3,
           });
         });
+      });
+    });
+  });
+
+  describe('rowToFieldValue', () => {
+    describe('happy paths', () => {
+      describe('field without field display', () => {
+        const field: any = { values: new ArrayVector(['a', 'b', 'c']) };
+        const row = { index: 1 };
+
+        const result = rowToFieldValue(row, field);
+
+        expect(result).toEqual('b');
+      });
+
+      describe('field with display processor', () => {
+        const field: Field = {
+          config: {},
+          values: new ArrayVector([1, 2, 2, 1, 3, 5, 6]),
+          name: 'value',
+          type: FieldType.number,
+          display: jest.fn((value: any) => ({
+            numeric: 1,
+            percent: 0.01,
+            color: '',
+            title: `${value}.0`,
+            text: `${value}.0`,
+          })),
+        };
+        const row = { index: 4 };
+
+        const result = rowToFieldValue(row, field);
+
+        expect(result).toEqual('3.0');
+      });
+    });
+
+    describe('quick exist paths', () => {
+      describe('field is missing', () => {
+        const field = undefined;
+        const row = { index: 0 };
+
+        const result = rowToFieldValue(row, field);
+
+        expect(result).toEqual('');
+      });
+      describe('row is missing', () => {
+        const field: any = { values: new ArrayVector(['a', 'b', 'c']) };
+        const row = undefined;
+
+        const result = rowToFieldValue(row, field);
+
+        expect(result).toEqual('');
       });
     });
   });

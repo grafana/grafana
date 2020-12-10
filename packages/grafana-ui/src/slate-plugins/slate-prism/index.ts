@@ -1,4 +1,4 @@
-import Prism from 'prismjs';
+import Prism, { LanguageMap } from 'prismjs';
 import { Block, Text, Decoration } from 'slate';
 import { Plugin } from '@grafana/slate-react';
 import Options, { OptionsFormat } from './options';
@@ -19,7 +19,7 @@ export interface Token {
 /**
  * A Slate plugin to highlight code syntax.
  */
-export function SlatePrism(optsParam: OptionsFormat = {}): Plugin {
+export function SlatePrism(optsParam: OptionsFormat = {}, prismLanguages = Prism.languages as LanguageMap): Plugin {
   const opts: Options = new Options(optsParam);
 
   return {
@@ -30,7 +30,7 @@ export function SlatePrism(optsParam: OptionsFormat = {}): Plugin {
 
       const block = Block.create(node as Block);
       const grammarName = opts.getSyntax(block);
-      const grammar = Prism.languages[grammarName];
+      const grammar = prismLanguages[grammarName];
 
       if (!grammar) {
         // Grammar not loaded

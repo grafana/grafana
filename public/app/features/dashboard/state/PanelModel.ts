@@ -1,31 +1,32 @@
 // Libraries
 import _ from 'lodash';
 // Utils
-import { Emitter } from 'app/core/utils/emitter';
+import { getTemplateSrv } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import templateSrv from 'app/features/templating/template_srv';
 // Types
 import {
   DataConfigSource,
   DataLink,
   DataQuery,
-  DataQueryResponseData,
   DataTransformerConfig,
-  eventFactory,
+  FieldColorConfigSettings,
+  FieldColorModeId,
+  fieldColorModeRegistry,
+  FieldConfigProperty,
   FieldConfigSource,
   PanelEvents,
   PanelPlugin,
   ScopedVars,
   ThresholdsConfig,
   ThresholdsMode,
+  EventBusExtended,
+  EventBusSrv,
+  DataFrameDTO,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
-import { PanelQueryRunner } from './PanelQueryRunner';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
-
-export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
-export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
+import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { PanelOptionsChangedEvent, PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 
 export interface GridPos {
   x: number;
@@ -116,14 +117,13 @@ export class PanelModel implements DataConfigSource {
   collapsed?: boolean;
 
   panels?: any;
-  soloMode?: boolean;
   targets: DataQuery[];
   transformations?: DataTransformerConfig[];
   datasource: string | null;
   thresholds?: any;
   pluginVersion?: string;
 
-  snapshotData?: DataQueryResponseData[];
+  snapshotData?: DataFrameDTO[];
   timeFrom?: any;
   timeShift?: any;
   hideTimeOverride?: any;
@@ -132,8 +132,8 @@ export class PanelModel implements DataConfigSource {
   };
   fieldConfig: FieldConfigSource;
 
-  maxDataPoints?: number;
-  interval?: string;
+  maxDataPoints?: number | null;
+  interval?: string | null;
   description?: string;
   links?: DataLink[];
   transparent: boolean;
@@ -142,8 +142,9 @@ export class PanelModel implements DataConfigSource {
   isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
+
   hasRefreshed: boolean;
-  events: Emitter;
+  events: EventBusExtended;
   cacheTimeout?: any;
   cachedPluginOptions?: any;
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
@@ -152,7 +153,7 @@ export class PanelModel implements DataConfigSource {
   private queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
-    this.events = new Emitter();
+    this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
   }
@@ -212,6 +213,7 @@ export class PanelModel implements DataConfigSource {
 
   updateOptions(options: object) {
     this.options = options;
+    this.events.publish(new PanelOptionsChangedEvent());
     this.render();
   }
 
@@ -284,10 +286,6 @@ export class PanelModel implements DataConfigSource {
     }
   }
 
-  initialized() {
-    this.events.emit(PanelEvents.panelInitialized);
-  }
-
   private getOptionsToRemember() {
     return Object.keys(this).reduce((acc, property) => {
       if (notPersistedProperties[property] || mustKeepProps[property]) {
@@ -319,7 +317,35 @@ export class PanelModel implements DataConfigSource {
       }
     });
 
-    this.fieldConfig = applyFieldConfigDefaults(this.fieldConfig, this.plugin!.fieldConfigDefaults);
+    this.fieldConfig = applyFieldConfigDefaults(this.fieldConfig, plugin.fieldConfigDefaults);
+    this.validateFieldColorMode(plugin);
+  }
+
+  private validateFieldColorMode(plugin: PanelPlugin) {
+    // adjust to prefered field color setting if needed
+    const color = plugin.fieldConfigRegistry.getIfExists(FieldConfigProperty.Color);
+
+    if (color && color.settings) {
+      const colorSettings = color.settings as FieldColorConfigSettings;
+      const mode = fieldColorModeRegistry.getIfExists(this.fieldConfig.defaults.color?.mode);
+
+      // When no support fo value colors, use classic palette
+      if (!colorSettings.byValueSupport) {
+        if (!mode || mode.isByValue) {
+          this.fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
+          return;
+        }
+      }
+
+      // When supporting value colors and prefering thresholds, use Thresholds mode.
+      // Otherwise keep current mode
+      if (colorSettings.byValueSupport && colorSettings.preferThresholdsMode) {
+        if (!mode || !mode.isByValue) {
+          this.fieldConfig.defaults.color = { mode: FieldColorModeId.Thresholds };
+          return;
+        }
+      }
+    }
   }
 
   pluginLoaded(plugin: PanelPlugin) {
@@ -382,6 +408,11 @@ export class PanelModel implements DataConfigSource {
     }
   }
 
+  updateQueries(queries: DataQuery[]) {
+    this.events.publish(new PanelQueriesChangedEvent());
+    this.targets = queries;
+  }
+
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
     query.refId = getNextRefIdChar(this.targets);
@@ -430,7 +461,6 @@ export class PanelModel implements DataConfigSource {
     return {
       fieldConfig: this.fieldConfig,
       replaceVariables: this.replaceVariables,
-      getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid.bind(getDatasourceSrv()),
       fieldConfigRegistry: this.plugin.fieldConfigRegistry,
       theme: config.theme,
     };
@@ -463,6 +493,7 @@ export class PanelModel implements DataConfigSource {
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
     this.resendLastResult();
+    this.events.publish(new PanelTransformationsChangedEvent());
   }
 
   replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {
@@ -470,7 +501,7 @@ export class PanelModel implements DataConfigSource {
     if (extraVars) {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
-    return templateSrv.replace(value, vars, format);
+    return getTemplateSrv().replace(value, vars, format);
   }
 
   resendLastResult() {

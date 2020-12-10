@@ -1,12 +1,11 @@
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { css } from 'emotion';
-import { DataSourceSelectItem, VariableSuggestion } from '@grafana/data';
+import { VariableSuggestion } from '@grafana/data';
 import { Button, LegacyForms, DataLinkInput, stylesFactory } from '@grafana/ui';
 const { FormField, Switch } = LegacyForms;
 import { DataLinkConfig } from '../types';
 import { usePrevious } from 'react-use';
-import { getDatasourceSrv } from '../../../../features/plugins/datasource_srv';
-import DataSourcePicker from '../../../../core/components/Select/DataSourcePicker';
+import { DataSourcePicker } from '../../../../core/components/Select/DataSourcePicker';
 
 const getStyles = stylesFactory(() => ({
   firstRow: css`
@@ -92,6 +91,7 @@ export const DataLink = (props: Props) => {
 
       <div className={styles.row}>
         <Switch
+          labelClass={'width-6'}
           label="Internal link"
           checked={showInternalLink}
           onChange={() => {
@@ -106,49 +106,20 @@ export const DataLink = (props: Props) => {
         />
 
         {showInternalLink && (
-          <DataSourceSection
-            onChange={datasourceUid => {
+          <DataSourcePicker
+            tracing={true}
+            // Uid and value should be always set in the db and so in the items.
+            onChange={ds => {
               onChange({
                 ...value,
-                datasourceUid,
+                datasourceUid: ds.uid,
               });
             }}
-            datasourceUid={value.datasourceUid}
+            current={value.datasourceUid}
           />
         )}
       </div>
     </div>
-  );
-};
-
-type DataSourceSectionProps = {
-  datasourceUid?: string;
-  onChange: (uid: string) => void;
-};
-
-const DataSourceSection = (props: DataSourceSectionProps) => {
-  const { datasourceUid, onChange } = props;
-  const datasources: DataSourceSelectItem[] = getDatasourceSrv()
-    .getExternal()
-    // At this moment only Jaeger and Zipkin datasource is supported as the link target.
-    .filter(ds => ds.meta.tracing)
-    .map(
-      ds =>
-        ({
-          value: ds.uid,
-          name: ds.name,
-          meta: ds.meta,
-        } as DataSourceSelectItem)
-    );
-
-  let selectedDatasource = datasourceUid && datasources.find(d => d.value === datasourceUid);
-  return (
-    <DataSourcePicker
-      // Uid and value should be always set in the db and so in the items.
-      onChange={ds => onChange(ds.value!)}
-      datasources={datasources}
-      current={selectedDatasource || undefined}
-    />
   );
 };
 

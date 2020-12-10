@@ -52,11 +52,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   const matcherUi = fieldMatchersUI.get(override.matcher.id);
   const styles = getStyles(theme);
 
-  const matcherLabel = (
-    <Label category={['Matcher']} description={matcherUi.description}>
-      {matcherUi.name}
-    </Label>
-  );
+  const matcherLabel = <Label>{matcherUi.name}</Label>;
 
   const onMatcherConfigChange = useCallback(
     (matcherConfig: any) => {
@@ -102,8 +98,12 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   );
 
   let configPropertiesOptions = registry.list().map(item => {
+    let label = item.name;
+    if (item.category && item.category.length > 1) {
+      label = [...item.category!.slice(1), item.name].join(' > ');
+    }
     return {
-      label: item.name,
+      label,
       value: item.id,
       description: item.description,
     };
@@ -121,7 +121,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
         {!isExpanded && (
           <div className={styles.overrideDetails}>
             <div className={styles.options} title={matcherOptions}>
-              Options <Icon name="angle-right" /> {matcherOptions}
+              {matcherUi.name} <Icon name="angle-right" /> {matcherOptions}
             </div>
             <div className={styles.options} title={overriddenProperites}>
               Properties overridden <Icon name="angle-right" />
@@ -135,7 +135,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
 
   return (
     <OptionsGroup renderTitle={renderOverrideTitle} id={name} key={name}>
-      <Field label={matcherLabel} description={matcherUi.description}>
+      <Field label={matcherLabel}>
         <matcherUi.component
           matcher={matcherUi.matcher}
           data={data}

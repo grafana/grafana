@@ -9,9 +9,9 @@ Please use this template to create your bug report. By providing as much info as
 
 PROTIP: record your screen and attach it as a gif to showcase the issue.
 
-* Questions should be posted to: https://community.grafana.com
-* Use query inspector to troubleshoot issues: https://bit.ly/2XNF6YS
-* How to record and attach gif: https://bit.ly/2Mi8T6K
+- Questions should be posted to: https://community.grafana.com
+- Use query inspector to troubleshoot issues: https://bit.ly/2XNF6YS
+- How to record and attach gif: https://bit.ly/2Mi8T6K
 -->
 
 **What happened**:

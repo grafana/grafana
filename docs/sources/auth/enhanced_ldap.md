@@ -2,12 +2,7 @@
 title = "Enhanced LDAP Integration"
 description = "Grafana Enhanced LDAP Integration Guide "
 keywords = ["grafana", "configuration", "documentation", "ldap", "active directory", "enterprise"]
-type = "docs"
-[menu.docs]
-name = "Enhanced LDAP"
-identifier = "enhanced-ldap"
-parent = "authentication"
-weight = 3
+weight = 400
 +++
 
 # Enhanced LDAP integration

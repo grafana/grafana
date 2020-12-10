@@ -8,6 +8,7 @@ import { getScenarioContext, setScenarioContext } from './support/scenarioContex
 import { e2eFactory } from './support';
 import { selectors } from '@grafana/e2e-selectors';
 import * as flows from './flows';
+import * as typings from './typings';
 
 const e2eObject = {
   env: (args: string) => Cypress.env(args),
@@ -16,6 +17,7 @@ const e2eObject = {
   imgSrcToBlob: (url: string) => Cypress.Blob.imgSrcToBlob(url),
   scenario: (args: ScenarioArguments) => e2eScenario(args),
   pages: e2eFactory({ selectors: selectors.pages }),
+  typings,
   components: e2eFactory({ selectors: selectors.components }),
   flows,
   getScenarioContext,

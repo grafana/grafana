@@ -97,11 +97,6 @@ type BoolQuery struct {
 	Filters []Filter
 }
 
-// NewBoolQuery create a new bool query
-func NewBoolQuery() *BoolQuery {
-	return &BoolQuery{Filters: make([]Filter, 0)}
-}
-
 // MarshalJSON returns the JSON encoding of the boolean query.
 func (q *BoolQuery) MarshalJSON() ([]byte, error) {
 	root := make(map[string]interface{})

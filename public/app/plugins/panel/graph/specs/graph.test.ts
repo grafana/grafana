@@ -20,13 +20,12 @@ import '../module';
 import { GraphCtrl } from '../module';
 import { MetricsPanelCtrl } from 'app/features/panel/metrics_panel_ctrl';
 import { PanelCtrl } from 'app/features/panel/panel_ctrl';
-
 import config from 'app/core/config';
 
 import TimeSeries from 'app/core/time_series2';
 import $ from 'jquery';
 import { graphDirective } from '../graph';
-import { dateTime } from '@grafana/data';
+import { dateTime, EventBusSrv } from '@grafana/data';
 
 const ctx = {} as any;
 let ctrl: any;
@@ -84,6 +83,7 @@ describe('grafanaGraph', () => {
       hiddenSeries: {},
       dashboard: {
         getTimezone: () => 'browser',
+        events: new EventBusSrv(),
       },
       range: {
         from: dateTime([2015, 1, 1, 10]),
@@ -636,7 +636,7 @@ describe('grafanaGraph', () => {
           Math,
           nonZero.map((t: number[]) => t[0])
         )
-      ).toBe(300);
+      ).toBe(280);
     });
   });
 
@@ -672,7 +672,7 @@ describe('grafanaGraph', () => {
           Math,
           nonZero.map((t: number[]) => t[0])
         )
-      ).toBe(300);
+      ).toBe(280);
     });
   });
 
@@ -708,7 +708,7 @@ describe('grafanaGraph', () => {
           Math,
           nonZero.map((t: number[]) => t[0])
         )
-      ).toBe(300);
+      ).toBe(250);
     });
   });
 
@@ -744,7 +744,7 @@ describe('grafanaGraph', () => {
           Math,
           nonZero.map((t: number[]) => t[0])
         )
-      ).toBe(300);
+      ).toBe(250);
     });
   });
 
@@ -854,7 +854,7 @@ describe('grafanaGraph', () => {
           Math,
           nonZero.map((t: number[]) => t[0])
         )
-      ).toBe(300);
+      ).toBe(250);
     });
   });
 
@@ -891,7 +891,7 @@ describe('grafanaGraph', () => {
           Math,
           nonZero.map((t: number[]) => t[0])
         )
-      ).toBe(300);
+      ).toBe(250);
     });
   });
 
@@ -966,7 +966,7 @@ describe('grafanaGraph', () => {
           Math,
           nonZero.map((t: number[]) => t[0])
         )
-      ).toBe(300);
+      ).toBe(280);
     });
   });
 
@@ -1003,7 +1003,7 @@ describe('grafanaGraph', () => {
           Math,
           nonZero.map((t: number[]) => t[0])
         )
-      ).toBe(300);
+      ).toBe(280);
     });
   });
 
@@ -1040,7 +1040,7 @@ describe('grafanaGraph', () => {
           Math,
           nonZero.map((t: number[]) => t[0])
         )
-      ).toBe(300);
+      ).toBe(280);
     });
   });
 
@@ -1077,7 +1077,7 @@ describe('grafanaGraph', () => {
           Math,
           nonZero.map((t: number[]) => t[0])
         )
-      ).toBe(300);
+      ).toBe(280);
     });
   });
 
@@ -1114,7 +1114,7 @@ describe('grafanaGraph', () => {
           Math,
           nonZero.map((t: number[]) => t[0])
         )
-      ).toBe(300);
+      ).toBe(280);
     });
   });
 
@@ -1150,7 +1150,7 @@ describe('grafanaGraph', () => {
           Math,
           nonZero.map((t: number[]) => t[0])
         )
-      ).toBe(300);
+      ).toBe(280);
     });
   });
 
@@ -1186,7 +1186,7 @@ describe('grafanaGraph', () => {
           Math,
           nonZero.map((t: number[]) => t[0])
         )
-      ).toBe(300);
+      ).toBe(280);
     });
   });
 
@@ -1216,13 +1216,13 @@ describe('grafanaGraph', () => {
           Math,
           nonZero.map((t: number[]) => t[0])
         )
-      ).toBe(100);
+      ).toBe(90);
       expect(
         Math.max.apply(
           Math,
           nonZero.map((t: number[]) => t[0])
         )
-      ).toBe(100);
+      ).toBe(90);
     });
   });
 
@@ -1255,7 +1255,7 @@ describe('grafanaGraph', () => {
     beforeEach(() => {
       setupCtx(() => {
         ctrl.panel.xaxis.mode = 'histogram';
-        ctrl.panel.xaxis.max = 301;
+        ctrl.panel.xaxis.max = 400;
         ctrl.panel.stack = false;
         ctrl.hiddenSeries = {};
         ctx.data[0] = new TimeSeries({

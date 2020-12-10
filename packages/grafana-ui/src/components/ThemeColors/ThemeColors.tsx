@@ -13,7 +13,7 @@ interface DemoBoxProps {
 const DemoBox: FC<DemoBoxProps> = ({ bg, border, children }) => {
   const style = cx(
     css`
-      padding: 16px 32px;
+      padding: 32px 32px 16px 32px;
       background: ${bg};
       width: 100%;
     `,
@@ -24,18 +24,7 @@ const DemoBox: FC<DemoBoxProps> = ({ bg, border, children }) => {
       : null
   );
 
-  return (
-    <div className={style}>
-      <div
-        className={css`
-          padding-bottom: 16px;
-        `}
-      >
-        {name}
-      </div>
-      {children}
-    </div>
-  );
+  return <div className={style}>{children}</div>;
 };
 
 const DemoText: FC<{ color?: string; bold?: boolean; size?: number }> = ({ color, bold, size, children }) => {
@@ -67,7 +56,7 @@ export const ThemeColors = () => {
           <DemoBox bg={theme.colors.bg2} border={theme.colors.border2}>
             <DemoText>
               colors.bg2 background used for elements placed on colors.bg1. Using colors.border1 should be used on
-              elements placed ontop of bg1. Ths box is using border2.
+              elements placed ontop of bg1. This box is using border2.
             </DemoText>
             <DemoBox bg={theme.colors.bg3} border={theme.colors.border2}>
               <DemoText>colors.bg3 background used for elements placed on colors.bg2.</DemoText>

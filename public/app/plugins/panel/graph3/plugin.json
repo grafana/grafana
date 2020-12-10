@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "uPlot graph",
+  "id": "graph3",
+  "state": "alpha",
+
+  "info": {
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-graph-panel.svg",
+      "large": "img/icn-graph-panel.svg"
+    }
+  }
+}

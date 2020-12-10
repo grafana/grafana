@@ -2,9 +2,12 @@ package conditions
 
 import (
 	"context"
+	"math"
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
@@ -13,7 +16,19 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
+	"github.com/xorcare/pointer"
 )
+
+func newTimeSeriesPointsFromArgs(values ...float64) tsdb.TimeSeriesPoints {
+	points := make(tsdb.TimeSeriesPoints, 0)
+
+	for i := 0; i < len(values); i += 2 {
+		points = append(points, tsdb.NewTimePoint(null.FloatFrom(values[i]), values[i+1]))
+	}
+
+	return points
+}
 
 func TestQueryCondition(t *testing.T) {
 	Convey("when evaluating query condition", t, func() {
@@ -42,8 +57,8 @@ func TestQueryCondition(t *testing.T) {
 			})
 
 			Convey("should fire when avg is above 100", func() {
-				points := tsdb.NewTimeSeriesPointsFromArgs(120, 0)
-				ctx.series = tsdb.TimeSeriesSlice{tsdb.NewTimeSeries("test1", points)}
+				points := newTimeSeriesPointsFromArgs(120, 0)
+				ctx.series = tsdb.TimeSeriesSlice{&tsdb.TimeSeries{Name: "test1", Points: points}}
 				cr, err := ctx.exec()
 
 				So(err, ShouldBeNil)
@@ -62,8 +77,8 @@ func TestQueryCondition(t *testing.T) {
 			})
 
 			Convey("Should not fire when avg is below 100", func() {
-				points := tsdb.NewTimeSeriesPointsFromArgs(90, 0)
-				ctx.series = tsdb.TimeSeriesSlice{tsdb.NewTimeSeries("test1", points)}
+				points := newTimeSeriesPointsFromArgs(90, 0)
+				ctx.series = tsdb.TimeSeriesSlice{&tsdb.TimeSeries{Name: "test1", Points: points}}
 				cr, err := ctx.exec()
 
 				So(err, ShouldBeNil)
@@ -83,8 +98,8 @@ func TestQueryCondition(t *testing.T) {
 
 			Convey("Should fire if only first series matches", func() {
 				ctx.series = tsdb.TimeSeriesSlice{
-					tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs(120, 0)),
-					tsdb.NewTimeSeries("test2", tsdb.NewTimeSeriesPointsFromArgs(0, 0)),
+					&tsdb.TimeSeries{Name: "test1", Points: newTimeSeriesPointsFromArgs(120, 0)},
+					&tsdb.TimeSeries{Name: "test2", Points: newTimeSeriesPointsFromArgs(0, 0)},
 				}
 				cr, err := ctx.exec()
 
@@ -116,7 +131,7 @@ func TestQueryCondition(t *testing.T) {
 				Convey("Should set Firing if eval match", func() {
 					ctx.evaluator = `{"type": "no_value", "params": []}`
 					ctx.series = tsdb.TimeSeriesSlice{
-						tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs()),
+						&tsdb.TimeSeries{Name: "test1", Points: newTimeSeriesPointsFromArgs()},
 					}
 					cr, err := ctx.exec()
 
@@ -126,8 +141,8 @@ func TestQueryCondition(t *testing.T) {
 
 				Convey("Should set NoDataFound both series are empty", func() {
 					ctx.series = tsdb.TimeSeriesSlice{
-						tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs()),
-						tsdb.NewTimeSeries("test2", tsdb.NewTimeSeriesPointsFromArgs()),
+						&tsdb.TimeSeries{Name: "test1", Points: newTimeSeriesPointsFromArgs()},
+						&tsdb.TimeSeries{Name: "test2", Points: newTimeSeriesPointsFromArgs()},
 					}
 					cr, err := ctx.exec()
 
@@ -137,8 +152,8 @@ func TestQueryCondition(t *testing.T) {
 
 				Convey("Should set NoDataFound both series contains null", func() {
 					ctx.series = tsdb.TimeSeriesSlice{
-						tsdb.NewTimeSeries("test1", tsdb.TimeSeriesPoints{tsdb.TimePoint{null.FloatFromPtr(nil), null.FloatFrom(0)}}),
-						tsdb.NewTimeSeries("test2", tsdb.TimeSeriesPoints{tsdb.TimePoint{null.FloatFromPtr(nil), null.FloatFrom(0)}}),
+						&tsdb.TimeSeries{Name: "test1", Points: tsdb.TimeSeriesPoints{tsdb.TimePoint{null.FloatFromPtr(nil), null.FloatFrom(0)}}},
+						&tsdb.TimeSeries{Name: "test2", Points: tsdb.TimeSeriesPoints{tsdb.TimePoint{null.FloatFromPtr(nil), null.FloatFrom(0)}}},
 					}
 					cr, err := ctx.exec()
 
@@ -148,8 +163,8 @@ func TestQueryCondition(t *testing.T) {
 
 				Convey("Should not set NoDataFound if one series is empty", func() {
 					ctx.series = tsdb.TimeSeriesSlice{
-						tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs()),
-						tsdb.NewTimeSeries("test2", tsdb.NewTimeSeriesPointsFromArgs(120, 0)),
+						&tsdb.TimeSeries{Name: "test1", Points: newTimeSeriesPointsFromArgs()},
+						&tsdb.TimeSeries{Name: "test2", Points: newTimeSeriesPointsFromArgs(120, 0)},
 					}
 					cr, err := ctx.exec()
 
@@ -225,4 +240,127 @@ func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
 
 		fn(ctx)
 	})
+}
+
+func TestFrameToSeriesSlice(t *testing.T) {
+	tests := []struct {
+		name        string
+		frame       *data.Frame
+		seriesSlice tsdb.TimeSeriesSlice
+		Err         require.ErrorAssertionFunc
+	}{
+		{
+			name: "a wide series",
+			frame: data.NewFrame("",
+				data.NewField("Time", nil, []time.Time{
+					time.Date(2020, 1, 2, 3, 4, 0, 0, time.UTC),
+					time.Date(2020, 1, 2, 3, 4, 30, 0, time.UTC),
+				}),
+				data.NewField(`Values Int64s`, data.Labels{"Animal Factor": "cat"}, []*int64{
+					nil,
+					pointer.Int64(3),
+				}),
+				data.NewField(`Values Floats`, data.Labels{"Animal Factor": "sloth"}, []float64{
+					2.0,
+					4.0,
+				})),
+
+			seriesSlice: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name: "Values Int64s {Animal Factor=cat}",
+					Tags: map[string]string{"Animal Factor": "cat"},
+					Points: tsdb.TimeSeriesPoints{
+						tsdb.TimePoint{null.FloatFrom(math.NaN()), null.FloatFrom(1577934240000)},
+						tsdb.TimePoint{null.FloatFrom(3), null.FloatFrom(1577934270000)},
+					},
+				},
+				&tsdb.TimeSeries{
+					Name: "Values Floats {Animal Factor=sloth}",
+					Tags: map[string]string{"Animal Factor": "sloth"},
+					Points: tsdb.TimeSeriesPoints{
+						tsdb.TimePoint{null.FloatFrom(2), null.FloatFrom(1577934240000)},
+						tsdb.TimePoint{null.FloatFrom(4), null.FloatFrom(1577934270000)},
+					},
+				},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "empty wide series",
+			frame: data.NewFrame("",
+				data.NewField("Time", nil, []time.Time{}),
+				data.NewField(`Values Int64s`, data.Labels{"Animal Factor": "cat"}, []*int64{}),
+				data.NewField(`Values Floats`, data.Labels{"Animal Factor": "sloth"}, []float64{})),
+
+			seriesSlice: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name:   "Values Int64s {Animal Factor=cat}",
+					Tags:   map[string]string{"Animal Factor": "cat"},
+					Points: tsdb.TimeSeriesPoints{},
+				},
+				&tsdb.TimeSeries{
+					Name:   "Values Floats {Animal Factor=sloth}",
+					Tags:   map[string]string{"Animal Factor": "sloth"},
+					Points: tsdb.TimeSeriesPoints{},
+				},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "empty labels",
+			frame: data.NewFrame("",
+				data.NewField("Time", data.Labels{}, []time.Time{}),
+				data.NewField(`Values`, data.Labels{}, []float64{})),
+
+			seriesSlice: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name:   "Values",
+					Points: tsdb.TimeSeriesPoints{},
+				},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "display name from data source",
+			frame: data.NewFrame("",
+				data.NewField("Time", data.Labels{}, []time.Time{}),
+				data.NewField(`Values`, data.Labels{}, []*int64{}).SetConfig(&data.FieldConfig{
+					DisplayNameFromDS: "sloth",
+				})),
+
+			seriesSlice: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name:   "sloth",
+					Points: tsdb.TimeSeriesPoints{},
+				},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "prefer display name over data source display name",
+			frame: data.NewFrame("",
+				data.NewField("Time", data.Labels{}, []time.Time{}),
+				data.NewField(`Values`, data.Labels{}, []*int64{}).SetConfig(&data.FieldConfig{
+					DisplayName:       "sloth #1",
+					DisplayNameFromDS: "sloth #2",
+				})),
+
+			seriesSlice: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name:   "sloth #1",
+					Points: tsdb.TimeSeriesPoints{},
+				},
+			},
+			Err: require.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			seriesSlice, err := FrameToSeriesSlice(tt.frame)
+			tt.Err(t, err)
+			if diff := cmp.Diff(tt.seriesSlice, seriesSlice, cmpopts.EquateNaNs()); diff != "" {
+				t.Errorf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
 }

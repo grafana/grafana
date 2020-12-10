@@ -163,7 +163,7 @@ describe('Positions', () => {
       // Note: ps.ys = [0, 2, 6, 12, 20, undefined x 5];
     });
 
-    it('scans y-values for index that equals or preceeds `yValue`', () => {
+    it('scans y-values for index that equals or precedes `yValue`', () => {
       let i = ps.findFloorIndex(3, getHeight);
       expect(i).toBe(1);
       i = ps.findFloorIndex(21, getHeight);

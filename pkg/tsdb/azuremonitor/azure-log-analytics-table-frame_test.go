@@ -112,10 +112,11 @@ func TestLogTableToFrame(t *testing.T) {
 					data.NewField("XLong", nil, []*int64{pointer.Int64(9223372036854775807)}),
 					data.NewField("XReal", nil, []*float64{pointer.Float64(1.797693134862315708145274237317043567981e+308)}),
 					data.NewField("XTimeSpan", nil, []*string{pointer.String("00:00:00.0000001")}),
+					data.NewField("XDecimal", nil, []*float64{pointer.Float64(79228162514264337593543950335)}),
 				)
 				frame.Meta = &data.FrameMeta{
 					Custom: &LogAnalyticsMeta{ColumnTypes: []string{"bool", "string", "datetime",
-						"dynamic", "guid", "int", "long", "real", "timespan"}},
+						"dynamic", "guid", "int", "long", "real", "timespan", "decimal"}},
 				}
 				return frame
 			},

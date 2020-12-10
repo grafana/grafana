@@ -1,11 +1,7 @@
 +++
 title = "Add or remove a user"
 keywords = ["grafana", "configuration", "documentation", "users"]
-type = "docs"
-[menu.docs]
-identifier = "add-or-remove-user"
-parent = "manage-users"
-weight = 10
+weight = 100
 +++
 
 # Add or remove a user

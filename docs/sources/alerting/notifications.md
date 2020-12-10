@@ -2,11 +2,7 @@
 title = "Alert notifications"
 description = "Alerting notifications guide"
 keywords = ["Grafana", "alerting", "guide", "notifications"]
-type = "docs"
-[menu.docs]
-name = "Notifications"
-parent = "alerting"
-weight = 200
+weight = 100
 +++
 
 # Alert notifications
@@ -68,6 +64,7 @@ OpsGenie | `opsgenie` | yes, external only | yes
 Prometheus Alertmanager | `prometheus-alertmanager` | yes, external only | yes
 Pushover | `pushover` | yes | no
 Sensu | `sensu` | yes, external only | no
+[Sensu Go](#sensu-go) | `sensugo` | yes, external only | no
 [Slack](#slack) | `slack` | yes | no
 Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
@@ -132,7 +129,7 @@ This might break custom event rules in your PagerDuty rules if you rely on the f
 Move any existing rules using `custom_details.myMetric` to `custom_details.queries.myMetric`.
 This behavior will become the default in a future version of Grafana.
 
-> Using `dedup_key` tag will override grafana generated `dedup_key` with a custom key.
+> Using `dedup_key` tag will override Grafana generated `dedup_key` with a custom key.
 ### Webhook
 
 The webhook notification is a simple way to send information about a state change over HTTP to a custom endpoint.
@@ -175,17 +172,17 @@ In DingTalk PC Client:
 
 1. Click "more" icon on upper right of the panel.
 
-2. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
+1. Click "Robot Manage" item in the pop menu, there will be a new panel call "Robot Manage".
 
-3. In the  "Robot Manage" panel, select "customized: customized robot with Webhook".
+1. In the  "Robot Manage" panel, select "customized: customized robot with Webhook".
 
-4. In the next new panel named "robot detail", click "Add" button.
+1. In the next new panel named "robot detail", click "Add" button.
 
-5. In "Add Robot" panel, input a nickname for the robot and select a "message group" which the robot will join in. click "next".
+1. In "Add Robot" panel, input a nickname for the robot and select a "message group" which the robot will join in. click "next".
 
-6. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the grafana Dingtalk setting page and then click "finish".
+1. There will be a Webhook URL in the panel, looks like this: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx. Copy this URL to the Grafana DingTalk setting page and then click "finish".
 
-Dingtalk supports the following "message type": `text`, `link` and `markdown`. Only the `link` message type is supported.
+DingTalk supports the following "message type": `text`, `link` and `markdown`. Only the `link` message type is supported.
 
 ### Kafka
 
@@ -194,13 +191,13 @@ There are a couple of configuration options which need to be set up in Grafana U
 
 1. Kafka REST Proxy endpoint.
 
-2. Kafka Topic.
+1. Kafka Topic.
 
 Once these two properties are set, you can send the alerts to Kafka for further processing or throttling.
 
 ### Google Hangouts Chat
 
-Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. Configuring such a webhook is described [here](https://developers.google.com/hangouts/chat/how-tos/webhooks).
+Notifications can be sent by setting up an incoming webhook in Google Hangouts chat. For more information about configuring a webhook, refer to [webhooks](https://developers.google.com/hangouts/chat/how-tos/webhooks).
 
 ### Squadcast
 
@@ -215,6 +212,10 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 ### Zenduty
 
 [Zenduty](https://www.zenduty.com) is an incident alerting and response orchestration platform that not alerts the right teams via SMS, Phone(Voice), Email, Slack, Microsoft Teams and Push notifications(Android/iOS) whenever a Grafana alert is triggered, but also helps you rapidly triage and remediate critical, user impacting incidents. Grafana alert are sent to Zenduty through Grafana's native webhook dispatcher. Refer the Zenduty-Grafana [integration documentation](https://docs.zenduty.com/docs/grafana) for configuring the integration.
+
+### Sensu Go
+
+[Sensu](https://sensu.io) is a complete solution for monitoring and observability at scale. Sensu Go is designed to give you visibility into everything you care about: traditional server closets, containers, applications, the cloud, and more. Grafana notifications can be sent to Sensu Go as events via the API. This operation requires an API Key. Refer to the [Sensu Go documentation](https://docs.sensu.io/sensu-go/latest/operations/control-access/use-apikeys/#api-key-authentication) for information on creating this key.
 
 ## Enable images in notifications {#external-image-store}
 

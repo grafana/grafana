@@ -2,6 +2,8 @@ import { CircularDataFrame, FieldCache, FieldType, MutableDataFrame } from '@gra
 import { LokiStreamResult, LokiTailResponse, LokiStreamResponse, LokiResultType, TransformerOptions } from './types';
 import * as ResultTransformer from './result_transformer';
 import { enhanceDataFrame } from './result_transformer';
+import { setTemplateSrv } from '@grafana/runtime';
+import { TemplateSrv } from 'app/features/templating/template_srv';
 
 const streamResult: LokiStreamResult[] = [
   {
@@ -31,7 +33,23 @@ const lokiResponse: LokiStreamResponse = {
   },
 };
 
+jest.mock('@grafana/runtime', () => ({
+  // @ts-ignore
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => {
+    return {
+      getInstanceSettings: () => {
+        return { name: 'Loki1' };
+      },
+    };
+  },
+}));
+
 describe('loki result transformer', () => {
+  beforeAll(() => {
+    setTemplateSrv(new TemplateSrv());
+  });
+
   afterAll(() => {
     jest.restoreAllMocks();
   });
@@ -55,10 +73,10 @@ describe('loki result transformer', () => {
     });
   });
 
-  describe('lokiStreamsToDataframes', () => {
+  describe('lokiStreamsToDataFrames', () => {
     it('should enhance data frames', () => {
       jest.spyOn(ResultTransformer, 'enhanceDataFrame');
-      const dataFrames = ResultTransformer.lokiStreamsToDataframes(lokiResponse, { refId: 'B' }, 500, {
+      const dataFrames = ResultTransformer.lokiStreamsToDataFrames(lokiResponse, { refId: 'B' }, 500, {
         derivedFields: [
           {
             matcherRegex: 'trace=(w+)',
@@ -161,12 +179,12 @@ describe('enhanceDataFrame', () => {
     expect(fc.getFieldByName('trace2')!.config.links!.length).toBe(2);
     expect(fc.getFieldByName('trace2')!.config.links![0]).toEqual({
       title: '',
-      internal: { datasourceUid: 'uid', query: { query: 'test' } },
+      internal: { datasourceName: 'Loki1', datasourceUid: 'uid', query: { query: 'test' } },
       url: '',
     });
     expect(fc.getFieldByName('trace2')!.config.links![1]).toEqual({
       title: '',
-      internal: { datasourceUid: 'uid2', query: { query: 'test' } },
+      internal: { datasourceName: 'Loki1', datasourceUid: 'uid2', query: { query: 'test' } },
       url: '',
     });
   });

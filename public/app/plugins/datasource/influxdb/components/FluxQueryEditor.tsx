@@ -18,10 +18,10 @@ import InfluxDatasource from '../datasource';
 type Props = QueryEditorProps<InfluxDatasource, InfluxQuery>;
 
 const samples: Array<SelectableValue<string>> = [
-  { label: 'Show buckets', description: 'List the avaliable buckets (table)', value: 'buckets()' },
+  { label: 'Show buckets', description: 'List the available buckets (table)', value: 'buckets()' },
   {
     label: 'Simple query',
-    description: 'filter by measurment and field',
+    description: 'filter by measurement and field',
     value: `from(bucket: "db/rp")
   |> range(start: v.timeRangeStart, stop:v.timeRangeStop)
   |> filter(fn: (r) =>
@@ -147,7 +147,7 @@ export class FluxQueryEditor extends PureComponent<Props> {
   };
 
   // For some reason in angular, when this component gets re-mounted, the width
-  // is not set properly.  This forces the layout shorly after mount so that it
+  // is not set properly.  This forces the layout shortly after mount so that it
   // displays OK.  Note: this is not an issue when used directly in react
   editorDidMountCallbackHack = (editor: any) => {
     setTimeout(() => editor.layout(), 100);

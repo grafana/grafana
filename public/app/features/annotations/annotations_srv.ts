@@ -11,21 +11,21 @@ import { DashboardModel } from '../dashboard/state';
 import {
   AnnotationEvent,
   AppEvents,
+  CoreApp,
+  DataQueryRequest,
   DataSourceApi,
   PanelEvents,
   rangeUtil,
-  DataQueryRequest,
-  CoreApp,
   ScopedVars,
 } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { getTimeSrv } from '../dashboard/services/TimeSrv';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
-import { AnnotationQueryResponse, AnnotationQueryOptions } from './types';
-import { standardAnnotationSupport, singleFrameFromPanelData } from './standardAnnotationSupport';
-import { runRequest } from '../dashboard/state/runRequest';
+import { map, mergeMap } from 'rxjs/operators';
+import { AnnotationQueryOptions, AnnotationQueryResponse } from './types';
+import { standardAnnotationSupport } from './standardAnnotationSupport';
+import { runRequest } from '../query/state/runRequest';
 
 let counter = 100;
 function getNextRequestId() {
@@ -203,6 +203,8 @@ export class AnnotationsSrv {
 
     for (const item of results) {
       item.source = annotation;
+      item.color = annotation.iconColor;
+      item.type = annotation.name;
       item.isRegion = item.timeEnd && item.time !== item.timeEnd;
     }
 
@@ -262,10 +264,12 @@ export function executeAnnotationQuery(
   };
 
   return runRequest(datasource, queryRequest).pipe(
-    map(panelData => {
-      const frame = singleFrameFromPanelData(panelData);
-      const events = frame ? processor.processEvents!(annotation, frame) : [];
-      return { panelData, frame, events };
+    mergeMap(panelData => {
+      if (!panelData.series) {
+        return of({ panelData, events: [] });
+      }
+
+      return processor.processEvents!(annotation, panelData.series).pipe(map(events => ({ panelData, events })));
     })
   );
 }

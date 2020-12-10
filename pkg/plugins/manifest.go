@@ -84,16 +84,21 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 
 // getPluginSignatureState returns the signature state for a plugin.
 func getPluginSignatureState(log log.Logger, plugin *PluginBase) PluginSignature {
-	log.Debug("Getting signature state of plugin", "plugin", plugin.Id)
+	log.Debug("Getting signature state of plugin", "plugin", plugin.Id, "isBackend", plugin.Backend)
 	manifestPath := filepath.Join(plugin.PluginDir, "MANIFEST.txt")
 
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `manifestPath` is based
+	// on plugin the folder structure on disk and not user input.
 	byteValue, err := ioutil.ReadFile(manifestPath)
 	if err != nil || len(byteValue) < 10 {
+		log.Debug("Plugin is unsigned", "id", plugin.Id)
 		return PluginSignatureUnsigned
 	}
 
 	manifest, err := readPluginManifest(byteValue)
 	if err != nil {
+		log.Debug("Plugin signature invalid", "id", plugin.Id)
 		return PluginSignatureInvalid
 	}
 
@@ -107,11 +112,19 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) PluginSignature
 	for p, hash := range manifest.Files {
 		// Open the file
 		fp := filepath.Join(plugin.PluginDir, p)
+
+		// nolint:gosec
+		// We can ignore the gosec G304 warning on this one because `fp` is based
+		// on the manifest file for a plugin and not user input.
 		f, err := os.Open(fp)
 		if err != nil {
 			return PluginSignatureModified
 		}
-		defer f.Close()
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Warn("Failed to close plugin file", "path", fp, "err", err)
+			}
+		}()
 
 		h := sha256.New()
 		if _, err := io.Copy(h, f); err != nil {
@@ -126,5 +139,6 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) PluginSignature
 	}
 
 	// Everything OK
+	log.Debug("Plugin signature valid", "id", plugin.Id)
 	return PluginSignatureValid
 }

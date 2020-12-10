@@ -1,6 +1,6 @@
 import React, { PureComponent } from 'react';
 import { dateTimeFormat } from '@grafana/data';
-import { Icon } from '@grafana/ui';
+import { Spinner } from '@grafana/ui';
 import { SyncInfo } from 'app/types';
 
 interface Props {
@@ -35,7 +35,7 @@ export class LdapSyncInfo extends PureComponent<Props, State> {
           LDAP Synchronisation
           <button className={`btn btn-secondary pull-right`} onClick={this.handleSyncClick} hidden={true}>
             <span className="btn-title">Bulk-sync now</span>
-            {isSyncing && <Icon name="fa fa-spinner" className="fa-fw fa-spin run-icon" />}
+            {isSyncing && <Spinner inline={true} />}
           </button>
         </h3>
         <div className="gf-form-group">

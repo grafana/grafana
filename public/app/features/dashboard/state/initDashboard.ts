@@ -29,6 +29,7 @@ import { DashboardModel } from './DashboardModel';
 import { DataQuery, locationUtil } from '@grafana/data';
 import { initVariablesTransaction } from '../../variables/state/actions';
 import { emitDashboardViewEvent } from './analyticsProcessor';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 
 export interface InitDashboardArgs {
   $injector: any;
@@ -230,6 +231,11 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     // send open dashboard event
     if (args.routeInfo !== DashboardRouteInfo.New) {
       emitDashboardViewEvent(dashboard);
+
+      // Listen for changes on the current dashboard
+      dashboardWatcher.watch(dashboard.uid);
+    } else {
+      dashboardWatcher.leave();
     }
 
     // yay we are done

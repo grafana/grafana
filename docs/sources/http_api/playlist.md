@@ -3,11 +3,6 @@ title = "Playlist HTTP API "
 description = "Playlist Admin HTTP API"
 keywords = ["grafana", "http", "documentation", "api", "playlist"]
 aliases = ["/docs/grafana/latest/http_api/playlist/"]
-type = "docs"
-[menu.docs]
-name = "Playlist"
-parent = "http_api"
-identifier = "http_api_playlist"
 +++
 
 # Playlist API

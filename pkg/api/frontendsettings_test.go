@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -55,7 +55,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HT
 	m := macaron.New()
 	m.Use(middleware.GetContextHandler(nil, nil, nil))
 	m.Use(macaron.Renderer(macaron.RenderOptions{
-		Directory:  path.Join(setting.StaticRootPath, "views"),
+		Directory:  filepath.Join(setting.StaticRootPath, "views"),
 		IndentJSON: true,
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))

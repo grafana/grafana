@@ -24,7 +24,7 @@ func init() {
 type UsageStatsService struct {
 	Cfg                *setting.Cfg               `inject:""`
 	Bus                bus.Bus                    `inject:""`
-	SQLStore           *sqlstore.SqlStore         `inject:""`
+	SQLStore           *sqlstore.SQLStore         `inject:""`
 	AlertingUsageStats alerting.UsageStatsQuerier `inject:""`
 	License            models.Licensing           `inject:""`
 
@@ -50,7 +50,7 @@ func (uss *UsageStatsService) Run(ctx context.Context) error {
 	for {
 		select {
 		case <-onceEveryDayTick.C:
-			uss.sendUsageStats(uss.oauthProviders)
+			uss.sendUsageStats()
 		case <-everyMinuteTicker.C:
 			uss.updateTotalStats()
 		case <-ctx.Done():

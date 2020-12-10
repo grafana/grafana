@@ -252,6 +252,81 @@ describe('dataFrameToLogsModel', () => {
     });
   });
 
+  it('given one series with error should return expected logs model', () => {
+    const series: DataFrame[] = [
+      new MutableDataFrame({
+        fields: [
+          {
+            name: 'time',
+            type: FieldType.time,
+            values: ['2019-04-26T09:28:11.352440161Z', '2019-04-26T14:42:50.991981292Z'],
+          },
+          {
+            name: 'message',
+            type: FieldType.string,
+            values: [
+              't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
+              't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
+            ],
+            labels: {
+              filename: '/var/log/grafana/grafana.log',
+              job: 'grafana',
+              __error__: 'Failed while parsing',
+            },
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['foo', 'bar'],
+          },
+        ],
+        meta: {
+          limit: 1000,
+          custom: {
+            error: 'Error when parsing some of the logs',
+          },
+        },
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 1, 'utc');
+    expect(logsModel.hasUniqueLabels).toBeFalsy();
+    expect(logsModel.rows).toHaveLength(2);
+    expect(logsModel.rows).toMatchObject([
+      {
+        entry: 't=2019-04-26T11:05:28+0200 lvl=info msg="Initializing DatasourceCacheService" logger=server',
+        labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana', __error__: 'Failed while parsing' },
+        logLevel: 'info',
+        uniqueLabels: {},
+        uid: 'foo',
+      },
+      {
+        entry: 't=2019-04-26T16:42:50+0200 lvl=eror msg="new token…t unhashed token=56d9fdc5c8b7400bd51b060eea8ca9d7',
+        labels: { filename: '/var/log/grafana/grafana.log', job: 'grafana', __error__: 'Failed while parsing' },
+        logLevel: 'error',
+        uniqueLabels: {},
+        uid: 'bar',
+      },
+    ]);
+
+    expect(logsModel.series).toHaveLength(2);
+    expect(logsModel.meta).toHaveLength(3);
+    expect(logsModel.meta![0]).toMatchObject({
+      label: 'Common labels',
+      value: series[0].fields[1].labels,
+      kind: LogsMetaKind.LabelsMap,
+    });
+    expect(logsModel.meta![1]).toMatchObject({
+      label: 'Limit',
+      value: `1000 (2 returned)`,
+      kind: LogsMetaKind.String,
+    });
+    expect(logsModel.meta![2]).toMatchObject({
+      label: '',
+      value: 'Error when parsing some of the logs',
+      kind: LogsMetaKind.Error,
+    });
+  });
+
   it('given one series without labels should return expected logs model', () => {
     const series: DataFrame[] = [
       new MutableDataFrame({
@@ -624,6 +699,78 @@ describe('logSeriesToLogsModel', () => {
     };
 
     expect(logSeriesToLogsModel(logSeries)).toMatchObject(metaData);
+  });
+  it('should return correct metaData when some data frames have empty fields', () => {
+    const logSeries: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          {
+            name: 'ts',
+            type: FieldType.time,
+            values: ['1970-01-01T00:00:01Z', '1970-02-01T00:00:01Z', '1970-03-01T00:00:01Z'],
+          },
+          {
+            name: 'line',
+            type: FieldType.string,
+            values: ['WARN boooo 0', 'WARN boooo 1', 'WARN boooo 2'],
+            labels: {
+              foo: 'bar',
+              level: 'dbug',
+            },
+          },
+          {
+            name: 'id',
+            type: FieldType.string,
+            values: ['0', '1', '2'],
+          },
+        ],
+        refId: 'A',
+        meta: {
+          searchWords: ['test'],
+          limit: 1000,
+          stats: [{ displayName: 'Summary: total bytes processed', value: 97048, unit: 'decbytes' }],
+          custom: { lokiQueryStatKey: 'Summary: total bytes processed' },
+          preferredVisualisationType: 'logs',
+        },
+      }),
+      toDataFrame({
+        fields: [],
+        length: 0,
+        refId: 'B',
+        meta: {
+          searchWords: ['test'],
+          limit: 1000,
+          stats: [{ displayName: 'Summary: total bytes processed', value: 97048, unit: 'decbytes' }],
+          custom: { lokiQueryStatKey: 'Summary: total bytes processed' },
+          preferredVisualisationType: 'logs',
+        },
+      }),
+    ];
+
+    const logsModel = dataFrameToLogsModel(logSeries, 0, 'utc');
+    expect(logsModel.meta).toMatchObject([
+      { kind: 2, label: 'Common labels', value: { foo: 'bar', level: 'dbug' } },
+      { kind: 1, label: 'Limit', value: '2000 (3 returned)' },
+      { kind: 1, label: 'Total bytes processed', value: '194  kB' },
+    ]);
+    expect(logsModel.rows).toHaveLength(3);
+    expect(logsModel.rows).toMatchObject([
+      {
+        entry: 'WARN boooo 0',
+        labels: { foo: 'bar' },
+        logLevel: LogLevel.debug,
+      },
+      {
+        entry: 'WARN boooo 1',
+        labels: { foo: 'bar' },
+        logLevel: LogLevel.debug,
+      },
+      {
+        entry: 'WARN boooo 2',
+        labels: { foo: 'bar' },
+        logLevel: LogLevel.debug,
+      },
+    ]);
   });
 });
 
