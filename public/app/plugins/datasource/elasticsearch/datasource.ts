@@ -446,7 +446,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
     const sortField = row.dataFrame.fields.find(f => f.name === 'sort');
-    const searchAfter = (sortField && sortField.values.get(row.rowIndex)) || [row.timeEpochMs];
+    const searchAfter = sortField?.values.get(row.rowIndex) || [row.timeEpochMs];
     const range = this.timeSrv.timeRange();
     const direction = options?.direction === 'FORWARD' ? 'asc' : 'desc';
     const header = this.getQueryHeader('query_then_fetch', range.from, range.to);
@@ -830,7 +830,7 @@ export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig
   }
 }
 
-export function transformHitsBasedOnDirection(response: any, direction: 'asc' | 'desc') {
+function transformHitsBasedOnDirection(response: any, direction: 'asc' | 'desc') {
   if (direction === 'desc') {
     return response;
   }
