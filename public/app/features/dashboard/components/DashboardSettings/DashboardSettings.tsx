@@ -8,6 +8,7 @@ import { CustomScrollbar, Icon, IconName } from '@grafana/ui';
 import { GeneralSettings } from './GeneralSettings';
 import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
+import { JsonEditorSettings } from './JsonEditorSettings';
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
 import { DashboardPermissions } from '../DashboardPermissions/DashboardPermissions';
 
@@ -102,7 +103,7 @@ export class DashboardSettings extends PureComponent<Props> {
       title: 'JSON Model',
       id: 'dashboard_json',
       icon: 'arrow',
-      render: () => <GeneralSettings dashboard={dashboard} />,
+      render: () => <JsonEditorSettings dashboard={dashboard} />,
     });
 
     return pages;
