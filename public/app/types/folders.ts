@@ -23,7 +23,7 @@ export interface FolderState {
 }
 
 export interface FolderInfo {
-  id: number;
-  title: string;
-  url: string;
+  id: number | undefined;
+  title: string | undefined;
+  url: string | undefined;
 }
