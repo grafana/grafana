@@ -18,8 +18,7 @@ export function EventsCanvas<T>({ id, events, renderEventMarker, mapEventToXYCoo
 
   const eventMarkers = useMemo(() => {
     const markers: React.ReactNode[] = [];
-
-    if (!plotCtx.isPlotReady || events.length === 0) {
+    if (!plotCtx.getPlotInstance() || events.length === 0) {
       return markers;
     }
 
@@ -41,9 +40,9 @@ export function EventsCanvas<T>({ id, events, renderEventMarker, mapEventToXYCoo
     }
 
     return <>{markers}</>;
-  }, [events, renderEventMarker, renderToken, plotCtx.isPlotReady]);
+  }, [events, renderEventMarker, renderToken, plotCtx]);
 
-  if (!plotCtx.isPlotReady) {
+  if (!plotCtx.getPlotInstance()) {
     return null;
   }
 

@@ -77,14 +77,30 @@ The following sections provide general guidelines on topics specific to Grafana 
 
 - Write headings in sentence case, not title case.
   - This is sentence case
-  - This Is Title Case
+  - This is Title Case
 - Task topic headings start with a verb.
-  - Write a query. Create a dashboard.
+  - Write a query
+  - Create a dashboard
 - Concept and reference topic headings should be nouns or gerunds. Examples: Contributing to docs, Visualizations, Style guide
+
+#### Heading don'ts
+
 - Avoid stacked headings, which is following one heading with another heading.
 - Avoid skipping heading levels. For example, an h1 should be followed by an h2 rather than an h3.
 - Avoid having just one lower-level heading. For example, h1, h2, h2, h3, h3, h2, h2 is a good order. Do not go h1, h2, h3, h2, h3, h2.
-- Don't include parenthetical words like (Important!) in headings.
+- Avoid using hyphens in headings.
+- Do not include parenthetical words like (Important!) in headings.
+
+#### Step-by-step headings
+
+In most cases, headings should not be numbered steps.
+
+However, sometimes we need to use headings as numbered steps. This is mostly in cases where each step is complex or a series of other procedures. For example, in [Getting started with Grafana and Prometheus](https://grafana.com/docs/grafana/latest/getting-started/getting-started-prometheus/).
+
+If that is the case, then use the following format for headings:
+
+##### Step 1. Install the software
+##### Step 2. Run the software
 
 ### Images
 
@@ -94,12 +110,13 @@ The following sections provide general guidelines on topics specific to Grafana 
 - Assume all graphics will be exclusively viewed on the web.
 - Maximum image size is 3840px X 2160px.
 - Screenshots should be readable, but not too large.
+- _Do not_ use image shortcodes. Follow the guidance in the [Grafana markdown guide](https://github.com/grafana/grafana/blob/master/contribute/style-guides/documentation-markdown-guide.md#images).
+- Markdown image links are preferred. Only use the HTML image links if you need to style the image in ways unsupported in Markdown.
 
 ### Capitalization
 
 - Grafana, Loki, and Prometheus are always capitalized unless part of a code block.
 - API names are always Title Case, followed by "API"—for example, "Dashboard Permissions API"
-- Git is always capitalized, unless part of a code block.
 - Abbreviations are always capitalized (such as API, HTTP, ID, JSON, SQL, or URL) unless they are part of a code block.
 - Menu and submenu titles always use sentence case: capitalize the first word, and lowercase the rest.
   - "Dashboards" when referring to the submenu title.
@@ -108,6 +125,22 @@ The following sections provide general guidelines on topics specific to Grafana 
   - Lowercase "dashboard" when referring to a dashboard generally.
   - Lowercase "dashboards" when referring to multiple dashboards.
 - **Exceptions:** If a term is lowercased in the Grafana UI, then match the UI.
+
+#### Git, GitHub
+
+Git is always capitalized, unless part of a code block. GitHub is the correct spelling and capitalization.
+
+#### Integrations
+
+In general, "integration" is not capitalized. Only capitalize it if it is capitalized in the UI or part of a proper noun, like the name of a specific integration.
+
+The first letter of the name of an integration is always capitalized, even if the original named source is lowercase.
+
+**Examples:**
+- MySQL Integration
+- CockroachDB Integration
+- Etcd Integration
+- I installed an integration on my local Grafana.
 
 ### Links and references
 
@@ -175,6 +208,18 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ### Word usage
 
 Grafana products has some words, abbreviations, and terms particular to the Grafana discourse community.
+
+#### changelog
+
+One word, not two.
+
+**Example**
+
+- Read the full changelog.
+
+**Exception:**
+
+- When referring to the file containing the official changelog, use the filename: `CHANGELOG.md`.
 
 #### checkout, check out
 

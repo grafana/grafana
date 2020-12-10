@@ -22,7 +22,6 @@ require (
 	github.com/centrifugal/centrifuge v0.13.0
 	github.com/crewjam/saml v0.4.1
 	github.com/davecgh/go-spew v1.1.1
-	github.com/deepmap/oapi-codegen v1.3.11 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20200620013148-b91950f658ec
 	github.com/facebookgo/ensure v0.0.0-20160127193407-b4ab57deab51 // indirect
 	github.com/facebookgo/inject v0.0.0-20180706035515-f23751cae28b
@@ -50,7 +49,7 @@ require (
 	github.com/hashicorp/go-plugin v1.2.2
 	github.com/hashicorp/go-version v1.2.0
 	github.com/inconshreveable/log15 v0.0.0-20180818164646-67afb5ed74ec
-	github.com/influxdata/influxdb-client-go/v2 v2.0.1
+	github.com/influxdata/influxdb-client-go/v2 v2.2.0
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/jonboulle/clockwork v0.2.1 // indirect
 	github.com/jung-kurt/gofpdf v1.10.1
@@ -63,9 +62,9 @@ require (
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/client_golang v1.8.0
 	github.com/prometheus/client_model v0.2.0
-	github.com/prometheus/common v0.10.0
+	github.com/prometheus/common v0.14.0
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be // indirect
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/robfig/cron/v3 v3.0.0
@@ -78,6 +77,7 @@ require (
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/unknwon/com v1.0.1
 	github.com/urfave/cli/v2 v2.1.1
+	github.com/weaveworks/common v0.0.0-20201119133501-0619918236ec
 	github.com/xorcare/pointer v1.1.0
 	github.com/yudai/gojsondiff v1.0.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
@@ -85,6 +85,7 @@ require (
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	golang.org/x/sys v0.0.0-20201022201747-fb209a7c41cd // indirect
+	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 	golang.org/x/tools v0.0.0-20201023150057-2f4fa188d925 // indirect
 	gonum.org/v1/gonum v0.6.0
 	google.golang.org/api v0.33.0

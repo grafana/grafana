@@ -14,6 +14,7 @@ import { updateVariableOptions } from '../query/reducer';
 import { customBuilder, queryBuilder } from '../shared/testing/builders';
 import { variablesInitTransaction } from './transactionReducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
+import { setDataSourceSrv } from '@grafana/runtime';
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   getTimeSrv: jest.fn().mockReturnValue({
@@ -28,39 +29,37 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   }),
 }));
 
-jest.mock('app/features/plugins/datasource_srv', () => ({
-  getDatasourceSrv: () => ({
-    get: jest.fn().mockResolvedValue({
-      metricFindQuery: jest.fn().mockImplementation((query, options) => {
-        if (query === '$custom.*') {
-          return Promise.resolve([
-            { value: 'AA', text: 'AA' },
-            { value: 'AB', text: 'AB' },
-            { value: 'AC', text: 'AC' },
-          ]);
-        }
+setDataSourceSrv({
+  get: jest.fn().mockResolvedValue({
+    metricFindQuery: jest.fn().mockImplementation((query, options) => {
+      if (query === '$custom.*') {
+        return Promise.resolve([
+          { value: 'AA', text: 'AA' },
+          { value: 'AB', text: 'AB' },
+          { value: 'AC', text: 'AC' },
+        ]);
+      }
 
-        if (query === '$custom.$queryDependsOnCustom.*') {
-          return Promise.resolve([
-            { value: 'AAA', text: 'AAA' },
-            { value: 'AAB', text: 'AAB' },
-            { value: 'AAC', text: 'AAC' },
-          ]);
-        }
+      if (query === '$custom.$queryDependsOnCustom.*') {
+        return Promise.resolve([
+          { value: 'AAA', text: 'AAA' },
+          { value: 'AAB', text: 'AAB' },
+          { value: 'AAC', text: 'AAC' },
+        ]);
+      }
 
-        if (query === '*') {
-          return Promise.resolve([
-            { value: 'A', text: 'A' },
-            { value: 'B', text: 'B' },
-            { value: 'C', text: 'C' },
-          ]);
-        }
+      if (query === '*') {
+        return Promise.resolve([
+          { value: 'A', text: 'A' },
+          { value: 'B', text: 'B' },
+          { value: 'C', text: 'C' },
+        ]);
+      }
 
-        return Promise.resolve([]);
-      }),
+      return Promise.resolve([]);
     }),
   }),
-}));
+} as any);
 
 variableAdapters.setInit(() => [createCustomVariableAdapter(), createQueryVariableAdapter()]);
 

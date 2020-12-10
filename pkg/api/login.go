@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
@@ -121,7 +122,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 			}
 		}
 
-		if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
+		if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
 			if err := hs.ValidateRedirectTo(redirectTo); err != nil {
 				// the user is already logged so instead of rendering the login page with error
 				// it should be redirected to the home page.
@@ -229,7 +230,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 		"message": "Logged in",
 	}
 
-	if redirectTo, _ := url.QueryUnescape(c.GetCookie("redirect_to")); len(redirectTo) > 0 {
+	if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
 		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
 			result["redirectUrl"] = redirectTo
 		} else {
@@ -248,7 +249,15 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 		return errors.New("could not login user")
 	}
 
-	userToken, err := hs.AuthTokenService.CreateToken(c.Req.Context(), user.Id, c.RemoteAddr(), c.Req.UserAgent())
+	addr := c.RemoteAddr()
+	ip, err := network.GetIPFromAddress(addr)
+	if err != nil {
+		hs.log.Debug("Failed to get IP from client address", "addr", addr)
+		ip = nil
+	}
+
+	hs.log.Debug("Got IP address from client address", "addr", addr, "ip", ip)
+	userToken, err := hs.AuthTokenService.CreateToken(c.Req.Context(), user.Id, ip, c.Req.UserAgent())
 	if err != nil {
 		return errutil.Wrap("failed to create auth token", err)
 	}

@@ -55,7 +55,7 @@ utilize Grafana's built-in support for assuming roles.
 
 Here is a minimal policy example:
 
-```bash
+```json
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -109,11 +109,11 @@ The `Assume Role ARN` field allows you to specify which IAM role to assume, if a
 
 The Grafana process in the container runs as user 472 (called "grafana"). When Kubernetes mounts your projected credentials, they will by default only be available to the root user. In order to allow user 472 to access the credentials (and avoid it falling back to the IAM role attached to the EC2 instance), you will need to provide a [security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) for your pod.
 
-```
+```yaml
 securityContext:
-	fsGroup: 472
-	runAsUser: 472
-	runAsGroup: 472
+  fsGroup: 472
+  runAsUser: 472
+  runAsGroup: 472
 ```
 
 ### AWS credentials file
@@ -218,7 +218,7 @@ If you're not currently logged in to the CloudWatch console, the link will forwa
 ### Alerting
 
 Since CloudWatch Logs queries can return numeric data, for example through the use of the `stats` command, alerts are supported.
-See the [Alerting]({{< relref "../alerting/alerts-overview.md" >}}) documentation for more on Grafana alerts.
+See the [Alerting]({{< relref "../alerting/_index.md" >}}) documentation for more on Grafana alerts.
 
 ## Curated dashboards
 
@@ -251,17 +251,17 @@ e.g. `metrics(AWS/DynamoDB, default)` or `dimension_values(default, ..., ..., ..
 
 Read more about the available dimensions in the [CloudWatch Metrics and Dimensions Reference](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CW_Support_For_AWS.html).
 
-| Name                                                                          | Description                                                                                                                                                                        |
-| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `regions()`                                                                   | Returns a list of all AWS regions                                                                                                                                                  |
-| `namespaces()`                                                                | Returns a list of namespaces CloudWatch support.                                                                                                                                   |
-| `metrics(namespace, [region])`                                                | Returns a list of metrics in the namespace. (specify region or use "default" for custom metrics)                                                                                   |
-| `dimension_\__keys(namespace)`                                                | Returns a list of dimension keys in the namespace.                                                                                                                                 |
-| `dimension_\__values(region, namespace, metric, dimension_\__key, [filters])` | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, `dimension_key` or you can use dimension `filters` to get more specific result as well. |
-| `ebs_\__volume_\__ids(region, instance_\__id)`                                | Returns a list of volume ids matching the specified `region`, `instance_id`.                                                                                                       |
-| `ec2_\__instance_\__attribute(region, attribute_\__name, filters)`            | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.                                                                                         |
-| `resource_\__arns(region, resource_\__type, tags)`                            | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.                                                                                                |
-| `statistics()`                                                                | Returns a list of all the standard statistics                                                                                                                                      |
+| Name                                                                    | Description                                                                                                                                                                        |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `regions()`                                                             | Returns a list of all AWS regions                                                                                                                                                  |
+| `namespaces()`                                                          | Returns a list of namespaces CloudWatch support.                                                                                                                                   |
+| `metrics(namespace, [region])`                                          | Returns a list of metrics in the namespace. (specify region or use "default" for custom metrics)                                                                                   |
+| `dimension_keys(namespace)`                                             | Returns a list of dimension keys in the namespace.                                                                                                                                 |
+| `dimension_values(region, namespace, metric, dimension_key, [filters])` | Returns a list of dimension values matching the specified `region`, `namespace`, `metric`, `dimension_key` or you can use dimension `filters` to get more specific result as well. |
+| `ebs_volume_ids(region, instance_id)`                                   | Returns a list of volume ids matching the specified `region`, `instance_id`.                                                                                                       |
+| `ec2_instance_attribute(region, attribute_name, filters)`               | Returns a list of attributes matching the specified `region`, `attribute_name`, `filters`.                                                                                         |
+| `resource_arns(region, resource_type, tags)`                            | Returns a list of ARNs matching the specified `region`, `resource_type` and `tags`.                                                                                                |
+| `statistics()`                                                          | Returns a list of all the standard statistics                                                                                                                                      |
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
@@ -269,16 +269,16 @@ For details about the metrics CloudWatch provides, please refer to the [CloudWat
 
 Example dimension queries which will return list of resources for individual AWS Services:
 
-| Query                                                                                                                            | Service          |
-| -------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| `dimension_\__values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)`                                                           | ELB              |
-| `dimension_\__values(us-east-1,AWS/ElastiCache,CPUUtilization,CacheClusterId)`                                                   | ElastiCache      |
-| `dimension_\__values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)`                                                   | RedShift         |
-| `dimension_\__values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)`                                                     | RDS              |
-| `dimension_\__values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)`                                                               | S3               |
-| `dimension_\__values(us-east-1,CWAgent,disk_\__used_\__percent,device,{"InstanceId":"\$instance_\__id"})`                        | CloudWatch Agent |
-| `resource_\__arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})` | ELB              |
-| `resource_\__arns(eu-west-1,ec2:instance,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})`                      | EC2              |
+| Query                                                                                                                         | Service          |
+| ----------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| `dimension_values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)`                                                           | ELB              |
+| `dimension_values(us-east-1,AWS/ElastiCache,CPUUtilization,CacheClusterId)`                                                   | ElastiCache      |
+| `dimension_values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)`                                                   | RedShift         |
+| `dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)`                                                     | RDS              |
+| `dimension_values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)`                                                               | S3               |
+| `dimension_values(us-east-1,CWAgent,disk_used_percent,device,{"InstanceId":"$instance_id"})`                                  | CloudWatch Agent |
+| `resource_arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})` | ELB              |
+| `resource_arns(eu-west-1,ec2:instance,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})`                      | EC2              |
 
 ## ec2_instance_attribute examples
 
@@ -347,7 +347,7 @@ Some queries accept filters in JSON format and Grafana supports the conversion o
 
 If `env = 'production', 'staging'`, following query will return ARNs of EC2 instances which `Environment` tag is `production` or `staging`.
 
-```
+```javascript
 resource_arns(us-east-1, ec2:instance, {"Environment":${env:json}})
 ```
 

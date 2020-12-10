@@ -306,6 +306,53 @@ func TestFrameToSeriesSlice(t *testing.T) {
 			},
 			Err: require.NoError,
 		},
+		{
+			name: "empty labels",
+			frame: data.NewFrame("",
+				data.NewField("Time", data.Labels{}, []time.Time{}),
+				data.NewField(`Values`, data.Labels{}, []float64{})),
+
+			seriesSlice: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name:   "Values",
+					Points: tsdb.TimeSeriesPoints{},
+				},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "display name from data source",
+			frame: data.NewFrame("",
+				data.NewField("Time", data.Labels{}, []time.Time{}),
+				data.NewField(`Values`, data.Labels{}, []*int64{}).SetConfig(&data.FieldConfig{
+					DisplayNameFromDS: "sloth",
+				})),
+
+			seriesSlice: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name:   "sloth",
+					Points: tsdb.TimeSeriesPoints{},
+				},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "prefer display name over data source display name",
+			frame: data.NewFrame("",
+				data.NewField("Time", data.Labels{}, []time.Time{}),
+				data.NewField(`Values`, data.Labels{}, []*int64{}).SetConfig(&data.FieldConfig{
+					DisplayName:       "sloth #1",
+					DisplayNameFromDS: "sloth #2",
+				})),
+
+			seriesSlice: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name:   "sloth #1",
+					Points: tsdb.TimeSeriesPoints{},
+				},
+			},
+			Err: require.NoError,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -4,6 +4,7 @@ import { PanelModel } from '../state/PanelModel';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN } from 'app/core/constants';
 import { expect } from 'test/lib/common';
 import { DataLinkBuiltInVars } from '@grafana/data';
+import { VariableHide } from '../../variables/types';
 
 jest.mock('app/core/services/context_srv', () => ({}));
 
@@ -132,7 +133,7 @@ describe('DashboardModel', () => {
     });
 
     it('dashboard schema version should be set to latest', () => {
-      expect(model.schemaVersion).toBe(26);
+      expect(model.schemaVersion).toBe(27);
     });
 
     it('graph thresholds should be migrated', () => {
@@ -796,6 +797,107 @@ describe('DashboardModel', () => {
       );
       expect(reactPanel.options.mode).toEqual('markdown');
       expect(reactPanel.options.angular).toBeUndefined();
+    });
+  });
+
+  describe('when migrating constant variables so they are always hidden', () => {
+    let model: DashboardModel;
+
+    beforeEach(() => {
+      model = new DashboardModel({
+        templating: {
+          list: [
+            {
+              type: 'query',
+              hide: VariableHide.dontHide,
+              datasource: null,
+              allFormat: '',
+            },
+            {
+              type: 'query',
+              hide: VariableHide.hideLabel,
+              datasource: null,
+              allFormat: '',
+            },
+            {
+              type: 'query',
+              hide: VariableHide.hideVariable,
+              datasource: null,
+              allFormat: '',
+            },
+            {
+              type: 'constant',
+              hide: VariableHide.dontHide,
+              query: 'default value',
+              current: { selected: true, text: 'A', value: 'B' },
+              options: [{ selected: true, text: 'A', value: 'B' }],
+              datasource: null,
+              allFormat: '',
+            },
+            {
+              type: 'constant',
+              hide: VariableHide.hideLabel,
+              query: 'default value',
+              current: { selected: true, text: 'A', value: 'B' },
+              options: [{ selected: true, text: 'A', value: 'B' }],
+              datasource: null,
+              allFormat: '',
+            },
+            {
+              type: 'constant',
+              hide: VariableHide.hideVariable,
+              query: 'default value',
+              current: { selected: true, text: 'A', value: 'B' },
+              options: [{ selected: true, text: 'A', value: 'B' }],
+              datasource: null,
+              allFormat: '',
+            },
+          ],
+        },
+      });
+    });
+
+    it('should have six variables after migration', () => {
+      expect(model.templating.list.length).toBe(6);
+    });
+
+    it('should not touch other variable types', () => {
+      expect(model.templating.list[0].hide).toEqual(VariableHide.dontHide);
+      expect(model.templating.list[1].hide).toEqual(VariableHide.hideLabel);
+      expect(model.templating.list[2].hide).toEqual(VariableHide.hideVariable);
+    });
+
+    it('should migrate visible constant variables to textbox variables', () => {
+      expect(model.templating.list[3]).toEqual({
+        type: 'textbox',
+        hide: VariableHide.dontHide,
+        query: 'default value',
+        current: { selected: true, text: 'default value', value: 'default value' },
+        options: [{ selected: true, text: 'default value', value: 'default value' }],
+        datasource: null,
+        allFormat: '',
+      });
+      expect(model.templating.list[4]).toEqual({
+        type: 'textbox',
+        hide: VariableHide.hideLabel,
+        query: 'default value',
+        current: { selected: true, text: 'default value', value: 'default value' },
+        options: [{ selected: true, text: 'default value', value: 'default value' }],
+        datasource: null,
+        allFormat: '',
+      });
+    });
+
+    it('should change current and options for hidden constant variables', () => {
+      expect(model.templating.list[5]).toEqual({
+        type: 'constant',
+        hide: VariableHide.hideVariable,
+        query: 'default value',
+        current: { selected: true, text: 'default value', value: 'default value' },
+        options: [{ selected: true, text: 'default value', value: 'default value' }],
+        datasource: null,
+        allFormat: '',
+      });
     });
   });
 });

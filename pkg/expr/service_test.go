@@ -36,7 +36,9 @@ func TestService(t *testing.T) {
 		},
 	}
 
-	pl, err := s.BuildPipeline(queries)
+	req := &backend.QueryDataRequest{Queries: queries}
+
+	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
 
 	res, err := s.ExecutePipeline(context.Background(), pl)

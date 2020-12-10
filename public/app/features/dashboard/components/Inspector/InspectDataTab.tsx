@@ -19,11 +19,10 @@ import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
 import { saveAs } from 'file-saver';
 import { css } from 'emotion';
-import { GetDataOptions } from '../../state/PanelQueryRunner';
+import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { PanelModel } from 'app/features/dashboard/state';
 import { DetailText } from './DetailText';
-import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 
 interface Props {
   panel: PanelModel;
@@ -125,7 +124,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
       replaceVariables: (value: string) => {
         return value;
       },
-      getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid,
     });
   }
 
