@@ -1,8 +1,9 @@
-import React, { useCallback, useMemo } from 'react';
-import { DataFrame, PanelProps, TimeRange } from '@grafana/data';
+import React from 'react';
+import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { GraphView } from '@grafana/ui/src/components/ServiceMap/GraphView';
-import { getFieldLinksForExplore } from '../../../features/explore/utils/links';
+import { useLinks } from '../../../features/explore/utils/links';
+import { useCategorizeFramesForGraph } from '@grafana/ui';
 
 export const ServiceMapPanel: React.FunctionComponent<PanelProps<Options>> = ({ width, height, data }) => {
   if (!data || !data.series.length) {
@@ -13,7 +14,7 @@ export const ServiceMapPanel: React.FunctionComponent<PanelProps<Options>> = ({ 
     );
   }
 
-  const { edges, nodes } = useCategorizeFrames(data.series);
+  const { edges, nodes } = useCategorizeFramesForGraph(data.series);
   const getNodeLinks = useLinks(nodes[0], data.timeRange);
   const getEdgeLinks = useLinks(edges[0], data.timeRange);
 
@@ -23,41 +24,3 @@ export const ServiceMapPanel: React.FunctionComponent<PanelProps<Options>> = ({ 
     </div>
   );
 };
-
-function useCategorizeFrames(series: DataFrame[]) {
-  return useMemo(() => {
-    const serviceMapFrames = series.filter(frame => frame.meta?.preferredVisualisationType === 'serviceMap');
-    return serviceMapFrames.reduce(
-      (acc, frame) => {
-        const sourceField = frame.fields.filter(f => f.name === 'source');
-        if (sourceField.length) {
-          acc.edges.push(frame);
-        } else {
-          acc.nodes.push(frame);
-        }
-        return acc;
-      },
-      { edges: [], nodes: [] } as { nodes: DataFrame[]; edges: DataFrame[] }
-    );
-  }, [series]);
-}
-
-function useLinks(dataFrame: DataFrame, range: TimeRange) {
-  return useCallback(
-    (node: { dataFrameRowIndex: number }) => {
-      return dataFrame.fields.flatMap(f => {
-        if (f.config?.links && f.config?.links.length) {
-          return getFieldLinksForExplore({
-            field: f,
-            rowIndex: node.dataFrameRowIndex,
-            range,
-            dataFrame,
-          });
-        } else {
-          return [];
-        }
-      });
-    },
-    [range, dataFrame]
-  );
-}
