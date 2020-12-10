@@ -38,7 +38,7 @@ func (lps *LibraryPanelService) createHandler(c *models.ReqContext, cmd addLibra
 
 // deleteHandler handles DELETE /api/library-panels/:panelId.
 func (lps *LibraryPanelService) deleteHandler(c *models.ReqContext) api.Response {
-	err := lps.deleteLibraryPanel(c.ParamsInt64(":panelId"))
+	err := lps.deleteLibraryPanel(c, c.ParamsInt64(":panelId"))
 
 	if err != nil {
 		if errors.Is(err, errLibraryPanelNotFound) {

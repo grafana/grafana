@@ -45,6 +45,21 @@ func TestDeleteLibraryPanel(t *testing.T) {
 		response = lps.deleteHandler(&context)
 		require.Equal(t, 200, response.Status())
 	})
+
+	libraryPanelScenario(t, "When an admin tries to delete a library panel in another org", "then it should fail", func(t *testing.T) {
+		params := map[string]string{":panelId": "1"}
+		lps, context := setupTestEnv(t, models.ROLE_ADMIN, params)
+		command := getCreateCommand(1, "Text - Library Panel")
+
+		response := lps.createHandler(&context, command)
+		require.Equal(t, 200, response.Status())
+
+		user := getTestUser(models.ROLE_ADMIN, 2)
+		context = getTestContext(user, params)
+
+		response = lps.deleteHandler(&context)
+		require.Equal(t, 404, response.Status())
+	})
 }
 
 func libraryPanelScenario(t *testing.T, when string, then string, fn func(t *testing.T)) {
@@ -68,7 +83,7 @@ func setupTestEnv(t *testing.T, orgRole models.RoleType, params macaron.Params) 
 	// We need to assign SQLStore after the override and migrations are done
 	service.SQLStore = sqlStore
 
-	user := getTestUser(orgRole)
+	user := getTestUser(orgRole, 1)
 	context := getTestContext(user, params)
 
 	return service, context
@@ -95,10 +110,10 @@ func overrideLibraryPanelServiceInRegistry(cfg *setting.Cfg) LibraryPanelService
 	return lps
 }
 
-func getTestUser(orgRole models.RoleType) models.SignedInUser {
+func getTestUser(orgRole models.RoleType, orgID int64) models.SignedInUser {
 	user := models.SignedInUser{
 		UserId:     1,
-		OrgId:      1,
+		OrgId:      orgID,
 		OrgRole:    orgRole,
 		LastSeenAt: time.Now(),
 	}

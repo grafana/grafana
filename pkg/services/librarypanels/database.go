@@ -41,9 +41,11 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd add
 }
 
 // deleteLibraryPanel function deletes a Library Panel
-func (lps *LibraryPanelService) deleteLibraryPanel(panelID int64) error {
+func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, panelID int64) error {
+	orgID := c.SignedInUser.OrgId
+
 	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-		result, err := session.Exec("DELETE FROM library_panel WHERE id = ?", panelID)
+		result, err := session.Exec("DELETE FROM library_panel WHERE id=? and org_id=?", panelID, orgID)
 
 		if err != nil {
 			return err
