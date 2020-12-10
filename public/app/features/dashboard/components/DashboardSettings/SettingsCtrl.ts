@@ -100,14 +100,6 @@ export class SettingsCtrl {
     this.hasUnsavedFolderChange = true;
   };
 
-  getFolder() {
-    return {
-      id: this.dashboard.meta.folderId,
-      title: this.dashboard.meta.folderTitle,
-      url: this.dashboard.meta.folderUrl,
-    };
-  }
-
   onRefreshIntervalChange = (intervals: string[]) => {
     this.dashboard.timepicker.refresh_intervals = intervals.filter(i => i.trim() !== '');
     this.renderCount++;

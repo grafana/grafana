@@ -7,6 +7,7 @@ import { updateLocation } from 'app/core/actions';
 import { CustomScrollbar, Icon, IconName } from '@grafana/ui';
 import { GeneralSettings } from './GeneralSettings';
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
+import DashboardPermissions from '../DashboardPermissions/DashboardPermissions';
 
 export interface Props {
   dashboard: DashboardModel;
@@ -28,6 +29,16 @@ export class DashboardSettings extends PureComponent<Props> {
       partial: true,
     });
   };
+
+  getFolder() {
+    const { dashboard } = this.props;
+
+    return {
+      id: dashboard.meta.folderId,
+      title: dashboard.meta.folderTitle,
+      url: dashboard.meta.folderUrl,
+    };
+  }
 
   getPages(): SettingsPage[] {
     const { dashboard } = this.props;
@@ -72,7 +83,7 @@ export class DashboardSettings extends PureComponent<Props> {
         title: 'Permissions',
         id: 'permissions',
         icon: 'lock',
-        render: () => <GeneralSettings dashboard={dashboard} />,
+        render: () => <DashboardPermissions dashboardId={dashboard.id} folder={this.getFolder()} />,
       });
     }
 
