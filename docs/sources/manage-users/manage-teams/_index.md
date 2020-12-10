@@ -1,15 +1,24 @@
 +++
-title = "Team Admin tasks"
+title = "Manage teams"
 weight = 300
 +++
 
-# Team Admin tasks
+# Manage teams
 
-Org admin or Team admin manage team
-If editor_can_admin is set to `true`, then users with the Editor role in an organization can manage teams. 
-- View team
-- Create team
-- Delete team
-- Add/remove team members
-- Edit team settings (link to preferences)
-- Set team role (Admin/Member)
+A _team_ is a group of users assigned to an organization on a Grafana server. Each user can belong to more than one organization and more than one team. Teams are generally managed by Organization Admins, but they can also be managed by Editors if the [editors_can_admin]({{< relref "../administration/configuration.md#editors_can_admin" >}}) server setting is set to `true`. For more information, refer to [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}).
+
+> **Note:** You must have Org Admin or Team Admin permissions in order to perform the tasks described in this page.
+
+## View team list
+
+## Create team
+
+## Add/remove team members
+
+## Set team role (Admin/Member)
+
+## Delete team
+
+
+
+
