@@ -45,6 +45,10 @@ func addAlertDefinitionMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("alter alert_definition.data to mediumtext", migrator.NewRawSQLMigration("").
 		Mysql("ALTER TABLE alert_definition MODIFY data MEDIUMTEXT;"))
+
+	mg.AddMigration("drop index alert_definition updated", migrator.NewDropIndexMigration(alertDefinition, &migrator.Index{
+		Cols: []string{"updated"}, Type: migrator.IndexType,
+	}))
 }
 
 func addAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
