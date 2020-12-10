@@ -3,6 +3,7 @@ package ngalert
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
@@ -172,7 +173,7 @@ func (ng *AlertNG) getOrgAlertDefinitions(query *listAlertDefinitionsQuery) erro
 func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alerts := make([]*AlertDefinition, 0)
-		q := "SELECT id, interval, version FROM alert_definition"
+		q := fmt.Sprintf("SELECT id, %s, version FROM alert_definition", ng.SQLStore.Dialect.Quote("interval"))
 		if err := sess.SQL(q).Find(&alerts); err != nil {
 			return err
 		}

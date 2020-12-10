@@ -130,17 +130,17 @@ func addAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("create alert_definition_version table v1", migrator.NewAddTableMigration(alertDefinitionVersion))
 	mg.AddMigration("add unique index alert_definition_version.alert_definition_id and versionn", migrator.NewAddIndexMigration(alertDefinitionVersion, alertDefinitionVersion.Indices[0]))
 
-	const rawSQL = `INSERT INTO alert_definition_version
+	rawSQL := fmt.Sprintf(`INSERT INTO alert_definition_version
 	(
-		alert_definition_id,
-		version,
-		parent_version,
-		restored_from,
-		created,
-		name,
-		condition,
-		data,
-		interval
+		%s,
+		%s,
+		%s,
+		%s,
+		%s,
+		%s,
+		%s,
+		%s,
+		%s
 	)
 	SELECT
 		alert_definition.id,
@@ -152,8 +152,18 @@ func addAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
 		alert_definition.condition,
 		alert_definition.data,
 		alert_definition.interval
-	FROM alert_definition;`
-	mg.AddMigration("save existing alert_definition data in alert_definition_version table v1", migrator.NewRawSQLMigration(rawSQL))
+	FROM alert_definition;`,
+		mg.Dialect.Quote("alert_definition_id"),
+		mg.Dialect.Quote("version"),
+		mg.Dialect.Quote("parent_version"),
+		mg.Dialect.Quote("restored_from"),
+		mg.Dialect.Quote("created"),
+		mg.Dialect.Quote("name"),
+		mg.Dialect.Quote("condition"),
+		mg.Dialect.Quote("data"),
+		mg.Dialect.Quote("interval"),
+	)
+	mg.AddMigration("save existing alert_definition data in alert_definition_version table", migrator.NewRawSQLMigration(rawSQL))
 
 	const setVersionTo1WhereZeroSQL = `UPDATE alert_definition SET version = 1 WHERE version = 0`
 	mg.AddMigration("Set alert_definition version to 1 where 0", migrator.NewRawSQLMigration(setVersionTo1WhereZeroSQL))
