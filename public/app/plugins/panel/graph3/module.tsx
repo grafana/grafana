@@ -8,6 +8,7 @@ import {
   graphFieldOptions,
 } from '@grafana/ui/src/components/uPlot/config';
 import { GraphPanel } from './GraphPanel';
+import { LineDashEditor } from './LineDashEditor';
 import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
 
@@ -54,6 +55,14 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           },
           showIf: c => c.drawStyle !== DrawStyle.Points,
         })
+        .addCustomEditor({
+          id: 'lineDash',
+          path: 'lineDash',
+          name: 'Line dash',
+          editor: LineDashEditor,
+          override: LineDashEditor,
+          showIf: (c: any) => c.drawStyle === DrawStyle.Line,
+        } as any)
         .addSliderInput({
           path: 'fillOpacity',
           name: 'Fill area opacity',
@@ -64,6 +73,17 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             step: 0.1,
           },
           showIf: c => c.drawStyle !== DrawStyle.Points,
+        })
+        .addSliderInput({
+          path: 'fillGradient',
+          name: 'Fill gradient',
+          defaultValue: 0,
+          settings: {
+            min: 0,
+            max: 1,
+            step: 0.1,
+          },
+          showIf: c => !!(c.drawStyle !== DrawStyle.Points && c.fillOpacity && c.fillOpacity > 0),
         })
         .addRadio({
           path: 'spanNulls',

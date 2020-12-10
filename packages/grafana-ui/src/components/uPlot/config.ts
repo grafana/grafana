@@ -35,6 +35,7 @@ export interface LineConfig {
   lineColor?: string;
   lineWidth?: number;
   lineInterpolation?: LineInterpolation;
+  lineDash?: number[];
   spanNulls?: boolean;
 }
 
@@ -44,6 +45,7 @@ export interface LineConfig {
 export interface AreaConfig {
   fillColor?: string;
   fillOpacity?: number;
+  fillGradient?: number;
 }
 
 /**
