@@ -61,7 +61,7 @@ In order not to break all angular panel plugins and data sources we have some cu
 ### Bug fixes
 
 * **AzureMonitor**: Fix unit translation for MilliSeconds. [#29399](https://github.com/grafana/grafana/pull/29399), [@secustor](https://github.com/secustor)
-* **Instrumentation**: fixes bug with invalid handler label value for http request metrics. [#29529](https://github.com/grafana/grafana/pull/29529), [@bergquist](https://github.com/bergquist)
+* **Instrumentation**: Fix bug with invalid handler label value for http request metrics. [#29529](https://github.com/grafana/grafana/pull/29529), [@bergquist](https://github.com/bergquist)
 
 <!-- 7.3.5 END -->
 
