@@ -612,8 +612,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 		cfg = setting.NewCfg()
 	}
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
-		Name:    "database",
-		ConnStr: "",
+		Name: "database",
 	}
 	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
