@@ -6,6 +6,7 @@ import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { updateLocation } from 'app/core/actions';
 import { CustomScrollbar, Icon, IconName } from '@grafana/ui';
 import { GeneralSettings } from './GeneralSettings';
+import { LinksSettings } from './LinksSettings';
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
 import DashboardPermissions from '../DashboardPermissions/DashboardPermissions';
 
@@ -65,7 +66,7 @@ export class DashboardSettings extends PureComponent<Props> {
         title: 'Links',
         id: 'links',
         icon: 'link',
-        render: () => <GeneralSettings dashboard={dashboard} />,
+        render: () => <LinksSettings dashboard={dashboard} />,
       });
     }
 
