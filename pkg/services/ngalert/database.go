@@ -85,6 +85,7 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 			AlertDefinitionID: alertDefinition.ID,
 			Version:           alertDefinition.Version,
 			Created:           alertDefinition.Updated,
+			Condition:         alertDefinition.Condition,
 			Name:              alertDefinition.Name,
 			Data:              alertDefinition.Data,
 			Interval:          alertDefinition.Interval,
@@ -137,14 +138,21 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 			return err
 		}
 
+		// if interval is not supplied set to default
+		var intervalInSeconds int64 = 0
+		if alertDefinition.Interval == 0 {
+			intervalInSeconds = defaultIntervalInSeconds
+		}
+
 		alertDefVersion := AlertDefinitionVersion{
 			AlertDefinitionID: alertDefinition.ID,
 			ParentVersion:     existingAlertDefinition.Version,
 			Version:           alertDefinition.Version,
+			Condition:         alertDefinition.Condition,
 			Created:           alertDefinition.Updated,
 			Name:              alertDefinition.Name,
 			Data:              alertDefinition.Data,
-			Interval:          alertDefinition.Interval,
+			Interval:          intervalInSeconds,
 		}
 		if _, err := sess.Insert(alertDefVersion); err != nil {
 			return err
