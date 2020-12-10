@@ -8,8 +8,15 @@ list = false
 
 # Release notes for Grafana 7.3.5
 
+### Features and enhancements
+
+* **Alerting**: Improve Prometheus Alert Rule error message. [#29390](https://github.com/grafana/grafana/pull/29390), [@wbrowne](https://github.com/wbrowne)
+* **Bug**: Trace viewer doesn't show more than 300 spans. [#29377](https://github.com/grafana/grafana/pull/29377), [@zoltanbedi](https://github.com/zoltanbedi)
+
 ### Bug fixes
 
+* **Alerting**: Fix alarm message formatting in Dingding. [#29482](https://github.com/grafana/grafana/pull/29482), [@tomowang](https://github.com/tomowang)
 * **AzureMonitor**: Fix unit translation for MilliSeconds. [#29399](https://github.com/grafana/grafana/pull/29399), [@secustor](https://github.com/secustor)
 * **Instrumentation**: Fix bug with invalid handler label value for HTTP request metrics. [#29529](https://github.com/grafana/grafana/pull/29529), [@bergquist](https://github.com/bergquist)
+* **Prometheus**: Fix display name field has no effect. [#29441](https://github.com/grafana/grafana/pull/29441), [@zoltanbedi](https://github.com/zoltanbedi)
 
