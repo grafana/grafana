@@ -24,6 +24,7 @@ type State struct {
 	// Could hold more properties that change behavior around:
 	//  - Unions (How many result A and many Result B in case A + B are joined)
 	//  - NaN/Null behavior
+	RefID string
 }
 
 // Vars holds the results of datasource queries or other expression commands.
@@ -43,10 +44,11 @@ func New(expr string, funcs ...map[string]parse.Func) (*Expr, error) {
 }
 
 // Execute applies a parse expression to the context and executes it
-func (e *Expr) Execute(vars Vars) (r Results, err error) {
+func (e *Expr) Execute(refID string, vars Vars) (r Results, err error) {
 	s := &State{
-		Expr: e,
-		Vars: vars,
+		Expr:  e,
+		Vars:  vars,
+		RefID: refID,
 	}
 	return e.executeState(s)
 }
@@ -253,7 +255,6 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 	}
 	unions := union(ar, br)
 	for _, uni := range unions {
-		name := uni.Labels.String()
 		var value Value
 		switch at := uni.A.(type) {
 		case Scalar:
@@ -276,10 +277,10 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 				value = NewScalar(&f)
 			// Scalar op Scalar
 			case Number:
-				value, err = biScalarNumber(name, uni.Labels, node.OpStr, bt, aFloat, false)
+				value, err = e.biScalarNumber(uni.Labels, node.OpStr, bt, aFloat, false)
 			// Scalar op Series
 			case Series:
-				value, err = biSeriesNumber(name, uni.Labels, node.OpStr, bt, aFloat, false)
+				value, err = e.biSeriesNumber(uni.Labels, node.OpStr, bt, aFloat, false)
 			default:
 				return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 			}
@@ -288,14 +289,14 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 			// Series Op Scalar
 			case Scalar:
 				bFloat := bt.GetFloat64Value()
-				value, err = biSeriesNumber(name, uni.Labels, node.OpStr, at, bFloat, true)
+				value, err = e.biSeriesNumber(uni.Labels, node.OpStr, at, bFloat, true)
 			// case Series Op Number
 			case Number:
 				bFloat := bt.GetFloat64Value()
-				value, err = biSeriesNumber(name, uni.Labels, node.OpStr, at, bFloat, true)
+				value, err = e.biSeriesNumber(uni.Labels, node.OpStr, at, bFloat, true)
 			// case Series op Series
 			case Series:
-				value, err = biSeriesSeries(name, uni.Labels, node.OpStr, at, bt)
+				value, err = e.biSeriesSeries(uni.Labels, node.OpStr, at, bt)
 			default:
 				return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 			}
@@ -304,12 +305,12 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 			switch bt := uni.B.(type) {
 			case Scalar:
 				bFloat := bt.GetFloat64Value()
-				value, err = biScalarNumber(name, uni.Labels, node.OpStr, at, bFloat, true)
+				value, err = e.biScalarNumber(uni.Labels, node.OpStr, at, bFloat, true)
 			case Number:
 				bFloat := bt.GetFloat64Value()
-				value, err = biScalarNumber(name, uni.Labels, node.OpStr, at, bFloat, true)
+				value, err = e.biScalarNumber(uni.Labels, node.OpStr, at, bFloat, true)
 			case Series:
-				value, err = biSeriesNumber(name, uni.Labels, node.OpStr, bt, aFloat, false)
+				value, err = e.biSeriesNumber(uni.Labels, node.OpStr, bt, aFloat, false)
 			default:
 				return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 			}
@@ -409,8 +410,8 @@ func binaryOp(op string, a, b float64) (r float64, err error) {
 	return r, nil
 }
 
-func biScalarNumber(name string, labels data.Labels, op string, number Number, scalarVal *float64, numberFirst bool) (Number, error) {
-	newNumber := NewNumber(name, labels)
+func (e *State) biScalarNumber(labels data.Labels, op string, number Number, scalarVal *float64, numberFirst bool) (Number, error) {
+	newNumber := NewNumber(e.RefID, labels)
 	f := number.GetFloat64Value()
 	if f == nil || scalarVal == nil {
 		newNumber.SetValue(nil)
@@ -430,8 +431,8 @@ func biScalarNumber(name string, labels data.Labels, op string, number Number, s
 	return newNumber, nil
 }
 
-func biSeriesNumber(name string, labels data.Labels, op string, s Series, scalarVal *float64, seriesFirst bool) (Series, error) {
-	newSeries := NewSeries(name, labels, s.TimeIdx, s.TimeIsNullable, s.ValueIdx, s.ValueIsNullabe, s.Len())
+func (e *State) biSeriesNumber(labels data.Labels, op string, s Series, scalarVal *float64, seriesFirst bool) (Series, error) {
+	newSeries := NewSeries(e.RefID, labels, s.TimeIdx, s.TimeIsNullable, s.ValueIdx, s.ValueIsNullabe, s.Len())
 	var err error
 	for i := 0; i < s.Len(); i++ {
 		nF := math.NaN()
@@ -460,7 +461,7 @@ func biSeriesNumber(name string, labels data.Labels, op string, s Series, scalar
 // ... if would you like some series with your series and then get some series, or is that enough series?
 // biSeriesSeries performs a the binary operation for each value in the two series where the times
 // are equal. If there are datapoints in A or B that do not share a time, they will be dropped.
-func biSeriesSeries(name string, labels data.Labels, op string, aSeries, bSeries Series) (Series, error) {
+func (e *State) biSeriesSeries(labels data.Labels, op string, aSeries, bSeries Series) (Series, error) {
 	bPoints := make(map[time.Time]*float64)
 	for i := 0; i < bSeries.Len(); i++ {
 		t, f := bSeries.GetPoint(i)
@@ -469,7 +470,7 @@ func biSeriesSeries(name string, labels data.Labels, op string, aSeries, bSeries
 		}
 	}
 
-	newSeries := NewSeries(name, labels, aSeries.TimeIdx, aSeries.TimeIsNullable || bSeries.TimeIsNullable, aSeries.ValueIdx, aSeries.ValueIsNullabe || bSeries.ValueIsNullabe, 0)
+	newSeries := NewSeries(e.RefID, labels, aSeries.TimeIdx, aSeries.TimeIsNullable || bSeries.TimeIsNullable, aSeries.ValueIdx, aSeries.ValueIsNullabe || bSeries.ValueIsNullabe, 0)
 	for aIdx := 0; aIdx < aSeries.Len(); aIdx++ {
 		aTime, aF := aSeries.GetPoint(aIdx)
 		bF, ok := bPoints[*aTime]
