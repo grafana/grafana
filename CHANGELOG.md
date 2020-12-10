@@ -50,6 +50,21 @@ In order not to break all angular panel plugins and data sources we have some cu
 
 <!-- 7.4.0 END -->
 
+<!-- 7.3.5 START -->
+
+# 7.3.5 (2020-12-10)
+
+### Features and enhancements
+
+* **Auth**: Add SigV4 header allowlist to reduce chances of verification issues. [#29650](https://github.com/grafana/grafana/pull/29650), [@wbrowne](https://github.com/wbrowne)
+
+### Bug fixes
+
+* **AzureMonitor**: Fix unit translation for MilliSeconds. [#29399](https://github.com/grafana/grafana/pull/29399), [@secustor](https://github.com/secustor)
+* **Instrumentation**: fixes bug with invalid handler label value for http request metrics. [#29529](https://github.com/grafana/grafana/pull/29529), [@bergquist](https://github.com/bergquist)
+
+<!-- 7.3.5 END -->
+
 <!-- 7.3.4 START -->
 
 # 7.3.4 (2020-11-24)
