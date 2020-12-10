@@ -22,7 +22,7 @@ interface Props {
   setDashboardQueriesToUpdateOnLoad: typeof setDashboardQueriesToUpdateOnLoad;
 }
 
-const ReturnToDashboardButton: FC<Props> = ({
+export const UnconnectedReturnToDashboardButton: FC<Props> = ({
   originPanelId,
   updateLocation,
   setDashboardQueriesToUpdateOnLoad,
@@ -68,17 +68,24 @@ const ReturnToDashboardButton: FC<Props> = ({
   return (
     <div className="explore-toolbar-content-item">
       <Tooltip content={'Return to panel'} placement="bottom">
-        <button className={panelReturnClasses} onClick={() => returnToPanel()}>
+        <button
+          data-testid="returnButton"
+          title={'Return to panel'}
+          className={panelReturnClasses}
+          onClick={() => returnToPanel()}
+        >
           <Icon name="arrow-left" />
         </button>
       </Tooltip>
       {originDashboardIsEditable && (
-        <ButtonSelect
-          className="navbar-button--attached btn--radius-left-0$"
-          options={[{ label: 'Return to panel with changes', value: '' }]}
-          onChange={() => returnToPanel({ withChanges: true })}
-          maxMenuHeight={380}
-        />
+        <div data-testid="returnButtonWithChanges">
+          <ButtonSelect
+            className="navbar-button--attached btn--radius-left-0$"
+            options={[{ label: 'Return to panel with changes', value: '' }]}
+            onChange={() => returnToPanel({ withChanges: true })}
+            maxMenuHeight={380}
+          />
+        </div>
       )}
     </div>
   );
@@ -98,4 +105,4 @@ const mapDispatchToProps = {
   updateLocation,
   setDashboardQueriesToUpdateOnLoad,
 };
-export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(ReturnToDashboardButton));
+export default hot(module)(connect(mapStateToProps, mapDispatchToProps)(UnconnectedReturnToDashboardButton));
