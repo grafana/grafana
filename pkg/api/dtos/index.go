@@ -1,6 +1,10 @@
 package dtos
 
-import "github.com/grafana/grafana/pkg/setting"
+import (
+	"github.com/grafana/grafana/pkg/setting"
+
+	"html/template"
+)
 
 type IndexViewData struct {
 	User                    *CurrentUser
@@ -17,8 +21,8 @@ type IndexViewData struct {
 	NewGrafanaVersion       string
 	AppName                 string
 	AppNameBodyClass        string
-	FavIcon                 string
-	AppleTouchIcon          string
+	FavIcon                 template.URL
+	AppleTouchIcon          template.URL
 	AppTitle                string
 	Sentry                  *setting.Sentry
 }

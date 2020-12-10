@@ -37,7 +37,7 @@ func init() {
 			Help:      "Histogram of latencies for HTTP requests.",
 			Buckets:   defBuckets,
 		},
-		[]string{"handler", "code", "method"},
+		[]string{"handler", "status_code", "method"},
 	)
 
 	prometheus.MustRegister(httpRequestsInFlight, httpRequestDurationHistogram)

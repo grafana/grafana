@@ -8,6 +8,9 @@ interface AnnotationsEditorPluginProps {
   onAnnotationCreate: () => void;
 }
 
+/**
+ * @alpha
+ */
 export const AnnotationsEditorPlugin: React.FC<AnnotationsEditorPluginProps> = ({ onAnnotationCreate }) => {
   const pluginId = 'AnnotationsEditorPlugin';
 

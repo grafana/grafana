@@ -63,7 +63,6 @@ export { Counter } from './Tabs/Counter';
 export {
   BigValue,
   BigValueColorMode,
-  BigValueSparkline,
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,

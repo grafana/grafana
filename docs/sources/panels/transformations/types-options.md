@@ -19,6 +19,7 @@ Grafana comes with the following transformations:
 - [Concatenate fields](#concatenate-fields)
 - [Group by](#group-by)
 - [Merge](#merge)
+- [Rename by regex](#rename-by-regex)
 
 Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
 
@@ -398,3 +399,19 @@ When you have more than one condition, you can choose if you want the action (in
 In the example above we chose **Match all** because we wanted to include the rows that have a temperature lower than 30 _AND_ an altitude higher than 100. If we wanted to include the rows that have a temperature lower than 30 _OR_ an altitude higher than 100 instead, then we would select **Match any**. This would include the first row in the original data, which has a temperature of 32°C (does not match the first condition) but an altitude of 101 (which matches the second condition), so it is included.
 
 Conditions that are invalid or incompletely configured are ignored.
+
+## Rename by regex
+
+> **Note:** This transformation is only available in Grafana 7.4+.
+
+Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
+
+You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to `([^\.]+)\..+` and the replacement pattern to `$1`, `web-01.example.com` would become `web-01`.
+
+In the following example, we are stripping the prefix from event types. In the before image, you can see everything is prefixed with `system.`
+
+{{< docs-imagebox img="/img/docs/transformations/rename-by-regex-before-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+With the transformation applied, you can see we are left with just the remainder of the string.
+
+{{< docs-imagebox img="/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}

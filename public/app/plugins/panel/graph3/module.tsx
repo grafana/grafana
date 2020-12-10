@@ -2,15 +2,17 @@ import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/dat
 import { LegendDisplayMode } from '@grafana/ui';
 import {
   GraphFieldConfig,
-  PointMode,
+  PointVisibility,
   DrawStyle,
   AxisPlacement,
   graphFieldOptions,
 } from '@grafana/ui/src/components/uPlot/config';
 import { GraphPanel } from './GraphPanel';
+import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
+  .setPanelChangeHandler(graphPanelChangedHandler)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -76,11 +78,11 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           showIf: c => c.drawStyle === DrawStyle.Line,
         })
         .addRadio({
-          path: 'points',
-          name: 'Points',
-          defaultValue: graphFieldOptions.points[0].value,
+          path: 'showPoints',
+          name: 'Show points',
+          defaultValue: graphFieldOptions.showPoints[0].value,
           settings: {
-            options: graphFieldOptions.points,
+            options: graphFieldOptions.showPoints,
           },
         })
         .addSliderInput({
@@ -92,7 +94,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             max: 10,
             step: 1,
           },
-          showIf: c => c.points !== PointMode.Never,
+          showIf: c => c.showPoints !== PointVisibility.Never,
         })
         .addRadio({
           path: 'axisPlacement',
