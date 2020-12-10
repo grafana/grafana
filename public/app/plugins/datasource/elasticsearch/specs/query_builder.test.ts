@@ -406,7 +406,7 @@ describe('ElasticQueryBuilder', () => {
               type: 'serial_diff',
               field: '3',
               settings: {
-                lag: '5',
+                lag: 5,
               },
             },
           ],
