@@ -9,7 +9,14 @@ import {
   Portal,
   usePlotData,
 } from '@grafana/ui';
-import { DataFrameView, DisplayValue, Field, getDisplayProcessor, getFieldDisplayName } from '@grafana/data';
+import {
+  DataFrameView,
+  DisplayValue,
+  Field,
+  getDisplayProcessor,
+  getFieldDisplayName,
+  InterpolateFunction,
+} from '@grafana/data';
 import { TimeZone } from '@grafana/data';
 import { useClickAway } from 'react-use';
 import { getFieldLinksSupplier } from '../../../../features/panel/panellinks/linkSuppliers';
@@ -19,9 +26,15 @@ interface ContextMenuPluginProps {
   timeZone: TimeZone;
   onOpen?: () => void;
   onClose?: () => void;
+  replaceVariables?: InterpolateFunction;
 }
 
-export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({ onClose, timeZone, defaultItems }) => {
+export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({
+  onClose,
+  timeZone,
+  defaultItems,
+  replaceVariables,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const onClick = useCallback(() => {
@@ -37,6 +50,7 @@ export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({ onClose, t
               defaultItems={defaultItems}
               timeZone={timeZone}
               selection={{ point, coords }}
+              replaceVariables={replaceVariables}
               onClose={() => {
                 clearSelection();
                 if (onClose) {
@@ -59,9 +73,16 @@ interface ContextMenuProps {
     point: { seriesIdx: number | null; dataIdx: number | null };
     coords: { plotCanvas: { x: number; y: number }; viewport: { x: number; y: number } };
   };
+  replaceVariables?: InterpolateFunction;
 }
 
-export const ContextMenuView: React.FC<ContextMenuProps> = ({ selection, timeZone, defaultItems, ...otherProps }) => {
+export const ContextMenuView: React.FC<ContextMenuProps> = ({
+  selection,
+  timeZone,
+  defaultItems,
+  replaceVariables,
+  ...otherProps
+}) => {
   const ref = useRef(null);
   const { data } = usePlotData();
   const { seriesIdx, dataIdx } = selection.point;
@@ -102,7 +123,7 @@ export const ContextMenuView: React.FC<ContextMenuProps> = ({ selection, timeZon
 
         if (linksSupplier) {
           items.push({
-            items: linksSupplier.getLinks(/*this.panel.scopedVars*/).map<MenuItem>(link => {
+            items: linksSupplier.getLinks(replaceVariables).map<MenuItem>(link => {
               return {
                 label: link.title,
                 url: link.href,

@@ -1,8 +1,8 @@
 import { config } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getTemplateSrv } from 'app/features/templating/template_srv';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { PanelModel, dateTime, urlUtil } from '@grafana/data';
+import { getAllVariableValuesForUrl } from '../../../variables/utils';
 
 export function buildParams(
   useCurrentTimeRange: boolean,
@@ -10,7 +10,7 @@ export function buildParams(
   selectedTheme?: string,
   panel?: PanelModel
 ) {
-  const params = urlUtil.getUrlSearchParams();
+  let params = urlUtil.getUrlSearchParams();
 
   const range = getTimeSrv().timeRange();
   params.from = range.from.valueOf();
@@ -23,7 +23,10 @@ export function buildParams(
   }
 
   if (includeTemplateVars) {
-    getTemplateSrv().fillVariableValuesForUrl(params);
+    params = {
+      ...params,
+      ...getAllVariableValuesForUrl(),
+    };
   }
 
   if (selectedTheme !== 'current') {
