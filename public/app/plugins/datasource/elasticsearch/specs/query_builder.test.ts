@@ -224,12 +224,7 @@ describe('ElasticQueryBuilder', () => {
               ],
             },
           },
-          sort: {
-            '@timestamp': {
-              order: 'desc',
-              unmapped_type: 'boolean',
-            },
-          },
+          sort: [{ '@timestamp': { order: 'desc', unmapped_type: 'boolean' } }, { _doc: { order: 'desc' } }],
           script_fields: {},
         });
       });
