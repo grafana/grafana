@@ -43,7 +43,7 @@ func TestDeleteLibraryPanel(t *testing.T) {
 		require.Equal(t, 200, response.Status())
 
 		response = lps.deleteHandler(&context)
-		require.Equal(t, 204, response.Status())
+		require.Equal(t, 200, response.Status())
 	})
 }
 
@@ -58,7 +58,7 @@ func libraryPanelScenario(t *testing.T, when string, then string, fn func(t *tes
 
 func setupTestEnv(t *testing.T, orgRole models.RoleType, params macaron.Params) (LibraryPanelService, models.ReqContext) {
 	cfg := setting.NewCfg()
-	cfg.FeatureToggles = map[string]bool{"panelLibrary": true} // Everything in this service is behind the featuretoggle "panelLibrary"
+	cfg.FeatureToggles = map[string]bool{"panelLibrary": true} // Everything in this service is behind the feature toggle "panelLibrary"
 
 	// Because the LibraryPanelService is behind a feature toggle we need to override the service in the registry
 	// with a Cfg that contains the feature toggle so that Migrations are run properly

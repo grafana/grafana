@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-// createLibraryPanel function adds a LibraryPanel
+// createLibraryPanel function adds a Library Panel
 func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd addLibraryPanelCommand) (LibraryPanel, error) {
 	libraryPanel := LibraryPanel{
 		OrgID:    c.SignedInUser.OrgId,
@@ -40,16 +40,19 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd add
 	return libraryPanel, err
 }
 
+// deleteLibraryPanel function deletes a Library Panel
 func (lps *LibraryPanelService) deleteLibraryPanel(panelID int64) error {
 	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-		if res, err := session.Query("SELECT 1 from library_panel WHERE id=?", panelID); err != nil {
+		result, err := session.Exec("DELETE FROM library_panel WHERE id = ?", panelID)
+
+		if err != nil {
 			return err
-		} else if len(res) != 1 {
-			return errLibraryPanelNotFound
 		}
 
-		if _, err := session.Exec("DELETE FROM library_panel WHERE id = ?", panelID); err != nil {
+		if rowsAffected, err := result.RowsAffected(); err != nil {
 			return err
+		} else if rowsAffected != 1 {
+			return errLibraryPanelNotFound
 		}
 
 		return nil

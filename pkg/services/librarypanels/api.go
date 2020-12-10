@@ -47,5 +47,5 @@ func (lps *LibraryPanelService) deleteHandler(c *models.ReqContext) api.Response
 		return api.Error(500, "Failed to delete library panel", err)
 	}
 
-	return api.Empty(204)
+	return api.Success("Library panel deleted")
 }
