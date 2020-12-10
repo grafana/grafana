@@ -13,19 +13,19 @@ Just add it as a data source and you are ready to query your traces in [Explore]
 
 ## Adding the data source
 
-To access Zipkin settings, click the **Configuration** (gear) icon, then click **Data Sources**, and then click **Zipkin**.
+To access Zipkin settings, click the **Configuration** (gear) icon, then click **Data Sources** > **Zipkin**.
 
 | Name          | Description                                                                                                                           |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `Name`        | The data source name. This is how you refer to the data source in panels, queries, and Explore.                                       |
 | `Default`     | Data source will be pre-selected for new panels.                                                                                      |
 | `URL`         | The URL of the Zipkin instance, e.g., `http://localhost:9411`.                                                                        |
-| `Access`      | Server (default) = URL needs to be accessible from the Grafana backend/server, Browser = URL needs to be accessible from the browser. |
+| `Access`      | Server (default) = URL needs to be accessible from the Grafana backend/server. Browser = URL needs to be accessible from the browser. |
 | `Basic Auth`  | Enable basic authentication to the Zipkin data source.                                                                                |
 | `User`        | User name for basic authentication.                                                                                                   |
 | `Password`    | Password for basic authentication.                                                                                                    |
 | `Data source` | Data source for trace to logs feature.                                                                                                |
-| `Tags`        | The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`                                  |
+| `Tags`        | The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.                                  |
 
 ## Query traces
 

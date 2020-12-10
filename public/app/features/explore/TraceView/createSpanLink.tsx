@@ -15,7 +15,7 @@ export function createSpanLinkFactory(
   splitOpenFn: (options: { datasourceUid: string; query: any }) => void,
   traceToLogsOptions?: TraceToLogsOptions
 ) {
-  // We should return if dataSourceUid is undefined otherwise getInstanceSettings would return testDataSource
+  // We should return if dataSourceUid is undefined otherwise getInstanceSettings would return testDataSource.
   if (!traceToLogsOptions?.datasourceUid) {
     return undefined;
   }

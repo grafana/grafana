@@ -23,7 +23,7 @@ To access Tempo settings, click the **Configuration** (gear) icon, then click **
 | `User`        | User name for basic authentication.                                                                  |
 | `Password`    | Password for basic authentication.                                                                   |
 | `Data source` | Data source for trace to logs feature.                                                               |
-| `Tags`        | The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'` |
+| `Tags`        | The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`. |
 
 ## Query traces
 
