@@ -1,5 +1,5 @@
 ---
-title: View user list
+title: View user list and search - list format
 ---
 
 1. Hover your cursor over the **Server Admin** (shield) icon until a menu appears.
