@@ -10,7 +10,7 @@ import {
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { defaultBucketAgg, defaultMetricAgg, findMetricById, transformSettings } from './query_def';
+import { defaultBucketAgg, defaultMetricAgg, findMetricById } from './query_def';
 import { ElasticsearchQuery } from './types';
 
 export class ElasticQueryBuilder {
