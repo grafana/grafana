@@ -12,7 +12,7 @@ In order to perform any of these tasks, you must be logged in to Grafana on an a
 
 > **Note:** The Grafana Server Admin role does not exist in Grafana Cloud. Grafana Cloud users cannot perform tasks listed in this section.
 
-## View the user account list
+## View the server user account list
 
 See a complete list of users with accounts on your Grafana server.
 
