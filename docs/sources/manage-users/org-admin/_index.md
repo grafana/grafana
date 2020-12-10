@@ -27,7 +27,7 @@ Grafana displays all user accounts on the server, listed in alphabetical order b
 
 ![Org Admin user list](/img/docs/manage-users/org-user-list-7-3.png)
 
-## Add user to org
+## Manage organization invitations
 
 Organization Admins can invite users to their Grafana organizations and manage invitations. When an invited user signs in to Grafana, a user account is created for them if one does not already exist.
 
@@ -78,7 +78,7 @@ Revoke the invitation of a user that was invited but has not logged in.
 1. Click **Pending Invites**.
 1. Click the red **X** next to the invitation that you want to cancel.
 
-## Change org role
+## Change organization role
 
 Every user account is assigned an [Organization role]({{< relref "../../permissions/organization_roles.md" >}}). Organization admins can change the role assigned to a user in their organization.
 
@@ -88,7 +88,7 @@ Every user account is assigned an [Organization role]({{< relref "../../permissi
 1. Click the **Role** list in the user account that you want to change. Grafana displays the list of available roles.
 1. Click the role that you want to assign.
 
-## Remove user from org
+## Remove user from organization
 
 Remove a user account from your organization. This prevents them from accessing the dashboards and data sources associated with the organization, but it does not remove the user account from the server.
 
