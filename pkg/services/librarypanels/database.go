@@ -39,3 +39,21 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd add
 
 	return libraryPanel, err
 }
+
+func (lps *LibraryPanelService) deleteLibraryPanel(panelID int64) error {
+	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+		if res, err := session.Query("SELECT 1 from library_panel WHERE id=?", panelID); err != nil {
+			return err
+		} else if len(res) != 1 {
+			return errLibraryPanelNotFound
+		}
+
+		if _, err := session.Exec("DELETE FROM library_panel WHERE id = ?", panelID); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	return err
+}

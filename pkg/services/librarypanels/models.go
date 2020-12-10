@@ -2,7 +2,7 @@ package librarypanels
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"time"
 )
 
@@ -22,8 +22,10 @@ type LibraryPanel struct {
 }
 
 var (
-	// errLibraryPanelAlreadyAdded is an error when you add a library panel that already exists.
-	errLibraryPanelAlreadyAdded = fmt.Errorf("library panel with that title already exists")
+	// errLibraryPanelAlreadyAdded is an error for when the user tries to add a library panel that already exists.
+	errLibraryPanelAlreadyAdded = errors.New("library panel with that title already exists")
+	// errLibraryPanelNotFound is an error for when a library panel can't be found.
+	errLibraryPanelNotFound = errors.New("library panel could not be found")
 )
 
 // Commands
