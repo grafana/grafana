@@ -7,6 +7,7 @@ import { updateLocation } from 'app/core/actions';
 import { CustomScrollbar, Icon, IconName } from '@grafana/ui';
 import { GeneralSettings } from './GeneralSettings';
 import { LinksSettings } from './LinksSettings';
+import { VersionsSettings } from './VersionsSettings';
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
 import DashboardPermissions from '../DashboardPermissions/DashboardPermissions';
 
@@ -75,7 +76,7 @@ export class DashboardSettings extends PureComponent<Props> {
         title: 'Versions',
         id: 'versions',
         icon: 'history',
-        render: () => <GeneralSettings dashboard={dashboard} />,
+        render: () => <VersionsSettings dashboard={dashboard} />,
       });
     }
 
