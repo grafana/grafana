@@ -34,6 +34,12 @@ func (ng *AlertNG) deleteAlertDefinitionByID(cmd *deleteAlertDefinitionByIDComma
 			return err
 		}
 		cmd.RowsAffected = rowsAffected
+
+		_, err = sess.Exec("DELETE FROM alert_definition_version WHERE alert_definition_id = ?", cmd.ID)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 }
