@@ -133,10 +133,11 @@ describe('when onTimeRangeUpdated is dispatched', () => {
         startRefreshMock,
       } = getTestContext();
 
-      const tester = await reduxTester<{ templating: TemplatingState }>({ preloadedState })
+      const base = await reduxTester<{ templating: TemplatingState }>({ preloadedState })
         .givenRootReducer(getRootReducer())
-        .whenActionIsDispatched(setOptionAsCurrent(toVariableIdentifier(interval), interval.options[0], false))
-        .whenAsyncActionIsDispatched(onTimeRangeUpdated(range, dependencies), true);
+        .whenAsyncActionIsDispatched(setOptionAsCurrent(toVariableIdentifier(interval), interval.options[0], false));
+
+      const tester = await base.whenAsyncActionIsDispatched(onTimeRangeUpdated(range, dependencies), true);
 
       tester.thenDispatchedActionsShouldEqual(
         variableStateFetching(toVariablePayload({ type: 'interval', id: 'interval-0' })),

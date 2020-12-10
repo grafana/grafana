@@ -11,11 +11,13 @@ import { groupByTransformRegistryItem } from '../components/TransformersUI/Group
 import { mergeTransformerRegistryItem } from '../components/TransformersUI/MergeTransformerEditor';
 import { seriesToRowsTransformerRegistryItem } from '../components/TransformersUI/SeriesToRowsTransformerEditor';
 import { concatenateTransformRegistryItem } from '../components/TransformersUI/ConcatenateTransformerEditor';
+import { renameByRegexTransformRegistryItem } from '../components/TransformersUI/RenameByRegexTransformer';
 
 export const getStandardTransformers = (): Array<TransformerRegistyItem<any>> => {
   return [
     reduceTransformRegistryItem,
     filterFieldsByNameTransformRegistryItem,
+    renameByRegexTransformRegistryItem,
     filterFramesByRefIdTransformRegistryItem,
     filterByValueTransformRegistryItem,
     organizeFieldsTransformRegistryItem,
