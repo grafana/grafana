@@ -30,10 +30,6 @@ const (
 	InvalidAPIKey           = "invalid API key"
 )
 
-// GetTime returns the current time.
-// Stubbable by tests.
-var GetTime = time.Now
-
 const ServiceName = "ContextHandler"
 
 func init() {
@@ -51,6 +47,10 @@ type ContextHandler struct {
 	RemoteCache      *remotecache.RemoteCache `inject:""`
 	RenderService    rendering.Service        `inject:""`
 	SQLStore         *sqlstore.SQLStore       `inject:""`
+
+	// GetTime returns the current time.
+	// Stubbable by tests.
+	GetTime func() time.Time
 }
 
 // Init initializes the service.
@@ -174,7 +174,11 @@ func (h *ContextHandler) initContextWithAPIKey(ctx *models.ReqContext) bool {
 	}
 
 	// check for expiration
-	if apikey.Expires != nil && *apikey.Expires <= GetTime().Unix() {
+	getTime := h.GetTime
+	if getTime == nil {
+		getTime = time.Now
+	}
+	if apikey.Expires != nil && *apikey.Expires <= getTime().Unix() {
 		ctx.JsonApiErr(401, "Expired API key", err)
 		return true
 	}

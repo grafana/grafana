@@ -32,16 +32,9 @@ import (
 
 const errorTemplate = "error-template"
 
-func fakeGetTime(t *testing.T) {
-	t.Helper()
-
-	origGetTime := contexthandler.GetTime
-	t.Cleanup(func() {
-		contexthandler.GetTime = origGetTime
-	})
-
+func fakeGetTime() func() time.Time {
 	var timeSeed int64
-	contexthandler.GetTime = func() time.Time {
+	return func() time.Time {
 		fakeNow := time.Unix(timeSeed, 0)
 		timeSeed++
 		return fakeNow
@@ -191,14 +184,14 @@ func TestMiddlewareContext(t *testing.T) {
 	})
 
 	middlewareScenario(t, "Valid API key, but expired", func(t *testing.T, sc *scenarioContext) {
-		fakeGetTime(t)
+		sc.contextHandler.GetTime = fakeGetTime()
 
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
 		bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
 			// api key expired one second before
-			expires := contexthandler.GetTime().Add(-1 * time.Second).Unix()
+			expires := sc.contextHandler.GetTime().Add(-1 * time.Second).Unix()
 			query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash,
 				Expires: &expires}
 			return nil
@@ -578,6 +571,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		}))
 
 		ctxHdlr := getContextHandler(t, cfg)
+		sc.contextHandler = ctxHdlr
 		sc.m.Use(ctxHdlr.Middleware)
 		sc.m.Use(OrgRedirect())
 
