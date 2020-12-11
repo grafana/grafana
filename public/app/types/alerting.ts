@@ -1,6 +1,6 @@
-import { DataQuery, PanelData, SelectableValue } from '@grafana/data';
-import { QueryGroupOptions } from './query';
+import { PanelData, SelectableValue } from '@grafana/data';
 import { PanelQueryRunner } from '../features/query/state/PanelQueryRunner';
+import { QueryGroupOptions } from '../features/query/components/QueryGroupOptions';
 
 export interface AlertRuleDTO {
   id: number;
@@ -139,9 +139,7 @@ export interface AlertNotification {
 export interface AlertDefinitionState {
   uiState: AlertDefinitionUiState;
   alertDefinition: AlertDefinition;
-  queries: DataQuery[];
   queryOptions: QueryGroupOptions;
-  dataSourceName: string;
   queryRunner: PanelQueryRunner;
   data: PanelData[];
 }

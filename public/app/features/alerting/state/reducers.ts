@@ -16,7 +16,7 @@ import {
 import store from 'app/core/store';
 import { config } from '@grafana/runtime';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { QueryGroupOptions } from '../../../types/query';
+import { QueryGroupOptions } from '../../query/components/QueryGroupOptions';
 
 export const ALERT_DEFINITION_UI_STATE_STORAGE_KEY = 'grafana.alerting.alertDefinition.ui';
 const DEFAULT_ALERT_DEFINITION_UI_STATE: AlertDefinitionUiState = { rightPaneSize: 400, topPaneSize: 0.45 };
@@ -58,9 +58,7 @@ export const initialAlertDefinitionState: AlertDefinitionState = {
     description: '',
     condition: {} as AlertCondition,
   },
-  queries: [],
-  queryOptions: { maxDataPoints: 100 },
-  dataSourceName: 'gdev-testdata',
+  queryOptions: { maxDataPoints: 100, dataSource: { name: 'gdev-testdata' }, queries: [] },
   queryRunner: new PanelQueryRunner(dataConfig),
   uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
   data: [],

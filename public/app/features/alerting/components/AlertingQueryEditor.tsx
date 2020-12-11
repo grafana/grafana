@@ -13,9 +13,7 @@ import { StoreState } from '../../../types';
 interface OwnProps {}
 
 interface ConnectedProps {
-  queries: DataQuery[];
   queryOptions: QueryGroupOptions;
-  dataSourceName: string;
   queryRunner: PanelQueryRunner;
 }
 interface DispatchProps {
@@ -36,16 +34,16 @@ export class AlertingQueryEditor extends PureComponent<Props> {
   };
 
   onRunQueries = () => {
-    const { queryRunner, queries, dataSourceName, queryOptions } = this.props;
+    const { queryRunner, queryOptions } = this.props;
     const timeRange = { from: 'now-1h', to: 'now' };
 
     queryRunner.run({
-      queries,
       timezone: 'browser',
-      datasource: dataSourceName,
       timeRange: { from: dateMath.parse(timeRange.from)!, to: dateMath.parse(timeRange.to)!, raw: timeRange },
       maxDataPoints: queryOptions.maxDataPoints ?? 100,
       minInterval: queryOptions.minInterval,
+      queries: queryOptions.queries,
+      datasource: queryOptions.dataSource.name!,
     });
   };
 
@@ -54,7 +52,7 @@ export class AlertingQueryEditor extends PureComponent<Props> {
   };
 
   render() {
-    const { queryOptions, queryRunner, queries, dataSourceName } = this.props;
+    const { queryOptions, queryRunner } = this.props;
     const styles = getStyles(config.theme);
 
     return (
@@ -63,12 +61,8 @@ export class AlertingQueryEditor extends PureComponent<Props> {
           <h4>Queries</h4>
           <QueryGroup
             queryRunner={queryRunner}
-            queries={queries}
-            dataSourceName={dataSourceName}
             options={queryOptions}
             onRunQueries={this.onRunQueries}
-            onQueriesChange={this.onQueriesChange}
-            onDataSourceChange={this.onDataSourceChange}
             onOptionsChange={this.onQueryOptionsChange}
           />
         </div>
@@ -77,12 +71,10 @@ export class AlertingQueryEditor extends PureComponent<Props> {
   }
 }
 
-const mapsStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
+const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
   return {
-    queries: state.alertDefinition.queries,
     queryOptions: state.alertDefinition.queryOptions,
     queryRunner: state.alertDefinition.queryRunner,
-    dataSourceName: state.alertDefinition.dataSourceName,
   };
 };
 
@@ -92,7 +84,7 @@ const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
   queryOptionsChange,
 };
 
-export default connect(mapsStateToProps, mapDispatchToProps)(AlertingQueryEditor);
+export default connect(mapStateToProps, mapDispatchToProps)(AlertingQueryEditor);
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {

@@ -16,7 +16,7 @@ import {
   setQueryOptions,
 } from './reducers';
 import { AlertDefinition, AlertDefinitionUiState, AlertRuleDTO, NotifierDTO, ThunkResult } from 'app/types';
-import { QueryGroupOptions } from '../../../types/query';
+import { QueryGroupOptions } from '../../query/components/QueryGroupOptions';
 
 export function getAlertRulesAsync(options: { state: string }): ThunkResult<void> {
   return async dispatch => {
