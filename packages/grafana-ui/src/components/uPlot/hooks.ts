@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { PlotPlugin } from './types';
 import { pluginLog } from './utils';
-import uPlot, { Options, Axis, PaddingSide } from 'uplot';
+import uPlot, { Options, PaddingSide } from 'uplot';
 import { getTimeZoneInfo, TimeZone } from '@grafana/data';
 import { usePlotPluginContext } from './context';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
