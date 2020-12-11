@@ -4,7 +4,7 @@ import Wrapper from './Wrapper';
 import { configureStore } from '../../store/configureStore';
 import { Provider } from 'react-redux';
 import { store } from '../../store/store';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { setDataSourceSrv, setTimeSrv } from '@grafana/runtime';
 import {
   ArrayDataFrame,
   DataQueryResponse,
@@ -16,7 +16,6 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { setTimeSrv } from '../dashboard/services/TimeSrv';
 import { from, Observable } from 'rxjs';
 import { updateLocation } from '../../core/reducers/location';
 import { LokiDatasource } from '../../plugins/datasource/loki/datasource';

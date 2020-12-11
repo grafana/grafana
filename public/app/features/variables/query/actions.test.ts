@@ -35,9 +35,9 @@ import { expect } from 'test/lib/common';
 import { updateOptions } from '../state/actions';
 import { notifyApp } from '../../../core/reducers/appNotification';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
-import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { setVariableQueryRunner, VariableQueryRunner } from './VariableQueryRunner';
-import { setDataSourceSrv } from '@grafana/runtime';
+import { setDataSourceSrv, getTimeSrv, setTimeSrv } from '@grafana/runtime';
 
 const mocks: Record<string, any> = {
   datasource: {

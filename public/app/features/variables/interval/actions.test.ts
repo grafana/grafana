@@ -13,7 +13,8 @@ import {
 import { variableAdapters } from '../adapters';
 import { createIntervalVariableAdapter } from './adapter';
 import { dateTime } from '@grafana/data';
-import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
+import { getTimeSrv, setTimeSrv } from '@grafana/runtime';
+import { TimeSrv } from '../../dashboard/services/TimeSrv';
 import { TemplateSrv } from '../../templating/template_srv';
 import { intervalBuilder } from '../shared/testing/builders';
 import { updateOptions } from '../state/actions';
