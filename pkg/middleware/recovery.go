@@ -103,7 +103,7 @@ func function(pc uintptr) []byte {
 
 // Recovery returns a middleware that recovers from any panics and writes a 500 if there was one.
 // While Martini is in development mode, Recovery will also output the panic as HTML.
-func Recovery() macaron.Handler {
+func Recovery(cfg *setting.Cfg) macaron.Handler {
 	return func(c *macaron.Context) {
 		defer func() {
 			if r := recover(); r != nil {
@@ -134,7 +134,7 @@ func Recovery() macaron.Handler {
 
 				c.Data["Title"] = "Server Error"
 				c.Data["AppSubUrl"] = setting.AppSubUrl
-				c.Data["Theme"] = setting.DefaultTheme
+				c.Data["Theme"] = cfg.DefaultTheme
 
 				if setting.Env == setting.Dev {
 					if err, ok := r.(error); ok {
@@ -158,7 +158,7 @@ func Recovery() macaron.Handler {
 
 					c.JSON(500, resp)
 				} else {
-					c.HTML(500, setting.ErrTemplateName)
+					c.HTML(500, cfg.ErrTemplateName)
 				}
 			}
 		}()
