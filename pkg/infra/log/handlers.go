@@ -5,5 +5,5 @@ type DisposableHandler interface {
 }
 
 type ReloadableHandler interface {
-	Reload()
+	Reload() error
 }

@@ -187,7 +187,9 @@ func listenToSystemSignals(s *server.Server) {
 	for {
 		select {
 		case <-sighupChan:
-			log.Reload()
+			if err := log.Reload(); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to reload loggers: %s\n", err)
+			}
 		case sig := <-signalChan:
 			s.Shutdown(fmt.Sprintf("System signal: %s", sig))
 		}

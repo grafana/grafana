@@ -15,7 +15,10 @@ import (
 func TestHandleResponse(t *testing.T) {
 	t.Run("Returns body if status == 200", func(t *testing.T) {
 		resp := makeResponse(200, "test")
-		defer resp.Body.Close()
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		})
 		bodyReader, err := handleResponse(resp)
 		require.NoError(t, err)
 		body, err := ioutil.ReadAll(bodyReader)
@@ -25,14 +28,20 @@ func TestHandleResponse(t *testing.T) {
 
 	t.Run("Returns ErrorNotFound if status == 404", func(t *testing.T) {
 		resp := makeResponse(404, "")
-		defer resp.Body.Close()
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		})
 		_, err := handleResponse(resp)
 		assert.Equal(t, ErrNotFoundError, err)
 	})
 
 	t.Run("Returns message from body if status == 400", func(t *testing.T) {
 		resp := makeResponse(400, "{ \"message\": \"error_message\" }")
-		defer resp.Body.Close()
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		})
 		_, err := handleResponse(resp)
 		require.Error(t, err)
 		assert.Equal(t, "error_message", asBadRequestError(t, err).Message)
@@ -40,7 +49,10 @@ func TestHandleResponse(t *testing.T) {
 
 	t.Run("Returns body if status == 400 and no message key", func(t *testing.T) {
 		resp := makeResponse(400, "{ \"test\": \"test_message\"}")
-		defer resp.Body.Close()
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		})
 		_, err := handleResponse(resp)
 		require.Error(t, err)
 		assert.Equal(t, "{ \"test\": \"test_message\"}", asBadRequestError(t, err).Message)
@@ -48,7 +60,10 @@ func TestHandleResponse(t *testing.T) {
 
 	t.Run("Returns Bad request error if status == 400 and no body", func(t *testing.T) {
 		resp := makeResponse(400, "")
-		defer resp.Body.Close()
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		})
 		_, err := handleResponse(resp)
 		require.Error(t, err)
 		_ = asBadRequestError(t, err)
@@ -56,7 +71,10 @@ func TestHandleResponse(t *testing.T) {
 
 	t.Run("Returns error with invalid status if status == 500", func(t *testing.T) {
 		resp := makeResponse(500, "")
-		defer resp.Body.Close()
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		})
 		_, err := handleResponse(resp)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid status")

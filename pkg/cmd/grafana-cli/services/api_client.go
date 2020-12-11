@@ -192,7 +192,11 @@ func handleResponse(res *http.Response) (io.ReadCloser, error) {
 
 	if res.StatusCode/100 == 4 {
 		body, err := ioutil.ReadAll(res.Body)
-		defer res.Body.Close()
+		defer func() {
+			if err := res.Body.Close(); err != nil {
+				logger.Warn("Failed to close response body", "err", err)
+			}
+		}()
 		if err != nil || len(body) == 0 {
 			return nil, &BadRequestError{Status: res.Status}
 		}
