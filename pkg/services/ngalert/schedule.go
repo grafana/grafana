@@ -200,7 +200,7 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 
 			var step int64 = 0
 			if len(readyToRun) > 0 {
-				step = (time.Second.Nanoseconds() - lostTime.Nanoseconds()) / int64(len(readyToRun))
+				step = (ng.schedule.baseInterval.Nanoseconds() - lostTime.Nanoseconds()) / int64(len(readyToRun))
 			}
 
 			for i := range readyToRun {

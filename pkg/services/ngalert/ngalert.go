@@ -17,8 +17,11 @@ import (
 )
 
 const (
-	maxAttempts              int64 = 3
+	maxAttempts int64 = 3
+	// defaultIntervalInSeconds is the default interval of each alert definition
 	defaultIntervalInSeconds int64 = 60
+	// baseInterval is the interval of the scheduler
+	baseInterval time.Duration = 10 * time.Second
 )
 
 // AlertNG is the service for evaluating the condition of an alert definition.
@@ -46,7 +49,7 @@ func (ng *AlertNG) Init() error {
 // Run starts the scheduler
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.log.Debug("ngalert starting")
-	ng.schedule = newScheduler(clock.New(), time.Second, ng.log, nil)
+	ng.schedule = newScheduler(clock.New(), baseInterval, ng.log, nil)
 	return ng.alertingTicker(ctx)
 }
 
