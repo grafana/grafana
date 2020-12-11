@@ -1,5 +1,5 @@
 import { GrafanaTheme } from '@grafana/data';
-import { IconButton, stylesFactory, useTheme } from '@grafana/ui';
+import { IconButton, InlineFieldRow, InlineFormLabel, InlineLabel, stylesFactory, useTheme } from '@grafana/ui';
 import { css } from 'emotion';
 import { noop } from 'lodash';
 import React, { FunctionComponent } from 'react';
@@ -22,9 +22,9 @@ export const QueryEditorRow: FunctionComponent<Props> = ({
   const styles = getStyles(theme);
 
   return (
-    <fieldset className={styles.root}>
-      <div className={styles.wrapper}>
-        <legend className={styles.label}>{label}</legend>
+    <InlineFieldRow>
+      <InlineLabel width={17}>
+        <span>{label}</span>
         {onHideClick && (
           <IconButton
             name={hidden ? 'eye-slash' : 'eye'}
@@ -45,9 +45,9 @@ export const QueryEditorRow: FunctionComponent<Props> = ({
           disabled={!onRemoveClick}
           aria-label="remove metric"
         />
-      </div>
+      </InlineLabel>
       {children}
-    </fieldset>
+    </InlineFieldRow>
   );
 };
 

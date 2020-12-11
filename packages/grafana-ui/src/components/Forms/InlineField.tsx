@@ -63,7 +63,7 @@ const getStyles = (theme: GrafanaTheme, grow?: boolean) => {
       text-align: left;
       position: relative;
       flex: ${grow ? 1 : 0} 0 auto;
-      margin: 0 ${theme.spacing.xs} ${theme.spacing.xs} 0;
+      margin: 0 ${theme.spacing.xs};
     `,
     wrapper: css`
       display: flex;
