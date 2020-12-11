@@ -62,6 +62,26 @@ func TestDeleteLibraryPanel(t *testing.T) {
 	})
 }
 
+func TestGetLibraryPanel(t *testing.T) {
+	libraryPanelScenario(t, "When an admin tries to get a library panel that does not exist", "then it should fail", func(t *testing.T) {
+		lps, context := setupTestEnv(t, models.ROLE_ADMIN, map[string]string{":panelId": "74"})
+
+		response := lps.getHandler(&context)
+		require.Equal(t, 404, response.Status())
+	})
+
+	libraryPanelScenario(t, "When an admin tries to get a library panel that exists", "then it should succeed", func(t *testing.T) {
+		lps, context := setupTestEnv(t, models.ROLE_ADMIN, map[string]string{":panelId": "1"})
+		command := getCreateCommand(1, "Text - Library Panel")
+
+		response := lps.createHandler(&context, command)
+		require.Equal(t, 200, response.Status())
+
+		response = lps.getHandler(&context)
+		require.Equal(t, 200, response.Status())
+	})
+}
+
 func libraryPanelScenario(t *testing.T, when string, then string, fn func(t *testing.T)) {
 	t.Run(when, func(t *testing.T) {
 		t.Run(then, func(t *testing.T) {
@@ -133,8 +153,8 @@ func getTestContext(user models.SignedInUser, params macaron.Params) models.ReqC
 	return context
 }
 
-func getCreateCommand(folderID int64, title string) addLibraryPanelCommand {
-	command := addLibraryPanelCommand{
+func getCreateCommand(folderID int64, title string) createLibraryPanelCommand {
+	command := createLibraryPanelCommand{
 		FolderID: folderID,
 		Title:    title,
 		Model: []byte(`
