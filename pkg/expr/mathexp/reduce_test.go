@@ -57,7 +57,7 @@ func TestSeriesReduce(t *testing.T) {
 			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
-					makeNumber("sum_", nil, float64Pointer(3)),
+					makeNumber("", nil, float64Pointer(3)),
 				},
 			},
 		},
@@ -70,7 +70,7 @@ func TestSeriesReduce(t *testing.T) {
 			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
-					makeNumber("sum_", nil, NaN),
+					makeNumber("", nil, NaN),
 				},
 			},
 		},
@@ -83,7 +83,7 @@ func TestSeriesReduce(t *testing.T) {
 			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
-					makeNumber("sum_", nil, float64Pointer(0)),
+					makeNumber("", nil, float64Pointer(0)),
 				},
 			},
 		},
@@ -96,7 +96,7 @@ func TestSeriesReduce(t *testing.T) {
 			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
-					makeNumber("mean_", nil, NaN),
+					makeNumber("", nil, NaN),
 				},
 			},
 		},
@@ -109,7 +109,7 @@ func TestSeriesReduce(t *testing.T) {
 			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
-					makeNumber("mean_", nil, NaN),
+					makeNumber("", nil, NaN),
 				},
 			},
 		},
@@ -122,7 +122,7 @@ func TestSeriesReduce(t *testing.T) {
 			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
-					makeNumber("min_", nil, NaN),
+					makeNumber("", nil, NaN),
 				},
 			},
 		},
@@ -135,7 +135,7 @@ func TestSeriesReduce(t *testing.T) {
 			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
-					makeNumber("min_", nil, NaN),
+					makeNumber("", nil, NaN),
 				},
 			},
 		},
@@ -148,7 +148,7 @@ func TestSeriesReduce(t *testing.T) {
 			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
-					makeNumber("max_", nil, NaN),
+					makeNumber("", nil, NaN),
 				},
 			},
 		},
@@ -161,7 +161,7 @@ func TestSeriesReduce(t *testing.T) {
 			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
-					makeNumber("max_", nil, NaN),
+					makeNumber("", nil, NaN),
 				},
 			},
 		},
@@ -174,7 +174,7 @@ func TestSeriesReduce(t *testing.T) {
 			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
-					makeNumber("mean_", nil, float64Pointer(1.5)),
+					makeNumber("", nil, float64Pointer(1.5)),
 				},
 			},
 		},
@@ -187,7 +187,7 @@ func TestSeriesReduce(t *testing.T) {
 			resultsIs:   require.Equal,
 			results: Results{
 				[]Value{
-					makeNumber("count_", nil, float64Pointer(0)),
+					makeNumber("", nil, float64Pointer(0)),
 				},
 			},
 		},
@@ -210,7 +210,7 @@ func TestSeriesReduce(t *testing.T) {
 			resultsIs: require.Equal,
 			results: Results{
 				[]Value{
-					makeNumber("mean_", data.Labels{"host": "a"}, float64Pointer(1.5)),
+					makeNumber("", data.Labels{"host": "a"}, float64Pointer(1.5)),
 				},
 			},
 		},
@@ -221,7 +221,7 @@ func TestSeriesReduce(t *testing.T) {
 			results := Results{}
 			seriesSet := tt.vars[tt.varToReduce]
 			for _, series := range seriesSet.Values {
-				ns, err := series.Value().(*Series).Reduce(tt.red)
+				ns, err := series.Value().(*Series).Reduce("", tt.red)
 				tt.errIs(t, err)
 				if err != nil {
 					return
