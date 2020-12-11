@@ -279,7 +279,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       range,
       queries,
       initialized: true,
-      queryKeys: getQueryKeys(queries, state.datasourceInstance),
+      queryKeys: getQueryKeys(queries, datasourceInstance),
       originPanelId,
       update: makeInitialUpdateState(),
       datasourceInstance,
