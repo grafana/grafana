@@ -1,4 +1,4 @@
-package middleware
+package cookies
 
 import (
 	"net/http"
@@ -55,8 +55,8 @@ func WriteCookie(w http.ResponseWriter, name string, value string, maxAge int, g
 	http.SetCookie(w, &cookie)
 }
 
-func WriteSessionCookie(ctx *models.ReqContext, value string, maxLifetime time.Duration) {
-	if setting.Env == setting.Dev {
+func WriteSessionCookie(ctx *models.ReqContext, cfg *setting.Cfg, value string, maxLifetime time.Duration) {
+	if cfg.Env == setting.Dev {
 		ctx.Logger.Info("New token", "unhashed token", value)
 	}
 
