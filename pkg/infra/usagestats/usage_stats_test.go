@@ -3,7 +3,6 @@ package usagestats
 import (
 	"bytes"
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"runtime"
 	"sync"
@@ -23,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMetrics(t *testing.T) {
