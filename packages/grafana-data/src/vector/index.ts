@@ -5,5 +5,6 @@ export * from './ConstantVector';
 export * from './BinaryOperationVector';
 export * from './SortedVector';
 export * from './FormattedVector';
+export * from './IndexVector';
 
 export { vectorator } from './FunctionalVector';

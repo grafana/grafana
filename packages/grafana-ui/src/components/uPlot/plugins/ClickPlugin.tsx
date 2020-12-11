@@ -18,6 +18,9 @@ interface ClickPluginAPI {
   clearSelection: () => void;
 }
 
+/**
+ * @alpha
+ */
 interface ClickPluginProps extends PlotPluginProps {
   onClick: (e: { seriesIdx: number | null; dataIdx: number | null }) => void;
   children: (api: ClickPluginAPI) => React.ReactElement | null;

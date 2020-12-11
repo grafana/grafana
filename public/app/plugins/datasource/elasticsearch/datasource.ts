@@ -9,6 +9,8 @@ import {
   DataLink,
   PluginMeta,
   DataQuery,
+  LogRowModel,
+  Field,
   MetricFindValue,
 } from '@grafana/data';
 import LanguageProvider from './language_provider';
@@ -21,6 +23,7 @@ import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
+import { RowContextOptions } from '@grafana/ui/src/components/Logs/LogRowContextProvider';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import {
   isMetricAggregationWithField,
@@ -432,6 +435,74 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return text;
   }
 
+  /**
+   * This method checks to ensure the user is running a 5.0+ cluster. This is
+   * necessary bacause the query being used for the getLogRowContext relies on the
+   * search_after feature.
+   */
+  showContextToggle(): boolean {
+    return this.esVersion > 5;
+  }
+
+  getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
+    const sortField = row.dataFrame.fields.find(f => f.name === 'sort');
+    const searchAfter = sortField?.values.get(row.rowIndex) || [row.timeEpochMs];
+    const range = this.timeSrv.timeRange();
+    const direction = options?.direction === 'FORWARD' ? 'asc' : 'desc';
+    const header = this.getQueryHeader('query_then_fetch', range.from, range.to);
+    const limit = options?.limit ?? 10;
+    const esQuery = JSON.stringify({
+      size: limit,
+      query: {
+        bool: {
+          filter: [
+            {
+              range: {
+                [this.timeField]: {
+                  gte: range.from.valueOf(),
+                  lte: range.to.valueOf(),
+                  format: 'epoch_millis',
+                },
+              },
+            },
+          ],
+        },
+      },
+      sort: [{ [this.timeField]: direction }, { _doc: direction }],
+      search_after: searchAfter,
+    });
+    const payload = [header, esQuery].join('\n') + '\n';
+    const url = this.getMultiSearchUrl();
+    const response = await this.post(url, payload);
+    const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [], isLogsQuery: true }];
+    const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, direction));
+    const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);
+    const dataFrame = _.first(logResponse.data);
+    if (!dataFrame) {
+      return { data: [] };
+    }
+    /**
+     * The LogRowContextProvider requires there is a field in the dataFrame.fields
+     * named `ts` for timestamp and `line` for the actual log line to display.
+     * Unfortunatly these fields are hardcoded and are required for the lines to
+     * be properly displayed. This code just copies the fields based on this.timeField
+     * and this.logMessageField and recreates the dataFrame so it works.
+     */
+    const timestampField = dataFrame.fields.find((f: Field) => f.name === this.timeField);
+    const lineField = dataFrame.fields.find((f: Field) => f.name === this.logMessageField);
+    if (timestampField && lineField) {
+      return {
+        data: [
+          {
+            ...dataFrame,
+            fields: [...dataFrame.fields, { ...timestampField, name: 'ts' }, { ...lineField, name: 'line' }],
+          },
+        ],
+      };
+    }
+    return logResponse;
+  };
+
   query(options: DataQueryRequest<ElasticsearchQuery>): Promise<DataQueryResponse> {
     let payload = '';
     const targets = this.interpolateVariablesInQueries(_.cloneDeep(options.targets), options.scopedVars);
@@ -757,4 +828,23 @@ export function enhanceDataFrame(dataFrame: DataFrame, dataLinks: DataLinkConfig
     field.config = field.config || {};
     field.config.links = [...(field.config.links || []), link];
   }
+}
+
+function transformHitsBasedOnDirection(response: any, direction: 'asc' | 'desc') {
+  if (direction === 'desc') {
+    return response;
+  }
+  const actualResponse = response.responses[0];
+  return {
+    ...response,
+    responses: [
+      {
+        ...actualResponse,
+        hits: {
+          ...actualResponse.hits,
+          hits: actualResponse.hits.hits.reverse(),
+        },
+      },
+    ],
+  };
 }
