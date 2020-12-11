@@ -8,13 +8,11 @@ const pathBuilders = uPlot.paths;
 const barWidthFactor = 0.6;
 const barMaxWidth = Infinity;
 
-/* eslint-disable */
-const barsBuilder       = pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth] });
-const linearBuilder     = pathBuilders.linear!();
-const smoothBuilder     = pathBuilders.spline!();
-const stepBeforeBuilder = pathBuilders.stepped!({align: -1});
-const stepAfterBuilder  = pathBuilders.stepped!({align:  1});
-/* eslint-enable */
+const barsBuilder = pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth] });
+const linearBuilder = pathBuilders.linear!();
+const smoothBuilder = pathBuilders.spline!();
+const stepBeforeBuilder = pathBuilders.stepped!({ align: -1 });
+const stepAfterBuilder = pathBuilders.stepped!({ align: 1 });
 
 export interface SeriesProps extends LineConfig, AreaConfig, PointsConfig {
   drawStyle: DrawStyle;
