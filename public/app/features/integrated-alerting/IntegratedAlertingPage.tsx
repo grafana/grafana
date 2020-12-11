@@ -3,6 +3,7 @@ import { TabsBar, TabContent, Tab, useStyles } from '@grafana/ui';
 import { Messages } from './IntegratedAlerting.messages';
 import { getStyles } from './IntegratedAlerting.styles';
 import { TabKeys } from './IntegratedAlerting.types';
+import { AlertRuleTemplate } from './components/AlertRuleTemplate/AlertRuleTemplate';
 
 const IntegratedAlertingPage: FC = () => {
   const styles = useStyles(getStyles);
@@ -22,7 +23,7 @@ const IntegratedAlertingPage: FC = () => {
       {
         label: Messages.tabs.alertRuleTemplates,
         key: TabKeys.alertRuleTemplates,
-        component: <div key={TabKeys.alertRuleTemplates}>{Messages.tabs.alertRuleTemplates}</div>,
+        component: <AlertRuleTemplate key={TabKeys.alertRuleTemplates} />,
       },
       {
         label: Messages.tabs.notificationChannels,
@@ -36,7 +37,7 @@ const IntegratedAlertingPage: FC = () => {
   return (
     <div className={styles.integratedAlertingWrapper}>
       <TabsBar>
-        {tabs.map(tab => (
+        {tabs.map((tab) => (
           <Tab
             key={tab.key}
             label={tab.label}
@@ -45,7 +46,7 @@ const IntegratedAlertingPage: FC = () => {
           />
         ))}
       </TabsBar>
-      <TabContent>{tabs.find(tab => tab.key === activeTab).component}</TabContent>
+      <TabContent>{tabs.find((tab) => tab.key === activeTab).component}</TabContent>
     </div>
   );
 };
