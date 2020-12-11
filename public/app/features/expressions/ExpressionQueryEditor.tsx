@@ -157,26 +157,45 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
             <InlineField label="Function" labelWidth={labelWidth}>
               <Select options={reducerTypes} value={reducer} onChange={this.onSelectReducer} width={25} />
             </InlineField>
-            <InlineField label="Input" labelWidth={labelWidth}>
-              <Input onChange={this.onExpressionChange} value={query.expression} width={25} />
+            <InlineField label="Query" labelWidth={labelWidth}>
+              <Input
+                onChange={this.onExpressionChange}
+                value={query.expression}
+                width={30}
+                placeholder="Choose query by refId (eg. $A or A)"
+              />
             </InlineField>
           </InlineFieldRow>
         )}
         {query.type === GELQueryType.resample && (
-          <InlineFieldRow>
-            <InlineField label="Input" labelWidth={labelWidth}>
-              <Input onChange={this.onExpressionChange} value={query.expression} width={25} />
-            </InlineField>
-            <InlineField label="Window" labelWidth={labelWidth}>
-              <Input onChange={this.onWindowChange} value={query.window} width={25} />
-            </InlineField>
-            <InlineField label="Downsample" labelWidth={labelWidth}>
-              <Select options={downsamplingTypes} value={downsampler} onChange={this.onSelectDownsampler} width={25} />
-            </InlineField>
-            <InlineField label="Upsample" labelWidth={labelWidth}>
-              <Select options={upsamplingTypes} value={upsampler} onChange={this.onSelectUpsampler} width={25} />
-            </InlineField>
-          </InlineFieldRow>
+          <>
+            <InlineFieldRow>
+              <InlineField label="Query" labelWidth={labelWidth}>
+                <Input
+                  onChange={this.onExpressionChange}
+                  value={query.expression}
+                  width={30}
+                  placeholder="Choose query by refId (eg. $A or A)"
+                />
+              </InlineField>
+            </InlineFieldRow>
+            <InlineFieldRow>
+              <InlineField label="Resample to" labelWidth={labelWidth} tooltip="10s, 1m, 30m, 1h">
+                <Input onChange={this.onWindowChange} value={query.window} width={15} />
+              </InlineField>
+              <InlineField label="Downsample">
+                <Select
+                  options={downsamplingTypes}
+                  value={downsampler}
+                  onChange={this.onSelectDownsampler}
+                  width={25}
+                />
+              </InlineField>
+              <InlineField label="Upsample">
+                <Select options={upsamplingTypes} value={upsampler} onChange={this.onSelectUpsampler} width={25} />
+              </InlineField>
+            </InlineFieldRow>
+          </>
         )}
       </div>
     );
