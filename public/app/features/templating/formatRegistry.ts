@@ -254,30 +254,49 @@ function replaceText({ value, args }: FormatOptions) {
     return value;
   }
 
-  let replace = (s: string) => s;
-
-  if (args.length >= 2) {
-    const regex = new RegExp(args[0], 'g');
-    const replacement = args[1].replace(/\\:/g, ':');
-
-    replace = (s: string) => s.replace(regex, replacement);
-
-    args = args.slice(2);
-  }
-
-  if (args.length > 0) {
-    const inner = replace;
-
-    if (args[0] === 'upper') {
-      replace = (s: string) => inner(s).toUpperCase();
-    } else if (args[0] === 'lower') {
-      replace = (s: string) => inner(s).toLowerCase();
-    }
-  }
+  const replace = buildReplacementFunc(args);
 
   if (typeof value === 'string') {
     return replace(value);
   }
 
   return map(value, replace);
+}
+
+function buildReplacementFunc(args: string[]) {
+  const identity = (s: string) => s;
+  if (args.length === 0) {
+    return identity;
+  }
+
+  const buildReplaceFunc = (pattern: string, replacement: string) => {
+    const regex = new RegExp(pattern, 'g');
+    const repl = args[1].replace(/\\:/g, ':');
+
+    return (s: string) => s.replace(regex, repl);
+  };
+
+  const buildCaseChangeFunc = (caseChange: string) => {
+    switch (caseChange) {
+      case 'upper':
+        return (s: string) => s.toUpperCase();
+      case 'lower':
+        return (s: string) => s.toLowerCase();
+      default:
+        return identity;
+    }
+  };
+
+  if (args.length === 1) {
+    return buildCaseChangeFunc(args[0]);
+  }
+
+  if (args.length === 2) {
+    return buildReplaceFunc(args[0], args[1]);
+  }
+
+  const replace = buildReplaceFunc(args[0], args[1]);
+  const caseChange = buildCaseChangeFunc(args[2]);
+
+  return (s: string) => caseChange(replace(s));
 }
