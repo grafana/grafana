@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
@@ -29,6 +30,8 @@ type scenarioContext struct {
 	url                  string
 	userAuthTokenService *auth.FakeUserAuthTokenService
 	remoteCacheService   *remotecache.RemoteCache
+	cfg                  *setting.Cfg
+	contextHandler       *contexthandler.ContextHandler
 
 	req *http.Request
 }
@@ -94,9 +97,9 @@ func (sc *scenarioContext) exec() {
 	}
 
 	if sc.tokenSessionCookie != "" {
-		sc.t.Log(`Adding cookie`, "name", setting.LoginCookieName, "value", sc.tokenSessionCookie)
+		sc.t.Log(`Adding cookie`, "name", sc.cfg.LoginCookieName, "value", sc.tokenSessionCookie)
 		sc.req.AddCookie(&http.Cookie{
-			Name:  setting.LoginCookieName,
+			Name:  sc.cfg.LoginCookieName,
 			Value: sc.tokenSessionCookie,
 		})
 	}
