@@ -201,7 +201,6 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 				step = ng.schedule.baseInterval.Nanoseconds() / int64(len(readyToRun))
 			}
 
-			fmt.Println(">>>> step:", step)
 			for i := range readyToRun {
 				item := readyToRun[i]
 
