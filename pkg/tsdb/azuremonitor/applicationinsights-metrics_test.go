@@ -174,6 +174,8 @@ func loadInsightsMetricsResponse(t *testing.T, name string) MetricsResult {
 	t.Helper()
 
 	path := filepath.Join("testdata", name)
+	// Ignore gosec warning G304 since it's a test
+	// nolint:gosec
 	f, err := os.Open(path)
 	require.NoError(t, err)
 	defer func() {

@@ -153,6 +153,8 @@ func TestLogTableToFrame(t *testing.T) {
 
 func loadLogAnalyticsTestFileWithNumber(t *testing.T, name string) AzureLogAnalyticsResponse {
 	path := filepath.Join("testdata", name)
+	// Ignore gosec warning G304 since it's a test
+	// nolint:gosec
 	f, err := os.Open(path)
 	require.NoError(t, err)
 	defer func() {

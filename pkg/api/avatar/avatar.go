@@ -136,7 +136,9 @@ func newNotFound() *Avatar {
 	// variable.
 	// nolint:gosec
 	path := filepath.Join(setting.StaticRootPath, "img", "user_profile.png")
-
+	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
+	// variable.
+	// nolint:gosec
 	if data, err := ioutil.ReadFile(path); err != nil {
 		log.Errorf(3, "Failed to read user_profile.png, %v", path)
 	} else {

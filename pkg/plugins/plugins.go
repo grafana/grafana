@@ -335,9 +335,6 @@ func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) err
 		return nil
 	}
 
-	// nolint:gosec
-	// We can ignore the gosec G304 warning on this one because `currentPath` is based
-	// on plugin the folder structure on disk and not user input.
 	if err := s.loadPlugin(currentPath); err != nil {
 		s.log.Error("Failed to load plugin", "error", err, "pluginPath", filepath.Dir(currentPath))
 		s.errors = append(s.errors, err)
@@ -349,6 +346,9 @@ func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) err
 func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	s.log.Debug("Loading plugin", "path", pluginJSONFilePath)
 	currentDir := filepath.Dir(pluginJSONFilePath)
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `currentPath` is based
+	// on plugin the folder structure on disk and not user input.
 	reader, err := os.Open(pluginJSONFilePath)
 	if err != nil {
 		return err
