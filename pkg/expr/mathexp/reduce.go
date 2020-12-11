@@ -11,7 +11,7 @@ func Sum(v *data.Field) *float64 {
 	var sum float64
 	for i := 0; i < v.Len(); i++ {
 		if f, ok := v.At(i).(*float64); ok {
-			if f == nil {
+			if f == nil || math.IsNaN(*f) {
 				nan := math.NaN()
 				return &nan
 			}
@@ -35,7 +35,7 @@ func Min(fv *data.Field) *float64 {
 	}
 	for i := 0; i < fv.Len(); i++ {
 		if v, ok := fv.At(i).(*float64); ok {
-			if v == nil {
+			if v == nil || math.IsNaN(*v) {
 				nan := math.NaN()
 				return &nan
 			}
@@ -55,7 +55,7 @@ func Max(fv *data.Field) *float64 {
 	}
 	for i := 0; i < fv.Len(); i++ {
 		if v, ok := fv.At(i).(*float64); ok {
-			if v == nil {
+			if v == nil || math.IsNaN(*v) {
 				nan := math.NaN()
 				return &nan
 			}

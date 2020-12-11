@@ -9,6 +9,9 @@ interface ContextMenuPluginProps {
   onClose?: () => void;
 }
 
+/**
+ * @alpha
+ */
 export const ContextMenuPlugin: React.FC<ContextMenuPluginProps> = ({ onClose }) => {
   const [isOpen, setIsOpen] = useState(false);
 

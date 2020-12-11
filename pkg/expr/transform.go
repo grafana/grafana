@@ -73,7 +73,7 @@ func TransformData(ctx context.Context, req *backend.QueryDataRequest) (*backend
 	svc := Service{}
 	// Build the pipeline from the request, checking for ordering issues (e.g. loops)
 	// and parsing graph nodes from the queries.
-	pipeline, err := svc.BuildPipeline(req.Queries)
+	pipeline, err := svc.BuildPipeline(req)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -154,7 +154,7 @@ func QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.Que
 		}
 		queries[i] = &tsdb.Query{
 			RefId:         query.RefID,
-			IntervalMs:    query.Interval.Microseconds(),
+			IntervalMs:    query.Interval.Milliseconds(),
 			MaxDataPoints: query.MaxDataPoints,
 			QueryType:     query.QueryType,
 			DataSource:    getDsInfo.Result,

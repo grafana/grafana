@@ -102,6 +102,7 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 			assertContextContains(t, logs[0], "stacktrace", `UserError: Please replace user and try again
   at foofn (foo.js:123:23)
   at barfn (bar.js:113:231)`)
+			assert.NotContains(t, logs[0].Ctx, "context")
 		})
 
 		messageEvent := frontendSentryEvent{
@@ -127,8 +128,36 @@ func TestFrontendLoggingEndpoint(t *testing.T) {
 			assertContextContains(t, logs[0], "event_id", messageEvent.EventID)
 			assertContextContains(t, logs[0], "original_timestamp", messageEvent.Timestamp)
 			assert.NotContains(t, logs[0].Ctx, "stacktrace")
+			assert.NotContains(t, logs[0].Ctx, "context")
 			assertContextContains(t, logs[0], "user_email", user.Email)
 			assertContextContains(t, logs[0], "user_id", user.ID)
+		})
+
+		eventWithContext := frontendSentryEvent{
+			&sentry.Event{
+				EventID:   "123",
+				Level:     sentry.LevelInfo,
+				Request:   &request,
+				Timestamp: ts,
+				Message:   "hello world",
+				User:      user,
+				Contexts: map[string]interface{}{
+					"foo": map[string]interface{}{
+						"one":   "two",
+						"three": 4,
+					},
+					"bar": "baz",
+				},
+			},
+			nil,
+		}
+
+		logSentryEventScenario(t, "Should log event context", eventWithContext, func(sc *scenarioContext, logs []*log.Record) {
+			assert.Equal(t, 200, sc.resp.Code)
+			assert.Len(t, logs, 1)
+			assertContextContains(t, logs[0], "context_foo_one", "two")
+			assertContextContains(t, logs[0], "context_foo_three", "4")
+			assertContextContains(t, logs[0], "context_bar", "baz")
 		})
 	})
 }

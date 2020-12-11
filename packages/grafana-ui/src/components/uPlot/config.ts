@@ -9,13 +9,13 @@ export enum AxisPlacement {
   Hidden = 'hidden',
 }
 
-export enum PointMode {
+export enum PointVisibility {
   Auto = 'auto', // will show points when the density is low or line is hidden
   Never = 'never',
   Always = 'always',
 }
 
-export enum GraphMode {
+export enum DrawStyle {
   Line = 'line', // default
   Bars = 'bars', // will also have a gap percent
   Points = 'points', // Only show points
@@ -23,23 +23,34 @@ export enum GraphMode {
 
 export enum LineInterpolation {
   Linear = 'linear',
-  Staircase = 'staircase', // https://leeoniya.github.io/uPlot/demos/line-stepped.html
-  Smooth = 'smooth', // https://leeoniya.github.io/uPlot/demos/line-smoothing.html
+  Smooth = 'smooth',
+  StepBefore = 'stepBefore',
+  StepAfter = 'stepAfter',
 }
 
+/**
+ * @alpha
+ */
 export interface LineConfig {
   lineColor?: string;
   lineWidth?: number;
   lineInterpolation?: LineInterpolation;
+  spanNulls?: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface AreaConfig {
   fillColor?: string;
   fillOpacity?: number;
 }
 
+/**
+ * @alpha
+ */
 export interface PointsConfig {
-  points?: PointMode;
+  showPoints?: PointVisibility;
   pointSize?: number;
   pointColor?: string;
   pointSymbol?: string; // eventually dot,star, etc
@@ -52,28 +63,32 @@ export interface AxisConfig {
   axisWidth?: number; // pixels ideally auto?
 }
 
+/**
+ * @alpha
+ */
 export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, AxisConfig {
-  mode?: GraphMode;
+  drawStyle?: DrawStyle;
 }
 
 export const graphFieldOptions = {
-  mode: [
-    { label: 'Lines', value: GraphMode.Line },
-    { label: 'Bars', value: GraphMode.Bars },
-    { label: 'Points', value: GraphMode.Points },
-  ] as Array<SelectableValue<GraphMode>>,
+  drawStyle: [
+    { label: 'Lines', value: DrawStyle.Line },
+    { label: 'Bars', value: DrawStyle.Bars },
+    { label: 'Points', value: DrawStyle.Points },
+  ] as Array<SelectableValue<DrawStyle>>,
 
   lineInterpolation: [
     { label: 'Linear', value: LineInterpolation.Linear },
-    { label: 'Staircase', value: LineInterpolation.Staircase },
     { label: 'Smooth', value: LineInterpolation.Smooth },
+    { label: 'Step Before', value: LineInterpolation.StepBefore },
+    { label: 'Step After', value: LineInterpolation.StepAfter },
   ] as Array<SelectableValue<LineInterpolation>>,
 
-  points: [
-    { label: 'Auto', value: PointMode.Auto, description: 'Show points when the density is low' },
-    { label: 'Always', value: PointMode.Always },
-    { label: 'Never', value: PointMode.Never },
-  ] as Array<SelectableValue<PointMode>>,
+  showPoints: [
+    { label: 'Auto', value: PointVisibility.Auto, description: 'Show points when the density is low' },
+    { label: 'Always', value: PointVisibility.Always },
+    { label: 'Never', value: PointVisibility.Never },
+  ] as Array<SelectableValue<PointVisibility>>,
 
   axisPlacement: [
     { label: 'Auto', value: AxisPlacement.Auto, description: 'First field on the left, everything else on the right' },
