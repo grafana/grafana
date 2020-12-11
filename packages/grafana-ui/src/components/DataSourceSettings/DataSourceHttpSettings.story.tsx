@@ -25,6 +25,7 @@ const settingsMock: DataSourceSettings<any, any> = {
     timeInterval: '15s',
     httpMode: 'GET',
     keepCookies: ['cookie1', 'cookie2'],
+    serverName: '',
   },
   secureJsonData: {
     password: true,

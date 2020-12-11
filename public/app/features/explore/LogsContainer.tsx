@@ -91,6 +91,16 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     return [];
   };
 
+  showContextToggle = (): boolean => {
+    const { datasourceInstance } = this.props;
+
+    if (datasourceInstance?.showContextToggle) {
+      return datasourceInstance.showContextToggle();
+    }
+
+    return false;
+  };
+
   getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore(field, rowIndex, this.props.splitOpen, this.props.range);
   };
@@ -157,7 +167,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               timeZone={timeZone}
               scanning={scanning}
               scanRange={range.raw}
-              showContextToggle={this.props.datasourceInstance?.showContextToggle}
+              showContextToggle={this.showContextToggle}
               width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}
