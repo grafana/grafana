@@ -58,7 +58,12 @@ export function calculateFontSize(text: string, width: number, height: number, l
 export function getCanvasGradient(color: string, amount: number, plotHeight: number): CanvasGradient {
   const ctx = getCanvasContext();
   var gradient = ctx.createLinearGradient(0, 0, 0, plotHeight);
-  gradient.addColorStop(0, 'blue');
-  gradient.addColorStop(1, 'red');
+  gradient.addColorStop(0, color);
+  gradient.addColorStop(
+    1,
+    tinycolor(color)
+      .setAlpha(0)
+      .toRgbString()
+  );
   return gradient;
 }

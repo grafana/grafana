@@ -112,6 +112,14 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
               value: v / 10.0, // was 0-10
             });
             break;
+          case 'fillGradient':
+            if (v) {
+              rule.properties.push({
+                id: 'custom.fillGradient',
+                value: v / 10.0, // was 0-10
+              });
+            }
+            break;
           case 'points':
             rule.properties.push({
               id: 'custom.showPoints',
@@ -171,6 +179,9 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   }
   if (isNumber(angular.fill)) {
     graph.fillOpacity = angular.fill / 10; // fill is 0-10
+  }
+  if (isNumber(angular.fillGradient)) {
+    graph.fillGradient = angular.fillGradient / 10; // fill is 0-10
   }
   graph.spanNulls = angular.nullPointMode === NullValueMode.Null;
   if (angular.steppedLine) {

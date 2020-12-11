@@ -18,6 +18,7 @@ const stepAfterBuilder = pathBuilders.stepped!({ align: 1 });
 export interface SeriesProps extends LineConfig, AreaConfig, PointsConfig {
   drawStyle: DrawStyle;
   scaleKey: string;
+  height: number;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
@@ -32,6 +33,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       pointSize,
       fillColor,
       fillOpacity,
+      fillGradient,
       scaleKey,
       spanNulls,
     } = this.props;
@@ -90,7 +92,10 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
               .toRgbString()
           : fillColor,
       };
-      fillConfig.fill = getCanvasGradient(fillColor, 1, 200);
+      if (fillGradient) {
+        const height = this.props.height ?? 400;
+        fillConfig.fill = getCanvasGradient(fillColor, 1, height * 0.8 + height * fillGradient);
+      }
     }
 
     return {

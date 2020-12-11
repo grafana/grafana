@@ -77,7 +77,7 @@ export class Sparkline extends PureComponent<Props, State> {
   }
 
   prepareConfig(data: DataFrame, props: Props) {
-    const { theme } = this.props;
+    const { theme, height } = this.props;
     const builder = new UPlotConfigBuilder();
 
     builder.setCursor({
@@ -144,6 +144,7 @@ export class Sparkline extends PureComponent<Props, State> {
         pointColor: customConfig.pointColor ?? seriesColor,
         fillOpacity: customConfig.fillOpacity,
         fillColor: customConfig.fillColor ?? seriesColor,
+        height,
       });
     }
 
