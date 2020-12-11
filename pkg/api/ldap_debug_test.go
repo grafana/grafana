@@ -74,7 +74,7 @@ func getUserFromLDAPContext(t *testing.T, requestURL string) *scenarioContext {
 }
 
 func TestGetUserFromLDAPAPIEndpoint_UserNotFound(t *testing.T) {
-	getLDAPConfig = func() (*ldap.Config, error) {
+	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
 
@@ -131,7 +131,7 @@ func TestGetUserFromLDAPAPIEndpoint_OrgNotfound(t *testing.T) {
 		return nil
 	})
 
-	getLDAPConfig = func() (*ldap.Config, error) {
+	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
 
@@ -193,7 +193,7 @@ func TestGetUserFromLDAPAPIEndpoint(t *testing.T) {
 		return nil
 	})
 
-	getLDAPConfig = func() (*ldap.Config, error) {
+	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
 
@@ -273,7 +273,7 @@ func TestGetUserFromLDAPAPIEndpoint_WithTeamHandler(t *testing.T) {
 		return nil
 	})
 
-	getLDAPConfig = func() (*ldap.Config, error) {
+	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
 
@@ -349,7 +349,7 @@ func TestGetLDAPStatusAPIEndpoint(t *testing.T) {
 		{Host: "10.0.0.5", Port: 361, Available: false, Error: errors.New("something is awfully wrong")},
 	}
 
-	getLDAPConfig = func() (*ldap.Config, error) {
+	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
 	}
 
@@ -412,7 +412,7 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(t
 
 func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T) {
-		getLDAPConfig = func() (*ldap.Config, error) {
+		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
 		}
 
@@ -457,7 +457,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_Success(t *testing.T) {
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T) {
-		getLDAPConfig = func() (*ldap.Config, error) {
+		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
 		}
 
@@ -485,7 +485,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotFound(t *testing.T) {
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T) {
-		getLDAPConfig = func() (*ldap.Config, error) {
+		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
 		}
 
@@ -528,7 +528,7 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenGrafanaAdmin(t *testing.T) {
 
 func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 	sc := postSyncUserWithLDAPContext(t, "/api/admin/ldap/sync/34", func(t *testing.T) {
-		getLDAPConfig = func() (*ldap.Config, error) {
+		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 			return &ldap.Config{}, nil
 		}
 
