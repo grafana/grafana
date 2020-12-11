@@ -1,17 +1,27 @@
-import React from 'react';
-import angular from 'angular';
+import React, { useState } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { CodeEditor } from '@grafana/ui';
+import { Button, CodeEditor } from '@grafana/ui';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { getDashboardSrv } from '../../services/DashboardSrv';
 import { DashboardModel } from '../../state/DashboardModel';
-import './SettingsCtrl';
 
 interface Props {
   dashboard: DashboardModel;
 }
 
 export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
-  const height = 500;
-  const dashboardJson = angular.toJson(dashboard.getSaveModelClone(), true);
+  const [dashboardJson, setDashboardJson] = useState<string>(JSON.stringify(dashboard.getSaveModelClone(), null, 2));
+  const onBlur = (value: string) => {
+    setDashboardJson(value);
+  };
+  const onClick = () => {
+    getDashboardSrv()
+      .saveJSONDashboard(dashboardJson)
+      .then(() => {
+        dashboardWatcher.reloadPage();
+      });
+  };
+
   return (
     <>
       <h3 className="dashboard-settings__header">JSON Model</h3>
@@ -20,13 +30,23 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
         queries etc.
       </div>
 
-      <div className="gf-form">
+      <div>
         <AutoSizer disableHeight>
           {({ width }) => (
-            <CodeEditor value={dashboardJson} language="json" width={width} height={height} showMiniMap={false} />
+            <CodeEditor
+              value={dashboardJson}
+              language="json"
+              width={width}
+              height="500px"
+              showMiniMap={false}
+              onBlur={onBlur}
+            />
           )}
         </AutoSizer>
       </div>
+      <Button className="m-t-3" onClick={onClick}>
+        Save Changes
+      </Button>
     </>
   );
 };
