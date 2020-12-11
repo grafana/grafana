@@ -160,7 +160,6 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 	for {
 		select {
 		case tick := <-ng.schedule.heartbeat.C:
-			start := c.Now()
 			alertDefinitions := ng.fetchAllDetails(tick)
 			ng.schedule.log.Debug("alert definitions fetched", "count", len(alertDefinitions))
 
@@ -196,13 +195,13 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 				// remove the alert definition from the registered alert definitions
 				delete(registeredDefinitions, itemID)
 			}
-			lostTime := c.Now().Sub(start)
 
 			var step int64 = 0
 			if len(readyToRun) > 0 {
-				step = (ng.schedule.baseInterval.Nanoseconds() - lostTime.Nanoseconds()) / int64(len(readyToRun))
+				step = ng.schedule.baseInterval.Nanoseconds() / int64(len(readyToRun))
 			}
 
+			fmt.Println(">>>> step:", step)
 			for i := range readyToRun {
 				item := readyToRun[i]
 
