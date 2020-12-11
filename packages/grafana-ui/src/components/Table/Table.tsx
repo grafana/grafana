@@ -172,7 +172,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     if (onRowsChange) {
       onRowsChange(rows);
     }
-  }, [rows.length]);
+  }, [rows]);
 
   const RenderRow = React.useCallback(
     ({ index, style }) => {
