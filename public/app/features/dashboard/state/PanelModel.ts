@@ -30,7 +30,7 @@ import config from 'app/core/config';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
-import { getAllVariableValuesForUrl } from '../../variables/utils';
+import { getAllVariableValuesForUrl } from '../../variables/getAllVariableValuesForUrl';
 
 export interface GridPos {
   x: number;
@@ -507,7 +507,6 @@ export class PanelModel implements DataConfigSource {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
     const allVariablesParams = getAllVariableValuesForUrl(vars);
-
     const variablesQuery = urlUtil.toUrlParams(allVariablesParams);
     const timeRangeUrl = urlUtil.toUrlParams(getTimeSrv().timeRangeForUrl());
 

@@ -2,7 +2,7 @@ import { config } from '@grafana/runtime';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { createShortLink } from 'app/core/utils/shortLinks';
 import { PanelModel, dateTime, urlUtil } from '@grafana/data';
-import { getAllVariableValuesForUrl } from '../../../variables/utils';
+import { getAllVariableValuesForUrl } from 'app/features/variables/getAllVariableValuesForUrl';
 
 export function buildParams(
   useCurrentTimeRange: boolean,

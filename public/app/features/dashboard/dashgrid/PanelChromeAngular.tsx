@@ -247,7 +247,6 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
           dashboard={dashboard}
           title={panel.title}
           description={panel.description}
-          scopedVars={panel.scopedVars}
           angularComponent={angularComponent}
           links={panel.links}
           error={errorMessage}

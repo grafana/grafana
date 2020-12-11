@@ -1,5 +1,14 @@
 import { getFieldLinksForExplore } from './links';
-import { ArrayVector, DataLink, dateTime, Field, FieldType, LinkModel, ScopedVars, TimeRange } from '@grafana/data';
+import {
+  ArrayVector,
+  DataLink,
+  dateTime,
+  Field,
+  FieldType,
+  InterpolateFunction,
+  LinkModel,
+  TimeRange,
+} from '@grafana/data';
 import { setLinkSrv } from '../../panel/panellinks/link_srv';
 
 describe('getFieldLinksForExplore', () => {
@@ -57,7 +66,7 @@ describe('getFieldLinksForExplore', () => {
 
 function setup(link: DataLink) {
   setLinkSrv({
-    getDataLinkUIModel(link: DataLink, scopedVars: ScopedVars, origin: any): LinkModel<any> {
+    getDataLinkUIModel(link: DataLink, replaceVariables: InterpolateFunction, origin: any): LinkModel<any> {
       return {
         href: link.url,
         title: link.title,
