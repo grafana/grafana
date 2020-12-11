@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 )
 
@@ -14,7 +13,7 @@ func TestPreferencesDataAccess(t *testing.T) {
 	ss := InitTestDB(t)
 
 	t.Run("GetPreferencesWithDefaults with no saved preferences should return defaults", func(t *testing.T) {
-		setting.DefaultTheme = "light"
+		ss.Cfg.DefaultTheme = "light"
 		ss.Cfg.DateFormats.DefaultTimezone = "UTC"
 
 		query := &models.GetPreferencesWithDefaultsQuery{User: &models.SignedInUser{}}
