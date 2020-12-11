@@ -11,6 +11,11 @@ min-occurrences = 5
 [linters-settings.exhaustive]
 default-signifies-exhaustive = true
 
+[linters-settings.gocritic]
+enabled-checks = ["ruleguard"]
+[linters-settings.gocritic.settings.ruleguard]
+rules = "pkg/ruleguard.rules.go"
+
 [linters]
 disable-all = true
 enable = [

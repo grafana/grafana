@@ -94,8 +94,12 @@ var config *Config
 
 // GetConfig returns the LDAP config if LDAP is enabled otherwise it returns nil. It returns either cached value of
 // the config or it reads it and caches it first.
-func GetConfig() (*Config, error) {
-	if !IsEnabled() {
+func GetConfig(cfg *setting.Cfg) (*Config, error) {
+	if cfg != nil {
+		if !cfg.LDAPEnabled {
+			return nil, nil
+		}
+	} else if !IsEnabled() {
 		return nil, nil
 	}
 

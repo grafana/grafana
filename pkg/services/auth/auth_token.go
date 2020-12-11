@@ -18,8 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const ServiceName = "UserAuthTokenService"
+
 func init() {
-	registry.RegisterService(&UserAuthTokenService{})
+	registry.Register(&registry.Descriptor{
+		Name:         ServiceName,
+		Instance:     &UserAuthTokenService{},
+		InitPriority: registry.Medium,
+	})
 }
 
 var getTime = time.Now

@@ -16,8 +16,6 @@ import (
 )
 
 func TestRecoveryMiddleware(t *testing.T) {
-	setting.ErrTemplateName = "error-template"
-
 	t.Run("Given an API route that panics", func(t *testing.T) {
 		apiURL := "/api/whatever"
 		recoveryScenario(t, "recovery middleware should return json", apiURL, func(t *testing.T, sc *scenarioContext) {
@@ -52,18 +50,21 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
+		cfg := setting.NewCfg()
+		cfg.ErrTemplateName = "error-template"
 		sc := &scenarioContext{
 			t:   t,
 			url: url,
+			cfg: cfg,
 		}
 
 		viewsPath, err := filepath.Abs("../../public/views")
 		require.NoError(t, err)
 
 		sc.m = macaron.New()
-		sc.m.Use(Recovery())
+		sc.m.Use(Recovery(cfg))
 
-		sc.m.Use(AddDefaultResponseHeaders())
+		sc.m.Use(AddDefaultResponseHeaders(cfg))
 		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
 			Directory: viewsPath,
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
@@ -72,7 +73,8 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		sc.userAuthTokenService = auth.NewFakeUserAuthTokenService()
 		sc.remoteCacheService = remotecache.NewFakeStore(t)
 
-		sc.m.Use(GetContextHandler(sc.userAuthTokenService, sc.remoteCacheService, nil))
+		contextHandler := getContextHandler(t, nil)
+		sc.m.Use(contextHandler.Middleware)
 		// mock out gc goroutine
 		sc.m.Use(OrgRedirect())
 

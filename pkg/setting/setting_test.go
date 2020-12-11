@@ -140,7 +140,7 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			So(Domain, ShouldEqual, "test2")
+			So(cfg.Domain, ShouldEqual, "test2")
 		})
 
 		Convey("Defaults can be overridden in specified config file", func() {
@@ -248,7 +248,7 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			So(AuthProxySyncTtl, ShouldEqual, 2)
+			So(cfg.AuthProxySyncTTL, ShouldEqual, 2)
 		})
 
 		Convey("Only ldap_sync_ttl should return the value ldap_sync_ttl", func() {
@@ -259,7 +259,7 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			So(AuthProxySyncTtl, ShouldEqual, 5)
+			So(cfg.AuthProxySyncTTL, ShouldEqual, 5)
 		})
 
 		Convey("ldap_sync should override ldap_sync_ttl that is default value", func() {
@@ -270,7 +270,7 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			So(AuthProxySyncTtl, ShouldEqual, 5)
+			So(cfg.AuthProxySyncTTL, ShouldEqual, 5)
 		})
 
 		Convey("ldap_sync should not override ldap_sync_ttl that is different from default value", func() {
@@ -281,7 +281,7 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			So(AuthProxySyncTtl, ShouldEqual, 12)
+			So(cfg.AuthProxySyncTTL, ShouldEqual, 12)
 		})
 	})
 
