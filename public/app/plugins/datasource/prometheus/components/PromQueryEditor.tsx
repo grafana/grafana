@@ -12,6 +12,7 @@ import { PromQuery, PromOptions } from '../types';
 
 import PromQueryField from './PromQueryField';
 import PromLink from './PromLink';
+import { PromExemplarField } from './PromExemplarField';
 export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>;
 
 const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
@@ -96,7 +97,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { datasource, query, range, data } = this.props;
+    const { datasource, query, range, data, onChange } = this.props;
     const { formatOption, instant, interval, intervalFactorOption, legendFormat } = this.state;
 
     return (
@@ -183,6 +184,8 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               />
             </InlineFormLabel>
           </div>
+
+          <PromExemplarField query={query} onChange={onChange} />
         </div>
       </div>
     );
