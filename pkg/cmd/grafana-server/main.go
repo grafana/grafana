@@ -108,7 +108,11 @@ func main() {
 }
 
 func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnostics *tracingDiagnostics) error {
-	defer log.Close()
+	defer func() {
+		if err := log.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
+		}
+	}()
 
 	if traceDiagnostics.enabled {
 		fmt.Println("diagnostics: tracing enabled", "file", traceDiagnostics.file)
