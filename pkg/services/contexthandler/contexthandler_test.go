@@ -65,7 +65,10 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 
 	foundLoginCookie := false
 	resp := rr.Result()
-	defer resp.Body.Close()
+	t.Cleanup(func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	})
 	for _, c := range resp.Cookies() {
 		if c.Name == "login_token" {
 			foundLoginCookie = true
