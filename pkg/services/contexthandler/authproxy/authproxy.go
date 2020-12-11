@@ -81,7 +81,7 @@ type Options struct {
 	OrgID       int64
 }
 
-// New instance of the AuthProxy
+// New instance of the AuthProxy.
 func New(cfg *setting.Cfg, options *Options) *AuthProxy {
 	header := options.Ctx.Req.Header.Get(cfg.AuthProxyHeaderName)
 	return &AuthProxy{
@@ -93,7 +93,7 @@ func New(cfg *setting.Cfg, options *Options) *AuthProxy {
 	}
 }
 
-// IsEnabled checks if the proxy auth is enabled
+// IsEnabled checks if the auth proxy is enabled.
 func (auth *AuthProxy) IsEnabled() bool {
 	// Bail if the setting is not enabled
 	return auth.cfg.AuthProxyEnabled

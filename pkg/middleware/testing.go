@@ -67,6 +67,8 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 
 	sc.resp = httptest.NewRecorder()
 	req, err := http.NewRequest(method, url, nil)
+	require.NoError(sc.t, err)
+
 	q := req.URL.Query()
 	for k, v := range queryParams {
 		q.Add(k, v)
@@ -75,11 +77,6 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 	require.NoError(sc.t, err)
 	sc.req = req
 
-	return sc
-}
-
-func (sc *scenarioContext) handler(fn handlerFunc) *scenarioContext {
-	sc.handlerFunc = fn
 	return sc
 }
 
@@ -109,6 +106,9 @@ func (sc *scenarioContext) exec() {
 	if sc.resp.Header().Get("Content-Type") == "application/json; charset=UTF-8" {
 		err := json.NewDecoder(sc.resp.Body).Decode(&sc.respJson)
 		require.NoError(sc.t, err)
+		sc.t.Log("Decoded JSON", "json", sc.respJson)
+	} else {
+		sc.t.Log("Not decoding JSON")
 	}
 }
 
