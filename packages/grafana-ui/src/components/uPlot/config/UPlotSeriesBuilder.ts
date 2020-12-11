@@ -1,5 +1,6 @@
 import tinycolor from 'tinycolor2';
 import uPlot, { Series } from 'uplot';
+import { getCanvasGradient } from '../../../utils/measureText';
 import { DrawStyle, LineConfig, AreaConfig, PointsConfig, PointVisibility, LineInterpolation } from '../config';
 import { PlotConfigBuilder } from '../types';
 
@@ -89,6 +90,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
               .toRgbString()
           : fillColor,
       };
+      fillConfig.fill = getCanvasGradient(fillColor, 1, 200);
     }
 
     return {

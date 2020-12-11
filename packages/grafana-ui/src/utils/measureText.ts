@@ -1,5 +1,20 @@
+import tinycolor from 'tinycolor2';
+
 let canvas: HTMLCanvasElement | null = null;
 const cache: Record<string, TextMetrics> = {};
+
+function getCanvasContext() {
+  if (canvas === null) {
+    canvas = document.createElement('canvas');
+  }
+
+  const context = canvas.getContext('2d');
+  if (!context) {
+    throw new Error('Could not create context');
+  }
+
+  return context;
+}
 
 /**
  * @beta
@@ -13,14 +28,7 @@ export function measureText(text: string, fontSize: number): TextMetrics {
     return fromCache;
   }
 
-  if (canvas === null) {
-    canvas = document.createElement('canvas');
-  }
-
-  const context = canvas.getContext('2d');
-  if (!context) {
-    throw new Error('Could not create context');
-  }
+  const context = getCanvasContext();
 
   context.font = fontStyle;
   const metrics = context.measureText(text);
@@ -42,4 +50,15 @@ export function calculateFontSize(text: string, width: number, height: number, l
   // final fontSize
   const optimalSize = Math.min(fontSizeBasedOnHeight, fontSizeBasedOnWidth);
   return Math.min(optimalSize, maxSize ?? optimalSize);
+}
+
+/**
+ * @beta
+ */
+export function getCanvasGradient(color: string, amount: number, plotHeight: number): CanvasGradient {
+  const ctx = getCanvasContext();
+  var gradient = ctx.createLinearGradient(0, 0, 0, plotHeight);
+  gradient.addColorStop(0, 'blue');
+  gradient.addColorStop(1, 'red');
+  return gradient;
 }
