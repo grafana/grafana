@@ -1494,7 +1494,7 @@
       {
         "allValue": null,
         "current": {},
-        "datasource": "${DS_GOOGLE_CLOUD MONITORING}",
+        "datasource": "$datasource",
         "definition": "Google Cloud Monitoring - Label Values",
         "error": null,
         "hide": 0,
