@@ -2,6 +2,8 @@ package usagestats
 
 import (
 	"bytes"
+	"errors"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"runtime"
 	"sync"
@@ -322,6 +324,156 @@ func TestMetrics(t *testing.T) {
 			So(getSystemStatsWasCalled, ShouldBeTrue)
 		})
 	})
+}
+
+func Test_AddMetric(t *testing.T) {
+	uss := &UsageStatsService{
+		Bus:             bus.New(),
+		Cfg:             setting.NewCfg(),
+		externalMetrics: make(map[string]MetricFunc),
+	}
+	metricName := "stats.test_metric.count"
+
+	uss.AddMetric(metricName, func() (interface{}, error) {
+		return 1, nil
+	})
+
+	metric, _ := uss.externalMetrics[metricName]()
+	assert.Equal(t, 1, metric)
+}
+
+func Test_AddMetric_Override(t *testing.T) {
+	uss := &UsageStatsService{
+		Bus:             bus.New(),
+		Cfg:             setting.NewCfg(),
+		externalMetrics: make(map[string]MetricFunc),
+	}
+
+	metricName := "stats.test_metric.count"
+	uss.AddMetric(metricName, func() (interface{}, error) {
+		return 1, nil
+	})
+
+	metric, _ := uss.externalMetrics[metricName]()
+	assert.Equal(t, 1, metric)
+
+	uss.AddMetric(metricName, func() (interface{}, error) {
+		return 2, nil
+	})
+	newMetric, _ := uss.externalMetrics[metricName]()
+	assert.Equal(t, 2, newMetric)
+}
+
+func Test_AddMultipleMetrics(t *testing.T) {
+	uss := &UsageStatsService{
+		Bus:             bus.New(),
+		Cfg:             setting.NewCfg(),
+		externalMetrics: make(map[string]MetricFunc),
+	}
+
+	metricName := "stats.test_metric.count"
+	secondMetricName := "stats.test_second_metric.name"
+	uss.AddMetric(metricName, func() (interface{}, error) {
+		return 1, nil
+	})
+	uss.AddMetric(secondMetricName, func() (interface{}, error) {
+		return "a", nil
+	})
+
+	firstMetric, _ := uss.externalMetrics[metricName]()
+	secondMetric, _ := uss.externalMetrics[secondMetricName]()
+	assert.Equal(t, 1, firstMetric)
+	assert.Equal(t, "a", secondMetric)
+}
+
+func Test_GetUsageReport_ExternalMetrics(t *testing.T) {
+	uss := &UsageStatsService{
+		Bus:                bus.New(),
+		Cfg:                setting.NewCfg(),
+		SQLStore:           sqlstore.InitTestDB(t),
+		License:            &licensing.OSSLicensingService{},
+		AlertingUsageStats: &alertingUsageMock{},
+		externalMetrics:    make(map[string]MetricFunc),
+	}
+
+	uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
+		query.Result = &models.SystemStats{}
+		return nil
+	})
+
+	uss.Bus.AddHandler(func(query *models.GetDataSourceStatsQuery) error {
+		query.Result = []*models.DataSourceStats{}
+		return nil
+	})
+
+	uss.Bus.AddHandler(func(query *models.GetDataSourceAccessStatsQuery) error {
+		query.Result = []*models.DataSourceAccessStats{}
+		return nil
+	})
+
+	uss.Bus.AddHandler(func(query *models.GetAlertNotifierUsageStatsQuery) error {
+		query.Result = []*models.NotifierUsageStats{}
+		return nil
+	})
+
+	metricName := "stats.test_metric.count"
+	uss.AddMetric(metricName, func() (interface{}, error) {
+		return 1, nil
+	})
+
+	report, err := uss.GetUsageReport()
+	if err != nil {
+		assert.FailNow(t, "Received error from GetUsageReport")
+	}
+
+	metric, _ := report.Metrics[metricName]
+	assert.Equal(t, 1, metric)
+}
+
+func Test_RegisterExternalMetrics(t *testing.T) {
+	uss := &UsageStatsService{
+		Bus:             bus.New(),
+		Cfg:             setting.NewCfg(),
+		externalMetrics: make(map[string]MetricFunc),
+	}
+	metrics := map[string]interface{}{"stats.test_metric.count": 1, "stats.test_metric_second.count": 2}
+	extMetricName := "stats.test_external_metric.count"
+
+	uss.AddMetric(extMetricName, func() (interface{}, error) {
+		return 1, nil
+	})
+
+	uss.registerExternalMetrics(metrics)
+
+	extMetric, _ := metrics[extMetricName]
+	assert.Equal(t, 1, extMetric)
+}
+
+func Test_RegisterExternalMetrics_IgnoreErrorValues(t *testing.T) {
+	uss := &UsageStatsService{
+		Bus:             bus.New(),
+		Cfg:             setting.NewCfg(),
+		externalMetrics: make(map[string]MetricFunc),
+	}
+	metrics := map[string]interface{}{"stats.test_metric.count": 1, "stats.test_metric_second.count": 2}
+	extMetricName := "stats.test_external_metric.count"
+	extErrorMetricName := "stats.test_external_metric_error.count"
+
+	uss.AddMetric(extMetricName, func() (interface{}, error) {
+		return 1, nil
+	})
+
+	uss.AddMetric(extErrorMetricName, func() (interface{}, error) {
+		return 1, errors.New("some error")
+	})
+
+	uss.registerExternalMetrics(metrics)
+
+	extErrorMetric, _ := metrics[extErrorMetricName]
+	extMetric, _ := metrics[extMetricName]
+	assert.Equal(t, 1, extMetric)
+	assert.Nil(t, extErrorMetric)
+	assert.Len(t, metrics, 3)
 }
 
 func waitTimeout(wg *sync.WaitGroup, timeout time.Duration) bool {
