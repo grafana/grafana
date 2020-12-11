@@ -19,6 +19,8 @@ type Response interface {
 	WriteTo(ctx *models.ReqContext)
 	// Status gets the response's status.
 	Status() int
+	// Body gets the response's body.
+	Body() []byte
 }
 
 type NormalResponse struct {
@@ -46,6 +48,11 @@ func Wrap(action interface{}) macaron.Handler {
 // Status gets the response's status.
 func (r *NormalResponse) Status() int {
 	return r.status
+}
+
+// Body gets the response's body.
+func (r *NormalResponse) Body() []byte {
+	return r.body
 }
 
 func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
