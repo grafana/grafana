@@ -1,4 +1,11 @@
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { ApplyFieldOverrideOptions, DataTransformerConfig, dateTime, FieldColorModeId } from '@grafana/data';
+import alertDef from './alertDef';
 import {
+  AlertCondition,
+  AlertDefinition,
+  AlertDefinitionState,
+  AlertDefinitionUiState,
   AlertRule,
   AlertRuleDTO,
   AlertRulesState,
@@ -6,9 +13,13 @@ import {
   NotificationChannelState,
   NotifierDTO,
 } from 'app/types';
-import alertDef from './alertDef';
-import { dateTime } from '@grafana/data';
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import store from 'app/core/store';
+import { config } from '@grafana/runtime';
+import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { QueryGroupOptions } from '../../query/components/QueryGroupOptions';
+
+export const ALERT_DEFINITION_UI_STATE_STORAGE_KEY = 'grafana.alerting.alertDefinition.ui';
+const DEFAULT_ALERT_DEFINITION_UI_STATE: AlertDefinitionUiState = { rightPaneSize: 400, topPaneSize: 0.45 };
 
 export const initialState: AlertRulesState = {
   items: [],
@@ -20,6 +31,37 @@ export const initialChannelState: NotificationChannelState = {
   notificationChannelTypes: [],
   notificationChannel: {},
   notifiers: [],
+};
+
+const options: ApplyFieldOverrideOptions = {
+  fieldConfig: {
+    defaults: {
+      color: {
+        mode: FieldColorModeId.PaletteClassic,
+      },
+    },
+    overrides: [],
+  },
+  replaceVariables: (v: string) => v,
+  theme: config.theme,
+};
+
+const dataConfig = {
+  getTransformations: () => [] as DataTransformerConfig[],
+  getFieldOverrideOptions: () => options,
+};
+
+export const initialAlertDefinitionState: AlertDefinitionState = {
+  alertDefinition: {
+    id: 0,
+    name: '',
+    description: '',
+    condition: {} as AlertCondition,
+  },
+  queryOptions: { maxDataPoints: 100, dataSource: { name: 'gdev-testdata' }, queries: [] },
+  queryRunner: new PanelQueryRunner(dataConfig),
+  uiState: { ...store.getObject(ALERT_DEFINITION_UI_STATE_STORAGE_KEY, DEFAULT_ALERT_DEFINITION_UI_STATE) },
+  data: [],
 };
 
 function convertToAlertRule(dto: AlertRuleDTO, state: string): AlertRule {
@@ -108,6 +150,28 @@ const notificationChannelSlice = createSlice({
   },
 });
 
+const alertDefinitionSlice = createSlice({
+  name: 'alertDefinition',
+  initialState: initialAlertDefinitionState,
+  reducers: {
+    setAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<any>) => {
+      return { ...state, alertDefinition: action.payload };
+    },
+    updateAlertDefinition: (state: AlertDefinitionState, action: PayloadAction<Partial<AlertDefinition>>) => {
+      return { ...state, alertDefinition: { ...state.alertDefinition, ...action.payload } };
+    },
+    setUiState: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionUiState>) => {
+      return { ...state, uiState: { ...state.uiState, ...action.payload } };
+    },
+    setQueryOptions: (state: AlertDefinitionState, action: PayloadAction<QueryGroupOptions>) => {
+      return {
+        ...state,
+        queryOptions: action.payload,
+      };
+    },
+  },
+});
+
 export const { loadAlertRules, loadedAlertRules, setSearchQuery } = alertRulesSlice.actions;
 
 export const {
@@ -116,12 +180,16 @@ export const {
   resetSecureField,
 } = notificationChannelSlice.actions;
 
+export const { setUiState, updateAlertDefinition, setQueryOptions } = alertDefinitionSlice.actions;
+
 export const alertRulesReducer = alertRulesSlice.reducer;
 export const notificationChannelReducer = notificationChannelSlice.reducer;
+export const alertDefinitionsReducer = alertDefinitionSlice.reducer;
 
 export default {
   alertRules: alertRulesReducer,
   notificationChannel: notificationChannelReducer,
+  alertDefinition: alertDefinitionsReducer,
 };
 
 function migrateSecureFields(
