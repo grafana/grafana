@@ -125,3 +125,23 @@ text = "ST1020"
 [[issues.exclude-rules]]
 linters = ["stylecheck"]
 text = "ST1021"
+
+# TODO: Enable
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G204"
+
+# TODO: Enable
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G301"
+
+# TODO: Enable
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G302"
+
+# TODO: Enable
+[[issues.exclude-rules]]
+linters = ["gosec"]
+text = "G304"
