@@ -198,7 +198,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 	})
 }
 
-type libraryPanelDTO struct {
+type libraryPanel struct {
 	ID       int64  `json:"ID"`
 	OrgID    int64  `json:"OrgID"`
 	FolderID int64  `json:"FolderID"`
@@ -206,11 +206,11 @@ type libraryPanelDTO struct {
 }
 
 type libraryPanelResult struct {
-	Result libraryPanelDTO `json:"result"`
+	Result libraryPanel `json:"result"`
 }
 
 type libraryPanelsResult struct {
-	Result []libraryPanelDTO `json:"result"`
+	Result []libraryPanel `json:"result"`
 }
 
 type testContext struct {

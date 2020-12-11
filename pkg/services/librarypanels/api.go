@@ -71,7 +71,7 @@ func (lps *LibraryPanelService) getAllHandler(c *models.ReqContext) api.Response
 	libraryPanels, err := lps.getAllLibraryPanels(c)
 
 	if err != nil {
-		return api.Error(500, "Failed to get library panel", err)
+		return api.Error(500, "Failed to get library panels", err)
 	}
 
 	return api.JSON(200, util.DynMap{"result": libraryPanels})
