@@ -53,12 +53,15 @@ export function lokiStreamResultToDataFrame(stream: LokiStreamResult, reverse?: 
   const lines = new ArrayVector<string>([]);
   const uids = new ArrayVector<string>([]);
 
+  // We need to store and track all used uids to ensure that uids are unique
+  const usedUids: { string?: number } = {};
+
   for (const [ts, line] of stream.values) {
     // num ns epoch in string, we convert it to iso string here so it matches old format
     times.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
     timesNs.add(ts);
     lines.add(line);
-    uids.add(createUid(ts, labelsString, line));
+    uids.add(createUid(ts, labelsString, line, usedUids));
   }
 
   return constructDataFrame(times, timesNs, lines, uids, labels, reverse, refId);
@@ -127,6 +130,9 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
   const labelsField = data.fields[3];
   const idField = data.fields[4];
 
+  // We need to store and track all used uids to ensure that uids are unique
+  const usedUids: { string?: number } = {};
+
   for (const stream of streams) {
     // Find unique labels
     const unique = findUniqueLabels(stream.stream, baseLabels);
@@ -141,13 +147,29 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
       tsNsField.values.add(ts);
       lineField.values.add(line);
       labelsField.values.add(unique);
-      idField.values.add(createUid(ts, allLabelsString, line));
+      idField.values.add(createUid(ts, allLabelsString, line, usedUids));
     }
   }
 }
 
-function createUid(ts: string, labelsString: string, line: string): string {
-  return md5(`${ts}_${labelsString}_${line}`);
+function createUid(ts: string, labelsString: string, line: string, usedUids: any): string {
+  // Generate id as hashed nanosecond timestamp, labels and line (this does not have to be unique)
+  let id = md5(`${ts}_${labelsString}_${line}`);
+
+  // Check if generated id is unique
+  // If not and we've already used it, append it's count after it
+  if (id in usedUids) {
+    // Increase the count
+    const newCount = usedUids[id] + 1;
+    usedUids[id] = newCount;
+    // Append index to generated id to make it unique
+    id = `${id}_${newCount}`;
+  } else {
+    // If id is unique and wasn't used, add it to allUids and start count at 0
+    usedUids[id] = 0;
+  }
+  // Return unique id
+  return id;
 }
 
 function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: TransformerOptions): TimeSeries {

@@ -137,7 +137,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
             {hasData &&
               firstRows.map((row, index) => (
                 <LogRow
-                  key={`${row.uid}-${index}`}
+                  key={row.uid}
                   getRows={getRows}
                   getRowContext={getRowContext}
                   highlighterExpressions={highlighterExpressions}
@@ -162,7 +162,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
               renderAll &&
               lastRows.map((row, index) => (
                 <LogRow
-                  key={`${row.uid}-${index}`}
+                  key={row.uid}
                   getRows={getRows}
                   getRowContext={getRowContext}
                   row={row}
