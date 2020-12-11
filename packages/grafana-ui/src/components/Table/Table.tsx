@@ -1,9 +1,10 @@
-import React, { FC, memo, useCallback, useMemo } from 'react';
+import React, { FC, memo, useCallback, useEffect, useMemo } from 'react';
 import { DataFrame, Field, getFieldDisplayName } from '@grafana/data';
 import {
   Cell,
   Column,
   HeaderGroup,
+  Row,
   useAbsoluteLayout,
   useFilters,
   UseFiltersState,
@@ -43,6 +44,7 @@ export interface Props {
   onColumnResize?: TableColumnResizeActionCallback;
   onSortByChange?: TableSortByActionCallback;
   onCellFilterAdded?: TableFilterActionCallback;
+  onRowsChange?: (rows: Row[]) => void;
 }
 
 interface ReactTableInternalState extends UseResizeColumnsState<{}>, UseSortByState<{}>, UseFiltersState<{}> {}
@@ -122,6 +124,7 @@ export const Table: FC<Props> = memo((props: Props) => {
     noHeader,
     resizable = true,
     initialSortBy,
+    onRowsChange,
   } = props;
   const theme = useTheme();
   const tableStyles = getTableStyles(theme);
@@ -164,6 +167,12 @@ export const Table: FC<Props> = memo((props: Props) => {
   );
 
   const { fields } = data;
+
+  useEffect(() => {
+    if (onRowsChange) {
+      onRowsChange(rows);
+    }
+  }, [rows.length]);
 
   const RenderRow = React.useCallback(
     ({ index, style }) => {
