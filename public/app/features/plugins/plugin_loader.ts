@@ -35,7 +35,6 @@ import {
 import * as flatten from 'app/core/utils/flatten';
 import * as ticks from 'app/core/utils/ticks';
 import { BackendSrv, getBackendSrv } from 'app/core/services/backend_srv';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { promiseToDigest } from 'app/core/utils/promiseToDigest';
 import impressionSrv from 'app/core/services/impression_srv';
 import builtInPlugins from './built_in_plugins';
@@ -127,11 +126,6 @@ exposeToPlugin('app/features/dashboard/impression_store', {
 exposeToPlugin('app/core/services/backend_srv', {
   BackendSrv,
   getBackendSrv,
-});
-
-exposeToPlugin('app/features/dashboard/services/TimeSrv', {
-  TimeSrv,
-  getTimeSrv,
 });
 
 exposeToPlugin('app/plugins/sdk', sdk);
