@@ -426,7 +426,7 @@ func Test_GetUsageReport_ExternalMetrics(t *testing.T) {
 		assert.FailNow(t, "Received error from GetUsageReport")
 	}
 
-	metric, _ := report.Metrics[metricName]
+	metric := report.Metrics[metricName]
 	assert.Equal(t, 1, metric)
 }
 
@@ -445,7 +445,7 @@ func Test_RegisterExternalMetrics(t *testing.T) {
 
 	uss.registerExternalMetrics(metrics)
 
-	extMetric, _ := metrics[extMetricName]
+	extMetric := metrics[extMetricName]
 	assert.Equal(t, 1, extMetric)
 }
 
@@ -469,8 +469,8 @@ func Test_RegisterExternalMetrics_IgnoreErrorValues(t *testing.T) {
 
 	uss.registerExternalMetrics(metrics)
 
-	extErrorMetric, _ := metrics[extErrorMetricName]
-	extMetric, _ := metrics[extMetricName]
+	extErrorMetric := metrics[extErrorMetricName]
+	extMetric := metrics[extMetricName]
 	assert.Equal(t, 1, extMetric)
 	assert.Nil(t, extErrorMetric)
 	assert.Len(t, metrics, 3)
