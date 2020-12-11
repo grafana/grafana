@@ -48,6 +48,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     return {
       [scaleKey]: {
         time: isTime,
+        auto: !isTime,
         range: range ?? this.range,
         ...distribution,
       },

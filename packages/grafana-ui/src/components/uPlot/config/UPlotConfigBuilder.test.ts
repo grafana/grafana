@@ -20,12 +20,19 @@ describe('UPlotConfigBuilder', () => {
       expect(builder.getConfig()).toMatchInlineSnapshot(`
         Object {
           "axes": Array [],
+          "cursor": Object {
+            "drag": Object {
+              "setScale": false,
+            },
+          },
           "scales": Object {
             "scale-x": Object {
+              "auto": false,
               "range": [Function],
               "time": true,
             },
             "scale-y": Object {
+              "auto": true,
               "distr": 1,
               "log": undefined,
               "range": [Function],
@@ -65,8 +72,14 @@ describe('UPlotConfigBuilder', () => {
         expect(builder.getConfig()).toMatchInlineSnapshot(`
           Object {
             "axes": Array [],
+            "cursor": Object {
+              "drag": Object {
+                "setScale": false,
+              },
+            },
             "scales": Object {
               "scale-y": Object {
+                "auto": true,
                 "distr": 1,
                 "log": undefined,
                 "range": [Function],
@@ -92,8 +105,14 @@ describe('UPlotConfigBuilder', () => {
           expect(builder.getConfig()).toMatchInlineSnapshot(`
             Object {
               "axes": Array [],
+              "cursor": Object {
+                "drag": Object {
+                  "setScale": false,
+                },
+              },
               "scales": Object {
                 "scale-y": Object {
+                  "auto": true,
                   "distr": 1,
                   "log": undefined,
                   "range": [Function],
@@ -120,8 +139,14 @@ describe('UPlotConfigBuilder', () => {
           expect(builder.getConfig()).toMatchInlineSnapshot(`
             Object {
               "axes": Array [],
+              "cursor": Object {
+                "drag": Object {
+                  "setScale": false,
+                },
+              },
               "scales": Object {
                 "scale-y": Object {
+                  "auto": true,
                   "distr": 1,
                   "log": undefined,
                   "range": [Function],
@@ -181,6 +206,11 @@ describe('UPlotConfigBuilder', () => {
             "values": Array [],
           },
         ],
+        "cursor": Object {
+          "drag": Object {
+            "setScale": false,
+          },
+        },
         "scales": Object {},
         "series": Array [
           Object {},
@@ -224,6 +254,11 @@ describe('UPlotConfigBuilder', () => {
     expect(builder.getConfig()).toMatchInlineSnapshot(`
       Object {
         "axes": Array [],
+        "cursor": Object {
+          "drag": Object {
+            "setScale": false,
+          },
+        },
         "scales": Object {},
         "series": Array [
           Object {},

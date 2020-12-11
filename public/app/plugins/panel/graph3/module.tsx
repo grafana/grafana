@@ -16,10 +16,12 @@ import {
   ScaleDistributionConfig,
 } from '@grafana/ui';
 import { GraphPanel } from './GraphPanel';
+import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
+  .setPanelChangeHandler(graphPanelChangedHandler)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {

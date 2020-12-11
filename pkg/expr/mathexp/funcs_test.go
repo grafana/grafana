@@ -38,7 +38,7 @@ func TestFunc(t *testing.T) {
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
 			resultIs:  assert.Equal,
-			results:   Results{[]Value{NewScalar(float64Pointer(1.0))}},
+			results:   Results{[]Value{NewScalar("", float64Pointer(1.0))}},
 		},
 		{
 			name: "abs on series",
@@ -79,7 +79,7 @@ func TestFunc(t *testing.T) {
 			e, err := New(tt.expr)
 			tt.newErrIs(t, err)
 			if e != nil {
-				res, err := e.Execute(tt.vars)
+				res, err := e.Execute("", tt.vars)
 				tt.execErrIs(t, err)
 				tt.resultIs(t, tt.results, res)
 			}

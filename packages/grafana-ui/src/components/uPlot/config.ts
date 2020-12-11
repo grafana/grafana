@@ -33,6 +33,9 @@ export enum ScaleDistribution {
   Logarithmic = 'log',
 }
 
+/**
+ * @alpha
+ */
 export interface LineConfig {
   lineColor?: string;
   lineWidth?: number;
@@ -40,11 +43,17 @@ export interface LineConfig {
   spanNulls?: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface AreaConfig {
   fillColor?: string;
   fillOpacity?: number;
 }
 
+/**
+ * @alpha
+ */
 export interface PointsConfig {
   showPoints?: PointVisibility;
   pointSize?: number;
@@ -64,6 +73,9 @@ export interface AxisConfig {
   scaleDistribution?: ScaleDistributionConfig;
 }
 
+/**
+ * @alpha
+ */
 export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, AxisConfig {
   drawStyle?: DrawStyle;
 }

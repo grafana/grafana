@@ -18,6 +18,7 @@ import { OptionsPaneContent } from './OptionsPaneContent';
 import { DashNavButton } from 'app/features/dashboard/components/DashNav/DashNavButton';
 import { SubMenuItems } from 'app/features/dashboard/components/SubMenu/SubMenuItems';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
+import { PageToolbar } from 'app/core/components/PageToolbar/PageToolbar';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
 import { SaveDashboardModalProxy } from '../SaveDashboard/SaveDashboardModalProxy';
 import { DashboardPanel } from '../../dashgrid/DashboardPanel';
@@ -245,41 +246,25 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     );
   }
 
-  editorToolbar(styles: EditorStyles) {
-    const { dashboard } = this.props;
-
-    return (
-      <div className={styles.editorToolbar}>
-        <HorizontalGroup justify="space-between" align="center">
-          <div className={styles.toolbarLeft}>
-            <HorizontalGroup spacing="none">
-              <BackButton onClick={this.onPanelExit} surface="panel" />
-              <span className={styles.editorTitle}>{dashboard.title} / Edit Panel</span>
-            </HorizontalGroup>
-          </div>
-
-          <HorizontalGroup>
-            <HorizontalGroup spacing="sm" align="center">
-              <Button
-                icon="cog"
-                onClick={this.onOpenDashboardSettings}
-                variant="secondary"
-                title="Open dashboard settings"
-              />
-              <Button onClick={this.onDiscard} variant="secondary" title="Undo all changes">
-                Discard
-              </Button>
-              <Button onClick={this.onSaveDashboard} variant="secondary" title="Apply changes and save dashboard">
-                Save
-              </Button>
-              <Button onClick={this.onPanelExit} title="Apply changes and go back to dashboard">
-                Apply
-              </Button>
-            </HorizontalGroup>
-          </HorizontalGroup>
-        </HorizontalGroup>
-      </div>
-    );
+  renderEditorActions() {
+    return [
+      <Button
+        icon="cog"
+        onClick={this.onOpenDashboardSettings}
+        variant="secondary"
+        title="Open dashboard settings"
+        key="settings"
+      />,
+      <Button onClick={this.onDiscard} variant="secondary" title="Undo all changes" key="discard">
+        Discard
+      </Button>,
+      <Button onClick={this.onSaveDashboard} variant="secondary" title="Apply changes and save dashboard" key="save">
+        Save
+      </Button>,
+      <Button onClick={this.onPanelExit} title="Apply changes and go back to dashboard" key="apply">
+        Apply
+      </Button>,
+    ];
   }
 
   renderOptionsPane() {
@@ -309,7 +294,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   render() {
-    const { initDone, updatePanelEditorUIState, uiState } = this.props;
+    const { dashboard, initDone, updatePanelEditorUIState, uiState } = this.props;
     const styles = getStyles(config.theme, this.props);
 
     if (!initDone) {
@@ -318,7 +303,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
 
     return (
       <div className={styles.wrapper} aria-label={selectors.components.PanelEditor.General.content}>
-        {this.editorToolbar(styles)}
+        <PageToolbar
+          title={`${dashboard.title} / Edit Panel`}
+          titlePrefix={<BackButton onClick={this.onPanelExit} surface="panel" />}
+          actions={this.renderEditorActions()}
+        />
         <div className={styles.verticalSplitPanesWrapper}>
           <SplitPaneWrapper
             leftPaneComponents={this.renderPanelAndEditor(styles)}
@@ -413,13 +402,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       height: 100%;
       width: 100%;
     `,
-    editorToolbar: css`
-      display: flex;
-      padding: ${theme.spacing.sm};
-      background: ${theme.colors.panelBg};
-      justify-content: space-between;
-      border-bottom: 1px solid ${theme.colors.panelBorder};
-    `,
     panelToolbar: css`
       display: flex;
       padding: ${paneSpacing} 0 ${paneSpacing} ${paneSpacing};
@@ -433,10 +415,6 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, props: Props) => {
       display: flex;
       justify-content: center;
       align-items: center;
-    `,
-    editorTitle: css`
-      font-size: ${theme.typography.size.lg};
-      padding-left: ${theme.spacing.md};
     `,
   };
 });
