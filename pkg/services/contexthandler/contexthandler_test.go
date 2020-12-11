@@ -64,6 +64,7 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	ctxHdlr.rotateEndOfRequestFunc(reqContext, uts, token)(reqContext.Resp)
 
 	foundLoginCookie := false
+	// nolint:bodyclose
 	resp := rr.Result()
 	t.Cleanup(func() {
 		err := resp.Body.Close()
