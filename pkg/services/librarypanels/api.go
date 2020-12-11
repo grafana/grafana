@@ -18,6 +18,7 @@ func (lps *LibraryPanelService) registerAPIEndpoints() {
 
 	lps.RouteRegister.Group("/api/library-panels", func(libraryPanels routing.RouteRegister) {
 		libraryPanels.Post("/", middleware.ReqSignedIn, binding.Bind(addLibraryPanelCommand{}), api.Wrap(lps.createHandler))
+		libraryPanels.Delete("/:panelId", middleware.ReqSignedIn, api.Wrap(lps.deleteHandler))
 	})
 }
 
@@ -33,4 +34,18 @@ func (lps *LibraryPanelService) createHandler(c *models.ReqContext, cmd addLibra
 	}
 
 	return api.JSON(200, util.DynMap{"panel": panel})
+}
+
+// deleteHandler handles DELETE /api/library-panels/:panelId.
+func (lps *LibraryPanelService) deleteHandler(c *models.ReqContext) api.Response {
+	err := lps.deleteLibraryPanel(c, c.ParamsInt64(":panelId"))
+
+	if err != nil {
+		if errors.Is(err, errLibraryPanelNotFound) {
+			return api.Error(404, errLibraryPanelNotFound.Error(), err)
+		}
+		return api.Error(500, "Failed to delete library panel", err)
+	}
+
+	return api.Success("Library panel deleted")
 }

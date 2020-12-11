@@ -258,6 +258,8 @@ You can visualize traces from tracing data sources in explore. Data sources curr
 
 - [Jaeger]({{< relref "../datasources/jaeger.md" >}})
 - [Zipkin]({{< relref "../datasources/zipkin.md" >}})
+- [Tempo]({{< relref "../datasources/tempo.md" >}})
+- [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
 
 For information about how to use the query editor see documentation for specific data source.
 
@@ -300,10 +302,19 @@ Clicking anywhere on the span row shows span details.
 - Process metadata: Metadata about the process that logged this span.
 - Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations.
 
-## Navigating between Explore and a dashboard
+##### Trace to logs
 
-To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard
-after navigating to Explore from the panel's dropdown.
+> This feature is only available in Grafana 7.4+.
+
+You can navigate from a span in a trace view directly to logs relevant for that span. This is available for Tempo, Jaeger and Zipkin data source at this moment. See their relevant documentation for instruction how to configure this feature.
+
+{{< docs-imagebox img="/img/docs/v74/trace-to-logs.png" class="docs-image--no-shadow" caption="Screenshot of the trace view in Explore with new icon next to the spans" >}}
+
+Click the document icon to open a split view in Explore with the configured data source and query relevant logs for the span.
+
+## Navigate between Explore and a dashboard
+
+To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard after navigating to Explore from the panel's dropdown.
 
 {{< docs-imagebox img="/img/docs/v64/panel_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the panel dropdown" >}}
 
