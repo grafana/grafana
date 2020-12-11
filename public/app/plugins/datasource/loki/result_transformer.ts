@@ -162,7 +162,7 @@ function createUid(ts: string, labelsString: string, line: string, usedUids: any
     // Increase the count
     const newCount = usedUids[id] + 1;
     usedUids[id] = newCount;
-    // Append index to generated id to make it unique
+    // Append count to generated id to make it unique
     id = `${id}_${newCount}`;
   } else {
     // If id is unique and wasn't used, add it to allUids and start count at 0
