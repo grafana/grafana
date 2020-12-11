@@ -334,14 +334,14 @@ func (auth *AuthProxy) Remember(id int64) error {
 	}
 
 	// Check if user already in cache
-	userID, err := auth.store.Get(key)
+	userID, err := auth.remoteCache.Get(key)
 	if err == nil && userID != nil {
 		return nil
 	}
 
 	expiration := time.Duration(auth.cfg.AuthProxySyncTTL) * time.Minute
 
-	if err := auth.store.Set(key, id, expiration); err != nil {
+	if err := auth.remoteCache.Set(key, id, expiration); err != nil {
 		return err
 	}
 
