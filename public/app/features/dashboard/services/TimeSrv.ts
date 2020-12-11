@@ -13,6 +13,7 @@ import {
   isDateTime,
   rangeUtil,
 } from '@grafana/data';
+import { TimeSrv as TimeService, getTimeSrv as getTimeService } from '@grafana/runtime';
 import { ITimeoutService, ILocationService } from 'angular';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { DashboardModel } from '../state/DashboardModel';
@@ -23,7 +24,7 @@ import { CoreEvents } from '../../../types';
 
 import { config } from 'app/core/config';
 
-export class TimeSrv {
+export class TimeSrv implements TimeService {
   time: any;
   refreshTimer: any;
   refresh: any;
@@ -305,14 +306,9 @@ export class TimeSrv {
   }
 }
 
-let singleton: TimeSrv;
-
-export function setTimeSrv(srv: TimeSrv) {
-  singleton = srv;
-}
-
 export function getTimeSrv(): TimeSrv {
-  return singleton;
+  return getTimeService() as TimeSrv;
 }
 
 coreModule.service('timeSrv', TimeSrv);
+export default TimeSrv;

@@ -6,12 +6,19 @@ import Drop from 'tether-drop';
 
 // Utils and servies
 import { colors } from '@grafana/ui';
-import { getTemplateSrv, setBackendSrv, setDataSourceSrv, setLegacyAngularInjector } from '@grafana/runtime';
+import {
+  getTemplateSrv,
+  setBackendSrv,
+  setDataSourceSrv,
+  setLegacyAngularInjector,
+  setTimeSrv,
+  getTimeSrv,
+} from '@grafana/runtime';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 import { profiler } from 'app/core/profiler';
 import appEvents from 'app/core/app_events';
-import { TimeSrv, setTimeSrv, getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
+import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { KeybindingSrv, setKeybindingSrv } from 'app/core/services/keybindingSrv';
 import { AngularLoader, setAngularLoader } from 'app/core/services/AngularLoader';
