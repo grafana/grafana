@@ -1,7 +1,6 @@
 import React, { PureComponent } from 'react';
 import { DashboardModel } from '../../state/DashboardModel';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
-import './SettingsCtrl';
 
 interface Props {
   dashboard: DashboardModel;
