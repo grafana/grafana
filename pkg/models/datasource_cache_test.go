@@ -129,16 +129,19 @@ func TestDataSourceProxyCache(t *testing.T) {
 
 		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
+		json.Set("serverName", "server-name")
 
 		tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
 		So(err, ShouldBeNil)
 
 		ds := DataSource{
-			Id:             1,
-			Url:            "http://k8s:8001",
-			Type:           "Kubernetes",
-			JsonData:       json,
-			SecureJsonData: map[string][]byte{"tlsCACert": tlsCaCert},
+			Id:       1,
+			Url:      "http://k8s:8001",
+			Type:     "Kubernetes",
+			JsonData: json,
+			SecureJsonData: map[string][]byte{
+				"tlsCACert": tlsCaCert,
+			},
 		}
 
 		tr, err := ds.GetHttpTransport()
@@ -149,6 +152,9 @@ func TestDataSourceProxyCache(t *testing.T) {
 		})
 		Convey("Should have a TLS CA configured", func() {
 			So(len(tr.transport.TLSClientConfig.RootCAs.Subjects()), ShouldEqual, 1)
+		})
+		Convey("Should include a server name if one is provided", func() {
+			So(tr.transport.TLSClientConfig.ServerName, ShouldEqual, "server-name")
 		})
 	})
 
