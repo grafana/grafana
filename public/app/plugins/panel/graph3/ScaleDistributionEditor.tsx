@@ -56,8 +56,8 @@ export const ScaleDistributionEditor: React.FC<FieldOverrideEditorProps<ScaleDis
           autoFocus
           options={LOG_DISTRIBUTION_OPTIONS}
           value={value.log || 2}
-          prefix={'log'}
-          width={10}
+          prefix={'base'}
+          width={12}
           onChange={v => {
             onChange({
               ...value,
