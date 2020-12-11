@@ -23,6 +23,7 @@ import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { PanelModel } from 'app/features/dashboard/state';
 import { DetailText } from './DetailText';
+import { filterDataFrameByRowIds } from './utils';
 
 interface Props {
   panel: PanelModel;
@@ -43,6 +44,8 @@ interface State {
 }
 
 export class InspectDataTab extends PureComponent<Props, State> {
+  filterRowIds?: number[];
+
   constructor(props: Props) {
     super(props);
 
@@ -280,7 +283,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
           <div className={styles.dataDisplayOptions}>{this.renderDataOptions(dataFrames)}</div>
           <Button
             variant="primary"
-            onClick={() => this.exportCsv(dataFrames[dataFrameIndex], { useExcelHeader: this.state.downloadForExcel })}
+            onClick={() =>
+              this.exportCsv(filterDataFrameByRowIds(data, this.filterRowIds), {
+                useExcelHeader: this.state.downloadForExcel,
+              })
+            }
             className={css`
               margin-bottom: 10px;
             `}
@@ -297,7 +304,14 @@ export class InspectDataTab extends PureComponent<Props, State> {
 
               return (
                 <div style={{ width, height }}>
-                  <Table width={width} height={height} data={data} />
+                  <Table
+                    width={width}
+                    height={height}
+                    data={data}
+                    onRowsChange={rows => {
+                      this.filterRowIds = rows.map(row => parseInt(row.id, 10));
+                    }}
+                  />
                 </div>
               );
             }}
