@@ -21,11 +21,12 @@ type Command interface {
 type MathCommand struct {
 	RawExpression string
 	Expression    *mathexp.Expr
+	refID         string
 }
 
 // NewMathCommand creates a new MathCommand. It will return an error
 // if there is an error parsing expr.
-func NewMathCommand(expr string) (*MathCommand, error) {
+func NewMathCommand(refID, expr string) (*MathCommand, error) {
 	parsedExpr, err := mathexp.New(expr)
 	if err != nil {
 		return nil, err
@@ -33,6 +34,7 @@ func NewMathCommand(expr string) (*MathCommand, error) {
 	return &MathCommand{
 		RawExpression: expr,
 		Expression:    parsedExpr,
+		refID:         refID,
 	}, nil
 }
 
@@ -47,7 +49,7 @@ func UnmarshalMathCommand(rn *rawNode) (*MathCommand, error) {
 		return nil, fmt.Errorf("expected math command for refId %v expression to be a string, got %T", rn.RefID, rawExpr)
 	}
 
-	gm, err := NewMathCommand(exprString)
+	gm, err := NewMathCommand(rn.RefID, exprString)
 	if err != nil {
 		return nil, fmt.Errorf("invalid math command type in '%v': %v", rn.RefID, err)
 	}
@@ -63,21 +65,23 @@ func (gm *MathCommand) NeedsVars() []string {
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
 func (gm *MathCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathexp.Results, error) {
-	return gm.Expression.Execute(vars)
+	return gm.Expression.Execute(gm.refID, vars)
 }
 
 // ReduceCommand is an expression command for reduction of a timeseries such as a min, mean, or max.
 type ReduceCommand struct {
 	Reducer     string
 	VarToReduce string
+	refID       string
 }
 
 // NewReduceCommand creates a new ReduceCMD.
-func NewReduceCommand(reducer, varToReduce string) *ReduceCommand {
+func NewReduceCommand(refID, reducer, varToReduce string) *ReduceCommand {
 	// TODO: validate reducer here, before execution
 	return &ReduceCommand{
 		Reducer:     reducer,
 		VarToReduce: varToReduce,
+		refID:       refID,
 	}
 }
 
@@ -102,7 +106,7 @@ func UnmarshalReduceCommand(rn *rawNode) (*ReduceCommand, error) {
 		return nil, fmt.Errorf("expected reducer to be a string, got %T for refId %v", rawReducer, rn.RefID)
 	}
 
-	return NewReduceCommand(redFunc, varToReduce), nil
+	return NewReduceCommand(rn.RefID, redFunc, varToReduce), nil
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -120,7 +124,7 @@ func (gr *ReduceCommand) Execute(ctx context.Context, vars mathexp.Vars) (mathex
 		if !ok {
 			return newRes, fmt.Errorf("can only reduce type series, got type %v", val.Type())
 		}
-		num, err := series.Reduce(gr.Reducer)
+		num, err := series.Reduce(gr.refID, gr.Reducer)
 		if err != nil {
 			return newRes, err
 		}
@@ -136,10 +140,11 @@ type ResampleCommand struct {
 	Downsampler   string
 	Upsampler     string
 	TimeRange     backend.TimeRange
+	refID         string
 }
 
 // NewResampleCommand creates a new ResampleCMD.
-func NewResampleCommand(rawWindow, varToResample string, downsampler string, upsampler string, tr backend.TimeRange) (*ResampleCommand, error) {
+func NewResampleCommand(refID, rawWindow, varToResample string, downsampler string, upsampler string, tr backend.TimeRange) (*ResampleCommand, error) {
 	// TODO: validate reducer here, before execution
 	window, err := gtime.ParseDuration(rawWindow)
 	if err != nil {
@@ -151,6 +156,7 @@ func NewResampleCommand(rawWindow, varToResample string, downsampler string, ups
 		Downsampler:   downsampler,
 		Upsampler:     upsampler,
 		TimeRange:     tr,
+		refID:         refID,
 	}, nil
 }
 
@@ -194,7 +200,7 @@ func UnmarshalResampleCommand(rn *rawNode) (*ResampleCommand, error) {
 		return nil, fmt.Errorf("expected resample downsampler to be a string, got type %T for refId %v", upsampler, rn.RefID)
 	}
 
-	return NewResampleCommand(window, varToResample, downsampler, upsampler, rn.TimeRange)
+	return NewResampleCommand(rn.RefID, window, varToResample, downsampler, upsampler, rn.TimeRange)
 }
 
 // NeedsVars returns the variable names (refIds) that are dependencies
@@ -212,7 +218,7 @@ func (gr *ResampleCommand) Execute(ctx context.Context, vars mathexp.Vars) (math
 		if !ok {
 			return newRes, fmt.Errorf("can only resample type series, got type %v", val.Type())
 		}
-		num, err := series.Resample(gr.Window, gr.Downsampler, gr.Upsampler, gr.TimeRange)
+		num, err := series.Resample(gr.refID, gr.Window, gr.Downsampler, gr.Upsampler, gr.TimeRange)
 		if err != nil {
 			return newRes, err
 		}
