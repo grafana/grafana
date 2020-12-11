@@ -85,7 +85,7 @@ func Success(message string) *NormalResponse {
 	return JSON(200, resp)
 }
 
-// Error create a erroneous response
+// Error creates an error response.
 func Error(status int, message string, err error) *NormalResponse {
 	data := make(map[string]interface{})
 

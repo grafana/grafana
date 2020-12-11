@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -61,12 +61,12 @@ func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
 	return nil
 }
 
-func (hs *HTTPServer) CookieOptionsFromCfg() middleware.CookieOptions {
+func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 	path := "/"
 	if len(hs.Cfg.AppSubURL) > 0 {
 		path = hs.Cfg.AppSubURL
 	}
-	return middleware.CookieOptions{
+	return cookies.CookieOptions{
 		Path:             path,
 		Secure:           hs.Cfg.CookieSecure,
 		SameSiteDisabled: hs.Cfg.CookieSameSiteDisabled,
@@ -101,7 +101,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		// therefore the loginError should be passed to the view data
 		// and the view should return immediately before attempting
 		// to login again via OAuth and enter to a redirect loop
-		middleware.DeleteCookie(c.Resp, LoginErrorCookieName, hs.CookieOptionsFromCfg)
+		cookies.DeleteCookie(c.Resp, LoginErrorCookieName, hs.CookieOptionsFromCfg)
 		viewData.Settings["loginError"] = loginError
 		c.HTML(200, getViewIndex(), viewData)
 		return
@@ -113,7 +113,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 
 	if c.IsSignedIn {
 		// Assign login token to auth proxy users if enable_login_token = true
-		if setting.AuthProxyEnabled && setting.AuthProxyEnableLoginToken {
+		if hs.Cfg.AuthProxyEnabled && hs.Cfg.AuthProxyEnableLoginToken {
 			user := &models.User{Id: c.SignedInUser.UserId, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
 			err := hs.loginUserWithUser(user, c)
 			if err != nil {
@@ -129,7 +129,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 				log.Debugf("Ignored invalid redirect_to cookie value: %v", redirectTo)
 				redirectTo = hs.Cfg.AppSubURL + "/"
 			}
-			middleware.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
+			cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 			c.Redirect(redirectTo)
 			return
 		}
@@ -196,6 +196,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 		Username:   cmd.User,
 		Password:   cmd.Password,
 		IpAddress:  c.Req.RemoteAddr,
+		Cfg:        hs.Cfg,
 	}
 
 	err := bus.Dispatch(authQuery)
@@ -236,7 +237,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 		} else {
 			log.Infof("Ignored invalid redirect_to cookie value: %v", redirectTo)
 		}
-		middleware.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
+		cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 	}
 
 	metrics.MApiLoginPost.Inc()
@@ -263,7 +264,7 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 	}
 
 	hs.log.Info("Successful Login", "User", user.Email)
-	middleware.WriteSessionCookie(c, userToken.UnhashedToken, hs.Cfg.LoginMaxLifetime)
+	cookies.WriteSessionCookie(c, hs.Cfg, userToken.UnhashedToken, hs.Cfg.LoginMaxLifetime)
 	return nil
 }
 
@@ -278,7 +279,7 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 		hs.log.Error("failed to revoke auth token", "error", err)
 	}
 
-	middleware.WriteSessionCookie(c, "", -1)
+	cookies.WriteSessionCookie(c, hs.Cfg, "", -1)
 
 	if setting.SignoutRedirectUrl != "" {
 		c.Redirect(setting.SignoutRedirectUrl)
@@ -309,7 +310,7 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName s
 		return err
 	}
 
-	middleware.WriteCookie(ctx.Resp, cookieName, hex.EncodeToString(encryptedError), 60, hs.CookieOptionsFromCfg)
+	cookies.WriteCookie(ctx.Resp, cookieName, hex.EncodeToString(encryptedError), 60, hs.CookieOptionsFromCfg)
 
 	return nil
 }
