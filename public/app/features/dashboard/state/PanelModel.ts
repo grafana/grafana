@@ -125,6 +125,7 @@ export class PanelModel implements DataConfigSource {
   panels?: any;
   targets: DataQuery[];
   transformations?: DataTransformerConfig[];
+  transform: string;
   datasource: string | null;
   thresholds?: any;
   pluginVersion?: string;
