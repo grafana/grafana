@@ -1,4 +1,4 @@
-import { AppEvents, DataQuery } from '@grafana/data';
+import { AppEvents } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 import { updateLocation } from 'app/core/actions';
@@ -11,8 +11,6 @@ import {
   setUiState,
   ALERT_DEFINITION_UI_STATE_STORAGE_KEY,
   updateAlertDefinition,
-  setDataSource,
-  setQueries,
   setQueryOptions,
 } from './reducers';
 import { AlertDefinition, AlertDefinitionUiState, AlertRuleDTO, NotifierDTO, ThunkResult } from 'app/types';
@@ -132,18 +130,6 @@ export function updateAlertDefinitionUiState(uiState: Partial<AlertDefinitionUiS
 export function updateAlertDefinitionOption(alertDefinition: Partial<AlertDefinition>): ThunkResult<void> {
   return dispatch => {
     dispatch(updateAlertDefinition(alertDefinition));
-  };
-}
-
-export function dataSourceChange(dataSourceName: string, queries: DataQuery[]): ThunkResult<void> {
-  return dispatch => {
-    dispatch(setDataSource({ dataSourceName, queries }));
-  };
-}
-
-export function queriesChange(queries: DataQuery[]): ThunkResult<void> {
-  return dispatch => {
-    dispatch(setQueries(queries));
   };
 }
 

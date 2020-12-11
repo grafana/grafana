@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { ApplyFieldOverrideOptions, DataQuery, DataTransformerConfig, dateTime, FieldColorModeId } from '@grafana/data';
+import { ApplyFieldOverrideOptions, DataTransformerConfig, dateTime, FieldColorModeId } from '@grafana/data';
 import alertDef from './alertDef';
 import {
   AlertCondition,
@@ -163,21 +163,6 @@ const alertDefinitionSlice = createSlice({
     setUiState: (state: AlertDefinitionState, action: PayloadAction<AlertDefinitionUiState>) => {
       return { ...state, uiState: { ...state.uiState, ...action.payload } };
     },
-    setDataSource: (
-      state: AlertDefinitionState,
-      action: PayloadAction<{ dataSourceName: string; queries: DataQuery[] }>
-    ) => {
-      return {
-        ...state,
-        ...action.payload,
-      };
-    },
-    setQueries: (state: AlertDefinitionState, action: PayloadAction<DataQuery[]>) => {
-      return {
-        ...state,
-        queries: action.payload,
-      };
-    },
     setQueryOptions: (state: AlertDefinitionState, action: PayloadAction<QueryGroupOptions>) => {
       return {
         ...state,
@@ -195,13 +180,7 @@ export const {
   resetSecureField,
 } = notificationChannelSlice.actions;
 
-export const {
-  setUiState,
-  updateAlertDefinition,
-  setDataSource,
-  setQueries,
-  setQueryOptions,
-} = alertDefinitionSlice.actions;
+export const { setUiState, updateAlertDefinition, setQueryOptions } = alertDefinitionSlice.actions;
 
 export const alertRulesReducer = alertRulesSlice.reducer;
 export const notificationChannelReducer = notificationChannelSlice.reducer;

@@ -1,13 +1,13 @@
 import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
-import { DataQuery, DataSourceSelectItem, dateMath, GrafanaTheme } from '@grafana/data';
+import { dateMath, GrafanaTheme } from '@grafana/data';
 import { stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { QueryGroup } from '../../query/components/QueryGroup';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { QueryGroupOptions } from '../../query/components/QueryGroupOptions';
-import { dataSourceChange, queriesChange, queryOptionsChange } from '../state/actions';
+import { queryOptionsChange } from '../state/actions';
 import { StoreState } from '../../../types';
 
 interface OwnProps {}
@@ -17,18 +17,12 @@ interface ConnectedProps {
   queryRunner: PanelQueryRunner;
 }
 interface DispatchProps {
-  dataSourceChange: typeof dataSourceChange;
-  queriesChange: typeof queriesChange;
   queryOptionsChange: typeof queryOptionsChange;
 }
 
 type Props = ConnectedProps & DispatchProps & OwnProps;
 
 export class AlertingQueryEditor extends PureComponent<Props> {
-  onQueriesChange = (queries: DataQuery[]) => {
-    this.props.queriesChange(queries);
-  };
-
   onQueryOptionsChange = (queryOptions: QueryGroupOptions) => {
     this.props.queryOptionsChange(queryOptions);
   };
@@ -45,10 +39,6 @@ export class AlertingQueryEditor extends PureComponent<Props> {
       queries: queryOptions.queries,
       datasource: queryOptions.dataSource.name!,
     });
-  };
-
-  onDataSourceChange = (ds: DataSourceSelectItem, queries: DataQuery[]) => {
-    this.props.dataSourceChange(ds.value!, queries);
   };
 
   render() {
@@ -79,8 +69,6 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = s
 };
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  dataSourceChange,
-  queriesChange,
   queryOptionsChange,
 };
 

@@ -39,8 +39,6 @@ const upsamplingTypes: Array<SelectableValue<string>> = [
   { value: 'fillna', label: 'fillna', description: 'Fill with NaNs' },
 ];
 
-const labelWidth = 30;
-
 export class ExpressionQueryEditor extends PureComponent<Props, State> {
   state = {};
 
@@ -141,28 +139,18 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
             <InlineField label="Function">
               <Select options={reducerTypes} value={reducer} onChange={this.onSelectReducer} width={25} />
             </InlineField>
-            <InlineField label="Query" labelWidth={labelWidth}>
-              <Input
-                onChange={this.onExpressionChange}
-                value={query.expression}
-                width={30}
-                placeholder="Choose query by refId (eg. $A or A)"
-              />
+            <InlineField label="Input">
+              <Input onChange={this.onExpressionChange} value={query.expression} width={25} />
             </InlineField>
           </InlineFieldRow>
         )}
         {query.type === GELQueryType.resample && (
           <InlineFieldRow>
-            <InlineField label="Query" labelWidth={labelWidth}>
-              <Input
-                onChange={this.onExpressionChange}
-                value={query.expression}
-                width={25}
-                placeholder="Choose query by refId (eg. $A or A)"
-              />
+            <InlineField label="Input">
+              <Input onChange={this.onExpressionChange} value={query.expression} width={25} />
             </InlineField>
-            <InlineField label="Resample to" labelWidth={labelWidth} tooltip="10s, 1m, 30m, 1h">
-              <Input onChange={this.onWindowChange} value={query.window} width={15} />
+            <InlineField label="Window">
+              <Input onChange={this.onWindowChange} value={query.window} width={25} />
             </InlineField>
             <InlineField label="Downsample">
               <Select options={downsamplingTypes} value={downsampler} onChange={this.onSelectDownsampler} width={25} />
