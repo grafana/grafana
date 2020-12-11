@@ -272,6 +272,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
 
   if (initializeExploreAction.match(action)) {
     const { containerWidth, eventBridge, queries, range, originPanelId, datasourceInstance, history } = action.payload;
+
     return {
       ...state,
       containerWidth,
