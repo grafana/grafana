@@ -36,21 +36,14 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           },
         })
         .addCustomEditor({
-          id: 'seriesConfig',
-          name: 'Show series in area',
+          id: 'hideFrom',
+          name: 'Hide series in area',
           category: ['Display'],
-          path: 'seriesConfig',
+          path: 'hideFrom',
           defaultValue: {
-            displayInTooltip: true,
-            displayInGraph: true,
-            displayInLegend: true,
-          },
-          settings: {
-            descriptions: {
-              displayInTooltip: 'Tooltip',
-              displayInLegend: 'Legend',
-              displayInGraph: 'Graph',
-            },
+            tooltip: false,
+            graph: false,
+            legend: false,
           },
           editor: SeriesConfigEditor,
           override: SeriesConfigEditor,

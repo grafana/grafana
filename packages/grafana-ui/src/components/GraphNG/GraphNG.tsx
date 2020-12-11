@@ -39,11 +39,6 @@ const defaultConfig: GraphFieldConfig = {
   drawStyle: DrawStyle.Line,
   showPoints: PointVisibility.Auto,
   axisPlacement: AxisPlacement.Auto,
-  seriesConfig: {
-    displayInGraph: true,
-    displayInLegend: true,
-    displayInTooltip: true,
-  },
 };
 
 export const GraphNG: React.FC<GraphNGProps> = ({
@@ -63,7 +58,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   const legendItemsRef = useRef<LegendItem[]>([]);
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
   const alignedFrame = alignedFrameWithGapTest?.frame;
-  const getFieldIndexRef = alignedFrameWithGapTest?.getFieldIndexRef;
+  const getDataFrameFieldIndex = alignedFrameWithGapTest?.getDataFrameFieldIndex;
 
   const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
     if (a && b) {
@@ -74,17 +69,16 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
   const onLabelClick = useCallback(
     (legend: LegendItem, event: React.MouseEvent) => {
-      const { seriesRef } = legend;
+      const { seriesIndex } = legend;
 
-      if (!onLegendClick || !seriesRef) {
+      if (!onLegendClick || !seriesIndex) {
         return;
       }
 
-      const frame = data[seriesRef.frameIndex];
-      const field = frame.fields[seriesRef.fieldIndex];
-      const mode = mapMouseEventToMode(event);
-
-      onLegendClick({ field, frame, data, mode });
+      onLegendClick({
+        fieldIndex: seriesIndex,
+        mode: mapMouseEventToMode(event),
+      });
     },
     [onLegendClick, data]
   );
@@ -170,7 +164,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       // need to update field state here because we use a transform to merge framesP
       field.state = { ...field.state, seriesIndex: seriesIdx };
 
-      if (customConfig.seriesConfig?.displayInGraph) {
+      if (!customConfig.hideFrom?.graph) {
         const colorMode = getFieldColorModeForField(field);
         const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
         const showPoints =
@@ -191,13 +185,13 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         });
       }
 
-      if (hasLegend.current && customConfig.seriesConfig?.displayInLegend) {
+      if (hasLegend.current && !customConfig.hideFrom?.legend) {
         const axisPlacement = builder.getAxisPlacement(scaleKey);
         // we need to add this as dep or move it to be done outside.
-        const ref = getFieldIndexRef ? getFieldIndexRef(i) : undefined;
+        const ref = getDataFrameFieldIndex ? getDataFrameFieldIndex(i) : undefined;
 
         legendItems.push({
-          seriesRef: ref,
+          seriesIndex: ref,
           color: seriesColor,
           label: getFieldDisplayName(field, alignedFrame),
           yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,

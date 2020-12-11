@@ -129,7 +129,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       })),
     },
     isGap,
-    getFieldIndexRef: (alignedFieldIndex: number) => sourceFieldsRefs[alignedFieldIndex],
+    getDataFrameFieldIndex: (alignedFieldIndex: number) => sourceFieldsRefs[alignedFieldIndex],
   };
 }
 

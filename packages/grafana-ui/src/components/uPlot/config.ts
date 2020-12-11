@@ -63,10 +63,10 @@ export interface AxisConfig {
   axisWidth?: number; // pixels ideally auto?
 }
 
-export interface SeriesConfig extends Record<string, any> {
-  displayInTooltip: boolean;
-  displayInLegend: boolean;
-  displayInGraph: boolean;
+export interface HideSeriesConfig {
+  tooltip: boolean;
+  legend: boolean;
+  graph: boolean;
 }
 
 /**
@@ -74,7 +74,7 @@ export interface SeriesConfig extends Record<string, any> {
  */
 export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, AxisConfig {
   drawStyle?: DrawStyle;
-  seriesConfig?: SeriesConfig;
+  hideFrom?: HideSeriesConfig;
 }
 
 export const graphFieldOptions = {

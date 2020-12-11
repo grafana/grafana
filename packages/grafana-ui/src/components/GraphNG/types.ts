@@ -1,4 +1,4 @@
-import { DataFrame, Field } from '@grafana/data';
+import { DataFrameFieldIndex } from '@grafana/data';
 
 export enum GraphNGLegendEventMode {
   select = 'select',
@@ -6,8 +6,6 @@ export enum GraphNGLegendEventMode {
 }
 
 export interface GraphNGLegendEvent {
-  field: Field;
-  frame: DataFrame;
-  data: DataFrame[];
+  fieldIndex: DataFrameFieldIndex;
   mode: GraphNGLegendEventMode;
 }

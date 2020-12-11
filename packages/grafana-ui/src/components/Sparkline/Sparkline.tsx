@@ -159,7 +159,7 @@ export class Sparkline extends PureComponent<Props, State> {
         data={{
           frame: data,
           isGap: () => true, // any null is a gap
-          getFieldIndexRef: () => undefined,
+          getDataFrameFieldIndex: () => undefined,
         }}
         config={configBuilder}
         width={width}

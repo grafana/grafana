@@ -1,4 +1,5 @@
 import {
+  DataFrame,
   FieldConfigSource,
   FieldMatcherID,
   getFieldDisplayName,
@@ -12,11 +13,14 @@ const isDisplayOverride = isSystemOverride(displayOverrideRef);
 
 export const displayConfigFactory = (
   event: GraphNGLegendEvent,
-  fieldConfig: FieldConfigSource<any>
+  fieldConfig: FieldConfigSource<any>,
+  data: DataFrame[]
 ): FieldConfigSource<any> => {
-  const { field, frame, data, mode } = event;
+  const { fieldIndex, mode } = event;
   const { overrides } = fieldConfig;
 
+  const frame = data[fieldIndex.frameIndex];
+  const field = frame.fields[fieldIndex.fieldIndex];
   const displayName = getFieldDisplayName(field, frame, data);
   const currentIndex = overrides.findIndex(isDisplayOverride);
 

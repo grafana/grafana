@@ -1,37 +1,37 @@
 import React, { useCallback } from 'react';
-import { FieldConfigEditorProps, SelectableValue } from '@grafana/data';
+import _ from 'lodash';
 import { MultiSelect } from '@grafana/ui';
-import { SeriesConfig } from '@grafana/ui/src/components/uPlot/config';
+import { FieldConfigEditorProps, SelectableValue } from '@grafana/data';
+import { HideSeriesConfig } from '@grafana/ui/src/components/uPlot/config';
 
-interface SeriesConfigEditorSettings {
-  descriptions: Record<string, string>;
+interface SeriesConfigEditorContext {
+  values: string[];
+  options: Array<SelectableValue<string>>;
 }
 
-export const SeriesConfigEditor: React.FC<FieldConfigEditorProps<SeriesConfig, SeriesConfigEditorSettings>> = props => {
-  const { settings } = props.item;
-  const values: string[] = [];
-  const options: Array<SelectableValue<string>> = [];
+export const SeriesConfigEditor: React.FC<FieldConfigEditorProps<HideSeriesConfig, {}>> = props => {
+  const { options, values } = Object.keys(props.value).reduce(
+    (ctx: SeriesConfigEditorContext, value) => {
+      ctx.options.push({
+        label: _.startCase(value),
+        value,
+      });
 
-  for (const key in props.value) {
-    options.push({
-      label: settings?.descriptions[key] ?? key,
-      value: key,
-    });
-
-    if (!props.value[key]) {
-      continue;
-    }
-
-    values.push(key);
-  }
+      ctx.values.push(value);
+      return ctx;
+    },
+    { values: [], options: [] }
+  );
 
   const onChange = useCallback(
     (values: Array<SelectableValue<string>>) => {
-      const next = { ...props.value };
-
-      for (const key in props.value) {
-        next[key] = !!values.find(sv => sv.value === key);
-      }
+      const next = Object.keys(props.value).reduce(
+        (next, value: keyof HideSeriesConfig) => {
+          next[value] = !!values.find(v => v.value === value);
+          return next;
+        },
+        { ...props.value }
+      );
 
       props.onChange(next);
     },

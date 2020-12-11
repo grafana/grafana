@@ -18,7 +18,7 @@ export interface ConfigOverrideRule {
 /**
  * Describes config override rules created when interacting with Grafana.
  *
- * @public
+ * @internal
  */
 export interface SystemConfigOverrideRule extends ConfigOverrideRule {
   __systemRef: string;
@@ -29,12 +29,14 @@ export interface SystemConfigOverrideRule extends ConfigOverrideRule {
  * It will only return true if the {@link SystemConfigOverrideRule} has the passed systemRef.
  *
  * @param ref system override reference
+ * @internal
  */
 export function isSystemOverride<T extends SystemConfigOverrideRule>(ref: string) {
   return (override: ConfigOverrideRule): override is T => {
     return (override as T)?.__systemRef === ref;
   };
 }
+
 export interface FieldConfigSource<TOptions extends object = any> {
   // Defaults applied to all numeric fields
   defaults: FieldConfig<TOptions>;

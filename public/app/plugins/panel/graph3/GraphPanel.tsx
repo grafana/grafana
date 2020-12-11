@@ -21,9 +21,9 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
 }) => {
   const onLegendClick = useCallback(
     (event: GraphNGLegendEvent) => {
-      onFieldConfigChange(displayConfigFactory(event, fieldConfig));
+      onFieldConfigChange(displayConfigFactory(event, fieldConfig, data.series));
     },
-    [fieldConfig, onFieldConfigChange]
+    [fieldConfig, onFieldConfigChange, data.series]
   );
 
   return (
