@@ -127,6 +127,9 @@ func (w *FileLogWriter) docheck(size int) {
 
 func (w *FileLogWriter) createLogFile() (*os.File, error) {
 	// Open the log file
+	// We can ignore G304 here since we can't unconditionally lock these log files down to be readable only
+	// by the owner
+	// nolint:gosec
 	return os.OpenFile(w.Filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 }
 
