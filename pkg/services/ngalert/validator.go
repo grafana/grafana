@@ -2,6 +2,7 @@ package ngalert
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/expr"
 )
@@ -11,6 +12,10 @@ import (
 func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, requireData bool) error {
 	if !requireData && len(alertDefinition.Data) == 0 {
 		return fmt.Errorf("no queries or expressions are found")
+	}
+
+	if alertDefinition.Interval%int64(ng.schedule.baseInterval.Seconds()) != 0 {
+		return fmt.Errorf("invalid interval: %v: interval should be divided exactly by scheduler interval: %v", time.Duration(alertDefinition.Interval)*time.Second, ng.schedule.baseInterval)
 	}
 
 	for _, query := range alertDefinition.Data {

@@ -160,6 +160,7 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 	for {
 		select {
 		case tick := <-ng.schedule.heartbeat.C:
+			tickNum := tick.Unix() / int64(ng.schedule.baseInterval.Seconds())
 			alertDefinitions := ng.fetchAllDetails(tick)
 			ng.schedule.log.Debug("alert definitions fetched", "count", len(alertDefinitions))
 
@@ -172,7 +173,6 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 			type readyToRunItem struct {
 				id             int64
 				definitionInfo alertDefinitionInfo
-				newVersion     bool
 			}
 			readyToRun := make([]readyToRunItem, 0)
 			for _, item := range alertDefinitions {
@@ -180,14 +180,23 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 				itemVersion := item.Version
 				newRoutine := !ng.schedule.registry.exists(itemID)
 				definitionInfo := ng.schedule.registry.getOrCreateInfo(itemID, itemVersion)
+				invalidInterval := item.Interval%int64(ng.schedule.baseInterval.Seconds()) != 0
 
-				if newRoutine {
+				if newRoutine && !invalidInterval {
 					dispatcherGroup.Go(func() error {
 						return ng.definitionRoutine(ctx, itemID, definitionInfo.ch)
 					})
 				}
 
-				if item.Interval != 0 && tick.Unix()%item.Interval == 0 {
+				if invalidInterval {
+					// this is expected to be always false
+					// give that we validate interval during alert definition updates
+					ng.schedule.log.Debug("alert definition with invalid interval will be ignored: interval should be divided exactly by scheduler interval", "definitionID", itemID, "interval", time.Duration(item.Interval)*time.Second, "scheduler interval", ng.schedule.baseInterval)
+					continue
+				}
+
+				itemFrequency := item.Interval / int64(ng.schedule.baseInterval.Seconds())
+				if item.Interval != 0 && tickNum%itemFrequency == 0 {
 					readyToRun = append(readyToRun, readyToRunItem{id: itemID, definitionInfo: definitionInfo})
 				}
 
