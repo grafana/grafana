@@ -31,7 +31,7 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID in
 				start = timeNow()
 
 				// fetch latest alert definition version
-				if alertDefinition == nil || ctx.newVersion {
+				if alertDefinition == nil || alertDefinition.Version < ctx.version {
 					q := getAlertDefinitionByIDQuery{ID: definitionID}
 					err := ng.getAlertDefinitionByID(&q)
 					if err != nil {
@@ -180,7 +180,6 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 				itemVersion := item.Version
 				newRoutine := !ng.schedule.registry.exists(itemID)
 				definitionEnvelop := ng.schedule.registry.getOrCreateEnvelop(itemID, itemVersion)
-				newVersion := definitionEnvelop.version < itemVersion
 
 				if newRoutine {
 					dispatcherGroup.Go(func() error {
@@ -189,7 +188,7 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 				}
 
 				if item.Interval != 0 && tick.Unix()%item.Interval == 0 {
-					readyToRun = append(readyToRun, readyToRunItem{id: itemID, definitionEnvelop: definitionEnvelop, newVersion: newVersion})
+					readyToRun = append(readyToRun, readyToRunItem{id: itemID, definitionEnvelop: definitionEnvelop})
 				}
 
 				// remove the alert definition from the registered alert definitions
@@ -205,7 +204,7 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 				item := readyToRun[i]
 
 				c.AfterFunc(time.Duration(int64(i)*step), func() {
-					item.definitionEnvelop.ch <- &evalContext{now: tick, newVersion: item.newVersion}
+					item.definitionEnvelop.ch <- &evalContext{now: tick, version: item.definitionEnvelop.version}
 				})
 			}
 
@@ -232,12 +231,14 @@ func (r *alertDefinitionRegistry) getOrCreateEnvelop(definitionID int64, definit
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	ch, ok := r.alertDefinitionEnvelop[definitionID]
+	envelope, ok := r.alertDefinitionEnvelop[definitionID]
 	if !ok {
 		r.alertDefinitionEnvelop[definitionID] = alertDefinitionEnvelop{ch: make(chan *evalContext), version: definitionVersion}
 		return r.alertDefinitionEnvelop[definitionID]
 	}
-	return ch
+	envelope.version = definitionVersion
+	r.alertDefinitionEnvelop[definitionID] = envelope
+	return envelope
 }
 
 func (r *alertDefinitionRegistry) exists(definitionID int64) bool {
@@ -286,6 +287,6 @@ type alertDefinitionEnvelop struct {
 }
 
 type evalContext struct {
-	now        time.Time
-	newVersion bool
+	now     time.Time
+	version int64
 }
