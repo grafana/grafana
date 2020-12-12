@@ -37,9 +37,12 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
         return undefined;
       }
 
-      // TODO: We should make sure that we don't hard code unit here
-      const yMin = plotInstance.scales[FIXED_UNIT].min;
-      const yMax = plotInstance.scales[FIXED_UNIT].max;
+      // Filter x, y scales out
+      const yScale =
+        Object.keys(plotInstance.scales).find(scale => !['x', 'y'].some(key => key === scale)) ?? FIXED_UNIT;
+
+      const yMin = plotInstance.scales[yScale].min;
+      const yMax = plotInstance.scales[yScale].max;
 
       let y = exemplar.y;
       if (yMin != null && y < yMin) {
@@ -52,7 +55,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
 
       return {
         x: plotInstance.valToPos(exemplar.time, 'x'),
-        y: plotInstance.valToPos(y, FIXED_UNIT),
+        y: plotInstance.valToPos(y, yScale),
       };
     },
     [plotCtx.isPlotReady, plotCtx.getPlotInstance]
