@@ -131,12 +131,14 @@ function getCanvasGradient(
   switch (gradientMode) {
     case AreaGradientMode.Hue:
       const color1 = tinycolor(color)
-        .darken(0)
-        .spin(20)
+        .spin(-25)
+        .darken(30)
+        .setAlpha(opacity)
         .toRgbString();
       const color2 = tinycolor(color)
-        .lighten(0)
-        .spin(-20)
+        .spin(25)
+        .lighten(35)
+        .setAlpha(opacity)
         .toRgbString();
       gradient.addColorStop(0, color2);
       gradient.addColorStop(1, color1);
