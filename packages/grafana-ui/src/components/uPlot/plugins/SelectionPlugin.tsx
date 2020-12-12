@@ -67,6 +67,10 @@ export const SelectionPlugin: React.FC<SelectionPluginProps> = ({ onSelect, onDi
               width: u.select.width,
             },
           });
+
+          // manually hide selected region (since cursor.drag.setScale = false)
+          /* @ts-ignore */
+          u.setSelect({ left: 0, width: 0 }, false);
         },
       },
     });
