@@ -66,7 +66,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     return false;
   }, []);
 
-  // reference change will not triger re-render
+  // reference change will not trigger re-render
   const currentTimeRange = useRef<TimeRange>(timeRange);
   useLayoutEffect(() => {
     currentTimeRange.current = timeRange;
@@ -81,7 +81,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       return builder;
     }
 
-    // X is the first field in the alligned frame
+    // X is the first field in the aligned frame
     const xField = alignedFrame.fields[0];
     if (xField.type === FieldType.time) {
       builder.addScale({
