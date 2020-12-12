@@ -1,5 +1,5 @@
 import { GrafanaTheme } from '@grafana/data';
-import { IconButton, InlineFieldRow, InlineFormLabel, InlineLabel, stylesFactory, useTheme } from '@grafana/ui';
+import { IconButton, InlineFieldRow, InlineLabel, InlineSegmentGroup, stylesFactory, useTheme } from '@grafana/ui';
 import { css } from 'emotion';
 import { noop } from 'lodash';
 import React, { FunctionComponent } from 'react';
@@ -23,29 +23,31 @@ export const QueryEditorRow: FunctionComponent<Props> = ({
 
   return (
     <InlineFieldRow>
-      <InlineLabel width={17}>
-        <span>{label}</span>
-        {onHideClick && (
+      <InlineSegmentGroup>
+        <InlineLabel width={17}>
+          <span>{label}</span>
+          {onHideClick && (
+            <IconButton
+              name={hidden ? 'eye-slash' : 'eye'}
+              onClick={onHideClick}
+              surface="header"
+              size="sm"
+              aria-pressed={hidden}
+              aria-label="hide metric"
+              className={styles.icon}
+            />
+          )}
           <IconButton
-            name={hidden ? 'eye-slash' : 'eye'}
-            onClick={onHideClick}
+            name="trash-alt"
             surface="header"
             size="sm"
-            aria-pressed={hidden}
-            aria-label="hide metric"
             className={styles.icon}
+            onClick={onRemoveClick || noop}
+            disabled={!onRemoveClick}
+            aria-label="remove metric"
           />
-        )}
-        <IconButton
-          name="trash-alt"
-          surface="header"
-          size="sm"
-          className={styles.icon}
-          onClick={onRemoveClick || noop}
-          disabled={!onRemoveClick}
-          aria-label="remove metric"
-        />
-      </InlineLabel>
+        </InlineLabel>
+      </InlineSegmentGroup>
       {children}
     </InlineFieldRow>
   );
