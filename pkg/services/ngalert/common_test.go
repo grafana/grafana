@@ -24,7 +24,8 @@ func setupTestEnv(t *testing.T) *AlertNG {
 	sqlStore := sqlstore.InitTestDB(t)
 	ng.SQLStore = sqlStore
 
-	ng.Init()
+	err := ng.Init()
+	require.NoError(t, err)
 	return &ng
 }
 
