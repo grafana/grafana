@@ -11,7 +11,13 @@ import {
   FieldColorModeId,
 } from '@grafana/data';
 import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
-import { AxisPlacement, DrawStyle, LineInterpolation, PointVisibility } from '@grafana/ui/src/components/uPlot/config';
+import {
+  AreaGradientMode,
+  AxisPlacement,
+  DrawStyle,
+  LineInterpolation,
+  PointVisibility,
+} from '@grafana/ui/src/components/uPlot/config';
 import { Options } from './types';
 import omitBy from 'lodash/omitBy';
 import isNil from 'lodash/isNil';
@@ -167,6 +173,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
 
   const graph = y1.custom ?? ({} as GraphFieldConfig);
   graph.drawStyle = angular.bars ? DrawStyle.Bars : angular.lines ? DrawStyle.Line : DrawStyle.Points;
+
   if (angular.points) {
     graph.showPoints = PointVisibility.Always;
   } else if (graph.drawStyle !== DrawStyle.Points) {
@@ -174,22 +181,30 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   }
 
   graph.lineWidth = angular.linewidth;
+
   if (isNumber(angular.pointradius)) {
     graph.pointSize = 2 + angular.pointradius * 2;
   }
+
   if (isNumber(angular.fill)) {
     graph.fillOpacity = angular.fill / 10; // fill is 0-10
   }
+
   if (isNumber(angular.fillGradient)) {
-    graph.fillGradient = angular.fillGradient / 10; // fill is 0-10
+    graph.fillOpacity = angular.fillGradient / 10; // fill is 0-10
+    graph.fillGradient = AreaGradientMode.Opacity;
   }
+
   graph.spanNulls = angular.nullPointMode === NullValueMode.Null;
+
   if (angular.steppedLine) {
     graph.lineInterpolation = LineInterpolation.StepAfter;
   }
+
   if (graph.drawStyle === DrawStyle.Bars) {
     graph.fillOpacity = 1.0; // bars were always
   }
+
   y1.custom = omitBy(graph, isNil);
   y1.nullValueMode = angular.nullPointMode as NullValueMode;
 

@@ -1,7 +1,15 @@
 import tinycolor from 'tinycolor2';
 import uPlot, { Series } from 'uplot';
-import { getCanvasGradient } from '../../../utils/measureText';
-import { DrawStyle, LineConfig, AreaConfig, PointsConfig, PointVisibility, LineInterpolation } from '../config';
+import { getCanvasContext } from '../../../utils/measureText';
+import {
+  DrawStyle,
+  LineConfig,
+  AreaConfig,
+  PointsConfig,
+  PointVisibility,
+  LineInterpolation,
+  AreaGradientMode,
+} from '../config';
 import { PlotConfigBuilder } from '../types';
 
 const pathBuilders = uPlot.paths;
@@ -94,9 +102,10 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
               .toRgbString()
           : fillColor,
       };
-      if (fillGradient) {
+
+      if (fillGradient && fillGradient !== AreaGradientMode.None) {
         const height = this.props.height ?? 400;
-        fillConfig.fill = getCanvasGradient(fillColor, fillOpacityNumber, height);
+        fillConfig.fill = getCanvasGradient(fillColor, fillGradient, fillOpacityNumber, height);
       }
     }
 
@@ -107,5 +116,45 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       ...pointsConfig,
       ...fillConfig,
     };
+  }
+}
+
+function getCanvasGradient(
+  color: string,
+  gradientMode: AreaGradientMode,
+  opacity: number,
+  plotHeight: number
+): CanvasGradient {
+  const ctx = getCanvasContext();
+  var gradient = ctx.createLinearGradient(0, 0, 0, plotHeight);
+
+  switch (gradientMode) {
+    case AreaGradientMode.Hue:
+      const color1 = tinycolor(color)
+        .darken(0)
+        .spin(20)
+        .toRgbString();
+      const color2 = tinycolor(color)
+        .lighten(0)
+        .spin(-20)
+        .toRgbString();
+      gradient.addColorStop(0, color2);
+      gradient.addColorStop(1, color1);
+
+    case AreaGradientMode.Opacity:
+    default:
+      gradient.addColorStop(
+        0,
+        tinycolor(color)
+          .setAlpha(opacity)
+          .toRgbString()
+      );
+      gradient.addColorStop(
+        1,
+        tinycolor(color)
+          .setAlpha(0)
+          .toRgbString()
+      );
+      return gradient;
   }
 }

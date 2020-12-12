@@ -65,14 +65,12 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           },
           showIf: c => c.drawStyle !== DrawStyle.Points,
         })
-        .addSliderInput({
+        .addRadio({
           path: 'fillGradient',
           name: 'Fill gradient',
-          defaultValue: 0,
+          defaultValue: graphFieldOptions.fillGradient[0],
           settings: {
-            min: 0,
-            max: 1,
-            step: 0.1,
+            options: graphFieldOptions.fillGradient,
           },
           showIf: c => !!(c.drawStyle !== DrawStyle.Points && c.fillOpacity && c.fillOpacity > 0),
         })

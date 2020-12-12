@@ -45,7 +45,13 @@ export interface LineConfig {
 export interface AreaConfig {
   fillColor?: string;
   fillOpacity?: number;
-  fillGradient?: number;
+  fillGradient?: AreaGradientMode;
+}
+
+export enum AreaGradientMode {
+  None = 'none',
+  Opacity = 'opacity',
+  Hue = 'hue',
 }
 
 /**
@@ -98,4 +104,10 @@ export const graphFieldOptions = {
     { label: 'Right', value: AxisPlacement.Right },
     { label: 'Hidden', value: AxisPlacement.Hidden },
   ] as Array<SelectableValue<AxisPlacement>>,
+
+  fillGradient: [
+    { label: 'None', value: undefined },
+    { label: 'Opacity', value: AreaGradientMode.Opacity },
+    { label: 'Hue', value: AreaGradientMode.Hue },
+  ] as Array<SelectableValue<AreaGradientMode>>,
 };

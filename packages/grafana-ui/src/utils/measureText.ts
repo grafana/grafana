@@ -1,9 +1,7 @@
-import tinycolor from 'tinycolor2';
-
 let canvas: HTMLCanvasElement | null = null;
 const cache: Record<string, TextMetrics> = {};
 
-function getCanvasContext() {
+export function getCanvasContext() {
   if (canvas === null) {
     canvas = document.createElement('canvas');
   }
@@ -50,25 +48,4 @@ export function calculateFontSize(text: string, width: number, height: number, l
   // final fontSize
   const optimalSize = Math.min(fontSizeBasedOnHeight, fontSizeBasedOnWidth);
   return Math.min(optimalSize, maxSize ?? optimalSize);
-}
-
-/**
- * @beta
- */
-export function getCanvasGradient(color: string, amount: number, plotHeight: number): CanvasGradient {
-  const ctx = getCanvasContext();
-  var gradient = ctx.createLinearGradient(0, 0, 0, plotHeight);
-  gradient.addColorStop(
-    0,
-    tinycolor(color)
-      .setAlpha(amount)
-      .toRgbString()
-  );
-  gradient.addColorStop(
-    1,
-    tinycolor(color)
-      .setAlpha(0)
-      .toRgbString()
-  );
-  return gradient;
 }
