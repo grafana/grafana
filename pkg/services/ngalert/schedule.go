@@ -115,7 +115,7 @@ type schedule struct {
 func newScheduler(c clock.Clock, baseInterval time.Duration, logger log.Logger, evalApplied func(int64)) *schedule {
 	ticker := alerting.NewTicker(c.Now(), time.Second*0, c, int64(baseInterval.Seconds()))
 	sch := schedule{
-		registry:     alertDefinitionRegistry{alertDefinitionEnvelop: make(map[int64]alertDefinitionEnvelop)},
+		registry:     alertDefinitionRegistry{alertDefinitionInfo: make(map[int64]alertDefinitionInfo)},
 		stop:         make(chan int64),
 		maxAttempts:  maxAttempts,
 		clock:        c,
@@ -170,25 +170,25 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 			registeredDefinitions := ng.schedule.registry.keyMap()
 
 			type readyToRunItem struct {
-				id                int64
-				definitionEnvelop alertDefinitionEnvelop
-				newVersion        bool
+				id             int64
+				definitionInfo alertDefinitionInfo
+				newVersion     bool
 			}
 			readyToRun := make([]readyToRunItem, 0)
 			for _, item := range alertDefinitions {
 				itemID := item.ID
 				itemVersion := item.Version
 				newRoutine := !ng.schedule.registry.exists(itemID)
-				definitionEnvelop := ng.schedule.registry.getOrCreateEnvelop(itemID, itemVersion)
+				definitionInfo := ng.schedule.registry.getOrCreateInfo(itemID, itemVersion)
 
 				if newRoutine {
 					dispatcherGroup.Go(func() error {
-						return ng.definitionRoutine(ctx, itemID, definitionEnvelop.ch)
+						return ng.definitionRoutine(ctx, itemID, definitionInfo.ch)
 					})
 				}
 
 				if item.Interval != 0 && tick.Unix()%item.Interval == 0 {
-					readyToRun = append(readyToRun, readyToRunItem{id: itemID, definitionEnvelop: definitionEnvelop})
+					readyToRun = append(readyToRun, readyToRunItem{id: itemID, definitionInfo: definitionInfo})
 				}
 
 				// remove the alert definition from the registered alert definitions
@@ -204,7 +204,7 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 				item := readyToRun[i]
 
 				c.AfterFunc(time.Duration(int64(i)*step), func() {
-					item.definitionEnvelop.ch <- &evalContext{now: tick, version: item.definitionEnvelop.version}
+					item.definitionInfo.ch <- &evalContext{now: tick, version: item.definitionInfo.version}
 				})
 			}
 
@@ -221,31 +221,31 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 }
 
 type alertDefinitionRegistry struct {
-	mu                     sync.Mutex
-	alertDefinitionEnvelop map[int64]alertDefinitionEnvelop
+	mu                  sync.Mutex
+	alertDefinitionInfo map[int64]alertDefinitionInfo
 }
 
-// getOrCreateEnvelop returns the channel for the specific alert definition
+// getOrCreateInfo returns the channel for the specific alert definition
 // if it does not exists creates one and returns it
-func (r *alertDefinitionRegistry) getOrCreateEnvelop(definitionID int64, definitionVersion int64) alertDefinitionEnvelop {
+func (r *alertDefinitionRegistry) getOrCreateInfo(definitionID int64, definitionVersion int64) alertDefinitionInfo {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	envelope, ok := r.alertDefinitionEnvelop[definitionID]
+	info, ok := r.alertDefinitionInfo[definitionID]
 	if !ok {
-		r.alertDefinitionEnvelop[definitionID] = alertDefinitionEnvelop{ch: make(chan *evalContext), version: definitionVersion}
-		return r.alertDefinitionEnvelop[definitionID]
+		r.alertDefinitionInfo[definitionID] = alertDefinitionInfo{ch: make(chan *evalContext), version: definitionVersion}
+		return r.alertDefinitionInfo[definitionID]
 	}
-	envelope.version = definitionVersion
-	r.alertDefinitionEnvelop[definitionID] = envelope
-	return envelope
+	info.version = definitionVersion
+	r.alertDefinitionInfo[definitionID] = info
+	return info
 }
 
 func (r *alertDefinitionRegistry) exists(definitionID int64) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	_, ok := r.alertDefinitionEnvelop[definitionID]
+	_, ok := r.alertDefinitionInfo[definitionID]
 	return ok
 }
 
@@ -253,7 +253,7 @@ func (r *alertDefinitionRegistry) del(definitionID int64) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	delete(r.alertDefinitionEnvelop, definitionID)
+	delete(r.alertDefinitionInfo, definitionID)
 }
 
 func (r *alertDefinitionRegistry) iter() <-chan int64 {
@@ -263,7 +263,7 @@ func (r *alertDefinitionRegistry) iter() <-chan int64 {
 		r.mu.Lock()
 		defer r.mu.Unlock()
 
-		for k := range r.alertDefinitionEnvelop {
+		for k := range r.alertDefinitionInfo {
 			c <- k
 		}
 		close(c)
@@ -281,7 +281,7 @@ func (r *alertDefinitionRegistry) keyMap() map[int64]struct{} {
 	return definitionsIDs
 }
 
-type alertDefinitionEnvelop struct {
+type alertDefinitionInfo struct {
 	ch      chan *evalContext
 	version int64
 }
