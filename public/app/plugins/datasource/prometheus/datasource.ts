@@ -199,17 +199,21 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         instantTarget.range = true;
 
         // Create exemplar query
-        const exemplarTarget: any = cloneDeep(target);
-        exemplarTarget.exemplar = true;
-        exemplarTarget.instant = false;
-        exemplarTarget.requestId += '_exemplar';
+        if (target.exemplar) {
+          const exemplarTarget = cloneDeep(target);
+          exemplarTarget.instant = false;
+          exemplarTarget.requestId += '_exemplar';
+          instantTarget.exemplar = false;
+          rangeTarget.exemplar = false;
+          queries.push(this.createQuery(exemplarTarget, options, start, end));
+          activeTargets.push(exemplarTarget);
+        }
 
         // Add both targets to activeTargets and queries arrays
-        activeTargets.push(instantTarget, rangeTarget, exemplarTarget);
+        activeTargets.push(instantTarget, rangeTarget);
         queries.push(
           this.createQuery(instantTarget, options, start, end),
-          this.createQuery(rangeTarget, options, start, end),
-          this.createQuery(exemplarTarget, options, start, end)
+          this.createQuery(rangeTarget, options, start, end)
         );
         // If running only instant query in Explore, format as table
       } else if (target.instant && options.app === CoreApp.Explore) {
@@ -218,14 +222,15 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         queries.push(this.createQuery(instantTarget, options, start, end));
         activeTargets.push(instantTarget);
       } else {
-        const exemplarTarget: any = cloneDeep(target);
-        exemplarTarget.exemplar = true;
-        exemplarTarget.requestId += '_exemplar';
-        queries.push(
-          this.createQuery(target, options, start, end),
-          this.createQuery(exemplarTarget, options, start, end)
-        );
-        activeTargets.push(target, exemplarTarget);
+        if (target.exemplar) {
+          const exemplarTarget = cloneDeep(target);
+          exemplarTarget.requestId += '_exemplar';
+          target.exemplar = false;
+          queries.push(this.createQuery(exemplarTarget, options, start, end));
+          activeTargets.push(exemplarTarget);
+        }
+        queries.push(this.createQuery(target, options, start, end));
+        activeTargets.push(target);
       }
     }
 
