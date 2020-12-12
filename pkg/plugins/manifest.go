@@ -191,7 +191,7 @@ func getPluginSignatureState(log log.Logger, plugin *PluginBase) (PluginSignatur
 		}
 		sum := hex.EncodeToString(h.Sum(nil))
 		if sum != hash {
-			fmt.Printf("File %q should have checkum %q, but is %q\n", fp, hash, sum)
+			fmt.Printf("File %q should have checksum %q, but is %q\n", fp, hash, sum)
 			log.Warn("Plugin file's signature has been modified versus manifest", "plugin", plugin.Id, "filename", fp)
 			return PluginSignatureState{
 				Status: pluginSignatureModified,
