@@ -8,7 +8,7 @@ import {
   FieldMatcherID,
 } from '@grafana/data';
 import { AlignedFrameWithGapTest } from '../uPlot/types';
-import uPlot, { AlignedData } from 'uplot';
+import uPlot, { AlignedData, JoinNullMode } from 'uplot';
 import { XYFieldMatchers } from './GraphNG';
 
 // the results ofter passing though data
@@ -43,7 +43,7 @@ export function mapDimesions(match: XYFieldMatchers, frame: DataFrame, frames?: 
 export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): AlignedFrameWithGapTest | null {
   const valuesFromFrames: AlignedData[] = [];
   const sourceFields: Field[] = [];
-  const skipGaps: boolean[][] = [];
+  const nullModes: JoinNullMode[][] = [];
 
   // Default to timeseries config
   if (!fields) {
@@ -64,12 +64,12 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       throw new Error('Only a single x field is supported');
     }
 
-    let skipGapsFrame: boolean[] = [];
+    let nullModesFrame: JoinNullMode[] = [];
 
     // Add the first X axis
     if (!sourceFields.length) {
       sourceFields.push(dims.x[0]);
-      skipGapsFrame.push(true);
+      nullModesFrame.push(0);
     }
 
     const alignedData: AlignedData = [
@@ -79,15 +79,15 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     // Add the Y values
     for (const field of dims.y) {
       let values = field.values.toArray();
-      let spanNulls = field.config.custom.spanNulls || false;
+      let joinNullMode = field.config.custom.spanNulls ? 0 : 2;
 
       if (field.config.nullValueMode === NullValueMode.AsZero) {
         values = values.map(v => (v === null ? 0 : v));
-        spanNulls = true;
+        joinNullMode = 0;
       }
 
       alignedData.push(values);
-      skipGapsFrame.push(spanNulls);
+      nullModesFrame.push(joinNullMode);
 
       // This will cache an appropriate field name in the field state
       getFieldDisplayName(field, frame, frames);
@@ -95,7 +95,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     }
 
     valuesFromFrames.push(alignedData);
-    skipGaps.push(skipGapsFrame);
+    nullModes.push(nullModesFrame);
   }
 
   if (valuesFromFrames.length === 0) {
@@ -103,7 +103,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
   }
 
   // do the actual alignment (outerJoin on the first arrays)
-  let { data: alignedData, isGap } = uPlot.join(valuesFromFrames, skipGaps);
+  let { data: alignedData, isGap } = uPlot.join(valuesFromFrames, nullModes);
 
   if (alignedData!.length !== sourceFields.length) {
     throw new Error('outerJoinValues lost a field?');
