@@ -1,6 +1,12 @@
 import { DataFrame } from '@grafana/data';
 import { transform } from './result_transformer';
 
+jest.mock('@grafana/runtime', () => ({
+  getTemplateSrv: () => ({
+    replace: (str: string) => str,
+  }),
+}));
+
 const matrixResponse = {
   status: 'success',
   data: {
