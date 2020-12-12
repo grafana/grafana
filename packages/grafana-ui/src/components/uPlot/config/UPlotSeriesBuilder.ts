@@ -1,8 +1,18 @@
 import tinycolor from 'tinycolor2';
 import uPlot, { Series } from 'uplot';
 import { DrawStyle, LineConfig, AreaConfig, PointsConfig, PointVisibility, LineInterpolation } from '../config';
-import { barsBuilder, smoothBuilder, stepBeforeBuilder, stepAfterBuilder } from '../paths';
 import { PlotConfigBuilder } from '../types';
+
+const pathBuilders = uPlot.paths;
+
+const barWidthFactor = 0.6;
+const barMaxWidth = Infinity;
+
+const barsBuilder = pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth] });
+const linearBuilder = pathBuilders.linear!();
+const smoothBuilder = pathBuilders.spline!();
+const stepBeforeBuilder = pathBuilders.stepped!({ align: -1 });
+const stepAfterBuilder = pathBuilders.stepped!({ align: 1 });
 
 export interface SeriesProps extends LineConfig, AreaConfig, PointsConfig {
   drawStyle: DrawStyle;
@@ -32,15 +42,8 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     } else {
       lineConfig.stroke = lineColor;
       lineConfig.width = lineWidth;
-      lineConfig.paths = (
-        self: uPlot,
-        seriesIdx: number,
-        idx0: number,
-        idx1: number,
-        extendGap: Series.ExtendGap,
-        buildClip: Series.BuildClip
-      ) => {
-        let pathsBuilder = self.paths;
+      lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
+        let pathsBuilder = linearBuilder;
 
         if (drawStyle === DrawStyle.Bars) {
           pathsBuilder = barsBuilder;
@@ -54,7 +57,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
           }
         }
 
-        return pathsBuilder(self, seriesIdx, idx0, idx1, extendGap, buildClip);
+        return pathsBuilder(self, seriesIdx, idx0, idx1);
       };
     }
 
