@@ -156,7 +156,6 @@ func (sch *schedule) resetHeartbeatInterval(duration time.Duration) error {
 
 func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 	dispatcherGroup, ctx := errgroup.WithContext(grafanaCtx)
-	c := ng.schedule.clock
 	for {
 		select {
 		case tick := <-ng.schedule.heartbeat.C:
@@ -212,7 +211,7 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 			for i := range readyToRun {
 				item := readyToRun[i]
 
-				c.AfterFunc(time.Duration(int64(i)*step), func() {
+				time.AfterFunc(time.Duration(int64(i)*step), func() {
 					item.definitionInfo.ch <- &evalContext{now: tick, version: item.definitionInfo.version}
 				})
 			}

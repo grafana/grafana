@@ -2,6 +2,7 @@ package ngalert
 
 import (
 	"context"
+	"fmt"
 	"runtime"
 	"testing"
 	"time"
@@ -16,17 +17,22 @@ import (
 func TestAlertingTicker(t *testing.T) {
 	ng := setupTestEnv(t)
 	mockedClock := clock.NewMock()
-	evalAppliedCh := make(chan int64)
+	ng.schedule = newScheduler(mockedClock, time.Second, log.New("ngalert.schedule.test"), nil)
 
-	ng.schedule = newScheduler(mockedClock, time.Second, log.New("ngalert.schedule.test"), func(alertDefID int64) {
-		evalAppliedCh <- alertDefID
-	})
+	alerts := make([]*AlertDefinition, 0)
 
 	// create alert definition with zero interval (should never run)
-	initialAlertDef := createTestAlertDefinition(t, ng, 0)
+	alerts = append(alerts, createTestAlertDefinition(t, ng, 0))
 
 	// create alert definition with one second interval
-	alertDefWithOneSecInterval := createTestAlertDefinition(t, ng, 1)
+	alerts = append(alerts, createTestAlertDefinition(t, ng, 1))
+
+	// set the channel capacity to the number of the alerts created
+	evalAppliedCh := make(chan int64, len(alerts))
+
+	ng.schedule.evalApplied = func(alertDefID int64) {
+		evalAppliedCh <- alertDefID
+	}
 
 	ctx := context.Background()
 	go func() {
@@ -39,65 +45,88 @@ func TestAlertingTicker(t *testing.T) {
 	err := ng.schedule.resetHeartbeatInterval(0 * time.Second)
 	require.NoError(t, err)
 
-	advanceClock(t, mockedClock)
-	assertEvalRun(t, evalAppliedCh, alertDefWithOneSecInterval.ID)
+	t.Run(fmt.Sprintf("on 1st tick only alert definition %d should be evaluated", alerts[1].ID), func(t *testing.T) {
+		advanceClock(t, mockedClock)
+		expectedAlertDefinitionsEvaluated := []int64{alerts[1].ID}
+		mockedClock.AfterFunc(time.Second-time.Nanosecond, func() {
+			assertEvalRun(t, evalAppliedCh, expectedAlertDefinitionsEvaluated...)
+		})
+	})
 
 	// change alert definition interval to three seconds
 	var threeSecInterval int64 = 3
 	err = ng.updateAlertDefinition(&updateAlertDefinitionCommand{
-		ID:                initialAlertDef.ID,
+		ID:                alerts[0].ID,
 		IntervalInSeconds: &threeSecInterval,
 	})
 	require.NoError(t, err)
-	t.Logf("alert definition: %d interval reset to: %d", initialAlertDef.ID, threeSecInterval)
+	t.Logf("alert definition: %d interval reset to: %d", alerts[0].ID, threeSecInterval)
 
-	// advance clock one second and trigger next tick
-	advanceClock(t, mockedClock)
-	assertEvalRun(t, evalAppliedCh, alertDefWithOneSecInterval.ID)
-
-	advanceClock(t, mockedClock)
-	step := 500 * time.Millisecond
-
-	// wait enough for both alert definition evaluations
-	mockedClock.AfterFunc(step, func() {
-		assertEvalRun(t, evalAppliedCh, alertDefWithOneSecInterval.ID, initialAlertDef.ID)
+	t.Run(fmt.Sprintf("on 2nd tick only alert definition %d should be evaluated", alerts[1].ID), func(t *testing.T) {
+		advanceClock(t, mockedClock)
+		expectedAlertDefinitionsEvaluated := []int64{alerts[1].ID}
+		mockedClock.AfterFunc(time.Second-time.Nanosecond, func() {
+			assertEvalRun(t, evalAppliedCh, expectedAlertDefinitionsEvaluated...)
+		})
 	})
 
-	advanceClock(t, mockedClock)
-	assertEvalRun(t, evalAppliedCh, alertDefWithOneSecInterval.ID)
+	t.Run("on 3rd tick both alert definitions should be evaluated", func(t *testing.T) {
+		advanceClock(t, mockedClock)
+		expectedAlertDefinitionsEvaluated := []int64{alerts[1].ID, alerts[0].ID}
+		mockedClock.AfterFunc(time.Second-time.Nanosecond, func() {
+			assertEvalRun(t, evalAppliedCh, expectedAlertDefinitionsEvaluated...)
+		})
+	})
 
-	err = ng.deleteAlertDefinitionByID(&deleteAlertDefinitionByIDCommand{ID: alertDefWithOneSecInterval.ID})
+	t.Run(fmt.Sprintf("on 4th tick only alert definition %d should be evaluated", alerts[1].ID), func(t *testing.T) {
+		advanceClock(t, mockedClock)
+		expectedAlertDefinitionsEvaluated := []int64{alerts[1].ID}
+		mockedClock.AfterFunc(time.Second-time.Nanosecond, func() {
+			assertEvalRun(t, evalAppliedCh, expectedAlertDefinitionsEvaluated...)
+		})
+	})
+
+	err = ng.deleteAlertDefinitionByID(&deleteAlertDefinitionByIDCommand{ID: alerts[1].ID})
 	require.NoError(t, err)
-	t.Logf("alert definition: %d deleted", alertDefWithOneSecInterval.ID)
+	t.Logf("alert definition: %d deleted", alerts[1].ID)
 
-	advanceClock(t, mockedClock)
-	assertEvalRun(t, evalAppliedCh)
+	t.Run("on 5th tick no alert definitions should be evaluated", func(t *testing.T) {
+		advanceClock(t, mockedClock)
+		expectedAlertDefinitionsEvaluated := []int64{}
+		mockedClock.AfterFunc(time.Second-time.Nanosecond, func() {
+			assertEvalRun(t, evalAppliedCh, expectedAlertDefinitionsEvaluated...)
+		})
+	})
 
-	advanceClock(t, mockedClock)
-	assertEvalRun(t, evalAppliedCh, initialAlertDef.ID)
+	t.Run(fmt.Sprintf("on 6th tick alert definition %d should be evaluated", alerts[0].ID), func(t *testing.T) {
+		advanceClock(t, mockedClock)
+		expectedAlertDefinitionsEvaluated := []int64{alerts[0].ID}
+		mockedClock.AfterFunc(time.Second-time.Nanosecond, func() {
+			assertEvalRun(t, evalAppliedCh, expectedAlertDefinitionsEvaluated...)
+		})
+	})
 }
 
-// assertEvalRun blocks if does not receive the expected number of ids.
 func assertEvalRun(t *testing.T, ch <-chan int64, ids ...int64) {
-	received := make(map[int64]struct{}, len(ids))
+	expected := make(map[int64]struct{}, len(ids))
 	for _, id := range ids {
-		received[id] = struct{}{}
+		expected[id] = struct{}{}
 	}
 
 	for i := 0; i < len(ids); i++ {
 		id := <-ch
-		_, ok := received[id]
+		_, ok := expected[id]
 		assert.True(t, ok)
-		t.Logf("alert definition: %d evaluated", id)
-		delete(received, id)
+		//t.Logf("alert definition: %d evaluated", id)
+		delete(expected, id)
 	}
 
-	if len(received) > 0 {
-		assert.Fail(t, "Not received: %v", received)
+	if len(expected) > 0 {
+		assert.Fail(t, "Not expected: %v", expected)
 	}
 }
 
 func advanceClock(t *testing.T, mockedClock *clock.Mock) {
 	mockedClock.Add(time.Second)
-	t.Logf("Tick: %v", mockedClock.Now())
+	// t.Logf("Tick: %v", mockedClock.Now())
 }
