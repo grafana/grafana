@@ -1,7 +1,7 @@
 import React from 'react';
 import { css, cx } from 'emotion';
 import { DataQuery, DataSourceApi, GrafanaTheme } from '@grafana/data';
-import { Icon, Input, stylesFactory, useTheme } from '@grafana/ui';
+import { Icon, stylesFactory, useTheme } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { useState } from 'react';
 
@@ -67,7 +67,8 @@ export const QueryEditorRowTitle: React.FC<QueryEditorRowTitleProps> = ({
         </div>
       )}
       {isEditing && (
-        <Input
+        <input
+          type="text"
           defaultValue={query.refId}
           onBlur={onEditQueryBlur}
           autoFocus
@@ -97,8 +98,8 @@ const getQueryEditorRowTitleStyles = stylesFactory((theme: GrafanaTheme) => {
       &:hover {
         .query-name-wrapper {
           display: flex;
-          background: ${theme.colors.formInputBg};
-          border: ${theme.colors.formInputBorder};
+          background: ${theme.colors.bg3};
+          border: 1px dashed ${theme.colors.border3};
         }
 
         .query-name-edit-icon {
@@ -110,6 +111,7 @@ const getQueryEditorRowTitleStyles = stylesFactory((theme: GrafanaTheme) => {
       css`
         display: flex;
         cursor: pointer;
+        border: 1px solid transparent;
         border-radius: ${theme.border.radius.md};
         align-items: center;
         padding-right: ${theme.spacing.xs};
@@ -132,6 +134,16 @@ const getQueryEditorRowTitleStyles = stylesFactory((theme: GrafanaTheme) => {
     ),
     queryNameInput: css`
       max-width: 300px;
+      border: none;
+      height: 22px;
+      line-height: 22px;
+      background: ${theme.colors.formInputBg};
+      padding-left: ${theme.spacing.sm};
+      border: 1px dashed ${theme.colors.border3};
+      border-radius: ${theme.border.radius.md};
+      &:focus {
+        outline: none;
+      }
     `,
     collapsedText: css`
       font-weight: ${theme.typography.weight.regular};
