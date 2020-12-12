@@ -10,6 +10,7 @@ import {
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { DrawStyle } from '@grafana/ui/src/components/uPlot/config';
 import { groupBy } from 'lodash';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -92,8 +93,10 @@ export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelDat
         color: {
           mode: FieldColorModeId.PaletteClassic,
         },
-        // Seems like we have to pass an empty custom object to have the defaults
-        custom: {},
+        custom: {
+          drawStyle: DrawStyle.Line,
+          fillOpacity: 0,
+        },
         ...valueField.config,
       };
     }
