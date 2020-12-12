@@ -84,7 +84,9 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     }
 
     let fillConfig: any | undefined;
-    if (fillColor && fillOpacity !== 0) {
+    let fillOpacityNumber = fillOpacity ?? 0;
+
+    if (fillColor && fillOpacityNumber > 0) {
       fillConfig = {
         fill: fillOpacity
           ? tinycolor(fillColor)
@@ -94,7 +96,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       };
       if (fillGradient) {
         const height = this.props.height ?? 400;
-        fillConfig.fill = getCanvasGradient(fillColor, 1, height * 0.8 + height * fillGradient);
+        fillConfig.fill = getCanvasGradient(fillColor, fillOpacityNumber, height);
       }
     }
 
