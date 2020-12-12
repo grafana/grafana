@@ -47,20 +47,20 @@ func (ng *AlertNG) Init() error {
 	ng.log = log.New("ngalert")
 
 	ng.registerAPIEndpoints()
+	ng.schedule = newScheduler(clock.New(), baseIntervalInSeconds*time.Second, ng.log, nil)
 	return nil
 }
 
 // Run starts the scheduler
 func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.log.Debug("ngalert starting")
-	ng.schedule = newScheduler(clock.New(), baseIntervalInSeconds*time.Second, ng.log, nil)
 	return ng.alertingTicker(ctx)
 }
 
 // IsDisabled returns true if the alerting service is disable for this instance.
 func (ng *AlertNG) IsDisabled() bool {
 	if ng.Cfg == nil {
-		return false
+		return true
 	}
 	// Check also about expressions?
 	return !ng.Cfg.IsNgAlertEnabled()

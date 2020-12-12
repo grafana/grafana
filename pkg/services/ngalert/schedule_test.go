@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -16,6 +17,8 @@ import (
 
 func TestAlertingTicker(t *testing.T) {
 	ng := setupTestEnv(t)
+	t.Cleanup(registry.ClearOverrides)
+
 	mockedClock := clock.NewMock()
 	ng.schedule = newScheduler(mockedClock, time.Second, log.New("ngalert.schedule.test"), nil)
 

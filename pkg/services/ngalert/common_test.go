@@ -5,7 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
@@ -13,15 +16,40 @@ import (
 )
 
 func setupTestEnv(t *testing.T) *AlertNG {
-	sqlStore := sqlstore.InitTestDB(t)
-	cfg := setting.Cfg{}
+	cfg := setting.NewCfg()
 	cfg.FeatureToggles = map[string]bool{"ngalert": true}
-	ng := AlertNG{
-		SQLStore: sqlStore,
-		Cfg:      &cfg,
-		log:      log.New("ngalert-test"),
-	}
+
+	ng := overrideAlertNGInRegistry(cfg)
+
+	sqlStore := sqlstore.InitTestDB(t)
+	ng.SQLStore = sqlStore
+
+	ng.Init()
 	return &ng
+}
+
+func overrideAlertNGInRegistry(cfg *setting.Cfg) AlertNG {
+	ng := AlertNG{
+		SQLStore:      nil,
+		Cfg:           cfg,
+		RouteRegister: routing.NewRouteRegister(),
+		log:           log.New("ngalert-test"),
+	}
+
+	overrideServiceFunc := func(descriptor registry.Descriptor) (*registry.Descriptor, bool) {
+		if _, ok := descriptor.Instance.(*AlertNG); ok {
+			return &registry.Descriptor{
+				Name:         "AlertNG",
+				Instance:     &ng,
+				InitPriority: descriptor.InitPriority,
+			}, true
+		}
+		return nil, false
+	}
+
+	registry.RegisterOverride(overrideServiceFunc)
+
+	return ng
 }
 
 func createTestAlertDefinition(t *testing.T, ng *AlertNG, intervalInSeconds int64) *AlertDefinition {
