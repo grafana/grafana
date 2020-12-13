@@ -24,6 +24,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
   const styles = getStyles(theme, isHorizontal);
   const SliderWithTooltip = SliderComponent;
   const [slidervalue, setSliderValue] = useState<number>(value || min);
+
   const onSliderChange = useCallback((v: number) => {
     setSliderValue(v);
 
@@ -31,6 +32,7 @@ export const Slider: FunctionComponent<SliderProps> = ({
       onChange(v);
     }
   }, []);
+
   const onSliderInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     let v = +e.target.value;
 
@@ -47,8 +49,10 @@ export const Slider: FunctionComponent<SliderProps> = ({
       onAfterChange(v);
     }
   }, []);
+
   const sliderInputClassNames = !isHorizontal ? [styles.sliderInputVertical] : [];
   const sliderInputFieldClassNames = !isHorizontal ? [styles.sliderInputFieldVertical] : [];
+
   return (
     <div className={cx(styles.container, styles.slider)}>
       {/** Slider tooltip's parent component is body and therefore we need Global component to do css overrides for it. */}

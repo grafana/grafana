@@ -3,6 +3,7 @@ import { GrafanaTheme } from '@grafana/data';
 import { focusCss } from '../../themes/mixins';
 import { css as cssCore } from '@emotion/core';
 import { css } from 'emotion';
+import tinycolor from 'tinycolor2';
 
 export const getFocusStyle = (theme: GrafanaTheme) => css`
   &:focus {
@@ -12,6 +13,7 @@ export const getFocusStyle = (theme: GrafanaTheme) => css`
 
 export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boolean) => {
   const trackColor = theme.isLight ? theme.palette.gray5 : theme.palette.dark6;
+  const blueColor = theme.isLight ? theme.palette.blue80 : theme.palette.blue77;
   const container = isHorizontal
     ? css`
         width: 100%;
@@ -20,6 +22,9 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boole
         height: 100%;
         margin: ${theme.spacing.sm} ${theme.spacing.lg} ${theme.spacing.sm} ${theme.spacing.sm};
       `;
+  const blueOpacity = tinycolor(blueColor)
+    .setAlpha(0.2)
+    .toString();
 
   return {
     container,
@@ -33,28 +38,31 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boole
         margin-top: -10px;
       }
       .rc-slider-handle {
-        border: solid 2px ${theme.palette.blue77};
-        background-color: ${theme.palette.blue77};
+        border: none;
+        background-color: ${blueColor};
+        cursor: pointer;
       }
       .rc-slider-handle:hover {
-        border-color: ${theme.palette.blue77};
+        box-shadow: 0px 0px 0px 6px ${blueOpacity};
       }
       .rc-slider-handle:focus {
-        border-color: ${theme.palette.blue77};
-        box-shadow: none;
+        border: none;
+        box-shadow: 0px 0px 0px 6px ${blueOpacity};
       }
       .rc-slider-handle:active {
-        border-color: ${theme.palette.blue77};
-        box-shadow: none;
+        border: none;
+        box-shadow: 0px 0px 0px 6px ${blueOpacity};
       }
       .rc-slider-handle-click-focused:focus {
-        border-color: ${theme.palette.blue77};
+        border: none;
+        box-shadow: 0px 0px 0px 6px ${blueOpacity};
       }
       .rc-slider-dot-active {
-        border-color: ${theme.palette.blue77};
+        border: none;
+        box-shadow: 0px 0px 0px 6px ${blueOpacity};
       }
       .rc-slider-track {
-        background-color: ${theme.palette.blue77};
+        background-color: ${blueColor};
       }
       .rc-slider-rail {
         background-color: ${trackColor};

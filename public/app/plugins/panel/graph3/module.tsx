@@ -61,7 +61,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           settings: {
             min: 0,
             max: 1,
-            step: 0.1,
+            step: 0.025,
           },
           showIf: c => c.drawStyle !== DrawStyle.Points,
         })
