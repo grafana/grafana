@@ -5,6 +5,7 @@ import { Global } from '@emotion/core';
 import { useTheme } from '../../themes/ThemeContext';
 import { getStyles } from './styles';
 import { SliderProps } from './types';
+import { Input } from '../Input/Input';
 
 /**
  * @public
@@ -35,6 +36,10 @@ export const Slider: FunctionComponent<SliderProps> = ({
 
   const onSliderInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     let v = +e.target.value;
+
+    if (Number.isNaN(v)) {
+      v = 0;
+    }
 
     v > max && (v = max);
     v < min && (v = min);
@@ -69,9 +74,10 @@ export const Slider: FunctionComponent<SliderProps> = ({
           vertical={!isHorizontal}
           reverse={reverse}
         />
-        <input
+        {/* Uses text input so that the number spinners are not shown */}
+        <Input
+          type="text"
           className={cx(styles.sliderInputField, ...sliderInputFieldClassNames)}
-          type="number"
           value={`${slidervalue}`} // to fix the react leading zero issue
           onChange={onSliderInputChange}
           min={min}

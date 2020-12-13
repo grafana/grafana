@@ -25,6 +25,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boole
     container: css`
       width: 100%;
       margin: ${isHorizontal ? 'none' : `${spacing.sm} ${spacing.lg} ${spacing.sm} ${spacing.sm}`};
+      height: ${isHorizontal ? 'auto' : '100%'};
     `,
     slider: css`
       .rc-slider {
@@ -99,15 +100,11 @@ export const getStyles = stylesFactory((theme: GrafanaTheme, isHorizontal: boole
       }
     `,
     sliderInputField: css`
-      display: flex;
-      flex-grow: 0;
-      flex-basis: 50px;
       margin-left: ${theme.spacing.lg};
-      height: ${theme.spacing.formInputHeight}px;
-      text-align: center;
-      border-radius: ${theme.border.radius.sm};
-      border: 1px solid ${theme.colors.formInputBorder};
-      ${getFocusStyle(theme)};
+      width: 60px;
+      input {
+        text-align: center;
+      }
     `,
     sliderInputFieldVertical: css`
       margin: 0 0 ${theme.spacing.lg} 0;

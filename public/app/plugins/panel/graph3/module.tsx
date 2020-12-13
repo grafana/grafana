@@ -91,7 +91,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           defaultValue: 5,
           settings: {
             min: 1,
-            max: 10,
+            max: 40,
             step: 1,
           },
           showIf: c => c.showPoints !== PointVisibility.Never || c.drawStyle === DrawStyle.Points,
