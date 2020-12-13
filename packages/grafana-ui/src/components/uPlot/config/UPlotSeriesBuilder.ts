@@ -44,6 +44,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       fillGradient,
       scaleKey,
       spanNulls,
+      height,
     } = this.props;
 
     let lineConfig: Partial<Series> = {};
@@ -104,7 +105,6 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       };
 
       if (fillGradient && fillGradient !== AreaGradientMode.None) {
-        const height = this.props.height ?? 400;
         fillConfig.fill = getCanvasGradient(fillColor, fillGradient, fillOpacityNumber, height);
       }
     }
@@ -126,7 +126,9 @@ function getCanvasGradient(
   plotHeight: number
 ): CanvasGradient {
   const ctx = getCanvasContext();
-  var gradient = ctx.createLinearGradient(0, 0, 0, plotHeight);
+  const pxRatio = window.devicePixelRatio ?? 1;
+  const pixelHeight = (plotHeight - 30) * pxRatio;
+  const gradient = ctx.createLinearGradient(0, 0, 0, pixelHeight);
 
   switch (gradientMode) {
     case AreaGradientMode.Hue:
