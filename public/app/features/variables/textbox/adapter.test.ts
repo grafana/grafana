@@ -28,6 +28,7 @@ describe('createTextBoxVariableAdapter', () => {
           current: { selected: false, text: 'original', value: 'original' },
           options: [{ selected: false, text: 'original', value: 'original' }],
           type: 'textbox',
+          width: '192',
           label: null,
           hide: VariableHide.dontHide,
           skipUrlSync: false,
@@ -58,12 +59,45 @@ describe('createTextBoxVariableAdapter', () => {
           current: { selected: true, text: 'query', value: 'query' },
           options: [{ selected: false, text: 'query', value: 'query' }],
           type: 'textbox',
+          width: '192',
           label: null,
           hide: VariableHide.dontHide,
           skipUrlSync: false,
           error: null,
           description: null,
         });
+      });
+    });
+  });
+
+  describe('when called and the width is changed', () => {
+    it('then the model should be correct', () => {
+      const text = textboxBuilder()
+        .withId('text')
+        .withName('text')
+        .withQuery('query')
+        .withWidth('200')
+        .withOriginalQuery('original')
+        .withCurrent('query')
+        .withOptions('query')
+        .build();
+
+      const adapter = variableAdapters.get('textbox');
+
+      const result = adapter.getSaveModel(text, true);
+
+      expect(result).toEqual({
+        name: 'text',
+        query: 'query',
+        current: { selected: true, text: 'query', value: 'query' },
+        options: [{ selected: false, text: 'query', value: 'query' }],
+        type: 'textbox',
+        width: '200',
+        label: null,
+        hide: VariableHide.dontHide,
+        skipUrlSync: false,
+        error: null,
+        description: null,
       });
     });
   });

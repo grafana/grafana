@@ -23,5 +23,6 @@ _Text box_ variables display a free text input field with an optional default va
 ## Enter Text options
 
 1. (optional) In the **Default value** field, select the default value for the variable. If you do not enter anything in this field, then Grafana displays an empty text box for users to type text into.
+1. In the **Width** field, enter the width the Text Box should be if you need slightly more or less space for your users to enter their text. 
 1. In **Preview of values**, Grafana displays a list of the current variable values. Review them to ensure they match what you expect.
 1. Click **Add** to add the variable to the dashboard.

@@ -41,5 +41,14 @@ export function TextBoxVariablePicker({ variable }: Props): ReactElement {
     }
   };
 
-  return <Input type="text" value={updatedValue} onChange={onChange} onBlur={onBlur} onKeyDown={onKeyDown} />;
+  return (
+    <Input
+      type="text"
+      value={updatedValue}
+      width={Number(variable.width) / 8} // Component wants width in mulitples of 8px so we divide by 8 to allow the user to define TextBox width to be defined in px.
+      onChange={onChange}
+      onBlur={onBlur}
+      onKeyDown={onKeyDown}
+    />
+  );
 }
