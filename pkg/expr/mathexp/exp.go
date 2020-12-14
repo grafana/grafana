@@ -465,7 +465,7 @@ func (e *State) biSeriesSeries(labels data.Labels, op string, aSeries, bSeries S
 	for i := 0; i < bSeries.Len(); i++ {
 		t, f := bSeries.GetPoint(i)
 		if t != nil {
-			bPoints[t.String()] = f
+			bPoints[t.UTC().String()] = f
 		}
 	}
 
@@ -475,7 +475,7 @@ func (e *State) biSeriesSeries(labels data.Labels, op string, aSeries, bSeries S
 	)
 	for aIdx := 0; aIdx < aSeries.Len(); aIdx++ {
 		aTime, aF := aSeries.GetPoint(aIdx)
-		bF, ok := bPoints[aTime.String()]
+		bF, ok := bPoints[aTime.UTC().String()]
 		if !ok {
 			continue
 		}
