@@ -293,19 +293,24 @@ func lexVar(l *lexer) stateFn {
 		for {
 			switch r := l.next(); {
 			case r == '}':
+				if !hasChar {
+					return l.errorf("incomplete variable")
+				}
 				l.emit(itemVar)
 				return lexItem
 			case r == eof:
 				return l.errorf("unterminated variable missing closing }")
+			case isVarchar(r) || isSpace(r):
+				hasChar = true
 			default:
-				// absorb
+				return l.errorf("unsupported variable character")
 			}
 		}
 	}
 
 	for {
 		switch r := l.next(); {
-		case unicode.IsLetter(r):
+		case isVarchar(r):
 			hasChar = true
 			// absorb
 		default:
