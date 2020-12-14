@@ -35,8 +35,8 @@ func unconvert(m fluent.Matcher) {
 	m.Match("float32($x)").Where(m["x"].Type.Is("float32") && !m["x"].Const).Report("unnecessary conversion").Suggest("$x")
 	m.Match("float64($x)").Where(m["x"].Type.Is("float64") && !m["x"].Const).Report("unnecessary conversion").Suggest("$x")
 
-	// m.Match("byte($x)").Where(m["x"].Type.Is("byte")).Report("unnecessary conversion").Suggest("$x")
-	// m.Match("rune($x)").Where(m["x"].Type.Is("rune")).Report("unnecessary conversion").Suggest("$x")
+	m.Match("byte($x)").Where(m["x"].Type.Is("byte")).Report("unnecessary conversion").Suggest("$x")
+	m.Match("rune($x)").Where(m["x"].Type.Is("rune")).Report("unnecessary conversion").Suggest("$x")
 	m.Match("bool($x)").Where(m["x"].Type.Is("bool") && !m["x"].Const).Report("unnecessary conversion").Suggest("$x")
 
 	m.Match("int8($x)").Where(m["x"].Type.Is("int8") && !m["x"].Const).Report("unnecessary conversion").Suggest("$x")
@@ -52,7 +52,6 @@ func unconvert(m fluent.Matcher) {
 	m.Match("time.Duration($x)").Where(m["x"].Type.Is("time.Duration") && !m["x"].Text.Matches("^[0-9]*$")).Report("unnecessary conversion").Suggest("$x")
 }
 
-/*
 // Don't use == or != with time.Time
 // https://github.com/dominikh/go-tools/issues/47 : Wontfix
 func timeeq(m fluent.Matcher) {
@@ -60,7 +59,6 @@ func timeeq(m fluent.Matcher) {
 	m.Match("$t0 != $t1").Where(m["t0"].Type.Is("time.Time")).Report("using != with time.Time")
 	m.Match(`map[$k]$v`).Where(m["k"].Type.Is("time.Time")).Report("map with time.Time keys are easy to misuse")
 }
-*/
 
 // Wrong err in error check
 func wrongerr(m fluent.Matcher) {
@@ -225,28 +223,24 @@ func ifreturn(m fluent.Matcher) {
 }
 
 func oddifsequence(m fluent.Matcher) {
-	/*
-		m.Match("if $x { $*_ }; if $x {$*_ }").Report("odd sequence of if test")
+	m.Match("if $x { $*_ }; if $x {$*_ }").Report("odd sequence of if test")
 
-		m.Match("if $x == $y { $*_ }; if $y == $x {$*_ }").Report("odd sequence of if tests")
-		m.Match("if $x != $y { $*_ }; if $y != $x {$*_ }").Report("odd sequence of if tests")
+	m.Match("if $x == $y { $*_ }; if $y == $x {$*_ }").Report("odd sequence of if tests")
+	m.Match("if $x != $y { $*_ }; if $y != $x {$*_ }").Report("odd sequence of if tests")
 
-		m.Match("if $x < $y { $*_ }; if $y > $x {$*_ }").Report("odd sequence of if tests")
-		m.Match("if $x <= $y { $*_ }; if $y >= $x {$*_ }").Report("odd sequence of if tests")
+	m.Match("if $x < $y { $*_ }; if $y > $x {$*_ }").Report("odd sequence of if tests")
+	m.Match("if $x <= $y { $*_ }; if $y >= $x {$*_ }").Report("odd sequence of if tests")
 
-		m.Match("if $x > $y { $*_ }; if $y < $x {$*_ }").Report("odd sequence of if tests")
-		m.Match("if $x >= $y { $*_ }; if $y <= $x {$*_ }").Report("odd sequence of if tests")
-	*/
+	m.Match("if $x > $y { $*_ }; if $y < $x {$*_ }").Report("odd sequence of if tests")
+	m.Match("if $x >= $y { $*_ }; if $y <= $x {$*_ }").Report("odd sequence of if tests")
 }
 
 // odd sequence of nested if tests
 func nestedifsequence(m fluent.Matcher) {
-	/*
-		m.Match("if $x < $y { if $x >= $y {$*_ }; $*_ }").Report("odd sequence of nested if tests")
-		m.Match("if $x <= $y { if $x > $y {$*_ }; $*_ }").Report("odd sequence of nested if tests")
-		m.Match("if $x > $y { if $x <= $y {$*_ }; $*_ }").Report("odd sequence of nested if tests")
-		m.Match("if $x >= $y { if $x < $y {$*_ }; $*_ }").Report("odd sequence of nested if tests")
-	*/
+	m.Match("if $x < $y { if $x >= $y {$*_ }; $*_ }").Report("odd sequence of nested if tests")
+	m.Match("if $x <= $y { if $x > $y {$*_ }; $*_ }").Report("odd sequence of nested if tests")
+	m.Match("if $x > $y { if $x <= $y {$*_ }; $*_ }").Report("odd sequence of nested if tests")
+	m.Match("if $x >= $y { if $x < $y {$*_ }; $*_ }").Report("odd sequence of nested if tests")
 }
 
 // odd sequence of assignments
@@ -315,7 +309,6 @@ func floateq(m fluent.Matcher) {
 	m.Match("switch $x { $*_ }", "switch $*_; $x { $*_ }").
 		Where(m["x"].Type.Is("float64")).
 		Report("floating point as switch expression")
-
 }
 */
 
@@ -432,7 +425,6 @@ func nilerr(m fluent.Matcher) {
 
 }
 
-/*
 func mailaddress(m fluent.Matcher) {
 	m.Match(
 		"fmt.Sprintf(`\"%s\" <%s>`, $NAME, $EMAIL)",
@@ -447,7 +439,6 @@ func mailaddress(m fluent.Matcher) {
 		Report("use net/mail Address.String() instead of fmt.Sprintf()").
 		Suggest("(&mail.Address{Name:$NAME, Address:$EMAIL}).String()")
 }
-*/
 
 func errnetclosed(m fluent.Matcher) {
 	m.Match(
@@ -459,7 +450,6 @@ func errnetclosed(m fluent.Matcher) {
 
 }
 
-/*
 func httpheaderadd(m fluent.Matcher) {
 	m.Match(
 		`$H.Add($KEY, $VALUE)`,
@@ -468,7 +458,6 @@ func httpheaderadd(m fluent.Matcher) {
 		Report("use http.Header.Set method instead of Add to overwrite all existing header values").
 		Suggest(`$H.Set($KEY, $VALUE)`)
 }
-*/
 
 func hmacnew(m fluent.Matcher) {
 	m.Match("hmac.New(func() hash.Hash { return $x }, $_)",
