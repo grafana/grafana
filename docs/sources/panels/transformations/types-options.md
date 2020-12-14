@@ -16,26 +16,64 @@ Grafana comes with the following transformations:
 - [Series to rows](#series-to-rows)
 - [Add field from calculation](#add-field-from-calculation)
 - [Labels to fields](#labels-to-fields)
+- [Concatenate fields](#concatenate-fields)
 - [Group by](#group-by)
 - [Merge](#merge)
+- [Rename by regex](#rename-by-regex)
 
 Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
 
 ## Reduce
 
-Apply a _Reduce_ transformation when you want to simplify your results down to one value. Reduce removes the time component. If visualized as a table, it reduces a column down to one row (value).
+The _Reduce_ transformation will apply a calculation to each field in the frame and return a single value.  Time fields are removed when applying
+this transformation.  
 
-In the **Calculations** field, enter one or more calculation types. Click to see a list of calculation choices. For information about available calculations, refer to the [Calculation list]({{< relref "../calculations-list.md" >}}).
+Consider the input:
 
-Once you select at least one calculation, Grafana reduces the results down to one value using the calculation you select. If you select more than one calculation, then more than one value is displayed.
+Query A:
 
-Here's an example of a table with time series data. Before I apply the transformation, you can see all the data organized by time.
+| Time                | Temp    | Uptime  |
+| ------------------- | ------- | ------- |
+| 2020-07-07 11:34:20 | 12.3    | 256122  |
+| 2020-07-07 11:24:20 | 15.4    | 1230233 |
 
-{{< docs-imagebox img="/img/docs/transformations/reduce-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+Query B:
 
-After I apply the transformation, there is no time value and each column has been reduced to one row showing the results of the calculations that I chose.
+| Time                | AQI     | Errors |
+| ------------------- | ------- | ------ |
+| 2020-07-07 11:34:20 | 6.5     | 15     |
+| 2020-07-07 11:24:20 | 3.2     | 5      |
 
-{{< docs-imagebox img="/img/docs/transformations/reduce-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+The reduce transformer has two modes:
+- **Series to rows -** Creates a row for each field and a column for each calculation.
+- **Reduce fields -** Keeps the existing frame structure, but collapses each field into a single value.
+
+For example, if you used the **First** and **Last** calculation with a **Series to rows** transformation, then 
+the result would be:
+
+| Field   | First   | Last    | 
+| ------- | ------- | ------- | 
+| Temp    | 12.3    | 15.4    |
+| Uptime  | 256122  | 1230233 |
+| AQI     | 6.5     | 3.2     |
+| Errors  | 15      | 5       |
+
+The **Reduce fields** with the **Last** calculation,
+results in two frames, each with one row:
+
+Query A:
+
+| Temp    | Uptime  |
+| ------- | ------- |
+| 15.4    | 1230233 |
+
+Query B:
+
+| AQI     | Errors |
+| ------- | ------ |
+| 3.2     | 5      |
+
+
 
 ## Merge
 
@@ -242,6 +280,31 @@ We would then get :
 
 This transformation allows you to extract some key information out of your time series and display them in a convenient way.
 
+## Concatenate fields
+
+> **Note:** This transformation is only available in Grafana 7.3+.
+
+This transformation combines all fields from all frames into one result.  Consider:
+
+Query A:
+
+| Temp    | Uptime  |
+| ------- | ------- |
+| 15.4    | 1230233 |
+
+Query B:
+
+| AQI     | Errors |
+| ------- | ------ |
+| 3.2     | 5      |
+
+
+After you concatenate the fields, the data frame would be:
+
+| Temp    | Uptime  | AQI     | Errors |
+| ------- | ------- | ------- | ------ |
+| 15.4    | 1230233 | 3.2     | 5      |
+
 ## Series to rows
 
 > **Note:** This transformation is only available in Grafana 7.1+.
@@ -336,3 +399,19 @@ When you have more than one condition, you can choose if you want the action (in
 In the example above we chose **Match all** because we wanted to include the rows that have a temperature lower than 30 _AND_ an altitude higher than 100. If we wanted to include the rows that have a temperature lower than 30 _OR_ an altitude higher than 100 instead, then we would select **Match any**. This would include the first row in the original data, which has a temperature of 32°C (does not match the first condition) but an altitude of 101 (which matches the second condition), so it is included.
 
 Conditions that are invalid or incompletely configured are ignored.
+
+## Rename by regex
+
+> **Note:** This transformation is only available in Grafana 7.4+.
+
+Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
+
+You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to `([^\.]+)\..+` and the replacement pattern to `$1`, `web-01.example.com` would become `web-01`.
+
+In the following example, we are stripping the prefix from event types. In the before image, you can see everything is prefixed with `system.`
+
+{{< docs-imagebox img="/img/docs/transformations/rename-by-regex-before-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+With the transformation applied, you can see we are left with just the remainder of the string.
+
+{{< docs-imagebox img="/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}

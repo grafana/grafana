@@ -220,10 +220,12 @@ function setup(options?: SetupOptions): { datasources: { [name: string]: DataSou
   const dsSettings = options?.datasources || defaultDatasources;
 
   setDataSourceSrv({
-    getExternal(): DataSourceInstanceSettings[] {
+    getList(): DataSourceInstanceSettings[] {
       return dsSettings.map(d => d.settings);
     },
-
+    getInstanceSettings(name: string) {
+      return dsSettings.map(d => d.settings).find(x => x.name === name);
+    },
     get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
       return Promise.resolve((name ? dsSettings.find(d => d.api.name === name) : dsSettings[0])!.api);
     },

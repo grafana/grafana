@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import {
   compareDataFrameStructures,
   DataFrame,
@@ -8,11 +8,12 @@ import {
   formattedValueToString,
   getFieldColorModeForField,
   getFieldDisplayName,
+  TimeRange,
 } from '@grafana/data';
 import { alignDataFrames } from './utils';
 import { UPlotChart } from '../uPlot/Plot';
 import { PlotProps } from '../uPlot/types';
-import { AxisPlacement, GraphFieldConfig, GraphMode, PointMode } from '../uPlot/config';
+import { AxisPlacement, GraphFieldConfig, DrawStyle, PointVisibility } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
@@ -34,8 +35,8 @@ export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
 }
 
 const defaultConfig: GraphFieldConfig = {
-  mode: GraphMode.Line,
-  points: PointMode.Auto,
+  drawStyle: DrawStyle.Line,
+  showPoints: PointVisibility.Auto,
   axisPlacement: AxisPlacement.Auto,
 };
 
@@ -58,10 +59,16 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
   const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
     if (a && b) {
-      return compareDataFrameStructures(a, b, ['min', 'max']);
+      return compareDataFrameStructures(a, b);
     }
     return false;
   }, []);
+
+  // reference change will not triger re-render
+  const currentTimeRange = useRef<TimeRange>(timeRange);
+  useLayoutEffect(() => {
+    currentTimeRange.current = timeRange;
+  }, [timeRange]);
 
   const configRev = useRevision(alignedFrame, compareFrames);
 
@@ -78,6 +85,10 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       builder.addScale({
         scaleKey: 'x',
         isTime: true,
+        range: () => {
+          const r = currentTimeRange.current!;
+          return [r.from.valueOf(), r.to.valueOf()];
+        },
       });
       builder.addAxis({
         scaleKey: 'x',
@@ -104,21 +115,25 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     for (let i = 0; i < alignedFrame.fields.length; i++) {
       const field = alignedFrame.fields[i];
       const config = field.config as FieldConfig<GraphFieldConfig>;
-      const customConfig = config.custom || defaultConfig;
+      const customConfig: GraphFieldConfig = {
+        ...defaultConfig,
+        ...config.custom,
+      };
 
       if (field === xField || field.type !== FieldType.number) {
         continue;
       }
 
       const fmt = field.display ?? defaultFormatter;
-      const scale = config.unit || '__fixed';
-      const isNewScale = !builder.hasScale(scale);
+      const scaleKey = config.unit || '__fixed';
 
-      if (isNewScale && customConfig.axisPlacement !== AxisPlacement.Hidden) {
-        builder.addScale({ scaleKey: scale, min: field.config.min, max: field.config.max });
+      if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
+        // The builder will manage unique scaleKeys and combine where appropriate
+        builder.addScale({ scaleKey, min: field.config.min, max: field.config.max });
         builder.addAxis({
-          scaleKey: scale,
+          scaleKey,
           label: customConfig.axisLabel,
+          size: customConfig.axisWidth,
           placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
           formatValue: v => formattedValueToString(fmt(v)),
           theme,
@@ -130,23 +145,24 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       const colorMode = getFieldColorModeForField(field);
       const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
-      const pointsMode = customConfig.mode === GraphMode.Points ? PointMode.Always : customConfig.points;
+      const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
 
       builder.addSeries({
-        scaleKey: scale,
-        line: (customConfig.mode ?? GraphMode.Line) === GraphMode.Line,
+        scaleKey,
+        drawStyle: customConfig.drawStyle!,
         lineColor: seriesColor,
         lineWidth: customConfig.lineWidth,
-        points: pointsMode,
-        pointSize: customConfig.pointRadius,
+        lineInterpolation: customConfig.lineInterpolation,
+        showPoints,
+        pointSize: customConfig.pointSize,
         pointColor: seriesColor,
-        fill: customConfig.fillAlpha !== undefined,
-        fillOpacity: customConfig.fillAlpha,
+        fillOpacity: customConfig.fillOpacity,
         fillColor: seriesColor,
+        spanNulls: customConfig.spanNulls || false,
       });
 
       if (hasLegend.current) {
-        const axisPlacement = builder.getAxisPlacement(scale);
+        const axisPlacement = builder.getAxisPlacement(scaleKey);
 
         legendItems.push({
           color: seriesColor,

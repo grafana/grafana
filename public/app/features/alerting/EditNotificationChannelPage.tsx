@@ -91,7 +91,7 @@ export class EditNotificationChannelPage extends PureComponent<Props> {
 
                 return (
                   <NotificationChannelForm
-                    selectableChannels={mapChannelsToSelectableValue(notificationChannelTypes)}
+                    selectableChannels={mapChannelsToSelectableValue(notificationChannelTypes, true)}
                     selectedChannel={selectedChannel}
                     imageRendererAvailable={config.rendererAvailable}
                     onTestChannel={this.onTestChannel}
