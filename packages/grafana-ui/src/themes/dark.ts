@@ -55,7 +55,7 @@ const textColors = {
   text: basicColors.gray85,
   textSemiWeak: basicColors.gray70,
   textWeak: basicColors.gray60,
-  textFaint: basicColors.gray33,
+  textFaint: basicColors.gray53,
   textBlue: basicColors.blue85,
 };
 
