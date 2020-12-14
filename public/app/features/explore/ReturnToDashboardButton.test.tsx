@@ -17,13 +17,13 @@ const createProps = (propsOverride?: Partial<ComponentProps<typeof ReturnToDashb
 };
 
 describe('ReturnToDashboardButton', () => {
-  it('should render 2 buttons if dashboard is editable', () => {
+  it('should render 2 buttons if originPanelId is provided', () => {
     render(<ReturnToDashboardButton {...createProps()} />);
     expect(screen.getAllByTestId(/returnButton/i)).toHaveLength(2);
   });
-  it('should render 1 button if dashboard is not editable', () => {
+  it('should not render any button if originPanelId is not provided', () => {
     render(<ReturnToDashboardButton {...createProps({ originPanelId: undefined })} />);
-    expect(screen.getAllByTestId(/returnButton/i)).toHaveLength(1);
+    expect(screen.queryByTestId(/returnButton/i)).toBeNull();
   });
   it('should not render any button if split view', () => {
     render(<ReturnToDashboardButton {...createProps({ splitted: true })} />);

@@ -30,15 +30,16 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
   queries,
   splitted,
 }) => {
-  // If in split mode, escape early and return null
-  if (splitted) {
+  const withOriginId = originPanelId && Number.isInteger(originPanelId);
+
+  // If in split mode, or no origin id, escape early and return null
+  if (splitted || !withOriginId) {
     return null;
   }
 
-  const originDashboardIsEditable = originPanelId && Number.isInteger(originPanelId);
   const panelReturnClasses = classNames('btn', 'navbar-button', {
-    'btn--radius-right-0': originDashboardIsEditable,
-    'navbar-button navbar-button--border-right-0': originDashboardIsEditable,
+    'btn--radius-right-0': withOriginId,
+    'navbar-button navbar-button--border-right-0': withOriginId,
   });
 
   const cleanQueries = (queries: DataQuery[]) => {
@@ -84,16 +85,14 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
           <Icon name="arrow-left" />
         </button>
       </Tooltip>
-      {originDashboardIsEditable && (
-        <div data-testid="returnButtonWithChanges">
-          <ButtonSelect
-            className="navbar-button--attached btn--radius-left-0$"
-            options={[{ label: 'Return to panel with changes', value: '' }]}
-            onChange={() => returnToPanel({ withChanges: true })}
-            maxMenuHeight={380}
-          />
-        </div>
-      )}
+      <div data-testid="returnButtonWithChanges">
+        <ButtonSelect
+          className="navbar-button--attached btn--radius-left-0$"
+          options={[{ label: 'Return to panel with changes', value: '' }]}
+          onChange={() => returnToPanel({ withChanges: true })}
+          maxMenuHeight={380}
+        />
+      </div>
     </div>
   );
 };
