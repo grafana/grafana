@@ -129,6 +129,8 @@ Move any existing rules using `custom_details.myMetric` to `custom_details.queri
 This behavior will become the default in a future version of Grafana.
 
 > Using `dedup_key` tag will override Grafana generated `dedup_key` with a custom key.
+
+> Using `state` tag will override current alert state inside `custom_details` payload.
 ### Webhook
 
 The webhook notification is a simple way to send information about a state change over HTTP to a custom endpoint.
