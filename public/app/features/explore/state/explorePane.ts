@@ -263,6 +263,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
 
     return {
       ...state,
+      // Prevents re-renders. As logsHighlighterExpressions [] comes from datasource, we cannot control if it returns new array or not.
       logsHighlighterExpressions: isEqual(newExpressions, currentExpressions) ? currentExpressions : newExpressions,
     };
   }

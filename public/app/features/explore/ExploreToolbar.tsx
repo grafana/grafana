@@ -51,7 +51,6 @@ interface StateProps {
   hasLiveOption: boolean;
   isLive: boolean;
   isPaused: boolean;
-  originPanelId?: number | null;
   datasourceLoading?: boolean | null;
   containerWidth: number;
   datasourceName?: string;
@@ -114,7 +113,6 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
       hasLiveOption,
       isLive,
       isPaused,
-      originPanelId,
       containerWidth,
       onChangeTimeZone,
     } = this.props;
@@ -165,11 +163,7 @@ export class UnConnectedExploreToolbar extends PureComponent<Props> {
                 </div>
               </div>
             ) : null}
-
-            {originPanelId && Number.isInteger(originPanelId) && !splitted && (
-              <ReturnToDashboardButton originPanelId={originPanelId} exploreId={exploreId} />
-            )}
-
+            <ReturnToDashboardButton exploreId={exploreId} />
             {exploreId === 'left' && !splitted ? (
               <div className="explore-toolbar-content-item explore-icon-align">
                 <ResponsiveButton
@@ -268,7 +262,6 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     loading,
     isLive,
     isPaused,
-    originPanelId,
     containerWidth,
   } = exploreItem;
 
@@ -285,7 +278,6 @@ const mapStateToProps = (state: StoreState, { exploreId }: OwnProps): StateProps
     hasLiveOption,
     isLive,
     isPaused,
-    originPanelId,
     syncedTimes,
     containerWidth,
   };

@@ -15,9 +15,10 @@ import { setDashboardQueriesToUpdateOnLoad } from '../dashboard/state/reducers';
 const { ButtonSelect } = LegacyForms;
 
 interface Props {
-  originPanelId: number;
   exploreId: ExploreId;
+  splitted: boolean;
   queries: DataQuery[];
+  originPanelId?: number | null;
   updateLocation: typeof updateLocation;
   setDashboardQueriesToUpdateOnLoad: typeof setDashboardQueriesToUpdateOnLoad;
 }
@@ -27,7 +28,13 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
   updateLocation,
   setDashboardQueriesToUpdateOnLoad,
   queries,
+  splitted,
 }) => {
+  // If in split mode, escape early and return null
+  if (splitted) {
+    return null;
+  }
+
   const originDashboardIsEditable = originPanelId && Number.isInteger(originPanelId);
   const panelReturnClasses = classNames('btn', 'navbar-button', {
     'btn--radius-right-0': originDashboardIsEditable,
@@ -93,11 +100,15 @@ export const UnconnectedReturnToDashboardButton: FC<Props> = ({
 
 function mapStateToProps(state: StoreState, { exploreId }: { exploreId: ExploreId }) {
   const explore = state.explore;
-  const { datasourceInstance, queries } = explore[exploreId];
+  const splitted = state.explore.split;
+  const { datasourceInstance, queries, originPanelId } = explore[exploreId];
+
   return {
     exploreId,
     datasourceInstance,
     queries,
+    originPanelId,
+    splitted,
   };
 }
 

@@ -6,6 +6,7 @@ import { ExploreId } from 'app/types/explore';
 const createProps = (propsOverride?: Partial<ComponentProps<typeof ReturnToDashboardButton>>) => {
   const defaultProps = {
     originPanelId: 1,
+    splitted: false,
     exploreId: ExploreId.left,
     queries: [],
     updateLocation: jest.fn(),
@@ -23,6 +24,10 @@ describe('ReturnToDashboardButton', () => {
   it('should render 1 button if dashboard is not editable', () => {
     render(<ReturnToDashboardButton {...createProps({ originPanelId: undefined })} />);
     expect(screen.getAllByTestId(/returnButton/i)).toHaveLength(1);
+  });
+  it('should not render any button if split view', () => {
+    render(<ReturnToDashboardButton {...createProps({ splitted: true })} />);
+    expect(screen.queryByTestId(/returnButton/i)).toBeNull();
   });
   it('should show option to return to dashboard with changes', () => {
     render(<ReturnToDashboardButton {...createProps()} />);
