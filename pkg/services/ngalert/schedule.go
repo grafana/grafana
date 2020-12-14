@@ -64,7 +64,7 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID in
 				defer func() {
 					evalRunning = false
 					if ng.schedule.evalApplied != nil {
-						ng.schedule.evalApplied(definitionID)
+						ng.schedule.evalApplied(definitionID, ctx.now)
 					}
 				}()
 
@@ -106,13 +106,13 @@ type schedule struct {
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from evalApplied is handled.
-	evalApplied func(int64)
+	evalApplied func(int64, time.Time)
 
 	log log.Logger
 }
 
 // newScheduler returns a new schedule.
-func newScheduler(c clock.Clock, baseInterval time.Duration, logger log.Logger, evalApplied func(int64)) *schedule {
+func newScheduler(c clock.Clock, baseInterval time.Duration, logger log.Logger, evalApplied func(int64, time.Time)) *schedule {
 	ticker := alerting.NewTicker(c.Now(), time.Second*0, c, int64(baseInterval.Seconds()))
 	sch := schedule{
 		registry:     alertDefinitionRegistry{alertDefinitionInfo: make(map[int64]alertDefinitionInfo)},
