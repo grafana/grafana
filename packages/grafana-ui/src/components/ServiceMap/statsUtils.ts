@@ -25,8 +25,16 @@ export function computeStats(serviceOrEdge: XrayService | XrayEdge): Stats | und
     errors: (ErrorStatistics.TotalCount - ErrorStatistics.ThrottleCount) / TotalCount,
     faults: FaultStatistics.TotalCount / TotalCount,
     avgResponseTime: (TotalResponseTime / TotalCount) * 1000,
-    tracesPerMinute: TotalCount / ((EndTime - StartTime) / 60),
+    tracesPerMinute: TotalCount / ((toMs(EndTime) - toMs(StartTime)) / (60 * 1000)),
   };
+}
+
+function toMs(time: number | string): number {
+  if (typeof time === 'number') {
+    return time * 1000;
+  } else {
+    return new Date(time).valueOf();
+  }
 }
 
 export function getRatios(

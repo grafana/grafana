@@ -16,10 +16,10 @@ interface SummaryStatistics {
 
 export interface XrayEdge {
   Aliases: string[];
-  EndTime: number;
+  EndTime: number | string;
   ReferenceId: number;
   ResponseTimeHistogram: HistogramValue[];
-  StartTime: number;
+  StartTime: number | string;
   SummaryStatistics: SummaryStatistics;
 }
 
@@ -27,13 +27,13 @@ export interface XrayService {
   AccountId: string | null;
   DurationHistogram: HistogramValue[];
   Edges: XrayEdge[];
-  EndTime: number;
+  EndTime: number | string;
   Name: string;
   Names: string[];
   ReferenceId: number;
   ResponseTimeHistogram: HistogramValue[];
   Root: true | null;
-  StartTime: number;
+  StartTime: number | string;
   State: 'active' | 'unknown';
   SummaryStatistics: SummaryStatistics;
   Type: string;
