@@ -1,17 +1,18 @@
 import React, { PureComponent } from 'react';
 import { cx } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
-import { DashboardModel } from '../../state/DashboardModel';
+import { CustomScrollbar, Icon, IconName } from '@grafana/ui';
+import { contextSrv } from 'app/core/services/context_srv';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { updateLocation } from 'app/core/actions';
-import { CustomScrollbar, Icon, IconName } from '@grafana/ui';
+import { DashboardModel } from '../../state/DashboardModel';
+import { SaveDashboardButton, SaveDashboardAsButton } from '../SaveDashboard/SaveDashboardButton';
+import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
+import { DashboardPermissions } from '../DashboardPermissions/DashboardPermissions';
 import { GeneralSettings } from './GeneralSettings';
 import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
 import { JsonEditorSettings } from './JsonEditorSettings';
-import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
-import { DashboardPermissions } from '../DashboardPermissions/DashboardPermissions';
-
 export interface Props {
   dashboard: DashboardModel;
   updateLocation: typeof updateLocation;
@@ -124,11 +125,9 @@ export class DashboardSettings extends PureComponent<Props> {
     const haveFolder = (dashboard.meta.folderId ?? 0) > 0;
     const pages = this.getPages();
     const currentPage = pages.find(page => page.id === editview) ?? this.getGeneralPage();
-
-    // Used for side menu buttons
-    // this.canSaveAs = contextSrv.hasEditPermissionInFolders;
-    // this.canSave = this.dashboard.meta.canSave;
-    // this.canDelete = this.dashboard.meta.canSave
+    const canSaveAs = contextSrv.hasEditPermissionInFolders;
+    const canSave = dashboard.meta.canSave;
+    // const canDelete = this.dashboard.meta.canSave
 
     return (
       <div className="dashboard-settings">
@@ -155,6 +154,10 @@ export class DashboardSettings extends PureComponent<Props> {
                   {page.title}
                 </a>
               ))}
+              <div className="dashboard-settings__aside-actions">
+                {canSave && <SaveDashboardButton dashboard={dashboard} />}
+                {canSaveAs && <SaveDashboardAsButton dashboard={dashboard} />}
+              </div>
             </aside>
             <div className="dashboard-settings__content">{currentPage.render()}</div>
           </div>
