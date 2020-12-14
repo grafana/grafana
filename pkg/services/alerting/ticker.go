@@ -65,12 +65,12 @@ func (t *Ticker) ResetOffset(duration time.Duration) {
 	t.newOffset <- duration
 }
 
-// Pause unpauses the ticker and  ticks will be sent.
+// Pause unpauses the ticker and no ticks will be sent.
 func (t *Ticker) Pause() {
 	t.paused = true
 }
 
-// Unpause unpauses the ticker and  ticks will be sent.
+// Unpause unpauses the ticker and ticks will be sent.
 func (t *Ticker) Unpause() {
 	t.paused = false
 }
