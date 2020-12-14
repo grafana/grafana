@@ -112,10 +112,7 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 		}
 	}
 
-	err := ls.Bus.Dispatch(&models.SyncTeamsCommand{
-		User:         cmd.Result,
-		ExternalUser: extUser,
-	})
+	err := ls.TeamSync.SyncTeams(context.Background(), cmd.Result, extUser)
 	if err != nil && !errors.Is(err, bus.ErrHandlerNotFound) {
 		return err
 	}
@@ -262,12 +259,12 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 }
 
 type TeamSyncInterface interface {
-	SyncTeams(ctx context.Context, cmd *models.SyncTeamsCommand) error
+	SyncTeams(ctx context.Context, user *models.User, externalUser *models.ExternalUserInfo) error
 }
 
 type TeamSyncService struct{}
 
-func (t *TeamSyncService) SyncTeams(context.Context, *models.SyncTeamsCommand) error {
+func (t *TeamSyncService) SyncTeams(ctx context.Context, user *models.User, externalUser *models.ExternalUserInfo) error {
 	return nil
 }
 
