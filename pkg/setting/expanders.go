@@ -43,6 +43,17 @@ func AddExpander(name string, priority int64, e Expander) {
 	})
 }
 
+func removeExpander(name string) {
+	n := 0
+	for _, x := range expanders {
+		if x.name != name {
+			expanders[n] = x
+			n++
+		}
+	}
+	expanders = expanders[:n]
+}
+
 var regex = regexp.MustCompile(`\$(|__\w+){([^}]+)}`)
 
 func expandConfig(file *ini.File) error {
