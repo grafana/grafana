@@ -1,19 +1,17 @@
 package teamgroupsync
 
 import (
-	"context"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 )
 
 type TeamSync interface {
-	SyncTeams(ctx context.Context, user *models.User, externalUser *models.ExternalUserInfo) error
+	SyncTeams(user *models.User, externalUser *models.ExternalUserInfo) error
 }
 
 type TeamSyncService struct{}
 
-func (t *TeamSyncService) SyncTeams(ctx context.Context, user *models.User, externalUser *models.ExternalUserInfo) error {
+func (t *TeamSyncService) SyncTeams(user *models.User, externalUser *models.ExternalUserInfo) error {
 	return nil
 }
 

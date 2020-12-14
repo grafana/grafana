@@ -1,16 +1,14 @@
 package login
 
 import (
-	"context"
 	"errors"
-
-	"github.com/grafana/grafana/pkg/services/teamgroupsync"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/teamgroupsync"
 )
 
 func init() {
@@ -113,7 +111,7 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 		}
 	}
 
-	err := ls.TeamSync.SyncTeams(context.Background(), cmd.Result, extUser)
+	err := ls.TeamSync.SyncTeams(cmd.Result, extUser)
 	if err != nil && !errors.Is(err, bus.ErrHandlerNotFound) {
 		return err
 	}
