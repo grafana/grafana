@@ -433,7 +433,7 @@ func NotificationTest(c *models.ReqContext, dto dtos.NotificationTestCommand) Re
 		SecureSettings: dto.SecureSettings,
 	}
 
-	if err := bus.Dispatch(cmd); err != nil {
+	if err := bus.DispatchCtx(c.Req.Context(), cmd); err != nil {
 		if errors.Is(err, models.ErrSmtpNotEnabled) {
 			return Error(412, err.Error(), err)
 		}

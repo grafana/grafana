@@ -27,7 +27,7 @@ import { ExploreId, QueryOptions } from 'app/types/explore';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { notifyApp } from '../../../core/actions';
-import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
+import { preProcessPanelData, runRequest } from '../../query/state/runRequest';
 import {
   decorateWithGraphLogsTraceAndTable,
   decorateWithGraphResult,

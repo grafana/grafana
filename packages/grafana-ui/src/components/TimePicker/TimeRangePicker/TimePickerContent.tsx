@@ -307,3 +307,5 @@ function mapToHistoryOptions(ranges?: TimeRange[], timeZone?: TimeZone): TimeOpt
   }
   return ranges.slice(ranges.length - 4).map(range => mapRangeToTimeOption(range, timeZone));
 }
+
+EmptyRecentList.displayName = 'EmptyRecentList';

@@ -191,6 +191,7 @@ const ContextMenuItemComponent: React.FC<ContextMenuItemProps> = React.memo(
     );
   }
 );
+ContextMenuItemComponent.displayName = 'ContextMenuItemComponent';
 
 interface ContextMenuGroupProps {
   group: ContextMenuGroup;

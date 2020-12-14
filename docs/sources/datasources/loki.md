@@ -39,7 +39,7 @@ The Derived Fields configuration allows you to:
 - Add fields parsed from the log message.
 - Add a link that uses the value of the field.
 
-You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/explore/#labels-and-parsed-fields).
+You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/explore/#labels-and-detected-fields).
 {{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
 Each derived field consists of:
 
