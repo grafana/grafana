@@ -66,6 +66,26 @@ const regexpFieldNameMatcher: FieldMatcherInfo<string> = {
   },
 };
 
+const regexpFieldNameReadonlyMatcher: FieldMatcherInfo<string> = {
+  id: FieldMatcherID.byRegexpReadonly,
+  name: 'Field Name by Regexp',
+  description: 'match the field name by a given regexp pattern',
+  defaultOptions: '/.*/',
+
+  get: (pattern: string): FieldMatcher => {
+    const regexp = patternToRegex(pattern);
+
+    return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
+      const displayName = getFieldDisplayName(field, frame, allFrames);
+      return !!regexp && regexp.test(displayName);
+    };
+  },
+
+  getOptionsDisplayText: (pattern: string): string => {
+    return `Field name by pattern: ${pattern}`;
+  },
+};
+
 /**
  * Field matcher that will match all fields that exists in a
  * data frame with configured refId.
@@ -155,6 +175,7 @@ export function getFieldNameMatchers(): FieldMatcherInfo[] {
     multipleFieldNamesMatcher,
     regexpOrMultipleNamesMatcher,
     fieldsInFrameMatcher,
+    regexpFieldNameReadonlyMatcher,
   ];
 }
 

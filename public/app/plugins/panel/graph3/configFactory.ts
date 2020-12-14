@@ -66,7 +66,7 @@ const createFreshOverride = (displayName: string): SystemConfigOverrideRule => {
   return {
     __systemRef: displayOverrideRef,
     matcher: {
-      id: FieldMatcherID.byRegexp,
+      id: FieldMatcherID.byRegexpReadonly,
       options: `^(?!${displayName}$).*$`,
     },
     properties: [
@@ -104,7 +104,7 @@ const createExtendedOverride = (current: SystemConfigOverrideRule, displayName: 
   return {
     __systemRef: displayOverrideRef,
     matcher: {
-      id: FieldMatcherID.byRegexp,
+      id: FieldMatcherID.byRegexpReadonly,
       options: `^(?!${existing.join('|')}$).*$`,
     },
     properties: [

@@ -7,7 +7,7 @@ import {
   AxisPlacement,
   graphFieldOptions,
 } from '@grafana/ui/src/components/uPlot/config';
-import { SeriesConfigEditor, SeriesConfigViewer } from './seriesConfig';
+import { SeriesConfigEditor } from './HideSeriesConfigEditor';
 import { GraphPanel } from './GraphPanel';
 import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
@@ -34,21 +34,6 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           settings: {
             options: graphFieldOptions.drawStyle,
           },
-        })
-        .addCustomEditor({
-          id: 'hideFrom',
-          name: 'Hide series in area',
-          category: ['Display'],
-          path: 'hideFrom',
-          defaultValue: {
-            tooltip: false,
-            graph: false,
-            legend: false,
-          },
-          editor: SeriesConfigEditor,
-          override: SeriesConfigViewer,
-          shouldApply: () => true,
-          process: value => value,
         })
         .addRadio({
           path: 'lineInterpolation',
@@ -141,6 +126,21 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             placeholder: 'Auto',
           },
           showIf: c => c.axisPlacement !== AxisPlacement.Hidden,
+        })
+        .addCustomEditor({
+          id: 'hideFrom',
+          name: 'Hide in area',
+          category: ['Series'],
+          path: 'hideFrom',
+          defaultValue: {
+            tooltip: false,
+            graph: false,
+            legend: false,
+          },
+          editor: SeriesConfigEditor,
+          override: SeriesConfigEditor,
+          shouldApply: () => true,
+          process: value => value,
         });
     },
   })
