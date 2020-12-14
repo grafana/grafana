@@ -1,6 +1,7 @@
 package login
 
 import (
+	"context"
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -12,6 +13,7 @@ import (
 
 func init() {
 	registry.RegisterService(&LoginService{})
+	registry.RegisterService(&TeamSyncService{})
 }
 
 var (
@@ -21,6 +23,7 @@ var (
 type LoginService struct {
 	Bus          bus.Bus             `inject:""`
 	QuotaService *quota.QuotaService `inject:""`
+	TeamSync     TeamSyncInterface   `inject:""`
 }
 
 func (ls *LoginService) Init() error {
@@ -255,5 +258,19 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 		})
 	}
 
+	return nil
+}
+
+type TeamSyncInterface interface {
+	SyncTeams(ctx context.Context, cmd *models.SyncTeamsCommand) error
+}
+
+type TeamSyncService struct{}
+
+func (t *TeamSyncService) SyncTeams(context.Context, *models.SyncTeamsCommand) error {
+	return nil
+}
+
+func (t *TeamSyncService) Init() error {
 	return nil
 }
