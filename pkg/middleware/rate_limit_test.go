@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,6 +19,8 @@ type advanceTimeFunc func(deltaTime time.Duration)
 type rateLimiterScenarioFunc func(c execFunc, t advanceTimeFunc)
 
 func rateLimiterScenario(t *testing.T, desc string, rps int, burst int, fn rateLimiterScenarioFunc) {
+	t.Helper()
+
 	t.Run(desc, func(t *testing.T) {
 		defaultHandler := func(c *models.ReqContext) {
 			resp := make(map[string]interface{})
@@ -26,12 +29,14 @@ func rateLimiterScenario(t *testing.T, desc string, rps int, burst int, fn rateL
 		}
 		currentTime := time.Now()
 
+		cfg := setting.NewCfg()
+
 		m := macaron.New()
 		m.Use(macaron.Renderer(macaron.RenderOptions{
 			Directory: "",
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 		}))
-		m.Use(GetContextHandler(nil, nil, nil))
+		m.Use(getContextHandler(t, cfg).Middleware)
 		m.Get("/foo", RateLimit(rps, burst, func() time.Time { return currentTime }), defaultHandler)
 
 		fn(func() *httptest.ResponseRecorder {

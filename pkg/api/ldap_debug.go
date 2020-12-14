@@ -116,7 +116,7 @@ func (hs *HTTPServer) GetLDAPStatus(c *models.ReqContext) Response {
 		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
-	ldapConfig, err := getLDAPConfig()
+	ldapConfig, err := getLDAPConfig(hs.Cfg)
 
 	if err != nil {
 		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again", err)
@@ -158,7 +158,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
-	ldapConfig, err := getLDAPConfig()
+	ldapConfig, err := getLDAPConfig(hs.Cfg)
 	if err != nil {
 		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration. Please verify the configuration and try again", err)
 	}
@@ -217,7 +217,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) Response {
 	upsertCmd := &models.UpsertUserCommand{
 		ReqContext:    c,
 		ExternalUser:  user,
-		SignupAllowed: setting.LDAPAllowSignup,
+		SignupAllowed: hs.Cfg.LDAPAllowSignup,
 	}
 
 	err = bus.Dispatch(upsertCmd)
@@ -235,7 +235,7 @@ func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) Response {
 		return Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
 
-	ldapConfig, err := getLDAPConfig()
+	ldapConfig, err := getLDAPConfig(hs.Cfg)
 
 	if err != nil {
 		return Error(http.StatusBadRequest, "Failed to obtain the LDAP configuration", err)
