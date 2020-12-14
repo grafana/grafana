@@ -339,6 +339,7 @@ export interface QueryEditorProps<
   range?: TimeRange;
   exploreId?: any;
   history?: HistoryItem[];
+  queries?: DataQuery[];
 }
 
 export enum DataSourceStatus {
