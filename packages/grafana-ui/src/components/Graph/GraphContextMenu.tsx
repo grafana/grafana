@@ -25,6 +25,7 @@ export type GraphContextMenuProps = ContextMenuProps & {
   contextDimensions?: ContextDimensions;
 };
 
+/** @internal */
 export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
   getContextMenuSource,
   timeZone,
@@ -83,6 +84,7 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
   return <ContextMenu {...otherProps} items={itemsToRender} renderHeader={renderHeader} />;
 };
 
+/** @internal */
 export const GraphContextMenuHeader = ({
   timestamp,
   seriesColor,

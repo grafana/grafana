@@ -7,15 +7,23 @@ import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
 
 export interface MenuItem {
+  /** Label of the menu item */
   label: string;
+  /** Target of the menu item (i.e. new window)  */
   target?: LinkTarget;
+  /** Icon of the menu item */
   icon?: IconName;
+  /** Url of the menu item */
   url?: string;
+  /** Handler for the click behaviour */
   onClick?: (event?: React.SyntheticEvent<HTMLElement>) => void;
+  /** Handler for the click behaviour */
   group?: string;
 }
 export interface MenuItemsGroup {
+  /** Label for the menu items group */
   label?: string;
+  /** Items of the group */
   items: MenuItem[];
 }
 
@@ -28,6 +36,7 @@ export interface MenuProps extends React.HTMLAttributes<HTMLDivElement> {
   onClose?: () => void;
 }
 
+/** @public */
 export const Menu = React.forwardRef<HTMLDivElement, MenuProps>(({ header, items, onClose, ...otherProps }, ref) => {
   const styles = useStyles(getMenuStyles);
   const onClick = useCallback(() => {
