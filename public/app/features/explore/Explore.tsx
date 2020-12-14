@@ -322,7 +322,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const showRichHistory = openDrawer === ExploreDrawer.RichHistory;
     const showQueryInspector = openDrawer === ExploreDrawer.QueryInspector;
 
-    console.log({ showServiceMap, series: queryResponse.series });
     return (
       <div className={exploreClass} ref={this.getRef} aria-label={selectors.pages.Explore.General.container}>
         <ExploreToolbar exploreId={exploreId} onChangeTime={this.onChangeTime} />
