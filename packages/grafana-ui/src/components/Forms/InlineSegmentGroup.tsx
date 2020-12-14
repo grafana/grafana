@@ -8,6 +8,7 @@ export interface Props {
   className?: string;
 }
 
+/** @beta */
 export const InlineSegmentGroup: FC<Props> = ({ children, className, grow, ...htmlProps }) => {
   const theme = useTheme();
   const styles = getStyles(theme, grow);
