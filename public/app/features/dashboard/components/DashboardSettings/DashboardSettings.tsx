@@ -10,6 +10,7 @@ import { SaveDashboardButton, SaveDashboardAsButton } from '../SaveDashboard/Sav
 import { VariableEditorContainer } from '../../../variables/editor/VariableEditorContainer';
 import { DashboardPermissions } from '../DashboardPermissions/DashboardPermissions';
 import { GeneralSettings } from './GeneralSettings';
+import { AnnotationsSettings } from './AnnotationsSettings';
 import { LinksSettings } from './LinksSettings';
 import { VersionsSettings } from './VersionsSettings';
 import { JsonEditorSettings } from './JsonEditorSettings';
@@ -55,7 +56,7 @@ export class DashboardSettings extends PureComponent<Props> {
         title: 'Annotations',
         id: 'annotations',
         icon: 'comment-alt',
-        render: () => <GeneralSettings dashboard={dashboard} />,
+        render: () => <AnnotationsSettings dashboard={dashboard} />,
       });
 
       pages.push({
@@ -156,7 +157,7 @@ export class DashboardSettings extends PureComponent<Props> {
               ))}
               <div className="dashboard-settings__aside-actions">
                 {canSave && <SaveDashboardButton dashboard={dashboard} />}
-                {canSaveAs && <SaveDashboardAsButton dashboard={dashboard} />}
+                {canSaveAs && <SaveDashboardAsButton dashboard={dashboard} variant="secondary" />}
               </div>
             </aside>
             <div className="dashboard-settings__content">{currentPage.render()}</div>
