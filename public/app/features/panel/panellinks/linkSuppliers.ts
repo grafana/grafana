@@ -123,7 +123,7 @@ export const getFieldLinksSupplier = (value: FieldDisplay): LinkModelSupplier<Fi
         console.log('VALUE', value);
       }
 
-      const replace: InterpolateFunction = (value: string, vars: ScopedVars | undefined, fmt: string | Function) => {
+      const replace: InterpolateFunction = (value: string, vars: ScopedVars | undefined, fmt?: string | Function) => {
         const finalVars: ScopedVars = {
           ...(scopedVars as ScopedVars),
           ...vars,

@@ -500,7 +500,7 @@ export class PanelModel implements DataConfigSource {
     this.events.publish(new PanelTransformationsChangedEvent());
   }
 
-  replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {
+  replaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {
     let vars = this.scopedVars;
 
     if (extraVars) {

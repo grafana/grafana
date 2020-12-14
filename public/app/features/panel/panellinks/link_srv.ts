@@ -255,7 +255,7 @@ export const getPanelOptionsVariableSuggestions = (plugin: PanelPlugin, data?: D
 };
 
 export interface LinkService {
-  getDataLinkUIModel: <T>(link: DataLink, scopedVars: InterpolateFunction | undefined, origin: T) => LinkModel<T>;
+  getDataLinkUIModel: <T>(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin: T) => LinkModel<T>;
   getAnchorInfo: (link: any) => any;
   getLinkUrl: (link: any) => string;
 }

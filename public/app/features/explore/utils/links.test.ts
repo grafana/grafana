@@ -66,7 +66,7 @@ describe('getFieldLinksForExplore', () => {
 
 function setup(link: DataLink) {
   setLinkSrv({
-    getDataLinkUIModel(link: DataLink, replaceVariables: InterpolateFunction, origin: any): LinkModel<any> {
+    getDataLinkUIModel(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin: any): LinkModel<any> {
       return {
         href: link.url,
         title: link.title,
