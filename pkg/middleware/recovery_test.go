@@ -21,7 +21,7 @@ func TestRecoveryMiddleware(t *testing.T) {
 		recoveryScenario(t, "recovery middleware should return json", apiURL, func(t *testing.T, sc *scenarioContext) {
 			sc.handlerFunc = panicHandler
 			sc.fakeReq("GET", apiURL).exec()
-			sc.req.Header.Add("content-type", "application/json")
+			sc.req.Header.Set("content-type", "application/json")
 
 			assert.Equal(t, 500, sc.resp.Code)
 			assert.Equal(t, "Internal Server Error - Check the Grafana server logs for the detailed error message.", sc.respJson["message"])

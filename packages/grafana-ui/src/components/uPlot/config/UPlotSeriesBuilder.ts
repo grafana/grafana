@@ -3,16 +3,8 @@ import uPlot, { Series } from 'uplot';
 import { DrawStyle, LineConfig, AreaConfig, PointsConfig, PointVisibility, LineInterpolation } from '../config';
 import { PlotConfigBuilder } from '../types';
 
-const pathBuilders = uPlot.paths;
-
 const barWidthFactor = 0.6;
 const barMaxWidth = Infinity;
-
-const barsBuilder = pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth] });
-const linearBuilder = pathBuilders.linear!();
-const smoothBuilder = pathBuilders.spline!();
-const stepBeforeBuilder = pathBuilders.stepped!({ align: -1 });
-const stepAfterBuilder = pathBuilders.stepped!({ align: 1 });
 
 export interface SeriesProps extends LineConfig, AreaConfig, PointsConfig {
   drawStyle: DrawStyle;
@@ -43,20 +35,19 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       lineConfig.stroke = lineColor;
       lineConfig.width = lineWidth;
       lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
-        let pathsBuilder = linearBuilder;
+        let builderConfig;
 
         if (drawStyle === DrawStyle.Bars) {
-          pathsBuilder = barsBuilder;
+          builderConfig = { size: [barWidthFactor, barMaxWidth] };
         } else if (drawStyle === DrawStyle.Line) {
           if (lineInterpolation === LineInterpolation.StepBefore) {
-            pathsBuilder = stepBeforeBuilder;
+            builderConfig = { align: -1 };
           } else if (lineInterpolation === LineInterpolation.StepAfter) {
-            pathsBuilder = stepAfterBuilder;
-          } else if (lineInterpolation === LineInterpolation.Smooth) {
-            pathsBuilder = smoothBuilder;
+            builderConfig = { align: 1 };
           }
         }
 
+        let pathsBuilder = mapDrawStyleToPathBuilder(drawStyle, lineInterpolation, builderConfig);
         return pathsBuilder(self, seriesIdx, idx0, idx1);
       };
     }
@@ -81,13 +72,12 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     }
 
     let fillConfig: any | undefined;
-    if (fillColor && fillOpacity !== 0) {
+    let fillOpacityNumber = fillOpacity ?? 0;
+    if (fillColor && fillOpacityNumber !== 0) {
       fillConfig = {
-        fill: fillOpacity
-          ? tinycolor(fillColor)
-              .setAlpha(fillOpacity)
-              .toRgbString()
-          : fillColor,
+        fill: tinycolor(fillColor)
+          .setAlpha(fillOpacityNumber / 100)
+          .toRgbString(),
       };
     }
 
@@ -99,4 +89,46 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       ...fillConfig,
     };
   }
+}
+
+enum PathBuilder {
+  Linear,
+  Bars,
+  Spline,
+  Stepped,
+}
+
+function getPathBuilder(builder: PathBuilder): (opts: any) => Series.PathBuilder {
+  const pathBuilders = uPlot.paths;
+
+  switch (builder) {
+    case PathBuilder.Bars:
+      return pathBuilders.bars!;
+    case PathBuilder.Linear:
+      return pathBuilders.linear!;
+    case PathBuilder.Spline:
+      return pathBuilders.spline!;
+    case PathBuilder.Stepped:
+      return pathBuilders.stepped!;
+    default:
+      return pathBuilders.linear!;
+  }
+}
+
+function mapDrawStyleToPathBuilder(style: DrawStyle, lineInterpolation?: LineInterpolation, opts?: any) {
+  let builder = getPathBuilder(PathBuilder.Linear);
+
+  if (style === DrawStyle.Bars) {
+    builder = getPathBuilder(PathBuilder.Bars);
+  } else if (style === DrawStyle.Line) {
+    if (lineInterpolation === LineInterpolation.StepBefore) {
+      builder = getPathBuilder(PathBuilder.Stepped);
+    } else if (lineInterpolation === LineInterpolation.StepAfter) {
+      builder = getPathBuilder(PathBuilder.Stepped);
+    } else if (lineInterpolation === LineInterpolation.Smooth) {
+      builder = getPathBuilder(PathBuilder.Spline);
+    }
+  }
+
+  return builder(opts);
 }

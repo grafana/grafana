@@ -114,8 +114,8 @@ func (provider *accessTokenProvider) getAccessToken(data templateData) (string, 
 	}
 
 	getTokenReq, _ := http.NewRequest("POST", urlInterpolated, bytes.NewBufferString(params.Encode()))
-	getTokenReq.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	getTokenReq.Header.Add("Content-Length", strconv.Itoa(len(params.Encode())))
+	getTokenReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	getTokenReq.Header.Set("Content-Length", strconv.Itoa(len(params.Encode())))
 
 	resp, err := client.Do(getTokenReq)
 	if err != nil {

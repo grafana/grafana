@@ -51,24 +51,24 @@ func addSecurityHeaders(w macaron.ResponseWriter, cfg *setting.Cfg) {
 		if cfg.StrictTransportSecuritySubDomains {
 			strictHeaderValues = append(strictHeaderValues, "includeSubDomains")
 		}
-		w.Header().Add("Strict-Transport-Security", strings.Join(strictHeaderValues, "; "))
+		w.Header().Set("Strict-Transport-Security", strings.Join(strictHeaderValues, "; "))
 	}
 
 	if cfg.ContentTypeProtectionHeader {
-		w.Header().Add("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
 	}
 
 	if cfg.XSSProtectionHeader {
-		w.Header().Add("X-XSS-Protection", "1; mode=block")
+		w.Header().Set("X-XSS-Protection", "1; mode=block")
 	}
 }
 
 func addNoCacheHeaders(w macaron.ResponseWriter) {
-	w.Header().Add("Cache-Control", "no-cache")
-	w.Header().Add("Pragma", "no-cache")
-	w.Header().Add("Expires", "-1")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "-1")
 }
 
 func addXFrameOptionsDenyHeader(w macaron.ResponseWriter) {
-	w.Header().Add("X-Frame-Options", "deny")
+	w.Header().Set("X-Frame-Options", "deny")
 }
