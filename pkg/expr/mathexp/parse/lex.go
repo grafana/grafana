@@ -288,6 +288,21 @@ func lexFunc(l *lexer) stateFn {
 
 func lexVar(l *lexer) stateFn {
 	hasChar := false
+	if l.peek() == '{' {
+		_ = l.next()
+		for {
+			switch r := l.next(); {
+			case r == '}':
+				l.emit(itemVar)
+				return lexItem
+			case r == eof:
+				return l.errorf("unterminated variable missing closing }")
+			default:
+				// absorb
+			}
+		}
+	}
+
 	for {
 		switch r := l.next(); {
 		case unicode.IsLetter(r):
