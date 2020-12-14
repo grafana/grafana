@@ -145,15 +145,6 @@ func (sch *schedule) unpause() error {
 	return nil
 }
 
-func (sch *schedule) resetHeartbeatInterval(duration time.Duration) error {
-	if sch == nil {
-		return fmt.Errorf("scheduler is not initialised")
-	}
-	sch.heartbeat.ResetOffset(duration)
-	sch.log.Info("alert definition scheduler interval reset", "now", sch.clock.Now(), "duration", duration)
-	return nil
-}
-
 func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 	dispatcherGroup, ctx := errgroup.WithContext(grafanaCtx)
 	for {
