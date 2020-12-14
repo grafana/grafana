@@ -11,13 +11,16 @@ interface SeriesConfigEditorContext {
 
 export const SeriesConfigEditor: React.FC<FieldConfigEditorProps<HideSeriesConfig, {}>> = props => {
   const { options, values } = Object.keys(props.value).reduce(
-    (ctx: SeriesConfigEditorContext, value) => {
+    (ctx: SeriesConfigEditorContext, value: keyof HideSeriesConfig) => {
       ctx.options.push({
         label: _.startCase(value),
         value,
       });
 
-      ctx.values.push(value);
+      if (props.value[value]) {
+        ctx.values.push(value);
+      }
+
       return ctx;
     },
     { values: [], options: [] }

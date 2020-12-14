@@ -165,8 +165,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       field.state = { ...field.state, seriesIndex: seriesIdx };
 
       if (!customConfig.hideFrom?.graph) {
-        const colorMode = getFieldColorModeForField(field);
-        const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
         const showPoints =
           customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
 

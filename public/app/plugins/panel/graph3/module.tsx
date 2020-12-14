@@ -7,7 +7,7 @@ import {
   AxisPlacement,
   graphFieldOptions,
 } from '@grafana/ui/src/components/uPlot/config';
-import { SeriesConfigEditor } from './SeriesConfigEditor';
+import { SeriesConfigEditor, SeriesConfigViewer } from './seriesConfig';
 import { GraphPanel } from './GraphPanel';
 import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
@@ -46,7 +46,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             legend: false,
           },
           editor: SeriesConfigEditor,
-          override: SeriesConfigEditor,
+          override: SeriesConfigViewer,
           shouldApply: () => true,
           process: value => value,
         })
