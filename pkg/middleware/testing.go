@@ -88,12 +88,12 @@ func (sc *scenarioContext) exec() {
 
 	if sc.apiKey != "" {
 		sc.t.Logf(`Adding header "Authorization: Bearer %s"`, sc.apiKey)
-		sc.req.Header.Add("Authorization", "Bearer "+sc.apiKey)
+		sc.req.Header.Set("Authorization", "Bearer "+sc.apiKey)
 	}
 
 	if sc.authHeader != "" {
 		sc.t.Logf(`Adding header "Authorization: %s"`, sc.authHeader)
-		sc.req.Header.Add("Authorization", sc.authHeader)
+		sc.req.Header.Set("Authorization", sc.authHeader)
 	}
 
 	if sc.tokenSessionCookie != "" {
