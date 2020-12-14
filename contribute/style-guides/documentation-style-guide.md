@@ -66,6 +66,7 @@ The following sections provide general guidelines on topics specific to Grafana 
 - Do not use two spaces after a period. Only add one space after each sentence. Do not add a space at the end of the paragraph.
 - Sentence length should be 25 words or less. If your thought is longer than 25 words, consider breaking up the sentence or changing the format to a list.
 - Paragraphs should be three sentences or fewer. Break up long paragraphs.
+- Always use "MS SQL" when referring to MS SQL Server. Do not use "MSSQL", you may see this incorrect usage in some of our UI.
 
 ### File naming conventions
 
