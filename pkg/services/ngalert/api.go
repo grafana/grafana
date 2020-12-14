@@ -111,6 +111,7 @@ func (ng *AlertNG) deleteAlertDefinitionEndpoint(c *models.ReqContext) api.Respo
 // updateAlertDefinitionEndpoint handles PUT /api/alert-definitions/:alertDefinitionId.
 func (ng *AlertNG) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd updateAlertDefinitionCommand) api.Response {
 	cmd.ID = c.ParamsInt64(":alertDefinitionId")
+	cmd.OrgID = c.SignedInUser.OrgId
 
 	if err := ng.updateAlertDefinition(&cmd); err != nil {
 		return api.Error(500, "Failed to update alert definition", err)

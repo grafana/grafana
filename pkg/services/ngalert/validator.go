@@ -18,6 +18,10 @@ func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, req
 		return fmt.Errorf("invalid interval: %v: interval should be divided exactly by scheduler interval: %v", time.Duration(alertDefinition.Interval)*time.Second, ng.schedule.baseInterval)
 	}
 
+	if alertDefinition.OrgID == 0 {
+		return fmt.Errorf("no organisation is found")
+	}
+
 	for _, query := range alertDefinition.Data {
 		datasourceID, err := query.GetDatasource()
 		if err != nil {

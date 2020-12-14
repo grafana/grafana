@@ -61,6 +61,7 @@ func TestAlertingTicker(t *testing.T) {
 	err := ng.updateAlertDefinition(&updateAlertDefinitionCommand{
 		ID:                alerts[0].ID,
 		IntervalInSeconds: &threeSecInterval,
+		OrgID:             alerts[0].OrgID,
 	})
 	require.NoError(t, err)
 	t.Logf("alert definition: %d interval reset to: %d", alerts[0].ID, threeSecInterval)
