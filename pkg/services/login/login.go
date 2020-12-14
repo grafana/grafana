@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/grafana/grafana/pkg/services/teamgroupsync"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -13,7 +15,6 @@ import (
 
 func init() {
 	registry.RegisterService(&LoginService{})
-	registry.RegisterService(&TeamSyncService{})
 }
 
 var (
@@ -21,9 +22,9 @@ var (
 )
 
 type LoginService struct {
-	Bus          bus.Bus             `inject:""`
-	QuotaService *quota.QuotaService `inject:""`
-	TeamSync     TeamSyncInterface   `inject:""`
+	Bus          bus.Bus                `inject:""`
+	QuotaService *quota.QuotaService    `inject:""`
+	TeamSync     teamgroupsync.TeamSync `inject:""`
 }
 
 func (ls *LoginService) Init() error {
@@ -255,19 +256,5 @@ func syncOrgRoles(user *models.User, extUser *models.ExternalUserInfo) error {
 		})
 	}
 
-	return nil
-}
-
-type TeamSyncInterface interface {
-	SyncTeams(ctx context.Context, user *models.User, externalUser *models.ExternalUserInfo) error
-}
-
-type TeamSyncService struct{}
-
-func (t *TeamSyncService) SyncTeams(ctx context.Context, user *models.User, externalUser *models.ExternalUserInfo) error {
-	return nil
-}
-
-func (t *TeamSyncService) Init() error {
 	return nil
 }
