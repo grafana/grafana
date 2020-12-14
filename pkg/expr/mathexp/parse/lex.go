@@ -341,8 +341,6 @@ func isSpace(r rune) bool {
 	return unicode.IsSpace(r)
 }
 
-// isVarchar should maybe be used in place of unicode is letter above,
-// but do not want to modify it at this time, so adding lint exception.
 func isVarchar(r rune) bool {
 	return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
 }
