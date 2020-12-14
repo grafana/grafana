@@ -26,34 +26,40 @@ export const Slider: FunctionComponent<SliderProps> = ({
   const SliderWithTooltip = SliderComponent;
   const [slidervalue, setSliderValue] = useState<number>(value || min);
 
-  const onSliderChange = useCallback((v: number) => {
-    setSliderValue(v);
+  const onSliderChange = useCallback(
+    (v: number) => {
+      setSliderValue(v);
 
-    if (onChange) {
-      onChange(v);
-    }
-  }, []);
+      if (onChange) {
+        onChange(v);
+      }
+    },
+    [setSliderValue, onChange]
+  );
 
-  const onSliderInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
-    let v = +e.target.value;
+  const onSliderInputChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      let v = +e.target.value;
 
-    if (Number.isNaN(v)) {
-      v = 0;
-    }
+      if (Number.isNaN(v)) {
+        v = 0;
+      }
 
-    v > max && (v = max);
-    v < min && (v = min);
+      v > max && (v = max);
+      v < min && (v = min);
 
-    setSliderValue(v);
+      setSliderValue(v);
 
-    if (onChange) {
-      onChange(v);
-    }
+      if (onChange) {
+        onChange(v);
+      }
 
-    if (onAfterChange) {
-      onAfterChange(v);
-    }
-  }, []);
+      if (onAfterChange) {
+        onAfterChange(v);
+      }
+    },
+    [setSliderValue, onAfterChange]
+  );
 
   const sliderInputClassNames = !isHorizontal ? [styles.sliderInputVertical] : [];
   const sliderInputFieldClassNames = !isHorizontal ? [styles.sliderInputFieldVertical] : [];
