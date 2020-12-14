@@ -175,7 +175,7 @@ export const MultiPlainValue = () => {
   );
 };
 
-export const MultiOptgroupSelect = () => {
+export const MultiSelectWithOptionGroups = () => {
   const [value, setValue] = useState<string[]>();
 
   return (
