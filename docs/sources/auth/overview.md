@@ -19,6 +19,7 @@ Provider | Support | Role mapping | Team sync<br> *(Enterprise only)* | Active s
 [GitLab OAuth]({{< relref "gitlab.md" >}})         | v5.3+ | - | v6.4+ | -
 [Google OAuth]({{< relref "google.md" >}})         | v2.0+ | - | - | -
 [LDAP]({{< relref "ldap.md" >}})                   | v2.1+ | v2.1+ | v5.3+ | v6.3+
+[JWT]({{< relref "jwt.md" >}})                     | v2.1+ | - | - | -
 [Okta OAuth]({{< relref "okta.md" >}})             | v7.0+ | v7.0+ | v7.0+ | -
 [SAML]({{< relref "../enterprise/saml.md" >}}) (Enterprise only)    | v6.3+ | v7.0+ | v7.0+ | -
 

@@ -38,7 +38,7 @@ func (hs *HTTPServer) getProfileNode(c *models.ReqContext) *dtos.NavLink {
 		})
 	}
 
-	if !setting.DisableSignoutMenu {
+	if !setting.DisableSignoutMenu && !c.SignedInWithJWT() {
 		// add sign out first
 		children = append(children, &dtos.NavLink{
 			Text:         "Sign out",
