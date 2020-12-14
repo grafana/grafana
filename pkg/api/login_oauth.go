@@ -68,6 +68,26 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		return
 	}
 
+	// Get the URL of the current request
+	scheme := ctx.Req.Header.Get("X-Forwarded-Proto")
+	if scheme == "" {
+		scheme = string(hs.Cfg.Protocol)
+	}
+
+	path := ""
+	uri, err := url.ParseRequestURI(ctx.Req.RequestURI)
+	if err != nil {
+		path = "login/" + name
+	} else {
+		path = uri.Path
+	}
+
+	requestURL := url.URL{
+		Scheme: scheme,
+		Host:   ctx.Req.Host,
+		Path:   path,
+	}
+
 	code := ctx.Query("code")
 	if code == "" {
 		state, err := GenStateString()
@@ -83,7 +103,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		hashedState := hashStatecode(state, setting.OAuthService.OAuthInfos[name].ClientSecret)
 		cookies.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
-			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
+			ctx.Redirect(connect.AuthCodeURL(state, oauth2.SetAuthURLParam("redirect_uri", requestURL.String()), oauth2.AccessTypeOnline))
 		} else {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.SetAuthURLParam("hd", setting.OAuthService.OAuthInfos[name].HostedDomain), oauth2.AccessTypeOnline))
 		}
@@ -126,7 +146,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	oauthCtx := context.WithValue(context.Background(), oauth2.HTTPClient, oauthClient)
 
 	// get token from provider
-	token, err := connect.Exchange(oauthCtx, code)
+	token, err := connect.Exchange(oauthCtx, code, oauth2.SetAuthURLParam("redirect_uri", requestURL.String()))
 	if err != nil {
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
 			HttpStatus:    http.StatusInternalServerError,
