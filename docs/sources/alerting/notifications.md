@@ -67,7 +67,7 @@ Sensu | `sensu` | yes, external only | no
 [Slack](#slack) | `slack` | yes | no
 Telegram | `telegram` | yes | no
 Threema | `threema` | yes, external only | no
-VictorOps | `victorops` | yes, external only | no
+VictorOps | `victorops` | yes, external only | yes
 [Webhook](#webhook) | `webhook` | yes, external only | yes
 [Zenduty](#zenduty) | `webhook` | yes, external only | yes
 
@@ -133,10 +133,6 @@ This behavior will become the default in a future version of Grafana.
 ### VictorOps
 
 To configure VictorOps, provide the URL from the Grafana Integration and substitute `$routing_key` with a valid key.
-
-Setting | Description
----------- | -----------
-Auto resolve incidents | Resolve incidents in VictorOps once the alert goes back to `OK`.
 
 >**Note:** The tag `Severity` has special meaning in the [VictorOps Incident Fields](https://help.victorops.com/knowledge-base/incident-fields-glossary/). If an alert panel defines this key, then it replaces the `message_type` in the root of the event sent to VictorOps.
 
