@@ -15,19 +15,17 @@ type Ratio = 'success' | 'errors' | 'faults' | 'throttled';
 export function computeStats(serviceOrEdge: XrayService | XrayEdge): Stats | undefined {
   const { SummaryStatistics, StartTime, EndTime } = serviceOrEdge;
   if (!SummaryStatistics) {
-    return undefined;
+    return computeStats((serviceOrEdge as XrayService).Edges[0]);
   }
   const { TotalCount, OkCount, ErrorStatistics, FaultStatistics, TotalResponseTime } = SummaryStatistics;
-  const startTimeMs = new Date(StartTime).valueOf();
-  const endTimeMs = new Date(EndTime).valueOf();
 
   return {
     success: OkCount / TotalCount,
     throttled: ErrorStatistics.ThrottleCount / TotalCount,
     errors: (ErrorStatistics.TotalCount - ErrorStatistics.ThrottleCount) / TotalCount,
     faults: FaultStatistics.TotalCount / TotalCount,
-    avgResponseTime: TotalResponseTime / TotalCount,
-    tracesPerMinute: TotalCount / ((endTimeMs - startTimeMs) / (1000 * 60)),
+    avgResponseTime: (TotalResponseTime / TotalCount) * 1000,
+    tracesPerMinute: TotalCount / ((EndTime - StartTime) / 60),
   };
 }
 
