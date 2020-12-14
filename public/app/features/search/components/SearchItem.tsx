@@ -82,7 +82,7 @@ const getResultsItemStyles = stylesFactory((theme: GrafanaTheme) => ({
     overflow: hidden;
   `,
   folderTitle: css`
-    color: ${theme.colors.textWeak};
+    color: ${theme.colors.textSemiWeak};
     font-size: ${theme.typography.size.xs};
     line-height: ${theme.typography.lineHeight.xs};
     position: relative;
