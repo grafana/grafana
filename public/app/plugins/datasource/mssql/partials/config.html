@@ -1,5 +1,5 @@
 
-<h3 class="page-heading">MSSQL Connection</h3>
+<h3 class="page-heading">MS SQL Connection</h3>
 
 <div class="gf-form-group">
 	<div class="gf-form max-width-30">
@@ -23,7 +23,7 @@
         value="ctrl.current.secureJsonData.password"
         on-reset="ctrl.onPasswordReset"
         on-change="ctrl.onPasswordChange"
-        inputWidth="9"
+        inputWidth="8"
       />
     </div>
 	</div>
@@ -45,7 +45,7 @@
 	</div>
 </div>
 
-<b>Connection limits</b>
+<h3 class="page-heading">Connection limits</h3>
 
 <div class="gf-form-group">
 	<div class="gf-form max-width-15">
@@ -76,7 +76,7 @@
 	</div>
 </div>
 
-<h3 class="page-heading">MSSQL details</h3>
+<h3 class="page-heading">MS SQL details</h3>
 
 <div class="gf-form-group">
 	<div class="gf-form-inline">
@@ -102,10 +102,10 @@
 	<div class="grafana-info-box">
 		<h5>User Permission</h5>
 		<p>
-			The database user should only be granted SELECT permissions on the specified database &amp; tables you want to query.
+			The database user should only be granted SELECT permissions on the specified database and tables you want to query.
 			Grafana does not validate that queries are safe so queries can contain any SQL statement. For example, statements
 			like <code>USE otherdb;</code> and <code>DROP TABLE user;</code> would be executed. To protect against this we
-			<strong>Highly</strong> recommmend you create a specific MSSQL user with restricted permissions.
+			<emphasis>highly</emphasis> recommmend you create a specific MS SQL user with restricted permissions.
 		</p>
 	</div>
 </div>
