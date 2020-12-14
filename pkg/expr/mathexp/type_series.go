@@ -61,13 +61,13 @@ func SeriesFromFrame(frame *data.Frame) (s Series, err error) {
 }
 
 // NewSeries returns a dataframe of type Series.
-func NewSeries(name string, labels data.Labels, timeIdx int, nullableTime bool, valueIdx int, nullableValue bool, size int) Series {
+func NewSeries(refID string, labels data.Labels, timeIdx int, nullableTime bool, valueIdx int, nullableValue bool, size int) Series {
 	fields := make([]*data.Field, 2)
 
 	if nullableValue {
-		fields[valueIdx] = data.NewField(name, labels, make([]*float64, size))
+		fields[valueIdx] = data.NewField(refID, labels, make([]*float64, size))
 	} else {
-		fields[valueIdx] = data.NewField(name, labels, make([]float64, size))
+		fields[valueIdx] = data.NewField(refID, labels, make([]float64, size))
 	}
 
 	if nullableTime {

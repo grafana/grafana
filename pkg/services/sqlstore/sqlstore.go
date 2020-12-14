@@ -39,16 +39,21 @@ var (
 // ContextSessionKey is used as key to save values in `context.Context`
 type ContextSessionKey struct{}
 
+const ServiceName = "SqlStore"
+const InitPriority = registry.High
+
 func init() {
+	ss := &SQLStore{}
+
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
 
 	registry.Register(&registry.Descriptor{
-		Name:         "SQLStore",
-		Instance:     &SQLStore{},
-		InitPriority: registry.High,
+		Name:         ServiceName,
+		Instance:     ss,
+		InitPriority: InitPriority,
 	})
 }
 
@@ -113,13 +118,20 @@ func (ss *SQLStore) Init() error {
 
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 	err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
-		systemUserCountQuery := models.GetSystemUserCountStatsQuery{}
-		err := bus.DispatchCtx(ctx, &systemUserCountQuery)
+		var stats models.SystemUserCountStats
+		err := ss.WithDbSession(ctx, func(sess *DBSession) error {
+			var rawSql = `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
+			if _, err := sess.SQL(rawSql).Get(&stats); err != nil {
+				return fmt.Errorf("could not determine if admin user exists: %w", err)
+			}
+
+			return nil
+		})
 		if err != nil {
-			return fmt.Errorf("could not determine if admin user exists: %w", err)
+			return err
 		}
 
-		if systemUserCountQuery.Result.Count > 0 {
+		if stats.Count > 0 {
 			return nil
 		}
 
@@ -351,7 +363,7 @@ func InitTestDB(t ITestDB) *SQLStore {
 		testSQLStore = &SQLStore{}
 		testSQLStore.Bus = bus.New()
 		testSQLStore.CacheService = localcache.New(5*time.Minute, 10*time.Minute)
-		testSQLStore.skipEnsureDefaultOrgAndUser = true
+		testSQLStore.skipEnsureDefaultOrgAndUser = false
 
 		dbType := migrator.SQLite
 

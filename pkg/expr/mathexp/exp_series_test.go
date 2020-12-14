@@ -90,7 +90,7 @@ func TestSeriesExpr(t *testing.T) {
 			execErrIs: assert.NoError,
 			results: Results{
 				[]Value{
-					makeSeriesNullableTime("id=1", data.Labels{"id": "1"}, nullTimeTP{
+					makeSeriesNullableTime("", data.Labels{"id": "1"}, nullTimeTP{
 						unixTimePointer(5, 0), float64Pointer(9),
 					}, nullTimeTP{
 						unixTimePointer(10, 0), float64Pointer(8),
@@ -106,7 +106,7 @@ func TestSeriesExpr(t *testing.T) {
 			execErrIs: assert.NoError,
 			results: Results{
 				[]Value{
-					makeSeriesNullableTime("id=1", data.Labels{"id": "1"}, nullTimeTP{
+					makeSeriesNullableTime("", data.Labels{"id": "1"}, nullTimeTP{
 						unixTimePointer(5, 0), float64Pointer(9),
 					}, nullTimeTP{
 						unixTimePointer(10, 0), float64Pointer(8),
@@ -122,12 +122,12 @@ func TestSeriesExpr(t *testing.T) {
 			execErrIs: assert.NoError,
 			results: Results{
 				[]Value{
-					makeSeriesNullableTime("sensor=a, turbine=1", data.Labels{"sensor": "a", "turbine": "1"}, nullTimeTP{
+					makeSeriesNullableTime("", data.Labels{"sensor": "a", "turbine": "1"}, nullTimeTP{
 						unixTimePointer(5, 0), float64Pointer(6 * .5),
 					}, nullTimeTP{
 						unixTimePointer(10, 0), float64Pointer(8 * .2),
 					}),
-					makeSeriesNullableTime("sensor=b, turbine=1", data.Labels{"sensor": "b", "turbine": "1"}, nullTimeTP{
+					makeSeriesNullableTime("", data.Labels{"sensor": "b", "turbine": "1"}, nullTimeTP{
 						unixTimePointer(5, 0), float64Pointer(10 * .5),
 					}, nullTimeTP{
 						unixTimePointer(10, 0), float64Pointer(16 * .2),
@@ -178,7 +178,7 @@ func TestSeriesExpr(t *testing.T) {
 			e, err := New(tt.expr)
 			tt.newErrIs(t, err)
 			if e != nil {
-				res, err := e.Execute(tt.vars)
+				res, err := e.Execute("", tt.vars)
 				tt.execErrIs(t, err)
 				if diff := cmp.Diff(tt.results, res, data.FrameTestCompareOptions()...); diff != "" {
 					t.Errorf("Result mismatch (-want +got):\n%s", diff)
@@ -372,7 +372,7 @@ func TestSeriesAlternateFormsExpr(t *testing.T) {
 			e, err := New(tt.expr)
 			tt.newErrIs(t, err)
 			if e != nil {
-				res, err := e.Execute(tt.vars)
+				res, err := e.Execute("", tt.vars)
 				tt.execErrIs(t, err)
 				if diff := cmp.Diff(tt.results, res, data.FrameTestCompareOptions()...); diff != "" {
 					t.Errorf("Result mismatch (-want +got):\n%s", diff)

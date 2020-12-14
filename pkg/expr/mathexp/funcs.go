@@ -35,7 +35,7 @@ var builtins = map[string]parse.Func{
 func abs(e *State, varSet Results) (Results, error) {
 	newRes := Results{}
 	for _, res := range varSet.Values {
-		newVal, err := perFloat(res, math.Abs)
+		newVal, err := perFloat(e, res, math.Abs)
 		if err != nil {
 			return newRes, err
 		}
@@ -48,7 +48,7 @@ func abs(e *State, varSet Results) (Results, error) {
 func log(e *State, varSet Results) (Results, error) {
 	newRes := Results{}
 	for _, res := range varSet.Values {
-		newVal, err := perFloat(res, math.Log)
+		newVal, err := perFloat(e, res, math.Log)
 		if err != nil {
 			return newRes, err
 		}
@@ -60,25 +60,25 @@ func log(e *State, varSet Results) (Results, error) {
 // nan returns a scalar nan value
 func nan(e *State) Results {
 	aNaN := math.NaN()
-	return NewScalarResults(&aNaN)
+	return NewScalarResults(e.RefID, &aNaN)
 }
 
 // inf returns a scalar positive infinity value
 func inf(e *State) Results {
 	aInf := math.Inf(0)
-	return NewScalarResults(&aInf)
+	return NewScalarResults(e.RefID, &aInf)
 }
 
 // null returns a null scalar value
 func null(e *State) Results {
-	return NewScalarResults(nil)
+	return NewScalarResults(e.RefID, nil)
 }
 
-func perFloat(val Value, floatF func(x float64) float64) (Value, error) {
+func perFloat(e *State, val Value, floatF func(x float64) float64) (Value, error) {
 	var newVal Value
 	switch val.Type() {
 	case parse.TypeNumberSet:
-		n := NewNumber(val.GetName(), val.GetLabels())
+		n := NewNumber(e.RefID, val.GetLabels())
 		f := val.(Number).GetFloat64Value()
 		nF := math.NaN()
 		if f != nil {
@@ -92,10 +92,10 @@ func perFloat(val Value, floatF func(x float64) float64) (Value, error) {
 		if f != nil {
 			nF = floatF(*f)
 		}
-		newVal = NewScalar(&nF)
+		newVal = NewScalar(e.RefID, &nF)
 	case parse.TypeSeriesSet:
 		resSeries := val.(Series)
-		newSeries := NewSeries(resSeries.GetName(), resSeries.GetLabels(), resSeries.TimeIdx, resSeries.TimeIsNullable, resSeries.ValueIdx, resSeries.ValueIsNullabe, resSeries.Len())
+		newSeries := NewSeries(e.RefID, resSeries.GetLabels(), resSeries.TimeIdx, resSeries.TimeIsNullable, resSeries.ValueIdx, resSeries.ValueIsNullabe, resSeries.Len())
 		for i := 0; i < resSeries.Len(); i++ {
 			t, f := resSeries.GetPoint(i)
 			nF := math.NaN()

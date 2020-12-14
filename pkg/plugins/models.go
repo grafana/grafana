@@ -21,14 +21,27 @@ var (
 	PluginStateAlpha PluginState = "alpha"
 )
 
-type PluginSignature string
+type PluginSignatureState struct {
+	Status     PluginSignatureStatus
+	Type       PluginSignatureType
+	SigningOrg string
+}
+
+type PluginSignatureStatus string
 
 const (
-	PluginSignatureInternal PluginSignature = "internal" // core plugin, no signature
-	PluginSignatureValid    PluginSignature = "valid"    // signed and accurate MANIFEST
-	PluginSignatureInvalid  PluginSignature = "invalid"  // invalid signature
-	PluginSignatureModified PluginSignature = "modified" // valid signature, but content mismatch
-	PluginSignatureUnsigned PluginSignature = "unsigned" // no MANIFEST file
+	pluginSignatureInternal PluginSignatureStatus = "internal" // core plugin, no signature
+	pluginSignatureValid    PluginSignatureStatus = "valid"    // signed and accurate MANIFEST
+	pluginSignatureInvalid  PluginSignatureStatus = "invalid"  // invalid signature
+	pluginSignatureModified PluginSignatureStatus = "modified" // valid signature, but content mismatch
+	pluginSignatureUnsigned PluginSignatureStatus = "unsigned" // no MANIFEST file
+)
+
+type PluginSignatureType string
+
+const (
+	grafanaType PluginSignatureType = "grafana"
+	privateType PluginSignatureType = "private"
 )
 
 type PluginNotFoundError struct {
@@ -62,25 +75,28 @@ type PluginLoader interface {
 
 // PluginBase is the base plugin type.
 type PluginBase struct {
-	Type         string             `json:"type"`
-	Name         string             `json:"name"`
-	Id           string             `json:"id"`
-	Info         PluginInfo         `json:"info"`
-	Dependencies PluginDependencies `json:"dependencies"`
-	Includes     []*PluginInclude   `json:"includes"`
-	Module       string             `json:"module"`
-	BaseUrl      string             `json:"baseUrl"`
-	Category     string             `json:"category"`
-	HideFromList bool               `json:"hideFromList,omitempty"`
-	Preload      bool               `json:"preload"`
-	State        PluginState        `json:"state,omitempty"`
-	Signature    PluginSignature    `json:"signature"`
-	Backend      bool               `json:"backend"`
+	Type         string                `json:"type"`
+	Name         string                `json:"name"`
+	Id           string                `json:"id"`
+	Info         PluginInfo            `json:"info"`
+	Dependencies PluginDependencies    `json:"dependencies"`
+	Includes     []*PluginInclude      `json:"includes"`
+	Module       string                `json:"module"`
+	BaseUrl      string                `json:"baseUrl"`
+	Category     string                `json:"category"`
+	HideFromList bool                  `json:"hideFromList,omitempty"`
+	Preload      bool                  `json:"preload"`
+	State        PluginState           `json:"state,omitempty"`
+	Signature    PluginSignatureStatus `json:"signature"`
+	Backend      bool                  `json:"backend"`
 
-	IncludedInAppId string `json:"-"`
-	PluginDir       string `json:"-"`
-	DefaultNavUrl   string `json:"-"`
-	IsCorePlugin    bool   `json:"-"`
+	IncludedInAppId string              `json:"-"`
+	PluginDir       string              `json:"-"`
+	DefaultNavUrl   string              `json:"-"`
+	IsCorePlugin    bool                `json:"-"`
+	Files           []string            `json:"-"`
+	SignatureType   PluginSignatureType `json:"-"`
+	SignatureOrg    string              `json:"-"`
 
 	GrafanaNetVersion   string `json:"-"`
 	GrafanaNetHasUpdate bool   `json:"-"`
@@ -114,6 +130,8 @@ func (pb *PluginBase) registerPlugin(base *PluginBase) error {
 	// Copy relevant fields from the base
 	pb.PluginDir = base.PluginDir
 	pb.Signature = base.Signature
+	pb.SignatureType = base.SignatureType
+	pb.SignatureOrg = base.SignatureOrg
 
 	Plugins[pb.Id] = pb
 	return nil
