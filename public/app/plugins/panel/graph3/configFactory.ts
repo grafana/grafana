@@ -71,11 +71,11 @@ const createFreshOverride = (displayName: string): SystemConfigOverrideRule => {
     },
     properties: [
       {
-        id: 'custom.seriesConfig',
+        id: 'custom.hideFrom',
         value: {
-          displayInGraph: false,
-          displayInLegend: true,
-          displayInTooltip: true,
+          graph: true,
+          legend: false,
+          tooltip: false,
         },
       },
     ],
@@ -83,12 +83,12 @@ const createFreshOverride = (displayName: string): SystemConfigOverrideRule => {
 };
 
 const createExtendedOverride = (current: SystemConfigOverrideRule, displayName: string): SystemConfigOverrideRule => {
-  const property = current.properties.find(p => p.id === 'custom.seriesConfig') ?? {
-    id: 'custom.seriesConfig',
+  const property = current.properties.find(p => p.id === 'custom.hideFrom') ?? {
+    id: 'custom.hideFrom',
     value: {
-      displayInGraph: false,
-      displayInLegend: true,
-      displayInTooltip: true,
+      graph: true,
+      legend: false,
+      tooltip: false,
     },
   };
 
