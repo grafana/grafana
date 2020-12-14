@@ -138,7 +138,7 @@ describe('UPlotConfigBuilder', () => {
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
       fillColor: '#ff0000',
-      fillOpacity: 0.5,
+      fillOpacity: 50,
       showPoints: PointVisibility.Auto,
       pointSize: 5,
       pointColor: '#00ff00',
