@@ -343,6 +343,8 @@ func flushStream(plugin Plugin, stream CallResourceClientResponseStream, w http.
 				}
 
 				for _, v := range values {
+					// TODO: Figure out if we should use Set here instead
+					// nolint:gocritic
 					w.Header().Add(k, v)
 				}
 			}
