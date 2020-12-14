@@ -141,7 +141,7 @@ export const reducer = (
       });
 
     case INIT:
-      return [defaultMetricAgg()];
+      return [defaultMetricAgg('1')];
 
     default:
       return state;

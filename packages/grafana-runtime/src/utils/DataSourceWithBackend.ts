@@ -172,6 +172,7 @@ export class DataSourceWithBackend<
 
   /**
    * Checks the plugin health
+   * see public/app/features/datasources/state/actions.ts for what needs to be returned here
    */
   async testDatasource(): Promise<any> {
     return this.callHealthCheck().then(res => {
@@ -181,10 +182,7 @@ export class DataSourceWithBackend<
           message: res.message,
         };
       }
-      return {
-        status: 'fail',
-        message: res.message,
-      };
+      throw new Error(res.message);
     });
   }
 }

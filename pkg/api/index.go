@@ -196,6 +196,16 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
+	if hs.Cfg.IsNgAlertEnabled() {
+		navTree = append(navTree, &dtos.NavLink{
+			Text:     "NgAlerting",
+			Id:       "ngalerting",
+			SubTitle: "Next generation alerting",
+			Icon:     "bell",
+			Url:      setting.AppSubUrl + "/ngalerting",
+		})
+	}
+
 	if c.IsSignedIn {
 		navTree = append(navTree, getProfileNode(c))
 	}
@@ -300,7 +310,7 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 			{Text: "Stats", Id: "server-stats", Url: setting.AppSubUrl + "/admin/stats", Icon: "graph-bar"},
 		}
 
-		if setting.LDAPEnabled {
+		if hs.Cfg.LDAPEnabled {
 			adminNavLinks = append(adminNavLinks, &dtos.NavLink{
 				Text: "LDAP", Id: "ldap", Url: setting.AppSubUrl + "/admin/ldap", Icon: "book",
 			})
@@ -371,7 +381,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 
 	// special case when doing localhost call from image renderer
 	if c.IsRenderCall && !hs.Cfg.ServeFromSubPath {
-		appURL = fmt.Sprintf("%s://localhost:%s", setting.Protocol, setting.HttpPort)
+		appURL = fmt.Sprintf("%s://localhost:%s", hs.Cfg.Protocol, setting.HttpPort)
 		appSubURL = ""
 		settings["appSubUrl"] = ""
 	}
