@@ -23,7 +23,7 @@ export class SettingsCtrl {
     // temp hack for annotations and variables editors
     // that rely on inherited scope
     $scope.dashboard = this.dashboard;
-
+    this.canDelete = this.dashboard.meta.canSave;
     this.selectors = selectors.pages.Dashboard.Settings.General;
     this.renderCount = 0;
   }
