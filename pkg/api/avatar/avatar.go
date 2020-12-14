@@ -107,13 +107,13 @@ func (a *CacheServer) Handler(ctx *models.ReqContext) {
 		}
 	}
 
-	ctx.Resp.Header().Add("Content-Type", "image/jpeg")
+	ctx.Resp.Header().Set("Content-Type", "image/jpeg")
 
 	if !setting.EnableGzip {
-		ctx.Resp.Header().Add("Content-Length", strconv.Itoa(len(avatar.data.Bytes())))
+		ctx.Resp.Header().Set("Content-Length", strconv.Itoa(len(avatar.data.Bytes())))
 	}
 
-	ctx.Resp.Header().Add("Cache-Control", "private, max-age=3600")
+	ctx.Resp.Header().Set("Cache-Control", "private, max-age=3600")
 
 	if err := avatar.Encode(ctx.Resp); err != nil {
 		log.Warnf("avatar encode error: %v", err)
