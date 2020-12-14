@@ -1,5 +1,4 @@
 import throttle from 'lodash/throttle';
-import { rangeUtil, RawTimeRange } from '@grafana/data';
 import { Options } from 'uplot';
 import { PlotPlugin, PlotProps } from './types';
 
@@ -8,11 +7,6 @@ const ALLOWED_FORMAT_STRINGS_REGEX = /\b(YYYY|YY|MMMM|MMM|MM|M|DD|D|WWWW|WWW|HH|
 export const timeFormatToTemplate = (f: string) => {
   return f.replace(ALLOWED_FORMAT_STRINGS_REGEX, match => `{${match}}`);
 };
-
-export function rangeToMinMax(timeRange: RawTimeRange): [number, number] {
-  const v = rangeUtil.convertRawToRange(timeRange);
-  return [v.from.valueOf() / 1000, v.to.valueOf() / 1000];
-}
 
 export const buildPlotConfig = (props: PlotProps, plugins: Record<string, PlotPlugin>): Options => {
   return {

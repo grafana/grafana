@@ -107,13 +107,13 @@ func (a *CacheServer) Handler(ctx *models.ReqContext) {
 		}
 	}
 
-	ctx.Resp.Header().Add("Content-Type", "image/jpeg")
+	ctx.Resp.Header().Set("Content-Type", "image/jpeg")
 
 	if !setting.EnableGzip {
-		ctx.Resp.Header().Add("Content-Length", strconv.Itoa(len(avatar.data.Bytes())))
+		ctx.Resp.Header().Set("Content-Length", strconv.Itoa(len(avatar.data.Bytes())))
 	}
 
-	ctx.Resp.Header().Add("Cache-Control", "private, max-age=3600")
+	ctx.Resp.Header().Set("Cache-Control", "private, max-age=3600")
 
 	if err := avatar.Encode(ctx.Resp); err != nil {
 		log.Warnf("avatar encode error: %v", err)
@@ -132,6 +132,9 @@ func newNotFound() *Avatar {
 	avatar := &Avatar{notFound: true}
 
 	// load user_profile png into buffer
+	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
+	// variable.
+	// nolint:gosec
 	path := filepath.Join(setting.StaticRootPath, "img", "user_profile.png")
 
 	if data, err := ioutil.ReadFile(path); err != nil {

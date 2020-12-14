@@ -25,12 +25,13 @@ import (
 func init() {
 	remotecache.Register(&RenderUser{})
 	registry.Register(&registry.Descriptor{
-		Name:         "RenderingService",
+		Name:         ServiceName,
 		Instance:     &RenderingService{},
 		InitPriority: registry.High,
 	})
 }
 
+const ServiceName = "RenderingService"
 const renderKeyPrefix = "render-%s"
 
 type RenderUser struct {
@@ -226,8 +227,8 @@ func (rs *RenderingService) getURL(path string) string {
 		return fmt.Sprintf("%s%s&render=1", rs.Cfg.RendererCallbackUrl, path)
 	}
 
-	protocol := setting.Protocol
-	switch setting.Protocol {
+	protocol := rs.Cfg.Protocol
+	switch protocol {
 	case setting.HTTPScheme:
 		protocol = "http"
 	case setting.HTTP2Scheme, setting.HTTPSScheme:

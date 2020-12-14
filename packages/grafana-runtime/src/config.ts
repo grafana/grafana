@@ -56,7 +56,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     expressions: false,
     meta: false,
     ngalert: false,
-    traceToLogs: false,
+    panelLibrary: false,
   };
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;

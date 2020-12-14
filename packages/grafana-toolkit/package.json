@@ -103,9 +103,9 @@
     "terser-webpack-plugin": "2.3.5",
     "ts-jest": "26.4.4",
     "ts-loader": "6.2.1",
-    "ts-node": "8.8.1",
-    "tslib": "2.0.1",
-    "typescript": "4.0.2",
+    "ts-node": "9.0.0",
+    "tslib": "2.0.3",
+    "typescript": "4.1.2",
     "url-loader": "^2.0.1",
     "webpack": "4.41.5"
   },

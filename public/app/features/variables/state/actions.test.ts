@@ -61,6 +61,7 @@ import { expect } from '../../../../test/lib/common';
 import { ConstantVariableModel, VariableRefresh } from '../types';
 import { updateVariableOptions } from '../query/reducer';
 import { setVariableQueryRunner, VariableQueryRunner } from '../query/VariableQueryRunner';
+import { setDataSourceSrv } from '@grafana/runtime';
 
 variableAdapters.setInit(() => [
   createQueryVariableAdapter(),
@@ -82,12 +83,10 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   }),
 }));
 
-jest.mock('app/features/plugins/datasource_srv', () => ({
-  getDatasourceSrv: jest.fn(() => ({
-    get: getDatasource,
-    getMetricSources,
-  })),
-}));
+setDataSourceSrv({
+  get: getDatasource,
+  getList: getMetricSources,
+} as any);
 
 describe('shared actions', () => {
   describe('when initDashboardTemplating is dispatched', () => {

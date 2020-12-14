@@ -1,4 +1,5 @@
 import React, { PureComponent, ReactNode } from 'react';
+import { captureException } from '@sentry/browser';
 import { Alert } from '../Alert/Alert';
 import { ErrorWithStack } from './ErrorWithStack';
 
@@ -27,6 +28,7 @@ export class ErrorBoundary extends PureComponent<Props, State> {
   };
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    captureException(error, { contexts: { react: { componentStack: errorInfo.componentStack } } });
     this.setState({
       error: error,
       errorInfo: errorInfo,

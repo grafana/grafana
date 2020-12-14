@@ -32,7 +32,7 @@ import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { runQueries, setQueriesAction } from './query';
 import { updateTime } from './time';
 import { toRawTimeRange } from '../utils/time';
-import { getExploreDatasources } from './selectors';
+import { getDataSourceSrv } from '@grafana/runtime';
 
 //
 // Actions and Payloads
@@ -131,7 +131,7 @@ export function initializeExplore(
   originPanelId?: number | null
 ): ThunkResult<void> {
   return async (dispatch, getState) => {
-    const exploreDatasources = getExploreDatasources();
+    const exploreDatasources = getDataSourceSrv().getList();
     let instance = undefined;
     let history: HistoryItem[] = [];
 
@@ -272,6 +272,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
 
   if (initializeExploreAction.match(action)) {
     const { containerWidth, eventBridge, queries, range, originPanelId, datasourceInstance, history } = action.payload;
+
     return {
       ...state,
       containerWidth,
@@ -279,7 +280,7 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
       range,
       queries,
       initialized: true,
-      queryKeys: getQueryKeys(queries, state.datasourceInstance),
+      queryKeys: getQueryKeys(queries, datasourceInstance),
       originPanelId,
       update: makeInitialUpdateState(),
       datasourceInstance,

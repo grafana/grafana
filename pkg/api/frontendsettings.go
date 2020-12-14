@@ -146,7 +146,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		if isDefault, _ := dsM["isDefault"].(bool); isDefault {
 			defaultDS = n
 		}
-		delete(dsM, "isDefault")
 
 		meta := dsM["meta"].(*plugins.DataSourcePlugin)
 		if meta.Preload {
@@ -194,11 +193,11 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"datasources":                dataSources,
 		"minRefreshInterval":         setting.MinRefreshInterval,
 		"panels":                     panels,
-		"appUrl":                     setting.AppUrl,
-		"appSubUrl":                  setting.AppSubUrl,
+		"appUrl":                     hs.Cfg.AppURL,
+		"appSubUrl":                  hs.Cfg.AppSubURL,
 		"allowOrgCreate":             (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":           setting.AuthProxyEnabled,
-		"ldapEnabled":                setting.LDAPEnabled,
+		"ldapEnabled":                hs.Cfg.LDAPEnabled,
 		"alertingEnabled":            setting.AlertingEnabled,
 		"alertingErrorOrTimeout":     setting.AlertingErrorOrTimeout,
 		"alertingNoDataOrNullValues": setting.AlertingNoDataOrNullValues,

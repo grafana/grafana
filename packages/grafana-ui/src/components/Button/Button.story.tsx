@@ -20,17 +20,13 @@ export default {
     docs: {
       page: mdx,
     },
+    knobs: {
+      disabled: true,
+    },
   },
 };
 
-export const Simple: Story<ButtonProps> = ({ disabled, icon, children, size, variant }) => {
-  return (
-    <Button variant={variant} size={size} icon={icon} disabled={disabled}>
-      {children}
-    </Button>
-  );
-};
-
+export const Simple: Story<ButtonProps> = ({ children, ...args }) => <Button {...args}>{children}</Button>;
 Simple.args = {
   variant: 'primary',
   size: 'md',

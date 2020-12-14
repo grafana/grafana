@@ -4,17 +4,20 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 
 	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
 type scenarioContext struct {
+	t                    *testing.T
 	m                    *macaron.Macaron
 	context              *models.ReqContext
 	resp                 *httptest.ResponseRecorder
@@ -27,6 +30,8 @@ type scenarioContext struct {
 	url                  string
 	userAuthTokenService *auth.FakeUserAuthTokenService
 	remoteCacheService   *remotecache.RemoteCache
+	cfg                  *setting.Cfg
+	contextHandler       *contexthandler.ContextHandler
 
 	req *http.Request
 }
@@ -47,15 +52,19 @@ func (sc *scenarioContext) withAuthorizationHeader(authHeader string) *scenarioC
 }
 
 func (sc *scenarioContext) fakeReq(method, url string) *scenarioContext {
+	sc.t.Helper()
+
 	sc.resp = httptest.NewRecorder()
 	req, err := http.NewRequest(method, url, nil)
-	convey.So(err, convey.ShouldBeNil)
+	require.NoError(sc.t, err)
 	sc.req = req
 
 	return sc
 }
 
 func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map[string]string) *scenarioContext {
+	sc.t.Helper()
+
 	sc.resp = httptest.NewRecorder()
 	req, err := http.NewRequest(method, url, nil)
 	q := req.URL.Query()
@@ -63,7 +72,7 @@ func (sc *scenarioContext) fakeReqWithParams(method, url string, queryParams map
 		q.Add(k, v)
 	}
 	req.URL.RawQuery = q.Encode()
-	convey.So(err, convey.ShouldBeNil)
+	require.NoError(sc.t, err)
 	sc.req = req
 
 	return sc
@@ -75,17 +84,22 @@ func (sc *scenarioContext) handler(fn handlerFunc) *scenarioContext {
 }
 
 func (sc *scenarioContext) exec() {
+	sc.t.Helper()
+
 	if sc.apiKey != "" {
-		sc.req.Header.Add("Authorization", "Bearer "+sc.apiKey)
+		sc.t.Logf(`Adding header "Authorization: Bearer %s"`, sc.apiKey)
+		sc.req.Header.Set("Authorization", "Bearer "+sc.apiKey)
 	}
 
 	if sc.authHeader != "" {
-		sc.req.Header.Add("Authorization", sc.authHeader)
+		sc.t.Logf(`Adding header "Authorization: %s"`, sc.authHeader)
+		sc.req.Header.Set("Authorization", sc.authHeader)
 	}
 
 	if sc.tokenSessionCookie != "" {
+		sc.t.Log(`Adding cookie`, "name", sc.cfg.LoginCookieName, "value", sc.tokenSessionCookie)
 		sc.req.AddCookie(&http.Cookie{
-			Name:  setting.LoginCookieName,
+			Name:  sc.cfg.LoginCookieName,
 			Value: sc.tokenSessionCookie,
 		})
 	}
@@ -94,9 +108,9 @@ func (sc *scenarioContext) exec() {
 
 	if sc.resp.Header().Get("Content-Type") == "application/json; charset=UTF-8" {
 		err := json.NewDecoder(sc.resp.Body).Decode(&sc.respJson)
-		convey.So(err, convey.ShouldBeNil)
+		require.NoError(sc.t, err)
 	}
 }
 
-type scenarioFunc func(c *scenarioContext)
+type scenarioFunc func(t *testing.T, c *scenarioContext)
 type handlerFunc func(c *models.ReqContext)

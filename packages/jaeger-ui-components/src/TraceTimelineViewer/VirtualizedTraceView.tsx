@@ -82,6 +82,7 @@ type TVirtualizedTraceViewOwnProps = {
   createSpanLink?: (
     span: TraceSpan
   ) => { href: string; onClick?: (e: React.MouseEvent) => void; content: React.ReactNode };
+  scrollElement?: Element;
 };
 
 type VirtualizedTraceViewProps = TVirtualizedTraceViewOwnProps & TExtractUiFindFromStateReturn & TTraceTimeline;
@@ -445,6 +446,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
 
   render() {
     const styles = getStyles();
+    const { scrollElement } = this.props;
     return (
       <div>
         <ListView
@@ -452,12 +454,13 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           dataLength={this.rowStates.length}
           itemHeightGetter={this.getRowHeight}
           itemRenderer={this.renderRow}
-          viewBuffer={300}
-          viewBufferMin={100}
+          viewBuffer={50}
+          viewBufferMin={50}
           itemsWrapperClassName={styles.rowsWrapper}
           getKeyFromIndex={this.getKeyFromIndex}
           getIndexFromKey={this.getIndexFromKey}
-          windowScroller
+          windowScroller={false}
+          scrollElement={scrollElement}
         />
       </div>
     );

@@ -3,13 +3,14 @@ import uPlot, { Axis } from 'uplot';
 import { PlotConfigBuilder } from '../types';
 import { measureText } from '../../../utils/measureText';
 import { AxisPlacement } from '../config';
+import { optMinMax } from './UPlotScaleBuilder';
 
 export interface AxisProps {
   scaleKey: string;
   theme: GrafanaTheme;
   label?: string;
   show?: boolean;
-  size?: number;
+  size?: number | null;
   placement?: AxisPlacement;
   grid?: boolean;
   formatValue?: (v: any) => string;
@@ -19,6 +20,16 @@ export interface AxisProps {
 }
 
 export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
+  merge(props: AxisProps) {
+    this.props.size = optMinMax('max', this.props.size, props.size);
+    if (!this.props.label) {
+      this.props.label = props.label;
+    }
+    if (this.props.placement === AxisPlacement.Auto) {
+      this.props.placement = props.placement;
+    }
+  }
+
   getConfig(): Axis {
     const {
       scaleKey,
@@ -42,7 +53,7 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       side: getUPlotSideFromAxis(placement),
       font: `12px 'Roboto'`,
       labelFont: `12px 'Roboto'`,
-      size: calculateAxisSize,
+      size: this.props.size ?? calculateAxisSize,
       grid: {
         show: grid,
         stroke: gridColor,
@@ -83,7 +94,7 @@ function calculateSpace(self: uPlot, axisIdx: number, scaleMin: number, scaleMax
 
   // For x-axis (bottom) we need bigger spacing between labels
   if (axis.side === 2) {
-    return 50;
+    return 55;
   }
 
   return 30;
@@ -107,8 +118,7 @@ function calculateAxisSize(self: uPlot, values: string[], axisIdx: number) {
     }
   }
 
-  let axisWidth = measureText(maxLength, 12).width + 18;
-  return axisWidth;
+  return measureText(maxLength, 12).width + 18;
 }
 
 /** Format time axis ticks */

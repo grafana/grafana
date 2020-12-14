@@ -4,6 +4,7 @@ import { BigValue, BigValueColorMode, BigValueGraphMode, BigValueJustifyMode, Bi
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import mdx from './BigValue.mdx';
 import { useTheme } from '../../themes';
+import { ArrayVector, FieldSparkline, FieldType } from '@grafana/data';
 
 const getKnobs = () => {
   return {
@@ -37,17 +38,13 @@ export default {
 export const Basic = () => {
   const { value, title, colorMode, graphMode, height, width, color, textMode, justifyMode } = getKnobs();
   const theme = useTheme();
-  const sparkline = {
-    xMin: 0,
-    xMax: 5,
-    data: [
-      [0, 10],
-      [1, 20],
-      [2, 15],
-      [3, 25],
-      [4, 5],
-      [5, 10],
-    ],
+  const sparkline: FieldSparkline = {
+    y: {
+      name: '',
+      values: new ArrayVector([1, 2, 3, 4, 3]),
+      type: FieldType.number,
+      config: {},
+    },
   };
 
   return (

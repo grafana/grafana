@@ -341,11 +341,6 @@ export interface QueryEditorProps<
   history?: HistoryItem[];
 }
 
-export enum DataSourceStatus {
-  Connected,
-  Disconnected,
-}
-
 // TODO: not really needed but used as type in some data sources and in DataQueryRequest
 export enum ExploreMode {
   Logs = 'Logs',
@@ -567,6 +562,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   username?: string;
   password?: string; // when access is direct, for some legacy datasources
   database?: string;
+  isDefault?: boolean;
 
   /**
    * This is the full Authorization header if basic auth is enabled.
@@ -582,7 +578,6 @@ export interface DataSourceSelectItem {
   name: string;
   value: string | null;
   meta: DataSourcePluginMeta;
-  sort: string;
 }
 
 /**
