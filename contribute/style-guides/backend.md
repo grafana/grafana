@@ -40,7 +40,6 @@ The majority of our tests uses [GoConvey](http://goconvey.co/) but that's someth
 
 In the `sqlstore` package we do database operations in tests and while some might say that's not suited for unit tests. We think they are fast enough and provide a lot of value.
 
-
 ## Globals
 
 As a general rule of thumb, avoid using global variables, since they make the code difficult to maintain and reason
