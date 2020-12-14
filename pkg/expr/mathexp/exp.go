@@ -5,7 +5,6 @@ import (
 	"math"
 	"reflect"
 	"runtime"
-	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
@@ -130,7 +129,7 @@ func (e *State) walkUnary(node *parse.UnaryNode) (Results, error) {
 }
 
 func (e *State) unarySeries(s Series, op string) (Series, error) {
-	newSeries := NewSeries(e.RefID, s.GetLabels(), s.TimeIdx, s.TimeIsNullable, s.ValueIdx, s.ValueIsNullabe, s.Len())
+	newSeries := NewSeries(e.RefID, s.GetLabels(), s.TimeIdx, s.TimeIsNullable, s.ValueIdx, s.ValueIsNullable, s.Len())
 	for i := 0; i < s.Len(); i++ {
 		t, f := s.GetPoint(i)
 		if f == nil {
@@ -432,7 +431,7 @@ func (e *State) biScalarNumber(labels data.Labels, op string, number Number, sca
 }
 
 func (e *State) biSeriesNumber(labels data.Labels, op string, s Series, scalarVal *float64, seriesFirst bool) (Series, error) {
-	newSeries := NewSeries(e.RefID, labels, s.TimeIdx, s.TimeIsNullable, s.ValueIdx, s.ValueIsNullabe, s.Len())
+	newSeries := NewSeries(e.RefID, labels, s.TimeIdx, s.TimeIsNullable, s.ValueIdx, s.ValueIsNullable, s.Len())
 	var err error
 	for i := 0; i < s.Len(); i++ {
 		nF := math.NaN()
@@ -462,18 +461,21 @@ func (e *State) biSeriesNumber(labels data.Labels, op string, s Series, scalarVa
 // biSeriesSeries performs a the binary operation for each value in the two series where the times
 // are equal. If there are datapoints in A or B that do not share a time, they will be dropped.
 func (e *State) biSeriesSeries(labels data.Labels, op string, aSeries, bSeries Series) (Series, error) {
-	bPoints := make(map[time.Time]*float64)
+	bPoints := make(map[string]*float64)
 	for i := 0; i < bSeries.Len(); i++ {
 		t, f := bSeries.GetPoint(i)
 		if t != nil {
-			bPoints[*t] = f
+			bPoints[t.UTC().String()] = f
 		}
 	}
 
-	newSeries := NewSeries(e.RefID, labels, aSeries.TimeIdx, aSeries.TimeIsNullable || bSeries.TimeIsNullable, aSeries.ValueIdx, aSeries.ValueIsNullabe || bSeries.ValueIsNullabe, 0)
+	newSeries := NewSeries(
+		e.RefID, labels, aSeries.TimeIdx, aSeries.TimeIsNullable || bSeries.TimeIsNullable, aSeries.ValueIdx,
+		aSeries.ValueIsNullable || bSeries.ValueIsNullable, 0,
+	)
 	for aIdx := 0; aIdx < aSeries.Len(); aIdx++ {
 		aTime, aF := aSeries.GetPoint(aIdx)
-		bF, ok := bPoints[*aTime]
+		bF, ok := bPoints[aTime.UTC().String()]
 		if !ok {
 			continue
 		}
