@@ -56,7 +56,6 @@ export class PanelEditorQueries extends PureComponent<Props, State> {
     panel.hideTimeOverride = options.timeRange?.hide;
     panel.interval = options.minInterval;
     panel.maxDataPoints = options.maxDataPoints;
-    panel.refresh();
 
     this.setState({ options: options });
   };
