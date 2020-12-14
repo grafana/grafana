@@ -24,7 +24,7 @@ export function computeStats(serviceOrEdge: XrayService | XrayEdge): Stats | und
   return {
     success: OkCount / TotalCount,
     throttled: ErrorStatistics.ThrottleCount / TotalCount,
-    errors: ErrorStatistics.TotalCount - ErrorStatistics.ThrottleCount / TotalCount,
+    errors: (ErrorStatistics.TotalCount - ErrorStatistics.ThrottleCount) / TotalCount,
     faults: FaultStatistics.TotalCount / TotalCount,
     avgResponseTime: TotalResponseTime / TotalCount,
     tracesPerMinute: TotalCount / ((endTimeMs - startTimeMs) / (1000 * 60)),
