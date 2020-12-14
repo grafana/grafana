@@ -287,4 +287,4 @@ When referencing the Prometheus data source exporters, always use "node_exporter
 **Incorrect:** Node Exporter, node exporter, Windows Exporter, Windows exporter, windows exporter.
 
 ### MS SQL Server
-Always use "MS SQL" when referring to MS SQL Server application. Do not use "MSSQL", you may see this incorrect usage in some of our UI.
+Always use "MS SQL" when referring to MS SQL Server application. Do not use "MSSQL", you may see this incorrect usage in the UI.
