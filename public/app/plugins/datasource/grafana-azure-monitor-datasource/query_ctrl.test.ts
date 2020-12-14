@@ -19,7 +19,7 @@ describe('AzureMonitorQueryCtrl', () => {
     AzureMonitorQueryCtrl.prototype.target = {} as any;
     AzureMonitorQueryCtrl.prototype.datasource = {
       appInsightsDatasource: { isConfigured: () => false },
-      azureMonitorDatasource: { isConfigured: () => false },
+      azureMonitorDatasource: { isConfigured: () => false, hasSupportForCustomMetrics: () => true },
     };
 
     queryCtrl = new AzureMonitorQueryCtrl({}, {} as auto.IInjectorService, new TemplateSrv());

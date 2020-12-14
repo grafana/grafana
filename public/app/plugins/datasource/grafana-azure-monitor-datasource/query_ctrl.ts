@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import { QueryCtrl } from 'app/plugins/sdk';
-// import './css/query_editor.css';
 import TimegrainConverter from './time_grain_converter';
 import './editor/editor_component';
 
@@ -19,7 +18,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
 
   defaultDropdownValue = 'select';
 
-  dummyDiminsionString = '+';
+  dummyDimensionString = '+';
 
   target: {
     // should be: AzureMonitorQuery
@@ -392,6 +391,11 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
   }
 
   getMetricNames() {
+    const missingMetricNamespace =
+      (!this.target.azureMonitor.metricNamespace ||
+        this.target.azureMonitor.metricNamespace === this.defaultDropdownValue) &&
+      this.datasource.azureMonitorDatasource.hasSupportForCustomMetrics();
+
     if (
       this.target.queryType !== 'Azure Monitor' ||
       !this.target.azureMonitor.resourceGroup ||
@@ -400,8 +404,7 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
       this.target.azureMonitor.metricDefinition === this.defaultDropdownValue ||
       !this.target.azureMonitor.resourceName ||
       this.target.azureMonitor.resourceName === this.defaultDropdownValue ||
-      !this.target.azureMonitor.metricNamespace ||
-      this.target.azureMonitor.metricNamespace === this.defaultDropdownValue
+      missingMetricNamespace
     ) {
       return;
     }
@@ -633,12 +636,12 @@ export class AzureMonitorQueryCtrl extends QueryCtrl {
     const { appInsights } = this.target;
 
     // HACK alert... there must be a better way!
-    if (this.dummyDiminsionString && this.dummyDiminsionString.length && '+' !== this.dummyDiminsionString) {
+    if (this.dummyDimensionString && this.dummyDimensionString.length && '+' !== this.dummyDimensionString) {
       if (!appInsights.dimension) {
         appInsights.dimension = [];
       }
-      appInsights.dimension.push(this.dummyDiminsionString);
-      this.dummyDiminsionString = '+';
+      appInsights.dimension.push(this.dummyDimensionString);
+      this.dummyDimensionString = '+';
       this.refresh();
     }
 

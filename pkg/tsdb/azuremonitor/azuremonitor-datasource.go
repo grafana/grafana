@@ -223,8 +223,38 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 		return nil, errors.New("unable to find datasource plugin Azure Monitor")
 	}
 
+	u, err := url.Parse(dsInfo.Url)
+	if err != nil {
+		return nil, err
+	}
+	u.Path = path.Join(u.Path, "render")
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+	if err != nil {
+		azlog.Debug("AzureMonitor", "Failed to create request", err)
+		return nil, errutil.Wrap("Failed to create request", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
+
 	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
+	azlog.Debug("AzureMonitor", "CloudName used for query", cloudName)
+
+	azureMonitorRoute, proxyPass, err := e.getPluginRoute(plugin, cloudName)
+	if err != nil {
+		return nil, err
+	}
+	azlog.Debug("AzureMonitor", "Route for query", azureMonitorRoute, "Proxypass", proxyPass)
+
+	pluginproxy.ApplyRoute(ctx, req, proxyPass, azureMonitorRoute, dsInfo)
+
+	return req, nil
+}
+
+func (e *AzureMonitorDatasource) getPluginRoute(plugin *plugins.DataSourcePlugin, cloudName string) (*plugins.AppPluginRoute, string, error) {
 	var azureMonitorRoute *plugins.AppPluginRoute
+
 	for _, route := range plugin.Routes {
 		if route.Path == cloudName {
 			azureMonitorRoute = route
@@ -234,24 +264,7 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 
 	proxyPass := fmt.Sprintf("%s/subscriptions", cloudName)
 
-	u, err := url.Parse(dsInfo.Url)
-	if err != nil {
-		return nil, err
-	}
-	u.Path = path.Join(u.Path, "render")
-
-	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
-	if err != nil {
-		azlog.Debug("Failed to create request", "error", err)
-		return nil, errutil.Wrap("Failed to create request", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", setting.BuildVersion))
-
-	pluginproxy.ApplyRoute(ctx, req, proxyPass, azureMonitorRoute, dsInfo)
-
-	return req, nil
+	return azureMonitorRoute, proxyPass, nil
 }
 
 func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMonitorResponse, error) {
