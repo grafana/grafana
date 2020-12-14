@@ -114,6 +114,7 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 			Name:      cmd.Name,
 			Condition: cmd.Condition.RefID,
 			Data:      cmd.Condition.QueriesAndExpressions,
+			OrgID:     cmd.OrgID,
 		}
 		if cmd.IntervalInSeconds != nil {
 			alertDefinition.Interval = *cmd.IntervalInSeconds
