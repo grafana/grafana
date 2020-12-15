@@ -24,7 +24,7 @@ import syntax from '../syntax';
 import { ExploreQueryFieldProps, AbsoluteTimeRange, SelectableValue, AppEvents } from '@grafana/data';
 import { CloudWatchQuery, CloudWatchLogsQuery } from '../types';
 import { CloudWatchDatasource } from '../datasource';
-import { Grammar, LanguageMap, languages as prismLanguages } from 'prismjs';
+import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import { CloudWatchLanguageProvider } from '../language_provider';
 import { css } from 'emotion';
 import { ExploreId } from 'app/types';
@@ -36,8 +36,6 @@ export interface CloudWatchLogsQueryFieldProps extends ExploreQueryFieldProps<Cl
   absoluteRange: AbsoluteTimeRange;
   onLabelsRefresh?: () => void;
   ExtraFieldElement?: ReactNode;
-  syntaxLoaded: boolean;
-  syntax: Grammar | null;
   exploreId: ExploreId;
   allowCustomValue?: boolean;
 }
@@ -294,7 +292,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   };
 
   render() {
-    const { ExtraFieldElement, data, query, syntaxLoaded, datasource, allowCustomValue } = this.props;
+    const { ExtraFieldElement, data, query, datasource, allowCustomValue } = this.props;
     const {
       selectedLogGroups,
       availableLogGroups,
@@ -375,7 +373,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
               cleanText={cleanText}
               placeholder="Enter a CloudWatch Logs Insights query (run with Shift+Enter)"
               portalOrigin="cloudwatch"
-              syntaxLoaded={syntaxLoaded}
               disabled={loadingLogGroups || selectedLogGroups.length === 0}
             />
           </div>
