@@ -48,13 +48,15 @@ func (pm *PluginManager) checkForUpdates() {
 
 	pluginSlugs := getAllExternalPluginSlugs()
 	resp, err := httpClient.Get("https://grafana.com/api/plugins/versioncheck?slugIn=" + pluginSlugs + "&grafanaVersion=" + setting.BuildVersion)
-
 	if err != nil {
 		log.Tracef("Failed to get plugins repo from grafana.com, %v", err.Error())
 		return
 	}
-
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
@@ -91,8 +93,11 @@ func (pm *PluginManager) checkForUpdates() {
 		log.Tracef("Failed to get latest.json repo from github.com: %v", err.Error())
 		return
 	}
-
-	defer resp2.Body.Close()
+	defer func() {
+		if err := resp2.Body.Close(); err != nil {
+			pm.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
 	body, err = ioutil.ReadAll(resp2.Body)
 	if err != nil {
 		log.Tracef("Update check failed, reading response from github.com, %v", err.Error())

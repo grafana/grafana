@@ -22,7 +22,7 @@ const (
 func TestAdminAPIEndpoint(t *testing.T) {
 	const role = models.ROLE_ADMIN
 
-	t.Run("Given a server admin attempts to remove themself as an admin", func(t *testing.T) {
+	t.Run("Given a server admin attempts to remove themselves as an admin", func(t *testing.T) {
 		updateCmd := dtos.AdminUpdateUserPermissionsForm{
 			IsGrafanaAdmin: false,
 		}

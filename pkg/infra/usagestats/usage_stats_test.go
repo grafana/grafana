@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/stretchr/testify/require"
 
 	"net/http"
 	"net/http/httptest"
@@ -174,11 +175,13 @@ func TestMetrics(t *testing.T) {
 			"grafana_com":   true,
 		}
 
-		uss.sendUsageStats()
+		err := uss.sendUsageStats()
+		require.NoError(t, err)
 
 		t.Run("Given reporting not enabled and sending usage stats", func(t *testing.T) {
 			setting.ReportingEnabled = false
-			uss.sendUsageStats()
+			err := uss.sendUsageStats()
+			require.NoError(t, err)
 
 			t.Run("Should not gather stats or call http endpoint", func(t *testing.T) {
 				assert.Nil(t, getSystemStatsQuery)
@@ -198,7 +201,8 @@ func TestMetrics(t *testing.T) {
 			setting.Packaging = "deb"
 
 			wg.Add(1)
-			uss.sendUsageStats()
+			err := uss.sendUsageStats()
+			require.NoError(t, err)
 
 			t.Run("Should gather stats and call http endpoint", func(t *testing.T) {
 				if waitTimeout(&wg, 2*time.Second) {

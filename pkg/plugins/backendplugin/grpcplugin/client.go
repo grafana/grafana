@@ -31,7 +31,10 @@ var handshake = goplugin.HandshakeConfig{
 	MagicCookieValue: grpcplugin.MagicCookieValue,
 }
 
-func newClientConfig(executablePath string, env []string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
+func newClientConfig(executablePath string, env []string, logger log.Logger,
+	versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
+	// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
+	// nolint:gosec
 	cmd := exec.Command(executablePath)
 	cmd.Env = env
 
@@ -77,7 +80,7 @@ func getV2PluginSet() goplugin.PluginSet {
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
 func NewBackendPlugin(pluginID, executablePath string, startFns PluginStartFuncs) backendplugin.PluginFactoryFunc {
-	return New(PluginDescriptor{
+	return newPlugin(PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
 		managed:        true,
@@ -93,7 +96,7 @@ func NewBackendPlugin(pluginID, executablePath string, startFns PluginStartFuncs
 
 // NewRendererPlugin creates a new renderer plugin factory used for registering a backend renderer plugin.
 func NewRendererPlugin(pluginID, executablePath string, startFns PluginStartFuncs) backendplugin.PluginFactoryFunc {
-	return New(PluginDescriptor{
+	return newPlugin(PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
 		managed:        false,

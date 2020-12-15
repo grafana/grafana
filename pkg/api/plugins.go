@@ -110,6 +110,8 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 			DefaultNavUrl: pluginDef.DefaultNavUrl,
 			State:         pluginDef.State,
 			Signature:     pluginDef.Signature,
+			SignatureType: pluginDef.SignatureType,
+			SignatureOrg:  pluginDef.SignatureOrg,
 		}
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
@@ -162,6 +164,8 @@ func GetPluginSettingByID(c *models.ReqContext) Response {
 		HasUpdate:     def.GrafanaNetHasUpdate,
 		State:         def.State,
 		Signature:     def.Signature,
+		SignatureType: def.SignatureType,
+		SignatureOrg:  def.SignatureOrg,
 	}
 
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}

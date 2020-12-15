@@ -19,25 +19,29 @@ type PluginSetting struct {
 	JsonData      map[string]interface{}      `json:"jsonData"`
 	DefaultNavUrl string                      `json:"defaultNavUrl"`
 
-	LatestVersion string                  `json:"latestVersion"`
-	HasUpdate     bool                    `json:"hasUpdate"`
-	State         plugins.PluginState     `json:"state"`
-	Signature     plugins.PluginSignature `json:"signature"`
+	LatestVersion string                        `json:"latestVersion"`
+	HasUpdate     bool                          `json:"hasUpdate"`
+	State         plugins.PluginState           `json:"state"`
+	Signature     plugins.PluginSignatureStatus `json:"signature"`
+	SignatureType plugins.PluginSignatureType   `json:"signatureType"`
+	SignatureOrg  string                        `json:"signatureOrg"`
 }
 
 type PluginListItem struct {
-	Name          string                  `json:"name"`
-	Type          string                  `json:"type"`
-	Id            string                  `json:"id"`
-	Enabled       bool                    `json:"enabled"`
-	Pinned        bool                    `json:"pinned"`
-	Info          *plugins.PluginInfo     `json:"info"`
-	LatestVersion string                  `json:"latestVersion"`
-	HasUpdate     bool                    `json:"hasUpdate"`
-	DefaultNavUrl string                  `json:"defaultNavUrl"`
-	Category      string                  `json:"category"`
-	State         plugins.PluginState     `json:"state"`
-	Signature     plugins.PluginSignature `json:"signature"`
+	Name          string                        `json:"name"`
+	Type          string                        `json:"type"`
+	Id            string                        `json:"id"`
+	Enabled       bool                          `json:"enabled"`
+	Pinned        bool                          `json:"pinned"`
+	Info          *plugins.PluginInfo           `json:"info"`
+	LatestVersion string                        `json:"latestVersion"`
+	HasUpdate     bool                          `json:"hasUpdate"`
+	DefaultNavUrl string                        `json:"defaultNavUrl"`
+	Category      string                        `json:"category"`
+	State         plugins.PluginState           `json:"state"`
+	Signature     plugins.PluginSignatureStatus `json:"signature"`
+	SignatureType plugins.PluginSignatureType   `json:"signatureType"`
+	SignatureOrg  string                        `json:"signatureOrg"`
 }
 
 type PluginList []PluginListItem
