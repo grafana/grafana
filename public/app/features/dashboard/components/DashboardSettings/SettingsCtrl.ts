@@ -14,7 +14,6 @@ export class SettingsCtrl {
   canSaveAs: boolean;
   canSave?: boolean;
   canDelete?: boolean;
-  hasUnsavedFolderChange: boolean;
   selectors: typeof selectors.pages.Dashboard.Settings.General;
   renderCount: number; // hack to update React when Angular changes
 
@@ -87,7 +86,7 @@ export class SettingsCtrl {
   onFolderChange = (folder: { id: number; title: string }) => {
     this.dashboard.meta.folderId = folder.id;
     this.dashboard.meta.folderTitle = folder.title;
-    this.hasUnsavedFolderChange = true;
+    this.dashboard.meta.hasUnsavedFolderChange = true;
   };
 
   onRefreshIntervalChange = (intervals: string[]) => {
