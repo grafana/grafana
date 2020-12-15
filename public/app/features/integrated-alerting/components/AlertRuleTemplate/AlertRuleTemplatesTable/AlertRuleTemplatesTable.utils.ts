@@ -2,12 +2,13 @@ import { SourceDescription, FormattedTemplate, Template } from './AlertRuleTempl
 import moment from 'moment/moment';
 
 export const formatTemplate = (template: Template): FormattedTemplate => {
-  const { summary, source, created_at } = template;
+  const { summary, source, created_at, ...restProps } = template;
 
   return {
     summary,
     source: SourceDescription[source],
-    created_at: moment(created_at).format('YYYY-MM-DD HH:mm:ss'),
+    created_at: created_at ? moment(created_at).format('YYYY-MM-DD HH:mm:ss') : undefined,
+    ...restProps,
   };
 };
 

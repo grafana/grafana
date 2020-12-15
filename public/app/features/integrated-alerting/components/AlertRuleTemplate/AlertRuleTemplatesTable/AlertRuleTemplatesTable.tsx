@@ -1,34 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { FC } from 'react';
 import { useTable, Column } from 'react-table';
 import { Spinner, useStyles } from '@grafana/ui';
 import { getStyles } from './AlertRuleTemplatesTable.styles';
 import { css } from 'emotion';
-import { logger } from '@percona/platform-core';
-import { AlertRuleTemplateService } from '../AlertRuleTemplate.service';
-import { formatTemplates } from './AlertRuleTemplatesTable.utils';
-import { FormattedTemplate } from './AlertRuleTemplatesTable.types';
+import { FormattedTemplate, AlertRuleTemplatesTableProps } from './AlertRuleTemplatesTable.types';
 import { Messages } from '../../../IntegratedAlerting.messages';
+import { AlertRuleTemplateActions } from '../AlertRuleTemplateActions/AlertRuleTemplateActions';
 
 const { noData, columns } = Messages.alertRuleTemplate.table;
 
-const { name: nameColumn, source: sourceColumn, createdAt: createdAtColumn } = columns;
+const { name: nameColumn, source: sourceColumn, createdAt: createdAtColumn, actions: actionsColumn } = columns;
 
-export const AlertRuleTemplatesTable = () => {
+export const AlertRuleTemplatesTable: FC<AlertRuleTemplatesTableProps> = ({
+  pendingRequest,
+  data,
+  getAlertRuleTemplates,
+}) => {
   const style = useStyles(getStyles);
-  const [pendingRequest, setPendingRequest] = useState(false);
-  const [data, setData] = useState<FormattedTemplate[]>([]);
-
-  const getAlertRuleTemplates = async () => {
-    setPendingRequest(true);
-    try {
-      const { templates } = await AlertRuleTemplateService.list();
-      setData(formatTemplates(templates));
-    } catch (e) {
-      logger.error(e);
-    } finally {
-      setPendingRequest(false);
-    }
-  };
 
   const columns = React.useMemo(
     () => [
@@ -44,16 +32,18 @@ export const AlertRuleTemplatesTable = () => {
       } as Column,
       {
         Header: createdAtColumn,
-        accessor: 'created_at',
+        accessor: ({ created_at }: FormattedTemplate) => (created_at ? created_at : '-'),
         width: '10%',
+      } as Column,
+      {
+        Header: actionsColumn,
+        accessor: (template: FormattedTemplate) => (
+          <AlertRuleTemplateActions template={template} getAlertRuleTemplates={getAlertRuleTemplates} />
+        ),
       } as Column,
     ],
     []
   );
-
-  useEffect(() => {
-    getAlertRuleTemplates();
-  }, []);
 
   const tableInstance = useTable({ columns, data });
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = tableInstance;

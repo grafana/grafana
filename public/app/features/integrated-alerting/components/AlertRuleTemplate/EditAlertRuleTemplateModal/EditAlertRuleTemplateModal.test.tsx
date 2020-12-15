@@ -2,7 +2,7 @@ import React from 'react';
 import { mount } from 'enzyme';
 import { act } from 'react-dom/test-utils';
 import { dataQa } from '@percona/platform-core';
-import { AddAlertRuleTemplateModal } from './AddAlertRuleTemplateModal';
+import { EditAlertRuleTemplateModal } from './EditAlertRuleTemplateModal';
 
 jest.mock('../AlertRuleTemplate.service');
 jest.mock('app/core/app_events', () => {
@@ -13,22 +13,21 @@ jest.mock('app/core/app_events', () => {
   };
 });
 
-describe('AddAlertRuleTemplateModal', () => {
+describe('EditAlertRuleTemplateModal', () => {
   it('should render component correctly', () => {
     const wrapper = mount(
-      <AddAlertRuleTemplateModal setVisible={jest.fn()} getAlertRuleTemplates={jest.fn()} isVisible />
+      <EditAlertRuleTemplateModal setVisible={jest.fn()} isVisible yaml="" getAlertRuleTemplates={jest.fn()} />
     );
-    const addButton = wrapper.find(dataQa('alert-rule-template-add-button')).find('button');
+    const addButton = wrapper.find(dataQa('alert-rule-template-edit-button')).find('button');
 
     expect(wrapper.find('textarea')).toBeTruthy();
-    expect(wrapper.find(dataQa('alert-rule-template-upload-button')).find('button')).toBeTruthy();
     expect(addButton).toBeTruthy();
     expect(addButton.prop('disabled')).toBeTruthy();
   });
 
   it('should not render modal when visible is set to false', () => {
     const wrapper = mount(
-      <AddAlertRuleTemplateModal setVisible={jest.fn()} getAlertRuleTemplates={jest.fn()} isVisible={false} />
+      <EditAlertRuleTemplateModal setVisible={jest.fn()} isVisible={false} yaml="" getAlertRuleTemplates={jest.fn()} />
     );
 
     expect(wrapper.contains('textarea')).toBeFalsy();
@@ -37,7 +36,7 @@ describe('AddAlertRuleTemplateModal', () => {
   it('should call setVisible on close', () => {
     const setVisible = jest.fn();
     const wrapper = mount(
-      <AddAlertRuleTemplateModal setVisible={setVisible} getAlertRuleTemplates={jest.fn()} isVisible />
+      <EditAlertRuleTemplateModal setVisible={setVisible} isVisible yaml="" getAlertRuleTemplates={jest.fn()} />
     );
 
     wrapper.find(dataQa('modal-background')).simulate('click');
@@ -45,11 +44,31 @@ describe('AddAlertRuleTemplateModal', () => {
     expect(setVisible).toHaveBeenCalled();
   });
 
+  it('should render yaml content passed', () => {
+    const wrapper = mount(
+      <EditAlertRuleTemplateModal
+        setVisible={jest.fn()}
+        isVisible
+        yaml="test content"
+        getAlertRuleTemplates={jest.fn()}
+      />
+    );
+    const addButton = wrapper.find(dataQa('alert-rule-template-edit-button')).find('button');
+
+    expect(wrapper.find('textarea').text()).toEqual('test content');
+    expect(addButton.prop('disabled')).toBeTruthy();
+  });
+
   it('should call setVisible and getAlertRuleTemplates on submit', async () => {
     const setVisible = jest.fn();
     const getAlertRuleTemplates = jest.fn();
     const wrapper = mount(
-      <AddAlertRuleTemplateModal setVisible={setVisible} getAlertRuleTemplates={getAlertRuleTemplates} isVisible />
+      <EditAlertRuleTemplateModal
+        setVisible={setVisible}
+        isVisible
+        yaml=""
+        getAlertRuleTemplates={getAlertRuleTemplates}
+      />
     );
 
     wrapper.find('textarea').simulate('change', { target: { value: 'test content' } });
