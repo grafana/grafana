@@ -72,7 +72,7 @@ export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
-export { GraphContextMenu } from './Graph/GraphContextMenu';
+export { GraphContextMenu, GraphContextMenuHeader } from './Graph/GraphContextMenu';
 export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
@@ -104,7 +104,8 @@ export { FullWidthButtonContainer } from './Button/FullWidthButtonContainer';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
-export { ContextMenu, ContextMenuItem, ContextMenuGroup, ContextMenuProps } from './ContextMenu/ContextMenu';
+export { ContextMenu, ContextMenuProps } from './ContextMenu/ContextMenu';
+export { Menu, MenuItem, MenuItemsGroup } from './Menu/Menu';
 export { WithContextMenu } from './ContextMenu/WithContextMenu';
 export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
@@ -174,6 +175,7 @@ export { FileUpload } from './FileUpload/FileUpload';
 export { TimeRangeInput } from './TimePicker/TimeRangeInput';
 export { Card, Props as CardProps, ContainerProps, CardInnerProps, getCardStyles } from './Card/Card';
 
+export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
 // Legacy forms
 
 // Export this until we've figured out a good approach to inline form styles.
