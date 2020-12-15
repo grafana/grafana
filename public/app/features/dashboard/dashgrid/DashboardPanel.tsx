@@ -44,9 +44,7 @@ const mapDispatchToProps = { initDashboardPanel, updateLocation };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-type PropsFromRedux = ConnectedProps<typeof connector>;
-
-export type Props = OwnProps & PropsFromRedux;
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   specialPanels: { [key: string]: Function } = {};
