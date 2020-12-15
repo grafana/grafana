@@ -6,6 +6,8 @@ import {
   Field,
   fieldMatchers,
   FieldMatcherID,
+  FieldType,
+  FieldState,
 } from '@grafana/data';
 import { AlignedFrameWithGapTest, FieldIndexRef } from '../uPlot/types';
 import uPlot, { AlignedData, JoinNullMode } from 'uplot';
@@ -119,14 +121,25 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     throw new Error('outerJoinValues lost a field?');
   }
 
+  let seriesIdx = 0;
   // Replace the values from the outer-join field
   return {
     frame: {
       length: alignedData![0].length,
-      fields: alignedData!.map((vals, idx) => ({
-        ...sourceFields[idx],
-        values: new ArrayVector(vals),
-      })),
+      fields: alignedData!.map((vals, idx) => {
+        let state: FieldState = { ...sourceFields[idx].state };
+
+        if (sourceFields[idx].type !== FieldType.time) {
+          state.seriesIndex = seriesIdx;
+          seriesIdx++;
+        }
+
+        return {
+          ...sourceFields[idx],
+          state,
+          values: new ArrayVector(vals),
+        };
+      }),
     },
     isGap,
     getDataFrameFieldIndex: (alignedFieldIndex: number) => sourceFieldsRefs[alignedFieldIndex],
