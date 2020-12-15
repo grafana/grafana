@@ -10,8 +10,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/setting"
 )
+
+const alertingEvaluationTimeout = 30 * time.Second
 
 // invalidEvalResultFormatError is an error for invalid format of the alert definition evaluation results.
 type invalidEvalResultFormatError struct {
@@ -210,7 +211,7 @@ func (evalResults Results) AsDataFrame() data.Frame {
 
 // ConditionEval executes conditions and evaluates the result.
 func ConditionEval(condition *Condition, now time.Time) (Results, error) {
-	alertCtx, cancelFn := context.WithTimeout(context.Background(), setting.AlertingEvaluationTimeout)
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertingEvaluationTimeout)
 	defer cancelFn()
 
 	alertExecCtx := AlertExecCtx{OrgID: condition.OrgID, Ctx: alertCtx}
