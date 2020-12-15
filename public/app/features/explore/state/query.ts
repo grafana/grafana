@@ -477,7 +477,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries: nextQueries,
-      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
     };
   }
 
