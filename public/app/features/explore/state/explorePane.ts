@@ -1,5 +1,5 @@
 import { AnyAction } from 'redux';
-
+import { isEqual } from 'lodash';
 import { getQueryKeys } from 'app/core/utils/explore';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { queryReducer } from './query';
@@ -258,8 +258,14 @@ export const paneReducer = (state: ExploreItemState = makeExplorePaneState(), ac
   }
 
   if (highlightLogsExpressionAction.match(action)) {
-    const { expressions } = action.payload;
-    return { ...state, logsHighlighterExpressions: expressions };
+    const { expressions: newExpressions } = action.payload;
+    const { logsHighlighterExpressions: currentExpressions } = state;
+
+    return {
+      ...state,
+      // Prevents re-renders. As logsHighlighterExpressions [] comes from datasource, we cannot control if it returns new array or not.
+      logsHighlighterExpressions: isEqual(newExpressions, currentExpressions) ? currentExpressions : newExpressions,
+    };
   }
 
   if (changeDedupStrategyAction.match(action)) {
