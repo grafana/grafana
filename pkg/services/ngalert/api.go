@@ -114,7 +114,7 @@ func (ng *AlertNG) deleteAlertDefinitionEndpoint(c *models.ReqContext) api.Respo
 	}
 
 	if cmd.RowsAffected != 1 {
-		ng.log.Warn("unexpected number of rows affected on alert definiiton update", "rowsAffected", cmd.RowsAffected)
+		ng.log.Warn("unexpected number of rows affected on alert definition delete", "definitionID", alertDefinitionID, "rowsAffected", cmd.RowsAffected)
 	}
 
 	return api.Success("Alert definition deleted")
@@ -134,7 +134,7 @@ func (ng *AlertNG) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd updat
 	}
 
 	if cmd.RowsAffected != 1 {
-		ng.log.Warn("unexpected number of rows affected on alert definiiton update", "rowsAffected", cmd.RowsAffected)
+		ng.log.Warn("unexpected number of rows affected on alert definition update", "definitionID", cmd.ID, "rowsAffected", cmd.RowsAffected)
 	}
 
 	return api.Success("Alert definition updated")
