@@ -1,5 +1,5 @@
 import React from 'react';
-import { TooltipPlugin, ZoomPlugin, GraphNG, MenuItemsGroup } from '@grafana/ui';
+import { TooltipPlugin, ZoomPlugin, GraphNG } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
