@@ -2,6 +2,8 @@ import React, { useState, MouseEvent } from 'react';
 import { getRatios, Stats } from './statsUtils';
 import { NodeDatum } from './types';
 
+const nodeR = 40;
+
 export function Node(props: {
   node: NodeDatum;
   onMouseEnter: (id: string) => void;
@@ -24,18 +26,18 @@ export function Node(props: {
         setHovering(false);
         onMouseLeave(node.id);
       }}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'pointer', fontSize: 10 }}
       onClick={event => {
         onClick(event, node);
       }}
     >
       <ResponseTypeCircle node={node} />
-      <circle fill={'#fff'} r={58} cx={node.x} cy={node.y} />
+      <circle fill={'#fff'} r={nodeR - 2} cx={node.x} cy={node.y} />
       <circle
         style={{ display: hovering ? 'initial' : 'none' }}
         fill={'transparent'}
         stroke={'blue'}
-        r={56}
+        r={nodeR - 4}
         cx={node.x}
         cy={node.y}
         strokeWidth={4}
@@ -44,15 +46,15 @@ export function Node(props: {
         <text x={node.x} y={node.y - 5} textAnchor={'middle'}>
           avg. {node.stats?.avgResponseTime.toFixed(2)}ms
         </text>
-        <text x={node.x} y={node.y + 15} textAnchor={'middle'}>
+        <text x={node.x} y={node.y + 10} textAnchor={'middle'}>
           {node.stats?.tracesPerMinute.toFixed(2)} t/min
         </text>
       </g>
       <g>
-        <text x={node.x} y={node.y + 80} textAnchor={'middle'}>
+        <text x={node.x} y={node.y + nodeR + 15} textAnchor={'middle'}>
           {node.name}
         </text>
-        <text x={node.x} y={node.y + 100} textAnchor={'middle'}>
+        <text x={node.x} y={node.y + nodeR + 30} textAnchor={'middle'}>
           {node.type}
         </text>
       </g>
@@ -66,7 +68,7 @@ function ResponseTypeCircle(props: { node: NodeDatum }) {
   if (fullStat) {
     // Doing arc with path does not work well so it's better to just do a circle in that case
     return (
-      <circle fill="none" stroke={colors[fullStat as keyof Stats]} strokeWidth={2} r={60} cx={node.x} cy={node.y} />
+      <circle fill="none" stroke={colors[fullStat as keyof Stats]} strokeWidth={2} r={nodeR} cx={node.x} cy={node.y} />
     );
   }
 
@@ -75,7 +77,7 @@ function ResponseTypeCircle(props: { node: NodeDatum }) {
       const percent = node.stats![k as keyof typeof node.stats];
       const el = (
         <ArcSection
-          r={60}
+          r={nodeR}
           x={node.x!}
           y={node.y!}
           startPercent={acc.percent}

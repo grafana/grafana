@@ -20,7 +20,7 @@ export function Link(props: Props) {
       x2: target.x!,
       y2: target.y!,
     },
-    130
+    90
   );
 
   const middle = {
@@ -47,11 +47,11 @@ export function Link(props: Props) {
         markerEnd="url(#triangle)"
       />
       <g style={{ display: showStats || hovering ? 'initial' : 'none' }}>
-        <rect x={middle.x - 60} y={middle.y - 25} width="120" height="50" rx="5" fill={'white'} />
+        <rect x={middle.x - 50} y={middle.y - 15} width="100" height="40" rx="5" fill={'white'} />
         <text x={middle.x} y={middle.y - 5} textAnchor={'middle'}>
           {statsText}
         </text>
-        <text x={middle.x} y={middle.y + 15} textAnchor={'middle'}>
+        <text x={middle.x} y={middle.y + 10} textAnchor={'middle'}>
           {link.stats?.tracesPerMinute.toFixed(2)} t/min
         </text>
       </g>

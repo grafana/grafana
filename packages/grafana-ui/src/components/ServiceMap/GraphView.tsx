@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback, MouseEvent } from 'react';
+import React, { useEffect, useState, useMemo, useCallback, MouseEvent, MutableRefObject } from 'react';
 import { forceSimulation, forceLink, forceManyBody, forceCollide } from 'd3-force';
 import useMeasure from 'react-use/lib/useMeasure';
 // import { response } from './x-ray-response';
@@ -10,6 +10,7 @@ import { Link } from './Link';
 import { ViewControls } from './ViewControls';
 import { ContextMenu } from '..';
 import { DataFrame, DataFrameView, LinkModel } from '@grafana/data';
+import { useZoom } from './useZoom';
 
 interface Config extends Record<string, number> {
   collide: number;
@@ -24,11 +25,10 @@ interface Props {
   getEdgeLinks: (node: LinkDatum) => LinkModel[];
 }
 export function GraphView(props: Props) {
-  const [scale, setScale] = useState(0.5);
   const [measureRef, { width, height }] = useMeasure();
   const [config, setConfig] = useState<Config>({
-    collide: 200,
-    linkDistance: 100,
+    collide: 120,
+    linkDistance: 70,
     chargeStrength: -100,
   });
   const [useTestData, setUseTestData] = useState(false);
@@ -42,6 +42,12 @@ export function GraphView(props: Props) {
   ]);
   const { nodes, links, bounds } = useLayout(rawNodes, rawLinks, config);
 
+  const { scale, onStepDown, onStepUp, ref } = useZoom({
+    stepDown: s => s / 1.5,
+    stepUp: s => s * 1.5,
+    min: 0.13,
+    max: 2.25,
+  });
   const { state: panningState, ref: panRef } = usePanning<SVGSVGElement>({
     scale,
     bounds,
@@ -55,7 +61,13 @@ export function GraphView(props: Props) {
   const onEdgeOpen = useCallback((event, edge) => setOpenedEdge({ edge, event }), []);
 
   return (
-    <div ref={measureRef} style={{ height: '100%', width: '100%', overflow: 'hidden', position: 'relative' }}>
+    <div
+      ref={r => {
+        measureRef(r);
+        (ref as MutableRefObject<HTMLElement | null>).current = r;
+      }}
+      style={{ height: '100%', width: '100%', overflow: 'hidden', position: 'relative' }}
+    >
       <svg
         ref={panRef}
         viewBox={`${-(width / 2)} ${-(height / 2)} ${width} ${height}`}
@@ -69,6 +81,7 @@ export function GraphView(props: Props) {
         <g
           style={{
             transform: `scale(${scale}) translate(${panPosition.x}px, ${panPosition.y}px)`,
+            fontSize: 10,
           }}
         >
           <LinkArrowMarker />
@@ -109,10 +122,10 @@ export function GraphView(props: Props) {
         <ViewControls<Config>
           config={config}
           onConfigChange={setConfig}
-          onScaleChange={setScale}
           onUseTestDataChange={setUseTestData}
-          scale={scale}
           useTestData={useTestData}
+          onMinus={onStepDown}
+          onPlus={onStepUp}
         />
       </div>
 
@@ -281,7 +294,7 @@ function LinkArrowMarker() {
       <marker
         id="triangle"
         viewBox="0 0 10 10"
-        refX="10"
+        refX="8"
         refY="5"
         markerUnits="strokeWidth"
         markerWidth="10"
