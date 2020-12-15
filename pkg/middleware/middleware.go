@@ -6,6 +6,7 @@ import (
 
 	macaron "gopkg.in/macaron.v1"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -20,29 +21,37 @@ var (
 	ReqOrgAdmin   = RoleAuth(models.ROLE_ADMIN)
 )
 
-func AddDefaultResponseHeaders(cfg *setting.Cfg) macaron.Handler {
-	return func(ctx *macaron.Context) {
-		ctx.Resp.Before(func(w macaron.ResponseWriter) {
+func HandleNoCacheHeader() macaron.Handler {
+	return func(ctx *models.ReqContext) {
+		ctx.SkipCache = ctx.Req.Header.Get("X-Grafana-NoCache") == "true"
+	}
+}
+
+func AddDefaultResponseHeaders(cfg *setting.Cfg, logger log.Logger) macaron.Handler {
+	return func(c *macaron.Context) {
+		c.Resp.Before(func(w macaron.ResponseWriter) {
 			// if response has already been written, skip.
 			if w.Written() {
 				return
 			}
 
-			if !strings.HasPrefix(ctx.Req.URL.Path, "/api/datasources/proxy/") {
-				addNoCacheHeaders(ctx.Resp)
+			if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") {
+				addNoCacheHeaders(c.Resp)
 			}
 
 			if !cfg.AllowEmbedding {
 				addXFrameOptionsDenyHeader(w)
 			}
 
-			addSecurityHeaders(w, cfg)
+			if err := addSecurityHeaders(c, w, cfg); err != nil {
+				log.Error(err.Error())
+			}
 		})
 	}
 }
 
 // addSecurityHeaders adds HTTP(S) response headers that enable various security protections in the client's browser.
-func addSecurityHeaders(w macaron.ResponseWriter, cfg *setting.Cfg) {
+func addSecurityHeaders(c *macaron.Context, w macaron.ResponseWriter, cfg *setting.Cfg) error {
 	if (cfg.Protocol == setting.HTTPSScheme || cfg.Protocol == setting.HTTP2Scheme) && cfg.StrictTransportSecurity {
 		strictHeaderValues := []string{fmt.Sprintf("max-age=%v", cfg.StrictTransportSecurityMaxAge)}
 		if cfg.StrictTransportSecurityPreload {
@@ -61,6 +70,12 @@ func addSecurityHeaders(w macaron.ResponseWriter, cfg *setting.Cfg) {
 	if cfg.XSSProtectionHeader {
 		w.Header().Set("X-XSS-Protection", "1; mode=block")
 	}
+
+	if err := addCSPHeader(c, w, cfg); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func addNoCacheHeaders(w macaron.ResponseWriter) {

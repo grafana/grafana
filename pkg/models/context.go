@@ -19,6 +19,7 @@ type ReqContext struct {
 	AllowAnonymous bool
 	SkipCache      bool
 	Logger         log.Logger
+	RequestNonce   string
 }
 
 // Handle handles and logs error by given status.

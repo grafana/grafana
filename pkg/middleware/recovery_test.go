@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -64,7 +65,7 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		sc.m = macaron.New()
 		sc.m.Use(Recovery(cfg))
 
-		sc.m.Use(AddDefaultResponseHeaders(cfg))
+		sc.m.Use(AddDefaultResponseHeaders(cfg, log.New("test")))
 		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
 			Directory: viewsPath,
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
