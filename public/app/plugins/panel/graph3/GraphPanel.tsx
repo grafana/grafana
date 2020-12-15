@@ -17,20 +17,6 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
   options,
   onChangeTimeRange,
 }) => {
-  const defaultContextMenuLinks: MenuItemsGroup[] = [
-    {
-      items: [
-        {
-          label: 'Add annotation',
-          icon: 'comment-alt',
-          onClick: () => {
-            alert('TODO');
-          },
-        },
-      ],
-    },
-  ];
-
   return (
     <GraphNG
       data={data.series}
@@ -42,7 +28,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
     >
       <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
       <ZoomPlugin onZoom={onChangeTimeRange} />
-      <ContextMenuPlugin timeZone={timeZone} defaultItems={defaultContextMenuLinks} />
+      <ContextMenuPlugin timeZone={timeZone} />
       {data.annotations ? <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} /> : <></>}
       {data.annotations ? <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} /> : <></>}
     </GraphNG>
