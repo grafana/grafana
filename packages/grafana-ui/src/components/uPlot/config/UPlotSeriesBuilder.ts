@@ -73,12 +73,17 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     let fillConfig: any | undefined;
     let fillOpacityNumber = fillOpacity ?? 0;
-    if (fillColor && fillOpacityNumber !== 0) {
+
+    if (fillColor) {
       fillConfig = {
-        fill: tinycolor(fillColor)
-          .setAlpha(fillOpacityNumber / 100)
-          .toRgbString(),
+        fill: fillColor,
       };
+    }
+
+    if (fillOpacityNumber !== 0) {
+      fillConfig.fill = tinycolor(fillColor ?? lineColor)
+        .setAlpha(fillOpacityNumber / 100)
+        .toRgbString();
     }
 
     return {

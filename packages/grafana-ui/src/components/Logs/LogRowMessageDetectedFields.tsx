@@ -1,4 +1,5 @@
 import React, { PureComponent } from 'react';
+import { cx, css } from 'emotion';
 import { LogRowModel, Field, LinkModel } from '@grafana/data';
 
 import { Themeable } from '../../types/theme';
@@ -9,13 +10,20 @@ import { getAllFields } from './logParser';
 export interface Props extends Themeable {
   row: LogRowModel;
   showDetectedFields: string[];
+  wrapLogMessage: boolean;
   getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
 class UnThemedLogRowMessageDetectedFields extends PureComponent<Props> {
   render() {
-    const { row, showDetectedFields, getFieldLinks } = this.props;
+    const { row, showDetectedFields, getFieldLinks, wrapLogMessage } = this.props;
     const fields = getAllFields(row, getFieldLinks);
+    const wrapClassName = cx(
+      wrapLogMessage &&
+        css`
+          white-space: pre-wrap;
+        `
+    );
 
     const line = showDetectedFields
       .map(parsedKey => {
@@ -33,7 +41,7 @@ class UnThemedLogRowMessageDetectedFields extends PureComponent<Props> {
       .filter(s => s !== null)
       .join(' ');
 
-    return <td>{line}</td>;
+    return <td className={wrapClassName}>{line}</td>;
   }
 }
 
