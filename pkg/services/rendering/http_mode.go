@@ -77,7 +77,11 @@ func (rs *RenderingService) renderViaHttp(ctx context.Context, renderKey string,
 	}
 
 	// save response to file
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			rs.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	// check for timeout first
 	if errors.Is(reqContext.Err(), context.DeadlineExceeded) {

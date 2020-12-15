@@ -130,7 +130,7 @@ func (ts *TracingService) Run(ctx context.Context) error {
 
 	if ts.closer != nil {
 		ts.log.Info("Closing tracing")
-		ts.closer.Close()
+		return ts.closer.Close()
 	}
 
 	return nil
