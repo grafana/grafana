@@ -43,6 +43,30 @@ interface OwnProps {
   sourcePanel: PanelModel;
 }
 
+const mapStateToProps = (state: StoreState) => {
+  const panel = state.panelEditor.getPanel();
+  const { plugin } = getPanelStateById(state.dashboard, panel.id);
+
+  return {
+    location: state.location,
+    plugin: plugin,
+    panel,
+    initDone: state.panelEditor.initDone,
+    tabs: getPanelEditorTabs(state.location, plugin),
+    uiState: state.panelEditor.ui,
+    variables: getVariables(state),
+  };
+};
+
+const mapDispatchToProps = {
+  updateLocation,
+  initPanelEditor,
+  panelEditorCleanUp,
+  setDiscardChanges,
+  updatePanelEditorUIState,
+  updateTimeZoneForSession,
+};
+
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
 type Props = OwnProps & ConnectedProps<typeof connector>;
@@ -302,32 +326,6 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
       </div>
     );
   }
-}
-
-function mapStateToProps(state: StoreState) {
-  const panel = state.panelEditor.getPanel();
-  const { plugin } = getPanelStateById(state.dashboard, panel.id);
-
-  return {
-    location: state.location,
-    plugin: plugin,
-    panel,
-    initDone: state.panelEditor.initDone,
-    tabs: getPanelEditorTabs(state.location, plugin),
-    uiState: state.panelEditor.ui,
-    variables: getVariables(state),
-  };
-}
-
-function mapDispatchToProps() {
-  return {
-    updateLocation,
-    initPanelEditor,
-    panelEditorCleanUp,
-    setDiscardChanges,
-    updatePanelEditorUIState,
-    updateTimeZoneForSession,
-  };
 }
 
 export const PanelEditor = connector(PanelEditorUnconnected);
