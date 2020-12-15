@@ -109,7 +109,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
           case 'fill':
             rule.properties.push({
               id: 'custom.fillOpacity',
-              value: v / 10.0, // was 0-10
+              value: v * 10, // was 0-10, new graph is 0 - 100
             });
             break;
           case 'points':
@@ -170,7 +170,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     graph.pointSize = 2 + angular.pointradius * 2;
   }
   if (isNumber(angular.fill)) {
-    graph.fillOpacity = angular.fill / 10; // fill is 0-10
+    graph.fillOpacity = angular.fill * 10; // fill was 0 - 10, new is 0 to 100
   }
   graph.spanNulls = angular.nullPointMode === NullValueMode.Null;
   if (angular.steppedLine) {

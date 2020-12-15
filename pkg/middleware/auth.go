@@ -8,30 +8,14 @@ import (
 
 	macaron "gopkg.in/macaron.v1"
 
+	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type AuthOptions struct {
 	ReqGrafanaAdmin bool
 	ReqSignedIn     bool
-}
-
-func getApiKey(c *models.ReqContext) string {
-	header := c.Req.Header.Get("Authorization")
-	parts := strings.SplitN(header, " ", 2)
-	if len(parts) == 2 && parts[0] == "Bearer" {
-		key := parts[1]
-		return key
-	}
-
-	username, password, err := util.DecodeBasicAuthHeader(header)
-	if err == nil && username == "api_key" {
-		return password
-	}
-
-	return ""
 }
 
 func accessForbidden(c *models.ReqContext) {
@@ -57,7 +41,7 @@ func notAuthorized(c *models.ReqContext) {
 	// remove any forceLogin=true params
 	redirectTo = removeForceLoginParams(redirectTo)
 
-	WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
+	cookies.WriteCookie(c.Resp, "redirect_to", url.QueryEscape(redirectTo), 0, nil)
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
@@ -135,9 +119,9 @@ func AdminOrFeatureEnabled(enabled bool) macaron.Handler {
 	}
 }
 
-func SnapshotPublicModeOrSignedIn() macaron.Handler {
+func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) macaron.Handler {
 	return func(c *models.ReqContext) {
-		if setting.SnapshotPublicMode {
+		if cfg.SnapshotPublicMode {
 			return
 		}
 

@@ -243,12 +243,7 @@ describe('ElasticQueryBuilder', () => {
               ],
             },
           },
-          sort: {
-            '@timestamp': {
-              order: 'desc',
-              unmapped_type: 'boolean',
-            },
-          },
+          sort: [{ '@timestamp': { order: 'desc', unmapped_type: 'boolean' } }, { _doc: { order: 'desc' } }],
           script_fields: {},
         });
       });
@@ -573,7 +568,10 @@ describe('ElasticQueryBuilder', () => {
           };
           expect(query.query).toEqual(expectedQuery);
 
-          expect(query.sort).toEqual({ '@timestamp': { order: 'desc', unmapped_type: 'boolean' } });
+          expect(query.sort).toEqual([
+            { '@timestamp': { order: 'desc', unmapped_type: 'boolean' } },
+            { _doc: { order: 'desc' } },
+          ]);
 
           const expectedAggs = {
             // FIXME: It's pretty weak to include this '1' in the test as it's not part of what we are testing here and
