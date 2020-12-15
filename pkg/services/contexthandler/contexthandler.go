@@ -350,13 +350,13 @@ func logUserIn(auth *authproxy.AuthProxy, username string, logger log.Logger, ig
 	return id, nil
 }
 
-func handleError(ctx *models.ReqContext, err error, statusCode int, cb func(error)) {
+func (h *ContextHandler) handleError(ctx *models.ReqContext, err error, statusCode int, cb func(error)) {
 	details := err
 	var e authproxy.Error
 	if errors.As(err, &e) {
 		details = e.DetailsError
 	}
-	ctx.Handle(statusCode, err.Error(), details)
+	ctx.Handle(h.Cfg, statusCode, err.Error(), details)
 
 	if cb != nil {
 		cb(details)
@@ -385,7 +385,7 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 
 	// Check if allowed to continue with this IP
 	if err := auth.IsAllowedIP(); err != nil {
-		handleError(ctx, err, 407, func(details error) {
+		h.handleError(ctx, err, 407, func(details error) {
 			logger.Error("Failed to check whitelisted IP addresses", "message", err.Error(), "error", details)
 		})
 		return true
@@ -393,7 +393,7 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 
 	id, err := logUserIn(auth, username, logger, false)
 	if err != nil {
-		handleError(ctx, err, 407, nil)
+		h.handleError(ctx, err, 407, nil)
 		return true
 	}
 
@@ -414,13 +414,13 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 		}
 		id, err = logUserIn(auth, username, logger, true)
 		if err != nil {
-			handleError(ctx, err, 407, nil)
+			h.handleError(ctx, err, 407, nil)
 			return true
 		}
 
 		user, err = auth.GetSignedInUser(id)
 		if err != nil {
-			handleError(ctx, err, 407, nil)
+			h.handleError(ctx, err, 407, nil)
 			return true
 		}
 	}
@@ -433,7 +433,7 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 
 	// Remember user data in cache
 	if err := auth.Remember(id); err != nil {
-		handleError(ctx, err, 500, func(details error) {
+		h.handleError(ctx, err, 500, func(details error) {
 			logger.Error(
 				"Failed to store user in cache",
 				"username", username,

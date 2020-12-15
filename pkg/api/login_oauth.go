@@ -277,7 +277,7 @@ type LoginError struct {
 }
 
 func (hs *HTTPServer) handleOAuthLoginError(ctx *models.ReqContext, info models.LoginInfo, err LoginError) {
-	ctx.Handle(err.HttpStatus, err.PublicMessage, err.Err)
+	ctx.Handle(hs.Cfg, err.HttpStatus, err.PublicMessage, err.Err)
 
 	info.Error = err.Err
 	if info.Error == nil {
