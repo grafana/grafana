@@ -8,8 +8,9 @@ import {
   FieldMatcherID,
   FieldType,
   FieldState,
+  DataFrameFieldIndex,
 } from '@grafana/data';
-import { AlignedFrameWithGapTest, FieldIndexRef } from '../uPlot/types';
+import { AlignedFrameWithGapTest } from '../uPlot/types';
 import uPlot, { AlignedData, JoinNullMode } from 'uplot';
 import { XYFieldMatchers } from './GraphNG';
 
@@ -45,7 +46,7 @@ export function mapDimesions(match: XYFieldMatchers, frame: DataFrame, frames?: 
 export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): AlignedFrameWithGapTest | null {
   const valuesFromFrames: AlignedData[] = [];
   const sourceFields: Field[] = [];
-  const sourceFieldsRefs: Record<number, FieldIndexRef> = {};
+  const sourceFieldsRefs: Record<number, DataFrameFieldIndex> = {};
   const nullModes: JoinNullMode[][] = [];
 
   // Default to timeseries config
