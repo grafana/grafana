@@ -169,6 +169,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const operatorsPattern = /[+\-*/^%]/;
     const isNextOperand = text.match(operatorsPattern);
 
+    console.log(wrapperClasses);
+
     // Determine candidates by CSS context
     if (wrapperClasses.includes('context-range')) {
       // Suggestions for metric[|]
@@ -329,11 +331,14 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const suffix = line.substr(cursorOffset);
     const prefix = line.substr(0, cursorOffset);
     const isValueStart = text.match(/^(=|=~|!=|!~)/);
+    const isValueEnd = suffix.match(/^"?[,}]|$/);
     // Detect cursor in front of value, e.g., {key=|"}
     const isPreValue = prefix.match(/(=|=~|!=|!~)$/) && suffix.match(/^"/);
 
     // Don't suggest anything at the beginning or inside a value
-    if (isPreValue) {
+    const isValueEmpty = isValueStart && isValueEnd;
+    const hasValuePrefix = isValueEnd && !isValueStart;
+    if ((!isValueEmpty && !hasValuePrefix) || isPreValue) {
       return { suggestions };
     }
 
