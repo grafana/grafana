@@ -218,7 +218,7 @@ class GraphElement {
 
       const dataLinks = [
         {
-          items: linksSupplier.getLinks(this.panel.scopedVars).map<MenuItem>(link => {
+          items: linksSupplier.getLinks(this.panel.replaceVariables).map<MenuItem>(link => {
             return {
               label: link.title,
               url: link.href,
