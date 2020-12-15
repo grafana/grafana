@@ -9,70 +9,41 @@ import {
   PanelData,
   FieldColorModeId,
   FieldColorConfigSettings,
+  DataLinkBuiltInVars,
+  VariableModel,
 } from '@grafana/data';
 import { ComponentClass } from 'react';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-
-class TablePanelCtrl {}
-
-export const mockStandardProperties = () => {
-  const unit = {
-    id: 'unit',
-    path: 'unit',
-    name: 'Unit',
-    description: 'Value units',
-    // @ts-ignore
-    editor: () => null,
-    // @ts-ignore
-    override: () => null,
-    process: identityOverrideProcessor,
-    shouldApply: () => true,
-  };
-
-  const decimals = {
-    id: 'decimals',
-    path: 'decimals',
-    name: 'Decimals',
-    description: 'Number of decimal to be shown for a value',
-    // @ts-ignore
-    editor: () => null,
-    // @ts-ignore
-    override: () => null,
-    process: identityOverrideProcessor,
-    shouldApply: () => true,
-  };
-
-  const boolean = {
-    id: 'boolean',
-    path: 'boolean',
-    name: 'Boolean',
-    description: '',
-    // @ts-ignore
-    editor: () => null,
-    // @ts-ignore
-    override: () => null,
-    process: identityOverrideProcessor,
-    shouldApply: () => true,
-  };
-
-  const fieldColor = {
-    id: 'color',
-    path: 'color',
-    name: 'color',
-    description: '',
-    // @ts-ignore
-    editor: () => null,
-    // @ts-ignore
-    override: () => null,
-    process: identityOverrideProcessor,
-    shouldApply: () => true,
-  };
-
-  return [unit, decimals, boolean, fieldColor];
-};
+import { setTimeSrv } from '../services/TimeSrv';
+import { TemplateSrv } from '../../templating/template_srv';
+import { setTemplateSrv } from '@grafana/runtime';
+import { variableAdapters } from '../../variables/adapters';
+import { createQueryVariableAdapter } from '../../variables/query/adapter';
 
 standardFieldConfigEditorRegistry.setInit(() => mockStandardProperties());
 standardEditorsRegistry.setInit(() => mockStandardProperties());
+
+setTimeSrv({
+  timeRangeForUrl: () => ({
+    from: 1607687293000,
+    to: 1607687293100,
+  }),
+} as any);
+
+setTemplateSrv(
+  new TemplateSrv({
+    // @ts-ignore
+    getVariables: () => {
+      return variablesMock;
+    },
+    // @ts-ignore
+    getVariableWithName: (name: string) => {
+      return variablesMock.filter(v => v.name === name)[0];
+    },
+  })
+);
+
+variableAdapters.setInit(() => [createQueryVariableAdapter()]);
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
@@ -147,7 +118,7 @@ describe('PanelModel', () => {
           id: 'table',
         },
         (null as unknown) as ComponentClass<PanelProps>, // react
-        TablePanelCtrl // angular
+        {} // angular
       );
 
       panelPlugin.setPanelOptions(builder => {
@@ -238,6 +209,16 @@ describe('PanelModel', () => {
       it('should interpolate variables', () => {
         const out = model.replaceVariables('hello $aaa');
         expect(out).toBe('hello AAA');
+      });
+
+      it('should interpolate $__url_time_range variable', () => {
+        const out = model.replaceVariables(`/d/1?$${DataLinkBuiltInVars.keepTime}`);
+        expect(out).toBe('/d/1?from=1607687293000&to=1607687293100');
+      });
+
+      it('should interpolate $__all_variables variable', () => {
+        const out = model.replaceVariables(`/d/1?$${DataLinkBuiltInVars.includeVars}`);
+        expect(out).toBe('/d/1?var-test1=val1&var-test2=val2');
       });
 
       it('should prefer the local variable value', () => {
@@ -468,3 +449,84 @@ describe('PanelModel', () => {
     });
   });
 });
+
+export const mockStandardProperties = () => {
+  const unit = {
+    id: 'unit',
+    path: 'unit',
+    name: 'Unit',
+    description: 'Value units',
+    // @ts-ignore
+    editor: () => null,
+    // @ts-ignore
+    override: () => null,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+  };
+
+  const decimals = {
+    id: 'decimals',
+    path: 'decimals',
+    name: 'Decimals',
+    description: 'Number of decimal to be shown for a value',
+    // @ts-ignore
+    editor: () => null,
+    // @ts-ignore
+    override: () => null,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+  };
+
+  const boolean = {
+    id: 'boolean',
+    path: 'boolean',
+    name: 'Boolean',
+    description: '',
+    // @ts-ignore
+    editor: () => null,
+    // @ts-ignore
+    override: () => null,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+  };
+
+  const fieldColor = {
+    id: 'color',
+    path: 'color',
+    name: 'color',
+    description: '',
+    // @ts-ignore
+    editor: () => null,
+    // @ts-ignore
+    override: () => null,
+    process: identityOverrideProcessor,
+    shouldApply: () => true,
+  };
+
+  return [unit, decimals, boolean, fieldColor];
+};
+
+const variablesMock = [
+  {
+    type: 'query',
+    name: 'test1',
+    label: 'Test1',
+    hide: false,
+    current: { value: 'val1' },
+    skipUrlSync: false,
+    getValueForUrl: function() {
+      return 'val1';
+    },
+  } as VariableModel,
+  {
+    type: 'query',
+    name: 'test2',
+    label: 'Test2',
+    hide: false,
+    current: { value: 'val2' },
+    skipUrlSync: false,
+    getValueForUrl: function() {
+      return 'val2';
+    },
+  } as VariableModel,
+];
