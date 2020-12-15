@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { cx } from 'emotion';
 import { selectors } from '@grafana/e2e-selectors';
-import { CustomScrollbar, Icon, IconName } from '@grafana/ui';
+import { Button, CustomScrollbar, Icon, IconName } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
 import { updateLocation } from 'app/core/actions';
@@ -74,6 +74,15 @@ export class DashboardSettings extends PureComponent<Props> {
       });
     }
 
+    if (dashboard.meta.canMakeEditable) {
+      pages.push({
+        title: 'General',
+        icon: 'sliders-v-alt',
+        id: 'settings',
+        render: () => this.renderMakeEditable(),
+      });
+    }
+
     if (dashboard.id && dashboard.meta.canSave) {
       pages.push({
         title: 'Versions',
@@ -92,15 +101,6 @@ export class DashboardSettings extends PureComponent<Props> {
       });
     }
 
-    if (dashboard.meta.canMakeEditable) {
-      pages.push({
-        title: 'General',
-        icon: 'sliders-v-alt',
-        id: 'make_editable',
-        render: () => <GeneralSettings dashboard={dashboard} />,
-      });
-    }
-
     pages.push({
       title: 'JSON Model',
       id: 'dashboard_json',
@@ -109,6 +109,24 @@ export class DashboardSettings extends PureComponent<Props> {
     });
 
     return pages;
+  }
+
+  onMakeEditable = () => {
+    const { dashboard } = this.props;
+    dashboard.editable = true;
+    dashboard.meta.canMakeEditable = false;
+    dashboard.meta.canEdit = true;
+    dashboard.meta.canSave = true;
+    this.forceUpdate();
+  };
+
+  renderMakeEditable(): React.ReactNode {
+    return (
+      <div>
+        <div className="dashboard-settings__header">Dashboard not editable</div>
+        <Button onClick={this.onMakeEditable}>Make editable</Button>
+      </div>
+    );
   }
 
   getGeneralPage(): SettingsPage {
@@ -125,10 +143,9 @@ export class DashboardSettings extends PureComponent<Props> {
     const folderTitle = dashboard.meta.folderTitle;
     const haveFolder = (dashboard.meta.folderId ?? 0) > 0;
     const pages = this.getPages();
-    const currentPage = pages.find(page => page.id === editview) ?? this.getGeneralPage();
+    const currentPage = pages.find(page => page.id === editview) ?? pages[0];
     const canSaveAs = contextSrv.hasEditPermissionInFolders;
     const canSave = dashboard.meta.canSave;
-    // const canDelete = this.dashboard.meta.canSave
 
     return (
       <div className="dashboard-settings">
