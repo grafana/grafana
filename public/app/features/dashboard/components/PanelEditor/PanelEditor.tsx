@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react';
-import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { css, cx } from 'emotion';
 import { Subscription } from 'rxjs';
 
-import { FieldConfigSource, GrafanaTheme, PanelPlugin } from '@grafana/data';
+import { FieldConfigSource, GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, HorizontalGroup, Icon, RadioButtonGroup, stylesFactory } from '@grafana/ui';
 
@@ -27,15 +27,14 @@ import { initPanelEditor, panelEditorCleanUp, updatePanelEditorUIState } from '.
 
 import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
 import { updateLocation } from 'app/core/reducers/location';
-import { PanelEditorUIState, setDiscardChanges } from './state/reducers';
+import { setDiscardChanges } from './state/reducers';
 
 import { getPanelEditorTabs } from './state/selectors';
 import { getPanelStateById } from '../../state/selectors';
 import { getVariables } from 'app/features/variables/state/selectors';
 
-import { CoreEvents, LocationState, StoreState } from 'app/types';
+import { CoreEvents, StoreState } from 'app/types';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
-import { VariableModel } from 'app/features/variables/types';
 import { DashboardModel, PanelModel } from '../../state';
 import { PanelOptionsChangedEvent } from 'app/types/events';
 
@@ -44,26 +43,33 @@ interface OwnProps {
   sourcePanel: PanelModel;
 }
 
-interface ConnectedProps {
-  location: LocationState;
-  plugin?: PanelPlugin;
-  panel: PanelModel;
-  initDone: boolean;
-  tabs: PanelEditorTab[];
-  uiState: PanelEditorUIState;
-  variables: VariableModel[];
-}
+const mapStateToProps = (state: StoreState) => {
+  const panel = state.panelEditor.getPanel();
+  const { plugin } = getPanelStateById(state.dashboard, panel.id);
 
-interface DispatchProps {
-  updateLocation: typeof updateLocation;
-  initPanelEditor: typeof initPanelEditor;
-  panelEditorCleanUp: typeof panelEditorCleanUp;
-  setDiscardChanges: typeof setDiscardChanges;
-  updatePanelEditorUIState: typeof updatePanelEditorUIState;
-  updateTimeZoneForSession: typeof updateTimeZoneForSession;
-}
+  return {
+    location: state.location,
+    plugin: plugin,
+    panel,
+    initDone: state.panelEditor.initDone,
+    tabs: getPanelEditorTabs(state.location, plugin),
+    uiState: state.panelEditor.ui,
+    variables: getVariables(state),
+  };
+};
 
-type Props = OwnProps & ConnectedProps & DispatchProps;
+const mapDispatchToProps = {
+  updateLocation,
+  initPanelEditor,
+  panelEditorCleanUp,
+  setDiscardChanges,
+  updatePanelEditorUIState,
+  updateTimeZoneForSession,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class PanelEditorUnconnected extends PureComponent<Props> {
   private eventSubs?: Subscription;
@@ -322,31 +328,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => {
-  const panel = state.panelEditor.getPanel();
-  const { plugin } = getPanelStateById(state.dashboard, panel.id);
-
-  return {
-    location: state.location,
-    plugin: plugin,
-    panel,
-    initDone: state.panelEditor.initDone,
-    tabs: getPanelEditorTabs(state.location, plugin),
-    uiState: state.panelEditor.ui,
-    variables: getVariables(state),
-  };
-};
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  updateLocation,
-  initPanelEditor,
-  panelEditorCleanUp,
-  setDiscardChanges,
-  updatePanelEditorUIState,
-  updateTimeZoneForSession,
-};
-
-export const PanelEditor = connect(mapStateToProps, mapDispatchToProps)(PanelEditorUnconnected);
+export const PanelEditor = connector(PanelEditorUnconnected);
 
 /*
  * Styles

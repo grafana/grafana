@@ -1,4 +1,4 @@
-// Libaries
+// Libraries
 import React, { PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import ReactGridLayout, { ItemCallback } from 'react-grid-layout';
@@ -102,7 +102,7 @@ export interface Props {
 }
 
 export class DashboardGrid extends PureComponent<Props> {
-  private panelMap: { [id: string]: PanelModel };
+  private panelMap: { [id: string]: PanelModel } = {};
   private panelRef: { [id: string]: HTMLElement } = {};
   private eventSubs = new Subscription();
 
