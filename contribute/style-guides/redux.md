@@ -79,4 +79,4 @@ class PanelEditorUnconnected extends PureComponent<Props> {};
 
 export const PanelEditor = connector(PanelEditorUnconnected);
 ```
-More examples can be found in the [Redux docs](https://react-redux.js.org/using-react-redux/static-typing#inferring-the-connected-props-automatically).
+For more examples, refer to the [Redux docs](https://react-redux.js.org/using-react-redux/static-typing#inferring-the-connected-props-automatically).
