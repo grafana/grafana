@@ -168,9 +168,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         });
       }
 
-      // need to update field state here because we use a transform to merge framesP
-      field.state = { ...field.state, seriesIndex: seriesIdx };
-
       if (!customConfig.hideFrom?.graph) {
         const showPoints =
           customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
