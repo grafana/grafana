@@ -34,13 +34,13 @@ export function Node(props: {
       <ResponseTypeCircle node={node} />
       <circle fill={'#fff'} r={nodeR - 2} cx={node.x} cy={node.y} />
       <circle
-        style={{ display: hovering ? 'initial' : 'none' }}
+        style={{ display: hovering ? 'initial' : 'none', opacity: 0.5 }}
         fill={'transparent'}
-        stroke={'blue'}
-        r={nodeR - 4}
+        stroke={'rgb(57, 131, 213)'}
+        r={nodeR - 3}
         cx={node.x}
         cy={node.y}
-        strokeWidth={4}
+        strokeWidth={2}
       />
       <g>
         <text x={node.x} y={node.y - 5} textAnchor={'middle'}>
@@ -83,6 +83,7 @@ function ResponseTypeCircle(props: { node: NodeDatum }) {
           startPercent={acc.percent}
           percent={percent}
           color={colors[k as keyof Stats]!}
+          strokeWidth={(k as keyof Stats) === 'success' ? 2 : 4}
         />
       );
       acc.elements.push(el);
@@ -96,9 +97,9 @@ function ResponseTypeCircle(props: { node: NodeDatum }) {
 }
 
 const colors: Partial<{ [key in keyof Stats]: string }> = {
-  success: 'green',
-  errors: 'yellow',
-  faults: 'red',
+  success: 'rgb(80, 171, 113)',
+  errors: 'rgb(255, 196, 110)',
+  faults: 'rgb(233, 84, 84)',
   throttled: 'purple',
 };
 
@@ -109,6 +110,7 @@ function ArcSection({
   startPercent,
   percent,
   color,
+  strokeWidth = 2,
 }: {
   r: number;
   x: number;
@@ -116,6 +118,7 @@ function ArcSection({
   startPercent: number;
   percent: number;
   color: string;
+  strokeWidth?: number;
 }) {
   const endPercent = startPercent + percent;
   const startXPos = x + Math.sin(2 * Math.PI * startPercent) * r;
@@ -128,7 +131,7 @@ function ArcSection({
       fill="none"
       d={`M ${startXPos} ${startYPos} A ${r} ${r} 0 ${largeArc} 1 ${endXPos} ${endYPos}`}
       stroke={color}
-      strokeWidth={2}
+      strokeWidth={strokeWidth}
     />
   );
 }

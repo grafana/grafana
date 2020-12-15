@@ -43,7 +43,7 @@ export function getRatios(
   nonZero: Ratio[];
   fullStat: Ratio | undefined;
 } {
-  const ratios = pick(stats, 'success', 'errors', 'faults', 'throttled');
+  const ratios = pick(stats, 'faults', 'errors', 'throttled', 'success');
   const statsArray = (Object.keys(ratios) as Ratio[]).filter(k => stats[k as keyof Stats] > 0);
   const fullStat = statsArray.find(k => stats[k as keyof Stats] === 1);
   return { nonZero: statsArray, fullStat };
