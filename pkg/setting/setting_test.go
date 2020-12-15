@@ -39,7 +39,10 @@ func TestLoadingSettings(t *testing.T) {
 			if err != nil {
 				t.Errorf("failed to load defaults.ini file: %v", err)
 			}
-			defer file.Close()
+			defer func() {
+				err := file.Close()
+				So(err, ShouldBeNil)
+			}()
 
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
@@ -51,10 +54,11 @@ func TestLoadingSettings(t *testing.T) {
 		})
 
 		Convey("Should be able to override via environment variables", func() {
-			os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
+			err := os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
+			require.NoError(t, err)
 
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
 			So(AdminUser, ShouldEqual, "superduper")
@@ -63,29 +67,32 @@ func TestLoadingSettings(t *testing.T) {
 		})
 
 		Convey("Should replace password when defined in environment", func() {
-			os.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
+			err := os.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
+			require.NoError(t, err)
 
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
 			So(appliedEnvOverrides, ShouldContain, "GF_SECURITY_ADMIN_PASSWORD=*********")
 		})
 
 		Convey("Should return an error when url is invalid", func() {
-			os.Setenv("GF_DATABASE_URL", "postgres.%31://grafana:secret@postgres:5432/grafana")
+			err := os.Setenv("GF_DATABASE_URL", "postgres.%31://grafana:secret@postgres:5432/grafana")
+			require.NoError(t, err)
 
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
 
 			So(err, ShouldNotBeNil)
 		})
 
 		Convey("Should replace password in URL when url environment is defined", func() {
-			os.Setenv("GF_DATABASE_URL", "mysql://user:secret@localhost:3306/database")
+			err := os.Setenv("GF_DATABASE_URL", "mysql://user:secret@localhost:3306/database")
+			require.NoError(t, err)
 
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
 			So(appliedEnvOverrides, ShouldContain, "GF_DATABASE_URL=mysql://user:-redacted-@localhost:3306/database")
@@ -186,9 +193,10 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Can use environment variables in config values", func() {
 			if runtime.GOOS == windows {
-				os.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
+				err := os.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
+				require.NoError(t, err)
 				cfg := NewCfg()
-				err := cfg.Load(&CommandLineArgs{
+				err = cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
 					Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 				})
@@ -196,9 +204,10 @@ func TestLoadingSettings(t *testing.T) {
 
 				So(cfg.DataPath, ShouldEqual, `c:\tmp\env_override`)
 			} else {
-				os.Setenv("GF_DATA_PATH", "/tmp/env_override")
+				err := os.Setenv("GF_DATA_PATH", "/tmp/env_override")
+				require.NoError(t, err)
 				cfg := NewCfg()
-				err := cfg.Load(&CommandLineArgs{
+				err = cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
 					Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 				})

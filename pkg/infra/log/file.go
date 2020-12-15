@@ -55,11 +55,15 @@ func (l *MuxWriter) Write(b []byte) (int, error) {
 }
 
 // set os.File in writer.
-func (l *MuxWriter) SetFd(fd *os.File) {
+func (l *MuxWriter) setFD(fd *os.File) error {
 	if l.fd != nil {
-		l.fd.Close()
+		if err := l.fd.Close(); err != nil {
+			return err
+		}
 	}
+
 	l.fd = fd
+	return nil
 }
 
 // create a FileLogWriter returning as LoggerInterface.
@@ -98,13 +102,17 @@ func (w *FileLogWriter) StartLogger() error {
 	if err != nil {
 		return err
 	}
-	w.mw.SetFd(fd)
+	if err := w.mw.setFD(fd); err != nil {
+		return err
+	}
+
 	return w.initFd()
 }
 
 func (w *FileLogWriter) docheck(size int) {
 	w.startLock.Lock()
 	defer w.startLock.Unlock()
+
 	if w.Rotate && ((w.Maxlines > 0 && w.maxlinesCurlines >= w.Maxlines) ||
 		(w.Maxsize > 0 && w.maxsizeCursize >= w.Maxsize) ||
 		(w.Daily && time.Now().Day() != w.dailyOpendate)) {
@@ -119,6 +127,9 @@ func (w *FileLogWriter) docheck(size int) {
 
 func (w *FileLogWriter) createLogFile() (*os.File, error) {
 	// Open the log file
+	// We can ignore G304 here since we can't unconditionally lock these log files down to be readable only
+	// by the owner
+	// nolint:gosec
 	return os.OpenFile(w.Filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 }
 
@@ -187,7 +198,9 @@ func (w *FileLogWriter) DoRotate() error {
 		defer w.mw.Unlock()
 
 		fd := w.mw.fd
-		fd.Close()
+		if err := fd.Close(); err != nil {
+			return err
+		}
 
 		// close fd before rename
 		// Rename the file to its newfound home
@@ -228,8 +241,8 @@ func (w *FileLogWriter) deleteOldLog() {
 }
 
 // destroy file logger, close file writer.
-func (w *FileLogWriter) Close() {
-	w.mw.fd.Close()
+func (w *FileLogWriter) Close() error {
+	return w.mw.fd.Close()
 }
 
 // flush file logger.
@@ -242,18 +255,22 @@ func (w *FileLogWriter) Flush() {
 }
 
 // Reload file logger
-func (w *FileLogWriter) Reload() {
+func (w *FileLogWriter) Reload() error {
 	// block Logger's io.Writer
 	w.mw.Lock()
 	defer w.mw.Unlock()
 
 	// Close
 	fd := w.mw.fd
-	fd.Close()
+	if err := fd.Close(); err != nil {
+		return err
+	}
 
 	// Open again
 	err := w.StartLogger()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Reload StartLogger: %s\n", err)
+		return err
 	}
+
+	return nil
 }
