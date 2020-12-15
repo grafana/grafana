@@ -57,6 +57,140 @@ func getOrgIdForNewUser(sess *DBSession, cmd *models.CreateUserCommand) (int64, 
 	return getOrCreateOrg(sess, orgName)
 }
 
+type userCreationArgs struct {
+	Login          string
+	Email          string
+	Name           string
+	Company        string
+	Password       string
+	IsAdmin        bool
+	IsDisabled     bool
+	EmailVerified  bool
+	OrgID          int64
+	OrgName        string
+	DefaultOrgRole string
+}
+
+func (ss *SQLStore) getOrgIDForNewUser(sess *DBSession, args userCreationArgs) (int64, error) {
+	if ss.Cfg.AutoAssignOrg && args.OrgID != 0 {
+		if err := verifyExistingOrg(sess, args.OrgID); err != nil {
+			return -1, err
+		}
+		return args.OrgID, nil
+	}
+
+	orgName := args.OrgName
+	if orgName == "" {
+		orgName = util.StringsFallback2(args.Email, args.Login)
+	}
+
+	return ss.getOrCreateOrg(sess, orgName)
+}
+
+// createUser creates a user in the database.
+func (ss *SQLStore) createUser(ctx context.Context, args userCreationArgs, skipOrgSetup bool) (models.User, error) {
+	var user models.User
+	if err := inTransactionWithRetryCtx(ctx, ss.engine, func(sess *DBSession) error {
+		var orgID int64 = -1
+		if !skipOrgSetup {
+			var err error
+			orgID, err = ss.getOrgIDForNewUser(sess, args)
+			if err != nil {
+				return err
+			}
+		}
+
+		if args.Email == "" {
+			args.Email = args.Login
+		}
+
+		exists, err := sess.Where("email=? OR login=?", args.Email, args.Login).Get(&models.User{})
+		if err != nil {
+			return err
+		}
+		if exists {
+			return models.ErrUserAlreadyExists
+		}
+
+		// create user
+		user = models.User{
+			Email:         args.Email,
+			Name:          args.Name,
+			Login:         args.Login,
+			Company:       args.Company,
+			IsAdmin:       args.IsAdmin,
+			IsDisabled:    args.IsDisabled,
+			OrgId:         orgID,
+			EmailVerified: args.EmailVerified,
+			Created:       time.Now(),
+			Updated:       time.Now(),
+			LastSeenAt:    time.Now().AddDate(-10, 0, 0),
+		}
+
+		salt, err := util.GetRandomString(10)
+		if err != nil {
+			return err
+		}
+		user.Salt = salt
+		rands, err := util.GetRandomString(10)
+		if err != nil {
+			return err
+		}
+		user.Rands = rands
+
+		if len(args.Password) > 0 {
+			encodedPassword, err := util.EncodePassword(args.Password, user.Salt)
+			if err != nil {
+				return err
+			}
+			user.Password = encodedPassword
+		}
+
+		sess.UseBool("is_admin")
+
+		if _, err := sess.Insert(&user); err != nil {
+			return err
+		}
+
+		sess.publishAfterCommit(&events.UserCreated{
+			Timestamp: user.Created,
+			Id:        user.Id,
+			Name:      user.Name,
+			Login:     user.Login,
+			Email:     user.Email,
+		})
+
+		// create org user link
+		if !skipOrgSetup {
+			orgUser := models.OrgUser{
+				OrgId:   orgID,
+				UserId:  user.Id,
+				Role:    models.ROLE_ADMIN,
+				Created: time.Now(),
+				Updated: time.Now(),
+			}
+
+			if ss.Cfg.AutoAssignOrg && !user.IsAdmin {
+				if len(args.DefaultOrgRole) > 0 {
+					orgUser.Role = models.RoleType(args.DefaultOrgRole)
+				} else {
+					orgUser.Role = models.RoleType(ss.Cfg.AutoAssignOrgRole)
+				}
+			}
+
+			if _, err = sess.Insert(&orgUser); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}, 0); err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
 func CreateUser(ctx context.Context, cmd *models.CreateUserCommand) error {
 	return inTransactionCtx(ctx, func(sess *DBSession) error {
 		orgId, err := getOrgIdForNewUser(sess, cmd)
