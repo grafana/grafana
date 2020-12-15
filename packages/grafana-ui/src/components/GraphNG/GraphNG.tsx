@@ -128,7 +128,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       });
     }
 
-    let seriesIdx = 0;
     const legendItems: LegendItem[] = [];
 
     for (let i = 0; i < alignedFrame.fields.length; i++) {
@@ -251,7 +250,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
 const mapMouseEventToMode = (event: React.MouseEvent): GraphNGLegendEventMode => {
   if (event.ctrlKey || event.metaKey || event.shiftKey) {
-    return GraphNGLegendEventMode.append;
+    return GraphNGLegendEventMode.appendToSelection;
   }
-  return GraphNGLegendEventMode.select;
+  return GraphNGLegendEventMode.toggleSelection;
 };

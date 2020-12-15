@@ -138,7 +138,7 @@ const matchersInConfig = (current: SystemConfigOverrideRule): string[] => {
   const match = /^\^\(\?\!([\w$|-]+)\$\)\.\*\$$/.exec(previous);
 
   if (match?.length === 2) {
-    return match[1].split('|');
+    return match[1].split('$|');
   }
 
   return [];
