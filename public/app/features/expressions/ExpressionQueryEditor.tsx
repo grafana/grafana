@@ -167,16 +167,16 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
             <InlineField label="Function" labelWidth={labelWidth}>
               <Select options={reducerTypes} value={reducer} onChange={this.onSelectReducer} width={25} />
             </InlineField>
-            <InlineField label="Query" labelWidth={labelWidth}>
-              <Select onChange={this.onRefIdChange} options={refIds} value={query.expression} width={15} />
+            <InlineField label="Input" labelWidth={labelWidth}>
+              <Select onChange={this.onRefIdChange} options={refIds} value={query.expression} width={20} />
             </InlineField>
           </InlineFieldRow>
         )}
         {query.type === GELQueryType.resample && (
           <>
             <InlineFieldRow>
-              <InlineField label="Query" labelWidth={labelWidth}>
-                <Select onChange={this.onRefIdChange} options={refIds} value={query.expression} width={15} />
+              <InlineField label="Input" labelWidth={labelWidth}>
+                <Select onChange={this.onRefIdChange} options={refIds} value={query.expression} width={20} />
               </InlineField>
             </InlineFieldRow>
             <InlineFieldRow>
