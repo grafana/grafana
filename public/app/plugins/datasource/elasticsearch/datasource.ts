@@ -14,6 +14,8 @@ import {
   MetricFindValue,
   TimeRange,
   DefaultTimeRange,
+  DateTime,
+  dateTime,
 } from '@grafana/data';
 import LanguageProvider from './language_provider';
 import { ElasticResponse } from './elastic_response';
@@ -141,7 +143,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
    * @param url the url to query the index on, for example `/_mapping`.
    */
   private get(url: string, range = DefaultTimeRange) {
-    const indexList = this.indexPattern.getIndexList(range.from.valueOf(), range.to.valueOf());
+    const indexList = this.indexPattern.getIndexList(range.from, range.to);
     if (_.isArray(indexList) && indexList.length) {
       return this.requestAllIndices(indexList, url).then((results: any) => {
         results.data.$$config = results.config;
@@ -369,7 +371,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     );
   }
 
-  getQueryHeader(searchType: any, timeFrom: any, timeTo: any) {
+  getQueryHeader(searchType: any, timeFrom?: DateTime, timeTo?: DateTime): string {
     const queryHeader: any = {
       search_type: searchType,
       ignore_unavailable: true,
@@ -446,9 +448,13 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
     const sortField = row.dataFrame.fields.find(f => f.name === 'sort');
     const searchAfter = sortField?.values.get(row.rowIndex) || [row.timeEpochMs];
-    const range = this.timeSrv.timeRange();
-    const direction = options?.direction === 'FORWARD' ? 'asc' : 'desc';
-    const header = this.getQueryHeader('query_then_fetch', range.from, range.to);
+    const sort = options?.direction === 'FORWARD' ? 'asc' : 'desc';
+
+    const header =
+      options?.direction === 'FORWARD'
+        ? this.getQueryHeader('query_then_fetch', dateTime(row.timeEpochMs))
+        : this.getQueryHeader('query_then_fetch', undefined, dateTime(row.timeEpochMs));
+
     const limit = options?.limit ?? 10;
     const esQuery = JSON.stringify({
       size: limit,
@@ -458,8 +464,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
             {
               range: {
                 [this.timeField]: {
-                  gte: range.from.valueOf(),
-                  lte: range.to.valueOf(),
+                  [options?.direction === 'FORWARD' ? 'gte' : 'lte']: row.timeEpochMs,
                   format: 'epoch_millis',
                 },
               },
@@ -467,14 +472,14 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
           ],
         },
       },
-      sort: [{ [this.timeField]: direction }, { _doc: direction }],
+      sort: [{ [this.timeField]: sort }, { _doc: sort }],
       search_after: searchAfter,
     });
     const payload = [header, esQuery].join('\n') + '\n';
     const url = this.getMultiSearchUrl();
     const response = await this.post(url, payload);
     const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [], isLogsQuery: true }];
-    const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, direction));
+    const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, sort));
     const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);
     const dataFrame = _.first(logResponse.data);
     if (!dataFrame) {

@@ -1,9 +1,18 @@
-import { toUtc, dateTime } from '@grafana/data';
+import { toUtc, dateTime, DateTime, DurationUnit } from '@grafana/data';
+import { Interval } from './types';
 
-const intervalMap: any = {
+type IntervalMap = Record<
+  Interval,
+  {
+    startOf: DurationUnit;
+    amount: DurationUnit;
+  }
+>;
+
+const intervalMap: IntervalMap = {
   Hourly: { startOf: 'hour', amount: 'hours' },
   Daily: { startOf: 'day', amount: 'days' },
-  Weekly: { startOf: 'isoWeek', amount: 'weeks' },
+  Weekly: { startOf: 'week', amount: 'weeks' },
   Monthly: { startOf: 'month', amount: 'months' },
   Yearly: { startOf: 'year', amount: 'years' },
 };
@@ -11,7 +20,7 @@ const intervalMap: any = {
 export class IndexPattern {
   private dateLocale = 'en';
 
-  constructor(private pattern: any, private interval?: string) {}
+  constructor(private pattern: string, private interval?: keyof typeof intervalMap) {}
 
   getIndexForToday() {
     if (this.interval) {
@@ -23,12 +32,20 @@ export class IndexPattern {
     }
   }
 
-  getIndexList(from: any, to: any) {
+  getIndexList(from?: DateTime, to?: DateTime) {
     if (!this.interval) {
       return this.pattern;
     }
 
     const intervalInfo = intervalMap[this.interval];
+
+    if (!from) {
+      from = dateTime(to).add(-7, intervalInfo.amount);
+    }
+    if (!to) {
+      to = dateTime(from).add(7, intervalInfo.amount);
+    }
+
     const start = dateTime(from)
       .utc()
       .startOf(intervalInfo.startOf);
