@@ -169,7 +169,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const operatorsPattern = /[+\-*/^%]/;
     const isNextOperand = text.match(operatorsPattern);
 
-    console.log(wrapperClasses);
 
     // Determine candidates by CSS context
     if (wrapperClasses.includes('context-range')) {
