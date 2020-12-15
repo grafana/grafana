@@ -130,7 +130,8 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
   const labelsField = data.fields[3];
   const idField = data.fields[4];
 
-  // We need to store and track all used uids to ensure that uids are unique
+  // We are comparing used ids only within the received stream. This could be a problem if the same line + labels + nanosecond timestamp came in 2 separate batches.
+  // As this is very unlikely, and the result would only affect live-tailing css animation we have decided to not compare all received uids from data param as this would slow down processing.
   const usedUids: { string?: number } = {};
 
   for (const stream of streams) {
