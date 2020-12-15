@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
 import { Tooltip, Icon, Button } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
-import { StoreState, FolderInfo } from 'app/types';
+import { StoreState } from 'app/types';
 import { DashboardAcl, PermissionLevel, NewDashboardAclItem } from 'app/types/acl';
 import {
   getDashboardPermissions,
@@ -10,13 +10,13 @@ import {
   removeDashboardPermission,
   updateDashboardPermission,
 } from '../../state/actions';
+import { DashboardModel } from '../../state/DashboardModel';
 import PermissionList from 'app/core/components/PermissionList/PermissionList';
 import AddPermission from 'app/core/components/PermissionList/AddPermission';
 import PermissionsInfo from 'app/core/components/PermissionList/PermissionsInfo';
 
 export interface OwnProps {
-  dashboardId: number;
-  folder?: FolderInfo;
+  dashboard: DashboardModel;
 }
 
 export interface ConnectedProps {
@@ -46,7 +46,7 @@ export class DashboardPermissionsUnconnected extends PureComponent<Props, State>
   }
 
   componentDidMount() {
-    this.props.getDashboardPermissions(this.props.dashboardId);
+    this.props.getDashboardPermissions(this.props.dashboard.id);
   }
 
   onOpenAddPermissions = () => {
@@ -54,26 +54,43 @@ export class DashboardPermissionsUnconnected extends PureComponent<Props, State>
   };
 
   onRemoveItem = (item: DashboardAcl) => {
-    this.props.removeDashboardPermission(this.props.dashboardId, item);
+    this.props.removeDashboardPermission(this.props.dashboard.id, item);
   };
 
   onPermissionChanged = (item: DashboardAcl, level: PermissionLevel) => {
-    this.props.updateDashboardPermission(this.props.dashboardId, item, level);
+    this.props.updateDashboardPermission(this.props.dashboard.id, item, level);
   };
 
   onAddPermission = (newItem: NewDashboardAclItem) => {
-    return this.props.addDashboardPermission(this.props.dashboardId, newItem);
+    return this.props.addDashboardPermission(this.props.dashboard.id, newItem);
   };
 
   onCancelAddPermission = () => {
     this.setState({ isAdding: false });
   };
 
+  getFolder() {
+    const { dashboard } = this.props;
+
+    return {
+      id: dashboard.meta.folderId,
+      title: dashboard.meta.folderTitle,
+      url: dashboard.meta.folderUrl,
+    };
+  }
+
   render() {
-    const { permissions, folder } = this.props;
+    const {
+      permissions,
+      dashboard: {
+        meta: { hasUnsavedFolderChange },
+      },
+    } = this.props;
     const { isAdding } = this.state;
 
-    return (
+    return hasUnsavedFolderChange ? (
+      <h5>You have changed folder, please save to view permissions.</h5>
+    ) : (
       <div>
         <div className="dashboard-settings__header">
           <div className="page-action-bar">
@@ -95,7 +112,7 @@ export class DashboardPermissionsUnconnected extends PureComponent<Props, State>
           onRemoveItem={this.onRemoveItem}
           onPermissionChanged={this.onPermissionChanged}
           isFetching={false}
-          folderInfo={folder}
+          folderInfo={this.getFolder()}
         />
       </div>
     );

@@ -35,16 +35,6 @@ export class DashboardSettings extends PureComponent<Props> {
     });
   };
 
-  getFolder() {
-    const { dashboard } = this.props;
-
-    return {
-      id: dashboard.meta.folderId,
-      title: dashboard.meta.folderTitle,
-      url: dashboard.meta.folderUrl,
-    };
-  }
-
   getPages(): SettingsPage[] {
     const { dashboard } = this.props;
     const pages: SettingsPage[] = [];
@@ -97,7 +87,7 @@ export class DashboardSettings extends PureComponent<Props> {
         title: 'Permissions',
         id: 'permissions',
         icon: 'lock',
-        render: () => <DashboardPermissions dashboardId={dashboard.id} folder={this.getFolder()} />,
+        render: () => <DashboardPermissions dashboard={dashboard} />,
       });
     }
 
