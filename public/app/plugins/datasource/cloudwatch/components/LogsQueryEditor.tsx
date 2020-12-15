@@ -7,8 +7,6 @@ import { InlineFormLabel } from '@grafana/ui';
 import { CloudWatchDatasource } from '../datasource';
 import { CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { CloudWatchLogsQueryField } from './LogsQueryField';
-import { useCloudWatchSyntax } from '../useCloudwatchSyntax';
-import { CloudWatchLanguageProvider } from '../language_provider';
 import CloudWatchLink from './CloudWatchLink';
 import { css } from 'emotion';
 
@@ -36,11 +34,6 @@ export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor
     };
   }
 
-  const { isSyntaxReady, syntax } = useCloudWatchSyntax(
-    datasource.languageProvider as CloudWatchLanguageProvider,
-    absolute
-  );
-
   return (
     <CloudWatchLogsQueryField
       exploreId={exploreId}
@@ -52,8 +45,6 @@ export const CloudWatchLogsQueryEditor = memo(function CloudWatchLogsQueryEditor
       history={[]}
       data={data}
       absoluteRange={absolute}
-      syntaxLoaded={isSyntaxReady}
-      syntax={syntax}
       allowCustomValue={allowCustomValue}
       ExtraFieldElement={
         <InlineFormLabel className={`gf-form-label--btn ${labelClass}`} width="auto" tooltip="Link to Graph in AWS">

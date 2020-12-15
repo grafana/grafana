@@ -24,7 +24,7 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { ContextMenuGroup, ContextMenuItem, graphTimeFormat, graphTickFormatter } from '@grafana/ui';
+import { MenuItem, MenuItemsGroup, graphTimeFormat, graphTickFormatter, IconName } from '@grafana/ui';
 import { getCurrentTheme, provideTheme } from 'app/core/utils/ConfigProvider';
 import {
   DataFrame,
@@ -197,10 +197,10 @@ class GraphElement {
   getContextMenuItemsSupplier = (
     flotPosition: { x: number; y: number },
     linksSupplier?: LinkModelSupplier<FieldDisplay>
-  ): (() => ContextMenuGroup[]) => {
+  ): (() => MenuItemsGroup[]) => {
     return () => {
       // Fixed context menu items
-      const items: ContextMenuGroup[] = [
+      const items: MenuItemsGroup[] = [
         {
           items: [
             {
@@ -218,12 +218,12 @@ class GraphElement {
 
       const dataLinks = [
         {
-          items: linksSupplier.getLinks(this.panel.scopedVars).map<ContextMenuItem>(link => {
+          items: linksSupplier.getLinks(this.panel.replaceVariables).map<MenuItem>(link => {
             return {
               label: link.title,
               url: link.href,
               target: link.target,
-              icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}`,
+              icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}` as IconName,
               onClick: link.onClick,
             };
           }),
