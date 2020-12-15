@@ -264,11 +264,14 @@ func (ar *AzureLogAnalyticsResponse) GetPrimaryResultTable() (*AzureLogAnalytics
 
 func (e *AzureLogAnalyticsDatasource) unmarshalResponse(res *http.Response) (AzureLogAnalyticsResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
-
 	if err != nil {
 		return AzureLogAnalyticsResponse{}, err
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			azlog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))

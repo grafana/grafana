@@ -108,7 +108,11 @@ func main() {
 }
 
 func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnostics *tracingDiagnostics) error {
-	defer log.Close()
+	defer func() {
+		if err := log.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
+		}
+	}()
 
 	if traceDiagnostics.enabled {
 		fmt.Println("diagnostics: tracing enabled", "file", traceDiagnostics.file)
@@ -183,7 +187,9 @@ func listenToSystemSignals(s *server.Server) {
 	for {
 		select {
 		case <-sighupChan:
-			log.Reload()
+			if err := log.Reload(); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to reload loggers: %s\n", err)
+			}
 		case sig := <-signalChan:
 			s.Shutdown(fmt.Sprintf("System signal: %s", sig))
 		}
