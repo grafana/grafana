@@ -130,8 +130,11 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
   const labelsField = data.fields[3];
   const idField = data.fields[4];
 
-  // We need to store and track all used uids to ensure that uids are unique
-  const usedUids: { string?: number } = {};
+  // We need to store and track all used uids (from current response, but also data) to ensure that uids are unique
+  const usedUids: { string?: number } = idField.values.toArray().reduce((obj, uid) => {
+    obj[uid] = 0;
+    return obj;
+  }, {});
 
   for (const stream of streams) {
     // Find unique labels
