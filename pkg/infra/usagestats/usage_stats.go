@@ -199,7 +199,7 @@ func (uss *UsageStatsService) registerExternalMetrics(metrics map[string]interfa
 	}
 }
 
-func (uss *UsageStatsService) AddMetric(name string, fn MetricFunc) {
+func (uss *UsageStatsService) RegisterMetric(name string, fn MetricFunc) {
 	uss.externalMetrics[name] = fn
 }
 

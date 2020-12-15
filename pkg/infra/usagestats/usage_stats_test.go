@@ -342,7 +342,7 @@ func TestMetrics(t *testing.T) {
 		})
 	})
 
-	t.Run("When adding a metric", func(t *testing.T) {
+	t.Run("When registering a metric", func(t *testing.T) {
 		uss := &UsageStatsService{
 			Bus:             bus.New(),
 			Cfg:             setting.NewCfg(),
@@ -350,8 +350,8 @@ func TestMetrics(t *testing.T) {
 		}
 		metricName := "stats.test_metric.count"
 
-		t.Run("Add a new metric to the external metrics", func(t *testing.T) {
-			uss.AddMetric(metricName, func() (interface{}, error) {
+		t.Run("Adds a new metric to the external metrics", func(t *testing.T) {
+			uss.RegisterMetric(metricName, func() (interface{}, error) {
 				return 1, nil
 			})
 
@@ -360,7 +360,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		t.Run("When metric already exists", func(t *testing.T) {
-			uss.AddMetric(metricName, func() (interface{}, error) {
+			uss.RegisterMetric(metricName, func() (interface{}, error) {
 				return 1, nil
 			})
 
@@ -368,7 +368,7 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, 1, metric)
 
 			t.Run("Overrides the metric", func(t *testing.T) {
-				uss.AddMetric(metricName, func() (interface{}, error) {
+				uss.RegisterMetric(metricName, func() (interface{}, error) {
 					return 2, nil
 				})
 				newMetric, _ := uss.externalMetrics[metricName]()
@@ -409,7 +409,7 @@ func TestMetrics(t *testing.T) {
 		})
 
 		t.Run("Should include external metrics", func(t *testing.T) {
-			uss.AddMetric(metricName, func() (interface{}, error) {
+			uss.RegisterMetric(metricName, func() (interface{}, error) {
 				return 1, nil
 			})
 
@@ -431,7 +431,7 @@ func TestMetrics(t *testing.T) {
 		extMetricName := "stats.test_external_metric.count"
 
 		t.Run("Should add to metrics", func(t *testing.T) {
-			uss.AddMetric(extMetricName, func() (interface{}, error) {
+			uss.RegisterMetric(extMetricName, func() (interface{}, error) {
 				return 1, nil
 			})
 
@@ -441,13 +441,13 @@ func TestMetrics(t *testing.T) {
 		})
 
 		t.Run("When loading a metric results to an error", func(t *testing.T) {
-			uss.AddMetric(extMetricName, func() (interface{}, error) {
+			uss.RegisterMetric(extMetricName, func() (interface{}, error) {
 				return 1, nil
 			})
 			extErrorMetricName := "stats.test_external_metric_error.count"
 
 			t.Run("Should not add it to metrics", func(t *testing.T) {
-				uss.AddMetric(extErrorMetricName, func() (interface{}, error) {
+				uss.RegisterMetric(extErrorMetricName, func() (interface{}, error) {
 					return 1, errors.New("some error")
 				})
 
