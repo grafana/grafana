@@ -28,16 +28,6 @@ export class SettingsCtrl {
     this.renderCount = 0;
   }
 
-  makeEditable() {
-    this.dashboard.editable = true;
-    this.dashboard.meta.canMakeEditable = false;
-    this.dashboard.meta.canEdit = true;
-    this.dashboard.meta.canSave = true;
-    this.canDelete = true;
-    //const currentSection: any = _.find(this.sections, { id: this.viewId } as any);
-    //this.$location.url(locationUtil.stripBaseFromUrl(currentSection.url));
-  }
-
   deleteDashboard() {
     let confirmText = '';
     let text2 = this.dashboard.title;
