@@ -55,6 +55,7 @@ export const displayConfigFactory = (
   }
 
   const override = createExtendedOverride(current, displayName);
+  console.log('override', override);
 
   return {
     ...fieldConfig,
@@ -66,8 +67,12 @@ const createFreshOverride = (displayName: string): SystemConfigOverrideRule => {
   return {
     __systemRef: displayOverrideRef,
     matcher: {
-      id: FieldMatcherID.byRegexpReadonly,
-      options: `^(?!${displayName}$).*$`,
+      id: FieldMatcherID.readOnly,
+      options: {
+        innerId: FieldMatcherID.byRegexp,
+        innerOptions: `^(?!${displayName}$).*$`,
+        formattedValue: `All series except: ${displayName}`,
+      },
     },
     properties: [
       {
@@ -104,8 +109,12 @@ const createExtendedOverride = (current: SystemConfigOverrideRule, displayName: 
   return {
     __systemRef: displayOverrideRef,
     matcher: {
-      id: FieldMatcherID.byRegexpReadonly,
-      options: `^(?!${existing.join('|')}$).*$`,
+      id: FieldMatcherID.readOnly,
+      options: {
+        innerId: FieldMatcherID.byRegexp,
+        innerOptions: `^(?!${existing.join('|')}$).*$`,
+        formattedValue: `All series except: ${existing.join(', ')}.`,
+      },
     },
     properties: [
       {
@@ -120,7 +129,8 @@ const createExtendedOverride = (current: SystemConfigOverrideRule, displayName: 
 };
 
 const matchersInConfig = (current: SystemConfigOverrideRule): string[] => {
-  const match = /^\^\(\?\!([\w|-]+)\$\)\.\*\$$/.exec(current.matcher.options);
+  const previous = current.matcher.options.innerOptions;
+  const match = /^\^\(\?\!([\w|-]+)\$\)\.\*\$$/.exec(previous);
 
   if (match?.length === 2) {
     return match[1].split('|');

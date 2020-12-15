@@ -4,7 +4,7 @@ import { fieldNameMatcherItem } from './FieldNameMatcherEditor';
 import { fieldNameByRegexMatcherItem } from './FieldNameByRegexMatcherEditor';
 import { fieldTypeMatcherItem } from './FieldTypeMatcherEditor';
 import { fieldsByFrameRefIdItem } from './FieldsByFrameRefIdMatcher';
-import { fieldNameByRegexReadonlyMatcherItem } from './FieldNameByRegexMatcherViewer';
+import { readOnlyFieldMatcherItem } from './ReadOnlyFieldMatcherEditor';
 
 export const fieldMatchersUI = new Registry<FieldMatcherUIRegistryItem<any>>(() => {
   return [
@@ -12,6 +12,6 @@ export const fieldMatchersUI = new Registry<FieldMatcherUIRegistryItem<any>>(() 
     fieldNameByRegexMatcherItem,
     fieldTypeMatcherItem,
     fieldsByFrameRefIdItem,
-    fieldNameByRegexReadonlyMatcherItem,
+    readOnlyFieldMatcherItem,
   ];
 });

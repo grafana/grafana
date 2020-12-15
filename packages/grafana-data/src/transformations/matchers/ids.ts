@@ -16,13 +16,13 @@ export enum FieldMatcherID {
   time = 'time', // Can be multiple times
   first = 'first',
   firstTimeField = 'firstTimeField', // Only the first fime field
+  readOnly = 'readOnly',
 
   // With arguments
   byType = 'byType',
   byName = 'byName',
   byNames = 'byNames',
   byRegexp = 'byRegexp',
-  byRegexpReadonly = 'byRegexpReadonly',
   byRegexpOrNames = 'byRegexpOrNames',
   byFrameRefID = 'byFrameRefID',
   // byIndex = 'byIndex',
