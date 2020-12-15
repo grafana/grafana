@@ -56,45 +56,26 @@ type deleteAlertDefinitionByIDCommand struct {
 	RowsAffected int64
 }
 
-// condition is the structure used by storing/updating alert definition commmands
-type condition struct {
-	RefID string `json:"refId"`
-
-	QueriesAndExpressions []eval.AlertQuery `json:"queriesAndExpressions"`
-}
-
 // saveAlertDefinitionCommand is the query for saving a new alert definition.
 type saveAlertDefinitionCommand struct {
-	Name              string    `json:"name"`
-	OrgID             int64     `json:"-"`
-	Condition         condition `json:"condition"`
-	IntervalInSeconds *int64    `json:"interval"`
+	Name              string         `json:"name"`
+	OrgID             int64          `json:"-"`
+	Condition         eval.Condition `json:"condition"`
+	IntervalInSeconds *int64         `json:"interval"`
 
 	Result *AlertDefinition
 }
 
-// IsValid validates a SaveAlertDefinitionCommand.
-// Always returns true.
-func (cmd *saveAlertDefinitionCommand) IsValid() bool {
-	return true
-}
-
 // updateAlertDefinitionCommand is the query for updating an existing alert definition.
 type updateAlertDefinitionCommand struct {
-	ID                int64     `json:"-"`
-	Name              string    `json:"name"`
-	OrgID             int64     `json:"-"`
-	Condition         condition `json:"condition"`
-	IntervalInSeconds *int64    `json:"interval"`
+	ID                int64          `json:"-"`
+	Name              string         `json:"name"`
+	OrgID             int64          `json:"-"`
+	Condition         eval.Condition `json:"condition"`
+	IntervalInSeconds *int64         `json:"interval"`
 
 	RowsAffected int64
 	Result       *AlertDefinition
-}
-
-// IsValid validates an UpdateAlertDefinitionCommand.
-// Always returns true.
-func (cmd *updateAlertDefinitionCommand) IsValid() bool {
-	return true
 }
 
 type evalAlertConditionCommand struct {

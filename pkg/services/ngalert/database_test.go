@@ -55,7 +55,7 @@ func TestCreatingAlertDefinition(t *testing.T) {
 			q := saveAlertDefinitionCommand{
 				OrgID: 1,
 				Name:  "something completely different",
-				Condition: condition{
+				Condition: eval.Condition{
 					RefID: "B",
 					QueriesAndExpressions: []eval.AlertQuery{
 						{
@@ -96,7 +96,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 			ID:    1,
 			OrgID: 1,
 			Name:  "something completely different",
-			Condition: condition{
+			Condition: eval.Condition{
 				RefID: "A",
 				QueriesAndExpressions: []eval.AlertQuery{
 					{
@@ -161,7 +161,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		q := updateAlertDefinitionCommand{
 			ID:   (*alertDefinition).ID,
 			Name: "something completely different",
-			Condition: condition{
+			Condition: eval.Condition{
 				RefID: "B",
 				QueriesAndExpressions: []eval.AlertQuery{
 					{

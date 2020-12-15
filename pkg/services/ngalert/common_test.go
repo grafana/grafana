@@ -57,7 +57,7 @@ func createTestAlertDefinition(t *testing.T, ng *AlertNG, intervalInSeconds int6
 	cmd := saveAlertDefinitionCommand{
 		OrgID: 1,
 		Name:  "an alert definition",
-		Condition: condition{
+		Condition: eval.Condition{
 			RefID: "A",
 			QueriesAndExpressions: []eval.AlertQuery{
 				{

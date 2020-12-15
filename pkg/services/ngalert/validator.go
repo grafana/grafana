@@ -5,10 +5,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
-// validateAlertDefinition validates that the alert definition that alert queries refer to existing datasources.
-// if requireData is true checks that it contains at least one alert query
+// validateAlertDefinition validates the alert definition interval and organisation.
+// If requireData is true checks that it contains at least one alert query
 func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, requireData bool) error {
 	if !requireData && len(alertDefinition.Data) == 0 {
 		return fmt.Errorf("no queries or expressions are found")
@@ -22,20 +24,35 @@ func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, req
 		return fmt.Errorf("no organisation is found")
 	}
 
-	for _, query := range alertDefinition.Data {
+	return nil
+}
+
+// validateCondition validates that condition queries refer to existing datasources
+func (ng *AlertNG) validateCondition(c eval.Condition, user *models.SignedInUser) error {
+	var refID string
+
+	for _, query := range c.QueriesAndExpressions {
+		if c.RefID == query.RefID {
+			refID = c.RefID
+		}
+
 		datasourceID, err := query.GetDatasource()
 		if err != nil {
 			return err
 		}
 
 		if datasourceID == expr.DatasourceID {
-			return nil
+			continue
 		}
 
-		_, err = ng.DatasourceCache.GetDatasource(datasourceID, alertDefinition.OrgID, false)
+		_, err = ng.DatasourceCache.GetDatasource(datasourceID, user, false)
 		if err != nil {
 			return err
 		}
+	}
+
+	if refID == "" {
+		return fmt.Errorf("condition %s not found in any query or expression", c.RefID)
 	}
 	return nil
 }
