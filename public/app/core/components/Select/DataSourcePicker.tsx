@@ -3,7 +3,7 @@ import React, { PureComponent } from 'react';
 
 // Components
 import { HorizontalGroup, Select } from '@grafana/ui';
-import { SelectableValue, DataSourceInstanceSettings } from '@grafana/data';
+import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { isUnsignedPluginSignature, PluginSignatureBadge } from '../../../features/plugins/PluginSignatureBadge';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -130,7 +130,6 @@ export class DataSourcePicker extends PureComponent<Props, State> {
           onBlur={onBlur}
           openMenuOnFocus={openMenuOnFocus}
           maxMenuHeight={500}
-          menuPlacement="bottom"
           placeholder={placeholder}
           noOptionsMessage="No datasources found"
           value={value}

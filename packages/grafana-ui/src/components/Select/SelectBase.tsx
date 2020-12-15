@@ -116,7 +116,7 @@ export function SelectBase<T>({
   maxMenuHeight = 300,
   minMenuHeight,
   maxVisibleValues,
-  menuPlacement = 'auto',
+  menuPlacement = 'bottom',
   menuPosition,
   noOptionsMessage = 'No options found',
   onBlur,
