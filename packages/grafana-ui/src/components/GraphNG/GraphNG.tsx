@@ -69,14 +69,14 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
   const onLabelClick = useCallback(
     (legend: LegendItem, event: React.MouseEvent) => {
-      const { seriesIndex } = legend;
+      const { fieldIndex } = legend;
 
-      if (!onLegendClick || !seriesIndex) {
+      if (!onLegendClick || !fieldIndex) {
         return;
       }
 
       onLegendClick({
-        fieldIndex: seriesIndex,
+        fieldIndex,
         mode: mapMouseEventToMode(event),
       });
     },

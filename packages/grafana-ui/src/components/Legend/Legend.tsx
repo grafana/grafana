@@ -42,7 +42,7 @@ export interface LegendItem {
   yAxis: number;
   disabled?: boolean;
   displayValues?: DisplayValue[];
-  seriesIndex?: DataFrameFieldIndex;
+  fieldIndex?: DataFrameFieldIndex;
 }
 
 export interface LegendComponentProps {
