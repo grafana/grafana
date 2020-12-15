@@ -110,6 +110,10 @@ export class DashboardSettings extends PureComponent<Props> {
     this.forceUpdate();
   };
 
+  onPostSave = () => {
+    this.props.dashboard.meta.hasUnsavedFolderChange = false;
+  };
+
   renderMakeEditable(): React.ReactNode {
     return (
       <div>
@@ -163,8 +167,10 @@ export class DashboardSettings extends PureComponent<Props> {
                 </a>
               ))}
               <div className="dashboard-settings__aside-actions">
-                {canSave && <SaveDashboardButton dashboard={dashboard} />}
-                {canSaveAs && <SaveDashboardAsButton dashboard={dashboard} variant="secondary" />}
+                {canSave && <SaveDashboardButton dashboard={dashboard} onSaveSuccess={this.onPostSave} />}
+                {canSaveAs && (
+                  <SaveDashboardAsButton dashboard={dashboard} onSaveSuccess={this.onPostSave} variant="secondary" />
+                )}
               </div>
             </aside>
             <div className="dashboard-settings__content">{currentPage.render()}</div>
