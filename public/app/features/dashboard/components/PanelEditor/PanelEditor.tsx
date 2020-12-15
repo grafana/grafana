@@ -45,8 +45,6 @@ interface OwnProps {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-type PropsFromRedux = ConnectedProps<typeof connector>;
-
 type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export class PanelEditorUnconnected extends PureComponent<Props> {
