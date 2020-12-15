@@ -298,7 +298,7 @@ func TestMetrics(t *testing.T) {
 			return nil
 		})
 
-		t.Run("When metrics is disabled and total stats is not disabled", func(t *testing.T) {
+		t.Run("When metrics is disabled and total stats is enabled", func(t *testing.T) {
 			uss.Cfg.MetricsEndpointEnabled = false
 			uss.Cfg.MetricsEndpointDisableTotalStats = false
 			t.Run("Should not update stats", func(t *testing.T) {
@@ -330,7 +330,7 @@ func TestMetrics(t *testing.T) {
 			})
 		})
 
-		t.Run("When metrics is enabled and total stats is not disabled", func(t *testing.T) {
+		t.Run("When metrics is enabled and total stats is enabled", func(t *testing.T) {
 			uss.Cfg.MetricsEndpointEnabled = true
 			uss.Cfg.MetricsEndpointDisableTotalStats = false
 
