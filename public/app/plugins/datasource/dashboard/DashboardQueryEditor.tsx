@@ -1,27 +1,18 @@
-// Libraries
 import React, { PureComponent } from 'react';
-
-// Types
-import { LegacyForms, Icon } from '@grafana/ui';
-import { DataQuery, DataQueryError, PanelData, DataFrame, SelectableValue } from '@grafana/data';
-import { DashboardQuery } from './types';
-import config from 'app/core/config';
+import { LegacyForms, VerticalGroup } from '@grafana/ui';
+import { DataQuery, PanelData, SelectableValue } from '@grafana/data';
 import { css } from 'emotion';
+
+import { DashboardQuery, ResultInfo } from './types';
+import config from 'app/core/config';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PanelModel } from 'app/features/dashboard/state';
 import { SHARED_DASHBODARD_QUERY } from './types';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { filterPanelDataToQuery } from 'app/features/query/components/QueryEditorRow';
+import { DashboardQueryRow } from './DashboardQueryRow';
 
 const { Select } = LegacyForms;
-
-type ResultInfo = {
-  img: string; // The Datasource
-  refId: string;
-  query: string; // As text
-  data: DataFrame[];
-  error?: DataQueryError;
-};
 
 function getQueryDisplayText(query: DataQuery): string {
   return JSON.stringify(query);
@@ -107,25 +98,11 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
     const { results } = this.state;
 
     return (
-      <div>
+      <VerticalGroup spacing="sm">
         {results.map((target, index) => {
-          return (
-            <div className="query-editor-row__header" key={index}>
-              <div className="query-editor-row__ref-id">
-                <img src={target.img} width={16} className={css({ marginRight: '8px' })} />
-                {target.refId}:
-              </div>
-              <div className="query-editor-row__collapsed-text">
-                <a href={editURL}>
-                  {target.query}
-                  &nbsp;
-                  <Icon name="external-link-alt" />
-                </a>
-              </div>
-            </div>
-          );
+          return <DashboardQueryRow editURL={editURL} target={target} key={`DashboardQueryRow-${index}`} />;
         })}
-      </div>
+      </VerticalGroup>
     );
   }
 
