@@ -13,7 +13,7 @@ import {
 import { alignDataFrames } from './utils';
 import { UPlotChart } from '../uPlot/Plot';
 import { PlotProps } from '../uPlot/types';
-import { AxisPlacement, GraphFieldConfig, DrawStyle, PointVisibility } from '../uPlot/config';
+import { AxisPlacement, DrawStyle, GraphFieldConfig, PointVisibility } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
@@ -129,7 +129,14 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
         // The builder will manage unique scaleKeys and combine where appropriate
-        builder.addScale({ scaleKey, min: field.config.min, max: field.config.max });
+        builder.addScale({
+          scaleKey,
+          distribution: customConfig.scaleDistribution?.type,
+          log: customConfig.scaleDistribution?.log,
+          min: field.config.min,
+          max: field.config.max,
+        });
+
         builder.addAxis({
           scaleKey,
           label: customConfig.axisLabel,

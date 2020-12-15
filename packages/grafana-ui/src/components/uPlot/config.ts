@@ -28,6 +28,11 @@ export enum LineInterpolation {
   StepAfter = 'stepAfter',
 }
 
+export enum ScaleDistribution {
+  Linear = 'linear',
+  Logarithmic = 'log',
+}
+
 /**
  * @alpha
  */
@@ -56,11 +61,16 @@ export interface PointsConfig {
   pointSymbol?: string; // eventually dot,star, etc
 }
 
+export interface ScaleDistributionConfig {
+  type: ScaleDistribution;
+  log?: number;
+}
 // Axis is actually unique based on the unit... not each field!
 export interface AxisConfig {
   axisPlacement?: AxisPlacement;
   axisLabel?: string;
   axisWidth?: number; // pixels ideally auto?
+  scaleDistribution?: ScaleDistributionConfig;
 }
 
 /**
