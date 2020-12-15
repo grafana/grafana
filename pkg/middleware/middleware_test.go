@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/gtime"
+	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
@@ -30,8 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-const errorTemplate = "error-template"
-
 func fakeGetTime() func() time.Time {
 	var timeSeed int64
 	return func() time.Time {
@@ -42,12 +41,6 @@ func fakeGetTime() func() time.Time {
 }
 
 func TestMiddleWareSecurityHeaders(t *testing.T) {
-	origErrTemplateName := setting.ErrTemplateName
-	t.Cleanup(func() {
-		setting.ErrTemplateName = origErrTemplateName
-	})
-	setting.ErrTemplateName = errorTemplate
-
 	middlewareScenario(t, "middleware should get correct x-xss-protection header", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/api/").exec()
 		assert.Equal(t, "1; mode=block", sc.resp.Header().Get("X-XSS-Protection"))
@@ -79,11 +72,7 @@ func TestMiddleWareSecurityHeaders(t *testing.T) {
 }
 
 func TestMiddlewareContext(t *testing.T) {
-	origErrTemplateName := setting.ErrTemplateName
-	t.Cleanup(func() {
-		setting.ErrTemplateName = origErrTemplateName
-	})
-	setting.ErrTemplateName = errorTemplate
+	const noCache = "no-cache"
 
 	middlewareScenario(t, "middleware should add context to injector", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/").exec()
@@ -97,8 +86,8 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "middleware should add Cache-Control header for requests to API", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/api/search").exec()
-		assert.Equal(t, "no-cache", sc.resp.Header().Get("Cache-Control"))
-		assert.Equal(t, "no-cache", sc.resp.Header().Get("Pragma"))
+		assert.Equal(t, noCache, sc.resp.Header().Get("Cache-Control"))
+		assert.Equal(t, noCache, sc.resp.Header().Get("Pragma"))
 		assert.Equal(t, "-1", sc.resp.Header().Get("Expires"))
 	})
 
@@ -110,20 +99,23 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Empty(t, sc.resp.Header().Get("Expires"))
 	})
 
-	middlewareScenario(t, "middleware should add Cache-Control header for requests with html response", func(
+	middlewareScenario(t, "middleware should add Cache-Control header for requests with HTML response", func(
 		t *testing.T, sc *scenarioContext) {
-		sc.handler(func(c *models.ReqContext) {
+		sc.handlerFunc = func(c *models.ReqContext) {
+			t.Log("Handler called")
 			data := &dtos.IndexViewData{
 				User:     &dtos.CurrentUser{},
 				Settings: map[string]interface{}{},
 				NavTree:  []*dtos.NavLink{},
 			}
+			t.Log("Calling HTML", "data", data, "render", c.Render)
 			c.HTML(200, "index-template", data)
-		})
+			t.Log("Returned HTML with code 200")
+		}
 		sc.fakeReq("GET", "/").exec()
-		assert.Equal(t, 200, sc.resp.Code)
-		assert.Equal(t, "no-cache", sc.resp.Header().Get("Cache-Control"))
-		assert.Equal(t, "no-cache", sc.resp.Header().Get("Pragma"))
+		require.Equal(t, 200, sc.resp.Code)
+		assert.Equal(t, noCache, sc.resp.Header().Get("Cache-Control"))
+		assert.Equal(t, noCache, sc.resp.Header().Get("Pragma"))
 		assert.Equal(t, "-1", sc.resp.Header().Get("Expires"))
 	})
 
@@ -150,7 +142,7 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, contexthandler.InvalidAPIKey, sc.respJson["message"])
 	})
 
-	middlewareScenario(t, "Valid api key", func(t *testing.T, sc *scenarioContext) {
+	middlewareScenario(t, "Valid API key", func(t *testing.T, sc *scenarioContext) {
 		const orgID int64 = 12
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
@@ -162,15 +154,15 @@ func TestMiddlewareContext(t *testing.T) {
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
-		assert.Equal(t, 200, sc.resp.Code)
+		require.Equal(t, 200, sc.resp.Code)
 
 		assert.True(t, sc.context.IsSignedIn)
 		assert.Equal(t, orgID, sc.context.OrgId)
 		assert.Equal(t, models.ROLE_EDITOR, sc.context.OrgRole)
 	})
 
-	middlewareScenario(t, "Valid api key, but does not match db hash", func(t *testing.T, sc *scenarioContext) {
-		keyhash := "Something_not_matching"
+	middlewareScenario(t, "Valid API key, but does not match DB hash", func(t *testing.T, sc *scenarioContext) {
+		const keyhash = "Something_not_matching"
 
 		bus.AddHandler("test", func(query *models.GetApiKeyByNameQuery) error {
 			query.Result = &models.ApiKey{OrgId: 12, Role: models.ROLE_EDITOR, Key: keyhash}
@@ -223,14 +215,16 @@ func TestMiddlewareContext(t *testing.T) {
 
 		sc.fakeReq("GET", "/").exec()
 
+		require.NotNil(t, sc.context)
+		require.NotNil(t, sc.context.UserToken)
 		assert.True(t, sc.context.IsSignedIn)
 		assert.Equal(t, userID, sc.context.UserId)
 		assert.Equal(t, userID, sc.context.UserToken.UserId)
 		assert.Equal(t, "token", sc.context.UserToken.UnhashedToken)
-		assert.Equal(t, "", sc.resp.Header().Get("Set-Cookie"))
+		assert.Empty(t, sc.resp.Header().Get("Set-Cookie"))
 	})
 
-	middlewareScenario(t, "Non-expired auth token in cookie which are being rotated", func(t *testing.T, sc *scenarioContext) {
+	middlewareScenario(t, "Non-expired auth token in cookie which is being rotated", func(t *testing.T, sc *scenarioContext) {
 		const userID int64 = 12
 
 		sc.withTokenSessionCookie("token")
@@ -253,7 +247,7 @@ func TestMiddlewareContext(t *testing.T) {
 			return true, nil
 		}
 
-		maxAge := int(setting.LoginMaxLifetime.Seconds())
+		maxAge := int(sc.cfg.LoginMaxLifetime.Seconds())
 
 		sameSiteModes := []http.SameSite{
 			http.SameSiteNoneMode,
@@ -269,11 +263,11 @@ func TestMiddlewareContext(t *testing.T) {
 				setting.CookieSameSiteMode = sameSiteMode
 
 				expectedCookiePath := "/"
-				if len(setting.AppSubUrl) > 0 {
-					expectedCookiePath = setting.AppSubUrl
+				if len(sc.cfg.AppSubURL) > 0 {
+					expectedCookiePath = sc.cfg.AppSubURL
 				}
 				expectedCookie := &http.Cookie{
-					Name:     setting.LoginCookieName,
+					Name:     sc.cfg.LoginCookieName,
 					Value:    "rotated",
 					Path:     expectedCookiePath,
 					HttpOnly: true,
@@ -303,11 +297,11 @@ func TestMiddlewareContext(t *testing.T) {
 			setting.CookieSameSiteMode = http.SameSiteLaxMode
 
 			expectedCookiePath := "/"
-			if len(setting.AppSubUrl) > 0 {
-				expectedCookiePath = setting.AppSubUrl
+			if len(sc.cfg.AppSubURL) > 0 {
+				expectedCookiePath = sc.cfg.AppSubURL
 			}
 			expectedCookie := &http.Cookie{
-				Name:     setting.LoginCookieName,
+				Name:     sc.cfg.LoginCookieName,
 				Value:    "rotated",
 				Path:     expectedCookiePath,
 				HttpOnly: true,
@@ -556,6 +550,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		cfg := setting.NewCfg()
 		cfg.LoginCookieName = "grafana_session"
 		cfg.LoginMaxLifetime = loginMaxLifetime
+		// Required when rendering errors
+		cfg.ErrTemplateName = "error-template"
 		for _, cb := range cbs {
 			cb(cfg)
 		}
@@ -564,6 +560,9 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 
 		viewsPath, err := filepath.Abs("../../public/views")
 		require.NoError(t, err)
+		exists, err := fs.Exists(viewsPath)
+		require.NoError(t, err)
+		require.Truef(t, exists, "Views directory should exist at %q", viewsPath)
 
 		sc.m = macaron.New()
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
@@ -575,7 +574,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		ctxHdlr := getContextHandler(t, cfg)
 		sc.contextHandler = ctxHdlr
 		sc.m.Use(ctxHdlr.Middleware)
-		sc.m.Use(OrgRedirect())
+		sc.m.Use(OrgRedirect(sc.cfg))
 
 		sc.userAuthTokenService = ctxHdlr.AuthTokenService.(*auth.FakeUserAuthTokenService)
 		sc.remoteCacheService = ctxHdlr.RemoteCache
@@ -587,6 +586,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
 			} else {
+				t.Log("Returning JSON OK")
 				resp := make(map[string]interface{})
 				resp["message"] = "OK"
 				c.JSON(200, resp)
