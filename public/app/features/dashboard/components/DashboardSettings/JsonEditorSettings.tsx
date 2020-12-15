@@ -44,9 +44,11 @@ export const JsonEditorSettings: React.FC<Props> = ({ dashboard }) => {
           )}
         </AutoSizer>
       </div>
-      <Button className="m-t-3" onClick={onClick}>
-        Save Changes
-      </Button>
+      {dashboard.meta.canSave && (
+        <Button className="m-t-3" onClick={onClick}>
+          Save Changes
+        </Button>
+      )}
     </>
   );
 };
