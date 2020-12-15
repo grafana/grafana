@@ -4,6 +4,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Button, CustomScrollbar, Icon, IconName } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { BackButton } from 'app/core/components/BackButton/BackButton';
+import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { updateLocation } from 'app/core/actions';
 import { DashboardModel } from '../../state/DashboardModel';
 import { SaveDashboardButton, SaveDashboardAsButton } from '../SaveDashboard/SaveDashboardButton';
@@ -112,6 +113,7 @@ export class DashboardSettings extends PureComponent<Props> {
 
   onPostSave = () => {
     this.props.dashboard.meta.hasUnsavedFolderChange = false;
+    dashboardWatcher.reloadPage();
   };
 
   renderMakeEditable(): React.ReactNode {
