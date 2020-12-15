@@ -49,6 +49,19 @@ func addAlertDefinitionMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("drop index alert_definition updated", migrator.NewDropIndexMigration(alertDefinition, &migrator.Index{
 		Cols: []string{"updated"}, Type: migrator.IndexType,
 	}))
+
+	mg.AddMigration("alter alert_definition.name to varchar 190", migrator.NewRawSQLMigration("").
+		Mysql("ALTER TABLE alert_definition MODIFY name VARCHAR(190);"))
+
+	mg.AddMigration("uniquely rename alert_definitions", migrator.NewRawSQLMigration("").
+		SQLite("UPDATE alert_definition SET name=(name || ' ' || id);").
+		Postgres("UPDATE alert_definition SET name=(name || ' ' || id::text);").
+		Mysql("UPDATE alert_definition SET name=CONCAT(name, ' ', CAST(id AS CHAR));"),
+	)
+
+	mg.AddMigration("add index alert_definition org_id & name", migrator.NewAddIndexMigration(alertDefinition, &migrator.Index{
+		Cols: []string{"org_id", "name"}, Type: migrator.UniqueIndex,
+	}))
 }
 
 func addAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
@@ -113,4 +126,13 @@ func addAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
 
 	mg.AddMigration("alter alert_definition_version.data to mediumtext", migrator.NewRawSQLMigration("").
 		Mysql("ALTER TABLE alert_definition_version MODIFY data MEDIUMTEXT;"))
+
+	mg.AddMigration("alter alert_definition_version.name to varchar 190", migrator.NewRawSQLMigration("").
+		Mysql("ALTER TABLE alert_definition_version MODIFY name VARCHAR(190);"))
+
+	mg.AddMigration("uniquely rename alert_definition_version name", migrator.NewRawSQLMigration("").
+		SQLite("UPDATE alert_definition_version SET name=(name || ' ' || id);").
+		Postgres("UPDATE alert_definition_version SET name=(name || ' ' || id::text);").
+		Mysql("UPDATE alert_definition_version SET name=CONCAT(name, ' ', CAST(id AS CHAR));"),
+	)
 }

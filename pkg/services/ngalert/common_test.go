@@ -2,6 +2,8 @@ package ngalert
 
 import (
 	"encoding/json"
+	"fmt"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -56,7 +58,7 @@ func overrideAlertNGInRegistry(cfg *setting.Cfg) AlertNG {
 func createTestAlertDefinition(t *testing.T, ng *AlertNG, intervalInSeconds int64) *AlertDefinition {
 	cmd := saveAlertDefinitionCommand{
 		OrgID: 1,
-		Name:  "an alert definition",
+		Name:  fmt.Sprintf("an alert definition %d", rand.Intn(1000)),
 		Condition: eval.Condition{
 			RefID: "A",
 			QueriesAndExpressions: []eval.AlertQuery{
