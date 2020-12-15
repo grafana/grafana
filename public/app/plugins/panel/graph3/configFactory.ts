@@ -20,6 +20,11 @@ export const hideSeriesConfigFactory = (
   const { overrides } = fieldConfig;
 
   const frame = data[fieldIndex.frameIndex];
+
+  if (!frame) {
+    return fieldConfig;
+  }
+
   const field = frame.fields[fieldIndex.fieldIndex];
   const displayName = getFieldDisplayName(field, frame, data);
   const currentIndex = overrides.findIndex(isDisplayOverride);

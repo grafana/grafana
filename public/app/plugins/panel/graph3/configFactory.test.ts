@@ -144,6 +144,43 @@ describe('hideSeriesConfigFactory', () => {
       overrides: [],
     });
   });
+
+  it('should return existing override if invalid index is passed', () => {
+    const event: GraphNGLegendEvent = {
+      mode: GraphNGLegendEventMode.toggleSelection,
+      fieldIndex: {
+        frameIndex: 4,
+        fieldIndex: 1,
+      },
+    };
+
+    const existingConfig: FieldConfigSource = {
+      defaults: {},
+      overrides: [createOverride(['temperature'])],
+    };
+
+    const data: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'temperature', type: FieldType.number, values: [1, 3, 5, 7] },
+        ],
+      }),
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'humidity', type: FieldType.number, values: [1, 3, 5, 7] },
+        ],
+      }),
+    ];
+
+    const config = hideSeriesConfigFactory(event, existingConfig, data);
+
+    expect(config).toEqual({
+      defaults: {},
+      overrides: [createOverride(['temperature'])],
+    });
+  });
 });
 
 const createOverride = (matchers: string[]) => {
