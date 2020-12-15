@@ -36,15 +36,17 @@ export function GraphView(props: Props) {
   // const [linkHover, setLinkHover] = useState<number | undefined>(undefined);
   const clearNodeHover = useCallback(() => setNodeHover(undefined), []);
 
-  const panRef = React.useRef<SVGSVGElement>(null);
-  const { position: panPosition, isPanning } = usePanning(panRef, scale);
-
-  // const services = useTestData ? response.Services : props.services;
   const { nodes: rawNodes, links: rawLinks } = useMemo(() => processServices(props.services, props.edges), [
     props.services,
     props.edges,
   ]);
-  const { nodes, links } = useLayout(rawNodes, rawLinks, config);
+  const { nodes, links, bounds } = useLayout(rawNodes, rawLinks, config);
+
+  const { state: panningState, ref: panRef } = usePanning<SVGSVGElement>({
+    scale,
+    bounds,
+  });
+  const { position: panPosition, isPanning } = panningState;
 
   const [openedNode, setOpenedNode] = useState<{ node: NodeDatum; event: MouseEvent } | undefined>(undefined);
   const onNodeOpen = useCallback((event, node) => setOpenedNode({ node, event }), []);
@@ -206,7 +208,7 @@ function useLayout(rawNodes: NodeDatum[], rawLinks: LinkDatum[], config: Config)
     setLinks(rawLinks);
   }, [config, rawNodes, rawLinks]);
 
-  return { nodes, links };
+  return { nodes, links, bounds: nodeBounds(nodes) };
 }
 
 function processServices(services: DataFrame, edges: DataFrame): { nodes: NodeDatum[]; links: LinkDatum[] } {
@@ -242,7 +244,18 @@ function processServices(services: DataFrame, edges: DataFrame): { nodes: NodeDa
 }
 
 function centerNodes(nodes: NodeDatum[]) {
-  const bounds = nodes.reduce(
+  const bounds = nodeBounds(nodes);
+  const middleY = bounds.top + (bounds.bottom - bounds.top) / 2;
+  const middleX = bounds.left + (bounds.right - bounds.left) / 2;
+
+  for (let node of nodes) {
+    node.x = node.x! - middleX;
+    node.y = node.y! - middleY;
+  }
+}
+
+function nodeBounds(nodes: NodeDatum[]): { top: number; right: number; bottom: number; left: number } {
+  return nodes.reduce(
     (acc, node) => {
       if (node.x! > acc.right) {
         acc.right = node.x!;
@@ -260,14 +273,6 @@ function centerNodes(nodes: NodeDatum[]) {
     },
     { top: Infinity, right: -Infinity, bottom: -Infinity, left: Infinity }
   );
-
-  const middleY = bounds.top + (bounds.bottom - bounds.top) / 2;
-  const middleX = bounds.left + (bounds.right - bounds.left) / 2;
-
-  for (let node of nodes) {
-    node.x = node.x! - middleX;
-    node.y = node.y! - middleY;
-  }
 }
 
 function LinkArrowMarker() {

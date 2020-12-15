@@ -10,17 +10,24 @@ export interface State {
   };
 }
 
+interface Options {
+  scale?: number;
+  bounds?: { top: number; bottom: number; right: number; left: number };
+}
+
 /**
  * Based on https://github.com/streamich/react-use/blob/master/src/useSlider.ts
  * Returns position x/y coordinates which can be directly used in transform: translate().
- * @param ref
  * @param scale can be used when we want to scale the movement if we are moving a scaled element. We need to do it
  *   here because we don't wont to change the pos when scale changes.
  */
-export function usePanning(ref: RefObject<Element>, scale = 1): State {
+export function usePanning<T extends Element>(
+  { scale = 1, bounds }: Options = { scale: 1 }
+): { state: State; ref: RefObject<T> } {
   const isMounted = useMountedState();
   const isPanning = useRef(false);
   const frame = useRef(0);
+  const panRef = useRef<T>(null);
 
   // We need to keep some state so we can compute the position diff and add that to the previous position.
   const startMousePosition = useRef({ x: 0, y: 0 });
@@ -78,15 +85,15 @@ export function usePanning(ref: RefObject<Element>, scale = 1): State {
       const pos = getEventXY(event);
 
       frame.current = requestAnimationFrame(() => {
-        if (isMounted() && ref.current) {
+        if (isMounted() && panRef.current) {
           // Get the diff by which we moved the mouse.
           let xDiff = pos.x - startMousePosition.current.x;
           let yDiff = pos.y - startMousePosition.current.y;
 
           // Add the diff to the position from the moment we started panning.
           currentPosition.current = {
-            x: prevPosition.current.x + xDiff / scale,
-            y: prevPosition.current.y + yDiff / scale,
+            x: inBounds(prevPosition.current.x + xDiff / scale, bounds?.left, bounds?.right),
+            y: inBounds(prevPosition.current.y + yDiff / scale, bounds?.top, bounds?.bottom),
           };
           setState(state => ({
             ...state,
@@ -98,19 +105,23 @@ export function usePanning(ref: RefObject<Element>, scale = 1): State {
       });
     };
 
-    if (ref.current) {
-      ref.current.addEventListener('mousedown', onPanStart);
-      ref.current.addEventListener('touchstart', onPanStart);
+    if (panRef.current) {
+      panRef.current.addEventListener('mousedown', onPanStart);
+      panRef.current.addEventListener('touchstart', onPanStart);
     }
     return () => {
-      if (ref.current) {
-        ref.current.removeEventListener('mousedown', onPanStart);
-        ref.current.removeEventListener('touchstart', onPanStart);
+      if (panRef.current) {
+        panRef.current.removeEventListener('mousedown', onPanStart);
+        panRef.current.removeEventListener('touchstart', onPanStart);
       }
     };
-  }, [ref, scale]);
+  }, [scale, bounds?.left, bounds?.right, bounds?.top, bounds?.bottom]);
 
-  return state;
+  return { state, ref: panRef };
+}
+
+function inBounds(value: number, min: number | undefined, max: number | undefined) {
+  return Math.min(Math.max(value, min ?? -Infinity), max ?? Infinity);
 }
 
 function getEventXY(event: Event): { x: number; y: number } {
