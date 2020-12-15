@@ -16,7 +16,7 @@ fieldMatchers.register({
   description: 'Field name by inner matcher',
   get: (options: ReadOnlyFieldMatcherOptions): FieldMatcher => {
     if (options.innerId === FieldMatcherID.readOnly) {
-      return defaultMatcher;
+      throw new Error('You can not wrap the readOnly matcher in the readOnly matcher, will cause a loop.');
     }
 
     const matcher = fieldMatchers.getIfExists(options.innerId);
