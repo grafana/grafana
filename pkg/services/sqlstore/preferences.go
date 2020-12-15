@@ -6,8 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
-
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func (ss *SQLStore) addPreferencesQueryAndCommandHandlers() {
@@ -42,7 +40,7 @@ func (ss *SQLStore) GetPreferencesWithDefaults(query *models.GetPreferencesWithD
 	}
 
 	res := &models.Preferences{
-		Theme:           setting.DefaultTheme,
+		Theme:           ss.Cfg.DefaultTheme,
 		Timezone:        ss.Cfg.DateFormats.DefaultTimezone,
 		HomeDashboardId: 0,
 	}

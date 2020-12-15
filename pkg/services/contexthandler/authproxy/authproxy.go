@@ -32,7 +32,13 @@ const (
 var getLDAPConfig = ldap.GetConfig
 
 // isLDAPEnabled checks if LDAP is enabled
-var isLDAPEnabled = ldap.IsEnabled
+var isLDAPEnabled = func(cfg *setting.Cfg) bool {
+	if cfg != nil {
+		return cfg.LDAPEnabled
+	}
+
+	return setting.LDAPEnabled
+}
 
 // newLDAP creates multiple LDAP instance
 var newLDAP = multildap.New
@@ -42,18 +48,11 @@ var supportedHeaderFields = []string{"Name", "Email", "Login", "Groups"}
 
 // AuthProxy struct
 type AuthProxy struct {
-	store  *remotecache.RemoteCache
-	ctx    *models.ReqContext
-	orgID  int64
-	header string
-
-	enabled             bool
-	LDAPAllowSignup     bool
-	AuthProxyAutoSignUp bool
-	whitelistIP         string
-	headerType          string
-	headers             map[string]string
-	cacheTTL            int
+	cfg         *setting.Cfg
+	remoteCache *remotecache.RemoteCache
+	ctx         *models.ReqContext
+	orgID       int64
+	header      string
 }
 
 // Error auth proxy specific error
@@ -77,35 +76,27 @@ func (err Error) Error() string {
 
 // Options for the AuthProxy
 type Options struct {
-	Store *remotecache.RemoteCache
-	Ctx   *models.ReqContext
-	OrgID int64
+	RemoteCache *remotecache.RemoteCache
+	Ctx         *models.ReqContext
+	OrgID       int64
 }
 
 // New instance of the AuthProxy
-func New(options *Options) *AuthProxy {
-	header := options.Ctx.Req.Header.Get(setting.AuthProxyHeaderName)
-
+func New(cfg *setting.Cfg, options *Options) *AuthProxy {
+	header := options.Ctx.Req.Header.Get(cfg.AuthProxyHeaderName)
 	return &AuthProxy{
-		store:  options.Store,
-		ctx:    options.Ctx,
-		orgID:  options.OrgID,
-		header: header,
-
-		enabled:             setting.AuthProxyEnabled,
-		headerType:          setting.AuthProxyHeaderProperty,
-		headers:             setting.AuthProxyHeaders,
-		whitelistIP:         setting.AuthProxyWhitelist,
-		cacheTTL:            setting.AuthProxySyncTtl,
-		LDAPAllowSignup:     setting.LDAPAllowSignup,
-		AuthProxyAutoSignUp: setting.AuthProxyAutoSignUp,
+		remoteCache: options.RemoteCache,
+		cfg:         cfg,
+		ctx:         options.Ctx,
+		orgID:       options.OrgID,
+		header:      header,
 	}
 }
 
 // IsEnabled checks if the proxy auth is enabled
 func (auth *AuthProxy) IsEnabled() bool {
 	// Bail if the setting is not enabled
-	return auth.enabled
+	return auth.cfg.AuthProxyEnabled
 }
 
 // HasHeader checks if the we have specified header
@@ -113,15 +104,15 @@ func (auth *AuthProxy) HasHeader() bool {
 	return len(auth.header) != 0
 }
 
-// IsAllowedIP compares presented IP with the whitelist one
+// IsAllowedIP returns whether provided IP is allowed.
 func (auth *AuthProxy) IsAllowedIP() error {
 	ip := auth.ctx.Req.RemoteAddr
 
-	if len(strings.TrimSpace(auth.whitelistIP)) == 0 {
+	if len(strings.TrimSpace(auth.cfg.AuthProxyWhitelist)) == 0 {
 		return nil
 	}
 
-	proxies := strings.Split(auth.whitelistIP, ",")
+	proxies := strings.Split(auth.cfg.AuthProxyWhitelist, ",")
 	var proxyObjs []*net.IPNet
 	for _, proxy := range proxies {
 		result, err := coerceProxyAddress(proxy)
@@ -181,7 +172,7 @@ func (auth *AuthProxy) Login(logger log.Logger, ignoreCache bool) (int64, error)
 		}
 	}
 
-	if isLDAPEnabled() {
+	if isLDAPEnabled(auth.cfg) {
 		id, err := auth.LoginViaLDAP()
 		if err != nil {
 			if errors.Is(err, ldap.ErrInvalidCredentials) {
@@ -205,7 +196,7 @@ func (auth *AuthProxy) Login(logger log.Logger, ignoreCache bool) (int64, error)
 func (auth *AuthProxy) GetUserViaCache(logger log.Logger) (int64, error) {
 	cacheKey := auth.getKey()
 	logger.Debug("Getting user ID via auth cache", "cacheKey", cacheKey)
-	userID, err := auth.store.Get(cacheKey)
+	userID, err := auth.remoteCache.Get(cacheKey)
 	if err != nil {
 		logger.Debug("Failed getting user ID via auth cache", "error", err)
 		return 0, err
@@ -219,7 +210,7 @@ func (auth *AuthProxy) GetUserViaCache(logger log.Logger) (int64, error) {
 func (auth *AuthProxy) RemoveUserFromCache(logger log.Logger) error {
 	cacheKey := auth.getKey()
 	logger.Debug("Removing user from auth cache", "cacheKey", cacheKey)
-	if err := auth.store.Delete(cacheKey); err != nil {
+	if err := auth.remoteCache.Delete(cacheKey); err != nil {
 		return err
 	}
 
@@ -229,12 +220,13 @@ func (auth *AuthProxy) RemoveUserFromCache(logger log.Logger) error {
 
 // LoginViaLDAP logs in user via LDAP request
 func (auth *AuthProxy) LoginViaLDAP() (int64, error) {
-	config, err := getLDAPConfig()
+	config, err := getLDAPConfig(auth.cfg)
 	if err != nil {
 		return 0, newError("failed to get LDAP config", err)
 	}
 
-	extUser, _, err := newLDAP(config.Servers).User(auth.header)
+	mldap := newLDAP(config.Servers)
+	extUser, _, err := mldap.User(auth.header)
 	if err != nil {
 		return 0, err
 	}
@@ -242,7 +234,7 @@ func (auth *AuthProxy) LoginViaLDAP() (int64, error) {
 	// Have to sync grafana and LDAP user during log in
 	upsert := &models.UpsertUserCommand{
 		ReqContext:    auth.ctx,
-		SignupAllowed: auth.LDAPAllowSignup,
+		SignupAllowed: auth.cfg.LDAPAllowSignup,
 		ExternalUser:  extUser,
 	}
 	if err := bus.Dispatch(upsert); err != nil {
@@ -259,7 +251,7 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 		AuthId:     auth.header,
 	}
 
-	switch auth.headerType {
+	switch auth.cfg.AuthProxyHeaderProperty {
 	case "username":
 		extUser.Login = auth.header
 
@@ -284,7 +276,7 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 
 	upsert := &models.UpsertUserCommand{
 		ReqContext:    auth.ctx,
-		SignupAllowed: setting.AuthProxyAutoSignUp,
+		SignupAllowed: auth.cfg.AuthProxyAutoSignUp,
 		ExternalUser:  extUser,
 	}
 
@@ -299,8 +291,7 @@ func (auth *AuthProxy) LoginViaHeader() (int64, error) {
 // headersIterator iterates over all non-empty supported additional headers
 func (auth *AuthProxy) headersIterator(fn func(field string, header string)) {
 	for _, field := range supportedHeaderFields {
-		h := auth.headers[field]
-
+		h := auth.cfg.AuthProxyHeaders[field]
 		if h == "" {
 			continue
 		}
@@ -311,8 +302,8 @@ func (auth *AuthProxy) headersIterator(fn func(field string, header string)) {
 	}
 }
 
-// GetSignedUser gets full signed user info.
-func (auth *AuthProxy) GetSignedUser(userID int64) (*models.SignedInUser, error) {
+// GetSignedUser gets full signed in user info.
+func (auth *AuthProxy) GetSignedInUser(userID int64) (*models.SignedInUser, error) {
 	query := &models.GetSignedInUserQuery{
 		OrgId:  auth.orgID,
 		UserId: userID,
@@ -330,14 +321,14 @@ func (auth *AuthProxy) Remember(id int64) error {
 	key := auth.getKey()
 
 	// Check if user already in cache
-	userID, _ := auth.store.Get(key)
+	userID, _ := auth.remoteCache.Get(key)
 	if userID != nil {
 		return nil
 	}
 
-	expiration := time.Duration(auth.cacheTTL) * time.Minute
+	expiration := time.Duration(auth.cfg.AuthProxySyncTTL) * time.Minute
 
-	err := auth.store.Set(key, id, expiration)
+	err := auth.remoteCache.Set(key, id, expiration)
 	if err != nil {
 		return err
 	}
@@ -353,5 +344,8 @@ func coerceProxyAddress(proxyAddr string) (*net.IPNet, error) {
 	}
 
 	_, network, err := net.ParseCIDR(proxyAddr)
-	return network, err
+	if err != nil {
+		return nil, fmt.Errorf("could not parse the network: %w", err)
+	}
+	return network, nil
 }

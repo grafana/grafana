@@ -592,8 +592,8 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
-	setting.AuthProxyEnabled = true
-	setting.AuthProxyEnableLoginToken = enableLoginToken
+	hs.Cfg.AuthProxyEnabled = true
+	hs.Cfg.AuthProxyEnableLoginToken = enableLoginToken
 
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()

@@ -57,11 +57,11 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
         .addSliderInput({
           path: 'fillOpacity',
           name: 'Fill area opacity',
-          defaultValue: 0.1,
+          defaultValue: 10,
           settings: {
             min: 0,
-            max: 1,
-            step: 0.1,
+            max: 100,
+            step: 1,
           },
           showIf: c => c.drawStyle !== DrawStyle.Points,
         })
@@ -91,10 +91,10 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           defaultValue: 5,
           settings: {
             min: 1,
-            max: 10,
+            max: 40,
             step: 1,
           },
-          showIf: c => c.showPoints !== PointVisibility.Never,
+          showIf: c => c.showPoints !== PointVisibility.Never || c.drawStyle === DrawStyle.Points,
         })
         .addRadio({
           path: 'axisPlacement',

@@ -3,24 +3,34 @@ title = "Tempo"
 description = "High volume, minimal dependency trace storage. OSS tracing solution from Grafana Labs."
 keywords = ["grafana", "tempo", "guide", "tracing"]
 aliases = ["/docs/grafana/latest/features/datasources/tempo"]
-weight = 800
+weight = 1400
 +++
 
 # Tempo data source
 
 Grafana ships with built-in support for Tempo a high volume, minimal dependency trace storage, OSS tracing solution from Grafana Labs. Add it as a data source, and you are ready to query your traces in [Explore]({{< relref "../explore/index.md" >}}).
 
-## Adding the data source
+## Add data source
+
 To access Tempo settings, click the **Configuration** (gear) icon, then click **Data Sources** > **Tempo**.
 
-| Name            | Description                                                                                                                                   |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| _Name_          | The data source name using which you will refer to the data source in panels, queries, and Explore.                                                 |
-| _Default_       | The default data source will be pre-selected for new panels.                                                                         |
-| _URL_           | The URL of the Tempo instance, e.g., `http://localhost:16686`                                                                                   |
-| _Basic Auth_    | Enable basic authentication to the Tempo data source.                                                                            |
-| _User_          | User name for basic authentication.                                                                                                   |
-| _Password_      | Password for basic authentication.                                                                                                    |
+| Name         | Description                                                                             |
+| ------------ | --------------------------------------------------------------------------------------- |
+| `Name`       | The name using which you will refer to the data source in panels, queries, and Explore. |
+| `Default`    | The default data source will be pre-selected for new panels.                            |
+| `URL`        | The URL of the Tempo instance, e.g., `http://localhost:16686`                           |
+| `Basic Auth` | Enable basic authentication to the Tempo data source.                                   |
+| `User`       | User name for basic authentication.                                                     |
+| `Password`   | Password for basic authentication.                                                      |
+
+### Trace to logs
+
+{{< docs-imagebox img="/img/docs/v74/trace-to-logs-settings.png" class="docs-image--no-shadow" caption="Screenshot of the trace to logs settings" >}}
+
+This is a configuration for the [trace to logs feature]({{< relref "../explore/index.md#trace-to-logs" >}}). Select target data source (at this moment limited to Loki data sources) and select which tags will be used in the logs query.
+
+- **Data source -** Target data source.
+- **Tags -** The tags that will be used in the Loki query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.
 
 ## Query traces
 
