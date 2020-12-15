@@ -9,6 +9,7 @@ import (
 	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
@@ -129,16 +130,19 @@ func TestDataSourceProxyCache(t *testing.T) {
 
 		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
+		json.Set("serverName", "server-name")
 
 		tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
 		So(err, ShouldBeNil)
 
 		ds := DataSource{
-			Id:             1,
-			Url:            "http://k8s:8001",
-			Type:           "Kubernetes",
-			JsonData:       json,
-			SecureJsonData: map[string][]byte{"tlsCACert": tlsCaCert},
+			Id:       1,
+			Url:      "http://k8s:8001",
+			Type:     "Kubernetes",
+			JsonData: json,
+			SecureJsonData: map[string][]byte{
+				"tlsCACert": tlsCaCert,
+			},
 		}
 
 		tr, err := ds.GetHttpTransport()
@@ -149,6 +153,9 @@ func TestDataSourceProxyCache(t *testing.T) {
 		})
 		Convey("Should have a TLS CA configured", func() {
 			So(len(tr.transport.TLSClientConfig.RootCAs.Subjects()), ShouldEqual, 1)
+		})
+		Convey("Should include a server name if one is provided", func() {
+			So(tr.transport.TLSClientConfig.ServerName, ShouldEqual, "server-name")
 		})
 	})
 
@@ -217,15 +224,16 @@ func TestDataSourceProxyCache(t *testing.T) {
 			// 2. Get HTTP transport from datasource which uses the test server as backend
 			ds.Url = backend.URL
 			transport, err := ds.GetHttpTransport()
-			if err != nil {
-				log.Fatal(err.Error())
-			}
+			So(err, ShouldBeNil)
 
 			// 3. Send test request which should have the Authorization header set
 			req := httptest.NewRequest("GET", backend.URL+"/test-headers", nil)
 			res, err := transport.RoundTrip(req)
 			So(err, ShouldBeNil)
-			defer res.Body.Close()
+			t.Cleanup(func() {
+				err := res.Body.Close()
+				assert.NoError(t, err)
+			})
 			body, err := ioutil.ReadAll(res.Body)
 			So(err, ShouldBeNil)
 			bodyStr := string(body)

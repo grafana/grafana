@@ -110,6 +110,8 @@ If that is the case, then use the following format for headings:
 - Assume all graphics will be exclusively viewed on the web.
 - Maximum image size is 3840px X 2160px.
 - Screenshots should be readable, but not too large.
+- _Do not_ use image shortcodes. Follow the guidance in the [Grafana markdown guide](https://github.com/grafana/grafana/blob/master/contribute/style-guides/documentation-markdown-guide.md#images).
+- Markdown image links are preferred. Only use the HTML image links if you need to style the image in ways unsupported in Markdown.
 
 ### Capitalization
 
@@ -283,3 +285,8 @@ When referencing the Prometheus data source exporters, always use "node_exporter
 
 **Correct:** node_exporter, windows_exporter
 **Incorrect:** Node Exporter, node exporter, Windows Exporter, Windows exporter, windows exporter.
+
+### MS SQL Server
+Always use "MS SQL" when referring to MS SQL Server application. Do not use "MSSQL" unless you are specifically referring to a UI element that uses it.
+
+Incorrect UI spellings will be corrected in a later version of Grafana.

@@ -35,8 +35,12 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 			sc.fakeReqWithParams("GET", "/dashboard/db/dash?orgId=1&panelId=2", map[string]string{}).exec()
 
 			assert.Equal(t, 301, sc.resp.Code)
+			// nolint:bodyclose
 			resp := sc.resp.Result()
-			resp.Body.Close()
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				assert.NoError(t, err)
+			})
 			redirectURL, err := resp.Location()
 			require.NoError(t, err)
 			assert.Equal(t, models.GetDashboardUrl(fakeDash.Uid, fakeDash.Slug), redirectURL.Path)
@@ -54,8 +58,12 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 			sc.fakeReqWithParams("GET", "/dashboard-solo/db/dash?orgId=1&panelId=2", map[string]string{}).exec()
 
 			assert.Equal(t, 301, sc.resp.Code)
+			// nolint:bodyclose
 			resp := sc.resp.Result()
-			resp.Body.Close()
+			t.Cleanup(func() {
+				err := resp.Body.Close()
+				assert.NoError(t, err)
+			})
 			redirectURL, err := resp.Location()
 			require.NoError(t, err)
 			expectedURL := models.GetDashboardUrl(fakeDash.Uid, fakeDash.Slug)
@@ -71,8 +79,12 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 		sc.fakeReqWithParams("GET", "/d/asd/dash?orgId=1&panelId=12&fullscreen&edit", map[string]string{}).exec()
 
 		assert.Equal(t, 301, sc.resp.Code)
+		// nolint:bodyclose
 		resp := sc.resp.Result()
-		resp.Body.Close()
+		t.Cleanup(func() {
+			err := resp.Body.Close()
+			assert.NoError(t, err)
+		})
 		redirectURL, err := resp.Location()
 		require.NoError(t, err)
 		assert.Equal(t, "/d/asd/d/asd/dash?editPanel=12&orgId=1", redirectURL.String())

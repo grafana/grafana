@@ -1,3 +1,4 @@
+import { defaultBucketAgg } from 'app/plugins/datasource/elasticsearch/query_def';
 import { reducerTester } from 'test/core/redux/reducerTester';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
 import { BucketAggregation, DateHistogram } from '../aggregations';
@@ -10,6 +11,7 @@ import {
   removeBucketAggregation,
 } from './actions';
 import { reducer } from './reducer';
+import { initQuery } from '../../state';
 
 describe('Bucket Aggregations Reducer', () => {
   it('Should correctly add new aggregations', () => {
@@ -139,5 +141,12 @@ describe('Bucket Aggregations Reducer', () => {
         changeBucketAggregationSetting(firstAggregation, 'min_doc_count', expectedSettings.min_doc_count!)
       )
       .thenStateShouldEqual([{ ...firstAggregation, settings: expectedSettings }, secondAggregation]);
+  });
+
+  it('Should correctly initialize first Bucket Aggregation', () => {
+    reducerTester()
+      .givenReducer(reducer, [])
+      .whenActionIsDispatched(initQuery())
+      .thenStateShouldEqual([defaultBucketAgg('2')]);
   });
 });

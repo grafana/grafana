@@ -30,7 +30,11 @@ interface Coords {
   y: number;
 }
 
-// Exposes API for Graph cursor position
+/**
+ * Exposes API for Graph cursor position
+ *
+ * @alpha
+ */
 export const CursorPlugin: React.FC<CursorPluginProps> = ({ id, children, capture = 'mousemove', lock = false }) => {
   const pluginId = `CursorPlugin:${id}`;
   const plotCanvas = useRef<HTMLDivElement>(null);

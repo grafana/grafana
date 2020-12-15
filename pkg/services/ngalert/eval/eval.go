@@ -96,11 +96,12 @@ func (c *Condition) Execute(ctx AlertExecCtx, fromStr, toStr string) (*Execution
 	result := ExecutionResults{}
 	if !c.IsValid() {
 		return nil, fmt.Errorf("invalid conditions")
+		// TODO: Things probably
 	}
 
 	queryDataReq := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			// TODO: Things probably
+			OrgID: ctx.SignedInUser.OrgId,
 		},
 		Queries: []backend.DataQuery{},
 	}

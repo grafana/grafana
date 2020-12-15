@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import {
   compareDataFrameStructures,
   DataFrame,
@@ -8,11 +8,12 @@ import {
   formattedValueToString,
   getFieldColorModeForField,
   getFieldDisplayName,
+  TimeRange,
 } from '@grafana/data';
 import { alignDataFrames } from './utils';
 import { UPlotChart } from '../uPlot/Plot';
 import { PlotProps } from '../uPlot/types';
-import { AxisPlacement, GraphFieldConfig, DrawStyle, PointMode } from '../uPlot/config';
+import { AxisPlacement, DrawStyle, GraphFieldConfig, PointVisibility } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
@@ -35,7 +36,7 @@ export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
 
 const defaultConfig: GraphFieldConfig = {
   drawStyle: DrawStyle.Line,
-  points: PointMode.Auto,
+  showPoints: PointVisibility.Auto,
   axisPlacement: AxisPlacement.Auto,
 };
 
@@ -58,10 +59,16 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
   const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
     if (a && b) {
-      return compareDataFrameStructures(a, b, ['min', 'max']);
+      return compareDataFrameStructures(a, b);
     }
     return false;
   }, []);
+
+  // reference change will not triger re-render
+  const currentTimeRange = useRef<TimeRange>(timeRange);
+  useLayoutEffect(() => {
+    currentTimeRange.current = timeRange;
+  }, [timeRange]);
 
   const configRev = useRevision(alignedFrame, compareFrames);
 
@@ -78,6 +85,10 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       builder.addScale({
         scaleKey: 'x',
         isTime: true,
+        range: () => {
+          const r = currentTimeRange.current!;
+          return [r.from.valueOf(), r.to.valueOf()];
+        },
       });
       builder.addAxis({
         scaleKey: 'x',
@@ -118,7 +129,14 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
         // The builder will manage unique scaleKeys and combine where appropriate
-        builder.addScale({ scaleKey, min: field.config.min, max: field.config.max });
+        builder.addScale({
+          scaleKey,
+          distribution: customConfig.scaleDistribution?.type,
+          log: customConfig.scaleDistribution?.log,
+          min: field.config.min,
+          max: field.config.max,
+        });
+
         builder.addAxis({
           scaleKey,
           label: customConfig.axisLabel,
@@ -134,7 +152,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       const colorMode = getFieldColorModeForField(field);
       const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
-      const pointsMode = customConfig.drawStyle === DrawStyle.Points ? PointMode.Always : customConfig.points;
+      const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
 
       builder.addSeries({
         scaleKey,
@@ -142,7 +160,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         lineColor: seriesColor,
         lineWidth: customConfig.lineWidth,
         lineInterpolation: customConfig.lineInterpolation,
-        points: pointsMode,
+        showPoints,
         pointSize: customConfig.pointSize,
         pointColor: seriesColor,
         fillOpacity: customConfig.fillOpacity,

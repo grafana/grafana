@@ -6,7 +6,7 @@ import { DataFrame } from '../types/dataFrame';
  *
  * To compare multiple frames use:
  * ```
- * areArraysEqual(a, b, framesHaveSameStructure);
+ * compareArrayValues(a, b, framesHaveSameStructure);
  * ```
  * NOTE: this does a shallow check on the FieldConfig properties, when using the query
  * editor, this should be sufficient, however if applicaitons are mutating properties

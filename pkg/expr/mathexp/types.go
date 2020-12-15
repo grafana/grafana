@@ -30,7 +30,6 @@ type Value interface {
 	Value() interface{}
 	GetLabels() data.Labels
 	SetLabels(data.Labels)
-	GetName() string
 	AsDataFrame() *data.Frame
 }
 
@@ -49,23 +48,21 @@ func (s Scalar) GetLabels() data.Labels { return nil }
 
 func (s Scalar) SetLabels(ls data.Labels) {}
 
-func (s Scalar) GetName() string { return s.Frame.Name }
-
 // AsDataFrame returns the underlying *data.Frame.
 func (s Scalar) AsDataFrame() *data.Frame { return s.Frame }
 
 // NewScalar creates a Scalar holding value f.
-func NewScalar(f *float64) Scalar {
+func NewScalar(name string, f *float64) Scalar {
 	frame := data.NewFrame("",
-		data.NewField("Scalar", nil, []*float64{f}),
+		data.NewField(name, nil, []*float64{f}),
 	)
 	return Scalar{frame}
 }
 
 // NewScalarResults creates a Results holding a single Scalar
-func NewScalarResults(f *float64) Results {
+func NewScalarResults(name string, f *float64) Results {
 	return Results{
-		Values: []Value{NewScalar(f)},
+		Values: []Value{NewScalar(name, f)},
 	}
 }
 
@@ -86,8 +83,6 @@ func (n Number) Value() interface{} { return &n }
 func (n Number) GetLabels() data.Labels { return n.Frame.Fields[0].Labels }
 
 func (n Number) SetLabels(ls data.Labels) { n.Frame.Fields[0].Labels = ls }
-
-func (n Number) GetName() string { return n.Frame.Name }
 
 // AsDataFrame returns the underlying *data.Frame.
 func (n Number) AsDataFrame() *data.Frame { return n.Frame }

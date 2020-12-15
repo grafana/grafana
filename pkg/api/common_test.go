@@ -8,9 +8,14 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/macaron.v1"
 )
@@ -141,20 +146,68 @@ func (sc *scenarioContext) exec() {
 type scenarioFunc func(c *scenarioContext)
 type handlerFunc func(c *models.ReqContext) Response
 
+func getContextHandler(t *testing.T) *contexthandler.ContextHandler {
+	t.Helper()
+
+	sqlStore := sqlstore.InitTestDB(t)
+	remoteCacheSvc := &remotecache.RemoteCache{}
+	cfg := setting.NewCfg()
+	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
+		Name: "database",
+	}
+	userAuthTokenSvc := auth.NewFakeUserAuthTokenService()
+	renderSvc := &fakeRenderService{}
+	ctxHdlr := &contexthandler.ContextHandler{}
+
+	err := registry.BuildServiceGraph([]interface{}{cfg}, []*registry.Descriptor{
+		{
+			Name:     sqlstore.ServiceName,
+			Instance: sqlStore,
+		},
+		{
+			Name:     remotecache.ServiceName,
+			Instance: remoteCacheSvc,
+		},
+		{
+			Name:     auth.ServiceName,
+			Instance: userAuthTokenSvc,
+		},
+		{
+			Name:     rendering.ServiceName,
+			Instance: renderSvc,
+		},
+		{
+			Name:     contexthandler.ServiceName,
+			Instance: ctxHdlr,
+		},
+	})
+	require.NoError(t, err)
+
+	return ctxHdlr
+}
+
 func setupScenarioContext(t *testing.T, url string) *scenarioContext {
 	sc := &scenarioContext{
 		url: url,
 		t:   t,
 	}
-	viewsPath, _ := filepath.Abs("../../public/views")
+	viewsPath, err := filepath.Abs("../../public/views")
+	require.NoError(t, err)
 
 	sc.m = macaron.New()
 	sc.m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory: viewsPath,
 		Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 	}))
-
-	sc.m.Use(middleware.GetContextHandler(nil, nil, nil))
+	sc.m.Use(getContextHandler(t).Middleware)
 
 	return sc
+}
+
+type fakeRenderService struct {
+	rendering.Service
+}
+
+func (s *fakeRenderService) Init() error {
+	return nil
 }

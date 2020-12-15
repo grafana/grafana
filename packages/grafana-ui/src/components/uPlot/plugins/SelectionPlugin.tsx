@@ -30,6 +30,9 @@ interface SelectionPluginProps extends PlotPluginProps {
   children?: (api: SelectionPluginAPI) => JSX.Element;
 }
 
+/**
+ * @alpha
+ */
 export const SelectionPlugin: React.FC<SelectionPluginProps> = ({ onSelect, onDismiss, lazy, id, children }) => {
   const pluginId = `SelectionPlugin:${id}`;
   const plotCtx = usePlotContext();
@@ -64,6 +67,10 @@ export const SelectionPlugin: React.FC<SelectionPluginProps> = ({ onSelect, onDi
               width: u.select.width,
             },
           });
+
+          // manually hide selected region (since cursor.drag.setScale = false)
+          /* @ts-ignore */
+          u.setSelect({ left: 0, width: 0 }, false);
         },
       },
     });

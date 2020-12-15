@@ -3,7 +3,7 @@
 import { UPlotConfigBuilder } from './UPlotConfigBuilder';
 import { GrafanaTheme } from '@grafana/data';
 import { expect } from '../../../../../../public/test/lib/common';
-import { AxisPlacement, DrawStyle, PointMode } from '../config';
+import { AxisPlacement, DrawStyle, PointVisibility, ScaleDistribution } from '../config';
 
 describe('UPlotConfigBuilder', () => {
   describe('scales config', () => {
@@ -20,12 +20,23 @@ describe('UPlotConfigBuilder', () => {
       expect(builder.getConfig()).toMatchInlineSnapshot(`
         Object {
           "axes": Array [],
+          "cursor": Object {
+            "drag": Object {
+              "setScale": false,
+            },
+          },
           "scales": Object {
             "scale-x": Object {
+              "auto": false,
+              "range": [Function],
               "time": true,
             },
             "scale-y": Object {
+              "auto": true,
+              "distr": 1,
+              "log": undefined,
               "range": [Function],
+              "time": false,
             },
           },
           "series": Array [
@@ -47,6 +58,108 @@ describe('UPlotConfigBuilder', () => {
       });
 
       expect(Object.keys(builder.getConfig().scales!)).toHaveLength(1);
+    });
+
+    describe('scale distribution', () => {
+      it('allows linear scale configuration', () => {
+        const builder = new UPlotConfigBuilder();
+
+        builder.addScale({
+          scaleKey: 'scale-y',
+          isTime: false,
+          distribution: ScaleDistribution.Linear,
+        });
+        expect(builder.getConfig()).toMatchInlineSnapshot(`
+          Object {
+            "axes": Array [],
+            "cursor": Object {
+              "drag": Object {
+                "setScale": false,
+              },
+            },
+            "scales": Object {
+              "scale-y": Object {
+                "auto": true,
+                "distr": 1,
+                "log": undefined,
+                "range": [Function],
+                "time": false,
+              },
+            },
+            "series": Array [
+              Object {},
+            ],
+          }
+        `);
+      });
+      describe('logarithmic scale', () => {
+        it('defaults to log2', () => {
+          const builder = new UPlotConfigBuilder();
+
+          builder.addScale({
+            scaleKey: 'scale-y',
+            isTime: false,
+            distribution: ScaleDistribution.Linear,
+          });
+
+          expect(builder.getConfig()).toMatchInlineSnapshot(`
+            Object {
+              "axes": Array [],
+              "cursor": Object {
+                "drag": Object {
+                  "setScale": false,
+                },
+              },
+              "scales": Object {
+                "scale-y": Object {
+                  "auto": true,
+                  "distr": 1,
+                  "log": undefined,
+                  "range": [Function],
+                  "time": false,
+                },
+              },
+              "series": Array [
+                Object {},
+              ],
+            }
+          `);
+        });
+
+        it('allows custom log configuration', () => {
+          const builder = new UPlotConfigBuilder();
+
+          builder.addScale({
+            scaleKey: 'scale-y',
+            isTime: false,
+            distribution: ScaleDistribution.Linear,
+            log: 10,
+          });
+
+          expect(builder.getConfig()).toMatchInlineSnapshot(`
+            Object {
+              "axes": Array [],
+              "cursor": Object {
+                "drag": Object {
+                  "setScale": false,
+                },
+              },
+              "scales": Object {
+                "scale-y": Object {
+                  "auto": true,
+                  "distr": 1,
+                  "log": undefined,
+                  "range": [Function],
+                  "time": false,
+                },
+              },
+              "series": Array [
+                Object {},
+              ],
+            }
+          `);
+        });
+      });
     });
   });
 
@@ -93,6 +206,11 @@ describe('UPlotConfigBuilder', () => {
             "values": Array [],
           },
         ],
+        "cursor": Object {
+          "drag": Object {
+            "setScale": false,
+          },
+        },
         "scales": Object {},
         "series": Array [
           Object {},
@@ -124,8 +242,8 @@ describe('UPlotConfigBuilder', () => {
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
       fillColor: '#ff0000',
-      fillOpacity: 0.5,
-      points: PointMode.Auto,
+      fillOpacity: 50,
+      showPoints: PointVisibility.Auto,
       pointSize: 5,
       pointColor: '#00ff00',
       lineColor: '#0000ff',
@@ -136,6 +254,11 @@ describe('UPlotConfigBuilder', () => {
     expect(builder.getConfig()).toMatchInlineSnapshot(`
       Object {
         "axes": Array [],
+        "cursor": Object {
+          "drag": Object {
+            "setScale": false,
+          },
+        },
         "scales": Object {},
         "series": Array [
           Object {},
