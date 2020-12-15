@@ -136,7 +136,9 @@ func newNotFound() *Avatar {
 	// variable.
 	// nolint:gosec
 	path := filepath.Join(setting.StaticRootPath, "img", "user_profile.png")
-
+	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
+	// variable.
+	// nolint:gosec
 	if data, err := ioutil.ReadFile(path); err != nil {
 		log.Errorf(3, "Failed to read user_profile.png, %v", path)
 	} else {
@@ -212,7 +214,10 @@ func (a *thunderTask) fetch() error {
 	a.Avatar.timestamp = time.Now()
 
 	log.Debugf("avatar.fetch(fetch new avatar): %s", a.Url)
-	req, _ := http.NewRequest("GET", a.Url, nil)
+	req, err := http.NewRequest("GET", a.Url, nil)
+	if err != nil {
+		return err
+	}
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/jpeg,image/png,*/*;q=0.8")
 	req.Header.Set("Accept-Encoding", "deflate,sdch")
 	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.8")
@@ -221,10 +226,13 @@ func (a *thunderTask) fetch() error {
 	resp, err := client.Do(req)
 	if err != nil {
 		a.Avatar.notFound = true
-		return fmt.Errorf("gravatar unreachable, %v", err)
+		return fmt.Errorf("gravatar unreachable: %w", err)
 	}
-
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	if resp.StatusCode != 200 {
 		a.Avatar.notFound = true

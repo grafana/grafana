@@ -70,9 +70,17 @@ func (az *AzureBlobUploader) Upload(ctx context.Context, imageDiskPath string) (
 	if err != nil {
 		return "", err
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	if resp.StatusCode > 400 && resp.StatusCode < 600 {
-		body, _ := ioutil.ReadAll(io.LimitReader(resp.Body, 1<<20))
+		body, err := ioutil.ReadAll(io.LimitReader(resp.Body, 1<<20))
+		if err != nil {
+			return "", err
+		}
 		aerr := &Error{
 			Code:   resp.StatusCode,
 			Status: resp.Status,
@@ -80,7 +88,6 @@ func (az *AzureBlobUploader) Upload(ctx context.Context, imageDiskPath string) (
 			Header: resp.Header,
 		}
 		aerr.parseXML()
-		resp.Body.Close()
 		return "", aerr
 	}
 
