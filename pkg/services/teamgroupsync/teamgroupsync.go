@@ -1,3 +1,4 @@
+// Package teamgroupsync provides the interface for the Grafana Enterprise team sync feature.
 package teamgroupsync
 
 import (
