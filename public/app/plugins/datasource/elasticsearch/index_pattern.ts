@@ -33,23 +33,20 @@ export class IndexPattern {
   }
 
   getIndexList(from?: DateTime, to?: DateTime) {
+    // When no `from` or `to` is provided, we request data from 7 subsequent/previous indices
+    // for the provided index pattern.
+    // This is useful when requesting log context where the only time data we have is the log
+    // timestamp.
+    const indexOffset = 7;
     if (!this.interval) {
       return this.pattern;
     }
 
     const intervalInfo = intervalMap[this.interval];
-
-    if (!from) {
-      from = dateTime(to).add(-7, intervalInfo.amount);
-    }
-    if (!to) {
-      to = dateTime(from).add(7, intervalInfo.amount);
-    }
-
-    const start = dateTime(from)
+    const start = dateTime(from || dateTime(to).add(-indexOffset, intervalInfo.amount))
       .utc()
       .startOf(intervalInfo.startOf);
-    const endEpoch = dateTime(to)
+    const endEpoch = dateTime(to || dateTime(from).add(indexOffset, intervalInfo.amount))
       .utc()
       .startOf(intervalInfo.startOf)
       .valueOf();
