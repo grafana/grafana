@@ -341,11 +341,6 @@ export interface QueryEditorProps<
   history?: HistoryItem[];
 }
 
-export enum DataSourceStatus {
-  Connected,
-  Disconnected,
-}
-
 // TODO: not really needed but used as type in some data sources and in DataQueryRequest
 export enum ExploreMode {
   Logs = 'Logs',
