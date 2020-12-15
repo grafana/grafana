@@ -192,14 +192,12 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         const ref = getDataFrameFieldIndex ? getDataFrameFieldIndex(i) : undefined;
 
         legendItems.push({
-          seriesIndex: ref,
+          fieldIndex: ref,
           color: seriesColor,
           label: getFieldDisplayName(field, alignedFrame),
           yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
         });
       }
-
-      seriesIdx++;
     }
 
     legendItemsRef.current = legendItems;

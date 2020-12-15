@@ -7,4 +7,3 @@ export * from './dimensions';
 export * from './ArrowDataFrame';
 export * from './ArrayDataFrame';
 export * from './frameComparisons';
-export * from './dataFrameFieldIndex';

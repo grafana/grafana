@@ -71,6 +71,80 @@ describe('hideSeriesConfigFactory', () => {
     });
   });
 
+  it('should remove override if appending only the existing series override', () => {
+    const event: GraphNGLegendEvent = {
+      mode: GraphNGLegendEventMode.appendToSelection,
+      fieldIndex: {
+        frameIndex: 0,
+        fieldIndex: 1,
+      },
+    };
+
+    const existingConfig: FieldConfigSource = {
+      defaults: {},
+      overrides: [createOverride(['temperature'])],
+    };
+
+    const data: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'temperature', type: FieldType.number, values: [1, 3, 5, 7] },
+        ],
+      }),
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'humidity', type: FieldType.number, values: [1, 3, 5, 7] },
+        ],
+      }),
+    ];
+
+    const config = hideSeriesConfigFactory(event, existingConfig, data);
+
+    expect(config).toEqual({
+      defaults: {},
+      overrides: [],
+    });
+  });
+
+  it('should create config override that removes series if appending existing field', () => {
+    const event: GraphNGLegendEvent = {
+      mode: GraphNGLegendEventMode.appendToSelection,
+      fieldIndex: {
+        frameIndex: 0,
+        fieldIndex: 1,
+      },
+    };
+
+    const existingConfig: FieldConfigSource = {
+      defaults: {},
+      overrides: [createOverride(['temperature', 'humidity'])],
+    };
+
+    const data: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'temperature', type: FieldType.number, values: [1, 3, 5, 7] },
+        ],
+      }),
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'humidity', type: FieldType.number, values: [1, 3, 5, 7] },
+        ],
+      }),
+    ];
+
+    const config = hideSeriesConfigFactory(event, existingConfig, data);
+
+    expect(config).toEqual({
+      defaults: {},
+      overrides: [createOverride(['humidity'])],
+    });
+  });
+
   it('should create config override replacing existing series', () => {
     const event: GraphNGLegendEvent = {
       mode: GraphNGLegendEventMode.toggleSelection,

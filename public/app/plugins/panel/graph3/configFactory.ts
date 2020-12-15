@@ -43,7 +43,6 @@ export const hideSeriesConfigFactory = (
 
   if (mode === GraphNGLegendEventMode.toggleSelection) {
     const existing = matchersInConfig(current);
-
     if (existing.find(name => name === displayName)) {
       return {
         ...fieldConfig,
@@ -60,6 +59,13 @@ export const hideSeriesConfigFactory = (
   }
 
   const override = createExtendedOverride(current, displayName);
+
+  if (!override) {
+    return {
+      ...fieldConfig,
+      overrides: overridesCopy,
+    };
+  }
 
   return {
     ...fieldConfig,
@@ -91,7 +97,10 @@ const createFreshOverride = (displayName: string): SystemConfigOverrideRule => {
   };
 };
 
-const createExtendedOverride = (current: SystemConfigOverrideRule, displayName: string): SystemConfigOverrideRule => {
+const createExtendedOverride = (
+  current: SystemConfigOverrideRule,
+  displayName: string
+): SystemConfigOverrideRule | undefined => {
   const property = current.properties.find(p => p.id === 'custom.hideFrom') ?? {
     id: 'custom.hideFrom',
     value: {
@@ -108,6 +117,10 @@ const createExtendedOverride = (current: SystemConfigOverrideRule, displayName: 
     existing.push(displayName);
   } else {
     existing.splice(index, 1);
+  }
+
+  if (existing.length === 0) {
+    return;
   }
 
   return {
