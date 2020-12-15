@@ -208,7 +208,7 @@ const LegacyForms = {
 export { LegacyForms, LegacyInputStatus };
 
 // WIP, need renames and exports cleanup
-export { GraphFieldConfig, graphFieldOptions } from './uPlot/config';
+export * from './uPlot/config';
 export { UPlotChart } from './uPlot/Plot';
 export * from './uPlot/geometries';
 export * from './uPlot/plugins';

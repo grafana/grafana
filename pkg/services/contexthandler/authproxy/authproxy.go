@@ -141,25 +141,29 @@ func (auth *AuthProxy) IsAllowedIP() error {
 	))
 }
 
-func HashCacheKey(key string) string {
+func HashCacheKey(key string) (string, error) {
 	hasher := fnv.New128a()
-	// according to the documentation, Hash.Write cannot error, but linter is complaining
-	hasher.Write([]byte(key)) // nolint: errcheck
-	return hex.EncodeToString(hasher.Sum(nil))
+	if _, err := hasher.Write([]byte(key)); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(hasher.Sum(nil)), nil
 }
 
 // getKey forms a key for the cache based on the headers received as part of the authentication flow.
 // Our configuration supports multiple headers. The main header contains the email or username.
 // And the additional ones that allow us to specify extra attributes: Name, Email or Groups.
-func (auth *AuthProxy) getKey() string {
+func (auth *AuthProxy) getKey() (string, error) {
 	key := strings.TrimSpace(auth.header) // start the key with the main header
 
 	auth.headersIterator(func(_, header string) {
 		key = strings.Join([]string{key, header}, "-") // compose the key with any additional headers
 	})
 
-	hashedKey := HashCacheKey(key)
-	return fmt.Sprintf(CachePrefix, hashedKey)
+	hashedKey, err := HashCacheKey(key)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(CachePrefix, hashedKey), nil
 }
 
 // Login logs in user ID by whatever means possible.
@@ -194,7 +198,10 @@ func (auth *AuthProxy) Login(logger log.Logger, ignoreCache bool) (int64, error)
 
 // GetUserViaCache gets user ID from cache.
 func (auth *AuthProxy) GetUserViaCache(logger log.Logger) (int64, error) {
-	cacheKey := auth.getKey()
+	cacheKey, err := auth.getKey()
+	if err != nil {
+		return 0, err
+	}
 	logger.Debug("Getting user ID via auth cache", "cacheKey", cacheKey)
 	userID, err := auth.remoteCache.Get(cacheKey)
 	if err != nil {
@@ -208,7 +215,10 @@ func (auth *AuthProxy) GetUserViaCache(logger log.Logger) (int64, error) {
 
 // RemoveUserFromCache removes user from cache.
 func (auth *AuthProxy) RemoveUserFromCache(logger log.Logger) error {
-	cacheKey := auth.getKey()
+	cacheKey, err := auth.getKey()
+	if err != nil {
+		return err
+	}
 	logger.Debug("Removing user from auth cache", "cacheKey", cacheKey)
 	if err := auth.remoteCache.Delete(cacheKey); err != nil {
 		return err
@@ -318,18 +328,20 @@ func (auth *AuthProxy) GetSignedInUser(userID int64) (*models.SignedInUser, erro
 
 // Remember user in cache
 func (auth *AuthProxy) Remember(id int64) error {
-	key := auth.getKey()
+	key, err := auth.getKey()
+	if err != nil {
+		return err
+	}
 
 	// Check if user already in cache
-	userID, _ := auth.remoteCache.Get(key)
-	if userID != nil {
+	userID, err := auth.remoteCache.Get(key)
+	if err == nil && userID != nil {
 		return nil
 	}
 
 	expiration := time.Duration(auth.cfg.AuthProxySyncTTL) * time.Minute
 
-	err := auth.remoteCache.Set(key, id, expiration)
-	if err != nil {
+	if err := auth.remoteCache.Set(key, id, expiration); err != nil {
 		return err
 	}
 
