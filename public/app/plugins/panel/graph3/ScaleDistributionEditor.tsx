@@ -22,14 +22,6 @@ const LOG_DISTRIBUTION_OPTIONS: Array<SelectableValue<number>> = [
     label: '10',
     value: 10,
   },
-  {
-    label: '32 (not supported)',
-    value: 32,
-  },
-  {
-    label: '1024 (not supported)',
-    value: 1024,
-  },
 ];
 
 export const ScaleDistributionEditor: React.FC<FieldOverrideEditorProps<ScaleDistributionConfig, any>> = ({
