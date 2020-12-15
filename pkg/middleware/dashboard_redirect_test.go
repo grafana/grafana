@@ -60,10 +60,10 @@ func TestMiddlewareDashboardRedirect(t *testing.T) {
 			assert.Equal(t, 301, sc.resp.Code)
 			// nolint:bodyclose
 			resp := sc.resp.Result()
-			defer func() {
+			t.Cleanup(func() {
 				err := resp.Body.Close()
 				assert.NoError(t, err)
-			}()
+			})
 			redirectURL, err := resp.Location()
 			require.NoError(t, err)
 			expectedURL := models.GetDashboardUrl(fakeDash.Uid, fakeDash.Slug)

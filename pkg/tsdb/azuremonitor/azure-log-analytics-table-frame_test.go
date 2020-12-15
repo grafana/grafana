@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xorcare/pointer"
 )
@@ -152,6 +153,7 @@ func TestLogTableToFrame(t *testing.T) {
 }
 
 func loadLogAnalyticsTestFileWithNumber(t *testing.T, name string) AzureLogAnalyticsResponse {
+	t.Helper()
 	path := filepath.Join("testdata", name)
 	// Ignore gosec warning G304 since it's a test
 	// nolint:gosec
@@ -159,7 +161,7 @@ func loadLogAnalyticsTestFileWithNumber(t *testing.T, name string) AzureLogAnaly
 	require.NoError(t, err)
 	defer func() {
 		err := f.Close()
-		require.NoError(t, err)
+		assert.NoError(t, err)
 	}()
 
 	d := json.NewDecoder(f)

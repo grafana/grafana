@@ -82,7 +82,6 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	if err != nil {
 		return nil, err
 	}
-
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
 			glog.Warn("Failed to close response body", "err", err)
