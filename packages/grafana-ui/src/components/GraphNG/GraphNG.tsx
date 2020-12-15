@@ -157,14 +157,13 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       builder.addSeries({
         scaleKey,
         drawStyle: customConfig.drawStyle!,
-        lineColor: seriesColor,
+        lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,
         lineInterpolation: customConfig.lineInterpolation,
         showPoints,
         pointSize: customConfig.pointSize,
-        pointColor: seriesColor,
+        pointColor: customConfig.pointColor ?? seriesColor,
         fillOpacity: customConfig.fillOpacity,
-        fillColor: seriesColor,
         spanNulls: customConfig.spanNulls || false,
       });
 
