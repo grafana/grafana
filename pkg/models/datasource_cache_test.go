@@ -9,6 +9,7 @@ import (
 	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/securejsondata"
@@ -223,15 +224,16 @@ func TestDataSourceProxyCache(t *testing.T) {
 			// 2. Get HTTP transport from datasource which uses the test server as backend
 			ds.Url = backend.URL
 			transport, err := ds.GetHttpTransport()
-			if err != nil {
-				log.Fatal(err.Error())
-			}
+			So(err, ShouldBeNil)
 
 			// 3. Send test request which should have the Authorization header set
 			req := httptest.NewRequest("GET", backend.URL+"/test-headers", nil)
 			res, err := transport.RoundTrip(req)
 			So(err, ShouldBeNil)
-			defer res.Body.Close()
+			t.Cleanup(func() {
+				err := res.Body.Close()
+				assert.NoError(t, err)
+			})
 			body, err := ioutil.ReadAll(res.Body)
 			So(err, ShouldBeNil)
 			bodyStr := string(body)

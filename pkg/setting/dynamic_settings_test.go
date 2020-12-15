@@ -15,8 +15,12 @@ func TestDynamicSettingsSupport_Override(t *testing.T) {
 	keyName := "bar"
 	expected := "dynamic value"
 
-	os.Setenv(envKey, expected)
-	defer func() { os.Unsetenv(envKey) }()
+	err := os.Setenv(envKey, expected)
+	require.NoError(t, err)
+	defer func() {
+		err := os.Unsetenv(envKey)
+		require.NoError(t, err)
+	}()
 
 	value := cfg.SectionWithEnvOverrides(sectionName).Key(keyName).MustString("default value")
 	require.Equal(t, expected, value)
