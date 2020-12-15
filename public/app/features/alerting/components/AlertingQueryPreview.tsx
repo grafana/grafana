@@ -40,11 +40,7 @@ export const AlertingQueryPreview: FC<Props> = ({ queryRunner }) => {
         })}
       </TabsBar>
       <TabContent className={styles.tabContent}>
-        {activeTab === Tabs.Query && data && (
-          <div>
-            <Table data={data.series[0]} width={1200} height={300} />
-          </div>
-        )}
+        {activeTab === Tabs.Query && data && <div></div>}
         {activeTab === Tabs.Instance && <div>Instance something something dark side</div>}
       </TabContent>
     </div>

@@ -88,24 +88,24 @@ export function loadNotificationChannel(id: number): ThunkResult<void> {
 
 export function createAlertDefinition(): ThunkResult<void> {
   return async (dispatch, getStore) => {
+    const queryOptions = getStore().alertDefinition.queryOptions;
     const alertDefinition: AlertDefinition = {
       ...getStore().alertDefinition.alertDefinition,
       condition: {
         ref: 'A',
-        queriesAndExpressions: [
-          {
-            model: {
-              expression: '2 + 2 > 1',
-              type: 'math',
-              datasource: '__expr__',
-            },
-            relativeTimeRange: {
-              From: 500,
-              To: 0,
-            },
-            refId: 'A',
+        queriesAndExpressions: queryOptions.queries.map(query => ({
+          model: {
+            expression: query.expr,
+            type: query.queryType,
+            datasource: queryOptions.dataSource.name,
+            datasourceId: queryOptions.dataSource.uid,
           },
-        ],
+          refId: query.refId,
+          relativeTimeRange: {
+            From: 500,
+            To: 0,
+          },
+        })),
       },
     };
     await getBackendSrv().post(`/api/alert-definitions`, alertDefinition);
