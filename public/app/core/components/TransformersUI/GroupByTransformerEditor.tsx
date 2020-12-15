@@ -1,20 +1,20 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { css, cx } from 'emotion';
 import {
   DataTransformerID,
+  ReducerID,
+  SelectableValue,
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
-  ReducerID,
-  SelectableValue,
 } from '@grafana/data';
 import { getAllFieldNamesFromDataFrames } from './OrganizeFieldsTransformerEditor';
 import { Select, StatsPicker, stylesFactory } from '@grafana/ui';
 
 import {
-  GroupByTransformerOptions,
-  GroupByOperationID,
   GroupByFieldOptions,
+  GroupByOperationID,
+  GroupByTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/groupBy';
 
 interface FieldProps {
@@ -90,7 +90,6 @@ export const GroupByFieldConfiguration: React.FC<FieldProps> = ({ fieldName, con
             placeholder="Ignored"
             onChange={onChange}
             isClearable
-            menuPlacement="bottom"
           />
         </div>
       </div>
@@ -105,7 +104,6 @@ export const GroupByFieldConfiguration: React.FC<FieldProps> = ({ fieldName, con
             onChange={stats => {
               onConfigChange({ ...config, aggregations: stats as ReducerID[] });
             }}
-            menuPlacement="bottom"
           />
         </div>
       )}
