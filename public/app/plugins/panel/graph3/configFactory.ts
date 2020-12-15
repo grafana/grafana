@@ -8,10 +8,10 @@ import {
 } from '@grafana/data';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from '@grafana/ui';
 
-const displayOverrideRef = 'series_display';
+const displayOverrideRef = 'hide_series_from';
 const isDisplayOverride = isSystemOverride(displayOverrideRef);
 
-export const displayConfigFactory = (
+export const hideSeriesConfigFactory = (
   event: GraphNGLegendEvent,
   fieldConfig: FieldConfigSource<any>,
   data: DataFrame[]
@@ -36,7 +36,7 @@ export const displayConfigFactory = (
   const overridesCopy = Array.from(overrides);
   const [current] = overridesCopy.splice(currentIndex, 1) as SystemConfigOverrideRule[];
 
-  if (mode === GraphNGLegendEventMode.select) {
+  if (mode === GraphNGLegendEventMode.toggleSelection) {
     const existing = matchersInConfig(current);
 
     if (existing.find(name => name === displayName)) {
@@ -55,7 +55,6 @@ export const displayConfigFactory = (
   }
 
   const override = createExtendedOverride(current, displayName);
-  console.log('override', override);
 
   return {
     ...fieldConfig,
@@ -71,7 +70,7 @@ const createFreshOverride = (displayName: string): SystemConfigOverrideRule => {
       options: {
         innerId: FieldMatcherID.byRegexp,
         innerOptions: `^(?!${displayName}$).*$`,
-        formattedValue: `All series except: ${displayName}`,
+        formattedValue: `Except fields: ${displayName}`,
       },
     },
     properties: [
@@ -112,16 +111,17 @@ const createExtendedOverride = (current: SystemConfigOverrideRule, displayName: 
       id: FieldMatcherID.readOnly,
       options: {
         innerId: FieldMatcherID.byRegexp,
-        innerOptions: `^(?!${existing.join('|')}$).*$`,
-        formattedValue: `All series except: ${existing.join(', ')}.`,
+        innerOptions: `^(?!${existing.join('$|')}$).*$`,
+        formattedValue: `Except fields: ${existing.join(', ')}`,
       },
     },
     properties: [
       {
         ...property,
         value: {
-          ...property.value,
-          displayInGraph: false,
+          graph: true,
+          legend: false,
+          tooltip: false,
         },
       },
     ],
@@ -130,7 +130,7 @@ const createExtendedOverride = (current: SystemConfigOverrideRule, displayName: 
 
 const matchersInConfig = (current: SystemConfigOverrideRule): string[] => {
   const previous = current.matcher.options.innerOptions;
-  const match = /^\^\(\?\!([\w|-]+)\$\)\.\*\$$/.exec(previous);
+  const match = /^\^\(\?\!([\w$|-]+)\$\)\.\*\$$/.exec(previous);
 
   if (match?.length === 2) {
     return match[1].split('|');

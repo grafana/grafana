@@ -1,8 +1,8 @@
 import { DataFrameFieldIndex } from '@grafana/data';
 
 export enum GraphNGLegendEventMode {
-  select = 'select',
-  append = 'append',
+  toggleSelection = 'select',
+  appendToSelection = 'append',
 }
 
 export interface GraphNGLegendEvent {

@@ -4,7 +4,7 @@ import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
-import { displayConfigFactory } from './configFactory';
+import { hideSeriesConfigFactory } from './configFactory';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 
 interface GraphPanelProps extends PanelProps<Options> {}
@@ -23,7 +23,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
 }) => {
   const onLegendClick = useCallback(
     (event: GraphNGLegendEvent) => {
-      onFieldConfigChange(displayConfigFactory(event, fieldConfig, data.series));
+      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, data.series));
     },
     [fieldConfig, onFieldConfigChange, data.series]
   );
