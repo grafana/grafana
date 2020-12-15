@@ -43,48 +43,50 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
   }
 
   async componentDidMount() {
-    this.componentDidUpdate(this.props);
+    await this.updateState();
   }
 
   async componentDidUpdate(prevProps: Props) {
+    const { panelData } = this.props;
+
+    if (prevProps.panelData !== panelData) {
+      await this.updateState();
+    }
+  }
+
+  async updateState() {
     const { panelData, queries } = this.props;
 
-    if (queries.length < 0) {
+    const query = queries[0] as DashboardQuery;
+    const defaultDS = await getDatasourceSrv().get();
+    const dashboard = getDashboardSrv().getCurrent();
+    const panel = dashboard.getPanelById(query.panelId ?? -124134);
+
+    if (!panel) {
+      this.setState({ defaultDatasource: defaultDS.name });
       return;
     }
 
-    if (!prevProps || prevProps.panelData !== panelData) {
-      const query = queries[0] as DashboardQuery;
-      const defaultDS = await getDatasourceSrv().get();
-      const dashboard = getDashboardSrv().getCurrent();
-      const panel = dashboard.getPanelById(query.panelId ?? -124134);
+    const mainDS = await getDatasourceSrv().get(panel.datasource);
+    const info: ResultInfo[] = [];
 
-      if (!panel) {
-        this.setState({ defaultDatasource: defaultDS.name });
-        return;
-      }
+    for (const query of panel.targets) {
+      const ds = query.datasource ? await getDatasourceSrv().get(query.datasource) : mainDS;
+      const fmt = ds.getQueryDisplayText ? ds.getQueryDisplayText : getQueryDisplayText;
 
-      const mainDS = await getDatasourceSrv().get(panel.datasource);
-      const info: ResultInfo[] = [];
+      const qData = filterPanelDataToQuery(panelData, query.refId);
+      const queryData = qData ? qData : panelData;
 
-      for (const query of panel.targets) {
-        const ds = query.datasource ? await getDatasourceSrv().get(query.datasource) : mainDS;
-        const fmt = ds.getQueryDisplayText ? ds.getQueryDisplayText : getQueryDisplayText;
-
-        const qData = filterPanelDataToQuery(panelData, query.refId);
-        const queryData = qData ? qData : panelData;
-
-        info.push({
-          refId: query.refId,
-          query: fmt(query),
-          img: ds.meta.info.logos.small,
-          data: queryData.series,
-          error: queryData.error,
-        });
-      }
-
-      this.setState({ defaultDatasource: defaultDS.name, results: info });
+      info.push({
+        refId: query.refId,
+        query: fmt(query),
+        img: ds.meta.info.logos.small,
+        data: queryData.series,
+        error: queryData.error,
+      });
     }
+
+    this.setState({ defaultDatasource: defaultDS.name, results: info });
   }
 
   onPanelChanged = (id: number) => {
