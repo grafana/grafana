@@ -67,5 +67,5 @@ func WriteSessionCookie(ctx *models.ReqContext, cfg *setting.Cfg, value string, 
 		maxAge = int(maxLifetime.Seconds())
 	}
 
-	WriteCookie(ctx.Resp, setting.LoginCookieName, url.QueryEscape(value), maxAge, nil)
+	WriteCookie(ctx.Resp, cfg.LoginCookieName, url.QueryEscape(value), maxAge, nil)
 }

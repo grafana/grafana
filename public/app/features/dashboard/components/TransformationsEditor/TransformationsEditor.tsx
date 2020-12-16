@@ -159,7 +159,6 @@ export class TransformationsEditor extends React.PureComponent<TransformationsEd
           options={availableTransformers}
           onChange={this.onTransformationAdd}
           isFullWidth={false}
-          menuPlacement="bottom"
         />
       </div>
     );

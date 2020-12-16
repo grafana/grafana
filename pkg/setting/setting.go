@@ -40,10 +40,6 @@ const (
 	Test             = "test"
 )
 
-var (
-	ErrTemplateName = "error"
-)
-
 // This constant corresponds to the default value for ldap_sync_ttl in .ini files
 // it is used for comparison and has to be kept in sync
 const (
@@ -126,10 +122,6 @@ var (
 	ViewersCanEdit          bool
 
 	// HTTP auth
-	AdminUser        string
-	AdminPassword    string
-	LoginCookieName  string
-	LoginMaxLifetime time.Duration
 	SigV4AuthEnabled bool
 
 	AnonymousEnabled bool
@@ -271,6 +263,8 @@ type Cfg struct {
 	TokenRotationIntervalMinutes int
 	SigV4AuthEnabled             bool
 	BasicAuthEnabled             bool
+	AdminUser                    string
+	AdminPassword                string
 
 	// Auth proxy settings
 	AuthProxyEnabled          bool
@@ -724,7 +718,7 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 	cfg.IsEnterprise = IsEnterprise
 	cfg.Packaging = Packaging
 
-	cfg.ErrTemplateName = ErrTemplateName
+	cfg.ErrTemplateName = "error"
 
 	ApplicationName = "Grafana"
 
@@ -1013,8 +1007,8 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 
 	// admin
 	cfg.DisableInitAdminCreation = security.Key("disable_initial_admin_creation").MustBool(false)
-	AdminUser = valueAsString(security, "admin_user", "")
-	AdminPassword = valueAsString(security, "admin_password", "")
+	cfg.AdminUser = valueAsString(security, "admin_user", "")
+	cfg.AdminPassword = valueAsString(security, "admin_password", "")
 
 	return nil
 }
@@ -1022,8 +1016,7 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	auth := iniFile.Section("auth")
 
-	LoginCookieName = valueAsString(auth, "login_cookie_name", "grafana_session")
-	cfg.LoginCookieName = LoginCookieName
+	cfg.LoginCookieName = valueAsString(auth, "login_cookie_name", "grafana_session")
 	maxInactiveDaysVal := auth.Key("login_maximum_inactive_lifetime_days").MustString("")
 	if maxInactiveDaysVal != "" {
 		maxInactiveDaysVal = fmt.Sprintf("%sd", maxInactiveDaysVal)
@@ -1049,7 +1042,6 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	if err != nil {
 		return err
 	}
-	LoginMaxLifetime = cfg.LoginMaxLifetime
 
 	cfg.ApiKeyMaxSecondsToLive = auth.Key("api_key_max_seconds_to_live").MustInt64(-1)
 

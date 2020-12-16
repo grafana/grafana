@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,7 +21,7 @@ func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 	ctxHdlr := getContextHandler(t)
 
 	ctx, cancel := context.WithCancel(context.Background())
-	reqContext, _, err := initTokenRotationScenario(ctx, t)
+	reqContext, _, err := initTokenRotationScenario(ctx, t, ctxHdlr)
 	require.NoError(t, err)
 
 	tryRotateCallCount := 0
@@ -46,7 +45,7 @@ func TestDontRotateTokensOnCancelledRequests(t *testing.T) {
 func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	ctxHdlr := getContextHandler(t)
 
-	reqContext, rr, err := initTokenRotationScenario(context.Background(), t)
+	reqContext, rr, err := initTokenRotationScenario(context.Background(), t, ctxHdlr)
 	require.NoError(t, err)
 
 	uts := &auth.FakeUserAuthTokenService{
@@ -64,8 +63,12 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	ctxHdlr.rotateEndOfRequestFunc(reqContext, uts, token)(reqContext.Resp)
 
 	foundLoginCookie := false
+	// nolint:bodyclose
 	resp := rr.Result()
-	defer resp.Body.Close()
+	t.Cleanup(func() {
+		err := resp.Body.Close()
+		assert.NoError(t, err)
+	})
 	for _, c := range resp.Cookies() {
 		if c.Name == "login_token" {
 			foundLoginCookie = true
@@ -76,18 +79,13 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 	assert.True(t, foundLoginCookie, "Could not find cookie")
 }
 
-func initTokenRotationScenario(ctx context.Context, t *testing.T) (*models.ReqContext, *httptest.ResponseRecorder, error) {
+func initTokenRotationScenario(ctx context.Context, t *testing.T, ctxHdlr *ContextHandler) (
+	*models.ReqContext, *httptest.ResponseRecorder, error) {
 	t.Helper()
 
-	origLoginCookieName := setting.LoginCookieName
-	origLoginMaxLifetime := setting.LoginMaxLifetime
-	t.Cleanup(func() {
-		setting.LoginCookieName = origLoginCookieName
-		setting.LoginMaxLifetime = origLoginMaxLifetime
-	})
-	setting.LoginCookieName = "login_token"
+	ctxHdlr.Cfg.LoginCookieName = "login_token"
 	var err error
-	setting.LoginMaxLifetime, err = gtime.ParseDuration("7d")
+	ctxHdlr.Cfg.LoginMaxLifetime, err = gtime.ParseDuration("7d")
 	if err != nil {
 		return nil, nil, err
 	}

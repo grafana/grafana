@@ -12,17 +12,6 @@ import {
 } from '../config';
 import { PlotConfigBuilder } from '../types';
 
-const pathBuilders = uPlot.paths;
-
-const barWidthFactor = 0.6;
-const barMaxWidth = Infinity;
-
-const barsBuilder = pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth] });
-const linearBuilder = pathBuilders.linear!();
-const smoothBuilder = pathBuilders.spline!();
-const stepBeforeBuilder = pathBuilders.stepped!({ align: -1 });
-const stepAfterBuilder = pathBuilders.stepped!({ align: 1 });
-
 export interface SeriesProps extends LineConfig, AreaConfig, PointsConfig {
   drawStyle: DrawStyle;
   scaleKey: string;
@@ -44,7 +33,6 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       fillGradient,
       scaleKey,
       spanNulls,
-      height,
     } = this.props;
 
     let lineConfig: Partial<Series> = {};
@@ -55,20 +43,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       lineConfig.stroke = lineColor;
       lineConfig.width = lineWidth;
       lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
-        let pathsBuilder = linearBuilder;
-
-        if (drawStyle === DrawStyle.Bars) {
-          pathsBuilder = barsBuilder;
-        } else if (drawStyle === DrawStyle.Line) {
-          if (lineInterpolation === LineInterpolation.StepBefore) {
-            pathsBuilder = stepBeforeBuilder;
-          } else if (lineInterpolation === LineInterpolation.StepAfter) {
-            pathsBuilder = stepAfterBuilder;
-          } else if (lineInterpolation === LineInterpolation.Smooth) {
-            pathsBuilder = smoothBuilder;
-          }
-        }
-
+        let pathsBuilder = mapDrawStyleToPathBuilder(drawStyle, lineInterpolation);
         return pathsBuilder(self, seriesIdx, idx0, idx1);
       };
     }
@@ -95,17 +70,21 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     let fillConfig: any | undefined;
     let fillOpacityNumber = fillOpacity ?? 0;
 
-    if (fillColor && fillOpacityNumber > 0) {
+    if (fillColor) {
       fillConfig = {
-        fill: fillOpacity
-          ? tinycolor(fillColor)
-              .setAlpha(fillOpacity)
-              .toRgbString()
-          : fillColor,
+        fill: fillColor,
+      };
+    }
+
+    if (fillOpacityNumber !== 0) {
+      fillConfig = {
+        fill: tinycolor(fillColor ?? lineColor)
+          .setAlpha(fillOpacityNumber / 100)
+          .toRgbString(),
       };
 
       if (fillGradient && fillGradient !== AreaGradientMode.None) {
-        fillConfig.fill = getCanvasGradient(fillColor, fillGradient, fillOpacityNumber, height);
+        fillConfig.fill = getCanvasGradient(fillConfig.fill, fillGradient, fillOpacityNumber);
       }
     }
 
@@ -119,12 +98,55 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   }
 }
 
-function getCanvasGradient(
-  color: string,
-  gradientMode: AreaGradientMode,
-  opacity: number,
-  plotHeight: number
-): CanvasGradient {
+interface PathBuilders {
+  bars: Series.PathBuilder;
+  linear: Series.PathBuilder;
+  smooth: Series.PathBuilder;
+  stepBefore: Series.PathBuilder;
+  stepAfter: Series.PathBuilder;
+}
+
+let builders: PathBuilders | undefined = undefined;
+
+function mapDrawStyleToPathBuilder(
+  style: DrawStyle,
+  lineInterpolation?: LineInterpolation,
+  opts?: any
+): Series.PathBuilder {
+  // This should be global static, but Jest initalization was failing so we lazy load to avoid the issue
+  if (!builders) {
+    const pathBuilders = uPlot.paths;
+    const barWidthFactor = 0.6;
+    const barMaxWidth = Infinity;
+
+    builders = {
+      bars: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth] }),
+      linear: pathBuilders.linear!(),
+      smooth: pathBuilders.spline!(),
+      stepBefore: pathBuilders.stepped!({ align: -1 }),
+      stepAfter: pathBuilders.stepped!({ align: 1 }),
+    };
+  }
+
+  if (style === DrawStyle.Bars) {
+    return builders.bars;
+  }
+  if (style === DrawStyle.Line) {
+    if (lineInterpolation === LineInterpolation.StepBefore) {
+      return builders.stepBefore;
+    }
+    if (lineInterpolation === LineInterpolation.StepAfter) {
+      return builders.stepAfter;
+    }
+    if (lineInterpolation === LineInterpolation.Smooth) {
+      return builders.smooth;
+    }
+  }
+
+  return builders.linear; // the default
+}
+
+function getCanvasGradient(color: string, gradientMode: AreaGradientMode, opacity: number): CanvasGradient {
   const ctx = getCanvasContext();
   const pxRatio = window.devicePixelRatio ?? 1;
   const pixelHeight = (plotHeight - 30) * pxRatio;
