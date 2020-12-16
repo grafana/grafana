@@ -1,5 +1,5 @@
 import tinycolor from 'tinycolor2';
-import uPlot, { Series } from 'uplot';
+import uPlot, { Series, Fill } from 'uplot';
 import { getCanvasContext } from '../../../utils/measureText';
 import {
   DrawStyle,
@@ -66,31 +66,31 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     return {
       scale: scaleKey,
       spanGaps: spanNulls,
+      fill: this.getFill(),
       ...lineConfig,
       ...pointsConfig,
-      ...this.getFillConfig(),
     };
   }
 
-  getFillConfig(): Partial<Series> {
+  getFill(): Fill {
     const { lineColor, fillColor, fillGradient, fillOpacity } = this.props;
 
     if (fillColor) {
-      return { fill: fillColor };
+      return fillColor;
     }
 
+    const mode = fillGradient ?? AreaGradientMode.None;
     let fillOpacityNumber = fillOpacity ?? 0;
-    if (fillOpacityNumber > 0 && fillGradient && fillGradient !== AreaGradientMode.None) {
-      return {
-        fill: getCanvasGradient({
-          color: (fillColor ?? lineColor)!,
-          opacity: fillOpacityNumber / 100,
-          mode: fillGradient,
-        }),
-      };
+
+    if (fillOpacity === 0 || mode === AreaGradientMode.None) {
+      return undefined;
     }
 
-    return {};
+    return getCanvasGradient({
+      color: (fillColor ?? lineColor)!,
+      opacity: fillOpacityNumber / 100,
+      mode,
+    });
   }
 }
 
