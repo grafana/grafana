@@ -82,15 +82,21 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     const mode = fillGradient ?? AreaGradientMode.None;
     let fillOpacityNumber = fillOpacity ?? 0;
 
-    if (fillOpacity === 0 || mode === AreaGradientMode.None) {
-      return undefined;
+    if (mode !== AreaGradientMode.None) {
+      return getCanvasGradient({
+        color: (fillColor ?? lineColor)!,
+        opacity: fillOpacityNumber / 100,
+        mode,
+      });
     }
 
-    return getCanvasGradient({
-      color: (fillColor ?? lineColor)!,
-      opacity: fillOpacityNumber / 100,
-      mode,
-    });
+    if (fillOpacityNumber > 0) {
+      return tinycolor(lineColor)
+        .setAlpha(fillOpacityNumber / 100)
+        .toString();
+    }
+
+    return undefined;
   }
 }
 
