@@ -73,12 +73,12 @@ func Count(fv *data.Field) *float64 {
 }
 
 // Reduce turns the Series into a Number based on the given reduction function
-func (s Series) Reduce(rFunc string) (Number, error) {
+func (s Series) Reduce(refID, rFunc string) (Number, error) {
 	var l data.Labels
 	if s.GetLabels() != nil {
 		l = s.GetLabels().Copy()
 	}
-	number := NewNumber(fmt.Sprintf("%v_%v", rFunc, s.GetName()), l)
+	number := NewNumber(refID, l)
 	var f *float64
 	fVec := s.Frame.Fields[1]
 	switch rFunc {

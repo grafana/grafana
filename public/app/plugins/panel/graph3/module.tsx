@@ -1,15 +1,24 @@
-import { FieldColorModeId, FieldConfigProperty, PanelPlugin } from '@grafana/data';
-import { LegendDisplayMode } from '@grafana/ui';
 import {
-  GraphFieldConfig,
-  PointVisibility,
-  DrawStyle,
+  FieldColorModeId,
+  FieldConfigProperty,
+  FieldType,
+  identityOverrideProcessor,
+  PanelPlugin,
+} from '@grafana/data';
+import {
   AxisPlacement,
+  DrawStyle,
+  GraphFieldConfig,
   graphFieldOptions,
-} from '@grafana/ui/src/components/uPlot/config';
+  LegendDisplayMode,
+  PointVisibility,
+  ScaleDistribution,
+  ScaleDistributionConfig,
+} from '@grafana/ui';
 import { GraphPanel } from './GraphPanel';
 import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
+import { ScaleDistributionEditor } from './ScaleDistributionEditor';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
@@ -57,11 +66,11 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
         .addSliderInput({
           path: 'fillOpacity',
           name: 'Fill area opacity',
-          defaultValue: 0.1,
+          defaultValue: 10,
           settings: {
             min: 0,
-            max: 1,
-            step: 0.1,
+            max: 100,
+            step: 1,
           },
           showIf: c => c.drawStyle !== DrawStyle.Points,
         })
@@ -91,10 +100,10 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           defaultValue: 5,
           settings: {
             min: 1,
-            max: 10,
+            max: 40,
             step: 1,
           },
-          showIf: c => c.showPoints !== PointVisibility.Never,
+          showIf: c => c.showPoints !== PointVisibility.Never || c.drawStyle === DrawStyle.Points,
         })
         .addRadio({
           path: 'axisPlacement',
@@ -125,6 +134,17 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             placeholder: 'Auto',
           },
           showIf: c => c.axisPlacement !== AxisPlacement.Hidden,
+        })
+        .addCustomEditor<void, ScaleDistributionConfig>({
+          id: 'scaleDistribution',
+          path: 'scaleDistribution',
+          name: 'Scale',
+          category: ['Axis'],
+          editor: ScaleDistributionEditor,
+          override: ScaleDistributionEditor,
+          defaultValue: { type: ScaleDistribution.Linear },
+          shouldApply: f => f.type === FieldType.number,
+          process: identityOverrideProcessor,
         });
     },
   })

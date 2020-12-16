@@ -69,6 +69,10 @@ func Infof(format string, v ...interface{}) {
 	Root.Info(message)
 }
 
+func Warn(msg string, v ...interface{}) {
+	Root.Warn(msg, v...)
+}
+
 func Warnf(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
@@ -90,21 +94,33 @@ func Errorf(skip int, format string, v ...interface{}) {
 
 func Fatalf(skip int, format string, v ...interface{}) {
 	Root.Crit(fmt.Sprintf(format, v...))
-	Close()
+	if err := Close(); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
+	}
 	os.Exit(1)
 }
 
-func Close() {
+func Close() error {
+	var err error
 	for _, logger := range loggersToClose {
-		logger.Close()
+		if e := logger.Close(); e != nil && err == nil {
+			err = e
+		}
 	}
 	loggersToClose = make([]DisposableHandler, 0)
+
+	return err
 }
 
-func Reload() {
+// Reload reloads all loggers.
+func Reload() error {
 	for _, logger := range loggersToReload {
-		logger.Reload()
+		if err := logger.Reload(); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 var logLevels = map[string]log15.Lvl{
@@ -164,7 +180,9 @@ func getLogFormat(format string) log15.Format {
 }
 
 func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) error {
-	Close()
+	if err := Close(); err != nil {
+		return err
+	}
 
 	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
 	defaultFilters := getFilters(util.SplitString(cfg.Section("log").Key("filters").String()))

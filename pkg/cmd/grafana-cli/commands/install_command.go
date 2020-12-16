@@ -111,11 +111,17 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 	if err != nil {
 		return errutil.Wrap("failed to create temporary file", err)
 	}
-	defer os.Remove(tmpFile.Name())
+	defer func() {
+		if err := os.Remove(tmpFile.Name()); err != nil {
+			logger.Warn("Failed to remove temporary file", "file", tmpFile.Name(), "err", err)
+		}
+	}()
 
 	err = client.DownloadFile(pluginName, tmpFile, downloadURL, checksum)
 	if err != nil {
-		tmpFile.Close()
+		if err := tmpFile.Close(); err != nil {
+			logger.Warn("Failed to close file", "err", err)
+		}
 		return errutil.Wrap("failed to download plugin archive", err)
 	}
 	err = tmpFile.Close()
@@ -228,6 +234,8 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 		newFile := filepath.Join(filePath, newFileName)
 
 		if zf.FileInfo().IsDir() {
+			// We can ignore gosec G304 here since it makes sense to give all users read access
+			// nolint:gosec
 			if err := os.MkdirAll(newFile, 0755); err != nil {
 				if os.IsPermission(err) {
 					return fmt.Errorf(permissionsDeniedMessage, newFile)
@@ -240,6 +248,8 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 		}
 
 		// Create needed directories to extract file
+		// We can ignore gosec G304 here since it makes sense to give all users read access
+		// nolint:gosec
 		if err := os.MkdirAll(filepath.Dir(newFile), 0755); err != nil {
 			return errutil.Wrap("failed to create directory to extract plugin files", err)
 		}

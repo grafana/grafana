@@ -196,6 +196,16 @@ func (hs *HTTPServer) getNavTree(c *models.ReqContext, hasEditPerm bool) ([]*dto
 		})
 	}
 
+	if hs.Cfg.IsNgAlertEnabled() {
+		navTree = append(navTree, &dtos.NavLink{
+			Text:     "NgAlerting",
+			Id:       "ngalerting",
+			SubTitle: "Next generation alerting",
+			Icon:     "bell",
+			Url:      setting.AppSubUrl + "/ngalerting",
+		})
+	}
+
 	if c.IsSignedIn {
 		navTree = append(navTree, getProfileNode(c))
 	}
@@ -448,7 +458,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 func (hs *HTTPServer) Index(c *models.ReqContext) {
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
-		c.Handle(500, "Failed to get settings", err)
+		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
 		return
 	}
 	c.HTML(200, "index", data)
@@ -462,7 +472,7 @@ func (hs *HTTPServer) NotFoundHandler(c *models.ReqContext) {
 
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
-		c.Handle(500, "Failed to get settings", err)
+		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
 		return
 	}
 

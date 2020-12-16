@@ -46,7 +46,7 @@ func TestService(t *testing.T) {
 
 	bDF := data.NewFrame("",
 		data.NewField("Time", nil, []*time.Time{utp(1)}),
-		data.NewField("", nil, []*float64{fp(4)}))
+		data.NewField("B", nil, []*float64{fp(4)}))
 	bDF.RefID = "B"
 
 	expect := &backend.QueryDataResponse{

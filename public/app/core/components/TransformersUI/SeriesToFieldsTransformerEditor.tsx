@@ -33,13 +33,7 @@ export const SeriesToFieldsTransformerEditor: React.FC<TransformerUIProps<Series
     <div className="gf-form-inline">
       <div className="gf-form gf-form--grow">
         <div className="gf-form-label width-8">Field name</div>
-        <Select
-          options={fieldNameOptions}
-          value={options.byField}
-          onChange={onSelectField}
-          isClearable
-          menuPlacement="bottom"
-        />
+        <Select options={fieldNameOptions} value={options.byField} onChange={onSelectField} isClearable />
       </div>
     </div>
   );
