@@ -39,9 +39,9 @@
     "@types/react-color": "3.0.1",
     "@types/react-select": "3.0.8",
     "@types/react-table": "7.0.12",
+    "@sentry/browser": "5.25.0",
     "@types/slate": "0.47.1",
     "@types/slate-react": "0.22.5",
-    "bizcharts": "^3.5.8",
     "classnames": "2.2.6",
     "d3": "5.15.0",
     "emotion": "10.0.27",
@@ -71,7 +71,7 @@
     "react-transition-group": "4.4.1",
     "slate": "0.47.8",
     "tinycolor2": "1.4.1",
-    "uplot": "1.4.7"
+    "uplot": "1.5.2"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "16.0.0",

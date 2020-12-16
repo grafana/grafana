@@ -9,7 +9,7 @@ export enum AxisPlacement {
   Hidden = 'hidden',
 }
 
-export enum PointMode {
+export enum PointVisibility {
   Auto = 'auto', // will show points when the density is low or line is hidden
   Never = 'never',
   Always = 'always',
@@ -28,6 +28,14 @@ export enum LineInterpolation {
   StepAfter = 'stepAfter',
 }
 
+export enum ScaleDistribution {
+  Linear = 'linear',
+  Logarithmic = 'log',
+}
+
+/**
+ * @alpha
+ */
 export interface LineConfig {
   lineColor?: string;
   lineWidth?: number;
@@ -35,25 +43,39 @@ export interface LineConfig {
   spanNulls?: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface AreaConfig {
   fillColor?: string;
   fillOpacity?: number;
 }
 
+/**
+ * @alpha
+ */
 export interface PointsConfig {
-  points?: PointMode;
+  showPoints?: PointVisibility;
   pointSize?: number;
   pointColor?: string;
   pointSymbol?: string; // eventually dot,star, etc
 }
 
+export interface ScaleDistributionConfig {
+  type: ScaleDistribution;
+  log?: number;
+}
 // Axis is actually unique based on the unit... not each field!
 export interface AxisConfig {
   axisPlacement?: AxisPlacement;
   axisLabel?: string;
   axisWidth?: number; // pixels ideally auto?
+  scaleDistribution?: ScaleDistributionConfig;
 }
 
+/**
+ * @alpha
+ */
 export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, AxisConfig {
   drawStyle?: DrawStyle;
 }
@@ -72,11 +94,11 @@ export const graphFieldOptions = {
     { label: 'Step After', value: LineInterpolation.StepAfter },
   ] as Array<SelectableValue<LineInterpolation>>,
 
-  points: [
-    { label: 'Auto', value: PointMode.Auto, description: 'Show points when the density is low' },
-    { label: 'Always', value: PointMode.Always },
-    { label: 'Never', value: PointMode.Never },
-  ] as Array<SelectableValue<PointMode>>,
+  showPoints: [
+    { label: 'Auto', value: PointVisibility.Auto, description: 'Show points when the density is low' },
+    { label: 'Always', value: PointVisibility.Always },
+    { label: 'Never', value: PointVisibility.Never },
+  ] as Array<SelectableValue<PointVisibility>>,
 
   axisPlacement: [
     { label: 'Auto', value: AxisPlacement.Auto, description: 'First field on the left, everything else on the right' },
