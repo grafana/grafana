@@ -72,8 +72,22 @@ export class UPlotConfigBuilder {
 
     config.cursor = this.cursor || {};
 
-    // prevent client-side zoom from triggering at the end of a selection
-    defaultsDeep(config.cursor, { drag: { setScale: false } });
+    const cursorDefaults: Cursor = {
+      // prevent client-side zoom from triggering at the end of a selection
+      drag: { setScale: false },
+      points: {
+        /*@ts-ignore*/
+        size: (u, seriesIdx) => u.series[seriesIdx].points.size * 2,
+        /*@ts-ignore*/
+        width: (u, seriesIdx, size) => size / 4,
+        /*@ts-ignore*/
+        stroke: (u, seriesIdx) => u.series[seriesIdx].points.stroke(u, seriesIdx) + '80',
+        /*@ts-ignore*/
+        fill: (u, seriesIdx) => u.series[seriesIdx].points.stroke(u, seriesIdx),
+      },
+    };
+
+    defaultsDeep(config.cursor, cursorDefaults);
 
     return config;
   }
