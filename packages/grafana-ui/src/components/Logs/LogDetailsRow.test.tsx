@@ -10,6 +10,7 @@ const setup = (propOverrides?: Partial<Props>) => {
     parsedValue: '',
     parsedKey: '',
     isLabel: true,
+    wrapLogMessage: false,
     getStats: () => null,
     onClickFilterLabel: () => {},
     onClickFilterOutLabel: () => {},

@@ -24,8 +24,8 @@ func (hs *HTTPServer) registerRoutes() {
 	reqCanAccessTeams := middleware.AdminOrFeatureEnabled(hs.Cfg.EditorsCanAdmin)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
-	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
-	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL()
+	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL(hs.Cfg)
+	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
 	quota := middleware.Quota(hs.QuotaService)
 	bind := binding.Bind
 
