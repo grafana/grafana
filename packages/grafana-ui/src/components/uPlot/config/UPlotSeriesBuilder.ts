@@ -1,5 +1,5 @@
 import tinycolor from 'tinycolor2';
-import uPlot, { Series, Fill } from 'uplot';
+import uPlot, { Series } from 'uplot';
 import { getCanvasContext } from '../../../utils/measureText';
 import {
   DrawStyle,
@@ -72,7 +72,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     };
   }
 
-  getFill(): Fill {
+  getFill(): Series.Fill | undefined {
     const { lineColor, fillColor, fillGradient, fillOpacity } = this.props;
 
     if (fillColor) {
