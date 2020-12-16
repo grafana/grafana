@@ -167,23 +167,21 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         });
       }
 
-      if (!customConfig.hideFrom?.graph) {
-        const showPoints =
-          customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
+      const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
 
-        builder.addSeries({
-          scaleKey,
-          drawStyle: customConfig.drawStyle!,
-          lineColor: customConfig.lineColor ?? seriesColor,
-          lineWidth: customConfig.lineWidth,
-          lineInterpolation: customConfig.lineInterpolation,
-          showPoints,
-          pointSize: customConfig.pointSize,
-          pointColor: customConfig.pointColor ?? seriesColor,
-          fillOpacity: customConfig.fillOpacity,
-          spanNulls: customConfig.spanNulls || false,
-        });
-      }
+      builder.addSeries({
+        scaleKey,
+        drawStyle: customConfig.drawStyle!,
+        lineColor: customConfig.lineColor ?? seriesColor,
+        lineWidth: customConfig.lineWidth,
+        lineInterpolation: customConfig.lineInterpolation,
+        showPoints,
+        pointSize: customConfig.pointSize,
+        pointColor: customConfig.pointColor ?? seriesColor,
+        fillOpacity: customConfig.fillOpacity,
+        spanNulls: customConfig.spanNulls || false,
+        show: !customConfig.hideFrom?.graph,
+      });
 
       if (hasLegend.current && !customConfig.hideFrom?.legend) {
         const axisPlacement = builder.getAxisPlacement(scaleKey);
