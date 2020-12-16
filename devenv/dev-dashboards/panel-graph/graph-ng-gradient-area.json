@@ -15,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 349,
+  "id": 358,
   "links": [],
   "panels": [
     {
@@ -30,10 +30,13 @@
             "axisPlacement": "auto",
             "drawStyle": "line",
             "fillGradient": 0.5,
-            "fillOpacity": 0.3,
+            "fillOpacity": 40,
             "lineInterpolation": "linear",
             "lineWidth": 2,
             "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": true
           },
@@ -115,10 +118,13 @@
             "axisPlacement": "auto",
             "drawStyle": "bars",
             "fillGradient": 0.4,
-            "fillOpacity": 0.5,
+            "fillOpacity": 53,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": true
           },
@@ -201,10 +207,13 @@
             "axisPlacement": "auto",
             "drawStyle": "bars",
             "fillGradient": "opacity",
-            "fillOpacity": 1,
+            "fillOpacity": 100,
             "lineInterpolation": "linear",
             "lineWidth": 0,
             "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": true
           },
@@ -287,10 +296,13 @@
             "axisPlacement": "auto",
             "drawStyle": "line",
             "fillGradient": 0.5,
-            "fillOpacity": 0.2,
+            "fillOpacity": 20,
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": true
           },
@@ -372,10 +384,13 @@
             "axisPlacement": "auto",
             "drawStyle": "line",
             "fillGradient": "hue",
-            "fillOpacity": 0.9,
+            "fillOpacity": 99,
             "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": true
           },
@@ -462,6 +477,9 @@
             "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": true
           },
@@ -544,10 +562,13 @@
             "axisPlacement": "auto",
             "drawStyle": "line",
             "fillGradient": 1,
-            "fillOpacity": 0.7,
+            "fillOpacity": 90,
             "lineInterpolation": "linear",
             "lineWidth": 0,
             "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": true
           },
@@ -629,10 +650,13 @@
             "axisPlacement": "auto",
             "drawStyle": "bars",
             "fillGradient": "hue",
-            "fillOpacity": 1,
+            "fillOpacity": 100,
             "lineInterpolation": "smooth",
             "lineWidth": 0,
             "pointSize": 6,
+            "scaleDistribution": {
+              "type": "linear"
+            },
             "showPoints": "never",
             "spanNulls": true
           },
@@ -663,7 +687,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "green",
+                  "fixedColor": "orange",
                   "mode": "fixed"
                 }
               }
@@ -721,5 +745,5 @@
   "timezone": "",
   "title": "Panel Tests - Graph NG - Gradient Area Fills",
   "uid": "_gWgX2JGk",
-  "version": 13
+  "version": 1
 }

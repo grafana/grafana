@@ -80,7 +80,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       if (fillGradient && fillGradient !== AreaGradientMode.None) {
         fillConfig.fill = getCanvasGradient({
           color: (fillColor ?? lineColor)!,
-          opacity: fillOpacityNumber,
+          opacity: fillOpacityNumber / 100,
           mode: fillGradient,
         });
       } else {
