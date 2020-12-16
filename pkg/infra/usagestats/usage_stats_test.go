@@ -25,6 +25,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// This is to ensure that the interface contract is held by the implementation
+func Test_InterfaceContractValidity(t *testing.T) {
+	newUsageStats := func() UsageStats {
+		return &UsageStatsService{}
+	}
+	v, ok := newUsageStats().(*UsageStatsService)
+
+	assert.NotNil(t, v)
+	assert.True(t, ok)
+}
+
 func TestMetrics(t *testing.T) {
 	t.Run("When sending usage stats", func(t *testing.T) {
 		uss := &UsageStatsService{
