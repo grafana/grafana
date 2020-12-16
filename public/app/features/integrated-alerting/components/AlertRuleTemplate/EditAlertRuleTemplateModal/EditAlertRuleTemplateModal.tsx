@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { Form } from 'react-final-form';
-import { HorizontalGroup, useStyles } from '@grafana/ui';
+import { Button, HorizontalGroup, useStyles } from '@grafana/ui';
 import { AppEvents } from '@grafana/data';
 import { Modal, LoaderButton, TextareaInputField, validators, logger } from '@percona/platform-core';
 import { appEvents } from 'app/core/app_events';
@@ -52,6 +52,13 @@ export const EditAlertRuleTemplateModal: FC<EditAlertRuleTemplateModalProps> = (
                 >
                   {Messages.submitButton}
                 </LoaderButton>
+                <Button
+                  data-qa="alert-rule-template-cancel-button"
+                  variant="secondary"
+                  onClick={() => setVisible(false)}
+                >
+                  {Messages.cancelAction}
+                </Button>
               </HorizontalGroup>
             </>
           </form>
