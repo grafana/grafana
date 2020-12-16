@@ -1,6 +1,9 @@
 let canvas: HTMLCanvasElement | null = null;
 const cache: Record<string, TextMetrics> = {};
 
+/**
+ * @internal
+ */
 export function getCanvasContext() {
   if (canvas === null) {
     canvas = document.createElement('canvas');

@@ -87,11 +87,18 @@ export interface PointsConfig {
   pointSymbol?: string; // eventually dot,star, etc
 }
 
+/**
+ * @alpha
+ */
 export interface ScaleDistributionConfig {
   type: ScaleDistribution;
   log?: number;
 }
-// Axis is actually unique based on the unit... not each field!
+
+/**
+ * @alpha
+ * Axis is actually unique based on the unit... not each field!
+ */
 export interface AxisConfig {
   axisPlacement?: AxisPlacement;
   axisLabel?: string;
@@ -106,6 +113,9 @@ export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, 
   drawStyle?: DrawStyle;
 }
 
+/**
+ * @alpha
+ */
 export const graphFieldOptions = {
   drawStyle: [
     { label: 'Lines', value: DrawStyle.Line },
