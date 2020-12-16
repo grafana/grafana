@@ -143,7 +143,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
         return null;
       }
 
-      if (item.hideFromFieldOptions) {
+      if (item.hideFromDefaults) {
         return null;
       }
 

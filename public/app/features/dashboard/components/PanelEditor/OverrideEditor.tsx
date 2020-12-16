@@ -99,7 +99,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
 
   let configPropertiesOptions = registry
     .list()
-    .filter(o => !o.disableOverride)
+    .filter(o => !o.hideFromOverrides)
     .map(item => {
       let label = item.name;
       if (item.category && item.category.length > 1) {
