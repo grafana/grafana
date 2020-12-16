@@ -77,14 +77,18 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     }
 
     if (fillOpacityNumber !== 0) {
-      fillConfig = {
-        fill: tinycolor(fillColor ?? lineColor)
-          .setAlpha(fillOpacityNumber / 100)
-          .toRgbString(),
-      };
-
       if (fillGradient && fillGradient !== AreaGradientMode.None) {
-        fillConfig.fill = getCanvasGradient(fillConfig.fill, fillGradient, fillOpacityNumber);
+        fillConfig.fill = getCanvasGradient({
+          color: (fillColor ?? lineColor)!,
+          opacity: fillOpacityNumber,
+          mode: fillGradient,
+        });
+      } else {
+        fillConfig = {
+          fill: tinycolor(fillColor ?? lineColor)
+            .setAlpha(fillOpacityNumber / 100)
+            .toRgbString(),
+        };
       }
     }
 
@@ -146,41 +150,49 @@ function mapDrawStyleToPathBuilder(
   return builders.linear; // the default
 }
 
-function getCanvasGradient(color: string, gradientMode: AreaGradientMode, opacity: number): CanvasGradient {
-  const ctx = getCanvasContext();
-  const pxRatio = window.devicePixelRatio ?? 1;
-  const pixelHeight = (plotHeight - 30) * pxRatio;
-  const gradient = ctx.createLinearGradient(0, 0, 0, pixelHeight);
+interface AreaGradientOptions {
+  color: string;
+  mode: AreaGradientMode;
+  opacity: number;
+}
 
-  switch (gradientMode) {
-    case AreaGradientMode.Hue:
-      const color1 = tinycolor(color)
-        .spin(-25)
-        .darken(30)
-        .setAlpha(opacity)
-        .toRgbString();
-      const color2 = tinycolor(color)
-        .spin(25)
-        .lighten(35)
-        .setAlpha(opacity)
-        .toRgbString();
-      gradient.addColorStop(0, color2);
-      gradient.addColorStop(1, color1);
+function getCanvasGradient(opts: AreaGradientOptions): (self: uPlot, seriesIdx: number) => CanvasGradient {
+  return (plot: uPlot, seriesIdx: number) => {
+    const { color, mode, opacity } = opts;
 
-    case AreaGradientMode.Opacity:
-    default:
-      gradient.addColorStop(
-        0,
-        tinycolor(color)
+    const ctx = getCanvasContext();
+    const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
+
+    switch (mode) {
+      case AreaGradientMode.Hue:
+        const color1 = tinycolor(color)
+          .spin(-25)
+          .darken(30)
           .setAlpha(opacity)
-          .toRgbString()
-      );
-      gradient.addColorStop(
-        1,
-        tinycolor(color)
-          .setAlpha(0)
-          .toRgbString()
-      );
-      return gradient;
-  }
+          .toRgbString();
+        const color2 = tinycolor(color)
+          .spin(25)
+          .lighten(35)
+          .setAlpha(opacity)
+          .toRgbString();
+        gradient.addColorStop(0, color2);
+        gradient.addColorStop(1, color1);
+
+      case AreaGradientMode.Opacity:
+      default:
+        gradient.addColorStop(
+          0,
+          tinycolor(color)
+            .setAlpha(opacity)
+            .toRgbString()
+        );
+        gradient.addColorStop(
+          1,
+          tinycolor(color)
+            .setAlpha(0)
+            .toRgbString()
+        );
+        return gradient;
+    }
+  };
 }
