@@ -473,7 +473,7 @@
             "axisPlacement": "auto",
             "drawStyle": "line",
             "fillGradient": "hue",
-            "fillOpacity": 0.8,
+            "fillOpacity": 80,
             "lineInterpolation": "smooth",
             "lineWidth": 1,
             "pointSize": 6,
