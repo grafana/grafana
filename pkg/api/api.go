@@ -255,6 +255,7 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Delete("/:id", Wrap(DeleteDataSourceById))
 			datasourceRoute.Delete("/name/:name", Wrap(DeleteDataSourceByName))
 			datasourceRoute.Get("/:id", Wrap(GetDataSourceById))
+			datasourceRoute.Get("/uid/:uid", Wrap(GetDataSourceByUID))
 			datasourceRoute.Get("/name/:name", Wrap(GetDataSourceByName))
 		}, reqOrgAdmin)
 
