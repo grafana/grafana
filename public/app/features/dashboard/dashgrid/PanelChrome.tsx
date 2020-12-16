@@ -282,7 +282,6 @@ export class PanelChrome extends Component<Props, State> {
       'panel-content--no-padding': plugin.noPadding,
     });
     const panelOptions = panel.getOptions();
-    console.log('rendering panel');
 
     return (
       <>
