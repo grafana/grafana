@@ -21,6 +21,12 @@ func init() {
 	registry.RegisterService(&UsageStatsService{})
 }
 
+type UsageStats interface {
+	GetUsageReport() (UsageReport, error)
+
+	RegisterMetric(name string, fn MetricFunc)
+}
+
 type MetricFunc func() (interface{}, error)
 
 type UsageStatsService struct {
