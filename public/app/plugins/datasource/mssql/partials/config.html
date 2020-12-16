@@ -1,15 +1,15 @@
 
-<h3 class="page-heading">MS SQL Connection</h3>
+<h3 class="page-heading">MS SQL connection</h3>
 
 <div class="gf-form-group">
 	<div class="gf-form max-width-30">
 		<span class="gf-form-label width-7">Host</span>
-		<input type="text" class="gf-form-input" ng-model='ctrl.current.url' placeholder="localhost:1433" bs-typeahead="{{['localhost', 'localhost:1433']}}" required></input>
+		<input type="text" class="gf-form-input" style="width: 352px" ng-model='ctrl.current.url' placeholder="localhost:1433" bs-typeahead="{{['localhost', 'localhost:1433']}}" required></input>
 	</div>
 
 	<div class="gf-form max-width-30">
 		<span class="gf-form-label width-7">Database</span>
-		<input type="text" class="gf-form-input" ng-model='ctrl.current.database' placeholder="database name" required></input>
+		<input type="text" class="gf-form-input" style="width: 352px" ng-model='ctrl.current.database' placeholder="database name" required></input>
 	</div>
 
 	<div class="gf-form-inline">
@@ -23,7 +23,8 @@
         value="ctrl.current.secureJsonData.password"
         on-reset="ctrl.onPasswordReset"
         on-change="ctrl.onPasswordChange"
-        inputWidth="8"
+        labelWidth="7"
+        inputWidth="7"
       />
     </div>
 	</div>
