@@ -87,7 +87,6 @@ export const FilterByValueFilterEditor: React.FC<Props> = props => {
           options={fieldsAsOptions}
           value={filter.fieldName}
           onChange={onChangeField}
-          menuPlacement="bottom"
         />
       </div>
       <div className="gf-form gf-form-spacing">
@@ -98,7 +97,6 @@ export const FilterByValueFilterEditor: React.FC<Props> = props => {
           options={matcherOptions}
           value={matcherId}
           onChange={onChangeMatcher}
-          menuPlacement="bottom"
         />
       </div>
       <div className="gf-form gf-form--grow gf-form-spacing">

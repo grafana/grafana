@@ -18,7 +18,7 @@ import (
 func TestRecoveryMiddleware(t *testing.T) {
 	t.Run("Given an API route that panics", func(t *testing.T) {
 		apiURL := "/api/whatever"
-		recoveryScenario(t, "recovery middleware should return json", apiURL, func(t *testing.T, sc *scenarioContext) {
+		recoveryScenario(t, "recovery middleware should return JSON", apiURL, func(t *testing.T, sc *scenarioContext) {
 			sc.handlerFunc = panicHandler
 			sc.fakeReq("GET", apiURL).exec()
 			sc.req.Header.Set("content-type", "application/json")
@@ -37,7 +37,7 @@ func TestRecoveryMiddleware(t *testing.T) {
 
 			assert.Equal(t, 500, sc.resp.Code)
 			assert.Equal(t, "text/html; charset=UTF-8", sc.resp.Header().Get("content-type"))
-			assert.True(t, strings.Contains(sc.resp.Body.String(), "<title>Grafana - Error</title>"))
+			assert.Contains(t, sc.resp.Body.String(), "<title>Grafana - Error</title>")
 		})
 	})
 }
@@ -76,7 +76,7 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		contextHandler := getContextHandler(t, nil)
 		sc.m.Use(contextHandler.Middleware)
 		// mock out gc goroutine
-		sc.m.Use(OrgRedirect())
+		sc.m.Use(OrgRedirect(cfg))
 
 		sc.defaultHandler = func(c *models.ReqContext) {
 			sc.context = c

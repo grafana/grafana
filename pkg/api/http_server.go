@@ -337,11 +337,11 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	m.Use(hs.metricsEndpoint)
 
 	m.Use(hs.ContextHandler.Middleware)
-	m.Use(middleware.OrgRedirect())
+	m.Use(middleware.OrgRedirect(hs.Cfg))
 
 	// needs to be after context handler
 	if setting.EnforceDomain {
-		m.Use(middleware.ValidateHostHeader(hs.Cfg.Domain))
+		m.Use(middleware.ValidateHostHeader(hs.Cfg))
 	}
 
 	m.Use(middleware.HandleNoCacheHeader())
