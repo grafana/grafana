@@ -24,28 +24,30 @@ export const QueryEditorRow: FunctionComponent<Props> = ({
   return (
     <InlineFieldRow>
       <InlineSegmentGroup>
-        <InlineLabel width={17}>
+        <InlineLabel width={17} as="div">
           <span>{label}</span>
-          {onHideClick && (
+          <span className={styles.iconWrapper}>
+            {onHideClick && (
+              <IconButton
+                name={hidden ? 'eye-slash' : 'eye'}
+                onClick={onHideClick}
+                surface="header"
+                size="sm"
+                aria-pressed={hidden}
+                aria-label="hide metric"
+                className={styles.icon}
+              />
+            )}
             <IconButton
-              name={hidden ? 'eye-slash' : 'eye'}
-              onClick={onHideClick}
+              name="trash-alt"
               surface="header"
               size="sm"
-              aria-pressed={hidden}
-              aria-label="hide metric"
               className={styles.icon}
+              onClick={onRemoveClick || noop}
+              disabled={!onRemoveClick}
+              aria-label="remove metric"
             />
-          )}
-          <IconButton
-            name="trash-alt"
-            surface="header"
-            size="sm"
-            className={styles.icon}
-            onClick={onRemoveClick || noop}
-            disabled={!onRemoveClick}
-            aria-label="remove metric"
-          />
+          </span>
         </InlineLabel>
       </InlineSegmentGroup>
       {children}
@@ -55,32 +57,8 @@ export const QueryEditorRow: FunctionComponent<Props> = ({
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    root: css`
+    iconWrapper: css`
       display: flex;
-      margin-bottom: ${theme.spacing.xs};
-    `,
-    // FIXME: this is taken from  `getInlineLabelStyles` in '@grafana/ui/src/components/Forms/InlineLabel' with width = 17
-    // We should have a better way to access / use these styles.
-    wrapper: css`
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
-      padding: 0 ${theme.spacing.sm};
-      font-weight: ${theme.typography.weight.semibold};
-      font-size: ${theme.typography.size.sm};
-      background-color: ${theme.colors.bg2};
-      height: ${theme.height.md}px;
-      line-height: ${theme.height.md}px;
-      margin-right: ${theme.spacing.xs};
-      border-radius: ${theme.border.radius.md};
-      border: none;
-      width: 136px;
-      color: ${theme.colors.textHeading};
-    `,
-    label: css`
-      font-size: ${theme.typography.size.sm};
-      margin: 0;
     `,
     icon: css`
       color: ${theme.colors.textWeak};
