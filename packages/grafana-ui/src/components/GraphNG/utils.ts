@@ -96,8 +96,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
         joinNullMode = 0;
       }
 
-      const alignedFieldIndex = (valuesFromFrames.length + 1) * alignedData.length;
-      sourceFieldsRefs[alignedFieldIndex] = { fieldIndex, frameIndex };
+      sourceFieldsRefs[sourceFields.length] = { frameIndex, fieldIndex };
 
       alignedData.push(values);
       nullModesFrame.push(joinNullMode);
@@ -143,6 +142,12 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       }),
     },
     isGap,
-    getDataFrameFieldIndex: (alignedFieldIndex: number) => sourceFieldsRefs[alignedFieldIndex],
+    getDataFrameFieldIndex: (alignedFieldIndex: number) => {
+      const index = sourceFieldsRefs[alignedFieldIndex];
+      if (!index) {
+        throw new Error(`Could not find index for ${alignedFieldIndex}`);
+      }
+      return index;
+    },
   };
 }
