@@ -113,7 +113,7 @@ function mapDrawStyleToPathBuilder(
   lineInterpolation?: LineInterpolation,
   opts?: any
 ): Series.PathBuilder {
-  // Initalize the builders once
+  // This could be global static, but Jest initalization was failing so we lazy load to avoid the issue
   if (!builders) {
     const pathBuilders = uPlot.paths;
     const barWidthFactor = 0.6;
