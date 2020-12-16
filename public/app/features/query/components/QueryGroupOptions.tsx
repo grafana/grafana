@@ -144,19 +144,23 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
       maxDataPoints = null;
     }
 
-    onChange({
-      ...options,
-      maxDataPoints: maxDataPoints,
-    });
+    if (maxDataPoints !== options.maxDataPoints) {
+      onChange({
+        ...options,
+        maxDataPoints,
+      });
+    }
   };
 
   onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {
     const { options, onChange } = this.props;
-
-    onChange({
-      ...options,
-      minInterval: emptyToNull(event.target.value),
-    });
+    const minInterval = emptyToNull(event.target.value);
+    if (minInterval !== options.minInterval) {
+      onChange({
+        ...options,
+        minInterval,
+      });
+    }
   };
 
   renderCacheTimeoutOption() {
