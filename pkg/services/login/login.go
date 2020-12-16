@@ -114,7 +114,7 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 
 	if ls.TeamSync != nil {
 		err := ls.TeamSync(cmd.Result, extUser)
-		if err != nil && !errors.Is(err, bus.ErrHandlerNotFound) {
+		if err != nil {
 			return err
 		}
 	}
