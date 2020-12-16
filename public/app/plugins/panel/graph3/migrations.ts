@@ -122,7 +122,11 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
             if (v) {
               rule.properties.push({
                 id: 'custom.fillGradient',
-                value: v / 10.0, // was 0-10
+                value: 'opacity', // was 0-10
+              });
+              rule.properties.push({
+                id: 'custom.fillOpacity',
+                value: v * 10, // was 0-10, new graph is 0 - 100
               });
             }
             break;
@@ -190,9 +194,9 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     graph.fillOpacity = angular.fill * 10; // fill was 0 - 10, new is 0 to 100
   }
 
-  if (isNumber(angular.fillGradient)) {
-    graph.fillOpacity = angular.fillGradient / 10; // fill is 0-10
+  if (isNumber(angular.fillGradient) && angular.fillGradient > 0) {
     graph.fillGradient = AreaGradientMode.Opacity;
+    graph.fillOpacity = angular.fillGradient * 10; // fill is 0-10
   }
 
   graph.spanNulls = angular.nullPointMode === NullValueMode.Null;

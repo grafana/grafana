@@ -27,9 +27,6 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       showPoints,
       pointColor,
       pointSize,
-      fillColor,
-      fillOpacity,
-      fillGradient,
       scaleKey,
       spanNulls,
     } = this.props;
@@ -66,38 +63,34 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       pointsConfig.points!.show = true;
     }
 
-    let fillConfig: any | undefined;
-    let fillOpacityNumber = fillOpacity ?? 0;
-
-    if (fillColor) {
-      fillConfig = {
-        fill: fillColor,
-      };
-    }
-
-    if (fillOpacityNumber !== 0) {
-      if (fillGradient && fillGradient !== AreaGradientMode.None) {
-        fillConfig.fill = getCanvasGradient({
-          color: (fillColor ?? lineColor)!,
-          opacity: fillOpacityNumber / 100,
-          mode: fillGradient,
-        });
-      } else {
-        fillConfig = {
-          fill: tinycolor(fillColor ?? lineColor)
-            .setAlpha(fillOpacityNumber / 100)
-            .toRgbString(),
-        };
-      }
-    }
-
     return {
       scale: scaleKey,
       spanGaps: spanNulls,
       ...lineConfig,
       ...pointsConfig,
-      ...fillConfig,
+      ...this.getFillConfig(),
     };
+  }
+
+  getFillConfig(): Partial<Series> {
+    const { lineColor, fillColor, fillGradient, fillOpacity } = this.props;
+
+    if (fillColor) {
+      return { fill: fillColor };
+    }
+
+    let fillOpacityNumber = fillOpacity ?? 0;
+    if (fillOpacityNumber > 0 && fillGradient && fillGradient !== AreaGradientMode.None) {
+      return {
+        fill: getCanvasGradient({
+          color: (fillColor ?? lineColor)!,
+          opacity: fillOpacityNumber / 100,
+          mode: fillGradient,
+        }),
+      };
+    }
+
+    return {};
   }
 }
 
