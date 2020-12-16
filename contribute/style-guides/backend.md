@@ -55,8 +55,8 @@ code, plus lets you run each test case in isolation when debugging. Don't use `t
 
 ### Cleanup
 
-Use `t.Cleanup` to clean up resources in tests. It's a less fragile choice than `defer`, since it's independent of which
-function you call it in. It will always execute after the test is over.
+Use [`t.Cleanup`](https://golang.org/pkg/testing/#T.Cleanup) to clean up resources in tests. It's a less fragile choice than `defer`, since it's independent of which
+function you call it in. It will always execute after the test is over in reverse call order (last `t.Cleanup` first, same as `defer`).
 
 ## Globals
 
@@ -71,7 +71,7 @@ increase the risk of bugs, since a pointer can be nil and dereferencing a nil po
 Valid reasons to use a pointer include (but not necessarily limited to):
 
 * You might need to pass a modifiable argument to a function
-* Copying an object might incur a performance hit (although you have to keep in mind that copying is often faster than
+* Copying an object might incur a performance hit (benchmark to check your assumptions, copying is often faster than
   allocating heap memory)
 * You might *need* `nil` to tell if a variable isn't set, although usually it's better to use the type's zero
   value to tell instead
