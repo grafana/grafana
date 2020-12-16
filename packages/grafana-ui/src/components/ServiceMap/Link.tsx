@@ -52,7 +52,9 @@ export function Link(props: Props) {
           {statsText}
         </text>
         <text x={middle.x} y={middle.y + 10} textAnchor={'middle'}>
-          {link.stats?.tracesPerMinute.toFixed(2)} t/min
+          {link.stats?.tracesPerMinute === undefined
+            ? link.stats?.tracesCount + ' Request' + (link.stats!.tracesCount > 1 ? 's' : '')
+            : link.stats?.tracesPerMinute.toFixed(2) + ' t/min'}
         </text>
       </g>
       <line

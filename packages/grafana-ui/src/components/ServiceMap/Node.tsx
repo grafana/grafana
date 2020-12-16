@@ -47,7 +47,9 @@ export function Node(props: {
           avg. {node.stats?.avgResponseTime.toFixed(2)}ms
         </text>
         <text x={node.x} y={node.y + 10} textAnchor={'middle'}>
-          {node.stats?.tracesPerMinute.toFixed(2)} t/min
+          {node.stats?.tracesPerMinute === undefined
+            ? node.stats?.tracesCount + ' Request' + (node.stats!.tracesCount > 1 ? 's' : '')
+            : node.stats?.tracesPerMinute.toFixed(2) + ' t/min'}
         </text>
       </g>
       <g>

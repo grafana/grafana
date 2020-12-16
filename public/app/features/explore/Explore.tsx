@@ -400,7 +400,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                             />
                           )}
                           {showServiceMap && (
-                            <div style={{ height: 600 }}>
+                            <div style={{ height: showTrace ? 300 : 600 }}>
                               <ServiceMapContainer
                                 // TODO this thrashes internal memoization
                                 dataFrames={queryResponse.series.filter(

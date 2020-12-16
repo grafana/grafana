@@ -7,13 +7,14 @@ export interface Stats {
   errors: number;
   faults: number;
   avgResponseTime: number;
-  tracesPerMinute: number;
+  tracesPerMinute?: number;
+  tracesCount: number;
 }
 
 type Ratio = 'success' | 'errors' | 'faults' | 'throttled';
 
 export function computeStats(serviceOrEdge: XrayService | XrayEdge): Stats | undefined {
-  const { SummaryStatistics, StartTime, EndTime } = serviceOrEdge;
+  const { SummaryStatistics, StartTime, EndTime, ResponseTimeHistogram } = serviceOrEdge;
   if (!SummaryStatistics) {
     return computeStats((serviceOrEdge as XrayService).Edges[0]);
   }
@@ -25,7 +26,8 @@ export function computeStats(serviceOrEdge: XrayService | XrayEdge): Stats | und
     errors: (ErrorStatistics.TotalCount - ErrorStatistics.ThrottleCount) / TotalCount,
     faults: FaultStatistics.TotalCount / TotalCount,
     avgResponseTime: (TotalResponseTime / TotalCount) * 1000,
-    tracesPerMinute: TotalCount / ((toMs(EndTime) - toMs(StartTime)) / (60 * 1000)),
+    tracesPerMinute: EndTime && StartTime ? TotalCount / ((toMs(EndTime) - toMs(StartTime)) / (60 * 1000)) : undefined,
+    tracesCount: ResponseTimeHistogram.reduce((acc, h) => acc + h.Count, 0),
   };
 }
 
@@ -44,7 +46,7 @@ export function getRatios(
   fullStat: Ratio | undefined;
 } {
   const ratios = pick(stats, 'faults', 'errors', 'throttled', 'success');
-  const statsArray = (Object.keys(ratios) as Ratio[]).filter(k => stats[k as keyof Stats] > 0);
-  const fullStat = statsArray.find(k => stats[k as keyof Stats] === 1);
+  const statsArray = (Object.keys(ratios) as Ratio[]).filter(k => stats[k as Ratio] > 0);
+  const fullStat = statsArray.find(k => stats[k as Ratio] === 1);
   return { nonZero: statsArray, fullStat };
 }
