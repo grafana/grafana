@@ -1,39 +1,42 @@
 package ngalert
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
+var errAlertDefinitionFailedGenerateUniqueUID = errors.New("failed to generate alert definition UID")
+
 // AlertDefinition is the model for alert definitions in Alerting NG.
 type AlertDefinition struct {
-	ID        int64 `xorm:"pk autoincr 'id'"`
-	OrgID     int64 `xorm:"org_id"`
-	Name      string
-	Condition string
-	Data      []eval.AlertQuery
-	Updated   int64
-	// Interval in seconds
-	Interval int64
-	Version  int64
+	ID              int64 `xorm:"pk autoincr 'id'"`
+	OrgID           int64 `xorm:"org_id"`
+	Title           string
+	Condition       string
+	Data            []eval.AlertQuery
+	Updated         time.Time
+	IntervalSeconds int64
+	Version         int64
+	UID             string `xorm:"uid"`
 }
 
 // AlertDefinitionVersion is the model for alert definition versions in Alerting NG.
 type AlertDefinitionVersion struct {
-	ID                int64 `xorm:"pk autoincr 'id'"`
-	AlertDefinitionID int64 `xorm:"alert_definition_id"`
-	ParentVersion     int64
-	RestoredFrom      int64
-	Version           int64
+	ID                 int64  `xorm:"pk autoincr 'id'"`
+	AlertDefinitionID  int64  `xorm:"alert_definition_id"`
+	AlertDefinitionUID string `xorm:"alert_definition_uid"`
+	ParentVersion      int64
+	RestoredFrom       int64
+	Version            int64
 
-	Created   int64
-	Name      string
-	Condition string
-	Data      []eval.AlertQuery
-	// Interval in seconds
-	Interval int64
+	Created         time.Time
+	Title           string
+	Condition       string
+	Data            []eval.AlertQuery
+	IntervalSeconds int64
 }
 
 var (
@@ -58,21 +61,22 @@ type deleteAlertDefinitionByIDCommand struct {
 
 // saveAlertDefinitionCommand is the query for saving a new alert definition.
 type saveAlertDefinitionCommand struct {
-	Name              string         `json:"name"`
-	OrgID             int64          `json:"-"`
-	Condition         eval.Condition `json:"condition"`
-	IntervalInSeconds *int64         `json:"interval"`
+	Title           string         `json:"title"`
+	OrgID           int64          `json:"-"`
+	Condition       eval.Condition `json:"condition"`
+	IntervalSeconds *int64         `json:"interval_seconds"`
 
 	Result *AlertDefinition
 }
 
 // updateAlertDefinitionCommand is the query for updating an existing alert definition.
 type updateAlertDefinitionCommand struct {
-	ID                int64          `json:"-"`
-	Name              string         `json:"name"`
-	OrgID             int64          `json:"-"`
-	Condition         eval.Condition `json:"condition"`
-	IntervalInSeconds *int64         `json:"interval"`
+	ID              int64          `json:"-"`
+	Title           string         `json:"title"`
+	OrgID           int64          `json:"-"`
+	Condition       eval.Condition `json:"condition"`
+	IntervalSeconds *int64         `json:"interval_seconds"`
+	UID             string         `json:"-"`
 
 	RowsAffected int64
 	Result       *AlertDefinition

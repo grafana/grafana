@@ -17,6 +17,6 @@ func (alertDefinition *AlertDefinition) preSave() error {
 		}
 		alertDefinition.Data[i] = q
 	}
-	alertDefinition.Updated = timeNow().Unix()
+	alertDefinition.Updated = timeNow()
 	return nil
 }

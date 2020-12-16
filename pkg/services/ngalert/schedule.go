@@ -170,7 +170,7 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 				itemVersion := item.Version
 				newRoutine := !ng.schedule.registry.exists(itemID)
 				definitionInfo := ng.schedule.registry.getOrCreateInfo(itemID, itemVersion)
-				invalidInterval := item.Interval%int64(ng.schedule.baseInterval.Seconds()) != 0
+				invalidInterval := item.IntervalSeconds%int64(ng.schedule.baseInterval.Seconds()) != 0
 
 				if newRoutine && !invalidInterval {
 					dispatcherGroup.Go(func() error {
@@ -181,12 +181,12 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 				if invalidInterval {
 					// this is expected to be always false
 					// give that we validate interval during alert definition updates
-					ng.schedule.log.Debug("alert definition with invalid interval will be ignored: interval should be divided exactly by scheduler interval", "definitionID", itemID, "interval", time.Duration(item.Interval)*time.Second, "scheduler interval", ng.schedule.baseInterval)
+					ng.schedule.log.Debug("alert definition with invalid interval will be ignored: interval should be divided exactly by scheduler interval", "definitionID", itemID, "interval", time.Duration(item.IntervalSeconds)*time.Second, "scheduler interval", ng.schedule.baseInterval)
 					continue
 				}
 
-				itemFrequency := item.Interval / int64(ng.schedule.baseInterval.Seconds())
-				if item.Interval != 0 && tickNum%itemFrequency == 0 {
+				itemFrequency := item.IntervalSeconds / int64(ng.schedule.baseInterval.Seconds())
+				if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
 					readyToRun = append(readyToRun, readyToRunItem{id: itemID, definitionInfo: definitionInfo})
 				}
 

@@ -7,132 +7,64 @@ import (
 )
 
 func addAlertDefinitionMigrations(mg *migrator.Migrator) {
+	mg.AddMigration("delete alert_definition table", migrator.NewDropTableMigration("alert_definition"))
+
 	alertDefinition := migrator.Table{
 		Name: "alert_definition",
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "condition", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "title", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "condition", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "data", Type: migrator.DB_Text, Nullable: false},
+			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "interval_seconds", Type: migrator.DB_BigInt, Nullable: false, Default: fmt.Sprintf("%d", defaultIntervalSeconds)},
+			{Name: "version", Type: migrator.DB_Int, Nullable: false, Default: "0"},
+			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "0"},
 		},
 		Indices: []*migrator.Index{
-			{Cols: []string{"org_id"}, Type: migrator.IndexType},
+			{Cols: []string{"org_id", "title"}, Type: migrator.IndexType},
+			{Cols: []string{"org_id", "uid"}, Type: migrator.IndexType},
 		},
 	}
 	// create table
-	mg.AddMigration("create alert_definition table", migrator.NewAddTableMigration(alertDefinition))
+	mg.AddMigration("recreate alert_definition table", migrator.NewAddTableMigration(alertDefinition))
 
 	// create indices
-	mg.AddMigration("add index alert_definition org_id", migrator.NewAddIndexMigration(alertDefinition, alertDefinition.Indices[0]))
+	mg.AddMigration("add index in alert_definition on org_id and title columns", migrator.NewAddIndexMigration(alertDefinition, alertDefinition.Indices[0]))
+	mg.AddMigration("add index in alert_definition on org_id and uid columns", migrator.NewAddIndexMigration(alertDefinition, alertDefinition.Indices[1]))
 
-	now := timeNow()
-	mg.AddMigration("add column updated", migrator.NewAddColumnMigration(alertDefinition, &migrator.Column{
-		Name: "updated", Type: migrator.DB_BigInt, Nullable: false, Default: fmt.Sprintf("%d", now.Unix()),
-	}))
-
-	mg.AddMigration("add index alert_definition updated", migrator.NewAddIndexMigration(alertDefinition, &migrator.Index{
-		Cols: []string{"updated"}, Type: migrator.IndexType,
-	}))
-
-	mg.AddMigration("add column interval", migrator.NewAddColumnMigration(alertDefinition, &migrator.Column{
-		Name: "interval", Type: migrator.DB_BigInt, Nullable: false, Default: fmt.Sprintf("%d", defaultIntervalInSeconds),
-	}))
-
-	mg.AddMigration("add column version", migrator.NewAddColumnMigration(alertDefinition, &migrator.Column{
-		Name: "version", Type: migrator.DB_Int, Nullable: false, Default: "0",
-	}))
-
-	mg.AddMigration("alter alert_definition.data to mediumtext", migrator.NewRawSQLMigration("").
+	mg.AddMigration("alter alert_definition table data column to mediumtext in mysql", migrator.NewRawSQLMigration("").
 		Mysql("ALTER TABLE alert_definition MODIFY data MEDIUMTEXT;"))
-
-	mg.AddMigration("drop index alert_definition updated", migrator.NewDropIndexMigration(alertDefinition, &migrator.Index{
-		Cols: []string{"updated"}, Type: migrator.IndexType,
-	}))
-
-	mg.AddMigration("alter alert_definition.name to varchar 190", migrator.NewRawSQLMigration("").
-		Mysql("ALTER TABLE alert_definition MODIFY name VARCHAR(190);"))
-
-	mg.AddMigration("uniquely rename alert_definitions", migrator.NewRawSQLMigration("").
-		SQLite("UPDATE alert_definition SET name=(name || ' ' || id);").
-		Postgres("UPDATE alert_definition SET name=(name || ' ' || id::text);").
-		Mysql("UPDATE alert_definition SET name=CONCAT(name, ' ', CAST(id AS CHAR));"),
-	)
-
-	mg.AddMigration("add index alert_definition org_id & name", migrator.NewAddIndexMigration(alertDefinition, &migrator.Index{
-		Cols: []string{"org_id", "name"}, Type: migrator.UniqueIndex,
-	}))
 }
 
 func addAlertDefinitionVersionMigrations(mg *migrator.Migrator) {
+	mg.AddMigration("delete alert_definition_version table", migrator.NewDropTableMigration("alert_definition_version"))
+
 	alertDefinitionVersion := migrator.Table{
 		Name: "alert_definition_version",
 		Columns: []*migrator.Column{
 			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "alert_definition_id", Type: migrator.DB_BigInt},
+			{Name: "alert_definition_uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false, Default: "0"},
 			{Name: "parent_version", Type: migrator.DB_Int, Nullable: false},
 			{Name: "restored_from", Type: migrator.DB_Int, Nullable: false},
 			{Name: "version", Type: migrator.DB_Int, Nullable: false},
-			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
-			{Name: "name", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "condition", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "title", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "condition", Type: migrator.DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "data", Type: migrator.DB_Text, Nullable: false},
-			{Name: "interval", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "interval_seconds", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"alert_definition_id", "version"}, Type: migrator.UniqueIndex},
+			{Cols: []string{"alert_definition_uid", "version"}, Type: migrator.UniqueIndex},
 		},
 	}
-	mg.AddMigration("create alert_definition_version table v1", migrator.NewAddTableMigration(alertDefinitionVersion))
-	mg.AddMigration("add unique index alert_definition_version.alert_definition_id and versionn", migrator.NewAddIndexMigration(alertDefinitionVersion, alertDefinitionVersion.Indices[0]))
+	mg.AddMigration("recreate alert_definition_version table", migrator.NewAddTableMigration(alertDefinitionVersion))
+	mg.AddMigration("add index in alert_definition_version table on alert_definition_id and version columns", migrator.NewAddIndexMigration(alertDefinitionVersion, alertDefinitionVersion.Indices[0]))
+	mg.AddMigration("add index in alert_definition_version table on alert_definition_uid and version columns", migrator.NewAddIndexMigration(alertDefinitionVersion, alertDefinitionVersion.Indices[1]))
 
-	rawSQL := fmt.Sprintf(`INSERT INTO alert_definition_version
-	(
-		%s,
-		%s,
-		%s,
-		%s,
-		%s,
-		%s,
-		%s,
-		%s,
-		%s
-	)
-	SELECT
-		alert_definition.id,
-		alert_definition.version,
-		alert_definition.version,
-		alert_definition.version,
-		alert_definition.updated,
-		alert_definition.name,
-		alert_definition.condition,
-		alert_definition.data,
-		alert_definition.interval
-	FROM alert_definition;`,
-		mg.Dialect.Quote("alert_definition_id"),
-		mg.Dialect.Quote("version"),
-		mg.Dialect.Quote("parent_version"),
-		mg.Dialect.Quote("restored_from"),
-		mg.Dialect.Quote("created"),
-		mg.Dialect.Quote("name"),
-		mg.Dialect.Quote("condition"),
-		mg.Dialect.Quote("data"),
-		mg.Dialect.Quote("interval"),
-	)
-	mg.AddMigration("save existing alert_definition data in alert_definition_version table", migrator.NewRawSQLMigration(rawSQL))
-
-	const setVersionTo1WhereZeroSQL = `UPDATE alert_definition SET version = 1 WHERE version = 0`
-	mg.AddMigration("Set alert_definition version to 1 where 0", migrator.NewRawSQLMigration(setVersionTo1WhereZeroSQL))
-
-	mg.AddMigration("alter alert_definition_version.data to mediumtext", migrator.NewRawSQLMigration("").
+	mg.AddMigration("alter alert_definition_version table data column to mediumtext in mysql", migrator.NewRawSQLMigration("").
 		Mysql("ALTER TABLE alert_definition_version MODIFY data MEDIUMTEXT;"))
-
-	mg.AddMigration("alter alert_definition_version.name to varchar 190", migrator.NewRawSQLMigration("").
-		Mysql("ALTER TABLE alert_definition_version MODIFY name VARCHAR(190);"))
-
-	mg.AddMigration("uniquely rename alert_definition_version name", migrator.NewRawSQLMigration("").
-		SQLite("UPDATE alert_definition_version SET name=(name || ' ' || id);").
-		Postgres("UPDATE alert_definition_version SET name=(name || ' ' || id::text);").
-		Mysql("UPDATE alert_definition_version SET name=CONCAT(name, ' ', CAST(id AS CHAR));"),
-	)
 }

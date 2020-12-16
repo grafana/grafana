@@ -55,10 +55,10 @@ func overrideAlertNGInRegistry(cfg *setting.Cfg) AlertNG {
 	return ng
 }
 
-func createTestAlertDefinition(t *testing.T, ng *AlertNG, intervalInSeconds int64) *AlertDefinition {
+func createTestAlertDefinition(t *testing.T, ng *AlertNG, intervalSeconds int64) *AlertDefinition {
 	cmd := saveAlertDefinitionCommand{
 		OrgID: 1,
-		Name:  fmt.Sprintf("an alert definition %d", rand.Intn(1000)),
+		Title: fmt.Sprintf("an alert definition %d", rand.Intn(1000)),
 		Condition: eval.Condition{
 			RefID: "A",
 			QueriesAndExpressions: []eval.AlertQuery{
@@ -76,10 +76,10 @@ func createTestAlertDefinition(t *testing.T, ng *AlertNG, intervalInSeconds int6
 				},
 			},
 		},
-		IntervalInSeconds: &intervalInSeconds,
+		IntervalSeconds: &intervalSeconds,
 	}
 	err := ng.saveAlertDefinition(&cmd)
 	require.NoError(t, err)
-	t.Logf("alert definition: %d with interval: %d created", cmd.Result.ID, intervalInSeconds)
+	t.Logf("alert definition: %d with interval: %d created", cmd.Result.ID, intervalSeconds)
 	return cmd.Result
 }

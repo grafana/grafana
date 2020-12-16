@@ -18,11 +18,12 @@ func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, req
 		return fmt.Errorf("no queries or expressions are found")
 	}
 
-	if alertDefinition.Interval%int64(ng.schedule.baseInterval.Seconds()) != 0 {
-		return fmt.Errorf("invalid interval: %v: interval should be divided exactly by scheduler interval: %v", time.Duration(alertDefinition.Interval)*time.Second, ng.schedule.baseInterval)
+	if alertDefinition.IntervalSeconds%int64(ng.schedule.baseInterval.Seconds()) != 0 {
+		return fmt.Errorf("invalid interval: %v: interval should be divided exactly by scheduler interval: %v", time.Duration(alertDefinition.IntervalSeconds)*time.Second, ng.schedule.baseInterval)
 	}
 
-	if len(alertDefinition.Name) > alertDefinitionMaxNameLength {
+	// enfore max name length in SQLite
+	if len(alertDefinition.Title) > alertDefinitionMaxNameLength {
 		return fmt.Errorf("name length should not be greater than %d", alertDefinitionMaxNameLength)
 	}
 
@@ -36,6 +37,10 @@ func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, req
 // validateCondition validates that condition queries refer to existing datasources
 func (ng *AlertNG) validateCondition(c eval.Condition, user *models.SignedInUser) error {
 	var refID string
+
+	if len(c.QueriesAndExpressions) == 0 {
+		return nil
+	}
 
 	for _, query := range c.QueriesAndExpressions {
 		if c.RefID == query.RefID {

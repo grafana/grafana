@@ -23,9 +23,9 @@ const (
 	// because this could cause existing alert definition
 	// with intervals that are not exactly divided by this number
 	// not to be evaluated
-	baseIntervalInSeconds = 10
+	baseIntervalSeconds = 10
 	// default alert definiiton interval
-	defaultIntervalInSeconds int64 = 6 * baseIntervalInSeconds
+	defaultIntervalSeconds int64 = 6 * baseIntervalSeconds
 )
 
 // AlertNG is the service for evaluating the condition of an alert definition.
@@ -47,7 +47,7 @@ func (ng *AlertNG) Init() error {
 	ng.log = log.New("ngalert")
 
 	ng.registerAPIEndpoints()
-	ng.schedule = newScheduler(clock.New(), baseIntervalInSeconds*time.Second, ng.log, nil)
+	ng.schedule = newScheduler(clock.New(), baseIntervalSeconds*time.Second, ng.log, nil)
 	return nil
 }
 
