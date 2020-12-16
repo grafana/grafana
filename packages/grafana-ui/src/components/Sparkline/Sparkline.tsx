@@ -77,7 +77,7 @@ export class Sparkline extends PureComponent<Props, State> {
   }
 
   prepareConfig(data: DataFrame, props: Props) {
-    const { theme, height } = this.props;
+    const { theme } = this.props;
     const builder = new UPlotConfigBuilder();
 
     builder.setCursor({
