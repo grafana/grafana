@@ -186,19 +186,22 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 	return report, nil
 }
 
-func (uss *UsageStatsService) sendUsageStats() {
+func (uss *UsageStatsService) sendUsageStats() error {
 	if !setting.ReportingEnabled {
-		return
+		return nil
 	}
 
 	metricsLogger.Debug(fmt.Sprintf("Sending anonymous usage stats to %s", usageStatsURL))
 
 	report, err := uss.GetUsageReport()
 	if err != nil {
-		return
+		return err
 	}
 
-	out, _ := json.MarshalIndent(report, "", " ")
+	out, err := json.MarshalIndent(report, "", " ")
+	if err != nil {
+		return err
+	}
 	data := bytes.NewBuffer(out)
 
 	client := http.Client{Timeout: 5 * time.Second}
@@ -208,8 +211,12 @@ func (uss *UsageStatsService) sendUsageStats() {
 			metricsLogger.Error("Failed to send usage stats", "err", err)
 			return
 		}
-		resp.Body.Close()
+		if err := resp.Body.Close(); err != nil {
+			metricsLogger.Warn("Failed to close response body", "err", err)
+		}
 	}()
+
+	return nil
 }
 
 func (uss *UsageStatsService) updateTotalStats() {

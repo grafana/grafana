@@ -167,8 +167,13 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.setState({ scrollTop: 1000 });
   };
 
+  onUpdateAndRun = (options: QueryGroupOptions) => {
+    this.props.onOptionsChange(options);
+    this.props.onRunQueries();
+  };
+
   renderTopSection(styles: QueriesTabStyls) {
-    const { onOpenQueryInspector, options, onOptionsChange } = this.props;
+    const { onOpenQueryInspector, options } = this.props;
     const { dataSource, data } = this.state;
 
     return (
@@ -199,7 +204,7 @@ export class QueryGroup extends PureComponent<Props, State> {
                   options={options}
                   dataSource={dataSource}
                   data={data}
-                  onChange={onOptionsChange}
+                  onChange={this.onUpdateAndRun}
                 />
               </div>
               {onOpenQueryInspector && (

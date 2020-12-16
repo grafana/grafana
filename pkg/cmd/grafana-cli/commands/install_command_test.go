@@ -215,7 +215,7 @@ func setupFakePluginsDir(t *testing.T) (string, func()) {
 	err := os.RemoveAll(dirname)
 	require.Nil(t, err)
 
-	err = os.MkdirAll(dirname, 0774)
+	err = os.MkdirAll(dirname, 0750)
 	require.Nil(t, err)
 
 	return dirname, func() {

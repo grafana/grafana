@@ -22,11 +22,15 @@ import {
   EventBusExtended,
   EventBusSrv,
   DataFrameDTO,
+  urlUtil,
+  DataLinkBuiltInVars,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { PanelOptionsChangedEvent, PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
+import { getTimeSrv } from '../services/TimeSrv';
+import { getAllVariableValuesForUrl } from '../../variables/getAllVariableValuesForUrl';
 
 export interface GridPos {
   x: number;
@@ -496,11 +500,28 @@ export class PanelModel implements DataConfigSource {
     this.events.publish(new PanelTransformationsChangedEvent());
   }
 
-  replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {
+  replaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {
     let vars = this.scopedVars;
+
     if (extraVars) {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
+    const allVariablesParams = getAllVariableValuesForUrl(vars);
+    const variablesQuery = urlUtil.toUrlParams(allVariablesParams);
+    const timeRangeUrl = urlUtil.toUrlParams(getTimeSrv().timeRangeForUrl());
+
+    vars = {
+      ...vars,
+      [DataLinkBuiltInVars.keepTime]: {
+        text: timeRangeUrl,
+        value: timeRangeUrl,
+      },
+      [DataLinkBuiltInVars.includeVars]: {
+        text: variablesQuery,
+        value: variablesQuery,
+      },
+    };
+
     return getTemplateSrv().replace(value, vars, format);
   }
 
