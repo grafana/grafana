@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/quota"
-	"github.com/grafana/grafana/pkg/services/teamgroupsync"
 )
 
 func init() {
@@ -19,10 +18,12 @@ var (
 	logger = log.New("login.ext_user")
 )
 
+type TeamSyncFunc func(user *models.User, externalUser *models.ExternalUserInfo) error
+
 type LoginService struct {
-	Bus          bus.Bus                `inject:""`
-	QuotaService *quota.QuotaService    `inject:""`
-	TeamSync     teamgroupsync.TeamSync `inject:""`
+	Bus          bus.Bus             `inject:""`
+	QuotaService *quota.QuotaService `inject:""`
+	TeamSync     TeamSyncFunc
 }
 
 func (ls *LoginService) Init() error {
@@ -111,9 +112,11 @@ func (ls *LoginService) UpsertUser(cmd *models.UpsertUserCommand) error {
 		}
 	}
 
-	err := ls.TeamSync.SyncTeams(cmd.Result, extUser)
-	if err != nil && !errors.Is(err, bus.ErrHandlerNotFound) {
-		return err
+	if ls.TeamSync != nil {
+		err := ls.TeamSync(cmd.Result, extUser)
+		if err != nil && !errors.Is(err, bus.ErrHandlerNotFound) {
+			return err
+		}
 	}
 
 	return nil
