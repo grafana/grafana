@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -23,6 +24,7 @@ func init() {
 	bus.AddHandler("sql", DeleteDataSourceByName)
 	bus.AddHandler("sql", UpdateDataSource)
 	bus.AddHandler("sql", GetDataSourceById)
+	bus.AddHandler("sql", GetDataSourceByUID)
 	bus.AddHandler("sql", GetDataSourceByName)
 }
 
@@ -242,4 +244,38 @@ func generateNewDatasourceUid(sess *DBSession, orgId int64) (string, error) {
 	}
 
 	return "", models.ErrDataSourceFailedGenerateUniqueUid
+}
+
+func getDataSourceByUID(uid string, orgID int64, engine *xorm.Engine) (*models.DataSource, error) {
+	if uid == "" {
+		return nil, fmt.Errorf("can not get data source by uid, uid is missing")
+	}
+
+	if orgID == 0 {
+		return nil, fmt.Errorf("can not get data source by uid, orgId is missing")
+	}
+
+	datasource := models.DataSource{OrgId: orgID, Uid: uid}
+	has, err := engine.Get(&datasource)
+	if err != nil {
+		sqlog.Error("Failed getting data source", "err", err, "uid", uid, "orgId", orgID)
+		return nil, err
+	}
+	if !has {
+		sqlog.Debug("Failed to find data source", "uid", uid, "orgId", orgID)
+		return nil, models.ErrDataSourceNotFound
+	}
+
+	return &datasource, nil
+}
+
+func (ss *SQLStore) GetDataSourceByUID(uid string, orgID int64) (*models.DataSource, error) {
+	return getDataSourceByUID(uid, orgID, ss.engine)
+}
+
+func GetDataSourceByUID(query *models.GetDataSourceByUIDQuery) error {
+	ds, err := getDataSourceByUID(query.Uid, query.OrgId, x)
+	query.Result = ds
+
+	return err
 }

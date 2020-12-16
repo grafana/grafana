@@ -12,6 +12,7 @@ import (
 
 type CacheService interface {
 	GetDatasource(datasourceID int64, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
+	GetDatasourceByUID(datasourceUID string, user *models.SignedInUser, skipCache bool) (*models.DataSource, error)
 }
 
 type CacheServiceImpl struct {
@@ -53,6 +54,47 @@ func (dc *CacheServiceImpl) GetDatasource(
 		return nil, err
 	}
 
+	if ds.Uid != "" {
+		dc.CacheService.Set(uidKey(ds.Uid), ds, time.Second*5)
+	}
 	dc.CacheService.Set(cacheKey, ds, time.Second*5)
 	return ds, nil
+}
+
+func (dc *CacheServiceImpl) GetDatasourceByUID(
+	datasourceUID string,
+	user *models.SignedInUser,
+	skipCache bool,
+) (*models.DataSource, error) {
+	if datasourceUID == "" {
+		return nil, fmt.Errorf("can not get data source by uid, uid is empty")
+	}
+	uidCacheKey := uidKey(datasourceUID)
+
+	if !skipCache {
+		if cached, found := dc.CacheService.Get(uidCacheKey); found {
+			ds := cached.(*models.DataSource)
+			if ds.OrgId == user.OrgId {
+				return ds, nil
+			}
+		}
+	}
+
+	plog.Debug("Querying for data source via SQL store", "uid", datasourceUID, "orgId", user.OrgId)
+	ds, err := dc.SQLStore.GetDataSourceByUID(datasourceUID, user.OrgId)
+	if err != nil {
+		return nil, err
+	}
+
+	dc.CacheService.Set(uidCacheKey, ds, time.Second*5)
+	dc.CacheService.Set(idKey(ds.Id), ds, time.Second*5)
+	return ds, nil
+}
+
+func idKey(id int64) string {
+	return fmt.Sprintf("ds-%d", id)
+}
+
+func uidKey(uid string) string {
+	return fmt.Sprintf("dsuid-%d", uid)
 }

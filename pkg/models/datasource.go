@@ -213,6 +213,12 @@ type GetDataSourceByIdQuery struct {
 	Result *DataSource
 }
 
+type GetDataSourceByUIDQuery struct {
+	Uid    string
+	OrgId  int64
+	Result *DataSource
+}
+
 type GetDataSourceByNameQuery struct {
 	Name   string
 	OrgId  int64
