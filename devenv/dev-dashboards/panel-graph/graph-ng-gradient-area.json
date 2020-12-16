@@ -15,7 +15,6 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 358,
   "links": [],
   "panels": [
     {
@@ -87,7 +86,7 @@
       "options": {
         "graph": {},
         "legend": {
-          "displayMode": "list",
+          "displayMode": "hidden",
           "placement": "bottom"
         },
         "tooltipOptions": {
@@ -176,7 +175,7 @@
       "options": {
         "graph": {},
         "legend": {
-          "displayMode": "list",
+          "displayMode": "hidden",
           "placement": "bottom"
         },
         "tooltipOptions": {
@@ -265,7 +264,7 @@
       "options": {
         "graph": {},
         "legend": {
-          "displayMode": "list",
+          "displayMode": "hidden",
           "placement": "bottom"
         },
         "tooltipOptions": {
@@ -353,7 +352,7 @@
       "options": {
         "graph": {},
         "legend": {
-          "displayMode": "list",
+          "displayMode": "hidden",
           "placement": "bottom"
         },
         "tooltipOptions": {
@@ -384,9 +383,9 @@
             "axisPlacement": "auto",
             "drawStyle": "line",
             "fillGradient": "hue",
-            "fillOpacity": 99,
+            "fillOpacity": 62,
             "lineInterpolation": "smooth",
-            "lineWidth": 1,
+            "lineWidth": 2,
             "pointSize": 6,
             "scaleDistribution": {
               "type": "linear"
@@ -421,7 +420,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "red",
+                  "fixedColor": "semi-dark-blue",
                   "mode": "fixed"
                 }
               }
@@ -431,18 +430,18 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 7,
+        "w": 14,
         "x": 10,
         "y": 8
       },
       "id": 13,
       "interval": "1m",
       "links": [],
-      "maxDataPoints": 30,
+      "maxDataPoints": 80,
       "options": {
         "graph": {},
         "legend": {
-          "displayMode": "list",
+          "displayMode": "hidden",
           "placement": "bottom"
         },
         "tooltipOptions": {
@@ -459,183 +458,6 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Hue gradient mode",
-      "type": "graph3"
-    },
-    {
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "drawStyle": "line",
-            "fillGradient": "hue",
-            "fillOpacity": 80,
-            "lineInterpolation": "smooth",
-            "lineWidth": 1,
-            "pointSize": 6,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true
-          },
-          "mappings": [],
-          "nullValueMode": "null",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "A-series"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 7,
-        "x": 17,
-        "y": 8
-      },
-      "id": 15,
-      "interval": "1m",
-      "links": [],
-      "maxDataPoints": 30,
-      "options": {
-        "graph": {},
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltipOptions": {
-          "mode": "single"
-        }
-      },
-      "pluginVersion": "7.4.0-pre",
-      "targets": [
-        {
-          "refId": "A",
-          "scenarioId": "random_walk"
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Hue gradient mode",
-      "type": "graph3"
-    },
-    {
-      "datasource": null,
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "drawStyle": "line",
-            "fillGradient": 1,
-            "fillOpacity": 90,
-            "lineInterpolation": "linear",
-            "lineWidth": 0,
-            "pointSize": 6,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": true
-          },
-          "mappings": [],
-          "nullValueMode": "null",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "A-series"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 10,
-        "x": 0,
-        "y": 16
-      },
-      "id": 10,
-      "interval": "1m",
-      "links": [],
-      "options": {
-        "graph": {},
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltipOptions": {
-          "mode": "single"
-        }
-      },
-      "pluginVersion": "7.4.0-pre",
-      "targets": [
-        {
-          "refId": "A",
-          "scenarioId": "random_walk"
-        }
-      ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Req/s",
       "type": "graph3"
     },
     {
@@ -687,7 +509,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "orange",
+                  "fixedColor": "red",
                   "mode": "fixed"
                 }
               }
@@ -696,19 +518,19 @@
         ]
       },
       "gridPos": {
-        "h": 8,
-        "w": 14,
-        "x": 10,
+        "h": 11,
+        "w": 24,
+        "x": 0,
         "y": 16
       },
-      "id": 14,
+      "id": 16,
       "interval": "1m",
       "links": [],
-      "maxDataPoints": 20,
+      "maxDataPoints": 50,
       "options": {
         "graph": {},
         "legend": {
-          "displayMode": "list",
+          "displayMode": "hidden",
           "placement": "bottom"
         },
         "tooltipOptions": {
