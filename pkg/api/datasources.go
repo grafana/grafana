@@ -104,7 +104,7 @@ func DeleteDataSourceById(c *models.ReqContext) Response {
 	return Success("Data source deleted")
 }
 
-// Get /api/datasources/uid/:uid
+// GET /api/datasources/uid/:uid
 func GetDataSourceByUID(c *models.ReqContext) Response {
 	query := models.GetDataSourceByUIDQuery{
 		Uid:   c.Params(":uid"),
@@ -122,6 +122,33 @@ func GetDataSourceByUID(c *models.ReqContext) Response {
 	dtos := convertModelToDtos(ds)
 
 	return JSON(200, &dtos)
+}
+
+// DELETE /api/datasources/uid/:uid
+func DeleteDataSourceByUID(c *models.ReqContext) Response {
+	uid := c.Params(":uid")
+
+	if uid == "" {
+		return Error(400, "Missing datasource uid", nil)
+	}
+
+	ds, err := getRawDataSourceByUID(uid, c.OrgId)
+	if err != nil {
+		return Error(400, "Failed to delete datasource", nil)
+	}
+
+	if ds.ReadOnly {
+		return Error(403, "Cannot delete read-only data source", nil)
+	}
+
+	cmd := &models.DeleteDataSourceByUIDCommand{Uid: uid, OrgId: c.OrgId}
+
+	err = bus.Dispatch(cmd)
+	if err != nil {
+		return Error(500, "Failed to delete datasource", err)
+	}
+
+	return Success("Data source deleted")
 }
 
 func DeleteDataSourceByName(c *models.ReqContext) Response {

@@ -198,6 +198,13 @@ type DeleteDataSourceByNameCommand struct {
 	DeletedDatasourcesCount int64
 }
 
+type DeleteDataSourceByUIDCommand struct {
+	Uid   string
+	OrgId int64
+
+	DeletedDatasourcesCount int64
+}
+
 // ---------------------
 // QUERIES
 

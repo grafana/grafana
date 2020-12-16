@@ -22,6 +22,7 @@ func init() {
 	bus.AddHandler("sql", AddDataSource)
 	bus.AddHandler("sql", DeleteDataSourceById)
 	bus.AddHandler("sql", DeleteDataSourceByName)
+	bus.AddHandler("sql", DeleteDataSourceByUID)
 	bus.AddHandler("sql", UpdateDataSource)
 	bus.AddHandler("sql", GetDataSourceById)
 	bus.AddHandler("sql", GetDataSourceByUID)
@@ -79,6 +80,16 @@ func DeleteDataSourceById(cmd *models.DeleteDataSourceByIdCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSQL = "DELETE FROM data_source WHERE id=? and org_id=?"
 		result, err := sess.Exec(rawSQL, cmd.Id, cmd.OrgId)
+		affected, _ := result.RowsAffected()
+		cmd.DeletedDatasourcesCount = affected
+		return err
+	})
+}
+
+func DeleteDataSourceByUID(cmd *models.DeleteDataSourceByUIDCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		var rawSQL = "DELETE FROM data_source WHERE uid=? and org_id=?"
+		result, err := sess.Exec(rawSQL, cmd.Uid, cmd.OrgId)
 		affected, _ := result.RowsAffected()
 		cmd.DeletedDatasourcesCount = affected
 		return err
