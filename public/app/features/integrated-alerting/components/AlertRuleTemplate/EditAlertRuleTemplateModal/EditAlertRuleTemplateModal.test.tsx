@@ -23,6 +23,7 @@ describe('EditAlertRuleTemplateModal', () => {
     expect(wrapper.find('textarea')).toBeTruthy();
     expect(addButton).toBeTruthy();
     expect(addButton.prop('disabled')).toBeTruthy();
+    expect(wrapper.find(dataQa('alert-rule-template-cancel-button'))).toBeTruthy();
   });
 
   it('should not render modal when visible is set to false', () => {

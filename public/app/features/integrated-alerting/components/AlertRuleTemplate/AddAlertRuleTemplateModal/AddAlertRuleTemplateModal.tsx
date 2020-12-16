@@ -76,6 +76,13 @@ export const AddAlertRuleTemplateModal: FC<AddAlertRuleTemplateModalProps> = ({
                 >
                   {Messages.alertRuleTemplate.addModal.confirm}
                 </LoaderButton>
+                <Button
+                  data-qa="alert-rule-template-cancel-button"
+                  variant="secondary"
+                  onClick={() => setVisible(false)}
+                >
+                  {Messages.alertRuleTemplate.addModal.cancel}
+                </Button>
               </HorizontalGroup>
             </>
           </form>

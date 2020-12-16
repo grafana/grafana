@@ -22,6 +22,7 @@ describe('AddAlertRuleTemplateModal', () => {
 
     expect(wrapper.find('textarea')).toBeTruthy();
     expect(wrapper.find(dataQa('alert-rule-template-upload-button')).find('button')).toBeTruthy();
+    expect(wrapper.find(dataQa('alert-rule-template-cancel-button')).find('button')).toBeTruthy();
     expect(addButton).toBeTruthy();
     expect(addButton.prop('disabled')).toBeTruthy();
   });
