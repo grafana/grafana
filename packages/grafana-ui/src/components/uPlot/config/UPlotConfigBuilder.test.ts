@@ -24,6 +24,12 @@ describe('UPlotConfigBuilder', () => {
             "drag": Object {
               "setScale": false,
             },
+            "points": Object {
+              "fill": [Function],
+              "size": [Function],
+              "stroke": [Function],
+              "width": [Function],
+            },
           },
           "scales": Object {
             "scale-x": Object {
@@ -76,6 +82,12 @@ describe('UPlotConfigBuilder', () => {
               "drag": Object {
                 "setScale": false,
               },
+              "points": Object {
+                "fill": [Function],
+                "size": [Function],
+                "stroke": [Function],
+                "width": [Function],
+              },
             },
             "scales": Object {
               "scale-y": Object {
@@ -108,6 +120,12 @@ describe('UPlotConfigBuilder', () => {
               "cursor": Object {
                 "drag": Object {
                   "setScale": false,
+                },
+                "points": Object {
+                  "fill": [Function],
+                  "size": [Function],
+                  "stroke": [Function],
+                  "width": [Function],
                 },
               },
               "scales": Object {
@@ -142,6 +160,12 @@ describe('UPlotConfigBuilder', () => {
               "cursor": Object {
                 "drag": Object {
                   "setScale": false,
+                },
+                "points": Object {
+                  "fill": [Function],
+                  "size": [Function],
+                  "stroke": [Function],
+                  "width": [Function],
                 },
               },
               "scales": Object {
@@ -210,6 +234,12 @@ describe('UPlotConfigBuilder', () => {
           "drag": Object {
             "setScale": false,
           },
+          "points": Object {
+            "fill": [Function],
+            "size": [Function],
+            "stroke": [Function],
+            "width": [Function],
+          },
         },
         "scales": Object {},
         "series": Array [
@@ -257,6 +287,12 @@ describe('UPlotConfigBuilder', () => {
         "cursor": Object {
           "drag": Object {
             "setScale": false,
+          },
+          "points": Object {
+            "fill": [Function],
+            "size": [Function],
+            "stroke": [Function],
+            "width": [Function],
           },
         },
         "scales": Object {},
