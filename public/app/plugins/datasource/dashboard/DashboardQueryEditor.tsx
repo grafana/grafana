@@ -47,9 +47,9 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
   }
 
   async componentDidUpdate(prevProps: Props) {
-    const { panelData } = this.props;
+    const { panelData, queries } = this.props;
 
-    if (prevProps.panelData !== panelData) {
+    if (prevProps.panelData !== panelData || prevProps.queries !== queries) {
       await this.updateState();
     }
   }
@@ -90,10 +90,14 @@ export class DashboardQueryEditor extends PureComponent<Props, State> {
   }
 
   onPanelChanged = (id: number) => {
-    const { onChange } = this.props;
     const query = this.getQuery();
-    query.panelId = id;
-    onChange([query]);
+
+    this.props.onChange([
+      {
+        ...query,
+        panelId: id,
+      } as DashboardQuery,
+    ]);
   };
 
   renderQueryData(editURL: string) {
