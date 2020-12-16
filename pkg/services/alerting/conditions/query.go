@@ -340,6 +340,8 @@ func FrameToSeriesSlice(frame *data.Frame) (tsdb.TimeSeriesSlice, error) {
 		case field.Config != nil && field.Config.DisplayNameFromDS != "":
 			ts.Name = field.Config.DisplayNameFromDS
 		case len(field.Labels) > 0:
+			// Tags are appended to the name so they are eventually included in EvalMatch's Metric property
+			// for display in notifications.
 			ts.Name = fmt.Sprintf("%v {%v}", field.Name, field.Labels.String())
 		default:
 			ts.Name = field.Name
