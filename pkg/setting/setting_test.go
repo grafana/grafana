@@ -30,7 +30,7 @@ func TestLoadingSettings(t *testing.T) {
 			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
-			So(AdminUser, ShouldEqual, "admin")
+			So(cfg.AdminUser, ShouldEqual, "admin")
 			So(cfg.RendererCallbackUrl, ShouldEqual, "http://localhost:3000/")
 		})
 
@@ -61,7 +61,7 @@ func TestLoadingSettings(t *testing.T) {
 			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
-			So(AdminUser, ShouldEqual, "superduper")
+			So(cfg.AdminUser, ShouldEqual, "superduper")
 			So(cfg.DataPath, ShouldEqual, filepath.Join(HomePath, "data"))
 			So(cfg.LogsPath, ShouldEqual, filepath.Join(cfg.DataPath, "log"))
 		})

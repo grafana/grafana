@@ -8,8 +8,8 @@ import {
 } from '@grafana/data';
 import { Input, Select } from '@grafana/ui';
 import {
-  ConcatenateTransformerOptions,
   ConcatenateFrameNameMode,
+  ConcatenateTransformerOptions,
 } from '@grafana/data/src/transformations/transformers/concat';
 
 interface ConcatenateTransformerEditorProps extends TransformerUIProps<ConcatenateTransformerOptions> {}
@@ -61,7 +61,6 @@ export class ConcatenateTransformerEditor extends React.PureComponent<Concatenat
               options={nameModes}
               value={nameModes.find(v => v.value === frameNameMode)}
               onChange={this.onModeChanged}
-              menuPlacement="bottom"
             />
           </div>
         </div>
