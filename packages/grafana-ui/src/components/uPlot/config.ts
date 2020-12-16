@@ -1,5 +1,8 @@
 import { SelectableValue } from '@grafana/data';
 
+/**
+ * @alpha
+ */
 export enum AxisPlacement {
   Auto = 'auto', // First axis on the left, the rest on the right
   Top = 'top',
@@ -9,18 +12,27 @@ export enum AxisPlacement {
   Hidden = 'hidden',
 }
 
+/**
+ * @alpha
+ */
 export enum PointVisibility {
   Auto = 'auto', // will show points when the density is low or line is hidden
   Never = 'never',
   Always = 'always',
 }
 
+/**
+ * @alpha
+ */
 export enum DrawStyle {
   Line = 'line', // default
   Bars = 'bars', // will also have a gap percent
   Points = 'points', // Only show points
 }
 
+/**
+ * @alpha
+ */
 export enum LineInterpolation {
   Linear = 'linear',
   Smooth = 'smooth',
@@ -28,6 +40,9 @@ export enum LineInterpolation {
   StepAfter = 'stepAfter',
 }
 
+/**
+ * @alpha
+ */
 export enum ScaleDistribution {
   Linear = 'linear',
   Logarithmic = 'log',
@@ -53,6 +68,9 @@ export interface AreaConfig {
   fillGradient?: AreaGradientMode;
 }
 
+/**
+ * @alpha
+ */
 export enum AreaGradientMode {
   None = 'none',
   Opacity = 'opacity',
