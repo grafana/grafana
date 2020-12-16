@@ -76,7 +76,6 @@ func getLibraryPanels(session *sqlstore.DBSession, statement interface{}, args .
 func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, panelID int64) (LibraryPanel, error) {
 	orgID := c.SignedInUser.OrgId
 	libraryPanel := LibraryPanel{}
-
 	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		libraryPanels, err := getLibraryPanels(session, "SELECT * FROM library_panel WHERE id=? and org_id=?", panelID, orgID)
 
