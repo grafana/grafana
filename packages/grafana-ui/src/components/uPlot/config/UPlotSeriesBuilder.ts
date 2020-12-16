@@ -1,6 +1,15 @@
 import tinycolor from 'tinycolor2';
 import uPlot, { Series } from 'uplot';
-import { DrawStyle, LineConfig, AreaConfig, PointsConfig, PointVisibility, LineInterpolation } from '../config';
+import { getCanvasContext } from '../../../utils/measureText';
+import {
+  DrawStyle,
+  LineConfig,
+  AreaConfig,
+  PointsConfig,
+  PointVisibility,
+  LineInterpolation,
+  AreaGradientMode,
+} from '../config';
 import { PlotConfigBuilder } from '../types';
 
 export interface SeriesProps extends LineConfig, AreaConfig, PointsConfig {
@@ -18,8 +27,6 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       showPoints,
       pointColor,
       pointSize,
-      fillColor,
-      fillOpacity,
       scaleKey,
       spanNulls,
     } = this.props;
@@ -56,30 +63,40 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       pointsConfig.points!.show = true;
     }
 
-    let fillConfig: any | undefined;
-    let fillOpacityNumber = fillOpacity ?? 0;
-
-    if (fillColor) {
-      fillConfig = {
-        fill: fillColor,
-      };
-    }
-
-    if (fillOpacityNumber !== 0) {
-      fillConfig = {
-        fill: tinycolor(fillColor ?? lineColor)
-          .setAlpha(fillOpacityNumber / 100)
-          .toRgbString(),
-      };
-    }
-
     return {
       scale: scaleKey,
       spanGaps: spanNulls,
+      fill: this.getFill(),
       ...lineConfig,
       ...pointsConfig,
-      ...fillConfig,
     };
+  }
+
+  getFill(): Series.Fill | undefined {
+    const { lineColor, fillColor, fillGradient, fillOpacity } = this.props;
+
+    if (fillColor) {
+      return fillColor;
+    }
+
+    const mode = fillGradient ?? AreaGradientMode.None;
+    let fillOpacityNumber = fillOpacity ?? 0;
+
+    if (mode !== AreaGradientMode.None) {
+      return getCanvasGradient({
+        color: (fillColor ?? lineColor)!,
+        opacity: fillOpacityNumber / 100,
+        mode,
+      });
+    }
+
+    if (fillOpacityNumber > 0) {
+      return tinycolor(lineColor)
+        .setAlpha(fillOpacityNumber / 100)
+        .toString();
+    }
+
+    return undefined;
   }
 }
 
@@ -129,4 +146,51 @@ function mapDrawStyleToPathBuilder(
   }
 
   return builders.linear; // the default
+}
+
+interface AreaGradientOptions {
+  color: string;
+  mode: AreaGradientMode;
+  opacity: number;
+}
+
+function getCanvasGradient(opts: AreaGradientOptions): (self: uPlot, seriesIdx: number) => CanvasGradient {
+  return (plot: uPlot, seriesIdx: number) => {
+    const { color, mode, opacity } = opts;
+
+    const ctx = getCanvasContext();
+    const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
+
+    switch (mode) {
+      case AreaGradientMode.Hue:
+        const color1 = tinycolor(color)
+          .spin(-25)
+          .darken(30)
+          .setAlpha(opacity)
+          .toRgbString();
+        const color2 = tinycolor(color)
+          .spin(25)
+          .lighten(35)
+          .setAlpha(opacity)
+          .toRgbString();
+        gradient.addColorStop(0, color2);
+        gradient.addColorStop(1, color1);
+
+      case AreaGradientMode.Opacity:
+      default:
+        gradient.addColorStop(
+          0,
+          tinycolor(color)
+            .setAlpha(opacity)
+            .toRgbString()
+        );
+        gradient.addColorStop(
+          1,
+          tinycolor(color)
+            .setAlpha(0)
+            .toRgbString()
+        );
+        return gradient;
+    }
+  };
 }
