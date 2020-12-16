@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
 
+const alertDefinitionMaxNameLength = 190
+
 // validateAlertDefinition validates the alert definition interval and organisation.
 // If requireData is true checks that it contains at least one alert query
 func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, requireData bool) error {
@@ -18,6 +20,10 @@ func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, req
 
 	if alertDefinition.Interval%int64(ng.schedule.baseInterval.Seconds()) != 0 {
 		return fmt.Errorf("invalid interval: %v: interval should be divided exactly by scheduler interval: %v", time.Duration(alertDefinition.Interval)*time.Second, ng.schedule.baseInterval)
+	}
+
+	if len(alertDefinition.Name) > alertDefinitionMaxNameLength {
+		return fmt.Errorf("name length should not be greater than %d", alertDefinitionMaxNameLength)
 	}
 
 	if alertDefinition.OrgID == 0 {

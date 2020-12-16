@@ -4,6 +4,7 @@ package ngalert
 
 import (
 	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 
@@ -33,20 +34,30 @@ func TestCreatingAlertDefinition(t *testing.T) {
 	testCases := []struct {
 		desc                 string
 		inputInterval        *int64
+		inputName            string
+		expectedError        error
 		expectedInterval     int64
 		expectedUpdatedEpoch int64
 	}{
 		{
 			desc:                 "should create successfuly an alert definition with default interval",
 			inputInterval:        nil,
+			inputName:            "a name",
 			expectedInterval:     defaultIntervalInSeconds,
 			expectedUpdatedEpoch: time.Unix(1, 0).Unix(),
 		},
 		{
 			desc:                 "should create successfuly an alert definition with custom interval",
 			inputInterval:        &customInterval,
+			inputName:            "another name",
 			expectedInterval:     customInterval,
 			expectedUpdatedEpoch: time.Unix(2, 0).Unix(),
+		},
+		{
+			desc:          "should fail to create an alert definition with too big name",
+			inputInterval: &customInterval,
+			inputName:     getLongString(alertDefinitionMaxNameLength + 1),
+			expectedError: errors.New(""),
 		},
 	}
 	for _, tc := range testCases {
@@ -54,7 +65,7 @@ func TestCreatingAlertDefinition(t *testing.T) {
 			ng := setupTestEnv(t)
 			q := saveAlertDefinitionCommand{
 				OrgID: 1,
-				Name:  "something completely different",
+				Name:  tc.inputName,
 				Condition: eval.Condition{
 					RefID: "B",
 					QueriesAndExpressions: []eval.AlertQuery{
@@ -77,10 +88,15 @@ func TestCreatingAlertDefinition(t *testing.T) {
 				q.IntervalInSeconds = tc.inputInterval
 			}
 			err := ng.saveAlertDefinition(&q)
-			require.NoError(t, err)
-			assert.Equal(t, tc.expectedUpdatedEpoch, q.Result.Updated)
-			assert.Equal(t, tc.expectedInterval, q.Result.Interval)
-			assert.Equal(t, int64(1), q.Result.Version)
+			switch {
+			case tc.expectedError != nil:
+				require.Error(t, err)
+			default:
+				assert.Equal(t, tc.expectedUpdatedEpoch, q.Result.Updated)
+				assert.Equal(t, tc.expectedInterval, q.Result.Interval)
+				assert.Equal(t, int64(1), q.Result.Version)
+
+			}
 		})
 	}
 }
@@ -131,7 +147,9 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		testCases := []struct {
 			desc                 string
 			inputOrgID           int64
+			inputName            string
 			inputInterval        *int64
+			expectedError        error
 			expectedInterval     int64
 			expectedUpdatedEpoch int64
 		}{
@@ -139,6 +157,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				desc:                 "should not update previous interval if it's not provided",
 				inputInterval:        nil,
 				inputOrgID:           alertDefinition.OrgID,
+				inputName:            "something completely different",
 				expectedInterval:     initialInterval,
 				expectedUpdatedEpoch: time.Unix(1, 0).Unix(),
 			},
@@ -146,6 +165,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				desc:                 "should update interval if it's provided",
 				inputInterval:        &customInterval,
 				inputOrgID:           alertDefinition.OrgID,
+				inputName:            "something completely different",
 				expectedInterval:     customInterval,
 				expectedUpdatedEpoch: time.Unix(2, 0).Unix(),
 			},
@@ -153,8 +173,16 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				desc:                 "should not update organisation if it's provided",
 				inputInterval:        &customInterval,
 				inputOrgID:           0,
+				inputName:            "something completely different",
 				expectedInterval:     customInterval,
 				expectedUpdatedEpoch: time.Unix(2, 0).Unix(),
+			},
+			{
+				desc:          "should not update alert definition if the name it's too big",
+				inputInterval: &customInterval,
+				inputOrgID:    0,
+				inputName:     getLongString(alertDefinitionMaxNameLength + 1),
+				expectedError: errors.New(""),
 			},
 		}
 
@@ -189,29 +217,47 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				if tc.inputOrgID != 0 {
 					q.OrgID = tc.inputOrgID
 				}
+				q.Name = tc.inputName
 				err := ng.updateAlertDefinition(&q)
-				require.NoError(t, err)
-				assert.Equal(t, int64(1), q.RowsAffected)
-				assert.Equal(t, int64(1), q.Result.ID)
-				assert.Greater(t, q.Result.Updated, lastUpdated)
-				updated := q.Result.Updated
-				assert.Equal(t, previousVersion+1, q.Result.Version)
-				assert.Equal(t, alertDefinition.OrgID, q.Result.OrgID)
+				switch {
+				case tc.expectedError != nil:
+					require.Error(t, err)
 
-				getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: (*alertDefinition).ID}
-				err = ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery)
-				require.NoError(t, err)
-				assert.Equal(t, "something completely different", getAlertDefinitionByIDQuery.Result.Name)
-				assert.Equal(t, "B", getAlertDefinitionByIDQuery.Result.Condition)
-				assert.Equal(t, 1, len(getAlertDefinitionByIDQuery.Result.Data))
-				assert.Greater(t, getAlertDefinitionByIDQuery.Result.Updated, lastUpdated)
-				assert.Equal(t, updated, getAlertDefinitionByIDQuery.Result.Updated)
-				assert.Equal(t, tc.expectedInterval, getAlertDefinitionByIDQuery.Result.Interval)
-				assert.Equal(t, previousVersion+1, getAlertDefinitionByIDQuery.Result.Version)
-				assert.Equal(t, alertDefinition.OrgID, getAlertDefinitionByIDQuery.Result.OrgID)
+					getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: (*alertDefinition).ID}
+					err = ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery)
+					require.NoError(t, err)
+					assert.Equal(t, alertDefinition.Name, getAlertDefinitionByIDQuery.Result.Name)
+					assert.Equal(t, alertDefinition.Condition, getAlertDefinitionByIDQuery.Result.Condition)
+					assert.Equal(t, len(alertDefinition.Data), len(getAlertDefinitionByIDQuery.Result.Data))
+					assert.Equal(t, alertDefinition.Interval, getAlertDefinitionByIDQuery.Result.Interval)
+					assert.Equal(t, alertDefinition.Updated, getAlertDefinitionByIDQuery.Result.Updated)
+					assert.Equal(t, previousVersion, getAlertDefinitionByIDQuery.Result.Version)
+					assert.Equal(t, alertDefinition.OrgID, getAlertDefinitionByIDQuery.Result.OrgID)
+				default:
+					require.NoError(t, err)
+					assert.Equal(t, int64(1), q.RowsAffected)
+					assert.Equal(t, int64(1), q.Result.ID)
+					assert.Greater(t, q.Result.Updated, lastUpdated)
+					updated := q.Result.Updated
+					assert.Equal(t, previousVersion+1, q.Result.Version)
+					assert.Equal(t, alertDefinition.OrgID, q.Result.OrgID)
 
-				lastUpdated = updated
-				previousVersion = getAlertDefinitionByIDQuery.Result.Version
+					getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: (*alertDefinition).ID}
+					err = ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery)
+					require.NoError(t, err)
+					assert.Equal(t, "something completely different", getAlertDefinitionByIDQuery.Result.Name)
+					assert.Equal(t, "B", getAlertDefinitionByIDQuery.Result.Condition)
+					assert.Equal(t, 1, len(getAlertDefinitionByIDQuery.Result.Data))
+					assert.Greater(t, getAlertDefinitionByIDQuery.Result.Updated, lastUpdated)
+					assert.Equal(t, updated, getAlertDefinitionByIDQuery.Result.Updated)
+					assert.Equal(t, tc.expectedInterval, getAlertDefinitionByIDQuery.Result.Interval)
+					assert.Equal(t, previousVersion+1, getAlertDefinitionByIDQuery.Result.Version)
+					assert.Equal(t, alertDefinition.OrgID, getAlertDefinitionByIDQuery.Result.OrgID)
+
+					lastUpdated = updated
+					previousVersion = getAlertDefinitionByIDQuery.Result.Version
+					alertDefinition = getAlertDefinitionByIDQuery.Result
+				}
 			})
 
 		}
@@ -246,4 +292,12 @@ func TestDeletingAlertDefinition(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), q.RowsAffected)
 	})
+}
+
+func getLongString(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = 'a'
+	}
+	return string(b)
 }
