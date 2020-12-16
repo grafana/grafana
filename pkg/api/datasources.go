@@ -31,6 +31,7 @@ func GetDataSources(c *models.ReqContext) Response {
 		dsItem := dtos.DataSourceListItemDTO{
 			OrgId:     ds.OrgId,
 			Id:        ds.Id,
+			UID:       ds.Uid,
 			Name:      ds.Name,
 			Url:       ds.Url,
 			Type:      ds.Type,
@@ -354,6 +355,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
 	dto := dtos.DataSource{
 		Id:                ds.Id,
+		UID:               ds.Uid,
 		OrgId:             ds.OrgId,
 		Name:              ds.Name,
 		Url:               ds.Url,
