@@ -37,7 +37,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 	user *models.SignedInUser,
 	skipCache bool,
 ) (*models.DataSource, error) {
-	cacheKey := fmt.Sprintf("ds-%d", datasourceID)
+	cacheKey := idKey(datasourceID)
 
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(cacheKey); found {
@@ -96,5 +96,5 @@ func idKey(id int64) string {
 }
 
 func uidKey(uid string) string {
-	return fmt.Sprintf("dsuid-%d", uid)
+	return fmt.Sprintf("dsuid-%s", uid)
 }
