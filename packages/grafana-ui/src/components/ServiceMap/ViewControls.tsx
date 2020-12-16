@@ -18,9 +18,12 @@ export function ViewControls<Config extends Record<string, number>>(props: Props
       <Button icon={'plus-circle'} onClick={onPlus} />
       <Button icon={'minus-circle'} onClick={onMinus} />
       <div>Or use ctrl/meta + scroll</div>
-      <Button size={'xs'} variant={'link'} onClick={() => setShowConfig(showConfig => !showConfig)}>
-        {showConfig ? 'Hide config' : 'Show config'}
-      </Button>
+
+      {false && (
+        <Button size={'xs'} variant={'link'} onClick={() => setShowConfig(showConfig => !showConfig)}>
+          {showConfig ? 'Hide config' : 'Show config'}
+        </Button>
+      )}
 
       {showConfig && (
         <>
