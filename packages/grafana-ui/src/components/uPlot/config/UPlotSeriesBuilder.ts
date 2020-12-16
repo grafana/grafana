@@ -3,9 +3,6 @@ import uPlot, { Series } from 'uplot';
 import { DrawStyle, LineConfig, AreaConfig, PointsConfig, PointVisibility, LineInterpolation } from '../config';
 import { PlotConfigBuilder } from '../types';
 
-const barWidthFactor = 0.6;
-const barMaxWidth = Infinity;
-
 export interface SeriesProps extends LineConfig, AreaConfig, PointsConfig {
   drawStyle: DrawStyle;
   scaleKey: string;
@@ -35,19 +32,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       lineConfig.stroke = lineColor;
       lineConfig.width = lineWidth;
       lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
-        let builderConfig;
-
-        if (drawStyle === DrawStyle.Bars) {
-          builderConfig = { size: [barWidthFactor, barMaxWidth] };
-        } else if (drawStyle === DrawStyle.Line) {
-          if (lineInterpolation === LineInterpolation.StepBefore) {
-            builderConfig = { align: -1 };
-          } else if (lineInterpolation === LineInterpolation.StepAfter) {
-            builderConfig = { align: 1 };
-          }
-        }
-
-        let pathsBuilder = mapDrawStyleToPathBuilder(drawStyle, lineInterpolation, builderConfig);
+        let pathsBuilder = mapDrawStyleToPathBuilder(drawStyle, lineInterpolation);
         return pathsBuilder(self, seriesIdx, idx0, idx1);
       };
     }
@@ -113,7 +98,7 @@ function mapDrawStyleToPathBuilder(
   lineInterpolation?: LineInterpolation,
   opts?: any
 ): Series.PathBuilder {
-  // This could be global static, but Jest initalization was failing so we lazy load to avoid the issue
+  // This should be global static, but Jest initalization was failing so we lazy load to avoid the issue
   if (!builders) {
     const pathBuilders = uPlot.paths;
     const barWidthFactor = 0.6;
