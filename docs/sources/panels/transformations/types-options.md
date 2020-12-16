@@ -77,7 +77,7 @@ Query B:
 
 ## Merge
 
-> **Note:** This transformation is only available in Grafana 7.1+.
+> **Note:** This transformation is available in Grafana 7.1+.
 
 Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../visualizations/table/_index.md" >}}).
 
@@ -222,7 +222,7 @@ After I apply the transformation, my labels appear in the table as fields.
 
 ## Group by
 
-> **Note:** This transformation is only available in Grafana 7.2+.
+> **Note:** This transformation is available in Grafana 7.2+.
 
 This transformation groups the data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to the [List of calculations]({{< relref "../calculations-list.md" >}}).
 
@@ -282,7 +282,7 @@ This transformation allows you to extract some key information out of your time 
 
 ## Concatenate fields
 
-> **Note:** This transformation is only available in Grafana 7.3+.
+> **Note:** This transformation is available in Grafana 7.3+.
 
 This transformation combines all fields from all frames into one result.  Consider:
 
@@ -307,7 +307,7 @@ After you concatenate the fields, the data frame would be:
 
 ## Series to rows
 
-> **Note:** This transformation is only available in Grafana 7.1+.
+> **Note:** This transformation is available in Grafana 7.1+.
 
 Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization.
 
@@ -343,6 +343,8 @@ Here is the result after applying the Series to rows transformation.
 | 2020-07-07 09:30:05 | Temperature | 19    |
 
 ## Filter by value
+
+> **Note:** This transformation is available in Grafana 7.4+.
 
 This transformation allows you to filter your data directly in Grafana and remove some data points from your query result. You have the option to include or exclude data that match one or more conditions you define. The conditions are applied on a selected field.
 
@@ -402,7 +404,7 @@ Conditions that are invalid or incompletely configured are ignored.
 
 ## Rename by regex
 
-> **Note:** This transformation is only available in Grafana 7.4+.
+> **Note:** This transformation is available in Grafana 7.4+.
 
 Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
 

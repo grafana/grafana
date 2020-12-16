@@ -285,3 +285,8 @@ When referencing the Prometheus data source exporters, always use "node_exporter
 
 **Correct:** node_exporter, windows_exporter
 **Incorrect:** Node Exporter, node exporter, Windows Exporter, Windows exporter, windows exporter.
+
+### MS SQL Server
+Always use "MS SQL" when referring to MS SQL Server application. Do not use "MSSQL" unless you are specifically referring to a UI element that uses it.
+
+Incorrect UI spellings will be corrected in a later version of Grafana.

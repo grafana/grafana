@@ -54,7 +54,11 @@ func createExternalDashboardSnapshot(cmd models.CreateDashboardSnapshotCommand) 
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			plog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	if response.StatusCode != 200 {
 		return nil, fmt.Errorf("create external snapshot response status code %d", response.StatusCode)
@@ -178,7 +182,9 @@ func deleteExternalDashboardSnapshot(externalUrl string) error {
 	if err != nil {
 		return err
 	}
-	defer response.Body.Close()
+	if err := response.Body.Close(); err != nil {
+		plog.Warn("Failed closing response body", "err", err)
+	}
 
 	if response.StatusCode == 200 {
 		return nil

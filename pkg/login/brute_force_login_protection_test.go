@@ -12,11 +12,16 @@ import (
 func TestLoginAttemptsValidation(t *testing.T) {
 	Convey("Validate login attempts", t, func() {
 		Convey("Given brute force login protection enabled", func() {
-			setting.DisableBruteForceLoginProtection = false
+			cfg := setting.NewCfg()
+			cfg.DisableBruteForceLoginProtection = false
+			query := &models.LoginUserQuery{
+				Username: "user",
+				Cfg:      cfg,
+			}
 
 			Convey("When user login attempt count equals max-1 ", func() {
 				withLoginAttempts(maxInvalidLoginAttempts - 1)
-				err := validateLoginAttempts("user")
+				err := validateLoginAttempts(query)
 
 				Convey("it should not result in error", func() {
 					So(err, ShouldBeNil)
@@ -25,7 +30,7 @@ func TestLoginAttemptsValidation(t *testing.T) {
 
 			Convey("When user login attempt count equals max ", func() {
 				withLoginAttempts(maxInvalidLoginAttempts)
-				err := validateLoginAttempts("user")
+				err := validateLoginAttempts(query)
 
 				Convey("it should result in too many login attempts error", func() {
 					So(err, ShouldEqual, ErrTooManyLoginAttempts)
@@ -34,7 +39,7 @@ func TestLoginAttemptsValidation(t *testing.T) {
 
 			Convey("When user login attempt count is greater than max ", func() {
 				withLoginAttempts(maxInvalidLoginAttempts + 5)
-				err := validateLoginAttempts("user")
+				err := validateLoginAttempts(query)
 
 				Convey("it should result in too many login attempts error", func() {
 					So(err, ShouldEqual, ErrTooManyLoginAttempts)
@@ -54,6 +59,7 @@ func TestLoginAttemptsValidation(t *testing.T) {
 					Username:  "user",
 					Password:  "pwd",
 					IpAddress: "192.168.1.1:56433",
+					Cfg:       setting.NewCfg(),
 				})
 				So(err, ShouldBeNil)
 
@@ -66,11 +72,16 @@ func TestLoginAttemptsValidation(t *testing.T) {
 		})
 
 		Convey("Given brute force login protection disabled", func() {
-			setting.DisableBruteForceLoginProtection = true
+			cfg := setting.NewCfg()
+			cfg.DisableBruteForceLoginProtection = true
+			query := &models.LoginUserQuery{
+				Username: "user",
+				Cfg:      cfg,
+			}
 
 			Convey("When user login attempt count equals max-1 ", func() {
 				withLoginAttempts(maxInvalidLoginAttempts - 1)
-				err := validateLoginAttempts("user")
+				err := validateLoginAttempts(query)
 
 				Convey("it should not result in error", func() {
 					So(err, ShouldBeNil)
@@ -79,7 +90,7 @@ func TestLoginAttemptsValidation(t *testing.T) {
 
 			Convey("When user login attempt count equals max ", func() {
 				withLoginAttempts(maxInvalidLoginAttempts)
-				err := validateLoginAttempts("user")
+				err := validateLoginAttempts(query)
 
 				Convey("it should not result in error", func() {
 					So(err, ShouldBeNil)
@@ -88,7 +99,7 @@ func TestLoginAttemptsValidation(t *testing.T) {
 
 			Convey("When user login attempt count is greater than max ", func() {
 				withLoginAttempts(maxInvalidLoginAttempts + 5)
-				err := validateLoginAttempts("user")
+				err := validateLoginAttempts(query)
 
 				Convey("it should not result in error", func() {
 					So(err, ShouldBeNil)
@@ -97,7 +108,7 @@ func TestLoginAttemptsValidation(t *testing.T) {
 
 			Convey("When saving invalid login attempt", func() {
 				defer bus.ClearBusHandlers()
-				createLoginAttemptCmd := (*models.CreateLoginAttemptCommand)(nil)
+				var createLoginAttemptCmd *models.CreateLoginAttemptCommand
 
 				bus.AddHandler("test", func(cmd *models.CreateLoginAttemptCommand) error {
 					createLoginAttemptCmd = cmd
@@ -108,6 +119,7 @@ func TestLoginAttemptsValidation(t *testing.T) {
 					Username:  "user",
 					Password:  "pwd",
 					IpAddress: "192.168.1.1:56433",
+					Cfg:       cfg,
 				})
 				So(err, ShouldBeNil)
 
