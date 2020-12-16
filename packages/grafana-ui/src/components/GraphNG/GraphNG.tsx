@@ -155,15 +155,17 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
 
       builder.addSeries({
-        ...customConfig,
-        drawStyle: customConfig.drawStyle!,
-        lineColor: seriesColor,
-        pointColor: seriesColor,
-        fillColor: seriesColor,
-        fillGradient: customConfig.fillGradient,
         scaleKey,
+        drawStyle: customConfig.drawStyle!,
+        lineColor: customConfig.lineColor ?? seriesColor,
+        lineWidth: customConfig.lineWidth,
+        lineInterpolation: customConfig.lineInterpolation,
         showPoints,
-        height,
+        pointSize: customConfig.pointSize,
+        pointColor: customConfig.pointColor ?? seriesColor,
+        fillOpacity: customConfig.fillOpacity,
+        spanNulls: customConfig.spanNulls || false,
+        fillGradient: customConfig.fillGradient,
       });
 
       if (hasLegend.current) {
