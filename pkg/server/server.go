@@ -341,7 +341,11 @@ func (s *Server) notifySystemd(state string) {
 		s.log.Warn("Failed to connect to systemd", "err", err, "socket", notifySocket)
 		return
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			s.log.Warn("Failed to close connection", "err", err)
+		}
+	}()
 
 	_, err = conn.Write([]byte(state))
 	if err != nil {

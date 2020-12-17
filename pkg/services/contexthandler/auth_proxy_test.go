@@ -65,7 +65,9 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 		Logger: log.New("Test"),
 	}
 	req.Header.Set(svc.Cfg.AuthProxyHeaderName, name)
-	key := fmt.Sprintf(authproxy.CachePrefix, authproxy.HashCacheKey(name))
+	h, err := authproxy.HashCacheKey(name)
+	require.NoError(t, err)
+	key := fmt.Sprintf(authproxy.CachePrefix, h)
 
 	t.Logf("Injecting stale user ID in cache with key %q", key)
 	err = svc.RemoteCache.Set(key, int64(33), 0)
