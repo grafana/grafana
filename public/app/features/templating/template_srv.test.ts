@@ -291,7 +291,7 @@ describe('templateSrv', () => {
 
   describe('replaceToList', () => {
     beforeEach(() => {
-      initTemplateSrv([
+      _templateSrv = initTemplateSrv([
         { type: 'query', name: 'var', current: { value: ['replaced?', 'replaced?2'] } },
         { type: 'query', name: 'var2', current: { value: ['replaced?3', 'replaced?4'] } },
       ]);
