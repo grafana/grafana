@@ -2,8 +2,12 @@ package models
 
 import (
 	"errors"
+	"regexp"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
@@ -38,6 +42,8 @@ var (
 	ErrDataSourceAccessDenied            = errors.New("data source access denied")
 	ErrDataSourceFailedGenerateUniqueUid = errors.New("failed to generate unique datasource ID")
 )
+
+var dynamicPasswordRegex = regexp.MustCompile("{{resolve:ssm:([a-zA-Z0-9_.-/]+):([0-9]+)}}")
 
 type DsAccess string
 
@@ -76,6 +82,20 @@ func (ds *DataSource) DecryptedBasicAuthPassword() string {
 // DecryptedPassword returns data source password in plain text. It uses either deprecated password field
 // or encrypted secure_json_data[password] variable.
 func (ds *DataSource) DecryptedPassword() string {
+	if dynamicPasswordRegex.Match([]byte(ds.Password)) {
+		match := dynamicPasswordRegex.FindStringSubmatch(ds.Password)
+		name, _ := match[0], match[1]
+
+		svc := ssm.New(session.Must(session.NewSession()))
+		param, err := svc.GetParameter(&ssm.GetParameterInput{
+			Name: aws.String(name),
+		})
+		if err != nil {
+			return ""
+		}
+
+		return *param.Parameter.Value
+	}
 	return ds.decryptedValue("password", ds.Password)
 }
 
