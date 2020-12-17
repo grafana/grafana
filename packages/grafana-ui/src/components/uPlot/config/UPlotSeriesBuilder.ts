@@ -8,13 +8,14 @@ import {
   PointsConfig,
   PointVisibility,
   LineInterpolation,
-  AreaGradientMode,
+  GraphGradientMode,
 } from '../config';
 import { PlotConfigBuilder } from '../types';
 
 export interface SeriesProps extends LineConfig, AreaConfig, PointsConfig {
   drawStyle: DrawStyle;
   scaleKey: string;
+  gradientMode?: GraphGradientMode;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
@@ -73,16 +74,16 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
   }
 
   getFill(): Series.Fill | undefined {
-    const { lineColor, fillColor, fillGradient, fillOpacity } = this.props;
+    const { lineColor, fillColor, gradientMode, fillOpacity } = this.props;
 
     if (fillColor) {
       return fillColor;
     }
 
-    const mode = fillGradient ?? AreaGradientMode.None;
+    const mode = gradientMode ?? GraphGradientMode.None;
     let fillOpacityNumber = fillOpacity ?? 0;
 
-    if (mode !== AreaGradientMode.None) {
+    if (mode !== GraphGradientMode.None) {
       return getCanvasGradient({
         color: (fillColor ?? lineColor)!,
         opacity: fillOpacityNumber / 100,
@@ -150,7 +151,7 @@ function mapDrawStyleToPathBuilder(
 
 interface AreaGradientOptions {
   color: string;
-  mode: AreaGradientMode;
+  mode: GraphGradientMode;
   opacity: number;
 }
 
@@ -162,7 +163,7 @@ function getCanvasGradient(opts: AreaGradientOptions): (self: uPlot, seriesIdx: 
     const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
 
     switch (mode) {
-      case AreaGradientMode.Hue:
+      case GraphGradientMode.Hue:
         const color1 = tinycolor(color)
           .spin(-25)
           .darken(30)
@@ -176,7 +177,7 @@ function getCanvasGradient(opts: AreaGradientOptions): (self: uPlot, seriesIdx: 
         gradient.addColorStop(0, color2);
         gradient.addColorStop(1, color1);
 
-      case AreaGradientMode.Opacity:
+      case GraphGradientMode.Opacity:
       default:
         gradient.addColorStop(
           0,
