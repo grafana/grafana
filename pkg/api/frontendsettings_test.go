@@ -52,7 +52,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg) (*macaron.Macaron, *HT
 	}
 
 	m := macaron.New()
-	m.Use(getContextHandler(t).Middleware)
+	m.Use(getContextHandler(t, cfg).Middleware)
 	m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory:  filepath.Join(setting.StaticRootPath, "views"),
 		IndentJSON: true,

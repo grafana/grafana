@@ -15,6 +15,7 @@ import { Tag } from '..';
 export interface Props extends Themeable {
   parsedValue: string;
   parsedKey: string;
+  wrapLogMessage?: boolean;
   isLabel?: boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
@@ -49,6 +50,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     showingField: css`
       color: ${theme.palette.blue95};
+    `,
+    wrapLine: css`
+      label: wrapLine;
+      white-space: pre-wrap;
     `,
   };
 });
@@ -107,7 +112,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   }
 
   render() {
-    const { theme, parsedKey, parsedValue, isLabel, links, showDetectedFields } = this.props;
+    const { theme, parsedKey, parsedValue, isLabel, links, showDetectedFields, wrapLogMessage } = this.props;
     const { showFieldsStats, fieldStats, fieldCount } = this.state;
     const styles = getStyles(theme);
     const style = getLogRowStyles(theme);
@@ -146,7 +151,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
         {/* Key - value columns */}
         <td className={style.logDetailsLabel}>{parsedKey}</td>
-        <td className={styles.wordBreakAll}>
+        <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
           {parsedValue}
           {links &&
             links.map(link => {

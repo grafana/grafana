@@ -23,9 +23,10 @@ func TestLogFile(t *testing.T) {
 	require.NotNil(t, fileLogWrite)
 
 	t.Cleanup(func() {
-		fileLogWrite.Close()
-		err := os.Remove(fileLogWrite.Filename)
-		require.NoError(t, err)
+		err := fileLogWrite.Close()
+		assert.NoError(t, err)
+		err = os.Remove(fileLogWrite.Filename)
+		assert.NoError(t, err)
 	})
 
 	fileLogWrite.Filename = "grafana_test.log"

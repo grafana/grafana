@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
@@ -26,7 +27,7 @@ func loggedInUserScenario(t *testing.T, desc string, url string, fn scenarioFunc
 
 func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		defer bus.ClearBusHandlers()
+		t.Cleanup(bus.ClearBusHandlers)
 
 		sc := setupScenarioContext(t, url)
 		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
@@ -129,6 +130,7 @@ func (sc *scenarioContext) fakeReqNoAssertionsWithCookie(method, url string, coo
 
 type scenarioContext struct {
 	t                    *testing.T
+	cfg                  *setting.Cfg
 	m                    *macaron.Macaron
 	context              *models.ReqContext
 	resp                 *httptest.ResponseRecorder
@@ -146,12 +148,15 @@ func (sc *scenarioContext) exec() {
 type scenarioFunc func(c *scenarioContext)
 type handlerFunc func(c *models.ReqContext) Response
 
-func getContextHandler(t *testing.T) *contexthandler.ContextHandler {
+func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHandler {
 	t.Helper()
+
+	if cfg == nil {
+		cfg = setting.NewCfg()
+	}
 
 	sqlStore := sqlstore.InitTestDB(t)
 	remoteCacheSvc := &remotecache.RemoteCache{}
-	cfg := setting.NewCfg()
 	cfg.RemoteCacheOptions = &setting.RemoteCacheOptions{
 		Name: "database",
 	}
@@ -187,19 +192,24 @@ func getContextHandler(t *testing.T) *contexthandler.ContextHandler {
 }
 
 func setupScenarioContext(t *testing.T, url string) *scenarioContext {
+	cfg := setting.NewCfg()
 	sc := &scenarioContext{
 		url: url,
 		t:   t,
+		cfg: cfg,
 	}
 	viewsPath, err := filepath.Abs("../../public/views")
 	require.NoError(t, err)
+	exists, err := fs.Exists(viewsPath)
+	require.NoError(t, err)
+	require.Truef(t, exists, "Views should be in %q", viewsPath)
 
 	sc.m = macaron.New()
 	sc.m.Use(macaron.Renderer(macaron.RenderOptions{
 		Directory: viewsPath,
 		Delims:    macaron.Delims{Left: "[[", Right: "]]"},
 	}))
-	sc.m.Use(getContextHandler(t).Middleware)
+	sc.m.Use(getContextHandler(t, cfg).Middleware)
 
 	return sc
 }

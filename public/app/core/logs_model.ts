@@ -32,7 +32,6 @@ import {
 } from '@grafana/data';
 import { getThemeColor } from 'app/core/utils/colors';
 
-import { deduplicateLogRowsById } from 'app/core/utils/explore';
 import { SIPrefix } from '@grafana/data/src/valueFormats/symbolFormatters';
 
 export const LogLevelColor = {
@@ -393,8 +392,6 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
     }
   }
 
-  const deduplicatedLogRows = deduplicateLogRowsById(rows);
-
   // Meta data to display in status
   const meta: LogsMetaItem[] = [];
   if (_.size(commonLabels) > 0) {
@@ -416,7 +413,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   if (limits.length > 0) {
     meta.push({
       label: 'Limit',
-      value: `${limitValue} (${deduplicatedLogRows.length} returned)`,
+      value: `${limitValue} (${rows.length} returned)`,
       kind: LogsMetaKind.String,
     });
   }
@@ -464,7 +461,7 @@ export function logSeriesToLogsModel(logSeries: DataFrame[]): LogsModel | undefi
   return {
     hasUniqueLabels,
     meta,
-    rows: deduplicatedLogRows,
+    rows,
   };
 }
 
