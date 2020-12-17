@@ -59,7 +59,7 @@ func TestAlertingTicker(t *testing.T) {
 	// change alert definition interval to three seconds
 	var threeSecInterval int64 = 3
 	err := ng.updateAlertDefinition(&updateAlertDefinitionCommand{
-		ID:              alerts[0].ID,
+		UID:             alerts[0].UID,
 		IntervalSeconds: &threeSecInterval,
 		OrgID:           alerts[0].OrgID,
 	})
@@ -84,7 +84,7 @@ func TestAlertingTicker(t *testing.T) {
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
 
-	err = ng.deleteAlertDefinitionByID(&deleteAlertDefinitionByIDCommand{ID: alerts[1].ID})
+	err = ng.deleteAlertDefinitionByUID(&deleteAlertDefinitionByUIDCommand{UID: alerts[1].UID, OrgID: alerts[1].OrgID})
 	require.NoError(t, err)
 	t.Logf("alert definition: %d deleted", alerts[1].ID)
 

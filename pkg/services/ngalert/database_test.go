@@ -103,14 +103,14 @@ func TestCreatingAlertDefinition(t *testing.T) {
 }
 
 func TestUpdatingAlertDefinition(t *testing.T) {
-	mockTimeNow()
-	defer resetTimeNow()
-
 	t.Run("zero rows affected when updating unknown alert", func(t *testing.T) {
+		mockTimeNow()
+		defer resetTimeNow()
+
 		ng := setupTestEnv(t)
 
 		q := updateAlertDefinitionCommand{
-			ID:    1,
+			UID:   "unknown",
 			OrgID: 1,
 			Title: "something completely different",
 			Condition: eval.Condition{
@@ -138,6 +138,9 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 	})
 
 	t.Run("updating existing alert", func(t *testing.T) {
+		mockTimeNow()
+		defer resetTimeNow()
+
 		ng := setupTestEnv(t)
 		var initialInterval int64 = 120
 		alertDefinition := createTestAlertDefinition(t, ng, initialInterval)
@@ -159,7 +162,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				inputOrgID:              alertDefinition.OrgID,
 				inputTitle:              "something completely different",
 				expectedIntervalSeconds: initialInterval,
-				expectedUpdated:         time.Unix(2, 0).UTC(),
+				expectedUpdated:         time.Unix(1, 0).UTC(),
 			},
 			{
 				desc:                    "should update interval if it's provided",
@@ -167,7 +170,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				inputOrgID:              alertDefinition.OrgID,
 				inputTitle:              "something completely different",
 				expectedIntervalSeconds: customInterval,
-				expectedUpdated:         time.Unix(3, 0).UTC(),
+				expectedUpdated:         time.Unix(2, 0).UTC(),
 			},
 			{
 				desc:                    "should not update organisation if it's provided",
@@ -175,7 +178,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				inputOrgID:              0,
 				inputTitle:              "something completely different",
 				expectedIntervalSeconds: customInterval,
-				expectedUpdated:         time.Unix(4, 0).UTC(),
+				expectedUpdated:         time.Unix(3, 0).UTC(),
 			},
 			{
 				desc:          "should not update alert definition if the name it's too big",
@@ -187,7 +190,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		}
 
 		q := updateAlertDefinitionCommand{
-			ID:    (*alertDefinition).ID,
+			UID:   (*alertDefinition).UID,
 			Title: "something completely different",
 			Condition: eval.Condition{
 				RefID: "B",
@@ -270,12 +273,12 @@ func TestDeletingAlertDefinition(t *testing.T) {
 	t.Run("zero rows affected when deleting unknown alert", func(t *testing.T) {
 		ng := setupTestEnv(t)
 
-		q := deleteAlertDefinitionByIDCommand{
-			ID:    1,
+		q := deleteAlertDefinitionByUIDCommand{
+			UID:   "unknown",
 			OrgID: 1,
 		}
 
-		err := ng.deleteAlertDefinitionByID(&q)
+		err := ng.deleteAlertDefinitionByUID(&q)
 		require.NoError(t, err)
 		assert.Equal(t, int64(0), q.RowsAffected)
 	})
@@ -284,12 +287,12 @@ func TestDeletingAlertDefinition(t *testing.T) {
 		ng := setupTestEnv(t)
 		alertDefinition := createTestAlertDefinition(t, ng, 60)
 
-		q := deleteAlertDefinitionByIDCommand{
-			ID:    (*alertDefinition).ID,
+		q := deleteAlertDefinitionByUIDCommand{
+			UID:   (*alertDefinition).UID,
 			OrgID: 1,
 		}
 
-		err := ng.deleteAlertDefinitionByID(&q)
+		err := ng.deleteAlertDefinitionByUID(&q)
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), q.RowsAffected)
 	})

@@ -9,6 +9,18 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+func getAlertDefinitionByUID(alertDefinitionUID string, orgID int64, sess *sqlstore.DBSession) (*AlertDefinition, error) {
+	alertDefinition := AlertDefinition{OrgID: orgID, UID: alertDefinitionUID}
+	has, err := sess.Get(&alertDefinition)
+	if !has {
+		return nil, errAlertDefinitionNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &alertDefinition, nil
+}
+
 func getAlertDefinitionByID(alertDefinitionID int64, sess *sqlstore.DBSession) (*AlertDefinition, error) {
 	alertDefinition := AlertDefinition{}
 	has, err := sess.ID(alertDefinitionID).Get(&alertDefinition)
@@ -23,9 +35,9 @@ func getAlertDefinitionByID(alertDefinitionID int64, sess *sqlstore.DBSession) (
 
 // deleteAlertDefinitionByID is a handler for deleting an alert definition.
 // It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
-func (ng *AlertNG) deleteAlertDefinitionByID(cmd *deleteAlertDefinitionByIDCommand) error {
+func (ng *AlertNG) deleteAlertDefinitionByUID(cmd *deleteAlertDefinitionByUIDCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		res, err := sess.Exec("DELETE FROM alert_definition WHERE id = ?", cmd.ID)
+		res, err := sess.Exec("DELETE FROM alert_definition WHERE uid = ? AND org_id = ?", cmd.UID, cmd.OrgID)
 		if err != nil {
 			return err
 		}
@@ -36,11 +48,24 @@ func (ng *AlertNG) deleteAlertDefinitionByID(cmd *deleteAlertDefinitionByIDComma
 		}
 		cmd.RowsAffected = rowsAffected
 
-		_, err = sess.Exec("DELETE FROM alert_definition_version WHERE alert_definition_id = ?", cmd.ID)
+		_, err = sess.Exec("DELETE FROM alert_definition_version WHERE alert_definition_uid = ?", cmd.UID)
 		if err != nil {
 			return err
 		}
 
+		return nil
+	})
+}
+
+// getAlertDefinitionByUID is a handler for retrieving an alert definition from that database by its UID and organisation ID.
+// It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
+func (ng *AlertNG) getAlertDefinitionByUID(query *getAlertDefinitionByUIDQuery) error {
+	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		alertDefinition, err := getAlertDefinitionByUID(query.UID, query.OrgID, sess)
+		if err != nil {
+			return err
+		}
+		query.Result = alertDefinition
 		return nil
 	})
 }
@@ -118,39 +143,11 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 // It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
 func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		alertDefinition := &AlertDefinition{
-			ID:        cmd.ID,
-			Title:     cmd.Title,
-			Condition: cmd.Condition.RefID,
-			Data:      cmd.Condition.QueriesAndExpressions,
-			OrgID:     cmd.OrgID,
-		}
-		if cmd.IntervalSeconds != nil {
-			alertDefinition.IntervalSeconds = *cmd.IntervalSeconds
-		}
-
-		if err := ng.validateAlertDefinition(alertDefinition, true); err != nil {
-			return err
-		}
-
-		if err := alertDefinition.preSave(); err != nil {
-			return err
-		}
-
-		existingAlertDefinition, err := getAlertDefinitionByID(alertDefinition.ID, sess)
+		existingAlertDefinition, err := getAlertDefinitionByUID(cmd.UID, cmd.OrgID, sess)
 		if err != nil {
 			if errors.Is(err, errAlertDefinitionNotFound) {
-				cmd.Result = alertDefinition
-				cmd.RowsAffected = 0
 				return nil
 			}
-			return err
-		}
-
-		alertDefinition.Version = existingAlertDefinition.Version + 1
-
-		affectedRows, err := sess.ID(cmd.ID).Update(alertDefinition)
-		if err != nil {
 			return err
 		}
 
@@ -171,16 +168,41 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 			intervalSeconds = &existingAlertDefinition.IntervalSeconds
 		}
 
+		// explicitly set all fields regardless of being provided or not
+		alertDefinition := &AlertDefinition{
+			ID:              existingAlertDefinition.ID,
+			Title:           title,
+			Condition:       condition,
+			Data:            data,
+			OrgID:           existingAlertDefinition.OrgID,
+			IntervalSeconds: *intervalSeconds,
+		}
+
+		if err := ng.validateAlertDefinition(alertDefinition, true); err != nil {
+			return err
+		}
+
+		if err := alertDefinition.preSave(); err != nil {
+			return err
+		}
+
+		alertDefinition.Version = existingAlertDefinition.Version + 1
+
+		affectedRows, err := sess.ID(existingAlertDefinition.ID).Update(alertDefinition)
+		if err != nil {
+			return err
+		}
+
 		alertDefVersion := AlertDefinitionVersion{
 			AlertDefinitionID:  alertDefinition.ID,
-			AlertDefinitionUID: existingAlertDefinition.UID,
-			ParentVersion:      existingAlertDefinition.Version,
+			AlertDefinitionUID: alertDefinition.UID,
+			ParentVersion:      alertDefinition.Version,
 			Version:            alertDefinition.Version,
-			Condition:          condition,
+			Condition:          alertDefinition.Condition,
 			Created:            alertDefinition.Updated,
-			Title:              title,
-			Data:               data,
-			IntervalSeconds:    *intervalSeconds,
+			Title:              alertDefinition.Title,
+			Data:               alertDefinition.Data,
+			IntervalSeconds:    alertDefinition.IntervalSeconds,
 		}
 		if _, err := sess.Insert(alertDefVersion); err != nil {
 			return err
