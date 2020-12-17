@@ -1,8 +1,11 @@
 package alerting
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"strings"
+	"text/template"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -177,4 +180,52 @@ func getNewStateInternal(c *EvalContext) models.AlertStateType {
 	}
 
 	return models.AlertStateOK
+}
+
+// evaluateNotificationTemplateFields will treat the alert evaluation rule's name and message fields as Go text
+// templates, and execute the templates using data from the alert evaluation's tags
+func (c *EvalContext) evaluateNotificationTemplateFields() error {
+	if len(c.EvalMatches) < 1 {
+		return nil
+	}
+
+	msgTmpl, err := template.New("").Parse(c.Rule.Message)
+	if err != nil {
+		return err
+	}
+
+	templateDataMap := buildTemplateDataMap(c.EvalMatches)
+
+	var msgBuf bytes.Buffer
+	if err := msgTmpl.Execute(&msgBuf, templateDataMap); err != nil {
+		return err
+	}
+	c.Rule.Message = msgBuf.String()
+
+	titleTmpl, err := template.New("").Parse(c.Rule.Name)
+	if err != nil {
+		return err
+	}
+
+	var titleBuf bytes.Buffer
+	if err := titleTmpl.Execute(&titleBuf, templateDataMap); err != nil {
+		return err
+	}
+	c.Rule.Name = titleBuf.String()
+	return nil
+}
+
+// buildTemplateDataMap builds a map of alert evaluation tag names to a set of associated values (comma separated)
+func buildTemplateDataMap(evalMatches []*EvalMatch) map[string]string {
+	var result = map[string]string{}
+	for _, match := range evalMatches {
+		for tagName, tagValue := range match.Tags {
+			if _, exists := result[tagName]; exists && !strings.Contains(result[tagName], tagValue) {
+				result[tagName] = fmt.Sprintf("%s, %s", result[tagName], tagValue)
+			} else {
+				result[tagName] = tagValue
+			}
+		}
+	}
+	return result
 }
