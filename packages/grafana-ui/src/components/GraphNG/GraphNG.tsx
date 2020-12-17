@@ -6,7 +6,6 @@ import {
   FieldMatcher,
   FieldType,
   formattedValueToString,
-  getFieldColorModeForField,
   getFieldDisplayName,
   TimeRange,
 } from '@grafana/data';
