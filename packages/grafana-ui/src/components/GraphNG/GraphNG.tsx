@@ -19,7 +19,7 @@ import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
 import { GraphLegend } from '../Graph/GraphLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
-import { getFieldSeriesColor } from '@grafana/data/src/field/fieldColor';
+import { getFieldColorModeForField, getFieldSeriesColor } from '@grafana/data/src/field/fieldColor';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -150,6 +150,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       // need to update field state here because we use a transform to merge framesP
       field.state = { ...field.state, seriesIndex: seriesIdx };
 
+      const colorMode = getFieldColorModeForField(field);
       const scaleColor = getFieldSeriesColor(field, theme);
       const seriesColor = scaleColor.color;
       const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
@@ -166,6 +167,8 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         fillOpacity: customConfig.fillOpacity,
         spanNulls: customConfig.spanNulls || false,
         gradientMode: customConfig.gradientMode,
+        thresholds: config.thresholds,
+        colorMode: colorMode,
       });
 
       if (hasLegend.current) {
