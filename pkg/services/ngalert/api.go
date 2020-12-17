@@ -114,10 +114,6 @@ func (ng *AlertNG) deleteAlertDefinitionEndpoint(c *models.ReqContext) api.Respo
 		return api.Error(500, "Failed to delete alert definition", err)
 	}
 
-	if cmd.RowsAffected != 1 {
-		ng.log.Warn("unexpected number of rows affected on alert definition delete", "definitionID", alertDefinitionUID, "rowsAffected", cmd.RowsAffected)
-	}
-
 	return api.Success("Alert definition deleted")
 }
 
@@ -134,11 +130,7 @@ func (ng *AlertNG) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd updat
 		return api.Error(500, "Failed to update alert definition", err)
 	}
 
-	if cmd.RowsAffected != 1 {
-		ng.log.Warn("unexpected number of rows affected on alert definition update", "definitionUID", cmd.UID, "rowsAffected", cmd.RowsAffected)
-	}
-
-	return api.Success("Alert definition updated")
+	return api.JSON(200, cmd.Result)
 }
 
 // createAlertDefinitionEndpoint handles POST /api/alert-definitions.
@@ -153,7 +145,7 @@ func (ng *AlertNG) createAlertDefinitionEndpoint(c *models.ReqContext, cmd saveA
 		return api.Error(500, "Failed to create alert definition", err)
 	}
 
-	return api.JSON(200, util.DynMap{"id": cmd.Result.ID})
+	return api.JSON(200, cmd.Result)
 }
 
 // listAlertDefinitions handles GET /api/alert-definitions.

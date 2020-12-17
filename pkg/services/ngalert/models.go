@@ -63,8 +63,6 @@ type getAlertDefinitionByIDQuery struct {
 type deleteAlertDefinitionByUIDCommand struct {
 	UID   string
 	OrgID int64
-
-	RowsAffected int64
 }
 
 // saveAlertDefinitionCommand is the query for saving a new alert definition.
@@ -85,8 +83,7 @@ type updateAlertDefinitionCommand struct {
 	IntervalSeconds *int64         `json:"interval_seconds"`
 	UID             string         `json:"-"`
 
-	RowsAffected int64
-	Result       *AlertDefinition
+	Result *AlertDefinition
 }
 
 type evalAlertConditionCommand struct {

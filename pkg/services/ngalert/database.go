@@ -42,11 +42,10 @@ func (ng *AlertNG) deleteAlertDefinitionByUID(cmd *deleteAlertDefinitionByUIDCom
 			return err
 		}
 
-		rowsAffected, err := res.RowsAffected()
+		_, err = res.RowsAffected()
 		if err != nil {
 			return err
 		}
-		cmd.RowsAffected = rowsAffected
 
 		_, err = sess.Exec("DELETE FROM alert_definition_version WHERE alert_definition_uid = ?", cmd.UID)
 		if err != nil {
@@ -176,6 +175,7 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 			Data:            data,
 			OrgID:           existingAlertDefinition.OrgID,
 			IntervalSeconds: *intervalSeconds,
+			UID:             existingAlertDefinition.UID,
 		}
 
 		if err := ng.validateAlertDefinition(alertDefinition, true); err != nil {
@@ -188,7 +188,7 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 
 		alertDefinition.Version = existingAlertDefinition.Version + 1
 
-		affectedRows, err := sess.ID(existingAlertDefinition.ID).Update(alertDefinition)
+		_, err = sess.ID(existingAlertDefinition.ID).Update(alertDefinition)
 		if err != nil {
 			return err
 		}
@@ -209,7 +209,6 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 		}
 
 		cmd.Result = alertDefinition
-		cmd.RowsAffected = affectedRows
 		return nil
 	})
 }

@@ -134,7 +134,6 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 
 		err := ng.updateAlertDefinition(&q)
 		require.NoError(t, err)
-		assert.Equal(t, int64(0), q.RowsAffected)
 	})
 
 	t.Run("updating existing alert", func(t *testing.T) {
@@ -227,20 +226,16 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 				case tc.expectedError != nil:
 					require.Error(t, err)
 
-					getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: (*alertDefinition).ID}
-					err = ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery)
-					require.NoError(t, err)
-					assert.Equal(t, previousAlertDefinition.Title, getAlertDefinitionByIDQuery.Result.Title)
-					assert.Equal(t, previousAlertDefinition.Condition, getAlertDefinitionByIDQuery.Result.Condition)
-					assert.Equal(t, len(previousAlertDefinition.Data), len(getAlertDefinitionByIDQuery.Result.Data))
-					assert.Equal(t, previousAlertDefinition.IntervalSeconds, getAlertDefinitionByIDQuery.Result.IntervalSeconds)
-					assert.Equal(t, previousAlertDefinition.Updated, getAlertDefinitionByIDQuery.Result.Updated)
-					assert.Equal(t, previousAlertDefinition.Version, getAlertDefinitionByIDQuery.Result.Version)
-					assert.Equal(t, previousAlertDefinition.OrgID, getAlertDefinitionByIDQuery.Result.OrgID)
-					assert.Equal(t, previousAlertDefinition.UID, getAlertDefinitionByIDQuery.Result.UID)
+					assert.Equal(t, previousAlertDefinition.Title, q.Result.Title)
+					assert.Equal(t, previousAlertDefinition.Condition, q.Result.Condition)
+					assert.Equal(t, len(previousAlertDefinition.Data), len(q.Result.Data))
+					assert.Equal(t, previousAlertDefinition.IntervalSeconds, q.Result.IntervalSeconds)
+					assert.Equal(t, previousAlertDefinition.Updated, q.Result.Updated)
+					assert.Equal(t, previousAlertDefinition.Version, q.Result.Version)
+					assert.Equal(t, previousAlertDefinition.OrgID, q.Result.OrgID)
+					assert.Equal(t, previousAlertDefinition.UID, q.Result.UID)
 				default:
 					require.NoError(t, err)
-					assert.Equal(t, int64(1), q.RowsAffected)
 					assert.Equal(t, int64(1), q.Result.ID)
 					assert.True(t, q.Result.Updated.After(lastUpdated))
 					assert.Equal(t, tc.expectedUpdated, q.Result.Updated)
@@ -248,19 +243,16 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 
 					assert.Equal(t, alertDefinition.OrgID, q.Result.OrgID)
 
-					getAlertDefinitionByIDQuery := getAlertDefinitionByIDQuery{ID: (*alertDefinition).ID}
-					err = ng.getAlertDefinitionByID(&getAlertDefinitionByIDQuery)
-					require.NoError(t, err)
-					assert.Equal(t, "something completely different", getAlertDefinitionByIDQuery.Result.Title)
-					assert.Equal(t, "B", getAlertDefinitionByIDQuery.Result.Condition)
-					assert.Equal(t, 1, len(getAlertDefinitionByIDQuery.Result.Data))
-					assert.Equal(t, tc.expectedUpdated, getAlertDefinitionByIDQuery.Result.Updated)
-					assert.Equal(t, tc.expectedIntervalSeconds, getAlertDefinitionByIDQuery.Result.IntervalSeconds)
-					assert.Equal(t, previousAlertDefinition.Version+1, getAlertDefinitionByIDQuery.Result.Version)
-					assert.Equal(t, alertDefinition.OrgID, getAlertDefinitionByIDQuery.Result.OrgID)
-					assert.Equal(t, alertDefinition.UID, getAlertDefinitionByIDQuery.Result.UID)
+					assert.Equal(t, "something completely different", q.Result.Title)
+					assert.Equal(t, "B", q.Result.Condition)
+					assert.Equal(t, 1, len(q.Result.Data))
+					assert.Equal(t, tc.expectedUpdated, q.Result.Updated)
+					assert.Equal(t, tc.expectedIntervalSeconds, q.Result.IntervalSeconds)
+					assert.Equal(t, previousAlertDefinition.Version+1, q.Result.Version)
+					assert.Equal(t, alertDefinition.OrgID, q.Result.OrgID)
+					assert.Equal(t, alertDefinition.UID, q.Result.UID)
 
-					previousAlertDefinition = getAlertDefinitionByIDQuery.Result
+					previousAlertDefinition = q.Result
 				}
 			})
 
@@ -280,7 +272,6 @@ func TestDeletingAlertDefinition(t *testing.T) {
 
 		err := ng.deleteAlertDefinitionByUID(&q)
 		require.NoError(t, err)
-		assert.Equal(t, int64(0), q.RowsAffected)
 	})
 
 	t.Run("deleting successfully existing alert", func(t *testing.T) {
@@ -294,7 +285,6 @@ func TestDeletingAlertDefinition(t *testing.T) {
 
 		err := ng.deleteAlertDefinitionByUID(&q)
 		require.NoError(t, err)
-		assert.Equal(t, int64(1), q.RowsAffected)
 	})
 }
 
