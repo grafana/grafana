@@ -26,7 +26,8 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
     standardOptions: {
       [FieldConfigProperty.Color]: {
         settings: {
-          byValueSupport: false,
+          byValueSupport: true,
+          bySeriesSupport: true,
         },
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,
