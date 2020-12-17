@@ -127,12 +127,11 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   };
 
   onFieldConfigChange = (config: FieldConfigSource) => {
-    const { panel } = this.props;
-
-    panel.updateFieldConfig({
+    // we do not need to trigger force update here as the function call below
+    // fires PanelOptionsChangedEvent which we subscribe to above
+    this.props.panel.updateFieldConfig({
       ...config,
     });
-    this.forceUpdate();
   };
 
   onPanelOptionsChanged = (options: any) => {

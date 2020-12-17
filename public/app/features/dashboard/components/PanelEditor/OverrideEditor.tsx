@@ -97,17 +97,20 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
     [override, onChange]
   );
 
-  let configPropertiesOptions = registry.list().map(item => {
-    let label = item.name;
-    if (item.category && item.category.length > 1) {
-      label = [...item.category!.slice(1), item.name].join(' > ');
-    }
-    return {
-      label,
-      value: item.id,
-      description: item.description,
-    };
-  });
+  let configPropertiesOptions = registry
+    .list()
+    .filter(o => !o.hideFromOverrides)
+    .map(item => {
+      let label = item.name;
+      if (item.category && item.category.length > 1) {
+        label = [...item.category!.slice(1), item.name].join(' > ');
+      }
+      return {
+        label,
+        value: item.id,
+        description: item.description,
+      };
+    });
 
   const renderOverrideTitle = (isExpanded: boolean) => {
     const overriddenProperites = override.properties.map(p => registry.get(p.id).name).join(', ');
@@ -151,6 +154,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
           if (!item) {
             return <div>Unknown property: {p.id}</div>;
           }
+
           const isCollapsible =
             Array.isArray(p.value) || COLLECTION_STANDARD_PROPERTIES.includes(p.id as FieldConfigProperty);
 

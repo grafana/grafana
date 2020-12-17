@@ -1,23 +1,13 @@
 import LanguageProvider from './language_provider';
 import { PromQuery } from '../prometheus/types';
 import { ElasticDatasource } from './datasource';
-import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
+import { DataSourceInstanceSettings } from '@grafana/data';
 import { ElasticsearchOptions } from './types';
 import { TemplateSrv } from '../../../features/templating/template_srv';
-import { TimeSrv } from '../../../features/dashboard/services/TimeSrv';
 
 const templateSrvStub = {
   getAdhocFilters: jest.fn(() => [] as any[]),
   replace: jest.fn((a: string) => a),
-} as any;
-
-const timeSrvStub = {
-  timeRange(): any {
-    return {
-      from: dateTime(1531468681),
-      to: dateTime(1531489712),
-    };
-  },
 } as any;
 
 const dataSource = new ElasticDatasource(
@@ -30,8 +20,7 @@ const dataSource = new ElasticDatasource(
       timeField: '@time',
     },
   } as DataSourceInstanceSettings<ElasticsearchOptions>,
-  templateSrvStub as TemplateSrv,
-  timeSrvStub as TimeSrv
+  templateSrvStub as TemplateSrv
 );
 describe('transform prometheus query to elasticsearch query', () => {
   it('Prometheus query with exact equals labels ( 2 labels ) and metric __name__', () => {

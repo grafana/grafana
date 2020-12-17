@@ -231,6 +231,7 @@ type scenarioConfig struct {
 }
 
 // testScenario is a wrapper around t.Run performing common setup for library panel tests.
+// It takes your real test function as a callback.
 func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioContext), cfgs ...scenarioConfig) {
 	t.Helper()
 
