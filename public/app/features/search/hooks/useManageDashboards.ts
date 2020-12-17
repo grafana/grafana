@@ -6,6 +6,8 @@ import { DELETE_ITEMS, MOVE_ITEMS, TOGGLE_ALL_CHECKED, TOGGLE_CHECKED } from '..
 import { manageDashboardsReducer, manageDashboardsState, ManageDashboardsState } from '../reducers/manageDashboards';
 import { useSearch } from './useSearch';
 
+export const GENERAL_FOLDER_ID = 0;
+
 export const useManageDashboards = (
   query: DashboardQuery,
   state: Partial<ManageDashboardsState> = {},
@@ -42,10 +44,10 @@ export const useManageDashboards = (
     () => results.some((result: DashboardSection) => result.items && result.items.some(item => item.checked)),
     [results]
   );
-  const canDelete = useMemo(() => canMove || results.some((result: DashboardSection) => result.checked), [
-    canMove,
-    results,
-  ]);
+  const canDelete = useMemo(
+    () => canMove || results.some((result: DashboardSection) => result.checked && result.id !== GENERAL_FOLDER_ID),
+    [canMove, results]
+  );
 
   const canSave = folder?.canSave;
   const hasEditPermissionInFolders = folder ? canSave : contextSrv.hasEditPermissionInFolders;
