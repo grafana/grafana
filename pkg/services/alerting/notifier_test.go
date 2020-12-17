@@ -23,14 +23,15 @@ func TestNotificationService(t *testing.T) {
 	evalCtx := NewEvalContext(context.Background(), testRule)
 
 	testRuleTemplated := newTestRule("Test {{.quantile}}", "Something is bad on instance {{ .instance }}")
-	evalCtxWithMatch := newEvalContext(context.Background(), testRuleTemplated, &EvalMatch{
+	evalCtxWithMatch := NewEvalContext(context.Background(), testRuleTemplated)
+	evalCtxWithMatch.EvalMatches = []*EvalMatch{{
 		Value:  null.FloatFrom(10),
 		Metric: "test",
 		Tags: map[string]string{
 			"instance": "localhost:3000",
 			"quantile": "0.99",
 		},
-	})
+	}}
 
 	notificationServiceScenario(t, "Given alert rule with upload image enabled should render and upload image and send notification",
 		evalCtx, true, func(sc *scenarioContext) {
@@ -295,14 +296,6 @@ func newTestRule(name, description string) *Rule {
 		State:         models.AlertStateAlerting,
 		Notifications: []string{"1"},
 	}
-}
-
-func newEvalContext(ctx context.Context, rule *Rule, match *EvalMatch) *EvalContext {
-	evalCtx := NewEvalContext(ctx, rule)
-	if match != nil {
-		evalCtx.EvalMatches = append(evalCtx.EvalMatches, match)
-	}
-	return evalCtx
 }
 
 type notificationSent struct{}
