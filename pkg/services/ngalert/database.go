@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func getAlertDefinitionByUID(alertDefinitionUID string, orgID int64, sess *sqlstore.DBSession) (*AlertDefinition, error) {
+func getAlertDefinitionByUID(sess *sqlstore.DBSession, alertDefinitionUID string, orgID int64) (*AlertDefinition, error) {
 	alertDefinition := AlertDefinition{OrgID: orgID, UID: alertDefinitionUID}
 	has, err := sess.Get(&alertDefinition)
 	if !has {
@@ -21,7 +21,7 @@ func getAlertDefinitionByUID(alertDefinitionUID string, orgID int64, sess *sqlst
 	return &alertDefinition, nil
 }
 
-func getAlertDefinitionByID(alertDefinitionID int64, sess *sqlstore.DBSession) (*AlertDefinition, error) {
+func getAlertDefinitionByID(sess *sqlstore.DBSession, alertDefinitionID int64) (*AlertDefinition, error) {
 	alertDefinition := AlertDefinition{}
 	has, err := sess.ID(alertDefinitionID).Get(&alertDefinition)
 	if !has {
@@ -61,7 +61,7 @@ func (ng *AlertNG) deleteAlertDefinitionByUID(cmd *deleteAlertDefinitionByUIDCom
 // It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
 func (ng *AlertNG) getAlertDefinitionByUID(query *getAlertDefinitionByUIDQuery) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		alertDefinition, err := getAlertDefinitionByUID(query.UID, query.OrgID, sess)
+		alertDefinition, err := getAlertDefinitionByUID(sess, query.UID, query.OrgID)
 		if err != nil {
 			return err
 		}
@@ -73,8 +73,8 @@ func (ng *AlertNG) getAlertDefinitionByUID(query *getAlertDefinitionByUIDQuery) 
 // getAlertDefinitionByID is a handler for retrieving an alert definition from that database by its ID.
 // It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
 func (ng *AlertNG) getAlertDefinitionByID(query *getAlertDefinitionByIDQuery) error {
-	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		alertDefinition, err := getAlertDefinitionByID(query.ID, sess)
+	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		alertDefinition, err := getAlertDefinitionByID(sess, query.ID)
 		if err != nil {
 			return err
 		}
@@ -143,7 +143,7 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 // It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
 func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		existingAlertDefinition, err := getAlertDefinitionByUID(cmd.UID, cmd.OrgID, sess)
+		existingAlertDefinition, err := getAlertDefinitionByUID(sess, cmd.UID, cmd.OrgID)
 		if err != nil {
 			if errors.Is(err, errAlertDefinitionNotFound) {
 				return nil
@@ -216,7 +216,7 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 
 // getOrgAlertDefinitions is a handler for retrieving alert definitions of specific organisation.
 func (ng *AlertNG) getOrgAlertDefinitions(query *listAlertDefinitionsQuery) error {
-	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertDefinitions := make([]*AlertDefinition, 0)
 		q := "SELECT * FROM alert_definition WHERE org_id = ?"
 		if err := sess.SQL(q, query.OrgID).Find(&alertDefinitions); err != nil {
@@ -229,7 +229,7 @@ func (ng *AlertNG) getOrgAlertDefinitions(query *listAlertDefinitionsQuery) erro
 }
 
 func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
-	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alerts := make([]*AlertDefinition, 0)
 		q := "SELECT id, interval_seconds, version FROM alert_definition"
 		if err := sess.SQL(q).Find(&alerts); err != nil {
@@ -240,7 +240,6 @@ func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
 		return nil
 	})
 }
-
 func generateNewAlertDefinitionUID(sess *sqlstore.DBSession, orgID int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()
