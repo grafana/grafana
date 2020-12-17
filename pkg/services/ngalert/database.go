@@ -10,6 +10,7 @@ import (
 )
 
 func getAlertDefinitionByUID(sess *sqlstore.DBSession, alertDefinitionUID string, orgID int64) (*AlertDefinition, error) {
+	// we consider optionally enabling some caching
 	alertDefinition := AlertDefinition{OrgID: orgID, UID: alertDefinitionUID}
 	has, err := sess.Get(&alertDefinition)
 	if !has {
