@@ -2,6 +2,7 @@ package librarypanels
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -46,7 +47,6 @@ func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, panelID
 
 	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		result, err := session.Exec("DELETE FROM library_panel WHERE id=? and org_id=?", panelID, orgID)
-
 		if err != nil {
 			return err
 		}
@@ -63,26 +63,25 @@ func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, panelID
 	return err
 }
 
-// getLibraryPanels gets Library Panels based on statement and args
-func getLibraryPanels(session *sqlstore.DBSession, statement interface{}, args ...interface{}) ([]LibraryPanel, error) {
-	libraryPanels := make([]LibraryPanel, 0)
-
-	err := session.SQL(statement, args...).Find(&libraryPanels)
-
-	return libraryPanels, err
-}
-
-// getLibraryPanel gets a Library Panel
+// getLibraryPanel gets a Library Panel.
 func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, panelID int64) (LibraryPanel, error) {
 	orgID := c.SignedInUser.OrgId
 	libraryPanel := LibraryPanel{}
-	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-		libraryPanels, err := getLibraryPanels(session, "SELECT * FROM library_panel WHERE id=? and org_id=?", panelID, orgID)
 
+	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+		libraryPanels := make([]LibraryPanel, 0)
+
+		err := session.SQL("SELECT * FROM library_panel WHERE id=? and org_id=?", panelID, orgID).Find(&libraryPanels)
 		if err != nil {
 			return err
-		} else if len(libraryPanels) != 1 {
+		}
+
+		if len(libraryPanels) == 0 {
 			return errLibraryPanelNotFound
+		}
+
+		if len(libraryPanels) > 1 {
+			return fmt.Errorf("found %d panels, while expecting at most one", len(libraryPanels))
 		}
 
 		libraryPanel = libraryPanels[0]
@@ -93,19 +92,16 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, panelID in
 	return libraryPanel, err
 }
 
-// getAllLibraryPanels gets all Library Panels
+// getAllLibraryPanels gets all library panels.
 func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]LibraryPanel, error) {
 	orgID := c.SignedInUser.OrgId
 	libraryPanels := make([]LibraryPanel, 0)
 
 	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-		panels, err := getLibraryPanels(session, "SELECT * FROM library_panel WHERE org_id=?", orgID)
-
+		err := session.SQL("SELECT * FROM library_panel WHERE org_id=?", orgID).Find(&libraryPanels)
 		if err != nil {
 			return err
 		}
-
-		libraryPanels = panels
 
 		return nil
 	})

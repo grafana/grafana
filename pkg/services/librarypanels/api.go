@@ -27,7 +27,6 @@ func (lps *LibraryPanelService) registerAPIEndpoints() {
 // createHandler handles POST /api/library-panels.
 func (lps *LibraryPanelService) createHandler(c *models.ReqContext, cmd createLibraryPanelCommand) api.Response {
 	panel, err := lps.createLibraryPanel(c, cmd)
-
 	if err != nil {
 		if errors.Is(err, errLibraryPanelAlreadyAdded) {
 			return api.Error(400, errLibraryPanelAlreadyAdded.Error(), err)
@@ -41,7 +40,6 @@ func (lps *LibraryPanelService) createHandler(c *models.ReqContext, cmd createLi
 // deleteHandler handles DELETE /api/library-panels/:panelId
 func (lps *LibraryPanelService) deleteHandler(c *models.ReqContext) api.Response {
 	err := lps.deleteLibraryPanel(c, c.ParamsInt64(":panelId"))
-
 	if err != nil {
 		if errors.Is(err, errLibraryPanelNotFound) {
 			return api.Error(404, errLibraryPanelNotFound.Error(), err)
@@ -55,7 +53,6 @@ func (lps *LibraryPanelService) deleteHandler(c *models.ReqContext) api.Response
 // getHandler handles GET /api/library-panels/:panelId
 func (lps *LibraryPanelService) getHandler(c *models.ReqContext) api.Response {
 	libraryPanel, err := lps.getLibraryPanel(c, c.ParamsInt64(":panelId"))
-
 	if err != nil {
 		if errors.Is(err, errLibraryPanelNotFound) {
 			return api.Error(404, errLibraryPanelNotFound.Error(), err)
@@ -69,7 +66,6 @@ func (lps *LibraryPanelService) getHandler(c *models.ReqContext) api.Response {
 // getAllHandler handles GET /api/library-panels/
 func (lps *LibraryPanelService) getAllHandler(c *models.ReqContext) api.Response {
 	libraryPanels, err := lps.getAllLibraryPanels(c)
-
 	if err != nil {
 		return api.Error(500, "Failed to get library panels", err)
 	}

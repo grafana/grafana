@@ -16,184 +16,184 @@ import (
 )
 
 func TestCreateLibraryPanel(t *testing.T) {
-	t.Run("When an admin tries to create a library panel that already exists", func(t *testing.T) {
-		t.Run("then it should fail", func(t *testing.T) {
-			testScenario(t, getTestContext(), func(t *testing.T, ctx *testContext) {
-				command := getCreateCommand(1, "Text - Library Panel")
+	t.Run("When an admin tries to create a library panel that already exists, then it should fail.", func(t *testing.T) {
+		context := getTestContext()
 
-				response := ctx.service.createHandler(ctx.reqContext, command)
-				require.Equal(t, 200, response.Status())
+		testScenario(t, context, func(t *testing.T, ctx *testContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
 
-				response = ctx.service.createHandler(ctx.reqContext, command)
-				require.Equal(t, 400, response.Status())
-			})
+			response := ctx.service.createHandler(ctx.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			response = ctx.service.createHandler(ctx.reqContext, command)
+			require.Equal(t, 400, response.Status())
 		})
 	})
 }
 
 func TestDeleteLibraryPanel(t *testing.T) {
-	t.Run("When an admin tries to delete a library panel that does not exist", func(t *testing.T) {
-		t.Run("then it should fail", func(t *testing.T) {
-			testScenario(t, getTestContext().withParams(map[string]string{":panelId": "74"}), func(t *testing.T, ctx *testContext) {
-				response := ctx.service.deleteHandler(ctx.reqContext)
-				require.Equal(t, 404, response.Status())
-			})
+	t.Run("When an admin tries to delete a library panel that does not exist, then it should fail.", func(t *testing.T) {
+		context := getTestContext().withParams(map[string]string{":panelId": "74"})
+
+		testScenario(t, context, func(t *testing.T, ctx *testContext) {
+			response := ctx.service.deleteHandler(ctx.reqContext)
+			require.Equal(t, 404, response.Status())
 		})
 	})
 
-	t.Run("When an admin tries to delete a library panel that exists", func(t *testing.T) {
-		t.Run("then it should succeed", func(t *testing.T) {
-			testScenario(t, getTestContext().withParams(map[string]string{":panelId": "1"}), func(t *testing.T, ctx *testContext) {
-				command := getCreateCommand(1, "Text - Library Panel")
+	t.Run("When an admin tries to delete a library panel that exists, then it should succeed.", func(t *testing.T) {
+		context := getTestContext().withParams(map[string]string{":panelId": "1"})
 
-				response := ctx.service.createHandler(ctx.reqContext, command)
-				require.Equal(t, 200, response.Status())
+		testScenario(t, context, func(t *testing.T, ctx *testContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
 
-				response = ctx.service.deleteHandler(ctx.reqContext)
-				require.Equal(t, 200, response.Status())
-			})
+			response := ctx.service.createHandler(ctx.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			response = ctx.service.deleteHandler(ctx.reqContext)
+			require.Equal(t, 200, response.Status())
 		})
 	})
 
-	t.Run("When an admin tries to delete a library panel in another org", func(t *testing.T) {
-		t.Run("then it should fail", func(t *testing.T) {
-			testScenario(t, getTestContext().withParams(map[string]string{":panelId": "1"}), func(t *testing.T, ctx *testContext) {
-				command := getCreateCommand(1, "Text - Library Panel")
+	t.Run("When an admin tries to delete a library panel in another org, then it should fail.", func(t *testing.T) {
+		context := getTestContext().withParams(map[string]string{":panelId": "1"})
 
-				response := ctx.service.createHandler(ctx.reqContext, command)
-				require.Equal(t, 200, response.Status())
+		testScenario(t, context, func(t *testing.T, ctx *testContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
 
-				ctx.withSignedInUser(2, models.ROLE_ADMIN)
+			response := ctx.service.createHandler(ctx.reqContext, command)
+			require.Equal(t, 200, response.Status())
 
-				response = ctx.service.deleteHandler(ctx.reqContext)
-				require.Equal(t, 404, response.Status())
-			})
+			ctx.withSignedInUser(2, models.ROLE_ADMIN)
+
+			response = ctx.service.deleteHandler(ctx.reqContext)
+			require.Equal(t, 404, response.Status())
 		})
 	})
 }
 
 func TestGetLibraryPanel(t *testing.T) {
-	t.Run("When an admin tries to get a library panel that does not exist", func(t *testing.T) {
-		t.Run("then it should fail", func(t *testing.T) {
-			testScenario(t, getTestContext().withParams(map[string]string{":panelId": "74"}), func(t *testing.T, ctx *testContext) {
-				response := ctx.service.getHandler(ctx.reqContext)
-				require.Equal(t, 404, response.Status())
-			})
+	t.Run("When an admin tries to get a library panel that does not exist, then it should fail.", func(t *testing.T) {
+		context := getTestContext().withParams(map[string]string{":panelId": "74"})
+
+		testScenario(t, context, func(t *testing.T, ctx *testContext) {
+			response := ctx.service.getHandler(ctx.reqContext)
+			require.Equal(t, 404, response.Status())
 		})
 	})
 
-	t.Run("When an admin tries to get a library panel that exists", func(t *testing.T) {
-		t.Run("then it should succeed and return correct result", func(t *testing.T) {
-			testScenario(t, getTestContext().withParams(map[string]string{":panelId": "1"}), func(t *testing.T, ctx *testContext) {
-				command := getCreateCommand(1, "Text - Library Panel")
+	t.Run("When an admin tries to get a library panel that exists, then it should succeed and return correct result.", func(t *testing.T) {
+		context := getTestContext().withParams(map[string]string{":panelId": "1"})
 
-				response := ctx.service.createHandler(ctx.reqContext, command)
-				require.Equal(t, 200, response.Status())
+		testScenario(t, context, func(t *testing.T, ctx *testContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
 
-				response = ctx.service.getHandler(ctx.reqContext)
-				require.Equal(t, 200, response.Status())
+			response := ctx.service.createHandler(ctx.reqContext, command)
+			require.Equal(t, 200, response.Status())
 
-				result := libraryPanelResult{}
-				err := json.Unmarshal(response.Body(), &result)
-				require.NoError(t, err)
-				require.Equal(t, int64(1), result.Result.FolderID)
-				require.Equal(t, "Text - Library Panel", result.Result.Title)
-			})
+			response = ctx.service.getHandler(ctx.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			result := libraryPanelResult{}
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			require.Equal(t, int64(1), result.Result.FolderID)
+			require.Equal(t, "Text - Library Panel", result.Result.Title)
 		})
 	})
 
-	t.Run("When an admin tries to get a library panel that exists in an other org", func(t *testing.T) {
-		t.Run("then it should fail", func(t *testing.T) {
-			testScenario(t, getTestContext().withParams(map[string]string{":panelId": "1"}), func(t *testing.T, ctx *testContext) {
-				command := getCreateCommand(1, "Text - Library Panel")
+	t.Run("When an admin tries to get a library panel that exists in an other org, then it should fail.", func(t *testing.T) {
+		context := getTestContext().withParams(map[string]string{":panelId": "1"})
 
-				response := ctx.service.createHandler(ctx.reqContext, command)
-				require.Equal(t, 200, response.Status())
+		testScenario(t, context, func(t *testing.T, ctx *testContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
 
-				// switch orgID
-				ctx.withSignedInUser(2, models.ROLE_ADMIN)
+			response := ctx.service.createHandler(ctx.reqContext, command)
+			require.Equal(t, 200, response.Status())
 
-				response = ctx.service.getHandler(ctx.reqContext)
-				require.Equal(t, 404, response.Status())
-			})
+			// switch orgID
+			ctx.withSignedInUser(2, models.ROLE_ADMIN)
+
+			response = ctx.service.getHandler(ctx.reqContext)
+			require.Equal(t, 404, response.Status())
 		})
 	})
 }
 
 func TestGetAllLibraryPanels(t *testing.T) {
-	t.Run("When an admin tries to get all library panels and none exists", func(t *testing.T) {
-		t.Run("then it should succeed and return correct result", func(t *testing.T) {
-			testScenario(t, getTestContext(), func(t *testing.T, ctx *testContext) {
-				response := ctx.service.getAllHandler(ctx.reqContext)
-				require.Equal(t, 200, response.Status())
+	t.Run("When an admin tries to get all library panels and none exists, then it should succeed and return correct result.", func(t *testing.T) {
+		context := getTestContext()
 
-				result := libraryPanelsResult{}
-				err := json.Unmarshal(response.Body(), &result)
-				require.NoError(t, err)
-				require.NotNil(t, result.Result)
-				require.Equal(t, 0, len(result.Result))
-			})
+		testScenario(t, context, func(t *testing.T, ctx *testContext) {
+			response := ctx.service.getAllHandler(ctx.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			result := libraryPanelsResult{}
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			require.NotNil(t, result.Result)
+			require.Equal(t, 0, len(result.Result))
 		})
 	})
 
-	t.Run("When an admin tries to get all library panels and two exists", func(t *testing.T) {
-		t.Run("then it should succeed and return correct result", func(t *testing.T) {
-			testScenario(t, getTestContext(), func(t *testing.T, ctx *testContext) {
-				command := getCreateCommand(1, "Text - Library Panel")
+	t.Run("When an admin tries to get all library panels and two exists, then it should succeed and return correct result.", func(t *testing.T) {
+		context := getTestContext()
 
-				response := ctx.service.createHandler(ctx.reqContext, command)
-				require.Equal(t, 200, response.Status())
+		testScenario(t, context, func(t *testing.T, ctx *testContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
 
-				command = getCreateCommand(1, "Text - Library Panel2")
+			response := ctx.service.createHandler(ctx.reqContext, command)
+			require.Equal(t, 200, response.Status())
 
-				response = ctx.service.createHandler(ctx.reqContext, command)
-				require.Equal(t, 200, response.Status())
+			command = getCreateCommand(1, "Text - Library Panel2")
 
-				response = ctx.service.getAllHandler(ctx.reqContext)
-				require.Equal(t, 200, response.Status())
+			response = ctx.service.createHandler(ctx.reqContext, command)
+			require.Equal(t, 200, response.Status())
 
-				result := libraryPanelsResult{}
-				err := json.Unmarshal(response.Body(), &result)
-				require.NoError(t, err)
-				require.Equal(t, 2, len(result.Result))
-				require.Equal(t, int64(1), result.Result[0].FolderID)
-				require.Equal(t, int64(1), result.Result[1].FolderID)
-				require.Equal(t, "Text - Library Panel", result.Result[0].Title)
-				require.Equal(t, "Text - Library Panel2", result.Result[1].Title)
-			})
+			response = ctx.service.getAllHandler(ctx.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			result := libraryPanelsResult{}
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			require.Equal(t, 2, len(result.Result))
+			require.Equal(t, int64(1), result.Result[0].FolderID)
+			require.Equal(t, int64(1), result.Result[1].FolderID)
+			require.Equal(t, "Text - Library Panel", result.Result[0].Title)
+			require.Equal(t, "Text - Library Panel2", result.Result[1].Title)
 		})
 	})
 
-	t.Run("When an admin tries to get all library panels in a different org", func(t *testing.T) {
-		t.Run("then it should succeed and return correct result", func(t *testing.T) {
-			testScenario(t, getTestContext(), func(t *testing.T, ctx *testContext) {
-				command := getCreateCommand(1, "Text - Library Panel")
+	t.Run("When an admin tries to get all library panels in a different org, then it should succeed and return correct result.", func(t *testing.T) {
+		context := getTestContext()
 
-				response := ctx.service.createHandler(ctx.reqContext, command)
-				require.Equal(t, 200, response.Status())
+		testScenario(t, context, func(t *testing.T, ctx *testContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
 
-				response = ctx.service.getAllHandler(ctx.reqContext)
-				require.Equal(t, 200, response.Status())
+			response := ctx.service.createHandler(ctx.reqContext, command)
+			require.Equal(t, 200, response.Status())
 
-				result := libraryPanelsResult{}
-				err := json.Unmarshal(response.Body(), &result)
-				require.NoError(t, err)
-				require.Equal(t, 1, len(result.Result))
-				require.Equal(t, int64(1), result.Result[0].FolderID)
-				require.Equal(t, "Text - Library Panel", result.Result[0].Title)
+			response = ctx.service.getAllHandler(ctx.reqContext)
+			require.Equal(t, 200, response.Status())
 
-				// switch orgID
-				ctx.withSignedInUser(2, models.ROLE_ADMIN)
+			result := libraryPanelsResult{}
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			require.Equal(t, 1, len(result.Result))
+			require.Equal(t, int64(1), result.Result[0].FolderID)
+			require.Equal(t, "Text - Library Panel", result.Result[0].Title)
 
-				response = ctx.service.getAllHandler(ctx.reqContext)
-				require.Equal(t, 200, response.Status())
+			// switch orgID
+			ctx.withSignedInUser(2, models.ROLE_ADMIN)
 
-				result = libraryPanelsResult{}
-				err = json.Unmarshal(response.Body(), &result)
-				require.NoError(t, err)
-				require.NotNil(t, result.Result)
-				require.Equal(t, 0, len(result.Result))
-			})
+			response = ctx.service.getAllHandler(ctx.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			result = libraryPanelsResult{}
+			err = json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			require.NotNil(t, result.Result)
+			require.Equal(t, 0, len(result.Result))
 		})
 	})
 }
