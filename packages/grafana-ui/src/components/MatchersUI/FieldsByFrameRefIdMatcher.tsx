@@ -8,7 +8,7 @@ import { Select } from '../Select/Select';
  * @public
  */
 export const FieldsByFrameRefIdMatcher = memo<MatcherUIProps<string>>(props => {
-  const { data, options, onChange: onChangeFromProps } = props;
+  const { data, options, onChange: onChangeFromProps, readOnly } = props;
   const referenceIDs = useFrameRefIds(data);
   const selectOptions = useSelectOptions(referenceIDs);
 
@@ -23,7 +23,7 @@ export const FieldsByFrameRefIdMatcher = memo<MatcherUIProps<string>>(props => {
   );
 
   const selectedOption = selectOptions.find(v => v.value === options);
-  return <Select value={selectedOption} options={selectOptions} onChange={onChange} />;
+  return <Select value={selectedOption} options={selectOptions} onChange={onChange} disabled={readOnly} />;
 });
 
 FieldsByFrameRefIdMatcher.displayName = 'FieldsByFrameRefIdMatcher';

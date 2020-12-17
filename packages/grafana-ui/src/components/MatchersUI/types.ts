@@ -13,4 +13,5 @@ export interface MatcherUIProps<T> {
   data: DataFrame[];
   options: T;
   onChange: (options: T) => void;
+  readOnly?: boolean;
 }

@@ -1,3 +1,5 @@
+import './MatchersUI/registerUIs';
+
 export { Icon } from './Icon/Icon';
 export { IconButton } from './IconButton/IconButton';
 export { ConfirmButton } from './ConfirmButton/ConfirmButton';

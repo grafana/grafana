@@ -4,7 +4,7 @@ import { FieldMatcherID, fieldMatchers, getFieldDisplayName, SelectableValue, Da
 import { Select } from '../Select/Select';
 
 export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>(props => {
-  const { data, options, onChange: onChangeFromProps } = props;
+  const { data, options, onChange: onChangeFromProps, readOnly } = props;
   const names = useFieldDisplayNames(data);
   const selectOptions = useSelectOptions(names);
 
@@ -19,7 +19,7 @@ export const FieldNameMatcherEditor = memo<MatcherUIProps<string>>(props => {
   );
 
   const selectedOption = selectOptions.find(v => v.value === options);
-  return <Select value={selectedOption} options={selectOptions} onChange={onChange} />;
+  return <Select value={selectedOption} options={selectOptions} onChange={onChange} disabled={readOnly} />;
 });
 FieldNameMatcherEditor.displayName = 'FieldNameMatcherEditor';
 
