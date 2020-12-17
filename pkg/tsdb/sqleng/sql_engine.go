@@ -75,7 +75,7 @@ type sqlQueryEndpoint struct {
 type SqlQueryEndpointConfiguration struct {
 	DriverName        string
 	Datasource        *models.DataSource
-	ConnectionString  string
+	ConnectionString  func() (string, error)
 	TimeColumnNames   []string
 	MetricColumnTypes []string
 }
@@ -106,7 +106,12 @@ var NewSqlQueryEndpoint = func(config *SqlQueryEndpointConfiguration, queryResul
 		}
 	}
 
-	engine, err := NewXormEngine(config.DriverName, config.ConnectionString)
+	cnnstr, err := config.ConnectionString()
+	if err != nil {
+		return nil, err
+	}
+
+	engine, err := NewXormEngine(config.DriverName, cnnstr)
 	if err != nil {
 		return nil, err
 	}

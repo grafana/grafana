@@ -31,6 +31,28 @@ func characterEscape(s string, escapeChar string) string {
 func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoint, error) {
 	logger := log.New("tsdb.mysql")
 
+	config := sqleng.SqlQueryEndpointConfiguration{
+		DriverName: "mysql",
+		ConnectionString: func() (string, error) {
+			cnnstr, err := generateConnectionString(datasource)
+			if setting.Env == setting.Dev {
+				logger.Debug("getEngine", "connection", cnnstr)
+			}
+			return cnnstr, err
+		},
+		Datasource:        datasource,
+		TimeColumnNames:   []string{"time", "time_sec"},
+		MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
+	}
+
+	rowTransformer := mysqlQueryResultTransformer{
+		log: logger,
+	}
+
+	return sqleng.NewSqlQueryEndpoint(&config, &rowTransformer, newMysqlMacroEngine(logger), logger)
+}
+
+func generateConnectionString(datasource *models.DataSource) (string, error) {
 	protocol := "tcp"
 	if strings.HasPrefix(datasource.Url, "/") {
 		protocol = "unix"
@@ -46,34 +68,18 @@ func newMysqlQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndpoin
 
 	tlsConfig, err := datasource.GetTLSConfig()
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	if tlsConfig.RootCAs != nil || len(tlsConfig.Certificates) > 0 {
 		tlsConfigString := fmt.Sprintf("ds%d", datasource.Id)
 		if err := mysql.RegisterTLSConfig(tlsConfigString, tlsConfig); err != nil {
-			return nil, err
+			return "", err
 		}
 		cnnstr += "&tls=" + tlsConfigString
 	}
 
-	if setting.Env == setting.Dev {
-		logger.Debug("getEngine", "connection", cnnstr)
-	}
-
-	config := sqleng.SqlQueryEndpointConfiguration{
-		DriverName:        "mysql",
-		ConnectionString:  cnnstr,
-		Datasource:        datasource,
-		TimeColumnNames:   []string{"time", "time_sec"},
-		MetricColumnTypes: []string{"CHAR", "VARCHAR", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"},
-	}
-
-	rowTransformer := mysqlQueryResultTransformer{
-		log: logger,
-	}
-
-	return sqleng.NewSqlQueryEndpoint(&config, &rowTransformer, newMysqlMacroEngine(logger), logger)
+	return cnnstr, nil
 }
 
 type mysqlQueryResultTransformer struct {

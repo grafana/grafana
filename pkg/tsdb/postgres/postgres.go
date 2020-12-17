@@ -24,18 +24,15 @@ func newPostgresQueryEndpoint(datasource *models.DataSource) (tsdb.TsdbQueryEndp
 	logger := log.New("tsdb.postgres")
 	logger.Debug("Creating Postgres query endpoint")
 
-	cnnstr, err := generateConnectionString(datasource, logger)
-	if err != nil {
-		return nil, err
-	}
-
-	if setting.Env == setting.Dev {
-		logger.Debug("getEngine", "connection", cnnstr)
-	}
-
 	config := sqleng.SqlQueryEndpointConfiguration{
-		DriverName:        "postgres",
-		ConnectionString:  cnnstr,
+		DriverName: "postgres",
+		ConnectionString: func() (string, error) {
+			cnnstr, err := generateConnectionString(datasource, logger)
+			if setting.Env == setting.Dev {
+				logger.Debug("getEngine", "connection", cnnstr)
+			}
+			return cnnstr, err
+		},
 		Datasource:        datasource,
 		MetricColumnTypes: []string{"UNKNOWN", "TEXT", "VARCHAR", "CHAR"},
 	}
