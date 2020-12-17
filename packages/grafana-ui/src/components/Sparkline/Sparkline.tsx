@@ -133,6 +133,7 @@ export class Sparkline extends PureComponent<Props, State> {
       const colorMode = getFieldColorModeForField(field);
       const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
       const pointsMode = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
+
       builder.addSeries({
         scaleKey,
         drawStyle: customConfig.drawStyle!,

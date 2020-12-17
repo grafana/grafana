@@ -181,6 +181,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         fillOpacity: customConfig.fillOpacity,
         spanNulls: customConfig.spanNulls || false,
         show: !customConfig.hideFrom?.graph,
+        fillGradient: customConfig.fillGradient,
       });
 
       if (hasLegend.current && !customConfig.hideFrom?.legend) {

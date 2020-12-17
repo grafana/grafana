@@ -49,6 +49,11 @@ export interface FieldConfig<TOptions extends object = any> {
   path?: string;
 
   /**
+   * True if data source can write a value to the path.  Auth/authz are supported separately
+   */
+  writeable?: boolean;
+
+  /**
    * True if data source field supports ad-hoc filters
    */
   filterable?: boolean;

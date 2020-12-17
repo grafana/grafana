@@ -324,7 +324,7 @@ func TestFrameToSeriesSlice(t *testing.T) {
 			name: "display name from data source",
 			frame: data.NewFrame("",
 				data.NewField("Time", data.Labels{}, []time.Time{}),
-				data.NewField(`Values`, data.Labels{}, []*int64{}).SetConfig(&data.FieldConfig{
+				data.NewField(`Values`, data.Labels{"Rating": "10"}, []*int64{}).SetConfig(&data.FieldConfig{
 					DisplayNameFromDS: "sloth",
 				})),
 
@@ -332,6 +332,7 @@ func TestFrameToSeriesSlice(t *testing.T) {
 				&tsdb.TimeSeries{
 					Name:   "sloth",
 					Points: tsdb.TimeSeriesPoints{},
+					Tags:   map[string]string{"Rating": "10"},
 				},
 			},
 			Err: require.NoError,
