@@ -3,6 +3,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { TagList, Card } from '@grafana/ui';
 import { DashboardSectionItem, OnToggleChecked } from '../types';
 import { SearchCheckbox } from './SearchCheckbox';
+import { SEARCH_ITEM_HEIGHT } from '../constants';
 
 export interface Props {
   item: DashboardSectionItem;
@@ -29,7 +30,12 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
   );
 
   return (
-    <Card aria-label={selectors.dashboards(item.title)} heading={item.title} href={item.url}>
+    <Card
+      aria-label={selectors.dashboards(item.title)}
+      heading={item.title}
+      href={item.url}
+      style={{ minHeight: SEARCH_ITEM_HEIGHT }}
+    >
       <Card.Figure>
         <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
       </Card.Figure>
