@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 import { Tooltip, Icon, Button } from '@grafana/ui';
 import { SlideDown } from 'app/core/components/Animations/SlideDown';
 import { StoreState } from 'app/types';
@@ -15,22 +15,24 @@ import PermissionList from 'app/core/components/PermissionList/PermissionList';
 import AddPermission from 'app/core/components/PermissionList/AddPermission';
 import PermissionsInfo from 'app/core/components/PermissionList/PermissionsInfo';
 
+const mapStateToProps = (state: StoreState) => ({
+  permissions: state.dashboard.permissions,
+});
+
+const mapDispatchToProps = {
+  getDashboardPermissions,
+  addDashboardPermission,
+  removeDashboardPermission,
+  updateDashboardPermission,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
 export interface OwnProps {
   dashboard: DashboardModel;
 }
 
-export interface ConnectedProps {
-  permissions: DashboardAcl[];
-}
-
-export interface DispatchProps {
-  getDashboardPermissions: typeof getDashboardPermissions;
-  updateDashboardPermission: typeof updateDashboardPermission;
-  removeDashboardPermission: typeof removeDashboardPermission;
-  addDashboardPermission: typeof addDashboardPermission;
-}
-
-export type Props = OwnProps & ConnectedProps & DispatchProps;
+export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 export interface State {
   isAdding: boolean;
@@ -119,15 +121,4 @@ export class DashboardPermissionsUnconnected extends PureComponent<Props, State>
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = state => ({
-  permissions: state.dashboard.permissions,
-});
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = {
-  getDashboardPermissions,
-  addDashboardPermission,
-  removeDashboardPermission,
-  updateDashboardPermission,
-};
-
-export const DashboardPermissions = connect(mapStateToProps, mapDispatchToProps)(DashboardPermissionsUnconnected);
+export const DashboardPermissions = connector(DashboardPermissionsUnconnected);
