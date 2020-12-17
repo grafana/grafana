@@ -14,4 +14,5 @@ export const readOnlyFieldMatcherItem: FieldMatcherUIRegistryItem<ReadOnlyFieldM
   name: 'Fields matching',
   description: 'Display inner matcher as read only value for the end user.',
   optionsToLabel: options => options.formattedValue,
+  excludeFromPicker: true,
 };

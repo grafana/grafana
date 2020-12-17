@@ -31,11 +31,21 @@ export interface SystemConfigOverrideRule extends ConfigOverrideRule {
  * @param ref system override reference
  * @internal
  */
-export function isSystemOverride<T extends SystemConfigOverrideRule>(ref: string) {
+export function isSystemOverrideWithRef<T extends SystemConfigOverrideRule>(ref: string) {
   return (override: ConfigOverrideRule): override is T => {
     return (override as T)?.__systemRef === ref;
   };
 }
+
+/**
+ * Guard functionality to check if an override rule is of type {@link SystemConfigOverrideRule}.
+ * It will return true if the {@link SystemConfigOverrideRule} has any systemRef set.
+ *
+ * @internal
+ */
+export const isSystemOverride = (override: ConfigOverrideRule): override is SystemConfigOverrideRule => {
+  return typeof (override as SystemConfigOverrideRule)?.__systemRef === 'string';
+};
 
 export interface FieldConfigSource<TOptions extends object = any> {
   // Defaults applied to all numeric fields

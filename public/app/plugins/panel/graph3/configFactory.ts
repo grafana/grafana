@@ -3,13 +3,13 @@ import {
   FieldConfigSource,
   FieldMatcherID,
   getFieldDisplayName,
-  isSystemOverride,
+  isSystemOverrideWithRef,
   SystemConfigOverrideRule,
 } from '@grafana/data';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from '@grafana/ui';
 
 const displayOverrideRef = 'hide_series_from';
-const isDisplayOverride = isSystemOverride(displayOverrideRef);
+const isHideSeriesOverride = isSystemOverrideWithRef(displayOverrideRef);
 
 export const hideSeriesConfigFactory = (
   event: GraphNGLegendEvent,
@@ -27,7 +27,7 @@ export const hideSeriesConfigFactory = (
 
   const field = frame.fields[fieldIndex.fieldIndex];
   const displayName = getFieldDisplayName(field, frame, data);
-  const currentIndex = overrides.findIndex(isDisplayOverride);
+  const currentIndex = overrides.findIndex(isHideSeriesOverride);
 
   if (currentIndex < 0) {
     const override = createFreshOverride(displayName);

@@ -8,12 +8,11 @@ export interface ReadOnlyFieldMatcherOptions<T = any> {
   formattedValue: string;
 }
 
-const defaultMatcher: FieldMatcher = () => false;
-
 fieldMatchers.register({
   id: FieldMatcherID.readOnly,
   name: 'Read-only field matcher',
   description: 'Field name by inner matcher',
+  excludeFromPicker: true,
   get: (options: ReadOnlyFieldMatcherOptions): FieldMatcher => {
     if (options.innerId === FieldMatcherID.readOnly) {
       throw new Error('You can not wrap the readOnly matcher in the readOnly matcher, will cause a loop.');
@@ -22,7 +21,7 @@ fieldMatchers.register({
     const matcher = fieldMatchers.getIfExists(options.innerId);
 
     if (!matcher) {
-      return defaultMatcher;
+      throw new Error(`Could not find given matcher Id ${options.innerId}`);
     }
 
     return matcher.get(options.innerOptions);
