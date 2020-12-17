@@ -265,7 +265,7 @@ const createOverride = (matchers: string[]) => {
       options: {
         innerId: FieldMatcherID.byRegexp,
         innerOptions: `^(?!${matchers.join('$|')}$).*$`,
-        formattedValue: `Except fields: ${matchers.join(', ')}`,
+        formattedValue: `All except: ${matchers.join(', ')}`,
       },
     },
     properties: [

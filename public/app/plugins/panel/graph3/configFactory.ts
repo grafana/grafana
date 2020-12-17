@@ -81,7 +81,7 @@ const createFreshOverride = (displayName: string): SystemConfigOverrideRule => {
       options: {
         innerId: FieldMatcherID.byRegexp,
         innerOptions: `^(?!${displayName}$).*$`,
-        formattedValue: `Except fields: ${displayName}`,
+        formattedValue: `All except: ${displayName}`,
       },
     },
     properties: [
@@ -130,7 +130,7 @@ const createExtendedOverride = (
       options: {
         innerId: FieldMatcherID.byRegexp,
         innerOptions: `^(?!${existing.join('$|')}$).*$`,
-        formattedValue: `Except fields: ${existing.join(', ')}`,
+        formattedValue: `All except: ${existing.join(', ')}`,
       },
     },
     properties: [
