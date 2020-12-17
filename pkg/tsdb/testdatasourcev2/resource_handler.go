@@ -57,7 +57,7 @@ func (td *testdataV2) testStreamHandler(rw http.ResponseWriter, req *http.Reques
 		sleepDuration = time.Millisecond
 	}
 
-	rw.Header().Add("Content-Type", "text/plain")
+	rw.Header().Set("Content-Type", "text/plain")
 	rw.WriteHeader(http.StatusOK)
 
 	for i := 1; i <= count; i++ {
@@ -76,7 +76,11 @@ func createJSONHandler(logger log.Logger) http.Handler {
 
 		var reqData map[string]interface{}
 		if req.Body != nil {
-			defer req.Body.Close()
+			defer func() {
+				if err := req.Body.Close(); err != nil {
+					logger.Warn("Failed to close response body", "err", err)
+				}
+			}()
 			b, err := ioutil.ReadAll(req.Body)
 			if err != nil {
 				logger.Error("Failed to read request body to bytes", "error", err)
@@ -107,7 +111,7 @@ func createJSONHandler(logger log.Logger) http.Handler {
 			logger.Error("Failed to marshal response body to JSON", "error", err)
 		}
 
-		rw.Header().Add("Content-Type", "application/json")
+		rw.Header().Set("Content-Type", "application/json")
 		rw.WriteHeader(http.StatusOK)
 		if _, err := rw.Write(bytes); err != nil {
 			logger.Error("Failed to write response", "error", err)
