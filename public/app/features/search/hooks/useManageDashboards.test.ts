@@ -4,7 +4,8 @@ import { renderHook } from '@testing-library/react-hooks';
 import * as useSearch from './useSearch';
 import { DashboardQuery, DashboardSearchItemType, DashboardSection, SearchAction } from '../types';
 import { ManageDashboardsState } from '../reducers/manageDashboards';
-import { GENERAL_FOLDER_ID, useManageDashboards } from './useManageDashboards';
+import { useManageDashboards } from './useManageDashboards';
+import { GENERAL_FOLDER_ID } from '../constants';
 
 describe('useManageDashboards', () => {
   const useSearchMock = jest.spyOn(useSearch, 'useSearch');

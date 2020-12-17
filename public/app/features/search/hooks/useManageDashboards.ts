@@ -5,8 +5,7 @@ import { DashboardQuery, DashboardSection, OnDeleteItems, OnMoveItems, OnToggleC
 import { DELETE_ITEMS, MOVE_ITEMS, TOGGLE_ALL_CHECKED, TOGGLE_CHECKED } from '../reducers/actionTypes';
 import { manageDashboardsReducer, manageDashboardsState, ManageDashboardsState } from '../reducers/manageDashboards';
 import { useSearch } from './useSearch';
-
-export const GENERAL_FOLDER_ID = 0;
+import { GENERAL_FOLDER_ID } from '../constants';
 
 export const useManageDashboards = (
   query: DashboardQuery,
