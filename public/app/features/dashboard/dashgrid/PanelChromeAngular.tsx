@@ -128,7 +128,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(prevProps: Props, prevState: State) {
-    const { plugin, height, width } = this.props;
+    const { plugin, height, width, panel } = this.props;
 
     if (prevProps.plugin !== plugin) {
       this.cleanUpAngularPanel();
@@ -139,6 +139,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
       if (this.scopeProps) {
         this.scopeProps.size.height = this.getInnerPanelHeight();
         this.scopeProps.size.width = this.getInnerPanelWidth();
+        panel.render();
       }
     }
   }

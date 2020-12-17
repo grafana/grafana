@@ -31,7 +31,6 @@ import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import {
   PanelOptionsChangedEvent,
   PanelQueriesChangedEvent,
-  PanelSizeChangedEvent,
   PanelTransformationsChangedEvent,
   RefreshEvent,
   RenderEvent,
@@ -264,12 +263,6 @@ export class PanelModel implements DataConfigSource {
   }
 
   updateGridPos(newPos: GridPos) {
-    let sizeChanged = false;
-
-    if (this.gridPos.w !== newPos.w || this.gridPos.h !== newPos.h) {
-      sizeChanged = true;
-    }
-
     this.gridPos.x = newPos.x;
     this.gridPos.y = newPos.y;
     this.gridPos.w = newPos.w;

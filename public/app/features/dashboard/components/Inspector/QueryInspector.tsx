@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Button, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { AppEvents, PanelEvents, DataFrame } from '@grafana/data';
+import { AppEvents, DataFrame } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';

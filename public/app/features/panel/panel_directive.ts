@@ -5,7 +5,7 @@ import { PanelEvents } from '@grafana/data';
 import { PanelModel } from '../dashboard/state';
 import { PanelCtrl } from './panel_ctrl';
 import { Subscription } from 'rxjs';
-import { PanelSizeChangedEvent, RefreshEvent, RenderEvent } from 'app/types/events';
+import { RefreshEvent, RenderEvent } from 'app/types/events';
 
 const module = angular.module('grafana.directives');
 
@@ -61,13 +61,6 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         }
       });
 
-      function onPanelSizeChanged() {
-        $timeout(() => {
-          resizeScrollableContent();
-          ctrl.render();
-        });
-      }
-
       function updateDimensionsFromParentScope() {
         ctrl.height = scope.$parent.$parent.size.height;
         ctrl.width = scope.$parent.$parent.size.width;
@@ -84,11 +77,13 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
       subs.add(
         panel.events.subscribe(RenderEvent, () => {
           updateDimensionsFromParentScope();
-          ctrl.events.emit('refresh');
+
+          $timeout(() => {
+            resizeScrollableContent();
+            ctrl.events.emit('render');
+          });
         })
       );
-
-      subs.add(panel.events.subscribe(PanelSizeChangedEvent, onPanelSizeChanged));
 
       scope.$on('$destroy', () => {
         elem.off();

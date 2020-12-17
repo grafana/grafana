@@ -50,7 +50,6 @@ export class PanelCtrl {
   }
 
   panelDidMount() {
-    console.log('panelDidMount');
     this.events.emit(PanelEvents.componentDidMount);
     this.dashboard.panelInitialized(this.panel);
   }

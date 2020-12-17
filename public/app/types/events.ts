@@ -154,9 +154,5 @@ export class RefreshEvent extends BusEventBase {
 }
 
 export class RenderEvent extends BusEventBase {
-  static type = 'refresh';
-}
-
-export class PanelSizeChangedEvent extends BusEventBase {
-  static type = 'refresh';
+  static type = 'render';
 }

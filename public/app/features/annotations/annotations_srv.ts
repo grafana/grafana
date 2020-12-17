@@ -14,7 +14,6 @@ import {
   CoreApp,
   DataQueryRequest,
   DataSourceApi,
-  PanelEvents,
   rangeUtil,
   ScopedVars,
 } from '@grafana/data';
