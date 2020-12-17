@@ -169,6 +169,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           editor: SeriesConfigEditor,
           override: SeriesConfigEditor,
           shouldApply: () => true,
+          showIf: () => false,
           process: value => value,
         });
     },
