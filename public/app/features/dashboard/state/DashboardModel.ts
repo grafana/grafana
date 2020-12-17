@@ -16,7 +16,6 @@ import {
   DateTimeInput,
   EventBusExtended,
   EventBusSrv,
-  PanelEvents,
   TimeRange,
   TimeZone,
   UrlQueryValue,
@@ -27,7 +26,7 @@ import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
 import { isAllVariable } from '../../variables/utils';
-import { DashboardPanelsChangedEvent } from 'app/types/events';
+import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent } from 'app/types/events';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -265,7 +264,7 @@ export class DashboardModel {
   }
 
   startRefresh() {
-    this.events.emit(PanelEvents.refresh);
+    this.events.publish(new RefreshEvent());
 
     if (this.panelInEdit) {
       this.panelInEdit.refresh();
@@ -280,8 +279,7 @@ export class DashboardModel {
   }
 
   render() {
-    this.events.emit(PanelEvents.render);
-
+    this.events.publish(new RenderEvent());
     for (const panel of this.panels) {
       panel.render();
     }
