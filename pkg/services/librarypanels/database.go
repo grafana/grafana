@@ -24,9 +24,9 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 		CreatedBy: c.SignedInUser.UserId,
 		UpdatedBy: c.SignedInUser.UserId,
 	}
-
 	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-		if res, err := session.Query("SELECT 1 FROM library_panel WHERE org_id=? AND folder_id=? AND title=?", c.SignedInUser.OrgId, cmd.FolderID, cmd.Title); err != nil {
+		if res, err := session.Query("SELECT 1 FROM library_panel WHERE org_id=? AND folder_id=? AND title=?",
+			c.SignedInUser.OrgId, cmd.FolderID, cmd.Title); err != nil {
 			return err
 		} else if len(res) == 1 {
 			return errLibraryPanelAlreadyAdded
@@ -44,8 +44,7 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 // deleteLibraryPanel deletes a Library Panel
 func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, panelID int64) error {
 	orgID := c.SignedInUser.OrgId
-
-	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+	return lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		result, err := session.Exec("DELETE FROM library_panel WHERE id=? and org_id=?", panelID, orgID)
 		if err != nil {
 			return err
@@ -59,18 +58,14 @@ func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, panelID
 
 		return nil
 	})
-
-	return err
 }
 
 // getLibraryPanel gets a Library Panel.
 func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, panelID int64) (LibraryPanel, error) {
 	orgID := c.SignedInUser.OrgId
-	libraryPanel := LibraryPanel{}
-
+	var libraryPanel LibraryPanel
 	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		libraryPanels := make([]LibraryPanel, 0)
-
 		err := session.SQL("SELECT * FROM library_panel WHERE id=? and org_id=?", panelID, orgID).Find(&libraryPanels)
 		if err != nil {
 			return err
@@ -79,7 +74,6 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, panelID in
 		if len(libraryPanels) == 0 {
 			return errLibraryPanelNotFound
 		}
-
 		if len(libraryPanels) > 1 {
 			return fmt.Errorf("found %d panels, while expecting at most one", len(libraryPanels))
 		}
