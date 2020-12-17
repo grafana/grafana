@@ -165,9 +165,9 @@ export class DashboardGrid extends PureComponent<Props> {
   };
 
   onWidthChange = () => {
-    for (const panel of this.props.dashboard.panels) {
-      panel.resizeDone();
-    }
+    // for (const panel of this.props.dashboard.panels) {
+    //   panel.resizeDone();
+    // }
   };
 
   updateGridPos = (item: ReactGridLayout.Layout, layout: ReactGridLayout.Layout[]) => {

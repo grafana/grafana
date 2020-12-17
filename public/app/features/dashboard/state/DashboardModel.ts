@@ -883,10 +883,12 @@ export class DashboardModel {
     return rowPanels;
   }
 
+  /** @deprecated */
   on<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
     this.events.on(event, callback);
   }
 
+  /** @deprecated */
   off<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
     this.events.off(event, callback);
   }
