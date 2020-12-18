@@ -1,7 +1,10 @@
 package notifiers
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -106,10 +109,20 @@ func (mn *MatrixNotifier) Notify(evalContext *alerting.EvalContext) error {
 		formattedBody += evalContext.Rule.Message
 	}
 
+	formattedBody += "</blockquote>"
+
+	imageURL := evalContext.ImagePublicURL
+	if mn.NeedsImage() && imageURL != "" {
+		MXCImage, err := uploadImageToMatrix(imageURL, mn.HomeserverURL, mn.AccessToken)
+		if err == nil {
+			formattedBody += "<img src='" + MXCImage + "' alt='Failed to load image'><br/>"
+		}
+	}
+
 	payload := map[string]interface{}{
 		"formatted_body": formattedBody,
 		"body":           "",
-		"msgtype":        "m.notice",
+		"msgtype":        "m.text",
 		"format":         "org.matrix.custom.html",
 	}
 
@@ -130,4 +143,36 @@ func (mn *MatrixNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	return nil
+}
+
+// Images should be uploaded to the marix before sending the image
+func uploadImageToMatrix(imageURL string, homeserverURL string, accessToken string) (string, error) {
+	dashboardImage, err := http.Get(imageURL)
+
+	if err == nil {
+		defer dashboardImage.Body.Close()
+		var data bytes.Buffer
+		_, err := io.Copy(&data, dashboardImage.Body)
+		if err == nil {
+			matrixUploadURL := homeserverURL + "/_matrix/media/r0/upload?access_token=" + accessToken
+			request, _ := http.NewRequest("POST", matrixUploadURL, &data)
+			request.Header.Set("Content-Type", "image/png")
+
+			client := &http.Client{}
+			response, err := client.Do(request)
+			if err == nil {
+				defer response.Body.Close()
+				body, err := ioutil.ReadAll(response.Body)
+				if err == nil {
+					content := make(map[string]string)
+					err := json.Unmarshal(body, &content)
+					if err == nil {
+						return content["content_uri"], err
+					}
+				}
+			}
+		}
+	}
+
+	return "", err
 }
