@@ -60,7 +60,7 @@ def get_steps(edition, ver_mode):
     should_upload = should_publish or ver_mode in ('release-branch',)
 
     steps = [
-        lint_backend_step(edition),
+        lint_backend_step(edition=edition),
         codespell_step(),
         shellcheck_step(),
         dashboard_schemas_check(),
@@ -70,7 +70,7 @@ def get_steps(edition, ver_mode):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
         package_step(edition=edition, ver_mode=ver_mode),
-        e2e_tests_server_step(),
+        e2e_tests_server_step(edition=edition),
         e2e_tests_step(),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         copy_packages_for_docker_step(),
@@ -87,6 +87,18 @@ def get_steps(edition, ver_mode):
             release_npm_packages_step(edition=edition, ver_mode=ver_mode),
         ])
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
+
+    if edition == 'enterprise':
+        build_tags = ['enterprise2']
+        steps.extend([
+            test_backend_step(build_tags=build_tags),
+            build_backend_step(edition=edition, ver_mode=ver_mode, variants=['linux-x64'], build_tags=build_tags),
+            package_step(edition=edition, ver_mode=ver_mode, variants=['linux-x64'], build_tags=build_tags),
+            e2e_tests_server_step(edition=edition, build_tags=build_tags),
+            e2e_tests_step(build_tags=build_tags),
+        ])
+        if should_upload:
+            steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode, build_tags=build_tags))
 
     return steps, windows_steps
 
