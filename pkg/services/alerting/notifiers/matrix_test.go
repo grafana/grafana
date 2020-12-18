@@ -90,7 +90,6 @@ func TestMatrixNotifier(t *testing.T) {
 				So(matrixNotifier.AccessToken, ShouldEqual, "ToKeN")
 				So(matrixNotifier.Recipient, ShouldResemble, "!roomid:homeservername")
 			})
-
 		})
 	})
 }

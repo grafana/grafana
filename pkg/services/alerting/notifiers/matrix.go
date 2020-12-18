@@ -113,7 +113,7 @@ func (mn *MatrixNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	imageURL := evalContext.ImagePublicURL
 	if mn.NeedsImage() && imageURL != "" {
-		MXCImage, err := uploadImageToMatrix(imageURL, mn.HomeserverURL, mn.AccessToken)
+		MXCImage, err := uploadImageToMatrix(imageURL, mn)
 		if err == nil {
 			formattedBody += "<img src='" + MXCImage + "' alt='Failed to load image'><br/>"
 		}
@@ -146,28 +146,36 @@ func (mn *MatrixNotifier) Notify(evalContext *alerting.EvalContext) error {
 }
 
 // Images should be uploaded to the marix before sending the image
-func uploadImageToMatrix(imageURL string, homeserverURL string, accessToken string) (string, error) {
+func uploadImageToMatrix(imageURL string, mn *MatrixNotifier) (string, error) {
 	dashboardImage, err := http.Get(imageURL)
 
 	if err == nil {
-		defer dashboardImage.Body.Close()
+		defer func() {
+			if err := dashboardImage.Body.Close(); err != nil {
+				mn.log.Error("Failed to get dashboard image", "error", err, "webhook", mn.Name)
+			}
+		}()
 		var data bytes.Buffer
 		_, err := io.Copy(&data, dashboardImage.Body)
 		if err == nil {
-			matrixUploadURL := homeserverURL + "/_matrix/media/r0/upload?access_token=" + accessToken
+			matrixUploadURL := mn.HomeserverURL + "/_matrix/media/r0/upload?access_token=" + mn.AccessToken
 			request, _ := http.NewRequest("POST", matrixUploadURL, &data)
 			request.Header.Set("Content-Type", "image/png")
 
 			client := &http.Client{}
 			response, err := client.Do(request)
 			if err == nil {
-				defer response.Body.Close()
+				defer func() {
+					if err := response.Body.Close(); err != nil {
+						mn.log.Error("Failed to upload dashboard image to matrix", "error", err, "webhook", mn.Name)
+					}
+				}()
 				body, err := ioutil.ReadAll(response.Body)
 				if err == nil {
 					content := make(map[string]string)
 					err := json.Unmarshal(body, &content)
 					if err == nil {
-						return content["content_uri"], err
+						return content["content_uri"], nil
 					}
 				}
 			}
