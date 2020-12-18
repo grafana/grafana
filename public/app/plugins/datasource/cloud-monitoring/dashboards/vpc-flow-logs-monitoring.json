@@ -1,25 +1,4 @@
 {
-  "__inputs": [],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "7.3.0-pre"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": ""
-    },
-    {
-      "type": "datasource",
-      "id": "stackdriver",
-      "name": "Google Cloud Monitoring",
-      "version": "1.0.0"
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -36,121 +15,12 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
+  "id": 172,
+  "iteration": 1608296852960,
   "links": [],
   "panels": [
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$datasource",
-      "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
-        "overrides": []
-      },
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 0
-      },
-      "hiddenSeries": false,
-      "id": 7,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
-      "options": {
-        "alertThreshold": true
-      },
-      "percentage": false,
-      "pluginVersion": "7.3.0-pre",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "metricQuery": {
-            "aliasBy": "{{resource.label.url_map_name}}",
-            "alignmentPeriod": "cloud-monitoring-auto",
-            "crossSeriesReducer": "REDUCE_SUM",
-            "filters": [],
-            "groupBys": ["resource.label.url_map_name"],
-            "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/request_count",
-            "perSeriesAligner": "ALIGN_DELTA",
-            "projectName": "$project",
-            "unit": "1",
-            "valueType": "INT64"
-          },
-          "queryType": "metrics",
-          "refId": "A"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Request Count",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "ms",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$datasource",
+      "datasource": null,
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -158,99 +28,74 @@
         },
         "overrides": []
       },
-      "fill": 1,
-      "fillGradient": 0,
       "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
+        "h": 3,
+        "w": 24,
+        "x": 0,
         "y": 0
       },
-      "hiddenSeries": false,
-      "id": 8,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
+      "id": 0,
       "options": {
-        "alertThreshold": true
+        "content": "This dashboard has 6 charts for the related [VPC flow logs metrics](https://cloud.google.com/monitoring/api/metrics_gcp#gcp-networking), including `Ingested log volume`, `log counts`, estimated `VPC Flow logs` counts and volume.",
+        "mode": "markdown"
       },
-      "percentage": false,
-      "pluginVersion": "7.3.0-pre",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "metricQuery": {
-            "aliasBy": "{{resource.label.url_map_name}}",
-            "alignmentPeriod": "cloud-monitoring-auto",
-            "crossSeriesReducer": "REDUCE_SUM",
-            "filters": [],
-            "groupBys": ["resource.label.url_map_name"],
-            "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/total_latencies",
-            "perSeriesAligner": "ALIGN_PERCENTILE_99",
-            "projectName": "$project",
-            "unit": "ms",
-            "valueType": "DISTRIBUTION"
-          },
-          "queryType": "metrics",
-          "refId": "A"
-        }
-      ],
-      "thresholds": [],
+      "pluginVersion": "7.4.0-pre",
       "timeFrom": null,
-      "timeRegions": [],
       "timeShift": null,
-      "title": "Total Latency",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "ms",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
+      "title": "VPC Flow Logs Monitoring",
+      "type": "text"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
         },
-        {
-          "format": "ms",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 12,
+        "x": 0,
+        "y": 3
+      },
+      "id": 6,
+      "options": {
+        "content": "These charts represent the volume of logs ingested for VPC Flow logs. The chart below provides the total volume of logs ingested for reference.",
+        "mode": "markdown"
+      },
+      "pluginVersion": "7.4.0-pre",
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Ingested log volume",
+      "type": "text"
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 12,
+        "x": 12,
+        "y": 3
+      },
+      "id": 7,
+      "options": {
+        "content": "These 2 charts represent the count of log entries for VPC Flow logs. The chart below provides the total count of log entries for reference.",
+        "mode": "markdown"
+      },
+      "pluginVersion": "7.4.0-pre",
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Log counts",
+      "type": "text"
     },
     {
       "aliasColors": {},
@@ -270,16 +115,19 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 8
+        "y": 6
       },
       "hiddenSeries": false,
-      "id": 9,
+      "id": 1,
       "legend": {
+        "alignAsTable": false,
         "avg": false,
         "current": false,
         "max": false,
         "min": false,
+        "rightSide": false,
         "show": true,
+        "sideWidth": 220,
         "total": false,
         "values": false
       },
@@ -290,7 +138,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.0-pre",
+      "pluginVersion": "7.4.0-pre",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -301,13 +149,12 @@
       "targets": [
         {
           "metricQuery": {
-            "aliasBy": "{{resource.label.url_map_name}}",
-            "alignmentPeriod": "cloud-monitoring-auto",
-            "crossSeriesReducer": "REDUCE_SUM",
-            "filters": [],
-            "groupBys": ["resource.label.url_map_name"],
+            "aliasBy": "",
+            "alignmentPeriod": "$alignmentPeriod",
+            "filters": ["resource.type", "=", "global", "AND", "metric.label.resource_type", "=", "gce_subnetwork"],
+            "groupBys": [],
             "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/request_bytes_count",
+            "metricType": "logging.googleapis.com/billing/bytes_ingested",
             "perSeriesAligner": "ALIGN_RATE",
             "projectName": "$project",
             "unit": "By",
@@ -321,7 +168,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Request Bytes",
+      "title": "Log bytes ingested for gce_subnetwork by label.resource_type [SUM]",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -337,7 +184,7 @@
       },
       "yaxes": [
         {
-          "format": "Bps",
+          "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -376,16 +223,19 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 8
+        "y": 6
       },
       "hiddenSeries": false,
-      "id": 10,
+      "id": 2,
       "legend": {
+        "alignAsTable": false,
         "avg": false,
         "current": false,
         "max": false,
         "min": false,
+        "rightSide": false,
         "show": true,
+        "sideWidth": 220,
         "total": false,
         "values": false
       },
@@ -396,7 +246,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.0-pre",
+      "pluginVersion": "7.4.0-pre",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -407,260 +257,14 @@
       "targets": [
         {
           "metricQuery": {
-            "aliasBy": "{{resource.label.url_map_name}}",
-            "alignmentPeriod": "cloud-monitoring-auto",
+            "aliasBy": "",
+            "alignmentPeriod": "$alignmentPeriod",
             "crossSeriesReducer": "REDUCE_SUM",
-            "filters": [],
-            "groupBys": ["resource.label.url_map_name"],
+            "filters": ["resource.type", "=", "gce_subnetwork"],
+            "groupBys": [],
             "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/response_bytes_count",
-            "perSeriesAligner": "ALIGN_DELTA",
-            "projectName": "$project",
-            "unit": "By",
-            "valueType": "INT64"
-          },
-          "queryType": "metrics",
-          "refId": "A"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Response Bytes",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "Bps",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$datasource",
-      "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
-        "overrides": []
-      },
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 16
-      },
-      "hiddenSeries": false,
-      "id": 12,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
-      "options": {
-        "alertThreshold": true
-      },
-      "percentage": false,
-      "pluginVersion": "7.3.0-pre",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "metricQuery": {
-            "aliasBy": "ALIGN_DELTA  REDUCE_PERCENTILE_95 {{resource.label.url_map_name}}",
-            "alignmentPeriod": "cloud-monitoring-auto",
-            "crossSeriesReducer": "REDUCE_PERCENTILE_95",
-            "filters": [],
-            "groupBys": ["resource.label.url_map_name"],
-            "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/frontend_tcp_rtt",
-            "perSeriesAligner": "ALIGN_DELTA",
-            "projectName": "$project",
-            "unit": "ms",
-            "valueType": "DISTRIBUTION"
-          },
-          "queryType": "metrics",
-          "refId": "A"
-        },
-        {
-          "metricQuery": {
-            "aliasBy": "ALIGN_PERCENTILE_99 REDUCE_PERCENTILE_05 {{resource.label.url_map_name}}",
-            "alignmentPeriod": "cloud-monitoring-auto",
-            "crossSeriesReducer": "REDUCE_PERCENTILE_05",
-            "filters": [],
-            "groupBys": ["resource.label.url_map_name"],
-            "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/frontend_tcp_rtt",
-            "perSeriesAligner": "ALIGN_PERCENTILE_99",
-            "projectName": "$project",
-            "unit": "ms",
-            "valueType": "DISTRIBUTION"
-          },
-          "queryType": "metrics",
-          "refId": "B"
-        },
-        {
-          "metricQuery": {
-            "aliasBy": "ALIGN_DELTA REDUCE_PERCENTILE_50 {{resource.label.url_map_name}}",
-            "alignmentPeriod": "cloud-monitoring-auto",
-            "crossSeriesReducer": "REDUCE_PERCENTILE_50",
-            "filters": [],
-            "groupBys": ["resource.label.url_map_name"],
-            "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/frontend_tcp_rtt",
-            "perSeriesAligner": "ALIGN_DELTA",
-            "projectName": "$project",
-            "unit": "ms",
-            "valueType": "DISTRIBUTION"
-          },
-          "queryType": "metrics",
-          "refId": "C"
-        }
-      ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Frontend RTT [95/50/5 PERCENTILE].",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "ms",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "short",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "$datasource",
-      "fieldConfig": {
-        "defaults": {
-          "custom": {}
-        },
-        "overrides": []
-      },
-      "fill": 1,
-      "fillGradient": 0,
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 16
-      },
-      "hiddenSeries": false,
-      "id": 14,
-      "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
-      "options": {
-        "alertThreshold": true
-      },
-      "percentage": false,
-      "pluginVersion": "7.3.0-pre",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
-      "targets": [
-        {
-          "metricQuery": {
-            "aliasBy": "{{resource.label.url_map_name}}",
-            "alignmentPeriod": "cloud-monitoring-auto",
-            "crossSeriesReducer": "REDUCE_SUM",
-            "filters": [],
-            "groupBys": ["resource.label.url_map_name"],
-            "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/backend_request_count",
-            "perSeriesAligner": "ALIGN_RATE",
+            "metricType": "logging.googleapis.com/log_entry_count",
+            "perSeriesAligner": "ALIGN_SUM",
             "projectName": "$project",
             "unit": "1",
             "valueType": "INT64"
@@ -673,7 +277,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Backend Request Count",
+      "title": "gce_subnetwork log entries count [SUM]",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -689,7 +293,7 @@
       },
       "yaxes": [
         {
-          "format": "Bps",
+          "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -728,16 +332,19 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 24
+        "y": 14
       },
       "hiddenSeries": false,
-      "id": 15,
+      "id": 3,
       "legend": {
+        "alignAsTable": false,
         "avg": false,
         "current": false,
         "max": false,
         "min": false,
+        "rightSide": false,
         "show": true,
+        "sideWidth": 220,
         "total": false,
         "values": false
       },
@@ -748,7 +355,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.0-pre",
+      "pluginVersion": "7.4.0-pre",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -759,13 +366,12 @@
       "targets": [
         {
           "metricQuery": {
-            "aliasBy": "{{resource.label.url_map_name}}",
-            "alignmentPeriod": "cloud-monitoring-auto",
-            "crossSeriesReducer": "REDUCE_SUM",
-            "filters": [],
-            "groupBys": ["resource.label.url_map_name"],
+            "aliasBy": "",
+            "alignmentPeriod": "$alignmentPeriod",
+            "filters": ["resource.type", "=", "global"],
+            "groupBys": [],
             "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/backend_request_bytes_count",
+            "metricType": "logging.googleapis.com/billing/bytes_ingested",
             "perSeriesAligner": "ALIGN_RATE",
             "projectName": "$project",
             "unit": "By",
@@ -779,7 +385,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Backend Request Bytes",
+      "title": "Log bytes ingested by label.resource_type [SUM]",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -795,7 +401,7 @@
       },
       "yaxes": [
         {
-          "format": "Bps",
+          "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -834,16 +440,19 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 24
+        "y": 14
       },
       "hiddenSeries": false,
-      "id": 16,
+      "id": 5,
       "legend": {
+        "alignAsTable": false,
         "avg": false,
         "current": false,
         "max": false,
         "min": false,
+        "rightSide": false,
         "show": true,
+        "sideWidth": 220,
         "total": false,
         "values": false
       },
@@ -854,7 +463,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.0-pre",
+      "pluginVersion": "7.4.0-pre",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -865,16 +474,16 @@
       "targets": [
         {
           "metricQuery": {
-            "aliasBy": "{{resource.label.url_map_name}}",
-            "alignmentPeriod": "cloud-monitoring-auto",
+            "aliasBy": "",
+            "alignmentPeriod": "$alignmentPeriod",
             "crossSeriesReducer": "REDUCE_SUM",
-            "filters": [],
-            "groupBys": ["resource.label.url_map_name"],
+            "filters": ["resource.type", "=", "global"],
+            "groupBys": [],
             "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/backend_response_bytes_count",
-            "perSeriesAligner": "ALIGN_RATE",
+            "metricType": "logging.googleapis.com/log_entry_count",
+            "perSeriesAligner": "ALIGN_SUM",
             "projectName": "$project",
-            "unit": "By",
+            "unit": "1",
             "valueType": "INT64"
           },
           "queryType": "metrics",
@@ -885,7 +494,7 @@
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Backend Response Bytes",
+      "title": "Log entries count [SUM]",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -901,7 +510,135 @@
       },
       "yaxes": [
         {
-          "format": "Bps",
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        },
+        {
+          "format": "short",
+          "label": null,
+          "logBase": 1,
+          "max": null,
+          "min": null,
+          "show": true
+        }
+      ],
+      "yaxis": {
+        "align": false,
+        "alignLevel": null
+      }
+    },
+    {
+      "datasource": null,
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 24,
+        "x": 0,
+        "y": 22
+      },
+      "id": 8,
+      "options": {
+        "content": "The metric predicted_max_vpc_flow_logs_count is used for the two charts below. They can be used to help estimate VPC Flow log counts and volume. For more details see the metric [vpc_flow/predicted_max_vpc_flow_logs_count ](https://cloud.google.com/monitoring/api/metrics_gcp#gcp-networking).",
+        "mode": "markdown"
+      },
+      "pluginVersion": "7.4.0-pre",
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "VPC Flow logs predicted count",
+      "type": "text"
+    },
+    {
+      "aliasColors": {},
+      "bars": false,
+      "dashLength": 10,
+      "dashes": false,
+      "datasource": "$datasource",
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "fill": 1,
+      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 25
+      },
+      "hiddenSeries": false,
+      "id": 9,
+      "legend": {
+        "alignAsTable": false,
+        "avg": false,
+        "current": false,
+        "max": false,
+        "min": false,
+        "rightSide": false,
+        "show": true,
+        "sideWidth": 220,
+        "total": false,
+        "values": false
+      },
+      "lines": true,
+      "linewidth": 1,
+      "nullPointMode": "null",
+      "options": {
+        "alertThreshold": true
+      },
+      "percentage": false,
+      "pluginVersion": "7.4.0-pre",
+      "pointradius": 2,
+      "points": false,
+      "renderer": "flot",
+      "seriesOverrides": [],
+      "spaceLength": 10,
+      "stack": false,
+      "steppedLine": false,
+      "targets": [
+        {
+          "mqlQuery": {
+            "aliasBy": "",
+            "expression": "fetch gce_subnetwork\n| metric 'networking.googleapis.com/vpc_flow/predicted_max_vpc_flow_logs_count'\n| align mean_aligner(1w)\n| every 1w\n| group_by [],\n    [value_predicted_max_vpc_flow_logs_count_aggregate:\n       aggregate(value.predicted_max_vpc_flow_logs_count)]\n| value\n    [value_predicted_max_vpc_flow_logs_count_aggregate_mul:\n       mul(value_predicted_max_vpc_flow_logs_count_aggregate, 1080)]\n| value\n    [value_predicted_max_vpc_flow_logs_count_aggregate_mul_cast_units:\n       cast_units(value_predicted_max_vpc_flow_logs_count_aggregate_mul, 'By')]\n| value\n    [value_predicted_max_vpc_flow_logs_count_aggregate_mul_cast_units_mul:\n       mul(value_predicted_max_vpc_flow_logs_count_aggregate_mul_cast_units,\n         60 * 24 * 30)]\n| value\n    [value_predicted_max_vpc_flow_logs_count_aggregate_mul_cast_units_mul_mul:\n       mul(\n         value_predicted_max_vpc_flow_logs_count_aggregate_mul_cast_units_mul,\n         1.0)]",
+            "projectName": "$project",
+            "query": "fetch gce_subnetwork\n| metric 'networking.googleapis.com/vpc_flow/predicted_max_vpc_flow_logs_count'\n| align mean_aligner(1w)\n| every 1w\n| group_by [],\n    [value_predicted_max_vpc_flow_logs_count_aggregate:\n       aggregate(value.predicted_max_vpc_flow_logs_count)]\n| value\n    [value_predicted_max_vpc_flow_logs_count_aggregate_mul:\n       mul(value_predicted_max_vpc_flow_logs_count_aggregate, 1080)]\n| value\n    [value_predicted_max_vpc_flow_logs_count_aggregate_mul_cast_units:\n       cast_units(value_predicted_max_vpc_flow_logs_count_aggregate_mul, 'By')]\n| value\n    [value_predicted_max_vpc_flow_logs_count_aggregate_mul_cast_units_mul:\n       mul(value_predicted_max_vpc_flow_logs_count_aggregate_mul_cast_units,\n         60 * 24 * 30)]\n| value\n    [value_predicted_max_vpc_flow_logs_count_aggregate_mul_cast_units_mul_mul:\n       mul(\n         value_predicted_max_vpc_flow_logs_count_aggregate_mul_cast_units_mul,\n         1.0)]"
+          },
+          "queryType": "metrics",
+          "refId": "A"
+        }
+      ],
+      "thresholds": [],
+      "timeFrom": null,
+      "timeRegions": [],
+      "timeShift": null,
+      "title": "VPC Flow Logs Volume",
+      "tooltip": {
+        "shared": true,
+        "sort": 0,
+        "value_type": "individual"
+      },
+      "type": "graph",
+      "xaxis": {
+        "buckets": null,
+        "mode": "time",
+        "name": null,
+        "show": true,
+        "values": []
+      },
+      "yaxes": [
+        {
+          "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -939,17 +676,20 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 32
+        "x": 12,
+        "y": 25
       },
       "hiddenSeries": false,
-      "id": 17,
+      "id": 4,
       "legend": {
+        "alignAsTable": false,
         "avg": false,
         "current": false,
         "max": false,
         "min": false,
+        "rightSide": false,
         "show": true,
+        "sideWidth": 220,
         "total": false,
         "values": false
       },
@@ -960,7 +700,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.3.0-pre",
+      "pluginVersion": "7.4.0-pre",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -971,61 +711,27 @@
       "targets": [
         {
           "metricQuery": {
-            "aliasBy": "REDUCE_PERCENTILE_95 {{resource.label.url_map_name}}",
-            "alignmentPeriod": "cloud-monitoring-auto",
-            "crossSeriesReducer": "REDUCE_PERCENTILE_95",
-            "filters": [],
-            "groupBys": ["resource.label.url_map_name"],
+            "aliasBy": "",
+            "alignmentPeriod": "$alignmentPeriod",
+            "crossSeriesReducer": "REDUCE_SUM",
+            "filters": ["resource.type", "=", "gce_subnetwork"],
+            "groupBys": ["resource.label.project_id"],
             "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/backend_latencies",
-            "perSeriesAligner": "ALIGN_DELTA",
+            "metricType": "networking.googleapis.com/vpc_flow/predicted_max_vpc_flow_logs_count",
+            "perSeriesAligner": "ALIGN_SUM",
             "projectName": "$project",
-            "unit": "ms",
-            "valueType": "DISTRIBUTION"
+            "unit": "1",
+            "valueType": "INT64"
           },
           "queryType": "metrics",
           "refId": "A"
-        },
-        {
-          "metricQuery": {
-            "aliasBy": "REDUCE_PERCENTILE_05",
-            "alignmentPeriod": "cloud-monitoring-auto",
-            "crossSeriesReducer": "REDUCE_PERCENTILE_05",
-            "filters": [],
-            "groupBys": [],
-            "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/backend_latencies",
-            "perSeriesAligner": "ALIGN_DELTA",
-            "projectName": "$project",
-            "unit": "ms",
-            "valueType": "DISTRIBUTION"
-          },
-          "queryType": "metrics",
-          "refId": "B"
-        },
-        {
-          "metricQuery": {
-            "aliasBy": "REDUCE_PERCENTILE_50",
-            "alignmentPeriod": "cloud-monitoring-auto",
-            "crossSeriesReducer": "REDUCE_PERCENTILE_50",
-            "filters": [],
-            "groupBys": [],
-            "metricKind": "DELTA",
-            "metricType": "loadbalancing.googleapis.com/https/backend_latencies",
-            "perSeriesAligner": "ALIGN_DELTA",
-            "projectName": "$project",
-            "unit": "ms",
-            "valueType": "DISTRIBUTION"
-          },
-          "queryType": "metrics",
-          "refId": "C"
         }
       ],
       "thresholds": [],
       "timeFrom": null,
       "timeRegions": [],
       "timeShift": null,
-      "title": "Backend Latency",
+      "title": "Predicted Max VPC Flow Logs Count [SUM]",
       "tooltip": {
         "shared": true,
         "sort": 0,
@@ -1041,7 +747,7 @@
       },
       "yaxes": [
         {
-          "format": "ms",
+          "format": "short",
           "label": null,
           "logBase": 1,
           "max": null,
@@ -1063,21 +769,22 @@
       }
     }
   ],
-  "schemaVersion": 26,
+  "schemaVersion": 27,
   "style": "dark",
-  "tags": [],
+  "tags": ["Networking", "Cloud Monitoring", "GCP"],
   "templating": {
     "list": [
       {
         "current": {
-          "selected": true,
-          "text": "cloud-monitoring",
-          "value": "cloud-monitoring"
+          "selected": false,
+          "text": "gdev-stackdriver-raintank-dev",
+          "value": "gdev-stackdriver-raintank-dev"
         },
+        "description": null,
         "error": null,
         "hide": 0,
         "includeAll": false,
-        "label": null,
+        "label": "Datasource",
         "multi": false,
         "name": "datasource",
         "options": [],
@@ -1090,15 +797,130 @@
       },
       {
         "allValue": null,
-        "current": {},
+        "current": {
+          "selected": true,
+          "text": "raintank-dev",
+          "value": "raintank-dev"
+        },
         "datasource": "$datasource",
         "definition": "Google Cloud Monitoring - Projects",
+        "description": null,
+        "error": null,
         "hide": 0,
         "includeAll": false,
-        "label": null,
+        "label": "Project",
         "multi": false,
         "name": "project",
         "options": [],
+        "query": {
+          "labelKey": "",
+          "loading": false,
+          "projectName": "$project",
+          "projects": [],
+          "selectedMetricType": "actions.googleapis.com/smarthome_action/num_active_users",
+          "selectedQueryType": "projects",
+          "selectedSLOService": "",
+          "selectedService": "actions.googleapis.com",
+          "sloServices": []
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "grafana auto",
+          "value": "grafana-auto"
+        },
+        "datasource": "${datasource}",
+        "definition": "",
+        "description": null,
+        "error": null,
+        "hide": 0,
+        "includeAll": false,
+        "label": "Alignment Period",
+        "multi": false,
+        "name": "alignmentPeriod",
+        "options": [
+          {
+            "selected": true,
+            "text": "grafana auto",
+            "value": "grafana-auto"
+          },
+          {
+            "selected": false,
+            "text": "stackdriver auto",
+            "value": "stackdriver-auto"
+          },
+          {
+            "selected": false,
+            "text": "cloud monitoring auto",
+            "value": "cloud-monitoring-auto"
+          },
+          {
+            "selected": false,
+            "text": "1m",
+            "value": "+60s"
+          },
+          {
+            "selected": false,
+            "text": "2m",
+            "value": "+120s"
+          },
+          {
+            "selected": false,
+            "text": "5m",
+            "value": "+300s"
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "+600s"
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "+1800s"
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "+3600s"
+          },
+          {
+            "selected": false,
+            "text": "3h",
+            "value": "+7200s"
+          },
+          {
+            "selected": false,
+            "text": "6h",
+            "value": "+21600s"
+          },
+          {
+            "selected": false,
+            "text": "1d",
+            "value": "+86400s"
+          },
+          {
+            "selected": false,
+            "text": "3d",
+            "value": "+259200s"
+          },
+          {
+            "selected": false,
+            "text": "1w",
+            "value": "+604800s"
+          }
+        ],
         "query": {
           "labelKey": "",
           "loading": false,
@@ -1113,13 +935,14 @@
               "value": "project-2"
             }
           ],
+          "refId": "CloudMonitoringVariableQueryEditor-VariableQuery",
           "selectedMetricType": "actions.googleapis.com/smarthome_action/num_active_users",
-          "selectedQueryType": "projects",
+          "selectedQueryType": "alignmentPeriods",
           "selectedSLOService": "",
           "selectedService": "actions.googleapis.com",
           "sloServices": []
         },
-        "refresh": 2,
+        "refresh": 0,
         "regex": "",
         "skipUrlSync": false,
         "sort": 0,
@@ -1132,12 +955,12 @@
     ]
   },
   "time": {
-    "from": "now-3h",
+    "from": "now-24h",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
-  "title": "HTTP/S GCP Load Balancer Monitoring",
-  "uid": "WO1Za5FMl",
-  "version": 3
+  "title": "VPC Flow Logs Monitoring",
+  "uid": "-pIYdu1Gz",
+  "version": 2
 }
