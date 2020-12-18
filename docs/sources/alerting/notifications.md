@@ -58,6 +58,7 @@ Discord | `discord` | yes | no
 Hipchat | `hipchat` | yes, external only | no
 [Kafka](#kafka) | `kafka` | yes, external only | no
 Line | `line` | yes, external only | no
+[Matrix](#matrix) | `matrix` | yes | no
 Microsoft Teams | `teams` | yes, external only | no
 OpsGenie | `opsgenie` | yes, external only | yes
 [Pagerduty](#pagerduty) | `pagerduty` | yes, external only | yes
@@ -216,6 +217,14 @@ Alertmanager handles alerts sent by client applications such as Prometheus serve
 ### Sensu Go
 
 [Sensu](https://sensu.io) is a complete solution for monitoring and observability at scale. Sensu Go is designed to give you visibility into everything you care about: traditional server closets, containers, applications, the cloud, and more. Grafana notifications can be sent to Sensu Go as events via the API. This operation requires an API Key. Refer to the [Sensu Go documentation](https://docs.sensu.io/sensu-go/latest/operations/control-access/use-apikeys/#api-key-authentication) for information on creating this key.
+
+### Matrix
+
+To send alerts to the matrix, you must join the user you want to send the alerts in the room in which you want to get notified. For the authentication against the matrix server, your user should have an access token. the command below will generate an access token for user `example` with password `wordpass` and the matrix server of `https://homeserver.org:8448`, more instructions can be found [here](https://matrix.org/docs/guides/client-server/).
+```
+curl -XPOST -d '{"type":"m.login.password", "user":"example", "password":"wordpass"}' "https://homeserver.org:8448/_matrix/client/r0/login"
+```
+To get the address of the room you want to receive alerts, go to the room -> `Room Info` -> `Room settings` -> `Advanced` -> `Room information`. the room ID format structure is `!XXXXXXXXXXXXXXXXXX:homeserver.org`
 
 ## Enable images in notifications {#external-image-store}
 
