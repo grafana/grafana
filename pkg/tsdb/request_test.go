@@ -38,7 +38,7 @@ func TestHandleRequest(t *testing.T) {
 		fakeExecutor.Return("B", TimeSeriesSlice{&TimeSeries{Name: "barg"}})
 
 		res, err := HandleRequest(context.TODO(), &models.DataSource{Id: 1, Type: "test"}, req)
-		require.Nil(t, err)
+		require.NoError(t, err)
 
 		require.Len(t, res.Results, 2)
 		require.Equal(t, "argh", res.Results["A"].Series[0].Name)
