@@ -91,6 +91,7 @@ def get_steps(edition, ver_mode):
     if edition == 'enterprise':
         build_tags = ['enterprise2']
         steps.extend([
+            lint_backend_step(edition=edition, build_tags=build_tags),
             test_backend_step(build_tags=build_tags),
             build_backend_step(edition=edition, ver_mode=ver_mode, variants=['linux-x64'], build_tags=build_tags),
             package_step(edition=edition, ver_mode=ver_mode, variants=['linux-x64'], build_tags=build_tags),
