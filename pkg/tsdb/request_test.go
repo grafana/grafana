@@ -53,7 +53,7 @@ func TestHandleRequest(t *testing.T) {
 		}
 
 		_, err := HandleRequest(context.TODO(), &models.DataSource{Id: 12, Type: "testjughjgjg"}, req)
-		require.NotNil(t, err)
+		require.Error(t, err)
 	})
 }
 
