@@ -107,6 +107,14 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
     });
   };
 
+  onRefIdChange = (value: SelectableValue<string>) => {
+    const { query, onChange } = this.props;
+    onChange({
+      ...query,
+      expression: value.value,
+    });
+  };
+
   onExpressionChange = (evt: ChangeEvent<any>) => {
     const { query, onChange } = this.props;
     onChange({
@@ -124,12 +132,14 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { query } = this.props;
+    const { query, queries } = this.props;
     const selected = gelTypes.find(o => o.value === query.type);
     const reducer = reducerTypes.find(o => o.value === query.reducer);
     const downsampler = downsamplingTypes.find(o => o.value === query.downsampler);
     const upsampler = upsamplingTypes.find(o => o.value === query.upsampler);
     const labelWidth = 14;
+
+    const refIds = queries!.filter(q => query.refId !== q.refId).map(q => ({ value: q.refId, label: q.refId }));
 
     return (
       <div>
@@ -157,26 +167,16 @@ export class ExpressionQueryEditor extends PureComponent<Props, State> {
             <InlineField label="Function" labelWidth={labelWidth}>
               <Select options={reducerTypes} value={reducer} onChange={this.onSelectReducer} width={25} />
             </InlineField>
-            <InlineField label="Query" labelWidth={labelWidth}>
-              <Input
-                onChange={this.onExpressionChange}
-                value={query.expression}
-                width={30}
-                placeholder="Choose query by refId (eg. $A or A)"
-              />
+            <InlineField label="Input" labelWidth={labelWidth}>
+              <Select onChange={this.onRefIdChange} options={refIds} value={query.expression} width={20} />
             </InlineField>
           </InlineFieldRow>
         )}
         {query.type === GELQueryType.resample && (
           <>
             <InlineFieldRow>
-              <InlineField label="Query" labelWidth={labelWidth}>
-                <Input
-                  onChange={this.onExpressionChange}
-                  value={query.expression}
-                  width={30}
-                  placeholder="Choose query by refId (eg. $A or A)"
-                />
+              <InlineField label="Input" labelWidth={labelWidth}>
+                <Select onChange={this.onRefIdChange} options={refIds} value={query.expression} width={20} />
               </InlineField>
             </InlineFieldRow>
             <InlineFieldRow>

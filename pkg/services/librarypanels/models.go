@@ -30,8 +30,8 @@ var (
 
 // Commands
 
-// addLibraryPanelCommand is the command for adding a LibraryPanel
-type addLibraryPanelCommand struct {
+// createLibraryPanelCommand is the command for adding a LibraryPanel
+type createLibraryPanelCommand struct {
 	FolderID int64           `json:"folderId"`
 	Title    string          `json:"title"`
 	Model    json.RawMessage `json:"model"`
