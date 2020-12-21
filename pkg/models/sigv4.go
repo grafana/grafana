@@ -33,6 +33,7 @@ var permittedHeaders = map[string]struct{}{
 	"User-Agent":      {},
 	"Accept":          {},
 	"Accept-Encoding": {},
+	"Content-Type":    {},
 }
 
 type SigV4Middleware struct {
