@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -503,9 +503,8 @@ func (e *CloudMonitoringExecutor) unmarshalResponse(res *http.Response) (cloudMo
 }
 
 func handleDistributionSeries(series timeSeries, defaultMetricName string, seriesLabels map[string]string,
-	query *cloudMonitoringQuery, queryRes *tsdb.QueryResult) {
-	points := make([]tsdb.TimePoint, 0)
-	for i := len(series.Points) - 1; i >= 0; i-- {
+	query *cloudMonitoringQuery, queryRes *tsdb.QueryResult, frame *data.Frame) {
+	for i := 0; i < len(series.Points); i++ {
 		point := series.Points[i]
 		value := point.Value.DoubleValue
 
@@ -523,27 +522,26 @@ func handleDistributionSeries(series timeSeries, defaultMetricName string, serie
 				value = 0
 			}
 		}
-
-		points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.Interval.EndTime).Unix())*1000))
+		frame.SetRow(len(series.Points)-1-i, point.Interval.EndTime, value)
 	}
 
 	metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, nil, query)
-
-	queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-		Name:   metricName,
-		Points: points,
-	})
+	dataField := frame.Fields[1]
+	dataField.Name = metricName
 }
 
-func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, query *cloudMonitoringQuery) error {
+func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, cmr cloudMonitoringResponse, query *cloudMonitoringQuery) error {
 	labels := make(map[string]map[string]bool)
-
-	for _, series := range data.TimeSeries {
-		seriesLabels := make(map[string]string)
+	frames := data.Frames{}
+	for _, series := range cmr.TimeSeries {
+		seriesLabels := data.Labels{}
 		defaultMetricName := series.Metric.Type
+
 		labels["resource.type"] = map[string]bool{series.Resource.Type: true}
 		seriesLabels["resource.type"] = series.Resource.Type
 
+		frame := data.NewFrameOfFieldTypes("", len(series.Points), data.FieldTypeTime, data.FieldTypeFloat64)
+		frame.RefID = query.RefID
 		for key, value := range series.Metric.Labels {
 			if _, ok := labels["metric.label."+key]; !ok {
 				labels["metric.label."+key] = map[string]bool{}
@@ -598,10 +596,11 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, data
 
 		// reverse the order to be ascending
 		if series.ValueType != "DISTRIBUTION" {
-			handleDistributionSeries(series, defaultMetricName, seriesLabels, query, queryRes)
+			handleDistributionSeries(
+				series, defaultMetricName, seriesLabels, query, queryRes, frame)
+			frames = append(frames, frame)
 		} else {
-			buckets := make(map[int]*tsdb.TimeSeries)
-
+			buckets := make(map[int]*data.Frame)
 			for i := len(series.Points) - 1; i >= 0; i-- {
 				point := series.Points[i]
 				if len(point.Value.DistributionValue.BucketCounts) == 0 {
@@ -618,34 +617,53 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, data
 						// https://cloud.google.com/monitoring/api/ref_v3/rest/v3/TimeSeries#Distribution
 						bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
 						additionalLabels := map[string]string{"bucket": bucketBound}
-						buckets[i] = &tsdb.TimeSeries{
-							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, nil, additionalLabels, query),
-							Points: make([]tsdb.TimePoint, 0),
+
+						timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{})
+						valueField := data.NewField(data.TimeSeriesValueFieldName, nil, []float64{})
+
+						frameName := formatLegendKeys(series.Metric.Type, defaultMetricName, nil, additionalLabels, query)
+						valueField.Name = frameName
+						buckets[i] = &data.Frame{
+							Name: frameName,
+							Fields: []*data.Field{
+								timeField,
+								valueField,
+							},
+							RefID: query.RefID,
 						}
+
 						if maxKey < i {
 							maxKey = i
 						}
 					}
-					buckets[i].Points = append(buckets[i].Points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.Interval.EndTime).Unix())*1000))
+					buckets[i].AppendRow(point.Interval.EndTime, value)
 				}
-
-				// fill empty bucket
 				for i := 0; i < maxKey; i++ {
 					if _, ok := buckets[i]; !ok {
 						bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
-						additionalLabels := map[string]string{"bucket": bucketBound}
-						buckets[i] = &tsdb.TimeSeries{
-							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, additionalLabels, query),
-							Points: make([]tsdb.TimePoint, 0),
+						additionalLabels := data.Labels{"bucket": bucketBound}
+						timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{})
+						valueField := data.NewField(data.TimeSeriesValueFieldName, nil, []float64{})
+						frameName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, additionalLabels, query)
+						valueField.Name = frameName
+						buckets[i] = &data.Frame{
+							Name: frameName,
+							Fields: []*data.Field{
+								timeField,
+								valueField,
+							},
+							RefID: query.RefID,
 						}
 					}
 				}
 			}
 			for i := 0; i < len(buckets); i++ {
-				queryRes.Series = append(queryRes.Series, buckets[i])
+				frames = append(frames, buckets[i])
 			}
 		}
 	}
+
+	queryRes.Dataframes = tsdb.NewDecodedDataFrames(frames)
 
 	labelsByKey := make(map[string][]string)
 	for key, values := range labels {
@@ -656,7 +674,6 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, data
 
 	queryRes.Meta.Set("labels", labelsByKey)
 	queryRes.Meta.Set("groupBys", query.GroupBys)
-
 	return nil
 }
 
