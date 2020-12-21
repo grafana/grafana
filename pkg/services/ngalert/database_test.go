@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -63,6 +64,8 @@ func TestCreatingAlertDefinition(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			ng := setupTestEnv(t)
+			t.Cleanup(registry.ClearOverrides)
+
 			q := saveAlertDefinitionCommand{
 				OrgID: 1,
 				Title: tc.inputTitle,
@@ -108,6 +111,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		defer resetTimeNow()
 
 		ng := setupTestEnv(t)
+		t.Cleanup(registry.ClearOverrides)
 
 		q := updateAlertDefinitionCommand{
 			UID:   "unknown",
@@ -141,6 +145,8 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 		defer resetTimeNow()
 
 		ng := setupTestEnv(t)
+		t.Cleanup(registry.ClearOverrides)
+
 		var initialInterval int64 = 120
 		alertDefinition := createTestAlertDefinition(t, ng, initialInterval)
 		created := alertDefinition.Updated
@@ -264,6 +270,7 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 func TestDeletingAlertDefinition(t *testing.T) {
 	t.Run("zero rows affected when deleting unknown alert", func(t *testing.T) {
 		ng := setupTestEnv(t)
+		t.Cleanup(registry.ClearOverrides)
 
 		q := deleteAlertDefinitionByUIDCommand{
 			UID:   "unknown",
@@ -276,6 +283,8 @@ func TestDeletingAlertDefinition(t *testing.T) {
 
 	t.Run("deleting successfully existing alert", func(t *testing.T) {
 		ng := setupTestEnv(t)
+		t.Cleanup(registry.ClearOverrides)
+
 		alertDefinition := createTestAlertDefinition(t, ng, 60)
 
 		q := deleteAlertDefinitionByUIDCommand{
