@@ -105,9 +105,9 @@ Interpolation result: 'test1.|test2'
 Turns off data source-specific formatting, such as single quotes in an SQL query.
 
 ```bash
-servers = ['test1.', 'test2']
+servers = ['test.1', 'test2']
 String to interpolate: '${var_name:raw}'
-Interpolation result: '{test.1,test2}'
+Interpolation result: 'test.1,test2'
 ```
 
 ## Regex
