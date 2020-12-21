@@ -144,17 +144,26 @@ func Respond(status int, body interface{}) *NormalResponse {
 	}
 }
 
+// RedirectResponse represents a redirect response.
 type RedirectResponse struct {
 	location string
 }
 
+// WriteTo writes to a response.
 func (r *RedirectResponse) WriteTo(ctx *models.ReqContext) {
 	ctx.Redirect(r.location)
 }
 
 // Status gets the response's status.
+// Required to implement api.Response.
 func (*RedirectResponse) Status() int {
 	return http.StatusFound
+}
+
+// Body gets the response's body.
+// Required to implement api.Response.
+func (r *RedirectResponse) Body() []byte {
+	return nil
 }
 
 func Redirect(location string) *RedirectResponse {
