@@ -2,6 +2,7 @@ package usagestats
 
 import (
 	"bytes"
+	"errors"
 	"io/ioutil"
 	"runtime"
 	"sync"
@@ -21,11 +22,22 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
+// This is to ensure that the interface contract is held by the implementation
+func Test_InterfaceContractValidity(t *testing.T) {
+	newUsageStats := func() UsageStats {
+		return &UsageStatsService{}
+	}
+	v, ok := newUsageStats().(*UsageStatsService)
+
+	assert.NotNil(t, v)
+	assert.True(t, ok)
+}
+
 func TestMetrics(t *testing.T) {
-	Convey("Test send usage stats", t, func() {
+	t.Run("When sending usage stats", func(t *testing.T) {
 		uss := &UsageStatsService{
 			Bus:      bus.New(),
 			SQLStore: sqlstore.InitTestDB(t),
@@ -163,6 +175,8 @@ func TestMetrics(t *testing.T) {
 		}))
 		usageStatsURL = ts.URL
 
+		defer ts.Close()
+
 		uss.oauthProviders = map[string]bool{
 			"github":        true,
 			"gitlab":        true,
@@ -175,20 +189,20 @@ func TestMetrics(t *testing.T) {
 		err := uss.sendUsageStats()
 		require.NoError(t, err)
 
-		Convey("Given reporting not enabled and sending usage stats", func() {
+		t.Run("Given reporting not enabled and sending usage stats", func(t *testing.T) {
 			setting.ReportingEnabled = false
 			err := uss.sendUsageStats()
 			require.NoError(t, err)
 
-			Convey("Should not gather stats or call http endpoint", func() {
-				So(getSystemStatsQuery, ShouldBeNil)
-				So(getDataSourceStatsQuery, ShouldBeNil)
-				So(getDataSourceAccessStatsQuery, ShouldBeNil)
-				So(req, ShouldBeNil)
+			t.Run("Should not gather stats or call http endpoint", func(t *testing.T) {
+				assert.Nil(t, getSystemStatsQuery)
+				assert.Nil(t, getDataSourceStatsQuery)
+				assert.Nil(t, getDataSourceAccessStatsQuery)
+				assert.Nil(t, req)
 			})
 		})
 
-		Convey("Given reporting enabled and sending usage stats", func() {
+		t.Run("Given reporting enabled and sending usage stats", func(t *testing.T) {
 			setting.ReportingEnabled = true
 			setting.BuildVersion = "5.0.0"
 			setting.AnonymousEnabled = true
@@ -201,90 +215,87 @@ func TestMetrics(t *testing.T) {
 			err := uss.sendUsageStats()
 			require.NoError(t, err)
 
-			Convey("Should gather stats and call http endpoint", func() {
+			t.Run("Should gather stats and call http endpoint", func(t *testing.T) {
 				if waitTimeout(&wg, 2*time.Second) {
 					t.Fatalf("Timed out waiting for http request")
 				}
 
-				So(getSystemStatsQuery, ShouldNotBeNil)
-				So(getDataSourceStatsQuery, ShouldNotBeNil)
-				So(getDataSourceAccessStatsQuery, ShouldNotBeNil)
-				So(getAlertNotifierUsageStatsQuery, ShouldNotBeNil)
-				So(req, ShouldNotBeNil)
-				So(req.Method, ShouldEqual, http.MethodPost)
-				So(req.Header.Get("Content-Type"), ShouldEqual, "application/json")
+				assert.NotNil(t, getSystemStatsQuery)
+				assert.NotNil(t, getDataSourceStatsQuery)
+				assert.NotNil(t, getDataSourceAccessStatsQuery)
+				assert.NotNil(t, getAlertNotifierUsageStatsQuery)
+				assert.NotNil(t, req)
 
-				So(responseBuffer, ShouldNotBeNil)
+				assert.Equal(t, http.MethodPost, req.Method)
+				assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
+
+				assert.NotNil(t, responseBuffer)
 
 				j, err := simplejson.NewFromReader(responseBuffer)
-				So(err, ShouldBeNil)
+				assert.Nil(t, err)
 
-				So(j.Get("version").MustString(), ShouldEqual, "5_0_0")
-				So(j.Get("os").MustString(), ShouldEqual, runtime.GOOS)
-				So(j.Get("arch").MustString(), ShouldEqual, runtime.GOARCH)
+				assert.Equal(t, "5_0_0", j.Get("version").MustString())
+				assert.Equal(t, runtime.GOOS, j.Get("os").MustString())
+				assert.Equal(t, runtime.GOARCH, j.Get("arch").MustString())
 
 				metrics := j.Get("metrics")
-				So(metrics.Get("stats.dashboards.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Dashboards)
-				So(metrics.Get("stats.users.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Users)
-				So(metrics.Get("stats.orgs.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Orgs)
-				So(metrics.Get("stats.playlist.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Playlists)
-				So(metrics.Get("stats.plugins.apps.count").MustInt(), ShouldEqual, len(plugins.Apps))
-				So(metrics.Get("stats.plugins.panels.count").MustInt(), ShouldEqual, len(plugins.Panels))
-				So(metrics.Get("stats.plugins.datasources.count").MustInt(), ShouldEqual, len(plugins.DataSources))
-				So(metrics.Get("stats.alerts.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Alerts)
-				So(metrics.Get("stats.active_users.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.ActiveUsers)
-				So(metrics.Get("stats.datasources.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Datasources)
-				So(metrics.Get("stats.stars.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Stars)
-				So(metrics.Get("stats.folders.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Folders)
-				So(metrics.Get("stats.dashboard_permissions.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.DashboardPermissions)
-				So(metrics.Get("stats.folder_permissions.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.FolderPermissions)
-				So(metrics.Get("stats.provisioned_dashboards.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.ProvisionedDashboards)
-				So(metrics.Get("stats.snapshots.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Snapshots)
-				So(metrics.Get("stats.teams.count").MustInt(), ShouldEqual, getSystemStatsQuery.Result.Teams)
-				So(metrics.Get("stats.total_auth_token.count").MustInt64(), ShouldEqual, 15)
-				So(metrics.Get("stats.avg_auth_token_per_user.count").MustInt64(), ShouldEqual, 5)
-				So(metrics.Get("stats.dashboard_versions.count").MustInt64(), ShouldEqual, 16)
-				So(metrics.Get("stats.annotations.count").MustInt64(), ShouldEqual, 17)
+				assert.Equal(t, getSystemStatsQuery.Result.Dashboards, metrics.Get("stats.dashboards.count").MustInt64())
+				assert.Equal(t, getSystemStatsQuery.Result.Users, metrics.Get("stats.users.count").MustInt64())
+				assert.Equal(t, getSystemStatsQuery.Result.Orgs, metrics.Get("stats.orgs.count").MustInt64())
+				assert.Equal(t, getSystemStatsQuery.Result.Playlists, metrics.Get("stats.playlist.count").MustInt64())
+				assert.Equal(t, len(plugins.Apps), metrics.Get("stats.plugins.apps.count").MustInt())
+				assert.Equal(t, len(plugins.Panels), metrics.Get("stats.plugins.panels.count").MustInt())
+				assert.Equal(t, len(plugins.DataSources), metrics.Get("stats.plugins.datasources.count").MustInt())
+				assert.Equal(t, getSystemStatsQuery.Result.Alerts, metrics.Get("stats.alerts.count").MustInt64())
+				assert.Equal(t, getSystemStatsQuery.Result.ActiveUsers, metrics.Get("stats.active_users.count").MustInt64())
+				assert.Equal(t, getSystemStatsQuery.Result.Datasources, metrics.Get("stats.datasources.count").MustInt64())
+				assert.Equal(t, getSystemStatsQuery.Result.Stars, metrics.Get("stats.stars.count").MustInt64())
+				assert.Equal(t, getSystemStatsQuery.Result.Folders, metrics.Get("stats.folders.count").MustInt64())
+				assert.Equal(t, getSystemStatsQuery.Result.DashboardPermissions, metrics.Get("stats.dashboard_permissions.count").MustInt64())
+				assert.Equal(t, getSystemStatsQuery.Result.FolderPermissions, metrics.Get("stats.folder_permissions.count").MustInt64())
+				assert.Equal(t, getSystemStatsQuery.Result.ProvisionedDashboards, metrics.Get("stats.provisioned_dashboards.count").MustInt64())
+				assert.Equal(t, getSystemStatsQuery.Result.Snapshots, metrics.Get("stats.snapshots.count").MustInt64())
+				assert.Equal(t, getSystemStatsQuery.Result.Teams, metrics.Get("stats.teams.count").MustInt64())
+				assert.Equal(t, 15, metrics.Get("stats.total_auth_token.count").MustInt())
+				assert.Equal(t, 5, metrics.Get("stats.avg_auth_token_per_user.count").MustInt())
+				assert.Equal(t, 16, metrics.Get("stats.dashboard_versions.count").MustInt())
+				assert.Equal(t, 17, metrics.Get("stats.annotations.count").MustInt())
 
-				So(metrics.Get("stats.ds."+models.DS_ES+".count").MustInt(), ShouldEqual, 9)
-				So(metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt(), ShouldEqual, 10)
-				So(metrics.Get("stats.ds.other.count").MustInt(), ShouldEqual, 11+12)
+				assert.Equal(t, 9, metrics.Get("stats.ds."+models.DS_ES+".count").MustInt())
+				assert.Equal(t, 10, metrics.Get("stats.ds."+models.DS_PROMETHEUS+".count").MustInt())
+				assert.Equal(t, 11+12, metrics.Get("stats.ds.other.count").MustInt())
 
-				So(metrics.Get("stats.ds_access."+models.DS_ES+".direct.count").MustInt(), ShouldEqual, 1)
-				So(metrics.Get("stats.ds_access."+models.DS_ES+".proxy.count").MustInt(), ShouldEqual, 2)
-				So(metrics.Get("stats.ds_access."+models.DS_PROMETHEUS+".proxy.count").MustInt(), ShouldEqual, 3)
-				So(metrics.Get("stats.ds_access.other.direct.count").MustInt(), ShouldEqual, 6+7)
-				So(metrics.Get("stats.ds_access.other.proxy.count").MustInt(), ShouldEqual, 4+8)
+				assert.Equal(t, 1, metrics.Get("stats.ds_access."+models.DS_ES+".direct.count").MustInt())
+				assert.Equal(t, 2, metrics.Get("stats.ds_access."+models.DS_ES+".proxy.count").MustInt())
+				assert.Equal(t, 3, metrics.Get("stats.ds_access."+models.DS_PROMETHEUS+".proxy.count").MustInt())
+				assert.Equal(t, 6+7, metrics.Get("stats.ds_access.other.direct.count").MustInt())
+				assert.Equal(t, 4+8, metrics.Get("stats.ds_access.other.proxy.count").MustInt())
 
-				So(metrics.Get("stats.alerting.ds.prometheus.count").MustInt(), ShouldEqual, 1)
-				So(metrics.Get("stats.alerting.ds.graphite.count").MustInt(), ShouldEqual, 2)
-				So(metrics.Get("stats.alerting.ds.mysql.count").MustInt(), ShouldEqual, 5)
-				So(metrics.Get("stats.alerting.ds.other.count").MustInt(), ShouldEqual, 90)
+				assert.Equal(t, 1, metrics.Get("stats.alerting.ds.prometheus.count").MustInt())
+				assert.Equal(t, 2, metrics.Get("stats.alerting.ds.graphite.count").MustInt())
+				assert.Equal(t, 5, metrics.Get("stats.alerting.ds.mysql.count").MustInt())
+				assert.Equal(t, 90, metrics.Get("stats.alerting.ds.other.count").MustInt())
 
-				So(metrics.Get("stats.alert_notifiers.slack.count").MustInt(), ShouldEqual, 1)
-				So(metrics.Get("stats.alert_notifiers.webhook.count").MustInt(), ShouldEqual, 2)
+				assert.Equal(t, 1, metrics.Get("stats.alert_notifiers.slack.count").MustInt())
+				assert.Equal(t, 2, metrics.Get("stats.alert_notifiers.webhook.count").MustInt())
 
-				So(metrics.Get("stats.auth_enabled.anonymous.count").MustInt(), ShouldEqual, 1)
-				So(metrics.Get("stats.auth_enabled.basic_auth.count").MustInt(), ShouldEqual, 1)
-				So(metrics.Get("stats.auth_enabled.ldap.count").MustInt(), ShouldEqual, 1)
-				So(metrics.Get("stats.auth_enabled.auth_proxy.count").MustInt(), ShouldEqual, 1)
-				So(metrics.Get("stats.auth_enabled.oauth_github.count").MustInt(), ShouldEqual, 1)
-				So(metrics.Get("stats.auth_enabled.oauth_gitlab.count").MustInt(), ShouldEqual, 1)
-				So(metrics.Get("stats.auth_enabled.oauth_google.count").MustInt(), ShouldEqual, 1)
-				So(metrics.Get("stats.auth_enabled.oauth_azuread.count").MustInt(), ShouldEqual, 1)
-				So(metrics.Get("stats.auth_enabled.oauth_generic_oauth.count").MustInt(), ShouldEqual, 1)
-				So(metrics.Get("stats.auth_enabled.oauth_grafana_com.count").MustInt(), ShouldEqual, 1)
+				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.anonymous.count").MustInt())
+				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.basic_auth.count").MustInt())
+				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.ldap.count").MustInt())
+				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.auth_proxy.count").MustInt())
+				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.oauth_github.count").MustInt())
+				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.oauth_gitlab.count").MustInt())
+				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.oauth_google.count").MustInt())
+				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.oauth_azuread.count").MustInt())
+				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.oauth_generic_oauth.count").MustInt())
+				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.oauth_grafana_com.count").MustInt())
 
-				So(metrics.Get("stats.packaging.deb.count").MustInt(), ShouldEqual, 1)
+				assert.Equal(t, 1, metrics.Get("stats.packaging.deb.count").MustInt())
 			})
-		})
-
-		Reset(func() {
-			ts.Close()
 		})
 	})
 
-	Convey("Test update total stats", t, func() {
+	t.Run("When updating total stats", func(t *testing.T) {
 		uss := &UsageStatsService{
 			Bus: bus.New(),
 			Cfg: setting.NewCfg(),
@@ -298,32 +309,168 @@ func TestMetrics(t *testing.T) {
 			return nil
 		})
 
-		Convey("should not update stats when metrics is disabled and total stats is disabled", func() {
-			uss.Cfg.MetricsEndpointEnabled = false
-			uss.Cfg.MetricsEndpointDisableTotalStats = true
-			uss.updateTotalStats()
-			So(getSystemStatsWasCalled, ShouldBeFalse)
-		})
-
-		Convey("should not update stats when metrics is disabled and total stats enabled", func() {
+		t.Run("When metrics is disabled and total stats is enabled", func(t *testing.T) {
 			uss.Cfg.MetricsEndpointEnabled = false
 			uss.Cfg.MetricsEndpointDisableTotalStats = false
-			uss.updateTotalStats()
-			So(getSystemStatsWasCalled, ShouldBeFalse)
+			t.Run("Should not update stats", func(t *testing.T) {
+				uss.updateTotalStats()
+
+				assert.False(t, getSystemStatsWasCalled)
+			})
 		})
 
-		Convey("should not update stats when metrics is enabled and total stats disabled", func() {
+		t.Run("When metrics is enabled and total stats is disabled", func(t *testing.T) {
 			uss.Cfg.MetricsEndpointEnabled = true
 			uss.Cfg.MetricsEndpointDisableTotalStats = true
-			uss.updateTotalStats()
-			So(getSystemStatsWasCalled, ShouldBeFalse)
+
+			t.Run("Should not update stats", func(t *testing.T) {
+				uss.updateTotalStats()
+
+				assert.False(t, getSystemStatsWasCalled)
+			})
 		})
 
-		Convey("should update stats when metrics is enabled and total stats enabled", func() {
+		t.Run("When metrics is disabled and total stats is disabled", func(t *testing.T) {
+			uss.Cfg.MetricsEndpointEnabled = false
+			uss.Cfg.MetricsEndpointDisableTotalStats = true
+
+			t.Run("Should not update stats", func(t *testing.T) {
+				uss.updateTotalStats()
+
+				assert.False(t, getSystemStatsWasCalled)
+			})
+		})
+
+		t.Run("When metrics is enabled and total stats is enabled", func(t *testing.T) {
 			uss.Cfg.MetricsEndpointEnabled = true
 			uss.Cfg.MetricsEndpointDisableTotalStats = false
-			uss.updateTotalStats()
-			So(getSystemStatsWasCalled, ShouldBeTrue)
+
+			t.Run("Should update stats", func(t *testing.T) {
+				uss.updateTotalStats()
+
+				assert.True(t, getSystemStatsWasCalled)
+			})
+		})
+	})
+
+	t.Run("When registering a metric", func(t *testing.T) {
+		uss := &UsageStatsService{
+			Bus:             bus.New(),
+			Cfg:             setting.NewCfg(),
+			externalMetrics: make(map[string]MetricFunc),
+		}
+		metricName := "stats.test_metric.count"
+
+		t.Run("Adds a new metric to the external metrics", func(t *testing.T) {
+			uss.RegisterMetric(metricName, func() (interface{}, error) {
+				return 1, nil
+			})
+
+			metric, _ := uss.externalMetrics[metricName]()
+			assert.Equal(t, 1, metric)
+		})
+
+		t.Run("When metric already exists", func(t *testing.T) {
+			uss.RegisterMetric(metricName, func() (interface{}, error) {
+				return 1, nil
+			})
+
+			metric, _ := uss.externalMetrics[metricName]()
+			assert.Equal(t, 1, metric)
+
+			t.Run("Overrides the metric", func(t *testing.T) {
+				uss.RegisterMetric(metricName, func() (interface{}, error) {
+					return 2, nil
+				})
+				newMetric, _ := uss.externalMetrics[metricName]()
+				assert.Equal(t, 2, newMetric)
+			})
+		})
+	})
+
+	t.Run("When getting usage report", func(t *testing.T) {
+		uss := &UsageStatsService{
+			Bus:                bus.New(),
+			Cfg:                setting.NewCfg(),
+			SQLStore:           sqlstore.InitTestDB(t),
+			License:            &licensing.OSSLicensingService{},
+			AlertingUsageStats: &alertingUsageMock{},
+			externalMetrics:    make(map[string]MetricFunc),
+		}
+		metricName := "stats.test_metric.count"
+
+		uss.Bus.AddHandler(func(query *models.GetSystemStatsQuery) error {
+			query.Result = &models.SystemStats{}
+			return nil
+		})
+
+		uss.Bus.AddHandler(func(query *models.GetDataSourceStatsQuery) error {
+			query.Result = []*models.DataSourceStats{}
+			return nil
+		})
+
+		uss.Bus.AddHandler(func(query *models.GetDataSourceAccessStatsQuery) error {
+			query.Result = []*models.DataSourceAccessStats{}
+			return nil
+		})
+
+		uss.Bus.AddHandler(func(query *models.GetAlertNotifierUsageStatsQuery) error {
+			query.Result = []*models.NotifierUsageStats{}
+			return nil
+		})
+
+		t.Run("Should include external metrics", func(t *testing.T) {
+			uss.RegisterMetric(metricName, func() (interface{}, error) {
+				return 1, nil
+			})
+
+			report, err := uss.GetUsageReport()
+			assert.Nil(t, err, "Expected no error")
+
+			metric := report.Metrics[metricName]
+			assert.Equal(t, 1, metric)
+		})
+	})
+
+	t.Run("When registering external metrics", func(t *testing.T) {
+		uss := &UsageStatsService{
+			Bus:             bus.New(),
+			Cfg:             setting.NewCfg(),
+			externalMetrics: make(map[string]MetricFunc),
+		}
+		metrics := map[string]interface{}{"stats.test_metric.count": 1, "stats.test_metric_second.count": 2}
+		extMetricName := "stats.test_external_metric.count"
+
+		t.Run("Should add to metrics", func(t *testing.T) {
+			uss.RegisterMetric(extMetricName, func() (interface{}, error) {
+				return 1, nil
+			})
+
+			uss.registerExternalMetrics(metrics)
+
+			assert.Equal(t, 1, metrics[extMetricName])
+		})
+
+		t.Run("When loading a metric results to an error", func(t *testing.T) {
+			uss.RegisterMetric(extMetricName, func() (interface{}, error) {
+				return 1, nil
+			})
+			extErrorMetricName := "stats.test_external_metric_error.count"
+
+			t.Run("Should not add it to metrics", func(t *testing.T) {
+				uss.RegisterMetric(extErrorMetricName, func() (interface{}, error) {
+					return 1, errors.New("some error")
+				})
+
+				uss.registerExternalMetrics(metrics)
+
+				extErrorMetric := metrics[extErrorMetricName]
+				extMetric := metrics[extMetricName]
+
+				assert.Nil(t, extErrorMetric, "Invalid metric should not be added")
+				assert.Equal(t, 1, extMetric)
+				assert.Len(t, metrics, 3, "Expected only one available metric")
+			})
 		})
 	})
 }

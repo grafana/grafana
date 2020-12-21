@@ -15,7 +15,6 @@ import {
 import _ from 'lodash';
 import { ElasticDatasource, enhanceDataFrame } from './datasource';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
-import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { ElasticsearchOptions, ElasticsearchQuery } from './types';
 import { Filters } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
@@ -61,8 +60,6 @@ describe('ElasticDatasource', function(this: any) {
     getAdhocFilters: jest.fn(() => []),
   };
 
-  const timeSrv: any = createTimeSrv('now-1h');
-
   interface TestContext {
     ds: ElasticDatasource;
   }
@@ -88,15 +85,8 @@ describe('ElasticDatasource', function(this: any) {
   }
 
   function createDatasource(instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>) {
-    createDatasourceWithTime(instanceSettings, timeSrv as TimeSrv);
-  }
-
-  function createDatasourceWithTime(
-    instanceSettings: DataSourceInstanceSettings<ElasticsearchOptions>,
-    timeSrv: TimeSrv
-  ) {
     instanceSettings.jsonData = instanceSettings.jsonData || ({} as ElasticsearchOptions);
-    ctx.ds = new ElasticDatasource(instanceSettings, templateSrv as TemplateSrv, timeSrv);
+    ctx.ds = new ElasticDatasource(instanceSettings, templateSrv as TemplateSrv);
   }
 
   describe('When testing datasource with index pattern', () => {
@@ -506,14 +496,11 @@ describe('ElasticDatasource', function(this: any) {
     };
 
     beforeEach(() => {
-      createDatasourceWithTime(
-        {
-          url: ELASTICSEARCH_MOCK_URL,
-          database: '[asd-]YYYY.MM.DD',
-          jsonData: { interval: 'Daily', esVersion: 50 } as ElasticsearchOptions,
-        } as DataSourceInstanceSettings<ElasticsearchOptions>,
-        twoWeekTimeSrv
-      );
+      createDatasource({
+        url: ELASTICSEARCH_MOCK_URL,
+        database: '[asd-]YYYY.MM.DD',
+        jsonData: { interval: 'Daily', esVersion: 50 } as ElasticsearchOptions,
+      } as DataSourceInstanceSettings<ElasticsearchOptions>);
     });
 
     it('should return fields of the newest available index', async () => {
@@ -534,7 +521,8 @@ describe('ElasticDatasource', function(this: any) {
         return Promise.reject({ status: 404 });
       });
 
-      const fieldObjects = await ctx.ds.getFields();
+      const range = twoWeekTimeSrv.timeRange();
+      const fieldObjects = await ctx.ds.getFields(undefined, range);
 
       const fields = _.map(fieldObjects, 'text');
       expect(fields).toEqual(['@timestamp', 'beat.hostname']);
@@ -545,6 +533,7 @@ describe('ElasticDatasource', function(this: any) {
         .subtract(2, 'day')
         .format('YYYY.MM.DD');
 
+      const range = twoWeekTimeSrv.timeRange();
       datasourceRequestMock.mockImplementation(options => {
         if (options.url === `${ELASTICSEARCH_MOCK_URL}/asd-${twoDaysBefore}/_mapping`) {
           return Promise.resolve(basicResponse);
@@ -554,7 +543,7 @@ describe('ElasticDatasource', function(this: any) {
 
       expect.assertions(2);
       try {
-        await ctx.ds.getFields();
+        await ctx.ds.getFields(undefined, range);
       } catch (e) {
         expect(e).toStrictEqual({ status: 500 });
         expect(datasourceRequestMock).toBeCalledTimes(1);
@@ -562,13 +551,14 @@ describe('ElasticDatasource', function(this: any) {
     });
 
     it('should not retry more than 7 indices', async () => {
+      const range = twoWeekTimeSrv.timeRange();
       datasourceRequestMock.mockImplementation(() => {
         return Promise.reject({ status: 404 });
       });
 
       expect.assertions(2);
       try {
-        await ctx.ds.getFields();
+        await ctx.ds.getFields(undefined, range);
       } catch (e) {
         expect(e).toStrictEqual({ status: 404 });
         expect(datasourceRequestMock).toBeCalledTimes(7);
@@ -840,8 +830,7 @@ describe('ElasticDatasource', function(this: any) {
             timeField: '@time',
           },
         } as DataSourceInstanceSettings<ElasticsearchOptions>,
-        templateSrv as TemplateSrv,
-        timeSrv as TimeSrv
+        templateSrv as TemplateSrv
       );
       (dataSource as any).post = jest.fn(() => Promise.resolve({ responses: [] }));
       dataSource.query(createElasticQuery());

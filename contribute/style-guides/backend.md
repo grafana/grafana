@@ -40,8 +40,38 @@ The majority of our tests uses [GoConvey](http://goconvey.co/) but that's someth
 
 In the `sqlstore` package we do database operations in tests and while some might say that's not suited for unit tests. We think they are fast enough and provide a lot of value.
 
+### Assertions
+
+Use respectively [`assert.*`](https://github.com/stretchr/testify#assert-package) functions to make assertions that 
+should _not_ halt the test ("soft checks") and [`require.*`](https://github.com/stretchr/testify#require-package) 
+functions to make assertions that _should_ halt the test ("hard checks"). Typically you want to use the latter type of
+check to assert that errors have or have not happened, since continuing the test after such an assertion fails is
+chaotic (the system under test will be in an undefined state) and you'll often have segfaults in practice.
+
+### Sub-tests
+
+Use [`t.Run`](https://golang.org/pkg/testing/#T.Run) to group sub-test cases, since it allows common setup and teardown
+code, plus lets you run each test case in isolation when debugging. Don't use `t.Run` to e.g. group assertions.
+
+### Cleanup
+
+Use [`t.Cleanup`](https://golang.org/pkg/testing/#T.Cleanup) to clean up resources in tests. It's a less fragile choice than `defer`, since it's independent of which
+function you call it in. It will always execute after the test is over in reverse call order (last `t.Cleanup` first, same as `defer`).
+
 ## Globals
 
 As a general rule of thumb, avoid using global variables, since they make the code difficult to maintain and reason
 about, and to write tests for. The Grafana codebase currently does use a lot of global variables, especially when
 it comes to configuration, but that is a problem we're trying to solve.
+
+## Pointers
+
+In general, use value types and only reach for pointers when there's a real need. The reason being that pointers
+increase the risk of bugs, since a pointer can be nil and dereferencing a nil pointer leads to a panic (AKA segfault).
+Valid reasons to use a pointer include (but not necessarily limited to):
+
+* You might need to pass a modifiable argument to a function
+* Copying an object might incur a performance hit (benchmark to check your assumptions, copying is often faster than
+  allocating heap memory)
+* You might *need* `nil` to tell if a variable isn't set, although usually it's better to use the type's zero
+  value to tell instead
