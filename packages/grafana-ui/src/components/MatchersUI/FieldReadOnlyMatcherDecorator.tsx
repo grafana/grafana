@@ -7,7 +7,7 @@ export const ReadOnlyFieldMatcherEditor = memo<MatcherUIProps<ReadOnlyFieldMatch
   const { options } = props;
   const { innerOptions } = options;
   const matcherUI = fieldMatchersUI.get(options.innerId);
-  return <matcherUI.component {...props} options={innerOptions} readOnly={true} />;
+  return <matcherUI.component {...props} options={innerOptions} readOnly={true} prefix={options.prefix} />;
 });
 ReadOnlyFieldMatcherEditor.displayName = 'ReadOnlyFieldMatcherEditor';
 
@@ -17,6 +17,6 @@ export const readOnlyFieldMatcherItem: FieldMatcherUIRegistryItem<ReadOnlyFieldM
   matcher: fieldMatchers.get(FieldMatcherID.readOnly),
   name: 'Fields matching',
   description: 'Display inner matcher as read only value for the end user.',
-  optionsToLabel: options => options.formattedValue,
+  optionsToLabel: () => '',
   excludeFromPicker: true,
 };

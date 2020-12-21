@@ -9,6 +9,11 @@ export interface RegexpOrNamesMatcherOptions {
   names?: string[];
 }
 
+export interface ByNamesMatcherOptions {
+  mode?: 'exclude' | 'include';
+  names?: string[];
+}
+
 // General Field matcher
 const fieldNameMatcher: FieldMatcherInfo<string> = {
   id: FieldMatcherID.byName,
@@ -27,22 +32,34 @@ const fieldNameMatcher: FieldMatcherInfo<string> = {
   },
 };
 
-const multipleFieldNamesMatcher: FieldMatcherInfo<string[]> = {
+const multipleFieldNamesMatcher: FieldMatcherInfo<ByNamesMatcherOptions> = {
   id: FieldMatcherID.byNames,
   name: 'Field Names',
   description: 'match any of the given the field names',
-  defaultOptions: [],
+  defaultOptions: {
+    mode: 'include',
+    names: [],
+  },
 
-  get: (names: string[]): FieldMatcher => {
+  get: (options: ByNamesMatcherOptions): FieldMatcher => {
+    const { names, mode = 'include' } = options;
     const uniqueNames = new Set<string>(names ?? []);
 
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
+      if (mode === 'exclude') {
+        return !uniqueNames.has(getFieldDisplayName(field, frame, allFrames));
+      }
       return uniqueNames.has(getFieldDisplayName(field, frame, allFrames));
     };
   },
 
-  getOptionsDisplayText: (names: string[]): string => {
-    return `Field names: ${names.join(', ')}`;
+  getOptionsDisplayText: (options: ByNamesMatcherOptions): string => {
+    const { names, mode } = options;
+    const displayText = (names ?? []).join(', ');
+    if (mode === 'exclude') {
+      return `All except: ${displayText}`;
+    }
+    return `All of: ${displayText}`;
   },
 };
 
@@ -99,7 +116,10 @@ const regexpOrMultipleNamesMatcher: FieldMatcherInfo<RegexpOrNamesMatcherOptions
 
   get: (options: RegexpOrNamesMatcherOptions): FieldMatcher => {
     const regexpMatcher = regexpFieldNameMatcher.get(options?.pattern || '');
-    const namesMatcher = multipleFieldNamesMatcher.get(options?.names ?? []);
+    const namesMatcher = multipleFieldNamesMatcher.get({
+      mode: 'include',
+      names: options?.names ?? [],
+    });
 
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
       return namesMatcher(field, frame, allFrames) || regexpMatcher(field, frame, allFrames);

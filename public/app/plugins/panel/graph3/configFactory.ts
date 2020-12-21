@@ -8,7 +8,7 @@ import {
 } from '@grafana/data';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from '@grafana/ui';
 
-const displayOverrideRef = 'hide_series_from';
+const displayOverrideRef = 'hideSeriesFrom';
 const isHideSeriesOverride = isSystemOverrideWithRef(displayOverrideRef);
 
 export const hideSeriesConfigFactory = (
@@ -26,6 +26,11 @@ export const hideSeriesConfigFactory = (
   }
 
   const field = frame.fields[fieldIndex.fieldIndex];
+
+  if (!field) {
+    return fieldConfig;
+  }
+
   const displayName = getFieldDisplayName(field, frame, data);
   const currentIndex = overrides.findIndex(isHideSeriesOverride);
 
@@ -42,7 +47,8 @@ export const hideSeriesConfigFactory = (
   const [current] = overridesCopy.splice(currentIndex, 1) as SystemConfigOverrideRule[];
 
   if (mode === GraphNGLegendEventMode.toggleSelection) {
-    const existing = matchersInConfig(current);
+    const existing = getExistingDisplayNames(current);
+
     if (existing.find(name => name === displayName)) {
       return {
         ...fieldConfig,
@@ -79,9 +85,12 @@ const createFreshOverride = (displayName: string): SystemConfigOverrideRule => {
     matcher: {
       id: FieldMatcherID.readOnly,
       options: {
-        innerId: FieldMatcherID.byRegexp,
-        innerOptions: `^(?!${displayName}$).*$`,
-        formattedValue: `All except: ${displayName}`,
+        prefix: 'All except:',
+        innerId: FieldMatcherID.byNames,
+        innerOptions: {
+          mode: 'exclude',
+          names: [displayName],
+        },
       },
     },
     properties: [
@@ -110,7 +119,7 @@ const createExtendedOverride = (
     },
   };
 
-  const existing = matchersInConfig(current);
+  const existing = getExistingDisplayNames(current);
   const index = existing.findIndex(name => name === displayName);
 
   if (index < 0) {
@@ -128,9 +137,12 @@ const createExtendedOverride = (
     matcher: {
       id: FieldMatcherID.readOnly,
       options: {
-        innerId: FieldMatcherID.byRegexp,
-        innerOptions: `^(?!${existing.join('$|')}$).*$`,
-        formattedValue: `All except: ${existing.join(', ')}`,
+        prefix: 'All except:',
+        innerId: FieldMatcherID.byNames,
+        innerOptions: {
+          mode: 'exclude',
+          names: existing,
+        },
       },
     },
     properties: [
@@ -146,13 +158,10 @@ const createExtendedOverride = (
   };
 };
 
-const matchersInConfig = (current: SystemConfigOverrideRule): string[] => {
-  const previous = current.matcher.options.innerOptions;
-  const match = /^\^\(\?\!([\w$|-]+)\$\)\.\*\$$/.exec(previous);
-
-  if (match?.length === 2) {
-    return match[1].split('$|');
+const getExistingDisplayNames = (rule: SystemConfigOverrideRule): string[] => {
+  const names = rule.matcher.options?.innerOptions?.names;
+  if (!Array.isArray(names)) {
+    return [];
   }
-
-  return [];
+  return names;
 };

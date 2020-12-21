@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { DataFrame, RegistryItem, FieldMatcherInfo } from '@grafana/data';
 
 export interface FieldMatcherUIRegistryItem<TOptions> extends RegistryItem {
@@ -14,4 +14,5 @@ export interface MatcherUIProps<T> {
   options: T;
   onChange: (options: T) => void;
   readOnly?: boolean;
+  prefix?: ReactNode;
 }

@@ -5,7 +5,7 @@ import { FieldMatcherID } from './ids';
 export interface ReadOnlyFieldMatcherOptions<T = any> {
   innerId: FieldMatcherID;
   innerOptions: T;
-  formattedValue: string;
+  prefix: string;
 }
 
 fieldMatchers.register({
@@ -27,6 +27,15 @@ fieldMatchers.register({
     return matcher.get(options.innerOptions);
   },
   getOptionsDisplayText: (options: ReadOnlyFieldMatcherOptions): string => {
-    return `Fields matching ${options.formattedValue}.`;
+    const matcher = fieldMatchers.getIfExists(options.innerId);
+
+    if (!matcher) {
+      throw new Error(`Could not find given matcher Id ${options.innerId}`);
+    }
+
+    if (!matcher.getOptionsDisplayText) {
+      return '';
+    }
+    return matcher.getOptionsDisplayText(options);
   },
 });
