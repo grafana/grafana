@@ -858,8 +858,22 @@ def publish_packages_step(edition, is_downstream):
     else:
         build_no = '$${SOURCE_BUILD_NUMBER}'
 
+    #if ver_mode == 'test-release':
+        #cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
+                #edition, build_no,
+            #)
+	 #'--deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket ' + \
+            #'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo'
+    #else:
+        #cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
+                #edition, build_no,
+            #)
+    cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
+        edition, build_no,
+    )
+
     return {
-        'name': 'publish-packages',
+        'name': 'publish-packages-{}'.format(edition),
         'image': publish_image,
         'depends_on': [
             'initialize',
@@ -883,9 +897,7 @@ def publish_packages_step(edition, is_downstream):
         },
         'commands': [
             'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
-            './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
-                edition, build_no,
-            ),
+            cmd,
         ],
     }
 
