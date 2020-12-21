@@ -6,11 +6,7 @@ import { fieldMatchersUI } from './fieldMatchersUI';
 export const ReadOnlyFieldMatcherEditor = memo<MatcherUIProps<ReadOnlyFieldMatcherOptions>>(props => {
   const { options } = props;
   const { innerOptions } = options;
-
   const matcherUI = fieldMatchersUI.get(options.innerId);
-  if (!matcherUI.component) {
-    return null;
-  }
   return <matcherUI.component {...props} options={innerOptions} readOnly={true} />;
 });
 ReadOnlyFieldMatcherEditor.displayName = 'ReadOnlyFieldMatcherEditor';

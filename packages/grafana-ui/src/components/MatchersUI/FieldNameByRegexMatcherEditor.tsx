@@ -13,7 +13,15 @@ export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>(props 
     [onChange]
   );
 
-  return <Input placeholder="Enter regular expression" defaultValue={options} onBlur={onBlur} readOnly={readOnly} />;
+  return (
+    <Input
+      placeholder="Enter regular expression"
+      defaultValue={options}
+      onBlur={onBlur}
+      disabled={readOnly}
+      readOnly={readOnly}
+    />
+  );
 });
 FieldNameByRegexMatcherEditor.displayName = 'FieldNameByRegexMatcherEditor';
 
