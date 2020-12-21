@@ -18,21 +18,31 @@ export interface Props extends Omit<LabelProps, 'css' | 'description' | 'categor
   /** @deprecated */
   /** This prop is deprecated and is not used anymore */
   isInvalid?: boolean;
+  /** @beta */
+  /** Controls which element the InlineLabel should be rendered into */
+  as?: React.ElementType;
 }
 
-export const InlineLabel: FunctionComponent<Props> = ({ children, className, tooltip, width, ...rest }) => {
+export const InlineLabel: FunctionComponent<Props> = ({
+  children,
+  className,
+  tooltip,
+  width,
+  as: Component = 'label',
+  ...rest
+}) => {
   const theme = useTheme();
   const styles = getInlineLabelStyles(theme, width);
 
   return (
-    <label className={cx(styles.label, className)} {...rest}>
+    <Component className={cx(styles.label, className)} {...rest}>
       {children}
       {tooltip && (
         <Tooltip placement="top" content={tooltip} theme="info">
           <Icon name="info-circle" size="sm" className={styles.icon} />
         </Tooltip>
       )}
-    </label>
+    </Component>
   );
 };
 

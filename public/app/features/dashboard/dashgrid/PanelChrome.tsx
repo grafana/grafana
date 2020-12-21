@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import classNames from 'classnames';
 import { Unsubscribable } from 'rxjs';
 // Components
@@ -51,7 +51,7 @@ export interface State {
   data: PanelData;
 }
 
-export class PanelChrome extends PureComponent<Props, State> {
+export class PanelChrome extends Component<Props, State> {
   readonly timeSrv: TimeSrv = getTimeSrv();
 
   querySubscription?: Unsubscribable;
@@ -122,6 +122,19 @@ export class PanelChrome extends PureComponent<Props, State> {
         }
       }
     }
+  }
+
+  shouldComponentUpdate(prevProps: Props, prevState: State) {
+    const { plugin, panel } = this.props;
+
+    // If plugin changed we need to process fieldOverrides again
+    // We do this by asking panel query runner to resend last result
+    if (prevProps.plugin !== plugin) {
+      panel.getQueryRunner().resendLastResult();
+      return false;
+    }
+
+    return true;
   }
 
   // Updates the response with information from the stream

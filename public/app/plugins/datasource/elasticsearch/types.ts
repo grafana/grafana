@@ -8,10 +8,12 @@ import {
   MetricAggregationType,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 
+export type Interval = 'Hourly' | 'Daily' | 'Weekly' | 'Monthly' | 'Yearly';
+
 export interface ElasticsearchOptions extends DataSourceJsonData {
   timeField: string;
   esVersion: number;
-  interval?: string;
+  interval?: Interval;
   timeInterval: string;
   maxConcurrentShardRequests?: number;
   logMessageField?: string;

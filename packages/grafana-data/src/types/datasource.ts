@@ -339,6 +339,7 @@ export interface QueryEditorProps<
   range?: TimeRange;
   exploreId?: any;
   history?: HistoryItem[];
+  queries?: DataQuery[];
 }
 
 // TODO: not really needed but used as type in some data sources and in DataQueryRequest

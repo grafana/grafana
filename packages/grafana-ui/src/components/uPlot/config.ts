@@ -1,5 +1,8 @@
 import { SelectableValue } from '@grafana/data';
 
+/**
+ * @alpha
+ */
 export enum AxisPlacement {
   Auto = 'auto', // First axis on the left, the rest on the right
   Top = 'top',
@@ -9,18 +12,27 @@ export enum AxisPlacement {
   Hidden = 'hidden',
 }
 
+/**
+ * @alpha
+ */
 export enum PointVisibility {
   Auto = 'auto', // will show points when the density is low or line is hidden
   Never = 'never',
   Always = 'always',
 }
 
+/**
+ * @alpha
+ */
 export enum DrawStyle {
   Line = 'line', // default
   Bars = 'bars', // will also have a gap percent
   Points = 'points', // Only show points
 }
 
+/**
+ * @alpha
+ */
 export enum LineInterpolation {
   Linear = 'linear',
   Smooth = 'smooth',
@@ -28,6 +40,9 @@ export enum LineInterpolation {
   StepAfter = 'stepAfter',
 }
 
+/**
+ * @alpha
+ */
 export enum ScaleDistribution {
   Linear = 'linear',
   Logarithmic = 'log',
@@ -40,6 +55,7 @@ export interface LineConfig {
   lineColor?: string;
   lineWidth?: number;
   lineInterpolation?: LineInterpolation;
+  lineDash?: number[];
   spanNulls?: boolean;
 }
 
@@ -49,6 +65,16 @@ export interface LineConfig {
 export interface AreaConfig {
   fillColor?: string;
   fillOpacity?: number;
+  fillGradient?: AreaGradientMode;
+}
+
+/**
+ * @alpha
+ */
+export enum AreaGradientMode {
+  None = 'none',
+  Opacity = 'opacity',
+  Hue = 'hue',
 }
 
 /**
@@ -61,11 +87,18 @@ export interface PointsConfig {
   pointSymbol?: string; // eventually dot,star, etc
 }
 
+/**
+ * @alpha
+ */
 export interface ScaleDistributionConfig {
   type: ScaleDistribution;
   log?: number;
 }
-// Axis is actually unique based on the unit... not each field!
+
+/**
+ * @alpha
+ * Axis is actually unique based on the unit... not each field!
+ */
 export interface AxisConfig {
   axisPlacement?: AxisPlacement;
   axisLabel?: string;
@@ -80,6 +113,9 @@ export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, 
   drawStyle?: DrawStyle;
 }
 
+/**
+ * @alpha
+ */
 export const graphFieldOptions = {
   drawStyle: [
     { label: 'Lines', value: DrawStyle.Line },
@@ -106,4 +142,10 @@ export const graphFieldOptions = {
     { label: 'Right', value: AxisPlacement.Right },
     { label: 'Hidden', value: AxisPlacement.Hidden },
   ] as Array<SelectableValue<AxisPlacement>>,
+
+  fillGradient: [
+    { label: 'None', value: undefined },
+    { label: 'Opacity', value: AreaGradientMode.Opacity },
+    { label: 'Hue', value: AreaGradientMode.Hue },
+  ] as Array<SelectableValue<AreaGradientMode>>,
 };

@@ -87,6 +87,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                     onRemoveQuery={this.onRemoveQuery}
                     onAddQuery={this.props.onAddQuery}
                     onRunQuery={this.props.onRunQueries}
+                    queries={queries}
                   />
                 ))}
                 {provided.placeholder}
