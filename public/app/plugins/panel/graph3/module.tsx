@@ -75,6 +75,15 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           showIf: c => c.drawStyle !== DrawStyle.Points,
         })
         .addRadio({
+          path: 'fillGradient',
+          name: 'Fill gradient',
+          defaultValue: graphFieldOptions.fillGradient[0],
+          settings: {
+            options: graphFieldOptions.fillGradient,
+          },
+          showIf: c => !!(c.drawStyle !== DrawStyle.Points && c.fillOpacity && c.fillOpacity > 0),
+        })
+        .addRadio({
           path: 'spanNulls',
           name: 'Null values',
           defaultValue: false,

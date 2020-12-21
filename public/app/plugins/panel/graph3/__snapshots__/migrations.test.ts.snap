@@ -33,7 +33,8 @@ Object {
       "custom": Object {
         "axisPlacement": "hidden",
         "drawStyle": "line",
-        "fillOpacity": 50,
+        "fillGradient": "opacity",
+        "fillOpacity": 60,
         "lineInterpolation": "stepAfter",
         "lineWidth": 1,
         "pointSize": 6,

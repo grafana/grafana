@@ -21,6 +21,14 @@ func init() {
 	registry.RegisterService(&UsageStatsService{})
 }
 
+type UsageStats interface {
+	GetUsageReport() (UsageReport, error)
+
+	RegisterMetric(name string, fn MetricFunc)
+}
+
+type MetricFunc func() (interface{}, error)
+
 type UsageStatsService struct {
 	Cfg                *setting.Cfg               `inject:""`
 	Bus                bus.Bus                    `inject:""`
@@ -30,12 +38,14 @@ type UsageStatsService struct {
 
 	log log.Logger
 
-	oauthProviders map[string]bool
+	oauthProviders  map[string]bool
+	externalMetrics map[string]MetricFunc
 }
 
 func (uss *UsageStatsService) Init() error {
 	uss.log = log.New("infra.usagestats")
 	uss.oauthProviders = social.GetOAuthProviders(uss.Cfg)
+	uss.externalMetrics = make(map[string]MetricFunc)
 	return nil
 }
 

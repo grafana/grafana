@@ -42,6 +42,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
           "canSave": true,
           "canShare": true,
           "canStar": true,
+          "hasUnsavedFolderChange": false,
           "showSettings": true,
         },
         "originalTemplating": Array [],
@@ -169,6 +170,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 "canSave": true,
                 "canShare": true,
                 "canStar": true,
+                "hasUnsavedFolderChange": false,
                 "showSettings": true,
               },
               "originalTemplating": Array [],
@@ -264,6 +266,7 @@ exports[`DashboardPage Dashboard init completed  Should render dashboard grid 1`
                 "canSave": true,
                 "canShare": true,
                 "canStar": true,
+                "hasUnsavedFolderChange": false,
                 "showSettings": true,
               },
               "originalTemplating": Array [],
@@ -414,6 +417,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           "canSave": true,
           "canShare": true,
           "canStar": true,
+          "hasUnsavedFolderChange": false,
           "showSettings": true,
         },
         "originalTemplating": Array [],
@@ -541,6 +545,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "canSave": true,
                 "canShare": true,
                 "canStar": true,
+                "hasUnsavedFolderChange": false,
                 "showSettings": true,
               },
               "originalTemplating": Array [],
@@ -636,6 +641,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
                 "canSave": true,
                 "canShare": true,
                 "canStar": true,
+                "hasUnsavedFolderChange": false,
                 "showSettings": true,
               },
               "originalTemplating": Array [],
@@ -736,6 +742,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
           "canSave": true,
           "canShare": true,
           "canStar": true,
+          "hasUnsavedFolderChange": false,
           "showSettings": true,
         },
         "originalTemplating": Array [],
@@ -792,6 +799,7 @@ exports[`DashboardPage When dashboard has editview url state should render setti
         "version": 0,
       }
     }
+    editview="settings"
     updateLocation={[MockFunction]}
   />
 </div>

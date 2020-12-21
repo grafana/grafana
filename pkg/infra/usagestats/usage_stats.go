@@ -72,6 +72,8 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 	metrics["stats.edition.oss.count"] = getOssEditionCount()
 	metrics["stats.edition.enterprise.count"] = getEnterpriseEditionCount()
 
+	uss.registerExternalMetrics(metrics)
+
 	userCount := statsQuery.Result.Users
 	avgAuthTokensPerUser := statsQuery.Result.AuthTokens
 	if userCount != 0 {
@@ -184,6 +186,21 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 	}
 
 	return report, nil
+}
+
+func (uss *UsageStatsService) registerExternalMetrics(metrics map[string]interface{}) {
+	for name, fn := range uss.externalMetrics {
+		result, err := fn()
+		if err != nil {
+			metricsLogger.Error("Failed to fetch external metric", "name", name, "error", err)
+			continue
+		}
+		metrics[name] = result
+	}
+}
+
+func (uss *UsageStatsService) RegisterMetric(name string, fn MetricFunc) {
+	uss.externalMetrics[name] = fn
 }
 
 func (uss *UsageStatsService) sendUsageStats() error {
