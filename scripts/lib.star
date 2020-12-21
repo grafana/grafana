@@ -1,4 +1,4 @@
-grabpl_version = '0.5.29'
+grabpl_version = '0.5.30'
 build_image = 'grafana/build-container:1.3.0'
 publish_image = 'grafana/grafana-ci-deploy:1.2.7'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -206,8 +206,8 @@ def enterprise_downstream_step(edition):
     }
 
 def lint_backend_step(edition, build_tags=None):
-    sfx = ''       
-    build_tags_str = '' 
+    sfx = ''
+    build_tags_str = ''
     if build_tags:
         sfx = '-' + '-'.join(build_tags)
         build_tags_str += ' --build-tags={}'.format(','.join(build_tags))
@@ -446,8 +446,8 @@ def build_plugins_step(edition, sign=False):
     }
 
 def test_backend_step(build_tags=None):
-    sfx = ''       
-    build_tags_str = '' 
+    sfx = ''
+    build_tags_str = ''
     if build_tags:
         sfx = '-' + '-'.join(build_tags)
         build_tags_str += ' --build-tags {}'.format(','.join(build_tags))
@@ -612,7 +612,7 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False, build_ta
             'build-backend' + sfx,
             'build-frontend',
             'build-plugins',
-            'test-backend' + sfx, # Not sure we need to keep this as the build-backend step already wait for it
+            'test-backend' + sfx,
             'test-frontend',
             'codespell',
             'shellcheck',
@@ -635,7 +635,7 @@ def e2e_tests_server_step(edition, build_tags=None):
     if package_file_pfx:
         environment = {
             'PACKAGE_FILE': 'dist/{}-*linux-amd64.tar.gz'.format(package_file_pfx),
-            'RUNDIR': 'e2e/tmp-{}'.format(package_file_pfx) 
+            'RUNDIR': 'e2e/tmp-{}'.format(package_file_pfx)
         }
 
     return {

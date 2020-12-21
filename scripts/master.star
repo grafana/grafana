@@ -64,8 +64,6 @@ def get_steps(edition, is_downstream=False):
         upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         deploy_to_kubernetes_step(edition=edition, is_downstream=is_downstream),
     ]
-    windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream)
-
     if edition == 'enterprise':
         build_tags = ['enterprise2']
         steps.extend([
@@ -78,6 +76,7 @@ def get_steps(edition, is_downstream=False):
             upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream, build_tags=build_tags),
         ])
     
+    windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream)
     publish_steps = [
         publish_packages_step(edition=edition, is_downstream=is_downstream),
     ]
