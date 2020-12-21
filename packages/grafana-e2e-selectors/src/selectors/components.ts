@@ -64,6 +64,9 @@ export const Components = {
     DataPane: {
       content: 'Panel editor data pane content',
     },
+    FieldOptions: {
+      propertyEditor: (type: string) => `${type} field property editor`,
+    },
   },
   PanelInspector: {
     Data: {
@@ -151,6 +154,7 @@ export const Components = {
   },
   QueryField: { container: 'Query field' },
   ValuePicker: {
+    button: 'Value picker add button',
     select: (name: string) => `Value picker select ${name}`,
   },
   Search: {

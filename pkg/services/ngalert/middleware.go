@@ -13,7 +13,7 @@ func (ng *AlertNG) validateOrgAlertDefinition(c *models.ReqContext) {
 		return
 	}
 
-	if c.OrgId != query.Result.OrgId {
+	if c.OrgId != query.Result.OrgID {
 		c.JsonApiErr(403, "You are not allowed to edit/view alert definition", nil)
 		return
 	}

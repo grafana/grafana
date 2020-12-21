@@ -78,10 +78,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     wrapper: css`
       padding-left: ${theme.spacing.md};
+      height: 100%;
     `,
     container: css`
       padding: ${theme.spacing.md};
       background-color: ${theme.colors.panelBg};
+      height: 100%;
     `,
     editorWrapper: css`
       border: 1px solid ${theme.colors.panelBorder};

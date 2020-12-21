@@ -59,19 +59,11 @@ const getStyles = (theme: GrafanaTheme, grow?: boolean) => {
     container: css`
       display: flex;
       flex-direction: row;
-      align-items: center;
+      align-items: flex-start;
       text-align: left;
       position: relative;
       flex: ${grow ? 1 : 0} 0 auto;
       margin: 0 ${theme.spacing.xs} ${theme.spacing.xs} 0;
-    `,
-    wrapper: css`
-      display: flex;
-      width: 100%;
-    `,
-
-    fillContainer: css`
-      flex-grow: 1;
     `,
   };
 };
