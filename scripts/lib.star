@@ -849,28 +849,25 @@ def upload_packages_step(edition, ver_mode, is_downstream=False, build_tags=None
         'commands': [cmd,],
     }
 
-def publish_packages_step(edition, is_downstream):
-    if edition == 'enterprise' and not is_downstream:
-        return None
-
-    if not is_downstream:
-        build_no = '${DRONE_BUILD_NUMBER}'
+def publish_packages_step(edition, ver_mode, is_downstream=False):
+    if ver_mode == 'test-release':
+        cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json '.format(edition) + \
+            '--deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket ' + \
+            'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo {}'.format(test_release_ver)
+    elif ver_mode == 'release':
+        cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
+            edition,
+        )
+    elif ver_mode == 'master':
+        if not is_downstream:
+            build_no = '${DRONE_BUILD_NUMBER}'
+        else:
+            build_no = '$${SOURCE_BUILD_NUMBER}'
+        cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
+                edition, build_no,
+        )
     else:
-        build_no = '$${SOURCE_BUILD_NUMBER}'
-
-    #if ver_mode == 'test-release':
-        #cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
-                #edition, build_no,
-            #)
-	 #'--deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket ' + \
-            #'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo'
-    #else:
-        #cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
-                #edition, build_no,
-            #)
-    cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
-        edition, build_no,
-    )
+        fail('Unexpected version mode {}'.format(ver_mode))
 
     return {
         'name': 'publish-packages-{}'.format(edition),
@@ -936,7 +933,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             ver_part = test_release_ver
             dir = 'release'
             bucket = 'grafana-downloads-test'
-            bucket_part = ' --packages-bucket grafana-downloads-test'
+            bucket_part = ' --packages-bucket {}'.format(bucket)
         else:
             dir = 'master'
             if not is_downstream:

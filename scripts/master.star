@@ -75,11 +75,14 @@ def get_steps(edition, is_downstream=False):
             e2e_tests_step(build_tags=build_tags),
             upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream, build_tags=build_tags),
         ])
-    
+
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream)
-    publish_steps = [
-        publish_packages_step(edition=edition, is_downstream=is_downstream),
-    ]
+    if edition == 'enterprise' and not is_downstream:
+        publish_steps = []
+    else:
+        publish_steps = [
+            publish_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
+        ]
 
     return steps, windows_steps, publish_steps
 
