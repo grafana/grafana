@@ -46,7 +46,7 @@ func (e *AlertEngine) IsDisabled() bool {
 
 // Init initializes the AlertingService.
 func (e *AlertEngine) Init() error {
-	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New())
+	e.ticker = NewTicker(time.Now(), time.Second*0, clock.New(), 1)
 	e.execQueue = make(chan *Job, 1000)
 	e.scheduler = newScheduler()
 	e.evalHandler = NewEvalHandler()
