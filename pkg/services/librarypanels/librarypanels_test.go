@@ -98,7 +98,7 @@ func TestGetLibraryPanel(t *testing.T) {
 }
 
 func TestGetAllLibraryPanels(t *testing.T) {
-	testScenario(t, "When an admin tries to get all library panels and none exists, it should succeed and return correct result",
+	testScenario(t, "When an admin tries to get all library panels and none exists, it should return none",
 		func(t *testing.T, sc scenarioContext) {
 			response := sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, response.Status())
@@ -110,7 +110,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			require.Equal(t, 0, len(result.Result))
 		})
 
-	testScenario(t, "When an admin tries to get all library panels and two exists, it should succeed and return correct result",
+	testScenario(t, "When an admin tries to get all library panels and two exist, it should work",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
@@ -128,12 +128,12 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, 2, len(result.Result))
 			require.Equal(t, int64(1), result.Result[0].FolderID)
-			require.Equal(t, int64(1), result.Result[1].FolderID)
 			require.Equal(t, "Text - Library Panel", result.Result[0].Title)
+			require.Equal(t, int64(1), result.Result[1].FolderID)
 			require.Equal(t, "Text - Library Panel2", result.Result[1].Title)
 		})
 
-	testScenario(t, "When an admin tries to get all library panels in a different org, it should succeed and return correct result",
+	testScenario(t, "When an admin tries to get all library panels in a different org, none should be returned",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel")
 
