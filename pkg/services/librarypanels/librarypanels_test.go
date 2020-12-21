@@ -87,7 +87,6 @@ func TestGetLibraryPanel(t *testing.T) {
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
 			response = sc.service.getHandler(sc.reqContext)
 			require.Equal(t, 200, response.Status())
-
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
 			require.Equal(t, int64(1), result.Result.FolderID)
@@ -107,7 +106,6 @@ func TestGetLibraryPanel(t *testing.T) {
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
 			sc.reqContext.SignedInUser.OrgId = 2
 			sc.reqContext.SignedInUser.OrgRole = models.ROLE_ADMIN
-
 			response = sc.service.getHandler(sc.reqContext)
 			require.Equal(t, 404, response.Status())
 		})
@@ -168,7 +166,6 @@ func TestGetAllLibraryPanels(t *testing.T) {
 
 			sc.reqContext.SignedInUser.OrgId = 2
 			sc.reqContext.SignedInUser.OrgRole = models.ROLE_ADMIN
-
 			response = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, response.Status())
 
