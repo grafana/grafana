@@ -37,7 +37,7 @@ func (lps *LibraryPanelService) createHandler(c *models.ReqContext, cmd createLi
 	return api.JSON(200, util.DynMap{"result": panel})
 }
 
-// deleteHandler handles DELETE /api/library-panels/:panelId
+// deleteHandler handles DELETE /api/library-panels/:uid
 func (lps *LibraryPanelService) deleteHandler(c *models.ReqContext) api.Response {
 	err := lps.deleteLibraryPanel(c, c.Params(":uid"))
 	if err != nil {
@@ -50,7 +50,7 @@ func (lps *LibraryPanelService) deleteHandler(c *models.ReqContext) api.Response
 	return api.Success("Library panel deleted")
 }
 
-// getHandler handles GET /api/library-panels/:panelId
+// getHandler handles GET /api/library-panels/:uid
 func (lps *LibraryPanelService) getHandler(c *models.ReqContext) api.Response {
 	libraryPanel, err := lps.getLibraryPanel(c, c.Params(":uid"))
 	if err != nil {
