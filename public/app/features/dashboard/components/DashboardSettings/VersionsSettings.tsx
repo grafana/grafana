@@ -1,47 +1,24 @@
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
 import { DashboardModel } from '../../state/DashboardModel';
-import { getBackendSrv } from '@grafana/runtime';
-import { DateTimeInput } from '@grafana/data';
-import { Spinner, HorizontalGroup, Checkbox, Button } from '@grafana/ui';
+import { historySrv, RevisionsModel } from '../VersionHistory/HistorySrv';
+import { Spinner, HorizontalGroup, Checkbox, Button, Tag } from '@grafana/ui';
 
 interface Props {
   dashboard: DashboardModel;
 }
 
-export interface HistoryListOpts {
-  limit: number;
-  start: number;
-}
-
-export interface RevisionsModel {
-  id: number;
-  checked: boolean;
-  dashboardId: number;
-  parentVersion: number;
-  version: number;
-  created: Date;
-  createdBy: string;
-  message: string;
-}
-
-export interface CalculateDiffOptions {
-  new: DiffTarget;
-  base: DiffTarget;
-  diffType: string;
-}
-
-export interface DiffTarget {
-  dashboardId: number;
-  version: number;
-  unsavedDashboard?: DashboardModel; // when doing diffs against unsaved dashboard version
-}
-
 type State = {
-  canCompare: boolean;
   isLoading: boolean;
-  versions: RevisionsModel[];
+  isAppending: boolean;
+  versions: DecoratedRevisionModel[];
   viewMode: 'list' | 'compare';
+};
+
+type DecoratedRevisionModel = RevisionsModel & {
+  createdDateString: string;
+  ageString: string;
+  checked: boolean;
 };
 
 export class VersionsSettings extends PureComponent<Props, State> {
@@ -53,36 +30,37 @@ export class VersionsSettings extends PureComponent<Props, State> {
     this.limit = 10;
     this.start = 0;
     this.state = {
-      canCompare: false,
       isLoading: true,
+      isAppending: true,
       versions: [],
       viewMode: 'list',
     };
   }
 
   componentDidMount() {
-    this.getVersions(this.props.dashboard, { limit: this.limit, start: this.start }).then(res => {
-      this.setState({
-        isLoading: false,
-        versions: [...this.state.versions, ...this.decorateVersions(res)],
-      });
-      this.start += this.limit;
-    });
+    this.getVersions();
   }
 
-  formatDate(date: DateTimeInput) {
-    return this.props.dashboard.formatDate(date);
-  }
-
-  formatBasicDate(date: DateTimeInput) {
-    return this.props.dashboard.getRelativeTime(date);
-  }
+  getVersions = (append = false) => {
+    this.setState({ isAppending: append });
+    historySrv
+      .getHistoryList(this.props.dashboard, { limit: this.limit, start: this.start })
+      .then(res => {
+        this.setState({
+          isLoading: false,
+          versions: [...this.state.versions, ...this.decorateVersions(res)],
+        });
+        this.start += this.limit;
+      })
+      .catch(err => console.log(err))
+      .finally(() => this.setState({ isAppending: false }));
+  };
 
   decorateVersions = (versions: RevisionsModel[]) =>
     versions.map(version => ({
       ...version,
-      createdDateString: this.formatDate(version.created),
-      ageString: this.formatBasicDate(version.created),
+      createdDateString: this.props.dashboard.formatDate(version.created),
+      ageString: this.props.dashboard.getRelativeTime(version.created),
       checked: false,
     }));
 
@@ -90,103 +68,115 @@ export class VersionsSettings extends PureComponent<Props, State> {
     return _.find(this.state.versions, rev => rev.version === 1);
   }
 
-  getVersions(dashboard: DashboardModel, options: HistoryListOpts) {
-    const id = dashboard && dashboard.id ? dashboard.id : void 0;
-    return id ? getBackendSrv().get(`api/dashboards/id/${id}/versions`, options) : Promise.resolve([]);
-  }
-
-  calculateDiff(options: CalculateDiffOptions) {
-    return getBackendSrv().post('api/dashboards/calculate-diff', options);
-  }
-
-  restoreDashboard(dashboard: DashboardModel, version: number) {
-    const id = dashboard && dashboard.id ? dashboard.id : void 0;
-    const url = `api/dashboards/id/${id}/restore`;
-
-    return id && _.isNumber(version) ? getBackendSrv().post(url, { version }) : Promise.resolve({});
-  }
-
-  renderHeader = () => {
-    return <h3 className="dashboard-settings__header">Versions</h3>;
-  };
-
-  renderTable = () => {
-    return (
-      <table className="filter-table">
-        <thead>
-          <tr>
-            <th className="width-4"></th>
-            <th className="width-4">Version</th>
-            <th className="width-14">Date</th>
-            <th className="width-10">Updated By</th>
-            <th>Notes</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {this.state.versions.map(version => (
-            <tr key={version.id}>
-              <td>
-                <div>
-                  <Checkbox checked={version.checked} onChange={ev => console.log(ev.currentTarget.checked)} />
-                </div>
-              </td>
-              <td>{version.version}</td>
-              <td>{version.createdDateString}</td>
-              <td>{version.createdBy}</td>
-              <td>{version.message}</td>
-              <td className="text-right">
-                <Button variant="secondary" size="sm" icon="history" onClick={() => console.log('restore')}>
-                  Restore
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    );
+  handleCheck = (ev: React.FormEvent<HTMLInputElement>, versionId: number) => {
+    this.setState({
+      versions: this.state.versions.map(version =>
+        version.id === versionId ? { ...version, checked: ev.currentTarget.checked } : version
+      ),
+    });
   };
 
   render() {
+    const canCompare = this.state.versions.filter(version => version.checked).length !== 2;
+    const hasVersions = this.state.versions.length > 1;
+    const hasMore = this.state.versions.length >= this.limit;
     return (
       <div>
-        {this.renderHeader()}
+        <VersionsHeader />
         {this.state.isLoading ? (
-          <HorizontalGroup>
-            <Spinner />
-            <em>Fetching history list&hellip;</em>
-          </HorizontalGroup>
+          <VersionsSpinner msg="Fetching history list&hellip;" />
         ) : (
-          this.renderTable()
+          <VersionsTable versions={this.state.versions} handleCheck={this.handleCheck} />
         )}
-        <div className="gf-form-group">
-          <div className="gf-form-button-row">
-            {this.state.versions.length >= this.limit && (
-              <Button
-                type="button"
-                onClick={() => console.log('get more versions')}
-                variant="secondary"
-                disabled={!!this.isLastPage()}
-              >
-                Show more versions
-              </Button>
-            )}
-            {this.state.versions.length > 1 && (
-              // TODO: add a tooltip!
-              // bs-tooltip="ctrl.canCompare ? '' : 'Select 2 versions to start comparing'"
-              // data-placement="bottom"
-              <Button
-                type="button"
-                disabled={!this.state.canCompare}
-                onClick={() => console.log('display diff view')}
-                icon="code-branch"
-              >
-                Compare versions
-              </Button>
-            )}
-          </div>
-        </div>
+        {this.state.isAppending && <VersionsSpinner msg="Fetching more entries&hellip;" />}
+        <VersionsButtons
+          hasMore={hasMore}
+          hasVersions={hasVersions}
+          canCompare={canCompare}
+          getVersions={this.getVersions}
+          isLastPage={!!this.isLastPage()}
+        />
       </div>
     );
   }
 }
+
+const VersionsSpinner = ({ msg }: { msg: string }) => (
+  <HorizontalGroup>
+    <Spinner />
+    <em>{msg}</em>
+  </HorizontalGroup>
+);
+
+const VersionsButtons = ({
+  hasMore,
+  hasVersions,
+  canCompare,
+  getVersions,
+  isLastPage,
+}: {
+  hasMore: boolean;
+  hasVersions: boolean;
+  canCompare: boolean;
+  getVersions: (append: boolean) => void;
+  isLastPage: boolean;
+}) => (
+  <div className="gf-form-group">
+    <div className="gf-form-button-row">
+      {hasMore && (
+        <Button type="button" onClick={() => getVersions(true)} variant="secondary" disabled={isLastPage}>
+          Show more versions
+        </Button>
+      )}
+      {hasVersions && (
+        // TODO: add a tooltip!
+        // bs-tooltip="ctrl.canCompare ? '' : 'Select 2 versions to start comparing'"
+        // data-placement="bottom"
+        <Button type="button" disabled={canCompare} onClick={() => console.log('display diff view')} icon="code-branch">
+          Compare versions
+        </Button>
+      )}
+    </div>
+  </div>
+);
+
+const VersionsHeader = () => <h3 className="dashboard-settings__header">Versions</h3>;
+
+const VersionsTable = ({ versions, handleCheck }: { versions: DecoratedRevisionModel[]; handleCheck: any }) => (
+  <table className="filter-table">
+    <thead>
+      <tr>
+        <th className="width-4"></th>
+        <th className="width-4">Version</th>
+        <th className="width-14">Date</th>
+        <th className="width-10">Updated By</th>
+        <th>Notes</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {versions.map((version, idx) => (
+        <tr key={version.id}>
+          <td>
+            <div>
+              <Checkbox checked={version.checked} onChange={ev => handleCheck(ev, version.id)} />
+            </div>
+          </td>
+          <td>{version.version}</td>
+          <td>{version.createdDateString}</td>
+          <td>{version.createdBy}</td>
+          <td>{version.message}</td>
+          <td className="text-right">
+            {idx === 0 ? (
+              <Tag name="Latest" colorIndex={17} />
+            ) : (
+              <Button variant="secondary" size="sm" icon="history" onClick={() => console.log('restore')}>
+                Restore
+              </Button>
+            )}
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+);
