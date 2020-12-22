@@ -70,6 +70,7 @@ func TestDeleteLibraryPanel(t *testing.T) {
 func TestGetLibraryPanel(t *testing.T) {
 	testScenario(t, "When an admin tries to get a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": "unknown"})
 			response := sc.service.getHandler(sc.reqContext)
 			require.Equal(t, 404, response.Status())
 		})
