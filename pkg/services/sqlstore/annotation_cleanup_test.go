@@ -25,6 +25,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 
 	createTestAnnotations(t, fakeSQL, 21, 6)
 	assertAnnotationCount(t, fakeSQL, "", 21)
+	assertAnnotationTagCount(t, fakeSQL, 42)
 
 	tests := []struct {
 		name                     string
@@ -32,6 +33,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 		alertAnnotationCount     int64
 		dashboardAnnotationCount int64
 		APIAnnotationCount       int64
+		affectedAnnotations      int64
 	}{
 		{
 			name: "default settings should not delete any annotations",
@@ -43,6 +45,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     7,
 			dashboardAnnotationCount: 7,
 			APIAnnotationCount:       7,
+			affectedAnnotations:      0,
 		},
 		{
 			name: "should remove annotations created before cut off point",
@@ -54,6 +57,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     5,
 			dashboardAnnotationCount: 5,
 			APIAnnotationCount:       5,
+			affectedAnnotations:      6,
 		},
 		{
 			name: "should only keep three annotations",
@@ -65,6 +69,7 @@ func TestAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     3,
 			dashboardAnnotationCount: 3,
 			APIAnnotationCount:       3,
+			affectedAnnotations:      6,
 		},
 		{
 			name: "running the max count delete again should not remove any annotations",
@@ -76,18 +81,28 @@ func TestAnnotationCleanUp(t *testing.T) {
 			alertAnnotationCount:     3,
 			dashboardAnnotationCount: 3,
 			APIAnnotationCount:       3,
+			affectedAnnotations:      0,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			cleaner := &AnnotationCleanupService{batchSize: 1, log: log.New("test-logger")}
-			err := cleaner.CleanAnnotations(context.Background(), test.cfg)
+			affectedAnnotations, affectedAnnotationTags, err := cleaner.CleanAnnotations(context.Background(), test.cfg)
 			require.NoError(t, err)
+
+			assert.Equal(t, test.affectedAnnotations, affectedAnnotations)
+			assert.Equal(t, test.affectedAnnotations*2, affectedAnnotationTags)
 
 			assertAnnotationCount(t, fakeSQL, alertAnnotationType, test.alertAnnotationCount)
 			assertAnnotationCount(t, fakeSQL, dashboardAnnotationType, test.dashboardAnnotationCount)
 			assertAnnotationCount(t, fakeSQL, apiAnnotationType, test.APIAnnotationCount)
+
+			// we create two records in annotation_tag for each sample annotation
+			expectedAnnotationTagCount := (test.alertAnnotationCount +
+				test.dashboardAnnotationCount +
+				test.APIAnnotationCount) * 2
+			assertAnnotationTagCount(t, fakeSQL, expectedAnnotationTagCount)
 		})
 	}
 }
@@ -128,7 +143,7 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 
 	// run the clean up task to keep one annotation.
 	cleaner := &AnnotationCleanupService{batchSize: 1, log: log.New("test-logger")}
-	err = cleaner.cleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
+	_, err = cleaner.cleanAnnotations(context.Background(), setting.AnnotationCleanupSettings{MaxCount: 1}, alertAnnotationType)
 	require.NoError(t, err)
 
 	// assert that the last annotations were kept
@@ -147,6 +162,17 @@ func assertAnnotationCount(t *testing.T, fakeSQL *SQLStore, sql string, expected
 	session := fakeSQL.NewSession()
 	defer session.Close()
 	count, err := session.Where(sql).Count(&annotations.Item{})
+	require.NoError(t, err)
+	require.Equal(t, expectedCount, count)
+}
+
+func assertAnnotationTagCount(t *testing.T, fakeSQL *SQLStore, expectedCount int64) {
+	t.Helper()
+
+	session := fakeSQL.NewSession()
+	defer session.Close()
+
+	count, err := session.SQL("select count(*) from annotation_tag").Count()
 	require.NoError(t, err)
 	require.Equal(t, expectedCount, count)
 }
@@ -187,6 +213,14 @@ func createTestAnnotations(t *testing.T, sqlstore *SQLStore, expectedCount int, 
 
 		_, err := sqlstore.NewSession().Insert(a)
 		require.NoError(t, err, "should be able to save annotation", err)
+
+		// mimick the SQL annotation Save logic by writing records to the annotation_tag table
+		// we need to ensure they get deleted when we clean up annotations
+		sess := sqlstore.NewSession()
+		for tagID := range []int{1, 2} {
+			_, err = sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", a.Id, tagID)
+			require.NoError(t, err, "should be able to save annotation tag ID", err)
+		}
 	}
 }
 

@@ -14,7 +14,7 @@ const getStyles = (theme: GrafanaTheme) => ({
     font-size: ${theme.typography.size.sm};
     display: flex;
     flex-flow: column nowrap;
-    height: 65vh;
+    height: 60vh;
     overflow-y: auto;
     :first-child {
       margin-top: auto !important;

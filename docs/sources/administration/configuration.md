@@ -610,8 +610,7 @@ If you manage users externally you can replace the user invite button for organi
 
 ### viewers_can_edit
 
-Viewers can edit/inspect dashboard settings in the browser, but not save the dashboard.
-Default is `false`.
+Viewers can access and use [Explore]({{< relref "../explore/_index.md" >}}) and perform temporary edits on panels in dashboards they have access to. They cannot save their changes. Default is `false`.
 
 ### editors_can_admin
 
@@ -882,6 +881,8 @@ Enable daily rotation of files, valid options are `false` or `true`. Default is 
 
 Maximum number of days to keep log files. Default is `7`.
 
+<hr>
+
 ## [log.syslog]
 
 Only applicable when "syslog" used in `[log]` mode.
@@ -905,6 +906,36 @@ Syslog facility. Valid options are user, daemon or local0 through local7. Defaul
 ### tag
 
 Syslog tag. By default, the process's `argv[0]` is used.
+
+<hr>
+
+## [log.frontend]
+
+**Note:** This feature is available in Grafana 7.4+.
+
+### enabled
+
+Sentry javascript agent is initialized. Default is `false`.
+
+### sentry_dsn
+
+Sentry DSN if you want to send events to Sentry
+
+### custom_endpoint
+
+Custom HTTP endpoint to send events captured by the Sentry agent to. Default, `/log`, will log the events to stdout.
+
+### sample_rate
+
+Rate of events to be reported between `0` (none) and `1` (all, default), float.
+
+### log_endpoint_requests_per_second_limit
+
+Requests per second limit enforced per an extended period, for Grafana backend log ingestion endpoint, `/log`. Default is `3`.
+
+### log_endpoint_burst_limit
+
+Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log`. Default is `15`.
 
 <hr>
 

@@ -1,5 +1,8 @@
 import { SelectableValue } from '@grafana/data';
 
+/**
+ * @alpha
+ */
 export enum AxisPlacement {
   Auto = 'auto', // First axis on the left, the rest on the right
   Top = 'top',
@@ -9,18 +12,27 @@ export enum AxisPlacement {
   Hidden = 'hidden',
 }
 
-export enum PointMode {
+/**
+ * @alpha
+ */
+export enum PointVisibility {
   Auto = 'auto', // will show points when the density is low or line is hidden
   Never = 'never',
   Always = 'always',
 }
 
-export enum GraphMode {
+/**
+ * @alpha
+ */
+export enum DrawStyle {
   Line = 'line', // default
   Bars = 'bars', // will also have a gap percent
   Points = 'points', // Only show points
 }
 
+/**
+ * @alpha
+ */
 export enum LineInterpolation {
   Linear = 'linear',
   Smooth = 'smooth',
@@ -28,41 +40,88 @@ export enum LineInterpolation {
   StepAfter = 'stepAfter',
 }
 
+/**
+ * @alpha
+ */
+export enum ScaleDistribution {
+  Linear = 'linear',
+  Logarithmic = 'log',
+}
+
+/**
+ * @alpha
+ */
 export interface LineConfig {
   lineColor?: string;
   lineWidth?: number;
   lineInterpolation?: LineInterpolation;
+  lineDash?: number[];
+  spanNulls?: boolean;
 }
 
+/**
+ * @alpha
+ */
 export interface AreaConfig {
   fillColor?: string;
   fillOpacity?: number;
+  fillGradient?: AreaGradientMode;
 }
 
+/**
+ * @alpha
+ */
+export enum AreaGradientMode {
+  None = 'none',
+  Opacity = 'opacity',
+  Hue = 'hue',
+}
+
+/**
+ * @alpha
+ */
 export interface PointsConfig {
-  points?: PointMode;
+  showPoints?: PointVisibility;
   pointSize?: number;
   pointColor?: string;
   pointSymbol?: string; // eventually dot,star, etc
 }
 
-// Axis is actually unique based on the unit... not each field!
+/**
+ * @alpha
+ */
+export interface ScaleDistributionConfig {
+  type: ScaleDistribution;
+  log?: number;
+}
+
+/**
+ * @alpha
+ * Axis is actually unique based on the unit... not each field!
+ */
 export interface AxisConfig {
   axisPlacement?: AxisPlacement;
   axisLabel?: string;
   axisWidth?: number; // pixels ideally auto?
+  scaleDistribution?: ScaleDistributionConfig;
 }
 
+/**
+ * @alpha
+ */
 export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, AxisConfig {
-  mode?: GraphMode;
+  drawStyle?: DrawStyle;
 }
 
+/**
+ * @alpha
+ */
 export const graphFieldOptions = {
-  mode: [
-    { label: 'Lines', value: GraphMode.Line },
-    { label: 'Bars', value: GraphMode.Bars },
-    { label: 'Points', value: GraphMode.Points },
-  ] as Array<SelectableValue<GraphMode>>,
+  drawStyle: [
+    { label: 'Lines', value: DrawStyle.Line },
+    { label: 'Bars', value: DrawStyle.Bars },
+    { label: 'Points', value: DrawStyle.Points },
+  ] as Array<SelectableValue<DrawStyle>>,
 
   lineInterpolation: [
     { label: 'Linear', value: LineInterpolation.Linear },
@@ -71,11 +130,11 @@ export const graphFieldOptions = {
     { label: 'Step After', value: LineInterpolation.StepAfter },
   ] as Array<SelectableValue<LineInterpolation>>,
 
-  points: [
-    { label: 'Auto', value: PointMode.Auto, description: 'Show points when the density is low' },
-    { label: 'Always', value: PointMode.Always },
-    { label: 'Never', value: PointMode.Never },
-  ] as Array<SelectableValue<PointMode>>,
+  showPoints: [
+    { label: 'Auto', value: PointVisibility.Auto, description: 'Show points when the density is low' },
+    { label: 'Always', value: PointVisibility.Always },
+    { label: 'Never', value: PointVisibility.Never },
+  ] as Array<SelectableValue<PointVisibility>>,
 
   axisPlacement: [
     { label: 'Auto', value: AxisPlacement.Auto, description: 'First field on the left, everything else on the right' },
@@ -83,4 +142,10 @@ export const graphFieldOptions = {
     { label: 'Right', value: AxisPlacement.Right },
     { label: 'Hidden', value: AxisPlacement.Hidden },
   ] as Array<SelectableValue<AxisPlacement>>,
+
+  fillGradient: [
+    { label: 'None', value: undefined },
+    { label: 'Opacity', value: AreaGradientMode.Opacity },
+    { label: 'Hue', value: AreaGradientMode.Hue },
+  ] as Array<SelectableValue<AreaGradientMode>>,
 };

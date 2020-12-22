@@ -482,10 +482,14 @@ func (e *CloudMonitoringExecutor) executeQuery(ctx context.Context, query *cloud
 
 func (e *CloudMonitoringExecutor) unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			slog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	if res.StatusCode/100 != 2 {
 		slog.Error("Request failed", "status", res.Status, "body", string(body))

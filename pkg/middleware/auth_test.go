@@ -33,16 +33,10 @@ func TestMiddlewareAuth(t *testing.T) {
 	t.Run("Anonymous auth enabled", func(t *testing.T) {
 		const orgID int64 = 1
 
-		origEnabled := setting.AnonymousEnabled
-		t.Cleanup(func() {
-			setting.AnonymousEnabled = origEnabled
-		})
-		origName := setting.AnonymousOrgName
-		t.Cleanup(func() {
-			setting.AnonymousOrgName = origName
-		})
-		setting.AnonymousEnabled = true
-		setting.AnonymousOrgName = "test"
+		configure := func(cfg *setting.Cfg) {
+			cfg.AnonymousEnabled = true
+			cfg.AnonymousOrgName = "test"
+		}
 
 		middlewareScenario(t, "ReqSignIn true and request with forceLogin in query string", func(
 			t *testing.T, sc *scenarioContext) {
@@ -59,7 +53,7 @@ func TestMiddlewareAuth(t *testing.T) {
 			location, ok := sc.resp.Header()["Location"]
 			assert.True(t, ok)
 			assert.Equal(t, "/login", location[0])
-		})
+		}, configure)
 
 		middlewareScenario(t, "ReqSignIn true and request with same org provided in query string", func(
 			t *testing.T, sc *scenarioContext) {
@@ -73,7 +67,7 @@ func TestMiddlewareAuth(t *testing.T) {
 			sc.fakeReq("GET", fmt.Sprintf("/secure?orgId=%d", orgID)).exec()
 
 			assert.Equal(t, 200, sc.resp.Code)
-		})
+		}, configure)
 
 		middlewareScenario(t, "ReqSignIn true and request with different org provided in query string", func(
 			t *testing.T, sc *scenarioContext) {
@@ -90,20 +84,20 @@ func TestMiddlewareAuth(t *testing.T) {
 			location, ok := sc.resp.Header()["Location"]
 			assert.True(t, ok)
 			assert.Equal(t, "/login", location[0])
-		})
+		}, configure)
 	})
 
 	middlewareScenario(t, "Snapshot public mode disabled and unauthenticated request should return 401", func(
 		t *testing.T, sc *scenarioContext) {
-		sc.m.Get("/api/snapshot", SnapshotPublicModeOrSignedIn(), sc.defaultHandler)
+		sc.m.Get("/api/snapshot", SnapshotPublicModeOrSignedIn(sc.cfg), sc.defaultHandler)
 		sc.fakeReq("GET", "/api/snapshot").exec()
 		assert.Equal(t, 401, sc.resp.Code)
 	})
 
 	middlewareScenario(t, "Snapshot public mode enabled and unauthenticated request should return 200", func(
 		t *testing.T, sc *scenarioContext) {
-		setting.SnapshotPublicMode = true
-		sc.m.Get("/api/snapshot", SnapshotPublicModeOrSignedIn(), sc.defaultHandler)
+		sc.cfg.SnapshotPublicMode = true
+		sc.m.Get("/api/snapshot", SnapshotPublicModeOrSignedIn(sc.cfg), sc.defaultHandler)
 		sc.fakeReq("GET", "/api/snapshot").exec()
 		assert.Equal(t, 200, sc.resp.Code)
 	})

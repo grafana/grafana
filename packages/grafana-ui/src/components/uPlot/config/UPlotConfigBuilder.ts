@@ -3,11 +3,14 @@ import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '../config';
+import { Cursor } from 'uplot';
+import { defaultsDeep } from 'lodash';
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
   private axes: Record<string, UPlotAxisBuilder> = {};
   private scales: UPlotScaleBuilder[] = [];
+  private cursor: Cursor | undefined;
 
   hasLeftAxis = false;
 
@@ -28,12 +31,21 @@ export class UPlotConfigBuilder {
       this.hasLeftAxis = true;
     }
 
+    if (props.placement === AxisPlacement.Hidden) {
+      props.show = false;
+      props.size = 0;
+    }
+
     this.axes[props.scaleKey] = new UPlotAxisBuilder(props);
   }
 
   getAxisPlacement(scaleKey: string): AxisPlacement {
     const axis = this.axes[scaleKey];
     return axis?.props.placement! ?? AxisPlacement.Left;
+  }
+
+  setCursor(cursor?: Cursor) {
+    this.cursor = cursor;
   }
 
   addSeries(props: SeriesProps) {
@@ -57,6 +69,28 @@ export class UPlotConfigBuilder {
     config.scales = this.scales.reduce((acc, s) => {
       return { ...acc, ...s.getConfig() };
     }, {});
+
+    config.cursor = this.cursor || {};
+
+    const cursorDefaults: Cursor = {
+      // prevent client-side zoom from triggering at the end of a selection
+      drag: { setScale: false },
+      points: {
+        /*@ts-ignore*/
+        size: (u, seriesIdx) => u.series[seriesIdx].points.size * 2,
+        /*@ts-ignore*/
+        width: (u, seriesIdx, size) => size / 4,
+        /*@ts-ignore*/
+        stroke: (u, seriesIdx) => u.series[seriesIdx].points.stroke(u, seriesIdx) + '80',
+        /*@ts-ignore*/
+        fill: (u, seriesIdx) => u.series[seriesIdx].points.stroke(u, seriesIdx),
+      },
+      focus: {
+        prox: 30,
+      },
+    };
+
+    defaultsDeep(config.cursor, cursorDefaults);
 
     return config;
   }

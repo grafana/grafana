@@ -1,20 +1,23 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import uPlot, { AlignedData, AlignedDataWithGapTest, Options } from 'uplot';
 import { buildPlotContext, PlotContext } from './context';
 import { pluginLog } from './utils';
 import { usePlotConfig } from './hooks';
 import { AlignedFrameWithGapTest, PlotProps } from './types';
-import { DataFrame, FieldType } from '@grafana/data';
-import isNumber from 'lodash/isNumber';
+import { DataFrame } from '@grafana/data';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 import usePrevious from 'react-use/lib/usePrevious';
 
-// uPlot abstraction responsible for plot initialisation, setup and refresh
-// Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
-// Exposes contexts for plugins registration and uPlot instance access
+/**
+ * @internal
+ * uPlot abstraction responsible for plot initialisation, setup and refresh
+ * Receives a data frame that is x-axis aligned, as of https://github.com/leeoniya/uPlot/tree/master/docs#data-format
+ * Exposes contexts for plugins registration and uPlot instance access
+ */
 export const UPlotChart: React.FC<PlotProps> = props => {
   const canvasRef = useRef<HTMLDivElement>(null);
   const plotInstance = useRef<uPlot>();
+  const [isPlotReady, setIsPlotReady] = useState(false);
   const prevProps = usePrevious(props);
   const { isConfigReady, currentConfig, registerPlugin } = usePlotConfig(
     props.width,
@@ -36,6 +39,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     // 1. When config is ready and there is no uPlot instance, create new uPlot and return
     if (isConfigReady && !plotInstance.current) {
       plotInstance.current = initializePlot(prepareData(props.data), currentConfig.current, canvasRef.current);
+      setIsPlotReady(true);
       return;
     }
 
@@ -60,7 +64,7 @@ export const UPlotChart: React.FC<PlotProps> = props => {
     }
 
     // 4. Otherwise, assume only data has changed and update uPlot data
-    updateData(props.data.frame, props.config, plotInstance.current, prepareData(props.data).data);
+    updateData(props.data.frame, props.config, plotInstance.current, prepareData(props.data));
   }, [props, isConfigReady]);
 
   // When component unmounts, clean the existing uPlot instance
@@ -68,8 +72,8 @@ export const UPlotChart: React.FC<PlotProps> = props => {
 
   // Memoize plot context
   const plotCtx = useMemo(() => {
-    return buildPlotContext(canvasRef, props.data, registerPlugin, getPlotInstance);
-  }, [plotInstance, canvasRef, props.data, registerPlugin, getPlotInstance]);
+    return buildPlotContext(isPlotReady, canvasRef, props.data, registerPlugin, getPlotInstance);
+  }, [plotInstance, canvasRef, props.data, registerPlugin, getPlotInstance, isPlotReady]);
 
   return (
     <PlotContext.Provider value={plotCtx}>
@@ -93,38 +97,15 @@ function initializePlot(data: AlignedDataWithGapTest, config: Options, el: HTMLD
   return new uPlot(config, data, el);
 }
 
-function updateData(frame: DataFrame, config: UPlotConfigBuilder, plotInstance?: uPlot, data?: AlignedData | null) {
+function updateData(
+  frame: DataFrame,
+  config: UPlotConfigBuilder,
+  plotInstance?: uPlot,
+  data?: AlignedDataWithGapTest | null
+) {
   if (!plotInstance || !data) {
     return;
   }
   pluginLog('uPlot core', false, 'updating plot data(throttled log!)', data);
-  updateScales(frame, config, plotInstance);
   plotInstance.setData(data);
-}
-
-function updateScales(frame: DataFrame, config: UPlotConfigBuilder, plotInstance: uPlot) {
-  let yRange: [number, number] | undefined = undefined;
-
-  for (let i = 0; i < frame.fields.length; i++) {
-    if (frame.fields[i].type !== FieldType.number) {
-      continue;
-    }
-    if (isNumber(frame.fields[i].config.min) && isNumber(frame.fields[i].config.max)) {
-      yRange = [frame.fields[i].config.min!, frame.fields[i].config.max!];
-      break;
-    }
-  }
-
-  const scalesConfig = config.getConfig().scales;
-
-  if (scalesConfig && yRange) {
-    for (const scale in scalesConfig) {
-      if (!scalesConfig.hasOwnProperty(scale)) {
-        continue;
-      }
-      if (scale !== 'x') {
-        plotInstance.setScale(scale, { min: yRange[0], max: yRange[1] });
-      }
-    }
-  }
 }

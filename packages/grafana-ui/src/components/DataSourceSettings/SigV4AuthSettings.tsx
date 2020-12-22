@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HttpSettingsProps } from './types';
 import { SelectableValue } from '@grafana/data';
 import { Button, InlineFormLabel, Input } from '..';
 import Select from '../Forms/Legacy/Select/Select';
 
 export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
-  const { dataSourceConfig } = props;
+  const { dataSourceConfig, onChange } = props;
 
   const authProviderOptions = [
     { label: 'AWS SDK Default', value: 'default' },
@@ -42,6 +42,12 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
     { value: 'us-west-2', label: 'us-west-2' },
   ] as SelectableValue[];
 
+  // Apply some defaults on initial render
+  useEffect(() => {
+    const sigV4AuthType = dataSourceConfig.jsonData.sigV4AuthType || 'default';
+    onJsonDataChange('sigV4AuthType', sigV4AuthType);
+  }, []);
+
   const onSecureJsonDataReset = (fieldName: string) => {
     const state = {
       ...dataSourceConfig,
@@ -55,7 +61,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
       },
     };
 
-    props.onChange(state);
+    onChange(state);
   };
 
   const onSecureJsonDataChange = (fieldName: string, fieldValue: string) => {
@@ -67,7 +73,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
       },
     };
 
-    props.onChange(state);
+    onChange(state);
   };
 
   const onJsonDataChange = (fieldName: string, fieldValue: string) => {
@@ -79,7 +85,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
       },
     };
 
-    props.onChange(state);
+    onChange(state);
   };
 
   return (
@@ -100,7 +106,7 @@ export const SigV4AuthSettings: React.FC<HttpSettingsProps> = props => {
                 authProvider => authProvider.value === dataSourceConfig.jsonData.sigV4AuthType
               )}
               options={authProviderOptions}
-              defaultValue={dataSourceConfig.jsonData.sigV4AuthType || authProviderOptions[0]}
+              defaultValue={dataSourceConfig.jsonData.sigV4AuthType || ''}
               onChange={option => {
                 onJsonDataChange('sigV4AuthType', option.value);
               }}

@@ -12,7 +12,6 @@ import {
   DefaultTimeZone,
   HistoryItem,
   IntervalValues,
-  LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
   RawTimeRange,
@@ -484,10 +483,6 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
   }
 
   return rangeUtil.calculateInterval(range, resolution, lowLimit);
-}
-
-export function deduplicateLogRowsById(rows: LogRowModel[]) {
-  return _.uniqBy(rows, 'uid');
 }
 
 export const getFirstNonQueryRowSpecificError = (queryErrors?: DataQueryError[]): DataQueryError | undefined => {

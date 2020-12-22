@@ -48,6 +48,12 @@ export interface FieldConfigEditorConfig<TOptions, TSettings = any, TValue = any
    * @param field
    */
   shouldApply?: (field: Field) => boolean;
+
+  /** Indicates that option shoukd not be available in the Field config tab */
+  hideFromDefaults?: boolean;
+
+  /** Indicates that option should not be available for the overrides */
+  hideFromOverrides?: boolean;
 }
 
 export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings extends {} = any>
@@ -58,10 +64,16 @@ export interface FieldConfigPropertyItem<TOptions = any, TValue = any, TSettings
   /** true for plugin field config properties */
   isCustom?: boolean;
 
-  // Convert the override value to a well typed value
+  /** Hides option from the Field config tab */
+  hideFromDefaults?: boolean;
+
+  /** Indicates that option should not be available for the overrides */
+  hideFromOverrides?: boolean;
+
+  /** Convert the override value to a well typed value */
   process: (value: any, context: FieldOverrideContext, settings?: TSettings) => TValue | undefined | null;
 
-  // Checks if field should be processed
+  /** Checks if field should be processed */
   shouldApply: (field: Field) => boolean;
 }
 

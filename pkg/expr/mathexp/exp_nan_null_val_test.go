@@ -144,7 +144,7 @@ func TestNaN(t *testing.T) {
 				e, err := New(tt.expr)
 				tt.newErrIs(t, err)
 				if e != nil {
-					res, err := e.Execute(tt.vars)
+					res, err := e.Execute("", tt.vars)
 					tt.execErrIs(t, err)
 					if diff := cmp.Diff(res, tt.results, options...); diff != "" {
 						assert.FailNow(t, tt.name, diff)
@@ -175,21 +175,21 @@ func TestNullValues(t *testing.T) {
 			expr:      "! null()",
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
-			results:   NewScalarResults(nil),
+			results:   NewScalarResults("", nil),
 		},
 		{
 			name:      "scalar: binary null() + null(): is null",
 			expr:      "null() + null()",
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
-			results:   NewScalarResults(nil),
+			results:   NewScalarResults("", nil),
 		},
 		{
 			name:      "scalar: binary 1 + null(): is null",
 			expr:      "1 + null()",
 			newErrIs:  assert.NoError,
 			execErrIs: assert.NoError,
-			results:   NewScalarResults(nil),
+			results:   NewScalarResults("", nil),
 		},
 		{
 			name: "series: unary with a null value in it has a null value in result",
@@ -406,7 +406,7 @@ func TestNullValues(t *testing.T) {
 				e, err := New(tt.expr)
 				tt.newErrIs(t, err)
 				if e != nil {
-					res, err := e.Execute(tt.vars)
+					res, err := e.Execute("", tt.vars)
 					tt.execErrIs(t, err)
 					if diff := cmp.Diff(tt.results, res, options...); diff != "" {
 						t.Errorf("Result mismatch (-want +got):\n%s", diff)
