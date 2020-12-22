@@ -6,8 +6,8 @@ import { FieldMatcherID } from './ids';
  * @public
  */
 export interface ReadOnlyFieldMatcherOptions<T = any> {
-  innerId: FieldMatcherID;
-  innerOptions: T;
+  matcherId: FieldMatcherID;
+  matcherOptions: T;
   prefix: string;
 }
 
@@ -29,23 +29,23 @@ export const getReadOnlyFieldMatchers = (
       description: 'Field name by inner matcher',
       excludeFromPicker: true,
       get: (options: ReadOnlyFieldMatcherOptions): FieldMatcher => {
-        if (options.innerId === FieldMatcherID.readOnly) {
+        if (options.matcherId === FieldMatcherID.readOnly) {
           throw new Error('You can not wrap the readOnly matcher in the readOnly matcher, will cause a loop.');
         }
 
-        const matcher = registry.getIfExists(options.innerId);
+        const matcher = registry.getIfExists(options.matcherId);
 
         if (!matcher) {
-          throw new Error(`Could not find given matcher Id ${options.innerId}`);
+          throw new Error(`Could not find given matcher Id ${options.matcherId}`);
         }
 
-        return matcher.get(options.innerOptions);
+        return matcher.get(options.matcherOptions);
       },
       getOptionsDisplayText: (options: ReadOnlyFieldMatcherOptions): string => {
-        const matcher = registry.getIfExists(options.innerId);
+        const matcher = registry.getIfExists(options.matcherId);
 
         if (!matcher) {
-          throw new Error(`Could not find given matcher Id ${options.innerId}`);
+          throw new Error(`Could not find given matcher Id ${options.matcherId}`);
         }
 
         if (!matcher.getOptionsDisplayText) {

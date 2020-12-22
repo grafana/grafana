@@ -270,9 +270,9 @@ const createOverride = (matchers: string[]) => {
     matcher: {
       id: FieldMatcherID.readOnly,
       options: {
-        innerId: FieldMatcherID.byNames,
-        innerOptions: {
-          mode: ByNamesMatcherMode.allExcept,
+        matcherId: FieldMatcherID.byNames,
+        matcherOptions: {
+          mode: ByNamesMatcherMode.exclude,
           names: matchers,
         },
         prefix: 'All except:',

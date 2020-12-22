@@ -187,11 +187,11 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       if (hasLegend.current && !customConfig.hideFrom?.legend) {
         const axisPlacement = builder.getAxisPlacement(scaleKey);
         // we need to add this as dep or move it to be done outside.
-        const ref = getDataFrameFieldIndex ? getDataFrameFieldIndex(i) : undefined;
+        const dataFrameFieldIndex = getDataFrameFieldIndex ? getDataFrameFieldIndex(i) : undefined;
 
         legendItems.push({
           disabled: field.config.custom?.hideFrom?.graph ?? false,
-          fieldIndex: ref,
+          fieldIndex: dataFrameFieldIndex,
           color: seriesColor,
           label: getFieldDisplayName(field, alignedFrame),
           yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,

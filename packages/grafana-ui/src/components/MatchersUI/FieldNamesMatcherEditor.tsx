@@ -52,6 +52,7 @@ export const fieldNamesMatcherItem: FieldMatcherUIRegistryItem<ByNamesMatcherOpt
   name: 'Fields with name',
   description: 'Set properties for a specific field',
   optionsToLabel: options => (options.names ?? []).join(', '),
+  excludeFromPicker: true,
 };
 
 const useFieldDisplayNames = (data: DataFrame[]): Set<string> => {

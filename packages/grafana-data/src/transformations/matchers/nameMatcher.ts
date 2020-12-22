@@ -15,8 +15,8 @@ export interface RegexpOrNamesMatcherOptions {
  * @public
  */
 export enum ByNamesMatcherMode {
-  allExcept = 'allExcept',
-  allIn = 'allIn',
+  exclude = 'exclude',
+  include = 'include',
 }
 
 /**
@@ -52,16 +52,16 @@ const multipleFieldNamesMatcher: FieldMatcherInfo<ByNamesMatcherOptions> = {
   name: 'Field Names',
   description: 'match any of the given the field names',
   defaultOptions: {
-    mode: ByNamesMatcherMode.allIn,
+    mode: ByNamesMatcherMode.include,
     names: [],
   },
 
   get: (options: ByNamesMatcherOptions): FieldMatcher => {
-    const { names, mode = ByNamesMatcherMode.allIn } = options;
+    const { names, mode = ByNamesMatcherMode.include } = options;
     const uniqueNames = new Set<string>(names ?? []);
 
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
-      if (mode === ByNamesMatcherMode.allExcept) {
+      if (mode === ByNamesMatcherMode.exclude) {
         return !uniqueNames.has(getFieldDisplayName(field, frame, allFrames));
       }
       return uniqueNames.has(getFieldDisplayName(field, frame, allFrames));
@@ -71,7 +71,7 @@ const multipleFieldNamesMatcher: FieldMatcherInfo<ByNamesMatcherOptions> = {
   getOptionsDisplayText: (options: ByNamesMatcherOptions): string => {
     const { names, mode } = options;
     const displayText = (names ?? []).join(', ');
-    if (mode === ByNamesMatcherMode.allExcept) {
+    if (mode === ByNamesMatcherMode.exclude) {
       return `All except: ${displayText}`;
     }
     return `All of: ${displayText}`;
@@ -132,7 +132,7 @@ const regexpOrMultipleNamesMatcher: FieldMatcherInfo<RegexpOrNamesMatcherOptions
   get: (options: RegexpOrNamesMatcherOptions): FieldMatcher => {
     const regexpMatcher = regexpFieldNameMatcher.get(options?.pattern || '');
     const namesMatcher = multipleFieldNamesMatcher.get({
-      mode: ByNamesMatcherMode.allIn,
+      mode: ByNamesMatcherMode.include,
       names: options?.names ?? [],
     });
 

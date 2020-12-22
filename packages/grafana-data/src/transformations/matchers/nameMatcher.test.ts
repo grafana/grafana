@@ -115,7 +115,7 @@ describe('Field Multiple Names Matcher', () => {
     const config = {
       id: FieldMatcherID.byNames,
       options: {
-        mode: ByNamesMatcherMode.allIn,
+        mode: ByNamesMatcherMode.include,
         names: ['C'],
       },
     };
@@ -154,7 +154,7 @@ describe('Field Multiple Names Matcher', () => {
     const config = {
       id: FieldMatcherID.byNames,
       options: {
-        mode: ByNamesMatcherMode.allIn,
+        mode: ByNamesMatcherMode.include,
         names: ['c'],
       },
     };
@@ -173,7 +173,7 @@ describe('Field Multiple Names Matcher', () => {
     const config = {
       id: FieldMatcherID.byNames,
       options: {
-        mode: ByNamesMatcherMode.allIn,
+        mode: ByNamesMatcherMode.include,
         names: [],
       },
     };
@@ -192,7 +192,7 @@ describe('Field Multiple Names Matcher', () => {
     const config = {
       id: FieldMatcherID.byNames,
       options: {
-        mode: ByNamesMatcherMode.allIn,
+        mode: ByNamesMatcherMode.include,
         names: ['some.instance.path', '112', '13'],
       },
     };
@@ -211,7 +211,7 @@ describe('Field Multiple Names Matcher', () => {
     const config = {
       id: FieldMatcherID.byNames,
       options: {
-        mode: ByNamesMatcherMode.allExcept,
+        mode: ByNamesMatcherMode.exclude,
         names: ['C'],
       },
     };

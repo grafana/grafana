@@ -126,9 +126,9 @@ const createOverride = (names: string[], property?: DynamicConfigValue): SystemC
       id: FieldMatcherID.readOnly,
       options: {
         prefix: 'All except:',
-        innerId: FieldMatcherID.byNames,
-        innerOptions: {
-          mode: ByNamesMatcherMode.allExcept,
+        matcherId: FieldMatcherID.byNames,
+        matcherOptions: {
+          mode: ByNamesMatcherMode.exclude,
           names: names,
         },
       },
