@@ -1,4 +1,11 @@
-import { DataFrame, FieldConfigSource, FieldMatcherID, FieldType, toDataFrame } from '@grafana/data';
+import {
+  ByNamesMatcherMode,
+  DataFrame,
+  FieldConfigSource,
+  FieldMatcherID,
+  FieldType,
+  toDataFrame,
+} from '@grafana/data';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from '@grafana/ui';
 import { hideSeriesConfigFactory } from './hideSeriesConfigFactory';
 
@@ -259,13 +266,16 @@ describe('hideSeriesConfigFactory', () => {
 
 const createOverride = (matchers: string[]) => {
   return {
-    __systemRef: 'hide_series_from',
+    __systemRef: 'hideSeriesFrom',
     matcher: {
       id: FieldMatcherID.readOnly,
       options: {
-        innerId: FieldMatcherID.byRegexp,
-        innerOptions: `^(?!${matchers.join('$|')}$).*$`,
-        formattedValue: `All except: ${matchers.join(', ')}`,
+        innerId: FieldMatcherID.byNames,
+        innerOptions: {
+          mode: ByNamesMatcherMode.allExcept,
+          names: matchers,
+        },
+        prefix: 'All except:',
       },
     },
     properties: [

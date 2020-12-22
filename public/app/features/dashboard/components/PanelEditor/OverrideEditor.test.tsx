@@ -3,9 +3,11 @@ import { fireEvent, render } from '@testing-library/react';
 import { FieldConfigOptionsRegistry } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { OverrideEditor } from './OverrideEditor';
+import { fieldMatchersUI, getDefaultFieldMatchersUI } from '@grafana/ui';
 
 describe('OverrideEditor', () => {
   let registry: FieldConfigOptionsRegistry;
+  fieldMatchersUI.setInit(getDefaultFieldMatchersUI);
 
   beforeEach(() => {
     registry = new FieldConfigOptionsRegistry(() => {
