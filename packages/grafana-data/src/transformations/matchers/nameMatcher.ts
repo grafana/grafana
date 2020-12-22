@@ -57,7 +57,7 @@ const multipleFieldNamesMatcher: FieldMatcherInfo<ByNamesMatcherOptions> = {
   },
 
   get: (options: ByNamesMatcherOptions): FieldMatcher => {
-    const { names, mode = 'include' } = options;
+    const { names, mode = ByNamesMatcherMode.allIn } = options;
     const uniqueNames = new Set<string>(names ?? []);
 
     return (field: Field, frame: DataFrame, allFrames: DataFrame[]) => {
