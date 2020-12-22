@@ -22,9 +22,9 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
     link: (scope: any, elem) => {
       const ctrl: PanelCtrl = scope.ctrl;
       const panel: PanelModel = scope.ctrl.panel;
+      const subs = new Subscription();
 
       let panelScrollbar: any;
-      let subs = new Subscription();
 
       function resizeScrollableContent() {
         if (panelScrollbar) {
