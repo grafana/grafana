@@ -179,11 +179,11 @@ func TestGetAllLibraryPanels(t *testing.T) {
 }
 
 type libraryPanel struct {
-	ID       int64  `json:"ID"`
-	OrgID    int64  `json:"OrgID"`
-	FolderID int64  `json:"FolderID"`
-	UID      string `json:"UID"`
-	Name     string `json:"Name"`
+	ID       int64  `json:"id"`
+	OrgID    int64  `json:"orgId"`
+	FolderID int64  `json:"folderId"`
+	UID      string `json:"uid"`
+	Name     string `json:"name"`
 }
 
 type libraryPanelResult struct {
