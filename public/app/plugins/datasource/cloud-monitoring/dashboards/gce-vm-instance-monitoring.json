@@ -95,7 +95,7 @@
           "queryType": "metrics",
           "refId": "A",
           "metricQuery": {
-            "aliasBy": "",
+            "aliasBy": "{{metric.label.instance_name}}",
             "alignmentPeriod": "$alignmentPeriod",
             "perSeriesAligner": "ALIGN_MEAN",
             "filters": ["resource.type", "=", "gce_instance"],

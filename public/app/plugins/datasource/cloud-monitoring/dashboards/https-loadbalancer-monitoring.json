@@ -853,7 +853,7 @@
   "time": { "from": "now-24h", "to": "now" },
   "timepicker": {},
   "timezone": "",
-  "title": "HTTP/S Load Balancer Monitoring",
+  "title": "HTTP/S GCP Load Balancer Monitoring",
   "uid": "",
   "version": 5
 }
