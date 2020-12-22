@@ -66,7 +66,7 @@ func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, uid str
 func getLibraryPanel(session *sqlstore.DBSession, uid string, orgID int64) (LibraryPanel, error) {
 	libraryPanels := make([]LibraryPanel, 0)
 	session.Table("library_panel")
-	session.Where("uid=? and org_id=?", uid, orgID)
+	session.Where("uid=? AND org_id=?", uid, orgID)
 	err := session.Find(&libraryPanels)
 	if err != nil {
 		return LibraryPanel{}, err
