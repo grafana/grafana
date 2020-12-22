@@ -8,7 +8,7 @@ weight = 1100
 
 # Using OpenTSDB in Grafana
 
-Grafana ships with advanced support for OpenTSDB. This topic explains options, variables, querying, and other options specific to the Prometheus data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
+Grafana ships with advanced support for OpenTSDB. This topic explains options, variables, querying, and other options specific to the OpenTSDB data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
 ## OpenTSDB settings
 
