@@ -19,17 +19,19 @@ import { getEqualValueMatchers } from './matchers/valueMatchers/equalMatchers';
 import { getRangeValueMatchers } from './matchers/valueMatchers/rangeMatchers';
 import { getSimpleFieldMatchers } from './matchers/simpleFieldMatcher';
 import { getRegexValueMatcher } from './matchers/valueMatchers/regexMatchers';
+import { getReadOnlyFieldMatchers } from './matchers/readOnlyMatcher';
 
 /**
  * Registry that contains all of the built in field matchers.
  * @public
  */
-export const fieldMatchers = new Registry<FieldMatcherInfo>(() => {
+export const fieldMatchers: Registry<FieldMatcherInfo> = new Registry<FieldMatcherInfo>(() => {
   return [
     ...getFieldPredicateMatchers(), // Predicates
     ...getFieldTypeMatchers(), // by type
     ...getFieldNameMatchers(), // by name
     ...getSimpleFieldMatchers(), // first
+    ...getReadOnlyFieldMatchers(fieldMatchers),
   ];
 });
 

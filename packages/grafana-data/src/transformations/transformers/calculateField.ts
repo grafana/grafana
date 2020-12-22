@@ -13,7 +13,6 @@ import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators'
 import { ensureColumnsTransformer } from './ensureColumns';
 import { getFieldDisplayName } from '../../field';
 import { noopTransformer } from './noop';
-import { ByNamesMatcherMode } from '../matchers/nameMatcher';
 
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',

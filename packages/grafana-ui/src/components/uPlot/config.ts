@@ -106,6 +106,9 @@ export interface AxisConfig {
   scaleDistribution?: ScaleDistributionConfig;
 }
 
+/**
+ * @alpha
+ */
 export interface HideSeriesConfig {
   tooltip: boolean;
   legend: boolean;
