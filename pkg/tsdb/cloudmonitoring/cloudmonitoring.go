@@ -542,6 +542,17 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, cmr 
 
 		frame := data.NewFrameOfFieldTypes("", len(series.Points), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = query.RefID
+
+		dl := ""
+		if len(cmr.TimeSeries) > 0 {
+			dl = query.buildDeepLink()
+		}
+		deepLink := data.DataLink{
+			Title:       "View in Metrics Explorer",
+			TargetBlank: true,
+			URL:         dl,
+		}
+
 		for key, value := range series.Metric.Labels {
 			if _, ok := labels["metric.label."+key]; !ok {
 				labels["metric.label."+key] = map[string]bool{}
@@ -598,6 +609,10 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, cmr 
 		if series.ValueType != "DISTRIBUTION" {
 			handleDistributionSeries(
 				series, defaultMetricName, seriesLabels, query, queryRes, frame)
+			if frame.Fields[1].Config == nil {
+				frame.Fields[1].Config = &data.FieldConfig{}
+			}
+			frame.Fields[1].Config.Links = append(frame.Fields[1].Config.Links, deepLink)
 			frames = append(frames, frame)
 		} else {
 			buckets := make(map[int]*data.Frame)
@@ -658,6 +673,10 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, cmr 
 				}
 			}
 			for i := 0; i < len(buckets); i++ {
+				if frame.Fields[1].Config == nil {
+					frame.Fields[1].Config = &data.FieldConfig{}
+				}
+				buckets[i].Fields[1].Config.Links = append(buckets[i].Fields[1].Config.Links, deepLink)
 				frames = append(frames, buckets[i])
 			}
 		}
