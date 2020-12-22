@@ -18,9 +18,9 @@ func (lps *LibraryPanelService) registerAPIEndpoints() {
 
 	lps.RouteRegister.Group("/api/library-panels", func(libraryPanels routing.RouteRegister) {
 		libraryPanels.Post("/", middleware.ReqSignedIn, binding.Bind(createLibraryPanelCommand{}), api.Wrap(lps.createHandler))
-		libraryPanels.Delete("/:panelId", middleware.ReqSignedIn, api.Wrap(lps.deleteHandler))
-		libraryPanels.Get("/:panelId", middleware.ReqSignedIn, api.Wrap(lps.getHandler))
+		libraryPanels.Delete("/:uid", middleware.ReqSignedIn, api.Wrap(lps.deleteHandler))
 		libraryPanels.Get("/", middleware.ReqSignedIn, api.Wrap(lps.getAllHandler))
+		libraryPanels.Get("/:uid", middleware.ReqSignedIn, api.Wrap(lps.getHandler))
 	})
 }
 
@@ -37,9 +37,9 @@ func (lps *LibraryPanelService) createHandler(c *models.ReqContext, cmd createLi
 	return api.JSON(200, util.DynMap{"result": panel})
 }
 
-// deleteHandler handles DELETE /api/library-panels/:panelId
+// deleteHandler handles DELETE /api/library-panels/:uid
 func (lps *LibraryPanelService) deleteHandler(c *models.ReqContext) api.Response {
-	err := lps.deleteLibraryPanel(c, c.ParamsInt64(":panelId"))
+	err := lps.deleteLibraryPanel(c, c.Params(":uid"))
 	if err != nil {
 		if errors.Is(err, errLibraryPanelNotFound) {
 			return api.Error(404, errLibraryPanelNotFound.Error(), err)
@@ -50,9 +50,9 @@ func (lps *LibraryPanelService) deleteHandler(c *models.ReqContext) api.Response
 	return api.Success("Library panel deleted")
 }
 
-// getHandler handles GET /api/library-panels/:panelId
+// getHandler handles GET /api/library-panels/:uid
 func (lps *LibraryPanelService) getHandler(c *models.ReqContext) api.Response {
-	libraryPanel, err := lps.getLibraryPanel(c, c.ParamsInt64(":panelId"))
+	libraryPanel, err := lps.getLibraryPanel(c, c.Params(":uid"))
 	if err != nil {
 		if errors.Is(err, errLibraryPanelNotFound) {
 			return api.Error(404, errLibraryPanelNotFound.Error(), err)
