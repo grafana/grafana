@@ -278,7 +278,7 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			require.Equal(t, existing.Result.UpdatedBy, result.Result.UpdatedBy)
 		})
 
-	testScenario(t, "When an admin tries to update a library with model only, it should change model successfully and return correct result",
+	testScenario(t, "When an admin tries to update a library panel with model only, it should change model successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
