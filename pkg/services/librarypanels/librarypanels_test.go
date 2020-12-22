@@ -218,7 +218,7 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			require.Equal(t, "Model - New name", result.Result.Model["name"])
 		})
 
-	testScenario(t, "When an admin tries to update a library with folder only, it should change folder successfully and return correct result",
+	testScenario(t, "When an admin tries to update a library panel with folder only, it should change folder successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
