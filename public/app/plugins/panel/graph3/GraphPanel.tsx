@@ -4,7 +4,7 @@ import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
-import { hideSeriesConfigFactory } from './configFactory';
+import { hideSeriesConfigFactory } from './hideSeriesConfigFactory';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 
 interface GraphPanelProps extends PanelProps<Options> {}

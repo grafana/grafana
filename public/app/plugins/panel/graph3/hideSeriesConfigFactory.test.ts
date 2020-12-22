@@ -1,6 +1,6 @@
 import { DataFrame, FieldConfigSource, FieldMatcherID, FieldType, toDataFrame } from '@grafana/data';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from '@grafana/ui';
-import { hideSeriesConfigFactory } from './configFactory';
+import { hideSeriesConfigFactory } from './hideSeriesConfigFactory';
 
 describe('hideSeriesConfigFactory', () => {
   it('should create config override matching one series', () => {
