@@ -1,8 +1,9 @@
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
-import { DashboardModel } from '../../state/DashboardModel';
-import { historySrv, RevisionsModel } from '../VersionHistory/HistorySrv';
 import { Spinner, HorizontalGroup, Checkbox, Button, Tag } from '@grafana/ui';
+import DangerouslySetHtmlContent from 'dangerously-set-html-content';
+import { DashboardModel } from '../../state/DashboardModel';
+import { historySrv, RevisionsModel, CalculateDiffOptions } from '../VersionHistory/HistorySrv';
 
 interface Props {
   dashboard: DashboardModel;
@@ -13,6 +14,7 @@ type State = {
   isAppending: boolean;
   versions: DecoratedRevisionModel[];
   viewMode: 'list' | 'compare';
+  delta: { basic: string; json: string };
 };
 
 type DecoratedRevisionModel = RevisionsModel & {
@@ -34,6 +36,10 @@ export class VersionsSettings extends PureComponent<Props, State> {
       isAppending: true,
       versions: [],
       viewMode: 'list',
+      delta: {
+        basic: '',
+        json: '',
+      },
     };
   }
 
@@ -56,6 +62,48 @@ export class VersionsSettings extends PureComponent<Props, State> {
       .finally(() => this.setState({ isAppending: false }));
   };
 
+  getDiff = (diff = 'basic') => {
+    this.setState({ viewMode: 'compare', isLoading: true });
+
+    const selectedVersions = this.state.versions.filter(version => version.checked);
+    const newInfo = selectedVersions[0];
+    const baseInfo = selectedVersions[1];
+    // TODO: isNewLatest needs workering.
+    const isNewLatest = newInfo.version === this.props.dashboard.version;
+    const options: CalculateDiffOptions = {
+      new: {
+        dashboardId: this.props.dashboard.id,
+        version: newInfo.version,
+      },
+      base: {
+        dashboardId: this.props.dashboard.id,
+        version: baseInfo.version,
+      },
+      diffType: diff,
+    };
+
+    return historySrv
+      .calculateDiff(options)
+      .then((response: any) => {
+        // @ts-ignore
+        this.setState({
+          delta: {
+            [diff]: response,
+          },
+        });
+      })
+      .catch(() => {
+        this.setState({
+          viewMode: 'list',
+        });
+      })
+      .finally(() => {
+        this.setState({
+          isLoading: false,
+        });
+      });
+  };
+
   decorateVersions = (versions: RevisionsModel[]) =>
     versions.map(version => ({
       ...version,
@@ -76,10 +124,30 @@ export class VersionsSettings extends PureComponent<Props, State> {
     });
   };
 
+  setViewMode = () => {
+    this.setState({
+      viewMode: 'list',
+    });
+  };
+
   render() {
     const canCompare = this.state.versions.filter(version => version.checked).length !== 2;
     const hasVersions = this.state.versions.length > 1;
     const hasMore = this.state.versions.length >= this.limit;
+
+    if (this.state.viewMode === 'compare') {
+      return (
+        <div>
+          <VersionsHeader />
+          {this.state.isLoading ? (
+            <VersionsSpinner msg="Fetching changes&hellip;" />
+          ) : (
+            <VersionsDiff delta={this.state.delta} />
+          )}
+        </div>
+      );
+    }
+
     return (
       <div>
         <VersionsHeader />
@@ -94,6 +162,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
           hasVersions={hasVersions}
           canCompare={canCompare}
           getVersions={this.getVersions}
+          getDiff={this.getDiff}
           isLastPage={!!this.isLastPage()}
         />
       </div>
@@ -113,12 +182,14 @@ const VersionsButtons = ({
   hasVersions,
   canCompare,
   getVersions,
+  getDiff,
   isLastPage,
 }: {
   hasMore: boolean;
   hasVersions: boolean;
   canCompare: boolean;
   getVersions: (append: boolean) => void;
+  getDiff: () => void;
   isLastPage: boolean;
 }) => (
   <div className="gf-form-group">
@@ -132,7 +203,7 @@ const VersionsButtons = ({
         // TODO: add a tooltip!
         // bs-tooltip="ctrl.canCompare ? '' : 'Select 2 versions to start comparing'"
         // data-placement="bottom"
-        <Button type="button" disabled={canCompare} onClick={() => console.log('display diff view')} icon="code-branch">
+        <Button type="button" disabled={canCompare} onClick={() => getDiff()} icon="code-branch">
           Compare versions
         </Button>
       )}
@@ -180,3 +251,13 @@ const VersionsTable = ({ versions, handleCheck }: { versions: DecoratedRevisionM
     </tbody>
   </table>
 );
+
+const VersionsDiff = ({ delta }) => {
+  return (
+    <div>
+      <div className="delta-basic">
+        <DangerouslySetHtmlContent html={delta.basic} />
+      </div>
+    </div>
+  );
+};
