@@ -12,9 +12,9 @@ mkdir $RUNDIR
 
 echo -e "Copying grafana backend files to temp dir..."
 
-if [ -f $PACKAGE_FILE ]; then
+if [[ -f "$PACKAGE_FILE" ]]; then
   echo "Found package tar file, extracting..."
-  tar zxf $PACKAGE_FILE -C $RUNDIR
+  tar zxf "$PACKAGE_FILE" -C $RUNDIR
   mv $RUNDIR/grafana-*/* $RUNDIR
 else
   echo "Copying local dev files"
