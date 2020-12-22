@@ -71,8 +71,8 @@ def get_steps(edition, is_downstream=False):
             test_backend_step(build_tags=build_tags),
             build_backend_step(edition=edition, ver_mode=ver_mode, variants=['linux-x64'], is_downstream=is_downstream, build_tags=build_tags),
             package_step(edition=edition, ver_mode=ver_mode, variants=['linux-x64'], is_downstream=is_downstream, build_tags=build_tags),
-            e2e_tests_server_step(edition=edition, build_tags=build_tags),
-            e2e_tests_step(build_tags=build_tags),
+            e2e_tests_server_step(edition=edition, build_tags=build_tags, port=3002),
+            e2e_tests_step(build_tags=build_tags, port=3002),
             upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream, build_tags=build_tags),
         ])
 

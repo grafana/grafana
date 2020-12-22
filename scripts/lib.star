@@ -617,7 +617,7 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False, build_ta
         'commands': cmds,
     }
 
-def e2e_tests_server_step(edition, build_tags=None):
+def e2e_tests_server_step(edition, build_tags=None, port=3001):
     sfx = ''
     package_file_pfx = ''
     if build_tags:
@@ -626,12 +626,12 @@ def e2e_tests_server_step(edition, build_tags=None):
     elif edition == 'enterprise':
         package_file_pfx = 'grafana-' + edition
 
-    environment = {}
+    environment = {
+        'PORT': port,
+    }
     if package_file_pfx:
-        environment = {
-            'PACKAGE_FILE': 'dist/{}-*linux-amd64.tar.gz'.format(package_file_pfx),
-            'RUNDIR': 'e2e/tmp-{}'.format(package_file_pfx)
-        }
+        environment['PACKAGE_FILE'] = 'dist/{}-*linux-amd64.tar.gz'.format(package_file_pfx)
+        environment['RUNDIR'] = 'e2e/tmp-{}'.format(package_file_pfx)
 
     return {
         'name': 'end-to-end-tests-server' + sfx,
@@ -646,7 +646,7 @@ def e2e_tests_server_step(edition, build_tags=None):
         ],
     }
 
-def e2e_tests_step(build_tags=None):
+def e2e_tests_step(build_tags=None, port=3001):
     sfx = ''
     if build_tags:
         sfx = '-' + '-'.join(build_tags)
@@ -664,7 +664,7 @@ def e2e_tests_step(build_tags=None):
             # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
             # even though the Yarn cache directory is beneath /usr/local/share somewhere
             './node_modules/.bin/cypress install',
-            './bin/grabpl e2e-tests',
+            './bin/grabpl e2e-tests --port {}'.format(port),
         ],
     }
 
