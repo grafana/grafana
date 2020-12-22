@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-// createLibraryPanel adds a Library Panel
+// createLibraryPanel adds a Library Panel.
 func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd createLibraryPanelCommand) (LibraryPanel, error) {
 	libraryPanel := LibraryPanel{
 		OrgID:    c.SignedInUser.OrgId,
@@ -32,7 +32,7 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 			c.SignedInUser.OrgId, cmd.FolderID, cmd.Name); err != nil {
 			return err
 		} else if len(res) == 1 {
-			return errLibraryPanelAlreadyAdded
+			return errLibraryPanelAlreadyExists
 		}
 
 		if _, err := session.Insert(&libraryPanel); err != nil {
@@ -44,7 +44,7 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 	return libraryPanel, err
 }
 
-// deleteLibraryPanel deletes a Library Panel
+// deleteLibraryPanel deletes a Library Panel.
 func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, uid string) error {
 	orgID := c.SignedInUser.OrgId
 	return lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
@@ -63,26 +63,31 @@ func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, uid str
 	})
 }
 
+func getLibraryPanel(session *sqlstore.DBSession, uid string, orgID int64) (LibraryPanel, error) {
+	libraryPanels := make([]LibraryPanel, 0)
+	session.Table("library_panel")
+	session.Where("uid=? and org_id=?", uid, orgID)
+	err := session.Find(&libraryPanels)
+	if err != nil {
+		return LibraryPanel{}, err
+	}
+	if len(libraryPanels) == 0 {
+		return LibraryPanel{}, errLibraryPanelNotFound
+	}
+	if len(libraryPanels) > 1 {
+		return LibraryPanel{}, fmt.Errorf("found %d panels, while expecting at most one", len(libraryPanels))
+	}
+
+	return libraryPanels[0], nil
+}
+
 // getLibraryPanel gets a Library Panel.
 func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string) (LibraryPanel, error) {
-	orgID := c.SignedInUser.OrgId
 	var libraryPanel LibraryPanel
 	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-		libraryPanels := make([]LibraryPanel, 0)
-		err := session.SQL("SELECT * FROM library_panel WHERE uid=? and org_id=?", uid, orgID).Find(&libraryPanels)
-		if err != nil {
-			return err
-		}
-		if len(libraryPanels) == 0 {
-			return errLibraryPanelNotFound
-		}
-		if len(libraryPanels) > 1 {
-			return fmt.Errorf("found %d panels, while expecting at most one", len(libraryPanels))
-		}
-
-		libraryPanel = libraryPanels[0]
-
-		return nil
+		var err error
+		libraryPanel, err = getLibraryPanel(session, uid, c.SignedInUser.OrgId)
+		return err
 	})
 
 	return libraryPanel, err
@@ -92,7 +97,6 @@ func (lps *LibraryPanelService) getLibraryPanel(c *models.ReqContext, uid string
 func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]LibraryPanel, error) {
 	orgID := c.SignedInUser.OrgId
 	libraryPanels := make([]LibraryPanel, 0)
-
 	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		err := session.SQL("SELECT * FROM library_panel WHERE org_id=?", orgID).Find(&libraryPanels)
 		if err != nil {
@@ -103,4 +107,55 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]Lib
 	})
 
 	return libraryPanels, err
+}
+
+// updateLibraryPanel updates a Library Panel.
+func (lps *LibraryPanelService) updateLibraryPanel(c *models.ReqContext, cmd updateLibraryPanelCommand) (LibraryPanel, error) {
+	var libraryPanel LibraryPanel
+	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
+		panelInDb, err := getLibraryPanel(session, cmd.UID, c.SignedInUser.OrgId)
+		if err != nil {
+			return err
+		}
+
+		libraryPanel = LibraryPanel{
+			ID:        panelInDb.ID,
+			OrgID:     c.SignedInUser.OrgId,
+			FolderID:  cmd.FolderID,
+			UID:       cmd.UID,
+			Name:      cmd.Name,
+			Model:     cmd.Model,
+			Created:   panelInDb.Created,
+			CreatedBy: panelInDb.CreatedBy,
+			Updated:   time.Now(),
+			UpdatedBy: c.SignedInUser.UserId,
+		}
+
+		if cmd.FolderID == 0 {
+			libraryPanel.FolderID = panelInDb.FolderID
+		}
+		if cmd.Name == "" {
+			libraryPanel.Name = panelInDb.Name
+		}
+		if cmd.Model == nil {
+			libraryPanel.Model = panelInDb.Model
+		}
+
+		if res, err := session.Query("SELECT 1 FROM library_panel WHERE org_id=? AND folder_id=? AND name=? AND uid <>?",
+			libraryPanel.OrgID, libraryPanel.FolderID, libraryPanel.Name, libraryPanel.UID); err != nil {
+			return err
+		} else if len(res) == 1 {
+			return errLibraryPanelAlreadyExists
+		}
+
+		if rowsAffected, err := session.ID(panelInDb.ID).Update(&libraryPanel); err != nil {
+			return err
+		} else if rowsAffected != 1 {
+			return errLibraryPanelNotFound
+		}
+
+		return nil
+	})
+
+	return libraryPanel, err
 }

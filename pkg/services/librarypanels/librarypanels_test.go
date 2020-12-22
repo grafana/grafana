@@ -177,12 +177,240 @@ func TestGetAllLibraryPanels(t *testing.T) {
 		})
 }
 
+func TestUpdateLibraryPanel(t *testing.T) {
+	testScenario(t, "When an admin tries to update a library panel that does not exist, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			cmd := updateLibraryPanelCommand{}
+			response := sc.service.updateHandler(sc.reqContext, cmd)
+			require.Equal(t, 404, response.Status())
+		})
+
+	testScenario(t, "When an admin tries to update a library panel that exists, it should succeed",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+
+			cmd := updateLibraryPanelCommand{
+				FolderID: 2,
+				Name:     "Panel - New name",
+				Model: []byte(`
+								{
+								  "datasource": "${DS_GDEV-TESTDATA}",
+								  "id": 1,
+								  "name": "Model - New name",
+								  "type": "text"
+								}
+							`),
+			}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+			response = sc.service.updateHandler(sc.reqContext, cmd)
+			require.Equal(t, 200, response.Status())
+			err = json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			require.Equal(t, int64(2), result.Result.FolderID)
+			require.Equal(t, "Panel - New name", result.Result.Name)
+			require.Equal(t, "Model - New name", result.Result.Model["name"])
+		})
+
+	testScenario(t, "When an admin tries to update a library with folder only, it should change folder successfully and return correct result",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var existing libraryPanelResult
+			err := json.Unmarshal(response.Body(), &existing)
+			require.NoError(t, err)
+
+			cmd := updateLibraryPanelCommand{
+				FolderID: 100,
+			}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
+			response = sc.service.updateHandler(sc.reqContext, cmd)
+			require.Equal(t, 200, response.Status())
+			var result libraryPanelResult
+			err = json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			require.Equal(t, existing.Result.ID, result.Result.ID)
+			require.Equal(t, existing.Result.OrgID, result.Result.OrgID)
+			require.Equal(t, int64(100), result.Result.FolderID)
+			require.Equal(t, existing.Result.Name, result.Result.Name)
+			require.Equal(t, existing.Result.Model["name"], result.Result.Model["name"])
+			require.Equal(t, existing.Result.Created.UTC().Format(time.RFC3339), result.Result.Created.UTC().Format(time.RFC3339))
+			require.Equal(t, existing.Result.CreatedBy, result.Result.CreatedBy)
+			require.True(t, existing.Result.Updated.UTC().Before(result.Result.Updated.UTC()))
+			require.Equal(t, existing.Result.UpdatedBy, result.Result.UpdatedBy)
+		})
+
+	testScenario(t, "When an admin tries to update a library with name only, it should change name successfully and return correct result",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var existing libraryPanelResult
+			err := json.Unmarshal(response.Body(), &existing)
+			require.NoError(t, err)
+
+			cmd := updateLibraryPanelCommand{
+				Name: "New Name",
+			}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
+			response = sc.service.updateHandler(sc.reqContext, cmd)
+			require.Equal(t, 200, response.Status())
+			var result libraryPanelResult
+			err = json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			require.Equal(t, existing.Result.ID, result.Result.ID)
+			require.Equal(t, existing.Result.OrgID, result.Result.OrgID)
+			require.Equal(t, int64(1), result.Result.FolderID)
+			require.Equal(t, "New Name", result.Result.Name)
+			require.Equal(t, existing.Result.Model["name"], result.Result.Model["name"])
+			require.Equal(t, existing.Result.Created.UTC().Format(time.RFC3339), result.Result.Created.UTC().Format(time.RFC3339))
+			require.Equal(t, existing.Result.CreatedBy, result.Result.CreatedBy)
+			require.True(t, existing.Result.Updated.UTC().Before(result.Result.Updated.UTC()))
+			require.Equal(t, existing.Result.UpdatedBy, result.Result.UpdatedBy)
+		})
+
+	testScenario(t, "When an admin tries to update a library with model only, it should change model successfully and return correct result",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var existing libraryPanelResult
+			err := json.Unmarshal(response.Body(), &existing)
+			require.NoError(t, err)
+
+			cmd := updateLibraryPanelCommand{
+				Model: []byte(`{ "name": "New Model Name" }`),
+			}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
+			response = sc.service.updateHandler(sc.reqContext, cmd)
+			require.Equal(t, 200, response.Status())
+			var result libraryPanelResult
+			err = json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			require.Equal(t, existing.Result.ID, result.Result.ID)
+			require.Equal(t, existing.Result.OrgID, result.Result.OrgID)
+			require.Equal(t, int64(1), result.Result.FolderID)
+			require.Equal(t, existing.Result.Name, result.Result.Name)
+			require.Equal(t, "New Model Name", result.Result.Model["name"])
+			require.Equal(t, existing.Result.Created.UTC().Format(time.RFC3339), result.Result.Created.UTC().Format(time.RFC3339))
+			require.Equal(t, existing.Result.CreatedBy, result.Result.CreatedBy)
+			require.True(t, existing.Result.Updated.UTC().Before(result.Result.Updated.UTC()))
+			require.Equal(t, existing.Result.UpdatedBy, result.Result.UpdatedBy)
+		})
+
+	testScenario(t, "When an other admin tries to update a library, it should change UpdatedBy successfully and return correct result",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var existing libraryPanelResult
+			err := json.Unmarshal(response.Body(), &existing)
+			require.NoError(t, err)
+
+			cmd := updateLibraryPanelCommand{}
+			sc.reqContext.UserId = 2
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
+			response = sc.service.updateHandler(sc.reqContext, cmd)
+			require.Equal(t, 200, response.Status())
+			var result libraryPanelResult
+			err = json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			require.Equal(t, existing.Result.ID, result.Result.ID)
+			require.Equal(t, existing.Result.OrgID, result.Result.OrgID)
+			require.Equal(t, existing.Result.FolderID, result.Result.FolderID)
+			require.Equal(t, existing.Result.Name, result.Result.Name)
+			require.Equal(t, existing.Result.Model["name"], result.Result.Model["name"])
+			require.Equal(t, existing.Result.Created.UTC().Format(time.RFC3339), result.Result.Created.UTC().Format(time.RFC3339))
+			require.Equal(t, existing.Result.CreatedBy, result.Result.CreatedBy)
+			require.True(t, existing.Result.Updated.UTC().Before(result.Result.Updated.UTC()))
+			require.Equal(t, int64(2), result.Result.UpdatedBy)
+		})
+
+	testScenario(t, "When an admin tries to update a library panel with a name that already exists, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Existing")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			command = getCreateCommand(1, "Text - Library Panel")
+			response = sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+
+			cmd := updateLibraryPanelCommand{
+				Name: "Existing",
+			}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+			response = sc.service.updateHandler(sc.reqContext, cmd)
+			require.Equal(t, 400, response.Status())
+		})
+
+	testScenario(t, "When an admin tries to update a library panel with a folder where a library panel with the same name already exists, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(2, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			command = getCreateCommand(1, "Text - Library Panel")
+			response = sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+
+			cmd := updateLibraryPanelCommand{
+				FolderID: 2,
+			}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+			response = sc.service.updateHandler(sc.reqContext, cmd)
+			require.Equal(t, 400, response.Status())
+		})
+
+	testScenario(t, "When an admin tries to update a library panel in another org, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+
+			cmd := updateLibraryPanelCommand{
+				FolderID: 2,
+			}
+			sc.reqContext.OrgId = 2
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+			response = sc.service.updateHandler(sc.reqContext, cmd)
+			require.Equal(t, 404, response.Status())
+		})
+}
+
 type libraryPanel struct {
-	ID       int64  `json:"ID"`
-	OrgID    int64  `json:"OrgID"`
-	FolderID int64  `json:"FolderID"`
-	UID      string `json:"UID"`
-	Name     string `json:"Name"`
+	ID        int64                  `json:"ID"`
+	OrgID     int64                  `json:"OrgID"`
+	FolderID  int64                  `json:"FolderID"`
+	UID       string                 `json:"UID"`
+	Name      string                 `json:"Name"`
+	Model     map[string]interface{} `json:"Model"`
+	Created   time.Time              `json:"Created"`
+	Updated   time.Time              `json:"Updated"`
+	CreatedBy int64                  `json:"CreatedBy"`
+	UpdatedBy int64                  `json:"UpdatedBy"`
 }
 
 type libraryPanelResult struct {
