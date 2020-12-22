@@ -853,7 +853,9 @@ def publish_packages_step(edition, ver_mode, is_downstream=False):
     if ver_mode == 'test-release':
         cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json '.format(edition) + \
             '--deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket ' + \
-            'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo {}'.format(test_release_ver)
+            'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release {}'.format(
+                test_release_ver,
+            )
     elif ver_mode == 'release':
         cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
             edition,

@@ -2329,7 +2329,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
-  - ./bin/grabpl publish-packages --edition oss --gcp-key /tmp/gcpkey.json --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket grafana-downloads-test --rpm-repo-bucket grafana-testing-repo v7.3.0-test
+  - ./bin/grabpl publish-packages --edition oss --gcp-key /tmp/gcpkey.json --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release v7.3.0-test
   environment:
     GCP_KEY:
       from_secret: gcp_key
@@ -2348,7 +2348,7 @@ steps:
   image: grafana/grafana-ci-deploy:1.2.7
   commands:
   - printenv GCP_KEY | base64 -d > /tmp/gcpkey.json
-  - ./bin/grabpl publish-packages --edition enterprise --gcp-key /tmp/gcpkey.json --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket grafana-downloads-test --rpm-repo-bucket grafana-testing-repo v7.3.0-test
+  - ./bin/grabpl publish-packages --edition enterprise --gcp-key /tmp/gcpkey.json --deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release v7.3.0-test
   environment:
     GCP_KEY:
       from_secret: gcp_key
