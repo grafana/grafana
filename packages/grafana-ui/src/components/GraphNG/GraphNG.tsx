@@ -190,7 +190,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         const ref = getDataFrameFieldIndex ? getDataFrameFieldIndex(i) : undefined;
 
         legendItems.push({
-          disabled: field.config.custom.hideFrom.graph,
+          disabled: field.config.custom?.hideFrom?.graph ?? false,
           fieldIndex: ref,
           color: seriesColor,
           label: getFieldDisplayName(field, alignedFrame),
