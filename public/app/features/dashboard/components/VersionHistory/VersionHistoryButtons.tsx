@@ -8,13 +8,13 @@ type VersionsButtonsType = {
   getDiff: () => void;
   isLastPage: boolean;
 };
-export const VersionsHistoryButtons = ({
+export const VersionsHistoryButtons: React.FC<VersionsButtonsType> = ({
   hasMore,
   canCompare,
   getVersions,
   getDiff,
   isLastPage,
-}: VersionsButtonsType) => (
+}) => (
   <HorizontalGroup>
     {hasMore && (
       <Button type="button" onClick={() => getVersions(true)} variant="secondary" disabled={isLastPage}>

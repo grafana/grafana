@@ -2,7 +2,15 @@ import React from 'react';
 import noop from 'lodash/noop';
 import { Icon } from '@grafana/ui';
 
-export const VersionHistoryHeader = ({
+type VersionHistoryHeaderProps = {
+  isComparing?: boolean;
+  onClick?: () => void;
+  baseVersion?: number;
+  newVersion?: number;
+  isNewLatest?: boolean;
+};
+
+export const VersionHistoryHeader: React.FC<VersionHistoryHeaderProps> = ({
   isComparing = false,
   onClick = noop,
   baseVersion = 0,

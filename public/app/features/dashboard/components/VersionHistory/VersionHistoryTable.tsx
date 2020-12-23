@@ -6,7 +6,7 @@ type VersionsTableProps = {
   versions: DecoratedRevisionModel[];
   onCheck: (ev: React.FormEvent<HTMLInputElement>, versionId: number) => void;
 };
-export const VersionHistoryTable = ({ versions, onCheck }: VersionsTableProps) => (
+export const VersionHistoryTable: React.FC<VersionsTableProps> = ({ versions, onCheck }) => (
   <table className="filter-table gf-form-group">
     <thead>
       <tr>
