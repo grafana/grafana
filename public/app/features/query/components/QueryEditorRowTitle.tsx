@@ -1,7 +1,7 @@
 import React from 'react';
 import { css, cx } from 'emotion';
 import { DataQuery, DataSourceApi, GrafanaTheme } from '@grafana/data';
-import { Icon, stylesFactory, useTheme } from '@grafana/ui';
+import { Icon, Input, stylesFactory, useTheme } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { useState } from 'react';
 
@@ -53,6 +53,10 @@ export const QueryEditorRowTitle: React.FC<QueryEditorRowTitleProps> = ({
     }
   };
 
+  const onFocus = (event: React.FocusEvent<HTMLInputElement>) => {
+    event.target.select();
+  };
+
   return (
     <div className={styles.wrapper}>
       {!isEditing && (
@@ -67,12 +71,13 @@ export const QueryEditorRowTitle: React.FC<QueryEditorRowTitleProps> = ({
         </div>
       )}
       {isEditing && (
-        <input
+        <Input
           type="text"
           defaultValue={query.refId}
           onBlur={onEditQueryBlur}
           autoFocus
           onKeyDown={onKeyDown}
+          onFocus={onFocus}
           className={styles.queryNameInput}
         />
       )}
@@ -94,6 +99,7 @@ const getQueryEditorRowTitleStyles = stylesFactory((theme: GrafanaTheme) => {
       display: flex;
       align-items: center;
       flex-grow: 1;
+      margin-left: ${theme.spacing.xs};
 
       &:hover {
         .query-name-wrapper {
@@ -122,8 +128,8 @@ const getQueryEditorRowTitleStyles = stylesFactory((theme: GrafanaTheme) => {
       font-weight: ${theme.typography.weight.semibold};
       color: ${theme.colors.textBlue};
       cursor: pointer;
-      margin-left: ${theme.spacing.sm};
       overflow: hidden;
+      margin-left: ${theme.spacing.xs};
     `,
     queryEditIcon: cx(
       css`
@@ -134,16 +140,7 @@ const getQueryEditorRowTitleStyles = stylesFactory((theme: GrafanaTheme) => {
     ),
     queryNameInput: css`
       max-width: 300px;
-      border: none;
-      height: 22px;
-      line-height: 22px;
-      background: ${theme.colors.formInputBg};
-      padding-left: ${theme.spacing.sm};
-      border: 1px dashed ${theme.colors.border3};
-      border-radius: ${theme.border.radius.md};
-      &:focus {
-        outline: none;
-      }
+      margin: -4px 0;
     `,
     collapsedText: css`
       font-weight: ${theme.typography.weight.regular};
