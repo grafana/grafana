@@ -21,7 +21,7 @@ func (lps *LibraryPanelService) registerAPIEndpoints() {
 		libraryPanels.Delete("/:uid", middleware.ReqSignedIn, api.Wrap(lps.deleteHandler))
 		libraryPanels.Get("/", middleware.ReqSignedIn, api.Wrap(lps.getAllHandler))
 		libraryPanels.Get("/:uid", middleware.ReqSignedIn, api.Wrap(lps.getHandler))
-		libraryPanels.Put("/:uid", middleware.ReqSignedIn, binding.Bind(updateLibraryPanelCommand{}), api.Wrap(lps.updateHandler))
+		libraryPanels.Patch("/:uid", middleware.ReqSignedIn, binding.Bind(patchLibraryPanelCommand{}), api.Wrap(lps.patchHandler))
 	})
 }
 
@@ -74,10 +74,9 @@ func (lps *LibraryPanelService) getAllHandler(c *models.ReqContext) api.Response
 	return api.JSON(200, util.DynMap{"result": libraryPanels})
 }
 
-// updateHandler handles PUT /api/library-panels/:uid
-func (lps *LibraryPanelService) updateHandler(c *models.ReqContext, cmd updateLibraryPanelCommand) api.Response {
-	cmd.UID = c.Params(":uid")
-	libraryPanel, err := lps.updateLibraryPanel(c, cmd)
+// patchHandler handles PUT /api/library-panels/:uid
+func (lps *LibraryPanelService) patchHandler(c *models.ReqContext, cmd patchLibraryPanelCommand) api.Response {
+	libraryPanel, err := lps.patchLibraryPanel(c, cmd, c.Params(":uid"))
 	if err != nil {
 		if errors.Is(err, errLibraryPanelAlreadyExists) {
 			return api.Error(400, errLibraryPanelAlreadyExists.Error(), err)

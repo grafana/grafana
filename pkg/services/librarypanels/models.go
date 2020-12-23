@@ -38,10 +38,9 @@ type createLibraryPanelCommand struct {
 	Model    json.RawMessage `json:"model"`
 }
 
-// updateLibraryPanelCommand is the command for updating a LibraryPanel
-type updateLibraryPanelCommand struct {
+// patchLibraryPanelCommand is the command for updating a LibraryPanel
+type patchLibraryPanelCommand struct {
 	FolderID int64           `json:"folderId"`
-	UID      string          `json:"-"`
 	Name     string          `json:"name"`
 	Model    json.RawMessage `json:"model"`
 }
