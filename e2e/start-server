@@ -12,7 +12,7 @@ mkdir $RUNDIR
 
 echo -e "Copying grafana backend files to temp dir..."
 
-// Expand any wildcards
+# Expand any wildcards
 pkgs=(${PACKAGE_FILE})
 pkg=${pkgs[0]}
 if [[ -f ${pkg} ]]; then
