@@ -390,16 +390,16 @@ func TestUpdateLibraryPanel(t *testing.T) {
 }
 
 type libraryPanel struct {
-	ID        int64                  `json:"ID"`
-	OrgID     int64                  `json:"OrgID"`
-	FolderID  int64                  `json:"FolderID"`
-	UID       string                 `json:"UID"`
-	Name      string                 `json:"Name"`
-	Model     map[string]interface{} `json:"Model"`
-	Created   time.Time              `json:"Created"`
-	Updated   time.Time              `json:"Updated"`
-	CreatedBy int64                  `json:"CreatedBy"`
-	UpdatedBy int64                  `json:"UpdatedBy"`
+	ID        int64                  `json:"id"`
+	OrgID     int64                  `json:"orgId"`
+	FolderID  int64                  `json:"folderId"`
+	UID       string                 `json:"uid"`
+	Name      string                 `json:"name"`
+	Model     map[string]interface{} `json:"model"`
+	Created   time.Time              `json:"created"`
+	Updated   time.Time              `json:"updated"`
+	CreatedBy int64                  `json:"createdBy"`
+	UpdatedBy int64                  `json:"updatedBy"`
 }
 
 type libraryPanelResult struct {

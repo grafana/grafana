@@ -295,6 +295,13 @@ describe('templateSrv', () => {
       expect(result).toBe('test');
     });
 
+    it('should use glob format when unknown format provided', () => {
+      let result = _templateSrv.formatValue('test', 'nonexistentformat');
+      expect(result).toBe('test');
+      result = _templateSrv.formatValue(['test', 'test1'], 'nonexistentformat');
+      expect(result).toBe('{test,test1}');
+    });
+
     it('multi value and glob format should render glob string', () => {
       const result = _templateSrv.formatValue(['test', 'test2'], 'glob');
       expect(result).toBe('{test,test2}');
