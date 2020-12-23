@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import { Button, JSONFormatter, LoadingPlaceholder } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
-import { AppEvents, PanelEvents, DataFrame } from '@grafana/data';
+import { AppEvents, DataFrame } from '@grafana/data';
 
 import appEvents from 'app/core/app_events';
 import { CopyToClipboard } from 'app/core/components/CopyToClipboard/CopyToClipboard';
@@ -10,8 +10,9 @@ import { getPanelInspectorStyles } from './styles';
 import { supportsDataQuery } from '../PanelEditor/utils';
 import { config } from '@grafana/runtime';
 import { css } from 'emotion';
-import { Unsubscribable } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { RefreshEvent } from 'app/types/events';
 
 interface DsQuery {
   isLoading: boolean;
@@ -39,9 +40,8 @@ interface State {
 }
 
 export class QueryInspector extends PureComponent<Props, State> {
-  formattedJson: any;
-  clipboard: any;
-  subscription?: Unsubscribable;
+  private formattedJson: any;
+  private subs = new Subscription();
 
   constructor(props: Props) {
     super(props);
@@ -58,11 +58,15 @@ export class QueryInspector extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    this.subscription = backendSrv.getInspectorStream().subscribe({
-      next: response => this.onDataSourceResponse(response),
-    });
+    const { panel } = this.props;
 
-    this.props.panel.events.on(PanelEvents.refresh, this.onPanelRefresh);
+    this.subs.add(
+      backendSrv.getInspectorStream().subscribe({
+        next: response => this.onDataSourceResponse(response),
+      })
+    );
+
+    this.subs.add(panel.events.subscribe(RefreshEvent, this.onPanelRefresh));
     this.updateQueryList();
   }
 
@@ -112,13 +116,7 @@ export class QueryInspector extends PureComponent<Props, State> {
   };
 
   componentWillUnmount() {
-    const { panel } = this.props;
-
-    if (this.subscription) {
-      this.subscription.unsubscribe();
-    }
-
-    panel.events.off(PanelEvents.refresh, this.onPanelRefresh);
+    this.subs.unsubscribe();
   }
 
   onPanelRefresh = () => {
