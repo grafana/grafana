@@ -19,7 +19,11 @@ if [[ -f "$PACKAGE_FILE" ]]; then
 else
   echo "Copying local dev files"
 
-  [[ -f ./bin/grafana-server ]] || exit "bin/grafana-server missing"
+  if [[ ! -f bin/grafana-server ]]; then
+    echo bin/grafana-server missing
+    ls bin
+    exit 1
+  fi
 
   cp -r ./bin $RUNDIR
   cp -r ./public $RUNDIR
