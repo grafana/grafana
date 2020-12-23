@@ -5,6 +5,20 @@ export const Messages = {
     alertRuleTemplates: 'Alert Rule Templates',
     notificationChannels: 'Notification Channels',
   },
+  alertRules: {
+    table: {
+      noData: 'No alert rules found',
+      columns: {
+        createdAt: 'Created',
+        duration: 'Duration',
+        filters: 'Filters',
+        lastNotified: 'Last Notified',
+        severity: 'Severity',
+        summary: 'Summary',
+        threshold: 'Threshold',
+      },
+    },
+  },
   alertRuleTemplate: {
     addAction: 'Add',
     addSuccess: 'Alert rule template successfully added',

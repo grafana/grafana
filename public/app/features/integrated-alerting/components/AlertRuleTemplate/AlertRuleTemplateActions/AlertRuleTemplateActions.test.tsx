@@ -3,7 +3,6 @@ import { mount } from 'enzyme';
 import { dataQa } from '@percona/platform-core';
 import { AlertRuleTemplateActions } from './AlertRuleTemplateActions';
 import { formattedTemplateStubs } from '../__mocks__/alertRuleTemplateStubs';
-import { SourceDescription } from '../AlertRuleTemplatesTable/AlertRuleTemplatesTable.types';
 
 describe('AlertRuleTemplateActions', () => {
   it('should render component correctly', () => {
