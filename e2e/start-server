@@ -17,11 +17,11 @@ if [[ -f "$PACKAGE_FILE" ]]; then
   tar zxf "$PACKAGE_FILE" -C $RUNDIR
   mv $RUNDIR/grafana-*/* $RUNDIR
 else
-  echo "Copying local dev files"
+  echo "Couldn't find package ${PACKAGE_FILE} - copying local dev files"
 
   if [[ ! -f bin/grafana-server ]]; then
-    echo bin/grafana-server missing
     ls bin
+    echo bin/grafana-server missing
     exit 1
   fi
 
