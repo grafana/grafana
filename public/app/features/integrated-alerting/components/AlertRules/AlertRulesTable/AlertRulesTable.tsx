@@ -1,107 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { useTable, Column } from 'react-table';
+import React, { FC } from 'react';
+import { useTable } from 'react-table';
 import { Spinner, useStyles } from '@grafana/ui';
-import { getStyles } from './AlertRulesTable.styles';
 import { css } from 'emotion';
-import { logger } from '@percona/platform-core';
-import { AlertRulesService } from '../AlertRules.service';
-import { Messages } from '../../../IntegratedAlerting.messages';
+import { getStyles } from './AlertRulesTable.styles';
 import { AlertRule } from '../AlertRules.types';
-import { formatRules } from './AlertRulesTable.utils';
+import { AlertRulesTableProps } from './AlertRulesTable.types';
 
-const { noData, columns } = Messages.alertRules.table;
-
-const {
-  createdAt: createdAtColumn,
-  duration: durationColumn,
-  filters: filtersColumn,
-  lastNotified: lastNotifiedColumn,
-  severity: severityColumn,
-  summary: summaryColumn,
-  threshold: thresholdColumn,
-} = columns;
-
-export const AlertRulesTable = () => {
+export const AlertRulesTable: FC<AlertRulesTableProps> = ({ pendingRequest, data, columns, emptyMessage }) => {
   const style = useStyles(getStyles);
-  const [pendingRequest, setPendingRequest] = useState(false);
-  const [data, setData] = useState<AlertRule[]>([]);
-
-  const getAlertRules = async () => {
-    setPendingRequest(true);
-    try {
-      const { rules } = await AlertRulesService.list();
-      setData(formatRules(rules));
-    } catch (e) {
-      logger.error(e);
-    } finally {
-      setPendingRequest(false);
-    }
-  };
-
-  const columns = React.useMemo(
-    () => [
-      {
-        Header: summaryColumn,
-        accessor: 'summary',
-        width: '25%',
-      } as Column,
-      {
-        Header: thresholdColumn,
-        accessor: 'threshold',
-        width: '10%',
-      } as Column,
-      {
-        Header: durationColumn,
-        accessor: 'duration',
-        width: '10%',
-      } as Column,
-      {
-        Header: severityColumn,
-        accessor: 'severity',
-        width: '5%',
-      } as Column,
-      {
-        Header: filtersColumn,
-        accessor: ({ filters }: AlertRule) => (
-          <div className={style.filtersWrapper}>
-            {filters.map(filter => (
-              <span key={filter} className={style.filter}>
-                {filter}
-              </span>
-            ))}
-          </div>
-        ),
-        width: '30%',
-      } as Column,
-      {
-        Header: createdAtColumn,
-        accessor: 'createdAt',
-        width: '10%',
-      } as Column,
-      {
-        Header: lastNotifiedColumn,
-        accessor: ({ lastNotified }: AlertRule) => (
-          <>
-            <div className={style.lastNotifiedWrapper}>
-              {lastNotified ? (
-                <>
-                  <span className={style.lastNotifiedDate}>{lastNotified}</span>
-                  <span className={style.lastNotifiedCircle} />
-                </>
-              ) : null}
-            </div>
-          </>
-        ),
-        width: '10%',
-      } as Column,
-    ],
-    []
-  );
-
-  useEffect(() => {
-    getAlertRules();
-  }, []);
-
   const tableInstance = useTable({ columns, data });
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = tableInstance;
 
@@ -115,7 +21,7 @@ export const AlertRulesTable = () => {
         ) : null}
         {!rows.length && !pendingRequest ? (
           <div data-qa="alert-rules-table-no-data" className={style.empty}>
-            {<h1>{noData}</h1>}
+            {<h1>{emptyMessage}</h1>}
           </div>
         ) : null}
         {rows.length && !pendingRequest ? (

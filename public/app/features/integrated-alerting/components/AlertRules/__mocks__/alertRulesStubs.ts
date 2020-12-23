@@ -25,11 +25,21 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     last_notified: '2020-11-25T16:53:39.366Z',
     severity: 'SEVERITY_CRITICAL',
     summary: 'Database down - HR - Prod',
+    params: [
+      {
+        name: 'threshold',
+        type: 'BOOL',
+        bool: true,
+      },
+    ],
     template: {
       params: [
         {
           name: 'threshold',
-          value: true,
+          type: 'BOOL',
+          bool: {
+            default: true,
+          },
         },
       ],
     },
@@ -58,12 +68,22 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     last_notified: '2020-11-25T16:53:39.366Z',
     severity: 'SEVERITY_WARNING',
     summary: 'High CPU load - Sales - Prod',
+    params: [
+      {
+        name: 'threshold',
+        type: 'FLOAT',
+        float: 75,
+      },
+    ],
     template: {
       params: [
         {
           name: 'threshold',
-          value: 75,
-          unit: '%',
+          type: 'FLOAT',
+          float: {
+            default: 75,
+          },
+          unit: 'PERCENTAGE',
         },
       ],
     },
@@ -96,8 +116,11 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
       params: [
         {
           name: 'threshold',
-          value: 80,
-          unit: '%',
+          type: 'FLOAT',
+          float: {
+            default: 80,
+          },
+          unit: 'PERCENTAGE',
         },
       ],
     },
@@ -126,12 +149,22 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     last_notified: '',
     severity: 'SEVERITY_WARNING',
     summary: 'High network throughput in - Mnfcg - Dev',
+    params: [
+      {
+        name: 'threshold',
+        type: 'FLOAT',
+        float: 75,
+      },
+    ],
     template: {
       params: [
         {
           name: 'threshold',
-          value: 100,
-          unit: 'GB/min',
+          type: 'FLOAT',
+          float: {
+            default: 75,
+          },
+          unit: 'PERCENTAGE',
         },
       ],
     },
@@ -164,8 +197,11 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
       params: [
         {
           name: 'threshold',
-          value: 30,
-          unit: '%',
+          type: 'FLOAT',
+          float: {
+            default: 75,
+          },
+          unit: 'PERCENTAGE',
         },
       ],
     },
@@ -198,8 +234,11 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
       params: [
         {
           name: 'threshold',
-          value: 30,
-          unit: '%',
+          type: 'FLOAT',
+          float: {
+            default: 75,
+          },
+          unit: 'PERCENTAGE',
         },
       ],
     },

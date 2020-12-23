@@ -4,8 +4,15 @@ import { dataQa } from '@percona/platform-core';
 import { act } from 'react-dom/test-utils';
 import { AlertRuleTemplate } from './AlertRuleTemplate';
 import { AlertRuleTemplateService } from './AlertRuleTemplate.service';
+import { templateStubs } from './__mocks__/alertRuleTemplateStubs';
 
-jest.mock('./AlertRuleTemplate.service');
+jest.mock('./AlertRuleTemplate.service', () => ({
+  AlertRuleTemplateService: {
+    list: () => ({
+      templates: templateStubs,
+    }),
+  },
+}));
 
 describe('AlertRuleTemplate', () => {
   afterEach(() => {
