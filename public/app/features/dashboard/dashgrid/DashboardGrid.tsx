@@ -28,7 +28,6 @@ interface GridWrapperProps {
   onDragStop: ItemCallback;
   onResize: ItemCallback;
   onResizeStop: ItemCallback;
-  onWidthChange: () => void;
   className: string;
   isResizable?: boolean;
   isDraggable?: boolean;
@@ -43,7 +42,6 @@ function GridWrapper({
   onDragStop,
   onResize,
   onResizeStop,
-  onWidthChange,
   className,
   isResizable,
   isDraggable,
@@ -56,7 +54,6 @@ function GridWrapper({
     if (ignoreNextWidthChange) {
       ignoreNextWidthChange = false;
     } else if (!viewPanel && Math.abs(width - lastGridWidth) > 8) {
-      onWidthChange();
       lastGridWidth = width;
     }
   }
@@ -164,12 +161,6 @@ export class DashboardGrid extends PureComponent<Props> {
     this.forceUpdate();
   };
 
-  onWidthChange = () => {
-    for (const panel of this.props.dashboard.panels) {
-      panel.resizeDone();
-    }
-  };
-
   updateGridPos = (item: ReactGridLayout.Layout, layout: ReactGridLayout.Layout[]) => {
     this.panelMap[item.i!].updateGridPos(item);
 
@@ -184,7 +175,6 @@ export class DashboardGrid extends PureComponent<Props> {
 
   onResizeStop: ItemCallback = (layout, oldItem, newItem) => {
     this.updateGridPos(newItem, layout);
-    this.panelMap[newItem.i!].resizeDone();
   };
 
   onDragStop: ItemCallback = (layout, oldItem, newItem) => {
@@ -277,7 +267,6 @@ export class DashboardGrid extends PureComponent<Props> {
         isResizable={dashboard.meta.canEdit}
         isDraggable={dashboard.meta.canEdit}
         onLayoutChange={this.onLayoutChange}
-        onWidthChange={this.onWidthChange}
         onDragStop={this.onDragStop}
         onResize={this.onResize}
         onResizeStop={this.onResizeStop}
