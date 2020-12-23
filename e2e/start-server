@@ -18,6 +18,7 @@ if [[ -f "$PACKAGE_FILE" ]]; then
   mv $RUNDIR/grafana-*/* $RUNDIR
 else
   echo "Couldn't find package ${PACKAGE_FILE} - copying local dev files"
+  ls dist
 
   if [[ ! -f bin/grafana-server ]]; then
     ls bin
