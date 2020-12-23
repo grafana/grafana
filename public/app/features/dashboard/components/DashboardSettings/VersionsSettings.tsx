@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
-import _ from 'lodash';
-import { Spinner, HorizontalGroup, Checkbox, Button, Tag, Icon } from '@grafana/ui';
+import { Spinner, HorizontalGroup, Checkbox, Button, Tag, Icon, Tooltip } from '@grafana/ui';
 import { AngularComponent, getAngularLoader } from '@grafana/runtime';
 import { DashboardModel } from '../../state/DashboardModel';
 import { historySrv, RevisionsModel, CalculateDiffOptions } from '../VersionHistory/HistorySrv';
@@ -122,10 +121,10 @@ export class VersionsSettings extends PureComponent<Props, State> {
     }));
 
   isLastPage() {
-    return _.find(this.state.versions, rev => rev.version === 1);
+    return this.state.versions.find(rev => rev.version === 1);
   }
 
-  handleCheck = (ev: React.FormEvent<HTMLInputElement>, versionId: number) => {
+  onCheck = (ev: React.FormEvent<HTMLInputElement>, versionId: number) => {
     this.setState({
       versions: this.state.versions.map(version =>
         version.id === versionId ? { ...version, checked: ev.currentTarget.checked } : version
@@ -145,9 +144,9 @@ export class VersionsSettings extends PureComponent<Props, State> {
   };
 
   render() {
-    const { versions, viewMode } = this.state;
+    const { versions, viewMode, baseInfo, newInfo, isNewLatest, isLoading, delta } = this.state;
     const canCompare = versions.filter(version => version.checked).length !== 2;
-    const hasVersions = versions.length > 1;
+    const showButtons = versions.length > 1;
     const hasMore = versions.length >= this.limit;
 
     if (viewMode === 'compare') {
@@ -156,20 +155,19 @@ export class VersionsSettings extends PureComponent<Props, State> {
           <VersionsHeader
             isComparing
             onClick={this.reset}
-            baseVersion={this.state.baseInfo?.version}
-            newVersion={this.state.newInfo?.version}
-            isNewLatest={this.state.isNewLatest}
+            baseVersion={baseInfo?.version}
+            newVersion={newInfo?.version}
+            isNewLatest={isNewLatest}
           />
-          {this.state.isLoading ? (
+          {isLoading ? (
             <VersionsSpinner msg="Fetching changes&hellip;" />
           ) : (
-            // Loads angular diff
             <VersionsDiffView
               dashboard={this.props.dashboard}
-              newInfo={this.state.newInfo}
-              baseInfo={this.state.baseInfo}
-              isNewLatest={this.state.isNewLatest}
-              delta={this.state.delta}
+              newInfo={newInfo}
+              baseInfo={baseInfo}
+              isNewLatest={isNewLatest}
+              delta={delta}
             />
           )}
         </div>
@@ -179,20 +177,21 @@ export class VersionsSettings extends PureComponent<Props, State> {
     return (
       <div>
         <VersionsHeader />
-        {this.state.isLoading ? (
+        {isLoading ? (
           <VersionsSpinner msg="Fetching history list&hellip;" />
         ) : (
-          <VersionsTable versions={versions} handleCheck={this.handleCheck} />
+          <VersionsTable versions={versions} onCheck={this.onCheck} />
         )}
         {this.state.isAppending && <VersionsSpinner msg="Fetching more entries&hellip;" />}
-        <VersionsButtons
-          hasMore={hasMore}
-          hasVersions={hasVersions}
-          canCompare={canCompare}
-          getVersions={this.getVersions}
-          getDiff={this.getDiff}
-          isLastPage={!!this.isLastPage()}
-        />
+        {showButtons && (
+          <VersionsButtons
+            hasMore={hasMore}
+            canCompare={canCompare}
+            getVersions={this.getVersions}
+            getDiff={this.getDiff}
+            isLastPage={!!this.isLastPage()}
+          />
+        )}
       </div>
     );
   }
@@ -207,36 +206,29 @@ const VersionsSpinner = ({ msg }: { msg: string }) => (
 
 const VersionsButtons = ({
   hasMore,
-  hasVersions,
   canCompare,
   getVersions,
   getDiff,
   isLastPage,
 }: {
   hasMore: boolean;
-  hasVersions: boolean;
   canCompare: boolean;
   getVersions: (append: boolean) => void;
   getDiff: () => void;
   isLastPage: boolean;
 }) => (
-  <div className="gf-form-group">
-    <div className="gf-form-button-row">
-      {hasMore && (
-        <Button type="button" onClick={() => getVersions(true)} variant="secondary" disabled={isLastPage}>
-          Show more versions
-        </Button>
-      )}
-      {hasVersions && (
-        // TODO: add a tooltip!
-        // bs-tooltip="ctrl.canCompare ? '' : 'Select 2 versions to start comparing'"
-        // data-placement="bottom"
-        <Button type="button" disabled={canCompare} onClick={() => getDiff()} icon="code-branch">
-          Compare versions
-        </Button>
-      )}
-    </div>
-  </div>
+  <HorizontalGroup>
+    {hasMore && (
+      <Button type="button" onClick={() => getVersions(true)} variant="secondary" disabled={isLastPage}>
+        Show more versions
+      </Button>
+    )}
+    <Tooltip content="Select 2 versions to start comparing" placement="bottom">
+      <Button type="button" disabled={canCompare} onClick={() => getDiff()} icon="code-branch">
+        Compare versions
+      </Button>
+    </Tooltip>
+  </HorizontalGroup>
 );
 
 const VersionsHeader = ({
@@ -259,8 +251,14 @@ const VersionsHeader = ({
   </h3>
 );
 
-const VersionsTable = ({ versions, handleCheck }: { versions: DecoratedRevisionModel[]; handleCheck: any }) => (
-  <table className="filter-table">
+const VersionsTable = ({
+  versions,
+  onCheck,
+}: {
+  versions: DecoratedRevisionModel[];
+  onCheck: (ev: React.FormEvent<HTMLInputElement>, versionId: number) => void;
+}) => (
+  <table className="filter-table gf-form-group">
     <thead>
       <tr>
         <th className="width-4"></th>
@@ -276,7 +274,7 @@ const VersionsTable = ({ versions, handleCheck }: { versions: DecoratedRevisionM
         <tr key={version.id}>
           <td>
             <div>
-              <Checkbox checked={version.checked} onChange={ev => handleCheck(ev, version.id)} />
+              <Checkbox checked={version.checked} onChange={ev => onCheck(ev, version.id)} />
             </div>
           </td>
           <td>{version.version}</td>
