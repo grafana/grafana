@@ -1,4 +1,4 @@
-grabpl_version = '0.5.29'
+grabpl_version = '0.5.30'
 build_image = 'grafana/build-container:1.3.0'
 publish_image = 'grafana/grafana-ci-deploy:1.2.7'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -224,12 +224,7 @@ def lint_backend_step(edition, build_tags=None):
         ],
         'commands': [
             # Don't use Make since it will re-download the linters
-            'golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...',
-            'revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...',
-            './scripts/revive-strict',
-            './scripts/tidy-check.sh',
-            './grafana-mixin/scripts/lint.sh',
-            './grafana-mixin/scripts/build.sh',
+            './bin/grabpl lint-backend{}'.format(build_tags_str),
         ],
     }
 
@@ -631,10 +626,9 @@ def e2e_tests_server_step(edition, build_tags=None, port=3001):
     elif edition == 'enterprise':
         package_file_pfx = 'grafana-' + edition
 
-    # environment = {
-    #     'PORT': port,
-    # }
-    environment = {}
+    environment = {
+        'PORT': port,
+    }
     if package_file_pfx:
         environment['PACKAGE_FILE'] = 'dist/{}-*linux-amd64.tar.gz'.format(package_file_pfx)
         environment['RUNDIR'] = 'e2e/tmp-{}'.format(package_file_pfx)

@@ -17,7 +17,7 @@ steps:
   image: grafana/build-container:1.3.0
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -30,12 +30,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.3.0
   commands:
-  - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
-  - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
-  - ./scripts/revive-strict
-  - ./scripts/tidy-check.sh
-  - ./grafana-mixin/scripts/lint.sh
-  - ./grafana-mixin/scripts/build.sh
+  - ./bin/grabpl lint-backend
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -126,6 +121,8 @@ steps:
   detach: true
   commands:
   - ./e2e/start-server
+  environment:
+    PORT: 3001
   depends_on:
   - package
 
@@ -254,7 +251,7 @@ steps:
   image: grafana/build-container:1.3.0
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -279,12 +276,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.3.0
   commands:
-  - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
-  - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
-  - ./scripts/revive-strict
-  - ./scripts/tidy-check.sh
-  - ./grafana-mixin/scripts/lint.sh
-  - ./grafana-mixin/scripts/build.sh
+  - ./bin/grabpl lint-backend
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -400,6 +392,8 @@ steps:
   detach: true
   commands:
   - ./e2e/start-server
+  environment:
+    PORT: 3001
   depends_on:
   - package
 
@@ -571,7 +565,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/windows/grabpl.exe -OutFile grabpl.exe
   - .\grabpl.exe verify-drone
 
 - name: build-windows-installer
@@ -621,7 +615,7 @@ steps:
   image: grafana/build-container:1.3.0
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   environment:
@@ -706,7 +700,7 @@ steps:
   image: grafana/build-container:1.3.0
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
@@ -720,12 +714,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.3.0
   commands:
-  - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
-  - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
-  - ./scripts/revive-strict
-  - ./scripts/tidy-check.sh
-  - ./grafana-mixin/scripts/lint.sh
-  - ./grafana-mixin/scripts/build.sh
+  - ./bin/grabpl lint-backend
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -833,6 +822,8 @@ steps:
   detach: true
   commands:
   - ./e2e/start-server
+  environment:
+    PORT: 3001
   depends_on:
   - package
 
@@ -996,7 +987,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/windows/grabpl.exe -OutFile grabpl.exe
   - .\grabpl.exe verify-drone
 
 - name: build-windows-installer
@@ -1047,7 +1038,7 @@ steps:
   image: grafana/build-container:1.3.0
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -1079,12 +1070,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.3.0
   commands:
-  - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
-  - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
-  - ./scripts/revive-strict
-  - ./scripts/tidy-check.sh
-  - ./grafana-mixin/scripts/lint.sh
-  - ./grafana-mixin/scripts/build.sh
+  - ./bin/grabpl lint-backend
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -1194,6 +1180,7 @@ steps:
   - ./e2e/start-server
   environment:
     PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
+    PORT: 3001
     RUNDIR: e2e/tmp-grafana-enterprise
   depends_on:
   - package
@@ -1287,12 +1274,7 @@ steps:
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.3.0
   commands:
-  - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
-  - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
-  - ./scripts/revive-strict
-  - ./scripts/tidy-check.sh
-  - ./grafana-mixin/scripts/lint.sh
-  - ./grafana-mixin/scripts/build.sh
+  - ./bin/grabpl lint-backend --build-tags=enterprise2
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -1352,6 +1334,7 @@ steps:
   - ./e2e/start-server
   environment:
     PACKAGE_FILE: dist/grafana-enterprise2-*linux-amd64.tar.gz
+    PORT: 3002
     RUNDIR: e2e/tmp-grafana-enterprise2
   depends_on:
   - package-enterprise2
@@ -1422,7 +1405,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout ${DRONE_TAG}
@@ -1488,7 +1471,7 @@ steps:
   image: grafana/build-container:1.3.0
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version ${DRONE_TAG}
@@ -1593,7 +1576,7 @@ steps:
   image: grafana/build-container:1.3.0
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
@@ -1607,12 +1590,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.3.0
   commands:
-  - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
-  - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
-  - ./scripts/revive-strict
-  - ./scripts/tidy-check.sh
-  - ./grafana-mixin/scripts/lint.sh
-  - ./grafana-mixin/scripts/build.sh
+  - ./bin/grabpl lint-backend
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -1720,6 +1698,8 @@ steps:
   detach: true
   commands:
   - ./e2e/start-server
+  environment:
+    PORT: 3001
   depends_on:
   - package
 
@@ -1872,7 +1852,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/windows/grabpl.exe -OutFile grabpl.exe
   - .\grabpl.exe verify-drone
 
 - name: build-windows-installer
@@ -1923,7 +1903,7 @@ steps:
   image: grafana/build-container:1.3.0
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -1955,12 +1935,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.3.0
   commands:
-  - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
-  - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
-  - ./scripts/revive-strict
-  - ./scripts/tidy-check.sh
-  - ./grafana-mixin/scripts/lint.sh
-  - ./grafana-mixin/scripts/build.sh
+  - ./bin/grabpl lint-backend
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -2070,6 +2045,7 @@ steps:
   - ./e2e/start-server
   environment:
     PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
+    PORT: 3001
     RUNDIR: e2e/tmp-grafana-enterprise
   depends_on:
   - package
@@ -2157,12 +2133,7 @@ steps:
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.3.0
   commands:
-  - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
-  - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
-  - ./scripts/revive-strict
-  - ./scripts/tidy-check.sh
-  - ./grafana-mixin/scripts/lint.sh
-  - ./grafana-mixin/scripts/build.sh
+  - ./bin/grabpl lint-backend --build-tags=enterprise2
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -2222,6 +2193,7 @@ steps:
   - ./e2e/start-server
   environment:
     PACKAGE_FILE: dist/grafana-enterprise2-*linux-amd64.tar.gz
+    PORT: 3002
     RUNDIR: e2e/tmp-grafana-enterprise2
   depends_on:
   - package-enterprise2
@@ -2292,7 +2264,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout master
@@ -2358,7 +2330,7 @@ steps:
   image: grafana/build-container:1.3.0
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - ./bin/grabpl verify-version v7.3.0-test
@@ -2463,7 +2435,7 @@ steps:
   image: grafana/build-container:1.3.0
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/grabpl
   - chmod +x bin/grabpl
   - ./bin/grabpl verify-drone
   - curl -fLO https://github.com/jwilder/dockerize/releases/download/v$${DOCKERIZE_VERSION}/dockerize-linux-amd64-v$${DOCKERIZE_VERSION}.tar.gz
@@ -2476,12 +2448,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.3.0
   commands:
-  - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
-  - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
-  - ./scripts/revive-strict
-  - ./scripts/tidy-check.sh
-  - ./grafana-mixin/scripts/lint.sh
-  - ./grafana-mixin/scripts/build.sh
+  - ./bin/grabpl lint-backend
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -2586,6 +2553,8 @@ steps:
   detach: true
   commands:
   - ./e2e/start-server
+  environment:
+    PORT: 3001
   depends_on:
   - package
 
@@ -2719,7 +2688,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/windows/grabpl.exe -OutFile grabpl.exe
   - .\grabpl.exe verify-drone
 
 - name: build-windows-installer
@@ -2766,7 +2735,7 @@ steps:
   image: grafana/build-container:1.3.0
   commands:
   - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/grabpl
+  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/grabpl
   - chmod +x bin/grabpl
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
@@ -2797,12 +2766,7 @@ steps:
 - name: lint-backend
   image: grafana/build-container:1.3.0
   commands:
-  - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
-  - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
-  - ./scripts/revive-strict
-  - ./scripts/tidy-check.sh
-  - ./grafana-mixin/scripts/lint.sh
-  - ./grafana-mixin/scripts/build.sh
+  - ./bin/grabpl lint-backend
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -2909,6 +2873,7 @@ steps:
   - ./e2e/start-server
   environment:
     PACKAGE_FILE: dist/grafana-enterprise-*linux-amd64.tar.gz
+    PORT: 3001
     RUNDIR: e2e/tmp-grafana-enterprise
   depends_on:
   - package
@@ -3006,12 +2971,7 @@ steps:
 - name: lint-backend-enterprise2
   image: grafana/build-container:1.3.0
   commands:
-  - golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...
-  - revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...
-  - ./scripts/revive-strict
-  - ./scripts/tidy-check.sh
-  - ./grafana-mixin/scripts/lint.sh
-  - ./grafana-mixin/scripts/build.sh
+  - ./bin/grabpl lint-backend --build-tags=enterprise2
   environment:
     CGO_ENABLED: 1
   depends_on:
@@ -3068,6 +3028,7 @@ steps:
   - ./e2e/start-server
   environment:
     PACKAGE_FILE: dist/grafana-enterprise2-*linux-amd64.tar.gz
+    PORT: 3002
     RUNDIR: e2e/tmp-grafana-enterprise2
   depends_on:
   - package-enterprise2
@@ -3138,7 +3099,7 @@ steps:
   image: grafana/ci-wix:0.1.1
   commands:
   - $$ProgressPreference = "SilentlyContinue"
-  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.29/windows/grabpl.exe -OutFile grabpl.exe
+  - Invoke-WebRequest https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.30/windows/grabpl.exe -OutFile grabpl.exe
   - git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"
   - cd grafana-enterprise
   - git checkout $$env:DRONE_BRANCH
