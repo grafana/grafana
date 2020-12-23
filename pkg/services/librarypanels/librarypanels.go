@@ -60,7 +60,11 @@ func (lps *LibraryPanelService) AddMigration(mg *migrator.Migrator) {
 			{Name: "updated", Type: migrator.DB_DateTime, Nullable: false},
 			{Name: "updated_by", Type: migrator.DB_BigInt, Nullable: false},
 		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"org_id", "folder_id", "name"}, Type: migrator.UniqueIndex},
+		},
 	}
 
 	mg.AddMigration("create library_panel table v1", migrator.NewAddTableMigration(libraryPanelV1))
+	mg.AddMigration("add index library_panel org_id & folder_id & name", migrator.NewAddIndexMigration(libraryPanelV1, libraryPanelV1.Indices[0]))
 }
