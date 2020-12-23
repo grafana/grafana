@@ -2,7 +2,8 @@ import _ from 'lodash';
 import angular, { ILocationService, IScope } from 'angular';
 
 import { DashboardModel } from '../../state/DashboardModel';
-import { CalculateDiffOptions, HistorySrv, RevisionsModel } from './HistorySrv';
+import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
+import { CalculateDiffOptions, HistorySrv } from './HistorySrv';
 import { AppEvents, locationUtil } from '@grafana/data';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
 import { CoreEvents } from 'app/types';
@@ -13,8 +14,8 @@ export class HistoryListCtrl {
   delta: { basic: string; json: string };
   diff: string;
   loading: boolean;
-  newInfo: RevisionsModel;
-  baseInfo: RevisionsModel;
+  newInfo: DecoratedRevisionModel;
+  baseInfo: DecoratedRevisionModel;
   isNewLatest: boolean;
 
   /** @ngInject */

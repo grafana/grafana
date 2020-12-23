@@ -1,9 +1,11 @@
 import React, { PureComponent } from 'react';
-import { Spinner, HorizontalGroup, Checkbox, Button, Tag, Icon, Tooltip } from '@grafana/ui';
-import { AngularComponent, getAngularLoader } from '@grafana/runtime';
+import { Spinner, HorizontalGroup } from '@grafana/ui';
 import { DashboardModel } from '../../state/DashboardModel';
 import { historySrv, RevisionsModel, CalculateDiffOptions } from '../VersionHistory/HistorySrv';
-
+import { VersionHistoryTable } from '../VersionHistory/VersionHistoryTable';
+import { VersionHistoryHeader } from '../VersionHistory/VersionHistoryHeader';
+import { VersionsHistoryButtons } from '../VersionHistory/VersionHistoryButtons';
+import { VersionHistoryComparison } from '../VersionHistory/VersionHistoryComparison';
 interface Props {
   dashboard: DashboardModel;
 }
@@ -19,7 +21,7 @@ type State = {
   isNewLatest: boolean;
 };
 
-type DecoratedRevisionModel = RevisionsModel & {
+export type DecoratedRevisionModel = RevisionsModel & {
   createdDateString: string;
   ageString: string;
   checked: boolean;
@@ -152,7 +154,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
     if (viewMode === 'compare') {
       return (
         <div>
-          <VersionsHeader
+          <VersionHistoryHeader
             isComparing
             onClick={this.reset}
             baseVersion={baseInfo?.version}
@@ -160,9 +162,9 @@ export class VersionsSettings extends PureComponent<Props, State> {
             isNewLatest={isNewLatest}
           />
           {isLoading ? (
-            <VersionsSpinner msg="Fetching changes&hellip;" />
+            <VersionsHistorySpinner msg="Fetching changes&hellip;" />
           ) : (
-            <VersionsDiffView
+            <VersionHistoryComparison
               dashboard={this.props.dashboard}
               newInfo={newInfo}
               baseInfo={baseInfo}
@@ -176,15 +178,15 @@ export class VersionsSettings extends PureComponent<Props, State> {
 
     return (
       <div>
-        <VersionsHeader />
+        <VersionHistoryHeader />
         {isLoading ? (
-          <VersionsSpinner msg="Fetching history list&hellip;" />
+          <VersionsHistorySpinner msg="Fetching history list&hellip;" />
         ) : (
-          <VersionsTable versions={versions} onCheck={this.onCheck} />
+          <VersionHistoryTable versions={versions} onCheck={this.onCheck} />
         )}
-        {this.state.isAppending && <VersionsSpinner msg="Fetching more entries&hellip;" />}
+        {this.state.isAppending && <VersionsHistorySpinner msg="Fetching more entries&hellip;" />}
         {showButtons && (
-          <VersionsButtons
+          <VersionsHistoryButtons
             hasMore={hasMore}
             canCompare={canCompare}
             getVersions={this.getVersions}
@@ -197,142 +199,9 @@ export class VersionsSettings extends PureComponent<Props, State> {
   }
 }
 
-const VersionsSpinner = ({ msg }: { msg: string }) => (
+const VersionsHistorySpinner = ({ msg }: { msg: string }) => (
   <HorizontalGroup>
     <Spinner />
     <em>{msg}</em>
   </HorizontalGroup>
 );
-
-const VersionsButtons = ({
-  hasMore,
-  canCompare,
-  getVersions,
-  getDiff,
-  isLastPage,
-}: {
-  hasMore: boolean;
-  canCompare: boolean;
-  getVersions: (append: boolean) => void;
-  getDiff: () => void;
-  isLastPage: boolean;
-}) => (
-  <HorizontalGroup>
-    {hasMore && (
-      <Button type="button" onClick={() => getVersions(true)} variant="secondary" disabled={isLastPage}>
-        Show more versions
-      </Button>
-    )}
-    <Tooltip content="Select 2 versions to start comparing" placement="bottom">
-      <Button type="button" disabled={canCompare} onClick={() => getDiff()} icon="code-branch">
-        Compare versions
-      </Button>
-    </Tooltip>
-  </HorizontalGroup>
-);
-
-const VersionsHeader = ({
-  isComparing = false,
-  onClick = () => {},
-  baseVersion = 0,
-  newVersion = 0,
-  isNewLatest = false,
-}) => (
-  <h3 className="dashboard-settings__header">
-    <span onClick={onClick} className={isComparing ? 'pointer' : ''}>
-      Versions
-    </span>
-    {isComparing && (
-      <span>
-        <Icon name="angle-right" /> Comparing {baseVersion} <Icon name="arrows-h" /> {newVersion}{' '}
-        {isNewLatest && <cite className="muted">(Latest)</cite>}
-      </span>
-    )}
-  </h3>
-);
-
-const VersionsTable = ({
-  versions,
-  onCheck,
-}: {
-  versions: DecoratedRevisionModel[];
-  onCheck: (ev: React.FormEvent<HTMLInputElement>, versionId: number) => void;
-}) => (
-  <table className="filter-table gf-form-group">
-    <thead>
-      <tr>
-        <th className="width-4"></th>
-        <th className="width-4">Version</th>
-        <th className="width-14">Date</th>
-        <th className="width-10">Updated By</th>
-        <th>Notes</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {versions.map((version, idx) => (
-        <tr key={version.id}>
-          <td>
-            <div>
-              <Checkbox checked={version.checked} onChange={ev => onCheck(ev, version.id)} />
-            </div>
-          </td>
-          <td>{version.version}</td>
-          <td>{version.createdDateString}</td>
-          <td>{version.createdBy}</td>
-          <td>{version.message}</td>
-          <td className="text-right">
-            {idx === 0 ? (
-              <Tag name="Latest" colorIndex={17} />
-            ) : (
-              <Button variant="secondary" size="sm" icon="history" onClick={() => console.log('restore')}>
-                Restore
-              </Button>
-            )}
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-);
-
-type DiffViewProps = {
-  dashboard: DashboardModel;
-  isNewLatest: boolean;
-  newInfo?: DecoratedRevisionModel;
-  baseInfo?: DecoratedRevisionModel;
-  delta: { basic: string; json: string };
-};
-
-export class VersionsDiffView extends PureComponent<DiffViewProps> {
-  element?: HTMLElement | null;
-  angularCmp?: AngularComponent;
-
-  constructor(props: DiffViewProps) {
-    super(props);
-  }
-
-  componentDidMount() {
-    const loader = getAngularLoader();
-    const template =
-      '<gf-dashboard-history dashboard="dashboard" newinfo="newinfo" baseinfo="baseinfo" isnewlatest="isnewlatest" delta="delta"/>';
-    const scopeProps = {
-      dashboard: this.props.dashboard,
-      delta: this.props.delta,
-      baseinfo: this.props.baseInfo,
-      newinfo: this.props.newInfo,
-      isnewlatest: this.props.isNewLatest,
-    };
-    this.angularCmp = loader.load(this.element, scopeProps, template);
-  }
-
-  componentWillUnmount() {
-    if (this.angularCmp) {
-      this.angularCmp.destroy();
-    }
-  }
-
-  render() {
-    return <div ref={ref => (this.element = ref)} />;
-  }
-}
