@@ -74,7 +74,7 @@ func (lps *LibraryPanelService) getAllHandler(c *models.ReqContext) api.Response
 	return api.JSON(200, util.DynMap{"result": libraryPanels})
 }
 
-// patchHandler handles PUT /api/library-panels/:uid
+// patchHandler handles PATCH /api/library-panels/:uid
 func (lps *LibraryPanelService) patchHandler(c *models.ReqContext, cmd patchLibraryPanelCommand) api.Response {
 	libraryPanel, err := lps.patchLibraryPanel(c, cmd, c.Params(":uid"))
 	if err != nil {

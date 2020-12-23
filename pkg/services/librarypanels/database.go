@@ -109,35 +109,35 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]Lib
 func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patchLibraryPanelCommand, uid string) (LibraryPanel, error) {
 	var libraryPanel LibraryPanel
 	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-		panelInDb, err := getLibraryPanel(session, uid, c.SignedInUser.OrgId)
+		panelInDB, err := getLibraryPanel(session, uid, c.SignedInUser.OrgId)
 		if err != nil {
 			return err
 		}
 
 		libraryPanel = LibraryPanel{
-			ID:        panelInDb.ID,
+			ID:        panelInDB.ID,
 			OrgID:     c.SignedInUser.OrgId,
 			FolderID:  cmd.FolderID,
 			UID:       uid,
 			Name:      cmd.Name,
 			Model:     cmd.Model,
-			Created:   panelInDb.Created,
-			CreatedBy: panelInDb.CreatedBy,
+			Created:   panelInDB.Created,
+			CreatedBy: panelInDB.CreatedBy,
 			Updated:   time.Now(),
 			UpdatedBy: c.SignedInUser.UserId,
 		}
 
 		if cmd.FolderID == 0 {
-			libraryPanel.FolderID = panelInDb.FolderID
+			libraryPanel.FolderID = panelInDB.FolderID
 		}
 		if cmd.Name == "" {
-			libraryPanel.Name = panelInDb.Name
+			libraryPanel.Name = panelInDB.Name
 		}
 		if cmd.Model == nil {
-			libraryPanel.Model = panelInDb.Model
+			libraryPanel.Model = panelInDB.Model
 		}
 
-		if rowsAffected, err := session.ID(panelInDb.ID).Update(&libraryPanel); err != nil {
+		if rowsAffected, err := session.ID(panelInDB.ID).Update(&libraryPanel); err != nil {
 			if lps.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
 				return errLibraryPanelAlreadyExists
 			}

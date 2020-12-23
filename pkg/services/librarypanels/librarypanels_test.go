@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/macaron.v1"
 
@@ -179,8 +178,8 @@ func TestGetAllLibraryPanels(t *testing.T) {
 		})
 }
 
-func TestUpdateLibraryPanel(t *testing.T) {
-	testScenario(t, "When an admin tries to update a library panel that does not exist, it should fail",
+func TestPatchLibraryPanel(t *testing.T) {
+	testScenario(t, "When an admin tries to patch a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			cmd := patchLibraryPanelCommand{}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": "unknown"})
@@ -188,7 +187,7 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			require.Equal(t, 404, response.Status())
 		})
 
-	testScenario(t, "When an admin tries to update a library panel that exists, it should succeed",
+	testScenario(t, "When an admin tries to patch a library panel that exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
@@ -217,15 +216,15 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			var result libraryPanelResult
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
-			require.Equal(t, int64(2), result.Result.FolderID)
-			require.Equal(t, "Panel - New name", result.Result.Name)
-			require.Equal(t, "Model - New name", result.Result.Model["name"])
-			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions("FolderID", "Name", "Model")...); diff != "" {
+			existing.Result.FolderID = int64(2)
+			existing.Result.Name = "Panel - New name"
+			existing.Result.Model["name"] = "Model - New name"
+			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
 
-	testScenario(t, "When an admin tries to update a library panel with folder only, it should change folder successfully and return correct result",
+	testScenario(t, "When an admin tries to patch a library panel with folder only, it should change folder successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
@@ -245,13 +244,13 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			var result libraryPanelResult
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
-			require.Equal(t, int64(100), result.Result.FolderID)
-			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions("FolderID")...); diff != "" {
+			existing.Result.FolderID = int64(100)
+			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
 
-	testScenario(t, "When an admin tries to update a library panel with name only, it should change name successfully and return correct result",
+	testScenario(t, "When an admin tries to patch a library panel with name only, it should change name successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
@@ -270,13 +269,13 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			var result libraryPanelResult
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
-			require.Equal(t, "New Name", result.Result.Name)
-			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions("Name")...); diff != "" {
+			existing.Result.Name = "New Name"
+			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
 
-	testScenario(t, "When an admin tries to update a library panel with model only, it should change model successfully and return correct result",
+	testScenario(t, "When an admin tries to patch a library panel with model only, it should change model successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
@@ -295,13 +294,15 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			var result libraryPanelResult
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
-			require.Equal(t, "New Model Name", result.Result.Model["name"])
-			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions("Model")...); diff != "" {
+			existing.Result.Model = map[string]interface{}{
+				"name": "New Model Name",
+			}
+			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
 
-	testScenario(t, "When another admin tries to update a library panel, it should change UpdatedBy successfully and return correct result",
+	testScenario(t, "When another admin tries to patch a library panel, it should change UpdatedBy successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
@@ -319,13 +320,13 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			var result libraryPanelResult
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
-			require.Equal(t, int64(2), result.Result.UpdatedBy)
-			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions("UpdatedBy")...); diff != "" {
+			existing.Result.UpdatedBy = int64(2)
+			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
 				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
 			}
 		})
 
-	testScenario(t, "When an admin tries to update a library panel with a name that already exists, it should fail",
+	testScenario(t, "When an admin tries to patch a library panel with a name that already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Existing")
 			response := sc.service.createHandler(sc.reqContext, command)
@@ -347,7 +348,7 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			require.Equal(t, 400, response.Status())
 		})
 
-	testScenario(t, "When an admin tries to update a library panel with a folder where a library panel with the same name already exists, it should fail",
+	testScenario(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(2, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
@@ -369,7 +370,7 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			require.Equal(t, 400, response.Status())
 		})
 
-	testScenario(t, "When an admin tries to update a library panel in another org, it should fail",
+	testScenario(t, "When an admin tries to patch a library panel in another org, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
@@ -497,9 +498,8 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 	})
 }
 
-func getCompareOptions(ignore ...string) []cmp.Option {
+func getCompareOptions() []cmp.Option {
 	return []cmp.Option{
-		cmpopts.IgnoreFields(libraryPanel{}, ignore...),
 		cmp.Transformer("Time", func(in time.Time) int64 {
 			return in.UTC().Unix()
 		}),
