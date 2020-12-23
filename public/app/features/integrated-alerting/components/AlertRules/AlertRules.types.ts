@@ -1,17 +1,33 @@
-import {} from '../AlertRuleTemplate/AlertRuleTemplate.types';
+export interface AlertRulesContext {
+  getAlertRules: () => void;
+}
 
 export enum AlertRuleFilterType {
   EQUAL = '=',
 }
 
-export interface AlertRulesListResponseTemplateParam {
-  name: string;
-  unit?: string;
-  value: any;
+export enum AlertRulesListPayloadTemplateParamUnits {
+  PARAM_UNIT_INVALID = 'Invalid unit',
+  PERCENTAGE = '%',
 }
 
-export interface AlertRulesListResponseTemplate {
-  params: AlertRulesListResponseTemplateParam[];
+export interface AlertRulesListPayloadTemplateParam {
+  [AlertRuleParamType.BOOL]?: {
+    default: boolean;
+  };
+  [AlertRuleParamType.FLOAT]?: {
+    default: number;
+  };
+  [AlertRuleParamType.STRING]?: {
+    default: string;
+  };
+  name: string;
+  unit?: keyof typeof AlertRulesListPayloadTemplateParamUnits;
+  type: keyof typeof AlertRuleParamType;
+}
+
+export interface AlertRulesListPayloadTemplate {
+  params: AlertRulesListPayloadTemplateParam[];
 }
 
 export enum AlertRuleSeverity {
@@ -32,39 +48,61 @@ export interface AlertRule {
   threshold: string;
 }
 
-export interface AlertRulesListResponseFilter {
+export interface AlertRulesListPayloadFilter {
   key: string;
   type: keyof typeof AlertRuleFilterType;
   value: string;
 }
 
 export enum AlertRuleParamType {
-  PARAM_TYPE_INVALID,
+  PARAM_TYPE_INVALID = 'Invalid type',
   BOOL = 'bool',
   FLOAT = 'float',
   STRING = 'string',
 }
 
 export interface AlertRulesListResponseParam {
-  bool?: boolean;
-  float?: number;
+  [AlertRuleParamType.BOOL]?: boolean;
+  [AlertRuleParamType.FLOAT]?: number;
   name: string;
-  string?: string;
+  [AlertRuleParamType.STRING]?: string;
   type: keyof typeof AlertRuleParamType;
 }
 
 export interface AlertRulesListResponseRule {
   created_at: string;
   disabled: boolean;
-  filters: AlertRulesListResponseFilter[];
+  filters: AlertRulesListPayloadFilter[];
   for: string; // duration, e.g.: '999s'
   last_notified?: string;
   params?: AlertRulesListResponseParam[];
   severity: keyof typeof AlertRuleSeverity;
   summary: string;
-  template: AlertRulesListResponseTemplate;
+  template: AlertRulesListPayloadTemplate;
 }
 
 export interface AlertRulesListResponse {
   rules: AlertRulesListResponseRule[];
+}
+
+export interface AlertRulePayloadCustomLabels {
+  [K: string]: string;
+}
+
+type AlertRulesListPayloadParam = AlertRulesListResponseParam;
+
+export interface AlertRuleCreateResponse {
+  rule_id: string;
+}
+
+export interface AlertRuleCreatePayload {
+  channel_ids: string[];
+  custom_labels: AlertRulePayloadCustomLabels;
+  disabled: boolean;
+  filters: AlertRulesListPayloadFilter[];
+  for: string;
+  params?: AlertRulesListPayloadParam[];
+  severity: keyof typeof AlertRuleSeverity;
+  summary: string;
+  template_name: string;
 }

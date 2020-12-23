@@ -1,8 +1,38 @@
-import { formatDuration, formatFilter, formatRule, formatRules, formatThreshold } from './AlertRulesTable.utils';
-import { rulesStubs } from '../__mocks__/alertRulesStubs';
+import { formatDuration, formatFilter, formatRule, formatRules, formatThreshold } from './AlertRules.utils';
+import { rulesStubs } from './__mocks__/alertRulesStubs';
+import { AlertRulesListPayloadTemplate } from './AlertRules.types';
 
 const moment = jest.requireActual('moment-timezone');
 moment.tz.setDefault('UTC');
+
+const testTemplate1: AlertRulesListPayloadTemplate = {
+  params: [
+    {
+      name: 'threshold',
+      float: {
+        default: 70,
+      },
+      unit: 'PERCENTAGE',
+      type: 'FLOAT',
+    },
+  ],
+};
+
+const testTemplate2: AlertRulesListPayloadTemplate = {
+  params: [],
+};
+
+const testTemplate3: AlertRulesListPayloadTemplate = {
+  params: [
+    {
+      name: 'threshold',
+      bool: {
+        default: true,
+      },
+      type: 'BOOL',
+    },
+  ],
+};
 
 describe('AlertRulesTable utils', () => {
   test('formatFilter', () => {
@@ -10,27 +40,42 @@ describe('AlertRulesTable utils', () => {
   });
 
   test('formatThreshold', () => {
+    expect(formatThreshold(testTemplate1, undefined)).toEqual('70 %');
+
+    expect(formatThreshold(testTemplate1, [])).toEqual('70 %');
+
+    expect(formatThreshold(testTemplate2, undefined)).toEqual('');
+
+    expect(formatThreshold(testTemplate2, [])).toEqual('');
+
     expect(
-      formatThreshold({
-        params: [
-          {
-            name: 'threshold',
-            value: 70,
-            unit: '%',
-          },
-        ],
-      })
+      formatThreshold(testTemplate2, [
+        {
+          name: 'threshold',
+          float: 70,
+          type: 'FLOAT',
+        },
+      ])
+    ).toEqual('');
+
+    expect(
+      formatThreshold(testTemplate1, [
+        {
+          name: 'threshold',
+          float: 70,
+          type: 'FLOAT',
+        },
+      ])
     ).toEqual('70 %');
 
     expect(
-      formatThreshold({
-        params: [
-          {
-            name: 'threshold',
-            value: true,
-          },
-        ],
-      })
+      formatThreshold(testTemplate3, [
+        {
+          name: 'threshold',
+          type: 'BOOL',
+          bool: true,
+        },
+      ])
     ).toEqual('true');
   });
 
@@ -62,7 +107,7 @@ describe('AlertRulesTable utils', () => {
       filters: ['environment=prod', 'app=wordpress', 'cluster=PXCCluster1'],
       severity: 'Warning',
       summary: 'High network throughput in - Mnfcg - Dev',
-      threshold: '100 GB/min',
+      threshold: '75 %',
       lastNotified: '',
     });
   });
@@ -88,7 +133,7 @@ describe('AlertRulesTable utils', () => {
         filters: ['environment=prod', 'app=wordpress', 'cluster=PXCCluster1'],
         severity: 'Warning',
         summary: 'High network throughput in - Mnfcg - Dev',
-        threshold: '100 GB/min',
+        threshold: '75 %',
         lastNotified: '',
       },
     ]);
