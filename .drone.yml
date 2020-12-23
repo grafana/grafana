@@ -1285,7 +1285,7 @@ steps:
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --build-tags enterprise2
-  - ./bin/grabpl integration-tests
+  - ./bin/grabpl integration-tests --build-tags enterprise2
   depends_on:
   - initialize
   - lint-backend-enterprise2
@@ -2144,7 +2144,7 @@ steps:
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --build-tags enterprise2
-  - ./bin/grabpl integration-tests
+  - ./bin/grabpl integration-tests --build-tags enterprise2
   depends_on:
   - initialize
   - lint-backend-enterprise2
@@ -2982,7 +2982,7 @@ steps:
   commands:
   - "[ $(grep FocusConvey -R pkg | wc -l) -eq \"0\" ] || exit 1"
   - ./bin/grabpl test-backend --build-tags enterprise2
-  - ./bin/grabpl integration-tests
+  - ./bin/grabpl integration-tests --build-tags enterprise2
   depends_on:
   - initialize
   - lint-backend-enterprise2

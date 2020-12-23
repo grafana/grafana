@@ -458,9 +458,9 @@ def test_backend_step(build_tags=None):
             # First make sure that there are no tests with FocusConvey
             '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
             # Then execute non-integration tests in parallel, since it should be safe
-            './bin/grabpl test-backend' + build_tags_str,
+            './bin/grabpl test-backend{}'.format(build_tags_str),
             # Then execute integration tests in serial
-            './bin/grabpl integration-tests',
+            './bin/grabpl integration-tests{}'.format(build_tags_str),
         ],
     }
 
