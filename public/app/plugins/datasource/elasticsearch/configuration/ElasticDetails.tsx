@@ -1,7 +1,7 @@
 import React from 'react';
 import { EventsWithValidation, regexValidation, LegacyForms } from '@grafana/ui';
 const { Select, Input, FormField } = LegacyForms;
-import { ElasticsearchOptions } from '../types';
+import { ElasticsearchOptions, Interval } from '../types';
 import { DataSourceSettings, SelectableValue } from '@grafana/data';
 
 const indexPatternTypes = [
@@ -170,7 +170,9 @@ const jsonDataChangeHandler = (key: keyof ElasticsearchOptions, value: Props['va
   });
 };
 
-const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => (option: SelectableValue<string>) => {
+const intervalHandler = (value: Props['value'], onChange: Props['onChange']) => (
+  option: SelectableValue<Interval | 'none'>
+) => {
   const { database } = value;
   // If option value is undefined it will send its label instead so we have to convert made up value to undefined here.
   const newInterval = option.value === 'none' ? undefined : option.value;

@@ -223,6 +223,7 @@ export class PanelModel implements DataConfigSource {
 
   updateFieldConfig(config: FieldConfigSource) {
     this.fieldConfig = config;
+    this.events.publish(new PanelOptionsChangedEvent());
 
     this.resendLastResult();
     this.render();

@@ -31,6 +31,7 @@ import { PanelModel } from 'app/features/dashboard/state';
 interface Props {
   data: PanelData;
   query: DataQuery;
+  queries: DataQuery[];
   dsSettings: DataSourceInstanceSettings;
   id: string;
   index: number;
@@ -174,7 +175,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   renderPluginEditor = () => {
-    const { query, onChange } = this.props;
+    const { query, onChange, queries } = this.props;
     const { datasource, data } = this.state;
 
     if (datasource?.components?.QueryCtrl) {
@@ -193,6 +194,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           onRunQuery={this.onRunQuery}
           data={data}
           range={getTimeSrv().timeRange()}
+          queries={queries}
         />
       );
     }
