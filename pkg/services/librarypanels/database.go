@@ -28,14 +28,10 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 		UpdatedBy: c.SignedInUser.UserId,
 	}
 	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-		if res, err := session.Query("SELECT 1 FROM library_panel WHERE org_id=? AND folder_id=? AND name=?",
-			c.SignedInUser.OrgId, cmd.FolderID, cmd.Name); err != nil {
-			return err
-		} else if len(res) == 1 {
-			return errLibraryPanelAlreadyExists
-		}
-
 		if _, err := session.Insert(&libraryPanel); err != nil {
+			if lps.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+				return errLibraryPanelAlreadyExists
+			}
 			return err
 		}
 		return nil
@@ -109,11 +105,11 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]Lib
 	return libraryPanels, err
 }
 
-// updateLibraryPanel updates a Library Panel.
-func (lps *LibraryPanelService) updateLibraryPanel(c *models.ReqContext, cmd updateLibraryPanelCommand) (LibraryPanel, error) {
+// patchLibraryPanel updates a Library Panel.
+func (lps *LibraryPanelService) patchLibraryPanel(c *models.ReqContext, cmd patchLibraryPanelCommand, uid string) (LibraryPanel, error) {
 	var libraryPanel LibraryPanel
 	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
-		panelInDb, err := getLibraryPanel(session, cmd.UID, c.SignedInUser.OrgId)
+		panelInDb, err := getLibraryPanel(session, uid, c.SignedInUser.OrgId)
 		if err != nil {
 			return err
 		}
@@ -122,7 +118,7 @@ func (lps *LibraryPanelService) updateLibraryPanel(c *models.ReqContext, cmd upd
 			ID:        panelInDb.ID,
 			OrgID:     c.SignedInUser.OrgId,
 			FolderID:  cmd.FolderID,
-			UID:       cmd.UID,
+			UID:       uid,
 			Name:      cmd.Name,
 			Model:     cmd.Model,
 			Created:   panelInDb.Created,
@@ -141,14 +137,10 @@ func (lps *LibraryPanelService) updateLibraryPanel(c *models.ReqContext, cmd upd
 			libraryPanel.Model = panelInDb.Model
 		}
 
-		if res, err := session.Query("SELECT 1 FROM library_panel WHERE org_id=? AND folder_id=? AND name=? AND uid <>?",
-			libraryPanel.OrgID, libraryPanel.FolderID, libraryPanel.Name, libraryPanel.UID); err != nil {
-			return err
-		} else if len(res) == 1 {
-			return errLibraryPanelAlreadyExists
-		}
-
 		if rowsAffected, err := session.ID(panelInDb.ID).Update(&libraryPanel); err != nil {
+			if lps.SQLStore.Dialect.IsUniqueConstraintViolation(err) {
+				return errLibraryPanelAlreadyExists
+			}
 			return err
 		} else if rowsAffected != 1 {
 			return errLibraryPanelNotFound

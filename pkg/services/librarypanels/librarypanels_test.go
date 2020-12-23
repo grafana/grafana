@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"gopkg.in/macaron.v1"
-
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
@@ -181,8 +182,9 @@ func TestGetAllLibraryPanels(t *testing.T) {
 func TestUpdateLibraryPanel(t *testing.T) {
 	testScenario(t, "When an admin tries to update a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := updateLibraryPanelCommand{}
-			response := sc.service.updateHandler(sc.reqContext, cmd)
+			cmd := patchLibraryPanelCommand{}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": "unknown"})
+			response := sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 404, response.Status())
 		})
 
@@ -192,11 +194,11 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			response := sc.service.createHandler(sc.reqContext, command)
 			require.Equal(t, 200, response.Status())
 
-			var result libraryPanelResult
-			err := json.Unmarshal(response.Body(), &result)
+			var existing libraryPanelResult
+			err := json.Unmarshal(response.Body(), &existing)
 			require.NoError(t, err)
 
-			cmd := updateLibraryPanelCommand{
+			cmd := patchLibraryPanelCommand{
 				FolderID: 2,
 				Name:     "Panel - New name",
 				Model: []byte(`
@@ -208,14 +210,19 @@ func TestUpdateLibraryPanel(t *testing.T) {
 								}
 							`),
 			}
-			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
-			response = sc.service.updateHandler(sc.reqContext, cmd)
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
+			response = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
 			require.Equal(t, int64(2), result.Result.FolderID)
 			require.Equal(t, "Panel - New name", result.Result.Name)
 			require.Equal(t, "Model - New name", result.Result.Model["name"])
+			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions("FolderID", "Name", "Model")...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
 		})
 
 	testScenario(t, "When an admin tries to update a library panel with folder only, it should change folder successfully and return correct result",
@@ -228,24 +235,20 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			err := json.Unmarshal(response.Body(), &existing)
 			require.NoError(t, err)
 
-			cmd := updateLibraryPanelCommand{
+			cmd := patchLibraryPanelCommand{
 				FolderID: 100,
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
-			response = sc.service.updateHandler(sc.reqContext, cmd)
+			response = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 200, response.Status())
+
 			var result libraryPanelResult
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
-			require.Equal(t, existing.Result.ID, result.Result.ID)
-			require.Equal(t, existing.Result.OrgID, result.Result.OrgID)
 			require.Equal(t, int64(100), result.Result.FolderID)
-			require.Equal(t, existing.Result.Name, result.Result.Name)
-			require.Equal(t, existing.Result.Model["name"], result.Result.Model["name"])
-			require.Equal(t, existing.Result.Created.UTC().Format(time.RFC3339), result.Result.Created.UTC().Format(time.RFC3339))
-			require.Equal(t, existing.Result.CreatedBy, result.Result.CreatedBy)
-			require.True(t, existing.Result.Updated.UTC().Before(result.Result.Updated.UTC()))
-			require.Equal(t, existing.Result.UpdatedBy, result.Result.UpdatedBy)
+			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions("FolderID")...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
 		})
 
 	testScenario(t, "When an admin tries to update a library panel with name only, it should change name successfully and return correct result",
@@ -258,24 +261,19 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			err := json.Unmarshal(response.Body(), &existing)
 			require.NoError(t, err)
 
-			cmd := updateLibraryPanelCommand{
+			cmd := patchLibraryPanelCommand{
 				Name: "New Name",
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
-			response = sc.service.updateHandler(sc.reqContext, cmd)
+			response = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 200, response.Status())
 			var result libraryPanelResult
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
-			require.Equal(t, existing.Result.ID, result.Result.ID)
-			require.Equal(t, existing.Result.OrgID, result.Result.OrgID)
-			require.Equal(t, int64(1), result.Result.FolderID)
 			require.Equal(t, "New Name", result.Result.Name)
-			require.Equal(t, existing.Result.Model["name"], result.Result.Model["name"])
-			require.Equal(t, existing.Result.Created.UTC().Format(time.RFC3339), result.Result.Created.UTC().Format(time.RFC3339))
-			require.Equal(t, existing.Result.CreatedBy, result.Result.CreatedBy)
-			require.True(t, existing.Result.Updated.UTC().Before(result.Result.Updated.UTC()))
-			require.Equal(t, existing.Result.UpdatedBy, result.Result.UpdatedBy)
+			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions("Name")...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
 		})
 
 	testScenario(t, "When an admin tries to update a library panel with model only, it should change model successfully and return correct result",
@@ -288,24 +286,19 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			err := json.Unmarshal(response.Body(), &existing)
 			require.NoError(t, err)
 
-			cmd := updateLibraryPanelCommand{
+			cmd := patchLibraryPanelCommand{
 				Model: []byte(`{ "name": "New Model Name" }`),
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
-			response = sc.service.updateHandler(sc.reqContext, cmd)
+			response = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 200, response.Status())
 			var result libraryPanelResult
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
-			require.Equal(t, existing.Result.ID, result.Result.ID)
-			require.Equal(t, existing.Result.OrgID, result.Result.OrgID)
-			require.Equal(t, int64(1), result.Result.FolderID)
-			require.Equal(t, existing.Result.Name, result.Result.Name)
 			require.Equal(t, "New Model Name", result.Result.Model["name"])
-			require.Equal(t, existing.Result.Created.UTC().Format(time.RFC3339), result.Result.Created.UTC().Format(time.RFC3339))
-			require.Equal(t, existing.Result.CreatedBy, result.Result.CreatedBy)
-			require.True(t, existing.Result.Updated.UTC().Before(result.Result.Updated.UTC()))
-			require.Equal(t, existing.Result.UpdatedBy, result.Result.UpdatedBy)
+			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions("Model")...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
 		})
 
 	testScenario(t, "When another admin tries to update a library panel, it should change UpdatedBy successfully and return correct result",
@@ -318,23 +311,18 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			err := json.Unmarshal(response.Body(), &existing)
 			require.NoError(t, err)
 
-			cmd := updateLibraryPanelCommand{}
+			cmd := patchLibraryPanelCommand{}
 			sc.reqContext.UserId = 2
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
-			response = sc.service.updateHandler(sc.reqContext, cmd)
+			response = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 200, response.Status())
 			var result libraryPanelResult
 			err = json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
-			require.Equal(t, existing.Result.ID, result.Result.ID)
-			require.Equal(t, existing.Result.OrgID, result.Result.OrgID)
-			require.Equal(t, existing.Result.FolderID, result.Result.FolderID)
-			require.Equal(t, existing.Result.Name, result.Result.Name)
-			require.Equal(t, existing.Result.Model["name"], result.Result.Model["name"])
-			require.Equal(t, existing.Result.Created.UTC().Format(time.RFC3339), result.Result.Created.UTC().Format(time.RFC3339))
-			require.Equal(t, existing.Result.CreatedBy, result.Result.CreatedBy)
-			require.True(t, existing.Result.Updated.UTC().Before(result.Result.Updated.UTC()))
 			require.Equal(t, int64(2), result.Result.UpdatedBy)
+			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions("UpdatedBy")...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
 		})
 
 	testScenario(t, "When an admin tries to update a library panel with a name that already exists, it should fail",
@@ -351,11 +339,11 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			err := json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
 
-			cmd := updateLibraryPanelCommand{
+			cmd := patchLibraryPanelCommand{
 				Name: "Existing",
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
-			response = sc.service.updateHandler(sc.reqContext, cmd)
+			response = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 400, response.Status())
 		})
 
@@ -373,11 +361,11 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			err := json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
 
-			cmd := updateLibraryPanelCommand{
+			cmd := patchLibraryPanelCommand{
 				FolderID: 2,
 			}
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
-			response = sc.service.updateHandler(sc.reqContext, cmd)
+			response = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 400, response.Status())
 		})
 
@@ -391,12 +379,12 @@ func TestUpdateLibraryPanel(t *testing.T) {
 			err := json.Unmarshal(response.Body(), &result)
 			require.NoError(t, err)
 
-			cmd := updateLibraryPanelCommand{
+			cmd := patchLibraryPanelCommand{
 				FolderID: 2,
 			}
 			sc.reqContext.OrgId = 2
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
-			response = sc.service.updateHandler(sc.reqContext, cmd)
+			response = sc.service.patchHandler(sc.reqContext, cmd)
 			require.Equal(t, 404, response.Status())
 		})
 }
@@ -507,4 +495,13 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		}
 		fn(t, sc)
 	})
+}
+
+func getCompareOptions(ignore ...string) []cmp.Option {
+	return []cmp.Option{
+		cmpopts.IgnoreFields(libraryPanel{}, ignore...),
+		cmp.Transformer("Time", func(in time.Time) int64 {
+			return in.UTC().Unix()
+		}),
+	}
 }
