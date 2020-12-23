@@ -445,7 +445,7 @@ def test_backend_step(build_tags=None):
     build_tags_str = ''
     if build_tags:
         sfx = '-' + '-'.join(build_tags)
-        build_tags_str += ' --build-tags {}'.format(','.join(build_tags))
+        build_tags_str = ' --build-tags {}'.format(','.join(build_tags))
 
     return {
         'name': 'test-backend' + sfx,
