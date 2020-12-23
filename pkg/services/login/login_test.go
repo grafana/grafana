@@ -1,10 +1,12 @@
 package login
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/quota"
 	log "github.com/inconshreveable/log15"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -72,6 +74,60 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 	err := syncOrgRoles(&user, &externalUser)
 	require.NoError(t, err)
 	assert.Contains(t, logs, models.ErrLastOrgAdmin.Error())
+}
+
+func Test_teamSync(t *testing.T) {
+	login := LoginService{
+		Bus:          bus.New(),
+		QuotaService: &quota.QuotaService{},
+	}
+
+	upserCmd := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: "test_user@example.org"}}
+	expectedUser := &models.User{
+		Id:    1,
+		Email: "test_user@example.org",
+		Name:  "test_user",
+		Login: "test_user",
+	}
+
+	bus.ClearBusHandlers()
+	t.Cleanup(func() { bus.ClearBusHandlers() })
+	bus.AddHandler("test", func(query *models.GetUserByAuthInfoQuery) error {
+		query.Result = expectedUser
+		return nil
+	})
+
+	var actualUser *models.User
+	var actualExternalUser *models.ExternalUserInfo
+
+	t.Run("login.TeamSync should not be called when  nil", func(t *testing.T) {
+		err := login.UpsertUser(upserCmd)
+		require.Nil(t, err)
+		assert.Nil(t, actualUser)
+		assert.Nil(t, actualExternalUser)
+
+		t.Run("login.TeamSync should be called when not nil", func(t *testing.T) {
+			teamSyncFunc := func(user *models.User, externalUser *models.ExternalUserInfo) error {
+				actualUser = user
+				actualExternalUser = externalUser
+				return nil
+			}
+			login.TeamSync = teamSyncFunc
+			err := login.UpsertUser(upserCmd)
+			require.Nil(t, err)
+			assert.Equal(t, actualUser, expectedUser)
+			assert.Equal(t, actualExternalUser, upserCmd.ExternalUser)
+		})
+
+		t.Run("login.TeamSync should propagate its errors to the caller", func(t *testing.T) {
+			teamSyncFunc := func(user *models.User, externalUser *models.ExternalUserInfo) error {
+				return errors.New("teamsync test error")
+			}
+			login.TeamSync = teamSyncFunc
+			err := login.UpsertUser(upserCmd)
+			require.Error(t, err)
+		})
+	})
 }
 
 func createSimpleUser() models.User {

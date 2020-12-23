@@ -2,7 +2,14 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
 import { auto } from 'angular';
-import { AppEvent, PanelEvents, PanelPluginMeta, AngularPanelMenuItem, EventBusExtended } from '@grafana/data';
+import {
+  AppEvent,
+  PanelEvents,
+  PanelPluginMeta,
+  AngularPanelMenuItem,
+  EventBusExtended,
+  EventBusSrv,
+} from '@grafana/data';
 import { DashboardModel } from '../dashboard/state';
 
 export class PanelCtrl {
@@ -30,7 +37,7 @@ export class PanelCtrl {
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
     this.editorTabs = [];
-    this.events = this.panel.events;
+    this.events = new EventBusSrv();
     this.timing = {}; // not used but here to not break plugins
 
     const plugin = config.panels[this.panel.type];
