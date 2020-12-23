@@ -122,8 +122,3 @@ type GetTeamsForLDAPGroupCommand struct {
 	Groups []string
 	Result []TeamOrgGroupDTO
 }
-
-type SyncTeamsCommand struct {
-	ExternalUser *ExternalUserInfo
-	User         *User
-}

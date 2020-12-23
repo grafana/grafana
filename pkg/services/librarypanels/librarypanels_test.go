@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"gopkg.in/macaron.v1"
-
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
@@ -178,12 +178,229 @@ func TestGetAllLibraryPanels(t *testing.T) {
 		})
 }
 
+func TestPatchLibraryPanel(t *testing.T) {
+	testScenario(t, "When an admin tries to patch a library panel that does not exist, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			cmd := patchLibraryPanelCommand{}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": "unknown"})
+			response := sc.service.patchHandler(sc.reqContext, cmd)
+			require.Equal(t, 404, response.Status())
+		})
+
+	testScenario(t, "When an admin tries to patch a library panel that exists, it should succeed",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var existing libraryPanelResult
+			err := json.Unmarshal(response.Body(), &existing)
+			require.NoError(t, err)
+
+			cmd := patchLibraryPanelCommand{
+				FolderID: 2,
+				Name:     "Panel - New name",
+				Model: []byte(`
+								{
+								  "datasource": "${DS_GDEV-TESTDATA}",
+								  "id": 1,
+								  "name": "Model - New name",
+								  "type": "text"
+								}
+							`),
+			}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
+			response = sc.service.patchHandler(sc.reqContext, cmd)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err = json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			existing.Result.FolderID = int64(2)
+			existing.Result.Name = "Panel - New name"
+			existing.Result.Model["name"] = "Model - New name"
+			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	testScenario(t, "When an admin tries to patch a library panel with folder only, it should change folder successfully and return correct result",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var existing libraryPanelResult
+			err := json.Unmarshal(response.Body(), &existing)
+			require.NoError(t, err)
+
+			cmd := patchLibraryPanelCommand{
+				FolderID: 100,
+			}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
+			response = sc.service.patchHandler(sc.reqContext, cmd)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err = json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			existing.Result.FolderID = int64(100)
+			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	testScenario(t, "When an admin tries to patch a library panel with name only, it should change name successfully and return correct result",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var existing libraryPanelResult
+			err := json.Unmarshal(response.Body(), &existing)
+			require.NoError(t, err)
+
+			cmd := patchLibraryPanelCommand{
+				Name: "New Name",
+			}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
+			response = sc.service.patchHandler(sc.reqContext, cmd)
+			require.Equal(t, 200, response.Status())
+			var result libraryPanelResult
+			err = json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			existing.Result.Name = "New Name"
+			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	testScenario(t, "When an admin tries to patch a library panel with model only, it should change model successfully and return correct result",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var existing libraryPanelResult
+			err := json.Unmarshal(response.Body(), &existing)
+			require.NoError(t, err)
+
+			cmd := patchLibraryPanelCommand{
+				Model: []byte(`{ "name": "New Model Name" }`),
+			}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
+			response = sc.service.patchHandler(sc.reqContext, cmd)
+			require.Equal(t, 200, response.Status())
+			var result libraryPanelResult
+			err = json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			existing.Result.Model = map[string]interface{}{
+				"name": "New Model Name",
+			}
+			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	testScenario(t, "When another admin tries to patch a library panel, it should change UpdatedBy successfully and return correct result",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var existing libraryPanelResult
+			err := json.Unmarshal(response.Body(), &existing)
+			require.NoError(t, err)
+
+			cmd := patchLibraryPanelCommand{}
+			sc.reqContext.UserId = 2
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": existing.Result.UID})
+			response = sc.service.patchHandler(sc.reqContext, cmd)
+			require.Equal(t, 200, response.Status())
+			var result libraryPanelResult
+			err = json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+			existing.Result.UpdatedBy = int64(2)
+			if diff := cmp.Diff(existing.Result, result.Result, getCompareOptions()...); diff != "" {
+				t.Fatalf("Result mismatch (-want +got):\n%s", diff)
+			}
+		})
+
+	testScenario(t, "When an admin tries to patch a library panel with a name that already exists, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Existing")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			command = getCreateCommand(1, "Text - Library Panel")
+			response = sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+
+			cmd := patchLibraryPanelCommand{
+				Name: "Existing",
+			}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+			response = sc.service.patchHandler(sc.reqContext, cmd)
+			require.Equal(t, 400, response.Status())
+		})
+
+	testScenario(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(2, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			command = getCreateCommand(1, "Text - Library Panel")
+			response = sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+
+			cmd := patchLibraryPanelCommand{
+				FolderID: 2,
+			}
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+			response = sc.service.patchHandler(sc.reqContext, cmd)
+			require.Equal(t, 400, response.Status())
+		})
+
+	testScenario(t, "When an admin tries to patch a library panel in another org, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+
+			cmd := patchLibraryPanelCommand{
+				FolderID: 2,
+			}
+			sc.reqContext.OrgId = 2
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+			response = sc.service.patchHandler(sc.reqContext, cmd)
+			require.Equal(t, 404, response.Status())
+		})
+}
+
 type libraryPanel struct {
-	ID       int64  `json:"id"`
-	OrgID    int64  `json:"orgId"`
-	FolderID int64  `json:"folderId"`
-	UID      string `json:"uid"`
-	Name     string `json:"name"`
+	ID        int64                  `json:"id"`
+	OrgID     int64                  `json:"orgId"`
+	FolderID  int64                  `json:"folderId"`
+	UID       string                 `json:"uid"`
+	Name      string                 `json:"name"`
+	Model     map[string]interface{} `json:"model"`
+	Created   time.Time              `json:"created"`
+	Updated   time.Time              `json:"updated"`
+	CreatedBy int64                  `json:"createdBy"`
+	UpdatedBy int64                  `json:"updatedBy"`
 }
 
 type libraryPanelResult struct {
@@ -279,4 +496,12 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		}
 		fn(t, sc)
 	})
+}
+
+func getCompareOptions() []cmp.Option {
+	return []cmp.Option{
+		cmp.Transformer("Time", func(in time.Time) int64 {
+			return in.UTC().Unix()
+		}),
+	}
 }
