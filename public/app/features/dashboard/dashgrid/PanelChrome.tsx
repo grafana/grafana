@@ -1,7 +1,7 @@
 // Libraries
 import React, { Component } from 'react';
 import classNames from 'classnames';
-import { Unsubscribable } from 'rxjs';
+import { Subscription } from 'rxjs';
 // Components
 import { PanelHeader } from './PanelHeader/PanelHeader';
 import { ErrorBoundary } from '@grafana/ui';
@@ -20,7 +20,6 @@ import {
   DefaultTimeRange,
   toUtc,
   toDataFrameDTO,
-  PanelEvents,
   PanelData,
   PanelPlugin,
   FieldConfigSource,
@@ -28,6 +27,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
+import { RefreshEvent, RenderEvent } from 'app/types/events';
 
 const DEFAULT_PLUGIN_ERROR = 'Error in plugin';
 
@@ -52,9 +52,8 @@ export interface State {
 }
 
 export class PanelChrome extends Component<Props, State> {
-  readonly timeSrv: TimeSrv = getTimeSrv();
-
-  querySubscription?: Unsubscribable;
+  private readonly timeSrv: TimeSrv = getTimeSrv();
+  private subs = new Subscription();
 
   constructor(props: Props) {
     super(props);
@@ -75,8 +74,8 @@ export class PanelChrome extends Component<Props, State> {
     const { panel, dashboard } = this.props;
 
     // Subscribe to panel events
-    panel.events.on(PanelEvents.refresh, this.onRefresh);
-    panel.events.on(PanelEvents.render, this.onRender);
+    this.subs.add(panel.events.subscribe(RefreshEvent, this.onRefresh));
+    this.subs.add(panel.events.subscribe(RenderEvent, this.onRender));
 
     dashboard.panelInitialized(this.props.panel);
 
@@ -93,21 +92,18 @@ export class PanelChrome extends Component<Props, State> {
       this.setState({ isFirstLoad: false });
     }
 
-    this.querySubscription = panel
-      .getQueryRunner()
-      .getData({ withTransforms: true, withFieldConfig: true })
-      .subscribe({
-        next: data => this.onDataUpdate(data),
-      });
+    this.subs.add(
+      panel
+        .getQueryRunner()
+        .getData({ withTransforms: true, withFieldConfig: true })
+        .subscribe({
+          next: data => this.onDataUpdate(data),
+        })
+    );
   }
 
   componentWillUnmount() {
-    this.props.panel.events.off(PanelEvents.refresh, this.onRefresh);
-    this.props.panel.events.off(PanelEvents.render, this.onRender);
-
-    if (this.querySubscription) {
-      this.querySubscription.unsubscribe();
-    }
+    this.subs.unsubscribe();
   }
 
   componentDidUpdate(prevProps: Props) {

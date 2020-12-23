@@ -28,7 +28,13 @@ import {
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
-import { PanelOptionsChangedEvent, PanelQueriesChangedEvent, PanelTransformationsChangedEvent } from 'app/types/events';
+import {
+  PanelOptionsChangedEvent,
+  PanelQueriesChangedEvent,
+  PanelTransformationsChangedEvent,
+  RefreshEvent,
+  RenderEvent,
+} from 'app/types/events';
 import { getTimeSrv } from '../services/TimeSrv';
 import { getAllVariableValuesForUrl } from '../../variables/getAllVariableValuesForUrl';
 
@@ -258,36 +264,22 @@ export class PanelModel implements DataConfigSource {
   }
 
   updateGridPos(newPos: GridPos) {
-    let sizeChanged = false;
-
-    if (this.gridPos.w !== newPos.w || this.gridPos.h !== newPos.h) {
-      sizeChanged = true;
-    }
-
     this.gridPos.x = newPos.x;
     this.gridPos.y = newPos.y;
     this.gridPos.w = newPos.w;
     this.gridPos.h = newPos.h;
-
-    if (sizeChanged) {
-      this.events.emit(PanelEvents.panelSizeChanged);
-    }
-  }
-
-  resizeDone() {
-    this.events.emit(PanelEvents.panelSizeChanged);
   }
 
   refresh() {
     this.hasRefreshed = true;
-    this.events.emit(PanelEvents.refresh);
+    this.events.publish(new RefreshEvent());
   }
 
   render() {
     if (!this.hasRefreshed) {
       this.refresh();
     } else {
-      this.events.emit(PanelEvents.render);
+      this.events.publish(new RenderEvent());
     }
   }
 

@@ -137,9 +137,11 @@ export class TemplateSrv implements BaseTemplateSrv {
       args = [];
     }
 
-    const formatItem = formatRegistry.getIfExists(format);
+    let formatItem = formatRegistry.getIfExists(format);
+
     if (!formatItem) {
-      throw new Error(`Variable format ${format} not found`);
+      console.error(`Variable format ${format} not found. Using glob format as fallback.`);
+      formatItem = formatRegistry.get('glob');
     }
 
     const options: FormatOptions = { value, args, text: text ?? value };
