@@ -31,7 +31,7 @@ def pr_pipelines(edition):
     services = integration_test_services()
     variants = ['linux-x64', 'linux-x64-musl', 'osx64', 'win64',]
     steps = [
-        lint_backend_step(edition),
+        lint_backend_step(edition=edition),
         codespell_step(),
         shellcheck_step(),
         dashboard_schemas_check(),
@@ -41,7 +41,7 @@ def pr_pipelines(edition):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition),
         package_step(edition=edition, ver_mode=ver_mode, variants=variants),
-        e2e_tests_server_step(),
+        e2e_tests_server_step(edition=edition),
         e2e_tests_step(),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         build_frontend_docs_step(edition=edition),
@@ -54,6 +54,16 @@ def pr_pipelines(edition):
     if edition == 'enterprise':
         steps.append(benchmark_ldap_step())
         services.append(ldap_service())
+        build_tags = ['enterprise2']
+        steps.extend([
+            lint_backend_step(edition=edition, build_tags=build_tags),
+            test_backend_step(build_tags=build_tags),
+            build_backend_step(edition=edition, ver_mode=ver_mode, variants=['linux-x64'], build_tags=build_tags),
+            package_step(edition=edition, ver_mode=ver_mode, variants=['linux-x64'], build_tags=build_tags),
+            e2e_tests_server_step(edition=edition, build_tags=build_tags, port=3002),
+            e2e_tests_step(build_tags=build_tags, port=3002),
+        ])
+
     trigger = {
         'event': ['pull_request',],
     }
