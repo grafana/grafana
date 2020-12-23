@@ -224,7 +224,12 @@ def lint_backend_step(edition, build_tags=None):
         ],
         'commands': [
             # Don't use Make since it will re-download the linters
-            './bin/grabpl lint-backend{}'.format(build_tags_str),
+            'golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...',
+            'revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...',
+            './scripts/revive-strict',
+            './scripts/tidy-check.sh',
+            './grafana-mixin/scripts/lint.sh',
+            './grafana-mixin/scripts/build.sh',
         ],
     }
 
