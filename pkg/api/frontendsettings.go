@@ -19,7 +19,7 @@ func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plu
 	orgDataSources := make([]*models.DataSource, 0)
 
 	if c.OrgId != 0 {
-		query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: &hs.Cfg.DataSourceLimit}
+		query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
 		err := bus.Dispatch(&query)
 
 		if err != nil {

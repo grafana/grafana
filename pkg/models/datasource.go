@@ -203,7 +203,7 @@ type DeleteDataSourceByNameCommand struct {
 
 type GetDataSourcesQuery struct {
 	OrgId           int64
-	DataSourceLimit *int
+	DataSourceLimit int
 	User            *SignedInUser
 	Result          []*DataSource
 }

@@ -20,7 +20,7 @@ import (
 var datasourcesLogger = log.New("datasources")
 
 func (hs *HTTPServer) GetDataSources(c *models.ReqContext) Response {
-	query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: &hs.Cfg.DataSourceLimit}
+	query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return Error(500, "Failed to query datasources", err)

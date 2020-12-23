@@ -343,12 +343,6 @@ Defaults to `private`.
 
 <hr />
 
-## [database]
-
-### datasource_limit
-
-The upper limit of number of data sources returned in the response, set this if you need to override the default.
-
 ## [remote_cache]
 
 ### type
