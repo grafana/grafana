@@ -204,7 +204,7 @@ export const TIME_SERIES_TIME_FIELD_NAME = 'Time';
 export const TIME_SERIES_METRIC_FIELD_NAME = 'Metric';
 
 /**
- * Used to describe from where a specific data frame field is located within a
+ * Describes where a specific data frame field is located within a
  * dataset of type DataFrame[]
  * @public
  */
