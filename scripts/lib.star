@@ -626,9 +626,10 @@ def e2e_tests_server_step(edition, build_tags=None, port=3001):
     elif edition == 'enterprise':
         package_file_pfx = 'grafana-' + edition
 
-    environment = {
-        'PORT': port,
-    }
+    # environment = {
+    #     'PORT': port,
+    # }
+    environment = {}
     if package_file_pfx:
         environment['PACKAGE_FILE'] = 'dist/{}-*linux-amd64.tar.gz'.format(package_file_pfx)
         environment['RUNDIR'] = 'e2e/tmp-{}'.format(package_file_pfx)
