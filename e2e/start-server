@@ -12,16 +12,14 @@ mkdir $RUNDIR
 
 echo -e "Copying grafana backend files to temp dir..."
 
-if [[ -f "$PACKAGE_FILE" ]]; then
+if [[ -f $PACKAGE_FILE ]]; then
   echo "Found package tar file, extracting..."
-  tar zxf "$PACKAGE_FILE" -C $RUNDIR
+  tar zxf $PACKAGE_FILE -C $RUNDIR
   mv $RUNDIR/grafana-*/* $RUNDIR
 else
   echo "Couldn't find package ${PACKAGE_FILE} - copying local dev files"
-  ls dist
 
   if [[ ! -f bin/grafana-server ]]; then
-    ls bin
     echo bin/grafana-server missing
     exit 1
   fi
