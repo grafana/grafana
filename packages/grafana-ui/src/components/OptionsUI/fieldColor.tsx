@@ -36,7 +36,9 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
       description: mode.description,
       isContinuous: mode.isContinuous,
       isByValue: mode.isByValue,
-      component: () => <FieldColorModeViz mode={mode} theme={theme} />,
+      component() {
+        return <FieldColorModeViz mode={mode} theme={theme} />;
+      },
     };
   });
 

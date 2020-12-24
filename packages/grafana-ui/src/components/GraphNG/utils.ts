@@ -8,7 +8,7 @@ import {
   FieldMatcherID,
 } from '@grafana/data';
 import { AlignedFrameWithGapTest } from '../uPlot/types';
-import uPlot, { AlignedData, AlignedDataWithGapTest } from 'uplot';
+import uPlot, { AlignedData, JoinNullMode } from 'uplot';
 import { XYFieldMatchers } from './GraphNG';
 
 // the results ofter passing though data
@@ -43,6 +43,7 @@ export function mapDimesions(match: XYFieldMatchers, frame: DataFrame, frames?: 
 export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): AlignedFrameWithGapTest | null {
   const valuesFromFrames: AlignedData[] = [];
   const sourceFields: Field[] = [];
+  const nullModes: JoinNullMode[][] = [];
 
   // Default to timeseries config
   if (!fields) {
@@ -54,6 +55,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
 
   for (const frame of frames) {
     const dims = mapDimesions(fields, frame, frames);
+
     if (!(dims.x.length && dims.y.length)) {
       continue; // both x and y matched something!
     }
@@ -62,9 +64,12 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       throw new Error('Only a single x field is supported');
     }
 
+    let nullModesFrame: JoinNullMode[] = [];
+
     // Add the first X axis
     if (!sourceFields.length) {
       sourceFields.push(dims.x[0]);
+      nullModesFrame.push(0);
     }
 
     const alignedData: AlignedData = [
@@ -74,10 +79,15 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     // Add the Y values
     for (const field of dims.y) {
       let values = field.values.toArray();
+      let joinNullMode = field.config.custom.spanNulls ? 0 : 2;
+
       if (field.config.nullValueMode === NullValueMode.AsZero) {
         values = values.map(v => (v === null ? 0 : v));
+        joinNullMode = 0;
       }
+
       alignedData.push(values);
+      nullModesFrame.push(joinNullMode);
 
       // This will cache an appropriate field name in the field state
       getFieldDisplayName(field, frame, frames);
@@ -85,6 +95,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     }
 
     valuesFromFrames.push(alignedData);
+    nullModes.push(nullModesFrame);
   }
 
   if (valuesFromFrames.length === 0) {
@@ -92,7 +103,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
   }
 
   // do the actual alignment (outerJoin on the first arrays)
-  const { data: alignedData, isGap } = outerJoinValues(valuesFromFrames);
+  let { data: alignedData, isGap } = uPlot.join(valuesFromFrames, nullModes);
 
   if (alignedData!.length !== sourceFields.length) {
     throw new Error('outerJoinValues lost a field?');
@@ -108,74 +119,5 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       })),
     },
     isGap,
-  };
-}
-
-export function outerJoinValues(tables: AlignedData[]): AlignedDataWithGapTest {
-  if (tables.length === 1) {
-    return {
-      data: tables[0],
-      isGap: () => true,
-    };
-  }
-
-  let xVals: Set<number> = new Set();
-  let xNulls: Array<Set<number>> = [new Set()];
-
-  for (const t of tables) {
-    let xs = t[0];
-    let len = xs.length;
-    let nulls: Set<number> = new Set();
-
-    for (let i = 0; i < len; i++) {
-      xVals.add(xs[i]);
-    }
-
-    for (let j = 1; j < t.length; j++) {
-      let ys = t[j];
-
-      for (let i = 0; i < len; i++) {
-        if (ys[i] == null) {
-          nulls.add(xs[i]);
-        }
-      }
-    }
-
-    xNulls.push(nulls);
-  }
-
-  let data: AlignedData = [Array.from(xVals).sort((a, b) => a - b)];
-
-  let alignedLen = data[0].length;
-
-  let xIdxs = new Map();
-
-  for (let i = 0; i < alignedLen; i++) {
-    xIdxs.set(data[0][i], i);
-  }
-
-  for (const t of tables) {
-    let xs = t[0];
-
-    for (let j = 1; j < t.length; j++) {
-      let ys = t[j];
-
-      let yVals = Array(alignedLen).fill(null);
-
-      for (let i = 0; i < ys.length; i++) {
-        yVals[xIdxs.get(xs[i])] = ys[i];
-      }
-
-      data.push(yVals);
-    }
-  }
-
-  return {
-    data: data,
-    isGap(u: uPlot, seriesIdx: number, dataIdx: number) {
-      // u.data has to be AlignedDate
-      let xVal = u.data[0][dataIdx];
-      return xNulls[seriesIdx].has(xVal!);
-    },
   };
 }

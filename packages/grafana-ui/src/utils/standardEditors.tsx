@@ -139,7 +139,6 @@ export const getStandardFieldConfigs = () => {
     id: 'thresholds',
     path: 'thresholds',
     name: 'Thresholds',
-
     editor: standardEditorsRegistry.get('thresholds').editor as any,
     override: standardEditorsRegistry.get('thresholds').editor as any,
     process: thresholdsOverrideProcessor,
@@ -259,7 +258,9 @@ export const getStandardOptionEditors = () => {
     id: 'boolean',
     name: 'Boolean',
     description: 'Allows boolean values input',
-    editor: props => <Switch {...props} onChange={e => props.onChange(e.currentTarget.checked)} />,
+    editor(props) {
+      return <Switch {...props} onChange={e => props.onChange(e.currentTarget.checked)} />;
+    },
   };
 
   const select: StandardEditorsRegistryItem<any> = {
@@ -273,7 +274,9 @@ export const getStandardOptionEditors = () => {
     id: 'radio',
     name: 'Radio',
     description: 'Allows option selection',
-    editor: props => <RadioButtonGroup {...props} options={props.item.settings?.options} />,
+    editor(props) {
+      return <RadioButtonGroup {...props} options={props.item.settings?.options} />;
+    },
   };
 
   const unit: StandardEditorsRegistryItem<string> = {
@@ -301,7 +304,9 @@ export const getStandardOptionEditors = () => {
     id: 'color',
     name: 'Color',
     description: 'Allows color selection',
-    editor: props => <ColorValueEditor value={props.value} onChange={props.onChange} />,
+    editor(props) {
+      return <ColorValueEditor value={props.value} onChange={props.onChange} />;
+    },
   };
 
   const fieldColor: StandardEditorsRegistryItem<FieldColor> = {

@@ -5,12 +5,10 @@ import { getTemplateSrv } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
 // Types
 import {
-  AppEvent,
   DataConfigSource,
   DataLink,
   DataQuery,
   DataTransformerConfig,
-  eventFactory,
   FieldColorConfigSettings,
   FieldColorModeId,
   fieldColorModeRegistry,
@@ -24,15 +22,21 @@ import {
   EventBusExtended,
   EventBusSrv,
   DataFrameDTO,
+  urlUtil,
+  DataLinkBuiltInVars,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
-import { PanelQueryRunner } from './PanelQueryRunner';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { CoreEvents } from '../../../types';
-
-export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
-export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
+import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import {
+  PanelOptionsChangedEvent,
+  PanelQueriesChangedEvent,
+  PanelTransformationsChangedEvent,
+  RefreshEvent,
+  RenderEvent,
+} from 'app/types/events';
+import { getTimeSrv } from '../services/TimeSrv';
+import { getAllVariableValuesForUrl } from '../../variables/getAllVariableValuesForUrl';
 
 export interface GridPos {
   x: number;
@@ -138,8 +142,8 @@ export class PanelModel implements DataConfigSource {
   };
   fieldConfig: FieldConfigSource;
 
-  maxDataPoints?: number;
-  interval?: string;
+  maxDataPoints?: number | null;
+  interval?: string | null;
   description?: string;
   links?: DataLink[];
   transparent: boolean;
@@ -219,11 +223,13 @@ export class PanelModel implements DataConfigSource {
 
   updateOptions(options: object) {
     this.options = options;
+    this.events.publish(new PanelOptionsChangedEvent());
     this.render();
   }
 
   updateFieldConfig(config: FieldConfigSource) {
     this.fieldConfig = config;
+    this.events.publish(new PanelOptionsChangedEvent());
 
     this.resendLastResult();
     this.render();
@@ -258,41 +264,23 @@ export class PanelModel implements DataConfigSource {
   }
 
   updateGridPos(newPos: GridPos) {
-    let sizeChanged = false;
-
-    if (this.gridPos.w !== newPos.w || this.gridPos.h !== newPos.h) {
-      sizeChanged = true;
-    }
-
     this.gridPos.x = newPos.x;
     this.gridPos.y = newPos.y;
     this.gridPos.w = newPos.w;
     this.gridPos.h = newPos.h;
-
-    if (sizeChanged) {
-      this.events.emit(PanelEvents.panelSizeChanged);
-    }
-  }
-
-  resizeDone() {
-    this.events.emit(PanelEvents.panelSizeChanged);
   }
 
   refresh() {
     this.hasRefreshed = true;
-    this.events.emit(PanelEvents.refresh);
+    this.events.publish(new RefreshEvent());
   }
 
   render() {
     if (!this.hasRefreshed) {
       this.refresh();
     } else {
-      this.events.emit(PanelEvents.render);
+      this.events.publish(new RenderEvent());
     }
-  }
-
-  initialized() {
-    this.events.emit(PanelEvents.panelInitialized);
   }
 
   private getOptionsToRemember() {
@@ -418,7 +406,7 @@ export class PanelModel implements DataConfigSource {
   }
 
   updateQueries(queries: DataQuery[]) {
-    this.events.emit(CoreEvents.queryChanged);
+    this.events.publish(new PanelQueriesChangedEvent());
     this.targets = queries;
   }
 
@@ -470,7 +458,6 @@ export class PanelModel implements DataConfigSource {
     return {
       fieldConfig: this.fieldConfig,
       replaceVariables: this.replaceVariables,
-      getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid.bind(getDatasourceSrv()),
       fieldConfigRegistry: this.plugin.fieldConfigRegistry,
       theme: config.theme,
     };
@@ -501,16 +488,33 @@ export class PanelModel implements DataConfigSource {
   }
 
   setTransformations(transformations: DataTransformerConfig[]) {
-    this.events.emit(CoreEvents.transformationChanged);
     this.transformations = transformations;
     this.resendLastResult();
+    this.events.publish(new PanelTransformationsChangedEvent());
   }
 
-  replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {
+  replaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {
     let vars = this.scopedVars;
+
     if (extraVars) {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
+    const allVariablesParams = getAllVariableValuesForUrl(vars);
+    const variablesQuery = urlUtil.toUrlParams(allVariablesParams);
+    const timeRangeUrl = urlUtil.toUrlParams(getTimeSrv().timeRangeForUrl());
+
+    vars = {
+      ...vars,
+      [DataLinkBuiltInVars.keepTime]: {
+        text: timeRangeUrl,
+        value: timeRangeUrl,
+      },
+      [DataLinkBuiltInVars.includeVars]: {
+        text: variablesQuery,
+        value: variablesQuery,
+      },
+    };
+
     return getTemplateSrv().replace(value, vars, format);
   }
 
@@ -528,14 +532,6 @@ export class PanelModel implements DataConfigSource {
    * */
   getSavedId(): number {
     return this.editSourceId ?? this.id;
-  }
-
-  on<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
-    this.events.on(event, callback);
-  }
-
-  off<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
-    this.events.off(event, callback);
   }
 }
 

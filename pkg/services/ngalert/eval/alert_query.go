@@ -237,18 +237,6 @@ func (aq *AlertQuery) getModel() ([]byte, error) {
 	return model, nil
 }
 
-func (aq *AlertQuery) setOrgID(orgID int64) error {
-	if aq.modelProps == nil {
-		err := aq.setModelProps()
-		if err != nil {
-			return err
-		}
-	}
-
-	aq.modelProps["orgId"] = orgID
-	return nil
-}
-
 func (aq *AlertQuery) setQueryType() error {
 	if aq.modelProps == nil {
 		err := aq.setModelProps()
@@ -272,12 +260,7 @@ func (aq *AlertQuery) setQueryType() error {
 
 // PreSave sets query's properties.
 // It should be called before being saved.
-func (aq *AlertQuery) PreSave(orgID int64) error {
-	err := aq.setOrgID(orgID)
-	if err != nil {
-		return fmt.Errorf("failed to set orgId to query model: %w", err)
-	}
-
+func (aq *AlertQuery) PreSave() error {
 	if err := aq.setDatasource(); err != nil {
 		return fmt.Errorf("failed to set datasource to query model: %w", err)
 	}

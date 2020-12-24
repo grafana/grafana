@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -232,7 +231,6 @@ func verifyExistingOrg(sess *DBSession, orgId int64) error {
 
 func getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
 	var org models.Org
-
 	if setting.AutoAssignOrg {
 		has, err := sess.Where("id=?", setting.AutoAssignOrgId).Get(&org)
 		if err != nil {
@@ -241,15 +239,16 @@ func getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
 		if has {
 			return org.Id, nil
 		}
-		if setting.AutoAssignOrgId == 1 {
-			org.Name = mainOrgName
-			org.Id = int64(setting.AutoAssignOrgId)
-		} else {
+
+		if setting.AutoAssignOrgId != 1 {
 			sqlog.Error("Could not create user: organization ID does not exist", "orgID",
 				setting.AutoAssignOrgId)
 			return 0, fmt.Errorf("could not create user: organization ID %d does not exist",
 				setting.AutoAssignOrgId)
 		}
+
+		org.Name = mainOrgName
+		org.Id = int64(setting.AutoAssignOrgId)
 	} else {
 		org.Name = orgName
 	}
@@ -274,15 +273,4 @@ func getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
 	})
 
 	return org.Id, nil
-}
-
-func createDefaultOrg(ctx context.Context) error {
-	return inTransactionCtx(ctx, func(sess *DBSession) error {
-		_, err := getOrCreateOrg(sess, mainOrgName)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
 }

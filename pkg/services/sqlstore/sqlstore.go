@@ -39,16 +39,21 @@ var (
 // ContextSessionKey is used as key to save values in `context.Context`
 type ContextSessionKey struct{}
 
+const ServiceName = "SqlStore"
+const InitPriority = registry.High
+
 func init() {
+	ss := &SQLStore{}
+
 	// This change will make xorm use an empty default schema for postgres and
 	// by that mimic the functionality of how it was functioning before
 	// xorm's changes above.
 	xorm.DefaultPostgresSchema = ""
 
 	registry.Register(&registry.Descriptor{
-		Name:         "SQLStore",
-		Instance:     &SQLStore{},
-		InitPriority: registry.High,
+		Name:         ServiceName,
+		Instance:     ss,
+		InitPriority: InitPriority,
 	})
 }
 
@@ -113,35 +118,49 @@ func (ss *SQLStore) Init() error {
 
 func (ss *SQLStore) ensureMainOrgAndAdminUser() error {
 	err := ss.InTransaction(context.Background(), func(ctx context.Context) error {
-		systemUserCountQuery := models.GetSystemUserCountStatsQuery{}
-		err := bus.DispatchCtx(ctx, &systemUserCountQuery)
+		ss.log.Debug("Ensuring main org and admin user exist")
+		var stats models.SystemUserCountStats
+		err := ss.WithDbSession(ctx, func(sess *DBSession) error {
+			// TODO: Should be able to rename "Count" to "count", for more standard SQL style
+			// Just have to make sure it gets deserialized properly into models.SystemUserCountStats
+			rawSQL := `SELECT COUNT(id) AS Count FROM ` + dialect.Quote("user")
+			if _, err := sess.SQL(rawSQL).Get(&stats); err != nil {
+				return fmt.Errorf("could not determine if admin user exists: %w", err)
+			}
+
+			return nil
+		})
 		if err != nil {
-			return fmt.Errorf("could not determine if admin user exists: %w", err)
+			return err
 		}
 
-		if systemUserCountQuery.Result.Count > 0 {
+		if stats.Count > 0 {
 			return nil
 		}
 
 		// ensure admin user
 		if !ss.Cfg.DisableInitAdminCreation {
-			cmd := models.CreateUserCommand{}
-			cmd.Login = setting.AdminUser
-			cmd.Email = setting.AdminUser + "@localhost"
-			cmd.Password = setting.AdminPassword
-			cmd.IsAdmin = true
-
+			ss.log.Debug("Creating default admin user")
+			cmd := models.CreateUserCommand{
+				Login:    ss.Cfg.AdminUser,
+				Email:    ss.Cfg.AdminUser + "@localhost",
+				Password: ss.Cfg.AdminPassword,
+				IsAdmin:  true,
+			}
 			if err := bus.DispatchCtx(ctx, &cmd); err != nil {
 				return fmt.Errorf("failed to create admin user: %s", err)
 			}
 
-			ss.log.Info("Created default admin", "user", setting.AdminUser)
+			ss.log.Info("Created default admin", "user", ss.Cfg.AdminUser)
 			return nil
 		}
 
-		// ensure default org if default admin user is disabled
-		if err := createDefaultOrg(ctx); err != nil {
-			return errutil.Wrap("Failed to create default organization", err)
+		// ensure default org even if default admin user is disabled
+		if err := inTransactionCtx(ctx, func(sess *DBSession) error {
+			_, err := getOrCreateOrg(sess, mainOrgName)
+			return err
+		}); err != nil {
+			return fmt.Errorf("failed to create default organization: %w", err)
 		}
 
 		ss.log.Info("Created default organization")
@@ -351,7 +370,7 @@ func InitTestDB(t ITestDB) *SQLStore {
 		testSQLStore = &SQLStore{}
 		testSQLStore.Bus = bus.New()
 		testSQLStore.CacheService = localcache.New(5*time.Minute, 10*time.Minute)
-		testSQLStore.skipEnsureDefaultOrgAndUser = true
+		testSQLStore.skipEnsureDefaultOrgAndUser = false
 
 		dbType := migrator.SQLite
 

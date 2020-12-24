@@ -19,7 +19,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 
-import { getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv, getDataSourceSrv } from '@grafana/runtime';
 import TableModel from 'app/core/table_model';
 import { formatQuery, getHighlighterExpressionsFromQuery } from './query_utils';
 import {
@@ -53,12 +53,15 @@ export function lokiStreamResultToDataFrame(stream: LokiStreamResult, reverse?: 
   const lines = new ArrayVector<string>([]);
   const uids = new ArrayVector<string>([]);
 
+  // We need to store and track all used uids to ensure that uids are unique
+  const usedUids: { string?: number } = {};
+
   for (const [ts, line] of stream.values) {
     // num ns epoch in string, we convert it to iso string here so it matches old format
     times.add(new Date(parseInt(ts.substr(0, ts.length - 6), 10)).toISOString());
     timesNs.add(ts);
     lines.add(line);
-    uids.add(createUid(ts, labelsString, line));
+    uids.add(createUid(ts, labelsString, line, usedUids));
   }
 
   return constructDataFrame(times, timesNs, lines, uids, labels, reverse, refId);
@@ -127,6 +130,10 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
   const labelsField = data.fields[3];
   const idField = data.fields[4];
 
+  // We are comparing used ids only within the received stream. This could be a problem if the same line + labels + nanosecond timestamp came in 2 separate batches.
+  // As this is very unlikely, and the result would only affect live-tailing css animation we have decided to not compare all received uids from data param as this would slow down processing.
+  const usedUids: { string?: number } = {};
+
   for (const stream of streams) {
     // Find unique labels
     const unique = findUniqueLabels(stream.stream, baseLabels);
@@ -141,13 +148,29 @@ export function appendResponseToBufferedData(response: LokiTailResponse, data: M
       tsNsField.values.add(ts);
       lineField.values.add(line);
       labelsField.values.add(unique);
-      idField.values.add(createUid(ts, allLabelsString, line));
+      idField.values.add(createUid(ts, allLabelsString, line, usedUids));
     }
   }
 }
 
-function createUid(ts: string, labelsString: string, line: string): string {
-  return md5(`${ts}_${labelsString}_${line}`);
+function createUid(ts: string, labelsString: string, line: string, usedUids: any): string {
+  // Generate id as hashed nanosecond timestamp, labels and line (this does not have to be unique)
+  let id = md5(`${ts}_${labelsString}_${line}`);
+
+  // Check if generated id is unique
+  // If not and we've already used it, append it's count after it
+  if (id in usedUids) {
+    // Increase the count
+    const newCount = usedUids[id] + 1;
+    usedUids[id] = newCount;
+    // Append count to generated id to make it unique
+    id = `${id}_${newCount}`;
+  } else {
+    // If id is unique and wasn't used, add it to usedUids and start count at 0
+    usedUids[id] = 0;
+  }
+  // Return unique id
+  return id;
 }
 
 function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: TransformerOptions): TimeSeries {
@@ -387,9 +410,13 @@ export const enhanceDataFrame = (dataFrame: DataFrame, config: LokiOptions | nul
  * Transform derivedField config into dataframe field with config that contains link.
  */
 function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]): Field<any, ArrayVector> {
+  const dataSourceSrv = getDataSourceSrv();
+
   const dataLinks = derivedFieldConfigs.reduce((acc, derivedFieldConfig) => {
     // Having field.datasourceUid means it is an internal link.
     if (derivedFieldConfig.datasourceUid) {
+      const dsSettings = dataSourceSrv.getInstanceSettings(derivedFieldConfig.datasourceUid);
+
       acc.push({
         // Will be filled out later
         title: '',
@@ -398,6 +425,7 @@ function fieldFromDerivedFieldConfig(derivedFieldConfigs: DerivedFieldConfig[]):
         internal: {
           query: { query: derivedFieldConfig.url },
           datasourceUid: derivedFieldConfig.datasourceUid,
+          datasourceName: dsSettings?.name ?? 'Data source not found',
         },
       });
     } else if (derivedFieldConfig.url) {

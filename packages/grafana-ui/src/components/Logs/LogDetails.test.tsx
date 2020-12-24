@@ -8,6 +8,7 @@ const setup = (propOverrides?: Partial<Props>, rowOverrides?: Partial<LogRowMode
   const props: Props = {
     theme: {} as GrafanaTheme,
     showDuplicates: false,
+    wrapLogMessage: false,
     row: {
       dataFrame: new MutableDataFrame(),
       entryFieldIndex: 0,

@@ -34,11 +34,12 @@ export interface VariableAdapter<Model extends VariableModel> {
   setValue: (variable: Model, option: VariableOption, emitChanges?: boolean) => Promise<void>;
   setValueFromUrl: (variable: Model, urlValue: UrlQueryValue) => Promise<void>;
   updateOptions: (variable: Model, searchFilter?: string) => Promise<void>;
-  getSaveModel: (variable: Model) => Partial<Model>;
+  getSaveModel: (variable: Model, saveCurrentAsDefault?: boolean) => Partial<Model>;
   getValueForUrl: (variable: Model) => string | string[];
   picker: ComponentType<VariablePickerProps>;
   editor: ComponentType<VariableEditorProps>;
   reducer: Reducer<VariablesState>;
+  beforeAdding?: (model: any) => any;
 }
 
 export type VariableModels =

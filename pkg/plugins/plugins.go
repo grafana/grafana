@@ -145,7 +145,7 @@ func (pm *PluginManager) Init() error {
 
 	for _, p := range Plugins {
 		if p.IsCorePlugin {
-			p.Signature = PluginSignatureInternal
+			p.Signature = pluginSignatureInternal
 		} else {
 			metrics.SetPluginBuildInformation(p.Id, p.Type, p.Info.Version)
 		}
@@ -269,11 +269,18 @@ func (pm *PluginManager) scan(pluginDir string, requireSigned bool) error {
 			}
 		}
 
+		// nolint:gosec
+		// We can ignore the gosec G304 warning on this one because `jsonFPath` is based
+		// on plugin the folder structure on disk and not user input.
 		reader, err := os.Open(jsonFPath)
 		if err != nil {
 			return err
 		}
-		defer reader.Close()
+		defer func() {
+			if err := reader.Close(); err != nil {
+				scanner.log.Warn("Failed to close JSON file", "path", jsonFPath, "err", err)
+			}
+		}()
 
 		jsonParser := json.NewDecoder(reader)
 
@@ -339,11 +346,18 @@ func (s *PluginScanner) walker(currentPath string, f os.FileInfo, err error) err
 func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	s.log.Debug("Loading plugin", "path", pluginJSONFilePath)
 	currentDir := filepath.Dir(pluginJSONFilePath)
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `currentPath` is based
+	// on plugin the folder structure on disk and not user input.
 	reader, err := os.Open(pluginJSONFilePath)
 	if err != nil {
 		return err
 	}
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			s.log.Warn("Failed to close JSON file", "path", pluginJSONFilePath, "err", err)
+		}
+	}()
 
 	jsonParser := json.NewDecoder(reader)
 	pluginCommon := PluginBase{}
@@ -356,7 +370,20 @@ func (s *PluginScanner) loadPlugin(pluginJSONFilePath string) error {
 	}
 
 	pluginCommon.PluginDir = filepath.Dir(pluginJSONFilePath)
-	pluginCommon.Signature = getPluginSignatureState(s.log, &pluginCommon)
+	pluginCommon.Files, err = collectPluginFilesWithin(pluginCommon.PluginDir)
+	if err != nil {
+		s.log.Warn("Could not collect plugin file information in directory", "pluginID", pluginCommon.Id, "dir", pluginCommon.PluginDir)
+		return err
+	}
+
+	signatureState, err := getPluginSignatureState(s.log, &pluginCommon)
+	if err != nil {
+		s.log.Warn("Could not get plugin signature state", "pluginID", pluginCommon.Id, "err", err)
+		return err
+	}
+	pluginCommon.Signature = signatureState.Status
+	pluginCommon.SignatureType = signatureState.Type
+	pluginCommon.SignatureOrg = signatureState.SigningOrg
 
 	s.plugins[currentDir] = &pluginCommon
 
@@ -369,21 +396,21 @@ func (*PluginScanner) IsBackendOnlyPlugin(pluginType string) bool {
 
 // validateSignature validates a plugin's signature.
 func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
-	if plugin.Signature == PluginSignatureValid {
+	if plugin.Signature == pluginSignatureValid {
 		s.log.Debug("Plugin has valid signature", "id", plugin.Id)
 		return nil
 	}
 
 	if plugin.Root != nil {
 		// If a descendant plugin with invalid signature, set signature to that of root
-		if plugin.IsCorePlugin || plugin.Signature == PluginSignatureInternal {
+		if plugin.IsCorePlugin || plugin.Signature == pluginSignatureInternal {
 			s.log.Debug("Not setting descendant plugin's signature to that of root since it's core or internal",
 				"plugin", plugin.Id, "signature", plugin.Signature, "isCore", plugin.IsCorePlugin)
 		} else {
 			s.log.Debug("Setting descendant plugin's signature to that of root", "plugin", plugin.Id,
 				"root", plugin.Root.Id, "signature", plugin.Signature, "rootSignature", plugin.Root.Signature)
 			plugin.Signature = plugin.Root.Signature
-			if plugin.Signature == PluginSignatureValid {
+			if plugin.Signature == pluginSignatureValid {
 				s.log.Debug("Plugin has valid signature (inherited from root)", "id", plugin.Id)
 				return nil
 			}
@@ -400,7 +427,7 @@ func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
 	}
 
 	switch plugin.Signature {
-	case PluginSignatureUnsigned:
+	case pluginSignatureUnsigned:
 		if allowed := s.allowUnsigned(plugin); !allowed {
 			s.log.Debug("Plugin is unsigned", "id", plugin.Id)
 			s.errors = append(s.errors, fmt.Errorf("plugin %q is unsigned", plugin.Id))
@@ -411,13 +438,13 @@ func (s *PluginScanner) validateSignature(plugin *PluginBase) *PluginError {
 		s.log.Warn("Running an unsigned backend plugin", "pluginID", plugin.Id, "pluginDir",
 			plugin.PluginDir)
 		return nil
-	case PluginSignatureInvalid:
+	case pluginSignatureInvalid:
 		s.log.Debug("Plugin %q has an invalid signature", plugin.Id)
 		s.errors = append(s.errors, fmt.Errorf("plugin %q has an invalid signature", plugin.Id))
 		return &PluginError{
 			ErrorCode: signatureInvalid,
 		}
-	case PluginSignatureModified:
+	case pluginSignatureModified:
 		s.log.Debug("Plugin %q has a modified signature", plugin.Id)
 		s.errors = append(s.errors, fmt.Errorf("plugin %q's signature has been modified", plugin.Id))
 		return &PluginError{
@@ -463,6 +490,9 @@ func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 		return nil, PluginNotFoundError{pluginId}
 	}
 
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `plug.PluginDir` is based
+	// on plugin the folder structure on disk and not user input.
 	path := filepath.Join(plug.PluginDir, fmt.Sprintf("%s.md", strings.ToUpper(name)))
 	exists, err := fs.Exists(path)
 	if err != nil {
@@ -480,9 +510,32 @@ func GetPluginMarkdown(pluginId string, name string) ([]byte, error) {
 		return make([]byte, 0), nil
 	}
 
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `plug.PluginDir` is based
+	// on plugin the folder structure on disk and not user input.
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 	return data, nil
+}
+
+// gets plugin filenames that require verification for plugin signing
+func collectPluginFilesWithin(rootDir string) ([]string, error) {
+	var files []string
+
+	err := filepath.Walk(rootDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.IsDir() && info.Name() != "MANIFEST.txt" {
+			file, err := filepath.Rel(rootDir, path)
+			if err != nil {
+				return err
+			}
+			files = append(files, file)
+		}
+		return nil
+	})
+	return files, err
 }

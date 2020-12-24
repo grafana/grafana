@@ -35,8 +35,7 @@ export interface FeatureToggles {
   live: boolean;
   expressions: boolean;
   ngalert: boolean;
-  // Just for demo at the moment
-  traceToLogs: boolean;
+  panelLibrary: boolean;
 
   /**
    * @remarks

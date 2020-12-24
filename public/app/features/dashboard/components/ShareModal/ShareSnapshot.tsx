@@ -239,7 +239,7 @@ export class ShareSnapshot extends PureComponent<Props, State> {
         </InlineFieldRow>
 
         <p className="share-modal-info-text">
-          You may need to configure the timeout value if it takes a long time to collect your dashboard's metrics.
+          You may need to configure the timeout value if it takes a long time to collect your dashboard&apos;s metrics.
         </p>
 
         <InlineFieldRow className="share-modal-options">

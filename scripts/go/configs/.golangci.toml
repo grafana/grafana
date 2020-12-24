@@ -8,6 +8,14 @@ min-confidence = 3
 min-len = 5
 min-occurrences = 5
 
+[linters-settings.exhaustive]
+default-signifies-exhaustive = true
+
+[linters-settings.gocritic]
+enabled-checks = ["ruleguard"]
+[linters-settings.gocritic.settings.ruleguard]
+rules = "pkg/ruleguard.rules.go"
+
 [linters]
 disable-all = true
 enable = [
@@ -39,6 +47,7 @@ enable = [
   "varcheck",
   "whitespace",
   "gocyclo",
+  "exhaustive",
   "typecheck",
   "asciicheck",
   "errorlint",
@@ -47,6 +56,9 @@ enable = [
 
 # Disabled linters (might want them later)
 # "unparam"
+
+[issues]
+exclude-use-default = false
 
 # Enable when appropriate
 # Poorly chosen identifier
@@ -103,3 +115,18 @@ text = "Unknwon` is a misspelling of `Unknown"
 [[issues.exclude-rules]]
 linters = ["errorlint"]
 text = "non-wrapping format verb for fmt.Errorf"
+
+# TODO: Enable
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1000"
+
+# TODO: Enable
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1020"
+
+# TODO: Enable
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1021"

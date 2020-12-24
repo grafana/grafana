@@ -1,3 +1,5 @@
+import { Components } from './components';
+
 export const Pages = {
   Login: {
     url: '/login',
@@ -14,7 +16,6 @@ export const Pages = {
     delete: 'Data source settings page Delete button',
     saveAndTest: 'Data source settings page Save and Test button',
     alert: 'Data source settings page Alert',
-    alertMessage: 'Data source settings page Alert message',
   },
   DataSources: {
     url: '/datasources',
@@ -88,7 +89,7 @@ export const Pages = {
             submitButton: 'Variable editor Submit button',
           },
           QueryVariable: {
-            queryOptionsDataSourceSelect: 'Variable editor Form Query DataSource select',
+            queryOptionsDataSourceSelect: Components.DataSourcePicker.container,
             queryOptionsRefreshSelect: 'Variable editor Form Query Refresh select',
             queryOptionsRegExInput: 'Variable editor Form Query RegEx field',
             queryOptionsSortSelect: 'Variable editor Form Query Sort select',
@@ -99,6 +100,9 @@ export const Pages = {
           },
           ConstantVariable: {
             constantOptionsQueryInput: 'Variable editor Form Constant Query field',
+          },
+          TextBoxVariable: {
+            textBoxOptionsQueryInput: 'Variable editor Form TextBox Query field',
           },
         },
       },

@@ -1,6 +1,6 @@
-import { Field, LinkModel, TimeRange, mapInternalLinkToExplore } from '@grafana/data';
+import { Field, LinkModel, TimeRange, mapInternalLinkToExplore, InterpolateFunction } from '@grafana/data';
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
-import { getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { getTemplateSrv } from '@grafana/runtime';
 import { splitOpen } from '../state/main';
 
 /**
@@ -27,16 +27,23 @@ export const getFieldLinksForExplore = (
   return field.config.links
     ? field.config.links.map(link => {
         if (!link.internal) {
-          const linkModel = getLinkSrv().getDataLinkUIModel(link, scopedVars, field);
+          const replace: InterpolateFunction = (value, vars) =>
+            getTemplateSrv().replace(value, { ...vars, ...scopedVars });
+
+          const linkModel = getLinkSrv().getDataLinkUIModel(link, replace, field);
           if (!linkModel.title) {
             linkModel.title = getTitleFromHref(linkModel.href);
           }
           return linkModel;
         } else {
-          return mapInternalLinkToExplore(link, scopedVars, range, field, {
+          return mapInternalLinkToExplore({
+            link,
+            internalLink: link.internal,
+            scopedVars: scopedVars,
+            range,
+            field,
             onClickFn: splitOpenFn,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-            getDataSourceSettingsByUid: getDataSourceSrv().getDataSourceSettingsByUid.bind(getDataSourceSrv()),
           });
         }
       })

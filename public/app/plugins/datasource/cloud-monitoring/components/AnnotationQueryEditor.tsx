@@ -42,8 +42,8 @@ const DefaultTarget: State = {
 export class AnnotationQueryEditor extends React.Component<Props, State> {
   state: State = DefaultTarget;
 
-  async UNSAFE_componentWillMount() {
-    // Unfortunately, migrations like this need to go componentWillMount. As soon as there's
+  async UNSAFE_UNSAFE_componentWillMount() {
+    // Unfortunately, migrations like this need to go UNSAFE_componentWillMount. As soon as there's
     // migration hook for this module.ts, we can do the migrations there instead.
     const { target, datasource } = this.props;
     if (!target.projectName) {

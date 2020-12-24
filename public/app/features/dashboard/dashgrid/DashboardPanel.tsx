@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import { connect, MapStateToProps, MapDispatchToProps } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 
 // Components
 import { PanelChrome } from './PanelChrome';
@@ -25,23 +25,28 @@ export interface OwnProps {
   isInView: boolean;
 }
 
-export interface ConnectedProps {
-  plugin?: PanelPlugin | null;
-}
-
-export interface DispatchProps {
-  initDashboardPanel: typeof initDashboardPanel;
-  updateLocation: typeof updateLocation;
-}
-
-export type Props = OwnProps & ConnectedProps & DispatchProps;
-
 export interface State {
   isLazy: boolean;
 }
 
+const mapStateToProps = (state: StoreState, props: OwnProps) => {
+  const panelState = state.dashboard.panels[props.panel.id];
+  if (!panelState) {
+    return { plugin: null };
+  }
+
+  return {
+    plugin: panelState.plugin,
+  };
+};
+
+const mapDispatchToProps = { initDashboardPanel, updateLocation };
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export type Props = OwnProps & ConnectedProps<typeof connector>;
+
 export class DashboardPanelUnconnected extends PureComponent<Props, State> {
-  element: HTMLElement;
   specialPanels: { [key: string]: Function } = {};
 
   constructor(props: Props) {
@@ -140,17 +145,4 @@ export class DashboardPanelUnconnected extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = (state, props) => {
-  const panelState = state.dashboard.panels[props.panel.id];
-  if (!panelState) {
-    return { plugin: null };
-  }
-
-  return {
-    plugin: panelState.plugin,
-  };
-};
-
-const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { initDashboardPanel, updateLocation };
-
-export const DashboardPanel = connect(mapStateToProps, mapDispatchToProps)(DashboardPanelUnconnected);
+export const DashboardPanel = connector(DashboardPanelUnconnected);

@@ -153,7 +153,7 @@ func (e *cloudWatchExecutor) newSession(region string) (*session.Session, error)
 	}
 
 	duration := stscreds.DefaultDuration
-	expiration := time.Now().Add(duration)
+	expiration := time.Now().UTC().Add(duration)
 	if dsInfo.AssumeRoleARN != "" {
 		// We should assume a role in AWS
 		plog.Debug("Trying to assume role in AWS", "arn", dsInfo.AssumeRoleARN)
@@ -452,7 +452,7 @@ func isTerminated(queryStatus string) bool {
 	return queryStatus == "Complete" || queryStatus == "Cancelled" || queryStatus == "Failed" || queryStatus == "Timeout"
 }
 
-// CloudWatch client factory.
+// newCWClient is a CloudWatch client factory.
 //
 // Stubbable by tests.
 var newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
@@ -464,7 +464,7 @@ var newCWClient = func(sess *session.Session) cloudwatchiface.CloudWatchAPI {
 	return client
 }
 
-// CloudWatch logs client factory.
+// newCWLogsClient is a CloudWatch logs client factory.
 //
 // Stubbable by tests.
 var newCWLogsClient = func(sess *session.Session) cloudwatchlogsiface.CloudWatchLogsAPI {
