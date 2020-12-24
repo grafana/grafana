@@ -25,6 +25,10 @@ brew install node@14
 npm install -g yarn
 ```
 
+### windows
+
+If you are running on Windows 10, we recommend installing the Windows Subsystem for Linux (WSL). For installation instructions, refer to the [Microsoft WSL Installation Guide](https://docs.microsoft.com/en-us/windows/wsl/install-win10). 
+
 ## Download Grafana
 
 We recommend using the Git command-line interface to download the source code for the Grafana project:
