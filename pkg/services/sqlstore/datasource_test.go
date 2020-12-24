@@ -232,10 +232,56 @@ func TestDataAccess(t *testing.T) {
 				})
 				require.NoError(t, err)
 			}
-			query := models.GetDataSourcesQuery{OrgId: 10, DataSourceLimit: &datasourceLimit}
+			query := models.GetDataSourcesQuery{OrgId: 10, DataSourceLimit: datasourceLimit}
+
 			err := GetDataSources(&query)
+
 			require.NoError(t, err)
 			require.Equal(t, datasourceLimit, len(query.Result))
+		})
+		t.Run("Number of data sources returned limited to 0 per organization", func(t *testing.T) {
+			InitTestDB(t)
+			numberOfDatasource := 5100
+			for i := 0; i < numberOfDatasource; i++ {
+				err := AddDataSource(&models.AddDataSourceCommand{
+					OrgId:    10,
+					Name:     "laban" + strconv.Itoa(i),
+					Type:     models.DS_GRAPHITE,
+					Access:   models.DS_ACCESS_DIRECT,
+					Url:      "http://test",
+					Database: "site",
+					ReadOnly: true,
+				})
+				require.NoError(t, err)
+			}
+			query := models.GetDataSourcesQuery{OrgId: 10}
+
+			err := GetDataSources(&query)
+
+			require.NoError(t, err)
+			require.Equal(t, numberOfDatasource, len(query.Result))
+		})
+		t.Run("Number of data sources returned limited to -1 per organization", func(t *testing.T) {
+			InitTestDB(t)
+			numberOfDatasource := 5100
+			for i := 0; i < numberOfDatasource; i++ {
+				err := AddDataSource(&models.AddDataSourceCommand{
+					OrgId:    10,
+					Name:     "laban" + strconv.Itoa(i),
+					Type:     models.DS_GRAPHITE,
+					Access:   models.DS_ACCESS_DIRECT,
+					Url:      "http://test",
+					Database: "site",
+					ReadOnly: true,
+				})
+				require.NoError(t, err)
+			}
+			query := models.GetDataSourcesQuery{OrgId: 10, DataSourceLimit: -1}
+
+			err := GetDataSources(&query)
+
+			require.NoError(t, err)
+			require.Equal(t, numberOfDatasource, len(query.Result))
 		})
 	})
 }

@@ -68,7 +68,7 @@ func GetDataSourceByName(query *models.GetDataSourceByNameQuery) error {
 
 func GetDataSources(query *models.GetDataSourcesQuery) error {
 	var sess *xorm.Session
-	if query.DataSourceLimit == 0 {
+	if query.DataSourceLimit <= 0 {
 		sess = x.Where("org_id=?", query.OrgId).Asc("name")
 	} else {
 		sess = x.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgId).Asc("name")
