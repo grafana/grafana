@@ -103,7 +103,7 @@ const createExtendedOverride = (
 };
 
 const getExistingDisplayNames = (rule: SystemConfigOverrideRule): string[] => {
-  const names = rule.matcher.options?.innerOptions?.names;
+  const names = rule.matcher.options?.matcherOptions?.names;
   if (!Array.isArray(names)) {
     return [];
   }
