@@ -1,6 +1,11 @@
 import { getBackendSrv } from '@grafana/runtime';
 
-import { AlertRulesListResponse, AlertRuleCreatePayload, AlertRuleCreateResponse } from './AlertRules.types';
+import {
+  AlertRulesListResponse,
+  AlertRuleCreatePayload,
+  AlertRuleTogglePayload,
+  AlertRuleCreateResponse,
+} from './AlertRules.types';
 
 const BASE_URL = `${window.location.origin}/v1/management/ia/Rules`;
 
@@ -13,5 +18,8 @@ export const AlertRulesService = {
   },
   async update(payload: AlertRuleCreatePayload): Promise<{}> {
     return getBackendSrv().post(`${BASE_URL}/Update`, payload);
+  },
+  async toggle(payload: AlertRuleTogglePayload): Promise<void> {
+    return getBackendSrv().post(`${BASE_URL}/Toggle`, payload);
   },
 };

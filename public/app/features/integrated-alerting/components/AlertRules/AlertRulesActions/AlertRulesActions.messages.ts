@@ -1,6 +1,4 @@
 export const Messages = {
-  activateSuccess: 'Alert activated',
-  silenceSuccess: 'Alert silenced',
-  activateTitle: 'Activate',
-  silenceTitle: 'Silence',
+  getEnabledMessage: (summary: string) => `Alert rule "${summary}" successfully enabled`,
+  getDisabledMessage: (summary: string) => `Alert rule "${summary}" successfully disabled`,
 };
