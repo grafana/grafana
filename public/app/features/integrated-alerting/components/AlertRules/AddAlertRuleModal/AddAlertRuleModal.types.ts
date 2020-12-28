@@ -1,8 +1,11 @@
 import { SelectableValue } from '@grafana/data';
 
+import { AlertRule } from '../AlertRules.types';
+
 export interface AddAlertRuleModalProps {
   isVisible: boolean;
   setVisible: (value: boolean) => void;
+  alertRule?: AlertRule;
 }
 
 export enum Severity {
