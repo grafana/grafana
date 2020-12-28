@@ -239,7 +239,8 @@ func TestDataAccess(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, datasourceLimit, len(query.Result))
 		})
-		t.Run("Number of data sources returned limited to 0 per organization", func(t *testing.T) {
+
+		t.Run("No limit should be applied on the returned data sources if the limit is not set", func(t *testing.T) {
 			InitTestDB(t)
 			numberOfDatasource := 5100
 			for i := 0; i < numberOfDatasource; i++ {
@@ -261,7 +262,8 @@ func TestDataAccess(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, numberOfDatasource, len(query.Result))
 		})
-		t.Run("Number of data sources returned limited to -1 per organization", func(t *testing.T) {
+
+		t.Run("No limit should be applied on the returned data sources if the limit is negative", func(t *testing.T) {
 			InitTestDB(t)
 			numberOfDatasource := 5100
 			for i := 0; i < numberOfDatasource; i++ {
