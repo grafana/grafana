@@ -24,8 +24,8 @@ func TestAlertRuleExtraction(t *testing.T) {
 		influxDBDs := &models.DataSource{Id: 16, OrgId: 1, Name: "InfluxDB"}
 		prom := &models.DataSource{Id: 17, OrgId: 1, Name: "Prometheus"}
 
-		bus.AddHandler("test", func(query *models.GetDataSourcesQuery) error {
-			query.Result = []*models.DataSource{defaultDs, graphite2Ds}
+		bus.AddHandler("test", func(query *models.GetDefaultDataSourceQuery) error {
+			query.Result = defaultDs
 			return nil
 		})
 

@@ -24,6 +24,7 @@ func init() {
 	bus.AddHandler("sql", UpdateDataSource)
 	bus.AddHandler("sql", GetDataSourceById)
 	bus.AddHandler("sql", GetDataSourceByName)
+	bus.AddHandler("sql", GetDefaultDataSource)
 }
 
 func getDataSourceByID(id, orgID int64, engine *xorm.Engine) (*models.DataSource, error) {
@@ -71,6 +72,19 @@ func GetDataSources(query *models.GetDataSourcesQuery) error {
 
 	query.Result = make([]*models.DataSource, 0)
 	return sess.Find(&query.Result)
+}
+
+// GetDefaultDataSource is used to get the default datasource of organization
+func GetDefaultDataSource(query *models.GetDefaultDataSourceQuery) error {
+	datasource := models.DataSource{OrgId: query.OrgId, IsDefault: true}
+	has, err := x.Get(&datasource)
+
+	if !has {
+		return models.ErrDataSourceNotFound
+	}
+
+	query.Result = &datasource
+	return err
 }
 
 func DeleteDataSourceById(cmd *models.DeleteDataSourceByIdCommand) error {
