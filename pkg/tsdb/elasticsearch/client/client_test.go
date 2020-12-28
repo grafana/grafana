@@ -371,7 +371,7 @@ func TestClient(t *testing.T) {
 
 func createMultisearchForTest(c Client) (*MultiSearchRequest, error) {
 	msb := c.MultiSearch()
-	s := msb.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"})
+	s := msb.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"}, "")
 	s.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
 		a.Interval = "$__interval"
 
