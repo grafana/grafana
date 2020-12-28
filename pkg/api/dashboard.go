@@ -50,8 +50,23 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) Response {
 	slug := c.Params(":slug")
 	uid := c.Params(":uid")
 	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
+
 	if rsp != nil {
 		return rsp
+	}
+
+	// When dash contains only keys id, uid that means dashboard data is not valid and json decode failed.
+	if dash.Data != nil {
+		isEmptyData := true
+		for k := range dash.Data.MustMap() {
+			if k != "id" && k != "uid" {
+				isEmptyData = false
+				break
+			}
+		}
+		if isEmptyData {
+			return Error(500, "Error while loading dashboard, dashboard data is invalid", nil)
+		}
 	}
 
 	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
