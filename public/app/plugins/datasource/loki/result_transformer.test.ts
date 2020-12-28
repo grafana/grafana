@@ -71,6 +71,37 @@ describe('loki result transformer', () => {
       expect(data[1].fields[1].values.get(0)).toEqual(streamResult[1].values[0][1]);
       expect(data[1].fields[2].values.get(0)).toEqual('75d73d66cff40f9d1a1f2d5a0bf295d0');
     });
+
+    it('should always generate unique ids for logs', () => {
+      const streamResultWithDuplicateLogs: LokiStreamResult[] = [
+        {
+          stream: {
+            foo: 'bar',
+          },
+
+          values: [
+            ['1579857562021616000', 't=2020-02-12T15:04:51+0000 lvl=info msg="Duplicated"'],
+            ['1579857562021616000', 't=2020-02-12T15:04:51+0000 lvl=info msg="Duplicated"'],
+            ['1579857562021616000', 't=2020-02-12T15:04:51+0000 lvl=info msg="Non-duplicated"'],
+            ['1579857562021616000', 't=2020-02-12T15:04:51+0000 lvl=info msg="Duplicated"'],
+          ],
+        },
+        {
+          stream: {
+            bar: 'foo',
+          },
+          values: [['1579857562021617000', 't=2020-02-12T15:04:51+0000 lvl=info msg="Non-dupliicated"']],
+        },
+      ];
+
+      const data = streamResultWithDuplicateLogs.map(stream => ResultTransformer.lokiStreamResultToDataFrame(stream));
+
+      expect(data[0].fields[2].values.get(0)).toEqual('65cee200875f58ee1430d8bd2e8b74e7');
+      expect(data[0].fields[2].values.get(1)).toEqual('65cee200875f58ee1430d8bd2e8b74e7_1');
+      expect(data[0].fields[2].values.get(2)).not.toEqual('65cee200875f58ee1430d8bd2e8b74e7_2');
+      expect(data[0].fields[2].values.get(3)).toEqual('65cee200875f58ee1430d8bd2e8b74e7_2');
+      expect(data[1].fields[2].values.get(0)).not.toEqual('65cee200875f58ee1430d8bd2e8b74e7_3');
+    });
   });
 
   describe('lokiStreamsToDataFrames', () => {
@@ -131,7 +162,44 @@ describe('loki result transformer', () => {
         id: '19e8e093d70122b3b53cb6e24efd6e2d',
       });
     });
+
+    it('should always generate unique ids for logs', () => {
+      const tailResponse: LokiTailResponse = {
+        streams: [
+          {
+            stream: {
+              filename: '/var/log/grafana/grafana.log',
+              job: 'grafana',
+            },
+            values: [
+              ['1581519914265798400', 't=2020-02-12T15:04:51+0000 lvl=info msg="Dupplicated 1"'],
+              ['1581519914265798400', 't=2020-02-12T15:04:51+0000 lvl=info msg="Dupplicated 1"'],
+              ['1581519914265798400', 't=2020-02-12T15:04:51+0000 lvl=info msg="Dupplicated 2"'],
+              ['1581519914265798400', 't=2020-02-12T15:04:51+0000 lvl=info msg="Not dupplicated"'],
+              ['1581519914265798400', 't=2020-02-12T15:04:51+0000 lvl=info msg="Dupplicated 1"'],
+              ['1581519914265798400', 't=2020-02-12T15:04:51+0000 lvl=info msg="Dupplicated 2"'],
+            ],
+          },
+        ],
+      };
+
+      const data = new CircularDataFrame({ capacity: 6 });
+      data.addField({ name: 'ts', type: FieldType.time, config: { displayName: 'Time' } });
+      data.addField({ name: 'tsNs', type: FieldType.time, config: { displayName: 'Time ns' } });
+      data.addField({ name: 'line', type: FieldType.string }).labels = { job: 'grafana' };
+      data.addField({ name: 'labels', type: FieldType.other });
+      data.addField({ name: 'id', type: FieldType.string });
+
+      ResultTransformer.appendResponseToBufferedData(tailResponse, data);
+      expect(data.get(0).id).toEqual('870e4d105741bdfc2c67904ee480d4f3');
+      expect(data.get(1).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_1');
+      expect(data.get(2).id).toEqual('707e4ec2b842f389dbb993438505856d');
+      expect(data.get(3).id).toEqual('78f044015a58fad3e257a855b167d85e');
+      expect(data.get(4).id).toEqual('870e4d105741bdfc2c67904ee480d4f3_2');
+      expect(data.get(5).id).toEqual('707e4ec2b842f389dbb993438505856d_1');
+    });
   });
+
   describe('createMetricLabel', () => {
     it('should create correct label based on passed variables', () => {
       const label = ResultTransformer.createMetricLabel({}, ({

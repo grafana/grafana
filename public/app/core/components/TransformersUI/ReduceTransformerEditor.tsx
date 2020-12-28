@@ -1,15 +1,15 @@
 import React, { useCallback } from 'react';
-import { StatsPicker, Select, LegacyForms } from '@grafana/ui';
+import { LegacyForms, Select, StatsPicker } from '@grafana/ui';
 import {
   DataTransformerID,
   ReducerID,
+  SelectableValue,
   standardTransformers,
   TransformerRegistyItem,
   TransformerUIProps,
-  SelectableValue,
 } from '@grafana/data';
 
-import { ReduceTransformerOptions, ReduceTransformerMode } from '@grafana/data/src/transformations/transformers/reduce';
+import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
 import { selectors } from '@grafana/e2e-selectors';
 
 // TODO:  Minimal implementation, needs some <3
@@ -60,7 +60,6 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
             options={modes}
             value={modes.find(v => v.value === options.mode) || modes[0]}
             onChange={onSelectMode}
-            menuPlacement="bottom"
             className="flex-grow-1"
           />
         </div>
@@ -81,7 +80,6 @@ export const ReduceTransformerEditor: React.FC<TransformerUIProps<ReduceTransfor
                 reducers: stats as ReducerID[],
               });
             }}
-            menuPlacement="bottom"
           />
         </div>
       </div>

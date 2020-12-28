@@ -84,7 +84,7 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 
 	groups := s.GetGroups(&data)
 	if !s.IsGroupMember(groups) {
-		return nil, ErrMissingGroupMembership
+		return nil, errMissingGroupMembership
 	}
 
 	return &BasicUserInfo{
@@ -98,7 +98,7 @@ func (s *SocialOkta) UserInfo(client *http.Client, token *oauth2.Token) (*BasicU
 }
 
 func (s *SocialOkta) extractAPI(data *OktaUserInfoJson, client *http.Client) error {
-	rawUserInfoResponse, err := HttpGet(client, s.apiUrl)
+	rawUserInfoResponse, err := s.httpGet(client, s.apiUrl)
 	if err != nil {
 		s.log.Debug("Error getting user info response", "url", s.apiUrl, "error", err)
 		return errutil.Wrapf(err, "error getting user info response")

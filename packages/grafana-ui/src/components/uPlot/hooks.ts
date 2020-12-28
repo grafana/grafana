@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { PlotPlugin } from './types';
 import { pluginLog } from './utils';
-import uPlot, { Options } from 'uplot';
+import uPlot, { Options, PaddingSide } from 'uplot';
 import { getTimeZoneInfo, TimeZone } from '@grafana/data';
 import { usePlotPluginContext } from './context';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
@@ -85,7 +85,11 @@ export const usePlotPlugins = () => {
   };
 };
 
-export const DEFAULT_PLOT_CONFIG = {
+const paddingSide: PaddingSide = (u, side, sidesWithAxes, cycleNum) => {
+  return sidesWithAxes[side] ? 0 : 8;
+};
+
+export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
   focus: {
     alpha: 1,
   },
@@ -97,10 +101,7 @@ export const DEFAULT_PLOT_CONFIG = {
   legend: {
     show: false,
   },
-  gutters: {
-    x: 8,
-    y: 8,
-  },
+  padding: [paddingSide, paddingSide, paddingSide, paddingSide],
   series: [],
   hooks: {},
 };

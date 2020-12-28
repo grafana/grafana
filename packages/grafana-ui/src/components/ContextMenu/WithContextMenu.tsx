@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { ContextMenu, ContextMenuGroup } from '../ContextMenu/ContextMenu';
+import { ContextMenu } from '../ContextMenu/ContextMenu';
+import { MenuItemsGroup } from '../Menu/Menu';
 
 interface WithContextMenuProps {
   /** Menu item trigger that accepts openMenu prop */
   children: (props: { openMenu: React.MouseEventHandler<HTMLElement> }) => JSX.Element;
   /** A function that returns an array of menu items */
-  getContextMenuItems: () => ContextMenuGroup[];
+  getContextMenuItems: () => MenuItemsGroup[];
 }
 
 export const WithContextMenu: React.FC<WithContextMenuProps> = ({ children, getContextMenuItems }) => {

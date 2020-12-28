@@ -390,9 +390,9 @@ func TestDataSourceProxy_routeRule(t *testing.T) {
 		proxy, err := NewDataSourceProxy(ds, plugin, ctx, "/path/to/folder/", &setting.Cfg{})
 		require.NoError(t, err)
 		req, err := http.NewRequest(http.MethodGet, "http://grafana.com/sub", nil)
-		req.Header.Add("Origin", "grafana.com")
-		req.Header.Add("Referer", "grafana.com")
-		req.Header.Add("X-Canary", "stillthere")
+		req.Header.Set("Origin", "grafana.com")
+		req.Header.Set("Referer", "grafana.com")
+		req.Header.Set("X-Canary", "stillthere")
 		require.NoError(t, err)
 
 		proxy.director(req)

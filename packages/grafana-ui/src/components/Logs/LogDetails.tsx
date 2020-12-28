@@ -29,6 +29,7 @@ export interface Props extends Themeable {
   row: LogRowModel;
   showDuplicates: boolean;
   getRows: () => LogRowModel[];
+  wrapLogMessage: boolean;
   className?: string;
   hasError?: boolean;
   onMouseEnter?: () => void;
@@ -85,6 +86,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
       onClickHideDetectedField,
       showDetectedFields,
       getFieldLinks,
+      wrapLogMessage,
     } = this.props;
     const style = getLogRowStyles(theme, row.logLevel);
     const styles = getStyles(theme);
@@ -163,6 +165,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                           : calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())
                       }
                       showDetectedFields={showDetectedFields}
+                      wrapLogMessage={wrapLogMessage}
                     />
                   );
                 })}

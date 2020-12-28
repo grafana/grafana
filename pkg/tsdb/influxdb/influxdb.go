@@ -82,10 +82,13 @@ func (e *InfluxDBExecutor) Query(ctx context.Context, dsInfo *models.DataSource,
 	if err != nil {
 		return nil, err
 	}
-
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			glog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 	if resp.StatusCode/100 != 2 {
-		return nil, fmt.Errorf("InfluxDB returned statuscode invalid status code: %s", resp.Status)
+		return nil, fmt.Errorf("InfluxDB returned error status: %s", resp.Status)
 	}
 
 	var response Response

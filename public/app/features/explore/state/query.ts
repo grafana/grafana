@@ -477,7 +477,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries: nextQueries,
-      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
     };
   }
 
@@ -552,13 +551,11 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
       nextQueries.push(generateNewKeyAndAddRefIdIfMissing(query, nextQueries, i));
     });
 
-    const nextQueryKeys: string[] = nextQueries.map(query => query.key!);
-
     return {
       ...state,
       queries: nextQueries,
       logsHighlighterExpressions: undefined,
-      queryKeys: nextQueryKeys,
+      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
     };
   }
 
