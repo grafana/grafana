@@ -1,7 +1,9 @@
-import { AlertRulesListResponseRule } from '../AlertRules.types';
+import { AlertRulesListResponseRule, AlertRulesContext } from '../AlertRules.types';
+import { formatRules } from '../AlertRules.utils';
 
 export const rulesStubs: AlertRulesListResponseRule[] = [
   {
+    rule_id: 'test 1',
     created_at: '2020-11-25T16:53:39.366Z',
     disabled: false,
     filters: [
@@ -45,6 +47,7 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     },
   },
   {
+    rule_id: 'test 2',
     created_at: '2020-11-25T16:53:39.366Z',
     disabled: false,
     filters: [
@@ -89,6 +92,7 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     },
   },
   {
+    rule_id: 'test 3',
     created_at: '2020-11-25T16:53:39.366Z',
     disabled: false,
     filters: [
@@ -126,6 +130,7 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     },
   },
   {
+    rule_id: 'test 4',
     created_at: '2020-11-25T16:53:39.366Z',
     disabled: true,
     filters: [
@@ -170,6 +175,7 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     },
   },
   {
+    rule_id: 'test 5',
     created_at: '2020-11-25T16:53:39.366Z',
     disabled: false,
     filters: [
@@ -207,6 +213,7 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     },
   },
   {
+    rule_id: 'test 6',
     created_at: '2020-11-25T16:53:39.366Z',
     disabled: false,
     filters: [
@@ -244,3 +251,11 @@ export const rulesStubs: AlertRulesListResponseRule[] = [
     },
   },
 ];
+
+export const formattedRulesStubs = formatRules(rulesStubs);
+
+export const alertRulesContextStub: AlertRulesContext = {
+  getAlertRules: jest.fn(),
+  setAddModalVisible: jest.fn(),
+  setSelectedAlertRule: jest.fn(),
+};

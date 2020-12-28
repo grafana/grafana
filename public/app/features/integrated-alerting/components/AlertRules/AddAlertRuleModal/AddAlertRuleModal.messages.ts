@@ -10,6 +10,7 @@ export const Messages = {
     SEVERITY_WARNING: 'Warning',
     SEVERITY_NOTICE: 'Notice',
   },
+  title: 'Add Alert Rule',
   addRuleTitle: 'Add Alert Rule',
   editRuleTitle: 'Edit Alert Rule',
   create: 'Add',
