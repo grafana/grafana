@@ -2,77 +2,48 @@ import { PanelModel } from './PanelModel';
 import { getPanelPlugin } from '../../plugins/__mocks__/pluginMocks';
 import {
   FieldConfigProperty,
-  identityOverrideProcessor,
   PanelProps,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   PanelData,
   FieldColorModeId,
   FieldColorConfigSettings,
+  DataLinkBuiltInVars,
+  VariableModel,
 } from '@grafana/data';
 import { ComponentClass } from 'react';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { setTimeSrv } from '../services/TimeSrv';
+import { TemplateSrv } from '../../templating/template_srv';
+import { setTemplateSrv } from '@grafana/runtime';
+import { variableAdapters } from '../../variables/adapters';
+import { createQueryVariableAdapter } from '../../variables/query/adapter';
+import { mockStandardFieldConfigOptions } from '../../../../test/helpers/fieldConfig';
 
-class TablePanelCtrl {}
+standardFieldConfigEditorRegistry.setInit(() => mockStandardFieldConfigOptions());
+standardEditorsRegistry.setInit(() => mockStandardFieldConfigOptions());
 
-export const mockStandardProperties = () => {
-  const unit = {
-    id: 'unit',
-    path: 'unit',
-    name: 'Unit',
-    description: 'Value units',
-    // @ts-ignore
-    editor: () => null,
-    // @ts-ignore
-    override: () => null,
-    process: identityOverrideProcessor,
-    shouldApply: () => true,
-  };
+setTimeSrv({
+  timeRangeForUrl: () => ({
+    from: 1607687293000,
+    to: 1607687293100,
+  }),
+} as any);
 
-  const decimals = {
-    id: 'decimals',
-    path: 'decimals',
-    name: 'Decimals',
-    description: 'Number of decimal to be shown for a value',
+setTemplateSrv(
+  new TemplateSrv({
     // @ts-ignore
-    editor: () => null,
+    getVariables: () => {
+      return variablesMock;
+    },
     // @ts-ignore
-    override: () => null,
-    process: identityOverrideProcessor,
-    shouldApply: () => true,
-  };
+    getVariableWithName: (name: string) => {
+      return variablesMock.filter(v => v.name === name)[0];
+    },
+  })
+);
 
-  const boolean = {
-    id: 'boolean',
-    path: 'boolean',
-    name: 'Boolean',
-    description: '',
-    // @ts-ignore
-    editor: () => null,
-    // @ts-ignore
-    override: () => null,
-    process: identityOverrideProcessor,
-    shouldApply: () => true,
-  };
-
-  const fieldColor = {
-    id: 'color',
-    path: 'color',
-    name: 'color',
-    description: '',
-    // @ts-ignore
-    editor: () => null,
-    // @ts-ignore
-    override: () => null,
-    process: identityOverrideProcessor,
-    shouldApply: () => true,
-  };
-
-  return [unit, decimals, boolean, fieldColor];
-};
-
-standardFieldConfigEditorRegistry.setInit(() => mockStandardProperties());
-standardEditorsRegistry.setInit(() => mockStandardProperties());
+variableAdapters.setInit(() => [createQueryVariableAdapter()]);
 
 describe('PanelModel', () => {
   describe('when creating new panel model', () => {
@@ -147,7 +118,7 @@ describe('PanelModel', () => {
           id: 'table',
         },
         (null as unknown) as ComponentClass<PanelProps>, // react
-        TablePanelCtrl // angular
+        {} // angular
       );
 
       panelPlugin.setPanelOptions(builder => {
@@ -238,6 +209,16 @@ describe('PanelModel', () => {
       it('should interpolate variables', () => {
         const out = model.replaceVariables('hello $aaa');
         expect(out).toBe('hello AAA');
+      });
+
+      it('should interpolate $__url_time_range variable', () => {
+        const out = model.replaceVariables(`/d/1?$${DataLinkBuiltInVars.keepTime}`);
+        expect(out).toBe('/d/1?from=1607687293000&to=1607687293100');
+      });
+
+      it('should interpolate $__all_variables variable', () => {
+        const out = model.replaceVariables(`/d/1?$${DataLinkBuiltInVars.includeVars}`);
+        expect(out).toBe('/d/1?var-test1=val1&var-test2=val2');
       });
 
       it('should prefer the local variable value', () => {
@@ -468,3 +449,28 @@ describe('PanelModel', () => {
     });
   });
 });
+
+const variablesMock = [
+  {
+    type: 'query',
+    name: 'test1',
+    label: 'Test1',
+    hide: false,
+    current: { value: 'val1' },
+    skipUrlSync: false,
+    getValueForUrl: function() {
+      return 'val1';
+    },
+  } as VariableModel,
+  {
+    type: 'query',
+    name: 'test2',
+    label: 'Test2',
+    hide: false,
+    current: { value: 'val2' },
+    skipUrlSync: false,
+    getValueForUrl: function() {
+      return 'val2';
+    },
+  } as VariableModel,
+];

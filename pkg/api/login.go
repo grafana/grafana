@@ -77,7 +77,7 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	viewData, err := setIndexViewData(hs, c)
 	if err != nil {
-		c.Handle(500, "Failed to get settings", err)
+		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
 		return
 	}
 
@@ -117,7 +117,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 			user := &models.User{Id: c.SignedInUser.UserId, Email: c.SignedInUser.Email, Login: c.SignedInUser.Login}
 			err := hs.loginUserWithUser(user, c)
 			if err != nil {
-				c.Handle(500, "Failed to sign in user", err)
+				c.Handle(hs.Cfg, 500, "Failed to sign in user", err)
 				return
 			}
 		}

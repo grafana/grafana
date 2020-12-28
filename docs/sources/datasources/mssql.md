@@ -8,16 +8,7 @@ weight = 900
 
 # Using Microsoft SQL Server in Grafana
 
-> Only available in Grafana v5.1+.
-
-Grafana ships with a built-in Microsoft SQL Server (MSSQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database.
-
-## Adding the data source
-
-1. Open the side menu by clicking the Grafana icon in the top header.
-1. In the side menu under the `Configuration` link you should find a link named `Data Sources`.
-1. Click the `+ Add data source` button in the top header.
-1. Select *Microsoft SQL Server* from the *Type* dropdown.
+Grafana ships with a built-in Microsoft SQL Server (MS SQL) data source plugin that allows you to query and visualize data from any Microsoft SQL Server 2005 or newer, including Microsoft Azure SQL Database. This topic explains options, variables, querying, and other options specific to the MS SQL data source. Refer to [Add a data source]({{< relref "add-a-data-source.md" >}}) for instructions on how to add a data source to Grafana. Only users with the organization admin role can add data sources.
 
 ### Data source options
 
@@ -25,14 +16,14 @@ Name           | Description
 ------------   | -------------
 `Name`         | The data source name. This is how you refer to the data source in panels and queries.
 `Default`      | Default data source means that it will be pre-selected for new panels.
-`Host`         | The IP address/hostname and optional port of your MSSQL instance. If port is omitted, default 1433 will be used.
-`Database`     | Name of your MSSQL database.
+`Host`         | The IP address/hostname and optional port of your MS SQL instance. If port is omitted, default 1433 will be used.
+`Database`     | Name of your MS SQL database.
 `User`         | Database user's login/username
 `Password`     | Database user's password
-`Encrypt`      | This option determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server, default `false` (Grafana v5.4+).
-`Max open`     | The maximum number of open connections to the database, default `unlimited` (Grafana v5.4+).
-`Max idle`     | The maximum number of connections in the idle connection pool, default `2` (Grafana v5.4+).
-`Max lifetime` | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours (Grafana v5.4+).
+`Encrypt`      | This option determines whether or to which extent a secure SSL TCP/IP connection will be negotiated with the server, default `false`.
+`Max open`     | The maximum number of open connections to the database, default `unlimited`.
+`Max idle`     | The maximum number of connections in the idle connection pool, default `2`.
+`Max lifetime` | The maximum amount of time in seconds a connection may be reused, default `14400`/4 hours.
 
 ### Min time interval
 
@@ -52,12 +43,12 @@ Identifier   | Description
 `s`          | second
 `ms`         | millisecond
 
-### Database User Permissions (Important!)
+### Database user permissions
 
 The database user you specify when you add the data source should only be granted SELECT permissions on
 the specified database and tables you want to query. Grafana does not validate that the query is safe. The query
 could include any SQL statement. For example, statements like `DELETE FROM user;` and `DROP TABLE user;` would be
-executed. To protect against this we **Highly** recommend you create a specific MSSQL user with restricted permissions.
+executed. To protect against this we _highly_ recommend you create a specific MS SQL user with restricted permissions.
 
 Example:
 
@@ -178,7 +169,7 @@ The resulting table panel:
 If you set `Format as` to `Time series`, for use in Graph panel for example, then the query must have a column named `time` that returns either a SQL datetime or any numeric datatype representing Unix epoch in seconds. You may return a column named `metric` that is used as metric name for the value column. Any column except `time` and `metric` is treated as a value column. If you omit the `metric` column, the name of the value column will be the metric name. You may select multiple value columns, each will have its name as metric.
 If you return multiple value columns and a column named `metric` then this column is used as prefix for the series name (only available in Grafana 5.3+).
 
-Resultsets of time series queries need to be sorted by time.
+Result sets of time series queries need to be sorted by time.
 
 **Example database table:**
 
@@ -299,12 +290,12 @@ Instead of hard-coding things like server, application and sensor name in your m
 
 Check out the [Templating]({{< relref "../variables/_index.md" >}}) documentation for an introduction to the templating feature and the different types of template variables.
 
-### Query Variable
+### Query variable
 
-If you add a template variable of the type `Query`, you can write a MSSQL query that can
+If you add a template variable of the type `Query`, you can write a MS SQL query that can
 return things like measurement names, key names or key values that are shown as a dropdown select box.
 
-For example, you can have a variable that contains all values for the `hostname` column in a table if you specify a query like this in the templating variable *Query* setting.
+For example, you can have a variable that contains all values for the `hostname` column in a table if you specify a query like this in the templating variable **Query** setting.
 
 ```sql
 SELECT hostname FROM host
@@ -489,7 +480,7 @@ In this case the stored procedure accepts two parameters `@from` and `@to` of `i
 which will be used to filter the data to return from the stored procedure.
 
 We're mimicking the `$__timeGroup(time, '5m')` in the select and group by expressions, and that's why there are a lot of lengthy expressions needed -
-these could be extracted to MSSQL functions, if wanted.
+these could be extracted to MS SQL functions, if wanted.
 
 ```sql
 CREATE PROCEDURE sp_test_epoch(
@@ -541,7 +532,7 @@ In this case the stored procedure accepts two parameters `@from` and `@to` of `d
 which will be used to filter the data to return from the stored procedure.
 
 We're mimicking the `$__timeGroup(time, '5m')` in the select and group by expressions and that's why there's a lot of lengthy expressions needed -
-these could be extracted to MSSQL functions, if wanted.
+these could be extracted to MS SQL functions, if wanted.
 
 ```sql
 CREATE PROCEDURE sp_test_datetime(

@@ -1,12 +1,12 @@
-import { ScopedVars } from './ScopedVars';
 import { DataQuery } from './datasource';
+import { InterpolateFunction } from './panel';
 
 /**
  * Callback info for DataLink click events
  */
 export interface DataLinkClickEvent<T = any> {
   origin: T;
-  scopedVars?: ScopedVars;
+  replaceVariables: InterpolateFunction | undefined;
   e?: any; // mouse|react event
 }
 
@@ -67,7 +67,7 @@ export interface LinkModel<T = any> {
  * TODO: ScopedVars in in GrafanaUI package!
  */
 export interface LinkModelSupplier<T extends object> {
-  getLinks(scopedVars?: any): Array<LinkModel<T>>;
+  getLinks(replaceVariables?: InterpolateFunction): Array<LinkModel<T>>;
 }
 
 export enum VariableOrigin {

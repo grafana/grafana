@@ -1,3 +1,4 @@
+// Package api contains API logic.
 package api
 
 import (
@@ -7,9 +8,12 @@ import (
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 )
+
+var plog = log.New("api")
 
 // registerRoutes registers all API HTTP routes.
 func (hs *HTTPServer) registerRoutes() {
@@ -20,8 +24,8 @@ func (hs *HTTPServer) registerRoutes() {
 	reqCanAccessTeams := middleware.AdminOrFeatureEnabled(hs.Cfg.EditorsCanAdmin)
 	reqSnapshotPublicModeOrSignedIn := middleware.SnapshotPublicModeOrSignedIn(hs.Cfg)
 	redirectFromLegacyDashboardURL := middleware.RedirectFromLegacyDashboardURL()
-	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL()
-	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL()
+	redirectFromLegacyDashboardSoloURL := middleware.RedirectFromLegacyDashboardSoloURL(hs.Cfg)
+	redirectFromLegacyPanelEditURL := middleware.RedirectFromLegacyPanelEditURL(hs.Cfg)
 	quota := middleware.Quota(hs.QuotaService)
 	bind := binding.Bind
 
@@ -245,7 +249,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// Data sources
 		apiRoute.Group("/datasources", func(datasourceRoute routing.RouteRegister) {
-			datasourceRoute.Get("/", Wrap(GetDataSources))
+			datasourceRoute.Get("/", Wrap(hs.GetDataSources))
 			datasourceRoute.Post("/", quota("data_source"), bind(models.AddDataSourceCommand{}), Wrap(AddDataSource))
 			datasourceRoute.Put("/:id", bind(models.UpdateDataSourceCommand{}), Wrap(UpdateDataSource))
 			datasourceRoute.Delete("/:id", Wrap(DeleteDataSourceById))

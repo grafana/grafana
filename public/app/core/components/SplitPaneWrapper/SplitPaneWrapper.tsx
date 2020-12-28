@@ -76,15 +76,14 @@ export class SplitPaneWrapper extends PureComponent<Props> {
       panel toolbar and editor toolbar (~120px). This is to prevent resizing
       the preview window beyond the browser window.
      */
-    const maxHeight = window.innerHeight - 120;
 
     if (Array.isArray(leftPaneComponents)) {
       return (
         <SplitPane
           split="horizontal"
-          maxSize={maxHeight}
+          maxSize={-200}
           primary="first"
-          size={topPaneSize < 200 ? 200 : topPaneSize}
+          size={topPaneSize}
           pane2Style={{ minHeight: 0 }}
           resizerClassName={styles.resizerH}
           onDragStarted={this.onDragStarted}
@@ -101,7 +100,6 @@ export class SplitPaneWrapper extends PureComponent<Props> {
   render() {
     const { rightPaneVisible, rightPaneComponents, uiState } = this.props;
     // Limit options pane width to 90% of screen.
-    const maxWidth = window.innerWidth * 0.9;
     const styles = getStyles(config.theme);
 
     // Need to handle when width is relative. ie a percentage of the viewport
@@ -117,8 +115,8 @@ export class SplitPaneWrapper extends PureComponent<Props> {
     return (
       <SplitPane
         split="vertical"
-        maxSize={maxWidth}
-        size={rightPaneSize >= 300 ? rightPaneSize : 300}
+        maxSize={-300}
+        size={rightPaneSize}
         primary="second"
         resizerClassName={styles.resizerV}
         onDragStarted={() => (document.body.style.cursor = 'col-resize')}
