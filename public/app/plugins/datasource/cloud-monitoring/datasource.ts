@@ -43,6 +43,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
 
   query(request: DataQueryRequest<CloudMonitoringQuery>): Observable<DataQueryResponse> {
     this.intervalMs = request.intervalMs;
+    request.targets = request.targets.map(this.migrateQuery);
     return super.query(request).pipe(
       mergeMap((res: DataQueryResponse) => {
         return from(this.processResponse(request, res));
@@ -54,50 +55,11 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     request: DataQueryRequest<CloudMonitoringQuery>,
     res: DataQueryResponse
   ): Promise<DataQueryResponse> {
+    console.log();
     // const unit = this.resolvePanelUnitFromTargets(request.targets);
-    if (res.data) {
-      for (const df of res.data) {
-        for (const field of df.fields) {
-          if (df.meta?.deepLink && df.meta?.deepLink.length > 0) {
-            field.config.links = [
-              {
-                url: df.meta?.deepLink,
-                title: 'View in Metrics Explorer',
-                targetBlank: true,
-              },
-            ];
-          }
-        }
-        // const encodedQuery = df.meta?.custom?.encodedQuery;
-        // if (encodedQuery && encodedQuery.length > 0) {
-        //   const url = await this.buildDeepLink(df.meta.custom);
-        //   if (url?.length) {
-        //     for (const field of df.fields) {
-        //       field.config.links = [
-        //         {
-        //           url: url,
-        //           title: 'View in Azure Portal',
-        //           targetBlank: true,
-        //         },
-        //       ];
-        //     }
-        //   }
-        // }
-      }
-    }
+
     return res;
   }
-  //   for (const field of df.fields) {
-  //     if (queryRes.meta?.deepLink && queryRes.meta?.deepLink.length > 0) {
-  //       field.config.links = [
-  //        {
-  //          url: queryRes.meta?.deepLink,
-  //          title: 'View in Metrics Explorer',
-  //          targetBlank: true,
-  //        },
-  //      ];
-  //    }
-  //  }
 
   async annotationQuery(options: any) {
     await this.ensureGCEDefaultProject();
@@ -147,7 +109,6 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars): Record<string, any> {
-    target = this.migrateQuery(target);
     target = this.prepareTimeSeriesQuery(target, scopedVars);
     return {
       ...target,
@@ -357,7 +318,6 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   filterQuery(query: CloudMonitoringQuery): boolean {
-    query = this.migrateQuery(query);
     if (query.hide) {
       return false;
     }

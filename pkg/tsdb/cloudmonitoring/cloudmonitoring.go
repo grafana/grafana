@@ -34,11 +34,30 @@ var (
 )
 
 var (
-	matchAllCap       = regexp.MustCompile("(.)([A-Z][a-z]*)")
-	legendKeyFormat   = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
-	metricNameFormat  = regexp.MustCompile(`([\w\d_]+)\.(googleapis\.com|io)/(.+)`)
-	wildcardRegexRe   = regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
-	alignmentPeriodRe = regexp.MustCompile("[0-9]+")
+	matchAllCap                 = regexp.MustCompile("(.)([A-Z][a-z]*)")
+	legendKeyFormat             = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+	metricNameFormat            = regexp.MustCompile(`([\w\d_]+)\.(googleapis\.com|io)/(.+)`)
+	wildcardRegexRe             = regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
+	alignmentPeriodRe           = regexp.MustCompile("[0-9]+")
+	cloudMonitoringUnitMappings = map[string]string{
+		"rsc":     "3711",
+		"r":       "2138",
+		"gri":     "1908",
+		"adg":     "912",
+		"bit":     "bits",
+		"By":      "bytes",
+		"s":       "s",
+		"min":     "m",
+		"h":       "h",
+		"d":       "d",
+		"us":      "µs",
+		"ms":      "ms",
+		"ns":      "ns",
+		"percent": "percent",
+		"MiBy":    "mbytes",
+		"By/s":    "Bps",
+		"GBy":     "decgbytes",
+	}
 )
 
 const (
@@ -207,12 +226,6 @@ func (e *CloudMonitoringExecutor) executeTimeSeriesQuery(ctx context.Context, ts
 		if err != nil {
 			return nil, err
 		}
-		err = e.parseResponse(queryRes, resp, query)
-		if err != nil {
-			queryRes.Error = err
-		}
-
-		result.Results[query.RefID] = queryRes
 
 		resourceType := ""
 		for _, s := range resp.TimeSeries {
@@ -221,11 +234,13 @@ func (e *CloudMonitoringExecutor) executeTimeSeriesQuery(ctx context.Context, ts
 			break
 		}
 		query.Params.Set("resourceType", resourceType)
-		dl := ""
-		if len(resp.TimeSeries) > 0 {
-			dl = query.buildDeepLink()
+
+		err = e.parseResponse(queryRes, resp, query)
+		if err != nil {
+			queryRes.Error = err
 		}
-		queryRes.Meta.Set("deepLink", dl)
+
+		result.Results[query.RefID] = queryRes
 	}
 
 	return result, nil
@@ -547,16 +562,6 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, cmr 
 		frame := data.NewFrameOfFieldTypes("", len(series.Points), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = query.RefID
 
-		dl := ""
-		if len(cmr.TimeSeries) > 0 {
-			dl = query.buildDeepLink()
-		}
-		deepLink := data.DataLink{
-			Title:       "View in Metrics Explorer",
-			TargetBlank: true,
-			URL:         dl,
-		}
-
 		for key, value := range series.Metric.Labels {
 			if _, ok := labels["metric.label."+key]; !ok {
 				labels["metric.label."+key] = map[string]bool{}
@@ -613,10 +618,6 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, cmr 
 		if series.ValueType != "DISTRIBUTION" {
 			handleDistributionSeries(
 				series, defaultMetricName, seriesLabels, query, queryRes, frame)
-			if frame.Fields[1].Config == nil {
-				frame.Fields[1].Config = &data.FieldConfig{}
-			}
-			frame.Fields[1].Config.Links = append(frame.Fields[1].Config.Links, deepLink)
 			frames = append(frames, frame)
 		} else {
 			buckets := make(map[int]*data.Frame)
@@ -677,11 +678,24 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, cmr 
 				}
 			}
 			for i := 0; i < len(buckets); i++ {
-				if frame.Fields[1].Config == nil {
-					frame.Fields[1].Config = &data.FieldConfig{}
-				}
-				buckets[i].Fields[1].Config.Links = append(buckets[i].Fields[1].Config.Links, deepLink)
 				frames = append(frames, buckets[i])
+			}
+		}
+	}
+
+	if len(cmr.TimeSeries) > 0 {
+		dl := query.buildDeepLink()
+		for i := range frames {
+			for j, field := range frames[i].Fields {
+				if field.Config == nil {
+					frames[i].Fields[j].Config = &data.FieldConfig{}
+				}
+				deepLink := data.DataLink{
+					Title:       "View in Metrics Explorer",
+					TargetBlank: true,
+					URL:         dl,
+				}
+				frames[i].Fields[j].Config.Links = append(frames[i].Fields[j].Config.Links, deepLink)
 			}
 		}
 	}
