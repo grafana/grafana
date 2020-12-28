@@ -10,6 +10,7 @@ import { AlertRulesService } from './AlertRules.service';
 import { Messages } from '../../IntegratedAlerting.messages';
 import { formatRules } from './AlertRules.utils';
 import { AlertRule } from './AlertRules.types';
+import { AlertRulesActions } from './AlertRulesActions';
 
 const { noData, columns } = Messages.alertRules.table;
 
@@ -20,12 +21,14 @@ const {
   severity: severityColumn,
   summary: summaryColumn,
   threshold: thresholdColumn,
+  actions: actionsColumn,
 } = columns;
 
 export const AlertRules: FC = () => {
   const styles = useStyles(getStyles);
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(false);
+  const [selectedAlertRule, setSelectedAlertRule] = useState<AlertRule>();
   const [data, setData] = useState<AlertRule[]>([]);
 
   const getAlertRules = async () => {
@@ -73,12 +76,17 @@ export const AlertRules: FC = () => {
             ))}
           </div>
         ),
-        width: '40%',
+        width: '35%',
       } as Column,
       {
         Header: createdAtColumn,
         accessor: 'createdAt',
         width: '10%',
+      } as Column,
+      {
+        Header: actionsColumn,
+        width: '5%',
+        accessor: (alertRule: AlertRule) => <AlertRulesActions alertRule={alertRule} />,
       } as Column,
     ],
     []
@@ -88,20 +96,25 @@ export const AlertRules: FC = () => {
     getAlertRules();
   }, []);
 
+  const handleAddButton = () => {
+    setSelectedAlertRule(null);
+    setAddModalVisible(currentValue => !currentValue);
+  };
+
   return (
-    <AlertRulesProvider.Provider value={{ getAlertRules }}>
+    <AlertRulesProvider.Provider value={{ getAlertRules, setAddModalVisible, setSelectedAlertRule }}>
       <div className={styles.actionsWrapper}>
         <Button
           size="md"
           icon="plus-square"
           variant="link"
-          onClick={() => setAddModalVisible(!addModalVisible)}
+          onClick={handleAddButton}
           data-qa="alert-rule-template-add-modal-button"
         >
           {Messages.alertRuleTemplate.addAction}
         </Button>
       </div>
-      <AddAlertRuleModal isVisible={addModalVisible} setVisible={setAddModalVisible} />
+      <AddAlertRuleModal isVisible={addModalVisible} setVisible={setAddModalVisible} alertRule={selectedAlertRule} />
       <AlertRulesTable emptyMessage={noData} data={data} columns={columns} pendingRequest={pendingRequest} />
     </AlertRulesProvider.Provider>
   );

@@ -10,4 +10,7 @@ export const AlertRulesService = {
   async create(payload: AlertRuleCreatePayload): Promise<AlertRuleCreateResponse> {
     return getBackendSrv().post(`${BASE_URL}/Create`, payload);
   },
+  async update(payload: AlertRuleCreatePayload): Promise<{}> {
+    return getBackendSrv().post(`${BASE_URL}/Update`, payload);
+  },
 };

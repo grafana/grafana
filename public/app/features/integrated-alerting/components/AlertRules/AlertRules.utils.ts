@@ -74,6 +74,7 @@ export const formatRule = (rule: AlertRulesListResponseRule): AlertRule => {
     summary,
     threshold: formatThreshold(template, params),
     lastNotified: last_notified ? moment(last_notified).format('YYYY-MM-DD HH:mm:ss.SSS') : '',
+    rawValues: rule,
   };
 };
 
