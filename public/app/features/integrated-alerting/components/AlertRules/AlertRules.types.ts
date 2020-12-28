@@ -42,6 +42,7 @@ export enum AlertRuleSeverity {
 }
 
 export interface AlertRule {
+  ruleId?: string;
   createdAt: string;
   disabled: boolean;
   duration: string;
@@ -120,5 +121,10 @@ export interface AlertRuleCreatePayload {
 }
 
 export interface AlertRuleUpdatePayload extends AlertRuleCreatePayload {
+  rule_id: string;
+}
+
+export interface AlertRuleTogglePayload {
+  disabled: 'DO_NOT_CHANGE' | 'TRUE' | 'FALSE';
   rule_id: string;
 }

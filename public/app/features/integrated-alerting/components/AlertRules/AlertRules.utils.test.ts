@@ -97,6 +97,7 @@ describe('AlertRulesTable utils', () => {
   test('formatRule', () => {
     expect(formatRule(rulesStubs[0])).toEqual({
       rawValues: {
+        rule_id: 'test 1',
         created_at: '2020-11-25T16:53:39.366Z',
         disabled: false,
         filters: [
@@ -139,6 +140,7 @@ describe('AlertRulesTable utils', () => {
           ],
         },
       },
+      ruleId: 'test 1',
       createdAt: '2020-11-25 16:53:39.366',
       disabled: false,
       duration: '2 minutes',
@@ -151,6 +153,7 @@ describe('AlertRulesTable utils', () => {
 
     expect(formatRule(rulesStubs[3])).toEqual({
       rawValues: {
+        rule_id: 'test 4',
         created_at: '2020-11-25T16:53:39.366Z',
         disabled: true,
         filters: [
@@ -194,6 +197,7 @@ describe('AlertRulesTable utils', () => {
           ],
         },
       },
+      ruleId: 'test 4',
       createdAt: '2020-11-25 16:53:39.366',
       disabled: true,
       duration: '5 minutes',
@@ -215,6 +219,7 @@ describe('AlertRulesTable utils', () => {
     expect(formatRules([rulesStubs[0], rulesStubs[3]])).toEqual([
       {
         rawValues: {
+          rule_id: 'test 1',
           created_at: '2020-11-25T16:53:39.366Z',
           disabled: false,
           filters: [
@@ -257,6 +262,7 @@ describe('AlertRulesTable utils', () => {
             ],
           },
         },
+        ruleId: 'test 1',
         createdAt: '2020-11-25 16:53:39.366',
         disabled: false,
         duration: '2 minutes',
@@ -268,6 +274,7 @@ describe('AlertRulesTable utils', () => {
       },
       {
         rawValues: {
+          rule_id: 'test 4',
           created_at: '2020-11-25T16:53:39.366Z',
           disabled: true,
           filters: [
@@ -311,6 +318,7 @@ describe('AlertRulesTable utils', () => {
             ],
           },
         },
+        ruleId: 'test 4',
         createdAt: '2020-11-25 16:53:39.366',
         disabled: true,
         duration: '5 minutes',

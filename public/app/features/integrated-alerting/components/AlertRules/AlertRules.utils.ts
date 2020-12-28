@@ -63,13 +63,25 @@ export const formatDuration = (duration: string): string => {
 };
 
 export const formatRule = (rule: AlertRulesListResponseRule): AlertRule => {
-  const { created_at, disabled, filters, for: duration, last_notified, template, severity, summary, params } = rule;
+  const {
+    rule_id,
+    created_at,
+    disabled,
+    filters,
+    for: duration,
+    last_notified,
+    template,
+    severity,
+    summary,
+    params,
+  } = rule;
 
   return {
+    ruleId: rule_id,
     createdAt: moment(created_at).format('YYYY-MM-DD HH:mm:ss.SSS'),
     disabled,
     duration: formatDuration(duration),
-    filters: filters.map(formatFilter),
+    filters: filters ? filters.map(formatFilter) : [],
     severity: AlertRuleSeverity[severity],
     summary,
     threshold: formatThreshold(template, params),
