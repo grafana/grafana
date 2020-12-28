@@ -26,4 +26,4 @@ export const formatAlert = (rule: AlertsListResponseAlert): Alert => {
   };
 };
 
-export const formatAlerts = (rules: AlertsListResponseAlert[]): Alert[] => rules.map(formatAlert);
+export const formatAlerts = (alerts: AlertsListResponseAlert[]): Alert[] => (alerts ? alerts.map(formatAlert) : []);

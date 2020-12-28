@@ -1,5 +1,7 @@
 export interface AlertRulesContext {
   getAlertRules: () => void;
+  setAddModalVisible: (isVisible: boolean) => void;
+  setSelectedAlertRule: (alertRule: AlertRule) => void;
 }
 
 export enum AlertRuleFilterType {
@@ -27,6 +29,8 @@ export interface AlertRulesListPayloadTemplateParam {
 }
 
 export interface AlertRulesListPayloadTemplate {
+  name: string;
+  summary: string;
   params: AlertRulesListPayloadTemplateParam[];
 }
 
@@ -46,6 +50,7 @@ export interface AlertRule {
   severity: AlertRuleSeverity[keyof AlertRuleSeverity];
   summary: string;
   threshold: string;
+  rawValues: AlertRulesListResponseRule;
 }
 
 export interface AlertRulesListPayloadFilter {
@@ -69,7 +74,13 @@ export interface AlertRulesListResponseParam {
   type: keyof typeof AlertRuleParamType;
 }
 
+export interface AlertRulesListResponseChannel {
+  channel_id: string;
+  summary: string;
+}
+
 export interface AlertRulesListResponseRule {
+  channels: AlertRulesListResponseChannel[];
   created_at: string;
   disabled: boolean;
   filters: AlertRulesListPayloadFilter[];
@@ -79,6 +90,7 @@ export interface AlertRulesListResponseRule {
   severity: keyof typeof AlertRuleSeverity;
   summary: string;
   template: AlertRulesListPayloadTemplate;
+  rule_id: string;
 }
 
 export interface AlertRulesListResponse {
@@ -105,4 +117,8 @@ export interface AlertRuleCreatePayload {
   severity: keyof typeof AlertRuleSeverity;
   summary: string;
   template_name: string;
+}
+
+export interface AlertRuleUpdatePayload extends AlertRuleCreatePayload {
+  rule_id: string;
 }

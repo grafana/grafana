@@ -30,6 +30,7 @@ export const Messages = {
         severity: 'Severity',
         summary: 'Name',
         threshold: 'Threshold',
+        actions: 'Actions',
       },
     },
   },
