@@ -19,8 +19,9 @@ type SearchRequestBuilder struct {
 }
 
 // NewSearchRequestBuilder create a new search request builder
-func NewSearchRequestBuilder(version int, interval tsdb.Interval) *SearchRequestBuilder {
+func NewSearchRequestBuilder(version int, interval tsdb.Interval, indexPatternOverride string) *SearchRequestBuilder {
 	builder := &SearchRequestBuilder{
+		index:       indexPatternOverride,
 		version:     version,
 		interval:    interval,
 		sort:        make(map[string]interface{}),
@@ -131,8 +132,9 @@ func NewMultiSearchRequestBuilder(version int) *MultiSearchRequestBuilder {
 }
 
 // Search initiates and returns a new search request builder
-func (m *MultiSearchRequestBuilder) Search(interval tsdb.Interval) *SearchRequestBuilder {
-	b := NewSearchRequestBuilder(m.version, interval)
+func (m *MultiSearchRequestBuilder) Search(interval tsdb.Interval, indexPatternOverride string) *SearchRequestBuilder {
+
+	b := NewSearchRequestBuilder(m.version, interval, indexPatternOverride)
 	m.requestBuilders = append(m.requestBuilders, b)
 	return b
 }

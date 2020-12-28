@@ -6,13 +6,14 @@ import (
 
 // Query represents the time series query model of the datasource
 type Query struct {
-	TimeField  string       `json:"timeField"`
-	RawQuery   string       `json:"query"`
-	BucketAggs []*BucketAgg `json:"bucketAggs"`
-	Metrics    []*MetricAgg `json:"metrics"`
-	Alias      string       `json:"alias"`
-	Interval   string
-	RefID      string
+	TimeField            string       `json:"timeField"`
+	RawQuery             string       `json:"query"`
+	BucketAggs           []*BucketAgg `json:"bucketAggs"`
+	Metrics              []*MetricAgg `json:"metrics"`
+	Alias                string       `json:"alias"`
+	IndexPatternOverride string       `json:"indexPatternOverride"`
+	Interval             string
+	RefID                string
 }
 
 // BucketAgg represents a bucket aggregation of the time series query model of the datasource
