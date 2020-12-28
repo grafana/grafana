@@ -6,8 +6,8 @@ import { DataFrameFieldIndex } from '@grafana/data';
  * @public
  */
 export enum GraphNGLegendEventMode {
-  toggleSelection = 'select',
-  appendToSelection = 'append',
+  ToggleSelection = 'select',
+  AppendToSelection = 'append',
 }
 
 /**

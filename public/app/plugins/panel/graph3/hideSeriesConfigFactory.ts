@@ -48,7 +48,7 @@ export const hideSeriesConfigFactory = (
   const overridesCopy = Array.from(overrides);
   const [current] = overridesCopy.splice(currentIndex, 1) as SystemConfigOverrideRule[];
 
-  if (mode === GraphNGLegendEventMode.toggleSelection) {
+  if (mode === GraphNGLegendEventMode.ToggleSelection) {
     const existing = getExistingDisplayNames(current);
 
     if (existing.find(name => name === displayName)) {

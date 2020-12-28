@@ -247,7 +247,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
 const mapMouseEventToMode = (event: React.MouseEvent): GraphNGLegendEventMode => {
   if (event.ctrlKey || event.metaKey || event.shiftKey) {
-    return GraphNGLegendEventMode.appendToSelection;
+    return GraphNGLegendEventMode.AppendToSelection;
   }
-  return GraphNGLegendEventMode.toggleSelection;
+  return GraphNGLegendEventMode.ToggleSelection;
 };

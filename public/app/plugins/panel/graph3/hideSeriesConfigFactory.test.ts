@@ -12,7 +12,7 @@ import { hideSeriesConfigFactory } from './hideSeriesConfigFactory';
 describe('hideSeriesConfigFactory', () => {
   it('should create config override matching one series', () => {
     const event: GraphNGLegendEvent = {
-      mode: GraphNGLegendEventMode.toggleSelection,
+      mode: GraphNGLegendEventMode.ToggleSelection,
       fieldIndex: {
         frameIndex: 0,
         fieldIndex: 1,
@@ -43,7 +43,7 @@ describe('hideSeriesConfigFactory', () => {
 
   it('should create config override that append series to existing override', () => {
     const event: GraphNGLegendEvent = {
-      mode: GraphNGLegendEventMode.appendToSelection,
+      mode: GraphNGLegendEventMode.AppendToSelection,
       fieldIndex: {
         frameIndex: 1,
         fieldIndex: 1,
@@ -80,7 +80,7 @@ describe('hideSeriesConfigFactory', () => {
 
   it('should remove override if appending only the existing series override', () => {
     const event: GraphNGLegendEvent = {
-      mode: GraphNGLegendEventMode.appendToSelection,
+      mode: GraphNGLegendEventMode.AppendToSelection,
       fieldIndex: {
         frameIndex: 0,
         fieldIndex: 1,
@@ -117,7 +117,7 @@ describe('hideSeriesConfigFactory', () => {
 
   it('should create config override that removes series if appending existing field', () => {
     const event: GraphNGLegendEvent = {
-      mode: GraphNGLegendEventMode.appendToSelection,
+      mode: GraphNGLegendEventMode.AppendToSelection,
       fieldIndex: {
         frameIndex: 0,
         fieldIndex: 1,
@@ -154,7 +154,7 @@ describe('hideSeriesConfigFactory', () => {
 
   it('should create config override replacing existing series', () => {
     const event: GraphNGLegendEvent = {
-      mode: GraphNGLegendEventMode.toggleSelection,
+      mode: GraphNGLegendEventMode.ToggleSelection,
       fieldIndex: {
         frameIndex: 1,
         fieldIndex: 1,
@@ -191,7 +191,7 @@ describe('hideSeriesConfigFactory', () => {
 
   it('should create config override removing existing series', () => {
     const event: GraphNGLegendEvent = {
-      mode: GraphNGLegendEventMode.toggleSelection,
+      mode: GraphNGLegendEventMode.ToggleSelection,
       fieldIndex: {
         frameIndex: 0,
         fieldIndex: 1,
@@ -228,7 +228,7 @@ describe('hideSeriesConfigFactory', () => {
 
   it('should return existing override if invalid index is passed', () => {
     const event: GraphNGLegendEvent = {
-      mode: GraphNGLegendEventMode.toggleSelection,
+      mode: GraphNGLegendEventMode.ToggleSelection,
       fieldIndex: {
         frameIndex: 4,
         fieldIndex: 1,
