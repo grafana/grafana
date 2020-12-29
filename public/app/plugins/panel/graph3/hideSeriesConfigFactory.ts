@@ -107,7 +107,7 @@ const createExtendedOverride = (current: SystemConfigOverrideRule, displayName: 
 };
 
 const getExistingDisplayNames = (rule: SystemConfigOverrideRule): string[] => {
-  const names = rule.matcher.options?.matcherOptions?.names;
+  const names = rule.matcher.options?.names;
   if (!Array.isArray(names)) {
     return [];
   }
@@ -127,14 +127,12 @@ const createOverride = (names: string[], property?: DynamicConfigValue): SystemC
   return {
     __systemRef: displayOverrideRef,
     matcher: {
-      id: FieldMatcherID.readOnly,
+      id: FieldMatcherID.byNames,
       options: {
+        mode: ByNamesMatcherMode.exclude,
+        names: names,
         prefix: 'All except:',
-        matcherId: FieldMatcherID.byNames,
-        matcherOptions: {
-          mode: ByNamesMatcherMode.exclude,
-          names: names,
-        },
+        readOnly: true,
       },
     },
     properties: [

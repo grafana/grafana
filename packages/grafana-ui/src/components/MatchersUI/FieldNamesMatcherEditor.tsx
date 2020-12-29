@@ -12,13 +12,14 @@ import { MultiSelect } from '../Select/Select';
 import { Input } from '../Input/Input';
 
 export const FieldNamesMatcherEditor = memo<MatcherUIProps<ByNamesMatcherOptions>>(props => {
-  const { data, options, onChange: onChangeFromProps, readOnly } = props;
+  const { data, options, onChange: onChangeFromProps } = props;
+  const { readOnly, prefix } = options;
   const names = useFieldDisplayNames(data);
   const selectOptions = useSelectOptions(names);
 
   if (readOnly) {
     const displayNames = (options.names ?? []).join(', ');
-    return <Input value={displayNames} readOnly={true} disabled={true} prefix={props.prefix} />;
+    return <Input value={displayNames} readOnly={true} disabled={true} prefix={prefix} />;
   }
 
   const onChange = useCallback(

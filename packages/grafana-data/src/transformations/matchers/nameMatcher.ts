@@ -27,6 +27,8 @@ export enum ByNamesMatcherMode {
 export interface ByNamesMatcherOptions {
   mode?: ByNamesMatcherMode;
   names?: string[];
+  readOnly?: boolean;
+  prefix?: string;
 }
 
 // General Field matcher

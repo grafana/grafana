@@ -397,14 +397,12 @@ const createOverride = (matchers: string[]) => {
   return {
     __systemRef: 'hideSeriesFrom',
     matcher: {
-      id: FieldMatcherID.readOnly,
+      id: FieldMatcherID.byNames,
       options: {
-        matcherId: FieldMatcherID.byNames,
-        matcherOptions: {
-          mode: ByNamesMatcherMode.exclude,
-          names: matchers,
-        },
+        mode: ByNamesMatcherMode.exclude,
+        names: matchers,
         prefix: 'All except:',
+        readOnly: true,
       },
     },
     properties: [

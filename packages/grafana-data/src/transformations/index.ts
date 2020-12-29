@@ -12,4 +12,3 @@ export {
 export { RegexpOrNamesMatcherOptions, ByNamesMatcherOptions, ByNamesMatcherMode } from './matchers/nameMatcher';
 export { RenameByRegexTransformerOptions } from './transformers/renameByRegex';
 export { outerJoinDataFrames } from './transformers/seriesToColumns';
-export { ReadOnlyFieldMatcherOptions } from './matchers/readOnlyMatcher';

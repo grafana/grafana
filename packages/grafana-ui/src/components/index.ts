@@ -144,7 +144,6 @@ export { InputControl } from './InputControl';
 export * from './Button';
 export { ValuePicker } from './ValuePicker/ValuePicker';
 export { fieldMatchersUI } from './MatchersUI/fieldMatchersUI';
-export { getDefaultFieldMatchersUI } from './MatchersUI/defaultFieldMatchers';
 export { getFormStyles } from './Forms/getFormStyles';
 
 export { Label } from './Forms/Label';
