@@ -4,6 +4,7 @@ import {
   DynamicConfigValue,
   FieldConfigSource,
   FieldMatcherID,
+  FieldType,
   getFieldDisplayName,
   isSystemOverrideWithRef,
   SystemConfigOverrideRule,
@@ -37,7 +38,17 @@ export const hideSeriesConfigFactory = (
   const currentIndex = overrides.findIndex(isHideSeriesOverride);
 
   if (currentIndex < 0) {
-    const override = createOverride([displayName]);
+    if (mode === GraphNGLegendEventMode.ToggleSelection) {
+      const override = createOverride([displayName]);
+
+      return {
+        ...fieldConfig,
+        overrides: [override, ...fieldConfig.overrides],
+      };
+    }
+
+    const displayNames = getDisplayNames(data, displayName);
+    const override = createOverride(displayNames);
 
     return {
       ...fieldConfig,
@@ -68,7 +79,7 @@ export const hideSeriesConfigFactory = (
 
   const override = createExtendedOverride(current, displayName);
 
-  if (!override) {
+  if (allFieldsAreExcluded(override, data)) {
     return {
       ...fieldConfig,
       overrides: overridesCopy,
@@ -81,10 +92,7 @@ export const hideSeriesConfigFactory = (
   };
 };
 
-const createExtendedOverride = (
-  current: SystemConfigOverrideRule,
-  displayName: string
-): SystemConfigOverrideRule | undefined => {
+const createExtendedOverride = (current: SystemConfigOverrideRule, displayName: string): SystemConfigOverrideRule => {
   const property = current.properties.find(p => p.id === 'custom.hideFrom');
   const existing = getExistingDisplayNames(current);
   const index = existing.findIndex(name => name === displayName);
@@ -93,10 +101,6 @@ const createExtendedOverride = (
     existing.push(displayName);
   } else {
     existing.splice(index, 1);
-  }
-
-  if (existing.length === 0) {
-    return;
   }
 
   return createOverride(existing, property);
@@ -144,4 +148,30 @@ const createOverride = (names: string[], property?: DynamicConfigValue): SystemC
       },
     ],
   };
+};
+
+const allFieldsAreExcluded = (override: SystemConfigOverrideRule, data: DataFrame[]): boolean => {
+  return getExistingDisplayNames(override).length === getDisplayNames(data).length;
+};
+
+const getDisplayNames = (data: DataFrame[], excludeName?: string): string[] => {
+  const unique = new Set<string>();
+
+  for (const frame of data) {
+    for (const field of frame.fields) {
+      if (field.type !== FieldType.number) {
+        continue;
+      }
+
+      const name = getFieldDisplayName(field, frame, data);
+
+      if (name === excludeName) {
+        continue;
+      }
+
+      unique.add(name);
+    }
+  }
+
+  return Array.from(unique);
 };

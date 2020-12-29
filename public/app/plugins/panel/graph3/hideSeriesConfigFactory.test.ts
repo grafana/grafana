@@ -68,6 +68,12 @@ describe('hideSeriesConfigFactory', () => {
           { name: 'humidity', type: FieldType.number, values: [1, 3, 5, 7] },
         ],
       }),
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'pressure', type: FieldType.number, values: [1, 3, 5, 7] },
+        ],
+      }),
     ];
 
     const config = hideSeriesConfigFactory(event, existingConfig, data);
@@ -78,7 +84,7 @@ describe('hideSeriesConfigFactory', () => {
     });
   });
 
-  it('should remove override if appending only the existing series override', () => {
+  it('should create config override that hides all series if appending only existing series', () => {
     const event: GraphNGLegendEvent = {
       mode: GraphNGLegendEventMode.AppendToSelection,
       fieldIndex: {
@@ -111,7 +117,7 @@ describe('hideSeriesConfigFactory', () => {
 
     expect(config).toEqual({
       defaults: {},
-      overrides: [],
+      overrides: [createOverride([])],
     });
   });
 
@@ -223,6 +229,86 @@ describe('hideSeriesConfigFactory', () => {
     expect(config).toEqual({
       defaults: {},
       overrides: [],
+    });
+  });
+
+  it('should remove override if all fields are appended', () => {
+    const event: GraphNGLegendEvent = {
+      mode: GraphNGLegendEventMode.AppendToSelection,
+      fieldIndex: {
+        frameIndex: 1,
+        fieldIndex: 1,
+      },
+    };
+
+    const existingConfig: FieldConfigSource = {
+      defaults: {},
+      overrides: [createOverride(['temperature'])],
+    };
+
+    const data: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'temperature', type: FieldType.number, values: [1, 3, 5, 7] },
+        ],
+      }),
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'humidity', type: FieldType.number, values: [1, 3, 5, 7] },
+        ],
+      }),
+    ];
+
+    const config = hideSeriesConfigFactory(event, existingConfig, data);
+
+    expect(config).toEqual({
+      defaults: {},
+      overrides: [],
+    });
+  });
+
+  it('should create config override hiding appended series if no previous override exists', () => {
+    const event: GraphNGLegendEvent = {
+      mode: GraphNGLegendEventMode.AppendToSelection,
+      fieldIndex: {
+        frameIndex: 0,
+        fieldIndex: 1,
+      },
+    };
+
+    const existingConfig: FieldConfigSource = {
+      defaults: {},
+      overrides: [],
+    };
+
+    const data: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'temperature', type: FieldType.number, values: [1, 3, 5, 7] },
+        ],
+      }),
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'humidity', type: FieldType.number, values: [1, 3, 5, 7] },
+        ],
+      }),
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'pressure', type: FieldType.number, values: [1, 3, 5, 7] },
+        ],
+      }),
+    ];
+
+    const config = hideSeriesConfigFactory(event, existingConfig, data);
+
+    expect(config).toEqual({
+      defaults: {},
+      overrides: [createOverride(['humidity', 'pressure'])],
     });
   });
 
