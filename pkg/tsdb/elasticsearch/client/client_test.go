@@ -384,7 +384,6 @@ func TestClient(t *testing.T) {
 					So(res.Status, ShouldEqual, 200)
 					So(res.Responses, ShouldHaveLength, 1)
 				})
-
 			})
 		})
 	})
