@@ -69,6 +69,10 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
                   return agg;
                 }
 
+                if (f.config.custom?.hideFrom?.tooltip) {
+                  return agg;
+                }
+
                 return [
                   ...agg,
                   {
