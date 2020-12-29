@@ -138,7 +138,7 @@ func TestClient(t *testing.T) {
 			}`
 
 			Convey("When executing multi search", func() {
-				ms, err := createMultisearchForTest(sc.client)
+				ms, err := createMultisearchForTest(sc.client, "")
 				So(err, ShouldBeNil)
 				res, err := sc.client.ExecuteMultisearch(ms)
 				So(err, ShouldBeNil)
@@ -200,7 +200,7 @@ func TestClient(t *testing.T) {
 			}`
 
 			Convey("When executing multi search", func() {
-				ms, err := createMultisearchForTest(sc.client)
+				ms, err := createMultisearchForTest(sc.client, "")
 				So(err, ShouldBeNil)
 				res, err := sc.client.ExecuteMultisearch(ms)
 				So(err, ShouldBeNil)
@@ -262,7 +262,7 @@ func TestClient(t *testing.T) {
 			}`
 
 			Convey("When executing multi search", func() {
-				ms, err := createMultisearchForTest(sc.client)
+				ms, err := createMultisearchForTest(sc.client, "")
 				So(err, ShouldBeNil)
 				res, err := sc.client.ExecuteMultisearch(ms)
 				So(err, ShouldBeNil)
@@ -324,7 +324,7 @@ func TestClient(t *testing.T) {
 			}`
 
 			Convey("When executing multi search", func() {
-				ms, err := createMultisearchForTest(sc.client)
+				ms, err := createMultisearchForTest(sc.client, "")
 				So(err, ShouldBeNil)
 				res, err := sc.client.ExecuteMultisearch(ms)
 				So(err, ShouldBeNil)
@@ -366,12 +366,44 @@ func TestClient(t *testing.T) {
 				})
 			})
 		})
+
+		httpClientScenario(t, "Given a fake http client and a v7.0 client with response", &models.DataSource{
+			Database: "[metrics-]YYYY.MM.DD",
+			JsonData: simplejson.NewFromAny(map[string]interface{}{
+				"esVersion":                  70,
+				"maxConcurrentShardRequests": 6,
+				"timeField":                  "@timestamp",
+				"interval":                   "Daily",
+			}),
+		}, func(sc *scenarioContext) {
+			sc.responseBody = `{
+				"responses": [
+					{
+						"hits": {	"hits": [], "max_score": 0,	"total": { "value": 4656, "relation": "eq"}	},
+						"status": 200
+					}
+				]
+			}`
+
+			Convey("When executing a multi search with indexPatternOverride", func() {
+				_, err := createMultisearchForTest(sc.client, "metrics-*")
+				So(err, ShouldBeNil)
+
+				Convey("Should override the index", func() {
+					headerBytes, err := sc.requestBody.ReadBytes('\n')
+					So(err, ShouldBeNil)
+					jHeader, err := simplejson.NewJson(headerBytes)
+					So(err, ShouldBeNil)
+					So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-*")
+				})
+			})
+		})
 	})
 }
 
-func createMultisearchForTest(c Client) (*MultiSearchRequest, error) {
+func createMultisearchForTest(c Client, indexPatternOverride string) (*MultiSearchRequest, error) {
 	msb := c.MultiSearch()
-	s := msb.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"}, "")
+	s := msb.Search(tsdb.Interval{Value: 15 * time.Second, Text: "15s"}, indexPatternOverride)
 	s.Agg().DateHistogram("2", "@timestamp", func(a *DateHistogramAgg, ab AggBuilder) {
 		a.Interval = "$__interval"
 
