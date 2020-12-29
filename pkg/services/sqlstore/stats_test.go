@@ -4,14 +4,14 @@ package sqlstore
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
-	"net"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -74,15 +74,9 @@ func TestStatsDataAccess(t *testing.T) {
 	})
 
 	t.Run("Get concurrent users stats should return a histogram", func(t *testing.T) {
-		tokenService := &auth.UserAuthTokenService{
-			SQLStore: sqlStore,
-			Cfg:      &setting.Cfg{},
-		}
-		ip := net.ParseIP("192.168.10.11")
-
 		for u := 1; u <= 5; u++ {
 			for tkn := 1; tkn <= u*4; tkn++ {
-				_, err := tokenService.CreateToken(context.Background(), int64(u), ip, "Mozilla")
+				err := createToken(u, sqlStore)
 				assert.NoError(t, err)
 			}
 		}
@@ -120,7 +114,7 @@ func TestStatsDataAccess(t *testing.T) {
 			err = GetConcurrentUsersStats(ctx, &query)
 			require.NoError(t, err)
 
-			_, err = tokenService.CreateToken(context.Background(), int64(1), ip, "Mozilla")
+			err = createToken(1, sqlStore)
 			assert.NoError(t, err)
 
 			expectedResult = []models.ConcurrentUsersStats{
@@ -173,12 +167,58 @@ func TestStatsDataAccess(t *testing.T) {
 			err = GetConcurrentUsersStats(ctx, &query)
 			require.NoError(t, err)
 
-			_, err = tokenService.CreateToken(context.Background(), int64(1), ip, "Mozilla")
+			err = createToken(1, sqlStore)
 			assert.NoError(t, err)
 
 			assert.ElementsMatch(t, query.Result, expectedCachedResult, "Expecting cached results, but received updated data")
 		})
 	})
+}
+
+func createToken(uId int, sqlStore *SQLStore) error {
+	token, err := util.RandomHex(16)
+	if err != nil {
+		return err
+	}
+	hashBytes := sha256.Sum256([]byte(token + "secret"))
+	hashedToken := hex.EncodeToString(hashBytes[:])
+
+	now := getTime().Unix()
+
+	userAuthToken := userAuthToken{
+		UserId:        int64(uId),
+		AuthToken:     hashedToken,
+		PrevAuthToken: hashedToken,
+		ClientIp:      "192.168.10.11",
+		UserAgent:     "Mozilla",
+		RotatedAt:     now,
+		CreatedAt:     now,
+		UpdatedAt:     now,
+		SeenAt:        0,
+		AuthTokenSeen: false,
+	}
+
+	err = sqlStore.WithDbSession(context.Background(), func(dbSession *DBSession) error {
+		_, err = dbSession.Insert(&userAuthToken)
+		return err
+	})
+
+	return nil
+}
+
+type userAuthToken struct {
+	Id            int64
+	UserId        int64
+	AuthToken     string
+	PrevAuthToken string
+	UserAgent     string
+	ClientIp      string
+	AuthTokenSeen bool
+	SeenAt        int64
+	RotatedAt     int64
+	CreatedAt     int64
+	UpdatedAt     int64
+	UnhashedToken string `xorm:"-"`
 }
 
 func populateDB(t *testing.T) {
