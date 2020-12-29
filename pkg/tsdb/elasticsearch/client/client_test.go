@@ -365,36 +365,18 @@ func TestClient(t *testing.T) {
 					So(res.Responses, ShouldHaveLength, 1)
 				})
 			})
-		})
-
-		httpClientScenario(t, "Given a fake http client and a v7.0 client with response", &models.DataSource{
-			Database: "[metrics-]YYYY.MM.DD",
-			JsonData: simplejson.NewFromAny(map[string]interface{}{
-				"esVersion":                  70,
-				"maxConcurrentShardRequests": 6,
-				"timeField":                  "@timestamp",
-				"interval":                   "Daily",
-			}),
-		}, func(sc *scenarioContext) {
-			sc.responseBody = `{
-				"responses": [
-					{
-						"hits": {	"hits": [], "max_score": 0,	"total": { "value": 4656, "relation": "eq"}	},
-						"status": 200
-					}
-				]
-			}`
 
 			Convey("When executing a multi search with indexPatternOverride", func() {
-				_, err := createMultisearchForTest(sc.client, "metrics-*")
+				ms, err := createMultisearchForTest(sc.client, "logs-*")
 				So(err, ShouldBeNil)
+				sc.client.ExecuteMultisearch(ms)
 
 				Convey("Should override the index", func() {
 					headerBytes, err := sc.requestBody.ReadBytes('\n')
 					So(err, ShouldBeNil)
 					jHeader, err := simplejson.NewJson(headerBytes)
 					So(err, ShouldBeNil)
-					So(jHeader.Get("index").MustString(), ShouldEqual, "metrics-*")
+					So(jHeader.Get("index").MustString(), ShouldEqual, "logs-*")
 				})
 			})
 		})
