@@ -66,6 +66,24 @@ var sqlStoreTestCases = []sqlStoreTest{
 		dbHost:        "[::1]",
 		connStrValues: []string{"host=::1", "port=5432"},
 	},
+	{
+		name:          "Postgres Unix Socket Escape Colon",
+		dbType:        "postgres",
+		dbHost:        "/IAmAPath/WhoWorksDuringNewYear/wierd\\:path:1234",
+		connStrValues: []string{"host=/IAmAPath/WhoWorksDuringNewYear/wierd:path", "port=1234"},
+	},
+	{
+		name:          "Postgres Unix Socket (Default Port)",
+		dbType:        "postgres",
+		dbHost:        "/IAmAPath/WhoWorksDuringNewYear/wierd:path",
+		connStrValues: []string{"host=/IAmAPath/WhoWorksDuringNewYear/wierd:path", "port=5432"},
+	},
+	{
+		name:          "Postgres Unix Socket Without Escape Colon",
+		dbType:        "postgres",
+		dbHost:        "/IAmAPath/WhoWorksDuringNewYear/wierd:path:1234",
+		connStrValues: []string{"host=/IAmAPath/WhoWorksDuringNewYear/wierd:path", "port=1234"},
+	},
 }
 
 func TestSQLConnectionString(t *testing.T) {

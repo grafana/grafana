@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -222,10 +223,17 @@ func (ss *SQLStore) buildConnectionString() (string, error) {
 		var host string
 		var port string
 		if strings.HasPrefix(ss.dbCfg.Host, "/") {
-			// Unix socket
-			host = ss.dbCfg.Host
-			// Default Postgres port
-			port = "5432"
+			re := regexp.MustCompile(`(?P<url>^.*[^\\]):(?P<port>\d{4})$`)
+			match := re.FindStringSubmatch(ss.dbCfg.Host)
+			if match == nil {
+				// Unix socket
+				host = ss.dbCfg.Host
+				// Default Postgres port
+				port = "5432"
+			} else {
+				host = strings.Replace(match[re.SubexpIndex("url")], "\\:", ":", -1)
+				port = match[re.SubexpIndex("port")]
+			}
 		} else {
 			addr, err := util.SplitHostPortDefault(ss.dbCfg.Host, "127.0.0.1", "5432")
 			if err != nil {
