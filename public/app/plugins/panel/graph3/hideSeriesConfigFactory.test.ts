@@ -41,6 +41,49 @@ describe('hideSeriesConfigFactory', () => {
     });
   });
 
+  it('should create config override matching one series if selected with others', () => {
+    const event: GraphNGLegendEvent = {
+      mode: GraphNGLegendEventMode.ToggleSelection,
+      fieldIndex: {
+        frameIndex: 0,
+        fieldIndex: 1,
+      },
+    };
+
+    const existingConfig: FieldConfigSource = {
+      defaults: {},
+      overrides: [createOverride(['temperature', 'humidity'])],
+    };
+
+    const data: DataFrame[] = [
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'temperature', type: FieldType.number, values: [1, 3, 5, 7] },
+        ],
+      }),
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'humidity', type: FieldType.number, values: [1, 3, 5, 7] },
+        ],
+      }),
+      toDataFrame({
+        fields: [
+          { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'pressure', type: FieldType.number, values: [1, 3, 5, 7] },
+        ],
+      }),
+    ];
+
+    const config = hideSeriesConfigFactory(event, existingConfig, data);
+
+    expect(config).toEqual({
+      defaults: {},
+      overrides: [createOverride(['temperature'])],
+    });
+  });
+
   it('should create config override that append series to existing override', () => {
     const event: GraphNGLegendEvent = {
       mode: GraphNGLegendEventMode.AppendToSelection,

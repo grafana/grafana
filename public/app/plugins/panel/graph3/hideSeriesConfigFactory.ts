@@ -62,7 +62,7 @@ export const hideSeriesConfigFactory = (
   if (mode === GraphNGLegendEventMode.ToggleSelection) {
     const existing = getExistingDisplayNames(current);
 
-    if (existing.find(name => name === displayName)) {
+    if (existing[0] === displayName && existing.length === 1) {
       return {
         ...fieldConfig,
         overrides: overridesCopy,
