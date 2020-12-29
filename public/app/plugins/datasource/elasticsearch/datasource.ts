@@ -706,8 +706,8 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const parsedQuery = JSON.parse(query);
     if (query) {
       if (parsedQuery.find === 'fields') {
-        parsedQuery.field = this.templateSrv.replace(parsedQuery.field, {}, 'lucene');
-        return this.getFields(parsedQuery, range);
+        parsedQuery.type = this.templateSrv.replace(parsedQuery.type, {}, 'lucene');
+        return this.getFields(parsedQuery.type, range);
       }
 
       if (parsedQuery.find === 'terms') {
