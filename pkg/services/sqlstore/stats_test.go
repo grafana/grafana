@@ -87,11 +87,11 @@ func TestStatsDataAccess(t *testing.T) {
 		})
 
 		t.Run("Should refresh stats when forced", func(t *testing.T) {
-			query := models.GetConcurrentUsersStatsQuery{MustRefresh: true}
+			query := models.GetConcurrentUsersStatsQuery{}
 			err := GetConcurrentUsersStats(ctx, &query)
 			require.NoError(t, err)
 
-			expectedResult := []models.ConcurrentUsersStats{
+			expectedResult := []*models.ConcurrentUsersStats{
 				{
 					BucketActiveTokens: 5,
 					Count:              1,
@@ -111,13 +111,14 @@ func TestStatsDataAccess(t *testing.T) {
 			}
 			assert.ElementsMatch(t, query.Result, expectedResult, "Expecting concurrent users buckets and counts to match")
 
+			err = createToken(6, sqlStore)
+			assert.NoError(t, err)
+
+			query = models.GetConcurrentUsersStatsQuery{MustRefresh: true}
 			err = GetConcurrentUsersStats(ctx, &query)
 			require.NoError(t, err)
 
-			err = createToken(1, sqlStore)
-			assert.NoError(t, err)
-
-			expectedResult = []models.ConcurrentUsersStats{
+			expectedResult = []*models.ConcurrentUsersStats{
 				{
 					BucketActiveTokens: 5,
 					Count:              2,
@@ -144,10 +145,10 @@ func TestStatsDataAccess(t *testing.T) {
 			err := GetConcurrentUsersStats(ctx, &query)
 			require.NoError(t, err)
 
-			expectedCachedResult := []models.ConcurrentUsersStats{
+			expectedCachedResult := []*models.ConcurrentUsersStats{
 				{
 					BucketActiveTokens: 5,
-					Count:              1,
+					Count:              2,
 				},
 				{
 					BucketActiveTokens: 10,
@@ -164,11 +165,12 @@ func TestStatsDataAccess(t *testing.T) {
 			}
 			assert.ElementsMatch(t, query.Result, expectedCachedResult, "Expecting concurrent users buckets and counts to match")
 
+			err = createToken(7, sqlStore)
+			assert.NoError(t, err)
+
+			query = models.GetConcurrentUsersStatsQuery{}
 			err = GetConcurrentUsersStats(ctx, &query)
 			require.NoError(t, err)
-
-			err = createToken(1, sqlStore)
-			assert.NoError(t, err)
 
 			assert.ElementsMatch(t, query.Result, expectedCachedResult, "Expecting cached results, but received updated data")
 		})
@@ -180,7 +182,8 @@ func createToken(uId int, sqlStore *SQLStore) error {
 	if err != nil {
 		return err
 	}
-	hashBytes := sha256.Sum256([]byte(token + "secret"))
+	tokenWithSecret := fmt.Sprintf("%ssecret%d", token, uId)
+	hashBytes := sha256.Sum256([]byte(tokenWithSecret))
 	hashedToken := hex.EncodeToString(hashBytes[:])
 
 	now := getTime().Unix()
