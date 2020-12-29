@@ -17,6 +17,7 @@ func init() {
 	bus.AddHandlerCtx("sql", GetUserStats)
 	bus.AddHandlerCtx("sql", GetAlertNotifiersUsageStats)
 	bus.AddHandlerCtx("sql", GetSystemUserCountStats)
+	bus.AddHandlerCtx("sql", GetConcurrentUsersStats)
 }
 
 const activeUserTimeLimit = time.Hour * 24 * 30
@@ -183,6 +184,57 @@ func GetSystemUserCountStats(ctx context.Context, query *models.GetSystemUserCou
 
 		return nil
 	})
+}
+
+type memoConcurrentUserStats struct {
+	stats []*models.ConcurrentUsersStats
+
+	memoized time.Time
+}
+
+var (
+	concurrentUserStatsCache         = memoConcurrentUserStats{}
+	concurrentUserStatsCacheLifetime = time.Hour
+)
+
+func GetConcurrentUsersStats(ctx context.Context, query *models.GetConcurrentUsersStatsQuery) error {
+	err := updateConcurrentUsersStatsIfNecessary(ctx, query.MustRefresh)
+	if err != nil {
+		return err
+	}
+	query.Result = concurrentUserStatsCache.stats
+	return nil
+}
+
+func updateConcurrentUsersStatsIfNecessary(ctx context.Context, refresh bool) error {
+	memoizationPeriod := time.Now().Add(-concurrentUserStatsCacheLifetime)
+	if refresh || concurrentUserStatsCache.memoized.Before(memoizationPeriod) {
+		err := updateConcurrentUsersStats(ctx)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func updateConcurrentUsersStats(ctx context.Context) error {
+	/*
+		Retrieves concurrent users stats as a histogram. For buckets, it rounds each token count data point up to the nearest multiple of 5
+		and then groups by that rounded value. If there is no data in a specific bucket, that row will not appear in the results.
+	*/
+	var rawSql = `
+SELECT ceil(tokens/5.00)*5	AS bucket_active_tokens,
+       count(*)             AS count
+FROM   (select count(1) as tokens, user_id from` + dialect.Quote("user_auth_token") + ` group by user_id) uat
+GROUP  BY bucket_active_tokens;`
+	concurrentUserStatsCache.stats = make([]*models.ConcurrentUsersStats, 0)
+	err := x.Context(ctx).SQL(rawSql).Find(&concurrentUserStatsCache.stats)
+	if err != nil {
+		return err
+	}
+	concurrentUserStatsCache.memoized = time.Now()
+	return err
 }
 
 func GetUserStats(ctx context.Context, query *models.GetUserStatsQuery) error {

@@ -159,6 +159,31 @@ func TestMetrics(t *testing.T) {
 			return nil
 		})
 
+		var getConcurrentUsersStatsQuery *models.GetConcurrentUsersStatsQuery
+		uss.Bus.AddHandler(func(query *models.GetConcurrentUsersStatsQuery) error {
+			query.Result = []*models.ConcurrentUsersStats{
+				{
+					BucketActiveTokens: 5,
+					Count:              10,
+				},
+				{
+					BucketActiveTokens: 10,
+					Count:              11,
+				},
+				{
+					BucketActiveTokens: 15,
+					Count:              12,
+				},
+				{
+					BucketActiveTokens: 20,
+					Count:              13,
+				},
+			}
+
+			getConcurrentUsersStatsQuery = query
+			return nil
+		})
+
 		uss.AlertingUsageStats = &alertingUsageMock{}
 
 		var wg sync.WaitGroup
@@ -224,6 +249,7 @@ func TestMetrics(t *testing.T) {
 				assert.NotNil(t, getDataSourceStatsQuery)
 				assert.NotNil(t, getDataSourceAccessStatsQuery)
 				assert.NotNil(t, getAlertNotifierUsageStatsQuery)
+				assert.NotNil(t, getConcurrentUsersStatsQuery)
 				assert.NotNil(t, req)
 
 				assert.Equal(t, http.MethodPost, req.Method)
@@ -291,6 +317,11 @@ func TestMetrics(t *testing.T) {
 				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.oauth_grafana_com.count").MustInt())
 
 				assert.Equal(t, 1, metrics.Get("stats.packaging.deb.count").MustInt())
+
+				assert.Equal(t, 10, metrics.Get("stats.auth_token_per_user_le_5").MustInt())
+				assert.Equal(t, 11, metrics.Get("stats.auth_token_per_user_le_10").MustInt())
+				assert.Equal(t, 12, metrics.Get("stats.auth_token_per_user_le_15").MustInt())
+				assert.Equal(t, 13, metrics.Get("stats.auth_token_per_user_le_20").MustInt())
 			})
 		})
 	})
@@ -419,7 +450,51 @@ func TestMetrics(t *testing.T) {
 			return nil
 		})
 
+		t.Run("Should include metrics for concurrent users", func(t *testing.T) {
+			uss.Bus.AddHandler(func(query *models.GetConcurrentUsersStatsQuery) error {
+				query.Result = []*models.ConcurrentUsersStats{
+					{
+						BucketActiveTokens: 5,
+						Count:              10,
+					},
+					{
+						BucketActiveTokens: 10,
+						Count:              11,
+					},
+					{
+						BucketActiveTokens: 15,
+						Count:              12,
+					},
+					{
+						BucketActiveTokens: 20,
+						Count:              13,
+					},
+				}
+				return nil
+			})
+			report, err := uss.GetUsageReport()
+			assert.NoError(t, err)
+
+			assert.Equal(t, int32(10), report.Metrics["stats.auth_token_per_user_le_5"])
+			assert.Equal(t, int32(11), report.Metrics["stats.auth_token_per_user_le_10"])
+			assert.Equal(t, int32(12), report.Metrics["stats.auth_token_per_user_le_15"])
+			assert.Equal(t, int32(13), report.Metrics["stats.auth_token_per_user_le_20"])
+
+			t.Run("Fails when returns error", func(t *testing.T) {
+				uss.Bus.AddHandler(func(query *models.GetConcurrentUsersStatsQuery) error {
+					return errors.New("unexpected error")
+				})
+
+				_, err := uss.GetUsageReport()
+				assert.Error(t, err)
+			})
+		})
+
 		t.Run("Should include external metrics", func(t *testing.T) {
+			uss.Bus.AddHandler(func(query *models.GetConcurrentUsersStatsQuery) error {
+				query.Result = []*models.ConcurrentUsersStats{}
+				return nil
+			})
 			uss.RegisterMetric(metricName, func() (interface{}, error) {
 				return 1, nil
 			})

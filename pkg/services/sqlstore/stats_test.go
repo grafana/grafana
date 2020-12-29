@@ -5,15 +5,19 @@ package sqlstore
 import (
 	"context"
 	"fmt"
+	"net"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestStatsDataAccess(t *testing.T) {
-	InitTestDB(t)
+	sqlStore := InitTestDB(t)
 	populateDB(t)
 
 	t.Run("Get system stats should not results in error", func(t *testing.T) {
@@ -67,6 +71,113 @@ func TestStatsDataAccess(t *testing.T) {
 		assert.Equal(t, int64(1), query.Result.Admins)
 		assert.Equal(t, int64(0), query.Result.Editors)
 		assert.Equal(t, int64(0), query.Result.Viewers)
+	})
+
+	t.Run("Get concurrent users stats should return a histogram", func(t *testing.T) {
+		tokenService := &auth.UserAuthTokenService{
+			SQLStore: sqlStore,
+			Cfg:      &setting.Cfg{},
+		}
+		ip := net.ParseIP("192.168.10.11")
+
+		for u := 1; u <= 5; u++ {
+			for tkn := 1; tkn <= u*4; tkn++ {
+				_, err := tokenService.CreateToken(context.Background(), int64(u), ip, "Mozilla")
+				assert.NoError(t, err)
+			}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		t.Cleanup(func() {
+			cancel()
+		})
+
+		t.Run("Should refresh stats when forced", func(t *testing.T) {
+			query := models.GetConcurrentUsersStatsQuery{MustRefresh: true}
+			err := GetConcurrentUsersStats(ctx, &query)
+			require.NoError(t, err)
+
+			expectedResult := []models.ConcurrentUsersStats{
+				{
+					BucketActiveTokens: 5,
+					Count:              1,
+				},
+				{
+					BucketActiveTokens: 10,
+					Count:              1,
+				},
+				{
+					BucketActiveTokens: 15,
+					Count:              1,
+				},
+				{
+					BucketActiveTokens: 20,
+					Count:              2,
+				},
+			}
+			assert.ElementsMatch(t, query.Result, expectedResult, "Expecting concurrent users buckets and counts to match")
+
+			err = GetConcurrentUsersStats(ctx, &query)
+			require.NoError(t, err)
+
+			_, err = tokenService.CreateToken(context.Background(), int64(1), ip, "Mozilla")
+			assert.NoError(t, err)
+
+			expectedResult = []models.ConcurrentUsersStats{
+				{
+					BucketActiveTokens: 5,
+					Count:              2,
+				},
+				{
+					BucketActiveTokens: 10,
+					Count:              1,
+				},
+				{
+					BucketActiveTokens: 15,
+					Count:              1,
+				},
+				{
+					BucketActiveTokens: 20,
+					Count:              2,
+				},
+			}
+
+			assert.ElementsMatch(t, query.Result, expectedResult, "Expecting updated data, but received cached results")
+		})
+
+		t.Run("Should cache results", func(t *testing.T) {
+			query := models.GetConcurrentUsersStatsQuery{}
+			err := GetConcurrentUsersStats(ctx, &query)
+			require.NoError(t, err)
+
+			expectedCachedResult := []models.ConcurrentUsersStats{
+				{
+					BucketActiveTokens: 5,
+					Count:              1,
+				},
+				{
+					BucketActiveTokens: 10,
+					Count:              1,
+				},
+				{
+					BucketActiveTokens: 15,
+					Count:              1,
+				},
+				{
+					BucketActiveTokens: 20,
+					Count:              2,
+				},
+			}
+			assert.ElementsMatch(t, query.Result, expectedCachedResult, "Expecting concurrent users buckets and counts to match")
+
+			err = GetConcurrentUsersStats(ctx, &query)
+			require.NoError(t, err)
+
+			_, err = tokenService.CreateToken(context.Background(), int64(1), ip, "Mozilla")
+			assert.NoError(t, err)
+
+			assert.ElementsMatch(t, query.Result, expectedCachedResult, "Expecting cached results, but received updated data")
+		})
 	})
 }
 

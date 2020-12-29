@@ -185,6 +185,19 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 		metrics["stats.auth_enabled."+authType+".count"] = enabledValue
 	}
 
+	// Get concurrent users count as histogram
+	concurrentUsersStats := models.GetConcurrentUsersStatsQuery{}
+	if err := uss.Bus.Dispatch(&concurrentUsersStats); err != nil {
+		metricsLogger.Error("Failed to get concurrent users stats", "error", err)
+		return report, err
+	}
+
+	// Mimicking histogram metric, where the metric name is: stats.auth_token_per_user_le_"<upper inclusive bound>"
+	for _, stats := range concurrentUsersStats.Result {
+		metricName := fmt.Sprintf("stats.auth_token_per_user_le_%d", stats.BucketActiveTokens)
+		metrics[metricName] = stats.Count
+	}
+
 	return report, nil
 }
 

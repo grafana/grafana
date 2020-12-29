@@ -104,3 +104,13 @@ type GetUserStatsQuery struct {
 	Active     bool
 	Result     UserStats
 }
+
+type ConcurrentUsersStats struct {
+	BucketActiveTokens int16
+	Count              int32
+}
+
+type GetConcurrentUsersStatsQuery struct {
+	MustRefresh bool
+	Result      []*ConcurrentUsersStats
+}
