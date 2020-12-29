@@ -35,8 +35,6 @@ export function buildParams(
 
   if (panel && !params.editPanel) {
     params.viewPanel = panel.id;
-  } else {
-    delete params.viewPanel;
   }
 
   return params;
