@@ -369,7 +369,8 @@ func TestClient(t *testing.T) {
 			Convey("When executing a multi search with indexPatternOverride", func() {
 				ms, err := createMultisearchForTest(sc.client, "logs-*")
 				So(err, ShouldBeNil)
-				sc.client.ExecuteMultisearch(ms)
+				res, err := sc.client.ExecuteMultisearch(ms)
+				So(err, ShouldBeNil)
 
 				Convey("Should override the index", func() {
 					headerBytes, err := sc.requestBody.ReadBytes('\n')
@@ -378,6 +379,12 @@ func TestClient(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(jHeader.Get("index").MustString(), ShouldEqual, "logs-*")
 				})
+
+				Convey("Should parse response", func() {
+					So(res.Status, ShouldEqual, 200)
+					So(res.Responses, ShouldHaveLength, 1)
+				})
+
 			})
 		})
 	})
