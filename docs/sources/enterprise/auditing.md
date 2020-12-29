@@ -157,7 +157,7 @@ Audit logs are sent to a [Loki](/oss/loki/) service, through HTTP or gRPC.
 [auditing.logs.loki]
 # Set the communication protocol to use with Loki (can be grpc or http)
 type = grpc
-# Set the URL for writing logs to Loki (format must be host:port)
+# Set the address for writing logs to Loki (format must be host:port)
 url = localhost:9095
 # Defaults to true. If true, it establishes a secure connection to Loki
 tls = true
