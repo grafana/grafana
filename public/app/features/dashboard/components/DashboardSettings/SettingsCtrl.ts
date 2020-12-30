@@ -1,181 +1,30 @@
 import _ from 'lodash';
-import angular, { ILocationService, IScope } from 'angular';
+import { ILocationService, IScope } from 'angular';
 import { selectors } from '@grafana/e2e-selectors';
 
-import { appEvents, contextSrv, coreModule } from 'app/core/core';
+import { appEvents, coreModule } from 'app/core/core';
 import { DashboardModel } from '../../state/DashboardModel';
-import { DashboardSrv } from '../../services/DashboardSrv';
 import { CoreEvents } from 'app/types';
-import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { AppEvents, locationUtil, TimeZone, urlUtil } from '@grafana/data';
+import { AppEvents, TimeZone } from '@grafana/data';
 import { promiseToDigest } from '../../../../core/utils/promiseToDigest';
 import { deleteDashboard } from 'app/features/manage-dashboards/state/actions';
 
 export class SettingsCtrl {
   dashboard: DashboardModel;
-  isOpen: boolean;
-  viewId: string;
-  json: string;
-  alertCount: number;
   canSaveAs: boolean;
   canSave?: boolean;
   canDelete?: boolean;
-  sections: any[];
-  hasUnsavedFolderChange: boolean;
   selectors: typeof selectors.pages.Dashboard.Settings.General;
   renderCount: number; // hack to update React when Angular changes
 
   /** @ngInject */
-  constructor(
-    private $scope: IScope & Record<string, any>,
-    private $route: any,
-    private $location: ILocationService,
-    private $rootScope: GrafanaRootScope,
-    private dashboardSrv: DashboardSrv
-  ) {
+  constructor(private $scope: IScope & Record<string, any>, private $location: ILocationService) {
     // temp hack for annotations and variables editors
     // that rely on inherited scope
     $scope.dashboard = this.dashboard;
-
-    this.$scope.$on('$destroy', () => {
-      this.dashboard.updateSubmenuVisibility();
-
-      setTimeout(() => {
-        this.dashboard.startRefresh();
-      });
-    });
-
-    this.canSaveAs = contextSrv.hasEditPermissionInFolders;
-    this.canSave = this.dashboard.meta.canSave;
     this.canDelete = this.dashboard.meta.canSave;
-
-    this.buildSectionList();
-    this.onRouteUpdated();
-
-    this.$rootScope.onAppEvent(CoreEvents.routeUpdated, this.onRouteUpdated.bind(this), $scope);
-
-    appEvents.on(CoreEvents.dashboardSaved, this.onPostSave.bind(this), $scope);
-
     this.selectors = selectors.pages.Dashboard.Settings.General;
     this.renderCount = 0;
-  }
-
-  buildSectionList() {
-    this.sections = [];
-
-    if (this.dashboard.meta.canEdit) {
-      this.sections.push({
-        title: 'General',
-        id: 'settings',
-        icon: 'sliders-v-alt',
-      });
-      this.sections.push({
-        title: 'Annotations',
-        id: 'annotations',
-        icon: 'comment-alt',
-      });
-      this.sections.push({
-        title: 'Variables',
-        id: 'templating',
-        icon: 'calculator-alt',
-      });
-      this.sections.push({
-        title: 'Links',
-        id: 'links',
-        icon: 'link',
-      });
-    }
-
-    if (this.dashboard.id && this.dashboard.meta.canSave) {
-      this.sections.push({
-        title: 'Versions',
-        id: 'versions',
-        icon: 'history',
-      });
-    }
-
-    if (this.dashboard.id && this.dashboard.meta.canAdmin) {
-      this.sections.push({
-        title: 'Permissions',
-        id: 'permissions',
-        icon: 'lock',
-      });
-    }
-
-    if (this.dashboard.meta.canMakeEditable) {
-      this.sections.push({
-        title: 'General',
-        icon: 'sliders-v-alt',
-        id: 'make_editable',
-      });
-    }
-
-    this.sections.push({
-      title: 'JSON Model',
-      id: 'dashboard_json',
-      icon: 'arrow',
-    });
-
-    const params = this.$location.search();
-    const url = this.$location.path();
-
-    for (const section of this.sections) {
-      section.url = locationUtil.assureBaseUrl(urlUtil.renderUrl(url, { ...params, editview: section.id }));
-    }
-  }
-
-  onRouteUpdated() {
-    this.viewId = this.$location.search().editview;
-
-    if (this.viewId) {
-      this.json = angular.toJson(this.dashboard.getSaveModelClone(), true);
-    }
-
-    if (this.viewId === 'settings' && this.dashboard.meta.canMakeEditable) {
-      this.viewId = 'make_editable';
-    }
-
-    const currentSection: any = _.find(this.sections, { id: this.viewId } as any);
-    if (!currentSection) {
-      this.sections.unshift({
-        title: 'Not found',
-        id: '404',
-        icon: 'exclamation-triangle',
-      });
-      this.viewId = '404';
-    }
-  }
-  saveDashboardJson() {
-    this.dashboardSrv.saveJSONDashboard(this.json).then(() => {
-      this.$route.reload();
-    });
-  }
-
-  onPostSave() {
-    this.hasUnsavedFolderChange = false;
-  }
-
-  hideSettings() {
-    const urlParams = this.$location.search();
-    delete urlParams.editview;
-    setTimeout(() => {
-      this.$rootScope.$apply(() => {
-        this.$location.search(urlParams);
-      });
-    });
-  }
-
-  makeEditable() {
-    this.dashboard.editable = true;
-    this.dashboard.meta.canMakeEditable = false;
-    this.dashboard.meta.canEdit = true;
-    this.dashboard.meta.canSave = true;
-    this.canDelete = true;
-    this.viewId = 'settings';
-    this.buildSectionList();
-
-    const currentSection: any = _.find(this.sections, { id: this.viewId } as any);
-    this.$location.url(locationUtil.stripBaseFromUrl(currentSection.url));
   }
 
   deleteDashboard() {
@@ -237,19 +86,7 @@ export class SettingsCtrl {
   onFolderChange = (folder: { id: number; title: string }) => {
     this.dashboard.meta.folderId = folder.id;
     this.dashboard.meta.folderTitle = folder.title;
-    this.hasUnsavedFolderChange = true;
-  };
-
-  getFolder() {
-    return {
-      id: this.dashboard.meta.folderId,
-      title: this.dashboard.meta.folderTitle,
-      url: this.dashboard.meta.folderUrl,
-    };
-  }
-
-  getDashboard = () => {
-    return this.dashboard;
+    this.dashboard.meta.hasUnsavedFolderChange = true;
   };
 
   onRefreshIntervalChange = (intervals: string[]) => {

@@ -203,6 +203,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               row={row}
               showDetectedFields={showDetectedFields!}
               getFieldLinks={getFieldLinks}
+              wrapLogMessage={wrapLogMessage}
             />
           ) : (
             <LogRowMessage
@@ -233,6 +234,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             onClickHideDetectedField={onClickHideDetectedField}
             getRows={getRows}
             row={row}
+            wrapLogMessage={wrapLogMessage}
             hasError={hasError}
             showDetectedFields={showDetectedFields}
           />

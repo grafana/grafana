@@ -16,14 +16,12 @@ import (
 )
 
 func TestRecoveryMiddleware(t *testing.T) {
-	setting.ErrTemplateName = "error-template"
-
 	t.Run("Given an API route that panics", func(t *testing.T) {
 		apiURL := "/api/whatever"
-		recoveryScenario(t, "recovery middleware should return json", apiURL, func(t *testing.T, sc *scenarioContext) {
+		recoveryScenario(t, "recovery middleware should return JSON", apiURL, func(t *testing.T, sc *scenarioContext) {
 			sc.handlerFunc = panicHandler
 			sc.fakeReq("GET", apiURL).exec()
-			sc.req.Header.Add("content-type", "application/json")
+			sc.req.Header.Set("content-type", "application/json")
 
 			assert.Equal(t, 500, sc.resp.Code)
 			assert.Equal(t, "Internal Server Error - Check the Grafana server logs for the detailed error message.", sc.respJson["message"])
@@ -39,7 +37,7 @@ func TestRecoveryMiddleware(t *testing.T) {
 
 			assert.Equal(t, 500, sc.resp.Code)
 			assert.Equal(t, "text/html; charset=UTF-8", sc.resp.Header().Get("content-type"))
-			assert.True(t, strings.Contains(sc.resp.Body.String(), "<title>Grafana - Error</title>"))
+			assert.Contains(t, sc.resp.Body.String(), "<title>Grafana - Error</title>")
 		})
 	})
 }
@@ -52,18 +50,21 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 	t.Run(desc, func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
+		cfg := setting.NewCfg()
+		cfg.ErrTemplateName = "error-template"
 		sc := &scenarioContext{
 			t:   t,
 			url: url,
+			cfg: cfg,
 		}
 
 		viewsPath, err := filepath.Abs("../../public/views")
 		require.NoError(t, err)
 
 		sc.m = macaron.New()
-		sc.m.Use(Recovery())
+		sc.m.Use(Recovery(cfg))
 
-		sc.m.Use(AddDefaultResponseHeaders())
+		sc.m.Use(AddDefaultResponseHeaders(cfg))
 		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
 			Directory: viewsPath,
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
@@ -72,9 +73,10 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		sc.userAuthTokenService = auth.NewFakeUserAuthTokenService()
 		sc.remoteCacheService = remotecache.NewFakeStore(t)
 
-		sc.m.Use(GetContextHandler(sc.userAuthTokenService, sc.remoteCacheService, nil))
+		contextHandler := getContextHandler(t, nil)
+		sc.m.Use(contextHandler.Middleware)
 		// mock out gc goroutine
-		sc.m.Use(OrgRedirect())
+		sc.m.Use(OrgRedirect(cfg))
 
 		sc.defaultHandler = func(c *models.ReqContext) {
 			sc.context = c

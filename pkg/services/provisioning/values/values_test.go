@@ -19,10 +19,14 @@ import (
 
 func TestValues(t *testing.T) {
 	Convey("Values", t, func() {
-		os.Setenv("INT", "1")
-		os.Setenv("STRING", "test")
-		os.Setenv("EMPTYSTRING", "")
-		os.Setenv("BOOL", "true")
+		err := os.Setenv("INT", "1")
+		So(err, ShouldBeNil)
+		err = os.Setenv("STRING", "test")
+		So(err, ShouldBeNil)
+		err = os.Setenv("EMPTYSTRING", "")
+		So(err, ShouldBeNil)
+		err = os.Setenv("BOOL", "true")
+		So(err, ShouldBeNil)
 
 		Convey("IntValue", func() {
 			type Data struct {
@@ -240,10 +244,14 @@ func TestValues(t *testing.T) {
 		})
 
 		Reset(func() {
-			os.Unsetenv("INT")
-			os.Unsetenv("STRING")
-			os.Unsetenv("EMPTYSTRING")
-			os.Unsetenv("BOOL")
+			err := os.Unsetenv("INT")
+			So(err, ShouldBeNil)
+			err = os.Unsetenv("STRING")
+			So(err, ShouldBeNil)
+			err = os.Unsetenv("EMPTYSTRING")
+			So(err, ShouldBeNil)
+			err = os.Unsetenv("BOOL")
+			So(err, ShouldBeNil)
 		})
 	})
 }

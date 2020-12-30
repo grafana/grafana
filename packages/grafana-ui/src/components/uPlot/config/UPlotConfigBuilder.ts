@@ -4,6 +4,7 @@ import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '../config';
 import { Cursor } from 'uplot';
+import { defaultsDeep } from 'lodash';
 
 export class UPlotConfigBuilder {
   private series: UPlotSeriesBuilder[] = [];
@@ -68,9 +69,29 @@ export class UPlotConfigBuilder {
     config.scales = this.scales.reduce((acc, s) => {
       return { ...acc, ...s.getConfig() };
     }, {});
-    if (this.cursor) {
-      config.cursor = this.cursor;
-    }
+
+    config.cursor = this.cursor || {};
+
+    const cursorDefaults: Cursor = {
+      // prevent client-side zoom from triggering at the end of a selection
+      drag: { setScale: false },
+      points: {
+        /*@ts-ignore*/
+        size: (u, seriesIdx) => u.series[seriesIdx].points.size * 2,
+        /*@ts-ignore*/
+        width: (u, seriesIdx, size) => size / 4,
+        /*@ts-ignore*/
+        stroke: (u, seriesIdx) => u.series[seriesIdx].points.stroke(u, seriesIdx) + '80',
+        /*@ts-ignore*/
+        fill: (u, seriesIdx) => u.series[seriesIdx].points.stroke(u, seriesIdx),
+      },
+      focus: {
+        prox: 30,
+      },
+    };
+
+    defaultsDeep(config.cursor, cursorDefaults);
+
     return config;
   }
 }
