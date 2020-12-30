@@ -481,12 +481,13 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, int32(13), report.Metrics["stats.auth_token_per_user_le_20"])
 
 			t.Run("Fails when returns error", func(t *testing.T) {
+				expectedErr := errors.New("unexpected error")
 				uss.Bus.AddHandler(func(query *models.GetConcurrentUsersStatsQuery) error {
-					return errors.New("unexpected error")
+					return expectedErr
 				})
 
 				_, err := uss.GetUsageReport()
-				assert.Error(t, err)
+				assert.True(t, errors.Is(err, expectedErr))
 			})
 		})
 
