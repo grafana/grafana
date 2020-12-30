@@ -185,18 +185,20 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 		metrics["stats.auth_enabled."+authType+".count"] = enabledValue
 	}
 
-	// Get concurrent users count as histogram
+	// Get concurrent users stats as histogram
 	concurrentUsersStats := models.GetConcurrentUsersStatsQuery{}
 	if err := uss.Bus.Dispatch(&concurrentUsersStats); err != nil {
 		metricsLogger.Error("Failed to get concurrent users stats", "error", err)
 		return report, err
 	}
 
-	// Mimicking histogram metric, where the metric name is: stats.auth_token_per_user_le_"<upper inclusive bound>"
-	for _, stats := range concurrentUsersStats.Result {
-		metricName := fmt.Sprintf("stats.auth_token_per_user_le_%d", stats.BucketActiveTokens)
-		metrics[metricName] = stats.Count
-	}
+	// Histogram is cumulative and metric name has a postfix of le_"<upper inclusive bound>"
+	metrics["stats.auth_token_per_user_le_3"] = concurrentUsersStats.Result.BucketLe3
+	metrics["stats.auth_token_per_user_le_6"] = concurrentUsersStats.Result.BucketLe6
+	metrics["stats.auth_token_per_user_le_9"] = concurrentUsersStats.Result.BucketLe9
+	metrics["stats.auth_token_per_user_le_12"] = concurrentUsersStats.Result.BucketLe12
+	metrics["stats.auth_token_per_user_le_15"] = concurrentUsersStats.Result.BucketLe15
+	metrics["stats.auth_token_per_user_le_inf"] = concurrentUsersStats.Result.BucketLeInf
 
 	return report, nil
 }

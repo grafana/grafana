@@ -187,7 +187,7 @@ func GetSystemUserCountStats(ctx context.Context, query *models.GetSystemUserCou
 }
 
 type memoConcurrentUserStats struct {
-	stats []*models.ConcurrentUsersStats
+	stats *models.ConcurrentUsersStats
 
 	memoized time.Time
 }
@@ -219,18 +219,18 @@ func updateConcurrentUsersStatsIfNecessary(ctx context.Context, refresh bool) er
 }
 
 func updateConcurrentUsersStats(ctx context.Context) error {
-	/*
-		Retrieves concurrent users stats as a histogram. For buckets, it rounds each token count data point up to the nearest multiple of 5
-		and then groups by that rounded value. If there is no data in a specific bucket, that row will not appear in the results.
-		Note that because ceil() is not a built-in function SQLite, rounding is used instead, which is sufficient approximation for this use case.
-	*/
+	// Retrieves concurrent users stats as a histogram. Buckets are accumulative and upper bound is inclusive.
 	var rawSql = `
-SELECT round(tokens/5.00 + 0.49999)*5	AS bucket_active_tokens,
-       count(*)             AS count
-FROM   (select count(1) as tokens, user_id from` + dialect.Quote("user_auth_token") + ` group by user_id) uat
-GROUP  BY bucket_active_tokens;`
-	concurrentUserStatsCache.stats = make([]*models.ConcurrentUsersStats, 0)
-	err := x.Context(ctx).SQL(rawSql).Find(&concurrentUserStatsCache.stats)
+SELECT
+    COUNT(CASE WHEN tokens <= 3 THEN 1 END) AS bucket_le3,
+    COUNT(CASE WHEN tokens <= 6 THEN 1 END) AS bucket_le6,
+    COUNT(CASE WHEN tokens <= 9 THEN 1 END) AS bucket_le9,
+    COUNT(CASE WHEN tokens <= 12 THEN 1 END) AS bucket_le12,
+    COUNT(CASE WHEN tokens <= 15 THEN 1 END) AS bucket_le15,
+    COUNT(1) AS bucket_le_inf
+FROM (select count(1) as tokens from user_auth_token group by user_id) uat;`
+	concurrentUserStatsCache.stats = &models.ConcurrentUsersStats{}
+	_, err := x.Context(ctx).SQL(rawSql).Get(concurrentUserStatsCache.stats)
 	if err != nil {
 		return err
 	}

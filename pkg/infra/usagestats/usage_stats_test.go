@@ -161,23 +161,13 @@ func TestMetrics(t *testing.T) {
 
 		var getConcurrentUsersStatsQuery *models.GetConcurrentUsersStatsQuery
 		uss.Bus.AddHandler(func(query *models.GetConcurrentUsersStatsQuery) error {
-			query.Result = []*models.ConcurrentUsersStats{
-				{
-					BucketActiveTokens: 5,
-					Count:              10,
-				},
-				{
-					BucketActiveTokens: 10,
-					Count:              11,
-				},
-				{
-					BucketActiveTokens: 15,
-					Count:              12,
-				},
-				{
-					BucketActiveTokens: 20,
-					Count:              13,
-				},
+			query.Result = &models.ConcurrentUsersStats{
+				BucketLe3:   1,
+				BucketLe6:   2,
+				BucketLe9:   3,
+				BucketLe12:  4,
+				BucketLe15:  5,
+				BucketLeInf: 7,
 			}
 
 			getConcurrentUsersStatsQuery = query
@@ -318,10 +308,12 @@ func TestMetrics(t *testing.T) {
 
 				assert.Equal(t, 1, metrics.Get("stats.packaging.deb.count").MustInt())
 
-				assert.Equal(t, 10, metrics.Get("stats.auth_token_per_user_le_5").MustInt())
-				assert.Equal(t, 11, metrics.Get("stats.auth_token_per_user_le_10").MustInt())
-				assert.Equal(t, 12, metrics.Get("stats.auth_token_per_user_le_15").MustInt())
-				assert.Equal(t, 13, metrics.Get("stats.auth_token_per_user_le_20").MustInt())
+				assert.Equal(t, 1, metrics.Get("stats.auth_token_per_user_le_3").MustInt())
+				assert.Equal(t, 2, metrics.Get("stats.auth_token_per_user_le_6").MustInt())
+				assert.Equal(t, 3, metrics.Get("stats.auth_token_per_user_le_9").MustInt())
+				assert.Equal(t, 4, metrics.Get("stats.auth_token_per_user_le_12").MustInt())
+				assert.Equal(t, 5, metrics.Get("stats.auth_token_per_user_le_15").MustInt())
+				assert.Equal(t, 7, metrics.Get("stats.auth_token_per_user_le_inf").MustInt())
 			})
 		})
 	})
@@ -452,33 +444,25 @@ func TestMetrics(t *testing.T) {
 
 		t.Run("Should include metrics for concurrent users", func(t *testing.T) {
 			uss.Bus.AddHandler(func(query *models.GetConcurrentUsersStatsQuery) error {
-				query.Result = []*models.ConcurrentUsersStats{
-					{
-						BucketActiveTokens: 5,
-						Count:              10,
-					},
-					{
-						BucketActiveTokens: 10,
-						Count:              11,
-					},
-					{
-						BucketActiveTokens: 15,
-						Count:              12,
-					},
-					{
-						BucketActiveTokens: 20,
-						Count:              13,
-					},
+				query.Result = &models.ConcurrentUsersStats{
+					BucketLe3:   1,
+					BucketLe6:   2,
+					BucketLe9:   3,
+					BucketLe12:  4,
+					BucketLe15:  5,
+					BucketLeInf: 7,
 				}
 				return nil
 			})
 			report, err := uss.GetUsageReport()
 			assert.NoError(t, err)
 
-			assert.Equal(t, int32(10), report.Metrics["stats.auth_token_per_user_le_5"])
-			assert.Equal(t, int32(11), report.Metrics["stats.auth_token_per_user_le_10"])
-			assert.Equal(t, int32(12), report.Metrics["stats.auth_token_per_user_le_15"])
-			assert.Equal(t, int32(13), report.Metrics["stats.auth_token_per_user_le_20"])
+			assert.Equal(t, int32(1), report.Metrics["stats.auth_token_per_user_le_3"])
+			assert.Equal(t, int32(2), report.Metrics["stats.auth_token_per_user_le_6"])
+			assert.Equal(t, int32(3), report.Metrics["stats.auth_token_per_user_le_9"])
+			assert.Equal(t, int32(4), report.Metrics["stats.auth_token_per_user_le_12"])
+			assert.Equal(t, int32(5), report.Metrics["stats.auth_token_per_user_le_15"])
+			assert.Equal(t, int32(7), report.Metrics["stats.auth_token_per_user_le_inf"])
 
 			t.Run("Fails when returns error", func(t *testing.T) {
 				expectedErr := errors.New("unexpected error")
@@ -493,7 +477,7 @@ func TestMetrics(t *testing.T) {
 
 		t.Run("Should include external metrics", func(t *testing.T) {
 			uss.Bus.AddHandler(func(query *models.GetConcurrentUsersStatsQuery) error {
-				query.Result = []*models.ConcurrentUsersStats{}
+				query.Result = &models.ConcurrentUsersStats{}
 				return nil
 			})
 			uss.RegisterMetric(metricName, func() (interface{}, error) {

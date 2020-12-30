@@ -106,11 +106,15 @@ type GetUserStatsQuery struct {
 }
 
 type ConcurrentUsersStats struct {
-	BucketActiveTokens int16
-	Count              int32
+	BucketLe3   int32
+	BucketLe6   int32
+	BucketLe9   int32
+	BucketLe12  int32
+	BucketLe15  int32
+	BucketLeInf int32
 }
 
 type GetConcurrentUsersStatsQuery struct {
 	MustRefresh bool
-	Result      []*ConcurrentUsersStats
+	Result      *ConcurrentUsersStats
 }

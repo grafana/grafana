@@ -74,8 +74,8 @@ func TestStatsDataAccess(t *testing.T) {
 	})
 
 	t.Run("Get concurrent users stats should return a histogram", func(t *testing.T) {
-		for u := 1; u <= 5; u++ {
-			for tkn := 1; tkn <= u*4; tkn++ {
+		for u := 1; u <= 6; u++ {
+			for tkn := 1; tkn <= u*3; tkn++ {
 				err := createToken(u, sqlStore)
 				assert.NoError(t, err)
 			}
@@ -87,92 +87,63 @@ func TestStatsDataAccess(t *testing.T) {
 		})
 
 		t.Run("Should refresh stats when forced", func(t *testing.T) {
-			query := models.GetConcurrentUsersStatsQuery{}
-			err := GetConcurrentUsersStats(ctx, &query)
+			q := models.GetConcurrentUsersStatsQuery{}
+			err := GetConcurrentUsersStats(ctx, &q)
 			require.NoError(t, err)
 
-			expectedResult := []*models.ConcurrentUsersStats{
-				{
-					BucketActiveTokens: 5,
-					Count:              1,
-				},
-				{
-					BucketActiveTokens: 10,
-					Count:              1,
-				},
-				{
-					BucketActiveTokens: 15,
-					Count:              1,
-				},
-				{
-					BucketActiveTokens: 20,
-					Count:              2,
-				},
-			}
-			assert.ElementsMatch(t, query.Result, expectedResult, "Expecting concurrent users buckets and counts to match")
-
-			err = createToken(6, sqlStore)
-			assert.NoError(t, err)
-
-			query = models.GetConcurrentUsersStatsQuery{MustRefresh: true}
-			err = GetConcurrentUsersStats(ctx, &query)
-			require.NoError(t, err)
-
-			expectedResult = []*models.ConcurrentUsersStats{
-				{
-					BucketActiveTokens: 5,
-					Count:              2,
-				},
-				{
-					BucketActiveTokens: 10,
-					Count:              1,
-				},
-				{
-					BucketActiveTokens: 15,
-					Count:              1,
-				},
-				{
-					BucketActiveTokens: 20,
-					Count:              2,
-				},
+			expectedResult := &models.ConcurrentUsersStats{
+				BucketLe3:   1,
+				BucketLe6:   2,
+				BucketLe9:   3,
+				BucketLe12:  4,
+				BucketLe15:  5,
+				BucketLeInf: 6,
 			}
 
-			assert.ElementsMatch(t, query.Result, expectedResult, "Expecting updated data, but received cached results")
-		})
-
-		t.Run("Should cache results", func(t *testing.T) {
-			query := models.GetConcurrentUsersStatsQuery{}
-			err := GetConcurrentUsersStats(ctx, &query)
-			require.NoError(t, err)
-
-			expectedCachedResult := []*models.ConcurrentUsersStats{
-				{
-					BucketActiveTokens: 5,
-					Count:              2,
-				},
-				{
-					BucketActiveTokens: 10,
-					Count:              1,
-				},
-				{
-					BucketActiveTokens: 15,
-					Count:              1,
-				},
-				{
-					BucketActiveTokens: 20,
-					Count:              2,
-				},
-			}
-			assert.ElementsMatch(t, query.Result, expectedCachedResult, "Expecting concurrent users buckets and counts to match")
+			assert.Equal(t, expectedResult, q.Result)
 
 			err = createToken(7, sqlStore)
 			assert.NoError(t, err)
 
-			query = models.GetConcurrentUsersStatsQuery{}
-			err = GetConcurrentUsersStats(ctx, &query)
+			q = models.GetConcurrentUsersStatsQuery{MustRefresh: true}
+			err = GetConcurrentUsersStats(ctx, &q)
 			require.NoError(t, err)
 
-			assert.ElementsMatch(t, query.Result, expectedCachedResult, "Expecting cached results, but received updated data")
+			expectedResult = &models.ConcurrentUsersStats{
+				BucketLe3:   2,
+				BucketLe6:   3,
+				BucketLe9:   4,
+				BucketLe12:  5,
+				BucketLe15:  6,
+				BucketLeInf: 7,
+			}
+
+			assert.Equal(t, expectedResult, q.Result)
+		})
+
+		t.Run("Should cache results", func(t *testing.T) {
+			q := models.GetConcurrentUsersStatsQuery{}
+			err := GetConcurrentUsersStats(ctx, &q)
+			require.NoError(t, err)
+
+			expectedCachedResult := &models.ConcurrentUsersStats{
+				BucketLe3:   2,
+				BucketLe6:   3,
+				BucketLe9:   4,
+				BucketLe12:  5,
+				BucketLe15:  6,
+				BucketLeInf: 7,
+			}
+			assert.Equal(t, expectedCachedResult, q.Result)
+
+			err = createToken(8, sqlStore)
+			assert.NoError(t, err)
+
+			q = models.GetConcurrentUsersStatsQuery{}
+			err = GetConcurrentUsersStats(ctx, &q)
+
+			require.NoError(t, err)
+			assert.Equal(t, expectedCachedResult, q.Result)
 		})
 	})
 }
