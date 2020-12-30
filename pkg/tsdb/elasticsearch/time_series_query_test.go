@@ -141,7 +141,7 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
 				],
 				"metrics": [
-        {"type": "percentiles", "field": "@value", "id": "1", "settings": { "percents": "95,99"} }
+        {"type": "percentiles", "field": "@value", "id": "1", "settings": { "percents": ["95","99"] } }
 				]
 			}`, from, to, 15*time.Second)
 			So(err, ShouldBeNil)

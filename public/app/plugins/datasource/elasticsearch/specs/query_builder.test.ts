@@ -111,6 +111,58 @@ describe('ElasticQueryBuilder', () => {
         expect(secondLevel.aggs['5'].avg.field).toBe('@value');
       });
 
+      it('with term agg and order by extended_stats agg', () => {
+        const query = builder.build(
+          {
+            refId: 'A',
+            metrics: [{ type: 'extended_stats', id: '1', field: '@value', meta: { std_deviation: true } }],
+            bucketAggs: [
+              {
+                type: 'terms',
+                field: '@host',
+                settings: { size: '5', order: 'asc', orderBy: '1[std_deviation]' },
+                id: '2',
+              },
+              { type: 'date_histogram', field: '@timestamp', id: '3' },
+            ],
+          },
+          100,
+          '1000'
+        );
+
+        const firstLevel = query.aggs['2'];
+        const secondLevel = firstLevel.aggs['3'];
+
+        expect(firstLevel.aggs['1'].extended_stats.field).toBe('@value');
+        expect(secondLevel.aggs['1'].extended_stats.field).toBe('@value');
+      });
+
+      it('with term agg and order by percentiles agg', () => {
+        const query = builder.build(
+          {
+            refId: 'A',
+            metrics: [{ type: 'percentiles', id: '1', field: '@value', settings: { percents: ['95', '99'] } }],
+            bucketAggs: [
+              {
+                type: 'terms',
+                field: '@host',
+                settings: { size: '5', order: 'asc', orderBy: '1[95.0]' },
+                id: '2',
+              },
+              { type: 'date_histogram', field: '@timestamp', id: '3' },
+            ],
+          },
+          100,
+          '1000'
+        );
+
+        const firstLevel = query.aggs['2'];
+        const secondLevel = firstLevel.aggs['3'];
+
+        expect(firstLevel.aggs['1'].percentiles.field).toBe('@value');
+        expect(secondLevel.aggs['1'].percentiles.field).toBe('@value');
+      });
+
       it('with term agg and valid min_doc_count', () => {
         const query = builder.build(
           {
