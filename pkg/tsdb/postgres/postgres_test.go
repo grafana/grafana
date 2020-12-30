@@ -22,7 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"xorm.io/xorm"
 
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v4"
 	. "github.com/smartystreets/goconvey/convey"
 )
 

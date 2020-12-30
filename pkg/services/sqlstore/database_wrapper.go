@@ -11,7 +11,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/lib/pq"
+	"github.com/jackc/pgx/v4/stdlib"
 	"github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus"
 	"xorm.io/core"
@@ -46,7 +46,7 @@ func WrapDatabaseDriverWithHooks(dbType string) string {
 	drivers := map[string]driver.Driver{
 		migrator.SQLite:   &sqlite3.SQLiteDriver{},
 		migrator.MySQL:    &mysql.MySQLDriver{},
-		migrator.Postgres: &pq.Driver{},
+		migrator.Postgres: stdlib.GetDefaultDriver(),
 	}
 
 	d, exist := drivers[dbType]

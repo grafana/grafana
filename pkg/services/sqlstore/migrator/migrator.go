@@ -7,7 +7,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v4"
 	_ "github.com/mattn/go-sqlite3"
 	"xorm.io/xorm"
 )
