@@ -34,8 +34,8 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
 import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
-import { EMPTY, Observable, of, throwError } from 'rxjs';
-import { catchError, map, mergeMap } from 'rxjs/operators';
+import { generate, Observable, of, throwError } from 'rxjs';
+import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty } from 'rxjs/operators';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -152,28 +152,40 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
    * @param url the url to query the index on, for example `/_mapping`.
    */
   private get(url: string, range = getDefaultTimeRange()): Observable<any> {
-    const indexList = this.indexPattern.getIndexList(range.from, range.to);
-    if (_.isArray(indexList) && indexList.length) {
-      return this.requestAllIndices(indexList, url);
-    } else {
-      return this.request('GET', this.indexPattern.getIndexForToday() + url);
+    let indexList = this.indexPattern.getIndexList(range.from, range.to);
+    if (!Array.isArray(indexList)) {
+      indexList = [this.indexPattern.getIndexForToday()];
     }
+
+    const indexUrlList = indexList.map(index => index + url);
+
+    return this.requestAllIndices(indexUrlList);
   }
 
-  private requestAllIndices(indexList: string[], url: string): Observable<any> {
+  private requestAllIndices(indexList: string[]): Observable<any> {
     const maxTraversals = 7; // do not go beyond one week (for a daily pattern)
     const listLen = indexList.length;
-    for (let i = 0; i < Math.min(listLen, maxTraversals); i++) {
-      try {
-        return this.request('GET', indexList[listLen - i - 1] + url);
-      } catch (err) {
-        if (err.status !== 404 || i === maxTraversals - 1) {
-          throw err;
-        }
-      }
-    }
 
-    return EMPTY;
+    return generate(
+      0,
+      i => i < Math.min(listLen, maxTraversals),
+      i => i + 1
+    ).pipe(
+      mergeMap(index => {
+        // catch all errors and emit an object with an err property to simplify checks later in the pipeline
+        return this.request('GET', indexList[listLen - index - 1]).pipe(catchError(err => of({ err })));
+      }),
+      skipWhile(resp => resp.err && resp.err.status === 404), // skip all requests that fail because missing Elastic index
+      throwIfEmpty(() => 'Could not find an available index for this time range.'), // when i === Math.min(listLen, maxTraversals) generate will complete but without emitting any values which means we didn't find a valid index
+      first(), // take the first value that isn't skipped
+      map(resp => {
+        if (resp.err) {
+          throw resp.err; // if there is some other error except 404 then we must throw it
+        }
+
+        return resp;
+      })
+    );
   }
 
   private post(url: string, data: any): Observable<any> {
