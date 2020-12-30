@@ -134,7 +134,7 @@ func (t *postgresQueryResultTransformer) TransformQueryResult(columnTypes []*sql
 		return nil, err
 	}
 
-	// convert types not handled by lib/pq
+	// convert types not handled by jackc/pgx
 	// unhandled types are returned as []byte
 	for i := 0; i < len(columnTypes); i++ {
 		if value, ok := values[i].([]byte); ok {

@@ -25,7 +25,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v4"
 	"xorm.io/xorm"
 )
 
