@@ -2,6 +2,7 @@ package elasticsearch
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -242,9 +243,21 @@ func addTermsAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, metrics []*Metr
 		if orderBy, err := bucketAgg.Settings.Get("orderBy").String(); err == nil {
 			a.Order[orderBy] = bucketAgg.Settings.Get("order").MustString("desc")
 
-			if _, err := strconv.Atoi(orderBy); err == nil {
+			/*
+			   The format for extended stats and percentiles is {metricId}[bucket_path]
+			   for everything else it's just {metricId}
+			*/
+			metricIdRegex := regexp.MustCompile(`^(\d+)`)
+			metricIdMatches := metricIdRegex.FindStringSubmatch(orderBy)
+
+			var metricId string
+			if len(metricIdMatches) == 2 {
+				metricId = metricIdMatches[1]
+			}
+
+			if len(metricId) > 0 {
 				for _, m := range metrics {
-					if m.ID == orderBy {
+					if m.ID == metricId {
 						b.Metric(m.ID, m.Type, m.Field, nil)
 						break
 					}
