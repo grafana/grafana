@@ -2,10 +2,6 @@
 title = "Change your password"
 description = "How to change your Grafana password"
 keywords = ["grafana", "password", "change", "preferences"]
-type = "docs"
-[menu.docs]
-identifier = "change-your-password"
-parent = "administration"
 weight = 100
 +++
 
@@ -29,3 +25,4 @@ Grafana admins can use the following tools:
 
 - Use the [User API]({{< relref "../http_api/user.md" >}}) to change your password programmatically or to manage users.
 - The [Manage users]({{< relref "../manage-users/_index.md" >}}) section explains how to manage users and teams.
+

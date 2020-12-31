@@ -4,6 +4,7 @@ load(
     'lint_backend_step',
     'codespell_step',
     'shellcheck_step',
+    'dashboard_schemas_check',
     'test_backend_step',
     'test_frontend_step',
     'build_backend_step',
@@ -13,7 +14,7 @@ load(
     'e2e_tests_server_step',
     'e2e_tests_step',
     'build_storybook_step',
-    'build_docs_website_step',
+    'build_frontend_docs_step',
     'copy_packages_for_docker_step',
     'build_docker_images_step',
     'postgres_integration_tests_step',
@@ -24,7 +25,7 @@ load(
     'enterprise_downstream_step',
     'frontend_metrics_step',
     'publish_storybook_step',
-    'release_next_npm_packages_step',
+    'release_canary_npm_packages_step',
     'upload_packages_step',
     'deploy_to_kubernetes_step',
     'publish_packages_step',
@@ -37,10 +38,11 @@ ver_mode = 'master'
 def get_steps(edition, is_downstream=False):
     publish = edition != 'enterprise' or is_downstream
     steps = [
-        enterprise_downstream_step(edition),
-        lint_backend_step(edition),
+        enterprise_downstream_step(edition=edition),
+        lint_backend_step(edition=edition),
         codespell_step(),
         shellcheck_step(),
+        dashboard_schemas_check(),
         test_backend_step(),
         test_frontend_step(),
         frontend_metrics_step(edition=edition),
@@ -48,25 +50,39 @@ def get_steps(edition, is_downstream=False):
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_plugins_step(edition=edition, sign=True),
         package_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
-        e2e_tests_server_step(),
+        e2e_tests_server_step(edition=edition),
         e2e_tests_step(),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         publish_storybook_step(edition=edition, ver_mode=ver_mode),
-        build_docs_website_step(),
+        build_frontend_docs_step(edition=edition),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=publish),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=publish),
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
-        release_next_npm_packages_step(edition),
+        release_canary_npm_packages_step(edition),
         upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         deploy_to_kubernetes_step(edition=edition, is_downstream=is_downstream),
     ]
-    windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream)
+    if edition == 'enterprise':
+        build_tags = ['enterprise2']
+        steps.extend([
+            lint_backend_step(edition=edition, build_tags=build_tags),
+            test_backend_step(build_tags=build_tags),
+            build_backend_step(edition=edition, ver_mode=ver_mode, variants=['linux-x64'], is_downstream=is_downstream, build_tags=build_tags),
+            package_step(edition=edition, ver_mode=ver_mode, variants=['linux-x64'], is_downstream=is_downstream, build_tags=build_tags),
+            e2e_tests_server_step(edition=edition, build_tags=build_tags, port=3002),
+            e2e_tests_step(build_tags=build_tags, port=3002),
+            upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream, build_tags=build_tags),
+        ])
 
-    publish_steps = [
-        publish_packages_step(edition=edition, is_downstream=is_downstream),
-    ]
+    windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream)
+    if edition == 'enterprise' and not is_downstream:
+        publish_steps = []
+    else:
+        publish_steps = [
+            publish_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
+        ]
 
     return steps, windows_steps, publish_steps
 

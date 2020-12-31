@@ -2,11 +2,6 @@
 title = "Upgrade Grafana"
 description = "Guide for upgrading Grafana"
 keywords = ["grafana", "configuration", "documentation", "upgrade"]
-type = "docs"
-[menu.docs]
-name = "Upgrade Grafana"
-identifier = "upgrading"
-parent = "installation"
 weight = 700
 +++
 
@@ -21,7 +16,7 @@ Upgrading is generally safe (between many minor and one major version) and dashb
 
 We recommend that you backup a few things in case you have to rollback the upgrade.
 - Installed plugins - Back them up before you upgrade them in case you want to rollback the Grafana version and want to get the exact same versions you were running before the upgrade.
-- Configuration files do not need to be backed up. However, you might want to in case you add new config options after upgrade and then rollback.
+- Configuration files do not need to be backed up. However, you might want to in case you add new configuration options after upgrade and then rollback.
 
 ### Database backup
 
@@ -82,7 +77,7 @@ sudo apt-get upgrade
 
 If you downloaded the binary `.tar.gz` package, then you can just download and extract the new package and overwrite all your existing files. However, this might overwrite your config changes.
 
-We recommend that you save your custom config changes in a file named `<grafana_install_dir>/conf/custom.ini`.
+We recommend that you save your custom configuration changes in a file named `<grafana_install_dir>/conf/custom.ini`.
 This allows you to upgrade Grafana without risking losing your configuration changes.
 
 ### Centos / RHEL
@@ -108,7 +103,7 @@ docker run -d --name=my-grafana-container --restart=always -v /var/lib/grafana:/
 
 ### Windows
 
-If you downloaded the Windows binary package you can just download a newer package and extract to the same location (and overwrite the existing files). This might overwrite your config changes. We recommend that you save your config changes in a file named `<grafana_install_dir>/conf/custom.ini` as this will make upgrades easier without risking losing your config changes.
+If you downloaded the Windows binary package you can just download a newer package and extract to the same location (and overwrite the existing files). This might overwrite your configuration changes. We recommend that you save your configuration changes in a file named `<grafana_install_dir>/conf/custom.ini` as this will make upgrades easier without risking losing your configuration changes.
 
 ## Update plugins
 
@@ -240,7 +235,7 @@ change the `[security]` setting `cookie_secure` to `true` and use HTTPS when `co
 
 ### PhantomJS removed
 
-PhantomJS was deprecated in [Grafana v6.4]({{< relref "../guides/whats-new-in-v6-4.md#phantomjs-deprecation" >}}) and starting from Grafana v7.0.0, all PhantomJS support has been removed. This means that Grafana no longer ships with a built-in image renderer, and we advise you to install the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
+PhantomJS was deprecated in [Grafana v6.4]({{< relref "../whatsnew/whats-new-in-v6-4.md#phantomjs-deprecation" >}}) and starting from Grafana v7.0.0, all PhantomJS support has been removed. This means that Grafana no longer ships with a built-in image renderer, and we advise you to install the [Grafana Image Renderer plugin](https://grafana.com/grafana/plugins/grafana-image-renderer).
 
 ### Dashboard minimum refresh interval enforced
 
@@ -277,3 +272,45 @@ For existing alert notification channels, there is no automatic migration of sto
 > Please note that when migrating a notification channel and later downgrading Grafana to an earlier version, the notification channel will not be able to read stored sensitive settings and, as a result, not function as expected.
 
 For provisioning of alert notification channels, refer to [Alert notification channels]({{< relref "../administration/provisioning.md#alert-notification-channels" >}}).
+
+## Upgrading to v7.3
+
+### AWS CloudWatch data source
+
+The AWS CloudWatch data source's authentication scheme has changed in Grafana 7.3. Most importantly the authentication method _ARN_ has been removed, and a new one has been added: _AWS SDK Default_. Existing data source configurations using the former will fallback to the latter. Assuming an IAM role will still work though, and the old _ARN_ method would use the default AWS SDK authentication method under the hood anyway.
+
+Since _ARN_ has been removed as an authentication method, we have instead made it into an option for providing the ARN of an IAM role to assume. This works independently of the authentication method you choose.
+
+The new authentication method, _AWS SDK Default_, uses the default AWS Go SDK credential chain, which at the time of writing looks for credentials in the following order:
+
+1. Environment variables.
+1. Shared credentials file.
+1. If your application uses an ECS task definition or RunTask API operation, IAM role for tasks.
+1. If your application is running on an Amazon EC2 instance, IAM role for Amazon EC2.
+
+The other authentication methods, _Access & secret key_ and _Credentials file_, have changed in regards to fallbacks. If these methods fail, they no longer fallback to other methods. e.g. environment variables. If you want fallbacks, you should use _AWS SDK Default_ instead.
+
+For more information and details, please refer to [Using AWS CloudWatch in Grafana]({{< relref "../datasources/cloudwatch.md#authentication" >}}).
+
+### User invites database migration
+
+The database table _temp\_user_, that tracks user invites, is subject to a database migration that changes the data type of the _created_ and _updated_ columns:
+
+| Database | Old data type | New data type |
+| -------- | ------------- | ------------- |
+| Sqlite   | DATETIME      | INTEGER       |
+| MySQL    | DATETIME      | INT           |
+| Postgres | TIMESTAMP     | INTEGER       |
+
+> Please note that if downgrading Grafana to an earlier version, you have to manually change the data type of the _created_ and _updated_ columns back to _old data type_ , otherwise the user invite feature doesn't function as expected.
+
+### Snapshots database migration
+
+The database table _dashboard\_snapshot_, that stores dashboard snapshots, adds a new column _dashboard\_encrypted_ for storing an encrypted snapshot. 
+NOTE: Only snapshots created on Grafana 7.3 or later will use this column to store snapshot data as encrypted. Snapshots created before this version will be unaffected and remain unencrypted.
+
+### Use of the root group in the Docker images
+
+The Grafana Docker images use the `root` group instead of the `grafana` group. This change can cause builds to break for users who extend the Grafana Docker image. Learn more about this change in the  [Docker migration instructions]({{< relref "docker/#migrate-to-v73-or-later">}})
+
+

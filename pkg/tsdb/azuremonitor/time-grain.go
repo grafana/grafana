@@ -28,7 +28,7 @@ func (tg *TimeGrain) createISO8601DurationFromIntervalMS(interval int64) (string
 	timeValueString := formatted[0 : len(formatted)-1]
 	timeValue, err := strconv.Atoi(timeValueString)
 	if err != nil {
-		return "", fmt.Errorf("Could not parse interval %v to an ISO 8061 duration", interval)
+		return "", fmt.Errorf("could not parse interval %q to an ISO 8061 duration: %w", interval, err)
 	}
 
 	unit := formatted[len(formatted)-1:]

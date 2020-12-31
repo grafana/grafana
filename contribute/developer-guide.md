@@ -20,7 +20,7 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
-brew install node@12
+brew install node@14
 
 npm install -g yarn
 ```
@@ -76,7 +76,10 @@ When you log in for the first time, Grafana asks you to change your password.
 
 #### Building on Windows
 
-The Grafana backend includes Sqlite3 which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
+The Grafana backend includes SQLite which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download). Eventually, if you use [Scoop](https://scoop.sh), you can install GCC through that.
+
+You can simply build the back-end as follows: `go run build.go build`. The Grafana binaries will be in bin\\windows-amd64.
+Alternately, if you wish to use the `make` command, install [Make for Windows](http://gnuwin32.sourceforge.net/packages/make.htm) and use it in a Unix shell (f.ex. Git Bash). 
 
 ## Test Grafana
 
@@ -87,7 +90,7 @@ The test suite consists of three types of tests: _Frontend tests_, _backend test
 We use [jest](https://jestjs.io/) for our frontend tests. Run them using Yarn:
 
 ```
-yarn jest
+yarn test
 ```
 
 ### Run backend tests
@@ -96,6 +99,13 @@ If you're developing for the backend, run the tests with the standard Go tool:
 
 ```
 go test -v ./pkg/...
+```
+
+#### On Windows
+Running the backend tests on Windows currently needs some tweaking, so use the build.go script:
+
+```
+go run build.go test
 ```
 
 ### Run end-to-end tests

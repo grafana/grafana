@@ -1,5 +1,5 @@
 import React, { PureComponent } from 'react';
-import { Modal, stylesFactory, VerticalGroup } from '@grafana/ui';
+import { Modal, stylesFactory } from '@grafana/ui';
 import { css } from 'emotion';
 import { dashboardWatcher } from './dashboardWatcher';
 import { config } from '@grafana/runtime';
@@ -71,6 +71,7 @@ export class DashboardChangedModal extends PureComponent<Props, State> {
         title="Dashboard Changed"
         icon="copy"
         onDismiss={this.onDismiss}
+        onClickBackdrop={() => {}}
         className={styles.modal}
       >
         <div>
@@ -80,16 +81,14 @@ export class DashboardChangedModal extends PureComponent<Props, State> {
             <div>This dashboard has been modifed by another session</div>
           )}
           <br />
-          <VerticalGroup>
-            {options.map(opt => {
-              return (
-                <div key={opt.label} onClick={opt.action} className={styles.radioItem}>
-                  <h3>{opt.label}</h3>
-                  {opt.description}
-                </div>
-              );
-            })}
-          </VerticalGroup>
+          {options.map(opt => {
+            return (
+              <div key={opt.label} onClick={opt.action} className={styles.radioItem}>
+                <h3>{opt.label}</h3>
+                {opt.description}
+              </div>
+            );
+          })}
           <br />
         </div>
       </Modal>
@@ -104,9 +103,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     `,
     radioItem: css`
       margin: 0;
-      margin-left: ${theme.spacing.md};
       font-size: ${theme.typography.size.sm};
       color: ${theme.colors.textWeak};
+      padding: 10px;
+      cursor: pointer;
+      width: 100%;
+
+      &:hover {
+        background: ${theme.colors.formCheckboxBgCheckedHover};
+        color: ${theme.colors.text};
+      }
     `,
   };
 });

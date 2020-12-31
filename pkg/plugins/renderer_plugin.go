@@ -3,7 +3,7 @@ package plugins
 import (
 	"context"
 	"encoding/json"
-	"path"
+	"path/filepath"
 
 	pluginModel "github.com/grafana/grafana-plugin-model/go/renderer"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -34,7 +34,7 @@ func (r *RendererPlugin) Load(decoder *json.Decoder, base *PluginBase, backendPl
 	r.backendPluginManager = backendPluginManager
 
 	cmd := ComposePluginStartCommand("plugin_start")
-	fullpath := path.Join(r.PluginDir, cmd)
+	fullpath := filepath.Join(r.PluginDir, cmd)
 	factory := grpcplugin.NewRendererPlugin(r.Id, fullpath, grpcplugin.PluginStartFuncs{
 		OnLegacyStart: r.onLegacyPluginStart,
 		OnStart:       r.onPluginStart,

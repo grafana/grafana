@@ -20,9 +20,10 @@ import {
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
 
-import { changeDedupStrategy, splitOpen, updateTimeRange } from './state/actions';
-import { toggleLogLevelAction } from 'app/features/explore/state/actionTypes';
-import { deduplicatedRowsSelector } from 'app/features/explore/state/selectors';
+import { splitOpen } from './state/main';
+import { updateTimeRange } from './state/time';
+import { toggleLogLevelAction, changeDedupStrategy } from './state/explorePane';
+import { deduplicatedRowsSelector } from './state/selectors';
 import { getTimeZone } from '../profile/state/selectors';
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
@@ -88,6 +89,16 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     }
 
     return [];
+  };
+
+  showContextToggle = (row?: LogRowModel): boolean => {
+    const { datasourceInstance } = this.props;
+
+    if (datasourceInstance?.showContextToggle) {
+      return datasourceInstance.showContextToggle(row);
+    }
+
+    return false;
   };
 
   getFieldLinks = (field: Field, rowIndex: number) => {
@@ -156,7 +167,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
               timeZone={timeZone}
               scanning={scanning}
               scanRange={range.raw}
-              showContextToggle={this.props.datasourceInstance?.showContextToggle}
+              showContextToggle={this.showContextToggle}
               width={width}
               getRowContext={this.getLogRowContext}
               getFieldLinks={this.getFieldLinks}

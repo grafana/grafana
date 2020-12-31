@@ -11,7 +11,7 @@ import './jquery.flot.events';
 import $ from 'jquery';
 import _ from 'lodash';
 import { tickStep } from 'app/core/utils/ticks';
-import { appEvents, coreModule, updateLegendValues } from 'app/core/core';
+import { coreModule, updateLegendValues } from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
 import { ThresholdManager } from './threshold_manager';
 import { TimeRegionManager } from './time_region_manager';
@@ -24,7 +24,7 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { ContextMenuGroup, ContextMenuItem, graphTimeFormat, graphTickFormatter } from '@grafana/ui';
+import { graphTickFormatter, graphTimeFormat, IconName, MenuItem, MenuItemsGroup } from '@grafana/ui';
 import { getCurrentTheme, provideTheme } from 'app/core/utils/ConfigProvider';
 import {
   DataFrame,
@@ -37,6 +37,8 @@ import {
   getTimeField,
   getValueFormat,
   hasLinks,
+  LegacyGraphHoverClearEvent,
+  LegacyGraphHoverEvent,
   LinkModelSupplier,
   PanelEvents,
   toUtc,
@@ -45,7 +47,7 @@ import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
-import { CoreEvents } from 'app/types';
+import { DashboardModel } from '../../../features/dashboard/state';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
@@ -53,11 +55,11 @@ class GraphElement {
   ctrl: GraphCtrl;
   contextMenu: GraphContextMenuCtrl;
   tooltip: any;
-  dashboard: any;
+  dashboard: DashboardModel;
   annotations: object[];
   panel: any;
   plot: any;
-  sortedSeries: any[];
+  sortedSeries?: any[];
   data: any[];
   panelWidth: number;
   eventManager: EventManager;
@@ -75,7 +77,7 @@ class GraphElement {
     this.panelWidth = 0;
     this.eventManager = new EventManager(this.ctrl);
     this.thresholdManager = new ThresholdManager(this.ctrl);
-    this.timeRegionManager = new TimeRegionManager(this.ctrl, config.theme.type);
+    this.timeRegionManager = new TimeRegionManager(this.ctrl);
     // @ts-ignore
     this.tooltip = new GraphTooltip(this.elem, this.ctrl.dashboard, this.scope, () => {
       return this.sortedSeries;
@@ -86,8 +88,11 @@ class GraphElement {
     this.ctrl.events.on(PanelEvents.render, this.onRender.bind(this));
 
     // global events
-    appEvents.on(CoreEvents.graphHover, this.onGraphHover.bind(this), scope);
-    appEvents.on(CoreEvents.graphHoverClear, this.onGraphHoverClear.bind(this), scope);
+    // Using old way here to use the scope unsubscribe model as the new $on function does not take scope
+    this.ctrl.dashboard.events.on(LegacyGraphHoverEvent.type, this.onGraphHover.bind(this), this.scope);
+    this.ctrl.dashboard.events.on(LegacyGraphHoverClearEvent.type, this.onGraphHoverClear.bind(this), this.scope);
+
+    // plot events
     this.elem.bind('plotselected', this.onPlotSelected.bind(this));
     this.elem.bind('plotclick', this.onPlotClick.bind(this));
 
@@ -193,20 +198,22 @@ class GraphElement {
   getContextMenuItemsSupplier = (
     flotPosition: { x: number; y: number },
     linksSupplier?: LinkModelSupplier<FieldDisplay>
-  ): (() => ContextMenuGroup[]) => {
+  ): (() => MenuItemsGroup[]) => {
     return () => {
       // Fixed context menu items
-      const items: ContextMenuGroup[] = [
-        {
-          items: [
+      const items: MenuItemsGroup[] = this.dashboard?.editable
+        ? [
             {
-              label: 'Add annotation',
-              icon: 'comment-alt',
-              onClick: () => this.eventManager.updateTime({ from: flotPosition.x, to: null }),
+              items: [
+                {
+                  label: 'Add annotation',
+                  icon: 'comment-alt',
+                  onClick: () => this.eventManager.updateTime({ from: flotPosition.x, to: null }),
+                },
+              ],
             },
-          ],
-        },
-      ];
+          ]
+        : [];
 
       if (!linksSupplier) {
         return items;
@@ -214,12 +221,12 @@ class GraphElement {
 
       const dataLinks = [
         {
-          items: linksSupplier.getLinks(this.panel.scopedVars).map<ContextMenuItem>(link => {
+          items: linksSupplier.getLinks(this.panel.replaceVariables).map<MenuItem>(link => {
             return {
               label: link.title,
               url: link.href,
               target: link.target,
-              icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}`,
+              icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}` as IconName,
               onClick: link.onClick,
             };
           }),
@@ -239,11 +246,17 @@ class GraphElement {
       return;
     }
 
-    if ((pos.ctrlKey || pos.metaKey) && (this.dashboard.meta.canEdit || this.dashboard.meta.canMakeEditable)) {
+    if (pos.ctrlKey || pos.metaKey) {
       // Skip if range selected (added in "plotselected" event handler)
       if (pos.x !== pos.x1) {
         return;
       }
+
+      // skip if dashboard is not saved yet (exists in db) or user cannot edit
+      if (!this.dashboard.id || (!this.dashboard.meta.canEdit && !this.dashboard.meta.canMakeEditable)) {
+        return;
+      }
+
       setTimeout(() => {
         this.eventManager.updateTime({ from: pos.x, to: null });
       }, 100);
@@ -263,7 +276,7 @@ class GraphElement {
         const hasLinksValue = hasLinks(field);
         if (hasLinksValue) {
           // Append the configured links to the panel datalinks
-          links = [...links, ...field.config.links];
+          links = [...links, ...field.config.links!];
         }
         const fieldConfig = {
           decimals: yAxisConfig.decimals,

@@ -111,11 +111,17 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 	if err != nil {
 		return errutil.Wrap("failed to create temporary file", err)
 	}
-	defer os.Remove(tmpFile.Name())
+	defer func() {
+		if err := os.Remove(tmpFile.Name()); err != nil {
+			logger.Warn("Failed to remove temporary file", "file", tmpFile.Name(), "err", err)
+		}
+	}()
 
 	err = client.DownloadFile(pluginName, tmpFile, downloadURL, checksum)
 	if err != nil {
-		tmpFile.Close()
+		if err := tmpFile.Close(); err != nil {
+			logger.Warn("Failed to close file", "err", err)
+		}
 		return errutil.Wrap("failed to download plugin archive", err)
 	}
 	err = tmpFile.Close()
@@ -132,11 +138,11 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 
 	res, _ := services.ReadPlugin(pluginFolder, pluginName)
 	for _, v := range res.Dependencies.Plugins {
-		if err := InstallPlugin(v.Id, "", c, client); err != nil {
-			return errutil.Wrapf(err, "failed to install plugin '%s'", v.Id)
+		if err := InstallPlugin(v.ID, "", c, client); err != nil {
+			return errutil.Wrapf(err, "failed to install plugin '%s'", v.ID)
 		}
 
-		logger.Infof("Installed dependency: %v ✔\n", v.Id)
+		logger.Infof("Installed dependency: %v ✔\n", v.ID)
 	}
 
 	return err
@@ -228,6 +234,8 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 		newFile := filepath.Join(filePath, newFileName)
 
 		if zf.FileInfo().IsDir() {
+			// We can ignore gosec G304 here since it makes sense to give all users read access
+			// nolint:gosec
 			if err := os.MkdirAll(newFile, 0755); err != nil {
 				if os.IsPermission(err) {
 					return fmt.Errorf(permissionsDeniedMessage, newFile)
@@ -240,6 +248,8 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 		}
 
 		// Create needed directories to extract file
+		// We can ignore gosec G304 here since it makes sense to give all users read access
+		// nolint:gosec
 		if err := os.MkdirAll(filepath.Dir(newFile), 0755); err != nil {
 			return errutil.Wrap("failed to create directory to extract plugin files", err)
 		}
@@ -291,6 +301,10 @@ func extractFile(file *zip.File, filePath string) (err error) {
 		fileMode = os.FileMode(0755)
 	}
 
+	// We can ignore the gosec G304 warning on this one, since the variable part of the file path stems
+	// from command line flag "pluginsDir", and the only possible damage would be writing to the wrong directory.
+	// If the user shouldn't be writing to this directory, they shouldn't have the permission in the file system.
+	// nolint:gosec
 	dst, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileMode)
 	if err != nil {
 		if os.IsPermission(err) {

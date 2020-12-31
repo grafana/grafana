@@ -62,6 +62,8 @@ export class GrafanaCtrl {
     setDashboardSrv(dashboardSrv);
     setLegacyAngularInjector($injector);
 
+    datasourceSrv.init(config.datasources, config.defaultDatasource);
+
     locationUtil.initialize({
       getConfig: () => config,
       getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
@@ -209,8 +211,6 @@ export function grafanaAppDirective(
         for (const drop of Drop.drops) {
           drop.destroy();
         }
-
-        appEvents.emit(CoreEvents.hideDashSearch);
       });
 
       // handle kiosk mode

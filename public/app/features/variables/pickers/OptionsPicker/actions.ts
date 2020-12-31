@@ -82,14 +82,15 @@ export const commitChangesToVariable = (): ThunkResult<void> => {
     dispatch(setCurrentVariableValue(toVariablePayload(existing, currentPayload)));
     dispatch(changeVariableProp(toVariablePayload(existing, searchQueryPayload)));
     const updated = getVariable<VariableWithMultiSupport>(picker.id, getState());
+    dispatch(hideOptions());
 
     if (getCurrentText(existing) === getCurrentText(updated)) {
-      return dispatch(hideOptions());
+      return;
     }
 
     const adapter = variableAdapters.get(updated.type);
     await adapter.setValue(updated, updated.current, true);
-    return dispatch(hideOptions());
+    return;
   };
 };
 
@@ -118,7 +119,7 @@ const fetchTagValues = (tagText: string): ThunkResult<Promise<string[]>> => {
     const variable = getVariable<QueryVariableModel>(picker.id, getState());
 
     const datasource = await getDataSourceSrv().get(variable.datasource ?? '');
-    const query = variable.tagValuesQuery.replace('$tag', tagText);
+    const query = variable.tagValuesQuery.replace(/\$tag/g, tagText);
     const options = { range: getTimeRange(variable), variable };
 
     if (!datasource.metricFindQuery) {

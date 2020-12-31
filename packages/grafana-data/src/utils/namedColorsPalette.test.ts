@@ -1,47 +1,8 @@
-import {
-  getColorName,
-  getColorDefinition,
-  getColorByName,
-  getColorFromHexRgbOrName,
-  getColorDefinitionByName,
-} from './namedColorsPalette';
+import { getColorFromHexRgbOrName, getColorDefinitionByName } from './namedColorsPalette';
 import { GrafanaThemeType } from '../types/theme';
 
 describe('colors', () => {
   const SemiDarkBlue = getColorDefinitionByName('semi-dark-blue');
-
-  describe('getColorDefinition', () => {
-    it('returns undefined for unknown hex', () => {
-      expect(getColorDefinition('#ff0000', GrafanaThemeType.Light)).toBeUndefined();
-      expect(getColorDefinition('#ff0000', GrafanaThemeType.Dark)).toBeUndefined();
-    });
-
-    it('returns definition for known hex', () => {
-      expect(getColorDefinition(SemiDarkBlue.variants.light, GrafanaThemeType.Light)).toEqual(SemiDarkBlue);
-      expect(getColorDefinition(SemiDarkBlue.variants.dark, GrafanaThemeType.Dark)).toEqual(SemiDarkBlue);
-    });
-  });
-
-  describe('getColorName', () => {
-    it('returns undefined for unknown hex', () => {
-      expect(getColorName('#ff0000')).toBeUndefined();
-    });
-
-    it('returns name for known hex', () => {
-      expect(getColorName(SemiDarkBlue.variants.light, GrafanaThemeType.Light)).toEqual(SemiDarkBlue.name);
-      expect(getColorName(SemiDarkBlue.variants.dark, GrafanaThemeType.Dark)).toEqual(SemiDarkBlue.name);
-    });
-  });
-
-  describe('getColorByName', () => {
-    it('returns undefined for unknown color', () => {
-      expect(getColorByName('aruba-sunshine')).toBeUndefined();
-    });
-
-    it('returns color definition for known color', () => {
-      expect(getColorByName(SemiDarkBlue.name)).toBe(SemiDarkBlue);
-    });
-  });
 
   describe('getColorFromHexRgbOrName', () => {
     it('returns black for unknown color', () => {
@@ -57,7 +18,7 @@ describe('colors', () => {
     });
 
     it('returns color if specified as hex or rgb/a', () => {
-      expect(getColorFromHexRgbOrName('ff0000')).toBe('ff0000');
+      expect(getColorFromHexRgbOrName('ff0000')).toBe('#ff0000');
       expect(getColorFromHexRgbOrName('#ff0000')).toBe('#ff0000');
       expect(getColorFromHexRgbOrName('#FF0000')).toBe('#FF0000');
       expect(getColorFromHexRgbOrName('#CCC')).toBe('#CCC');

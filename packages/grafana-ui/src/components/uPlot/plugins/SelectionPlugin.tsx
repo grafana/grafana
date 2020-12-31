@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { PlotPluginProps } from '../types';
-import { usePlotCanvas, usePlotPluginContext } from '../context';
+import { usePlotContext } from '../context';
 import { pluginLog } from '../utils';
 
 interface Selection {
@@ -30,13 +30,14 @@ interface SelectionPluginProps extends PlotPluginProps {
   children?: (api: SelectionPluginAPI) => JSX.Element;
 }
 
+/**
+ * @alpha
+ */
 export const SelectionPlugin: React.FC<SelectionPluginProps> = ({ onSelect, onDismiss, lazy, id, children }) => {
   const pluginId = `SelectionPlugin:${id}`;
-  const pluginsApi = usePlotPluginContext();
-  const canvas = usePlotCanvas();
-
+  const plotCtx = usePlotContext();
   const [selection, setSelection] = useState<Selection | null>(null);
-  //
+
   useEffect(() => {
     if (!lazy && selection) {
       pluginLog(pluginId, false, 'selected', selection);
@@ -49,7 +50,7 @@ export const SelectionPlugin: React.FC<SelectionPluginProps> = ({ onSelect, onDi
   }, [setSelection]);
 
   useEffect(() => {
-    pluginsApi.registerPlugin({
+    plotCtx.registerPlugin({
       id: pluginId,
       hooks: {
         setSelect: u => {
@@ -66,6 +67,10 @@ export const SelectionPlugin: React.FC<SelectionPluginProps> = ({ onSelect, onDi
               width: u.select.width,
             },
           });
+
+          // manually hide selected region (since cursor.drag.setScale = false)
+          /* @ts-ignore */
+          u.setSelect({ left: 0, width: 0 }, false);
         },
       },
     });
@@ -77,7 +82,7 @@ export const SelectionPlugin: React.FC<SelectionPluginProps> = ({ onSelect, onDi
     };
   }, []);
 
-  if (!children || !canvas || !selection) {
+  if (!plotCtx.getPlotInstance() || !children || !selection) {
     return null;
   }
 

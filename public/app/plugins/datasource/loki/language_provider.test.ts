@@ -82,6 +82,16 @@ describe('Language completion provider', () => {
       expect(result.suggestions[0].label).toEqual('History');
       expect(result.suggestions[1].label).toEqual('Functions');
     });
+
+    it('returns pipe operations on pipe context', async () => {
+      const instance = new LanguageProvider(datasource);
+      const input = createTypeaheadInput('{app="test"} | ', ' ', '', 15, ['context-pipe']);
+      const result = await instance.provideCompletionItems(input, { absoluteRange: rangeMock });
+      expect(result.context).toBeUndefined();
+      expect(result.suggestions.length).toEqual(2);
+      expect(result.suggestions[0].label).toEqual('Operators');
+      expect(result.suggestions[1].label).toEqual('Parsers');
+    });
   });
 
   describe('label key suggestions', () => {

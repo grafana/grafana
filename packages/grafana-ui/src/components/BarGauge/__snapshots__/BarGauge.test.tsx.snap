@@ -42,6 +42,7 @@ exports[`BarGauge Render with basic options should render 1`] = `
         Object {
           "color": "#73BF69",
           "numeric": 25,
+          "percent": 0.25,
           "prefix": undefined,
           "suffix": undefined,
           "text": "25",

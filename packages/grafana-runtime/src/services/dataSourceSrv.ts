@@ -16,9 +16,25 @@ export interface DataSourceSrv {
   get(name?: string | null, scopedVars?: ScopedVars): Promise<DataSourceApi>;
 
   /**
-   * Returns metadata based on UID.
+   * Get a list of data sources
    */
-  getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined;
+  getList(filters?: GetDataSourceListFilters): DataSourceInstanceSettings[];
+
+  /**
+   * Get settings and plugin metadata by name or uid
+   */
+  getInstanceSettings(nameOrUid: string | null | undefined): DataSourceInstanceSettings | undefined;
+}
+
+/** @public */
+export interface GetDataSourceListFilters {
+  mixed?: boolean;
+  metrics?: boolean;
+  tracing?: boolean;
+  annotations?: boolean;
+  dashboard?: boolean;
+  variables?: boolean;
+  pluginId?: string;
 }
 
 let singletonInstance: DataSourceSrv;

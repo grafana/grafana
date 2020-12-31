@@ -30,7 +30,7 @@ export default function PrismPlugin({ definition, language }: { definition: any;
      * Render a Slate mark with appropriate CSS class names
      *
      * @param {Object} props
-     * @return {Element}
+     * @returns {Element}
      */
 
     renderDecoration(props: any, editor: Editor, next: () => any): JSX.Element {
@@ -47,7 +47,7 @@ export default function PrismPlugin({ definition, language }: { definition: any;
      * Decorate code blocks with Prism.js highlighting.
      *
      * @param {Node} node
-     * @return {Array}
+     * @returns {Array}
      */
 
     decorateNode(node: any, editor: Editor, next: () => any): any[] {

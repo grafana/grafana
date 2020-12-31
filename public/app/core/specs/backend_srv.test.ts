@@ -1,10 +1,9 @@
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
-import { AppEvents, DataQueryErrorType } from '@grafana/data';
+import { AppEvents, DataQueryErrorType, EventBusExtended } from '@grafana/data';
 
 import { BackendSrv } from '../services/backend_srv';
-import { Emitter } from '../utils/emitter';
 import { ContextSrv, User } from '../services/context_srv';
 import { describe, expect } from '../../../test/lib/common';
 import { BackendSrvRequest, FetchError } from '@grafana/runtime';
@@ -35,9 +34,11 @@ const getTestContext = (overides?: object) => {
     };
     return of(mockedResponse);
   });
-  const appEventsMock: Emitter = ({
+
+  const appEventsMock: EventBusExtended = ({
     emit: jest.fn(),
-  } as any) as Emitter;
+  } as any) as EventBusExtended;
+
   const user: User = ({
     isSignedIn: props.isSignedIn,
     orgId: props.orgId,

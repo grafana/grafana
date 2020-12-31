@@ -9,7 +9,7 @@ import {
   selectorRegexp,
   processLabels,
 } from 'app/plugins/datasource/prometheus/language_utils';
-import syntax, { FUNCTIONS } from './syntax';
+import syntax, { FUNCTIONS, PIPE_PARSERS, PIPE_OPERATORS } from './syntax';
 
 // Types
 import { LokiQuery } from './types';
@@ -84,7 +84,7 @@ export default class LokiLanguageProvider extends LanguageProvider {
   }
 
   // Strip syntax chars
-  cleanText = (s: string) => s.replace(/[{}[\]="(),!~+\-*/^%]/g, '').trim();
+  cleanText = (s: string) => s.replace(/[{}[\]="(),!~+\-*/^%\|]/g, '').trim();
 
   getSyntax(): Grammar {
     return syntax;
@@ -165,6 +165,8 @@ export default class LokiLanguageProvider extends LanguageProvider {
     } else if (wrapperClasses.includes('context-labels')) {
       // Suggestions for {|} and {foo=|}
       return await this.getLabelCompletionItems(input, context);
+    } else if (wrapperClasses.includes('context-pipe')) {
+      return this.getPipeCompletionItem();
     } else if (empty) {
       // Suggestions for empty query field
       return this.getEmptyCompletionItems(context);
@@ -217,6 +219,22 @@ export default class LokiLanguageProvider extends LanguageProvider {
       prefixMatch: true,
       label: 'Functions',
       items: FUNCTIONS.map(suggestion => ({ ...suggestion, kind: 'function' })),
+    });
+
+    return { suggestions };
+  };
+
+  getPipeCompletionItem = (): TypeaheadOutput => {
+    const suggestions = [];
+
+    suggestions.push({
+      label: 'Operators',
+      items: PIPE_OPERATORS.map(suggestion => ({ ...suggestion, kind: 'operators' })),
+    });
+
+    suggestions.push({
+      label: 'Parsers',
+      items: PIPE_PARSERS.map(suggestion => ({ ...suggestion, kind: 'parsers' })),
     });
 
     return { suggestions };

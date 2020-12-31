@@ -37,7 +37,7 @@ func (hs *HTTPServer) getPluginContext(pluginID string, user *models.SignedInUse
 	if err != nil {
 		// models.ErrPluginSettingNotFound is expected if there's no row found for plugin setting in database (if non-app plugin).
 		// If it's not this expected error something is wrong with cache or database and we return the error to the client.
-		if err != models.ErrPluginSettingNotFound {
+		if !errors.Is(err, models.ErrPluginSettingNotFound) {
 			return pc, errutil.Wrap("Failed to get plugin settings", err)
 		}
 	} else {
@@ -110,6 +110,8 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 			DefaultNavUrl: pluginDef.DefaultNavUrl,
 			State:         pluginDef.State,
 			Signature:     pluginDef.Signature,
+			SignatureType: pluginDef.SignatureType,
+			SignatureOrg:  pluginDef.SignatureOrg,
 		}
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
@@ -121,7 +123,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) Response {
 			listItem.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + listItem.Id + "/"
 		}
 
-		// filter out disabled
+		// filter out disabled plugins
 		if enabledFilter == "1" && !listItem.Enabled {
 			continue
 		}
@@ -162,11 +164,13 @@ func GetPluginSettingByID(c *models.ReqContext) Response {
 		HasUpdate:     def.GrafanaNetHasUpdate,
 		State:         def.State,
 		Signature:     def.Signature,
+		SignatureType: def.SignatureType,
+		SignatureOrg:  def.SignatureOrg,
 	}
 
 	query := models.GetPluginSettingByIdQuery{PluginId: pluginID, OrgId: c.OrgId}
 	if err := bus.Dispatch(&query); err != nil {
-		if err != models.ErrPluginSettingNotFound {
+		if !errors.Is(err, models.ErrPluginSettingNotFound) {
 			return Error(500, "Failed to get login settings", nil)
 		}
 	} else {
@@ -200,8 +204,9 @@ func GetPluginDashboards(c *models.ReqContext) Response {
 
 	list, err := plugins.GetPluginDashboards(c.OrgId, pluginID)
 	if err != nil {
-		if notfound, ok := err.(plugins.PluginNotFoundError); ok {
-			return Error(404, notfound.Error(), nil)
+		var notFound plugins.PluginNotFoundError
+		if errors.As(err, &notFound) {
+			return Error(404, notFound.Error(), nil)
 		}
 
 		return Error(500, "Failed to get plugin dashboards", err)
@@ -216,8 +221,9 @@ func GetPluginMarkdown(c *models.ReqContext) Response {
 
 	content, err := plugins.GetPluginMarkdown(pluginID, name)
 	if err != nil {
-		if notfound, ok := err.(plugins.PluginNotFoundError); ok {
-			return Error(404, notfound.Error(), nil)
+		var notFound plugins.PluginNotFoundError
+		if errors.As(err, &notFound) {
+			return Error(404, notFound.Error(), nil)
 		}
 
 		return Error(500, "Could not get markdown file", err)
@@ -291,7 +297,7 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) Response {
 
 	pCtx, err := hs.getPluginContext(pluginID, c.SignedInUser)
 	if err != nil {
-		if err == ErrPluginNotFound {
+		if errors.Is(err, ErrPluginNotFound) {
 			return Error(404, "Plugin not found", nil)
 		}
 
@@ -334,7 +340,7 @@ func (hs *HTTPServer) CallResource(c *models.ReqContext) {
 
 	pCtx, err := hs.getPluginContext(pluginID, c.SignedInUser)
 	if err != nil {
-		if err == ErrPluginNotFound {
+		if errors.Is(err, ErrPluginNotFound) {
 			c.JsonApiErr(404, "Plugin not found", nil)
 			return
 		}
@@ -362,6 +368,10 @@ func (hs *HTTPServer) getCachedPluginSettings(pluginID string, user *models.Sign
 
 	hs.CacheService.Set(cacheKey, query.Result, time.Second*5)
 	return query.Result, nil
+}
+
+func (hs *HTTPServer) GetPluginErrorsList(c *models.ReqContext) Response {
+	return JSON(200, plugins.ScanningErrors())
 }
 
 func translatePluginRequestErrorToAPIError(err error) Response {

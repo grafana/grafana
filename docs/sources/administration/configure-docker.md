@@ -2,12 +2,7 @@
 title = "Configure Grafana Docker image"
 description = "Guide for configuring the Grafana Docker image"
 keywords = ["grafana", "configuration", "documentation", "docker"]
-type = "docs"
 aliases = ["/docs/grafana/latest/installation/configure-docker/"]
-[menu.docs]
-name = "Configure Grafana Docker image"
-identifier = "configure-docker"
-parent = "administration"
 weight = 400
 +++
 
@@ -17,7 +12,7 @@ If you are running Grafana in a Docker image, then you configure Grafana using [
 
 ## Save your Grafana data
 
-If you do not designate a location for information storage, then all your Grafana data disappears as soon as you stop your image. To save your data, you need to set up persistent storage or bind mounts for your container.
+If you do not designate a location for information storage, then all your Grafana data disappears as soon as you stop your container. To save your data, you need to set up persistent storage or bind mounts for your container.
 
 ### Run Grafana container with persistent storage (recommended)
 
@@ -38,7 +33,7 @@ mkdir data # creates a folder for your data
 ID=$(id -u) # saves your user id in the ID variable
 
 # starts grafana with your user id and using the data folder
-docker run -d --user $ID --volume "$PWD/data:/var/lib/grafana" -p 3000:3000 grafana/grafana:5.1.0
+docker run -d --user $ID --volume "$PWD/data:/var/lib/grafana" -p 3000:3000 grafana/grafana:7.2.1
 ```
 
 ## Default paths

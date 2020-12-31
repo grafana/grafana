@@ -60,6 +60,8 @@ $panel-header-no-title-zindex: 1;
 }
 
 .panel-menu-toggle {
+  position: absolute;
+  top: calc(50% - 9px);
   color: $text-color-weak;
   cursor: pointer;
   margin: 2px 0 0 2px;
@@ -175,6 +177,12 @@ $panel-header-no-title-zindex: 1;
     &:hover {
       color: darken($white, 10%);
     }
+  }
+
+  code {
+    white-space: normal;
+    display: block;
+    word-wrap: break-word;
   }
 
   .panel-info-corner-links {

@@ -1,9 +1,6 @@
 +++
-title = "Alerting"
-type = "docs"
-[menu.docs]
-identifier = "alerting"
-parent = "features"
+title = "Alerts"
+aliases = ["/docs/grafana/latest/alerting/rules/", "/docs/grafana/latest/alerting/metrics/"]
 weight = 100
 +++
 
@@ -53,5 +50,4 @@ Total number of alerts | counter | `alerting.active_alerts`
 Alert execution result | counter | `alerting.result`
 Notifications sent counter | counter | `alerting.notifications_sent`
 Alert execution timer | timer | `alerting.execution_time`
-
 

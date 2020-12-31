@@ -6,6 +6,7 @@ export type KeyValue<T = any> = Record<string, T>;
 
 /**
  * Represent panel data loading state.
+ * @public
  */
 export enum LoadingState {
   NotStarted = 'NotStarted',
@@ -21,6 +22,9 @@ export enum DataTopic {
 
 export type PreferredVisualisationType = 'graph' | 'table' | 'logs' | 'trace';
 
+/**
+ * @public
+ */
 export interface QueryResultMeta {
   /** DatasSource Specific Values */
   custom?: Record<string, any>;
@@ -50,6 +54,16 @@ export interface QueryResultMeta {
   executedQueryString?: string;
 
   /**
+   * A browsable path on the datasource
+   */
+  path?: string;
+
+  /**
+   * defaults to '/'
+   */
+  pathSeparator?: string;
+
+  /**
    * Legacy data source specific, should be moved to custom
    * */
   gmdMeta?: any[]; // used by cloudwatch
@@ -67,6 +81,7 @@ export interface QueryResultMetaStat extends FieldConfig {
 
 /**
  * QueryResultMetaNotice is a structure that provides user notices for query result data
+ * @public
  */
 export interface QueryResultMetaNotice {
   /**
@@ -91,6 +106,9 @@ export interface QueryResultMetaNotice {
   inspect?: 'meta' | 'error' | 'data' | 'stats';
 }
 
+/**
+ * @public
+ */
 export interface QueryResultBase {
   /**
    * Matches the query target refId

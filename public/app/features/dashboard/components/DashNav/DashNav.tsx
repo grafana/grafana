@@ -217,12 +217,12 @@ class DashNav extends PureComponent<Props> {
 
   renderRightActionsButton() {
     const { dashboard, onAddPanel } = this.props;
-    const { canSave, showSettings } = dashboard.meta;
+    const { canEdit, showSettings } = dashboard.meta;
     const { snapshot } = dashboard;
     const snapshotUrl = snapshot && snapshot.originalUrl;
 
     const buttons: ReactNode[] = [];
-    if (canSave) {
+    if (canEdit) {
       buttons.push(
         <DashNavButton
           classSuffix="save"

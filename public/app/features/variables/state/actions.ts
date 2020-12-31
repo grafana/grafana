@@ -1,6 +1,6 @@
 import angular from 'angular';
 import castArray from 'lodash/castArray';
-import { LoadingState, TimeRange, UrlQueryMap, UrlQueryValue } from '@grafana/data';
+import { DataQuery, LoadingState, TimeRange, UrlQueryMap, UrlQueryValue } from '@grafana/data';
 
 import {
   DashboardVariableModel,
@@ -29,11 +29,17 @@ import {
   variableStateFetching,
   variableStateNotStarted,
 } from './sharedReducer';
-import { toVariableIdentifier, toVariablePayload, VariableIdentifier } from './types';
+import {
+  ALL_VARIABLE_TEXT,
+  ALL_VARIABLE_VALUE,
+  toVariableIdentifier,
+  toVariablePayload,
+  VariableIdentifier,
+} from './types';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getTemplateSrv, TemplateSrv } from '../../templating/template_srv';
 import { alignCurrentWithMulti } from '../shared/multiOptions';
-import { isMulti } from '../guard';
+import { hasLegacyVariableSupport, hasStandardVariableSupport, isMulti, isQuery } from '../guard';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { createErrorNotification } from '../../../core/copy/appNotification';
@@ -46,8 +52,9 @@ import {
 import { getBackendSrv } from '../../../core/services/backend_srv';
 import { cleanVariables } from './variablesReducer';
 import isEqual from 'lodash/isEqual';
-import { getCurrentText } from '../utils';
+import { getCurrentText, getVariableRefresh } from '../utils';
 import { store } from 'app/store/store';
+import { getDatasourceSrv } from '../../plugins/datasource_srv';
 
 // process flow queryVariable
 // thunk => processVariables
@@ -93,8 +100,10 @@ export const initDashboardTemplating = (list: VariableModel[]): ThunkResult<void
 
     getTemplateSrv().updateTimeRange(getTimeSrv().timeRange());
 
-    for (let index = 0; index < getVariables(getState()).length; index++) {
-      dispatch(variableStateNotStarted(toVariablePayload(getVariables(getState())[index])));
+    const variables = getVariables(getState());
+    for (let index = 0; index < variables.length; index++) {
+      const variable = variables[index];
+      dispatch(variableStateNotStarted(toVariablePayload(variable)));
     }
   };
 };
@@ -161,6 +170,7 @@ export const addSystemTemplateVariables = (dashboard: DashboardModel): ThunkResu
         value: {
           login: contextSrv.user.login,
           id: contextSrv.user.id,
+          email: contextSrv.user.email,
           toString: () => contextSrv.user.id.toString(),
         },
       },
@@ -201,7 +211,7 @@ export const processVariableDependencies = async (variable: VariableModel, state
     return;
   }
 
-  await new Promise(resolve => {
+  await new Promise<void>(resolve => {
     const unsubscribe = store.subscribe(() => {
       if (!isWaitingForDependencies(dependencies, store.getState())) {
         unsubscribe();
@@ -250,7 +260,7 @@ export const processVariable = (
     }
 
     // for variables that aren't updated via url or refresh let's simulate the same state changes
-    dispatch(variableStateCompleted(toVariablePayload(variable)));
+    dispatch(completeVariableLoading(identifier));
   };
 };
 
@@ -271,14 +281,9 @@ export const setOptionFromUrl = (
 ): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const variable = getVariable(identifier.id, getState());
-    if (variable.hasOwnProperty('refresh') && (variable as QueryVariableModel).refresh !== VariableRefresh.never) {
+    if (getVariableRefresh(variable) !== VariableRefresh.never) {
       // updates options
       await dispatch(updateOptions(toVariableIdentifier(variable)));
-    }
-
-    if (variable.hasOwnProperty('refresh') && (variable as QueryVariableModel).refresh === VariableRefresh.never) {
-      // for variables that have refresh to never simulate the same state changes
-      dispatch(variableStateCompleted(toVariablePayload(variable)));
     }
 
     // get variable from state
@@ -290,6 +295,12 @@ export const setOptionFromUrl = (
     let option = variableFromState.options.find(op => {
       return op.text === urlValue || op.value === urlValue;
     });
+
+    if (!option && isMulti(variableFromState)) {
+      if (variableFromState.allValue && urlValue === variableFromState.allValue) {
+        option = { text: ALL_VARIABLE_TEXT, value: ALL_VARIABLE_VALUE, selected: false };
+      }
+    }
 
     if (!option) {
       let defaultText = urlValue as string | string[];
@@ -415,9 +426,9 @@ export const setOptionAsCurrent = (
   current: VariableOption,
   emitChanges: boolean
 ): ThunkResult<Promise<void>> => {
-  return dispatch => {
+  return async dispatch => {
     dispatch(setCurrentVariableValue(toVariablePayload(identifier, { option: current })));
-    return dispatch(variableUpdated(identifier, emitChanges));
+    return await dispatch(variableUpdated(identifier, emitChanges));
   };
 };
 
@@ -447,11 +458,16 @@ export const variableUpdated = (
   identifier: VariableIdentifier,
   emitChangeEvents: boolean
 ): ThunkResult<Promise<void>> => {
-  return (dispatch, getState) => {
+  return async (dispatch, getState) => {
     const variableInState = getVariable(identifier.id, getState());
 
     // if we're initializing variables ignore cascading update because we are in a boot up scenario
     if (getState().templating.transaction.status === TransactionStatus.Fetching) {
+      if (getVariableRefresh(variableInState) === VariableRefresh.never) {
+        // for variable types with updates that go the setValueFromUrl path in the update let's make sure their state is set to Done.
+        await dispatch(upgradeLegacyQueries(toVariableIdentifier(variableInState)));
+        dispatch(completeVariableLoading(identifier));
+      }
       return Promise.resolve();
     }
 
@@ -623,8 +639,9 @@ export const updateOptions = (identifier: VariableIdentifier, rethrow = false): 
   const variableInState = getVariable(identifier.id, getState());
   try {
     dispatch(variableStateFetching(toVariablePayload(variableInState)));
+    await dispatch(upgradeLegacyQueries(toVariableIdentifier(variableInState)));
     await variableAdapters.get(variableInState.type).updateOptions(variableInState);
-    dispatch(variableStateCompleted(toVariablePayload(variableInState)));
+    dispatch(completeVariableLoading(identifier));
   } catch (error) {
     dispatch(variableStateFailed(toVariablePayload(variableInState, { error })));
 
@@ -648,3 +665,58 @@ export const createVariableErrorNotification = (
     `${identifier ? `Templating [${identifier.id}]` : 'Templating'}`,
     `${message} ${error.message}`
   );
+
+export const completeVariableLoading = (identifier: VariableIdentifier): ThunkResult<void> => (dispatch, getState) => {
+  const variableInState = getVariable(identifier.id, getState());
+
+  if (variableInState.state !== LoadingState.Done) {
+    dispatch(variableStateCompleted(toVariablePayload(variableInState)));
+  }
+};
+
+export function upgradeLegacyQueries(
+  identifier: VariableIdentifier,
+  getDatasourceSrvFunc: typeof getDatasourceSrv = getDatasourceSrv
+): ThunkResult<void> {
+  return async function(dispatch, getState) {
+    const variable = getVariable<QueryVariableModel>(identifier.id, getState());
+
+    if (!isQuery(variable)) {
+      return;
+    }
+
+    try {
+      const datasource = await getDatasourceSrvFunc().get(variable.datasource ?? '');
+
+      if (hasLegacyVariableSupport(datasource)) {
+        return;
+      }
+
+      if (!hasStandardVariableSupport(datasource)) {
+        return;
+      }
+
+      if (isDataQueryType(variable.query)) {
+        return;
+      }
+
+      const query = {
+        refId: `${datasource.name}-${identifier.id}-Variable-Query`,
+        query: variable.query,
+      };
+
+      dispatch(changeVariableProp(toVariablePayload(identifier, { propName: 'query', propValue: query })));
+    } catch (err) {
+      dispatch(notifyApp(createVariableErrorNotification('Failed to upgrade legacy queries', err)));
+      console.error(err);
+    }
+  };
+}
+
+function isDataQueryType(query: any): query is DataQuery {
+  if (!query) {
+    return false;
+  }
+
+  return query.hasOwnProperty('refId') && typeof query.refId === 'string';
+}

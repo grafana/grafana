@@ -2,16 +2,14 @@ import { getFieldLinksForExplore } from './links';
 import {
   ArrayVector,
   DataLink,
-  DataSourceInstanceSettings,
   dateTime,
   Field,
   FieldType,
+  InterpolateFunction,
   LinkModel,
-  ScopedVars,
   TimeRange,
 } from '@grafana/data';
 import { setLinkSrv } from '../../panel/panellinks/link_srv';
-import { setDataSourceSrv } from '@grafana/runtime';
 
 describe('getFieldLinksForExplore', () => {
   it('returns correct link model for external link', () => {
@@ -43,6 +41,7 @@ describe('getFieldLinksForExplore', () => {
       internal: {
         query: { query: 'query_1' },
         datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
       },
     });
     const splitfn = jest.fn();
@@ -57,13 +56,17 @@ describe('getFieldLinksForExplore', () => {
       links[0].onClick({});
     }
 
-    expect(splitfn).toBeCalledWith({ datasourceUid: 'uid_1', query: { query: 'query_1' } });
+    expect(splitfn).toBeCalledWith({
+      datasourceUid: 'uid_1',
+      query: { query: 'query_1' },
+      range,
+    });
   });
 });
 
 function setup(link: DataLink) {
   setLinkSrv({
-    getDataLinkUIModel(link: DataLink, scopedVars: ScopedVars, origin: any): LinkModel<any> {
+    getDataLinkUIModel(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin: any): LinkModel<any> {
       return {
         href: link.url,
         title: link.title,
@@ -78,18 +81,7 @@ function setup(link: DataLink) {
       return link.url;
     },
   });
-  setDataSourceSrv({
-    getDataSourceSettingsByUid(uid: string) {
-      return {
-        id: 1,
-        uid: 'uid_1',
-        type: 'metrics',
-        name: 'test_ds',
-        meta: {},
-        jsonData: {},
-      } as DataSourceInstanceSettings;
-    },
-  } as any);
+
   const field: Field<string> = {
     name: 'flux-dimensions',
     type: FieldType.string,
@@ -100,8 +92,8 @@ function setup(link: DataLink) {
   };
 
   const range: TimeRange = {
-    from: dateTime(),
-    to: dateTime(),
+    from: dateTime('2020-10-14T00:00:00'),
+    to: dateTime('2020-10-14T01:00:00'),
     raw: {
       from: 'now-1h',
       to: 'now',

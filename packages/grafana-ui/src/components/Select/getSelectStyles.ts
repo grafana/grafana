@@ -43,6 +43,7 @@ export const getSelectStyles = stylesFactory((theme: GrafanaTheme) => {
       font-size: ${theme.typography.size.sm};
       color: ${theme.colors.textWeak};
       white-space: normal;
+      line-height: ${theme.typography.lineHeight.md};
     `,
     optionBody: css`
       label: grafana-select-option-body;

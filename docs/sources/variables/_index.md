@@ -1,8 +1,5 @@
 +++
 title = "Templates and variables"
-type = "docs"
-[menu.docs]
-identifier = "variables"
 weight = 130
 +++
 
@@ -36,7 +33,7 @@ Variable values are always synced to the URL using the syntax `var-<varname>=val
 
 To see variable and template examples, go to any of the dashboards listed in [Variable examples]({{< relref "variable-examples.md" >}}).
 
-Variables are listed in drop-down lists across the top of the screen. Select different variables to see how the visualizations change. 
+Variables are listed in drop-down lists across the top of the screen. Select different variables to see how the visualizations change.
 
 To see variable settings, navigate to **Dashboard Settings > Variables**. Click a variable in the list to see its settings.
 
@@ -46,3 +43,4 @@ Variables can be used in titles, descriptions, text panels, and queries. Queries
 
 - Variable drop-down lists are displayed in the order they are listed in the variable list in Dashboard settings.
 - Put the variables that you will change often at the top, so they will be shown first (far left on the dashboard).
+

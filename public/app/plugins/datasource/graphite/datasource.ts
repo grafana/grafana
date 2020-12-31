@@ -38,7 +38,7 @@ export class GraphiteDatasource extends DataSourceApi<GraphiteQuery, GraphiteOpt
     this.basicAuth = instanceSettings.basicAuth;
     this.url = instanceSettings.url;
     this.name = instanceSettings.name;
-    this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || '0.9';
+    this.graphiteVersion = instanceSettings.jsonData.graphiteVersion || '1.1';
     this.isMetricTank = instanceSettings.jsonData.graphiteType === GraphiteType.Metrictank;
     this.supportsTags = supportsTags(this.graphiteVersion);
     this.cacheTimeout = instanceSettings.cacheTimeout;

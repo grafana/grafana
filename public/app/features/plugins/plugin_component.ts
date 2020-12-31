@@ -4,7 +4,7 @@ import _ from 'lodash';
 import config from 'app/core/config';
 import coreModule from 'app/core/core_module';
 
-import { DataSourceApi } from '@grafana/data';
+import { DataSourceApi, PanelEvents } from '@grafana/data';
 import { importPanelPlugin, importDataSourcePlugin, importAppPlugin } from './plugin_loader';
 import DatasourceSrv from './datasource_srv';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
@@ -229,7 +229,7 @@ function pluginDirectiveLoader(
         elem.append(child);
         setTimeout(() => {
           scope.$applyAsync(() => {
-            scope.$broadcast('component-did-mount');
+            scope.$broadcast(PanelEvents.componentDidMount.name);
           });
         });
       });

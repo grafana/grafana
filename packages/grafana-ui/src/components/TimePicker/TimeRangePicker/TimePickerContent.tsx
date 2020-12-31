@@ -192,14 +192,14 @@ export const TimePickerContent: React.FC<Props> = props => {
 };
 
 const NarrowScreenForm: React.FC<FormProps> = props => {
-  if (!props.visible) {
-    return null;
-  }
-
   const theme = useTheme();
   const styles = getNarrowScreenStyles(theme);
   const isAbsolute = isDateTime(props.value.raw.from) || isDateTime(props.value.raw.to);
   const [collapsed, setCollapsed] = useState(isAbsolute);
+
+  if (!props.visible) {
+    return null;
+  }
 
   return (
     <>
@@ -238,12 +238,12 @@ const NarrowScreenForm: React.FC<FormProps> = props => {
 };
 
 const FullScreenForm: React.FC<FormProps> = props => {
+  const theme = useTheme();
+  const styles = getFullScreenStyles(theme);
+
   if (!props.visible) {
     return null;
   }
-
-  const theme = useTheme();
-  const styles = getFullScreenStyles(theme);
 
   return (
     <>
@@ -283,8 +283,8 @@ const EmptyRecentList = memo(() => {
     <div className={styles.container}>
       <div>
         <span>
-          It looks like you haven't used this timer picker before. As soon as you enter some time intervals, recently
-          used intervals will appear here.
+          It looks like you haven&apos;t used this timer picker before. As soon as you enter some time intervals,
+          recently used intervals will appear here.
         </span>
       </div>
       <div>
@@ -307,3 +307,5 @@ function mapToHistoryOptions(ranges?: TimeRange[], timeZone?: TimeZone): TimeOpt
   }
   return ranges.slice(ranges.length - 4).map(range => mapRangeToTimeOption(range, timeZone));
 }
+
+EmptyRecentList.displayName = 'EmptyRecentList';

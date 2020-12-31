@@ -10,9 +10,6 @@ import (
 )
 
 var (
-	NotFound = func() Response {
-		return Error(404, "Not found", nil)
-	}
 	ServerError = func(err error) Response {
 		return Error(500, "Server error", err)
 	}
@@ -20,6 +17,10 @@ var (
 
 type Response interface {
 	WriteTo(ctx *models.ReqContext)
+	// Status gets the response's status.
+	Status() int
+	// Body gets the response's body.
+	Body() []byte
 }
 
 type NormalResponse struct {
@@ -44,6 +45,16 @@ func Wrap(action interface{}) macaron.Handler {
 	}
 }
 
+// Status gets the response's status.
+func (r *NormalResponse) Status() int {
+	return r.status
+}
+
+// Body gets the response's body.
+func (r *NormalResponse) Body() []byte {
+	return r.body
+}
+
 func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 	if r.err != nil {
 		ctx.Logger.Error(r.errMessage, "error", r.err, "remote_addr", ctx.RemoteAddr())
@@ -59,16 +70,12 @@ func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
 	}
 }
 
-func (r *NormalResponse) Cache(ttl string) *NormalResponse {
-	return r.Header("Cache-Control", "public,max-age="+ttl)
-}
-
 func (r *NormalResponse) Header(key, value string) *NormalResponse {
 	r.header.Set(key, value)
 	return r
 }
 
-// Empty create an empty response
+// Empty creates an empty response.
 func Empty(status int) *NormalResponse {
 	return Respond(status, nil)
 }
@@ -85,7 +92,7 @@ func Success(message string) *NormalResponse {
 	return JSON(200, resp)
 }
 
-// Error create a erroneous response
+// Error creates an error response.
 func Error(status int, message string, err error) *NormalResponse {
 	data := make(map[string]interface{})
 
@@ -137,12 +144,26 @@ func Respond(status int, body interface{}) *NormalResponse {
 	}
 }
 
+// RedirectResponse represents a redirect response.
 type RedirectResponse struct {
 	location string
 }
 
+// WriteTo writes to a response.
 func (r *RedirectResponse) WriteTo(ctx *models.ReqContext) {
 	ctx.Redirect(r.location)
+}
+
+// Status gets the response's status.
+// Required to implement api.Response.
+func (*RedirectResponse) Status() int {
+	return http.StatusFound
+}
+
+// Body gets the response's body.
+// Required to implement api.Response.
+func (r *RedirectResponse) Body() []byte {
+	return nil
 }
 
 func Redirect(location string) *RedirectResponse {

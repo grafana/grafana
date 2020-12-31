@@ -3,10 +3,6 @@ title = "White-labeling"
 description = "White-labeling"
 keywords = ["grafana", "white-labeling", "enterprise"]
 aliases = ["/docs/grafana/latest/enterprise/white-labeling/"]
-type = "docs"
-[menu.docs]
-name = "White-labeling"
-parent = "enterprise"
 weight = 700
 +++
 

@@ -1,6 +1,8 @@
 import './dashboard_loaders';
 import './ReactContainer';
 import { applyRouteRegistrationHandlers } from './registry';
+import { contextSrv } from 'app/core/services/context_srv';
+
 // Pages
 import LdapPage from 'app/features/admin/ldap/LdapPage';
 import UserAdminPage from 'app/features/admin/UserAdminPage';
@@ -26,7 +28,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/', {
       template: '<react-container />',
       //@ts-ignore
-      pageClass: 'page-dashboard',
+      pageClass: 'page-explore',
       routeInfo: DashboardRouteInfo.Home,
       reloadOnSearch: false,
       resolve: {
@@ -70,6 +72,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       routeInfo: DashboardRouteInfo.New,
       reloadOnSearch: false,
       resolve: {
+        roles: () => (contextSrv.hasEditPermissionInFolders ? [contextSrv.user.orgRole] : ['Admin']),
         component: importDashboardPage,
       },
     })
@@ -232,6 +235,14 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       resolve: {
         roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
         component: () => SafeDynamicImport(import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
+      },
+    })
+    .when('/sandbox/test', {
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "sandbox" */ 'app/features/sandbox/TestStuffPage')),
       },
     })
     .when('/a/:pluginId/', {
@@ -403,13 +414,6 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
           SafeDynamicImport(import(/* webpackChunkName: "ServerStats" */ 'app/features/admin/ServerStats')),
       },
     })
-    .when('/admin/live', {
-      template: '<react-container />',
-      reloadOnSearch: false,
-      resolve: {
-        component: () => SafeDynamicImport(import(/* webpackChunkName: "LiveAdmin" */ 'app/features/admin/LiveAdmin')),
-      },
-    })
     .when('/admin/ldap', {
       template: '<react-container />',
       reloadOnSearch: false,
@@ -551,6 +555,17 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
             import(/* webpackChunkName: "EditNotificationChannel"*/ 'app/features/alerting/EditNotificationChannelPage')
           ),
       },
+    })
+    .when('/ngalerting', {
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
+          ),
+      },
+      //@ts-ignore
+      pageClass: 'page-alerting',
     })
     .otherwise({
       template: '<react-container />',

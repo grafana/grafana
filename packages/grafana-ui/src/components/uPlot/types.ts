@@ -1,53 +1,14 @@
 import React from 'react';
-import uPlot from 'uplot';
-import { DataFrame, FieldColor, TimeRange, TimeZone } from '@grafana/data';
+import uPlot, { Options, Series, Hooks } from 'uplot';
+import { DataFrame, TimeRange, TimeZone } from '@grafana/data';
+import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
 
-export type NullValuesMode = 'null' | 'connected' | 'asZero';
-
-export enum MicroPlotAxisSide {
-  top = 0,
-  right = 1,
-  bottom = 2,
-  left = 3,
-}
-
-interface AxisConfig {
-  label: string;
-  side: number;
-  grid: boolean;
-  width: number;
-}
-
-interface LineConfig {
-  show: boolean;
-  width: number;
-  color: FieldColor;
-}
-interface PointConfig {
-  show: boolean;
-  radius: number;
-}
-interface BarsConfig {
-  show: boolean;
-}
-interface FillConfig {
-  alpha: number;
-}
-
-export interface GraphCustomFieldConfig {
-  axis: AxisConfig;
-  line: LineConfig;
-  points: PointConfig;
-  bars: BarsConfig;
-  fill: FillConfig;
-  nullValues: NullValuesMode;
-}
-
+export type PlotSeriesConfig = Pick<Options, 'series' | 'scales' | 'axes' | 'cursor'>;
 export type PlotPlugin = {
   id: string;
   /** can mutate provided opts as necessary */
-  opts?: (self: uPlot, opts: uPlot.Options) => void;
-  hooks: uPlot.PluginHooks;
+  opts?: (self: uPlot, opts: Options) => void;
+  hooks: Hooks.ArraysOrFuncs;
 };
 
 export interface PlotPluginProps {
@@ -55,10 +16,21 @@ export interface PlotPluginProps {
 }
 
 export interface PlotProps {
-  data: DataFrame;
-  width: number;
-  height: number;
+  data: AlignedFrameWithGapTest;
   timeRange: TimeRange;
   timeZone: TimeZone;
-  children: React.ReactNode[];
+  width: number;
+  height: number;
+  config: UPlotConfigBuilder;
+  children?: React.ReactElement[];
+}
+
+export abstract class PlotConfigBuilder<P, T> {
+  constructor(public props: P) {}
+  abstract getConfig(): T;
+}
+
+export interface AlignedFrameWithGapTest {
+  frame: DataFrame;
+  isGap: Series.isGap;
 }

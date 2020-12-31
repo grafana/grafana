@@ -123,3 +123,21 @@ export const CustomLabel = () => {
     </SegmentFrame>
   );
 };
+
+export const HtmlAttributes = () => {
+  const [value, setValue] = useState<any>(options[0]);
+  return (
+    <SegmentFrame loadOptions={() => loadOptions(options)}>
+      <SegmentAsync
+        data-testid="segment-async-test"
+        id="segment-async"
+        value={value}
+        loadOptions={() => loadOptions(options)}
+        onChange={item => {
+          setValue(item);
+          action('Segment value changed')(item.value);
+        }}
+      />
+    </SegmentFrame>
+  );
+};

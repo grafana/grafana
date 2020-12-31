@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/oauth2"
 )
 
@@ -36,6 +37,15 @@ type ExternalUserInfo struct {
 	IsDisabled     bool
 }
 
+type LoginInfo struct {
+	AuthModule    string
+	User          *User
+	ExternalUser  ExternalUserInfo
+	LoginUsername string
+	HTTPStatus    int
+	Error         error
+}
+
 // ---------------------
 // COMMANDS
 
@@ -65,15 +75,6 @@ type DeleteAuthInfoCommand struct {
 	UserAuth *UserAuth
 }
 
-type SendLoginLogCommand struct {
-	ReqContext   *ReqContext
-	LogAction    string
-	User         *User
-	ExternalUser *ExternalUserInfo
-	HTTPStatus   int
-	Error        error
-}
-
 // ----------------------
 // QUERIES
 
@@ -84,6 +85,7 @@ type LoginUserQuery struct {
 	User       *User
 	IpAddress  string
 	AuthModule string
+	Cfg        *setting.Cfg
 }
 
 type GetUserByAuthInfoQuery struct {
@@ -119,9 +121,4 @@ type TeamOrgGroupDTO struct {
 type GetTeamsForLDAPGroupCommand struct {
 	Groups []string
 	Result []TeamOrgGroupDTO
-}
-
-type SyncTeamsCommand struct {
-	ExternalUser *ExternalUserInfo
-	User         *User
 }

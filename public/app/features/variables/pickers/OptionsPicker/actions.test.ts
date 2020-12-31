@@ -192,9 +192,9 @@ describe('options picker actions', () => {
         toggleOption({ option: options[1], forceSelect: true, clearOthers }),
         setCurrentVariableValue(toVariablePayload(variable, { option })),
         changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' })),
+        hideOptions(),
         setCurrentVariableValue(toVariablePayload(variable, { option })),
-        updateLocation({ query: { 'var-Constant': ['B'] } }),
-        hideOptions()
+        updateLocation({ query: { 'var-Constant': ['B'] } })
       );
     });
   });
@@ -265,9 +265,9 @@ describe('options picker actions', () => {
       tester.thenDispatchedActionsShouldEqual(
         setCurrentVariableValue(toVariablePayload(variable, { option })),
         changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: '' })),
+        hideOptions(),
         setCurrentVariableValue(toVariablePayload(variable, { option })),
-        updateLocation({ query: { 'var-Constant': [] } }),
-        hideOptions()
+        updateLocation({ query: { 'var-Constant': [] } })
       );
     });
   });
@@ -297,9 +297,9 @@ describe('options picker actions', () => {
       tester.thenDispatchedActionsShouldEqual(
         setCurrentVariableValue(toVariablePayload(variable, { option })),
         changeVariableProp(toVariablePayload(variable, { propName: 'queryValue', propValue: 'C' })),
+        hideOptions(),
         setCurrentVariableValue(toVariablePayload(variable, { option })),
-        updateLocation({ query: { 'var-Constant': [] } }),
-        hideOptions()
+        updateLocation({ query: { 'var-Constant': [] } })
       );
     });
   });

@@ -2,12 +2,7 @@
 title = "Configuration"
 description = "Configuration documentation"
 keywords = ["grafana", "configuration", "documentation"]
-type = "docs"
 aliases = ["/docs/grafana/latest/installation/configuration/"]
-[menu.docs]
-name = "Configuration"
-identifier = "config"
-parent = "admin"
 weight = 300
 +++
 
@@ -16,6 +11,8 @@ weight = 300
 Grafana has a number of configuration options that you can specify in a `.ini` configuration file or specified using environment variables.
 
 > **Note:** You must restart Grafana for any configuration changes to take effect.
+
+To see all settings currently applied to the Grafana server, refer to [View server settings]({{< relref "view-server-settings.md" >}}).
 
 ## Config file locations
 
@@ -89,9 +86,7 @@ export GF_PLUGIN_GRAFANA_IMAGE_RENDERER_RENDERING_IGNORE_HTTPS_ERRORS=true
 
 ## Variable expansion
 
-> Only available in Grafana 7.1+.
-
-> For any changes to `conf/grafana.ini` (or corresponding environment variables) to take effect, you must restart Grafana.
+> **Note:** Only available in Grafana 7.1+.
 
 If any of your options contains the expression `$__<provider>{<argument>}`
 or `${<environment variable>}`, then they will be processed by Grafana's
@@ -163,7 +158,7 @@ How long temporary images in `data` directory should be kept. Defaults to: `24h`
 
 Path to where Grafana stores logs. This path is usually specified via command line in the init.d script or the systemd service file. You can override it in the configuration file or in the default environment variable file. However, please note that by overriding this the default log path will be used temporarily until Grafana has fully initialized/started.
 
-Override log path using the command line argument `cfg:default.paths.log`:
+Override log path using the command line argument `cfg:default.paths.logs`:
 
 ```bash
 ./grafana-server --config /custom/config.ini --homepath /custom/homepath cfg:default.paths.logs=/custom/path
@@ -173,13 +168,13 @@ Override log path using the command line argument `cfg:default.paths.log`:
 
 ### plugins
 
-Directory where Grafana automatically scans and looks for plugins. Manually or automatically install any plugins here.
+Directory where Grafana automatically scans and looks for plugins. Manually or automatically install any [plugins](https://grafana.com/docs/grafana/latest/plugins/installation/) here.
 
 **macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
 
 ### provisioning
 
-Folder that contains [provisioning]({{< relref "provisioning.md" >}}) config files that grafana will apply on startup. Dashboards will be reloaded when the json files changes
+Folder that contains [provisioning]({{< relref "provisioning.md" >}}) config files that Grafana will apply on startup. Dashboards will be reloaded when the json files changes.
 
 <hr />
 
@@ -389,6 +384,26 @@ How long the data proxy should wait before timing out. Default is 30 seconds.
 
 This setting also applies to core backend HTTP data sources where query requests use an HTTP client with timeout set.
 
+### keep_alive_seconds
+
+Interval between keep-alive probes. Default is `30` seconds. For more details check the [Dialer.KeepAlive](https://golang.org/pkg/net/#Dialer.KeepAlive) documentation.
+
+### tls_handshake_timeout_seconds
+
+The length of time that Grafana will wait for a successful TLS handshake with the datasource. Default is `10` seconds. For more details check the [Transport.TLSHandshakeTimeout](https://golang.org/pkg/net/http/#Transport.TLSHandshakeTimeout) documentation.
+
+### expect_continue_timeout_seconds
+
+The length of time that Grafana will wait for a datasource’s first response headers after fully writing the request headers, if the request has an “Expect: 100-continue” header. A value of `0` will result in the body being sent immediately. Default is `1` second. For more details check the [Transport.ExpectContinueTimeout](https://golang.org/pkg/net/http/#Transport.ExpectContinueTimeout) documentation.
+
+### max_idle_connections
+
+The maximum number of idle connections that Grafana will maintain. Default is `100`. For more details check the [Transport.MaxIdleConns](https://golang.org/pkg/net/http/#Transport.MaxIdleConns) documentation.
+
+### idle_conn_timeout_seconds
+
+The length of time that Grafana maintains idle connections before closing them. Default is `90` seconds. For more details check the [Transport.IdleConnTimeout](https://golang.org/pkg/net/http/#Transport.IdleConnTimeout) documentation.
+
 ### send_user_header
 
 If enabled and user is not anonymous, data proxy will add X-Grafana-User header with username into the request. Default is `false`.
@@ -529,8 +544,10 @@ Number dashboard versions to keep (per dashboard). Default: `20`, Minimum: `1`.
 
 > Only available in Grafana v6.7+.
 
-This prevents users from setting the dashboard refresh interval of a lower than given interval. Per default this is 5 seconds.
+This feature prevents users from setting the dashboard refresh interval to a lower value than a given interval value. The default interval value is 5 seconds.
 The interval string is a possibly signed sequence of decimal numbers, followed by a unit suffix (ms, s, m, h, d), e.g. `30s` or `1m`.
+
+As of Grafana v7.3, this also limits the refresh interval options in Explore.
 
 ### default_home_dashboard_path
 
@@ -593,13 +610,18 @@ If you manage users externally you can replace the user invite button for organi
 
 ### viewers_can_edit
 
-Viewers can edit/inspect dashboard settings in the browser, but not save the dashboard.
-Default is `false`.
+Viewers can access and use [Explore]({{< relref "../explore/_index.md" >}}) and perform temporary edits on panels in dashboards they have access to. They cannot save their changes. Default is `false`.
 
 ### editors_can_admin
 
 Editors can administrate dashboards, folders and teams they create.
 Default is `false`.
+
+### user_invite_max_lifetime_duration
+
+The duration in time a user invitation remains valid before expiring.
+This setting should be expressed as a duration. Examples: 6h (hours), 2d (days), 1w (week).
+Default is `24h` (24 hours). The minimum supported duration is `15m` (15 minutes).
 
 <hr>
 
@@ -648,6 +670,12 @@ Administrators can increase this if they experience OAuth login state mismatch e
 ### api_key_max_seconds_to_live
 
 Limit of API key seconds to live before expiration. Default is -1 (unlimited).
+
+### sigv4_auth_enabled
+
+> Only available in Grafana 7.3+.
+
+Set to `true` to enable the AWS Signature Version 4 Authentication option for HTTP-based datasources. Default is `false`.
 
 <hr />
 
@@ -853,6 +881,8 @@ Enable daily rotation of files, valid options are `false` or `true`. Default is 
 
 Maximum number of days to keep log files. Default is `7`.
 
+<hr>
+
 ## [log.syslog]
 
 Only applicable when "syslog" used in `[log]` mode.
@@ -876,6 +906,36 @@ Syslog facility. Valid options are user, daemon or local0 through local7. Defaul
 ### tag
 
 Syslog tag. By default, the process's `argv[0]` is used.
+
+<hr>
+
+## [log.frontend]
+
+**Note:** This feature is available in Grafana 7.4+.
+
+### enabled
+
+Sentry javascript agent is initialized. Default is `false`.
+
+### sentry_dsn
+
+Sentry DSN if you want to send events to Sentry
+
+### custom_endpoint
+
+Custom HTTP endpoint to send events captured by the Sentry agent to. Default, `/log`, will log the events to stdout.
+
+### sample_rate
+
+Rate of events to be reported between `0` (none) and `1` (all, default), float.
+
+### log_endpoint_requests_per_second_limit
+
+Requests per second limit enforced per an extended period, for Grafana backend log ingestion endpoint, `/log`. Default is `3`.
+
+### log_endpoint_burst_limit
+
+Maximum requests accepted per short interval of time for Grafana backend log ingestion endpoint, `/log`. Default is `15`.
 
 <hr>
 
@@ -931,7 +991,7 @@ Sets a global limit on number of users that can be logged in at one time. Defaul
 
 ## [alerting]
 
-For more information about the Alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/alerts-overview.md" >}}).
+For more information about the Alerting feature in Grafana, refer to [Alerts overview]({{< relref "../alerting/_index.md" >}}).
 
 ### enabled
 
@@ -1041,6 +1101,15 @@ If both are set, then basic authentication is required to access the metrics end
 
 <hr>
 
+## [metrics.environment_info]
+
+Adds dimensions to the `grafana_environment_info` metric, which can expose more information about the Grafana instance.
+
+```
+; exampleLabel1 = exampleValue1
+; exampleLabel2 = exampleValue2
+```
+
 ## [metrics.graphite]
 
 Use these options if you want to send internal Grafana metrics to Graphite.
@@ -1115,6 +1184,10 @@ This is the sampler configuration parameter. Depending on the value of `sampler_
   is received from the mothership
 
 May be set with the environment variable `JAEGER_SAMPLER_PARAM`.
+
+### sampling_server_url
+
+sampling_server_url is the URL of a sampling manager providing a sampling strategy.
 
 ### zipkin_propagation
 
@@ -1293,6 +1366,10 @@ Set to `true` if you want to test alpha plugins that are not yet ready for gener
 
 Enter a comma-separated list of plugin identifiers to identify plugins that are allowed to be loaded even if they lack a valid signature.
 
+### marketplace_url
+
+Custom install/learn more url for enterprise plugins. Defaults to https://grafana.com/grafana/plugins/.
+
 <hr>
 
 ## [plugin.grafana-image-renderer]
@@ -1391,7 +1468,7 @@ For more information about Grafana Enterprise, refer to [Grafana Enterprise]({{<
 
 ### enable
 
-Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`
+Keys of alpha features to enable, separated by space. Available alpha features are: `transformations`,`ngalert`
 
 ## [date_formats]
 

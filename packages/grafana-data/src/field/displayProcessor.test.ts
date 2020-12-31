@@ -1,10 +1,7 @@
-import { getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
+import { getDecimalsForValue, getDisplayProcessor, getRawDisplayProcessor } from './displayProcessor';
 import { DisplayProcessor, DisplayValue } from '../types/displayValue';
 import { MappingType, ValueMapping } from '../types/valueMapping';
-import { Field, FieldConfig, FieldType, GrafanaTheme, Threshold, ThresholdsMode } from '../types';
-import { getScaleCalculator, sortThresholds } from './scale';
-import { ArrayVector } from '../vector';
-import { validateFieldConfig } from './fieldOverrides';
+import { FieldConfig, FieldType, ThresholdsMode } from '../types';
 import { systemDateFormats } from '../datetime';
 
 function getDisplayProcessorFromConfig(config: FieldConfig) {
@@ -16,24 +13,11 @@ function getDisplayProcessorFromConfig(config: FieldConfig) {
   });
 }
 
-function getColorFromThreshold(value: number, steps: Threshold[], theme?: GrafanaTheme): string {
-  const field: Field = {
-    name: 'test',
-    config: { thresholds: { mode: ThresholdsMode.Absolute, steps: sortThresholds(steps) } },
-    type: FieldType.number,
-    values: new ArrayVector([]),
-  };
-  validateFieldConfig(field.config!);
-  const calc = getScaleCalculator(field, theme);
-  return calc(value).color!;
-}
-
 function assertSame(input: any, processors: DisplayProcessor[], match: DisplayValue) {
   processors.forEach(processor => {
     const value = processor(input);
-    expect(value.text).toEqual(match.text);
-    if (match.hasOwnProperty('numeric')) {
-      expect(value.numeric).toEqual(match.numeric);
+    for (const key of Object.keys(match)) {
+      expect((value as any)[key]).toEqual((match as any)[key]);
     }
   });
 }
@@ -42,7 +26,7 @@ describe('Process simple display values', () => {
   // Don't test float values here since the decimal formatting changes
   const processors = [
     // Without options, this shortcuts to a much easier implementation
-    getDisplayProcessor(),
+    getDisplayProcessor({ field: { config: {} } }),
 
     // Add a simple option that is not used (uses a different base class)
     getDisplayProcessorFromConfig({ min: 0, max: 100 }),
@@ -104,28 +88,24 @@ describe('Process simple display values', () => {
   });
 });
 
-describe('Get color from threshold', () => {
-  it('should get first threshold color when only one threshold', () => {
-    const thresholds = [{ index: 0, value: -Infinity, color: '#7EB26D' }];
-    expect(getColorFromThreshold(49, thresholds)).toEqual('#7EB26D');
-  });
+describe('Process null values', () => {
+  const processors = [
+    getDisplayProcessorFromConfig({
+      min: 0,
+      max: 100,
+      thresholds: {
+        mode: ThresholdsMode.Absolute,
+        steps: [
+          { value: -Infinity, color: '#000' },
+          { value: 0, color: '#100' },
+          { value: 100, color: '#200' },
+        ],
+      },
+    }),
+  ];
 
-  it('should get the threshold color if value is same as a threshold', () => {
-    const thresholds = [
-      { index: 2, value: 75, color: '#6ED0E0' },
-      { index: 1, value: 50, color: '#EAB839' },
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-    ];
-    expect(getColorFromThreshold(50, thresholds)).toEqual('#EAB839');
-  });
-
-  it('should get the nearest threshold color between thresholds', () => {
-    const thresholds = [
-      { index: 2, value: 75, color: '#6ED0E0' },
-      { index: 1, value: 50, color: '#EAB839' },
-      { index: 0, value: -Infinity, color: '#7EB26D' },
-    ];
-    expect(getColorFromThreshold(55, thresholds)).toEqual('#EAB839');
+  it('Null should get -Infinity (base) color', () => {
+    assertSame(null, processors, { text: '', numeric: NaN, color: '#000' });
   });
 });
 
@@ -316,6 +296,7 @@ describe('Date display options', () => {
       timeZone: 'utc',
       field: {
         type: FieldType.time,
+        config: {},
       },
     });
 
@@ -366,5 +347,23 @@ describe('getRawDisplayProcessor', () => {
     const result = processor(value);
 
     expect(result).toEqual({ text: expected, numeric: null });
+  });
+});
+
+describe('getDecimalsForValue', () => {
+  it.each`
+    value                   | expected
+    ${0}                    | ${0}
+    ${13.37}                | ${0}
+    ${-13.37}               | ${0}
+    ${12679.3712345811212}  | ${0}
+    ${-12679.3712345811212} | ${0}
+    ${0.3712345}            | ${2}
+    ${-0.37123458}          | ${2}
+    ${-0.04671994403853774} | ${3}
+    ${0.04671994403853774}  | ${3}
+  `('should return correct suggested decimal count', ({ value, expected }) => {
+    const result = getDecimalsForValue(value);
+    expect(result.decimals).toEqual(expected);
   });
 });

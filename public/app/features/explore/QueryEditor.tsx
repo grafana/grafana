@@ -5,9 +5,7 @@ import React, { PureComponent } from 'react';
 import { getAngularLoader, AngularComponent } from '@grafana/runtime';
 
 // Types
-import { Emitter } from 'app/core/utils/emitter';
-import { DataQuery } from '@grafana/data';
-import { TimeRange } from '@grafana/data';
+import { DataQuery, TimeRange, EventBusExtended } from '@grafana/data';
 import 'app/features/plugins/plugin_loader';
 
 interface QueryEditorProps {
@@ -16,7 +14,7 @@ interface QueryEditorProps {
   onExecuteQuery?: () => void;
   onQueryChange?: (value: DataQuery) => void;
   initialQuery: DataQuery;
-  exploreEvents: Emitter;
+  exploreEvents: EventBusExtended;
   range: TimeRange;
   textEditModeEnabled?: boolean;
 }

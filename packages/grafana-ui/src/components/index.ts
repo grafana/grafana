@@ -13,7 +13,7 @@ export { ClipboardButton } from './ClipboardButton/ClipboardButton';
 export { Cascader, CascaderOption } from './Cascader/Cascader';
 export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 
-export { LoadingPlaceholder } from './LoadingPlaceholder/LoadingPlaceholder';
+export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
 export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
@@ -22,14 +22,14 @@ export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { PieChart, PieChartType } from './PieChart/PieChart';
 export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
-export { RefreshPicker } from './RefreshPicker/RefreshPicker';
+export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
 export { TimeRangePicker } from './TimePicker/TimeRangePicker';
 export { TimeOfDayPicker } from './TimePicker/TimeOfDayPicker';
 export { TimeZonePicker } from './TimePicker/TimeZonePicker';
 export { List } from './List/List';
 export { TagsInput } from './TagsInput/TagsInput';
 export { Pagination } from './Pagination/Pagination';
-export { Tag } from './Tags/Tag';
+export { Tag, OnTagClick } from './Tags/Tag';
 export { TagList } from './Tags/TagList';
 export { FilterPill } from './FilterPill/FilterPill';
 
@@ -63,29 +63,21 @@ export { Counter } from './Tabs/Counter';
 export {
   BigValue,
   BigValueColorMode,
-  BigValueSparkline,
   BigValueGraphMode,
   BigValueJustifyMode,
   BigValueTextMode,
 } from './BigValue/BigValue';
 
-export { GraphCustomFieldConfig } from './uPlot/types';
-export { UPlotChart } from './uPlot/Plot';
-export * from './uPlot/geometries';
-export { usePlotConfigContext } from './uPlot/context';
-export { Canvas } from './uPlot/Canvas';
-export * from './uPlot/plugins';
-export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';
-
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
 export { GraphLegend } from './Graph/GraphLegend';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
-export { GraphContextMenu } from './Graph/GraphContextMenu';
+export { GraphContextMenu, GraphContextMenuHeader } from './Graph/GraphContextMenu';
 export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
 export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
+export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
 
 export {
   LegendOptions,
@@ -103,6 +95,7 @@ export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesTo
 export { Collapse, ControlledCollapse } from './Collapse/Collapse';
 export { CollapsableSection } from './Collapse/CollapsableSection';
 export { LogLabels } from './Logs/LogLabels';
+export { LogMessageAnsi } from './Logs/LogMessageAnsi';
 export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
 export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
@@ -111,7 +104,9 @@ export { FullWidthButtonContainer } from './Button/FullWidthButtonContainer';
 export { ClickOutsideWrapper } from './ClickOutsideWrapper/ClickOutsideWrapper';
 export * from './SingleStatShared/index';
 export { CallToActionCard } from './CallToActionCard/CallToActionCard';
-export { ContextMenu, ContextMenuItem, ContextMenuGroup, ContextMenuProps } from './ContextMenu/ContextMenu';
+export { ContextMenu, ContextMenuProps } from './ContextMenu/ContextMenu';
+export { Menu, MenuItem, MenuItemsGroup } from './Menu/Menu';
+export { WithContextMenu } from './ContextMenu/WithContextMenu';
 export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
@@ -133,11 +128,13 @@ export { default as Chart } from './Chart';
 export { TooltipContainer } from './Chart/TooltipContainer';
 export { Drawer } from './Drawer/Drawer';
 export { Slider } from './Slider/Slider';
+export { RangeSlider } from './Slider/RangeSlider';
 
 // TODO: namespace!!
 export { StringValueEditor } from './OptionsUI/string';
 export { StringArrayEditor } from './OptionsUI/strings';
 export { NumberValueEditor } from './OptionsUI/number';
+export { SliderValueEditor } from './OptionsUI/slider';
 export { SelectValueEditor } from './OptionsUI/select';
 export { FieldConfigItemHeaderTitle } from './FieldConfigs/FieldConfigItemHeaderTitle';
 
@@ -155,8 +152,10 @@ export { Legend } from './Forms/Legend';
 export { FieldSet } from './Forms/FieldSet';
 export { FieldValidationMessage } from './Forms/FieldValidationMessage';
 export { InlineField } from './Forms/InlineField';
+export { InlineSegmentGroup } from './Forms/InlineSegmentGroup';
 export { InlineLabel } from './Forms/InlineLabel';
 export { InlineFieldRow } from './Forms/InlineFieldRow';
+export { FieldArray } from './Forms/FieldArray';
 
 export { default as resetSelectStyles } from './Select/resetSelectStyles';
 export * from './Select/Select';
@@ -175,7 +174,9 @@ export { Checkbox } from './Forms/Checkbox';
 export { TextArea } from './TextArea/TextArea';
 export { FileUpload } from './FileUpload/FileUpload';
 export { TimeRangeInput } from './TimePicker/TimeRangeInput';
+export { Card, Props as CardProps, ContainerProps, CardInnerProps, getCardStyles } from './Card/Card';
 
+export { FormattedValueDisplay } from './FormattedValueDisplay/FormattedValueDisplay';
 // Legacy forms
 
 // Export this until we've figured out a good approach to inline form styles.
@@ -206,3 +207,12 @@ const LegacyForms = {
   Switch,
 };
 export { LegacyForms, LegacyInputStatus };
+
+// WIP, need renames and exports cleanup
+export * from './uPlot/config';
+export { UPlotChart } from './uPlot/Plot';
+export * from './uPlot/geometries';
+export * from './uPlot/plugins';
+export { useRefreshAfterGraphRendered } from './uPlot/hooks';
+export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';
+export { GraphNG } from './GraphNG/GraphNG';

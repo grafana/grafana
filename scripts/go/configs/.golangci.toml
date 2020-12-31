@@ -8,6 +8,14 @@ min-confidence = 3
 min-len = 5
 min-occurrences = 5
 
+[linters-settings.exhaustive]
+default-signifies-exhaustive = true
+
+[linters-settings.gocritic]
+enabled-checks = ["ruleguard"]
+[linters-settings.gocritic.settings.ruleguard]
+rules = "pkg/ruleguard.rules.go"
+
 [linters]
 disable-all = true
 enable = [
@@ -32,17 +40,37 @@ enable = [
   "exportloopref",
   "staticcheck",
   "structcheck",
-  # "stylecheck",
+  "stylecheck",
   "typecheck",
   "unconvert",
   "unused",
   "varcheck",
   "whitespace",
   "gocyclo",
+  "exhaustive",
+  "typecheck",
+  "asciicheck",
+  "errorlint",
+  "sqlclosecheck",
 ]
 
 # Disabled linters (might want them later)
 # "unparam"
+
+[issues]
+exclude-use-default = false
+
+# Enable when appropriate
+# Poorly chosen identifier
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1003"
+
+# Enable when appropriate
+# Dot imports that aren't in external test packages are discouraged.
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1001"
 
 [[issues.exclude-rules]]
 linters = ["gosec"]
@@ -83,3 +111,22 @@ text = "404"
 [[issues.exclude-rules]]
 linters = ["misspell"]
 text = "Unknwon` is a misspelling of `Unknown"
+
+[[issues.exclude-rules]]
+linters = ["errorlint"]
+text = "non-wrapping format verb for fmt.Errorf"
+
+# TODO: Enable
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1000"
+
+# TODO: Enable
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1020"
+
+# TODO: Enable
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1021"

@@ -6,4 +6,4 @@ node_modules
 public/vendor/
 vendor/
 data/
-
+e2e/tmp

@@ -1,3 +1,8 @@
+# 7.3.0-beta1 (2020-10-15)
+
+### Features / Enhancements
+* **NamedColors**: Named colors refactors. [#28235](https://github.com/grafana/grafana/pull/28235), [@torkelo](https://github.com/torkelo)
+
 # 7.2.0 (2020-09-23)
 
 ### Features / Enhancements

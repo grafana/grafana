@@ -38,6 +38,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         height={height}
         orientation={orientation}
         field={field}
+        text={options.text}
         display={processor}
         theme={config.theme}
         itemSpacing={this.getItemSpacing()}
@@ -75,7 +76,6 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
       replaceVariables,
       theme: config.theme,
       data: data.series,
-      autoMinMax: true,
       timeZone,
     });
   };

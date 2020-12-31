@@ -11,18 +11,18 @@ import {
   toCSV,
   transformDataFrame,
 } from '@grafana/data';
-import { Button, Container, Field, HorizontalGroup, Icon, Select, Switch, Table, VerticalGroup } from '@grafana/ui';
+import { Button, Container, Field, HorizontalGroup, Spinner, Select, Switch, Table, VerticalGroup } from '@grafana/ui';
+import { CSVConfig } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { getPanelInspectorStyles } from './styles';
 import { config } from 'app/core/config';
 import { saveAs } from 'file-saver';
 import { css } from 'emotion';
-import { GetDataOptions } from '../../state/PanelQueryRunner';
+import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { PanelModel } from 'app/features/dashboard/state';
 import { DetailText } from './DetailText';
-import { getDatasourceSrv } from '../../../plugins/datasource_srv';
 
 interface Props {
   panel: PanelModel;
@@ -39,6 +39,7 @@ interface State {
   dataFrameIndex: number;
   transformationOptions: Array<SelectableValue<DataTransformerID>>;
   transformedData: DataFrame[];
+  downloadForExcel: boolean;
 }
 
 export class InspectDataTab extends PureComponent<Props, State> {
@@ -51,6 +52,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       transformId: DataTransformerID.noop,
       transformationOptions: buildTransformationOptions(),
       transformedData: props.data ?? [],
+      downloadForExcel: false,
     };
   }
 
@@ -82,11 +84,11 @@ export class InspectDataTab extends PureComponent<Props, State> {
     }
   }
 
-  exportCsv = (dataFrame: DataFrame) => {
+  exportCsv = (dataFrame: DataFrame, csvConfig: CSVConfig = {}) => {
     const { panel } = this.props;
     const { transformId } = this.state;
 
-    const dataFrameCsv = toCSV([dataFrame]);
+    const dataFrameCsv = toCSV([dataFrame], csvConfig);
 
     const blob = new Blob([String.fromCharCode(0xfeff), dataFrameCsv], {
       type: 'text/csv;charset=utf-8',
@@ -122,7 +124,6 @@ export class InspectDataTab extends PureComponent<Props, State> {
       replaceVariables: (value: string) => {
         return value;
       },
-      getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid,
     });
   }
 
@@ -154,6 +155,10 @@ export class InspectDataTab extends PureComponent<Props, State> {
       if (options.withFieldConfig) {
         parts.push('Formatted data');
       }
+    }
+
+    if (this.state.downloadForExcel) {
+      parts.push('Excel header');
     }
 
     return parts.join(', ');
@@ -233,6 +238,12 @@ export class InspectDataTab extends PureComponent<Props, State> {
                   />
                 </Field>
               )}
+              <Field label="Download for Excel" description="Adds header to CSV for use with Excel">
+                <Switch
+                  value={this.state.downloadForExcel}
+                  onChange={() => this.setState({ downloadForExcel: !this.state.downloadForExcel })}
+                />
+              </Field>
             </HorizontalGroup>
           </VerticalGroup>
         </div>
@@ -248,7 +259,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
     if (isLoading) {
       return (
         <div>
-          Loading <Icon name="fa fa-spinner" className="fa-spin" size="lg" />
+          <Spinner inline={true} /> Loading
         </div>
       );
     }
@@ -269,7 +280,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
           <div className={styles.dataDisplayOptions}>{this.renderDataOptions(dataFrames)}</div>
           <Button
             variant="primary"
-            onClick={() => this.exportCsv(dataFrames[dataFrameIndex])}
+            onClick={() => this.exportCsv(dataFrames[dataFrameIndex], { useExcelHeader: this.state.downloadForExcel })}
             className={css`
               margin-bottom: 10px;
             `}

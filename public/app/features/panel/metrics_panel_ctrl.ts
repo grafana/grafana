@@ -16,7 +16,7 @@ import {
 } from '@grafana/data';
 import { Unsubscribable } from 'rxjs';
 import { PanelModel } from 'app/features/dashboard/state';
-import { PanelQueryRunner } from '../dashboard/state/PanelQueryRunner';
+import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -80,6 +80,12 @@ class MetricsPanelCtrl extends PanelCtrl {
       if (!_.isArray(data)) {
         data = data.data;
       }
+
+      this.panelData = {
+        state: LoadingState.Done,
+        series: data,
+        timeRange: this.range,
+      };
 
       // Defer panel rendering till the next digest cycle.
       // For some reason snapshot panels don't init at this time, so this helps to avoid rendering issues.

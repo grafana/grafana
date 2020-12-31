@@ -58,7 +58,7 @@ func main() {
 
 		v           = flag.Bool("v", false, "prints current version and exits")
 		profile     = flag.Bool("profile", false, "Turn on pprof profiling")
-		profilePort = flag.Uint("profile-port", 6060, "Define custom port for profiling")
+		profilePort = flag.Uint64("profile-port", 6060, "Define custom port for profiling")
 		tracing     = flag.Bool("tracing", false, "Turn on tracing")
 		tracingFile = flag.String("tracing-file", "trace.out", "Define tracing output file")
 	)
@@ -108,7 +108,11 @@ func main() {
 }
 
 func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnostics *tracingDiagnostics) error {
-	defer log.Close()
+	defer func() {
+		if err := log.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
+		}
+	}()
 
 	if traceDiagnostics.enabled {
 		fmt.Println("diagnostics: tracing enabled", "file", traceDiagnostics.file)
@@ -116,7 +120,11 @@ func executeServer(configFile, homePath, pidFile, packaging string, traceDiagnos
 		if err != nil {
 			panic(err)
 		}
-		defer f.Close()
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Error("Failed to write trace diagnostics", "path", traceDiagnostics.file, "err", err)
+			}
+		}()
 
 		if err := trace.Start(f); err != nil {
 			panic(err)
@@ -179,7 +187,9 @@ func listenToSystemSignals(s *server.Server) {
 	for {
 		select {
 		case <-sighupChan:
-			log.Reload()
+			if err := log.Reload(); err != nil {
+				fmt.Fprintf(os.Stderr, "Failed to reload loggers: %s\n", err)
+			}
 		case sig := <-signalChan:
 			s.Shutdown(fmt.Sprintf("System signal: %s", sig))
 		}

@@ -51,6 +51,7 @@ export type TraceSpanData = {
   traceID: string;
   processID: string;
   operationName: string;
+  // Times are in microseconds
   startTime: number;
   duration: number;
   logs: TraceLog[];
@@ -77,6 +78,10 @@ export type TraceData = {
   processes: Record<string, TraceProcess>;
   traceID: string;
   warnings?: string[] | null;
+};
+
+export type TraceViewData = TraceData & {
+  spans: TraceSpanData[];
 };
 
 export type Trace = TraceData & {

@@ -5,7 +5,6 @@ import { variableRegex } from '../variables/utils';
 import { isAdHoc } from '../variables/guard';
 import { VariableModel } from '../variables/types';
 import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
-import { variableAdapters } from '../variables/adapters';
 import { formatRegistry, FormatOptions } from './formatRegistry';
 import { ALL_VARIABLE_TEXT } from '../variables/state/types';
 
@@ -112,6 +111,15 @@ export class TemplateSrv implements BaseTemplateSrv {
     // for some scopedVars there is no variable
     variable = variable || {};
 
+    if (value === null || value === undefined) {
+      return '';
+    }
+
+    // if it's an object transform value to string
+    if (!Array.isArray(value) && typeof value === 'object') {
+      value = `${value}`;
+    }
+
     if (typeof format === 'function') {
       return format(value, variable, this.formatValue);
     }
@@ -129,9 +137,11 @@ export class TemplateSrv implements BaseTemplateSrv {
       args = [];
     }
 
-    const formatItem = formatRegistry.getIfExists(format);
+    let formatItem = formatRegistry.getIfExists(format);
+
     if (!formatItem) {
-      throw new Error(`Variable format ${format} not found`);
+      console.error(`Variable format ${format} not found. Using glob format as fallback.`);
+      formatItem = formatRegistry.get('glob');
     }
 
     const options: FormatOptions = { value, args, text: text ?? value };
@@ -299,22 +309,6 @@ export class TemplateSrv implements BaseTemplateSrv {
     deprecationWarning('template_srv.ts', 'replaceWithText()', 'replace(), and specify the :text format');
     return this.replace(target, scopedVars, 'text');
   }
-
-  fillVariableValuesForUrl = (params: any, scopedVars?: ScopedVars) => {
-    _.each(this.getVariables(), variable => {
-      if (scopedVars && scopedVars[variable.name] !== void 0) {
-        if (scopedVars[variable.name].skipUrlSync) {
-          return;
-        }
-        params['var-' + variable.name] = scopedVars[variable.name].value;
-      } else {
-        if (variable.skipUrlSync) {
-          return;
-        }
-        params['var-' + variable.name] = variableAdapters.get(variable.type).getValueForUrl(variable);
-      }
-    });
-  };
 
   private getVariableAtIndex(name: string) {
     if (!name) {

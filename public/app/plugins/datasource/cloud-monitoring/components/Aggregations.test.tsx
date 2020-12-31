@@ -16,7 +16,9 @@ const props: Props = {
   } as any,
   crossSeriesReducer: '',
   groupBys: [],
-  children: renderProps => <div />,
+  children(renderProps) {
+    return <div />;
+  },
   templateVariableOptions: [],
 };
 
@@ -62,7 +64,7 @@ describe('Aggregations', () => {
         const { options } = wrapper.find(Segment).props() as any;
         const [, aggGroup] = options;
 
-        expect(aggGroup.options.length).toEqual(10);
+        expect(aggGroup.options.length).toEqual(11);
         expect(aggGroup.options.map((o: any) => o.value)).toEqual(expect.arrayContaining(['REDUCE_NONE']));
       });
     });

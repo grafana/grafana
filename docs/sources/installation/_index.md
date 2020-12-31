@@ -2,11 +2,7 @@
 title = "Installation"
 description = "Installation guide for Grafana"
 keywords = ["grafana", "installation", "documentation"]
-type = "docs"
 aliases = ["/docs/grafana/latest/installation/installation/", "/docs/grafana/v2.1/installation/install/", "/docs/grafana/latest/install"]
-[menu.docs]
-name = "Installation"
-identifier = "installation"
 weight = 30
 +++
 
@@ -20,3 +16,4 @@ This section discusses the hardware and software requirements as well as the pro
 - [Install on macOS]({{< relref "mac" >}})
 - [Install on Windows]({{< relref "windows" >}})
 - [Run Docker image]({{< relref "docker" >}})
+

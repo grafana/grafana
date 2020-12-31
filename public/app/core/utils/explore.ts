@@ -12,7 +12,6 @@ import {
   DefaultTimeZone,
   HistoryItem,
   IntervalValues,
-  LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
   RawTimeRange,
@@ -23,6 +22,8 @@ import {
   urlUtil,
   ExploreUrlState,
   rangeUtil,
+  DateTime,
+  isDateTime,
 } from '@grafana/data';
 import store from 'app/core/store';
 import { v4 as uuidv4 } from 'uuid';
@@ -192,7 +193,7 @@ export const safeParseJson = (text?: string): any | undefined => {
   }
 
   try {
-    return JSON.parse(decodeURI(text));
+    return JSON.parse(text);
   } catch (error) {
     console.error(error);
   }
@@ -241,7 +242,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const queries = parsedSegments.filter(segment => !isSegment(segment, 'ui', 'originPanelId'));
+  const queries = parsedSegments.filter(segment => !isSegment(segment, 'ui', 'originPanelId', 'mode'));
 
   const originPanelId = parsedSegments.filter(segment => isSegment(segment, 'originPanelId'))[0];
   return { datasource, queries, range, originPanelId };
@@ -355,9 +356,13 @@ export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRa
   };
 };
 
-const parseRawTime = (value: any): TimeFragment | null => {
+const parseRawTime = (value: string | DateTime): TimeFragment | null => {
   if (value === null) {
     return null;
+  }
+
+  if (isDateTime(value)) {
+    return value;
   }
 
   if (value.indexOf('now') !== -1) {
@@ -374,9 +379,16 @@ const parseRawTime = (value: any): TimeFragment | null => {
     return toUtc(value, 'YYYY-MM-DD HH:mm:ss');
   }
 
-  if (!isNaN(value)) {
+  // This should handle cases where value is an epoch time as string
+  if (value.match(/^\d+$/)) {
     const epoch = parseInt(value, 10);
     return toUtc(epoch);
+  }
+
+  // This should handle ISO strings
+  const time = toUtc(value);
+  if (time.isValid()) {
+    return time;
   }
 
   return null;
@@ -473,11 +485,16 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
   return rangeUtil.calculateInterval(range, resolution, lowLimit);
 }
 
-export function deduplicateLogRowsById(rows: LogRowModel[]) {
-  return _.uniqBy(rows, 'uid');
-}
-
 export const getFirstNonQueryRowSpecificError = (queryErrors?: DataQueryError[]): DataQueryError | undefined => {
   const refId = getValueWithRefId(queryErrors);
   return refId ? undefined : getFirstQueryErrorWithoutRefId(queryErrors);
+};
+
+export const copyStringToClipboard = (string: string) => {
+  const el = document.createElement('textarea');
+  el.value = string;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
 };

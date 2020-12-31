@@ -1,4 +1,4 @@
-import * as jestCLI from 'jest-cli';
+import { runCLI } from '@jest/core';
 import { useSpinner } from '../../utils/useSpinner';
 import { loadJestPluginConfig } from '../../../config/jest.plugin.config';
 
@@ -34,7 +34,7 @@ export const testPlugin = ({
     };
 
     // @ts-ignore
-    const runJest = () => jestCLI.runCLI(cliConfig, [process.cwd()]);
+    const runJest = () => runCLI(cliConfig, [process.cwd()]);
 
     if (watch) {
       runJest();

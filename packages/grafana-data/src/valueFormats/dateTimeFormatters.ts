@@ -383,6 +383,24 @@ export function getDateTimeAsLocalFormat() {
   );
 }
 
+export function getDateTimeAsLocalFormatNoDateIfToday() {
+  return toDateTimeValueFormatter(
+    localTimeFormat({
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    }),
+    localTimeFormat({
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+  );
+}
+
 export function dateTimeSystemFormatter(
   value: number,
   decimals: DecimalCount,

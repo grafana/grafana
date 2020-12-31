@@ -12,6 +12,9 @@ interface TooltipPluginProps {
   timeZone: TimeZone;
 }
 
+/**
+ * @alpha
+ */
 export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', timeZone }) => {
   const pluginId = 'PlotTooltip';
   const plotContext = usePlotContext();
@@ -25,7 +28,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
   return (
     <CursorPlugin id={pluginId}>
       {({ focusedSeriesIdx, focusedPointIdx, coords }) => {
-        if (!plotContext || !plotContext.series) {
+        if (!plotContext.getPlotInstance()) {
           return null;
         }
 
@@ -46,7 +49,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
               series={[
                 {
                   // stroke is typed as CanvasRenderingContext2D['strokeStyle'] - we are using strings only for now
-                  color: plotContext.series![focusedSeriesIdx!].stroke as string,
+                  color: plotContext.getSeries()[focusedSeriesIdx!].stroke as string,
                   label: getFieldDisplayName(field, data),
                   value: fieldFmt(field.values.get(focusedPointIdx)).text,
                 },
@@ -70,7 +73,7 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
                   ...agg,
                   {
                     // stroke is typed as CanvasRenderingContext2D['strokeStyle'] - we are using strings only for now
-                    color: plotContext.series![i].stroke as string,
+                    color: plotContext.getSeries()[i].stroke as string,
                     label: getFieldDisplayName(f, data),
                     value: formattedValueToString(f.display!(f.values.get(focusedPointIdx!))),
                     isActive: focusedSeriesIdx === i,

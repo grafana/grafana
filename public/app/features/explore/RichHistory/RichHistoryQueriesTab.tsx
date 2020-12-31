@@ -20,7 +20,7 @@ import {
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
-import { Slider, Select } from '@grafana/ui';
+import { RangeSlider, Select } from '@grafana/ui';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
@@ -186,7 +186,7 @@ export function RichHistoryQueriesTab(props: Props) {
           <div className="label-slider">Filter history</div>
           <div className="label-slider">{mapNumbertoTimeInSlider(timeFilter[0])}</div>
           <div className="slider">
-            <Slider
+            <RangeSlider
               tooltipAlwaysVisible={false}
               min={0}
               max={retentionPeriod}

@@ -29,7 +29,7 @@ e2e.scenario({
       e2e.components.DashboardLinks.link()
         .should('be.visible')
         .and(links => {
-          expect(links).to.have.length(13);
+          expect(links).to.have.length.greaterThan(13);
 
           for (let index = 0; index < links.length; index++) {
             expect(Cypress.$(links[index]).attr('href')).contains(`var-custom=${variableValue}`);
@@ -59,8 +59,7 @@ e2e.scenario({
     e2e.components.DashboardLinks.dropDown()
       .should('be.visible')
       .click()
-      .wait('@tagsTemplatingSearch')
-      .wait('@tagsDemoSearch');
+      .wait('@tagsTemplatingSearch');
 
     // verify all links, should have p2 value
     verifyLinks('p2');

@@ -22,7 +22,7 @@ type ReqContext struct {
 }
 
 // Handle handles and logs error by given status.
-func (ctx *ReqContext) Handle(status int, title string, err error) {
+func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err error) {
 	if err != nil {
 		ctx.Logger.Error(title, "error", err)
 		if setting.Env != setting.Prod {
@@ -31,16 +31,10 @@ func (ctx *ReqContext) Handle(status int, title string, err error) {
 	}
 
 	ctx.Data["Title"] = title
-	ctx.Data["AppSubUrl"] = setting.AppSubUrl
+	ctx.Data["AppSubUrl"] = cfg.AppSubURL
 	ctx.Data["Theme"] = "dark"
 
-	ctx.HTML(status, setting.ErrTemplateName)
-}
-
-func (ctx *ReqContext) JsonOK(message string) {
-	resp := make(map[string]interface{})
-	resp["message"] = message
-	ctx.JSON(200, resp)
+	ctx.HTML(status, cfg.ErrTemplateName)
 }
 
 func (ctx *ReqContext) IsApiRequest() bool {

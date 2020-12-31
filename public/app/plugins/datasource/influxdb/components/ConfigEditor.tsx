@@ -256,7 +256,8 @@ export class ConfigEditor extends PureComponent<Props> {
             <p>
               Setting the database for this datasource does not deny access to other databases. The InfluxDB query
               syntax allows switching the database in the query. For example:
-              <code>SHOW MEASUREMENTS ON _internal</code> or <code>SELECT * FROM "_internal".."database" LIMIT 10</code>
+              <code>SHOW MEASUREMENTS ON _internal</code> or
+              <code>SELECT * FROM &quot;_internal&quot;..&quot;database&quot; LIMIT 10</code>
               <br />
               <br />
               To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
