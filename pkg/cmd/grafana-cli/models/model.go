@@ -38,7 +38,8 @@ type Version struct {
 }
 
 type ArchMeta struct {
-	Md5 string `json:"md5"`
+	Md5    string `json:"md5"`
+	SHA256 string `json:"sha256"`
 }
 
 type PluginRepo struct {
