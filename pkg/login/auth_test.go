@@ -25,7 +25,7 @@ func TestAuthenticateUser(t *testing.T) {
 		require.EqualError(t, err, ErrPasswordEmpty.Error())
 		assert.False(t, sc.grafanaLoginWasCalled)
 		assert.False(t, sc.ldapLoginWasCalled)
-		assert.Equal(t, "", sc.loginUserQuery.AuthModule)
+		assert.Empty(t, sc.loginUserQuery.AuthModule)
 	})
 
 	authScenario(t, "When a user authenticates having too many login attempts", func(sc *authScenarioContext) {
@@ -41,7 +41,7 @@ func TestAuthenticateUser(t *testing.T) {
 		assert.False(t, sc.grafanaLoginWasCalled)
 		assert.False(t, sc.ldapLoginWasCalled)
 		assert.False(t, sc.saveInvalidLoginAttemptWasCalled)
-		assert.Equal(t, "", sc.loginUserQuery.AuthModule)
+		assert.Empty(t, sc.loginUserQuery.AuthModule)
 	})
 
 	authScenario(t, "When grafana user authenticate with valid credentials", func(sc *authScenarioContext) {
@@ -90,7 +90,7 @@ func TestAuthenticateUser(t *testing.T) {
 		assert.True(t, sc.grafanaLoginWasCalled)
 		assert.True(t, sc.ldapLoginWasCalled)
 		assert.False(t, sc.saveInvalidLoginAttemptWasCalled)
-		assert.Equal(t, "", sc.loginUserQuery.AuthModule)
+		assert.Empty(t, sc.loginUserQuery.AuthModule)
 	})
 
 	authScenario(t, "When a non-existing grafana user authenticate and invalid ldap credentials", func(sc *authScenarioContext) {
