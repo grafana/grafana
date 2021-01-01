@@ -130,9 +130,11 @@ func LDAPLoginScenario(t *testing.T, desc string, fn LDAPLoginScenarioFunc) {
 
 		origNewLDAP := newLDAP
 		origGetLDAPConfig := getLDAPConfig
+		origLDAPEnabled := setting.LDAPEnabled
 		t.Cleanup(func() {
 			newLDAP = origNewLDAP
 			getLDAPConfig = origGetLDAPConfig
+			setting.LDAPEnabled = origLDAPEnabled
 		})
 
 		getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
