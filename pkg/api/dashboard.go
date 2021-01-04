@@ -50,7 +50,6 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) Response {
 	slug := c.Params(":slug")
 	uid := c.Params(":uid")
 	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
-
 	if rsp != nil {
 		return rsp
 	}
