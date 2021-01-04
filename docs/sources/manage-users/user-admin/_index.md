@@ -5,12 +5,7 @@ weight = 400
 
 # User account tasks
 
-DFP Note - Some of these tasks currently exist in Change your Grafana preferences
 
-- Change org you are logged into (switch orgs)
-- Change your password - exists in change-your-password.md.
-- View your assigned organizations and roles
-- View your Grafana sessions
 
 ## Edit your Grafana profile
 
@@ -31,7 +26,14 @@ Every user is a member of at least one organization. You can have different role
 1. Scroll down to the Organizations section.
    - **Name -** The name of the organizations you are a member of in that Grafana instance.
    - **Role -** The role you are assigned in the organization. Refer to [Organization roles]({{< relref "../../permissions/organization_roles.md" >}}) about permissions assigned to each role.
-   - **Current -** Grafana tags the organization that you are currently signed in to as _Current_.
+   - **Current -** Grafana tags the organization that you are currently signed in to as _Current_. If you are part of multiple organizations, then you can click **Select** to switch to that organization.
+
+## Change the organization you are signed in to
+
+When you sign in to Grafana, you are always signed in with a particular organization. If you are assigned to multiple organizations, then you might need to switch which organization you are signed in to. For example, if you need to view a dashboard associated with a different org, then you might switch organizations.
+
+1. Hover your cursor over your user icon in the lower left corner of the screen, then click **Switch**.
+1. Next to the organization that you want to sign in to, click **Switch to**.
 
 ## View your Grafana sessions
 
