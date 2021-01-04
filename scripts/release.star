@@ -29,6 +29,7 @@ load(
     'upload_packages_step',
     'notify_pipeline',
     'integration_test_services',
+    'publish_packages_step',
 )
 
 def release_npm_packages_step(edition, ver_mode):
@@ -60,7 +61,7 @@ def get_steps(edition, ver_mode):
     should_upload = should_publish or ver_mode in ('release-branch',)
 
     steps = [
-        lint_backend_step(edition),
+        lint_backend_step(edition=edition),
         codespell_step(),
         shellcheck_step(),
         dashboard_schemas_check(),
@@ -70,7 +71,7 @@ def get_steps(edition, ver_mode):
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
         package_step(edition=edition, ver_mode=ver_mode),
-        e2e_tests_server_step(),
+        e2e_tests_server_step(edition=edition),
         e2e_tests_step(),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         copy_packages_for_docker_step(),
@@ -87,6 +88,19 @@ def get_steps(edition, ver_mode):
             release_npm_packages_step(edition=edition, ver_mode=ver_mode),
         ])
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
+
+    if edition == 'enterprise':
+        build_tags = ['enterprise2']
+        steps.extend([
+            lint_backend_step(edition=edition, build_tags=build_tags),
+            test_backend_step(build_tags=build_tags),
+            build_backend_step(edition=edition, ver_mode=ver_mode, variants=['linux-x64'], build_tags=build_tags),
+            package_step(edition=edition, ver_mode=ver_mode, variants=['linux-x64'], build_tags=build_tags),
+            e2e_tests_server_step(edition=edition, build_tags=build_tags, port=3002),
+            e2e_tests_step(build_tags=build_tags, port=3002),
+        ])
+        if should_upload:
+            steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode, build_tags=build_tags))
 
     return steps, windows_steps
 
@@ -118,38 +132,6 @@ def get_enterprise_pipelines(trigger, ver_mode):
         ),
     ]
 
-def publish_packages_step(edition):
-    return {
-        'name': 'publish-packages-{}'.format(edition),
-        'image': publish_image,
-        'depends_on': [
-            'initialize',
-        ],
-        'environment': {
-            'GRAFANA_COM_API_KEY': {
-                'from_secret': 'grafana_api_key',
-            },
-            'GCP_KEY': {
-                'from_secret': 'gcp_key',
-            },
-            'GPG_PRIV_KEY': {
-                'from_secret': 'gpg_priv_key',
-            },
-            'GPG_PUB_KEY': {
-                'from_secret': 'gpg_pub_key',
-            },
-            'GPG_KEY_PASSWORD': {
-                'from_secret': 'gpg_key_password',
-            },
-        },
-        'commands': [
-            'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
-            './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
-                edition,
-            ),
-        ],
-    }
-
 def release_pipelines(ver_mode='release', trigger=None):
     services = integration_test_services()
     if not trigger:
@@ -169,8 +151,8 @@ def release_pipelines(ver_mode='release', trigger=None):
     if should_publish:
         publish_pipeline = pipeline(
             name='publish-{}'.format(ver_mode), trigger=trigger, edition='oss', steps=[
-                publish_packages_step(edition='oss'),
-                publish_packages_step(edition='enterprise'),
+                publish_packages_step(edition='oss', ver_mode=ver_mode),
+                publish_packages_step(edition='enterprise', ver_mode=ver_mode),
             ], depends_on=[p['name'] for p in oss_pipelines + enterprise_pipelines], install_deps=False,
             ver_mode=ver_mode,
         )
@@ -198,36 +180,8 @@ def test_release_pipelines():
 
     publish_pipeline = pipeline(
         name='publish-{}'.format(ver_mode), trigger=trigger, edition='oss', steps=[
-            {
-                'name': 'publish-packages-oss',
-                'image': publish_image,
-                'depends_on': [
-                    'initialize',
-                ],
-                'environment': {
-                    'GRAFANA_COM_API_KEY': {
-                        'from_secret': 'grafana_api_key',
-                    },
-                },
-                'commands': [
-                    publish_cmd.format('oss'),
-                ],
-            },
-            {
-                'name': 'publish-packages-enterprise',
-                'image': publish_image,
-                'depends_on': [
-                    'initialize',
-                ],
-                'environment': {
-                    'GRAFANA_COM_API_KEY': {
-                        'from_secret': 'grafana_api_key',
-                    },
-                },
-                'commands': [
-                    publish_cmd.format('enterprise'),
-                ],
-            },
+            publish_packages_step(edition='oss', ver_mode=ver_mode),
+            publish_packages_step(edition='enterprise', ver_mode=ver_mode),
         ], depends_on=[p['name'] for p in oss_pipelines + enterprise_pipelines], install_deps=False,
         ver_mode=ver_mode,
     )
