@@ -1,6 +1,7 @@
 import React from 'react';
-import { Checkbox, Button, Tag } from '@grafana/ui';
+import { Checkbox, Button, Tag, ModalsController } from '@grafana/ui';
 import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
+import { RevertDashboardModal } from './RevertDashboardModal';
 
 type VersionsTableProps = {
   versions: DecoratedRevisionModel[];
@@ -34,9 +35,23 @@ export const VersionHistoryTable: React.FC<VersionsTableProps> = ({ versions, on
             {idx === 0 ? (
               <Tag name="Latest" colorIndex={17} />
             ) : (
-              <Button variant="secondary" size="sm" icon="history" onClick={() => console.log('restore')}>
-                Restore
-              </Button>
+              <ModalsController>
+                {({ showModal, hideModal }) => (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon="history"
+                    onClick={() => {
+                      showModal(RevertDashboardModal, {
+                        version: version.version,
+                        hideModal,
+                      });
+                    }}
+                  >
+                    Restore
+                  </Button>
+                )}
+              </ModalsController>
             )}
           </td>
         </tr>
