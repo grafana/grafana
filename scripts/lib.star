@@ -1,4 +1,4 @@
-grabpl_version = '0.5.29'
+grabpl_version = '0.5.30'
 build_image = 'grafana/build-container:1.3.0'
 publish_image = 'grafana/grafana-ci-deploy:1.2.7'
 grafana_docker_image = 'grafana/drone-grafana-docker:0.3.2'
@@ -205,9 +205,15 @@ def enterprise_downstream_step(edition):
         },
     }
 
-def lint_backend_step(edition):
+def lint_backend_step(edition, build_tags=None):
+    sfx = ''
+    build_tags_str = ''
+    if build_tags:
+        sfx = '-' + '-'.join(build_tags)
+        build_tags_str += ' --build-tags={}'.format(','.join(build_tags))
+
     return {
-        'name': 'lint-backend',
+        'name': 'lint-backend' + sfx,
         'image': build_image,
         'environment': {
             # We need CGO because of go-sqlite3
@@ -218,12 +224,7 @@ def lint_backend_step(edition):
         ],
         'commands': [
             # Don't use Make since it will re-download the linters
-            'golangci-lint run --config scripts/go/configs/.golangci.toml ./pkg/...',
-            'revive -formatter stylish -config scripts/go/configs/revive.toml ./pkg/...',
-            './scripts/revive-strict',
-            './scripts/tidy-check.sh',
-            './grafana-mixin/scripts/lint.sh',
-            './grafana-mixin/scripts/build.sh',
+            './bin/grabpl lint-backend{}'.format(build_tags_str),
         ],
     }
 
@@ -311,11 +312,16 @@ def publish_storybook_step(edition, ver_mode):
         'commands': commands,
     }
 
-def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
+def build_backend_step(edition, ver_mode, variants=None, is_downstream=False, build_tags=None):
+    variants_str = ''
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
-    else:
-        variants_str = ''
+
+    build_tags_str = ''
+    sfx = ''
+    if build_tags:
+        build_tags_str = ' --build-tags {}'.format(','.join(build_tags))
+        sfx = '-' + '-'.join(build_tags)
 
     # TODO: Convert number of jobs to percentage
     if ver_mode == 'release':
@@ -325,8 +331,8 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
             },
         }
         cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise ${{DRONE_TAG}}'.format(
-                edition,
+            './bin/grabpl build-backend --jobs 8 --edition {}{} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise ${{DRONE_TAG}}'.format(
+                edition, build_tags_str,
             ),
         ]
     elif ver_mode == 'test-release':
@@ -336,8 +342,8 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
             },
         }
         cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise {}'.format(
-                edition, test_release_ver,
+            './bin/grabpl build-backend --jobs 8 --edition {}{} --github-token $${{GITHUB_TOKEN}} --no-pull-enterprise {}'.format(
+                edition, build_tags_str, test_release_ver,
             ),
         ]
     else:
@@ -347,18 +353,18 @@ def build_backend_step(edition, ver_mode, variants=None, is_downstream=False):
             build_no = '$${SOURCE_BUILD_NUMBER}'
         env = {}
         cmds = [
-            './bin/grabpl build-backend --jobs 8 --edition {} --build-id {}{} --no-pull-enterprise'.format(
-                edition, build_no, variants_str,
+            './bin/grabpl build-backend --jobs 8 --edition {}{} --build-id {}{} --no-pull-enterprise'.format(
+                edition, build_tags_str, build_no, variants_str,
             ),
         ]
 
     return {
-        'name': 'build-backend',
+        'name': 'build-backend' + sfx,
         'image': build_image,
         'depends_on': [
             'initialize',
-            'lint-backend',
-            'test-backend',
+            'lint-backend' + sfx,
+            'test-backend' + sfx,
         ],
         'environment': env,
         'commands': cmds,
@@ -434,21 +440,27 @@ def build_plugins_step(edition, sign=False):
         ],
     }
 
-def test_backend_step():
+def test_backend_step(build_tags=None):
+    sfx = ''
+    build_tags_str = ''
+    if build_tags:
+        sfx = '-' + '-'.join(build_tags)
+        build_tags_str = ' --build-tags {}'.format(','.join(build_tags))
+
     return {
-        'name': 'test-backend',
+        'name': 'test-backend' + sfx,
         'image': build_image,
         'depends_on': [
             'initialize',
-            'lint-backend',
+            'lint-backend' + sfx,
         ],
         'commands': [
             # First make sure that there are no tests with FocusConvey
             '[ $(grep FocusConvey -R pkg | wc -l) -eq "0" ] || exit 1',
             # Then execute non-integration tests in parallel, since it should be safe
-            './bin/grabpl test-backend',
+            './bin/grabpl test-backend{}'.format(build_tags_str),
             # Then execute integration tests in serial
-            './bin/grabpl integration-tests',
+            './bin/grabpl integration-tests{}'.format(build_tags_str),
         ],
     }
 
@@ -527,11 +539,17 @@ def dashboard_schemas_check():
         ],
     }
 
-def package_step(edition, ver_mode, variants=None, is_downstream=False):
+def package_step(edition, ver_mode, variants=None, is_downstream=False, build_tags=None):
+    variants_str = ''
     if variants:
         variants_str = ' --variants {}'.format(','.join(variants))
-    else:
-        variants_str = ''
+
+    build_tags_str = ''
+    sfx = ''
+    if build_tags:
+        build_tags_str = ' --build-tags {}'.format(','.join(build_tags))
+        sfx = '-' + '-'.join(build_tags)
+
     if ver_mode in ('master', 'release', 'test-release', 'release-branch'):
         sign_args = ' --sign'
         env = {
@@ -560,14 +578,14 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
     # TODO: Use percentage for jobs
     if ver_mode == 'release':
         cmds = [
-            '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
+            '{}./bin/grabpl package --jobs 8 --edition {}{} '.format(test_args, edition, build_tags_str) + \
                 '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} ${{DRONE_TAG}}'.format(
                     sign_args
                 ),
         ]
     elif ver_mode == 'test-release':
         cmds = [
-            '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
+            '{}./bin/grabpl package --jobs 8 --edition {}{} '.format(test_args, edition, build_tags_str) + \
                 '--github-token $${{GITHUB_TOKEN}} --no-pull-enterprise{} {}'.format(
                     sign_args, test_release_ver,
                 ),
@@ -578,18 +596,18 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
         else:
             build_no = '$${SOURCE_BUILD_NUMBER}'
         cmds = [
-            '{}./bin/grabpl package --jobs 8 --edition {} '.format(test_args, edition) + \
+            '{}./bin/grabpl package --jobs 8 --edition {}{} '.format(test_args, edition, build_tags_str) + \
                 '--build-id {} --no-pull-enterprise{}{}'.format(build_no, variants_str, sign_args),
         ]
 
     return {
-        'name': 'package',
+        'name': 'package' + sfx,
         'image': build_image,
         'depends_on': [
-            'build-backend',
+            'build-backend' + sfx,
             'build-frontend',
             'build-plugins',
-            'test-backend',
+            'test-backend' + sfx,
             'test-frontend',
             'codespell',
             'shellcheck',
@@ -599,34 +617,54 @@ def package_step(edition, ver_mode, variants=None, is_downstream=False):
         'commands': cmds,
     }
 
-def e2e_tests_server_step():
+def e2e_tests_server_step(edition, build_tags=None, port=3001):
+    sfx = ''
+    package_file_pfx = ''
+    if build_tags:
+        sfx = '-' + '-'.join(build_tags)
+        package_file_pfx = 'grafana' + sfx
+    elif edition == 'enterprise':
+        package_file_pfx = 'grafana-' + edition
+
+    environment = {
+        'PORT': port,
+    }
+    if package_file_pfx:
+        environment['PACKAGE_FILE'] = 'dist/{}-*linux-amd64.tar.gz'.format(package_file_pfx)
+        environment['RUNDIR'] = 'e2e/tmp-{}'.format(package_file_pfx)
+
     return {
-        'name': 'end-to-end-tests-server',
+        'name': 'end-to-end-tests-server' + sfx,
         'image': build_image,
         'detach': True,
         'depends_on': [
-            'package',
+            'package' + sfx,
         ],
+        'environment': environment,
         'commands': [
             './e2e/start-server',
         ],
     }
 
-def e2e_tests_step():
+def e2e_tests_step(build_tags=None, port=3001):
+    sfx = ''
+    if build_tags:
+        sfx = '-' + '-'.join(build_tags)
+
     return {
-        'name': 'end-to-end-tests',
+        'name': 'end-to-end-tests' + sfx,
         'image': 'grafana/ci-e2e:12.19.0-1',
         'depends_on': [
-            'end-to-end-tests-server',
+            'end-to-end-tests-server' + sfx,
         ],
         'environment': {
-            'HOST': 'end-to-end-tests-server',
+            'HOST': 'end-to-end-tests-server' + sfx,
         },
         'commands': [
             # Have to re-install Cypress since it insists on searching for its binary beneath /root/.cache,
             # even though the Yarn cache directory is beneath /usr/local/share somewhere
             './node_modules/.bin/cypress install',
-            './bin/grabpl e2e-tests',
+            './bin/grabpl e2e-tests --port {}'.format(port),
         ],
     }
 
@@ -776,23 +814,30 @@ def deploy_to_kubernetes_step(edition, is_downstream=False):
         ],
     }
 
-def upload_packages_step(edition, ver_mode, is_downstream=False):
+def upload_packages_step(edition, ver_mode, is_downstream=False, build_tags=None):
     if ver_mode == 'master' and edition == 'enterprise' and not is_downstream:
         return None
 
+    build_tags_str = ''
+    sfx = ''
+    packages_bucket = ''
+    if build_tags:
+        build_tags_str = ' --build-tags {}'.format(','.join(build_tags))
+        sfx = '-' + '-'.join(build_tags)
+        packages_bucket = ' --packages-bucket grafana-downloads' + sfx
+
     if ver_mode == 'test-release':
-        cmd = './bin/grabpl upload-packages --edition {} '.format(edition) + \
-            '--deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket ' + \
-            'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo'
+        cmd = './bin/grabpl upload-packages --edition {}{} '.format(edition, build_tags_str) + \
+            '--packages-bucket grafana-downloads-test'
     else:
-        cmd = './bin/grabpl upload-packages --edition {}'.format(edition)
+        cmd = './bin/grabpl upload-packages --edition {}{}{}'.format(edition, build_tags_str, packages_bucket)
 
     return {
-        'name': 'upload-packages',
+        'name': 'upload-packages' + sfx,
         'image': publish_image,
         'depends_on': [
-            'package',
-            'end-to-end-tests',
+            'package' + sfx,
+            'end-to-end-tests' + sfx,
             'mysql-integration-tests',
             'postgres-integration-tests',
         ],
@@ -804,17 +849,30 @@ def upload_packages_step(edition, ver_mode, is_downstream=False):
         'commands': [cmd,],
     }
 
-def publish_packages_step(edition, is_downstream):
-    if edition == 'enterprise' and not is_downstream:
-        return None
-
-    if not is_downstream:
-        build_no = '${DRONE_BUILD_NUMBER}'
+def publish_packages_step(edition, ver_mode, is_downstream=False):
+    if ver_mode == 'test-release':
+        cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json '.format(edition) + \
+            '--deb-db-bucket grafana-testing-aptly-db --deb-repo-bucket grafana-testing-repo --packages-bucket ' + \
+            'grafana-downloads-test --rpm-repo-bucket grafana-testing-repo --simulate-release {}'.format(
+                test_release_ver,
+            )
+    elif ver_mode == 'release':
+        cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json ${{DRONE_TAG}}'.format(
+            edition,
+        )
+    elif ver_mode == 'master':
+        if not is_downstream:
+            build_no = '${DRONE_BUILD_NUMBER}'
+        else:
+            build_no = '$${SOURCE_BUILD_NUMBER}'
+        cmd = './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
+                edition, build_no,
+        )
     else:
-        build_no = '$${SOURCE_BUILD_NUMBER}'
+        fail('Unexpected version mode {}'.format(ver_mode))
 
     return {
-        'name': 'publish-packages',
+        'name': 'publish-packages-{}'.format(edition),
         'image': publish_image,
         'depends_on': [
             'initialize',
@@ -838,9 +896,7 @@ def publish_packages_step(edition, is_downstream):
         },
         'commands': [
             'printenv GCP_KEY | base64 -d > /tmp/gcpkey.json',
-            './bin/grabpl publish-packages --edition {} --gcp-key /tmp/gcpkey.json --build-id {}'.format(
-                edition, build_no,
-            ),
+            cmd,
         ],
     }
 
@@ -879,7 +935,7 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
             ver_part = test_release_ver
             dir = 'release'
             bucket = 'grafana-downloads-test'
-            bucket_part = ' --packages-bucket grafana-downloads-test'
+            bucket_part = ' --packages-bucket {}'.format(bucket)
         else:
             dir = 'master'
             if not is_downstream:

@@ -158,7 +158,7 @@ How long temporary images in `data` directory should be kept. Defaults to: `24h`
 
 Path to where Grafana stores logs. This path is usually specified via command line in the init.d script or the systemd service file. You can override it in the configuration file or in the default environment variable file. However, please note that by overriding this the default log path will be used temporarily until Grafana has fully initialized/started.
 
-Override log path using the command line argument `cfg:default.paths.log`:
+Override log path using the command line argument `cfg:default.paths.logs`:
 
 ```bash
 ./grafana-server --config /custom/config.ini --homepath /custom/homepath cfg:default.paths.logs=/custom/path
