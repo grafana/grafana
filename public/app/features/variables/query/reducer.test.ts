@@ -1,6 +1,6 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
-import { queryVariableReducer, updateVariableOptions, updateVariableTags } from './reducer';
-import { QueryVariableModel } from '../types';
+import { queryVariableReducer, sortVariableValues, updateVariableOptions, updateVariableTags } from './reducer';
+import { QueryVariableModel, VariableSort } from '../types';
 import cloneDeep from 'lodash/cloneDeep';
 import { VariablesState } from '../state/variablesReducer';
 import { getVariableTestContext } from '../state/helpers';
@@ -257,6 +257,28 @@ describe('queryVariableReducer', () => {
           } as unknown) as QueryVariableModel,
         });
     });
+  });
+});
+
+describe('sortVariableValues', () => {
+  describe('when using any sortOrder with an option with null as text', () => {
+    it.each`
+      options                                           | sortOrder                                       | expected
+      ${[{ text: '1' }, { text: null }, { text: '2' }]} | ${VariableSort.disabled}                        | ${[{ text: '1' }, { text: null }, { text: '2' }]}
+      ${[{ text: 'a' }, { text: null }, { text: 'b' }]} | ${VariableSort.alphabeticalAsc}                 | ${[{ text: 'a' }, { text: 'b' }, { text: null }]}
+      ${[{ text: 'a' }, { text: null }, { text: 'b' }]} | ${VariableSort.alphabeticalDesc}                | ${[{ text: null }, { text: 'b' }, { text: 'a' }]}
+      ${[{ text: '1' }, { text: null }, { text: '2' }]} | ${VariableSort.numericalAsc}                    | ${[{ text: null }, { text: '1' }, { text: '2' }]}
+      ${[{ text: '1' }, { text: null }, { text: '2' }]} | ${VariableSort.numericalDesc}                   | ${[{ text: '2' }, { text: '1' }, { text: null }]}
+      ${[{ text: 'a' }, { text: null }, { text: 'b' }]} | ${VariableSort.alphabeticalCaseInsensitiveAsc}  | ${[{ text: null }, { text: 'a' }, { text: 'b' }]}
+      ${[{ text: 'a' }, { text: null }, { text: 'b' }]} | ${VariableSort.alphabeticalCaseInsensitiveDesc} | ${[{ text: 'b' }, { text: 'a' }, { text: null }]}
+    `(
+      'then it should sort the options correctly without throwing (sortOrder:$sortOrder)',
+      ({ options, sortOrder, expected }) => {
+        const result = sortVariableValues(options, sortOrder);
+
+        expect(result).toEqual(expected);
+      }
+    );
   });
 });
 

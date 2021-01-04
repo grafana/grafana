@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -274,15 +273,4 @@ func getOrCreateOrg(sess *DBSession, orgName string) (int64, error) {
 	})
 
 	return org.Id, nil
-}
-
-func createDefaultOrg(ctx context.Context) error {
-	return inTransactionCtx(ctx, func(sess *DBSession) error {
-		_, err := getOrCreateOrg(sess, mainOrgName)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
 }

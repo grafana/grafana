@@ -46,7 +46,7 @@ export class PanelHeaderCorner extends Component<Props> {
     const markdown = panel.description || '';
     const interpolatedMarkdown = getTemplateSrv().replace(markdown, panel.scopedVars);
     const markedInterpolatedMarkdown = renderMarkdown(interpolatedMarkdown);
-    const links = this.props.links && this.props.links.getLinks(panel);
+    const links = this.props.links && this.props.links.getLinks(panel.replaceVariables);
 
     return (
       <div className="panel-info-content markdown-html">

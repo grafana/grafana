@@ -3,6 +3,7 @@
 package sqlstore
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -213,5 +214,76 @@ func TestDataAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, 0, len(query.Result))
+	})
+
+	t.Run("GetDataSource", func(t *testing.T) {
+		t.Run("Number of data sources returned limited to 6 per organization", func(t *testing.T) {
+			InitTestDB(t)
+			datasourceLimit := 6
+			for i := 0; i < datasourceLimit+1; i++ {
+				err := AddDataSource(&models.AddDataSourceCommand{
+					OrgId:    10,
+					Name:     "laban" + strconv.Itoa(i),
+					Type:     models.DS_GRAPHITE,
+					Access:   models.DS_ACCESS_DIRECT,
+					Url:      "http://test",
+					Database: "site",
+					ReadOnly: true,
+				})
+				require.NoError(t, err)
+			}
+			query := models.GetDataSourcesQuery{OrgId: 10, DataSourceLimit: datasourceLimit}
+
+			err := GetDataSources(&query)
+
+			require.NoError(t, err)
+			require.Equal(t, datasourceLimit, len(query.Result))
+		})
+
+		t.Run("No limit should be applied on the returned data sources if the limit is not set", func(t *testing.T) {
+			InitTestDB(t)
+			numberOfDatasource := 5100
+			for i := 0; i < numberOfDatasource; i++ {
+				err := AddDataSource(&models.AddDataSourceCommand{
+					OrgId:    10,
+					Name:     "laban" + strconv.Itoa(i),
+					Type:     models.DS_GRAPHITE,
+					Access:   models.DS_ACCESS_DIRECT,
+					Url:      "http://test",
+					Database: "site",
+					ReadOnly: true,
+				})
+				require.NoError(t, err)
+			}
+			query := models.GetDataSourcesQuery{OrgId: 10}
+
+			err := GetDataSources(&query)
+
+			require.NoError(t, err)
+			require.Equal(t, numberOfDatasource, len(query.Result))
+		})
+
+		t.Run("No limit should be applied on the returned data sources if the limit is negative", func(t *testing.T) {
+			InitTestDB(t)
+			numberOfDatasource := 5100
+			for i := 0; i < numberOfDatasource; i++ {
+				err := AddDataSource(&models.AddDataSourceCommand{
+					OrgId:    10,
+					Name:     "laban" + strconv.Itoa(i),
+					Type:     models.DS_GRAPHITE,
+					Access:   models.DS_ACCESS_DIRECT,
+					Url:      "http://test",
+					Database: "site",
+					ReadOnly: true,
+				})
+				require.NoError(t, err)
+			}
+			query := models.GetDataSourcesQuery{OrgId: 10, DataSourceLimit: -1}
+
+			err := GetDataSources(&query)
+
+			require.NoError(t, err)
+			require.Equal(t, numberOfDatasource, len(query.Result))
+		})
 	})
 }
