@@ -624,7 +624,7 @@ describe('templateSrv', () => {
 
   describe('replace', () => {
     beforeEach(() => {
-      initTemplateSrv([
+      _templateSrv = initTemplateSrv([
         {
           type: 'query',
           name: 'single_value',
