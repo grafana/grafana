@@ -1,13 +1,31 @@
-import React, { FC, useCallback, useMemo, useRef } from 'react';
+import React, { FC, useCallback, useMemo, useRef, useState } from 'react';
+import { css, cx } from 'emotion';
 import { DashboardModel, PanelModel } from '../../state';
-import { PanelData, PanelPlugin } from '@grafana/data';
-import { Counter, DataLinksInlineEditor, Field, Input, RadioButtonGroup, Select, Switch, TextArea } from '@grafana/ui';
+import { GrafanaTheme, PanelData, PanelPlugin } from '@grafana/data';
+import {
+  Button,
+  Counter,
+  DataLinksInlineEditor,
+  Field,
+  Input,
+  RadioButtonGroup,
+  Select,
+  stylesFactory,
+  Switch,
+  TagsInput,
+  TextArea,
+  useTheme,
+} from '@grafana/ui';
 import { getPanelLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
 import { PanelOptionsEditor } from './PanelOptionsEditor';
 import { AngularPanelOptions } from './AngularPanelOptions';
 import { VisualizationTab } from './VisualizationTab';
 import { OptionsGroup } from './OptionsGroup';
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
+import { AddLibraryPanelModal } from '../AddLibraryPanelModal/AddLibraryPanelModal';
+import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
+import { LibraryPanelCardProps } from '../LibraryPanelCard/LibraryPanelCard';
+import { PanelQueriesChangedEvent } from 'app/types/events';
 
 interface Props {
   panel: PanelModel;
@@ -18,6 +36,11 @@ interface Props {
   onPanelOptionsChanged: (options: any) => void;
 }
 
+// const addLibraryPanel = (panel: PanelModel) => () => {
+//   const backendSrv = getBackendSrv();
+//   backendSrv.addLibraryPanel(panel, 0).then(res => console.log(res));
+// };
+
 export const PanelOptionsTab: FC<Props> = ({
   panel,
   plugin,
@@ -26,6 +49,9 @@ export const PanelOptionsTab: FC<Props> = ({
   onPanelConfigChange,
   onPanelOptionsChanged,
 }) => {
+  const theme = useTheme();
+  const styles = getStyles(theme);
+  const [showingAddPanelModal, setShowingAddPanelModal] = useState<boolean>(false);
   const visTabInputRef = useRef<HTMLInputElement>(null);
   const linkVariablesSuggestions = useMemo(() => getPanelLinksVariableSuggestions(), []);
   const onRepeatRowSelectChange = useCallback((value: string | null) => onPanelConfigChange('repeat', value), [
@@ -46,7 +72,38 @@ export const PanelOptionsTab: FC<Props> = ({
       visTabInputRef.current.focus();
     }
   };
-  // Fist common panel settings Title, description
+
+  const useLibraryPanel = ({ model }: LibraryPanelCardProps) => {
+    panel.restoreModel(model);
+
+    // dummy change for re-render
+    onPanelConfigChange('isEditing', true);
+    panel.refresh();
+    panel.events.publish(PanelQueriesChangedEvent);
+  };
+
+  const onAddToPanelLibrary = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setShowingAddPanelModal(true);
+  };
+
+  if (panel.libraryPanel) {
+    elements.push(
+      <OptionsGroup title="Reusable panel information" id="Shared Panel Info" key="Shared Panel Info">
+        <p className={cx(styles.libraryPanelInfo)}>
+          Used on 999 dashboards <br />
+          Last edited on 199X-XX-XX by LaurenIpsum
+        </p>
+        <Field label="Tags">
+          <TagsInput onChange={() => {}} />
+        </Field>
+      </OptionsGroup>
+    );
+  }
+
+  // First common panel settings Title, description
   elements.push(
     <OptionsGroup title="Settings" id="Panel settings" key="Panel settings">
       <Field label="Panel title">
@@ -152,5 +209,54 @@ export const PanelOptionsTab: FC<Props> = ({
     </OptionsGroup>
   );
 
+  elements.push(
+    <OptionsGroup
+      renderTitle={(isExpanded) => {
+        return isExpanded && !panel.libraryPanel ? (
+          <div className={cx(styles.panelLibraryTitle)}>
+            <span>Panel library</span>
+            <Button size="sm" onClick={onAddToPanelLibrary}>
+              Add this panel to the panel library
+            </Button>
+          </div>
+        ) : (
+          'Panel library'
+        );
+      }}
+      id="panel-library"
+      key="panel-library"
+      defaultToClosed
+    >
+      <LibraryPanelsView formatDate={(dateString: string) => dashboard.formatDate(dateString, 'L')}>
+        {(panel) => (
+          <Button variant="secondary" onClick={() => useLibraryPanel(panel)}>
+            Use instead of current panel
+          </Button>
+        )}
+      </LibraryPanelsView>
+      {showingAddPanelModal && (
+        <AddLibraryPanelModal
+          panel={panel}
+          onDismiss={() => setShowingAddPanelModal(false)}
+          initialFolderId={dashboard.meta.folderId}
+          isOpen={showingAddPanelModal}
+        />
+      )}
+    </OptionsGroup>
+  );
+
   return <>{elements}</>;
 };
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    libraryPanelInfo: css`
+      color: ${theme.colors.textSemiWeak};
+      font-size: ${theme.typography.size.sm};
+    `,
+    panelLibraryTitle: css`
+      display: flex;
+      gap: 10px;
+    `,
+  };
+});

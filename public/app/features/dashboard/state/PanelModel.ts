@@ -147,6 +147,11 @@ export class PanelModel implements DataConfigSource {
   links?: DataLink[];
   transparent: boolean;
 
+  libraryPanel?: {
+    uid?: string;
+    name: string;
+  };
+
   // non persisted
   isViewing: boolean;
   isEditing: boolean;

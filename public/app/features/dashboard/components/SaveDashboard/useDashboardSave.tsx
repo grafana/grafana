@@ -8,12 +8,56 @@ import appEvents from 'app/core/app_events';
 import { updateLocation } from 'app/core/reducers/location';
 import { DashboardModel } from 'app/features/dashboard/state';
 import { saveDashboard as saveDashboardApiCall } from 'app/features/manage-dashboards/state/actions';
+import { getBackendSrv } from 'app/core/services/backend_srv';
 
 const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dashboard: DashboardModel) => {
   let folderId = options.folderId;
   if (folderId === undefined) {
     folderId = dashboard.meta.folderId || saveModel.folderId;
   }
+
+  // Check if there are any new library panels that need to be created first
+  const panelPromises = [];
+  for (const [i, panel] of saveModel.panels.entries()) {
+    if (!panel.libraryPanel) {
+      continue;
+    } else if (panel.libraryPanel && panel.libraryPanel.uid === undefined) {
+      panel.libraryPanel.name = panel.title;
+      panelPromises.push(
+        getBackendSrv()
+          .addLibraryPanel(panel, folderId!)
+          .then((returnedPanel) => {
+            saveModel.panels[i] = {
+              id: returnedPanel.Model.id,
+              gridPos: returnedPanel.Model.gridPos,
+              libraryPanel: {
+                uid: returnedPanel.UID,
+                name: returnedPanel.Name,
+              },
+            };
+          })
+      );
+    } else {
+      // For now, update library panels. Implement "Update panel instances" modal later.
+      panelPromises.push(
+        getBackendSrv()
+          .updateLibraryPanel(panel, folderId!)
+          .then((returnedPanel) => {
+            saveModel.panels[i] = {
+              id: returnedPanel.Model.id,
+              gridPos: returnedPanel.Model.gridPos,
+              libraryPanel: {
+                uid: returnedPanel.UID,
+                name: returnedPanel.Name,
+              },
+            };
+          })
+      );
+    }
+  }
+
+  await Promise.all(panelPromises);
+
   return await saveDashboardApiCall({ ...options, folderId, dashboard: saveModel });
 };
 

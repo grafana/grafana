@@ -13,7 +13,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { getPanelMenu } from 'app/features/dashboard/utils/getPanelMenu';
 import { updateLocation } from 'app/core/actions';
-import { css } from 'emotion';
+import { css, cx } from 'emotion';
 
 export interface Props {
   panel: PanelModel;
@@ -187,6 +187,7 @@ export class PanelHeader extends PureComponent<Props, State> {
           >
             <div className="panel-title">
               {Object.values(notices).map(this.renderNotice)}
+              {panel.libraryPanel && <Icon name="reusable-panel" type="mono" style={{ marginRight: '4px' }} />}
               {alertState && (
                 <Icon
                   name={alertState === 'alerting' ? 'heart-break' : 'heart'}

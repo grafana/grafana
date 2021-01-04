@@ -8,7 +8,7 @@ import { AppEvents, DataQueryErrorType } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { getConfig } from 'app/core/config';
 import { DashboardSearchHit } from 'app/features/search/types';
-import { FolderDTO } from 'app/types';
+import { FolderDTO, OrgUser } from 'app/types';
 import { coreModule } from 'app/core/core_module';
 import { ContextSrv, contextSrv } from './context_srv';
 import { parseInitFromOptions, parseResponseBody, parseUrlFromOptions } from '../utils/fetch';
@@ -18,6 +18,19 @@ import { ResponseQueue } from './ResponseQueue';
 import { FetchQueueWorker } from './FetchQueueWorker';
 
 const CANCEL_ALL_REQUESTS_REQUEST_ID = 'cancel_all_requests_request_id';
+
+export interface LibraryPanel {
+  ID: number;
+  OrgID: number;
+  FolderID: number;
+  UID: string;
+  Name: string;
+  Model: any;
+  Created: string;
+  Updated: string;
+  CreatedBy: number;
+  UpdatedBy: number;
+}
 
 export interface BackendSrvDependencies {
   fromFetch: (input: string | Request, init?: RequestInit) => Observable<Response>;
@@ -396,6 +409,34 @@ export class BackendSrv implements BackendService {
 
   getFolderByUid(uid: string) {
     return this.get<FolderDTO>(`/api/folders/${uid}`);
+  }
+
+  getLibraryPanels(): Promise<LibraryPanel[]> {
+    return this.get(`/api/library-panels`).then(({ result }) => result);
+  }
+
+  addLibraryPanel(panelSaveModel: any, folderId: number): Promise<LibraryPanel> {
+    return this.post(`/api/library-panels`, {
+      folderId,
+      name: panelSaveModel.title,
+      model: panelSaveModel,
+    }).then(({ result }: { result: LibraryPanel }) => result);
+  }
+
+  updateLibraryPanel(panelSaveModel: any, folderId: number) {
+    return this.patch(`/api/library-panels/${panelSaveModel.panelLibrary.uid}`, {
+      folderId,
+      name: panelSaveModel.title,
+      model: panelSaveModel,
+    });
+  }
+
+  deleteLibraryPanel(uid: string) {
+    return this.delete(`/api/library-panels/${uid}`);
+  }
+
+  getOrgUsers(): Promise<OrgUser[]> {
+    return this.get('/api/org/users');
   }
 }
 

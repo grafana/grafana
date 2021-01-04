@@ -126,6 +126,9 @@ const darkTheme: GrafanaTheme = {
     linkDisabled: basicColors.gray2,
     linkHover: basicColors.white,
     linkExternal: basicColors.blue85,
+
+    cardBackground: basicColors.gray15,
+    cardBackgroundHover: basicColors.gray25,
   },
   shadows: {
     listItem: 'none',

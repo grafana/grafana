@@ -1,9 +1,8 @@
 // Libraries
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import _ from 'lodash';
 import { LocationUpdate } from '@grafana/runtime';
-import { Button, HorizontalGroup, IconButton, stylesFactory, useTheme } from '@grafana/ui';
-import { selectors } from '@grafana/e2e-selectors';
+import { Button, Icon, IconButton, stylesFactory, useTheme } from '@grafana/ui';
 import { connect, MapDispatchToProps } from 'react-redux';
 // Utils
 import config from 'app/core/config';
@@ -17,12 +16,16 @@ import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { css, cx, keyframes } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import tinycolor from 'tinycolor2';
+import { OrgUser } from 'app/types';
+import { LibraryPanelsView } from '../LibraryPanelsView/LibraryPanelsView';
+import { LibraryPanelCardProps } from '../LibraryPanelCard/LibraryPanelCard';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
 
 export interface OwnProps {
   panel: PanelModel;
   dashboard: DashboardModel;
+  users: OrgUser[];
 }
 
 export interface DispatchProps {
@@ -55,7 +58,7 @@ const getCopiedPanelPlugins = () => {
   return _.sortBy(copiedPanels, 'sort');
 };
 
-export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, updateLocation, addPanel }) => {
+export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, updateLocation, addPanel, users }) => {
   const theme = useTheme();
 
   const onCancelAddPanel = (evt: any) => {
@@ -63,14 +66,21 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
     dashboard.removePanel(panel);
   };
 
-  const onCreateNewPanel = () => {
+  const onCreateNewPanel = (libraryPanel = false) => {
     const { gridPos } = panel;
 
-    const newPanel: any = {
+    const newPanel: Partial<PanelModel> = {
       type: 'graph',
       title: 'Panel Title',
       gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
     };
+
+    if (libraryPanel) {
+      newPanel.libraryPanel = {
+        uid: undefined,
+        name: 'Panel Title',
+      };
+    }
 
     dashboard.addPanel(newPanel);
     dashboard.removePanel(panel);
@@ -110,6 +120,18 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
     dashboard.removePanel(panel);
   };
 
+  const onAddLibraryPanel = (libraryPanel: LibraryPanelCardProps) => {
+    const { gridPos } = panel;
+
+    const newPanel: any = {
+      ...libraryPanel.model,
+      gridPos,
+    };
+
+    dashboard.addPanel(newPanel);
+    dashboard.removePanel(panel);
+  };
+
   const onCreateNewRow = () => {
     const newRow: any = {
       type: 'row',
@@ -122,26 +144,53 @@ export const AddPanelWidgetUnconnected: React.FC<Props> = ({ panel, dashboard, u
   };
 
   const styles = getStyles(theme);
+  const copiedPanelPlugins = useMemo(() => getCopiedPanelPlugins(), []);
+
+  const [addPanelView, setAddPanelView] = useState(false);
   return (
     <div className={cx('panel-container', styles.wrapper)}>
       <AddPanelWidgetHandle onCancel={onCancelAddPanel} />
-      <div className={styles.actionsWrapper}>
-        <AddPanelWidgetCreate onCreate={onCreateNewPanel} onPasteCopiedPanel={onPasteCopiedPanel} />
-        <div>
-          <HorizontalGroup justify="center">
-            <Button onClick={onCreateNewRow} variant="secondary" size="sm">
-              Convert to row
+      {addPanelView ? (
+        <LibraryPanelsView
+          className={cx(styles.libraryPanelsWrapper)}
+          onCreateNewPanel={() => onCreateNewPanel(true)}
+          formatDate={(dateString: string) => dashboard.formatDate(dateString, 'L')}
+        >
+          {(panel) => (
+            <Button className={cx(styles.buttonMargin)} variant="secondary" onClick={() => onAddLibraryPanel(panel)}>
+              Add library panel
             </Button>
-          </HorizontalGroup>
+          )}
+        </LibraryPanelsView>
+      ) : (
+        <div className={styles.actionsWrapper}>
+          <div onClick={() => onCreateNewPanel()}>
+            <Icon name="file-blank" size="xl" />
+            Add an empty panel
+          </div>
+          <div onClick={onCreateNewRow}>
+            <Icon name="wrap-text" size="xl" />
+            Add a new row
+          </div>
+          <div onClick={() => setAddPanelView(true)}>
+            <Icon name="book-open" size="xl" />
+            Add a panel from the panel library
+          </div>
+          {copiedPanelPlugins.length === 1 && (
+            <div onClick={() => onPasteCopiedPanel(copiedPanelPlugins[0])}>
+              <Icon name="clipboard-alt" size="xl" />
+              Paste panel from clipboard
+            </div>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 };
 
 const mapDispatchToProps: MapDispatchToProps<DispatchProps, OwnProps> = { addPanel, updateLocation };
 
-export const AddPanelWidget = connect(null, mapDispatchToProps)(AddPanelWidgetUnconnected);
+export const AddPanelWidget = connect(undefined, mapDispatchToProps)(AddPanelWidgetUnconnected);
 
 interface AddPanelWidgetHandleProps {
   onCancel: (e: React.MouseEvent<HTMLButtonElement>) => void;
@@ -152,31 +201,6 @@ const AddPanelWidgetHandle: React.FC<AddPanelWidgetHandleProps> = ({ onCancel })
   return (
     <div className={cx(styles.handle, 'grid-drag-handle')}>
       <IconButton name="times" onClick={onCancel} surface="header" className="add-panel-widget__close" />
-    </div>
-  );
-};
-
-interface AddPanelWidgetCreateProps {
-  onCreate: () => void;
-  onPasteCopiedPanel: (panelPluginInfo: PanelPluginInfo) => void;
-}
-
-const AddPanelWidgetCreate: React.FC<AddPanelWidgetCreateProps> = ({ onCreate, onPasteCopiedPanel }) => {
-  const copiedPanelPlugins = useMemo(() => getCopiedPanelPlugins(), []);
-  const theme = useTheme();
-  const styles = getAddPanelWidgetCreateStyles(theme);
-  return (
-    <div className={styles.wrapper}>
-      <HorizontalGroup>
-        <Button icon="plus" size="md" onClick={onCreate} aria-label={selectors.pages.AddDashboard.addNewPanel}>
-          Add new panel
-        </Button>
-        {copiedPanelPlugins.length === 1 && (
-          <Button variant="secondary" size="md" onClick={() => onPasteCopiedPanel(copiedPanelPlugins[0])}>
-            Paste copied panel
-          </Button>
-        )}
-      </HorizontalGroup>
     </div>
   );
 };
@@ -198,11 +222,49 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       animation: ${pulsate} 2s ease infinite;
     `,
     actionsWrapper: css`
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 8px 8px;
       height: 100%;
-      justify-content: center;
+      margin-left: 15px;
+      margin-right: 24px;
+      margin-top: 39px;
+      margin-bottom: 42px;
+
+      > div {
+        justify-self: center;
+        cursor: pointer;
+        background: ${theme.colors.cardBackground};
+        border-radius: 2px;
+        color: ${theme.colors.text};
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+
+        &:hover {
+          background: ${theme.colors.cardBackgroundHover};
+        }
+
+        &:hover > #book-icon {
+          background: linear-gradient(#f05a28 30%, #fbca0a 99%);
+        }
+
+        &:nth-child(odd):last-child {
+          grid-column: 1 / span 2;
+        }
+      }
+    `,
+    buttonMargin: css`
+      margin-right: 10px;
+    `,
+    libraryPanelsWrapper: css`
+      padding-left: 32px;
+      padding-right: 25px;
+      padding-top: 40px;
     `,
   };
 });
@@ -228,20 +290,20 @@ const getAddPanelWigetHandleStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-const getAddPanelWidgetCreateStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    wrapper: css`
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: ${theme.spacing.lg};
-      &:hover {
-        background: ${theme.colors.bg2};
-      }
-    `,
-    icon: css`
-      color: ${theme.colors.textWeak};
-    `,
-  };
-});
+// const getAddPanelWidgetCreateStyles = stylesFactory((theme: GrafanaTheme) => {
+//   return {
+//     wrapper: css`
+//       cursor: pointer;
+//       display: flex;
+//       flex-direction: column;
+//       align-items: center;
+//       margin-bottom: ${theme.spacing.lg};
+//       &:hover {
+//         background: ${theme.colors.bg2};
+//       }
+//     `,
+//     icon: css`
+//       color: ${theme.colors.textWeak};
+//     `,
+//   };
+// });

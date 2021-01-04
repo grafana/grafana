@@ -37,6 +37,7 @@ import { CoreEvents, StoreState } from 'app/types';
 import { DisplayMode, displayModes, PanelEditorTab } from './types';
 import { DashboardModel, PanelModel } from '../../state';
 import { PanelOptionsChangedEvent } from 'app/types/events';
+import { UnlinkModal } from '../UnlinkModal/UnlinkModal';
 
 interface OwnProps {
   dashboard: DashboardModel;
@@ -140,7 +141,7 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
     this.props.panel.updateOptions(options);
   };
 
-  onPanelConfigChanged = (configKey: string, value: any) => {
+  onPanelConfigChanged = (configKey: keyof PanelModel, value: any) => {
     // @ts-ignore
     this.props.panel[configKey] = value;
     this.props.panel.render();
@@ -157,6 +158,19 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   onTogglePanelOptions = () => {
     const { uiState, updatePanelEditorUIState } = this.props;
     updatePanelEditorUIState({ isPanelOptionsVisible: !uiState.isPanelOptionsVisible });
+  };
+
+  onUnlinkPanel = () => {
+    appEvents.emit(CoreEvents.showModalReact, {
+      component: UnlinkModal,
+      props: {
+        onConfirm: () => {
+          delete this.props.panel.libraryPanel;
+          this.props.panel.render();
+          this.forceUpdate();
+        },
+      },
+    });
   };
 
   renderPanel = (styles: EditorStyles) => {
@@ -252,7 +266,8 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
   }
 
   renderEditorActions() {
-    return [
+    const { panel } = this.props;
+    const actions = [
       <Button
         icon="cog"
         onClick={this.onOpenDashboardSettings}
@@ -260,16 +275,36 @@ export class PanelEditorUnconnected extends PureComponent<Props> {
         title="Open dashboard settings"
         key="settings"
       />,
-      <Button onClick={this.onDiscard} variant="secondary" title="Undo all changes" key="discard">
-        Discard
-      </Button>,
-      <Button onClick={this.onSaveDashboard} variant="secondary" title="Apply changes and save dashboard" key="save">
-        Save
-      </Button>,
-      <Button onClick={this.onPanelExit} title="Apply changes and go back to dashboard" key="apply">
-        Apply
-      </Button>,
     ];
+
+    if (panel.libraryPanel) {
+      actions.push(
+        <Button
+          variant="secondary"
+          title="Disconnects this panel from the reusable panel so that you can edit it regularly."
+          key="unlink"
+          onClick={this.onUnlinkPanel}
+        >
+          Unlink
+        </Button>
+      );
+    }
+
+    actions.push(
+      ...[
+        <Button onClick={this.onDiscard} variant="secondary" title="Undo all changes" key="discard">
+          Discard
+        </Button>,
+        <Button onClick={this.onSaveDashboard} variant="secondary" title="Apply changes and save dashboard" key="save">
+          Save
+        </Button>,
+        <Button onClick={this.onPanelExit} title="Apply changes and go back to dashboard" key="apply">
+          Apply
+        </Button>,
+      ]
+    );
+
+    return actions;
   }
 
   renderOptionsPane() {
