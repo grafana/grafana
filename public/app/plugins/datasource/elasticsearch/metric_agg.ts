@@ -19,6 +19,9 @@ export class ElasticMetricAggCtrl {
       $scope.validateModel();
       $scope.updatePipelineAggOptions();
     };
+    $scope.getOrderOptions = () => {
+      return queryDef.orderOptions;
+    };
 
     $scope.updatePipelineAggOptions = () => {
       $scope.pipelineAggOptions = queryDef.getPipelineAggOptions($scope.target);
@@ -103,9 +106,11 @@ export class ElasticMetricAggCtrl {
         }
         case 'raw_document': {
           $scope.agg.settings.size = $scope.agg.settings.size || 500;
-          $scope.settingsLinkText = 'Size: ' + $scope.agg.settings.size;
+          let orderBy = $scope.agg.settings.orderBy;
+          orderBy = orderBy && orderBy.charAt(0).toUpperCase() + orderBy.slice(1);
+          const sizeText = 'Size: ' + $scope.agg.settings.size;
+          $scope.settingsLinkText = orderBy ? sizeText + ' , Order by: ' + orderBy : sizeText;
           $scope.target.metrics.splice(0, $scope.target.metrics.length, $scope.agg);
-
           $scope.target.bucketAggs = [];
           break;
         }

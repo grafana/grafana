@@ -118,11 +118,15 @@ export class ElasticQueryBuilder {
     return filterObj;
   }
 
-  documentQuery(query: any, size: number) {
+  documentQuery(query: any, size: number, metric?: any) {
     query.size = size;
     query.sort = {};
-    query.sort[this.timeField] = { order: 'desc', unmapped_type: 'boolean' };
-
+    if (metric.type === 'raw_document' && metric.settings.orderBy) {
+      query.size = metric.settings.size;
+      query.sort[metric.settings.orderBy] = { order: metric.settings.order, unmapped_type: 'boolean' };
+    } else {
+      query.sort[this.timeField] = { order: 'desc', unmapped_type: 'boolean' };
+    }
     // fields field not supported on ES 5.x
     if (this.esVersion < 5) {
       query.fields = ['*', '_source'];
@@ -213,7 +217,7 @@ export class ElasticQueryBuilder {
       }
 
       const size = (metric.settings && metric.settings.size) || 500;
-      return this.documentQuery(query, size);
+      return this.documentQuery(query, size, metric);
     }
 
     nestedAggs = query;

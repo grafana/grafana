@@ -1,3 +1,4 @@
+
 <div class="gf-form-inline" ng-class="{'gf-form-disabled': agg.hide}">
 	<div class="gf-form">
 		<label class="gf-form-label query-keyword width-7">
@@ -96,9 +97,32 @@
     <label class="gf-form-label width-10">Percentiles</label>
     <input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.percents" array-join ng-blur="onChange()"></input>
   </div>
-  <div class="gf-form offset-width-7" ng-if="agg.type === 'raw_document'">
-    <label class="gf-form-label width-10">Size</label>
-    <input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.size" ng-blur="onChange()"></input>
+  <div class="offset-width-7" ng-if="agg.type === 'raw_document'">
+
+      <div class="gf-form ">
+        <label class="gf-form-label width-10">Order</label>
+        <gf-form-dropdown model="agg.settings.order"
+                          lookup-text="true"
+                          get-options="getOrderOptions()"
+                          on-change="onChangeInternal()"
+                          label-mode="true"
+                          css-class="width-12">
+        </gf-form-dropdown>
+      </div>
+      <div class="gf-form ">
+          <label class="gf-form-label width-10">Size</label>
+          <input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.size" ng-blur="onChange()"></input>      
+      </div>
+      <div class="gf-form ">
+        <label class="gf-form-label width-10">Order By</label>
+        <gf-form-dropdown model="agg.settings.orderBy"
+                          lookup-text="true"
+                          get-options="getFieldsInternal()"
+                          on-change="onChangeInternal()"
+                          label-mode="true"
+                          css-class="width-12">
+        </gf-form-dropdown>
+      </div>
   </div>
 
 
