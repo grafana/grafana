@@ -69,20 +69,20 @@ var sqlStoreTestCases = []sqlStoreTest{
 	{
 		name:          "Postgres Unix Socket Escape Colon",
 		dbType:        "postgres",
-		dbHost:        "/IAmAPath/WhoWorksDuringNewYear/wierd\\:path:1234",
-		connStrValues: []string{"host=/IAmAPath/WhoWorksDuringNewYear/wierd:path", "port=1234"},
+		dbHost:        "/IAmAPath/ThatWorksDuringNewYear/wierd\\:path:1234",
+		connStrValues: []string{"host=/IAmAPath/ThatWorksDuringNewYear/weird:path", "port=1234"},
 	},
 	{
 		name:          "Postgres Unix Socket (Default Port)",
 		dbType:        "postgres",
-		dbHost:        "/IAmAPath/WhoWorksDuringNewYear/wierd:path",
-		connStrValues: []string{"host=/IAmAPath/WhoWorksDuringNewYear/wierd:path", "port=5432"},
+		dbHost:        "/IAmAPath/ThatWorksDuringNewYear/wierd:path",
+		connStrValues: []string{"host=/IAmAPath/ThatWorksDuringNewYear/weird:path", "port=5432"},
 	},
 	{
 		name:          "Postgres Unix Socket Without Escape Colon",
 		dbType:        "postgres",
-		dbHost:        "/IAmAPath/WhoWorksDuringNewYear/wierd:path:1234",
-		connStrValues: []string{"host=/IAmAPath/WhoWorksDuringNewYear/wierd:path", "port=1234"},
+		dbHost:        "/IAmAPath/ThatWorksDuringNewYear/weird:path:1234",
+		connStrValues: []string{"host=/IAmAPath/ThatWorksDuringNewYear/weird:path", "port=1234"},
 	},
 }
 
