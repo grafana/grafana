@@ -4,20 +4,16 @@ package sqlstore
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"testing"
-	"time"
 
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestStatsDataAccess(t *testing.T) {
-	sqlStore := InitTestDB(t)
+	InitTestDB(t)
 	populateDB(t)
 
 	t.Run("Get system stats should not results in error", func(t *testing.T) {
@@ -72,127 +68,6 @@ func TestStatsDataAccess(t *testing.T) {
 		assert.Equal(t, int64(0), query.Result.Editors)
 		assert.Equal(t, int64(0), query.Result.Viewers)
 	})
-
-	t.Run("Get concurrent users stats should return a histogram", func(t *testing.T) {
-		for u := 1; u <= 6; u++ {
-			for tkn := 1; tkn <= u*3; tkn++ {
-				err := createToken(u, sqlStore)
-				assert.NoError(t, err)
-			}
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		t.Cleanup(func() {
-			cancel()
-		})
-
-		t.Run("Should refresh stats when forced", func(t *testing.T) {
-			q := models.GetConcurrentUsersStatsQuery{}
-			err := GetConcurrentUsersStats(ctx, &q)
-			require.NoError(t, err)
-
-			expectedResult := &models.ConcurrentUsersStats{
-				BucketLe3:   1,
-				BucketLe6:   2,
-				BucketLe9:   3,
-				BucketLe12:  4,
-				BucketLe15:  5,
-				BucketLeInf: 6,
-			}
-
-			assert.Equal(t, expectedResult, q.Result)
-
-			err = createToken(7, sqlStore)
-			assert.NoError(t, err)
-
-			q = models.GetConcurrentUsersStatsQuery{MustRefresh: true}
-			err = GetConcurrentUsersStats(ctx, &q)
-			require.NoError(t, err)
-
-			expectedResult = &models.ConcurrentUsersStats{
-				BucketLe3:   2,
-				BucketLe6:   3,
-				BucketLe9:   4,
-				BucketLe12:  5,
-				BucketLe15:  6,
-				BucketLeInf: 7,
-			}
-
-			assert.Equal(t, expectedResult, q.Result)
-		})
-
-		t.Run("Should cache results", func(t *testing.T) {
-			q := models.GetConcurrentUsersStatsQuery{}
-			err := GetConcurrentUsersStats(ctx, &q)
-			require.NoError(t, err)
-
-			expectedCachedResult := &models.ConcurrentUsersStats{
-				BucketLe3:   2,
-				BucketLe6:   3,
-				BucketLe9:   4,
-				BucketLe12:  5,
-				BucketLe15:  6,
-				BucketLeInf: 7,
-			}
-			assert.Equal(t, expectedCachedResult, q.Result)
-
-			err = createToken(8, sqlStore)
-			assert.NoError(t, err)
-
-			q = models.GetConcurrentUsersStatsQuery{}
-			err = GetConcurrentUsersStats(ctx, &q)
-
-			require.NoError(t, err)
-			assert.Equal(t, expectedCachedResult, q.Result)
-		})
-	})
-}
-
-func createToken(uId int, sqlStore *SQLStore) error {
-	token, err := util.RandomHex(16)
-	if err != nil {
-		return err
-	}
-	tokenWithSecret := fmt.Sprintf("%ssecret%d", token, uId)
-	hashBytes := sha256.Sum256([]byte(tokenWithSecret))
-	hashedToken := hex.EncodeToString(hashBytes[:])
-
-	now := getTime().Unix()
-
-	userAuthToken := userAuthToken{
-		UserId:        int64(uId),
-		AuthToken:     hashedToken,
-		PrevAuthToken: hashedToken,
-		ClientIp:      "192.168.10.11",
-		UserAgent:     "Mozilla",
-		RotatedAt:     now,
-		CreatedAt:     now,
-		UpdatedAt:     now,
-		SeenAt:        0,
-		AuthTokenSeen: false,
-	}
-
-	err = sqlStore.WithDbSession(context.Background(), func(dbSession *DBSession) error {
-		_, err = dbSession.Insert(&userAuthToken)
-		return err
-	})
-
-	return nil
-}
-
-type userAuthToken struct {
-	Id            int64
-	UserId        int64
-	AuthToken     string
-	PrevAuthToken string
-	UserAgent     string
-	ClientIp      string
-	AuthTokenSeen bool
-	SeenAt        int64
-	RotatedAt     int64
-	CreatedAt     int64
-	UpdatedAt     int64
-	UnhashedToken string `xorm:"-"`
 }
 
 func populateDB(t *testing.T) {

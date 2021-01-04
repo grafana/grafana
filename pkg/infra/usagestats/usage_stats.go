@@ -2,6 +2,7 @@ package usagestats
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -27,7 +28,7 @@ type UsageReport struct {
 	Packaging       string                 `json:"packaging"`
 }
 
-func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
+func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, error) {
 	version := strings.ReplaceAll(setting.BuildVersion, ".", "_")
 
 	metrics := map[string]interface{}{}
@@ -186,19 +187,19 @@ func (uss *UsageStatsService) GetUsageReport() (UsageReport, error) {
 	}
 
 	// Get concurrent users stats as histogram
-	concurrentUsersStats := models.GetConcurrentUsersStatsQuery{}
-	if err := uss.Bus.Dispatch(&concurrentUsersStats); err != nil {
+	concurrentUsersStats, err := uss.GetConcurrentUsersStats(ctx, false)
+	if err != nil {
 		metricsLogger.Error("Failed to get concurrent users stats", "error", err)
 		return report, err
 	}
 
 	// Histogram is cumulative and metric name has a postfix of le_"<upper inclusive bound>"
-	metrics["stats.auth_token_per_user_le_3"] = concurrentUsersStats.Result.BucketLe3
-	metrics["stats.auth_token_per_user_le_6"] = concurrentUsersStats.Result.BucketLe6
-	metrics["stats.auth_token_per_user_le_9"] = concurrentUsersStats.Result.BucketLe9
-	metrics["stats.auth_token_per_user_le_12"] = concurrentUsersStats.Result.BucketLe12
-	metrics["stats.auth_token_per_user_le_15"] = concurrentUsersStats.Result.BucketLe15
-	metrics["stats.auth_token_per_user_le_inf"] = concurrentUsersStats.Result.BucketLeInf
+	metrics["stats.auth_token_per_user_le_3"] = concurrentUsersStats.BucketLe3
+	metrics["stats.auth_token_per_user_le_6"] = concurrentUsersStats.BucketLe6
+	metrics["stats.auth_token_per_user_le_9"] = concurrentUsersStats.BucketLe9
+	metrics["stats.auth_token_per_user_le_12"] = concurrentUsersStats.BucketLe12
+	metrics["stats.auth_token_per_user_le_15"] = concurrentUsersStats.BucketLe15
+	metrics["stats.auth_token_per_user_le_inf"] = concurrentUsersStats.BucketLeInf
 
 	return report, nil
 }
@@ -218,14 +219,14 @@ func (uss *UsageStatsService) RegisterMetric(name string, fn MetricFunc) {
 	uss.externalMetrics[name] = fn
 }
 
-func (uss *UsageStatsService) sendUsageStats() error {
+func (uss *UsageStatsService) sendUsageStats(ctx context.Context) error {
 	if !setting.ReportingEnabled {
 		return nil
 	}
 
 	metricsLogger.Debug(fmt.Sprintf("Sending anonymous usage stats to %s", usageStatsURL))
 
-	report, err := uss.GetUsageReport()
+	report, err := uss.GetUsageReport(ctx)
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package usagestats
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io/ioutil"
 	"runtime"
@@ -159,21 +160,7 @@ func TestMetrics(t *testing.T) {
 			return nil
 		})
 
-		var getConcurrentUsersStatsQuery *models.GetConcurrentUsersStatsQuery
-		uss.Bus.AddHandler(func(query *models.GetConcurrentUsersStatsQuery) error {
-			query.Result = &models.ConcurrentUsersStats{
-				BucketLe3:   1,
-				BucketLe6:   2,
-				BucketLe9:   3,
-				BucketLe12:  4,
-				BucketLe15:  5,
-				BucketLeInf: 7,
-			}
-
-			getConcurrentUsersStatsQuery = query
-			return nil
-		})
-
+		createConcurrentTokens(t, uss.SQLStore)
 		uss.AlertingUsageStats = &alertingUsageMock{}
 
 		var wg sync.WaitGroup
@@ -201,12 +188,12 @@ func TestMetrics(t *testing.T) {
 			"grafana_com":   true,
 		}
 
-		err := uss.sendUsageStats()
+		err := uss.sendUsageStats(context.Background())
 		require.NoError(t, err)
 
 		t.Run("Given reporting not enabled and sending usage stats", func(t *testing.T) {
 			setting.ReportingEnabled = false
-			err := uss.sendUsageStats()
+			err := uss.sendUsageStats(context.Background())
 			require.NoError(t, err)
 
 			t.Run("Should not gather stats or call http endpoint", func(t *testing.T) {
@@ -227,7 +214,7 @@ func TestMetrics(t *testing.T) {
 			setting.Packaging = "deb"
 
 			wg.Add(1)
-			err := uss.sendUsageStats()
+			err := uss.sendUsageStats(context.Background())
 			require.NoError(t, err)
 
 			t.Run("Should gather stats and call http endpoint", func(t *testing.T) {
@@ -239,7 +226,6 @@ func TestMetrics(t *testing.T) {
 				assert.NotNil(t, getDataSourceStatsQuery)
 				assert.NotNil(t, getDataSourceAccessStatsQuery)
 				assert.NotNil(t, getAlertNotifierUsageStatsQuery)
-				assert.NotNil(t, getConcurrentUsersStatsQuery)
 				assert.NotNil(t, req)
 
 				assert.Equal(t, http.MethodPost, req.Method)
@@ -313,7 +299,7 @@ func TestMetrics(t *testing.T) {
 				assert.Equal(t, 3, metrics.Get("stats.auth_token_per_user_le_9").MustInt())
 				assert.Equal(t, 4, metrics.Get("stats.auth_token_per_user_le_12").MustInt())
 				assert.Equal(t, 5, metrics.Get("stats.auth_token_per_user_le_15").MustInt())
-				assert.Equal(t, 7, metrics.Get("stats.auth_token_per_user_le_inf").MustInt())
+				assert.Equal(t, 6, metrics.Get("stats.auth_token_per_user_le_inf").MustInt())
 			})
 		})
 	})
@@ -442,19 +428,10 @@ func TestMetrics(t *testing.T) {
 			return nil
 		})
 
+		createConcurrentTokens(t, uss.SQLStore)
+
 		t.Run("Should include metrics for concurrent users", func(t *testing.T) {
-			uss.Bus.AddHandler(func(query *models.GetConcurrentUsersStatsQuery) error {
-				query.Result = &models.ConcurrentUsersStats{
-					BucketLe3:   1,
-					BucketLe6:   2,
-					BucketLe9:   3,
-					BucketLe12:  4,
-					BucketLe15:  5,
-					BucketLeInf: 7,
-				}
-				return nil
-			})
-			report, err := uss.GetUsageReport()
+			report, err := uss.GetUsageReport(context.Background())
 			assert.NoError(t, err)
 
 			assert.Equal(t, int32(1), report.Metrics["stats.auth_token_per_user_le_3"])
@@ -462,29 +439,15 @@ func TestMetrics(t *testing.T) {
 			assert.Equal(t, int32(3), report.Metrics["stats.auth_token_per_user_le_9"])
 			assert.Equal(t, int32(4), report.Metrics["stats.auth_token_per_user_le_12"])
 			assert.Equal(t, int32(5), report.Metrics["stats.auth_token_per_user_le_15"])
-			assert.Equal(t, int32(7), report.Metrics["stats.auth_token_per_user_le_inf"])
-
-			t.Run("Fails when returns error", func(t *testing.T) {
-				expectedErr := errors.New("unexpected error")
-				uss.Bus.AddHandler(func(query *models.GetConcurrentUsersStatsQuery) error {
-					return expectedErr
-				})
-
-				_, err := uss.GetUsageReport()
-				assert.True(t, errors.Is(err, expectedErr))
-			})
+			assert.Equal(t, int32(6), report.Metrics["stats.auth_token_per_user_le_inf"])
 		})
 
 		t.Run("Should include external metrics", func(t *testing.T) {
-			uss.Bus.AddHandler(func(query *models.GetConcurrentUsersStatsQuery) error {
-				query.Result = &models.ConcurrentUsersStats{}
-				return nil
-			})
 			uss.RegisterMetric(metricName, func() (interface{}, error) {
 				return 1, nil
 			})
 
-			report, err := uss.GetUsageReport()
+			report, err := uss.GetUsageReport(context.Background())
 			assert.Nil(t, err, "Expected no error")
 
 			metric := report.Metrics[metricName]
