@@ -109,7 +109,7 @@ func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File
 		return fmt.Errorf("failed to write to %q: %w", tmpFile.Name(), err)
 	}
 	if len(checksum) > 0 && checksum != fmt.Sprintf("%x", h.Sum(nil)) {
-		return fmt.Errorf("expected sha256 checksum does not match the downloaded archive - please contact security@grafana.com")
+		return fmt.Errorf("expected SHA256 checksum does not match the downloaded archive - please contact security@grafana.com")
 	}
 	return nil
 }
