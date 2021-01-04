@@ -1,7 +1,8 @@
 import { PanelProps } from '@grafana/data';
-import { ContextMenuPlugin, GraphNG, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
+import { GraphNG, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
 import React from 'react';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
+import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { Options } from './types';
 
@@ -15,6 +16,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
   height,
   options,
   onChangeTimeRange,
+  replaceVariables,
 }) => {
   return (
     <GraphNG
@@ -27,7 +29,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
     >
       <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
       <ZoomPlugin onZoom={onChangeTimeRange} />
-      <ContextMenuPlugin />
+      <ContextMenuPlugin timeZone={timeZone} replaceVariables={replaceVariables} />
       {data.annotations ? <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} /> : <></>}
       {data.annotations ? <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} /> : <></>}
     </GraphNG>

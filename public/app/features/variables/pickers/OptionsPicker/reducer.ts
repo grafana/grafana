@@ -221,10 +221,12 @@ const optionsPickerSlice = createSlice({
         return applyStateChanges(state, updateOptions);
       }
 
-      state.selectedValues = state.options.map(option => ({
-        ...option,
-        selected: true,
-      }));
+      state.selectedValues = state.options
+        .filter(option => option.value !== ALL_VARIABLE_VALUE)
+        .map(option => ({
+          ...option,
+          selected: true,
+        }));
 
       return applyStateChanges(state, updateOptions);
     },

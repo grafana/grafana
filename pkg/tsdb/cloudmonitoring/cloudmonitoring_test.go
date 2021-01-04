@@ -989,6 +989,8 @@ func TestCloudMonitoring(t *testing.T) {
 func loadTestFile(path string) (cloudMonitoringResponse, error) {
 	var data cloudMonitoringResponse
 
+	// Can ignore gosec warning G304 here since it's a test path
+	// nolint:gosec
 	jsonBody, err := ioutil.ReadFile(path)
 	if err != nil {
 		return data, err

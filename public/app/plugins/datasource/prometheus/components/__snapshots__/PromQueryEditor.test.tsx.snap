@@ -82,7 +82,6 @@ exports[`Render PromQueryEditor with basic options should render 1`] = `
       </div>
       <Select
         isSearchable={false}
-        menuPlacement="bottom"
         onChange={[Function]}
         options={
           Array [

@@ -554,11 +554,12 @@ The following sections detail the supported settings and secure settings for eac
 
 #### Alert notification `webhook`
 
-| Name     | Secure setting |
-| -------- | -------------- |
-| url      |                |
-| username |                |
-| password | yes            |
+| Name       | Secure setting |
+| ---------- | -------------- |
+| url        |                |
+| httpMethod |                |
+| username   |                |
+| password   | yes            |
 
 #### Alert notification `googlechat`
 

@@ -33,7 +33,8 @@ Object {
       "custom": Object {
         "axisPlacement": "hidden",
         "drawStyle": "line",
-        "fillOpacity": 0.5,
+        "fillGradient": "opacity",
+        "fillOpacity": 60,
         "lineInterpolation": "stepAfter",
         "lineWidth": 1,
         "pointSize": 6,
@@ -66,7 +67,7 @@ Object {
       "custom": Object {
         "axisPlacement": "auto",
         "drawStyle": "line",
-        "fillOpacity": 0.5,
+        "fillOpacity": 50,
         "lineInterpolation": "stepAfter",
         "lineWidth": 5,
         "pointSize": 6,
@@ -115,7 +116,7 @@ Object {
         "axisLabel": "Y111",
         "axisPlacement": "auto",
         "drawStyle": "line",
-        "fillOpacity": 0.1,
+        "fillOpacity": 10,
         "lineWidth": 1,
         "pointSize": 6,
         "showPoints": "never",

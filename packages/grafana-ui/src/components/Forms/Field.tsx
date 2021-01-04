@@ -1,11 +1,11 @@
-import React from 'react';
+import React, { HTMLAttributes } from 'react';
 import { Label } from './Label';
 import { stylesFactory, useTheme } from '../../themes';
 import { css, cx } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { FieldValidationMessage } from './FieldValidationMessage';
 
-export interface FieldProps {
+export interface FieldProps extends HTMLAttributes<HTMLDivElement> {
   /** Form input element, i.e Input or Switch */
   children: React.ReactElement;
   /** Label for the field */
@@ -59,6 +59,7 @@ export const Field: React.FC<FieldProps> = ({
   error,
   children,
   className,
+  ...otherProps
 }) => {
   const theme = useTheme();
   let inputId;
@@ -81,7 +82,7 @@ export const Field: React.FC<FieldProps> = ({
     );
 
   return (
-    <div className={cx(styles.field, horizontal && styles.fieldHorizontal, className)}>
+    <div className={cx(styles.field, horizontal && styles.fieldHorizontal, className)} {...otherProps}>
       {labelElement}
       <div>
         {React.cloneElement(children, { invalid, disabled, loading })}

@@ -17,8 +17,6 @@ describe('CloudWatchLogsQueryField', () => {
       <CloudWatchLogsQueryField
         history={[]}
         absoluteRange={{ from: 1, to: 10 }}
-        syntaxLoaded={false}
-        syntax={{} as any}
         exploreId={ExploreId.left}
         datasource={
           {
@@ -153,8 +151,6 @@ describe('CloudWatchLogsQueryField', () => {
       <CloudWatchLogsQueryField
         history={[]}
         absoluteRange={{ from: 1, to: 10 }}
-        syntaxLoaded={false}
-        syntax={{} as any}
         exploreId={ExploreId.left}
         datasource={
           {

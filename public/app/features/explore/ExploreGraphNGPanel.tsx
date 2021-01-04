@@ -1,14 +1,6 @@
 import { AbsoluteTimeRange, DataFrame, dateTime, GrafanaTheme, TimeZone } from '@grafana/data';
-import {
-  Collapse,
-  ContextMenuPlugin,
-  GraphNG,
-  Icon,
-  LegendDisplayMode,
-  TooltipPlugin,
-  useStyles,
-  ZoomPlugin,
-} from '@grafana/ui';
+import { Collapse, GraphNG, Icon, LegendDisplayMode, TooltipPlugin, useStyles, ZoomPlugin } from '@grafana/ui';
+import { ContextMenuPlugin } from 'app/plugins/panel/graph3/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from 'app/plugins/panel/graph3/plugins/ExemplarsPlugin';
 import { css, cx } from 'emotion';
 import React, { useState } from 'react';
@@ -71,7 +63,7 @@ export function ExploreGraphNGPanel({
         >
           <TooltipPlugin mode="single" timeZone={timeZone} />
           <ZoomPlugin onZoom={onUpdateTimeRange} />
-          <ContextMenuPlugin />
+          <ContextMenuPlugin timeZone={timeZone} />
           {annotations ? <ExemplarsPlugin exemplars={annotations} timeZone={timeZone} /> : <></>}
         </GraphNG>
       </Collapse>

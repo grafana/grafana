@@ -14,6 +14,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   collapseBody: css`
     label: collapse__body;
     padding: ${theme.panelPadding}px;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  `,
+  bodyContentWrapper: css`
+    label: bodyContentWrapper;
+    flex: 1;
+    overflow: hidden;
   `,
   loader: css`
     label: collapse__loader;
@@ -136,7 +145,7 @@ export const Collapse: FunctionComponent<Props> = ({ isOpen, label, loading, col
       {isOpen && (
         <div className={cx([style.collapseBody])}>
           <div className={loaderClass} />
-          {children}
+          <div className={style.bodyContentWrapper}>{children}</div>
         </div>
       )}
     </div>
