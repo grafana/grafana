@@ -34,6 +34,8 @@ var permittedHeaders = map[string]struct{}{
 	"Accept":          {},
 	"Accept-Encoding": {},
 	"Content-Type":    {},
+	"securitytenant":  {},
+	"sgtenant":        {},
 }
 
 type SigV4Middleware struct {
