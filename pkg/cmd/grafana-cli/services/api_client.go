@@ -103,7 +103,7 @@ func (client *GrafanaComClient) DownloadFile(pluginName string, tmpFile *os.File
 	w := bufio.NewWriter(tmpFile)
 	h := sha256.New()
 	if _, err = io.Copy(w, io.TeeReader(bodyReader, h)); err != nil {
-		return errutil.Wrap("Failed to compute sha256 checksum", err)
+		return errutil.Wrap("failed to compute SHA256 checksum", err)
 	}
 	if err := w.Flush(); err != nil {
 		return fmt.Errorf("failed to write to %q: %w", tmpFile.Name(), err)
