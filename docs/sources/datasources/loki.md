@@ -232,7 +232,7 @@ datasources:
           url: "http://localhost:16686/trace/$${__value.raw}"
 ```
 
-Here's example of Jaeger datasource corresponding to the above example. Note Jaeger's `uid` value does match with Loki's `datasourceUid` value.
+Here's an example of a Jaeger data source corresponding to the above example. Note that the Jaeger `uid` value does match the Loki `datasourceUid` value.
 
 ```
 datasources:
