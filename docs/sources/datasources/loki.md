@@ -240,6 +240,6 @@ datasources:
       type: jaeger
       url: http://jaeger-tracing-query:16686/
       access: proxy
-      # uid should be matching with datasourceUid in dervidedFields.
+      # UID should match the datasourceUid in dervidedFields.
       uid: my_jaeger_uid
 ```
