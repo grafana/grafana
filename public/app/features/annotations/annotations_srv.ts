@@ -14,7 +14,6 @@ import {
   CoreApp,
   DataQueryRequest,
   DataSourceApi,
-  PanelEvents,
   rangeUtil,
   ScopedVars,
 } from '@grafana/data';
@@ -26,6 +25,7 @@ import { map, mergeMap } from 'rxjs/operators';
 import { AnnotationQueryOptions, AnnotationQueryResponse } from './types';
 import { standardAnnotationSupport } from './standardAnnotationSupport';
 import { runRequest } from '../query/state/runRequest';
+import { RefreshEvent } from 'app/types/events';
 
 let counter = 100;
 function getNextRequestId() {
@@ -41,7 +41,7 @@ export class AnnotationsSrv {
     // always clearPromiseCaches when loading new dashboard
     this.clearPromiseCaches();
     // clear promises on refresh events
-    dashboard.on(PanelEvents.refresh, this.clearPromiseCaches.bind(this));
+    dashboard.events.subscribe(RefreshEvent, this.clearPromiseCaches.bind(this));
   }
 
   clearPromiseCaches() {

@@ -436,6 +436,10 @@
             {
               "text": "Micro Bitcoin (μBTC)",
               "value": "currencyμBTC"
+            },
+            {
+              "text": "Vietnamese Dong (VND)",
+              "value": "currencyVND"
             }
           ],
           "text": "currency"
@@ -1535,6 +1539,10 @@
             {
               "text": "Bitcoin (฿)",
               "value": "currencyBTC"
+            },
+            {
+              "text": "Vietnamese Dong (VND)",
+              "value": "currencyVND"
             }
           ],
           "text": "currency"
@@ -2614,6 +2622,10 @@
             {
               "text": "Bitcoin (฿)",
               "value": "currencyBTC"
+            },
+            {
+              "text": "Vietnamese Dong (VND)",
+              "value": "currencyVND"
             }
           ],
           "text": "currency"

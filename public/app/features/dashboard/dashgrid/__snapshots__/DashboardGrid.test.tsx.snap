@@ -41,7 +41,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
   onLayoutChange={[Function]}
   onResize={[Function]}
   onResizeStop={[Function]}
-  onWidthChange={[Function]}
   viewPanel={null}
 >
   <div

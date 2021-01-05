@@ -19,6 +19,8 @@ type Response interface {
 	WriteTo(ctx *models.ReqContext)
 	// Status gets the response's status.
 	Status() int
+	// Body gets the response's body.
+	Body() []byte
 }
 
 type NormalResponse struct {
@@ -46,6 +48,11 @@ func Wrap(action interface{}) macaron.Handler {
 // Status gets the response's status.
 func (r *NormalResponse) Status() int {
 	return r.status
+}
+
+// Body gets the response's body.
+func (r *NormalResponse) Body() []byte {
+	return r.body
 }
 
 func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
@@ -137,17 +144,26 @@ func Respond(status int, body interface{}) *NormalResponse {
 	}
 }
 
+// RedirectResponse represents a redirect response.
 type RedirectResponse struct {
 	location string
 }
 
+// WriteTo writes to a response.
 func (r *RedirectResponse) WriteTo(ctx *models.ReqContext) {
 	ctx.Redirect(r.location)
 }
 
 // Status gets the response's status.
+// Required to implement api.Response.
 func (*RedirectResponse) Status() int {
 	return http.StatusFound
+}
+
+// Body gets the response's body.
+// Required to implement api.Response.
+func (r *RedirectResponse) Body() []byte {
+	return nil
 }
 
 func Redirect(location string) *RedirectResponse {
