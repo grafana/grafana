@@ -79,9 +79,6 @@ func GetDefaultDataSource(query *models.GetDefaultDataSourceQuery) error {
 	datasource := models.DataSource{}
 
 	exists, err := x.Where("org_id=? AND is_default=?", query.OrgId, true).Get(&datasource)
-	if err != nil {
-		return err
-	}
 
 	if !exists {
 		return models.ErrDataSourceNotFound

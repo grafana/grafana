@@ -175,6 +175,28 @@ func TestAlertRuleExtraction(t *testing.T) {
 			})
 		})
 
+		Convey("Panel does not have datasource configured, use the default datasource", func() {
+			panelWithoutSpecifiedDatasource, err := ioutil.ReadFile("./testdata/panel-without-specified-datasource.json")
+			So(err, ShouldBeNil)
+
+			dashJSON, err := simplejson.NewJson(panelWithoutSpecifiedDatasource)
+			So(err, ShouldBeNil)
+			dash := models.NewDashboardFromJson(dashJSON)
+			extractor := NewDashAlertExtractor(dash, 1, nil)
+
+			alerts, err := extractor.GetAlerts()
+
+			Convey("Get rules without error", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Use default datasource", func() {
+				condition := simplejson.NewFromAny(alerts[0].Settings.Get("conditions").MustArray()[0])
+				query := condition.Get("query")
+				So(query.Get("datasourceId").MustInt64(), ShouldEqual, 12)
+			})
+		})
+
 		Convey("Parse alerts from dashboard without rows", func() {
 			json, err := ioutil.ReadFile("./testdata/v5-dashboard.json")
 			So(err, ShouldBeNil)
