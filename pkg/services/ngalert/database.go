@@ -22,18 +22,6 @@ func getAlertDefinitionByUID(sess *sqlstore.DBSession, alertDefinitionUID string
 	return &alertDefinition, nil
 }
 
-func getAlertDefinitionByID(sess *sqlstore.DBSession, alertDefinitionID int64) (*AlertDefinition, error) {
-	alertDefinition := AlertDefinition{}
-	has, err := sess.ID(alertDefinitionID).Get(&alertDefinition)
-	if !has {
-		return nil, errAlertDefinitionNotFound
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &alertDefinition, nil
-}
-
 // deleteAlertDefinitionByID is a handler for deleting an alert definition.
 // It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
 func (ng *AlertNG) deleteAlertDefinitionByUID(cmd *deleteAlertDefinitionByUIDCommand) error {
@@ -62,19 +50,6 @@ func (ng *AlertNG) deleteAlertDefinitionByUID(cmd *deleteAlertDefinitionByUIDCom
 func (ng *AlertNG) getAlertDefinitionByUID(query *getAlertDefinitionByUIDQuery) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertDefinition, err := getAlertDefinitionByUID(sess, query.UID, query.OrgID)
-		if err != nil {
-			return err
-		}
-		query.Result = alertDefinition
-		return nil
-	})
-}
-
-// getAlertDefinitionByID is a handler for retrieving an alert definition from that database by its ID.
-// It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
-func (ng *AlertNG) getAlertDefinitionByID(query *getAlertDefinitionByIDQuery) error {
-	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		alertDefinition, err := getAlertDefinitionByID(sess, query.ID)
 		if err != nil {
 			return err
 		}
@@ -231,7 +206,7 @@ func (ng *AlertNG) getOrgAlertDefinitions(query *listAlertDefinitionsQuery) erro
 func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alerts := make([]*AlertDefinition, 0)
-		q := "SELECT id, interval_seconds, version FROM alert_definition"
+		q := "SELECT uid, org_id, interval_seconds, version FROM alert_definition"
 		if err := sess.SQL(q).Find(&alerts); err != nil {
 			return err
 		}

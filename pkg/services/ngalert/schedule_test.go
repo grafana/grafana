@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"runtime"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -18,8 +17,8 @@ import (
 )
 
 type evalAppliedInfo struct {
-	alertDefID int64
-	now        time.Time
+	alertDefKey string
+	now         time.Time
 }
 
 func TestAlertingTicker(t *testing.T) {
@@ -39,8 +38,8 @@ func TestAlertingTicker(t *testing.T) {
 
 	evalAppliedCh := make(chan evalAppliedInfo, len(alerts))
 
-	ng.schedule.evalApplied = func(alertDefID int64, now time.Time) {
-		evalAppliedCh <- evalAppliedInfo{alertDefID: alertDefID, now: now}
+	ng.schedule.evalApplied = func(alertDefKey string, now time.Time) {
+		evalAppliedCh <- evalAppliedInfo{alertDefKey: alertDefKey, now: now}
 	}
 
 	ctx := context.Background()
@@ -50,7 +49,7 @@ func TestAlertingTicker(t *testing.T) {
 	}()
 	runtime.Gosched()
 
-	expectedAlertDefinitionsEvaluated := []int64{alerts[1].ID}
+	expectedAlertDefinitionsEvaluated := []string{alerts[1].getKey()}
 	t.Run(fmt.Sprintf("on 1st tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
@@ -64,21 +63,21 @@ func TestAlertingTicker(t *testing.T) {
 		OrgID:           alerts[0].OrgID,
 	})
 	require.NoError(t, err)
-	t.Logf("alert definition: %d interval reset to: %d", alerts[0].ID, threeSecInterval)
+	t.Logf("alert definition: %s interval reset to: %d", alerts[0].getKey(), threeSecInterval)
 
-	expectedAlertDefinitionsEvaluated = []int64{alerts[1].ID}
+	expectedAlertDefinitionsEvaluated = []string{alerts[1].getKey()}
 	t.Run(fmt.Sprintf("on 2nd tick alert definition: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
 
-	expectedAlertDefinitionsEvaluated = []int64{alerts[1].ID, alerts[0].ID}
+	expectedAlertDefinitionsEvaluated = []string{alerts[1].getKey(), alerts[0].getKey()}
 	t.Run(fmt.Sprintf("on 3rd tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
 
-	expectedAlertDefinitionsEvaluated = []int64{alerts[1].ID}
+	expectedAlertDefinitionsEvaluated = []string{alerts[1].getKey()}
 	t.Run(fmt.Sprintf("on 4th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
@@ -88,13 +87,13 @@ func TestAlertingTicker(t *testing.T) {
 	require.NoError(t, err)
 	t.Logf("alert definition: %d deleted", alerts[1].ID)
 
-	expectedAlertDefinitionsEvaluated = []int64{}
+	expectedAlertDefinitionsEvaluated = []string{}
 	t.Run(fmt.Sprintf("on 5th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
 
-	expectedAlertDefinitionsEvaluated = []int64{alerts[0].ID}
+	expectedAlertDefinitionsEvaluated = []string{alerts[0].getKey()}
 	t.Run(fmt.Sprintf("on 6th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
@@ -103,29 +102,29 @@ func TestAlertingTicker(t *testing.T) {
 	// create alert definition with one second interval
 	alerts = append(alerts, createTestAlertDefinition(t, ng, 1))
 
-	expectedAlertDefinitionsEvaluated = []int64{alerts[2].ID}
+	expectedAlertDefinitionsEvaluated = []string{alerts[2].getKey()}
 	t.Run(fmt.Sprintf("on 7th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
 }
 
-func assertEvalRun(t *testing.T, ch <-chan evalAppliedInfo, tick time.Time, ids ...int64) {
+func assertEvalRun(t *testing.T, ch <-chan evalAppliedInfo, tick time.Time, keys ...string) {
 	timeout := time.After(time.Second)
 
-	expected := make(map[int64]struct{}, len(ids))
-	for _, id := range ids {
-		expected[id] = struct{}{}
+	expected := make(map[string]struct{}, len(keys))
+	for _, k := range keys {
+		expected[k] = struct{}{}
 	}
 
 	for {
 		select {
 		case info := <-ch:
-			_, ok := expected[info.alertDefID]
-			t.Logf("alert definition: %d evaluated at: %v", info.alertDefID, info.now)
+			_, ok := expected[info.alertDefKey]
+			t.Logf("alert definition: %s evaluated at: %v", info.alertDefKey, info.now)
 			assert.True(t, ok)
 			assert.Equal(t, tick, info.now)
-			delete(expected, info.alertDefID)
+			delete(expected, info.alertDefKey)
 			if len(expected) == 0 {
 				return
 			}
@@ -144,10 +143,6 @@ func advanceClock(t *testing.T, mockedClock *clock.Mock) time.Time {
 	// t.Logf("Tick: %v", mockedClock.Now())
 }
 
-func concatenate(ids []int64) string {
-	s := make([]string, len(ids))
-	for _, id := range ids {
-		s = append(s, strconv.FormatInt(id, 10))
-	}
-	return fmt.Sprintf("[%s]", strings.TrimLeft(strings.Join(s, ","), ","))
+func concatenate(keys []string) string {
+	return fmt.Sprintf("[%s]", strings.TrimLeft(strings.Join(keys, ","), ","))
 }

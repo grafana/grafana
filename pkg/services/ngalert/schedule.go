@@ -3,6 +3,8 @@ package ngalert
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -13,13 +15,20 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID int64, evalCh <-chan *evalContext) error {
-	ng.log.Debug("alert definition routine started", "definitionID", definitionID)
+const separator = ":"
+
+func getKey(definitionUID string, orgID int64) string {
+	return strings.Join([]string{strconv.FormatInt(orgID, 10), definitionUID}, separator)
+}
+
+func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionUID string, orgID int64, evalCh <-chan *evalContext) error {
+	ng.log.Debug("alert definition routine started", "definitionUID", definitionUID)
 
 	evalRunning := false
 	var start, end time.Time
 	var attempt int64
 	var alertDefinition *AlertDefinition
+	key := getKey(definitionUID, orgID)
 	for {
 		select {
 		case ctx := <-evalCh:
@@ -32,8 +41,8 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID in
 
 				// fetch latest alert definition version
 				if alertDefinition == nil || alertDefinition.Version < ctx.version {
-					q := getAlertDefinitionByIDQuery{ID: definitionID}
-					err := ng.getAlertDefinitionByID(&q)
+					q := getAlertDefinitionByUIDQuery{OrgID: orgID, UID: definitionUID}
+					err := ng.getAlertDefinitionByUID(&q)
 					if err != nil {
 						ng.schedule.log.Error("failed to fetch alert definition", "alertDefinitionID", alertDefinition.ID)
 						return err
@@ -50,11 +59,11 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID in
 				results, err := eval.ConditionEval(&condition, ctx.now)
 				end = timeNow()
 				if err != nil {
-					ng.schedule.log.Error("failed to evaluate alert definition", "definitionID", definitionID, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
+					ng.schedule.log.Error("failed to evaluate alert definition", "definitionUID", definitionUID, "orgID", orgID, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
 					return err
 				}
 				for _, r := range results {
-					ng.schedule.log.Info("alert definition result", "definitionID", definitionID, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
+					ng.schedule.log.Info("alert definition result", "definitionUID", definitionUID, "orgID", orgID, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
 				}
 				return nil
 			}
@@ -64,7 +73,7 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID in
 				defer func() {
 					evalRunning = false
 					if ng.schedule.evalApplied != nil {
-						ng.schedule.evalApplied(definitionID, ctx.now)
+						ng.schedule.evalApplied(key, ctx.now)
 					}
 				}()
 
@@ -75,9 +84,9 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionID in
 					}
 				}
 			}()
-		case id := <-ng.schedule.stop:
-			if id == definitionID {
-				ng.schedule.log.Debug("stopping alert definition routine", "definitionID", definitionID)
+		case k := <-ng.schedule.stop:
+			if key == k {
+				ng.schedule.log.Debug("stopping alert definition routine", "definitionUID", definitionUID, "orgID", orgID)
 				// interrupt evaluation if it's running
 				return nil
 			}
@@ -95,7 +104,7 @@ type schedule struct {
 	registry alertDefinitionRegistry
 
 	// broadcast channel for stopping definition routines
-	stop chan int64
+	stop chan string
 
 	maxAttempts int64
 
@@ -106,17 +115,17 @@ type schedule struct {
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from evalApplied is handled.
-	evalApplied func(int64, time.Time)
+	evalApplied func(string, time.Time)
 
 	log log.Logger
 }
 
 // newScheduler returns a new schedule.
-func newScheduler(c clock.Clock, baseInterval time.Duration, logger log.Logger, evalApplied func(int64, time.Time)) *schedule {
+func newScheduler(c clock.Clock, baseInterval time.Duration, logger log.Logger, evalApplied func(string, time.Time)) *schedule {
 	ticker := alerting.NewTicker(c.Now(), time.Second*0, c, int64(baseInterval.Seconds()))
 	sch := schedule{
-		registry:     alertDefinitionRegistry{alertDefinitionInfo: make(map[int64]alertDefinitionInfo)},
-		stop:         make(chan int64),
+		registry:     alertDefinitionRegistry{alertDefinitionInfo: make(map[string]alertDefinitionInfo)},
+		stop:         make(chan string),
 		maxAttempts:  maxAttempts,
 		clock:        c,
 		baseInterval: baseInterval,
@@ -161,37 +170,39 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 			registeredDefinitions := ng.schedule.registry.keyMap()
 
 			type readyToRunItem struct {
-				id             int64
+				key            string
 				definitionInfo alertDefinitionInfo
 			}
 			readyToRun := make([]readyToRunItem, 0)
 			for _, item := range alertDefinitions {
-				itemID := item.ID
+				itemUID := item.UID
+				itemOrgID := item.OrgID
+				key := item.getKey()
 				itemVersion := item.Version
-				newRoutine := !ng.schedule.registry.exists(itemID)
-				definitionInfo := ng.schedule.registry.getOrCreateInfo(itemID, itemVersion)
+				newRoutine := !ng.schedule.registry.exists(itemUID, itemOrgID)
+				definitionInfo := ng.schedule.registry.getOrCreateInfo(itemUID, itemOrgID, itemVersion)
 				invalidInterval := item.IntervalSeconds%int64(ng.schedule.baseInterval.Seconds()) != 0
 
 				if newRoutine && !invalidInterval {
 					dispatcherGroup.Go(func() error {
-						return ng.definitionRoutine(ctx, itemID, definitionInfo.ch)
+						return ng.definitionRoutine(ctx, itemUID, itemOrgID, definitionInfo.ch)
 					})
 				}
 
 				if invalidInterval {
 					// this is expected to be always false
 					// give that we validate interval during alert definition updates
-					ng.schedule.log.Debug("alert definition with invalid interval will be ignored: interval should be divided exactly by scheduler interval", "definitionID", itemID, "interval", time.Duration(item.IntervalSeconds)*time.Second, "scheduler interval", ng.schedule.baseInterval)
+					ng.schedule.log.Debug("alert definition with invalid interval will be ignored: interval should be divided exactly by scheduler interval", "definitionUID", itemUID, "orgID", itemOrgID, "interval", time.Duration(item.IntervalSeconds)*time.Second, "scheduler interval", ng.schedule.baseInterval)
 					continue
 				}
 
 				itemFrequency := item.IntervalSeconds / int64(ng.schedule.baseInterval.Seconds())
 				if item.IntervalSeconds != 0 && tickNum%itemFrequency == 0 {
-					readyToRun = append(readyToRun, readyToRunItem{id: itemID, definitionInfo: definitionInfo})
+					readyToRun = append(readyToRun, readyToRunItem{key: key, definitionInfo: definitionInfo})
 				}
 
 				// remove the alert definition from the registered alert definitions
-				delete(registeredDefinitions, itemID)
+				delete(registeredDefinitions, key)
 			}
 
 			var step int64 = 0
@@ -221,42 +232,46 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 
 type alertDefinitionRegistry struct {
 	mu                  sync.Mutex
-	alertDefinitionInfo map[int64]alertDefinitionInfo
+	alertDefinitionInfo map[string]alertDefinitionInfo
 }
 
 // getOrCreateInfo returns the channel for the specific alert definition
 // if it does not exists creates one and returns it
-func (r *alertDefinitionRegistry) getOrCreateInfo(definitionID int64, definitionVersion int64) alertDefinitionInfo {
+func (r *alertDefinitionRegistry) getOrCreateInfo(definitionUID string, orgID int64, definitionVersion int64) alertDefinitionInfo {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	info, ok := r.alertDefinitionInfo[definitionID]
+	key := getKey(definitionUID, orgID)
+
+	info, ok := r.alertDefinitionInfo[key]
 	if !ok {
-		r.alertDefinitionInfo[definitionID] = alertDefinitionInfo{ch: make(chan *evalContext), version: definitionVersion}
-		return r.alertDefinitionInfo[definitionID]
+		r.alertDefinitionInfo[key] = alertDefinitionInfo{ch: make(chan *evalContext), version: definitionVersion}
+		return r.alertDefinitionInfo[key]
 	}
 	info.version = definitionVersion
-	r.alertDefinitionInfo[definitionID] = info
+	r.alertDefinitionInfo[key] = info
 	return info
 }
 
-func (r *alertDefinitionRegistry) exists(definitionID int64) bool {
+func (r *alertDefinitionRegistry) exists(definitionUID string, orgID int64) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	_, ok := r.alertDefinitionInfo[definitionID]
+	key := getKey(definitionUID, orgID)
+
+	_, ok := r.alertDefinitionInfo[key]
 	return ok
 }
 
-func (r *alertDefinitionRegistry) del(definitionID int64) {
+func (r *alertDefinitionRegistry) del(key string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	delete(r.alertDefinitionInfo, definitionID)
+	delete(r.alertDefinitionInfo, key)
 }
 
-func (r *alertDefinitionRegistry) iter() <-chan int64 {
-	c := make(chan int64)
+func (r *alertDefinitionRegistry) iter() <-chan string {
+	c := make(chan string)
 
 	f := func() {
 		r.mu.Lock()
@@ -272,10 +287,10 @@ func (r *alertDefinitionRegistry) iter() <-chan int64 {
 	return c
 }
 
-func (r *alertDefinitionRegistry) keyMap() map[int64]struct{} {
-	definitionsIDs := make(map[int64]struct{})
-	for definitionID := range r.iter() {
-		definitionsIDs[definitionID] = struct{}{}
+func (r *alertDefinitionRegistry) keyMap() map[string]struct{} {
+	definitionsIDs := make(map[string]struct{})
+	for k := range r.iter() {
+		definitionsIDs[k] = struct{}{}
 	}
 	return definitionsIDs
 }

@@ -23,6 +23,10 @@ type AlertDefinition struct {
 	UID             string `xorm:"uid"`
 }
 
+func (alertDefinition *AlertDefinition) getKey() string {
+	return getKey(alertDefinition.UID, alertDefinition.OrgID)
+}
+
 // AlertDefinitionVersion is the model for alert definition versions in Alerting NG.
 type AlertDefinitionVersion struct {
 	ID                 int64  `xorm:"pk autoincr 'id'"`
@@ -47,14 +51,6 @@ var (
 // getAlertDefinitionByUIDQuery is the query for retrieving/deleting an alert definition by UID and organisation ID.
 type getAlertDefinitionByUIDQuery struct {
 	UID   string
-	OrgID int64
-
-	Result *AlertDefinition
-}
-
-// getAlertDefinitionByIDQuery is the query for retrieving/deleting an alert definition by ID.
-type getAlertDefinitionByIDQuery struct {
-	ID    int64
 	OrgID int64
 
 	Result *AlertDefinition
