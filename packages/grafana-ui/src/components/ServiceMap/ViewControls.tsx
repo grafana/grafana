@@ -7,7 +7,7 @@ interface Props<Config> {
   onPlus: () => void;
   onMinus: () => void;
 }
-export function ViewControls<Config extends Array<Record<string, any>>>(props: Props<Config>) {
+export function ViewControls<Config extends Record<string, any>>(props: Props<Config>) {
   const { config, onConfigChange, onPlus, onMinus } = props;
   const [showConfig, setShowConfig] = useState(false);
 
@@ -21,40 +21,21 @@ export function ViewControls<Config extends Array<Record<string, any>>>(props: P
       </Button>
 
       {showConfig &&
-        config.map((c, index) => (
-          <>
-            <div>
-              Show:
+        Object.keys(config)
+          .filter(k => k !== 'show')
+          .map(k => (
+            <div key={k}>
+              {k}
               <input
                 style={{ width: 50 }}
-                type={'checkbox'}
-                checked={c.show}
+                type={'number'}
+                value={config[k]}
                 onChange={e => {
-                  const newConfig: any = [...config];
-                  newConfig[index] = { ...c, show: e.target.checked };
-                  onConfigChange(newConfig);
+                  onConfigChange({ ...config, [k]: parseFloat(e.target.value) });
                 }}
               />
             </div>
-            {Object.keys(c)
-              .filter(k => k !== 'show')
-              .map(k => (
-                <div key={k}>
-                  {k}
-                  <input
-                    style={{ width: 50 }}
-                    type={'number'}
-                    value={c[k]}
-                    onChange={e => {
-                      const newConfig: any = [...config];
-                      newConfig[index] = { ...c, [k]: parseFloat(e.target.value) };
-                      onConfigChange(newConfig);
-                    }}
-                  />
-                </div>
-              ))}
-          </>
-        ))}
+          ))}
     </>
   );
 }

@@ -1,22 +1,15 @@
-import React, { useEffect, useState, useMemo, useCallback, MouseEvent, MutableRefObject } from 'react';
-import { forceSimulation, forceLink, forceManyBody, forceCollide, forceX } from 'd3-force';
+import React, { useState, useMemo, useCallback, MouseEvent, MutableRefObject } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
-// import { response } from './x-ray-response';
 import { usePanning } from './usePanning';
 import { LinkDatum, NodeDatum, XrayEdge, XrayService } from './types';
 import { computeStats } from './statsUtils';
 import { Node } from './Node';
 import { Link } from './Link';
 import { ViewControls } from './ViewControls';
-import { ContextMenu } from '..';
 import { DataFrame, DataFrameView, LinkModel } from '@grafana/data';
 import { useZoom } from './useZoom';
-
-// interface Config extends Record<string, number> {
-//   collide: number;
-//   linkDistance: number;
-//   chargeStrength: number;
-// }
+import { GraphContextMenu } from './GraphContextMenu';
+import { useLayout, Config, defaultConfig } from './layout';
 
 interface Props {
   services: DataFrame;
@@ -26,37 +19,16 @@ interface Props {
 }
 export function GraphView(props: Props) {
   const [measureRef, { width, height }] = useMeasure();
-  const [config, setConfig] = useState<any>([
-    {
-      show: false,
-      linkDistance: 70,
-      chargeStrength: -1000000,
-      forceX: 20000,
-      rootX: -5000,
-    },
-    {
-      show: false,
-      linkDistance: 70,
-      linkStrength: 0.01,
-      tick: 300,
-    },
-    {
-      show: true,
-      linkDistance: 70,
-      linkStrength: 0.3,
-      tick: 300,
-    },
-  ]);
+  const [config, setConfig] = useState<Config>(defaultConfig);
 
   const [nodeHover, setNodeHover] = useState<string | undefined>(undefined);
-  // const [linkHover, setLinkHover] = useState<number | undefined>(undefined);
   const clearNodeHover = useCallback(() => setNodeHover(undefined), []);
 
   const { nodes: rawNodes, links: rawLinks } = useMemo(() => processServices(props.services, props.edges), [
     props.services,
     props.edges,
   ]);
-  const layouts: any = useLayout(rawNodes, rawLinks, config);
+  const { nodes, edges, bounds } = useLayout(rawNodes, rawLinks, config);
 
   const { scale, onStepDown, onStepUp, ref } = useZoom({
     stepDown: s => s / 1.5,
@@ -64,9 +36,6 @@ export function GraphView(props: Props) {
     min: 0.13,
     max: 2.25,
   });
-
-  const resIndex = config.findIndex((c: any) => c.show);
-  const { nodes, edges, bounds } = layouts.length ? layouts[resIndex] : { nodes: [], edges: [], bounds: undefined };
 
   const { state: panningState, ref: panRef } = usePanning<SVGSVGElement>({
     scale,
@@ -116,25 +85,6 @@ export function GraphView(props: Props) {
           {nodes.map(n => (
             <Node key={n.id} node={n} onMouseEnter={setNodeHover} onMouseLeave={clearNodeHover} onClick={onNodeOpen} />
           ))}
-
-          {/*<Node*/}
-          {/*  node={{*/}
-          {/*    id: '0',*/}
-          {/*    incoming: 0,*/}
-          {/*    x: 0,*/}
-          {/*    y: 0,*/}
-          {/*    name: 'test',*/}
-          {/*    type: 'test',*/}
-          {/*    stats: {*/}
-          {/*      tracesPerMinute: 0,*/}
-          {/*      avgResponseTime: 0,*/}
-          {/*      success: 0.46090105573287504,*/}
-          {/*      errors: 0,*/}
-          {/*      faults: 0.539098944267125,*/}
-          {/*      throttled: 0,*/}
-          {/*    },*/}
-          {/*  }}*/}
-          {/*/>*/}
         </g>
       </svg>
 
@@ -165,145 +115,6 @@ export function GraphView(props: Props) {
       )}
     </div>
   );
-}
-
-function GraphContextMenu({
-  header,
-  onClose,
-  links,
-  event,
-}: {
-  header: React.ReactNode;
-  onClose: () => void;
-  links: LinkModel[];
-  event: MouseEvent;
-}) {
-  if (!links.length) {
-    return null;
-  }
-
-  return (
-    <ContextMenu
-      renderHeader={() => header}
-      items={[
-        {
-          label: 'Open in Explore',
-          items: links.map(link => ({
-            label: link.title,
-            url: link.href,
-            onClick: link.onClick,
-          })),
-        },
-      ]}
-      onClose={onClose}
-      x={event.pageX}
-      y={event.pageY}
-    />
-  );
-}
-
-function useLayout(rawNodes: NodeDatum[], rawEdges: LinkDatum[], config: any[]) {
-  const [nodes, setNodes] = useState<NodeDatum[][]>([]);
-  const [edges, setEdges] = useState<LinkDatum[][]>([]);
-
-  // TODO the use effect is probably not needed here right now, but may make sense later if we decide to move the layout
-  // to webworker or just postpone until other things are rendered. Also right now it memoizes this for us.
-  useEffect(() => {
-    const resultNodes: any = [];
-    const resultEdges: any = [];
-
-    const rawNodesCopy = rawNodes.map(n => ({ ...n }));
-    const rawEdgesCopy = rawEdges.map(e => ({ ...e }));
-
-    // TODO figure out a good way to put roots in fixed position on the left
-    let roots = rawNodesCopy.filter(n => n.incoming === 0);
-    roots.forEach((n, index) => {
-      n.fx = config[0].rootX;
-      n.fy = index * 200;
-    });
-
-    const simulation = forceSimulation(rawNodesCopy)
-      .force(
-        'link',
-        forceLink(rawEdgesCopy)
-          .id((d: any) => d.id)
-          .distance(config[0].linkDistance)
-      )
-      .force('charge', forceManyBody().strength(config[0].chargeStrength))
-      .force('x', forceX(config[0].forceX));
-
-    simulation.tick(300);
-    simulation.stop();
-
-    centerNodes(rawNodesCopy);
-    resultNodes.push(rawNodesCopy);
-    resultEdges.push(rawEdgesCopy);
-
-    const rawNodesCopy2 = rawNodesCopy.map(n => ({ ...n }));
-    const rawEdgesCopy2 = rawEdges.map(e => ({ ...e }));
-
-    // roots = rawNodesCopy2.filter(n => n.incoming === 0);
-    // roots.forEach((n, index) => {
-    //   n.x = n.fx as any;
-    //   n.fx = undefined;
-    //   n.y = n.fy as any;
-    //   n.fy = undefined;
-    // });
-
-    const simulation2 = forceSimulation(rawNodesCopy2)
-      .force(
-        'link',
-        forceLink(rawEdgesCopy2)
-          // .strength(config[1].linkStrength)
-          .id((d: any) => d.id)
-          .distance(config[1].linkDistance)
-      )
-      .force('collide', forceCollide(200));
-
-    simulation2.tick(config[1].tick);
-    simulation2.stop();
-
-    centerNodes(rawNodesCopy2);
-    resultNodes.push(rawNodesCopy2);
-    resultEdges.push(rawEdgesCopy2);
-
-    const rawNodesCopy3 = rawNodesCopy2.map(n => ({ ...n }));
-    const rawEdgesCopy3 = rawEdges.map(e => ({ ...e }));
-    roots = rawNodesCopy3.filter(n => n.incoming === 0);
-    roots.forEach((n, index) => {
-      n.x = n.fx as any;
-      n.fx = undefined;
-      n.y = n.fy as any;
-      n.fy = undefined;
-    });
-
-    const simulation3 = forceSimulation(rawNodesCopy3)
-      .force(
-        'link',
-        forceLink(rawEdgesCopy3)
-          .strength((l: LinkDatum) => (roots.includes(l.source as any) ? config[2].linkStrength : 0))
-          .id((d: any) => d.id)
-          .distance(config[2].linkDistance)
-      )
-      .force('collide', forceCollide(200));
-
-    simulation3.tick(config[2].tick);
-    simulation3.stop();
-    // could use a center force but that dose not work well if we want to fix some nodes somewhere (not doing that
-    // right now though)
-    centerNodes(rawNodesCopy3);
-    resultNodes.push(rawNodesCopy3);
-    resultEdges.push(rawEdgesCopy3);
-
-    setNodes(resultNodes);
-    setEdges(resultEdges);
-  }, [config, rawNodes, rawEdges]);
-
-  return nodes.map((n, index) => ({
-    nodes: n,
-    edges: edges[index],
-    bounds: nodeBounds(n) /* momeoize? loops over all nodes every time */,
-  }));
 }
 
 /**
@@ -339,38 +150,6 @@ function processServices(services: DataFrame, edges: DataFrame): { nodes: NodeDa
     nodes: Object.values(servicesMap),
     links: edgesMapped,
   };
-}
-
-function centerNodes(nodes: NodeDatum[]) {
-  const bounds = nodeBounds(nodes);
-  const middleY = bounds.top + (bounds.bottom - bounds.top) / 2;
-  const middleX = bounds.left + (bounds.right - bounds.left) / 2;
-
-  for (let node of nodes) {
-    node.x = node.x! - middleX;
-    node.y = node.y! - middleY;
-  }
-}
-
-function nodeBounds(nodes: NodeDatum[]): { top: number; right: number; bottom: number; left: number } {
-  return nodes.reduce(
-    (acc, node) => {
-      if (node.x! > acc.right) {
-        acc.right = node.x!;
-      }
-      if (node.x! < acc.left) {
-        acc.left = node.x!;
-      }
-      if (node.y! > acc.bottom) {
-        acc.bottom = node.y!;
-      }
-      if (node.y! < acc.top) {
-        acc.top = node.y!;
-      }
-      return acc;
-    },
-    { top: Infinity, right: -Infinity, bottom: -Infinity, left: Infinity }
-  );
 }
 
 function LinkArrowMarker() {
