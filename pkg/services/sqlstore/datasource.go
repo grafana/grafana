@@ -76,10 +76,14 @@ func GetDataSources(query *models.GetDataSourcesQuery) error {
 
 // GetDefaultDataSource is used to get the default datasource of organization
 func GetDefaultDataSource(query *models.GetDefaultDataSourceQuery) error {
-	datasource := models.DataSource{OrgId: query.OrgId, IsDefault: true}
-	has, err := x.Get(&datasource)
+	datasource := models.DataSource{}
 
-	if !has {
+	exists, err := x.Where("org_id=? AND is_default=?", query.OrgId, true).Get(&datasource)
+	if err != nil {
+		return err
+	}
+
+	if !exists {
 		return models.ErrDataSourceNotFound
 	}
 
