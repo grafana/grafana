@@ -277,7 +277,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
         query={query}
         queries={queries}
         inMixedMode={dsSettings.meta.mixed}
-        datasource={datasource!}
+        dataSourceName={datasource!.name}
         disabled={isDisabled}
         onClick={e => this.onToggleEditMode(e, props)}
         onChange={onChange}

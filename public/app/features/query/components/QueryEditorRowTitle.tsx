@@ -1,14 +1,14 @@
 import React from 'react';
 import { css, cx } from 'emotion';
-import { DataQuery, DataSourceApi, GrafanaTheme } from '@grafana/data';
+import { DataQuery, GrafanaTheme } from '@grafana/data';
 import { Icon, Input, stylesFactory, useTheme, FieldValidationMessage } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { useState } from 'react';
 
-interface QueryEditorRowTitleProps {
+export interface Props {
   query: DataQuery;
   queries: DataQuery[];
-  datasource: DataSourceApi;
+  dataSourceName: string;
   inMixedMode?: boolean;
   disabled?: boolean;
   onChange: (query: DataQuery) => void;
@@ -16,8 +16,8 @@ interface QueryEditorRowTitleProps {
   collapsedText: string | null;
 }
 
-export const QueryEditorRowTitle: React.FC<QueryEditorRowTitleProps> = ({
-  datasource,
+export const QueryEditorRowTitle: React.FC<Props> = ({
+  dataSourceName,
   inMixedMode,
   disabled,
   query,
@@ -57,11 +57,13 @@ export const QueryEditorRowTitle: React.FC<QueryEditorRowTitleProps> = ({
 
     if (newName.length === 0) {
       setValidationError('An empty query name is not allowed');
+      return;
     }
 
     for (const otherQuery of queries) {
       if (otherQuery !== query && newName === otherQuery.refId) {
         setValidationError('Query name already exists');
+        return;
       }
     }
 
@@ -87,15 +89,16 @@ export const QueryEditorRowTitle: React.FC<QueryEditorRowTitleProps> = ({
   return (
     <div className={styles.wrapper}>
       {!isEditing && (
-        <div
+        <button
           className={styles.queryNameWrapper}
           aria-label={selectors.components.QueryEditorRow.title(query.refId)}
           title="Edit query name"
           onClick={onEditQuery}
+          data-testid="query-name-div"
         >
           <span className={styles.queryName}>{query.refId}</span>
           <Icon name="pen" className={styles.queryEditIcon} size="sm" />
-        </div>
+        </button>
       )}
       {isEditing && (
         <>
@@ -109,11 +112,12 @@ export const QueryEditorRowTitle: React.FC<QueryEditorRowTitleProps> = ({
             invalid={validationError !== null}
             onChange={onInputChange}
             className={styles.queryNameInput}
+            data-testid="query-name-input"
           />
           {validationError && <FieldValidationMessage horizontal>{validationError}</FieldValidationMessage>}
         </>
       )}
-      {inMixedMode && <em className={styles.contextInfo}> ({datasource.name})</em>}
+      {inMixedMode && <em className={styles.contextInfo}> ({dataSourceName})</em>}
       {disabled && <em className={styles.contextInfo}> Disabled</em>}
 
       {collapsedText && (
@@ -135,7 +139,6 @@ const getQueryEditorRowTitleStyles = stylesFactory((theme: GrafanaTheme) => {
 
       &:hover {
         .query-name-wrapper {
-          display: flex;
           background: ${theme.colors.bg3};
           border: 1px dashed ${theme.colors.border3};
         }
@@ -152,7 +155,17 @@ const getQueryEditorRowTitleStyles = stylesFactory((theme: GrafanaTheme) => {
         border: 1px solid transparent;
         border-radius: ${theme.border.radius.md};
         align-items: center;
-        padding-right: ${theme.spacing.xs};
+        padding: 0 0 0 ${theme.spacing.xs};
+        margin: 0;
+        background: transparent;
+
+        &:focus {
+          border: 2px solid ${theme.colors.formInputBorderActive};
+
+          .query-name-edit-icon {
+            visibility: visible;
+          }
+        }
       `,
       'query-name-wrapper'
     ),
