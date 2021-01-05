@@ -1,6 +1,6 @@
 'use strict';
 
-const merge = require('webpack-merge');
+const { merge } = require('webpack-merge');
 const common = require('./webpack.common.js');
 const path = require('path');
 const webpack = require('webpack');
@@ -119,7 +119,6 @@ module.exports = (env = {}) =>
         chunksSortMode: 'none',
         excludeChunks: ['dark', 'light'],
       }),
-      new webpack.NamedModulesPlugin(),
       new webpack.HotModuleReplacementPlugin(),
       new webpack.DefinePlugin({
         'process.env': {
