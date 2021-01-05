@@ -32,7 +32,7 @@ describe('QueryOperationRow', () => {
       const onOpenSpy = jest.fn();
       const onCloseSpy = jest.fn();
       const wrapper = mount(
-        <QueryOperationRow onOpen={onOpenSpy} onClose={onCloseSpy} isOpen={false} id="test-id" index={0}>
+        <QueryOperationRow title="title" onOpen={onOpenSpy} onClose={onCloseSpy} isOpen={false} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
       );
@@ -132,9 +132,7 @@ describe('QueryOperationRow', () => {
         </QueryOperationRow>
       );
 
-      expect(Object.keys(propsSpy.mock.calls[0][0])).toContainEqual('isOpen');
-      expect(Object.keys(propsSpy.mock.calls[0][0])).toContainEqual('openRow');
-      expect(Object.keys(propsSpy.mock.calls[0][0])).toContainEqual('closeRow');
+      expect(Object.keys(propsSpy.mock.calls[0][0])).toEqual(['isOpen', 'onOpen', 'onClose']);
     });
   });
 });
