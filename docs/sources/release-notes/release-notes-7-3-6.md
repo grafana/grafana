@@ -8,7 +8,7 @@ list = false
 
 # Release notes for Grafana 7.3.6
 
-### Bug fixes
+### Security
 
 * **SAML**: Fixes encoding/xml SAML vulnerability in Grafana Enterprise. [#29875](https://github.com/grafana/grafana/issues/29875)
 
