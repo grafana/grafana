@@ -1,12 +1,13 @@
 import React from 'react';
 import { css, cx } from 'emotion';
 import { DataQuery, DataSourceApi, GrafanaTheme } from '@grafana/data';
-import { Icon, Input, stylesFactory, useTheme } from '@grafana/ui';
+import { Icon, Input, stylesFactory, useTheme, FieldValidationMessage } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 import { useState } from 'react';
 
 interface QueryEditorRowTitleProps {
   query: DataQuery;
+  queries: DataQuery[];
   datasource: DataSourceApi;
   inMixedMode?: boolean;
   disabled?: boolean;
@@ -20,6 +21,7 @@ export const QueryEditorRowTitle: React.FC<QueryEditorRowTitleProps> = ({
   inMixedMode,
   disabled,
   query,
+  queries,
   onClick,
   onChange,
   collapsedText,
@@ -27,6 +29,7 @@ export const QueryEditorRowTitle: React.FC<QueryEditorRowTitleProps> = ({
   const theme = useTheme();
   const styles = getQueryEditorRowTitleStyles(theme);
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const onEditQuery = (event: React.SyntheticEvent) => {
     setIsEditing(true);
@@ -34,6 +37,12 @@ export const QueryEditorRowTitle: React.FC<QueryEditorRowTitleProps> = ({
 
   const onEndEditName = (newName: string) => {
     setIsEditing(false);
+
+    // Ignore change if invalid
+    if (validationError) {
+      setValidationError(null);
+      return;
+    }
 
     if (query.refId !== newName) {
       onChange({
@@ -43,8 +52,26 @@ export const QueryEditorRowTitle: React.FC<QueryEditorRowTitleProps> = ({
     }
   };
 
+  const onInputChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
+    const newName = event.currentTarget.value.trim();
+
+    if (newName.length === 0) {
+      setValidationError('An empty query name is not allowed');
+    }
+
+    for (const otherQuery of queries) {
+      if (otherQuery !== query && newName === otherQuery.refId) {
+        setValidationError('Query name already exists');
+      }
+    }
+
+    if (validationError) {
+      setValidationError(null);
+    }
+  };
+
   const onEditQueryBlur = (event: React.SyntheticEvent<HTMLInputElement>) => {
-    onEndEditName(event.currentTarget.value);
+    onEndEditName(event.currentTarget.value.trim());
   };
 
   const onKeyDown = (event: React.KeyboardEvent) => {
@@ -71,15 +98,20 @@ export const QueryEditorRowTitle: React.FC<QueryEditorRowTitleProps> = ({
         </div>
       )}
       {isEditing && (
-        <Input
-          type="text"
-          defaultValue={query.refId}
-          onBlur={onEditQueryBlur}
-          autoFocus
-          onKeyDown={onKeyDown}
-          onFocus={onFocus}
-          className={styles.queryNameInput}
-        />
+        <>
+          <Input
+            type="text"
+            defaultValue={query.refId}
+            onBlur={onEditQueryBlur}
+            autoFocus
+            onKeyDown={onKeyDown}
+            onFocus={onFocus}
+            invalid={validationError !== null}
+            onChange={onInputChange}
+            className={styles.queryNameInput}
+          />
+          {validationError && <FieldValidationMessage horizontal>{validationError}</FieldValidationMessage>}
+        </>
       )}
       {inMixedMode && <em className={styles.contextInfo}> ({datasource.name})</em>}
       {disabled && <em className={styles.contextInfo}> Disabled</em>}

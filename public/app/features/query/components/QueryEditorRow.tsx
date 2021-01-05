@@ -268,13 +268,14 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   renderTitle = (props: QueryOperationRowRenderProps) => {
-    const { query, dsSettings, onChange } = this.props;
+    const { query, dsSettings, onChange, queries } = this.props;
     const { datasource } = this.state;
     const isDisabled = query.hide;
 
     return (
       <QueryEditorRowTitle
         query={query}
+        queries={queries}
         inMixedMode={dsSettings.meta.mixed}
         datasource={datasource!}
         disabled={isDisabled}
