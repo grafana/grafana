@@ -157,7 +157,7 @@
     "jest-canvas-mock": "2.3.0",
     "jest-date-mock": "1.0.8",
     "jest-matcher-utils": "26.0.0",
-    "lerna": "^3.20.2",
+    "lerna": "^3.22.1",
     "lint-staged": "10.0.7",
     "load-grunt-tasks": "5.1.0",
     "mini-css-extract-plugin": "0.9.0",
