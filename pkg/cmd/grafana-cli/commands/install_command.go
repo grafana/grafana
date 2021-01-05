@@ -102,7 +102,6 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 				archMeta = v.Arch["any"]
 			}
 			checksum = archMeta.SHA256
-			}
 		}
 	}
 
