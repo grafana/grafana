@@ -54,7 +54,7 @@ In order not to break all angular panel plugins and data sources we have some cu
 
 # 7.3.6 (2020-12-17)
 
-### Bug fixes
+### Security
 
 * **SAML**: Fixes encoding/xml SAML vulnerability in Grafana Enterprise. [#29875](https://github.com/grafana/grafana/issues/29875)
 
