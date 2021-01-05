@@ -50,6 +50,16 @@ In order not to break all angular panel plugins and data sources we have some cu
 
 <!-- 7.4.0 END -->
 
+<!-- 7.3.6 START -->
+
+# 7.3.6 (2020-12-17)
+
+### Security
+
+- **SAML**: Fixes encoding/xml SAML vulnerability in Grafana Enterprise [#29875](https://github.com/grafana/grafana/issues/29875), [@bergquist](https://github.com/bergquist)
+
+<!-- 7.3.6 END -->
+
 <!-- 7.3.5 START -->
 
 # 7.3.5 (2020-12-10)
@@ -220,6 +230,16 @@ In order not to break all angular panel plugins and data sources we have some cu
 * **TemplateSrv**: Fix interpolating strings with object variables. [#28171](https://github.com/grafana/grafana/pull/28171), [@torkelo](https://github.com/torkelo)
 * **Variables**: Fixes so constants set from url get completed state. [#28257](https://github.com/grafana/grafana/pull/28257), [@hugohaggmark](https://github.com/hugohaggmark)
 * **Variables**: Prevent adhoc filters from crashing when they are not loaded properly. [#28226](https://github.com/grafana/grafana/pull/28226), [@mckn](https://github.com/mckn)
+
+<!-- 7.2.3 START -->
+
+# 7.2.3 (2020-12-17)
+
+### Security
+
+- **SAML**: Fixes encoding/xml SAML vulnerability in Grafana Enterprise [#29875](https://github.com/grafana/grafana/issues/29875), [@bergquist](https://github.com/bergquist)
+
+<!-- 7.2.3 END -->
 
 # 7.2.2 (2020-10-21)
 
@@ -1009,6 +1029,18 @@ We have also extended the time zone options so you can select any of the standar
 - **Logs**: Fix error when non-string log level supplied. [#23654](https://github.com/grafana/grafana/pull/23654), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Rich history**: Fix create url and run query for various datasources. [#23627](https://github.com/grafana/grafana/pull/23627), [@ivanahuckova](https://github.com/ivanahuckova)
 - **Security**: Fix XSS vulnerability in table panel. [#23816](https://github.com/grafana/grafana/pull/23816), [@torkelo](https://github.com/torkelo)
+
+<!-- 6.7.5 START -->
+
+# 6.7.5 (2020-12-17)
+
+### Security
+
+- **SAML**: Fixes encoding/xml SAML vulnerability in Grafana Enterprise [#29875](https://github.com/grafana/grafana/issues/29875), [@bergquist](https://github.com/bergquist)
+
+<!-- 6.7.5 END -->
+
+
 
 # 6.7.4 (2020-06-03)
 

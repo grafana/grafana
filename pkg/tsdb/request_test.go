@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/require"
 )
 
-func TestMetricQuery(t *testing.T) {
-	Convey("When executing request with one query", t, func() {
+func TestHandleRequest(t *testing.T) {
+	t.Run("Should return query result when handling request for query", func(t *testing.T) {
 		req := &TsdbQuery{
 			Queries: []*Query{
 				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
@@ -20,15 +20,12 @@ func TestMetricQuery(t *testing.T) {
 		fakeExecutor.Return("A", TimeSeriesSlice{&TimeSeries{Name: "argh"}})
 
 		res, err := HandleRequest(context.TODO(), &models.DataSource{Id: 1, Type: "test"}, req)
-		So(err, ShouldBeNil)
-
-		Convey("Should return query results", func() {
-			So(res.Results["A"].Series, ShouldNotBeEmpty)
-			So(res.Results["A"].Series[0].Name, ShouldEqual, "argh")
-		})
+		require.NoError(t, err)
+		require.NotEmpty(t, res.Results["A"].Series)
+		require.Equal(t, "argh", res.Results["A"].Series[0].Name)
 	})
 
-	Convey("When executing one request with two queries from same data source", t, func() {
+	t.Run("Should return query results when handling request for two queries with same data source", func(t *testing.T) {
 		req := &TsdbQuery{
 			Queries: []*Query{
 				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
@@ -41,15 +38,14 @@ func TestMetricQuery(t *testing.T) {
 		fakeExecutor.Return("B", TimeSeriesSlice{&TimeSeries{Name: "barg"}})
 
 		res, err := HandleRequest(context.TODO(), &models.DataSource{Id: 1, Type: "test"}, req)
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
-		Convey("Should return query results", func() {
-			So(len(res.Results), ShouldEqual, 2)
-			So(res.Results["B"].Series[0].Name, ShouldEqual, "barg")
-		})
+		require.Len(t, res.Results, 2)
+		require.Equal(t, "argh", res.Results["A"].Series[0].Name)
+		require.Equal(t, "barg", res.Results["B"].Series[0].Name)
 	})
 
-	Convey("When query uses data source of unknown type", t, func() {
+	t.Run("Should return error when handling request for query with unknown type", func(t *testing.T) {
 		req := &TsdbQuery{
 			Queries: []*Query{
 				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "asdasdas"}},
@@ -57,7 +53,7 @@ func TestMetricQuery(t *testing.T) {
 		}
 
 		_, err := HandleRequest(context.TODO(), &models.DataSource{Id: 12, Type: "testjughjgjg"}, req)
-		So(err, ShouldNotBeNil)
+		require.Error(t, err)
 	})
 }
 

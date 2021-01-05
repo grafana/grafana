@@ -139,7 +139,6 @@ export const getStandardFieldConfigs = () => {
     id: 'thresholds',
     path: 'thresholds',
     name: 'Thresholds',
-
     editor: standardEditorsRegistry.get('thresholds').editor as any,
     override: standardEditorsRegistry.get('thresholds').editor as any,
     process: thresholdsOverrideProcessor,
