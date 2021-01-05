@@ -56,11 +56,11 @@ describe('QueryOperationRow', () => {
     });
   });
 
-  describe('title rendering', () => {
-    it('should render title provided as element', () => {
+  describe('headerElement rendering', () => {
+    it('should render headerElement provided as element', () => {
       const title = <div aria-label="test title">Test</div>;
       const wrapper = shallow(
-        <QueryOperationRow title={title} id="test-id" index={0}>
+        <QueryOperationRow headerElement={title} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
       );
@@ -68,10 +68,11 @@ describe('QueryOperationRow', () => {
       const titleEl = wrapper.find({ 'aria-label': 'test title' });
       expect(titleEl).toHaveLength(1);
     });
-    it('should render title provided as function', () => {
+
+    it('should render headerElement provided as function', () => {
       const title = () => <div aria-label="test title">Test</div>;
       const wrapper = shallow(
-        <QueryOperationRow title={title} id="test-id" index={0}>
+        <QueryOperationRow headerElement={title} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
       );
@@ -80,14 +81,14 @@ describe('QueryOperationRow', () => {
       expect(titleEl).toHaveLength(1);
     });
 
-    it('should expose api to title rendered as function', () => {
+    it('should expose api to headerElement rendered as function', () => {
       const propsSpy = jest.fn();
       const title = (props: any) => {
         propsSpy(props);
         return <div aria-label="test title">Test</div>;
       };
       shallow(
-        <QueryOperationRow title={title} id="test-id" index={0}>
+        <QueryOperationRow headerElement={title} id="test-id" index={0}>
           <div>Test</div>
         </QueryOperationRow>
       );
