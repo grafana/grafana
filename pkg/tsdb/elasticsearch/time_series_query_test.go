@@ -807,6 +807,7 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 				"timeField": "@timestamp",
 				"query": "@metric:cpu",
 				"alias": "{{@hostname}} {{metric}}",
+        "interval": "10m",
 				"metrics": [
 					{
 						"field": "@value",
@@ -863,6 +864,7 @@ func TestTimeSeriesQueryParser(t *testing.T) {
 			So(q.TimeField, ShouldEqual, "@timestamp")
 			So(q.RawQuery, ShouldEqual, "@metric:cpu")
 			So(q.Alias, ShouldEqual, "{{@hostname}} {{metric}}")
+			So(q.Interval, ShouldEqual, "10m")
 
 			So(q.Metrics, ShouldHaveLength, 2)
 			So(q.Metrics[0].Field, ShouldEqual, "@value")
