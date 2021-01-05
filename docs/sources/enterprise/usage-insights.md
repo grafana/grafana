@@ -1,6 +1,6 @@
 +++
-title = "Usage-insights"
-description = "Usage-insights"
+title = "Usage insights"
+description = "See who is using dashboards and how often"
 keywords = ["grafana", "usage-insights", "enterprise"]
 aliases = ["/docs/grafana/latest/enterprise/usage-insights/"]
 weight = 700
