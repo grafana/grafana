@@ -68,22 +68,40 @@ var sqlStoreTestCases = []sqlStoreTest{
 		connStrValues: []string{"host=::1", "port=5432"},
 	},
 	{
-		name:          "Postgres Unix socket escaped colon",
+		name:          "Postgres Unix socket with default port",
+		dbType:        "postgres",
+		dbHost:        "/IAmAPath/ThatWorksDuringNewYear",
+		connStrValues: []string{"host=/IAmAPath/ThatWorksDuringNewYear", "port=5432"},
+	},
+	{
+		name:          "Postgres Unix socket with non-default port",
+		dbType:        "postgres",
+		dbHost:        "/IAmAPath/ThatWorksDuringNewYear:1234",
+		connStrValues: []string{"host=/IAmAPath/ThatWorksDuringNewYear", "port=1234"},
+	},
+	{
+		name:          "Postgres Unix socket with escaped colon, default port",
+		dbType:        "postgres",
+		dbHost:        "/IAmAPath/ThatWorksDuringNewYear/weird\\:path",
+		connStrValues: []string{"host=/IAmAPath/ThatWorksDuringNewYear/weird:path", "port=5432"},
+	},
+	{
+		name:          "Postgres Unix socket with numeric component after escaped colon, default port",
+		dbType:        "postgres",
+		dbHost:        "/IAmAPath/ThatWorksDuringNewYear/path\\:1234",
+		connStrValues: []string{"host=/IAmAPath/ThatWorksDuringNewYear/path:1234", "port=5432"},
+	},
+	{
+		name:          "Postgres Unix socket with escaped colon, non-default port",
 		dbType:        "postgres",
 		dbHost:        "/IAmAPath/ThatWorksDuringNewYear/weird\\:path:1234",
 		connStrValues: []string{"host=/IAmAPath/ThatWorksDuringNewYear/weird:path", "port=1234"},
 	},
 	{
-		name:          "Postgres Unix socket (default port)",
+		name:          "Postgres Unix socket with escaped colons, default port",
 		dbType:        "postgres",
-		dbHost:        "/IAmAPath/ThatWorksDuringNewYear/weird:path",
-		connStrValues: []string{"host=/IAmAPath/ThatWorksDuringNewYear/weird:path", "port=5432"},
-	},
-	{
-		name:          "Postgres Unix socket without escaped colon",
-		dbType:        "postgres",
-		dbHost:        "/IAmAPath/ThatWorksDuringNewYear/weird:path:1234",
-		connStrValues: []string{"host=/IAmAPath/ThatWorksDuringNewYear/weird:path", "port=1234"},
+		dbHost:        "/IAmAPath/ThatWorksDuringNewYear/weird\\:path\\:component",
+		connStrValues: []string{"host=/IAmAPath/ThatWorksDuringNewYear/weird:path:component", "port=5432"},
 	},
 }
 
