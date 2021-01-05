@@ -51,7 +51,7 @@ export const getSearchFilterScopedVar = (args: {
 
 export function containsVariable(...args: any[]) {
   const variableName = args[args.length - 1];
-  args[0] = isString(args[0]) ? args[0] : Object['values'](args[0]).join(' ');
+  args[0] = isString(args[0]) ? args[0] : JSON.stringify(args[0]);
   const variableString = args.slice(0, -1).join(' ');
   const matches = variableString.match(variableRegex);
   const isMatchingVariable =
