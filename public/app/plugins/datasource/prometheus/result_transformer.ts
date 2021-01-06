@@ -87,48 +87,7 @@ export function transform(
     });
 
     // Grouping exemplars by step
-    const step = options.step || 15;
-    const bucketedExemplars: { [ts: string]: ExemplarsDataFrameViewDTO[] } = {};
-    const values: number[] = [];
-    for (const exemplar of events) {
-      // Align exemplar timestamp to nearest step second
-      const alignedTs = String(Math.floor(exemplar.time / 1000 / step) * step * 1000);
-      if (!bucketedExemplars[alignedTs]) {
-        // New bucket found
-        bucketedExemplars[alignedTs] = [];
-      }
-      bucketedExemplars[alignedTs].push(exemplar);
-      values.push(exemplar.y);
-    }
-
-    // Getting exemplars from each bucket
-    const stddev = deviation(values);
-    const sampledBuckets = Object.keys(bucketedExemplars).sort();
-    const sampledExemplars = [];
-    for (const ts of sampledBuckets) {
-      const exemplarsInBucket = bucketedExemplars[ts];
-      if (exemplarsInBucket.length === 1) {
-        sampledExemplars.push(exemplarsInBucket[0]);
-      } else {
-        // Choose which values to sample
-        const bucketValues = exemplarsInBucket.map(ex => ex.y).sort(descending);
-        const sampledBucketValues = bucketValues.reduce((acc: number[], curr) => {
-          if (acc.length === 0) {
-            // First value is max and is always added
-            acc.push(curr);
-          } else {
-            // Then take values only when at least 2 stddev distance to previously taken value
-            const prev = acc[acc.length - 1];
-            if (stddev && prev - stddev * 2 >= 0) {
-              acc.push(curr);
-            }
-          }
-          return acc;
-        }, []);
-        // Find the exemplars for the sampled values
-        sampledExemplars.push(...sampledBucketValues.map(value => exemplarsInBucket.find(ex => ex.y === value)!));
-      }
-    }
+    const sampledExemplars = sampleExemplars(events, options);
 
     const dataFrame = new ArrayDataFrame(sampledExemplars);
     dataFrame.meta = { dataTopic: DataTopic.Annotations };
@@ -170,6 +129,52 @@ export function transform(
 
   // Return matrix or vector result as DataFrame[]
   return dataFrame;
+}
+
+function sampleExemplars(events: ExemplarsDataFrameViewDTO[], options: TransformOptions) {
+  const step = options.step || 15;
+  const bucketedExemplars: { [ts: string]: ExemplarsDataFrameViewDTO[] } = {};
+  const values: number[] = [];
+  for (const exemplar of events) {
+    // Align exemplar timestamp to nearest step second
+    const alignedTs = String(Math.floor(exemplar.time / 1000 / step) * step * 1000);
+    if (!bucketedExemplars[alignedTs]) {
+      // New bucket found
+      bucketedExemplars[alignedTs] = [];
+    }
+    bucketedExemplars[alignedTs].push(exemplar);
+    values.push(exemplar.y);
+  }
+
+  // Getting exemplars from each bucket
+  const stddev = deviation(values);
+  const sampledBuckets = Object.keys(bucketedExemplars).sort();
+  const sampledExemplars = [];
+  for (const ts of sampledBuckets) {
+    const exemplarsInBucket = bucketedExemplars[ts];
+    if (exemplarsInBucket.length === 1) {
+      sampledExemplars.push(exemplarsInBucket[0]);
+    } else {
+      // Choose which values to sample
+      const bucketValues = exemplarsInBucket.map(ex => ex.y).sort(descending);
+      const sampledBucketValues = bucketValues.reduce((acc: number[], curr) => {
+        if (acc.length === 0) {
+          // First value is max and is always added
+          acc.push(curr);
+        } else {
+          // Then take values only when at least 2 stddev distance to previously taken value
+          const prev = acc[acc.length - 1];
+          if (stddev && prev - stddev * 2 >= 0) {
+            acc.push(curr);
+          }
+        }
+        return acc;
+      }, []);
+      // Find the exemplars for the sampled values
+      sampledExemplars.push(...sampledBucketValues.map(value => exemplarsInBucket.find(ex => ex.y === value)!));
+    }
+  }
+  return sampledExemplars;
 }
 
 function getPreferredVisualisationType(isInstantQuery?: boolean, mixedQueries?: boolean) {

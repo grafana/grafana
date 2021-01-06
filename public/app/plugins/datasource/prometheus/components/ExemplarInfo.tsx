@@ -12,7 +12,7 @@ export function ExemplarInfo({ exemplar, seriesLabels, exemplarTraceIDDestinatio
   let traceIDComponent: React.ReactNode;
   if (exemplarTraceIDDestination) {
     const traceID = exemplar.labels[exemplarTraceIDDestination.name];
-    const href = exemplarTraceIDDestination.url.replace('${value}', traceID);
+    const href = exemplarTraceIDDestination.url?.replace('${value}', traceID);
     const anchorElement = (
       <a href={href} rel="noreferrer" target="_blank">
         <Tag name={traceID} colorIndex={6} />

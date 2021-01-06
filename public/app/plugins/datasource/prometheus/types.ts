@@ -29,7 +29,8 @@ export interface PromOptions extends DataSourceJsonData {
 
 export type ExemplarTraceIDDestination = {
   name: string;
-  url: string;
+  url?: string;
+  datasourceUid?: string;
 };
 
 export interface PromQueryRequest extends PromQuery {
