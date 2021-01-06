@@ -11,6 +11,7 @@ import {
   GraphFieldConfig,
   graphFieldOptions,
   LegendDisplayMode,
+  LineStyle,
   PointVisibility,
   ScaleDistribution,
   ScaleDistributionConfig,
@@ -19,6 +20,7 @@ import { GraphPanel } from './GraphPanel';
 import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
+import { LineStyleEditor } from './LineStyleEditor';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
@@ -74,14 +76,13 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           },
           showIf: c => c.drawStyle !== DrawStyle.Points,
         })
-        // TODO!!!!!! (custom editor for this)
-        .addCustomEditor<void, ScaleDistributionConfig>({
-          id: 'lineDash',
-          path: 'lineDash',
-          name: 'Dashed Line',
+        .addCustomEditor<void, LineStyle>({
+          id: 'lineStyle',
+          path: 'lineStyle',
+          name: 'Line Style',
           showIf: c => c.drawStyle === DrawStyle.Line,
-          editor: ScaleDistributionEditor,
-          override: ScaleDistributionEditor,
+          editor: LineStyleEditor,
+          override: LineStyleEditor,
           process: identityOverrideProcessor,
           shouldApply: f => f.type === FieldType.number,
         })
