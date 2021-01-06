@@ -34,6 +34,7 @@ var permittedHeaders = map[string]struct{}{
 	"Accept":          {},
 	"Accept-Encoding": {},
 	"Content-Type":    {},
+	"Content-Length":  {},
 	"securitytenant":  {},
 	"sgtenant":        {},
 	"kbn-xsrf":        {},
