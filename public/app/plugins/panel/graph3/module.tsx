@@ -16,6 +16,7 @@ import {
   ScaleDistribution,
   ScaleDistributionConfig,
 } from '@grafana/ui';
+import { SeriesConfigEditor } from './HideSeriesConfigEditor';
 import { GraphPanel } from './GraphPanel';
 import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
@@ -166,6 +167,23 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           defaultValue: { type: ScaleDistribution.Linear },
           shouldApply: f => f.type === FieldType.number,
           process: identityOverrideProcessor,
+        })
+        .addCustomEditor({
+          id: 'hideFrom',
+          name: 'Hide in area',
+          category: ['Series'],
+          path: 'hideFrom',
+          defaultValue: {
+            tooltip: false,
+            graph: false,
+            legend: false,
+          },
+          editor: SeriesConfigEditor,
+          override: SeriesConfigEditor,
+          shouldApply: () => true,
+          hideFromDefaults: true,
+          hideFromOverrides: true,
+          process: value => value,
         });
     },
   })

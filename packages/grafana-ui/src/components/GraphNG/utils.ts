@@ -6,6 +6,9 @@ import {
   Field,
   fieldMatchers,
   FieldMatcherID,
+  FieldType,
+  FieldState,
+  DataFrameFieldIndex,
 } from '@grafana/data';
 import { AlignedFrameWithGapTest } from '../uPlot/types';
 import uPlot, { AlignedData, JoinNullMode } from 'uplot';
@@ -43,6 +46,7 @@ export function mapDimesions(match: XYFieldMatchers, frame: DataFrame, frames?: 
 export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): AlignedFrameWithGapTest | null {
   const valuesFromFrames: AlignedData[] = [];
   const sourceFields: Field[] = [];
+  const sourceFieldsRefs: Record<number, DataFrameFieldIndex> = {};
   const nullModes: JoinNullMode[][] = [];
 
   // Default to timeseries config
@@ -53,11 +57,12 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     };
   }
 
-  for (const frame of frames) {
+  for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
+    const frame = frames[frameIndex];
     const dims = mapDimesions(fields, frame, frames);
 
     if (!(dims.x.length && dims.y.length)) {
-      continue; // both x and y matched something!
+      continue; // no numeric and no time fields
     }
 
     if (dims.x.length > 1) {
@@ -76,15 +81,22 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       dims.x[0].values.toArray(), // The x axis (time)
     ];
 
-    // Add the Y values
-    for (const field of dims.y) {
+    for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
+      const field = frame.fields[fieldIndex];
+
+      if (!fields.y(field, frame, frames)) {
+        continue;
+      }
+
       let values = field.values.toArray();
-      let joinNullMode = field.config.custom.spanNulls ? 0 : 2;
+      let joinNullMode = field.config.custom?.spanNulls ? 0 : 2;
 
       if (field.config.nullValueMode === NullValueMode.AsZero) {
         values = values.map(v => (v === null ? 0 : v));
         joinNullMode = 0;
       }
+
+      sourceFieldsRefs[sourceFields.length] = { frameIndex, fieldIndex };
 
       alignedData.push(values);
       nullModesFrame.push(joinNullMode);
@@ -109,15 +121,33 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     throw new Error('outerJoinValues lost a field?');
   }
 
+  let seriesIdx = 0;
   // Replace the values from the outer-join field
   return {
     frame: {
       length: alignedData![0].length,
-      fields: alignedData!.map((vals, idx) => ({
-        ...sourceFields[idx],
-        values: new ArrayVector(vals),
-      })),
+      fields: alignedData!.map((vals, idx) => {
+        let state: FieldState = { ...sourceFields[idx].state };
+
+        if (sourceFields[idx].type !== FieldType.time) {
+          state.seriesIndex = seriesIdx;
+          seriesIdx++;
+        }
+
+        return {
+          ...sourceFields[idx],
+          state,
+          values: new ArrayVector(vals),
+        };
+      }),
     },
     isGap,
+    getDataFrameFieldIndex: (alignedFieldIndex: number) => {
+      const index = sourceFieldsRefs[alignedFieldIndex];
+      if (!index) {
+        throw new Error(`Could not find index for ${alignedFieldIndex}`);
+      }
+      return index;
+    },
   };
 }
