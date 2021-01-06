@@ -50,6 +50,10 @@ class AppRootPage extends Component<Props, State> {
     };
   }
 
+  shouldComponentUpdate(nextProps: Props) {
+    return nextProps.path.startsWith('/a/');
+  }
+
   async componentDidMount() {
     const { pluginId } = this.props;
 

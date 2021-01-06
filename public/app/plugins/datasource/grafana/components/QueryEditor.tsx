@@ -16,7 +16,7 @@ export class QueryEditor extends PureComponent<Props> {
     {
       label: 'Random Walk',
       value: GrafanaQueryType.RandomWalk,
-      description: 'Random signal within the selected time rage',
+      description: 'Random signal within the selected time range',
     },
     {
       label: 'Live Measurements',
