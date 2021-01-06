@@ -7,6 +7,10 @@ interface Props<Config> {
   onPlus: () => void;
   onMinus: () => void;
 }
+
+/**
+ * Control buttons for zoom but also some layout config inputs mainly for debugging.
+ */
 export function ViewControls<Config extends Record<string, any>>(props: Props<Config>) {
   const { config, onConfigChange, onPlus, onMinus } = props;
   const [showConfig, setShowConfig] = useState(false);

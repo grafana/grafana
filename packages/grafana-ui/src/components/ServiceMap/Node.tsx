@@ -1,8 +1,18 @@
 import React, { useState, MouseEvent } from 'react';
 import { getRatios, Stats } from './statsUtils';
 import { NodeDatum } from './types';
+import { stylesFactory, useTheme } from '../../themes';
+import { GrafanaTheme } from '@grafana/data';
+import { css } from 'emotion';
 
 const nodeR = 40;
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  mainGroup: css`
+    cursor: pointer;
+    font-size: 10px;
+  `,
+}));
 
 export function Node(props: {
   node: NodeDatum;
@@ -12,6 +22,8 @@ export function Node(props: {
 }) {
   const { node, onMouseEnter, onMouseLeave, onClick } = props;
   const [hovering, setHovering] = useState(false);
+  const styles = getStyles(useTheme());
+
   if (!(node.x !== undefined && node.y !== undefined)) {
     return null;
   }
@@ -26,7 +38,7 @@ export function Node(props: {
         setHovering(false);
         onMouseLeave(node.id);
       }}
-      style={{ cursor: 'pointer', fontSize: 10 }}
+      className={styles.mainGroup}
       onClick={event => {
         onClick(event, node);
       }}
@@ -64,6 +76,9 @@ export function Node(props: {
   );
 }
 
+/**
+ * Shows the outer segmented circle with different color for each response type.
+ */
 function ResponseTypeCircle(props: { node: NodeDatum }) {
   const { node } = props;
   const { nonZero, fullStat } = getRatios(node.stats!);

@@ -1,5 +1,4 @@
 import { useEffect, useRef, RefObject, useState } from 'react';
-
 import useMountedState from 'react-use/lib/useMountedState';
 
 export interface State {
@@ -18,8 +17,9 @@ interface Options {
 /**
  * Based on https://github.com/streamich/react-use/blob/master/src/useSlider.ts
  * Returns position x/y coordinates which can be directly used in transform: translate().
- * @param scale can be used when we want to scale the movement if we are moving a scaled element. We need to do it
+ * @param scale Can be used when we want to scale the movement if we are moving a scaled element. We need to do it
  *   here because we don't wont to change the pos when scale changes.
+ * @param bounds If set the panning cannot go outside of those bounds.
  */
 export function usePanning<T extends Element>(
   { scale = 1, bounds }: Options = { scale: 1 }

@@ -13,6 +13,7 @@ export function Link(props: Props) {
   const { source, target } = link as { source: NodeDatum; target: NodeDatum };
   const [hovering, setHovering] = useState(false);
 
+  // As the nodes have some radius we want edges to end outside of the node circle.
   const line = shortenLine(
     {
       x1: source.x!,
@@ -76,6 +77,10 @@ function statLine(stat: string, value: number) {
 }
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
+
+/**
+ * Makes line shorter while keeping the middle in he same place.
+ */
 function shortenLine(line: Line, length: number): Line {
   const vx = line.x2 - line.x1;
   const vy = line.y2 - line.y1;

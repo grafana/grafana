@@ -20,7 +20,11 @@ export const defaultConfig: Config = {
   tick: 300,
 };
 
-export function useLayout(rawNodes: NodeDatum[], rawEdges: LinkDatum[], config: Config = defaultConfig) {
+export function useLayout(
+  rawNodes: NodeDatum[],
+  rawEdges: LinkDatum[],
+  config: Config = defaultConfig
+): { bounds: Bounds; nodes: NodeDatum[]; edges: LinkDatum[] } {
   const [nodes, setNodes] = useState<NodeDatum[]>([]);
   const [edges, setEdges] = useState<LinkDatum[]>([]);
 
@@ -167,10 +171,17 @@ function centerNodes(nodes: NodeDatum[]) {
   }
 }
 
+export interface Bounds {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
 /**
  * Get bounds of the graph meaning the extent of the nodes in all directions.
  */
-function graphBounds(nodes: NodeDatum[]): { top: number; right: number; bottom: number; left: number } {
+function graphBounds(nodes: NodeDatum[]): Bounds {
   return nodes.reduce(
     (acc, node) => {
       if (node.x! > acc.right) {

@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 import { DataFrame } from '@grafana/data';
 
+/**
+ *
+ */
 export function useCategorizeFrames(series: DataFrame[]) {
   return useMemo(() => {
     const serviceMapFrames = series.filter(frame => frame.meta?.preferredVisualisationType === 'serviceMap');

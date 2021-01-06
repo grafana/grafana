@@ -6,10 +6,35 @@ import { computeStats } from './statsUtils';
 import { Node } from './Node';
 import { Link } from './Link';
 import { ViewControls } from './ViewControls';
-import { DataFrame, DataFrameView, LinkModel } from '@grafana/data';
+import { DataFrame, DataFrameView, GrafanaTheme, LinkModel } from '@grafana/data';
 import { useZoom } from './useZoom';
 import { GraphContextMenu } from './GraphContextMenu';
-import { useLayout, Config, defaultConfig } from './layout';
+import { useLayout, Config, defaultConfig, Bounds } from './layout';
+import { LinkArrowMarker } from './LinkArrowMarker';
+import { stylesFactory, useTheme } from '../../themes';
+import { css } from 'emotion';
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+  wrapper: css`
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+  `,
+
+  svg: css`
+    height: 100%;
+    width: 100%;
+    overflow: visible;
+    font-size: 10px;
+  `,
+
+  viewControls: css`
+    position: absolute;
+    left: 10px;
+    top: 10px;
+  `,
+}));
 
 interface Props {
   services: DataFrame;
@@ -21,6 +46,8 @@ export function GraphView(props: Props) {
   const [measureRef, { width, height }] = useMeasure();
   const [config, setConfig] = useState<Config>(defaultConfig);
 
+  // We need nodeHover here because if we hover node we also highlight it's edges, while hovering over the edge
+  // highlights just the edge
   const [nodeHover, setNodeHover] = useState<string | undefined>(undefined);
   const clearNodeHover = useCallback(() => setNodeHover(undefined), []);
 
@@ -29,50 +56,25 @@ export function GraphView(props: Props) {
     props.edges,
   ]);
   const { nodes, edges, bounds } = useLayout(rawNodes, rawLinks, config);
-
-  const { scale, onStepDown, onStepUp, ref } = useZoom({
-    stepDown: s => s / 1.5,
-    stepUp: s => s * 1.5,
-    min: 0.13,
-    max: 2.25,
-  });
-
-  const { state: panningState, ref: panRef } = usePanning<SVGSVGElement>({
-    scale,
-    bounds,
-  });
-  const { position: panPosition, isPanning } = panningState;
-
-  const [openedNode, setOpenedNode] = useState<{ node: NodeDatum; event: MouseEvent } | undefined>(undefined);
-  const onNodeOpen = useCallback((event, node) => setOpenedNode({ node, event }), []);
-
-  const [openedEdge, setOpenedEdge] = useState<{ edge: LinkDatum; event: MouseEvent } | undefined>(undefined);
-  const onEdgeOpen = useCallback((event, edge) => setOpenedEdge({ edge, event }), []);
+  const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale } = usePanAndZoom(bounds);
+  const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(props.getNodeLinks, props.getEdgeLinks);
+  const styles = getStyles(useTheme());
 
   return (
     <div
       ref={r => {
         measureRef(r);
-        (ref as MutableRefObject<HTMLElement | null>).current = r;
+        (zoomRef as MutableRefObject<HTMLElement | null>).current = r;
       }}
-      style={{ height: '100%', width: '100%', overflow: 'hidden', position: 'relative' }}
+      className={styles.wrapper}
     >
       <svg
         ref={panRef}
         viewBox={`${-(width / 2)} ${-(height / 2)} ${width} ${height}`}
-        style={{
-          overflow: 'visible',
-          width: '100%',
-          height: '100%',
-          userSelect: isPanning ? 'none' : 'unset',
-        }}
+        className={styles.svg}
+        style={{ userSelect: isPanning ? 'none' : 'unset' }}
       >
-        <g
-          style={{
-            transform: `scale(${scale}) translate(${panPosition.x}px, ${panPosition.y}px)`,
-            fontSize: 10,
-          }}
-        >
+        <g style={{ transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)` }}>
           <LinkArrowMarker />
           {edges.map((e, index) => (
             <Link
@@ -88,33 +90,78 @@ export function GraphView(props: Props) {
         </g>
       </svg>
 
-      <div style={{ position: 'absolute', left: 10, top: 10 }}>
-        <ViewControls<any> config={config} onConfigChange={setConfig} onMinus={onStepDown} onPlus={onStepUp} />
+      <div className={styles.viewControls}>
+        <ViewControls<Config> config={config} onConfigChange={setConfig} onMinus={onStepDown} onPlus={onStepUp} />
       </div>
 
-      {openedNode && (
-        <GraphContextMenu
-          event={openedNode.event}
-          onClose={() => setOpenedNode(undefined)}
-          links={props.getNodeLinks(openedNode.node)}
-          header={<div>{openedNode.node.name}</div>}
-        />
-      )}
-
-      {openedEdge && (
-        <GraphContextMenu
-          event={openedEdge.event}
-          onClose={() => setOpenedEdge(undefined)}
-          links={props.getEdgeLinks(openedEdge.edge)}
-          header={
-            <div>
-              {(openedEdge.edge.source as NodeDatum).name} {'->'} {(openedEdge.edge.target as NodeDatum).name}
-            </div>
-          }
-        />
-      )}
+      {MenuComponent}
     </div>
   );
+}
+
+/**
+ * Hook that contains state of the context menu, both for edges and nodes and provides appropriate component when
+ * opened context menu should be opened.
+ */
+function useContextMenu(
+  getNodeLinks: (node: NodeDatum) => LinkModel[],
+  getEdgeLinks: (node: LinkDatum) => LinkModel[]
+): {
+  onEdgeOpen: (event: MouseEvent<SVGElement>, edge: LinkDatum) => void;
+  onNodeOpen: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
+  MenuComponent: React.ReactNode;
+} {
+  const [openedNode, setOpenedNode] = useState<{ node: NodeDatum; event: MouseEvent } | undefined>(undefined);
+  const onNodeOpen = useCallback((event, node) => setOpenedNode({ node, event }), []);
+
+  const [openedEdge, setOpenedEdge] = useState<{ edge: LinkDatum; event: MouseEvent } | undefined>(undefined);
+  const onEdgeOpen = useCallback((event, edge) => setOpenedEdge({ edge, event }), []);
+
+  let MenuComponent = null;
+
+  if (openedNode) {
+    MenuComponent = (
+      <GraphContextMenu
+        event={openedNode.event}
+        onClose={() => setOpenedNode(undefined)}
+        links={getNodeLinks(openedNode.node)}
+        header={<div>{openedNode.node.name}</div>}
+      />
+    );
+  }
+
+  if (openedEdge) {
+    MenuComponent = (
+      <GraphContextMenu
+        event={openedEdge.event}
+        onClose={() => setOpenedEdge(undefined)}
+        links={getEdgeLinks(openedEdge.edge)}
+        header={
+          <div>
+            {(openedEdge.edge.source as NodeDatum).name} {'->'} {(openedEdge.edge.target as NodeDatum).name}
+          </div>
+        }
+      />
+    );
+  }
+
+  return { onEdgeOpen, onNodeOpen, MenuComponent };
+}
+
+function usePanAndZoom(bounds: Bounds) {
+  const { scale, onStepDown, onStepUp, ref } = useZoom({
+    stepDown: s => s / 1.5,
+    stepUp: s => s * 1.5,
+    min: 0.13,
+    max: 2.25,
+  });
+
+  const { state: panningState, ref: panRef } = usePanning<SVGSVGElement>({
+    scale,
+    bounds,
+  });
+  const { position, isPanning } = panningState;
+  return { zoomRef: ref, panRef, position, isPanning, scale, onStepDown, onStepUp };
 }
 
 /**
@@ -136,6 +183,7 @@ function processServices(services: DataFrame, edges: DataFrame): { nodes: NodeDa
 
   const edgesView = new DataFrameView<{ source: string; target: string; data: XrayEdge }>(edges);
   const edgesMapped = edgesView.toArray().map((edge, index) => {
+    // We are adding incoming edges count so we can later on find out which nodes are the roots
     servicesMap[edge.target].incoming++;
 
     return {
@@ -150,23 +198,4 @@ function processServices(services: DataFrame, edges: DataFrame): { nodes: NodeDa
     nodes: Object.values(servicesMap),
     links: edgesMapped,
   };
-}
-
-function LinkArrowMarker() {
-  return (
-    <defs>
-      <marker
-        id="triangle"
-        viewBox="0 0 10 10"
-        refX="8"
-        refY="5"
-        markerUnits="strokeWidth"
-        markerWidth="10"
-        markerHeight="10"
-        orient="auto"
-      >
-        <path d="M 0 0 L 10 5 L 0 10 z" fill="#999" />
-      </marker>
-    </defs>
-  );
 }
