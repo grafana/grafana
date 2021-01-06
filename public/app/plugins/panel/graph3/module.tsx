@@ -74,6 +74,17 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
           },
           showIf: c => c.drawStyle !== DrawStyle.Points,
         })
+        // TODO!!!!!! (custom editor for this)
+        .addCustomEditor<void, ScaleDistributionConfig>({
+          id: 'lineDash',
+          path: 'lineDash',
+          name: 'Dashed Line',
+          showIf: c => c.drawStyle === DrawStyle.Line,
+          editor: ScaleDistributionEditor,
+          override: ScaleDistributionEditor,
+          process: identityOverrideProcessor,
+          shouldApply: f => f.type === FieldType.number,
+        })
         .addRadio({
           path: 'fillGradient',
           name: 'Fill gradient',

@@ -24,6 +24,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       lineInterpolation,
       lineColor,
       lineWidth,
+      lineDash,
       showPoints,
       pointColor,
       pointSize,
@@ -38,6 +39,10 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     } else {
       lineConfig.stroke = lineColor;
       lineConfig.width = lineWidth;
+      if (lineDash?.length) {
+        // empty array will "clear" the dash state as an override
+        lineConfig.dash = lineDash;
+      }
       lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
         let pathsBuilder = mapDrawStyleToPathBuilder(drawStyle, lineInterpolation);
         return pathsBuilder(self, seriesIdx, idx0, idx1);
