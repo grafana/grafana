@@ -2,6 +2,7 @@ package usagestats
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -81,30 +82,15 @@ type memoConcurrentUserStats struct {
 const concurrentUserStatsCacheLifetime = time.Hour
 
 func (uss *UsageStatsService) GetConcurrentUsersStats(ctx context.Context) (*concurrentUsersStats, error) {
-	err := uss.updateConcurrentUsersStatsIfNecessary(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return uss.concurrentUserStatsCache.stats, nil
-}
-
-func (uss *UsageStatsService) updateConcurrentUsersStatsIfNecessary(ctx context.Context) error {
 	memoizationPeriod := time.Now().Add(-concurrentUserStatsCacheLifetime)
-	if uss.concurrentUserStatsCache.memoized.Before(memoizationPeriod) {
-		err := uss.updateConcurrentUsersStats(ctx)
-		if err != nil {
-			return err
-		}
+	if !uss.concurrentUserStatsCache.memoized.Before(memoizationPeriod) {
+		return uss.concurrentUserStatsCache.stats, nil
 	}
 
-	return nil
-}
-
-func (uss *UsageStatsService) updateConcurrentUsersStats(ctx context.Context) error {
 	uss.concurrentUserStatsCache.stats = &concurrentUsersStats{}
 	err := uss.SQLStore.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		// Retrieves concurrent users stats as a histogram. Buckets are accumulative and upper bound is inclusive.
-		var rawSql = `
+		rawSQL := `
 SELECT
     COUNT(CASE WHEN tokens <= 3 THEN 1 END) AS bucket_le_3,
     COUNT(CASE WHEN tokens <= 6 THEN 1 END) AS bucket_le_6,
@@ -113,16 +99,16 @@ SELECT
     COUNT(CASE WHEN tokens <= 15 THEN 1 END) AS bucket_le_15,
     COUNT(1) AS bucket_le_inf
 FROM (select count(1) as tokens from user_auth_token group by user_id) uat;`
-		_, err := sess.SQL(rawSql).Get(uss.concurrentUserStatsCache.stats)
+		_, err := sess.SQL(rawSQL).Get(uss.concurrentUserStatsCache.stats)
 		if err != nil {
 			return err
 		}
 		return nil
 	})
-
 	if err != nil {
-		return err
+		return nil, fmt.Errorf("failed to get concurrent users stats from database: %w", err)
 	}
+
 	uss.concurrentUserStatsCache.memoized = time.Now()
-	return nil
+	return uss.concurrentUserStatsCache.stats, nil
 }
