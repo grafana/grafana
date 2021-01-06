@@ -36,6 +36,7 @@ var permittedHeaders = map[string]struct{}{
 	"Content-Type":    {},
 	"securitytenant":  {},
 	"sgtenant":        {},
+	"kbn-xsrf":        {},
 }
 
 type SigV4Middleware struct {
