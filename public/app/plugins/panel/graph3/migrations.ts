@@ -16,6 +16,7 @@ import {
   AxisPlacement,
   DrawStyle,
   LineInterpolation,
+  LineStyle,
   PointVisibility,
 } from '@grafana/ui/src/components/uPlot/config';
 import { Options } from './types';
@@ -41,12 +42,6 @@ export const graphPanelChangedHandler = (
   return {};
 };
 
-interface DashConfig {
-  dashed: boolean;
-  length: number;
-  space: number;
-}
-
 export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSource; options: Options } {
   const overrides: ConfigOverrideRule[] = angular.fieldConfig?.overrides ?? [];
   const yaxes = angular.yaxes ?? [];
@@ -59,10 +54,9 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   }
 
   // Dashes
-  const dash: DashConfig = {
-    dashed: angular.dashes === true,
-    length: angular.dashLength ?? 10,
-    space: angular.spaceLength ?? 10,
+  const dash: LineStyle = {
+    fill: angular.dashes ? 'dash' : 'solid',
+    dash: [angular.dashLength ?? 10, angular.spaceLength ?? 10],
   };
 
   // "seriesOverrides": [
@@ -111,7 +105,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
         },
         properties: [],
       };
-      let dashOverride: DashConfig | undefined = undefined;
+      let dashOverride: LineStyle | undefined = undefined;
 
       for (const p of Object.keys(seriesOverride)) {
         const v = seriesOverride[p];
@@ -184,17 +178,20 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
           case 'spaceLength':
           case 'dashes':
             if (!dashOverride) {
-              dashOverride = { ...dash };
+              dashOverride = {
+                fill: dash.fill,
+                dash: [...dash.dash],
+              };
             }
             switch (p) {
               case 'dashLength':
-                dashOverride.length = v;
+                dashOverride!.dash![0] = v;
                 break;
               case 'spaceLength':
-                dashOverride.space = v;
+                dashOverride!.dash![1] = v;
                 break;
               case 'dashes':
-                dashOverride.dashed = v;
+                dashOverride!.fill = v ? 'dash' : 'solid';
                 break;
             }
             break;
@@ -204,8 +201,8 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
       }
       if (dashOverride) {
         rule.properties.push({
-          id: 'custom.lineDash',
-          value: dashOverride.dashed ? [dashOverride.length, dashOverride.space] : [],
+          id: 'custom.lineStyle',
+          value: dashOverride,
         });
       }
       if (rule.properties.length) {
@@ -224,8 +221,8 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   }
 
   graph.lineWidth = angular.linewidth;
-  if (dash.dashed) {
-    graph.lineDash = [dash.length, dash.space];
+  if (dash.fill !== 'solid') {
+    graph.lineStyle = dash;
   }
 
   if (isNumber(angular.pointradius)) {
