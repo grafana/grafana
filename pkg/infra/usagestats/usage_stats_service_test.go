@@ -23,52 +23,48 @@ func TestUsageStatsService_GetConcurrentUsersStats(t *testing.T) {
 		SQLStore: sqlStore,
 		License:  &licensing.OSSLicensingService{},
 	}
-	t.Run("Get concurrent users stats should return a histogram", func(t *testing.T) {
-		createConcurrentTokens(t, sqlStore)
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		t.Cleanup(func() {
-			cancel()
-		})
+	createConcurrentTokens(t, sqlStore)
 
-		t.Run("Should cache results", func(t *testing.T) {
-			actualResult, err := uss.GetConcurrentUsersStats(ctx)
-			require.NoError(t, err)
-
-			expectedCachedResult := &concurrentUsersStats{
-				BucketLE3:   1,
-				BucketLE6:   2,
-				BucketLE9:   3,
-				BucketLE12:  4,
-				BucketLE15:  5,
-				BucketLEInf: 6,
-			}
-			assert.Equal(t, expectedCachedResult, actualResult)
-
-			err = createToken(8, sqlStore)
-			require.NoError(t, err)
-
-			actualResult, err = uss.GetConcurrentUsersStats(ctx)
-
-			require.NoError(t, err)
-			assert.Equal(t, expectedCachedResult, actualResult)
-		})
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	t.Cleanup(func() {
+		cancel()
 	})
+
+	actualResult, err := uss.GetConcurrentUsersStats(ctx)
+	require.NoError(t, err)
+
+	expectedCachedResult := &concurrentUsersStats{
+		BucketLE3:   1,
+		BucketLE6:   2,
+		BucketLE9:   3,
+		BucketLE12:  4,
+		BucketLE15:  5,
+		BucketLEInf: 6,
+	}
+	assert.Equal(t, expectedCachedResult, actualResult)
+
+	createToken(t, 8, sqlStore)
+	require.NoError(t, err)
+
+	actualResult, err = uss.GetConcurrentUsersStats(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, expectedCachedResult, actualResult)
 }
 
-func createToken(uId int, sqlStore *sqlstore.SQLStore) error {
+func createToken(t *testing.T, uID int, sqlStore *sqlstore.SQLStore) {
+	t.Helper()
 	token, err := util.RandomHex(16)
-	if err != nil {
-		return err
-	}
-	tokenWithSecret := fmt.Sprintf("%ssecret%d", token, uId)
+	require.NoError(t, err)
+
+	tokenWithSecret := fmt.Sprintf("%ssecret%d", token, uID)
 	hashBytes := sha256.Sum256([]byte(tokenWithSecret))
 	hashedToken := hex.EncodeToString(hashBytes[:])
 
 	now := time.Now().Unix()
 
 	userAuthToken := userAuthToken{
-		UserID:        int64(uId),
+		UserID:        int64(uID),
 		AuthToken:     hashedToken,
 		PrevAuthToken: hashedToken,
 		ClientIP:      "192.168.10.11",
@@ -84,16 +80,14 @@ func createToken(uId int, sqlStore *sqlstore.SQLStore) error {
 		_, err = dbSession.Insert(&userAuthToken)
 		return err
 	})
-
-	return nil
+	require.NoError(t, err)
 }
 
 func createConcurrentTokens(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	t.Helper()
 	for u := 1; u <= 6; u++ {
 		for tkn := 1; tkn <= u*3; tkn++ {
-			err := createToken(u, sqlStore)
-			require.NoError(t, err)
+			createToken(t, u, sqlStore)
 		}
 	}
 }
