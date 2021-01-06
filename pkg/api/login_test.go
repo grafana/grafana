@@ -455,7 +455,7 @@ func TestLoginPostRedirect(t *testing.T) {
 			require.Equal(t, 200, sc.resp.Code)
 
 			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			redirectURL := respJSON.Get("redirectUrl").MustString()
 			if c.err != nil {
 				assert.Equal(t, "", redirectURL)
