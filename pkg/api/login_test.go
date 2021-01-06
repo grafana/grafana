@@ -103,19 +103,28 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	cfg.LoginCookieName = "grafana_session"
 	setting.SecretKey = "login_testing"
 
-	setting.OAuthService = &setting.OAuther{}
-	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
-	setting.OAuthService.OAuthInfos["github"] = &setting.OAuthInfo{
-		ClientId:     "fake",
-		ClientSecret: "fakefake",
-		Enabled:      true,
-		AllowSignup:  true,
-		Name:         "github",
+	origOAuthService := setting.OAuthService
+	origOAuthAutoLogin := setting.OAuthAutoLogin
+	t.Cleanup(func() {
+		setting.OAuthService = origOAuthService
+		setting.OAuthAutoLogin = origOAuthAutoLogin
+	})
+	setting.OAuthService = &setting.OAuther{
+		OAuthInfos: map[string]*setting.OAuthInfo{
+			"github": {
+				ClientId:     "fake",
+				ClientSecret: "fakefake",
+				Enabled:      true,
+				AllowSignup:  true,
+				Name:         "github",
+			},
+		},
 	}
 	setting.OAuthAutoLogin = true
 
 	oauthError := errors.New("User not a member of one of the required organizations")
-	encryptedError, _ := util.Encrypt([]byte(oauthError.Error()), setting.SecretKey)
+	encryptedError, err := util.Encrypt([]byte(oauthError.Error()), setting.SecretKey)
+	require.NoError(t, err)
 	expCookiePath := "/"
 	if len(setting.AppSubUrl) > 0 {
 		expCookiePath = setting.AppSubUrl
@@ -134,7 +143,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	assert.Equal(t, sc.resp.Code, 200)
 
 	responseString, err := getBody(sc.resp)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, strings.Contains(responseString, oauthError.Error()))
 }
 
@@ -304,7 +313,7 @@ func TestLoginViewRedirect(t *testing.T) {
 			}
 
 			responseString, err := getBody(sc.resp)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			if c.err != nil {
 				assert.True(t, strings.Contains(responseString, c.err.Error()))
 			}
