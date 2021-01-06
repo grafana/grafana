@@ -231,3 +231,15 @@ datasources:
           name: TraceID
           url: "http://localhost:16686/trace/$${__value.raw}"
 ```
+
+Here's an example of a Jaeger data source corresponding to the above example. Note that the Jaeger `uid` value does match the Loki `datasourceUid` value.
+
+```
+datasources:
+    - name: Jaeger
+      type: jaeger
+      url: http://jaeger-tracing-query:16686/
+      access: proxy
+      # UID should match the datasourceUid in dervidedFields.
+      uid: my_jaeger_uid
+```
