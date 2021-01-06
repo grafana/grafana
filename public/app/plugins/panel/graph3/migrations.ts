@@ -180,18 +180,18 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
             if (!dashOverride) {
               dashOverride = {
                 fill: dash.fill,
-                dash: [...dash.dash],
+                dash: [...dash.dash!],
               };
             }
             switch (p) {
               case 'dashLength':
-                dashOverride!.dash![0] = v;
+                dashOverride.dash![0] = v;
                 break;
               case 'spaceLength':
-                dashOverride!.dash![1] = v;
+                dashOverride.dash![1] = v;
                 break;
               case 'dashes':
-                dashOverride!.fill = v ? 'dash' : 'solid';
+                dashOverride.fill = v ? 'dash' : 'solid';
                 break;
             }
             break;

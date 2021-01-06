@@ -33,6 +33,7 @@ const SPACKING_DASH: Array<SelectableValue<string>> = [
 
 const SPACKING_DOTS: Array<SelectableValue<string>> = [
   '0, 10', // default
+  '10, 20, 0, 20',
   '0, 20',
   '0, 30',
   '0, 3, 3, 3',
