@@ -212,7 +212,7 @@ If you selected Server as the **Value field name**, then you would get one field
 
 ### Merging behavior
 
-The labels to fields transformer is internally two separate transformations. One that acts on single series (extracting labels to fields) followed by the [merge](#merge) transformation to join all the results into a single table. 
+The labels to fields transformer is internally two separate transformations. One that acts on single series (extracting labels to fields) followed by the [merge](#merge) transformation to join all the results into a single table. The merge transformation tries to join on all matching fields. This merge step is required and cannot be turned off.
 
 To illustrate this, here is another example where you have two queries that return time series with non overallaping labels. 
 
@@ -235,9 +235,6 @@ After merge:
 | ------------------- | ------- | ----- | ---------- |
 | 2020-07-07 11:34:20 | ServerA | 10    |            |
 | 2020-07-07 11:34:20 |         | 20    | EU         |
-
-There is currently no option to disable this merge step. The merge transform tries to join 
-on all matching fields. 
 
 ## Group by
 
