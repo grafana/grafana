@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import React, { Component } from 'react';
 import { StoreState } from 'app/types';
 import { Provider } from 'react-redux';
@@ -8,6 +8,9 @@ import { getPluginSettings } from './PluginSettingsCache';
 import { importAppPlugin } from './plugin_loader';
 import { getMockPlugin } from './__mocks__/pluginMocks';
 import { AppPlugin, PluginType, AppRootProps, NavModelItem } from '@grafana/data';
+import { updateLocation } from 'app/core/actions';
+import { createRootReducer } from 'app/core/reducers/root';
+import { createStore } from 'redux';
 
 jest.mock('./PluginSettingsCache', () => ({
   getPluginSettings: jest.fn(),
@@ -109,5 +112,59 @@ describe('AppRootPage', () => {
     await screen.findAllByRole('link', { name: /A page/ });
     await screen.findAllByRole('link', { name: /Another page/ });
     expect(timesMounted).toEqual(1);
+  });
+
+  it('should not render component if not at plugin path', async () => {
+    getPluginSettingsMock.mockResolvedValue(
+      getMockPlugin({
+        type: PluginType.app,
+        enabled: true,
+      })
+    );
+
+    let timesRendered = 0;
+    class RootComponent extends Component<AppRootProps> {
+      render() {
+        timesRendered += 1;
+        return <p>my great component</p>;
+      }
+    }
+
+    const plugin = new AppPlugin();
+    plugin.root = RootComponent;
+
+    importAppPluginMock.mockResolvedValue(plugin);
+
+    const store = createStore(createRootReducer());
+    store.dispatch(updateLocation({ path: '/a/foo' }));
+    render(
+      <Provider store={store}>
+        <AppRootPage />
+      </Provider>
+    );
+    await screen.findByText('my great component');
+
+    // renders the first time
+    expect(timesRendered).toEqual(1);
+
+    await act(async () => {
+      await store.dispatch(
+        updateLocation({
+          path: '/foo',
+        })
+      );
+    });
+
+    expect(timesRendered).toEqual(1);
+
+    await act(async () => {
+      await store.dispatch(
+        updateLocation({
+          path: '/a/foo',
+        })
+      );
+    });
+
+    expect(timesRendered).toEqual(2);
   });
 });
