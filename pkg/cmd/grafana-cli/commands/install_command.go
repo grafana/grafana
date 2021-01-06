@@ -97,7 +97,11 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 
 		// Plugins which are downloaded just as sourcecode zipball from github do not have checksum
 		if v.Arch != nil {
-			checksum = v.Arch[osAndArchString()].Md5
+			archMeta, exists := v.Arch[osAndArchString()]
+			if !exists {
+				archMeta = v.Arch["any"]
+			}
+			checksum = archMeta.SHA256
 		}
 	}
 

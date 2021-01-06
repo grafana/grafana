@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -32,7 +33,8 @@ func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
 		})
 
 		// handler func being tested
-		sc.handlerFunc = GetDataSources
+		hs := &HTTPServer{Bus: bus.GetBus(), Cfg: setting.NewCfg()}
+		sc.handlerFunc = hs.GetDataSources
 		sc.fakeReq("GET", "/api/datasources").exec()
 
 		respJSON := []map[string]interface{}{}

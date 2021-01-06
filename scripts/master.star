@@ -10,6 +10,7 @@ load(
     'build_backend_step',
     'build_frontend_step',
     'build_plugins_step',
+    'gen_version_step',
     'package_step',
     'e2e_tests_server_step',
     'e2e_tests_step',
@@ -37,21 +38,36 @@ ver_mode = 'master'
 
 def get_steps(edition, is_downstream=False):
     publish = edition != 'enterprise' or is_downstream
+    include_enterprise2 = edition == 'enterprise'
     steps = [
         enterprise_downstream_step(edition=edition),
         lint_backend_step(edition=edition),
         codespell_step(),
         shellcheck_step(),
         dashboard_schemas_check(),
-        test_backend_step(),
+        test_backend_step(edition=edition),
         test_frontend_step(),
         frontend_metrics_step(edition=edition),
         build_backend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_frontend_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         build_plugins_step(edition=edition, sign=True),
+    ]
+
+    # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)
+    if include_enterprise2:
+        edition2 = 'enterprise2'
+        steps.extend([
+            lint_backend_step(edition=edition2),
+            test_backend_step(edition=edition2),
+            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64'], is_downstream=is_downstream),
+        ])
+
+    # Insert remaining steps
+    steps.extend([
+        gen_version_step(ver_mode=ver_mode, is_downstream=is_downstream, include_enterprise2=include_enterprise2),
         package_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         e2e_tests_server_step(edition=edition),
-        e2e_tests_step(),
+        e2e_tests_step(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         publish_storybook_step(edition=edition, ver_mode=ver_mode),
         build_frontend_docs_step(edition=edition),
@@ -63,17 +79,14 @@ def get_steps(edition, is_downstream=False):
         release_canary_npm_packages_step(edition),
         upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream),
         deploy_to_kubernetes_step(edition=edition, is_downstream=is_downstream),
-    ]
-    if edition == 'enterprise':
-        build_tags = ['enterprise2']
+    ])
+    if include_enterprise2:
+        edition2 = 'enterprise2'
         steps.extend([
-            lint_backend_step(edition=edition, build_tags=build_tags),
-            test_backend_step(build_tags=build_tags),
-            build_backend_step(edition=edition, ver_mode=ver_mode, variants=['linux-x64'], is_downstream=is_downstream, build_tags=build_tags),
-            package_step(edition=edition, ver_mode=ver_mode, variants=['linux-x64'], is_downstream=is_downstream, build_tags=build_tags),
-            e2e_tests_server_step(edition=edition, build_tags=build_tags, port=3002),
-            e2e_tests_step(build_tags=build_tags, port=3002),
-            upload_packages_step(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream, build_tags=build_tags),
+            package_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64'], is_downstream=is_downstream),
+            e2e_tests_server_step(edition=edition2, port=3002),
+            e2e_tests_step(edition=edition2, port=3002),
+            upload_packages_step(edition=edition2, ver_mode=ver_mode, is_downstream=is_downstream),
         ])
 
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode, is_downstream=is_downstream)
