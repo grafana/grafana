@@ -116,4 +116,8 @@ func populateDB(t *testing.T) {
 	}
 	err = UpdateUserLastSeenAt(updateUserLastSeenAtCmd)
 	require.NoError(t, err)
+
+	// force renewal of user stats
+	err = updateUserRoleCountsIfNecessary(context.Background(), true)
+	require.NoError(t, err)
 }
