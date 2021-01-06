@@ -188,7 +188,7 @@ In the example below, I added two fields together and named them Sum.
 
 ## Labels to fields
 
-This transform can transform time series results that include labels or tags to a table structure where each label becomes it's own field.
+This transformation changes time series results that include labels or tags into to a table structure where each label becomes its own field.
 
 Given a query result of two time series:
 
