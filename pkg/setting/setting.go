@@ -314,6 +314,9 @@ type Cfg struct {
 	// Sentry config
 	Sentry Sentry
 
+	// Data sources
+	DataSourceLimit int
+
 	// Snapshots
 	SnapshotPublicMode bool
 
@@ -830,6 +833,8 @@ func (cfg *Cfg) Load(args *CommandLineArgs) error {
 		return err
 	}
 
+	cfg.readDataSourcesSettings()
+
 	if VerifyEmailEnabled && !cfg.Smtp.Enabled {
 		log.Warnf("require_email_validation is enabled but smtp is disabled")
 	}
@@ -1261,4 +1266,9 @@ func readServerSettings(iniFile *ini.File, cfg *Cfg) error {
 	}
 
 	return nil
+}
+
+func (cfg *Cfg) readDataSourcesSettings() {
+	datasources := cfg.Raw.Section("datasources")
+	cfg.DataSourceLimit = datasources.Key("datasource_limit").MustInt(5000)
 }

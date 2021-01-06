@@ -24,7 +24,7 @@ import config from 'app/core/config';
 
 import TimeSeries from 'app/core/time_series2';
 import $ from 'jquery';
-import { graphDirective } from '../graph';
+import { graphDirective, GraphElement } from '../graph';
 import { dateTime, EventBusSrv } from '@grafana/data';
 
 const ctx = {} as any;
@@ -1284,6 +1284,48 @@ describe('grafanaGraph', () => {
           nonZero.map((t: number[]) => t[0])
         )
       ).toBe(300);
+    });
+  });
+
+  describe('getContextMenuItemsSupplier', () => {
+    function getGraphElement({ editable }: { editable?: boolean } = {}) {
+      const element = new GraphElement(
+        {
+          ctrl: {
+            contextMenuCtrl: {},
+            dashboard: { editable, events: { on: jest.fn() } },
+            events: { on: jest.fn() },
+          },
+        },
+        { mouseleave: jest.fn(), bind: jest.fn() } as any,
+        {} as any
+      );
+
+      return element;
+    }
+
+    describe('when called and dashboard is editable', () => {
+      it('then the correct menu items should be returned', () => {
+        const element = getGraphElement({ editable: true });
+
+        const result = element.getContextMenuItemsSupplier({ x: 1, y: 1 })();
+
+        expect(result.length).toEqual(1);
+        expect(result[0].items.length).toEqual(1);
+        expect(result[0].items[0].label).toEqual('Add annotation');
+        expect(result[0].items[0].icon).toEqual('comment-alt');
+        expect(result[0].items[0].onClick).toBeDefined();
+      });
+    });
+
+    describe('when called and dashboard is not editable', () => {
+      it('then the correct menu items should be returned', () => {
+        const element = getGraphElement({ editable: false });
+
+        const result = element.getContextMenuItemsSupplier({ x: 1, y: 1 })();
+
+        expect(result.length).toEqual(0);
+      });
     });
   });
 });

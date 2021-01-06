@@ -15,11 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func getFSDataSources(c *models.ReqContext, enabledPlugins *plugins.EnabledPlugins) (map[string]interface{}, error) {
+func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins *plugins.EnabledPlugins) (map[string]interface{}, error) {
 	orgDataSources := make([]*models.DataSource, 0)
 
 	if c.OrgId != 0 {
-		query := models.GetDataSourcesQuery{OrgId: c.OrgId}
+		query := models.GetDataSourcesQuery{OrgId: c.OrgId, DataSourceLimit: hs.Cfg.DataSourceLimit}
 		err := bus.Dispatch(&query)
 
 		if err != nil {
@@ -135,7 +135,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		}
 	}
 
-	dataSources, err := getFSDataSources(c, enabledPlugins)
+	dataSources, err := hs.getFSDataSources(c, enabledPlugins)
 	if err != nil {
 		return nil, err
 	}
