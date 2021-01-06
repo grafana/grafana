@@ -648,7 +648,7 @@ def e2e_tests_server_step(edition, port=3001):
     if edition == 'enterprise2':
         sfx = '-{}'.format(edition)
         package_file_pfx = 'grafana' + sfx
-    elif edition in ('enterprise', 'enterprise2'):
+    elif edition == 'enterprise':
         package_file_pfx = 'grafana-' + edition
 
     environment = {
@@ -821,7 +821,7 @@ def release_canary_npm_packages_step(edition):
     }
 
 def deploy_to_kubernetes_step(edition, is_downstream=False):
-    if edition not in ('enterprise', 'enterprise2') or not is_downstream:
+    if edition != 'enterprise' or not is_downstream:
         return None
 
     return {
