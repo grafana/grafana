@@ -4,7 +4,7 @@ weight = 4
 draft = "true"
 +++
 
-# Sharing panels and dashboards
+# Sharing
 
 Grafana allows you to share dashboards and panels with other users within your organization and in certain situations, publicly on the Web. You can share using:
 - A direct link
