@@ -85,6 +85,9 @@ export class UPlotConfigBuilder {
         /*@ts-ignore*/
         fill: (u, seriesIdx) => u.series[seriesIdx].points.stroke(u, seriesIdx),
       },
+      focus: {
+        prox: 30,
+      },
     };
 
     defaultsDeep(config.cursor, cursorDefaults);

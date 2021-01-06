@@ -6,6 +6,34 @@ import { expect } from '../../../../../../public/test/lib/common';
 import { AreaGradientMode, AxisPlacement, DrawStyle, PointVisibility, ScaleDistribution } from '../config';
 
 describe('UPlotConfigBuilder', () => {
+  describe('default config', () => {
+    it('builds default config', () => {
+      const builder = new UPlotConfigBuilder();
+      expect(builder.getConfig()).toMatchInlineSnapshot(`
+        Object {
+          "axes": Array [],
+          "cursor": Object {
+            "drag": Object {
+              "setScale": false,
+            },
+            "focus": Object {
+              "prox": 30,
+            },
+            "points": Object {
+              "fill": [Function],
+              "size": [Function],
+              "stroke": [Function],
+              "width": [Function],
+            },
+          },
+          "scales": Object {},
+          "series": Array [
+            Object {},
+          ],
+        }
+      `);
+    });
+  });
   describe('scales config', () => {
     it('allows scales configuration', () => {
       const builder = new UPlotConfigBuilder();
@@ -23,6 +51,9 @@ describe('UPlotConfigBuilder', () => {
           "cursor": Object {
             "drag": Object {
               "setScale": false,
+            },
+            "focus": Object {
+              "prox": 30,
             },
             "points": Object {
               "fill": [Function],
@@ -82,6 +113,9 @@ describe('UPlotConfigBuilder', () => {
               "drag": Object {
                 "setScale": false,
               },
+              "focus": Object {
+                "prox": 30,
+              },
               "points": Object {
                 "fill": [Function],
                 "size": [Function],
@@ -120,6 +154,9 @@ describe('UPlotConfigBuilder', () => {
               "cursor": Object {
                 "drag": Object {
                   "setScale": false,
+                },
+                "focus": Object {
+                  "prox": 30,
                 },
                 "points": Object {
                   "fill": [Function],
@@ -160,6 +197,9 @@ describe('UPlotConfigBuilder', () => {
               "cursor": Object {
                 "drag": Object {
                   "setScale": false,
+                },
+                "focus": Object {
+                  "prox": 30,
                 },
                 "points": Object {
                   "fill": [Function],
@@ -233,6 +273,9 @@ describe('UPlotConfigBuilder', () => {
         "cursor": Object {
           "drag": Object {
             "setScale": false,
+          },
+          "focus": Object {
+            "prox": 30,
           },
           "points": Object {
             "fill": [Function],
@@ -336,6 +379,9 @@ describe('UPlotConfigBuilder', () => {
         "cursor": Object {
           "drag": Object {
             "setScale": false,
+          },
+          "focus": Object {
+            "prox": 30,
           },
           "points": Object {
             "fill": [Function],

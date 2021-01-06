@@ -31,7 +31,6 @@
         <tbody>
           <tr ng-repeat="revision in ctrl.revisions">
             <td
-              class="filter-table__switch-cell"
               bs-tooltip="!revision.checked && ctrl.canCompare ? 'You can only compare 2 versions at a time' : ''"
               data-placement="right"
             >

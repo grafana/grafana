@@ -354,7 +354,7 @@ func (ss *SQLStore) readConfig() {
 	ss.dbCfg.CacheMode = sec.Key("cache_mode").MustString("private")
 }
 
-// Interface of arguments for testing db
+// ITestDB is an interface of arguments for testing db
 type ITestDB interface {
 	Helper()
 	Fatalf(format string, args ...interface{})
