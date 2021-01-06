@@ -169,3 +169,99 @@ datasources:
     access: proxy
     url: http://localhost:9090
 ```
+
+## Amazon Managed Service for Prometheus
+
+AWS users using Amazon Managed Service for Prometheus can use Grafana's Prometheus
+data source to visualize their data. If you are using an AWS Identity and 
+Access Management (IAM) policy to control access to your Amazon Elasticsearch 
+Service domain, then you must use AWS Signature Version 4 (AWS SigV4) to sign 
+all requests to that domain. For more details on AWS SigV4,
+refer to the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
+
+### AWS Signature Version 4 authentication
+
+> **Note:** Only available in Grafana v7.3+.
+
+In order to sign requests to your Amazon Managed Service for Prometheus domain,
+SigV4 can be enabled in the Grafana [configuration]({{< relref "../administration/configuration.md#sigv4_auth_enabled" >}}).
+
+### Workspace configuration
+
+Once AWS SigV4 is enabled, the Prometheus data source can be configured to query
+data from your Amazon Managed Service for Prometheus workspace. Go to the
+data source, enter your workspace URL and choose "Server" as access mode.
+
+The URL should be in the format of https://aps-workspaces.REGION.amazonaws.com/workspaces/ws-UNIQUE_WORKSPACE_ID/.
+
+### SigV4 Auth Details
+
+There are three different authentication methods available. `AWS SDK Default` 
+performs no custom configuration at all and instead uses the
+[default provider](https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html)
+as specified by the AWS SDK for Go. This requires you to configure your
+AWS credentials separately, such as if you've [configured the CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html),
+if you're [running on an EC2 instance](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html),
+[in an ECS task](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html)
+or for a [Service Account in a Kubernetes cluster](https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html).
+
+`Credentials file` corresponds directly to the [SharedCredentialsProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#SharedCredentialsProvider)
+provider in the Go SDK. In short, it will read the AWS shared credentials file and
+find the given profile. While `AWS SDK Default` will also find the shared credentials
+file, this option allows you to specify which profile to use without using
+environment variables. It doesn't have any implicit fallbacks to other credential
+providers, and will fail if using credentials from the credentials file doesn't work.
+
+`Access & secret key` corresponds to the [StaticProvider](https://docs.aws.amazon.com/sdk-for-go/api/aws/credentials/#StaticProvider)
+and uses the given access key ID and secret key to authenticate. This method doesn't
+have any fallbacks, and will fail if the provided key pair doesn't work.
+
+#### IAM roles
+
+Currently all access to Amazon Managed Service for Prometheus is done server
+side by the Grafana backend using the official AWS SDK.
+Providing you have chosen the _AWS SDK Default_ authentication method,
+and your Grafana server is running on AWS, you can use IAM Roles to handle
+authentication automically.
+
+See the AWS documentation on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html).
+
+#### IAM policies
+
+Grafana needs permissions granted via IAM to be able to read Amazon Managed Service for
+Prometheus. You can attach these permissions to IAM roles and utilize Grafana’s built-in
+support for assuming roles.
+
+Here is a minimal policy example:
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "aps:ListWorkspaces",
+                "aps:DescribeWorkspace",
+                "aps:QueryMetrics",
+                "aps:GetLabels",
+                "aps:GetSeries",
+                "aps:GetMetricMetadata"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+#### Assuming a role
+
+The `Assume Role ARN` field allows you to specify which IAM role to assume, if any. When left blank, the provided credentials are used directly and the associated role or user should have the required permissions. If this field is non-blank, on the other hand, the provided credentials are used to perform an [sts:AssumeRole](https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html) call.
+
+#### Default region
+
+Choose the Amazon Managed Service for Prometheus workspace region as your
+default region. For example, "us-east-1".
+
+Once configured, click on "Save & Test". Grafana should be able to query data
+from your workspace now.
