@@ -932,10 +932,8 @@ def get_windows_steps(edition, ver_mode, is_downstream=False):
 
     init_cmds = []
     sfx = ''
-    if edition == 'enterprise':
-        sfx = '-enterprise'
-    elif edition == 'enterprise2':
-        sfx = '-enterprise2'
+    if edition in ('enterprise', 'enterprise2'):
+        sfx = '-{}'.format(edition)
     else:
         init_cmds.extend([
             '$$ProgressPreference = "SilentlyContinue"',
