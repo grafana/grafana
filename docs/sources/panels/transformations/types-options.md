@@ -190,7 +190,7 @@ In the example below, I added two fields together and named them Sum.
 
 This transform can transform time series results that include labels or tags to a table structure where each label becomes it's own field.
 
-Given a query result of two time series
+Given a query result of two time series:
 
 * Series 1: labels Server=Server A, Datacenter=EU
 * Series 2: labels Server=Server B, Datacenter=EU
