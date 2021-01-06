@@ -219,7 +219,7 @@ To illustrate this, here is another example where you have two queries that retu
 * Series 1: labels Server=ServerA
 * Series 2: labels Datacenter=EU
 
-This will first result in these two tables
+This will first result in these two tables:
 
 | Time                | Server  | Value | 
 | ------------------- | ------- | ----- | 
