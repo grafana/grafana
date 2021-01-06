@@ -811,7 +811,7 @@ steps:
 - name: gen-version
   image: grafana/build-container:1.3.0
   commands:
-  - ./bin/grabpl gen-version ${{DRONE_TAG}}
+  - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
   - build-backend
   - build-frontend
@@ -1206,7 +1206,7 @@ steps:
 - name: gen-version
   image: grafana/build-container:1.3.0
   commands:
-  - ./bin/grabpl gen-version ${{DRONE_TAG}}
+  - ./bin/grabpl gen-version ${DRONE_TAG}
   depends_on:
   - build-backend
   - build-frontend

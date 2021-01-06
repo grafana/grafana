@@ -551,7 +551,7 @@ def gen_version_step(ver_mode, include_enterprise2=False, is_downstream=False):
         ])
 
     if ver_mode == 'release':
-        args = '${{DRONE_TAG}}'
+        args = '${DRONE_TAG}'
     elif ver_mode == 'test-release':
         args = test_release_ver
     else:
