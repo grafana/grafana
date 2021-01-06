@@ -8,55 +8,46 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 //nolint:goconst
-func TestDataSourceProxyCache(t *testing.T) {
-	Convey("When caching a datasource proxy", t, func() {
-		clearDSProxyCache()
+func TestDataSource_GetHttpTransport(t *testing.T) {
+	t.Run("Should use cached proxy", func(t *testing.T) {
+		clearDSProxyCache(t)
 		ds := DataSource{
 			Id:   1,
 			Url:  "http://k8s:8001",
 			Type: "Kubernetes",
 		}
 
-		t1, err := ds.GetHttpTransport()
-		So(err, ShouldBeNil)
+		tr1, err := ds.GetHttpTransport()
+		require.NoError(t, err)
 
-		t2, err := ds.GetHttpTransport()
-		So(err, ShouldBeNil)
+		tr2, err := ds.GetHttpTransport()
+		require.NoError(t, err)
 
-		Convey("Should be using the cached proxy", func() {
-			So(t2, ShouldEqual, t1)
-		})
-		Convey("Should verify TLS by default", func() {
-			So(t1.transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
-		})
-		Convey("Should have no TLS client certificate configured", func() {
-			So(len(t1.transport.TLSClientConfig.Certificates), ShouldEqual, 0)
-		})
-		Convey("Should have no user-supplied TLS CA configured", func() {
-			So(t1.transport.TLSClientConfig.RootCAs, ShouldBeNil)
-		})
+		require.Same(t, tr1, tr2)
+
+		assert.False(t, tr1.transport.TLSClientConfig.InsecureSkipVerify)
+		assert.Empty(t, tr1.transport.TLSClientConfig.Certificates)
+		assert.Nil(t, tr1.transport.TLSClientConfig.RootCAs)
 	})
 
-	Convey("When caching a datasource proxy then updating it", t, func() {
-		clearDSProxyCache()
+	t.Run("Should not use cached proxy when datasource updated", func(t *testing.T) {
+		clearDSProxyCache(t)
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
 		json.Set("tlsAuthWithCACert", true)
 
 		tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 		ds := DataSource{
 			Id:             1,
 			Url:            "http://k8s:8001",
@@ -65,42 +56,36 @@ func TestDataSourceProxyCache(t *testing.T) {
 			Updated:        time.Now().Add(-2 * time.Minute),
 		}
 
-		t1, err := ds.GetHttpTransport()
-		So(err, ShouldBeNil)
+		tr1, err := ds.GetHttpTransport()
+		require.NoError(t, err)
 
-		Convey("Should verify TLS by default", func() {
-			So(t1.transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
-		})
-		Convey("Should have no TLS client certificate configured", func() {
-			So(len(t1.transport.TLSClientConfig.Certificates), ShouldEqual, 0)
-		})
-		Convey("Should have no user-supplied TLS CA configured", func() {
-			So(t1.transport.TLSClientConfig.RootCAs, ShouldBeNil)
-		})
+		assert.False(t, tr1.transport.TLSClientConfig.InsecureSkipVerify)
+		assert.Empty(t, tr1.transport.TLSClientConfig.Certificates)
+		assert.Nil(t, tr1.transport.TLSClientConfig.RootCAs)
 
 		ds.JsonData = nil
 		ds.SecureJsonData = map[string][]byte{}
 		ds.Updated = time.Now()
 
-		t2, err := ds.GetHttpTransport()
-		So(err, ShouldBeNil)
+		tr2, err := ds.GetHttpTransport()
+		require.NoError(t, err)
 
-		Convey("Should have no user-supplied TLS CA configured after the update", func() {
-			So(t2.transport.TLSClientConfig.RootCAs, ShouldBeNil)
-		})
+		require.NotSame(t, tr1, tr2)
+
+		assert.Nil(t, tr2.transport.TLSClientConfig.RootCAs)
 	})
 
-	Convey("When caching a datasource proxy with TLS client authentication enabled", t, func() {
-		clearDSProxyCache()
+	t.Run("Should set TLS client authentication enabled if configured in JsonData", func(t *testing.T) {
+		clearDSProxyCache(t)
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
 		json.Set("tlsAuth", true)
 
 		tlsClientCert, err := util.Encrypt([]byte(clientCert), "password")
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 		tlsClientKey, err := util.Encrypt([]byte(clientKey), "password")
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
 		ds := DataSource{
 			Id:       1,
@@ -114,18 +99,14 @@ func TestDataSourceProxyCache(t *testing.T) {
 		}
 
 		tr, err := ds.GetHttpTransport()
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
-		Convey("Should verify TLS by default", func() {
-			So(tr.transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
-		})
-		Convey("Should have a TLS client certificate configured", func() {
-			So(len(tr.transport.TLSClientConfig.Certificates), ShouldEqual, 1)
-		})
+		assert.False(t, tr.transport.TLSClientConfig.InsecureSkipVerify)
+		require.Len(t, tr.transport.TLSClientConfig.Certificates, 1)
 	})
 
-	Convey("When caching a datasource proxy with a user-supplied TLS CA", t, func() {
-		clearDSProxyCache()
+	t.Run("Should set user-supplied TLS CA if configured in JsonData", func(t *testing.T) {
+		clearDSProxyCache(t)
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
@@ -133,7 +114,7 @@ func TestDataSourceProxyCache(t *testing.T) {
 		json.Set("serverName", "server-name")
 
 		tlsCaCert, err := util.Encrypt([]byte(caCert), "password")
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
 		ds := DataSource{
 			Id:       1,
@@ -146,21 +127,15 @@ func TestDataSourceProxyCache(t *testing.T) {
 		}
 
 		tr, err := ds.GetHttpTransport()
-		So(err, ShouldBeNil)
+		require.NoError(t, err)
 
-		Convey("Should verify TLS by default", func() {
-			So(tr.transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
-		})
-		Convey("Should have a TLS CA configured", func() {
-			So(len(tr.transport.TLSClientConfig.RootCAs.Subjects()), ShouldEqual, 1)
-		})
-		Convey("Should include a server name if one is provided", func() {
-			So(tr.transport.TLSClientConfig.ServerName, ShouldEqual, "server-name")
-		})
+		assert.False(t, tr.transport.TLSClientConfig.InsecureSkipVerify)
+		require.Len(t, tr.transport.TLSClientConfig.RootCAs.Subjects(), 1)
+		assert.Equal(t, "server-name", tr.transport.TLSClientConfig.ServerName)
 	})
 
-	Convey("When caching a datasource proxy when user skips TLS verification", t, func() {
-		clearDSProxyCache()
+	t.Run("Should set skip TLS verification if configured in JsonData", func(t *testing.T) {
+		clearDSProxyCache(t)
 
 		json := simplejson.New()
 		json.Set("tlsSkipVerify", true)
@@ -172,16 +147,19 @@ func TestDataSourceProxyCache(t *testing.T) {
 			JsonData: json,
 		}
 
-		tr, err := ds.GetHttpTransport()
-		So(err, ShouldBeNil)
+		tr1, err := ds.GetHttpTransport()
+		require.NoError(t, err)
 
-		Convey("Should skip TLS verification", func() {
-			So(tr.transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, true)
-		})
+		tr2, err := ds.GetHttpTransport()
+		require.NoError(t, err)
+
+		require.Same(t, tr1, tr2)
+
+		assert.True(t, tr1.transport.TLSClientConfig.InsecureSkipVerify)
 	})
 
-	Convey("When caching a datasource proxy with custom headers specified", t, func() {
-		clearDSProxyCache()
+	t.Run("Should set custom headers if configured in JsonData", func(t *testing.T) {
+		clearDSProxyCache(t)
 
 		json := simplejson.NewFromAny(map[string]interface{}{
 			"httpHeaderName1": "Authorization",
@@ -199,51 +177,107 @@ func TestDataSourceProxyCache(t *testing.T) {
 			SecureJsonData: map[string][]byte{"httpHeaderValue1": encryptedData},
 		}
 
-		Convey("Should match header value after decryption", func() {
-			headers := ds.getCustomHeaders()
-			So(headers["Authorization"], ShouldEqual, "Bearer xf5yhfkpsnmgo")
+		headers := ds.getCustomHeaders()
+		assert.Equal(t, "Bearer xf5yhfkpsnmgo", headers["Authorization"])
+
+		// 1. Start HTTP test server which checks the request headers
+		backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.Header.Get("Authorization") == "Bearer xf5yhfkpsnmgo" {
+				w.WriteHeader(200)
+				_, err := w.Write([]byte("Ok"))
+				require.NoError(t, err)
+				return
+			}
+
+			w.WriteHeader(403)
+			_, err := w.Write([]byte("Invalid bearer token provided"))
+			require.NoError(t, err)
+		}))
+		defer backend.Close()
+
+		// 2. Get HTTP transport from datasource which uses the test server as backend
+		ds.Url = backend.URL
+		tr, err := ds.GetHttpTransport()
+		require.NoError(t, err)
+
+		// 3. Send test request which should have the Authorization header set
+		req := httptest.NewRequest("GET", backend.URL+"/test-headers", nil)
+		res, err := tr.RoundTrip(req)
+		require.NoError(t, err)
+		t.Cleanup(func() {
+			err := res.Body.Close()
+			require.NoError(t, err)
 		})
+		body, err := ioutil.ReadAll(res.Body)
+		require.NoError(t, err)
+		bodyStr := string(body)
+		assert.Equal(t, "Ok", bodyStr)
+	})
 
-		Convey("Should add header fields in HTTP Transport", func() {
-			// 1. Start HTTP test server which checks the request headers
-			backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				// Can't use So() here, see: https://github.com/smartystreets/goconvey/issues/561
-				if r.Header.Get("Authorization") == "Bearer xf5yhfkpsnmgo" {
-					w.WriteHeader(200)
-					_, err := w.Write([]byte("Ok"))
-					require.Nil(t, err)
-					return
-				}
+	t.Run("Should use SigV4 in middleware chain if configured in JsonData", func(t *testing.T) {
+		clearDSProxyCache(t)
 
-				w.WriteHeader(403)
-				_, err := w.Write([]byte("Invalid bearer token provided"))
-				require.Nil(t, err)
-			}))
-			defer backend.Close()
+		origEnabled := setting.SigV4AuthEnabled
+		setting.SigV4AuthEnabled = true
+		t.Cleanup(func() { setting.SigV4AuthEnabled = origEnabled })
 
-			// 2. Get HTTP transport from datasource which uses the test server as backend
-			ds.Url = backend.URL
-			transport, err := ds.GetHttpTransport()
-			So(err, ShouldBeNil)
+		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
+		require.NoError(t, err)
 
-			// 3. Send test request which should have the Authorization header set
-			req := httptest.NewRequest("GET", backend.URL+"/test-headers", nil)
-			res, err := transport.RoundTrip(req)
-			So(err, ShouldBeNil)
-			t.Cleanup(func() {
-				err := res.Body.Close()
-				assert.NoError(t, err)
-			})
-			body, err := ioutil.ReadAll(res.Body)
-			So(err, ShouldBeNil)
-			bodyStr := string(body)
-			So(bodyStr, ShouldEqual, "Ok")
-		})
+		ds := DataSource{
+			JsonData: json,
+		}
+
+		tr, err := ds.GetHttpTransport()
+		require.NoError(t, err)
+
+		m1, ok := tr.next.(*SigV4Middleware)
+		require.True(t, ok)
+
+		_, ok = m1.Next.(*http.Transport)
+		require.True(t, ok)
+	})
+
+	t.Run("Should not include SigV4 middleware if not configured in JsonData", func(t *testing.T) {
+		clearDSProxyCache(t)
+
+		origEnabled := setting.SigV4AuthEnabled
+		setting.SigV4AuthEnabled = true
+		t.Cleanup(func() { setting.SigV4AuthEnabled = origEnabled })
+
+		ds := DataSource{}
+
+		tr, err := ds.GetHttpTransport()
+		require.NoError(t, err)
+
+		_, ok := tr.next.(*http.Transport)
+		require.True(t, ok)
+	})
+
+	t.Run("Should not include SigV4 middleware if not configured in app config", func(t *testing.T) {
+		clearDSProxyCache(t)
+
+		origEnabled := setting.SigV4AuthEnabled
+		setting.SigV4AuthEnabled = false
+		t.Cleanup(func() { setting.SigV4AuthEnabled = origEnabled })
+
+		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
+		require.NoError(t, err)
+
+		ds := DataSource{
+			JsonData: json,
+		}
+
+		tr, err := ds.GetHttpTransport()
+		require.NoError(t, err)
+
+		_, ok := tr.next.(*http.Transport)
+		require.True(t, ok)
 	})
 }
 
-func TestDataSourceDecryptionCache(t *testing.T) {
-	Convey("When datasource hasn't been updated, encrypted JSON should be fetched from cache", t, func() {
+func TestDataSource_DecryptedValue(t *testing.T) {
+	t.Run("When datasource hasn't been updated, encrypted JSON should be fetched from cache", func(t *testing.T) {
 		ClearDSDecryptionCache()
 
 		ds := DataSource{
@@ -258,19 +292,19 @@ func TestDataSourceDecryptionCache(t *testing.T) {
 
 		// Populate cache
 		password, ok := ds.DecryptedValue("password")
-		So(password, ShouldEqual, "password")
-		So(ok, ShouldBeTrue)
+		require.True(t, ok)
+		assert.Equal(t, "password", password)
 
 		ds.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
 			"password": "",
 		})
 
 		password, ok = ds.DecryptedValue("password")
-		So(password, ShouldEqual, "password")
-		So(ok, ShouldBeTrue)
+		require.True(t, ok)
+		assert.Equal(t, "password", password)
 	})
 
-	Convey("When datasource is updated, encrypted JSON should not be fetched from cache", t, func() {
+	t.Run("When datasource is updated, encrypted JSON should not be fetched from cache", func(t *testing.T) {
 		ClearDSDecryptionCache()
 
 		ds := DataSource{
@@ -285,8 +319,8 @@ func TestDataSourceDecryptionCache(t *testing.T) {
 
 		// Populate cache
 		password, ok := ds.DecryptedValue("password")
-		So(password, ShouldEqual, "password")
-		So(ok, ShouldBeTrue)
+		require.True(t, ok)
+		assert.Equal(t, "password", password)
 
 		ds.SecureJsonData = securejsondata.GetEncryptedJsonData(map[string]string{
 			"password": "",
@@ -294,84 +328,14 @@ func TestDataSourceDecryptionCache(t *testing.T) {
 		ds.Updated = time.Now()
 
 		password, ok = ds.DecryptedValue("password")
-		So(password, ShouldEqual, "")
-		So(ok, ShouldBeTrue)
+		require.True(t, ok)
+		assert.Empty(t, password)
 	})
 }
 
-func TestDataSourceSigV4Auth(t *testing.T) {
-	Convey("When caching a datasource proxy with middleware", t, func() {
-		clearDSProxyCache()
-		origEnabled := setting.SigV4AuthEnabled
-		setting.SigV4AuthEnabled = true
-		t.Cleanup(func() {
-			setting.SigV4AuthEnabled = origEnabled
-		})
+func clearDSProxyCache(t *testing.T) {
+	t.Helper()
 
-		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
-		So(err, ShouldBeNil)
-
-		ds := DataSource{
-			JsonData: json,
-		}
-
-		t, err := ds.GetHttpTransport()
-		So(err, ShouldBeNil)
-
-		Convey("SigV4 is in middleware chain if configured in JsonData", func() {
-			m1, ok := t.next.(*SigV4Middleware)
-			So(ok, ShouldEqual, true)
-
-			_, ok = m1.Next.(*http.Transport)
-			So(ok, ShouldEqual, true)
-		})
-	})
-
-	Convey("When caching a datasource proxy with middleware", t, func() {
-		clearDSProxyCache()
-		origEnabled := setting.SigV4AuthEnabled
-		setting.SigV4AuthEnabled = true
-		t.Cleanup(func() {
-			setting.SigV4AuthEnabled = origEnabled
-		})
-
-		ds := DataSource{}
-
-		t, err := ds.GetHttpTransport()
-		So(err, ShouldBeNil)
-
-		Convey("Should not include sigV4 middleware if not configured in JsonData", func() {
-			_, ok := t.next.(*http.Transport)
-			So(ok, ShouldEqual, true)
-		})
-	})
-
-	Convey("When caching a datasource proxy with middleware", t, func() {
-		clearDSProxyCache()
-		origEnabled := setting.SigV4AuthEnabled
-		setting.SigV4AuthEnabled = false
-		t.Cleanup(func() {
-			setting.SigV4AuthEnabled = origEnabled
-		})
-
-		json, err := simplejson.NewJson([]byte(`{ "sigV4Auth": true }`))
-		So(err, ShouldBeNil)
-
-		ds := DataSource{
-			JsonData: json,
-		}
-
-		t, err := ds.GetHttpTransport()
-		So(err, ShouldBeNil)
-
-		Convey("Should not include sigV4 middleware if not configured in app config", func() {
-			_, ok := t.next.(*http.Transport)
-			So(ok, ShouldEqual, true)
-		})
-	})
-}
-
-func clearDSProxyCache() {
 	ptc.Lock()
 	defer ptc.Unlock()
 
