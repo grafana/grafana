@@ -432,7 +432,7 @@ func TestMetrics(t *testing.T) {
 
 		t.Run("Should include metrics for concurrent users", func(t *testing.T) {
 			report, err := uss.GetUsageReport(context.Background())
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			assert.Equal(t, int32(1), report.Metrics["stats.auth_token_per_user_le_3"])
 			assert.Equal(t, int32(2), report.Metrics["stats.auth_token_per_user_le_6"])

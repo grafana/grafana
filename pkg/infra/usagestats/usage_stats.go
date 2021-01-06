@@ -187,19 +187,19 @@ func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, 
 	}
 
 	// Get concurrent users stats as histogram
-	concurrentUsersStats, err := uss.GetConcurrentUsersStats(ctx, false)
+	concurrentUsersStats, err := uss.GetConcurrentUsersStats(ctx)
 	if err != nil {
 		metricsLogger.Error("Failed to get concurrent users stats", "error", err)
 		return report, err
 	}
 
 	// Histogram is cumulative and metric name has a postfix of le_"<upper inclusive bound>"
-	metrics["stats.auth_token_per_user_le_3"] = concurrentUsersStats.BucketLe3
-	metrics["stats.auth_token_per_user_le_6"] = concurrentUsersStats.BucketLe6
-	metrics["stats.auth_token_per_user_le_9"] = concurrentUsersStats.BucketLe9
-	metrics["stats.auth_token_per_user_le_12"] = concurrentUsersStats.BucketLe12
-	metrics["stats.auth_token_per_user_le_15"] = concurrentUsersStats.BucketLe15
-	metrics["stats.auth_token_per_user_le_inf"] = concurrentUsersStats.BucketLeInf
+	metrics["stats.auth_token_per_user_le_3"] = concurrentUsersStats.BucketLE3
+	metrics["stats.auth_token_per_user_le_6"] = concurrentUsersStats.BucketLE6
+	metrics["stats.auth_token_per_user_le_9"] = concurrentUsersStats.BucketLE9
+	metrics["stats.auth_token_per_user_le_12"] = concurrentUsersStats.BucketLE12
+	metrics["stats.auth_token_per_user_le_15"] = concurrentUsersStats.BucketLE15
+	metrics["stats.auth_token_per_user_le_inf"] = concurrentUsersStats.BucketLEInf
 
 	return report, nil
 }

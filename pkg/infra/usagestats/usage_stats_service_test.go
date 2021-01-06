@@ -31,57 +31,24 @@ func TestUsageStatsService_GetConcurrentUsersStats(t *testing.T) {
 			cancel()
 		})
 
-		t.Run("Should refresh stats when forced", func(t *testing.T) {
-			actualResult, err := uss.GetConcurrentUsersStats(ctx, true)
-			require.NoError(t, err)
-
-			expectedResult := &ConcurrentUsersStats{
-				BucketLe3:   1,
-				BucketLe6:   2,
-				BucketLe9:   3,
-				BucketLe12:  4,
-				BucketLe15:  5,
-				BucketLeInf: 6,
-			}
-
-			assert.Equal(t, expectedResult, actualResult)
-
-			err = createToken(7, sqlStore)
-			assert.NoError(t, err)
-
-			actualResult, err = uss.GetConcurrentUsersStats(ctx, true)
-			require.NoError(t, err)
-
-			expectedResult = &ConcurrentUsersStats{
-				BucketLe3:   2,
-				BucketLe6:   3,
-				BucketLe9:   4,
-				BucketLe12:  5,
-				BucketLe15:  6,
-				BucketLeInf: 7,
-			}
-
-			assert.Equal(t, expectedResult, actualResult)
-		})
-
 		t.Run("Should cache results", func(t *testing.T) {
-			actualResult, err := uss.GetConcurrentUsersStats(ctx, false)
+			actualResult, err := uss.GetConcurrentUsersStats(ctx)
 			require.NoError(t, err)
 
-			expectedCachedResult := &ConcurrentUsersStats{
-				BucketLe3:   2,
-				BucketLe6:   3,
-				BucketLe9:   4,
-				BucketLe12:  5,
-				BucketLe15:  6,
-				BucketLeInf: 7,
+			expectedCachedResult := &concurrentUsersStats{
+				BucketLE3:   1,
+				BucketLE6:   2,
+				BucketLE9:   3,
+				BucketLE12:  4,
+				BucketLE15:  5,
+				BucketLEInf: 6,
 			}
 			assert.Equal(t, expectedCachedResult, actualResult)
 
 			err = createToken(8, sqlStore)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
-			actualResult, err = uss.GetConcurrentUsersStats(ctx, false)
+			actualResult, err = uss.GetConcurrentUsersStats(ctx)
 
 			require.NoError(t, err)
 			assert.Equal(t, expectedCachedResult, actualResult)
@@ -101,10 +68,10 @@ func createToken(uId int, sqlStore *sqlstore.SQLStore) error {
 	now := time.Now().Unix()
 
 	userAuthToken := userAuthToken{
-		UserId:        int64(uId),
+		UserID:        int64(uId),
 		AuthToken:     hashedToken,
 		PrevAuthToken: hashedToken,
-		ClientIp:      "192.168.10.11",
+		ClientIP:      "192.168.10.11",
 		UserAgent:     "Mozilla",
 		RotatedAt:     now,
 		CreatedAt:     now,
@@ -122,25 +89,24 @@ func createToken(uId int, sqlStore *sqlstore.SQLStore) error {
 }
 
 func createConcurrentTokens(t *testing.T, sqlStore *sqlstore.SQLStore) {
+	t.Helper()
 	for u := 1; u <= 6; u++ {
 		for tkn := 1; tkn <= u*3; tkn++ {
 			err := createToken(u, sqlStore)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 		}
 	}
 }
 
 type userAuthToken struct {
-	Id            int64
-	UserId        int64
+	UserID        int64 `xorm:"user_id"`
 	AuthToken     string
 	PrevAuthToken string
 	UserAgent     string
-	ClientIp      string
+	ClientIP      string `xorm:"client_ip"`
 	AuthTokenSeen bool
 	SeenAt        int64
 	RotatedAt     int64
 	CreatedAt     int64
 	UpdatedAt     int64
-	UnhashedToken string `xorm:"-"`
 }
