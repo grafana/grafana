@@ -259,6 +259,10 @@ func (ss *SQLStore) getEngine() (*xorm.Engine, error) {
 		return nil, err
 	}
 
+	if ss.Cfg.IsDatabaseMetricsEnabled() {
+		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type)
+	}
+
 	sqlog.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
 	if ss.dbCfg.Type == migrator.SQLite && strings.HasPrefix(connectionString, "file:") {
 		exists, err := fs.Exists(ss.dbCfg.Path)
