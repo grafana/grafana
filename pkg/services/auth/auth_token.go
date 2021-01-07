@@ -116,11 +116,9 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	var exists bool
 	var err error
 	err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		exists, err = dbSession.Where("(auth_token = ? OR prev_auth_token = ?) AND created_at > ? AND rotated_at > ?",
+		exists, err = dbSession.Where("(auth_token = ? OR prev_auth_token = ?)",
 			hashedToken,
-			hashedToken,
-			s.createdAfterParam(),
-			s.rotatedAfterParam()).
+			hashedToken).
 			Get(&model)
 
 		return err
@@ -131,6 +129,10 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 
 	if !exists {
 		return nil, models.ErrUserTokenNotFound
+	}
+
+	if model.CreatedAt <= s.createdAfterParam() || model.RotatedAt <= s.rotatedAfterParam() {
+		return &models.UserToken{UserId: model.UserId}, models.ErrUserTokenExpired
 	}
 
 	if model.AuthToken != hashedToken && model.PrevAuthToken == hashedToken && model.AuthTokenSeen {

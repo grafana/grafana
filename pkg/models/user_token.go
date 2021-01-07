@@ -9,6 +9,7 @@ import (
 // Typed errors
 var (
 	ErrUserTokenNotFound = errors.New("user token not found")
+	ErrUserTokenExpired  = errors.New("user token expired")
 )
 
 // UserToken represents a user token
