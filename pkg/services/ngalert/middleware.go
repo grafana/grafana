@@ -5,10 +5,10 @@ import (
 )
 
 func (ng *AlertNG) validateOrgAlertDefinition(c *models.ReqContext) {
-	id := c.ParamsInt64(":alertDefinitionId")
-	query := getAlertDefinitionByIDQuery{ID: id}
+	uid := c.ParamsEscape(":alertDefinitionUID")
+	query := getAlertDefinitionByUIDQuery{UID: uid, OrgID: c.SignedInUser.OrgId}
 
-	if err := ng.getAlertDefinitionByID(&query); err != nil {
+	if err := ng.getAlertDefinitionByUID(&query); err != nil {
 		c.JsonApiErr(404, "Alert definition not found", nil)
 		return
 	}
