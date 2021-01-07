@@ -331,6 +331,10 @@ type Cfg struct {
 	Quota QuotaSettings
 
 	DefaultTheme string
+
+	AutoAssignOrg     bool
+	AutoAssignOrgId   int
+	AutoAssignOrgRole string
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.
@@ -1125,9 +1129,12 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	users := iniFile.Section("users")
 	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
-	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
-	AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
-	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
+	cfg.AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
+	AutoAssignOrg = cfg.AutoAssignOrg
+	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
+	AutoAssignOrgId = cfg.AutoAssignOrgId
+	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
+	AutoAssignOrgRole = cfg.AutoAssignOrgRole
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
 	LoginHint = valueAsString(users, "login_hint", "")

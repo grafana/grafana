@@ -125,14 +125,18 @@ func (db *MySQLDialect) CleanDB() error {
 	defer sess.Close()
 
 	for _, table := range tables {
-		if _, err := sess.Exec("set foreign_key_checks = 0"); err != nil {
-			return errutil.Wrap("failed to disable foreign key checks", err)
-		}
-		if _, err := sess.Exec("drop table " + table.Name + " ;"); err != nil {
-			return errutil.Wrapf(err, "failed to delete table %q", table.Name)
-		}
-		if _, err := sess.Exec("set foreign_key_checks = 1"); err != nil {
-			return errutil.Wrap("failed to disable foreign key checks", err)
+		switch table.Name {
+		case "migration_log":
+		default:
+			if _, err := sess.Exec("set foreign_key_checks = 0"); err != nil {
+				return errutil.Wrap("failed to disable foreign key checks", err)
+			}
+			if _, err := sess.Exec("drop table " + table.Name + " ;"); err != nil {
+				return errutil.Wrapf(err, "failed to delete table %q", table.Name)
+			}
+			if _, err := sess.Exec("set foreign_key_checks = 1"); err != nil {
+				return errutil.Wrap("failed to disable foreign key checks", err)
+			}
 		}
 	}
 

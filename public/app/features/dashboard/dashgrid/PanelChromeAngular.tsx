@@ -13,7 +13,7 @@ import config from 'app/core/config';
 // Types
 import { DashboardModel, PanelModel } from '../state';
 import { StoreState } from 'app/types';
-import { DefaultTimeRange, LoadingState, PanelData, PanelPlugin } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, PanelData, PanelPlugin } from '@grafana/data';
 import { updateLocation } from 'app/core/actions';
 import { PANEL_BORDER } from 'app/core/constants';
 import { selectors } from '@grafana/e2e-selectors';
@@ -68,7 +68,7 @@ export class PanelChromeAngularUnconnected extends PureComponent<Props, State> {
       data: {
         state: LoadingState.NotStarted,
         series: [],
-        timeRange: DefaultTimeRange,
+        timeRange: getDefaultTimeRange(),
       },
     };
   }
