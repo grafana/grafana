@@ -120,9 +120,15 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return getBackendSrv()
       .datasourceRequest(options)
       .catch((err: any) => {
-        if (err.data && err.data.error) {
+        if (err.data) {
+          const message =
+            err.data.error && err.data.error.reason
+              ? err.data.error.reason
+              : err.data.message
+              ? err.data.message
+              : 'Unknown error';
           throw {
-            message: 'Elasticsearch error: ' + err.data.error.reason,
+            message: 'Elasticsearch error: ' + message,
             error: err.data.error,
           };
         }

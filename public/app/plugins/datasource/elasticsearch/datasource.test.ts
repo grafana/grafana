@@ -333,6 +333,29 @@ describe('ElasticDatasource', function(this: any) {
       }
     });
 
+    it('should properly throw an error with just a message', async () => {
+      datasourceRequestMock.mockImplementation(() => {
+        return Promise.reject({
+          data: {
+            error: 'Bad Request',
+            message: 'Authentication to data source failed',
+            response: 'Authentication to data source failed',
+          },
+        });
+      });
+
+      const errObject = {
+        error: 'Bad Request',
+        message: 'Elasticsearch error: Authentication to data source failed',
+      };
+
+      try {
+        await ctx.ds.query(query);
+      } catch (err) {
+        expect(err).toEqual(errObject);
+      }
+    });
+
     it('should properly throw an unknown error', async () => {
       datasourceRequestMock.mockImplementation(() => {
         return Promise.resolve({
