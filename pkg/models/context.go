@@ -19,7 +19,8 @@ type ReqContext struct {
 	AllowAnonymous bool
 	SkipCache      bool
 	Logger         log.Logger
-	RequestNonce   string
+	// RequestNonce is a cryptographic request identifier for use with Content Security Policy.
+	RequestNonce string
 }
 
 // Handle handles and logs error by given status.

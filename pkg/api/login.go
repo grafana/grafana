@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -104,10 +103,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		// to login again via OAuth and enter to a redirect loop
 		cookies.DeleteCookie(c.Resp, LoginErrorCookieName, hs.CookieOptionsFromCfg)
 		viewData.Settings["loginError"] = loginError
-		idx := getViewIndex()
-		fmt.Printf("Responding with HTML, idx: %+v, viewData: %+v\n", idx, viewData)
-		c.HTML(200, idx, viewData)
-		fmt.Printf("Returning\n")
+		c.HTML(200, getViewIndex(), viewData)
 		return
 	}
 
