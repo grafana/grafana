@@ -33,12 +33,12 @@ type Version struct {
 	Commit  string `json:"commit"`
 	URL     string `json:"url"`
 	Version string `json:"version"`
-	// os-arch to md5 checksum to check when downloading the file
+	// Arch contains architecture metadata.
 	Arch map[string]ArchMeta `json:"arch"`
 }
 
 type ArchMeta struct {
-	Md5 string `json:"md5"`
+	SHA256 string `json:"sha256"`
 }
 
 type PluginRepo struct {
