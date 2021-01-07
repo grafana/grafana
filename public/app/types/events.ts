@@ -148,3 +148,11 @@ export class PanelOptionsChangedEvent extends BusEventBase {
 export class DashboardPanelsChangedEvent extends BusEventBase {
   static type = 'dashboard-panels-changed';
 }
+
+export class RefreshEvent extends BusEventBase {
+  static type = 'refresh';
+}
+
+export class RenderEvent extends BusEventBase {
+  static type = 'render';
+}
