@@ -52,7 +52,7 @@ func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertCond
 	})
 }
 
-// alertDefinitionEvalEndpoint handles GET /api/alert-definitions/eval/:dashboardId/:panelId/:refId".
+// alertDefinitionEvalEndpoint handles GET /api/alert-definitions/eval/:alertDefinitionUID.
 func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) api.Response {
 	alertDefinitionUID := c.ParamsEscape(":alertDefinitionUID")
 
@@ -67,7 +67,7 @@ func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) api.Respons
 
 	evalResults, err := eval.ConditionEval(condition, timeNow())
 	if err != nil {
-		return api.Error(400, "Failed to evaludate alert", err)
+		return api.Error(400, "Failed to evaluate alert", err)
 	}
 	frame := evalResults.AsDataFrame()
 
