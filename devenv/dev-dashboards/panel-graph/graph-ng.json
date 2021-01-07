@@ -2084,7 +2084,7 @@
       "type": "graph3"
     },
     {
-      "collapsed": true,
+      "collapsed": false,
       "datasource": null,
       "gridPos": {
         "h": 1,
