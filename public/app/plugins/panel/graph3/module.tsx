@@ -80,7 +80,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
         .addCustomEditor<void, LineStyle>({
           id: 'lineStyle',
           path: 'lineStyle',
-          name: 'Line Style',
+          name: 'Line style',
           showIf: c => c.drawStyle === DrawStyle.Line,
           editor: LineStyleEditor,
           override: LineStyleEditor,
