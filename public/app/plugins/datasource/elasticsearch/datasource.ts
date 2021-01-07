@@ -1,27 +1,27 @@
 import _ from 'lodash';
 import {
-  DataSourceApi,
-  DataSourceInstanceSettings,
+  DataFrame,
+  DataLink,
+  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
-  DataFrame,
-  ScopedVars,
-  DataLink,
-  PluginMeta,
-  DataQuery,
-  LogRowModel,
-  Field,
-  MetricFindValue,
-  TimeRange,
-  DefaultTimeRange,
+  DataSourceApi,
+  DataSourceInstanceSettings,
   DateTime,
   dateTime,
+  Field,
+  getDefaultTimeRange,
+  LogRowModel,
+  MetricFindValue,
+  PluginMeta,
+  ScopedVars,
+  TimeRange,
+  toUtc,
 } from '@grafana/data';
 import LanguageProvider from './language_provider';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
-import { toUtc } from '@grafana/data';
 import { defaultBucketAgg, hasMetricOfType } from './query_def';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
@@ -142,7 +142,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
    *
    * @param url the url to query the index on, for example `/_mapping`.
    */
-  private get(url: string, range = DefaultTimeRange) {
+  private get(url: string, range = getDefaultTimeRange()) {
     const indexList = this.indexPattern.getIndexList(range.from, range.to);
     if (_.isArray(indexList) && indexList.length) {
       return this.requestAllIndices(indexList, url).then((results: any) => {
@@ -667,7 +667,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
   }
 
-  getTerms(queryDef: any, range = DefaultTimeRange) {
+  getTerms(queryDef: any, range = getDefaultTimeRange()) {
     const searchType = this.esVersion >= 5 ? 'query_then_fetch' : 'count';
     const header = this.getQueryHeader(searchType, range.from, range.to);
     let esQuery = JSON.stringify(this.queryBuilder.getTermsQuery(queryDef));
@@ -706,14 +706,14 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     const parsedQuery = JSON.parse(query);
     if (query) {
       if (parsedQuery.find === 'fields') {
-        parsedQuery.field = this.templateSrv.replace(parsedQuery.field, {}, 'lucene');
-        return this.getFields(query, range);
+        parsedQuery.type = this.templateSrv.replace(parsedQuery.type, {}, 'lucene');
+        return this.getFields(parsedQuery.type, range);
       }
 
       if (parsedQuery.find === 'terms') {
         parsedQuery.field = this.templateSrv.replace(parsedQuery.field, {}, 'lucene');
         parsedQuery.query = this.templateSrv.replace(parsedQuery.query || '*', {}, 'lucene');
-        return this.getTerms(query, range);
+        return this.getTerms(parsedQuery, range);
       }
     }
 
