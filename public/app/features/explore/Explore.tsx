@@ -23,6 +23,7 @@ import {
   EventBusExtended,
   EventBusSrv,
   TraceViewData,
+  DataFrame,
 } from '@grafana/data';
 
 import store from 'app/core/store';
@@ -287,6 +288,84 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     );
   };
 
+  renderGraphPanel = (width: number) => {
+    const { graphResult, loading, absoluteRange, timeZone } = this.props;
+    return (
+      <ExploreGraphPanel
+        ariaLabel={selectors.pages.Explore.General.graph}
+        series={graphResult}
+        width={width}
+        loading={loading}
+        absoluteRange={absoluteRange}
+        isStacked={false}
+        showPanel={true}
+        timeZone={timeZone}
+        onUpdateTimeRange={this.onUpdateTimeRange}
+        showBars={false}
+        showLines={true}
+      />
+    );
+  };
+
+  renderTablePanel = (width: number) => {
+    const { exploreId, datasourceInstance } = this.props;
+    return (
+      <TableContainer
+        ariaLabel={selectors.pages.Explore.General.table}
+        width={width}
+        exploreId={exploreId}
+        onCellFilterAdded={datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined}
+      />
+    );
+  };
+
+  renderLogsPanel = (width: number) => {
+    const { exploreId, syncedTimes } = this.props;
+    return (
+      <LogsContainer
+        width={width}
+        exploreId={exploreId}
+        syncedTimes={syncedTimes}
+        onClickFilterLabel={this.onClickFilterLabel}
+        onClickFilterOutLabel={this.onClickFilterOutLabel}
+        onStartScanning={this.onStartScanning}
+        onStopScanning={this.onStopScanning}
+      />
+    );
+  };
+
+  renderServiceMapPanel = () => {
+    const { exploreId, showTrace, queryResponse } = this.props;
+    return (
+      <ServiceMapContainer
+        dataFrames={this.getServiceMapDataFrames(queryResponse.series)}
+        exploreId={exploreId}
+        short={showTrace}
+      />
+    );
+  };
+
+  getServiceMapDataFrames = memoizeOne((frames: DataFrame[]) => {
+    // TODO: this not in sync with how other types of responses are handled. Other types have a query response
+    //  processing pipeline which ends up populating redux state with proper data. As we move towards more dataFrame
+    //  oriented API it seems like a better direction to move such processing into to visualisations and do minimal
+    //  and lazy processing here. Needs bigger refactor so keeping serviceMap and Traces as they are for now.
+    return frames.filter(frame => frame.meta?.preferredVisualisationType === 'serviceMap');
+  });
+
+  renderTraceViewPanel = () => {
+    const { queryResponse, splitOpen } = this.props;
+    const dataFrames = queryResponse.series.filter(series => series.meta?.preferredVisualisationType === 'trace');
+
+    return (
+      // We expect only one trace at the moment to be in the dataframe
+      // If there is no data (like 404) we show a separate error so no need to show anything here
+      dataFrames[0] && (
+        <TraceView trace={dataFrames[0].fields[0].values.get(0) as TraceViewData | undefined} splitOpenFn={splitOpen} />
+      )
+    );
+  };
+
   render() {
     const {
       datasourceInstance,
@@ -294,12 +373,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       exploreId,
       split,
       queryKeys,
-      graphResult,
-      loading,
-      absoluteRange,
-      timeZone,
       queryResponse,
-      syncedTimes,
       isLive,
       theme,
       showMetrics,
@@ -307,7 +381,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       showLogs,
       showTrace,
       showServiceMap,
-      splitOpen,
     } = this.props;
     const { openDrawer } = this.state;
     const exploreClass = split ? 'explore explore-split' : 'explore';
@@ -363,63 +436,11 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                       )}
                       {!showStartPage && (
                         <>
-                          {showMetrics && (
-                            <ExploreGraphPanel
-                              ariaLabel={selectors.pages.Explore.General.graph}
-                              series={graphResult}
-                              width={width}
-                              loading={loading}
-                              absoluteRange={absoluteRange}
-                              isStacked={false}
-                              showPanel={true}
-                              timeZone={timeZone}
-                              onUpdateTimeRange={this.onUpdateTimeRange}
-                              showBars={false}
-                              showLines={true}
-                            />
-                          )}
-                          {showTable && (
-                            <TableContainer
-                              ariaLabel={selectors.pages.Explore.General.table}
-                              width={width}
-                              exploreId={exploreId}
-                              onCellFilterAdded={
-                                this.props.datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined
-                              }
-                            />
-                          )}
-                          {showLogs && (
-                            <LogsContainer
-                              width={width}
-                              exploreId={exploreId}
-                              syncedTimes={syncedTimes}
-                              onClickFilterLabel={this.onClickFilterLabel}
-                              onClickFilterOutLabel={this.onClickFilterOutLabel}
-                              onStartScanning={this.onStartScanning}
-                              onStopScanning={this.onStopScanning}
-                            />
-                          )}
-                          {showServiceMap && (
-                            <div style={{ height: showTrace ? 300 : 600 }}>
-                              <ServiceMapContainer
-                                // TODO this thrashes internal memoization
-                                dataFrames={queryResponse.series.filter(
-                                  series => series.meta?.preferredVisualisationType === 'serviceMap'
-                                )}
-                                exploreId={exploreId}
-                              />
-                            </div>
-                          )}
-                          {/* TODO:unification */}
-                          {showTrace &&
-                            // We expect only one trace at the moment to be in the dataframe
-                            // If there is not data (like 404) we show a separate error so no need to show anything here
-                            queryResponse.series[0] && (
-                              <TraceView
-                                trace={queryResponse.series[0].fields[0].values.get(0) as TraceViewData | undefined}
-                                splitOpenFn={splitOpen}
-                              />
-                            )}
+                          {showMetrics && this.renderGraphPanel(width)}
+                          {showTable && this.renderTablePanel(width)}
+                          {showLogs && this.renderLogsPanel(width)}
+                          {showServiceMap && this.renderServiceMapPanel()}
+                          {showTrace && this.renderTraceViewPanel()}
                         </>
                       )}
                       {showRichHistory && (

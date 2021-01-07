@@ -13,15 +13,18 @@ interface ServiceMapContainerProps {
   exploreId: ExploreId;
   range: TimeRange;
   splitOpen: typeof splitOpen;
+  short?: boolean;
 }
 export function UnconnectedServiceMapContainer(props: ServiceMapContainerProps) {
-  const { dataFrames, range, splitOpen } = props;
+  const { dataFrames, range, splitOpen, short } = props;
   const getLinks = useLinks(range, splitOpen);
 
   return (
-    <Collapse label="Service Map" isOpen>
-      <GraphView dataFrames={dataFrames} getLinks={getLinks} />
-    </Collapse>
+    <div style={{ height: short ? 300 : 600 }}>
+      <Collapse label="Service Map" isOpen>
+        <GraphView dataFrames={dataFrames} getLinks={getLinks} />
+      </Collapse>
+    </div>
   );
 }
 
