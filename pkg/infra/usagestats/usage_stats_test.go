@@ -2,6 +2,7 @@ package usagestats
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"io/ioutil"
 	"runtime"
@@ -159,6 +160,7 @@ func TestMetrics(t *testing.T) {
 			return nil
 		})
 
+		createConcurrentTokens(t, uss.SQLStore)
 		uss.AlertingUsageStats = &alertingUsageMock{}
 
 		var wg sync.WaitGroup
@@ -186,12 +188,12 @@ func TestMetrics(t *testing.T) {
 			"grafana_com":   true,
 		}
 
-		err := uss.sendUsageStats()
+		err := uss.sendUsageStats(context.Background())
 		require.NoError(t, err)
 
 		t.Run("Given reporting not enabled and sending usage stats", func(t *testing.T) {
 			setting.ReportingEnabled = false
-			err := uss.sendUsageStats()
+			err := uss.sendUsageStats(context.Background())
 			require.NoError(t, err)
 
 			t.Run("Should not gather stats or call http endpoint", func(t *testing.T) {
@@ -212,7 +214,7 @@ func TestMetrics(t *testing.T) {
 			setting.Packaging = "deb"
 
 			wg.Add(1)
-			err := uss.sendUsageStats()
+			err := uss.sendUsageStats(context.Background())
 			require.NoError(t, err)
 
 			t.Run("Should gather stats and call http endpoint", func(t *testing.T) {
@@ -291,6 +293,13 @@ func TestMetrics(t *testing.T) {
 				assert.Equal(t, 1, metrics.Get("stats.auth_enabled.oauth_grafana_com.count").MustInt())
 
 				assert.Equal(t, 1, metrics.Get("stats.packaging.deb.count").MustInt())
+
+				assert.Equal(t, 1, metrics.Get("stats.auth_token_per_user_le_3").MustInt())
+				assert.Equal(t, 2, metrics.Get("stats.auth_token_per_user_le_6").MustInt())
+				assert.Equal(t, 3, metrics.Get("stats.auth_token_per_user_le_9").MustInt())
+				assert.Equal(t, 4, metrics.Get("stats.auth_token_per_user_le_12").MustInt())
+				assert.Equal(t, 5, metrics.Get("stats.auth_token_per_user_le_15").MustInt())
+				assert.Equal(t, 6, metrics.Get("stats.auth_token_per_user_le_inf").MustInt())
 			})
 		})
 	})
@@ -419,12 +428,26 @@ func TestMetrics(t *testing.T) {
 			return nil
 		})
 
+		createConcurrentTokens(t, uss.SQLStore)
+
+		t.Run("Should include metrics for concurrent users", func(t *testing.T) {
+			report, err := uss.GetUsageReport(context.Background())
+			require.NoError(t, err)
+
+			assert.Equal(t, int32(1), report.Metrics["stats.auth_token_per_user_le_3"])
+			assert.Equal(t, int32(2), report.Metrics["stats.auth_token_per_user_le_6"])
+			assert.Equal(t, int32(3), report.Metrics["stats.auth_token_per_user_le_9"])
+			assert.Equal(t, int32(4), report.Metrics["stats.auth_token_per_user_le_12"])
+			assert.Equal(t, int32(5), report.Metrics["stats.auth_token_per_user_le_15"])
+			assert.Equal(t, int32(6), report.Metrics["stats.auth_token_per_user_le_inf"])
+		})
+
 		t.Run("Should include external metrics", func(t *testing.T) {
 			uss.RegisterMetric(metricName, func() (interface{}, error) {
 				return 1, nil
 			})
 
-			report, err := uss.GetUsageReport()
+			report, err := uss.GetUsageReport(context.Background())
 			assert.Nil(t, err, "Expected no error")
 
 			metric := report.Metrics[metricName]

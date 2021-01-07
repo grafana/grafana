@@ -13,6 +13,7 @@ load(
     'build_backend_step',
     'build_frontend_step',
     'build_plugins_step',
+    'gen_version_step',
     'package_step',
     'e2e_tests_server_step',
     'e2e_tests_step',
@@ -59,27 +60,42 @@ def release_npm_packages_step(edition, ver_mode):
 def get_steps(edition, ver_mode):
     should_publish = ver_mode in ('release', 'test-release',)
     should_upload = should_publish or ver_mode in ('release-branch',)
+    include_enterprise2 = edition == 'enterprise'
 
     steps = [
         lint_backend_step(edition=edition),
         codespell_step(),
         shellcheck_step(),
         dashboard_schemas_check(),
-        test_backend_step(),
+        test_backend_step(edition=edition),
         test_frontend_step(),
         build_backend_step(edition=edition, ver_mode=ver_mode),
         build_frontend_step(edition=edition, ver_mode=ver_mode),
         build_plugins_step(edition=edition, sign=True),
+    ]
+
+    # Have to insert Enterprise2 steps before they're depended on (in the gen-version step)
+    if include_enterprise2:
+        edition2 = 'enterprise2'
+        steps.extend([
+            lint_backend_step(edition=edition2),
+            test_backend_step(edition=edition2),
+            build_backend_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
+        ])
+
+    # Insert remaining steps
+    steps.extend([
+        gen_version_step(ver_mode=ver_mode, include_enterprise2=include_enterprise2),
         package_step(edition=edition, ver_mode=ver_mode),
         e2e_tests_server_step(edition=edition),
-        e2e_tests_step(),
+        e2e_tests_step(edition=edition),
         build_storybook_step(edition=edition, ver_mode=ver_mode),
         copy_packages_for_docker_step(),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, publish=should_publish),
         build_docker_images_step(edition=edition, ver_mode=ver_mode, ubuntu=True, publish=should_publish),
         postgres_integration_tests_step(),
         mysql_integration_tests_step(),
-    ]
+    ])
     if should_upload:
         steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode))
     if should_publish:
@@ -89,18 +105,15 @@ def get_steps(edition, ver_mode):
         ])
     windows_steps = get_windows_steps(edition=edition, ver_mode=ver_mode)
 
-    if edition == 'enterprise':
-        build_tags = ['enterprise2']
+    if include_enterprise2:
+        edition2 = 'enterprise2'
         steps.extend([
-            lint_backend_step(edition=edition, build_tags=build_tags),
-            test_backend_step(build_tags=build_tags),
-            build_backend_step(edition=edition, ver_mode=ver_mode, variants=['linux-x64'], build_tags=build_tags),
-            package_step(edition=edition, ver_mode=ver_mode, variants=['linux-x64'], build_tags=build_tags),
-            e2e_tests_server_step(edition=edition, build_tags=build_tags, port=3002),
-            e2e_tests_step(build_tags=build_tags, port=3002),
+            package_step(edition=edition2, ver_mode=ver_mode, variants=['linux-x64']),
+            e2e_tests_server_step(edition=edition2, port=3002),
+            e2e_tests_step(edition=edition2, port=3002),
         ])
         if should_upload:
-            steps.append(upload_packages_step(edition=edition, ver_mode=ver_mode, build_tags=build_tags))
+            steps.append(upload_packages_step(edition=edition2, ver_mode=ver_mode))
 
     return steps, windows_steps
 

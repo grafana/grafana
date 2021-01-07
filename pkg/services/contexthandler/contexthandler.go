@@ -114,8 +114,8 @@ func (h *ContextHandler) initContextWithAnonymousUser(ctx *models.ReqContext) bo
 		return false
 	}
 
-	orgQuery := models.GetOrgByNameQuery{Name: h.Cfg.AnonymousOrgName}
-	if err := bus.Dispatch(&orgQuery); err != nil {
+	org, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
+	if err != nil {
 		log.Errorf(3, "Anonymous access organization error: '%s': %s", h.Cfg.AnonymousOrgName, err)
 		return false
 	}
@@ -124,8 +124,8 @@ func (h *ContextHandler) initContextWithAnonymousUser(ctx *models.ReqContext) bo
 	ctx.AllowAnonymous = true
 	ctx.SignedInUser = &models.SignedInUser{IsAnonymous: true}
 	ctx.OrgRole = models.RoleType(h.Cfg.AnonymousOrgRole)
-	ctx.OrgId = orgQuery.Result.Id
-	ctx.OrgName = orgQuery.Result.Name
+	ctx.OrgId = org.Id
+	ctx.OrgName = org.Name
 	return true
 }
 
