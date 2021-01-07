@@ -2,9 +2,9 @@ import React, { useMemo } from 'react';
 import { FieldOverrideEditorProps, SelectableValue } from '@grafana/data';
 import { HorizontalGroup, IconButton, LineStyle, RadioButtonGroup, Select } from '@grafana/ui';
 
-type lineFill = 'solid' | 'dash' | 'dot';
+type LineFill = 'solid' | 'dash' | 'dot';
 
-const LINE_OPTIONS: Array<SelectableValue<lineFill>> = [
+const lineFillOptions: Array<SelectableValue<lineFill>> = [
   {
     label: 'Solid',
     value: 'solid',
