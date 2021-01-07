@@ -75,6 +75,14 @@ func addSecurityHeaders(c *macaron.Context, w macaron.ResponseWriter, cfg *setti
 		return err
 	}
 
+	ctx, ok := c.Data["ctx"].(*models.ReqContext)
+	if !ok {
+		return fmt.Errorf("failed to convert context into models.ReqContext")
+	}
+	if ctx.RequestNonce == "" {
+		panic("Nonce is empty")
+	}
+
 	return nil
 }
 

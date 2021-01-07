@@ -36,6 +36,9 @@ func addCSPHeader(c *macaron.Context, w macaron.ResponseWriter, cfg *setting.Cfg
 	}
 
 	ctx.RequestNonce = nonce
+	if ctx.RequestNonce == "" {
+		panic("Nonce is empty")
+	}
 
 	return nil
 }

@@ -391,6 +391,9 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		return nil, err
 	}
 
+	if c.RequestNonce == "" {
+		panic(fmt.Sprintf("Nonce: %q", c.RequestNonce))
+	}
 	data := dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:                         c.UserId,
