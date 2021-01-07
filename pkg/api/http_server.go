@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/shorturls"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 
@@ -77,6 +78,7 @@ type HTTPServer struct {
 	ShortURLService      *shorturls.ShortURLService       `inject:""`
 	Live                 *live.GrafanaLive                `inject:""`
 	ContextHandler       *contexthandler.ContextHandler   `inject:""`
+	SQLStore             *sqlstore.SQLStore               `inject:""`
 	Listener             net.Listener
 }
 

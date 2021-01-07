@@ -9,6 +9,6 @@ export {
   TransformerUIProps,
   standardTransformersRegistry,
 } from './standardTransformersRegistry';
-export { RegexpOrNamesMatcherOptions } from './matchers/nameMatcher';
+export { RegexpOrNamesMatcherOptions, ByNamesMatcherOptions, ByNamesMatcherMode } from './matchers/nameMatcher';
 export { RenameByRegexTransformerOptions } from './transformers/renameByRegex';
 export { outerJoinDataFrames } from './transformers/seriesToColumns';
