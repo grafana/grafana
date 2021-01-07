@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -12,33 +13,31 @@ import (
 	macaron "gopkg.in/macaron.v1"
 )
 
-// addCSPHeader adds the Content Security Policy header.
-func addCSPHeader(c *macaron.Context, w macaron.ResponseWriter, cfg *setting.Cfg) error {
-	if !cfg.CSPEnabled {
-		return nil
-	}
+// AddCSPHeader adds the Content Security Policy header.
+func AddCSPHeader(cfg *setting.Cfg) macaron.Handler {
+	return func(w http.ResponseWriter, req *http.Request, c *macaron.Context) {
+		if !cfg.CSPEnabled {
+			return
+		}
 
-	if cfg.CSPTemplate == "" {
-		return fmt.Errorf("CSP template has to be configured")
-	}
+		ctx, ok := c.Data["ctx"].(*models.ReqContext)
+		if !ok {
+			panic("Failed to convert context into models.ReqContext")
+		}
 
-	var buf [16]byte
-	if _, err := io.ReadFull(rand.Reader, buf[:]); err != nil {
-		return fmt.Errorf("failed to generate CSP nonce: %w", err)
-	}
-	nonce := base64.RawStdEncoding.EncodeToString(buf[:])
-	val := strings.ReplaceAll(cfg.CSPTemplate, "$NONCE", fmt.Sprintf("'nonce-%s'", nonce))
-	w.Header().Set("Content-Security-Policy", val)
+		if cfg.CSPTemplate == "" {
+			ctx.JsonApiErr(403, "CSP template has to be configured", nil)
+			return
+		}
 
-	ctx, ok := c.Data["ctx"].(*models.ReqContext)
-	if !ok {
-		return fmt.Errorf("failed to convert context into models.ReqContext")
-	}
+		var buf [16]byte
+		if _, err := io.ReadFull(rand.Reader, buf[:]); err != nil {
+			ctx.JsonApiErr(500, "Failed to generate CSP nonce", err)
+		}
+		nonce := base64.RawStdEncoding.EncodeToString(buf[:])
+		val := strings.ReplaceAll(cfg.CSPTemplate, "$NONCE", fmt.Sprintf("'nonce-%s'", nonce))
+		w.Header().Set("Content-Security-Policy", val)
 
-	ctx.RequestNonce = nonce
-	if ctx.RequestNonce == "" {
-		panic("Nonce is empty")
+		ctx.RequestNonce = nonce
 	}
-
-	return nil
 }

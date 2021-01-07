@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -76,18 +75,6 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 }
 
 func (hs *HTTPServer) LoginView(c *models.ReqContext) {
-	ctx, ok := c.Data["ctx"].(*models.ReqContext)
-	if !ok {
-		panic(fmt.Errorf("failed to convert context into models.ReqContext"))
-	}
-
-	if c.RequestNonce == "" {
-		panic("Outer nonce is empty")
-	}
-	if ctx.RequestNonce == "" {
-		panic("Inner nonce is empty")
-	}
-
 	viewData, err := setIndexViewData(hs, c)
 	if err != nil {
 		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
