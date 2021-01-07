@@ -76,7 +76,7 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefini
 				}
 			}()
 		case k := <-ng.schedule.stop:
-			if k.orgID == key.orgID && k.definitionUID == key.definitionUID {
+			if k == key {
 				ng.schedule.log.Debug("stopping alert definition routine", "definitionUID", key.definitionUID, "orgID", key.orgID)
 				// interrupt evaluation if it's running
 				return nil
