@@ -116,9 +116,9 @@ export const Card: CardInterface = ({
         <div className={styles.inner}>
           <div className={styles.heading} role="heading">
             {heading}
+            {tags}
           </div>
           {meta}
-          {tags}
           {description && <p className={styles.description}>{description}</p>}
           {hasActions && (
             <div className={styles.actionRow}>
@@ -181,6 +181,9 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
       width: 100%;
     `,
     heading: css`
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 0;
       font-size: ${theme.typography.size.md};
       line-height: ${theme.typography.lineHeight.xs};
@@ -233,7 +236,7 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
       width: 100%;
     `,
     tagList: css`
-      margin-top: ${theme.spacing.sm};
+      max-width: 50%;
     `,
   };
 });

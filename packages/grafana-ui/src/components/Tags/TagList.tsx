@@ -29,11 +29,10 @@ const getStyles = () => {
       display: flex;
       flex: 1 1 auto;
       flex-wrap: wrap;
+      margin-bottom: -6px;
     `,
     tag: css`
-      &:not(:first-child) {
-        margin-left: 6px;
-      }
+      margin: 0 6px 6px 0;
     `,
   };
 };
