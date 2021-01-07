@@ -23,8 +23,17 @@ type AlertDefinition struct {
 	UID             string `xorm:"uid"`
 }
 
-func (alertDefinition *AlertDefinition) getKey() string {
-	return getKey(alertDefinition.UID, alertDefinition.OrgID)
+type alertDefinitionKey struct {
+	orgID         int64
+	definitionUID string
+}
+
+func (k alertDefinitionKey) String() string {
+	return fmt.Sprintf("{orgID: %d, definitionUID: %s}", k.orgID, k.definitionUID)
+}
+
+func (alertDefinition *AlertDefinition) getKey() alertDefinitionKey {
+	return alertDefinitionKey{orgID: alertDefinition.OrgID, definitionUID: alertDefinition.UID}
 }
 
 // AlertDefinitionVersion is the model for alert definition versions in Alerting NG.

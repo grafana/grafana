@@ -3,8 +3,6 @@ package ngalert
 import (
 	"context"
 	"fmt"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -15,20 +13,13 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const separator = ":"
-
-func getKey(definitionUID string, orgID int64) string {
-	return strings.Join([]string{strconv.FormatInt(orgID, 10), definitionUID}, separator)
-}
-
-func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionUID string, orgID int64, evalCh <-chan *evalContext) error {
-	ng.log.Debug("alert definition routine started", "definitionUID", definitionUID)
+func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefinitionKey, evalCh <-chan *evalContext) error {
+	ng.log.Debug("alert definition routine started", "key", key)
 
 	evalRunning := false
 	var start, end time.Time
 	var attempt int64
 	var alertDefinition *AlertDefinition
-	key := getKey(definitionUID, orgID)
 	for {
 		select {
 		case ctx := <-evalCh:
@@ -41,14 +32,14 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionUID s
 
 				// fetch latest alert definition version
 				if alertDefinition == nil || alertDefinition.Version < ctx.version {
-					q := getAlertDefinitionByUIDQuery{OrgID: orgID, UID: definitionUID}
+					q := getAlertDefinitionByUIDQuery{OrgID: key.orgID, UID: key.definitionUID}
 					err := ng.getAlertDefinitionByUID(&q)
 					if err != nil {
-						ng.schedule.log.Error("failed to fetch alert definition", "alertDefinitionID", alertDefinition.ID)
+						ng.schedule.log.Error("failed to fetch alert definition", "key", key)
 						return err
 					}
 					alertDefinition = q.Result
-					ng.schedule.log.Debug("new alert definition version fetched", "alertDefinitionID", alertDefinition.ID, "version", alertDefinition.Version)
+					ng.schedule.log.Debug("new alert definition version fetched", "key", key, "version", alertDefinition.Version)
 				}
 
 				condition := eval.Condition{
@@ -59,11 +50,11 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionUID s
 				results, err := eval.ConditionEval(&condition, ctx.now)
 				end = timeNow()
 				if err != nil {
-					ng.schedule.log.Error("failed to evaluate alert definition", "definitionUID", definitionUID, "orgID", orgID, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
+					ng.schedule.log.Error("failed to evaluate alert definition", "definitionUID", key.definitionUID, "orgID", key.orgID, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
 					return err
 				}
 				for _, r := range results {
-					ng.schedule.log.Info("alert definition result", "definitionUID", definitionUID, "orgID", orgID, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
+					ng.schedule.log.Info("alert definition result", "definitionUID", key.definitionUID, "orgID", key.orgID, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
 				}
 				return nil
 			}
@@ -85,8 +76,8 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, definitionUID s
 				}
 			}()
 		case k := <-ng.schedule.stop:
-			if key == k {
-				ng.schedule.log.Debug("stopping alert definition routine", "definitionUID", definitionUID, "orgID", orgID)
+			if k.orgID == key.orgID && k.definitionUID == key.definitionUID {
+				ng.schedule.log.Debug("stopping alert definition routine", "definitionUID", key.definitionUID, "orgID", key.orgID)
 				// interrupt evaluation if it's running
 				return nil
 			}
@@ -104,7 +95,7 @@ type schedule struct {
 	registry alertDefinitionRegistry
 
 	// broadcast channel for stopping definition routines
-	stop chan string
+	stop chan alertDefinitionKey
 
 	maxAttempts int64
 
@@ -115,17 +106,17 @@ type schedule struct {
 	// evalApplied is only used for tests: test code can set it to non-nil
 	// function, and then it'll be called from the event loop whenever the
 	// message from evalApplied is handled.
-	evalApplied func(string, time.Time)
+	evalApplied func(alertDefinitionKey, time.Time)
 
 	log log.Logger
 }
 
 // newScheduler returns a new schedule.
-func newScheduler(c clock.Clock, baseInterval time.Duration, logger log.Logger, evalApplied func(string, time.Time)) *schedule {
+func newScheduler(c clock.Clock, baseInterval time.Duration, logger log.Logger, evalApplied func(alertDefinitionKey, time.Time)) *schedule {
 	ticker := alerting.NewTicker(c.Now(), time.Second*0, c, int64(baseInterval.Seconds()))
 	sch := schedule{
-		registry:     alertDefinitionRegistry{alertDefinitionInfo: make(map[string]alertDefinitionInfo)},
-		stop:         make(chan string),
+		registry:     alertDefinitionRegistry{alertDefinitionInfo: make(map[alertDefinitionKey]alertDefinitionInfo)},
+		stop:         make(chan alertDefinitionKey),
 		maxAttempts:  maxAttempts,
 		clock:        c,
 		baseInterval: baseInterval,
@@ -170,7 +161,7 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 			registeredDefinitions := ng.schedule.registry.keyMap()
 
 			type readyToRunItem struct {
-				key            string
+				key            alertDefinitionKey
 				definitionInfo alertDefinitionInfo
 			}
 			readyToRun := make([]readyToRunItem, 0)
@@ -179,13 +170,13 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 				itemOrgID := item.OrgID
 				key := item.getKey()
 				itemVersion := item.Version
-				newRoutine := !ng.schedule.registry.exists(itemUID, itemOrgID)
-				definitionInfo := ng.schedule.registry.getOrCreateInfo(itemUID, itemOrgID, itemVersion)
+				newRoutine := !ng.schedule.registry.exists(key)
+				definitionInfo := ng.schedule.registry.getOrCreateInfo(key, itemVersion)
 				invalidInterval := item.IntervalSeconds%int64(ng.schedule.baseInterval.Seconds()) != 0
 
 				if newRoutine && !invalidInterval {
 					dispatcherGroup.Go(func() error {
-						return ng.definitionRoutine(ctx, itemUID, itemOrgID, definitionInfo.ch)
+						return ng.definitionRoutine(ctx, key, definitionInfo.ch)
 					})
 				}
 
@@ -219,9 +210,9 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 			}
 
 			// unregister and stop routines of the deleted alert definitions
-			for id := range registeredDefinitions {
-				ng.schedule.stop <- id
-				ng.schedule.registry.del(id)
+			for key := range registeredDefinitions {
+				ng.schedule.stop <- key
+				ng.schedule.registry.del(key)
 			}
 		case <-grafanaCtx.Done():
 			err := dispatcherGroup.Wait()
@@ -232,16 +223,14 @@ func (ng *AlertNG) alertingTicker(grafanaCtx context.Context) error {
 
 type alertDefinitionRegistry struct {
 	mu                  sync.Mutex
-	alertDefinitionInfo map[string]alertDefinitionInfo
+	alertDefinitionInfo map[alertDefinitionKey]alertDefinitionInfo
 }
 
 // getOrCreateInfo returns the channel for the specific alert definition
 // if it does not exists creates one and returns it
-func (r *alertDefinitionRegistry) getOrCreateInfo(definitionUID string, orgID int64, definitionVersion int64) alertDefinitionInfo {
+func (r *alertDefinitionRegistry) getOrCreateInfo(key alertDefinitionKey, definitionVersion int64) alertDefinitionInfo {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-
-	key := getKey(definitionUID, orgID)
 
 	info, ok := r.alertDefinitionInfo[key]
 	if !ok {
@@ -253,25 +242,23 @@ func (r *alertDefinitionRegistry) getOrCreateInfo(definitionUID string, orgID in
 	return info
 }
 
-func (r *alertDefinitionRegistry) exists(definitionUID string, orgID int64) bool {
+func (r *alertDefinitionRegistry) exists(key alertDefinitionKey) bool {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-
-	key := getKey(definitionUID, orgID)
 
 	_, ok := r.alertDefinitionInfo[key]
 	return ok
 }
 
-func (r *alertDefinitionRegistry) del(key string) {
+func (r *alertDefinitionRegistry) del(key alertDefinitionKey) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	delete(r.alertDefinitionInfo, key)
 }
 
-func (r *alertDefinitionRegistry) iter() <-chan string {
-	c := make(chan string)
+func (r *alertDefinitionRegistry) iter() <-chan alertDefinitionKey {
+	c := make(chan alertDefinitionKey)
 
 	f := func() {
 		r.mu.Lock()
@@ -287,8 +274,8 @@ func (r *alertDefinitionRegistry) iter() <-chan string {
 	return c
 }
 
-func (r *alertDefinitionRegistry) keyMap() map[string]struct{} {
-	definitionsIDs := make(map[string]struct{})
+func (r *alertDefinitionRegistry) keyMap() map[alertDefinitionKey]struct{} {
+	definitionsIDs := make(map[alertDefinitionKey]struct{})
 	for k := range r.iter() {
 		definitionsIDs[k] = struct{}{}
 	}
