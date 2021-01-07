@@ -22,7 +22,13 @@ describe('Datasource reducer', () => {
       queries,
       queryKeys,
     } as unknown) as ExploreItemState;
-    const expectedState: any = {
+
+    const result = datasourceReducer(
+      initialState,
+      updateDatasourceInstanceAction({ exploreId: ExploreId.left, datasourceInstance, history: [] })
+    );
+
+    const expectedState: Partial<ExploreItemState> = {
       datasourceInstance,
       queries,
       queryKeys,
@@ -31,13 +37,14 @@ describe('Datasource reducer', () => {
       tableResult: null,
       latency: 0,
       loading: false,
-      queryResponse: createEmptyQueryResponse(),
+      queryResponse: {
+        // When creating an empty query response we also create a timeRange object with the current time.
+        // Copying the range from the reducer here prevents intermittent failures when creating them at different times.
+        ...createEmptyQueryResponse(),
+        timeRange: result.queryResponse.timeRange,
+      },
     };
 
-    const result = datasourceReducer(
-      initialState,
-      updateDatasourceInstanceAction({ exploreId: ExploreId.left, datasourceInstance, history: [] })
-    );
     expect(result).toMatchObject(expectedState);
   });
 });

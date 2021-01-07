@@ -2,7 +2,7 @@
 title = "TestData"
 keywords = ["grafana", "dashboard", "documentation", "panels", "testdata"]
 aliases = ["/docs/grafana/latest/features/datasources/testdata"]
-weight = 1400
+weight = 1500
 +++
 
 # Grafana TestData DB

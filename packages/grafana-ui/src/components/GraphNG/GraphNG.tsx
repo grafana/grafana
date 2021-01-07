@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import {
   compareDataFrameStructures,
   DataFrame,
@@ -8,17 +8,19 @@ import {
   formattedValueToString,
   getFieldColorModeForField,
   getFieldDisplayName,
+  TimeRange,
 } from '@grafana/data';
 import { alignDataFrames } from './utils';
 import { UPlotChart } from '../uPlot/Plot';
 import { PlotProps } from '../uPlot/types';
-import { AxisPlacement, GraphFieldConfig, GraphMode, PointMode } from '../uPlot/config';
+import { AxisPlacement, DrawStyle, GraphFieldConfig, PointVisibility } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
 import { GraphLegend } from '../Graph/GraphLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
+import { GraphNGLegendEvent, GraphNGLegendEventMode } from './types';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -26,16 +28,16 @@ export interface XYFieldMatchers {
   x: FieldMatcher;
   y: FieldMatcher;
 }
-
 export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
   data: DataFrame[];
   legend?: LegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
+  onLegendClick?: (event: GraphNGLegendEvent) => void;
 }
 
 const defaultConfig: GraphFieldConfig = {
-  mode: GraphMode.Line,
-  points: PointMode.Auto,
+  drawStyle: DrawStyle.Line,
+  showPoints: PointVisibility.Auto,
   axisPlacement: AxisPlacement.Auto,
 };
 
@@ -48,6 +50,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   legend,
   timeRange,
   timeZone,
+  onLegendClick,
   ...plotProps
 }) => {
   const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
@@ -55,13 +58,36 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   const legendItemsRef = useRef<LegendItem[]>([]);
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
   const alignedFrame = alignedFrameWithGapTest?.frame;
+  const getDataFrameFieldIndex = alignedFrameWithGapTest?.getDataFrameFieldIndex;
 
   const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
     if (a && b) {
-      return compareDataFrameStructures(a, b, ['min', 'max']);
+      return compareDataFrameStructures(a, b);
     }
     return false;
   }, []);
+
+  const onLabelClick = useCallback(
+    (legend: LegendItem, event: React.MouseEvent) => {
+      const { fieldIndex } = legend;
+
+      if (!onLegendClick || !fieldIndex) {
+        return;
+      }
+
+      onLegendClick({
+        fieldIndex,
+        mode: mapMouseEventToMode(event),
+      });
+    },
+    [onLegendClick, data]
+  );
+
+  // reference change will not triger re-render
+  const currentTimeRange = useRef<TimeRange>(timeRange);
+  useLayoutEffect(() => {
+    currentTimeRange.current = timeRange;
+  }, [timeRange]);
 
   const configRev = useRevision(alignedFrame, compareFrames);
 
@@ -78,6 +104,10 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       builder.addScale({
         scaleKey: 'x',
         isTime: true,
+        range: () => {
+          const r = currentTimeRange.current!;
+          return [r.from.valueOf(), r.to.valueOf()];
+        },
       });
       builder.addAxis({
         scaleKey: 'x',
@@ -98,64 +128,75 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       });
     }
 
-    let seriesIdx = 0;
     const legendItems: LegendItem[] = [];
 
     for (let i = 0; i < alignedFrame.fields.length; i++) {
       const field = alignedFrame.fields[i];
       const config = field.config as FieldConfig<GraphFieldConfig>;
-      const customConfig = config.custom || defaultConfig;
+      const customConfig: GraphFieldConfig = {
+        ...defaultConfig,
+        ...config.custom,
+      };
 
       if (field === xField || field.type !== FieldType.number) {
         continue;
       }
 
       const fmt = field.display ?? defaultFormatter;
-      const scale = config.unit || '__fixed';
-      const isNewScale = !builder.hasScale(scale);
+      const scaleKey = config.unit || '__fixed';
+      const colorMode = getFieldColorModeForField(field);
+      const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
 
-      if (isNewScale && customConfig.axisPlacement !== AxisPlacement.Hidden) {
-        builder.addScale({ scaleKey: scale, min: field.config.min, max: field.config.max });
+      if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
+        // The builder will manage unique scaleKeys and combine where appropriate
+        builder.addScale({
+          scaleKey,
+          distribution: customConfig.scaleDistribution?.type,
+          log: customConfig.scaleDistribution?.log,
+          min: field.config.min,
+          max: field.config.max,
+        });
+
         builder.addAxis({
-          scaleKey: scale,
+          scaleKey,
           label: customConfig.axisLabel,
+          size: customConfig.axisWidth,
           placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
           formatValue: v => formattedValueToString(fmt(v)),
           theme,
         });
       }
 
-      // need to update field state here because we use a transform to merge framesP
-      field.state = { ...field.state, seriesIndex: seriesIdx };
-
-      const colorMode = getFieldColorModeForField(field);
-      const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
-      const pointsMode = customConfig.mode === GraphMode.Points ? PointMode.Always : customConfig.points;
+      const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
 
       builder.addSeries({
-        scaleKey: scale,
-        line: (customConfig.mode ?? GraphMode.Line) === GraphMode.Line,
-        lineColor: seriesColor,
+        scaleKey,
+        drawStyle: customConfig.drawStyle!,
+        lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,
-        points: pointsMode,
-        pointSize: customConfig.pointRadius,
-        pointColor: seriesColor,
-        fill: customConfig.fillAlpha !== undefined,
-        fillOpacity: customConfig.fillAlpha,
-        fillColor: seriesColor,
+        lineInterpolation: customConfig.lineInterpolation,
+        showPoints,
+        pointSize: customConfig.pointSize,
+        pointColor: customConfig.pointColor ?? seriesColor,
+        fillOpacity: customConfig.fillOpacity,
+        spanNulls: customConfig.spanNulls || false,
+        show: !customConfig.hideFrom?.graph,
+        fillGradient: customConfig.fillGradient,
       });
 
-      if (hasLegend.current) {
-        const axisPlacement = builder.getAxisPlacement(scale);
+      if (hasLegend.current && !customConfig.hideFrom?.legend) {
+        const axisPlacement = builder.getAxisPlacement(scaleKey);
+        // we need to add this as dep or move it to be done outside.
+        const dataFrameFieldIndex = getDataFrameFieldIndex ? getDataFrameFieldIndex(i) : undefined;
 
         legendItems.push({
+          disabled: field.config.custom?.hideFrom?.graph ?? false,
+          fieldIndex: dataFrameFieldIndex,
           color: seriesColor,
           label: getFieldDisplayName(field, alignedFrame),
           yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
         });
       }
-
-      seriesIdx++;
     }
 
     legendItemsRef.current = legendItems;
@@ -175,7 +216,12 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   if (hasLegend && legendItemsRef.current.length > 0) {
     legendElement = (
       <VizLayout.Legend position={legend!.placement} maxHeight="35%" maxWidth="60%">
-        <GraphLegend placement={legend!.placement} items={legendItemsRef.current} displayMode={legend!.displayMode} />
+        <GraphLegend
+          onLabelClick={onLabelClick}
+          placement={legend!.placement}
+          items={legendItemsRef.current}
+          displayMode={legend!.displayMode}
+        />
       </VizLayout.Legend>
     );
   }
@@ -197,4 +243,11 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       )}
     </VizLayout>
   );
+};
+
+const mapMouseEventToMode = (event: React.MouseEvent): GraphNGLegendEventMode => {
+  if (event.ctrlKey || event.metaKey || event.shiftKey) {
+    return GraphNGLegendEventMode.AppendToSelection;
+  }
+  return GraphNGLegendEventMode.ToggleSelection;
 };

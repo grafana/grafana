@@ -2,7 +2,7 @@
 import React, { PureComponent, ChangeEvent, FocusEvent } from 'react';
 
 // Utils
-import { rangeUtil, PanelData, DataSourceApi } from '@grafana/data';
+import { rangeUtil, PanelData, DataSourceApi, DataQuery } from '@grafana/data';
 
 // Components
 import { Switch, Input, InlineField, InlineFormLabel, stylesFactory } from '@grafana/ui';
@@ -13,6 +13,8 @@ import { config } from 'app/core/config';
 import { css } from 'emotion';
 
 export interface QueryGroupOptions {
+  queries: DataQuery[];
+  dataSource: QueryGroupDataSource;
   maxDataPoints?: number | null;
   minInterval?: string | null;
   cacheTimeout?: string | null;
@@ -21,6 +23,12 @@ export interface QueryGroupOptions {
     shift?: string | null;
     hide?: boolean;
   };
+}
+
+interface QueryGroupDataSource {
+  name?: string | null;
+  uid?: string;
+  default?: boolean;
 }
 
 interface Props {
@@ -136,19 +144,23 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
       maxDataPoints = null;
     }
 
-    onChange({
-      ...options,
-      maxDataPoints: maxDataPoints,
-    });
+    if (maxDataPoints !== options.maxDataPoints) {
+      onChange({
+        ...options,
+        maxDataPoints,
+      });
+    }
   };
 
   onMinIntervalBlur = (event: ChangeEvent<HTMLInputElement>) => {
     const { options, onChange } = this.props;
-
-    onChange({
-      ...options,
-      minInterval: emptyToNull(event.target.value),
-    });
+    const minInterval = emptyToNull(event.target.value);
+    if (minInterval !== options.minInterval) {
+      onChange({
+        ...options,
+        minInterval,
+      });
+    }
   };
 
   renderCacheTimeoutOption() {
@@ -171,7 +183,6 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
             type="text"
             className="width-6"
             placeholder="60"
-            name={name}
             spellCheck={false}
             onBlur={this.onCacheTimeoutBlur}
             defaultValue={options.cacheTimeout ?? ''}
@@ -205,7 +216,6 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
             type="number"
             className="width-6"
             placeholder={`${realMd}`}
-            name={name}
             spellCheck={false}
             onBlur={this.onMaxDataPointsBlur}
             defaultValue={value}
@@ -246,7 +256,6 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
               type="text"
               className="width-6"
               placeholder={`${minIntervalOnDs}`}
-              name={name}
               spellCheck={false}
               onBlur={this.onMinIntervalBlur}
               defaultValue={options.minInterval ?? ''}

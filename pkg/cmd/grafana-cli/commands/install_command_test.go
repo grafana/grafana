@@ -108,7 +108,7 @@ func TestInstallPluginCommand(t *testing.T) {
 						Version: "1.0.0",
 						Arch: map[string]models.ArchMeta{
 							fmt.Sprintf("%s-%s", runtime.GOOS, runtime.GOARCH): {
-								Md5: "test",
+								SHA256: "test",
 							},
 						},
 					},
@@ -215,7 +215,7 @@ func setupFakePluginsDir(t *testing.T) (string, func()) {
 	err := os.RemoveAll(dirname)
 	require.Nil(t, err)
 
-	err = os.MkdirAll(dirname, 0774)
+	err = os.MkdirAll(dirname, 0750)
 	require.Nil(t, err)
 
 	return dirname, func() {
@@ -252,7 +252,7 @@ func makePluginWithVersions(versions ...versionArg) *models.Plugin {
 			ver.Arch = map[string]models.ArchMeta{}
 			for _, arch := range version.Arch {
 				ver.Arch[arch] = models.ArchMeta{
-					Md5: fmt.Sprintf("md5_%s", arch),
+					SHA256: fmt.Sprintf("sha256_%s", arch),
 				}
 			}
 		}

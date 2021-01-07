@@ -16,9 +16,13 @@ import {
   TimeRange,
   toLegacyResponseData,
   EventBusExtended,
+  DataSourceInstanceSettings,
 } from '@grafana/data';
 import { QueryEditorRowTitle } from './QueryEditorRowTitle';
-import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import {
+  QueryOperationRow,
+  QueryOperationRowRenderProps,
+} from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { selectors } from '@grafana/e2e-selectors';
@@ -27,8 +31,8 @@ import { PanelModel } from 'app/features/dashboard/state';
 interface Props {
   data: PanelData;
   query: DataQuery;
-  dataSourceValue: string | null;
-  inMixedMode?: boolean;
+  queries: DataQuery[];
+  dsSettings: DataSourceInstanceSettings;
   id: string;
   index: number;
   onAddQuery: (query?: DataQuery) => void;
@@ -38,7 +42,7 @@ interface Props {
 }
 
 interface State {
-  loadedDataSourceValue: string | null | undefined;
+  loadedDataSourceIdentifier?: string | null;
   datasource: DataSourceApi | null;
   hasTextEditMode: boolean;
   data?: PanelData;
@@ -53,7 +57,6 @@ export class QueryEditorRow extends PureComponent<Props, State> {
 
   state: State = {
     datasource: null,
-    loadedDataSourceValue: undefined,
     hasTextEditMode: false,
     data: undefined,
     isOpen: true,
@@ -91,27 +94,31 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     };
   }
 
+  getQueryDataSourceIdentifier(): string | null | undefined {
+    const { query, dsSettings } = this.props;
+    return query.datasource ?? dsSettings.name;
+  }
+
   async loadDatasource() {
-    const { query, dataSourceValue } = this.props;
     const dataSourceSrv = getDatasourceSrv();
-    let datasource;
+    let datasource: DataSourceApi;
+    const dataSourceIdentifier = this.getQueryDataSourceIdentifier();
 
     try {
-      const datasourceName = dataSourceValue || query.datasource;
-      datasource = await dataSourceSrv.get(datasourceName);
+      datasource = await dataSourceSrv.get(dataSourceIdentifier);
     } catch (error) {
       datasource = await dataSourceSrv.get();
     }
 
     this.setState({
       datasource,
-      loadedDataSourceValue: this.props.dataSourceValue,
+      loadedDataSourceIdentifier: dataSourceIdentifier,
       hasTextEditMode: _.has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
     });
   }
 
   componentDidUpdate(prevProps: Props) {
-    const { loadedDataSourceValue } = this.state;
+    const { datasource, loadedDataSourceIdentifier } = this.state;
     const { data, query } = this.props;
 
     if (data !== prevProps.data) {
@@ -127,7 +134,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     }
 
     // check if we need to load another datasource
-    if (loadedDataSourceValue !== this.props.dataSourceValue) {
+    if (datasource && loadedDataSourceIdentifier !== this.getQueryDataSourceIdentifier()) {
       if (this.angularQueryEditor) {
         this.angularQueryEditor.destroy();
         this.angularQueryEditor = null;
@@ -139,6 +146,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     if (!this.element || this.angularQueryEditor) {
       return;
     }
+
     this.renderAngularQueryEditor();
   }
 
@@ -169,7 +177,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   renderPluginEditor = () => {
-    const { query, onChange } = this.props;
+    const { query, onChange, queries } = this.props;
     const { datasource, data } = this.state;
 
     if (datasource?.components?.QueryCtrl) {
@@ -188,6 +196,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           onRunQuery={this.onRunQuery}
           data={data}
           range={getTimeSrv().timeRange()}
+          queries={queries}
         />
       );
     }
@@ -195,13 +204,13 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     return <div>Data source plugin does not export any Query Editor component</div>;
   };
 
-  onToggleEditMode = (e: React.MouseEvent, { isOpen, openRow }: { isOpen: boolean; openRow: () => void }) => {
+  onToggleEditMode = (e: React.MouseEvent, props: QueryOperationRowRenderProps) => {
     e.stopPropagation();
     if (this.angularScope && this.angularScope.toggleEditorMode) {
       this.angularScope.toggleEditorMode();
       this.angularQueryEditor?.digest();
-      if (!isOpen) {
-        openRow();
+      if (!props.isOpen) {
+        props.onOpen();
       }
     }
   };
@@ -239,7 +248,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     return null;
   }
 
-  renderActions = (props: { isOpen: boolean; openRow: () => void }) => {
+  renderActions = (props: QueryOperationRowRenderProps) => {
     const { query } = this.props;
     const { hasTextEditMode, datasource } = this.state;
     const isDisabled = query.hide;
@@ -271,18 +280,20 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     );
   };
 
-  renderTitle = (props: { isOpen: boolean; openRow: () => void }) => {
-    const { query, inMixedMode } = this.props;
+  renderTitle = (props: QueryOperationRowRenderProps) => {
+    const { query, dsSettings, onChange, queries } = this.props;
     const { datasource } = this.state;
     const isDisabled = query.hide;
 
     return (
       <QueryEditorRowTitle
         query={query}
-        inMixedMode={inMixedMode}
-        datasource={datasource!}
+        queries={queries}
+        inMixedMode={dsSettings.meta.mixed}
+        dataSourceName={datasource!.name}
         disabled={isDisabled}
         onClick={e => this.onToggleEditMode(e, props)}
+        onChange={onChange}
         collapsedText={!props.isOpen ? this.renderCollapsedText() : null}
       />
     );
@@ -311,7 +322,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
           id={id}
           draggable={true}
           index={index}
-          title={this.renderTitle}
+          headerElement={this.renderTitle}
           actions={this.renderActions}
           onOpen={this.onOpen}
         >

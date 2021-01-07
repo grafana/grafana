@@ -112,16 +112,14 @@ func (b *InProcBus) DispatchCtx(ctx context.Context, msg Msg) error {
 func (b *InProcBus) Dispatch(msg Msg) error {
 	var msgName = reflect.TypeOf(msg).Elem().Name()
 
-	var handler = b.handlersWithCtx[msgName]
 	withCtx := true
-
+	handler := b.handlersWithCtx[msgName]
 	if handler == nil {
 		withCtx = false
 		handler = b.handlers[msgName]
-	}
-
-	if handler == nil {
-		return ErrHandlerNotFound
+		if handler == nil {
+			return ErrHandlerNotFound
+		}
 	}
 
 	var params = []reflect.Value{}

@@ -11,8 +11,8 @@ export interface CustomEndpointTransportOptions {
 /**
  * This is a copy of sentry's FetchTransport, edited to be able to push to any custom url
  * instead of using Sentry-specific endpoint logic.
- * Also transofrms some of the payload values to be parseable by go.
- * Sends events sequanetially and implements back-off in case of rate limiting.
+ * Also transforms some of the payload values to be parseable by go.
+ * Sends events sequentially and implements back-off in case of rate limiting.
  */
 
 export class CustomEndpointTransport implements BaseTransport {

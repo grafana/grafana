@@ -20,7 +20,7 @@ import { Plugin, Node } from 'slate';
 import { DOMUtil } from '@grafana/ui';
 import { ExploreQueryFieldProps, AbsoluteTimeRange } from '@grafana/data';
 import { LokiQuery, LokiOptions } from '../types';
-import { Grammar, LanguageMap, languages as prismLanguages } from 'prismjs';
+import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import LokiLanguageProvider, { LokiHistoryItem } from '../language_provider';
 import LokiDatasource from '../datasource';
 import LokiOptionFields from './LokiOptionFields';
@@ -64,9 +64,8 @@ function willApplySuggestion(suggestion: string, { typeaheadContext, typeaheadTe
 
 export interface LokiQueryFieldFormProps extends ExploreQueryFieldProps<LokiDatasource, LokiQuery, LokiOptions> {
   history: LokiHistoryItem[];
-  syntax: Grammar | null;
   logLabelOptions: CascaderOption[];
-  syntaxLoaded: boolean;
+  labelsLoaded: boolean;
   absoluteRange: AbsoluteTimeRange;
   onLoadOptions: (selectedOptions: CascaderOption[]) => void;
   onLabelsRefresh?: () => void;
@@ -140,18 +139,19 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
     const {
       ExtraFieldElement,
       query,
-      syntaxLoaded,
+      labelsLoaded,
       logLabelOptions,
       onLoadOptions,
       onLabelsRefresh,
       datasource,
       runOnBlur,
     } = this.props;
+
     const lokiLanguageProvider = datasource.languageProvider as LokiLanguageProvider;
     const cleanText = datasource.languageProvider ? lokiLanguageProvider.cleanText : undefined;
     const hasLogLabels = logLabelOptions && logLabelOptions.length > 0;
-    const chooserText = getChooserText(syntaxLoaded, hasLogLabels);
-    const buttonDisabled = !(syntaxLoaded && hasLogLabels);
+    const chooserText = getChooserText(labelsLoaded, hasLogLabels);
+    const buttonDisabled = !(labelsLoaded && hasLogLabels);
 
     return (
       <>
@@ -179,7 +179,6 @@ export class LokiQueryFieldForm extends React.PureComponent<LokiQueryFieldFormPr
               onRunQuery={this.props.onRunQuery}
               placeholder="Enter a Loki query (run with Shift+Enter)"
               portalOrigin="loki"
-              syntaxLoaded={syntaxLoaded}
             />
           </div>
         </div>

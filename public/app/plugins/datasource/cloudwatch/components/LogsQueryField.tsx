@@ -5,26 +5,26 @@ import debounce from 'lodash/debounce';
 import unionBy from 'lodash/unionBy';
 
 import {
-  QueryField,
-  SlatePrism,
+  BracesPlugin,
   LegacyForms,
+  MultiSelect,
+  QueryField,
+  Select,
+  SlatePrism,
   TypeaheadInput,
   TypeaheadOutput,
-  BracesPlugin,
-  Select,
-  MultiSelect,
 } from '@grafana/ui';
 
 // Utils & Services
 // dom also includes Element polyfills
-import { Plugin, Node, Editor } from 'slate';
+import { Editor, Node, Plugin } from 'slate';
 import syntax from '../syntax';
 
 // Types
-import { ExploreQueryFieldProps, AbsoluteTimeRange, SelectableValue, AppEvents } from '@grafana/data';
-import { CloudWatchQuery, CloudWatchLogsQuery } from '../types';
+import { AbsoluteTimeRange, AppEvents, ExploreQueryFieldProps, SelectableValue } from '@grafana/data';
+import { CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { CloudWatchDatasource } from '../datasource';
-import { Grammar, LanguageMap, languages as prismLanguages } from 'prismjs';
+import { LanguageMap, languages as prismLanguages } from 'prismjs';
 import { CloudWatchLanguageProvider } from '../language_provider';
 import { css } from 'emotion';
 import { ExploreId } from 'app/types';
@@ -36,8 +36,6 @@ export interface CloudWatchLogsQueryFieldProps extends ExploreQueryFieldProps<Cl
   absoluteRange: AbsoluteTimeRange;
   onLabelsRefresh?: () => void;
   ExtraFieldElement?: ReactNode;
-  syntaxLoaded: boolean;
-  syntax: Grammar | null;
   exploreId: ExploreId;
   allowCustomValue?: boolean;
 }
@@ -294,7 +292,7 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
   };
 
   render() {
-    const { ExtraFieldElement, data, query, syntaxLoaded, datasource, allowCustomValue } = this.props;
+    const { ExtraFieldElement, data, query, datasource, allowCustomValue } = this.props;
     const {
       selectedLogGroups,
       availableLogGroups,
@@ -323,7 +321,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
                 onChange={v => this.setSelectedRegion(v)}
                 width={18}
                 placeholder="Choose Region"
-                menuPlacement="bottom"
                 maxMenuHeight={500}
               />
             }
@@ -351,7 +348,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
                 isOptionDisabled={() => selectedLogGroups.length >= MAX_LOG_GROUPS}
                 placeholder="Choose Log Groups"
                 maxVisibleValues={4}
-                menuPlacement="bottom"
                 noOptionsMessage="No log groups available"
                 isLoading={loadingLogGroups}
                 onOpenMenu={this.onOpenLogGroupMenu}
@@ -375,7 +371,6 @@ export class CloudWatchLogsQueryField extends React.PureComponent<CloudWatchLogs
               cleanText={cleanText}
               placeholder="Enter a CloudWatch Logs Insights query (run with Shift+Enter)"
               portalOrigin="cloudwatch"
-              syntaxLoaded={syntaxLoaded}
               disabled={loadingLogGroups || selectedLogGroups.length === 0}
             />
           </div>

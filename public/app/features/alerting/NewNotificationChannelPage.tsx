@@ -58,7 +58,7 @@ class NewNotificationChannelPage extends PureComponent<Props> {
 
               return (
                 <NotificationChannelForm
-                  selectableChannels={mapChannelsToSelectableValue(notificationChannelTypes)}
+                  selectableChannels={mapChannelsToSelectableValue(notificationChannelTypes, true)}
                   selectedChannel={selectedChannel}
                   onTestChannel={this.onTestChannel}
                   register={register}

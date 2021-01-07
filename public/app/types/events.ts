@@ -117,8 +117,6 @@ export const zoomOut = eventFactory<number>('zoom-out');
 
 export const shiftTime = eventFactory<number>('shift-time');
 
-export const elasticQueryUpdated = eventFactory('elastic-query-updated');
-
 export const routeUpdated = eventFactory('$routeUpdate');
 
 /**
@@ -149,4 +147,12 @@ export class PanelOptionsChangedEvent extends BusEventBase {
  */
 export class DashboardPanelsChangedEvent extends BusEventBase {
   static type = 'dashboard-panels-changed';
+}
+
+export class RefreshEvent extends BusEventBase {
+  static type = 'refresh';
+}
+
+export class RenderEvent extends BusEventBase {
+  static type = 'render';
 }
