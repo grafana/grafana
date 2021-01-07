@@ -1045,7 +1045,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		maxLifetimeDaysVal = fmt.Sprintf("%sd", maxLifetimeDaysVal)
 		cfg.Logger.Warn("[Deprecated] the configuration setting 'login_maximum_lifetime_days' is deprecated, please use 'login_maximum_lifetime_duration' instead")
 	} else {
-		maxLifetimeDaysVal = "7d"
+		maxLifetimeDaysVal = "30d"
 	}
 	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", maxLifetimeDaysVal)
 	cfg.LoginMaxLifetime, err = gtime.ParseDuration(maxLifetimeDurationVal)
