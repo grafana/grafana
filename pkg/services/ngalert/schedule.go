@@ -50,11 +50,11 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefini
 				results, err := eval.ConditionEval(&condition, ctx.now)
 				end = timeNow()
 				if err != nil {
-					ng.schedule.log.Error("failed to evaluate alert definition", "definitionUID", key.definitionUID, "orgID", key.orgID, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
+					ng.schedule.log.Error("failed to evaluate alert definition", "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "error", err)
 					return err
 				}
 				for _, r := range results {
-					ng.schedule.log.Info("alert definition result", "definitionUID", key.definitionUID, "orgID", key.orgID, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
+					ng.schedule.log.Info("alert definition result", "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
 				}
 				return nil
 			}
@@ -77,7 +77,7 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefini
 			}()
 		case k := <-ng.schedule.stop:
 			if k == key {
-				ng.schedule.log.Debug("stopping alert definition routine", "definitionUID", key.definitionUID, "orgID", key.orgID)
+				ng.schedule.log.Debug("stopping alert definition routine", "key", key)
 				// interrupt evaluation if it's running
 				return nil
 			}
