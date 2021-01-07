@@ -19,7 +19,7 @@ const lineFillOptions: Array<SelectableValue<LineFill>> = [
   // },
 ];
 
-const stackingDashOptions: Array<SelectableValue<string>> = [
+const dashOptions: Array<SelectableValue<string>> = [
   '10, 10', // default
   '10, 15',
   '10, 20',
@@ -39,7 +39,7 @@ const stackingDashOptions: Array<SelectableValue<string>> = [
   value: txt,
 }));
 
-const spackingDotOptions: Array<SelectableValue<string>> = [
+const dotOptions: Array<SelectableValue<string>> = [
   '0, 10', // default
   '0, 20',
   '0, 30',
@@ -51,7 +51,7 @@ const spackingDotOptions: Array<SelectableValue<string>> = [
 }));
 
 export const LineStyleEditor: React.FC<FieldOverrideEditorProps<LineStyle, any>> = ({ value, onChange }) => {
-  const options = useMemo(() => (value?.fill === 'dash' ? stackingDashOptions : spackingDotOptions), [value]);
+  const options = useMemo(() => (value?.fill === 'dash' ? dashOptions : dotOptions), [value]);
   const current = useMemo(() => {
     if (!value?.dash?.length) {
       return options[0];
