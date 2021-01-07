@@ -114,12 +114,14 @@ export const Card: CardInterface = ({
       <CardInner href={href}>
         {figure}
         <div className={styles.inner}>
-          <div className={styles.heading} role="heading">
-            {heading}
-            {tags}
+          <div className={styles.info}>
+            <div className={styles.heading} role="heading">
+              {heading}
+              {tags}
+            </div>
+            {meta}
+            {description && <p className={styles.description}>{description}</p>}
           </div>
-          {meta}
-          {description && <p className={styles.description}>{description}</p>}
           {hasActions && (
             <div className={styles.actionRow}>
               {actions}
@@ -178,23 +180,37 @@ export const getContainerStyles = stylesFactory((theme: GrafanaTheme, disabled =
 export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     inner: css`
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       width: 100%;
+      flex-wrap: wrap;
     `,
     heading: css`
       display: flex;
       justify-content: space-between;
       align-items: center;
+      width: 100%;
       margin-bottom: 0;
       font-size: ${theme.typography.size.md};
       line-height: ${theme.typography.lineHeight.xs};
     `,
+    info: css`
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    `,
     metadata: css`
+      width: 100%;
       font-size: ${theme.typography.size.sm};
       color: ${theme.colors.textSemiWeak};
       margin: ${theme.spacing.sm} 0 0;
       line-height: ${theme.typography.lineHeight.xs};
     `,
     description: css`
+      width: 100%;
       margin: ${theme.spacing.sm} 0 0;
       color: ${theme.colors.textSemiWeak};
       line-height: ${theme.typography.lineHeight.md};
@@ -251,8 +267,21 @@ const Tags: FC<ChildProps> = ({ children, styles }) => {
 };
 Tags.displayName = 'Tags';
 
-const Figure: FC<ChildProps> = ({ children, styles }) => {
-  return <div className={styles?.media}>{children}</div>;
+const Figure: FC<ChildProps & { align?: 'top' | 'center' }> = ({ children, styles, align = 'top' }) => {
+  return (
+    <div
+      className={cx(
+        styles?.media,
+        align === 'center' &&
+          css`
+            display: flex;
+            align-items: center;
+          `
+      )}
+    >
+      {children}
+    </div>
+  );
 };
 
 Figure.displayName = 'Figure';

@@ -36,10 +36,10 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
       href={item.url}
       style={{ minHeight: SEARCH_ITEM_HEIGHT }}
     >
-      <Card.Figure>
+      <Card.Figure align={'center'}>
         <SearchCheckbox editable={editable} checked={item.checked} onClick={toggleItem} />
       </Card.Figure>
-      <Card.Meta>{item.folderTitle}</Card.Meta>
+      {item.folderTitle && <Card.Meta>{item.folderTitle}</Card.Meta>}
       <Card.Tags>
         <TagList tags={item.tags} onClick={tagSelected} />
       </Card.Tags>
