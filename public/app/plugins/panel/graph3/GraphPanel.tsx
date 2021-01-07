@@ -1,6 +1,7 @@
 import { PanelProps } from '@grafana/data';
-import { GraphNG, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
-import React from 'react';
+import { GraphNG, GraphNGLegendEvent, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
+import React, { useCallback } from 'react';
+import { hideSeriesConfigFactory } from './hideSeriesConfigFactory';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
@@ -15,9 +16,18 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
   width,
   height,
   options,
+  fieldConfig,
   onChangeTimeRange,
+  onFieldConfigChange,
   replaceVariables,
 }) => {
+  const onLegendClick = useCallback(
+    (event: GraphNGLegendEvent) => {
+      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, data.series));
+    },
+    [fieldConfig, onFieldConfigChange, data.series]
+  );
+
   return (
     <GraphNG
       data={data.series}
@@ -26,6 +36,7 @@ export const GraphPanel: React.FC<GraphPanelProps> = ({
       width={width}
       height={height}
       legend={options.legend}
+      onLegendClick={onLegendClick}
     >
       <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
       <ZoomPlugin onZoom={onChangeTimeRange} />

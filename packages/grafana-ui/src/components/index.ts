@@ -216,3 +216,4 @@ export * from './uPlot/plugins';
 export { useRefreshAfterGraphRendered } from './uPlot/hooks';
 export { usePlotContext, usePlotData, usePlotPluginContext } from './uPlot/context';
 export { GraphNG, FIXED_UNIT } from './GraphNG/GraphNG';
+export { GraphNGLegendEvent, GraphNGLegendEventMode } from './GraphNG/types';
