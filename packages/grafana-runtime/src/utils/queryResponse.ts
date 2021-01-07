@@ -19,6 +19,7 @@ interface DataResponse {
   dataframes?: string[];
   series?: TimeSeries[];
   tables?: TableData[];
+  meta?: { [key: string]: any };
 }
 
 /**
@@ -43,12 +44,13 @@ export function toDataQueryResponse(res: any): DataQueryResponse {
           }
         }
 
+        const dataFrames: DataFrame[] = [];
         if (dr.series && dr.series.length) {
           for (const s of dr.series) {
             if (!s.refId) {
               s.refId = refId;
             }
-            rsp.data.push(toDataFrame(s));
+            dataFrames.push(toDataFrame(s));
           }
         }
 
@@ -57,7 +59,7 @@ export function toDataQueryResponse(res: any): DataQueryResponse {
             if (!s.refId) {
               s.refId = refId;
             }
-            rsp.data.push(toDataFrame(s));
+            dataFrames.push(toDataFrame(s));
           }
         }
 
@@ -69,13 +71,21 @@ export function toDataQueryResponse(res: any): DataQueryResponse {
               if (!f.refId) {
                 f.refId = refId;
               }
-              rsp.data.push(f);
+              dataFrames.push(f);
             } catch (err) {
               rsp.state = LoadingState.Error;
               rsp.error = toDataQueryError(err);
             }
           }
         }
+
+        if (dr.meta) {
+          for (const df of dataFrames) {
+            df.meta = dr.meta;
+          }
+        }
+
+        rsp.data = [...rsp.data, ...dataFrames];
       }
     }
   }
