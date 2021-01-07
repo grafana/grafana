@@ -1,4 +1,4 @@
-package server
+package metrics
 
 import (
 	"bytes"
@@ -20,6 +20,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs/cloudwatchlogsiface"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
 
@@ -202,7 +203,7 @@ func createGrafDir(t *testing.T) (string, string) {
 		assert.NoError(t, err)
 	})
 
-	rootDir := filepath.Join("..", "..")
+	rootDir := filepath.Join("..", "..", "..", "..")
 
 	cfgDir := filepath.Join(tmpDir, "conf")
 	err = os.MkdirAll(cfgDir, 0750)
@@ -289,7 +290,7 @@ func startGrafana(t *testing.T, grafDir, cfgPath string, sqlStore *sqlstore.SQLS
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
-	server, err := New(Config{
+	server, err := server.New(server.Config{
 		ConfigFile: cfgPath,
 		HomePath:   grafDir,
 		Listener:   listener,
