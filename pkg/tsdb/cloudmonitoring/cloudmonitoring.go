@@ -40,10 +40,6 @@ var (
 	wildcardRegexRe             = regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
 	alignmentPeriodRe           = regexp.MustCompile("[0-9]+")
 	cloudMonitoringUnitMappings = map[string]string{
-		"rsc":     "3711",
-		"r":       "2138",
-		"gri":     "1908",
-		"adg":     "912",
 		"bit":     "bits",
 		"By":      "bytes",
 		"s":       "s",
@@ -301,7 +297,7 @@ func (e *CloudMonitoringExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*cl
 		target = params.Encode()
 		sq.Target = target
 		sq.Params = params
-
+		sq.Unit = q.MetricQuery.Unit
 		if setting.Env == setting.Dev {
 			slog.Debug("CloudMonitoring request", "params", params)
 		}
@@ -696,6 +692,11 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, cmr 
 					URL:         dl,
 				}
 				frames[i].Fields[j].Config.Links = append(frames[i].Fields[j].Config.Links, deepLink)
+				if len(query.Unit) > 0 {
+					if val, ok := cloudMonitoringUnitMappings[query.Unit]; ok {
+						frames[i].Fields[j].Config.Unit = val
+					}
+				}
 			}
 		}
 	}
