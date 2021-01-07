@@ -258,6 +258,12 @@ func (h *ContextHandler) initContextWithToken(ctx *models.ReqContext, orgID int6
 	if err != nil {
 		ctx.Logger.Error("Failed to look up user based on cookie", "error", err)
 		cookies.WriteSessionCookie(ctx, h.Cfg, "", -1)
+
+		ctx.Data["lookupTokenErr"] = err
+		if token != nil {
+			ctx.UserId = token.UserId
+		}
+
 		return false
 	}
 
