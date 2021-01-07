@@ -31,7 +31,7 @@ const SPACKING_DASH: Array<SelectableValue<string>> = [
   value: txt,
 }));
 
-const SPACKING_DOTS: Array<SelectableValue<string>> = [
+const spackingDotOptions: Array<SelectableValue<string>> = [
   '0, 10', // default
   '10, 20, 0, 20',
   '0, 20',
