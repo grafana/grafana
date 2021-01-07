@@ -47,7 +47,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 		if i == 0 && !hasExpr {
 			ds, err = hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 			if err != nil {
-				hs.log.Debug("Encountered error getting data source", "err", err)
+				hs.log.Debug("Encountered error getting data source", "err", err, "id", datasourceID)
 				if errors.Is(err, models.ErrDataSourceAccessDenied) {
 					return Error(403, "Access denied to data source", err)
 				}

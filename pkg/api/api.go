@@ -232,7 +232,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 		// orgs (admin routes)
 		apiRoute.Group("/orgs/name/:name", func(orgsRoute routing.RouteRegister) {
-			orgsRoute.Get("/", Wrap(GetOrgByName))
+			orgsRoute.Get("/", Wrap(hs.GetOrgByName))
 		}, reqGrafanaAdmin)
 
 		// auth api keys
