@@ -4,7 +4,7 @@ import { HorizontalGroup, IconButton, LineStyle, RadioButtonGroup, Select } from
 
 type LineFill = 'solid' | 'dash' | 'dot';
 
-const lineFillOptions: Array<SelectableValue<lineFill>> = [
+const lineFillOptions: Array<SelectableValue<LineFill>> = [
   {
     label: 'Solid',
     value: 'solid',
@@ -19,13 +19,21 @@ const lineFillOptions: Array<SelectableValue<lineFill>> = [
   // },
 ];
 
-const SPACKING_DASH: Array<SelectableValue<string>> = [
+const stackingDashOptions: Array<SelectableValue<string>> = [
   '10, 10', // default
-  '20, 5',
-  '20, 5',
-  '15, 3, 3, 3',
-  '20, 3, 3, 3, 3, 3, 3, 3',
-  '12, 3, 3',
+  '10, 15',
+  '10, 20',
+  '10, 25',
+  '10, 30',
+  '10, 40',
+  '15, 10',
+  '20, 10',
+  '25, 10',
+  '30, 10',
+  '40, 10',
+  '50, 10',
+  '5, 10',
+  '30, 3, 3',
 ].map(txt => ({
   label: txt,
   value: txt,
@@ -33,17 +41,17 @@ const SPACKING_DASH: Array<SelectableValue<string>> = [
 
 const spackingDotOptions: Array<SelectableValue<string>> = [
   '0, 10', // default
-  '10, 20, 0, 20',
   '0, 20',
   '0, 30',
-  '0, 3, 3, 3',
+  '0, 40',
+  '0, 3, 3',
 ].map(txt => ({
   label: txt,
   value: txt,
 }));
 
 export const LineStyleEditor: React.FC<FieldOverrideEditorProps<LineStyle, any>> = ({ value, onChange }) => {
-  const options = useMemo(() => (value?.fill === 'dash' ? SPACKING_DASH : SPACKING_DOTS), [value]);
+  const options = useMemo(() => (value?.fill === 'dash' ? stackingDashOptions : spackingDotOptions), [value]);
   const current = useMemo(() => {
     if (!value?.dash?.length) {
       return options[0];
@@ -63,7 +71,7 @@ export const LineStyleEditor: React.FC<FieldOverrideEditorProps<LineStyle, any>>
     <HorizontalGroup>
       <RadioButtonGroup
         value={value?.fill || 'solid'}
-        options={LINE_OPTIONS}
+        options={lineFillOptions}
         onChange={v => {
           onChange({
             ...value,
