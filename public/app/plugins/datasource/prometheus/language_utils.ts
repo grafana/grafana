@@ -185,3 +185,11 @@ export function fixSummariesMetadata(metadata: PromMetricsMetadata): PromMetrics
   }
   return { ...metadata, ...summaryMetadata };
 }
+
+export function roundMsToMin(miliseconds: number): number {
+  return roundSecToMin(miliseconds / 1000);
+}
+
+export function roundSecToMin(seconds: number): number {
+  return Math.floor(seconds / 60);
+}

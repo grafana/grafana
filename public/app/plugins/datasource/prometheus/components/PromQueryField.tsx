@@ -16,6 +16,7 @@ import { LanguageMap, languages as prismLanguages } from 'prismjs';
 
 // dom also includes Element polyfills
 import { PromQuery, PromOptions, PromMetricsMetadata } from '../types';
+import { roundMsToMin } from '../language_utils';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
 import {
   ExploreQueryFieldProps,
@@ -184,9 +185,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       });
     }
 
-    const changedRange = this.rangeChangedToRefresh(range, prevProps.range);
-
-    if (languageProvider !== prevProps.datasource.languageProvider || changedRange) {
+    const changedRangeToRefresh = this.rangeChangedToRefresh(range, prevProps.range);
+    // We want to rehresh metrics when language provider changes and/or when range changes (we round up intervals to a minute)
+    if (languageProvider !== prevProps.datasource.languageProvider || changedRangeToRefresh) {
       this.refreshMetrics();
     }
 
@@ -235,15 +236,12 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     }
   };
 
-  roundMsToMin(miliseconds: number): number {
-    return Math.floor(miliseconds / (60 * 1000));
-  }
   rangeChangedToRefresh(range?: TimeRange, prevRange?: TimeRange): boolean {
     if (range && prevRange) {
-      const sameFromMin = this.roundMsToMin(range.from.valueOf()) === this.roundMsToMin(prevRange.from.valueOf());
-      const sameToMin = this.roundMsToMin(range.to.valueOf()) === this.roundMsToMin(prevRange.to.valueOf());
+      const sameMinuteFrom = roundMsToMin(range.from.valueOf()) === roundMsToMin(prevRange.from.valueOf());
+      const sameMinuteTo = roundMsToMin(range.to.valueOf()) === roundMsToMin(prevRange.to.valueOf());
       // If both are same, don't need to refresh.
-      return !(sameFromMin && sameToMin);
+      return !(sameMinuteFrom && sameMinuteTo);
     }
     return false;
   }
