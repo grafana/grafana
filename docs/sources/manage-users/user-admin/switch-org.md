@@ -1,7 +1,7 @@
 +++
 title = "Switch organization"
 description = "Change which organization you are logged in with"
-weight = 400
+weight = 300
 +++
 
 #  Change the organization you are signed in to

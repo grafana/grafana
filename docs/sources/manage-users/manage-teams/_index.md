@@ -29,7 +29,7 @@ See the complete list of teams in your Grafana organization.
 
 ![Team list](/img/docs/manage-users/team-admin-team-list-7-3.png)
 
-## Create team
+## Create a team
 
 Add a team to your Grafana organization.
 
@@ -76,7 +76,7 @@ Change team member permission levels.
 
 ![Change team member permissions](/img/docs/manage-users/change-team-permissions-7-3.png)
 
-## Delete team
+## Delete a team
 
 Permanently delete the team and all special permissions assigned to it.
 
