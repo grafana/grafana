@@ -1,5 +1,5 @@
 import { of, throwError } from 'rxjs';
-import { DefaultTimeRange, LoadingState, VariableSupportType } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState, VariableSupportType } from '@grafana/data';
 import { delay } from 'rxjs/operators';
 
 import { UpdateOptionsResults, VariableQueryRunner } from './VariableQueryRunner';
@@ -46,7 +46,7 @@ function getTestContext(variable?: QueryVariableModel) {
       .withId('query')
       .build();
   const getTimeSrv = jest.fn().mockReturnValue({
-    timeRange: jest.fn().mockReturnValue(DefaultTimeRange),
+    timeRange: jest.fn().mockReturnValue(getDefaultTimeRange()),
   });
   const datasource: any = { metricFindQuery: jest.fn().mockResolvedValue([]) };
   const identifier = toVariableIdentifier(variable);

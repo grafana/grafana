@@ -1,6 +1,6 @@
 import { of } from 'rxjs';
 import { setBackendSrv } from '@grafana/runtime';
-import { dateTime, DefaultTimeRange } from '@grafana/data';
+import { dateTime, getDefaultTimeRange } from '@grafana/data';
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
 import { CloudWatchDatasource } from './datasource';
@@ -86,7 +86,7 @@ describe('datasource', () => {
 function setup({ data = [] }: { data?: any } = {}) {
   const datasource = new CloudWatchDatasource({ jsonData: { defaultRegion: 'us-west-1' } } as any, new TemplateSrv(), {
     timeRange() {
-      return DefaultTimeRange;
+      return getDefaultTimeRange();
     },
   } as any);
   const fetchMock = jest.fn().mockReturnValue(of({ data }));

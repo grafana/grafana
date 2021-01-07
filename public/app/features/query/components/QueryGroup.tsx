@@ -11,11 +11,11 @@ import config from 'app/core/config';
 // Types
 import {
   DataQuery,
-  DefaultTimeRange,
-  LoadingState,
-  PanelData,
   DataSourceApi,
   DataSourceInstanceSettings,
+  getDefaultTimeRange,
+  LoadingState,
+  PanelData,
 } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
@@ -62,7 +62,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     data: {
       state: LoadingState.NotStarted,
       series: [],
-      timeRange: DefaultTimeRange,
+      timeRange: getDefaultTimeRange(),
     },
   };
 
