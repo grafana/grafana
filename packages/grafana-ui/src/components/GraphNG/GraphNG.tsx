@@ -20,6 +20,7 @@ import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
 import { GraphLegend } from '../Graph/GraphLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
+import { GraphNGLegendEvent, GraphNGLegendEventMode } from './types';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -27,11 +28,11 @@ export interface XYFieldMatchers {
   x: FieldMatcher;
   y: FieldMatcher;
 }
-
 export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
   data: DataFrame[];
   legend?: LegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
+  onLegendClick?: (event: GraphNGLegendEvent) => void;
 }
 
 const defaultConfig: GraphFieldConfig = {
@@ -49,6 +50,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   legend,
   timeRange,
   timeZone,
+  onLegendClick,
   ...plotProps
 }) => {
   const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
@@ -56,6 +58,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   const legendItemsRef = useRef<LegendItem[]>([]);
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
   const alignedFrame = alignedFrameWithGapTest?.frame;
+  const getDataFrameFieldIndex = alignedFrameWithGapTest?.getDataFrameFieldIndex;
 
   const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
     if (a && b) {
@@ -63,6 +66,22 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     }
     return false;
   }, []);
+
+  const onLabelClick = useCallback(
+    (legend: LegendItem, event: React.MouseEvent) => {
+      const { fieldIndex } = legend;
+
+      if (!onLegendClick || !fieldIndex) {
+        return;
+      }
+
+      onLegendClick({
+        fieldIndex,
+        mode: mapMouseEventToMode(event),
+      });
+    },
+    [onLegendClick, data]
+  );
 
   // reference change will not triger re-render
   const currentTimeRange = useRef<TimeRange>(timeRange);
@@ -109,7 +128,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       });
     }
 
-    let seriesIdx = 0;
     const legendItems: LegendItem[] = [];
 
     for (let i = 0; i < alignedFrame.fields.length; i++) {
@@ -126,6 +144,8 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       const fmt = field.display ?? defaultFormatter;
       const scaleKey = config.unit || '__fixed';
+      const colorMode = getFieldColorModeForField(field);
+      const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
 
       if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
         // The builder will manage unique scaleKeys and combine where appropriate
@@ -147,11 +167,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         });
       }
 
-      // need to update field state here because we use a transform to merge framesP
-      field.state = { ...field.state, seriesIndex: seriesIdx };
-
-      const colorMode = getFieldColorModeForField(field);
-      const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
       const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
 
       builder.addSeries({
@@ -165,20 +180,23 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         pointColor: customConfig.pointColor ?? seriesColor,
         fillOpacity: customConfig.fillOpacity,
         spanNulls: customConfig.spanNulls || false,
+        show: !customConfig.hideFrom?.graph,
         fillGradient: customConfig.fillGradient,
       });
 
-      if (hasLegend.current) {
+      if (hasLegend.current && !customConfig.hideFrom?.legend) {
         const axisPlacement = builder.getAxisPlacement(scaleKey);
+        // we need to add this as dep or move it to be done outside.
+        const dataFrameFieldIndex = getDataFrameFieldIndex ? getDataFrameFieldIndex(i) : undefined;
 
         legendItems.push({
+          disabled: field.config.custom?.hideFrom?.graph ?? false,
+          fieldIndex: dataFrameFieldIndex,
           color: seriesColor,
           label: getFieldDisplayName(field, alignedFrame),
           yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
         });
       }
-
-      seriesIdx++;
     }
 
     legendItemsRef.current = legendItems;
@@ -198,7 +216,12 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   if (hasLegend && legendItemsRef.current.length > 0) {
     legendElement = (
       <VizLayout.Legend position={legend!.placement} maxHeight="35%" maxWidth="60%">
-        <GraphLegend placement={legend!.placement} items={legendItemsRef.current} displayMode={legend!.displayMode} />
+        <GraphLegend
+          onLabelClick={onLabelClick}
+          placement={legend!.placement}
+          items={legendItemsRef.current}
+          displayMode={legend!.displayMode}
+        />
       </VizLayout.Legend>
     );
   }
@@ -220,4 +243,11 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       )}
     </VizLayout>
   );
+};
+
+const mapMouseEventToMode = (event: React.MouseEvent): GraphNGLegendEventMode => {
+  if (event.ctrlKey || event.metaKey || event.shiftKey) {
+    return GraphNGLegendEventMode.AppendToSelection;
+  }
+  return GraphNGLegendEventMode.ToggleSelection;
 };

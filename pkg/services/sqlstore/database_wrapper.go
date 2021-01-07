@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gchaincl/sqlhooks"
@@ -18,30 +19,23 @@ import (
 )
 
 var (
-	databaseQueryCounter   *prometheus.CounterVec
-	databaseQueryHistogram prometheus.Histogram
+	databaseQueryHistogram *prometheus.HistogramVec
 )
 
 func init() {
-	databaseQueryCounter = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "grafana",
-		Name:      "database_queries_total",
-		Help:      "The total amount of Database queries",
-	}, []string{"status"})
-
-	databaseQueryHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
+	databaseQueryHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "database_queries_duration_seconds",
 		Help:      "Database query histogram",
 		Buckets:   prometheus.ExponentialBuckets(0.0001, 4, 9),
-	})
+	}, []string{"status"})
 
-	prometheus.MustRegister(databaseQueryCounter, databaseQueryHistogram)
+	prometheus.MustRegister(databaseQueryHistogram)
 }
 
 // WrapDatabaseDriverWithHooks creates a fake database driver that
 // executes pre and post functions which we use to gather metrics about
-// database queries.
+// database queries. It also registers the metrics.
 func WrapDatabaseDriverWithHooks(dbType string) string {
 	drivers := map[string]driver.Driver{
 		migrator.SQLite:   &sqlite3.SQLiteDriver{},
@@ -56,7 +50,7 @@ func WrapDatabaseDriverWithHooks(dbType string) string {
 
 	driverWithHooks := dbType + "WithHooks"
 	sql.Register(driverWithHooks, sqlhooks.Wrap(d, &databaseQueryWrapper{log: log.New("sqlstore.metrics")}))
-	core.RegisterDriver(driverWithHooks, &databaseQueryWrapperParser{dbType: dbType})
+	core.RegisterDriver(driverWithHooks, &databaseQueryWrapperDriver{dbType: dbType})
 	return driverWithHooks
 }
 
@@ -78,8 +72,7 @@ func (h *databaseQueryWrapper) Before(ctx context.Context, query string, args ..
 func (h *databaseQueryWrapper) After(ctx context.Context, query string, args ...interface{}) (context.Context, error) {
 	begin := ctx.Value(databaseQueryWrapperKey{}).(time.Time)
 	elapsed := time.Since(begin)
-	databaseQueryCounter.WithLabelValues("success").Inc()
-	databaseQueryHistogram.Observe(elapsed.Seconds())
+	databaseQueryHistogram.WithLabelValues("success").Observe(elapsed.Seconds())
 	h.log.Debug("query finished", "status", "success", "elapsed time", elapsed, "sql", query)
 	return ctx, nil
 }
@@ -94,18 +87,20 @@ func (h *databaseQueryWrapper) OnError(ctx context.Context, err error, query str
 
 	begin := ctx.Value(databaseQueryWrapperKey{}).(time.Time)
 	elapsed := time.Since(begin)
-	databaseQueryCounter.WithLabelValues(status).Inc()
-	databaseQueryHistogram.Observe(elapsed.Seconds())
+	databaseQueryHistogram.WithLabelValues(status).Observe(elapsed.Seconds())
 	h.log.Debug("query finished", "status", status, "elapsed time", elapsed, "sql", query, "error", err)
 	return err
 }
 
-type databaseQueryWrapperParser struct {
+// databaseQueryWrapperDriver satisfies the xorm.io/core.Driver interface
+type databaseQueryWrapperDriver struct {
 	dbType string
 }
 
-func (hp *databaseQueryWrapperParser) Parse(string, string) (*core.Uri, error) {
-	return &core.Uri{
-		DbType: core.DbType(hp.dbType),
-	}, nil
+func (hp *databaseQueryWrapperDriver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
+	driver := core.QueryDriver(hp.dbType)
+	if driver == nil {
+		return nil, fmt.Errorf("could not find driver with name %s", hp.dbType)
+	}
+	return driver.Parse(driverName, dataSourceName)
 }

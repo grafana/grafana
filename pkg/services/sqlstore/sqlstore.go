@@ -288,6 +288,10 @@ func (ss *SQLStore) initEngine() error {
 		return err
 	}
 
+	if ss.Cfg.IsDatabaseMetricsEnabled() {
+		ss.dbCfg.Type = WrapDatabaseDriverWithHooks(ss.dbCfg.Type)
+	}
+
 	sqlog.Info("Connecting to DB", "dbtype", ss.dbCfg.Type)
 	if ss.dbCfg.Type == migrator.SQLite && strings.HasPrefix(connectionString, "file:") &&
 		!strings.HasPrefix(connectionString, "file::memory:") {
