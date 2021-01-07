@@ -29,7 +29,7 @@ func TestIntegration_GetUserStats(t *testing.T) {
 		Email:   "admin@test.com",
 		Name:    "Admin",
 		Login:   "admin",
-		OrgName: mainOrgName,
+		OrgName: MainOrgName,
 		IsAdmin: true,
 	}
 	err := CreateUser(context.Background(), cmd)

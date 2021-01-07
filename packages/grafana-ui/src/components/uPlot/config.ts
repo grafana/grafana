@@ -51,11 +51,19 @@ export enum ScaleDistribution {
 /**
  * @alpha
  */
+export interface LineStyle {
+  fill?: 'solid' | 'dash' | 'dot' | 'square'; // cap = 'butt' | 'round' | 'square'
+  dash?: number[];
+}
+
+/**
+ * @alpha
+ */
 export interface LineConfig {
   lineColor?: string;
   lineWidth?: number;
   lineInterpolation?: LineInterpolation;
-  lineDash?: number[];
+  lineStyle?: LineStyle;
   spanNulls?: boolean;
 }
 
@@ -109,8 +117,18 @@ export interface AxisConfig {
 /**
  * @alpha
  */
+export interface HideSeriesConfig {
+  tooltip: boolean;
+  legend: boolean;
+  graph: boolean;
+}
+
+/**
+ * @alpha
+ */
 export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, AxisConfig {
   drawStyle?: DrawStyle;
+  hideFrom?: HideSeriesConfig;
 }
 
 /**

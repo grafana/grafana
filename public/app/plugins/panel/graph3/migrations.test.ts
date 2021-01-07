@@ -186,6 +186,9 @@ const twoYAxis = {
     {
       alias: 'B-series',
       yaxis: 2,
+      dashLength: 5,
+      dashes: true,
+      spaceLength: 8,
     },
   ],
   thresholds: [],
@@ -199,7 +202,7 @@ const twoYAxis = {
     },
   ],
   fillGradient: 0,
-  dashes: false,
+  dashes: true,
   hiddenSeries: false,
   points: false,
   bars: false,

@@ -24,7 +24,7 @@ import ReactDOM from 'react-dom';
 import { GraphLegendProps, Legend } from './Legend/Legend';
 
 import { GraphCtrl } from './module';
-import { MenuItem, MenuItemsGroup, graphTimeFormat, graphTickFormatter, IconName } from '@grafana/ui';
+import { graphTickFormatter, graphTimeFormat, IconName, MenuItem, MenuItemsGroup } from '@grafana/ui';
 import { getCurrentTheme, provideTheme } from 'app/core/utils/ConfigProvider';
 import {
   DataFrame,
@@ -47,6 +47,7 @@ import { GraphContextMenuCtrl } from './GraphContextMenuCtrl';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { ContextSrv } from 'app/core/services/context_srv';
 import { getFieldLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { DashboardModel } from '../../../features/dashboard/state';
 
 const LegendWithThemeProvider = provideTheme(Legend);
 
@@ -54,7 +55,7 @@ class GraphElement {
   ctrl: GraphCtrl;
   contextMenu: GraphContextMenuCtrl;
   tooltip: any;
-  dashboard: any;
+  dashboard: DashboardModel;
   annotations: object[];
   panel: any;
   plot: any;
@@ -200,17 +201,19 @@ class GraphElement {
   ): (() => MenuItemsGroup[]) => {
     return () => {
       // Fixed context menu items
-      const items: MenuItemsGroup[] = [
-        {
-          items: [
+      const items: MenuItemsGroup[] = this.dashboard?.editable
+        ? [
             {
-              label: 'Add annotation',
-              icon: 'comment-alt',
-              onClick: () => this.eventManager.updateTime({ from: flotPosition.x, to: null }),
+              items: [
+                {
+                  label: 'Add annotation',
+                  icon: 'comment-alt',
+                  onClick: () => this.eventManager.updateTime({ from: flotPosition.x, to: null }),
+                },
+              ],
             },
-          ],
-        },
-      ];
+          ]
+        : [];
 
       if (!linksSupplier) {
         return items;

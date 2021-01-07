@@ -402,6 +402,7 @@ describe('UPlotConfigBuilder', () => {
               "stroke": "#00ff00",
             },
             "scale": "scale-x",
+            "show": true,
             "spanGaps": false,
             "stroke": "#0000ff",
             "width": 1,
