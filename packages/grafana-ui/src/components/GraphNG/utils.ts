@@ -69,6 +69,8 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       throw new Error('Only a single x field is supported');
     }
 
+    console.log('X:', getFieldDisplayName(dims.x[0]));
+
     let nullModesFrame: JoinNullMode[] = [];
 
     // Add the first X axis
