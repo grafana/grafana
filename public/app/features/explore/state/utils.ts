@@ -1,11 +1,11 @@
 import {
+  DataSourceApi,
   EventBusExtended,
-  DefaultTimeRange,
+  getDefaultTimeRange,
+  HistoryItem,
   LoadingState,
   LogsDedupStrategy,
   PanelData,
-  DataSourceApi,
-  HistoryItem,
 } from '@grafana/data';
 
 import { ExploreItemState, ExploreUpdateState } from 'app/types/explore';
@@ -64,7 +64,7 @@ export const makeExplorePaneState = (): ExploreItemState => ({
 export const createEmptyQueryResponse = (): PanelData => ({
   state: LoadingState.NotStarted,
   series: [],
-  timeRange: DefaultTimeRange,
+  timeRange: getDefaultTimeRange(),
 });
 
 export async function loadAndInitDatasource(

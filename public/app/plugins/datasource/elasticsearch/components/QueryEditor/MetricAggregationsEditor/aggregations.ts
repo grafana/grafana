@@ -150,6 +150,7 @@ interface Logs extends BaseMetricAggregation {
 
 export interface BasePipelineMetricAggregation extends MetricAggregationWithField {
   type: PipelineMetricAggregationType;
+  pipelineAgg?: string;
 }
 
 interface PipelineMetricAggregationWithMultipleBucketPaths extends BaseMetricAggregation {

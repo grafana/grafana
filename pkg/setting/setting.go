@@ -331,6 +331,10 @@ type Cfg struct {
 	Quota QuotaSettings
 
 	DefaultTheme string
+
+	AutoAssignOrg     bool
+	AutoAssignOrgId   int
+	AutoAssignOrgRole string
 }
 
 // IsExpressionsEnabled returns whether the expressions feature is enabled.
@@ -346,6 +350,11 @@ func (cfg Cfg) IsLiveEnabled() bool {
 // IsNgAlertEnabled returns whether the standalone alerts feature is enabled.
 func (cfg Cfg) IsNgAlertEnabled() bool {
 	return cfg.FeatureToggles["ngalert"]
+}
+
+// IsDatabaseMetricsEnabled returns whether the database instrumentation feature is enabled.
+func (cfg Cfg) IsDatabaseMetricsEnabled() bool {
+	return cfg.FeatureToggles["database_metrics"]
 }
 
 // IsHTTPRequestHistogramEnabled returns whether the http_request_histogram feature is enabled.
@@ -1040,7 +1049,7 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 		maxLifetimeDaysVal = fmt.Sprintf("%sd", maxLifetimeDaysVal)
 		cfg.Logger.Warn("[Deprecated] the configuration setting 'login_maximum_lifetime_days' is deprecated, please use 'login_maximum_lifetime_duration' instead")
 	} else {
-		maxLifetimeDaysVal = "7d"
+		maxLifetimeDaysVal = "30d"
 	}
 	maxLifetimeDurationVal := valueAsString(auth, "login_maximum_lifetime_duration", maxLifetimeDaysVal)
 	cfg.LoginMaxLifetime, err = gtime.ParseDuration(maxLifetimeDurationVal)
@@ -1120,9 +1129,12 @@ func readUserSettings(iniFile *ini.File, cfg *Cfg) error {
 	users := iniFile.Section("users")
 	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
-	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
-	AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
-	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
+	cfg.AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
+	AutoAssignOrg = cfg.AutoAssignOrg
+	cfg.AutoAssignOrgId = users.Key("auto_assign_org_id").MustInt(1)
+	AutoAssignOrgId = cfg.AutoAssignOrgId
+	cfg.AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Viewer"})
+	AutoAssignOrgRole = cfg.AutoAssignOrgRole
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 
 	LoginHint = valueAsString(users, "login_hint", "")

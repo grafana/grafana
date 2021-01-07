@@ -82,6 +82,7 @@ export const OverrideFieldConfigEditor: React.FC<Props> = props => {
           variant="secondary"
           options={fieldMatchersUI
             .list()
+            .filter(o => !o.excludeFromPicker)
             .map<SelectableValue<string>>(i => ({ label: i.name, value: i.id, description: i.description }))}
           onChange={value => onOverrideAdd(value)}
           isFullWidth={false}
