@@ -19,16 +19,25 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
 }) => {
   const fields = useMemo(() => configToXYFieldMatchers(options.graph), [options]);
 
+  const frame = useMemo(() => {
+    if (!data.series?.length) {
+      return [];
+    }
+    const idx = options.graph?.dims?.frame ?? 0;
+    console.log('IDX', idx, data.series);
+    return [data.series[idx]];
+  }, [data.series, options.graph]);
+
   const onLegendClick = useCallback(
     (event: GraphNGLegendEvent) => {
-      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, data.series));
+      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, frame));
     },
-    [fieldConfig, onFieldConfigChange, data.series]
+    [fieldConfig, onFieldConfigChange, frame]
   );
 
   return (
     <GraphNG
-      data={data.series}
+      data={frame}
       fields={fields}
       timeRange={timeRange}
       timeZone={timeZone}

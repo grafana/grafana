@@ -2,6 +2,7 @@ import { FieldMatcherID, MatcherConfig } from '@grafana/data';
 import { LegendOptions, GraphTooltipOptions } from '@grafana/ui';
 
 export const defaultXYDimensions: XYDimensions = {
+  frame: 0,
   xFields: {
     id: FieldMatcherID.first,
   },
@@ -11,6 +12,7 @@ export const defaultXYDimensions: XYDimensions = {
 };
 
 export interface XYDimensions {
+  frame?: number;
   xFields?: MatcherConfig; // Field Matchers
   yFields?: MatcherConfig;
 }
