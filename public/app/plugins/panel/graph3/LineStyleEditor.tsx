@@ -13,10 +13,10 @@ const LINE_OPTIONS: Array<SelectableValue<lineFill>> = [
     label: 'Dash',
     value: 'dash',
   },
-  {
-    label: 'Dots',
-    value: 'dot',
-  },
+  // {
+  //   label: 'Dots',
+  //   value: 'dot',
+  // },
 ];
 
 const SPACKING_DASH: Array<SelectableValue<string>> = [
