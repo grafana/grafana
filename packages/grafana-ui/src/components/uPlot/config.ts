@@ -109,8 +109,18 @@ export interface AxisConfig {
 /**
  * @alpha
  */
+export interface HideSeriesConfig {
+  tooltip: boolean;
+  legend: boolean;
+  graph: boolean;
+}
+
+/**
+ * @alpha
+ */
 export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, AxisConfig {
   drawStyle?: DrawStyle;
+  hideFrom?: HideSeriesConfig;
 }
 
 /**

@@ -15,6 +15,7 @@ import { PlotConfigBuilder } from '../types';
 export interface SeriesProps extends LineConfig, AreaConfig, PointsConfig {
   drawStyle: DrawStyle;
   scaleKey: string;
+  show?: boolean;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
@@ -29,6 +30,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       pointSize,
       scaleKey,
       spanNulls,
+      show = true,
     } = this.props;
 
     let lineConfig: Partial<Series> = {};
@@ -66,6 +68,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     return {
       scale: scaleKey,
       spanGaps: spanNulls,
+      show,
       fill: this.getFill(),
       ...lineConfig,
       ...pointsConfig,

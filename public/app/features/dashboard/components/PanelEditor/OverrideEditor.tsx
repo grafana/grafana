@@ -6,6 +6,7 @@ import {
   FieldConfigOptionsRegistry,
   FieldConfigProperty,
   GrafanaTheme,
+  isSystemOverride as isSystemOverrideGuard,
   VariableSuggestionsScope,
 } from '@grafana/data';
 import {
@@ -136,6 +137,8 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
     );
   };
 
+  const isSystemOverride = isSystemOverrideGuard(override);
+
   return (
     <OptionsGroup renderTitle={renderOverrideTitle} id={name} key={name}>
       <Field label={matcherLabel}>
@@ -150,6 +153,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
       <>
         {override.properties.map((p, j) => {
           const item = registry.getIfExists(p.id);
+          console.log('item', item);
 
           if (!item) {
             return <div>Unknown property: {p.id}</div>;
@@ -162,6 +166,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
             <DynamicConfigValueEditor
               key={`${p.id}/${j}`}
               isCollapsible={isCollapsible}
+              isSystemOverride={isSystemOverride}
               onChange={value => onDynamicConfigValueChange(j, value)}
               onRemove={() => onDynamicConfigValueRemove(j)}
               property={p}
@@ -173,7 +178,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
             />
           );
         })}
-        {override.matcher.options && (
+        {!isSystemOverride && override.matcher.options && (
           <div className={styles.propertyPickerWrapper}>
             <ValuePicker
               label="Add override property"
