@@ -186,7 +186,7 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     }
 
     const changedRangeToRefresh = this.rangeChangedToRefresh(range, prevProps.range);
-    // We want to rehresh metrics when language provider changes and/or when range changes (we round up intervals to a minute)
+    // We want to refresh metrics when language provider changes and/or when range changes (we round up intervals to a minute)
     if (languageProvider !== prevProps.datasource.languageProvider || changedRangeToRefresh) {
       this.refreshMetrics();
     }
