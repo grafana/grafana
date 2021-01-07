@@ -39,7 +39,6 @@ const tempoPlugin = async () =>
   await import(/* webpackChunkName: "tempoPlugin" */ 'app/plugins/datasource/tempo/module');
 
 import * as textPanel from 'app/plugins/panel/text/module';
-import * as graph2Panel from 'app/plugins/panel/graph2/module';
 import * as graph3Panel from 'app/plugins/panel/graph3/module';
 import * as graphPanel from 'app/plugins/panel/graph/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
@@ -82,7 +81,6 @@ const builtInPlugins: any = {
   'app/plugins/datasource/tempo/module': tempoPlugin,
 
   'app/plugins/panel/text/module': textPanel,
-  'app/plugins/panel/graph2/module': graph2Panel,
   'app/plugins/panel/graph3/module': graph3Panel,
   'app/plugins/panel/graph/module': graphPanel,
   'app/plugins/panel/dashlist/module': dashListPanel,
