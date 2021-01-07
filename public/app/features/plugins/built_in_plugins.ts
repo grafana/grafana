@@ -40,7 +40,7 @@ const tempoPlugin = async () =>
 
 import * as textPanel from 'app/plugins/panel/text/module';
 import * as graph2Panel from 'app/plugins/panel/graph2/module';
-import * as graph3Panel from 'app/plugins/panel/graph3/module';
+import * as timeseriesPanel from 'app/plugins/panel/timeseries/module';
 import * as graphPanel from 'app/plugins/panel/graph/module';
 import * as dashListPanel from 'app/plugins/panel/dashlist/module';
 import * as pluginsListPanel from 'app/plugins/panel/pluginlist/module';
@@ -83,7 +83,7 @@ const builtInPlugins: any = {
 
   'app/plugins/panel/text/module': textPanel,
   'app/plugins/panel/graph2/module': graph2Panel,
-  'app/plugins/panel/graph3/module': graph3Panel,
+  'app/plugins/panel/timeseries/module': timeseriesPanel,
   'app/plugins/panel/graph/module': graphPanel,
   'app/plugins/panel/dashlist/module': dashListPanel,
   'app/plugins/panel/pluginlist/module': pluginsListPanel,

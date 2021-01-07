@@ -115,7 +115,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Show gaps",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": "gdev-testdata",
@@ -225,7 +225,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Gaps & null between every point for series B",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": "gdev-testdata",
@@ -355,7 +355,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "No nulls but unaligned series",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": "gdev-testdata",
@@ -455,7 +455,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Connected",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": "gdev-testdata",
@@ -565,7 +565,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Same as above but connected",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": "gdev-testdata",
@@ -695,7 +695,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Same as above but connected",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": "gdev-testdata",
@@ -858,7 +858,7 @@
       "timeShift": null,
       "title": "Null values in first series & show gaps ",
       "transformations": [],
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": "gdev-testdata",
@@ -1021,7 +1021,7 @@
       "timeShift": null,
       "title": "Null values in second series show gaps (bugged)",
       "transformations": [],
-      "type": "graph3"
+      "type": "timeseries"
     }
   ],
   "schemaVersion": 27,
