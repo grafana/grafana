@@ -140,7 +140,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 	}
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertionsWithCookie("GET", sc.url, cookie).exec()
-	assert.Equal(t, sc.resp.Code, 200)
+	require.Equal(t, 200, sc.resp.Code)
 
 	responseString, err := getBody(sc.resp)
 	require.NoError(t, err)
@@ -285,7 +285,7 @@ func TestLoginViewRedirect(t *testing.T) {
 			}
 			sc.m.Get(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertionsWithCookie("GET", sc.url, cookie).exec()
-			assert.Equal(t, c.status, sc.resp.Code)
+			require.Equal(t, c.status, sc.resp.Code)
 			if c.status == 302 {
 				location, ok := sc.resp.Header()["Location"]
 				assert.True(t, ok)
@@ -452,7 +452,7 @@ func TestLoginPostRedirect(t *testing.T) {
 			}
 			sc.m.Post(sc.url, sc.defaultHandler)
 			sc.fakeReqNoAssertionsWithCookie("POST", sc.url, cookie).exec()
-			assert.Equal(t, sc.resp.Code, 200)
+			require.Equal(t, 200, sc.resp.Code)
 
 			respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 			assert.NoError(t, err)
@@ -505,10 +505,10 @@ func TestLoginOAuthRedirect(t *testing.T) {
 	sc.m.Get(sc.url, sc.defaultHandler)
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
 
-	assert.Equal(t, sc.resp.Code, 307)
+	require.Equal(t, 307, sc.resp.Code)
 	location, ok := sc.resp.Header()["Location"]
 	assert.True(t, ok)
-	assert.Equal(t, location[0], "/login/github")
+	assert.Equal(t, "/login/github", location[0])
 }
 
 func TestLoginInternal(t *testing.T) {
@@ -541,16 +541,16 @@ func TestLoginInternal(t *testing.T) {
 	sc.fakeReqNoAssertions("GET", sc.url).exec()
 
 	// Shouldn't redirect to the OAuth login URL
-	assert.Equal(t, sc.resp.Code, 200)
+	assert.Equal(t, 200, sc.resp.Code)
 }
 
 func TestAuthProxyLoginEnableLoginTokenDisabled(t *testing.T) {
 	sc := setupAuthProxyLoginTest(t, false)
 
-	assert.Equal(t, sc.resp.Code, 302)
+	require.Equal(t, 302, sc.resp.Code)
 	location, ok := sc.resp.Header()["Location"]
 	assert.True(t, ok)
-	assert.Equal(t, location[0], "/")
+	assert.Equal(t, "/", location[0])
 
 	_, ok = sc.resp.Header()["Set-Cookie"]
 	assert.False(t, ok, "Set-Cookie does not exist")
@@ -558,11 +558,11 @@ func TestAuthProxyLoginEnableLoginTokenDisabled(t *testing.T) {
 
 func TestAuthProxyLoginWithEnableLoginToken(t *testing.T) {
 	sc := setupAuthProxyLoginTest(t, true)
-	require.Equal(t, sc.resp.Code, 302)
+	require.Equal(t, 302, sc.resp.Code)
 
 	location, ok := sc.resp.Header()["Location"]
 	assert.True(t, ok)
-	assert.Equal(t, location[0], "/")
+	assert.Equal(t, "/", location[0])
 	setCookie := sc.resp.Header()["Set-Cookie"]
 	require.NotNil(t, setCookie, "Set-Cookie should exist")
 	assert.Equal(t, "grafana_session=; Path=/; Max-Age=0; HttpOnly", setCookie[0])
