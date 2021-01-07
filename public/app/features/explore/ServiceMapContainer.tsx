@@ -4,7 +4,7 @@ import { DataFrame, TimeRange } from '@grafana/data';
 import { ExploreId, StoreState } from '../../types';
 import { splitOpen } from './state/main';
 import { connect } from 'react-redux';
-import { Collapse, useCategorizeFramesForGraph } from '@grafana/ui';
+import { Collapse } from '@grafana/ui';
 import { useLinks } from './utils/links';
 
 interface ServiceMapContainerProps {
@@ -16,14 +16,11 @@ interface ServiceMapContainerProps {
 }
 export function UnconnectedServiceMapContainer(props: ServiceMapContainerProps) {
   const { dataFrames, range, splitOpen } = props;
-
-  const { edges, nodes } = useCategorizeFramesForGraph(dataFrames);
-  const getNodeLinks = useLinks(nodes[0], range, splitOpen);
-  const getEdgeLinks = useLinks(edges[0], range, splitOpen);
+  const getLinks = useLinks(range, splitOpen);
 
   return (
     <Collapse label="Service Map" isOpen>
-      <GraphView edges={edges[0]} services={nodes[0]} getNodeLinks={getNodeLinks} getEdgeLinks={getEdgeLinks} />
+      <GraphView dataFrames={dataFrames} getLinks={getLinks} />
     </Collapse>
   );
 }

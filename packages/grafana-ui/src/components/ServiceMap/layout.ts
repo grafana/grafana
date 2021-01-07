@@ -58,8 +58,8 @@ export function useLayout(
       // Make sure nodes don't overlap
       .force('collide', forceCollide(config.forceCollide));
 
-    // 300 ticks for the simulation are recommended but less would probably work too, most movement id done in first
-    // few iteraction and than all the forces gets smaller https://github.com/d3/d3-force#simulation_alphaDecay
+    // 300 ticks for the simulation are recommended but less would probably work too, most movement is done in first
+    // few iterations and then all the forces gets smaller https://github.com/d3/d3-force#simulation_alphaDecay
     simulation.tick(config.tick);
     simulation.stop();
 
@@ -86,11 +86,11 @@ export function useLayout(
  * This function directly modifies the nodes given and only returns references to root nodes so they do not have to be
  * found again later on.
  *
- * How the spacing looks like approximately:
+ * How the spacing could look like approximately:
  * 0 - 0 - 0 - 0
- *   - 0 - 0
- *       - 0
- * 0 - 0
+ *  \- 0 - 0   |
+ *      \- 0 -/
+ * 0 - 0 -/
  */
 function initializePositions(
   nodes: NodeDatum[],

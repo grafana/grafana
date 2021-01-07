@@ -8,11 +8,12 @@ import { Link } from './Link';
 import { ViewControls } from './ViewControls';
 import { DataFrame, DataFrameView, GrafanaTheme, LinkModel } from '@grafana/data';
 import { useZoom } from './useZoom';
-import { GraphContextMenu } from './GraphContextMenu';
 import { useLayout, Config, defaultConfig, Bounds } from './layout';
 import { LinkArrowMarker } from './LinkArrowMarker';
 import { stylesFactory, useTheme } from '../../themes';
 import { css } from 'emotion';
+import { useCategorizeFrames } from './useCategorizeFrames';
+import { ContextMenu } from '..';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
@@ -37,12 +38,12 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
 }));
 
 interface Props {
-  services: DataFrame;
-  edges: DataFrame;
-  getNodeLinks: (node: NodeDatum) => LinkModel[];
-  getEdgeLinks: (node: LinkDatum) => LinkModel[];
+  dataFrames: DataFrame[];
+  getLinks: (dataFrame: DataFrame, rowIndex: number) => LinkModel[];
 }
-export function GraphView(props: Props) {
+export function GraphView({ getLinks, dataFrames }: Props) {
+  const { edges: edgesDataFrames, nodes: nodesDataFrames } = useCategorizeFrames(dataFrames);
+
   const [measureRef, { width, height }] = useMeasure();
   const [config, setConfig] = useState<Config>(defaultConfig);
 
@@ -51,13 +52,15 @@ export function GraphView(props: Props) {
   const [nodeHover, setNodeHover] = useState<string | undefined>(undefined);
   const clearNodeHover = useCallback(() => setNodeHover(undefined), []);
 
-  const { nodes: rawNodes, links: rawLinks } = useMemo(() => processServices(props.services, props.edges), [
-    props.services,
-    props.edges,
+  // TODO we should be able to allow multiple dataframes for both edges and nodes, could be ussue with node ids which in
+  //  that case should be unique or figure a way to link edges and nodes dataframes together.
+  const { nodes: rawNodes, links: rawLinks } = useMemo(() => processServices(nodesDataFrames[0], edgesDataFrames[0]), [
+    nodesDataFrames[0],
+    edgesDataFrames[0],
   ]);
   const { nodes, edges, bounds } = useLayout(rawNodes, rawLinks, config);
   const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale } = usePanAndZoom(bounds);
-  const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(props.getNodeLinks, props.getEdgeLinks);
+  const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(getLinks, nodesDataFrames[0], edgesDataFrames[0]);
   const styles = getStyles(useTheme());
 
   return (
@@ -104,13 +107,27 @@ export function GraphView(props: Props) {
  * opened context menu should be opened.
  */
 function useContextMenu(
-  getNodeLinks: (node: NodeDatum) => LinkModel[],
-  getEdgeLinks: (node: LinkDatum) => LinkModel[]
+  getLinks: (dataFrame: DataFrame, rowIndex: number) => LinkModel[],
+  nodes: DataFrame,
+  edges: DataFrame
 ): {
   onEdgeOpen: (event: MouseEvent<SVGElement>, edge: LinkDatum) => void;
   onNodeOpen: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
   MenuComponent: React.ReactNode;
 } {
+  function getItems(dataFrame: DataFrame, rowIndex: number) {
+    return [
+      {
+        label: 'Open in Explore',
+        items: getLinks(dataFrame, rowIndex).map(l => ({
+          label: l.title,
+          url: l.href,
+          onClick: l.onClick,
+        })),
+      },
+    ];
+  }
+
   const [openedNode, setOpenedNode] = useState<{ node: NodeDatum; event: MouseEvent } | undefined>(undefined);
   const onNodeOpen = useCallback((event, node) => setOpenedNode({ node, event }), []);
 
@@ -121,26 +138,28 @@ function useContextMenu(
 
   if (openedNode) {
     MenuComponent = (
-      <GraphContextMenu
-        event={openedNode.event}
+      <ContextMenu
+        renderHeader={() => <div>{openedNode.node.name}</div>}
+        items={getItems(nodes, openedNode.node.dataFrameRowIndex)}
         onClose={() => setOpenedNode(undefined)}
-        links={getNodeLinks(openedNode.node)}
-        header={<div>{openedNode.node.name}</div>}
+        x={openedNode.event.pageX}
+        y={openedNode.event.pageY}
       />
     );
   }
 
   if (openedEdge) {
     MenuComponent = (
-      <GraphContextMenu
-        event={openedEdge.event}
-        onClose={() => setOpenedEdge(undefined)}
-        links={getEdgeLinks(openedEdge.edge)}
-        header={
+      <ContextMenu
+        renderHeader={() => (
           <div>
             {(openedEdge.edge.source as NodeDatum).name} {'->'} {(openedEdge.edge.target as NodeDatum).name}
           </div>
-        }
+        )}
+        items={getItems(edges, openedEdge.edge.dataFrameRowIndex)}
+        onClose={() => setOpenedEdge(undefined)}
+        x={openedEdge.event.pageX}
+        y={openedEdge.event.pageY}
       />
     );
   }
@@ -149,13 +168,7 @@ function useContextMenu(
 }
 
 function usePanAndZoom(bounds: Bounds) {
-  const { scale, onStepDown, onStepUp, ref } = useZoom({
-    stepDown: s => s / 1.5,
-    stepUp: s => s * 1.5,
-    min: 0.13,
-    max: 2.25,
-  });
-
+  const { scale, onStepDown, onStepUp, ref } = useZoom();
   const { state: panningState, ref: panRef } = usePanning<SVGSVGElement>({
     scale,
     bounds,

@@ -93,17 +93,15 @@ function getTitleFromHref(href: string): string {
  * Hook that returns a function that can be used to retrieve all the links for a row. This returns all the links from
  * all the fields so is useful for visualisation where the whole row is represented as single clickable item like a
  * service map.
- * @param dataFrame
- * @param range
  */
-export function useLinks(dataFrame: DataFrame, range: TimeRange, splitOpenFn?: typeof splitOpen) {
+export function useLinks(range: TimeRange, splitOpenFn?: typeof splitOpen) {
   return useCallback(
-    (node: { dataFrameRowIndex: number }) => {
+    (dataFrame: DataFrame, rowIndex: number) => {
       return dataFrame.fields.flatMap(f => {
         if (f.config?.links && f.config?.links.length) {
           return getFieldLinksForExplore({
             field: f,
-            rowIndex: node.dataFrameRowIndex,
+            rowIndex: rowIndex,
             range,
             dataFrame,
             splitOpenFn,
@@ -113,6 +111,6 @@ export function useLinks(dataFrame: DataFrame, range: TimeRange, splitOpenFn?: t
         }
       });
     },
-    [range, dataFrame, splitOpenFn]
+    [range, splitOpenFn]
   );
 }

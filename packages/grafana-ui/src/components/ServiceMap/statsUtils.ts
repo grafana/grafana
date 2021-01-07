@@ -13,6 +13,7 @@ export interface Stats {
 
 type Ratio = 'success' | 'errors' | 'faults' | 'throttled';
 
+// TODO: move this to data source, we should not depend on data source specific metadata here
 export function computeStats(serviceOrEdge: XrayService | XrayEdge): Stats | undefined {
   const { SummaryStatistics, StartTime, EndTime, ResponseTimeHistogram } = serviceOrEdge;
   if (!SummaryStatistics) {

@@ -14,6 +14,7 @@ interface SummaryStatistics {
   TotalResponseTime: number;
 }
 
+// TODO: move this to data source, we should not depend on data source specific metadata here
 export interface XrayEdge {
   Aliases: string[];
   EndTime: number | string;
