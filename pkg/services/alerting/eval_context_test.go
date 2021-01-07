@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/null"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -202,5 +204,93 @@ func TestGetStateFromEvalContext(t *testing.T) {
 		tc.applyFn(evalContext)
 		newState := evalContext.GetNewState()
 		assert.Equal(t, tc.expected, newState, "failed: %s \n expected '%s' have '%s'\n", tc.name, tc.expected, string(newState))
+	}
+}
+
+func TestBuildTemplateDataMap(t *testing.T) {
+	tcs := []struct {
+		name     string
+		matches  []*EvalMatch
+		expected map[string]string
+	}{
+		{
+			name: "single match",
+			matches: []*EvalMatch{
+				{
+					Value:  null.Float{},
+					Metric: "",
+					Tags: map[string]string{
+						"InstanceId": "i-123456789",
+						"Percentile": "0.999",
+					},
+				},
+			},
+			expected: map[string]string{
+				"InstanceId": "i-123456789",
+				"Percentile": "0.999",
+			},
+		},
+		{
+			name: "matches with duplicate keys",
+			matches: []*EvalMatch{
+				{
+					Value:  null.Float{},
+					Metric: "",
+					Tags: map[string]string{
+						"InstanceId": "i-123456789",
+					},
+				},
+				{
+					Value:  null.Float{},
+					Metric: "",
+					Tags: map[string]string{
+						"InstanceId": "i-987654321",
+						"Percentile": "0.999",
+					},
+				},
+			},
+			expected: map[string]string{
+				"InstanceId": "i-123456789, i-987654321",
+				"Percentile": "0.999",
+			},
+		},
+		{
+			name: "matches with duplicate keys and values",
+			matches: []*EvalMatch{
+				{
+					Value:  null.Float{},
+					Metric: "",
+					Tags: map[string]string{
+						"InstanceId": "i-123456789",
+						"Percentile": "0.999",
+					},
+				},
+				{
+					Value:  null.Float{},
+					Metric: "",
+					Tags: map[string]string{
+						"InstanceId": "i-987654321",
+						"Percentile": "0.995",
+					},
+				},
+				{
+					Value:  null.Float{},
+					Metric: "",
+					Tags: map[string]string{
+						"InstanceId": "i-987654321",
+						"Percentile": "0.999",
+					},
+				},
+			},
+			expected: map[string]string{
+				"InstanceId": "i-123456789, i-987654321",
+				"Percentile": "0.999, 0.995",
+			},
+		},
+	}
+
+	for _, tc := range tcs {
+		result := buildTemplateDataMap(tc.matches)
+		assert.Equal(t, tc.expected, result, "failed: %s \n expected '%s' have '%s'\n", tc.name, tc.expected, result)
 	}
 }

@@ -22,7 +22,7 @@ func TestNotificationService(t *testing.T) {
 	testRule := newTestRule("Test", "Something is bad")
 	evalCtx := NewEvalContext(context.Background(), testRule)
 
-	testRuleTemplated := newTestRule("Test latency {{.quantile}}", "Something is bad on instance {{ .instance }}")
+	testRuleTemplated := newTestRule("Test latency {{.quantile}}", "Something is bad on instance {{.instance}}")
 	evalCtxWithMatch := NewEvalContext(context.Background(), testRuleTemplated)
 	evalCtxWithMatch.EvalMatches = []*EvalMatch{{
 		Value:  null.FloatFrom(10),
@@ -299,14 +299,14 @@ func newTestNotifier(model *models.AlertNotification) (Notifier, error) {
 	}, nil
 }
 
-func newTestRule(name, description string) *Rule {
+func newTestRule(name, message string) *Rule {
 	return &Rule{
 		ID:            1,
 		DashboardID:   1,
 		PanelID:       1,
 		OrgID:         1,
 		Name:          name,
-		Message:       description,
+		Message:       message,
 		State:         models.AlertStateAlerting,
 		Notifications: []string{"1"},
 	}

@@ -220,7 +220,11 @@ func buildTemplateDataMap(evalMatches []*EvalMatch) map[string]string {
 	var result = map[string]string{}
 	for _, match := range evalMatches {
 		for tagName, tagValue := range match.Tags {
-			if _, exists := result[tagName]; exists && !strings.Contains(result[tagName], tagValue) {
+			// skip duplicate values
+			if strings.Contains(result[tagName], tagValue) {
+				continue
+			}
+			if _, exists := result[tagName]; exists {
 				result[tagName] = fmt.Sprintf("%s, %s", result[tagName], tagValue)
 			} else {
 				result[tagName] = tagValue
