@@ -15,7 +15,6 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 371,
   "links": [],
   "panels": [
     {
@@ -275,7 +274,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "10 data points, auto points mode",
+      "title": "10 data points, points auto",
       "type": "graph3"
     },
     {
@@ -399,7 +398,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "20 data points, auto points never",
+      "title": "20 data points, points never",
       "type": "graph3"
     },
     {
@@ -441,7 +440,7 @@
             "lineInterpolation": "linear",
             "lineWidth": 1,
             "nullValues": "null",
-            "pointSize": 8,
+            "pointSize": 5,
             "points": {
               "radius": 4,
               "show": false
@@ -476,7 +475,7 @@
         "y": 1
       },
       "id": 56,
-      "maxDataPoints": 20,
+      "maxDataPoints": 90,
       "options": {
         "graph": {
           "realTimeUpdates": false
@@ -509,7 +508,7 @@
             "timeStep": 60
           },
           "refId": "A",
-          "scenarioId": "csv_metric_values",
+          "scenarioId": "random_walk",
           "seriesCount": 1,
           "stream": {
             "bands": 1,
@@ -523,7 +522,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "20 data points, points mode always",
+      "title": "20 data points, points always",
       "type": "graph3"
     },
     {
@@ -2712,7 +2711,8 @@
   "timepicker": {
     "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
   },
+  "timezone": "",
   "title": "Panel Tests - Graph NG",
   "uid": "TkZXxlNG3",
-  "version": 11
+  "version": 2
 }
