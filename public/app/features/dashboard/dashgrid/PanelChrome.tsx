@@ -15,15 +15,15 @@ import { updateLocation } from 'app/core/actions';
 import { DashboardModel, PanelModel } from '../state';
 import { PANEL_BORDER } from 'app/core/constants';
 import {
-  LoadingState,
   AbsoluteTimeRange,
-  DefaultTimeRange,
-  toUtc,
-  toDataFrameDTO,
+  FieldConfigSource,
+  getDefaultTimeRange,
+  LoadingState,
   PanelData,
   PanelPlugin,
-  FieldConfigSource,
   PanelPluginMeta,
+  toDataFrameDTO,
+  toUtc,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
@@ -65,7 +65,7 @@ export class PanelChrome extends Component<Props, State> {
       data: {
         state: LoadingState.NotStarted,
         series: [],
-        timeRange: DefaultTimeRange,
+        timeRange: getDefaultTimeRange(),
       },
     };
   }
