@@ -30,7 +30,7 @@ func TestLoadingSettings(t *testing.T) {
 			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
-			So(AdminUser, ShouldEqual, "admin")
+			So(cfg.AdminUser, ShouldEqual, "admin")
 			So(cfg.RendererCallbackUrl, ShouldEqual, "http://localhost:3000/")
 		})
 
@@ -61,7 +61,7 @@ func TestLoadingSettings(t *testing.T) {
 			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
-			So(AdminUser, ShouldEqual, "superduper")
+			So(cfg.AdminUser, ShouldEqual, "superduper")
 			So(cfg.DataPath, ShouldEqual, filepath.Join(HomePath, "data"))
 			So(cfg.LogsPath, ShouldEqual, filepath.Join(cfg.DataPath, "log"))
 		})
@@ -371,6 +371,19 @@ func TestAuthDurationSettings(t *testing.T) {
 	_, err = sec.NewKey("login_maximum_lifetime_duration", "824h")
 	require.NoError(t, err)
 	maxLifetimeDurationTest, err := time.ParseDuration("824h")
+	require.NoError(t, err)
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
+	require.Equal(t, maxLifetimeDurationTest, cfg.LoginMaxLifetime)
+
+	f = ini.Empty()
+	sec, err = f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_days", "")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_duration", "")
+	require.NoError(t, err)
+	maxLifetimeDurationTest, err = time.ParseDuration("720h")
 	require.NoError(t, err)
 	err = readAuthSettings(f, cfg)
 	require.NoError(t, err)

@@ -278,6 +278,7 @@ Example dimension queries which will return list of resources for individual AWS
 | `dimension_values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)`                                                               | S3               |
 | `dimension_values(us-east-1,CWAgent,disk_used_percent,device,{"InstanceId":"$instance_id"})`                                  | CloudWatch Agent |
 | `resource_arns(eu-west-1,elasticloadbalancing:loadbalancer,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})` | ELB              |
+| `resource_arns(eu-west-1,elasticloadbalancing:loadbalancer,{"Component":["$service"],"Environment":["$environment"]})`        | ELB              |
 | `resource_arns(eu-west-1,ec2:instance,{"elasticbeanstalk:environment-name":["myApp-dev","myApp-prod"]})`                      | EC2              |
 
 ## ec2_instance_attribute examples

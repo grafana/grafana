@@ -1,14 +1,21 @@
 import tinycolor from 'tinycolor2';
 import uPlot, { Series } from 'uplot';
-import { DrawStyle, LineConfig, AreaConfig, PointsConfig, PointVisibility, LineInterpolation } from '../config';
+import { getCanvasContext } from '../../../utils/measureText';
+import {
+  DrawStyle,
+  LineConfig,
+  AreaConfig,
+  PointsConfig,
+  PointVisibility,
+  LineInterpolation,
+  AreaGradientMode,
+} from '../config';
 import { PlotConfigBuilder } from '../types';
-
-const barWidthFactor = 0.6;
-const barMaxWidth = Infinity;
 
 export interface SeriesProps extends LineConfig, AreaConfig, PointsConfig {
   drawStyle: DrawStyle;
   scaleKey: string;
+  show?: boolean;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
@@ -21,10 +28,9 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       showPoints,
       pointColor,
       pointSize,
-      fillColor,
-      fillOpacity,
       scaleKey,
       spanNulls,
+      show = true,
     } = this.props;
 
     let lineConfig: Partial<Series> = {};
@@ -35,19 +41,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       lineConfig.stroke = lineColor;
       lineConfig.width = lineWidth;
       lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
-        let builderConfig;
-
-        if (drawStyle === DrawStyle.Bars) {
-          builderConfig = { size: [barWidthFactor, barMaxWidth] };
-        } else if (drawStyle === DrawStyle.Line) {
-          if (lineInterpolation === LineInterpolation.StepBefore) {
-            builderConfig = { align: -1 };
-          } else if (lineInterpolation === LineInterpolation.StepAfter) {
-            builderConfig = { align: 1 };
-          }
-        }
-
-        let pathsBuilder = mapDrawStyleToPathBuilder(drawStyle, lineInterpolation, builderConfig);
+        let pathsBuilder = mapDrawStyleToPathBuilder(drawStyle, lineInterpolation);
         return pathsBuilder(self, seriesIdx, idx0, idx1);
       };
     }
@@ -71,69 +65,135 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       pointsConfig.points!.show = true;
     }
 
-    let fillConfig: any | undefined;
-    let fillOpacityNumber = fillOpacity ?? 0;
-
-    if (fillColor) {
-      fillConfig = {
-        fill: fillColor,
-      };
-    }
-
-    if (fillOpacityNumber !== 0) {
-      fillConfig.fill = tinycolor(fillColor ?? lineColor)
-        .setAlpha(fillOpacityNumber / 100)
-        .toRgbString();
-    }
-
     return {
       scale: scaleKey,
       spanGaps: spanNulls,
+      show,
+      fill: this.getFill(),
       ...lineConfig,
       ...pointsConfig,
-      ...fillConfig,
     };
   }
-}
 
-enum PathBuilder {
-  Linear,
-  Bars,
-  Spline,
-  Stepped,
-}
+  getFill(): Series.Fill | undefined {
+    const { lineColor, fillColor, fillGradient, fillOpacity } = this.props;
 
-function getPathBuilder(builder: PathBuilder): (opts: any) => Series.PathBuilder {
-  const pathBuilders = uPlot.paths;
+    if (fillColor) {
+      return fillColor;
+    }
 
-  switch (builder) {
-    case PathBuilder.Bars:
-      return pathBuilders.bars!;
-    case PathBuilder.Linear:
-      return pathBuilders.linear!;
-    case PathBuilder.Spline:
-      return pathBuilders.spline!;
-    case PathBuilder.Stepped:
-      return pathBuilders.stepped!;
-    default:
-      return pathBuilders.linear!;
+    const mode = fillGradient ?? AreaGradientMode.None;
+    let fillOpacityNumber = fillOpacity ?? 0;
+
+    if (mode !== AreaGradientMode.None) {
+      return getCanvasGradient({
+        color: (fillColor ?? lineColor)!,
+        opacity: fillOpacityNumber / 100,
+        mode,
+      });
+    }
+
+    if (fillOpacityNumber > 0) {
+      return tinycolor(lineColor)
+        .setAlpha(fillOpacityNumber / 100)
+        .toString();
+    }
+
+    return undefined;
   }
 }
 
-function mapDrawStyleToPathBuilder(style: DrawStyle, lineInterpolation?: LineInterpolation, opts?: any) {
-  let builder = getPathBuilder(PathBuilder.Linear);
+interface PathBuilders {
+  bars: Series.PathBuilder;
+  linear: Series.PathBuilder;
+  smooth: Series.PathBuilder;
+  stepBefore: Series.PathBuilder;
+  stepAfter: Series.PathBuilder;
+}
+
+let builders: PathBuilders | undefined = undefined;
+
+function mapDrawStyleToPathBuilder(
+  style: DrawStyle,
+  lineInterpolation?: LineInterpolation,
+  opts?: any
+): Series.PathBuilder {
+  // This should be global static, but Jest initalization was failing so we lazy load to avoid the issue
+  if (!builders) {
+    const pathBuilders = uPlot.paths;
+    const barWidthFactor = 0.6;
+    const barMaxWidth = Infinity;
+
+    builders = {
+      bars: pathBuilders.bars!({ size: [barWidthFactor, barMaxWidth] }),
+      linear: pathBuilders.linear!(),
+      smooth: pathBuilders.spline!(),
+      stepBefore: pathBuilders.stepped!({ align: -1 }),
+      stepAfter: pathBuilders.stepped!({ align: 1 }),
+    };
+  }
 
   if (style === DrawStyle.Bars) {
-    builder = getPathBuilder(PathBuilder.Bars);
-  } else if (style === DrawStyle.Line) {
+    return builders.bars;
+  }
+  if (style === DrawStyle.Line) {
     if (lineInterpolation === LineInterpolation.StepBefore) {
-      builder = getPathBuilder(PathBuilder.Stepped);
-    } else if (lineInterpolation === LineInterpolation.StepAfter) {
-      builder = getPathBuilder(PathBuilder.Stepped);
-    } else if (lineInterpolation === LineInterpolation.Smooth) {
-      builder = getPathBuilder(PathBuilder.Spline);
+      return builders.stepBefore;
+    }
+    if (lineInterpolation === LineInterpolation.StepAfter) {
+      return builders.stepAfter;
+    }
+    if (lineInterpolation === LineInterpolation.Smooth) {
+      return builders.smooth;
     }
   }
 
-  return builder(opts);
+  return builders.linear; // the default
+}
+
+interface AreaGradientOptions {
+  color: string;
+  mode: AreaGradientMode;
+  opacity: number;
+}
+
+function getCanvasGradient(opts: AreaGradientOptions): (self: uPlot, seriesIdx: number) => CanvasGradient {
+  return (plot: uPlot, seriesIdx: number) => {
+    const { color, mode, opacity } = opts;
+
+    const ctx = getCanvasContext();
+    const gradient = ctx.createLinearGradient(0, plot.bbox.top, 0, plot.bbox.top + plot.bbox.height);
+
+    switch (mode) {
+      case AreaGradientMode.Hue:
+        const color1 = tinycolor(color)
+          .spin(-25)
+          .darken(30)
+          .setAlpha(opacity)
+          .toRgbString();
+        const color2 = tinycolor(color)
+          .spin(25)
+          .lighten(35)
+          .setAlpha(opacity)
+          .toRgbString();
+        gradient.addColorStop(0, color2);
+        gradient.addColorStop(1, color1);
+
+      case AreaGradientMode.Opacity:
+      default:
+        gradient.addColorStop(
+          0,
+          tinycolor(color)
+            .setAlpha(opacity)
+            .toRgbString()
+        );
+        gradient.addColorStop(
+          1,
+          tinycolor(color)
+            .setAlpha(0)
+            .toRgbString()
+        );
+        return gradient;
+    }
+  };
 }
