@@ -37,6 +37,7 @@ var (
 	ErrDatasourceIsReadOnly              = errors.New("data source is readonly, can only be updated from configuration")
 	ErrDataSourceAccessDenied            = errors.New("data source access denied")
 	ErrDataSourceFailedGenerateUniqueUid = errors.New("failed to generate unique datasource ID")
+	ErrDataSourceIdentifierNotSet        = errors.New("unique identifier and orgid needed to be able to get a datasource")
 )
 
 type DsAccess string
@@ -214,21 +215,15 @@ type GetDataSourcesQuery struct {
 	Result []*DataSource
 }
 
-type GetDataSourceByIdQuery struct {
-	Id     int64
-	OrgId  int64
-	Result *DataSource
-}
+// GetDataSourceQuery will get a DataSource based on the Name, ID, or UID.
+// At least one of the 3 must be set.
+type GetDataSourceQuery struct {
+	Id   int64
+	Uid  string
+	Name string
 
-type GetDataSourceByUIDQuery struct {
-	Uid    string
-	OrgId  int64
-	Result *DataSource
-}
+	OrgId int64
 
-type GetDataSourceByNameQuery struct {
-	Name   string
-	OrgId  int64
 	Result *DataSource
 }
 

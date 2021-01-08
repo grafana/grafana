@@ -60,7 +60,7 @@ func GetDataSources(c *models.ReqContext) Response {
 }
 
 func GetDataSourceById(c *models.ReqContext) Response {
-	query := models.GetDataSourceByIdQuery{
+	query := models.GetDataSourceQuery{
 		Id:    c.ParamsInt64(":id"),
 		OrgId: c.OrgId,
 	}
@@ -106,7 +106,7 @@ func DeleteDataSourceById(c *models.ReqContext) Response {
 
 // GET /api/datasources/uid/:uid
 func GetDataSourceByUID(c *models.ReqContext) Response {
-	query := models.GetDataSourceByUIDQuery{
+	query := models.GetDataSourceQuery{
 		Uid:   c.Params(":uid"),
 		OrgId: c.OrgId,
 	}
@@ -158,7 +158,7 @@ func DeleteDataSourceByName(c *models.ReqContext) Response {
 		return Error(400, "Missing valid datasource name", nil)
 	}
 
-	getCmd := &models.GetDataSourceByNameQuery{Name: name, OrgId: c.OrgId}
+	getCmd := &models.GetDataSourceQuery{Name: name, OrgId: c.OrgId}
 	if err := bus.Dispatch(getCmd); err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return Error(404, "Data source not found", nil)
@@ -239,7 +239,7 @@ func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) 
 		return Error(500, "Failed to update datasource", err)
 	}
 
-	query := models.GetDataSourceByIdQuery{
+	query := models.GetDataSourceQuery{
 		Id:    cmd.Id,
 		OrgId: c.OrgId,
 	}
@@ -286,7 +286,7 @@ func fillWithSecureJSONData(cmd *models.UpdateDataSourceCommand) error {
 }
 
 func getRawDataSourceById(id int64, orgID int64) (*models.DataSource, error) {
-	query := models.GetDataSourceByIdQuery{
+	query := models.GetDataSourceQuery{
 		Id:    id,
 		OrgId: orgID,
 	}
@@ -299,7 +299,7 @@ func getRawDataSourceById(id int64, orgID int64) (*models.DataSource, error) {
 }
 
 func getRawDataSourceByUID(uid string, orgID int64) (*models.DataSource, error) {
-	query := models.GetDataSourceByUIDQuery{
+	query := models.GetDataSourceQuery{
 		Uid:   uid,
 		OrgId: orgID,
 	}
@@ -313,7 +313,7 @@ func getRawDataSourceByUID(uid string, orgID int64) (*models.DataSource, error) 
 
 // Get /api/datasources/name/:name
 func GetDataSourceByName(c *models.ReqContext) Response {
-	query := models.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
+	query := models.GetDataSourceQuery{Name: c.Params(":name"), OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
@@ -328,7 +328,7 @@ func GetDataSourceByName(c *models.ReqContext) Response {
 
 // Get /api/datasources/id/:name
 func GetDataSourceIdByName(c *models.ReqContext) Response {
-	query := models.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
+	query := models.GetDataSourceQuery{Name: c.Params(":name"), OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {

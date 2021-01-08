@@ -43,7 +43,7 @@ func (dc *DatasourceProvisioner) apply(cfg *configs) error {
 	}
 
 	for _, ds := range cfg.Datasources {
-		cmd := &models.GetDataSourceByNameQuery{OrgId: ds.OrgID, Name: ds.Name}
+		cmd := &models.GetDataSourceQuery{OrgId: ds.OrgID, Name: ds.Name}
 		err := bus.Dispatch(cmd)
 		if err != nil && !errors.Is(err, models.ErrDataSourceNotFound) {
 			return err

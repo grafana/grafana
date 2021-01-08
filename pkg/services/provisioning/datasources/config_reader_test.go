@@ -281,7 +281,7 @@ func mockInsert(cmd *models.AddDataSourceCommand) error {
 	return nil
 }
 
-func mockGet(cmd *models.GetDataSourceByNameQuery) error {
+func mockGet(cmd *models.GetDataSourceQuery) error {
 	for _, v := range fakeRepo.loadAll {
 		if cmd.Name == v.Name && cmd.OrgId == v.OrgId {
 			cmd.Result = v

@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"fmt"
 	"strings"
 	"time"
 
@@ -19,54 +18,51 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetDataSources)
+	bus.AddHandler("sql", GetDataSource)
 	bus.AddHandler("sql", AddDataSource)
 	bus.AddHandler("sql", DeleteDataSourceById)
 	bus.AddHandler("sql", DeleteDataSourceByName)
 	bus.AddHandler("sql", DeleteDataSourceByUID)
 	bus.AddHandler("sql", UpdateDataSource)
-	bus.AddHandler("sql", GetDataSourceById)
-	bus.AddHandler("sql", GetDataSourceByUID)
-	bus.AddHandler("sql", GetDataSourceByName)
 }
 
-func getDataSourceByID(id, orgID int64, engine *xorm.Engine) (*models.DataSource, error) {
-	metrics.MDBDataSourceQueryByID.Inc()
+// GetDataSource returns a datasource by org_id and either uid (preferred), id, or name.
+// Zero values (0, or "") should be used for the parameters that will not be queried.
+func (ss *SQLStore) GetDataSource(uid string, id int64, name string, orgID int64) (*models.DataSource, error) {
+	query := &models.GetDataSourceQuery{
+		Id:    id,
+		Uid:   uid,
+		Name:  name,
+		OrgId: orgID,
+	}
 
-	datasource := models.DataSource{OrgId: orgID, Id: id}
-	has, err := engine.Get(&datasource)
-	if err != nil {
-		sqlog.Error("Failed getting data source", "err", err, "id", id, "orgId", orgID)
+	if err := GetDataSource(query); err != nil {
 		return nil, err
 	}
-	if !has {
-		sqlog.Debug("Failed to find data source", "id", id, "orgId", orgID)
-		return nil, models.ErrDataSourceNotFound
+
+	return query.Result, nil
+}
+
+// GetDataSource adds a datasource to the query model by querying by org_id as well as
+// either uid (preferred), id, or name and is added to the bus.
+func GetDataSource(query *models.GetDataSourceQuery) error {
+	metrics.MDBDataSourceQueryByID.Inc()
+	if query.OrgId == 0 || (query.Id == 0 && len(query.Name) == 0 && len(query.Uid) == 0) {
+		return models.ErrDashboardIdentifierNotSet
 	}
 
-	return &datasource, nil
-}
-
-func (ss *SQLStore) GetDataSourceByID(id, orgID int64) (*models.DataSource, error) {
-	return getDataSourceByID(id, orgID, ss.engine)
-}
-
-func GetDataSourceById(query *models.GetDataSourceByIdQuery) error {
-	ds, err := getDataSourceByID(query.Id, query.OrgId, x)
-	query.Result = ds
-
-	return err
-}
-
-func GetDataSourceByName(query *models.GetDataSourceByNameQuery) error {
-	datasource := models.DataSource{OrgId: query.OrgId, Name: query.Name}
+	datasource := models.DataSource{Name: query.Name, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
 	has, err := x.Get(&datasource)
 
-	if !has {
+	if err != nil {
+		sqlog.Error("Failed getting data source", "err", err, "uid", query.Uid, "id", query.Id, "name", query.Name, "orgId", query.OrgId)
+		return err
+	} else if !has {
 		return models.ErrDataSourceNotFound
 	}
 
 	query.Result = &datasource
-	return err
+	return nil
 }
 
 func GetDataSources(query *models.GetDataSourcesQuery) error {
@@ -255,38 +251,4 @@ func generateNewDatasourceUid(sess *DBSession, orgId int64) (string, error) {
 	}
 
 	return "", models.ErrDataSourceFailedGenerateUniqueUid
-}
-
-func getDataSourceByUID(uid string, orgID int64, engine *xorm.Engine) (*models.DataSource, error) {
-	if uid == "" {
-		return nil, fmt.Errorf("can not get data source by uid, uid is missing")
-	}
-
-	if orgID == 0 {
-		return nil, fmt.Errorf("can not get data source by uid, orgId is missing")
-	}
-
-	datasource := models.DataSource{OrgId: orgID, Uid: uid}
-	has, err := engine.Get(&datasource)
-	if err != nil {
-		sqlog.Error("Failed getting data source", "err", err, "uid", uid, "orgId", orgID)
-		return nil, err
-	}
-	if !has {
-		sqlog.Debug("Failed to find data source", "uid", uid, "orgId", orgID)
-		return nil, models.ErrDataSourceNotFound
-	}
-
-	return &datasource, nil
-}
-
-func (ss *SQLStore) GetDataSourceByUID(uid string, orgID int64) (*models.DataSource, error) {
-	return getDataSourceByUID(uid, orgID, ss.engine)
-}
-
-func GetDataSourceByUID(query *models.GetDataSourceByUIDQuery) error {
-	ds, err := getDataSourceByUID(query.Uid, query.OrgId, x)
-	query.Result = ds
-
-	return err
 }
