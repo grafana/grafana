@@ -329,11 +329,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const suffix = line.substr(cursorOffset);
     const prefix = line.substr(0, cursorOffset);
     const isValueStart = text.match(/^(=|=~|!=|!~)/);
-    const isValueEnd = suffix.match(/^"?[,}]/);
-    // detect cursor in front of value, e.g., {key=|"}
+    const isValueEnd = suffix.match(/^"?[,}]|$/);
+    // Detect cursor in front of value, e.g., {key=|"}
     const isPreValue = prefix.match(/(=|=~|!=|!~)$/) && suffix.match(/^"/);
 
-    // Don't suggestq anything at the beginning or inside a value
+    // Don't suggest anything at the beginning or inside a value
     const isValueEmpty = isValueStart && isValueEnd;
     const hasValuePrefix = isValueEnd && !isValueStart;
     if ((!isValueEmpty && !hasValuePrefix) || isPreValue) {
