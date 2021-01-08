@@ -12,7 +12,7 @@ You can share a panel as a direct link, as a snapshot or as an embedded link.
 To share a panel:
 
 1. Click a panel title to open the panel menu.
-1. Click **Share** in the panel menu. The share dialog opens and shows the Link tab.
+2. Click **Share**. The share dialog opens and shows the Link tab.
 
 ## Direct link
 
@@ -54,27 +54,14 @@ To publish a snapshot:
 If you created a snapshot by mistake, click **delete snapshot** to remove the snapshot from your Grafana instance.
 ## Embed Panel
 
-You can embed a panel using an iframe on another web site. This tab will show you the html that you need to use.
+You can embed a panel using an iframe on another web site. Unless anonymous access permission is enabled, the viewer must be logged into Grafana to view the graph.
 
-> **Note:** This sharing requires [allow_embedding]({{< relref "../administration/configuration.md#allow-embedding" >}}) enabled and anonymous access, or proper configuration of the [cookie_samesite]({{< relref "../administration/configuration.md#cookie-samesite" >}}) setting.
-
-Example:
+Here is an example of the html code:
 
 ```html
 <iframe src="https://snapshot.raintank.io/dashboard-solo/snapshot/y7zwi2bZ7FcoTlB93WN7yWO4aMiz3pZb?from=1493369923321&to=1493377123321&panelId=4" width="650" height="300" frameborder="0"></iframe>
 ```
 
-Below there should be an interactive Grafana graph embedded in an iframe:
+The result is an interactive Grafana graph embedded in an iframe:
 
 <iframe src="https://snapshot.raintank.io/dashboard-solo/snapshot/y7zwi2bZ7FcoTlB93WN7yWO4aMiz3pZb?from=1493369923321&to=1493377123321&panelId=4" width="650" height="300" frameborder="0"></iframe>
-
-#### Export Panel Data
-
-{{< docs-imagebox img="/img/docs/v50/export_panel_data.png" max-width="500px" >}}
-
-The submenu for a panel can be found by clicking on the title of a panel and then on the More submenu.
-
-This menu contains two options for exporting data:
-
-- The panel JSON (the specification and not the data) can be exported or updated via the panel context menu.
-- Panel data can be exported in the CSV format for Table and Graph Panels.
