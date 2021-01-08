@@ -933,7 +933,7 @@
               "show": true,
               "width": 1
             },
-            "lineInterpolation": "stepBefore",
+            "lineInterpolation": "stepAfter",
             "lineWidth": 1,
             "nullValues": "null",
             "pointSize": 5,
@@ -1018,7 +1018,7 @@
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "Interpolation: Step before",
+      "title": "Interpolation: Step after",
       "type": "graph3"
     },
     {
