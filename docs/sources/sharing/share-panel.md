@@ -1,16 +1,31 @@
 +++
 title = "Share a Panel"
 keywords = ["grafana", "dashboard", "documentation", "sharing"]
+aliases = ["/docs/grafana/latest/dashboards/share-dashboard/" "/docs/grafana/latest/reference/share_panel/"]
 weight = 6
-draft = "true"
 +++
 
 # Share a panel
 
-To share a panel
+You can share a panel as a direct link, as a snapshot or as an embedded link. 
+
+To share a panel:
 
 1. Click a panel title to open the panel menu.
-1. Click share in the panel menu to open the Share Panel dialog.
+1. Click **Share** in the panel menu. The share dialog opens and shows the Link tab.
+
+## Direct Link Rendered Image
+
+In the Link tab, you have access to a link that will take you to exactly this panel with the current time range and selected template variables.
+
+You also get a link to render a .png image of the panel, which is useful if you want to share an image of the panel. For more information about the requirements and how to configure image rendering, refer to [Image rendering]({{< relref "../administration/image_rendering.md)" >}}.
+
+Example of a link to a server-side rendered PNG:
+
+```bash
+https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=1568719680173&to=1568726880174&panelId=4&fullscreen
+```
+   
 
  Here you have access to a link that will take you to exactly this panel with the current time range and selected template variables. Here are some of the ways you can share a panel.
 
@@ -24,7 +39,7 @@ Anyone with the link can view it. You can optionally set an expiration time if y
 
 ## Direct Link Rendered Image
 
-You also get a link to render a PNG image of the panel. Useful if you want to share an image of the panel. For more information about the requirements and how to configure image rendering, refer to [image rendering](/administration/image_rendering/).
+You also get a link to render a .png image of the panel, which is useful if you want to share an image of the panel. For more information about the requirements and how to configure image rendering, refer to [Image rendering]({{< relref "../administration/image_rendering.md)" >}}.
 
 Example of a link to a server-side rendered PNG:
 
@@ -38,6 +53,7 @@ https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=156871968017
 - **height**: height in pixels. Default is 400.
 - **tz**: timezone in the format `UTC%2BHH%3AMM` where HH and MM are offset in hours and minutes after UTC
 - **timeout**: number of seconds. The timeout can be increased if the query for the panel needs more than the default 30 seconds.
+- **scale**: numeric value to configure device scale factor. Default is 1. Use a higher value to produce more detailed images (higher DPI). Supported in Grafana v7.0+.
 
 ## Embed Panel
 
