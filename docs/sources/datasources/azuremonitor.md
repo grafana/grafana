@@ -69,9 +69,9 @@ az ad sp create-for-rbac -n "http://localhost:3000"
 
 In the query editor for a panel, after choosing your Azure Monitor data source, the first option is to choose a service. There are three options here:
 
-- `Azure Monitor`
+- `Metrics`
 - `Application Insights`
-- `Azure Log Analytics`
+- `Logs`
 - `Insights Analytics`
 
 The query editor changes depending on which one you pick. Azure Monitor is the default.
