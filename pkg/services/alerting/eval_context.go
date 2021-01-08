@@ -221,8 +221,9 @@ func buildTemplateDataMap(evalMatches []*EvalMatch) map[string]string {
 	for _, match := range evalMatches {
 		for tagName, tagValue := range match.Tags {
 			// skip duplicate values
-			match := regexp.MustCompile(fmt.Sprintf("\\b%s\\b", tagValue)).FindString(result[tagName])
-			if len(match) > 0 {
+			rVal := regexp.MustCompile(fmt.Sprintf(`\b%s\b`, regexp.QuoteMeta(tagValue)))
+			rMatch := rVal.FindString(result[tagName])
+			if len(rMatch) > 0 {
 				continue
 			}
 			if _, exists := result[tagName]; exists {
