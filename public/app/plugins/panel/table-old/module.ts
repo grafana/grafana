@@ -18,6 +18,7 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
   dataRaw: any;
   table: any;
   renderer: any;
+  panelHasRowColorMode: boolean;
 
   panelDefaults: any = {
     targets: [{}],
@@ -65,6 +66,8 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
 
     _.defaults(this.panel, this.panelDefaults);
 
+    this.panelHasRowColorMode = this.panel.styles.find((style: any) => style.colorMode === 'row');
+
     this.events.on(PanelEvents.dataReceived, this.onDataReceived.bind(this));
     this.events.on(PanelEvents.dataSnapshotLoad, this.onDataReceived.bind(this));
     this.events.on(PanelEvents.editModeInitialized, this.onInitEditMode.bind(this));
@@ -73,6 +76,10 @@ export class TablePanelCtrl extends MetricsPanelCtrl {
   onInitEditMode() {
     this.addEditorTab('Options', tablePanelEditor, 2);
     this.addEditorTab('Column Styles', columnOptionsTab, 3);
+  }
+
+  migrateToPanel(type: string) {
+    this.onPluginTypeChange(config.panels[type]);
   }
 
   issueQueries(datasource: any) {
