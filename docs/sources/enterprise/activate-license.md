@@ -1,7 +1,7 @@
 +++
 title = "Activate an Enterprise license"
 description = "Activate an Enterprise license"
-keywords = ["grafana", "licensing"]
+keywords = ["grafana", "licensing", "enterprise"]
 weight = 7
 +++
 
