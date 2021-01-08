@@ -117,6 +117,37 @@ describe('LokiDatasource', () => {
       expect(req.end).toBeDefined();
       expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything());
     });
+
+    it('should set the minimal step to 100ms', () => {
+      const target = { expr: '{job="grafana"}', refId: 'B' };
+      const raw = { from: 'now', to: 'now-1h' };
+      const range = { from: dateTime('2020-10-14T00:00:00'), to: dateTime('2020-10-14T00:10:00'), raw: raw };
+      const options = {
+        range,
+        intervalMs: 50,
+      };
+
+      const req = ds.createRangeQuery(target, options as any, 1000);
+      expect(req.start).toBeDefined();
+      expect(req.end).toBeDefined();
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(50, expect.anything());
+      // Step is in seconds (100 ms === 0.1 s)
+      expect(req.step).toEqual(0.1);
+    });
+    it('should use provided intervalMs', () => {
+      const target = { expr: '{job="grafana"}', refId: 'B' };
+      const raw = { from: 'now', to: 'now-1h' };
+      const range = { from: dateTime(), to: dateTime(), raw: raw };
+      const options = {
+        range,
+        intervalMs: 2000,
+      };
+
+      const req = ds.createRangeQuery(target, options as any, 1000);
+      expect(req.start).toBeDefined();
+      expect(req.end).toBeDefined();
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything());
+    });
   });
 
   describe('when doing logs queries with limits', () => {
