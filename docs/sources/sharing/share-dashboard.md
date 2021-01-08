@@ -29,7 +29,7 @@ A dashboard snapshot shares an interactive dashboard publicly. Grafana strips se
 (metric, template and annotation) and panel links, leaving only the visible metric data and series names embedded into your dashboard. Dashboard snapshots can be accessed by anyone with the link.
 
 You can publish snapshots to your local instance or to [snapshot.raintank.io](http://snapshot.raintank.io). The latter is a free service
-provided by Grafana Labs, that allows you to publish dashboard snapshots to an external Grafana instance. The same rules still apply, anyone with the link can view it. You can additionally set an expiration time if you want the snapshot to be removed after a certain time period.
+provided by Grafana Labs that allows you to publish dashboard snapshots to an external Grafana instance. The same rules still apply: anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 
 {{< docs-imagebox img="/img/docs/v50/share_panel_modal.png" max-width="700px" >}}
 
