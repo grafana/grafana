@@ -1,8 +1,8 @@
 +++
-title = "Activate an Enterprise license"
-description = "Activate an Enterprise license"
-keywords = ["grafana", "licensing", "enterprise"]
-weight = 7
+title = "License activation"
+description = ""
+keywords = ["grafana", "licensing"]
+weight = 8
 +++
 
 # Activate an Enterprise license
