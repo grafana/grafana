@@ -215,8 +215,8 @@ type GetDataSourcesQuery struct {
 	Result []*DataSource
 }
 
-// GetDataSourceQuery will get a DataSource based on the Name, ID, or UID.
-// At least one of the 3 must be set.
+// GetDataSourceQuery will get a DataSource based on OrgID as well as the UID (preferred), ID, or UID.
+// At least one of the UID, ID, or Name properties must be set in addition to OrgID.
 type GetDataSourceQuery struct {
 	Id   int64
 	Uid  string
