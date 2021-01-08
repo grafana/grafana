@@ -52,7 +52,8 @@ To publish a snapshot:
 1. Copy the snapshot link, and share it either within your organization or publicly on the Web.
    
 If you created a snapshot by mistake, click **delete snapshot** to remove the snapshot from your Grafana instance.
-## Embed Panel
+
+## Embed panel
 
 You can embed a panel using an iframe on another web site. Unless anonymous access permission is enabled, the viewer must be signed into Grafana to view the graph.
 
