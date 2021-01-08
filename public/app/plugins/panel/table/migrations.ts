@@ -1,6 +1,8 @@
 import { PanelModel, FieldMatcherID, ConfigOverrideRule } from '@grafana/data';
 import { ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
 import { Options } from './types';
+import omitBy from 'lodash/omitBy';
+import isNil from 'lodash/isNil';
 
 /**
  * At 7.0, the `table` panel was swapped from an angular implementation to a react one.
@@ -117,6 +119,36 @@ const migrateTableStyleToOverride = (style: any) => {
   return override;
 };
 
+const migrateDefaults = (prevDefaults: any) => {
+  let defaults: any = {
+    custom: {},
+  };
+  if (prevDefaults) {
+    defaults = omitBy(
+      {
+        unit: prevDefaults.unit,
+        decimals: prevDefaults.decimals,
+        displayName: prevDefaults.alias,
+        custom: {
+          align: prevDefaults.align === 'auto' ? null : prevDefaults.align,
+          displayMode: colorModeMap[prevDefaults.colorMode],
+        },
+      },
+      isNil
+    );
+    if (prevDefaults.thresholds.length) {
+      defaults.thresholds = {
+        mode: 'absolute',
+        steps: [-Infinity, ...prevDefaults.thresholds].map((threshold, idx) => ({
+          color: prevDefaults.colors[idx],
+          value: parseInt(threshold, 10),
+        })),
+      };
+    }
+  }
+  return defaults;
+};
+
 /**
  * This is called when the panel changes from another panel
  */
@@ -129,9 +161,13 @@ export const tablePanelChangedHandler = (
   if (prevPluginId === 'table-old' && prevOptions.angular) {
     const oldOpts = prevOptions.angular;
     const transformations = migrateTransformations(panel, oldOpts);
+    const prevDefaults = oldOpts.styles.find((style: any) => style.pattern === '/.*/');
+    const defaults = migrateDefaults(prevDefaults);
     const overrides = oldOpts.styles.filter((style: any) => style.pattern !== '/.*/').map(migrateTableStyleToOverride);
+
     panel.transformations = transformations;
     panel.fieldConfig = {
+      defaults,
       overrides,
     };
   }

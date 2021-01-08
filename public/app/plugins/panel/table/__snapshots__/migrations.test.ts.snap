@@ -1,8 +1,17 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Table Migrations migrates styles to field config overrides 1`] = `
+exports[`Table Migrations migrates styles to field config overrides and defaults 1`] = `
 Object {
   "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "align": "right",
+        "displayMode": undefined,
+      },
+      "decimals": 2,
+      "displayName": "",
+      "unit": "short",
+    },
     "overrides": Array [
       Object {
         "matcher": Object {
@@ -109,6 +118,9 @@ Object {
 exports[`Table Migrations migrates transform out to core transforms 1`] = `
 Object {
   "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {},
+    },
     "overrides": Array [],
   },
   "transformations": Array [
@@ -125,6 +137,9 @@ Object {
 exports[`Table Migrations migrates transform out to core transforms 2`] = `
 Object {
   "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {},
+    },
     "overrides": Array [],
   },
   "transformations": Array [
@@ -141,6 +156,9 @@ Object {
 exports[`Table Migrations migrates transform out to core transforms 3`] = `
 Object {
   "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {},
+    },
     "overrides": Array [],
   },
   "transformations": Array [

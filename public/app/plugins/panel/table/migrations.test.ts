@@ -55,7 +55,7 @@ describe('Table Migrations', () => {
     expect(aggregationsPanel).toMatchSnapshot();
   });
 
-  it('migrates styles to field config overrides', () => {
+  it('migrates styles to field config overrides and defaults', () => {
     const oldStyles = {
       angular: {
         columns: [],
