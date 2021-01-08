@@ -96,6 +96,7 @@ export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelDat
         custom: {
           drawStyle: DrawStyle.Line,
           fillOpacity: 0,
+          pointSize: 5,
         },
         ...valueField.config,
       };
