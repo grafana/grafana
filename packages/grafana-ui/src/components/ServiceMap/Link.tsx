@@ -47,12 +47,12 @@ export function Link(props: Props) {
         y2={line.y2}
         markerEnd="url(#triangle)"
       />
-      <g style={{ display: showStats || hovering ? 'initial' : 'none' }}>
-        <rect x={middle.x - 50} y={middle.y - 15} width="100" height="40" rx="5" fill={'white'} />
-        <text x={middle.x} y={middle.y - 5} textAnchor={'middle'}>
+      <g style={{ display: showStats || hovering ? 'initial' : 'none', fontSize: 8 }}>
+        <rect x={middle.x - 40} y={middle.y - 15} width="80" height="30" rx="5" fill={'rgba(0, 0, 0, 0.7)'} />
+        <text x={middle.x} y={middle.y - 5} textAnchor={'middle'} fill={'white'}>
           {statsText}
         </text>
-        <text x={middle.x} y={middle.y + 10} textAnchor={'middle'}>
+        <text x={middle.x} y={middle.y + 10} textAnchor={'middle'} fill={'white'}>
           {link.stats?.tracesPerMinute === undefined
             ? link.stats?.tracesCount + ' Request' + (link.stats!.tracesCount > 1 ? 's' : '')
             : link.stats?.tracesPerMinute.toFixed(2) + ' t/min'}
