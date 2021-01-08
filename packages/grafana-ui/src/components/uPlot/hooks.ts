@@ -86,7 +86,9 @@ export const usePlotPlugins = () => {
 };
 
 const paddingSide: PaddingSide = (u, side, sidesWithAxes, cycleNum) => {
-  return sidesWithAxes[side] ? 0 : 8;
+  let hasCrossAxis = side % 2 ? sidesWithAxes[0] || sidesWithAxes[2] : sidesWithAxes[1] || sidesWithAxes[3];
+
+  return sidesWithAxes[side] || !hasCrossAxis ? 0 : 8;
 };
 
 export const DEFAULT_PLOT_CONFIG: Partial<Options> = {

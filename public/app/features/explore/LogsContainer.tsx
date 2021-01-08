@@ -102,7 +102,7 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
   };
 
   getFieldLinks = (field: Field, rowIndex: number) => {
-    return getFieldLinksForExplore(field, rowIndex, this.props.splitOpen, this.props.range);
+    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn: this.props.splitOpen, range: this.props.range });
   };
 
   render() {
