@@ -1,4 +1,4 @@
-import { DisplayValue } from '@grafana/data';
+import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
 
 import { LegendList } from './LegendList';
 import { LegendTable } from './LegendTable';
@@ -42,6 +42,7 @@ export interface LegendItem {
   yAxis: number;
   disabled?: boolean;
   displayValues?: DisplayValue[];
+  fieldIndex?: DataFrameFieldIndex;
 }
 
 export interface LegendComponentProps {

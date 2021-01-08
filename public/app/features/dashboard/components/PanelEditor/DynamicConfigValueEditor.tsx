@@ -11,6 +11,7 @@ interface DynamicConfigValueEditorProps {
   context: FieldOverrideContext;
   onRemove: () => void;
   isCollapsible?: boolean;
+  isSystemOverride?: boolean;
 }
 
 export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> = ({
@@ -20,6 +21,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
   onChange,
   onRemove,
   isCollapsible,
+  isSystemOverride,
 }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
@@ -37,9 +39,11 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
         {item.name}
         {!isExpanded && includeCounter && item.getItemsCount && <Counter value={item.getItemsCount(property.value)} />}
       </Label>
-      <div>
-        <IconButton name="times" onClick={onRemove} />
-      </div>
+      {!isSystemOverride && (
+        <div>
+          <IconButton name="times" onClick={onRemove} />
+        </div>
+      )}
     </HorizontalGroup>
   );
 
