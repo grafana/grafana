@@ -5,7 +5,13 @@ import { Value } from 'slate';
 import { dateTime, HistoryItem, LanguageProvider } from '@grafana/data';
 import { CompletionItem, CompletionItemGroup, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
-import { fixSummariesMetadata, parseSelector, processHistogramLabels, processLabels } from './language_utils';
+import {
+  fixSummariesMetadata,
+  parseSelector,
+  processHistogramLabels,
+  processLabels,
+  roundSecToMin,
+} from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 import { PrometheusDatasource } from './datasource';
@@ -421,10 +427,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     return { [key]: data };
   };
 
-  roundToMinutes(seconds: number): number {
-    return Math.floor(seconds / 60);
-  }
-
   /**
    * Fetch labels for a series. This is cached by it's args but also by the global timeRange currently selected as
    * they can change over requested time.
@@ -443,8 +445,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
     // millisecond while still actually getting all the keys for the correct interval. This still can create problems
     // when user does not the newest values for a minute if already cached.
-    params.set('start', this.roundToMinutes(tRange['start']).toString());
-    params.set('end', this.roundToMinutes(tRange['end']).toString());
+    params.set('start', roundSecToMin(tRange['start']).toString());
+    params.set('end', roundSecToMin(tRange['end']).toString());
     params.append('withName', withName ? 'true' : 'false');
     const cacheKey = `/api/v1/series?${params.toString()}`;
     let value = this.labelsCache.get(cacheKey);
