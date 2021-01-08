@@ -14,13 +14,13 @@ To share a dashboard:
 1. Go to the home page of your Grafana instance.
 1. Click on the share icon in the top navigation. The share dialog opens and shows the Link tab.
 
-## Direct link
+## Use direct link
 
 The Link tab has the current time range, template variables and theme selected by default. You can optionally select a shortened URL to share.
 
 To share a direct link:
 
-1. Click **Copy**. This copies the URL to the clipboard.
+1. Click **Copy**. This copies the default or the shortened URL to the clipboard.
 1. Send the copied URL to a Grafana user with authorization to view the link.
 
 ## Publish snapshots
@@ -36,7 +36,7 @@ provided by Grafana Labs, that allows you to publish dashboard snapshots to an e
 To publish a snapshot:
 
 1. Click on **Local Snapshot** or **Publish to snapshot.raintank.io**. This generates the link of the snapshot.
-1. Copy the snapshot link, and share it either within your organization or publicly on the Web.
+1. Copy the snapshot link, and share it either within your organization or publicly on the web.
 
 In case you created a snapshot by mistake, click **delete snapshot** to remove the snapshot from your Grafana instance.
 
