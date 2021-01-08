@@ -7,7 +7,7 @@ weight = 6
 
 # Share a panel
 
-You can share a panel as a direct link, as a snapshot or as an embedded link. 
+You can share a panel as a direct link, as a snapshot or as an embedded link.
 
 To share a panel:
 
