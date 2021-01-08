@@ -1,0 +1,45 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Table Migrations migrates transform out to core transforms 1`] = `
+Object {
+  "transformations": Array [
+    Object {
+      "id": "seriesToColumns",
+      "options": Object {
+        "reducers": Array [],
+      },
+    },
+  ],
+}
+`;
+
+exports[`Table Migrations migrates transform out to core transforms 2`] = `
+Object {
+  "transformations": Array [
+    Object {
+      "id": "seriesToRows",
+      "options": Object {
+        "reducers": Array [],
+      },
+    },
+  ],
+}
+`;
+
+exports[`Table Migrations migrates transform out to core transforms 3`] = `
+Object {
+  "transformations": Array [
+    Object {
+      "id": "reduce",
+      "options": Object {
+        "includeTimeField": false,
+        "reducers": Array [
+          "mean",
+          "max",
+          "last",
+        ],
+      },
+    },
+  ],
+}
+`;

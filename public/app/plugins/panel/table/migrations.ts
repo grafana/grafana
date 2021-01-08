@@ -1,4 +1,5 @@
 import { PanelModel } from '@grafana/data';
+import { ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
 import { Options } from './types';
 
 /**
@@ -16,6 +17,39 @@ export const tableMigrationHandler = (panel: PanelModel<Options>): Partial<Optio
   return panel.options;
 };
 
+const transformsMap = {
+  timeseries_to_rows: 'seriesToRows',
+  timeseries_to_columns: 'seriesToColumns',
+  timeseries_aggregations: 'reduce',
+};
+
+const columnsMap = {
+  avg: 'mean',
+  min: 'min',
+  max: 'max',
+  total: 'sum',
+  current: 'last',
+  count: 'count',
+};
+
+const migrateTransformations = (panel: PanelModel<Partial<Options>> | any, oldOpts: any) => {
+  const transformations = panel.transformations ?? [];
+  if (Object.keys(transformsMap).includes(oldOpts.transform)) {
+    const opts: ReduceTransformerOptions = {
+      reducers: [],
+    };
+    if (oldOpts.transform === 'timeseries_aggregations') {
+      opts.includeTimeField = false;
+      opts.reducers = oldOpts.columns.map((column: any) => columnsMap[column.value]);
+    }
+    transformations.push({
+      id: transformsMap[oldOpts.transform],
+      options: opts,
+    });
+  }
+  return transformations;
+};
+
 /**
  * This is called when the panel changes from another panel
  */
@@ -26,7 +60,10 @@ export const tablePanelChangedHandler = (
 ) => {
   // Changing from angular table panel
   if (prevPluginId === 'table-old' && prevOptions.angular) {
-    // Todo write migration logic
+    const oldOpts = prevOptions.angular;
+    const transformations = migrateTransformations(panel, oldOpts);
+
+    panel.transformations = transformations;
   }
 
   return {};
