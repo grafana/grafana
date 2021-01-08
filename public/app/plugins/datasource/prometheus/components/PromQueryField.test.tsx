@@ -189,7 +189,7 @@ describe('PromQueryField', () => {
     let cascader = screen.getByRole('button');
     // Should not show loading
     expect(cascader.textContent).toContain('Metrics');
-    checkMetricsInCascader(await screen.findByRole('button'), changedMetrics);
+    checkMetricsInCascader(cascader, metrics);
   });
 });
 
