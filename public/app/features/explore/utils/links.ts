@@ -36,6 +36,7 @@ export const getFieldLinksForExplore = (options: {
     text: 'Raw value',
   };
 
+  // If we have a dataFrame we can allow referencing other columns ant their values in the interpolation.
   if (dataFrame) {
     scopedVars['__data'] = {
       value: {
