@@ -1,6 +1,7 @@
 import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
-import { InlineField, Input, Switch } from '@grafana/ui';
+import { InlineField, Input, Switch, useStyles } from '@grafana/ui';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
+import { css } from 'emotion';
 import React, { useState } from 'react';
 import { PromOptions } from '../types';
 
@@ -10,13 +11,14 @@ export function ExemplarsSettings({ options, onOptionsChange }: Props) {
   const [isInternalLink, setIsInternalLink] = useState(
     Boolean(options.jsonData.exemplarTraceIDDestination?.datasourceUid)
   );
+  const styles = useStyles(getExemplarsSettingsStyles);
 
   return (
     <>
       <h3 className="page-heading">Exemplars</h3>
 
       <InlineField label="Internal link" labelWidth={24}>
-        <div style={{ alignSelf: 'center' }}>
+        <div className={styles.switch}>
           <Switch value={isInternalLink} onChange={ev => setIsInternalLink(ev.currentTarget.checked)} />
         </div>
       </InlineField>
@@ -84,3 +86,9 @@ export function ExemplarsSettings({ options, onOptionsChange }: Props) {
     </>
   );
 }
+
+export const getExemplarsSettingsStyles = () => ({
+  switch: css`
+    align-self: center;
+  `,
+});
