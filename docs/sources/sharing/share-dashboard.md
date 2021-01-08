@@ -19,7 +19,7 @@ The Link tab has the current time range, template variables and theme selected b
 
 To share a direct link:
 
-1. Click **Copy**, this copies the default or the shortened URL to the clipboard.
+1. Click **Copy**. This copies the URL to the clipboard.
 1. Send the copied URL to a Grafana user with authorization to view the link.
 
 ## Publish snapshots
