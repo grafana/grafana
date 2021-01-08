@@ -25,7 +25,7 @@ export const XYDimsEditor: FC<StandardEditorProps<XYDimensions, any, GraphOption
       <Label>Data</Label>
       <Select
         options={names}
-        value={names.find(v => v.value === value.frame) ?? names[0]}
+        value={names.find(v => v.value === value?.frame) ?? names[0]}
         onChange={v => {
           onChange({
             ...value,

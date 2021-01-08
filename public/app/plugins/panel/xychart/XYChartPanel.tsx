@@ -2,7 +2,7 @@ import React, { useCallback, useMemo } from 'react';
 import { TooltipPlugin, GraphNG, GraphNGLegendEvent } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
 import { Options } from './types';
-import { hideSeriesConfigFactory } from '../graph3/hideSeriesConfigFactory';
+import { hideSeriesConfigFactory } from '../timeseries/hideSeriesConfigFactory';
 import { configToXYFieldMatchers } from './dims';
 
 interface XYChartPanelProps extends PanelProps<Options> {}

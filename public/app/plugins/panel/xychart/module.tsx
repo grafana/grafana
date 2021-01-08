@@ -15,10 +15,10 @@ import {
   ScaleDistribution,
   ScaleDistributionConfig,
 } from '@grafana/ui';
-import { SeriesConfigEditor } from '../graph3/HideSeriesConfigEditor';
+import { SeriesConfigEditor } from '../timeseries/HideSeriesConfigEditor';
 import { XYChartPanel } from './XYChartPanel';
 import { defaultXYDimensions, Options } from './types';
-import { ScaleDistributionEditor } from '../graph3/ScaleDistributionEditor';
+import { ScaleDistributionEditor } from '../timeseries/ScaleDistributionEditor';
 import { XYDimsEditor } from './XYDimsEditor';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
