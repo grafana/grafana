@@ -679,7 +679,8 @@ func setHomePath(args *CommandLineArgs) {
 		return
 	}
 
-	HomePath, err := filepath.Abs(".")
+	var err error
+	HomePath, err = filepath.Abs(".")
 	if err != nil {
 		panic(err)
 	}

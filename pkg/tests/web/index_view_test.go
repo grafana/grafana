@@ -21,6 +21,7 @@ func TestIndexView(t *testing.T) {
 		sqlStore := testinfra.SetUpDatabase(t, grafDir)
 		addr := testinfra.StartGrafana(t, grafDir, cfgPath, sqlStore)
 
+		// nolint:bodyclose
 		resp, html := makeRequest(t, addr)
 
 		assert.Regexp(t, "script-src 'unsafe-eval' 'strict-dynamic' 'nonce-[^']+';object-src 'none';font-src 'self';style-src 'self' 'unsafe-inline';img-src 'self' data:;base-uri 'self';connect-src 'self' grafana.com;manifest-src 'self';media-src 'none';block-all-mixed-content;", resp.Header.Get("Content-Security-Policy"))
@@ -32,6 +33,7 @@ func TestIndexView(t *testing.T) {
 		sqlStore := testinfra.SetUpDatabase(t, grafDir)
 		addr := testinfra.StartGrafana(t, grafDir, cfgPath, sqlStore)
 
+		// nolint:bodyclose
 		resp, html := makeRequest(t, addr)
 
 		assert.Empty(t, resp.Header.Get("Content-Security-Policy"))
