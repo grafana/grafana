@@ -37,7 +37,7 @@ var (
 	ErrDatasourceIsReadOnly              = errors.New("data source is readonly, can only be updated from configuration")
 	ErrDataSourceAccessDenied            = errors.New("data source access denied")
 	ErrDataSourceFailedGenerateUniqueUid = errors.New("failed to generate unique datasource ID")
-	ErrDataSourceIdentifierNotSet        = errors.New("unique identifier and orgid needed to be able to get a datasource")
+	ErrDataSourceIdentifierNotSet        = errors.New("unique identifier and org id are needed to be able to get a datasource")
 )
 
 type DsAccess string

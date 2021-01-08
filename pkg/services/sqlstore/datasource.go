@@ -49,7 +49,7 @@ func (ss *SQLStore) GetDataSource(uid string, id int64, name string, orgID int64
 func GetDataSource(query *models.GetDataSourceQuery) error {
 	metrics.MDBDataSourceQueryByID.Inc()
 	if query.OrgId == 0 || (query.Id == 0 && len(query.Name) == 0 && len(query.Uid) == 0) {
-		return models.ErrDashboardIdentifierNotSet
+		return models.ErrDataSourceIdentifierNotSet
 	}
 
 	datasource := models.DataSource{Name: query.Name, OrgId: query.OrgId, Id: query.Id, Uid: query.Uid}
