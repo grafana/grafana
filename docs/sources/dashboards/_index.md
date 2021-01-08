@@ -42,7 +42,7 @@ Dashboards can use [templating]({{< relref "../variables/_index.md" >}}) to make
 
 Dashboards can use [annotations]({{< relref "annotations.md" >}}) to display event data across panels. This can help correlate the time series data in the panel with other events.
 
-Dashboards can be [shared]({{< relref "share-dashboard.md" >}}) easily in a variety of ways.
+Dashboards can be [shared]({{< relref "../sharing/share-dashboard.md" >}}) easily in a variety of ways.
 
 Dashboards can be tagged, and the dashboard picker provides quick, searchable access to all dashboards in a particular organization.
 

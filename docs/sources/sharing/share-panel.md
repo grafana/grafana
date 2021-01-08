@@ -1,7 +1,7 @@
 +++
 title = "Share a Panel"
 keywords = ["grafana", "dashboard", "documentation", "sharing"]
-aliases = ["/docs/grafana/latest/dashboards/share-dashboard/" "/docs/grafana/latest/reference/share_panel/"]
+aliases = ["/docs/grafana/latest/dashboards/share-dashboard/","/docs/grafana/latest/reference/share_panel/"]
 weight = 6
 +++
 
@@ -14,39 +14,23 @@ To share a panel:
 1. Click a panel title to open the panel menu.
 1. Click **Share** in the panel menu. The share dialog opens and shows the Link tab.
 
-## Direct Link Rendered Image
+## Direct link
 
-In the Link tab, you have access to a link that will take you to exactly this panel with the current time range and selected template variables.
+The Link tab has the current time range, template variables and theme selected by default. You can optionally enable a shortened URL to share.
 
-You also get a link to render a .png image of the panel, which is useful if you want to share an image of the panel. For more information about the requirements and how to configure image rendering, refer to [Image rendering]({{< relref "../administration/image_rendering.md)" >}}.
+To share a direct link:
 
-Example of a link to a server-side rendered PNG:
+1. Click **Copy**, this copies the default or the shortened URL to the clipboard.
+1. Send the copied URL to a Grafana user with authorization to view the link.
+1. You also optionally click **Direct link rendered image** to share an image of the panel.
 
-```bash
-https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=1568719680173&to=1568726880174&panelId=4&fullscreen
-```
-   
+For more information, refer to the topic [Image rendering]({{< relref "../administration/image_rendering.md)" >}}).
 
- Here you have access to a link that will take you to exactly this panel with the current time range and selected template variables. Here are some of the ways you can share a panel.
-
-## Publish snapshots
-
-You can publish snapshots to your local instance or to [snapshot.raintank.io](http://snapshot.raintank.io). The latter is a free service provided by [Raintank](http://raintank.io), that allows you to publish dashboard snapshots to an external Grafana instance.
-
-Anyone with the link can view it. You can optionally set an expiration time if you want the snapshot to be removed after a certain time period.
-
-{{< docs-imagebox img="/img/docs/panels/Share_a_panel.png" max-width="700px" >}}
-
-## Direct Link Rendered Image
-
-You also get a link to render a .png image of the panel, which is useful if you want to share an image of the panel. For more information about the requirements and how to configure image rendering, refer to [Image rendering]({{< relref "../administration/image_rendering.md)" >}}.
-
-Example of a link to a server-side rendered PNG:
+Here is an example of a link to a server-side rendered PNG:
 
 ```bash
 https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=1568719680173&to=1568726880174&panelId=4&fullscreen
 ```
-
 #### Query String Parameters For Server-Side Rendered Images
 
 - **width**: width in pixels. Default is 800.
@@ -55,6 +39,19 @@ https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=156871968017
 - **timeout**: number of seconds. The timeout can be increased if the query for the panel needs more than the default 30 seconds.
 - **scale**: numeric value to configure device scale factor. Default is 1. Use a higher value to produce more detailed images (higher DPI). Supported in Grafana v7.0+.
 
+## Publish snapshots
+
+A panel snapshot shares an interactive panel publicly. Grafana strips sensitive data leaving only the visible metric data and series names embedded into your dashboard. Panel snapshots can be accessed by anyone with the link.
+
+You can publish snapshots to your local instance or to [snapshot.raintank.io](http://snapshot.raintank.io). The latter is a free service provided by [Raintank](http://raintank.io), that allows you to publish dashboard snapshots to an external Grafana instance. You can optionally set an expiration time if you want the snapshot to be removed after a certain time period.
+
+To publish a snapshot:
+
+1. In the Share Panel dialog, click **Snapshot** to open the tab.
+1. Click on **Local Snapshot** or **Publish to snapshot.raintank.io**. This generates the link of the snapshot.
+1. Copy the snapshot link, and share it either within your organization or publicly on the Web.
+   
+If you created a snapshot by mistake, click **delete snapshot** to remove the snapshot from your Grafana instance.
 ## Embed Panel
 
 You can embed a panel using an iframe on another web site. This tab will show you the html that you need to use.
