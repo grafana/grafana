@@ -54,7 +54,7 @@ To publish a snapshot:
 If you created a snapshot by mistake, click **delete snapshot** to remove the snapshot from your Grafana instance.
 ## Embed Panel
 
-You can embed a panel using an iframe on another web site. Unless anonymous access permission is enabled, the viewer must be logged into Grafana to view the graph.
+You can embed a panel using an iframe on another web site. Unless anonymous access permission is enabled, the viewer must be signed into Grafana to view the graph.
 
 Here is an example of the HTML code:
 
