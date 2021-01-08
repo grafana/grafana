@@ -17,4 +17,5 @@ export const Messages = {
   slackOption: 'Slack',
   addSuccess: 'Notification channel was successfully added',
   editSuccess: 'Notification channel was successfully edited',
+  invalidChannelName: "Channel shouldn't have # character.",
 };
