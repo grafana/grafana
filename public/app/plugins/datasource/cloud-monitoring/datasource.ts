@@ -2,7 +2,6 @@ import _ from 'lodash';
 
 import {
   DataQueryRequest,
-  LoadingState,
   DataSourceInstanceSettings,
   ScopedVars,
   SelectableValue,
@@ -12,7 +11,6 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { CloudMonitoringOptions, CloudMonitoringQuery, Filter, MetricDescriptor, QueryType } from './types';
-import { cloudMonitoringUnitMappings } from './constants';
 import API, { PostResponse } from './api';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { CloudMonitoringVariableSupport } from './variables';
@@ -391,16 +389,5 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       }
     });
     return interpolatedGroupBys;
-  }
-
-  resolvePanelUnitFromTargets(targets: any) {
-    let unit;
-    if (targets.length > 0 && targets.every((t: any) => t.unit === targets[0].unit)) {
-      if (cloudMonitoringUnitMappings.hasOwnProperty(targets[0].unit!)) {
-        // @ts-ignore
-        unit = cloudMonitoringUnitMappings[targets[0].unit];
-      }
-    }
-    return unit;
   }
 }
