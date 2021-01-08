@@ -1009,7 +1009,9 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return nil
 			})
 			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
-				query.Result = &models.Dashboard{Id: 1, Data: &simplejson.Json{}}
+				dataValue, err := simplejson.NewJson([]byte(`{"id": 1, "editable": true, "style": "dark"}`))
+				require.NoError(t, err)
+				query.Result = &models.Dashboard{Id: 1, Data: dataValue}
 				return nil
 			})
 

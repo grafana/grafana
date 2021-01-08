@@ -116,7 +116,7 @@ export const GraphLegendTableRow: React.FunctionComponent<GraphLegendItemProps> 
                 onLabelClick(item, event);
               }
             }}
-            className={styles.label}
+            className={cx(styles.label, item.disabled && styles.labelDisabled)}
           >
             {item.label} {item.yAxis === 2 && <span className={styles.yAxisLabel}>(right y-axis)</span>}
           </div>
