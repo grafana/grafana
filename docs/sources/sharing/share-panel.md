@@ -56,7 +56,7 @@ If you created a snapshot by mistake, click **delete snapshot** to remove the sn
 
 You can embed a panel using an iframe on another web site. Unless anonymous access permission is enabled, the viewer must be logged into Grafana to view the graph.
 
-Here is an example of the html code:
+Here is an example of the HTML code:
 
 ```html
 <iframe src="https://snapshot.raintank.io/dashboard-solo/snapshot/y7zwi2bZ7FcoTlB93WN7yWO4aMiz3pZb?from=1493369923321&to=1493377123321&panelId=4" width="650" height="300" frameborder="0"></iframe>
