@@ -210,9 +210,16 @@ type DeleteDataSourceByUIDCommand struct {
 // QUERIES
 
 type GetDataSourcesQuery struct {
+	OrgId           int64
+	DataSourceLimit int
+	User            *SignedInUser
+	Result          []*DataSource
+}
+
+type GetDefaultDataSourceQuery struct {
 	OrgId  int64
 	User   *SignedInUser
-	Result []*DataSource
+	Result *DataSource
 }
 
 // GetDataSourceQuery will get a DataSource based on OrgID as well as the UID (preferred), ID, or UID.

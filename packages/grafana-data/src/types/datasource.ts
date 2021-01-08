@@ -175,6 +175,11 @@ export abstract class DataSourceApi<
   readonly id: number;
 
   /**
+   *  Set in constructor
+   */
+  readonly type: string;
+
+  /**
    *  min interval range
    */
   interval?: string;
@@ -182,6 +187,7 @@ export abstract class DataSourceApi<
   constructor(instanceSettings: DataSourceInstanceSettings<TOptions>) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
+    this.type = instanceSettings.type;
     this.meta = {} as DataSourcePluginMeta;
   }
 
@@ -339,6 +345,7 @@ export interface QueryEditorProps<
   range?: TimeRange;
   exploreId?: any;
   history?: HistoryItem[];
+  queries?: DataQuery[];
 }
 
 // TODO: not really needed but used as type in some data sources and in DataQueryRequest

@@ -185,7 +185,10 @@ function lokiMatrixToTimeSeries(matrixResult: LokiMatrixResult, options: Transfo
   };
 }
 
-function lokiPointsToTimeseriesPoints(data: Array<[number, string]>, options: TransformerOptions): TimeSeriesValue[][] {
+export function lokiPointsToTimeseriesPoints(
+  data: Array<[number, string]>,
+  options: TransformerOptions
+): TimeSeriesValue[][] {
   const stepMs = options.step * 1000;
   const datapoints: TimeSeriesValue[][] = [];
 
@@ -199,7 +202,7 @@ function lokiPointsToTimeseriesPoints(data: Array<[number, string]>, options: Tr
 
     const timestamp = time * 1000;
     for (let t = baseTimestampMs; t < timestamp; t += stepMs) {
-      datapoints.push([0, t]);
+      datapoints.push([null, t]);
     }
 
     baseTimestampMs = timestamp + stepMs;
@@ -208,7 +211,7 @@ function lokiPointsToTimeseriesPoints(data: Array<[number, string]>, options: Tr
 
   const endTimestamp = options.end / 1e6;
   for (let t = baseTimestampMs; t <= endTimestamp; t += stepMs) {
-    datapoints.push([0, t]);
+    datapoints.push([null, t]);
   }
 
   return datapoints;

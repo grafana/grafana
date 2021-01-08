@@ -4,4 +4,4 @@
 ## Common variable declarations
 ##
 
-DOCKER_IMAGE_NAME="grafana/grafana-plugin-ci:1.1.0-alpine"
+DOCKER_IMAGE_NAME="grafana/grafana-plugin-ci:1.1.1-alpine"
