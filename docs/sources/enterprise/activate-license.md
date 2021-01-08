@@ -11,7 +11,7 @@ Follow these steps to activate your Grafana Enterprise license:
 
 ## Step 1. Download your license file
 
-To download your Grafana Enterprise license, log in to your [Grafana Cloud Account](https://grafana.com) and go to your **Org Profile**. In the side menu there is a section for Grafana Enterprise licenses. At the bottom of the license details page there is **Download Token** link that will download the license.jwt file containing your license.
+To download your Grafana Enterprise license, log in to your [Grafana Cloud Account](https://grafana.com) and go to your **Org Profile**. In the side menu there is a section for Grafana Enterprise licenses. At the bottom of the license details page there is a **Download Token** link that will download the license.jwt file containing your license.
 
 ## Step 2. Add your license file to a Grafana instance
 
