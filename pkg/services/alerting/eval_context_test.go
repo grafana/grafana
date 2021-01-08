@@ -287,10 +287,34 @@ func TestBuildTemplateDataMap(t *testing.T) {
 				"Percentile": "0.999, 0.995",
 			},
 		},
+		{
+			name: "a value and its substring for same key",
+			matches: []*EvalMatch{
+				{
+					Value:  null.Float{},
+					Metric: "",
+					Tags: map[string]string{
+						"Percentile": "0.9990",
+					},
+				},
+				{
+					Value:  null.Float{},
+					Metric: "",
+					Tags: map[string]string{
+						"Percentile": "0.999",
+					},
+				},
+			},
+			expected: map[string]string{
+				"Percentile": "0.9990, 0.999",
+			},
+		},
 	}
 
 	for _, tc := range tcs {
-		result := buildTemplateDataMap(tc.matches)
-		assert.Equal(t, tc.expected, result, "failed: %s \n expected '%s' have '%s'\n", tc.name, tc.expected, result)
+		t.Run(tc.name, func(t *testing.T) {
+			result := buildTemplateDataMap(tc.matches)
+			assert.Equal(t, tc.expected, result, "failed: %s \n expected '%s' have '%s'\n", tc.name, tc.expected, result)
+		})
 	}
 }
