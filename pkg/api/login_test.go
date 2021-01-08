@@ -130,7 +130,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 		expCookiePath = setting.AppSubUrl
 	}
 	cookie := http.Cookie{
-		Name:     LoginErrorCookieName,
+		Name:     loginErrorCookieName,
 		MaxAge:   60,
 		Value:    hex.EncodeToString(encryptedError),
 		HttpOnly: true,

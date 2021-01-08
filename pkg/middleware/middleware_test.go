@@ -540,6 +540,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 	t.Run(desc, func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
+		logger := log.New("test")
+
 		loginMaxLifetime, err := gtime.ParseDuration("30d")
 		require.NoError(t, err)
 		cfg := setting.NewCfg()
@@ -560,7 +562,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		require.Truef(t, exists, "Views directory should exist at %q", viewsPath)
 
 		sc.m = macaron.New()
-		sc.m.Use(AddDefaultResponseHeaders(cfg, log.New("test")))
+		sc.m.Use(AddDefaultResponseHeaders(cfg))
+		sc.m.Use(AddCSPHeader(cfg, logger))
 		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
 			Directory: viewsPath,
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},

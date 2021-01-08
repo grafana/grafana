@@ -6,7 +6,6 @@ import (
 
 	macaron "gopkg.in/macaron.v1"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -25,7 +24,7 @@ func HandleNoCacheHeader(ctx *models.ReqContext) {
 	ctx.SkipCache = ctx.Req.Header.Get("X-Grafana-NoCache") == "true"
 }
 
-func AddDefaultResponseHeaders(cfg *setting.Cfg, logger log.Logger) macaron.Handler {
+func AddDefaultResponseHeaders(cfg *setting.Cfg) macaron.Handler {
 	return func(c *macaron.Context) {
 		c.Resp.Before(func(w macaron.ResponseWriter) {
 			// if response has already been written, skip.

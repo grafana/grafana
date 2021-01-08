@@ -65,7 +65,7 @@ func New(cfg Config) (*Server, error) {
 		shutdownFn:    shutdownFn,
 		childRoutines: childRoutines,
 		log:           log.New("server"),
-		cfg:           setting.NewCfg(),
+		cfg:           setting.GetCfg(),
 
 		configFile:  cfg.ConfigFile,
 		homePath:    cfg.HomePath,

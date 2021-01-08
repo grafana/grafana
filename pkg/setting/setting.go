@@ -600,8 +600,6 @@ func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 }
 
 func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
-	var err error
-
 	// load config defaults
 	defaultConfigFile := path.Join(HomePath, "conf/defaults.ini")
 	configFiles = append(configFiles, defaultConfigFile)
@@ -681,7 +679,10 @@ func setHomePath(args *CommandLineArgs) {
 		return
 	}
 
-	HomePath, _ = filepath.Abs(".")
+	HomePath, err := filepath.Abs(".")
+	if err != nil {
+		panic(err)
+	}
 	// check if homepath is correct
 	if pathExists(filepath.Join(HomePath, "conf/defaults.ini")) {
 		return
@@ -700,6 +701,21 @@ func NewCfg() *Cfg {
 		Logger: log.New("settings"),
 		Raw:    ini.Empty(),
 	}
+}
+
+var theCfg *Cfg
+
+// GetCfg gets the Cfg singleton.
+// XXX: This is only required for integration tests so that the configuration can be reset for each test,
+// as due to how the current DI framework functions, we can't create a new Cfg object every time (the services
+// constituting the DI graph, and referring to a Cfg instance, get created only once).
+func GetCfg() *Cfg {
+	if theCfg != nil {
+		return theCfg
+	}
+
+	theCfg = NewCfg()
+	return theCfg
 }
 
 func (cfg *Cfg) validateStaticRootPath() error {

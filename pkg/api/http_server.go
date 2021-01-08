@@ -320,7 +320,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		hs.mapStatic(m, hs.Cfg.ImagesDir, "", "/public/img/attachments")
 	}
 
-	m.Use(middleware.AddDefaultResponseHeaders(hs.Cfg, hs.log))
+	m.Use(middleware.AddDefaultResponseHeaders(hs.Cfg))
 
 	if setting.ServeFromSubPath && setting.AppSubUrl != "" {
 		m.SetURLPrefix(setting.AppSubUrl)
@@ -347,7 +347,7 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 	}
 
 	m.Use(middleware.HandleNoCacheHeader)
-	m.Use(middleware.AddCSPHeader(hs.Cfg))
+	m.Use(middleware.AddCSPHeader(hs.Cfg, hs.log))
 
 	for _, mw := range hs.middlewares {
 		m.Use(mw)
