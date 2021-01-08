@@ -41,7 +41,6 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
   onLayoutChange={[Function]}
   onResize={[Function]}
   onResizeStop={[Function]}
-  onWidthChange={[Function]}
   viewPanel={null}
 >
   <div
@@ -92,6 +91,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             "canSave": true,
             "canShare": true,
             "canStar": true,
+            "hasUnsavedFolderChange": false,
             "showSettings": true,
           },
           "originalTemplating": Array [],
@@ -314,6 +314,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             "canSave": true,
             "canShare": true,
             "canStar": true,
+            "hasUnsavedFolderChange": false,
             "showSettings": true,
           },
           "originalTemplating": Array [],
@@ -536,6 +537,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             "canSave": true,
             "canShare": true,
             "canStar": true,
+            "hasUnsavedFolderChange": false,
             "showSettings": true,
           },
           "originalTemplating": Array [],
@@ -758,6 +760,7 @@ exports[`DashboardGrid Can render dashboard grid Should render 1`] = `
             "canSave": true,
             "canShare": true,
             "canStar": true,
+            "hasUnsavedFolderChange": false,
             "showSettings": true,
           },
           "originalTemplating": Array [],

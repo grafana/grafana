@@ -1,5 +1,8 @@
 import { SelectableValue } from '@grafana/data';
 
+/**
+ * @alpha
+ */
 export enum AxisPlacement {
   Auto = 'auto', // First axis on the left, the rest on the right
   Top = 'top',
@@ -9,18 +12,27 @@ export enum AxisPlacement {
   Hidden = 'hidden',
 }
 
+/**
+ * @alpha
+ */
 export enum PointVisibility {
   Auto = 'auto', // will show points when the density is low or line is hidden
   Never = 'never',
   Always = 'always',
 }
 
+/**
+ * @alpha
+ */
 export enum DrawStyle {
   Line = 'line', // default
   Bars = 'bars', // will also have a gap percent
   Points = 'points', // Only show points
 }
 
+/**
+ * @alpha
+ */
 export enum LineInterpolation {
   Linear = 'linear',
   Smooth = 'smooth',
@@ -31,10 +43,27 @@ export enum LineInterpolation {
 /**
  * @alpha
  */
+export enum ScaleDistribution {
+  Linear = 'linear',
+  Logarithmic = 'log',
+}
+
+/**
+ * @alpha
+ */
+export interface LineStyle {
+  fill?: 'solid' | 'dash' | 'dot' | 'square'; // cap = 'butt' | 'round' | 'square'
+  dash?: number[];
+}
+
+/**
+ * @alpha
+ */
 export interface LineConfig {
   lineColor?: string;
   lineWidth?: number;
   lineInterpolation?: LineInterpolation;
+  lineStyle?: LineStyle;
   spanNulls?: boolean;
 }
 
@@ -44,6 +73,16 @@ export interface LineConfig {
 export interface AreaConfig {
   fillColor?: string;
   fillOpacity?: number;
+  fillGradient?: AreaGradientMode;
+}
+
+/**
+ * @alpha
+ */
+export enum AreaGradientMode {
+  None = 'none',
+  Opacity = 'opacity',
+  Hue = 'hue',
 }
 
 /**
@@ -56,11 +95,32 @@ export interface PointsConfig {
   pointSymbol?: string; // eventually dot,star, etc
 }
 
-// Axis is actually unique based on the unit... not each field!
+/**
+ * @alpha
+ */
+export interface ScaleDistributionConfig {
+  type: ScaleDistribution;
+  log?: number;
+}
+
+/**
+ * @alpha
+ * Axis is actually unique based on the unit... not each field!
+ */
 export interface AxisConfig {
   axisPlacement?: AxisPlacement;
   axisLabel?: string;
   axisWidth?: number; // pixels ideally auto?
+  scaleDistribution?: ScaleDistributionConfig;
+}
+
+/**
+ * @alpha
+ */
+export interface HideSeriesConfig {
+  tooltip: boolean;
+  legend: boolean;
+  graph: boolean;
 }
 
 /**
@@ -68,8 +128,12 @@ export interface AxisConfig {
  */
 export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, AxisConfig {
   drawStyle?: DrawStyle;
+  hideFrom?: HideSeriesConfig;
 }
 
+/**
+ * @alpha
+ */
 export const graphFieldOptions = {
   drawStyle: [
     { label: 'Lines', value: DrawStyle.Line },
@@ -96,4 +160,10 @@ export const graphFieldOptions = {
     { label: 'Right', value: AxisPlacement.Right },
     { label: 'Hidden', value: AxisPlacement.Hidden },
   ] as Array<SelectableValue<AxisPlacement>>,
+
+  fillGradient: [
+    { label: 'None', value: undefined },
+    { label: 'Opacity', value: AreaGradientMode.Opacity },
+    { label: 'Hue', value: AreaGradientMode.Hue },
+  ] as Array<SelectableValue<AreaGradientMode>>,
 };

@@ -114,8 +114,8 @@ func (h *ContextHandler) initContextWithAnonymousUser(ctx *models.ReqContext) bo
 		return false
 	}
 
-	orgQuery := models.GetOrgByNameQuery{Name: h.Cfg.AnonymousOrgName}
-	if err := bus.Dispatch(&orgQuery); err != nil {
+	org, err := h.SQLStore.GetOrgByName(h.Cfg.AnonymousOrgName)
+	if err != nil {
 		log.Errorf(3, "Anonymous access organization error: '%s': %s", h.Cfg.AnonymousOrgName, err)
 		return false
 	}
@@ -124,8 +124,8 @@ func (h *ContextHandler) initContextWithAnonymousUser(ctx *models.ReqContext) bo
 	ctx.AllowAnonymous = true
 	ctx.SignedInUser = &models.SignedInUser{IsAnonymous: true}
 	ctx.OrgRole = models.RoleType(h.Cfg.AnonymousOrgRole)
-	ctx.OrgId = orgQuery.Result.Id
-	ctx.OrgName = orgQuery.Result.Name
+	ctx.OrgId = org.Id
+	ctx.OrgName = org.Name
 	return true
 }
 
@@ -350,13 +350,13 @@ func logUserIn(auth *authproxy.AuthProxy, username string, logger log.Logger, ig
 	return id, nil
 }
 
-func handleError(ctx *models.ReqContext, err error, statusCode int, cb func(error)) {
+func (h *ContextHandler) handleError(ctx *models.ReqContext, err error, statusCode int, cb func(error)) {
 	details := err
 	var e authproxy.Error
 	if errors.As(err, &e) {
 		details = e.DetailsError
 	}
-	ctx.Handle(statusCode, err.Error(), details)
+	ctx.Handle(h.Cfg, statusCode, err.Error(), details)
 
 	if cb != nil {
 		cb(details)
@@ -385,7 +385,7 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 
 	// Check if allowed to continue with this IP
 	if err := auth.IsAllowedIP(); err != nil {
-		handleError(ctx, err, 407, func(details error) {
+		h.handleError(ctx, err, 407, func(details error) {
 			logger.Error("Failed to check whitelisted IP addresses", "message", err.Error(), "error", details)
 		})
 		return true
@@ -393,7 +393,7 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 
 	id, err := logUserIn(auth, username, logger, false)
 	if err != nil {
-		handleError(ctx, err, 407, nil)
+		h.handleError(ctx, err, 407, nil)
 		return true
 	}
 
@@ -414,13 +414,13 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 		}
 		id, err = logUserIn(auth, username, logger, true)
 		if err != nil {
-			handleError(ctx, err, 407, nil)
+			h.handleError(ctx, err, 407, nil)
 			return true
 		}
 
 		user, err = auth.GetSignedInUser(id)
 		if err != nil {
-			handleError(ctx, err, 407, nil)
+			h.handleError(ctx, err, 407, nil)
 			return true
 		}
 	}
@@ -433,7 +433,7 @@ func (h *ContextHandler) initContextWithAuthProxy(ctx *models.ReqContext, orgID 
 
 	// Remember user data in cache
 	if err := auth.Remember(id); err != nil {
-		handleError(ctx, err, 500, func(details error) {
+		h.handleError(ctx, err, 500, func(details error) {
 			logger.Error(
 				"Failed to store user in cache",
 				"username", username,

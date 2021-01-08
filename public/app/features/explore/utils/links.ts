@@ -4,6 +4,7 @@ import {
   LinkModel,
   TimeRange,
   mapInternalLinkToExplore,
+  InterpolateFunction,
   ScopedVars,
   DataFrame,
   getFieldDisplayValuesProxy,
@@ -36,6 +37,7 @@ export const getFieldLinksForExplore = (options: {
     text: 'Raw value',
   };
 
+  // If we have a dataFrame we can allow referencing other columns and their values in the interpolation.
   if (dataFrame) {
     scopedVars['__data'] = {
       value: {
@@ -52,7 +54,10 @@ export const getFieldLinksForExplore = (options: {
   return field.config.links
     ? field.config.links.map(link => {
         if (!link.internal) {
-          const linkModel = getLinkSrv().getDataLinkUIModel(link, scopedVars, field);
+          const replace: InterpolateFunction = (value, vars) =>
+            getTemplateSrv().replace(value, { ...vars, ...scopedVars });
+
+          const linkModel = getLinkSrv().getDataLinkUIModel(link, replace, field);
           if (!linkModel.title) {
             linkModel.title = getTitleFromHref(linkModel.href);
           }

@@ -387,6 +387,35 @@ describe('ElasticQueryBuilder', () => {
         expect(firstLevel.aggs['2'].derivative.buckets_path).toBe('_count');
       });
 
+      it('with serial_diff', () => {
+        const query = builder.build({
+          refId: 'A',
+          metrics: [
+            {
+              id: '3',
+              type: 'max',
+              field: '@value',
+            },
+            {
+              id: '2',
+              type: 'serial_diff',
+              field: '3',
+              settings: {
+                lag: 5,
+              },
+            },
+          ],
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
+        });
+
+        const firstLevel = query.aggs['3'];
+
+        expect(firstLevel.aggs['2']).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].serial_diff).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].serial_diff.buckets_path).toBe('3');
+        expect(firstLevel.aggs['2'].serial_diff.lag).toBe(5);
+      });
+
       it('with bucket_script', () => {
         const query = builder.build({
           refId: 'A',

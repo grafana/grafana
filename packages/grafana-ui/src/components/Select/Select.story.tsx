@@ -175,6 +175,26 @@ export const MultiPlainValue = () => {
   );
 };
 
+export const MultiSelectWithOptionGroups = () => {
+  const [value, setValue] = useState<string[]>();
+
+  return (
+    <>
+      <MultiSelect
+        options={[
+          { label: '1', value: '1' },
+          { label: '2', value: '2', options: [{ label: '5', value: '5' }] },
+        ]}
+        value={value}
+        onChange={v => {
+          setValue(v.map((v: any) => v.value));
+        }}
+        {...getDynamicProps()}
+      />
+    </>
+  );
+};
+
 export const MultiSelectBasic = () => {
   const [value, setValue] = useState<Array<SelectableValue<string>>>([]);
 

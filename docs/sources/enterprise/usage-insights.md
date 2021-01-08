@@ -1,6 +1,6 @@
 +++
-title = "Usage-insights"
-description = "Usage-insights"
+title = "Usage insights"
+description = "See how often dashboards are used"
 keywords = ["grafana", "usage-insights", "enterprise"]
 aliases = ["/docs/grafana/latest/enterprise/usage-insights/"]
 weight = 700
@@ -14,7 +14,7 @@ Usage insights allow you to have a better understanding of how your Grafana inst
 - Data source errors
 - Data source queries
 
-> Only available in Grafana Enterprise v7.0+.
+> **Note:** Available in Grafana Enterprise v7.0+.
 
 ## Presence indicator
 
@@ -54,7 +54,7 @@ In the search view, you can sort dashboards using these insights data. It helps 
 
 ## Data source insights
 
-> Only available in Grafana Enterprise v7.3+.
+> **Note:** Available in Grafana Enterprise v7.3+.
 
 Data source insights give you information about how a data source has been used in the last thirty days.
 

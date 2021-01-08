@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1008,7 +1009,9 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				return nil
 			})
 			bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
-				query.Result = &models.Dashboard{Id: 1, Data: &simplejson.Json{}}
+				dataValue, err := simplejson.NewJson([]byte(`{"id": 1, "editable": true, "style": "dark"}`))
+				require.NoError(t, err)
+				query.Result = &models.Dashboard{Id: 1, Data: dataValue}
 				return nil
 			})
 
@@ -1177,11 +1180,15 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
+		cfg := setting.NewCfg()
 		hs := HTTPServer{
 			Bus:                 bus.GetBus(),
-			Cfg:                 setting.NewCfg(),
+			Cfg:                 cfg,
 			ProvisioningService: provisioning.NewProvisioningServiceMock(),
 			Live:                &live.GrafanaLive{Cfg: setting.NewCfg()},
+			QuotaService: &quota.QuotaService{
+				Cfg: cfg,
+			},
 		}
 
 		sc := setupScenarioContext(t, url)
@@ -1238,11 +1245,13 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		defer bus.ClearBusHandlers()
 
+		cfg := setting.NewCfg()
 		hs := HTTPServer{
-			Cfg:                 setting.NewCfg(),
+			Cfg:                 cfg,
 			Bus:                 bus.GetBus(),
 			ProvisioningService: provisioning.NewProvisioningServiceMock(),
-			Live:                &live.GrafanaLive{Cfg: setting.NewCfg()},
+			Live:                &live.GrafanaLive{Cfg: cfg},
+			QuotaService:        &quota.QuotaService{Cfg: cfg},
 		}
 
 		sc := setupScenarioContext(t, url)

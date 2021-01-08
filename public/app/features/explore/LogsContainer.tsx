@@ -91,11 +91,11 @@ export class LogsContainer extends PureComponent<LogsContainerProps> {
     return [];
   };
 
-  showContextToggle = (): boolean => {
+  showContextToggle = (row?: LogRowModel): boolean => {
     const { datasourceInstance } = this.props;
 
     if (datasourceInstance?.showContextToggle) {
-      return datasourceInstance.showContextToggle();
+      return datasourceInstance.showContextToggle(row);
     }
 
     return false;

@@ -11,7 +11,14 @@ import {
   FieldColorModeId,
 } from '@grafana/data';
 import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
-import { AxisPlacement, DrawStyle, LineInterpolation, PointVisibility } from '@grafana/ui/src/components/uPlot/config';
+import {
+  AreaGradientMode,
+  AxisPlacement,
+  DrawStyle,
+  LineInterpolation,
+  LineStyle,
+  PointVisibility,
+} from '@grafana/ui/src/components/uPlot/config';
 import { Options } from './types';
 import omitBy from 'lodash/omitBy';
 import isNil from 'lodash/isNil';
@@ -45,6 +52,12 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
       ...y1, // Keep the y-axis unit and custom
     };
   }
+
+  // Dashes
+  const dash: LineStyle = {
+    fill: angular.dashes ? 'dash' : 'solid',
+    dash: [angular.dashLength ?? 10, angular.spaceLength ?? 10],
+  };
 
   // "seriesOverrides": [
   //   {
@@ -92,6 +105,8 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
         },
         properties: [],
       };
+      let dashOverride: LineStyle | undefined = undefined;
+
       for (const p of Object.keys(seriesOverride)) {
         const v = seriesOverride[p];
         switch (p) {
@@ -109,8 +124,20 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
           case 'fill':
             rule.properties.push({
               id: 'custom.fillOpacity',
-              value: v / 10.0, // was 0-10
+              value: v * 10, // was 0-10, new graph is 0 - 100
             });
+            break;
+          case 'fillGradient':
+            if (v) {
+              rule.properties.push({
+                id: 'custom.fillGradient',
+                value: 'opacity', // was 0-10
+              });
+              rule.properties.push({
+                id: 'custom.fillOpacity',
+                value: v * 10, // was 0-10, new graph is 0 - 100
+              });
+            }
             break;
           case 'points':
             rule.properties.push({
@@ -147,9 +174,36 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
               value: 2 + v * 2,
             });
             break;
+          case 'dashLength':
+          case 'spaceLength':
+          case 'dashes':
+            if (!dashOverride) {
+              dashOverride = {
+                fill: dash.fill,
+                dash: [...dash.dash!],
+              };
+            }
+            switch (p) {
+              case 'dashLength':
+                dashOverride.dash![0] = v;
+                break;
+              case 'spaceLength':
+                dashOverride.dash![1] = v;
+                break;
+              case 'dashes':
+                dashOverride.fill = v ? 'dash' : 'solid';
+                break;
+            }
+            break;
           default:
             console.log('Ignore override migration:', seriesOverride.alias, p, v);
         }
+      }
+      if (dashOverride) {
+        rule.properties.push({
+          id: 'custom.lineStyle',
+          value: dashOverride,
+        });
       }
       if (rule.properties.length) {
         overrides.push(rule);
@@ -159,6 +213,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
 
   const graph = y1.custom ?? ({} as GraphFieldConfig);
   graph.drawStyle = angular.bars ? DrawStyle.Bars : angular.lines ? DrawStyle.Line : DrawStyle.Points;
+
   if (angular.points) {
     graph.showPoints = PointVisibility.Always;
   } else if (graph.drawStyle !== DrawStyle.Points) {
@@ -166,19 +221,33 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   }
 
   graph.lineWidth = angular.linewidth;
+  if (dash.fill !== 'solid') {
+    graph.lineStyle = dash;
+  }
+
   if (isNumber(angular.pointradius)) {
     graph.pointSize = 2 + angular.pointradius * 2;
   }
+
   if (isNumber(angular.fill)) {
-    graph.fillOpacity = angular.fill / 10; // fill is 0-10
+    graph.fillOpacity = angular.fill * 10; // fill was 0 - 10, new is 0 to 100
   }
+
+  if (isNumber(angular.fillGradient) && angular.fillGradient > 0) {
+    graph.fillGradient = AreaGradientMode.Opacity;
+    graph.fillOpacity = angular.fillGradient * 10; // fill is 0-10
+  }
+
   graph.spanNulls = angular.nullPointMode === NullValueMode.Null;
+
   if (angular.steppedLine) {
     graph.lineInterpolation = LineInterpolation.StepAfter;
   }
+
   if (graph.drawStyle === DrawStyle.Bars) {
     graph.fillOpacity = 1.0; // bars were always
   }
+
   y1.custom = omitBy(graph, isNil);
   y1.nullValueMode = angular.nullPointMode as NullValueMode;
 

@@ -57,6 +57,9 @@ enable = [
 # Disabled linters (might want them later)
 # "unparam"
 
+[issues]
+exclude-use-default = false
+
 # Enable when appropriate
 # Poorly chosen identifier
 [[issues.exclude-rules]]
@@ -112,3 +115,18 @@ text = "Unknwon` is a misspelling of `Unknown"
 [[issues.exclude-rules]]
 linters = ["errorlint"]
 text = "non-wrapping format verb for fmt.Errorf"
+
+# TODO: Enable
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1000"
+
+# TODO: Enable
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1020"
+
+# TODO: Enable
+[[issues.exclude-rules]]
+linters = ["stylecheck"]
+text = "ST1021"

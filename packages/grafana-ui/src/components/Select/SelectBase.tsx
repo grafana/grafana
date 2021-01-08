@@ -22,7 +22,7 @@ import { SingleValue } from './SingleValue';
 import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { useTheme } from '../../themes';
 import { getSelectStyles } from './getSelectStyles';
-import { cleanValue } from './utils';
+import { cleanValue, findSelectedValue } from './utils';
 import { SelectBaseProps, SelectValue } from './types';
 
 interface ExtraValuesIndicatorProps {
@@ -116,7 +116,7 @@ export function SelectBase<T>({
   maxMenuHeight = 300,
   minMenuHeight,
   maxVisibleValues,
-  menuPlacement = 'auto',
+  menuPlacement = 'bottom',
   menuPosition,
   noOptionsMessage = 'No options found',
   onBlur,
@@ -158,11 +158,7 @@ export function SelectBase<T>({
     // we are selecting the corresponding value from the options
     if (isMulti && value && Array.isArray(value) && !loadOptions) {
       // @ts-ignore
-      selectedValue = value.map(v => {
-        return options.filter(o => {
-          return v === o.value || o.value === v.value;
-        })[0];
-      });
+      selectedValue = value.map(v => findSelectedValue(v.value ?? v, options));
     } else if (loadOptions) {
       const hasValue = defaultValue || value;
       selectedValue = hasValue ? [hasValue] : [];

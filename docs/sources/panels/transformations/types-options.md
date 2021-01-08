@@ -77,7 +77,7 @@ Query B:
 
 ## Merge
 
-> **Note:** This transformation is only available in Grafana 7.1+.
+> **Note:** This transformation is available in Grafana 7.1+.
 
 Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../visualizations/table/_index.md" >}}).
 
@@ -188,14 +188,12 @@ In the example below, I added two fields together and named them Sum.
 
 ## Labels to fields
 
-> **Note:** In order to apply this transformation, your query needs to return labeled fields.
+This transformation changes time series results that include labels or tags into to a table structure where each label becomes its own field.
 
-When you select this transformation, Grafana automatically transforms all labeled data into fields.
+Given a query result of two time series:
 
-Example: Given a query result of two time series
-
-1: labels Server=Server A, Datacenter=EU
-2: labels Server=Server B, Datacenter=EU
+* Series 1: labels Server=Server A, Datacenter=EU
+* Series 2: labels Server=Server B, Datacenter=EU
 
 This would result in a table like this:
 
@@ -204,7 +202,7 @@ This would result in a table like this:
 | 2020-07-07 11:34:20 | Server A | EU         | 1     |
 | 2020-07-07 11:34:20 | Server B | EU         | 2     |
 
-**Value field name**
+### Value field name
 
 If you selected Server as the **Value field name**, then you would get one field for every value of the Server label.
 
@@ -212,17 +210,35 @@ If you selected Server as the **Value field name**, then you would get one field
 | ------------------- | ---------- | -------- | -------- |
 | 2020-07-07 11:34:20 | EU         | 1        | 2        |
 
-For this example, I manually defined labels in the Random Walk visualization of TestData DB.
+### Merging behavior
 
-{{< docs-imagebox img="/img/docs/transformations/labels-to-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+The labels to fields transformer is internally two separate transformations. The first acts on single series and extracts labels to fields. The second is the [merge](#merge) transformation that joins all the results into a single table. The merge transformation tries to join on all matching fields. This merge step is required and cannot be turned off.
 
-After I apply the transformation, my labels appear in the table as fields.
+To illustrate this, here is an example where you have two queries that return time series with no overlapping labels. 
 
-{{< docs-imagebox img="/img/docs/transformations/labels-to-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+* Series 1: labels Server=ServerA
+* Series 2: labels Datacenter=EU
+
+This will first result in these two tables:
+
+| Time                | Server  | Value | 
+| ------------------- | ------- | ----- | 
+| 2020-07-07 11:34:20 | ServerA | 10
+
+| Time                | Datacenter | Value | 
+| ------------------- | ---------- | ----- |
+| 2020-07-07 11:34:20 | EU         | 20
+
+After merge: 
+
+| Time                | Server  | Value | Datacenter |
+| ------------------- | ------- | ----- | ---------- |
+| 2020-07-07 11:34:20 | ServerA | 10    |            |
+| 2020-07-07 11:34:20 |         | 20    | EU         |
 
 ## Group by
 
-> **Note:** This transformation is only available in Grafana 7.2+.
+> **Note:** This transformation is available in Grafana 7.2+.
 
 This transformation groups the data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to the [List of calculations]({{< relref "../calculations-list.md" >}}).
 
@@ -282,7 +298,7 @@ This transformation allows you to extract some key information out of your time 
 
 ## Concatenate fields
 
-> **Note:** This transformation is only available in Grafana 7.3+.
+> **Note:** This transformation is available in Grafana 7.3+.
 
 This transformation combines all fields from all frames into one result.  Consider:
 
@@ -307,7 +323,7 @@ After you concatenate the fields, the data frame would be:
 
 ## Series to rows
 
-> **Note:** This transformation is only available in Grafana 7.1+.
+> **Note:** This transformation is available in Grafana 7.1+.
 
 Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization.
 
@@ -343,6 +359,8 @@ Here is the result after applying the Series to rows transformation.
 | 2020-07-07 09:30:05 | Temperature | 19    |
 
 ## Filter by value
+
+> **Note:** This transformation is available in Grafana 7.4+.
 
 This transformation allows you to filter your data directly in Grafana and remove some data points from your query result. You have the option to include or exclude data that match one or more conditions you define. The conditions are applied on a selected field.
 
@@ -402,7 +420,7 @@ Conditions that are invalid or incompletely configured are ignored.
 
 ## Rename by regex
 
-> **Note:** This transformation is only available in Grafana 7.4+.
+> **Note:** This transformation is available in Grafana 7.4+.
 
 Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
 
