@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"strings"
+	"regexp"
 	"text/template"
 	"time"
 
@@ -221,7 +221,8 @@ func buildTemplateDataMap(evalMatches []*EvalMatch) map[string]string {
 	for _, match := range evalMatches {
 		for tagName, tagValue := range match.Tags {
 			// skip duplicate values
-			if strings.Contains(result[tagName], tagValue) {
+			match := regexp.MustCompile(fmt.Sprintf("\\b%s\\b", tagValue)).FindString(result[tagName])
+			if len(match) > 0 {
 				continue
 			}
 			if _, exists := result[tagName]; exists {
