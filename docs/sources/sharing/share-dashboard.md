@@ -5,7 +5,7 @@ aliases = ["/docs/grafana/latest/dashboards/share-dashboard/","/docs/grafana/lat
 weight = 6
 +++
 
-# Share dashboard
+# Share a dashboard
 
 You can share a dashboard as a direct link or as a snapshot. You can also export a dashboard. If you have made changes to the dashboard, verify those changes are saved before sharing.
 
@@ -13,6 +13,7 @@ To share a dashboard:
 
 1. Go to the home page of your Grafana instance.
 1. Click on the share icon in the top navigation. The share dialog opens and shows the Link tab.
+
 ## Direct link
 
 The Link tab has the current time range, template variables and theme selected by default. You can optionally select a shortened URL to share.
