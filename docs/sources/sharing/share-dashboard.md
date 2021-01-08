@@ -12,7 +12,13 @@ You can share a dashboard as a direct link or as a snapshot. You can also export
 To share a dashboard:
 
 1. Go to the home page of your Grafana instance.
-1. Click on the share icon in the top navigation. The share dialog opens and shows the Link tab.
+1. Click on the share icon in the top navigation. 
+
+{{< docs-imagebox img="/img/docs/sharing/Dashboard_Share_Icon.png" max-width="700px" >}}
+
+The share dialog opens and shows the Link tab.
+
+{{< docs-imagebox img="/img/docs/sharing/Share_Dashboard_Direct_Link.png" max-width="700px" >}}
 
 ## Use direct link
 
