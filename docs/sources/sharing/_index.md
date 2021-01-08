@@ -1,9 +1,9 @@
 +++
 title = "Sharing"
-weight = 110
+weight = 85
 +++
 
-# Sharing overview
+# Sharing dashboards and panels
 
 Grafana allows you to share dashboards and panels with other users within an organization and in certain situations, publicly on the Web. You can share using:
 - A direct link
@@ -11,7 +11,7 @@ Grafana allows you to share dashboards and panels with other users within an org
 - An embedded link (for panels only)
 - An export link (for dashboards only)
 
-Refer to [Share dashboard]({{< relref "share-dashboard.md" >}}) and [Share panel]({{< relref "share-panel.md" >}}) for more information.
+Refer to [Share dashboard]({{< relref "share-dashboard.md" >}}) and [Share a panel]({{< relref "share-panel.md" >}}) for more information.
 
 You must have an authorized viewer permission to see an image rendered by a direct link.
 
