@@ -1,4 +1,4 @@
-import { PanelModel } from '@grafana/data';
+import { PanelModel, FieldMatcherID, ConfigOverrideRule } from '@grafana/data';
 import { ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
 import { Options } from './types';
 
@@ -32,6 +32,12 @@ const columnsMap = {
   count: 'count',
 };
 
+const colorModeMap = {
+  cell: 'color-background',
+  row: 'color-background',
+  value: 'color-text',
+};
+
 const migrateTransformations = (panel: PanelModel<Partial<Options>> | any, oldOpts: any) => {
   const transformations = panel.transformations ?? [];
   if (Object.keys(transformsMap).includes(oldOpts.transform)) {
@@ -50,6 +56,67 @@ const migrateTransformations = (panel: PanelModel<Partial<Options>> | any, oldOp
   return transformations;
 };
 
+const migrateTableStyleToOverride = (style: any) => {
+  const fieldMatcherId = /^\/.*\/$/.test(style.pattern) ? FieldMatcherID.byRegexp : FieldMatcherID.byName;
+  const override: ConfigOverrideRule = {
+    matcher: {
+      id: fieldMatcherId,
+      options: style.pattern,
+    },
+    properties: [],
+  };
+
+  if (style.alias) {
+    override.properties.push({
+      id: 'displayName',
+      value: style.alias,
+    });
+  }
+
+  if (style.unit) {
+    override.properties.push({
+      id: 'unit',
+      value: style.unit,
+    });
+  }
+
+  if (style.decimals) {
+    override.properties.push({
+      id: 'decimals',
+      value: style.decimals,
+    });
+  }
+
+  if (style.type === 'date') {
+    override.properties.push({
+      id: 'unit',
+      value: `time: ${style.dateFormat}`,
+    });
+  }
+
+  if (style.colorMode) {
+    override.properties.push({
+      id: 'custom.displayMode',
+      value: colorModeMap[style.colorMode],
+    });
+  }
+
+  if (style.thresholds?.length) {
+    override.properties.push({
+      id: 'thresholds',
+      value: {
+        mode: 'absolute',
+        steps: [-Infinity, ...style.thresholds].map((threshold, idx) => ({
+          color: style.colors[idx],
+          value: parseInt(threshold, 10),
+        })),
+      },
+    });
+  }
+
+  return override;
+};
+
 /**
  * This is called when the panel changes from another panel
  */
@@ -62,8 +129,11 @@ export const tablePanelChangedHandler = (
   if (prevPluginId === 'table-old' && prevOptions.angular) {
     const oldOpts = prevOptions.angular;
     const transformations = migrateTransformations(panel, oldOpts);
-
+    const overrides = oldOpts.styles.filter((style: any) => style.pattern !== '/.*/').map(migrateTableStyleToOverride);
     panel.transformations = transformations;
+    panel.fieldConfig = {
+      overrides,
+    };
   }
 
   return {};
