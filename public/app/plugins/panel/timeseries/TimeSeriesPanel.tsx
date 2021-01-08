@@ -7,9 +7,9 @@ import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { hideSeriesConfigFactory } from './hideSeriesConfigFactory';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 
-interface GraphPanelProps extends PanelProps<Options> {}
+interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
-export const GraphPanel: React.FC<GraphPanelProps> = ({
+export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   data,
   timeRange,
   timeZone,

@@ -17,13 +17,13 @@ import {
   ScaleDistributionConfig,
 } from '@grafana/ui';
 import { SeriesConfigEditor } from './HideSeriesConfigEditor';
-import { GraphPanel } from './GraphPanel';
+import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
 import { LineStyleEditor } from './LineStyleEditor';
 
-export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
+export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
   .useFieldConfig({
     standardOptions: {
