@@ -16,7 +16,6 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
-export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
 export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { PieChart, PieChartType } from './PieChart/PieChart';
