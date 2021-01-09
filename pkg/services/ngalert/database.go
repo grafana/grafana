@@ -9,9 +9,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func getAlertDefinitionByID(alertDefinitionID int64, sess *sqlstore.DBSession) (*AlertDefinition, error) {
-	alertDefinition := AlertDefinition{}
-	has, err := sess.ID(alertDefinitionID).Get(&alertDefinition)
+func getAlertDefinitionByUID(sess *sqlstore.DBSession, alertDefinitionUID string, orgID int64) (*AlertDefinition, error) {
+	// we consider optionally enabling some caching
+	alertDefinition := AlertDefinition{OrgID: orgID, UID: alertDefinitionUID}
+	has, err := sess.Get(&alertDefinition)
 	if !has {
 		return nil, errAlertDefinitionNotFound
 	}
@@ -23,20 +24,19 @@ func getAlertDefinitionByID(alertDefinitionID int64, sess *sqlstore.DBSession) (
 
 // deleteAlertDefinitionByID is a handler for deleting an alert definition.
 // It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
-func (ng *AlertNG) deleteAlertDefinitionByID(cmd *deleteAlertDefinitionByIDCommand) error {
+func (ng *AlertNG) deleteAlertDefinitionByUID(cmd *deleteAlertDefinitionByUIDCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		res, err := sess.Exec("DELETE FROM alert_definition WHERE id = ?", cmd.ID)
+		res, err := sess.Exec("DELETE FROM alert_definition WHERE uid = ? AND org_id = ?", cmd.UID, cmd.OrgID)
 		if err != nil {
 			return err
 		}
 
-		rowsAffected, err := res.RowsAffected()
+		_, err = res.RowsAffected()
 		if err != nil {
 			return err
 		}
-		cmd.RowsAffected = rowsAffected
 
-		_, err = sess.Exec("DELETE FROM alert_definition_version WHERE alert_definition_id = ?", cmd.ID)
+		_, err = sess.Exec("DELETE FROM alert_definition_version WHERE alert_definition_uid = ?", cmd.UID)
 		if err != nil {
 			return err
 		}
@@ -45,11 +45,11 @@ func (ng *AlertNG) deleteAlertDefinitionByID(cmd *deleteAlertDefinitionByIDComma
 	})
 }
 
-// getAlertDefinitionByID is a handler for retrieving an alert definition from that database by its ID.
+// getAlertDefinitionByUID is a handler for retrieving an alert definition from that database by its UID and organisation ID.
 // It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
-func (ng *AlertNG) getAlertDefinitionByID(query *getAlertDefinitionByIDQuery) error {
-	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		alertDefinition, err := getAlertDefinitionByID(query.ID, sess)
+func (ng *AlertNG) getAlertDefinitionByUID(query *getAlertDefinitionByUIDQuery) error {
+	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		alertDefinition, err := getAlertDefinitionByUID(sess, query.UID, query.OrgID)
 		if err != nil {
 			return err
 		}
@@ -118,39 +118,11 @@ func (ng *AlertNG) saveAlertDefinition(cmd *saveAlertDefinitionCommand) error {
 // It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
 func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		alertDefinition := &AlertDefinition{
-			ID:        cmd.ID,
-			Title:     cmd.Title,
-			Condition: cmd.Condition.RefID,
-			Data:      cmd.Condition.QueriesAndExpressions,
-			OrgID:     cmd.OrgID,
-		}
-		if cmd.IntervalSeconds != nil {
-			alertDefinition.IntervalSeconds = *cmd.IntervalSeconds
-		}
-
-		if err := ng.validateAlertDefinition(alertDefinition, true); err != nil {
-			return err
-		}
-
-		if err := alertDefinition.preSave(); err != nil {
-			return err
-		}
-
-		existingAlertDefinition, err := getAlertDefinitionByID(alertDefinition.ID, sess)
+		existingAlertDefinition, err := getAlertDefinitionByUID(sess, cmd.UID, cmd.OrgID)
 		if err != nil {
 			if errors.Is(err, errAlertDefinitionNotFound) {
-				cmd.Result = alertDefinition
-				cmd.RowsAffected = 0
 				return nil
 			}
-			return err
-		}
-
-		alertDefinition.Version = existingAlertDefinition.Version + 1
-
-		affectedRows, err := sess.ID(cmd.ID).Update(alertDefinition)
-		if err != nil {
 			return err
 		}
 
@@ -171,30 +143,55 @@ func (ng *AlertNG) updateAlertDefinition(cmd *updateAlertDefinitionCommand) erro
 			intervalSeconds = &existingAlertDefinition.IntervalSeconds
 		}
 
+		// explicitly set all fields regardless of being provided or not
+		alertDefinition := &AlertDefinition{
+			ID:              existingAlertDefinition.ID,
+			Title:           title,
+			Condition:       condition,
+			Data:            data,
+			OrgID:           existingAlertDefinition.OrgID,
+			IntervalSeconds: *intervalSeconds,
+			UID:             existingAlertDefinition.UID,
+		}
+
+		if err := ng.validateAlertDefinition(alertDefinition, true); err != nil {
+			return err
+		}
+
+		if err := alertDefinition.preSave(); err != nil {
+			return err
+		}
+
+		alertDefinition.Version = existingAlertDefinition.Version + 1
+
+		_, err = sess.ID(existingAlertDefinition.ID).Update(alertDefinition)
+		if err != nil {
+			return err
+		}
+
 		alertDefVersion := AlertDefinitionVersion{
 			AlertDefinitionID:  alertDefinition.ID,
-			AlertDefinitionUID: existingAlertDefinition.UID,
-			ParentVersion:      existingAlertDefinition.Version,
+			AlertDefinitionUID: alertDefinition.UID,
+			ParentVersion:      alertDefinition.Version,
 			Version:            alertDefinition.Version,
-			Condition:          condition,
+			Condition:          alertDefinition.Condition,
 			Created:            alertDefinition.Updated,
-			Title:              title,
-			Data:               data,
-			IntervalSeconds:    *intervalSeconds,
+			Title:              alertDefinition.Title,
+			Data:               alertDefinition.Data,
+			IntervalSeconds:    alertDefinition.IntervalSeconds,
 		}
 		if _, err := sess.Insert(alertDefVersion); err != nil {
 			return err
 		}
 
 		cmd.Result = alertDefinition
-		cmd.RowsAffected = affectedRows
 		return nil
 	})
 }
 
 // getOrgAlertDefinitions is a handler for retrieving alert definitions of specific organisation.
 func (ng *AlertNG) getOrgAlertDefinitions(query *listAlertDefinitionsQuery) error {
-	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertDefinitions := make([]*AlertDefinition, 0)
 		q := "SELECT * FROM alert_definition WHERE org_id = ?"
 		if err := sess.SQL(q, query.OrgID).Find(&alertDefinitions); err != nil {
@@ -207,9 +204,9 @@ func (ng *AlertNG) getOrgAlertDefinitions(query *listAlertDefinitionsQuery) erro
 }
 
 func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
-	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alerts := make([]*AlertDefinition, 0)
-		q := "SELECT id, interval_seconds, version FROM alert_definition"
+		q := "SELECT uid, org_id, interval_seconds, version FROM alert_definition"
 		if err := sess.SQL(q).Find(&alerts); err != nil {
 			return err
 		}
@@ -218,7 +215,6 @@ func (ng *AlertNG) getAlertDefinitions(query *listAlertDefinitionsQuery) error {
 		return nil
 	})
 }
-
 func generateNewAlertDefinitionUID(sess *sqlstore.DBSession, orgID int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()

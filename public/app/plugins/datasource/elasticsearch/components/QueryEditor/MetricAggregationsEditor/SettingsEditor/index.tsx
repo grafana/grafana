@@ -35,6 +35,15 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
     <SettingsEditorContainer label={description} hidden={metric.hide}>
       {metric.type === 'derivative' && <SettingField label="Unit" metric={metric} settingName="unit" />}
 
+      {metric.type === 'serial_diff' && (
+        <InlineField label="Lag">
+          <Input
+            onBlur={e => dispatch(changeMetricSetting(metric, 'lag', parseInt(e.target.value, 10)))}
+            defaultValue={metric.settings?.lag}
+          />
+        </InlineField>
+      )}
+
       {metric.type === 'cumulative_sum' && <SettingField label="Format" metric={metric} settingName="format" />}
 
       {metric.type === 'moving_avg' && <MovingAverageSettingsEditor metric={metric} />}

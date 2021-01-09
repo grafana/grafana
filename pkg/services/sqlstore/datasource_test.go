@@ -3,10 +3,12 @@
 package sqlstore
 
 import (
+	"errors"
 	"strconv"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -285,5 +287,53 @@ func TestDataAccess(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, numberOfDatasource, len(query.Result))
 		})
+	})
+}
+
+func TestGetDefaultDataSource(t *testing.T) {
+	InitTestDB(t)
+
+	t.Run("should return error if there is no default datasource", func(t *testing.T) {
+		cmd := models.AddDataSourceCommand{
+			OrgId:  10,
+			Name:   "nisse",
+			Type:   models.DS_GRAPHITE,
+			Access: models.DS_ACCESS_DIRECT,
+			Url:    "http://test",
+		}
+
+		err := AddDataSource(&cmd)
+		require.NoError(t, err)
+
+		query := models.GetDefaultDataSourceQuery{OrgId: 10}
+		err = GetDefaultDataSource(&query)
+		require.Error(t, err)
+		assert.True(t, errors.Is(err, models.ErrDataSourceNotFound))
+	})
+
+	t.Run("should return default datasource if exists", func(t *testing.T) {
+		cmd := models.AddDataSourceCommand{
+			OrgId:     10,
+			Name:      "default datasource",
+			Type:      models.DS_GRAPHITE,
+			Access:    models.DS_ACCESS_DIRECT,
+			Url:       "http://test",
+			IsDefault: true,
+		}
+
+		err := AddDataSource(&cmd)
+		require.NoError(t, err)
+
+		query := models.GetDefaultDataSourceQuery{OrgId: 10}
+		err = GetDefaultDataSource(&query)
+		require.NoError(t, err)
+		assert.Equal(t, "default datasource", query.Result.Name)
+	})
+
+	t.Run("should not return default datasource of other organisation", func(t *testing.T) {
+		query := models.GetDefaultDataSourceQuery{OrgId: 1}
+		err := GetDefaultDataSource(&query)
+		require.Error(t, err)
+		assert.True(t, errors.Is(err, models.ErrDataSourceNotFound))
 	})
 }

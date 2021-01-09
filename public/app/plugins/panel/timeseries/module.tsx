@@ -11,17 +11,19 @@ import {
   GraphFieldConfig,
   graphFieldOptions,
   LegendDisplayMode,
+  LineStyle,
   PointVisibility,
   ScaleDistribution,
   ScaleDistributionConfig,
 } from '@grafana/ui';
 import { SeriesConfigEditor } from './HideSeriesConfigEditor';
-import { GraphPanel } from './GraphPanel';
+import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
 import { ScaleDistributionEditor } from './ScaleDistributionEditor';
+import { LineStyleEditor } from './LineStyleEditor';
 
-export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
+export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
   .useFieldConfig({
     standardOptions: {
@@ -74,6 +76,16 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(GraphPanel)
             step: 1,
           },
           showIf: c => c.drawStyle !== DrawStyle.Points,
+        })
+        .addCustomEditor<void, LineStyle>({
+          id: 'lineStyle',
+          path: 'lineStyle',
+          name: 'Line style',
+          showIf: c => c.drawStyle === DrawStyle.Line,
+          editor: LineStyleEditor,
+          override: LineStyleEditor,
+          process: identityOverrideProcessor,
+          shouldApply: f => f.type === FieldType.number,
         })
         .addRadio({
           path: 'fillGradient',

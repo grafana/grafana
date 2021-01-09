@@ -25,6 +25,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       lineInterpolation,
       lineColor,
       lineWidth,
+      lineStyle,
       showPoints,
       pointColor,
       pointSize,
@@ -40,6 +41,12 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     } else {
       lineConfig.stroke = lineColor;
       lineConfig.width = lineWidth;
+      if (lineStyle && lineStyle.fill !== 'solid') {
+        if (lineStyle.fill === 'dot') {
+          // lineConfig.dashCap = 'round'; // square or butt
+        }
+        lineConfig.dash = lineStyle.dash ?? [10, 10];
+      }
       lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
         let pathsBuilder = mapDrawStyleToPathBuilder(drawStyle, lineInterpolation);
         return pathsBuilder(self, seriesIdx, idx0, idx1);
