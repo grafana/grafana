@@ -153,7 +153,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
               });
               rule.properties.push({
                 id: 'custom.fillOpacity',
-                value: 1, // solid bars
+                value: 100, // solid bars
               });
             } else {
               rule.properties.push({
@@ -245,7 +245,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   }
 
   if (graph.drawStyle === DrawStyle.Bars) {
-    graph.fillOpacity = 1.0; // bars were always
+    graph.fillOpacity = 100; // bars were always
   }
 
   y1.custom = omitBy(graph, isNil);

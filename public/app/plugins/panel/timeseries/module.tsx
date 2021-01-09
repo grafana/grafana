@@ -80,7 +80,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel
         .addRadio({
           path: 'fillGradient',
           name: 'Fill gradient',
-          defaultValue: graphFieldOptions.fillGradient[0],
+          defaultValue: graphFieldOptions.fillGradient[0].value,
           settings: {
             options: graphFieldOptions.fillGradient,
           },
