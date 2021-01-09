@@ -610,16 +610,16 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
 
           const requestQuery = request.queries.find(q => q.refId === frame.refId!) as any;
 
-          const link = this.buildCloudwatchConsoleUrl(
-            requestQuery!,
-            from.toISOString(),
-            to.toISOString(),
-            frame.refId!,
-            queryResult.meta.gmdMeta
-          );
+          for (const field of frame.fields) {
+            const link = this.buildCloudwatchConsoleUrl(
+              requestQuery!,
+              from.toISOString(),
+              to.toISOString(),
+              frame.refId!,
+              frame.meta?.executedQueryString ? JSON.parse(frame.meta?.executedQueryString) : {}
+            );
 
-          if (link) {
-            for (const field of frame.fields) {
+            if (link) {
               field.config.links = [
                 {
                   url: link,
@@ -629,6 +629,7 @@ export class CloudWatchDatasource extends DataSourceApi<CloudWatchQuery, CloudWa
               ];
             }
           }
+
           return { frame, error };
         });
 
