@@ -1,8 +1,8 @@
 {
   "type": "panel",
-  "name": "Timeseries",
+  "name": "Time series",
   "id": "timeseries",
-  "state": "alpha",
+  "state": "beta",
 
   "info": {
     "author": {

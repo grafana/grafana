@@ -162,7 +162,7 @@ export const graphFieldOptions = {
   ] as Array<SelectableValue<AxisPlacement>>,
 
   fillGradient: [
-    { label: 'None', value: undefined },
+    { label: 'None', value: AreaGradientMode.None },
     { label: 'Opacity', value: AreaGradientMode.Opacity },
     { label: 'Hue', value: AreaGradientMode.Hue },
   ] as Array<SelectableValue<AreaGradientMode>>,
