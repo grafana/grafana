@@ -15,7 +15,13 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "links": [],
+  "links": [
+    {
+      "icon": "external link",
+      "tags": ["gdev", "graph-ng"],
+      "type": "dashboards"
+    }
+  ],
   "panels": [
     {
       "datasource": null,
@@ -552,7 +558,7 @@
   ],
   "schemaVersion": 27,
   "style": "dark",
-  "tags": ["gdev", "panel-tests"],
+  "tags": ["gdev", "panel-tests", "graph-ng"],
   "templating": {
     "list": []
   },
