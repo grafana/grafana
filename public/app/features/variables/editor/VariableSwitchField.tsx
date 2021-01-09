@@ -32,13 +32,8 @@ export function VariableSwitchField({
 function getStyles(theme: GrafanaTheme) {
   return {
     switchContainer: css`
-      padding-left: ${theme.spacing.sm};
-      padding-right: ${theme.spacing.sm};
-      height: 100%;
-      display: flex;
-      align-items: center;
-      background: ${theme.colors.formInputBg};
-      border: 1px solid ${theme.colors.formInputBorder};
+      margin-left: ${theme.spacing.sm};
+      margin-right: ${theme.spacing.sm};
     `,
   };
 }
