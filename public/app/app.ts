@@ -102,6 +102,7 @@ export class GrafanaApp {
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
     standardTransformersRegistry.setInit(getStandardTransformers);
     variableAdapters.setInit(getDefaultVariableAdapters);
+
     setVariableQueryRunner(new VariableQueryRunner());
 
     app.config(

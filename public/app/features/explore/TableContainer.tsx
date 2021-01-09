@@ -48,7 +48,7 @@ export class TableContainer extends PureComponent<TableContainerProps> {
       // differently and sidestep this getLinks API on a dataframe
       for (const field of tableResult.fields) {
         field.getLinks = (config: ValueLinkConfig) => {
-          return getFieldLinksForExplore(field, config.valueRowIndex!, splitOpen, range);
+          return getFieldLinksForExplore({ field, rowIndex: config.valueRowIndex!, splitOpenFn: splitOpen, range });
         };
       }
     }

@@ -134,7 +134,12 @@ describe('Series to rows', () => {
       name: 'A',
       fields: [
         { name: 'Time', type: FieldType.time, values: [100, 150, 200], config: { displayName: 'Random time' } },
-        { name: 'Temp', type: FieldType.number, values: [1, 4, 5], config: { displayName: 'Temp' } },
+        {
+          name: 'Temp',
+          type: FieldType.number,
+          values: [1, 4, 5],
+          config: { displayName: 'Temp', displayNameFromDS: 'dsName' },
+        },
       ],
     });
 
