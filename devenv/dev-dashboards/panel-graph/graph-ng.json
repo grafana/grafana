@@ -157,7 +157,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Lines 500 data points",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -281,7 +281,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "10 data points, points auto",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -405,7 +405,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "20 data points, points never",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -529,7 +529,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "20 data points, points always",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -653,7 +653,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Interpolation: linear",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -777,7 +777,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Interpolation: Smooth",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -901,7 +901,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Interpolation: Step before",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -1025,7 +1025,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Interpolation: Step after",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -1316,7 +1316,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Dashed lines",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "collapsed": false,
@@ -1454,7 +1454,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Bars: no fill",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -1592,7 +1592,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Bars: Fill + hue gradient",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -1730,7 +1730,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Points: Size 10",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -1868,7 +1868,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Points: size 4",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "collapsed": false,
@@ -2022,7 +2022,7 @@
       "timeShift": null,
       "title": "List",
       "transformations": [],
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": "gdev-testdata",
@@ -2176,7 +2176,7 @@
       "timeShift": null,
       "title": "List legend to the right ",
       "transformations": [],
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": "gdev-testdata",
@@ -2329,7 +2329,7 @@
       "timeShift": null,
       "title": "Table",
       "transformations": [],
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": "gdev-testdata",
@@ -2482,7 +2482,7 @@
       "timeShift": null,
       "title": "Table to the right",
       "transformations": [],
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "collapsed": false,
@@ -2604,7 +2604,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Single mode",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -2712,7 +2712,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Multi mode",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -2819,7 +2819,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "No tooltip",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": "gdev-testdata",
@@ -2930,7 +2930,7 @@
       "timeShift": null,
       "title": "Diff number of datapoints and multi series tooltip",
       "transformations": [],
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "collapsed": false,
@@ -3068,7 +3068,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "React NG graph",
-      "type": "graph3"
+      "type": "timeseries"
     }
   ],
   "refresh": false,

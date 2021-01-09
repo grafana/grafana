@@ -100,7 +100,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Data from 0 - 10K (unit short)",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -179,7 +179,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Data from 0 - 10K (unit bytes metric)",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -258,7 +258,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Data from 0 - 10K (unit bytes IEC)",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -337,7 +337,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Data from 0 - 10K (unit short)",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -416,7 +416,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Data from 0.0002 - 0.001 (unit short)",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -495,7 +495,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Data from 12000 - 30000 (unit ms)",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -575,7 +575,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Data from 0 - 1B (unit short)",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -655,7 +655,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Data from 0 - 1B (unit bytes)",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -734,7 +734,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Data from 12000 - 30000 (unit ms)",
-      "type": "graph3"
+      "type": "timeseries"
     }
   ],
   "refresh": false,

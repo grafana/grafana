@@ -109,7 +109,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Req/s",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -198,7 +198,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Req/s",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -287,7 +287,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Req/s",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -375,7 +375,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Memory",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -464,7 +464,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Hue gradient mode",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -553,7 +553,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Hue gradient mode",
-      "type": "graph3"
+      "type": "timeseries"
     }
   ],
   "schemaVersion": 27,
