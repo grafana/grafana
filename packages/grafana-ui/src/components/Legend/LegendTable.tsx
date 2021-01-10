@@ -6,6 +6,8 @@ import { useTheme } from '../../themes/ThemeContext';
 import union from 'lodash/union';
 import sortBy from 'lodash/sortBy';
 import { LegendTableItem } from './LegendTableItem';
+import { stylesFactory } from '../../themes/stylesFactory';
+import { GrafanaTheme } from '@grafana/data';
 
 export const LegendTable: FC<LegendTableProps> = ({
   items,
@@ -18,6 +20,7 @@ export const LegendTable: FC<LegendTableProps> = ({
   onSeriesColorChange,
 }) => {
   const theme = useTheme();
+  const styles = getStyles(theme);
 
   const columns = items
     .map(item => {
@@ -59,29 +62,14 @@ export const LegendTable: FC<LegendTableProps> = ({
   }
 
   return (
-    <table
-      className={cx(
-        css`
-          width: 100%;
-          td {
-            padding: 2px 10px;
-          }
-        `,
-        className
-      )}
-    >
+    <table className={cx(styles.table, className)}>
       <thead>
         <tr>
           {columns.map(columnHeader => {
             return (
               <th
                 key={columnHeader}
-                className={css`
-                  color: ${theme.colors.textBlue};
-                  font-weight: bold;
-                  text-align: right;
-                  cursor: pointer;
-                `}
+                className={styles.header}
                 onClick={() => {
                   if (onToggleSort) {
                     onToggleSort(columnHeader);
@@ -90,12 +78,7 @@ export const LegendTable: FC<LegendTableProps> = ({
               >
                 {columnHeader}
                 {sortKey === columnHeader && (
-                  <Icon
-                    className={css`
-                      margin-left: ${theme.spacing.sm};
-                    `}
-                    name={sortDesc ? 'angle-down' : 'angle-up'}
-                  />
+                  <Icon className={styles.sortIcon} name={sortDesc ? 'angle-down' : 'angle-up'} />
                 )}
               </th>
             );
@@ -106,3 +89,20 @@ export const LegendTable: FC<LegendTableProps> = ({
     </table>
   );
 };
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  return {
+    table: css`
+      width: 100%;
+    `,
+    header: css`
+      color: ${theme.colors.textBlue};
+      font-weight: ${theme.typography.weight.semibold};
+      text-align: right;
+      cursor: pointer;
+    `,
+    sortIcon: css`
+      margin-left: ${theme.spacing.sm};
+    `,
+  };
+});

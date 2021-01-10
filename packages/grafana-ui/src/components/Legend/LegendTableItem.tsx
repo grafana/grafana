@@ -23,6 +23,7 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
 }) => {
   const theme = useContext(ThemeContext);
   const styles = getStyles(theme);
+
   return (
     <tr className={cx(styles.row, className)}>
       <td>
