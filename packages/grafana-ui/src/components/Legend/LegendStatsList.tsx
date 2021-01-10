@@ -8,7 +8,7 @@ const LegendItemStat: React.FunctionComponent<{ stat: DisplayValue }> = ({ stat 
   return (
     <div
       className={css`
-        margin-left: 6px;
+        margin-left: 8px;
       `}
     >
       {stat.title && `${capitalize(stat.title)}:`} {formattedValueToString(stat)}

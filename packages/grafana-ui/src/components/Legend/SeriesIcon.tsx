@@ -1,13 +1,22 @@
-import React from 'react';
-import { Icon } from '../Icon/Icon';
+import React, { CSSProperties } from 'react';
 
-export interface SeriesIconProps {
+export interface Props extends React.HTMLAttributes<HTMLDivElement> {
   color: string;
-  className?: string;
 }
 
-export const SeriesIcon: React.FunctionComponent<SeriesIconProps> = ({ color, className }) => {
-  return <Icon name="minus" className={className} style={{ color }} />;
-};
+export const SeriesIcon = React.forwardRef<HTMLDivElement, Props>(({ color, className, ...restProps }, ref) => {
+  const styles: CSSProperties = {
+    backgroundColor: color,
+    width: '12px',
+    height: '12px',
+    borderRadius: '3px',
+    display: 'inline-block',
+    marginRight: '8px',
+    position: 'relative',
+    top: '-1px',
+  };
+
+  return <div ref={ref} className={className} style={styles} {...restProps} />;
+});
 
 SeriesIcon.displayName = 'SeriesIcon';

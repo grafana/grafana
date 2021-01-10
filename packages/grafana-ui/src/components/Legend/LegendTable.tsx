@@ -98,6 +98,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     header: css`
       color: ${theme.colors.textBlue};
       font-weight: ${theme.typography.weight.semibold};
+      border-bottom: 1px solid ${theme.colors.border1};
+      padding: ${theme.spacing.xxs} ${theme.spacing.sm};
       text-align: right;
       cursor: pointer;
     `,

@@ -1,9 +1,8 @@
 import React, { FC, useState } from 'react';
-import { VizLegend } from '@grafana/ui';
+import { useTheme, VizLegend } from '@grafana/ui';
 import { number, select } from '@storybook/addon-knobs';
 import {} from './LegendListItem';
-import tinycolor from 'tinycolor2';
-import { DisplayValue } from '@grafana/data';
+import { DisplayValue, getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { LegendDisplayMode, LegendItem, LegendPlacement } from './types';
 
@@ -40,7 +39,8 @@ interface LegendStoryDemoProps {
 }
 
 const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, name, placement, stats }) => {
-  const [items, setItems] = useState<LegendItem[]>(generateLegendItems(seriesCount, stats));
+  const theme = useTheme();
+  const [items, setItems] = useState<LegendItem[]>(generateLegendItems(seriesCount, theme, stats));
 
   const onSeriesColorChange = (label: string, color: string) => {
     setItems(
@@ -163,13 +163,20 @@ export const WithValues = () => {
   );
 };
 
-function generateLegendItems(numberOfSeries: number, statsToDisplay?: DisplayValue[]): LegendItem[] {
+function generateLegendItems(
+  numberOfSeries: number,
+  theme: GrafanaTheme,
+  statsToDisplay?: DisplayValue[]
+): LegendItem[] {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
+  const colors = ['green', 'blue', 'red', 'purple', 'orange', 'dark-green', 'yellow', 'light-blue'].map(c =>
+    getColorForTheme(c, theme)
+  );
 
   return [...new Array(numberOfSeries)].map((item, i) => {
     return {
       label: `${alphabet[i].toUpperCase()}-series`,
-      color: tinycolor.fromRatio({ h: i / alphabet.length, s: 1, v: 1 }).toHexString(),
+      color: colors[i],
       yAxis: 1,
       displayValues: statsToDisplay || [],
     };

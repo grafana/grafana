@@ -4,7 +4,7 @@ import { LegendSeriesIcon } from './LegendSeriesIcon';
 import { LegendItem } from './types';
 import { SeriesColorChangeHandler } from './types';
 import { ThemeContext } from '../../themes/ThemeContext';
-import { stylesFactory } from '../../themes';
+import { styleMixins, stylesFactory } from '../../themes';
 import { GrafanaTheme, formattedValueToString } from '@grafana/data';
 
 export interface Props {
@@ -29,7 +29,7 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
       <td>
         <span className={styles.itemWrapper}>
           <LegendSeriesIcon
-            disabled={!!onSeriesColorChange}
+            disabled={!onSeriesColorChange}
             color={item.color}
             onColorChange={color => {
               if (onSeriesColorChange) {
@@ -65,13 +65,20 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
 LegendTableItem.displayName = 'LegendTableItem';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const rowHoverBg = styleMixins.hoverColor(theme.colors.bg1, theme);
+
   return {
     row: css`
       label: LegendRow;
       font-size: ${theme.typography.size.sm};
+      border-bottom: 1px solid ${theme.colors.border1};
       td {
         padding: ${theme.spacing.xxs} ${theme.spacing.sm};
         white-space: nowrap;
+      }
+
+      &:hover {
+        background: ${rowHoverBg};
       }
     `,
     label: css`
@@ -86,6 +93,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     itemWrapper: css`
       display: flex;
       white-space: nowrap;
+      align-items: center;
     `,
     value: css`
       text-align: right;

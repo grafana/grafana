@@ -20,7 +20,7 @@ export const LegendListItem: React.FunctionComponent<Props> = ({ item, onSeriesC
   const styles = getStyles(theme);
 
   return (
-    <>
+    <div className={styles.itemWrapper}>
       <LegendSeriesIcon
         disabled={!onSeriesColorChange}
         color={item.color}
@@ -43,7 +43,7 @@ export const LegendListItem: React.FunctionComponent<Props> = ({ item, onSeriesC
       </div>
 
       {item.displayValues && <LegendStatsList stats={item.displayValues} />}
-    </>
+    </div>
   );
 };
 
@@ -63,6 +63,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
     itemWrapper: css`
       display: flex;
       white-space: nowrap;
+      align-items: center;
     `,
     value: css`
       text-align: right;
