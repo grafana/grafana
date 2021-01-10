@@ -5,13 +5,7 @@ import { css } from 'emotion';
 import { GraphSeriesValue } from '@grafana/data';
 
 import { Graph, GraphProps } from './Graph';
-import {
-  LegendItem,
-  LegendDisplayMode,
-  SeriesColorChangeHandler,
-  SeriesAxisToggleHandler,
-  LegendPlacement,
-} from '../Legend/types';
+import { LegendItem, LegendDisplayMode, SeriesColorChangeHandler, LegendPlacement } from '../Legend/types';
 import { VizLegend } from '../Legend/Legend';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { stylesFactory } from '../../themes';
@@ -24,7 +18,6 @@ export interface GraphWithLegendProps extends GraphProps {
   sortLegendBy?: string;
   sortLegendDesc?: boolean;
   onSeriesColorChange?: SeriesColorChangeHandler;
-  onSeriesAxisToggle?: SeriesAxisToggleHandler;
   onSeriesToggle?: (label: string, event: React.MouseEvent<HTMLElement>) => void;
   onToggleSort: (sortBy: string) => void;
 }
@@ -65,7 +58,6 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
     sortLegendDesc,
     legendDisplayMode,
     placement,
-    onSeriesAxisToggle,
     onSeriesColorChange,
     onSeriesToggle,
     onToggleSort,
@@ -129,7 +121,6 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
                 }
               }}
               onSeriesColorChange={onSeriesColorChange}
-              onSeriesAxisToggle={onSeriesAxisToggle}
               onToggleSort={onToggleSort}
             />
           </CustomScrollbar>

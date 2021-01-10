@@ -8,7 +8,6 @@ export interface LegendBaseProps {
   items: LegendItem[];
   itemRenderer?: (item: LegendItem, index: number) => JSX.Element;
   onSeriesColorChange?: SeriesColorChangeHandler;
-  onSeriesAxisToggle?: SeriesAxisToggleHandler;
   onLabelClick?: (item: LegendItem, event: React.MouseEvent<HTMLElement>) => void;
 }
 

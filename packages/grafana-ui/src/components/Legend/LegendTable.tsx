@@ -14,7 +14,6 @@ export const LegendTable: FC<LegendTableProps> = ({
   itemRenderer,
   className,
   onToggleSort,
-  onSeriesAxisToggle,
   onLabelClick,
   onSeriesColorChange,
 }) => {
@@ -53,7 +52,6 @@ export const LegendTable: FC<LegendTableProps> = ({
       <LegendTableItem
         key={`${item.label}-${index}`}
         item={item}
-        onSeriesAxisToggle={onSeriesAxisToggle}
         onSeriesColorChange={onSeriesColorChange}
         onLabelClick={onLabelClick}
       />

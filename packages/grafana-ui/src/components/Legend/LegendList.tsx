@@ -15,7 +15,6 @@ export const LegendList: React.FunctionComponent<Props> = ({
   itemRenderer,
   onSeriesColorChange,
   onLabelClick,
-  onSeriesAxisToggle,
   placement,
   className,
 }) => {
@@ -25,12 +24,7 @@ export const LegendList: React.FunctionComponent<Props> = ({
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
     itemRenderer = item => (
-      <LegendListItem
-        item={item}
-        onLabelClick={onLabelClick}
-        onSeriesColorChange={onSeriesColorChange}
-        onSeriesAxisToggle={onSeriesAxisToggle}
-      />
+      <LegendListItem item={item} onLabelClick={onLabelClick} onSeriesColorChange={onSeriesColorChange} />
     );
   }
 
