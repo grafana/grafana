@@ -6,7 +6,7 @@ Object {
     "defaults": Object {
       "custom": Object {
         "drawStyle": "bars",
-        "fillOpacity": 1,
+        "fillOpacity": 100,
         "showPoints": "never",
         "spanNulls": false,
       },
