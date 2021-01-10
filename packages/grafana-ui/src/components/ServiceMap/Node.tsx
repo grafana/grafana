@@ -1,4 +1,4 @@
-import React, { useState, MouseEvent } from 'react';
+import React, { MouseEvent } from 'react';
 import { NodeDatum } from './types';
 import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
@@ -18,9 +18,9 @@ export function Node(props: {
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
   onClick: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
+  hovering: boolean;
 }) {
-  const { node, onMouseEnter, onMouseLeave, onClick } = props;
-  const [hovering, setHovering] = useState(false);
+  const { node, onMouseEnter, onMouseLeave, onClick, hovering } = props;
   const styles = getStyles(useTheme());
 
   if (!(node.x !== undefined && node.y !== undefined)) {
@@ -30,11 +30,9 @@ export function Node(props: {
   return (
     <g
       onMouseEnter={() => {
-        setHovering(true);
         onMouseEnter(node.id);
       }}
       onMouseLeave={() => {
-        setHovering(false);
         onMouseLeave(node.id);
       }}
       className={styles.mainGroup}

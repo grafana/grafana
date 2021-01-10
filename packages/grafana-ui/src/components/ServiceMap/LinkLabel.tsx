@@ -1,15 +1,12 @@
-import React, { MouseEvent } from 'react';
+import React from 'react';
 import { LinkDatum, NodeDatum } from './types';
 
 interface Props {
   link: LinkDatum;
   hovering: boolean;
-  onClick: (event: MouseEvent<SVGElement>, link: LinkDatum) => void;
-  onMouseEnter: (id: string) => void;
-  onMouseLeave: (id: string) => void;
 }
-export function Link(props: Props) {
-  const { link, onClick, onMouseEnter, onMouseLeave, hovering } = props;
+export function LinkLabel(props: Props) {
+  const { link, hovering } = props;
   const { source, target } = link as { source: NodeDatum; target: NodeDatum };
 
   // As the nodes have some radius we want edges to end outside of the node circle.
@@ -23,31 +20,20 @@ export function Link(props: Props) {
     90
   );
 
+  const middle = {
+    x: line.x1 + (line.x2 - line.x1) / 2,
+    y: line.y1 + (line.y2 - line.y1) / 2,
+  };
+
   return (
-    <g onClick={event => onClick(event, link)} style={{ cursor: 'pointer' }}>
-      <line
-        strokeWidth={hovering ? 2 : 1}
-        stroke={'#999'}
-        x1={line.x1}
-        y1={line.y1}
-        x2={line.x2}
-        y2={line.y2}
-        markerEnd="url(#triangle)"
-      />
-      <line
-        stroke={'transparent'}
-        x1={line.x1}
-        y1={line.y1}
-        x2={line.x2}
-        y2={line.y2}
-        strokeWidth={20}
-        onMouseEnter={() => {
-          onMouseEnter(link.id);
-        }}
-        onMouseLeave={() => {
-          onMouseLeave(link.id);
-        }}
-      />
+    <g style={{ display: hovering ? 'initial' : 'none', fontSize: 8, pointerEvents: 'none' }}>
+      <rect x={middle.x - 40} y={middle.y - 15} width="80" height="30" rx="5" fill={'rgba(0, 0, 0, 0.7)'} />
+      <text x={middle.x} y={middle.y - 5} textAnchor={'middle'} fill={'white'}>
+        {link.mainStat}
+      </text>
+      <text x={middle.x} y={middle.y + 10} textAnchor={'middle'} fill={'white'}>
+        {link.secondaryStat}
+      </text>
     </g>
   );
 }

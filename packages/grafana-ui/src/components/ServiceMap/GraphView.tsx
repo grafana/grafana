@@ -13,6 +13,7 @@ import { stylesFactory, useTheme } from '../../themes';
 import { css } from 'emotion';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { ContextMenu } from '..';
+import { LinkLabel } from './LinkLabel';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
@@ -51,6 +52,9 @@ export function GraphView({ getLinks, dataFrames }: Props) {
   const [nodeHover, setNodeHover] = useState<string | undefined>(undefined);
   const clearNodeHover = useCallback(() => setNodeHover(undefined), []);
 
+  const [edgeHover, setEdgeHover] = useState<string | undefined>(undefined);
+  const clearEdgeHover = useCallback(() => setEdgeHover(undefined), []);
+
   // TODO we should be able to allow multiple dataframes for both edges and nodes, could be ussue with node ids which in
   //  that case should be unique or figure a way to link edges and nodes dataframes together.
   const { nodes: rawNodes, links: rawLinks } = useMemo(() => processServices(nodesDataFrames[0], edgesDataFrames[0]), [
@@ -80,14 +84,39 @@ export function GraphView({ getLinks, dataFrames }: Props) {
           <LinkArrowMarker />
           {edges.map((e, index) => (
             <Link
-              key={index}
+              key={e.id}
               link={e}
-              showStats={(e.source as NodeDatum).id === nodeHover || (e.target as NodeDatum).id === nodeHover}
+              hovering={
+                (e.source as NodeDatum).id === nodeHover ||
+                (e.target as NodeDatum).id === nodeHover ||
+                edgeHover === e.id
+              }
               onClick={onEdgeOpen}
+              onMouseEnter={setEdgeHover}
+              onMouseLeave={clearEdgeHover}
             />
           ))}
           {nodes.map(n => (
-            <Node key={n.id} node={n} onMouseEnter={setNodeHover} onMouseLeave={clearNodeHover} onClick={onNodeOpen} />
+            <Node
+              key={n.id}
+              node={n}
+              onMouseEnter={setNodeHover}
+              onMouseLeave={clearNodeHover}
+              onClick={onNodeOpen}
+              hovering={nodeHover === n.id}
+            />
+          ))}
+          {/*We split the labels from edges so that thay are shown on top of everything else*/}
+          {edges.map((e, index) => (
+            <LinkLabel
+              key={e.id}
+              link={e}
+              hovering={
+                (e.source as NodeDatum).id === nodeHover ||
+                (e.target as NodeDatum).id === nodeHover ||
+                edgeHover === e.id
+              }
+            />
           ))}
         </g>
       </svg>
@@ -209,16 +238,19 @@ function processServices(nodes: DataFrame, edges: DataFrame): { nodes: NodeDatum
     }, {}) || {};
 
   const edgesFieldsCache = new FieldCache(edges);
+  const edgeIdField = edgesFieldsCache.getFieldByName('id');
   const edgeSourceField = edgesFieldsCache.getFieldByName('source');
   const edgeTargetField = edgesFieldsCache.getFieldByName('target');
   const edgeMainStatField = edgesFieldsCache.getFieldsByLabel(labelType, mainStat)[0];
   const edgeSecondaryStatField = edgesFieldsCache.getFieldsByLabel(labelType, secondaryStat)[0];
-  const edgesMapped = edgeSourceField?.values.toArray().map((source, index) => {
+  const edgesMapped = edgeIdField?.values.toArray().map((id, index) => {
     const target = edgeTargetField?.values.get(index);
+    const source = edgeSourceField?.values.get(index);
     // We are adding incoming edges count so we can later on find out which nodes are the roots
     servicesMap[target].incoming++;
 
     return {
+      id,
       dataFrameRowIndex: index,
       source,
       target,

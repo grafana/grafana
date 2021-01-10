@@ -14,6 +14,7 @@ export type NodeDatum = SimulationNodeDatum & {
   }>;
 };
 export type LinkDatum = SimulationLinkDatum<NodeDatum> & {
+  id: string;
   mainStat: string;
   secondaryStat: string;
   dataFrameRowIndex: number;
