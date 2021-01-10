@@ -45,6 +45,5 @@ export interface LegendOptions {
 
 export type SeriesOptionChangeHandler<TOption> = (label: string, option: TOption) => void;
 export type SeriesColorChangeHandler = SeriesOptionChangeHandler<string>;
-export type SeriesAxisToggleHandler = SeriesOptionChangeHandler<number>;
 
 export { LegendList, LegendTable };

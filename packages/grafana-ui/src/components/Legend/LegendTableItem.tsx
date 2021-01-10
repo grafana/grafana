@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { css, cx } from 'emotion';
 import { LegendSeriesIcon } from './LegendSeriesIcon';
-import { LegendItem, SeriesAxisToggleHandler } from './types';
+import { LegendItem } from './types';
 import { SeriesColorChangeHandler } from './types';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes';
@@ -13,13 +13,11 @@ export interface Props {
   className?: string;
   onLabelClick?: (item: LegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
   onSeriesColorChange?: SeriesColorChangeHandler;
-  onSeriesAxisToggle?: SeriesAxisToggleHandler;
 }
 
 export const LegendTableItem: React.FunctionComponent<Props> = ({
   item,
   onSeriesColorChange,
-  onSeriesAxisToggle,
   onLabelClick,
   className,
 }) => {
@@ -35,11 +33,6 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
             onColorChange={color => {
               if (onSeriesColorChange) {
                 onSeriesColorChange(item.label, color);
-              }
-            }}
-            onToggleAxis={() => {
-              if (onSeriesAxisToggle) {
-                onSeriesAxisToggle(item.label, item.yAxis === 1 ? 2 : 1);
               }
             }}
             yAxis={item.yAxis}
