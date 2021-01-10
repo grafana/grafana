@@ -56,6 +56,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     display: flex;
     font-size: ${theme.typography.size.sm};
     white-space: nowrap;
+    margin-bottom: ${theme.spacing.xs};
   `,
   wrapper: css`
     display: flex;

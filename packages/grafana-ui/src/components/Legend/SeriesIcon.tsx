@@ -9,11 +9,9 @@ export const SeriesIcon = React.forwardRef<HTMLDivElement, Props>(({ color, clas
     backgroundColor: color,
     width: '12px',
     height: '12px',
-    borderRadius: '3px',
+    borderRadius: '6px',
     display: 'inline-block',
     marginRight: '8px',
-    position: 'relative',
-    top: '-1px',
   };
 
   return <div ref={ref} className={className} style={styles} {...restProps} />;
