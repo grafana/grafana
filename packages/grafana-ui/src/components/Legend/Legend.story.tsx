@@ -36,10 +36,11 @@ interface LegendStoryDemoProps {
   displayMode: LegendDisplayMode;
   placement: LegendPlacement;
   seriesCount: number;
+  stats?: DisplayValue[];
 }
 
-const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, name, placement }) => {
-  const [items, setItems] = useState<LegendItem[]>(generateLegendItems(seriesCount));
+const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, name, placement, stats }) => {
+  const [items, setItems] = useState<LegendItem[]>(generateLegendItems(seriesCount, stats));
 
   const onSeriesColorChange = (label: string, color: string) => {
     setItems(
@@ -110,6 +111,53 @@ export const WithNoValues = () => {
         displayMode={LegendDisplayMode.Table}
         seriesCount={seriesCount}
         placement="bottom"
+      />
+    </div>
+  );
+};
+
+export const WithValues = () => {
+  const { seriesCount, containerWidth } = getStoriesKnobs();
+  const stats: DisplayValue[] = [
+    {
+      title: 'Min',
+      text: '5.00',
+      numeric: 5,
+    },
+    {
+      title: 'Max',
+      text: '10.00',
+      numeric: 10,
+    },
+    {
+      title: 'Last',
+      text: '2.00',
+      numeric: 2,
+    },
+  ];
+
+  return (
+    <div style={{ width: containerWidth }}>
+      <LegendStoryDemo
+        name="List mode, placement bottom"
+        displayMode={LegendDisplayMode.List}
+        seriesCount={seriesCount}
+        placement="bottom"
+        stats={stats}
+      />
+      <LegendStoryDemo
+        name="List mode, placement right"
+        displayMode={LegendDisplayMode.List}
+        seriesCount={seriesCount}
+        placement="right"
+        stats={stats}
+      />
+      <LegendStoryDemo
+        name="Table mode"
+        displayMode={LegendDisplayMode.Table}
+        seriesCount={seriesCount}
+        placement="bottom"
+        stats={stats}
       />
     </div>
   );

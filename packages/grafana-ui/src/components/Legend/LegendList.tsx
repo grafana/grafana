@@ -52,7 +52,7 @@ LegendList.displayName = 'LegendList';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   item: css`
-    padding-left: 10px;
+    padding-right: 10px;
     display: flex;
     font-size: ${theme.typography.size.sm};
     white-space: nowrap;
