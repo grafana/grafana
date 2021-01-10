@@ -1,5 +1,4 @@
 import React, { useState, MouseEvent } from 'react';
-import { getRatios, Stats } from './statsUtils';
 import { NodeDatum } from './types';
 import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
@@ -56,20 +55,18 @@ export function Node(props: {
       />
       <g>
         <text x={node.x} y={node.y - 5} textAnchor={'middle'}>
-          avg. {node.stats?.avgResponseTime.toFixed(2)}ms
+          {node.mainStat}
         </text>
         <text x={node.x} y={node.y + 10} textAnchor={'middle'}>
-          {node.stats?.tracesPerMinute === undefined
-            ? node.stats?.tracesCount + ' Request' + (node.stats!.tracesCount > 1 ? 's' : '')
-            : node.stats?.tracesPerMinute.toFixed(2) + ' t/min'}
+          {node.secondaryStat}
         </text>
       </g>
       <g>
         <text x={node.x} y={node.y + nodeR + 15} textAnchor={'middle'}>
-          {node.name}
+          {node.title}
         </text>
         <text x={node.x} y={node.y + nodeR + 30} textAnchor={'middle'}>
-          {node.type}
+          {node.subTitle}
         </text>
       </g>
     </g>
@@ -81,30 +78,29 @@ export function Node(props: {
  */
 function ResponseTypeCircle(props: { node: NodeDatum }) {
   const { node } = props;
-  const { nonZero, fullStat } = getRatios(node.stats!);
+  const fullStat = node.arcSections.find(s => s.value === 1);
   if (fullStat) {
     // Doing arc with path does not work well so it's better to just do a circle in that case
-    return (
-      <circle fill="none" stroke={colors[fullStat as keyof Stats]} strokeWidth={2} r={nodeR} cx={node.x} cy={node.y} />
-    );
+    return <circle fill="none" stroke={fullStat.color} strokeWidth={2} r={nodeR} cx={node.x} cy={node.y} />;
   }
 
+  const nonZero = node.arcSections.filter(s => s.value !== 0);
+
   const { elements } = nonZero.reduce(
-    (acc, k) => {
-      const percent = node.stats![k as keyof typeof node.stats];
+    (acc, section) => {
       const el = (
         <ArcSection
           r={nodeR}
           x={node.x!}
           y={node.y!}
           startPercent={acc.percent}
-          percent={percent}
-          color={colors[k as keyof Stats]!}
-          strokeWidth={(k as keyof Stats) === 'success' ? 2 : 4}
+          percent={section.value}
+          color={section.color}
+          strokeWidth={2}
         />
       );
       acc.elements.push(el);
-      acc.percent = acc.percent + percent;
+      acc.percent = acc.percent + section.value;
       return acc;
     },
     { elements: [] as React.ReactNode[], percent: 0 }
@@ -112,13 +108,6 @@ function ResponseTypeCircle(props: { node: NodeDatum }) {
 
   return <>{elements}</>;
 }
-
-const colors: Partial<{ [key in keyof Stats]: string }> = {
-  success: 'rgb(80, 171, 113)',
-  errors: 'rgb(255, 196, 110)',
-  faults: 'rgb(233, 84, 84)',
-  throttled: 'purple',
-};
 
 function ArcSection({
   r,

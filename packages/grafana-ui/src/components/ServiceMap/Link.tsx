@@ -1,7 +1,5 @@
 import React, { useState, MouseEvent } from 'react';
-import { capitalize } from 'lodash';
 import { LinkDatum, NodeDatum } from './types';
-import { getRatios } from './statsUtils';
 
 interface Props {
   link: LinkDatum;
@@ -29,13 +27,6 @@ export function Link(props: Props) {
     y: line.y1 + (line.y2 - line.y1) / 2,
   };
 
-  const { nonZero, fullStat } = getRatios(link.stats!);
-  const firstNonSuccess = nonZero.filter(k => k !== 'success')[0];
-
-  const statsText = fullStat
-    ? statLine(fullStat, link.stats![fullStat])
-    : statLine(firstNonSuccess, link.stats![firstNonSuccess]);
-
   return (
     <g onClick={event => onClick(event, link)} style={{ cursor: 'pointer' }}>
       <line
@@ -50,12 +41,10 @@ export function Link(props: Props) {
       <g style={{ display: showStats || hovering ? 'initial' : 'none', fontSize: 8 }}>
         <rect x={middle.x - 40} y={middle.y - 15} width="80" height="30" rx="5" fill={'rgba(0, 0, 0, 0.7)'} />
         <text x={middle.x} y={middle.y - 5} textAnchor={'middle'} fill={'white'}>
-          {statsText}
+          {link.mainStat}
         </text>
         <text x={middle.x} y={middle.y + 10} textAnchor={'middle'} fill={'white'}>
-          {link.stats?.tracesPerMinute === undefined
-            ? link.stats?.tracesCount + ' Request' + (link.stats!.tracesCount > 1 ? 's' : '')
-            : link.stats?.tracesPerMinute.toFixed(2) + ' t/min'}
+          {link.secondaryStat}
         </text>
       </g>
       <line
@@ -70,10 +59,6 @@ export function Link(props: Props) {
       />
     </g>
   );
-}
-
-function statLine(stat: string, value: number) {
-  return `${capitalize(stat)} ${(value * 100).toFixed(2)}%`;
 }
 
 type Line = { x1: number; y1: number; x2: number; y2: number };

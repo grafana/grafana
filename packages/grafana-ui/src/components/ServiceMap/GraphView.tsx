@@ -1,14 +1,13 @@
-import React, { useState, useMemo, useCallback, MouseEvent, MutableRefObject } from 'react';
+import React, { MouseEvent, MutableRefObject, useCallback, useMemo, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 import { usePanning } from './usePanning';
-import { LinkDatum, NodeDatum, XrayEdge, XrayService } from './types';
-import { computeStats } from './statsUtils';
+import { LinkDatum, NodeDatum } from './types';
 import { Node } from './Node';
 import { Link } from './Link';
 import { ViewControls } from './ViewControls';
-import { DataFrame, DataFrameView, GrafanaTheme, LinkModel } from '@grafana/data';
+import { DataFrame, Field, FieldCache, FieldType, GrafanaTheme, LinkModel } from '@grafana/data';
 import { useZoom } from './useZoom';
-import { useLayout, Config, defaultConfig, Bounds } from './layout';
+import { Bounds, Config, defaultConfig, useLayout } from './layout';
 import { LinkArrowMarker } from './LinkArrowMarker';
 import { stylesFactory, useTheme } from '../../themes';
 import { css } from 'emotion';
@@ -139,7 +138,7 @@ function useContextMenu(
   if (openedNode) {
     MenuComponent = (
       <ContextMenu
-        renderHeader={() => <div>{openedNode.node.name}</div>}
+        renderHeader={() => <div>{openedNode.node.title}</div>}
         items={getItems(nodes, openedNode.node.dataFrameRowIndex)}
         onClose={() => setOpenedNode(undefined)}
         x={openedNode.event.pageX}
@@ -153,7 +152,7 @@ function useContextMenu(
       <ContextMenu
         renderHeader={() => (
           <div>
-            {(openedEdge.edge.source as NodeDatum).name} {'->'} {(openedEdge.edge.target as NodeDatum).name}
+            {(openedEdge.edge.source as NodeDatum).title} {'->'} {(openedEdge.edge.target as NodeDatum).title}
           </div>
         )}
         items={getItems(edges, openedEdge.edge.dataFrameRowIndex)}
@@ -180,35 +179,78 @@ function usePanAndZoom(bounds: Bounds) {
 /**
  * Transform nodes and edges dataframes into array of objects that the layout code can then work with.
  */
-function processServices(services: DataFrame, edges: DataFrame): { nodes: NodeDatum[]; links: LinkDatum[] } {
-  const servicesView = new DataFrameView<{ name: string; id: string; data: XrayService }>(services);
-  const servicesMap = servicesView.toArray().reduce((acc, s, index) => {
-    acc[s.id] = {
-      name: s.name,
-      type: s.data.Type,
-      id: s.id,
-      dataFrameRowIndex: index,
-      incoming: 0,
-      stats: computeStats(s.data),
-    };
-    return acc;
-  }, {} as { [id: string]: NodeDatum });
+function processServices(nodes: DataFrame, edges: DataFrame): { nodes: NodeDatum[]; links: LinkDatum[] } {
+  const nodesFieldsCache = new FieldCache(nodes);
+  const idField = nodesFieldsCache.getFieldByName('id');
+  const titleField = nodesFieldsCache.getFieldsByLabel(labelType, titleLabel)[0];
+  const subTitleField = nodesFieldsCache.getFieldsByLabel(labelType, subTitleLabel)[0];
+  const mainStatField = nodesFieldsCache.getFieldsByLabel(labelType, mainStat)[0];
+  const secondaryStatField = nodesFieldsCache.getFieldsByLabel(labelType, secondaryStat)[0];
+  const arcFields = nodesFieldsCache.getFieldsByLabel(labelType, arcLabel);
 
-  const edgesView = new DataFrameView<{ source: string; target: string; data: XrayEdge }>(edges);
-  const edgesMapped = edgesView.toArray().map((edge, index) => {
+  const servicesMap =
+    idField?.values.toArray().reduce<{ [id: string]: NodeDatum }>((acc, id, index) => {
+      acc[id] = {
+        id: id,
+        title: titleField.values.get(index),
+        subTitle: subTitleField.values.get(index),
+        dataFrameRowIndex: index,
+        incoming: 0,
+        mainStat: statToString(mainStatField, index),
+        secondaryStat: statToString(secondaryStatField, index),
+        arcSections: arcFields.map(f => {
+          return {
+            value: f.values.get(index),
+            color: f.config.color?.fixedColor || '',
+          };
+        }),
+      };
+      return acc;
+    }, {}) || {};
+
+  const edgesFieldsCache = new FieldCache(edges);
+  const edgeSourceField = edgesFieldsCache.getFieldByName('source');
+  const edgeTargetField = edgesFieldsCache.getFieldByName('target');
+  const edgeMainStatField = edgesFieldsCache.getFieldsByLabel(labelType, mainStat)[0];
+  const edgeSecondaryStatField = edgesFieldsCache.getFieldsByLabel(labelType, secondaryStat)[0];
+  const edgesMapped = edgeSourceField?.values.toArray().map((source, index) => {
+    const target = edgeTargetField?.values.get(index);
     // We are adding incoming edges count so we can later on find out which nodes are the roots
-    servicesMap[edge.target].incoming++;
+    servicesMap[target].incoming++;
 
     return {
       dataFrameRowIndex: index,
-      source: edge.source,
-      target: edge.target,
-      stats: computeStats(edge.data),
+      source,
+      target,
+      mainStat: statToString(edgeMainStatField, index),
+      secondaryStat: statToString(edgeSecondaryStatField, index),
     } as LinkDatum;
   });
 
   return {
     nodes: Object.values(servicesMap),
-    links: edgesMapped,
+    links: edgesMapped || [],
   };
 }
+
+function statToString(field: Field, index: number) {
+  if (field.type === FieldType.string) {
+    return field.values.get(index);
+  } else {
+    const decimals = field.config.decimals || 2;
+    const val = field.values.get(index);
+    if (Number.isFinite(val)) {
+      return field.values.get(index).toFixed(decimals) + ' ' + field.config.unit;
+    } else {
+      return '';
+    }
+  }
+}
+
+// TODO move to grafana data probably
+const labelType = 'NodeGraphValueType';
+const arcLabel = 'arc';
+const titleLabel = 'title';
+const subTitleLabel = 'subTitle';
+const mainStat = 'mainStat';
+const secondaryStat = 'secondaryStat';
