@@ -16,8 +16,8 @@ import { PlotProps } from '../uPlot/types';
 import { AxisPlacement, DrawStyle, GraphFieldConfig, PointVisibility } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
-import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
-import { GraphLegend } from '../Graph/GraphLegend';
+import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/types';
+import { VizLegend } from '../Legend/Legend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from './types';
@@ -217,7 +217,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   if (hasLegend && legendItemsRef.current.length > 0) {
     legendElement = (
       <VizLayout.Legend position={legend!.placement} maxHeight="35%" maxWidth="60%">
-        <GraphLegend
+        <VizLegend
           onLabelClick={onLabelClick}
           placement={legend!.placement}
           items={legendItemsRef.current}

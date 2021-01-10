@@ -5,17 +5,22 @@ import { css } from 'emotion';
 import { GraphSeriesValue } from '@grafana/data';
 
 import { Graph, GraphProps } from './Graph';
-import { LegendRenderOptions, LegendItem, LegendDisplayMode } from '../Legend/Legend';
-import { GraphLegend } from './GraphLegend';
+import {
+  LegendItem,
+  LegendDisplayMode,
+  SeriesColorChangeHandler,
+  SeriesAxisToggleHandler,
+  LegendPlacement,
+} from '../Legend/types';
+import { VizLegend } from '../Legend/Legend';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { stylesFactory } from '../../themes';
 
-export type SeriesOptionChangeHandler<TOption> = (label: string, option: TOption) => void;
-export type SeriesColorChangeHandler = SeriesOptionChangeHandler<string>;
-export type SeriesAxisToggleHandler = SeriesOptionChangeHandler<number>;
-
-export interface GraphWithLegendProps extends GraphProps, LegendRenderOptions {
+export interface GraphWithLegendProps extends GraphProps {
   legendDisplayMode: LegendDisplayMode;
+  placement: LegendPlacement;
+  hideEmpty?: boolean;
+  hideZero?: boolean;
   sortLegendBy?: string;
   sortLegendDesc?: boolean;
   onSeriesColorChange?: SeriesColorChangeHandler;
@@ -112,7 +117,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
       {legendDisplayMode !== LegendDisplayMode.Hidden && (
         <div className={legendContainer}>
           <CustomScrollbar hideHorizontalTrack>
-            <GraphLegend
+            <VizLegend
               items={legendItems}
               displayMode={legendDisplayMode}
               placement={placement}

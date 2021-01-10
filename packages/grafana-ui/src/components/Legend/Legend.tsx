@@ -1,58 +1,49 @@
-import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
-
-import { LegendList } from './LegendList';
+import React from 'react';
+import { LegendProps, LegendDisplayMode } from './types';
 import { LegendTable } from './LegendTable';
-import tinycolor from 'tinycolor2';
+import { LegendList } from './LegendList';
 
-export const generateLegendItems = (numberOfSeries: number, statsToDisplay?: DisplayValue[]): LegendItem[] => {
-  const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
-
-  return [...new Array(numberOfSeries)].map((item, i) => {
-    return {
-      label: `${alphabet[i].toUpperCase()}-series`,
-      color: tinycolor.fromRatio({ h: i / alphabet.length, s: 1, v: 1 }).toHexString(),
-      yAxis: 1,
-      displayValues: statsToDisplay || [],
-    };
-  });
+export const VizLegend: React.FunctionComponent<LegendProps> = ({
+  items,
+  displayMode,
+  sortBy: sortKey,
+  sortDesc,
+  onToggleSort,
+  onSeriesAxisToggle,
+  onLabelClick,
+  onSeriesColorChange,
+  placement,
+  className,
+}) => {
+  switch (displayMode) {
+    case LegendDisplayMode.Table:
+      return (
+        <LegendTable
+          className={className}
+          items={items}
+          placement={placement}
+          sortBy={sortKey}
+          sortDesc={sortDesc}
+          onLabelClick={onLabelClick}
+          onSeriesAxisToggle={onSeriesAxisToggle}
+          onToggleSort={onToggleSort}
+          onSeriesColorChange={onSeriesColorChange}
+        />
+      );
+    case LegendDisplayMode.List:
+      return (
+        <LegendList
+          className={className}
+          items={items}
+          placement={placement}
+          onLabelClick={onLabelClick}
+          onSeriesColorChange={onSeriesColorChange}
+          onSeriesAxisToggle={onSeriesAxisToggle}
+        />
+      );
+    default:
+      return null;
+  }
 };
 
-export enum LegendDisplayMode {
-  List = 'list',
-  Table = 'table',
-  Hidden = 'hidden',
-}
-export interface LegendBasicOptions {
-  displayMode: LegendDisplayMode;
-}
-
-export interface LegendRenderOptions {
-  placement: LegendPlacement;
-  hideEmpty?: boolean;
-  hideZero?: boolean;
-}
-
-export type LegendPlacement = 'bottom' | 'right';
-
-export interface LegendOptions extends LegendBasicOptions, LegendRenderOptions {}
-
-export interface LegendItem {
-  label: string;
-  color: string;
-  yAxis: number;
-  disabled?: boolean;
-  displayValues?: DisplayValue[];
-  fieldIndex?: DataFrameFieldIndex;
-}
-
-export interface LegendComponentProps {
-  className?: string;
-  items: LegendItem[];
-  placement: LegendPlacement;
-  // Function to render given item
-  itemRenderer?: (item: LegendItem, index: number) => JSX.Element;
-}
-
-export interface LegendProps extends LegendComponentProps {}
-
-export { LegendList, LegendTable };
+VizLegend.displayName = 'Legend';

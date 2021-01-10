@@ -1,26 +1,64 @@
-import React, { useContext } from 'react';
+import React, { FC } from 'react';
 import { css, cx } from 'emotion';
-import { LegendComponentProps } from './Legend';
+import { LegendTableProps } from './types';
 import { Icon } from '../Icon/Icon';
-import { ThemeContext } from '../../themes/ThemeContext';
+import { useTheme } from '../../themes/ThemeContext';
+import union from 'lodash/union';
+import sortBy from 'lodash/sortBy';
+import { LegendTableItem } from './LegendTableItem';
 
-export interface LegendTableProps extends LegendComponentProps {
-  columns: string[];
-  sortBy?: string;
-  sortDesc?: boolean;
-  onToggleSort?: (sortBy: string) => void;
-}
-
-export const LegendTable: React.FunctionComponent<LegendTableProps> = ({
+export const LegendTable: FC<LegendTableProps> = ({
   items,
-  columns,
-  sortBy,
+  sortBy: sortKey,
   sortDesc,
   itemRenderer,
   className,
   onToggleSort,
+  onSeriesAxisToggle,
+  onLabelClick,
+  onSeriesColorChange,
 }) => {
-  const theme = useContext(ThemeContext);
+  const theme = useTheme();
+
+  const columns = items
+    .map(item => {
+      if (item.displayValues) {
+        return item.displayValues.map(i => i.title);
+      }
+      return [];
+    })
+    .reduce(
+      (acc, current) => {
+        return union(
+          acc,
+          current.filter(item => !!item)
+        );
+      },
+      ['']
+    ) as string[];
+
+  const sortedItems = sortKey
+    ? sortBy(items, item => {
+        if (item.displayValues) {
+          const stat = item.displayValues.filter(stat => stat.title === sortKey)[0];
+          return stat && stat.numeric;
+        }
+        return undefined;
+      })
+    : items;
+
+  if (!itemRenderer) {
+    /* eslint-disable-next-line react/display-name */
+    itemRenderer = (item, index) => (
+      <LegendTableItem
+        key={`${item.label}-${index}`}
+        item={item}
+        onSeriesAxisToggle={onSeriesAxisToggle}
+        onSeriesColorChange={onSeriesColorChange}
+        onLabelClick={onLabelClick}
+      />
+    );
+  }
 
   return (
     <table
@@ -53,7 +91,7 @@ export const LegendTable: React.FunctionComponent<LegendTableProps> = ({
                 }}
               >
                 {columnHeader}
-                {sortBy === columnHeader && (
+                {sortKey === columnHeader && (
                   <Icon
                     className={css`
                       margin-left: ${theme.spacing.sm};
@@ -66,17 +104,7 @@ export const LegendTable: React.FunctionComponent<LegendTableProps> = ({
           })}
         </tr>
       </thead>
-      <tbody>
-        {items.map((item, index) => {
-          return itemRenderer ? (
-            itemRenderer(item, index)
-          ) : (
-            <tr key={`${item.label}-${index}`}>
-              <td>{item.label}</td>
-            </tr>
-          );
-        })}
-      </tbody>
+      <tbody>{sortedItems.map(itemRenderer!)}</tbody>
     </table>
   );
 };

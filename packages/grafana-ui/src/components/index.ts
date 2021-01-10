@@ -70,7 +70,6 @@ export {
 
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
-export { GraphLegend } from './Graph/GraphLegend';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
 export { GraphContextMenu, GraphContextMenuHeader } from './Graph/GraphContextMenu';
 export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
@@ -79,16 +78,8 @@ export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepea
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
 
-export {
-  LegendOptions,
-  LegendBasicOptions,
-  LegendRenderOptions,
-  LegendList,
-  LegendTable,
-  LegendItem,
-  LegendPlacement,
-  LegendDisplayMode,
-} from './Legend/Legend';
+export { LegendOptions, LegendList, LegendTable, LegendItem, LegendPlacement, LegendDisplayMode } from './Legend/types';
+export { VizLegend } from './Legend/Legend';
 
 export { Alert, AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';

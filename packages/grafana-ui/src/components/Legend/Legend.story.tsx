@@ -1,9 +1,11 @@
 import React from 'react';
-import { generateLegendItems } from './Legend';
-import { LegendList, LegendPlacement, LegendItem, LegendTable } from '@grafana/ui';
-import { number, select, text } from '@storybook/addon-knobs';
-import { action } from '@storybook/addon-actions';
-import { GraphLegendListItem, GraphLegendTableRow, GraphLegendItemProps } from '../Graph/GraphLegendItem';
+import { VizLegend } from '@grafana/ui';
+import { number, select } from '@storybook/addon-knobs';
+import {} from './LegendListItem';
+import tinycolor from 'tinycolor2';
+import { DisplayValue } from '@grafana/data';
+import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
+import { LegendDisplayMode, LegendItem } from './types';
 
 const getStoriesKnobs = (table = false) => {
   const numberOfSeries = number('Number of series', 3);
@@ -17,115 +19,49 @@ const getStoriesKnobs = (table = false) => {
     '100%'
   );
 
-  const rawRenderer = (item: LegendItem) => (
-    <>
-      Label: <strong>{item.label}</strong>, Color: <strong>{item.color}</strong>, disabled:{' '}
-      <strong>{item.disabled ? 'yes' : 'no'}</strong>
-    </>
-  );
-
-  // eslint-disable-next-line react/display-name
-  const customRenderer = (component: React.ComponentType<GraphLegendItemProps>) => (item: LegendItem) =>
-    React.createElement(component, {
-      item,
-      onLabelClick: action('GraphLegendItem label clicked'),
-      onSeriesColorChange: action('Series color changed'),
-      onToggleAxis: action('Y-axis toggle'),
-    });
-
-  const typeSpecificRenderer = table
-    ? {
-        'Custom renderer(GraphLegendTablerow)': 'custom-table',
-      }
-    : {
-        'Custom renderer(GraphLegendListItem)': 'custom-list',
-      };
-  const legendItemRenderer = select(
-    'Item rendered',
-    {
-      'Raw renderer': 'raw',
-      ...typeSpecificRenderer,
-    },
-    'raw'
-  );
-
-  const rightAxisSeries = text('Right y-axis series, i.e. A,C', '');
-
-  const legendPlacement = select<LegendPlacement>(
-    'Legend placement',
-    {
-      bottom: 'bottom',
-      right: 'right',
-    },
-    'bottom'
-  );
-
   return {
     numberOfSeries,
     containerWidth,
-    itemRenderer:
-      legendItemRenderer === 'raw'
-        ? rawRenderer
-        : customRenderer(legendItemRenderer === 'custom-list' ? GraphLegendListItem : GraphLegendTableRow),
-    rightAxisSeries,
-    legendPlacement,
   };
 };
 
 export default {
-  title: 'Visualizations/Legend',
-  component: LegendList,
-  subcomponents: { LegendTable },
+  title: 'Visualizations/VizLegend',
+  component: VizLegend,
+  decorators: [withCenteredStory],
 };
 
-export const list = () => {
-  const { numberOfSeries, itemRenderer, containerWidth, rightAxisSeries, legendPlacement } = getStoriesKnobs();
+export const Examples = () => {
+  const { numberOfSeries, containerWidth } = getStoriesKnobs();
   let items = generateLegendItems(numberOfSeries);
 
-  items = items.map(i => {
-    if (
-      rightAxisSeries
-        .split(',')
-        .map(s => s.trim())
-        .indexOf(i.label.split('-')[0]) > -1
-    ) {
-      i.yAxis = 2;
-    }
-
-    return i;
-  });
   return (
     <div style={{ width: containerWidth }}>
-      <LegendList itemRenderer={itemRenderer} items={items} placement={legendPlacement} />
+      <p>
+        List placement bottom
+        <VizLegend displayMode={LegendDisplayMode.List} items={items} placement="bottom" />
+      </p>
+      <p>
+        List placement right
+        <VizLegend displayMode={LegendDisplayMode.List} items={items} placement="right" />
+      </p>
+      <p>
+        Display mode table
+        <VizLegend displayMode={LegendDisplayMode.Table} items={items} placement="bottom" />
+      </p>
     </div>
   );
 };
 
-export const table = () => {
-  const { numberOfSeries, itemRenderer, containerWidth, rightAxisSeries, legendPlacement } = getStoriesKnobs(true);
-  let items = generateLegendItems(numberOfSeries);
+function generateLegendItems(numberOfSeries: number, statsToDisplay?: DisplayValue[]): LegendItem[] {
+  const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
 
-  items = items.map(i => {
-    if (
-      rightAxisSeries
-        .split(',')
-        .map(s => s.trim())
-        .indexOf(i.label.split('-')[0]) > -1
-    ) {
-      i.yAxis = 2;
-    }
-
+  return [...new Array(numberOfSeries)].map((item, i) => {
     return {
-      ...i,
-      info: [
-        { title: 'min', text: '14.42', numeric: 14.427101844163694 },
-        { title: 'max', text: '18.42', numeric: 18.427101844163694 },
-      ],
+      label: `${alphabet[i].toUpperCase()}-series`,
+      color: tinycolor.fromRatio({ h: i / alphabet.length, s: 1, v: 1 }).toHexString(),
+      yAxis: 1,
+      displayValues: statsToDisplay || [],
     };
   });
-  return (
-    <div style={{ width: containerWidth }}>
-      <LegendTable itemRenderer={itemRenderer} items={items} columns={['', 'min', 'max']} placement={legendPlacement} />
-    </div>
-  );
-};
+}
