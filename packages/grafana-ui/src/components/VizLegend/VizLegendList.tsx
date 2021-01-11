@@ -1,16 +1,16 @@
 import React, { useContext } from 'react';
-import { LegendBaseProps, VizLegendItem } from './types';
+import { VizLegendBaseProps, VizLegendItem } from './types';
 import { InlineList } from '../List/InlineList';
 import { List } from '../List/List';
 import { css, cx } from 'emotion';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
-import { LegendListItem } from './VizLegendListItem';
+import { VizLegendListItem } from './VizLegendListItem';
 
-export interface Props extends LegendBaseProps {}
+export interface Props extends VizLegendBaseProps {}
 
-export const LegendList: React.FunctionComponent<Props> = ({
+export const VizLegendList: React.FunctionComponent<Props> = ({
   items,
   itemRenderer,
   onSeriesColorChange,
@@ -24,7 +24,7 @@ export const LegendList: React.FunctionComponent<Props> = ({
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
     itemRenderer = item => (
-      <LegendListItem item={item} onLabelClick={onLabelClick} onSeriesColorChange={onSeriesColorChange} />
+      <VizLegendListItem item={item} onLabelClick={onLabelClick} onSeriesColorChange={onSeriesColorChange} />
     );
   }
 
@@ -34,21 +34,37 @@ export const LegendList: React.FunctionComponent<Props> = ({
 
   const getItemKey = (item: VizLegendItem) => `${item.label}`;
 
-  return placement === 'bottom' ? (
-    <div className={cx(styles.wrapper, className)}>
-      <div className={styles.section}>
-        <InlineList items={items.filter(item => item.yAxis === 1)} renderItem={renderItem} getItemKey={getItemKey} />
-      </div>
-      <div className={cx(styles.section, styles.sectionRight)}>
-        <InlineList items={items.filter(item => item.yAxis !== 1)} renderItem={renderItem} getItemKey={getItemKey} />
-      </div>
-    </div>
-  ) : (
-    <List items={items} renderItem={renderItem} getItemKey={getItemKey} className={className} />
-  );
+  switch (placement) {
+    case 'right':
+      return (
+        <div className={cx(styles.rightWrapper, className)}>
+          <List items={items} renderItem={renderItem} getItemKey={getItemKey} className={className} />
+        </div>
+      );
+    case 'bottom':
+    default:
+      return (
+        <div className={cx(styles.bottomWrapper, className)}>
+          <div className={styles.section}>
+            <InlineList
+              items={items.filter(item => item.yAxis === 1)}
+              renderItem={renderItem}
+              getItemKey={getItemKey}
+            />
+          </div>
+          <div className={cx(styles.section, styles.sectionRight)}>
+            <InlineList
+              items={items.filter(item => item.yAxis !== 1)}
+              renderItem={renderItem}
+              getItemKey={getItemKey}
+            />
+          </div>
+        </div>
+      );
+  }
 };
 
-LegendList.displayName = 'LegendList';
+VizLegendList.displayName = 'LegendList';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   item: css`
@@ -58,7 +74,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     white-space: nowrap;
     margin-bottom: ${theme.spacing.xs};
   `,
-  wrapper: css`
+  rightWrapper: css`
+    margin-left: ${theme.spacing.sm};
+  `,
+  bottomWrapper: css`
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;

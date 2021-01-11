@@ -1,7 +1,7 @@
 import React from 'react';
 import { LegendProps, LegendDisplayMode } from './types';
-import { LegendTable } from './VizLegendTable';
-import { LegendList } from './VizLegendList';
+import { VizLegendTable } from './VizLegendTable';
+import { VizLegendList } from './VizLegendList';
 
 export const VizLegend: React.FunctionComponent<LegendProps> = ({
   items,
@@ -17,7 +17,7 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
   switch (displayMode) {
     case LegendDisplayMode.Table:
       return (
-        <LegendTable
+        <VizLegendTable
           className={className}
           items={items}
           placement={placement}
@@ -30,7 +30,7 @@ export const VizLegend: React.FunctionComponent<LegendProps> = ({
       );
     case LegendDisplayMode.List:
       return (
-        <LegendList
+        <VizLegendList
           className={className}
           items={items}
           placement={placement}

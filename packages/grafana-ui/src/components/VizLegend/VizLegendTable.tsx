@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { css, cx } from 'emotion';
-import { LegendTableProps } from './types';
+import { VizLegendTableProps } from './types';
 import { Icon } from '../Icon/Icon';
 import { useTheme } from '../../themes/ThemeContext';
 import union from 'lodash/union';
@@ -9,7 +9,7 @@ import { LegendTableItem } from './VizLegendTableItem';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { GrafanaTheme } from '@grafana/data';
 
-export const LegendTable: FC<LegendTableProps> = ({
+export const VizLegendTable: FC<VizLegendTableProps> = ({
   items,
   sortBy: sortKey,
   sortDesc,

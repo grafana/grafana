@@ -16,7 +16,7 @@ import { PlotProps } from '../uPlot/types';
 import { AxisPlacement, DrawStyle, GraphFieldConfig, PointVisibility } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
-import { LegendDisplayMode, VizLegendItem, LegendOptions } from '../VizLegend/types';
+import { LegendDisplayMode, VizLegendItem, VizLegendOptions } from '../VizLegend/types';
 import { VizLegend } from '../VizLegend/VizLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
@@ -30,7 +30,7 @@ export interface XYFieldMatchers {
 }
 export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
   data: DataFrame[];
-  legend?: LegendOptions;
+  legend?: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
 }

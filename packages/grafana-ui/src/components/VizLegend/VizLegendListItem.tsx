@@ -15,7 +15,7 @@ export interface Props {
   onSeriesColorChange?: SeriesColorChangeHandler;
 }
 
-export const LegendListItem: React.FunctionComponent<Props> = ({ item, onSeriesColorChange, onLabelClick }) => {
+export const VizLegendListItem: React.FunctionComponent<Props> = ({ item, onSeriesColorChange, onLabelClick }) => {
   const theme = useTheme();
   const styles = getStyles(theme);
 
@@ -47,7 +47,7 @@ export const LegendListItem: React.FunctionComponent<Props> = ({ item, onSeriesC
   );
 };
 
-LegendListItem.displayName = 'LegendTableItem';
+VizLegendListItem.displayName = 'VizLegendListItem';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {

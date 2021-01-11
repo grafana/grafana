@@ -1,8 +1,8 @@
 import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
-import { LegendList } from './VizLegendList';
-import { LegendTable } from './VizLegendTable';
+import { VizLegendList } from './VizLegendList';
+import { VizLegendTable } from './VizLegendTable';
 
-export interface LegendBaseProps {
+export interface VizLegendBaseProps {
   placement: LegendPlacement;
   className?: string;
   items: VizLegendItem[];
@@ -11,13 +11,13 @@ export interface LegendBaseProps {
   onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLElement>) => void;
 }
 
-export interface LegendTableProps extends LegendBaseProps {
+export interface VizLegendTableProps extends VizLegendBaseProps {
   sortBy?: string;
   sortDesc?: boolean;
   onToggleSort?: (sortBy: string) => void;
 }
 
-export interface LegendProps extends LegendBaseProps, LegendTableProps {
+export interface LegendProps extends VizLegendBaseProps, VizLegendTableProps {
   displayMode: LegendDisplayMode;
 }
 
@@ -38,12 +38,10 @@ export enum LegendDisplayMode {
 
 export type LegendPlacement = 'bottom' | 'right';
 
-export interface LegendOptions {
+export interface VizLegendOptions {
   displayMode: LegendDisplayMode;
   placement: LegendPlacement;
 }
 
 export type SeriesOptionChangeHandler<TOption> = (label: string, option: TOption) => void;
 export type SeriesColorChangeHandler = SeriesOptionChangeHandler<string>;
-
-export { LegendList, LegendTable };
