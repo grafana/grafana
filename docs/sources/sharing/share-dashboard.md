@@ -12,11 +12,7 @@ You can share a dashboard as a direct link or as a snapshot. You can also export
 To share a dashboard:
 
 1. Go to the home page of your Grafana instance.
-1. Click on the share icon in the top navigation. 
-
-{{< docs-imagebox img="/img/docs/sharing/Dashboard_Share_Icon.png" max-width="700px" >}}
-
-The share dialog opens and shows the Link tab.
+1. Click on the share icon in the top navigation. The share dialog opens and shows the Link tab.
 
 {{< docs-imagebox img="/img/docs/sharing/Share_Dashboard_Direct_Link.png" max-width="700px" >}}
 
@@ -37,15 +33,17 @@ A dashboard snapshot shares an interactive dashboard publicly. Grafana strips se
 You can publish snapshots to your local instance or to [snapshot.raintank.io](http://snapshot.raintank.io). The latter is a free service
 provided by Grafana Labs that allows you to publish dashboard snapshots to an external Grafana instance. The same rules still apply: anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 
-{{< docs-imagebox img="/img/docs/v50/share_panel_modal.png" max-width="700px" >}}
+{{< docs-imagebox img="/img/docs/sharing/Share_Dashboard_Snapshot.png" max-width="700px" >}}
 
 To publish a snapshot:
 
 1. Click on **Local Snapshot** or **Publish to snapshot.raintank.io**. This generates the link of the snapshot.
-1. Copy the snapshot link, and share it either within your organization or publicly on the web.
+2. Copy the snapshot link, and share it either within your organization or publicly on the web.
 
 In case you created a snapshot by mistake, click **delete snapshot** to remove the snapshot from your Grafana instance.
 
 ## Export dashboard
 
 Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards]({{< relref "../dashboards/export-import.md" >}}).
+
+{{< docs-imagebox img="/img/docs/sharing/Share_Dashboard_Export.png" max-width="700px" >}}
