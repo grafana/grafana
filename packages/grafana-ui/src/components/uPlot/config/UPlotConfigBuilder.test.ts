@@ -3,7 +3,7 @@
 import { UPlotConfigBuilder } from './UPlotConfigBuilder';
 import { GrafanaTheme } from '@grafana/data';
 import { expect } from '../../../../../../public/test/lib/common';
-import { AreaGradientMode, AxisPlacement, DrawStyle, PointVisibility, ScaleDistribution } from '../config';
+import { FillGradientMode, AxisPlacement, DrawStyle, PointVisibility, ScaleDistribution } from '../config';
 
 describe('UPlotConfigBuilder', () => {
   describe('default config', () => {
@@ -352,7 +352,7 @@ describe('UPlotConfigBuilder', () => {
       scaleKey: 'scale-x',
       lineColor: '#FFAABB',
       fillOpacity: 50,
-      fillGradient: AreaGradientMode.Opacity,
+      fillGradient: FillGradientMode.Opacity,
     });
 
     expect(builder.getConfig().series[1].fill).toBeInstanceOf(Function);
@@ -364,7 +364,7 @@ describe('UPlotConfigBuilder', () => {
       drawStyle: DrawStyle.Line,
       scaleKey: 'scale-x',
       fillOpacity: 50,
-      fillGradient: AreaGradientMode.Opacity,
+      fillGradient: FillGradientMode.Opacity,
       showPoints: PointVisibility.Auto,
       pointSize: 5,
       pointColor: '#00ff00',

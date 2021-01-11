@@ -168,7 +168,7 @@ export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 export { Input } from './Input/Input';
 export { FormInputSize } from './Forms/types';
 
-export { Switch } from './Switch/Switch';
+export { Switch, InlineSwitch } from './Switch/Switch';
 export { Checkbox } from './Forms/Checkbox';
 
 export { TextArea } from './TextArea/TextArea';
