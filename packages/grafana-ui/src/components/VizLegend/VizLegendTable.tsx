@@ -94,7 +94,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     table: css`
       width: 100%;
-      margin-left: ${theme.spacing.md};
+      margin-left: ${theme.spacing.sm};
     `,
     header: css`
       color: ${theme.colors.textBlue};
