@@ -76,7 +76,6 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
 
     if (pointsConfig.points!.show) {
       if (pointSymbol && pointSymbol !== PointSymbol.Dot) {
-        console.log(pointSize);
         pointsConfig.points!.show = getCustomPointRenderer(pointSymbol, pointColor!, pointSize!);
       }
     }
@@ -256,6 +255,8 @@ function getCustomPointRenderer(shape: PointSymbol, color: string, size: number)
       ctx.fill();
       j++;
     }
+
+    return undefined;
   };
 }
 
