@@ -17,7 +17,7 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
       .addCustomEditor({
         id: 'xyPlotConfig',
         path: 'dims',
-        name: 'Dimensions',
+        name: 'Data',
         editor: XYDimsEditor,
       })
       .addRadio({
