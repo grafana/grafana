@@ -1,4 +1,4 @@
-import { InlineField, Input, Switch } from '@grafana/ui';
+import { InlineField, Input, InlineSwitch } from '@grafana/ui';
 import React, { FunctionComponent, ComponentProps, useState } from 'react';
 import { extendedStats } from '../../../../query_def';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
@@ -132,7 +132,11 @@ const ExtendedStatSetting: FunctionComponent<ExtendedStatSettingProps> = ({ stat
 
   return (
     <InlineField label={stat.label} {...inlineFieldProps} key={stat.value}>
-      <Switch id={id} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)} value={value} />
+      <InlineSwitch
+        id={id}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
+        value={value}
+      />
     </InlineField>
   );
 };
