@@ -3,6 +3,7 @@ import { NodeDatum } from './types';
 import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
+import tinycolor from 'tinycolor2';
 
 const nodeR = 40;
 
@@ -10,6 +11,30 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   mainGroup: css`
     cursor: pointer;
     font-size: 10px;
+  `,
+
+  mainCircle: css`
+    fill: ${theme.colors.panelBg};
+  `,
+
+  hoverCircle: css`
+    opacity: 0.5;
+    fill: transparent;
+    stroke: ${theme.colors.textBlue};
+  `,
+
+  text: css`
+    fill: ${theme.colors.text};
+  `,
+
+  titleText: css`
+    text-align: center;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    background-color: ${tinycolor(theme.colors.bodyBg)
+      .setAlpha(0.6)
+      .toHex8String()};
   `,
 }));
 
@@ -29,43 +54,41 @@ export function Node(props: {
 
   return (
     <g
+      className={styles.mainGroup}
       onMouseEnter={() => {
         onMouseEnter(node.id);
       }}
       onMouseLeave={() => {
         onMouseLeave(node.id);
       }}
-      className={styles.mainGroup}
       onClick={event => {
         onClick(event, node);
       }}
     >
-      <ResponseTypeCircle node={node} />
-      <circle fill={'#fff'} r={nodeR - 2} cx={node.x} cy={node.y} />
+      <circle className={styles.mainCircle} r={nodeR} cx={node.x} cy={node.y} />
       <circle
-        style={{ display: hovering ? 'initial' : 'none', opacity: 0.5 }}
-        fill={'transparent'}
-        stroke={'rgb(57, 131, 213)'}
+        className={styles.hoverCircle}
+        style={{ display: hovering ? 'initial' : 'none' }}
         r={nodeR - 3}
         cx={node.x}
         cy={node.y}
         strokeWidth={2}
       />
-      <g>
+      <ResponseTypeCircle node={node} />
+      <g className={styles.text}>
         <text x={node.x} y={node.y - 5} textAnchor={'middle'}>
           {node.mainStat}
         </text>
         <text x={node.x} y={node.y + 10} textAnchor={'middle'}>
           {node.secondaryStat}
         </text>
-      </g>
-      <g>
-        <text x={node.x} y={node.y + nodeR + 15} textAnchor={'middle'}>
-          {node.title}
-        </text>
-        <text x={node.x} y={node.y + nodeR + 30} textAnchor={'middle'}>
-          {node.subTitle}
-        </text>
+        <foreignObject x={node.x - 50} y={node.y + nodeR + 5} width="100" height="30">
+          <div className={styles.titleText}>
+            {node.title}
+            <br />
+            {node.subTitle}
+          </div>
+        </foreignObject>
       </g>
     </g>
   );

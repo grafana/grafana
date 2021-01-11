@@ -1,5 +1,31 @@
 import React from 'react';
 import { LinkDatum, NodeDatum } from './types';
+import { css } from 'emotion';
+import { stylesFactory, useTheme } from '../../themes';
+import { GrafanaTheme } from '@grafana/data';
+import tinycolor from 'tinycolor2';
+import lightTheme from '../../themes/light';
+import darkTheme from '../../themes/dark';
+
+const getStyles = stylesFactory((theme: GrafanaTheme) => {
+  const inverseTheme = theme.isDark ? lightTheme : darkTheme;
+  return {
+    mainGroup: css`
+      pointer-events: none;
+      font-size: 8px;
+    `,
+
+    background: css`
+      fill: ${tinycolor(inverseTheme.colors.bodyBg)
+        .setAlpha(0.8)
+        .toHex8String()};
+    `,
+
+    text: css`
+      fill: ${inverseTheme.colors.text};
+    `,
+  };
+});
 
 interface Props {
   link: LinkDatum;
@@ -24,14 +50,15 @@ export function LinkLabel(props: Props) {
     x: line.x1 + (line.x2 - line.x1) / 2,
     y: line.y1 + (line.y2 - line.y1) / 2,
   };
+  const styles = getStyles(useTheme());
 
   return (
-    <g style={{ display: hovering ? 'initial' : 'none', fontSize: 8, pointerEvents: 'none' }}>
-      <rect x={middle.x - 40} y={middle.y - 15} width="80" height="30" rx="5" fill={'rgba(0, 0, 0, 0.7)'} />
-      <text x={middle.x} y={middle.y - 5} textAnchor={'middle'} fill={'white'}>
+    <g className={styles.mainGroup} style={{ display: hovering ? 'initial' : 'none' }}>
+      <rect className={styles.background} x={middle.x - 40} y={middle.y - 15} width="80" height="30" rx="5" />
+      <text className={styles.text} x={middle.x} y={middle.y - 5} textAnchor={'middle'}>
         {link.mainStat}
       </text>
-      <text x={middle.x} y={middle.y + 10} textAnchor={'middle'} fill={'white'}>
+      <text className={styles.text} x={middle.x} y={middle.y + 10} textAnchor={'middle'}>
         {link.secondaryStat}
       </text>
     </g>
