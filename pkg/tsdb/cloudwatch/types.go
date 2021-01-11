@@ -42,6 +42,11 @@ func (e *queryError) Error() string {
 	return fmt.Sprintf("error parsing query %q, %s", e.RefID, e.err)
 }
 
+type executedQuery struct {
+	Expression, ID string
+	Period         int
+}
+
 type cloudWatchLink struct {
 	View    string        `json:"view"`
 	Stacked bool          `json:"stacked"`
@@ -52,6 +57,11 @@ type cloudWatchLink struct {
 	Metrics []interface{} `json:"metrics"`
 }
 
-// type cloudWatchLinkMetric struct {
-// 	Expression string `json:"expression"`
-// }
+type metricExpression struct {
+	Expression string `json:"expression"`
+} 
+
+type metricStatMeta struct {
+	Stat   string `json:"stat"`
+	Period int `json:"period"`
+}

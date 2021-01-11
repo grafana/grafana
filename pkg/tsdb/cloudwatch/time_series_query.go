@@ -97,7 +97,7 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, queryCo
 			}
 
 			cloudwatchResponses = append(cloudwatchResponses, responses...)
-			res := e.transformQueryResponsesToQueryResult(cloudwatchResponses, requestQueries)
+			res := e.transformQueryResponsesToQueryResult(cloudwatchResponses, requestQueries, startTime, endTime)
 			for _, queryRes := range res {
 				resultChan <- queryRes
 			}
