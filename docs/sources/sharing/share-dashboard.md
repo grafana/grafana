@@ -14,6 +14,8 @@ To share a dashboard:
 1. Go to the home page of your Grafana instance.
 1. Click on the share icon in the top navigation. The share dialog opens and shows the Link tab.
 
+{{< docs-imagebox img="/img/docs/sharing/Share_Dashboard_Direct_Link.png" max-width="700px" >}}
+
 ## Use direct link
 
 The Link tab has the current time range, template variables and theme selected by default. You can optionally select a shortened URL to share.
@@ -23,7 +25,7 @@ To share a direct link:
 1. Click **Copy**. This copies the default or the shortened URL to the clipboard.
 1. Send the copied URL to a Grafana user with authorization to view the link.
 
-## Publish snapshots
+## Publish a snapshot
 
 A dashboard snapshot shares an interactive dashboard publicly. Grafana strips sensitive data like queries
 (metric, template and annotation) and panel links, leaving only the visible metric data and series names embedded into your dashboard. Dashboard snapshots can be accessed by anyone with the link.
@@ -31,7 +33,7 @@ A dashboard snapshot shares an interactive dashboard publicly. Grafana strips se
 You can publish snapshots to your local instance or to [snapshot.raintank.io](http://snapshot.raintank.io). The latter is a free service
 provided by Grafana Labs that allows you to publish dashboard snapshots to an external Grafana instance. The same rules still apply: anyone with the link can view it. You can set an expiration time if you want the snapshot removed after a certain time period.
 
-{{< docs-imagebox img="/img/docs/v50/share_panel_modal.png" max-width="700px" >}}
+{{< docs-imagebox img="/img/docs/sharing/Share_Dashboard_Snapshot.png" max-width="700px" >}}
 
 To publish a snapshot:
 
@@ -40,6 +42,8 @@ To publish a snapshot:
 
 In case you created a snapshot by mistake, click **delete snapshot** to remove the snapshot from your Grafana instance.
 
-## Export dashboard
+## Dashboard export
 
 Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards]({{< relref "../dashboards/export-import.md" >}}).
+
+{{< docs-imagebox img="/img/docs/sharing/Share_Dashboard_Export.png" max-width="700px" >}}
