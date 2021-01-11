@@ -42,7 +42,7 @@ To publish a snapshot:
 
 In case you created a snapshot by mistake, click **delete snapshot** to remove the snapshot from your Grafana instance.
 
-## Export dashboard
+## Dashboard export
 
 Grafana dashboards can easily be exported and imported. For more information, refer to [Export and import dashboards]({{< relref "../dashboards/export-import.md" >}}).
 
