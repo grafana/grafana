@@ -31,7 +31,7 @@ Here is an example of a link to a server-side rendered PNG:
 ```bash
 https://play.grafana.org/d/000000012/grafana-play-home?orgId=1&from=1568719680173&to=1568726880174&panelId=4&fullscreen
 ```
-#### Query string parameters For server-side rendered images
+#### Query string parameters for server-side rendered images
 
 - **width:** width in pixels. Default is 800.
 - **height:** height in pixels. Default is 400.
