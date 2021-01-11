@@ -114,8 +114,13 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
     });
 
   const renderOverrideTitle = (isExpanded: boolean) => {
-    const overriddenProperites = override.properties.map(p => registry.get(p.id).name).join(', ');
+    const overriddenProperites = override.properties
+      .map(p => registry.getIfExists(p.id)?.name)
+      .filter(name => !!name)
+      .join(', ');
+
     const matcherOptions = matcherUi.optionsToLabel(override.matcher.options);
+
     return (
       <div>
         <HorizontalGroup justify="space-between">
@@ -153,7 +158,6 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
       <>
         {override.properties.map((p, j) => {
           const item = registry.getIfExists(p.id);
-          console.log('item', item);
 
           if (!item) {
             return <div>Unknown property: {p.id}</div>;
