@@ -173,8 +173,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
       const rangeMs = Math.ceil((endNs - startNs) / 1e6);
       const adjustedInterval =
         this.adjustInterval((options as DataQueryRequest<LokiQuery>).intervalMs || 1000, rangeMs) / 1000;
-      // We want to ceil to 1 decimal place
-      const step = Math.ceil(adjustedInterval * 10) / 10;
+      // We want to ceil to 3 decimal places
+      const step = Math.ceil(adjustedInterval * 1000) / 1000;
       const alignedTimes = {
         start: startNs - (startNs % 1e9),
         end: endNs + (1e9 - (endNs % 1e9)),
@@ -544,8 +544,8 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
     if (interval !== 0 && range / interval > 11000) {
       interval = Math.ceil(range / 11000);
     }
-    // The min interval is set to 100ms
-    return Math.max(interval, 100);
+    // The min interval is set to 1ms
+    return Math.max(interval, 1);
   }
 }
 
