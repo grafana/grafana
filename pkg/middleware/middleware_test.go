@@ -329,19 +329,13 @@ func TestMiddlewareContext(t *testing.T) {
 	})
 
 	middlewareScenario(t, "When anonymous access is enabled", func(t *testing.T, sc *scenarioContext) {
-		const orgID int64 = 2
-
-		bus.AddHandler("test", func(query *models.GetOrgByNameQuery) error {
-			assert.Equal(t, "test", query.Name)
-
-			query.Result = &models.Org{Id: orgID, Name: "test"}
-			return nil
-		})
+		org, err := sc.sqlStore.CreateOrgWithMember(sc.cfg.AnonymousOrgName, 1)
+		require.NoError(t, err)
 
 		sc.fakeReq("GET", "/").exec()
 
 		assert.Equal(t, int64(0), sc.context.UserId)
-		assert.Equal(t, orgID, sc.context.OrgId)
+		assert.Equal(t, org.Id, sc.context.OrgId)
 		assert.Equal(t, models.ROLE_EDITOR, sc.context.OrgRole)
 		assert.False(t, sc.context.IsSignedIn)
 	}, func(cfg *setting.Cfg) {
@@ -572,6 +566,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		}))
 
 		ctxHdlr := getContextHandler(t, cfg)
+		sc.sqlStore = ctxHdlr.SQLStore
 		sc.contextHandler = ctxHdlr
 		sc.m.Use(ctxHdlr.Middleware)
 		sc.m.Use(OrgRedirect(sc.cfg))

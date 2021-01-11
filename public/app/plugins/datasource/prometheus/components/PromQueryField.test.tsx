@@ -94,6 +94,55 @@ describe('PromQueryField', () => {
     checkMetricsInCascader(await screen.findByRole('button'), changedMetrics);
   });
 
+  it('does not refreshes metrics when after rounding to minute time range does not change', async () => {
+    const defaultProps = {
+      query: { expr: '', refId: '' },
+      onRunQuery: () => {},
+      onChange: () => {},
+      history: [],
+    };
+    const metrics = ['foo', 'bar'];
+    const changedMetrics = ['foo', 'baz'];
+    const range = {
+      from: dateTime('2020-10-28T00:00:00Z'),
+      to: dateTime('2020-10-28T01:00:00Z'),
+    };
+
+    const languageProvider = makeLanguageProvider({ metrics: [metrics, changedMetrics] });
+    const queryField = render(
+      <PromQueryField
+        // @ts-ignore
+        datasource={{ languageProvider }}
+        range={{
+          ...range,
+          raw: range,
+        }}
+        {...defaultProps}
+      />
+    );
+    checkMetricsInCascader(await screen.findByRole('button'), metrics);
+
+    const newRange = {
+      from: dateTime('2020-10-28T00:00:01Z'),
+      to: dateTime('2020-10-28T01:00:01Z'),
+    };
+    queryField.rerender(
+      <PromQueryField
+        // @ts-ignore
+        datasource={{ languageProvider }}
+        range={{
+          ...newRange,
+          raw: newRange,
+        }}
+        {...defaultProps}
+      />
+    );
+    let cascader = screen.getByRole('button');
+    // Should not show loading
+    expect(cascader.textContent).toContain('Metrics');
+    checkMetricsInCascader(await screen.findByRole('button'), metrics);
+  });
+
   it('refreshes metrics when time range changes but dont show loading state', async () => {
     const defaultProps = {
       query: { expr: '', refId: '' },

@@ -128,10 +128,15 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
         }
 
         let config = field.config; // already set by the prepare task
+
         if (field.state?.range) {
           // Us the global min/max values
-          config = { ...config, ...field.state?.range };
+          config = {
+            ...config,
+            ...field.state?.range,
+          };
         }
+
         const displayName = field.config.displayName ?? defaultDisplayName;
 
         const display =

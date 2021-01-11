@@ -3,7 +3,10 @@ import { DataFrame, DataTransformerConfig, TransformerRegistyItem } from '@grafa
 import { HorizontalGroup } from '@grafana/ui';
 
 import { TransformationEditor } from './TransformationEditor';
-import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
+import {
+  QueryOperationRow,
+  QueryOperationRowRenderProps,
+} from 'app/core/components/QueryOperationRow/QueryOperationRow';
 import { QueryOperationAction } from 'app/core/components/QueryOperationRow/QueryOperationAction';
 import { TransformationsEditorTransformation } from './types';
 
@@ -28,7 +31,7 @@ export const TransformationOperationRow: React.FC<TransformationOperationRowProp
 }) => {
   const [showDebug, setShowDebug] = useState(false);
 
-  const renderActions = ({ isOpen }: { isOpen: boolean }) => {
+  const renderActions = ({ isOpen }: QueryOperationRowRenderProps) => {
     return (
       <HorizontalGroup align="center" width="auto">
         <QueryOperationAction

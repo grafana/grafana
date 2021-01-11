@@ -1,7 +1,7 @@
 {
   "type": "panel",
-  "name": "React graph",
-  "id": "graph2",
+  "name": "XY Chart",
+  "id": "xychart",
   "state": "alpha",
 
   "info": {
@@ -10,8 +10,8 @@
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "img/icn-graph-panel.svg",
-      "large": "img/icn-graph-panel.svg"
+      "small": "img/icn-xychart.svg",
+      "large": "img/icn-xychart.svg"
     }
   }
 }

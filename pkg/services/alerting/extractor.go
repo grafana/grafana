@@ -32,26 +32,19 @@ func NewDashAlertExtractor(dash *models.Dashboard, orgID int64, user *models.Sig
 
 func (e *DashAlertExtractor) lookupDatasourceID(dsName string) (*models.DataSource, error) {
 	if dsName == "" {
-		query := &models.GetDataSourcesQuery{OrgId: e.OrgID}
+		query := &models.GetDefaultDataSourceQuery{OrgId: e.OrgID}
 		if err := bus.Dispatch(query); err != nil {
 			return nil, err
 		}
-
-		for _, ds := range query.Result {
-			if ds.IsDefault {
-				return ds, nil
-			}
-		}
-	} else {
-		query := &models.GetDataSourceByNameQuery{Name: dsName, OrgId: e.OrgID}
-		if err := bus.Dispatch(query); err != nil {
-			return nil, err
-		}
-
 		return query.Result, nil
 	}
 
-	return nil, errors.New("Could not find datasource id for " + dsName)
+	query := &models.GetDataSourceByNameQuery{Name: dsName, OrgId: e.OrgID}
+	if err := bus.Dispatch(query); err != nil {
+		return nil, err
+	}
+
+	return query.Result, nil
 }
 
 func findPanelQueryByRefID(panel *simplejson.Json, refID string) *simplejson.Json {
