@@ -10,6 +10,7 @@ import { ReduceTransformerOptions } from '@grafana/data/src/transformations/tran
 import { Options } from './types';
 import omitBy from 'lodash/omitBy';
 import isNil from 'lodash/isNil';
+import isNumber from 'lodash/isNumber';
 
 /**
  * At 7.0, the `table` panel was swapped from an angular implementation to a react one.
@@ -147,9 +148,9 @@ const migrateTableStyleToOverride = (style: Style) => {
       id: 'thresholds',
       value: {
         mode: 'absolute',
-        steps: ['0', ...style.thresholds].map((threshold, idx) => ({
+        steps: [-Infinity, ...style.thresholds].map((threshold, idx) => ({
           color: style.colors[idx],
-          value: parseInt(threshold, 10),
+          value: isNumber(threshold) ? threshold : parseInt(threshold, 10),
         })),
       },
     });
@@ -180,7 +181,7 @@ const migrateDefaults = (prevDefaults: Style) => {
         mode: ThresholdsMode.Absolute,
         steps: [-Infinity, ...prevDefaults.thresholds].map((threshold: string, idx: number) => ({
           color: prevDefaults.colors[idx],
-          value: parseInt(threshold, 10),
+          value: isNumber(threshold) ? threshold : parseInt(threshold, 10),
         })),
       };
       defaults.thresholds = thresholds;
