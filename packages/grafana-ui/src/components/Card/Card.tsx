@@ -206,7 +206,7 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
       width: 100%;
       font-size: ${theme.typography.size.sm};
       color: ${theme.colors.textSemiWeak};
-      margin: ${theme.spacing.sm} 0 0;
+      margin: ${theme.spacing.xs} 0 0;
       line-height: ${theme.typography.lineHeight.xs};
     `,
     description: css`
