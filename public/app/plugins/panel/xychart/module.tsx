@@ -1,15 +1,25 @@
 import { PanelPlugin } from '@grafana/data';
-import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
-import { TimeSeriesPanel } from './TimeSeriesPanel';
-import { graphPanelChangedHandler } from './migrations';
+import { DrawStyle, GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
+import { XYChartPanel } from './XYChartPanel';
 import { Options } from './types';
-import { getGraphFieldConfig, defaultGraphConfig } from './config';
+import { XYDimsEditor } from './XYDimsEditor';
+import { getGraphFieldConfig, defaultGraphConfig } from '../timeseries/config';
 
-export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel)
-  .setPanelChangeHandler(graphPanelChangedHandler)
-  .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
+export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
+  .useFieldConfig(
+    getGraphFieldConfig({
+      ...defaultGraphConfig,
+      drawStyle: DrawStyle.Points,
+    })
+  )
   .setPanelOptions(builder => {
     builder
+      .addCustomEditor({
+        id: 'xyPlotConfig',
+        path: 'dims',
+        name: 'Data',
+        editor: XYDimsEditor,
+      })
       .addRadio({
         path: 'tooltipOptions.mode',
         name: 'Tooltip mode',

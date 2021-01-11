@@ -1,8 +1,8 @@
 {
   "type": "panel",
-  "name": "Time series",
-  "id": "timeseries",
-  "state": "beta",
+  "name": "XY Chart",
+  "id": "xychart",
+  "state": "alpha",
 
   "info": {
     "author": {
@@ -10,8 +10,8 @@
       "url": "https://grafana.com"
     },
     "logos": {
-      "small": "img/icn-graph-panel.svg",
-      "large": "img/icn-graph-panel.svg"
+      "small": "img/icn-xychart.svg",
+      "large": "img/icn-xychart.svg"
     }
   }
 }

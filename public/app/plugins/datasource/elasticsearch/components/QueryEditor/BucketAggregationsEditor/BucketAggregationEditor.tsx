@@ -48,7 +48,7 @@ export const BucketAggregationEditor: FunctionComponent<QueryMetricEditorProps> 
       }
     };
 
-    return (await get()).map(toSelectableValue);
+    return (await get().toPromise()).map(toSelectableValue);
   };
 
   return (
