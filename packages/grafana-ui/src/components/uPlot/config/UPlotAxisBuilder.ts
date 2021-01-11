@@ -68,6 +68,10 @@ export class UPlotAxisBuilder extends PlotConfigBuilder<AxisProps, Axis> {
       space: calculateSpace,
     };
 
+    if (placement === AxisPlacement.Right) {
+      config.grid!.show = false;
+    }
+
     if (label !== undefined && label !== null && label.length > 0) {
       config.label = label;
       config.labelSize = 18;
