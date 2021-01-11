@@ -29,7 +29,7 @@ To share a direct link:
 1. Click **Copy**. This copies the default or the shortened URL to the clipboard.
 1. Send the copied URL to a Grafana user with authorization to view the link.
 
-## Publish snapshots
+## Publish snapshot
 
 A dashboard snapshot shares an interactive dashboard publicly. Grafana strips sensitive data like queries
 (metric, template and annotation) and panel links, leaving only the visible metric data and series names embedded into your dashboard. Dashboard snapshots can be accessed by anyone with the link.
