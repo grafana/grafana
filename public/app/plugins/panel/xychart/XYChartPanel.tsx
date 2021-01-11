@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo } from 'react';
-import { TooltipPlugin, GraphNG, GraphNGLegendEvent } from '@grafana/ui';
+import { Button, TooltipPlugin, GraphNG, GraphNGLegendEvent } from '@grafana/ui';
 import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { hideSeriesConfigFactory } from '../timeseries/hideSeriesConfigFactory';
-import { configToXYFieldMatchers } from './dims';
+import { getXYDimensions } from './dims';
 
 interface XYChartPanelProps extends PanelProps<Options> {}
 
@@ -17,28 +17,34 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
   fieldConfig,
   onFieldConfigChange,
 }) => {
-  const fields = useMemo(() => configToXYFieldMatchers(options.graph), [options]);
+  const dims = useMemo(() => getXYDimensions(options.dims, data.series), [options.dims, data.series]);
+  if (dims.error) {
+    return (
+      <div>
+        <div>ERROR: {dims.error}</div>
+        {dims.hasData && (
+          <div>
+            <Button onClick={() => alert('TODO, switch vis')}>Show as Table</Button>
+            {dims.hasTime && <Button onClick={() => alert('TODO, switch vis')}>Show as Time series</Button>}
+          </div>
+        )}
+      </div>
+    );
+  }
 
-  const frame = useMemo(() => {
-    if (!data.series?.length) {
-      return [];
-    }
-    const idx = options.graph?.dims?.frame ?? 0;
-    console.log('IDX', idx, data.series);
-    return [data.series[idx]];
-  }, [data.series, options.graph]);
+  const frames = useMemo(() => [dims.frame], [dims]);
 
   const onLegendClick = useCallback(
     (event: GraphNGLegendEvent) => {
-      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, frame));
+      onFieldConfigChange(hideSeriesConfigFactory(event, fieldConfig, frames));
     },
-    [fieldConfig, onFieldConfigChange, frame]
+    [fieldConfig, onFieldConfigChange, frames]
   );
 
   return (
     <GraphNG
-      data={frame}
-      fields={fields}
+      data={frames}
+      fields={dims.fields}
       timeRange={timeRange}
       timeZone={timeZone}
       width={width}
@@ -47,7 +53,7 @@ export const XYChartPanel: React.FC<XYChartPanelProps> = ({
       onLegendClick={onLegendClick}
     >
       <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
-      <>{/* needs an array? */}</>
+      <>{/* needs to be an array */}</>
     </GraphNG>
   );
 };

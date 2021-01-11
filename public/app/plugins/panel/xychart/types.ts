@@ -1,28 +1,14 @@
-import { FieldMatcherID, MatcherConfig } from '@grafana/data';
 import { LegendOptions, GraphTooltipOptions } from '@grafana/ui';
 
-export const defaultXYDimensions: XYDimensions = {
-  frame: 0,
-  xFields: {
-    id: FieldMatcherID.first,
-  },
-  yFields: {
-    id: FieldMatcherID.numeric,
-  },
-};
-
-export interface XYDimensions {
-  frame?: number;
-  xFields?: MatcherConfig; // Field Matchers
-  yFields?: MatcherConfig;
-}
-
-export interface GraphOptions {
-  dims: XYDimensions;
+export interface XYDimensionConfig {
+  frame: number;
+  sort?: boolean;
+  x?: string; // name | first
+  exclude?: string[]; // all other numbers except
 }
 
 export interface Options {
-  graph: GraphOptions;
+  dims: XYDimensionConfig;
   legend: LegendOptions;
   tooltipOptions: GraphTooltipOptions;
 }
