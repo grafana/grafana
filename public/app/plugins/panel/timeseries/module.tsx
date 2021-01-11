@@ -3,11 +3,11 @@ import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
 import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
-import { graphFieldConfig } from './config';
+import { getGraphFieldConfig, defaultGraphConfig } from './config';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
-  .useFieldConfig(graphFieldConfig)
+  .useFieldConfig(getGraphFieldConfig(defaultGraphConfig))
   .setPanelOptions(builder => {
     builder
       .addRadio({

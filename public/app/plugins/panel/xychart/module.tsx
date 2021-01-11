@@ -1,12 +1,17 @@
 import { PanelPlugin } from '@grafana/data';
-import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
+import { DrawStyle, GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
 import { XYChartPanel } from './XYChartPanel';
 import { Options } from './types';
 import { XYDimsEditor } from './XYDimsEditor';
-import { graphFieldConfig } from '../timeseries/config';
+import { getGraphFieldConfig, defaultGraphConfig } from '../timeseries/config';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(XYChartPanel)
-  .useFieldConfig(graphFieldConfig)
+  .useFieldConfig(
+    getGraphFieldConfig({
+      ...defaultGraphConfig,
+      drawStyle: DrawStyle.Points,
+    })
+  )
   .setPanelOptions(builder => {
     builder
       .addCustomEditor({
