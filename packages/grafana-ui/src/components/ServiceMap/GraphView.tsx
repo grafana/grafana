@@ -28,6 +28,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     width: 100%;
     overflow: visible;
     font-size: 10px;
+    cursor: move;
   `,
 
   viewControls: css`
@@ -122,7 +123,13 @@ export function GraphView({ getLinks, dataFrames }: Props) {
       </svg>
 
       <div className={styles.viewControls}>
-        <ViewControls<Config> config={config} onConfigChange={setConfig} onMinus={onStepDown} onPlus={onStepUp} />
+        <ViewControls<Config>
+          config={config}
+          onConfigChange={setConfig}
+          onMinus={onStepDown}
+          onPlus={onStepUp}
+          scale={scale}
+        />
       </div>
 
       {MenuComponent}

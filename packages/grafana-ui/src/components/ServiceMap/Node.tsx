@@ -111,6 +111,7 @@ function ResponseTypeCircle(props: { node: NodeDatum }) {
     (acc, section) => {
       const el = (
         <ArcSection
+          key={section.color}
           r={nodeR}
           x={node.x!}
           y={node.y!}
