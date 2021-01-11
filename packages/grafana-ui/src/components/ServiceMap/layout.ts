@@ -109,14 +109,16 @@ function initializePositions(
   }, {} as Record<string, LinkDatum[]>);
 
   let roots = nodes.filter(n => n.incoming === 0);
-  let secondLevelRoots = roots.map(r => nodesMap[edgesMap[r.id][0].target as number]);
+  let secondLevelRoots = roots.reduce<NodeDatum[]>(
+    (acc, r) => [...acc, ...edgesMap[r.id].map(e => nodesMap[e.target as number])],
+    []
+  );
 
   const rootYSpacing = 300;
   const nodeYSpacing = 200;
   const nodeXSpacing = 200;
 
   let rootY = 0;
-  let nextRootY = rootYSpacing;
   for (const root of roots) {
     let graphLevel = [root];
     let x = 0;
@@ -134,11 +136,6 @@ function initializePositions(
 
         // Move to next Y position for next node
         y += nodeYSpacing;
-        if (y > nextRootY) {
-          // We want next root to start after all the nodes from the previous root, although obviously some of those
-          // nodes can be children for both roots
-          nextRootY = y + rootYSpacing;
-        }
         if (edgesMap[node.id]) {
           nextGraphLevel.push(...edgesMap[node.id].map(edge => nodesMap[edge.target as number]));
         }
@@ -150,8 +147,7 @@ function initializePositions(
       // Reset Y back to baseline for this root
       y = rootY;
     }
-    rootY = nextRootY;
-    nextRootY = nextRootY + nodeYSpacing;
+    rootY += rootYSpacing;
   }
   return { roots, secondLevelRoots };
 }
