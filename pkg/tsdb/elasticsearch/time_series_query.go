@@ -248,12 +248,7 @@ func addTermsAgg(aggBuilder es.AggBuilder, bucketAgg *BucketAgg, metrics []*Metr
 			   for everything else it's just {metricId}
 			*/
 			metricIdRegex := regexp.MustCompile(`^(\d+)`)
-			metricIdMatches := metricIdRegex.FindStringSubmatch(orderBy)
-
-			var metricId string
-			if len(metricIdMatches) == 2 {
-				metricId = metricIdMatches[1]
-			}
+			metricId := metricIdRegex.FindString(orderBy)
 
 			if len(metricId) > 0 {
 				for _, m := range metrics {
