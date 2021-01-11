@@ -339,7 +339,7 @@ describe('CloudWatchDatasource', () => {
           type: 'Metrics',
           error: '',
           refId: 'A',
-          meta: { gmdMeta: [] },
+          meta: {},
           series: [
             {
               name: 'CPUUtilization_Average',
@@ -690,13 +690,7 @@ describe('CloudWatchDatasource', () => {
         A: {
           error: '',
           refId: 'A',
-          meta: {
-            gmdMeta: [
-              {
-                Period: 300,
-              },
-            ],
-          },
+          meta: {},
           series: [
             {
               name: 'TargetResponseTime_p90.00',

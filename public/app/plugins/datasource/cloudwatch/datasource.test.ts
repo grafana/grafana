@@ -46,8 +46,8 @@ describe('datasource', () => {
       const { datasource } = setup({
         data: {
           results: {
-            a: { refId: 'a', series: [{ name: 'cpu', points: [1, 1] }], meta: { gmdMeta: '' } },
-            b: { refId: 'b', series: [{ name: 'memory', points: [2, 2] }], meta: { gmdMeta: '' } },
+            a: { refId: 'a', series: [{ name: 'cpu', points: [1, 1] }], meta: {} },
+            b: { refId: 'b', series: [{ name: 'memory', points: [2, 2] }], meta: {} },
           },
         },
       });
