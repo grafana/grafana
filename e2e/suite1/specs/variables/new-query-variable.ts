@@ -175,19 +175,11 @@ describe('Variables - Add variable', () => {
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsMultiSwitch()
       .click({ force: true })
-      .within(() => {
-        e2e()
-          .get('input')
-          .should('be.checked');
-      });
+      .should('be.checked');
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsIncludeAllSwitch()
       .click({ force: true })
-      .within(() => {
-        e2e()
-          .get('input')
-          .should('be.checked');
-      });
+      .should('be.checked');
 
     e2e.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsCustomAllInput().within(input => {
       expect(input.attr('placeholder')).equals('blank = auto');
