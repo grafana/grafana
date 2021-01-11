@@ -1,16 +1,13 @@
 import {
   AbsoluteTimeRange,
   DataFrame,
-  FieldColorModeId,
   FieldType,
   getDisplayProcessor,
   PanelData,
   sortLogsResult,
   standardTransformers,
-  TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { DrawStyle } from '@grafana/ui/src/components/uPlot/config';
 import { groupBy } from 'lodash';
 import { Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -84,26 +81,7 @@ export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelDat
     return { ...data, graphResult: null };
   }
 
-  // Set the field config of the value field to show graph lines
-  const graphResult = [...data.graphFrames];
-  for (const graph of graphResult) {
-    const valueField = graph.fields.find(f => f.name === TIME_SERIES_VALUE_FIELD_NAME);
-    if (valueField) {
-      valueField.config = {
-        color: {
-          mode: FieldColorModeId.PaletteClassic,
-        },
-        custom: {
-          drawStyle: DrawStyle.Line,
-          fillOpacity: 0,
-          pointSize: 5,
-        },
-        ...valueField.config,
-      };
-    }
-  }
-
-  return { ...data, graphResult };
+  return { ...data, graphResult: data.graphFrames };
 };
 
 /**
