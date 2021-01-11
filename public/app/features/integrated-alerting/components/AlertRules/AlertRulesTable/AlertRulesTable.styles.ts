@@ -2,7 +2,7 @@ import { css } from 'emotion';
 
 import { GrafanaTheme } from '@grafana/data';
 
-export const getStyles = ({ colors }: GrafanaTheme) => {
+export const getStyles = ({ colors, spacing }: GrafanaTheme) => {
   const borderColor = colors.border2;
   const backgroundColorBody = colors.bg1;
   const backgroundColorHeader = colors.bg2;
@@ -84,6 +84,9 @@ export const getStyles = ({ colors }: GrafanaTheme) => {
         color: ${colors.textWeak};
         background-color: ${colors.dashboardBg} !important;
       }
+    `,
+    details: css`
+      margin-top: ${spacing.md};
     `,
   };
 };

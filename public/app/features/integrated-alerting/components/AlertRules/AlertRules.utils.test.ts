@@ -98,6 +98,7 @@ describe('AlertRulesTable utils', () => {
     expect(formatRule(rulesStubs[0])).toEqual({
       rawValues: {
         rule_id: 'test 1',
+        channels: [],
         created_at: '2020-11-25T16:53:39.366Z',
         disabled: false,
         filters: [
@@ -129,6 +130,7 @@ describe('AlertRulesTable utils', () => {
         severity: 'SEVERITY_CRITICAL',
         summary: 'Database down - HR - Prod',
         template: {
+          name: 'test 1',
           params: [
             {
               bool: {
@@ -138,6 +140,7 @@ describe('AlertRulesTable utils', () => {
               type: 'BOOL',
             },
           ],
+          summary: 'Test 1',
         },
       },
       ruleId: 'test 1',
@@ -154,6 +157,7 @@ describe('AlertRulesTable utils', () => {
     expect(formatRule(rulesStubs[3])).toEqual({
       rawValues: {
         rule_id: 'test 4',
+        channels: [],
         created_at: '2020-11-25T16:53:39.366Z',
         disabled: true,
         filters: [
@@ -185,6 +189,7 @@ describe('AlertRulesTable utils', () => {
         severity: 'SEVERITY_WARNING',
         summary: 'High network throughput in - Mnfcg - Dev',
         template: {
+          name: 'test 4',
           params: [
             {
               float: {
@@ -195,6 +200,7 @@ describe('AlertRulesTable utils', () => {
               unit: 'PERCENTAGE',
             },
           ],
+          summary: 'Test 4',
         },
       },
       ruleId: 'test 4',
@@ -220,6 +226,7 @@ describe('AlertRulesTable utils', () => {
       {
         rawValues: {
           rule_id: 'test 1',
+          channels: [],
           created_at: '2020-11-25T16:53:39.366Z',
           disabled: false,
           filters: [
@@ -251,6 +258,7 @@ describe('AlertRulesTable utils', () => {
           severity: 'SEVERITY_CRITICAL',
           summary: 'Database down - HR - Prod',
           template: {
+            name: 'test 1',
             params: [
               {
                 bool: {
@@ -260,6 +268,7 @@ describe('AlertRulesTable utils', () => {
                 type: 'BOOL',
               },
             ],
+            summary: 'Test 1',
           },
         },
         ruleId: 'test 1',
@@ -275,6 +284,7 @@ describe('AlertRulesTable utils', () => {
       {
         rawValues: {
           rule_id: 'test 4',
+          channels: [],
           created_at: '2020-11-25T16:53:39.366Z',
           disabled: true,
           filters: [
@@ -306,6 +316,7 @@ describe('AlertRulesTable utils', () => {
           severity: 'SEVERITY_WARNING',
           summary: 'High network throughput in - Mnfcg - Dev',
           template: {
+            name: 'test 4',
             params: [
               {
                 float: {
@@ -316,6 +327,7 @@ describe('AlertRulesTable utils', () => {
                 unit: 'PERCENTAGE',
               },
             ],
+            summary: 'Test 4',
           },
         },
         ruleId: 'test 4',

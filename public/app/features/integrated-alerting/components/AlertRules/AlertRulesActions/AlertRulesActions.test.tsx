@@ -4,7 +4,7 @@ import React from 'react';
 import { act } from 'react-dom/test-utils';
 
 import { AlertRulesProvider } from '../AlertRules.provider';
-import { formattedRulesStubs, alertRulesContextStub } from '../__mocks__/alertRulesStubs';
+import { formattedRulesStubs } from '../__mocks__/alertRulesStubs';
 
 import { AlertRulesActions } from './AlertRulesActions';
 
@@ -32,8 +32,15 @@ describe('AlertRulesActions', () => {
   });
 
   it('calls getAlertRules on toggle', async () => {
+    const alertRulesContext = {
+      getAlertRules: jest.fn(),
+      setAddModalVisible: jest.fn(),
+      setSelectedAlertRule: jest.fn(),
+      setSelectedRuleDetails: jest.fn(),
+      selectedRuleDetails: formattedRulesStubs[0],
+    };
     const wrapper = mount(
-      <AlertRulesProvider.Provider value={alertRulesContextStub}>
+      <AlertRulesProvider.Provider value={alertRulesContext}>
         <AlertRulesActions alertRule={formattedRulesStubs[0]} />
       </AlertRulesProvider.Provider>
     );
@@ -42,6 +49,6 @@ describe('AlertRulesActions', () => {
       wrapper.find(dataQa('toggle-alert-rule')).find('input').simulate('click');
     });
 
-    expect(alertRulesContextStub.getAlertRules).toHaveBeenCalled();
+    expect(alertRulesContext.getAlertRules).toHaveBeenCalled();
   });
 });
