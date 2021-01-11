@@ -283,7 +283,7 @@ const EmptyRecentList = memo(() => {
     <div className={styles.container}>
       <div>
         <span>
-          It looks like you haven&apos;t used this timer picker before. As soon as you enter some time intervals,
+          It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals,
           recently used intervals will appear here.
         </span>
       </div>
