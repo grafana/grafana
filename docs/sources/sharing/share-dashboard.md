@@ -38,7 +38,7 @@ provided by Grafana Labs that allows you to publish dashboard snapshots to an ex
 To publish a snapshot:
 
 1. Click on **Local Snapshot** or **Publish to snapshot.raintank.io**. This generates the link of the snapshot.
-2. Copy the snapshot link, and share it either within your organization or publicly on the web.
+1. Copy the snapshot link, and share it either within your organization or publicly on the web.
 
 In case you created a snapshot by mistake, click **delete snapshot** to remove the snapshot from your Grafana instance.
 
