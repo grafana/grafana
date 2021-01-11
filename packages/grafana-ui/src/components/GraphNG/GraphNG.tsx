@@ -175,6 +175,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,
         lineInterpolation: customConfig.lineInterpolation,
+        lineStyle: customConfig.lineStyle,
         showPoints,
         pointSize: customConfig.pointSize,
         pointColor: customConfig.pointColor ?? seriesColor,

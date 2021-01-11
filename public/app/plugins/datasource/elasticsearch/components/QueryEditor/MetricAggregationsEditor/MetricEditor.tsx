@@ -83,7 +83,7 @@ export const MetricEditor: FunctionComponent<Props> = ({ value }) => {
       return datasource.getFields('number');
     };
 
-    return (await get()).map(toSelectableValue);
+    return (await get().toPromise()).map(toSelectableValue);
   };
 
   return (
