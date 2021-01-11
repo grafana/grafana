@@ -1,4 +1,11 @@
-import { PanelModel, FieldMatcherID, ConfigOverrideRule } from '@grafana/data';
+import {
+  PanelModel,
+  FieldMatcherID,
+  ConfigOverrideRule,
+  ThresholdsMode,
+  ThresholdsConfig,
+  FieldConfig,
+} from '@grafana/data';
 import { ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
 import { Options } from './types';
 import omitBy from 'lodash/omitBy';
@@ -40,15 +47,34 @@ const colorModeMap = {
   value: 'color-text',
 };
 
-const migrateTransformations = (panel: PanelModel<Partial<Options>> | any, oldOpts: any) => {
-  const transformations = panel.transformations ?? [];
+type Transformations = keyof typeof transformsMap;
+
+type Transformation = {
+  id: string;
+  options: ReduceTransformerOptions;
+};
+
+type Columns = keyof typeof columnsMap;
+
+type Column = {
+  value: Columns;
+  text: string;
+};
+
+type ColorModes = keyof typeof colorModeMap;
+
+const migrateTransformations = (
+  panel: PanelModel<Partial<Options>> | any,
+  oldOpts: { columns: any; transform: Transformations }
+) => {
+  const transformations: Transformation[] = panel.transformations ?? [];
   if (Object.keys(transformsMap).includes(oldOpts.transform)) {
     const opts: ReduceTransformerOptions = {
       reducers: [],
     };
     if (oldOpts.transform === 'timeseries_aggregations') {
       opts.includeTimeField = false;
-      opts.reducers = oldOpts.columns.map((column: any) => columnsMap[column.value]);
+      opts.reducers = oldOpts.columns.map((column: Column) => columnsMap[column.value]);
     }
     transformations.push({
       id: transformsMap[oldOpts.transform],
@@ -58,7 +84,20 @@ const migrateTransformations = (panel: PanelModel<Partial<Options>> | any, oldOp
   return transformations;
 };
 
-const migrateTableStyleToOverride = (style: any) => {
+type Style = {
+  unit: string;
+  type: string;
+  alias: string;
+  decimals: number;
+  colors: string[];
+  colorMode: ColorModes;
+  pattern: string;
+  thresholds: string[];
+  align?: string;
+  dateFormat: string;
+};
+
+const migrateTableStyleToOverride = (style: Style) => {
   const fieldMatcherId = /^\/.*\/$/.test(style.pattern) ? FieldMatcherID.byRegexp : FieldMatcherID.byName;
   const override: ConfigOverrideRule = {
     matcher: {
@@ -108,7 +147,7 @@ const migrateTableStyleToOverride = (style: any) => {
       id: 'thresholds',
       value: {
         mode: 'absolute',
-        steps: [-Infinity, ...style.thresholds].map((threshold, idx) => ({
+        steps: ['0', ...style.thresholds].map((threshold, idx) => ({
           color: style.colors[idx],
           value: parseInt(threshold, 10),
         })),
@@ -119,8 +158,8 @@ const migrateTableStyleToOverride = (style: any) => {
   return override;
 };
 
-const migrateDefaults = (prevDefaults: any) => {
-  let defaults: any = {
+const migrateDefaults = (prevDefaults: Style) => {
+  let defaults: FieldConfig = {
     custom: {},
   };
   if (prevDefaults) {
@@ -137,13 +176,14 @@ const migrateDefaults = (prevDefaults: any) => {
       isNil
     );
     if (prevDefaults.thresholds.length) {
-      defaults.thresholds = {
-        mode: 'absolute',
-        steps: [-Infinity, ...prevDefaults.thresholds].map((threshold, idx) => ({
+      const thresholds: ThresholdsConfig = {
+        mode: ThresholdsMode.Absolute,
+        steps: [-Infinity, ...prevDefaults.thresholds].map((threshold: string, idx: number) => ({
           color: prevDefaults.colors[idx],
           value: parseInt(threshold, 10),
         })),
       };
+      defaults.thresholds = thresholds;
     }
   }
   return defaults;
