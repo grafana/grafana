@@ -47,7 +47,9 @@ export class FormDropdownCtrl {
 
     // listen to model changes
     $scope.$watch('ctrl.model', this.modelChanged.bind(this));
+  }
 
+  $onInit() {
     if (this.labelMode) {
       this.cssClasses = 'gf-form-label ' + this.cssClass;
     } else {

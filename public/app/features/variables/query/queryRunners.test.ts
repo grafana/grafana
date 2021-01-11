@@ -1,14 +1,15 @@
 import { QueryRunners } from './queryRunners';
-import { DefaultTimeRange, VariableSupportType } from '@grafana/data';
+import { getDefaultTimeRange, VariableSupportType } from '@grafana/data';
 import { VariableRefresh } from '../types';
 import { of } from 'rxjs';
 
 describe('QueryRunners', () => {
   describe('when using a legacy data source', () => {
     const getLegacyTestContext = (variable?: any) => {
+      const defaultTimeRange = getDefaultTimeRange();
       variable = variable ?? { query: 'A query' };
       const timeSrv = {
-        timeRange: jest.fn().mockReturnValue(DefaultTimeRange),
+        timeRange: jest.fn().mockReturnValue(defaultTimeRange),
       };
       const datasource: any = { metricFindQuery: jest.fn().mockResolvedValue([{ text: 'A', value: 'A' }]) };
       const runner = new QueryRunners().getRunnerForDatasource(datasource);
@@ -16,7 +17,7 @@ describe('QueryRunners', () => {
       const runnerArgs: any = { datasource, variable, searchFilter: 'A searchFilter', timeSrv, runRequest };
       const request: any = {};
 
-      return { timeSrv, datasource, runner, variable, runnerArgs, request };
+      return { timeSrv, datasource, runner, variable, runnerArgs, request, defaultTimeRange };
     };
 
     describe('and calling getRunnerForDatasource', () => {
@@ -35,7 +36,7 @@ describe('QueryRunners', () => {
     });
 
     describe('and calling runRequest with a variable that refreshes when time range changes', () => {
-      const { datasource, runner, runnerArgs, request, timeSrv } = getLegacyTestContext({
+      const { datasource, runner, runnerArgs, request, timeSrv, defaultTimeRange } = getLegacyTestContext({
         query: 'A query',
         refresh: VariableRefresh.onTimeRangeChanged,
       });
@@ -47,7 +48,7 @@ describe('QueryRunners', () => {
           expect(value).toEqual({
             series: [{ text: 'A', value: 'A' }],
             state: 'Done',
-            timeRange: { from: {}, raw: { from: '6h', to: 'now' }, to: {} },
+            timeRange: defaultTimeRange,
           });
         });
       });
@@ -59,14 +60,7 @@ describe('QueryRunners', () => {
       it('and it should call metricFindQuery with correct options', () => {
         expect(datasource.metricFindQuery).toHaveBeenCalledTimes(1);
         expect(datasource.metricFindQuery).toHaveBeenCalledWith('A query', {
-          range: {
-            from: {},
-            raw: {
-              from: '6h',
-              to: 'now',
-            },
-            to: {},
-          },
+          range: defaultTimeRange,
           searchFilter: 'A searchFilter',
           variable: {
             query: 'A query',
@@ -89,7 +83,7 @@ describe('QueryRunners', () => {
           expect(values).toEqual({
             series: [{ text: 'A', value: 'A' }],
             state: 'Done',
-            timeRange: { from: {}, raw: { from: '6h', to: 'now' }, to: {} },
+            timeRange: undefined,
           });
         });
       });

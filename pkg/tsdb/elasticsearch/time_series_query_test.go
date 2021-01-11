@@ -650,6 +650,64 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			So(plAgg.BucketPath, ShouldEqual, "_count")
 		})
 
+		Convey("With serial_diff", func() {
+			c := newFakeClient(5)
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
+				],
+				"metrics": [
+					{ "id": "3", "type": "sum", "field": "@value" },
+					{
+						"id": "2",
+						"type": "serial_diff",
+						"pipelineAgg": "3"
+					}
+				]
+			}`, from, to, 15*time.Second)
+			So(err, ShouldBeNil)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			So(firstLevel.Key, ShouldEqual, "4")
+			So(firstLevel.Aggregation.Type, ShouldEqual, "date_histogram")
+
+			serialDiffAgg := firstLevel.Aggregation.Aggs[1]
+			So(serialDiffAgg.Key, ShouldEqual, "2")
+			plAgg := serialDiffAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			So(plAgg.BucketPath, ShouldEqual, "3")
+		})
+
+		Convey("With serial_diff doc count", func() {
+			c := newFakeClient(5)
+			_, err := executeTsdbQuery(c, `{
+				"timeField": "@timestamp",
+				"bucketAggs": [
+					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
+				],
+				"metrics": [
+					{ "id": "3", "type": "count", "field": "select field" },
+					{
+						"id": "2",
+						"type": "serial_diff",
+						"pipelineAgg": "3"
+					}
+				]
+			}`, from, to, 15*time.Second)
+			So(err, ShouldBeNil)
+			sr := c.multisearchRequests[0].Requests[0]
+
+			firstLevel := sr.Aggs[0]
+			So(firstLevel.Key, ShouldEqual, "4")
+			So(firstLevel.Aggregation.Type, ShouldEqual, "date_histogram")
+
+			serialDiffAgg := firstLevel.Aggregation.Aggs[0]
+			So(serialDiffAgg.Key, ShouldEqual, "2")
+			plAgg := serialDiffAgg.Aggregation.Aggregation.(*es.PipelineAggregation)
+			So(plAgg.BucketPath, ShouldEqual, "_count")
+		})
+
 		Convey("With bucket_script", func() {
 			c := newFakeClient(5)
 			_, err := executeTsdbQuery(c, `{

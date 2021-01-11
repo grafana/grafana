@@ -1,7 +1,7 @@
 import { CircularDataFrame, FieldCache, FieldType, MutableDataFrame } from '@grafana/data';
 import { LokiStreamResult, LokiTailResponse, LokiStreamResponse, LokiResultType, TransformerOptions } from './types';
 import * as ResultTransformer from './result_transformer';
-import { enhanceDataFrame } from './result_transformer';
+import { enhanceDataFrame, lokiPointsToTimeseriesPoints } from './result_transformer';
 import { setTemplateSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
@@ -254,6 +254,32 @@ describe('enhanceDataFrame', () => {
       title: '',
       internal: { datasourceName: 'Loki1', datasourceUid: 'uid2', query: { query: 'test' } },
       url: '',
+    });
+  });
+
+  describe('lokiPointsToTimeseriesPoints()', () => {
+    /**
+     * NOTE on time parameters:
+     * - Input time series data has timestamps in sec (like Prometheus)
+     * - Output time series has timestamps in ms (as expected for the chart lib)
+     * - Start/end parameters are in ns (as expected for Loki)
+     * - Step is in sec (like in Prometheus)
+     */
+    const data: Array<[number, string]> = [
+      [1, '1'],
+      [2, '0'],
+      [4, '1'],
+    ];
+
+    it('returns data as is if step, start, and end align', () => {
+      const options: Partial<TransformerOptions> = { start: 1 * 1e9, end: 4 * 1e9, step: 1 };
+      const result = lokiPointsToTimeseriesPoints(data, options as TransformerOptions);
+      expect(result).toEqual([
+        [1, 1000],
+        [0, 2000],
+        [null, 3000],
+        [1, 4000],
+      ]);
     });
   });
 });
