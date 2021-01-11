@@ -3,8 +3,10 @@ import { useObservable } from 'react-use';
 import { css } from 'emotion';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { GrafanaTheme } from '@grafana/data';
-import { TabsBar, TabContent, Tab, useStyles, Table, Icon } from '@grafana/ui';
+import { TabsBar, TabContent, Tab, useStyles, Icon } from '@grafana/ui';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import { PreviewQueryTab } from './PreviewQueryTab';
+import { PreviewInstancesTab } from './PreviewInstancesTab';
 
 enum Tabs {
   Query = 'query',
@@ -46,11 +48,11 @@ export const AlertingQueryPreview: FC<Props> = ({ queryRunner }) => {
             {({ width, height }) => {
               switch (activeTab) {
                 case Tabs.Instance:
-                  return <div>Instance something something dark side</div>;
+                  return <PreviewInstancesTab isTested={false} data={data} styles={styles} />;
 
                 case Tabs.Query:
                 default:
-                  return <Table data={data.series[0]} height={height} width={width} />;
+                  return <PreviewQueryTab data={data} width={width} height={height} />;
               }
             }}
           </AutoSizer>
@@ -96,3 +98,5 @@ const getStyles = (theme: GrafanaTheme) => {
     `,
   };
 };
+
+export type PreviewStyles = ReturnType<typeof getStyles>;
