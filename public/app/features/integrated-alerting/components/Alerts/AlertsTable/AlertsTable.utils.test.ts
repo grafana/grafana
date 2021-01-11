@@ -1,6 +1,9 @@
+import { GrafanaTheme } from '@grafana/data';
+
+import { AlertRuleSeverity } from '../../AlertRules/AlertRules.types';
 import { alertsStubs } from '../__mocks__/alertsStubs';
 
-import { formatAlert, formatAlerts, formatLabel, formatLabels } from './AlertsTable.utils';
+import { formatAlert, formatAlerts, formatLabel, formatLabels, getSeverityColors } from './AlertsTable.utils';
 
 const moment = jest.requireActual('moment-timezone');
 moment.tz.setDefault('UTC');
@@ -61,5 +64,23 @@ describe('AlertRulesTable utils', () => {
     expect(formatAlerts([])).toEqual([]);
 
     expect(formatAlerts([alertsStubs[0], alertsStubs[5]])).toEqual([expectedAlertResult1, expectedAlertResult2]);
+  });
+
+  test('getSeverityColors', () => {
+    const palette = {
+      critical: 'color1',
+      orange: 'color2',
+      blue80: 'color3',
+      yellow: 'color4',
+    };
+    const theme = { palette };
+    const expected = {
+      [AlertRuleSeverity.SEVERITY_CRITICAL]: palette.critical,
+      [AlertRuleSeverity.SEVERITY_ERROR]: palette.orange,
+      [AlertRuleSeverity.SEVERITY_NOTICE]: palette.blue80,
+      [AlertRuleSeverity.SEVERITY_WARNING]: palette.yellow,
+    };
+
+    expect(getSeverityColors(theme as GrafanaTheme)).toEqual(expected);
   });
 });
