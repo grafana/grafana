@@ -54,7 +54,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/jonboulle/clockwork v0.2.2 // indirect
 	github.com/jung-kurt/gofpdf v1.10.1
-	github.com/lib/pq v1.3.0
+	github.com/lib/pq v1.9.0
 	github.com/linkedin/goavro/v2 v2.9.7
 	github.com/magefile/mage v1.9.0
 	github.com/mattn/go-colorable v0.1.7 // indirect
