@@ -221,6 +221,10 @@ export const getCardStyles = stylesFactory((theme: GrafanaTheme) => {
       & > * {
         width: 100%;
       }
+
+      &:empty {
+        display: none;
+      }
     `,
     actionRow: css`
       display: flex;
