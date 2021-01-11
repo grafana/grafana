@@ -7,9 +7,9 @@ export interface Props extends React.HTMLAttributes<HTMLDivElement> {
 export const SeriesIcon = React.forwardRef<HTMLDivElement, Props>(({ color, className, ...restProps }, ref) => {
   const styles: CSSProperties = {
     backgroundColor: color,
-    width: '12px',
-    height: '12px',
-    borderRadius: '6px',
+    width: '14px',
+    height: '4px',
+    borderRadius: '1px',
     display: 'inline-block',
     marginRight: '8px',
   };

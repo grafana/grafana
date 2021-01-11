@@ -63,6 +63,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     flex-wrap: wrap;
     justify-content: space-between;
     width: 100%;
+    margin-left: ${theme.spacing.md};
   `,
   section: css`
     display: flex;
