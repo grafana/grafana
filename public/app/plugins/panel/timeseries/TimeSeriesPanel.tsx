@@ -41,6 +41,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
       <ZoomPlugin onZoom={onChangeTimeRange} />
       <ContextMenuPlugin timeZone={timeZone} replaceVariables={replaceVariables} />
+      {/*<CustomPointsPlugin />*/}
       {data.annotations ? <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} /> : <></>}
       {data.annotations ? <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} /> : <></>}
     </GraphNG>

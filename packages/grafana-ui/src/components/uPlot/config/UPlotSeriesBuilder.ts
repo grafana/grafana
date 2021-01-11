@@ -5,9 +5,10 @@ import {
   DrawStyle,
   LineConfig,
   FillConfig,
-  PointsConfig,
-  PointVisibility,
   LineInterpolation,
+  PointsConfig,
+  PointSymbol,
+  PointVisibility,
   FillGradientMode,
 } from '../config';
 import { PlotConfigBuilder } from '../types';
@@ -29,6 +30,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       showPoints,
       pointColor,
       pointSize,
+      pointSymbol,
       scaleKey,
       spanNulls,
       show = true,
@@ -70,6 +72,13 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       pointsConfig.points!.show = false;
     } else if (showPoints === PointVisibility.Always) {
       pointsConfig.points!.show = true;
+    }
+
+    if (pointsConfig.points!.show) {
+      if (pointSymbol && pointSymbol !== PointSymbol.Dot) {
+        console.log(pointSize);
+        pointsConfig.points!.show = getCustomPointRenderer(pointSymbol, pointColor!, pointSize!);
+      }
     }
 
     return {
@@ -203,4 +212,105 @@ function getCanvasGradient(opts: AreaGradientOptions): (self: uPlot, seriesIdx: 
         return gradient;
     }
   };
+}
+
+function getCustomPointRenderer(shape: PointSymbol, color: string, size: number) {
+  let shapeSize: number;
+  let drawFn: (ctx: CanvasRenderingContext2D, cx: number, cy: number, height: number) => void;
+
+  switch (shape) {
+    case PointSymbol.Star:
+      shapeSize = size * 1.5;
+      drawFn = drawStar;
+      break;
+    case PointSymbol.Square:
+      shapeSize = size * 2;
+      drawFn = drawSquare;
+      break;
+    case PointSymbol.Triangle:
+      shapeSize = size * 3;
+      drawFn = drawTriangle;
+      break;
+    case PointSymbol.Marble:
+      shapeSize = size * 3;
+      drawFn = drawMarble;
+      break;
+    case PointSymbol.Cross:
+      shapeSize = size * 2;
+      drawFn = drawCross;
+      break;
+  }
+
+  return (u: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
+    const series = u.series[seriesIdx];
+    const { ctx } = u;
+    const { scale } = series;
+    let j = idx0;
+    ctx.fillStyle = color;
+
+    while (j <= idx1) {
+      let val = u.data[seriesIdx][j];
+      let cx = Math.round(u.valToPos(u.data[0][j], 'x', true));
+      let cy = Math.round(u.valToPos(val!, scale!, true));
+      drawFn!(ctx, cx, cy, shapeSize!);
+      ctx.fill();
+      j++;
+    }
+  };
+}
+
+function drawStar(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) {
+  let rot = (Math.PI / 2) * 3;
+  let x = cx;
+  let y = cy;
+  let step = Math.PI / 5;
+
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - size);
+
+  for (let i = 0; i < 5; i++) {
+    x = cx + Math.cos(rot) * size;
+    y = cy + Math.sin(rot) * size;
+    ctx.lineTo(x, y);
+    rot += step;
+
+    x = cx + (Math.cos(rot) * size) / 2;
+    y = cy + (Math.sin(rot) * size) / 2;
+    ctx.lineTo(x, y);
+    rot += step;
+  }
+
+  ctx.lineTo(cx, cy - size);
+  ctx.closePath();
+}
+
+function drawSquare(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) {
+  ctx.beginPath();
+  ctx.rect(cx - size / 2, cy - size / 2, size, size);
+  ctx.closePath();
+}
+
+function drawMarble(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) {
+  ctx.beginPath();
+  ctx.moveTo(cx - size / 2, cy);
+  ctx.lineTo(cx, cy + size / 2);
+  ctx.lineTo(cx + size / 2, cy);
+  ctx.lineTo(cx, cy - size / 2);
+  ctx.closePath();
+}
+
+function drawTriangle(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) {
+  let height = (size * Math.sqrt(3)) / 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - size / 2, cy + height / 2);
+  ctx.lineTo(cx + size / 2, cy + height / 2);
+  ctx.lineTo(cx, cy - height / 2);
+  ctx.closePath();
+}
+
+function drawCross(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number) {
+  ctx.beginPath();
+  ctx.fillRect(cx - size / 2, cy - size / 8, size, size / 4);
+  ctx.fillRect(cx - size / 8, cy - size / 2, size / 4, size);
+  ctx.closePath();
 }

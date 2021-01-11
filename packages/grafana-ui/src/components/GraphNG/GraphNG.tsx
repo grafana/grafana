@@ -13,7 +13,7 @@ import {
 import { alignDataFrames } from './utils';
 import { UPlotChart } from '../uPlot/Plot';
 import { PlotProps } from '../uPlot/types';
-import { AxisPlacement, DrawStyle, GraphFieldConfig, PointVisibility } from '../uPlot/config';
+import { AxisPlacement, DrawStyle, GraphFieldConfig, PointSymbol, PointVisibility } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
 import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
@@ -179,6 +179,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         showPoints,
         pointSize: customConfig.pointSize,
         pointColor: customConfig.pointColor ?? seriesColor,
+        pointSymbol: customConfig.pointSymbol ?? PointSymbol.Dot,
         fillOpacity: customConfig.fillOpacity,
         spanNulls: customConfig.spanNulls || false,
         show: !customConfig.hideFrom?.graph,

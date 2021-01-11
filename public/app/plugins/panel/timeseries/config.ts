@@ -116,6 +116,15 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
             options: graphFieldOptions.showPoints,
           },
         })
+        .addRadio({
+          path: 'pointSymbol',
+          name: 'Point shape',
+          defaultValue: graphFieldOptions.pointSymbol[0].value,
+          settings: {
+            options: graphFieldOptions.pointSymbol,
+          },
+          showIf: c => c.showPoints !== PointVisibility.Never || c.drawStyle === DrawStyle.Points,
+        })
         .addSliderInput({
           path: 'pointSize',
           name: 'Point size',

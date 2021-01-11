@@ -92,7 +92,19 @@ export interface PointsConfig {
   showPoints?: PointVisibility;
   pointSize?: number;
   pointColor?: string;
-  pointSymbol?: string; // eventually dot,star, etc
+  pointSymbol?: PointSymbol;
+}
+
+/**
+ * @alpha
+ */
+export enum PointSymbol {
+  Dot = 'dot',
+  Marble = 'marble',
+  Triangle = 'triangle',
+  Square = 'square',
+  Star = 'star',
+  Cross = 'cross',
 }
 
 /**
@@ -166,4 +178,13 @@ export const graphFieldOptions = {
     { label: 'Opacity', value: FillGradientMode.Opacity },
     { label: 'Hue', value: FillGradientMode.Hue },
   ] as Array<SelectableValue<FillGradientMode>>,
+
+  pointSymbol: [
+    { label: 'Dot', value: PointSymbol.Dot },
+    { label: 'Marble', value: PointSymbol.Marble },
+    { label: 'Square', value: PointSymbol.Square },
+    { label: 'Triangle', value: PointSymbol.Triangle },
+    { label: 'Star', value: PointSymbol.Star },
+    { label: 'Cross', value: PointSymbol.Cross },
+  ] as Array<SelectableValue<PointSymbol>>,
 };
