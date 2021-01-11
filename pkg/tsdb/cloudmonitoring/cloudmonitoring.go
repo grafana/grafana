@@ -682,20 +682,18 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, cmr 
 	if len(cmr.TimeSeries) > 0 {
 		dl := query.buildDeepLink()
 		for i := range frames {
-			for j, field := range frames[i].Fields {
-				if field.Config == nil {
-					frames[i].Fields[j].Config = &data.FieldConfig{}
-				}
-				deepLink := data.DataLink{
-					Title:       "View in Metrics Explorer",
-					TargetBlank: true,
-					URL:         dl,
-				}
-				frames[i].Fields[j].Config.Links = append(frames[i].Fields[j].Config.Links, deepLink)
-				if len(query.Unit) > 0 {
-					if val, ok := cloudMonitoringUnitMappings[query.Unit]; ok {
-						frames[i].Fields[j].Config.Unit = val
-					}
+			if frames[i].Fields[1].Config == nil {
+				frames[i].Fields[1].Config = &data.FieldConfig{}
+			}
+			deepLink := data.DataLink{
+				Title:       "View in Metrics Explorer",
+				TargetBlank: true,
+				URL:         dl,
+			}
+			frames[i].Fields[1].Config.Links = append(frames[i].Fields[1].Config.Links, deepLink)
+			if len(query.Unit) > 0 {
+				if val, ok := cloudMonitoringUnitMappings[query.Unit]; ok {
+					frames[i].Fields[1].Config.Unit = val
 				}
 			}
 		}

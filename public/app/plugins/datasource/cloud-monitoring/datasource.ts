@@ -115,33 +115,8 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     };
   }
 
-  getTimeSeries(options: DataQueryRequest<CloudMonitoringQuery>): Observable<PostResponse> {
-    const queries = options.targets
-      .map(this.migrateQuery)
-      .filter(this.filterQuery)
-      .map(q => this.prepareTimeSeriesQuery(q, options.scopedVars))
-      .map(q => ({ ...q, intervalMs: options.intervalMs, type: 'timeSeriesQuery' }));
-
-    if (!queries.length) {
-      return of({ results: [] });
-    }
-
-    return from(this.ensureGCEDefaultProject()).pipe(
-      mergeMap(() => {
-        return this.api.post({
-          from: options.range.from.valueOf().toString(),
-          to: options.range.to.valueOf().toString(),
-          queries,
-        });
-      }),
-      map(({ data }) => {
-        return data;
-      })
-    );
-  }
-
   async getLabels(metricType: string, refId: string, projectName: string, groupBys?: string[]) {
-    return this.getTimeSeries({
+    const options = {
       targets: [
         {
           refId,
@@ -157,8 +132,29 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         },
       ],
       range: this.timeSrv.timeRange(),
-    } as DataQueryRequest<CloudMonitoringQuery>)
+    } as DataQueryRequest<CloudMonitoringQuery>;
+
+    const queries = options.targets
+      .map(this.migrateQuery)
+      .filter(this.filterQuery)
+      .map(q => this.applyTemplateVariables(q, options.scopedVars));
+
+    if (!queries.length) {
+      return of({ results: [] }).toPromise();
+    }
+
+    return from(this.ensureGCEDefaultProject())
       .pipe(
+        mergeMap(() => {
+          return this.api.post({
+            from: options.range.from.valueOf().toString(),
+            to: options.range.to.valueOf().toString(),
+            queries,
+          });
+        }),
+        map(({ data }) => {
+          return data;
+        }),
         map(response => {
           const result = response.results[refId];
           return result && result.meta ? result.meta.labels : {};
