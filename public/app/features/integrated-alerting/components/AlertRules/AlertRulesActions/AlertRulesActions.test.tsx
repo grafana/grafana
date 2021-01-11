@@ -4,7 +4,7 @@ import { act } from 'react-dom/test-utils';
 import { dataQa } from '@percona/platform-core';
 import { AlertRulesActions } from './AlertRulesActions';
 import { AlertRulesProvider } from '../AlertRules.provider';
-import { formattedRulesStubs, alertRulesContextStub } from '../__mocks__/alertRulesStubs';
+import { formattedRulesStubs } from '../__mocks__/alertRulesStubs';
 
 jest.mock('../AlertRules.service');
 jest.mock('app/core/app_events');
@@ -30,8 +30,15 @@ describe('AlertRulesActions', () => {
   });
 
   it('calls getAlertRules on toggle', async () => {
+    const alertRulesContext = {
+      getAlertRules: jest.fn(),
+      setAddModalVisible: jest.fn(),
+      setSelectedAlertRule: jest.fn(),
+      setSelectedRuleDetails: jest.fn(),
+      selectedRuleDetails: formattedRulesStubs[0],
+    };
     const wrapper = mount(
-      <AlertRulesProvider.Provider value={alertRulesContextStub}>
+      <AlertRulesProvider.Provider value={alertRulesContext}>
         <AlertRulesActions alertRule={formattedRulesStubs[0]} />
       </AlertRulesProvider.Provider>
     );
@@ -43,6 +50,6 @@ describe('AlertRulesActions', () => {
         .simulate('click');
     });
 
-    expect(alertRulesContextStub.getAlertRules).toHaveBeenCalled();
+    expect(alertRulesContext.getAlertRules).toHaveBeenCalled();
   });
 });

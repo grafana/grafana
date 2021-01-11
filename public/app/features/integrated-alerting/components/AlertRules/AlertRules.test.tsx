@@ -1,5 +1,6 @@
 import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
+import { dataQa } from '@percona/platform-core';
 import { AlertRules } from './AlertRules';
 import { act } from 'react-dom/test-utils';
 import { AlertRuleTemplateService } from '../AlertRuleTemplate/AlertRuleTemplate.service';
@@ -47,5 +48,29 @@ describe('AlertRules', () => {
     expect(notificationChannelsServiceList).toBeCalledTimes(1);
 
     wrapper.unmount();
+  });
+  it('should toggle selected alert rule details', async () => {
+    let wrapper: ReactWrapper<{}, {}, any>;
+
+    await act(async () => {
+      wrapper = mount(<AlertRules />);
+    });
+
+    wrapper.update();
+    wrapper
+      .find(dataQa('show-alert-rule-details'))
+      .at(0)
+      .find('button')
+      .simulate('click');
+
+    expect(wrapper.find(dataQa('alert-rules-details'))).toHaveLength(1);
+
+    wrapper
+      .find(dataQa('hide-alert-rule-details'))
+      .at(0)
+      .find('button')
+      .simulate('click');
+
+    expect(wrapper.find(dataQa('alert-rules-details'))).toHaveLength(0);
   });
 });

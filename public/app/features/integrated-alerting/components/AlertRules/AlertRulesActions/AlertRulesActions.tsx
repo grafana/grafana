@@ -12,12 +12,15 @@ import { Messages } from './AlertRulesActions.messages';
 export const AlertRulesActions: FC<AlertRulesActionsProps> = ({ alertRule }) => {
   const styles = useStyles(getStyles);
   const [pendingRequest, setPendingRequest] = useState(false);
-  const { setAddModalVisible, setSelectedAlertRule, getAlertRules } = useContext(AlertRulesProvider);
+  const { setAddModalVisible, setSelectedAlertRule, getAlertRules, setSelectedRuleDetails } = useContext(
+    AlertRulesProvider
+  );
   const { ruleId, summary, disabled } = alertRule;
 
   const handleEditClick = () => {
     setSelectedAlertRule(alertRule);
     setAddModalVisible(true);
+    setSelectedRuleDetails(null);
   };
 
   const toggleAlertRule = async () => {
@@ -30,6 +33,7 @@ export const AlertRulesActions: FC<AlertRulesActionsProps> = ({ alertRule }) => 
       appEvents.emit(AppEvents.alertSuccess, [
         disabled ? Messages.getEnabledMessage(summary) : Messages.getDisabledMessage(summary),
       ]);
+      setSelectedRuleDetails(null);
       getAlertRules();
     } catch (e) {
       logger.error(e);

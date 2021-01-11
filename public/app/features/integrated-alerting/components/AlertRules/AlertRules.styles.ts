@@ -39,5 +39,9 @@ export const getStyles = ({ palette, colors, spacing }: GrafanaTheme) => {
       height: 16px;
       width: 16px;
     `,
+    nameWrapper: css`
+      display: flex;
+      justify-content: space-between;
+    `,
   };
 };

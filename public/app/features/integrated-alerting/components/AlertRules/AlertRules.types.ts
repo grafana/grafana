@@ -1,7 +1,9 @@
 export interface AlertRulesContext {
+  selectedRuleDetails: AlertRule;
   getAlertRules: () => void;
   setAddModalVisible: (isVisible: boolean) => void;
   setSelectedAlertRule: (alertRule: AlertRule) => void;
+  setSelectedRuleDetails: (alertRule: AlertRule) => void;
 }
 
 export enum AlertRuleFilterType {
@@ -32,6 +34,7 @@ export interface AlertRulesListPayloadTemplate {
   name: string;
   summary: string;
   params: AlertRulesListPayloadTemplateParam[];
+  yaml?: string;
 }
 
 export enum AlertRuleSeverity {
