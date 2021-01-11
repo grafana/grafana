@@ -5,29 +5,24 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
-
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestCloudMonitoringAnnotationQuery(t *testing.T) {
-	Convey("CloudMonitoring Annotation Query Executor", t, func() {
-		executor := &CloudMonitoringExecutor{}
-		Convey("When parsing the cloud monitoring api response", func() {
-			data, err := loadTestFile("./test-data/2-series-response-no-agg.json")
-			So(err, ShouldBeNil)
-			So(len(data.TimeSeries), ShouldEqual, 3)
+func TestCloudMonitoringExecutor_parseToAnnotations(t *testing.T) {
+	data, err := loadTestFile("./test-data/2-series-response-no-agg.json")
+	require.NoError(t, err)
+	require.Len(t, data.TimeSeries, 3)
 
-			res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "annotationQuery"}
-			query := &cloudMonitoringQuery{}
-			err = executor.parseToAnnotations(res, data, query, "atitle {{metric.label.instance_name}} {{metric.value}}", "atext {{resource.label.zone}}", "atag")
-			So(err, ShouldBeNil)
+	res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "annotationQuery"}
+	query := &cloudMonitoringQuery{}
 
-			Convey("Should return annotations table", func() {
-				So(len(res.Tables), ShouldEqual, 1)
-				So(len(res.Tables[0].Rows), ShouldEqual, 9)
-				So(res.Tables[0].Rows[0][1], ShouldEqual, "atitle collector-asia-east-1 9.856650")
-				So(res.Tables[0].Rows[0][3], ShouldEqual, "atext asia-east1-a")
-			})
-		})
-	})
+	executor := &CloudMonitoringExecutor{}
+	err = executor.parseToAnnotations(res, data, query, "atitle {{metric.label.instance_name}} {{metric.value}}", "atext {{resource.label.zone}}", "atag")
+	require.NoError(t, err)
+
+	require.Len(t, res.Tables, 1)
+	require.Len(t, res.Tables[0].Rows, 9)
+	assert.Equal(t, "atitle collector-asia-east-1 9.856650", res.Tables[0].Rows[0][1])
+	assert.Equal(t, "atext asia-east1-a", res.Tables[0].Rows[0][3])
 }

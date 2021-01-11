@@ -16,8 +16,16 @@ import { LanguageMap, languages as prismLanguages } from 'prismjs';
 
 // dom also includes Element polyfills
 import { PromQuery, PromOptions, PromMetricsMetadata } from '../types';
+import { roundMsToMin } from '../language_utils';
 import { CancelablePromise, makePromiseCancelable } from 'app/core/utils/CancelablePromise';
-import { ExploreQueryFieldProps, QueryHint, isDataFrame, toLegacyResponseData, HistoryItem } from '@grafana/data';
+import {
+  ExploreQueryFieldProps,
+  QueryHint,
+  isDataFrame,
+  toLegacyResponseData,
+  HistoryItem,
+  TimeRange,
+} from '@grafana/data';
 import { DOMUtil, SuggestionsState } from '@grafana/ui';
 import { PrometheusDatasource } from '../datasource';
 
@@ -168,17 +176,6 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       range,
     } = this.props;
 
-    const rangeChanged =
-      range &&
-      prevProps.range &&
-      !_.isEqual(
-        { from: range.from.valueOf(), to: range.to.valueOf() },
-        {
-          from: prevProps.range.from.valueOf(),
-          to: prevProps.range.to.valueOf(),
-        }
-      );
-
     if (languageProvider !== prevProps.datasource.languageProvider) {
       // We reset this only on DS change so we do not flesh loading state on every rangeChange which happens on every
       // query run if using relative range.
@@ -188,7 +185,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       });
     }
 
-    if (languageProvider !== prevProps.datasource.languageProvider || rangeChanged) {
+    const changedRangeToRefresh = this.rangeChangedToRefresh(range, prevProps.range);
+    // We want to refresh metrics when language provider changes and/or when range changes (we round up intervals to a minute)
+    if (languageProvider !== prevProps.datasource.languageProvider || changedRangeToRefresh) {
       this.refreshMetrics();
     }
 
@@ -236,6 +235,16 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
       }
     }
   };
+
+  rangeChangedToRefresh(range?: TimeRange, prevRange?: TimeRange): boolean {
+    if (range && prevRange) {
+      const sameMinuteFrom = roundMsToMin(range.from.valueOf()) === roundMsToMin(prevRange.from.valueOf());
+      const sameMinuteTo = roundMsToMin(range.to.valueOf()) === roundMsToMin(prevRange.to.valueOf());
+      // If both are same, don't need to refresh.
+      return !(sameMinuteFrom && sameMinuteTo);
+    }
+    return false;
+  }
 
   onChangeMetrics = (values: string[], selectedOptions: CascaderOption[]) => {
     let query;

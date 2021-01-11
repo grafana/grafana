@@ -54,6 +54,20 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) Response {
 		return rsp
 	}
 
+	// When dash contains only keys id, uid that means dashboard data is not valid and json decode failed.
+	if dash.Data != nil {
+		isEmptyData := true
+		for k := range dash.Data.MustMap() {
+			if k != "id" && k != "uid" {
+				isEmptyData = false
+				break
+			}
+		}
+		if isEmptyData {
+			return Error(500, "Error while loading dashboard, dashboard data is invalid", nil)
+		}
+	}
+
 	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
 	if canView, err := guardian.CanView(); err != nil || !canView {
 		return dashboardGuardianResponse(err)

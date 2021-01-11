@@ -24,8 +24,8 @@ func TestAlertRuleExtraction(t *testing.T) {
 		influxDBDs := &models.DataSource{Id: 16, OrgId: 1, Name: "InfluxDB"}
 		prom := &models.DataSource{Id: 17, OrgId: 1, Name: "Prometheus"}
 
-		bus.AddHandler("test", func(query *models.GetDataSourcesQuery) error {
-			query.Result = []*models.DataSource{defaultDs, graphite2Ds}
+		bus.AddHandler("test", func(query *models.GetDefaultDataSourceQuery) error {
+			query.Result = defaultDs
 			return nil
 		})
 
@@ -172,6 +172,28 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 			Convey("panel with id 0 should return error", func() {
 				So(err, ShouldNotBeNil)
+			})
+		})
+
+		Convey("Panel does not have datasource configured, use the default datasource", func() {
+			panelWithoutSpecifiedDatasource, err := ioutil.ReadFile("./testdata/panel-without-specified-datasource.json")
+			So(err, ShouldBeNil)
+
+			dashJSON, err := simplejson.NewJson(panelWithoutSpecifiedDatasource)
+			So(err, ShouldBeNil)
+			dash := models.NewDashboardFromJson(dashJSON)
+			extractor := NewDashAlertExtractor(dash, 1, nil)
+
+			alerts, err := extractor.GetAlerts()
+
+			Convey("Get rules without error", func() {
+				So(err, ShouldBeNil)
+			})
+
+			Convey("Use default datasource", func() {
+				condition := simplejson.NewFromAny(alerts[0].Settings.Get("conditions").MustArray()[0])
+				query := condition.Get("query")
+				So(query.Get("datasourceId").MustInt64(), ShouldEqual, 12)
 			})
 		})
 

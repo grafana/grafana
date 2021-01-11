@@ -66,6 +66,8 @@ module.directive('grafanaPanel', ($rootScope, $document, $timeout) => {
         ctrl.width = scope.$parent.$parent.size.width;
       }
 
+      updateDimensionsFromParentScope();
+
       // Pass PanelModel events down to angular controller event emitter
       subs.add(
         panel.events.subscribe(RefreshEvent, () => {

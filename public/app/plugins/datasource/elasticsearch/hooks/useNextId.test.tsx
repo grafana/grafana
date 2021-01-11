@@ -13,7 +13,7 @@ describe('useNextId', () => {
     };
     const wrapper: FunctionComponent = ({ children }) => {
       return (
-        <ElasticsearchProvider query={query} datasource={{} as any} onChange={() => {}}>
+        <ElasticsearchProvider query={query} datasource={{} as any} onChange={() => {}} onRunQuery={() => {}}>
           {children}
         </ElasticsearchProvider>
       );

@@ -1,11 +1,12 @@
 import React from 'react';
 import { UPlotChart } from './Plot';
 import { act, render } from '@testing-library/react';
-import { ArrayVector, dateTime, FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
+import { ArrayVector, DataFrame, dateTime, FieldConfig, FieldType, MutableDataFrame } from '@grafana/data';
 import { GraphFieldConfig, DrawStyle } from '../uPlot/config';
 import uPlot from 'uplot';
 import createMockRaf from 'mock-raf';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
+import { AlignedFrameWithGapTest } from './types';
 
 const mockRaf = createMockRaf();
 const setDataMock = jest.fn();
@@ -68,7 +69,7 @@ describe('UPlotChart', () => {
 
   it('destroys uPlot instance when component unmounts', () => {
     const { data, timeRange, config } = mockData();
-    const uPlotData = { frame: data, isGap: () => false };
+    const uPlotData = createPlotData(data);
 
     const { unmount } = render(
       <UPlotChart
@@ -94,7 +95,7 @@ describe('UPlotChart', () => {
   describe('data update', () => {
     it('skips uPlot reinitialization when there are no field config changes', () => {
       const { data, timeRange, config } = mockData();
-      const uPlotData = { frame: data, isGap: () => false };
+      const uPlotData = createPlotData(data);
 
       const { rerender } = render(
         <UPlotChart
@@ -135,7 +136,7 @@ describe('UPlotChart', () => {
   describe('config update', () => {
     it('skips uPlot intialization for width and height equal 0', async () => {
       const { data, timeRange, config } = mockData();
-      const uPlotData = { frame: data, isGap: () => false };
+      const uPlotData = createPlotData(data);
 
       const { queryAllByTestId } = render(
         <UPlotChart data={uPlotData} config={config} timeRange={timeRange} timeZone={'browser'} width={0} height={0} />
@@ -147,7 +148,7 @@ describe('UPlotChart', () => {
 
     it('reinitializes uPlot when config changes', () => {
       const { data, timeRange, config } = mockData();
-      const uPlotData = { frame: data, isGap: () => false };
+      const uPlotData = createPlotData(data);
 
       const { rerender } = render(
         <UPlotChart
@@ -184,7 +185,7 @@ describe('UPlotChart', () => {
 
     it('skips uPlot reinitialization when only dimensions change', () => {
       const { data, timeRange, config } = mockData();
-      const uPlotData = { frame: data, isGap: () => false };
+      const uPlotData = createPlotData(data);
 
       const { rerender } = render(
         <UPlotChart
@@ -219,3 +220,11 @@ describe('UPlotChart', () => {
     });
   });
 });
+
+const createPlotData = (frame: DataFrame): AlignedFrameWithGapTest => {
+  return {
+    frame,
+    isGap: () => false,
+    getDataFrameFieldIndex: () => undefined,
+  };
+};

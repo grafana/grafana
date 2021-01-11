@@ -93,7 +93,7 @@ const copyFieldStructure = (field: Field, name: string): Field => {
     name: name,
     values: new ArrayVector(),
     config: {
-      ...omit(field.config, 'displayName'),
+      ...omit(field.config, ['displayName', 'displayNameFromDS']),
     },
   };
 };

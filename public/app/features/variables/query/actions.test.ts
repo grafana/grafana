@@ -1,4 +1,4 @@
-import { DefaultTimeRange, LoadingState } from '@grafana/data';
+import { getDefaultTimeRange, LoadingState } from '@grafana/data';
 
 import { variableAdapters } from '../adapters';
 import { createQueryVariableAdapter } from './adapter';
@@ -68,7 +68,7 @@ describe('query actions', () => {
   beforeEach(() => {
     originalTimeSrv = getTimeSrv();
     setTimeSrv(({
-      timeRange: jest.fn().mockReturnValue(DefaultTimeRange),
+      timeRange: jest.fn().mockReturnValue(getDefaultTimeRange()),
     } as unknown) as TimeSrv);
     setVariableQueryRunner(new VariableQueryRunner());
   });

@@ -49,6 +49,7 @@ var metricAggType = map[string]string{
 	"moving_fn":      "Moving Function",
 	"cumulative_sum": "Cumulative Sum",
 	"derivative":     "Derivative",
+	"serial_diff":    "Serial Difference",
 	"bucket_script":  "Bucket Script",
 	"raw_document":   "Raw Document",
 }
@@ -69,6 +70,7 @@ var pipelineAggType = map[string]string{
 	"moving_fn":      "moving_fn",
 	"cumulative_sum": "cumulative_sum",
 	"derivative":     "derivative",
+	"serial_diff":    "serial_diff",
 	"bucket_script":  "bucket_script",
 }
 

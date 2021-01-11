@@ -40,7 +40,7 @@ const getMatcherConfig = (options?: RegexpOrNamesMatcherOptions): MatcherConfig 
   }
 
   if (!pattern) {
-    return { id: FieldMatcherID.byNames, options: names };
+    return { id: FieldMatcherID.byNames, options: { names } };
   }
 
   if (!Array.isArray(names) || names.length === 0) {

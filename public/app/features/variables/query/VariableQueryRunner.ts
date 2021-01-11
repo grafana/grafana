@@ -5,7 +5,7 @@ import {
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
-  DefaultTimeRange,
+  getDefaultTimeRange,
   LoadingState,
   ScopedVars,
 } from '@grafana/data';
@@ -177,7 +177,7 @@ export class VariableQueryRunner {
     const range =
       variable.refresh === VariableRefresh.onTimeRangeChanged
         ? this.dependencies.getTimeSrv().timeRange()
-        : DefaultTimeRange;
+        : getDefaultTimeRange();
 
     const request: DataQueryRequest = {
       app: CoreApp.Dashboard,

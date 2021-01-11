@@ -15,9 +15,26 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": 90,
-  "links": [],
+  "links": [
+    {
+      "icon": "external link",
+      "tags": ["gdev", "graph-ng"],
+      "type": "dashboards"
+    }
+  ],
   "panels": [
+    {
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 50,
+      "title": "Lines",
+      "type": "row"
+    },
     {
       "datasource": null,
       "fieldConfig": {
@@ -32,21 +49,41 @@
               "side": 3,
               "width": 60
             },
+            "axisLabel": "",
+            "axisPlacement": "auto",
             "bars": {
               "show": false
             },
+            "drawStyle": "line",
             "fill": {
               "alpha": 0.1
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
             },
             "line": {
               "show": true,
               "width": 1
             },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
             "nullValues": "null",
+            "pointSize": 5,
             "points": {
               "radius": 4,
               "show": false
-            }
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
           },
           "mappings": [],
           "thresholds": {
@@ -66,18 +103,20 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 11,
-        "w": 12,
+        "h": 6,
+        "w": 6,
         "x": 0,
-        "y": 0
+        "y": 1
       },
-      "id": 40,
+      "id": 47,
+      "maxDataPoints": 500,
       "options": {
         "graph": {
           "realTimeUpdates": false
         },
         "legend": {
           "asTable": false,
+          "displayMode": "hidden",
           "isVisible": true,
           "placement": "bottom"
         },
@@ -88,64 +127,1813 @@
       "pluginVersion": "7.3.0-pre",
       "targets": [
         {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
           "refId": "A",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "B",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "C",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "D",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "E",
-          "scenarioId": "random_walk"
+          "scenarioId": "random_walk",
+          "seriesCount": 1,
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": ""
         }
       ],
       "timeFrom": null,
       "timeShift": null,
-      "title": "React NG graph",
-      "type": "graph3"
+      "title": "Lines 500 data points",
+      "type": "timeseries"
     },
     {
-      "aliasColors": {
-        "B-series": "purple"
-      },
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "gdev-testdata",
+      "datasource": null,
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0.1
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 8,
+            "points": {
+              "radius": 4,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 1
+      },
+      "id": 48,
+      "maxDataPoints": 20,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "hidden",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.3.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "seriesCount": 1,
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "1,20,50,30,5,0,20,40,90,50"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "10 data points, points auto",
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0.1
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 4,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 1
+      },
+      "id": 55,
+      "maxDataPoints": 20,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "hidden",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.3.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "seriesCount": 1,
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "1,20,50,30,5,0,20,40,90,50"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "20 data points, points never",
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0.1
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 4,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 1
+      },
+      "id": 56,
+      "maxDataPoints": 90,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "hidden",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.3.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 1,
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "1,20,50,30,5,0,20,40,90,50"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "20 data points, points always",
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0.1
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 4,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 7
+      },
+      "id": 52,
+      "maxDataPoints": 10,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "hidden",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.3.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "seriesCount": 1,
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "1,20,50,30,5,0,20,40,90,50"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Interpolation: linear",
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0.1
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 4,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 7
+      },
+      "id": 53,
+      "maxDataPoints": 10,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "hidden",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.3.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "seriesCount": 1,
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "1,20,50,30,5,0,20,40,90,50"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Interpolation: Smooth",
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0.1
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "stepBefore",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 4,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 7
+      },
+      "id": 54,
+      "maxDataPoints": 10,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "hidden",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.3.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "seriesCount": 1,
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "1,20,50,30,5,0,20,40,90,50"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Interpolation: Step before",
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0.1
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "stepAfter",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 4,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 7
+      },
+      "id": 57,
+      "maxDataPoints": 10,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "hidden",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.3.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "seriesCount": 1,
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "1,20,50,30,5,0,20,40,90,50"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Interpolation: Step after",
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "align": null,
             "axis": {
               "grid": true,
               "label": "",
               "side": 3,
-              "width": 80
+              "width": 60
             },
+            "axisLabel": "",
+            "axisPlacement": "auto",
             "bars": {
               "show": false
             },
+            "drawStyle": "line",
             "fill": {
               "alpha": 0
             },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
             "line": {
-              "show": false,
+              "color": {
+                "mode": "palette-classic"
+              },
+              "show": true,
               "width": 1
             },
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "dash": [10, 10],
+              "fill": "dash"
+            },
+            "lineWidth": 2,
             "nullValues": "null",
+            "pointSize": 5,
             "points": {
-              "radius": 2,
-              "show": true
-            }
+              "radius": 5,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "B-series"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [10, 20],
+                  "fill": "dash"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "C-series"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [10, 30],
+                  "fill": "dash"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "D-series"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [30, 3, 3],
+                  "fill": "dash"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "E-series"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "id": 60,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "hidden",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "10,10"
+        },
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "B",
+          "scenarioId": "csv_metric_values",
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "9,9"
+        },
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "8,8"
+        },
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "D",
+          "scenarioId": "csv_metric_values",
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "7,7"
+        },
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "E",
+          "scenarioId": "csv_metric_values",
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "6,6"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Dashed lines",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "id": 62,
+      "panels": [],
+      "title": "Bars and points",
+      "type": "row"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "bars",
+            "fill": {
+              "alpha": 0.1
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 4,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 0,
+        "y": 19
+      },
+      "id": 63,
+      "maxDataPoints": 10,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "hidden",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.3.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "seriesCount": 1,
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "1,20,50,30,5,0,20,40,90,50"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Bars: no fill",
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "bars",
+            "fill": {
+              "alpha": 0.1
+            },
+            "fillGradient": "hue",
+            "fillOpacity": 100,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 0,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 4,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A-series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 6,
+        "y": 19
+      },
+      "id": 64,
+      "maxDataPoints": 10,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "hidden",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.3.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "seriesCount": 1,
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "1,20,50,30,5,0,20,40,90,50"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Bars: Fill + hue gradient",
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "points",
+            "fill": {
+              "alpha": 0.1
+            },
+            "fillGradient": "hue",
+            "fillOpacity": 100,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 0,
+            "nullValues": "null",
+            "pointSize": 10,
+            "points": {
+              "radius": 4,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A-series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 19
+      },
+      "id": 65,
+      "maxDataPoints": 10,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "hidden",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.3.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "seriesCount": 1,
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "1,20,50,30,5,0,20,40,90,50"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Points: Size 10",
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "points",
+            "fill": {
+              "alpha": 0.1
+            },
+            "fillGradient": "hue",
+            "fillOpacity": 100,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 0,
+            "nullValues": "null",
+            "pointSize": 4,
+            "points": {
+              "radius": 4,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "A-series"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 19
+      },
+      "id": 66,
+      "maxDataPoints": 100,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "hidden",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.3.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 1,
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": "1,20,50,30,5,0,20,40,90,50"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Points: size 4",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "id": 34,
+      "panels": [],
+      "title": "Legend rendering",
+      "type": "row"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "align": null,
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 40
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0.2
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 10,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 5,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
           },
           "decimals": 2,
           "mappings": [],
@@ -184,84 +1972,1074 @@
                 "value": true
               },
               {
-                "id": "custom.axis.label",
-                "value": "Temperature (F)"
+                "id": "custom.axis.width",
+                "value": 40
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 26
+      },
+      "id": 32,
+      "maxDataPoints": 100,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "list",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "hide": false,
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "hide": false,
+          "refId": "B",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "C",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "List",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "align": null,
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 40
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0.2
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 10,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 5,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
           },
+          "unit": "celsius"
+        },
+        "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "C-series"
+              "options": "B-series"
             },
             "properties": [
               {
                 "id": "unit",
-                "value": "kelvin"
-              },
-              {
-                "id": "custom.axis.label",
-                "value": "Temperature (K)"
+                "value": "fahrenheit"
               },
               {
                 "id": "custom.axis.side",
                 "value": 1
               },
               {
-                "id": "custom.axis.grid",
-                "value": false
+                "id": "custom.line.show",
+                "value": true
+              },
+              {
+                "id": "custom.axis.width",
+                "value": 40
               }
             ]
           }
         ]
       },
-      "fill": 1,
-      "fillGradient": 0,
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 26
+      },
+      "id": 35,
+      "maxDataPoints": 100,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "list",
+          "isVisible": false,
+          "placement": "right"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "hide": false,
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 3,
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": ""
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "List legend to the right ",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "align": null,
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 40
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0.2
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 5,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "B-series"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "fahrenheit"
+              },
+              {
+                "id": "custom.axis.side",
+                "value": 1
+              },
+              {
+                "id": "custom.line.show",
+                "value": true
+              },
+              {
+                "id": "custom.axis.width",
+                "value": 40
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 26
+      },
+      "id": 31,
+      "maxDataPoints": 200,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": true,
+          "displayMode": "table",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 8,
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": ""
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Table",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "align": null,
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 40
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0.2
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 0,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 5,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "decimals": 2,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "B-series"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "fahrenheit"
+              },
+              {
+                "id": "custom.axis.side",
+                "value": 1
+              },
+              {
+                "id": "custom.line.show",
+                "value": true
+              },
+              {
+                "id": "custom.axis.width",
+                "value": 40
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 26
+      },
+      "id": 51,
+      "maxDataPoints": 200,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": true,
+          "displayMode": "table",
+          "isVisible": true,
+          "placement": "right"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "alias": "",
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "lines": 10,
+          "points": [],
+          "pulseWave": {
+            "offCount": 3,
+            "offValue": 1,
+            "onCount": 3,
+            "onValue": 2,
+            "timeStep": 60
+          },
+          "refId": "A",
+          "scenarioId": "random_walk",
+          "seriesCount": 8,
+          "stream": {
+            "bands": 1,
+            "noise": 2.2,
+            "speed": 250,
+            "spread": 3.5,
+            "type": "signal"
+          },
+          "stringInput": ""
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Table to the right",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 34
+      },
+      "id": 17,
+      "panels": [],
+      "title": "Tooltip",
+      "type": "row"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "align": null,
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 10,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 5,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 0,
+        "y": 35
+      },
+      "id": 19,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "hidden",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "B",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Single mode",
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "align": null,
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 10,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 5,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 6,
+        "y": 35
+      },
+      "id": 20,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "hidden",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "multi"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "B",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Multi mode",
+      "type": "timeseries"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 10,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 5,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 12,
+        "y": 35
+      },
+      "id": 21,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "hidden",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "none"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "refId": "A",
+          "scenarioId": "random_walk"
+        },
+        {
+          "refId": "B",
+          "scenarioId": "random_walk"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "No tooltip",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "gdev-testdata",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "Temperature",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 10,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 8,
+              "show": true
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "celsius"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 6,
+        "x": 18,
+        "y": 35
+      },
+      "id": 9,
+      "options": {
+        "graph": {
+          "realTimeUpdates": false
+        },
+        "legend": {
+          "asTable": false,
+          "displayMode": "hidden",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "multi"
+        }
+      },
+      "pluginVersion": "7.2.0-pre",
+      "targets": [
+        {
+          "refId": "C",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "1,20,90,30,5,0"
+        },
+        {
+          "refId": "A",
+          "scenarioId": "csv_metric_values",
+          "stringInput": "10,25,40"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Diff number of datapoints and multi series tooltip",
+      "transformations": [],
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 42
+      },
+      "id": 45,
+      "panels": [],
+      "title": "Annotations",
+      "type": "row"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axis": {
+              "grid": true,
+              "label": "",
+              "side": 3,
+              "width": 60
+            },
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "bars": {
+              "show": false
+            },
+            "drawStyle": "line",
+            "fill": {
+              "alpha": 0.1
+            },
+            "fillGradient": {
+              "label": "None"
+            },
+            "fillOpacity": 10,
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "line": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "show": true,
+              "width": 1
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "nullValues": "null",
+            "pointSize": 5,
+            "points": {
+              "radius": 4,
+              "show": false
+            },
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
       "gridPos": {
         "h": 11,
         "w": 12,
-        "x": 12,
-        "y": 0
+        "x": 0,
+        "y": 43
       },
-      "hiddenSeries": false,
-      "id": 22,
-      "legend": {
-        "alignAsTable": true,
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
-      },
-      "lines": true,
-      "linewidth": 1,
-      "nullPointMode": "null",
+      "id": 46,
       "options": {
-        "alertThreshold": true
-      },
-      "percentage": false,
-      "pluginVersion": "7.3.0-pre",
-      "pointradius": 2,
-      "points": false,
-      "renderer": "flot",
-      "seriesOverrides": [
-        {
-          "alias": "C-series",
-          "yaxis": 2
+        "graph": {
+          "realTimeUpdates": false
         },
-        {
-          "alias": "B-series",
-          "yaxis": 2
+        "legend": {
+          "asTable": false,
+          "displayMode": "list",
+          "isVisible": true,
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
         }
-      ],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      },
+      "pluginVersion": "7.3.0-pre",
       "targets": [
         {
-          "labels": "",
           "refId": "A",
           "scenarioId": "random_walk"
         },
@@ -283,2202 +3061,32 @@
         },
         {
           "refId": "F",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "G",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "H",
-          "scenarioId": "random_walk"
-        },
-        {
-          "refId": "I",
-          "scenarioId": "random_walk"
+          "scenarioId": "annotations",
+          "stringInput": ""
         }
       ],
-      "thresholds": [],
       "timeFrom": null,
-      "timeRegions": [],
       "timeShift": null,
-      "title": "Angular graph",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
-      "transformations": [],
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "format": "celsius",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "format": "kelvin",
-          "label": null,
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
-    },
-    {
-      "collapsed": true,
-      "datasource": null,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 11
-      },
-      "id": 34,
-      "panels": [
-        {
-          "datasource": "gdev-testdata",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "align": null,
-                "axis": {
-                  "grid": true,
-                  "label": "",
-                  "side": 3,
-                  "width": 40
-                },
-                "bars": {
-                  "show": false
-                },
-                "fill": {
-                  "alpha": 0.2
-                },
-                "line": {
-                  "show": true,
-                  "width": 1
-                },
-                "nullValues": "null",
-                "points": {
-                  "radius": 5,
-                  "show": false
-                }
-              },
-              "decimals": 2,
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "celsius"
-            },
-            "overrides": [
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "B-series"
-                },
-                "properties": [
-                  {
-                    "id": "unit",
-                    "value": "fahrenheit"
-                  },
-                  {
-                    "id": "custom.axis.side",
-                    "value": 1
-                  },
-                  {
-                    "id": "custom.line.show",
-                    "value": true
-                  },
-                  {
-                    "id": "custom.axis.width",
-                    "value": 40
-                  }
-                ]
-              }
-            ]
-          },
-          "gridPos": {
-            "h": 11,
-            "w": 8,
-            "x": 0,
-            "y": 12
-          },
-          "id": 31,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": true,
-              "isVisible": true,
-              "placement": "bottom"
-            },
-            "tooltipOptions": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "7.2.0-pre",
-          "targets": [
-            {
-              "hide": false,
-              "refId": "A",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "B",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "C",
-              "scenarioId": "random_walk"
-            },
-            {
-              "labels": "",
-              "refId": "D",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "E",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "F",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "G",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "H",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "I",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "J",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "K",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "L",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "M",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "N",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "O",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "P",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "Q",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "R",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "S",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "T",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "U",
-              "scenarioId": "random_walk"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Table",
-          "transformations": [],
-          "type": "graph3"
-        },
-        {
-          "datasource": "gdev-testdata",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "align": null,
-                "axis": {
-                  "grid": true,
-                  "label": "",
-                  "side": 3,
-                  "width": 40
-                },
-                "bars": {
-                  "show": false
-                },
-                "fill": {
-                  "alpha": 0.2
-                },
-                "line": {
-                  "show": true,
-                  "width": 1
-                },
-                "nullValues": "null",
-                "points": {
-                  "radius": 5,
-                  "show": false
-                }
-              },
-              "decimals": 2,
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "celsius"
-            },
-            "overrides": [
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "B-series"
-                },
-                "properties": [
-                  {
-                    "id": "unit",
-                    "value": "fahrenheit"
-                  },
-                  {
-                    "id": "custom.axis.side",
-                    "value": 1
-                  },
-                  {
-                    "id": "custom.line.show",
-                    "value": true
-                  },
-                  {
-                    "id": "custom.axis.width",
-                    "value": 40
-                  }
-                ]
-              }
-            ]
-          },
-          "gridPos": {
-            "h": 11,
-            "w": 8,
-            "x": 8,
-            "y": 12
-          },
-          "id": 32,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": false,
-              "isVisible": true,
-              "placement": "bottom"
-            },
-            "tooltipOptions": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "7.2.0-pre",
-          "targets": [
-            {
-              "hide": false,
-              "refId": "A",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "B",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "C",
-              "scenarioId": "random_walk"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "List",
-          "transformations": [],
-          "type": "graph3"
-        },
-        {
-          "datasource": "gdev-testdata",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "align": null,
-                "axis": {
-                  "grid": true,
-                  "label": "",
-                  "side": 3,
-                  "width": 40
-                },
-                "bars": {
-                  "show": false
-                },
-                "fill": {
-                  "alpha": 0.2
-                },
-                "line": {
-                  "show": true,
-                  "width": 1
-                },
-                "nullValues": "null",
-                "points": {
-                  "radius": 5,
-                  "show": false
-                }
-              },
-              "decimals": 2,
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "celsius"
-            },
-            "overrides": [
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "B-series"
-                },
-                "properties": [
-                  {
-                    "id": "unit",
-                    "value": "fahrenheit"
-                  },
-                  {
-                    "id": "custom.axis.side",
-                    "value": 1
-                  },
-                  {
-                    "id": "custom.line.show",
-                    "value": true
-                  },
-                  {
-                    "id": "custom.axis.width",
-                    "value": 40
-                  }
-                ]
-              }
-            ]
-          },
-          "gridPos": {
-            "h": 11,
-            "w": 8,
-            "x": 16,
-            "y": 12
-          },
-          "id": 35,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": false,
-              "isVisible": false,
-              "placement": "bottom"
-            },
-            "tooltipOptions": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "7.2.0-pre",
-          "targets": [
-            {
-              "hide": false,
-              "refId": "A",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "B",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "C",
-              "scenarioId": "random_walk"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "No legend",
-          "transformations": [],
-          "type": "graph3"
-        }
-      ],
-      "title": "Legend rendering",
-      "type": "row"
-    },
-    {
-      "collapsed": true,
-      "datasource": null,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 12
-      },
-      "id": 24,
-      "panels": [
-        {
-          "datasource": "gdev-testdata",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "align": null,
-                "axis": {
-                  "grid": true,
-                  "label": "",
-                  "side": 3,
-                  "width": 40
-                },
-                "bars": {
-                  "show": false
-                },
-                "fill": {
-                  "alpha": 0.2
-                },
-                "line": {
-                  "show": false,
-                  "width": 1
-                },
-                "nullValues": "null",
-                "points": {
-                  "radius": 5,
-                  "show": false
-                }
-              },
-              "decimals": 2,
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "celsius"
-            },
-            "overrides": [
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "B-series"
-                },
-                "properties": [
-                  {
-                    "id": "unit",
-                    "value": "fahrenheit"
-                  },
-                  {
-                    "id": "custom.axis.side",
-                    "value": 1
-                  },
-                  {
-                    "id": "custom.line.show",
-                    "value": true
-                  },
-                  {
-                    "id": "custom.axis.width",
-                    "value": 40
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "C-series"
-                },
-                "properties": [
-                  {
-                    "id": "unit",
-                    "value": "kelvin"
-                  },
-                  {
-                    "id": "custom.axis.side",
-                    "value": 1
-                  },
-                  {
-                    "id": "custom.axis.grid",
-                    "value": false
-                  },
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "purple",
-                      "mode": "fixed"
-                    }
-                  },
-                  {
-                    "id": "custom.axis.width",
-                    "value": 40
-                  }
-                ]
-              }
-            ]
-          },
-          "gridPos": {
-            "h": 11,
-            "w": 6,
-            "x": 0,
-            "y": 24
-          },
-          "id": 25,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": false,
-              "isVisible": true,
-              "placement": "bottom"
-            },
-            "tooltipOptions": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "7.2.0-pre",
-          "targets": [
-            {
-              "hide": false,
-              "refId": "A",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "B",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "C",
-              "scenarioId": "random_walk"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Bottom",
-          "transformations": [],
-          "type": "graph3"
-        },
-        {
-          "datasource": "gdev-testdata",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "align": null,
-                "axis": {
-                  "grid": true,
-                  "label": "",
-                  "side": 3,
-                  "width": 40
-                },
-                "bars": {
-                  "show": false
-                },
-                "fill": {
-                  "alpha": 0.2
-                },
-                "line": {
-                  "show": false,
-                  "width": 1
-                },
-                "nullValues": "null",
-                "points": {
-                  "radius": 5,
-                  "show": false
-                }
-              },
-              "decimals": 2,
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "celsius"
-            },
-            "overrides": [
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "B-series"
-                },
-                "properties": [
-                  {
-                    "id": "unit",
-                    "value": "fahrenheit"
-                  },
-                  {
-                    "id": "custom.axis.side",
-                    "value": 1
-                  },
-                  {
-                    "id": "custom.line.show",
-                    "value": true
-                  },
-                  {
-                    "id": "custom.axis.width",
-                    "value": 40
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "C-series"
-                },
-                "properties": [
-                  {
-                    "id": "unit",
-                    "value": "kelvin"
-                  },
-                  {
-                    "id": "custom.axis.side",
-                    "value": 1
-                  },
-                  {
-                    "id": "custom.axis.grid",
-                    "value": false
-                  },
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "purple",
-                      "mode": "palette-classic"
-                    }
-                  },
-                  {
-                    "id": "custom.axis.width",
-                    "value": 40
-                  }
-                ]
-              }
-            ]
-          },
-          "gridPos": {
-            "h": 11,
-            "w": 6,
-            "x": 6,
-            "y": 24
-          },
-          "id": 26,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": false,
-              "isVisible": true,
-              "placement": "top"
-            },
-            "tooltipOptions": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "7.2.0-pre",
-          "targets": [
-            {
-              "hide": false,
-              "refId": "A",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "B",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "C",
-              "scenarioId": "random_walk"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Top",
-          "transformations": [],
-          "type": "graph3"
-        },
-        {
-          "datasource": "gdev-testdata",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "align": null,
-                "axis": {
-                  "grid": true,
-                  "label": "",
-                  "side": 3,
-                  "width": 40
-                },
-                "bars": {
-                  "show": false
-                },
-                "fill": {
-                  "alpha": 0.2
-                },
-                "line": {
-                  "show": false,
-                  "width": 1
-                },
-                "nullValues": "null",
-                "points": {
-                  "radius": 5,
-                  "show": false
-                }
-              },
-              "decimals": 2,
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "celsius"
-            },
-            "overrides": [
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "B-series"
-                },
-                "properties": [
-                  {
-                    "id": "unit",
-                    "value": "fahrenheit"
-                  },
-                  {
-                    "id": "custom.axis.side",
-                    "value": 1
-                  },
-                  {
-                    "id": "custom.line.show",
-                    "value": true
-                  },
-                  {
-                    "id": "custom.axis.width",
-                    "value": 40
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "C-series"
-                },
-                "properties": [
-                  {
-                    "id": "unit",
-                    "value": "kelvin"
-                  },
-                  {
-                    "id": "custom.axis.side",
-                    "value": 1
-                  },
-                  {
-                    "id": "custom.axis.grid",
-                    "value": false
-                  },
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "purple",
-                      "mode": "palette-classic"
-                    }
-                  },
-                  {
-                    "id": "custom.axis.width",
-                    "value": 40
-                  }
-                ]
-              }
-            ]
-          },
-          "gridPos": {
-            "h": 11,
-            "w": 6,
-            "x": 12,
-            "y": 24
-          },
-          "id": 28,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": false,
-              "isVisible": true,
-              "placement": "left"
-            },
-            "tooltipOptions": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "7.2.0-pre",
-          "targets": [
-            {
-              "hide": false,
-              "refId": "A",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "B",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "C",
-              "scenarioId": "random_walk"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Left",
-          "transformations": [],
-          "type": "graph3"
-        },
-        {
-          "datasource": "gdev-testdata",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "align": null,
-                "axis": {
-                  "grid": true,
-                  "label": "",
-                  "side": 3,
-                  "width": 40
-                },
-                "bars": {
-                  "show": false
-                },
-                "fill": {
-                  "alpha": 0.2
-                },
-                "line": {
-                  "show": false,
-                  "width": 1
-                },
-                "nullValues": "null",
-                "points": {
-                  "radius": 5,
-                  "show": false
-                }
-              },
-              "decimals": 2,
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "celsius"
-            },
-            "overrides": [
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "B-series"
-                },
-                "properties": [
-                  {
-                    "id": "unit",
-                    "value": "fahrenheit"
-                  },
-                  {
-                    "id": "custom.axis.side",
-                    "value": 1
-                  },
-                  {
-                    "id": "custom.line.show",
-                    "value": true
-                  },
-                  {
-                    "id": "custom.axis.width",
-                    "value": 40
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "C-series"
-                },
-                "properties": [
-                  {
-                    "id": "unit",
-                    "value": "kelvin"
-                  },
-                  {
-                    "id": "custom.axis.side",
-                    "value": 1
-                  },
-                  {
-                    "id": "custom.axis.grid",
-                    "value": false
-                  },
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "purple",
-                      "mode": "palette-classic"
-                    }
-                  },
-                  {
-                    "id": "custom.axis.width",
-                    "value": 40
-                  }
-                ]
-              }
-            ]
-          },
-          "gridPos": {
-            "h": 11,
-            "w": 6,
-            "x": 18,
-            "y": 24
-          },
-          "id": 27,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": false,
-              "isVisible": true,
-              "placement": "right"
-            },
-            "tooltipOptions": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "7.2.0-pre",
-          "targets": [
-            {
-              "hide": false,
-              "refId": "A",
-              "scenarioId": "random_walk"
-            },
-            {
-              "hide": false,
-              "refId": "B",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "C",
-              "scenarioId": "random_walk"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Right",
-          "transformations": [],
-          "type": "graph3"
-        }
-      ],
-      "title": "Legend placement",
-      "type": "row"
-    },
-    {
-      "collapsed": true,
-      "datasource": null,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 13
-      },
-      "id": 17,
-      "panels": [
-        {
-          "datasource": null,
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "align": null,
-                "axis": {
-                  "grid": true,
-                  "label": "",
-                  "side": 3,
-                  "width": 60
-                },
-                "bars": {
-                  "show": false
-                },
-                "fill": {
-                  "alpha": 0
-                },
-                "line": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "show": true,
-                  "width": 1
-                },
-                "nullValues": "null",
-                "points": {
-                  "radius": 5,
-                  "show": false
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 8,
-            "x": 0,
-            "y": 14
-          },
-          "id": 19,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": false,
-              "isVisible": true,
-              "placement": "bottom"
-            },
-            "tooltipOptions": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "7.2.0-pre",
-          "targets": [
-            {
-              "refId": "A",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "B",
-              "scenarioId": "random_walk"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Single mode",
-          "type": "graph3"
-        },
-        {
-          "datasource": null,
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "align": null,
-                "axis": {
-                  "grid": true,
-                  "label": "",
-                  "side": 3,
-                  "width": 60
-                },
-                "bars": {
-                  "show": false
-                },
-                "fill": {
-                  "alpha": 0
-                },
-                "line": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "show": true,
-                  "width": 1
-                },
-                "nullValues": "null",
-                "points": {
-                  "radius": 5,
-                  "show": false
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 8,
-            "x": 8,
-            "y": 14
-          },
-          "id": 20,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": false,
-              "isVisible": true,
-              "placement": "bottom"
-            },
-            "tooltipOptions": {
-              "mode": "multi"
-            }
-          },
-          "pluginVersion": "7.2.0-pre",
-          "targets": [
-            {
-              "refId": "A",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "B",
-              "scenarioId": "random_walk"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Multi mode",
-          "type": "graph3"
-        },
-        {
-          "datasource": null,
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axis": {
-                  "grid": true,
-                  "label": "",
-                  "side": 3,
-                  "width": 60
-                },
-                "bars": {
-                  "show": false
-                },
-                "fill": {
-                  "alpha": 0
-                },
-                "line": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "show": true,
-                  "width": 1
-                },
-                "nullValues": "null",
-                "points": {
-                  "radius": 5,
-                  "show": false
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 8,
-            "x": 16,
-            "y": 14
-          },
-          "id": 21,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": false,
-              "isVisible": true,
-              "placement": "bottom"
-            },
-            "tooltipOptions": {
-              "mode": "none"
-            }
-          },
-          "pluginVersion": "7.2.0-pre",
-          "targets": [
-            {
-              "refId": "A",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "B",
-              "scenarioId": "random_walk"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "No tooltip",
-          "type": "graph3"
-        },
-        {
-          "datasource": "gdev-testdata",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axis": {
-                  "grid": true,
-                  "label": "Temperature",
-                  "side": 3,
-                  "width": 60
-                },
-                "bars": {
-                  "show": false
-                },
-                "fill": {
-                  "alpha": 0
-                },
-                "line": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "show": true,
-                  "width": 1
-                },
-                "nullValues": "null",
-                "points": {
-                  "radius": 8,
-                  "show": true
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "celsius"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 9,
-            "w": 12,
-            "x": 0,
-            "y": 22
-          },
-          "id": 9,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": false,
-              "isVisible": true,
-              "placement": "bottom"
-            },
-            "tooltipOptions": {
-              "mode": "multi"
-            }
-          },
-          "pluginVersion": "7.2.0-pre",
-          "targets": [
-            {
-              "refId": "C",
-              "scenarioId": "csv_metric_values",
-              "stringInput": "1,20,90,30,5,0"
-            },
-            {
-              "refId": "A",
-              "scenarioId": "csv_metric_values",
-              "stringInput": "10,25,40"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Diff number of datapoints milt multi series tooltip",
-          "transformations": [],
-          "type": "graph3"
-        }
-      ],
-      "title": "Tooltip",
-      "type": "row"
-    },
-    {
-      "collapsed": true,
-      "datasource": null,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 14
-      },
-      "id": 11,
-      "panels": [
-        {
-          "datasource": "gdev-testdata",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axis": {
-                  "grid": true,
-                  "label": "Temperature",
-                  "side": 3,
-                  "width": 60
-                },
-                "bars": {
-                  "show": false
-                },
-                "fill": {
-                  "alpha": 0
-                },
-                "line": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "show": true,
-                  "width": 1
-                },
-                "nullValues": "null",
-                "points": {
-                  "radius": 8,
-                  "show": true
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "celsius"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 11,
-            "w": 8,
-            "x": 0,
-            "y": 15
-          },
-          "id": 8,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": false,
-              "isVisible": true,
-              "placement": "bottom"
-            },
-            "tooltipOptions": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "7.2.0-pre",
-          "targets": [
-            {
-              "refId": "C",
-              "scenarioId": "csv_metric_values",
-              "stringInput": "1,20,90,30,5,0"
-            },
-            {
-              "refId": "A",
-              "scenarioId": "csv_metric_values",
-              "stringInput": "10,25,null,null,50,10"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "As null",
-          "transformations": [],
-          "type": "graph3"
-        },
-        {
-          "datasource": "gdev-testdata",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axis": {
-                  "grid": true,
-                  "label": "",
-                  "side": 3,
-                  "width": 60
-                },
-                "bars": {
-                  "show": false
-                },
-                "custom": {
-                  "axis": {
-                    "grid": true,
-                    "label": "Temperature",
-                    "side": 3
-                  },
-                  "bars": {
-                    "show": false
-                  },
-                  "line": {
-                    "show": true
-                  },
-                  "points": {
-                    "radius": 8,
-                    "show": true
-                  }
-                },
-                "fill": {
-                  "alpha": 0
-                },
-                "line": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "show": true,
-                  "width": 1
-                },
-                "nullValues": "asZero",
-                "points": {
-                  "radius": 5,
-                  "show": false
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "celsius"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 11,
-            "w": 8,
-            "x": 8,
-            "y": 15
-          },
-          "id": 13,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": false,
-              "isVisible": true,
-              "placement": "bottom"
-            },
-            "tooltipOptions": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "7.2.0-pre",
-          "targets": [
-            {
-              "refId": "C",
-              "scenarioId": "csv_metric_values",
-              "stringInput": "1,20,90,30,5,0"
-            },
-            {
-              "refId": "A",
-              "scenarioId": "csv_metric_values",
-              "stringInput": "10,25,null,null,50,10"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "As zero",
-          "transformations": [],
-          "type": "graph3"
-        },
-        {
-          "datasource": "gdev-testdata",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axis": {
-                  "grid": true,
-                  "label": "Temperature",
-                  "side": 3,
-                  "width": 60
-                },
-                "bars": {
-                  "show": false
-                },
-                "fill": {
-                  "alpha": 0
-                },
-                "line": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "show": true,
-                  "width": 1
-                },
-                "nullValues": "connected",
-                "points": {
-                  "radius": 8,
-                  "show": true
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "celsius"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 11,
-            "w": 8,
-            "x": 16,
-            "y": 15
-          },
-          "id": 12,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": false,
-              "isVisible": true,
-              "placement": "bottom"
-            },
-            "tooltipOptions": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "7.2.0-pre",
-          "targets": [
-            {
-              "refId": "C",
-              "scenarioId": "csv_metric_values",
-              "stringInput": "1,20,90,30,5,0"
-            },
-            {
-              "refId": "A",
-              "scenarioId": "csv_metric_values",
-              "stringInput": "10,25,null,null,50,10"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Connected",
-          "transformations": [],
-          "type": "graph3"
-        }
-      ],
-      "title": "Null values rendering",
-      "type": "row"
-    },
-    {
-      "collapsed": true,
-      "datasource": null,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 15
-      },
-      "id": 15,
-      "panels": [
-        {
-          "datasource": "gdev-testdata",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axis": {
-                  "grid": true,
-                  "label": "Temperature",
-                  "side": 3,
-                  "width": 60
-                },
-                "bars": {
-                  "show": false
-                },
-                "fill": {
-                  "alpha": 0
-                },
-                "line": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "show": true,
-                  "width": 1
-                },
-                "nullValues": "null",
-                "points": {
-                  "radius": 8,
-                  "show": true
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "celsius"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 10,
-            "w": 24,
-            "x": 0,
-            "y": 16
-          },
-          "id": 43,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": false,
-              "isVisible": true,
-              "placement": "bottom"
-            },
-            "tooltipOptions": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "7.2.0-pre",
-          "targets": [
-            {
-              "refId": "C",
-              "scenarioId": "csv_metric_values",
-              "stringInput": "1,20,90,30,5,0"
-            },
-            {
-              "refId": "A",
-              "scenarioId": "csv_metric_values",
-              "stringInput": "10,25,40"
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Diff number of datapoints",
-          "transformations": [],
-          "type": "graph3"
-        }
-      ],
-      "title": "Misaligned data",
-      "type": "row"
-    },
-    {
-      "collapsed": true,
-      "datasource": null,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 16
-      },
-      "id": 38,
-      "panels": [
-        {
-          "datasource": "gdev-testdata",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "align": null,
-                "axis": {
-                  "grid": true,
-                  "label": "",
-                  "side": 3,
-                  "width": 80
-                },
-                "bars": {
-                  "show": false
-                },
-                "fill": {
-                  "alpha": 0.2
-                },
-                "line": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "show": false,
-                  "width": 1
-                },
-                "nullValues": "null",
-                "points": {
-                  "radius": 4,
-                  "show": false
-                }
-              },
-              "decimals": 2,
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "celsius"
-            },
-            "overrides": [
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "B-series"
-                },
-                "properties": [
-                  {
-                    "id": "unit",
-                    "value": "fahrenheit"
-                  },
-                  {
-                    "id": "custom.axis.side",
-                    "value": 1
-                  },
-                  {
-                    "id": "custom.line.show",
-                    "value": true
-                  },
-                  {
-                    "id": "custom.axis.label",
-                    "value": "Temperature (F)"
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "C-series"
-                },
-                "properties": [
-                  {
-                    "id": "unit",
-                    "value": "kelvin"
-                  },
-                  {
-                    "id": "custom.axis.label",
-                    "value": "Temperature (K)"
-                  },
-                  {
-                    "id": "custom.axis.side",
-                    "value": 1
-                  },
-                  {
-                    "id": "custom.axis.grid",
-                    "value": false
-                  },
-                  {
-                    "id": "color",
-                    "value": {
-                      "fixedColor": "purple",
-                      "mode": "palette-classic"
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "gridPos": {
-            "h": 11,
-            "w": 12,
-            "x": 0,
-            "y": 17
-          },
-          "id": 5,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": false,
-              "isVisible": true,
-              "placement": "bottom"
-            },
-            "tooltipOptions": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "7.2.0-pre",
-          "targets": [
-            {
-              "refId": "C",
-              "scenarioId": "streaming_client",
-              "stream": {
-                "bands": 1,
-                "noise": 2.2,
-                "speed": 250,
-                "spread": 3.5,
-                "type": "signal"
-              },
-              "stringInput": ""
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Graph ng",
-          "transformations": [],
-          "type": "graph3"
-        }
-      ],
-      "title": "Streaming",
-      "type": "row"
-    },
-    {
-      "collapsed": true,
-      "datasource": null,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 17
-      },
-      "id": 45,
-      "panels": [
-        {
-          "datasource": null,
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axis": {
-                  "grid": true,
-                  "label": "",
-                  "side": 3,
-                  "width": 60
-                },
-                "bars": {
-                  "show": false
-                },
-                "fill": {
-                  "alpha": 0.1
-                },
-                "line": {
-                  "color": {
-                    "mode": "palette-classic"
-                  },
-                  "show": true,
-                  "width": 1
-                },
-                "nullValues": "null",
-                "points": {
-                  "radius": 4,
-                  "show": false
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 11,
-            "w": 12,
-            "x": 0,
-            "y": 18
-          },
-          "id": 46,
-          "options": {
-            "graph": {
-              "realTimeUpdates": false
-            },
-            "legend": {
-              "asTable": false,
-              "isVisible": true,
-              "placement": "bottom"
-            },
-            "tooltipOptions": {
-              "mode": "single"
-            }
-          },
-          "pluginVersion": "7.3.0-pre",
-          "targets": [
-            {
-              "refId": "A",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "B",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "C",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "D",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "E",
-              "scenarioId": "random_walk"
-            },
-            {
-              "refId": "F",
-              "scenarioId": "annotations",
-              "stringInput": ""
-            }
-          ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "React NG graph",
-          "type": "graph3"
-        }
-      ],
-      "title": "Annotations",
-      "type": "row"
+      "title": "React NG graph",
+      "type": "timeseries"
     }
   ],
   "refresh": false,
-  "schemaVersion": 26,
+  "schemaVersion": 27,
   "style": "dark",
-  "tags": ["gdev", "panel-tests"],
+  "tags": ["gdev", "panel-tests", "graph-ng"],
   "templating": {
     "list": []
   },
   "time": {
-    "from": "now-2d",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {
     "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
   },
-  "timezone": "Africa/Accra",
+  "timezone": "",
   "title": "Panel Tests - Graph NG",
   "uid": "TkZXxlNG3",
-  "version": 65
+  "version": 10
 }
