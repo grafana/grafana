@@ -19,26 +19,35 @@ export const processHistogramLabels = (labels: string[]) => {
 };
 
 export function processLabels(labels: Array<{ [key: string]: string }>, withName = false) {
-  const values: { [key: string]: string[] } = {};
-  labels.forEach(l => {
-    const { __name__, ...rest } = l;
+  // We are using sets for computation as they have much better performance than array, but we will return array
+  const valueSet: { [key: string]: Set<string> } = {};
+  labels.forEach(label => {
+    const { __name__, ...rest } = label;
     if (withName) {
-      values['__name__'] = values['__name__'] || [];
-      if (!values['__name__'].includes(__name__)) {
-        values['__name__'].push(__name__);
+      valueSet['__name__'] = valueSet['__name__'] || new Set();
+      if (!valueSet['__name__'].has(__name__)) {
+        valueSet['__name__'].add(__name__);
       }
     }
 
     Object.keys(rest).forEach(key => {
-      if (!values[key]) {
-        values[key] = [];
+      if (!valueSet[key]) {
+        valueSet[key] = new Set();
       }
-      if (!values[key].includes(rest[key])) {
-        values[key].push(rest[key]);
+      if (!valueSet[key].has(rest[key])) {
+        valueSet[key].add(rest[key]);
       }
     });
   });
-  return { values, keys: Object.keys(values) };
+
+  // We return object with arrays created from sets
+  const valueArray: { [key: string]: string[] } = {};
+
+  Object.keys(valueSet).forEach(key => {
+    valueArray[key] = Array.from(valueSet[key]);
+  });
+
+  return { values: valueArray, keys: Object.keys(valueArray) };
 }
 
 // const cleanSelectorRegexp = /\{(\w+="[^"\n]*?")(,\w+="[^"\n]*?")*\}/;
