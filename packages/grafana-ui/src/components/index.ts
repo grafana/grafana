@@ -98,6 +98,7 @@ export { LogLabels } from './Logs/LogLabels';
 export { LogMessageAnsi } from './Logs/LogMessageAnsi';
 export { LogRows } from './Logs/LogRows';
 export { getLogRowStyles } from './Logs/getLogRowStyles';
+export { FieldLink } from './Logs/FieldLink';
 export { ToggleButtonGroup, ToggleButton } from './ToggleButtonGroup/ToggleButtonGroup';
 // Panel editors
 export { FullWidthButtonContainer } from './Button/FullWidthButtonContainer';
