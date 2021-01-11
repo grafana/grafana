@@ -34,6 +34,8 @@ import {
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
 import { isBucketAggregationWithField } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
+import { generate, Observable, of, throwError } from 'rxjs';
+import { catchError, first, map, mergeMap, skipWhile, throwIfEmpty } from 'rxjs/operators';
 
 // Those are metadata fields as defined in https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-fields.html#_identity_metadata_fields.
 // custom fields can start with underscores, therefore is not safe to exclude anything that starts with one.
@@ -101,7 +103,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     this.languageProvider = new LanguageProvider(this);
   }
 
-  private request(method: string, url: string, data?: undefined) {
+  private request(method: string, url: string, data?: undefined): Observable<any> {
     const options: any = {
       url: this.url + '/' + url,
       method: method,
@@ -118,16 +120,23 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     }
 
     return getBackendSrv()
-      .datasourceRequest(options)
-      .catch((err: any) => {
-        if (err.data && err.data.error) {
-          throw {
-            message: 'Elasticsearch error: ' + err.data.error.reason,
-            error: err.data.error,
-          };
-        }
-        throw err;
-      });
+      .fetch<any>(options)
+      .pipe(
+        map(results => {
+          results.data.$$config = results.config;
+          return results.data;
+        }),
+        catchError(err => {
+          if (err.data && err.data.error) {
+            return throwError({
+              message: 'Elasticsearch error: ' + err.data.error.reason,
+              error: err.data.error,
+            });
+          }
+
+          return throwError(err);
+        })
+      );
   }
 
   async importQueries(queries: DataQuery[], originMeta: PluginMeta): Promise<ElasticsearchQuery[]> {
@@ -142,40 +151,45 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
    *
    * @param url the url to query the index on, for example `/_mapping`.
    */
-  private get(url: string, range = getDefaultTimeRange()) {
-    const indexList = this.indexPattern.getIndexList(range.from, range.to);
-    if (_.isArray(indexList) && indexList.length) {
-      return this.requestAllIndices(indexList, url).then((results: any) => {
-        results.data.$$config = results.config;
-        return results.data;
-      });
-    } else {
-      return this.request('GET', this.indexPattern.getIndexForToday() + url).then((results: any) => {
-        results.data.$$config = results.config;
-        return results.data;
-      });
+  private get(url: string, range = getDefaultTimeRange()): Observable<any> {
+    let indexList = this.indexPattern.getIndexList(range.from, range.to);
+    if (!Array.isArray(indexList)) {
+      indexList = [this.indexPattern.getIndexForToday()];
     }
+
+    const indexUrlList = indexList.map(index => index + url);
+
+    return this.requestAllIndices(indexUrlList);
   }
 
-  private async requestAllIndices(indexList: string[], url: string): Promise<any> {
+  private requestAllIndices(indexList: string[]): Observable<any> {
     const maxTraversals = 7; // do not go beyond one week (for a daily pattern)
     const listLen = indexList.length;
-    for (let i = 0; i < Math.min(listLen, maxTraversals); i++) {
-      try {
-        return await this.request('GET', indexList[listLen - i - 1] + url);
-      } catch (err) {
-        if (err.status !== 404 || i === maxTraversals - 1) {
-          throw err;
+
+    return generate(
+      0,
+      i => i < Math.min(listLen, maxTraversals),
+      i => i + 1
+    ).pipe(
+      mergeMap(index => {
+        // catch all errors and emit an object with an err property to simplify checks later in the pipeline
+        return this.request('GET', indexList[listLen - index - 1]).pipe(catchError(err => of({ err })));
+      }),
+      skipWhile(resp => resp.err && resp.err.status === 404), // skip all requests that fail because missing Elastic index
+      throwIfEmpty(() => 'Could not find an available index for this time range.'), // when i === Math.min(listLen, maxTraversals) generate will complete but without emitting any values which means we didn't find a valid index
+      first(), // take the first value that isn't skipped
+      map(resp => {
+        if (resp.err) {
+          throw resp.err; // if there is some other error except 404 then we must throw it
         }
-      }
-    }
+
+        return resp;
+      })
+    );
   }
 
-  private post(url: string, data: any) {
-    return this.request('POST', url, data).then((results: any) => {
-      results.data.$$config = results.config;
-      return results.data;
-    });
+  private post(url: string, data: any): Observable<any> {
+    return this.request('POST', url, data);
   }
 
   annotationQuery(options: any): Promise<any> {
@@ -248,75 +262,79 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
     const payload = JSON.stringify(header) + '\n' + JSON.stringify(data) + '\n';
 
-    return this.post('_msearch', payload).then((res: any) => {
-      const list = [];
-      const hits = res.responses[0].hits.hits;
+    return this.post('_msearch', payload)
+      .pipe(
+        map(res => {
+          const list = [];
+          const hits = res.responses[0].hits.hits;
 
-      const getFieldFromSource = (source: any, fieldName: any) => {
-        if (!fieldName) {
-          return;
-        }
+          const getFieldFromSource = (source: any, fieldName: any) => {
+            if (!fieldName) {
+              return;
+            }
 
-        const fieldNames = fieldName.split('.');
-        let fieldValue = source;
+            const fieldNames = fieldName.split('.');
+            let fieldValue = source;
 
-        for (let i = 0; i < fieldNames.length; i++) {
-          fieldValue = fieldValue[fieldNames[i]];
-          if (!fieldValue) {
-            console.log('could not find field in annotation: ', fieldName);
-            return '';
+            for (let i = 0; i < fieldNames.length; i++) {
+              fieldValue = fieldValue[fieldNames[i]];
+              if (!fieldValue) {
+                console.log('could not find field in annotation: ', fieldName);
+                return '';
+              }
+            }
+
+            return fieldValue;
+          };
+
+          for (let i = 0; i < hits.length; i++) {
+            const source = hits[i]._source;
+            let time = getFieldFromSource(source, timeField);
+            if (typeof hits[i].fields !== 'undefined') {
+              const fields = hits[i].fields;
+              if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
+                time = fields[timeField];
+              }
+            }
+
+            const event: {
+              annotation: any;
+              time: number;
+              timeEnd?: number;
+              text: string;
+              tags: string | string[];
+            } = {
+              annotation: annotation,
+              time: toUtc(time).valueOf(),
+              text: getFieldFromSource(source, textField),
+              tags: getFieldFromSource(source, tagsField),
+            };
+
+            if (timeEndField) {
+              const timeEnd = getFieldFromSource(source, timeEndField);
+              if (timeEnd) {
+                event.timeEnd = toUtc(timeEnd).valueOf();
+              }
+            }
+
+            // legacy support for title tield
+            if (annotation.titleField) {
+              const title = getFieldFromSource(source, annotation.titleField);
+              if (title) {
+                event.text = title + '\n' + event.text;
+              }
+            }
+
+            if (typeof event.tags === 'string') {
+              event.tags = event.tags.split(',');
+            }
+
+            list.push(event);
           }
-        }
-
-        return fieldValue;
-      };
-
-      for (let i = 0; i < hits.length; i++) {
-        const source = hits[i]._source;
-        let time = getFieldFromSource(source, timeField);
-        if (typeof hits[i].fields !== 'undefined') {
-          const fields = hits[i].fields;
-          if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
-            time = fields[timeField];
-          }
-        }
-
-        const event: {
-          annotation: any;
-          time: number;
-          timeEnd?: number;
-          text: string;
-          tags: string | string[];
-        } = {
-          annotation: annotation,
-          time: toUtc(time).valueOf(),
-          text: getFieldFromSource(source, textField),
-          tags: getFieldFromSource(source, tagsField),
-        };
-
-        if (timeEndField) {
-          const timeEnd = getFieldFromSource(source, timeEndField);
-          if (timeEnd) {
-            event.timeEnd = toUtc(timeEnd).valueOf();
-          }
-        }
-
-        // legacy support for title tield
-        if (annotation.titleField) {
-          const title = getFieldFromSource(source, annotation.titleField);
-          if (title) {
-            event.text = title + '\n' + event.text;
-          }
-        }
-
-        if (typeof event.tags === 'string') {
-          event.tags = event.tags.split(',');
-        }
-
-        list.push(event);
-      }
-      return list;
-    });
+          return list;
+        })
+      )
+      .toPromise();
   }
 
   private interpolateLuceneQuery(queryString: string, scopedVars: ScopedVars) {
@@ -349,26 +367,25 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
   testDatasource() {
     // validate that the index exist and has date field
-    return this.getFields('date').then(
-      (dateFields: any) => {
-        const timeField: any = _.find(dateFields, { text: this.timeField });
-        if (!timeField) {
-          return {
-            status: 'error',
-            message: 'No date field named ' + this.timeField + ' found',
-          };
-        }
-        return { status: 'success', message: 'Index OK. Time field name OK.' };
-      },
-      (err: any) => {
-        console.error(err);
-        if (err.message) {
-          return { status: 'error', message: err.message };
-        } else {
-          return { status: 'error', message: err.status };
-        }
-      }
-    );
+    return this.getFields('date')
+      .pipe(
+        mergeMap(dateFields => {
+          const timeField: any = _.find(dateFields, { text: this.timeField });
+          if (!timeField) {
+            return of({ status: 'error', message: 'No date field named ' + this.timeField + ' found' });
+          }
+          return of({ status: 'success', message: 'Index OK. Time field name OK.' });
+        }),
+        catchError(err => {
+          console.error(err);
+          if (err.message) {
+            return of({ status: 'error', message: err.message });
+          } else {
+            return of({ status: 'error', message: err.status });
+          }
+        })
+      )
+      .toPromise();
   }
 
   getQueryHeader(searchType: any, timeFrom?: DateTime, timeTo?: DateTime): string {
@@ -507,7 +524,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     return logResponse;
   };
 
-  query(options: DataQueryRequest<ElasticsearchQuery>): Promise<DataQueryResponse> {
+  query(options: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {
     let payload = '';
     const targets = this.interpolateVariablesInQueries(_.cloneDeep(options.targets), options.scopedVars);
     const sentTargets: ElasticsearchQuery[] = [];
@@ -547,7 +564,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     }
 
     if (sentTargets.length === 0) {
-      return Promise.resolve({ data: [] });
+      return of({ data: [] });
     }
 
     // We replace the range here for actual values. We need to replace it together with enclosing "" so that we replace
@@ -560,19 +577,21 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
     const url = this.getMultiSearchUrl();
 
-    return this.post(url, payload).then((res: any) => {
-      const er = new ElasticResponse(sentTargets, res);
+    return this.post(url, payload).pipe(
+      map(res => {
+        const er = new ElasticResponse(sentTargets, res);
 
-      if (sentTargets.some(target => target.isLogsQuery)) {
-        const response = er.getLogs(this.logMessageField, this.logLevelField);
-        for (const dataFrame of response.data) {
-          enhanceDataFrame(dataFrame, this.dataLinks);
+        if (sentTargets.some(target => target.isLogsQuery)) {
+          const response = er.getLogs(this.logMessageField, this.logLevelField);
+          for (const dataFrame of response.data) {
+            enhanceDataFrame(dataFrame, this.dataLinks);
+          }
+          return response;
         }
-        return response;
-      }
 
-      return er.getTimeSeries();
-    });
+        return er.getTimeSeries();
+      })
+    );
   }
 
   isMetadataField(fieldName: string) {
@@ -580,94 +599,96 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   // TODO: instead of being a string, this could be a custom type representing all the elastic types
-  async getFields(type?: string, range?: TimeRange): Promise<MetricFindValue[]> {
+  getFields(type?: string, range?: TimeRange): Observable<MetricFindValue[]> {
     const configuredEsVersion = this.esVersion;
-    return this.get('/_mapping', range).then((result: any) => {
-      const typeMap: any = {
-        float: 'number',
-        double: 'number',
-        integer: 'number',
-        long: 'number',
-        date: 'date',
-        date_nanos: 'date',
-        string: 'string',
-        text: 'string',
-        scaled_float: 'number',
-        nested: 'nested',
-      };
+    return this.get('/_mapping', range).pipe(
+      map(result => {
+        const typeMap: any = {
+          float: 'number',
+          double: 'number',
+          integer: 'number',
+          long: 'number',
+          date: 'date',
+          date_nanos: 'date',
+          string: 'string',
+          text: 'string',
+          scaled_float: 'number',
+          nested: 'nested',
+        };
 
-      const shouldAddField = (obj: any, key: string) => {
-        if (this.isMetadataField(key)) {
-          return false;
-        }
-
-        if (!type) {
-          return true;
-        }
-
-        // equal query type filter, or via typemap translation
-        return type === obj.type || type === typeMap[obj.type];
-      };
-
-      // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total
-      const fieldNameParts: any = [];
-      const fields: any = {};
-
-      function getFieldsRecursively(obj: any) {
-        for (const key in obj) {
-          const subObj = obj[key];
-
-          // Check mapping field for nested fields
-          if (_.isObject(subObj.properties)) {
-            fieldNameParts.push(key);
-            getFieldsRecursively(subObj.properties);
+        const shouldAddField = (obj: any, key: string) => {
+          if (this.isMetadataField(key)) {
+            return false;
           }
 
-          if (_.isObject(subObj.fields)) {
-            fieldNameParts.push(key);
-            getFieldsRecursively(subObj.fields);
+          if (!type) {
+            return true;
           }
 
-          if (_.isString(subObj.type)) {
-            const fieldName = fieldNameParts.concat(key).join('.');
+          // equal query type filter, or via typemap translation
+          return type === obj.type || type === typeMap[obj.type];
+        };
 
-            // Hide meta-fields and check field type
-            if (shouldAddField(subObj, key)) {
-              fields[fieldName] = {
-                text: fieldName,
-                type: subObj.type,
-              };
+        // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total
+        const fieldNameParts: any = [];
+        const fields: any = {};
+
+        function getFieldsRecursively(obj: any) {
+          for (const key in obj) {
+            const subObj = obj[key];
+
+            // Check mapping field for nested fields
+            if (_.isObject(subObj.properties)) {
+              fieldNameParts.push(key);
+              getFieldsRecursively(subObj.properties);
+            }
+
+            if (_.isObject(subObj.fields)) {
+              fieldNameParts.push(key);
+              getFieldsRecursively(subObj.fields);
+            }
+
+            if (_.isString(subObj.type)) {
+              const fieldName = fieldNameParts.concat(key).join('.');
+
+              // Hide meta-fields and check field type
+              if (shouldAddField(subObj, key)) {
+                fields[fieldName] = {
+                  text: fieldName,
+                  type: subObj.type,
+                };
+              }
             }
           }
+          fieldNameParts.pop();
         }
-        fieldNameParts.pop();
-      }
 
-      for (const indexName in result) {
-        const index = result[indexName];
-        if (index && index.mappings) {
-          const mappings = index.mappings;
+        for (const indexName in result) {
+          const index = result[indexName];
+          if (index && index.mappings) {
+            const mappings = index.mappings;
 
-          if (configuredEsVersion < 70) {
-            for (const typeName in mappings) {
-              const properties = mappings[typeName].properties;
+            if (configuredEsVersion < 70) {
+              for (const typeName in mappings) {
+                const properties = mappings[typeName].properties;
+                getFieldsRecursively(properties);
+              }
+            } else {
+              const properties = mappings.properties;
               getFieldsRecursively(properties);
             }
-          } else {
-            const properties = mappings.properties;
-            getFieldsRecursively(properties);
           }
         }
-      }
 
-      // transform to array
-      return _.map(fields, value => {
-        return value;
-      });
-    });
+        // transform to array
+        return _.map(fields, value => {
+          return value;
+        });
+      })
+    );
   }
 
-  getTerms(queryDef: any, range = getDefaultTimeRange()) {
+  getTerms(queryDef: any, range = getDefaultTimeRange()): Observable<MetricFindValue[]> {
     const searchType = this.esVersion >= 5 ? 'query_then_fetch' : 'count';
     const header = this.getQueryHeader(searchType, range.from, range.to);
     let esQuery = JSON.stringify(this.queryBuilder.getTermsQuery(queryDef));
@@ -678,19 +699,21 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
 
     const url = this.getMultiSearchUrl();
 
-    return this.post(url, esQuery).then((res: any) => {
-      if (!res.responses[0].aggregations) {
-        return [];
-      }
+    return this.post(url, esQuery).pipe(
+      map(res => {
+        if (!res.responses[0].aggregations) {
+          return [];
+        }
 
-      const buckets = res.responses[0].aggregations['1'].buckets;
-      return _.map(buckets, bucket => {
-        return {
-          text: bucket.key_as_string || bucket.key,
-          value: bucket.key,
-        };
-      });
-    });
+        const buckets = res.responses[0].aggregations['1'].buckets;
+        return _.map(buckets, bucket => {
+          return {
+            text: bucket.key_as_string || bucket.key,
+            value: bucket.key,
+          };
+        });
+      })
+    );
   }
 
   getMultiSearchUrl() {
@@ -707,13 +730,13 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     if (query) {
       if (parsedQuery.find === 'fields') {
         parsedQuery.type = this.templateSrv.replace(parsedQuery.type, {}, 'lucene');
-        return this.getFields(parsedQuery.type, range);
+        return this.getFields(parsedQuery.type, range).toPromise();
       }
 
       if (parsedQuery.find === 'terms') {
         parsedQuery.field = this.templateSrv.replace(parsedQuery.field, {}, 'lucene');
         parsedQuery.query = this.templateSrv.replace(parsedQuery.query || '*', {}, 'lucene');
-        return this.getTerms(parsedQuery, range);
+        return this.getTerms(parsedQuery, range).toPromise();
       }
     }
 
@@ -721,11 +744,11 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
   }
 
   getTagKeys() {
-    return this.getFields();
+    return this.getFields().toPromise();
   }
 
   getTagValues(options: any) {
-    return this.getTerms({ field: options.key, query: '*' });
+    return this.getTerms({ field: options.key, query: '*' }).toPromise();
   }
 
   targetContainsTemplate(target: any) {

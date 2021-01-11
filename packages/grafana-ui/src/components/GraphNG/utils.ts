@@ -69,12 +69,11 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
       throw new Error('Only a single x field is supported');
     }
 
-    let nullModesFrame: JoinNullMode[] = [];
+    let nullModesFrame: JoinNullMode[] = [0];
 
     // Add the first X axis
     if (!sourceFields.length) {
       sourceFields.push(dims.x[0]);
-      nullModesFrame.push(0);
     }
 
     const alignedData: AlignedData = [

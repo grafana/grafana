@@ -166,6 +166,7 @@ apiVersion: 1
 datasources:
   - name: Prometheus
     type: prometheus
+    # Access mode - proxy (server in the UI) or direct (browser in the UI).
     access: proxy
     url: http://localhost:9090
 ```
