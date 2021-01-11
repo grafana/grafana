@@ -51,8 +51,6 @@ describe('datasource', () => {
           },
         },
       });
-      const buildCloudwatchConsoleUrlMock = jest.spyOn(datasource, 'buildCloudwatchConsoleUrl');
-      buildCloudwatchConsoleUrlMock.mockImplementation(() => '');
 
       const observable = datasource.performTimeSeriesQuery(
         {

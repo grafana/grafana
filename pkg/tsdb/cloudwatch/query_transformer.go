@@ -104,7 +104,7 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 			plog.Error("Could not marshal executedString struct", err)
 		}
 
-		link, err := buildDeepLinks(refID, requestQueries, executedQueries, startTime, endTime)
+		link, err := buildDeepLink(refID, requestQueries, executedQueries, startTime, endTime)
 		if err != nil {
 			plog.Error("Could not build deep link", err)
 		}
@@ -114,15 +114,17 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 				ExecutedQueryString: string(eq),
 			}
 
-			for _, field := range frame.Fields {
-				field.Config = &data.FieldConfig{
-					Links: []data.DataLink{
-						{
-							Title:       "View in CloudWatch console",
-							TargetBlank: true,
-							URL:         link,
+			if link != "" {
+				for _, field := range frame.Fields {
+					field.Config = &data.FieldConfig{
+						Links: []data.DataLink{
+							{
+								Title:       "View in CloudWatch console",
+								TargetBlank: true,
+								URL:         link,
+							},
 						},
-					},
+					}
 				}
 			}
 		}
@@ -134,7 +136,12 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 	return results
 }
 
-func buildDeepLinks(refID string, requestQueries []*requestQuery, executedQueries []executedQuery, startTime time.Time, endTime time.Time) (string, error) {
+// Generates a deep link from Grafana to the CloudWatch console. The link params are based on metric(s) for a given query row in the Query Editor
+func buildDeepLink(refID string, requestQueries []*requestQuery, executedQueries []executedQuery, startTime time.Time, endTime time.Time) (string, error) {
+	if isMathExpression(executedQueries) {
+		return "", nil
+	}
+
 	requestQuery := &requestQuery{}
 	for _, rq := range requestQueries {
 		if rq.RefId == refID {
@@ -155,11 +162,10 @@ func buildDeepLinks(refID string, requestQueries []*requestQuery, executedQuerie
 
 	expressions := []interface{}{}
 	for _, meta := range executedQueries {
-		if meta.Expression != "" { 
-			expressions = append(expressions, &metricExpression{ Expression: meta.Expression })
+		if strings.Contains(meta.Expression, "SEARCH(") {
+			expressions = append(expressions, &metricExpression{Expression: meta.Expression})
 		}
 	}
-
 
 	if len(expressions) != 0 {
 		cloudWatchLinkProps.Metrics = expressions
@@ -198,4 +204,14 @@ func buildDeepLinks(refID string, requestQueries []*requestQuery, executedQuerie
 	link := fmt.Sprintf(`%s#metricsV2:graph%s`, url.String(), fragment.Encode())
 
 	return link, nil
+}
+
+func isMathExpression(executedQueries []executedQuery) bool {
+	for _, query := range executedQueries {
+		if query.Expression != "" && strings.Contains(query.Expression, "SEARCH(") {
+			return false
+		}
+	}
+
+	return len(executedQueries) > 0
 }
