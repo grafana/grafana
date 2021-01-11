@@ -57,14 +57,23 @@ export const graphFieldConfig: SetFieldConfigOptionsArgs<GraphFieldConfig> = {
       })
       .addSliderInput({
         path: 'fillOpacity',
-        name: 'Fill area opacity',
-        defaultValue: 10,
+        name: 'Fill opacity',
+        defaultValue: 0,
         settings: {
           min: 0,
           max: 100,
           step: 1,
         },
         showIf: c => c.drawStyle !== DrawStyle.Points,
+      })
+      .addRadio({
+        path: 'fillGradient',
+        name: 'Fill gradient',
+        defaultValue: graphFieldOptions.fillGradient[0].value,
+        settings: {
+          options: graphFieldOptions.fillGradient,
+        },
+        showIf: c => !!(c.drawStyle !== DrawStyle.Points && c.fillOpacity && c.fillOpacity > 0),
       })
       .addCustomEditor<void, LineStyle>({
         id: 'lineStyle',
@@ -75,15 +84,6 @@ export const graphFieldConfig: SetFieldConfigOptionsArgs<GraphFieldConfig> = {
         override: LineStyleEditor,
         process: identityOverrideProcessor,
         shouldApply: f => f.type === FieldType.number,
-      })
-      .addRadio({
-        path: 'fillGradient',
-        name: 'Fill gradient',
-        defaultValue: graphFieldOptions.fillGradient[0],
-        settings: {
-          options: graphFieldOptions.fillGradient,
-        },
-        showIf: c => !!(c.drawStyle !== DrawStyle.Points && c.fillOpacity && c.fillOpacity > 0),
       })
       .addRadio({
         path: 'spanNulls',
