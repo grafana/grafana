@@ -76,7 +76,7 @@ export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
-export { VizLegendItem, LegendPlacement, LegendDisplayMode } from './VizLegend/types';
+export { VizLegendItem, LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/types';
 export { VizLegend } from './VizLegend/VizLegend';
 
 export { Alert, AlertVariant } from './Alert/Alert';

@@ -1,6 +1,5 @@
 import { GraphTooltipOptions, LegendDisplayMode, LegendPlacement } from '@grafana/ui';
 import { YAxis } from '@grafana/data';
-import Legend from 'app/plugins/panel/graph/Legend/Legend';
 
 export interface SeriesOptions {
   color?: string;

@@ -1,4 +1,4 @@
-import { LegendOptions, GraphTooltipOptions } from '@grafana/ui';
+import { VizLegendOptions, GraphTooltipOptions } from '@grafana/ui';
 
 export interface XYDimensionConfig {
   frame: number;
@@ -9,6 +9,6 @@ export interface XYDimensionConfig {
 
 export interface Options {
   dims: XYDimensionConfig;
-  legend: LegendOptions;
+  legend: VizLegendOptions;
   tooltipOptions: GraphTooltipOptions;
 }
