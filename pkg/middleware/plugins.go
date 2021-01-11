@@ -22,11 +22,11 @@ func ReqAppRoles(c *models.ReqContext) {
 
 	ok := false
 	for _, include := range plugin.Includes {
-		if !c.OrgRole.Includes(include.Role) {
+		if !strings.Contains(c.Req.RequestURI, include.Path) {
 			continue
 		}
 
-		if strings.Contains(c.Req.RequestURI, include.Path) {
+		if c.OrgRole.Includes(include.Role) {
 			ok = true
 			break
 		}
