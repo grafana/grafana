@@ -25,18 +25,18 @@ export const Controlled = () => {
 
   return (
     <div>
-      <p>
+      <div style={{ marginBottom: '32px' }}>
         <Field label="Normal switch" description="For horizontal forms">
           <Switch value={checked} disabled={disabled} onChange={onChange} />
         </Field>
-      </p>
-      <p>
+      </div>
+      <div style={{ marginBottom: '32px' }}>
         <InlineFieldRow>
           <InlineField label="My switch">
             <InlineSwitch value={checked} disabled={disabled} onChange={onChange} />
           </InlineField>
         </InlineFieldRow>
-      </p>
+      </div>
     </div>
   );
 };
