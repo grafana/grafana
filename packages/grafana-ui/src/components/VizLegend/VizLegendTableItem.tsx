@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { css, cx } from 'emotion';
-import { LegendSeriesIcon } from './LegendSeriesIcon';
-import { LegendItem } from './types';
+import { LegendSeriesIcon } from './VizLegendSeriesIcon';
+import { VizLegendItem } from './types';
 import { SeriesColorChangeHandler } from './types';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { styleMixins, stylesFactory } from '../../themes';
@@ -9,9 +9,9 @@ import { GrafanaTheme, formattedValueToString } from '@grafana/data';
 
 export interface Props {
   key?: React.Key;
-  item: LegendItem;
+  item: VizLegendItem;
   className?: string;
-  onLabelClick?: (item: LegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
   onSeriesColorChange?: SeriesColorChangeHandler;
 }
 

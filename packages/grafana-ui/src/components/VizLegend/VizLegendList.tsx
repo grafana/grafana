@@ -1,12 +1,12 @@
 import React, { useContext } from 'react';
-import { LegendBaseProps, LegendItem } from './types';
+import { LegendBaseProps, VizLegendItem } from './types';
 import { InlineList } from '../List/InlineList';
 import { List } from '../List/List';
 import { css, cx } from 'emotion';
 import { ThemeContext } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
-import { LegendListItem } from './LegendListItem';
+import { LegendListItem } from './VizLegendListItem';
 
 export interface Props extends LegendBaseProps {}
 
@@ -28,11 +28,11 @@ export const LegendList: React.FunctionComponent<Props> = ({
     );
   }
 
-  const renderItem = (item: LegendItem, index: number) => {
+  const renderItem = (item: VizLegendItem, index: number) => {
     return <span className={styles.item}>{itemRenderer!(item, index)}</span>;
   };
 
-  const getItemKey = (item: LegendItem) => `${item.label}`;
+  const getItemKey = (item: VizLegendItem) => `${item.label}`;
 
   return placement === 'bottom' ? (
     <div className={cx(styles.wrapper, className)}>

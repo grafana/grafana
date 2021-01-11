@@ -1,7 +1,7 @@
 import React from 'react';
 import { LegendProps, LegendDisplayMode } from './types';
-import { LegendTable } from './LegendTable';
-import { LegendList } from './LegendList';
+import { LegendTable } from './VizLegendTable';
+import { LegendList } from './VizLegendList';
 
 export const VizLegend: React.FunctionComponent<LegendProps> = ({
   items,

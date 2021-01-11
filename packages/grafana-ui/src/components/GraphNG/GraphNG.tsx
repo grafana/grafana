@@ -16,8 +16,8 @@ import { PlotProps } from '../uPlot/types';
 import { AxisPlacement, DrawStyle, GraphFieldConfig, PointVisibility } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
-import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/types';
-import { VizLegend } from '../Legend/Legend';
+import { LegendDisplayMode, VizLegendItem, LegendOptions } from '../VizLegend/types';
+import { VizLegend } from '../VizLegend/VizLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from './types';
@@ -55,7 +55,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 }) => {
   const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
   const theme = useTheme();
-  const legendItemsRef = useRef<LegendItem[]>([]);
+  const legendItemsRef = useRef<VizLegendItem[]>([]);
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
   const alignedFrame = alignedFrameWithGapTest?.frame;
   const getDataFrameFieldIndex = alignedFrameWithGapTest?.getDataFrameFieldIndex;
@@ -68,7 +68,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   }, []);
 
   const onLabelClick = useCallback(
-    (legend: LegendItem, event: React.MouseEvent) => {
+    (legend: VizLegendItem, event: React.MouseEvent) => {
       const { fieldIndex } = legend;
 
       if (!onLegendClick || !fieldIndex) {
@@ -128,7 +128,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       });
     }
 
-    const legendItems: LegendItem[] = [];
+    const legendItems: VizLegendItem[] = [];
 
     for (let i = 0; i < alignedFrame.fields.length; i++) {
       const field = alignedFrame.fields[i];

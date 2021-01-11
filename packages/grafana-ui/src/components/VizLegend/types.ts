@@ -1,14 +1,14 @@
 import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
-import { LegendList } from './LegendList';
-import { LegendTable } from './LegendTable';
+import { LegendList } from './VizLegendList';
+import { LegendTable } from './VizLegendTable';
 
 export interface LegendBaseProps {
   placement: LegendPlacement;
   className?: string;
-  items: LegendItem[];
-  itemRenderer?: (item: LegendItem, index: number) => JSX.Element;
+  items: VizLegendItem[];
+  itemRenderer?: (item: VizLegendItem, index: number) => JSX.Element;
   onSeriesColorChange?: SeriesColorChangeHandler;
-  onLabelClick?: (item: LegendItem, event: React.MouseEvent<HTMLElement>) => void;
+  onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLElement>) => void;
 }
 
 export interface LegendTableProps extends LegendBaseProps {
@@ -21,7 +21,7 @@ export interface LegendProps extends LegendBaseProps, LegendTableProps {
   displayMode: LegendDisplayMode;
 }
 
-export interface LegendItem {
+export interface VizLegendItem {
   label: string;
   color: string;
   yAxis: number;

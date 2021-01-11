@@ -76,9 +76,8 @@ export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
-
-export { LegendOptions, LegendList, LegendTable, LegendItem, LegendPlacement, LegendDisplayMode } from './Legend/types';
-export { VizLegend } from './Legend/Legend';
+export { VizLegendItem, LegendPlacement, LegendDisplayMode } from './VizLegend/types';
+export { VizLegend } from './VizLegend/VizLegend';
 
 export { Alert, AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
@@ -100,7 +99,7 @@ export { WithContextMenu } from './ContextMenu/WithContextMenu';
 export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
-export { SeriesIcon } from './Legend/SeriesIcon';
+export { SeriesIcon } from './VizLegend/SeriesIcon';
 export { InfoBox } from './InfoBox/InfoBox';
 export { FeatureInfoBox } from './InfoBox/FeatureInfoBox';
 

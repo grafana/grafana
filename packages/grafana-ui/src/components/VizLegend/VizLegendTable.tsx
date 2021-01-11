@@ -5,7 +5,7 @@ import { Icon } from '../Icon/Icon';
 import { useTheme } from '../../themes/ThemeContext';
 import union from 'lodash/union';
 import sortBy from 'lodash/sortBy';
-import { LegendTableItem } from './LegendTableItem';
+import { LegendTableItem } from './VizLegendTableItem';
 import { stylesFactory } from '../../themes/stylesFactory';
 import { GrafanaTheme } from '@grafana/data';
 
@@ -94,6 +94,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     table: css`
       width: 100%;
+      margin-left: ${theme.spacing.md};
     `,
     header: css`
       color: ${theme.colors.textBlue};

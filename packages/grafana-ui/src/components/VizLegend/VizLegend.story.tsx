@@ -1,10 +1,10 @@
 import React, { FC, useState } from 'react';
 import { useTheme, VizLegend } from '@grafana/ui';
 import { number, select } from '@storybook/addon-knobs';
-import {} from './LegendListItem';
+import {} from './VizLegendListItem';
 import { DisplayValue, getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { LegendDisplayMode, LegendItem, LegendPlacement } from './types';
+import { LegendDisplayMode, VizLegendItem, LegendPlacement } from './types';
 
 const getStoriesKnobs = (table = false) => {
   const seriesCount = number('Number of series', 5);
@@ -40,7 +40,7 @@ interface LegendStoryDemoProps {
 
 const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, name, placement, stats }) => {
   const theme = useTheme();
-  const [items, setItems] = useState<LegendItem[]>(generateLegendItems(seriesCount, theme, stats));
+  const [items, setItems] = useState<VizLegendItem[]>(generateLegendItems(seriesCount, theme, stats));
 
   const onSeriesColorChange = (label: string, color: string) => {
     setItems(
@@ -57,7 +57,7 @@ const LegendStoryDemo: FC<LegendStoryDemoProps> = ({ displayMode, seriesCount, n
     );
   };
 
-  const onLabelClick = (clickItem: LegendItem) => {
+  const onLabelClick = (clickItem: VizLegendItem) => {
     setItems(
       items.map(item => {
         if (item !== clickItem) {
@@ -167,7 +167,7 @@ function generateLegendItems(
   numberOfSeries: number,
   theme: GrafanaTheme,
   statsToDisplay?: DisplayValue[]
-): LegendItem[] {
+): VizLegendItem[] {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
   const colors = ['green', 'blue', 'red', 'purple', 'orange', 'dark-green', 'yellow', 'light-blue'].map(c =>
     getColorForTheme(c, theme)

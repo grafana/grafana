@@ -1,17 +1,17 @@
 import React from 'react';
 import { css, cx } from 'emotion';
-import { LegendSeriesIcon } from './LegendSeriesIcon';
-import { LegendItem } from './types';
+import { LegendSeriesIcon } from './VizLegendSeriesIcon';
+import { VizLegendItem } from './types';
 import { SeriesColorChangeHandler } from './types';
-import { LegendStatsList } from './LegendStatsList';
+import { LegendStatsList } from './VizLegendStatsList';
 import { useTheme } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 
 export interface Props {
-  item: LegendItem;
+  item: VizLegendItem;
   className?: string;
-  onLabelClick?: (item: LegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
+  onLabelClick?: (item: VizLegendItem, event: React.MouseEvent<HTMLDivElement>) => void;
   onSeriesColorChange?: SeriesColorChangeHandler;
 }
 

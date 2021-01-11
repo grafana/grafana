@@ -5,8 +5,8 @@ import { css } from 'emotion';
 import { GraphSeriesValue } from '@grafana/data';
 
 import { Graph, GraphProps } from './Graph';
-import { LegendItem, LegendDisplayMode, SeriesColorChangeHandler, LegendPlacement } from '../Legend/types';
-import { VizLegend } from '../Legend/Legend';
+import { VizLegendItem, LegendDisplayMode, SeriesColorChangeHandler, LegendPlacement } from '../VizLegend/types';
+import { VizLegend } from '../VizLegend/VizLegend';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
 import { stylesFactory } from '../../themes';
 
@@ -72,7 +72,7 @@ export const GraphWithLegend: React.FunctionComponent<GraphWithLegendProps> = (p
   } = props;
   const { graphContainer, wrapper, legendContainer } = getGraphWithLegendStyles(props);
 
-  const legendItems = series.reduce<LegendItem[]>((acc, s) => {
+  const legendItems = series.reduce<VizLegendItem[]>((acc, s) => {
     return shouldHideLegendItem(s.data, hideEmpty, hideZero)
       ? acc
       : acc.concat([
