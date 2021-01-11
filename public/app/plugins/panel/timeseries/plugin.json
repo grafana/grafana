@@ -1,8 +1,8 @@
 {
   "type": "panel",
-  "name": "uPlot graph",
-  "id": "graph3",
-  "state": "alpha",
+  "name": "Time series",
+  "id": "timeseries",
+  "state": "beta",
 
   "info": {
     "author": {

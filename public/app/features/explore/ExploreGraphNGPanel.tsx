@@ -1,7 +1,7 @@
 import { AbsoluteTimeRange, DataFrame, dateTime, Field, GrafanaTheme, TimeZone } from '@grafana/data';
 import { Collapse, GraphNG, Icon, LegendDisplayMode, TooltipPlugin, useStyles, ZoomPlugin } from '@grafana/ui';
-import { ContextMenuPlugin } from 'app/plugins/panel/graph3/plugins/ContextMenuPlugin';
-import { ExemplarsPlugin } from 'app/plugins/panel/graph3/plugins/ExemplarsPlugin';
+import { ContextMenuPlugin } from 'app/plugins/panel/timeseries/plugins/ContextMenuPlugin';
+import { ExemplarsPlugin } from 'app/plugins/panel/timeseries/plugins/ExemplarsPlugin';
 import { css, cx } from 'emotion';
 import React, { useState } from 'react';
 import { splitOpen } from './state/main';

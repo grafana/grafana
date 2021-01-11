@@ -8,9 +8,9 @@ import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
 import { Options } from './types';
 
-interface GraphPanelProps extends PanelProps<Options> {}
+interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
-export const GraphPanel: React.FC<GraphPanelProps> = ({
+export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
   data,
   timeRange,
   timeZone,
