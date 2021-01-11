@@ -2,6 +2,7 @@ import {
   ArrayDataFrame,
   ArrayVector,
   DataFrame,
+  DataLink,
   DataTopic,
   Field,
   FieldType,
@@ -13,10 +14,8 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
-import { FetchResponse, getTemplateSrv } from '@grafana/runtime';
-import { ExemplarsDataFrameViewDTO } from 'app/plugins/panel/graph3/plugins/ExemplarsPlugin';
+import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { descending, deviation } from 'd3';
-import { getExemplarInfoComponent } from './components/ExemplarInfo';
 import {
   ExemplarTraceIDDestination,
   isExemplarData,
@@ -32,6 +31,11 @@ import {
 
 const POSITIVE_INFINITY_SAMPLE_VALUE = '+Inf';
 const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';
+
+interface TimeAndValue {
+  [TIME_SERIES_TIME_FIELD_NAME]: number;
+  [TIME_SERIES_VALUE_FIELD_NAME]: number;
+}
 
 export function transform(
   response: FetchResponse<PromDataSuccessResponse>,
@@ -70,18 +74,15 @@ export function transform(
   const prometheusResult = response.data.data;
 
   if (isExemplarData(prometheusResult)) {
-    const events: ExemplarsDataFrameViewDTO[] = [];
+    const events: TimeAndValue[] = [];
     prometheusResult.forEach(exemplarData => {
       const data = exemplarData.exemplars.map(exemplar => {
         return {
-          time: exemplar.scrapeTimestamp,
-          component: getExemplarInfoComponent(
-            exemplar.exemplar,
-            exemplarData.seriesLabels,
-            transformOptions.exemplarTraceIDDestination
-          ),
-          y: exemplar.exemplar.value,
-        } as ExemplarsDataFrameViewDTO;
+          [TIME_SERIES_TIME_FIELD_NAME]: exemplar.scrapeTimestamp,
+          [TIME_SERIES_VALUE_FIELD_NAME]: exemplar.exemplar.value,
+          ...exemplar.exemplar.labels,
+          ...exemplarData.seriesLabels,
+        };
       });
       events.push(...data);
     });
@@ -91,6 +92,16 @@ export function transform(
 
     const dataFrame = new ArrayDataFrame(sampledExemplars);
     dataFrame.meta = { dataTopic: DataTopic.Annotations };
+
+    // Add data links if configured
+    if (transformOptions.exemplarTraceIDDestination) {
+      const traceIDField = dataFrame.fields.find(
+        field => field.name === transformOptions.exemplarTraceIDDestination!.name
+      );
+      if (traceIDField) {
+        traceIDField.config.links = getDataLinks(transformOptions.exemplarTraceIDDestination);
+      }
+    }
     return [dataFrame];
   }
 
@@ -131,19 +142,47 @@ export function transform(
   return dataFrame;
 }
 
-function sampleExemplars(events: ExemplarsDataFrameViewDTO[], options: TransformOptions) {
+function getDataLinks(options: ExemplarTraceIDDestination): DataLink[] {
+  const dataSourceSrv = getDataSourceSrv();
+
+  const dataLinks: DataLink[] = [];
+
+  if (options.datasourceUid) {
+    const dsSettings = dataSourceSrv.getInstanceSettings(options.datasourceUid);
+
+    dataLinks.push({
+      title: 'Trace: ${__value.raw}',
+      url: '',
+      internal: {
+        query: { query: '${__value.raw}', queryType: 'getTrace' },
+        datasourceUid: options.datasourceUid,
+        datasourceName: dsSettings?.name ?? 'Data source not found',
+      },
+    });
+  }
+
+  if (options.url) {
+    dataLinks.push({
+      title: 'Trace: ${__value.raw}',
+      url: options.url,
+    });
+  }
+  return dataLinks;
+}
+
+function sampleExemplars(events: TimeAndValue[], options: TransformOptions) {
   const step = options.step || 15;
-  const bucketedExemplars: { [ts: string]: ExemplarsDataFrameViewDTO[] } = {};
+  const bucketedExemplars: { [ts: string]: TimeAndValue[] } = {};
   const values: number[] = [];
   for (const exemplar of events) {
     // Align exemplar timestamp to nearest step second
-    const alignedTs = String(Math.floor(exemplar.time / 1000 / step) * step * 1000);
+    const alignedTs = String(Math.floor(exemplar[TIME_SERIES_TIME_FIELD_NAME] / 1000 / step) * step * 1000);
     if (!bucketedExemplars[alignedTs]) {
       // New bucket found
       bucketedExemplars[alignedTs] = [];
     }
     bucketedExemplars[alignedTs].push(exemplar);
-    values.push(exemplar.y);
+    values.push(exemplar[TIME_SERIES_VALUE_FIELD_NAME]);
   }
 
   // Getting exemplars from each bucket
@@ -156,7 +195,7 @@ function sampleExemplars(events: ExemplarsDataFrameViewDTO[], options: Transform
       sampledExemplars.push(exemplarsInBucket[0]);
     } else {
       // Choose which values to sample
-      const bucketValues = exemplarsInBucket.map(ex => ex.y).sort(descending);
+      const bucketValues = exemplarsInBucket.map(ex => ex[TIME_SERIES_VALUE_FIELD_NAME]).sort(descending);
       const sampledBucketValues = bucketValues.reduce((acc: number[], curr) => {
         if (acc.length === 0) {
           // First value is max and is always added
@@ -171,7 +210,9 @@ function sampleExemplars(events: ExemplarsDataFrameViewDTO[], options: Transform
         return acc;
       }, []);
       // Find the exemplars for the sampled values
-      sampledExemplars.push(...sampledBucketValues.map(value => exemplarsInBucket.find(ex => ex.y === value)!));
+      sampledExemplars.push(
+        ...sampledBucketValues.map(value => exemplarsInBucket.find(ex => ex[TIME_SERIES_VALUE_FIELD_NAME] === value)!)
+      );
     }
   }
   return sampledExemplars;

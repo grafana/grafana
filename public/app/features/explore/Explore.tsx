@@ -368,6 +368,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                               timeZone={timeZone}
                               onUpdateTimeRange={this.onUpdateTimeRange}
                               annotations={queryResponse.annotations}
+                              splitOpenFn={splitOpen}
                               isLoading={isLoading}
                             />
                           )}

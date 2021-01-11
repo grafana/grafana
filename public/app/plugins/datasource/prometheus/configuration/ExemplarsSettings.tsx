@@ -49,7 +49,7 @@ export function ExemplarsSettings({ options, onOptionsChange }: Props) {
           tooltip="The URL of the trace backend the user would go to see its trace."
         >
           <Input
-            placeholder="https://example.com/${value}"
+            placeholder="https://example.com/${__value.raw}"
             spellCheck={false}
             width={40}
             value={options.jsonData.exemplarTraceIDDestination?.url}

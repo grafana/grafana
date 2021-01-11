@@ -1,9 +1,11 @@
-import { AbsoluteTimeRange, DataFrame, dateTime, GrafanaTheme, TimeZone } from '@grafana/data';
+import { AbsoluteTimeRange, DataFrame, dateTime, Field, GrafanaTheme, TimeZone } from '@grafana/data';
 import { Collapse, GraphNG, Icon, LegendDisplayMode, TooltipPlugin, useStyles, ZoomPlugin } from '@grafana/ui';
 import { ContextMenuPlugin } from 'app/plugins/panel/graph3/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from 'app/plugins/panel/graph3/plugins/ExemplarsPlugin';
 import { css, cx } from 'emotion';
 import React, { useState } from 'react';
+import { splitOpen } from './state/main';
+import { getFieldLinksForExplore } from './utils/links';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -15,6 +17,7 @@ interface Props {
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   onUpdateTimeRange: (absoluteRange: AbsoluteTimeRange) => void;
+  splitOpenFn: typeof splitOpen;
 }
 
 export function ExploreGraphNGPanel({
@@ -25,6 +28,7 @@ export function ExploreGraphNGPanel({
   onUpdateTimeRange,
   isLoading,
   annotations,
+  splitOpenFn,
 }: Props) {
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
   const style = useStyles(getStyles);
@@ -38,6 +42,10 @@ export function ExploreGraphNGPanel({
   };
 
   const seriesToShow = showAllTimeSeries ? data : data.slice(0, MAX_NUMBER_OF_TIME_SERIES);
+
+  const getFieldLinks = (field: Field, rowIndex: number) => {
+    return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range: timeRange });
+  };
 
   return (
     <>
@@ -64,7 +72,11 @@ export function ExploreGraphNGPanel({
           <TooltipPlugin mode="single" timeZone={timeZone} />
           <ZoomPlugin onZoom={onUpdateTimeRange} />
           <ContextMenuPlugin timeZone={timeZone} />
-          {annotations ? <ExemplarsPlugin exemplars={annotations} timeZone={timeZone} /> : <></>}
+          {annotations ? (
+            <ExemplarsPlugin exemplars={annotations} timeZone={timeZone} getFieldLinks={getFieldLinks} />
+          ) : (
+            <></>
+          )}
         </GraphNG>
       </Collapse>
     </>

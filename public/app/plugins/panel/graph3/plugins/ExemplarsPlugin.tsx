@@ -1,4 +1,11 @@
-import { DataFrame, dateTimeFormat, systemDateFormats, TimeZone } from '@grafana/data';
+import {
+  DataFrame,
+  Field,
+  LinkModel,
+  TimeZone,
+  TIME_SERIES_TIME_FIELD_NAME,
+  TIME_SERIES_VALUE_FIELD_NAME,
+} from '@grafana/data';
 import { EventsCanvas, FIXED_UNIT, usePlotContext } from '@grafana/ui';
 import React, { useCallback } from 'react';
 import { ExemplarMarker } from './ExemplarMarker';
@@ -6,34 +13,19 @@ import { ExemplarMarker } from './ExemplarMarker';
 interface ExemplarsPluginProps {
   exemplars: DataFrame[];
   timeZone: TimeZone;
+  getFieldLinks: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
 }
 
-// Type representing exemplars data frame fields
-export interface ExemplarsDataFrameViewDTO {
-  time: number;
-  y: number;
-  component: React.ReactNode;
-  tags: string[];
-}
-
-export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, timeZone }) => {
+export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, timeZone, getFieldLinks }) => {
   const plotCtx = usePlotContext();
 
-  const timeFormatter = useCallback(
-    (value: number) => {
-      return dateTimeFormat(value, {
-        format: systemDateFormats.fullDate,
-        timeZone,
-      });
-    },
-    [timeZone]
-  );
-
   const mapExemplarToXYCoords = useCallback(
-    (exemplar: ExemplarsDataFrameViewDTO) => {
+    (dataFrame: DataFrame, index: number) => {
       const plotInstance = plotCtx.getPlotInstance();
+      const time = dataFrame.fields.find(f => f.name === TIME_SERIES_TIME_FIELD_NAME);
+      const value = dataFrame.fields.find(f => f.name === TIME_SERIES_VALUE_FIELD_NAME);
 
-      if (!exemplar.time || !plotCtx.isPlotReady || !plotInstance) {
+      if (!time || !value || !plotCtx.isPlotReady || !plotInstance) {
         return undefined;
       }
 
@@ -44,7 +36,8 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
       const yMin = plotInstance.scales[yScale].min;
       const yMax = plotInstance.scales[yScale].max;
 
-      let y = exemplar.y;
+      let y = value.values.get(index);
+      // To not to show exemplars outside of the graph we set the y value to min if it is smaller and max if it is bigger than the size of the graph
       if (yMin != null && y < yMin) {
         y = yMin;
       }
@@ -54,7 +47,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
       }
 
       return {
-        x: plotInstance.valToPos(exemplar.time, 'x'),
+        x: plotInstance.valToPos(time.values.get(index), 'x'),
         y: plotInstance.valToPos(y, yScale),
       };
     },
@@ -62,14 +55,14 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
   );
 
   const renderMarker = useCallback(
-    (exemplar: ExemplarsDataFrameViewDTO) => {
-      return <ExemplarMarker time={timeFormatter(exemplar.time)} component={exemplar.component} tags={exemplar.tags} />;
+    (dataFrame: DataFrame, index: number) => {
+      return <ExemplarMarker timeZone={timeZone} getFieldLinks={getFieldLinks} dataFrame={dataFrame} index={index} />;
     },
-    [timeFormatter]
+    [timeZone, getFieldLinks]
   );
 
   return (
-    <EventsCanvas<ExemplarsDataFrameViewDTO>
+    <EventsCanvas
       id="exemplars"
       events={exemplars}
       renderEventMarker={renderMarker}

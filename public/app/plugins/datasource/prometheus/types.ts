@@ -67,7 +67,6 @@ export type PromData = PromMatrixData | PromVectorData | PromScalarData | PromEx
 
 export interface Labels {
   [index: string]: any;
-  traceID: string;
 }
 
 export interface ScrapeExemplar {
