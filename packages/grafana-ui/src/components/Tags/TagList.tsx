@@ -30,6 +30,7 @@ const getStyles = () => {
       flex: 1 1 auto;
       flex-wrap: wrap;
       margin-bottom: -6px;
+      justify-content: flex-end;
     `,
     tag: css`
       margin: 0 6px 6px 0;
