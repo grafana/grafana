@@ -100,5 +100,8 @@ export const getStyles = (theme: GrafanaTheme) => {
         background-color: ${colors.dashboardBg} !important;
       }
     `,
+    getSeverityStyle: (color: string) => css`
+      color: ${color};
+    `,
   };
 };

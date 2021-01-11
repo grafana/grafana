@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useTable, Column } from 'react-table';
-import { Spinner, useStyles } from '@grafana/ui';
+import { cx } from 'emotion';
+import { Spinner, useStyles, useTheme } from '@grafana/ui';
 import { getStyles } from './AlertsTable.styles';
 import { css } from 'emotion';
 import { logger } from '@percona/platform-core';
 import { AlertsService } from '../Alerts.service';
 import { Messages } from '../../../IntegratedAlerting.messages';
-import { Alert } from '../Alerts.types';
-import { formatAlerts } from './AlertsTable.utils';
+import { Alert, AlertStatus } from '../Alerts.types';
+import { formatAlerts, getSeverityColors } from './AlertsTable.utils';
 import { AlertsActions } from '../AlertsActions/AlertsActions';
+import { AlertRuleSeverity } from '../../AlertRules/AlertRules.types';
 
 const { noData, columns } = Messages.alerts.table;
 
@@ -24,8 +26,10 @@ const {
 
 export const AlertsTable = () => {
   const style = useStyles(getStyles);
+  const theme = useTheme();
   const [pendingRequest, setPendingRequest] = useState(false);
   const [data, setData] = useState<Alert[]>([]);
+  const severityColors = useMemo(() => getSeverityColors(theme), [theme]);
 
   const getAlerts = async () => {
     setPendingRequest(true);
@@ -48,7 +52,15 @@ export const AlertsTable = () => {
       } as Column,
       {
         Header: severityColumn,
-        accessor: 'severity',
+        accessor: ({ severity, status }: Alert) => (
+          <span
+            className={cx({
+              [style.getSeverityStyle(severityColors[severity as AlertRuleSeverity])]: status !== AlertStatus.SILENCED,
+            })}
+          >
+            {severity}
+          </span>
+        ),
         width: '5%',
       } as Column,
       {
@@ -84,7 +96,7 @@ export const AlertsTable = () => {
         accessor: (alert: Alert) => <AlertsActions alert={alert} getAlerts={getAlerts} />,
       } as Column,
     ],
-    []
+    [theme]
   );
 
   useEffect(() => {
