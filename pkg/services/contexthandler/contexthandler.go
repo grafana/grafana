@@ -262,6 +262,7 @@ func (h *ContextHandler) initContextWithToken(ctx *models.ReqContext, orgID int6
 		ctx.Data["lookupTokenErr"] = err
 		if token != nil {
 			ctx.UserId = token.UserId
+			ctx.UserToken = token
 		}
 
 		return false
