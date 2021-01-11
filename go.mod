@@ -29,7 +29,7 @@ require (
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/structtag v0.0.0-20150214074306-217e25fb9691 // indirect
 	github.com/facebookgo/subset v0.0.0-20150612182917-8dac2c3c4870 // indirect
-	github.com/fatih/color v1.9.0
+	github.com/fatih/color v1.10.0
 	github.com/gchaincl/sqlhooks v1.3.0
 	github.com/getsentry/sentry-go v0.9.0
 	github.com/go-macaron/binding v0.0.0-20190806013118-0b4f37bab25b
@@ -57,7 +57,6 @@ require (
 	github.com/lib/pq v1.9.0
 	github.com/linkedin/goavro/v2 v2.9.7
 	github.com/magefile/mage v1.9.0
-	github.com/mattn/go-colorable v0.1.7 // indirect
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/opentracing/opentracing-go v1.2.0
