@@ -19,7 +19,8 @@ export const processHistogramLabels = (labels: string[]) => {
 };
 
 export function processLabels(labels: Array<{ [key: string]: string }>, withName = false) {
-  // We are using sets for computation as they have much better performance than array, but we will return array
+  // For processing we are going to use sets as they have significantly better performance than arrays
+  // After we process labels, we will convert sets to arrays and return object with label values in arrays
   const valueSet: { [key: string]: Set<string> } = {};
   labels.forEach(label => {
     const { __name__, ...rest } = label;
@@ -40,9 +41,8 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
     });
   });
 
-  // We return object with arrays created from sets
+  // valueArray that we are going to return in the object
   const valueArray: { [key: string]: string[] } = {};
-
   Object.keys(valueSet).forEach(key => {
     valueArray[key] = Array.from(valueSet[key]);
   });
