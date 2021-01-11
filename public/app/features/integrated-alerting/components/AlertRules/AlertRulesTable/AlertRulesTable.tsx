@@ -1,13 +1,15 @@
-import React, { FC } from 'react';
+import React, { FC, useContext } from 'react';
 import { useTable } from 'react-table';
 import { Spinner, useStyles } from '@grafana/ui';
 import { css } from 'emotion';
 import { getStyles } from './AlertRulesTable.styles';
 import { AlertRule } from '../AlertRules.types';
 import { AlertRulesTableProps } from './AlertRulesTable.types';
+import { AlertRulesProvider } from '../AlertRules.provider';
 
 export const AlertRulesTable: FC<AlertRulesTableProps> = ({ pendingRequest, data, columns, emptyMessage }) => {
   const style = useStyles(getStyles);
+  const { selectedRuleDetails } = useContext(AlertRulesProvider);
   const tableInstance = useTable({ columns, data });
   const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = tableInstance;
 
@@ -46,12 +48,25 @@ export const AlertRulesTable: FC<AlertRulesTableProps> = ({ pendingRequest, data
             <tbody {...getTableBodyProps()} data-qa="alert-rules-table-tbody">
               {rows.map(row => {
                 prepareRow(row);
+                const alertRule = row.original as AlertRule;
+
                 return (
-                  <tr {...row.getRowProps()} className={(row.original as AlertRule).disabled ? style.disabledRow : ''}>
-                    {row.cells.map(cell => (
-                      <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
-                    ))}
-                  </tr>
+                  <>
+                    <tr {...row.getRowProps()} className={alertRule.disabled ? style.disabledRow : ''}>
+                      {row.cells.map(cell => (
+                        <td {...cell.getCellProps()}>{cell.render('Cell')}</td>
+                      ))}
+                    </tr>
+                    {selectedRuleDetails && alertRule.ruleId === selectedRuleDetails.ruleId && (
+                      <tr>
+                        <td colSpan={columns.length}>
+                          <pre data-qa="alert-rules-details" className={style.details}>
+                            {alertRule.rawValues.template.yaml}
+                          </pre>
+                        </td>
+                      </tr>
+                    )}
+                  </>
                 );
               })}
             </tbody>

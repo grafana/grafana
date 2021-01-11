@@ -1,6 +1,6 @@
 import React, { FC, useEffect, useState } from 'react';
 import { Column } from 'react-table';
-import { Button, useStyles } from '@grafana/ui';
+import { Button, useStyles, IconButton } from '@grafana/ui';
 import { logger } from '@percona/platform-core';
 import { AlertRulesTable } from './AlertRulesTable';
 import { AddAlertRuleModal } from './AddAlertRuleModal';
@@ -29,6 +29,7 @@ export const AlertRules: FC = () => {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [pendingRequest, setPendingRequest] = useState(false);
   const [selectedAlertRule, setSelectedAlertRule] = useState<AlertRule>();
+  const [selectedRuleDetails, setSelectedRuleDetails] = useState<AlertRule>();
   const [data, setData] = useState<AlertRule[]>([]);
 
   const getAlertRules = async () => {
@@ -47,7 +48,25 @@ export const AlertRules: FC = () => {
     () => [
       {
         Header: summaryColumn,
-        accessor: 'summary',
+        accessor: (alertRule: AlertRule) => (
+          <div className={styles.nameWrapper}>
+            {alertRule.summary}
+            {selectedRuleDetails && selectedRuleDetails.ruleId === alertRule.ruleId ? (
+              <IconButton
+                data-qa="hide-alert-rule-details"
+                name="arrow-up"
+                onClick={() => setSelectedRuleDetails(null)}
+              />
+            ) : (
+              <IconButton
+                data-qa="show-alert-rule-details"
+                name="arrow-down"
+                onClick={() => setSelectedRuleDetails(alertRule)}
+                disabled={alertRule.disabled}
+              />
+            )}
+          </div>
+        ),
         width: '25%',
       } as Column,
       {
@@ -89,7 +108,7 @@ export const AlertRules: FC = () => {
         accessor: (alertRule: AlertRule) => <AlertRulesActions alertRule={alertRule} />,
       } as Column,
     ],
-    []
+    [selectedRuleDetails]
   );
 
   useEffect(() => {
@@ -102,7 +121,9 @@ export const AlertRules: FC = () => {
   };
 
   return (
-    <AlertRulesProvider.Provider value={{ getAlertRules, setAddModalVisible, setSelectedAlertRule }}>
+    <AlertRulesProvider.Provider
+      value={{ getAlertRules, setAddModalVisible, setSelectedAlertRule, setSelectedRuleDetails, selectedRuleDetails }}
+    >
       <div className={styles.actionsWrapper}>
         <Button
           size="md"
