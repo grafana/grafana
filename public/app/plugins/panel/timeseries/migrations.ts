@@ -12,7 +12,7 @@ import {
 } from '@grafana/data';
 import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
 import {
-  AreaGradientMode,
+  FillGradientMode,
   AxisPlacement,
   DrawStyle,
   LineInterpolation,
@@ -234,7 +234,7 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   }
 
   if (isNumber(angular.fillGradient) && angular.fillGradient > 0) {
-    graph.fillGradient = AreaGradientMode.Opacity;
+    graph.fillGradient = FillGradientMode.Opacity;
     graph.fillOpacity = angular.fillGradient * 10; // fill is 0-10
   }
 
