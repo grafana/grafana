@@ -346,7 +346,8 @@ func (hs *HTTPServer) addMiddlewaresAndStaticRoutes() {
 		m.Use(middleware.ValidateHostHeader(hs.Cfg))
 	}
 
-	m.Use(middleware.HandleNoCacheHeader())
+	m.Use(middleware.HandleNoCacheHeader)
+	m.Use(middleware.AddCSPHeader(hs.Cfg, hs.log))
 
 	for _, mw := range hs.middlewares {
 		m.Use(mw)

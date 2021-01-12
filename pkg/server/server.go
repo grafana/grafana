@@ -65,7 +65,9 @@ func New(cfg Config) (*Server, error) {
 		shutdownFn:    shutdownFn,
 		childRoutines: childRoutines,
 		log:           log.New("server"),
-		cfg:           setting.NewCfg(),
+		// Need to use the singleton setting.Cfg instance, to make sure we use the same as is injected in the DI
+		// graph
+		cfg: setting.GetCfg(),
 
 		configFile:  cfg.ConfigFile,
 		homePath:    cfg.HomePath,
