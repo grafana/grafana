@@ -93,10 +93,10 @@ func GetDefaultDataSource(query *models.GetDefaultDataSourceQuery) error {
 // Zero values (0, or "") should be used for the parameters that will not be queried.
 func (ss *SQLStore) DeleteDataSource(uid string, id int64, name string, orgID int64) (int64, error) {
 	cmd := &models.DeleteDataSourceCommand{
-		Id:    id,
-		Uid:   uid,
+		ID:    id,
+		UID:   uid,
 		Name:  name,
-		OrgId: orgID,
+		OrgID: orgID,
 	}
 
 	if err := DeleteDataSource(cmd); err != nil {
@@ -117,14 +117,14 @@ func DeleteDataSource(cmd *models.DeleteDataSourceCommand) error {
 	}
 
 	switch {
-	case cmd.OrgId == 0:
+	case cmd.OrgID == 0:
 		return models.ErrDataSourceIdentifierNotSet
-	case cmd.Uid != "":
-		makeQuery("DELETE FROM data_source WHERE uid=? and org_id=?", cmd.Uid, cmd.OrgId)
-	case cmd.Id != 0:
-		makeQuery("DELETE FROM data_source WHERE id=? and org_id=?", cmd.Id, cmd.OrgId)
+	case cmd.UID != "":
+		makeQuery("DELETE FROM data_source WHERE uid=? and org_id=?", cmd.UID, cmd.OrgID)
+	case cmd.ID != 0:
+		makeQuery("DELETE FROM data_source WHERE id=? and org_id=?", cmd.ID, cmd.OrgID)
 	case cmd.Name != "":
-		makeQuery("DELETE FROM data_source WHERE name=? and org_id=?", cmd.Name, cmd.OrgId)
+		makeQuery("DELETE FROM data_source WHERE name=? and org_id=?", cmd.Name, cmd.OrgID)
 	default:
 		return models.ErrDataSourceIdentifierNotSet
 	}

@@ -188,11 +188,11 @@ type UpdateDataSourceCommand struct {
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
 // At least one of the UID, ID, or Name properties must be set in addition to OrgID.
 type DeleteDataSourceCommand struct {
-	Id   int64
-	Uid  string
+	ID   int64
+	UID  string
 	Name string
 
-	OrgId int64
+	OrgID int64
 
 	DeletedDatasourcesCount int64
 }
