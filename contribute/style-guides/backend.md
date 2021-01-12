@@ -75,3 +75,17 @@ Valid reasons to use a pointer include (but not necessarily limited to):
   allocating heap memory)
 * You might *need* `nil` to tell if a variable isn't set, although usually it's better to use the type's zero
   value to tell instead
+
+## Database
+
+In database related code, we follow certain patterns.
+
+### Foreign keys
+
+While they can be useful, we don't generally use foreign key constraints in Grafana, for historical and
+technical reasons. See this [comment](https://github.com/grafana/grafana/issues/3269#issuecomment-383328548) by Torkel 
+for context.
+
+### Unique columns
+
+If a column, or column combination, should be unique, add a corresponding uniqueness constraint through a migration.

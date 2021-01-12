@@ -9,8 +9,9 @@ describe('parseSelector()', () => {
     expect(parsed.labelKeys).toEqual([]);
   });
 
-  it('throws if selector is broken', () => {
-    expect(() => parseSelector('{foo')).toThrow();
+  it('returns a clean selector from an unclosed selector', () => {
+    const parsed = parseSelector('{foo');
+    expect(parsed.selector).toBe('{}');
   });
 
   it('returns the selector sorted by label key', () => {

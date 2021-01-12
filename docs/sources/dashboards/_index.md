@@ -42,7 +42,7 @@ Dashboards can use [templating]({{< relref "../variables/_index.md" >}}) to make
 
 Dashboards can use [annotations]({{< relref "annotations.md" >}}) to display event data across panels. This can help correlate the time series data in the panel with other events.
 
-Dashboards can be [shared]({{< relref "share-dashboard.md" >}}) easily in a variety of ways.
+You can [share dashboards]({{< relref "../sharing/share-dashboard.md" >}}) in a variety of ways.
 
 Dashboards can be tagged, and the dashboard picker provides quick, searchable access to all dashboards in a particular organization.
 
@@ -59,4 +59,3 @@ We use a unit abstraction so that Grafana looks great on all screen sizes.
 Collapse a row by clicking on the row title. If you save a dashboard with a row collapsed, then it saves in that state and does not load those graphs until you expand the row.
 
 Use the [repeating rows]({{< relref "../variables/_index.md#repeating-rows" >}}) functionality to dynamically create or remove entire rows, which can be filled with panels, based on the template variables selected.
-

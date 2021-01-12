@@ -21,14 +21,14 @@ import (
 )
 
 const (
-	ViewIndex            = "index"
-	LoginErrorCookieName = "login_error"
+	viewIndex            = "index"
+	loginErrorCookieName = "login_error"
 )
 
 var setIndexViewData = (*HTTPServer).setIndexViewData
 
 var getViewIndex = func() string {
-	return ViewIndex
+	return viewIndex
 }
 
 func (hs *HTTPServer) ValidateRedirectTo(redirectTo string) error {
@@ -96,12 +96,12 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	viewData.Settings["oauth"] = enabledOAuths
 	viewData.Settings["samlEnabled"] = hs.License.HasValidLicense() && hs.Cfg.SAMLEnabled
 
-	if loginError, ok := tryGetEncryptedCookie(c, LoginErrorCookieName); ok {
+	if loginError, ok := tryGetEncryptedCookie(c, loginErrorCookieName); ok {
 		// this cookie is only set whenever an OAuth login fails
 		// therefore the loginError should be passed to the view data
 		// and the view should return immediately before attempting
 		// to login again via OAuth and enter to a redirect loop
-		cookies.DeleteCookie(c.Resp, LoginErrorCookieName, hs.CookieOptionsFromCfg)
+		cookies.DeleteCookie(c.Resp, loginErrorCookieName, hs.CookieOptionsFromCfg)
 		viewData.Settings["loginError"] = loginError
 		c.HTML(200, getViewIndex(), viewData)
 		return
@@ -317,7 +317,7 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName s
 
 func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...interface{}) {
 	ctx.Logger.Error(err.Error(), v...)
-	if err := hs.trySetEncryptedCookie(ctx, LoginErrorCookieName, err.Error(), 60); err != nil {
+	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, err.Error(), 60); err != nil {
 		hs.log.Error("Failed to set encrypted cookie", "err", err)
 	}
 
@@ -326,7 +326,7 @@ func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...
 
 func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err error, v ...interface{}) *RedirectResponse {
 	ctx.Logger.Error(err.Error(), v...)
-	if err := hs.trySetEncryptedCookie(ctx, LoginErrorCookieName, err.Error(), 60); err != nil {
+	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, err.Error(), 60); err != nil {
 		hs.log.Error("Failed to set encrypted cookie", "err", err)
 	}
 
