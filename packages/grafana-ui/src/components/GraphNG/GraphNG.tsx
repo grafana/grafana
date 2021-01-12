@@ -2,12 +2,14 @@ import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import {
   compareDataFrameStructures,
   DataFrame,
+  DisplayValue,
   FieldConfig,
   FieldMatcher,
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
   getFieldDisplayName,
+  reduceField,
   TimeRange,
 } from '@grafana/data';
 import { alignDataFrames } from './utils';
@@ -215,6 +217,24 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   let legendElement: React.ReactElement | undefined;
 
   if (hasLegend && legendItemsRef.current.length > 0) {
+    if (legend!.calcs) {
+      for (let i = 0; i < legendItemsRef.current.length; i++) {
+        const item = legendItemsRef.current[i];
+        const field = data[item.fieldIndex!.frameIndex].fields[item.fieldIndex!.fieldIndex];
+        const fmt = field.display ?? defaultFormatter;
+        const fieldStats = reduceField({
+          field,
+          reducers: legend!.calcs || [],
+        });
+        item.displayValues = legend!.calcs.map<DisplayValue>(calc => {
+          return {
+            ...fmt(fieldStats[calc]),
+            title: calc,
+          };
+        });
+      }
+    }
+
     legendElement = (
       <VizLayout.Legend position={legend!.placement} maxHeight="35%" maxWidth="60%">
         <VizLegend
