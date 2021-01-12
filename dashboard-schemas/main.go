@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
@@ -17,25 +18,31 @@ func main() {
 	entrypoints := []string{"./..."}
 	bis := load.Instances(entrypoints, nil)
 
+	// collect all schemas
+	var pairs []openapi.KeyValue
 	for _, bi := range bis {
-
 		if bi.Err != nil {
-			fmt.Println("Error during load:", bi.Err)
-			continue
+			log.Fatalf("Error loading: %s", bi.Err)
 		}
-
 		inst, err := r.Build(bi)
 		if err != nil {
-			fmt.Println("Error during build:", bi.Err)
-			continue
+			log.Fatalf("Error building: %s", bi.Err)
 		}
-
-		oapi, err := openapi.Gen(inst, &cfg)
+		om, err := cfg.Schemas(inst)
 		if err != nil {
-			fmt.Println("Error during gen:", err)
-			continue
+			log.Fatalf("Error extracting: %s", err)
 		}
-
-		fmt.Println(string(oapi))
+		pairs = append(pairs, om.Pairs()...)
 	}
+
+	// add all schemas to new ordered map
+	om := openapi.OrderedMap{}
+	om.SetAll(pairs)
+
+	j, err := om.MarshalJSON()
+	if err != nil {
+		log.Fatalf("Error marshalling json: %s", err)
+	}
+
+	fmt.Println(string(j))
 }
