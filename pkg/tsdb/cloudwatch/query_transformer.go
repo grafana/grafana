@@ -101,12 +101,12 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 
 		eq, err := json.Marshal(executedQueries)
 		if err != nil {
-			return nil, fmt.Errorf("Could not marshal executedString struct: %w", err)
+			return nil, fmt.Errorf("could not marshal executedString struct: %w", err)
 		}
 
 		link, err := buildDeepLink(refID, requestQueries, executedQueries, startTime, endTime)
 		if err != nil {
-			return nil, fmt.Errorf("Could not build deep link: %w", err)
+			return nil, fmt.Errorf("could not build deep link: %w", err)
 		}
 
 		for _, frame := range frames {
