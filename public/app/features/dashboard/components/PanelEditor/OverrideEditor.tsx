@@ -160,7 +160,12 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
           const item = registry.getIfExists(p.id);
 
           if (!item) {
-            return <div key={`up-${p.id}`}>Unknown property: {p.id}</div>;
+            return (
+              <HorizontalGroup key={`${p.id}/${j}`} justify="space-between">
+                <div>Unknown property: {p.id}</div>
+                <IconButton name="times" onClick={() => onDynamicConfigValueRemove(j)} />
+              </HorizontalGroup>
+            );
           }
 
           const isCollapsible =
