@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/setting"
@@ -19,14 +18,12 @@ import (
 )
 
 func TestNotificationService(t *testing.T) {
-	testRule := newTestRule("Test", "Something is bad")
+	testRule := &Rule{Name: "Test", Message: "Something is bad"}
 	evalCtx := NewEvalContext(context.Background(), testRule)
 
-	testRuleTemplated := newTestRule("Test latency {{.quantile}}", "Something is bad on instance {{.instance}}")
+	testRuleTemplated := &Rule{Name: "Test latency {{.quantile}}", Message: "Something is bad on instance {{.instance}}"}
 	evalCtxWithMatch := NewEvalContext(context.Background(), testRuleTemplated)
 	evalCtxWithMatch.EvalMatches = []*EvalMatch{{
-		Value:  null.FloatFrom(10),
-		Metric: "latency",
 		Tags: map[string]string{
 			"instance": "localhost:3000",
 			"quantile": "0.99",
@@ -297,19 +294,6 @@ func newTestNotifier(model *models.AlertNotification) (Notifier, error) {
 		DisableResolveMessage: model.DisableResolveMessage,
 		Frequency:             model.Frequency,
 	}, nil
-}
-
-func newTestRule(name, message string) *Rule {
-	return &Rule{
-		ID:            1,
-		DashboardID:   1,
-		PanelID:       1,
-		OrgID:         1,
-		Name:          name,
-		Message:       message,
-		State:         models.AlertStateAlerting,
-		Notifications: []string{"1"},
-	}
 }
 
 type notificationSent struct{}

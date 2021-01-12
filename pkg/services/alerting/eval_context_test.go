@@ -6,11 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/null"
-
-	"github.com/stretchr/testify/assert"
-
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestStateIsUpdatedWhenNeeded(t *testing.T) {
@@ -217,8 +214,6 @@ func TestBuildTemplateDataMap(t *testing.T) {
 			name: "single match",
 			matches: []*EvalMatch{
 				{
-					Value:  null.Float{},
-					Metric: "",
 					Tags: map[string]string{
 						"InstanceId": "i-123456789",
 						"Percentile": "0.999",
@@ -234,15 +229,11 @@ func TestBuildTemplateDataMap(t *testing.T) {
 			name: "matches with duplicate keys",
 			matches: []*EvalMatch{
 				{
-					Value:  null.Float{},
-					Metric: "",
 					Tags: map[string]string{
 						"InstanceId": "i-123456789",
 					},
 				},
 				{
-					Value:  null.Float{},
-					Metric: "",
 					Tags: map[string]string{
 						"InstanceId": "i-987654321",
 						"Percentile": "0.999",
@@ -258,24 +249,18 @@ func TestBuildTemplateDataMap(t *testing.T) {
 			name: "matches with duplicate keys and values",
 			matches: []*EvalMatch{
 				{
-					Value:  null.Float{},
-					Metric: "",
 					Tags: map[string]string{
 						"InstanceId": "i-123456789",
 						"Percentile": "0.999",
 					},
 				},
 				{
-					Value:  null.Float{},
-					Metric: "",
 					Tags: map[string]string{
 						"InstanceId": "i-987654321",
 						"Percentile": "0.995",
 					},
 				},
 				{
-					Value:  null.Float{},
-					Metric: "",
 					Tags: map[string]string{
 						"InstanceId": "i-987654321",
 						"Percentile": "0.999",
@@ -291,15 +276,11 @@ func TestBuildTemplateDataMap(t *testing.T) {
 			name: "a value and its substring for same key",
 			matches: []*EvalMatch{
 				{
-					Value:  null.Float{},
-					Metric: "",
 					Tags: map[string]string{
 						"Percentile": "0.9990",
 					},
 				},
 				{
-					Value:  null.Float{},
-					Metric: "",
 					Tags: map[string]string{
 						"Percentile": "0.999",
 					},
