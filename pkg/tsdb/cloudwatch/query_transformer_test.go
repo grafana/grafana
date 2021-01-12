@@ -235,7 +235,8 @@ func TestQueryTransformer(t *testing.T) {
 		parsedURL, err := url.Parse(link)
 		require.NoError(t, err)
 
-		decodedLink, _ := url.PathUnescape(parsedURL.String())
+		decodedLink, err := url.PathUnescape(parsedURL.String())
+		require.NoError(t, err)
 		assert.Equal(t, "", decodedLink)
 	})
 }
