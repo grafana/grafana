@@ -9,17 +9,7 @@ import {
   isSystemOverride as isSystemOverrideGuard,
   VariableSuggestionsScope,
 } from '@grafana/data';
-import {
-  Field,
-  fieldMatchersUI,
-  HorizontalGroup,
-  Icon,
-  IconButton,
-  Label,
-  stylesFactory,
-  useTheme,
-  ValuePicker,
-} from '@grafana/ui';
+import { Field, fieldMatchersUI, HorizontalGroup, Icon, IconButton, Label, useStyles, ValuePicker } from '@grafana/ui';
 import { DynamicConfigValueEditor } from './DynamicConfigValueEditor';
 
 import { getDataLinksVariableSuggestions } from '../../../panel/panellinks/link_srv';
@@ -49,9 +39,8 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   onRemove,
   registry,
 }) => {
-  const theme = useTheme();
   const matcherUi = fieldMatchersUI.get(override.matcher.id);
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
 
   const matcherLabel = <Label>{matcherUi.name}</Label>;
 
@@ -162,7 +151,10 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
           if (!item) {
             return (
               <HorizontalGroup key={`${p.id}/${j}`} justify="space-between">
-                <div>Unknown property: {p.id}</div>
+                <HorizontalGroup>
+                  <Label className={styles.unknownLabel}>Unknown property:</Label>
+                  <code>{p.id}</code>
+                </HorizontalGroup>
                 <IconButton name="times" onClick={() => onDynamicConfigValueRemove(j)} />
               </HorizontalGroup>
             );
@@ -206,7 +198,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme) => {
   return {
     matcherUi: css`
       padding: ${theme.spacing.sm};
@@ -223,5 +215,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       overflow: hidden;
       padding-right: ${theme.spacing.xl};
     `,
+    unknownLabel: css`
+      margin-bottom: 0;
+    `,
   };
-});
+};
