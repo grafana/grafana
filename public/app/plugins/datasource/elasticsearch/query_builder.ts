@@ -58,10 +58,13 @@ export class ElasticQueryBuilder {
       if (metricId) {
         for (let metric of target.metrics || []) {
           if (metric.id === metricId) {
-            queryNode.aggs = {};
-            queryNode.aggs[metric.id] = {};
-            if (isMetricAggregationWithField(metric)) {
-              queryNode.aggs[metric.id][metric.type] = { field: metric.field };
+            if (metric.type === 'count') {
+              queryNode.terms.order['_count'] = aggDef.settings.order;
+            } else if (isMetricAggregationWithField(metric)) {
+              queryNode.aggs = {};
+              queryNode.aggs[metric.id] = {
+                [metric.type]: { field: metric.field },
+              };
             }
             break;
           }

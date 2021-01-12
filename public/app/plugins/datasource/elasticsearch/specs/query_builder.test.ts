@@ -111,6 +111,32 @@ describe('ElasticQueryBuilder', () => {
         expect(secondLevel.aggs['5'].avg.field).toBe('@value');
       });
 
+      it('with term agg and order by count agg', () => {
+        const query = builder.build(
+          {
+            refId: 'A',
+            metrics: [
+              { type: 'count', id: '1' },
+              { type: 'avg', field: '@value', id: '5' },
+            ],
+            bucketAggs: [
+              {
+                type: 'terms',
+                field: '@host',
+                settings: { size: '5', order: 'asc', orderBy: '1' },
+                id: '2',
+              },
+              { type: 'date_histogram', field: '@timestamp', id: '3' },
+            ],
+          },
+          100,
+          '1000'
+        );
+
+        expect(query.aggs['2'].terms.order._count).toEqual('asc');
+        expect(query.aggs['2'].aggs).not.toHaveProperty('1');
+      });
+
       it('with term agg and order by extended_stats agg', () => {
         const query = builder.build(
           {
