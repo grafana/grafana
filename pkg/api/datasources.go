@@ -94,7 +94,7 @@ func DeleteDataSourceById(c *models.ReqContext) Response {
 		return Error(403, "Cannot delete read-only data source", nil)
 	}
 
-	cmd := &models.DeleteDataSourceByIdCommand{Id: id, OrgId: c.OrgId}
+	cmd := &models.DeleteDataSourceCommand{Id: id, OrgId: c.OrgId}
 
 	err = bus.Dispatch(cmd)
 	if err != nil {
@@ -136,7 +136,7 @@ func DeleteDataSourceByUID(c *models.ReqContext) Response {
 		return Error(403, "Cannot delete read-only data source", nil)
 	}
 
-	cmd := &models.DeleteDataSourceByUIDCommand{Uid: uid, OrgId: c.OrgId}
+	cmd := &models.DeleteDataSourceCommand{Uid: uid, OrgId: c.OrgId}
 
 	err = bus.Dispatch(cmd)
 	if err != nil {
@@ -165,7 +165,7 @@ func DeleteDataSourceByName(c *models.ReqContext) Response {
 		return Error(403, "Cannot delete read-only data source", nil)
 	}
 
-	cmd := &models.DeleteDataSourceByNameCommand{Name: name, OrgId: c.OrgId}
+	cmd := &models.DeleteDataSourceCommand{Name: name, OrgId: c.OrgId}
 	err := bus.Dispatch(cmd)
 	if err != nil {
 		return Error(500, "Failed to delete datasource", err)

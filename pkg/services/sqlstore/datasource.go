@@ -20,9 +20,7 @@ func init() {
 	bus.AddHandler("sql", GetDataSources)
 	bus.AddHandler("sql", GetDataSource)
 	bus.AddHandler("sql", AddDataSource)
-	bus.AddHandler("sql", DeleteDataSourceById)
-	bus.AddHandler("sql", DeleteDataSourceByName)
-	bus.AddHandler("sql", DeleteDataSourceByUID)
+	bus.AddHandler("sql", DeleteDataSource)
 	bus.AddHandler("sql", UpdateDataSource)
 	bus.AddHandler("sql", GetDefaultDataSource)
 }
@@ -91,32 +89,49 @@ func GetDefaultDataSource(query *models.GetDefaultDataSourceQuery) error {
 	return err
 }
 
-func DeleteDataSourceById(cmd *models.DeleteDataSourceByIdCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		var rawSQL = "DELETE FROM data_source WHERE id=? and org_id=?"
-		result, err := sess.Exec(rawSQL, cmd.Id, cmd.OrgId)
-		affected, _ := result.RowsAffected()
-		cmd.DeletedDatasourcesCount = affected
-		return err
-	})
+// DeleteDataSource deletes a datasource by org_id and either uid (preferred), id, or name.
+// Zero values (0, or "") should be used for the parameters that will not be queried.
+func (ss *SQLStore) DeleteDataSource(uid string, id int64, name string, orgID int64) (int64, error) {
+	cmd := &models.DeleteDataSourceCommand{
+		Id:    id,
+		Uid:   uid,
+		Name:  name,
+		OrgId: orgID,
+	}
+
+	if err := DeleteDataSource(cmd); err != nil {
+		return 0, err
+	}
+
+	return cmd.DeletedDatasourcesCount, nil
 }
 
-func DeleteDataSourceByUID(cmd *models.DeleteDataSourceByUIDCommand) error {
-	return inTransaction(func(sess *DBSession) error {
-		var rawSQL = "DELETE FROM data_source WHERE uid=? and org_id=?"
-		result, err := sess.Exec(rawSQL, cmd.Uid, cmd.OrgId)
-		affected, _ := result.RowsAffected()
-		cmd.DeletedDatasourcesCount = affected
-		return err
-	})
-}
+// DeleteDataSource removes a datasource by org_id as well as either uid (preferred), id, or name
+// and is added to the bus.
+func DeleteDataSource(cmd *models.DeleteDataSourceCommand) error {
+	params := make([]interface{}, 0)
 
-func DeleteDataSourceByName(cmd *models.DeleteDataSourceByNameCommand) error {
+	makeQuery := func(sql string, p ...interface{}) {
+		params = append(params, sql)
+		params = append(params, p...)
+	}
+
+	switch {
+	case cmd.OrgId == 0:
+		return models.ErrDataSourceIdentifierNotSet
+	case cmd.Uid != "":
+		makeQuery("DELETE FROM data_source WHERE uid=? and org_id=?", cmd.Uid, cmd.OrgId)
+	case cmd.Id != 0:
+		makeQuery("DELETE FROM data_source WHERE id=? and org_id=?", cmd.Id, cmd.OrgId)
+	case cmd.Name != "":
+		makeQuery("DELETE FROM data_source WHERE name=? and org_id=?", cmd.Name, cmd.OrgId)
+	default:
+		return models.ErrDataSourceIdentifierNotSet
+	}
+
 	return inTransaction(func(sess *DBSession) error {
-		var rawSQL = "DELETE FROM data_source WHERE name=? and org_id=?"
-		result, err := sess.Exec(rawSQL, cmd.Name, cmd.OrgId)
-		affected, _ := result.RowsAffected()
-		cmd.DeletedDatasourcesCount = affected
+		result, err := sess.Exec(params...)
+		cmd.DeletedDatasourcesCount, _ = result.RowsAffected()
 		return err
 	})
 }

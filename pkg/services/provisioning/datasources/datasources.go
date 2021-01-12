@@ -84,7 +84,7 @@ func (dc *DatasourceProvisioner) applyChanges(configPath string) error {
 
 func (dc *DatasourceProvisioner) deleteDatasources(dsToDelete []*deleteDatasourceConfig) error {
 	for _, ds := range dsToDelete {
-		cmd := &models.DeleteDataSourceByNameCommand{OrgId: ds.OrgID, Name: ds.Name}
+		cmd := &models.DeleteDataSourceCommand{OrgId: ds.OrgID, Name: ds.Name}
 		if err := bus.Dispatch(cmd); err != nil {
 			return err
 		}
