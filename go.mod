@@ -64,7 +64,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.8.0
 	github.com/prometheus/client_model v0.2.0
-	github.com/prometheus/common v0.14.0
+	github.com/prometheus/common v0.15.0
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/russellhaering/goxmldsig v1.1.0
@@ -97,7 +97,7 @@ require (
 	gopkg.in/macaron.v1 v1.3.9
 	gopkg.in/mail.v2 v2.3.1
 	gopkg.in/redis.v5 v5.2.9
-	gopkg.in/square/go-jose.v2 v2.4.1
+	gopkg.in/square/go-jose.v2 v2.5.1
 	gopkg.in/yaml.v2 v2.3.0
 	xorm.io/core v0.7.3
 	xorm.io/xorm v0.8.1
