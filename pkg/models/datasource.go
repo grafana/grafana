@@ -185,7 +185,7 @@ type UpdateDataSourceCommand struct {
 	Result *DataSource
 }
 
-// DeleteDataSourceCommand will deleted based on OrgID as well as the UID (preferred), ID, or UID.
+// DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
 // At least one of the UID, ID, or Name properties must be set in addition to OrgID.
 type DeleteDataSourceCommand struct {
 	Id   int64
@@ -213,7 +213,7 @@ type GetDefaultDataSourceQuery struct {
 	Result *DataSource
 }
 
-// GetDataSourceQuery will get a DataSource based on OrgID as well as the UID (preferred), ID, or UID.
+// GetDataSourceQuery will get a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
 // At least one of the UID, ID, or Name properties must be set in addition to OrgID.
 type GetDataSourceQuery struct {
 	Id   int64
