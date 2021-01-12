@@ -35,7 +35,6 @@ License URL is the root URL of your Grafana instance. The license will not work 
 
 ## Dashboard and folder permissions report
 
-When determining a user’s role for billing purposes, any user who has the ability to edit and save dashboards is considered an "Editor".
 This CSV report helps to identify users, teams and roles who have been granted "Admin" or "Edit" permissions through dashboard or folder permissions.
 
 To download the report (in CSV format) go to **Server Admin** menu, select **Licensing**, scroll down to the bottom of the page and click on **Download report** button.
