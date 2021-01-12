@@ -95,7 +95,7 @@ func TestDeleteLibraryPanel(t *testing.T) {
 }
 
 func TestDisconnectLibraryPanel(t *testing.T) {
-	testScenario(t, "When an admin tries to disconnect a connection with a library panel that does not exist, it should fail",
+	testScenario(t, "When an admin tries to remove a connection with a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": "unknown", "dashboardId": "1"})
 			response := sc.service.disconnectHandler(sc.reqContext)
