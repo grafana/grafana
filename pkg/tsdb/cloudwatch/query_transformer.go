@@ -109,6 +109,14 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 			return nil, fmt.Errorf("could not build deep link: %w", err)
 		}
 
+		createDataLinks := func(link string) []data.DataLink {
+			return []data.DataLink{{
+				Title:       "View in CloudWatch console",
+				TargetBlank: true,
+				URL:         link,
+			}}
+		}
+
 		for _, frame := range frames {
 			frame.Meta = &data.FrameMeta{
 				ExecutedQueryString: string(eq),
@@ -119,15 +127,9 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 			}
 
 			for _, field := range frame.Fields {
-				field.Config = &data.FieldConfig{
-					Links: []data.DataLink{
-						{
-							Title:       "View in CloudWatch console",
-							TargetBlank: true,
-							URL:         link,
-						},
-					},
-				}
+				field.SetConfig(&data.FieldConfig{
+					Links: createDataLinks(link),
+				})
 			}
 		}
 
