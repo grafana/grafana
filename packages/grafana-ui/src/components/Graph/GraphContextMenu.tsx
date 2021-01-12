@@ -13,7 +13,7 @@ import {
 import { useTheme } from '../../themes';
 import { HorizontalGroup } from '../Layout/Layout';
 import { FormattedValueDisplay } from '../FormattedValueDisplay/FormattedValueDisplay';
-import { SeriesIcon } from '../Legend/SeriesIcon';
+import { SeriesIcon } from '../VizLegend/SeriesIcon';
 import { css } from 'emotion';
 
 export type ContextDimensions<T extends Dimensions = any> = { [key in keyof T]: [number, number | undefined] | null };

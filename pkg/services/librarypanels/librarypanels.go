@@ -67,4 +67,21 @@ func (lps *LibraryPanelService) AddMigration(mg *migrator.Migrator) {
 
 	mg.AddMigration("create library_panel table v1", migrator.NewAddTableMigration(libraryPanelV1))
 	mg.AddMigration("add index library_panel org_id & folder_id & name", migrator.NewAddIndexMigration(libraryPanelV1, libraryPanelV1.Indices[0]))
+
+	libraryPanelDashboardV1 := migrator.Table{
+		Name: "library_panel_dashboard",
+		Columns: []*migrator.Column{
+			{Name: "id", Type: migrator.DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "librarypanel_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "dashboard_id", Type: migrator.DB_BigInt, Nullable: false},
+			{Name: "created", Type: migrator.DB_DateTime, Nullable: false},
+			{Name: "created_by", Type: migrator.DB_BigInt, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"librarypanel_id", "dashboard_id"}, Type: migrator.UniqueIndex},
+		},
+	}
+
+	mg.AddMigration("create library_panel_dashboard table v1", migrator.NewAddTableMigration(libraryPanelDashboardV1))
+	mg.AddMigration("add index library_panel_dashboard librarypanel_id & dashboard_id", migrator.NewAddIndexMigration(libraryPanelDashboardV1, libraryPanelDashboardV1.Indices[0]))
 }

@@ -127,8 +127,9 @@ Include images in a document using the following syntax:
 > **Note:** Alt text does not appear when the user hovers the mouse over the image, but title text does.
 
 **Examples:** 
-- \!\[Grafana Logo](/link/to/grafanalogo/logo.png "Grafana logo")
-- \!\[Example](/img/docs/folder_name/alert_test_rule.png "Here is an example")
+
+- \!\[Grafana logo](/link/to/grafanalogo/logo.png)
+- \!\[Example](/img/docs/folder_name/alert_test_rule.png)
 
 This follows the format of "!", alt text wrapped in "[]" and the link URL wrapped in "()".
 

@@ -1,9 +1,11 @@
 +++
-title = "Enter Value tags"
+title = "Variable value group tags"
 weight = 500
 +++
 
-# Enter variable value groups/tags (experimental feature)
+# Configure variable value group tags 
+
+> **Note:** This is an experimental feature that will be deprecated in Grafana v8.
 
 Value groups/tags are a feature you can use to organize variable options. If you have many options in the dropdown for a multi-value variable, then you can use this feature to group the values into selectable tags.
 
