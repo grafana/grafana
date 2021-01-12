@@ -125,7 +125,7 @@ Include images in a document using the following syntax:
 ```
 
 **Examples:** 
-- \!\[Grafana Logo](/link/to/grafanalogo/logo.png)
+- \!\[Grafana logo](/link/to/grafanalogo/logo.png)
 - \!\[Example](/img/docs/folder_name/alert_test_rule.png)
 
 This follows the format of "!", alt text wrapped in "[]" and the link URL wrapped in "()".
