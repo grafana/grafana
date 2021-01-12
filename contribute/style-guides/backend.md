@@ -80,7 +80,7 @@ Valid reasons to use a pointer include (but not necessarily limited to):
 
 ### Foreign keys
 
-While they can be useful, we don't historically use foreign key constraints in Grafana, for historical and
+While they can be useful, we don't generally use foreign key constraints in Grafana, for historical and
 technical reasons. See this [comment](https://github.com/grafana/grafana/issues/3269#issuecomment-383328548) by Torkel 
 for context.
 
