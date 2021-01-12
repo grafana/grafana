@@ -45,9 +45,9 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
   // valueArray that we are going to return in the object
   const valueArray: { [key: string]: string[] } = {};
   Object.keys(valueSet)
-    .slice(AUTOCOMPLETE_LIMIT)
+    .slice(0, AUTOCOMPLETE_LIMIT)
     .forEach(key => {
-      valueArray[key] = Array.from(valueSet[key]).slice(AUTOCOMPLETE_LIMIT);
+      valueArray[key] = Array.from(valueSet[key]).slice(0, AUTOCOMPLETE_LIMIT);
     });
 
   return { values: valueArray, keys: Object.keys(valueArray) };
@@ -206,6 +206,8 @@ export function roundSecToMin(seconds: number): number {
   return Math.floor(seconds / 60);
 }
 
-export function addLimitInfo(items: any[]): string {
-  return items.length >= AUTOCOMPLETE_LIMIT ? `, limited to the first ${AUTOCOMPLETE_LIMIT} received items` : '';
+export function addLimitInfo(items: any[] | undefined): string {
+  return items && items.length >= AUTOCOMPLETE_LIMIT
+    ? `, limited to the first ${AUTOCOMPLETE_LIMIT} received items`
+    : '';
 }

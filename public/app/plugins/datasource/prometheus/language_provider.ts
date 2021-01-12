@@ -68,7 +68,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   metricsMetadata?: PromMetricsMetadata;
   startTask: Promise<any>;
   datasource: PrometheusDatasource;
-  lookupsDisabled: boolean; // Dynamically set to true for big/slow instances
 
   /**
    *  Cache for labels of series. This is bit simplistic in the sense that it just counts responses each as a 1 and does
@@ -84,7 +83,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     this.histogramMetrics = [];
     this.timeRange = { start: 0, end: 0 };
     this.metrics = [];
-    this.lookupsDisabled = true;
 
     Object.assign(this, initialValues);
   }
@@ -242,7 +240,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       const limitInfo = addLimitInfo(metrics);
       suggestions.push({
         label: `Metrics${limitInfo}`,
-        items: metrics.slice(AUTOCOMPLETE_LIMIT).map(m => addMetricsMetadata(m, metricsMetadata)),
+        items: metrics.slice(0, AUTOCOMPLETE_LIMIT).map(m => addMetricsMetadata(m, metricsMetadata)),
       });
     }
 
@@ -381,7 +379,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         context = 'context-label-values';
         const limitInfo = addLimitInfo(labelValues[labelKey]);
         suggestions.push({
-          label: `Label values for "${labelKey}"${limitInfo}.`,
+          label: `Label values for "${labelKey}"${limitInfo}`,
           items: labelValues[labelKey].map(wrapLabel),
         });
       }
@@ -395,7 +393,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
           context = 'context-labels';
           const newItems = possibleKeys.map(key => ({ label: key }));
           const limitInfo = addLimitInfo(newItems);
-          const newSuggestion: CompletionItemGroup = { label: `Labels${limitInfo}.`, items: newItems };
+          const newSuggestion: CompletionItemGroup = { label: `Labels${limitInfo}`, items: newItems };
           suggestions.push(newSuggestion);
         }
       }
@@ -405,7 +403,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   async getLabelValues(selector: string, withName?: boolean) {
-    if (this.lookupsDisabled) {
+    if (this.datasource.lookupsDisabled) {
       return undefined;
     }
     try {
