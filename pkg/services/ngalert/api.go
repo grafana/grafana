@@ -27,6 +27,10 @@ func (ng *AlertNG) registerAPIEndpoints() {
 		schedulerRouter.Post("/pause", api.Wrap(ng.pauseScheduler))
 		schedulerRouter.Post("/unpause", api.Wrap(ng.unpauseScheduler))
 	}, middleware.ReqOrgAdmin)
+
+	ng.RouteRegister.Group("/api/alert-instances", func(alertInstances routing.RouteRegister) {
+		alertInstances.Get("", middleware.ReqSignedIn, api.Wrap(ng.listAlertInstancesEndpoint))
+	})
 }
 
 // conditionEvalEndpoint handles POST /api/alert-definitions/eval.
