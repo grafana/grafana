@@ -9,6 +9,8 @@ aliases = ["/docs/grafana/latest/http_api/licensing/"]
 
 ## Manually force license refresh
 
+> Only available in Grafana Enterprise v7.4+.
+
 `POST /api/licensing/token/renew`
 
 Manually ask license issuer for a new token.
@@ -56,6 +58,8 @@ Status Codes:
 - **403** - Access denied
 
 ## Remove license from database
+
+> Only available in Grafana Enterprise v7.4+.
 
 `DELETE /api/licensing/token`
 
