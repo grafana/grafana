@@ -161,7 +161,7 @@ The Prometheus data source works with other projects that implement the [Prometh
 - Cortex
 - [Thanos](https://thanos.io/v0.17/components/query.md/)
 
-For more information on how to get other project data into Prometheus and Grafana, refer to the specific project documentation. 
+For more information on how to query other Prometheus-compatible projects from Grafana, refer to the specific project documentation. 
 
 ## Provision the Prometheus data source
 
