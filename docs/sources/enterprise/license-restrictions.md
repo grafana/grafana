@@ -33,6 +33,13 @@ The license expiration date is the day when a license is no longer active. A ban
 
 License URL is the root URL of your Grafana instance. The license will not work on an instance of Grafana with a different root URL.
 
+## Dashboard and folder permissions report
+
+When determining a user’s role for billing purposes, any user who has the ability to edit and save dashboards is considered an "Editor".
+This CSV report helps to identify users, teams and roles who have been granted "Admin" or "Edit" permissions through dashboard or folder permissions.
+
+To download the report (in CSV format) go to **Server Admin** menu, select **Licensing**, scroll down to the bottom of the page and click on **Download report** button.
+
 ## Updating license restrictions
 
 To increase the number of licensed users within Grafana, extend a license, or change your Licensed URL, contact [Grafana support](https://grafana.com/profile/org#support) or your Grafana Labs account team. They will update your license, and you can apply the updated license within Grafana following the [Activate a license process](https://grafana.com/docs/grafana/latest/enterprise/activate-license/).
