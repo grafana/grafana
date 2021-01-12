@@ -1,0 +1,34 @@
+.panel-options-group {
+  border-bottom: $panel-border;
+}
+
+.panel-options-group__header {
+  padding: 8px 16px 8px 8px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 500;
+  color: $text-color-semi-weak;
+
+  &:hover {
+    color: $text-color;
+
+    .panel-options-group__icon {
+      color: $text-color;
+    }
+  }
+}
+
+.panel-options-group__icon {
+  color: $text-color-weak;
+  margin-right: 8px;
+}
+
+.panel-options-group__title {
+  position: relative;
+}
+
+.panel-options-group__body {
+  padding: 8px 16px 16px 32px;
+}
