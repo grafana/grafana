@@ -5,7 +5,7 @@ import { DataFrame, TimeRange, ValueLinkConfig } from '@grafana/data';
 import { Collapse, Table } from '@grafana/ui';
 import { ExploreId, ExploreItemState } from 'app/types/explore';
 import { StoreState } from 'app/types';
-import { splitOpen } from './state/actions';
+import { splitOpen } from './state/main';
 import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
 import { MetaInfoText } from './MetaInfoText';
@@ -48,7 +48,7 @@ export class TableContainer extends PureComponent<TableContainerProps> {
       // differently and sidestep this getLinks API on a dataframe
       for (const field of tableResult.fields) {
         field.getLinks = (config: ValueLinkConfig) => {
-          return getFieldLinksForExplore(field, config.valueRowIndex!, splitOpen, range);
+          return getFieldLinksForExplore({ field, rowIndex: config.valueRowIndex!, splitOpenFn: splitOpen, range });
         };
       }
     }

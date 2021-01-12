@@ -2,11 +2,6 @@
 title = "Grafana Authentication"
 description = "Grafana OAuthentication Guide "
 keywords = ["grafana", "configuration", "documentation", "oauth"]
-type = "docs"
-[menu.docs]
-name = "GitLab"
-identifier = "grafana-oauth"
-parent = "authentication"
 weight = 100
 +++
 

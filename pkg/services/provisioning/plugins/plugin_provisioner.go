@@ -1,6 +1,8 @@
 package plugins
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -42,12 +44,11 @@ func (ap *PluginProvisioner) apply(cfg *pluginsAsConfig) error {
 		query := &models.GetPluginSettingByIdQuery{OrgId: app.OrgID, PluginId: app.PluginID}
 		err := bus.Dispatch(query)
 		if err != nil {
-			if err != models.ErrPluginSettingNotFound {
+			if !errors.Is(err, models.ErrPluginSettingNotFound) {
 				return err
 			}
 		} else {
 			app.PluginVersion = query.Result.PluginVersion
-			app.Pinned = query.Result.Pinned
 		}
 
 		ap.log.Info("Updating app from configuration ", "type", app.PluginID, "enabled", app.Enabled)

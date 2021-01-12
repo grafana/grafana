@@ -11,6 +11,7 @@ import (
 	"html/template"
 	"io"
 	"net"
+	"net/mail"
 	"strconv"
 	"strings"
 
@@ -88,7 +89,6 @@ func (ns *NotificationService) setFiles(
 
 func (ns *NotificationService) createDialer() (*gomail.Dialer, error) {
 	host, port, err := net.SplitHostPort(ns.Cfg.Smtp.Host)
-
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (ns *NotificationService) createDialer() (*gomail.Dialer, error) {
 	if ns.Cfg.Smtp.CertFile != "" {
 		cert, err := tls.LoadX509KeyPair(ns.Cfg.Smtp.CertFile, ns.Cfg.Smtp.KeyFile)
 		if err != nil {
-			return nil, fmt.Errorf("Could not load cert or key file. error: %v", err)
+			return nil, fmt.Errorf("could not load cert or key file: %w", err)
 		}
 		tlsconfig.Certificates = []tls.Certificate{cert}
 	}
@@ -159,7 +159,7 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 		subjectText, hasSubject := subjectData["value"]
 
 		if !hasSubject {
-			return nil, fmt.Errorf("Missing subject in Template %s", cmd.Template)
+			return nil, fmt.Errorf("missing subject in template %s", cmd.Template)
 		}
 
 		subjectTmpl, err := template.New("subject").Parse(subjectText.(string))
@@ -176,10 +176,11 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 		subject = subjectBuffer.String()
 	}
 
+	addr := mail.Address{Name: ns.Cfg.Smtp.FromName, Address: ns.Cfg.Smtp.FromAddress}
 	return &Message{
 		To:            cmd.To,
 		SingleEmail:   cmd.SingleEmail,
-		From:          fmt.Sprintf("%s <%s>", ns.Cfg.Smtp.FromName, ns.Cfg.Smtp.FromAddress),
+		From:          addr.String(),
 		Subject:       subject,
 		Body:          buffer.String(),
 		EmbeddedFiles: cmd.EmbeddedFiles,

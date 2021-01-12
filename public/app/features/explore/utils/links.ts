@@ -1,7 +1,16 @@
-import { splitOpen } from '../state/actions';
-import { Field, LinkModel, TimeRange, mapInternalLinkToExplore } from '@grafana/data';
+import {
+  Field,
+  LinkModel,
+  TimeRange,
+  mapInternalLinkToExplore,
+  InterpolateFunction,
+  ScopedVars,
+  DataFrame,
+  getFieldDisplayValuesProxy,
+} from '@grafana/data';
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
-import { getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { config, getTemplateSrv } from '@grafana/runtime';
+import { splitOpen } from '../state/main';
 
 /**
  * Get links from the field of a dataframe and in addition check if there is associated
@@ -10,13 +19,16 @@ import { getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
  * appropriately. This is for example used for transition from log with traceId to trace datasource to show that
  * trace.
  */
-export const getFieldLinksForExplore = (
-  field: Field,
-  rowIndex: number,
-  splitOpenFn: typeof splitOpen,
-  range: TimeRange
-): Array<LinkModel<Field>> => {
-  const scopedVars: any = {};
+export const getFieldLinksForExplore = (options: {
+  field: Field;
+  rowIndex: number;
+  splitOpenFn?: typeof splitOpen;
+  range: TimeRange;
+  vars?: ScopedVars;
+  dataFrame?: DataFrame;
+}): Array<LinkModel<Field>> => {
+  const { field, vars, splitOpenFn, range, rowIndex, dataFrame } = options;
+  const scopedVars: any = { ...(vars || {}) };
   scopedVars['__value'] = {
     value: {
       raw: field.values.get(rowIndex),
@@ -24,19 +36,40 @@ export const getFieldLinksForExplore = (
     text: 'Raw value',
   };
 
+  // If we have a dataFrame we can allow referencing other columns and their values in the interpolation.
+  if (dataFrame) {
+    scopedVars['__data'] = {
+      value: {
+        name: dataFrame.name,
+        refId: dataFrame.refId,
+        fields: getFieldDisplayValuesProxy(dataFrame, rowIndex, {
+          theme: config.theme,
+        }),
+      },
+      text: 'Data',
+    };
+  }
+
   return field.config.links
     ? field.config.links.map(link => {
         if (!link.internal) {
-          const linkModel = getLinkSrv().getDataLinkUIModel(link, scopedVars, field);
+          const replace: InterpolateFunction = (value, vars) =>
+            getTemplateSrv().replace(value, { ...vars, ...scopedVars });
+
+          const linkModel = getLinkSrv().getDataLinkUIModel(link, replace, field);
           if (!linkModel.title) {
             linkModel.title = getTitleFromHref(linkModel.href);
           }
           return linkModel;
         } else {
-          return mapInternalLinkToExplore(link, scopedVars, range, field, {
+          return mapInternalLinkToExplore({
+            link,
+            internalLink: link.internal,
+            scopedVars: scopedVars,
+            range,
+            field,
             onClickFn: splitOpenFn,
             replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-            getDataSourceSettingsByUid: getDataSourceSrv().getDataSourceSettingsByUid.bind(getDataSourceSrv()),
           });
         }
       })

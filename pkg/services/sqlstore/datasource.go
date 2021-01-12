@@ -18,13 +18,13 @@ import (
 
 func init() {
 	bus.AddHandler("sql", GetDataSources)
-	bus.AddHandler("sql", GetAllDataSources)
 	bus.AddHandler("sql", AddDataSource)
 	bus.AddHandler("sql", DeleteDataSourceById)
 	bus.AddHandler("sql", DeleteDataSourceByName)
 	bus.AddHandler("sql", UpdateDataSource)
 	bus.AddHandler("sql", GetDataSourceById)
 	bus.AddHandler("sql", GetDataSourceByName)
+	bus.AddHandler("sql", GetDefaultDataSource)
 }
 
 func getDataSourceByID(id, orgID int64, engine *xorm.Engine) (*models.DataSource, error) {
@@ -44,7 +44,7 @@ func getDataSourceByID(id, orgID int64, engine *xorm.Engine) (*models.DataSource
 	return &datasource, nil
 }
 
-func (ss *SqlStore) GetDataSourceByID(id, orgID int64) (*models.DataSource, error) {
+func (ss *SQLStore) GetDataSourceByID(id, orgID int64) (*models.DataSource, error) {
 	return getDataSourceByID(id, orgID, ss.engine)
 }
 
@@ -68,23 +68,34 @@ func GetDataSourceByName(query *models.GetDataSourceByNameQuery) error {
 }
 
 func GetDataSources(query *models.GetDataSourcesQuery) error {
-	sess := x.Limit(5000, 0).Where("org_id=?", query.OrgId).Asc("name")
-
+	var sess *xorm.Session
+	if query.DataSourceLimit <= 0 {
+		sess = x.Where("org_id=?", query.OrgId).Asc("name")
+	} else {
+		sess = x.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgId).Asc("name")
+	}
 	query.Result = make([]*models.DataSource, 0)
 	return sess.Find(&query.Result)
 }
 
-func GetAllDataSources(query *models.GetAllDataSourcesQuery) error {
-	sess := x.Limit(5000, 0).Asc("name")
+// GetDefaultDataSource is used to get the default datasource of organization
+func GetDefaultDataSource(query *models.GetDefaultDataSourceQuery) error {
+	datasource := models.DataSource{}
 
-	query.Result = make([]*models.DataSource, 0)
-	return sess.Find(&query.Result)
+	exists, err := x.Where("org_id=? AND is_default=?", query.OrgId, true).Get(&datasource)
+
+	if !exists {
+		return models.ErrDataSourceNotFound
+	}
+
+	query.Result = &datasource
+	return err
 }
 
 func DeleteDataSourceById(cmd *models.DeleteDataSourceByIdCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		var rawSql = "DELETE FROM data_source WHERE id=? and org_id=?"
-		result, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
+		var rawSQL = "DELETE FROM data_source WHERE id=? and org_id=?"
+		result, err := sess.Exec(rawSQL, cmd.Id, cmd.OrgId)
 		affected, _ := result.RowsAffected()
 		cmd.DeletedDatasourcesCount = affected
 		return err
@@ -93,8 +104,8 @@ func DeleteDataSourceById(cmd *models.DeleteDataSourceByIdCommand) error {
 
 func DeleteDataSourceByName(cmd *models.DeleteDataSourceByNameCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		var rawSql = "DELETE FROM data_source WHERE name=? and org_id=?"
-		result, err := sess.Exec(rawSql, cmd.Name, cmd.OrgId)
+		var rawSQL = "DELETE FROM data_source WHERE name=? and org_id=?"
+		result, err := sess.Exec(rawSQL, cmd.Name, cmd.OrgId)
 		affected, _ := result.RowsAffected()
 		cmd.DeletedDatasourcesCount = affected
 		return err
@@ -163,8 +174,8 @@ func AddDataSource(cmd *models.AddDataSourceCommand) error {
 func updateIsDefaultFlag(ds *models.DataSource, sess *DBSession) error {
 	// Handle is default flag
 	if ds.IsDefault {
-		rawSql := "UPDATE data_source SET is_default=? WHERE org_id=? AND id <> ?"
-		if _, err := sess.Exec(rawSql, false, ds.OrgId, ds.Id); err != nil {
+		rawSQL := "UPDATE data_source SET is_default=? WHERE org_id=? AND id <> ?"
+		if _, err := sess.Exec(rawSQL, false, ds.OrgId, ds.Id); err != nil {
 			return err
 		}
 	}

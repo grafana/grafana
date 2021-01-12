@@ -6,6 +6,7 @@ import {
   FieldConfigOptionsRegistry,
   FieldConfigProperty,
   GrafanaTheme,
+  isSystemOverride as isSystemOverrideGuard,
   VariableSuggestionsScope,
 } from '@grafana/data';
 import {
@@ -97,13 +98,20 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
     [override, onChange]
   );
 
-  let configPropertiesOptions = registry.list().map(item => {
-    return {
-      label: item.name,
-      value: item.id,
-      description: item.description,
-    };
-  });
+  let configPropertiesOptions = registry
+    .list()
+    .filter(o => !o.hideFromOverrides)
+    .map(item => {
+      let label = item.name;
+      if (item.category && item.category.length > 1) {
+        label = [...item.category!.slice(1), item.name].join(' > ');
+      }
+      return {
+        label,
+        value: item.id,
+        description: item.description,
+      };
+    });
 
   const renderOverrideTitle = (isExpanded: boolean) => {
     const overriddenProperites = override.properties.map(p => registry.get(p.id).name).join(', ');
@@ -129,6 +137,8 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
     );
   };
 
+  const isSystemOverride = isSystemOverrideGuard(override);
+
   return (
     <OptionsGroup renderTitle={renderOverrideTitle} id={name} key={name}>
       <Field label={matcherLabel}>
@@ -143,10 +153,12 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
       <>
         {override.properties.map((p, j) => {
           const item = registry.getIfExists(p.id);
+          console.log('item', item);
 
           if (!item) {
             return <div>Unknown property: {p.id}</div>;
           }
+
           const isCollapsible =
             Array.isArray(p.value) || COLLECTION_STANDARD_PROPERTIES.includes(p.id as FieldConfigProperty);
 
@@ -154,6 +166,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
             <DynamicConfigValueEditor
               key={`${p.id}/${j}`}
               isCollapsible={isCollapsible}
+              isSystemOverride={isSystemOverride}
               onChange={value => onDynamicConfigValueChange(j, value)}
               onRemove={() => onDynamicConfigValueRemove(j)}
               property={p}
@@ -165,7 +178,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
             />
           );
         })}
-        {override.matcher.options && (
+        {!isSystemOverride && override.matcher.options && (
           <div className={styles.propertyPickerWrapper}>
             <ValuePicker
               label="Add override property"

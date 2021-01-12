@@ -19,6 +19,7 @@ e2e.scenario({
       '__org.id = 1',
       '__user.id = 1',
       '__user.login = admin',
+      '__user.email = admin@localhost',
       `Server:raw = A'A"A,BB\\B,CCC`,
       `Server:regex = (A'A"A|BB\\\\B|CCC)`,
       `Server:lucene = ("A'A\\"A" OR "BB\\\\B" OR "CCC")`,
@@ -38,7 +39,7 @@ e2e.scenario({
 
     e2e()
       .get('.markdown-html li')
-      .should('have.length', 22)
+      .should('have.length', 23)
       .each(element => {
         items.push(element.text());
       })

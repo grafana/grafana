@@ -13,7 +13,7 @@ import { DashboardGrid } from '../dashgrid/DashboardGrid';
 import { DashNav } from '../components/DashNav';
 import { DashboardSettings } from '../components/DashboardSettings';
 import { PanelEditor } from '../components/PanelEditor/PanelEditor';
-import { Alert, Button, CustomScrollbar, HorizontalGroup, Icon, VerticalGroup } from '@grafana/ui';
+import { Alert, Button, CustomScrollbar, HorizontalGroup, Spinner, VerticalGroup } from '@grafana/ui';
 // Redux
 import { initDashboard } from '../state/initDashboard';
 import { notifyApp, updateLocation } from 'app/core/actions';
@@ -235,7 +235,7 @@ export class DashboardPage extends PureComponent<Props, State> {
         <div className="dashboard-loading__text">
           <VerticalGroup spacing="md">
             <HorizontalGroup align="center" justify="center" spacing="xs">
-              <Icon name="fa fa-spinner" className="fa-spin" /> {this.props.initPhase}
+              <Spinner inline={true} /> {this.props.initPhase}
             </HorizontalGroup>{' '}
             <HorizontalGroup align="center" justify="center">
               <Button variant="secondary" size="md" icon="repeat" onClick={this.cancelVariables}>
@@ -257,11 +257,9 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     return (
       <div className="dashboard-loading">
-        <Alert
-          severity={AppNotificationSeverity.Error}
-          title={initError.message}
-          children={getMessageFromError(initError.error)}
-        />
+        <Alert severity={AppNotificationSeverity.Error} title={initError.message}>
+          {getMessageFromError(initError.error)}
+        </Alert>
       </div>
     );
   }
@@ -322,7 +320,9 @@ export class DashboardPage extends PureComponent<Props, State> {
           >
             <div className="dashboard-content">
               {initError && this.renderInitFailedState()}
-              {!editPanel && <SubMenu dashboard={dashboard} links={dashboard.links} />}
+              {!editPanel && (
+                <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+              )}
 
               <DashboardGrid
                 dashboard={dashboard}
@@ -337,7 +337,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} defaultTab={inspectTab} />}
         {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} />}
-        {editview && <DashboardSettings dashboard={dashboard} updateLocation={updateLocation} />}
+        {editview && <DashboardSettings dashboard={dashboard} updateLocation={updateLocation} editview={editview} />}
       </div>
     );
   }

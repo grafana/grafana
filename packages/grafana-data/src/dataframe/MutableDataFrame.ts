@@ -1,5 +1,5 @@
 import { Field, DataFrame, DataFrameDTO, FieldDTO, FieldType } from '../types/dataFrame';
-import { KeyValue, QueryResultMeta } from '../types/data';
+import { QueryResultMeta } from '../types/data';
 import { guessFieldTypeFromValue, guessFieldTypeForField, toDataFrameDTO } from './processDataFrame';
 import isString from 'lodash/isString';
 import { makeFieldParser } from '../utils/fieldParser';
@@ -17,9 +17,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
   name?: string;
   refId?: string;
   meta?: QueryResultMeta;
-
   fields: MutableField[] = [];
-  values: KeyValue<MutableVector> = {};
 
   private first: Vector = new ArrayVector();
   private creator: MutableVectorCreator;
@@ -101,11 +99,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     // Make sure it has a name
     let name = f.name;
     if (!name) {
-      if (type === FieldType.time) {
-        name = this.values['Time'] ? `Time ${this.fields.length + 1}` : 'Time';
-      } else {
-        name = `Field ${this.fields.length + 1}`;
-      }
+      name = `Field ${this.fields.length + 1}`;
     }
 
     const field: MutableField = {
@@ -125,13 +119,6 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
 
     this.fields.push(field);
     this.first = this.fields[0].values;
-
-    // The Field Already exists
-    if (this.values[name]) {
-      console.warn(`Duplicate field names found: ${name}, only the first will be accessible`);
-    } else {
-      this.values[name] = field.values;
-    }
 
     // Make sure the field starts with a given length
     if (startLength) {
@@ -155,17 +142,6 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     for (const field of this.fields) {
       while (field.values.length !== length) {
         field.values.add(MISSING_VALUE);
-      }
-    }
-  }
-
-  private addMissingFieldsFor(value: any) {
-    for (const key of Object.keys(value)) {
-      if (!this.values[key]) {
-        this.addField({
-          name: key,
-          type: guessFieldTypeFromValue(value[key]),
-        });
       }
     }
   }
@@ -217,11 +193,7 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
   /**
    * Add all properties of the value as fields on the frame
    */
-  add(value: T, addMissingFields?: boolean) {
-    if (addMissingFields) {
-      this.addMissingFieldsFor(value);
-    }
-
+  add(value: T) {
     // Will add one value for every field
     const obj = value as any;
     for (const field of this.fields) {
@@ -242,13 +214,9 @@ export class MutableDataFrame<T = any> extends FunctionalVector<T> implements Da
     }
   }
 
-  set(index: number, value: T, addMissingFields?: boolean) {
+  set(index: number, value: T) {
     if (index > this.length) {
       throw new Error('Unable ot set value beyond current length');
-    }
-
-    if (addMissingFields) {
-      this.addMissingFieldsFor(value);
     }
 
     const obj = (value as any) || {};

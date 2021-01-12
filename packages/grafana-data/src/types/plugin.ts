@@ -6,6 +6,7 @@ import { LiveChannelSupport } from './live';
 export enum PluginState {
   alpha = 'alpha', // Only included if `enable_alpha` config option is true
   beta = 'beta', // Will show a warning banner
+  stable = 'stable', // Will not show anything
   deprecated = 'deprecated', // Will continue to work -- but not show up in the options to add
 }
 
@@ -17,7 +18,7 @@ export enum PluginType {
   renderer = 'renderer',
 }
 
-/** Describes status of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signature-verification/ | plugin signature} */
+/** Describes status of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/ | plugin signature} */
 export enum PluginSignatureStatus {
   internal = 'internal', // core plugin, no signature
   valid = 'valid', // signed and accurate MANIFEST

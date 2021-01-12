@@ -54,10 +54,14 @@ func createExternalDashboardSnapshot(cmd models.CreateDashboardSnapshotCommand) 
 	if err != nil {
 		return nil, err
 	}
-	defer response.Body.Close()
+	defer func() {
+		if err := response.Body.Close(); err != nil {
+			plog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	if response.StatusCode != 200 {
-		return nil, fmt.Errorf("Create external snapshot response status code %d", response.StatusCode)
+		return nil, fmt.Errorf("create external snapshot response status code %d", response.StatusCode)
 	}
 
 	if err := json.NewDecoder(response.Body).Decode(&createSnapshotResponse); err != nil {
@@ -132,6 +136,7 @@ func CreateDashboardSnapshot(c *models.ReqContext, cmd models.CreateDashboardSna
 		"deleteKey": cmd.DeleteKey,
 		"url":       url,
 		"deleteUrl": setting.ToAbsUrl("api/snapshots-delete/" + cmd.DeleteKey),
+		"id":        cmd.Result.Id,
 	})
 }
 
@@ -177,7 +182,9 @@ func deleteExternalDashboardSnapshot(externalUrl string) error {
 	if err != nil {
 		return err
 	}
-	defer response.Body.Close()
+	if err := response.Body.Close(); err != nil {
+		plog.Warn("Failed closing response body", "err", err)
+	}
 
 	if response.StatusCode == 200 {
 		return nil
@@ -196,7 +203,7 @@ func deleteExternalDashboardSnapshot(externalUrl string) error {
 		}
 	}
 
-	return fmt.Errorf("Unexpected response when deleting external snapshot. Status code: %d", response.StatusCode)
+	return fmt.Errorf("unexpected response when deleting external snapshot, status code: %d", response.StatusCode)
 }
 
 // GET /api/snapshots-delete/:deleteKey
@@ -223,7 +230,10 @@ func DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) Response {
 		return Error(500, "Failed to delete dashboard snapshot", err)
 	}
 
-	return JSON(200, util.DynMap{"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches."})
+	return JSON(200, util.DynMap{
+		"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches.",
+		"id":      query.Result.Id,
+	})
 }
 
 // DELETE /api/snapshots/:key
@@ -236,10 +246,10 @@ func DeleteDashboardSnapshot(c *models.ReqContext) Response {
 	if err != nil {
 		return Error(500, "Failed to get dashboard snapshot", err)
 	}
-
 	if query.Result == nil {
 		return Error(404, "Failed to get dashboard snapshot", nil)
 	}
+
 	dashboard, err := query.Result.DashboardJSON()
 	if err != nil {
 		return Error(500, "Failed to get dashboard data for dashboard snapshot", err)
@@ -269,7 +279,10 @@ func DeleteDashboardSnapshot(c *models.ReqContext) Response {
 		return Error(500, "Failed to delete dashboard snapshot", err)
 	}
 
-	return JSON(200, util.DynMap{"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches."})
+	return JSON(200, util.DynMap{
+		"message": "Snapshot deleted. It might take an hour before it's cleared from any CDN caches.",
+		"id":      query.Result.Id,
+	})
 }
 
 // GET /api/dashboard/snapshots

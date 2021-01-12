@@ -26,7 +26,7 @@ e2e.scenario({
           expect(li.text()).equals('Query1'); // there's already a query so therefore Query + 1
         });
         e2e.components.QueryTab.content().should('be.visible');
-        e2e.components.TransformTab.content().should('not.be.visible');
+        e2e.components.TransformTab.content().should('not.exist');
         e2e.components.AlertTab.content().should('not.be.visible');
 
         //  Bottom pane tabs
@@ -37,7 +37,9 @@ e2e.scenario({
         e2e.components.Tab.active().within((li: JQuery<HTMLLIElement>) => {
           expect(li.text()).equals('Transform0'); // there's no transform so therefore Transform + 0
         });
-        e2e.components.TransformTab.content().should('be.visible');
+        e2e.components.Transforms.card('Merge')
+          .scrollIntoView()
+          .should('be.visible');
         e2e.components.QueryTab.content().should('not.be.visible');
         e2e.components.AlertTab.content().should('not.be.visible');
 
@@ -50,7 +52,7 @@ e2e.scenario({
         });
         e2e.components.AlertTab.content().should('be.visible');
         e2e.components.QueryTab.content().should('not.be.visible');
-        e2e.components.TransformTab.content().should('not.be.visible');
+        e2e.components.TransformTab.content().should('not.exist');
 
         e2e.components.Tab.title('Query')
           .should('be.visible')

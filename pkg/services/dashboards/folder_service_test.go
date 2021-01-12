@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/services/guardian"
 
@@ -194,9 +195,8 @@ func TestFolderService(t *testing.T) {
 
 			for _, tc := range testCases {
 				actualError := toFolderError(tc.ActualError)
-				if actualError != tc.ExpectedError {
-					t.Errorf("For error '%s' expected error '%s', actual '%s'", tc.ActualError, tc.ExpectedError, actualError)
-				}
+				assert.EqualErrorf(t, actualError, tc.ExpectedError.Error(),
+					"For error '%s' expected error '%s', actual '%s'", tc.ActualError, tc.ExpectedError, actualError)
 			}
 		})
 	})

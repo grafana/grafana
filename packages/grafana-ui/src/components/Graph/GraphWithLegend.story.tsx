@@ -3,12 +3,11 @@ import React from 'react';
 import { select, text } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { GraphWithLegend, GraphWithLegendProps } from './GraphWithLegend';
-
-import { LegendPlacement, LegendDisplayMode } from '../Legend/Legend';
+import { LegendPlacement, LegendDisplayMode } from '../VizLegend/types';
 import { GraphSeriesXY, FieldType, ArrayVector, dateTime, FieldColorModeId } from '@grafana/data';
 
 export default {
-  title: 'Visualizations/Graph',
+  title: 'Visualizations/Graph/GraphWithLegend',
   component: GraphWithLegend,
   decorator: [withCenteredStory],
 };
@@ -86,10 +85,10 @@ const getStoriesKnobs = () => {
   const legendPlacement = select<LegendPlacement>(
     'Legend placement',
     {
-      under: 'under',
+      bottom: 'under',
       right: 'right',
     },
-    'under'
+    'bottom'
   );
   const renderLegendAsTable = select<any>(
     'Render legend as',
@@ -123,8 +122,7 @@ export const graphWithLegend = () => {
       }
       return s;
     }),
-    displayMode: renderLegendAsTable ? LegendDisplayMode.Table : LegendDisplayMode.List,
-    isLegendVisible: true,
+    legendDisplayMode: renderLegendAsTable ? LegendDisplayMode.Table : LegendDisplayMode.List,
     onToggleSort: () => {},
     timeRange: {
       from: dateTime(1546372800000),

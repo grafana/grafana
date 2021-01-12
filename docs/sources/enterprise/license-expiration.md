@@ -2,9 +2,6 @@
 title = "License Expiration"
 description = ""
 keywords = ["grafana", "licensing"]
-type = "docs"
-[menu.docs]
-parent = "enterprise"
 weight = 8
 +++
 
@@ -32,7 +29,7 @@ If your license has expired most of Grafana keeps working as normal. Some enterp
 
 ## If your license expires
 
-If your Grafana Enterprise license expires, the following functionality affected as follows.
+If your Grafana Enterprise license expires, you can expect the following changes in feature behavior.
 
 ### Data source permissions
 

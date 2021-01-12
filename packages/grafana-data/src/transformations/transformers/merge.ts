@@ -104,7 +104,7 @@ export const mergeTransformer: DataTransformerInfo<MergeTransformerOptions> = {
           const value = valuesByKey[pointer.key][pointer.index];
 
           if (value) {
-            dataFrame.add(value, false);
+            dataFrame.add(value);
           }
         }
 

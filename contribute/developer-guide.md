@@ -20,7 +20,7 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
-brew install node@12
+brew install node@14
 
 npm install -g yarn
 ```
@@ -90,7 +90,7 @@ The test suite consists of three types of tests: _Frontend tests_, _backend test
 We use [jest](https://jestjs.io/) for our frontend tests. Run them using Yarn:
 
 ```
-yarn jest
+yarn test
 ```
 
 ### Run backend tests

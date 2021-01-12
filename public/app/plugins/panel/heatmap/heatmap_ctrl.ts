@@ -13,7 +13,7 @@ import {
   sortSeriesByLabel,
 } from './heatmap_data_converter';
 import { auto } from 'angular';
-import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
+import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 import { DataProcessor } from '../graph/data_processor';
 import { LegacyResponseData, PanelEvents, DataFrame, rangeUtil } from '@grafana/data';
 import { CoreEvents } from 'app/types';

@@ -8,8 +8,6 @@ import { connect } from 'react-redux';
 // Components
 import AngularQueryEditor from './QueryEditor';
 import { QueryRowActions } from './QueryRowActions';
-// Actions
-import { changeQuery, modifyQueries, runQueries } from './state/actions';
 // Types
 import { StoreState } from 'app/types';
 import {
@@ -25,8 +23,9 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 
 import { ExploreItemState, ExploreId } from 'app/types/explore';
-import { highlightLogsExpressionAction, removeQueryRowAction } from './state/actionTypes';
+import { highlightLogsExpressionAction } from './state/explorePane';
 import { ErrorContainer } from './ErrorContainer';
+import { changeQuery, modifyQueries, removeQueryRowAction, runQueries } from './state/query';
 
 interface PropsFromParent {
   exploreId: ExploreId;

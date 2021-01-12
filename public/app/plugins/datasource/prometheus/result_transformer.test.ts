@@ -1,6 +1,22 @@
 import { DataFrame } from '@grafana/data';
 import { transform } from './result_transformer';
 
+const matrixResponse = {
+  status: 'success',
+  data: {
+    resultType: 'matrix',
+    result: [
+      {
+        metric: { __name__: 'test', job: 'testjob' },
+        values: [
+          [1, '10'],
+          [2, '0'],
+        ],
+      },
+    ],
+  },
+};
+
 describe('Prometheus Result Transformer', () => {
   const options: any = { target: {}, query: {} };
   describe('When nothing is returned', () => {
@@ -248,6 +264,33 @@ describe('Prometheus Result Transformer', () => {
   });
 
   describe('When the response is a matrix', () => {
+    it('should have labels with the value field', () => {
+      const response = {
+        status: 'success',
+        data: {
+          resultType: 'matrix',
+          result: [
+            {
+              metric: { __name__: 'test', job: 'testjob', instance: 'testinstance' },
+              values: [
+                [0, '10'],
+                [1, '10'],
+                [2, '0'],
+              ],
+            },
+          ],
+        },
+      };
+
+      const result: DataFrame[] = transform({ data: response } as any, {
+        ...options,
+      });
+
+      expect(result[0].fields[1].labels).toBeDefined();
+      expect(result[0].fields[1].labels?.instance).toBe('testinstance');
+      expect(result[0].fields[1].labels?.job).toBe('testjob');
+    });
+
     it('should transform into a data frame', () => {
       const response = {
         status: 'success',
@@ -279,46 +322,14 @@ describe('Prometheus Result Transformer', () => {
     });
 
     it('should fill null values', () => {
-      const response = {
-        status: 'success',
-        data: {
-          resultType: 'matrix',
-          result: [
-            {
-              metric: { __name__: 'test', job: 'testjob' },
-              values: [
-                [1, '10'],
-                [2, '0'],
-              ],
-            },
-          ],
-        },
-      };
-
-      const result = transform({ data: response } as any, { ...options, query: { step: 1, start: 0, end: 2 } });
+      const result = transform({ data: matrixResponse } as any, { ...options, query: { step: 1, start: 0, end: 2 } });
 
       expect(result[0].fields[0].values.toArray()).toEqual([0, 1000, 2000]);
       expect(result[0].fields[1].values.toArray()).toEqual([null, 10, 0]);
     });
 
     it('should use __name__ label as series name', () => {
-      const response = {
-        status: 'success',
-        data: {
-          resultType: 'matrix',
-          result: [
-            {
-              metric: { __name__: 'test', job: 'testjob' },
-              values: [
-                [1, '10'],
-                [2, '0'],
-              ],
-            },
-          ],
-        },
-      };
-
-      const result = transform({ data: response } as any, {
+      const result = transform({ data: matrixResponse } as any, {
         ...options,
         query: {
           step: 1,
@@ -355,6 +366,12 @@ describe('Prometheus Result Transformer', () => {
         },
       });
       expect(result[0].name).toBe('{job="testjob"}');
+    });
+
+    it('should not set displayName for ValueFields', () => {
+      const result = transform({ data: matrixResponse } as any, options);
+      expect(result[0].fields[1].config.displayName).toBeUndefined();
+      expect(result[0].fields[1].config.displayNameFromDS).toBe('test{job="testjob"}');
     });
 
     it('should align null values with step', () => {

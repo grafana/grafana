@@ -1,6 +1,5 @@
 +++
 title = "Plugin migration guide"
-type = "docs"
 +++
 
 # Plugin migration guide
@@ -46,7 +45,7 @@ For plugins prior to Grafana 7.0, all options are considered _Display options_. 
 
 While backend plugins were available as an experimental feature in previous versions of Grafana, the support has been greatly improved for Grafana 7. Backend plugins for Grafana 7.0 are backwards-compatible and will continue to work. However, the old backend plugin system has been deprecated, and we recommend that you use the new SDK for backend plugins.
 
-Since Grafana 7.0 introduced [signing of backend plugins]({{< relref "../../plugins/plugin-signature-verification.md" >}}), community plugins won’t load by default if they’re unsigned.
+Since Grafana 7.0 introduced [signing of backend plugins]({{< relref "../../plugins/plugin-signatures.md" >}}), community plugins won’t load by default if they’re unsigned.
 
 To learn more, refer to [Backend plugins]({{< relref "backend" >}}).
 
@@ -165,4 +164,4 @@ For more information, refer to [Data frames](https://grafana.com/docs/grafana/la
 
 ## Troubleshoot plugin migration
 
-With Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana will ignore unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../plugins/plugin-signature-verification.md#allow-unsigned-plugins" >}}).
+With Grafana 7.0, backend plugins can now be cryptographically signed to verify their origin. By default, Grafana will ignore unsigned plugins. For more information, refer to [Allow unsigned plugins]({{< relref "../../plugins/plugin-signatures.md#allow-unsigned-plugins" >}}).

@@ -2,19 +2,15 @@
 title = "What's New in Grafana v7.2"
 description = "Feature and improvement highlights for Grafana v7.2"
 keywords = ["grafana", "new", "documentation", "7.2", "release notes"]
-type = "docs"
 aliases = ["/docs/grafana/latest/guides/whats-new-in-v7-2/"]
-[menu.docs]
-name = "Version 7.2"
-identifier = "v7.2"
-parent = "whatsnew"
-weight = -15
+weight = -29
+[_build]
+list = false
 +++
 
 # What's new in Grafana v7.2
 
 This topic includes the release notes for the Grafana v7.2. For all details, read the full [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
-
 
 The main highlights are:
 
@@ -67,7 +63,7 @@ After lots of testing and user feedback, we removed the beta label from the conf
 
 ### Added table column filters
 
-You can now dynamically apply value filters to any table column. This option is can be enabled for all columns or one specific column using an override rule.
+You can now dynamically apply value filters to any table column. This option can be enabled for all columns or one specific column using an override rule.
 
 {{< docs-imagebox img="/img/docs/v72/table_column_filters.png" max-width="800px" caption="Table column filters" >}}
 
@@ -111,7 +107,7 @@ With this awesome contribution from one of our community members, you can now to
 
 {{< docs-imagebox img="/img/docs/v72/explore-toggle-parsed-fields.gif" max-width="800px" caption="Toggling parsed fields in Explore" >}}
 
-The [Toggle parsed fields]({{< relref "../explore/index.md#toggle-parsed-fields" >}}) section has been added to [Explore]({{< relref "../explore/index.md" >}}) as a result of this feature.
+The [Toggle parsed fields]({{< relref "../explore/index.md#toggle-detected-fields" >}}) section has been added to [Explore]({{< relref "../explore/index.md" >}}) as a result of this feature.
 
 ## Sensitive alert channel settings are now encrypted
 

@@ -7,7 +7,7 @@ exports[`PromExploreQueryEditor should render component 1`] = `
       onKeyDownFunc={[Function]}
       onQueryTypeChange={[Function]}
       onStepChange={[Function]}
-      queryType="range"
+      queryType="both"
       stepValue="1s"
     />
   }
@@ -45,7 +45,13 @@ exports[`PromExploreQueryEditor should render component 1`] = `
       },
     }
   }
-  datasource={Object {}}
+  datasource={
+    Object {
+      "languageProvider": Object {
+        "syntax": [Function],
+      },
+    }
+  }
   history={Array []}
   onBlur={[Function]}
   onChange={[MockFunction]}

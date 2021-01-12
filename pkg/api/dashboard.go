@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -48,9 +47,25 @@ func dashboardGuardianResponse(err error) Response {
 }
 
 func (hs *HTTPServer) GetDashboard(c *models.ReqContext) Response {
-	dash, rsp := getDashboardHelper(c.OrgId, c.Params(":slug"), 0, c.Params(":uid"))
+	slug := c.Params(":slug")
+	uid := c.Params(":uid")
+	dash, rsp := getDashboardHelper(c.OrgId, slug, 0, uid)
 	if rsp != nil {
 		return rsp
+	}
+
+	// When dash contains only keys id, uid that means dashboard data is not valid and json decode failed.
+	if dash.Data != nil {
+		isEmptyData := true
+		for k := range dash.Data.MustMap() {
+			if k != "id" && k != "uid" {
+				isEmptyData = false
+				break
+			}
+		}
+		if isEmptyData {
+			return Error(500, "Error while loading dashboard, dashboard data is invalid", nil)
+		}
 	}
 
 	guardian := guardian.New(dash.Id, c.OrgId, c.SignedInUser)
@@ -332,7 +347,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
 			return JSON(200, &dashRedirect)
 		}
-		log.Warnf("Failed to get slug from database, %s", err.Error())
+		hs.log.Warn("Failed to get slug from database", "err", err)
 	}
 
 	filePath := hs.Cfg.DefaultHomeDashboardPath
@@ -340,11 +355,18 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) Response {
 		filePath = filepath.Join(hs.Cfg.StaticRootPath, "dashboards/home.json")
 	}
 
+	// It's safe to ignore gosec warning G304 since the variable part of the file path comes from a configuration
+	// variable
+	// nolint:gosec
 	file, err := os.Open(filePath)
 	if err != nil {
 		return Error(500, "Failed to load home dashboard", err)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			hs.log.Warn("Failed to close dashboard file", "path", filePath, "err", err)
+		}
+	}()
 
 	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.IsHome = true
@@ -496,7 +518,7 @@ func CalculateDashboardDiff(c *models.ReqContext, apiOptions dtos.CalculateDiffO
 
 	result, err := dashdiffs.CalculateDiff(&options)
 	if err != nil {
-		if err == models.ErrDashboardVersionNotFound {
+		if errors.Is(err, models.ErrDashboardVersionNotFound) {
 			return Error(404, "Dashboard version not found", err)
 		}
 		return Error(500, "Unable to compute diff", err)

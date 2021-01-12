@@ -2,11 +2,7 @@
 title = "Elasticsearch"
 description = "Guide for using Elasticsearch in Grafana"
 keywords = ["grafana", "elasticsearch", "guide"]
-type = "docs"
 aliases = ["/docs/grafana/latest/features/datasources/elasticsearch"]
-[menu.docs]
-name = "Elasticsearch"
-parent = "datasources"
 weight = 400
 +++
 
@@ -38,6 +34,8 @@ Access mode controls how requests to the data source will be handled. Server sho
 All requests will be made from the browser to Grafana backend/server which in turn will forward the requests to the data source and by that circumvent possible Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the grafana backend/server if you select this access mode.
 
 ### Browser (Direct) access
+
+> **Warning:** Browser (Direct) access is deprecated and will be removed in a future release.
 
 All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
 
@@ -95,7 +93,7 @@ For example, if you're using a default setup of Filebeat for shipping logs to El
 
 Data links create a link from a specified field that can be accessed in logs view in Explore.
 
-Each data link configuration consists of: 
+Each data link configuration consists of:
 - **Field -** Name of the field used by the data link.
 - **URL/query -** If the link is external, then enter the full link URL. If the link is internal link, then this input serves as query for the target data source. In both cases, you can interpolate the value from the field with `${__value.raw }` macro.
 - **Internal link -** Select if the link is internal or external. In case of internal link, a data source selector allows you to select the target data source. Only tracing data sources are supported.

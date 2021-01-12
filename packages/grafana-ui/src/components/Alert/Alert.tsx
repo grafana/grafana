@@ -1,4 +1,4 @@
-import React, { FC, ReactNode } from 'react';
+import React, { FC, HTMLAttributes, ReactNode } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -9,7 +9,7 @@ import { getColorsFromSeverity } from '../../utils/colors';
 
 export type AlertVariant = 'success' | 'warning' | 'error' | 'info';
 
-export interface Props {
+export interface Props extends HTMLAttributes<HTMLDivElement> {
   title: string;
   /** On click handler for alert button, mostly used for dismissing the alert */
   onRemove?: (event: React.MouseEvent) => void;
@@ -39,21 +39,13 @@ function getIconFromSeverity(severity: AlertVariant): string {
   }
 }
 
-export const Alert: FC<Props> = ({
-  title,
-  buttonText,
-  onButtonClick,
-  onRemove,
-  children,
-  buttonContent,
-  severity = 'error',
-}) => {
-  const theme = useTheme();
-  const styles = getStyles(theme, severity, !!buttonContent);
+export const Alert: FC<Props> = React.forwardRef<HTMLDivElement, Props>(
+  ({ title, buttonText, onButtonClick, onRemove, children, buttonContent, severity = 'error', ...restProps }, ref) => {
+    const theme = useTheme();
+    const styles = getStyles(theme, severity, !!buttonContent);
 
-  return (
-    <div className={styles.container}>
-      <div className={styles.alert} aria-label={selectors.components.Alert.alert(severity)}>
+    return (
+      <div ref={ref} className={styles.alert} aria-label={selectors.components.Alert.alert(severity)} {...restProps}>
         <div className={styles.icon}>
           <Icon size="xl" name={getIconFromSeverity(severity) as IconName} />
         </div>
@@ -72,9 +64,11 @@ export const Alert: FC<Props> = ({
           </button>
         ) : null}
       </div>
-    </div>
-  );
-};
+    );
+  }
+);
+
+Alert.displayName = 'Alert';
 
 const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean) => {
   const { white } = theme.palette;
@@ -84,9 +78,6 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
   `;
 
   return {
-    container: css`
-      z-index: ${theme.zIndex.tooltip};
-    `,
     alert: css`
       padding: 15px 20px;
       margin-bottom: ${theme.spacing.xs};
@@ -112,6 +103,8 @@ const getStyles = (theme: GrafanaTheme, severity: AlertVariant, outline: boolean
     body: css`
       flex-grow: 1;
       margin: 0 ${theme.spacing.md} 0 0;
+      overflow-wrap: break-word;
+      word-break: break-word;
 
       a {
         color: ${white};

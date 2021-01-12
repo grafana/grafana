@@ -206,6 +206,11 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 		queryResult.Error = err
 		return queryResult, AzureMonitorResponse{}, nil
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			azlog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	data, err := e.unmarshalResponse(res)
 	if err != nil {
@@ -220,7 +225,7 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 	// find plugin
 	plugin, ok := plugins.DataSources[dsInfo.Type]
 	if !ok {
-		return nil, errors.New("Unable to find datasource plugin Azure Monitor")
+		return nil, errors.New("unable to find datasource plugin Azure Monitor")
 	}
 
 	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
@@ -256,14 +261,13 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 
 func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMonitorResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
 	if err != nil {
 		return AzureMonitorResponse{}, err
 	}
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return AzureMonitorResponse{}, fmt.Errorf("Request failed status: %v", res.Status)
+		return AzureMonitorResponse{}, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	var data AzureMonitorResponse
@@ -421,7 +425,7 @@ func toGrafanaUnit(unit string) string {
 		return "cps"
 	case "Percent":
 		return "percent"
-	case "Milliseconds":
+	case "MilliSeconds":
 		return "ms"
 	case "Seconds":
 		return "s"

@@ -176,7 +176,7 @@ export class HistoryListCtrl {
       title: 'Restore version',
       text: '',
       text2: `Are you sure you want to restore the dashboard to version ${version}? All unsaved changes will be lost.`,
-      icon: 'fa-history',
+      icon: 'history',
       yesText: `Yes, restore to version ${version}`,
       onConfirm: this.restoreConfirm.bind(this, version),
     });
