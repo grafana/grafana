@@ -274,7 +274,7 @@ func TestGetConnectedDashboards(t *testing.T) {
 			require.Equal(t, 0, len(dashResult.Result))
 		})
 
-	testScenario(t, "When an admin tries to get connected dashboards for a library panel that does exists and has connections, it should return connected dashboard ids",
+	testScenario(t, "When an admin tries to get connected dashboards for a library panel that exists and has connections, it should return connected dashboard IDs",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
