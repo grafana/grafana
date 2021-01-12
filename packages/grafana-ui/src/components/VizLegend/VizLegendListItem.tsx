@@ -1,11 +1,10 @@
 import React from 'react';
 import { css, cx } from 'emotion';
-import { LegendSeriesIcon } from './VizLegendSeriesIcon';
+import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendItem } from './types';
 import { SeriesColorChangeHandler } from './types';
-import { LegendStatsList } from './VizLegendStatsList';
-import { useTheme } from '../../themes/ThemeContext';
-import { stylesFactory } from '../../themes';
+import { VizLegendStatsList } from './VizLegendStatsList';
+import { useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 
 export interface Props {
@@ -16,12 +15,11 @@ export interface Props {
 }
 
 export const VizLegendListItem: React.FunctionComponent<Props> = ({ item, onSeriesColorChange, onLabelClick }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
 
   return (
     <div className={styles.itemWrapper}>
-      <LegendSeriesIcon
+      <VizLegendSeriesIcon
         disabled={!onSeriesColorChange}
         color={item.color}
         onColorChange={color => {
@@ -42,34 +40,32 @@ export const VizLegendListItem: React.FunctionComponent<Props> = ({ item, onSeri
         {item.label}
       </div>
 
-      {item.displayValues && <LegendStatsList stats={item.displayValues} />}
+      {item.displayValues && <VizLegendStatsList stats={item.displayValues} />}
     </div>
   );
 };
 
 VizLegendListItem.displayName = 'VizLegendListItem';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    label: css`
-      label: LegendLabel;
-      cursor: pointer;
-      white-space: nowrap;
-    `,
-    labelDisabled: css`
-      label: LegendLabelDisabled;
-      color: ${theme.colors.linkDisabled};
-    `,
-    itemWrapper: css`
-      display: flex;
-      white-space: nowrap;
-      align-items: center;
-    `,
-    value: css`
-      text-align: right;
-    `,
-    yAxisLabel: css`
-      color: ${theme.palette.gray2};
-    `,
-  };
+const getStyles = (theme: GrafanaTheme) => ({
+  label: css`
+    label: LegendLabel;
+    cursor: pointer;
+    white-space: nowrap;
+  `,
+  labelDisabled: css`
+    label: LegendLabelDisabled;
+    color: ${theme.colors.linkDisabled};
+  `,
+  itemWrapper: css`
+    display: flex;
+    white-space: nowrap;
+    align-items: center;
+  `,
+  value: css`
+    text-align: right;
+  `,
+  yAxisLabel: css`
+    color: ${theme.palette.gray2};
+  `,
 });

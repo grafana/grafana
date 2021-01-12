@@ -10,7 +10,7 @@ interface Props {
   onToggleAxis?: () => void;
 }
 
-export const LegendSeriesIcon: React.FunctionComponent<Props> = ({
+export const VizLegendSeriesIcon: React.FunctionComponent<Props> = ({
   disabled,
   yAxis,
   color,
@@ -40,4 +40,4 @@ export const LegendSeriesIcon: React.FunctionComponent<Props> = ({
   );
 };
 
-LegendSeriesIcon.displayName = 'LegendSeriesIcon';
+VizLegendSeriesIcon.displayName = 'VizLegendSeriesIcon';

@@ -1,10 +1,9 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { VizLegendBaseProps, VizLegendItem } from './types';
 import { InlineList } from '../List/InlineList';
 import { List } from '../List/List';
 import { css, cx } from 'emotion';
-import { ThemeContext } from '../../themes/ThemeContext';
-import { stylesFactory } from '../../themes';
+import { useStyles } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
 import { VizLegendListItem } from './VizLegendListItem';
 
@@ -18,8 +17,7 @@ export const VizLegendList: React.FunctionComponent<Props> = ({
   placement,
   className,
 }) => {
-  const theme = useContext(ThemeContext);
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
 
   if (!itemRenderer) {
     /* eslint-disable-next-line react/display-name */
@@ -64,9 +62,9 @@ export const VizLegendList: React.FunctionComponent<Props> = ({
   }
 };
 
-VizLegendList.displayName = 'LegendList';
+VizLegendList.displayName = 'VizLegendList';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme) => ({
   item: css`
     padding-right: 10px;
     display: flex;
@@ -91,4 +89,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     justify-content: flex-end;
     flex-grow: 1;
   `,
-}));
+});

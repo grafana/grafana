@@ -4,25 +4,25 @@ import { css } from 'emotion';
 import { DisplayValue, formattedValueToString } from '@grafana/data';
 import capitalize from 'lodash/capitalize';
 
-const LegendItemStat: React.FunctionComponent<{ stat: DisplayValue }> = ({ stat }) => {
+const VizLegendItemStat: React.FunctionComponent<{ stat: DisplayValue }> = ({ stat }) => {
+  const styles = css`
+    margin-left: 8px;
+  `;
+
   return (
-    <div
-      className={css`
-        margin-left: 8px;
-      `}
-    >
+    <div className={styles}>
       {stat.title && `${capitalize(stat.title)}:`} {formattedValueToString(stat)}
     </div>
   );
 };
 
-LegendItemStat.displayName = 'LegendItemStat';
+VizLegendItemStat.displayName = 'VizLegendItemStat';
 
-export const LegendStatsList: React.FunctionComponent<{ stats: DisplayValue[] }> = ({ stats }) => {
+export const VizLegendStatsList: React.FunctionComponent<{ stats: DisplayValue[] }> = ({ stats }) => {
   if (stats.length === 0) {
     return null;
   }
-  return <InlineList items={stats} renderItem={stat => <LegendItemStat stat={stat} />} />;
+  return <InlineList items={stats} renderItem={stat => <VizLegendItemStat stat={stat} />} />;
 };
 
-LegendStatsList.displayName = 'LegendStatsList';
+VizLegendStatsList.displayName = 'VizLegendStatsList';

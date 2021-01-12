@@ -1,10 +1,10 @@
-import React, { useContext } from 'react';
+import React from 'react';
 import { css, cx } from 'emotion';
-import { LegendSeriesIcon } from './VizLegendSeriesIcon';
+import { VizLegendSeriesIcon } from './VizLegendSeriesIcon';
 import { VizLegendItem } from './types';
 import { SeriesColorChangeHandler } from './types';
-import { ThemeContext } from '../../themes/ThemeContext';
-import { styleMixins, stylesFactory } from '../../themes';
+import { useStyles } from '../../themes/ThemeContext';
+import { styleMixins } from '../../themes';
 import { GrafanaTheme, formattedValueToString } from '@grafana/data';
 
 export interface Props {
@@ -21,14 +21,13 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
   onLabelClick,
   className,
 }) => {
-  const theme = useContext(ThemeContext);
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
 
   return (
     <tr className={cx(styles.row, className)}>
       <td>
         <span className={styles.itemWrapper}>
-          <LegendSeriesIcon
+          <VizLegendSeriesIcon
             disabled={!onSeriesColorChange}
             color={item.color}
             onColorChange={color => {
@@ -64,7 +63,7 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
 
 LegendTableItem.displayName = 'LegendTableItem';
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme) => {
   const rowHoverBg = styleMixins.hoverColor(theme.colors.bg1, theme);
 
   return {
@@ -102,4 +101,4 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       color: ${theme.palette.gray2};
     `,
   };
-});
+};

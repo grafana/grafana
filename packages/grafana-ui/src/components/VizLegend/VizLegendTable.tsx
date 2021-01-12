@@ -2,11 +2,10 @@ import React, { FC } from 'react';
 import { css, cx } from 'emotion';
 import { VizLegendTableProps } from './types';
 import { Icon } from '../Icon/Icon';
-import { useTheme } from '../../themes/ThemeContext';
+import { useStyles } from '../../themes/ThemeContext';
 import union from 'lodash/union';
 import sortBy from 'lodash/sortBy';
 import { LegendTableItem } from './VizLegendTableItem';
-import { stylesFactory } from '../../themes/stylesFactory';
 import { GrafanaTheme } from '@grafana/data';
 
 export const VizLegendTable: FC<VizLegendTableProps> = ({
@@ -19,8 +18,7 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
   onLabelClick,
   onSeriesColorChange,
 }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles(getStyles);
 
   const columns = items
     .map(item => {
@@ -90,22 +88,20 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
   );
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
-  return {
-    table: css`
-      width: 100%;
-      margin-left: ${theme.spacing.sm};
-    `,
-    header: css`
-      color: ${theme.colors.textBlue};
-      font-weight: ${theme.typography.weight.semibold};
-      border-bottom: 1px solid ${theme.colors.border1};
-      padding: ${theme.spacing.xxs} ${theme.spacing.sm};
-      text-align: right;
-      cursor: pointer;
-    `,
-    sortIcon: css`
-      margin-left: ${theme.spacing.sm};
-    `,
-  };
+const getStyles = (theme: GrafanaTheme) => ({
+  table: css`
+    width: 100%;
+    margin-left: ${theme.spacing.sm};
+  `,
+  header: css`
+    color: ${theme.colors.textBlue};
+    font-weight: ${theme.typography.weight.semibold};
+    border-bottom: 1px solid ${theme.colors.border1};
+    padding: ${theme.spacing.xxs} ${theme.spacing.sm};
+    text-align: right;
+    cursor: pointer;
+  `,
+  sortIcon: css`
+    margin-left: ${theme.spacing.sm};
+  `,
 });
