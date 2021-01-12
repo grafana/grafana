@@ -8,7 +8,7 @@ weight = 600
 
 # Time series dimensions
 
-At the end of the ["Time series databases" section of "Introduction to time series"]({{< relref "timeseries.md#time-series-databases" >}}), the concept of _labels_, also called  _tags_, is introduced:
+At the end of the ["Time series databases" section of "Introduction to time series"]({{< relref "timeseries.md#time-series-databases" >}}), the concept of _labels_, also called _tags_, is introduced:
 
 > Another feature of a TSDB is the ability to filter measurements using _tags_. Each data point is labeled with a tag that adds context information, such as where the measurement was taken. ...
 
@@ -80,6 +80,6 @@ In this case the labels that represent the dimensions will have two keys based o
 
 ### Multiple values
 
-In the case SQL-like data sources, more than one numeric column can be selected, with or without additional string columns to be used as dimensions. For example, ` AVG(Temperature) AS AvgTemp,  MAX(Temperature) AS MaxTemp`. This, if combined with multiple dimensions can result in a lot of series. Selecting multiple values is currently only designed to be used with visualization.
+In the case SQL-like data sources, more than one numeric column can be selected, with or without additional string columns to be used as dimensions. For example, `AVG(Temperature) AS AvgTemp, MAX(Temperature) AS MaxTemp`. This, if combined with multiple dimensions can result in a lot of series. Selecting multiple values is currently only designed to be used with visualization.
 
 Additional technical information on tabular time series formats and how dimensions are extracted can be found in [the developer documentation on data frames as time series]({{< relref "../developers/plugins/data-frames.md#data-frames-as-time-series" >}}).
