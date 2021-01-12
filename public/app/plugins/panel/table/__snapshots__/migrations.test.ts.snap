@@ -92,6 +92,16 @@ Object {
             "value": 2,
           },
           Object {
+            "id": "links",
+            "value": Array [
+              Object {
+                "targetBlank": true,
+                "title": "",
+                "url": "http://www.grafana.com",
+              },
+            ],
+          },
+          Object {
             "id": "custom.displayMode",
             "value": "color-text",
           },

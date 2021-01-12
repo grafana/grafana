@@ -7,10 +7,11 @@ import {
   FieldConfig,
 } from '@grafana/data';
 import { ReduceTransformerOptions } from '@grafana/data/src/transformations/transformers/reduce';
-import { Options } from './types';
 import omitBy from 'lodash/omitBy';
 import isNil from 'lodash/isNil';
 import isNumber from 'lodash/isNumber';
+import defaultTo from 'lodash/defaultTo';
+import { Options } from './types';
 
 /**
  * At 7.0, the `table` panel was swapped from an angular implementation to a react one.
@@ -96,6 +97,10 @@ type Style = {
   thresholds: string[];
   align?: string;
   dateFormat: string;
+  link: boolean;
+  linkTargetBlank: boolean;
+  linkTooltip: string;
+  linkUrl: string;
 };
 
 const migrateTableStyleToOverride = (style: Style) => {
@@ -133,6 +138,19 @@ const migrateTableStyleToOverride = (style: Style) => {
     override.properties.push({
       id: 'unit',
       value: `time: ${style.dateFormat}`,
+    });
+  }
+
+  if (style.link) {
+    override.properties.push({
+      id: 'links',
+      value: [
+        {
+          title: defaultTo(style.linkTooltip, ''),
+          url: defaultTo(style.linkUrl, ''),
+          targetBlank: defaultTo(style.linkTargetBlank, false),
+        },
+      ],
     });
   }
 
