@@ -28,7 +28,7 @@ func TestCreateLibraryPanel(t *testing.T) {
 }
 
 func TestConnectLibraryPanel(t *testing.T) {
-	testScenario(t, "When an admin tries to create a connection for a library panel that does not exists, it should fail",
+	testScenario(t, "When an admin tries to create a connection for a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": "unknown", "dashboardId": "1"})
 			response := sc.service.connectHandler(sc.reqContext)
