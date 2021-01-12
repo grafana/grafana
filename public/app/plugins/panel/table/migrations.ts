@@ -65,6 +65,13 @@ type Column = {
 
 type ColorModes = keyof typeof colorModeMap;
 
+const generateThresholds = (thresholds: string[], colors: string[]) => {
+  return [-Infinity, ...thresholds].map((threshold, idx) => ({
+    color: colors[idx],
+    value: isNumber(threshold) ? threshold : parseInt(threshold, 10),
+  }));
+};
+
 const migrateTransformations = (
   panel: PanelModel<Partial<Options>> | any,
   oldOpts: { columns: any; transform: Transformations }
@@ -98,9 +105,9 @@ type Style = {
   align?: string;
   dateFormat: string;
   link: boolean;
-  linkTargetBlank: boolean;
-  linkTooltip: string;
-  linkUrl: string;
+  linkTargetBlank?: boolean;
+  linkTooltip?: string;
+  linkUrl?: string;
 };
 
 const migrateTableStyleToOverride = (style: Style) => {
@@ -172,11 +179,8 @@ const migrateTableStyleToOverride = (style: Style) => {
     override.properties.push({
       id: 'thresholds',
       value: {
-        mode: 'absolute',
-        steps: [-Infinity, ...style.thresholds].map((threshold, idx) => ({
-          color: style.colors[idx],
-          value: isNumber(threshold) ? threshold : parseInt(threshold, 10),
-        })),
+        mode: ThresholdsMode.Absolute,
+        steps: generateThresholds(style.thresholds, style.colors),
       },
     });
   }
@@ -204,10 +208,7 @@ const migrateDefaults = (prevDefaults: Style) => {
     if (prevDefaults.thresholds.length) {
       const thresholds: ThresholdsConfig = {
         mode: ThresholdsMode.Absolute,
-        steps: [-Infinity, ...prevDefaults.thresholds].map((threshold: string, idx: number) => ({
-          color: prevDefaults.colors[idx],
-          value: isNumber(threshold) ? threshold : parseInt(threshold, 10),
-        })),
+        steps: generateThresholds(prevDefaults.thresholds, prevDefaults.colors),
       };
       defaults.thresholds = thresholds;
     }
