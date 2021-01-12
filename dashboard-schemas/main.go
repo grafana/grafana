@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"cuelang.org/go/cue"
 	"cuelang.org/go/cue/load"
@@ -10,27 +11,36 @@ import (
 )
 
 func main() {
+	b, err := openAPISchemas(os.Args[1:])
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(string(b))
+}
+
+// openAPISchemas returns OpenAPI schema JSON of the Cue entrypoints passed to
+// it. It is not a valid OpenAPI document - just the schemas.
+func openAPISchemas(entrypoints []string) ([]byte, error) {
 
 	var r cue.Runtime
 	cfg := openapi.Config{
 		ExpandReferences: true,
 	}
-	entrypoints := []string{"./..."}
 	bis := load.Instances(entrypoints, nil)
 
 	// collect all schemas
 	var pairs []openapi.KeyValue
 	for _, bi := range bis {
 		if bi.Err != nil {
-			log.Fatalf("Error loading: %s", bi.Err)
+			return nil, bi.Err
 		}
 		inst, err := r.Build(bi)
 		if err != nil {
-			log.Fatalf("Error building: %s", bi.Err)
+			return nil, err
 		}
 		om, err := cfg.Schemas(inst)
 		if err != nil {
-			log.Fatalf("Error extracting: %s", err)
+			return nil, err
 		}
 		pairs = append(pairs, om.Pairs()...)
 	}
@@ -41,8 +51,8 @@ func main() {
 
 	j, err := om.MarshalJSON()
 	if err != nil {
-		log.Fatalf("Error marshalling json: %s", err)
+		return nil, err
 	}
 
-	fmt.Println(string(j))
+	return j, nil
 }
