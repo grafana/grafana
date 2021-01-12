@@ -160,7 +160,7 @@ export const OverrideEditor: React.FC<OverrideEditorProps> = ({
           const item = registry.getIfExists(p.id);
 
           if (!item) {
-            return <div>Unknown property: {p.id}</div>;
+            return <div key={`up-${p.id}`}>Unknown property: {p.id}</div>;
           }
 
           const isCollapsible =
