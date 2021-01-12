@@ -22,7 +22,8 @@ const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
 const HISTORY_ITEM_COUNT = 5;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
-export const DEFAULT_LOOKUP_METRICS_THRESHOLD = 10000; // number of metrics defining an installation that's too big
+// Max number of items - metrics, labels, values - that we display. Prevents running out of memory.
+export const AUTOCOMPLETE_LIMIT = 10000;
 
 const wrapLabel = (label: string): CompletionItem => ({ label });
 
@@ -67,7 +68,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   metricsMetadata?: PromMetricsMetadata;
   startTask: Promise<any>;
   datasource: PrometheusDatasource;
-  lookupMetricsThreshold: number;
   lookupsDisabled: boolean; // Dynamically set to true for big/slow instances
 
   /**
@@ -84,8 +84,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     this.histogramMetrics = [];
     this.timeRange = { start: 0, end: 0 };
     this.metrics = [];
-    // Disable lookups until we know the instance is small enough
-    this.lookupMetricsThreshold = DEFAULT_LOOKUP_METRICS_THRESHOLD;
     this.lookupsDisabled = true;
 
     Object.assign(this, initialValues);
@@ -129,7 +127,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const url = `/api/v1/label/__name__/values?${params.toString()}`;
 
     this.metrics = await this.request(url, []);
-    this.lookupsDisabled = this.metrics.length > this.lookupMetricsThreshold;
     this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
     this.processHistogramMetrics(this.metrics);
 
@@ -242,9 +239,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     });
 
     if (metrics && metrics.length) {
+      const limitInfo = addLimitInfo(metrics);
       suggestions.push({
-        label: 'Metrics',
-        items: metrics.map(m => addMetricsMetadata(m, metricsMetadata)),
+        label: `Metrics${limitInfo}`,
+        items: metrics.slice(AUTOCOMPLETE_LIMIT).map(m => addMetricsMetadata(m, metricsMetadata)),
       });
     }
 
