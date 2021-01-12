@@ -1,6 +1,6 @@
 import uPlot, { Scale } from 'uplot';
 import { PlotConfigBuilder } from '../types';
-import { ScaleDistribution } from '../config';
+import { AxisMinMaxMode, ScaleDistribution } from '../config';
 
 export interface ScaleProps {
   scaleKey: string;
@@ -9,6 +9,7 @@ export interface ScaleProps {
   max?: number | null;
   range?: () => number[]; // min/max
   distribution?: ScaleDistribution;
+  mode?: AxisMinMaxMode;
   log?: number;
 }
 
@@ -16,11 +17,16 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
   merge(props: ScaleProps) {
     this.props.min = optMinMax('min', this.props.min, props.min);
     this.props.max = optMinMax('max', this.props.max, props.max);
+
+    // Prefer using soft if that is specified by any field sharing the scale
+    if (props.mode === AxisMinMaxMode.Soft) {
+      this.props.mode = props.mode;
+    }
   }
 
   // uPlot range function
   range = (u: uPlot, dataMin: number, dataMax: number, scaleKey: string) => {
-    const { min, max } = this.props;
+    const { min, max, mode } = this.props;
 
     const scale = u.scales[scaleKey];
 
@@ -31,6 +37,10 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     } else if (scale.distr === 3) {
       /**@ts-ignore (uPlot 1.4.7 typings are wrong and exclude logBase arg) */
       [smin, smax] = uPlot.rangeLog(min ?? dataMin, max ?? dataMax, scale.log, true);
+    }
+
+    if (mode === AxisMinMaxMode.Soft) {
+      // ??????
     }
 
     return [min ?? smin, max ?? smax];

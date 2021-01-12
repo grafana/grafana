@@ -155,6 +155,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
           log: customConfig.scaleDistribution?.log,
           min: field.config.min,
           max: field.config.max,
+          mode: customConfig.axisMinMaxMode,
         });
 
         builder.addAxis({

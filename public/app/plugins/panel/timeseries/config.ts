@@ -157,6 +157,15 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           },
           showIf: c => c.axisPlacement !== AxisPlacement.Hidden,
         })
+        .addRadio({
+          path: 'axisMinMaxMode',
+          name: 'Min/Max mode',
+          category: ['Axis'],
+          defaultValue: graphFieldOptions.axisMinMaxMode[0].value,
+          settings: {
+            options: graphFieldOptions.axisMinMaxMode,
+          },
+        })
         .addCustomEditor<void, ScaleDistributionConfig>({
           id: 'scaleDistribution',
           path: 'scaleDistribution',
