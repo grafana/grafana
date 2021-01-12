@@ -1,19 +1,20 @@
-import React, { MouseEvent, MutableRefObject, useCallback, useMemo, useState } from 'react';
+import React, { MutableRefObject, useCallback, useMemo, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 import { usePanning } from './usePanning';
 import { LinkDatum, NodeDatum } from './types';
 import { Node } from './Node';
 import { Link } from './Link';
 import { ViewControls } from './ViewControls';
-import { DataFrame, Field, FieldCache, FieldType, GrafanaTheme, LinkModel } from '@grafana/data';
+import { DataFrame, Field, FieldType, GrafanaTheme, LinkModel } from '@grafana/data';
 import { useZoom } from './useZoom';
 import { Bounds, Config, defaultConfig, useLayout } from './layout';
 import { LinkArrowMarker } from './LinkArrowMarker';
 import { stylesFactory, useTheme } from '../../themes';
 import { css } from 'emotion';
 import { useCategorizeFrames } from './useCategorizeFrames';
-import { ContextMenu } from '..';
 import { LinkLabel } from './LinkLabel';
+import { useContextMenu } from './useContextMenu';
+import { getEdgeFields, getNodeFields } from './utils';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
@@ -56,7 +57,7 @@ export function GraphView({ getLinks, dataFrames }: Props) {
   const [edgeHover, setEdgeHover] = useState<string | undefined>(undefined);
   const clearEdgeHover = useCallback(() => setEdgeHover(undefined), []);
 
-  // TODO we should be able to allow multiple dataframes for both edges and nodes, could be ussue with node ids which in
+  // TODO we should be able to allow multiple dataframes for both edges and nodes, could be issue with node ids which in
   //  that case should be unique or figure a way to link edges and nodes dataframes together.
   const { nodes: rawNodes, links: rawLinks } = useMemo(() => processServices(nodesDataFrames[0], edgesDataFrames[0]), [
     nodesDataFrames[0],
@@ -137,71 +138,6 @@ export function GraphView({ getLinks, dataFrames }: Props) {
   );
 }
 
-/**
- * Hook that contains state of the context menu, both for edges and nodes and provides appropriate component when
- * opened context menu should be opened.
- */
-function useContextMenu(
-  getLinks: (dataFrame: DataFrame, rowIndex: number) => LinkModel[],
-  nodes: DataFrame,
-  edges: DataFrame
-): {
-  onEdgeOpen: (event: MouseEvent<SVGElement>, edge: LinkDatum) => void;
-  onNodeOpen: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
-  MenuComponent: React.ReactNode;
-} {
-  function getItems(dataFrame: DataFrame, rowIndex: number) {
-    return [
-      {
-        label: 'Open in Explore',
-        items: getLinks(dataFrame, rowIndex).map(l => ({
-          label: l.title,
-          url: l.href,
-          onClick: l.onClick,
-        })),
-      },
-    ];
-  }
-
-  const [openedNode, setOpenedNode] = useState<{ node: NodeDatum; event: MouseEvent } | undefined>(undefined);
-  const onNodeOpen = useCallback((event, node) => setOpenedNode({ node, event }), []);
-
-  const [openedEdge, setOpenedEdge] = useState<{ edge: LinkDatum; event: MouseEvent } | undefined>(undefined);
-  const onEdgeOpen = useCallback((event, edge) => setOpenedEdge({ edge, event }), []);
-
-  let MenuComponent = null;
-
-  if (openedNode) {
-    MenuComponent = (
-      <ContextMenu
-        renderHeader={() => <div>{openedNode.node.title}</div>}
-        items={getItems(nodes, openedNode.node.dataFrameRowIndex)}
-        onClose={() => setOpenedNode(undefined)}
-        x={openedNode.event.pageX}
-        y={openedNode.event.pageY}
-      />
-    );
-  }
-
-  if (openedEdge) {
-    MenuComponent = (
-      <ContextMenu
-        renderHeader={() => (
-          <div>
-            {(openedEdge.edge.source as NodeDatum).title} {'->'} {(openedEdge.edge.target as NodeDatum).title}
-          </div>
-        )}
-        items={getItems(edges, openedEdge.edge.dataFrameRowIndex)}
-        onClose={() => setOpenedEdge(undefined)}
-        x={openedEdge.event.pageX}
-        y={openedEdge.event.pageY}
-      />
-    );
-  }
-
-  return { onEdgeOpen, onNodeOpen, MenuComponent };
-}
-
 function usePanAndZoom(bounds: Bounds) {
   const { scale, onStepDown, onStepUp, ref } = useZoom();
   const { state: panningState, ref: panRef } = usePanning<SVGSVGElement>({
@@ -216,25 +152,19 @@ function usePanAndZoom(bounds: Bounds) {
  * Transform nodes and edges dataframes into array of objects that the layout code can then work with.
  */
 function processServices(nodes: DataFrame, edges: DataFrame): { nodes: NodeDatum[]; links: LinkDatum[] } {
-  const nodesFieldsCache = new FieldCache(nodes);
-  const idField = nodesFieldsCache.getFieldByName('id');
-  const titleField = nodesFieldsCache.getFieldsByLabel(labelType, titleLabel)[0];
-  const subTitleField = nodesFieldsCache.getFieldsByLabel(labelType, subTitleLabel)[0];
-  const mainStatField = nodesFieldsCache.getFieldsByLabel(labelType, mainStat)[0];
-  const secondaryStatField = nodesFieldsCache.getFieldsByLabel(labelType, secondaryStat)[0];
-  const arcFields = nodesFieldsCache.getFieldsByLabel(labelType, arcLabel);
+  const nodeFields = getNodeFields(nodes);
 
   const servicesMap =
-    idField?.values.toArray().reduce<{ [id: string]: NodeDatum }>((acc, id, index) => {
+    nodeFields.id?.values.toArray().reduce<{ [id: string]: NodeDatum }>((acc, id, index) => {
       acc[id] = {
         id: id,
-        title: titleField.values.get(index),
-        subTitle: subTitleField.values.get(index),
+        title: nodeFields.title.values.get(index),
+        subTitle: nodeFields.subTitle.values.get(index),
         dataFrameRowIndex: index,
         incoming: 0,
-        mainStat: statToString(mainStatField, index),
-        secondaryStat: statToString(secondaryStatField, index),
-        arcSections: arcFields.map(f => {
+        mainStat: statToString(nodeFields.mainStat, index),
+        secondaryStat: statToString(nodeFields.secondaryStat, index),
+        arcSections: nodeFields.arc.map(f => {
           return {
             value: f.values.get(index),
             color: f.config.color?.fixedColor || '',
@@ -244,15 +174,10 @@ function processServices(nodes: DataFrame, edges: DataFrame): { nodes: NodeDatum
       return acc;
     }, {}) || {};
 
-  const edgesFieldsCache = new FieldCache(edges);
-  const edgeIdField = edgesFieldsCache.getFieldByName('id');
-  const edgeSourceField = edgesFieldsCache.getFieldByName('source');
-  const edgeTargetField = edgesFieldsCache.getFieldByName('target');
-  const edgeMainStatField = edgesFieldsCache.getFieldsByLabel(labelType, mainStat)[0];
-  const edgeSecondaryStatField = edgesFieldsCache.getFieldsByLabel(labelType, secondaryStat)[0];
-  const edgesMapped = edgeIdField?.values.toArray().map((id, index) => {
-    const target = edgeTargetField?.values.get(index);
-    const source = edgeSourceField?.values.get(index);
+  const edgeFields = getEdgeFields(edges);
+  const edgesMapped = edgeFields.id?.values.toArray().map((id, index) => {
+    const target = edgeFields.target?.values.get(index);
+    const source = edgeFields.source?.values.get(index);
     // We are adding incoming edges count so we can later on find out which nodes are the roots
     servicesMap[target].incoming++;
 
@@ -261,8 +186,8 @@ function processServices(nodes: DataFrame, edges: DataFrame): { nodes: NodeDatum
       dataFrameRowIndex: index,
       source,
       target,
-      mainStat: statToString(edgeMainStatField, index),
-      secondaryStat: statToString(edgeSecondaryStatField, index),
+      mainStat: statToString(edgeFields.mainStat, index),
+      secondaryStat: statToString(edgeFields.secondaryStat, index),
     } as LinkDatum;
   });
 
@@ -285,11 +210,3 @@ function statToString(field: Field, index: number) {
     }
   }
 }
-
-// TODO move to grafana data probably
-const labelType = 'NodeGraphValueType';
-const arcLabel = 'arc';
-const titleLabel = 'title';
-const subTitleLabel = 'subTitle';
-const mainStat = 'mainStat';
-const secondaryStat = 'secondaryStat';
