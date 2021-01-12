@@ -247,7 +247,7 @@ func TestGetAllLibraryPanels(t *testing.T) {
 }
 
 func TestGetConnectedDashboards(t *testing.T) {
-	testScenario(t, "When an admin tries to get connected dashboards for a library panel that does not exists, it should fail",
+	testScenario(t, "When an admin tries to get connected dashboards for a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			sc.reqContext.ReplaceAllParams(map[string]string{":uid": "unknown"})
 			response := sc.service.getConnectedDashboardsHandler(sc.reqContext)
