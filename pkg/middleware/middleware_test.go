@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/gtime"
 	"github.com/grafana/grafana/pkg/infra/fs"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
@@ -539,6 +540,8 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 	t.Run(desc, func(t *testing.T) {
 		t.Cleanup(bus.ClearBusHandlers)
 
+		logger := log.New("test")
+
 		loginMaxLifetime, err := gtime.ParseDuration("30d")
 		require.NoError(t, err)
 		cfg := setting.NewCfg()
@@ -560,6 +563,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 
 		sc.m = macaron.New()
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
+		sc.m.Use(AddCSPHeader(cfg, logger))
 		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
 			Directory: viewsPath,
 			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
