@@ -678,25 +678,8 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, cmr 
 			}
 		}
 	}
-
 	if len(cmr.TimeSeries) > 0 {
-		dl := query.buildDeepLink()
-		for i := range frames {
-			if frames[i].Fields[1].Config == nil {
-				frames[i].Fields[1].Config = &data.FieldConfig{}
-			}
-			deepLink := data.DataLink{
-				Title:       "View in Metrics Explorer",
-				TargetBlank: true,
-				URL:         dl,
-			}
-			frames[i].Fields[1].Config.Links = append(frames[i].Fields[1].Config.Links, deepLink)
-			if len(query.Unit) > 0 {
-				if val, ok := cloudMonitoringUnitMappings[query.Unit]; ok {
-					frames[i].Fields[1].Config.Unit = val
-				}
-			}
-		}
+		frames = addConfigData(frames, query)
 	}
 
 	queryRes.Dataframes = tsdb.NewDecodedDataFrames(frames)
@@ -711,6 +694,27 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, cmr 
 	queryRes.Meta.Set("labels", labelsByKey)
 	queryRes.Meta.Set("groupBys", query.GroupBys)
 	return nil
+}
+
+func addConfigData(frames data.Frames, query *cloudMonitoringQuery) data.Frames {
+	dl := query.buildDeepLink()
+	for i := range frames {
+		if frames[i].Fields[1].Config == nil {
+			frames[i].Fields[1].Config = &data.FieldConfig{}
+		}
+		deepLink := data.DataLink{
+			Title:       "View in Metrics Explorer",
+			TargetBlank: true,
+			URL:         dl,
+		}
+		frames[i].Fields[1].Config.Links = append(frames[i].Fields[1].Config.Links, deepLink)
+		if len(query.Unit) > 0 {
+			if val, ok := cloudMonitoringUnitMappings[query.Unit]; ok {
+				frames[i].Fields[1].Config.Unit = val
+			}
+		}
+	}
+	return frames
 }
 
 func toSnakeCase(str string) string {

@@ -11,7 +11,7 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { CloudMonitoringOptions, CloudMonitoringQuery, Filter, MetricDescriptor, QueryType } from './types';
-import API, { PostResponse } from './api';
+import API from './api';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { CloudMonitoringVariableSupport } from './variables';
 import { catchError, map, mergeMap } from 'rxjs/operators';
@@ -107,12 +107,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   }
 
   applyTemplateVariables(target: CloudMonitoringQuery, scopedVars: ScopedVars): Record<string, any> {
-    target = this.prepareTimeSeriesQuery(target, scopedVars);
-    return {
-      ...target,
-      intervalMs: this.intervalMs,
-      type: 'timeSeriesQuery',
-    };
+    return this.prepareTimeSeriesQuery(target, scopedVars);
   }
 
   async getLabels(metricType: string, refId: string, projectName: string, groupBys?: string[]) {
@@ -333,6 +328,8 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     return {
       datasourceId: this.id,
       refId,
+      intervalMs: this.intervalMs,
+      type: 'timeSeriesQuery',
       queryType,
       metricQuery: {
         ...this.interpolateProps(metricQuery, scopedVars),
