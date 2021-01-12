@@ -17,7 +17,7 @@ import {
 import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { descending, deviation } from 'd3';
 import {
-  ExemplarTraceIDDestination,
+  ExemplarTraceIdDestination,
   isExemplarData,
   isMatrixData,
   MatrixOrVectorResult,
@@ -41,7 +41,7 @@ export function transform(
   response: FetchResponse<PromDataSuccessResponse>,
   transformOptions: {
     query: PromQueryRequest;
-    exemplarTraceIDDestination?: ExemplarTraceIDDestination;
+    exemplarTraceIdDestination?: ExemplarTraceIdDestination;
     target: PromQuery;
     responseListLength: number;
     scopedVars?: ScopedVars;
@@ -94,12 +94,12 @@ export function transform(
     dataFrame.meta = { dataTopic: DataTopic.Annotations };
 
     // Add data links if configured
-    if (transformOptions.exemplarTraceIDDestination) {
+    if (transformOptions.exemplarTraceIdDestination) {
       const traceIDField = dataFrame.fields.find(
-        field => field.name === transformOptions.exemplarTraceIDDestination!.name
+        field => field.name === transformOptions.exemplarTraceIdDestination!.name
       );
       if (traceIDField) {
-        traceIDField.config.links = getDataLinks(transformOptions.exemplarTraceIDDestination);
+        traceIDField.config.links = getDataLinks(transformOptions.exemplarTraceIdDestination);
       }
     }
     return [dataFrame];
@@ -142,7 +142,7 @@ export function transform(
   return dataFrame;
 }
 
-function getDataLinks(options: ExemplarTraceIDDestination): DataLink[] {
+function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
   const dataSourceSrv = getDataSourceSrv();
 
   const dataLinks: DataLink[] = [];

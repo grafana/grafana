@@ -1,7 +1,6 @@
 import { DataSourcePluginOptionsEditorProps, updateDatasourcePluginJsonDataOption } from '@grafana/data';
-import { InlineField, Input, Switch, useStyles } from '@grafana/ui';
+import { InlineField, InlineSwitch, Input } from '@grafana/ui';
 import { DataSourcePicker } from 'app/core/components/Select/DataSourcePicker';
-import { css } from 'emotion';
 import React, { useState } from 'react';
 import { PromOptions } from '../types';
 
@@ -9,18 +8,15 @@ interface Props extends DataSourcePluginOptionsEditorProps<PromOptions> {}
 
 export function ExemplarsSettings({ options, onOptionsChange }: Props) {
   const [isInternalLink, setIsInternalLink] = useState(
-    Boolean(options.jsonData.exemplarTraceIDDestination?.datasourceUid)
+    Boolean(options.jsonData.exemplarTraceIdDestination?.datasourceUid)
   );
-  const styles = useStyles(getExemplarsSettingsStyles);
 
   return (
     <>
       <h3 className="page-heading">Exemplars</h3>
 
       <InlineField label="Internal link" labelWidth={24}>
-        <div className={styles.switch}>
-          <Switch value={isInternalLink} onChange={ev => setIsInternalLink(ev.currentTarget.checked)} />
-        </div>
+        <InlineSwitch value={isInternalLink} onChange={ev => setIsInternalLink(ev.currentTarget.checked)} />
       </InlineField>
 
       {isInternalLink ? (
@@ -31,12 +27,12 @@ export function ExemplarsSettings({ options, onOptionsChange }: Props) {
         >
           <DataSourcePicker
             tracing={true}
-            current={options.jsonData.exemplarTraceIDDestination?.datasourceUid}
+            current={options.jsonData.exemplarTraceIdDestination?.datasourceUid}
             noDefault={true}
             onChange={ds =>
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'exemplarTraceIDDestination', {
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'exemplarTraceIdDestination', {
                 datasourceUid: ds.uid,
-                name: options.jsonData.exemplarTraceIDDestination?.name,
+                name: options.jsonData.exemplarTraceIdDestination?.name,
                 url: undefined,
               })
             }
@@ -52,11 +48,11 @@ export function ExemplarsSettings({ options, onOptionsChange }: Props) {
             placeholder="https://example.com/${__value.raw}"
             spellCheck={false}
             width={40}
-            value={options.jsonData.exemplarTraceIDDestination?.url}
+            value={options.jsonData.exemplarTraceIdDestination?.url}
             onChange={event =>
-              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'exemplarTraceIDDestination', {
+              updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'exemplarTraceIdDestination', {
                 datasourceUid: undefined,
-                name: options.jsonData.exemplarTraceIDDestination?.name,
+                name: options.jsonData.exemplarTraceIdDestination?.name,
                 url: event.currentTarget.value,
               })
             }
@@ -73,11 +69,11 @@ export function ExemplarsSettings({ options, onOptionsChange }: Props) {
           placeholder="traceID"
           spellCheck={false}
           width={40}
-          value={options.jsonData.exemplarTraceIDDestination?.name}
+          value={options.jsonData.exemplarTraceIdDestination?.name}
           onChange={event =>
-            updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'exemplarTraceIDDestination', {
-              datasourceUid: options.jsonData.exemplarTraceIDDestination?.datasourceUid,
-              url: options.jsonData.exemplarTraceIDDestination?.url,
+            updateDatasourcePluginJsonDataOption({ onOptionsChange, options }, 'exemplarTraceIdDestination', {
+              datasourceUid: options.jsonData.exemplarTraceIdDestination?.datasourceUid,
+              url: options.jsonData.exemplarTraceIdDestination?.url,
               name: event.currentTarget.value,
             })
           }
@@ -86,9 +82,3 @@ export function ExemplarsSettings({ options, onOptionsChange }: Props) {
     </>
   );
 }
-
-export const getExemplarsSettingsStyles = () => ({
-  switch: css`
-    align-self: center;
-  `,
-});

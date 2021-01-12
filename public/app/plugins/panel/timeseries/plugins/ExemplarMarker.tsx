@@ -67,7 +67,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFr
       >
         <div ref={annotationPopoverRef} className={styles.wrapper}>
           <div className={styles.header}>
-            <span className={styles.time}>Exemplar</span>
+            <span className={styles.title}>Exemplar</span>
           </div>
           <div className={styles.body}>
             <div>
@@ -190,14 +190,6 @@ const getExemplarMarkerStyles = (theme: GrafanaTheme) => {
       white-space: nowrap;
       text-overflow: ellipsis;
       flex-grow: 1;
-    `,
-    time: css`
-      color: ${theme.colors.textWeak};
-      font-style: italic;
-      font-weight: normal;
-      display: inline-block;
-      position: relative;
-      top: 1px;
     `,
     body: css`
       padding: ${theme.spacing.sm};

@@ -24,10 +24,10 @@ export interface PromOptions extends DataSourceJsonData {
   directUrl: string;
   customQueryParameters?: string;
   disableMetricsLookup?: boolean;
-  exemplarTraceIDDestination?: ExemplarTraceIDDestination;
+  exemplarTraceIdDestination?: ExemplarTraceIdDestination;
 }
 
-export type ExemplarTraceIDDestination = {
+export type ExemplarTraceIdDestination = {
   name: string;
   url?: string;
   datasourceUid?: string;

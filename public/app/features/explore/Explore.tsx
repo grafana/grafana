@@ -102,7 +102,6 @@ export interface ExploreProps {
   updateTimeRange: typeof updateTimeRange;
   graphResult: DataFrame[] | null;
   logsResult?: LogsModel;
-  loading?: boolean;
   absoluteRange: AbsoluteTimeRange;
   timeZone: TimeZone;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
@@ -453,7 +452,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showMetrics,
     showTable,
     showTrace,
-    loading,
     absoluteRange,
     queryResponse,
   } = item;
@@ -478,7 +476,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     isLive,
     graphResult,
     logsResult: logsResult ?? undefined,
-    loading,
     absoluteRange,
     queryResponse,
     originPanelId,

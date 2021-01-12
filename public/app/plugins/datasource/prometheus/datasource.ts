@@ -28,7 +28,7 @@ import { expandRecordingRules } from './language_utils';
 import { getQueryHints } from './query_hints';
 import { getOriginalMetricName, renderTemplate, transform } from './result_transformer';
 import {
-  ExemplarTraceIDDestination,
+  ExemplarTraceIdDestination,
   isFetchErrorResponse,
   PromDataErrorResponse,
   PromDataSuccessResponse,
@@ -58,7 +58,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   queryTimeout: string;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
-  exemplarTraceIDDestination: ExemplarTraceIDDestination | undefined;
+  exemplarTraceIdDestination: ExemplarTraceIdDestination | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: any;
 
@@ -78,7 +78,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.directUrl = instanceSettings.jsonData.directUrl;
-    this.exemplarTraceIDDestination = instanceSettings.jsonData.exemplarTraceIDDestination;
+    this.exemplarTraceIdDestination = instanceSettings.jsonData.exemplarTraceIdDestination;
     this.ruleMappings = {};
     this.languageProvider = new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
@@ -278,7 +278,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
             target,
             responseListLength: queries.length,
             mixedQueries,
-            exemplarTraceIDDestination: this.exemplarTraceIDDestination,
+            exemplarTraceIdDestination: this.exemplarTraceIdDestination,
           });
           return {
             data,
@@ -320,7 +320,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
             target,
             responseListLength: queries.length,
             scopedVars,
-            exemplarTraceIDDestination: this.exemplarTraceIDDestination,
+            exemplarTraceIdDestination: this.exemplarTraceIdDestination,
           });
           return data;
         })
