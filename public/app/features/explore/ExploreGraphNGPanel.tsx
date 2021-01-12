@@ -1,13 +1,14 @@
 import {
   AbsoluteTimeRange,
   applyFieldOverrides,
+  createFieldConfigRegistry,
   DataFrame,
   dateTime,
   Field,
   FieldColorModeId,
+  FieldConfigSource,
   GrafanaTheme,
   TimeZone,
-  TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
 import {
   Collapse,
@@ -21,11 +22,12 @@ import {
   useTheme,
   ZoomPlugin,
 } from '@grafana/ui';
+import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { hideSeriesConfigFactory } from 'app/plugins/panel/timeseries/hideSeriesConfigFactory';
 import { ContextMenuPlugin } from 'app/plugins/panel/timeseries/plugins/ContextMenuPlugin';
 import { ExemplarsPlugin } from 'app/plugins/panel/timeseries/plugins/ExemplarsPlugin';
 import { css, cx } from 'emotion';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { splitOpen } from './state/main';
 import { getFieldLinksForExplore } from './utils/links';
 
@@ -52,9 +54,22 @@ export function ExploreGraphNGPanel({
   annotations,
   splitOpenFn,
 }: Props) {
-  const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
   const theme = useTheme();
-  const [dataFramesWithConfig, setDataFramesWithConfig] = useState<DataFrame[]>();
+  const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
+  const [fieldConfig, setFieldConfig] = useState<FieldConfigSource>({
+    defaults: {
+      color: {
+        mode: FieldColorModeId.PaletteClassic,
+      },
+      custom: {
+        drawStyle: DrawStyle.Line,
+        fillOpacity: 0,
+        pointSize: 5,
+      },
+    },
+    overrides: [],
+  });
+
   const style = useStyles(getStyles);
   const timeRange = {
     from: dateTime(absoluteRange.from),
@@ -65,32 +80,26 @@ export function ExploreGraphNGPanel({
     },
   };
 
+  const dataWithConfig = useMemo(() => {
+    const registry = createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore');
+    return applyFieldOverrides({
+      fieldConfig,
+      data,
+      timeZone,
+      replaceVariables: value => value, // We don't need proper replace here as it is only used in getLinks and we use getFieldLinks
+      theme,
+      fieldConfigRegistry: registry,
+    });
+  }, [fieldConfig, data, timeZone, theme]);
+
   const onLegendClick = useCallback(
     (event: GraphNGLegendEvent) => {
-      const configWithOverrides = hideSeriesConfigFactory(event, { defaults: fieldConfig, overrides: [] }, data);
-      const applied = applyFieldOverrides({
-        fieldConfig: configWithOverrides,
-        data,
-        timeZone,
-        replaceVariables: value => value, // TODO: replace with real replace
-        theme,
-      });
-      setDataFramesWithConfig(applied);
+      setFieldConfig(hideSeriesConfigFactory(event, fieldConfig, data));
     },
-    [fieldConfig, data, timeZone, theme]
+    [fieldConfig, data]
   );
 
-  useEffect(() => {
-    setDataFramesWithConfig(addConfigToDataFrame(data));
-  }, [data]);
-
-  if (!dataFramesWithConfig) {
-    return null;
-  }
-
-  const seriesToShow = showAllTimeSeries
-    ? dataFramesWithConfig
-    : dataFramesWithConfig.slice(0, MAX_NUMBER_OF_TIME_SERIES);
+  const seriesToShow = showAllTimeSeries ? dataWithConfig : dataWithConfig.slice(0, MAX_NUMBER_OF_TIME_SERIES);
 
   const getFieldLinks = (field: Field, rowIndex: number) => {
     return getFieldLinksForExplore({ field, rowIndex, splitOpenFn, range: timeRange });
@@ -98,14 +107,14 @@ export function ExploreGraphNGPanel({
 
   return (
     <>
-      {dataFramesWithConfig.length > MAX_NUMBER_OF_TIME_SERIES && !showAllTimeSeries && (
+      {dataWithConfig.length > MAX_NUMBER_OF_TIME_SERIES && !showAllTimeSeries && (
         <div className={cx([style.timeSeriesDisclaimer])}>
           <Icon className={style.disclaimerIcon} name="exclamation-triangle" />
           {`Showing only ${MAX_NUMBER_OF_TIME_SERIES} time series. `}
           <span
             className={cx([style.showAllTimeSeries])}
             onClick={() => setShowAllTimeSeries(true)}
-          >{`Show all ${dataFramesWithConfig.length}`}</span>
+          >{`Show all ${dataWithConfig.length}`}</span>
         </div>
       )}
 
@@ -132,30 +141,6 @@ export function ExploreGraphNGPanel({
     </>
   );
 }
-
-const fieldConfig = {
-  color: {
-    mode: FieldColorModeId.PaletteClassic,
-  },
-  custom: {
-    drawStyle: DrawStyle.Line,
-    fillOpacity: 0,
-    pointSize: 5,
-  },
-};
-
-const addConfigToDataFrame = (dataFrames: DataFrame[]) => {
-  const dataFramesWithConfig: DataFrame[] = [];
-  for (const graph of dataFrames) {
-    const copiedFrame = { ...graph };
-    const valueField = copiedFrame.fields.find(f => f.name === TIME_SERIES_VALUE_FIELD_NAME);
-    if (valueField) {
-      valueField.config = { ...fieldConfig, ...valueField.config };
-    }
-    dataFramesWithConfig.push(copiedFrame);
-  }
-  return dataFramesWithConfig;
-};
 
 const getStyles = (theme: GrafanaTheme) => ({
   timeSeriesDisclaimer: css`
