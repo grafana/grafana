@@ -104,7 +104,7 @@ Content-Type: application/json
 
 `GET /api/datasources/uid/:uid`
 
-**Example Request**:
+**Example request:**
 
 ```http
 GET /api/datasources/uid/kLtEtcRGk HTTP/1.1
@@ -449,7 +449,7 @@ Content-Type: application/json
 
 `DELETE /api/datasources/uid/:uid`
 
-**Example Request**:
+**Example request:**
 
 ```http
 DELETE /api/datasources/uid/kLtEtcRGk HTTP/1.1
