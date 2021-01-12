@@ -175,8 +175,10 @@ func TestQueryTransformer(t *testing.T) {
 	}
 
 	t.Run("A deep link that reference two metric stat metrics is created based on a request query with two stats", func(t *testing.T) {
-		start, _ := time.Parse(time.RFC3339, "2018-03-15T13:00:00Z")
-		end, _ := time.Parse(time.RFC3339, "2018-03-18T13:34:00Z")
+		start, err := time.Parse(time.RFC3339, "2018-03-15T13:00:00Z")
+		require.NoError(t, err)
+		end, err := time.Parse(time.RFC3339, "2018-03-18T13:34:00Z")
+		require.NoError(t, err)
 
 		link, err := buildDeepLink("E", requestQueries, []executedQuery{}, start, end)
 		require.NoError(t, err)
@@ -184,14 +186,18 @@ func TestQueryTransformer(t *testing.T) {
 		parsedURL, err := url.Parse(link)
 		require.NoError(t, err)
 
-		decodedLink, _ := url.PathUnescape(parsedURL.String())
+		decodedLink, err := url.PathUnescape(parsedURL.String())
+		require.NoError(t, err)
 		expected := `https://us-east-1.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"E","start":"2018-03-15T13:00:00Z","end":"2018-03-18T13:34:00Z","region":"us-east-1","metrics":[["ec2","CPUUtilization",{"stat":"Average","period":600}],["ec2","CPUUtilization",{"stat":"p46.32","period":600}]]}`
 		assert.Equal(t, expected, decodedLink)
 	})
 
 	t.Run("A deep link that reference an expression based metric is created based on a request query with one stat", func(t *testing.T) {
-		start, _ := time.Parse(time.RFC3339, "2018-03-15T13:00:00Z")
-		end, _ := time.Parse(time.RFC3339, "2018-03-18T13:34:00Z")
+		start, err := time.Parse(time.RFC3339, "2018-03-15T13:00:00Z")
+		require.NoError(t, err)
+		end, err := time.Parse(time.RFC3339, "2018-03-18T13:34:00Z")
+		require.NoError(t, err)
+
 		executedQueries := []executedQuery{{
 			Expression: `REMOVE_EMPTY(SEARCH('Namespace="AWS/EC2" MetricName="CPUUtilization"', 'Sum', 600))`,
 			ID:         "D",
@@ -204,14 +210,19 @@ func TestQueryTransformer(t *testing.T) {
 		parsedURL, err := url.Parse(link)
 		require.NoError(t, err)
 
-		decodedLink, _ := url.PathUnescape(parsedURL.String())
+		decodedLink, err := url.PathUnescape(parsedURL.String())
+		require.NoError(t, err)
+
 		expected := `https://us-east-1.console.aws.amazon.com/cloudwatch/deeplink.js?region=us-east-1#metricsV2:graph={"view":"timeSeries","stacked":false,"title":"E","start":"2018-03-15T13:00:00Z","end":"2018-03-18T13:34:00Z","region":"us-east-1","metrics":[{"expression":"REMOVE_EMPTY(SEARCH('Namespace=\"AWS/EC2\"+MetricName=\"CPUUtilization\"',+'Sum',+600))"}]}`
 		assert.Equal(t, expected, decodedLink)
 	})
 
 	t.Run("A deep link is not built in case any of the executedQueries are math expressions", func(t *testing.T) {
-		start, _ := time.Parse(time.RFC3339, "2018-03-15T13:00:00Z")
-		end, _ := time.Parse(time.RFC3339, "2018-03-18T13:34:00Z")
+		start, err := time.Parse(time.RFC3339, "2018-03-15T13:00:00Z")
+		require.NoError(t, err)
+		end, err := time.Parse(time.RFC3339, "2018-03-18T13:34:00Z")
+		require.NoError(t, err)
+
 		executedQueries := []executedQuery{{
 			Expression: `a * 2`,
 			ID:         "D",

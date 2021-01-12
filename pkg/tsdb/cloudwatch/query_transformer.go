@@ -55,7 +55,7 @@ func (e *cloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 	return cloudwatchQueries, nil
 }
 
-func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResponses []*cloudwatchResponse, requestQueries []*requestQuery, startTime time.Time, endTime time.Time) map[string]*tsdb.QueryResult {
+func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResponses []*cloudwatchResponse, requestQueries []*requestQuery, startTime time.Time, endTime time.Time) (map[string]*tsdb.QueryResult, error) {
 	responsesByRefID := make(map[string][]*cloudwatchResponse)
 	refIDs := sort.StringSlice{}
 	for _, res := range cloudwatchResponses {
@@ -101,12 +101,12 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 
 		eq, err := json.Marshal(executedQueries)
 		if err != nil {
-			plog.Error("Could not marshal executedString struct", err)
+			return nil, fmt.Errorf("Could not marshal executedString struct: %w", err)
 		}
 
 		link, err := buildDeepLink(refID, requestQueries, executedQueries, startTime, endTime)
 		if err != nil {
-			plog.Error("Could not build deep link", err)
+			return nil, fmt.Errorf("Could not build deep link: %w", err)
 		}
 
 		for _, frame := range frames {
@@ -114,17 +114,19 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 				ExecutedQueryString: string(eq),
 			}
 
-			if link != "" {
-				for _, field := range frame.Fields {
-					field.Config = &data.FieldConfig{
-						Links: []data.DataLink{
-							{
-								Title:       "View in CloudWatch console",
-								TargetBlank: true,
-								URL:         link,
-							},
+			if link == "" {
+				continue
+			}
+
+			for _, field := range frame.Fields {
+				field.Config = &data.FieldConfig{
+					Links: []data.DataLink{
+						{
+							Title:       "View in CloudWatch console",
+							TargetBlank: true,
+							URL:         link,
 						},
-					}
+					},
 				}
 			}
 		}
@@ -133,10 +135,10 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 		results[refID] = queryResult
 	}
 
-	return results
+	return results, nil
 }
 
-// Generates a deep link from Grafana to the CloudWatch console. The link params are based on metric(s) for a given query row in the Query Editor
+// buildDeepLink generates a deep link from Grafana to the CloudWatch console. The link params are based on metric(s) for a given query row in the Query Editor.
 func buildDeepLink(refID string, requestQueries []*requestQuery, executedQueries []executedQuery, startTime time.Time, endTime time.Time) (string, error) {
 	if isMathExpression(executedQueries) {
 		return "", nil
@@ -186,7 +188,7 @@ func buildDeepLink(refID string, requestQueries []*requestQuery, executedQueries
 
 	linkProps, err := json.Marshal(cloudWatchLinkProps)
 	if err != nil {
-		return "", fmt.Errorf("could not marshal link")
+		return "", fmt.Errorf("could not marshal link: %w", err)
 	}
 
 	url, err := url.Parse(fmt.Sprintf(`https://%s.console.aws.amazon.com/cloudwatch/deeplink.js`, requestQuery.Region))
