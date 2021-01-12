@@ -8,6 +8,7 @@ import Prism from 'prismjs';
 import {
   AnnotationEvent,
   AnnotationQueryRequest,
+  CoreApp,
   DataFrame,
   DataFrameView,
   DataQueryError,
@@ -25,7 +26,7 @@ import {
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
-import { getTemplateSrv, TemplateSrv, BackendSrvRequest, FetchError, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, FetchError, getBackendSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { addLabelToQuery } from 'app/plugins/datasource/prometheus/add_label_to_query';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
@@ -314,10 +315,34 @@ export class LokiDatasource extends DataSourceApi<LokiQuery, LokiOptions> {
 
     const labelValues = query.match(labelValuesRegex);
     if (labelValues) {
-      return await this.labelValuesQuery(labelValues[2], params);
+      if (labelValues[1]) {
+        return await this.labelValuesSeriesQuery(labelValues[1], labelValues[2], timeRange);
+      } else {
+        return await this.labelValuesQuery(labelValues[2], params);
+      }
     }
 
     return Promise.resolve([]);
+  }
+
+  async labelValuesSeriesQuery(queryExpr: string, label: string, range: TimeRange): Promise<DataQueryResponse> {
+    const query: LokiQuery = {
+      expr: queryExpr,
+      refId: `variable-${label}`,
+    };
+    const options: DataQueryRequest = {
+      app: CoreApp.Dashboard,
+      interval: '60s',
+      intervalMs: 0,
+      range: range,
+      requestId: `variable-${label}`,
+      scopedVars: {}, // maybe add additional parameters
+      startTime: 0,
+      targets: [],
+      timezone: 'UTC', //not sure if it is correct that the time is already normalized
+    };
+    //TODO extract variables and then return them
+    return await this.runRangeQuery(query, options as any).toPromise();
   }
 
   async labelNamesQuery(params?: Record<string, string | number>) {

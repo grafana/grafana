@@ -542,6 +542,40 @@ describe('LokiDatasource', () => {
         expect(res).toEqual([{ text: 'label1' }]);
       });
     });
+
+    mocks.forEach((mock, index) => {
+      it(`should return label values for subquery for Loki v${index}`, async () => {
+        const { ds } = getTestContext(mock);
+
+        const res = await ds.metricFindQuery('label_values({app="foo", namespace="prod"},instance)');
+
+        expect(res).toEqual([{ text: 'label1' }]);
+      });
+    });
+
+    mocks.forEach((mock, index) => {
+      it(`should return label values for subquery for Loki v${index}`, async () => {
+        const { ds } = getTestContext(mock);
+
+        const res = await ds.metricFindQuery(
+          'label_values(label_values({filename="/var/log/nginx/json_access.log"} | json, status)'
+        );
+
+        expect(res).toEqual([{ text: 'label1' }]);
+      });
+    });
+
+    mocks.forEach((mock, index) => {
+      it(`should return label values for subquery for Loki v${index}`, async () => {
+        const { ds } = getTestContext(mock);
+
+        const res = await ds.metricFindQuery(
+          'label_values({compose_service=~$service, compose_project=~$project}, container_name)'
+        );
+
+        expect(res).toEqual([{ text: 'label1' }]);
+      });
+    });
   });
 });
 
