@@ -1,4 +1,4 @@
-import { LegendOptions, GraphTooltipOptions, LegendPlacement } from '@grafana/ui';
+import { VizLegendOptions, GraphTooltipOptions } from '@grafana/ui';
 
 export interface GraphOptions {
   // Redraw as time passes
@@ -7,15 +7,6 @@ export interface GraphOptions {
 
 export interface Options {
   graph: GraphOptions;
-  legend: GraphLegendEditorLegendOptions & {
-    placement: LegendPlacement;
-  };
+  legend: VizLegendOptions;
   tooltipOptions: GraphTooltipOptions;
-}
-
-export interface GraphLegendEditorLegendOptions extends Omit<LegendOptions, 'placement'> {
-  stats?: string[];
-  decimals?: number;
-  sortBy?: string;
-  sortDesc?: boolean;
 }
