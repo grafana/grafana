@@ -7,23 +7,23 @@ weight = 8
 
 # License restrictions
 
-Enterprise licenses are limited by the number of active viewers, the number of active editor/admins, a license expiration date, and the URL of the Grafana instance.
+Enterprise licenses are limited by the number of active users, a license expiration date, and the URL of the Grafana instance.
 
 **User limits**
 
-Grafana licenses allow a certain number of active users in an instance. An active user is any user that has signed in to Grafana within the past 30 days. 
+Grafana licenses allow a certain number of active users in an instance. An active user is any user that has signed in to Grafana within the past 30 days.
 
-Each user is classified as either Viewer or an Editor/Admin. 
+In the context of licensing, each user is classified as either a viewer or an editor, which are defined as follows:
 
-- All users who have the ability to edit and save dashboards are considered “Editors/Admins”, which includes: 
+- An editor is a user who has the ability to edit and save dashboards, which includes:
     - Grafana server admins
     - Users assigned an Org role of "Editor" or "Admin," 
-    - Users that have been granted "Admin" or "Edit" permissions through [dashboard/folder permissions](https://grafana.com/docs/grafana/latest/permissions/dashboard_folder_permissions/). 
-- Viewers are users with the Viewer role who do not have the permissions to save dashboards.
+    - Users that have been granted "Admin" or "Edit" permissions through [dashboard/folder permissions](https://grafana.com/docs/grafana/latest/permissions/dashboard_folder_permissions/).     
+- A viewer is a user with the Viewer role who does not have the permissions to save dashboards.
 
-Editors and admins are counted the same from a licensing perspective. Restrictions are applied separately for Viewers and for Editor/Admins. 
+Restrictions are applied separately for viewers and editors.
 
-When the number of maximum active Viewers or Editor/Admins is reached, a warning banner is displayed within Grafana.
+When the number of maximum active viewers or editors is reached, a warning banner is displayed within Grafana.
 
 **Expiration date**
 
