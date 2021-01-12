@@ -3,7 +3,7 @@ import { ScaleProps, UPlotScaleBuilder } from './UPlotScaleBuilder';
 import { SeriesProps, UPlotSeriesBuilder } from './UPlotSeriesBuilder';
 import { AxisProps, UPlotAxisBuilder } from './UPlotAxisBuilder';
 import { AxisPlacement } from '../config';
-import { Cursor, Axis } from 'uplot';
+import { Cursor } from 'uplot';
 import { defaultsDeep } from 'lodash';
 
 export class UPlotConfigBuilder {
