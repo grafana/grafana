@@ -55,7 +55,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 	}
 
 	if ds.Uid != "" {
-		dc.CacheService.Set(uidKey(ds.Uid), ds, time.Second*5)
+		dc.CacheService.Set(uidKey(ds.OrgId, ds.Uid), ds, time.Second*5)
 	}
 	dc.CacheService.Set(cacheKey, ds, time.Second*5)
 	return ds, nil
@@ -69,7 +69,10 @@ func (dc *CacheServiceImpl) GetDatasourceByUID(
 	if datasourceUID == "" {
 		return nil, fmt.Errorf("can not get data source by uid, uid is empty")
 	}
-	uidCacheKey := uidKey(datasourceUID)
+	if user.OrgId == 0 {
+		return nil, fmt.Errorf("can not get data source by uid, orgId is missing")
+	}
+	uidCacheKey := uidKey(user.OrgId, datasourceUID)
 
 	if !skipCache {
 		if cached, found := dc.CacheService.Get(uidCacheKey); found {
@@ -95,6 +98,6 @@ func idKey(id int64) string {
 	return fmt.Sprintf("ds-%d", id)
 }
 
-func uidKey(uid string) string {
-	return fmt.Sprintf("dsuid-%s", uid)
+func uidKey(orgID int64, uid string) string {
+	return fmt.Sprintf("ds-orgid-uid-%d-%s", orgID, uid)
 }
