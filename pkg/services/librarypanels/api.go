@@ -18,12 +18,12 @@ func (lps *LibraryPanelService) registerAPIEndpoints() {
 
 	lps.RouteRegister.Group("/api/library-panels", func(libraryPanels routing.RouteRegister) {
 		libraryPanels.Post("/", middleware.ReqSignedIn, binding.Bind(createLibraryPanelCommand{}), api.Wrap(lps.createHandler))
-		libraryPanels.Post("/:uid/dashboard/:dashboardId", middleware.ReqSignedIn, api.Wrap(lps.connectHandler))
+		libraryPanels.Post("/:uid/dashboards/:dashboardId", middleware.ReqSignedIn, api.Wrap(lps.connectHandler))
 		libraryPanels.Delete("/:uid", middleware.ReqSignedIn, api.Wrap(lps.deleteHandler))
-		libraryPanels.Delete("/:uid/dashboard/:dashboardId", middleware.ReqSignedIn, api.Wrap(lps.disconnectHandler))
+		libraryPanels.Delete("/:uid/dashboards/:dashboardId", middleware.ReqSignedIn, api.Wrap(lps.disconnectHandler))
 		libraryPanels.Get("/", middleware.ReqSignedIn, api.Wrap(lps.getAllHandler))
 		libraryPanels.Get("/:uid", middleware.ReqSignedIn, api.Wrap(lps.getHandler))
-		libraryPanels.Get("/:uid/dashboard/", middleware.ReqSignedIn, api.Wrap(lps.getConnectedDashboardsHandler))
+		libraryPanels.Get("/:uid/dashboards/", middleware.ReqSignedIn, api.Wrap(lps.getConnectedDashboardsHandler))
 		libraryPanels.Patch("/:uid", middleware.ReqSignedIn, binding.Bind(patchLibraryPanelCommand{}), api.Wrap(lps.patchHandler))
 	})
 }
@@ -41,7 +41,7 @@ func (lps *LibraryPanelService) createHandler(c *models.ReqContext, cmd createLi
 	return api.JSON(200, util.DynMap{"result": panel})
 }
 
-// connectHandler handles POST /api/library-panels/:uid/dashboard/:dashboardId.
+// connectHandler handles POST /api/library-panels/:uid/dashboards/:dashboardId.
 func (lps *LibraryPanelService) connectHandler(c *models.ReqContext) api.Response {
 	if err := lps.connectDashboard(c, c.Params(":uid"), c.ParamsInt64(":dashboardId")); err != nil {
 		if errors.Is(err, errLibraryPanelNotFound) {
@@ -66,7 +66,7 @@ func (lps *LibraryPanelService) deleteHandler(c *models.ReqContext) api.Response
 	return api.Success("Library panel deleted")
 }
 
-// disconnectHandler handles DELETE /api/library-panels/:uid/dashboard/:dashboardId.
+// disconnectHandler handles DELETE /api/library-panels/:uid/dashboards/:dashboardId.
 func (lps *LibraryPanelService) disconnectHandler(c *models.ReqContext) api.Response {
 	err := lps.disconnectDashboard(c, c.Params(":uid"), c.ParamsInt64(":dashboardId"))
 	if err != nil {
@@ -105,7 +105,7 @@ func (lps *LibraryPanelService) getAllHandler(c *models.ReqContext) api.Response
 	return api.JSON(200, util.DynMap{"result": libraryPanels})
 }
 
-// getConnectedDashboardsHandler handles GET /api/library-panels/:uid/dashboard/.
+// getConnectedDashboardsHandler handles GET /api/library-panels/:uid/dashboards/.
 func (lps *LibraryPanelService) getConnectedDashboardsHandler(c *models.ReqContext) api.Response {
 	dashboardIDs, err := lps.getConnectedDashboards(c, c.Params(":uid"))
 	if err != nil {

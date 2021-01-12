@@ -22,8 +22,8 @@ type LibraryPanel struct {
 	UpdatedBy int64
 }
 
-// LibraryPanelDashboard is the model for library panel connections.
-type LibraryPanelDashboard struct {
+// libraryPanelDashboard is the model for library panel connections.
+type libraryPanelDashboard struct {
 	ID             int64 `xorm:"pk autoincr 'id'"`
 	LibraryPanelID int64 `xorm:"librarypanel_id"`
 	DashboardID    int64 `xorm:"dashboard_id"`

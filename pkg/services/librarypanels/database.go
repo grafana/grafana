@@ -50,7 +50,7 @@ func (lps *LibraryPanelService) connectDashboard(c *models.ReqContext, uid strin
 
 		// TODO add check that dashboard exists
 
-		libraryPanelDashboard := LibraryPanelDashboard{
+		libraryPanelDashboard := libraryPanelDashboard{
 			DashboardID:    dashboardID,
 			LibraryPanelID: panel.ID,
 			Created:        time.Now(),
@@ -165,7 +165,7 @@ func (lps *LibraryPanelService) getConnectedDashboards(c *models.ReqContext, uid
 			return err
 		}
 
-		var libraryPanelDashboards []LibraryPanelDashboard
+		var libraryPanelDashboards []libraryPanelDashboard
 		session.Table("library_panel_dashboard")
 		session.Where("librarypanel_id=?", panel.ID)
 		err = session.Find(&libraryPanelDashboards)
