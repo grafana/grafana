@@ -260,11 +260,6 @@ func (h *ContextHandler) initContextWithToken(ctx *models.ReqContext, orgID int6
 		cookies.WriteSessionCookie(ctx, h.Cfg, "", -1)
 
 		ctx.Data["lookupTokenErr"] = err
-		if token != nil {
-			ctx.UserId = token.UserId
-			ctx.UserToken = token
-		}
-
 		return false
 	}
 

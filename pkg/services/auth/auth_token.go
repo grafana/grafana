@@ -142,7 +142,10 @@ func (s *UserAuthTokenService) LookupToken(ctx context.Context, unhashedToken st
 	}
 
 	if model.CreatedAt <= s.createdAfterParam() || model.RotatedAt <= s.rotatedAfterParam() {
-		return &models.UserToken{Id: model.Id, UserId: model.UserId}, models.ErrUserTokenExpired
+		return nil, &models.TokenExpiredError{
+			UserID:  model.UserId,
+			TokenID: model.Id,
+		}
 	}
 
 	if model.AuthToken != hashedToken && model.PrevAuthToken == hashedToken && model.AuthTokenSeen {

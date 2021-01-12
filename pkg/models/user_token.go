@@ -9,8 +9,14 @@ import (
 // Typed errors
 var (
 	ErrUserTokenNotFound = errors.New("user token not found")
-	ErrUserTokenExpired  = errors.New("user token expired")
 )
+
+type TokenExpiredError struct {
+	UserID  int64
+	TokenID int64
+}
+
+func (e *TokenExpiredError) Error() string { return "user token expired" }
 
 // UserToken represents a user token
 type UserToken struct {
