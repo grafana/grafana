@@ -5,7 +5,7 @@ weight = 500
 
 # Configure variable value group tags 
 
-> Experimental feature that will be deprecated in Grafana v8.
+> **Note:** This is an experimental feature that will be deprecated in Grafana v8.
 
 Value groups/tags are a feature you can use to organize variable options. If you have many options in the dropdown for a multi-value variable, then you can use this feature to group the values into selectable tags.
 
