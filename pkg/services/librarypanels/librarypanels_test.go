@@ -117,7 +117,7 @@ func TestDisconnectLibraryPanel(t *testing.T) {
 			require.Equal(t, 404, response.Status())
 		})
 
-	testScenario(t, "When an admin tries to disconnect a connection that does exists, it should succeed",
+	testScenario(t, "When an admin tries to remove a connection that does exist, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
 			command := getCreateCommand(1, "Text - Library Panel")
 			response := sc.service.createHandler(sc.reqContext, command)
