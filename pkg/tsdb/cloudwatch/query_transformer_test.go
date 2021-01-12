@@ -180,7 +180,13 @@ func TestQueryTransformer(t *testing.T) {
 		end, err := time.Parse(time.RFC3339, "2018-03-18T13:34:00Z")
 		require.NoError(t, err)
 
-		link, err := buildDeepLink("E", requestQueries, []executedQuery{}, start, end)
+		executedQueries := []executedQuery{{
+			Expression: ``,
+			ID:         "D",
+			Period:     600,
+		}}
+
+		link, err := buildDeepLink("E", requestQueries, executedQueries, start, end)
 		require.NoError(t, err)
 
 		parsedURL, err := url.Parse(link)

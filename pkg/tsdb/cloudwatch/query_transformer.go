@@ -209,11 +209,14 @@ func buildDeepLink(refID string, requestQueries []*requestQuery, executedQueries
 }
 
 func isMathExpression(executedQueries []executedQuery) bool {
+	isMathExpression := false
 	for _, query := range executedQueries {
-		if query.Expression != "" && strings.Contains(query.Expression, "SEARCH(") {
+		if strings.Contains(query.Expression, "SEARCH(") {
 			return false
+		} else if query.Expression != "" {
+			isMathExpression = true
 		}
 	}
 
-	return len(executedQueries) > 0
+	return isMathExpression
 }
