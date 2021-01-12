@@ -143,6 +143,7 @@ export const Components = {
   },
   OverridesConfigEditor: {
     content: 'Field overrides editor content',
+    unknownPropertiesList: 'Unknown properties list',
   },
   FolderPicker: {
     container: 'Folder picker select container',

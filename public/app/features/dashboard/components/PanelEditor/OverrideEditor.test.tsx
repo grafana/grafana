@@ -71,7 +71,7 @@ describe('OverrideEditor', () => {
       hideFromOverrides: true,
     });
 
-    const { queryByText } = render(
+    const { queryAllByLabelText } = render(
       <OverrideEditor
         name={'test'}
         data={[]}
@@ -97,7 +97,7 @@ describe('OverrideEditor', () => {
       />
     );
 
-    expect(queryByText('Unknown property: does.not.exist')).not.toEqual(null);
+    expect(queryAllByLabelText(selectors.components.OverridesConfigEditor.unknownPropertiesList)).not.toEqual(null);
   });
 
   it('should not allow override selection that marked as hidden from overrides', () => {
