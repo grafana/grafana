@@ -11,6 +11,7 @@ import {
   processHistogramLabels,
   processLabels,
   roundSecToMin,
+  addLimitInfo,
 } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
@@ -314,7 +315,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     const labelValues = await this.getLabelValues(selector);
     if (labelValues) {
-      suggestions.push({ label: 'Labels', items: Object.keys(labelValues).map(wrapLabel) });
+      const limitInfo = addLimitInfo(labelValues[0]);
+      suggestions.push({
+        label: `Labels${limitInfo}`,
+        items: Object.keys(labelValues).map(wrapLabel),
+      });
     }
     return result;
   };
@@ -376,8 +381,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       // Label values
       if (labelKey && labelValues[labelKey]) {
         context = 'context-label-values';
+        const limitInfo = addLimitInfo(labelValues[labelKey]);
         suggestions.push({
-          label: `Label values for "${labelKey}"`,
+          label: `Label values for "${labelKey}"${limitInfo}.`,
           items: labelValues[labelKey].map(wrapLabel),
         });
       }
@@ -390,7 +396,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         if (possibleKeys.length) {
           context = 'context-labels';
           const newItems = possibleKeys.map(key => ({ label: key }));
-          const newSuggestion: CompletionItemGroup = { label: `Labels`, items: newItems };
+          const limitInfo = addLimitInfo(newItems);
+          const newSuggestion: CompletionItemGroup = { label: `Labels${limitInfo}.`, items: newItems };
           suggestions.push(newSuggestion);
         }
       }

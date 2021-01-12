@@ -2,6 +2,7 @@ import { PromMetricsMetadata } from './types';
 import { addLabelToQuery } from './add_label_to_query';
 
 export const RATE_RANGES = ['1m', '5m', '10m', '30m', '1h'];
+export const AUTOCOMPLETE_LIMIT = 10000;
 
 export const processHistogramLabels = (labels: string[]) => {
   const resultSet: Set<string> = new Set();
@@ -43,9 +44,11 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
 
   // valueArray that we are going to return in the object
   const valueArray: { [key: string]: string[] } = {};
-  Object.keys(valueSet).forEach(key => {
-    valueArray[key] = Array.from(valueSet[key]);
-  });
+  Object.keys(valueSet)
+    .slice(AUTOCOMPLETE_LIMIT)
+    .forEach(key => {
+      valueArray[key] = Array.from(valueSet[key]).slice(AUTOCOMPLETE_LIMIT);
+    });
 
   return { values: valueArray, keys: Object.keys(valueArray) };
 }
@@ -201,4 +204,8 @@ export function roundMsToMin(milliseconds: number): number {
 
 export function roundSecToMin(seconds: number): number {
   return Math.floor(seconds / 60);
+}
+
+export function addLimitInfo(items: any[]): string {
+  return items.length >= AUTOCOMPLETE_LIMIT ? `, limited to the first ${AUTOCOMPLETE_LIMIT} received items` : '';
 }
