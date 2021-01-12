@@ -48,6 +48,8 @@ func (lps *LibraryPanelService) connectDashboard(c *models.ReqContext, uid strin
 			return err
 		}
 
+		// TODO add check that dashboard exists
+
 		libraryPanelDashboard := LibraryPanelDashboard{
 			DashboardID:    dashboardId,
 			LibraryPanelID: panel.ID,
