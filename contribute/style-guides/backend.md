@@ -78,6 +78,8 @@ Valid reasons to use a pointer include (but not necessarily limited to):
 
 ## Database
 
+In database related code, we follow certain patterns.
+
 ### Foreign keys
 
 While they can be useful, we don't generally use foreign key constraints in Grafana, for historical and
