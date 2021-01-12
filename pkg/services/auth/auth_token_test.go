@@ -187,8 +187,8 @@ func TestUserAuthToken(t *testing.T) {
 				}
 
 				notGood, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-				So(err, ShouldEqual, models.ErrUserTokenExpired)
-				So(notGood, ShouldNotBeNil)
+				So(err, ShouldHaveSameTypeAs, &models.TokenExpiredError{})
+				So(notGood, ShouldBeNil)
 
 				Convey("should not find active token when expired", func() {
 					count, err := userAuthTokenService.ActiveTokenCount(context.Background())
@@ -221,8 +221,8 @@ func TestUserAuthToken(t *testing.T) {
 				}
 
 				notGood, err := userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
-				So(err, ShouldEqual, models.ErrUserTokenExpired)
-				So(notGood, ShouldNotBeNil)
+				So(err, ShouldHaveSameTypeAs, &models.TokenExpiredError{})
+				So(notGood, ShouldBeNil)
 			})
 		})
 
