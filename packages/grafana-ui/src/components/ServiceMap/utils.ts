@@ -33,6 +33,7 @@ export function getNodeFields(nodes: DataFrame) {
     mainStat: fieldsCache.getFieldsByLabel(labelType, mainStat)[0],
     secondaryStat: fieldsCache.getFieldsByLabel(labelType, secondaryStat)[0],
     arc: fieldsCache.getFieldsByLabel(labelType, arcLabel),
+    details: fieldsCache.getFieldsByLabel(labelDetail, 'true'),
   };
 }
 
@@ -44,11 +45,14 @@ export function getEdgeFields(edges: DataFrame) {
     target: fieldsCache.getFieldByName('target'),
     mainStat: fieldsCache.getFieldsByLabel(labelType, mainStat)[0],
     secondaryStat: fieldsCache.getFieldsByLabel(labelType, secondaryStat)[0],
+    details: fieldsCache.getFieldsByLabel(labelDetail, 'true'),
   };
 }
 
 // TODO move to grafana data probably
 const labelType = 'NodeGraphValueType';
+const labelDetail = 'NodeGraphDetailField';
+
 const arcLabel = 'arc';
 const titleLabel = 'title';
 const subTitleLabel = 'subTitle';

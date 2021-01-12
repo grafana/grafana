@@ -4,7 +4,7 @@ import { DataFrame, Field, GrafanaTheme, LinkModel } from '@grafana/data';
 import { ContextMenu } from '../ContextMenu/ContextMenu';
 import { useTheme } from '../../themes/ThemeContext';
 import { stylesFactory } from '../../themes/stylesFactory';
-import { getNodeFields } from './utils';
+import { getEdgeFields, getNodeFields } from './utils';
 import { css } from 'emotion';
 
 /**
@@ -20,19 +20,6 @@ export function useContextMenu(
   onNodeOpen: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
   MenuComponent: React.ReactNode;
 } {
-  function getItems(dataFrame: DataFrame, rowIndex: number) {
-    return [
-      {
-        label: 'Open in Explore',
-        items: getLinks(dataFrame, rowIndex).map(l => ({
-          label: l.title,
-          url: l.href,
-          onClick: l.onClick,
-        })),
-      },
-    ];
-  }
-
   const [openedNode, setOpenedNode] = useState<{ node: NodeDatum; event: MouseEvent } | undefined>(undefined);
   const onNodeOpen = useCallback((event, node) => setOpenedNode({ node, event }), []);
 
@@ -45,7 +32,7 @@ export function useContextMenu(
     MenuComponent = (
       <ContextMenu
         renderHeader={() => <NodeHeader node={openedNode.node} nodes={nodes} />}
-        items={getItems(nodes, openedNode.node.dataFrameRowIndex)}
+        items={getItems(getLinks(nodes, openedNode.node.dataFrameRowIndex))}
         onClose={() => setOpenedNode(undefined)}
         x={openedNode.event.pageX}
         y={openedNode.event.pageY}
@@ -56,7 +43,8 @@ export function useContextMenu(
   if (openedEdge) {
     MenuComponent = (
       <ContextMenu
-        items={getItems(edges, openedEdge.edge.dataFrameRowIndex)}
+        renderHeader={() => <EdgeHeader edge={openedEdge.edge} edges={edges} />}
+        items={getItems(getLinks(edges, openedEdge.edge.dataFrameRowIndex))}
         onClose={() => setOpenedEdge(undefined)}
         x={openedEdge.event.pageX}
         y={openedEdge.event.pageY}
@@ -67,6 +55,36 @@ export function useContextMenu(
   return { onEdgeOpen, onNodeOpen, MenuComponent };
 }
 
+function getItems(links: LinkModel[]) {
+  const defaultGroup = 'Open in Explore';
+  const groups = links.reduce<{ [group: string]: Array<{ l: LinkModel; newTitle?: string }> }>((acc, l) => {
+    let group;
+    let title;
+    if (l.title.indexOf('/') !== -1) {
+      group = l.title.split('/')[0];
+      title = l.title.split('/')[1];
+      acc[group] = acc[group] || [];
+      acc[group].push({ l, newTitle: title });
+    } else {
+      acc[defaultGroup] = acc[defaultGroup] || [];
+      acc[defaultGroup].push({ l });
+    }
+
+    return acc;
+  }, {});
+
+  return Object.keys(groups).map(key => {
+    return {
+      label: key,
+      items: groups[key].map(link => ({
+        label: link.newTitle || link.l.title,
+        url: link.l.href,
+        onClick: link.l.onClick,
+      })),
+    };
+  });
+}
+
 function NodeHeader(props: { node: NodeDatum; nodes: DataFrame }) {
   const index = props.node.dataFrameRowIndex;
   const fields = getNodeFields(props.nodes);
@@ -74,6 +92,21 @@ function NodeHeader(props: { node: NodeDatum; nodes: DataFrame }) {
     <div>
       <Label field={fields.title} index={index} />
       <Label field={fields.subTitle} index={index} />
+      {fields.details.map(f => (
+        <Label key={f.name} field={f} index={index} />
+      ))}
+    </div>
+  );
+}
+
+function EdgeHeader(props: { edge: LinkDatum; edges: DataFrame }) {
+  const index = props.edge.dataFrameRowIndex;
+  const fields = getEdgeFields(props.edges);
+  return (
+    <div>
+      {fields.details.map(f => (
+        <Label key={f.name} field={f} index={index} />
+      ))}
     </div>
   );
 }
