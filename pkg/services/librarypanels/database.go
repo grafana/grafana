@@ -41,7 +41,7 @@ func (lps *LibraryPanelService) createLibraryPanel(c *models.ReqContext, cmd cre
 }
 
 // connectDashboard adds a connection between a Library Panel and a Dashboard.
-func (lps *LibraryPanelService) connectDashboard(c *models.ReqContext, uid string, dashboardId int64) error {
+func (lps *LibraryPanelService) connectDashboard(c *models.ReqContext, uid string, dashboardID int64) error {
 	err := lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		panel, err := getLibraryPanel(session, uid, c.SignedInUser.OrgId)
 		if err != nil {
@@ -51,7 +51,7 @@ func (lps *LibraryPanelService) connectDashboard(c *models.ReqContext, uid strin
 		// TODO add check that dashboard exists
 
 		libraryPanelDashboard := LibraryPanelDashboard{
-			DashboardID:    dashboardId,
+			DashboardID:    dashboardID,
 			LibraryPanelID: panel.ID,
 			Created:        time.Now(),
 			CreatedBy:      c.SignedInUser.UserId,
@@ -88,14 +88,14 @@ func (lps *LibraryPanelService) deleteLibraryPanel(c *models.ReqContext, uid str
 }
 
 // disconnectDashboard deletes a connection between a Library Panel and a Dashboard.
-func (lps *LibraryPanelService) disconnectDashboard(c *models.ReqContext, uid string, dashboardId int64) error {
+func (lps *LibraryPanelService) disconnectDashboard(c *models.ReqContext, uid string, dashboardID int64) error {
 	return lps.SQLStore.WithTransactionalDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		panel, err := getLibraryPanel(session, uid, c.SignedInUser.OrgId)
 		if err != nil {
 			return err
 		}
 
-		result, err := session.Exec("DELETE FROM library_panel_dashboard WHERE librarypanel_id=? and dashboard_id=?", panel.ID, dashboardId)
+		result, err := session.Exec("DELETE FROM library_panel_dashboard WHERE librarypanel_id=? and dashboard_id=?", panel.ID, dashboardID)
 		if err != nil {
 			return err
 		}
@@ -158,14 +158,14 @@ func (lps *LibraryPanelService) getAllLibraryPanels(c *models.ReqContext) ([]Lib
 
 // getConnectedDashboards gets all dashboards connected to a Library Panel.
 func (lps *LibraryPanelService) getConnectedDashboards(c *models.ReqContext, uid string) ([]int64, error) {
-	connectedDashboardIds := make([]int64, 0)
+	connectedDashboardIDs := make([]int64, 0)
 	err := lps.SQLStore.WithDbSession(context.Background(), func(session *sqlstore.DBSession) error {
 		panel, err := getLibraryPanel(session, uid, c.SignedInUser.OrgId)
 		if err != nil {
 			return err
 		}
 
-		libraryPanelDashboards := make([]LibraryPanelDashboard, 0)
+		var libraryPanelDashboards []LibraryPanelDashboard
 		session.Table("library_panel_dashboard")
 		session.Where("librarypanel_id=?", panel.ID)
 		err = session.Find(&libraryPanelDashboards)
@@ -174,13 +174,13 @@ func (lps *LibraryPanelService) getConnectedDashboards(c *models.ReqContext, uid
 		}
 
 		for _, lpd := range libraryPanelDashboards {
-			connectedDashboardIds = append(connectedDashboardIds, lpd.DashboardID)
+			connectedDashboardIDs = append(connectedDashboardIDs, lpd.DashboardID)
 		}
 
 		return nil
 	})
 
-	return connectedDashboardIds, err
+	return connectedDashboardIDs, err
 }
 
 // patchLibraryPanel updates a Library Panel.

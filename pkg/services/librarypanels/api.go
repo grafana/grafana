@@ -107,7 +107,7 @@ func (lps *LibraryPanelService) getAllHandler(c *models.ReqContext) api.Response
 
 // getConnectedDashboardsHandler handles GET /api/library-panels/:uid/dashboard/.
 func (lps *LibraryPanelService) getConnectedDashboardsHandler(c *models.ReqContext) api.Response {
-	dashboardIds, err := lps.getConnectedDashboards(c, c.Params(":uid"))
+	dashboardIDs, err := lps.getConnectedDashboards(c, c.Params(":uid"))
 	if err != nil {
 		if errors.Is(err, errLibraryPanelNotFound) {
 			return api.Error(404, errLibraryPanelNotFound.Error(), err)
@@ -115,7 +115,7 @@ func (lps *LibraryPanelService) getConnectedDashboardsHandler(c *models.ReqConte
 		return api.Error(500, "Failed to get connected dashboards", err)
 	}
 
-	return api.JSON(200, util.DynMap{"result": dashboardIds})
+	return api.JSON(200, util.DynMap{"result": dashboardIDs})
 }
 
 // patchHandler handles PATCH /api/library-panels/:uid
