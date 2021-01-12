@@ -106,21 +106,16 @@ func DeleteDataSourceById(c *models.ReqContext) Response {
 
 // GET /api/datasources/uid/:uid
 func GetDataSourceByUID(c *models.ReqContext) Response {
-	query := models.GetDataSourceQuery{
-		Uid:   c.Params(":uid"),
-		OrgId: c.OrgId,
-	}
+	ds, err := getRawDataSourceByUID(c.Params(":uid"), c.OrgId)
 
-	if err := bus.Dispatch(&query); err != nil {
+	if err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return Error(404, "Data source not found", nil)
 		}
 		return Error(500, "Failed to query datasources", err)
 	}
 
-	ds := query.Result
 	dtos := convertModelToDtos(ds)
-
 	return JSON(200, &dtos)
 }
 
