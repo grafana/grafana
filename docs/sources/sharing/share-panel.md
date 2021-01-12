@@ -51,9 +51,9 @@ You can publish snapshots to your local instance or to [snapshot.raintank.io](ht
 To publish a snapshot:
 
 1. In the Share Panel dialog, click **Snapshot** to open the tab.
-2. Click on **Local Snapshot** or **Publish to snapshot.raintank.io**. This generates the link of the snapshot.
-3. Copy the snapshot link, and share it either within your organization or publicly on the web.
-   
+1. Click on **Local Snapshot** or **Publish to snapshot.raintank.io**. This generates the link of the snapshot.
+1. Copy the snapshot link, and share it either within your organization or publicly on the web.
+
 If you created a snapshot by mistake, click **delete snapshot** to remove the snapshot from your Grafana instance.
 
 ## Embed panel
