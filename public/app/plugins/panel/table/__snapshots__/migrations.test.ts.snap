@@ -27,6 +27,10 @@ Object {
             "id": "unit",
             "value": "time: YYYY-MM-DD HH:mm:ss",
           },
+          Object {
+            "id": "custom.align",
+            "value": null,
+          },
         ],
       },
       Object {
@@ -46,6 +50,10 @@ Object {
           Object {
             "id": "custom.displayMode",
             "value": "color-background",
+          },
+          Object {
+            "id": "custom.align",
+            "value": "left",
           },
           Object {
             "id": "thresholds",
@@ -86,6 +94,10 @@ Object {
           Object {
             "id": "custom.displayMode",
             "value": "color-text",
+          },
+          Object {
+            "id": "custom.align",
+            "value": null,
           },
           Object {
             "id": "thresholds",

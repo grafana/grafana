@@ -143,6 +143,13 @@ const migrateTableStyleToOverride = (style: Style) => {
     });
   }
 
+  if (style.align) {
+    override.properties.push({
+      id: 'custom.align',
+      value: style.align === 'auto' ? null : style.align,
+    });
+  }
+
   if (style.thresholds?.length) {
     override.properties.push({
       id: 'thresholds',
