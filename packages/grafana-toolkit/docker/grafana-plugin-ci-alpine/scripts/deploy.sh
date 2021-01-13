@@ -10,7 +10,7 @@ mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
 rm /bin/cp
 mv /usr/local/bin/cp /bin/cp
 
-apk add --no-cache curl nodejs npm yarn build-base openssh git-lfs perl-utils coreutils python3
+apk add --no-cache curl 'nodejs-current=14.5.0-r0' npm yarn build-base openssh git-lfs perl-utils coreutils python3
 
 #
 # Only relevant for testing, but cypress does not work with musl/alpine.
@@ -43,7 +43,7 @@ get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-l
     "b4138199aa755ebfe171b57cc46910b13258ace5fbc4eaa099c42607cd0bff32"
 chmod +x /usr/local/bin/cc-test-reporter
 
-curl -fL -o /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.24/grabpl"
+curl -fL -o /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v0.5.32/grabpl"
 
 apk add --no-cache git
 # Install Mage

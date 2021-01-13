@@ -43,9 +43,11 @@ export type TimeFragment = string | DateTime;
 export const TIME_FORMAT = 'YYYY-MM-DD HH:mm:ss';
 
 export function getDefaultTimeRange(): TimeRange {
+  const now = dateTime();
+
   return {
-    from: dateTime().subtract(6, 'hour'),
-    to: dateTime(),
+    from: dateTime(now).subtract(6, 'hour'),
+    to: now,
     raw: { from: 'now-6h', to: 'now' },
   };
 }

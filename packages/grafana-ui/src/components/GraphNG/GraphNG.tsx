@@ -16,8 +16,8 @@ import { PlotProps } from '../uPlot/types';
 import { AxisPlacement, DrawStyle, GraphFieldConfig, PointVisibility } from '../uPlot/config';
 import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
-import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
-import { GraphLegend } from '../Graph/GraphLegend';
+import { LegendDisplayMode, VizLegendItem, VizLegendOptions } from '../VizLegend/types';
+import { VizLegend } from '../VizLegend/VizLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from './types';
@@ -30,7 +30,7 @@ export interface XYFieldMatchers {
 }
 export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
   data: DataFrame[];
-  legend?: LegendOptions;
+  legend?: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
 }
@@ -55,7 +55,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 }) => {
   const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
   const theme = useTheme();
-  const legendItemsRef = useRef<LegendItem[]>([]);
+  const legendItemsRef = useRef<VizLegendItem[]>([]);
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
   const alignedFrame = alignedFrameWithGapTest?.frame;
   const getDataFrameFieldIndex = alignedFrameWithGapTest?.getDataFrameFieldIndex;
@@ -68,7 +68,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   }, []);
 
   const onLabelClick = useCallback(
-    (legend: LegendItem, event: React.MouseEvent) => {
+    (legend: VizLegendItem, event: React.MouseEvent) => {
       const { fieldIndex } = legend;
 
       if (!onLegendClick || !fieldIndex) {
@@ -128,7 +128,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       });
     }
 
-    const legendItems: LegendItem[] = [];
+    const legendItems: VizLegendItem[] = [];
 
     for (let i = 0; i < alignedFrame.fields.length; i++) {
       const field = alignedFrame.fields[i];
@@ -175,6 +175,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,
         lineInterpolation: customConfig.lineInterpolation,
+        lineStyle: customConfig.lineStyle,
         showPoints,
         pointSize: customConfig.pointSize,
         pointColor: customConfig.pointColor ?? seriesColor,
@@ -216,7 +217,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   if (hasLegend && legendItemsRef.current.length > 0) {
     legendElement = (
       <VizLayout.Legend position={legend!.placement} maxHeight="35%" maxWidth="60%">
-        <GraphLegend
+        <VizLegend
           onLabelClick={onLabelClick}
           placement={legend!.placement}
           items={legendItemsRef.current}
