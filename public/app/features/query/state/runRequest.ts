@@ -17,6 +17,7 @@ import {
   guessFieldTypes,
   LoadingState,
   PanelData,
+  TimeRange,
   toDataFrame,
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
@@ -45,16 +46,6 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   let loadingState = packet.state || LoadingState.Done;
   let error: DataQueryError | undefined = undefined;
 
-  // Update the time range
-  const range = { ...request.range };
-  const timeRange = isString(range.raw.from)
-    ? {
-        from: dateMath.parse(range.raw.from, false)!,
-        to: dateMath.parse(range.raw.to, true)!,
-        raw: range.raw,
-      }
-    : range;
-
   const series: DataQueryResponseData[] = [];
   const annotations: DataQueryResponseData[] = [];
 
@@ -78,6 +69,8 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
     }
   }
 
+  const timeRange = getRequestTimeRange(request, loadingState);
+
   const panelData = {
     state: loadingState,
     series,
@@ -88,6 +81,20 @@ export function processResponsePacket(packet: DataQueryResponse, state: RunningQ
   };
 
   return { packets, panelData };
+}
+
+function getRequestTimeRange(request: DataQueryRequest, loadingState: LoadingState): TimeRange {
+  const range = request.range;
+
+  if (!isString(range.raw.from) || loadingState !== LoadingState.Streaming) {
+    return range;
+  }
+
+  return {
+    ...range,
+    from: dateMath.parse(range.raw.from, false)!,
+    to: dateMath.parse(range.raw.to, true)!,
+  };
 }
 
 /**

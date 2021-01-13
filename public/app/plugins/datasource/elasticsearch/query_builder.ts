@@ -334,10 +334,11 @@ export class ElasticQueryBuilder {
         metricAgg = { field: metric.field };
       }
 
-      metricAgg = {
-        ...metricAgg,
-        ...(isMetricAggregationWithSettings(metric) && metric.settings),
-      };
+      if (isMetricAggregationWithSettings(metric)) {
+        Object.entries(metric.settings || {})
+          .filter(([_, v]) => v !== null)
+          .forEach(([k, v]) => (metricAgg[k] = v));
+      }
 
       aggField[metric.type] = metricAgg;
       nestedAggs.aggs[metric.id] = aggField;
