@@ -146,11 +146,10 @@ export function transform(
 }
 
 function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
-  const dataSourceSrv = getDataSourceSrv();
-
   const dataLinks: DataLink[] = [];
 
   if (options.datasourceUid) {
+    const dataSourceSrv = getDataSourceSrv();
     const dsSettings = dataSourceSrv.getInstanceSettings(options.datasourceUid);
 
     dataLinks.push({
@@ -173,6 +172,11 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
   return dataLinks;
 }
 
+/**
+ * Reduce the density of the exemplars by making sure that the highest value exemplar is included
+ * and then only the ones that are 2 times the standard deviation of the all the values.
+ * This makes sure not to show too many dots near each other.
+ */
 function sampleExemplars(events: TimeAndValue[], options: TransformOptions) {
   const step = options.step || 15;
   const bucketedExemplars: { [ts: string]: TimeAndValue[] } = {};
@@ -189,7 +193,7 @@ function sampleExemplars(events: TimeAndValue[], options: TransformOptions) {
   }
 
   // Getting exemplars from each bucket
-  const stddev = deviation(values);
+  const standardDeviation = deviation(values);
   const sampledBuckets = Object.keys(bucketedExemplars).sort();
   const sampledExemplars = [];
   for (const ts of sampledBuckets) {
@@ -204,9 +208,9 @@ function sampleExemplars(events: TimeAndValue[], options: TransformOptions) {
           // First value is max and is always added
           acc.push(curr);
         } else {
-          // Then take values only when at least 2 stddev distance to previously taken value
+          // Then take values only when at least 2 standard deviation distance to previously taken value
           const prev = acc[acc.length - 1];
-          if (stddev && prev - stddev * 2 >= 0) {
+          if (standardDeviation && prev - curr - standardDeviation * 2 >= 0) {
             acc.push(curr);
           }
         }
