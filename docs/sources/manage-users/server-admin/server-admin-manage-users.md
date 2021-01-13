@@ -33,10 +33,10 @@ Grafana displays all user accounts on the server, listed in alphabetical order b
 
 See all details associated with a specific user account.
 
-<ol>
-{{< docs/list "manage-users/view-server-user-list-list.md" >}}
-<li>Click the user account you wish to view. If necessary, use the search field at the top of the tab to search for the specific user account that you need.
-</ol>
+{{< docs/list >}}
+  {{< docs/shared "manage-users/view-server-user-list.md" >}}
+  1. Click the user account you wish to view. If necessary, use the search field at the top of the tab to search for the specific user account that you need.
+{{< /docs/list >}}
 
 Each user account contains the following sections.
 
@@ -73,14 +73,16 @@ See recent sessions that the user was logged on, including when they logged on a
 
 Create a new user account at the server level.
 
-{{< docs/list "manage-users/view-server-user-list" >}}
-1. Click **New user**.
-1. Enter the following information:
-   - **Name -** Required.
-   - **E-mail -** Optional if a **Username** is entered.
-   - **Username -** Optional if an **E-mail** is entered.
-   - **Password -** Required.
-1. Click **Create user**.
+{{< docs/list >}}
+  {{< docs/shared "manage-users/view-server-user-list.md" >}}
+  1. Click **New user**.
+  1. Enter the following information:
+    - **Name -** Required.
+    - **E-mail -** Optional if a **Username** is entered.
+    - **Username -** Optional if an **E-mail** is entered.
+    - **Password -** Required.
+  1. Click **Create user**.
+{{< /docs/list >}}
 
 The user can change all this information after they log in. For instructions, refer to [Edit your Grafana profile]({{< relref "../../administration/preferences.md#edit-your-grafana-profile" >}}) and [Change your password]({{< relref "../../administration/change-your-password.md" >}}).
 
@@ -92,9 +94,11 @@ Change information or settings in an individual user account.
 
 Edit information on an existing user account, including the user name, email, username, and password.
 
-{{< docs/list "manage-users/view-server-user-list-search" >}}
-1. In the User information section, click **Edit** next to the field that you want to change.
-1. Enter the new value and then click **Save**.
+{{< docs/list >}}
+  {{< docs/shared "manage-users/view-server-user-list-search.md" >}}
+  1. In the User information section, click **Edit** next to the field that you want to change.
+  1. Enter the new value and then click **Save**.
+{{< /docs/list >}}
 
 ### Change the password on a user account
 
