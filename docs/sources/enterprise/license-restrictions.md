@@ -33,6 +33,12 @@ The license expiration date is the date when a license is no longer active. As t
 
 License URL is the root URL of your Grafana instance. The license will not work on an instance of Grafana with a different root URL.
 
+## Dashboard and folder permissions report
+
+This CSV report helps to identify users, teams, and roles that have been granted `Admin` or `Edit` permissions at the dashboard or folder level.
+
+To download the report (in CSV format) go to the **Server Admin** > **Licensing**. From the bottom of the page, select **Download report**.
+
 ## Updating license restrictions
 
 To increase the number of licensed users within Grafana, extend a license, or change your licensed URL, contact [Grafana support](https://grafana.com/profile/org#support) or your Grafana Labs account team. They will update your license, which you can activate from within Grafana. Refer to [Activate a license process](https://grafana.com/docs/grafana/latest/enterprise/activate-license/).
