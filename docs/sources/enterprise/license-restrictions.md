@@ -11,23 +11,23 @@ Enterprise licenses are limited by the number of active users, a license expirat
 
 **User limits**
 
-Grafana licenses allow a certain number of active users in an instance. An active user is any user that has signed in to Grafana within the past 30 days.
+Grafana licenses allow for a certain number of active users per instance. An active user is any user that has signed in to Grafana within the past 30 days.
 
-In the context of licensing, each user is classified as either a viewer or an editor, which are defined as follows:
+In the context of licensing, each user is classified as either a viewer or an editor:
 
-- An editor is a user who has the ability to edit and save dashboards, which includes:
-    - Grafana server admins
-    - Users assigned an Org role of "Editor" or "Admin," 
+- An editor is a user who has permission to edit and save a dashboard. Examples of editors are as follows:
+    - Grafana server administrators.
+    - Users who are assigned an organizational role of `Editor` or `Admin`.
     - Users that have been granted "Admin" or "Edit" permissions through [dashboard/folder permissions](https://grafana.com/docs/grafana/latest/permissions/dashboard_folder_permissions/).     
-- A viewer is a user with the Viewer role who does not have the permissions to save dashboards.
+- A viewer is a user with the `Viewer` role, which does not permit the user to save a dashboard.
 
 Restrictions are applied separately for viewers and editors.
 
-When the number of maximum active viewers or editors is reached, a warning banner is displayed within Grafana.
+When the number of maximum active viewers or editors is reached, Grafana displays a warning banner.
 
 **Expiration date**
 
-The license expiration date is the day when a license is no longer active. A banner will appear in Grafana Enterprise when the license expiration date approaches.
+The license expiration date is the date when a license is no longer active. As the license expiration date approaches, Grafana Enterprise displays a banner.
 
 **License URL**
 
