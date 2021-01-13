@@ -4,13 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"net"
-	"net/http"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/macaron.v1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -24,7 +22,6 @@ func TestUserAuthToken(t *testing.T) {
 		userAuthTokenService := ctx.tokenService
 		user := &models.User{Id: int64(10)}
 		userID := user.Id
-		req := createReqContext("192.168.10.11", "some user agent")
 
 		t := time.Date(2018, 12, 13, 13, 45, 0, 0, time.UTC)
 		getTime = func() time.Time {
@@ -32,7 +29,8 @@ func TestUserAuthToken(t *testing.T) {
 		}
 
 		Convey("When creating token", func() {
-			userToken, err := userAuthTokenService.CreateToken(req, user)
+			userToken, err := userAuthTokenService.CreateToken(context.Background(), user,
+				net.ParseIP("192.168.10.11"), "some user agent")
 			So(err, ShouldBeNil)
 			So(userToken, ShouldNotBeNil)
 			So(userToken.AuthTokenSeen, ShouldBeFalse)
@@ -83,7 +81,8 @@ func TestUserAuthToken(t *testing.T) {
 			})
 
 			Convey("When creating an additional token", func() {
-				userToken2, err := userAuthTokenService.CreateToken(req, user)
+				userToken2, err := userAuthTokenService.CreateToken(context.Background(), user,
+					net.ParseIP("192.168.10.11"), "some user agent")
 				So(err, ShouldBeNil)
 				So(userToken2, ShouldNotBeNil)
 
@@ -129,7 +128,8 @@ func TestUserAuthToken(t *testing.T) {
 					for i := 0; i < 3; i++ {
 						userId := userID + int64(i+1)
 						userIds = append(userIds, userId)
-						_, err := userAuthTokenService.CreateToken(req, user)
+						_, err := userAuthTokenService.CreateToken(context.Background(), user,
+							net.ParseIP("192.168.10.11"), "some user agent")
 						So(err, ShouldBeNil)
 					}
 
@@ -146,7 +146,8 @@ func TestUserAuthToken(t *testing.T) {
 		})
 
 		Convey("expires correctly", func() {
-			userToken, err := userAuthTokenService.CreateToken(req, user)
+			userToken, err := userAuthTokenService.CreateToken(context.Background(), user,
+				net.ParseIP("192.168.10.11"), "some user agent")
 			So(err, ShouldBeNil)
 
 			userToken, err = userAuthTokenService.LookupToken(context.Background(), userToken.UnhashedToken)
@@ -227,7 +228,8 @@ func TestUserAuthToken(t *testing.T) {
 		})
 
 		Convey("can properly rotate tokens", func() {
-			userToken, err := userAuthTokenService.CreateToken(req, user)
+			userToken, err := userAuthTokenService.CreateToken(context.Background(), user,
+				net.ParseIP("192.168.10.11"), "some user agent")
 			So(err, ShouldBeNil)
 
 			prevToken := userToken.AuthToken
@@ -311,7 +313,8 @@ func TestUserAuthToken(t *testing.T) {
 		})
 
 		Convey("keeps prev token valid for 1 minute after it is confirmed", func() {
-			userToken, err := userAuthTokenService.CreateToken(req, user)
+			userToken, err := userAuthTokenService.CreateToken(context.Background(), user,
+				net.ParseIP("192.168.10.11"), "some user agent")
 			So(err, ShouldBeNil)
 			So(userToken, ShouldNotBeNil)
 
@@ -343,7 +346,8 @@ func TestUserAuthToken(t *testing.T) {
 		})
 
 		Convey("will not mark token unseen when prev and current are the same", func() {
-			userToken, err := userAuthTokenService.CreateToken(req, user)
+			userToken, err := userAuthTokenService.CreateToken(context.Background(), user,
+				net.ParseIP("192.168.10.11"), "some user agent")
 			So(err, ShouldBeNil)
 			So(userToken, ShouldNotBeNil)
 
@@ -362,7 +366,8 @@ func TestUserAuthToken(t *testing.T) {
 		})
 
 		Convey("Rotate token", func() {
-			userToken, err := userAuthTokenService.CreateToken(req, user)
+			userToken, err := userAuthTokenService.CreateToken(context.Background(), user,
+				net.ParseIP("192.168.10.11"), "some user agent")
 			So(err, ShouldBeNil)
 			So(userToken, ShouldNotBeNil)
 
@@ -503,23 +508,6 @@ func TestUserAuthToken(t *testing.T) {
 			getTime = time.Now
 		})
 	})
-}
-
-func createReqContext(ip string, userAgent string) *models.ReqContext {
-	headers := map[string][]string{
-		"X-Real-IP":  {ip},
-		"User-Agent": {userAgent},
-	}
-
-	return &models.ReqContext{
-		Context: &macaron.Context{
-			Req: macaron.Request{
-				Request: &http.Request{
-					Header: headers,
-				},
-			},
-		},
-	}
 }
 
 func createTestContext(t *testing.T) *testContext {

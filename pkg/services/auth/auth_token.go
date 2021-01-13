@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -61,7 +60,7 @@ func (s *UserAuthTokenService) ActiveTokenCount(ctx context.Context) (int64, err
 	return count, err
 }
 
-func (s *UserAuthTokenService) CreateToken(c *models.ReqContext, user *models.User) (*models.UserToken, error) {
+func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *models.User, clientIP net.IP, userAgent string) (*models.UserToken, error) {
 	token, err := util.RandomHex(16)
 	if err != nil {
 		return nil, err
@@ -70,14 +69,6 @@ func (s *UserAuthTokenService) CreateToken(c *models.ReqContext, user *models.Us
 	hashedToken := hashToken(token)
 
 	now := getTime().Unix()
-
-	addr := c.RemoteAddr()
-	clientIP, err := network.GetIPFromAddress(addr)
-	if err != nil {
-		s.log.Debug("Failed to get IP from client address", "addr", addr)
-		clientIP = nil
-	}
-	s.log.Debug("Got IP address from client address", "addr", addr, "ip", clientIP)
 
 	clientIPStr := clientIP.String()
 	if len(clientIP) == 0 {
@@ -89,7 +80,7 @@ func (s *UserAuthTokenService) CreateToken(c *models.ReqContext, user *models.Us
 		AuthToken:     hashedToken,
 		PrevAuthToken: hashedToken,
 		ClientIp:      clientIPStr,
-		UserAgent:     c.Req.UserAgent(),
+		UserAgent:     userAgent,
 		RotatedAt:     now,
 		CreatedAt:     now,
 		UpdatedAt:     now,
@@ -97,7 +88,7 @@ func (s *UserAuthTokenService) CreateToken(c *models.ReqContext, user *models.Us
 		AuthTokenSeen: false,
 	}
 
-	err = s.SQLStore.WithDbSession(c.Req.Context(), func(dbSession *sqlstore.DBSession) error {
+	err = s.SQLStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
 		_, err = dbSession.Insert(&userAuthToken)
 		return err
 	})
