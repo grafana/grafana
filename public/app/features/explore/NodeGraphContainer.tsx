@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraphView } from '@grafana/ui/src/components/ServiceMap/GraphView';
+import { NodeGraph } from '@grafana/ui';
 import { DataFrame, TimeRange } from '@grafana/data';
 import { ExploreId, StoreState } from '../../types';
 import { splitOpen } from './state/main';
@@ -7,7 +7,7 @@ import { connect } from 'react-redux';
 import { Collapse } from '@grafana/ui';
 import { useLinks } from './utils/links';
 
-interface ServiceMapContainerProps {
+interface Props {
   // Edges and Nodes are separate frames
   dataFrames: DataFrame[];
   exploreId: ExploreId;
@@ -15,14 +15,14 @@ interface ServiceMapContainerProps {
   splitOpen: typeof splitOpen;
   short?: boolean;
 }
-export function UnconnectedServiceMapContainer(props: ServiceMapContainerProps) {
+export function UnconnectedNodeGraphContainer(props: Props) {
   const { dataFrames, range, splitOpen, short } = props;
   const getLinks = useLinks(range, splitOpen);
 
   return (
     <div style={{ height: short ? 300 : 600 }}>
       <Collapse label="Service Map" isOpen>
-        <GraphView dataFrames={dataFrames} getLinks={getLinks} />
+        <NodeGraph dataFrames={dataFrames} getLinks={getLinks} />
       </Collapse>
     </div>
   );
@@ -38,4 +38,4 @@ const mapDispatchToProps = {
   splitOpen,
 };
 
-export const ServiceMapContainer = connect(mapStateToProps, mapDispatchToProps)(UnconnectedServiceMapContainer);
+export const NodeGraphContainer = connect(mapStateToProps, mapDispatchToProps)(UnconnectedNodeGraphContainer);

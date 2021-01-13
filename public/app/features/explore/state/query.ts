@@ -648,7 +648,7 @@ export const processQueryResponse = (
     logsResult,
     tableResult,
     traceFrames,
-    serviceMapFrames,
+    nodeGraphFrames,
   } = response;
 
   if (error) {
@@ -702,6 +702,6 @@ export const processQueryResponse = (
     showMetrics: !!graphResult,
     showTable: !!tableResult,
     showTrace: !!traceFrames.length,
-    showServiceMap: !!serviceMapFrames.length,
+    showNodeGraph: !!nodeGraphFrames.length,
   };
 };

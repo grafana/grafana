@@ -1,17 +1,18 @@
 import React, { MouseEvent } from 'react';
-import { LinkDatum, NodeDatum } from './types';
+import { EdgeDatum, NodeDatum } from './types';
 import { shortenLine } from './utils';
 
 interface Props {
-  link: LinkDatum;
+  edge: EdgeDatum;
   hovering: boolean;
-  onClick: (event: MouseEvent<SVGElement>, link: LinkDatum) => void;
+  onClick: (event: MouseEvent<SVGElement>, link: EdgeDatum) => void;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
 }
-export function Link(props: Props) {
-  const { link, onClick, onMouseEnter, onMouseLeave, hovering } = props;
-  const { source, target } = link as { source: NodeDatum; target: NodeDatum };
+export function Edge(props: Props) {
+  const { edge, onClick, onMouseEnter, onMouseLeave, hovering } = props;
+  // Not great typing but after we do layout these properties are full objects not just references
+  const { source, target } = edge as { source: NodeDatum; target: NodeDatum };
 
   // As the nodes have some radius we want edges to end outside of the node circle.
   const line = shortenLine(
@@ -25,7 +26,7 @@ export function Link(props: Props) {
   );
 
   return (
-    <g onClick={event => onClick(event, link)} style={{ cursor: 'pointer' }}>
+    <g onClick={event => onClick(event, edge)} style={{ cursor: 'pointer' }}>
       <line
         strokeWidth={hovering ? 2 : 1}
         stroke={'#999'}
@@ -43,10 +44,10 @@ export function Link(props: Props) {
         y2={line.y2}
         strokeWidth={20}
         onMouseEnter={() => {
-          onMouseEnter(link.id);
+          onMouseEnter(edge.id);
         }}
         onMouseLeave={() => {
-          onMouseLeave(link.id);
+          onMouseLeave(edge.id);
         }}
       />
     </g>

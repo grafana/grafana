@@ -31,7 +31,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
       tableFrames: [],
       logsFrames: [],
       traceFrames: [],
-      serviceMapFrames: [],
+      nodeGraphFrames: [],
       graphResult: null,
       tableResult: null,
       logsResult: null,
@@ -42,7 +42,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
   const tableFrames: DataFrame[] = [];
   const logsFrames: DataFrame[] = [];
   const traceFrames: DataFrame[] = [];
-  const serviceMapFrames: DataFrame[] = [];
+  const nodeGraphFrames: DataFrame[] = [];
 
   for (const frame of data.series) {
     switch (frame.meta?.preferredVisualisationType) {
@@ -58,8 +58,8 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
       case 'table':
         tableFrames.push(frame);
         break;
-      case 'serviceMap':
-        serviceMapFrames.push(frame);
+      case 'nodeGraph':
+        nodeGraphFrames.push(frame);
         break;
       default:
         if (isTimeSeries(frame)) {
@@ -78,7 +78,7 @@ export const decorateWithFrameTypeMetadata = (data: PanelData): ExplorePanelData
     tableFrames,
     logsFrames,
     traceFrames,
-    serviceMapFrames,
+    nodeGraphFrames,
     graphResult: null,
     tableResult: null,
     logsResult: null,

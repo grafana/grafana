@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { forceSimulation, forceLink, forceCollide, forceX } from 'd3-force';
-import { LinkDatum, NodeDatum } from './types';
+import { EdgeDatum, NodeDatum } from './types';
 
 export interface Config {
   linkDistance: number;
@@ -20,13 +20,18 @@ export const defaultConfig: Config = {
   tick: 300,
 };
 
+/**
+ * This will return copy of the nods and edges with x,y positions filled in. Also the layout changes source/target props
+ * in edges from string ids to actual nodes.
+ * TODO: the typing could probably be done better so it's clear that props are filled in after the layout
+ */
 export function useLayout(
   rawNodes: NodeDatum[],
-  rawEdges: LinkDatum[],
+  rawEdges: EdgeDatum[],
   config: Config = defaultConfig
-): { bounds: Bounds; nodes: NodeDatum[]; edges: LinkDatum[] } {
+): { bounds: Bounds; nodes: NodeDatum[]; edges: EdgeDatum[] } {
   const [nodes, setNodes] = useState<NodeDatum[]>([]);
-  const [edges, setEdges] = useState<LinkDatum[]>([]);
+  const [edges, setEdges] = useState<EdgeDatum[]>([]);
 
   // TODO the use effect is probably not needed here right now, but may make sense later if we decide to move the layout
   // to webworker or just postpone until other things are rendered. Also right now it memoizes this for us.
@@ -94,7 +99,7 @@ export function useLayout(
  */
 function initializePositions(
   nodes: NodeDatum[],
-  edges: LinkDatum[]
+  edges: EdgeDatum[]
 ): { roots: NodeDatum[]; secondLevelRoots: NodeDatum[] } {
   // To prevent going in cycles
   const alreadyPositioned: { [id: string]: boolean } = {};
@@ -106,7 +111,7 @@ function initializePositions(
       ...acc,
       [sourceId]: [...(acc[sourceId] || []), edge],
     };
-  }, {} as Record<string, LinkDatum[]>);
+  }, {} as Record<string, EdgeDatum[]>);
 
   let roots = nodes.filter(n => n.incoming === 0);
   let secondLevelRoots = roots.reduce<NodeDatum[]>(

@@ -13,7 +13,7 @@ export type NodeDatum = SimulationNodeDatum & {
     color: string;
   }>;
 };
-export type LinkDatum = SimulationLinkDatum<NodeDatum> & {
+export type EdgeDatum = SimulationLinkDatum<NodeDatum> & {
   id: string;
   mainStat: string;
   secondaryStat: string;

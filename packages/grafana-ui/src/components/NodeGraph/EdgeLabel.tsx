@@ -1,5 +1,5 @@
 import React from 'react';
-import { LinkDatum, NodeDatum } from './types';
+import { EdgeDatum, NodeDatum } from './types';
 import { css } from 'emotion';
 import { stylesFactory, useTheme } from '../../themes';
 import { GrafanaTheme } from '@grafana/data';
@@ -29,12 +29,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 });
 
 interface Props {
-  link: LinkDatum;
+  edge: EdgeDatum;
   hovering: boolean;
 }
-export function LinkLabel(props: Props) {
-  const { link, hovering } = props;
-  const { source, target } = link as { source: NodeDatum; target: NodeDatum };
+export function EdgeLabel(props: Props) {
+  const { edge, hovering } = props;
+  // Not great typing but after we do layout these properties are full objects not just references
+  const { source, target } = edge as { source: NodeDatum; target: NodeDatum };
 
   // As the nodes have some radius we want edges to end outside of the node circle.
   const line = shortenLine(
@@ -57,10 +58,10 @@ export function LinkLabel(props: Props) {
     <g className={styles.mainGroup} style={{ display: hovering ? 'initial' : 'none' }}>
       <rect className={styles.background} x={middle.x - 40} y={middle.y - 15} width="80" height="30" rx="5" />
       <text className={styles.text} x={middle.x} y={middle.y - 5} textAnchor={'middle'}>
-        {link.mainStat}
+        {edge.mainStat}
       </text>
       <text className={styles.text} x={middle.x} y={middle.y + 10} textAnchor={'middle'}>
-        {link.secondaryStat}
+        {edge.secondaryStat}
       </text>
     </g>
   );

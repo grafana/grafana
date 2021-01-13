@@ -1,5 +1,5 @@
 import React, { MouseEvent, useCallback, useState } from 'react';
-import { LinkDatum, NodeDatum } from './types';
+import { EdgeDatum, NodeDatum } from './types';
 import { DataFrame, Field, GrafanaTheme, LinkModel } from '@grafana/data';
 import { ContextMenu } from '../ContextMenu/ContextMenu';
 import { useTheme } from '../../themes/ThemeContext';
@@ -16,14 +16,14 @@ export function useContextMenu(
   nodes: DataFrame,
   edges: DataFrame
 ): {
-  onEdgeOpen: (event: MouseEvent<SVGElement>, edge: LinkDatum) => void;
+  onEdgeOpen: (event: MouseEvent<SVGElement>, edge: EdgeDatum) => void;
   onNodeOpen: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
   MenuComponent: React.ReactNode;
 } {
   const [openedNode, setOpenedNode] = useState<{ node: NodeDatum; event: MouseEvent } | undefined>(undefined);
   const onNodeOpen = useCallback((event, node) => setOpenedNode({ node, event }), []);
 
-  const [openedEdge, setOpenedEdge] = useState<{ edge: LinkDatum; event: MouseEvent } | undefined>(undefined);
+  const [openedEdge, setOpenedEdge] = useState<{ edge: EdgeDatum; event: MouseEvent } | undefined>(undefined);
   const onEdgeOpen = useCallback((event, edge) => setOpenedEdge({ edge, event }), []);
 
   let MenuComponent = null;
@@ -99,7 +99,7 @@ function NodeHeader(props: { node: NodeDatum; nodes: DataFrame }) {
   );
 }
 
-function EdgeHeader(props: { edge: LinkDatum; edges: DataFrame }) {
+function EdgeHeader(props: { edge: EdgeDatum; edges: DataFrame }) {
   const index = props.edge.dataFrameRowIndex;
   const fields = getEdgeFields(props.edges);
   return (

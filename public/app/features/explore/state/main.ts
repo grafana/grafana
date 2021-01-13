@@ -88,7 +88,7 @@ export function splitOpen<T extends DataQuery = any>(options?: {
       rightState.urlState = urlState;
       rightState.showLogs = false;
       rightState.showMetrics = false;
-      rightState.showServiceMap = false;
+      rightState.showNodeGraph = false;
       rightState.showTrace = false;
       rightState.showTable = false;
       if (options.range) {

@@ -1,10 +1,10 @@
 import React from 'react';
 import { PanelProps } from '@grafana/data';
 import { Options } from './types';
-import { GraphView } from '@grafana/ui/src/components/ServiceMap/GraphView';
+import { NodeGraph } from '@grafana/ui';
 import { useLinks } from '../../../features/explore/utils/links';
 
-export const ServiceMapPanel: React.FunctionComponent<PanelProps<Options>> = ({ width, height, data }) => {
+export const NodeGraphPanel: React.FunctionComponent<PanelProps<Options>> = ({ width, height, data }) => {
   if (!data || !data.series.length) {
     return (
       <div className="panel-empty">
@@ -17,7 +17,7 @@ export const ServiceMapPanel: React.FunctionComponent<PanelProps<Options>> = ({ 
 
   return (
     <div style={{ width, height }}>
-      <GraphView dataFrames={data.series} getLinks={getLinks} />
+      <NodeGraph dataFrames={data.series} getLinks={getLinks} />
     </div>
   );
 };

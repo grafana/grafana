@@ -1,18 +1,18 @@
 import React, { MutableRefObject, useCallback, useMemo, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 import { usePanning } from './usePanning';
-import { LinkDatum, NodeDatum } from './types';
+import { EdgeDatum, NodeDatum } from './types';
 import { Node } from './Node';
-import { Link } from './Link';
+import { Edge } from './Edge';
 import { ViewControls } from './ViewControls';
 import { DataFrame, Field, FieldType, GrafanaTheme, LinkModel } from '@grafana/data';
 import { useZoom } from './useZoom';
 import { Bounds, Config, defaultConfig, useLayout } from './layout';
-import { LinkArrowMarker } from './LinkArrowMarker';
+import { EdgeArrowMarker } from './EdgeArrowMarker';
 import { stylesFactory, useTheme } from '../../themes';
 import { css } from 'emotion';
 import { useCategorizeFrames } from './useCategorizeFrames';
-import { LinkLabel } from './LinkLabel';
+import { EdgeLabel } from './EdgeLabel';
 import { useContextMenu } from './useContextMenu';
 import { getEdgeFields, getNodeFields } from './utils';
 
@@ -43,17 +43,16 @@ interface Props {
   dataFrames: DataFrame[];
   getLinks: (dataFrame: DataFrame, rowIndex: number) => LinkModel[];
 }
-export function GraphView({ getLinks, dataFrames }: Props) {
+export function NodeGraph({ getLinks, dataFrames }: Props) {
   const { edges: edgesDataFrames, nodes: nodesDataFrames } = useCategorizeFrames(dataFrames);
 
   const [measureRef, { width, height }] = useMeasure();
   const [config, setConfig] = useState<Config>(defaultConfig);
 
-  // We need nodeHover here because if we hover node we also highlight it's edges, while hovering over the edge
-  // highlights just the edge
+  // We need hover state here because for nodes we also highlight edges and for edges have labels separate to make
+  // sure they are visible on top of everything else
   const [nodeHover, setNodeHover] = useState<string | undefined>(undefined);
   const clearNodeHover = useCallback(() => setNodeHover(undefined), []);
-
   const [edgeHover, setEdgeHover] = useState<string | undefined>(undefined);
   const clearEdgeHover = useCallback(() => setEdgeHover(undefined), []);
 
@@ -83,11 +82,11 @@ export function GraphView({ getLinks, dataFrames }: Props) {
         style={{ userSelect: isPanning ? 'none' : 'unset' }}
       >
         <g style={{ transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)` }}>
-          <LinkArrowMarker />
+          <EdgeArrowMarker />
           {edges.map((e, index) => (
-            <Link
+            <Edge
               key={e.id}
-              link={e}
+              edge={e}
               hovering={
                 (e.source as NodeDatum).id === nodeHover ||
                 (e.target as NodeDatum).id === nodeHover ||
@@ -110,9 +109,9 @@ export function GraphView({ getLinks, dataFrames }: Props) {
           ))}
           {/*We split the labels from edges so that thay are shown on top of everything else*/}
           {edges.map((e, index) => (
-            <LinkLabel
+            <EdgeLabel
               key={e.id}
-              link={e}
+              edge={e}
               hovering={
                 (e.source as NodeDatum).id === nodeHover ||
                 (e.target as NodeDatum).id === nodeHover ||
@@ -151,7 +150,7 @@ function usePanAndZoom(bounds: Bounds) {
 /**
  * Transform nodes and edges dataframes into array of objects that the layout code can then work with.
  */
-function processServices(nodes: DataFrame, edges: DataFrame): { nodes: NodeDatum[]; links: LinkDatum[] } {
+function processServices(nodes: DataFrame, edges: DataFrame): { nodes: NodeDatum[]; links: EdgeDatum[] } {
   const nodeFields = getNodeFields(nodes);
 
   const servicesMap =
@@ -188,7 +187,7 @@ function processServices(nodes: DataFrame, edges: DataFrame): { nodes: NodeDatum
       target,
       mainStat: statToString(edgeFields.mainStat, index),
       secondaryStat: statToString(edgeFields.secondaryStat, index),
-    } as LinkDatum;
+    } as EdgeDatum;
   });
 
   return {
