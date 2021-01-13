@@ -1,10 +1,10 @@
 package api
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/models"
+	jsoniter "github.com/json-iterator/go"
 )
 
 // Response is an HTTP response interface.
@@ -87,7 +87,7 @@ func (r streamingResponse) WriteTo(ctx *models.ReqContext) {
 		header[k] = v
 	}
 	ctx.Resp.WriteHeader(r.status)
-	enc := json.NewEncoder(ctx.Resp)
+	enc := jsoniter.NewEncoder(ctx.Resp)
 	if err := enc.Encode(r.body); err != nil {
 		ctx.Logger.Error("Error writing to response", "err", err)
 	}
