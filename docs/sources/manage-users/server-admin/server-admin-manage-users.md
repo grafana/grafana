@@ -27,7 +27,7 @@ Grafana displays all user accounts on the server, listed in alphabetical order b
 - **Server Admin status -** If the user account has **Grafana Admin** option set, then a shield icon is displayed.
 - **Account status -** If the account is disabled, then the **Disabled** label is displayed.
 
-![Server Admin user list](/img/docs/manage-users/server-user-list-7-3.png)
+![Server Admin user list](/img/docs/manage-users/server-user-list-7-3.png "title")
 
 ## View user account details
 
