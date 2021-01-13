@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
 import { dateMath, GrafanaTheme } from '@grafana/data';
-import { stylesFactory } from '@grafana/ui';
+import { RefreshPicker, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { QueryGroup } from '../../query/components/QueryGroup';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
@@ -41,6 +41,10 @@ export class AlertingQueryEditor extends PureComponent<Props> {
     });
   };
 
+  onIntervalChanged = (interval: string) => {
+    this.props.queryOptionsChange({ ...this.props.queryOptions, minInterval: interval });
+  };
+
   render() {
     const { queryOptions, queryRunner } = this.props;
     const styles = getStyles(config.theme);
@@ -49,6 +53,13 @@ export class AlertingQueryEditor extends PureComponent<Props> {
       <div className={styles.wrapper}>
         <div className={styles.container}>
           <h4>Queries</h4>
+          <div className={styles.refreshWrapper}>
+            <RefreshPicker
+              onIntervalChanged={this.onIntervalChanged}
+              onRefresh={this.onRunQueries}
+              intervals={['15s', '30s']}
+            />
+          </div>
           <QueryGroup
             queryRunner={queryRunner}
             options={queryOptions}
@@ -84,6 +95,10 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
       padding: ${theme.spacing.md};
       background-color: ${theme.colors.panelBg};
       height: 100%;
+    `,
+    refreshWrapper: css`
+      display: flex;
+      justify-content: flex-end;
     `,
     editorWrapper: css`
       border: 1px solid ${theme.colors.panelBorder};
