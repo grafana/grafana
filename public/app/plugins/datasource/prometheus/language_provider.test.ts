@@ -519,6 +519,43 @@ describe('Language completion provider', () => {
       expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(2);
     });
   });
+  describe('disabled metrics lookup', () => {
+    it('does not issue any metadata requests when lookup is disabled', async () => {
+      const datasource: PrometheusDatasource = ({
+        metadataRequest: jest.fn(() => ({ data: { data: ['foo', 'bar'] as string[] } })),
+        getTimeRange: jest.fn(() => ({ start: 0, end: 1 })),
+        lookupsDisabled: true,
+      } as any) as PrometheusDatasource;
+      const instance = new LanguageProvider(datasource);
+      const value = Plain.deserialize('{}');
+      const ed = new SlateEditor({ value });
+      const valueWithSelection = ed.moveForward(1).value;
+      const args = {
+        text: '',
+        prefix: '',
+        wrapperClasses: ['context-labels'],
+        value: valueWithSelection,
+      };
+
+      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
+      await instance.start();
+      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
+      await instance.provideCompletionItems(args);
+      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
+    });
+    it('issues metadata requests when lookup is not disabled', async () => {
+      const datasource: PrometheusDatasource = ({
+        metadataRequest: jest.fn(() => ({ data: { data: ['foo', 'bar'] as string[] } })),
+        getTimeRange: jest.fn(() => ({ start: 0, end: 1 })),
+        lookupsDisabled: false,
+      } as any) as PrometheusDatasource;
+      const instance = new LanguageProvider(datasource);
+
+      expect((datasource.metadataRequest as Mock).mock.calls.length).toBe(0);
+      await instance.start();
+      expect((datasource.metadataRequest as Mock).mock.calls.length).toBeGreaterThan(0);
+    });
+  });
 });
 
 const simpleMetricLabelsResponse = {

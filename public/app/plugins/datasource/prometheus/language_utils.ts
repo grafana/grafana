@@ -1,6 +1,6 @@
 import { PromMetricsMetadata } from './types';
 import { addLabelToQuery } from './add_label_to_query';
-import { AUTOCOMPLETE_LIMIT } from './language_provider';
+import { SUGGESTIONS_LIMIT } from './language_provider';
 
 export const RATE_RANGES = ['1m', '5m', '10m', '30m', '1h'];
 
@@ -44,11 +44,9 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
 
   // valueArray that we are going to return in the object
   const valueArray: { [key: string]: string[] } = {};
-  Object.keys(valueSet)
-    .slice(0, AUTOCOMPLETE_LIMIT)
-    .forEach(key => {
-      valueArray[key] = Array.from(valueSet[key]).slice(0, AUTOCOMPLETE_LIMIT);
-    });
+  limitSuggestions(Object.keys(valueSet)).forEach(key => {
+    valueArray[key] = limitSuggestions(Array.from(valueSet[key]));
+  });
 
   return { values: valueArray, keys: Object.keys(valueArray) };
 }
@@ -206,8 +204,10 @@ export function roundSecToMin(seconds: number): number {
   return Math.floor(seconds / 60);
 }
 
+export function limitSuggestions(items: string[]) {
+  return items.slice(0, SUGGESTIONS_LIMIT);
+}
+
 export function addLimitInfo(items: any[] | undefined): string {
-  return items && items.length >= AUTOCOMPLETE_LIMIT
-    ? `, limited to the first ${AUTOCOMPLETE_LIMIT} received items`
-    : '';
+  return items && items.length >= SUGGESTIONS_LIMIT ? `, limited to the first ${SUGGESTIONS_LIMIT} received items` : '';
 }

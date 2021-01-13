@@ -12,6 +12,7 @@ import {
   processLabels,
   roundSecToMin,
   addLimitInfo,
+  limitSuggestions,
 } from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
@@ -23,7 +24,7 @@ const EMPTY_SELECTOR = '{}';
 const HISTORY_ITEM_COUNT = 5;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
 // Max number of items - metrics, labels, values - that we display. Prevents running out of memory.
-export const AUTOCOMPLETE_LIMIT = 10000;
+export const SUGGESTIONS_LIMIT = 10000;
 
 const wrapLabel = (label: string): CompletionItem => ({ label });
 
@@ -240,7 +241,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       const limitInfo = addLimitInfo(metrics);
       suggestions.push({
         label: `Metrics${limitInfo}`,
-        items: metrics.slice(0, AUTOCOMPLETE_LIMIT).map(m => addMetricsMetadata(m, metricsMetadata)),
+        items: limitSuggestions(metrics).map(m => addMetricsMetadata(m, metricsMetadata)),
       });
     }
 
