@@ -27,13 +27,28 @@ describe('AlertRuleTemplateActions', () => {
     expect(wrapper.find(dataQa('alert-rule-template-edit-button'))).toBeTruthy();
   });
 
-  it('should disable edit button when template is built-in', () => {
+  it('should open delete modal when clicking delete button', () => {
+    const wrapper = mount(
+      <AlertRuleTemplateActions template={formattedTemplateStubs[1]} getAlertRuleTemplates={jest.fn()} />
+    );
+
+    wrapper
+      .find(dataQa('delete-template-button'))
+      .find('button')
+      .simulate('click');
+
+    expect(wrapper.find(dataQa('confirm-delete-modal-button'))).toBeTruthy();
+  });
+
+  it('should disable edit and delete buttons when template is built-in', () => {
     const wrapper = mount(
       <AlertRuleTemplateActions template={formattedTemplateStubs[0]} getAlertRuleTemplates={jest.fn()} />
     );
 
     const editButton = wrapper.find(dataQa('edit-template-button')).find('button');
+    const deleteButton = wrapper.find(dataQa('delete-template-button')).find('button');
 
     expect(editButton.prop('disabled')).toBeTruthy();
+    expect(deleteButton.prop('disabled')).toBeTruthy();
   });
 });
