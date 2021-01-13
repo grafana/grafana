@@ -52,7 +52,7 @@ export enum ScaleDistribution {
  * @alpha
  */
 export interface LineStyle {
-  fill?: 'solid' | 'dash' | 'dot' | 'square'; // cap = 'butt' | 'round' | 'square'
+  fill?: 'solid' | 'dash' | 'dot' | 'square';
   dash?: number[];
 }
 
@@ -64,6 +64,7 @@ export interface LineConfig {
   lineWidth?: number;
   lineInterpolation?: LineInterpolation;
   lineStyle?: LineStyle;
+  lineCap?: 'butt' | 'round' | 'square';
   spanNulls?: boolean;
 }
 

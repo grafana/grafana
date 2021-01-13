@@ -1156,6 +1156,21 @@
                 "id": "custom.lineStyle"
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "F-series"
+            },
+            "properties": [
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "dash": [0, 10],
+                  "fill": "dot"
+                }
+              }
+            ]
           }
         ]
       },
@@ -1311,6 +1326,32 @@
             "type": "signal"
           },
           "stringInput": "6,6"
+        },
+        {
+          "points": [],
+          "stream": {
+            "type": "signal",
+            "speed": 250,
+            "spread": 3.5,
+            "noise": 2.2,
+            "bands": 1
+          },
+          "pulseWave": {
+            "timeStep": 60,
+            "onCount": 3,
+            "onValue": 2,
+            "offCount": 3,
+            "offValue": 1
+          },
+          "csvWave": {
+            "timeStep": 60,
+            "valuesCSV": "0,0,2,2,1,1"
+          },
+          "stringInput": "5,5",
+          "scenarioId": "csv_metric_values",
+          "lines": 10,
+          "refId": "F",
+          "alias": ""
         }
       ],
       "timeFrom": null,
