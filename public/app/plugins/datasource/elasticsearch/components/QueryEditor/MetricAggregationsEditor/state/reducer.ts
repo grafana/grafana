@@ -2,7 +2,12 @@ import { defaultMetricAgg } from '../../../../query_def';
 import { ElasticsearchQuery } from '../../../../types';
 import { removeEmpty } from '../../../../utils';
 import { INIT, InitAction } from '../../state';
-import { isMetricAggregationWithMeta, isMetricAggregationWithSettings, MetricAggregation } from '../aggregations';
+import {
+  isMetricAggregationWithMeta,
+  isMetricAggregationWithSettings,
+  isPipelineAggregation,
+  MetricAggregation,
+} from '../aggregations';
 import { getChildren, metricAggregationConfig } from '../utils';
 import {
   ADD_METRIC,
@@ -64,10 +69,16 @@ export const reducer = (
           return metric;
         }
 
-        return {
+        const newMetric = {
           ...metric,
           field: action.payload.field,
         };
+
+        if (isPipelineAggregation(metric)) {
+          return { ...newMetric, pipelineAgg: action.payload.field };
+        }
+
+        return newMetric;
       });
 
     case TOGGLE_METRIC_VISIBILITY:
