@@ -14,7 +14,7 @@ Grafana also offers a [free account with Grafana Cloud](https://grafana.com/sign
 
 ## Step 1: Install Grafana. 
 
-Grafana offers a [free account with Grafana Cloud](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) (10K metrics, 50gb logs and dashboards) to make starting even easier and faster. Alternatively, Grafana can be installed on many different operating systems. For a list of minimum hardware and software requirements, as well as instructions on installing Grafana, refer to [Install Grafana]({{< relref "../installation/_index.md" >}}).
+Grafana can be installed on many different operating systems. For a list of the minimum hardware and software requirements, as well as instructions on installing Grafana, refer to [Install Grafana]({{< relref "../installation/_index.md" >}}).
 
 ## Step 2: Log in
 
