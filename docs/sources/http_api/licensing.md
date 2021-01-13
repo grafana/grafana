@@ -59,7 +59,7 @@ Status Codes:
 
 ## Remove license from database
 
-> Only available in Grafana Enterprise v7.4+.
+> **Note:** Only available in Grafana Enterprise v7.4+.
 
 `DELETE /api/licensing/token`
 
