@@ -21,7 +21,6 @@ import { GraphLegend } from '../Graph/GraphLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from './types';
-import { SeriesColorChangeHandler } from '../Graph/GraphWithLegend';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -34,7 +33,7 @@ export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
   legend?: LegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
-  onSeriesColorChange?: SeriesColorChangeHandler;
+  onSeriesColorChange?: (label: string, color: string) => void;
 }
 
 const defaultConfig: GraphFieldConfig = {
