@@ -10,6 +10,8 @@ weight = 200
 
 This topic helps you get started with Grafana and build your first dashboard. To learn more about Grafana, refer to [What is Grafana?]({{< relref "_index.md" >}}).
 
+Grafana also offers a [free account with Grafana Cloud](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) to make starting even easier and faster. You can install Grafana to self-host or get a free Grafana Cloud account.
+
 ## Step 1: Install Grafana to self host or get a Free Grafana Cloud Account 
 
 Grafana offers a [free account with Grafana Cloud](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) (10K metrics, 50gb logs and dashboards) to make starting even easier and faster. Alternatively, Grafana can be installed on many different operating systems. For a list of minimum hardware and software requirements, as well as instructions on installing Grafana, refer to [Install Grafana]({{< relref "../installation/_index.md" >}}).
