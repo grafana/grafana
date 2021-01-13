@@ -51,7 +51,7 @@ export const ExemplarsPlugin: React.FC<ExemplarsPluginProps> = ({ exemplars, tim
         y: plotInstance.valToPos(y, yScale),
       };
     },
-    [plotCtx.isPlotReady, plotCtx.getPlotInstance]
+    [plotCtx]
   );
 
   const renderMarker = useCallback(

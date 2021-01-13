@@ -100,7 +100,7 @@ export const ExemplarMarker: React.FC<ExemplarMarkerProps> = ({ timeZone, dataFr
         </div>
       </TooltipContainer>
     );
-  }, []);
+  }, [dataFrame.fields, getFieldLinks, index, onMouseEnter, onMouseLeave, styles, timeFormatter]);
 
   return (
     <>
