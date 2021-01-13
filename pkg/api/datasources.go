@@ -87,6 +87,9 @@ func DeleteDataSourceById(c *models.ReqContext) Response {
 
 	ds, err := getRawDataSourceById(id, c.OrgId)
 	if err != nil {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return Error(404, "Data source not found", nil)
+		}
 		return Error(400, "Failed to delete datasource", nil)
 	}
 
@@ -129,6 +132,9 @@ func DeleteDataSourceByUID(c *models.ReqContext) Response {
 
 	ds, err := getRawDataSourceByUID(uid, c.OrgId)
 	if err != nil {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return Error(404, "Data source not found", nil)
+		}
 		return Error(400, "Failed to delete datasource", nil)
 	}
 
