@@ -21,6 +21,7 @@ import { GraphLegend } from '../Graph/GraphLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from './types';
+import { SeriesColorChangeHandler } from '../Graph/GraphWithLegend';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -33,6 +34,7 @@ export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
   legend?: LegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
+  onSeriesColorChange?: SeriesColorChangeHandler;
 }
 
 const defaultConfig: GraphFieldConfig = {
@@ -51,6 +53,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   timeRange,
   timeZone,
   onLegendClick,
+  onSeriesColorChange,
   ...plotProps
 }) => {
   const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
@@ -222,6 +225,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
           placement={legend!.placement}
           items={legendItemsRef.current}
           displayMode={legend!.displayMode}
+          onSeriesColorChange={onSeriesColorChange}
         />
       </VizLayout.Legend>
     );
