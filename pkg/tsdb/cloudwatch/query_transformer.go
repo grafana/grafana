@@ -122,15 +122,13 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 				ExecutedQueryString: string(eq),
 			}
 
-			if link == "" {
+			if link == "" || len(frame.Fields) < 2 {
 				continue
 			}
 
-			for _, field := range frame.Fields {
-				field.SetConfig(&data.FieldConfig{
-					Links: createDataLinks(link),
-				})
-			}
+			frame.Fields[1].SetConfig(&data.FieldConfig{
+				Links: createDataLinks(link),
+			})
 		}
 
 		queryResult.Dataframes = tsdb.NewDecodedDataFrames(frames)
