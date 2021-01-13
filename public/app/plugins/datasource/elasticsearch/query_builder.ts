@@ -59,7 +59,7 @@ export class ElasticQueryBuilder {
         for (let metric of target.metrics || []) {
           if (metric.id === metricId) {
             if (metric.type === 'count') {
-              queryNode.terms.order['_count'] = aggDef.settings.order;
+              queryNode.terms.order = { _count: aggDef.settings.order };
             } else if (isMetricAggregationWithField(metric)) {
               queryNode.aggs = {};
               queryNode.aggs[metric.id] = {
