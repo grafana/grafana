@@ -8,7 +8,7 @@ weight = 300
 Grafana comes with the following transformations:
 
 - [Reduce](#reduce)
-- [Filter by name](#filter-by-name)
+- [Filter data by name](#filter-data-by-name)
 - [Filter data by query](#filter-data-by-query)
 - [Filter data by value](#filter-data-by-value)
 - [Organize fields](#organize-fields)
@@ -19,13 +19,14 @@ Grafana comes with the following transformations:
 - [Concatenate fields](#concatenate-fields)
 - [Group by](#group-by)
 - [Merge](#merge)
+- [Rename by regex](#rename-by-regex)
 
 Keep reading for detailed descriptions of each type of transformation and the options available for each, as well as suggestions on how to use them.
 
 ## Reduce
 
 The _Reduce_ transformation will apply a calculation to each field in the frame and return a single value.  Time fields are removed when applying
-this transformation.  
+this transformation.
 
 Consider the input:
 
@@ -47,11 +48,11 @@ The reduce transformer has two modes:
 - **Series to rows -** Creates a row for each field and a column for each calculation.
 - **Reduce fields -** Keeps the existing frame structure, but collapses each field into a single value.
 
-For example, if you used the **First** and **Last** calculation with a **Series to rows** transformation, then 
+For example, if you used the **First** and **Last** calculation with a **Series to rows** transformation, then
 the result would be:
 
-| Field   | First   | Last    | 
-| ------- | ------- | ------- | 
+| Field   | First   | Last    |
+| ------- | ------- | ------- |
 | Temp    | 12.3    | 15.4    |
 | Uptime  | 256122  | 1230233 |
 | AQI     | 6.5     | 3.2     |
@@ -76,7 +77,7 @@ Query B:
 
 ## Merge
 
-> **Note:** This transformation is only available in Grafana 7.1+.
+> **Note:** This transformation is available in Grafana 7.1+.
 
 Use this transformation to combine the result from multiple queries into one single result. This is helpful when using the table panel visualization. Values that can be merged are combined into the same row. Values are mergeable if the shared fields contain the same data. For information, refer to [Table panel]({{< relref "../visualizations/table/_index.md" >}}).
 
@@ -103,7 +104,7 @@ Here is the result after applying the Merge transformation.
 | 2020-07-07 11:34:20 | node    | 15     | 25260122  |
 | 2020-07-07 11:24:20 | postgre | 5      | 123001233 |
 
-## Filter by name
+## Filter data by name
 
 Use this transformation to remove portions of the query results.
 
@@ -187,14 +188,12 @@ In the example below, I added two fields together and named them Sum.
 
 ## Labels to fields
 
-> **Note:** In order to apply this transformation, your query needs to return labeled fields.
+This transformation changes time series results that include labels or tags into to a table structure where each label becomes its own field.
 
-When you select this transformation, Grafana automatically transforms all labeled data into fields.
+Given a query result of two time series:
 
-Example: Given a query result of two time series
-
-1: labels Server=Server A, Datacenter=EU
-2: labels Server=Server B, Datacenter=EU
+* Series 1: labels Server=Server A, Datacenter=EU
+* Series 2: labels Server=Server B, Datacenter=EU
 
 This would result in a table like this:
 
@@ -203,7 +202,7 @@ This would result in a table like this:
 | 2020-07-07 11:34:20 | Server A | EU         | 1     |
 | 2020-07-07 11:34:20 | Server B | EU         | 2     |
 
-**Value field name**
+### Value field name
 
 If you selected Server as the **Value field name**, then you would get one field for every value of the Server label.
 
@@ -211,17 +210,35 @@ If you selected Server as the **Value field name**, then you would get one field
 | ------------------- | ---------- | -------- | -------- |
 | 2020-07-07 11:34:20 | EU         | 1        | 2        |
 
-For this example, I manually defined labels in the Random Walk visualization of TestData DB.
+### Merging behavior
 
-{{< docs-imagebox img="/img/docs/transformations/labels-to-fields-before-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+The labels to fields transformer is internally two separate transformations. The first acts on single series and extracts labels to fields. The second is the [merge](#merge) transformation that joins all the results into a single table. The merge transformation tries to join on all matching fields. This merge step is required and cannot be turned off.
 
-After I apply the transformation, my labels appear in the table as fields.
+To illustrate this, here is an example where you have two queries that return time series with no overlapping labels.
 
-{{< docs-imagebox img="/img/docs/transformations/labels-to-fields-after-7-0.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+* Series 1: labels Server=ServerA
+* Series 2: labels Datacenter=EU
+
+This will first result in these two tables:
+
+| Time                | Server  | Value |
+| ------------------- | ------- | ----- |
+| 2020-07-07 11:34:20 | ServerA | 10
+
+| Time                | Datacenter | Value |
+| ------------------- | ---------- | ----- |
+| 2020-07-07 11:34:20 | EU         | 20
+
+After merge:
+
+| Time                | Server  | Value | Datacenter |
+| ------------------- | ------- | ----- | ---------- |
+| 2020-07-07 11:34:20 | ServerA | 10    |            |
+| 2020-07-07 11:34:20 |         | 20    | EU         |
 
 ## Group by
 
-> **Note:** This transformation is only available in Grafana 7.2+.
+> **Note:** This transformation is available in Grafana 7.2+.
 
 This transformation groups the data by a specified field (column) value and processes calculations on each group. Click to see a list of calculation choices. For information about available calculations, refer to the [List of calculations]({{< relref "../calculations-list.md" >}}).
 
@@ -281,7 +298,7 @@ This transformation allows you to extract some key information out of your time 
 
 ## Concatenate fields
 
-> **Note:** This transformation is only available in Grafana 7.3+.
+> **Note:** This transformation is available in Grafana 7.3+.
 
 This transformation combines all fields from all frames into one result.  Consider:
 
@@ -306,7 +323,7 @@ After you concatenate the fields, the data frame would be:
 
 ## Series to rows
 
-> **Note:** This transformation is only available in Grafana 7.1+.
+> **Note:** This transformation is available in Grafana 7.1+.
 
 Use this transformation to combine the result from multiple time series data queries into one single result. This is helpful when using the table panel visualization.
 
@@ -341,7 +358,9 @@ Here is the result after applying the Series to rows transformation.
 | 2020-07-07 09:30:57 | Humidity    | 33    |
 | 2020-07-07 09:30:05 | Temperature | 19    |
 
-## Filter by value
+## Filter data by value
+
+> **Note:** This transformation is available in Grafana 7.4+.
 
 This transformation allows you to filter your data directly in Grafana and remove some data points from your query result. You have the option to include or exclude data that match one or more conditions you define. The conditions are applied on a selected field.
 
@@ -398,3 +417,19 @@ When you have more than one condition, you can choose if you want the action (in
 In the example above we chose **Match all** because we wanted to include the rows that have a temperature lower than 30 _AND_ an altitude higher than 100. If we wanted to include the rows that have a temperature lower than 30 _OR_ an altitude higher than 100 instead, then we would select **Match any**. This would include the first row in the original data, which has a temperature of 32°C (does not match the first condition) but an altitude of 101 (which matches the second condition), so it is included.
 
 Conditions that are invalid or incompletely configured are ignored.
+
+## Rename by regex
+
+> **Note:** This transformation is available in Grafana 7.4+.
+
+Use this transformation to rename parts of the query results using a regular expression and replacement pattern.
+
+You can specify a regular expression, which is only applied to matches, along with a replacement pattern that support back references. For example, let's imagine you're visualizing CPU usage per host and you want to remove the domain name. You could set the regex to `([^\.]+)\..+` and the replacement pattern to `$1`, `web-01.example.com` would become `web-01`.
+
+In the following example, we are stripping the prefix from event types. In the before image, you can see everything is prefixed with `system.`
+
+{{< docs-imagebox img="/img/docs/transformations/rename-by-regex-before-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}
+
+With the transformation applied, you can see we are left with just the remainder of the string.
+
+{{< docs-imagebox img="/img/docs/transformations/rename-by-regex-after-7-3.png" class="docs-image--no-shadow" max-width= "1100px" >}}

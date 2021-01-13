@@ -11,11 +11,11 @@ import config from 'app/core/config';
 // Types
 import {
   DataQuery,
-  DefaultTimeRange,
-  LoadingState,
-  PanelData,
   DataSourceApi,
   DataSourceInstanceSettings,
+  getDefaultTimeRange,
+  LoadingState,
+  PanelData,
 } from '@grafana/data';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import { addQuery } from 'app/core/utils/query';
@@ -62,7 +62,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     data: {
       state: LoadingState.NotStarted,
       series: [],
-      timeRange: DefaultTimeRange,
+      timeRange: getDefaultTimeRange(),
     },
   };
 
@@ -167,8 +167,13 @@ export class QueryGroup extends PureComponent<Props, State> {
     this.setState({ scrollTop: 1000 });
   };
 
+  onUpdateAndRun = (options: QueryGroupOptions) => {
+    this.props.onOptionsChange(options);
+    this.props.onRunQueries();
+  };
+
   renderTopSection(styles: QueriesTabStyls) {
-    const { onOpenQueryInspector, options, onOptionsChange } = this.props;
+    const { onOpenQueryInspector, options } = this.props;
     const { dataSource, data } = this.state;
 
     return (
@@ -199,7 +204,7 @@ export class QueryGroup extends PureComponent<Props, State> {
                   options={options}
                   dataSource={dataSource}
                   data={data}
-                  onChange={onOptionsChange}
+                  onChange={this.onUpdateAndRun}
                 />
               </div>
               {onOpenQueryInspector && (
@@ -235,6 +240,7 @@ export class QueryGroup extends PureComponent<Props, State> {
         onChange={this.onAddMixedQuery}
         current={null}
         autoFocus={true}
+        variables={true}
         onBlur={this.onMixedPickerBlur}
         openMenuOnFocus={true}
       />

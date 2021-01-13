@@ -5,11 +5,55 @@ import { GrafanaTheme, deprecationWarning } from '@grafana/data';
 import { stylesFactory, useTheme } from '../../themes';
 import { focusCss } from '../../themes/mixins';
 
-export interface SwitchProps extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
+export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
   value?: boolean;
 }
 
-export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
+export const Switch = React.forwardRef<HTMLInputElement, Props>(
+  ({ value, checked, disabled = false, onChange, id, ...inputProps }, ref) => {
+    if (checked) {
+      deprecationWarning('Switch', 'checked prop', 'value');
+    }
+
+    const theme = useTheme();
+    const styles = getSwitchStyles(theme);
+    const switchIdRef = useRef(id ? id : uniqueId('switch-'));
+
+    return (
+      <div className={cx(styles.switch)}>
+        <input
+          type="checkbox"
+          disabled={disabled}
+          checked={value}
+          onChange={event => {
+            onChange?.(event);
+          }}
+          id={switchIdRef.current}
+          {...inputProps}
+          ref={ref}
+        />
+        <label htmlFor={switchIdRef.current} />
+      </div>
+    );
+  }
+);
+
+Switch.displayName = 'Switch';
+
+export const InlineSwitch = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
+  const theme = useTheme();
+  const styles = getSwitchStyles(theme);
+
+  return (
+    <div className={styles.inlineContainer}>
+      <Switch {...props} ref={ref} />
+    </div>
+  );
+});
+
+InlineSwitch.displayName = 'Switch';
+
+const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
     switch: css`
       width: 32px;
@@ -71,36 +115,14 @@ export const getSwitchStyles = stylesFactory((theme: GrafanaTheme) => {
         }
       }
     `,
+    inlineContainer: css`
+      padding: 0 ${theme.spacing.sm};
+      height: ${theme.spacing.formInputHeight}px;
+      display: flex;
+      align-items: center;
+      background: ${theme.colors.formInputBg};
+      border: 1px solid ${theme.colors.formInputBorder};
+      border-radius: ${theme.border.radius.md};
+    `,
   };
 });
-
-export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
-  ({ value, checked, disabled = false, onChange, id, ...inputProps }, ref) => {
-    if (checked) {
-      deprecationWarning('Switch', 'checked prop', 'value');
-    }
-
-    const theme = useTheme();
-    const styles = getSwitchStyles(theme);
-    const switchIdRef = useRef(id ? id : uniqueId('switch-'));
-
-    return (
-      <div className={cx(styles.switch)}>
-        <input
-          type="checkbox"
-          disabled={disabled}
-          checked={value}
-          onChange={event => {
-            onChange?.(event);
-          }}
-          id={switchIdRef.current}
-          {...inputProps}
-          ref={ref}
-        />
-        <label htmlFor={switchIdRef.current} />
-      </div>
-    );
-  }
-);
-
-Switch.displayName = 'Switch';

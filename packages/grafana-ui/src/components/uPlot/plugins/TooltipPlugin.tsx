@@ -12,6 +12,9 @@ interface TooltipPluginProps {
   timeZone: TimeZone;
 }
 
+/**
+ * @alpha
+ */
 export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', timeZone }) => {
   const pluginId = 'PlotTooltip';
   const plotContext = usePlotContext();
@@ -63,6 +66,10 @@ export const TooltipPlugin: React.FC<TooltipPluginProps> = ({ mode = 'single', t
               series={data.fields.reduce<SeriesTableRowProps[]>((agg, f, i) => {
                 // skipping time field and non-numeric fields
                 if (f.type === FieldType.time || f.type !== FieldType.number) {
+                  return agg;
+                }
+
+                if (f.config.custom?.hideFrom?.tooltip) {
                   return agg;
                 }
 

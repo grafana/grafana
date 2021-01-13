@@ -24,6 +24,22 @@ describe('ElasticQueryBuilder', () => {
         expect(query.aggs['1'].date_histogram.extended_bounds.min).toBe('$timeFrom');
       });
 
+      it('should clean settings from null values', () => {
+        const query = builder.build({
+          refId: 'A',
+          // The following `missing: null as any` is because previous versions of the DS where
+          // storing null in the query model when inputting an empty string,
+          // which were then removed in the query builder.
+          // The new version doesn't store empty strings at all. This tests ensures backward compatinility.
+          metrics: [{ type: 'avg', id: '0', settings: { missing: null as any, script: '1' } }],
+          timeField: '@timestamp',
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
+        });
+
+        expect(query.aggs['1'].aggs['0'].avg.missing).not.toBeDefined();
+        expect(query.aggs['1'].aggs['0'].avg.script).toBeDefined();
+      });
+
       it('with multiple bucket aggs', () => {
         const query = builder.build({
           refId: 'A',
@@ -243,12 +259,7 @@ describe('ElasticQueryBuilder', () => {
               ],
             },
           },
-          sort: {
-            '@timestamp': {
-              order: 'desc',
-              unmapped_type: 'boolean',
-            },
-          },
+          sort: [{ '@timestamp': { order: 'desc', unmapped_type: 'boolean' } }, { _doc: { order: 'desc' } }],
           script_fields: {},
         });
       });
@@ -390,6 +401,35 @@ describe('ElasticQueryBuilder', () => {
         expect(firstLevel.aggs['2']).not.toBe(undefined);
         expect(firstLevel.aggs['2'].derivative).not.toBe(undefined);
         expect(firstLevel.aggs['2'].derivative.buckets_path).toBe('_count');
+      });
+
+      it('with serial_diff', () => {
+        const query = builder.build({
+          refId: 'A',
+          metrics: [
+            {
+              id: '3',
+              type: 'max',
+              field: '@value',
+            },
+            {
+              id: '2',
+              type: 'serial_diff',
+              field: '3',
+              settings: {
+                lag: 5,
+              },
+            },
+          ],
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '3' }],
+        });
+
+        const firstLevel = query.aggs['3'];
+
+        expect(firstLevel.aggs['2']).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].serial_diff).not.toBe(undefined);
+        expect(firstLevel.aggs['2'].serial_diff.buckets_path).toBe('3');
+        expect(firstLevel.aggs['2'].serial_diff.lag).toBe(5);
       });
 
       it('with bucket_script', () => {
@@ -573,7 +613,10 @@ describe('ElasticQueryBuilder', () => {
           };
           expect(query.query).toEqual(expectedQuery);
 
-          expect(query.sort).toEqual({ '@timestamp': { order: 'desc', unmapped_type: 'boolean' } });
+          expect(query.sort).toEqual([
+            { '@timestamp': { order: 'desc', unmapped_type: 'boolean' } },
+            { _doc: { order: 'desc' } },
+          ]);
 
           const expectedAggs = {
             // FIXME: It's pretty weak to include this '1' in the test as it's not part of what we are testing here and

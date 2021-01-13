@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import classNames from 'classnames';
-import { DataLink, LoadingState, PanelData, PanelMenuItem, QueryResultMetaNotice, ScopedVars } from '@grafana/data';
-import { AngularComponent, config, getTemplateSrv } from '@grafana/runtime';
+import { DataLink, LoadingState, PanelData, PanelMenuItem, QueryResultMetaNotice } from '@grafana/data';
+import { AngularComponent, config } from '@grafana/runtime';
 import { ClickOutsideWrapper, Icon, IconName, Tooltip, stylesFactory } from '@grafana/ui';
 import { selectors } from '@grafana/e2e-selectors';
 
@@ -20,7 +20,6 @@ export interface Props {
   dashboard: DashboardModel;
   title?: string;
   description?: string;
-  scopedVars?: ScopedVars;
   angularComponent?: AngularComponent | null;
   links?: DataLink[];
   error?: string;
@@ -148,9 +147,9 @@ export class PanelHeader extends PureComponent<Props, State> {
   };
 
   render() {
-    const { panel, scopedVars, error, isViewing, isEditing, data, alertState } = this.props;
+    const { panel, error, isViewing, isEditing, data, alertState } = this.props;
     const { menuItems } = this.state;
-    const title = getTemplateSrv().replace(panel.title, scopedVars, 'text');
+    const title = panel.replaceVariables(panel.title, {}, 'text');
 
     const panelHeaderClass = classNames({
       'panel-header': true,

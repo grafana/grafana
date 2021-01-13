@@ -6,9 +6,12 @@ import {
   Field,
   fieldMatchers,
   FieldMatcherID,
+  FieldType,
+  FieldState,
+  DataFrameFieldIndex,
 } from '@grafana/data';
 import { AlignedFrameWithGapTest } from '../uPlot/types';
-import uPlot, { AlignedData, AlignedDataWithGapTest } from 'uplot';
+import uPlot, { AlignedData, JoinNullMode } from 'uplot';
 import { XYFieldMatchers } from './GraphNG';
 
 // the results ofter passing though data
@@ -43,7 +46,8 @@ export function mapDimesions(match: XYFieldMatchers, frame: DataFrame, frames?: 
 export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): AlignedFrameWithGapTest | null {
   const valuesFromFrames: AlignedData[] = [];
   const sourceFields: Field[] = [];
-  const skipGaps: boolean[][] = [];
+  const sourceFieldsRefs: Record<number, DataFrameFieldIndex> = {};
+  const nullModes: JoinNullMode[][] = [];
 
   // Default to timeseries config
   if (!fields) {
@@ -53,41 +57,48 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     };
   }
 
-  for (const frame of frames) {
+  for (let frameIndex = 0; frameIndex < frames.length; frameIndex++) {
+    const frame = frames[frameIndex];
     const dims = mapDimesions(fields, frame, frames);
 
     if (!(dims.x.length && dims.y.length)) {
-      continue; // both x and y matched something!
+      continue; // no numeric and no time fields
     }
 
     if (dims.x.length > 1) {
       throw new Error('Only a single x field is supported');
     }
 
-    let skipGapsFrame: boolean[] = [];
+    let nullModesFrame: JoinNullMode[] = [0];
 
     // Add the first X axis
     if (!sourceFields.length) {
       sourceFields.push(dims.x[0]);
-      skipGapsFrame.push(true);
     }
 
     const alignedData: AlignedData = [
       dims.x[0].values.toArray(), // The x axis (time)
     ];
 
-    // Add the Y values
-    for (const field of dims.y) {
+    for (let fieldIndex = 0; fieldIndex < frame.fields.length; fieldIndex++) {
+      const field = frame.fields[fieldIndex];
+
+      if (!fields.y(field, frame, frames)) {
+        continue;
+      }
+
       let values = field.values.toArray();
-      let spanNulls = field.config.custom.spanNulls || false;
+      let joinNullMode = field.config.custom?.spanNulls ? 0 : 2;
 
       if (field.config.nullValueMode === NullValueMode.AsZero) {
         values = values.map(v => (v === null ? 0 : v));
-        spanNulls = true;
+        joinNullMode = 0;
       }
 
+      sourceFieldsRefs[sourceFields.length] = { frameIndex, fieldIndex };
+
       alignedData.push(values);
-      skipGapsFrame.push(spanNulls);
+      nullModesFrame.push(joinNullMode);
 
       // This will cache an appropriate field name in the field state
       getFieldDisplayName(field, frame, frames);
@@ -95,7 +106,7 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
     }
 
     valuesFromFrames.push(alignedData);
-    skipGaps.push(skipGapsFrame);
+    nullModes.push(nullModesFrame);
   }
 
   if (valuesFromFrames.length === 0) {
@@ -103,94 +114,39 @@ export function alignDataFrames(frames: DataFrame[], fields?: XYFieldMatchers): 
   }
 
   // do the actual alignment (outerJoin on the first arrays)
-  let { data: alignedData, isGap } = outerJoinValues(valuesFromFrames, skipGaps);
+  let { data: alignedData, isGap } = uPlot.join(valuesFromFrames, nullModes);
 
   if (alignedData!.length !== sourceFields.length) {
     throw new Error('outerJoinValues lost a field?');
   }
 
+  let seriesIdx = 0;
   // Replace the values from the outer-join field
   return {
     frame: {
       length: alignedData![0].length,
-      fields: alignedData!.map((vals, idx) => ({
-        ...sourceFields[idx],
-        values: new ArrayVector(vals),
-      })),
+      fields: alignedData!.map((vals, idx) => {
+        let state: FieldState = { ...sourceFields[idx].state };
+
+        if (sourceFields[idx].type !== FieldType.time) {
+          state.seriesIndex = seriesIdx;
+          seriesIdx++;
+        }
+
+        return {
+          ...sourceFields[idx],
+          state,
+          values: new ArrayVector(vals),
+        };
+      }),
     },
     isGap,
-  };
-}
-
-// skipGaps is a tables-matched bool array indicating which series can skip storing indices of original nulls
-export function outerJoinValues(tables: AlignedData[], skipGaps?: boolean[][]): AlignedDataWithGapTest {
-  if (tables.length === 1) {
-    return {
-      data: tables[0],
-      isGap: skipGaps ? (u: uPlot, seriesIdx: number, dataIdx: number) => !skipGaps[0][seriesIdx] : () => true,
-    };
-  }
-
-  let xVals: Set<number> = new Set();
-  let xNulls: Array<Set<number>> = [new Set()];
-
-  for (let ti = 0; ti < tables.length; ti++) {
-    let t = tables[ti];
-    let xs = t[0];
-    let len = xs.length;
-    let nulls: Set<number> = new Set();
-
-    for (let i = 0; i < len; i++) {
-      xVals.add(xs[i]);
-    }
-
-    for (let j = 1; j < t.length; j++) {
-      if (skipGaps == null || !skipGaps[ti][j]) {
-        let ys = t[j];
-
-        for (let i = 0; i < len; i++) {
-          if (ys[i] == null) {
-            nulls.add(xs[i]);
-          }
-        }
+    getDataFrameFieldIndex: (alignedFieldIndex: number) => {
+      const index = sourceFieldsRefs[alignedFieldIndex];
+      if (!index) {
+        throw new Error(`Could not find index for ${alignedFieldIndex}`);
       }
-    }
-
-    xNulls.push(nulls);
-  }
-
-  let data: AlignedData = [Array.from(xVals).sort((a, b) => a - b)];
-
-  let alignedLen = data[0].length;
-
-  let xIdxs = new Map();
-
-  for (let i = 0; i < alignedLen; i++) {
-    xIdxs.set(data[0][i], i);
-  }
-
-  for (const t of tables) {
-    let xs = t[0];
-
-    for (let j = 1; j < t.length; j++) {
-      let ys = t[j];
-
-      let yVals = Array(alignedLen).fill(null);
-
-      for (let i = 0; i < ys.length; i++) {
-        yVals[xIdxs.get(xs[i])] = ys[i];
-      }
-
-      data.push(yVals);
-    }
-  }
-
-  return {
-    data: data,
-    isGap(u: uPlot, seriesIdx: number, dataIdx: number) {
-      // u.data has to be AlignedDate
-      let xVal = u.data[0][dataIdx];
-      return xNulls[seriesIdx].has(xVal!);
+      return index;
     },
   };
 }

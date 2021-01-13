@@ -8,7 +8,7 @@ Grafana supports the [following databases](https://grafana.com/docs/installation
 - [PostgreSQL](https://www.postgresql.org/)
 - [SQLite3](https://www.sqlite.org/)
 
-Grafana uses the [XORM](https://xorm.io) framework for persisting objects to the database. For more information on how to use XORM, refer to the [documentation](http://gobook.io/read/github.com/go-xorm/manual-en-US/).
+Grafana uses the [XORM](https://xorm.io) framework for persisting objects to the database. For more information on how to use XORM, refer to the [documentation](https://gobook.io/read/gitea.com/xorm/manual-en-US/).
 
 [Services](services.md) don't use XORM directly. Instead, services use the _SQL store_, a special type of service that provides an abstraction for the database layer. There are two ways of using the `sqlstore`: using `sqlstore` handlers, and using the `SQLStore` instance.
 

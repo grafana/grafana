@@ -35,6 +35,8 @@ All requests will be made from the browser to Grafana backend/server which in tu
 
 ### Browser (Direct) access
 
+> **Warning:** Browser (Direct) access is deprecated and will be removed in a future release.
+
 All requests will be made from the browser directly to the data source and may be subject to Cross-Origin Resource Sharing (CORS) requirements. The URL needs to be accessible from the browser if you select this access mode.
 
 If you select Browser access you must update your Elasticsearch configuration to allow other domains to access

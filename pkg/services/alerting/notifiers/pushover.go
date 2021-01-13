@@ -387,8 +387,10 @@ func (pn *PushoverNotifier) genPushoverBody(evalContext *alerting.EvalContext, m
 	if err != nil {
 		return nil, b, err
 	}
+	if err := w.Close(); err != nil {
+		return nil, b, err
+	}
 
-	w.Close()
 	headers := map[string]string{
 		"Content-Type": w.FormDataContentType(),
 	}

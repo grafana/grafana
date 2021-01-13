@@ -78,10 +78,17 @@ func (u *WebdavUploader) Upload(ctx context.Context, imgToUpload string) (string
 	if err != nil {
 		return "", err
 	}
-	defer res.Body.Close()
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			logger.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	if res.StatusCode != http.StatusCreated {
-		body, _ := ioutil.ReadAll(res.Body)
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return "", fmt.Errorf("failed to read response body: %w", err)
+		}
 		return "", fmt.Errorf("failed to upload image, statuscode: %d, body: %s", res.StatusCode, body)
 	}
 

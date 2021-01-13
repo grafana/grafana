@@ -131,8 +131,14 @@ export class ElasticQueryBuilder {
 
   documentQuery(query: any, size: number) {
     query.size = size;
-    query.sort = {};
-    query.sort[this.timeField] = { order: 'desc', unmapped_type: 'boolean' };
+    query.sort = [
+      {
+        [this.timeField]: { order: 'desc', unmapped_type: 'boolean' },
+      },
+      {
+        _doc: { order: 'desc' },
+      },
+    ];
 
     // fields field not supported on ES 5.x
     if (this.esVersion < 5) {
@@ -328,10 +334,11 @@ export class ElasticQueryBuilder {
         metricAgg = { field: metric.field };
       }
 
-      metricAgg = {
-        ...metricAgg,
-        ...(isMetricAggregationWithSettings(metric) && metric.settings),
-      };
+      if (isMetricAggregationWithSettings(metric)) {
+        Object.entries(metric.settings || {})
+          .filter(([_, v]) => v !== null)
+          .forEach(([k, v]) => (metricAgg[k] = v));
+      }
 
       aggField[metric.type] = metricAgg;
       nestedAggs.aggs[metric.id] = aggField;

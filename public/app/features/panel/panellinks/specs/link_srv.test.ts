@@ -1,30 +1,15 @@
-import { advanceTo } from 'jest-date-mock';
-import {
-  DataLinkBuiltInVars,
-  FieldType,
-  locationUtil,
-  toDataFrame,
-  VariableModel,
-  VariableOrigin,
-} from '@grafana/data';
+import { FieldType, locationUtil, toDataFrame, VariableOrigin } from '@grafana/data';
 
 import { getDataFrameVars, LinkSrv } from '../link_srv';
 import { TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { updateConfig } from '../../../../core/config';
-import { variableAdapters } from '../../../variables/adapters';
-import { createQueryVariableAdapter } from '../../../variables/query/adapter';
 
 jest.mock('app/core/core', () => ({
   appEvents: {
     on: () => {},
   },
 }));
-
-const dataPointMock = {
-  seriesName: 'A-series',
-  datapoint: [1000000001, 1],
-};
 
 describe('linkSrv', () => {
   let linkSrv: LinkSrv;
@@ -56,116 +41,14 @@ describe('linkSrv', () => {
     timeSrv.setTime({ from: 'now-1h', to: 'now' });
     _dashboard.refresh = false;
 
-    const variablesMock = [
-      {
-        type: 'query',
-        name: 'test1',
-        label: 'Test1',
-        hide: false,
-        current: { value: 'val1' },
-        skipUrlSync: false,
-        getValueForUrl: function() {
-          return 'val1';
-        },
-      } as VariableModel,
-      {
-        type: 'query',
-        name: 'test2',
-        label: 'Test2',
-        hide: false,
-        current: { value: 'val2' },
-        skipUrlSync: false,
-        getValueForUrl: function() {
-          return 'val2';
-        },
-      } as VariableModel,
-    ];
-    const _templateSrv = new TemplateSrv({
-      // @ts-ignore
-      getVariables: () => {
-        return variablesMock;
-      },
-      // @ts-ignore
-      getVariableWithName: (name: string) => {
-        return variablesMock.filter(v => v.name === name)[0];
-      },
-    });
-
-    linkSrv = new LinkSrv(_templateSrv, timeSrv);
+    linkSrv = new LinkSrv(new TemplateSrv(), timeSrv);
   }
-
-  beforeAll(() => {
-    variableAdapters.register(createQueryVariableAdapter());
-  });
 
   beforeEach(() => {
     initLinkSrv();
-    advanceTo(1000000000);
   });
 
   describe('built in variables', () => {
-    it('should add time range to url if $__url_time_range variable present', () => {
-      expect(
-        linkSrv.getDataLinkUIModel(
-          {
-            title: 'Any title',
-            url: `/d/1?$${DataLinkBuiltInVars.keepTime}`,
-          },
-          {},
-          {}
-        ).href
-      ).toEqual('/d/1?from=now-1h&to=now');
-    });
-
-    it('should add all variables to url if $__all_variables variable present', () => {
-      expect(
-        linkSrv.getDataLinkUIModel(
-          {
-            title: 'Any title',
-            url: `/d/1?$${DataLinkBuiltInVars.includeVars}`,
-          },
-          {},
-          {}
-        ).href
-      ).toEqual('/d/1?var-test1=val1&var-test2=val2');
-    });
-
-    it('should interpolate series name', () => {
-      expect(
-        linkSrv.getDataLinkUIModel(
-          {
-            title: 'Any title',
-            url: `/d/1?var-test=$\{${DataLinkBuiltInVars.seriesName}}`,
-          },
-          {
-            __series: {
-              value: {
-                name: 'A-series',
-              },
-              text: 'A-series',
-            },
-          },
-          {}
-        ).href
-      ).toEqual('/d/1?var-test=A-series');
-    });
-    it('should interpolate value time', () => {
-      expect(
-        linkSrv.getDataLinkUIModel(
-          {
-            title: 'Any title',
-            url: `/d/1?time=$\{${DataLinkBuiltInVars.valueTime}}`,
-          },
-          {
-            __value: {
-              value: { time: dataPointMock.datapoint[0] },
-              text: 'Value',
-            },
-          },
-          {}
-        ).href
-      ).toEqual('/d/1?time=1000000001');
-    });
     it('should not trim white space from data links', () => {
       expect(
         linkSrv.getDataLinkUIModel(
@@ -173,16 +56,12 @@ describe('linkSrv', () => {
             title: 'White space',
             url: 'www.google.com?query=some query',
           },
-          {
-            __value: {
-              value: { time: dataPointMock.datapoint[0] },
-              text: 'Value',
-            },
-          },
+          v => v,
           {}
         ).href
       ).toEqual('www.google.com?query=some query');
     });
+
     it('should remove new lines from data link', () => {
       expect(
         linkSrv.getDataLinkUIModel(
@@ -190,12 +69,7 @@ describe('linkSrv', () => {
             title: 'New line',
             url: 'www.google.com?query=some\nquery',
           },
-          {
-            __value: {
-              value: { time: dataPointMock.datapoint[0] },
-              text: 'Value',
-            },
-          },
+          v => v,
           {}
         ).href
       ).toEqual('www.google.com?query=somequery');
@@ -220,12 +94,7 @@ describe('linkSrv', () => {
             title: 'Any title',
             url,
           },
-          {
-            __value: {
-              value: { time: dataPointMock.datapoint[0] },
-              text: 'Value',
-            },
-          },
+          v => v,
           {}
         ).href;
 
@@ -261,12 +130,7 @@ describe('linkSrv', () => {
             title: 'Any title',
             url,
           },
-          {
-            __value: {
-              value: { time: dataPointMock.datapoint[0] },
-              text: 'Value',
-            },
-          },
+          v => v,
           {}
         ).href;
 

@@ -19,10 +19,12 @@ type ReqContext struct {
 	AllowAnonymous bool
 	SkipCache      bool
 	Logger         log.Logger
+	// RequestNonce is a cryptographic request identifier for use with Content Security Policy.
+	RequestNonce string
 }
 
 // Handle handles and logs error by given status.
-func (ctx *ReqContext) Handle(status int, title string, err error) {
+func (ctx *ReqContext) Handle(cfg *setting.Cfg, status int, title string, err error) {
 	if err != nil {
 		ctx.Logger.Error(title, "error", err)
 		if setting.Env != setting.Prod {
@@ -31,10 +33,10 @@ func (ctx *ReqContext) Handle(status int, title string, err error) {
 	}
 
 	ctx.Data["Title"] = title
-	ctx.Data["AppSubUrl"] = setting.AppSubUrl
+	ctx.Data["AppSubUrl"] = cfg.AppSubURL
 	ctx.Data["Theme"] = "dark"
 
-	ctx.HTML(status, setting.ErrTemplateName)
+	ctx.HTML(status, cfg.ErrTemplateName)
 }
 
 func (ctx *ReqContext) IsApiRequest() bool {
