@@ -149,7 +149,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 
 			termsAgg := sr.Aggs[0].Aggregation.Aggregation.(*es.TermsAggregation)
 			So(termsAgg.Order["_count"], ShouldEqual, "asc")
-
 		})
 
 		Convey("With term agg and order by percentiles agg", func() {
