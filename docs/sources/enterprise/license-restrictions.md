@@ -37,7 +37,7 @@ License URL is the root URL of your Grafana instance. The license will not work 
 
 This CSV report helps to identify users, teams, and roles that have been granted `Admin` or `Edit` permissions at the dashboard or folder level.
 
-To download the report (in CSV format) go to **Server Admin** menu, select **Licensing**, scroll down to the bottom of the page and click on **Download report** button.
+To download the report (in CSV format) go to the **Server Admin** > **Licensing**. From the bottom of the page, select **Download report**.
 
 ## Updating license restrictions
 
