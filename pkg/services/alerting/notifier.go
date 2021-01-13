@@ -133,7 +133,6 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 
 	if err := evalContext.evaluateNotificationTemplateFields(); err != nil {
 		n.log.Error("failed trying to evaluate notification template fields", "uid", notifier.GetNotifierUID(), "error", err)
-		return err
 	}
 
 	if err := notifier.Notify(evalContext); err != nil {
