@@ -893,6 +893,41 @@ func TestCloudMonitoring(t *testing.T) {
 					So(frames[0].Fields[1].Name, ShouldEqual, "select_slo_compliance(\"projects/test-proj/services/test-service/serviceLevelObjectives/test-slo\")")
 				})
 			})
+
+			Convey("when mapping google cloud monitoring unit from query to grafana unit", func() {
+				data, err := loadTestFile("./test-data/6-series-response-slo.json")
+				So(err, ShouldBeNil)
+				So(len(data.TimeSeries), ShouldEqual, 1)
+
+				Convey("when cloud monitoring unit does not have a corresponding grafana unit", func() {
+					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+					query := &cloudMonitoringQuery{
+						ProjectName: "test-proj",
+						Selector:    "select_slo_compliance",
+						Service:     "test-service",
+						Slo:         "test-slo",
+						Unit:        "megaseconds",
+					}
+					err = executor.parseResponse(res, data, query)
+					frames, _ := res.Dataframes.Decoded()
+					So(err, ShouldBeNil)
+					So(frames[0].Fields[1].Config.Unit, ShouldEqual, "")
+				})
+				Convey("when cloud monitoring unit has a corresponding grafana unit", func() {
+					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
+					query := &cloudMonitoringQuery{
+						ProjectName: "test-proj",
+						Selector:    "select_slo_compliance",
+						Service:     "test-service",
+						Slo:         "test-slo",
+						Unit:        "bit",
+					}
+					err = executor.parseResponse(res, data, query)
+					frames, _ := res.Dataframes.Decoded()
+					So(err, ShouldBeNil)
+					So(frames[0].Fields[1].Config.Unit, ShouldEqual, "bits")
+				})
+			})
 		})
 
 		Convey("when interpolating filter wildcards", func() {
