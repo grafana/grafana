@@ -31,7 +31,7 @@ func (ng *AlertNG) registerAPIEndpoints() {
 
 // conditionEvalEndpoint handles POST /api/alert-definitions/eval.
 func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertConditionCommand) api.Response {
-	if err := ng.validateCondition(dto.Condition, c.SignedInUser); err != nil {
+	if err := ng.validateCondition(dto.Condition, c.SignedInUser, c.SkipCache); err != nil {
 		return api.Error(400, "invalid condition", err)
 	}
 
@@ -61,7 +61,7 @@ func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) api.Respons
 		return api.Error(400, "Failed to load alert definition conditions", err)
 	}
 
-	if err := ng.validateCondition(*condition, c.SignedInUser); err != nil {
+	if err := ng.validateCondition(*condition, c.SignedInUser, c.SkipCache); err != nil {
 		return api.Error(400, "invalid condition", err)
 	}
 
@@ -122,7 +122,7 @@ func (ng *AlertNG) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd updat
 	cmd.UID = c.ParamsEscape(":alertDefinitionUID")
 	cmd.OrgID = c.SignedInUser.OrgId
 
-	if err := ng.validateCondition(cmd.Condition, c.SignedInUser); err != nil {
+	if err := ng.validateCondition(cmd.Condition, c.SignedInUser, c.SkipCache); err != nil {
 		return api.Error(400, "invalid condition", err)
 	}
 
@@ -137,7 +137,7 @@ func (ng *AlertNG) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd updat
 func (ng *AlertNG) createAlertDefinitionEndpoint(c *models.ReqContext, cmd saveAlertDefinitionCommand) api.Response {
 	cmd.OrgID = c.SignedInUser.OrgId
 
-	if err := ng.validateCondition(cmd.Condition, c.SignedInUser); err != nil {
+	if err := ng.validateCondition(cmd.Condition, c.SignedInUser, c.SkipCache); err != nil {
 		return api.Error(400, "invalid condition", err)
 	}
 

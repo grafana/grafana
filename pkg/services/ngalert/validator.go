@@ -35,7 +35,7 @@ func (ng *AlertNG) validateAlertDefinition(alertDefinition *AlertDefinition, req
 }
 
 // validateCondition validates that condition queries refer to existing datasources
-func (ng *AlertNG) validateCondition(c eval.Condition, user *models.SignedInUser) error {
+func (ng *AlertNG) validateCondition(c eval.Condition, user *models.SignedInUser, skipCache bool) error {
 	var refID string
 
 	if len(c.QueriesAndExpressions) == 0 {
@@ -56,7 +56,7 @@ func (ng *AlertNG) validateCondition(c eval.Condition, user *models.SignedInUser
 			continue
 		}
 
-		_, err = ng.DatasourceCache.GetDatasource(datasourceID, user, false)
+		_, err = ng.DatasourceCache.GetDatasource(datasourceID, user, skipCache)
 		if err != nil {
 			return err
 		}
