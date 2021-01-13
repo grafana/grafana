@@ -9,7 +9,7 @@ aliases = ["/docs/grafana/latest/http_api/licensing/"]
 
 ## Manually force license refresh
 
-> Only available in Grafana Enterprise v7.4+.
+> **Note:** Only available in Grafana Enterprise v7.4+.
 
 `POST /api/licensing/token/renew`
 
