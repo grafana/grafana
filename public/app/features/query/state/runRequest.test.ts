@@ -218,7 +218,7 @@ describe('runRequest', () => {
       // wait a bit
       await sleep(20);
 
-      ctx.emitPacket({ data: [{ name: 'DataB-1' } as DataFrame] });
+      ctx.emitPacket({ data: [{ name: 'DataB-1' } as DataFrame], state: LoadingState.Streaming });
     });
 
     it('should add the correct timeRange property and the request range should not be mutated', () => {
@@ -277,7 +277,6 @@ const expectThatRangeHasNotMutated = (ctx: ScenarioCtx) => {
   // Make sure that the range for request is not changed and that deepfreeze hasn't thrown
   expect(ctx.results[0].request?.range?.to.valueOf()).toBe(ctx.toStartTime.valueOf());
   expect(ctx.results[0].error).not.toBeDefined();
-  expect(ctx.results[0].state).toBe(LoadingState.Done);
 };
 
 async function sleep(ms: number) {
