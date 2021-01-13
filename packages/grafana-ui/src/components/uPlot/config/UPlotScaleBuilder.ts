@@ -1,6 +1,6 @@
 import uPlot, { Scale } from 'uplot';
 import { PlotConfigBuilder } from '../types';
-import { AxisMinMaxMode, ScaleDistribution } from '../config';
+import { ScaleDistribution } from '../config';
 
 export interface ScaleProps {
   scaleKey: string;
@@ -9,7 +9,8 @@ export interface ScaleProps {
   max?: number | null;
   range?: () => number[]; // min/max
   distribution?: ScaleDistribution;
-  mode?: AxisMinMaxMode;
+  softMin?: number | null;
+  softMax?: number | null;
   log?: number;
 }
 
@@ -18,15 +19,14 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
     this.props.min = optMinMax('min', this.props.min, props.min);
     this.props.max = optMinMax('max', this.props.max, props.max);
 
-    // Prefer using soft if that is specified by any field sharing the scale
-    if (props.mode === AxisMinMaxMode.Soft) {
-      this.props.mode = props.mode;
-    }
+    // Soft varient
+    this.props.softMin = optMinMax('min', this.props.softMin, props.softMin);
+    this.props.softMax = optMinMax('max', this.props.softMax, props.softMax);
   }
 
   // uPlot range function
   range = (u: uPlot, dataMin: number, dataMax: number, scaleKey: string) => {
-    const { min, max, mode } = this.props;
+    const { min, max, softMin, softMax } = this.props;
 
     const scale = u.scales[scaleKey];
 
@@ -39,9 +39,7 @@ export class UPlotScaleBuilder extends PlotConfigBuilder<ScaleProps, Scale> {
       [smin, smax] = uPlot.rangeLog(min ?? dataMin, max ?? dataMax, scale.log, true);
     }
 
-    if (mode === AxisMinMaxMode.Soft) {
-      // ??????
-    }
+    console.log('TODO, use soft limits', softMin, softMax);
 
     return [min ?? smin, max ?? smax];
   };

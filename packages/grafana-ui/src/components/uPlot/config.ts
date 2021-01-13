@@ -105,21 +105,14 @@ export interface ScaleDistributionConfig {
 
 /**
  * @alpha
- */
-export enum AxisMinMaxMode {
-  Hard = 'hard',
-  Soft = 'soft',
-}
-
-/**
- * @alpha
  * Axis is actually unique based on the unit... not each field!
  */
 export interface AxisConfig {
   axisPlacement?: AxisPlacement;
   axisLabel?: string;
   axisWidth?: number;
-  axisMinMaxMode?: AxisMinMaxMode;
+  axisSoftMin?: number;
+  axisSoftMax?: number;
   scaleDistribution?: ScaleDistributionConfig;
 }
 
@@ -169,15 +162,6 @@ export const graphFieldOptions = {
     { label: 'Right', value: AxisPlacement.Right },
     { label: 'Hidden', value: AxisPlacement.Hidden },
   ] as Array<SelectableValue<AxisPlacement>>,
-
-  axisMinMaxMode: [
-    { label: 'Hard', value: AxisMinMaxMode.Hard, description: 'The min/max specify the exact limits' },
-    {
-      label: 'Soft',
-      value: AxisMinMaxMode.Soft,
-      description: 'When the value expands beyond the rage, the scale expands to fit',
-    },
-  ] as Array<SelectableValue<AxisMinMaxMode>>,
 
   fillGradient: [
     { label: 'None', value: FillGradientMode.None },
