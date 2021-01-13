@@ -16,6 +16,7 @@ var (
 )
 
 type Response interface {
+	// WriteTo writes to the provided context.
 	WriteTo(ctx *models.ReqContext)
 	// Status gets the response's status.
 	Status() int
