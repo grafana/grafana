@@ -69,7 +69,6 @@ func (s *UserAuthTokenService) CreateToken(ctx context.Context, user *models.Use
 	hashedToken := hashToken(token)
 
 	now := getTime().Unix()
-
 	clientIPStr := clientIP.String()
 	if len(clientIP) == 0 {
 		clientIPStr = ""
