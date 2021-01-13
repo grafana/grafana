@@ -217,6 +217,8 @@ func (e *CloudMonitoringExecutor) executeTimeSeriesQuery(ctx context.Context, ts
 		return nil, err
 	}
 
+	unit := e.resolvePanelUnitFromQueries(queries)
+
 	for _, query := range queries {
 		queryRes, resp, err := e.executeQuery(ctx, query, tsdbQuery)
 		if err != nil {
@@ -236,10 +238,40 @@ func (e *CloudMonitoringExecutor) executeTimeSeriesQuery(ctx context.Context, ts
 			queryRes.Error = err
 		}
 
+		if len(unit) > 0 {
+			frames, _ := queryRes.Dataframes.Decoded()
+			for i := range frames {
+				if frames[i].Fields[1].Config == nil {
+					frames[i].Fields[1].Config = &data.FieldConfig{}
+				}
+				frames[i].Fields[1].Config.Unit = unit
+			}
+			queryRes.Dataframes = tsdb.NewDecodedDataFrames(frames)
+		}
 		result.Results[query.RefID] = queryRes
 	}
 
 	return result, nil
+}
+
+func (e *CloudMonitoringExecutor) resolvePanelUnitFromQueries(queries []*cloudMonitoringQuery) string {
+	if len(queries) == 0 {
+		return ""
+	}
+	unit := queries[0].Unit
+	if len(queries) > 1 {
+		for _, query := range queries[1:] {
+			if query.Unit != unit {
+				return ""
+			}
+		}
+	}
+	if len(unit) > 0 {
+		if val, ok := cloudMonitoringUnitMappings[unit]; ok {
+			return val
+		}
+	}
+	return ""
 }
 
 func (e *CloudMonitoringExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*cloudMonitoringQuery, error) {
@@ -708,11 +740,6 @@ func addConfigData(frames data.Frames, query *cloudMonitoringQuery) data.Frames 
 			URL:         dl,
 		}
 		frames[i].Fields[1].Config.Links = append(frames[i].Fields[1].Config.Links, deepLink)
-		if len(query.Unit) > 0 {
-			if val, ok := cloudMonitoringUnitMappings[query.Unit]; ok {
-				frames[i].Fields[1].Config.Unit = val
-			}
-		}
 	}
 	return frames
 }

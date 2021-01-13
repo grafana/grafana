@@ -765,7 +765,7 @@ func TestCloudMonitoring(t *testing.T) {
 				}
 
 				Convey("timestamps should be in ascending order", func() {
-					// So(frames[0].Fields[0].At(0), ShouldEqual, time.Unix(int64(1550859086000/1000), 0))
+					So(frames[0].Fields[0].At(0), ShouldEqual, time.Unix(int64(1550859086000/1000), 0))
 					So(frames[0].Fields[0].At(1), ShouldEqual, time.Unix(int64(1550859146000/1000), 0))
 				})
 
@@ -777,7 +777,7 @@ func TestCloudMonitoring(t *testing.T) {
 				})
 
 				Convey("value should be correct", func() {
-					// So(frames[8].Fields[1].At(0), ShouldEqual, 381)
+					So(frames[8].Fields[1].At(0), ShouldEqual, 381)
 					So(frames[9].Fields[1].At(0), ShouldEqual, 212)
 					So(frames[10].Fields[1].At(0), ShouldEqual, 56)
 					So(frames[8].Fields[1].At(1), ShouldEqual, 375)
@@ -893,39 +893,62 @@ func TestCloudMonitoring(t *testing.T) {
 					So(frames[0].Fields[1].Name, ShouldEqual, "select_slo_compliance(\"projects/test-proj/services/test-service/serviceLevelObjectives/test-slo\")")
 				})
 			})
-
-			Convey("when mapping google cloud monitoring unit from query to grafana unit", func() {
-				data, err := loadTestFile("./test-data/6-series-response-slo.json")
-				So(err, ShouldBeNil)
-				So(len(data.TimeSeries), ShouldEqual, 1)
-
-				Convey("when cloud monitoring unit does not have a corresponding grafana unit", func() {
-					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-					query := &cloudMonitoringQuery{
-						ProjectName: "test-proj",
-						Selector:    "select_slo_compliance",
-						Service:     "test-service",
-						Slo:         "test-slo",
-						Unit:        "megaseconds",
-					}
-					err = executor.parseResponse(res, data, query)
-					frames, _ := res.Dataframes.Decoded()
-					So(err, ShouldBeNil)
-					So(frames[0].Fields[1].Config.Unit, ShouldEqual, "")
+		})
+		Convey("Parse cloud monitoring unit", func() {
+			Convey("when there is only one query", func() {
+				Convey("and cloud monitoring unit does not have a corresponding grafana unit", func() {
+					queries := []*cloudMonitoringQuery{
+						{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service",
+							Slo: "test-slo", Unit: "megaseconds"}}
+					unit := executor.resolvePanelUnitFromQueries(queries)
+					So(unit, ShouldEqual, "")
 				})
-				Convey("when cloud monitoring unit has a corresponding grafana unit", func() {
-					res := &tsdb.QueryResult{Meta: simplejson.New(), RefId: "A"}
-					query := &cloudMonitoringQuery{
-						ProjectName: "test-proj",
-						Selector:    "select_slo_compliance",
-						Service:     "test-service",
-						Slo:         "test-slo",
-						Unit:        "bit",
+
+				Convey("and cloud monitoring unit has a corresponding grafana unit", func() {
+					for key, element := range cloudMonitoringUnitMappings {
+						queries := []*cloudMonitoringQuery{
+							{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service",
+								Slo: "test-slo", Unit: key}}
+						unit := executor.resolvePanelUnitFromQueries(queries)
+						So(unit, ShouldEqual, element)
 					}
-					err = executor.parseResponse(res, data, query)
-					frames, _ := res.Dataframes.Decoded()
-					So(err, ShouldBeNil)
-					So(frames[0].Fields[1].Config.Unit, ShouldEqual, "bits")
+				})
+			})
+
+			Convey("when there are more than one query", func() {
+				Convey("and all target units are the same", func() {
+					for key, element := range cloudMonitoringUnitMappings {
+						queries := []*cloudMonitoringQuery{
+							{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service1",
+								Slo: "test-slo", Unit: key},
+							{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service2",
+								Slo: "test-slo", Unit: key},
+						}
+						unit := executor.resolvePanelUnitFromQueries(queries)
+						So(unit, ShouldEqual, element)
+					}
+				})
+
+				Convey("and all target units are the same but does not have grafana mappings", func() {
+					queries := []*cloudMonitoringQuery{
+						{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service1",
+							Slo: "test-slo", Unit: "megaseconds"},
+						{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service2",
+							Slo: "test-slo", Unit: "megaseconds"},
+					}
+					unit := executor.resolvePanelUnitFromQueries(queries)
+					So(unit, ShouldEqual, "")
+				})
+
+				Convey("and all target units are not the same", func() {
+					queries := []*cloudMonitoringQuery{
+						{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service1",
+							Slo: "test-slo", Unit: "bit"},
+						{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service2",
+							Slo: "test-slo", Unit: "min"},
+					}
+					unit := executor.resolvePanelUnitFromQueries(queries)
+					So(unit, ShouldEqual, "")
 				})
 			})
 		})
