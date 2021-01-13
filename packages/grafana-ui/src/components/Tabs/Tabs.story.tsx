@@ -1,11 +1,19 @@
 import React from 'react';
+import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
-import { TabsBar, Tab, TabContent } from '@grafana/ui';
+import { TabsBar, Tab, TabContent, Counter } from '@grafana/ui';
+import mdx from './TabsBar.mdx';
+import { CounterProps } from './Counter';
 
 export default {
   title: 'Layout/Tabs',
   decorators: [withCenteredStory],
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 const tabs = [
@@ -43,4 +51,12 @@ export const Simple = () => {
       }}
     </UseState>
   );
+};
+
+export const TabCounter: Story<CounterProps> = args => {
+  return <Counter {...args} />;
+};
+
+TabCounter.args = {
+  value: 10,
 };
