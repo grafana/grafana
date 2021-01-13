@@ -56,7 +56,7 @@ const getLabelStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
-export interface Props extends Themeable {
+export interface TimeRangePickerProps extends Themeable {
   hideText?: boolean;
   value: TimeRange;
   timeZone?: TimeZone;
@@ -68,13 +68,14 @@ export interface Props extends Themeable {
   onMoveForward: () => void;
   onZoom: () => void;
   history?: TimeRange[];
+  hideQuickRanges?: boolean;
 }
 
 export interface State {
   isOpen: boolean;
 }
 
-export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
+export class UnthemedTimeRangePicker extends PureComponent<TimeRangePickerProps, State> {
   state: State = {
     isOpen: false,
   };
@@ -107,6 +108,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
       theme,
       history,
       onChangeTimeZone,
+      hideQuickRanges,
     } = this.props;
 
     const { isOpen } = this.state;
@@ -146,6 +148,7 @@ export class UnthemedTimeRangePicker extends PureComponent<Props, State> {
                   history={history}
                   showHistory
                   onChangeTimeZone={onChangeTimeZone}
+                  hideQuickRanges={hideQuickRanges}
                 />
               </ClickOutsideWrapper>
             )}
@@ -192,7 +195,7 @@ const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; time
   );
 };
 
-type LabelProps = Pick<Props, 'hideText' | 'value' | 'timeZone'>;
+type LabelProps = Pick<TimeRangePickerProps, 'hideText' | 'value' | 'timeZone'>;
 
 export const TimePickerButtonLabel = memo<LabelProps>(({ hideText, value, timeZone }) => {
   const theme = useTheme();
