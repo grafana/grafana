@@ -2,6 +2,7 @@ import {
   DataSourcePluginOptionsEditorProps,
   onUpdateDatasourceJsonDataOptionChecked,
   SelectableValue,
+  updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { EventsWithValidation, InlineFormLabel, LegacyForms, regexValidation } from '@grafana/ui';
 import React, { SyntheticEvent } from 'react';
@@ -105,7 +106,16 @@ export const PromSettings = (props: Props) => {
           </div>
         </div>
       </div>
-      <ExemplarsSettings options={options} onOptionsChange={onOptionsChange} />
+      <ExemplarsSettings
+        options={options.jsonData.exemplarTraceIdDestinations}
+        onChange={exemplarOptions =>
+          updateDatasourcePluginJsonDataOption(
+            { onOptionsChange, options },
+            'exemplarTraceIdDestinations',
+            exemplarOptions
+          )
+        }
+      />
     </>
   );
 };

@@ -41,7 +41,7 @@ export function transform(
   response: FetchResponse<PromDataSuccessResponse>,
   transformOptions: {
     query: PromQueryRequest;
-    exemplarTraceIdDestination?: ExemplarTraceIdDestination;
+    exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
     target: PromQuery;
     responseListLength: number;
     scopedVars?: ScopedVars;
@@ -94,12 +94,15 @@ export function transform(
     dataFrame.meta = { dataTopic: DataTopic.Annotations };
 
     // Add data links if configured
-    if (transformOptions.exemplarTraceIdDestination) {
-      const traceIDField = dataFrame.fields.find(
-        field => field.name === transformOptions.exemplarTraceIdDestination!.name
-      );
-      if (traceIDField) {
-        traceIDField.config.links = getDataLinks(transformOptions.exemplarTraceIdDestination);
+    if (transformOptions.exemplarTraceIdDestinations?.length) {
+      for (const exemplarTraceIdDestination of transformOptions.exemplarTraceIdDestinations) {
+        const traceIDField = dataFrame.fields.find(field => field.name === exemplarTraceIdDestination!.name);
+        if (traceIDField) {
+          const links = getDataLinks(exemplarTraceIdDestination);
+          traceIDField.config.links = traceIDField.config.links?.length
+            ? [...traceIDField.config.links, ...links]
+            : links;
+        }
       }
     }
     return [dataFrame];

@@ -58,7 +58,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   queryTimeout: string;
   httpMethod: string;
   languageProvider: PrometheusLanguageProvider;
-  exemplarTraceIdDestination: ExemplarTraceIdDestination | undefined;
+  exemplarTraceIdDestinations: ExemplarTraceIdDestination[] | undefined;
   lookupsDisabled: boolean;
   customQueryParameters: any;
 
@@ -78,7 +78,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     this.queryTimeout = instanceSettings.jsonData.queryTimeout;
     this.httpMethod = instanceSettings.jsonData.httpMethod || 'GET';
     this.directUrl = instanceSettings.jsonData.directUrl;
-    this.exemplarTraceIdDestination = instanceSettings.jsonData.exemplarTraceIdDestination;
+    this.exemplarTraceIdDestinations = instanceSettings.jsonData.exemplarTraceIdDestinations;
     this.ruleMappings = {};
     this.languageProvider = new PrometheusLanguageProvider(this);
     this.lookupsDisabled = instanceSettings.jsonData.disableMetricsLookup ?? false;
@@ -278,7 +278,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
             target,
             responseListLength: queries.length,
             mixedQueries,
-            exemplarTraceIdDestination: this.exemplarTraceIdDestination,
+            exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
           });
           return {
             data,
@@ -320,7 +320,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
             target,
             responseListLength: queries.length,
             scopedVars,
-            exemplarTraceIdDestination: this.exemplarTraceIdDestination,
+            exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
           });
           return data;
         })

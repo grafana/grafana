@@ -8,8 +8,8 @@ import { XYCanvas } from './XYCanvas';
 interface EventsCanvasProps {
   id: string;
   events: DataFrame[];
-  renderEventMarker: (event: DataFrame, index: number) => React.ReactNode;
-  mapEventToXYCoords: (event: DataFrame, index: number) => { x: number; y: number } | undefined;
+  renderEventMarker: (dataFrame: DataFrame, index: number) => React.ReactNode;
+  mapEventToXYCoords: (dataFrame: DataFrame, index: number) => { x: number; y: number } | undefined;
 }
 
 export function EventsCanvas({ id, events, renderEventMarker, mapEventToXYCoords }: EventsCanvasProps) {
