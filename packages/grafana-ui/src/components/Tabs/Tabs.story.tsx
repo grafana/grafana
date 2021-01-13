@@ -2,7 +2,7 @@ import React from 'react';
 import { Story } from '@storybook/react';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { UseState } from '../../utils/storybook/UseState';
-import { TabsBar, Tab, TabContent, Counter } from '@grafana/ui';
+import { TabsBar, Tab, TabContent, Counter as TabCounter } from '@grafana/ui';
 import mdx from './TabsBar.mdx';
 import { CounterProps } from './Counter';
 
@@ -53,10 +53,10 @@ export const Simple = () => {
   );
 };
 
-export const TabCounter: Story<CounterProps> = args => {
-  return <Counter {...args} />;
+export const Counter: Story<CounterProps> = args => {
+  return <TabCounter {...args} />;
 };
 
-TabCounter.args = {
+Counter.args = {
   value: 10,
 };
