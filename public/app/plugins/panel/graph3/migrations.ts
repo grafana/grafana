@@ -16,6 +16,7 @@ import {
   AxisPlacement,
   DrawStyle,
   LineInterpolation,
+  LineStyle,
   PointVisibility,
 } from '@grafana/ui/src/components/uPlot/config';
 import { Options } from './types';
@@ -51,6 +52,12 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
       ...y1, // Keep the y-axis unit and custom
     };
   }
+
+  // Dashes
+  const dash: LineStyle = {
+    fill: angular.dashes ? 'dash' : 'solid',
+    dash: [angular.dashLength ?? 10, angular.spaceLength ?? 10],
+  };
 
   // "seriesOverrides": [
   //   {
@@ -98,6 +105,8 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
         },
         properties: [],
       };
+      let dashOverride: LineStyle | undefined = undefined;
+
       for (const p of Object.keys(seriesOverride)) {
         const v = seriesOverride[p];
         switch (p) {
@@ -165,9 +174,36 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
               value: 2 + v * 2,
             });
             break;
+          case 'dashLength':
+          case 'spaceLength':
+          case 'dashes':
+            if (!dashOverride) {
+              dashOverride = {
+                fill: dash.fill,
+                dash: [...dash.dash!],
+              };
+            }
+            switch (p) {
+              case 'dashLength':
+                dashOverride.dash![0] = v;
+                break;
+              case 'spaceLength':
+                dashOverride.dash![1] = v;
+                break;
+              case 'dashes':
+                dashOverride.fill = v ? 'dash' : 'solid';
+                break;
+            }
+            break;
           default:
             console.log('Ignore override migration:', seriesOverride.alias, p, v);
         }
+      }
+      if (dashOverride) {
+        rule.properties.push({
+          id: 'custom.lineStyle',
+          value: dashOverride,
+        });
       }
       if (rule.properties.length) {
         overrides.push(rule);
@@ -185,6 +221,9 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
   }
 
   graph.lineWidth = angular.linewidth;
+  if (dash.fill !== 'solid') {
+    graph.lineStyle = dash;
+  }
 
   if (isNumber(angular.pointradius)) {
     graph.pointSize = 2 + angular.pointradius * 2;

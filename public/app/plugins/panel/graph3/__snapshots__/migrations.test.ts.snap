@@ -117,6 +117,13 @@ Object {
         "axisPlacement": "auto",
         "drawStyle": "line",
         "fillOpacity": 10,
+        "lineStyle": Object {
+          "dash": Array [
+            10,
+            10,
+          ],
+          "fill": "dash",
+        },
         "lineWidth": 1,
         "pointSize": 6,
         "showPoints": "never",
@@ -154,6 +161,16 @@ Object {
           Object {
             "id": "custom.axisLabel",
             "value": "Y222",
+          },
+          Object {
+            "id": "custom.lineStyle",
+            "value": Object {
+              "dash": Array [
+                5,
+                8,
+              ],
+              "fill": "dash",
+            },
           },
         ],
       },
