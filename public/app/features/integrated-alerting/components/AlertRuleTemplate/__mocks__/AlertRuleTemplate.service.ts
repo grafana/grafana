@@ -11,4 +11,7 @@ export const AlertRuleTemplateService = {
   async list(): Promise<TemplatesList> {
     return { templates: templateStubs };
   },
+  async delete(): Promise<void> {
+    return Promise.resolve();
+  },
 };

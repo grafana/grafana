@@ -3,6 +3,7 @@ import {
   TemplatesList,
   UploadAlertRuleTemplatePayload,
   UpdateAlertRuleTemplatePayload,
+  DeleteAlertRuleTemplatePayload,
 } from './AlertRuleTemplate.types';
 
 const BASE_URL = `${window.location.origin}/v1/management/ia/Templates`;
@@ -16,5 +17,8 @@ export const AlertRuleTemplateService = {
   },
   async update(payload: UpdateAlertRuleTemplatePayload): Promise<void> {
     return getBackendSrv().post(`${BASE_URL}/Update`, payload);
+  },
+  async delete(payload: DeleteAlertRuleTemplatePayload): Promise<void> {
+    return getBackendSrv().post(`${BASE_URL}/Delete`, payload);
   },
 };
