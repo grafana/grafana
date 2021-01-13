@@ -236,6 +236,14 @@ export class QueryEditorRow extends PureComponent<Props, State> {
     }));
   };
 
+  onClickExample = (query: DataQuery) => {
+    this.props.onChange({
+      ...query,
+      refId: this.props.query.refId,
+    });
+    this.onToggleHelp();
+  };
+
   renderCollapsedText(): string | null {
     const { datasource } = this.state;
     if (datasource?.getQueryDisplayText) {
@@ -300,7 +308,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
   };
 
   render() {
-    const { query, id, index, onChange } = this.props;
+    const { query, id, index } = this.props;
     const { datasource, showingHelp } = this.state;
     const isDisabled = query.hide;
 
@@ -330,7 +338,7 @@ export class QueryEditorRow extends PureComponent<Props, State> {
             <ErrorBoundaryAlert>
               {showingHelp && DatasourceCheatsheet && (
                 <InfoBox onDismiss={this.onToggleHelp}>
-                  <DatasourceCheatsheet onClickExample={query => onChange(query)} datasource={datasource} />
+                  <DatasourceCheatsheet onClickExample={query => this.onClickExample(query)} datasource={datasource} />
                 </InfoBox>
               )}
               {editor}
