@@ -16,6 +16,7 @@ import { DataSourceWithBackend } from '@grafana/runtime';
 import { CloudMonitoringVariableSupport } from './variables';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import { from, Observable, of, throwError } from 'rxjs';
+
 export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   CloudMonitoringQuery,
   CloudMonitoringOptions
@@ -42,21 +43,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   query(request: DataQueryRequest<CloudMonitoringQuery>): Observable<DataQueryResponse> {
     this.intervalMs = request.intervalMs;
     request.targets = request.targets.map(this.migrateQuery);
-    return super.query(request).pipe(
-      mergeMap((res: DataQueryResponse) => {
-        return from(this.processResponse(request, res));
-      })
-    );
-  }
-
-  async processResponse(
-    request: DataQueryRequest<CloudMonitoringQuery>,
-    res: DataQueryResponse
-  ): Promise<DataQueryResponse> {
-    console.log();
-    // const unit = this.resolvePanelUnitFromTargets(request.targets);
-
-    return res;
+    return super.query(request);
   }
 
   async annotationQuery(options: any) {
