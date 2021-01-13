@@ -39,7 +39,7 @@ export type LegendPlacement = 'bottom' | 'right';
 export interface VizLegendOptions {
   displayMode: LegendDisplayMode;
   placement: LegendPlacement;
-  calcs?: string[];
+  calcs: string[];
 }
 
 export type SeriesOptionChangeHandler<TOption> = (label: string, option: TOption) => void;
