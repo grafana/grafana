@@ -283,9 +283,11 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
 
   migrateQuery(query: CloudMonitoringQuery): CloudMonitoringQuery {
     if (!query.hasOwnProperty('metricQuery')) {
-      const { hide, refId, datasource, key, queryType, maxLines, metric, ...rest } = query as any;
+      const { hide, refId, datasource, key, queryType, maxLines, metric, intervalMs, type, ...rest } = query as any;
       return {
         refId,
+        intervalMs,
+        type,
         hide,
         queryType: QueryType.METRICS,
         metricQuery: {

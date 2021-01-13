@@ -236,6 +236,10 @@ type Cfg struct {
 	StrictTransportSecurityMaxAge     int
 	StrictTransportSecurityPreload    bool
 	StrictTransportSecuritySubDomains bool
+	// CSPEnabled toggles Content Security Policy support.
+	CSPEnabled bool
+	// CSPTemplate contains the Content Security Policy template.
+	CSPTemplate string
 
 	TempDataLifetime         time.Duration
 	PluginsEnableAlpha       bool
@@ -596,8 +600,6 @@ func loadSpecifiedConfigFile(configFile string, masterFile *ini.File) error {
 }
 
 func (cfg *Cfg) loadConfiguration(args *CommandLineArgs) (*ini.File, error) {
-	var err error
-
 	// load config defaults
 	defaultConfigFile := path.Join(HomePath, "conf/defaults.ini")
 	configFiles = append(configFiles, defaultConfigFile)
@@ -677,7 +679,11 @@ func setHomePath(args *CommandLineArgs) {
 		return
 	}
 
-	HomePath, _ = filepath.Abs(".")
+	var err error
+	HomePath, err = filepath.Abs(".")
+	if err != nil {
+		panic(err)
+	}
 	// check if homepath is correct
 	if pathExists(filepath.Join(HomePath, "conf/defaults.ini")) {
 		return
@@ -696,6 +702,21 @@ func NewCfg() *Cfg {
 		Logger: log.New("settings"),
 		Raw:    ini.Empty(),
 	}
+}
+
+var theCfg *Cfg
+
+// GetCfg gets the Cfg singleton.
+// XXX: This is only required for integration tests so that the configuration can be reset for each test,
+// as due to how the current DI framework functions, we can't create a new Cfg object every time (the services
+// constituting the DI graph, and referring to a Cfg instance, get created only once).
+func GetCfg() *Cfg {
+	if theCfg != nil {
+		return theCfg
+	}
+
+	theCfg = NewCfg()
+	return theCfg
 }
 
 func (cfg *Cfg) validateStaticRootPath() error {
@@ -1010,6 +1031,8 @@ func readSecuritySettings(iniFile *ini.File, cfg *Cfg) error {
 	cfg.StrictTransportSecurityMaxAge = security.Key("strict_transport_security_max_age_seconds").MustInt(86400)
 	cfg.StrictTransportSecurityPreload = security.Key("strict_transport_security_preload").MustBool(false)
 	cfg.StrictTransportSecuritySubDomains = security.Key("strict_transport_security_subdomains").MustBool(false)
+	cfg.CSPEnabled = security.Key("content_security_policy").MustBool(false)
+	cfg.CSPTemplate = security.Key("content_security_policy_template").MustString("")
 
 	// read data source proxy whitelist
 	DataProxyWhiteList = make(map[string]bool)
