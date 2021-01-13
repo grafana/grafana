@@ -68,16 +68,19 @@ type streamingResponse struct {
 }
 
 // Status gets the response's status.
+// Required to implement api.Response.
 func (r streamingResponse) Status() int {
 	return r.status
 }
 
 // Body gets the response's body.
+// Required to implement api.Response.
 func (r streamingResponse) Body() []byte {
 	return nil
 }
 
 // WriteTo writes the response to the provided context.
+// Required to implement api.Response.
 func (r streamingResponse) WriteTo(ctx *models.ReqContext) {
 	header := ctx.Resp.Header()
 	for k, v := range r.header {
