@@ -1,6 +1,5 @@
 // Store
 import store from 'app/core/store';
-import { store as reduxStore } from 'app/store/store';
 
 // Models
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -22,7 +21,6 @@ import { LS_PANEL_COPY_KEY, PANEL_BORDER } from 'app/core/constants';
 import { CoreEvents } from 'app/types';
 
 import { ShareModal } from 'app/features/dashboard/components/ShareModal';
-import { updateLocation } from 'app/core/actions';
 
 export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: boolean) => {
   // confirm deletion
@@ -43,12 +41,6 @@ export const removePanel = (dashboard: DashboardModel, panel: PanelModel, ask: b
   }
 
   dashboard.removePanel(panel);
-  reduxStore.dispatch(
-    updateLocation({
-      query: { viewPanel: null, editPanel: null, tab: null },
-      partial: true,
-    })
-  );
 };
 
 export const duplicatePanel = (dashboard: DashboardModel, panel: PanelModel) => {
