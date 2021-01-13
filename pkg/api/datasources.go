@@ -31,6 +31,7 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) Response {
 		dsItem := dtos.DataSourceListItemDTO{
 			OrgId:     ds.OrgId,
 			Id:        ds.Id,
+			UID:       ds.Uid,
 			Name:      ds.Name,
 			Url:       ds.Url,
 			Type:      ds.Type,
@@ -59,7 +60,7 @@ func (hs *HTTPServer) GetDataSources(c *models.ReqContext) Response {
 }
 
 func GetDataSourceById(c *models.ReqContext) Response {
-	query := models.GetDataSourceByIdQuery{
+	query := models.GetDataSourceQuery{
 		Id:    c.ParamsInt64(":id"),
 		OrgId: c.OrgId,
 	}
@@ -86,6 +87,9 @@ func DeleteDataSourceById(c *models.ReqContext) Response {
 
 	ds, err := getRawDataSourceById(id, c.OrgId)
 	if err != nil {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return Error(404, "Data source not found", nil)
+		}
 		return Error(400, "Failed to delete datasource", nil)
 	}
 
@@ -93,7 +97,52 @@ func DeleteDataSourceById(c *models.ReqContext) Response {
 		return Error(403, "Cannot delete read-only data source", nil)
 	}
 
-	cmd := &models.DeleteDataSourceByIdCommand{Id: id, OrgId: c.OrgId}
+	cmd := &models.DeleteDataSourceCommand{ID: id, OrgID: c.OrgId}
+
+	err = bus.Dispatch(cmd)
+	if err != nil {
+		return Error(500, "Failed to delete datasource", err)
+	}
+
+	return Success("Data source deleted")
+}
+
+// GET /api/datasources/uid/:uid
+func GetDataSourceByUID(c *models.ReqContext) Response {
+	ds, err := getRawDataSourceByUID(c.Params(":uid"), c.OrgId)
+
+	if err != nil {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return Error(404, "Data source not found", nil)
+		}
+		return Error(500, "Failed to query datasources", err)
+	}
+
+	dtos := convertModelToDtos(ds)
+	return JSON(200, &dtos)
+}
+
+// DELETE /api/datasources/uid/:uid
+func DeleteDataSourceByUID(c *models.ReqContext) Response {
+	uid := c.Params(":uid")
+
+	if uid == "" {
+		return Error(400, "Missing datasource uid", nil)
+	}
+
+	ds, err := getRawDataSourceByUID(uid, c.OrgId)
+	if err != nil {
+		if errors.Is(err, models.ErrDataSourceNotFound) {
+			return Error(404, "Data source not found", nil)
+		}
+		return Error(400, "Failed to delete datasource", nil)
+	}
+
+	if ds.ReadOnly {
+		return Error(403, "Cannot delete read-only data source", nil)
+	}
+
+	cmd := &models.DeleteDataSourceCommand{UID: uid, OrgID: c.OrgId}
 
 	err = bus.Dispatch(cmd)
 	if err != nil {
@@ -110,7 +159,7 @@ func DeleteDataSourceByName(c *models.ReqContext) Response {
 		return Error(400, "Missing valid datasource name", nil)
 	}
 
-	getCmd := &models.GetDataSourceByNameQuery{Name: name, OrgId: c.OrgId}
+	getCmd := &models.GetDataSourceQuery{Name: name, OrgId: c.OrgId}
 	if err := bus.Dispatch(getCmd); err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
 			return Error(404, "Data source not found", nil)
@@ -122,7 +171,7 @@ func DeleteDataSourceByName(c *models.ReqContext) Response {
 		return Error(403, "Cannot delete read-only data source", nil)
 	}
 
-	cmd := &models.DeleteDataSourceByNameCommand{Name: name, OrgId: c.OrgId}
+	cmd := &models.DeleteDataSourceCommand{Name: name, OrgID: c.OrgId}
 	err := bus.Dispatch(cmd)
 	if err != nil {
 		return Error(500, "Failed to delete datasource", err)
@@ -191,7 +240,7 @@ func UpdateDataSource(c *models.ReqContext, cmd models.UpdateDataSourceCommand) 
 		return Error(500, "Failed to update datasource", err)
 	}
 
-	query := models.GetDataSourceByIdQuery{
+	query := models.GetDataSourceQuery{
 		Id:    cmd.Id,
 		OrgId: c.OrgId,
 	}
@@ -238,8 +287,21 @@ func fillWithSecureJSONData(cmd *models.UpdateDataSourceCommand) error {
 }
 
 func getRawDataSourceById(id int64, orgID int64) (*models.DataSource, error) {
-	query := models.GetDataSourceByIdQuery{
+	query := models.GetDataSourceQuery{
 		Id:    id,
+		OrgId: orgID,
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return nil, err
+	}
+
+	return query.Result, nil
+}
+
+func getRawDataSourceByUID(uid string, orgID int64) (*models.DataSource, error) {
+	query := models.GetDataSourceQuery{
+		Uid:   uid,
 		OrgId: orgID,
 	}
 
@@ -252,7 +314,7 @@ func getRawDataSourceById(id int64, orgID int64) (*models.DataSource, error) {
 
 // Get /api/datasources/name/:name
 func GetDataSourceByName(c *models.ReqContext) Response {
-	query := models.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
+	query := models.GetDataSourceQuery{Name: c.Params(":name"), OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
@@ -267,7 +329,7 @@ func GetDataSourceByName(c *models.ReqContext) Response {
 
 // Get /api/datasources/id/:name
 func GetDataSourceIdByName(c *models.ReqContext) Response {
-	query := models.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
+	query := models.GetDataSourceQuery{Name: c.Params(":name"), OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
 		if errors.Is(err, models.ErrDataSourceNotFound) {
@@ -321,6 +383,7 @@ func (hs *HTTPServer) CallDatasourceResource(c *models.ReqContext) {
 func convertModelToDtos(ds *models.DataSource) dtos.DataSource {
 	dto := dtos.DataSource{
 		Id:                ds.Id,
+		UID:               ds.Uid,
 		OrgId:             ds.OrgId,
 		Name:              ds.Name,
 		Url:               ds.Url,
