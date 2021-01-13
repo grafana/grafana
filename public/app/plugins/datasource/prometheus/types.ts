@@ -126,7 +126,7 @@ export function isExemplarData(result: PromData): result is PromExemplarData[] {
   if (result == null || !Array.isArray(result)) {
     return false;
   }
-  return 'exemplars' in (result as any)[0];
+  return 'exemplars' in result[0];
 }
 
 export type MatrixOrVectorResult = PromMatrixData['result'][0] | PromVectorData['result'][0];

@@ -154,7 +154,7 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
     const dsSettings = dataSourceSrv.getInstanceSettings(options.datasourceUid);
 
     dataLinks.push({
-      title: 'Trace: ${__value.raw}',
+      title: `Query with ${dsSettings?.name}`,
       url: '',
       internal: {
         query: { query: '${__value.raw}', queryType: 'getTrace' },
@@ -166,7 +166,7 @@ function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
 
   if (options.url) {
     dataLinks.push({
-      title: 'Trace: ${__value.raw}',
+      title: 'Open link',
       url: options.url,
     });
   }

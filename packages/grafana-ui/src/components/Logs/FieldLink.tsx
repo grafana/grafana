@@ -1,16 +1,12 @@
 import { Field, LinkModel } from '@grafana/data';
-import { css } from 'emotion';
 import React from 'react';
-import { Tag } from '..';
-import { useStyles } from '../../themes';
+import { Button } from '..';
 
 type FieldLinkProps = {
   link: LinkModel<Field>;
 };
 
 export function FieldLink({ link }: FieldLinkProps) {
-  const styles = useStyles(getLinkStyles);
-
   return (
     <a
       href={link.href}
@@ -27,17 +23,7 @@ export function FieldLink({ link }: FieldLinkProps) {
           : undefined
       }
     >
-      <Tag name={link.title} className={styles.tag} colorIndex={6} />
+      <Button icon="external-link-alt">{link.title}</Button>
     </a>
   );
 }
-
-const getLinkStyles = () => {
-  return {
-    tag: css`
-      margin-left: 6px;
-      font-size: 11px;
-      padding: 2px 6px;
-    `,
-  };
-};

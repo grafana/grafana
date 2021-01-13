@@ -43,7 +43,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       legend={options.legend}
       onLegendClick={onLegendClick}
     >
-      <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
+      <TooltipPlugin mode={options.tooltipOptions.mode} timeZone={timeZone} />
       <ZoomPlugin onZoom={onChangeTimeRange} />
       <ContextMenuPlugin timeZone={timeZone} replaceVariables={replaceVariables} />
       {data.annotations ? (
