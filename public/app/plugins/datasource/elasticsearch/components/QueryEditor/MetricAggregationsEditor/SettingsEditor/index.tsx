@@ -1,4 +1,4 @@
-import { InlineField, Input, Switch } from '@grafana/ui';
+import { InlineField, Input, InlineSwitch } from '@grafana/ui';
 import React, { FunctionComponent, ComponentProps, useState } from 'react';
 import { extendedStats } from '../../../../query_def';
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
@@ -34,6 +34,15 @@ export const SettingsEditor: FunctionComponent<Props> = ({ metric, previousMetri
   return (
     <SettingsEditorContainer label={description} hidden={metric.hide}>
       {metric.type === 'derivative' && <SettingField label="Unit" metric={metric} settingName="unit" />}
+
+      {metric.type === 'serial_diff' && (
+        <InlineField label="Lag">
+          <Input
+            onBlur={e => dispatch(changeMetricSetting(metric, 'lag', parseInt(e.target.value, 10)))}
+            defaultValue={metric.settings?.lag}
+          />
+        </InlineField>
+      )}
 
       {metric.type === 'cumulative_sum' && <SettingField label="Format" metric={metric} settingName="format" />}
 
@@ -123,7 +132,11 @@ const ExtendedStatSetting: FunctionComponent<ExtendedStatSettingProps> = ({ stat
 
   return (
     <InlineField label={stat.label} {...inlineFieldProps} key={stat.value}>
-      <Switch id={id} onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)} value={value} />
+      <InlineSwitch
+        id={id}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.checked)}
+        value={value}
+      />
     </InlineField>
   );
 };

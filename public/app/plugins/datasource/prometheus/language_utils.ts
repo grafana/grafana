@@ -42,7 +42,7 @@ export function processLabels(labels: Array<{ [key: string]: string }>, withName
 }
 
 // const cleanSelectorRegexp = /\{(\w+="[^"\n]*?")(,\w+="[^"\n]*?")*\}/;
-export const selectorRegexp = /\{[^}]*?\}/;
+export const selectorRegexp = /\{[^}]*?(\}|$)/;
 export const labelRegexp = /\b(\w+)(!?=~?)("[^"\n]*?")/g;
 export function parseSelector(query: string, cursorOffset = 1): { labelKeys: any[]; selector: string } {
   if (!query.match(selectorRegexp)) {
@@ -184,4 +184,12 @@ export function fixSummariesMetadata(metadata: PromMetricsMetadata): PromMetrics
     }
   }
   return { ...metadata, ...summaryMetadata };
+}
+
+export function roundMsToMin(milliseconds: number): number {
+  return roundSecToMin(milliseconds / 1000);
+}
+
+export function roundSecToMin(seconds: number): number {
+  return Math.floor(seconds / 60);
 }

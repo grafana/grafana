@@ -27,6 +27,33 @@ func TestCreateLibraryPanel(t *testing.T) {
 		})
 }
 
+func TestConnectLibraryPanel(t *testing.T) {
+	testScenario(t, "When an admin tries to create a connection for a library panel that does not exist, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": "unknown", "dashboardId": "1"})
+			response := sc.service.connectHandler(sc.reqContext)
+			require.Equal(t, 404, response.Status())
+		})
+
+	testScenario(t, "When an admin tries to create a connection that already exists, it should succeed",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, "dashboardId": "1"})
+			response = sc.service.connectHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			response = sc.service.connectHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+		})
+}
+
 func TestDeleteLibraryPanel(t *testing.T) {
 	testScenario(t, "When an admin tries to delete a library panel that does not exist, it should fail",
 		func(t *testing.T, sc scenarioContext) {
@@ -64,6 +91,47 @@ func TestDeleteLibraryPanel(t *testing.T) {
 			sc.reqContext.SignedInUser.OrgRole = models.ROLE_ADMIN
 			response = sc.service.deleteHandler(sc.reqContext)
 			require.Equal(t, 404, response.Status())
+		})
+}
+
+func TestDisconnectLibraryPanel(t *testing.T) {
+	testScenario(t, "When an admin tries to remove a connection with a library panel that does not exist, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": "unknown", "dashboardId": "1"})
+			response := sc.service.disconnectHandler(sc.reqContext)
+			require.Equal(t, 404, response.Status())
+		})
+
+	testScenario(t, "When an admin tries to remove a connection that does not exist, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, "dashboardId": "1"})
+			response = sc.service.disconnectHandler(sc.reqContext)
+			require.Equal(t, 404, response.Status())
+		})
+
+	testScenario(t, "When an admin tries to remove a connection that does exist, it should succeed",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, "dashboardId": "1"})
+			response = sc.service.connectHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+			response = sc.service.disconnectHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
 		})
 }
 
@@ -175,6 +243,64 @@ func TestGetAllLibraryPanels(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, result.Result)
 			require.Equal(t, 0, len(result.Result))
+		})
+}
+
+func TestGetConnectedDashboards(t *testing.T) {
+	testScenario(t, "When an admin tries to get connected dashboards for a library panel that does not exist, it should fail",
+		func(t *testing.T, sc scenarioContext) {
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": "unknown"})
+			response := sc.service.getConnectedDashboardsHandler(sc.reqContext)
+			require.Equal(t, 404, response.Status())
+		})
+
+	testScenario(t, "When an admin tries to get connected dashboards for a library panel that exists, but has no connections, it should return none",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+			response = sc.service.getConnectedDashboardsHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			var dashResult libraryPanelDashboardsResult
+			err = json.Unmarshal(response.Body(), &dashResult)
+			require.NoError(t, err)
+			require.Equal(t, 0, len(dashResult.Result))
+		})
+
+	testScenario(t, "When an admin tries to get connected dashboards for a library panel that exists and has connections, it should return connected dashboard IDs",
+		func(t *testing.T, sc scenarioContext) {
+			command := getCreateCommand(1, "Text - Library Panel")
+			response := sc.service.createHandler(sc.reqContext, command)
+			require.Equal(t, 200, response.Status())
+
+			var result libraryPanelResult
+			err := json.Unmarshal(response.Body(), &result)
+			require.NoError(t, err)
+
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, ":dashboardId": "11"})
+			response = sc.service.connectHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID, ":dashboardId": "12"})
+			response = sc.service.connectHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			sc.reqContext.ReplaceAllParams(map[string]string{":uid": result.Result.UID})
+			response = sc.service.getConnectedDashboardsHandler(sc.reqContext)
+			require.Equal(t, 200, response.Status())
+
+			var dashResult libraryPanelDashboardsResult
+			err = json.Unmarshal(response.Body(), &dashResult)
+			require.NoError(t, err)
+			require.Equal(t, 2, len(dashResult.Result))
+			require.Equal(t, int64(11), dashResult.Result[0])
+			require.Equal(t, int64(12), dashResult.Result[1])
 		})
 }
 
@@ -409,6 +535,10 @@ type libraryPanelResult struct {
 
 type libraryPanelsResult struct {
 	Result []libraryPanel `json:"result"`
+}
+
+type libraryPanelDashboardsResult struct {
+	Result []int64 `json:"result"`
 }
 
 func overrideLibraryPanelServiceInRegistry(cfg *setting.Cfg) LibraryPanelService {

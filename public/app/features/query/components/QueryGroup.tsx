@@ -240,6 +240,7 @@ export class QueryGroup extends PureComponent<Props, State> {
         onChange={this.onAddMixedQuery}
         current={null}
         autoFocus={true}
+        variables={true}
         onBlur={this.onMixedPickerBlur}
         openMenuOnFocus={true}
       />

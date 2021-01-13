@@ -63,9 +63,9 @@ Data source insights give you information about how a data source has been used 
 - Average load duration per day (ms)
  
 To find data source insights, go to:
-1. Data source list view
-1. Click on a data source
-1. Click the insights tab
+1. Data source list view.
+1. Click on a data source.
+1. Click the Insights tab.
 
 {{< docs-imagebox img="/img/docs/enterprise/datasource_insights.png" max-width="650px" class="docs-image--no-shadow" >}}
 
