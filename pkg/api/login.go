@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/hex"
 	"errors"
 	"net/http"
@@ -258,7 +259,8 @@ func (hs *HTTPServer) loginUserWithUser(user *models.User, c *models.ReqContext)
 	}
 
 	hs.log.Debug("Got IP address from client address", "addr", addr, "ip", ip)
-	userToken, err := hs.AuthTokenService.CreateToken(c.Req.Context(), user, ip, c.Req.UserAgent())
+	ctx := context.WithValue(c.Req.Context(), models.RequestURIKey{}, c.Req.RequestURI)
+	userToken, err := hs.AuthTokenService.CreateToken(ctx, user, ip, c.Req.UserAgent())
 	if err != nil {
 		return errutil.Wrap("failed to create auth token", err)
 	}

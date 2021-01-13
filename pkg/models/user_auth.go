@@ -46,6 +46,9 @@ type LoginInfo struct {
 	Error         error
 }
 
+// RequestURIKey is used as key to save request URI in contexts
+type RequestURIKey struct{}
+
 // ---------------------
 // COMMANDS
 
