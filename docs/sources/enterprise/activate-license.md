@@ -58,7 +58,7 @@ There are three different ways to add the license to a Grafana instance:
   This option can be set using the `GF_ENTERPRISE_LICENSE_TEXT`
   environment variable.
 
-## Step 3. Ensure that the license file's root url matches the root_url configuration option
+## Step 3. Ensure that the license file's root URL matches the root_url configuration option
 
 Update the [`root_url`]({{< relref "../administration/configuration/#root-url" >}}) in your configuration. It should be the URL that users type in their browsers to access the frontend, not the node hostname(s).
 

@@ -18,7 +18,7 @@ Defaults to `<paths.data>/license.jwt`.
 
 ### license_text
 
-> Only available in Grafana Enterprise v7.4+.
+> **Note:** Available in Grafana Enterprise v7.4+.
 
 When set to the text representation (i.e. content of the license file)
 of the license, Grafana will evaluate and apply the given license to
@@ -26,7 +26,7 @@ the instance.
 
 ### auto_refresh_license
 
-> Only available in Grafana Enterprise v7.4+.
+> **Note:** Available in Grafana Enterprise v7.4+.
 
 When enabled, Grafana will send the license and usage statistics to
 the license issuer. If the license has been updated on the issuer's
