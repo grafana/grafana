@@ -24,7 +24,8 @@ export interface VizLegendItem {
   color: string;
   yAxis: number;
   disabled?: boolean;
-  displayValues?: DisplayValue[];
+  // displayValues?: DisplayValue[];
+  getDisplayValues?: () => DisplayValue[];
   fieldIndex?: DataFrameFieldIndex;
 }
 

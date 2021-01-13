@@ -87,6 +87,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
   // reference change will not triger re-render
   const currentTimeRange = useRef<TimeRange>(timeRange);
+
   useLayoutEffect(() => {
     currentTimeRange.current = timeRange;
   }, [timeRange]);
@@ -184,50 +185,15 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         spanNulls: customConfig.spanNulls || false,
         show: !customConfig.hideFrom?.graph,
         fillGradient: customConfig.fillGradient,
+
         // The following properties are not used in the uPlot config, but are utilized as transport for legend config
         dataFrameFieldIndex,
         fieldName: getFieldDisplayName(field, alignedFrame),
         hideInLegend: customConfig.hideFrom?.legend,
-        getCalcs: (reducers: string[]) => {
-          const fieldCalcs = reduceField({
-            field,
-            reducers,
-          });
-          return reducers.map<DisplayValue>(reducer => {
-            return {
-              ...fmt(fieldCalcs[reducer]),
-              title: reducer,
-            };
-          });
-        },
       });
     }
     return builder;
   }, [configRev, timeZone]);
-
-  const legendItems = useMemo<VizLegendItem[]>(() => {
-    const its = configBuilder.getSeries().map(s => {
-      const seriesConfig = s.props;
-      const fieldIndex = s.props.dataFrameFieldIndex;
-      const axisPlacement = configBuilder.getAxisPlacement(s.props.scaleKey);
-      // TODO: get rid of !s
-      const field = data[fieldIndex!.frameIndex].fields[fieldIndex!.fieldIndex];
-
-      if (seriesConfig.hideInLegend) {
-        return undefined;
-      }
-
-      return {
-        disabled: seriesConfig.show ?? false,
-        fieldIndex,
-        color: seriesConfig.lineColor!,
-        label: getFieldDisplayName(field, alignedFrame),
-        yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
-        displayValues: s.props.getCalcs ? s.props.getCalcs(legend.calcs || []) : [],
-      } as VizLegendItem;
-    });
-    return its.filter(i => i !== undefined) as VizLegendItem[];
-  }, [configBuilder, legend.calcs]);
 
   if (alignedFrameWithGapTest == null) {
     return (
@@ -237,7 +203,50 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     );
   }
 
+  const legendItems = configBuilder
+    .getSeries()
+    .map<VizLegendItem | undefined>(s => {
+      const seriesConfig = s.props;
+      const fieldIndex = seriesConfig.dataFrameFieldIndex;
+      const axisPlacement = configBuilder.getAxisPlacement(s.props.scaleKey);
+
+      if (seriesConfig.hideInLegend || !fieldIndex) {
+        return undefined;
+      }
+
+      const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
+
+      // I don't know what's going on... ;)
+      if (!field) {
+        return undefined;
+      }
+
+      return {
+        disabled: !seriesConfig.show ?? false,
+        fieldIndex,
+        color: seriesConfig.lineColor!,
+        label: seriesConfig.fieldName,
+        yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
+        getDisplayValues: () => {
+          const fmt = field.display ?? defaultFormatter;
+          const fieldCalcs = reduceField({
+            field,
+            reducers: legend.calcs,
+          });
+
+          return legend.calcs.map<DisplayValue>(reducer => {
+            return {
+              ...fmt(fieldCalcs[reducer]),
+              title: reducer,
+            };
+          });
+        },
+      };
+    })
+    .filter(i => i !== undefined) as VizLegendItem[];
+
   let legendElement: React.ReactElement | undefined;
+
   if (hasLegend && legendItems.length > 0) {
     legendElement = (
       <VizLayout.Legend position={legend.placement} maxHeight="35%" maxWidth="60%">

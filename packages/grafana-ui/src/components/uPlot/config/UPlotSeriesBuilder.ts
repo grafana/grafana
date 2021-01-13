@@ -11,7 +11,7 @@ import {
   FillGradientMode,
 } from '../config';
 import { PlotConfigBuilder } from '../types';
-import { DataFrameFieldIndex, DisplayValue } from '@grafana/data';
+import { DataFrameFieldIndex } from '@grafana/data';
 
 export interface SeriesProps extends LineConfig, FillConfig, PointsConfig {
   scaleKey: string;
@@ -20,7 +20,6 @@ export interface SeriesProps extends LineConfig, FillConfig, PointsConfig {
   show?: boolean;
   dataFrameFieldIndex?: DataFrameFieldIndex;
   hideInLegend?: boolean;
-  getCalcs?: (reducers: string[]) => DisplayValue[];
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {

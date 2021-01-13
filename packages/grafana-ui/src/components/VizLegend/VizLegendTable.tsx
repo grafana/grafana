@@ -22,8 +22,8 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
 
   const columns = items
     .map(item => {
-      if (item.displayValues) {
-        return item.displayValues.map(i => i.title);
+      if (item.getDisplayValues) {
+        return item.getDisplayValues().map(i => i.title);
       }
       return [];
     })
@@ -39,8 +39,8 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
 
   const sortedItems = sortKey
     ? sortBy(items, item => {
-        if (item.displayValues) {
-          const stat = item.displayValues.filter(stat => stat.title === sortKey)[0];
+        if (item.getDisplayValues) {
+          const stat = item.getDisplayValues().filter(stat => stat.title === sortKey)[0];
           return stat && stat.numeric;
         }
         return undefined;
