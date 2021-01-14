@@ -2,7 +2,7 @@
 title = "License restrictions"
 description = "Grafana Enterprise license restrictions"
 keywords = ["grafana", "licensing", "enterprise"]
-weight = 8
+weight = 110
 +++
 
 # License restrictions
@@ -43,4 +43,7 @@ To download the report:
 
 ## Update license restrictions
 
-To increase the number of licensed users within Grafana, extend a license, or change your licensed URL, contact [Grafana support](https://grafana.com/profile/org#support) or your Grafana Labs account team. They will update your license, which you can activate from within Grafana. Refer to [Activate a license process](https://grafana.com/docs/grafana/latest/enterprise/activate-license/).
+To increase the number of licensed users within Grafana, extend a license, or change your licensed URL, contact [Grafana support](https://grafana.com/profile/org#support) or your Grafana Labs account team. They will update your license, which you can activate from within Grafana. 
+
+For instructions on how to activate your license after it is updated, refer to 
+[Activate an Enterprise license]({{< relref "./activate-license.md" >}})
