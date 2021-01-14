@@ -15,11 +15,12 @@ import {
   TransformerRegistyItem,
   TransformerUIProps,
 } from '@grafana/data';
-import { FilterPill, HorizontalGroup, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
+import { FilterPill, HorizontalGroup, InlineLabel, Input, LegacyForms, Select, StatsPicker } from '@grafana/ui';
 import {
   BinaryOptions,
   CalculateFieldMode,
   CalculateFieldTransformerOptions,
+  DateOptions,
   getNameFromOptions,
   ReduceOptions,
 } from '@grafana/data/src/transformations/transformers/calculateField';
@@ -32,11 +33,13 @@ interface CalculateFieldTransformerEditorState {
   include: string[];
   names: string[];
   selected: string[];
+  timeFieldNames: Set<string>;
 }
 
 const calculationModes = [
   { value: CalculateFieldMode.BinaryOperation, label: 'Binary operation' },
   { value: CalculateFieldMode.ReduceRow, label: 'Reduce row' },
+  { value: CalculateFieldMode.FormatDate, label: 'Format date' },
 ];
 
 export class CalculateFieldTransformerEditor extends React.PureComponent<
@@ -50,16 +53,19 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
       include: props.options?.reduce?.include || [],
       names: [],
       selected: [],
+      timeFieldNames: new Set(),
     };
   }
 
   componentDidMount() {
     this.initOptions();
+    this.extractTimeFieldNames();
   }
 
   componentDidUpdate(oldProps: CalculateFieldTransformerEditorProps) {
     if (this.props.input !== oldProps.input) {
       this.initOptions();
+      this.extractTimeFieldNames();
     }
   }
 
@@ -127,6 +133,30 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
           return { names, selected };
         })
       );
+  }
+
+  private extractTimeFieldNames() {
+    const { input } = this.props;
+
+    if (!Array.isArray(input)) {
+      return;
+    }
+
+    const timeFieldNames = input.reduce((names, frame) => {
+      if (!frame || !Array.isArray(frame.fields)) {
+        return names;
+      }
+
+      return frame.fields.reduce((names, field) => {
+        if (field.type !== FieldType.time) {
+          return names;
+        }
+
+        return names.add(getFieldDisplayName(field, frame, input));
+      }, names);
+    }, new Set<string>());
+
+    this.setState({ ...this.state, timeFieldNames });
   }
 
   onToggleReplaceFields = () => {
@@ -325,6 +355,66 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
   }
 
   //---------------------------------------------------------
+  // Format date
+  //---------------------------------------------------------
+
+  updateDateOptions = (opts: DateOptions) => {
+    const { options, onChange } = this.props;
+    onChange({
+      ...options,
+      mode: CalculateFieldMode.FormatDate,
+      date: opts,
+    });
+  };
+
+  onDateFormatChanged = (evt: ChangeEvent<HTMLInputElement>) => {
+    const { date } = this.props.options;
+    this.updateDateOptions({
+      ...date!,
+      format: evt.target.value,
+    });
+  };
+
+  onFieldToFormatChanged = (v: SelectableValue<string>) => {
+    const { date } = this.props.options;
+    this.updateDateOptions({
+      ...date!,
+      fieldName: v.value! as BinaryOperationID,
+    });
+  };
+
+  renderFormatDate(options?: DateOptions) {
+    const { timeFieldNames } = this.state;
+    const timeFieldOptions = [...timeFieldNames].map(fn => ({ label: fn, value: fn }));
+
+    return (
+      <div className="gf-form-inline">
+        <div className="gf-form">
+          <InlineLabel className="width-8">Field to format</InlineLabel>
+          <Select
+            isClearable={false}
+            allowCustomValue={false}
+            className="width-18"
+            options={timeFieldOptions}
+            placeholder={'Select field'}
+            value={options?.fieldName ?? ''}
+            onChange={this.onFieldToFormatChanged}
+          />
+          <InlineLabel width="auto" tooltip={'Look at the Moment.js docs for allowed formats'}>
+            Date format
+          </InlineLabel>
+          <Input
+            className="width-10"
+            value={options?.format ?? ''}
+            placeholder={'YYYY-MM-DD'}
+            onChange={this.onDateFormatChanged}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  //---------------------------------------------------------
   // Render
   //---------------------------------------------------------
 
@@ -348,6 +438,7 @@ export class CalculateFieldTransformerEditor extends React.PureComponent<
         </div>
         {mode === CalculateFieldMode.BinaryOperation && this.renderBinaryOperation(options.binary)}
         {mode === CalculateFieldMode.ReduceRow && this.renderReduceRow(options.reduce)}
+        {mode === CalculateFieldMode.FormatDate && this.renderFormatDate(options.date)}
         <div className="gf-form-inline">
           <div className="gf-form">
             <div className="gf-form-label width-8">Alias</div>

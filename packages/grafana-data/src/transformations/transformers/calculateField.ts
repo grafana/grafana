@@ -13,10 +13,12 @@ import { BinaryOperationID, binaryOperators } from '../../utils/binaryOperators'
 import { ensureColumnsTransformer } from './ensureColumns';
 import { getFieldDisplayName } from '../../field';
 import { noopTransformer } from './noop';
+import { dateTimeAsMoment } from '../../datetime';
 
 export enum CalculateFieldMode {
   ReduceRow = 'reduceRow',
   BinaryOperation = 'binary',
+  FormatDate = 'formatDate',
 }
 
 export interface ReduceOptions {
@@ -31,6 +33,11 @@ export interface BinaryOptions {
   right: string;
 }
 
+export interface DateOptions {
+  format?: string;
+  fieldName?: string;
+}
+
 const defaultReduceOptions: ReduceOptions = {
   reducer: ReducerID.sum,
 };
@@ -41,6 +48,17 @@ const defaultBinaryOptions: BinaryOptions = {
   right: '',
 };
 
+const defaultDateOptions: DateOptions = {
+  format: '',
+  fieldName: '',
+};
+
+const fieldTypes: Record<CalculateFieldMode, FieldType> = {
+  [CalculateFieldMode.ReduceRow]: FieldType.number,
+  [CalculateFieldMode.BinaryOperation]: FieldType.number,
+  [CalculateFieldMode.FormatDate]: FieldType.time,
+};
+
 export interface CalculateFieldTransformerOptions {
   // True/False or auto
   timeSeries?: boolean;
@@ -49,6 +67,7 @@ export interface CalculateFieldTransformerOptions {
   // Only one should be filled
   reduce?: ReduceOptions;
   binary?: BinaryOptions;
+  date?: DateOptions;
 
   // Remove other fields
   replaceFields?: boolean;
@@ -84,6 +103,8 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
           creator = getReduceRowCreator(defaults(options.reduce, defaultReduceOptions), data);
         } else if (mode === CalculateFieldMode.BinaryOperation) {
           creator = getBinaryCreator(defaults(options.binary, defaultBinaryOptions), data);
+        } else if (mode === CalculateFieldMode.FormatDate) {
+          creator = getFormatDateCreator(defaults(options.date, defaultDateOptions), data);
         }
 
         // Nothing configured
@@ -100,7 +121,7 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
 
           const field = {
             name: getNameFromOptions(options),
-            type: FieldType.number,
+            type: fieldTypes[mode],
             config: {},
             values,
           };
@@ -213,6 +234,24 @@ function getBinaryCreator(options: BinaryOptions, allFrames: DataFrame[]): Value
   };
 }
 
+function getFormatDateCreator(options: DateOptions, allFrames: DataFrame[]): ValuesCreator {
+  return (frame: DataFrame) => {
+    for (const f of frame.fields) {
+      if (options.fieldName === getFieldDisplayName(f, frame, allFrames)) {
+        return new ArrayVector(
+          f.values.toArray().map(val => {
+            const m = dateTimeAsMoment(val);
+            const formatted = m.format(options.format);
+            return dateTimeAsMoment(formatted).valueOf();
+          })
+        );
+      }
+    }
+
+    return new ArrayVector();
+  };
+}
+
 export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
   if (options.alias?.length) {
     return options.alias;
@@ -228,6 +267,11 @@ export function getNameFromOptions(options: CalculateFieldTransformerOptions) {
     if (r) {
       return r.name;
     }
+  }
+
+  if (options.mode === CalculateFieldMode.FormatDate) {
+    const { date } = options;
+    return `${date?.fieldName ?? ''}`;
   }
 
   return 'math';
