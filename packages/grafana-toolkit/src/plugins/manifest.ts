@@ -7,11 +7,11 @@ const MANIFEST_FILE = 'MANIFEST.txt';
 
 async function* walk(dir: string, baseDir: string): AsyncGenerator<string, any, any> {
   for await (const d of await (fs.promises as any).opendir(dir)) {
-    const entry = path.join(dir, d.name);
+    const entry = path.posix.join(dir, d.name);
     if (d.isDirectory()) {
       yield* await walk(entry, baseDir);
     } else if (d.isFile()) {
-      yield path.relative(baseDir, entry);
+      yield path.posix.relative(baseDir, entry);
     } else if (d.isSymbolicLink()) {
       const realPath = fs.realpathSync(entry);
       if (!realPath.startsWith(baseDir)) {
