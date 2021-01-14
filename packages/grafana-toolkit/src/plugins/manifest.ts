@@ -19,7 +19,7 @@ async function* walk(dir: string, baseDir: string): AsyncGenerator<string, any, 
           `symbolic link ${path.relative(baseDir, entry)} targets a file outside of the base directory: ${baseDir}`
         );
       }
-      yield path.relative(baseDir, entry);
+      yield path.posix.relative(baseDir, entry);
     }
   }
 }
