@@ -81,7 +81,7 @@ To add the Elasticsearch data source:
 | `Time field name` | The name of the field that identiefies the timestamp of your documents.    | `@timestamp`           |
 | `Version`         | The Elasticsearch version you are running.                                 | `7.0+`                 |
 
-Once you click **Save & Test** the following message will appear, confirming that Grafana is able to communicate with your elasticsearch instance:
+Once you click **Save & Test** the following message will appear, confirming that Grafana is able to communicate with your Elasticsearch instance:
 
 ![Elasticsearch confirmation message](/img/docs/getting-started/elasticsearch/confirmation-7-4.png)
 
