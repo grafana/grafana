@@ -210,7 +210,7 @@ function sampleExemplars(events: TimeAndValue[], options: TransformOptions) {
         } else {
           // Then take values only when at least 2 standard deviation distance to previously taken value
           const prev = acc[acc.length - 1];
-          if (standardDeviation && prev - curr - standardDeviation * 2 >= 0) {
+          if (standardDeviation && prev - curr >= 2 * standardDeviation) {
             acc.push(curr);
           }
         }
