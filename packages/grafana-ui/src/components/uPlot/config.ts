@@ -64,7 +64,6 @@ export interface LineConfig {
   lineWidth?: number;
   lineInterpolation?: LineInterpolation;
   lineStyle?: LineStyle;
-  lineCap?: 'butt' | 'round' | 'square';
   spanNulls?: boolean;
 }
 
