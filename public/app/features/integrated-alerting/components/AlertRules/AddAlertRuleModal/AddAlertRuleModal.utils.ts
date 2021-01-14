@@ -103,7 +103,7 @@ export const formatCreateAPIPayload = (data: AddAlertRuleFormValues): AlertRuleC
     custom_labels: {},
     disabled: !enabled,
     channel_ids: notificationChannels ? notificationChannels.map(channel => channel.value) : [],
-    filters: formatFilters(filters),
+    filters: filters ? formatFilters(filters) : [],
     for: `${duration}s`,
     severity: severity.value,
     template_name: template.value,

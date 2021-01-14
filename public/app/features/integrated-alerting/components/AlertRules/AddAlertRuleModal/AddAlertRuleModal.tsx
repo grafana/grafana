@@ -129,7 +129,7 @@ export const AddAlertRuleModal: FC<AddAlertRuleModalProps> = ({ isVisible, setVi
               )}
             </Field>
 
-            <TextareaInputField label={Messages.filtersField} name="filters" validators={[required]} />
+            <TextareaInputField label={Messages.filtersField} name="filters" />
 
             <Field name="notificationChannels">
               {({ input }) => (
