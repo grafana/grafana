@@ -1,6 +1,5 @@
 import React from 'react';
 import { Story } from '@storybook/react';
-import { action } from '@storybook/addon-actions';
 import { FilterPill, FilterPillProps } from './FilterPill';
 import { withCenteredStory } from '@grafana/ui/src/utils/storybook/withCenteredStory';
 import mdx from './FilterPill.mdx';
@@ -12,6 +11,7 @@ export default {
   decorators: [withCenteredStory],
   argTypes: {
     icon: { control: { type: 'select', options: getAvailableIcons() } },
+    onClick: { action: 'Pill Clicked' },
   },
   parameters: {
     docs: {
@@ -21,7 +21,7 @@ export default {
 };
 
 export const Basic: Story<FilterPillProps> = args => {
-  return <FilterPill {...args} onClick={action('Pill clicked')} />;
+  return <FilterPill {...args} />;
 };
 
 Basic.args = {
