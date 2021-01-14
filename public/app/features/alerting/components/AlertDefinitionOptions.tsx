@@ -1,9 +1,8 @@
 import React, { FC, FormEvent, useState } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme } from '@grafana/data';
-import { Field, Input, Select, Tab, TabContent, TabsBar, TextArea, useStyles } from '@grafana/ui';
+import { Field, Input, Tab, TabContent, TabsBar, TextArea, useStyles } from '@grafana/ui';
 import { AlertDefinition, NotificationChannelType } from 'app/types';
-import { mapChannelsToSelectableValue } from '../utils/notificationChannels';
 
 interface Props {
   alertDefinition: AlertDefinition;
@@ -21,7 +20,7 @@ const tabs = [
   { id: Tabs.Panel, text: 'Panel' },
 ];
 
-export const AlertDefinitionOptions: FC<Props> = ({ alertDefinition, notificationChannelTypes, onChange }) => {
+export const AlertDefinitionOptions: FC<Props> = ({ alertDefinition, onChange }) => {
   const styles = useStyles(getStyles);
   const [activeTab, setActiveTab] = useState<string>(Tabs.Alert);
 
@@ -58,13 +57,6 @@ export const AlertDefinitionOptions: FC<Props> = ({ alertDefinition, notificatio
             <Field label="Conditions">
               <div></div>
             </Field>
-            {notificationChannelTypes.length > 0 && (
-              <>
-                <Field label="Notification channel">
-                  <Select options={mapChannelsToSelectableValue(notificationChannelTypes, false)} onChange={onChange} />
-                </Field>
-              </>
-            )}
           </div>
         )}
         {activeTab === Tabs.Panel && <div>VizPicker</div>}

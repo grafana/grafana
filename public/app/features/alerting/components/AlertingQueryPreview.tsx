@@ -10,12 +10,12 @@ import { PreviewInstancesTab } from './PreviewInstancesTab';
 
 enum Tabs {
   Query = 'query',
-  Instance = 'instance',
+  Instances = 'instances',
 }
 
 const tabs = [
-  { id: Tabs.Query, text: 'Query' },
-  { id: Tabs.Instance, text: 'Alerting instance' },
+  { id: Tabs.Query, text: 'Query result' },
+  { id: Tabs.Instances, text: 'Alerting instances' },
 ];
 
 interface Props {
@@ -47,7 +47,7 @@ export const AlertingQueryPreview: FC<Props> = ({ queryRunner }) => {
           <AutoSizer style={{ width: '100%', height: '100%' }}>
             {({ width, height }) => {
               switch (activeTab) {
-                case Tabs.Instance:
+                case Tabs.Instances:
                   return <PreviewInstancesTab isTested={false} data={data} styles={styles} />;
 
                 case Tabs.Query:
