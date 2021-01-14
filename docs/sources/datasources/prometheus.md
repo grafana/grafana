@@ -154,9 +154,18 @@ Grafana exposes metrics for Prometheus on the `/metrics` endpoint. We also bundl
 
 For detailed instructions, refer to [Internal Grafana metrics]({{< relref "../administration/metrics.md">}}).
 
+## Prometheus API
+
+The Prometheus data source works with other projects that implement the [Prometheus query API](https://prometheus.io/docs/prometheus/latest/querying/api/) including:
+
+- [Cortex](https://cortexmetrics.io/docs/)
+- [Thanos](https://thanos.io/v0.17/components/query.md/)
+
+For more information on how to query other Prometheus-compatible projects from Grafana, refer to the specific project documentation. 
+
 ## Provision the Prometheus data source
 
-You can configure data sources using config files with Grafana's provisioning system. Read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}})
+You can configure data sources using config files with Grafana's provisioning system. Read more about how it works and all the settings you can set for data sources on the [provisioning docs page]({{< relref "../administration/provisioning/#datasources" >}}).
 
 Here are some provisioning examples for this data source:
 
@@ -170,3 +179,13 @@ datasources:
     access: proxy
     url: http://localhost:9090
 ```
+
+## Amazon Managed Service for Prometheus
+
+The Prometheus data source works with Amazon Managed Service for Prometheus. If you are using an AWS Identity and Access Management (IAM) policy to control access to your Amazon Managed Service for Prometheus domain, then you must use AWS Signature Version 4 (AWS SigV4) to sign  all requests to that domain. For more details on AWS SigV4, refer to the [AWS documentation](https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
+
+> **Note:** Grafana version 7.3.5 or higher is required to use SigV4 authentication.
+
+To connect the Prometheus data source to Amazon Managed Service for Prometheus using SigV4 authentication, refer to the AWS guide to [Set up Grafana open source or Grafana Enterprise for use with AMP](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-standalone-grafana.html). 
+
+If you are running Grafana in an Amazon EKS cluster, follow the AWS guide to [Query using Grafana running in an Amazon EKS cluster](https://docs.aws.amazon.com/prometheus/latest/userguide/AMP-onboard-query-grafana-7.3.html).

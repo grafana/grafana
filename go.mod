@@ -53,6 +53,7 @@ require (
 	github.com/influxdata/influxdb-client-go/v2 v2.2.0
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/jonboulle/clockwork v0.2.2 // indirect
+	github.com/json-iterator/go v1.1.10
 	github.com/jung-kurt/gofpdf v1.10.1
 	github.com/lib/pq v1.9.0
 	github.com/linkedin/goavro/v2 v2.9.7
