@@ -21,6 +21,7 @@ import { VizLegend } from '../VizLegend/VizLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from './types';
+import { isNumber } from 'lodash';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -128,6 +129,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       });
     }
 
+    let indexByName: Map<string, number> | undefined = undefined;
     const legendItems: VizLegendItem[] = [];
 
     for (let i = 0; i < alignedFrame.fields.length; i++) {
@@ -168,6 +170,21 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       }
 
       const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
+
+      if (customConfig.fillBelowTo) {
+        if (!indexByName) {
+          indexByName = getNamesToFieldIndex(alignedFrame);
+        }
+        const t = indexByName.get(getFieldDisplayName(field, alignedFrame));
+        const b = indexByName.get(customConfig.fillBelowTo);
+        if (isNumber(b) && isNumber(t)) {
+          console.log('todo bands', t, b);
+          builder.addBand({
+            series: [t, b],
+            fill: 'rgba(255,0,0,0.1)',
+          });
+        }
+      }
 
       builder.addSeries({
         scaleKey,
@@ -252,3 +269,11 @@ const mapMouseEventToMode = (event: React.MouseEvent): GraphNGLegendEventMode =>
   }
   return GraphNGLegendEventMode.ToggleSelection;
 };
+
+function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
+  const names = new Map<string, number>();
+  for (let i = 0; i < frame.fields.length; i++) {
+    names.set(getFieldDisplayName(frame.fields[i], frame), i);
+  }
+  return names;
+}

@@ -127,6 +127,12 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
               value: v * 10, // was 0-10, new graph is 0 - 100
             });
             break;
+          case 'fillBelowTo':
+            rule.properties.push({
+              id: 'custom.fillBelowTo',
+              value: v,
+            });
+            break;
           case 'fillGradient':
             if (v) {
               rule.properties.push({
@@ -161,6 +167,12 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
                 value: DrawStyle.Line, // Change from bars
               });
             }
+            break;
+          case 'lines':
+            rule.properties.push({
+              id: 'custom.lineWidth',
+              value: 0, // don't show lines
+            });
             break;
           case 'linewidth':
             rule.properties.push({
