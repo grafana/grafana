@@ -16,7 +16,10 @@ async function* walk(dir: string, baseDir: string): AsyncGenerator<string, any, 
       const realPath = fs.realpathSync(entry);
       if (!realPath.startsWith(baseDir)) {
         throw new Error(
-          `symbolic link ${path.relative(baseDir, entry)} targets a file outside of the base directory: ${baseDir}`
+          `symbolic link ${path.posix.relative(
+            baseDir,
+            entry
+          )} targets a file outside of the base directory: ${baseDir}`
         );
       }
       yield path.posix.relative(baseDir, entry);
