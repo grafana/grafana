@@ -93,13 +93,13 @@ export function createAlertDefinition(): ThunkResult<void> {
     const alertDefinition: AlertDefinition = {
       ...currentAlertDefinition,
       condition: {
-        ref: currentAlertDefinition.condition.ref,
+        refId: currentAlertDefinition.condition.refId,
         queriesAndExpressions: queryOptions.queries.map(query => ({
           model: {
             expression: query.expr,
             type: query.queryType,
             datasource: queryOptions.dataSource.name,
-            datasourceId: queryOptions.dataSource.uid,
+            dataSourceUid: queryOptions.dataSource.uid,
           },
           refId: query.refId,
           relativeTimeRange: {

@@ -153,7 +153,7 @@ export interface AlertDefinition {
 }
 
 export interface AlertCondition {
-  ref: string;
+  refId: string;
   queriesAndExpressions: any[];
 }
 

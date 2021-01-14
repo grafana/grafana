@@ -55,8 +55,7 @@ export const AlertDefinitionOptions: FC<Props> = ({
           <div className={styles.optionRow}>
             <Select
               onChange={onConditionChange}
-              value={alertDefinition.condition.ref}
-              defaultValue={refIds[0]}
+              value={alertDefinition.condition.refId}
               options={refIds}
               noOptionsMessage="No queries added"
             />
