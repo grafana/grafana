@@ -57,7 +57,7 @@ To add the Elasticsearch data source:
 1. Click **Add data source** in the top right header to open the configuration page.
 1. Enter the information specified in the tables below, then click **Save & Test**.
 
-> **Note**: We'll assume you used the intructions from Grafana's devenv for simplicity, if this is not the case you may have to adapt the values in the tables below to match your use-case.
+> **Note**: We'll assume you used the instructions from Grafana's devenv for simplicity, if this is not the case you may have to adapt the values in the tables below to match your use-case.
 
 ### General Settings
 
@@ -67,10 +67,10 @@ To add the Elasticsearch data source:
 
 ### HTTP Settings
 
-| Name     | Description                                                                                              | Value                    |
-| -------- | -------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `URL`    | The IP address/hostname and optional port of your Elasticsearch instance.                                | `http://localhost:12200` |
-| `Access` | Wether to connect to your Elasticsearch instance from the browser or through Grafana's backend (Server). | `Server (default)`       |
+| Name     | Description                                                                                               | Value                    |
+| -------- | --------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `URL`    | The IP address/hostname and optional port of your Elasticsearch instance.                                 | `http://localhost:12200` |
+| `Access` | whether to connect to your Elasticsearch instance from the browser or through Grafana's backend (Server). | `Server (default)`       |
 
 ### Elasticsearch details
 
