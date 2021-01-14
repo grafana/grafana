@@ -10,7 +10,7 @@ import {
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { defaultBucketAgg, defaultMetricAgg, findMetricById } from './query_def';
+import { defaultBucketAgg, defaultMetricAgg, findMetricById, highlightTags } from './query_def';
 import { ElasticsearchQuery } from './types';
 
 export class ElasticQueryBuilder {
@@ -433,6 +433,14 @@ export class ElasticQueryBuilder {
     return {
       ...query,
       aggs: this.build(target, null, querystring).aggs,
+      highlight: {
+        fields: {
+          '*': {},
+        },
+        pre_tags: [highlightTags.pre],
+        post_tags: [highlightTags.post],
+        fragment_size: 2147483647,
+      },
     };
   }
 }

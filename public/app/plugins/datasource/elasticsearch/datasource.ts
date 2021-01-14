@@ -22,7 +22,7 @@ import LanguageProvider from './language_provider';
 import { ElasticResponse } from './elastic_response';
 import { IndexPattern } from './index_pattern';
 import { ElasticQueryBuilder } from './query_builder';
-import { defaultBucketAgg, hasMetricOfType } from './query_def';
+import { highlightTags, defaultBucketAgg, hasMetricOfType } from './query_def';
 import { getBackendSrv, getDataSourceSrv } from '@grafana/runtime';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { DataLinkConfig, ElasticsearchOptions, ElasticsearchQuery } from './types';
@@ -494,7 +494,7 @@ export class ElasticDatasource extends DataSourceApi<ElasticsearchQuery, Elastic
     });
     const payload = [header, esQuery].join('\n') + '\n';
     const url = this.getMultiSearchUrl();
-    const response = await this.post(url, payload);
+    const response = await this.post(url, payload).toPromise();
     const targets: ElasticsearchQuery[] = [{ refId: `${row.dataFrame.refId}`, metrics: [], isLogsQuery: true }];
     const elasticResponse = new ElasticResponse(targets, transformHitsBasedOnDirection(response, sort));
     const logResponse = elasticResponse.getLogs(this.logMessageField, this.logLevelField);

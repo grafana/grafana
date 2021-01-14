@@ -18,6 +18,8 @@ import {
 import { describeMetric } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
+const highlightWordRegex = new RegExp(`${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`, 'g');
+
 export class ElasticResponse {
   constructor(private targets: ElasticsearchQuery[], private response: any) {
     this.targets = targets;
@@ -373,6 +375,7 @@ export class ElasticResponse {
         _type: hit._type,
         _index: hit._index,
         sort: hit.sort,
+        highlight: hit.highlight,
       };
 
       if (hit._source) {
@@ -438,7 +441,6 @@ export class ElasticResponse {
     logLevelField?: string
   ): DataQueryResponse {
     const dataFrame: DataFrame[] = [];
-
     for (let n = 0; n < this.response.responses.length; n++) {
       const response = this.response.responses[n];
       if (response.error) {
@@ -463,7 +465,24 @@ export class ElasticResponse {
               // log level. We may rewrite some actual data in the level field if they are different.
               doc['level'] = doc[logLevelField];
             }
-
+            if (doc.highlight) {
+              const newSearchWords = Object.keys(doc.highlight)
+                .flatMap(key => {
+                  return doc.highlight[key].flatMap((line: string) => {
+                    const matchedWords = [];
+                    const matches = line.matchAll(highlightWordRegex);
+                    for (const match of matches) {
+                      matchedWords.push(match[1]);
+                    }
+                    return matchedWords;
+                  });
+                })
+                .filter(_.identity);
+              const searchWords = series.meta?.searchWords
+                ? _.uniq([...series.meta.searchWords, ...newSearchWords])
+                : [...newSearchWords];
+              series.meta = series.meta ? { ...series.meta, searchWords } : { searchWords };
+            }
             series.add(doc);
           }
           if (isLogsRequest) {
@@ -554,6 +573,7 @@ type Doc = {
   _index: string;
   _source?: any;
   sort?: Array<string | number>;
+  highlight?: Record<string, string[]>;
 };
 
 /**
@@ -575,6 +595,7 @@ const flattenHits = (hits: Doc[]): { docs: Array<Record<string, any>>; propNames
       _type: hit._type,
       _index: hit._index,
       sort: hit.sort,
+      highlight: hit.highlight,
       _source: { ...flattened },
       ...flattened,
     };
