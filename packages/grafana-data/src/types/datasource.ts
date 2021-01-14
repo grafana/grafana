@@ -80,6 +80,13 @@ export class DataSourcePlugin<
     return this;
   }
 
+  /**
+   * @deprecated prefer using `setQueryEditorHelp`
+   */
+  setExploreStartPage(ExploreStartPage: ComponentType<QueryEditorHelpProps>) {
+    return this.setQueryEditorHelp(ExploreStartPage);
+  }
+
   /*
    * @deprecated -- prefer using {@link StandardVariableSupport} or {@link CustomVariableSupport} or {@link DataSourceVariableSupport} in data source instead
    * */
