@@ -198,3 +198,22 @@ Object {
   ],
 }
 `;
+
+exports[`Table Migrations migrates transform out to core transforms 4`] = `
+Object {
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {},
+    },
+    "overrides": Array [],
+  },
+  "transformations": Array [
+    Object {
+      "id": "merge",
+      "options": Object {
+        "reducers": Array [],
+      },
+    },
+  ],
+}
+`;

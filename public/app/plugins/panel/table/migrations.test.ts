@@ -19,7 +19,7 @@ describe('Table Migrations', () => {
         options: {},
       },
     };
-    const toAggregations = {
+    const aggregations = {
       angular: {
         columns: [
           {
@@ -43,6 +43,14 @@ describe('Table Migrations', () => {
         options: {},
       },
     };
+    const table = {
+      angular: {
+        columns: [],
+        styles: [],
+        transform: 'table',
+        options: {},
+      },
+    };
 
     const columnsPanel = {} as PanelModel;
     tablePanelChangedHandler(columnsPanel, 'table-old', toColumns);
@@ -51,8 +59,11 @@ describe('Table Migrations', () => {
     tablePanelChangedHandler(rowsPanel, 'table-old', toRows);
     expect(rowsPanel).toMatchSnapshot();
     const aggregationsPanel = {} as PanelModel;
-    tablePanelChangedHandler(aggregationsPanel, 'table-old', toAggregations);
+    tablePanelChangedHandler(aggregationsPanel, 'table-old', aggregations);
     expect(aggregationsPanel).toMatchSnapshot();
+    const tablePanel = {} as PanelModel;
+    tablePanelChangedHandler(tablePanel, 'table-old', table);
+    expect(tablePanel).toMatchSnapshot();
   });
 
   it('migrates styles to field config overrides and defaults', () => {

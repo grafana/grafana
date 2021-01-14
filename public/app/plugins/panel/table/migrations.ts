@@ -32,6 +32,7 @@ const transformsMap = {
   timeseries_to_rows: 'seriesToRows',
   timeseries_to_columns: 'seriesToColumns',
   timeseries_aggregations: 'reduce',
+  table: 'merge',
 };
 
 const columnsMap = {
