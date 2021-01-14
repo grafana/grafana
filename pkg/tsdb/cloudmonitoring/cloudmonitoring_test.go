@@ -13,14 +13,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
-
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestCloudMonitoring(t *testing.T) {
 	Convey("Google Cloud Monitoring", t, func() {
 		executor := &CloudMonitoringExecutor{}
-
 		Convey("Parse migrated queries from frontend and build Google Cloud Monitoring API queries", func() {
 			fromStart := time.Date(2018, 3, 15, 13, 0, 0, 0, time.UTC).In(time.Local)
 			tsdbQuery := &tsdb.TsdbQuery{
@@ -589,20 +587,20 @@ func TestCloudMonitoring(t *testing.T) {
 				query := &cloudMonitoringQuery{}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
-
-				So(len(res.Series), ShouldEqual, 1)
-				So(res.Series[0].Name, ShouldEqual, "serviceruntime.googleapis.com/api/request_count")
-				So(len(res.Series[0].Points), ShouldEqual, 3)
+				frames, _ := res.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 1)
+				So(frames[0].Fields[1].Name, ShouldEqual, "serviceruntime.googleapis.com/api/request_count")
+				So(frames[0].Fields[1].Len(), ShouldEqual, 3)
 
 				Convey("timestamps should be in ascending order", func() {
-					So(res.Series[0].Points[0][0].Float64, ShouldEqual, 0.05)
-					So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1536670020000))
+					So(frames[0].Fields[1].At(0), ShouldEqual, 0.05)
+					So(frames[0].Fields[0].At(0), ShouldEqual, time.Unix(int64(1536670020000/1000), 0))
 
-					So(res.Series[0].Points[1][0].Float64, ShouldEqual, 1.05)
-					So(res.Series[0].Points[1][1].Float64, ShouldEqual, int64(1536670080000))
+					So(frames[0].Fields[1].At(1), ShouldEqual, 1.05)
+					So(frames[0].Fields[0].At(1), ShouldEqual, time.Unix(int64(1536670080000/1000), 0))
 
-					So(res.Series[0].Points[2][0].Float64, ShouldEqual, 1.0666666666667)
-					So(res.Series[0].Points[2][1].Float64, ShouldEqual, int64(1536670260000))
+					So(frames[0].Fields[1].At(2), ShouldEqual, 1.0666666666667)
+					So(frames[0].Fields[0].At(2), ShouldEqual, time.Unix(int64(1536670260000/1000), 0))
 				})
 			})
 
@@ -615,19 +613,20 @@ func TestCloudMonitoring(t *testing.T) {
 				query := &cloudMonitoringQuery{}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
+				frames, _ := res.Dataframes.Decoded()
 
 				Convey("Should add labels to metric name", func() {
-					So(len(res.Series), ShouldEqual, 3)
-					So(res.Series[0].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-asia-east-1")
-					So(res.Series[1].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-europe-west-1")
-					So(res.Series[2].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-us-east-1")
+					So(len(frames), ShouldEqual, 3)
+					So(frames[0].Fields[1].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-asia-east-1")
+					So(frames[1].Fields[1].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-europe-west-1")
+					So(frames[2].Fields[1].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-us-east-1")
 				})
 
 				Convey("Should parse to time series", func() {
-					So(len(res.Series[0].Points), ShouldEqual, 3)
-					So(res.Series[0].Points[0][0].Float64, ShouldEqual, 9.8566497180145)
-					So(res.Series[0].Points[1][0].Float64, ShouldEqual, 9.7323568146676)
-					So(res.Series[0].Points[2][0].Float64, ShouldEqual, 9.7730520330369)
+					So(frames[0].Fields[1].Len(), ShouldEqual, 3)
+					So(frames[0].Fields[1].At(0), ShouldEqual, 9.8566497180145)
+					So(frames[0].Fields[1].At(1), ShouldEqual, 9.7323568146676)
+					So(frames[0].Fields[1].At(2), ShouldEqual, 9.7730520330369)
 				})
 
 				Convey("Should add meta for labels to the response", func() {
@@ -657,12 +656,12 @@ func TestCloudMonitoring(t *testing.T) {
 				query := &cloudMonitoringQuery{GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
-
+				frames, _ := res.Dataframes.Decoded()
 				Convey("Should add instance name and zone labels to metric name", func() {
-					So(len(res.Series), ShouldEqual, 3)
-					So(res.Series[0].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-asia-east-1 asia-east1-a")
-					So(res.Series[1].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-europe-west-1 europe-west1-b")
-					So(res.Series[2].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-us-east-1 us-east1-b")
+					So(len(frames), ShouldEqual, 3)
+					So(frames[0].Fields[1].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-asia-east-1 asia-east1-a")
+					So(frames[1].Fields[1].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-europe-west-1 europe-west1-b")
+					So(frames[2].Fields[1].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time collector-us-east-1 us-east1-b")
 				})
 			})
 
@@ -677,12 +676,12 @@ func TestCloudMonitoring(t *testing.T) {
 					query := &cloudMonitoringQuery{AliasBy: "{{metric.type}} - {{metric.label.instance_name}} - {{resource.label.zone}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
-
+					frames, _ := res.Dataframes.Decoded()
 					Convey("Should use alias by formatting and only show instance name", func() {
-						So(len(res.Series), ShouldEqual, 3)
-						So(res.Series[0].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time - collector-asia-east-1 - asia-east1-a")
-						So(res.Series[1].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time - collector-europe-west-1 - europe-west1-b")
-						So(res.Series[2].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time - collector-us-east-1 - us-east1-b")
+						So(len(frames), ShouldEqual, 3)
+						So(frames[0].Fields[1].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time - collector-asia-east-1 - asia-east1-a")
+						So(frames[1].Fields[1].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time - collector-europe-west-1 - europe-west1-b")
+						So(frames[2].Fields[1].Name, ShouldEqual, "compute.googleapis.com/instance/cpu/usage_time - collector-us-east-1 - us-east1-b")
 					})
 				})
 
@@ -690,12 +689,12 @@ func TestCloudMonitoring(t *testing.T) {
 					query := &cloudMonitoringQuery{AliasBy: "metric {{metric.name}} service {{metric.service}}", GroupBys: []string{"metric.label.instance_name", "resource.label.zone"}}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
-
+					frames, _ := res.Dataframes.Decoded()
 					Convey("Should use alias by formatting and only show instance name", func() {
-						So(len(res.Series), ShouldEqual, 3)
-						So(res.Series[0].Name, ShouldEqual, "metric instance/cpu/usage_time service compute")
-						So(res.Series[1].Name, ShouldEqual, "metric instance/cpu/usage_time service compute")
-						So(res.Series[2].Name, ShouldEqual, "metric instance/cpu/usage_time service compute")
+						So(len(frames), ShouldEqual, 3)
+						So(frames[0].Fields[1].Name, ShouldEqual, "metric instance/cpu/usage_time service compute")
+						So(frames[1].Fields[1].Name, ShouldEqual, "metric instance/cpu/usage_time service compute")
+						So(frames[2].Fields[1].Name, ShouldEqual, "metric instance/cpu/usage_time service compute")
 					})
 				})
 			})
@@ -709,41 +708,41 @@ func TestCloudMonitoring(t *testing.T) {
 				query := &cloudMonitoringQuery{AliasBy: "{{bucket}}"}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
-
-				So(len(res.Series), ShouldEqual, 11)
+				frames, _ := res.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 11)
 				for i := 0; i < 11; i++ {
 					if i == 0 {
-						So(res.Series[i].Name, ShouldEqual, "0")
+						So(frames[i].Fields[1].Name, ShouldEqual, "0")
 					} else {
-						So(res.Series[i].Name, ShouldEqual, strconv.FormatInt(int64(math.Pow(float64(2), float64(i-1))), 10))
+						So(frames[i].Fields[1].Name, ShouldEqual, strconv.FormatInt(int64(math.Pow(float64(2), float64(i-1))), 10))
 					}
-					So(len(res.Series[i].Points), ShouldEqual, 3)
+					So(frames[i].Fields[0].Len(), ShouldEqual, 3)
 				}
 
 				Convey("timestamps should be in ascending order", func() {
-					So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1536668940000))
-					So(res.Series[0].Points[1][1].Float64, ShouldEqual, int64(1536669000000))
-					So(res.Series[0].Points[2][1].Float64, ShouldEqual, int64(1536669060000))
+					So(frames[0].Fields[0].At(0), ShouldEqual, time.Unix(int64(1536668940000/1000), 0))
+					So(frames[0].Fields[0].At(1), ShouldEqual, time.Unix(int64(1536669000000/1000), 0))
+					So(frames[0].Fields[0].At(2), ShouldEqual, time.Unix(int64(1536669060000/1000), 0))
 				})
 
 				Convey("bucket bounds should be correct", func() {
-					So(res.Series[0].Name, ShouldEqual, "0")
-					So(res.Series[1].Name, ShouldEqual, "1")
-					So(res.Series[2].Name, ShouldEqual, "2")
-					So(res.Series[3].Name, ShouldEqual, "4")
-					So(res.Series[4].Name, ShouldEqual, "8")
+					So(frames[0].Fields[1].Name, ShouldEqual, "0")
+					So(frames[1].Fields[1].Name, ShouldEqual, "1")
+					So(frames[2].Fields[1].Name, ShouldEqual, "2")
+					So(frames[3].Fields[1].Name, ShouldEqual, "4")
+					So(frames[4].Fields[1].Name, ShouldEqual, "8")
 				})
 
 				Convey("value should be correct", func() {
-					So(res.Series[8].Points[0][0].Float64, ShouldEqual, 1)
-					So(res.Series[9].Points[0][0].Float64, ShouldEqual, 1)
-					So(res.Series[10].Points[0][0].Float64, ShouldEqual, 1)
-					So(res.Series[8].Points[1][0].Float64, ShouldEqual, 0)
-					So(res.Series[9].Points[1][0].Float64, ShouldEqual, 0)
-					So(res.Series[10].Points[1][0].Float64, ShouldEqual, 1)
-					So(res.Series[8].Points[2][0].Float64, ShouldEqual, 0)
-					So(res.Series[9].Points[2][0].Float64, ShouldEqual, 1)
-					So(res.Series[10].Points[2][0].Float64, ShouldEqual, 0)
+					So(frames[8].Fields[1].At(0), ShouldEqual, 1)
+					So(frames[9].Fields[1].At(0), ShouldEqual, 1)
+					So(frames[10].Fields[1].At(0), ShouldEqual, 1)
+					So(frames[8].Fields[1].At(1), ShouldEqual, 0)
+					So(frames[9].Fields[1].At(1), ShouldEqual, 0)
+					So(frames[10].Fields[1].At(1), ShouldEqual, 1)
+					So(frames[8].Fields[1].At(2), ShouldEqual, 0)
+					So(frames[9].Fields[1].At(2), ShouldEqual, 1)
+					So(frames[10].Fields[1].At(2), ShouldEqual, 0)
 				})
 			})
 
@@ -756,34 +755,34 @@ func TestCloudMonitoring(t *testing.T) {
 				query := &cloudMonitoringQuery{AliasBy: "{{bucket}}"}
 				err = executor.parseResponse(res, data, query)
 				So(err, ShouldBeNil)
-
-				So(len(res.Series), ShouldEqual, 33)
+				frames, _ := res.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 33)
 				for i := 0; i < 33; i++ {
 					if i == 0 {
-						So(res.Series[i].Name, ShouldEqual, "0")
+						So(frames[i].Fields[1].Name, ShouldEqual, "0")
 					}
-					So(len(res.Series[i].Points), ShouldEqual, 2)
+					So(frames[i].Fields[1].Len(), ShouldEqual, 2)
 				}
 
 				Convey("timestamps should be in ascending order", func() {
-					So(res.Series[0].Points[0][1].Float64, ShouldEqual, int64(1550859086000))
-					So(res.Series[0].Points[1][1].Float64, ShouldEqual, int64(1550859146000))
+					So(frames[0].Fields[0].At(0), ShouldEqual, time.Unix(int64(1550859086000/1000), 0))
+					So(frames[0].Fields[0].At(1), ShouldEqual, time.Unix(int64(1550859146000/1000), 0))
 				})
 
 				Convey("bucket bounds should be correct", func() {
-					So(res.Series[0].Name, ShouldEqual, "0")
-					So(res.Series[1].Name, ShouldEqual, "0.01")
-					So(res.Series[2].Name, ShouldEqual, "0.05")
-					So(res.Series[3].Name, ShouldEqual, "0.1")
+					So(frames[0].Fields[1].Name, ShouldEqual, "0")
+					So(frames[1].Fields[1].Name, ShouldEqual, "0.01")
+					So(frames[2].Fields[1].Name, ShouldEqual, "0.05")
+					So(frames[3].Fields[1].Name, ShouldEqual, "0.1")
 				})
 
 				Convey("value should be correct", func() {
-					So(res.Series[8].Points[0][0].Float64, ShouldEqual, 381)
-					So(res.Series[9].Points[0][0].Float64, ShouldEqual, 212)
-					So(res.Series[10].Points[0][0].Float64, ShouldEqual, 56)
-					So(res.Series[8].Points[1][0].Float64, ShouldEqual, 375)
-					So(res.Series[9].Points[1][0].Float64, ShouldEqual, 213)
-					So(res.Series[10].Points[1][0].Float64, ShouldEqual, 56)
+					So(frames[8].Fields[1].At(0), ShouldEqual, 381)
+					So(frames[9].Fields[1].At(0), ShouldEqual, 212)
+					So(frames[10].Fields[1].At(0), ShouldEqual, 56)
+					So(frames[8].Fields[1].At(1), ShouldEqual, 375)
+					So(frames[9].Fields[1].At(1), ShouldEqual, 213)
+					So(frames[10].Fields[1].At(1), ShouldEqual, 56)
 				})
 			})
 
@@ -797,8 +796,8 @@ func TestCloudMonitoring(t *testing.T) {
 				err = executor.parseResponse(res, data, query)
 				labels := res.Meta.Get("labels").Interface().(map[string][]string)
 				So(err, ShouldBeNil)
-
-				So(len(res.Series), ShouldEqual, 3)
+				frames, _ := res.Dataframes.Decoded()
+				So(len(frames), ShouldEqual, 3)
 
 				Convey("and systemlabel contains key with array of string", func() {
 					So(len(labels["metadata.system_labels.test"]), ShouldEqual, 5)
@@ -835,11 +834,12 @@ func TestCloudMonitoring(t *testing.T) {
 					query := &cloudMonitoringQuery{AliasBy: "{{metadata.system_labels.test}}"}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
-					So(len(res.Series), ShouldEqual, 3)
-					fmt.Println(res.Series[0].Name)
-					So(res.Series[0].Name, ShouldEqual, "value1, value2")
-					So(res.Series[1].Name, ShouldEqual, "value1, value2, value3")
-					So(res.Series[2].Name, ShouldEqual, "value1, value2, value4, value5")
+					frames, _ := res.Dataframes.Decoded()
+					So(len(frames), ShouldEqual, 3)
+					fmt.Println(frames[0].Fields[1].Name)
+					So(frames[0].Fields[1].Name, ShouldEqual, "value1, value2")
+					So(frames[1].Fields[1].Name, ShouldEqual, "value1, value2, value3")
+					So(frames[2].Fields[1].Name, ShouldEqual, "value1, value2, value4, value5")
 				})
 
 				Convey("and systemlabel contains key with array of string2", func() {
@@ -847,9 +847,9 @@ func TestCloudMonitoring(t *testing.T) {
 					query := &cloudMonitoringQuery{AliasBy: "{{metadata.system_labels.test2}}"}
 					err = executor.parseResponse(res, data, query)
 					So(err, ShouldBeNil)
-					So(len(res.Series), ShouldEqual, 3)
-					fmt.Println(res.Series[0].Name)
-					So(res.Series[2].Name, ShouldEqual, "testvalue")
+					frames, _ := res.Dataframes.Decoded()
+					So(len(frames), ShouldEqual, 3)
+					So(frames[2].Fields[1].Name, ShouldEqual, "testvalue")
 				})
 			})
 
@@ -868,8 +868,9 @@ func TestCloudMonitoring(t *testing.T) {
 						AliasBy:     "{{project}} - {{service}} - {{slo}} - {{selector}}",
 					}
 					err = executor.parseResponse(res, data, query)
+					frames, _ := res.Dataframes.Decoded()
 					So(err, ShouldBeNil)
-					So(res.Series[0].Name, ShouldEqual, "test-proj - test-service - test-slo - select_slo_compliance")
+					So(frames[0].Fields[1].Name, ShouldEqual, "test-proj - test-service - test-slo - select_slo_compliance")
 				})
 			})
 
@@ -887,8 +888,67 @@ func TestCloudMonitoring(t *testing.T) {
 						Slo:         "test-slo",
 					}
 					err = executor.parseResponse(res, data, query)
+					frames, _ := res.Dataframes.Decoded()
 					So(err, ShouldBeNil)
-					So(res.Series[0].Name, ShouldEqual, "select_slo_compliance(\"projects/test-proj/services/test-service/serviceLevelObjectives/test-slo\")")
+					So(frames[0].Fields[1].Name, ShouldEqual, "select_slo_compliance(\"projects/test-proj/services/test-service/serviceLevelObjectives/test-slo\")")
+				})
+			})
+		})
+		Convey("Parse cloud monitoring unit", func() {
+			Convey("when there is only one query", func() {
+				Convey("and cloud monitoring unit does not have a corresponding grafana unit", func() {
+					queries := []*cloudMonitoringQuery{
+						{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service",
+							Slo: "test-slo", Unit: "megaseconds"}}
+					unit := executor.resolvePanelUnitFromQueries(queries)
+					So(unit, ShouldEqual, "")
+				})
+
+				Convey("and cloud monitoring unit has a corresponding grafana unit", func() {
+					for key, element := range cloudMonitoringUnitMappings {
+						queries := []*cloudMonitoringQuery{
+							{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service",
+								Slo: "test-slo", Unit: key}}
+						unit := executor.resolvePanelUnitFromQueries(queries)
+						So(unit, ShouldEqual, element)
+					}
+				})
+			})
+
+			Convey("when there are more than one query", func() {
+				Convey("and all target units are the same", func() {
+					for key, element := range cloudMonitoringUnitMappings {
+						queries := []*cloudMonitoringQuery{
+							{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service1",
+								Slo: "test-slo", Unit: key},
+							{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service2",
+								Slo: "test-slo", Unit: key},
+						}
+						unit := executor.resolvePanelUnitFromQueries(queries)
+						So(unit, ShouldEqual, element)
+					}
+				})
+
+				Convey("and all target units are the same but does not have grafana mappings", func() {
+					queries := []*cloudMonitoringQuery{
+						{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service1",
+							Slo: "test-slo", Unit: "megaseconds"},
+						{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service2",
+							Slo: "test-slo", Unit: "megaseconds"},
+					}
+					unit := executor.resolvePanelUnitFromQueries(queries)
+					So(unit, ShouldEqual, "")
+				})
+
+				Convey("and all target units are not the same", func() {
+					queries := []*cloudMonitoringQuery{
+						{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service1",
+							Slo: "test-slo", Unit: "bit"},
+						{ProjectName: "test-proj", Selector: "select_slo_compliance", Service: "test-service2",
+							Slo: "test-slo", Unit: "min"},
+					}
+					unit := executor.resolvePanelUnitFromQueries(queries)
+					So(unit, ShouldEqual, "")
 				})
 			})
 		})
