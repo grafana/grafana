@@ -478,6 +478,5 @@ function createDatasource(name: string, selectable = true): DataSourceSelectItem
     meta: {
       mixed: !selectable,
     } as DataSourcePluginMeta,
-    sort: '',
   };
 }

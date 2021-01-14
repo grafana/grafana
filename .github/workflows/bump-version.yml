@@ -15,9 +15,9 @@ jobs:
           repository: "grafana/grafana-github-actions"
           path: ./actions
           ref: main
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v2.1.4
         with:
-          node-version: '12'
+          node-version: '14'
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Run bump version

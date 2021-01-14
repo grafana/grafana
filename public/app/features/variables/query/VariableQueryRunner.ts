@@ -5,7 +5,7 @@ import {
   DataQuery,
   DataQueryRequest,
   DataSourceApi,
-  DefaultTimeRange,
+  getDefaultTimeRange,
   LoadingState,
   ScopedVars,
 } from '@grafana/data';
@@ -19,7 +19,7 @@ import { getTemplatedRegex } from '../utils';
 import { v4 as uuidv4 } from 'uuid';
 import { getTimeSrv } from '../../dashboard/services/TimeSrv';
 import { QueryRunners } from './queryRunners';
-import { runRequest } from '../../dashboard/state/runRequest';
+import { runRequest } from '../../query/state/runRequest';
 import {
   runUpdateTagsRequest,
   toMetricFindValues,
@@ -177,7 +177,7 @@ export class VariableQueryRunner {
     const range =
       variable.refresh === VariableRefresh.onTimeRangeChanged
         ? this.dependencies.getTimeSrv().timeRange()
-        : DefaultTimeRange;
+        : getDefaultTimeRange();
 
     const request: DataQueryRequest = {
       app: CoreApp.Dashboard,

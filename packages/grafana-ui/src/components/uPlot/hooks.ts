@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { PlotPlugin } from './types';
 import { pluginLog } from './utils';
-import uPlot from 'uplot';
+import uPlot, { Options, PaddingSide } from 'uplot';
 import { getTimeZoneInfo, TimeZone } from '@grafana/data';
 import { usePlotPluginContext } from './context';
 import { UPlotConfigBuilder } from './config/UPlotConfigBuilder';
+import usePrevious from 'react-use/lib/usePrevious';
 
 export const usePlotPlugins = () => {
   /**
@@ -84,7 +85,13 @@ export const usePlotPlugins = () => {
   };
 };
 
-export const DEFAULT_PLOT_CONFIG = {
+const paddingSide: PaddingSide = (u, side, sidesWithAxes, cycleNum) => {
+  let hasCrossAxis = side % 2 ? sidesWithAxes[0] || sidesWithAxes[2] : sidesWithAxes[1] || sidesWithAxes[3];
+
+  return sidesWithAxes[side] || !hasCrossAxis ? 0 : 8;
+};
+
+export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
   focus: {
     alpha: 1,
   },
@@ -96,48 +103,49 @@ export const DEFAULT_PLOT_CONFIG = {
   legend: {
     show: false,
   },
-  gutters: {
-    x: 8,
-    y: 8,
-  },
+  padding: [paddingSide, paddingSide, paddingSide, paddingSide],
   series: [],
   hooks: {},
 };
 
 export const usePlotConfig = (width: number, height: number, timeZone: TimeZone, configBuilder: UPlotConfigBuilder) => {
   const { arePluginsReady, plugins, registerPlugin } = usePlotPlugins();
-  const [currentConfig, setCurrentConfig] = useState<uPlot.Options>();
+  const [isConfigReady, setIsConfigReady] = useState(false);
 
+  const currentConfig = useRef<Options>();
   const tzDate = useMemo(() => {
     let fmt = undefined;
 
     const tz = getTimeZoneInfo(timeZone, Date.now())?.ianaName;
 
     if (tz) {
-      fmt = (ts: number) => uPlot.tzDate(new Date(ts * 1e3), tz);
+      fmt = (ts: number) => uPlot.tzDate(new Date(ts), tz);
     }
 
     return fmt;
   }, [timeZone]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!arePluginsReady) {
       return;
     }
-
-    setCurrentConfig({
+    currentConfig.current = {
       ...DEFAULT_PLOT_CONFIG,
       width,
       height,
+      ms: 1,
       plugins: Object.entries(plugins).map(p => ({
         hooks: p[1].hooks,
       })),
       tzDate,
       ...configBuilder.getConfig(),
-    });
-  }, [arePluginsReady, plugins, width, height, configBuilder]);
+    };
+
+    setIsConfigReady(true);
+  }, [arePluginsReady, plugins, width, height, tzDate, configBuilder]);
 
   return {
+    isConfigReady,
     registerPlugin,
     currentConfig,
   };
@@ -171,3 +179,18 @@ export const useRefreshAfterGraphRendered = (pluginId: string) => {
 
   return renderToken;
 };
+
+export function useRevision<T>(dep?: T | null, cmp?: (prev?: T | null, next?: T | null) => boolean) {
+  const [rev, setRev] = useState(0);
+  const prevDep = usePrevious(dep);
+  const comparator = cmp ? cmp : (a?: T | null, b?: T | null) => a === b;
+
+  useLayoutEffect(() => {
+    const hasChange = !comparator(prevDep, dep);
+    if (hasChange) {
+      setRev(r => r + 1);
+    }
+  }, [dep]);
+
+  return rev;
+}

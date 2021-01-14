@@ -208,14 +208,18 @@ func (ds *DataSource) sigV4Middleware(next http.RoundTripper) http.RoundTripper 
 
 func (ds *DataSource) GetTLSConfig() (*tls.Config, error) {
 	var tlsSkipVerify, tlsClientAuth, tlsAuthWithCACert bool
+	var serverName string
+
 	if ds.JsonData != nil {
 		tlsClientAuth = ds.JsonData.Get("tlsAuth").MustBool(false)
 		tlsAuthWithCACert = ds.JsonData.Get("tlsAuthWithCACert").MustBool(false)
 		tlsSkipVerify = ds.JsonData.Get("tlsSkipVerify").MustBool(false)
+		serverName = ds.JsonData.Get("serverName").MustString()
 	}
 
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: tlsSkipVerify,
+		ServerName:         serverName,
 	}
 
 	if tlsClientAuth || tlsAuthWithCACert {

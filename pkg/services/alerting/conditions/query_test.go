@@ -228,7 +228,7 @@ func (ctx *queryConditionTestContext) exec() (*alerting.ConditionResult, error) 
 
 func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
 	Convey(desc, func() {
-		bus.AddHandler("test", func(query *models.GetDataSourceByIdQuery) error {
+		bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
 			query.Result = &models.DataSource{Id: 1, Type: "graphite"}
 			return nil
 		})
@@ -301,6 +301,54 @@ func TestFrameToSeriesSlice(t *testing.T) {
 				&tsdb.TimeSeries{
 					Name:   "Values Floats {Animal Factor=sloth}",
 					Tags:   map[string]string{"Animal Factor": "sloth"},
+					Points: tsdb.TimeSeriesPoints{},
+				},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "empty labels",
+			frame: data.NewFrame("",
+				data.NewField("Time", data.Labels{}, []time.Time{}),
+				data.NewField(`Values`, data.Labels{}, []float64{})),
+
+			seriesSlice: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name:   "Values",
+					Points: tsdb.TimeSeriesPoints{},
+				},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "display name from data source",
+			frame: data.NewFrame("",
+				data.NewField("Time", data.Labels{}, []time.Time{}),
+				data.NewField(`Values`, data.Labels{"Rating": "10"}, []*int64{}).SetConfig(&data.FieldConfig{
+					DisplayNameFromDS: "sloth",
+				})),
+
+			seriesSlice: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name:   "sloth",
+					Points: tsdb.TimeSeriesPoints{},
+					Tags:   map[string]string{"Rating": "10"},
+				},
+			},
+			Err: require.NoError,
+		},
+		{
+			name: "prefer display name over data source display name",
+			frame: data.NewFrame("",
+				data.NewField("Time", data.Labels{}, []time.Time{}),
+				data.NewField(`Values`, data.Labels{}, []*int64{}).SetConfig(&data.FieldConfig{
+					DisplayName:       "sloth #1",
+					DisplayNameFromDS: "sloth #2",
+				})),
+
+			seriesSlice: tsdb.TimeSeriesSlice{
+				&tsdb.TimeSeries{
+					Name:   "sloth #1",
 					Points: tsdb.TimeSeriesPoints{},
 				},
 			},

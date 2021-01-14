@@ -135,7 +135,9 @@ function getReduceRowCreator(options: ReduceOptions, allFrames: DataFrame[]): Va
   if (options.include && options.include.length) {
     matcher = getFieldMatcher({
       id: FieldMatcherID.byNames,
-      options: options.include,
+      options: {
+        names: options.include,
+      },
     });
   }
 

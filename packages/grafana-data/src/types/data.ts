@@ -54,9 +54,18 @@ export interface QueryResultMeta {
   executedQueryString?: string;
 
   /**
+   * A browsable path on the datasource
+   */
+  path?: string;
+
+  /**
+   * defaults to '/'
+   */
+  pathSeparator?: string;
+
+  /**
    * Legacy data source specific, should be moved to custom
    * */
-  gmdMeta?: any[]; // used by cloudwatch
   alignmentPeriod?: number; // used by cloud monitoring
   searchWords?: string[]; // used by log models and loki
   limit?: number; // used by log models and loki

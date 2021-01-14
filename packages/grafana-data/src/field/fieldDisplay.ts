@@ -2,7 +2,6 @@ import toString from 'lodash/toString';
 import isEmpty from 'lodash/isEmpty';
 
 import { getDisplayProcessor } from './displayProcessor';
-import { getFlotPairs } from '../utils/flotPairs';
 import {
   DataFrame,
   DisplayValue,
@@ -13,10 +12,10 @@ import {
   FieldType,
   InterpolateFunction,
   LinkModel,
+  TimeRange,
   TimeZone,
 } from '../types';
 import { DataFrameView } from '../dataframe/DataFrameView';
-import { GraphSeriesValue } from '../types/graph';
 import { GrafanaTheme } from '../types/theme';
 import { reduceField, ReducerID } from '../transformations/fieldReducer';
 import { ScopedVars } from '../types/ScopedVars';
@@ -56,11 +55,18 @@ function getTitleTemplate(stats: string[]): string {
   return parts.join(' ');
 }
 
+export interface FieldSparkline {
+  y: Field; // Y values
+  x?: Field; // if this does not exist, use the index
+  timeRange?: TimeRange; // Optionally force an absolute time
+  highlightIndex?: number;
+}
+
 export interface FieldDisplay {
   name: string; // The field name (title is in display)
   field: FieldConfig;
   display: DisplayValue;
-  sparkline?: GraphSeriesValue[][];
+  sparkline?: FieldSparkline;
 
   // Expose to the original values for delayed inspection (DataLinks etc)
   view?: DataFrameView;
@@ -77,7 +83,6 @@ export interface GetFieldDisplayValuesOptions {
   replaceVariables: InterpolateFunction;
   sparkline?: boolean; // Calculate the sparkline
   theme: GrafanaTheme;
-  autoMinMax?: boolean;
   timeZone?: TimeZone;
 }
 
@@ -122,7 +127,16 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
           continue;
         }
 
-        const config = field.config; // already set by the prepare task
+        let config = field.config; // already set by the prepare task
+
+        if (field.state?.range) {
+          // Us the global min/max values
+          config = {
+            ...config,
+            ...field.state?.range,
+          };
+        }
+
         const displayName = field.config.displayName ?? defaultDisplayName;
 
         const display =
@@ -157,7 +171,7 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             });
 
             values.push({
-              name,
+              name: '',
               field: config,
               display: displayValue,
               view,
@@ -182,15 +196,6 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
             field,
             reducers: calcs, // The stats to calculate
           });
-          let sparkline: GraphSeriesValue[][] | undefined = undefined;
-
-          // Single sparkline for every reducer
-          if (options.sparkline && timeField) {
-            sparkline = getFlotPairs({
-              xField: timeField,
-              yField: series.fields[i],
-            });
-          }
 
           for (const calc of calcs) {
             scopedVars[VAR_CALC] = { value: calc, text: calc };
@@ -199,6 +204,19 @@ export const getFieldDisplayValues = (options: GetFieldDisplayValuesOptions): Fi
               ...field.state?.scopedVars, // series and field scoped vars
               ...scopedVars,
             });
+
+            let sparkline: FieldSparkline | undefined = undefined;
+            if (options.sparkline) {
+              sparkline = {
+                y: series.fields[i],
+                x: timeField,
+              };
+              if (calc === ReducerID.last) {
+                sparkline.highlightIndex = sparkline.y.values.length - 1;
+              } else if (calc === ReducerID.first) {
+                sparkline.highlightIndex = 0;
+              }
+            }
 
             values.push({
               name: calc,

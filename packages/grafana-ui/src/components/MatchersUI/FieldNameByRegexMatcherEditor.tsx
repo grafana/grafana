@@ -15,6 +15,7 @@ export const FieldNameByRegexMatcherEditor = memo<MatcherUIProps<string>>(props 
 
   return <Input placeholder="Enter regular expression" defaultValue={options} onBlur={onBlur} />;
 });
+FieldNameByRegexMatcherEditor.displayName = 'FieldNameByRegexMatcherEditor';
 
 export const fieldNameByRegexMatcherItem: FieldMatcherUIRegistryItem<string> = {
   id: FieldMatcherID.byRegexp,

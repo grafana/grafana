@@ -36,7 +36,9 @@ func TestService(t *testing.T) {
 		},
 	}
 
-	pl, err := s.BuildPipeline(queries)
+	req := &backend.QueryDataRequest{Queries: queries}
+
+	pl, err := s.BuildPipeline(req)
 	require.NoError(t, err)
 
 	res, err := s.ExecutePipeline(context.Background(), pl)
@@ -44,7 +46,7 @@ func TestService(t *testing.T) {
 
 	bDF := data.NewFrame("",
 		data.NewField("Time", nil, []*time.Time{utp(1)}),
-		data.NewField("", nil, []*float64{fp(4)}))
+		data.NewField("B", nil, []*float64{fp(4)}))
 	bDF.RefID = "B"
 
 	expect := &backend.QueryDataResponse{
@@ -104,7 +106,7 @@ func registerEndPoint(df ...*data.Frame) {
 	}
 
 	tsdb.RegisterTsdbQueryEndpoint("test", endpoint)
-	bus.AddHandler("test", func(query *models.GetDataSourceByIdQuery) error {
+	bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
 		query.Result = &models.DataSource{Id: 1, OrgId: 1, Type: "test"}
 		return nil
 	})

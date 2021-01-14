@@ -22,16 +22,15 @@ func GetOrgByID(c *models.ReqContext) Response {
 }
 
 // Get /api/orgs/name/:name
-func GetOrgByName(c *models.ReqContext) Response {
-	query := models.GetOrgByNameQuery{Name: c.Params(":name")}
-	if err := bus.Dispatch(&query); err != nil {
+func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) Response {
+	org, err := hs.SQLStore.GetOrgByName(c.Params(":name"))
+	if err != nil {
 		if errors.Is(err, models.ErrOrgNotFound) {
 			return Error(404, "Organization not found", err)
 		}
 
 		return Error(500, "Failed to get organization", err)
 	}
-	org := query.Result
 	result := models.OrgDetailsDTO{
 		Id:   org.Id,
 		Name: org.Name,

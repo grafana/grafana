@@ -59,7 +59,9 @@ describe('PrometheusDatasource', () => {
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
-    jsonData: {} as any,
+    jsonData: {
+      customQueryParameters: '',
+    } as any,
   } as unknown) as DataSourceInstanceSettings<PromOptions>;
 
   beforeEach(() => {
@@ -138,6 +140,30 @@ describe('PrometheusDatasource', () => {
       promDs.metadataRequest('/foo');
       expect(fetchMock.mock.calls.length).toBe(1);
       expect(fetchMock.mock.calls[0][0].method).toBe('GET');
+    });
+  });
+
+  describe('When using customQueryParams', () => {
+    const promDs = new PrometheusDatasource(
+      { ...instanceSettings, jsonData: { customQueryParameters: 'customQuery=123' } as any },
+      templateSrvStub as any,
+      timeSrvStub as any
+    );
+    it('added to metadata request', () => {
+      promDs.metadataRequest('/foo');
+      expect(fetchMock.mock.calls.length).toBe(1);
+      expect(fetchMock.mock.calls[0][0].url).toBe('proxied/foo?customQuery=123');
+    });
+    it('added to query', () => {
+      promDs.query({
+        range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
+        targets: [{ expr: 'test{job="testjob"}', format: 'time_series' }],
+        interval: '60s',
+      } as any);
+      expect(fetchMock.mock.calls.length).toBe(1);
+      expect(fetchMock.mock.calls[0][0].url).toBe(
+        'proxied/api/v1/query_range?query=test%7Bjob%3D%22testjob%22%7D&start=60&end=180&step=60&customQuery=123'
+      );
     });
   });
 

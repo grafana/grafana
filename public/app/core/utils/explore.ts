@@ -12,7 +12,6 @@ import {
   DefaultTimeZone,
   HistoryItem,
   IntervalValues,
-  LogRowModel,
   LogsDedupStrategy,
   LogsSortOrder,
   RawTimeRange,
@@ -243,7 +242,7 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const queries = parsedSegments.filter(segment => !isSegment(segment, 'ui', 'originPanelId'));
+  const queries = parsedSegments.filter(segment => !isSegment(segment, 'ui', 'originPanelId', 'mode'));
 
   const originPanelId = parsedSegments.filter(segment => isSegment(segment, 'originPanelId'))[0];
   return { datasource, queries, range, originPanelId };
@@ -484,10 +483,6 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
   }
 
   return rangeUtil.calculateInterval(range, resolution, lowLimit);
-}
-
-export function deduplicateLogRowsById(rows: LogRowModel[]) {
-  return _.uniqBy(rows, 'uid');
 }
 
 export const getFirstNonQueryRowSpecificError = (queryErrors?: DataQueryError[]): DataQueryError | undefined => {

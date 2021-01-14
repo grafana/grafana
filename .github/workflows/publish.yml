@@ -21,10 +21,10 @@ jobs:
         path: '**/node_modules'
         key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
     - name: generate-packages-docs
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v2.1.4
       id: generate-docs
       with:
-        node-version: '12'
+        node-version: '14'
     - run: yarn install --pure-lockfile --no-progress
     - run: ./scripts/ci-reference-docs-build.sh
     - name: publish-to-git

@@ -206,6 +206,11 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 		queryResult.Error = err
 		return queryResult, AzureMonitorResponse{}, nil
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			azlog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	data, err := e.unmarshalResponse(res)
 	if err != nil {
@@ -256,7 +261,6 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 
 func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMonitorResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
 	if err != nil {
 		return AzureMonitorResponse{}, err
 	}
@@ -421,7 +425,7 @@ func toGrafanaUnit(unit string) string {
 		return "cps"
 	case "Percent":
 		return "percent"
-	case "Milliseconds":
+	case "MilliSeconds":
 		return "ms"
 	case "Seconds":
 		return "s"

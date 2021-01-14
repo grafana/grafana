@@ -11,11 +11,11 @@ import (
 
 // Series has time.Time and ...? *float64 fields.
 type Series struct {
-	Frame          *data.Frame
-	TimeIsNullable bool
-	TimeIdx        int
-	ValueIsNullabe bool
-	ValueIdx       int
+	Frame           *data.Frame
+	TimeIsNullable  bool
+	TimeIdx         int
+	ValueIsNullable bool
+	ValueIdx        int
 	// TODO:
 	// - Multiple Value Fields
 	// - Value can be different number types
@@ -43,9 +43,11 @@ func SeriesFromFrame(frame *data.Frame) (s Series, err error) {
 			foundValue = true
 			s.ValueIdx = i
 		case data.FieldTypeNullableFloat64:
-			s.ValueIsNullabe = true
+			s.ValueIsNullable = true
 			foundValue = true
 			s.ValueIdx = i
+		default:
+			// Handle default case
 		}
 	}
 	if !foundTime {
@@ -59,13 +61,13 @@ func SeriesFromFrame(frame *data.Frame) (s Series, err error) {
 }
 
 // NewSeries returns a dataframe of type Series.
-func NewSeries(name string, labels data.Labels, timeIdx int, nullableTime bool, valueIdx int, nullableValue bool, size int) Series {
+func NewSeries(refID string, labels data.Labels, timeIdx int, nullableTime bool, valueIdx int, nullableValue bool, size int) Series {
 	fields := make([]*data.Field, 2)
 
 	if nullableValue {
-		fields[valueIdx] = data.NewField(name, labels, make([]*float64, size))
+		fields[valueIdx] = data.NewField(refID, labels, make([]*float64, size))
 	} else {
-		fields[valueIdx] = data.NewField(name, labels, make([]float64, size))
+		fields[valueIdx] = data.NewField(refID, labels, make([]float64, size))
 	}
 
 	if nullableTime {
@@ -75,11 +77,11 @@ func NewSeries(name string, labels data.Labels, timeIdx int, nullableTime bool, 
 	}
 
 	return Series{
-		Frame:          data.NewFrame("", fields...),
-		TimeIsNullable: nullableTime,
-		TimeIdx:        timeIdx,
-		ValueIsNullabe: nullableValue,
-		ValueIdx:       valueIdx,
+		Frame:           data.NewFrame("", fields...),
+		TimeIsNullable:  nullableTime,
+		TimeIdx:         timeIdx,
+		ValueIsNullable: nullableValue,
+		ValueIdx:        valueIdx,
 	}
 }
 
@@ -113,7 +115,7 @@ func (s Series) SetPoint(pointIdx int, t *time.Time, f *float64) (err error) {
 		}
 		s.Frame.Fields[s.TimeIdx].Set(pointIdx, *t)
 	}
-	if s.ValueIsNullabe {
+	if s.ValueIsNullable {
 		s.Frame.Fields[s.ValueIdx].Set(pointIdx, f)
 	} else {
 		if f == nil {
@@ -134,7 +136,7 @@ func (s Series) AppendPoint(pointIdx int, t *time.Time, f *float64) (err error) 
 		}
 		s.Frame.Fields[s.TimeIdx].Append(*t)
 	}
-	if s.ValueIsNullabe {
+	if s.ValueIsNullable {
 		s.Frame.Fields[s.ValueIdx].Append(f)
 	} else {
 		if f == nil {
@@ -161,7 +163,7 @@ func (s Series) GetTime(pointIdx int) *time.Time {
 
 // GetValue returns the float value at the specified index.
 func (s Series) GetValue(pointIdx int) *float64 {
-	if s.ValueIsNullabe {
+	if s.ValueIsNullable {
 		return s.Frame.Fields[s.ValueIdx].At(pointIdx).(*float64)
 	}
 	f := s.Frame.Fields[s.ValueIdx].At(pointIdx).(float64)

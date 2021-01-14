@@ -17,7 +17,7 @@ type Descriptor struct {
 var services []*Descriptor
 
 func RegisterServiceWithPriority(instance Service, priority Priority) {
-	services = append(services, &Descriptor{
+	Register(&Descriptor{
 		Name:         reflect.TypeOf(instance).Elem().Name(),
 		Instance:     instance,
 		InitPriority: priority,
@@ -25,7 +25,7 @@ func RegisterServiceWithPriority(instance Service, priority Priority) {
 }
 
 func RegisterService(instance Service) {
-	services = append(services, &Descriptor{
+	Register(&Descriptor{
 		Name:         reflect.TypeOf(instance).Elem().Name(),
 		Instance:     instance,
 		InitPriority: Medium,
@@ -33,7 +33,30 @@ func RegisterService(instance Service) {
 }
 
 func Register(descriptor *Descriptor) {
+	if descriptor == nil {
+		return
+	}
+	// Overwrite any existing equivalent service
+	for i, svc := range services {
+		if svc.Name == descriptor.Name {
+			services[i] = descriptor
+			return
+		}
+	}
+
 	services = append(services, descriptor)
+}
+
+// GetService gets the registered service descriptor with a certain name.
+// If none is found, nil is returned.
+func GetService(name string) *Descriptor {
+	for _, svc := range services {
+		if svc.Name == name {
+			return svc
+		}
+	}
+
+	return nil
 }
 
 func GetServices() []*Descriptor {
@@ -52,6 +75,10 @@ var overrides []OverrideServiceFunc
 
 func RegisterOverride(fn OverrideServiceFunc) {
 	overrides = append(overrides, fn)
+}
+
+func ClearOverrides() {
+	overrides = nil
 }
 
 func getServicesWithOverrides() []*Descriptor {

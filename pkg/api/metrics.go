@@ -16,22 +16,22 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// QueryMetricsV2 returns query metrics
+// QueryMetricsV2 returns query metrics.
 // POST /api/ds/query   DataSource query w/ expressions
-func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricRequest) Response {
-	if len(reqDto.Queries) == 0 {
+func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricRequest) Response {
+	if len(reqDTO.Queries) == 0 {
 		return Error(400, "No queries found in query", nil)
 	}
 
 	request := &tsdb.TsdbQuery{
-		TimeRange: tsdb.NewTimeRange(reqDto.From, reqDto.To),
-		Debug:     reqDto.Debug,
+		TimeRange: tsdb.NewTimeRange(reqDTO.From, reqDTO.To),
+		Debug:     reqDTO.Debug,
 		User:      c.SignedInUser,
 	}
 
 	hasExpr := false
 	var ds *models.DataSource
-	for i, query := range reqDto.Queries {
+	for i, query := range reqDTO.Queries {
 		hs.log.Debug("Processing metrics query", "query", query)
 		name := query.Get("datasource").MustString("")
 		if name == expr.DatasourceName {
@@ -47,7 +47,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 		if i == 0 && !hasExpr {
 			ds, err = hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 			if err != nil {
-				hs.log.Debug("Encountered error getting data source", "err", err)
+				hs.log.Debug("Encountered error getting data source", "err", err, "id", datasourceID)
 				if errors.Is(err, models.ErrDataSourceAccessDenied) {
 					return Error(403, "Access denied to data source", err)
 				}
@@ -95,7 +95,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 		}
 	}
 
-	return JSON(statusCode, &resp)
+	return jsonStreaming(statusCode, resp)
 }
 
 // QueryMetrics returns query metrics
