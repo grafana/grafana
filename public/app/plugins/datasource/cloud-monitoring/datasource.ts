@@ -10,7 +10,7 @@ import {
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
-import { CloudMonitoringOptions, CloudMonitoringQuery, Filter, MetricDescriptor, QueryType } from './types';
+import { CloudMonitoringOptions, CloudMonitoringQuery, Filter, MetricDescriptor, QueryType, EditorMode } from './types';
 import API from './api';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { CloudMonitoringVariableSupport } from './variables';
@@ -114,6 +114,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         filters: this.interpolateFilters(metricQuery.filters || [], scopedVars),
         groupBys: this.interpolateGroupBys(metricQuery.groupBys || [], scopedVars),
         view: metricQuery.view || 'FULL',
+        editorMode: metricQuery.editorMode,
       },
       sloQuery: sloQuery && this.interpolateProps(sloQuery, scopedVars),
     };
@@ -322,6 +323,10 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     if (query.queryType && query.queryType === QueryType.SLO && query.sloQuery) {
       const { selectorName, serviceId, sloId, projectName } = query.sloQuery;
       return !!selectorName && !!serviceId && !!sloId && !!projectName;
+    }
+
+    if (query.queryType && query.queryType === QueryType.METRICS && query.metricQuery.editorMode === EditorMode.MQL) {
+      return !!query.metricQuery.projectName && !!query.metricQuery.query;
     }
 
     const { metricType } = query.metricQuery;
