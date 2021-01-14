@@ -169,6 +169,7 @@ export class VersionsSettings extends PureComponent<Props, State> {
               newInfo={newInfo}
               baseInfo={baseInfo}
               isNewLatest={isNewLatest}
+              onFetchFail={this.reset}
               delta={delta}
             />
           )}

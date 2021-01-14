@@ -9,6 +9,7 @@ type DiffViewProps = {
   newInfo?: DecoratedRevisionModel;
   baseInfo?: DecoratedRevisionModel;
   delta: { basic: string; json: string };
+  onFetchFail: () => void;
 };
 
 export class VersionHistoryComparison extends PureComponent<DiffViewProps> {
@@ -22,13 +23,14 @@ export class VersionHistoryComparison extends PureComponent<DiffViewProps> {
   componentDidMount() {
     const loader = getAngularLoader();
     const template =
-      '<gf-dashboard-history dashboard="dashboard" newinfo="newinfo" baseinfo="baseinfo" isnewlatest="isnewlatest" delta="delta"/>';
+      '<gf-dashboard-history dashboard="dashboard" newinfo="newinfo" baseinfo="baseinfo" isnewlatest="isnewlatest" onfetchfail="onfetchfail" delta="delta"/>';
     const scopeProps = {
       dashboard: this.props.dashboard,
       delta: this.props.delta,
       baseinfo: this.props.baseInfo,
       newinfo: this.props.newInfo,
       isnewlatest: this.props.isNewLatest,
+      onfetchfail: this.props.onFetchFail,
     };
     this.angularCmp = loader.load(this.element, scopeProps, template);
   }

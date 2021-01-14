@@ -17,6 +17,7 @@ export class HistoryListCtrl {
   newInfo: DecoratedRevisionModel;
   baseInfo: DecoratedRevisionModel;
   isNewLatest: boolean;
+  onFetchFail: () => void;
 
   /** @ngInject */
   constructor(
@@ -36,8 +37,6 @@ export class HistoryListCtrl {
     if (this.delta[diff]) {
       return Promise.resolve(this.delta[diff]);
     }
-
-    this.isNewLatest = this.newInfo.version === this.dashboard.version;
 
     this.loading = true;
     const options: CalculateDiffOptions = {
@@ -59,6 +58,7 @@ export class HistoryListCtrl {
           // @ts-ignore
           this.delta[this.diff] = response;
         })
+        .catch(this.onFetchFail)
         .finally(() => {
           this.loading = false;
         })
@@ -106,6 +106,7 @@ export function dashboardHistoryDirective() {
       baseInfo: '=baseinfo',
       newInfo: '=newinfo',
       isNewLatest: '=isnewlatest',
+      onFetchFail: '=onfetchfail',
     },
   };
 }
