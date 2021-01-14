@@ -61,7 +61,7 @@ func (e *AlertEngine) mapRulesToUsageStats(rules []*models.Alert) (DatasourceAle
 	// map of datsource types and frequency
 	result := map[string]int{}
 	for k, v := range typeCount {
-		query := &models.GetDataSourceByIdQuery{Id: k}
+		query := &models.GetDataSourceQuery{Id: k}
 		err := e.Bus.Dispatch(query)
 		if err != nil {
 			return map[string]int{}, nil

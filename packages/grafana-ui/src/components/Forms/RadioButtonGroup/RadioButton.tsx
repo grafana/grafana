@@ -11,6 +11,7 @@ export interface RadioButtonProps {
   size?: RadioButtonSize;
   disabled?: boolean;
   name?: string;
+  description?: string;
   active: boolean;
   id: string;
   onChange: () => void;
@@ -101,6 +102,7 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   onChange,
   id,
   name = undefined,
+  description,
   fullWidth,
 }) => {
   const theme = useTheme();
@@ -117,7 +119,7 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
         checked={active}
         name={name}
       />
-      <label className={cx(styles.radioLabel)} htmlFor={id}>
+      <label className={cx(styles.radioLabel)} htmlFor={id} title={description}>
         {children}
       </label>
     </>

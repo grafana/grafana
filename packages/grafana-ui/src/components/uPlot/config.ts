@@ -52,7 +52,7 @@ export enum ScaleDistribution {
  * @alpha
  */
 export interface LineStyle {
-  fill?: 'solid' | 'dash' | 'dot' | 'square'; // cap = 'butt' | 'round' | 'square'
+  fill?: 'solid' | 'dash' | 'dot' | 'square';
   dash?: number[];
 }
 
@@ -70,16 +70,16 @@ export interface LineConfig {
 /**
  * @alpha
  */
-export interface AreaConfig {
+export interface FillConfig {
   fillColor?: string;
   fillOpacity?: number;
-  fillGradient?: AreaGradientMode;
+  fillGradient?: FillGradientMode;
 }
 
 /**
  * @alpha
  */
-export enum AreaGradientMode {
+export enum FillGradientMode {
   None = 'none',
   Opacity = 'opacity',
   Hue = 'hue',
@@ -126,7 +126,7 @@ export interface HideSeriesConfig {
 /**
  * @alpha
  */
-export interface GraphFieldConfig extends LineConfig, AreaConfig, PointsConfig, AxisConfig {
+export interface GraphFieldConfig extends LineConfig, FillConfig, PointsConfig, AxisConfig {
   drawStyle?: DrawStyle;
   hideFrom?: HideSeriesConfig;
 }
@@ -142,10 +142,10 @@ export const graphFieldOptions = {
   ] as Array<SelectableValue<DrawStyle>>,
 
   lineInterpolation: [
-    { label: 'Linear', value: LineInterpolation.Linear },
-    { label: 'Smooth', value: LineInterpolation.Smooth },
-    { label: 'Step Before', value: LineInterpolation.StepBefore },
-    { label: 'Step After', value: LineInterpolation.StepAfter },
+    { description: 'Linear', value: LineInterpolation.Linear, icon: 'gf-interpolation-linear' },
+    { description: 'Smooth', value: LineInterpolation.Smooth, icon: 'gf-interpolation-smooth' },
+    { description: 'Step before', value: LineInterpolation.StepBefore, icon: 'gf-interpolation-step-before' },
+    { description: 'Step after', value: LineInterpolation.StepAfter, icon: 'gf-interpolation-step-after' },
   ] as Array<SelectableValue<LineInterpolation>>,
 
   showPoints: [
@@ -162,8 +162,8 @@ export const graphFieldOptions = {
   ] as Array<SelectableValue<AxisPlacement>>,
 
   fillGradient: [
-    { label: 'None', value: undefined },
-    { label: 'Opacity', value: AreaGradientMode.Opacity },
-    { label: 'Hue', value: AreaGradientMode.Hue },
-  ] as Array<SelectableValue<AreaGradientMode>>,
+    { label: 'None', value: FillGradientMode.None },
+    { label: 'Opacity', value: FillGradientMode.Opacity },
+    { label: 'Hue', value: FillGradientMode.Hue },
+  ] as Array<SelectableValue<FillGradientMode>>,
 };

@@ -313,7 +313,7 @@ func (p *timeSeriesQueryParser) parse(tsdbQuery *tsdb.TsdbQuery) ([]*Query, erro
 			return nil, err
 		}
 		alias := model.Get("alias").MustString("")
-		interval := strconv.FormatInt(q.IntervalMs, 10) + "ms"
+		interval := model.Get("interval").MustString("")
 
 		queries = append(queries, &Query{
 			TimeField:  timeField,
