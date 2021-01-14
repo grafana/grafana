@@ -30,7 +30,9 @@
   <div class="gf-form">
     <label class="gf-form-label width-10">SSL Mode</label>
     <div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
-      <select class="gf-form-input" ng-model="ctrl.current.jsonData.sslmode" ng-options="mode for mode in ['disable', 'require', 'verify-ca', 'verify-full']" ng-init="ctrl.current.jsonData.sslmode"></select>
+	  <select class="gf-form-input" ng-model="ctrl.current.jsonData.sslmode" 
+	  ng-options="mode for mode in ['disable', 'require', 'verify-ca', 'verify-full']" 
+	  ng-init="ctrl.current.jsonData.sslmode" ng-change="ctrl.lssModeMapping()"></select>
       <info-popover mode="right-absolute">
         This option determines whether or with what priority a secure SSL (TLS) TCP/IP connection will be negotiated with the server.
       </info-popover>
@@ -60,6 +62,9 @@
       Be sure that the file is <i>only</i> readable by the user executing the grafana process.
     </info-popover>
   </div>
+
+  <datasource-tls-auth-settings current="ctrl.current" ng-if="(ctrl.current.jsonData.tlsAuth || ctrl.current.jsonData.tlsAuthWithCACert)">
+  </datasource-tls-auth-settings>
 </div>
 
 <b>Connection limits</b>
@@ -133,14 +138,13 @@
 			</info-popover>
 		</div>
 	</div>
-<div class="grafana-info-box alert alert-info" ng-show="ctrl.showTimescaleDBHelp">
-  <div class="alert-body">
-    <p>
-			<a href="https://github.com/timescale/timescaledb" class="pointer" target="_blank">TimescaleDB</a> is a time-series database built as a PostgreSQL extension. If enabled, Grafana will use <code>time_bucket</code> in the <code>$__timeGroup</code> macro and display TimescaleDB specific aggregate functions in the query builder.
-    </p>
-  </div>
-</div>
-
+	<div class="grafana-info-box alert alert-info" ng-show="ctrl.showTimescaleDBHelp">
+	<div class="alert-body">
+		<p>
+				<a href="https://github.com/timescale/timescaledb" class="pointer" target="_blank">TimescaleDB</a> is a time-series database built as a PostgreSQL extension. If enabled, Grafana will use <code>time_bucket</code> in the <code>$__timeGroup</code> macro and display TimescaleDB specific aggregate functions in the query builder.
+		</p>
+	</div>
+	</div>
 </div>
 
 

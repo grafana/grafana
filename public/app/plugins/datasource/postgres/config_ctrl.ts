@@ -62,6 +62,18 @@ export class PostgresConfigCtrl {
     this.showTimescaleDBHelp = !this.showTimescaleDBHelp;
   }
 
+  lssModeMapping() {
+    if (this.current.jsonData.sslmode === 'disable') {
+      this.current.jsonData.tlsAuth = false;
+      this.current.jsonData.tlsAuthWithCACert = false;
+      this.current.jsonData.tlsSkipVerify = true;
+    } else {
+      this.current.jsonData.tlsAuth = true;
+      this.current.jsonData.tlsAuthWithCACert = true;
+      this.current.jsonData.tlsSkipVerify = false;
+    }
+  }
+
   // the value portion is derived from postgres server_version_num/100
   postgresVersions = [
     { name: '9.3', value: 903 },

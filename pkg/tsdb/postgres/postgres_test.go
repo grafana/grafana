@@ -4,6 +4,7 @@ package postgres
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/rand"
 	"strings"
@@ -31,14 +32,16 @@ func TestGenerateConnectionString(t *testing.T) {
 	logger := log.New("tsdb.postgres")
 
 	testCases := []struct {
-		desc       string
-		host       string
-		user       string
-		password   string
-		database   string
-		sslMode    string
-		expConnStr string
-		expErr     string
+		desc           string
+		host           string
+		user           string
+		password       string
+		database       string
+		sslMode        string
+		expConnStr     string
+		expErr         string
+		jsonData       string
+		secureJsonData string
 	}{
 		{
 			desc:       "Unix socket host",
@@ -80,29 +83,80 @@ func TestGenerateConnectionString(t *testing.T) {
 			expConnStr: `user='user' password='p\'\\assword' host='host' dbname='database' sslmode='verify-full'`,
 		},
 		{
-			desc:       "Custom SSL mode",
+			desc:       "Custom SSL mode disabled",
 			host:       "host",
 			user:       "user",
 			password:   "password",
 			database:   "database",
-			sslMode:    "disable",
+			jsonData:   `{"sslmode" : "disable"}`,
 			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='disable'",
+		},
+		{
+			desc:     "Custom SSL mode verify-full with file path",
+			host:     "host",
+			user:     "user",
+			password: "password",
+			database: "database",
+			jsonData: `{"sslmode" : "verify-full", "sslRootCertFile" : "i/am/coding/ca.crt",
+			"sslCertFile" : "i/am/coding/client.crt", "sslKeyFile" : "i/am/coding/client.key"}`,
+			expConnStr: "user='user' password='password' host='host' dbname='database' sslmode='verify-full' " +
+				"sslrootcert='i/am/coding/ca.crt' sslcert='i/am/coding/client.crt' sslkey='i/am/coding/client.key'",
+		},
+		{
+			desc:           "Custom SSL mode verify-full with only input text",
+			host:           "host",
+			user:           "user",
+			password:       "password",
+			database:       "database",
+			jsonData:       `{"sslmode" : "verify-full"}`,
+			secureJsonData: `{"tlsClientCert" : "I am client certification", "tlsClientKey" : "I am client key", "tlsCACert" : "i am CA certification"}`,
+			expConnStr:     "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
+		},
+		{
+			desc:           "Custom SSL mode verify-full with input text and path",
+			host:           "host",
+			user:           "user",
+			password:       "password",
+			database:       "database",
+			jsonData:       `{"sslmode" : "verify-full"}`,
+			secureJsonData: `{"tlsClientCert" : "I am client certification", "tlsClientKey" : "I am client key", "tlsCACert" : "i am CA certification"}`,
+			expConnStr:     "user='user' password='password' host='host' dbname='database' sslmode='verify-full'",
 		},
 	}
 	for _, tt := range testCases {
 		t.Run(tt.desc, func(t *testing.T) {
-			data := map[string]interface{}{}
-			if tt.sslMode != "" {
-				data["sslmode"] = tt.sslMode
+			if tt.jsonData == "" {
+				tt.jsonData = `{}`
 			}
+			if tt.secureJsonData == "" {
+				tt.secureJsonData = `{}`
+			}
+			securityjsonData := map[string]string{}
+			jsonData, err := simplejson.NewJson([]byte(tt.jsonData))
+			require.NoError(t, err, tt.desc)
+
+			if err := json.Unmarshal([]byte(tt.secureJsonData), &securityjsonData); err != nil {
+				panic(err)
+			}
+
 			ds := &models.DataSource{
-				Url:      tt.host,
-				User:     tt.user,
-				Password: tt.password,
-				Database: tt.database,
-				JsonData: simplejson.NewFromAny(data),
+				Url:            tt.host,
+				User:           tt.user,
+				Password:       tt.password,
+				Database:       tt.database,
+				JsonData:       jsonData,
+				SecureJsonData: securejsondata.GetEncryptedJsonData(securityjsonData),
 			}
-			connStr, err := generateConnectionString(ds, logger)
+			connStr, config, err := generateConnectionString(ds, logger)
+			if config.sslRootCertFile != "" {
+				tt.expConnStr += " sslrootcert='" + config.sslRootCertFile + "'"
+			}
+			if config.sslCertFile != "" {
+				tt.expConnStr += " sslcert='" + config.sslCertFile + "'"
+			}
+			if config.sslKeyFile != "" {
+				tt.expConnStr += " sslkey='" + config.sslKeyFile + "'"
+			}
 			if tt.expErr == "" {
 				require.NoError(t, err, tt.desc)
 				assert.Equal(t, tt.expConnStr, connStr, tt.desc)
@@ -111,6 +165,7 @@ func TestGenerateConnectionString(t *testing.T) {
 				assert.True(t, strings.HasPrefix(err.Error(), tt.expErr),
 					fmt.Sprintf("%s: %q doesn't start with %q", tt.desc, err, tt.expErr))
 			}
+			cleanUpFiles(config)
 		})
 	}
 }
