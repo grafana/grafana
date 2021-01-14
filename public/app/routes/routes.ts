@@ -28,7 +28,7 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
     .when('/', {
       template: '<react-container />',
       //@ts-ignore
-      pageClass: 'page-dashboard',
+      pageClass: 'page-explore',
       routeInfo: DashboardRouteInfo.Home,
       reloadOnSearch: false,
       resolve: {
@@ -235,6 +235,14 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
       resolve: {
         roles: () => (config.viewersCanEdit ? [] : ['Editor', 'Admin']),
         component: () => SafeDynamicImport(import(/* webpackChunkName: "explore" */ 'app/features/explore/Wrapper')),
+      },
+    })
+    .when('/sandbox/test', {
+      template: '<react-container />',
+      reloadOnSearch: false,
+      resolve: {
+        component: () =>
+          SafeDynamicImport(import(/* webpackChunkName: "sandbox" */ 'app/features/sandbox/TestStuffPage')),
       },
     })
     .when('/a/:pluginId/', {
@@ -547,6 +555,17 @@ export function setupAngularRoutes($routeProvider: route.IRouteProvider, $locati
             import(/* webpackChunkName: "EditNotificationChannel"*/ 'app/features/alerting/EditNotificationChannelPage')
           ),
       },
+    })
+    .when('/ngalerting', {
+      template: '<react-container />',
+      resolve: {
+        component: () =>
+          SafeDynamicImport(
+            import(/* webpackChunkName: "NgAlertingPage"*/ 'app/features/alerting/NextGenAlertingPage')
+          ),
+      },
+      //@ts-ignore
+      pageClass: 'page-alerting',
     })
     .otherwise({
       template: '<react-container />',

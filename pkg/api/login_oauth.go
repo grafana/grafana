@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -81,7 +81,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 		}
 
 		hashedState := hashStatecode(state, setting.OAuthService.OAuthInfos[name].ClientSecret)
-		middleware.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
+		cookies.WriteCookie(ctx.Resp, OauthStateCookieName, hashedState, hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
 		} else {
@@ -93,7 +93,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	cookieState := ctx.GetCookie(OauthStateCookieName)
 
 	// delete cookie
-	middleware.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.CookieOptionsFromCfg)
+	cookies.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.CookieOptionsFromCfg)
 
 	if cookieState == "" {
 		hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
@@ -146,7 +146,8 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 	// get user info
 	userInfo, err := connect.UserInfo(client, token)
 	if err != nil {
-		if sErr, ok := err.(*social.Error); ok {
+		var sErr *social.Error
+		if errors.As(err, &sErr) {
 			hs.handleOAuthLoginErrorWithRedirect(ctx, loginInfo, sErr)
 		} else {
 			hs.handleOAuthLoginError(ctx, loginInfo, LoginError{
@@ -191,7 +192,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *models.ReqContext) {
 
 	if redirectTo, err := url.QueryUnescape(ctx.GetCookie("redirect_to")); err == nil && len(redirectTo) > 0 {
 		if err := hs.ValidateRedirectTo(redirectTo); err == nil {
-			middleware.DeleteCookie(ctx.Resp, "redirect_to", hs.CookieOptionsFromCfg)
+			cookies.DeleteCookie(ctx.Resp, "redirect_to", hs.CookieOptionsFromCfg)
 			ctx.Redirect(redirectTo)
 			return
 		}
@@ -223,11 +224,11 @@ func buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, 
 			var orgID int64
 			if setting.AutoAssignOrg && setting.AutoAssignOrgId > 0 {
 				orgID = int64(setting.AutoAssignOrgId)
-				logger.Debug("The user has a role assignment and organization membership is auto-assigned",
+				plog.Debug("The user has a role assignment and organization membership is auto-assigned",
 					"role", userInfo.Role, "orgId", orgID)
 			} else {
 				orgID = int64(1)
-				logger.Debug("The user has a role assignment and organization membership is not auto-assigned",
+				plog.Debug("The user has a role assignment and organization membership is not auto-assigned",
 					"role", userInfo.Role, "orgId", orgID)
 			}
 			extUser.OrgRoles[orgID] = rt
@@ -276,7 +277,7 @@ type LoginError struct {
 }
 
 func (hs *HTTPServer) handleOAuthLoginError(ctx *models.ReqContext, info models.LoginInfo, err LoginError) {
-	ctx.Handle(err.HttpStatus, err.PublicMessage, err.Err)
+	ctx.Handle(hs.Cfg, err.HttpStatus, err.PublicMessage, err.Err)
 
 	info.Error = err.Err
 	if info.Error == nil {

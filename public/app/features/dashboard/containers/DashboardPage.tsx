@@ -257,11 +257,9 @@ export class DashboardPage extends PureComponent<Props, State> {
 
     return (
       <div className="dashboard-loading">
-        <Alert
-          severity={AppNotificationSeverity.Error}
-          title={initError.message}
-          children={getMessageFromError(initError.error)}
-        />
+        <Alert severity={AppNotificationSeverity.Error} title={initError.message}>
+          {getMessageFromError(initError.error)}
+        </Alert>
       </div>
     );
   }
@@ -322,7 +320,9 @@ export class DashboardPage extends PureComponent<Props, State> {
           >
             <div className="dashboard-content">
               {initError && this.renderInitFailedState()}
-              {!editPanel && <SubMenu dashboard={dashboard} links={dashboard.links} />}
+              {!editPanel && (
+                <SubMenu dashboard={dashboard} annotations={dashboard.annotations.list} links={dashboard.links} />
+              )}
 
               <DashboardGrid
                 dashboard={dashboard}
@@ -337,7 +337,7 @@ export class DashboardPage extends PureComponent<Props, State> {
 
         {inspectPanel && <PanelInspector dashboard={dashboard} panel={inspectPanel} defaultTab={inspectTab} />}
         {editPanel && <PanelEditor dashboard={dashboard} sourcePanel={editPanel} />}
-        {editview && <DashboardSettings dashboard={dashboard} updateLocation={updateLocation} />}
+        {editview && <DashboardSettings dashboard={dashboard} updateLocation={updateLocation} editview={editview} />}
       </div>
     );
   }

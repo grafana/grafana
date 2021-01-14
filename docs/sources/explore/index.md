@@ -155,6 +155,33 @@ Along with metrics, Explore allows you to investigate your logs with the followi
 
 Results of log queries are shown as histograms in the graph and individual logs are displayed below. If the data source does not send histogram data for the requested time range, the logs model computes a time series based on the log row counts bucketed by an automatically calculated time interval and the start of the histogram is then anchored by the first log row's timestamp from the result. The end of the time series is anchored to the time picker's **To** range.
 
+#### Log level
+
+For logs where a **level** label is specified, we use the value of the label to determine the log level and update color accordingly. If the log doesn't have a level label specified, we parse the log to find out if its content matches any of the supported expressions (see below for more information). The log level is always determined by the first match. In case Grafana is not able to determine a log level, it will be visualized with **unknown** log level.
+
+**Supported log levels and mapping of log level abbreviation and expressions:**
+
+
+|  Supported expressions      | Log level     | Color       |
+| --------------------------- |:-------------:| -----------:|
+| emerg                       | critical      | purple      |
+| fatal                       | critical      | purple      |
+| alert                       | critical      | purple      |
+| crit                        | critical      | purple      |
+| critical                    | critical      | purple      |
+| err                         | error         | red         |
+| eror                        | error         | red         |
+| error                       | error         | red         |
+| warn                        | warning       | yellow      |
+| warning                     | warning       | yellow      |
+| info                        | info          | green       |
+| information                 | info          | green       |
+| notice                      | info          | green       |
+| dbug                        | debug         | blue        |
+| debug                       | debug         | blue        |
+| trace                       | trace         | light blue  |
+| *                           | unknown       | grey        |
+
 ### Visualization options
 
 You can customize how logs are displayed and select which columns are shown.
@@ -183,17 +210,17 @@ Log data can be very repetitive and Explore can help by hiding duplicate log lin
 
 You can change the order of received logs from the default descending order (newest first) to ascending order (oldest first).
 
-### Labels and parsed fields
+### Labels and detected fields
 
-Each log row has an extendable area with its labels and parsed fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
+Each log row has an extendable area with its labels and detected fields, for more robust interaction. For all labels we have added the ability to filter for (positive filter) and filter out (negative filter) selected labels. Each field or label also has a stats icon to display ad-hoc statistics in relation to all displayed logs.
 
-### Toggle parsed fields
+### Toggle detected fields
 
 > **Note:** This feature is only available in Grafana 7.2+.
 
-If your logs are structured in `json` or `logfmt`, then you can show or hide parsed fields. Expand a log line and then click the eye icon to show or hide fields.
+If your logs are structured in `json` or `logfmt`, then you can show or hide detected fields. Expand a log line and then click the eye icon to show or hide fields.
 
-{{< docs-imagebox img="/img/docs/explore/parsed-fields-7-2.gif" max-width="800px" caption="Toggling parsed fields in Explore" >}}
+{{< docs-imagebox img="/img/docs/explore/parsed-fields-7-2.gif" max-width="800px" caption="Toggling detected fields in Explore" >}}
 
 ### Loki-specific features
 
@@ -231,6 +258,8 @@ You can visualize traces from tracing data sources in explore. Data sources curr
 
 - [Jaeger]({{< relref "../datasources/jaeger.md" >}})
 - [Zipkin]({{< relref "../datasources/zipkin.md" >}})
+- [Tempo]({{< relref "../datasources/tempo.md" >}})
+- [X-Ray](https://grafana.com/grafana/plugins/grafana-x-ray-datasource)
 
 For information about how to use the query editor see documentation for specific data source.
 
@@ -273,10 +302,19 @@ Clicking anywhere on the span row shows span details.
 - Process metadata: Metadata about the process that logged this span.
 - Logs: List of logs logged by this span and associated key values. In case of Zipkin logs section shows Zipkin annotations.
 
-## Navigating between Explore and a dashboard
+##### Trace to logs
 
-To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard
-after navigating to Explore from the panel's dropdown.
+> This feature is only available in Grafana 7.4+.
+
+You can navigate from a span in a trace view directly to logs relevant for that span. This is available for Tempo, Jaeger and Zipkin data source at this moment. See their relevant documentation for instruction how to configure this feature.
+
+{{< docs-imagebox img="/img/docs/v74/trace-to-logs.png" class="docs-image--no-shadow" caption="Screenshot of the trace view in Explore with new icon next to the spans" >}}
+
+Click the document icon to open a split view in Explore with the configured data source and query relevant logs for the span.
+
+## Navigate between Explore and a dashboard
+
+To help accelerate workflows that involve regularly switching from Explore to a dashboard and vice-versa, we've added the ability to return to the origin dashboard after navigating to Explore from the panel's dropdown.
 
 {{< docs-imagebox img="/img/docs/v64/panel_dropdown.png" class="docs-image--no-shadow" caption="Screenshot of the panel dropdown" >}}
 
@@ -297,4 +335,4 @@ This functionality is similar to the panel inspector [Stats tab]({{< relref "../
 
 {{< docs-imagebox img="/img/docs/v71/query_inspector_explore.png" class="docs-image--no-shadow" caption="Screenshot of the query inspector button in Explore" >}}
 
-<!-- BEGIN Optimal Workshop Intercept Snippet --><div id='owInviteSnippet' style='position:fixed;right:20px;bottom:20px;width:280px;padding:20px;margin:0;border-radius:6px;background:#1857B8;color:#F7F8FA;text-align:left;z-index:2200000000;opacity:0;transition:opacity 500ms;-webkit-transition:opacity 500ms;display:none;'><div id='owInviteMessage' style='padding:0;margin:0 0 20px 0;font-size:16px;'>Got a spare two and a half minutes to help us improve the docs?</div><a id='owInviteOk' href='https://Grafana.optimalworkshop.com/questions/grafana-docs?tag=docs&utm_medium=intercept' onclick='this.parentNode.style.display="none";' target='_blank' style='color:#F7FAFF;font-size:16px;font-weight:bold;text-decoration:underline;'>Yes, I&#x27;ll help</a><a id='owInviteCancel' href='javascript:void(0)' onclick='this.parentNode.style.display="none";' style='color:#F7F8FA;font-size:14px;text-decoration:underline;float:right;'>Close</a></div><script>var owOnload=function(){if(-1==document.cookie.indexOf('ow-intercept-quiz-4ior230e')){var o=new XMLHttpRequest;o.onloadend=function(){try{var o=document.getElementById('owInviteSnippet');var date=new Date();date.setMonth(date.getMonth()+1);this.response&&JSON.parse(this.response).active===!0&&(document.cookie='ow-intercept-quiz-4ior230e=Done;path=/;expires='+date.toUTCString()+';',setTimeout(function(){o.style.display='block',o.style.opacity=1},2e3))}catch(e){}},o.open('POST','https://app.optimalworkshop.com/survey_status/questions/4ior230e/active'),o.send()}};if(window.addEventListener){window.addEventListener('load',function(){owOnload();});}else if(window.attachEvent){window.attachEvent('onload',function(){owOnload();});}</script><!-- END Optimal Workshop snippet -->
+

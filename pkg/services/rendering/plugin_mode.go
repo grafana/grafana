@@ -2,6 +2,7 @@ package rendering
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -45,7 +46,7 @@ func (rs *RenderingService) renderViaPluginV1(ctx context.Context, renderKey str
 	rs.log.Debug("calling renderer plugin", "req", req)
 
 	rsp, err := rs.pluginInfo.GrpcPluginV1.Render(ctx, req)
-	if ctx.Err() == context.DeadlineExceeded {
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		rs.log.Info("Rendering timed out")
 		return nil, ErrTimeout
 	}
@@ -88,7 +89,7 @@ func (rs *RenderingService) renderViaPluginV2(ctx context.Context, renderKey str
 	rs.log.Debug("Calling renderer plugin", "req", req)
 
 	rsp, err := rs.pluginInfo.GrpcPluginV2.Render(ctx, req)
-	if ctx.Err() == context.DeadlineExceeded {
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		rs.log.Info("Rendering timed out")
 		return nil, ErrTimeout
 	}

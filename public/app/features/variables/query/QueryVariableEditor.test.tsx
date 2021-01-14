@@ -8,7 +8,8 @@ import { initialQueryVariableModelState } from './reducer';
 import { initialVariableEditorState } from '../editor/reducer';
 import { describe, expect } from '../../../../test/lib/common';
 import { NEW_VARIABLE_ID } from '../state/types';
-import DefaultVariableQueryEditor from '../editor/DefaultVariableQueryEditor';
+import { LegacyVariableQueryEditor } from '../editor/LegacyVariableQueryEditor';
+import { setDataSourceSrv } from '@grafana/runtime';
 
 const setupTestContext = (options: Partial<Props>) => {
   const defaults: Props = {
@@ -20,8 +21,7 @@ const setupTestContext = (options: Partial<Props>) => {
     editor: {
       ...initialVariableEditorState,
       extended: {
-        VariableQueryEditor: DefaultVariableQueryEditor,
-        dataSources: [],
+        VariableQueryEditor: LegacyVariableQueryEditor,
         dataSource: ({} as unknown) as DataSourceApi,
       },
     },
@@ -33,6 +33,11 @@ const setupTestContext = (options: Partial<Props>) => {
 
   return { rerender, props };
 };
+
+setDataSourceSrv({
+  getInstanceSettings: () => null,
+  getList: () => [],
+} as any);
 
 describe('QueryVariableEditor', () => {
   describe('when the component is mounted', () => {

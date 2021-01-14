@@ -31,7 +31,10 @@ var handshake = goplugin.HandshakeConfig{
 	MagicCookieValue: grpcplugin.MagicCookieValue,
 }
 
-func newClientConfig(executablePath string, env []string, logger log.Logger, versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
+func newClientConfig(executablePath string, env []string, logger log.Logger,
+	versionedPlugins map[int]goplugin.PluginSet) *goplugin.ClientConfig {
+	// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
+	// nolint:gosec
 	cmd := exec.Command(executablePath)
 	cmd.Env = env
 
@@ -71,14 +74,13 @@ func getV2PluginSet() goplugin.PluginSet {
 		"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
 		"resource":    &grpcplugin.ResourceGRPCPlugin{},
 		"data":        &grpcplugin.DataGRPCPlugin{},
-		"transform":   &grpcplugin.TransformGRPCPlugin{},
 		"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
 	}
 }
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
 func NewBackendPlugin(pluginID, executablePath string, startFns PluginStartFuncs) backendplugin.PluginFactoryFunc {
-	return New(PluginDescriptor{
+	return newPlugin(PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
 		managed:        true,
@@ -94,7 +96,7 @@ func NewBackendPlugin(pluginID, executablePath string, startFns PluginStartFuncs
 
 // NewRendererPlugin creates a new renderer plugin factory used for registering a backend renderer plugin.
 func NewRendererPlugin(pluginID, executablePath string, startFns PluginStartFuncs) backendplugin.PluginFactoryFunc {
-	return New(PluginDescriptor{
+	return newPlugin(PluginDescriptor{
 		pluginID:       pluginID,
 		executablePath: executablePath,
 		managed:        false,
@@ -116,7 +118,6 @@ type LegacyClient struct {
 
 // Client client for communicating with a plugin using the current (v2) plugin protocol.
 type Client struct {
-	DataPlugin      grpcplugin.DataClient
-	TransformPlugin grpcplugin.TransformClient
-	RendererPlugin  pluginextensionv2.RendererPlugin
+	DataPlugin     grpcplugin.DataClient
+	RendererPlugin pluginextensionv2.RendererPlugin
 }

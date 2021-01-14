@@ -1,9 +1,18 @@
-import { toUtc, dateTime } from '@grafana/data';
+import { toUtc, dateTime, DateTime, DurationUnit } from '@grafana/data';
+import { Interval } from './types';
 
-const intervalMap: any = {
+type IntervalMap = Record<
+  Interval,
+  {
+    startOf: DurationUnit;
+    amount: DurationUnit;
+  }
+>;
+
+const intervalMap: IntervalMap = {
   Hourly: { startOf: 'hour', amount: 'hours' },
   Daily: { startOf: 'day', amount: 'days' },
-  Weekly: { startOf: 'isoWeek', amount: 'weeks' },
+  Weekly: { startOf: 'week', amount: 'weeks' },
   Monthly: { startOf: 'month', amount: 'months' },
   Yearly: { startOf: 'year', amount: 'years' },
 };
@@ -11,7 +20,7 @@ const intervalMap: any = {
 export class IndexPattern {
   private dateLocale = 'en';
 
-  constructor(private pattern: any, private interval?: string) {}
+  constructor(private pattern: string, private interval?: keyof typeof intervalMap) {}
 
   getIndexForToday() {
     if (this.interval) {
@@ -23,16 +32,21 @@ export class IndexPattern {
     }
   }
 
-  getIndexList(from: any, to: any) {
+  getIndexList(from?: DateTime, to?: DateTime) {
+    // When no `from` or `to` is provided, we request data from 7 subsequent/previous indices
+    // for the provided index pattern.
+    // This is useful when requesting log context where the only time data we have is the log
+    // timestamp.
+    const indexOffset = 7;
     if (!this.interval) {
       return this.pattern;
     }
 
     const intervalInfo = intervalMap[this.interval];
-    const start = dateTime(from)
+    const start = dateTime(from || dateTime(to).add(-indexOffset, intervalInfo.amount))
       .utc()
       .startOf(intervalInfo.startOf);
-    const endEpoch = dateTime(to)
+    const endEpoch = dateTime(to || dateTime(from).add(indexOffset, intervalInfo.amount))
       .utc()
       .startOf(intervalInfo.startOf)
       .valueOf();

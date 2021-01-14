@@ -1,17 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`LokiExploreQueryEditor should render component 1`] = `
-<Component
-  ExtraFieldElement={
-    <Memo(LokiExploreExtraField)
-      label="Line limit"
-      min={0}
-      onChangeFunc={[Function]}
-      onKeyDownFunc={[Function]}
-      type="number"
-      value="0"
-    />
-  }
+<LokiQueryField
   data={
     Object {
       "request": Object {

@@ -34,6 +34,7 @@ class AddPermissions extends Component<Props, NewDashboardAclItem> {
     return {
       userId: 0,
       teamId: 0,
+      role: undefined,
       type: AclTarget.Team,
       permission: PermissionLevel.View,
     };

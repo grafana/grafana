@@ -1,11 +1,11 @@
 import {
+  addQueryRowAction,
   cancelQueries,
   cancelQueriesAction,
+  queryReducer,
+  removeQueryRowAction,
   scanStartAction,
   scanStopAction,
-  queryReducer,
-  addQueryRowAction,
-  removeQueryRowAction,
 } from './query';
 import { ExploreId, ExploreItemState } from 'app/types';
 import { interval } from 'rxjs';
@@ -33,7 +33,7 @@ describe('running queries', () => {
     const initialState = {
       explore: {
         [exploreId]: {
-          datasourceInstance: 'test-datasource',
+          datasourceInstance: { name: 'testDs' },
           initialized: true,
           loading: true,
           querySubscription: unsubscribable,
@@ -71,7 +71,7 @@ describe('reducer', () => {
         .givenReducer(queryReducer, initialState)
         .whenActionIsDispatched(scanStartAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
-          ...makeExplorePaneState(),
+          ...initialState,
           scanning: true,
         });
     });
@@ -86,7 +86,7 @@ describe('reducer', () => {
         .givenReducer(queryReducer, initialState)
         .whenActionIsDispatched(scanStopAction({ exploreId: ExploreId.left }))
         .thenStateShouldEqual({
-          ...makeExplorePaneState(),
+          ...initialState,
           scanning: false,
           scanRange: undefined,
         });

@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/oauth2"
 )
 
@@ -84,6 +85,7 @@ type LoginUserQuery struct {
 	User       *User
 	IpAddress  string
 	AuthModule string
+	Cfg        *setting.Cfg
 }
 
 type GetUserByAuthInfoQuery struct {
@@ -119,9 +121,4 @@ type TeamOrgGroupDTO struct {
 type GetTeamsForLDAPGroupCommand struct {
 	Groups []string
 	Result []TeamOrgGroupDTO
-}
-
-type SyncTeamsCommand struct {
-	ExternalUser *ExternalUserInfo
-	User         *User
 }

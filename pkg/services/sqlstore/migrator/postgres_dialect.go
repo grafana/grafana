@@ -1,6 +1,7 @@
 package migrator
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -150,6 +151,7 @@ func (db *PostgresDialect) TruncateDBTables() error {
 		switch table.Name {
 		case "":
 			continue
+		case "migration_log":
 		case "dashboard_acl":
 			// keep default dashboard permissions
 			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", db.Quote(table.Name))); err != nil {
@@ -172,7 +174,8 @@ func (db *PostgresDialect) TruncateDBTables() error {
 }
 
 func (db *PostgresDialect) isThisError(err error, errcode string) bool {
-	if driverErr, ok := err.(*pq.Error); ok {
+	var driverErr *pq.Error
+	if errors.As(err, &driverErr) {
 		if string(driverErr.Code) == errcode {
 			return true
 		}
@@ -182,7 +185,8 @@ func (db *PostgresDialect) isThisError(err error, errcode string) bool {
 }
 
 func (db *PostgresDialect) ErrorMessage(err error) string {
-	if driverErr, ok := err.(*pq.Error); ok {
+	var driverErr *pq.Error
+	if errors.As(err, &driverErr) {
 		return driverErr.Message
 	}
 	return ""

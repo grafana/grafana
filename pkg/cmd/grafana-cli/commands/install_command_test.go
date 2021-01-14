@@ -99,16 +99,16 @@ func TestInstallPluginCommand(t *testing.T) {
 		GetPluginFunc: func(pluginId, repoUrl string) (models.Plugin, error) {
 			require.Equal(t, "test-plugin-panel", pluginId)
 			plugin := models.Plugin{
-				Id:       "test-plugin-panel",
+				ID:       "test-plugin-panel",
 				Category: "",
 				Versions: []models.Version{
 					{
 						Commit:  "commit",
-						Url:     "url",
+						URL:     "url",
 						Version: "1.0.0",
 						Arch: map[string]models.ArchMeta{
 							fmt.Sprintf("%s-%s", runtime.GOOS, runtime.GOARCH): {
-								Md5: "test",
+								SHA256: "test",
 							},
 						},
 					},
@@ -215,7 +215,7 @@ func setupFakePluginsDir(t *testing.T) (string, func()) {
 	err := os.RemoveAll(dirname)
 	require.Nil(t, err)
 
-	err = os.MkdirAll(dirname, 0774)
+	err = os.MkdirAll(dirname, 0750)
 	require.Nil(t, err)
 
 	return dirname, func() {
@@ -237,7 +237,7 @@ type versionArg struct {
 
 func makePluginWithVersions(versions ...versionArg) *models.Plugin {
 	plugin := &models.Plugin{
-		Id:       "",
+		ID:       "",
 		Category: "",
 		Versions: []models.Version{},
 	}
@@ -246,13 +246,13 @@ func makePluginWithVersions(versions ...versionArg) *models.Plugin {
 		ver := models.Version{
 			Version: version.Version,
 			Commit:  fmt.Sprintf("commit_%s", version.Version),
-			Url:     fmt.Sprintf("url_%s", version.Version),
+			URL:     fmt.Sprintf("url_%s", version.Version),
 		}
 		if version.Arch != nil {
 			ver.Arch = map[string]models.ArchMeta{}
 			for _, arch := range version.Arch {
 				ver.Arch[arch] = models.ArchMeta{
-					Md5: fmt.Sprintf("md5_%s", arch),
+					SHA256: fmt.Sprintf("sha256_%s", arch),
 				}
 			}
 		}

@@ -1,6 +1,7 @@
 package migrator
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -124,14 +125,18 @@ func (db *MySQLDialect) CleanDB() error {
 	defer sess.Close()
 
 	for _, table := range tables {
-		if _, err := sess.Exec("set foreign_key_checks = 0"); err != nil {
-			return errutil.Wrap("failed to disable foreign key checks", err)
-		}
-		if _, err := sess.Exec("drop table " + table.Name + " ;"); err != nil {
-			return errutil.Wrapf(err, "failed to delete table %q", table.Name)
-		}
-		if _, err := sess.Exec("set foreign_key_checks = 1"); err != nil {
-			return errutil.Wrap("failed to disable foreign key checks", err)
+		switch table.Name {
+		case "migration_log":
+		default:
+			if _, err := sess.Exec("set foreign_key_checks = 0"); err != nil {
+				return errutil.Wrap("failed to disable foreign key checks", err)
+			}
+			if _, err := sess.Exec("drop table " + table.Name + " ;"); err != nil {
+				return errutil.Wrapf(err, "failed to delete table %q", table.Name)
+			}
+			if _, err := sess.Exec("set foreign_key_checks = 1"); err != nil {
+				return errutil.Wrap("failed to disable foreign key checks", err)
+			}
 		}
 	}
 
@@ -169,7 +174,8 @@ func (db *MySQLDialect) TruncateDBTables() error {
 }
 
 func (db *MySQLDialect) isThisError(err error, errcode uint16) bool {
-	if driverErr, ok := err.(*mysql.MySQLError); ok {
+	var driverErr *mysql.MySQLError
+	if errors.As(err, &driverErr) {
 		if driverErr.Number == errcode {
 			return true
 		}
@@ -183,7 +189,8 @@ func (db *MySQLDialect) IsUniqueConstraintViolation(err error) bool {
 }
 
 func (db *MySQLDialect) ErrorMessage(err error) string {
-	if driverErr, ok := err.(*mysql.MySQLError); ok {
+	var driverErr *mysql.MySQLError
+	if errors.As(err, &driverErr) {
 		return driverErr.Message
 	}
 	return ""

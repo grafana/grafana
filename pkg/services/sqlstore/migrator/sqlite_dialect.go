@@ -1,6 +1,7 @@
 package migrator
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -99,6 +100,7 @@ func (db *SQLite3) TruncateDBTables() error {
 
 	for _, table := range tables {
 		switch table.Name {
+		case "migration_log":
 		case "dashboard_acl":
 			// keep default dashboard permissions
 			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %q WHERE dashboard_id != -1 AND org_id != -1;", table.Name)); err != nil {
@@ -120,7 +122,8 @@ func (db *SQLite3) TruncateDBTables() error {
 }
 
 func (db *SQLite3) isThisError(err error, errcode int) bool {
-	if driverErr, ok := err.(sqlite3.Error); ok {
+	var driverErr sqlite3.Error
+	if errors.As(err, &driverErr) {
 		if int(driverErr.ExtendedCode) == errcode {
 			return true
 		}
@@ -130,7 +133,8 @@ func (db *SQLite3) isThisError(err error, errcode int) bool {
 }
 
 func (db *SQLite3) ErrorMessage(err error) string {
-	if driverErr, ok := err.(sqlite3.Error); ok {
+	var driverErr sqlite3.Error
+	if errors.As(err, &driverErr) {
 		return driverErr.Error()
 	}
 	return ""

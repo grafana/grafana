@@ -36,10 +36,13 @@ else
   exit
 fi
 
+# Publish to NPM registry
+echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+
 echo $'\nBuilding packages'
 yarn packages:build
 
-echo $'\nPublishing packages'
+echo $'\nPublishing packages to NPM registry'
 yarn packages:${SCRIPT}
 
 # When releasing stable(latest) version of packages we are updating previously published next tag(beta) to be the same version as latest
@@ -50,3 +53,22 @@ if [ $RELEASE_CHANNEL == "latest" ]; then
     npm dist-tag add "$i"@"$PACKAGE_VERSION" next
   done
 fi
+
+# Publish to Github Packages registry
+# We do this for the convenience of developers that make use of both the canary and next / latest channels.
+
+echo "@grafana:registry=https://npm.pkg.github.com" >> ~/.npmrc
+echo "//npm.pkg.github.com/:_authToken=${GITHUB_PACKAGE_TOKEN}" >> ~/.npmrc
+
+echo $'\nPublishing packages to Github Packages registry'
+yarn packages:${SCRIPT} --registry https://npm.pkg.github.com
+
+# When releasing stable(latest) version of packages we are updating previously published next tag(beta) to be the same version as latest
+if [ $RELEASE_CHANNEL == "latest" ]; then
+  for i in "${PACKAGES[@]}"
+  do
+    :
+    npm dist-tag add "$i"@"$PACKAGE_VERSION" next
+  done
+fi
+

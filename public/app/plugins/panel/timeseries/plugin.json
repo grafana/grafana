@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Time series",
+  "id": "timeseries",
+  "state": "beta",
+
+  "info": {
+    "author": {
+      "name": "Grafana Labs",
+      "url": "https://grafana.com"
+    },
+    "logos": {
+      "small": "img/icn-timeseries-panel.svg",
+      "large": "img/icn-timeseries-panel.svg"
+    }
+  }
+}

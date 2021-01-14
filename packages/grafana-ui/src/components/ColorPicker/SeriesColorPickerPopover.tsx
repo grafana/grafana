@@ -19,20 +19,22 @@ export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopove
       customPickers={{
         yaxis: {
           name: 'Y-Axis',
-          tabComponent: () => (
-            <Switch
-              key="yaxisSwitch"
-              label="Use right y-axis"
-              className="ColorPicker__axisSwitch"
-              labelClass="ColorPicker__axisSwitchLabel"
-              checked={yaxis === 2}
-              onChange={() => {
-                if (onToggleAxis) {
-                  onToggleAxis();
-                }
-              }}
-            />
-          ),
+          tabComponent() {
+            return (
+              <Switch
+                key="yaxisSwitch"
+                label="Use right y-axis"
+                className="ColorPicker__axisSwitch"
+                labelClass="ColorPicker__axisSwitchLabel"
+                checked={yaxis === 2}
+                onChange={() => {
+                  if (onToggleAxis) {
+                    onToggleAxis();
+                  }
+                }}
+              />
+            );
+          },
         },
       }}
     />

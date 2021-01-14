@@ -2,6 +2,7 @@ package oauthtoken
 
 import (
 	"context"
+	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -23,7 +24,7 @@ func GetCurrentOAuthToken(ctx context.Context, user *models.SignedInUser) *oauth
 
 	authInfoQuery := &models.GetAuthInfoQuery{UserId: user.UserId}
 	if err := bus.Dispatch(authInfoQuery); err != nil {
-		if err == models.ErrUserNotFound {
+		if errors.Is(err, models.ErrUserNotFound) {
 			// Not necessarily an error.  User may be logged in another way.
 			logger.Debug("no OAuth token for user found", "userId", user.UserId, "username", user.Login)
 		} else {
@@ -85,6 +86,6 @@ func IsOAuthPassThruEnabled(ds *models.DataSource) bool {
 func tokensEq(t1, t2 *oauth2.Token) bool {
 	return t1.AccessToken == t2.AccessToken &&
 		t1.RefreshToken == t2.RefreshToken &&
-		t1.Expiry == t2.Expiry &&
+		t1.Expiry.Equal(t2.Expiry) &&
 		t1.TokenType == t2.TokenType
 }

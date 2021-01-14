@@ -39,7 +39,7 @@ The Derived Fields configuration allows you to:
 - Add fields parsed from the log message.
 - Add a link that uses the value of the field.
 
-You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/explore/#labels-and-parsed-fields).
+You can use this functionality to link to your tracing backend directly from your logs, or link to a user profile page if a userId is present in the log line. These links appear in the [log details](/explore/#labels-and-detected-fields).
 {{< docs-imagebox img="/img/docs/v65/loki_derived_fields.png" class="docs-image--no-shadow" caption="Screenshot of the derived fields configuration" >}}
 Each derived field consists of:
 
@@ -230,4 +230,16 @@ datasources:
         - matcherRegex: "traceID=(\\w+)"
           name: TraceID
           url: "http://localhost:16686/trace/$${__value.raw}"
+```
+
+Here's an example of a Jaeger data source corresponding to the above example. Note that the Jaeger `uid` value does match the Loki `datasourceUid` value.
+
+```
+datasources:
+    - name: Jaeger
+      type: jaeger
+      url: http://jaeger-tracing-query:16686/
+      access: proxy
+      # UID should match the datasourceUid in dervidedFields.
+      uid: my_jaeger_uid
 ```

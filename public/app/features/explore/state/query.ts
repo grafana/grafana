@@ -27,7 +27,7 @@ import { ExploreId, QueryOptions } from 'app/types/explore';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { getShiftedTimeRange } from 'app/core/utils/timePicker';
 import { notifyApp } from '../../../core/actions';
-import { preProcessPanelData, runRequest } from '../../dashboard/state/runRequest';
+import { preProcessPanelData, runRequest } from '../../query/state/runRequest';
 import {
   decorateWithGraphLogsTraceAndTable,
   decorateWithGraphResult,
@@ -342,7 +342,7 @@ export const runQueries = (exploreId: ExploreId): ThunkResult<void> => {
       liveStreaming: live,
     };
 
-    const datasourceName = exploreItemState.requestedDatasourceName;
+    const datasourceName = datasourceInstance.name;
     const timeZone = getTimeZone(getState().user);
     const transaction = buildQueryTransaction(queries, queryOptions, range, scanning, timeZone);
 
@@ -477,7 +477,6 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
     return {
       ...state,
       queries: nextQueries,
-      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
     };
   }
 
@@ -552,13 +551,11 @@ export const queryReducer = (state: ExploreItemState, action: AnyAction): Explor
       nextQueries.push(generateNewKeyAndAddRefIdIfMissing(query, nextQueries, i));
     });
 
-    const nextQueryKeys: string[] = nextQueries.map(query => query.key!);
-
     return {
       ...state,
       queries: nextQueries,
       logsHighlighterExpressions: undefined,
-      queryKeys: nextQueryKeys,
+      queryKeys: getQueryKeys(nextQueries, state.datasourceInstance),
     };
   }
 

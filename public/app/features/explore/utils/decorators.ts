@@ -13,7 +13,7 @@ import { config } from '@grafana/runtime';
 import { groupBy } from 'lodash';
 
 import { ExplorePanelData } from '../../../types';
-import { getGraphSeriesModel } from '../../../plugins/panel/graph2/getGraphSeriesModel';
+import { getGraphSeriesModel } from '../flotgraph/getGraphSeriesModel';
 import { dataFrameToLogsModel } from '../../../core/logs_model';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
 import { LegendDisplayMode } from '@grafana/ui';
@@ -92,7 +92,7 @@ export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelDat
           data.request?.timezone ?? 'browser',
           {},
           { showBars: false, showLines: true, showPoints: false },
-          { displayMode: LegendDisplayMode.List, isVisible: true, placement: 'bottom' }
+          { displayMode: LegendDisplayMode.List, placement: 'bottom' }
         );
 
   return { ...data, graphResult };

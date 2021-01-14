@@ -1,15 +1,16 @@
 // Libraries
 import React, { CSSProperties } from 'react';
 import tinycolor from 'tinycolor2';
-import { Chart, Geom } from 'bizcharts';
 
 // Utils
-import { formattedValueToString, DisplayValue, getColorForTheme } from '@grafana/data';
+import { formattedValueToString, DisplayValue, getColorForTheme, FieldConfig } from '@grafana/data';
 import { calculateFontSize } from '../../utils/measureText';
 
 // Types
 import { BigValueColorMode, Props, BigValueJustifyMode, BigValueTextMode } from './BigValue';
 import { getTextColorForBackground } from '../../utils';
+import { DrawStyle, GraphFieldConfig } from '../uPlot/config';
+import { Sparkline } from '../Sparkline/Sparkline';
 
 const LINE_HEIGHT = 1.2;
 const MAX_TITLE_SIZE = 30;
@@ -29,7 +30,7 @@ export abstract class BigValueLayout {
   textValues: BigValueTextValues;
 
   constructor(private props: Props) {
-    const { width, height, value, theme } = props;
+    const { width, height, value, theme, text } = props;
 
     this.valueColor = getColorForTheme(value.color || 'green', theme);
     this.panelPadding = height > 100 ? 12 : 8;
@@ -43,6 +44,18 @@ export abstract class BigValueLayout {
     this.chartWidth = 0;
     this.maxTextWidth = width - this.panelPadding * 2;
     this.maxTextHeight = height - this.panelPadding * 2;
+
+    // Explicit font sizing
+    if (text) {
+      if (text.titleSize) {
+        this.titleFontSize = text.titleSize;
+        this.titleToAlignTo = undefined;
+      }
+      if (text.valueSize) {
+        this.valueFontSize = text.valueSize;
+        this.valueToAlignTo = '';
+      }
+    }
   }
 
   getTitleStyles(): CSSProperties {
@@ -136,64 +149,11 @@ export abstract class BigValueLayout {
   }
 
   renderChart(): JSX.Element | null {
-    const { sparkline } = this.props;
+    const { sparkline, colorMode } = this.props;
 
-    if (!sparkline || sparkline.data.length === 0) {
+    if (!sparkline || !sparkline.y) {
       return null;
     }
-
-    const data = sparkline.data.map(values => {
-      return { time: values[0], value: values[1], name: 'A' };
-    });
-
-    const scales = {
-      time: {
-        type: 'time',
-        min: sparkline.xMin,
-        max: sparkline.xMax,
-      },
-      value: {
-        min: sparkline.yMin,
-        max: sparkline.yMax,
-      },
-    };
-
-    if (sparkline.xMax && sparkline.xMin) {
-      // Having the last data point align with the edge of the panel looks good
-      // So if it's close adjust time.max to the last data point time
-      const timeDelta = sparkline.xMax - sparkline.xMin;
-      const lastDataPointTime = data[data.length - 1].time || 0;
-      const lastTimeDiffFromMax = Math.abs(sparkline.xMax - lastDataPointTime);
-
-      // if last data point is just 5% or lower from the edge adjust it
-      if (lastTimeDiffFromMax / timeDelta < 0.05) {
-        scales.time.max = lastDataPointTime;
-      }
-    }
-
-    return (
-      <Chart
-        height={this.chartHeight}
-        width={this.chartWidth}
-        data={data}
-        animate={false}
-        padding={[4, 0, 0, 0]}
-        scale={scales}
-        style={this.getChartStyles()}
-      >
-        {this.renderGeom()}
-      </Chart>
-    );
-  }
-
-  renderGeom(): JSX.Element {
-    const { colorMode } = this.props;
-
-    const lineStyle: any = {
-      opacity: 1,
-      fillOpacity: 1,
-      lineWidth: 2,
-    };
 
     let fillColor: string;
     let lineColor: string;
@@ -212,16 +172,28 @@ export abstract class BigValueLayout {
           .toRgbString();
     }
 
-    lineStyle.stroke = lineColor;
+    // The graph field configuration applied to Y values
+    const config: FieldConfig<GraphFieldConfig> = {
+      custom: {
+        drawStyle: DrawStyle.Line,
+        lineWidth: 1,
+        fillColor,
+        lineColor,
+      },
+    };
 
     return (
-      <>
-        <Geom type="area" position="time*value" size={0} color={fillColor} style={lineStyle} shape="smooth" />
-        <Geom type="line" position="time*value" size={1} color={lineColor} style={lineStyle} shape="smooth" />
-      </>
+      <div style={this.getChartStyles()}>
+        <Sparkline
+          height={this.chartHeight}
+          width={this.chartWidth}
+          sparkline={sparkline}
+          config={config}
+          theme={this.props.theme}
+        />
+      </div>
     );
   }
-
   getChartStyles(): CSSProperties {
     return {
       position: 'absolute',
@@ -235,9 +207,9 @@ export class WideNoChartLayout extends BigValueLayout {
   constructor(props: Props) {
     super(props);
 
-    const valueWidthPercent = 0.3;
+    const valueWidthPercent = this.titleToAlignTo?.length ? 0.3 : 1.0;
 
-    if (this.titleToAlignTo && this.titleToAlignTo.length > 0) {
+    if (this.valueToAlignTo.length) {
       // initial value size
       this.valueFontSize = calculateFontSize(
         this.valueToAlignTo,
@@ -245,7 +217,9 @@ export class WideNoChartLayout extends BigValueLayout {
         this.maxTextHeight,
         LINE_HEIGHT
       );
+    }
 
+    if (this.titleToAlignTo?.length) {
       // How big can we make the title and still have it fit
       this.titleFontSize = calculateFontSize(
         this.titleToAlignTo,
@@ -257,9 +231,6 @@ export class WideNoChartLayout extends BigValueLayout {
 
       // make sure it's a bit smaller than valueFontSize
       this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
-    } else {
-      // if no title wide
-      this.valueFontSize = calculateFontSize(this.valueToAlignTo, this.maxTextWidth, this.maxTextHeight, LINE_HEIGHT);
     }
   }
 
@@ -292,6 +263,7 @@ export class WideWithChartLayout extends BigValueLayout {
     super(props);
 
     const { width, height } = props;
+
     const chartHeightPercent = 0.5;
     const titleWidthPercent = 0.6;
     const valueWidthPercent = 1 - titleWidthPercent;
@@ -300,7 +272,7 @@ export class WideWithChartLayout extends BigValueLayout {
     this.chartWidth = width;
     this.chartHeight = height * chartHeightPercent;
 
-    if (this.titleToAlignTo && this.titleToAlignTo.length > 0) {
+    if (this.titleToAlignTo?.length) {
       this.titleFontSize = calculateFontSize(
         this.titleToAlignTo,
         this.maxTextWidth * titleWidthPercent,
@@ -310,12 +282,14 @@ export class WideWithChartLayout extends BigValueLayout {
       );
     }
 
-    this.valueFontSize = calculateFontSize(
-      this.valueToAlignTo,
-      this.maxTextWidth * valueWidthPercent,
-      this.maxTextHeight * chartHeightPercent,
-      LINE_HEIGHT
-    );
+    if (this.valueToAlignTo.length) {
+      this.valueFontSize = calculateFontSize(
+        this.valueToAlignTo,
+        this.maxTextWidth * valueWidthPercent,
+        this.maxTextHeight * chartHeightPercent,
+        LINE_HEIGHT
+      );
+    }
   }
 
   getValueAndTitleContainerStyles() {
@@ -350,7 +324,7 @@ export class StackedWithChartLayout extends BigValueLayout {
     this.chartHeight = height * chartHeightPercent;
     this.chartWidth = width;
 
-    if (this.titleToAlignTo && this.titleToAlignTo.length > 0) {
+    if (this.titleToAlignTo?.length) {
       this.titleFontSize = calculateFontSize(
         this.titleToAlignTo,
         this.maxTextWidth,
@@ -358,19 +332,22 @@ export class StackedWithChartLayout extends BigValueLayout {
         LINE_HEIGHT,
         MAX_TITLE_SIZE
       );
+    }
+    titleHeight = this.titleFontSize * LINE_HEIGHT;
 
-      titleHeight = this.titleFontSize * LINE_HEIGHT;
+    if (this.valueToAlignTo.length) {
+      this.valueFontSize = calculateFontSize(
+        this.valueToAlignTo,
+        this.maxTextWidth,
+        this.maxTextHeight - this.chartHeight - titleHeight,
+        LINE_HEIGHT
+      );
     }
 
-    this.valueFontSize = calculateFontSize(
-      this.valueToAlignTo,
-      this.maxTextWidth,
-      this.maxTextHeight - this.chartHeight - titleHeight,
-      LINE_HEIGHT
-    );
-
     // make title fontsize it's a bit smaller than valueFontSize
-    this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
+    if (this.titleToAlignTo?.length) {
+      this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);
+    }
 
     // make chart take up unused space
     this.chartHeight = height - this.titleFontSize * LINE_HEIGHT - this.valueFontSize * LINE_HEIGHT;
@@ -398,7 +375,7 @@ export class StackedWithNoChartLayout extends BigValueLayout {
     const titleHeightPercent = 0.15;
     let titleHeight = 0;
 
-    if (this.titleToAlignTo && this.titleToAlignTo.length > 0) {
+    if (this.titleToAlignTo?.length) {
       this.titleFontSize = calculateFontSize(
         this.titleToAlignTo,
         this.maxTextWidth,
@@ -410,12 +387,14 @@ export class StackedWithNoChartLayout extends BigValueLayout {
       titleHeight = this.titleFontSize * LINE_HEIGHT;
     }
 
-    this.valueFontSize = calculateFontSize(
-      this.valueToAlignTo,
-      this.maxTextWidth,
-      this.maxTextHeight - titleHeight,
-      LINE_HEIGHT
-    );
+    if (this.valueToAlignTo.length) {
+      this.valueFontSize = calculateFontSize(
+        this.valueToAlignTo,
+        this.maxTextWidth,
+        this.maxTextHeight - titleHeight,
+        LINE_HEIGHT
+      );
+    }
 
     // make title fontsize it's a bit smaller than valueFontSize
     this.titleFontSize = Math.min(this.valueFontSize * 0.7, this.titleFontSize);

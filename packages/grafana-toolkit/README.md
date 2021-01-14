@@ -261,7 +261,7 @@ Yes! However, it's important that your `tsconfig.json` file contains the followi
 
 ### Can I adjust ESLint configuration to suit my needs?
 
-grafana-toolkit comes with [default config for ESLint](https://github.com/grafana/grafana/blob/master/packages/grafana-toolkit/src/config/eslint.plugin.json). For now, there is now way to customise ESLint config.
+grafana-toolkit comes with [default config for ESLint](https://github.com/grafana/grafana/blob/master/packages/grafana-toolkit/src/config/eslint.plugin.json). For now, there is no way to customise ESLint config.
 
 ### How is Prettier integrated into grafana-toolkit workflow?
 

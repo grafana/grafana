@@ -95,6 +95,8 @@ func (server *Server) Dial() error {
 	if server.Config.RootCACert != "" {
 		certPool = x509.NewCertPool()
 		for _, caCertFile := range strings.Split(server.Config.RootCACert, " ") {
+			// nolint:gosec
+			// We can ignore the gosec G304 warning on this one because `caCertFile` comes from ldap config.
 			pem, err := ioutil.ReadFile(caCertFile)
 			if err != nil {
 				return err
@@ -475,11 +477,11 @@ func (server *Server) AdminBind() error {
 func (server *Server) userBind(path, password string) error {
 	err := server.Connection.Bind(path, password)
 	if err != nil {
-		if ldapErr, ok := err.(*ldap.Error); ok {
-			if ldapErr.ResultCode == 49 {
-				return ErrInvalidCredentials
-			}
+		var ldapErr *ldap.Error
+		if errors.As(err, &ldapErr) && ldapErr.ResultCode == 49 {
+			return ErrInvalidCredentials
 		}
+
 		return err
 	}
 

@@ -57,8 +57,8 @@ import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/u
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
-    logsMain: css`
-      label: logsMain;
+    exploreMain: css`
+      label: exploreMain;
       // Is needed for some transition animations to work.
       position: relative;
       margin-top: 21px;
@@ -347,7 +347,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                 }
 
                 return (
-                  <main className={cx(styles.logsMain)} style={{ width }}>
+                  <main className={cx(styles.exploreMain)} style={{ width }}>
                     <ErrorBoundaryAlert>
                       {showStartPage && StartPage && (
                         <div className={'grafana-info-box grafana-info-box--max-lg'}>

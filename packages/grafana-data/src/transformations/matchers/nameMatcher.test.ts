@@ -1,6 +1,7 @@
 import { getFieldMatcher } from '../matchers';
 import { FieldMatcherID } from './ids';
 import { toDataFrame } from '../../dataframe/processDataFrame';
+import { ByNamesMatcherMode } from './nameMatcher';
 
 describe('Field Name by Regexp Matcher', () => {
   it('Match all with wildcard regex', () => {
@@ -113,7 +114,29 @@ describe('Field Multiple Names Matcher', () => {
     });
     const config = {
       id: FieldMatcherID.byNames,
-      options: ['C'],
+      options: {
+        mode: ByNamesMatcherMode.include,
+        names: ['C'],
+      },
+    };
+
+    const matcher = getFieldMatcher(config);
+
+    for (const field of seriesWithNames.fields) {
+      const didMatch = matcher(field, seriesWithNames, [seriesWithNames]);
+      expect(didMatch).toBe(field.name === 'C');
+    }
+  });
+
+  it('Match should default to include mode', () => {
+    const seriesWithNames = toDataFrame({
+      fields: [{ name: 'A hello world' }, { name: 'AAA' }, { name: 'C' }],
+    });
+    const config = {
+      id: FieldMatcherID.byNames,
+      options: {
+        names: ['C'],
+      },
     };
 
     const matcher = getFieldMatcher(config);
@@ -130,7 +153,10 @@ describe('Field Multiple Names Matcher', () => {
     });
     const config = {
       id: FieldMatcherID.byNames,
-      options: ['c'],
+      options: {
+        mode: ByNamesMatcherMode.include,
+        names: ['c'],
+      },
     };
 
     const matcher = getFieldMatcher(config);
@@ -146,7 +172,10 @@ describe('Field Multiple Names Matcher', () => {
     });
     const config = {
       id: FieldMatcherID.byNames,
-      options: [],
+      options: {
+        mode: ByNamesMatcherMode.include,
+        names: [],
+      },
     };
 
     const matcher = getFieldMatcher(config);
@@ -162,13 +191,36 @@ describe('Field Multiple Names Matcher', () => {
     });
     const config = {
       id: FieldMatcherID.byNames,
-      options: ['some.instance.path', '112', '13'],
+      options: {
+        mode: ByNamesMatcherMode.include,
+        names: ['some.instance.path', '112', '13'],
+      },
     };
 
     const matcher = getFieldMatcher(config);
 
     for (const field of seriesWithNames.fields) {
       expect(matcher(field, seriesWithNames, [seriesWithNames])).toBe(true);
+    }
+  });
+
+  it('Match all but supplied names', () => {
+    const seriesWithNames = toDataFrame({
+      fields: [{ name: 'A hello world' }, { name: 'AAA' }, { name: 'C' }],
+    });
+    const config = {
+      id: FieldMatcherID.byNames,
+      options: {
+        mode: ByNamesMatcherMode.exclude,
+        names: ['C'],
+      },
+    };
+
+    const matcher = getFieldMatcher(config);
+
+    for (const field of seriesWithNames.fields) {
+      const didMatch = matcher(field, seriesWithNames, [seriesWithNames]);
+      expect(didMatch).toBe(field.name !== 'C');
     }
   });
 });
@@ -304,5 +356,33 @@ describe('Field Regexp or Names Matcher', () => {
     for (const field of seriesWithNames.fields) {
       expect(matcher(field, seriesWithNames, [seriesWithNames])).toBe(true);
     }
+  });
+});
+
+describe('Fields returned by query with refId', () => {
+  it('Match all fields in frame with refId: A', () => {
+    const data = [
+      toDataFrame({
+        refId: 'A',
+        fields: [{ name: 'field_1' }, { name: 'field_2' }],
+      }),
+      toDataFrame({
+        refId: 'B',
+        fields: [{ name: 'field_1' }, { name: 'field_2' }],
+      }),
+    ];
+
+    const matcher = getFieldMatcher({
+      id: FieldMatcherID.byFrameRefID,
+      options: 'A',
+    });
+
+    const frameA = data[0];
+    expect(matcher(frameA.fields[0], frameA, data)).toBe(true);
+    expect(matcher(frameA.fields[1], frameA, data)).toBe(true);
+
+    const frameB = data[1];
+    expect(matcher(frameB.fields[0], frameB, data)).toBe(false);
+    expect(matcher(frameB.fields[1], frameB, data)).toBe(false);
   });
 });

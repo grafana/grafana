@@ -1,11 +1,11 @@
 // @ts-ignore
-import program from 'commander';
-import { execTask } from './utils/execTask';
 import chalk from 'chalk';
+import program from 'commander';
+import { promises as fs } from 'fs';
+import { execTask } from './utils/execTask';
 import { startTask } from './tasks/core.start';
 import { changelogTask } from './tasks/changelog';
 import { cherryPickTask } from './tasks/cherrypick';
-import { precommitTask } from './tasks/precommit';
 import { templateTask } from './tasks/template';
 import { pluginBuildTask } from './tasks/plugin.build';
 import { toolkitBuildTask } from './tasks/toolkit.build';
@@ -21,6 +21,7 @@ import { pluginCreateTask } from './tasks/plugin.create';
 import { pluginSignTask } from './tasks/plugin.sign';
 import { bundleManagedTask } from './tasks/plugin/bundle.managed';
 import { componentCreateTask } from './tasks/component.create';
+import { nodeVersionCheckerTask } from './tasks/nodeVersionChecker';
 
 export const run = (includeInternalScripts = false) => {
   if (includeInternalScripts) {
@@ -74,10 +75,10 @@ export const run = (includeInternalScripts = false) => {
       });
 
     program
-      .command('precommit')
-      .description('Executes checks')
+      .command('node-version-check')
+      .description('Verify node version')
       .action(async cmd => {
-        await execTask(precommitTask)({});
+        await execTask(nodeVersionCheckerTask)({});
       });
 
     program
@@ -129,6 +130,12 @@ export const run = (includeInternalScripts = false) => {
         await execTask(componentCreateTask)({});
       });
   }
+
+  program.option('-v, --version', 'Toolkit version').action(async () => {
+    const pkg = await fs.readFile(`${__dirname}/../../package.json`, 'utf8');
+    const { version } = JSON.parse(pkg);
+    console.log(`v${version}`);
+  });
 
   program
     .command('plugin:create [name]')

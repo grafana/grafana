@@ -114,7 +114,8 @@ func (mg *Migrator) Start() error {
 		}
 	}
 
-	return nil
+	// Make sure migrations are synced
+	return mg.x.Sync2()
 }
 
 func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
@@ -125,7 +126,7 @@ func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 		sql, args := condition.SQL(mg.Dialect)
 
 		if sql != "" {
-			mg.Logger.Debug("Executing migration condition sql", "id", m.Id(), "sql", sql, "args", args)
+			mg.Logger.Debug("Executing migration condition SQL", "id", m.Id(), "sql", sql, "args", args)
 			results, err := sess.SQL(sql, args...).Query()
 			if err != nil {
 				mg.Logger.Error("Executing migration condition failed", "id", m.Id(), "error", err)
@@ -168,8 +169,8 @@ func (mg *Migrator) inTransaction(callback dbTransactionFunc) error {
 	}
 
 	if err := callback(sess); err != nil {
-		if rollErr := sess.Rollback(); err != rollErr {
-			return errutil.Wrapf(err, "Failed to roll back transaction due to error: %s", rollErr)
+		if rollErr := sess.Rollback(); rollErr != nil {
+			return errutil.Wrapf(err, "failed to roll back transaction due to error: %s", rollErr)
 		}
 
 		return err
