@@ -1,7 +1,7 @@
 {
   "type": "panel",
-  "name": "Service Map",
-  "id": "serviceMap",
+  "name": "Node Graph",
+  "id": "nodeGraph",
 
   "info": {
     "author": {
