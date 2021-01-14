@@ -17,7 +17,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1610471621086,
+  "iteration": 1610639791711,
   "links": [
     {
       "asDropdown": true,
@@ -8067,7 +8067,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 17
+            "y": 8
           },
           "hiddenSeries": false,
           "id": 104,
@@ -8105,7 +8105,7 @@
                   "settings": {
                     "min_doc_count": "0",
                     "order": "desc",
-                    "orderBy": "1",
+                    "orderBy": "_count",
                     "size": "10"
                   },
                   "type": "terms"
@@ -8134,7 +8134,7 @@
           "timeFrom": null,
           "timeRegions": [],
           "timeShift": null,
-          "title": "Terms order by count",
+          "title": "Terms order by Doc Count",
           "tooltip": {
             "shared": true,
             "sort": 0,
@@ -8189,7 +8189,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 17
+            "y": 8
           },
           "hiddenSeries": false,
           "id": 107,
@@ -8227,7 +8227,7 @@
                   "settings": {
                     "min_doc_count": "0",
                     "order": "desc",
-                    "orderBy": "1",
+                    "orderBy": "_count",
                     "size": "10"
                   },
                   "type": "terms"
@@ -8256,7 +8256,7 @@
           "timeFrom": null,
           "timeRegions": [],
           "timeShift": null,
-          "title": "Terms order by count",
+          "title": "Terms order by Doc Count",
           "tooltip": {
             "shared": true,
             "sort": 0,
@@ -8311,7 +8311,251 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 25
+            "y": 16
+          },
+          "hiddenSeries": false,
+          "id": 116,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "options": {
+            "alertThreshold": true
+          },
+          "percentage": false,
+          "pluginVersion": "7.4.0-pre",
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "",
+              "bucketAggs": [
+                {
+                  "field": "@hostname",
+                  "id": "3",
+                  "settings": {
+                    "min_doc_count": "0",
+                    "order": "desc",
+                    "orderBy": "_term",
+                    "size": "10"
+                  },
+                  "type": "terms"
+                },
+                {
+                  "field": "@timestamp",
+                  "id": "2",
+                  "settings": {
+                    "interval": "auto"
+                  },
+                  "type": "date_histogram"
+                }
+              ],
+              "metrics": [
+                {
+                  "id": "1",
+                  "type": "count"
+                }
+              ],
+              "query": "",
+              "refId": "A",
+              "timeField": "@timestamp"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Terms order by Term value",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "${version_two}",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 16
+          },
+          "hiddenSeries": false,
+          "id": 117,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "nullPointMode": "null",
+          "options": {
+            "alertThreshold": true
+          },
+          "percentage": false,
+          "pluginVersion": "7.4.0-pre",
+          "pointradius": 2,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "spaceLength": 10,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "",
+              "bucketAggs": [
+                {
+                  "field": "@hostname",
+                  "id": "3",
+                  "settings": {
+                    "min_doc_count": "0",
+                    "order": "desc",
+                    "orderBy": "_term",
+                    "size": "10"
+                  },
+                  "type": "terms"
+                },
+                {
+                  "field": "@timestamp",
+                  "id": "2",
+                  "settings": {
+                    "interval": "auto"
+                  },
+                  "type": "date_histogram"
+                }
+              ],
+              "metrics": [
+                {
+                  "id": "1",
+                  "type": "count"
+                }
+              ],
+              "query": "",
+              "refId": "A",
+              "timeField": "@timestamp"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeRegions": [],
+          "timeShift": null,
+          "title": "Terms order by Term value",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "buckets": null,
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ],
+          "yaxis": {
+            "align": false,
+            "alignLevel": null
+          }
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "dashLength": 10,
+          "dashes": false,
+          "datasource": "${version_one}",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {}
+            },
+            "overrides": []
+          },
+          "fill": 1,
+          "fillGradient": 0,
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 24
           },
           "hiddenSeries": false,
           "id": 105,
@@ -8434,7 +8678,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 25
+            "y": 24
           },
           "hiddenSeries": false,
           "id": 108,
@@ -8557,7 +8801,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 33
+            "y": 32
           },
           "hiddenSeries": false,
           "id": 106,
@@ -8680,7 +8924,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 33
+            "y": 32
           },
           "hiddenSeries": false,
           "id": 109,
@@ -11460,9 +11704,9 @@
     "list": [
       {
         "current": {
-          "selected": false,
-          "text": "gdev-elasticsearch-v2-metrics",
-          "value": "gdev-elasticsearch-v2-metrics"
+          "selected": true,
+          "text": "gdev-elasticsearch-v5-metrics",
+          "value": "gdev-elasticsearch-v5-metrics"
         },
         "description": null,
         "error": null,
@@ -11513,5 +11757,5 @@
   "timezone": "",
   "title": "Datasource tests - Elasticsearch comparison",
   "uid": "fuFWehBmk",
-  "version": 4
+  "version": 10
 }
