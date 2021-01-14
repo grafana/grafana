@@ -30,36 +30,17 @@
   <div class="gf-form">
     <label class="gf-form-label width-10">SSL Mode</label>
     <div class="gf-form-select-wrapper max-width-15 gf-form-select-wrapper--has-help-icon">
-      <select class="gf-form-input" ng-model="ctrl.current.jsonData.sslmode" ng-options="mode for mode in ['disable', 'require', 'verify-ca', 'verify-full']" ng-init="ctrl.current.jsonData.sslmode"></select>
+	  <select class="gf-form-input" ng-model="ctrl.current.jsonData.sslmode" 
+	  ng-options="mode for mode in ['disable', 'require', 'verify-ca', 'verify-full']" 
+	  ng-init="ctrl.current.jsonData.sslmode" ng-change="ctrl.lssModeMapping()"></select>
       <info-popover mode="right-absolute">
         This option determines whether or with what priority a secure SSL (TLS) TCP/IP connection will be negotiated with the server.
       </info-popover>
     </div>
   </div>
-  <div class="gf-form max-width-30" ng-if="ctrl.current.jsonData.sslmode != 'disable'">
-    <span class="gf-form-label width-10">SSL Root Certificate</span>
-    <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslRootCertFile' placeholder="SSL/TLS root cert file"></input>
-    <info-popover mode="right-absolute">
-      If the selected SSL mode requires a server root certificate, provide the path to the file here.
-      Be sure that the file is readable by the user executing the grafana process.
-    </info-popover>
-  </div>
-  <div class="gf-form max-width-30" ng-if="ctrl.current.jsonData.sslmode != 'disable'">
-    <span class="gf-form-label width-10">SSL Client Certificate</span>
-    <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslCertFile' placeholder="SSL/TLS client cert file"></input>
-    <info-popover mode="right-absolute">
-      To authenticate with an SSL/TLS client certificate, provide the path to the file here.
-      Be sure that the file is readable by the user executing the grafana process.
-    </info-popover>
-  </div>
-  <div class="gf-form max-width-30" ng-if="ctrl.current.jsonData.sslmode != 'disable'">
-    <span class="gf-form-label width-10">SSL Client Key</span>
-    <input type="text" class="gf-form-input gf-form-input--has-help-icon" ng-model='ctrl.current.jsonData.sslKeyFile' placeholder="SSL/TLS client key file"></input>
-    <info-popover mode="right-absolute">
-      To authenticate with a client SSL/TLS certificate, provide the path to the corresponding key file here.
-      Be sure that the file is <i>only</i> readable by the user executing the grafana process.
-    </info-popover>
-  </div>
+
+  <datasource-tls-auth-settings current="ctrl.current" ng-if="(ctrl.current.jsonData.tlsAuth || ctrl.current.jsonData.tlsAuthWithCACert)">
+  </datasource-tls-auth-settings>
 </div>
 
 <b>Connection limits</b>
@@ -133,14 +114,13 @@
 			</info-popover>
 		</div>
 	</div>
-<div class="grafana-info-box alert alert-info" ng-show="ctrl.showTimescaleDBHelp">
-  <div class="alert-body">
-    <p>
-			<a href="https://github.com/timescale/timescaledb" class="pointer" target="_blank">TimescaleDB</a> is a time-series database built as a PostgreSQL extension. If enabled, Grafana will use <code>time_bucket</code> in the <code>$__timeGroup</code> macro and display TimescaleDB specific aggregate functions in the query builder.
-    </p>
-  </div>
-</div>
-
+	<div class="grafana-info-box alert alert-info" ng-show="ctrl.showTimescaleDBHelp">
+	<div class="alert-body">
+		<p>
+				<a href="https://github.com/timescale/timescaledb" class="pointer" target="_blank">TimescaleDB</a> is a time-series database built as a PostgreSQL extension. If enabled, Grafana will use <code>time_bucket</code> in the <code>$__timeGroup</code> macro and display TimescaleDB specific aggregate functions in the query builder.
+		</p>
+	</div>
+	</div>
 </div>
 
 
