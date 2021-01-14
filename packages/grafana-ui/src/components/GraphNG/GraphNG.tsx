@@ -5,6 +5,7 @@ import {
   DisplayValue,
   FieldConfig,
   FieldMatcher,
+  fieldReducers,
   FieldType,
   formattedValueToString,
   getFieldColorModeForField,
@@ -216,7 +217,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
 
-      // I don't know what's going on... ;)
+      // Hackish: when the data prop and config builder are not in sync yet
       if (!field) {
         return undefined;
       }
@@ -237,7 +238,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
           return legend.calcs.map<DisplayValue>(reducer => {
             return {
               ...fmt(fieldCalcs[reducer]),
-              title: reducer,
+              title: fieldReducers.get(reducer).name,
             };
           });
         },
