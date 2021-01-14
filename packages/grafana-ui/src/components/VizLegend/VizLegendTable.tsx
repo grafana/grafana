@@ -67,7 +67,7 @@ export const VizLegendTable: FC<VizLegendTableProps> = ({
             return (
               <th
                 key={columnHeader}
-                className={styles.header}
+                className={cx(styles.header, onToggleSort && styles.headerSortable)}
                 onClick={() => {
                   if (onToggleSort) {
                     onToggleSort(columnHeader);
@@ -99,6 +99,8 @@ const getStyles = (theme: GrafanaTheme) => ({
     border-bottom: 1px solid ${theme.colors.border1};
     padding: ${theme.spacing.xxs} ${theme.spacing.sm};
     text-align: right;
+  `,
+  headerSortable: css`
     cursor: pointer;
   `,
   sortIcon: css`
