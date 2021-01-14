@@ -158,11 +158,11 @@ function processServices(nodes: DataFrame, edges: DataFrame): { nodes: NodeDatum
       acc[id] = {
         id: id,
         title: nodeFields.title.values.get(index),
-        subTitle: nodeFields.subTitle.values.get(index),
+        subTitle: nodeFields.subTitle ? nodeFields.subTitle.values.get(index) : '',
         dataFrameRowIndex: index,
         incoming: 0,
-        mainStat: statToString(nodeFields.mainStat, index),
-        secondaryStat: statToString(nodeFields.secondaryStat, index),
+        mainStat: nodeFields.mainStat ? statToString(nodeFields.mainStat, index) : '',
+        secondaryStat: nodeFields.secondaryStat ? statToString(nodeFields.secondaryStat, index) : '',
         arcSections: nodeFields.arc.map(f => {
           return {
             value: f.values.get(index),
@@ -185,8 +185,8 @@ function processServices(nodes: DataFrame, edges: DataFrame): { nodes: NodeDatum
       dataFrameRowIndex: index,
       source,
       target,
-      mainStat: statToString(edgeFields.mainStat, index),
-      secondaryStat: statToString(edgeFields.secondaryStat, index),
+      mainStat: edgeFields.mainStat ? statToString(edgeFields.mainStat, index) : '',
+      secondaryStat: edgeFields.secondaryStat ? statToString(edgeFields.secondaryStat, index) : '',
     } as EdgeDatum;
   });
 
@@ -203,7 +203,7 @@ function statToString(field: Field, index: number) {
     const decimals = field.config.decimals || 2;
     const val = field.values.get(index);
     if (Number.isFinite(val)) {
-      return field.values.get(index).toFixed(decimals) + ' ' + field.config.unit;
+      return field.values.get(index).toFixed(decimals) + (field.config.unit ? ' ' + field.config.unit : '');
     } else {
       return '';
     }

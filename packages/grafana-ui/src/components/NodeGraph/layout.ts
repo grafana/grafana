@@ -114,8 +114,9 @@ function initializePositions(
   }, {} as Record<string, EdgeDatum[]>);
 
   let roots = nodes.filter(n => n.incoming === 0);
+
   let secondLevelRoots = roots.reduce<NodeDatum[]>(
-    (acc, r) => [...acc, ...edgesMap[r.id].map(e => nodesMap[e.target as number])],
+    (acc, r) => [...acc, ...(edgesMap[r.id] ? edgesMap[r.id].map(e => nodesMap[e.target as number]) : [])],
     []
   );
 

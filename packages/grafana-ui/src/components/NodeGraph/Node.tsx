@@ -1,7 +1,7 @@
 import React, { MouseEvent } from 'react';
 import { NodeDatum } from './types';
 import { stylesFactory, useTheme } from '../../themes';
-import { GrafanaTheme } from '@grafana/data';
+import { getColorForTheme, GrafanaTheme } from '@grafana/data';
 import { css } from 'emotion';
 import tinycolor from 'tinycolor2';
 
@@ -100,9 +100,20 @@ export function Node(props: {
 function ResponseTypeCircle(props: { node: NodeDatum }) {
   const { node } = props;
   const fullStat = node.arcSections.find(s => s.value === 1);
+  const theme = useTheme();
+
   if (fullStat) {
     // Doing arc with path does not work well so it's better to just do a circle in that case
-    return <circle fill="none" stroke={fullStat.color} strokeWidth={2} r={nodeR} cx={node.x} cy={node.y} />;
+    return (
+      <circle
+        fill="none"
+        stroke={getColorForTheme(fullStat.color, theme)}
+        strokeWidth={2}
+        r={nodeR}
+        cx={node.x}
+        cy={node.y}
+      />
+    );
   }
 
   const nonZero = node.arcSections.filter(s => s.value !== 0);
@@ -117,7 +128,7 @@ function ResponseTypeCircle(props: { node: NodeDatum }) {
           y={node.y!}
           startPercent={acc.percent}
           percent={section.value}
-          color={section.color}
+          color={getColorForTheme(section.color, theme)}
           strokeWidth={2}
         />
       );
