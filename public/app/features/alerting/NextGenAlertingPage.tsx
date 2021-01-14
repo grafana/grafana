@@ -19,6 +19,7 @@ import { AlertDefinition, AlertDefinitionUiState, NotificationChannelType, Store
 
 import { config } from 'app/core/config';
 import { PanelQueryRunner } from '../query/state/PanelQueryRunner';
+import { QueryGroupOptions } from '../query/components/QueryGroupOptions';
 
 interface OwnProps {}
 
@@ -27,6 +28,7 @@ interface ConnectedProps {
   uiState: AlertDefinitionUiState;
   notificationChannelTypes: NotificationChannelType[];
   queryRunner: PanelQueryRunner;
+  queryOptions: QueryGroupOptions;
 }
 
 interface DispatchProps {
@@ -54,6 +56,12 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
   onChangeInterval = (interval: SelectableValue<number>) => {
     this.props.updateAlertDefinitionOption({
       interval: interval.value,
+    });
+  };
+
+  onConditionChange = (condition: SelectableValue<string>) => {
+    this.props.updateAlertDefinitionOption({
+      condition: { ...this.props.alertDefinition.condition, ref: condition.value! },
     });
   };
 
@@ -88,6 +96,7 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
       uiState,
       updateAlertDefinitionUiState,
       queryRunner,
+      queryOptions,
     } = this.props;
     const styles = getStyles(config.theme);
 
@@ -113,6 +122,8 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
                 onChange={this.onChangeAlertOption}
                 notificationChannelTypes={notificationChannelTypes}
                 onIntervalChange={this.onChangeInterval}
+                onConditionChange={this.onConditionChange}
+                queryOptions={queryOptions}
               />
             }
           />
@@ -126,6 +137,7 @@ const mapStateToProps: MapStateToProps<ConnectedProps, OwnProps, StoreState> = s
   return {
     uiState: state.alertDefinition.uiState,
     alertDefinition: state.alertDefinition.alertDefinition,
+    queryOptions: state.alertDefinition.queryOptions,
     notificationChannelTypes: state.notificationChannel.notificationChannelTypes,
     queryRunner: state.alertDefinition.queryRunner,
   };

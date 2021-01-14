@@ -89,10 +89,11 @@ export function loadNotificationChannel(id: number): ThunkResult<void> {
 export function createAlertDefinition(): ThunkResult<void> {
   return async (dispatch, getStore) => {
     const queryOptions = getStore().alertDefinition.queryOptions;
+    const currentAlertDefinition = getStore().alertDefinition.alertDefinition;
     const alertDefinition: AlertDefinition = {
-      ...getStore().alertDefinition.alertDefinition,
+      ...currentAlertDefinition,
       condition: {
-        ref: 'A',
+        ref: currentAlertDefinition.condition.ref,
         queriesAndExpressions: queryOptions.queries.map(query => ({
           model: {
             expression: query.expr,
@@ -108,6 +109,7 @@ export function createAlertDefinition(): ThunkResult<void> {
         })),
       },
     };
+
     await getBackendSrv().post(`/api/alert-definitions`, alertDefinition);
     appEvents.emit(AppEvents.alertSuccess, ['Alert definition created']);
     dispatch(updateLocation({ path: 'alerting/list' }));

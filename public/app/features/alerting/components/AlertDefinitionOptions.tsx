@@ -1,18 +1,30 @@
-import React, { FC, FormEvent } from 'react';
+import React, { FC, FormEvent, useMemo } from 'react';
 import { css } from 'emotion';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Field, Input, Select, TextArea, useStyles } from '@grafana/ui';
 import { AlertDefinition, NotificationChannelType } from 'app/types';
+import { QueryGroupOptions } from '../../query/components/QueryGroupOptions';
 
 interface Props {
   alertDefinition: AlertDefinition;
   notificationChannelTypes: NotificationChannelType[];
   onChange: (event: FormEvent) => void;
   onIntervalChange: (interval: SelectableValue<number>) => void;
+  onConditionChange: (refId: SelectableValue<string>) => void;
+  queryOptions: QueryGroupOptions;
 }
 
-export const AlertDefinitionOptions: FC<Props> = ({ alertDefinition, onChange, onIntervalChange }) => {
+export const AlertDefinitionOptions: FC<Props> = ({
+  alertDefinition,
+  onChange,
+  onIntervalChange,
+  onConditionChange,
+  queryOptions,
+}) => {
   const styles = useStyles(getStyles);
+  const refIds = useMemo(() => queryOptions.queries.map(q => ({ value: q.refId, label: q.refId })), [
+    queryOptions.queries,
+  ]);
 
   return (
     <div style={{ paddingTop: '16px' }}>
@@ -41,7 +53,13 @@ export const AlertDefinitionOptions: FC<Props> = ({ alertDefinition, onChange, o
         </Field>
         <Field label="Conditions">
           <div className={styles.optionRow}>
-            <Select onChange={onConditionChange} value={alertDefinition.condition} options={refIds} />
+            <Select
+              onChange={onConditionChange}
+              value={alertDefinition.condition.ref}
+              defaultValue={refIds[0]}
+              options={refIds}
+              noOptionsMessage="No queries added"
+            />
           </div>
         </Field>
       </div>
