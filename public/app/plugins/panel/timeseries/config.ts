@@ -115,6 +115,7 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
           settings: {
             options: graphFieldOptions.showPoints,
           },
+          showIf: c => c.drawStyle !== DrawStyle.Points,
         })
         .addSliderInput({
           path: 'pointSize',
