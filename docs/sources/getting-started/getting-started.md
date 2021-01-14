@@ -12,7 +12,7 @@ This topic helps you get started with Grafana and build your first dashboard. To
 
 > **Note:** Grafana also offers a [free account with Grafana Cloud](https://grafana.com/signup/cloud/connect-account?pg=gsdocs) to help getting started even easier and faster. You can install Grafana to self-host or get a free Grafana Cloud account.
 
-## Step 1: Install Grafana.
+## Step 1: Install Grafana
 
 Grafana can be installed on many different operating systems. For a list of the minimum hardware and software requirements, as well as instructions on installing Grafana, refer to [Install Grafana]({{< relref "../installation/_index.md" >}}).
 
