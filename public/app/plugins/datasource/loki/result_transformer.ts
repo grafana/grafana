@@ -240,7 +240,7 @@ export function lokiResultsToTableModel(
   table.meta = meta;
   table.columns = [
     { text: 'Time', type: FieldType.time },
-    ...sortedLabels.map(label => ({ text: label, filterable: true })),
+    ...sortedLabels.map(label => ({ text: label, filterable: true, type: FieldType.string })),
     { text: resultCount > 1 || valueWithRefId ? `Value #${refId}` : 'Value', type: FieldType.number },
   ];
 
