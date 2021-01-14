@@ -3,7 +3,9 @@ package api
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
+	"time"
 
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
@@ -22,6 +24,8 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	if len(reqDTO.Queries) == 0 {
 		return Error(400, "No queries found in query", nil)
 	}
+
+	start := time.Now()
 
 	request := &tsdb.TsdbQuery{
 		TimeRange: tsdb.NewTimeRange(reqDTO.From, reqDTO.To),
@@ -67,6 +71,9 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 			DataSource:    ds,
 		})
 	}
+	spent := time.Since(start)
+	fmt.Printf("\nTime spent pre-processing queries: %d\n\n", spent.Milliseconds())
+	start = time.Now()
 
 	var resp *tsdb.Response
 	var err error
@@ -75,6 +82,8 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		if err != nil {
 			return Error(500, "Metric request error", err)
 		}
+		spent := time.Since(start)
+		fmt.Printf("\nTime spent handling request: %d\n\n", spent.Milliseconds())
 	} else {
 		if !hs.Cfg.IsExpressionsEnabled() {
 			return Error(404, "Expressions feature toggle is not enabled", nil)
