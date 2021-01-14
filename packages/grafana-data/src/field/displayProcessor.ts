@@ -22,10 +22,6 @@ interface DisplayProcessorOptions {
    * Will pick 'dark' if not defined
    */
   theme?: GrafanaTheme;
-  /**
-   * Used by auto decimals logic
-   **/
-  tickSize?: number;
 }
 
 // Reasonable units for time
