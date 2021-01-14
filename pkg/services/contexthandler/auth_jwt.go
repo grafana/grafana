@@ -11,11 +11,11 @@ import (
 const InvalidJWT = "Invalid JWT"
 
 func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64) bool {
-	if !h.Cfg.JWTAuthEnabled || h.Cfg.JWTAuthHeader == "" {
+	if !h.Cfg.JWTAuthEnabled || h.Cfg.JWTAuthHeaderName == "" {
 		return false
 	}
 
-	jwtToken := ctx.Req.Header.Get(h.Cfg.JWTAuthHeader)
+	jwtToken := ctx.Req.Header.Get(h.Cfg.JWTAuthHeaderName)
 	if jwtToken == "" {
 		return false
 	}
@@ -29,7 +29,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 
 	query := models.GetSignedInUserQuery{OrgId: orgId}
 
-	if key := h.Cfg.JWTAuthLoginClaim; key != "" {
+	if key := h.Cfg.JWTAuthUsernameClaim; key != "" {
 		query.Login, _ = claims[key].(string)
 	}
 	if key := h.Cfg.JWTAuthEmailClaim; key != "" {
@@ -47,7 +47,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 			ctx.Logger.Debug(
 				"Failed to find user using JWT claims",
 				"email_claim", query.Email,
-				"login_claim", query.Login,
+				"username_claim", query.Login,
 			)
 			err = login.ErrInvalidCredentials
 		} else {
@@ -59,7 +59,6 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 
 	ctx.SignedInUser = query.Result
 	ctx.IsSignedIn = true
-	ctx.JWTAuthClaims = claims
 
 	return true
 }

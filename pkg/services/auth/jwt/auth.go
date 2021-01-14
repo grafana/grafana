@@ -1,4 +1,4 @@
-package auth_jwt
+package jwt
 
 import (
 	"context"
@@ -12,17 +12,17 @@ import (
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
-const ServiceName = "JWTAuthService"
+const ServiceName = "AuthService"
 
 func init() {
 	registry.Register(&registry.Descriptor{
 		Name:         ServiceName,
-		Instance:     &JWTAuthService{},
+		Instance:     &AuthService{},
 		InitPriority: registry.Medium,
 	})
 }
 
-type JWTAuthService struct {
+type AuthService struct {
 	Cfg         *setting.Cfg             `inject:""`
 	RemoteCache *remotecache.RemoteCache `inject:""`
 
@@ -32,7 +32,7 @@ type JWTAuthService struct {
 	expectRegistered jwt.Expected
 }
 
-func (s *JWTAuthService) Init() error {
+func (s *AuthService) Init() error {
 	if !s.Cfg.JWTAuthEnabled {
 		return nil
 	}
@@ -49,7 +49,7 @@ func (s *JWTAuthService) Init() error {
 	return nil
 }
 
-func (s *JWTAuthService) Verify(ctx context.Context, strToken string) (models.JWTClaims, error) {
+func (s *AuthService) Verify(ctx context.Context, strToken string) (models.JWTClaims, error) {
 	s.log.Debug("Parsing JSON Web Token")
 
 	token, err := jwt.ParseSigned(strToken)
@@ -65,6 +65,8 @@ func (s *JWTAuthService) Verify(ctx context.Context, strToken string) (models.JW
 		return nil, errors.New("no keys found")
 	}
 
+	s.log.Debug("Trying to verify JSON Web Token using a key")
+
 	var claims models.JWTClaims
 	for _, key := range keys {
 		if err = token.Claims(key, &claims); err == nil {
@@ -74,6 +76,8 @@ func (s *JWTAuthService) Verify(ctx context.Context, strToken string) (models.JW
 	if err != nil {
 		return nil, err
 	}
+
+	s.log.Debug("Validating JSON Web Token claims")
 
 	if err = s.validateClaims(claims); err != nil {
 		return nil, err

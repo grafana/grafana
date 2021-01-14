@@ -103,7 +103,8 @@ func (sc *scenarioContext) exec() {
 	}
 
 	if sc.jwtAuthHeader != "" {
-		sc.req.Header.Set(sc.cfg.JWTAuthHeader, sc.jwtAuthHeader)
+		sc.t.Logf(`Adding header "%s: %s"`, sc.cfg.JWTAuthHeaderName, sc.jwtAuthHeader)
+		sc.req.Header.Set(sc.cfg.JWTAuthHeaderName, sc.jwtAuthHeader)
 	}
 
 	if sc.tokenSessionCookie != "" {

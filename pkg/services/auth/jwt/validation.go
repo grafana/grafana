@@ -1,4 +1,4 @@
-package auth_jwt
+package jwt
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
-func (s *JWTAuthService) initClaimExpectations() error {
+func (s *AuthService) initClaimExpectations() error {
 	if err := json.Unmarshal([]byte(s.Cfg.JWTAuthExpectClaims), &s.expect); err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (s *JWTAuthService) initClaimExpectations() error {
 	return nil
 }
 
-func (s *JWTAuthService) validateClaims(claims models.JWTClaims) error {
+func (s *AuthService) validateClaims(claims models.JWTClaims) error {
 	var registeredClaims jwt.Claims
 	for key, value := range claims {
 		switch key {

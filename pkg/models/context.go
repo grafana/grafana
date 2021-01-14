@@ -15,7 +15,6 @@ type ReqContext struct {
 	UserToken *UserToken
 
 	IsSignedIn     bool
-	JWTAuthClaims  JWTClaims
 	IsRenderCall   bool
 	AllowAnonymous bool
 	SkipCache      bool
@@ -78,8 +77,4 @@ func (ctx *ReqContext) HasHelpFlag(flag HelpFlags1) bool {
 
 func (ctx *ReqContext) TimeRequest(timer prometheus.Summary) {
 	ctx.Data["perfmon.timer"] = timer
-}
-
-func (ctx *ReqContext) SignedInWithJWT() bool {
-	return ctx.JWTAuthClaims != nil
 }

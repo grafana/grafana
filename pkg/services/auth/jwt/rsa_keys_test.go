@@ -1,4 +1,4 @@
-package auth_jwt
+package jwt
 
 import (
 	"crypto/rsa"

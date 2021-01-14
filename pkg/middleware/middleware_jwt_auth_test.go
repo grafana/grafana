@@ -18,11 +18,11 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 
 	configure := func(cfg *setting.Cfg) {
 		cfg.JWTAuthEnabled = true
-		cfg.JWTAuthHeader = "x-jwt-assertion"
+		cfg.JWTAuthHeaderName = "x-jwt-assertion"
 	}
 
-	configureLoginClaim := func(cfg *setting.Cfg) {
-		cfg.JWTAuthLoginClaim = "foo-login"
+	configureUsernameClaim := func(cfg *setting.Cfg) {
+		cfg.JWTAuthUsernameClaim = "foo-username"
 	}
 
 	configureEmailClaim := func(cfg *setting.Cfg) {
@@ -32,12 +32,12 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 	token := "some-token"
 
 	middlewareScenario(t, "Valid token with valid login claim", func(t *testing.T, sc *scenarioContext) {
-		myLogin := "vladimir"
+		myUsername := "vladimir"
 		var verifiedToken string
 		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
 			verifiedToken = token
 			return models.JWTClaims{
-				"foo-login": myLogin,
+				"foo-username": myUsername,
 			}, nil
 		}
 		bus.AddHandler("get-sign-user", func(query *models.GetSignedInUserQuery) error {
@@ -55,8 +55,8 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 		assert.True(t, sc.context.IsSignedIn)
 		assert.Equal(t, orgID, sc.context.OrgId)
 		assert.Equal(t, id, sc.context.UserId)
-		assert.Equal(t, myLogin, sc.context.Login)
-	}, configure, configureLoginClaim)
+		assert.Equal(t, myUsername, sc.context.Login)
+	}, configure, configureUsernameClaim)
 
 	middlewareScenario(t, "Valid token with valid email claim", func(t *testing.T, sc *scenarioContext) {
 		myEmail := "vladimir@example.com"
@@ -96,7 +96,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 		assert.Equal(t, verifiedToken, token)
 		assert.Equal(t, 401, sc.resp.Code)
 		assert.Equal(t, contexthandler.InvalidJWT, sc.respJson["message"])
-	}, configure, configureLoginClaim)
+	}, configure, configureUsernameClaim)
 
 	middlewareScenario(t, "Valid token without a email claim", func(t *testing.T, sc *scenarioContext) {
 		var verifiedToken string
@@ -122,5 +122,5 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 		assert.Equal(t, verifiedToken, token)
 		assert.Equal(t, 401, sc.resp.Code)
 		assert.Equal(t, contexthandler.InvalidJWT, sc.respJson["message"])
-	}, configure, configureLoginClaim)
+	}, configure, configureUsernameClaim)
 }

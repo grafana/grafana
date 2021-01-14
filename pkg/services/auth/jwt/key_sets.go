@@ -1,4 +1,4 @@
-package auth_jwt
+package jwt
 
 import (
 	"bytes"
@@ -11,16 +11,19 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	jose "gopkg.in/square/go-jose.v2"
 )
 
 var ErrFailedToParsePemFile = errors.New("failed to parse pem-encoded file")
 var ErrKeySetIsNotConfigured = errors.New("key set for jwt verification is not configured")
-var ErrKeySetConfigurationAmbigous = errors.New("key set configuration is ambigous: you should set either key_file, jwk_set_file or jwk_set_url")
+var ErrKeySetConfigurationAmbiguous = errors.New("key set configuration is ambiguous: you should set either key_file, jwk_set_file or jwk_set_url")
+var ErrJWTSetURLMustHaveHTTPSScheme = errors.New("jwt_set_url must have https scheme")
 
 type keySet interface {
 	Key(ctx context.Context, kid string) ([]jose.JSONWebKey, error)
@@ -32,13 +35,14 @@ type keySetJWKS struct {
 
 type keySetHTTP struct {
 	url             string
+	log             log.Logger
 	client          *http.Client
 	cache           *remotecache.RemoteCache
 	cacheKey        string
 	cacheExpiration time.Duration
 }
 
-func (s *JWTAuthService) checkKeySetConfiguration() error {
+func (s *AuthService) checkKeySetConfiguration() error {
 	var count int
 	if s.Cfg.JWTAuthKeyFile != "" {
 		count++
@@ -55,32 +59,33 @@ func (s *JWTAuthService) checkKeySetConfiguration() error {
 	}
 
 	if count > 1 {
-		return ErrKeySetConfigurationAmbigous
+		return ErrKeySetConfigurationAmbiguous
 	}
 
 	return nil
 }
 
-func (s *JWTAuthService) initKeySet() error {
+func (s *AuthService) initKeySet() error {
 	if err := s.checkKeySetConfiguration(); err != nil {
 		return err
 	}
 
-	if fileName := s.Cfg.JWTAuthKeyFile; fileName != "" {
+	if keyFilePath := s.Cfg.JWTAuthKeyFile; keyFilePath != "" {
 		// nolint:gosec
 		// We can ignore the gosec G304 warning on this one because `fileName` comes from grafana configuration file
-		file, err := os.Open(fileName)
+		file, err := os.Open(keyFilePath)
 		if err != nil {
 			return err
 		}
+		defer func() {
+			if err := file.Close(); err != nil {
+				s.log.Warn("Failed to close file", "path", keyFilePath, "err", err)
+			}
+		}()
 
 		data, err := ioutil.ReadAll(file)
-		err1 := file.Close()
 		if err != nil {
 			return err
-		}
-		if err1 != nil {
-			return err1
 		}
 		block, _ := pem.Decode(data)
 		if block == nil {
@@ -118,29 +123,38 @@ func (s *JWTAuthService) initKeySet() error {
 				Keys: []jose.JSONWebKey{{Key: key}},
 			},
 		}
-	} else if fileName := s.Cfg.JWTAuthJWKSetFile; fileName != "" {
+	} else if keyFilePath := s.Cfg.JWTAuthJWKSetFile; keyFilePath != "" {
 		// nolint:gosec
 		// We can ignore the gosec G304 warning on this one because `fileName` comes from grafana configuration file
-		file, err := os.Open(fileName)
+		file, err := os.Open(keyFilePath)
 		if err != nil {
 			return err
 		}
+		defer func() {
+			if err := file.Close(); err != nil {
+				s.log.Warn("Failed to close file", "path", keyFilePath, "err", err)
+			}
+		}()
+
 		var jwks jose.JSONWebKeySet
-		err = json.NewDecoder(file).Decode(&jwks)
-		err1 := file.Close()
-		if err != nil {
+		if err := json.NewDecoder(file).Decode(&jwks); err != nil {
 			return err
-		}
-		if err1 != nil {
-			return err1
 		}
 
 		s.keySet = keySetJWKS{jwks}
-	} else if url := s.Cfg.JWTAuthJWKSetURL; url != "" {
+	} else if urlStr := s.Cfg.JWTAuthJWKSetURL; urlStr != "" {
+		urlParsed, err := url.Parse(urlStr)
+		if err != nil {
+			return err
+		}
+		if urlParsed.Scheme != "https" {
+			return ErrJWTSetURLMustHaveHTTPSScheme
+		}
 		s.keySet = &keySetHTTP{
-			url:             url,
+			url:             urlStr,
+			log:             s.log,
 			client:          &http.Client{},
-			cacheKey:        fmt.Sprintf("auth-jwt:jwk-%s", url),
+			cacheKey:        fmt.Sprintf("auth-jwt:jwk-%s", urlStr),
 			cacheExpiration: s.Cfg.JWTAuthCacheTTL,
 			cache:           s.RemoteCache,
 		}
@@ -163,6 +177,8 @@ func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
 		}
 	}
 
+	ks.log.Debug("Getting key set from endpoint", "url", ks.url)
+
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ks.url, nil)
 	if err != nil {
 		return jwks, err
@@ -172,15 +188,15 @@ func (ks *keySetHTTP) getJWKS(ctx context.Context) (keySetJWKS, error) {
 	if err != nil {
 		return jwks, err
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			ks.log.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	var jsonBuf bytes.Buffer
-	err = json.NewDecoder(io.TeeReader(resp.Body, &jsonBuf)).Decode(&jwks)
-	err1 := resp.Body.Close()
-	if err != nil {
+	if err := json.NewDecoder(io.TeeReader(resp.Body, &jsonBuf)).Decode(&jwks); err != nil {
 		return jwks, err
-	}
-	if err1 != nil {
-		return jwks, err1
 	}
 
 	if ks.cacheExpiration > 0 {
