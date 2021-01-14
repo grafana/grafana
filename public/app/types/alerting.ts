@@ -149,6 +149,7 @@ export interface AlertDefinition {
   name: string;
   description: string;
   condition: AlertCondition;
+  interval: number;
 }
 
 export interface AlertCondition {

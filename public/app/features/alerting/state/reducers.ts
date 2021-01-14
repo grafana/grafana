@@ -57,6 +57,7 @@ export const initialAlertDefinitionState: AlertDefinitionState = {
     name: '',
     description: '',
     condition: {} as AlertCondition,
+    interval: 60,
   },
   queryOptions: { maxDataPoints: 100, dataSource: { name: 'gdev-testdata' }, queries: [] },
   queryRunner: new PanelQueryRunner(dataConfig),

@@ -2,7 +2,7 @@ import React, { FormEvent, PureComponent } from 'react';
 import { hot } from 'react-hot-loader';
 import { connect, MapDispatchToProps, MapStateToProps } from 'react-redux';
 import { css } from 'emotion';
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme, SelectableValue } from '@grafana/data';
 import { Button, Icon, stylesFactory } from '@grafana/ui';
 import { PageToolbar } from 'app/core/components/PageToolbar/PageToolbar';
 import { SplitPaneWrapper } from 'app/core/components/SplitPaneWrapper/SplitPaneWrapper';
@@ -49,6 +49,12 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
 
   onChangeAlertOption = (event: FormEvent<HTMLFormElement>) => {
     this.props.updateAlertDefinitionOption({ [event.currentTarget.name]: event.currentTarget.value });
+  };
+
+  onChangeInterval = (interval: SelectableValue<number>) => {
+    this.props.updateAlertDefinitionOption({
+      interval: interval.value,
+    });
   };
 
   onSaveAlert = () => {
@@ -106,6 +112,7 @@ class NextGenAlertingPage extends PureComponent<Props, State> {
                 alertDefinition={alertDefinition}
                 onChange={this.onChangeAlertOption}
                 notificationChannelTypes={notificationChannelTypes}
+                onIntervalChange={this.onChangeInterval}
               />
             }
           />
