@@ -146,6 +146,14 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) Response {
 	// make sure db version is in sync with json model version
 	dash.Data.Set("version", dash.Version)
 
+	if hs.Cfg.IsPanelLibraryEnabled() {
+		// load library panels
+		err = loadLibraryPanels(dash)
+		if err != nil {
+			return Error(500, "Error while loading library panels", err)
+		}
+	}
+
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
 		Meta:      meta,
