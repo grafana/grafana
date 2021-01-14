@@ -94,7 +94,11 @@ export class DataProcessor {
       const from = range.from;
 
       if (last - from.valueOf() < -10000) {
-        series.isOutsideRange = true;
+        // If the data is in reverse order
+        const first = datapoints[0][1];
+        if (first - from.valueOf() < -10000) {
+          series.isOutsideRange = true;
+        }
       }
     }
     return series;
