@@ -38,9 +38,9 @@ export const GraphContextMenu: React.FC<GraphContextMenuProps> = ({
 
   //  Do not render items that do not have label specified
   const itemsToRender = items
-    ? items.map(group => ({
+    ? items.map((group) => ({
         ...group,
-        items: group.items.filter(item => item.label),
+        items: group.items.filter((item) => item.label),
       }))
     : [];
 

@@ -35,7 +35,7 @@ export const basic = () => {
             placeholder="Choose..."
             options={options}
             width={20}
-            onChange={value => {
+            onChange={(value) => {
               action('onChanged fired')(value);
               updateValue(value);
             }}
@@ -59,7 +59,7 @@ export const withAllowCustomValue = () => {
             options={options}
             width={20}
             allowCustomValue={true}
-            onChange={value => {
+            onChange={(value) => {
               action('onChanged fired')(value);
               updateValue(value);
             }}
@@ -73,11 +73,11 @@ export const withAllowCustomValue = () => {
 export const AsyncSelect = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [value, setValue] = useState<SelectableValue<any>>();
-  const loadAsyncOptions = useCallback(inputValue => {
-    return new Promise<Array<SelectableValue<string>>>(resolve => {
+  const loadAsyncOptions = useCallback((inputValue) => {
+    return new Promise<Array<SelectableValue<string>>>((resolve) => {
       setTimeout(() => {
         setIsLoading(false);
-        resolve(options.filter(option => option.label && option.label.includes(inputValue)));
+        resolve(options.filter((option) => option.label && option.label.includes(inputValue)));
       }, 1000);
     });
   }, []);
@@ -88,7 +88,7 @@ export const AsyncSelect = () => {
       width={20}
       isLoading={isLoading}
       loadOptions={loadAsyncOptions}
-      onChange={value => {
+      onChange={(value) => {
         action('onChange')(value);
         setValue(value);
       }}

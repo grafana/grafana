@@ -181,33 +181,15 @@ function getCanvasGradient(opts: AreaGradientOptions): (self: uPlot, seriesIdx: 
 
     switch (mode) {
       case FillGradientMode.Hue:
-        const color1 = tinycolor(color)
-          .spin(-25)
-          .darken(30)
-          .setAlpha(opacity)
-          .toRgbString();
-        const color2 = tinycolor(color)
-          .spin(25)
-          .lighten(35)
-          .setAlpha(opacity)
-          .toRgbString();
+        const color1 = tinycolor(color).spin(-25).darken(30).setAlpha(opacity).toRgbString();
+        const color2 = tinycolor(color).spin(25).lighten(35).setAlpha(opacity).toRgbString();
         gradient.addColorStop(0, color2);
         gradient.addColorStop(1, color1);
 
       case FillGradientMode.Opacity:
       default:
-        gradient.addColorStop(
-          0,
-          tinycolor(color)
-            .setAlpha(opacity)
-            .toRgbString()
-        );
-        gradient.addColorStop(
-          1,
-          tinycolor(color)
-            .setAlpha(0)
-            .toRgbString()
-        );
+        gradient.addColorStop(0, tinycolor(color).setAlpha(opacity).toRgbString());
+        gradient.addColorStop(1, tinycolor(color).setAlpha(0).toRgbString());
         return gradient;
     }
   };

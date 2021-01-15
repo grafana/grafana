@@ -37,7 +37,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
     if (id) {
       // TODO: this api is internal, used in jaeger ui. Officially they have gRPC api that should be used.
       return this._request(`/api/traces/${encodeURIComponent(id)}`).pipe(
-        map(response => {
+        map((response) => {
           return {
             data: [
               new MutableDataFrame({
@@ -79,7 +79,7 @@ export class JaegerDatasource extends DataSourceApi<JaegerQuery> {
   async testDatasource(): Promise<any> {
     return this._request('/api/services')
       .pipe(
-        map(res => {
+        map((res) => {
           const values: any[] = res?.data?.data || [];
           const testResult =
             values.length > 0

@@ -107,7 +107,7 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
       __series: { text: 'Series', value: { name: getFrameDisplayName(frame, index) } }, // might be missing
     };
 
-    const fields: Field[] = frame.fields.map(field => {
+    const fields: Field[] = frame.fields.map((field) => {
       // Config is mutable within this scope
       const fieldScopedVars = { ...scopedVars };
       const displayName = getFieldDisplayName(field, frame, options.data);

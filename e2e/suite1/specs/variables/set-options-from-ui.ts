@@ -16,37 +16,24 @@ describe('Variables - Set options from ui', () => {
 
     e2e().wait('@query');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A')
-      .should('be.visible')
-      .click();
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A')
-      .should('be.visible')
-      .click();
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B')
-      .should('be.visible')
-      .click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').should('be.visible').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible').click();
 
     e2e.pages.Dashboard.Toolbar.navBar().click();
 
     e2e().wait('@query');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B')
-      .scrollIntoView()
-      .should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B').scrollIntoView().should('be.visible');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('have.length', 2);
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
-      .eq(0)
-      .should('be.visible')
-      .click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').eq(0).should('be.visible').click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e()
-          .get('.variable-option')
-          .should('have.length', 4);
+        e2e().get('.variable-option').should('have.length', 4);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
@@ -54,16 +41,12 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').should('be.visible');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All')
-      .should('be.visible')
-      .click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('All').should('be.visible').click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e()
-          .get('.variable-option')
-          .should('have.length', 10);
+        e2e().get('.variable-option').should('have.length', 10);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
@@ -91,32 +74,22 @@ describe('Variables - Set options from ui', () => {
 
     e2e().wait('@query');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A')
-      .should('be.visible')
-      .click();
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B')
-      .should('be.visible')
-      .click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A').should('be.visible').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('B').should('be.visible').click();
 
     e2e.pages.Dashboard.Toolbar.navBar().click();
 
     e2e().wait('@query');
     e2e().wait(500);
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A + B')
-      .scrollIntoView()
-      .should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A + B').scrollIntoView().should('be.visible');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA')
-      .should('be.visible')
-      .click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA').should('be.visible').click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e()
-          .get('.variable-option')
-          .should('have.length', 7);
+        e2e().get('.variable-option').should('have.length', 7);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
@@ -127,16 +100,12 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').should('be.visible');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AAA')
-      .should('be.visible')
-      .click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AAA').should('be.visible').click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e()
-          .get('.variable-option')
-          .should('have.length', 4);
+        e2e().get('.variable-option').should('have.length', 4);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
@@ -160,32 +129,22 @@ describe('Variables - Set options from ui', () => {
 
     e2e().wait('@query');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A + B')
-      .should('be.visible')
-      .click();
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A')
-      .should('be.visible')
-      .click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A + B').should('be.visible').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('A').should('be.visible').click();
 
     e2e.pages.Dashboard.Toolbar.navBar().click();
 
     e2e().wait('@query');
     e2e().wait(500);
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B')
-      .scrollIntoView()
-      .should('be.visible');
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('B').scrollIntoView().should('be.visible');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB')
-      .should('be.visible')
-      .click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BB').should('be.visible').click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e()
-          .get('.variable-option')
-          .should('have.length', 4);
+        e2e().get('.variable-option').should('have.length', 4);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('All').should('be.visible');
@@ -193,16 +152,12 @@ describe('Variables - Set options from ui', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BB').should('be.visible');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BC').should('be.visible');
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BBB')
-      .should('be.visible')
-      .click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('BBB').should('be.visible').click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
       .within(() => {
-        e2e()
-          .get('.variable-option')
-          .should('have.length', 4);
+        e2e().get('.variable-option').should('have.length', 4);
       });
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('BBA').should('be.visible');

@@ -48,25 +48,13 @@ const getStyles = stylesFactory((theme: GrafanaTheme, color: BadgeColor) => {
   let textColor = '';
 
   if (theme.isDark) {
-    bgColor = tinycolor(sourceColor)
-      .darken(38)
-      .toString();
-    borderColor = tinycolor(sourceColor)
-      .darken(25)
-      .toString();
-    textColor = tinycolor(sourceColor)
-      .lighten(45)
-      .toString();
+    bgColor = tinycolor(sourceColor).darken(38).toString();
+    borderColor = tinycolor(sourceColor).darken(25).toString();
+    textColor = tinycolor(sourceColor).lighten(45).toString();
   } else {
-    bgColor = tinycolor(sourceColor)
-      .lighten(30)
-      .toString();
-    borderColor = tinycolor(sourceColor)
-      .lighten(15)
-      .toString();
-    textColor = tinycolor(sourceColor)
-      .darken(40)
-      .toString();
+    bgColor = tinycolor(sourceColor).lighten(30).toString();
+    borderColor = tinycolor(sourceColor).lighten(15).toString();
+    textColor = tinycolor(sourceColor).darken(40).toString();
   }
 
   return {

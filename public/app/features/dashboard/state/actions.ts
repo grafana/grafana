@@ -17,7 +17,7 @@ import { PanelModel } from './PanelModel';
 import { cancelVariables } from '../../variables/state/actions';
 
 export function getDashboardPermissions(id: number): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     const permissions = await getBackendSrv().get(`/api/dashboards/id/${id}/permissions`);
     dispatch(loadDashboardPermissions(permissions));
   };
@@ -103,7 +103,7 @@ export function addDashboardPermission(dashboardId: number, newItem: NewDashboar
 }
 
 export function importDashboard(data: any, dashboardTitle: string): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     await getBackendSrv().post('/api/dashboards/import', data);
     dispatch(notifyApp(createSuccessNotification('Dashboard Imported', dashboardTitle)));
     dispatch(loadPluginDashboards());
@@ -111,7 +111,7 @@ export function importDashboard(data: any, dashboardTitle: string): ThunkResult<
 }
 
 export function removeDashboard(uri: string): ThunkResult<void> {
-  return async dispatch => {
+  return async (dispatch) => {
     await getBackendSrv().delete(`/api/dashboards/${uri}`);
     dispatch(loadPluginDashboards());
   };
@@ -160,7 +160,7 @@ export function changePanelPlugin(panel: PanelModel, pluginId: string): ThunkRes
   };
 }
 
-export const cleanUpDashboardAndVariables = (): ThunkResult<void> => dispatch => {
+export const cleanUpDashboardAndVariables = (): ThunkResult<void> => (dispatch) => {
   dispatch(cleanUpDashboard());
   dispatch(cancelVariables());
 };

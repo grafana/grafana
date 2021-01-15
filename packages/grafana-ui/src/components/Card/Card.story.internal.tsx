@@ -68,7 +68,7 @@ export const WithTags = () => {
     <Card heading="Elasticsearch – Custom Templated Query" disabled={disabled}>
       <Card.Meta>Elastic Search</Card.Meta>
       <Card.Tags>
-        <TagList tags={['elasticsearch', 'test', 'testdata']} onClick={tag => console.log('tag', tag)} />
+        <TagList tags={['elasticsearch', 'test', 'testdata']} onClick={(tag) => console.log('tag', tag)} />
       </Card.Tags>
     </Card>
   );

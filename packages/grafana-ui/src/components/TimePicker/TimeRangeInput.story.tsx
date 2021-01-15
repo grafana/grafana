@@ -30,7 +30,7 @@ export const basic = () => {
         return (
           <TimeRangeInput
             value={value}
-            onChange={timeRange => {
+            onChange={(timeRange) => {
               action('onChange fired')(timeRange);
               updateValue(timeRange);
             }}
@@ -55,7 +55,7 @@ export const clearable = () => {
           <TimeRangeInput
             clearable
             value={value}
-            onChange={timeRange => {
+            onChange={(timeRange) => {
               action('onChange fired')(timeRange);
               updateValue(timeRange);
             }}

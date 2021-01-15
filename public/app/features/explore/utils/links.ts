@@ -51,7 +51,7 @@ export const getFieldLinksForExplore = (options: {
   }
 
   return field.config.links
-    ? field.config.links.map(link => {
+    ? field.config.links.map((link) => {
         if (!link.internal) {
           const replace: InterpolateFunction = (value, vars) =>
             getTemplateSrv().replace(value, { ...vars, ...scopedVars });

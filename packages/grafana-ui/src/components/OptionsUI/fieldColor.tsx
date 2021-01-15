@@ -25,9 +25,9 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
 
   const availableOptions = item.settings?.byValueSupport
     ? fieldColorModeRegistry.list()
-    : fieldColorModeRegistry.list().filter(m => !m.isByValue);
+    : fieldColorModeRegistry.list().filter((m) => !m.isByValue);
 
-  const options = availableOptions.map(mode => {
+  const options = availableOptions.map((mode) => {
     let suffix = mode.isByValue ? ' (by value)' : '';
 
     return {
@@ -79,7 +79,7 @@ const FieldColorModeViz: FC<ModeProps> = ({ mode, theme }) => {
     return null;
   }
 
-  const colors = mode.colors.map(item => getColorForTheme(item, theme));
+  const colors = mode.colors.map((item) => getColorForTheme(item, theme));
   const style: CSSProperties = {
     height: '8px',
     width: '100%',

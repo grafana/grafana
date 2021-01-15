@@ -18,7 +18,7 @@ describe('TimePicker', () => {
     const wrapper = mount(
       <UnthemedTimeRangePicker
         onChangeTimeZone={() => {}}
-        onChange={value => {}}
+        onChange={(value) => {}}
         value={value}
         onMoveBackward={() => {}}
         onMoveForward={() => {}}

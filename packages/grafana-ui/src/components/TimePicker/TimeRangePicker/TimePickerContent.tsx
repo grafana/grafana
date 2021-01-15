@@ -146,7 +146,7 @@ interface FormProps extends Omit<Props, 'history'> {
   historyOptions?: TimeOption[];
 }
 
-export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = props => {
+export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = (props) => {
   const theme = useTheme();
   const styles = getStyles(theme, props.isReversed);
   const historyOptions = mapToHistoryOptions(props.history, props.timeZone);
@@ -184,14 +184,14 @@ export const TimePickerContentWithScreenSize: React.FC<PropsWithScreenSize> = pr
   );
 };
 
-export const TimePickerContent: React.FC<Props> = props => {
+export const TimePickerContent: React.FC<Props> = (props) => {
   const theme = useTheme();
   const isFullscreen = useMedia(`(min-width: ${theme.breakpoints.lg})`);
 
   return <TimePickerContentWithScreenSize {...props} isFullscreen={isFullscreen} />;
 };
 
-const NarrowScreenForm: React.FC<FormProps> = props => {
+const NarrowScreenForm: React.FC<FormProps> = (props) => {
   const theme = useTheme();
   const styles = getNarrowScreenStyles(theme);
   const isAbsolute = isDateTime(props.value.raw.from) || isDateTime(props.value.raw.to);
@@ -237,7 +237,7 @@ const NarrowScreenForm: React.FC<FormProps> = props => {
   );
 };
 
-const FullScreenForm: React.FC<FormProps> = props => {
+const FullScreenForm: React.FC<FormProps> = (props) => {
   const theme = useTheme();
   const styles = getFullScreenStyles(theme);
 
@@ -305,7 +305,7 @@ function mapToHistoryOptions(ranges?: TimeRange[], timeZone?: TimeZone): TimeOpt
   if (!Array.isArray(ranges) || ranges.length === 0) {
     return [];
   }
-  return ranges.slice(ranges.length - 4).map(range => mapRangeToTimeOption(range, timeZone));
+  return ranges.slice(ranges.length - 4).map((range) => mapRangeToTimeOption(range, timeZone));
 }
 
 EmptyRecentList.displayName = 'EmptyRecentList';

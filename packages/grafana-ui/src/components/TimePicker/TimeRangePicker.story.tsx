@@ -27,7 +27,7 @@ export const basic = () => {
             onChangeTimeZone={() => {}}
             timeZone="browser"
             value={value}
-            onChange={timeRange => {
+            onChange={(timeRange) => {
               action('onChange fired')(timeRange);
               updateValue(timeRange);
             }}

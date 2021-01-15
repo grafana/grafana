@@ -26,13 +26,7 @@ const getPropertiesForVariant = (theme: GrafanaTheme, variant: ButtonVariant) =>
   switch (variant) {
     case 'secondary':
       const from = theme.isLight ? theme.palette.gray7 : theme.palette.gray15;
-      const to = theme.isLight
-        ? tinycolor(from)
-            .darken(5)
-            .toString()
-        : tinycolor(from)
-            .lighten(4)
-            .toString();
+      const to = theme.isLight ? tinycolor(from).darken(5).toString() : tinycolor(from).lighten(4).toString();
       return {
         borderColor: theme.isLight ? theme.palette.gray85 : theme.palette.gray25,
         background: buttonVariantStyles(from, to, theme.isLight ? theme.palette.gray25 : theme.palette.gray4),

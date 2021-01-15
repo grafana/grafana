@@ -61,7 +61,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
       >
         <item.override
           value={property.value}
-          onChange={value => {
+          onChange={(value) => {
             onChange(value);
           }}
           item={item}
@@ -75,7 +75,7 @@ export const DynamicConfigValueEditor: React.FC<DynamicConfigValueEditorProps> =
         <Field label={renderLabel()()} description={item.description}>
           <item.override
             value={property.value}
-            onChange={value => {
+            onChange={(value) => {
               onChange(value);
             }}
             item={item}

@@ -9,7 +9,7 @@ describe('TimePickerContent', () => {
     const wrapper = shallow(
       <TimePickerContentWithScreenSize
         onChangeTimeZone={() => {}}
-        onChange={value => {}}
+        onChange={(value) => {}}
         timeZone="utc"
         value={value}
         isFullscreen={true}
@@ -23,7 +23,7 @@ describe('TimePickerContent', () => {
     const wrapper = shallow(
       <TimePickerContentWithScreenSize
         onChangeTimeZone={() => {}}
-        onChange={value => {}}
+        onChange={(value) => {}}
         timeZone="utc"
         value={value}
         isFullscreen={false}
@@ -42,7 +42,7 @@ describe('TimePickerContent', () => {
     const wrapper = shallow(
       <TimePickerContentWithScreenSize
         onChangeTimeZone={() => {}}
-        onChange={value => {}}
+        onChange={(value) => {}}
         timeZone="utc"
         value={value}
         isFullscreen={true}

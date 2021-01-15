@@ -166,7 +166,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
           label: customConfig.axisLabel,
           size: customConfig.axisWidth,
           placement: customConfig.axisPlacement ?? AxisPlacement.Auto,
-          formatValue: v => formattedValueToString(fmt(v)),
+          formatValue: (v) => formattedValueToString(fmt(v)),
           theme,
         });
       }
@@ -208,7 +208,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
   const legendItems = configBuilder
     .getSeries()
-    .map<VizLegendItem | undefined>(s => {
+    .map<VizLegendItem | undefined>((s) => {
       const seriesConfig = s.props;
       const fieldIndex = seriesConfig.dataFrameFieldIndex;
       const axisPlacement = configBuilder.getAxisPlacement(s.props.scaleKey);
@@ -237,7 +237,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
             reducers: legend.calcs,
           });
 
-          return legend.calcs.map<DisplayValue>(reducer => {
+          return legend.calcs.map<DisplayValue>((reducer) => {
             return {
               ...fmt(fieldCalcs[reducer]),
               title: fieldReducers.get(reducer).name,
@@ -246,7 +246,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         },
       };
     })
-    .filter(i => i !== undefined) as VizLegendItem[];
+    .filter((i) => i !== undefined) as VizLegendItem[];
 
   let legendElement: React.ReactElement | undefined;
 

@@ -35,7 +35,7 @@ describe('DefaultFieldConfigEditor', () => {
   it('should render custom  options', () => {
     const plugin = new PanelPlugin(() => null).useFieldConfig({
       standardOptions: {},
-      useCustomConfig: b => {
+      useCustomConfig: (b) => {
         b.addBooleanSwitch({
           name: 'a',
           path: 'a',
@@ -62,7 +62,7 @@ describe('DefaultFieldConfigEditor', () => {
   it('should not render options that are marked as hidden from defaults', () => {
     const plugin = new PanelPlugin(() => null).useFieldConfig({
       standardOptions: {},
-      useCustomConfig: b => {
+      useCustomConfig: (b) => {
         b.addBooleanSwitch({
           name: 'a',
           path: 'a',

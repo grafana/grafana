@@ -35,7 +35,7 @@ export const simple = () => {
       <ValuePicker
         options={options}
         label={label}
-        onChange={v => console.log(v)}
+        onChange={(v) => console.log(v)}
         variant={variant as ButtonVariant}
         icon={icon}
         isFullWidth={isFullWidth}

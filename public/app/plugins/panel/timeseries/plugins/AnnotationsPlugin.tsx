@@ -48,7 +48,7 @@ export const AnnotationsPlugin: React.FC<AnnotationsPluginProps> = ({ annotation
       id: pluginId,
       hooks: {
         // Render annotation lines on the canvas
-        draw: u => {
+        draw: (u) => {
           /**
            * We cannot rely on state value here, as it would require this effect to be dependent on the state value.
            * This would make the plugin re-register making the entire plot to reinitialise. ref is the way to go :)

@@ -44,7 +44,7 @@ export const DerivedFields = (props: Props) => {
                 className={styles.derivedField}
                 key={index}
                 value={field}
-                onChange={newField => {
+                onChange={(newField) => {
                   const newDerivedFields = [...value];
                   newDerivedFields.splice(index, 1, newField);
                   onChange(newDerivedFields);
@@ -72,7 +72,7 @@ export const DerivedFields = (props: Props) => {
               margin-right: 10px;
             `}
             icon="plus"
-            onClick={event => {
+            onClick={(event) => {
               event.preventDefault();
               const newDerivedFields = [...(value || []), { name: '', matcherRegex: '' }];
               onChange(newDerivedFields);

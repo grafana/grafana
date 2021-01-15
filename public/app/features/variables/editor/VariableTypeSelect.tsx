@@ -13,7 +13,7 @@ interface Props {
 
 export function VariableTypeSelect({ onChange, type }: PropsWithChildren<Props>) {
   const options = useMemo(() => getVariableTypes(), [getVariableTypes]);
-  const value = useMemo(() => options.find(o => o.value === type) ?? options[0], [options, type]);
+  const value = useMemo(() => options.find((o) => o.value === type) ?? options[0], [options, type]);
 
   return (
     <VariableSelectField

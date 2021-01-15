@@ -66,12 +66,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
   const separatorColor = selectThemeVariant(
     {
-      light: tinycolor(wrapperBg.toString())
-        .darken(10)
-        .toString(),
-      dark: tinycolor(wrapperBg.toString())
-        .lighten(10)
-        .toString(),
+      light: tinycolor(wrapperBg.toString()).darken(10).toString(),
+      dark: tinycolor(wrapperBg.toString()).lighten(10).toString(),
     },
     theme.type
   );
@@ -128,7 +124,7 @@ export const DataLinkSuggestions: React.FC<DataLinkSuggestionsProps> = ({ sugges
   });
 
   const groupedSuggestions = useMemo(() => {
-    return _.groupBy(suggestions, s => s.origin);
+    return _.groupBy(suggestions, (s) => s.origin);
   }, [suggestions]);
 
   const styles = getStyles(theme);

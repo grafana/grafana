@@ -37,7 +37,7 @@ describe('GraphiteQueryCtrl', () => {
       {},
       {} as any,
       //@ts-ignore
-      new uiSegmentSrv({ trustAsHtml: html => html }, { highlightVariablesAsHtml: () => {} }),
+      new uiSegmentSrv({ trustAsHtml: (html) => html }, { highlightVariablesAsHtml: () => {} }),
       //@ts-ignore
       new TemplateSrvStub(),
       {}

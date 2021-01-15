@@ -95,7 +95,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
   };
 
   toggleContext = () => {
-    this.setState(state => {
+    this.setState((state) => {
       return {
         showContext: !state.showContext,
       };
@@ -126,7 +126,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     if (this.props.allowDetails) {
       return;
     }
-    this.setState(state => {
+    this.setState((state) => {
       return {
         showDetails: !state.showDetails,
       };

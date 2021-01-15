@@ -55,7 +55,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
           <item.editor
             item={item}
             value={value}
-            onChange={v => onDefaultValueChange(item.path, v, item.isCustom)}
+            onChange={(v) => onDefaultValueChange(item.path, v, item.isCustom)}
             context={{
               data,
               getSuggestions: (scope?: VariableSuggestionsScope) => getDataLinksVariableSuggestions(data, scope),
@@ -67,7 +67,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
     [config]
   );
 
-  const groupedConfigs = groupBy(plugin.fieldConfigRegistry.list(), i => i.category && i.category[0]);
+  const groupedConfigs = groupBy(plugin.fieldConfigRegistry.list(), (i) => i.category && i.category[0]);
 
   return (
     <div aria-label={selectors.components.FieldConfigEditor.content}>
@@ -76,7 +76,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
 
         return (
           <OptionsGroup
-            renderTitle={isExpanded => {
+            renderTitle={(isExpanded) => {
               return (
                 <>
                   {k} {!isExpanded && groupItemsCounter && <Counter value={groupItemsCounter} />}
@@ -86,7 +86,7 @@ export const DefaultFieldConfigEditor: React.FC<Props> = ({ data, onChange, conf
             id={`${k}/${i}`}
             key={`${k}/${i}`}
           >
-            {groupedConfigs[k].map(c => {
+            {groupedConfigs[k].map((c) => {
               return renderEditor(c, groupedConfigs[k].length);
             })}
           </OptionsGroup>

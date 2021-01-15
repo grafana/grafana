@@ -35,7 +35,7 @@ export const DebugSection = (props: Props) => {
               `
             )}
             value={debugText}
-            onChange={event => setDebugText(event.currentTarget.value)}
+            onChange={(event) => setDebugText(event.currentTarget.value)}
           />
         }
       />
@@ -58,7 +58,7 @@ const DebugFields = ({ fields }: DebugFieldItemProps) => {
         </tr>
       </thead>
       <tbody>
-        {fields.map(field => {
+        {fields.map((field) => {
           let value: any = field.value;
           if (field.error) {
             value = field.error.message;
@@ -87,8 +87,8 @@ type DebugField = {
 
 function makeDebugFields(derivedFields: DerivedFieldConfig[], debugText: string): DebugField[] {
   return derivedFields
-    .filter(field => field.name && field.matcherRegex)
-    .map(field => {
+    .filter((field) => field.name && field.matcherRegex)
+    .map((field) => {
       try {
         const testMatch = debugText.match(field.matcherRegex);
         const value = testMatch && testMatch[1];

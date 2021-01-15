@@ -30,7 +30,7 @@ class StateHistory extends PureComponent<Props, State> {
         {},
         `state-history-${dashboard.id}-${panelId}`
       )
-      .then(data => {
+      .then((data) => {
         const items = data.map((item: any) => {
           return {
             stateModel: alertDef.getStateDisplayModel(item.newState),

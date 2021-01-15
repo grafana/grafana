@@ -18,7 +18,7 @@ const defaultScale: ThresholdsConfig = {
   ],
 };
 
-export const BarGaugeCell: FC<TableCellProps> = props => {
+export const BarGaugeCell: FC<TableCellProps> = (props) => {
   const { field, column, tableStyles, cell, cellProps } = props;
 
   let config = getFieldConfigWithMinMax(field, false);

@@ -169,7 +169,7 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
   const timeField = getTimeField([]);
   const metricFields = Object.keys(md.reduce((acc, series) => ({ ...acc, ...series.metric }), {}))
     .sort()
-    .map(label => {
+    .map((label) => {
       return {
         name: label,
         config: { filterable: true },
@@ -179,16 +179,16 @@ function transformMetricDataToTable(md: MatrixOrVectorResult[], options: Transfo
     });
   const valueField = getValueField({ data: [], valueName: valueText });
 
-  md.forEach(d => {
+  md.forEach((d) => {
     if (isMatrixData(d)) {
-      d.values.forEach(val => {
+      d.values.forEach((val) => {
         timeField.values.add(val[0] * 1000);
-        metricFields.forEach(metricField => metricField.values.add(getLabelValue(d.metric, metricField.name)));
+        metricFields.forEach((metricField) => metricField.values.add(getLabelValue(d.metric, metricField.name)));
         valueField.values.add(parseSampleValue(val[1]));
       });
     } else {
       timeField.values.add(d.value[0] * 1000);
-      metricFields.forEach(metricField => metricField.values.add(getLabelValue(d.metric, metricField.name)));
+      metricFields.forEach((metricField) => metricField.values.add(getLabelValue(d.metric, metricField.name)));
       valueField.values.add(parseSampleValue(d.value[1]));
     }
   });
@@ -216,7 +216,7 @@ function getTimeField(data: PromValue[], isMs = false): MutableField {
     name: TIME_SERIES_TIME_FIELD_NAME,
     type: FieldType.time,
     config: {},
-    values: new ArrayVector<number>(data.map(val => (isMs ? val[0] : val[0] * 1000))),
+    values: new ArrayVector<number>(data.map((val) => (isMs ? val[0] : val[0] * 1000))),
   };
 }
 type ValueFieldOptions = {
@@ -241,7 +241,7 @@ function getValueField({
       displayNameFromDS,
     },
     labels,
-    values: new ArrayVector<number | null>(data.map(val => (parseValue ? parseSampleValue(val[1]) : val[1]))),
+    values: new ArrayVector<number | null>(data.map((val) => (parseValue ? parseSampleValue(val[1]) : val[1]))),
   };
 }
 
@@ -262,7 +262,7 @@ export function getOriginalMetricName(labelData: { [key: string]: string }) {
   const metricName = labelData.__name__ || '';
   delete labelData.__name__;
   const labelPart = Object.entries(labelData)
-    .map(label => `${label[0]}="${label[1]}"`)
+    .map((label) => `${label[0]}="${label[1]}"`)
     .join(',');
   return `${metricName}{${labelPart}}`;
 }
@@ -285,8 +285,8 @@ function transformToHistogramOverTime(seriesList: DataFrame[]) {
     le30    30  10  35    =>    10  0   5
     */
   for (let i = seriesList.length - 1; i > 0; i--) {
-    const topSeries = seriesList[i].fields.find(s => s.name === TIME_SERIES_VALUE_FIELD_NAME);
-    const bottomSeries = seriesList[i - 1].fields.find(s => s.name === TIME_SERIES_VALUE_FIELD_NAME);
+    const topSeries = seriesList[i].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
+    const bottomSeries = seriesList[i - 1].fields.find((s) => s.name === TIME_SERIES_VALUE_FIELD_NAME);
     if (!topSeries || !bottomSeries) {
       throw new Error('Prometheus heatmap transform error: data should be a time series');
     }

@@ -20,7 +20,7 @@ const NotificationsListPage: FC = () => {
 
   const [state, fetchNotifications] = useAsyncFn(getNotifications);
   useEffect(() => {
-    fetchNotifications().then(res => {
+    fetchNotifications().then((res) => {
       setNotifications(res);
     });
   }, []);
@@ -68,7 +68,7 @@ const NotificationsListPage: FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {notifications.map(notification => (
+                {notifications.map((notification) => (
                   <tr key={notification.id}>
                     <td className="link-td">
                       <a href={`alerting/notification/${notification.id}/edit`}>{notification.name}</a>

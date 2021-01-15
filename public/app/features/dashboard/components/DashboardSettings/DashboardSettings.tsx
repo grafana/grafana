@@ -139,7 +139,7 @@ export class DashboardSettings extends PureComponent<Props> {
     const folderTitle = dashboard.meta.folderTitle;
     const haveFolder = (dashboard.meta.folderId ?? 0) > 0;
     const pages = this.getPages();
-    const currentPage = pages.find(page => page.id === editview) ?? pages[0];
+    const currentPage = pages.find((page) => page.id === editview) ?? pages[0];
     const canSaveAs = contextSrv.hasEditPermissionInFolders;
     const canSave = dashboard.meta.canSave;
 
@@ -157,7 +157,7 @@ export class DashboardSettings extends PureComponent<Props> {
         <CustomScrollbar>
           <div className="dashboard-settings__body">
             <aside className="dashboard-settings__aside">
-              {pages.map(page => (
+              {pages.map((page) => (
                 <a
                   className={cx('dashboard-settings__nav-item', { active: page.id === editview })}
                   aria-label={selectors.pages.Dashboard.Settings.General.sectionItems(page.title)}

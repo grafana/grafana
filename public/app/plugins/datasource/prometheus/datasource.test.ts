@@ -69,7 +69,7 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('Query', () => {
-    it('returns empty array when no queries', done => {
+    it('returns empty array when no queries', (done) => {
       expect.assertions(2);
 
       ds.query(createDataRequest([])).subscribe({
@@ -83,7 +83,7 @@ describe('PrometheusDatasource', () => {
       });
     });
 
-    it('performs time series queries', done => {
+    it('performs time series queries', (done) => {
       expect.assertions(2);
 
       ds.query(createDataRequest([{}])).subscribe({
@@ -97,7 +97,7 @@ describe('PrometheusDatasource', () => {
       });
     });
 
-    it('with 2 queries and used from Explore, sends results as they arrive', done => {
+    it('with 2 queries and used from Explore, sends results as they arrive', (done) => {
       expect.assertions(4);
 
       const responseStatus = [LoadingState.Loading, LoadingState.Done];
@@ -112,7 +112,7 @@ describe('PrometheusDatasource', () => {
       });
     });
 
-    it('with 2 queries and used from Panel, waits for all to finish until sending Done status', done => {
+    it('with 2 queries and used from Panel, waits for all to finish until sending Done status', (done) => {
       expect.assertions(2);
       ds.query(createDataRequest([{}, {}], { app: CoreApp.Dashboard })).subscribe({
         next(next) {
@@ -988,7 +988,7 @@ describe('PrometheusDatasource', () => {
           [8 * 60, '0'], // false --> create new block
           [9 * 60, '1'],
         ]);
-        expect(results.map(result => [result.time, result.timeEnd])).toEqual([
+        expect(results.map((result) => [result.time, result.timeEnd])).toEqual([
           [120000, 180000],
           [300000, 420000],
           [540000, 540000],
@@ -1000,7 +1000,7 @@ describe('PrometheusDatasource', () => {
           [2 * 60, '1'],
           [3 * 60, '1'],
         ]);
-        expect(results.map(result => [result.time, result.timeEnd])).toEqual([[120000, 180000]]);
+        expect(results.map((result) => [result.time, result.timeEnd])).toEqual([[120000, 180000]]);
       });
 
       it('should handle 0 active regions', async () => {
@@ -1014,7 +1014,7 @@ describe('PrometheusDatasource', () => {
 
       it('should handle single active value', async () => {
         const results = await runAnnotationQuery([[2 * 60, '1']]);
-        expect(results.map(result => [result.time, result.timeEnd])).toEqual([[120000, 120000]]);
+        expect(results.map((result) => [result.time, result.timeEnd])).toEqual([[120000, 120000]]);
       });
     });
   });
@@ -1301,7 +1301,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=60&end=420&step=10';
 
-      templateSrvStub.replace = jest.fn(str => str) as any;
+      templateSrvStub.replace = jest.fn((str) => str) as any;
       fetchMock.mockImplementation(() => of(response));
       ds.query(query as any);
       const res = fetchMock.mock.calls[0][0];
@@ -1341,7 +1341,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=60&end=420&step=10';
       fetchMock.mockImplementation(() => of(response));
-      templateSrvStub.replace = jest.fn(str => str) as any;
+      templateSrvStub.replace = jest.fn((str) => str) as any;
       ds.query(query as any);
       const res = fetchMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1381,7 +1381,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=0&end=400&step=100';
       fetchMock.mockImplementation(() => of(response));
-      templateSrvStub.replace = jest.fn(str => str) as any;
+      templateSrvStub.replace = jest.fn((str) => str) as any;
       ds.query(query as any);
       const res = fetchMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1426,7 +1426,7 @@ describe('PrometheusDatasource', () => {
         encodeURIComponent('rate(test[$__interval])') +
         '&start=50&end=400&step=50';
 
-      templateSrvStub.replace = jest.fn(str => str) as any;
+      templateSrvStub.replace = jest.fn((str) => str) as any;
       fetchMock.mockImplementation(() => of(response));
       ds.query(query as any);
       const res = fetchMock.mock.calls[0][0];
@@ -1516,7 +1516,7 @@ describe('PrometheusDatasource', () => {
         '&step=' +
         step;
       fetchMock.mockImplementation(() => of(response));
-      templateSrvStub.replace = jest.fn(str => str) as any;
+      templateSrvStub.replace = jest.fn((str) => str) as any;
       ds.query(query as any);
       const res = fetchMock.mock.calls[0][0];
       expect(res.method).toBe('GET');
@@ -1565,7 +1565,7 @@ describe('PrometheusDatasource', () => {
         query.targets[0].expr
       )}&start=0&end=3600&step=60`;
 
-      templateSrvStub.replace = jest.fn(str => str) as any;
+      templateSrvStub.replace = jest.fn((str) => str) as any;
       fetchMock.mockImplementation(() => of(response));
       ds.query(query as any);
       const res = fetchMock.mock.calls[0][0];
@@ -1741,9 +1741,13 @@ const getPrepareTargetsContext = (target: PromQuery, app?: CoreApp, queryOptions
   const start = 0;
   const end = 1;
   const panelId = '2';
-  const options = ({ targets: [target], interval: '1s', panelId, app, ...queryOptions } as any) as DataQueryRequest<
-    PromQuery
-  >;
+  const options = ({
+    targets: [target],
+    interval: '1s',
+    panelId,
+    app,
+    ...queryOptions,
+  } as any) as DataQueryRequest<PromQuery>;
 
   const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
   const { queries, activeTargets } = ds.prepareTargets(options, start, end);
@@ -1974,7 +1978,7 @@ describe('modifyQuery', () => {
 function createDataRequest(targets: any[], overrides?: Partial<DataQueryRequest>): DataQueryRequest<PromQuery> {
   const defaults = {
     app: CoreApp.Dashboard,
-    targets: targets.map(t => {
+    targets: targets.map((t) => {
       return {
         instant: false,
         start: dateTime().subtract(5, 'minutes'),

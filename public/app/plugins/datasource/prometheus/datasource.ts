@@ -153,7 +153,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
       return prometheusSpecialRegexEscape(value);
     }
 
-    const escapedValues = value.map(val => prometheusSpecialRegexEscape(val));
+    const escapedValues = value.map((val) => prometheusSpecialRegexEscape(val));
 
     if (escapedValues.length === 1) {
       return escapedValues[0];
@@ -240,7 +240,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
   private exploreQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number) {
     let runningQueriesCount = queries.length;
-    const mixedQueries = activeTargets.some(t => t.range) && activeTargets.some(t => t.instant);
+    const mixedQueries = activeTargets.some((t) => t.range) && activeTargets.some((t) => t.instant);
 
     const subQueries = queries.map((query, index) => {
       const target = activeTargets[index];
@@ -296,7 +296,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
     });
 
     return forkJoin(observables).pipe(
-      map(results => {
+      map((results) => {
         const data = results.reduce((result, current) => {
           return [...result, ...current];
         }, []);
@@ -562,7 +562,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
 
     const step = Math.floor(query.step ?? 15) * 1000;
 
-    response?.data?.data?.result?.forEach(series => {
+    response?.data?.data?.result?.forEach((series) => {
       const tags = Object.entries(series.metric)
         .filter(([k]) => splitKeys.includes(k))
         .map(([_k, v]: [string, string]) => v);
@@ -579,8 +579,8 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
         value[0] = timestampValue;
       });
 
-      const activeValues = series.values.filter(value => parseFloat(value[1]) >= 1);
-      const activeValuesTimestamps = activeValues.map(value => value[0]);
+      const activeValues = series.values.filter((value) => parseFloat(value[1]) >= 1);
+      const activeValuesTimestamps = activeValues.map((value) => value[0]);
 
       // Instead of creating singular annotation for each active event we group events into region if they are less
       // then `step` apart.
@@ -641,7 +641,7 @@ export class PrometheusDatasource extends DataSourceApi<PromQuery, PromOptions> 
   interpolateVariablesInQueries(queries: PromQuery[], scopedVars: ScopedVars): PromQuery[] {
     let expandedQueries = queries;
     if (queries && queries.length) {
-      expandedQueries = queries.map(query => {
+      expandedQueries = queries.map((query) => {
         const expandedQuery = {
           ...query,
           datasource: this.name,
