@@ -28,17 +28,21 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		TimeRange: tsdb.NewTimeRange(reqDTO.From, reqDTO.To),
 		Debug:     reqDTO.Debug,
 		User:      c.SignedInUser,
+		Queries:   make([]*tsdb.Query, 0, len(reqDTO.Queries)),
 	}
 
 	hasExpr := false
-	var ds *models.DataSource
+	// Loop to see if we have an expression.
 	for _, query := range reqDTO.Queries {
+		if hasExpr = query.Get("datasource").MustString("") == expr.DatasourceName; hasExpr {
+			break
+		}
+	}
+
+	var ds *models.DataSource
+	for i, query := range reqDTO.Queries {
 		hs.log.Debug("Processing metrics query", "query", query)
 		name := query.Get("datasource").MustString("")
-		queryIsExpr := name == expr.DatasourceName
-		if queryIsExpr {
-			hasExpr = true
-		}
 
 		datasourceID, err := query.Get("datasourceId").Int64()
 		if err != nil {
@@ -46,17 +50,20 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 			return response.Error(400, "Query missing data source ID", nil)
 		}
 
-		if !queryIsExpr {
+		// For mixed datasource case, each data source is sent in a single request.
+		if i == 0 && !hasExpr {
 			ds, err = hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 			if err != nil {
-				hs.log.Debug("Encountered error getting data source", "err", err, "id", datasourceID)
-				if errors.Is(err, models.ErrDataSourceAccessDenied) {
-					return response.Error(403, "Access denied to data source", err)
-				}
-				if errors.Is(err, models.ErrDataSourceNotFound) {
-					return response.Error(400, "Invalid data source ID", err)
-				}
-				return response.Error(500, "Unable to load data source metadata", err)
+				return hs.handleGetDataSourceError(err, datasourceID)
+			}
+		}
+
+		if hasExpr && !(name == expr.DatasourceName) {
+			// Expression requests have everything in one request, so need to check
+			// all data source queries that are not expressions themselves when
+			// there is an expression in the request.
+			if _, err = hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache); err != nil {
+				return hs.handleGetDataSourceError(err, datasourceID)
 			}
 		}
 
@@ -66,8 +73,12 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 			IntervalMs:    query.Get("intervalMs").MustInt64(1000),
 			QueryType:     query.Get("queryType").MustString(""),
 			Model:         query,
-			DataSource:    ds,
 		})
+
+		if !hasExpr {
+			request.Queries[i].DataSource = ds // datasource comes from Model with expressions.
+		}
+
 	}
 
 	var resp *tsdb.Response
@@ -96,6 +107,17 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 	return response.JSONStreaming(statusCode, resp)
 }
 
+func (hs *HTTPServer) handleGetDataSourceError(err error, datasourceID int64) *response.NormalResponse {
+	hs.log.Debug("Encountered error getting data source", "err", err, "id", datasourceID)
+	if errors.Is(err, models.ErrDataSourceAccessDenied) {
+		return response.Error(403, "Access denied to data source", err)
+	}
+	if errors.Is(err, models.ErrDataSourceNotFound) {
+		return response.Error(400, "Invalid data source ID", err)
+	}
+	return response.Error(500, "Unable to load data source metadata", err)
+}
+
 // QueryMetrics returns query metrics
 // POST /api/tsdb/query
 func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricRequest) response.Response {
@@ -112,10 +134,7 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 
 	ds, err := hs.DatasourceCache.GetDatasource(datasourceId, c.SignedInUser, c.SkipCache)
 	if err != nil {
-		if errors.Is(err, models.ErrDataSourceAccessDenied) {
-			return response.Error(403, "Access denied to datasource", err)
-		}
-		return response.Error(500, "Unable to load datasource meta data", err)
+		return hs.handleGetDataSourceError(err, datasourceId)
 	}
 
 	request := &tsdb.TsdbQuery{
