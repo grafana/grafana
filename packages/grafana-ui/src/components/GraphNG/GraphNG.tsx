@@ -178,10 +178,9 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         const t = indexByName.get(getFieldDisplayName(field, alignedFrame));
         const b = indexByName.get(customConfig.fillBelowTo);
         if (isNumber(b) && isNumber(t)) {
-          console.log('todo bands', t, b);
           builder.addBand({
             series: [t, b],
-            fill: 'rgba(255,0,0,0.1)',
+            fill: null as any, // using null will have the band use fill options from `t`
           });
         }
       }
