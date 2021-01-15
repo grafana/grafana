@@ -1219,7 +1219,7 @@ describe('ElasticResponse', () => {
         key: 'Q-1561369883389-0.7611823271062786-0',
         liveStreaming: false,
         maxDataPoints: 1620,
-        query: 'message',
+        query: 'hello AND message',
         timeField: '@timestamp',
       },
     ];
@@ -1256,7 +1256,9 @@ describe('ElasticResponse', () => {
                   },
                 },
                 highlight: {
-                  message: [`hello, i am a ${highlightTags.pre}message${highlightTags.post}`],
+                  message: [
+                    `${highlightTags.pre}hello${highlightTags.post}, i am a ${highlightTags.pre}message${highlightTags.post}`,
+                  ],
                 },
               },
               {
@@ -1273,7 +1275,9 @@ describe('ElasticResponse', () => {
                   },
                 },
                 highlight: {
-                  message: [`hello, i am a ${highlightTags.pre}message${highlightTags.post}`],
+                  message: [
+                    `${highlightTags.pre}hello${highlightTags.post}, i am a ${highlightTags.pre}message${highlightTags.post}`,
+                  ],
                 },
               },
             ],
@@ -1288,7 +1292,7 @@ describe('ElasticResponse', () => {
       const logResults = result.data[0] as MutableDataFrame;
       expect(logResults).toHaveProperty('meta');
       expect(logResults.meta).toEqual({
-        searchWords: ['message'],
+        searchWords: ['hello', 'message'],
         preferredVisualisationType: 'logs',
       });
 
