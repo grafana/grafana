@@ -34,7 +34,7 @@ type Dialect interface {
 
 	IndexCheckSQL(tableName, indexName string) (string, []interface{})
 	ColumnCheckSQL(tableName, columnName string) (string, []interface{})
-	//UpsertSQL returns the upsert sql statement for a dialect
+	// UpsertSQL returns the upsert sql statement for a dialect
 	UpsertSQL(tableName string, keyCols, updateCols []string) string
 
 	ColString(*Column) string

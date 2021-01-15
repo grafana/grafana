@@ -216,7 +216,7 @@ func (db *PostgresDialect) PostInsertId(table string, sess *xorm.Session) error 
 	return nil
 }
 
-//UpsertSQL returns the upsert sql statement for PostgreSQL dialect
+// UpsertSQL returns the upsert sql statement for PostgreSQL dialect
 func (db *PostgresDialect) UpsertSQL(tableName string, keyCols, updateCols []string) string {
 	columnsStr := strings.Builder{}
 	onConflictStr := strings.Builder{}

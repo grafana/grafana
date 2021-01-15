@@ -149,7 +149,7 @@ func (db *SQLite3) IsDeadlock(err error) bool {
 	return false // No deadlock
 }
 
-//UpsertSQL returns the upsert sql statement for SQLite dialect
+// UpsertSQL returns the upsert sql statement for SQLite dialect
 func (db *SQLite3) UpsertSQL(tableName string, keyCols, updateCols []string) string {
 	columnsStr := strings.Builder{}
 	onConflictStr := strings.Builder{}
