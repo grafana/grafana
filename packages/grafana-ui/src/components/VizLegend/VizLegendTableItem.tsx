@@ -49,8 +49,8 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
           </div>
         </span>
       </td>
-      {item.displayValues &&
-        item.displayValues.map((stat, index) => {
+      {item.getDisplayValues &&
+        item.getDisplayValues().map((stat, index) => {
           return (
             <td className={styles.value} key={`${stat.title}-${index}`}>
               {formattedValueToString(stat)}

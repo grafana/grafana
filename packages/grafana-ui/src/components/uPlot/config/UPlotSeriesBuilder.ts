@@ -11,11 +11,15 @@ import {
   FillGradientMode,
 } from '../config';
 import { PlotConfigBuilder } from '../types';
+import { DataFrameFieldIndex } from '@grafana/data';
 
 export interface SeriesProps extends LineConfig, FillConfig, PointsConfig {
-  drawStyle: DrawStyle;
   scaleKey: string;
+  fieldName: string;
+  drawStyle: DrawStyle;
   show?: boolean;
+  dataFrameFieldIndex?: DataFrameFieldIndex;
+  hideInLegend?: boolean;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
