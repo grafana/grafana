@@ -11,8 +11,8 @@ export class UPlotConfigBuilder {
   private axes: Record<string, UPlotAxisBuilder> = {};
   private scales: UPlotScaleBuilder[] = [];
   private cursor: Cursor | undefined;
-
-  hasLeftAxis = false;
+  private hasLeftAxis = false;
+  private hasBottomAxis = false;
 
   addAxis(props: AxisProps) {
     props.placement = props.placement ?? AxisPlacement.Auto;
@@ -27,8 +27,13 @@ export class UPlotConfigBuilder {
       props.placement = this.hasLeftAxis ? AxisPlacement.Right : AxisPlacement.Left;
     }
 
-    if (props.placement === AxisPlacement.Left) {
-      this.hasLeftAxis = true;
+    switch (props.placement) {
+      case AxisPlacement.Left:
+        this.hasLeftAxis = true;
+        break;
+      case AxisPlacement.Bottom:
+        this.hasBottomAxis = true;
+        break;
     }
 
     if (props.placement === AxisPlacement.Hidden) {
@@ -52,6 +57,10 @@ export class UPlotConfigBuilder {
     this.series.push(new UPlotSeriesBuilder(props));
   }
 
+  getSeries() {
+    return this.series;
+  }
+
   /** Add or update the scale with the scale key */
   addScale(props: ScaleProps) {
     const current = this.scales.find(v => v.props.scaleKey === props.scaleKey);
@@ -64,7 +73,7 @@ export class UPlotConfigBuilder {
 
   getConfig() {
     const config: PlotSeriesConfig = { series: [{}] };
-    config.axes = Object.values(this.axes).map(a => a.getConfig());
+    config.axes = this.ensureNonOverlappingAxes(Object.values(this.axes)).map(a => a.getConfig());
     config.series = [...config.series, ...this.series.map(s => s.getConfig())];
     config.scales = this.scales.reduce((acc, s) => {
       return { ...acc, ...s.getConfig() };
@@ -93,5 +102,18 @@ export class UPlotConfigBuilder {
     defaultsDeep(config.cursor, cursorDefaults);
 
     return config;
+  }
+
+  private ensureNonOverlappingAxes(axes: UPlotAxisBuilder[]): UPlotAxisBuilder[] {
+    for (const axis of axes) {
+      if (axis.props.placement === AxisPlacement.Right && this.hasLeftAxis) {
+        axis.props.grid = false;
+      }
+      if (axis.props.placement === AxisPlacement.Top && this.hasBottomAxis) {
+        axis.props.grid = false;
+      }
+    }
+
+    return axes;
   }
 }

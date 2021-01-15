@@ -1,12 +1,14 @@
 package cloudwatch
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/url"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -53,7 +55,7 @@ func (e *cloudWatchExecutor) transformRequestQueriesToCloudWatchQueries(requestQ
 	return cloudwatchQueries, nil
 }
 
-func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResponses []*cloudwatchResponse) map[string]*tsdb.QueryResult {
+func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResponses []*cloudwatchResponse, requestQueries []*requestQuery, startTime time.Time, endTime time.Time) (map[string]*tsdb.QueryResult, error) {
 	responsesByRefID := make(map[string][]*cloudwatchResponse)
 	refIDs := sort.StringSlice{}
 	for _, res := range cloudwatchResponses {
@@ -68,25 +70,18 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 		responses := responsesByRefID[refID]
 		queryResult := tsdb.NewQueryResult()
 		queryResult.RefId = refID
-		queryResult.Meta = simplejson.New()
 		queryResult.Series = tsdb.TimeSeriesSlice{}
 		frames := make(data.Frames, 0, len(responses))
 
 		requestExceededMaxLimit := false
 		partialData := false
-		queryMeta := []struct {
-			Expression, ID string
-			Period         int
-		}{}
+		executedQueries := []executedQuery{}
 
 		for _, response := range responses {
 			frames = append(frames, response.DataFrames...)
 			requestExceededMaxLimit = requestExceededMaxLimit || response.RequestExceededMaxLimit
 			partialData = partialData || response.PartialData
-			queryMeta = append(queryMeta, struct {
-				Expression, ID string
-				Period         int
-			}{
+			executedQueries = append(executedQueries, executedQuery{
 				Expression: response.Expression,
 				ID:         response.Id,
 				Period:     response.Period,
@@ -104,10 +99,124 @@ func (e *cloudWatchExecutor) transformQueryResponsesToQueryResult(cloudwatchResp
 			queryResult.ErrorString = "Cloudwatch GetMetricData error: Too many datapoints requested - your search has been limited. Please try to reduce the time range"
 		}
 
+		eq, err := json.Marshal(executedQueries)
+		if err != nil {
+			return nil, fmt.Errorf("could not marshal executedString struct: %w", err)
+		}
+
+		link, err := buildDeepLink(refID, requestQueries, executedQueries, startTime, endTime)
+		if err != nil {
+			return nil, fmt.Errorf("could not build deep link: %w", err)
+		}
+
+		createDataLinks := func(link string) []data.DataLink {
+			return []data.DataLink{{
+				Title:       "View in CloudWatch console",
+				TargetBlank: true,
+				URL:         link,
+			}}
+		}
+
+		for _, frame := range frames {
+			frame.Meta = &data.FrameMeta{
+				ExecutedQueryString: string(eq),
+			}
+
+			if link == "" || len(frame.Fields) < 2 {
+				continue
+			}
+
+			frame.Fields[1].SetConfig(&data.FieldConfig{
+				Links: createDataLinks(link),
+			})
+		}
+
 		queryResult.Dataframes = tsdb.NewDecodedDataFrames(frames)
-		queryResult.Meta.Set("gmdMeta", queryMeta)
 		results[refID] = queryResult
 	}
 
-	return results
+	return results, nil
+}
+
+// buildDeepLink generates a deep link from Grafana to the CloudWatch console. The link params are based on metric(s) for a given query row in the Query Editor.
+func buildDeepLink(refID string, requestQueries []*requestQuery, executedQueries []executedQuery, startTime time.Time, endTime time.Time) (string, error) {
+	if isMathExpression(executedQueries) {
+		return "", nil
+	}
+
+	requestQuery := &requestQuery{}
+	for _, rq := range requestQueries {
+		if rq.RefId == refID {
+			requestQuery = rq
+			break
+		}
+	}
+
+	metricItems := []interface{}{}
+	cloudWatchLinkProps := &cloudWatchLink{
+		Title:   refID,
+		View:    "timeSeries",
+		Stacked: false,
+		Region:  requestQuery.Region,
+		Start:   startTime.UTC().Format(time.RFC3339),
+		End:     endTime.UTC().Format(time.RFC3339),
+	}
+
+	expressions := []interface{}{}
+	for _, meta := range executedQueries {
+		if strings.Contains(meta.Expression, "SEARCH(") {
+			expressions = append(expressions, &metricExpression{Expression: meta.Expression})
+		}
+	}
+
+	if len(expressions) != 0 {
+		cloudWatchLinkProps.Metrics = expressions
+	} else {
+		for _, stat := range requestQuery.Statistics {
+			metricStat := []interface{}{requestQuery.Namespace, requestQuery.MetricName}
+			for dimensionKey, dimensionValues := range requestQuery.Dimensions {
+				metricStat = append(metricStat, dimensionKey, dimensionValues[0])
+			}
+			metricStat = append(metricStat, &metricStatMeta{
+				Stat:   *stat,
+				Period: requestQuery.Period,
+			})
+			metricItems = append(metricItems, metricStat)
+		}
+		cloudWatchLinkProps.Metrics = metricItems
+	}
+
+	linkProps, err := json.Marshal(cloudWatchLinkProps)
+	if err != nil {
+		return "", fmt.Errorf("could not marshal link: %w", err)
+	}
+
+	url, err := url.Parse(fmt.Sprintf(`https://%s.console.aws.amazon.com/cloudwatch/deeplink.js`, requestQuery.Region))
+	if err != nil {
+		return "", fmt.Errorf("unable to parse CloudWatch console deep link")
+	}
+
+	fragment := url.Query()
+	fragment.Set("", string(linkProps))
+
+	q := url.Query()
+	q.Set("region", requestQuery.Region)
+	url.RawQuery = q.Encode()
+
+	link := fmt.Sprintf(`%s#metricsV2:graph%s`, url.String(), fragment.Encode())
+
+	return link, nil
+}
+
+func isMathExpression(executedQueries []executedQuery) bool {
+	isMathExpression := false
+	for _, query := range executedQueries {
+		if strings.Contains(query.Expression, "SEARCH(") {
+			return false
+		} else if query.Expression != "" {
+			isMathExpression = true
+		}
+	}
+
+	return isMathExpression
 }

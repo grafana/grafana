@@ -16,7 +16,6 @@ export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 export { LoadingPlaceholder, LoadingPlaceholderProps } from './LoadingPlaceholder/LoadingPlaceholder';
 export { ColorPicker, SeriesColorPicker } from './ColorPicker/ColorPicker';
 export { SeriesColorPickerPopover, SeriesColorPickerPopoverWithTheme } from './ColorPicker/SeriesColorPickerPopover';
-export { PanelOptionsGroup } from './PanelOptionsGroup/PanelOptionsGroup';
 export { PanelOptionsGrid } from './PanelOptionsGrid/PanelOptionsGrid';
 export { EmptySearchResult } from './EmptySearchResult/EmptySearchResult';
 export { PieChart, PieChartType } from './PieChart/PieChart';
@@ -70,7 +69,6 @@ export {
 
 export { Gauge } from './Gauge/Gauge';
 export { Graph } from './Graph/Graph';
-export { GraphLegend } from './Graph/GraphLegend';
 export { GraphWithLegend } from './Graph/GraphWithLegend';
 export { GraphContextMenu, GraphContextMenuHeader } from './Graph/GraphContextMenu';
 export { BarGauge, BarGaugeDisplayMode } from './BarGauge/BarGauge';
@@ -78,17 +76,8 @@ export { GraphTooltipOptions } from './Graph/GraphTooltip/types';
 export { VizRepeater, VizRepeaterRenderValueProps } from './VizRepeater/VizRepeater';
 export { graphTimeFormat, graphTickFormatter } from './Graph/utils';
 export { VizLayout, VizLayoutComponentType, VizLayoutLegendProps, VizLayoutProps } from './VizLayout/VizLayout';
-
-export {
-  LegendOptions,
-  LegendBasicOptions,
-  LegendRenderOptions,
-  LegendList,
-  LegendTable,
-  LegendItem,
-  LegendPlacement,
-  LegendDisplayMode,
-} from './Legend/Legend';
+export { VizLegendItem, LegendPlacement, LegendDisplayMode, VizLegendOptions } from './VizLegend/types';
+export { VizLegend } from './VizLegend/VizLegend';
 
 export { Alert, AlertVariant } from './Alert/Alert';
 export { GraphSeriesToggler, GraphSeriesTogglerAPI } from './Graph/GraphSeriesToggler';
@@ -110,7 +99,7 @@ export { WithContextMenu } from './ContextMenu/WithContextMenu';
 export { DataLinksInlineEditor } from './DataLinks/DataLinksInlineEditor/DataLinksInlineEditor';
 export { DataLinkInput } from './DataLinks/DataLinkInput';
 export { DataLinksContextMenu } from './DataLinks/DataLinksContextMenu';
-export { SeriesIcon } from './Legend/SeriesIcon';
+export { SeriesIcon } from './VizLegend/SeriesIcon';
 export { InfoBox } from './InfoBox/InfoBox';
 export { FeatureInfoBox } from './InfoBox/FeatureInfoBox';
 
@@ -168,7 +157,7 @@ export { RadioButtonGroup } from './Forms/RadioButtonGroup/RadioButtonGroup';
 export { Input } from './Input/Input';
 export { FormInputSize } from './Forms/types';
 
-export { Switch } from './Switch/Switch';
+export { Switch, InlineSwitch } from './Switch/Switch';
 export { Checkbox } from './Forms/Checkbox';
 
 export { TextArea } from './TextArea/TextArea';

@@ -253,8 +253,10 @@ func (hs *HTTPServer) registerRoutes() {
 			datasourceRoute.Post("/", quota("data_source"), bind(models.AddDataSourceCommand{}), Wrap(AddDataSource))
 			datasourceRoute.Put("/:id", bind(models.UpdateDataSourceCommand{}), Wrap(UpdateDataSource))
 			datasourceRoute.Delete("/:id", Wrap(DeleteDataSourceById))
+			datasourceRoute.Delete("/uid/:uid", Wrap(DeleteDataSourceByUID))
 			datasourceRoute.Delete("/name/:name", Wrap(DeleteDataSourceByName))
 			datasourceRoute.Get("/:id", Wrap(GetDataSourceById))
+			datasourceRoute.Get("/uid/:uid", Wrap(GetDataSourceByUID))
 			datasourceRoute.Get("/name/:name", Wrap(GetDataSourceByName))
 		}, reqOrgAdmin)
 

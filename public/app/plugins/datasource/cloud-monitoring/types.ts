@@ -94,6 +94,8 @@ export interface CloudMonitoringQuery extends DataQuery {
   queryType: QueryType;
   metricQuery: MetricQuery;
   sloQuery?: SLOQuery;
+  intervalMs: number;
+  type: string;
 }
 
 export interface CloudMonitoringOptions extends DataSourceJsonData {

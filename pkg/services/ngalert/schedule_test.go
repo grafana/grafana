@@ -37,9 +37,14 @@ func TestAlertingTicker(t *testing.T) {
 	alerts = append(alerts, createTestAlertDefinition(t, ng, 1))
 
 	evalAppliedCh := make(chan evalAppliedInfo, len(alerts))
+	stopAppliedCh := make(chan alertDefinitionKey, len(alerts))
 
 	ng.schedule.evalApplied = func(alertDefKey alertDefinitionKey, now time.Time) {
 		evalAppliedCh <- evalAppliedInfo{alertDefKey: alertDefKey, now: now}
+	}
+
+	ng.schedule.stopApplied = func(alertDefKey alertDefinitionKey) {
+		stopAppliedCh <- alertDefKey
 	}
 
 	ctx := context.Background()
@@ -92,6 +97,10 @@ func TestAlertingTicker(t *testing.T) {
 		tick := advanceClock(t, mockedClock)
 		assertEvalRun(t, evalAppliedCh, tick, expectedAlertDefinitionsEvaluated...)
 	})
+	expectedAlertDefinitionsStopped := []alertDefinitionKey{alerts[1].getKey()}
+	t.Run(fmt.Sprintf("on 5th tick alert definitions: %s should be stopped", concatenate(expectedAlertDefinitionsStopped)), func(t *testing.T) {
+		assertStopRun(t, stopAppliedCh, expectedAlertDefinitionsStopped...)
+	})
 
 	expectedAlertDefinitionsEvaluated = []alertDefinitionKey{alerts[0].getKey()}
 	t.Run(fmt.Sprintf("on 6th tick alert definitions: %s should be evaluated", concatenate(expectedAlertDefinitionsEvaluated)), func(t *testing.T) {
@@ -125,6 +134,33 @@ func assertEvalRun(t *testing.T, ch <-chan evalAppliedInfo, tick time.Time, keys
 			assert.True(t, ok)
 			assert.Equal(t, tick, info.now)
 			delete(expected, info.alertDefKey)
+			if len(expected) == 0 {
+				return
+			}
+		case <-timeout:
+			if len(expected) == 0 {
+				return
+			}
+			t.Fatal("cycle has expired")
+		}
+	}
+}
+
+func assertStopRun(t *testing.T, ch <-chan alertDefinitionKey, keys ...alertDefinitionKey) {
+	timeout := time.After(time.Second)
+
+	expected := make(map[alertDefinitionKey]struct{}, len(keys))
+	for _, k := range keys {
+		expected[k] = struct{}{}
+	}
+
+	for {
+		select {
+		case alertDefKey := <-ch:
+			_, ok := expected[alertDefKey]
+			t.Logf("alert definition: %v stopped", alertDefKey)
+			assert.True(t, ok)
+			delete(expected, alertDefKey)
 			if len(expected) == 0 {
 				return
 			}

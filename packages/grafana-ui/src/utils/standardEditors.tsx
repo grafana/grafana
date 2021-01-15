@@ -21,6 +21,7 @@ import {
   TimeZone,
   FieldColor,
   FieldColorConfigSettings,
+  StatsPickerConfigSettings,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
@@ -323,7 +324,7 @@ export const getStandardOptionEditors = () => {
     editor: DataLinksValueEditor as any,
   };
 
-  const statsPicker: StandardEditorsRegistryItem<string[]> = {
+  const statsPicker: StandardEditorsRegistryItem<string[], StatsPickerConfigSettings> = {
     id: 'stats-picker',
     name: 'Stats Picker',
     editor: StatsPickerEditor as any,
