@@ -12,14 +12,14 @@ import (
 // getAlertInstance is a handler for retrieving an alert instance based on OrgId, AlertDefintionID, and
 // the hash of the labels.
 // nolint:unused
-func (ng *AlertNG) getAlertInstance(cmd *getAlertInstanceCommand) error {
+func (ng *AlertNG) getAlertInstance(cmd *getAlertInstanceQuery) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		instance := AlertInstance{}
 		s := strings.Builder{}
 		s.WriteString(`SELECT * FROM alert_instance
 			WHERE
-				org_id=? AND
-				alert_definition_uid=? AND
+				definition_org_id=? AND
+				definition_uid=? AND
 				labels_hash=?
 		`)
 
@@ -28,11 +28,11 @@ func (ng *AlertNG) getAlertInstance(cmd *getAlertInstanceCommand) error {
 			return err
 		}
 
-		params := append(make([]interface{}, 0), cmd.AlertDefinitionOrgID, cmd.AlertDefinitionUID, hash)
+		params := append(make([]interface{}, 0), cmd.DefinitionOrgID, cmd.DefinitionUID, hash)
 
 		has, err := sess.SQL(s.String(), params...).Get(&instance)
 		if !has {
-			return fmt.Errorf("instance not found for labels %v (hash: %v), alert definition %v (org %v)", cmd.Labels, hash, cmd.AlertDefinitionUID, cmd.AlertDefinitionOrgID)
+			return fmt.Errorf("instance not found for labels %v (hash: %v), alert definition %v (org %v)", cmd.Labels, hash, cmd.DefinitionUID, cmd.DefinitionOrgID)
 		}
 		if err != nil {
 			return err
@@ -45,7 +45,7 @@ func (ng *AlertNG) getAlertInstance(cmd *getAlertInstanceCommand) error {
 
 // listAlertInstances is a handler for retrieving alert instances within specific organisation
 // based on various filters.
-func (ng *AlertNG) listAlertInstances(cmd *listAlertInstancesCommand) error {
+func (ng *AlertNG) listAlertInstances(cmd *listAlertInstancesQuery) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 		alertInstances := make([]*AlertInstance, 0)
 
@@ -57,10 +57,10 @@ func (ng *AlertNG) listAlertInstances(cmd *listAlertInstancesCommand) error {
 			params = append(params, p...)
 		}
 
-		addToQuery("SELECT * FROM alert_instance WHERE org_id = ?", cmd.AlertDefinitionOrgID)
+		addToQuery("SELECT * FROM alert_instance WHERE definition_org_id = ?", cmd.DefinitionOrgID)
 
-		if cmd.AlertDefinitionUID != "" {
-			addToQuery(` AND alert_definition_uid = ?`, cmd.AlertDefinitionUID)
+		if cmd.DefinitionUID != "" {
+			addToQuery(` AND definition_uid = ?`, cmd.DefinitionUID)
 		}
 
 		if cmd.State != "" {
@@ -86,25 +86,25 @@ func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 		}
 
 		alertInstance := &AlertInstance{
-			AlertDefinitionOrgID: cmd.AlertDefinitionOrgID,
-			AlertDefinitionUID:   cmd.AlertDefinitionUID,
-			Labels:               cmd.Labels,
-			LabelsHash:           labelsHash,
-			CurrentState:         cmd.State,
-			CurrentStateSince:    time.Now(),
-			LastEvalTime:         cmd.LastEvalTime,
+			DefinitionOrgID:   cmd.DefinitionOrgID,
+			DefinitionUID:     cmd.DefinitionUID,
+			Labels:            cmd.Labels,
+			LabelsHash:        labelsHash,
+			CurrentState:      cmd.State,
+			CurrentStateSince: time.Now(),
+			LastEvalTime:      cmd.LastEvalTime,
 		}
 
 		if err := validateAlertInstance(alertInstance); err != nil {
 			return err
 		}
 
-		params := append(make([]interface{}, 0), alertInstance.AlertDefinitionOrgID, alertInstance.AlertDefinitionUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentStateSince.Unix(), alertInstance.LastEvalTime.Unix())
+		params := append(make([]interface{}, 0), alertInstance.DefinitionOrgID, alertInstance.DefinitionUID, labelTupleJSON, alertInstance.LabelsHash, alertInstance.CurrentState, alertInstance.CurrentStateSince.Unix(), alertInstance.LastEvalTime.Unix())
 
 		upsertSQL := ng.SQLStore.Dialect.UpsertSQL(
 			"alert_instance",
-			[]string{"org_id", "alert_definition_uid", "labels_hash"},
-			[]string{"org_id", "alert_definition_uid", "labels", "labels_hash", "current_state", "current_state_since", "last_eval_time"})
+			[]string{"definition_org_id", "definition_uid", "labels_hash"},
+			[]string{"definition_org_id", "definition_uid", "labels", "labels_hash", "current_state", "current_state_since", "last_eval_time"})
 		_, err = sess.SQL(upsertSQL, params...).Query()
 		if err != nil {
 			return err

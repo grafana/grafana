@@ -7,13 +7,13 @@ import (
 
 // AlertInstance represents a single alert instance.
 type AlertInstance struct {
-	AlertDefinitionOrgID int64  `xorm:"org_id"`
-	AlertDefinitionUID   string `xorm:"alert_definition_uid"`
-	Labels               InstanceLabels
-	LabelsHash           string
-	CurrentState         InstanceStateType
-	CurrentStateSince    time.Time
-	LastEvalTime         time.Time
+	DefinitionOrgID   int64  `xorm:"definition_org_id"`
+	DefinitionUID     string `xorm:"definition_uid"`
+	Labels            InstanceLabels
+	LabelsHash        string
+	CurrentState      InstanceStateType
+	CurrentStateSince time.Time
+	LastEvalTime      time.Time
 }
 
 // InstanceStateType is an enum for instance states.
@@ -35,28 +35,28 @@ func (i InstanceStateType) IsValid() bool {
 
 // saveAlertInstanceCommand is the query for saving a new alert instance.
 type saveAlertInstanceCommand struct {
-	AlertDefinitionOrgID int64
-	AlertDefinitionUID   string
-	Labels               InstanceLabels
-	State                InstanceStateType
-	LastEvalTime         time.Time
+	DefinitionOrgID int64
+	DefinitionUID   string
+	Labels          InstanceLabels
+	State           InstanceStateType
+	LastEvalTime    time.Time
 }
 
 // getAlertDefinitionByIDQuery is the query for retrieving/deleting an alert definition by ID.
 // nolint:unused
-type getAlertInstanceCommand struct {
-	AlertDefinitionOrgID int64
-	AlertDefinitionUID   string
-	Labels               InstanceLabels
+type getAlertInstanceQuery struct {
+	DefinitionOrgID int64
+	DefinitionUID   string
+	Labels          InstanceLabels
 
 	Result *AlertInstance
 }
 
 // listAlertInstancesCommand is the query list alert Instances.
-type listAlertInstancesCommand struct {
-	AlertDefinitionOrgID int64 `json:"-"`
-	AlertDefinitionUID   string
-	State                InstanceStateType
+type listAlertInstancesQuery struct {
+	DefinitionOrgID int64 `json:"-"`
+	DefinitionUID   string
+	State           InstanceStateType
 
 	Result []*AlertInstance
 }
@@ -68,11 +68,11 @@ func validateAlertInstance(alertInstance *AlertInstance) error {
 		return fmt.Errorf("alert instance is invalid because it is nil")
 	}
 
-	if alertInstance.AlertDefinitionOrgID == 0 {
+	if alertInstance.DefinitionOrgID == 0 {
 		return fmt.Errorf("alert instance is invalid due to missing alert definition organisation")
 	}
 
-	if alertInstance.AlertDefinitionUID == "" {
+	if alertInstance.DefinitionUID == "" {
 		return fmt.Errorf("alert instance is invalid due to missing alert definition uid")
 	}
 

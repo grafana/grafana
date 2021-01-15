@@ -7,7 +7,7 @@ import (
 
 // listAlertInstancesEndpoint handles GET /api/alert-instances.
 func (ng *AlertNG) listAlertInstancesEndpoint(c *models.ReqContext) api.Response {
-	cmd := listAlertInstancesCommand{AlertDefinitionOrgID: c.SignedInUser.OrgId}
+	cmd := listAlertInstancesQuery{DefinitionOrgID: c.SignedInUser.OrgId}
 
 	if err := ng.listAlertInstances(&cmd); err != nil {
 		return api.Error(500, "Failed to list alert instances", err)

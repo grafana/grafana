@@ -56,7 +56,7 @@ func (ng *AlertNG) definitionRoutine(grafanaCtx context.Context, key alertDefini
 				}
 				for _, r := range results {
 					ng.schedule.log.Info("alert definition result", "key", key, "attempt", attempt, "now", ctx.now, "duration", end.Sub(start), "instance", r.Instance, "state", r.State.String())
-					cmd := saveAlertInstanceCommand{AlertDefinitionOrgID: key.orgID, AlertDefinitionUID: key.definitionUID, State: InstanceStateType(r.State.String()), Labels: InstanceLabels(r.Instance), LastEvalTime: ctx.now}
+					cmd := saveAlertInstanceCommand{DefinitionOrgID: key.orgID, DefinitionUID: key.definitionUID, State: InstanceStateType(r.State.String()), Labels: InstanceLabels(r.Instance), LastEvalTime: ctx.now}
 					err := ng.saveAlertInstance(&cmd)
 					if err != nil {
 						ng.schedule.log.Error("failed saving alert instance", "key", key, "attempt", attempt, "now", ctx.now, "instance", r.Instance, "state", r.State.String(), "error", err)
