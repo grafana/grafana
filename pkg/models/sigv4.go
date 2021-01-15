@@ -148,7 +148,7 @@ func replaceBody(req *http.Request) ([]byte, error) {
 
 func awsServiceNamespace(dsType string) string {
 	switch dsType {
-	case DS_ES:
+	case DS_ES, DS_ES_OPEN_DISTRO:
 		return "es"
 	case DS_PROMETHEUS:
 		return "aps"
