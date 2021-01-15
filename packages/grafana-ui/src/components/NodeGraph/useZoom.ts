@@ -53,9 +53,9 @@ export function useZoom({ stepUp, stepDown, min, max } = defaultOptions) {
       if (wheelEvent.ctrlKey || wheelEvent.metaKey) {
         event.preventDefault();
 
-        if (wheelEvent.deltaY > 0) {
+        if (wheelEvent.deltaY < 0) {
           onStepUp();
-        } else if (wheelEvent.deltaY < 0) {
+        } else if (wheelEvent.deltaY > 0) {
           onStepDown();
         }
       }
