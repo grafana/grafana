@@ -299,3 +299,38 @@ func TestBuildTemplateDataMap(t *testing.T) {
 		})
 	}
 }
+
+func TestEvaluateTemplate(t *testing.T) {
+	tcs := []struct {
+		name     string
+		message  string
+		data     map[string]string
+		expected string
+	}{
+		{
+			name:    "matching terms",
+			message: "Degraded ${percentile} latency on ${instance}",
+			data: map[string]string{
+				"instance":   "i-123456789",
+				"percentile": "0.95",
+			},
+			expected: "Degraded 0.95 latency on i-123456789",
+		},
+		{
+			name:    "non-matching terms",
+			message: "Degraded $percentile latency for endpoint ${ endpoint } on ${instance}",
+			data: map[string]string{
+				"INSTANCE":   "i-123456789",
+				"percentile": "0.95",
+				"endpoint":   "/api/dashboard/123",
+			},
+			expected: "Degraded $percentile latency for endpoint ${ endpoint } on ${instance}",
+		},
+	}
+	for _, tc := range tcs {
+		t.Run(tc.name, func(t *testing.T) {
+			result := evaluateTemplate(tc.message, tc.data)
+			assert.Equal(t, tc.expected, result, "failed: %s \n expected '%s' have '%s'\n", tc.name, tc.expected, result)
+		})
+	}
+}
