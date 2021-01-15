@@ -1,4 +1,4 @@
-package api
+package response
 
 import (
 	"net/http"
@@ -17,6 +17,28 @@ type Response interface {
 	Status() int
 }
 
+func CreateNormalResponse(header http.Header, body []byte, status int) *NormalResponse {
+	return &NormalResponse{
+		header: header,
+		body:   body,
+		status: status,
+	}
+}
+
+func CreateStreamingResponse(header http.Header, body interface{}, status int) StreamingResponse {
+	return StreamingResponse{
+		header: header,
+		body:   body,
+		status: status,
+	}
+}
+
+func CreateRedirectResponse(location string) *RedirectResponse {
+	return &RedirectResponse{
+		location: location,
+	}
+}
+
 type NormalResponse struct {
 	status     int
 	body       []byte
@@ -30,9 +52,34 @@ func (r *NormalResponse) Status() int {
 	return r.status
 }
 
+// SetStatus sets the response's status.
+func (r *NormalResponse) SetStatus(status int) {
+	r.status = status
+}
+
 // Body gets the response's body.
 func (r *NormalResponse) Body() []byte {
 	return r.body
+}
+
+// Err gets the response's err.
+func (r *NormalResponse) Err() error {
+	return r.err
+}
+
+// SetErr sets the response's err.
+func (r *NormalResponse) SetErr(err error) {
+	r.err = err
+}
+
+// ErrMessage gets the response's errMessage.
+func (r *NormalResponse) ErrMessage() string {
+	return r.errMessage
+}
+
+// SetErrMessage sets the response's errMessage.
+func (r *NormalResponse) SetErrMessage(errMessage string) {
+	r.errMessage = errMessage
 }
 
 func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
@@ -55,13 +102,8 @@ func (r *NormalResponse) Header(key, value string) *NormalResponse {
 	return r
 }
 
-// Empty creates an empty NormalResponse.
-func Empty(status int) *NormalResponse {
-	return Respond(status, nil)
-}
-
-// streamingResponse is a response that streams itself back to the client.
-type streamingResponse struct {
+// StreamingResponse is a response that streams itself back to the client.
+type StreamingResponse struct {
 	body   interface{}
 	status int
 	header http.Header
@@ -69,19 +111,19 @@ type streamingResponse struct {
 
 // Status gets the response's status.
 // Required to implement api.Response.
-func (r streamingResponse) Status() int {
+func (r StreamingResponse) Status() int {
 	return r.status
 }
 
 // Body gets the response's body.
 // Required to implement api.Response.
-func (r streamingResponse) Body() []byte {
+func (r StreamingResponse) Body() []byte {
 	return nil
 }
 
 // WriteTo writes the response to the provided context.
 // Required to implement api.Response.
-func (r streamingResponse) WriteTo(ctx *models.ReqContext) {
+func (r StreamingResponse) WriteTo(ctx *models.ReqContext) {
 	header := ctx.Resp.Header()
 	for k, v := range r.header {
 		header[k] = v

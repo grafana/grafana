@@ -1,26 +1,27 @@
-package api
+package utils
 
 import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
 )
 
 var (
-	ServerError = func(err error) Response {
+	ServerError = func(err error) response.Response {
 		return Error(500, "Server error", err)
 	}
 )
 
 func Wrap(action interface{}) macaron.Handler {
 	return func(c *models.ReqContext) {
-		var res Response
+		var res response.Response
 		val, err := c.Invoke(action)
 		if err == nil && val != nil && len(val) > 0 {
-			res = val[0].Interface().(Response)
+			res = val[0].Interface().(response.Response)
 		} else {
 			res = ServerError(err)
 		}
@@ -30,30 +31,26 @@ func Wrap(action interface{}) macaron.Handler {
 }
 
 // JSON creates a JSON response.
-func JSON(status int, body interface{}) *NormalResponse {
+func JSON(status int, body interface{}) *response.NormalResponse {
 	return Respond(status, body).Header("Content-Type", "application/json")
 }
 
-// jsonStreaming creates a streaming JSON response.
-func jsonStreaming(status int, body interface{}) streamingResponse {
+// JsonStreaming creates a streaming JSON response.
+func JsonStreaming(status int, body interface{}) response.StreamingResponse {
 	header := make(http.Header)
 	header.Set("Content-Type", "application/json")
-	return streamingResponse{
-		status: status,
-		body:   body,
-		header: header,
-	}
+	return response.CreateStreamingResponse(header, body, status)
 }
 
 // Success create a successful response
-func Success(message string) *NormalResponse {
+func Success(message string) *response.NormalResponse {
 	resp := make(map[string]interface{})
 	resp["message"] = message
 	return JSON(200, resp)
 }
 
 // Error creates an error response.
-func Error(status int, message string, err error) *NormalResponse {
+func Error(status int, message string, err error) *response.NormalResponse {
 	data := make(map[string]interface{})
 
 	switch status {
@@ -76,15 +73,20 @@ func Error(status int, message string, err error) *NormalResponse {
 	resp := JSON(status, data)
 
 	if err != nil {
-		resp.errMessage = message
-		resp.err = err
+		resp.SetErrMessage(message)
+		resp.SetErr(err)
 	}
 
 	return resp
 }
 
+// Empty creates an empty NormalResponse.
+func Empty(status int) *response.NormalResponse {
+	return Respond(status, nil)
+}
+
 // Respond creates a response.
-func Respond(status int, body interface{}) *NormalResponse {
+func Respond(status int, body interface{}) *response.NormalResponse {
 	var b []byte
 	switch t := body.(type) {
 	case []byte:
@@ -97,13 +99,9 @@ func Respond(status int, body interface{}) *NormalResponse {
 			return Error(500, "body json marshal", err)
 		}
 	}
-	return &NormalResponse{
-		body:   b,
-		status: status,
-		header: make(http.Header),
-	}
+	return response.CreateNormalResponse(make(http.Header), b, status)
 }
 
-func Redirect(location string) *RedirectResponse {
-	return &RedirectResponse{location: location}
+func Redirect(location string) *response.RedirectResponse {
+	return response.CreateRedirectResponse(location)
 }

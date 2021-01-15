@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -159,35 +161,35 @@ func tryOAuthAutoLogin(c *models.ReqContext) bool {
 	return false
 }
 
-func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) Response {
+func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
 	if c.IsSignedIn || c.IsAnonymous {
-		return JSON(200, "Logged in")
+		return utils.JSON(200, "Logged in")
 	}
 
-	return Error(401, "Unauthorized", nil)
+	return utils.Error(401, "Unauthorized", nil)
 }
 
-func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Response {
+func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) response.Response {
 	authModule := ""
 	var user *models.User
-	var response *NormalResponse
+	var response *response.NormalResponse
 
 	defer func() {
-		err := response.err
-		if err == nil && response.errMessage != "" {
-			err = errors.New(response.errMessage)
+		err := response.Err()
+		if err == nil && response.ErrMessage() != "" {
+			err = errors.New(response.ErrMessage())
 		}
 		hs.HooksService.RunLoginHook(&models.LoginInfo{
 			AuthModule:    authModule,
 			User:          user,
 			LoginUsername: cmd.User,
-			HTTPStatus:    response.status,
+			HTTPStatus:    response.Status(),
 			Error:         err,
 		}, c)
 	}()
 
 	if setting.DisableLoginForm {
-		response = Error(http.StatusUnauthorized, "Login is disabled", nil)
+		response = utils.Error(http.StatusUnauthorized, "Login is disabled", nil)
 		return response
 	}
 
@@ -202,7 +204,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 	err := bus.Dispatch(authQuery)
 	authModule = authQuery.AuthModule
 	if err != nil {
-		response = Error(401, "Invalid username or password", err)
+		response = utils.Error(401, "Invalid username or password", err)
 		if errors.Is(err, login.ErrInvalidCredentials) || errors.Is(err, login.ErrTooManyLoginAttempts) || errors.Is(err,
 			models.ErrUserNotFound) {
 			return response
@@ -215,7 +217,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 			return response
 		}
 
-		response = Error(500, "Error while trying to authenticate user", err)
+		response = utils.Error(500, "Error while trying to authenticate user", err)
 		return response
 	}
 
@@ -223,7 +225,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 
 	err = hs.loginUserWithUser(user, c)
 	if err != nil {
-		response = Error(http.StatusInternalServerError, "Error while signing in user", err)
+		response = utils.Error(http.StatusInternalServerError, "Error while signing in user", err)
 		return response
 	}
 
@@ -241,7 +243,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext, cmd dtos.LoginCommand) Res
 	}
 
 	metrics.MApiLoginPost.Inc()
-	response = JSON(http.StatusOK, result)
+	response = utils.JSON(http.StatusOK, result)
 	return response
 }
 
@@ -324,11 +326,11 @@ func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...
 	ctx.Redirect(setting.AppSubUrl + "/login")
 }
 
-func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err error, v ...interface{}) *RedirectResponse {
+func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err error, v ...interface{}) *response.RedirectResponse {
 	ctx.Logger.Error(err.Error(), v...)
 	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, err.Error(), 60); err != nil {
 		hs.log.Error("Failed to set encrypted cookie", "err", err)
 	}
 
-	return Redirect(setting.AppSubUrl + "/login")
+	return utils.Redirect(setting.AppSubUrl + "/login")
 }
