@@ -1,8 +1,11 @@
+// +build integration
+
 package sqlstore
 
 import (
 	"context"
 	"math/rand"
+	"strconv"
 	"testing"
 	"time"
 
@@ -11,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSqlBuilder(t *testing.T) {
+func TestSQLBuilder(t *testing.T) {
 	t.Run("writeDashboardPermissionFilter", func(t *testing.T) {
 		t.Run("user ACL", func(t *testing.T) {
 			test(t,
@@ -191,14 +194,14 @@ func test(t *testing.T, dashboardProps DashboardProps, dashboardPermission *Dash
 }
 
 func createDummyUser() (*models.User, error) {
-	uid := rand.Intn(9999999)
+	uid := strconv.Itoa(rand.Intn(9999999))
 	createUserCmd := &models.CreateUserCommand{
-		Email:          string(uid) + "@example.com",
-		Login:          string(uid),
-		Name:           string(uid),
+		Email:          uid + "@example.com",
+		Login:          uid,
+		Name:           uid,
 		Company:        "",
 		OrgName:        "",
-		Password:       string(uid),
+		Password:       uid,
 		EmailVerified:  true,
 		IsAdmin:        false,
 		SkipOrgSetup:   false,
@@ -257,11 +260,11 @@ func createDummyDashboard(dashboardProps DashboardProps) (*models.Dashboard, err
 
 func createDummyAcl(dashboardPermission *DashboardPermission, search Search, dashboardId int64) (int64, error) {
 	acl := &models.DashboardAcl{
-		OrgId:       1,
+		OrgID:       1,
 		Created:     time.Now(),
 		Updated:     time.Now(),
 		Permission:  dashboardPermission.Permission,
-		DashboardId: dashboardId,
+		DashboardID: dashboardId,
 	}
 
 	var user *models.User
@@ -272,7 +275,7 @@ func createDummyAcl(dashboardPermission *DashboardPermission, search Search, das
 			return 0, err
 		}
 
-		acl.UserId = user.Id
+		acl.UserID = user.Id
 	}
 
 	if dashboardPermission.Team {
@@ -296,7 +299,7 @@ func createDummyAcl(dashboardPermission *DashboardPermission, search Search, das
 			}
 		}
 
-		acl.TeamId = team.Id
+		acl.TeamID = team.Id
 	}
 
 	if len(string(dashboardPermission.Role)) > 0 {
@@ -304,7 +307,7 @@ func createDummyAcl(dashboardPermission *DashboardPermission, search Search, das
 	}
 
 	updateAclCmd := &models.UpdateDashboardAclCommand{
-		DashboardId: dashboardId,
+		DashboardID: dashboardId,
 		Items:       []*models.DashboardAcl{acl},
 	}
 	err = UpdateDashboardAcl(updateAclCmd)
@@ -314,8 +317,8 @@ func createDummyAcl(dashboardPermission *DashboardPermission, search Search, das
 	return 0, err
 }
 
-func getDashboards(sqlStore *SqlStore, search Search, aclUserId int64) ([]*dashboardResponse, error) {
-	builder := &SqlBuilder{}
+func getDashboards(sqlStore *SQLStore, search Search, aclUserId int64) ([]*dashboardResponse, error) {
+	builder := &SQLBuilder{}
 	signedInUser := &models.SignedInUser{
 		UserId: 9999999999,
 	}
@@ -338,6 +341,6 @@ func getDashboards(sqlStore *SqlStore, search Search, aclUserId int64) ([]*dashb
 	var res []*dashboardResponse
 	builder.Write("SELECT * FROM dashboard WHERE true")
 	builder.writeDashboardPermissionFilter(signedInUser, search.RequiredPermission)
-	err := sqlStore.engine.SQL(builder.GetSqlString(), builder.params...).Find(&res)
+	err := sqlStore.engine.SQL(builder.GetSQLString(), builder.params...).Find(&res)
 	return res, err
 }

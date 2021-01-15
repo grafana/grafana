@@ -4,59 +4,64 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestInterval(t *testing.T) {
-	Convey("Default interval ", t, func() {
-		cfg := setting.NewCfg()
-		err := cfg.Load(&setting.CommandLineArgs{
-			HomePath: "../../",
+func TestIntervalCalculator_Calculate(t *testing.T) {
+	calculator := NewIntervalCalculator(&IntervalOptions{})
+
+	testCases := []struct {
+		name      string
+		timeRange *TimeRange
+		expected  string
+	}{
+		{"from 5m to now", NewTimeRange("5m", "now"), "200ms"},
+		{"from 15m to now", NewTimeRange("15m", "now"), "500ms"},
+		{"from 30m to now", NewTimeRange("30m", "now"), "1s"},
+		{"from 1h to now", NewTimeRange("1h", "now"), "2s"},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			interval := calculator.Calculate(tc.timeRange, time.Millisecond*1)
+			assert.Equal(t, tc.expected, interval.Text)
 		})
-		So(err, ShouldBeNil)
+	}
+}
 
-		calculator := NewIntervalCalculator(&IntervalOptions{})
+func TestRoundInterval(t *testing.T) {
+	testCases := []struct {
+		name     string
+		interval time.Duration
+		expected time.Duration
+	}{
+		{"30ms", time.Millisecond * 30, time.Millisecond * 20},
+		{"45ms", time.Millisecond * 45, time.Millisecond * 50},
+	}
 
-		Convey("for 5min", func() {
-			tr := NewTimeRange("5m", "now")
-
-			interval := calculator.Calculate(tr, time.Millisecond*1)
-			So(interval.Text, ShouldEqual, "200ms")
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, roundInterval(tc.interval))
 		})
+	}
+}
 
-		Convey("for 15min", func() {
-			tr := NewTimeRange("15m", "now")
+func TestFormatDuration(t *testing.T) {
+	testCases := []struct {
+		name     string
+		duration time.Duration
+		expected string
+	}{
+		{"61s", time.Second * 61, "1m"},
+		{"30ms", time.Millisecond * 30, "30ms"},
+		{"23h", time.Hour * 23, "23h"},
+		{"24h", time.Hour * 24, "1d"},
+		{"367d", time.Hour * 24 * 367, "1y"},
+	}
 
-			interval := calculator.Calculate(tr, time.Millisecond*1)
-			So(interval.Text, ShouldEqual, "500ms")
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, FormatDuration(tc.duration))
 		})
-
-		Convey("for 30min", func() {
-			tr := NewTimeRange("30m", "now")
-
-			interval := calculator.Calculate(tr, time.Millisecond*1)
-			So(interval.Text, ShouldEqual, "1s")
-		})
-
-		Convey("for 1h", func() {
-			tr := NewTimeRange("1h", "now")
-
-			interval := calculator.Calculate(tr, time.Millisecond*1)
-			So(interval.Text, ShouldEqual, "2s")
-		})
-
-		Convey("Round interval", func() {
-			So(roundInterval(time.Millisecond*30), ShouldEqual, time.Millisecond*20)
-			So(roundInterval(time.Millisecond*45), ShouldEqual, time.Millisecond*50)
-		})
-
-		Convey("Format value", func() {
-			So(FormatDuration(time.Second*61), ShouldEqual, "1m")
-			So(FormatDuration(time.Millisecond*30), ShouldEqual, "30ms")
-			So(FormatDuration(time.Hour*23), ShouldEqual, "23h")
-			So(FormatDuration(time.Hour*24), ShouldEqual, "1d")
-			So(FormatDuration(time.Hour*24*367), ShouldEqual, "1y")
-		})
-	})
+	}
 }

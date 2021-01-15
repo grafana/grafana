@@ -1,18 +1,20 @@
 import React, { FunctionComponent } from 'react';
 import { LokiQueryFieldForm, LokiQueryFieldFormProps } from './LokiQueryFieldForm';
-import { useLokiSyntaxAndLabels } from './useLokiSyntaxAndLabels';
+import { useLokiLabels } from './useLokiLabels';
 import LokiLanguageProvider from '../language_provider';
 
 type LokiQueryFieldProps = Omit<
   LokiQueryFieldFormProps,
-  'syntax' | 'syntaxLoaded' | 'onLoadOptions' | 'onLabelsRefresh' | 'logLabelOptions'
+  'labelsLoaded' | 'onLoadOptions' | 'onLabelsRefresh' | 'logLabelOptions' | 'absoluteRange'
 >;
 
 export const LokiQueryField: FunctionComponent<LokiQueryFieldProps> = props => {
-  const { datasource, absoluteRange, ...otherProps } = props;
-  const { isSyntaxReady, setActiveOption, refreshLabels, syntax, logLabelOptions } = useLokiSyntaxAndLabels(
+  const { datasource, range, ...otherProps } = props;
+  const absoluteTimeRange = { from: range!.from!.valueOf(), to: range!.to!.valueOf() }; // Range here is never optional
+
+  const { setActiveOption, refreshLabels, logLabelOptions, labelsLoaded } = useLokiLabels(
     datasource.languageProvider as LokiLanguageProvider,
-    absoluteRange
+    absoluteTimeRange
   );
 
   return (
@@ -26,9 +28,8 @@ export const LokiQueryField: FunctionComponent<LokiQueryFieldProps> = props => {
        */
       onLoadOptions={setActiveOption}
       onLabelsRefresh={refreshLabels}
-      absoluteRange={absoluteRange}
-      syntax={syntax}
-      syntaxLoaded={isSyntaxReady}
+      absoluteRange={absoluteTimeRange}
+      labelsLoaded={labelsLoaded}
       logLabelOptions={logLabelOptions}
       {...otherProps}
     />

@@ -20,7 +20,8 @@ export interface DashboardInfo {
  */
 export interface DataRequestInfo extends Partial<DashboardInfo> {
   datasourceName: string;
-  datasourceId?: number;
+  datasourceId: number;
+  datasourceType: string;
   panelId?: number;
   panelName?: string;
   duration: number;
@@ -64,7 +65,7 @@ export interface DataRequestEventPayload extends DataRequestInfo {
 export type MetaAnalyticsEventPayload = DashboardViewEventPayload | DataRequestEventPayload;
 
 /**
- * Describes meta analytics event with predefined {@link EchoEventType.MetaAnalytics} type.
+ * Describes meta analytics event with predefined {@link EchoEventType.EchoEventType} type.
  *
  * @public
  */

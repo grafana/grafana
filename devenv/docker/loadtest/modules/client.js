@@ -1,4 +1,4 @@
-import http from "k6/http";
+import http from 'k6/http';
 import encoding from 'k6/encoding';
 
 export const UIEndpoint = class UIEndpoint {
@@ -10,11 +10,15 @@ export const UIEndpoint = class UIEndpoint {
     const payload = { user: username, password: pwd };
     return this.httpClient.formPost('/login', payload);
   }
-}
+};
 
 export const DatasourcesEndpoint = class DatasourcesEndpoint {
   constructor(httpClient) {
     this.httpClient = httpClient;
+  }
+
+  getAll() {
+    return this.httpClient.get('/datasources');
   }
 
   getById(id) {
@@ -32,7 +36,7 @@ export const DatasourcesEndpoint = class DatasourcesEndpoint {
   delete(id) {
     return this.httpClient.delete(`/datasources/${id}`);
   }
-}
+};
 
 export const OrganizationsEndpoint = class OrganizationsEndpoint {
   constructor(httpClient) {
@@ -57,7 +61,7 @@ export const OrganizationsEndpoint = class OrganizationsEndpoint {
   delete(id) {
     return this.httpClient.delete(`/orgs/${id}`);
   }
-}
+};
 
 export const GrafanaClient = class GrafanaClient {
   constructor(httpClient) {
@@ -79,10 +83,10 @@ export const GrafanaClient = class GrafanaClient {
   onBeforeRequest(params) {
     if (this.orgId && this.orgId > 0) {
       params = params.headers || {};
-      params.headers["X-Grafana-Org-Id"] = this.orgId;
+      params.headers['X-Grafana-Org-Id'] = this.orgId;
     }
   }
-}
+};
 
 export const BaseClient = class BaseClient {
   constructor(url, subUrl) {
@@ -99,14 +103,12 @@ export const BaseClient = class BaseClient {
   }
 
   withUrl(subUrl) {
-    let c = new BaseClient(this.url,  subUrl);
+    let c = new BaseClient(this.url, subUrl);
     c.onBeforeRequest = this.onBeforeRequest;
     return c;
   }
 
-  beforeRequest(params) {
-
-  }
+  beforeRequest(params) {}
 
   get(url, params) {
     params = params || {};
@@ -156,7 +158,7 @@ export const BaseClient = class BaseClient {
 
     return http.batch(requests);
   }
-}
+};
 
 export class BasicAuthClient extends BaseClient {
   constructor(url, subUrl, username, password) {
@@ -166,7 +168,7 @@ export class BasicAuthClient extends BaseClient {
   }
 
   withUrl(subUrl) {
-    let c = new BasicAuthClient(this.url,  subUrl, this.username, this.password);
+    let c = new BasicAuthClient(this.url, subUrl, this.username, this.password);
     c.onBeforeRequest = this.onBeforeRequest;
     return c;
   }
@@ -179,10 +181,33 @@ export class BasicAuthClient extends BaseClient {
   }
 }
 
-export const createClient = (url) => {
-  return new GrafanaClient(new BaseClient(url, ''));
+export class BearerAuthClient extends BaseClient {
+  constructor(url, subUrl, token) {
+    super(url, subUrl);
+    this.token = token;
+  }
+
+  withUrl(subUrl) {
+    let c = new BearerAuthClient(this.url, subUrl, this.token);
+    c.onBeforeRequest = this.onBeforeRequest;
+    return c;
+  }
+
+  beforeRequest(params) {
+    params = params || {};
+    params.headers = params.headers || {};
+    params.headers['Authorization']  = `Bearer ${this.token}`;
+  }
 }
+
+export const createClient = url => {
+  return new GrafanaClient(new BaseClient(url, ''));
+};
 
 export const createBasicAuthClient = (url, username, password) => {
   return new GrafanaClient(new BasicAuthClient(url, '', username, password));
+};
+
+export const createBearerAuthClient = (url, token) => {
+  return new GrafanaClient(new BearerAuthClient(url, '', token));
 }

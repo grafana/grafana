@@ -12,9 +12,13 @@ import (
 
 var ls_getPlugins func(path string) []models.InstalledPlugin = services.GetLocalPlugins
 
+var (
+	errMissingPathFlag = errors.New("missing path flag")
+	errNotDirectory    = errors.New("plugin path is not a directory")
+)
 var validateLsCommand = func(pluginDir string) error {
 	if pluginDir == "" {
-		return errors.New("missing path flag")
+		return errMissingPathFlag
 	}
 
 	logger.Debug("plugindir: " + pluginDir + "\n")
@@ -24,7 +28,7 @@ var validateLsCommand = func(pluginDir string) error {
 	}
 
 	if !pluginDirInfo.IsDir() {
-		return errors.New("plugin path is not a directory")
+		return errNotDirectory
 	}
 
 	return nil
@@ -43,7 +47,7 @@ func (cmd Command) lsCommand(c utils.CommandLine) error {
 	}
 
 	for _, plugin := range plugins {
-		logger.Infof("%s %s %s\n", plugin.Id, color.YellowString("@"), plugin.Info.Version)
+		logger.Infof("%s %s %s\n", plugin.ID, color.YellowString("@"), plugin.Info.Version)
 	}
 
 	return nil

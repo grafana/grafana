@@ -71,8 +71,9 @@ describe(ReferencesButton, () => {
     // here
     const menuInstance = shallow(
       shallow(dropdown.first().props().overlay).prop('children')({
-        // eslint-disable-next-line react/prop-types
-        Menu: ({ children }) => <div>{children}</div>,
+        Menu({ children }) {
+          return <div>{children}</div>;
+        },
       })
     );
     const submenuItems = menuInstance.find(UIMenuItem);

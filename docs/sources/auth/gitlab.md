@@ -2,12 +2,7 @@
 title = "GitLab OAuth2 Authentication"
 description = "Grafana OAuthentication Guide "
 keywords = ["grafana", "configuration", "documentation", "oauth"]
-type = "docs"
-[menu.docs]
-name = "GitLab"
-identifier = "gitlab_oauth"
-parent = "authentication"
-weight = 5
+weight = 900
 +++
 
 # GitLab OAuth2 Authentication
@@ -31,9 +26,9 @@ instance, if you access Grafana at `http://203.0.113.31:3000`, you should use
 http://203.0.113.31:3000/login/gitlab
 ```
 
-Finally, select *api* as the *Scope* and submit the form. Note that if you're
+Finally, select *read_api* as the *Scope* and submit the form. Note that if you're
 not going to use GitLab groups for authorization (i.e. not setting
-`allowed_groups`, see below), you can select *read_user* instead of *api* as
+`allowed_groups`, see below), you can select *read_user* instead of *read_api* as
 the *Scope*, thus giving a more restricted access to your GitLab API.
 
 You'll get an *Application Id* and a *Secret* in return; we'll call them
@@ -51,14 +46,14 @@ enabled = true
 allow_sign_up = false
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
-scopes = api
+scopes = read_api
 auth_url = https://gitlab.com/oauth/authorize
 token_url = https://gitlab.com/oauth/token
 api_url = https://gitlab.com/api/v4
 allowed_groups =
 ```
 
-You may have to set the `root_url` option of `[server]` for the callback URL to be 
+You may have to set the `root_url` option of `[server]` for the callback URL to be
 correct. For example in case you are serving Grafana behind a proxy.
 
 Restart the Grafana backend for your changes to take effect.
@@ -121,7 +116,7 @@ allowed_groups = example, foo/bar
 > Only available in Grafana Enterprise v6.4+
 
 With Team Sync you can map your GitLab groups to teams in Grafana so that your users will automatically be added to
-the correct teams. 
+the correct teams.
 
 Your GitLab groups can be referenced in the same way as `allowed_groups`, like `example` or `foo/bar`.
 

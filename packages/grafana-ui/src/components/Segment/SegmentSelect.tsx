@@ -1,10 +1,10 @@
-import React, { useRef } from 'react';
+import React, { HTMLProps, useRef } from 'react';
 import { css, cx } from 'emotion';
 import useClickAway from 'react-use/lib/useClickAway';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '../Forms/Legacy/Select/Select';
 
-export interface Props<T> {
+export interface Props<T> extends Omit<HTMLProps<HTMLDivElement>, 'value' | 'onChange'> {
   value?: SelectableValue<T>;
   options: Array<SelectableValue<T>>;
   onChange: (item: SelectableValue<T>) => void;
@@ -22,6 +22,7 @@ export function SegmentSelect<T>({
   width,
   noOptionsMessage = '',
   allowCustomValue = false,
+  ...rest
 }: React.PropsWithChildren<Props<T>>) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -39,7 +40,7 @@ export function SegmentSelect<T>({
   });
 
   return (
-    <div ref={ref}>
+    <div {...rest} ref={ref}>
       <Select
         className={cx(
           css`

@@ -1,3 +1,5 @@
+// +build integration
+
 package sqlstore
 
 import (
@@ -33,6 +35,38 @@ func TestAccountDataAccess(t *testing.T) {
 
 			So(err, ShouldBeNil)
 			So(len(query.Result), ShouldEqual, 3)
+		})
+
+		Convey("Given we have organizations, we can limit and paginate search", func() {
+			for i := 1; i < 4; i++ {
+				cmd := &models.CreateOrgCommand{Name: fmt.Sprint("Org #", i)}
+				err := CreateOrg(cmd)
+				So(err, ShouldBeNil)
+			}
+
+			Convey("Should be able to search with defaults", func() {
+				query := &models.SearchOrgsQuery{}
+				err := SearchOrgs(query)
+
+				So(err, ShouldBeNil)
+				So(len(query.Result), ShouldEqual, 3)
+			})
+
+			Convey("Should be able to limit search", func() {
+				query := &models.SearchOrgsQuery{Limit: 1}
+				err := SearchOrgs(query)
+
+				So(err, ShouldBeNil)
+				So(len(query.Result), ShouldEqual, 1)
+			})
+
+			Convey("Should be able to limit and paginate search", func() {
+				query := &models.SearchOrgsQuery{Limit: 2, Page: 1}
+				err := SearchOrgs(query)
+
+				So(err, ShouldBeNil)
+				So(len(query.Result), ShouldEqual, 1)
+			})
 		})
 
 		Convey("Given single org mode", func() {
@@ -250,13 +284,13 @@ func TestAccountDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 3)
 
-					dash1 := insertTestDashboard("1 test dash", ac1.OrgId, 0, false, "prod", "webapp")
-					dash2 := insertTestDashboard("2 test dash", ac3.OrgId, 0, false, "prod", "webapp")
+					dash1 := insertTestDashboard(t, "1 test dash", ac1.OrgId, 0, false, "prod", "webapp")
+					dash2 := insertTestDashboard(t, "2 test dash", ac3.OrgId, 0, false, "prod", "webapp")
 
-					err = testHelperUpdateDashboardAcl(dash1.Id, models.DashboardAcl{DashboardId: dash1.Id, OrgId: ac1.OrgId, UserId: ac3.Id, Permission: models.PERMISSION_EDIT})
+					err = testHelperUpdateDashboardAcl(dash1.Id, models.DashboardAcl{DashboardID: dash1.Id, OrgID: ac1.OrgId, UserID: ac3.Id, Permission: models.PERMISSION_EDIT})
 					So(err, ShouldBeNil)
 
-					err = testHelperUpdateDashboardAcl(dash2.Id, models.DashboardAcl{DashboardId: dash2.Id, OrgId: ac3.OrgId, UserId: ac3.Id, Permission: models.PERMISSION_EDIT})
+					err = testHelperUpdateDashboardAcl(dash2.Id, models.DashboardAcl{DashboardID: dash2.Id, OrgID: ac3.OrgId, UserID: ac3.Id, Permission: models.PERMISSION_EDIT})
 					So(err, ShouldBeNil)
 
 					Convey("When org user is deleted", func() {
@@ -265,7 +299,7 @@ func TestAccountDataAccess(t *testing.T) {
 						So(err, ShouldBeNil)
 
 						Convey("Should remove dependent permissions for deleted org user", func() {
-							permQuery := &models.GetDashboardAclInfoListQuery{DashboardId: 1, OrgId: ac1.OrgId}
+							permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 1, OrgID: ac1.OrgId}
 							err = GetDashboardAclInfoList(permQuery)
 							So(err, ShouldBeNil)
 
@@ -273,7 +307,7 @@ func TestAccountDataAccess(t *testing.T) {
 						})
 
 						Convey("Should not remove dashboard permissions for same user in another org", func() {
-							permQuery := &models.GetDashboardAclInfoListQuery{DashboardId: 2, OrgId: ac3.OrgId}
+							permQuery := &models.GetDashboardAclInfoListQuery{DashboardID: 2, OrgID: ac3.OrgId}
 							err = GetDashboardAclInfoList(permQuery)
 							So(err, ShouldBeNil)
 
@@ -289,7 +323,7 @@ func TestAccountDataAccess(t *testing.T) {
 }
 
 func testHelperUpdateDashboardAcl(dashboardId int64, items ...models.DashboardAcl) error {
-	cmd := models.UpdateDashboardAclCommand{DashboardId: dashboardId}
+	cmd := models.UpdateDashboardAclCommand{DashboardID: dashboardId}
 	for _, i := range items {
 		item := i
 		item.Created = time.Now()

@@ -21,7 +21,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
     valueProps: VizRepeaterRenderValueProps<FieldDisplay, DisplayValueAlignmentFactors>,
     menuProps: DataLinksContextMenuApi
   ): JSX.Element => {
-    const { options } = this.props;
+    const { options, fieldConfig } = this.props;
     const { value, alignmentFactors, orientation, width, height, count } = valueProps;
     const { field, display, view, colIndex } = value;
     const { openMenu, targetClassName } = menuProps;
@@ -33,11 +33,12 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
 
     return (
       <BarGauge
-        value={clearNameForSingleSeries(count, field, display)}
+        value={clearNameForSingleSeries(count, fieldConfig.defaults, display)}
         width={width}
         height={height}
         orientation={orientation}
         field={field}
+        text={options.text}
         display={processor}
         theme={config.theme}
         itemSpacing={this.getItemSpacing()}
@@ -75,7 +76,6 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
       replaceVariables,
       theme: config.theme,
       data: data.series,
-      autoMinMax: true,
       timeZone,
     });
   };
@@ -100,6 +100,7 @@ export class BarGaugePanel extends PureComponent<PanelProps<BarGaugeOptions>> {
         renderCounter={renderCounter}
         width={width}
         height={height}
+        minVizHeight={10}
         itemSpacing={this.getItemSpacing()}
         orientation={options.orientation}
       />

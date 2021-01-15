@@ -13,11 +13,11 @@ var getTime = time.Now
 const databaseCacheType = "database"
 
 type databaseCache struct {
-	SQLStore *sqlstore.SqlStore
+	SQLStore *sqlstore.SQLStore
 	log      log.Logger
 }
 
-func newDatabaseCache(sqlstore *sqlstore.SqlStore) *databaseCache {
+func newDatabaseCache(sqlstore *sqlstore.SQLStore) *databaseCache {
 	dc := &databaseCache{
 		SQLStore: sqlstore,
 		log:      log.New("remotecache.database"),
@@ -70,7 +70,7 @@ func (dc *databaseCache) Get(key string) (interface{}, error) {
 	if cacheHit.Expires > 0 {
 		existedButExpired := getTime().Unix()-cacheHit.CreatedAt >= cacheHit.Expires
 		if existedButExpired {
-			err = dc.Delete(key) //ignore this error since we will return `ErrCacheItemNotFound` anyway
+			err = dc.Delete(key) // ignore this error since we will return `ErrCacheItemNotFound` anyway
 			if err != nil {
 				dc.log.Debug("Deletion of expired key failed: %v", err)
 			}

@@ -12,39 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import React from 'react';
+import { IconButton } from '@grafana/ui';
 import { css } from 'emotion';
-import cx from 'classnames';
-
-import { UITooltip, UIIcon } from '../../uiElementsContext';
+import React from 'react';
 import { createStyle } from '../../Theme';
 
 const getStyles = createStyle(() => {
   return {
-    TraceTimelineViewer: css`
-      border-bottom: 1px solid #bbb;
-    `,
     TimelineCollapser: css`
       align-items: center;
       display: flex;
       flex: none;
       justify-content: center;
       margin-right: 0.5rem;
-    `,
-    tooltipTitle: css`
-      white-space: pre;
-    `,
-    btn: css`
-      color: rgba(0, 0, 0, 0.5);
-      cursor: pointer;
-      margin-right: 0.3rem;
-      padding: 0.1rem;
-      &:hover {
-        color: rgba(0, 0, 0, 0.85);
-      }
-    `,
-    btnExpanded: css`
-      transform: rotate(90deg);
     `,
   };
 });
@@ -56,40 +36,27 @@ type CollapserProps = {
   onExpandAll: () => void;
 };
 
-function getTitle(value: string) {
+export function TimelineCollapser(props: CollapserProps) {
+  const { onExpandAll, onExpandOne, onCollapseAll, onCollapseOne } = props;
   const styles = getStyles();
-  return <span className={styles.tooltipTitle}>{value}</span>;
-}
-
-export default class TimelineCollapser extends React.PureComponent<CollapserProps> {
-  containerRef: React.RefObject<HTMLDivElement>;
-
-  constructor(props: CollapserProps) {
-    super(props);
-    this.containerRef = React.createRef();
-  }
-
-  // TODO: Something less hacky than createElement to help TypeScript / AntD
-  getContainer = () => this.containerRef.current || document.createElement('div');
-
-  render() {
-    const { onExpandAll, onExpandOne, onCollapseAll, onCollapseOne } = this.props;
-    const styles = getStyles();
-    return (
-      <div className={styles.TimelineCollapser} ref={this.containerRef} data-test-id="TimelineCollapser">
-        <UITooltip title={getTitle('Expand +1')} getPopupContainer={this.getContainer}>
-          <UIIcon type="right" onClick={onExpandOne} className={cx(styles.btn, styles.btnExpanded)} />
-        </UITooltip>
-        <UITooltip title={getTitle('Collapse +1')} getPopupContainer={this.getContainer}>
-          <UIIcon type="right" onClick={onCollapseOne} className={styles.btn} />
-        </UITooltip>
-        <UITooltip title={getTitle('Expand All')} getPopupContainer={this.getContainer}>
-          <UIIcon type="double-right" onClick={onExpandAll} className={cx(styles.btn, styles.btnExpanded)} />
-        </UITooltip>
-        <UITooltip title={getTitle('Collapse All')} getPopupContainer={this.getContainer}>
-          <UIIcon type="double-right" onClick={onCollapseAll} className={styles.btn} />
-        </UITooltip>
-      </div>
-    );
-  }
+  return (
+    <div className={styles.TimelineCollapser} data-test-id="TimelineCollapser">
+      <IconButton tooltip="Expand +1" size="xl" tooltipPlacement="top" name="angle-down" onClick={onExpandOne} />
+      <IconButton tooltip="Collapse +1" size="xl" tooltipPlacement="top" name="angle-right" onClick={onCollapseOne} />
+      <IconButton
+        tooltip="Expand All"
+        size="xl"
+        tooltipPlacement="top"
+        name="angle-double-down"
+        onClick={onExpandAll}
+      />
+      <IconButton
+        tooltip="Collapse All"
+        size="xl"
+        tooltipPlacement="top"
+        name="angle-double-right"
+        onClick={onCollapseAll}
+      />
+    </div>
+  );
 }

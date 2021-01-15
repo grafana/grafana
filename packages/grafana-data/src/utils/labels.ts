@@ -60,13 +60,31 @@ export function findUniqueLabels(labels: Labels | undefined, commonLabels: Label
 }
 
 /**
+ * Check that all labels exist in another set of labels
+ */
+export function matchAllLabels(expect: Labels, against?: Labels): boolean {
+  if (!expect) {
+    return true; // nothing to match
+  }
+  for (const [key, value] of Object.entries(expect)) {
+    if (!against || against[key] !== value) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Serializes the given labels to a string.
  */
-export function formatLabels(labels: Labels, defaultValue = ''): string {
+export function formatLabels(labels: Labels, defaultValue = '', withoutBraces?: boolean): string {
   if (!labels || Object.keys(labels).length === 0) {
     return defaultValue;
   }
   const labelKeys = Object.keys(labels).sort();
   const cleanSelector = labelKeys.map(key => `${key}="${labels[key]}"`).join(', ');
+  if (withoutBraces) {
+    return cleanSelector;
+  }
   return ['{', cleanSelector, '}'].join('');
 }

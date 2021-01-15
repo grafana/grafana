@@ -45,8 +45,10 @@ var metricAggType = map[string]string{
 	"percentiles":    "Percentiles",
 	"cardinality":    "Unique Count",
 	"moving_avg":     "Moving Average",
+	"moving_fn":      "Moving Function",
 	"cumulative_sum": "Cumulative Sum",
 	"derivative":     "Derivative",
+	"serial_diff":    "Serial Difference",
 	"bucket_script":  "Bucket Script",
 	"raw_document":   "Raw Document",
 }
@@ -64,8 +66,10 @@ var extendedStats = map[string]string{
 
 var pipelineAggType = map[string]string{
 	"moving_avg":     "moving_avg",
+	"moving_fn":      "moving_fn",
 	"cumulative_sum": "cumulative_sum",
 	"derivative":     "derivative",
+	"serial_diff":    "serial_diff",
 	"bucket_script":  "bucket_script",
 }
 

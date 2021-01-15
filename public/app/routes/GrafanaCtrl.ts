@@ -32,6 +32,7 @@ import { ILocationService, ITimeoutService, IRootScopeService, IAngularEvent } f
 import { AppEvent, AppEvents, locationUtil } from '@grafana/data';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { auto } from 'angular';
+import { initGrafanaLive } from 'app/features/live/live';
 
 export type GrafanaRootScope = IRootScopeService & AppEventEmitter & AppEventConsumer & { colors: string[] };
 
@@ -61,6 +62,8 @@ export class GrafanaCtrl {
     setDashboardSrv(dashboardSrv);
     setLegacyAngularInjector($injector);
 
+    datasourceSrv.init(config.datasources, config.defaultDatasource);
+
     locationUtil.initialize({
       getConfig: () => config,
       getTimeRangeForUrl: getTimeSrv().timeRangeForUrl,
@@ -74,6 +77,11 @@ export class GrafanaCtrl {
         store.dispatch(updateLocation(opt));
       },
     });
+
+    // Initialize websocket event streaming
+    if (config.featureToggles.live) {
+      initGrafanaLive();
+    }
 
     $scope.init = () => {
       $scope.contextSrv = contextSrv;
@@ -203,8 +211,6 @@ export function grafanaAppDirective(
         for (const drop of Drop.drops) {
           drop.destroy();
         }
-
-        appEvents.emit(CoreEvents.hideDashSearch);
       });
 
       // handle kiosk mode

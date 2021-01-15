@@ -1,18 +1,15 @@
 import coreModule from 'app/core/core_module';
-import appEvents from 'app/core/app_events';
 import { dispatch, store } from 'app/store/store';
 import { updateLocation } from 'app/core/actions';
-import { ILocationService, ITimeoutService, IWindowService } from 'angular';
-import { CoreEvents } from 'app/types';
+import { ILocationService, ITimeoutService } from 'angular';
 import { GrafanaRootScope } from 'app/routes/GrafanaCtrl';
-import { locationUtil, UrlQueryMap } from '@grafana/data';
+import { UrlQueryMap } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { templateVarsChangedInUrl } from 'app/features/variables/state/actions';
 import { isArray, isEqual } from 'lodash';
 
 // Services that handles angular -> redux store sync & other react <-> angular sync
 export class BridgeSrv {
-  private fullPageReloadRoutes: string[];
   private lastQuery: UrlQueryMap = {};
   private lastPath = '';
   private angularUrl: string;
@@ -22,11 +19,9 @@ export class BridgeSrv {
   constructor(
     private $location: ILocationService,
     private $timeout: ITimeoutService,
-    private $window: IWindowService,
     private $rootScope: GrafanaRootScope,
     private $route: any
   ) {
-    this.fullPageReloadRoutes = ['/logout'];
     this.angularUrl = $location.url();
   }
 
@@ -82,9 +77,13 @@ export class BridgeSrv {
         });
       }
 
-      // Check for template variable changes on a dashboard
-      if (state.location.path === this.lastPath) {
+      // if only query params changed, check if variables changed
+      if (state.location.path === this.lastPath && state.location.query !== this.lastQuery) {
+        // Find template variable changes
         const changes = findTemplateVarChanges(state.location.query, this.lastQuery);
+        // Store current query params to avoid recursion
+        this.lastQuery = state.location.query;
+
         if (changes) {
           const dash = getDashboardSrv().getCurrent();
           if (dash) {
@@ -93,22 +92,9 @@ export class BridgeSrv {
         }
       }
 
-      this.lastQuery = state.location.query;
       this.lastPath = state.location.path;
+      this.lastQuery = state.location.query;
       this.lastUrl = state.location.url;
-    });
-
-    appEvents.on(CoreEvents.locationChange, payload => {
-      const urlWithoutBase = locationUtil.stripBaseFromUrl(payload.href);
-      if (this.fullPageReloadRoutes.indexOf(urlWithoutBase) > -1) {
-        this.$window.location.href = payload.href;
-        return;
-      }
-
-      this.$timeout(() => {
-        // A hack to use timeout when we're changing things (in this case the url) from outside of Angular.
-        this.$location.url(urlWithoutBase);
-      });
     });
   }
 }

@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { boolean, text, select, number } from '@storybook/addon-knobs';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
-import { Input } from './Input';
-import { Button } from '../Button';
 import mdx from './Input.mdx';
 import { getAvailableIcons, IconName } from '../../types';
 import { KeyValue } from '@grafana/data';
-import { Icon } from '../Icon/Icon';
-import { Field } from '../Forms/Field';
+import { Field, Icon, Button, Input } from '@grafana/ui';
 
 export default {
   title: 'Forms/Input',
@@ -20,7 +17,7 @@ export default {
   },
 };
 
-export const simple = () => {
+export const Simple = () => {
   const prefixSuffixOpts = {
     None: null,
     Text: '$',
@@ -99,7 +96,7 @@ export const simple = () => {
   );
 };
 
-export const withFieldValidation = () => {
+export const WithFieldValidation = () => {
   const [value, setValue] = useState('');
 
   return (

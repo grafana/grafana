@@ -2,7 +2,7 @@ import coreModule from 'app/core/core_module';
 import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { DashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { ILocationService } from 'angular';
-import { AppEventEmitter, CoreEvents, Scope } from 'app/types';
+import { AppEventEmitter, Scope } from 'app/types';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 export class LoadDashboardCtrl {
@@ -11,11 +11,8 @@ export class LoadDashboardCtrl {
     $scope: Scope & AppEventEmitter,
     $routeParams: UrlQueryMap,
     dashboardLoaderSrv: DashboardLoaderSrv,
-    $location: ILocationService,
-    $browser: any
+    $location: ILocationService
   ) {
-    $scope.appEvent(CoreEvents.dashboardFetchStart);
-
     if (!$routeParams.uid && !$routeParams.slug) {
       backendSrv.get('/api/dashboards/home').then((homeDash: { redirectUri: string; meta: any }) => {
         if (homeDash.redirectUri) {

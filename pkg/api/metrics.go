@@ -2,11 +2,11 @@ package api
 
 import (
 	"context"
+	"errors"
 	"sort"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
@@ -16,39 +16,45 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// QueryMetricsV2 returns query metrics
+// QueryMetricsV2 returns query metrics.
 // POST /api/ds/query   DataSource query w/ expressions
-func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricRequest) Response {
-	if len(reqDto.Queries) == 0 {
-		return Error(500, "No queries found in query", nil)
+func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricRequest) Response {
+	if len(reqDTO.Queries) == 0 {
+		return Error(400, "No queries found in query", nil)
 	}
 
 	request := &tsdb.TsdbQuery{
-		TimeRange: tsdb.NewTimeRange(reqDto.From, reqDto.To),
-		Debug:     reqDto.Debug,
+		TimeRange: tsdb.NewTimeRange(reqDTO.From, reqDTO.To),
+		Debug:     reqDTO.Debug,
 		User:      c.SignedInUser,
 	}
 
-	expr := false
+	hasExpr := false
 	var ds *models.DataSource
-	for i, query := range reqDto.Queries {
+	for i, query := range reqDTO.Queries {
+		hs.log.Debug("Processing metrics query", "query", query)
 		name := query.Get("datasource").MustString("")
-		if name == "__expr__" {
-			expr = true
+		if name == expr.DatasourceName {
+			hasExpr = true
 		}
 
 		datasourceID, err := query.Get("datasourceId").Int64()
 		if err != nil {
-			return Error(500, "datasource missing ID", nil)
+			hs.log.Debug("Can't process query since it's missing data source ID")
+			return Error(400, "Query missing data source ID", nil)
 		}
 
-		if i == 0 && !expr {
+		if i == 0 && !hasExpr {
 			ds, err = hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 			if err != nil {
-				if err == models.ErrDataSourceAccessDenied {
-					return Error(403, "Access denied to datasource", err)
+				hs.log.Debug("Encountered error getting data source", "err", err, "id", datasourceID)
+				if errors.Is(err, models.ErrDataSourceAccessDenied) {
+					return Error(403, "Access denied to data source", err)
 				}
-				return Error(500, "Unable to load datasource meta data", err)
+				if errors.Is(err, models.ErrDataSourceNotFound) {
+					return Error(400, "Invalid data source ID", err)
+				}
+				return Error(500, "Unable to load data source metadata", err)
 			}
 		}
 
@@ -64,17 +70,17 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 
 	var resp *tsdb.Response
 	var err error
-	if !expr {
+	if !hasExpr {
 		resp, err = tsdb.HandleRequest(c.Req.Context(), ds, request)
 		if err != nil {
 			return Error(500, "Metric request error", err)
 		}
 	} else {
-		if !setting.IsExpressionsEnabled() {
+		if !hs.Cfg.IsExpressionsEnabled() {
 			return Error(404, "Expressions feature toggle is not enabled", nil)
 		}
 
-		resp, err = plugins.Transform.Transform(c.Req.Context(), request)
+		resp, err = expr.WrapTransformData(c.Req.Context(), request)
 		if err != nil {
 			return Error(500, "Transform request error", err)
 		}
@@ -89,7 +95,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDto dtos.MetricReq
 		}
 	}
 
-	return JSON(statusCode, &resp)
+	return jsonStreaming(statusCode, resp)
 }
 
 // QueryMetrics returns query metrics
@@ -108,7 +114,7 @@ func (hs *HTTPServer) QueryMetrics(c *models.ReqContext, reqDto dtos.MetricReque
 
 	ds, err := hs.DatasourceCache.GetDatasource(datasourceId, c.SignedInUser, c.SkipCache)
 	if err != nil {
-		if err == models.ErrDataSourceAccessDenied {
+		if errors.Is(err, models.ErrDataSourceAccessDenied) {
 			return Error(403, "Access denied to datasource", err)
 		}
 		return Error(500, "Unable to load datasource meta data", err)
@@ -179,7 +185,7 @@ func GenerateError(c *models.ReqContext) Response {
 
 // GET /api/tsdb/testdata/gensql
 func GenerateSQLTestData(c *models.ReqContext) Response {
-	if err := bus.Dispatch(&models.InsertSqlTestDataCommand{}); err != nil {
+	if err := bus.Dispatch(&models.InsertSQLTestDataCommand{}); err != nil {
 		return Error(500, "Failed to insert test data", err)
 	}
 

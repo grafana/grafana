@@ -15,5 +15,5 @@ export { getMappedValue } from './valueMappings';
 export { getFlotPairs, getFlotPairsConstant } from './flotPairs';
 export { locationUtil } from './location';
 export { urlUtil, UrlQueryMap, UrlQueryValue } from './url';
-export { DataLinkBuiltInVars } from './dataLinks';
+export { DataLinkBuiltInVars, mapInternalLinkToExplore } from './dataLinks';
 export { DocsId } from './docs';

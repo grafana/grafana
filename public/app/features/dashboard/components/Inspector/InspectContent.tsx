@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { getPanelInspectorStyles } from './styles';
+import { DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { CustomScrollbar, Drawer, TabContent } from '@grafana/ui';
+import { getPanelInspectorStyles } from './styles';
 import { InspectSubtitle } from './InspectSubtitle';
 import { InspectDataTab } from './InspectDataTab';
 import { InspectMetadataTab } from './InspectMetadataTab';
@@ -10,8 +12,7 @@ import { InspectStatsTab } from './InspectStatsTab';
 import { QueryInspector } from './QueryInspector';
 import { InspectTab } from './types';
 import { DashboardModel, PanelModel } from '../../state';
-import { DataSourceApi, PanelData, PanelPlugin } from '@grafana/data';
-import { GetDataOptions } from '../../state/PanelQueryRunner';
+import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 
 interface Props {
   dashboard: DashboardModel;
@@ -56,10 +57,11 @@ export const InspectContent: React.FC<Props> = ({
   if (!tabs.find(item => item.value === currentTab)) {
     activeTab = InspectTab.JSON;
   }
+  const title = getTemplateSrv().replace(panel.title, panel.scopedVars, 'text');
 
   return (
     <Drawer
-      title={`Inspect: ${panel.title}` || 'Panel inspect'}
+      title={`Inspect: ${title || 'Panel'}`}
       subtitle={
         <InspectSubtitle
           tabs={tabs}
@@ -91,7 +93,7 @@ export const InspectContent: React.FC<Props> = ({
             <InspectJSONTab panel={panel} dashboard={dashboard} data={data} onClose={onClose} />
           )}
           {activeTab === InspectTab.Error && <InspectErrorTab error={error} />}
-          {data && activeTab === InspectTab.Stats && <InspectStatsTab data={data} dashboard={dashboard} />}
+          {data && activeTab === InspectTab.Stats && <InspectStatsTab data={data} timeZone={dashboard.getTimezone()} />}
           {data && activeTab === InspectTab.Query && <QueryInspector panel={panel} data={data.series} />}
         </TabContent>
       </CustomScrollbar>

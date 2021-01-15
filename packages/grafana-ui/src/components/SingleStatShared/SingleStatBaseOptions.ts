@@ -15,12 +15,14 @@ import {
   ThresholdsMode,
   ThresholdsConfig,
   validateFieldConfig,
-  FieldColorMode,
+  FieldColorModeId,
+  TextDisplayOptions,
 } from '@grafana/data';
 
 export interface SingleStatBaseOptions {
   reduceOptions: ReduceDataOptions;
   orientation: VizOrientation;
+  text?: TextDisplayOptions;
 }
 
 const optionsToKeep = ['reduceOptions', 'orientation'];
@@ -174,7 +176,7 @@ export function sharedSingleStatMigrationHandler(panel: PanelModel<SingleStatBas
     const { defaults } = fieldOptions;
     if (defaults.color && typeof defaults.color === 'string') {
       defaults.color = {
-        mode: FieldColorMode.Fixed,
+        mode: FieldColorModeId.Fixed,
         fixedColor: defaults.color,
       };
     }

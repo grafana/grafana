@@ -7,7 +7,7 @@ import { SelectableValue } from '@grafana/data';
 
 export interface Props {
   refId: string;
-  usedAlignmentPeriod: string;
+  usedAlignmentPeriod?: number;
   variableOptionGroup: SelectableValue<string>;
   onChange: (query: MetricQuery) => void;
   onRunQuery: () => void;
@@ -24,8 +24,8 @@ export const defaultState: State = {
   labels: {},
 };
 
-export const defaultQuery: MetricQuery = {
-  projectName: '',
+export const defaultQuery: (dataSource: CloudMonitoringDatasource) => MetricQuery = dataSource => ({
+  projectName: dataSource.getDefaultProject(),
   metricType: '',
   metricKind: '',
   valueType: '',
@@ -36,7 +36,7 @@ export const defaultQuery: MetricQuery = {
   groupBys: [],
   filters: [],
   aliasBy: '',
-};
+});
 
 function Editor({
   refId,

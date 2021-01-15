@@ -1,10 +1,11 @@
 import React from 'react';
 import { text, boolean, select } from '@storybook/addon-knobs';
-import { ConfirmButton } from './ConfirmButton';
+import { ConfirmButton } from '@grafana/ui';
 import { withCenteredStory } from '../../utils/storybook/withCenteredStory';
 import { action } from '@storybook/addon-actions';
 import { Button } from '../Button';
 import { DeleteButton } from './DeleteButton';
+import mdx from './ConfirmButton.mdx';
 
 const getKnobs = () => {
   return {
@@ -31,6 +32,11 @@ export default {
   component: ConfirmButton,
   decorators: [withCenteredStory],
   subcomponents: { DeleteButton },
+  parameters: {
+    docs: {
+      page: mdx,
+    },
+  },
 };
 
 export const basic = () => {

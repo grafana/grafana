@@ -1,4 +1,6 @@
-import { SelectableValue } from '@grafana/data';
+import { PanelData, SelectableValue } from '@grafana/data';
+import { PanelQueryRunner } from '../features/query/state/PanelQueryRunner';
+import { QueryGroupOptions } from '../features/query/components/QueryGroupOptions';
 
 export interface AlertRuleDTO {
   id: number;
@@ -40,6 +42,7 @@ export type NotifierType =
   | 'hipchat'
   | 'email'
   | 'sensu'
+  | 'sensugo'
   | 'googlechat'
   | 'threema'
   | 'teams'
@@ -58,33 +61,39 @@ export type NotifierType =
 export interface NotifierDTO {
   name: string;
   description: string;
-  optionsTemplate: string;
   type: NotifierType;
   heading: string;
-  options: Option[];
+  options: NotificationChannelOption[];
   info?: string;
+  secure?: boolean;
 }
 
-export interface NotificationChannel {
+export interface NotificationChannelType {
   value: string;
   label: string;
   description: string;
   type: NotifierType;
   heading: string;
-  options: Option[];
+  options: NotificationChannelOption[];
   info?: string;
 }
 
 export interface NotificationChannelDTO {
-  [key: string]: string | boolean | SelectableValue<string>;
+  [key: string]: string | boolean | number | SelectableValue<string>;
+  id: number;
   name: string;
   type: SelectableValue<string>;
   sendReminder: boolean;
   disableResolveMessage: boolean;
   frequency: string;
   settings: ChannelTypeSettings;
+  secureSettings: NotificationChannelSecureSettings;
+  secureFields: NotificationChannelSecureFields;
   isDefault: boolean;
 }
+
+export type NotificationChannelSecureSettings = Record<string, string | number>;
+export type NotificationChannelSecureFields = Record<string, boolean>;
 
 export interface ChannelTypeSettings {
   [key: string]: any;
@@ -94,24 +103,30 @@ export interface ChannelTypeSettings {
   uploadImage: boolean;
 }
 
-export interface Option {
-  element: 'input' | 'select' | 'switch' | 'textarea';
+export interface NotificationChannelOption {
+  element: 'input' | 'select' | 'checkbox' | 'textarea';
   inputType: string;
   label: string;
   description: string;
   placeholder: string;
   propertyName: string;
-  selectOptions: Array<SelectableValue<string>>;
-  showWhen: { field: string; is: string };
   required: boolean;
+  secure: boolean;
+  selectOptions?: Array<SelectableValue<string>>;
+  showWhen: { field: string; is: string };
   validationRule: string;
+}
+
+export interface NotificationChannelState {
+  notificationChannelTypes: NotificationChannelType[];
+  notifiers: NotifierDTO[];
+  notificationChannel: any;
 }
 
 export interface AlertRulesState {
   items: AlertRule[];
   searchQuery: string;
   isLoading: boolean;
-  notificationChannels: NotificationChannel[];
 }
 
 export interface AlertNotification {
@@ -119,4 +134,29 @@ export interface AlertNotification {
   name: string;
   id: number;
   type: string;
+}
+
+export interface AlertDefinitionState {
+  uiState: AlertDefinitionUiState;
+  alertDefinition: AlertDefinition;
+  queryOptions: QueryGroupOptions;
+  queryRunner: PanelQueryRunner;
+  data: PanelData[];
+}
+
+export interface AlertDefinition {
+  id: number;
+  name: string;
+  description: string;
+  condition: AlertCondition;
+}
+
+export interface AlertCondition {
+  ref: string;
+  queriesAndExpressions: any[];
+}
+
+export interface AlertDefinitionUiState {
+  rightPaneSize: number;
+  topPaneSize: number;
 }

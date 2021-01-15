@@ -89,6 +89,7 @@ type TProps = TExtractUiFindFromStateReturn & {
   detailLogItemToggle: (spanID: string, log: TraceLog) => void;
   detailLogsToggle: (spanID: string) => void;
   detailWarningsToggle: (spanID: string) => void;
+  detailStackTracesToggle: (spanID: string) => void;
   detailReferencesToggle: (spanID: string) => void;
   detailProcessToggle: (spanID: string) => void;
   detailTagsToggle: (spanID: string) => void;
@@ -98,6 +99,10 @@ type TProps = TExtractUiFindFromStateReturn & {
   removeHoverIndentGuideId: (spanID: string) => void;
   linksGetter: (span: TraceSpan, items: TraceKeyValuePair[], itemIndex: number) => TraceLink[];
   theme: Theme;
+  createSpanLink?: (
+    span: TraceSpan
+  ) => { href: string; onClick?: (e: React.MouseEvent) => void; content: React.ReactNode };
+  scrollElement?: Element;
 };
 
 type State = {

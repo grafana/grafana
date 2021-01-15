@@ -13,7 +13,6 @@ import 'jquery';
 import 'angular';
 import 'angular-route';
 import 'angular-sanitize';
-import 'angular-native-dragdrop';
 import 'angular-bindonce';
 import 'react';
 import 'react-dom';
@@ -29,11 +28,10 @@ import _ from 'lodash';
 import {
   AppEvents,
   setLocale,
-  setMarkdownOptions,
+  setTimeZoneResolver,
   standardEditorsRegistry,
   standardFieldConfigEditorRegistry,
   standardTransformersRegistry,
-  setTimeZoneResolver,
 } from '@grafana/data';
 import appEvents from 'app/core/app_events';
 import { checkBrowserCompatibility } from 'app/core/utils/browser';
@@ -47,10 +45,13 @@ import { reportPerformance } from './core/services/echo/EchoSrv';
 import { PerformanceBackend } from './core/services/echo/backends/PerformanceBackend';
 import 'app/routes/GrafanaCtrl';
 import 'app/features/all';
-import { getStandardFieldConfigs, getStandardOptionEditors, getScrollbarWidth } from '@grafana/ui';
+import { getScrollbarWidth, getStandardFieldConfigs, getStandardOptionEditors } from '@grafana/ui';
 import { getDefaultVariableAdapters, variableAdapters } from './features/variables/adapters';
 import { initDevFeatures } from './dev';
 import { getStandardTransformers } from 'app/core/utils/standardTransformers';
+import { SentryEchoBackend } from './core/services/echo/backends/sentry/SentryBackend';
+import { monkeyPatchInjectorWithPreAssignedBindings } from './core/injectorMonkeyPatch';
+import { setVariableQueryRunner, VariableQueryRunner } from './features/variables/query/VariableQueryRunner';
 
 // add move to lodash for backward compatabiltiy
 // @ts-ignore
@@ -97,25 +98,21 @@ export class GrafanaApp {
     setLocale(config.bootData.user.locale);
     setTimeZoneResolver(() => config.bootData.user.timezone);
 
-    setMarkdownOptions({ sanitize: !config.disableSanitizeHtml });
-
     standardEditorsRegistry.setInit(getStandardOptionEditors);
     standardFieldConfigEditorRegistry.setInit(getStandardFieldConfigs);
     standardTransformersRegistry.setInit(getStandardTransformers);
     variableAdapters.setInit(getDefaultVariableAdapters);
 
+    setVariableQueryRunner(new VariableQueryRunner());
+
     app.config(
       (
-        $locationProvider: angular.ILocationProvider,
         $controllerProvider: angular.IControllerProvider,
         $compileProvider: angular.ICompileProvider,
         $filterProvider: angular.IFilterProvider,
         $httpProvider: angular.IHttpProvider,
         $provide: angular.auto.IProvideService
       ) => {
-        // pre assing bindings before constructor calls
-        $compileProvider.preAssignBindingsEnabled(true);
-
         if (config.buildInfo.env !== 'development') {
           $compileProvider.debugInfoEnabled(false);
         }
@@ -153,7 +150,6 @@ export class GrafanaApp {
       'ngRoute',
       'ngSanitize',
       '$strap.directives',
-      'ang-drag-drop',
       'grafana',
       'pasvaz.bindonce',
       'react',
@@ -172,7 +168,9 @@ export class GrafanaApp {
     $.fn.tooltip.defaults.animation = false;
 
     // bootstrap the app
-    angular.bootstrap(document, this.ngModuleDependencies).invoke(() => {
+    const injector: any = angular.bootstrap(document, this.ngModuleDependencies);
+
+    injector.invoke(() => {
       _.each(this.preBootModules, (module: angular.IModule) => {
         _.extend(module, this.registerFunctions);
       });
@@ -188,6 +186,8 @@ export class GrafanaApp {
         }, 1000);
       }
     });
+
+    monkeyPatchInjectorWithPreAssignedBindings(injector);
 
     // Preload selected app plugins
     for (const modulePath of config.pluginsToPreload) {
@@ -209,6 +209,15 @@ export class GrafanaApp {
     });
 
     registerEchoBackend(new PerformanceBackend({}));
+    if (config.sentry.enabled) {
+      registerEchoBackend(
+        new SentryEchoBackend({
+          ...config.sentry,
+          user: config.bootData.user,
+          buildInfo: config.buildInfo,
+        })
+      );
+    }
 
     window.addEventListener('DOMContentLoaded', () => {
       reportPerformance('dcl', Math.round(performance.now()));

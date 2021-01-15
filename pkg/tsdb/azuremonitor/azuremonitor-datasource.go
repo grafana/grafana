@@ -135,12 +135,12 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 
 		dimSB := strings.Builder{}
 
-		if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionsFilters) == 0 {
+		if dimension != "" && dimensionFilter != "" && dimension != "None" && len(azJSONModel.DimensionFilters) == 0 {
 			dimSB.WriteString(fmt.Sprintf("%s eq '%s'", dimension, dimensionFilter))
 		} else {
-			for i, filter := range azJSONModel.DimensionsFilters {
+			for i, filter := range azJSONModel.DimensionFilters {
 				dimSB.WriteString(filter.String())
-				if i != len(azJSONModel.DimensionsFilters)-1 {
+				if i != len(azJSONModel.DimensionFilters)-1 {
 					dimSB.WriteString(" and ")
 				}
 			}
@@ -153,7 +153,7 @@ func (e *AzureMonitorDatasource) buildQueries(queries []*tsdb.Query, timeRange *
 
 		target = params.Encode()
 
-		if setting.Env == setting.DEV {
+		if setting.Env == setting.Dev {
 			azlog.Debug("Azuremonitor request", "params", params)
 		}
 
@@ -206,6 +206,11 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, query *AzureM
 		queryResult.Error = err
 		return queryResult, AzureMonitorResponse{}, nil
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			azlog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	data, err := e.unmarshalResponse(res)
 	if err != nil {
@@ -220,18 +225,18 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 	// find plugin
 	plugin, ok := plugins.DataSources[dsInfo.Type]
 	if !ok {
-		return nil, errors.New("Unable to find datasource plugin Azure Monitor")
+		return nil, errors.New("unable to find datasource plugin Azure Monitor")
 	}
 
+	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 	var azureMonitorRoute *plugins.AppPluginRoute
 	for _, route := range plugin.Routes {
-		if route.Path == "azuremonitor" {
+		if route.Path == cloudName {
 			azureMonitorRoute = route
 			break
 		}
 	}
 
-	cloudName := dsInfo.JsonData.Get("cloudName").MustString("azuremonitor")
 	proxyPass := fmt.Sprintf("%s/subscriptions", cloudName)
 
 	u, err := url.Parse(dsInfo.Url)
@@ -256,14 +261,13 @@ func (e *AzureMonitorDatasource) createRequest(ctx context.Context, dsInfo *mode
 
 func (e *AzureMonitorDatasource) unmarshalResponse(res *http.Response) (AzureMonitorResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
 	if err != nil {
 		return AzureMonitorResponse{}, err
 	}
 
 	if res.StatusCode/100 != 2 {
 		azlog.Debug("Request failed", "status", res.Status, "body", string(body))
-		return AzureMonitorResponse{}, fmt.Errorf("Request failed status: %v", res.Status)
+		return AzureMonitorResponse{}, fmt.Errorf("request failed, status: %s", res.Status)
 	}
 
 	var data AzureMonitorResponse
@@ -288,23 +292,33 @@ func (e *AzureMonitorDatasource) parseResponse(queryRes *tsdb.QueryResult, amr A
 			labels[md.Name.LocalizedValue] = md.Value
 		}
 
-		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeFloat64)
+		frame := data.NewFrameOfFieldTypes("", len(series.Data), data.FieldTypeTime, data.FieldTypeNullableFloat64)
 		frame.RefID = query.RefID
 		dataField := frame.Fields[1]
 		dataField.Name = amr.Value[0].Name.LocalizedValue
 		dataField.Labels = labels
-		dataField.SetConfig(&data.FieldConfig{
-			Unit: toGrafanaUnit(amr.Value[0].Unit),
-		})
+		if amr.Value[0].Unit != "Unspecified" {
+			dataField.SetConfig(&data.FieldConfig{
+				Unit: toGrafanaUnit(amr.Value[0].Unit),
+			})
+		}
 		if query.Alias != "" {
-			dataField.Config.DisplayName = formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"],
+			displayName := formatAzureMonitorLegendKey(query.Alias, query.UrlComponents["resourceName"],
 				amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID, labels)
+
+			if dataField.Config != nil {
+				dataField.Config.DisplayName = displayName
+			} else {
+				dataField.SetConfig(&data.FieldConfig{
+					DisplayName: displayName,
+				})
+			}
 		}
 
 		requestedAgg := query.Params.Get("aggregation")
 
 		for i, point := range series.Data {
-			var value float64
+			var value *float64
 			switch requestedAgg {
 			case "Average":
 				value = point.Average
@@ -371,10 +385,16 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 		}
 
 		if metaPartName == "dimensionname" {
+			if len(keys) == 0 {
+				return []byte{}
+			}
 			return []byte(keys[0])
 		}
 
 		if metaPartName == "dimensionvalue" {
+			if len(keys) == 0 {
+				return []byte{}
+			}
 			return []byte(lowerLabels[keys[0]])
 		}
 
@@ -388,23 +408,30 @@ func formatAzureMonitorLegendKey(alias string, resourceName string, metricName s
 }
 
 // Map values from:
-//   https://docs.microsoft.com/en-us/azure/azure-monitor/platform/metrics-supported#microsoftanalysisservicesservers
+//   https://docs.microsoft.com/en-us/rest/api/monitor/metrics/list#unit
 // to
 //   https://github.com/grafana/grafana/blob/master/packages/grafana-data/src/valueFormats/categories.ts#L24
 func toGrafanaUnit(unit string) string {
 	switch unit {
-	case "Percent":
-		return "percent"
-	case "Count":
-		return "short" // this is used for integers
+	case "BitsPerSecond":
+		return "bps"
 	case "Bytes":
 		return "decbytes" // or ICE
 	case "BytesPerSecond":
 		return "Bps"
+	case "Count":
+		return "short" // this is used for integers
 	case "CountPerSecond":
 		return "cps"
-	case "Milliseconds":
+	case "Percent":
+		return "percent"
+	case "MilliSeconds":
 		return "ms"
+	case "Seconds":
+		return "s"
 	}
 	return unit // this will become a suffix in the display
+	// "ByteSeconds", "Cores", "MilliCores", and "NanoCores" all both:
+	// 1. Do not have a corresponding unit in Grafana's current list.
+	// 2. Do not have the unit listed in any of Azure Monitor's supported metrics anyways.
 }

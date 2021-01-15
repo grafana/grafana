@@ -1,14 +1,13 @@
 import _ from 'lodash';
 import { colors } from '@grafana/ui';
 import {
-  getColorFromHexRgbOrName,
   TimeRange,
   FieldType,
   Field,
   DataFrame,
   getTimeField,
-  dateTime,
   getFieldDisplayName,
+  getColorForTheme,
 } from '@grafana/data';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
@@ -47,7 +46,7 @@ export class DataProcessor {
         const datapoints = [];
 
         for (let r = 0; r < series.length; r++) {
-          datapoints.push([field.values.get(r), dateTime(timeField.values.get(r)).valueOf()]);
+          datapoints.push([field.values.get(r), timeField.values.get(r)]);
         }
 
         list.push(this.toTimeSeries(field, name, i, j, datapoints, list.length, range));
@@ -84,7 +83,7 @@ export class DataProcessor {
     const series = new TimeSeries({
       datapoints: datapoints || [],
       alias: alias,
-      color: getColorFromHexRgbOrName(color, config.theme.type),
+      color: getColorForTheme(color, config.theme),
       unit: field.config ? field.config.unit : undefined,
       dataFrameIndex,
       fieldIndex,
@@ -95,7 +94,11 @@ export class DataProcessor {
       const from = range.from;
 
       if (last - from.valueOf() < -10000) {
-        series.isOutsideRange = true;
+        // If the data is in reverse order
+        const first = datapoints[0][1];
+        if (first - from.valueOf() < -10000) {
+          series.isOutsideRange = true;
+        }
       }
     }
     return series;

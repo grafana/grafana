@@ -1,10 +1,10 @@
-import React, { FC, CSSProperties } from 'react';
+import React, { FC, CSSProperties, HTMLProps } from 'react';
 import { FormattedValue } from '@grafana/data';
 
-export interface Props {
-  className?: string;
+export interface Props extends Omit<HTMLProps<HTMLDivElement>, 'className' | 'value' | 'style'> {
   value: FormattedValue;
-  style: CSSProperties;
+  className?: string;
+  style?: CSSProperties;
 }
 
 function fontSizeReductionFactor(fontSize: number) {
@@ -17,18 +17,23 @@ function fontSizeReductionFactor(fontSize: number) {
   return 0.6;
 }
 
-export const FormattedValueDisplay: FC<Props> = ({ value, className, style }) => {
-  const fontSize = style.fontSize as number;
-  const reductionFactor = fontSizeReductionFactor(fontSize);
+export const FormattedValueDisplay: FC<Props> = ({ value, className, style, ...htmlProps }) => {
   const hasPrefix = (value.prefix ?? '').length > 0;
   const hasSuffix = (value.suffix ?? '').length > 0;
+  let suffixStyle;
+
+  if (style && style.fontSize) {
+    const fontSize = style?.fontSize as number;
+    const reductionFactor = fontSizeReductionFactor(fontSize);
+    suffixStyle = { fontSize: fontSize * reductionFactor };
+  }
 
   return (
-    <div className={className} style={style}>
+    <div className={className} style={style} {...htmlProps}>
       <div>
         {hasPrefix && <span>{value.prefix}</span>}
         <span>{value.text}</span>
-        {hasSuffix && <span style={{ fontSize: fontSize * reductionFactor }}>{value.suffix}</span>}
+        {hasSuffix && <span style={suffixStyle}>{value.suffix}</span>}
       </div>
     </div>
   );

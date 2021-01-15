@@ -20,18 +20,21 @@ We recommend using [Homebrew](https://brew.sh/) for installing any missing depen
 ```
 brew install git
 brew install go
-brew install node@12
+brew install node@14
 
 npm install -g yarn
 ```
 
 ## Download Grafana
 
-We recommend using Go to download the source code for the Grafana project:
+We recommend using the Git command-line interface to download the source code for the Grafana project:
 
-1. Add `export GOPATH=$HOME/go/` to the bottom of your `$HOME/.bash_profile`.
-1. Open a terminal and run `go get github.com/grafana/grafana` in your terminal. This command downloads, and installs Grafana to your `$GOPATH`.
-1. Open `$GOPATH/src/github.com/grafana/grafana` in your favorite code editor.
+1. Open a terminal and run `git clone https://github.com/grafana/grafana.git`. This command downloads Grafana to a new `grafana` directory in your current directory.
+1. Open the `grafana` directory in your favorite code editor.
+
+For alternative ways of cloning the Grafana repository, please refer to [GitHub's cloning a repository](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository) documentation.
+
+**Warning:** Do not use `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
 
 ## Build Grafana
 
@@ -73,7 +76,10 @@ When you log in for the first time, Grafana asks you to change your password.
 
 #### Building on Windows
 
-The Grafana backend includes Sqlite3 which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
+The Grafana backend includes SQLite which requires GCC to compile. So in order to compile Grafana on Windows you need to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download). Eventually, if you use [Scoop](https://scoop.sh), you can install GCC through that.
+
+You can simply build the back-end as follows: `go run build.go build`. The Grafana binaries will be in bin\\windows-amd64.
+Alternately, if you wish to use the `make` command, install [Make for Windows](http://gnuwin32.sourceforge.net/packages/make.htm) and use it in a Unix shell (f.ex. Git Bash). 
 
 ## Test Grafana
 
@@ -84,7 +90,7 @@ The test suite consists of three types of tests: _Frontend tests_, _backend test
 We use [jest](https://jestjs.io/) for our frontend tests. Run them using Yarn:
 
 ```
-yarn jest
+yarn test
 ```
 
 ### Run backend tests
@@ -93,6 +99,13 @@ If you're developing for the backend, run the tests with the standard Go tool:
 
 ```
 go test -v ./pkg/...
+```
+
+#### On Windows
+Running the backend tests on Windows currently needs some tweaking, so use the build.go script:
+
+```
+go run build.go test
 ```
 
 ### Run end-to-end tests
@@ -171,7 +184,7 @@ make build-docker-full
 
 The resulting image will be tagged as grafana/grafana:dev.
 
-**Note:** If you've already set up a local development environment, and you're running a `linux/amd64` machine, you can speed up building the Docker image:
+> **Note:** If you've already set up a local development environment, and you're running a `linux/amd64` machine, you can speed up building the Docker image:
 
 1. Build the frontend: `go run build.go build-frontend`.
 1. Build the Docker image: `make build-docker-dev`.
@@ -208,8 +221,8 @@ Another alternative is to limit the files being watched. The directories that ar
 
 To retain your `ulimit` configuration, i.e. so it will be remembered for future sessions, you need to commit it to your command line shell initialization file. Which file this will be depends on the shell you are using, here are some examples:
 
-* zsh -> ~/.zshrc
-* bash -> ~/.bashrc
+- zsh -> ~/.zshrc
+- bash -> ~/.bashrc
 
 Commit your ulimit configuration to your shell initialization file as follows ($LIMIT being your chosen limit and $INIT_FILE being the initialization file for your shell):
 

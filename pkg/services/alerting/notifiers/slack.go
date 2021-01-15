@@ -27,123 +27,6 @@ func init() {
 		Description: "Sends notifications to Slack via Slack Webhooks",
 		Heading:     "Slack settings",
 		Factory:     NewSlackNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">Slack settings</h3>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">Url</span>
-        <div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.url">
-					<input type="text"
-						required
-						class="gf-form-input max-width-30"
-						ng-init="ctrl.model.secureSettings.url = ctrl.model.settings.url || null; ctrl.model.settings.url = null;"
-						ng-model="ctrl.model.secureSettings.url"
-						placeholder="Slack incoming webhook url">
-					</input>
-        </div>
-        <div class="gf-form" ng-if="ctrl.model.secureFields.url">
-          <input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
-          <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.url = false">reset</a>
-        </div>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">Recipient</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.recipient"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Override default channel or user, use #channel-name, @username (has to be all lowercase, no whitespace), or user/channel Slack ID
-        </info-popover>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">Username</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.username"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Set the username for the bot's message
-        </info-popover>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">Icon emoji</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.icon_emoji"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Provide an emoji to use as the icon for the bot's message. Overrides the icon URL
-        </info-popover>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">Icon URL</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.icon_url"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Provide a URL to an image to use as the icon for the bot's message
-        </info-popover>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">Mention Users</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.mentionUsers"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Mention one or more users (comma separated) when notifying in a channel, by ID (you can copy this from the user's Slack profile)
-        </info-popover>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">Mention Groups</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.mentionGroups"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Mention one or more groups (comma separated) when notifying in a channel (you can copy this from the group's Slack profile URL)
-        </info-popover>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-8">Mention Channel</span>
-        <select
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.mentionChannel"
-          data-placement="right">
-		  <option value="">Disabled</option>
-		  <option value="here">Every active channel member</option>
-		  <option value="channel">Every channel member</option>
-        </select>
-        <info-popover mode="right-absolute">
-          Mention whole channel or just active members when notifying
-        </info-popover>
-      </div>
-      <div class="gf-form max-width-30">
-        <div class="gf-form gf-form--v-stretch"><label class="gf-form-label width-8">Token</label></div>
-        <div class="gf-form gf-form--grow" ng-if="!ctrl.model.secureFields.token">
-          <input type="text"
-						class="gf-form-input max-width-30"
-						ng-init="ctrl.model.secureSettings.token = ctrl.model.settings.token || null; ctrl.model.settings.token = null;"
-            ng-model="ctrl.model.secureSettings.token"
-            data-placement="right">
-          </input>
-          <info-popover mode="right-absolute">
-            Provide a bot token to use the Slack file.upload API (starts with "xoxb"). Specify Recipient for this to work
-          </info-popover>
-        </div>
-        <div class="gf-form" ng-if="ctrl.model.secureFields.token">
-          <input type="text" class="gf-form-input max-width-18" disabled="disabled" value="configured" />
-          <a class="btn btn-secondary gf-form-btn" href="#" ng-click="ctrl.model.secureFields.token = false">reset</a>
-        </div>
-      </div>
-    `,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Url",
@@ -152,6 +35,7 @@ func init() {
 				Placeholder:  "Slack incoming webhook url",
 				PropertyName: "url",
 				Required:     true,
+				Secure:       true,
 			},
 			{
 				Label:        "Recipient",
@@ -172,14 +56,14 @@ func init() {
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				Description:  "Provide an emoji to use as the icon for the bot's message. Overrides the icon URL.",
-				PropertyName: "icon_emoji",
+				PropertyName: "iconEmoji",
 			},
 			{
 				Label:        "Icon URL",
 				Element:      alerting.ElementTypeInput,
 				InputType:    alerting.InputTypeText,
 				Description:  "Provide a URL to an image to use as the icon for the bot's message",
-				PropertyName: "icon_url",
+				PropertyName: "iconUrl",
 			},
 			{
 				Label:        "Mention Users",
@@ -221,6 +105,7 @@ func init() {
 				InputType:    alerting.InputTypeText,
 				Description:  "Provide a bot token to use the Slack file.upload API (starts with \"xoxb\"). Specify Recipient for this to work",
 				PropertyName: "token",
+				Secure:       true,
 			},
 		},
 	})
@@ -356,7 +241,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		}
 	}
 	msg := ""
-	if evalContext.Rule.State != models.AlertStateOK { //don't add message when going back to alert state ok.
+	if evalContext.Rule.State != models.AlertStateOK { // don't add message when going back to alert state ok.
 		msg = evalContext.Rule.Message
 	}
 	imageURL := ""
@@ -402,7 +287,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		body["blocks"] = blocks
 	}
 
-	//recipient override
+	// recipient override
 	if sn.Recipient != "" {
 		body["channel"] = sn.Recipient
 	}
@@ -436,7 +321,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 	if sn.Token != "" && sn.UploadImage {
-		err = slackFileUpload(evalContext, sn.log, "https://slack.com/api/files.upload", sn.Recipient, sn.Token)
+		err = sn.slackFileUpload(evalContext, sn.log, "https://slack.com/api/files.upload", sn.Recipient, sn.Token)
 		if err != nil {
 			return err
 		}
@@ -444,12 +329,14 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	return nil
 }
 
-func slackFileUpload(evalContext *alerting.EvalContext, log log.Logger, url string, recipient string, token string) error {
+func (sn *SlackNotifier) slackFileUpload(evalContext *alerting.EvalContext, log log.Logger, url string, recipient string, token string) error {
 	if evalContext.ImageOnDiskPath == "" {
+		// nolint:gosec
+		// We can ignore the gosec G304 warning on this one because `setting.HomePath` comes from Grafana's configuration file.
 		evalContext.ImageOnDiskPath = filepath.Join(setting.HomePath, "public/img/mixed_styles.png")
 	}
 	log.Info("Uploading to slack via file.upload API")
-	headers, uploadBody, err := generateSlackBody(evalContext.ImageOnDiskPath, token, recipient)
+	headers, uploadBody, err := sn.generateSlackBody(evalContext.ImageOnDiskPath, token, recipient)
 	if err != nil {
 		return err
 	}
@@ -461,37 +348,51 @@ func slackFileUpload(evalContext *alerting.EvalContext, log log.Logger, url stri
 	return nil
 }
 
-func generateSlackBody(file string, token string, recipient string) (map[string]string, bytes.Buffer, error) {
+func (sn *SlackNotifier) generateSlackBody(path string, token string, recipient string) (map[string]string, bytes.Buffer, error) {
 	// Slack requires all POSTs to files.upload to present
 	// an "application/x-www-form-urlencoded" encoded querystring
 	// See https://api.slack.com/methods/files.upload
 	var b bytes.Buffer
 	w := multipart.NewWriter(&b)
+	defer func() {
+		if err := w.Close(); err != nil {
+			// Shouldn't matter since we already close w explicitly on the non-error path
+			sn.log.Warn("Failed to close multipart writer", "err", err)
+		}
+	}()
+
 	// Add the generated image file
-	f, err := os.Open(file)
+	// We can ignore the gosec G304 warning on this one because `imagePath` comes
+	// from the alert `evalContext` that generates the images. `evalContext` in turn derives the root of the file
+	// path from configuration variables.
+	// nolint:gosec
+	f, err := os.Open(path)
 	if err != nil {
 		return nil, b, err
 	}
-	defer f.Close()
-	fw, err := w.CreateFormFile("file", file)
+	defer func() {
+		if err := f.Close(); err != nil {
+			sn.log.Warn("Failed to close file", "path", path, "err", err)
+		}
+	}()
+	fw, err := w.CreateFormFile("file", path)
 	if err != nil {
 		return nil, b, err
 	}
-	_, err = io.Copy(fw, f)
-	if err != nil {
+	if _, err := io.Copy(fw, f); err != nil {
 		return nil, b, err
 	}
 	// Add the authorization token
-	err = w.WriteField("token", token)
-	if err != nil {
+	if err := w.WriteField("token", token); err != nil {
 		return nil, b, err
 	}
 	// Add the channel(s) to POST to
-	err = w.WriteField("channels", recipient)
-	if err != nil {
+	if err := w.WriteField("channels", recipient); err != nil {
 		return nil, b, err
 	}
-	w.Close()
+	if err := w.Close(); err != nil {
+		return nil, b, fmt.Errorf("failed to close multipart writer: %w", err)
+	}
 	headers := map[string]string{
 		"Content-Type":  w.FormDataContentType(),
 		"Authorization": "auth_token=\"" + token + "\"",

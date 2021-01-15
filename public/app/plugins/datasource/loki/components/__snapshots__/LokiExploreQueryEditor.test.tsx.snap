@@ -1,23 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`LokiExploreQueryEditor should render component 1`] = `
-<Component
-  ExtraFieldElement={
-    <Memo(LokiExploreExtraField)
-      label="Line limit"
-      min={0}
-      onChangeFunc={[Function]}
-      onKeyDownFunc={[Function]}
-      type="number"
-      value="0"
-    />
-  }
-  absoluteRange={
-    Object {
-      "from": 1577836800000,
-      "to": 1577923200000,
-    }
-  }
+<LokiQueryField
   data={
     Object {
       "request": Object {
@@ -60,6 +44,7 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
         "datasource": [Circular],
         "fetchSeriesLabels": [Function],
         "getBeginningCompletionItems": [Function],
+        "getPipeCompletionItem": [Function],
         "getTermCompletionItems": [Function],
         "labelKeys": Array [],
         "labelsCache": LRUCache {
@@ -110,6 +95,16 @@ exports[`LokiExploreQueryEditor should render component 1`] = `
       "expr": "",
       "maxLines": 0,
       "refId": "A",
+    }
+  }
+  range={
+    Object {
+      "from": "2020-01-01T00:00:00.000Z",
+      "raw": Object {
+        "from": "2020-01-01T00:00:00.000Z",
+        "to": "2020-01-02T00:00:00.000Z",
+      },
+      "to": "2020-01-02T00:00:00.000Z",
     }
   }
 />

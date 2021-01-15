@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
+import { rangeUtil } from '@grafana/data';
 
 export default class TimeGrainConverter {
   static createISO8601Duration(timeGrain: string | number, timeGrainUnit: any) {
@@ -36,11 +36,11 @@ export default class TimeGrainConverter {
     const timeGrains = _.filter(allowedTimeGrains, o => o !== 'auto');
 
     let closest = timeGrains[0];
-    const intervalMs = kbn.interval_to_ms(interval);
+    const intervalMs = rangeUtil.intervalToMs(interval);
 
     for (let i = 0; i < timeGrains.length; i++) {
       // abs (num - val) < abs (num - curr):
-      if (intervalMs > kbn.interval_to_ms(timeGrains[i])) {
+      if (intervalMs > rangeUtil.intervalToMs(timeGrains[i])) {
         if (i + 1 < timeGrains.length) {
           closest = timeGrains[i + 1];
         } else {

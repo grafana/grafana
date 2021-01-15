@@ -16,6 +16,7 @@ type (
 		Selector    string
 		Service     string
 		Slo         string
+		Unit        string
 	}
 
 	metricQuery struct {
@@ -28,6 +29,7 @@ type (
 		Filters            []string
 		AliasBy            string
 		View               string
+		Unit               string
 	}
 
 	sloQuery struct {
@@ -65,46 +67,48 @@ type (
 	}
 
 	cloudMonitoringResponse struct {
-		TimeSeries []struct {
-			Metric struct {
-				Labels map[string]string `json:"labels"`
-				Type   string            `json:"type"`
-			} `json:"metric"`
-			Resource struct {
-				Type   string            `json:"type"`
-				Labels map[string]string `json:"labels"`
-			} `json:"resource"`
-			MetaData   map[string]map[string]interface{} `json:"metadata"`
-			MetricKind string                            `json:"metricKind"`
-			ValueType  string                            `json:"valueType"`
-			Points     []struct {
-				Interval struct {
-					StartTime time.Time `json:"startTime"`
-					EndTime   time.Time `json:"endTime"`
-				} `json:"interval"`
-				Value struct {
-					DoubleValue       float64 `json:"doubleValue"`
-					StringValue       string  `json:"stringValue"`
-					BoolValue         bool    `json:"boolValue"`
-					IntValue          string  `json:"int64Value"`
-					DistributionValue struct {
-						Count                 string  `json:"count"`
-						Mean                  float64 `json:"mean"`
-						SumOfSquaredDeviation float64 `json:"sumOfSquaredDeviation"`
-						Range                 struct {
-							Min int `json:"min"`
-							Max int `json:"max"`
-						} `json:"range"`
-						BucketOptions cloudMonitoringBucketOptions `json:"bucketOptions"`
-						BucketCounts  []string                     `json:"bucketCounts"`
-						Examplars     []struct {
-							Value     float64 `json:"value"`
-							Timestamp string  `json:"timestamp"`
-							// attachments
-						} `json:"examplars"`
-					} `json:"distributionValue"`
-				} `json:"value"`
-			} `json:"points"`
-		} `json:"timeSeries"`
+		TimeSeries []timeSeries `json:"timeSeries"`
 	}
 )
+
+type timeSeries struct {
+	Metric struct {
+		Labels map[string]string `json:"labels"`
+		Type   string            `json:"type"`
+	} `json:"metric"`
+	Resource struct {
+		Type   string            `json:"type"`
+		Labels map[string]string `json:"labels"`
+	} `json:"resource"`
+	MetaData   map[string]map[string]interface{} `json:"metadata"`
+	MetricKind string                            `json:"metricKind"`
+	ValueType  string                            `json:"valueType"`
+	Points     []struct {
+		Interval struct {
+			StartTime time.Time `json:"startTime"`
+			EndTime   time.Time `json:"endTime"`
+		} `json:"interval"`
+		Value struct {
+			DoubleValue       float64 `json:"doubleValue"`
+			StringValue       string  `json:"stringValue"`
+			BoolValue         bool    `json:"boolValue"`
+			IntValue          string  `json:"int64Value"`
+			DistributionValue struct {
+				Count                 string  `json:"count"`
+				Mean                  float64 `json:"mean"`
+				SumOfSquaredDeviation float64 `json:"sumOfSquaredDeviation"`
+				Range                 struct {
+					Min int `json:"min"`
+					Max int `json:"max"`
+				} `json:"range"`
+				BucketOptions cloudMonitoringBucketOptions `json:"bucketOptions"`
+				BucketCounts  []string                     `json:"bucketCounts"`
+				Examplars     []struct {
+					Value     float64 `json:"value"`
+					Timestamp string  `json:"timestamp"`
+					// attachments
+				} `json:"examplars"`
+			} `json:"distributionValue"`
+		} `json:"value"`
+	} `json:"points"`
+}

@@ -1,14 +1,14 @@
 import React from 'react';
 import { LegacyForms } from '@grafana/ui';
-const { Input } = LegacyForms;
-
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 import { SelectableValue } from '@grafana/data';
 
 import CloudMonitoringDatasource from '../datasource';
-import { Metrics, LabelFilter, AnnotationsHelp, Project } from './';
+import { AnnotationsHelp, LabelFilter, Metrics, Project } from './';
 import { toOption } from '../functions';
 import { AnnotationTarget, MetricDescriptor } from '../types';
+
+const { Input } = LegacyForms;
 
 export interface Props {
   onQueryChange: (target: AnnotationTarget) => void;
@@ -42,8 +42,8 @@ const DefaultTarget: State = {
 export class AnnotationQueryEditor extends React.Component<Props, State> {
   state: State = DefaultTarget;
 
-  async UNSAFE_componentWillMount() {
-    // Unfortunately, migrations like this need to go componentWillMount. As soon as there's
+  async UNSAFE_UNSAFE_componentWillMount() {
+    // Unfortunately, migrations like this need to go UNSAFE_componentWillMount. As soon as there's
     // migration hook for this module.ts, we can do the migrations there instead.
     const { target, datasource } = this.props;
     if (!target.projectName) {
@@ -52,7 +52,7 @@ export class AnnotationQueryEditor extends React.Component<Props, State> {
 
     const variableOptionGroup = {
       label: 'Template Variables',
-      options: datasource.variables.map(toOption),
+      options: datasource.getVariables().map(toOption),
     };
 
     const projects = await datasource.getProjects();

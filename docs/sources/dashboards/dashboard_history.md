@@ -1,11 +1,7 @@
 +++
 title = "Dashboard Version History"
 keywords = ["grafana", "dashboard", "documentation", "version", "history"]
-type = "docs"
 aliases = ["/docs/grafana/latest/reference/dashboard_history/"]
-[menu.docs]
-name = "Dashboard Version History"
-parent = "dashboard_features"
 weight = 100
 +++
 

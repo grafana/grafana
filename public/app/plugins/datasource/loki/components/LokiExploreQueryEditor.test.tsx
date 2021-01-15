@@ -2,10 +2,10 @@ import React from 'react';
 import { mount, shallow } from 'enzyme';
 import { act } from 'react-dom/test-utils';
 import LokiExploreQueryEditor from './LokiExploreQueryEditor';
-import { LokiExploreExtraField } from './LokiExploreExtraField';
+import { LokiOptionFields } from './LokiOptionFields';
 import { LokiDatasource } from '../datasource';
 import { LokiQuery } from '../types';
-import { ExploreMode, LoadingState, PanelData, toUtc } from '@grafana/data';
+import { ExploreMode, LoadingState, PanelData, toUtc, TimeRange } from '@grafana/data';
 import { makeMockLokiDatasource } from '../mocks';
 import LokiLanguageProvider from '../language_provider';
 
@@ -15,6 +15,14 @@ const setup = (renderMethod: any, propOverrides?: object) => {
   const onRunQuery = jest.fn();
   const onChange = jest.fn();
   const query: LokiQuery = { expr: '', refId: 'A', maxLines: 0 };
+  const range: TimeRange = {
+    from: toUtc('2020-01-01', 'YYYY-MM-DD'),
+    to: toUtc('2020-01-02', 'YYYY-MM-DD'),
+    raw: {
+      from: toUtc('2020-01-01', 'YYYY-MM-DD'),
+      to: toUtc('2020-01-02', 'YYYY-MM-DD'),
+    },
+  };
   const data: PanelData = {
     state: LoadingState.NotStarted,
     series: [],
@@ -53,6 +61,7 @@ const setup = (renderMethod: any, propOverrides?: object) => {
   const props: any = {
     query,
     data,
+    range,
     datasource,
     exploreMode,
     history,
@@ -84,7 +93,7 @@ describe('LokiExploreQueryEditor', () => {
     // @ts-ignore strict null error TS2345: Argument of type '() => Promise<void>' is not assignable to parameter of type '() => void | undefined'.
     await act(async () => {
       const wrapper = setup(mount);
-      expect(wrapper.find(LokiExploreExtraField).length).toBe(1);
+      expect(wrapper.find(LokiOptionFields).length).toBe(1);
     });
   });
 });

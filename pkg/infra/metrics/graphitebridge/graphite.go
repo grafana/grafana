@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
@@ -201,7 +202,11 @@ func (b *Bridge) Push() error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() {
+		if err := conn.Close(); err != nil {
+			logger.Warn("Failed to close connection", "err", err)
+		}
+	}()
 
 	return b.writeMetrics(conn, mfs, b.prefix, model.Now())
 }
@@ -295,7 +300,7 @@ func writeMetric(buf *bufio.Writer, m model.Metric, mf *dto.MetricFamily) error 
 	return addExtensionConventionForRollups(buf, mf, m)
 }
 
-func addExtensionConventionForRollups(buf *bufio.Writer, mf *dto.MetricFamily, m model.Metric) error {
+func addExtensionConventionForRollups(buf io.Writer, mf *dto.MetricFamily, m model.Metric) error {
 	// Adding `.count` `.sum` suffix makes it possible to configure
 	// different rollup strategies based on metric type
 

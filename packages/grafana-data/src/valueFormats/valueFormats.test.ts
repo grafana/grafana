@@ -16,6 +16,7 @@ const formatTests: ValueFormatTest[] = [
   // Currency
   { id: 'currencyUSD', decimals: 2, value: 1532.82, result: '$1.53K' },
   { id: 'currencyKRW', decimals: 2, value: 1532.82, result: '₩1.53K' },
+  { id: 'currencyIDR', decimals: 2, value: 1532.82, result: 'Rp1.53K' },
 
   // Standard
   { id: 'ms', decimals: 4, value: 0.0024, result: '0.0024 ms' },
@@ -66,6 +67,19 @@ const formatTests: ValueFormatTest[] = [
   // Time format
   { id: 'time:YYYY', decimals: 0, value: dateTime(new Date(1999, 6, 2)).valueOf(), result: '1999' },
   { id: 'time:YYYY.MM', decimals: 0, value: dateTime(new Date(2010, 6, 2)).valueOf(), result: '2010.07' },
+  { id: 'dateTimeAsIso', decimals: 0, value: dateTime(new Date(2010, 6, 2)).valueOf(), result: '2010-07-02 00:00:00' },
+  {
+    id: 'dateTimeAsUS',
+    decimals: 0,
+    value: dateTime(new Date(2010, 6, 2)).valueOf(),
+    result: '07/02/2010 12:00:00 am',
+  },
+  {
+    id: 'dateTimeAsSystem',
+    decimals: 0,
+    value: dateTime(new Date(2010, 6, 2)).valueOf(),
+    result: '2010-07-02 00:00:00',
+  },
 ];
 
 describe('valueFormats', () => {

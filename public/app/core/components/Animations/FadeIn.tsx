@@ -6,7 +6,7 @@ interface Props {
   children: JSX.Element;
   in: boolean;
   unmountOnExit?: boolean;
-  onExited?: ExitHandler;
+  onExited?: ExitHandler<HTMLDivElement>;
 }
 
 export const FadeIn: FC<Props> = props => {

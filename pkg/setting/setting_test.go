@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -29,7 +30,7 @@ func TestLoadingSettings(t *testing.T) {
 			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
-			So(AdminUser, ShouldEqual, "admin")
+			So(cfg.AdminUser, ShouldEqual, "admin")
 			So(cfg.RendererCallbackUrl, ShouldEqual, "http://localhost:3000/")
 		})
 
@@ -38,7 +39,10 @@ func TestLoadingSettings(t *testing.T) {
 			if err != nil {
 				t.Errorf("failed to load defaults.ini file: %v", err)
 			}
-			defer file.Close()
+			defer func() {
+				err := file.Close()
+				So(err, ShouldBeNil)
+			}()
 
 			scanner := bufio.NewScanner(file)
 			for scanner.Scan() {
@@ -50,41 +54,45 @@ func TestLoadingSettings(t *testing.T) {
 		})
 
 		Convey("Should be able to override via environment variables", func() {
-			os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
+			err := os.Setenv("GF_SECURITY_ADMIN_USER", "superduper")
+			require.NoError(t, err)
 
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
-			So(AdminUser, ShouldEqual, "superduper")
+			So(cfg.AdminUser, ShouldEqual, "superduper")
 			So(cfg.DataPath, ShouldEqual, filepath.Join(HomePath, "data"))
 			So(cfg.LogsPath, ShouldEqual, filepath.Join(cfg.DataPath, "log"))
 		})
 
 		Convey("Should replace password when defined in environment", func() {
-			os.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
+			err := os.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
+			require.NoError(t, err)
 
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
 			So(appliedEnvOverrides, ShouldContain, "GF_SECURITY_ADMIN_PASSWORD=*********")
 		})
 
 		Convey("Should return an error when url is invalid", func() {
-			os.Setenv("GF_DATABASE_URL", "postgres.%31://grafana:secret@postgres:5432/grafana")
+			err := os.Setenv("GF_DATABASE_URL", "postgres.%31://grafana:secret@postgres:5432/grafana")
+			require.NoError(t, err)
 
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
 
 			So(err, ShouldNotBeNil)
 		})
 
 		Convey("Should replace password in URL when url environment is defined", func() {
-			os.Setenv("GF_DATABASE_URL", "mysql://user:secret@localhost:3306/database")
+			err := os.Setenv("GF_DATABASE_URL", "mysql://user:secret@localhost:3306/database")
+			require.NoError(t, err)
 
 			cfg := NewCfg()
-			err := cfg.Load(&CommandLineArgs{HomePath: "../../"})
+			err = cfg.Load(&CommandLineArgs{HomePath: "../../"})
 			So(err, ShouldBeNil)
 
 			So(appliedEnvOverrides, ShouldContain, "GF_DATABASE_URL=mysql://user:-redacted-@localhost:3306/database")
@@ -132,7 +140,7 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			So(Domain, ShouldEqual, "test2")
+			So(cfg.Domain, ShouldEqual, "test2")
 		})
 
 		Convey("Defaults can be overridden in specified config file", func() {
@@ -185,9 +193,10 @@ func TestLoadingSettings(t *testing.T) {
 
 		Convey("Can use environment variables in config values", func() {
 			if runtime.GOOS == windows {
-				os.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
+				err := os.Setenv("GF_DATA_PATH", `c:\tmp\env_override`)
+				require.NoError(t, err)
 				cfg := NewCfg()
-				err := cfg.Load(&CommandLineArgs{
+				err = cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
 					Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 				})
@@ -195,9 +204,10 @@ func TestLoadingSettings(t *testing.T) {
 
 				So(cfg.DataPath, ShouldEqual, `c:\tmp\env_override`)
 			} else {
-				os.Setenv("GF_DATA_PATH", "/tmp/env_override")
+				err := os.Setenv("GF_DATA_PATH", "/tmp/env_override")
+				require.NoError(t, err)
 				cfg := NewCfg()
-				err := cfg.Load(&CommandLineArgs{
+				err = cfg.Load(&CommandLineArgs{
 					HomePath: "../../",
 					Args:     []string{"cfg:paths.data=${GF_DATA_PATH}"},
 				})
@@ -214,7 +224,8 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			hostname, _ := os.Hostname()
+			hostname, err := os.Hostname()
+			So(err, ShouldBeNil)
 			So(InstanceName, ShouldEqual, hostname)
 		})
 
@@ -237,7 +248,7 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			So(AuthProxySyncTtl, ShouldEqual, 2)
+			So(cfg.AuthProxySyncTTL, ShouldEqual, 2)
 		})
 
 		Convey("Only ldap_sync_ttl should return the value ldap_sync_ttl", func() {
@@ -248,7 +259,7 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			So(AuthProxySyncTtl, ShouldEqual, 5)
+			So(cfg.AuthProxySyncTTL, ShouldEqual, 5)
 		})
 
 		Convey("ldap_sync should override ldap_sync_ttl that is default value", func() {
@@ -259,7 +270,7 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			So(AuthProxySyncTtl, ShouldEqual, 5)
+			So(cfg.AuthProxySyncTTL, ShouldEqual, 5)
 		})
 
 		Convey("ldap_sync should not override ldap_sync_ttl that is different from default value", func() {
@@ -270,7 +281,7 @@ func TestLoadingSettings(t *testing.T) {
 			})
 			So(err, ShouldBeNil)
 
-			So(AuthProxySyncTtl, ShouldEqual, 12)
+			So(cfg.AuthProxySyncTTL, ShouldEqual, 12)
 		})
 	})
 
@@ -279,26 +290,18 @@ func TestLoadingSettings(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		Convey("If key is found - should return value from ini file", func() {
-			value, err := valueAsString(iniFile.Section("server"), "alt_url", "")
-			So(err, ShouldBeNil)
+			value := valueAsString(iniFile.Section("server"), "alt_url", "")
 			So(value, ShouldEqual, "https://grafana.com/")
 		})
 
 		Convey("If key is not found - should return default value", func() {
-			value, err := valueAsString(iniFile.Section("server"), "extra_url", "default_url_val")
-			So(err, ShouldBeNil)
+			value := valueAsString(iniFile.Section("server"), "extra_url", "default_url_val")
 			So(value, ShouldEqual, "default_url_val")
-		})
-
-		Convey("In case of panic - should return user-friendly error", func() {
-			value, err := valueAsString(iniFile.Section("server"), "root_url", "")
-			So(err.Error(), ShouldEqual, "Invalid value for key 'root_url' in configuration file")
-			So(value, ShouldEqual, "")
 		})
 	})
 }
 
-func TestParseAppUrlAndSubUrl(t *testing.T) {
+func TestParseAppURLAndSubURL(t *testing.T) {
 	testCases := []struct {
 		rootURL           string
 		expectedAppURL    string
@@ -321,4 +324,68 @@ func TestParseAppUrlAndSubUrl(t *testing.T) {
 		require.Equal(t, tc.expectedAppURL, appURL)
 		require.Equal(t, tc.expectedAppSubURL, appSubURL)
 	}
+}
+
+func TestAuthDurationSettings(t *testing.T) {
+	const maxInactiveDaysTest = 240 * time.Hour
+
+	f := ini.Empty()
+	cfg := NewCfg()
+	sec, err := f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_inactive_lifetime_days", "10")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_inactive_lifetime_duration", "")
+	require.NoError(t, err)
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
+	require.Equal(t, maxInactiveDaysTest, cfg.LoginMaxInactiveLifetime)
+
+	f = ini.Empty()
+	sec, err = f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_inactive_lifetime_duration", "824h")
+	require.NoError(t, err)
+	maxInactiveDurationTest, err := time.ParseDuration("824h")
+	require.NoError(t, err)
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
+	require.Equal(t, maxInactiveDurationTest, cfg.LoginMaxInactiveLifetime)
+
+	f = ini.Empty()
+	sec, err = f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_days", "24")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_duration", "")
+	require.NoError(t, err)
+	maxLifetimeDaysTest, err := time.ParseDuration("576h")
+	require.NoError(t, err)
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
+	require.Equal(t, maxLifetimeDaysTest, cfg.LoginMaxLifetime)
+
+	f = ini.Empty()
+	sec, err = f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_duration", "824h")
+	require.NoError(t, err)
+	maxLifetimeDurationTest, err := time.ParseDuration("824h")
+	require.NoError(t, err)
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
+	require.Equal(t, maxLifetimeDurationTest, cfg.LoginMaxLifetime)
+
+	f = ini.Empty()
+	sec, err = f.NewSection("auth")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_days", "")
+	require.NoError(t, err)
+	_, err = sec.NewKey("login_maximum_lifetime_duration", "")
+	require.NoError(t, err)
+	maxLifetimeDurationTest, err = time.ParseDuration("720h")
+	require.NoError(t, err)
+	err = readAuthSettings(f, cfg)
+	require.NoError(t, err)
+	require.Equal(t, maxLifetimeDurationTest, cfg.LoginMaxLifetime)
 }

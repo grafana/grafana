@@ -4,7 +4,7 @@ import { Alert } from '@grafana/ui';
 
 interface Props {
   appNotification: AppNotification;
-  onClearNotification: (id: number) => void;
+  onClearNotification: (id: string) => void;
 }
 
 export default class AppNotificationItem extends Component<Props> {
@@ -26,9 +26,10 @@ export default class AppNotificationItem extends Component<Props> {
       <Alert
         severity={appNotification.severity}
         title={appNotification.title}
-        children={appNotification.component || appNotification.text}
         onRemove={() => onClearNotification(appNotification.id)}
-      />
+      >
+        {appNotification.component || appNotification.text}
+      </Alert>
     );
   }
 }

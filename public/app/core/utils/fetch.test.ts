@@ -2,8 +2,10 @@ import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import {
   isContentTypeApplicationJson,
   parseBody,
+  parseCredentials,
   parseHeaders,
   parseInitFromOptions,
+  parseResponseBody,
   parseUrlFromOptions,
 } from './fetch';
 
@@ -27,17 +29,18 @@ describe('parseUrlFromOptions', () => {
 
 describe('parseInitFromOptions', () => {
   it.each`
-    method       | data           | withCredentials | expected
-    ${undefined} | ${undefined}   | ${undefined}    | ${{ method: undefined, headers: { map: { accept: 'application/json, text/plain, */*' } }, body: undefined }}
-    ${'GET'}     | ${undefined}   | ${undefined}    | ${{ method: 'GET', headers: { map: { accept: 'application/json, text/plain, */*' } }, body: undefined }}
-    ${'POST'}    | ${{ id: '0' }} | ${undefined}    | ${{ method: 'POST', headers: { map: { 'content-type': 'application/json', accept: 'application/json, text/plain, */*' } }, body: '{"id":"0"}' }}
-    ${'PUT'}     | ${{ id: '0' }} | ${undefined}    | ${{ method: 'PUT', headers: { map: { 'content-type': 'application/json', accept: 'application/json, text/plain, */*' } }, body: '{"id":"0"}' }}
-    ${'monkey'}  | ${undefined}   | ${undefined}    | ${{ method: 'monkey', headers: { map: { accept: 'application/json, text/plain, */*' } }, body: undefined }}
-    ${'GET'}     | ${undefined}   | ${true}         | ${{ method: 'GET', headers: { map: { accept: 'application/json, text/plain, */*' } }, body: undefined, credentials: 'include' }}
+    method       | data           | withCredentials | credentials  | expected
+    ${undefined} | ${undefined}   | ${undefined}    | ${undefined} | ${{ method: undefined, headers: { map: { accept: 'application/json, text/plain, */*' } }, body: undefined, credentials: 'same-origin' }}
+    ${'GET'}     | ${undefined}   | ${undefined}    | ${undefined} | ${{ method: 'GET', headers: { map: { accept: 'application/json, text/plain, */*' } }, body: undefined, credentials: 'same-origin' }}
+    ${'POST'}    | ${{ id: '0' }} | ${undefined}    | ${undefined} | ${{ method: 'POST', headers: { map: { 'content-type': 'application/json', accept: 'application/json, text/plain, */*' } }, body: '{"id":"0"}', credentials: 'same-origin' }}
+    ${'PUT'}     | ${{ id: '0' }} | ${undefined}    | ${undefined} | ${{ method: 'PUT', headers: { map: { 'content-type': 'application/json', accept: 'application/json, text/plain, */*' } }, body: '{"id":"0"}', credentials: 'same-origin' }}
+    ${'monkey'}  | ${undefined}   | ${undefined}    | ${'omit'}    | ${{ method: 'monkey', headers: { map: { accept: 'application/json, text/plain, */*' } }, body: undefined, credentials: 'omit' }}
+    ${'GET'}     | ${undefined}   | ${true}         | ${undefined} | ${{ method: 'GET', headers: { map: { accept: 'application/json, text/plain, */*' } }, body: undefined, credentials: 'include' }}
+    ${'GET'}     | ${undefined}   | ${true}         | ${'omit'}    | ${{ method: 'GET', headers: { map: { accept: 'application/json, text/plain, */*' } }, body: undefined, credentials: 'omit' }}
   `(
-    "when called with method: '$method', data: '$data' and withCredentials: '$withCredentials' then result should be '$expected'",
-    ({ method, data, withCredentials, expected }) => {
-      expect(parseInitFromOptions({ method, data, withCredentials, url: '' })).toEqual(expected);
+    "when called with method: '$method', data: '$data', withCredentials: '$withCredentials' and credentials: '$credentials' then result should be '$expected'",
+    ({ method, data, withCredentials, credentials, expected }) => {
+      expect(parseInitFromOptions({ method, data, withCredentials, credentials, url: '' })).toEqual(expected);
     }
   );
 });
@@ -99,4 +102,74 @@ describe('parseBody', () => {
       expect(parseBody(options, isAppJson)).toEqual(expected);
     }
   );
+});
+
+describe('parseCredentials', () => {
+  it.each`
+    options                                                   | expected
+    ${undefined}                                              | ${undefined}
+    ${{}}                                                     | ${'same-origin'}
+    ${{ credentials: undefined }}                             | ${'same-origin'}
+    ${{ credentials: undefined, withCredentials: undefined }} | ${'same-origin'}
+    ${{ credentials: undefined, withCredentials: false }}     | ${'same-origin'}
+    ${{ credentials: undefined, withCredentials: true }}      | ${'include'}
+    ${{ credentials: 'invalid' }}                             | ${'invalid'}
+    ${{ credentials: 'invalid', withCredentials: undefined }} | ${'invalid'}
+    ${{ credentials: 'invalid', withCredentials: false }}     | ${'invalid'}
+    ${{ credentials: 'invalid', withCredentials: true }}      | ${'invalid'}
+    ${{ credentials: 'omit' }}                                | ${'omit'}
+    ${{ credentials: 'omit', withCredentials: undefined }}    | ${'omit'}
+    ${{ credentials: 'omit', withCredentials: false }}        | ${'omit'}
+    ${{ credentials: 'omit', withCredentials: true }}         | ${'omit'}
+  `(
+    "when called with options: '$options' then the result should be '$expected'",
+    ({ options, isAppJson, expected }) => {
+      expect(parseCredentials(options)).toEqual(expected);
+    }
+  );
+});
+
+describe('parseResponseBody', () => {
+  const rsp = ({} as unknown) as Response;
+  it('parses json', async () => {
+    const value = { hello: 'world' };
+    const body = await parseResponseBody(
+      {
+        ...rsp,
+        json: jest.fn().mockImplementationOnce(() => value),
+      },
+      'json'
+    );
+    expect(body).toEqual(value);
+  });
+
+  it('parses text', async () => {
+    const value = 'RAW TEXT';
+    const body = await parseResponseBody(
+      {
+        ...rsp,
+        text: jest.fn().mockImplementationOnce(() => value),
+      },
+      'text'
+    );
+    expect(body).toEqual(value);
+  });
+
+  it('undefined text', async () => {
+    const value = 'RAW TEXT';
+    const body = await parseResponseBody({
+      ...rsp,
+      text: jest.fn().mockImplementationOnce(() => value),
+    });
+    expect(body).toEqual(value);
+  });
+
+  it('undefined as parsed json', async () => {
+    const value = { hello: 'world' };
+    const body = await parseResponseBody({
+      ...rsp,
+      text: jest.fn().mockImplementationOnce(() => JSON.stringify(value)),
+    });
+    expect(body).toEqual(value);
+  });
 });

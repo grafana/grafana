@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/BurntSushi/toml"
-	"golang.org/x/xerrors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -95,8 +94,12 @@ var config *Config
 
 // GetConfig returns the LDAP config if LDAP is enabled otherwise it returns nil. It returns either cached value of
 // the config or it reads it and caches it first.
-func GetConfig() (*Config, error) {
-	if !IsEnabled() {
+func GetConfig(cfg *setting.Cfg) (*Config, error) {
+	if cfg != nil {
+		if !cfg.LDAPEnabled {
+			return nil, nil
+		}
+	} else if !IsEnabled() {
 		return nil, nil
 	}
 
@@ -108,10 +111,7 @@ func GetConfig() (*Config, error) {
 	loadingMutex.Lock()
 	defer loadingMutex.Unlock()
 
-	var err error
-	config, err = readConfig(setting.LDAPConfigFile)
-
-	return config, err
+	return readConfig(setting.LDAPConfigFile)
 }
 
 func readConfig(configFile string) (*Config, error) {
@@ -119,6 +119,8 @@ func readConfig(configFile string) (*Config, error) {
 
 	logger.Info("LDAP enabled, reading config file", "file", configFile)
 
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `filename` comes from grafana configuration file
 	fileBytes, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		return nil, errutil.Wrap("Failed to load LDAP config file", err)
@@ -136,7 +138,7 @@ func readConfig(configFile string) (*Config, error) {
 	}
 
 	if len(result.Servers) == 0 {
-		return nil, xerrors.New("LDAP enabled but no LDAP servers defined in config file")
+		return nil, fmt.Errorf("LDAP enabled but no LDAP servers defined in config file")
 	}
 
 	// set default org id
@@ -164,11 +166,11 @@ func assertNotEmptyCfg(val interface{}, propName string) error {
 	switch v := val.(type) {
 	case string:
 		if v == "" {
-			return xerrors.Errorf("LDAP config file is missing option: %v", propName)
+			return fmt.Errorf("LDAP config file is missing option: %q", propName)
 		}
 	case []string:
 		if len(v) == 0 {
-			return xerrors.Errorf("LDAP config file is missing option: %v", propName)
+			return fmt.Errorf("LDAP config file is missing option: %q", propName)
 		}
 	default:
 		fmt.Println("unknown")

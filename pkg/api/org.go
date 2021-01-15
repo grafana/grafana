@@ -1,6 +1,8 @@
 package api
 
 import (
+	"errors"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -20,16 +22,15 @@ func GetOrgByID(c *models.ReqContext) Response {
 }
 
 // Get /api/orgs/name/:name
-func GetOrgByName(c *models.ReqContext) Response {
-	query := models.GetOrgByNameQuery{Name: c.Params(":name")}
-	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrOrgNotFound {
+func (hs *HTTPServer) GetOrgByName(c *models.ReqContext) Response {
+	org, err := hs.SQLStore.GetOrgByName(c.Params(":name"))
+	if err != nil {
+		if errors.Is(err, models.ErrOrgNotFound) {
 			return Error(404, "Organization not found", err)
 		}
 
 		return Error(500, "Failed to get organization", err)
 	}
-	org := query.Result
 	result := models.OrgDetailsDTO{
 		Id:   org.Id,
 		Name: org.Name,
@@ -50,7 +51,7 @@ func getOrgHelper(orgID int64) Response {
 	query := models.GetOrgByIdQuery{Id: orgID}
 
 	if err := bus.Dispatch(&query); err != nil {
-		if err == models.ErrOrgNotFound {
+		if errors.Is(err, models.ErrOrgNotFound) {
 			return Error(404, "Organization not found", err)
 		}
 
@@ -82,7 +83,7 @@ func CreateOrg(c *models.ReqContext, cmd models.CreateOrgCommand) Response {
 
 	cmd.UserId = c.UserId
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrOrgNameTaken {
+		if errors.Is(err, models.ErrOrgNameTaken) {
 			return Error(409, "Organization name taken", err)
 		}
 		return Error(500, "Failed to create organization", err)
@@ -109,7 +110,7 @@ func UpdateOrg(c *models.ReqContext, form dtos.UpdateOrgForm) Response {
 func updateOrgHelper(form dtos.UpdateOrgForm, orgID int64) Response {
 	cmd := models.UpdateOrgCommand{Name: form.Name, OrgId: orgID}
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == models.ErrOrgNameTaken {
+		if errors.Is(err, models.ErrOrgNameTaken) {
 			return Error(400, "Organization name taken", err)
 		}
 		return Error(500, "Failed to update organization", err)
@@ -151,7 +152,7 @@ func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgID int64) Respons
 // GET /api/orgs/:orgId
 func DeleteOrgByID(c *models.ReqContext) Response {
 	if err := bus.Dispatch(&models.DeleteOrgCommand{Id: c.ParamsInt64(":orgId")}); err != nil {
-		if err == models.ErrOrgNotFound {
+		if errors.Is(err, models.ErrOrgNotFound) {
 			return Error(404, "Failed to delete organization. ID not found", nil)
 		}
 		return Error(500, "Failed to update organization", err)
@@ -160,11 +161,18 @@ func DeleteOrgByID(c *models.ReqContext) Response {
 }
 
 func SearchOrgs(c *models.ReqContext) Response {
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+
+	page := c.QueryInt("page")
+
 	query := models.SearchOrgsQuery{
 		Query: c.Query("query"),
 		Name:  c.Query("name"),
-		Page:  0,
-		Limit: 1000,
+		Page:  page,
+		Limit: perPage,
 	}
 
 	if err := bus.Dispatch(&query); err != nil {

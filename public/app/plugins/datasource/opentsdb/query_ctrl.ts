@@ -1,8 +1,7 @@
 import _ from 'lodash';
-import kbn from 'app/core/utils/kbn';
 import { QueryCtrl } from 'app/plugins/sdk';
 import { auto } from 'angular';
-import { textUtil } from '@grafana/data';
+import { textUtil, rangeUtil } from '@grafana/data';
 
 export class OpenTsQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -205,7 +204,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     if (this.target.shouldDownsample) {
       try {
         if (this.target.downsampleInterval) {
-          kbn.describe_interval(this.target.downsampleInterval);
+          rangeUtil.describeInterval(this.target.downsampleInterval);
         } else {
           errs.downsampleInterval = "You must supply a downsample interval (e.g. '1m' or '1h').";
         }

@@ -7,7 +7,7 @@ import { SLOQuery } from '../types';
 import CloudMonitoringDatasource from '../datasource';
 
 export interface Props {
-  usedAlignmentPeriod: string;
+  usedAlignmentPeriod?: number;
   variableOptionGroup: SelectableValue<string>;
   onChange: (query: SLOQuery) => void;
   onRunQuery: () => void;
@@ -15,14 +15,14 @@ export interface Props {
   datasource: CloudMonitoringDatasource;
 }
 
-export const defaultQuery: SLOQuery = {
-  projectName: '',
+export const defaultQuery: (dataSource: CloudMonitoringDatasource) => SLOQuery = dataSource => ({
+  projectName: dataSource.getDefaultProject(),
   alignmentPeriod: 'cloud-monitoring-auto',
   aliasBy: '',
   selectorName: 'select_slo_health',
   serviceId: '',
   sloId: '',
-};
+});
 
 export function SLOQueryEditor({
   query,

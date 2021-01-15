@@ -1,6 +1,5 @@
 import React, { PureComponent } from 'react';
 
-import isArray from 'lodash/isArray';
 import difference from 'lodash/difference';
 
 import { Select } from '../Select/Select';
@@ -55,7 +54,7 @@ export class StatsPicker extends PureComponent<Props> {
 
   onSelectionChange = (item: SelectableValue<string>) => {
     const { onChange } = this.props;
-    if (isArray(item)) {
+    if (Array.isArray(item)) {
       onChange(item.map(v => v.value));
     } else {
       onChange(item && item.value ? [item.value] : []);

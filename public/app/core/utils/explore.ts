@@ -12,9 +12,8 @@ import {
   DefaultTimeZone,
   HistoryItem,
   IntervalValues,
-  LogRowModel,
   LogsDedupStrategy,
-  LogsModel,
+  LogsSortOrder,
   RawTimeRange,
   TimeFragment,
   TimeRange,
@@ -22,9 +21,12 @@ import {
   toUtc,
   urlUtil,
   ExploreUrlState,
+  rangeUtil,
+  DateTime,
+  isDateTime,
 } from '@grafana/data';
 import store from 'app/core/store';
-import kbn from 'app/core/utils/kbn';
+import { v4 as uuidv4 } from 'uuid';
 import { getNextRefIdChar } from './query';
 // Types
 import { RefreshPicker } from '@grafana/ui';
@@ -40,9 +42,6 @@ export const DEFAULT_RANGE = {
 };
 
 export const DEFAULT_UI_STATE = {
-  showingTable: true,
-  showingGraph: true,
-  showingLogs: true,
   dedupStrategy: LogsDedupStrategy.none,
 };
 
@@ -157,10 +156,13 @@ export function buildQueryTransaction(
       __interval_ms: { text: intervalMs, value: intervalMs },
     },
     maxDataPoints: queryOptions.maxDataPoints,
-    exploreMode: queryOptions.mode,
+    exploreMode: undefined,
     liveStreaming: queryOptions.liveStreaming,
-    showingGraph: queryOptions.showingGraph,
-    showingTable: queryOptions.showingTable,
+    /**
+     * @deprecated (external API) showingGraph and showingTable are always set to true and set to true
+     */
+    showingGraph: true,
+    showingTable: true,
   };
 
   return {
@@ -185,20 +187,13 @@ enum ParseUrlStateIndex {
   SegmentsStart = 3,
 }
 
-enum ParseUiStateIndex {
-  Graph = 0,
-  Logs = 1,
-  Table = 2,
-  Strategy = 3,
-}
-
 export const safeParseJson = (text?: string): any | undefined => {
   if (!text) {
     return;
   }
 
   try {
-    return JSON.parse(decodeURI(text));
+    return JSON.parse(text);
   } catch (error) {
     console.error(error);
   }
@@ -224,7 +219,6 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
     datasource: null,
     queries: [],
     range: DEFAULT_RANGE,
-    ui: DEFAULT_UI_STATE,
     mode: null,
     originPanelId: null,
   };
@@ -248,25 +242,14 @@ export function parseUrlState(initial: string | undefined): ExploreUrlState {
   };
   const datasource = parsed[ParseUrlStateIndex.Datasource];
   const parsedSegments = parsed.slice(ParseUrlStateIndex.SegmentsStart);
-  const metricProperties = ['expr', 'expression', 'target', 'datasource', 'query'];
-  const queries = parsedSegments.filter(segment => isSegment(segment, ...metricProperties));
-
-  const uiState = parsedSegments.filter(segment => isSegment(segment, 'ui'))[0];
-  const ui = uiState
-    ? {
-        showingGraph: uiState.ui[ParseUiStateIndex.Graph],
-        showingLogs: uiState.ui[ParseUiStateIndex.Logs],
-        showingTable: uiState.ui[ParseUiStateIndex.Table],
-        dedupStrategy: uiState.ui[ParseUiStateIndex.Strategy],
-      }
-    : DEFAULT_UI_STATE;
+  const queries = parsedSegments.filter(segment => !isSegment(segment, 'ui', 'originPanelId', 'mode'));
 
   const originPanelId = parsedSegments.filter(segment => isSegment(segment, 'originPanelId'))[0];
-  return { datasource, queries, range, ui, originPanelId };
+  return { datasource, queries, range, originPanelId };
 }
 
 export function generateKey(index = 0): string {
-  return `Q-${Date.now()}-${Math.random()}-${index}`;
+  return `Q-${uuidv4()}-${index}`;
 }
 
 export function generateEmptyQuery(queries: DataQuery[], index = 0): DataQuery {
@@ -373,9 +356,13 @@ export const getTimeRange = (timeZone: TimeZone, rawRange: RawTimeRange): TimeRa
   };
 };
 
-const parseRawTime = (value: any): TimeFragment | null => {
+const parseRawTime = (value: string | DateTime): TimeFragment | null => {
   if (value === null) {
     return null;
+  }
+
+  if (isDateTime(value)) {
+    return value;
   }
 
   if (value.indexOf('now') !== -1) {
@@ -392,9 +379,16 @@ const parseRawTime = (value: any): TimeFragment | null => {
     return toUtc(value, 'YYYY-MM-DD HH:mm:ss');
   }
 
-  if (!isNaN(value)) {
+  // This should handle cases where value is an epoch time as string
+  if (value.match(/^\d+$/)) {
     const epoch = parseInt(value, 10);
     return toUtc(epoch);
+  }
+
+  // This should handle ISO strings
+  const time = toUtc(value);
+  if (time.isValid()) {
+    return time;
   }
 
   return null;
@@ -465,67 +459,8 @@ export const getRefIds = (value: any): string[] => {
   return _.uniq(_.flatten(refIds));
 };
 
-export const sortInAscendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  // compare milliseconds
-  if (a.timeEpochMs < b.timeEpochMs) {
-    return -1;
-  }
-
-  if (a.timeEpochMs > b.timeEpochMs) {
-    return 1;
-  }
-
-  // if milliseonds are equal, compare nanoseconds
-  if (a.timeEpochNs < b.timeEpochNs) {
-    return -1;
-  }
-
-  if (a.timeEpochNs > b.timeEpochNs) {
-    return 1;
-  }
-
-  return 0;
-};
-
-const sortInDescendingOrder = (a: LogRowModel, b: LogRowModel) => {
-  // compare milliseconds
-  if (a.timeEpochMs > b.timeEpochMs) {
-    return -1;
-  }
-
-  if (a.timeEpochMs < b.timeEpochMs) {
-    return 1;
-  }
-
-  // if milliseonds are equal, compare nanoseconds
-  if (a.timeEpochNs > b.timeEpochNs) {
-    return -1;
-  }
-
-  if (a.timeEpochNs < b.timeEpochNs) {
-    return 1;
-  }
-
-  return 0;
-};
-
-export enum SortOrder {
-  Descending = 'Descending',
-  Ascending = 'Ascending',
-  DatasourceAZ = 'Datasource A-Z',
-  DatasourceZA = 'Datasource Z-A',
-}
-
 export const refreshIntervalToSortOrder = (refreshInterval?: string) =>
-  RefreshPicker.isLive(refreshInterval) ? SortOrder.Ascending : SortOrder.Descending;
-
-export const sortLogsResult = (logsResult: LogsModel | null, sortOrder: SortOrder): LogsModel => {
-  const rows = logsResult ? logsResult.rows : [];
-  sortOrder === SortOrder.Ascending ? rows.sort(sortInAscendingOrder) : rows.sort(sortInDescendingOrder);
-  const result: LogsModel = logsResult ? { ...logsResult, rows } : { hasUniqueLabels: false, rows };
-
-  return result;
-};
+  RefreshPicker.isLive(refreshInterval) ? LogsSortOrder.Ascending : LogsSortOrder.Descending;
 
 export const convertToWebSocketUrl = (url: string) => {
   const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
@@ -547,14 +482,19 @@ export function getIntervals(range: TimeRange, lowLimit?: string, resolution?: n
     return { interval: '1s', intervalMs: 1000 };
   }
 
-  return kbn.calculateInterval(range, resolution, lowLimit);
-}
-
-export function deduplicateLogRowsById(rows: LogRowModel[]) {
-  return _.uniqBy(rows, 'uid');
+  return rangeUtil.calculateInterval(range, resolution, lowLimit);
 }
 
 export const getFirstNonQueryRowSpecificError = (queryErrors?: DataQueryError[]): DataQueryError | undefined => {
   const refId = getValueWithRefId(queryErrors);
   return refId ? undefined : getFirstQueryErrorWithoutRefId(queryErrors);
+};
+
+export const copyStringToClipboard = (string: string) => {
+  const el = document.createElement('textarea');
+  el.value = string;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
 };

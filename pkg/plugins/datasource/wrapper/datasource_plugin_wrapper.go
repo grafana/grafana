@@ -165,6 +165,6 @@ func (tw *DatasourcePluginWrapper) mapRowValue(rv *datasource.RowValue) (interfa
 	case datasource.RowValue_TYPE_BYTES:
 		return rv.BytesValue, nil
 	default:
-		return nil, fmt.Errorf("Unsupported row value %v from plugin", rv.Kind)
+		return nil, fmt.Errorf("unsupported row value %v from plugin", rv.Kind)
 	}
 }

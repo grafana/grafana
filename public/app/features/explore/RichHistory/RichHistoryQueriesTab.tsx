@@ -9,8 +9,8 @@ import { RichHistoryQuery, ExploreId } from 'app/types/explore';
 import { stylesFactory, useTheme } from '@grafana/ui';
 import { GrafanaTheme, SelectableValue } from '@grafana/data';
 
-import { SortOrder } from 'app/core/utils/explore';
 import {
+  SortOrder,
   mapNumbertoTimeInSlider,
   mapQueriesToHeadings,
   createDatasourcesList,
@@ -20,7 +20,7 @@ import {
 // Components
 import RichHistoryCard from './RichHistoryCard';
 import { sortOrderOptions } from './RichHistory';
-import { Slider, Select } from '@grafana/ui';
+import { RangeSlider, Select } from '@grafana/ui';
 import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 
 export interface Props {
@@ -186,7 +186,7 @@ export function RichHistoryQueriesTab(props: Props) {
           <div className="label-slider">Filter history</div>
           <div className="label-slider">{mapNumbertoTimeInSlider(timeFilter[0])}</div>
           <div className="slider">
-            <Slider
+            <RangeSlider
               tooltipAlwaysVisible={false}
               min={0}
               max={retentionPeriod}

@@ -10,19 +10,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/bus"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var (
 	// ErrFolderNameMissing is returned when folder name is missing.
-	ErrFolderNameMissing = errors.New("Folder name missing")
+	ErrFolderNameMissing = errors.New("folder name missing")
 )
 
 // FileReader is responsible for reading dashboards from disc and
@@ -43,7 +41,7 @@ func NewDashboardFileReader(cfg *config, log log.Logger) (*FileReader, error) {
 	if !ok {
 		path, ok = cfg.Options["folder"].(string)
 		if !ok {
-			return nil, fmt.Errorf("Failed to load dashboards. path param is not a string")
+			return nil, fmt.Errorf("failed to load dashboards, path param is not a string")
 		}
 
 		log.Warn("[Deprecated] The folder property is deprecated. Please use path instead.")
@@ -119,8 +117,7 @@ func (fr *FileReader) startWalkingDisk() error {
 // storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
 func (fr *FileReader) storeDashboardsInFolder(filesFoundOnDisk map[string]os.FileInfo, dashboardRefs map[string]*models.DashboardProvisioning, sanityChecker *provisioningSanityChecker) error {
 	folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
-
-	if err != nil && err != ErrFolderNameMissing {
+	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 		return err
 	}
 
@@ -147,8 +144,8 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(filesFoundOnDisk
 		}
 
 		folderID, err := getOrCreateFolderID(fr.Cfg, fr.dashboardProvisioningService, folderName)
-		if err != nil && err != ErrFolderNameMissing {
-			return err
+		if err != nil && !errors.Is(err, ErrFolderNameMissing) {
+			return fmt.Errorf("can't provision folder %q from file system structure: %w", folderName, err)
 		}
 
 		provisioningMetadata, err := fr.saveDashboard(path, folderID, fileInfo, dashboardRefs)
@@ -266,12 +263,12 @@ func getOrCreateFolderID(cfg *config, service dashboards.DashboardProvisioningSe
 	cmd := &models.GetDashboardQuery{Slug: models.SlugifyTitle(folderName), OrgId: cfg.OrgID}
 	err := bus.Dispatch(cmd)
 
-	if err != nil && err != models.ErrDashboardNotFound {
+	if err != nil && !errors.Is(err, models.ErrDashboardNotFound) {
 		return 0, err
 	}
 
 	// dashboard folder not found. create one.
-	if err == models.ErrDashboardNotFound {
+	if errors.Is(err, models.ErrDashboardNotFound) {
 		dash := &dashboards.SaveDashboardDTO{}
 		dash.Dashboard = models.NewDashboardFolder(folderName)
 		dash.Dashboard.IsFolder = true
@@ -346,11 +343,17 @@ type dashboardJSONFile struct {
 }
 
 func (fr *FileReader) readDashboardFromFile(path string, lastModified time.Time, folderID int64) (*dashboardJSONFile, error) {
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `path` comes from the provisioning configuration file.
 	reader, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	defer reader.Close()
+	defer func() {
+		if err := reader.Close(); err != nil {
+			fr.log.Warn("Failed to close file", "path", path, "err", err)
+		}
+	}()
 
 	all, err := ioutil.ReadAll(reader)
 	if err != nil {

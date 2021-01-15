@@ -1,4 +1,5 @@
 // Generated from ScrollQLParser.g4 by ANTLR 4.8
+/* eslint-disable */
 // jshint ignore: start
 // @ts-nocheck
 var antlr4 = require('antlr4/index');
@@ -2663,7 +2664,6 @@ StatsGroupFieldIdContext.prototype.fieldId = function() {
   return this.getTypedRuleContext(FieldIdContext, 0);
 };
 StatsGroupFieldIdContext.prototype.enterRule = function(listener) {
-  console.log(this);
   if (listener instanceof ScrollQLParserListener) {
     listener.enterStatsGroupFieldId(this);
   }

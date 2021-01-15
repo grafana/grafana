@@ -8,7 +8,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -17,7 +16,6 @@ import (
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"golang.org/x/xerrors"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
@@ -99,7 +97,11 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 
 		// Plugins which are downloaded just as sourcecode zipball from github do not have checksum
 		if v.Arch != nil {
-			checksum = v.Arch[osAndArchString()].Md5
+			archMeta, exists := v.Arch[osAndArchString()]
+			if !exists {
+				archMeta = v.Arch["any"]
+			}
+			checksum = archMeta.SHA256
 		}
 	}
 
@@ -113,11 +115,17 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 	if err != nil {
 		return errutil.Wrap("failed to create temporary file", err)
 	}
-	defer os.Remove(tmpFile.Name())
+	defer func() {
+		if err := os.Remove(tmpFile.Name()); err != nil {
+			logger.Warn("Failed to remove temporary file", "file", tmpFile.Name(), "err", err)
+		}
+	}()
 
 	err = client.DownloadFile(pluginName, tmpFile, downloadURL, checksum)
 	if err != nil {
-		tmpFile.Close()
+		if err := tmpFile.Close(); err != nil {
+			logger.Warn("Failed to close file", "err", err)
+		}
 		return errutil.Wrap("failed to download plugin archive", err)
 	}
 	err = tmpFile.Close()
@@ -134,11 +142,11 @@ func InstallPlugin(pluginName, version string, c utils.CommandLine, client utils
 
 	res, _ := services.ReadPlugin(pluginFolder, pluginName)
 	for _, v := range res.Dependencies.Plugins {
-		if err := InstallPlugin(v.Id, "", c, client); err != nil {
-			return errutil.Wrapf(err, "failed to install plugin '%s'", v.Id)
+		if err := InstallPlugin(v.ID, "", c, client); err != nil {
+			return errutil.Wrapf(err, "failed to install plugin '%s'", v.ID)
 		}
 
-		logger.Infof("Installed dependency: %v ✔\n", v.Id)
+		logger.Infof("Installed dependency: %v ✔\n", v.ID)
 	}
 
 	return err
@@ -180,7 +188,7 @@ func SelectVersion(plugin *models.Plugin, version string) (*models.Version, erro
 
 	latestForArch := latestSupportedVersion(plugin)
 	if latestForArch == nil {
-		return nil, xerrors.New("plugin is not supported on your architecture and OS.")
+		return nil, fmt.Errorf("plugin is not supported on your architecture and OS")
 	}
 
 	if version == "" {
@@ -194,22 +202,25 @@ func SelectVersion(plugin *models.Plugin, version string) (*models.Version, erro
 	}
 
 	if len(ver.Version) == 0 {
-		return nil, xerrors.New("could not find the version you're looking for")
+		return nil, fmt.Errorf("could not find the version you're looking for")
 	}
 
 	if !supportsCurrentArch(&ver) {
-		return nil, xerrors.Errorf("the version you want is not supported on your architecture and OS. Latest suitable version is %s", latestForArch.Version)
+		return nil, fmt.Errorf(
+			"the version you want is not supported on your architecture and OS, latest suitable version is %s",
+			latestForArch.Version)
 	}
 
 	return &ver, nil
 }
 
-func RemoveGitBuildFromName(pluginName, filename string) string {
-	r := regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
-	return r.ReplaceAllString(filename, pluginName+"/")
+var reGitBuild = regexp.MustCompile("^[a-zA-Z0-9_.-]*/")
+
+func removeGitBuildFromName(pluginName, filename string) string {
+	return reGitBuild.ReplaceAllString(filename, pluginName+"/")
 }
 
-var permissionsDeniedMessage = "Could not create %s. Permission denied. Make sure you have write access to plugindir"
+const permissionsDeniedMessage = "could not create %q, permission denied, make sure you have write access to plugin dir"
 
 func extractFiles(archiveFile string, pluginName string, filePath string, allowSymlinks bool) error {
 	logger.Debugf("Extracting archive %v to %v...\n", archiveFile, filePath)
@@ -219,34 +230,48 @@ func extractFiles(archiveFile string, pluginName string, filePath string, allowS
 		return err
 	}
 	for _, zf := range r.File {
-		newFileName := RemoveGitBuildFromName(pluginName, zf.Name)
+		newFileName := removeGitBuildFromName(pluginName, zf.Name)
 		if !isPathSafe(newFileName, filepath.Join(filePath, pluginName)) {
-			return xerrors.Errorf("filepath: %q tries to write outside of plugin directory: %q. This can be a security risk.", zf.Name, path.Join(filePath, pluginName))
+			return fmt.Errorf("filepath: %q tries to write outside of plugin directory: %q, this can be a security risk",
+				zf.Name, filepath.Join(filePath, pluginName))
 		}
-		newFile := path.Join(filePath, newFileName)
+		newFile := filepath.Join(filePath, newFileName)
 
 		if zf.FileInfo().IsDir() {
-			err := os.Mkdir(newFile, 0755)
-			if os.IsPermission(err) {
-				return fmt.Errorf(permissionsDeniedMessage, newFile)
+			// We can ignore gosec G304 here since it makes sense to give all users read access
+			// nolint:gosec
+			if err := os.MkdirAll(newFile, 0755); err != nil {
+				if os.IsPermission(err) {
+					return fmt.Errorf(permissionsDeniedMessage, newFile)
+				}
+
+				return err
 			}
-		} else {
-			if isSymlink(zf) {
-				if !allowSymlinks {
-					logger.Errorf("%v: plugin archive contains symlink which is not allowed. Skipping \n", zf.Name)
-					continue
-				}
-				err = extractSymlink(zf, newFile)
-				if err != nil {
-					logger.Errorf("Failed to extract symlink: %v \n", err)
-					continue
-				}
-			} else {
-				err = extractFile(zf, newFile)
-				if err != nil {
-					return errutil.Wrap("failed to extract file", err)
-				}
+
+			continue
+		}
+
+		// Create needed directories to extract file
+		// We can ignore gosec G304 here since it makes sense to give all users read access
+		// nolint:gosec
+		if err := os.MkdirAll(filepath.Dir(newFile), 0755); err != nil {
+			return errutil.Wrap("failed to create directory to extract plugin files", err)
+		}
+
+		if isSymlink(zf) {
+			if !allowSymlinks {
+				logger.Warnf("%v: plugin archive contains a symlink, which is not allowed. Skipping \n", zf.Name)
+				continue
 			}
+			if err := extractSymlink(zf, newFile); err != nil {
+				logger.Errorf("Failed to extract symlink: %v \n", err)
+				continue
+			}
+			continue
+		}
+
+		if err := extractFile(zf, newFile); err != nil {
+			return errutil.Wrap("failed to extract file", err)
 		}
 	}
 
@@ -264,12 +289,10 @@ func extractSymlink(file *zip.File, filePath string) error {
 		return errutil.Wrap("failed to extract file", err)
 	}
 	buf := new(bytes.Buffer)
-	_, err = io.Copy(buf, src)
-	if err != nil {
+	if _, err := io.Copy(buf, src); err != nil {
 		return errutil.Wrap("failed to copy symlink contents", err)
 	}
-	err = os.Symlink(strings.TrimSpace(buf.String()), filePath)
-	if err != nil {
+	if err := os.Symlink(strings.TrimSpace(buf.String()), filePath); err != nil {
 		return errutil.Wrapf(err, "failed to make symbolic link for %v", filePath)
 	}
 	return nil
@@ -282,15 +305,19 @@ func extractFile(file *zip.File, filePath string) (err error) {
 		fileMode = os.FileMode(0755)
 	}
 
+	// We can ignore the gosec G304 warning on this one, since the variable part of the file path stems
+	// from command line flag "pluginsDir", and the only possible damage would be writing to the wrong directory.
+	// If the user shouldn't be writing to this directory, they shouldn't have the permission in the file system.
+	// nolint:gosec
 	dst, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileMode)
 	if err != nil {
 		if os.IsPermission(err) {
-			return xerrors.Errorf(permissionsDeniedMessage, filePath)
+			return fmt.Errorf(permissionsDeniedMessage, filePath)
 		}
 
-		unwrappedError := xerrors.Unwrap(err)
+		unwrappedError := errors.Unwrap(err)
 		if unwrappedError != nil && strings.EqualFold(unwrappedError.Error(), "text file busy") {
-			return fmt.Errorf("file %s is in use. Please stop Grafana, install the plugin and restart Grafana", filePath)
+			return fmt.Errorf("file %q is in use - please stop Grafana, install the plugin and restart Grafana", filePath)
 		}
 
 		return errutil.Wrap("failed to open file", err)

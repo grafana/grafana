@@ -12,14 +12,18 @@
 # This should make it easy to add new rules without breaking existing ones.
 
 # Documentation owner: Diana Payton
-/docs/ @oddlittlebird
-/contribute/ @oddlittlebird  @marcusolsson
-
+/docs/ @grafana/docs-squad
+/contribute/ @marcusolsson @grafana/docs-squad
+/docs/sources/developers/plugins/ @marcusolsson
+/docs/sources/enterprise/ @osg-grafana
 
 # Backend code
 *.go @grafana/backend-platform
 go.mod @grafana/backend-platform
 go.sum @grafana/backend-platform
+
+# Backend code docs
+/contribute/style-guides/backend.md @grafana/backend-platform
 
 /e2e @grafana/grafana-frontend-platform
 /packages @grafana/grafana-frontend-platform
@@ -58,3 +62,6 @@ lerna.json @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/prometheus @grafana/observability-squad
 /public/app/plugins/datasource/cloud-monitoring @grafana/backend-platform
 /public/app/plugins/datasource/zipkin @grafana/observability-squad
+
+# Cloud middleware
+/grafana-mixin/ @grafana/cloud-middleware

@@ -30,10 +30,10 @@ var (
 )
 
 func init() {
-	bus.AddHandler("alerting", handleNotificationTestCommand)
+	bus.AddHandlerCtx("alerting", handleNotificationTestCommand)
 }
 
-func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
+func handleNotificationTestCommand(ctx context.Context, cmd *NotificationTestCommand) error {
 	notifier := newNotificationService(nil)
 
 	model := &models.AlertNotification{
@@ -89,7 +89,7 @@ func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 	}
 	ctx.IsTestRun = true
 	ctx.Firing = true
-	ctx.Error = fmt.Errorf("This is only a test")
+	ctx.Error = fmt.Errorf("this is only a test")
 	ctx.EvalMatches = evalMatchesBasedOnState()
 
 	return ctx

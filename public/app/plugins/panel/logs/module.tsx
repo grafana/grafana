@@ -1,7 +1,6 @@
-import { PanelPlugin } from '@grafana/data';
+import { PanelPlugin, LogsSortOrder } from '@grafana/data';
 import { Options } from './types';
 import { LogsPanel } from './LogsPanel';
-import { SortOrder } from '../../../core/utils/explore';
 
 export const plugin = new PanelPlugin<Options>(LogsPanel).setPanelOptions(builder => {
   builder
@@ -29,10 +28,10 @@ export const plugin = new PanelPlugin<Options>(LogsPanel).setPanelOptions(builde
       description: '',
       settings: {
         options: [
-          { value: SortOrder.Descending, label: 'Descending' },
-          { value: SortOrder.Ascending, label: 'Ascending' },
+          { value: LogsSortOrder.Descending, label: 'Descending' },
+          { value: LogsSortOrder.Ascending, label: 'Ascending' },
         ],
       },
-      defaultValue: SortOrder.Descending,
+      defaultValue: LogsSortOrder.Descending,
     });
 });

@@ -13,11 +13,13 @@
   width: 100%;
   flex-grow: 1;
   min-height: 0;
+  display: flex;
 }
 
 .dashboard-content {
-  padding: $dashboard-padding $dashboard-padding 0 $dashboard-padding;
-  height: 100%;
+  padding: $dashboard-padding;
+  flex-basis: 100%;
+  flex-grow: 1;
 }
 
 div.flot-text {

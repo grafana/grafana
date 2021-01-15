@@ -5,7 +5,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 
 import { PanelPlugin } from '@grafana/data';
 import { StoreState } from 'app/types';
-import { GetDataOptions } from '../../state/PanelQueryRunner';
+import { GetDataOptions } from '../../../query/state/PanelQueryRunner';
 import { usePanelLatestData } from '../PanelEditor/usePanelLatestData';
 import { InspectContent } from './InspectContent';
 import { useDatasourceMetadata, useInspectTabs } from './hooks';
@@ -32,7 +32,7 @@ const PanelInspectorUnconnected: React.FC<Props> = ({ panel, dashboard, defaultT
   const dispatch = useDispatch();
   const [dataOptions, setDataOptions] = useState<GetDataOptions>({
     withTransforms: false,
-    withFieldConfig: false,
+    withFieldConfig: true,
   });
   const { data, isLoading, error } = usePanelLatestData(panel, dataOptions);
   const metaDs = useDatasourceMetadata(data);

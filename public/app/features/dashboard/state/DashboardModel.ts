@@ -4,18 +4,18 @@ import _ from 'lodash';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 // Utils & Services
-import { Emitter } from 'app/core/utils/emitter';
 import { contextSrv } from 'app/core/services/context_srv';
 import sortByKeys from 'app/core/utils/sort_by_keys';
 // Types
-import { GridPos, panelAdded, PanelModel, panelRemoved } from './PanelModel';
+import { GridPos, PanelModel } from './PanelModel';
 import { DashboardMigrator } from './DashboardMigrator';
 import {
   AppEvent,
   dateTimeFormat,
   dateTimeFormatTimeAgo,
   DateTimeInput,
-  PanelEvents,
+  EventBusExtended,
+  EventBusSrv,
   TimeRange,
   TimeZone,
   UrlQueryValue,
@@ -25,6 +25,8 @@ import { GetVariables, getVariables } from 'app/features/variables/state/selecto
 import { variableAdapters } from 'app/features/variables/adapters';
 import { onTimeRangeUpdated } from 'app/features/variables/state/actions';
 import { dispatch } from '../../../store/store';
+import { isAllVariable } from '../../variables/utils';
+import { DashboardPanelsChangedEvent, RefreshEvent, RenderEvent } from 'app/types/events';
 
 export interface CloneOptions {
   saveVariables?: boolean;
@@ -79,9 +81,9 @@ export class DashboardModel {
   // ------------------
 
   // repeat process cycles
-  iteration: number;
+  iteration?: number;
   meta: DashboardMeta;
-  events: Emitter;
+  events: EventBusExtended;
 
   static nonPersistedProperties: { [str: string]: boolean } = {
     events: true,
@@ -100,7 +102,7 @@ export class DashboardModel {
       data = {};
     }
 
-    this.events = new Emitter();
+    this.events = new EventBusSrv();
     this.id = data.id || null;
     this.uid = data.uid || null;
     this.revision = data.revision;
@@ -167,6 +169,7 @@ export class DashboardModel {
     meta.canEdit = meta.canEdit !== false;
     meta.showSettings = meta.canEdit;
     meta.canMakeEditable = meta.canSave && !this.editable;
+    meta.hasUnsavedFolderChange = false;
 
     if (!this.editable) {
       meta.canEdit = false;
@@ -233,7 +236,9 @@ export class DashboardModel {
     const currentVariables = this.getVariablesFromState();
 
     copy.templating = {
-      list: currentVariables.map(variable => variableAdapters.get(variable.type).getSaveModel(variable)),
+      list: currentVariables.map(variable =>
+        variableAdapters.get(variable.type).getSaveModel(variable, defaults.saveVariables)
+      ),
     };
 
     if (!defaults.saveVariables) {
@@ -260,7 +265,7 @@ export class DashboardModel {
   }
 
   startRefresh() {
-    this.events.emit(PanelEvents.refresh);
+    this.events.publish(new RefreshEvent());
 
     if (this.panelInEdit) {
       this.panelInEdit.refresh();
@@ -275,16 +280,13 @@ export class DashboardModel {
   }
 
   render() {
-    this.events.emit(PanelEvents.render);
-
+    this.events.publish(new RenderEvent());
     for (const panel of this.panels) {
       panel.render();
     }
   }
 
   panelInitialized(panel: PanelModel) {
-    panel.initialized();
-
     const lastResult = panel.getQueryRunner().getLastResult();
 
     if (!this.otherPanelInFullscreen(panel) && !lastResult) {
@@ -377,13 +379,11 @@ export class DashboardModel {
   addPanel(panelData: any) {
     panelData.id = this.getNextPanelId();
 
-    const panel = new PanelModel(panelData);
-
-    this.panels.unshift(panel);
+    this.panels.unshift(new PanelModel(panelData));
 
     this.sortPanelsByGridPos();
 
-    this.events.emit(panelAdded, panel);
+    this.events.publish(new DashboardPanelsChangedEvent());
   }
 
   sortPanelsByGridPos() {
@@ -420,7 +420,7 @@ export class DashboardModel {
     _.pull(this.panels, ...panelsToRemove);
     panelsToRemove.map(p => p.destroy());
     this.sortPanelsByGridPos();
-    this.events.emit(CoreEvents.repeatsProcessed);
+    this.events.publish(new DashboardPanelsChangedEvent());
   }
 
   processRepeats() {
@@ -440,7 +440,7 @@ export class DashboardModel {
     }
 
     this.sortPanelsByGridPos();
-    this.events.emit(CoreEvents.repeatsProcessed);
+    this.events.publish(new DashboardPanelsChangedEvent());
   }
 
   cleanUpRowRepeats(rowPanels: PanelModel[]) {
@@ -484,6 +484,7 @@ export class DashboardModel {
     }
 
     const clone = new PanelModel(sourcePanel.getSaveModel());
+
     clone.id = this.getNextPanelId();
 
     // insert after source panel + value index
@@ -492,6 +493,11 @@ export class DashboardModel {
     clone.repeatIteration = this.iteration;
     clone.repeatPanelId = sourcePanel.id;
     clone.repeat = undefined;
+
+    if (this.panelInView?.id === clone.id) {
+      clone.setIsViewing(true);
+      this.panelInView = clone;
+    }
 
     return clone;
   }
@@ -538,6 +544,7 @@ export class DashboardModel {
     }
 
     const selectedOptions = this.getSelectedVariableOptions(variable);
+
     const maxPerRow = panel.maxPerRow || 4;
     let xPos = 0;
     let yPos = panel.gridPos.y;
@@ -651,7 +658,7 @@ export class DashboardModel {
 
   getSelectedVariableOptions(variable: any) {
     let selectedOptions: any[];
-    if (variable.current.text === 'All') {
+    if (isAllVariable(variable)) {
       selectedOptions = variable.options.slice(1, variable.options.length);
     } else {
       selectedOptions = _.filter(variable.options, { selected: true });
@@ -672,9 +679,8 @@ export class DashboardModel {
   }
 
   removePanel(panel: PanelModel) {
-    const index = _.indexOf(this.panels, panel);
-    this.panels.splice(index, 1);
-    this.events.emit(panelRemoved, panel);
+    this.panels = this.panels.filter(item => item !== panel);
+    this.events.publish(new DashboardPanelsChangedEvent());
   }
 
   removeRow(row: PanelModel, removePanels: boolean) {
@@ -839,7 +845,7 @@ export class DashboardModel {
       this.sortPanelsByGridPos();
 
       // emit change event
-      this.events.emit(CoreEvents.rowExpanded);
+      this.events.publish(new DashboardPanelsChangedEvent());
       return;
     }
 
@@ -852,7 +858,7 @@ export class DashboardModel {
     row.collapsed = true;
 
     // emit change event
-    this.events.emit(CoreEvents.rowCollapsed);
+    this.events.publish(new DashboardPanelsChangedEvent());
   }
 
   /**
@@ -876,11 +882,15 @@ export class DashboardModel {
     return rowPanels;
   }
 
+  /** @deprecated */
   on<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
+    console.log('DashboardModel.on is deprecated use events.subscribe');
     this.events.on(event, callback);
   }
 
+  /** @deprecated */
   off<T>(event: AppEvent<T>, callback: (payload?: T) => void) {
+    console.log('DashboardModel.off is deprecated');
     this.events.off(event, callback);
   }
 

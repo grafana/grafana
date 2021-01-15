@@ -1,12 +1,15 @@
 package tsdb
 
 import (
+	"encoding/base64"
 	"encoding/json"
+	"fmt"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	jsoniter "github.com/json-iterator/go"
 )
 
 // TsdbQuery contains all information about a query request.
@@ -19,12 +22,12 @@ type TsdbQuery struct {
 }
 
 type Query struct {
-	RefId         string
-	Model         *simplejson.Json
-	DataSource    *models.DataSource
-	MaxDataPoints int64
-	IntervalMs    int64
-	QueryType     string
+	RefId         string             `json:"refId"`
+	Model         *simplejson.Json   `json:"model,omitempty"`
+	DataSource    *models.DataSource `json:"datasource"`
+	MaxDataPoints int64              `json:"maxDataPoints"`
+	IntervalMs    int64              `json:"intervalMs"`
+	QueryType     string             `json:"queryType"`
 }
 
 type Response struct {
@@ -40,6 +43,121 @@ type QueryResult struct {
 	Series      TimeSeriesSlice  `json:"series"`
 	Tables      []*Table         `json:"tables"`
 	Dataframes  DataFrames       `json:"dataframes"`
+}
+
+// UnmarshalJSON deserializes a QueryResult from JSON.
+//
+// Deserialization support is required by tests.
+func (r *QueryResult) UnmarshalJSON(b []byte) error {
+	m := map[string]interface{}{}
+	// TODO: Use JSON decoder
+	if err := json.Unmarshal(b, &m); err != nil {
+		return err
+	}
+
+	refID, ok := m["refId"].(string)
+	if !ok {
+		return fmt.Errorf("can't decode field refId - not a string")
+	}
+	var meta *simplejson.Json
+	if m["meta"] != nil {
+		mm, ok := m["meta"].(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("can't decode field meta - not a JSON object")
+		}
+		meta = simplejson.NewFromAny(mm)
+	}
+	var series TimeSeriesSlice
+	/* TODO
+	if m["series"] != nil {
+	}
+	*/
+	var tables []*Table
+	if m["tables"] != nil {
+		ts, ok := m["tables"].([]interface{})
+		if !ok {
+			return fmt.Errorf("can't decode field tables - not an array of Tables")
+		}
+		for _, ti := range ts {
+			tm, ok := ti.(map[string]interface{})
+			if !ok {
+				return fmt.Errorf("can't decode field tables - not an array of Tables")
+			}
+			var columns []TableColumn
+			cs, ok := tm["columns"].([]interface{})
+			if !ok {
+				return fmt.Errorf("can't decode field tables - not an array of Tables")
+			}
+			for _, ci := range cs {
+				cm, ok := ci.(map[string]interface{})
+				if !ok {
+					return fmt.Errorf("can't decode field tables - not an array of Tables")
+				}
+				val, ok := cm["text"].(string)
+				if !ok {
+					return fmt.Errorf("can't decode field tables - not an array of Tables")
+				}
+
+				columns = append(columns, TableColumn{Text: val})
+			}
+
+			rs, ok := tm["rows"].([]interface{})
+			if !ok {
+				return fmt.Errorf("can't decode field tables - not an array of Tables")
+			}
+			var rows []RowValues
+			for _, ri := range rs {
+				vals, ok := ri.([]interface{})
+				if !ok {
+					return fmt.Errorf("can't decode field tables - not an array of Tables")
+				}
+				rows = append(rows, vals)
+			}
+
+			tables = append(tables, &Table{
+				Columns: columns,
+				Rows:    rows,
+			})
+		}
+	}
+
+	var dfs *dataFrames
+	if m["dataframes"] != nil {
+		raw, ok := m["dataframes"].([]interface{})
+		if !ok {
+			return fmt.Errorf("can't decode field dataframes - not an array of byte arrays")
+		}
+
+		var encoded [][]byte
+		for _, ra := range raw {
+			encS, ok := ra.(string)
+			if !ok {
+				return fmt.Errorf("can't decode field dataframes - not an array of byte arrays")
+			}
+			enc, err := base64.StdEncoding.DecodeString(encS)
+			if err != nil {
+				return fmt.Errorf("can't decode field dataframes - not an array of arrow frames")
+			}
+			encoded = append(encoded, enc)
+		}
+		decoded, err := data.UnmarshalArrowFrames(encoded)
+		if err != nil {
+			return err
+		}
+		dfs = &dataFrames{
+			decoded: decoded,
+			encoded: encoded,
+		}
+	}
+
+	r.RefId = refID
+	r.Meta = meta
+	r.Series = series
+	r.Tables = tables
+	if dfs != nil {
+		r.Dataframes = dfs
+	}
+	return nil
 }
 
 type TimeSeries struct {
@@ -72,24 +190,7 @@ func NewTimePoint(value null.Float, timestamp float64) TimePoint {
 	return TimePoint{value, null.FloatFrom(timestamp)}
 }
 
-func NewTimeSeriesPointsFromArgs(values ...float64) TimeSeriesPoints {
-	points := make(TimeSeriesPoints, 0)
-
-	for i := 0; i < len(values); i += 2 {
-		points = append(points, NewTimePoint(null.FloatFrom(values[i]), values[i+1]))
-	}
-
-	return points
-}
-
-func NewTimeSeries(name string, points TimeSeriesPoints) *TimeSeries {
-	return &TimeSeries{
-		Name:   name,
-		Points: points,
-	}
-}
-
-// DataFrames interface for retrieving encoded and decoded data frames.
+// DataFrames is an interface for retrieving encoded and decoded data frames.
 //
 // See NewDecodedDataFrames and NewEncodedDataFrames for more information.
 type DataFrames interface {
@@ -109,11 +210,11 @@ type dataFrames struct {
 	encoded [][]byte
 }
 
-// NewDecodedDataFrames create new DataFrames from decoded frames.
+// NewDecodedDataFrames instantiates DataFrames from decoded frames.
 //
-// This should be the primary function for creating DataFrames if your implementing a plugin.
-// In Grafana alerting scenario it needs to operate on decoded frames why this function is
-// preferrable. When encoded data frames is needed, e.g. returned from Grafana HTTP API, it will
+// This should be the primary function for creating DataFrames if you're implementing a plugin.
+// In a Grafana alerting scenario it needs to operate on decoded frames, which is why this function is
+// preferrable. When encoded data frames are needed, e.g. returned from Grafana HTTP API, it will
 // happen automatically when MarshalJSON() is called.
 func NewDecodedDataFrames(decodedFrames data.Frames) DataFrames {
 	return &dataFrames{
@@ -121,7 +222,7 @@ func NewDecodedDataFrames(decodedFrames data.Frames) DataFrames {
 	}
 }
 
-// NewEncodedDataFrames create new DataFrames from encoded frames.
+// NewEncodedDataFrames instantiates DataFrames from encoded frames.
 //
 // This one is primarily used for creating DataFrames when receiving encoded data frames from an external
 // plugin or similar. This may allow the encoded data frames to be returned to Grafana UI without any additional
@@ -163,5 +264,5 @@ func (df *dataFrames) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	return json.Marshal(encoded)
+	return jsoniter.Marshal(encoded)
 }

@@ -1,6 +1,6 @@
 import React, { FunctionComponent } from 'react';
 import { Themeable } from '../../types';
-import { ColorDefinition, getColorForTheme } from '@grafana/data';
+import { ColorDefinition } from '@grafana/data';
 import { Color } from 'csstype';
 import upperFirst from 'lodash/upperFirst';
 import find from 'lodash/find';
@@ -86,7 +86,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
           key={primaryColor.name}
           isSelected={primaryColor.name === selectedColor}
           variant={ColorSwatchVariant.Large}
-          color={getColorForTheme(primaryColor, theme.type)}
+          color={primaryColor.variants[theme.type]}
           label={upperFirst(primaryColor.hue)}
           onClick={() => onColorSelect(primaryColor)}
           theme={theme}
@@ -105,7 +105,7 @@ const NamedColorsGroup: FunctionComponent<NamedColorsGroupProps> = ({
                 <ColorSwatch
                   key={color.name}
                   isSelected={color.name === selectedColor}
-                  color={getColorForTheme(color, theme.type)}
+                  color={color.variants[theme.type]}
                   onClick={() => onColorSelect(color)}
                   theme={theme}
                 />

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/provisioning/utils"
 	"gopkg.in/yaml.v2"
 )
 
@@ -47,10 +48,11 @@ func (cr *configReader) readConfig(path string) ([]*notificationsAsConfig, error
 		return nil, err
 	}
 
-	checkOrgIDAndOrgName(notifications)
+	if err := checkOrgIDAndOrgName(notifications); err != nil {
+		return nil, err
+	}
 
-	err = validateNotifications(notifications)
-	if err != nil {
+	if err := validateNotifications(notifications); err != nil {
 		return nil, err
 	}
 
@@ -59,6 +61,9 @@ func (cr *configReader) readConfig(path string) ([]*notificationsAsConfig, error
 
 func (cr *configReader) parseNotificationConfig(path string, file os.FileInfo) (*notificationsAsConfig, error) {
 	filename, _ := filepath.Abs(filepath.Join(path, file.Name()))
+
+	// nolint:gosec
+	// We can ignore the gosec G304 warning on this one because `filename` comes from ps.Cfg.ProvisioningPath
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -73,7 +78,7 @@ func (cr *configReader) parseNotificationConfig(path string, file os.FileInfo) (
 	return cfg.mapToNotificationFromConfig(), nil
 }
 
-func checkOrgIDAndOrgName(notifications []*notificationsAsConfig) {
+func checkOrgIDAndOrgName(notifications []*notificationsAsConfig) error {
 	for i := range notifications {
 		for _, notification := range notifications[i].Notifications {
 			if notification.OrgID < 1 {
@@ -81,6 +86,10 @@ func checkOrgIDAndOrgName(notifications []*notificationsAsConfig) {
 					notification.OrgID = 1
 				} else {
 					notification.OrgID = 0
+				}
+			} else {
+				if err := utils.CheckOrgExists(notification.OrgID); err != nil {
+					return fmt.Errorf("failed to provision %q notification: %w", notification.Name, err)
 				}
 			}
 		}
@@ -95,6 +104,7 @@ func checkOrgIDAndOrgName(notifications []*notificationsAsConfig) {
 			}
 		}
 	}
+	return nil
 }
 
 func validateRequiredField(notifications []*notificationsAsConfig) error {

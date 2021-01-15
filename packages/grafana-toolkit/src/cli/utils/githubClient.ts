@@ -3,11 +3,11 @@ import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 const grafanaURL = (owner: string, repo: string) => `https://api.github.com/repos/${owner}/${repo}`;
 const enterpriseURL = 'https://api.github.com/repos/grafana/grafana-enterprise';
 
-// Encapsulates the creation of a client for the Github API
+// Encapsulates the creation of a client for the GitHub API
 //
 // Two key things:
 // 1. You can specify whenever you want the credentials to be required or not when imported.
-// 2. If the the credentials are available as part of the environment, even if
+// 2. If the credentials are available as part of the environment, even if
 // they're not required - the library will use them. This allows us to overcome
 // any API rate limiting imposed without authentication.
 

@@ -78,6 +78,7 @@ export interface EchoEvent<T extends EchoEventType = any, P = any> {
 export enum EchoEventType {
   Performance = 'performance',
   MetaAnalytics = 'meta-analytics',
+  Sentry = 'sentry',
 }
 
 /**
@@ -110,7 +111,7 @@ let singletonInstance: EchoSrv;
 
 /**
  * Used during startup by Grafana to set the EchoSrv so it is available
- * via the the {@link getEchoSrv} to the rest of the application.
+ * via the {@link getEchoSrv} to the rest of the application.
  *
  * @internal
  */

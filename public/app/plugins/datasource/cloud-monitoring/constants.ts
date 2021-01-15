@@ -152,7 +152,7 @@ export const aggOptions = [
     text: 'mean',
     value: 'REDUCE_MEAN',
     valueTypes: [ValueTypes.INT64, ValueTypes.DOUBLE, ValueTypes.MONEY, ValueTypes.DISTRIBUTION],
-    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA],
+    metricKinds: [MetricKind.GAUGE, MetricKind.DELTA, MetricKind.CUMULATIVE],
   },
   {
     text: 'min',
@@ -245,22 +245,6 @@ export const alignmentPeriods = [
   { text: '3d', value: '+259200s' },
   { text: '1w', value: '+604800s' },
 ];
-
-export const cloudMonitoringUnitMappings = {
-  bit: 'bits',
-  By: 'bytes',
-  s: 's',
-  min: 'm',
-  h: 'h',
-  d: 'd',
-  us: 'µs',
-  ms: 'ms',
-  ns: 'ns',
-  percent: 'percent',
-  MiBy: 'mbytes',
-  'By/s': 'Bps',
-  GBy: 'decgbytes',
-};
 
 export const systemLabels = [
   'metadata.system_labels.cloud_account',
