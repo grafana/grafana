@@ -2,13 +2,13 @@
 
 exports[`TimePickerContent renders correctly in full screen 1`] = `
 <div
-  className="css-ajr8sn"
+  className="css-1utm4h"
 >
   <div
-    className="css-ooqtr4"
+    className="css-5pev6g"
   >
     <div
-      className="css-1f2wc71"
+      className="css-11lrf2r"
     >
       <FullScreenForm
         historyOptions={Array []}
@@ -26,7 +26,6 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
             "to": "2019-12-18T07:48:27.433Z",
           }
         }
-        visible={true}
       />
     </div>
     <CustomScrollbar
@@ -39,24 +38,6 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
       hideTracksWhenNotNeeded={false}
       setScrollTop={[Function]}
     >
-      <NarrowScreenForm
-        historyOptions={Array []}
-        isFullscreen={true}
-        onChange={[Function]}
-        onChangeTimeZone={[Function]}
-        timeZone="utc"
-        value={
-          Object {
-            "from": "2019-12-17T07:48:27.433Z",
-            "raw": Object {
-              "from": "2019-12-17T07:48:27.433Z",
-              "to": "2019-12-18T07:48:27.433Z",
-            },
-            "to": "2019-12-18T07:48:27.433Z",
-          }
-        }
-        visible={false}
-      />
       <TimeRangeList
         onSelect={[Function]}
         options={Array []}
@@ -103,33 +84,11 @@ exports[`TimePickerContent renders correctly in full screen 1`] = `
 
 exports[`TimePickerContent renders correctly in narrow screen 1`] = `
 <div
-  className="css-ajr8sn"
+  className="css-1utm4h"
 >
   <div
     className="css-ooqtr4"
   >
-    <div
-      className="css-1f2wc71"
-    >
-      <FullScreenForm
-        historyOptions={Array []}
-        isFullscreen={false}
-        onChange={[Function]}
-        onChangeTimeZone={[Function]}
-        timeZone="utc"
-        value={
-          Object {
-            "from": "2019-12-17T07:48:27.433Z",
-            "raw": Object {
-              "from": "2019-12-17T07:48:27.433Z",
-              "to": "2019-12-18T07:48:27.433Z",
-            },
-            "to": "2019-12-18T07:48:27.433Z",
-          }
-        }
-        visible={false}
-      />
-    </div>
     <CustomScrollbar
       autoHeightMax="100%"
       autoHeightMin="0"
@@ -156,7 +115,6 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
             "to": "2019-12-18T07:48:27.433Z",
           }
         }
-        visible={true}
       />
       <TimeRangeList
         onSelect={[Function]}
@@ -200,13 +158,13 @@ exports[`TimePickerContent renders correctly in narrow screen 1`] = `
 
 exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
 <div
-  className="css-ajr8sn"
+  className="css-1utm4h"
 >
   <div
-    className="css-ooqtr4"
+    className="css-5pev6g"
   >
     <div
-      className="css-1f2wc71"
+      className="css-11lrf2r"
     >
       <FullScreenForm
         history={
@@ -259,7 +217,6 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
             "to": "2019-12-18T07:48:27.433Z",
           }
         }
-        visible={true}
       />
     </div>
     <CustomScrollbar
@@ -272,59 +229,6 @@ exports[`TimePickerContent renders recent absolute ranges correctly 1`] = `
       hideTracksWhenNotNeeded={false}
       setScrollTop={[Function]}
     >
-      <NarrowScreenForm
-        history={
-          Array [
-            Object {
-              "from": "2019-12-17T07:48:27.433Z",
-              "raw": Object {
-                "from": "2019-12-17T07:48:27.433Z",
-                "to": "2019-12-18T07:48:27.433Z",
-              },
-              "to": "2019-12-18T07:48:27.433Z",
-            },
-            Object {
-              "from": "2019-10-17T07:48:27.433Z",
-              "raw": Object {
-                "from": "2019-10-17T07:48:27.433Z",
-                "to": "2019-10-18T07:48:27.433Z",
-              },
-              "to": "2019-10-18T07:48:27.433Z",
-            },
-          ]
-        }
-        historyOptions={
-          Array [
-            Object {
-              "display": "2019-12-17 07:48:27 to 2019-12-18 07:48:27",
-              "from": "2019-12-17 07:48:27",
-              "section": 3,
-              "to": "2019-12-18 07:48:27",
-            },
-            Object {
-              "display": "2019-10-17 07:48:27 to 2019-10-18 07:48:27",
-              "from": "2019-10-17 07:48:27",
-              "section": 3,
-              "to": "2019-10-18 07:48:27",
-            },
-          ]
-        }
-        isFullscreen={true}
-        onChange={[Function]}
-        onChangeTimeZone={[Function]}
-        timeZone="utc"
-        value={
-          Object {
-            "from": "2019-12-17T07:48:27.433Z",
-            "raw": Object {
-              "from": "2019-12-17T07:48:27.433Z",
-              "to": "2019-12-18T07:48:27.433Z",
-            },
-            "to": "2019-12-18T07:48:27.433Z",
-          }
-        }
-        visible={false}
-      />
       <TimeRangeList
         onSelect={[Function]}
         options={Array []}

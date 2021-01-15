@@ -12,36 +12,11 @@ export default {
   title: 'Pickers and Editors/TimePickers/TimeRangeInput',
   component: TimeRangeInput,
   decorators: [withCenteredStory],
-  argTypes: {
-    hideTimeZone: {
-      control: 'boolean',
-    },
-    placeholder: {
-      control: 'text',
-    },
-    clearable: {
-      control: 'boolean',
-    },
-    isReversed: {
-      control: 'boolean',
-    },
-    hideQuickRanges: {
-      control: 'boolean',
-    },
-  },
   parameters: {
     docs: {
       page: mdx,
     },
   },
-};
-
-const args = {
-  hideTimeZone: false,
-  placeholder: undefined,
-  clearable: false,
-  isReversed: true,
-  hideQuickRanges: false,
 };
 
 interface State {
@@ -97,8 +72,6 @@ export const Relative: Story<TimeRangeInputProps> = props => {
   );
 };
 
-Relative.args = args;
-
 export const Absolute: Story<TimeRangeInputProps> = props => {
   const to = dateTime();
   const from = to.subtract(6, 'h');
@@ -118,5 +91,3 @@ export const Absolute: Story<TimeRangeInputProps> = props => {
     props
   );
 };
-
-Absolute.args = args;

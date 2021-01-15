@@ -39,6 +39,7 @@
     "@types/react-color": "3.0.1",
     "@types/react-select": "3.0.8",
     "@types/react-table": "7.0.12",
+    "@testing-library/jest-dom": "5.11.9",
     "@sentry/browser": "5.25.0",
     "@types/slate": "0.47.1",
     "@types/slate-react": "0.22.5",

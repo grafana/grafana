@@ -12,23 +12,6 @@ export default {
   title: 'Pickers and Editors/TimePickers/TimeRangePicker',
   component: TimeRangePicker,
   decorators: [withCenteredStory],
-  argTypes: {
-    hideText: {
-      control: 'boolean',
-    },
-    isSynced: {
-      control: 'boolean',
-    },
-    hideQuickRanges: {
-      control: 'boolean',
-    },
-  },
-};
-
-const args = {
-  hideText: false,
-  isSynced: false,
-  hideQuickRanges: false,
 };
 
 interface State {
@@ -110,8 +93,6 @@ export const Relative: Story<TimeRangePickerProps> = props => {
   );
 };
 
-Relative.args = args;
-
 export const Absolute: Story<TimeRangePickerProps> = props => {
   const to = dateTime();
   const from = to.subtract(6, 'h');
@@ -132,5 +113,3 @@ export const Absolute: Story<TimeRangePickerProps> = props => {
     props
   );
 };
-
-Absolute.args = args;
