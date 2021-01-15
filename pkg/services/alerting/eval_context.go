@@ -187,29 +187,48 @@ func (c *EvalContext) evaluateNotificationTemplateFields() error {
 		return nil
 	}
 
-	templateDataMap := buildTemplateDataMap(c.EvalMatches)
-	c.Rule.Message = evaluateTemplate(c.Rule.Message, templateDataMap)
-	c.Rule.Name = evaluateTemplate(c.Rule.Name, templateDataMap)
+	templateDataMap, err := buildTemplateDataMap(c.EvalMatches)
+	if err != nil {
+		return err
+	}
+
+	ruleMsg, err := evaluateTemplate(c.Rule.Message, templateDataMap)
+	if err != nil {
+		return err
+	}
+	c.Rule.Message = ruleMsg
+
+	ruleName, err := evaluateTemplate(c.Rule.Name, templateDataMap)
+	if err != nil {
+		return err
+	}
+	c.Rule.Name = ruleName
 
 	return nil
 }
 
-func evaluateTemplate(s string, m map[string]string) string {
+func evaluateTemplate(s string, m map[string]string) (string, error) {
 	for k, v := range m {
-		re := regexp.MustCompile(fmt.Sprintf(`\${%s}`, regexp.QuoteMeta(k)))
+		re, err := regexp.Compile(fmt.Sprintf(`\${%s}`, regexp.QuoteMeta(k)))
+		if err != nil {
+			return "", err
+		}
 		s = re.ReplaceAllString(s, v)
 	}
 
-	return s
+	return s, nil
 }
 
 // buildTemplateDataMap builds a map of alert evaluation tag names to a set of associated values (comma separated)
-func buildTemplateDataMap(evalMatches []*EvalMatch) map[string]string {
+func buildTemplateDataMap(evalMatches []*EvalMatch) (map[string]string, error) {
 	var result = map[string]string{}
 	for _, match := range evalMatches {
 		for tagName, tagValue := range match.Tags {
 			// skip duplicate values
-			rVal := regexp.MustCompile(fmt.Sprintf(`\b%s\b`, regexp.QuoteMeta(tagValue)))
+			rVal, err := regexp.Compile(fmt.Sprintf(`\b%s\b`, regexp.QuoteMeta(tagValue)))
+			if err != nil {
+				return nil, err
+			}
 			rMatch := rVal.FindString(result[tagName])
 			if len(rMatch) > 0 {
 				continue
@@ -221,5 +240,5 @@ func buildTemplateDataMap(evalMatches []*EvalMatch) map[string]string {
 			}
 		}
 	}
-	return result
+	return result, nil
 }
