@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 )
@@ -47,18 +46,22 @@ func (ng *AlertNG) validateCondition(c eval.Condition, user *models.SignedInUser
 			refID = c.RefID
 		}
 
-		datasourceID, err := query.GetDatasource()
+		datasourceUID, err := query.GetDatasource()
 		if err != nil {
 			return err
 		}
 
-		if datasourceID == expr.DatasourceID {
+		isExpression, err := query.IsExpression()
+		if err != nil {
+			return err
+		}
+		if isExpression {
 			continue
 		}
 
-		_, err = ng.DatasourceCache.GetDatasource(datasourceID, user, skipCache)
+		_, err = ng.DatasourceCache.GetDatasourceByUID(datasourceUID, user, skipCache)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get datasource: %s: %w", datasourceUID, err)
 		}
 	}
 
