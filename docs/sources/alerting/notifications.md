@@ -230,3 +230,14 @@ Notification services which need public image access are marked as 'external onl
 
 All alert notifications contain a link back to the triggered alert in the Grafana instance.
 This URL is based on the [domain]({{< relref "../administration/configuration/#domain" >}}) setting in Grafana.
+
+## Templating
+
+> **Note:** Alert notification templating is only available in Grafana v7.4 and above.
+
+You can apply data templating to an alert notification's title and message by referring to the matching alert condition query's tags/labels. Data templates are formatted as follows: `{{ .TagName }}`.
+
+For example, taking an alert based on the Prometheus data source, we can specify label names as template variables as follows:
+
+![Alerting notification template](/img/docs/alerting/notification_template.png)
+
