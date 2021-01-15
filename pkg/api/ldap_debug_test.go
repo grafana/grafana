@@ -6,8 +6,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -60,7 +61,7 @@ func getUserFromLDAPContext(t *testing.T, requestURL string) *scenarioContext {
 
 	hs := &HTTPServer{Cfg: setting.NewCfg()}
 
-	sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) response.Response {
+	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		sc.context = c
 		return hs.GetUserFromLDAP(c)
 	})
@@ -329,7 +330,7 @@ func getLDAPStatusContext(t *testing.T) *scenarioContext {
 
 	hs := &HTTPServer{Cfg: setting.NewCfg()}
 
-	sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) response.Response {
+	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		sc.context = c
 		return hs.GetLDAPStatus(c)
 	})
@@ -393,7 +394,7 @@ func postSyncUserWithLDAPContext(t *testing.T, requestURL string, preHook func(*
 		AuthTokenService: auth.NewFakeUserAuthTokenService(),
 	}
 
-	sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) response.Response {
+	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 		sc.context = c
 		return hs.PostSyncUserWithLDAP(c)
 	})

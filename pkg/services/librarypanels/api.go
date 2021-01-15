@@ -18,14 +18,14 @@ func (lps *LibraryPanelService) registerAPIEndpoints() {
 	}
 
 	lps.RouteRegister.Group("/api/library-panels", func(libraryPanels routing.RouteRegister) {
-		libraryPanels.Post("/", middleware.ReqSignedIn, binding.Bind(createLibraryPanelCommand{}), utils.Wrap(lps.createHandler))
-		libraryPanels.Post("/:uid/dashboards/:dashboardId", middleware.ReqSignedIn, utils.Wrap(lps.connectHandler))
-		libraryPanels.Delete("/:uid", middleware.ReqSignedIn, utils.Wrap(lps.deleteHandler))
-		libraryPanels.Delete("/:uid/dashboards/:dashboardId", middleware.ReqSignedIn, utils.Wrap(lps.disconnectHandler))
-		libraryPanels.Get("/", middleware.ReqSignedIn, utils.Wrap(lps.getAllHandler))
-		libraryPanels.Get("/:uid", middleware.ReqSignedIn, utils.Wrap(lps.getHandler))
-		libraryPanels.Get("/:uid/dashboards/", middleware.ReqSignedIn, utils.Wrap(lps.getConnectedDashboardsHandler))
-		libraryPanels.Patch("/:uid", middleware.ReqSignedIn, binding.Bind(patchLibraryPanelCommand{}), utils.Wrap(lps.patchHandler))
+		libraryPanels.Post("/", middleware.ReqSignedIn, binding.Bind(createLibraryPanelCommand{}), routing.Wrap(lps.createHandler))
+		libraryPanels.Post("/:uid/dashboards/:dashboardId", middleware.ReqSignedIn, routing.Wrap(lps.connectHandler))
+		libraryPanels.Delete("/:uid", middleware.ReqSignedIn, routing.Wrap(lps.deleteHandler))
+		libraryPanels.Delete("/:uid/dashboards/:dashboardId", middleware.ReqSignedIn, routing.Wrap(lps.disconnectHandler))
+		libraryPanels.Get("/", middleware.ReqSignedIn, routing.Wrap(lps.getAllHandler))
+		libraryPanels.Get("/:uid", middleware.ReqSignedIn, routing.Wrap(lps.getHandler))
+		libraryPanels.Get("/:uid/dashboards/", middleware.ReqSignedIn, routing.Wrap(lps.getConnectedDashboardsHandler))
+		libraryPanels.Patch("/:uid", middleware.ReqSignedIn, binding.Bind(patchLibraryPanelCommand{}), routing.Wrap(lps.patchHandler))
 	})
 }
 

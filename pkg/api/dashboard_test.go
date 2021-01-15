@@ -7,9 +7,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -1194,7 +1195,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{OrgId: cmd.OrgId, UserId: cmd.UserId}
 
@@ -1225,7 +1226,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{
 				OrgId:  testOrgID,
@@ -1257,7 +1258,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{
 				OrgId:  testOrgID,

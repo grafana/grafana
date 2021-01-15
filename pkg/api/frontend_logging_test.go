@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+
 	"github.com/getsentry/sentry-go"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/utils"
 	"github.com/grafana/grafana/pkg/models"
 	log "github.com/inconshreveable/log15"
 
@@ -32,7 +33,7 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendSentryEvent
 		sc := setupScenarioContext(t, "/log")
 		hs := HTTPServer{}
 
-		handler := utils.Wrap(func(w http.ResponseWriter, c *models.ReqContext) response.Response {
+		handler := routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) response.Response {
 			sc.context = c
 			return hs.logFrontendMessage(c, event)
 		})

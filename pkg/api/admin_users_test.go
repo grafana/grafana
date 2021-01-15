@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -357,7 +358,7 @@ func putAdminScenario(t *testing.T, desc string, url string, routePattern string
 		t.Cleanup(bus.ClearBusHandlers)
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
@@ -382,7 +383,7 @@ func adminLogoutUserScenario(t *testing.T, desc string, url string, routePattern
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			t.Log("Route handler invoked", "url", c.Req.URL)
 
 			sc.context = c
@@ -412,7 +413,7 @@ func adminRevokeUserAuthTokenScenario(t *testing.T, desc string, url string, rou
 
 		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
-		sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
@@ -440,7 +441,7 @@ func adminGetUserAuthTokensScenario(t *testing.T, desc string, url string, route
 
 		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
-		sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
@@ -467,7 +468,7 @@ func adminDisableUserScenario(t *testing.T, desc string, action string, url stri
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 
@@ -489,7 +490,7 @@ func adminDeleteUserScenario(t *testing.T, desc string, url string, routePattern
 		t.Cleanup(bus.ClearBusHandlers)
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 
@@ -507,7 +508,7 @@ func adminCreateUserScenario(t *testing.T, desc string, url string, routePattern
 		t.Cleanup(bus.ClearBusHandlers)
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 

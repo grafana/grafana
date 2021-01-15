@@ -15,18 +15,18 @@ import (
 
 func (ng *AlertNG) registerAPIEndpoints() {
 	ng.RouteRegister.Group("/api/alert-definitions", func(alertDefinitions routing.RouteRegister) {
-		alertDefinitions.Get("", middleware.ReqSignedIn, utils.Wrap(ng.listAlertDefinitions))
-		alertDefinitions.Get("/eval/:alertDefinitionUID", ng.validateOrgAlertDefinition, utils.Wrap(ng.alertDefinitionEvalEndpoint))
-		alertDefinitions.Post("/eval", middleware.ReqSignedIn, binding.Bind(evalAlertConditionCommand{}), utils.Wrap(ng.conditionEvalEndpoint))
-		alertDefinitions.Get("/:alertDefinitionUID", ng.validateOrgAlertDefinition, utils.Wrap(ng.getAlertDefinitionEndpoint))
-		alertDefinitions.Delete("/:alertDefinitionUID", ng.validateOrgAlertDefinition, utils.Wrap(ng.deleteAlertDefinitionEndpoint))
-		alertDefinitions.Post("/", middleware.ReqSignedIn, binding.Bind(saveAlertDefinitionCommand{}), utils.Wrap(ng.createAlertDefinitionEndpoint))
-		alertDefinitions.Put("/:alertDefinitionUID", ng.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionCommand{}), utils.Wrap(ng.updateAlertDefinitionEndpoint))
+		alertDefinitions.Get("", middleware.ReqSignedIn, routing.Wrap(ng.listAlertDefinitions))
+		alertDefinitions.Get("/eval/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.alertDefinitionEvalEndpoint))
+		alertDefinitions.Post("/eval", middleware.ReqSignedIn, binding.Bind(evalAlertConditionCommand{}), routing.Wrap(ng.conditionEvalEndpoint))
+		alertDefinitions.Get("/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.getAlertDefinitionEndpoint))
+		alertDefinitions.Delete("/:alertDefinitionUID", ng.validateOrgAlertDefinition, routing.Wrap(ng.deleteAlertDefinitionEndpoint))
+		alertDefinitions.Post("/", middleware.ReqSignedIn, binding.Bind(saveAlertDefinitionCommand{}), routing.Wrap(ng.createAlertDefinitionEndpoint))
+		alertDefinitions.Put("/:alertDefinitionUID", ng.validateOrgAlertDefinition, binding.Bind(updateAlertDefinitionCommand{}), routing.Wrap(ng.updateAlertDefinitionEndpoint))
 	})
 
 	ng.RouteRegister.Group("/api/ngalert/", func(schedulerRouter routing.RouteRegister) {
-		schedulerRouter.Post("/pause", utils.Wrap(ng.pauseScheduler))
-		schedulerRouter.Post("/unpause", utils.Wrap(ng.unpauseScheduler))
+		schedulerRouter.Post("/pause", routing.Wrap(ng.pauseScheduler))
+		schedulerRouter.Post("/unpause", routing.Wrap(ng.unpauseScheduler))
 	}, middleware.ReqOrgAdmin)
 }
 

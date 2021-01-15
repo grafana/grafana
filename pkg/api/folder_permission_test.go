@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -386,7 +387,7 @@ func updateFolderPermissionScenario(t *testing.T, ctx updatePermissionContext, h
 
 		sc := setupScenarioContext(t, ctx.url)
 
-		sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.OrgId = testOrgID
 			sc.context.UserId = testUserID

@@ -10,9 +10,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -98,7 +99,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 		License: &licensing.OSSLicensingService{},
 	}
 
-	sc.defaultHandler = utils.Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
+	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
 		hs.LoginView(c)
 	})
 
@@ -160,7 +161,7 @@ func TestLoginViewRedirect(t *testing.T) {
 	}
 	hs.Cfg.CookieSecure = true
 
-	sc.defaultHandler = utils.Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
+	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) {
 		c.IsSignedIn = true
 		c.SignedInUser = &models.SignedInUser{
 			UserId: 10,
@@ -337,7 +338,7 @@ func TestLoginPostRedirect(t *testing.T) {
 	}
 	hs.Cfg.CookieSecure = true
 
-	sc.defaultHandler = utils.Wrap(func(w http.ResponseWriter, c *models.ReqContext) response.Response {
+	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) response.Response {
 		cmd := dtos.LoginCommand{
 			User:     "admin",
 			Password: "admin",
@@ -490,7 +491,7 @@ func TestLoginOAuthRedirect(t *testing.T) {
 		License: &licensing.OSSLicensingService{},
 	}
 
-	sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) {
+	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) {
 		hs.LoginView(c)
 	})
 
@@ -524,7 +525,7 @@ func TestLoginInternal(t *testing.T) {
 		log:     log.New("test"),
 	}
 
-	sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) {
+	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) {
 		c.Req.URL.RawQuery = "disableAutoLogin=true"
 		hs.LoginView(c)
 	})
@@ -582,7 +583,7 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 		log:              log.New("hello"),
 	}
 
-	sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) {
+	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) {
 		c.IsSignedIn = true
 		c.SignedInUser = &models.SignedInUser{
 			UserId: 10,
@@ -620,7 +621,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 		HooksService:     hookService,
 	}
 
-	sc.defaultHandler = utils.Wrap(func(w http.ResponseWriter, c *models.ReqContext) response.Response {
+	sc.defaultHandler = routing.Wrap(func(w http.ResponseWriter, c *models.ReqContext) response.Response {
 		cmd := dtos.LoginCommand{
 			User:     "admin",
 			Password: "admin",

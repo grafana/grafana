@@ -5,30 +5,8 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
-	"gopkg.in/macaron.v1"
 )
-
-var (
-	ServerError = func(err error) response.Response {
-		return Error(500, "Server error", err)
-	}
-)
-
-func Wrap(action interface{}) macaron.Handler {
-	return func(c *models.ReqContext) {
-		var res response.Response
-		val, err := c.Invoke(action)
-		if err == nil && val != nil && len(val) > 0 {
-			res = val[0].Interface().(response.Response)
-		} else {
-			res = ServerError(err)
-		}
-
-		res.WriteTo(c)
-	}
-}
 
 // JSON creates a JSON response.
 func JSON(status int, body interface{}) *response.NormalResponse {

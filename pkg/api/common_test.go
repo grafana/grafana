@@ -7,8 +7,9 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/api/routing"
+
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
@@ -32,7 +33,7 @@ func loggedInUserScenarioWithRole(t *testing.T, desc string, method string, url 
 		t.Cleanup(bus.ClearBusHandlers)
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserId = testUserID
 			sc.context.OrgId = testOrgID
@@ -61,7 +62,7 @@ func anonymousUserScenario(t *testing.T, desc string, method string, url string,
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = utils.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			if sc.handlerFunc != nil {
 				return sc.handlerFunc(sc.context)
