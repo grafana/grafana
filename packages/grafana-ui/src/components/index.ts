@@ -47,9 +47,7 @@ export { ModalHeader } from './Modal/ModalHeader';
 export { ModalTabsHeader } from './Modal/ModalTabsHeader';
 export { ModalTabContent } from './Modal/ModalTabContent';
 export { ModalsProvider, ModalRoot, ModalsController } from './Modal/ModalsContext';
-
-// Data Link Modal
-export { DataLinkModal } from './DataLinkModal/DataLinkModal';
+export { DataLinkModal } from './Modal/DataLinkModal';
 
 // Renderless
 export { SetInterval } from './SetInterval/SetInterval';
