@@ -1,12 +1,13 @@
+import { Field, PanelProps } from '@grafana/data';
+import { GraphNG, GraphNGLegendEvent, TooltipPlugin, ZoomPlugin } from '@grafana/ui';
+import { getFieldLinksForExplore } from 'app/features/explore/utils/links';
 import React, { useCallback } from 'react';
-import { TooltipPlugin, ZoomPlugin, GraphNG, GraphNGLegendEvent } from '@grafana/ui';
-import { PanelProps } from '@grafana/data';
-import { Options } from './types';
-import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
-import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
-import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
-import { hideSeriesConfigFactory } from './overrides/hideSeriesConfigFactory';
 import { changeSeriesColorConfigFactory } from './overrides/colorSeriesConfigFactory';
+import { hideSeriesConfigFactory } from './overrides/hideSeriesConfigFactory';
+import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
+import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
+import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
+import { Options } from './types';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -29,6 +30,10 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     [fieldConfig, onFieldConfigChange, data.series]
   );
 
+  const getFieldLinks = (field: Field, rowIndex: number) => {
+    return getFieldLinksForExplore({ field, rowIndex, range: timeRange });
+  };
+
   const onSeriesColorChange = useCallback(
     (label: string, color: string) => {
       onFieldConfigChange(changeSeriesColorConfigFactory(label, color, fieldConfig));
@@ -47,10 +52,14 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       onLegendClick={onLegendClick}
       onSeriesColorChange={onSeriesColorChange}
     >
-      <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
+      <TooltipPlugin mode={options.tooltipOptions.mode} timeZone={timeZone} />
       <ZoomPlugin onZoom={onChangeTimeRange} />
       <ContextMenuPlugin timeZone={timeZone} replaceVariables={replaceVariables} />
-      {data.annotations ? <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} /> : <></>}
+      {data.annotations ? (
+        <ExemplarsPlugin exemplars={data.annotations} timeZone={timeZone} getFieldLinks={getFieldLinks} />
+      ) : (
+        <></>
+      )}
       {data.annotations ? <AnnotationsPlugin annotations={data.annotations} timeZone={timeZone} /> : <></>}
     </GraphNG>
   );

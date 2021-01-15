@@ -33,65 +33,82 @@ func TestRemoveGitBuildFromName(t *testing.T) {
 func TestExtractFiles(t *testing.T) {
 	t.Run("Should preserve file permissions for plugin backend binaries for linux and darwin", func(t *testing.T) {
 		skipWindows(t)
-		pluginDir, del := setupFakePluginsDir(t)
-		defer del()
+		pluginsDir := setupFakePluginsDir(t)
 
 		archive := filepath.Join("testdata", "grafana-simple-json-datasource-ec18fa4da8096a952608a7e4c7782b4260b41bcf.zip")
-		err := extractFiles(archive, "grafana-simple-json-datasource", pluginDir, false)
+		err := extractFiles(archive, "grafana-simple-json-datasource", pluginsDir, false)
 		require.NoError(t, err)
 
 		// File in zip has permissions 755
-		fileInfo, err := os.Stat(filepath.Join(pluginDir, "grafana-simple-json-datasource",
+		fileInfo, err := os.Stat(filepath.Join(pluginsDir, "grafana-simple-json-datasource",
 			"simple-plugin_darwin_amd64"))
 		require.NoError(t, err)
 		assert.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
 
 		// File in zip has permission 755
-		fileInfo, err = os.Stat(pluginDir + "/grafana-simple-json-datasource/simple-plugin_linux_amd64")
+		fileInfo, err = os.Stat(pluginsDir + "/grafana-simple-json-datasource/simple-plugin_linux_amd64")
 		require.NoError(t, err)
 		assert.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
 
 		// File in zip has permission 644
-		fileInfo, err = os.Stat(pluginDir + "/grafana-simple-json-datasource/simple-plugin_windows_amd64.exe")
+		fileInfo, err = os.Stat(pluginsDir + "/grafana-simple-json-datasource/simple-plugin_windows_amd64.exe")
 		require.NoError(t, err)
 		assert.Equal(t, "-rw-r--r--", fileInfo.Mode().String())
 
 		// File in zip has permission 755
-		fileInfo, err = os.Stat(pluginDir + "/grafana-simple-json-datasource/non-plugin-binary")
+		fileInfo, err = os.Stat(pluginsDir + "/grafana-simple-json-datasource/non-plugin-binary")
 		require.NoError(t, err)
 		assert.Equal(t, "-rwxr-xr-x", fileInfo.Mode().String())
 	})
 
 	t.Run("Should ignore symlinks if not allowed", func(t *testing.T) {
-		pluginDir, del := setupFakePluginsDir(t)
-		defer del()
+		pluginsDir := setupFakePluginsDir(t)
 
-		err := extractFiles("testdata/plugin-with-symlink.zip", "plugin-with-symlink", pluginDir, false)
+		err := extractFiles("testdata/plugin-with-symlink.zip", "plugin-with-symlink", pluginsDir, false)
 		require.NoError(t, err)
 
-		_, err = os.Stat(pluginDir + "/plugin-with-symlink/text.txt")
+		_, err = os.Stat(pluginsDir + "/plugin-with-symlink/text.txt")
 		require.NoError(t, err)
-		_, err = os.Stat(pluginDir + "/plugin-with-symlink/symlink_to_txt")
-		assert.NotNil(t, err)
+		_, err = os.Stat(pluginsDir + "/plugin-with-symlink/symlink_to_txt")
+		assert.Error(t, err)
 	})
 
 	t.Run("Should extract symlinks if allowed", func(t *testing.T) {
 		skipWindows(t)
-		pluginDir, del := setupFakePluginsDir(t)
-		defer del()
+		pluginsDir := setupFakePluginsDir(t)
 
-		err := extractFiles("testdata/plugin-with-symlink.zip", "plugin-with-symlink", pluginDir, true)
+		err := extractFiles("testdata/plugin-with-symlink.zip", "plugin-with-symlink", pluginsDir, true)
 		require.NoError(t, err)
 
-		_, err = os.Stat(pluginDir + "/plugin-with-symlink/symlink_to_txt")
+		_, err = os.Stat(pluginsDir + "/plugin-with-symlink/symlink_to_txt")
 		require.NoError(t, err)
-		fmt.Println(err)
+	})
+
+	t.Run("Should detect if archive members point outside of the destination directory", func(t *testing.T) {
+		pluginsDir := setupFakePluginsDir(t)
+
+		err := extractFiles("testdata/plugin-with-parent-member.zip", "plugin-with-parent-member",
+			pluginsDir, true)
+		require.EqualError(t, err, fmt.Sprintf(
+			`archive member "../member.txt" tries to write outside of plugin directory: %q, this can be a security risk`,
+			pluginsDir,
+		))
+	})
+
+	t.Run("Should detect if archive members are absolute", func(t *testing.T) {
+		pluginsDir := setupFakePluginsDir(t)
+
+		err := extractFiles("testdata/plugin-with-absolute-member.zip", "plugin-with-absolute-member",
+			pluginsDir, true)
+		require.EqualError(t, err, fmt.Sprintf(
+			`archive member "/member.txt" tries to write outside of plugin directory: %q, this can be a security risk`,
+			pluginsDir,
+		))
 	})
 }
 
 func TestInstallPluginCommand(t *testing.T) {
-	pluginsDir, cleanUp := setupFakePluginsDir(t)
-	defer cleanUp()
+	pluginsDir := setupFakePluginsDir(t)
 	c, err := commandstest.NewCliContext(map[string]string{"pluginsDir": pluginsDir})
 	require.NoError(t, err)
 
@@ -132,29 +149,13 @@ func TestInstallPluginCommand(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestIsPathSafe(t *testing.T) {
-	dest := fmt.Sprintf("%stest%spath", string(os.PathSeparator), string(os.PathSeparator))
-
-	t.Run("Should be true on nested destinations", func(t *testing.T) {
-		assert.True(t, isPathSafe("dest", dest))
-		assert.True(t, isPathSafe("dest/one", dest))
-		assert.True(t, isPathSafe("../path/dest/one", dest))
-	})
-
-	t.Run("Should be false on destinations outside of path", func(t *testing.T) {
-		assert.False(t, isPathSafe("../dest", dest))
-		assert.False(t, isPathSafe("../../", dest))
-		assert.False(t, isPathSafe("../../test", dest))
-	})
-}
-
 func TestSelectVersion(t *testing.T) {
 	t.Run("Should return error when requested version does not exist", func(t *testing.T) {
 		_, err := SelectVersion(
 			makePluginWithVersions(versionArg{Version: "version"}),
 			"1.1.1",
 		)
-		assert.NotNil(t, err)
+		assert.Error(t, err)
 	})
 
 	t.Run("Should return error when no version supports current arch", func(t *testing.T) {
@@ -162,7 +163,7 @@ func TestSelectVersion(t *testing.T) {
 			makePluginWithVersions(versionArg{Version: "version", Arch: []string{"non-existent"}}),
 			"",
 		)
-		assert.NotNil(t, err)
+		assert.Error(t, err)
 	})
 
 	t.Run("Should return error when requested version does not support current arch", func(t *testing.T) {
@@ -173,7 +174,7 @@ func TestSelectVersion(t *testing.T) {
 			),
 			"1.1.1",
 		)
-		assert.NotNil(t, err)
+		assert.Error(t, err)
 	})
 
 	t.Run("Should return latest available for arch when no version specified", func(t *testing.T) {
@@ -210,18 +211,22 @@ func TestSelectVersion(t *testing.T) {
 	})
 }
 
-func setupFakePluginsDir(t *testing.T) (string, func()) {
+func setupFakePluginsDir(t *testing.T) string {
 	dirname := "testdata/fake-plugins-dir"
 	err := os.RemoveAll(dirname)
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	err = os.MkdirAll(dirname, 0750)
-	require.Nil(t, err)
-
-	return dirname, func() {
+	require.NoError(t, err)
+	t.Cleanup(func() {
 		err := os.RemoveAll(dirname)
-		require.NoError(t, err)
-	}
+		assert.NoError(t, err)
+	})
+
+	dirname, err = filepath.Abs(dirname)
+	require.NoError(t, err)
+
+	return dirname
 }
 
 func skipWindows(t *testing.T) {

@@ -58,6 +58,10 @@ export class UPlotConfigBuilder {
     this.series.push(new UPlotSeriesBuilder(props));
   }
 
+  getSeries() {
+    return this.series;
+  }
+
   /** Add or update the scale with the scale key */
   addScale(props: ScaleProps) {
     const current = this.scales.find(v => v.props.scaleKey === props.scaleKey);

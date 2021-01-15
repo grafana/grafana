@@ -34,7 +34,6 @@ export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
   legend?: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
   onLegendClick?: (event: GraphNGLegendEvent) => void;
-  onSeriesColorChange?: (label: string, color: string) => void;
 }
 
 const defaultConfig: GraphFieldConfig = {
@@ -53,7 +52,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   timeRange,
   timeZone,
   onLegendClick,
-  onSeriesColorChange,
   ...plotProps
 }) => {
   const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
@@ -201,7 +199,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         showPoints,
         pointSize: customConfig.pointSize,
         pointColor: customConfig.pointColor ?? seriesColor,
-        fillOpacity,
+        fillOpacity: fillOpacity,
         spanNulls: customConfig.spanNulls || false,
         show: !customConfig.hideFrom?.graph,
         fillGradient: customConfig.fillGradient,
@@ -244,7 +242,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
           placement={legend!.placement}
           items={legendItemsRef.current}
           displayMode={legend!.displayMode}
-          onSeriesColorChange={onSeriesColorChange}
         />
       </VizLayout.Legend>
     );
