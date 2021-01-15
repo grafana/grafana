@@ -137,41 +137,49 @@ function toStringProcessor(value: any): DisplayValue {
   return { text: _.toString(value), numeric: toNumber(value) };
 }
 
+function getSignificantDigitCount(n: number) {
+  //remove decimal and make positive
+  n = Math.abs(+String(n).replace('.', ''));
+  if (n === 0) {
+    return 0;
+  }
+
+  // kill the 0s at the end of n
+  while (n !== 0 && n % 10 === 0) {
+    n /= 10;
+  }
+
+  // get number of digits
+  return Math.floor(Math.log(n) / Math.LN10) + 1;
+}
+
 export function getDecimalsForValue(value: number, decimalOverride?: DecimalCount): DecimalInfo {
   if (_.isNumber(decimalOverride)) {
     // It's important that scaledDecimals is null here
     return { decimals: decimalOverride, scaledDecimals: null };
   }
 
-  let dec = -Math.floor(Math.log(Math.abs(value)) / Math.LN10) + 1;
-  const magn = Math.pow(10, -dec);
-  const norm = value / magn; // norm is between 1.0 and 10.0
-  let size;
-
-  if (norm < 1.5) {
-    size = 1;
-  } else if (norm < 3) {
-    size = 2;
-    // special case for 2.5, requires an extra decimal
-    if (norm > 2.25) {
-      size = 2.5;
-      ++dec;
-    }
-  } else if (norm < 7.5) {
-    size = 5;
-  } else {
-    size = 10;
+  if (value === 0) {
+    return { decimals: 0, scaledDecimals: 0 };
   }
 
-  size *= magn;
+  const digits = getSignificantDigitCount(value);
+  const log10 = Math.floor(Math.log(Math.abs(value)) / Math.LN10);
+  let dec = -log10 + 1;
+  const magn = Math.pow(10, -dec);
+  const norm = value / magn; // norm is between 1.0 and 10.0
 
-  // reduce starting decimals if not needed
+  // special case for 2.5, requires an extra decimal
+  if (norm > 2.25) {
+    ++dec;
+  }
+
   if (value % 1 === 0) {
     dec = 0;
   }
 
   const decimals = Math.max(0, dec);
-  const scaledDecimals = decimals - Math.floor(Math.log(size) / Math.LN10) + 2;
+  const scaledDecimals = decimals - log10 + digits - 1;
 
   return { decimals, scaledDecimals };
 }

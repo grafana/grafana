@@ -43,7 +43,7 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/gosimple/slug v1.9.0
 	github.com/grafana/grafana-plugin-model v0.0.0-20190930120109-1fc953a61fb4
-	github.com/grafana/grafana-plugin-sdk-go v0.79.0
+	github.com/grafana/grafana-plugin-sdk-go v0.81.0
 	github.com/grafana/loki v1.6.2-0.20201026154740-6978ee5d7387
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.1
 	github.com/hashicorp/go-hclog v0.14.1
@@ -53,10 +53,11 @@ require (
 	github.com/influxdata/influxdb-client-go/v2 v2.2.0
 	github.com/jmespath/go-jmespath v0.4.0
 	github.com/jonboulle/clockwork v0.2.2 // indirect
+	github.com/json-iterator/go v1.1.10
 	github.com/jung-kurt/gofpdf v1.10.1
 	github.com/lib/pq v1.9.0
 	github.com/linkedin/goavro/v2 v2.9.7
-	github.com/magefile/mage v1.9.0
+	github.com/magefile/mage v1.10.0
 	github.com/mattn/go-isatty v0.0.12
 	github.com/mattn/go-sqlite3 v1.14.6
 	github.com/opentracing/opentracing-go v1.2.0

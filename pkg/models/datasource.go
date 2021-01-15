@@ -37,6 +37,7 @@ var (
 	ErrDatasourceIsReadOnly              = errors.New("data source is readonly, can only be updated from configuration")
 	ErrDataSourceAccessDenied            = errors.New("data source access denied")
 	ErrDataSourceFailedGenerateUniqueUid = errors.New("failed to generate unique datasource ID")
+	ErrDataSourceIdentifierNotSet        = errors.New("unique identifier and org id are needed to be able to get or delete a datasource")
 )
 
 type DsAccess string
@@ -184,16 +185,14 @@ type UpdateDataSourceCommand struct {
 	Result *DataSource
 }
 
-type DeleteDataSourceByIdCommand struct {
-	Id    int64
-	OrgId int64
+// DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
+// At least one of the UID, ID, or Name properties must be set in addition to OrgID.
+type DeleteDataSourceCommand struct {
+	ID   int64
+	UID  string
+	Name string
 
-	DeletedDatasourcesCount int64
-}
-
-type DeleteDataSourceByNameCommand struct {
-	Name  string
-	OrgId int64
+	OrgID int64
 
 	DeletedDatasourcesCount int64
 }
@@ -214,15 +213,15 @@ type GetDefaultDataSourceQuery struct {
 	Result *DataSource
 }
 
-type GetDataSourceByIdQuery struct {
-	Id     int64
-	OrgId  int64
-	Result *DataSource
-}
+// GetDataSourceQuery will get a DataSource based on OrgID as well as the UID (preferred), ID, or Name.
+// At least one of the UID, ID, or Name properties must be set in addition to OrgID.
+type GetDataSourceQuery struct {
+	Id   int64
+	Uid  string
+	Name string
 
-type GetDataSourceByNameQuery struct {
-	Name   string
-	OrgId  int64
+	OrgId int64
+
 	Result *DataSource
 }
 

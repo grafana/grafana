@@ -136,7 +136,7 @@ func QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.Que
 		datasourceID = req.PluginContext.DataSourceInstanceSettings.ID
 	}
 
-	getDsInfo := &models.GetDataSourceByIdQuery{
+	getDsInfo := &models.GetDataSourceQuery{
 		OrgId: req.PluginContext.OrgID,
 		Id:    datasourceID,
 	}
