@@ -10,6 +10,7 @@ import {
   getColorForTheme,
   FieldColorConfigSettings,
   FieldColorSeriesByMode,
+  getFieldColorMode,
 } from '@grafana/data';
 import { Select } from '../Select/Select';
 import { ColorValueEditor } from './color';
@@ -26,6 +27,7 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
   const theme = useTheme();
   const styles = useStyles(getStyles);
 
+  const colorMode = getFieldColorMode(value?.mode);
   const availableOptions = item.settings?.byValueSupport
     ? fieldColorModeRegistry.list()
     : fieldColorModeRegistry.list().filter(m => !m.isByValue);
@@ -79,7 +81,7 @@ export const FieldColorEditor: React.FC<FieldConfigEditorProps<FieldColor | unde
     );
   }
 
-  if (item.settings?.bySeriesSupport) {
+  if (item.settings?.bySeriesSupport && colorMode.isByValue) {
     const seriesModes: Array<SelectableValue<FieldColorSeriesByMode>> = [
       { label: 'Last', value: 'last' },
       { label: 'Min', value: 'min' },
