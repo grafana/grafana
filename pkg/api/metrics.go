@@ -78,7 +78,6 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		if !hasExpr {
 			request.Queries[i].DataSource = ds // datasource comes from Model with expressions.
 		}
-
 	}
 
 	var resp *tsdb.Response
