@@ -1,10 +1,9 @@
 import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
-import { AppEvents } from '@grafana/data';
+import { AppEvents, DataQueryErrorType, EventBusExtended } from '@grafana/data';
 
 import { BackendSrv } from '../services/backend_srv';
-import { Emitter } from '../utils/emitter';
 import { ContextSrv, User } from '../services/context_srv';
 import { describe, expect } from '../../../test/lib/common';
 import { BackendSrvRequest, FetchError } from '@grafana/runtime';
@@ -35,9 +34,11 @@ const getTestContext = (overides?: object) => {
     };
     return of(mockedResponse);
   });
-  const appEventsMock: Emitter = ({
+
+  const appEventsMock: EventBusExtended = ({
     emit: jest.fn(),
-  } as any) as Emitter;
+  } as any) as EventBusExtended;
+
   const user: User = ({
     isSignedIn: props.isSignedIn,
     orgId: props.orgId,
@@ -352,6 +353,7 @@ describe('backendSrv', () => {
         expect(unsubscribe).toHaveBeenCalledTimes(1);
 
         expect(slowError).toEqual({
+          type: DataQueryErrorType.Cancelled,
           cancelled: true,
           data: null,
           status: -1,
@@ -539,7 +541,7 @@ describe('backendSrv', () => {
           catchedError = err;
         }
 
-        expect(catchedError.cancelled).toEqual(true);
+        expect(catchedError.type).toEqual(DataQueryErrorType.Cancelled);
         expect(catchedError.statusText).toEqual('Request was aborted');
         expect(unsubscribe).toHaveBeenCalledTimes(2);
       });

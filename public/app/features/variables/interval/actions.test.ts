@@ -2,22 +2,23 @@ import { getRootReducer } from '../state/helpers';
 import { reduxTester } from '../../../../test/core/redux/reduxTester';
 import { TemplatingState } from '../state/reducers';
 import { toVariableIdentifier, toVariablePayload } from '../state/types';
-import {
-  updateAutoValue,
-  UpdateAutoValueDependencies,
-  updateIntervalVariableOptions,
-  UpdateIntervalVariableOptionsDependencies,
-} from './actions';
+import { updateAutoValue, UpdateAutoValueDependencies, updateIntervalVariableOptions } from './actions';
 import { createIntervalOptions } from './reducer';
-import { setCurrentVariableValue, addVariable } from '../state/sharedReducer';
+import {
+  addVariable,
+  setCurrentVariableValue,
+  variableStateFailed,
+  variableStateFetching,
+} from '../state/sharedReducer';
 import { variableAdapters } from '../adapters';
 import { createIntervalVariableAdapter } from './adapter';
-import { Emitter } from 'app/core/core';
-import { AppEvents, dateTime } from '@grafana/data';
+import { dateTime } from '@grafana/data';
 import { getTimeSrv, setTimeSrv, TimeSrv } from '../../dashboard/services/TimeSrv';
 import { TemplateSrv } from '../../templating/template_srv';
 import { intervalBuilder } from '../shared/testing/builders';
-import kbn from 'app/core/utils/kbn';
+import { updateOptions } from '../state/actions';
+import { notifyApp } from '../../../core/actions';
+import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 
 describe('interval actions', () => {
   variableAdapters.setInit(() => [createIntervalVariableAdapter()]);
@@ -45,8 +46,9 @@ describe('interval actions', () => {
     });
   });
 
-  describe('when updateIntervalVariableOptions is dispatched but something throws', () => {
-    it('then an app event should be emitted', async () => {
+  describe('when updateOptions is dispatched but something throws', () => {
+    silenceConsoleOutput();
+    it('then an notifyApp action should be dispatched', async () => {
       const timeSrvMock = ({
         timeRange: jest.fn().mockReturnValue({
           from: dateTime(new Date())
@@ -67,23 +69,36 @@ describe('interval actions', () => {
         .withAuto(true)
         .withAutoMin('1xyz') // illegal interval string
         .build();
-      const appEventMock = ({
-        emit: jest.fn(),
-      } as unknown) as Emitter;
-      const dependencies: UpdateIntervalVariableOptionsDependencies = { appEvents: appEventMock };
 
-      await reduxTester<{ templating: TemplatingState }>()
+      const tester = await reduxTester<{ templating: TemplatingState }>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(addVariable(toVariablePayload(interval, { global: false, index: 0, model: interval })))
-        .whenAsyncActionIsDispatched(updateIntervalVariableOptions(toVariableIdentifier(interval), dependencies), true);
+        .whenAsyncActionIsDispatched(updateOptions(toVariableIdentifier(interval)), true);
 
-      expect(appEventMock.emit).toHaveBeenCalledTimes(1);
-      expect(appEventMock.emit).toHaveBeenCalledWith(AppEvents.alertError, [
-        'Templating',
-        `Invalid interval string, has to be either unit-less or end with one of the following units: "${Object.keys(
-          kbn.intervalsInSeconds
-        ).join(', ')}"`,
-      ]);
+      tester.thenDispatchedActionsPredicateShouldEqual(dispatchedActions => {
+        const expectedNumberOfActions = 4;
+        expect(dispatchedActions[0]).toEqual(variableStateFetching(toVariablePayload(interval)));
+        expect(dispatchedActions[1]).toEqual(createIntervalOptions(toVariablePayload(interval)));
+        expect(dispatchedActions[2]).toEqual(
+          variableStateFailed(
+            toVariablePayload(interval, {
+              error: new Error(
+                'Invalid interval string, has to be either unit-less or end with one of the following units: "y, M, w, d, h, m, s, ms"'
+              ),
+            })
+          )
+        );
+
+        expect(dispatchedActions[3].type).toEqual(notifyApp.type);
+        expect(dispatchedActions[3].payload.title).toEqual('Templating [0]');
+        expect(dispatchedActions[3].payload.text).toEqual(
+          'Error updating options: Invalid interval string, has to be either unit-less or end with one of the following units: "y, M, w, d, h, m, s, ms"'
+        );
+        expect(dispatchedActions[3].payload.severity).toEqual('error');
+
+        return dispatchedActions.length === expectedNumberOfActions;
+      });
+
       setTimeSrv(originalTimeSrv);
     });
   });
@@ -97,9 +112,7 @@ describe('interval actions', () => {
           .build();
 
         const dependencies: UpdateAutoValueDependencies = {
-          kbn: {
-            calculateInterval: jest.fn(),
-          } as any,
+          calculateInterval: jest.fn(),
           getTimeSrv: () => {
             return ({
               timeRange: jest.fn().mockReturnValue({
@@ -124,7 +137,7 @@ describe('interval actions', () => {
           )
           .whenAsyncActionIsDispatched(updateAutoValue(toVariableIdentifier(interval), dependencies), true);
 
-        expect(dependencies.kbn.calculateInterval).toHaveBeenCalledTimes(0);
+        expect(dependencies.calculateInterval).toHaveBeenCalledTimes(0);
         expect(dependencies.getTimeSrv().timeRange).toHaveBeenCalledTimes(0);
         expect(dependencies.templateSrv.setGrafanaVariable).toHaveBeenCalledTimes(0);
       });
@@ -150,9 +163,7 @@ describe('interval actions', () => {
         });
         const setGrafanaVariableMock = jest.fn();
         const dependencies: UpdateAutoValueDependencies = {
-          kbn: {
-            calculateInterval: jest.fn().mockReturnValue({ interval: '10s' }),
-          } as any,
+          calculateInterval: jest.fn().mockReturnValue({ interval: '10s' }),
           getTimeSrv: () => {
             return ({
               timeRange: timeRangeMock,
@@ -170,8 +181,8 @@ describe('interval actions', () => {
           )
           .whenAsyncActionIsDispatched(updateAutoValue(toVariableIdentifier(interval), dependencies), true);
 
-        expect(dependencies.kbn.calculateInterval).toHaveBeenCalledTimes(1);
-        expect(dependencies.kbn.calculateInterval).toHaveBeenCalledWith(
+        expect(dependencies.calculateInterval).toHaveBeenCalledTimes(1);
+        expect(dependencies.calculateInterval).toHaveBeenCalledWith(
           {
             from: '2001-01-01',
             to: '2001-01-02',

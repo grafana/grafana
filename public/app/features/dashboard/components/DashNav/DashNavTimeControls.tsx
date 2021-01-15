@@ -1,4 +1,4 @@
-// Libaries
+// Libraries
 import React, { Component } from 'react';
 import { dateMath, GrafanaTheme, TimeZone } from '@grafana/data';
 import { css } from 'emotion';
@@ -8,16 +8,12 @@ import { DashboardModel } from '../../state';
 import { LocationState, CoreEvents } from 'app/types';
 import { TimeRange } from '@grafana/data';
 
-// State
-import { updateTimeZoneForSession } from 'app/features/profile/state/reducers';
-
 // Components
-import { RefreshPicker, withTheme, stylesFactory, Themeable } from '@grafana/ui';
+import { RefreshPicker, withTheme, stylesFactory, Themeable, defaultIntervals } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 
 // Utils & Services
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { defaultIntervals } from '@grafana/ui/src/components/RefreshPicker/RefreshPicker';
 import { appEvents } from 'app/core/core';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
@@ -32,7 +28,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 export interface Props extends Themeable {
   dashboard: DashboardModel;
   location: LocationState;
-  onChangeTimeZone: typeof updateTimeZoneForSession;
+  onChangeTimeZone: (timeZone: TimeZone) => void;
 }
 class UnthemedDashNavTimeControls extends Component<Props> {
   componentDidMount() {

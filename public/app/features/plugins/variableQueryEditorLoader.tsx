@@ -2,16 +2,16 @@ import coreModule from 'app/core/core_module';
 import { importDataSourcePlugin } from './plugin_loader';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import DefaultVariableQueryEditor from '../variables/editor/DefaultVariableQueryEditor';
+import { LegacyVariableQueryEditor } from '../variables/editor/LegacyVariableQueryEditor';
 import { DataSourcePluginMeta } from '@grafana/data';
-import { TemplateSrv } from '../templating/template_srv';
+import { TemplateSrv } from '@grafana/runtime';
 
 async function loadComponent(meta: DataSourcePluginMeta) {
   const dsPlugin = await importDataSourcePlugin(meta);
   if (dsPlugin.components.VariableQueryEditor) {
     return dsPlugin.components.VariableQueryEditor;
   } else {
-    return DefaultVariableQueryEditor;
+    return LegacyVariableQueryEditor;
   }
 }
 

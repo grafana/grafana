@@ -2,6 +2,7 @@ import React, { FC } from 'react';
 import { ThresholdsConfig, ThresholdsMode, VizOrientation } from '@grafana/data';
 import { BarGauge, BarGaugeDisplayMode } from '../BarGauge/BarGauge';
 import { TableCellProps, TableCellDisplayMode } from './types';
+import { getFieldConfigWithMinMax } from '@grafana/data/src/field/scale';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -18,13 +19,9 @@ const defaultScale: ThresholdsConfig = {
 };
 
 export const BarGaugeCell: FC<TableCellProps> = props => {
-  const { field, column, tableStyles, cell } = props;
+  const { field, column, tableStyles, cell, cellProps } = props;
 
-  if (!field.display) {
-    return null;
-  }
-
-  let { config } = field;
+  let config = getFieldConfigWithMinMax(field, false);
   if (!config.thresholds) {
     config = {
       ...config,
@@ -32,7 +29,7 @@ export const BarGaugeCell: FC<TableCellProps> = props => {
     };
   }
 
-  const displayValue = field.display(cell.value);
+  const displayValue = field.display!(cell.value);
   let barGaugeMode = BarGaugeDisplayMode.Gradient;
 
   if (field.config.custom && field.config.custom.displayMode === TableCellDisplayMode.LcdGauge) {
@@ -49,7 +46,7 @@ export const BarGaugeCell: FC<TableCellProps> = props => {
   }
 
   return (
-    <div className={tableStyles.tableCell}>
+    <div {...cellProps} className={tableStyles.cellContainer}>
       <BarGauge
         width={width}
         height={tableStyles.cellHeightInner}

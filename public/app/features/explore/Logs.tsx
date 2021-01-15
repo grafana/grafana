@@ -40,6 +40,8 @@ function renderMetaItem(value: any, kind: LogsMetaKind) {
         <LogLabels labels={value} />
       </span>
     );
+  } else if (kind === LogsMetaKind.Error) {
+    return <span className="logs-meta-item__error">{value}</span>;
   }
   return value;
 }
@@ -77,18 +79,20 @@ interface State {
   wrapLogMessage: boolean;
   logsSortOrder: LogsSortOrder | null;
   isFlipping: boolean;
+  showDetectedFields: string[];
 }
 
 export class Logs extends PureComponent<Props, State> {
   flipOrderTimer: NodeJS.Timeout;
   cancelFlippingTimer: NodeJS.Timeout;
 
-  state = {
+  state: State = {
     showLabels: store.getBool(SETTINGS_KEYS.showLabels, false),
     showTime: store.getBool(SETTINGS_KEYS.showTime, true),
     wrapLogMessage: store.getBool(SETTINGS_KEYS.wrapLogMessage, true),
     logsSortOrder: null,
     isFlipping: false,
+    showDetectedFields: [],
   };
 
   componentWillUnmount() {
@@ -170,6 +174,37 @@ export class Logs extends PureComponent<Props, State> {
     }
   };
 
+  showDetectedField = (key: string) => {
+    const index = this.state.showDetectedFields.indexOf(key);
+
+    if (index === -1) {
+      this.setState(state => {
+        return {
+          showDetectedFields: state.showDetectedFields.concat(key),
+        };
+      });
+    }
+  };
+
+  hideDetectedField = (key: string) => {
+    const index = this.state.showDetectedFields.indexOf(key);
+    if (index > -1) {
+      this.setState(state => {
+        return {
+          showDetectedFields: state.showDetectedFields.filter(k => key !== k),
+        };
+      });
+    }
+  };
+
+  clearDetectedFields = () => {
+    this.setState(state => {
+      return {
+        showDetectedFields: [],
+      };
+    });
+  };
+
   render() {
     const {
       logRows,
@@ -195,7 +230,7 @@ export class Logs extends PureComponent<Props, State> {
       return null;
     }
 
-    const { showLabels, showTime, wrapLogMessage, logsSortOrder, isFlipping } = this.state;
+    const { showLabels, showTime, wrapLogMessage, logsSortOrder, isFlipping, showDetectedFields } = this.state;
     const { dedupStrategy } = this.props;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -233,8 +268,6 @@ export class Logs extends PureComponent<Props, State> {
             absoluteRange={visibleRange || absoluteRange}
             isStacked={true}
             showPanel={false}
-            showingGraph={true}
-            showingTable={true}
             timeZone={timeZone}
             showBars={true}
             showLines={false}
@@ -290,6 +323,25 @@ export class Logs extends PureComponent<Props, State> {
           />
         )}
 
+        {showDetectedFields && showDetectedFields.length > 0 && (
+          <MetaInfoText
+            metaItems={[
+              {
+                label: 'Showing only detected fields',
+                value: renderMetaItem(showDetectedFields, LogsMetaKind.LabelsMap),
+              },
+              {
+                label: '',
+                value: (
+                  <Button variant="secondary" size="sm" onClick={this.clearDetectedFields}>
+                    Show all detected fields
+                  </Button>
+                ),
+              },
+            ]}
+          />
+        )}
+
         <LogRows
           logRows={logRows}
           deduplicatedRows={dedupedRows}
@@ -306,6 +358,9 @@ export class Logs extends PureComponent<Props, State> {
           timeZone={timeZone}
           getFieldLinks={getFieldLinks}
           logsSortOrder={logsSortOrder}
+          showDetectedFields={showDetectedFields}
+          onClickShowDetectedField={this.showDetectedField}
+          onClickHideDetectedField={this.hideDetectedField}
         />
 
         {!loading && !hasData && !scanning && (

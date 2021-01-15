@@ -9,16 +9,12 @@ import {
   variableEditorUnMounted,
 } from './reducer';
 import { variableAdapters } from '../adapters';
-import {
-  AddVariable,
-  NEW_VARIABLE_ID,
-  toVariableIdentifier,
-  toVariablePayload,
-  VariableIdentifier,
-} from '../state/types';
+import { AddVariable, toVariableIdentifier, toVariablePayload, VariableIdentifier } from '../state/types';
 import cloneDeep from 'lodash/cloneDeep';
 import { VariableType } from '@grafana/data';
-import { addVariable, removeVariable, storeNewVariable } from '../state/sharedReducer';
+import { addVariable, removeVariable } from '../state/sharedReducer';
+import { updateOptions } from '../state/actions';
+import { VariableModel } from '../types';
 
 export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async dispatch => {
@@ -29,29 +25,13 @@ export const variableEditorMount = (identifier: VariableIdentifier): ThunkResult
 export const variableEditorUnMount = (identifier: VariableIdentifier): ThunkResult<void> => {
   return async (dispatch, getState) => {
     dispatch(variableEditorUnMounted(toVariablePayload(identifier)));
-    if (getState().templating.variables[NEW_VARIABLE_ID]) {
-      dispatch(removeVariable(toVariablePayload({ type: identifier.type, id: NEW_VARIABLE_ID }, { reIndex: false })));
-    }
   };
 };
 
 export const onEditorUpdate = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const variableInState = getVariable(identifier.id, getState());
-    await variableAdapters.get(variableInState.type).updateOptions(variableInState);
+  return async dispatch => {
+    await dispatch(updateOptions(identifier));
     dispatch(switchToListMode());
-  };
-};
-
-export const onEditorAdd = (identifier: VariableIdentifier): ThunkResult<void> => {
-  return async (dispatch, getState) => {
-    const newVariableInState = getVariable(NEW_VARIABLE_ID, getState());
-    const id = newVariableInState.name;
-    dispatch(storeNewVariable(toVariablePayload({ type: identifier.type, id })));
-    const variableInState = getVariable(id, getState());
-    await variableAdapters.get(variableInState.type).updateOptions(variableInState);
-    dispatch(switchToListMode());
-    dispatch(removeVariable(toVariablePayload({ type: identifier.type, id: NEW_VARIABLE_ID }, { reIndex: false })));
   };
 };
 
@@ -78,16 +58,8 @@ export const changeVariableName = (identifier: VariableIdentifier, newName: stri
       return;
     }
 
-    const thunkToCall = identifier.id === NEW_VARIABLE_ID ? completeChangeNewVariableName : completeChangeVariableName;
-    dispatch(thunkToCall(identifier, newName));
+    dispatch(completeChangeVariableName(identifier, newName));
   };
-};
-
-export const completeChangeNewVariableName = (
-  identifier: VariableIdentifier,
-  newName: string
-): ThunkResult<void> => dispatch => {
-  dispatch(changeVariableNameSucceeded(toVariablePayload(identifier, { newName })));
 };
 
 export const completeChangeVariableName = (identifier: VariableIdentifier, newName: string): ThunkResult<void> => (
@@ -110,13 +82,14 @@ export const completeChangeVariableName = (identifier: VariableIdentifier, newNa
   dispatch(removeVariable(toVariablePayload(identifier, { reIndex: false })));
 };
 
-export const switchToNewMode = (): ThunkResult<void> => (dispatch, getState) => {
-  const type: VariableType = 'query';
-  const id = NEW_VARIABLE_ID;
-  const global = false;
-  const model = cloneDeep(variableAdapters.get(type).initialState);
-  const index = getNewVariabelIndex(getState());
+export const switchToNewMode = (type: VariableType = 'query'): ThunkResult<void> => (dispatch, getState) => {
+  const id = getNextAvailableId(type, getVariables(getState()));
   const identifier = { type, id };
+  const global = false;
+  const index = getNewVariabelIndex(getState());
+  const model = cloneDeep(variableAdapters.get(type).initialState);
+  model.id = id;
+  model.name = id;
   dispatch(
     addVariable(
       toVariablePayload<AddVariable>(identifier, { global, model, index })
@@ -132,3 +105,14 @@ export const switchToEditMode = (identifier: VariableIdentifier): ThunkResult<vo
 export const switchToListMode = (): ThunkResult<void> => dispatch => {
   dispatch(clearIdInEditor());
 };
+
+export function getNextAvailableId(type: VariableType, variables: VariableModel[]): string {
+  let counter = 0;
+  let nextId = `${type}${counter}`;
+
+  while (variables.find(variable => variable.id === nextId)) {
+    nextId = `${type}${++counter}`;
+  }
+
+  return nextId;
+}

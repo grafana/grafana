@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -34,11 +34,26 @@ var (
 )
 
 var (
-	matchAllCap       = regexp.MustCompile("(.)([A-Z][a-z]*)")
-	legendKeyFormat   = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
-	metricNameFormat  = regexp.MustCompile(`([\w\d_]+)\.(googleapis\.com|io)/(.+)`)
-	wildcardRegexRe   = regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
-	alignmentPeriodRe = regexp.MustCompile("[0-9]+")
+	matchAllCap                 = regexp.MustCompile("(.)([A-Z][a-z]*)")
+	legendKeyFormat             = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
+	metricNameFormat            = regexp.MustCompile(`([\w\d_]+)\.(googleapis\.com|io)/(.+)`)
+	wildcardRegexRe             = regexp.MustCompile(`[-\/^$+?.()|[\]{}]`)
+	alignmentPeriodRe           = regexp.MustCompile("[0-9]+")
+	cloudMonitoringUnitMappings = map[string]string{
+		"bit":     "bits",
+		"By":      "bytes",
+		"s":       "s",
+		"min":     "m",
+		"h":       "h",
+		"d":       "d",
+		"us":      "µs",
+		"ms":      "ms",
+		"ns":      "ns",
+		"percent": "percent",
+		"MiBy":    "mbytes",
+		"By/s":    "Bps",
+		"GBy":     "decgbytes",
+	}
 )
 
 const (
@@ -103,7 +118,7 @@ func (e *CloudMonitoringExecutor) getGCEDefaultProject(ctx context.Context, tsdb
 
 	gceDefaultProject, err := e.getDefaultProject(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
+		return nil, fmt.Errorf("failed to retrieve default project from GCE metadata server, error: %w", err)
 	}
 
 	queryResult.Meta.Set("defaultProject", gceDefaultProject)
@@ -202,17 +217,13 @@ func (e *CloudMonitoringExecutor) executeTimeSeriesQuery(ctx context.Context, ts
 		return nil, err
 	}
 
+	unit := e.resolvePanelUnitFromQueries(queries)
+
 	for _, query := range queries {
 		queryRes, resp, err := e.executeQuery(ctx, query, tsdbQuery)
 		if err != nil {
 			return nil, err
 		}
-		err = e.parseResponse(queryRes, resp, query)
-		if err != nil {
-			queryRes.Error = err
-		}
-
-		result.Results[query.RefID] = queryRes
 
 		resourceType := ""
 		for _, s := range resp.TimeSeries {
@@ -221,14 +232,46 @@ func (e *CloudMonitoringExecutor) executeTimeSeriesQuery(ctx context.Context, ts
 			break
 		}
 		query.Params.Set("resourceType", resourceType)
-		dl := ""
-		if len(resp.TimeSeries) > 0 {
-			dl = query.buildDeepLink()
+
+		err = e.parseResponse(queryRes, resp, query)
+		if err != nil {
+			queryRes.Error = err
 		}
-		queryRes.Meta.Set("deepLink", dl)
+
+		if len(unit) > 0 {
+			frames, _ := queryRes.Dataframes.Decoded()
+			for i := range frames {
+				if frames[i].Fields[1].Config == nil {
+					frames[i].Fields[1].Config = &data.FieldConfig{}
+				}
+				frames[i].Fields[1].Config.Unit = unit
+			}
+			queryRes.Dataframes = tsdb.NewDecodedDataFrames(frames)
+		}
+		result.Results[query.RefID] = queryRes
 	}
 
 	return result, nil
+}
+
+func (e *CloudMonitoringExecutor) resolvePanelUnitFromQueries(queries []*cloudMonitoringQuery) string {
+	if len(queries) == 0 {
+		return ""
+	}
+	unit := queries[0].Unit
+	if len(queries) > 1 {
+		for _, query := range queries[1:] {
+			if query.Unit != unit {
+				return ""
+			}
+		}
+	}
+	if len(unit) > 0 {
+		if val, ok := cloudMonitoringUnitMappings[unit]; ok {
+			return val
+		}
+	}
+	return ""
 }
 
 func (e *CloudMonitoringExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*cloudMonitoringQuery, error) {
@@ -286,8 +329,8 @@ func (e *CloudMonitoringExecutor) buildQueries(tsdbQuery *tsdb.TsdbQuery) ([]*cl
 		target = params.Encode()
 		sq.Target = target
 		sq.Params = params
-
-		if setting.Env == setting.DEV {
+		sq.Unit = q.MetricQuery.Unit
+		if setting.Env == setting.Dev {
 			slog.Debug("CloudMonitoring request", "params", params)
 		}
 
@@ -302,7 +345,7 @@ func migrateLegacyQueryModel(query *tsdb.Query) {
 	if mq == nil {
 		migratedModel := simplejson.NewFromAny(map[string]interface{}{
 			"queryType":   metricQueryType,
-			"metricQuery": query.Model,
+			"metricQuery": query.Model.MustMap(),
 		})
 		query.Model = migratedModel
 	}
@@ -320,7 +363,7 @@ func interpolateFilterWildcards(value string) string {
 	matches := strings.Count(value, "*")
 	switch {
 	case matches == 2 && strings.HasSuffix(value, "*") && strings.HasPrefix(value, "*"):
-		value = strings.Replace(value, "*", "", -1)
+		value = strings.ReplaceAll(value, "*", "")
 		value = fmt.Sprintf(`has_substring("%s")`, value)
 	case matches == 1 && strings.HasPrefix(value, "*"):
 		value = strings.Replace(value, "*", "", 1)
@@ -332,8 +375,8 @@ func interpolateFilterWildcards(value string) string {
 		value = string(wildcardRegexRe.ReplaceAllFunc([]byte(value), func(in []byte) []byte {
 			return []byte(strings.Replace(string(in), string(in), `\\`+string(in), 1))
 		}))
-		value = strings.Replace(value, "*", ".*", -1)
-		value = strings.Replace(value, `"`, `\\"`, -1)
+		value = strings.ReplaceAll(value, "*", ".*")
+		value = strings.ReplaceAll(value, `"`, `\\"`)
 		value = fmt.Sprintf(`monitoring.regex.full_match("^%s$")`, value)
 	}
 
@@ -482,10 +525,14 @@ func (e *CloudMonitoringExecutor) executeQuery(ctx context.Context, query *cloud
 
 func (e *CloudMonitoringExecutor) unmarshalResponse(res *http.Response) (cloudMonitoringResponse, error) {
 	body, err := ioutil.ReadAll(res.Body)
-	defer res.Body.Close()
 	if err != nil {
 		return cloudMonitoringResponse{}, err
 	}
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			slog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	if res.StatusCode/100 != 2 {
 		slog.Error("Request failed", "status", res.Status, "body", string(body))
@@ -503,9 +550,8 @@ func (e *CloudMonitoringExecutor) unmarshalResponse(res *http.Response) (cloudMo
 }
 
 func handleDistributionSeries(series timeSeries, defaultMetricName string, seriesLabels map[string]string,
-	query *cloudMonitoringQuery, queryRes *tsdb.QueryResult) {
-	points := make([]tsdb.TimePoint, 0)
-	for i := len(series.Points) - 1; i >= 0; i-- {
+	query *cloudMonitoringQuery, queryRes *tsdb.QueryResult, frame *data.Frame) {
+	for i := 0; i < len(series.Points); i++ {
 		point := series.Points[i]
 		value := point.Value.DoubleValue
 
@@ -523,26 +569,26 @@ func handleDistributionSeries(series timeSeries, defaultMetricName string, serie
 				value = 0
 			}
 		}
-
-		points = append(points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.Interval.EndTime).Unix())*1000))
+		frame.SetRow(len(series.Points)-1-i, point.Interval.EndTime, value)
 	}
 
 	metricName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, nil, query)
-
-	queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-		Name:   metricName,
-		Points: points,
-	})
+	dataField := frame.Fields[1]
+	dataField.Name = metricName
 }
 
-func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, data cloudMonitoringResponse, query *cloudMonitoringQuery) error {
+func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, cmr cloudMonitoringResponse, query *cloudMonitoringQuery) error {
 	labels := make(map[string]map[string]bool)
-
-	for _, series := range data.TimeSeries {
-		seriesLabels := make(map[string]string)
+	frames := data.Frames{}
+	for _, series := range cmr.TimeSeries {
+		seriesLabels := data.Labels{}
 		defaultMetricName := series.Metric.Type
+
 		labels["resource.type"] = map[string]bool{series.Resource.Type: true}
 		seriesLabels["resource.type"] = series.Resource.Type
+
+		frame := data.NewFrameOfFieldTypes("", len(series.Points), data.FieldTypeTime, data.FieldTypeFloat64)
+		frame.RefID = query.RefID
 
 		for key, value := range series.Metric.Labels {
 			if _, ok := labels["metric.label."+key]; !ok {
@@ -598,10 +644,11 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, data
 
 		// reverse the order to be ascending
 		if series.ValueType != "DISTRIBUTION" {
-			handleDistributionSeries(series, defaultMetricName, seriesLabels, query, queryRes)
+			handleDistributionSeries(
+				series, defaultMetricName, seriesLabels, query, queryRes, frame)
+			frames = append(frames, frame)
 		} else {
-			buckets := make(map[int]*tsdb.TimeSeries)
-
+			buckets := make(map[int]*data.Frame)
 			for i := len(series.Points) - 1; i >= 0; i-- {
 				point := series.Points[i]
 				if len(point.Value.DistributionValue.BucketCounts) == 0 {
@@ -618,34 +665,56 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, data
 						// https://cloud.google.com/monitoring/api/ref_v3/rest/v3/TimeSeries#Distribution
 						bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
 						additionalLabels := map[string]string{"bucket": bucketBound}
-						buckets[i] = &tsdb.TimeSeries{
-							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, nil, additionalLabels, query),
-							Points: make([]tsdb.TimePoint, 0),
+
+						timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{})
+						valueField := data.NewField(data.TimeSeriesValueFieldName, nil, []float64{})
+
+						frameName := formatLegendKeys(series.Metric.Type, defaultMetricName, nil, additionalLabels, query)
+						valueField.Name = frameName
+						buckets[i] = &data.Frame{
+							Name: frameName,
+							Fields: []*data.Field{
+								timeField,
+								valueField,
+							},
+							RefID: query.RefID,
 						}
+
 						if maxKey < i {
 							maxKey = i
 						}
 					}
-					buckets[i].Points = append(buckets[i].Points, tsdb.NewTimePoint(null.FloatFrom(value), float64((point.Interval.EndTime).Unix())*1000))
+					buckets[i].AppendRow(point.Interval.EndTime, value)
 				}
-
-				// fill empty bucket
 				for i := 0; i < maxKey; i++ {
 					if _, ok := buckets[i]; !ok {
 						bucketBound := calcBucketBound(point.Value.DistributionValue.BucketOptions, i)
-						additionalLabels := map[string]string{"bucket": bucketBound}
-						buckets[i] = &tsdb.TimeSeries{
-							Name:   formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, additionalLabels, query),
-							Points: make([]tsdb.TimePoint, 0),
+						additionalLabels := data.Labels{"bucket": bucketBound}
+						timeField := data.NewField(data.TimeSeriesTimeFieldName, nil, []time.Time{})
+						valueField := data.NewField(data.TimeSeriesValueFieldName, nil, []float64{})
+						frameName := formatLegendKeys(series.Metric.Type, defaultMetricName, seriesLabels, additionalLabels, query)
+						valueField.Name = frameName
+						buckets[i] = &data.Frame{
+							Name: frameName,
+							Fields: []*data.Field{
+								timeField,
+								valueField,
+							},
+							RefID: query.RefID,
 						}
 					}
 				}
 			}
 			for i := 0; i < len(buckets); i++ {
-				queryRes.Series = append(queryRes.Series, buckets[i])
+				frames = append(frames, buckets[i])
 			}
 		}
 	}
+	if len(cmr.TimeSeries) > 0 {
+		frames = addConfigData(frames, query)
+	}
+
+	queryRes.Dataframes = tsdb.NewDecodedDataFrames(frames)
 
 	labelsByKey := make(map[string][]string)
 	for key, values := range labels {
@@ -656,8 +725,23 @@ func (e *CloudMonitoringExecutor) parseResponse(queryRes *tsdb.QueryResult, data
 
 	queryRes.Meta.Set("labels", labelsByKey)
 	queryRes.Meta.Set("groupBys", query.GroupBys)
-
 	return nil
+}
+
+func addConfigData(frames data.Frames, query *cloudMonitoringQuery) data.Frames {
+	dl := query.buildDeepLink()
+	for i := range frames {
+		if frames[i].Fields[1].Config == nil {
+			frames[i].Fields[1].Config = &data.FieldConfig{}
+		}
+		deepLink := data.DataLink{
+			Title:       "View in Metrics Explorer",
+			TargetBlank: true,
+			URL:         dl,
+		}
+		frames[i].Fields[1].Config.Links = append(frames[i].Fields[1].Config.Links, deepLink)
+	}
+	return frames
 }
 
 func toSnakeCase(str string) string {
@@ -769,7 +853,7 @@ func (e *CloudMonitoringExecutor) createRequest(ctx context.Context, dsInfo *mod
 	req, err := http.NewRequest(http.MethodGet, "https://monitoring.googleapis.com/", nil)
 	if err != nil {
 		slog.Error("Failed to create request", "error", err)
-		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -778,7 +862,7 @@ func (e *CloudMonitoringExecutor) createRequest(ctx context.Context, dsInfo *mod
 	// find plugin
 	plugin, ok := plugins.DataSources[dsInfo.Type]
 	if !ok {
-		return nil, errors.New("Unable to find datasource plugin CloudMonitoring")
+		return nil, errors.New("unable to find datasource plugin CloudMonitoring")
 	}
 
 	var cloudMonitoringRoute *plugins.AppPluginRoute
@@ -799,14 +883,14 @@ func (e *CloudMonitoringExecutor) getDefaultProject(ctx context.Context) (string
 	if authenticationType == gceAuthentication {
 		defaultCredentials, err := google.FindDefaultCredentials(ctx, "https://www.googleapis.com/auth/monitoring.read")
 		if err != nil {
-			return "", fmt.Errorf("Failed to retrieve default project from GCE metadata server. error: %v", err)
+			return "", fmt.Errorf("failed to retrieve default project from GCE metadata server: %w", err)
 		}
 		token, err := defaultCredentials.TokenSource.Token()
 		if err != nil {
-			return "", fmt.Errorf("Failed to retrieve GCP credential token. error: %v", err)
+			return "", fmt.Errorf("failed to retrieve GCP credential token: %w", err)
 		}
 		if !token.Valid() {
-			return "", errors.New("Failed to validate GCP credentials")
+			return "", errors.New("failed to validate GCP credentials")
 		}
 
 		return defaultCredentials.ProjectID, nil

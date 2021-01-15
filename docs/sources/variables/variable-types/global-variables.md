@@ -1,12 +1,8 @@
 +++
 title = "Global variables"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable", "global", "standard"]
-type = "docs"
 aliases = ["/docs/grafana/latest/variables/global-variables.md"]
-[menu.docs]
-name = "global-variables"
-parent = "variables"
-weight = 200
+weight = 900
 +++
 
 # Global variables
@@ -28,12 +24,14 @@ Grafana has two built in time range variables: `$__from` and `$__to`. They are c
 | Syntax                   | Example result           | Description |
 | ------------------------ | ------------------------ | ----------- |
 | `${__from}`              | 1594671549254            | Unix millisecond epoch |
-| `${__from:date}`         | 2020-07-13T20:19:09.254Z | No args, defaults to ISO 8601/RFC 3339 | 
+| `${__from:date}`         | 2020-07-13T20:19:09.254Z | No args, defaults to ISO 8601/RFC 3339 |
 | `${__from:date:iso}`     | 2020-07-13T20:19:09.254Z | ISO 8601/RFC 3339 |
 | `${__from:date:seconds}` | 1594671549               | Unix seconds epoch |
 | `${__from:date:YYYY-MM}` | 2020-07                  | Any custom [date format](https://momentjs.com/docs/#/displaying/) |
 
-The above syntax works with `${__to}` as well.  
+The above syntax works with `${__to}` as well.
+
+You can use this variable in URLs as well. For example, send a user to a dashboard that shows a time range from six hours ago until now: https://play.grafana.org/d/000000012/grafana-play-home?viewPanel=2&orgId=1?from=now-6h&to=now
 
 ## $__interval
 
@@ -68,6 +66,7 @@ This variable is the ID of the current organization.
 
 `${__user.id}` is the ID of the current user.
 `${__user.login}` is the login handle of the current user.
+`${__user.email}` is the email for the current user.
 
 ## $__range
 
@@ -81,6 +80,5 @@ This is used in several places, including:
 
 - The WHERE clause for the InfluxDB data source. Grafana adds it automatically to InfluxDB queries when in Query Editor mode. You can add it manually in Text Editor mode: `WHERE $timeFilter`.
 - Log Analytics queries in the Azure Monitor data source.
-- SQL queries in MySQL, Postgres, and MSSQL
+- SQL queries in MySQL, Postgres, and MSSQL.
 - The `$__timeFilter` variable is used in the MySQL data source.
-

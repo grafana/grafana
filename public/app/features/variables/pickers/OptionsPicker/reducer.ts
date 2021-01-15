@@ -78,6 +78,7 @@ const updateOptions = (state: OptionsPickerState): OptionsPickerState => {
 
     return { ...option, selected };
   });
+  state.options = applyLimit(state.options);
   return state;
 };
 
@@ -220,10 +221,12 @@ const optionsPickerSlice = createSlice({
         return applyStateChanges(state, updateOptions);
       }
 
-      state.selectedValues = state.options.map(option => ({
-        ...option,
-        selected: true,
-      }));
+      state.selectedValues = state.options
+        .filter(option => option.value !== ALL_VARIABLE_VALUE)
+        .map(option => ({
+          ...option,
+          selected: true,
+        }));
 
       return applyStateChanges(state, updateOptions);
     },
@@ -234,18 +237,17 @@ const optionsPickerSlice = createSlice({
     updateOptionsAndFilter: (state, action: PayloadAction<VariableOption[]>): OptionsPickerState => {
       const searchQuery = trim((state.queryValue ?? '').toLowerCase());
 
-      const filteredOptions = action.payload.filter(option => {
+      state.options = action.payload.filter(option => {
         const text = Array.isArray(option.text) ? option.text.toString() : option.text;
         return text.toLowerCase().indexOf(searchQuery) !== -1;
       });
 
-      state.options = applyLimit(filteredOptions);
       state.highlightIndex = 0;
 
       return applyStateChanges(state, updateDefaultSelection, updateOptions);
     },
     updateOptionsFromSearch: (state, action: PayloadAction<VariableOption[]>): OptionsPickerState => {
-      state.options = applyLimit(action.payload);
+      state.options = action.payload;
       state.highlightIndex = 0;
 
       return applyStateChanges(state, updateDefaultSelection, updateOptions);

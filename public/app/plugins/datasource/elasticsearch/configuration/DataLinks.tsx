@@ -32,9 +32,9 @@ export const DataLinks = (props: Props) => {
         Add links to existing fields. Links will be shown in log row details next to the field value.
       </div>
 
-      <div className="gf-form-group">
-        {value &&
-          value.map((field, index) => {
+      {value && value.length > 0 && (
+        <div className="gf-form-group">
+          {value.map((field, index) => {
             return (
               <DataLink
                 className={styles.dataLink}
@@ -61,23 +61,23 @@ export const DataLinks = (props: Props) => {
               />
             );
           })}
-        <div>
-          <Button
-            variant={'secondary'}
-            className={css`
-              margin-right: 10px;
-            `}
-            icon="plus"
-            onClick={event => {
-              event.preventDefault();
-              const newDataLinks = [...(value || []), { field: '', url: '' }];
-              onChange(newDataLinks);
-            }}
-          >
-            Add
-          </Button>
         </div>
-      </div>
+      )}
+
+      <Button
+        variant={'secondary'}
+        className={css`
+          margin-right: 10px;
+        `}
+        icon="plus"
+        onClick={event => {
+          event.preventDefault();
+          const newDataLinks = [...(value || []), { field: '', url: '' }];
+          onChange(newDataLinks);
+        }}
+      >
+        Add
+      </Button>
     </>
   );
 };

@@ -6,11 +6,10 @@ import { SqlPart } from 'app/core/components/sql_part/sql_part';
 import PostgresQuery from './postgres_query';
 import sqlPart from './sql_part';
 import { auto } from 'angular';
-import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CoreEvents } from 'app/types';
 import { PanelEvents } from '@grafana/data';
 import { VariableWithMultiSupport } from 'app/features/variables/types';
-import { getLocationSrv } from '@grafana/runtime';
+import { getLocationSrv, TemplateSrv } from '@grafana/runtime';
 
 export interface QueryMeta {
   sql: string;

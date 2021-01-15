@@ -28,27 +28,6 @@ func init() {
 		Description: "Sends notifications to Telegram",
 		Heading:     "Telegram API settings",
 		Factory:     NewTelegramNotifier,
-		OptionsTemplate: `
-      <h3 class="page-heading">Telegram API settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-9">BOT API Token</span>
-        <input type="text" required
-					class="gf-form-input"
-					ng-model="ctrl.model.settings.bottoken"
-					placeholder="Telegram BOT API Token"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-9">Chat ID</span>
-        <input type="text" required
-					class="gf-form-input"
-					ng-model="ctrl.model.settings.chatid"
-					data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-					Integer Telegram Chat Identifier
-        </info-popover>
-      </div>
-    `,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "BOT API Token",
@@ -57,6 +36,7 @@ func init() {
 				Placeholder:  "Telegram BOT API Token",
 				PropertyName: "bottoken",
 				Required:     true,
+				Secure:       true,
 			},
 			{
 				Label:        "Chat ID",
@@ -86,7 +66,7 @@ func NewTelegramNotifier(model *models.AlertNotification) (alerting.Notifier, er
 		return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
 	}
 
-	botToken := model.Settings.Get("bottoken").MustString()
+	botToken := model.DecryptedValue("bottoken", model.Settings.Get("bottoken").MustString())
 	chatID := model.Settings.Get("chatid").MustString()
 	uploadImage := model.Settings.Get("uploadImage").MustBool()
 
@@ -190,6 +170,11 @@ func (tn *TelegramNotifier) buildMessageInlineImage(evalContext *alerting.EvalCo
 func (tn *TelegramNotifier) generateTelegramCmd(message string, messageField string, apiAction string, extraConf func(writer *multipart.Writer)) (*models.SendWebhookSync, error) {
 	var body bytes.Buffer
 	w := multipart.NewWriter(&body)
+	defer func() {
+		if err := w.Close(); err != nil {
+			tn.log.Warn("Failed to close writer", "err", err)
+		}
+	}()
 
 	fw, err := w.CreateFormField("chat_id")
 	if err != nil {
@@ -209,7 +194,9 @@ func (tn *TelegramNotifier) generateTelegramCmd(message string, messageField str
 
 	extraConf(w)
 
-	w.Close()
+	if err := w.Close(); err != nil {
+		return nil, err
+	}
 
 	tn.log.Info("Sending telegram notification", "chat_id", tn.ChatID, "bot_token", tn.BotToken, "apiAction", apiAction)
 	url := fmt.Sprintf(telegramAPIURL, tn.BotToken, apiAction)

@@ -1,29 +1,42 @@
 // Libraries
 import _ from 'lodash';
 // Utils
-import { Emitter } from 'app/core/utils/emitter';
+import { getTemplateSrv } from '@grafana/runtime';
 import { getNextRefIdChar } from 'app/core/utils/query';
-import templateSrv from 'app/features/templating/template_srv';
 // Types
 import {
   DataConfigSource,
   DataLink,
   DataQuery,
-  DataQueryResponseData,
   DataTransformerConfig,
-  eventFactory,
+  FieldColorConfigSettings,
+  FieldColorModeId,
+  fieldColorModeRegistry,
+  FieldConfigProperty,
   FieldConfigSource,
   PanelEvents,
   PanelPlugin,
   ScopedVars,
+  ThresholdsConfig,
+  ThresholdsMode,
+  EventBusExtended,
+  EventBusSrv,
+  DataFrameDTO,
+  urlUtil,
+  DataLinkBuiltInVars,
 } from '@grafana/data';
 import { EDIT_PANEL_ID } from 'app/core/constants';
 import config from 'app/core/config';
-import { PanelQueryRunner } from './PanelQueryRunner';
-import { getDatasourceSrv } from '../../plugins/datasource_srv';
-
-export const panelAdded = eventFactory<PanelModel | undefined>('panel-added');
-export const panelRemoved = eventFactory<PanelModel | undefined>('panel-removed');
+import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
+import {
+  PanelOptionsChangedEvent,
+  PanelQueriesChangedEvent,
+  PanelTransformationsChangedEvent,
+  RefreshEvent,
+  RenderEvent,
+} from 'app/types/events';
+import { getTimeSrv } from '../services/TimeSrv';
+import { getAllVariableValuesForUrl } from '../../variables/getAllVariableValuesForUrl';
 
 export interface GridPos {
   x: number;
@@ -114,14 +127,13 @@ export class PanelModel implements DataConfigSource {
   collapsed?: boolean;
 
   panels?: any;
-  soloMode?: boolean;
   targets: DataQuery[];
   transformations?: DataTransformerConfig[];
   datasource: string | null;
   thresholds?: any;
   pluginVersion?: string;
 
-  snapshotData?: DataQueryResponseData[];
+  snapshotData?: DataFrameDTO[];
   timeFrom?: any;
   timeShift?: any;
   hideTimeOverride?: any;
@@ -130,8 +142,8 @@ export class PanelModel implements DataConfigSource {
   };
   fieldConfig: FieldConfigSource;
 
-  maxDataPoints?: number;
-  interval?: string;
+  maxDataPoints?: number | null;
+  interval?: string | null;
   description?: string;
   links?: DataLink[];
   transparent: boolean;
@@ -140,8 +152,9 @@ export class PanelModel implements DataConfigSource {
   isViewing: boolean;
   isEditing: boolean;
   isInView: boolean;
+
   hasRefreshed: boolean;
-  events: Emitter;
+  events: EventBusExtended;
   cacheTimeout?: any;
   cachedPluginOptions?: any;
   legend?: { show: boolean; sort?: string; sortDesc?: boolean };
@@ -150,7 +163,7 @@ export class PanelModel implements DataConfigSource {
   private queryRunner?: PanelQueryRunner;
 
   constructor(model: any) {
-    this.events = new Emitter();
+    this.events = new EventBusSrv();
     this.restoreModel(model);
     this.replaceVariables = this.replaceVariables.bind(this);
   }
@@ -203,17 +216,20 @@ export class PanelModel implements DataConfigSource {
   getOptions() {
     return this.options;
   }
+
   getFieldConfig() {
     return this.fieldConfig;
   }
 
   updateOptions(options: object) {
     this.options = options;
+    this.events.publish(new PanelOptionsChangedEvent());
     this.render();
   }
 
   updateFieldConfig(config: FieldConfigSource) {
     this.fieldConfig = config;
+    this.events.publish(new PanelOptionsChangedEvent());
 
     this.resendLastResult();
     this.render();
@@ -248,41 +264,23 @@ export class PanelModel implements DataConfigSource {
   }
 
   updateGridPos(newPos: GridPos) {
-    let sizeChanged = false;
-
-    if (this.gridPos.w !== newPos.w || this.gridPos.h !== newPos.h) {
-      sizeChanged = true;
-    }
-
     this.gridPos.x = newPos.x;
     this.gridPos.y = newPos.y;
     this.gridPos.w = newPos.w;
     this.gridPos.h = newPos.h;
-
-    if (sizeChanged) {
-      this.events.emit(PanelEvents.panelSizeChanged);
-    }
-  }
-
-  resizeDone() {
-    this.events.emit(PanelEvents.panelSizeChanged);
   }
 
   refresh() {
     this.hasRefreshed = true;
-    this.events.emit(PanelEvents.refresh);
+    this.events.publish(new RefreshEvent());
   }
 
   render() {
     if (!this.hasRefreshed) {
       this.refresh();
     } else {
-      this.events.emit(PanelEvents.render);
+      this.events.publish(new RenderEvent());
     }
-  }
-
-  initialized() {
-    this.events.emit(PanelEvents.panelInitialized);
   }
 
   private getOptionsToRemember() {
@@ -309,28 +307,42 @@ export class PanelModel implements DataConfigSource {
     if (plugin.angularConfigCtrl) {
       return;
     }
+
     this.options = _.mergeWith({}, plugin.defaults, this.options || {}, (objValue: any, srcValue: any): any => {
       if (_.isArray(srcValue)) {
         return srcValue;
       }
     });
 
-    this.fieldConfig = {
-      defaults: _.mergeWith(
-        {},
-        plugin.fieldConfigDefaults.defaults,
-        this.fieldConfig ? this.fieldConfig.defaults : {},
-        (objValue: any, srcValue: any): any => {
-          if (_.isArray(srcValue)) {
-            return srcValue;
-          }
+    this.fieldConfig = applyFieldConfigDefaults(this.fieldConfig, plugin.fieldConfigDefaults);
+    this.validateFieldColorMode(plugin);
+  }
+
+  private validateFieldColorMode(plugin: PanelPlugin) {
+    // adjust to prefered field color setting if needed
+    const color = plugin.fieldConfigRegistry.getIfExists(FieldConfigProperty.Color);
+
+    if (color && color.settings) {
+      const colorSettings = color.settings as FieldColorConfigSettings;
+      const mode = fieldColorModeRegistry.getIfExists(this.fieldConfig.defaults.color?.mode);
+
+      // When no support fo value colors, use classic palette
+      if (!colorSettings.byValueSupport) {
+        if (!mode || mode.isByValue) {
+          this.fieldConfig.defaults.color = { mode: FieldColorModeId.PaletteClassic };
+          return;
         }
-      ),
-      overrides: [
-        ...plugin.fieldConfigDefaults.overrides,
-        ...(this.fieldConfig && this.fieldConfig.overrides ? this.fieldConfig.overrides : []),
-      ],
-    };
+      }
+
+      // When supporting value colors and prefering thresholds, use Thresholds mode.
+      // Otherwise keep current mode
+      if (colorSettings.byValueSupport && colorSettings.preferThresholdsMode) {
+        if (!mode || !mode.isByValue) {
+          this.fieldConfig.defaults.color = { mode: FieldColorModeId.Thresholds };
+          return;
+        }
+      }
+    }
   }
 
   pluginLoaded(plugin: PanelPlugin) {
@@ -393,6 +405,11 @@ export class PanelModel implements DataConfigSource {
     }
   }
 
+  updateQueries(queries: DataQuery[]) {
+    this.events.publish(new PanelQueriesChangedEvent());
+    this.targets = queries;
+  }
+
   addQuery(query?: Partial<DataQuery>) {
     query = query || { refId: 'A' };
     query.refId = getNextRefIdChar(this.targets);
@@ -441,7 +458,6 @@ export class PanelModel implements DataConfigSource {
     return {
       fieldConfig: this.fieldConfig,
       replaceVariables: this.replaceVariables,
-      getDataSourceSettingsByUid: getDatasourceSrv().getDataSourceSettingsByUid.bind(getDatasourceSrv()),
       fieldConfigRegistry: this.plugin.fieldConfigRegistry,
       theme: config.theme,
     };
@@ -474,14 +490,32 @@ export class PanelModel implements DataConfigSource {
   setTransformations(transformations: DataTransformerConfig[]) {
     this.transformations = transformations;
     this.resendLastResult();
+    this.events.publish(new PanelTransformationsChangedEvent());
   }
 
-  replaceVariables(value: string, extraVars?: ScopedVars, format?: string) {
+  replaceVariables(value: string, extraVars: ScopedVars | undefined, format?: string | Function) {
     let vars = this.scopedVars;
+
     if (extraVars) {
       vars = vars ? { ...vars, ...extraVars } : extraVars;
     }
-    return templateSrv.replace(value, vars, format);
+    const allVariablesParams = getAllVariableValuesForUrl(vars);
+    const variablesQuery = urlUtil.toUrlParams(allVariablesParams);
+    const timeRangeUrl = urlUtil.toUrlParams(getTimeSrv().timeRangeForUrl());
+
+    vars = {
+      ...vars,
+      [DataLinkBuiltInVars.keepTime]: {
+        text: timeRangeUrl,
+        value: timeRangeUrl,
+      },
+      [DataLinkBuiltInVars.includeVars]: {
+        text: variablesQuery,
+        value: variablesQuery,
+      },
+    };
+
+    return getTemplateSrv().replace(value, vars, format);
   }
 
   resendLastResult() {
@@ -498,6 +532,51 @@ export class PanelModel implements DataConfigSource {
    * */
   getSavedId(): number {
     return this.editSourceId ?? this.id;
+  }
+}
+
+function applyFieldConfigDefaults(fieldConfig: FieldConfigSource, defaults: FieldConfigSource): FieldConfigSource {
+  const result: FieldConfigSource = {
+    defaults: _.mergeWith(
+      {},
+      defaults.defaults,
+      fieldConfig ? fieldConfig.defaults : {},
+      (objValue: any, srcValue: any): any => {
+        if (_.isArray(srcValue)) {
+          return srcValue;
+        }
+      }
+    ),
+    overrides: fieldConfig?.overrides ?? [],
+  };
+
+  // Thresholds base values are null in JSON but need to be converted to -Infinity
+  if (result.defaults.thresholds) {
+    fixThresholds(result.defaults.thresholds);
+  }
+
+  for (const override of result.overrides) {
+    for (const property of override.properties) {
+      if (property.id === 'thresholds') {
+        fixThresholds(property.value as ThresholdsConfig);
+      }
+    }
+  }
+
+  return result;
+}
+
+function fixThresholds(thresholds: ThresholdsConfig) {
+  if (!thresholds.mode) {
+    thresholds.mode = ThresholdsMode.Absolute;
+  }
+
+  if (!thresholds.steps) {
+    thresholds.steps = [];
+  } else if (thresholds.steps.length) {
+    // First value is always -Infinity
+    // JSON saves it as null
+    thresholds.steps[0].value = -Infinity;
   }
 }
 

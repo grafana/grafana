@@ -141,8 +141,8 @@ func (c *baseClientImpl) encodeBatchRequests(requests []*multiRequest) ([]byte, 
 		}
 
 		body := string(reqBody)
-		body = strings.Replace(body, "$__interval_ms", strconv.FormatInt(r.interval.Milliseconds(), 10), -1)
-		body = strings.Replace(body, "$__interval", r.interval.Text, -1)
+		body = strings.ReplaceAll(body, "$__interval_ms", strconv.FormatInt(r.interval.Milliseconds(), 10))
+		body = strings.ReplaceAll(body, "$__interval", r.interval.Text)
 
 		payload.WriteString(body + "\n")
 	}
@@ -226,7 +226,11 @@ func (c *baseClientImpl) ExecuteMultisearch(r *MultiSearchRequest) (*MultiSearch
 		return nil, err
 	}
 	res := clientRes.httpResponse
-	defer res.Body.Close()
+	defer func() {
+		if err := res.Body.Close(); err != nil {
+			clientLog.Warn("Failed to close response body", "err", err)
+		}
+	}()
 
 	clientLog.Debug("Received multisearch response", "code", res.StatusCode, "status", res.Status, "content-length", res.ContentLength)
 

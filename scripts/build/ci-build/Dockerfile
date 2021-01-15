@@ -1,11 +1,10 @@
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20200803-slim AS toolchain
+FROM debian:stretch-20201209 AS toolchain
 
-ENV OSX_SDK_URL=https://s3.dockerproject.org/darwin/v2 \
-    OSX_SDK=MacOSX10.10.sdk \
-    OSX_MIN=10.10 \
+ENV OSX_MIN=10.10 \
     CTNG=1.24.0 \
-    OSX_CROSS_REV=542acc2ef6c21aeb3f109c03748b1015a71fed63
+    # This is the last revision that builds on Debian Stretch
+    OSX_CROSS_REV=a1d7d7a8d569f9f0b8c3140b8b32848dbcd62afa
 
 # Use ARG so as not to persist environment variable in image
 ARG DEBIAN_FRONTEND=noninteractive
@@ -37,6 +36,7 @@ WORKDIR /tmp
 RUN apt-get update && \
     apt-get install -yq \
         clang patch libxml2-dev \
+        build-essential \
         ca-certificates \
         curl            \
         git             \
@@ -47,10 +47,10 @@ RUN apt-get update && \
         lzma-dev
 RUN git clone https://github.com/tpoechtrager/osxcross.git /tmp/osxcross && \
       cd /tmp/osxcross && git reset --hard $OSX_CROSS_REV
-RUN curl -fL ${OSX_SDK_URL}/${OSX_SDK}.tar.xz -o /tmp/osxcross/tarballs/${OSX_SDK}.tar.xz
+COPY MacOSX10.15.sdk.tar.xz /tmp/osxcross/tarballs/
 RUN ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil
-RUN UNATTENDED=yes OSX_VERSION_MIN=${OSX_MIN} /tmp/osxcross/build.sh
-RUN rm -rf /tmp/osxcross/target/SDK/${OSX_SDK}/usr/share && \
+RUN UNATTENDED=1 OSX_VERSION_MIN=${OSX_MIN} /tmp/osxcross/build.sh
+RUN rm -rf /tmp/osxcross/target/SDK/*/usr/share && \
     cd /tmp                                              && \
     tar cfJ osxcross.tar.xz osxcross/target              && \
     rm -rf /tmp/osxcross
@@ -73,30 +73,44 @@ RUN cd /tmp && \
     rm -rf /tmp/x86_64-centos6-linux-gnu/ && \
     rm -rf /tmp/crosstool-ng-${CTNG}
 
-ARG GOLANGCILINT_VERSION=1.30.0
-ARG GOLANGCILINT_CHKSUM=c8e8fc5753e74d2eb489ad428dbce219eb9907799a57c02bcd8b80b4b98c60d4
+ARG GOLANGCILINT_VERSION=1.34.1
+ARG GOLANGCILINT_CHKSUM=23e4a9d8f89729007c6d749c245f725c2dbcfb194f4099003f9b826f1d386ad1
 
 RUN curl -fLO https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
 RUN echo ${GOLANGCILINT_CHKSUM} golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz | sha256sum --check --strict --status
 RUN tar xf golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64.tar.gz
 RUN mv golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64/golangci-lint /tmp/
 
+ARG SHELLCHECK_VERSION=0.7.1
+ARG SHELLCHECK_CHKSUM=beca3d7819a6bdcfbd044576df4fc284053b48f468b2f03428fe66f4ceb2c05d9b5411357fa15003cb0311406c255084cf7283a3b8fce644c340c2f6aa910b9f
+RUN curl -fLO http://storage.googleapis.com/grafana-downloads/ci-dependencies/shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz
+RUN echo $SHELLCHECK_CHKSUM shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz | sha512sum --check --strict --status
+RUN tar xf shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz && mv shellcheck-v${SHELLCHECK_VERSION}/shellcheck /tmp/
+
+ARG CUE_VERSION=0.3.0-alpha5
+ARG CUE_CHKSUM=9d3131e470cdb5182afd9966688f1c052d383145cce005a947156b5591da39b7
+RUN curl -fLO https://github.com/cuelang/cue/releases/download/v${CUE_VERSION}/cue_${CUE_VERSION}_Linux_x86_64.tar.gz
+RUN echo $CUE_CHKSUM cue_${CUE_VERSION}_Linux_x86_64.tar.gz | sha256sum --check --strict --status
+RUN tar xf cue_${CUE_VERSION}_Linux_x86_64.tar.gz -C /tmp cue
+
 # Base image to crossbuild grafana.
 # Use old Debian (this has support into 2022) in order to ensure binary compatibility with older glibc's.
-FROM debian:stretch-20200803
+FROM debian:stretch-20201209
 
-ENV GOVERSION=1.14.7 \
+ENV GOVERSION=1.15.6 \
     PATH=/usr/local/go/bin:$PATH \
     GOPATH=/go \
-    NODEVERSION=12.18.3-1nodesource1 \
-    YARNVERSION=1.22.4-1 \
+    NODEVERSION=14.15.4-1nodesource1 \
+    YARNVERSION=1.22.5-1 \
     GO111MODULE=on
 
 # Use ARG so as not to persist environment variable in image
 ARG DEBIAN_FRONTEND=noninteractive
 
 COPY --from=toolchain /tmp/x86_64-centos6-linux-gnu.tar.xz /tmp/osxcross.tar.xz /tmp/
-COPY --from=toolchain /tmp/golangci-lint /usr/local/bin
+COPY --from=toolchain /tmp/golangci-lint /usr/local/bin/
+COPY --from=toolchain /tmp/shellcheck /usr/local/bin/
+COPY --from=toolchain /tmp/cue /usr/local/bin/
 
 RUN apt-get update && \
     apt-get install -yq  \
@@ -121,7 +135,7 @@ RUN apt-get update && \
         unzip &&        \
     gem install -N fpm && \
     ln -s /usr/bin/llvm-dsymutil-6.0 /usr/bin/dsymutil && \
-    curl -fsL https://deb.nodesource.com/setup_12.x | bash - && \
+    curl -fsL https://deb.nodesource.com/setup_14.x | bash - && \
     apt-get update && apt-get install -yq nodejs=${NODEVERSION} && \
     curl -fsS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - && \
     echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list && \
@@ -155,7 +169,11 @@ RUN cd /tmp && \
     tar xf x86_64-linux-musl-cross.tgz && \
     rm x86_64-linux-musl-cross.tgz
 
-RUN go get -u github.com/mgechev/revive@v1.0.2
-RUN mv ${GOPATH}/bin/revive /usr/local/bin/
+RUN go get -u github.com/mgechev/revive@v1.0.2 && \
+  mv ${GOPATH}/bin/revive /usr/local/bin/ && \
+  go get github.com/google/go-jsonnet/cmd/jsonnetfmt && \
+  mv ${GOPATH}/bin/jsonnetfmt /usr/local/bin/ && \
+  go get github.com/monitoring-mixins/mixtool/cmd/mixtool && \
+  mv ${GOPATH}/bin/mixtool /usr/local/bin/
 
 COPY ./bootstrap.sh /tmp/bootstrap.sh

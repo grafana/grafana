@@ -5,8 +5,8 @@ import { variableRegex } from '../variables/utils';
 import { isAdHoc } from '../variables/guard';
 import { VariableModel } from '../variables/types';
 import { setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
-import { variableAdapters } from '../variables/adapters';
-import { formatRegistry } from './formatRegistry';
+import { formatRegistry, FormatOptions } from './formatRegistry';
+import { ALL_VARIABLE_TEXT } from '../variables/state/types';
 
 interface FieldAccessorCache {
   [key: string]: (obj: any) => any;
@@ -107,9 +107,18 @@ export class TemplateSrv implements BaseTemplateSrv {
     return filters;
   }
 
-  formatValue(value: any, format: any, variable: any) {
+  formatValue(value: any, format: any, variable: any, text?: string) {
     // for some scopedVars there is no variable
     variable = variable || {};
+
+    if (value === null || value === undefined) {
+      return '';
+    }
+
+    // if it's an object transform value to string
+    if (!Array.isArray(value) && typeof value === 'object') {
+      value = `${value}`;
+    }
 
     if (typeof format === 'function') {
       return format(value, variable, this.formatValue);
@@ -128,12 +137,15 @@ export class TemplateSrv implements BaseTemplateSrv {
       args = [];
     }
 
-    const formatItem = formatRegistry.getIfExists(format);
+    let formatItem = formatRegistry.getIfExists(format);
+
     if (!formatItem) {
-      throw new Error(`Variable format ${format} not found`);
+      console.error(`Variable format ${format} not found. Using glob format as fallback.`);
+      formatItem = formatRegistry.get('glob');
     }
 
-    return formatItem.formatter(value, args, variable);
+    const options: FormatOptions = { value, args, text: text ?? value };
+    return formatItem.formatter(options, variable);
   }
 
   setGrafanaVariable(name: string, value: any) {
@@ -197,7 +209,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return values;
   }
 
-  getFieldAccessor(fieldPath: string) {
+  private getFieldAccessor(fieldPath: string) {
     const accessor = this.fieldAccessorCache[fieldPath];
     if (accessor) {
       return accessor;
@@ -206,7 +218,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return (this.fieldAccessorCache[fieldPath] = _.property(fieldPath));
   }
 
-  getVariableValue(variableName: string, fieldPath: string | undefined, scopedVars: ScopedVars) {
+  private getVariableValue(variableName: string, fieldPath: string | undefined, scopedVars: ScopedVars) {
     const scopedVar = scopedVars[variableName];
     if (!scopedVar) {
       return null;
@@ -217,6 +229,20 @@ export class TemplateSrv implements BaseTemplateSrv {
     }
 
     return scopedVar.value;
+  }
+
+  private getVariableText(variableName: string, value: any, scopedVars: ScopedVars) {
+    const scopedVar = scopedVars[variableName];
+
+    if (!scopedVar) {
+      return null;
+    }
+
+    if (scopedVar.value === value || typeof value !== 'string') {
+      return scopedVar.text;
+    }
+
+    return value;
   }
 
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
@@ -233,8 +259,10 @@ export class TemplateSrv implements BaseTemplateSrv {
 
       if (scopedVars) {
         const value = this.getVariableValue(variableName, fieldPath, scopedVars);
+        const text = this.getVariableText(variableName, value, scopedVars);
+
         if (value !== null && value !== undefined) {
-          return this.formatValue(value, fmt, variable);
+          return this.formatValue(value, fmt, variable, text);
         }
       }
 
@@ -248,8 +276,11 @@ export class TemplateSrv implements BaseTemplateSrv {
       }
 
       let value = variable.current.value;
+      let text = variable.current.text;
+
       if (this.isAllValue(value)) {
         value = this.getAllValue(variable);
+        text = ALL_VARIABLE_TEXT;
         // skip formatting of custom all values
         if (variable.allValue) {
           return this.replace(value);
@@ -258,14 +289,14 @@ export class TemplateSrv implements BaseTemplateSrv {
 
       if (fieldPath) {
         const fieldValue = this.getVariableValue(variableName, fieldPath, {
-          [variableName]: { value: value, text: '' },
+          [variableName]: { value, text },
         });
         if (fieldValue !== null && fieldValue !== undefined) {
-          return this.formatValue(fieldValue, fmt, variable);
+          return this.formatValue(fieldValue, fmt, variable, text);
         }
       }
 
-      const res = this.formatValue(value, fmt, variable);
+      const res = this.formatValue(value, fmt, variable, text);
       return res;
     });
   }
@@ -275,47 +306,9 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   replaceWithText(target: string, scopedVars?: ScopedVars) {
-    if (!target) {
-      return target;
-    }
-
-    let variable;
-    this.regex.lastIndex = 0;
-
-    return target.replace(this.regex, (match: any, var1: any, var2: any, fmt2: any, var3: any) => {
-      if (scopedVars) {
-        const option = scopedVars[var1 || var2 || var3];
-        if (option) {
-          return option.text;
-        }
-      }
-
-      variable = this.getVariableAtIndex(var1 || var2 || var3);
-      if (!variable) {
-        return match;
-      }
-
-      const value = this.grafanaVariables[variable.current.value];
-
-      return typeof value === 'string' ? value : variable.current.text;
-    });
+    deprecationWarning('template_srv.ts', 'replaceWithText()', 'replace(), and specify the :text format');
+    return this.replace(target, scopedVars, 'text');
   }
-
-  fillVariableValuesForUrl = (params: any, scopedVars?: ScopedVars) => {
-    _.each(this.getVariables(), variable => {
-      if (scopedVars && scopedVars[variable.name] !== void 0) {
-        if (scopedVars[variable.name].skipUrlSync) {
-          return;
-        }
-        params['var-' + variable.name] = scopedVars[variable.name].value;
-      } else {
-        if (variable.skipUrlSync) {
-          return;
-        }
-        params['var-' + variable.name] = variableAdapters.get(variable.type).getValueForUrl(variable);
-      }
-    });
-  };
 
   private getVariableAtIndex(name: string) {
     if (!name) {
@@ -337,4 +330,4 @@ export class TemplateSrv implements BaseTemplateSrv {
 // Expose the template srv
 const srv = new TemplateSrv();
 setTemplateSrv(srv);
-export default srv;
+export const getTemplateSrv = () => srv;

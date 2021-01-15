@@ -1,9 +1,15 @@
 import _ from 'lodash';
 import config from 'app/core/config';
 import { profiler } from 'app/core/core';
-import { Emitter } from 'app/core/utils/emitter';
 import { auto } from 'angular';
-import { AppEvent, PanelEvents, PanelPluginMeta, AngularPanelMenuItem } from '@grafana/data';
+import {
+  AppEvent,
+  PanelEvents,
+  PanelPluginMeta,
+  AngularPanelMenuItem,
+  EventBusExtended,
+  EventBusSrv,
+} from '@grafana/data';
 import { DashboardModel } from '../dashboard/state';
 
 export class PanelCtrl {
@@ -21,7 +27,7 @@ export class PanelCtrl {
   height: number;
   width: number;
   containerHeight: any;
-  events: Emitter;
+  events: EventBusExtended;
   loading: boolean;
   timing: any;
 
@@ -31,7 +37,7 @@ export class PanelCtrl {
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
     this.editorTabs = [];
-    this.events = this.panel.events;
+    this.events = new EventBusSrv();
     this.timing = {}; // not used but here to not break plugins
 
     const plugin = config.panels[this.panel.type];
@@ -45,6 +51,7 @@ export class PanelCtrl {
 
   panelDidMount() {
     this.events.emit(PanelEvents.componentDidMount);
+    this.events.emit(PanelEvents.initialized);
     this.dashboard.panelInitialized(this.panel);
   }
 

@@ -16,7 +16,7 @@ import * as React from 'react';
 import { css } from 'emotion';
 import cx from 'classnames';
 
-import TimelineCollapser from './TimelineCollapser';
+import { TimelineCollapser } from './TimelineCollapser';
 import TimelineColumnResizer from './TimelineColumnResizer';
 import TimelineViewingLayer from './TimelineViewingLayer';
 import Ticks from '../Ticks';

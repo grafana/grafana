@@ -1,7 +1,10 @@
+// +build integration
+
 package sqlstore
 
 import (
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
@@ -53,8 +56,8 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 			})
 
 			Convey("Should be able update email sent and email sent on", func() {
-				cmd3 := models.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
-				err := UpdateTempUserWithEmailSent(&cmd3)
+				cmd2 := models.UpdateTempUserWithEmailSentCommand{Code: cmd.Result.Code}
+				err := UpdateTempUserWithEmailSent(&cmd2)
 				So(err, ShouldBeNil)
 
 				query := models.GetTempUsersQuery{OrgId: 2256, Status: models.TmpUserInvitePending}
@@ -62,7 +65,23 @@ func TestTempUserCommandsAndQueries(t *testing.T) {
 
 				So(err, ShouldBeNil)
 				So(query.Result[0].EmailSent, ShouldBeTrue)
-				So(query.Result[0].EmailSentOn, ShouldHappenOnOrAfter, (query.Result[0].Created))
+				So(query.Result[0].EmailSentOn.UTC(), ShouldHappenOnOrAfter, query.Result[0].Created.UTC())
+			})
+
+			Convey("Should be able expire temp user", func() {
+				createdAt := time.Unix(cmd.Result.Created, 0)
+				cmd2 := models.ExpireTempUsersCommand{OlderThan: createdAt.Add(1 * time.Second)}
+				err := ExpireOldUserInvites(&cmd2)
+				So(err, ShouldBeNil)
+				So(cmd2.NumExpired, ShouldEqual, int64(1))
+
+				Convey("Should do nothing when no temp users to expire", func() {
+					createdAt := time.Unix(cmd.Result.Created, 0)
+					cmd2 := models.ExpireTempUsersCommand{OlderThan: createdAt.Add(1 * time.Second)}
+					err := ExpireOldUserInvites(&cmd2)
+					So(err, ShouldBeNil)
+					So(cmd2.NumExpired, ShouldEqual, int64(0))
+				})
 			})
 		})
 	})

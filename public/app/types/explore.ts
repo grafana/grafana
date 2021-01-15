@@ -1,24 +1,22 @@
 import { Unsubscribable } from 'rxjs';
 import {
-  HistoryItem,
-  DataQuery,
-  DataSourceApi,
-  QueryHint,
-  PanelData,
-  DataQueryRequest,
-  RawTimeRange,
-  LogLevel,
-  TimeRange,
-  LogsModel,
-  LogsDedupStrategy,
   AbsoluteTimeRange,
-  GraphSeriesXY,
   DataFrame,
-  ExploreMode,
+  DataQuery,
+  DataQueryRequest,
+  DataSourceApi,
   ExploreUrlState,
+  GraphSeriesXY,
+  HistoryItem,
+  LogLevel,
+  LogsDedupStrategy,
+  LogsModel,
+  PanelData,
+  QueryHint,
+  RawTimeRange,
+  TimeRange,
+  EventBusExtended,
 } from '@grafana/data';
-
-import { Emitter } from 'app/core/core';
 
 export enum ExploreId {
   left = 'left',
@@ -61,21 +59,13 @@ export interface ExploreItemState {
    */
   datasourceInstance?: DataSourceApi | null;
   /**
-   * Current data source name or null if default
-   */
-  requestedDatasourceName: string | null;
-  /**
-   * True if the datasource is loading. `null` if the loading has not started yet.
-   */
-  datasourceLoading: boolean | null;
-  /**
    * True if there is no datasource to be selected.
    */
   datasourceMissing: boolean;
   /**
    * Emitter to send events to the rest of Grafana.
    */
-  eventBridge: Emitter;
+  eventBridge: EventBusExtended;
   /**
    * List of timeseries to be shown in the Explore graph result viewer.
    */
@@ -118,14 +108,6 @@ export interface ExploreItemState {
    * Current scanning range to be shown to the user while scanning is active.
    */
   scanRange?: RawTimeRange;
-  /**
-   * True if graph result viewer is expanded. Query runs will contain graph queries.
-   */
-  showingGraph: boolean;
-  /**
-   * True if table result viewer is expanded. Query runs will contain table queries.
-   */
-  showingTable: boolean;
 
   loading: boolean;
   /**
@@ -165,7 +147,6 @@ export interface ExploreItemState {
   update: ExploreUpdateState;
 
   latency: number;
-  supportedModes: ExploreMode[];
 
   /**
    * If true, the view is in live tailing mode.
@@ -199,16 +180,12 @@ export interface ExploreUpdateState {
   queries: boolean;
   range: boolean;
   mode: boolean;
-  ui: boolean;
 }
 
 export interface QueryOptions {
   minInterval?: string;
   maxDataPoints?: number;
   liveStreaming?: boolean;
-  showingGraph?: boolean;
-  showingTable?: boolean;
-  mode?: ExploreMode;
 }
 
 export interface QueryTransaction {
@@ -233,3 +210,13 @@ export type RichHistoryQuery = {
   sessionName: string;
   timeRange?: string;
 };
+
+export interface ExplorePanelData extends PanelData {
+  graphFrames: DataFrame[];
+  tableFrames: DataFrame[];
+  logsFrames: DataFrame[];
+  traceFrames: DataFrame[];
+  graphResult: GraphSeriesXY[] | null;
+  tableResult: DataFrame | null;
+  logsResult: LogsModel | null;
+}

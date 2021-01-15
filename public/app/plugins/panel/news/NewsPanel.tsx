@@ -29,16 +29,16 @@ export class NewsPanel extends PureComponent<Props, State> {
   }
 
   componentDidMount(): void {
-    this.loadFeed();
+    this.loadChannel();
   }
 
   componentDidUpdate(prevProps: Props): void {
     if (this.props.options.feedUrl !== prevProps.options.feedUrl) {
-      this.loadFeed();
+      this.loadChannel();
     }
   }
 
-  async loadFeed() {
+  async loadChannel() {
     const { options } = this.props;
     try {
       const url = options.feedUrl
@@ -77,7 +77,12 @@ export class NewsPanel extends PureComponent<Props, State> {
         {news.map((item, index) => {
           return (
             <div key={index} className={styles.item}>
-              <a href={item.link} target="_blank">
+              <a
+                className={styles.link}
+                href={textUtil.sanitizeUrl(item.link)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 <div className={styles.title}>{item.title}</div>
                 <div className={styles.date}>{dateTimeFormat(item.date, { format: 'MMM DD' })} </div>
               </a>
@@ -101,8 +106,15 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     margin-right: ${theme.spacing.sm};
     border-bottom: 2px solid ${theme.colors.border1};
   `,
-  title: css`
+  link: css`
     color: ${theme.colors.linkExternal};
+
+    &:hover {
+      color: ${theme.colors.linkExternal};
+      text-decoration: underline;
+    }
+  `,
+  title: css`
     max-width: calc(100% - 70px);
     font-size: 16px;
     margin-bottom: ${theme.spacing.sm};

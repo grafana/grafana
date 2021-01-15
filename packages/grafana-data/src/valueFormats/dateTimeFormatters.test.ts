@@ -1,6 +1,10 @@
 import {
   dateTimeAsIso,
+  dateTimeAsIsoNoDateIfToday,
   dateTimeAsUS,
+  dateTimeAsUSNoDateIfToday,
+  getDateTimeAsLocalFormat,
+  getDateTimeAsLocalFormatNoDateIfToday,
   dateTimeFromNow,
   Interval,
   toClock,
@@ -10,6 +14,7 @@ import {
   toDurationInHoursMinutesSeconds,
   toDurationInDaysHoursMinutesSeconds,
   toNanoSeconds,
+  toSeconds,
 } from './dateTimeFormatters';
 import { formattedValueToString } from './valueFormats';
 import { toUtc, dateTime } from '../datetime/moment_wrapper';
@@ -34,14 +39,14 @@ describe('date time formats', () => {
   it('should format as iso date and skip date when today', () => {
     const now = dateTime();
     const expected = now.format('HH:mm:ss');
-    const actual = dateTimeAsIso(now.valueOf(), 0, 0);
+    const actual = dateTimeAsIsoNoDateIfToday(now.valueOf(), 0, 0);
     expect(actual.text).toBe(expected);
   });
 
   it('should format as iso date (in UTC) and skip date when today', () => {
     const now = toUtc();
     const expected = now.format('HH:mm:ss');
-    const actual = dateTimeAsIso(now.valueOf(), 0, 0, 'utc');
+    const actual = dateTimeAsIsoNoDateIfToday(now.valueOf(), 0, 0, 'utc');
     expect(actual.text).toBe(expected);
   });
 
@@ -60,15 +65,45 @@ describe('date time formats', () => {
   it('should format as US date and skip date when today', () => {
     const now = dateTime();
     const expected = now.format('h:mm:ss a');
-    const actual = dateTimeAsUS(now.valueOf(), 0, 0);
+    const actual = dateTimeAsUSNoDateIfToday(now.valueOf(), 0, 0);
     expect(actual.text).toBe(expected);
   });
 
   it('should format as US date (in UTC) and skip date when today', () => {
     const now = toUtc();
     const expected = now.format('h:mm:ss a');
-    const actual = dateTimeAsUS(now.valueOf(), 0, 0, 'utc');
+    const actual = dateTimeAsUSNoDateIfToday(now.valueOf(), 0, 0, 'utc');
     expect(actual.text).toBe(expected);
+  });
+
+  it('should format as local date', () => {
+    const dateTimeObject = browserTime.toDate();
+    const formattedDateText = getDateTimeAsLocalFormat()(epoch, 0, 0).text;
+    expect(formattedDateText).toContain(dateTimeObject.getFullYear());
+    expect(formattedDateText).toContain(dateTimeObject.getSeconds());
+  });
+
+  it('should format as local date and skip date when today', () => {
+    const now = dateTime();
+    const dateTimeObject = now.toDate();
+    const formattedDateText = getDateTimeAsLocalFormatNoDateIfToday()(now.valueOf(), 0, 0).text;
+    expect(formattedDateText).not.toContain(dateTimeObject.getFullYear());
+    expect(formattedDateText).toContain(dateTimeObject.getSeconds());
+  });
+
+  it('should format as local date (in UTC)', () => {
+    const dateTimeObject = utcTime.toDate();
+    const formattedDateText = getDateTimeAsLocalFormat()(epoch, 0, 0, 'utc').text;
+    expect(formattedDateText).toContain(dateTimeObject.getFullYear());
+    expect(formattedDateText).toContain(dateTimeObject.getSeconds());
+  });
+
+  it('should format as local date (in UTC) and skip date when today', () => {
+    const now = toUtc();
+    const dateTimeObject = now.toDate();
+    const formattedDateText = getDateTimeAsLocalFormatNoDateIfToday()(now.valueOf(), 0, 0, 'utc').text;
+    expect(formattedDateText).not.toContain(dateTimeObject.getFullYear());
+    expect(formattedDateText).toContain(dateTimeObject.getSeconds());
   });
 
   it('should format as from now with days', () => {
@@ -327,5 +362,13 @@ describe('to nanoseconds', () => {
     const tenDays = toNanoSeconds(864000000000000);
     expect(tenDays.text).toBe('10');
     expect(tenDays.suffix).toBe(' day');
+  });
+});
+
+describe('seconds', () => {
+  it('should show 0 as 0', () => {
+    const zeroSeconds = toSeconds(0);
+    expect(zeroSeconds.text).toBe('0');
+    expect(zeroSeconds.suffix).toBe(' s');
   });
 });

@@ -10,5 +10,6 @@ func init() {
 }
 
 func GetDBHealthQuery(query *models.GetDBHealthQuery) error {
-	return x.Ping()
+	_, err := x.Exec("SELECT 1")
+	return err
 }

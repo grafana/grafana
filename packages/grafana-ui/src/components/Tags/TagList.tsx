@@ -21,6 +21,8 @@ export const TagList: FC<Props> = memo(({ tags, onClick, className }) => {
   );
 });
 
+TagList.displayName = 'TagList';
+
 const getStyles = () => {
   return {
     wrapper: css`
@@ -29,7 +31,9 @@ const getStyles = () => {
       flex-wrap: wrap;
     `,
     tag: css`
-      margin-left: 6px;
+      &:not(:first-child) {
+        margin-left: 6px;
+      }
     `,
   };
 };

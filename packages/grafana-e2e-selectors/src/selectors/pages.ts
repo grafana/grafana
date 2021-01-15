@@ -1,3 +1,5 @@
+import { Components } from './components';
+
 export const Pages = {
   Login: {
     url: '/login',
@@ -14,7 +16,6 @@ export const Pages = {
     delete: 'Data source settings page Delete button',
     saveAndTest: 'Data source settings page Save and Test button',
     alert: 'Data source settings page Alert',
-    alertMessage: 'Data source settings page Alert message',
   },
   DataSources: {
     url: '/datasources',
@@ -55,6 +56,11 @@ export const Pages = {
         timezone: 'Time zone picker select container',
         title: 'Dashboard settings page title',
       },
+      Annotations: {
+        List: {
+          addAnnotationCTA: 'Call to action button Add Annotation Query',
+        },
+      },
       Variables: {
         List: {
           addVariableCTA: 'Call to action button Add variable',
@@ -80,11 +86,10 @@ export const Pages = {
             selectionOptionsIncludeAllSwitch: 'Variable editor Form IncludeAll switch',
             selectionOptionsCustomAllInput: 'Variable editor Form IncludeAll field',
             previewOfValuesOption: 'Variable editor Preview of Values option',
-            addButton: 'Variable editor Add button',
-            updateButton: 'Variable editor Update button',
+            submitButton: 'Variable editor Submit button',
           },
           QueryVariable: {
-            queryOptionsDataSourceSelect: 'Variable editor Form Query DataSource select',
+            queryOptionsDataSourceSelect: Components.DataSourcePicker.container,
             queryOptionsRefreshSelect: 'Variable editor Form Query Refresh select',
             queryOptionsRegExInput: 'Variable editor Form Query RegEx field',
             queryOptionsSortSelect: 'Variable editor Form Query Sort select',
@@ -95,6 +100,9 @@ export const Pages = {
           },
           ConstantVariable: {
             constantOptionsQueryInput: 'Variable editor Form Constant Query field',
+          },
+          TextBoxVariable: {
+            textBoxOptionsQueryInput: 'Variable editor Form TextBox Query field',
           },
         },
       },
@@ -120,7 +128,25 @@ export const Pages = {
     url: '/explore',
     General: {
       container: 'Explore',
+      graph: 'Explore Graph',
       runButton: 'Run button',
+      table: 'Explore Table',
     },
+    Toolbar: {
+      navBar: () => '.explore-toolbar',
+    },
+  },
+  SoloPanel: {
+    url: (page: string) => `/d-solo/${page}`,
+  },
+  PluginsList: {
+    page: 'Plugins list page',
+    list: 'Plugins list',
+    listItem: 'Plugins list item',
+    signatureErrorNotice: 'Unsigned plugins notice',
+  },
+  PluginPage: {
+    page: 'Plugin page',
+    signatureInfo: 'Plugin signature info',
   },
 };

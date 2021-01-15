@@ -3,15 +3,15 @@ import React, { PureComponent } from 'react';
 
 // Types
 import { InlineFormLabel, LegacyForms, Select } from '@grafana/ui';
-import { SelectableValue, QueryEditorProps } from '@grafana/data';
-
-const { Switch } = LegacyForms;
-
+import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { PrometheusDatasource } from '../datasource';
-import { PromQuery, PromOptions } from '../types';
+import { PromOptions, PromQuery } from '../types';
 
 import PromQueryField from './PromQueryField';
 import PromLink from './PromLink';
+
+const { Switch } = LegacyForms;
+
 export type Props = QueryEditorProps<PrometheusDatasource, PromQuery, PromOptions>;
 
 const FORMAT_OPTIONS: Array<SelectableValue<string>> = [
@@ -96,7 +96,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
   };
 
   render() {
-    const { datasource, query, data } = this.props;
+    const { datasource, query, range, data } = this.props;
     const { formatOption, instant, interval, intervalFactorOption, legendFormat } = this.state;
 
     return (
@@ -104,6 +104,7 @@ export class PromQueryEditor extends PureComponent<Props, State> {
         <PromQueryField
           datasource={datasource}
           query={query}
+          range={range}
           onRunQuery={this.onRunQuery}
           onChange={this.onFieldChange}
           history={[]}
@@ -135,7 +136,8 @@ export class PromQueryEditor extends PureComponent<Props, State> {
               tooltip={
                 <>
                   An additional lower limit for the step parameter of the Prometheus query and for the{' '}
-                  <code>$__interval</code> variable. The limit is absolute and not modified by the "Resolution" setting.
+                  <code>$__interval</code> and <code>$__rate_interval</code> variables. The limit is absolute and not
+                  modified by the &quot;Resolution&quot; setting.
                 </>
               }
             >
@@ -155,7 +157,6 @@ export class PromQueryEditor extends PureComponent<Props, State> {
             <div className="gf-form-label">Resolution</div>
             <Select
               isSearchable={false}
-              menuPlacement="bottom"
               options={INTERVAL_FACTOR_OPTIONS}
               onChange={this.onIntervalFactorChange}
               value={intervalFactorOption}

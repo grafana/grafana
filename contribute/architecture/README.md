@@ -8,3 +8,6 @@ Learn more about the backend architecture:
 - Part 2: [Communication](communication.md)
 - Part 3: [Database](database.md)
 
+Learn more about the frontend architecture:
+- Part 1: [Data requests](frontend-data-requests.md)
+

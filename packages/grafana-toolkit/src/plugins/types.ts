@@ -91,6 +91,10 @@ export interface GitLogInfo {
 export interface ManifestInfo {
   // time: number;  << filled in by the server
   // keyId: string; << filled in by the server
+  // signedByOrg: string; << filled in by the server
+  // signedByOrgName: string; << filled in by the server
+  signatureType?: string; // filled in by the server if not specified
+  rootUrls?: string[]; // for private signatures
   plugin: string;
   version: string;
   files: Record<string, string>;

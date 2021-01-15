@@ -1,5 +1,5 @@
 // Libraries
-import React, { Component } from 'react';
+import React, { Component, HTMLAttributes } from 'react';
 import { getTitleFromNavModel } from 'app/core/selectors/navModel';
 
 // Components
@@ -11,7 +11,7 @@ import { NavModel } from '@grafana/data';
 import { isEqual } from 'lodash';
 import { Branding } from '../Branding/Branding';
 
-interface Props {
+interface Props extends HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   navModel: NavModel;
 }
@@ -44,13 +44,13 @@ class Page extends Component<Props> {
   }
 
   render() {
-    const { navModel } = this.props;
+    const { navModel, children, ...otherProps } = this.props;
     return (
-      <div className="page-scrollbar-wrapper">
+      <div {...otherProps} className="page-scrollbar-wrapper">
         <CustomScrollbar autoHeightMin={'100%'} className="custom-scrollbar--page">
           <div className="page-scrollbar-content">
             <PageHeader model={navModel} />
-            {this.props.children}
+            {children}
             <Footer />
           </div>
         </CustomScrollbar>

@@ -1,8 +1,6 @@
 +++
 title = "Variable examples"
 keywords = ["grafana", "templating", "documentation", "guide", "template", "variable"]
-type = "docs"
-[menu.docs]
 weight = 200
 +++
 

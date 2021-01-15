@@ -3,7 +3,7 @@ import omit from 'lodash/omit';
 import { PopoverController } from '../Tooltip/PopoverController';
 import { Popover } from '../Tooltip/Popover';
 import { ColorPickerPopover, ColorPickerProps, ColorPickerChangeHandler } from './ColorPickerPopover';
-import { getColorFromHexRgbOrName } from '@grafana/data';
+import { getColorForTheme } from '@grafana/data';
 import { SeriesColorPickerPopover } from './SeriesColorPickerPopover';
 
 import { withTheme } from '../../themes/ThemeContext';
@@ -74,7 +74,7 @@ export const colorPickerFactory = <T extends ColorPickerProps>(
                     ref={this.pickerTriggerRef}
                     onClick={showPopper}
                     onMouseLeave={hidePopper}
-                    color={getColorFromHexRgbOrName(this.props.color || '#000000', theme.type)}
+                    color={getColorForTheme(this.props.color || '#000000', theme)}
                   />
                 )}
               </>

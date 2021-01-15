@@ -63,7 +63,7 @@ interface SelectableZoneGroup extends SelectableValue<string> {
 const useTimeZones = (includeInternal: boolean): SelectableZoneGroup[] => {
   const now = Date.now();
 
-  return getTimeZoneGroups(includeInternal).map((group: GroupedTimeZones) => {
+  const timeZoneGroups = getTimeZoneGroups(includeInternal).map((group: GroupedTimeZones) => {
     const options = group.zones.reduce((options: SelectableZone[], zone) => {
       const info = getTimeZoneInfo(zone, now);
 
@@ -74,7 +74,7 @@ const useTimeZones = (includeInternal: boolean): SelectableZoneGroup[] => {
       options.push({
         label: info.name,
         value: info.zone,
-        searchIndex: useSearchIndex(info, now),
+        searchIndex: getSearchIndex(info, now),
       });
 
       return options;
@@ -85,6 +85,7 @@ const useTimeZones = (includeInternal: boolean): SelectableZoneGroup[] => {
       options,
     };
   });
+  return timeZoneGroups;
 };
 
 const useSelectedTimeZone = (
@@ -135,19 +136,17 @@ const useFilterBySearchIndex = () => {
   }, []);
 };
 
-const useSearchIndex = (info: TimeZoneInfo, timestamp: number): string => {
-  return useMemo(() => {
-    const parts: string[] = [
-      toLower(info.name),
-      toLower(info.abbreviation),
-      toLower(formatUtcOffset(timestamp, info.zone)),
-    ];
+const getSearchIndex = (info: TimeZoneInfo, timestamp: number): string => {
+  const parts: string[] = [
+    toLower(info.name),
+    toLower(info.abbreviation),
+    toLower(formatUtcOffset(timestamp, info.zone)),
+  ];
 
-    for (const country of info.countries) {
-      parts.push(toLower(country.name));
-      parts.push(toLower(country.code));
-    }
+  for (const country of info.countries) {
+    parts.push(toLower(country.name));
+    parts.push(toLower(country.code));
+  }
 
-    return parts.join('|');
-  }, [info.zone, info.abbreviation, info.offsetInMins]);
+  return parts.join('|');
 };

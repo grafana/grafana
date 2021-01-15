@@ -3,12 +3,12 @@ import {
   toDataFrame,
   FieldType,
   FieldCache,
-  FieldColorMode,
-  getColorFromHexRgbOrName,
-  GrafanaThemeType,
+  FieldColorModeId,
   Field,
+  getColorForTheme,
 } from '@grafana/data';
-import { getMultiSeriesGraphHoverInfo, findHoverIndexFromData } from './utils';
+import { getTheme } from '../../themes';
+import { getMultiSeriesGraphHoverInfo, findHoverIndexFromData, graphTimeFormat } from './utils';
 
 const mockResult = (
   value: string,
@@ -34,7 +34,7 @@ const aSeries = toDataFrame({
       name: 'value',
       type: FieldType.number,
       values: [10, 20, 10],
-      config: { color: { mode: FieldColorMode.Fixed, fixedColor: 'red' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'red' } },
     },
   ],
 });
@@ -45,7 +45,7 @@ const bSeries = toDataFrame({
       name: 'value',
       type: FieldType.number,
       values: [30, 60, 30],
-      config: { color: { mode: FieldColorMode.Fixed, fixedColor: 'blue' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'blue' } },
     },
   ],
 });
@@ -57,13 +57,13 @@ const cSeries = toDataFrame({
       name: 'value',
       type: FieldType.number,
       values: [30, 30],
-      config: { color: { mode: FieldColorMode.Fixed, fixedColor: 'yellow' } },
+      config: { color: { mode: FieldColorModeId.Fixed, fixedColor: 'yellow' } },
     },
   ],
 });
 
 function getFixedThemedColor(field: Field): string {
-  return getColorFromHexRgbOrName(field.config.color!.fixedColor!, GrafanaThemeType.Dark);
+  return getColorForTheme(field.config.color!.fixedColor!, getTheme());
 }
 
 describe('Graph utils', () => {
@@ -194,6 +194,16 @@ describe('Graph utils', () => {
       expect(findHoverIndexFromData(timeField!, 299)).toBe(1);
       // hovering over 3rd datapoint
       expect(findHoverIndexFromData(timeField!, 300)).toBe(2);
+    });
+  });
+
+  describe('graphTimeFormat', () => {
+    it('graphTimeFormat', () => {
+      expect(graphTimeFormat(5, 1, 45 * 5 * 1000)).toBe('HH:mm:ss');
+      expect(graphTimeFormat(5, 1, 7200 * 5 * 1000)).toBe('HH:mm');
+      expect(graphTimeFormat(5, 1, 80000 * 5 * 1000)).toBe('MM/DD HH:mm');
+      expect(graphTimeFormat(5, 1, 2419200 * 5 * 1000)).toBe('MM/DD');
+      expect(graphTimeFormat(5, 1, 12419200 * 5 * 1000)).toBe('YYYY-MM');
     });
   });
 });

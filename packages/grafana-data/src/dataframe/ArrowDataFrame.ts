@@ -55,6 +55,9 @@ export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
         case ArrowType.Decimal:
         case ArrowType.FloatingPoint: {
           type = FieldType.number;
+          if (col.nullCount) {
+            values = new WrappedColumn(col);
+          }
           break;
         }
         case ArrowType.Int: {
@@ -64,10 +67,14 @@ export function arrowTableToDataFrame(table: Table): ArrowDataFrame {
         }
         case ArrowType.Bool: {
           type = FieldType.boolean;
+          if (col.nullCount) {
+            values = new WrappedColumn(col);
+          }
           break;
         }
         case ArrowType.Timestamp: {
           type = FieldType.time;
+          values = new NumberColumn(col); // Cast to number
           break;
         }
         case ArrowType.Utf8: {
@@ -199,5 +206,22 @@ class NumberColumn extends FunctionalVector<number> {
     // then extra bits will be cut off, so we should be careful doing such conversion.
     // See https://javascript.info/bigint
     return Number(v);
+  }
+}
+
+// The `toArray()` arrow function will return a native ArrayBuffer -- this works fine
+// if there are no null values, but the native arrays do not support nulls.  This
+// class simply wraps the vector so `toArray` creates a new array
+class WrappedColumn extends FunctionalVector {
+  constructor(private col: Column) {
+    super();
+  }
+
+  get length() {
+    return this.col.length;
+  }
+
+  get(index: number): number {
+    return this.col.get(index);
   }
 }

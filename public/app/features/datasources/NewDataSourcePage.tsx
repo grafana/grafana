@@ -13,6 +13,7 @@ import { FilterInput } from 'app/core/components/FilterInput/FilterInput';
 import { setDataSourceTypeSearchQuery } from './state/reducers';
 import { PluginSignatureBadge } from '../plugins/PluginSignatureBadge';
 import { Card } from 'app/core/components/Card/Card';
+import { PluginsErrorsInfo } from '../plugins/PluginsErrorsInfo';
 
 export interface Props {
   navModel: NavModel;
@@ -98,6 +99,17 @@ class NewDataSourcePage extends PureComponent<Props> {
             <div className="page-action-bar__spacer" />
             <LinkButton href="datasources">Cancel</LinkButton>
           </div>
+          {!searchQuery && (
+            <PluginsErrorsInfo>
+              <>
+                <br />
+                <p>
+                  Note that <strong>unsigned front-end datasource plugins</strong> are still usable, but this is subject
+                  to change in the upcoming releases of Grafana
+                </p>
+              </>
+            </PluginsErrorsInfo>
+          )}
           <div>
             {searchQuery && this.renderPlugins(plugins)}
             {!searchQuery && this.renderCategories()}
@@ -117,10 +129,9 @@ interface DataSourceTypeCardProps {
 const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
   const { plugin, onLearnMoreClick } = props;
   const isPhantom = plugin.module === 'phantom';
-  const onClick = !isPhantom ? props.onClick : () => {};
-
+  const onClick = !isPhantom && !plugin.unlicensed ? props.onClick : () => {};
   // find first plugin info link
-  const learnMoreLink = plugin.info.links && plugin.info.links.length > 0 ? plugin.info.links[0] : null;
+  const learnMoreLink = plugin.info?.links?.length > 0 ? plugin.info.links[0] : null;
 
   return (
     <Card
@@ -142,7 +153,7 @@ const DataSourceTypeCard: FC<DataSourceTypeCardProps> = props => {
               {learnMoreLink.name}
             </LinkButton>
           )}
-          {!isPhantom && <Button>Select</Button>}
+          {!isPhantom && <Button disabled={plugin.unlicensed}>Select</Button>}
         </>
       }
       labels={

@@ -4,14 +4,26 @@ import { act } from 'react-dom/test-utils';
 import PromExploreQueryEditor from './PromExploreQueryEditor';
 import { PrometheusDatasource } from '../datasource';
 import { PromQuery } from '../types';
-import { LoadingState, PanelData, toUtc } from '@grafana/data';
+import { LoadingState, PanelData, toUtc, TimeRange } from '@grafana/data';
 
 const setup = (renderMethod: any, propOverrides?: object) => {
-  const datasourceMock: unknown = {};
+  const datasourceMock: unknown = {
+    languageProvider: {
+      syntax: () => {},
+    },
+  };
   const datasource: PrometheusDatasource = datasourceMock as PrometheusDatasource;
   const onRunQuery = jest.fn();
   const onChange = jest.fn();
   const query: PromQuery = { expr: '', refId: 'A', interval: '1s' };
+  const range: TimeRange = {
+    from: toUtc('2020-01-01', 'YYYY-MM-DD'),
+    to: toUtc('2020-01-02', 'YYYY-MM-DD'),
+    raw: {
+      from: toUtc('2020-01-01', 'YYYY-MM-DD'),
+      to: toUtc('2020-01-02', 'YYYY-MM-DD'),
+    },
+  };
   const data: PanelData = {
     state: LoadingState.NotStarted,
     series: [],
@@ -50,6 +62,7 @@ const setup = (renderMethod: any, propOverrides?: object) => {
   const props: any = {
     query,
     data,
+    range,
     datasource,
     exploreMode,
     history,

@@ -2,20 +2,29 @@ import _ from 'lodash';
 import LRU from 'lru-cache';
 import { Value } from 'slate';
 
-import { dateTime, LanguageProvider, HistoryItem } from '@grafana/data';
-import { CompletionItem, TypeaheadInput, TypeaheadOutput, CompletionItemGroup } from '@grafana/ui';
+import { dateTime, HistoryItem, LanguageProvider } from '@grafana/data';
+import { CompletionItem, CompletionItemGroup, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 
-import { parseSelector, processLabels, processHistogramLabels, fixSummariesMetadata } from './language_utils';
+import {
+  fixSummariesMetadata,
+  parseSelector,
+  processHistogramLabels,
+  processLabels,
+  roundSecToMin,
+  addLimitInfo,
+  limitSuggestions,
+} from './language_utils';
 import PromqlSyntax, { FUNCTIONS, RATE_RANGES } from './promql';
 
 import { PrometheusDatasource } from './datasource';
-import { PromQuery, PromMetricsMetadata } from './types';
+import { PromMetricsMetadata, PromQuery } from './types';
 
 const DEFAULT_KEYS = ['job', 'instance'];
 const EMPTY_SELECTOR = '{}';
 const HISTORY_ITEM_COUNT = 5;
 const HISTORY_COUNT_CUTOFF = 1000 * 60 * 60 * 24; // 24h
-export const DEFAULT_LOOKUP_METRICS_THRESHOLD = 10000; // number of metrics defining an installation that's too big
+// Max number of items (metrics, labels, values) that we display as suggestions. Prevents from running out of memory.
+export const SUGGESTIONS_LIMIT = 10000;
 
 const wrapLabel = (label: string): CompletionItem => ({ label });
 
@@ -60,8 +69,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   metricsMetadata?: PromMetricsMetadata;
   startTask: Promise<any>;
   datasource: PrometheusDatasource;
-  lookupMetricsThreshold: number;
-  lookupsDisabled: boolean; // Dynamically set to true for big/slow instances
 
   /**
    *  Cache for labels of series. This is bit simplistic in the sense that it just counts responses each as a 1 and does
@@ -77,9 +84,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     this.histogramMetrics = [];
     this.timeRange = { start: 0, end: 0 };
     this.metrics = [];
-    // Disable lookups until we know the instance is small enough
-    this.lookupMetricsThreshold = DEFAULT_LOOKUP_METRICS_THRESHOLD;
-    this.lookupsDisabled = true;
 
     Object.assign(this, initialValues);
   }
@@ -101,9 +105,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   request = async (url: string, defaultValue: any): Promise<any> => {
     try {
       const res = await this.datasource.metadataRequest(url);
-      const body = await (res.data || res.json());
-
-      return body.data;
+      return res.data.data;
     } catch (error) {
       console.error(error);
     }
@@ -116,8 +118,14 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       return [];
     }
 
-    this.metrics = await this.request('/api/v1/label/__name__/values', []);
-    this.lookupsDisabled = this.metrics.length > this.lookupMetricsThreshold;
+    const tRange = this.datasource.getTimeRange();
+    const params = new URLSearchParams({
+      start: tRange['start'].toString(),
+      end: tRange['end'].toString(),
+    });
+    const url = `/api/v1/label/__name__/values?${params.toString()}`;
+
+    this.metrics = await this.request(url, []);
     this.metricsMetadata = fixSummariesMetadata(await this.request('/api/v1/metadata', {}));
     this.processHistogramMetrics(this.metrics);
 
@@ -230,9 +238,10 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     });
 
     if (metrics && metrics.length) {
+      const limitInfo = addLimitInfo(metrics);
       suggestions.push({
-        label: 'Metrics',
-        items: metrics.map(m => addMetricsMetadata(m, metricsMetadata)),
+        label: `Metrics${limitInfo}`,
+        items: limitSuggestions(metrics).map(m => addMetricsMetadata(m, metricsMetadata)),
       });
     }
 
@@ -303,7 +312,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
     const labelValues = await this.getLabelValues(selector);
     if (labelValues) {
-      suggestions.push({ label: 'Labels', items: Object.keys(labelValues).map(wrapLabel) });
+      const limitInfo = addLimitInfo(labelValues[0]);
+      suggestions.push({
+        label: `Labels${limitInfo}`,
+        items: Object.keys(labelValues).map(wrapLabel),
+      });
     }
     return result;
   };
@@ -324,11 +337,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const suffix = line.substr(cursorOffset);
     const prefix = line.substr(0, cursorOffset);
     const isValueStart = text.match(/^(=|=~|!=|!~)/);
-    const isValueEnd = suffix.match(/^"?[,}]/);
-    // detect cursor in front of value, e.g., {key=|"}
+    const isValueEnd = suffix.match(/^"?[,}]|$/);
+    // Detect cursor in front of value, e.g., {key=|"}
     const isPreValue = prefix.match(/(=|=~|!=|!~)$/) && suffix.match(/^"/);
 
-    // Don't suggestq anything at the beginning or inside a value
+    // Don't suggest anything at the beginning or inside a value
     const isValueEmpty = isValueStart && isValueEnd;
     const hasValuePrefix = isValueEnd && !isValueStart;
     if ((!isValueEmpty && !hasValuePrefix) || isPreValue) {
@@ -365,8 +378,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       // Label values
       if (labelKey && labelValues[labelKey]) {
         context = 'context-label-values';
+        const limitInfo = addLimitInfo(labelValues[labelKey]);
         suggestions.push({
-          label: `Label values for "${labelKey}"`,
+          label: `Label values for "${labelKey}"${limitInfo}`,
           items: labelValues[labelKey].map(wrapLabel),
         });
       }
@@ -379,7 +393,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
         if (possibleKeys.length) {
           context = 'context-labels';
           const newItems = possibleKeys.map(key => ({ label: key }));
-          const newSuggestion: CompletionItemGroup = { label: `Labels`, items: newItems };
+          const limitInfo = addLimitInfo(newItems);
+          const newSuggestion: CompletionItemGroup = { label: `Labels${limitInfo}`, items: newItems };
           suggestions.push(newSuggestion);
         }
       }
@@ -389,7 +404,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   };
 
   async getLabelValues(selector: string, withName?: boolean) {
-    if (this.lookupsDisabled) {
+    if (this.datasource.lookupsDisabled) {
       return undefined;
     }
     try {
@@ -406,13 +421,15 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   }
 
   fetchLabelValues = async (key: string): Promise<Record<string, string[]>> => {
-    const data = await this.request(`/api/v1/label/${key}/values`, []);
+    const tRange = this.datasource.getTimeRange();
+    const params = new URLSearchParams({
+      start: tRange['start'].toString(),
+      end: tRange['end'].toString(),
+    });
+    const url = `/api/v1/label/${key}/values?${params.toString()}`;
+    const data = await this.request(url, []);
     return { [key]: data };
   };
-
-  roundToMinutes(seconds: number): number {
-    return Math.floor(seconds / 60);
-  }
 
   /**
    * Fetch labels for a series. This is cached by it's args but also by the global timeRange currently selected as
@@ -432,8 +449,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
     // millisecond while still actually getting all the keys for the correct interval. This still can create problems
     // when user does not the newest values for a minute if already cached.
-    params.set('start', this.roundToMinutes(tRange['start']).toString());
-    params.set('end', this.roundToMinutes(tRange['end']).toString());
+    params.set('start', roundSecToMin(tRange['start']).toString());
+    params.set('end', roundSecToMin(tRange['end']).toString());
     params.append('withName', withName ? 'true' : 'false');
     const cacheKey = `/api/v1/series?${params.toString()}`;
     let value = this.labelsCache.get(cacheKey);

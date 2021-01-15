@@ -13,7 +13,7 @@ import { initDashboard } from '../state/initDashboard';
 import { StoreState, DashboardRouteInfo } from 'app/types';
 import { PanelModel, DashboardModel } from 'app/features/dashboard/state';
 
-interface Props {
+export interface Props {
   urlPanelId: string;
   urlUid?: string;
   urlSlug?: string;
@@ -25,7 +25,7 @@ interface Props {
   dashboard: DashboardModel | null;
 }
 
-interface State {
+export interface State {
   panel: PanelModel | null;
   notFound: boolean;
 }
@@ -57,8 +57,8 @@ export class SoloPanelPage extends Component<Props, State> {
       return;
     }
 
-    // we just got the dashboard!
-    if (!prevProps.dashboard) {
+    // we just got a new dashboard
+    if (!prevProps.dashboard || prevProps.dashboard.uid !== dashboard.uid) {
       const panelId = parseInt(urlPanelId, 10);
 
       // need to expand parent row if this panel is inside a row

@@ -24,7 +24,7 @@ export class SelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>
     const now = this.props.item?.settings;
     if (old !== now) {
       this.updateOptions();
-    } else if (now.getOptions) {
+    } else if (now?.getOptions) {
       const old = oldProps.context?.data;
       const now = this.props.context?.data;
       if (old !== now) {
@@ -53,7 +53,6 @@ export class SelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>
     const { value, onChange, item } = this.props;
 
     const { settings } = item;
-    const { allowCustomValue } = settings;
     let current = options.find(v => v.value === value);
     if (!current && value) {
       current = {
@@ -66,7 +65,7 @@ export class SelectValueEditor<T> extends React.PureComponent<Props<T>, State<T>
         isLoading={isLoading}
         value={current}
         defaultValue={value}
-        allowCustomValue={allowCustomValue}
+        allowCustomValue={settings?.allowCustomValue}
         onChange={e => onChange(e.value)}
         options={options}
       />

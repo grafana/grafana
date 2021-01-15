@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import angular from 'angular';
 import coreModule from '../core_module';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { dateTime } from '@grafana/data';
 
 coreModule.filter('stringSort', () => {
@@ -39,8 +39,7 @@ coreModule.filter('moment', () => {
   };
 });
 
-/** @ngInject */
-function interpolateTemplateVars(templateSrv: TemplateSrv) {
+function interpolateTemplateVars(templateSrv: TemplateSrv = getTemplateSrv()) {
   const filterFunc: any = (text: string, scope: any) => {
     let scopedVars;
     if (scope.ctrl) {

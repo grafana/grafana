@@ -2,6 +2,7 @@ package usagestats
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -17,30 +18,35 @@ import (
 
 var usageStatsURL = "https://stats.grafana.org/grafana-usage-report"
 
-func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
-	if !setting.ReportingEnabled {
-		return
-	}
+type UsageReport struct {
+	Version         string                 `json:"version"`
+	Metrics         map[string]interface{} `json:"metrics"`
+	Os              string                 `json:"os"`
+	Arch            string                 `json:"arch"`
+	Edition         string                 `json:"edition"`
+	HasValidLicense bool                   `json:"hasValidLicense"`
+	Packaging       string                 `json:"packaging"`
+}
 
-	metricsLogger.Debug(fmt.Sprintf("Sending anonymous usage stats to %s", usageStatsURL))
-
-	version := strings.Replace(setting.BuildVersion, ".", "_", -1)
+func (uss *UsageStatsService) GetUsageReport(ctx context.Context) (UsageReport, error) {
+	version := strings.ReplaceAll(setting.BuildVersion, ".", "_")
 
 	metrics := map[string]interface{}{}
-	report := map[string]interface{}{
-		"version":         version,
-		"metrics":         metrics,
-		"os":              runtime.GOOS,
-		"arch":            runtime.GOARCH,
-		"edition":         getEdition(),
-		"hasValidLicense": uss.License.HasValidLicense(),
-		"packaging":       setting.Packaging,
+
+	report := UsageReport{
+		Version:         version,
+		Metrics:         metrics,
+		Os:              runtime.GOOS,
+		Arch:            runtime.GOARCH,
+		Edition:         getEdition(),
+		HasValidLicense: uss.License.HasValidLicense(),
+		Packaging:       setting.Packaging,
 	}
 
 	statsQuery := models.GetSystemStatsQuery{}
 	if err := uss.Bus.Dispatch(&statsQuery); err != nil {
 		metricsLogger.Error("Failed to get system stats", "error", err)
-		return
+		return report, err
 	}
 
 	metrics["stats.dashboards.count"] = statsQuery.Result.Dashboards
@@ -67,6 +73,8 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	metrics["stats.edition.oss.count"] = getOssEditionCount()
 	metrics["stats.edition.enterprise.count"] = getEnterpriseEditionCount()
 
+	uss.registerExternalMetrics(metrics)
+
 	userCount := statsQuery.Result.Users
 	avgAuthTokensPerUser := statsQuery.Result.AuthTokens
 	if userCount != 0 {
@@ -78,7 +86,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	dsStats := models.GetDataSourceStatsQuery{}
 	if err := uss.Bus.Dispatch(&dsStats); err != nil {
 		metricsLogger.Error("Failed to get datasource stats", "error", err)
-		return
+		return report, err
 	}
 
 	// send counters for each data source
@@ -100,7 +108,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	alertingUsageStats, err := uss.AlertingUsageStats.QueryUsageStats()
 	if err != nil {
 		uss.log.Error("Failed to get alerting usage stats", "error", err)
-		return
+		return report, err
 	}
 
 	var addAlertingUsageStats = func(dsType string, usageCount int) {
@@ -122,7 +130,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
 	if err := uss.Bus.Dispatch(&dsAccessStats); err != nil {
 		metricsLogger.Error("Failed to get datasource access stats", "error", err)
-		return
+		return report, err
 	}
 
 	// send access counters for each data source
@@ -152,7 +160,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	anStats := models.GetAlertNotifierUsageStatsQuery{}
 	if err := uss.Bus.Dispatch(&anStats); err != nil {
 		metricsLogger.Error("Failed to get alert notification stats", "error", err)
-		return
+		return report, err
 	}
 
 	for _, stats := range anStats.Result {
@@ -166,7 +174,7 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 	authTypes["ldap"] = setting.LDAPEnabled
 	authTypes["auth_proxy"] = setting.AuthProxyEnabled
 
-	for provider, enabled := range oauthProviders {
+	for provider, enabled := range uss.oauthProviders {
 		authTypes["oauth_"+provider] = enabled
 	}
 
@@ -178,7 +186,55 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 		metrics["stats.auth_enabled."+authType+".count"] = enabledValue
 	}
 
-	out, _ := json.MarshalIndent(report, "", " ")
+	// Get concurrent users stats as histogram
+	concurrentUsersStats, err := uss.GetConcurrentUsersStats(ctx)
+	if err != nil {
+		metricsLogger.Error("Failed to get concurrent users stats", "error", err)
+		return report, err
+	}
+
+	// Histogram is cumulative and metric name has a postfix of le_"<upper inclusive bound>"
+	metrics["stats.auth_token_per_user_le_3"] = concurrentUsersStats.BucketLE3
+	metrics["stats.auth_token_per_user_le_6"] = concurrentUsersStats.BucketLE6
+	metrics["stats.auth_token_per_user_le_9"] = concurrentUsersStats.BucketLE9
+	metrics["stats.auth_token_per_user_le_12"] = concurrentUsersStats.BucketLE12
+	metrics["stats.auth_token_per_user_le_15"] = concurrentUsersStats.BucketLE15
+	metrics["stats.auth_token_per_user_le_inf"] = concurrentUsersStats.BucketLEInf
+
+	return report, nil
+}
+
+func (uss *UsageStatsService) registerExternalMetrics(metrics map[string]interface{}) {
+	for name, fn := range uss.externalMetrics {
+		result, err := fn()
+		if err != nil {
+			metricsLogger.Error("Failed to fetch external metric", "name", name, "error", err)
+			continue
+		}
+		metrics[name] = result
+	}
+}
+
+func (uss *UsageStatsService) RegisterMetric(name string, fn MetricFunc) {
+	uss.externalMetrics[name] = fn
+}
+
+func (uss *UsageStatsService) sendUsageStats(ctx context.Context) error {
+	if !setting.ReportingEnabled {
+		return nil
+	}
+
+	metricsLogger.Debug(fmt.Sprintf("Sending anonymous usage stats to %s", usageStatsURL))
+
+	report, err := uss.GetUsageReport(ctx)
+	if err != nil {
+		return err
+	}
+
+	out, err := json.MarshalIndent(report, "", " ")
+	if err != nil {
+		return err
+	}
 	data := bytes.NewBuffer(out)
 
 	client := http.Client{Timeout: 5 * time.Second}
@@ -188,8 +244,12 @@ func (uss *UsageStatsService) sendUsageStats(oauthProviders map[string]bool) {
 			metricsLogger.Error("Failed to send usage stats", "err", err)
 			return
 		}
-		resp.Body.Close()
+		if err := resp.Body.Close(); err != nil {
+			metricsLogger.Warn("Failed to close response body", "err", err)
+		}
 	}()
+
+	return nil
 }
 
 func (uss *UsageStatsService) updateTotalStats() {

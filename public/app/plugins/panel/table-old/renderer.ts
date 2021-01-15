@@ -2,9 +2,7 @@ import _ from 'lodash';
 import {
   escapeStringForRegex,
   formattedValueToString,
-  getColorFromHexRgbOrName,
   getValueFormat,
-  GrafanaThemeType,
   ScopedVars,
   stringStartsAsRegEx,
   stringToJsRegex,
@@ -13,8 +11,10 @@ import {
   TimeZone,
   dateTimeFormatISO,
   dateTimeFormat,
+  getColorForTheme,
+  GrafanaTheme,
 } from '@grafana/data';
-import { TemplateSrv } from 'app/features/templating/template_srv';
+import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { ColumnRender, TableRenderModel, ColumnStyle } from './types';
 import { ColumnOptionsCtrl } from './column_options';
 
@@ -27,8 +27,8 @@ export class TableRenderer {
     private table: TableRenderModel,
     private timeZone: TimeZone,
     private sanitize: (v: any) => any,
-    private templateSrv: TemplateSrv,
-    private theme?: GrafanaThemeType
+    private templateSrv: TemplateSrv = getTemplateSrv(),
+    private theme: GrafanaTheme
   ) {
     this.initColumns();
   }
@@ -75,10 +75,10 @@ export class TableRenderer {
     }
     for (let i = style.thresholds.length; i > 0; i--) {
       if (value >= style.thresholds[i - 1]) {
-        return getColorFromHexRgbOrName(style.colors[i], this.theme);
+        return getColorForTheme(style.colors[i], this.theme);
       }
     }
-    return getColorFromHexRgbOrName(_.first(style.colors), this.theme);
+    return getColorForTheme(_.first(style.colors), this.theme);
   }
 
   defaultCellFormatter(v: any, style: ColumnStyle) {

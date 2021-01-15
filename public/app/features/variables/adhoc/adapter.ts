@@ -28,7 +28,7 @@ export const createAdHocVariableAdapter = (): VariableAdapter<AdHocVariableModel
     },
     updateOptions: noop,
     getSaveModel: variable => {
-      const { index, id, initLock, global, ...rest } = cloneDeep(variable);
+      const { index, id, state, global, ...rest } = cloneDeep(variable);
       return rest;
     },
     getValueForUrl: variable => {

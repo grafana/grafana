@@ -14,7 +14,6 @@ export const useExpandableLabel = (
 
   const Label: React.FC<LabelProps> = ({ Component, onClick }) => (
     <div
-      className="gf-form"
       ref={ref}
       onClick={() => {
         setExpanded(true);

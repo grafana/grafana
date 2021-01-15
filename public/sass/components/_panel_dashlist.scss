@@ -10,16 +10,28 @@
 
 .dashlist-link {
   @include list-item();
+  display: flex;
 
   .fa {
     padding-top: 3px;
   }
 
-  .dashlist-star {
-    float: right;
-  }
-
   .fa-star {
     color: $orange;
   }
+}
+
+.dashlist-star {
+  display: flex;
+  align-items: center;
+  color: $text-color-weak;
+}
+
+.dashlist-folder {
+  color: $text-color-weak;
+  font-size: $font-size-xs;
+}
+
+.dashlist-link-body {
+  flex-grow: 1;
 }

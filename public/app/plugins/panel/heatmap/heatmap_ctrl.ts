@@ -13,9 +13,9 @@ import {
   sortSeriesByLabel,
 } from './heatmap_data_converter';
 import { auto } from 'angular';
-import { getProcessedDataFrames } from 'app/features/dashboard/state/runRequest';
+import { getProcessedDataFrames } from 'app/features/query/state/runRequest';
 import { DataProcessor } from '../graph/data_processor';
-import { LegacyResponseData, PanelEvents, DataFrame } from '@grafana/data';
+import { LegacyResponseData, PanelEvents, DataFrame, rangeUtil } from '@grafana/data';
 import { CoreEvents } from 'app/types';
 
 const X_BUCKET_NUMBER_DEFAULT = 30;
@@ -182,7 +182,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     // Parse X bucket size (number or interval)
     const isIntervalString = kbn.intervalRegex.test(this.panel.xBucketSize);
     if (isIntervalString) {
-      xBucketSize = kbn.intervalToMs(this.panel.xBucketSize);
+      xBucketSize = rangeUtil.intervalToMs(this.panel.xBucketSize);
     } else if (
       isNaN(Number(this.panel.xBucketSize)) ||
       this.panel.xBucketSize === '' ||

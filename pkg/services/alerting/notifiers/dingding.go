@@ -12,26 +12,14 @@ import (
 )
 
 const defaultDingdingMsgType = "link"
-const dingdingOptionsTemplate = `
-      <h3 class="page-heading">DingDing settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Url</span>
-        <input type="text" required class="gf-form-input max-width-70" ng-model="ctrl.model.settings.url" placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxx"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">MessageType</span>
-        <select class="gf-form-input max-width-14" ng-model="ctrl.model.settings.msgType" ng-options="s for s in ['link','actionCard']" ng-init="ctrl.model.settings.msgType=ctrl.model.settings.msgType || '` + defaultDingdingMsgType + `'"></select>
-      </div>
-`
 
 func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
-		Type:            "dingding",
-		Name:            "DingDing",
-		Description:     "Sends HTTP POST request to DingDing",
-		Heading:         "DingDing settings",
-		Factory:         newDingDingNotifier,
-		OptionsTemplate: dingdingOptionsTemplate,
+		Type:        "dingding",
+		Name:        "DingDing",
+		Description: "Sends HTTP POST request to DingDing",
+		Heading:     "DingDing settings",
+		Factory:     newDingDingNotifier,
 		Options: []alerting.NotifierOption{
 			{
 				Label:        "Url",
@@ -131,14 +119,14 @@ func (dd *DingDingNotifier) genBody(evalContext *alerting.EvalContext, messageUR
 	}
 
 	for i, match := range evalContext.EvalMatches {
-		message += fmt.Sprintf("\\n%2d. %s: %s", i+1, match.Metric, match.Value)
+		message += fmt.Sprintf("\n%2d. %s: %s", i+1, match.Metric, match.Value)
 	}
 
 	var bodyMsg map[string]interface{}
 	if dd.MsgType == "actionCard" {
 		// Embed the pic into the markdown directly because actionCard doesn't have a picUrl field
 		if dd.NeedsImage() && picURL != "" {
-			message = "![](" + picURL + ")\\n\\n" + message
+			message = "![](" + picURL + ")\n\n" + message
 		}
 
 		bodyMsg = map[string]interface{}{

@@ -19,9 +19,20 @@ For more ways to contribute, check out the [Open Source Guides](https://opensour
 
 ### Report bugs
 
+Before submitting a new issue, try to make sure someone hasn't already reported the problem. Look through the [existing issues](https://github.com/grafana/grafana/issues) for similar issues.
+
 Report a bug by submitting a [bug report](https://github.com/grafana/grafana/issues/new?labels=type%3A+bug&template=1-bug_report.md). Make sure that you provide as much information as possible on how to reproduce the bug.
 
-Before submitting a new issue, try to make sure someone hasn't already reported the problem. Look through the [existing issues](https://github.com/grafana/grafana/issues) for similar issues.
+Follow the issue template and add additional information that will help us replicate the problem.
+
+For data visualization issues:
+- Query results from the inspect drawer (data tab & query inspector)
+- Panel settings can be extracted in the panel inspect drawer JSON tab
+
+For a dashboard related issues:
+- Dashboard JSON can be found in the dashboard settings JSON model view
+
+For authentication and alerting Grafana server logs are useful.
 
 #### Security issues
 
@@ -65,3 +76,4 @@ Before we can accept your pull request, you need to [sign our CLA](https://grafa
 - Set up your [development environment](contribute/developer-guide.md).
 - Learn how to [contribute documentation](contribute/documentation.md).
 - Get started [developing plugins](https://grafana.com/docs/grafana/latest/developers/plugins/) for Grafana.
+- Look through the resources in the [contribute](https://github.com/grafana/grafana/tree/master/contribute) folder.
