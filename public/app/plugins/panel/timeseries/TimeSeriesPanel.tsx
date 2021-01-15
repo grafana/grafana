@@ -4,8 +4,9 @@ import { PanelProps } from '@grafana/data';
 import { Options } from './types';
 import { AnnotationsPlugin } from './plugins/AnnotationsPlugin';
 import { ExemplarsPlugin } from './plugins/ExemplarsPlugin';
-import { hideSeriesConfigFactory } from './hideSeriesConfigFactory';
 import { ContextMenuPlugin } from './plugins/ContextMenuPlugin';
+import { hideSeriesConfigFactory } from './overrides/hideSeriesConfigFactory';
+import { changeSeriesColorConfigFactory } from './overrides/colorSeriesConfigFactory';
 
 interface TimeSeriesPanelProps extends PanelProps<Options> {}
 
@@ -28,6 +29,13 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
     [fieldConfig, onFieldConfigChange, data.series]
   );
 
+  const onSeriesColorChange = useCallback(
+    (label: string, color: string) => {
+      onFieldConfigChange(changeSeriesColorConfigFactory(label, color, fieldConfig));
+    },
+    [fieldConfig, onFieldConfigChange]
+  );
+
   return (
     <GraphNG
       data={data.series}
@@ -37,6 +45,7 @@ export const TimeSeriesPanel: React.FC<TimeSeriesPanelProps> = ({
       height={height}
       legend={options.legend}
       onLegendClick={onLegendClick}
+      onSeriesColorChange={onSeriesColorChange}
     >
       <TooltipPlugin mode={options.tooltipOptions.mode as any} timeZone={timeZone} />
       <ZoomPlugin onZoom={onChangeTimeRange} />

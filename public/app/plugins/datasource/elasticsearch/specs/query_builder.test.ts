@@ -24,6 +24,22 @@ describe('ElasticQueryBuilder', () => {
         expect(query.aggs['1'].date_histogram.extended_bounds.min).toBe('$timeFrom');
       });
 
+      it('should clean settings from null values', () => {
+        const query = builder.build({
+          refId: 'A',
+          // The following `missing: null as any` is because previous versions of the DS where
+          // storing null in the query model when inputting an empty string,
+          // which were then removed in the query builder.
+          // The new version doesn't store empty strings at all. This tests ensures backward compatinility.
+          metrics: [{ type: 'avg', id: '0', settings: { missing: null as any, script: '1' } }],
+          timeField: '@timestamp',
+          bucketAggs: [{ type: 'date_histogram', field: '@timestamp', id: '1' }],
+        });
+
+        expect(query.aggs['1'].aggs['0'].avg.missing).not.toBeDefined();
+        expect(query.aggs['1'].aggs['0'].avg.script).toBeDefined();
+      });
+
       it('with multiple bucket aggs', () => {
         const query = builder.build({
           refId: 'A',

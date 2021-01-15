@@ -209,9 +209,9 @@ class PromQueryField extends React.PureComponent<PromQueryFieldProps, PromQueryF
     let hint = hints.length > 0 ? hints[0] : null;
 
     // Hint for big disabled lookups
-    if (!hint && !datasource.lookupsDisabled && datasource.languageProvider.lookupsDisabled) {
+    if (!hint && datasource.lookupsDisabled) {
       hint = {
-        label: `Dynamic label lookup is disabled for datasources with more than ${datasource.languageProvider.lookupMetricsThreshold} metrics.`,
+        label: `Labels and metrics lookup was disabled in data source settings.`,
         type: 'INFO',
       };
     }
