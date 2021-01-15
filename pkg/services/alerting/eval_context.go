@@ -180,8 +180,8 @@ func getNewStateInternal(c *EvalContext) models.AlertStateType {
 	return models.AlertStateOK
 }
 
-// evaluateNotificationTemplateFields will treat the alert evaluation rule's name and message fields as Go text
-// templates, and execute the templates using data from the alert evaluation's tags
+// evaluateNotificationTemplateFields will treat the alert evaluation rule's name and message fields as
+// templates, and evaluate the templates using data from the alert evaluation's tags
 func (c *EvalContext) evaluateNotificationTemplateFields() error {
 	if len(c.EvalMatches) < 1 {
 		return nil
