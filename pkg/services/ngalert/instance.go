@@ -7,8 +7,8 @@ import (
 
 // AlertInstance represents a single alert instance.
 type AlertInstance struct {
-	DefinitionOrgID   int64  `xorm:"definition_org_id"`
-	DefinitionUID     string `xorm:"definition_uid"`
+	DefinitionOrgID   int64  `xorm:"def_org_id"`
+	DefinitionUID     string `xorm:"def_uid"`
 	Labels            InstanceLabels
 	LabelsHash        string
 	CurrentState      InstanceStateType

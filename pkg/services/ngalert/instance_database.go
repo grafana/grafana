@@ -18,8 +18,8 @@ func (ng *AlertNG) getAlertInstance(cmd *getAlertInstanceQuery) error {
 		s := strings.Builder{}
 		s.WriteString(`SELECT * FROM alert_instance
 			WHERE
-				definition_org_id=? AND
-				definition_uid=? AND
+				def_org_id=? AND
+				def_uid=? AND
 				labels_hash=?
 		`)
 
@@ -57,10 +57,10 @@ func (ng *AlertNG) listAlertInstances(cmd *listAlertInstancesQuery) error {
 			params = append(params, p...)
 		}
 
-		addToQuery("SELECT * FROM alert_instance WHERE definition_org_id = ?", cmd.DefinitionOrgID)
+		addToQuery("SELECT * FROM alert_instance WHERE def_org_id = ?", cmd.DefinitionOrgID)
 
 		if cmd.DefinitionUID != "" {
-			addToQuery(` AND definition_uid = ?`, cmd.DefinitionUID)
+			addToQuery(` AND def_uid = ?`, cmd.DefinitionUID)
 		}
 
 		if cmd.State != "" {
@@ -103,8 +103,8 @@ func (ng *AlertNG) saveAlertInstance(cmd *saveAlertInstanceCommand) error {
 
 		upsertSQL := ng.SQLStore.Dialect.UpsertSQL(
 			"alert_instance",
-			[]string{"definition_org_id", "definition_uid", "labels_hash"},
-			[]string{"definition_org_id", "definition_uid", "labels", "labels_hash", "current_state", "current_state_since", "last_eval_time"})
+			[]string{"def_org_id", "def_uid", "labels_hash"},
+			[]string{"def_org_id", "def_uid", "labels", "labels_hash", "current_state", "current_state_since", "last_eval_time"})
 		_, err = sess.SQL(upsertSQL, params...).Query()
 		if err != nil {
 			return err
