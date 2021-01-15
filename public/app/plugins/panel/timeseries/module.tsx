@@ -1,9 +1,9 @@
-import { PanelPlugin } from '@grafana/data';
+import { PanelPlugin, standardEditorsRegistry, StatsPickerConfigSettings } from '@grafana/data';
 import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
 import { TimeSeriesPanel } from './TimeSeriesPanel';
 import { graphPanelChangedHandler } from './migrations';
 import { Options } from './types';
-import { getGraphFieldConfig, defaultGraphConfig } from './config';
+import { defaultGraphConfig, getGraphFieldConfig } from './config';
 
 export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel)
   .setPanelChangeHandler(graphPanelChangedHandler)
@@ -48,5 +48,17 @@ export const plugin = new PanelPlugin<Options, GraphFieldConfig>(TimeSeriesPanel
           ],
         },
         showIf: c => c.legend.displayMode !== LegendDisplayMode.Hidden,
+      })
+      .addCustomEditor<StatsPickerConfigSettings, string[]>({
+        id: 'legend.calcs',
+        path: 'legend.calcs',
+        name: 'Legend calculations',
+        description: 'Choose a reducer functions / calculations to include in legend',
+        editor: standardEditorsRegistry.get('stats-picker').editor as any,
+        defaultValue: [],
+        settings: {
+          allowMultiple: true,
+        },
+        showIf: currentConfig => currentConfig.legend.displayMode !== LegendDisplayMode.Hidden,
       });
   });
