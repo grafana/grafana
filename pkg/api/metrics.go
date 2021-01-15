@@ -97,7 +97,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 		}
 	}
 
-	return utils.JsonStreaming(statusCode, resp)
+	return utils.JSONStreaming(statusCode, resp)
 }
 
 // QueryMetrics returns query metrics
