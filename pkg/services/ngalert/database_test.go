@@ -293,8 +293,31 @@ func TestDeletingAlertDefinition(t *testing.T) {
 			OrgID: 1,
 		}
 
-		err := ng.deleteAlertDefinitionByUID(&q)
+		// save an instance for the definition
+		saveCmd := &saveAlertInstanceCommand{
+			DefinitionOrgID: alertDefinition.OrgID,
+			DefinitionUID:   alertDefinition.UID,
+			State:           InstanceStateFiring,
+			Labels:          InstanceLabels{"test": "testValue"},
+		}
+		err := ng.saveAlertInstance(saveCmd)
 		require.NoError(t, err)
+		listCommand := &listAlertInstancesQuery{
+			DefinitionOrgID: alertDefinition.OrgID,
+			DefinitionUID:   alertDefinition.UID,
+		}
+		err = ng.listAlertInstances(listCommand)
+		require.NoError(t, err)
+		require.Len(t, listCommand.Result, 1)
+
+		err = ng.deleteAlertDefinitionByUID(&q)
+		require.NoError(t, err)
+
+		// assert that alert instance is deleted
+		err = ng.listAlertInstances(listCommand)
+		require.NoError(t, err)
+
+		require.Len(t, listCommand.Result, 0)
 	})
 }
 

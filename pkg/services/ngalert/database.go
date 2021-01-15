@@ -26,12 +26,7 @@ func getAlertDefinitionByUID(sess *sqlstore.DBSession, alertDefinitionUID string
 // It returns models.ErrAlertDefinitionNotFound if no alert definition is found for the provided ID.
 func (ng *AlertNG) deleteAlertDefinitionByUID(cmd *deleteAlertDefinitionByUIDCommand) error {
 	return ng.SQLStore.WithTransactionalDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		res, err := sess.Exec("DELETE FROM alert_definition WHERE uid = ? AND org_id = ?", cmd.UID, cmd.OrgID)
-		if err != nil {
-			return err
-		}
-
-		_, err = res.RowsAffected()
+		_, err := sess.Exec("DELETE FROM alert_definition WHERE uid = ? AND org_id = ?", cmd.UID, cmd.OrgID)
 		if err != nil {
 			return err
 		}
@@ -41,6 +36,10 @@ func (ng *AlertNG) deleteAlertDefinitionByUID(cmd *deleteAlertDefinitionByUIDCom
 			return err
 		}
 
+		_, err = sess.Exec("DELETE FROM alert_instance WHERE def_org_id = ? AND def_uid = ?", cmd.OrgID, cmd.UID)
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 }
