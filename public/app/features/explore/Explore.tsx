@@ -12,7 +12,6 @@ import {
   DataQuery,
   DataSourceApi,
   GrafanaTheme,
-  GraphSeriesXY,
   LoadingState,
   PanelData,
   RawTimeRange,
@@ -20,6 +19,7 @@ import {
   TimeZone,
   ExploreUrlState,
   LogsModel,
+  DataFrame,
   EventBusExtended,
   EventBusSrv,
   TraceViewData,
@@ -49,11 +49,11 @@ import { ExploreToolbar } from './ExploreToolbar';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { getTimeZone } from '../profile/state/selectors';
 import { ErrorContainer } from './ErrorContainer';
-import { ExploreGraphPanel } from './ExploreGraphPanel';
 //TODO:unification
 import { TraceView } from './TraceView/TraceView';
 import { SecondaryActions } from './SecondaryActions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
+import { ExploreGraphNGPanel } from './ExploreGraphNGPanel';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => {
   return {
@@ -100,11 +100,10 @@ export interface ExploreProps {
   isLive: boolean;
   syncedTimes: boolean;
   updateTimeRange: typeof updateTimeRange;
-  graphResult?: GraphSeriesXY[] | null;
+  graphResult: DataFrame[] | null;
   logsResult?: LogsModel;
-  loading?: boolean;
   absoluteRange: AbsoluteTimeRange;
-  timeZone?: TimeZone;
+  timeZone: TimeZone;
   onHiddenSeriesChanged?: (hiddenSeries: string[]) => void;
   queryResponse: PanelData;
   originPanelId: number;
@@ -293,7 +292,6 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
       split,
       queryKeys,
       graphResult,
-      loading,
       absoluteRange,
       timeZone,
       queryResponse,
@@ -311,6 +309,7 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
     const styles = getStyles(theme);
     const StartPage = datasourceInstance?.components?.ExploreStartPage;
     const showStartPage = !queryResponse || queryResponse.state === LoadingState.NotStarted;
+    const isLoading = queryResponse.state === LoadingState.Loading;
 
     // gets an error without a refID, so non-query-row-related error, like a connection error
     const queryErrors = queryResponse.error ? [queryResponse.error] : undefined;
@@ -360,19 +359,16 @@ export class Explore extends React.PureComponent<ExploreProps, ExploreState> {
                       )}
                       {!showStartPage && (
                         <>
-                          {showMetrics && (
-                            <ExploreGraphPanel
-                              ariaLabel={selectors.pages.Explore.General.graph}
-                              series={graphResult}
+                          {showMetrics && graphResult && (
+                            <ExploreGraphNGPanel
+                              data={graphResult}
                               width={width}
-                              loading={loading}
                               absoluteRange={absoluteRange}
-                              isStacked={false}
-                              showPanel={true}
                               timeZone={timeZone}
                               onUpdateTimeRange={this.onUpdateTimeRange}
-                              showBars={false}
-                              showLines={true}
+                              annotations={queryResponse.annotations}
+                              splitOpenFn={splitOpen}
+                              isLoading={isLoading}
                             />
                           )}
                           {showTable && (
@@ -456,7 +452,6 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     showMetrics,
     showTable,
     showTrace,
-    loading,
     absoluteRange,
     queryResponse,
   } = item;
@@ -479,9 +474,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps): Partia
     initialQueries,
     initialRange,
     isLive,
-    graphResult: graphResult ?? undefined,
+    graphResult,
     logsResult: logsResult ?? undefined,
-    loading,
     absoluteRange,
     queryResponse,
     originPanelId,

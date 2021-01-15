@@ -8,6 +8,7 @@ import {
   FieldType,
   getFieldColorModeForField,
   FieldConfig,
+  getFieldDisplayName,
 } from '@grafana/data';
 import { AxisPlacement, DrawStyle, GraphFieldConfig, PointVisibility } from '../uPlot/config';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
@@ -136,6 +137,7 @@ export class Sparkline extends PureComponent<Props, State> {
 
       builder.addSeries({
         scaleKey,
+        fieldName: getFieldDisplayName(field, data),
         drawStyle: customConfig.drawStyle!,
         lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,

@@ -1,5 +1,60 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Graph Migrations legend 1`] = `
+Object {
+  "fieldConfig": Object {
+    "defaults": Object {
+      "custom": Object {
+        "axisPlacement": "auto",
+        "drawStyle": "line",
+        "fillOpacity": 50,
+        "lineInterpolation": "stepAfter",
+        "lineWidth": 5,
+        "pointSize": 6,
+        "showPoints": "never",
+        "spanNulls": true,
+      },
+      "nullValueMode": "null",
+      "unit": "short",
+    },
+    "overrides": Array [
+      Object {
+        "matcher": Object {
+          "id": "byName",
+          "options": "A-series",
+        },
+        "properties": Array [
+          Object {
+            "id": "color",
+            "value": Object {
+              "fixedColor": "red",
+              "mode": "fixed",
+            },
+          },
+        ],
+      },
+    ],
+  },
+  "options": Object {
+    "graph": Object {},
+    "legend": Object {
+      "calcs": Array [
+        "mean",
+        "lastNotNull",
+        "max",
+        "min",
+        "sum",
+      ],
+      "displayMode": "table",
+      "placement": "bottom",
+    },
+    "tooltipOptions": Object {
+      "mode": "single",
+    },
+  },
+}
+`;
+
 exports[`Graph Migrations simple bars 1`] = `
 Object {
   "fieldConfig": Object {
@@ -16,6 +71,7 @@ Object {
   "options": Object {
     "graph": Object {},
     "legend": Object {
+      "calcs": Array [],
       "displayMode": "list",
       "placement": "bottom",
     },
@@ -50,7 +106,14 @@ Object {
   "options": Object {
     "graph": Object {},
     "legend": Object {
-      "displayMode": "list",
+      "calcs": Array [
+        "mean",
+        "lastNotNull",
+        "max",
+        "min",
+        "sum",
+      ],
+      "displayMode": "table",
       "placement": "bottom",
     },
     "tooltipOptions": Object {
@@ -98,6 +161,7 @@ Object {
   "options": Object {
     "graph": Object {},
     "legend": Object {
+      "calcs": Array [],
       "displayMode": "list",
       "placement": "bottom",
     },
@@ -179,6 +243,7 @@ Object {
   "options": Object {
     "graph": Object {},
     "legend": Object {
+      "calcs": Array [],
       "displayMode": "list",
       "placement": "bottom",
     },

@@ -11,11 +11,15 @@ import {
   FillGradientMode,
 } from '../config';
 import { PlotConfigBuilder } from '../types';
+import { DataFrameFieldIndex } from '@grafana/data';
 
 export interface SeriesProps extends LineConfig, FillConfig, PointsConfig {
-  drawStyle: DrawStyle;
   scaleKey: string;
+  fieldName: string;
+  drawStyle: DrawStyle;
   show?: boolean;
+  dataFrameFieldIndex?: DataFrameFieldIndex;
+  hideInLegend?: boolean;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
@@ -43,7 +47,7 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       lineConfig.width = lineWidth;
       if (lineStyle && lineStyle.fill !== 'solid') {
         if (lineStyle.fill === 'dot') {
-          // lineConfig.dashCap = 'round'; // square or butt
+          lineConfig.cap = 'round';
         }
         lineConfig.dash = lineStyle.dash ?? [10, 10];
       }
@@ -62,14 +66,18 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     };
 
     // we cannot set points.show property above (even to undefined) as that will clear uPlot's default auto behavior
-    if (showPoints === PointVisibility.Auto) {
-      if (drawStyle === DrawStyle.Bars) {
-        pointsConfig.points!.show = false;
-      }
-    } else if (showPoints === PointVisibility.Never) {
-      pointsConfig.points!.show = false;
-    } else if (showPoints === PointVisibility.Always) {
+    if (drawStyle === DrawStyle.Points) {
       pointsConfig.points!.show = true;
+    } else {
+      if (showPoints === PointVisibility.Auto) {
+        if (drawStyle === DrawStyle.Bars) {
+          pointsConfig.points!.show = false;
+        }
+      } else if (showPoints === PointVisibility.Never) {
+        pointsConfig.points!.show = false;
+      } else if (showPoints === PointVisibility.Always) {
+        pointsConfig.points!.show = true;
+      }
     }
 
     return {

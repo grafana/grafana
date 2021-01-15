@@ -1,20 +1,20 @@
 import {
+  ConfigOverrideRule,
+  DynamicConfigValue,
+  FieldColorModeId,
   FieldConfig,
+  FieldConfigProperty,
   FieldConfigSource,
+  FieldMatcherID,
+  fieldReducers,
   NullValueMode,
   PanelModel,
-  fieldReducers,
-  ConfigOverrideRule,
-  FieldMatcherID,
-  DynamicConfigValue,
-  FieldConfigProperty,
-  FieldColorModeId,
 } from '@grafana/data';
 import { GraphFieldConfig, LegendDisplayMode } from '@grafana/ui';
 import {
-  FillGradientMode,
   AxisPlacement,
   DrawStyle,
+  FillGradientMode,
   LineInterpolation,
   LineStyle,
   PointVisibility,
@@ -256,15 +256,29 @@ export function flotToGraphOptions(angular: any): { fieldConfig: FieldConfigSour
     legend: {
       displayMode: LegendDisplayMode.List,
       placement: 'bottom',
+      calcs: [],
     },
     tooltipOptions: {
       mode: 'single',
     },
   };
 
-  if (angular.legend?.values) {
-    const show = getReducersFromLegend(angular.legend?.values);
-    console.log('Migrate Legend', show);
+  // Legend config migration
+  const legendConfig = angular.legend;
+  if (legendConfig) {
+    if (legendConfig.show) {
+      options.legend.displayMode = legendConfig.alignAsTable ? LegendDisplayMode.Table : LegendDisplayMode.List;
+    } else {
+      options.legend.displayMode = LegendDisplayMode.Hidden;
+    }
+
+    if (legendConfig.rightSide) {
+      options.legend.placement = 'right';
+    }
+
+    if (angular.legend.values) {
+      options.legend.calcs = getReducersFromLegend(angular.legend);
+    }
   }
 
   return {

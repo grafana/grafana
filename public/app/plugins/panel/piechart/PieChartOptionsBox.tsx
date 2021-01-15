@@ -2,7 +2,7 @@
 import React, { PureComponent } from 'react';
 
 // Components
-import { LegacyForms, InlineFormLabel, PanelOptionsGroup } from '@grafana/ui';
+import { LegacyForms, InlineFormLabel } from '@grafana/ui';
 const { Select, FormField } = LegacyForms;
 
 // Types
@@ -27,7 +27,7 @@ export class PieChartOptionsBox extends PureComponent<PanelEditorProps<PieChartO
     const { pieType, strokeWidth } = options;
 
     return (
-      <PanelOptionsGroup title="PieChart">
+      <>
         <div className="gf-form">
           <InlineFormLabel width={labelWidth}>Type</InlineFormLabel>
           <Select
@@ -45,7 +45,7 @@ export class PieChartOptionsBox extends PureComponent<PanelEditorProps<PieChartO
             value={strokeWidth}
           />
         </div>
-      </PanelOptionsGroup>
+      </>
     );
   }
 }
