@@ -12,11 +12,9 @@ export interface SeriesColorPickerPopoverProps extends ColorPickerProps, Popover
 
 export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopoverProps> = props => {
   const { yaxis, onToggleAxis, color, ...colorPickerProps } = props;
-  return (
-    <ColorPickerPopover
-      {...colorPickerProps}
-      color={color || '#000000'}
-      customPickers={{
+
+  const customPickers = onToggleAxis
+    ? {
         yaxis: {
           name: 'Y-Axis',
           tabComponent() {
@@ -36,9 +34,9 @@ export const SeriesColorPickerPopover: FunctionComponent<SeriesColorPickerPopove
             );
           },
         },
-      }}
-    />
-  );
+      }
+    : undefined;
+  return <ColorPickerPopover {...colorPickerProps} color={color || '#000000'} customPickers={customPickers} />;
 };
 
 interface AxisSelectorProps {
