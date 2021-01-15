@@ -11,10 +11,22 @@ import (
 func TestAlertInstanceOperations(t *testing.T) {
 	ng := setupTestEnv(t)
 
+	alertDefinition1 := createTestAlertDefinition(t, ng, 60)
+	orgID := alertDefinition1.OrgID
+
+	alertDefinition2 := createTestAlertDefinition(t, ng, 60)
+	require.Equal(t, orgID, alertDefinition2.OrgID)
+
+	alertDefinition3 := createTestAlertDefinition(t, ng, 60)
+	require.Equal(t, orgID, alertDefinition3.OrgID)
+
+	alertDefinition4 := createTestAlertDefinition(t, ng, 60)
+	require.Equal(t, orgID, alertDefinition4.OrgID)
+
 	t.Run("can save and read new alert instance", func(t *testing.T) {
 		saveCmd := &saveAlertInstanceCommand{
-			DefinitionOrgID: 1,
-			DefinitionUID:   "uid 1",
+			DefinitionOrgID: alertDefinition1.OrgID,
+			DefinitionUID:   alertDefinition1.UID,
 			State:           InstanceStateFiring,
 			Labels:          InstanceLabels{"test": "testValue"},
 		}
@@ -22,8 +34,8 @@ func TestAlertInstanceOperations(t *testing.T) {
 		require.NoError(t, err)
 
 		getCmd := &getAlertInstanceQuery{
-			DefinitionOrgID: 1,
-			DefinitionUID:   "uid 1",
+			DefinitionOrgID: saveCmd.DefinitionOrgID,
+			DefinitionUID:   saveCmd.DefinitionUID,
 			Labels:          InstanceLabels{"test": "testValue"},
 		}
 
@@ -31,34 +43,36 @@ func TestAlertInstanceOperations(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, saveCmd.Labels, getCmd.Result.Labels)
+		require.Equal(t, alertDefinition1.OrgID, getCmd.Result.DefinitionOrgID)
+		require.Equal(t, alertDefinition1.UID, getCmd.Result.DefinitionUID)
 	})
 
 	t.Run("can save and read new alert instance with no labels", func(t *testing.T) {
 		saveCmd := &saveAlertInstanceCommand{
-			DefinitionOrgID: 1,
-			DefinitionUID:   "uid 2",
+			DefinitionOrgID: alertDefinition2.OrgID,
+			DefinitionUID:   alertDefinition2.UID,
 			State:           InstanceStateNormal,
 		}
 		err := ng.saveAlertInstance(saveCmd)
 		require.NoError(t, err)
 
 		getCmd := &getAlertInstanceQuery{
-			DefinitionOrgID: 1,
-			DefinitionUID:   "uid 2",
+			DefinitionOrgID: saveCmd.DefinitionOrgID,
+			DefinitionUID:   saveCmd.DefinitionUID,
 		}
 
 		err = ng.getAlertInstance(getCmd)
 		require.NoError(t, err)
 
-		require.Equal(t, saveCmd.DefinitionOrgID, getCmd.Result.DefinitionOrgID)
-		require.Equal(t, saveCmd.DefinitionUID, getCmd.Result.DefinitionUID)
+		require.Equal(t, alertDefinition2.OrgID, getCmd.Result.DefinitionOrgID)
+		require.Equal(t, alertDefinition2.UID, getCmd.Result.DefinitionUID)
 		require.Equal(t, saveCmd.Labels, getCmd.Result.Labels)
 	})
 
 	t.Run("can save two instances with same org_id, uid and different labels", func(t *testing.T) {
 		saveCmdOne := &saveAlertInstanceCommand{
-			DefinitionOrgID: 1,
-			DefinitionUID:   "uid 3",
+			DefinitionOrgID: alertDefinition3.OrgID,
+			DefinitionUID:   alertDefinition3.UID,
 			State:           InstanceStateFiring,
 			Labels:          InstanceLabels{"test": "testValue"},
 		}
@@ -67,8 +81,8 @@ func TestAlertInstanceOperations(t *testing.T) {
 		require.NoError(t, err)
 
 		saveCmdTwo := &saveAlertInstanceCommand{
-			DefinitionOrgID: 1,
-			DefinitionUID:   "uid 3",
+			DefinitionOrgID: saveCmdOne.DefinitionOrgID,
+			DefinitionUID:   saveCmdOne.DefinitionUID,
 			State:           InstanceStateFiring,
 			Labels:          InstanceLabels{"test": "meow"},
 		}
@@ -76,8 +90,8 @@ func TestAlertInstanceOperations(t *testing.T) {
 		require.NoError(t, err)
 
 		listCommand := &listAlertInstancesQuery{
-			DefinitionOrgID: 1,
-			DefinitionUID:   "uid 3",
+			DefinitionOrgID: saveCmdOne.DefinitionOrgID,
+			DefinitionUID:   saveCmdOne.DefinitionUID,
 		}
 
 		err = ng.listAlertInstances(listCommand)
@@ -88,7 +102,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 
 	t.Run("can list all added instances in org", func(t *testing.T) {
 		listCommand := &listAlertInstancesQuery{
-			DefinitionOrgID: 1,
+			DefinitionOrgID: orgID,
 		}
 
 		err := ng.listAlertInstances(listCommand)
@@ -99,7 +113,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 
 	t.Run("can list all added instances in org filtered by current state", func(t *testing.T) {
 		listCommand := &listAlertInstancesQuery{
-			DefinitionOrgID: 1,
+			DefinitionOrgID: orgID,
 			State:           InstanceStateNormal,
 		}
 
@@ -111,8 +125,8 @@ func TestAlertInstanceOperations(t *testing.T) {
 
 	t.Run("update instance with same org_id, uid and different labels", func(t *testing.T) {
 		saveCmdOne := &saveAlertInstanceCommand{
-			DefinitionOrgID: 1,
-			DefinitionUID:   "uid 4",
+			DefinitionOrgID: alertDefinition4.OrgID,
+			DefinitionUID:   alertDefinition4.UID,
 			State:           InstanceStateFiring,
 			Labels:          InstanceLabels{"test": "testValue"},
 		}
@@ -121,8 +135,8 @@ func TestAlertInstanceOperations(t *testing.T) {
 		require.NoError(t, err)
 
 		saveCmdTwo := &saveAlertInstanceCommand{
-			DefinitionOrgID: 1,
-			DefinitionUID:   "uid 4",
+			DefinitionOrgID: saveCmdOne.DefinitionOrgID,
+			DefinitionUID:   saveCmdOne.DefinitionUID,
 			State:           InstanceStateNormal,
 			Labels:          InstanceLabels{"test": "testValue"},
 		}
@@ -130,8 +144,8 @@ func TestAlertInstanceOperations(t *testing.T) {
 		require.NoError(t, err)
 
 		listCommand := &listAlertInstancesQuery{
-			DefinitionOrgID: 1,
-			DefinitionUID:   "uid 4",
+			DefinitionOrgID: alertDefinition4.OrgID,
+			DefinitionUID:   alertDefinition4.UID,
 		}
 
 		err = ng.listAlertInstances(listCommand)
@@ -143,6 +157,7 @@ func TestAlertInstanceOperations(t *testing.T) {
 		require.Equal(t, saveCmdTwo.DefinitionUID, listCommand.Result[0].DefinitionUID)
 		require.Equal(t, saveCmdTwo.Labels, listCommand.Result[0].Labels)
 		require.Equal(t, saveCmdTwo.State, listCommand.Result[0].CurrentState)
+		require.NotEmpty(t, listCommand.Result[0].DefinitionTitle)
+		require.Equal(t, alertDefinition4.Title, listCommand.Result[0].DefinitionTitle)
 	})
-
 }

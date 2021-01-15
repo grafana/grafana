@@ -29,7 +29,7 @@ func (ng *AlertNG) registerAPIEndpoints() {
 	}, middleware.ReqOrgAdmin)
 
 	ng.RouteRegister.Group("/api/alert-instances", func(alertInstances routing.RouteRegister) {
-		alertInstances.Get("", middleware.ReqSignedIn, api.Wrap(ng.listAlertInstancesEndpoint))
+		alertInstances.Get("", middleware.ReqSignedIn, routing.Wrap(ng.listAlertInstancesEndpoint))
 	})
 }
 

@@ -242,7 +242,8 @@ func TestUpdatingAlertDefinition(t *testing.T) {
 					assert.Equal(t, previousAlertDefinition.UID, q.Result.UID)
 				default:
 					require.NoError(t, err)
-					assert.Equal(t, int64(1), q.Result.ID)
+					assert.Equal(t, previousAlertDefinition.ID, q.Result.ID)
+					assert.Equal(t, previousAlertDefinition.UID, q.Result.UID)
 					assert.True(t, q.Result.Updated.After(lastUpdated))
 					assert.Equal(t, tc.expectedUpdated, q.Result.Updated)
 					assert.Equal(t, previousAlertDefinition.Version+1, q.Result.Version)

@@ -47,7 +47,7 @@ func (ng *AlertNG) getAlertInstance(cmd *getAlertInstanceQuery) error {
 // based on various filters.
 func (ng *AlertNG) listAlertInstances(cmd *listAlertInstancesQuery) error {
 	return ng.SQLStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		alertInstances := make([]*AlertInstance, 0)
+		alertInstances := make([]*listAlertInstancesQueryResult, 0)
 
 		s := strings.Builder{}
 		params := make([]interface{}, 0)
@@ -57,7 +57,7 @@ func (ng *AlertNG) listAlertInstances(cmd *listAlertInstancesQuery) error {
 			params = append(params, p...)
 		}
 
-		addToQuery("SELECT * FROM alert_instance WHERE def_org_id = ?", cmd.DefinitionOrgID)
+		addToQuery("SELECT alert_instance.*, alert_definition.title AS def_title FROM alert_instance LEFT JOIN alert_definition ON alert_instance.def_org_id = alert_definition.org_id AND alert_instance.def_uid = alert_definition.uid WHERE def_org_id = ?", cmd.DefinitionOrgID)
 
 		if cmd.DefinitionUID != "" {
 			addToQuery(` AND def_uid = ?`, cmd.DefinitionUID)
