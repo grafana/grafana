@@ -13,9 +13,6 @@ export const linkModelToContextMenuItems: (links: () => LinkModel[]) => ContextM
       target: link.target,
       icon: `${link.target === '_self' ? 'link' : 'external-link-alt'}`,
       onClick: link.onClick,
-      mode: link.mode,
-      modalContentType: link.modalContentType,
-      modalTemplate: link.modalTemplate,
     };
   });
 };

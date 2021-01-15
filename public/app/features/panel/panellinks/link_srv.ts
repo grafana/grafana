@@ -314,9 +314,6 @@ export class LinkSrv implements LinkService {
       href: locationUtil.assureBaseUrl(href.replace(/\n/g, '')),
       title: this.templateSrv.replace(link.title || '', scopedVars),
       target: link.targetBlank ? '_blank' : '_self',
-      mode: link.mode,
-      modalContentType: link.modalContentType,
-      modalTemplate: this.templateSrv.replace(link.modalTemplate || '', scopedVars),
       origin,
       onClick,
     };
@@ -326,18 +323,6 @@ export class LinkSrv implements LinkService {
     const variablesQuery = urlUtil.toUrlParams(params);
 
     info.href = this.templateSrv.replace(info.href, {
-      ...scopedVars,
-      [DataLinkBuiltInVars.keepTime]: {
-        text: timeRangeUrl,
-        value: timeRangeUrl,
-      },
-      [DataLinkBuiltInVars.includeVars]: {
-        text: variablesQuery,
-        value: variablesQuery,
-      },
-    });
-
-    info.modalTemplate = this.templateSrv.replace(info.modalTemplate, {
       ...scopedVars,
       [DataLinkBuiltInVars.keepTime]: {
         text: timeRangeUrl,

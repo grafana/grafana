@@ -216,9 +216,6 @@ class GraphElement {
         {
           items: linksSupplier.getLinks(this.panel.scopedVars).map<ContextMenuItem>(link => {
             return {
-              mode: link.mode,
-              modalContentType: link.modalContentType,
-              modalTemplate: link.modalTemplate,
               label: link.title,
               url: link.href,
               target: link.target,

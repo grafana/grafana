@@ -7,7 +7,6 @@ import { stylesFactory } from '../../themes/stylesFactory';
 import { Portal, List } from '../index';
 import { Icon } from '../Icon/Icon';
 import { IconName } from '../../types';
-import { DataLinkModal } from '../Modal/DataLinkModal';
 import { LinkTarget } from '@grafana/data';
 
 export interface ContextMenuItem {
@@ -17,9 +16,6 @@ export interface ContextMenuItem {
   url?: string;
   onClick?: (event?: React.SyntheticEvent<HTMLElement>) => void;
   group?: string;
-  mode?: string;
-  modalContentType?: 'html' | 'json' | 'plain_text';
-  modalTemplate?: string;
 }
 
 export interface ContextMenuGroup {
@@ -209,29 +205,12 @@ interface ContextMenuItemProps {
   target?: string;
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
   className?: string;
-  mode?: string;
-  modalContentType?: 'html' | 'json' | 'plain_text';
-  modalTemplate?: string;
 }
 
 const ContextMenuItem: React.FC<ContextMenuItemProps> = React.memo(
-  ({ url, icon, label, target, onClick, className, mode, modalTemplate, modalContentType }) => {
+  ({ url, icon, label, target, onClick, className }) => {
     const theme = useContext(ThemeContext);
     const styles = getContextMenuStyles(theme);
-    if (mode === 'modal') {
-      return (
-        <div className={styles.item}>
-          <DataLinkModal
-            fieldDisplayMode={'truncated_text'}
-            modalTitle={label || 'More details'}
-            modalContent={modalTemplate || ''}
-            modalDisplayMode={modalContentType || 'plain_text'}
-          >
-            {icon && <Icon name={icon as IconName} className={styles.icon} />} {label}
-          </DataLinkModal>
-        </div>
-      );
-    }
     return (
       <div className={styles.item}>
         <a
@@ -276,9 +255,6 @@ const ContextMenuGroup: React.FC<ContextMenuGroupProps> = ({ group, onClick }) =
               label={item.label}
               target={item.target}
               icon={item.icon}
-              mode={item.mode}
-              modalContentType={item.modalContentType}
-              modalTemplate={item.modalTemplate}
               onClick={(e: React.MouseEvent<HTMLElement>) => {
                 if (item.onClick) {
                   item.onClick(e);

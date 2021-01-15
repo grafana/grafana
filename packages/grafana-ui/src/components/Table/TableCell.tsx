@@ -1,22 +1,20 @@
 import React, { FC } from 'react';
-import { Row, Cell } from 'react-table';
+import { Cell } from 'react-table';
 import { Field } from '@grafana/data';
 
 import { getTextAlign } from './utils';
 import { TableFilterActionCallback } from './types';
 import { TableStyles } from './styles';
 import { FilterableTableCell } from './FilterableTableCell';
-import { DataLinkModal } from './../Modal/DataLinkModal';
 
 export interface Props {
-  row: Row;
   cell: Cell;
   field: Field;
   tableStyles: TableStyles;
   onCellFilterAdded?: TableFilterActionCallback;
 }
 
-export const TableCell: FC<Props> = ({ cell, row, field, tableStyles, onCellFilterAdded }) => {
+export const TableCell: FC<Props> = ({ cell, field, tableStyles, onCellFilterAdded }) => {
   const filterable = field.config.filterable;
   const cellProps = cell.getCellProps();
 
@@ -36,30 +34,9 @@ export const TableCell: FC<Props> = ({ cell, row, field, tableStyles, onCellFilt
     );
   }
 
-  let links: any[] = [];
-  if (field && field.getLinks) {
-    links = field.getLinks({
-      valueRowIndex: row.index,
-    });
-  }
-  const link: any = links && links.length > 0 ? links[links.length - 1] : undefined;
-  let wrappedCell = <> {renderCell(cell, field, tableStyles)} </>;
-  if (link && link.mode === 'modal') {
-    wrappedCell = (
-      <DataLinkModal
-        modalDisplayMode="html"
-        fieldDisplayMode="truncated_text"
-        modalTitle={link.title}
-        modalContent={link.modalTemplate || ''}
-      >
-        {renderCell(cell, field, tableStyles)}
-      </DataLinkModal>
-    );
-  }
-
   return (
     <div {...cellProps} className={tableStyles.tableCellWrapper}>
-      {wrappedCell}
+      {renderCell(cell, field, tableStyles)}
     </div>
   );
 };

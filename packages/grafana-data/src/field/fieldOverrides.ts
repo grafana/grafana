@@ -424,14 +424,6 @@ export const getLinksSupplier = (
         replaceVariables,
         getDataSourceSettingsByUid,
       });
-    } else if (link.mode === 'modal') {
-      const info: any = {
-        mode: link.mode || 'link',
-        title: replaceVariables(link.title || '', variables),
-        modalContentType: link.modalContentType || 'plain_text',
-        modalTemplate: replaceVariables(link.modalTemplate || '', variables),
-      };
-      return info;
     } else {
       let href = locationUtil.assureBaseUrl(link.url.replace(/\n/g, ''));
       href = replaceVariables(href, variables);
