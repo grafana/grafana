@@ -22,7 +22,7 @@ Use the instructions in [Getting started with Grafana]({{< relref "getting-start
 
 Elasticsearch can be installed on many different operating systems. Refer to the [Installing Elasticsearch](https://www.elastic.co/guide/en/elasticsearch/reference/current/install-elasticsearch.html) for a complete list of all available options.
 
-Alternately you can install Elasticsearch using the resources available in [grafana/grafana](https://github.com/grafana/grafana) GitHub repository (recommended). Here you will find a collection of supported data sources, including Elasticsearch, along with test data and pre-configured dashboards for use.
+Alternately you can install Elasticsearch using the resources available in [grafana/grafana](https://github.com/grafana/grafana) GitHub repository. Here you will find a collection of supported data sources, including Elasticsearch, along with test data and preconfigured dashboards for use.
 
 1. Clone the [grafana/grafana](https://github.com/grafana/grafana/tree/master) repository to your local system.
 1. Install Docker or verify that it is installed on your machine.
