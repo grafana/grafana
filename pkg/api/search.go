@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
@@ -25,7 +24,7 @@ func Search(c *models.ReqContext) response.Response {
 	permission := models.PERMISSION_VIEW
 
 	if limit > 5000 {
-		return utils.Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
+		return response.Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
 	}
 
 	if c.Query("permission") == "Edit" {
@@ -65,11 +64,11 @@ func Search(c *models.ReqContext) response.Response {
 
 	err := bus.Dispatch(&searchQuery)
 	if err != nil {
-		return utils.Error(500, "Search failed", err)
+		return response.Error(500, "Search failed", err)
 	}
 
 	c.TimeRequest(metrics.MApiDashboardSearch)
-	return utils.JSON(200, searchQuery.Result)
+	return response.JSON(200, searchQuery.Result)
 }
 
 func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) response.Response {
@@ -84,7 +83,7 @@ func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) response.Response {
 		})
 	}
 
-	return utils.JSON(http.StatusOK, util.DynMap{
+	return response.JSON(http.StatusOK, util.DynMap{
 		"sortOptions": res,
 	})
 }

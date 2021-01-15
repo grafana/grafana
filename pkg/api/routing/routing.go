@@ -2,14 +2,13 @@ package routing
 
 import (
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/utils"
 	"github.com/grafana/grafana/pkg/models"
 	"gopkg.in/macaron.v1"
 )
 
 var (
 	ServerError = func(err error) response.Response {
-		return utils.Error(500, "Server error", err)
+		return response.Error(500, "Server error", err)
 	}
 )
 

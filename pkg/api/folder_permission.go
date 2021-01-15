@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -30,7 +29,7 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 
 	acl, err := g.GetAcl()
 	if err != nil {
-		return utils.Error(500, "Failed to get folder permissions", err)
+		return response.Error(500, "Failed to get folder permissions", err)
 	}
 
 	filteredAcls := make([]*models.DashboardAclInfoDTO, 0, len(acl))
@@ -55,12 +54,12 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 		filteredAcls = append(filteredAcls, perm)
 	}
 
-	return utils.JSON(200, filteredAcls)
+	return response.JSON(200, filteredAcls)
 }
 
 func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.UpdateDashboardAclCommand) response.Response {
 	if err := validatePermissionsUpdate(apiCmd); err != nil {
-		return utils.Error(400, err.Error(), err)
+		return response.Error(400, err.Error(), err)
 	}
 
 	s := dashboards.NewFolderService(c.OrgId, c.SignedInUser)
@@ -98,7 +97,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.
 
 	hiddenACL, err := g.GetHiddenACL(hs.Cfg)
 	if err != nil {
-		return utils.Error(500, "Error while retrieving hidden permissions", err)
+		return response.Error(500, "Error while retrieving hidden permissions", err)
 	}
 	cmd.Items = append(cmd.Items, hiddenACL...)
 
@@ -106,13 +105,13 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.
 		if err != nil {
 			if errors.Is(err, guardian.ErrGuardianPermissionExists) ||
 				errors.Is(err, guardian.ErrGuardianOverride) {
-				return utils.Error(400, err.Error(), err)
+				return response.Error(400, err.Error(), err)
 			}
 
-			return utils.Error(500, "Error while checking folder permissions", err)
+			return response.Error(500, "Error while checking folder permissions", err)
 		}
 
-		return utils.Error(403, "Cannot remove own admin permission for a folder", nil)
+		return response.Error(403, "Cannot remove own admin permission for a folder", nil)
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -124,13 +123,13 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext, apiCmd dtos.
 		}
 
 		if errors.Is(err, models.ErrFolderAclInfoMissing) || errors.Is(err, models.ErrFolderPermissionFolderEmpty) {
-			return utils.Error(409, err.Error(), err)
+			return response.Error(409, err.Error(), err)
 		}
 
-		return utils.Error(500, "Failed to create permission", err)
+		return response.Error(500, "Failed to create permission", err)
 	}
 
-	return utils.JSON(200, util.DynMap{
+	return response.JSON(200, util.DynMap{
 		"message": "Folder permissions updated",
 		"id":      folder.Id,
 		"title":   folder.Title,

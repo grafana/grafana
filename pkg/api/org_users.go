@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -25,13 +24,13 @@ func AddOrgUser(c *models.ReqContext, cmd models.AddOrgUserCommand) response.Res
 
 func addOrgUserHelper(cmd models.AddOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
-		return utils.Error(400, "Invalid role specified", nil)
+		return response.Error(400, "Invalid role specified", nil)
 	}
 
 	userQuery := models.GetUserByLoginQuery{LoginOrEmail: cmd.LoginOrEmail}
 	err := bus.Dispatch(&userQuery)
 	if err != nil {
-		return utils.Error(404, "User not found", nil)
+		return response.Error(404, "User not found", nil)
 	}
 
 	userToAdd := userQuery.Result
@@ -40,15 +39,15 @@ func addOrgUserHelper(cmd models.AddOrgUserCommand) response.Response {
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if errors.Is(err, models.ErrOrgUserAlreadyAdded) {
-			return utils.JSON(409, util.DynMap{
+			return response.JSON(409, util.DynMap{
 				"message": "User is already member of this organization",
 				"userId":  cmd.UserId,
 			})
 		}
-		return utils.Error(500, "Could not add user to organization", err)
+		return response.Error(500, "Could not add user to organization", err)
 	}
 
-	return utils.JSON(200, util.DynMap{
+	return response.JSON(200, util.DynMap{
 		"message": "User added to organization",
 		"userId":  cmd.UserId,
 	})
@@ -63,21 +62,21 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *models.ReqContext) response.Re
 	}, c.SignedInUser)
 
 	if err != nil {
-		return utils.Error(500, "Failed to get users for current organization", err)
+		return response.Error(500, "Failed to get users for current organization", err)
 	}
 
-	return utils.JSON(200, result)
+	return response.JSON(200, result)
 }
 
 // GET /api/org/users/lookup
 func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) response.Response {
 	isAdmin, err := isOrgAdminFolderAdminOrTeamAdmin(c)
 	if err != nil {
-		return utils.Error(500, "Failed to get users for current organization", err)
+		return response.Error(500, "Failed to get users for current organization", err)
 	}
 
 	if !isAdmin {
-		return utils.Error(403, "Permission denied", nil)
+		return response.Error(403, "Permission denied", nil)
 	}
 
 	orgUsers, err := hs.getOrgUsersHelper(&models.GetOrgUsersQuery{
@@ -87,7 +86,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 	}, c.SignedInUser)
 
 	if err != nil {
-		return utils.Error(500, "Failed to get users for current organization", err)
+		return response.Error(500, "Failed to get users for current organization", err)
 	}
 
 	result := make([]*dtos.UserLookupDTO, 0)
@@ -100,7 +99,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *models.ReqContext) respo
 		})
 	}
 
-	return utils.JSON(200, result)
+	return response.JSON(200, result)
 }
 
 func isOrgAdminFolderAdminOrTeamAdmin(c *models.ReqContext) (bool, error) {
@@ -134,10 +133,10 @@ func (hs *HTTPServer) GetOrgUsers(c *models.ReqContext) response.Response {
 	}, c.SignedInUser)
 
 	if err != nil {
-		return utils.Error(500, "Failed to get users for organization", err)
+		return response.Error(500, "Failed to get users for organization", err)
 	}
 
-	return utils.JSON(200, result)
+	return response.JSON(200, result)
 }
 
 func (hs *HTTPServer) getOrgUsersHelper(query *models.GetOrgUsersQuery, signedInUser *models.SignedInUser) ([]*models.OrgUserDTO, error) {
@@ -174,17 +173,17 @@ func UpdateOrgUser(c *models.ReqContext, cmd models.UpdateOrgUserCommand) respon
 
 func updateOrgUserHelper(cmd models.UpdateOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
-		return utils.Error(400, "Invalid role specified", nil)
+		return response.Error(400, "Invalid role specified", nil)
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if errors.Is(err, models.ErrLastOrgAdmin) {
-			return utils.Error(400, "Cannot change role so that there is no organization admin left", nil)
+			return response.Error(400, "Cannot change role so that there is no organization admin left", nil)
 		}
-		return utils.Error(500, "Failed update org user", err)
+		return response.Error(500, "Failed update org user", err)
 	}
 
-	return utils.Success("Organization user updated")
+	return response.Success("Organization user updated")
 }
 
 // DELETE /api/org/users/:userId
@@ -207,14 +206,14 @@ func RemoveOrgUser(c *models.ReqContext) response.Response {
 func removeOrgUserHelper(cmd *models.RemoveOrgUserCommand) response.Response {
 	if err := bus.Dispatch(cmd); err != nil {
 		if errors.Is(err, models.ErrLastOrgAdmin) {
-			return utils.Error(400, "Cannot remove last organization admin", nil)
+			return response.Error(400, "Cannot remove last organization admin", nil)
 		}
-		return utils.Error(500, "Failed to remove user from organization", err)
+		return response.Error(500, "Failed to remove user from organization", err)
 	}
 
 	if cmd.UserWasDeleted {
-		return utils.Success("User deleted")
+		return response.Success("User deleted")
 	}
 
-	return utils.Success("User removed from organization")
+	return response.Success("User removed from organization")
 }

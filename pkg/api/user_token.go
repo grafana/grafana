@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
@@ -29,17 +28,17 @@ func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, user
 
 	if err := bus.Dispatch(&userQuery); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
-			return utils.Error(404, "User not found", err)
+			return response.Error(404, "User not found", err)
 		}
-		return utils.Error(500, "Could not read user from database", err)
+		return response.Error(500, "Could not read user from database", err)
 	}
 
 	err := hs.AuthTokenService.RevokeAllUserTokens(ctx, userID)
 	if err != nil {
-		return utils.Error(500, "Failed to logout user", err)
+		return response.Error(500, "Failed to logout user", err)
 	}
 
-	return utils.JSON(200, util.DynMap{
+	return response.JSON(200, util.DynMap{
 		"message": "User logged out",
 	})
 }
@@ -49,14 +48,14 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int
 
 	if err := bus.Dispatch(&userQuery); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
-			return utils.Error(404, "User not found", err)
+			return response.Error(404, "User not found", err)
 		}
-		return utils.Error(500, "Failed to get user", err)
+		return response.Error(500, "Failed to get user", err)
 	}
 
 	tokens, err := hs.AuthTokenService.GetUserTokens(c.Req.Context(), userID)
 	if err != nil {
-		return utils.Error(500, "Failed to get user auth tokens", err)
+		return response.Error(500, "Failed to get user auth tokens", err)
 	}
 
 	result := []*dtos.UserToken{}
@@ -108,7 +107,7 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *models.ReqContext, userID int
 		})
 	}
 
-	return utils.JSON(200, result)
+	return response.JSON(200, result)
 }
 
 func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID int64, cmd models.RevokeAuthTokenCmd) response.Response {
@@ -116,32 +115,32 @@ func (hs *HTTPServer) revokeUserAuthTokenInternal(c *models.ReqContext, userID i
 
 	if err := bus.Dispatch(&userQuery); err != nil {
 		if errors.Is(err, models.ErrUserNotFound) {
-			return utils.Error(404, "User not found", err)
+			return response.Error(404, "User not found", err)
 		}
-		return utils.Error(500, "Failed to get user", err)
+		return response.Error(500, "Failed to get user", err)
 	}
 
 	token, err := hs.AuthTokenService.GetUserToken(c.Req.Context(), userID, cmd.AuthTokenId)
 	if err != nil {
 		if errors.Is(err, models.ErrUserTokenNotFound) {
-			return utils.Error(404, "User auth token not found", err)
+			return response.Error(404, "User auth token not found", err)
 		}
-		return utils.Error(500, "Failed to get user auth token", err)
+		return response.Error(500, "Failed to get user auth token", err)
 	}
 
 	if c.UserToken != nil && c.UserToken.Id == token.Id {
-		return utils.Error(400, "Cannot revoke active user auth token", nil)
+		return response.Error(400, "Cannot revoke active user auth token", nil)
 	}
 
 	err = hs.AuthTokenService.RevokeToken(c.Req.Context(), token)
 	if err != nil {
 		if errors.Is(err, models.ErrUserTokenNotFound) {
-			return utils.Error(404, "User auth token not found", err)
+			return response.Error(404, "User auth token not found", err)
 		}
-		return utils.Error(500, "Failed to revoke user auth token", err)
+		return response.Error(500, "Failed to revoke user auth token", err)
 	}
 
-	return utils.JSON(200, util.DynMap{
+	return response.JSON(200, util.DynMap{
 		"message": "User auth token revoked",
 	})
 }

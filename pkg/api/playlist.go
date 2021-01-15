@@ -2,7 +2,6 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/utils"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
 )
@@ -44,10 +43,10 @@ func SearchPlaylists(c *models.ReqContext) response.Response {
 
 	err := bus.Dispatch(&searchQuery)
 	if err != nil {
-		return utils.Error(500, "Search failed", err)
+		return response.Error(500, "Search failed", err)
 	}
 
-	return utils.JSON(200, searchQuery.Result)
+	return response.JSON(200, searchQuery.Result)
 }
 
 func GetPlaylist(c *models.ReqContext) response.Response {
@@ -55,7 +54,7 @@ func GetPlaylist(c *models.ReqContext) response.Response {
 	cmd := models.GetPlaylistByIdQuery{Id: id}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return utils.Error(500, "Playlist not found", err)
+		return response.Error(500, "Playlist not found", err)
 	}
 
 	playlistDTOs, _ := LoadPlaylistItemDTOs(id)
@@ -68,7 +67,7 @@ func GetPlaylist(c *models.ReqContext) response.Response {
 		Items:    playlistDTOs,
 	}
 
-	return utils.JSON(200, dto)
+	return response.JSON(200, dto)
 }
 
 func LoadPlaylistItemDTOs(id int64) ([]models.PlaylistItemDTO, error) {
@@ -109,10 +108,10 @@ func GetPlaylistItems(c *models.ReqContext) response.Response {
 	playlistDTOs, err := LoadPlaylistItemDTOs(id)
 
 	if err != nil {
-		return utils.Error(500, "Could not load playlist items", err)
+		return response.Error(500, "Could not load playlist items", err)
 	}
 
-	return utils.JSON(200, playlistDTOs)
+	return response.JSON(200, playlistDTOs)
 }
 
 func GetPlaylistDashboards(c *models.ReqContext) response.Response {
@@ -120,10 +119,10 @@ func GetPlaylistDashboards(c *models.ReqContext) response.Response {
 
 	playlists, err := LoadPlaylistDashboards(c.OrgId, c.SignedInUser, playlistID)
 	if err != nil {
-		return utils.Error(500, "Could not load dashboards", err)
+		return response.Error(500, "Could not load dashboards", err)
 	}
 
-	return utils.JSON(200, playlists)
+	return response.JSON(200, playlists)
 }
 
 func DeletePlaylist(c *models.ReqContext) response.Response {
@@ -131,20 +130,20 @@ func DeletePlaylist(c *models.ReqContext) response.Response {
 
 	cmd := models.DeletePlaylistCommand{Id: id, OrgId: c.OrgId}
 	if err := bus.Dispatch(&cmd); err != nil {
-		return utils.Error(500, "Failed to delete playlist", err)
+		return response.Error(500, "Failed to delete playlist", err)
 	}
 
-	return utils.JSON(200, "")
+	return response.JSON(200, "")
 }
 
 func CreatePlaylist(c *models.ReqContext, cmd models.CreatePlaylistCommand) response.Response {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return utils.Error(500, "Failed to create playlist", err)
+		return response.Error(500, "Failed to create playlist", err)
 	}
 
-	return utils.JSON(200, cmd.Result)
+	return response.JSON(200, cmd.Result)
 }
 
 func UpdatePlaylist(c *models.ReqContext, cmd models.UpdatePlaylistCommand) response.Response {
@@ -152,14 +151,14 @@ func UpdatePlaylist(c *models.ReqContext, cmd models.UpdatePlaylistCommand) resp
 	cmd.Id = c.ParamsInt64(":id")
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return utils.Error(500, "Failed to save playlist", err)
+		return response.Error(500, "Failed to save playlist", err)
 	}
 
 	playlistDTOs, err := LoadPlaylistItemDTOs(cmd.Id)
 	if err != nil {
-		return utils.Error(500, "Failed to save playlist", err)
+		return response.Error(500, "Failed to save playlist", err)
 	}
 
 	cmd.Result.Items = playlistDTOs
-	return utils.JSON(200, cmd.Result)
+	return response.JSON(200, cmd.Result)
 }

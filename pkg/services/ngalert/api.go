@@ -5,7 +5,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/api/utils"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -33,22 +32,22 @@ func (ng *AlertNG) registerAPIEndpoints() {
 // conditionEvalEndpoint handles POST /api/alert-definitions/eval.
 func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertConditionCommand) response.Response {
 	if err := ng.validateCondition(dto.Condition, c.SignedInUser); err != nil {
-		return utils.Error(400, "invalid condition", err)
+		return response.Error(400, "invalid condition", err)
 	}
 
 	evalResults, err := eval.ConditionEval(&dto.Condition, timeNow())
 	if err != nil {
-		return utils.Error(400, "Failed to evaluate conditions", err)
+		return response.Error(400, "Failed to evaluate conditions", err)
 	}
 
 	frame := evalResults.AsDataFrame()
 	df := tsdb.NewDecodedDataFrames([]*data.Frame{&frame})
 	instances, err := df.Encoded()
 	if err != nil {
-		return utils.Error(400, "Failed to encode result dataframes", err)
+		return response.Error(400, "Failed to encode result dataframes", err)
 	}
 
-	return utils.JSON(200, util.DynMap{
+	return response.JSON(200, util.DynMap{
 		"instances": instances,
 	})
 }
@@ -59,29 +58,29 @@ func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) response.Re
 
 	condition, err := ng.LoadAlertCondition(alertDefinitionUID, c.SignedInUser.OrgId)
 	if err != nil {
-		return utils.Error(400, "Failed to load alert definition conditions", err)
+		return response.Error(400, "Failed to load alert definition conditions", err)
 	}
 
 	if err := ng.validateCondition(*condition, c.SignedInUser); err != nil {
-		return utils.Error(400, "invalid condition", err)
+		return response.Error(400, "invalid condition", err)
 	}
 
 	evalResults, err := eval.ConditionEval(condition, timeNow())
 	if err != nil {
-		return utils.Error(400, "Failed to evaluate alert", err)
+		return response.Error(400, "Failed to evaluate alert", err)
 	}
 	frame := evalResults.AsDataFrame()
 
 	df := tsdb.NewDecodedDataFrames([]*data.Frame{&frame})
 	if err != nil {
-		return utils.Error(400, "Failed to instantiate Dataframes from the decoded frames", err)
+		return response.Error(400, "Failed to instantiate Dataframes from the decoded frames", err)
 	}
 
 	instances, err := df.Encoded()
 	if err != nil {
-		return utils.Error(400, "Failed to encode result dataframes", err)
+		return response.Error(400, "Failed to encode result dataframes", err)
 	}
-	return utils.JSON(200, util.DynMap{
+	return response.JSON(200, util.DynMap{
 		"instances": instances,
 	})
 }
@@ -96,10 +95,10 @@ func (ng *AlertNG) getAlertDefinitionEndpoint(c *models.ReqContext) response.Res
 	}
 
 	if err := ng.getAlertDefinitionByUID(&query); err != nil {
-		return utils.Error(500, "Failed to get alert definition", err)
+		return response.Error(500, "Failed to get alert definition", err)
 	}
 
-	return utils.JSON(200, &query.Result)
+	return response.JSON(200, &query.Result)
 }
 
 // deleteAlertDefinitionEndpoint handles DELETE /api/alert-definitions/:alertDefinitionUID.
@@ -112,10 +111,10 @@ func (ng *AlertNG) deleteAlertDefinitionEndpoint(c *models.ReqContext) response.
 	}
 
 	if err := ng.deleteAlertDefinitionByUID(&cmd); err != nil {
-		return utils.Error(500, "Failed to delete alert definition", err)
+		return response.Error(500, "Failed to delete alert definition", err)
 	}
 
-	return utils.Success("Alert definition deleted")
+	return response.Success("Alert definition deleted")
 }
 
 // updateAlertDefinitionEndpoint handles PUT /api/alert-definitions/:alertDefinitionUID.
@@ -124,14 +123,14 @@ func (ng *AlertNG) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd updat
 	cmd.OrgID = c.SignedInUser.OrgId
 
 	if err := ng.validateCondition(cmd.Condition, c.SignedInUser); err != nil {
-		return utils.Error(400, "invalid condition", err)
+		return response.Error(400, "invalid condition", err)
 	}
 
 	if err := ng.updateAlertDefinition(&cmd); err != nil {
-		return utils.Error(500, "Failed to update alert definition", err)
+		return response.Error(500, "Failed to update alert definition", err)
 	}
 
-	return utils.JSON(200, cmd.Result)
+	return response.JSON(200, cmd.Result)
 }
 
 // createAlertDefinitionEndpoint handles POST /api/alert-definitions.
@@ -139,14 +138,14 @@ func (ng *AlertNG) createAlertDefinitionEndpoint(c *models.ReqContext, cmd saveA
 	cmd.OrgID = c.SignedInUser.OrgId
 
 	if err := ng.validateCondition(cmd.Condition, c.SignedInUser); err != nil {
-		return utils.Error(400, "invalid condition", err)
+		return response.Error(400, "invalid condition", err)
 	}
 
 	if err := ng.saveAlertDefinition(&cmd); err != nil {
-		return utils.Error(500, "Failed to create alert definition", err)
+		return response.Error(500, "Failed to create alert definition", err)
 	}
 
-	return utils.JSON(200, cmd.Result)
+	return response.JSON(200, cmd.Result)
 }
 
 // listAlertDefinitions handles GET /api/alert-definitions.
@@ -154,24 +153,24 @@ func (ng *AlertNG) listAlertDefinitions(c *models.ReqContext) response.Response 
 	query := listAlertDefinitionsQuery{OrgID: c.SignedInUser.OrgId}
 
 	if err := ng.getOrgAlertDefinitions(&query); err != nil {
-		return utils.Error(500, "Failed to list alert definitions", err)
+		return response.Error(500, "Failed to list alert definitions", err)
 	}
 
-	return utils.JSON(200, util.DynMap{"results": query.Result})
+	return response.JSON(200, util.DynMap{"results": query.Result})
 }
 
 func (ng *AlertNG) pauseScheduler() response.Response {
 	err := ng.schedule.pause()
 	if err != nil {
-		return utils.Error(500, "Failed to pause scheduler", err)
+		return response.Error(500, "Failed to pause scheduler", err)
 	}
-	return utils.JSON(200, util.DynMap{"message": "alert definition scheduler paused"})
+	return response.JSON(200, util.DynMap{"message": "alert definition scheduler paused"})
 }
 
 func (ng *AlertNG) unpauseScheduler() response.Response {
 	err := ng.schedule.unpause()
 	if err != nil {
-		return utils.Error(500, "Failed to unpause scheduler", err)
+		return response.Error(500, "Failed to unpause scheduler", err)
 	}
-	return utils.JSON(200, util.DynMap{"message": "alert definition scheduler unpaused"})
+	return response.JSON(200, util.DynMap{"message": "alert definition scheduler unpaused"})
 }

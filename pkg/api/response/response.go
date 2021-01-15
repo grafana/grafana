@@ -1,7 +1,10 @@
 package response
 
 import (
+	"encoding/json"
 	"net/http"
+
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/models"
 	jsoniter "github.com/json-iterator/go"
@@ -25,20 +28,6 @@ func CreateNormalResponse(header http.Header, body []byte, status int) *NormalRe
 	}
 }
 
-func CreateStreamingResponse(header http.Header, body interface{}, status int) StreamingResponse {
-	return StreamingResponse{
-		header: header,
-		body:   body,
-		status: status,
-	}
-}
-
-func CreateRedirectResponse(location string) *RedirectResponse {
-	return &RedirectResponse{
-		location: location,
-	}
-}
-
 type NormalResponse struct {
 	status     int
 	body       []byte
@@ -52,11 +41,6 @@ func (r *NormalResponse) Status() int {
 	return r.status
 }
 
-// SetStatus sets the response's status.
-func (r *NormalResponse) SetStatus(status int) {
-	r.status = status
-}
-
 // Body gets the response's body.
 func (r *NormalResponse) Body() []byte {
 	return r.body
@@ -67,19 +51,9 @@ func (r *NormalResponse) Err() error {
 	return r.err
 }
 
-// SetErr sets the response's err.
-func (r *NormalResponse) SetErr(err error) {
-	r.err = err
-}
-
 // ErrMessage gets the response's errMessage.
 func (r *NormalResponse) ErrMessage() string {
 	return r.errMessage
-}
-
-// SetErrMessage sets the response's errMessage.
-func (r *NormalResponse) SetErrMessage(errMessage string) {
-	r.errMessage = errMessage
 }
 
 func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
@@ -155,4 +129,89 @@ func (*RedirectResponse) Status() int {
 // Required to implement api.Response.
 func (r *RedirectResponse) Body() []byte {
 	return nil
+}
+
+// JSON creates a JSON response.
+func JSON(status int, body interface{}) *NormalResponse {
+	return Respond(status, body).Header("Content-Type", "application/json")
+}
+
+// JSONStreaming creates a streaming JSON response.
+func JSONStreaming(status int, body interface{}) StreamingResponse {
+	header := make(http.Header)
+	header.Set("Content-Type", "application/json")
+	return StreamingResponse{
+		body:   body,
+		status: status,
+		header: header,
+	}
+}
+
+// Success create a successful response
+func Success(message string) *NormalResponse {
+	resp := make(map[string]interface{})
+	resp["message"] = message
+	return JSON(200, resp)
+}
+
+// Error creates an error response.
+func Error(status int, message string, err error) *NormalResponse {
+	data := make(map[string]interface{})
+
+	switch status {
+	case 404:
+		data["message"] = "Not Found"
+	case 500:
+		data["message"] = "Internal Server Error"
+	}
+
+	if message != "" {
+		data["message"] = message
+	}
+
+	if err != nil {
+		if setting.Env != setting.Prod {
+			data["error"] = err.Error()
+		}
+	}
+
+	resp := JSON(status, data)
+
+	if err != nil {
+		resp.errMessage = message
+		resp.err = err
+	}
+
+	return resp
+}
+
+// Empty creates an empty NormalResponse.
+func Empty(status int) *NormalResponse {
+	return Respond(status, nil)
+}
+
+// Respond creates a response.
+func Respond(status int, body interface{}) *NormalResponse {
+	var b []byte
+	switch t := body.(type) {
+	case []byte:
+		b = t
+	case string:
+		b = []byte(t)
+	default:
+		var err error
+		if b, err = json.Marshal(body); err != nil {
+			return Error(500, "body json marshal", err)
+		}
+	}
+
+	return &NormalResponse{
+		status: status,
+		body:   b,
+		header: make(http.Header),
+	}
+}
+
+func Redirect(location string) *RedirectResponse {
+	return &RedirectResponse{location: location}
 }

@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/api/utils"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -22,12 +21,12 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 
 	if path.IsAbs(cmd.Path) {
 		hs.log.Error("Invalid short URL path", "path", cmd.Path)
-		return utils.Error(400, "Path should be relative", nil)
+		return response.Error(400, "Path should be relative", nil)
 	}
 
 	shortURL, err := hs.ShortURLService.CreateShortURL(c.Req.Context(), c.SignedInUser, cmd.Path)
 	if err != nil {
-		return utils.Error(500, "Failed to create short URL", err)
+		return response.Error(500, "Failed to create short URL", err)
 	}
 
 	url := fmt.Sprintf("%s/goto/%s", strings.TrimSuffix(setting.AppUrl, "/"), shortURL.Uid)
@@ -38,7 +37,7 @@ func (hs *HTTPServer) createShortURL(c *models.ReqContext, cmd dtos.CreateShortU
 		URL: url,
 	}
 
-	return utils.JSON(200, dto)
+	return response.JSON(200, dto)
 }
 
 func (hs *HTTPServer) redirectFromShortURL(c *models.ReqContext) {
