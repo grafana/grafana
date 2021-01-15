@@ -461,15 +461,17 @@ export class ElasticResponse {
           // Add a row for each document
           for (const doc of docs) {
             if (logLevelField) {
-              // Remap level field based on the datasource config. This field is then used in explore to figure out the
-              // log level. We may rewrite some actual data in the level field if they are different.
+              // Remap level field based on the datasource config. This field is
+              // then used in explore to figure out the log level. We may rewrite
+              // some actual data in the level field if they are different.
               doc['level'] = doc[logLevelField];
             }
-            // When highlighting exists, we need to collect all the highlighted phrases and add them to the DataFrame's
-            // meta.searchWords array.
+            // When highlighting exists, we need to collect all the highlighted
+            // phrases and add them to the DataFrame's meta.searchWords array.
             if (doc.highlight) {
-              // There might be multiple words so we need two versions of the regular expression. One to match gobally,
-              // when used with part.match, it returns and array of matches. The second one is used to capture the
+              // There might be multiple words so we need two versions of the
+              // regular expression. One to match gobally, when used with part.match,
+              // it returns and array of matches. The second one is used to capture the
               // values between the tags.
               const globalHighlightWordRegex = new RegExp(HIGHLIGHT_TAGS_EXP, 'g');
               const highlightWordRegex = new RegExp(HIGHLIGHT_TAGS_EXP);
@@ -487,8 +489,8 @@ export class ElasticResponse {
                   });
                 })
                 .filter(_.identity);
-              // If meta and searchWords already exists, add the words and deduplicate
-              // otherwise create a new set of search words.
+              // If meta and searchWords already exists, add the words and
+              // deduplicate otherwise create a new set of search words.
               const searchWords = series.meta?.searchWords
                 ? _.uniq([...series.meta.searchWords, ...newSearchWords])
                 : [...newSearchWords];
