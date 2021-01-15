@@ -1,4 +1,5 @@
 import React from 'react';
+import { css } from 'emotion';
 import { Checkbox, Button, Tag, ModalsController } from '@grafana/ui';
 import { DecoratedRevisionModel } from '../DashboardSettings/VersionsSettings';
 import { RevertDashboardModal } from './RevertDashboardModal';
@@ -23,9 +24,13 @@ export const VersionHistoryTable: React.FC<VersionsTableProps> = ({ versions, on
       {versions.map((version, idx) => (
         <tr key={version.id}>
           <td>
-            <div>
-              <Checkbox checked={version.checked} onChange={ev => onCheck(ev, version.id)} />
-            </div>
+            <Checkbox
+              className={css`
+                display: inline;
+              `}
+              checked={version.checked}
+              onChange={ev => onCheck(ev, version.id)}
+            />
           </td>
           <td>{version.version}</td>
           <td>{version.createdDateString}</td>
