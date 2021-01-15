@@ -32,10 +32,11 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 
 	hasExpr := false
 	var ds *models.DataSource
-	for i, query := range reqDTO.Queries {
+	for _, query := range reqDTO.Queries {
 		hs.log.Debug("Processing metrics query", "query", query)
 		name := query.Get("datasource").MustString("")
-		if name == expr.DatasourceName {
+		queryIsExpr := name == expr.DatasourceName
+		if queryIsExpr {
 			hasExpr = true
 		}
 
@@ -45,7 +46,7 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 			return response.Error(400, "Query missing data source ID", nil)
 		}
 
-		if i == 0 && !hasExpr {
+		if !queryIsExpr {
 			ds, err = hs.DatasourceCache.GetDatasource(datasourceID, c.SignedInUser, c.SkipCache)
 			if err != nil {
 				hs.log.Debug("Encountered error getting data source", "err", err, "id", datasourceID)
@@ -77,10 +78,6 @@ func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext, reqDTO dtos.MetricReq
 			return response.Error(500, "Metric request error", err)
 		}
 	} else {
-		if !hs.Cfg.IsExpressionsEnabled() {
-			return response.Error(404, "Expressions feature toggle is not enabled", nil)
-		}
-
 		resp, err = expr.WrapTransformData(c.Req.Context(), request)
 		if err != nil {
 			return response.Error(500, "Transform request error", err)
