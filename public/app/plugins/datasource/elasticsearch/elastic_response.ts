@@ -18,7 +18,7 @@ import {
 import { describeMetric } from './utils';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 
-const highlightWordRegex = new RegExp(`${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`, 'g');
+const HIGHLIGHT_TAGS_EXP = `${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`;
 
 export class ElasticResponse {
   constructor(private targets: ElasticsearchQuery[], private response: any) {
@@ -466,15 +466,19 @@ export class ElasticResponse {
               doc['level'] = doc[logLevelField];
             }
             if (doc.highlight) {
+              const globalHighlightWordRegex = new RegExp(HIGHLIGHT_TAGS_EXP, 'g');
+              const highlightWordRegex = new RegExp(HIGHLIGHT_TAGS_EXP);
               const newSearchWords = Object.keys(doc.highlight)
                 .flatMap(key => {
                   return doc.highlight[key].flatMap((line: string) => {
-                    const matchedWords = [];
-                    const matches = line.matchAll(highlightWordRegex);
-                    for (const match of matches) {
-                      matchedWords.push(match[1]);
+                    const matchedWords = line.match(globalHighlightWordRegex);
+                    if (!matchedWords) {
+                      return [];
                     }
-                    return matchedWords;
+                    return matchedWords.map(part => {
+                      const matches = part.match(highlightWordRegex);
+                      return (matches && matches[1]) || null;
+                    });
                   });
                 })
                 .filter(_.identity);
