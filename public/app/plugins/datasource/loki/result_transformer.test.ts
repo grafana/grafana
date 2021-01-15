@@ -1,5 +1,12 @@
 import { CircularDataFrame, FieldCache, FieldType, MutableDataFrame } from '@grafana/data';
-import { LokiStreamResult, LokiTailResponse, LokiStreamResponse, LokiResultType, TransformerOptions } from './types';
+import {
+  LokiStreamResult,
+  LokiTailResponse,
+  LokiStreamResponse,
+  LokiResultType,
+  TransformerOptions,
+  LokiMatrixResult,
+} from './types';
 import * as ResultTransformer from './result_transformer';
 import { enhanceDataFrame, lokiPointsToTimeseriesPoints } from './result_transformer';
 import { setTemplateSrv } from '@grafana/runtime';
@@ -207,6 +214,20 @@ describe('loki result transformer', () => {
         legendFormat: '{{$testLabel}}',
       } as unknown) as TransformerOptions);
       expect(label).toBe('label1');
+    });
+  });
+
+  describe('lokiResultsToTableModel', () => {
+    it('should correctly set the type of the label column to be a string', () => {
+      const lokiResultWithIntLabel = ([
+        { metric: { test: 1 }, value: [1610367143, 10] },
+        { metric: { test: 2 }, value: [1610367144, 20] },
+      ] as unknown) as LokiMatrixResult[];
+
+      const table = ResultTransformer.lokiResultsToTableModel(lokiResultWithIntLabel, 1, 'A', {});
+      expect(table.columns[0].type).toBe('time');
+      expect(table.columns[1].type).toBe('string');
+      expect(table.columns[2].type).toBe('number');
     });
   });
 });

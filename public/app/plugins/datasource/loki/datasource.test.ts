@@ -1,6 +1,6 @@
 import { of, throwError } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { AnnotationQueryRequest, CoreApp, DataFrame, dateTime, FieldCache, TimeRange, TimeSeries } from '@grafana/data';
+import { AnnotationQueryRequest, CoreApp, DataFrame, dateTime, FieldCache, TimeSeries } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse } from '@grafana/runtime';
 
 import LokiDatasource from './datasource';
@@ -116,6 +116,23 @@ describe('LokiDatasource', () => {
       expect(req.start).toBeDefined();
       expect(req.end).toBeDefined();
       expect(adjustIntervalSpy).toHaveBeenCalledWith(2000, expect.anything());
+    });
+
+    it('should set the minimal step to 1ms', () => {
+      const target = { expr: '{job="grafana"}', refId: 'B' };
+      const raw = { from: 'now', to: 'now-1h' };
+      const range = { from: dateTime('2020-10-14T00:00:00'), to: dateTime('2020-10-14T00:00:01'), raw: raw };
+      const options = {
+        range,
+        intervalMs: 0.0005,
+      };
+
+      const req = ds.createRangeQuery(target, options as any, 1000);
+      expect(req.start).toBeDefined();
+      expect(req.end).toBeDefined();
+      expect(adjustIntervalSpy).toHaveBeenCalledWith(0.0005, expect.anything());
+      // Step is in seconds (1 ms === 0.001 s)
+      expect(req.step).toEqual(0.001);
     });
   });
 
@@ -423,24 +440,6 @@ describe('LokiDatasource', () => {
         expect(result.status).toEqual('error');
         expect(result.message).toBe('Loki: Bad Gateway. 502');
       });
-    });
-  });
-
-  describe('when creating a range query', () => {
-    // Loki v1 API has an issue with float step parameters, can be removed when API is fixed
-    it('should produce an integer step parameter', () => {
-      const ds = createLokiDSForTests();
-      const query: LokiQuery = { expr: 'foo', refId: 'bar' };
-      const range: TimeRange = {
-        from: dateTime(0),
-        to: dateTime(1e9 + 1),
-        raw: { from: '0', to: '1000000001' },
-      };
-
-      // Odd timerange/interval combination that would lead to a float step
-      const options = { range, intervalMs: 2000 };
-
-      expect(Number.isInteger(ds.createRangeQuery(query, options as any, 1000).step!)).toBeTruthy();
     });
   });
 
