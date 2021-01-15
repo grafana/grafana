@@ -1,12 +1,11 @@
 import React, { useMemo } from 'react';
-import { DataFrame, Field, FieldType, PanelProps, VizOrientation } from '@grafana/data';
-import { BarChartOptions, defaults } from './types';
-import { Alert } from '@grafana/ui';
+import { DataFrame, Field, FieldType, PanelProps } from '@grafana/data';
+import { Alert, BarChart, BarChartOptions } from '@grafana/ui';
+import { config } from 'app/core/config';
 
 interface Props extends PanelProps<BarChartOptions> {}
 
 interface BarData {
-  options: BarChartOptions;
   error?: string;
   frame?: DataFrame; // first string vs all numbers
 }
@@ -21,15 +20,10 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
   }
 
   const barData = useMemo<BarData>(() => {
-    const opts = { ...defaults, ...options };
-    if (opts.orientation === VizOrientation.Auto) {
-      opts.orientation = width - height > 0 ? VizOrientation.Horizontal : VizOrientation.Vertical;
-    }
     const firstFrame = data.series[0];
     const firstString = firstFrame.fields.find(f => f.type === FieldType.string);
     if (!firstString) {
       return {
-        options: opts,
         error: 'Panel requires a string field',
       };
     }
@@ -41,13 +35,11 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     }
     if (fields.length < 2) {
       return {
-        options: opts,
         error: 'No numeric fields found',
       };
     }
 
     return {
-      options: opts,
       frame: {
         ...firstFrame,
         fields, // filtered to to the values we have
@@ -71,12 +63,5 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({ data, options, w
     );
   }
 
-  return (
-    <div>
-      <pre>{JSON.stringify(barData.options, null, '  ')}</pre>
-      {barData.frame.fields.map((f, idx) => (
-        <div key={f.name + '/' + idx}>{f.name}</div>
-      ))}
-    </div>
-  );
+  return <BarChart data={barData.frame} width={width} height={height} theme={config.theme} {...options} />;
 };

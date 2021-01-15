@@ -6,7 +6,7 @@ export enum BarStackingMode {
   Percent = 'percent',
 }
 
-export enum ValueVisibility {
+export enum BarValueVisibility {
   Auto = 'auto',
   Never = 'never',
   Always = 'always',
@@ -15,11 +15,5 @@ export enum ValueVisibility {
 export interface BarChartOptions {
   orientation: VizOrientation;
   stacking: BarStackingMode;
-  showValue: ValueVisibility;
+  showValue: BarValueVisibility;
 }
-
-export const defaults: BarChartOptions = {
-  orientation: VizOrientation.Auto,
-  stacking: BarStackingMode.None,
-  showValue: ValueVisibility.Auto,
-};

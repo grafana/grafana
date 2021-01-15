@@ -1,6 +1,6 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin, VizOrientation } from '@grafana/data';
 import { BarChartPanel } from './BarChartPanel';
-import { BarChartOptions, BarStackingMode, defaults, ValueVisibility } from './types';
+import { BarChartOptions, BarStackingMode, BarValueVisibility } from '@grafana/ui';
 
 export const plugin = new PanelPlugin<BarChartOptions>(BarChartPanel)
   .useFieldConfig({
@@ -27,7 +27,7 @@ export const plugin = new PanelPlugin<BarChartOptions>(BarChartPanel)
             { value: VizOrientation.Vertical, label: 'Vertical' },
           ],
         },
-        defaultValue: defaults.orientation,
+        defaultValue: VizOrientation.Auto,
       })
       .addRadio({
         path: 'stacking',
@@ -39,18 +39,18 @@ export const plugin = new PanelPlugin<BarChartOptions>(BarChartPanel)
             { value: BarStackingMode.Percent, label: '100%' },
           ],
         },
-        defaultValue: defaults.stacking,
+        defaultValue: BarStackingMode.None,
       })
       .addRadio({
         path: 'showValue',
         name: 'Show value',
         settings: {
           options: [
-            { value: ValueVisibility.Auto, label: 'Auto' },
-            { value: ValueVisibility.Always, label: 'Always' },
-            { value: ValueVisibility.Never, label: 'Never' },
+            { value: BarValueVisibility.Auto, label: 'Auto' },
+            { value: BarValueVisibility.Always, label: 'Always' },
+            { value: BarValueVisibility.Never, label: 'Never' },
           ],
         },
-        defaultValue: defaults.showValue,
+        defaultValue: BarValueVisibility.Auto,
       });
   });
