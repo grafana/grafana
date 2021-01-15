@@ -24,7 +24,7 @@ export const RevertDashboardModal: React.FC<RevertDashboardModalProps> = ({ hide
     >
       <p>Are you sure you want to restore the dashboard to version {version}? All unsaved changes will be lost.</p>
       <HorizontalGroup justify="center">
-        <Button variant="destructive" type="button" onClick={() => onRestoreDashboard()}>
+        <Button variant="destructive" type="button" onClick={onRestoreDashboard}>
           Yes, restore to version {version}
         </Button>
         <Button variant="secondary" onClick={hideModal}>
