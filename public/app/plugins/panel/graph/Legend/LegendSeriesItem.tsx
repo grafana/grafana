@@ -197,7 +197,7 @@ class LegendSeriesIcon extends PureComponent<LegendSeriesIconProps, LegendSeries
         enableNamedColors
       >
         {({ ref, showColorPicker, hideColorPicker }) => (
-          <span ref={ref} onClick={showColorPicker} onMouseLeave={hideColorPicker}>
+          <span ref={ref} onClick={showColorPicker} onMouseLeave={hideColorPicker} className="graph-legend-icon">
             <SeriesIcon color={this.props.color} />
           </span>
         )}
