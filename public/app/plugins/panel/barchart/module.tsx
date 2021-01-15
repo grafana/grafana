@@ -1,8 +1,8 @@
 import { FieldColorModeId, FieldConfigProperty, PanelPlugin, VizOrientation } from '@grafana/data';
 import { BarChartPanel } from './BarChartPanel';
-import { BarChartOptions, BarStackingMode, BarValueVisibility } from '@grafana/ui';
+import { BarChartFieldConfig, BarChartOptions, BarStackingMode, BarValueVisibility } from '@grafana/ui';
 
-export const plugin = new PanelPlugin<BarChartOptions>(BarChartPanel)
+export const plugin = new PanelPlugin<BarChartOptions, BarChartFieldConfig>(BarChartPanel)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -14,7 +14,8 @@ export const plugin = new PanelPlugin<BarChartOptions>(BarChartPanel)
         },
       },
     },
-  }) // ?? any custom properties?
+    // TODO: import BarChartFieldConfig
+  })
   .setPanelOptions(builder => {
     builder
       .addRadio({

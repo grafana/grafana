@@ -14,6 +14,9 @@ export interface Props extends Themeable, BarChartOptions {
   data: DataFrame;
 }
 
+/**
+ * @alpha
+ */
 export const BarChart: React.FunctionComponent<Props> = props => {
   if (!props.data || props.data.fields.length < 2) {
     return <div>Missing data</div>;
@@ -28,6 +31,7 @@ export const BarChart: React.FunctionComponent<Props> = props => {
   }, []);
   const configRev = useRevision(props.data, compareFrames);
 
+  // Updates only when the structure changes
   const plotConfig = useMemo(() => {
     let orientation = props.orientation;
     if (!orientation || orientation === VizOrientation.Auto) {
