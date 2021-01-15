@@ -29,7 +29,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *models.GetDataSourceByNameQuery) error {
+		bus.AddHandler("test", func(query *models.GetDataSourceQuery) error {
 			if query.Name == defaultDs.Name {
 				query.Result = defaultDs
 			}

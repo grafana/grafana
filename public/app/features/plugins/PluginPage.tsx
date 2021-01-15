@@ -212,8 +212,9 @@ class PluginPage extends PureComponent<Props, State> {
     if (item.type === PluginIncludeType.page) {
       const pluginId = this.state.plugin!.meta.id;
       const page = item.name.toLowerCase().replace(' ', '-');
+      const url = item.path ?? `plugins/${pluginId}/page/${page}`;
       return (
-        <a href={`plugins/${pluginId}/page/${page}`}>
+        <a href={url}>
           <i className={getPluginIcon(item.type)} />
           {item.name}
         </a>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { ComponentType } from 'react';
 import { css, cx } from 'emotion';
 import { GrafanaTheme, toPascalCase } from '@grafana/data';
 import { stylesFactory } from '../../themes/stylesFactory';
@@ -7,6 +7,8 @@ import { IconName, IconType, IconSize } from '../../types/icon';
 //@ts-ignore
 import * as DefaultIcon from '@iconscout/react-unicons';
 import * as MonoIcon from './assets';
+import { customIcons } from './custom';
+import { SvgProps } from './assets/types';
 
 const alwaysMonoIcons = ['grafana', 'favorite', 'heart-break', 'heart'];
 
@@ -34,6 +36,24 @@ const getIconStyles = stylesFactory((theme: GrafanaTheme) => {
   };
 });
 
+function getIconComponent(name: string, type: string): ComponentType<SvgProps> {
+  if (alwaysMonoIcons.includes(name)) {
+    type = 'mono';
+  }
+
+  if (name?.startsWith('gf-')) {
+    return customIcons[name];
+  }
+
+  const iconName = type === 'default' ? `Uil${toPascalCase(name)}` : toPascalCase(name);
+
+  /* Unicons don't have type definitions */
+  //@ts-ignore
+  const Component = type === 'default' ? DefaultIcon[iconName] : MonoIcon[iconName];
+
+  return Component ?? customIcons.notFoundDummy;
+}
+
 export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
   ({ size = 'md', type = 'default', name, className, style, ...divElementProps }, ref) => {
     const theme = useTheme();
@@ -41,24 +61,11 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
     const svgSize = getSvgSize(size);
 
     /* Temporary solution to display also font awesome icons */
-    const isFontAwesome = name?.includes('fa-');
-    if (isFontAwesome) {
+    if (name?.startsWith('fa fa-')) {
       return <i className={cx(name, className)} {...divElementProps} style={style} />;
     }
 
-    if (alwaysMonoIcons.includes(name)) {
-      type = 'mono';
-    }
-
-    const iconName = type === 'default' ? `Uil${toPascalCase(name)}` : toPascalCase(name);
-
-    /* Unicons don't have type definitions */
-    //@ts-ignore
-    const Component = type === 'default' ? DefaultIcon[iconName] : MonoIcon[iconName];
-
-    if (!Component) {
-      return <div />;
-    }
+    const Component = getIconComponent(name, type);
 
     return (
       <div className={styles.container} {...divElementProps} ref={ref}>

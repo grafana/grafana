@@ -70,7 +70,10 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
     const metricsQuery = this.props.query as CloudWatchMetricsQuery;
     const { showMeta } = this.state;
     const query = normalizeQuery(metricsQuery);
-    const metaDataExist = data && Object.values(data).length && data.state === 'Done';
+    const executedQueries =
+      data && data.series.length && data.series[0].meta && data.state === 'Done'
+        ? data.series[0].meta.executedQueryString
+        : null;
 
     return (
       <>
@@ -150,20 +153,21 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
             <label className="gf-form-label">
               <a
                 onClick={() =>
-                  metaDataExist &&
+                  executedQueries &&
                   this.setState({
                     showMeta: !showMeta,
                   })
                 }
               >
-                <Icon name={showMeta ? 'angle-down' : 'angle-right'} /> {showMeta ? 'Hide' : 'Show'} Query Preview
+                <Icon name={showMeta && executedQueries ? 'angle-down' : 'angle-right'} />{' '}
+                {showMeta && executedQueries ? 'Hide' : 'Show'} Query Preview
               </a>
             </label>
           </div>
           <div className="gf-form gf-form--grow">
             <div className="gf-form-label gf-form-label--grow" />
           </div>
-          {showMeta && metaDataExist && (
+          {showMeta && executedQueries && (
             <table className="filter-table form-inline">
               <thead>
                 <tr>
@@ -174,7 +178,7 @@ export class MetricsQueryEditor extends PureComponent<Props, State> {
                 </tr>
               </thead>
               <tbody>
-                {data?.series?.[0]?.meta?.gmdMeta?.map(({ ID, Expression, Period }: any) => (
+                {JSON.parse(executedQueries).map(({ ID, Expression, Period }: any) => (
                   <tr key={ID}>
                     <td>{ID}</td>
                     <td>{Expression}</td>

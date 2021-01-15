@@ -1,7 +1,7 @@
 // @ts-ignore
 import RCCascader from 'rc-cascader';
 import React from 'react';
-import PromQlLanguageProvider, { DEFAULT_LOOKUP_METRICS_THRESHOLD } from '../language_provider';
+import PromQlLanguageProvider from '../language_provider';
 import PromQueryField, { groupMetricsByPrefix, RECORDING_RULES_GROUP } from './PromQueryField';
 import { DataSourceInstanceSettings, dateTime } from '@grafana/data';
 import { PromOptions } from '../types';
@@ -254,7 +254,6 @@ function makeLanguageProvider(options: { metrics: string[][] }) {
     metrics: [],
     metricsMetadata: {},
     lookupsDisabled: false,
-    lookupMetricsThreshold: DEFAULT_LOOKUP_METRICS_THRESHOLD,
     start() {
       this.metrics = metricsStack.shift();
       return Promise.resolve([]);
