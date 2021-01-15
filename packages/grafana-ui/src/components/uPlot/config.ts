@@ -112,6 +112,8 @@ export interface AxisConfig {
   axisPlacement?: AxisPlacement;
   axisLabel?: string;
   axisWidth?: number; // pixels ideally auto?
+  axisSoftMin?: number;
+  axisSoftMax?: number;
   scaleDistribution?: ScaleDistributionConfig;
 }
 
