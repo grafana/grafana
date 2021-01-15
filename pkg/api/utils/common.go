@@ -35,8 +35,8 @@ func JSON(status int, body interface{}) *response.NormalResponse {
 	return Respond(status, body).Header("Content-Type", "application/json")
 }
 
-// JsonStreaming creates a streaming JSON response.
-func JsonStreaming(status int, body interface{}) response.StreamingResponse {
+// JSONStreaming creates a streaming JSON response.
+func JSONStreaming(status int, body interface{}) response.StreamingResponse {
 	header := make(http.Header)
 	header.Set("Content-Type", "application/json")
 	return response.CreateStreamingResponse(header, body, status)
