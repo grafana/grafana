@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
@@ -61,9 +63,9 @@ func TestGetHomeDashboard(t *testing.T) {
 			require.NoError(t, err, "must be able to marshal object to JSON")
 
 			res := hs.GetHomeDashboard(req)
-			nr, ok := res.(*NormalResponse)
+			nr, ok := res.(*response.NormalResponse)
 			require.True(t, ok, "should return *NormalResponse")
-			require.Equal(t, b, nr.body, "default home dashboard should equal content on disk")
+			require.Equal(t, b, nr.Body(), "default home dashboard should equal content on disk")
 		})
 	}
 }
@@ -1192,7 +1194,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{OrgId: cmd.OrgId, UserId: cmd.UserId}
 
@@ -1223,7 +1225,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 		defer bus.ClearBusHandlers()
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{
 				OrgId:  testOrgID,
@@ -1255,7 +1257,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = Wrap(func(c *models.ReqContext) Response {
+		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
 			sc.context = c
 			sc.context.SignedInUser = &models.SignedInUser{
 				OrgId:  testOrgID,
