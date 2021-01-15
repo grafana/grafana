@@ -69,59 +69,32 @@ describe('PrometheusDatasource', () => {
   });
 
   describe('Query', () => {
-    it('returns empty array when no queries', done => {
-      expect.assertions(2);
-
-      ds.query(createDataRequest([])).subscribe({
-        next(next) {
-          expect(next.data).toEqual([]);
-          expect(next.state).toBe(LoadingState.Done);
-        },
-        complete() {
-          done();
-        },
+    it('returns empty array when no queries', async () => {
+      await expect(ds.query(createDataRequest([]))).toEmitValuesWith(response => {
+        expect(response[0].data).toEqual([]);
+        expect(response[0].state).toBe(LoadingState.Done);
       });
     });
 
-    it('performs time series queries', done => {
-      expect.assertions(2);
-
-      ds.query(createDataRequest([{}])).subscribe({
-        next(next) {
-          expect(next.data.length).not.toBe(0);
-          expect(next.state).toBe(LoadingState.Done);
-        },
-        complete() {
-          done();
-        },
+    it('performs time series queries', async () => {
+      await expect(ds.query(createDataRequest([{}]))).toEmitValuesWith(response => {
+        expect(response[0].data.length).not.toBe(0);
+        expect(response[0].state).toBe(LoadingState.Done);
       });
     });
 
-    it('with 2 queries and used from Explore, sends results as they arrive', done => {
-      expect.assertions(4);
-
-      const responseStatus = [LoadingState.Loading, LoadingState.Done];
-      ds.query(createDataRequest([{}, {}], { app: CoreApp.Explore })).subscribe({
-        next(next) {
-          expect(next.data.length).not.toBe(0);
-          expect(next.state).toBe(responseStatus.shift());
-        },
-        complete() {
-          done();
-        },
+    it('with 2 queries and used from Explore, sends results as they arrive', async () => {
+      await expect(ds.query(createDataRequest([{}, {}], { app: CoreApp.Explore }))).toEmitValuesWith(response => {
+        expect(response[0].data.length).not.toBe(0);
+        expect(response[0].state).toBe(LoadingState.Loading);
+        expect(response[1].state).toBe(LoadingState.Done);
       });
     });
 
-    it('with 2 queries and used from Panel, waits for all to finish until sending Done status', done => {
-      expect.assertions(2);
-      ds.query(createDataRequest([{}, {}], { app: CoreApp.Dashboard })).subscribe({
-        next(next) {
-          expect(next.data.length).not.toBe(0);
-          expect(next.state).toBe(LoadingState.Done);
-        },
-        complete() {
-          done();
-        },
+    it('with 2 queries and used from Panel, waits for all to finish until sending Done status', async () => {
+      await expect(ds.query(createDataRequest([{}, {}], { app: CoreApp.Dashboard }))).toEmitValuesWith(response => {
+        expect(response[0].data.length).not.toBe(0);
+        expect(response[0].state).toBe(LoadingState.Done);
       });
     });
   });
@@ -228,7 +201,7 @@ describe('PrometheusDatasource', () => {
       };
     });
 
-    it('should convert cumullative histogram to ordinary', () => {
+    it('should convert cumulative histogram to ordinary', async () => {
       const resultMock = [
         {
           metric: { __name__: 'metric', job: 'testjob', le: '10' },
@@ -254,38 +227,16 @@ describe('PrometheusDatasource', () => {
       ];
       const responseMock = { data: { data: { result: resultMock } } };
 
-      const expected = [
-        {
-          target: '10',
-          datapoints: [
-            [10, 1443454528000],
-            [10, 1443454528000],
-          ],
-        },
-        {
-          target: '20',
-          datapoints: [
-            [10, 1443454528000],
-            [0, 1443454528000],
-          ],
-        },
-        {
-          target: '30',
-          datapoints: [
-            [5, 1443454528000],
-            [0, 1443454528000],
-          ],
-        },
-      ];
-
-      ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of([responseMock]));
-      ds.query(query).subscribe((result: any) => {
-        const results = result.data;
-        return expect(results).toMatchObject(expected);
+      ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of(responseMock));
+      await expect(ds.query(query)).toEmitValuesWith(result => {
+        const results = result[0].data;
+        expect(results[0].fields[1].values.toArray()).toEqual([10, 10]);
+        expect(results[1].fields[1].values.toArray()).toEqual([10, 0]);
+        expect(results[2].fields[1].values.toArray()).toEqual([5, 0]);
       });
     });
 
-    it('should sort series by label value', () => {
+    it('should sort series by label value', async () => {
       const resultMock = [
         {
           metric: { __name__: 'metric', job: 'testjob', le: '2' },
@@ -320,10 +271,10 @@ describe('PrometheusDatasource', () => {
 
       const expected = ['1', '2', '4', '+Inf'];
 
-      ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of([responseMock]));
-      ds.query(query).subscribe((result: any) => {
-        const seriesLabels = _.map(result.data, 'target');
-        return expect(seriesLabels).toEqual(expected);
+      ds.performTimeSeriesQuery = jest.fn().mockReturnValue(of(responseMock));
+      await expect(ds.query(query)).toEmitValuesWith(result => {
+        const seriesLabels = _.map(result[0].data, 'name');
+        expect(seriesLabels).toEqual(expected);
       });
     });
   });

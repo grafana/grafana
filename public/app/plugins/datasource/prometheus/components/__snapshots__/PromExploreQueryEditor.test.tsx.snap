@@ -4,9 +4,17 @@ exports[`PromExploreQueryEditor should render component 1`] = `
 <PromQueryField
   ExtraFieldElement={
     <Memo
+      onChange={[MockFunction]}
       onKeyDownFunc={[Function]}
       onQueryTypeChange={[Function]}
       onStepChange={[Function]}
+      query={
+        Object {
+          "expr": "",
+          "interval": "1s",
+          "refId": "A",
+        }
+      }
       queryType="both"
       stepValue="1s"
     />

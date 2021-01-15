@@ -1,18 +1,24 @@
 import {
+  ArrayDataFrame,
   ArrayVector,
   DataFrame,
+  DataLink,
+  DataTopic,
   Field,
   FieldType,
   formatLabels,
+  getDisplayProcessor,
   Labels,
   MutableField,
   ScopedVars,
   TIME_SERIES_TIME_FIELD_NAME,
   TIME_SERIES_VALUE_FIELD_NAME,
 } from '@grafana/data';
-import { FetchResponse } from '@grafana/runtime';
-import { getTemplateSrv } from 'app/features/templating/template_srv';
+import { FetchResponse, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
+import { descending, deviation } from 'd3';
 import {
+  ExemplarTraceIdDestination,
+  isExemplarData,
   isMatrixData,
   MatrixOrVectorResult,
   PromDataSuccessResponse,
@@ -26,10 +32,16 @@ import {
 const POSITIVE_INFINITY_SAMPLE_VALUE = '+Inf';
 const NEGATIVE_INFINITY_SAMPLE_VALUE = '-Inf';
 
+interface TimeAndValue {
+  [TIME_SERIES_TIME_FIELD_NAME]: number;
+  [TIME_SERIES_VALUE_FIELD_NAME]: number;
+}
+
 export function transform(
   response: FetchResponse<PromDataSuccessResponse>,
   transformOptions: {
     query: PromQueryRequest;
+    exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
     target: PromQuery;
     responseListLength: number;
     scopedVars?: ScopedVars;
@@ -61,7 +73,42 @@ export function transform(
   };
   const prometheusResult = response.data.data;
 
-  if (!prometheusResult.result) {
+  if (isExemplarData(prometheusResult)) {
+    const events: TimeAndValue[] = [];
+    prometheusResult.forEach(exemplarData => {
+      const data = exemplarData.exemplars.map(exemplar => {
+        return {
+          [TIME_SERIES_TIME_FIELD_NAME]: exemplar.scrapeTimestamp,
+          [TIME_SERIES_VALUE_FIELD_NAME]: exemplar.exemplar.value,
+          ...exemplar.exemplar.labels,
+          ...exemplarData.seriesLabels,
+        };
+      });
+      events.push(...data);
+    });
+
+    // Grouping exemplars by step
+    const sampledExemplars = sampleExemplars(events, options);
+
+    const dataFrame = new ArrayDataFrame(sampledExemplars);
+    dataFrame.meta = { dataTopic: DataTopic.Annotations };
+
+    // Add data links if configured
+    if (transformOptions.exemplarTraceIdDestinations?.length) {
+      for (const exemplarTraceIdDestination of transformOptions.exemplarTraceIdDestinations) {
+        const traceIDField = dataFrame.fields.find(field => field.name === exemplarTraceIdDestination!.name);
+        if (traceIDField) {
+          const links = getDataLinks(exemplarTraceIdDestination);
+          traceIDField.config.links = traceIDField.config.links?.length
+            ? [...traceIDField.config.links, ...links]
+            : links;
+        }
+      }
+    }
+    return [dataFrame];
+  }
+
+  if (!prometheusResult?.result) {
     return [];
   }
 
@@ -96,6 +143,86 @@ export function transform(
 
   // Return matrix or vector result as DataFrame[]
   return dataFrame;
+}
+
+function getDataLinks(options: ExemplarTraceIdDestination): DataLink[] {
+  const dataLinks: DataLink[] = [];
+
+  if (options.datasourceUid) {
+    const dataSourceSrv = getDataSourceSrv();
+    const dsSettings = dataSourceSrv.getInstanceSettings(options.datasourceUid);
+
+    dataLinks.push({
+      title: `Query with ${dsSettings?.name}`,
+      url: '',
+      internal: {
+        query: { query: '${__value.raw}', queryType: 'getTrace' },
+        datasourceUid: options.datasourceUid,
+        datasourceName: dsSettings?.name ?? 'Data source not found',
+      },
+    });
+  }
+
+  if (options.url) {
+    dataLinks.push({
+      title: 'Open link',
+      url: options.url,
+    });
+  }
+  return dataLinks;
+}
+
+/**
+ * Reduce the density of the exemplars by making sure that the highest value exemplar is included
+ * and then only the ones that are 2 times the standard deviation of the all the values.
+ * This makes sure not to show too many dots near each other.
+ */
+function sampleExemplars(events: TimeAndValue[], options: TransformOptions) {
+  const step = options.step || 15;
+  const bucketedExemplars: { [ts: string]: TimeAndValue[] } = {};
+  const values: number[] = [];
+  for (const exemplar of events) {
+    // Align exemplar timestamp to nearest step second
+    const alignedTs = String(Math.floor(exemplar[TIME_SERIES_TIME_FIELD_NAME] / 1000 / step) * step * 1000);
+    if (!bucketedExemplars[alignedTs]) {
+      // New bucket found
+      bucketedExemplars[alignedTs] = [];
+    }
+    bucketedExemplars[alignedTs].push(exemplar);
+    values.push(exemplar[TIME_SERIES_VALUE_FIELD_NAME]);
+  }
+
+  // Getting exemplars from each bucket
+  const standardDeviation = deviation(values);
+  const sampledBuckets = Object.keys(bucketedExemplars).sort();
+  const sampledExemplars = [];
+  for (const ts of sampledBuckets) {
+    const exemplarsInBucket = bucketedExemplars[ts];
+    if (exemplarsInBucket.length === 1) {
+      sampledExemplars.push(exemplarsInBucket[0]);
+    } else {
+      // Choose which values to sample
+      const bucketValues = exemplarsInBucket.map(ex => ex[TIME_SERIES_VALUE_FIELD_NAME]).sort(descending);
+      const sampledBucketValues = bucketValues.reduce((acc: number[], curr) => {
+        if (acc.length === 0) {
+          // First value is max and is always added
+          acc.push(curr);
+        } else {
+          // Then take values only when at least 2 standard deviation distance to previously taken value
+          const prev = acc[acc.length - 1];
+          if (standardDeviation && prev - curr >= 2 * standardDeviation) {
+            acc.push(curr);
+          }
+        }
+        return acc;
+      }, []);
+      // Find the exemplars for the sampled values
+      sampledExemplars.push(
+        ...sampledBucketValues.map(value => exemplarsInBucket.find(ex => ex[TIME_SERIES_VALUE_FIELD_NAME] === value)!)
+      );
+    }
+  }
+  return sampledExemplars;
 }
 
 function getPreferredVisualisationType(isInstantQuery?: boolean, mixedQueries?: boolean) {
@@ -237,6 +364,7 @@ function getValueField({
   return {
     name: valueName,
     type: FieldType.number,
+    display: getDisplayProcessor(),
     config: {
       displayNameFromDS,
     },
