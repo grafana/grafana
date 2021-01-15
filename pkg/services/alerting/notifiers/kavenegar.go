@@ -63,7 +63,6 @@ func init() {
 
 // NewKavenegarNotifier is the constructor for the Kavenegar Notifier.
 func NewKavenegarNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
-
 	token := model.DecryptedValue("token", model.Settings.Get("token").MustString())
 	recipient := model.Settings.Get("recipient").MustString()
 
