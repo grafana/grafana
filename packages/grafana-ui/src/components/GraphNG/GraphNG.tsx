@@ -45,6 +45,8 @@ const defaultConfig: GraphFieldConfig = {
   axisPlacement: AxisPlacement.Auto,
 };
 
+export const FIXED_UNIT = '__fixed';
+
 export const GraphNG: React.FC<GraphNGProps> = ({
   data,
   fields,
@@ -88,7 +90,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     [onLegendClick, data]
   );
 
-  // reference change will not triger re-render
+  // reference change will not trigger re-render
   const currentTimeRange = useRef<TimeRange>(timeRange);
 
   useLayoutEffect(() => {
@@ -104,7 +106,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       return builder;
     }
 
-    // X is the first field in the alligned frame
+    // X is the first field in the aligned frame
     const xField = alignedFrame.fields[0];
     if (xField.type === FieldType.time) {
       builder.addScale({
@@ -147,7 +149,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       }
 
       const fmt = field.display ?? defaultFormatter;
-      const scaleKey = config.unit || '__fixed';
+      const scaleKey = config.unit || FIXED_UNIT;
       const colorMode = getFieldColorModeForField(field);
       const seriesColor = colorMode.getCalculator(field, theme)(0, 0);
 

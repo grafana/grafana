@@ -1,5 +1,3 @@
-import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
 import {
   AbsoluteTimeRange,
   DataFrame,
@@ -11,12 +9,11 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { groupBy } from 'lodash';
-
-import { ExplorePanelData } from '../../../types';
-import { getGraphSeriesModel } from '../flotgraph/getGraphSeriesModel';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { dataFrameToLogsModel } from '../../../core/logs_model';
 import { refreshIntervalToSortOrder } from '../../../core/utils/explore';
-import { LegendDisplayMode } from '@grafana/ui';
+import { ExplorePanelData } from '../../../types';
 
 /**
  * When processing response first we try to determine what kind of dataframes we got as one query can return multiple
@@ -80,22 +77,11 @@ export const decorateWithGraphLogsTraceAndTable = (data: PanelData): ExplorePane
 };
 
 export const decorateWithGraphResult = (data: ExplorePanelData): ExplorePanelData => {
-  if (data.error) {
+  if (data.error || !data.graphFrames.length) {
     return { ...data, graphResult: null };
   }
 
-  const graphResult =
-    data.graphFrames.length === 0
-      ? null
-      : getGraphSeriesModel(
-          data.graphFrames,
-          data.request?.timezone ?? 'browser',
-          {},
-          { showBars: false, showLines: true, showPoints: false },
-          { displayMode: LegendDisplayMode.List, placement: 'bottom' }
-        );
-
-  return { ...data, graphResult };
+  return { ...data, graphResult: data.graphFrames };
 };
 
 /**
