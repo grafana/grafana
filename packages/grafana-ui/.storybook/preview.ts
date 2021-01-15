@@ -15,7 +15,6 @@ import lightTheme from '../../../public/sass/grafana.light.scss';
 // @ts-ignore
 import darkTheme from '../../../public/sass/grafana.dark.scss';
 import { GrafanaLight, GrafanaDark } from './storybookTheme';
-import { configure } from '@storybook/react';
 import addons from '@storybook/addons';
 
 const handleThemeChange = (theme: any) => {
