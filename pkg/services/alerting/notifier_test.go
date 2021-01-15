@@ -21,7 +21,7 @@ func TestNotificationService(t *testing.T) {
 	testRule := &Rule{Name: "Test", Message: "Something is bad"}
 	evalCtx := NewEvalContext(context.Background(), testRule)
 
-	testRuleTemplated := &Rule{Name: "Test latency {{.quantile}}", Message: "Something is bad on instance {{.instance}}"}
+	testRuleTemplated := &Rule{Name: "Test latency ${quantile}", Message: "Something is bad on instance ${instance}"}
 	evalCtxWithMatch := NewEvalContext(context.Background(), testRuleTemplated)
 	evalCtxWithMatch.EvalMatches = []*EvalMatch{{
 		Tags: map[string]string{

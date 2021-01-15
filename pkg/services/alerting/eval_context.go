@@ -1,11 +1,9 @@
 package alerting
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"regexp"
-	"text/template"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -189,30 +187,20 @@ func (c *EvalContext) evaluateNotificationTemplateFields() error {
 		return nil
 	}
 
-	msgTmpl, err := template.New("").Parse(c.Rule.Message)
-	if err != nil {
-		return err
-	}
-
 	templateDataMap := buildTemplateDataMap(c.EvalMatches)
+	c.Rule.Message = evaluateTemplate(c.Rule.Message, templateDataMap)
+	c.Rule.Name = evaluateTemplate(c.Rule.Name, templateDataMap)
 
-	var msgBuf bytes.Buffer
-	if err := msgTmpl.Execute(&msgBuf, templateDataMap); err != nil {
-		return err
-	}
-	c.Rule.Message = msgBuf.String()
-
-	titleTmpl, err := template.New("").Parse(c.Rule.Name)
-	if err != nil {
-		return err
-	}
-
-	var titleBuf bytes.Buffer
-	if err := titleTmpl.Execute(&titleBuf, templateDataMap); err != nil {
-		return err
-	}
-	c.Rule.Name = titleBuf.String()
 	return nil
+}
+
+func evaluateTemplate(s string, m map[string]string) string {
+	for k, v := range m {
+		re := regexp.MustCompile(fmt.Sprintf(`\${%s}`, regexp.QuoteMeta(k)))
+		s = re.ReplaceAllString(s, v)
+	}
+
+	return s
 }
 
 // buildTemplateDataMap builds a map of alert evaluation tag names to a set of associated values (comma separated)
