@@ -28,6 +28,7 @@ export const AlertingQueryPreview: FC<Props> = ({ queryRunner }) => {
 
   const observable = useMemo(() => queryRunner.getData({ withFieldConfig: true, withTransforms: true }), []);
   const data = useObservable(observable);
+
   return (
     <div className={styles.wrapper}>
       <TabsBar>
@@ -43,7 +44,12 @@ export const AlertingQueryPreview: FC<Props> = ({ queryRunner }) => {
         })}
       </TabsBar>
       <TabContent className={styles.tabContent}>
-        {data && data.series.length > 0 ? (
+        {data && data.state === 'Error' ? (
+          <div className={styles.noQueries}>
+            <h4 className={styles.noQueriesHeader}>There was an error :(</h4>
+            <div>{data.error?.message}</div>
+          </div>
+        ) : data && data.series.length > 0 ? (
           <AutoSizer style={{ width: '100%', height: '100%' }}>
             {({ width, height }) => {
               switch (activeTab) {
