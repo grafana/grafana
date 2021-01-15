@@ -246,22 +246,6 @@ export const alignmentPeriods = [
   { text: '1w', value: '+604800s' },
 ];
 
-export const cloudMonitoringUnitMappings = {
-  bit: 'bits',
-  By: 'bytes',
-  s: 's',
-  min: 'm',
-  h: 'h',
-  d: 'd',
-  us: 'µs',
-  ms: 'ms',
-  ns: 'ns',
-  percent: 'percent',
-  MiBy: 'mbytes',
-  'By/s': 'Bps',
-  GBy: 'decgbytes',
-};
-
 export const systemLabels = [
   'metadata.system_labels.cloud_account',
   'metadata.system_labels.name',
