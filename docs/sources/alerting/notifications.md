@@ -235,7 +235,7 @@ This URL is based on the [domain]({{< relref "../administration/configuration/#d
 
 > **Note:** Alert notification templating is only available in Grafana v7.4 and above.
 
-You can apply data templating to an alert notification's title and message by referring to the matching alert condition query's tags/labels. Data templates are formatted as follows: `${Label}`.
+You can apply data templating to an alert notification's title and message by referring to the matching alert condition query's tags/labels. Template variables are formatted as follows: `${Label}`.
 
 For example, taking an alert based on the Prometheus data source, we can specify label names as template variables as follows:
 
