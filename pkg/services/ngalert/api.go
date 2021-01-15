@@ -31,7 +31,7 @@ func (ng *AlertNG) registerAPIEndpoints() {
 
 // conditionEvalEndpoint handles POST /api/alert-definitions/eval.
 func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertConditionCommand) response.Response {
-	if err := ng.validateCondition(dto.Condition, c.SignedInUser); err != nil {
+	if err := ng.validateCondition(dto.Condition, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
@@ -54,14 +54,14 @@ func (ng *AlertNG) conditionEvalEndpoint(c *models.ReqContext, dto evalAlertCond
 
 // alertDefinitionEvalEndpoint handles GET /api/alert-definitions/eval/:alertDefinitionUID.
 func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) response.Response {
-	alertDefinitionUID := c.ParamsEscape(":alertDefinitionUID")
+	alertDefinitionUID := c.Params(":alertDefinitionUID")
 
 	condition, err := ng.LoadAlertCondition(alertDefinitionUID, c.SignedInUser.OrgId)
 	if err != nil {
 		return response.Error(400, "Failed to load alert definition conditions", err)
 	}
 
-	if err := ng.validateCondition(*condition, c.SignedInUser); err != nil {
+	if err := ng.validateCondition(*condition, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
@@ -87,7 +87,7 @@ func (ng *AlertNG) alertDefinitionEvalEndpoint(c *models.ReqContext) response.Re
 
 // getAlertDefinitionEndpoint handles GET /api/alert-definitions/:alertDefinitionUID.
 func (ng *AlertNG) getAlertDefinitionEndpoint(c *models.ReqContext) response.Response {
-	alertDefinitionUID := c.ParamsEscape(":alertDefinitionUID")
+	alertDefinitionUID := c.Params(":alertDefinitionUID")
 
 	query := getAlertDefinitionByUIDQuery{
 		UID:   alertDefinitionUID,
@@ -103,7 +103,7 @@ func (ng *AlertNG) getAlertDefinitionEndpoint(c *models.ReqContext) response.Res
 
 // deleteAlertDefinitionEndpoint handles DELETE /api/alert-definitions/:alertDefinitionUID.
 func (ng *AlertNG) deleteAlertDefinitionEndpoint(c *models.ReqContext) response.Response {
-	alertDefinitionUID := c.ParamsEscape(":alertDefinitionUID")
+	alertDefinitionUID := c.Params(":alertDefinitionUID")
 
 	cmd := deleteAlertDefinitionByUIDCommand{
 		UID:   alertDefinitionUID,
@@ -119,10 +119,10 @@ func (ng *AlertNG) deleteAlertDefinitionEndpoint(c *models.ReqContext) response.
 
 // updateAlertDefinitionEndpoint handles PUT /api/alert-definitions/:alertDefinitionUID.
 func (ng *AlertNG) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd updateAlertDefinitionCommand) response.Response {
-	cmd.UID = c.ParamsEscape(":alertDefinitionUID")
+	cmd.UID = c.Params(":alertDefinitionUID")
 	cmd.OrgID = c.SignedInUser.OrgId
 
-	if err := ng.validateCondition(cmd.Condition, c.SignedInUser); err != nil {
+	if err := ng.validateCondition(cmd.Condition, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
@@ -137,7 +137,7 @@ func (ng *AlertNG) updateAlertDefinitionEndpoint(c *models.ReqContext, cmd updat
 func (ng *AlertNG) createAlertDefinitionEndpoint(c *models.ReqContext, cmd saveAlertDefinitionCommand) response.Response {
 	cmd.OrgID = c.SignedInUser.OrgId
 
-	if err := ng.validateCondition(cmd.Condition, c.SignedInUser); err != nil {
+	if err := ng.validateCondition(cmd.Condition, c.SignedInUser, c.SkipCache); err != nil {
 		return response.Error(400, "invalid condition", err)
 	}
 
