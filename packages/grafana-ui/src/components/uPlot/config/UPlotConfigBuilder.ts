@@ -87,8 +87,8 @@ export class UPlotConfigBuilder {
     config.cursor = this.cursor || {};
 
     // When bands exist, only keep fill when defined
-    config.bands = this.bands;
     if (config.bands?.length) {
+      config.bands = this.bands;
       const keepFill = new Set<number>();
       for (const b of config.bands) {
         keepFill.add(b.series[0]);
