@@ -24,6 +24,7 @@ import { VizLegend } from '../VizLegend/VizLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
 import { GraphNGLegendEvent, GraphNGLegendEventMode } from './types';
+import { isNumber } from 'lodash';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -135,6 +136,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         theme,
       });
     }
+    let indexByName: Map<string, number> | undefined = undefined;
 
     for (let i = 0; i < alignedFrame.fields.length; i++) {
       const field = alignedFrame.fields[i];
@@ -176,6 +178,24 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
       const dataFrameFieldIndex = getDataFrameFieldIndex ? getDataFrameFieldIndex(i) : undefined;
 
+      let { fillOpacity } = customConfig;
+      if (customConfig.fillBelowTo) {
+        if (!indexByName) {
+          indexByName = getNamesToFieldIndex(alignedFrame);
+        }
+        const t = indexByName.get(getFieldDisplayName(field, alignedFrame));
+        const b = indexByName.get(customConfig.fillBelowTo);
+        if (isNumber(b) && isNumber(t)) {
+          builder.addBand({
+            series: [t, b],
+            fill: null as any, // using null will have the band use fill options from `t`
+          });
+        }
+        if (!fillOpacity) {
+          fillOpacity = 35; // default from flot
+        }
+      }
+
       builder.addSeries({
         scaleKey,
         drawStyle: customConfig.drawStyle!,
@@ -186,7 +206,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         showPoints,
         pointSize: customConfig.pointSize,
         pointColor: customConfig.pointColor ?? seriesColor,
-        fillOpacity: customConfig.fillOpacity,
+        fillOpacity,
         spanNulls: customConfig.spanNulls || false,
         show: !customConfig.hideFrom?.graph,
         fillGradient: customConfig.fillGradient,
@@ -291,3 +311,11 @@ const mapMouseEventToMode = (event: React.MouseEvent): GraphNGLegendEventMode =>
   }
   return GraphNGLegendEventMode.ToggleSelection;
 };
+
+function getNamesToFieldIndex(frame: DataFrame): Map<string, number> {
+  const names = new Map<string, number>();
+  for (let i = 0; i < frame.fields.length; i++) {
+    names.set(getFieldDisplayName(frame.fields[i], frame), i);
+  }
+  return names;
+}
