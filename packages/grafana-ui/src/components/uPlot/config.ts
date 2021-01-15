@@ -74,6 +74,7 @@ export interface FillConfig {
   fillColor?: string;
   fillOpacity?: number;
   fillGradient?: FillGradientMode;
+  fillBelowTo?: string; // name of the field
 }
 
 /**
