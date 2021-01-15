@@ -110,6 +110,7 @@ export { ErrorBoundary, ErrorBoundaryAlert } from './ErrorBoundary/ErrorBoundary
 export { ErrorWithStack } from './ErrorBoundary/ErrorWithStack';
 export { AlphaNotice } from './AlphaNotice/AlphaNotice';
 export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSettings';
+export { TLSAuthSettings } from './DataSourceSettings/TLSAuthSettings';
 export { Spinner } from './Spinner/Spinner';
 export { FadeTransition } from './transitions/FadeTransition';
 export { SlideOutTransition } from './transitions/SlideOutTransition';
