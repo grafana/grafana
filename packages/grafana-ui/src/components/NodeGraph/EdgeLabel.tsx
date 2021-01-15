@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { EdgeDatum, NodeDatum } from './types';
 import { css } from 'emotion';
 import { stylesFactory, useTheme } from '../../themes';
@@ -30,10 +30,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => {
 
 interface Props {
   edge: EdgeDatum;
-  hovering: boolean;
 }
-export function EdgeLabel(props: Props) {
-  const { edge, hovering } = props;
+export const EdgeLabel = memo(function EdgeLabel(props: Props) {
+  const { edge } = props;
   // Not great typing but after we do layout these properties are full objects not just references
   const { source, target } = edge as { source: NodeDatum; target: NodeDatum };
 
@@ -55,7 +54,7 @@ export function EdgeLabel(props: Props) {
   const styles = getStyles(useTheme());
 
   return (
-    <g className={styles.mainGroup} style={{ display: hovering ? 'initial' : 'none' }}>
+    <g className={styles.mainGroup}>
       <rect className={styles.background} x={middle.x - 40} y={middle.y - 15} width="80" height="30" rx="5" />
       <text className={styles.text} x={middle.x} y={middle.y - 5} textAnchor={'middle'}>
         {edge.mainStat}
@@ -65,4 +64,4 @@ export function EdgeLabel(props: Props) {
       </text>
     </g>
   );
-}
+});

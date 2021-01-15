@@ -1,4 +1,5 @@
-import { DataFrame, FieldCache } from '@grafana/data';
+import { DataFrame, Field, FieldCache, FieldType } from '@grafana/data';
+import { EdgeDatum, NodeDatum } from './types';
 
 type Line = { x1: number; y1: number; x2: number; y2: number };
 
@@ -47,6 +48,69 @@ export function getEdgeFields(edges: DataFrame) {
     secondaryStat: fieldsCache.getFieldsByLabel(DataFrameLabels.type, DataFrameTypeValues.secondaryStat)[0],
     details: fieldsCache.getFieldsByLabel(DataFrameLabels.type, DataFrameDetailValues.true),
   };
+}
+
+/**
+ * Transform nodes and edges dataframes into array of objects that the layout code can then work with.
+ */
+export function processServices(nodes: DataFrame, edges: DataFrame): { nodes: NodeDatum[]; links: EdgeDatum[] } {
+  const nodeFields = getNodeFields(nodes);
+
+  const servicesMap =
+    nodeFields.id?.values.toArray().reduce<{ [id: string]: NodeDatum }>((acc, id, index) => {
+      acc[id] = {
+        id: id,
+        title: nodeFields.title.values.get(index),
+        subTitle: nodeFields.subTitle ? nodeFields.subTitle.values.get(index) : '',
+        dataFrameRowIndex: index,
+        incoming: 0,
+        mainStat: nodeFields.mainStat ? statToString(nodeFields.mainStat, index) : '',
+        secondaryStat: nodeFields.secondaryStat ? statToString(nodeFields.secondaryStat, index) : '',
+        arcSections: nodeFields.arc.map(f => {
+          return {
+            value: f.values.get(index),
+            color: f.config.color?.fixedColor || '',
+          };
+        }),
+      };
+      return acc;
+    }, {}) || {};
+
+  const edgeFields = getEdgeFields(edges);
+  const edgesMapped = edgeFields.id?.values.toArray().map((id, index) => {
+    const target = edgeFields.target?.values.get(index);
+    const source = edgeFields.source?.values.get(index);
+    // We are adding incoming edges count so we can later on find out which nodes are the roots
+    servicesMap[target].incoming++;
+
+    return {
+      id,
+      dataFrameRowIndex: index,
+      source,
+      target,
+      mainStat: edgeFields.mainStat ? statToString(edgeFields.mainStat, index) : '',
+      secondaryStat: edgeFields.secondaryStat ? statToString(edgeFields.secondaryStat, index) : '',
+    } as EdgeDatum;
+  });
+
+  return {
+    nodes: Object.values(servicesMap),
+    links: edgesMapped || [],
+  };
+}
+
+function statToString(field: Field, index: number) {
+  if (field.type === FieldType.string) {
+    return field.values.get(index);
+  } else {
+    const decimals = field.config.decimals || 2;
+    const val = field.values.get(index);
+    if (Number.isFinite(val)) {
+      return field.values.get(index).toFixed(decimals) + (field.config.unit ? ' ' + field.config.unit : '');
+    } else {
+      return '';
+    }
+  }
 }
 
 export const DataFrameLabels = {

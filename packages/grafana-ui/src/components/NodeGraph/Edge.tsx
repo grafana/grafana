@@ -1,4 +1,4 @@
-import React, { MouseEvent } from 'react';
+import React, { MouseEvent, memo } from 'react';
 import { EdgeDatum, NodeDatum } from './types';
 import { shortenLine } from './utils';
 
@@ -9,7 +9,7 @@ interface Props {
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
 }
-export function Edge(props: Props) {
+export const Edge = memo(function Edge(props: Props) {
   const { edge, onClick, onMouseEnter, onMouseLeave, hovering } = props;
   // Not great typing but after we do layout these properties are full objects not just references
   const { source, target } = edge as { source: NodeDatum; target: NodeDatum };
@@ -52,4 +52,4 @@ export function Edge(props: Props) {
       />
     </g>
   );
-}
+});

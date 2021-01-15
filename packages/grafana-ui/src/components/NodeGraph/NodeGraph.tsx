@@ -1,4 +1,5 @@
-import React, { MutableRefObject, useCallback, useMemo, useState } from 'react';
+import React, { memo, MutableRefObject, useCallback, useMemo, useState, MouseEvent } from 'react';
+import cx from 'classnames';
 import useMeasure from 'react-use/lib/useMeasure';
 import { usePanning } from './usePanning';
 import { EdgeDatum, NodeDatum } from './types';
@@ -14,7 +15,9 @@ import { css } from 'emotion';
 import { useCategorizeFrames } from './useCategorizeFrames';
 import { EdgeLabel } from './EdgeLabel';
 import { useContextMenu } from './useContextMenu';
-import { getEdgeFields, getNodeFields } from './utils';
+import {getEdgeFields, getNodeFields, processServices} from './utils';
+import { Icon } from '..';
+import { useNodeLimit } from './useNodeLimit';
 
 const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   wrapper: css`
@@ -32,12 +35,30 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
     cursor: move;
   `,
 
+  svgPanning: css`
+    user-select: none;
+  `,
+
+  mainGroup: css`
+    will-change: transform;
+  `,
+
   viewControls: css`
     position: absolute;
     left: 10px;
     top: 10px;
   `,
+  alert: css`
+    padding: 5px 8px;
+    font-size: 10px;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+    border-radius: ${theme.border.radius.md};
+    align-items: center;
+  `,
 }));
+
+// This is mainly for performance reasons.
+const nodeCountLimit = 1500;
 
 interface Props {
   dataFrames: DataFrame[];
@@ -52,20 +73,25 @@ export function NodeGraph({ getLinks, dataFrames }: Props) {
   // We need hover state here because for nodes we also highlight edges and for edges have labels separate to make
   // sure they are visible on top of everything else
   const [nodeHover, setNodeHover] = useState<string | undefined>(undefined);
-  const clearNodeHover = useCallback(() => setNodeHover(undefined), []);
+  const clearNodeHover = useCallback(() => setNodeHover(undefined), [setNodeHover]);
   const [edgeHover, setEdgeHover] = useState<string | undefined>(undefined);
-  const clearEdgeHover = useCallback(() => setEdgeHover(undefined), []);
+  const clearEdgeHover = useCallback(() => setEdgeHover(undefined), [setEdgeHover]);
 
   // TODO we should be able to allow multiple dataframes for both edges and nodes, could be issue with node ids which in
   //  that case should be unique or figure a way to link edges and nodes dataframes together.
-  const { nodes: rawNodes, links: rawLinks } = useMemo(() => processServices(nodesDataFrames[0], edgesDataFrames[0]), [
+  const processed = useMemo(() => processServices(nodesDataFrames[0], edgesDataFrames[0]), [
     nodesDataFrames[0],
     edgesDataFrames[0],
   ]);
-  const { nodes, edges, bounds } = useLayout(rawNodes, rawLinks, config);
+
+  const { nodes: rawNodes, edges: rawEdges } = useNodeLimit(processed.nodes, processed.links, nodeCountLimit);
+  const hiddenNodesCount = processed.nodes.length - rawNodes.length;
+
+  const { nodes, edges, bounds } = useLayout(rawNodes, rawEdges, config);
   const { panRef, zoomRef, onStepUp, onStepDown, isPanning, position, scale } = usePanAndZoom(bounds);
   const { onEdgeOpen, onNodeOpen, MenuComponent } = useContextMenu(getLinks, nodesDataFrames[0], edgesDataFrames[0]);
   const styles = getStyles(useTheme());
+  const theme = useTheme();
 
   return (
     <div
@@ -78,47 +104,30 @@ export function NodeGraph({ getLinks, dataFrames }: Props) {
       <svg
         ref={panRef}
         viewBox={`${-(width / 2)} ${-(height / 2)} ${width} ${height}`}
-        className={styles.svg}
-        style={{ userSelect: isPanning ? 'none' : 'unset' }}
+        className={cx(styles.svg, isPanning && styles.svgPanning)}
       >
-        <g style={{ transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)` }}>
+        <g
+          className={styles.mainGroup}
+          style={{ transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)` }}
+        >
           <EdgeArrowMarker />
-          {edges.map((e, index) => (
-            <Edge
-              key={e.id}
-              edge={e}
-              hovering={
-                (e.source as NodeDatum).id === nodeHover ||
-                (e.target as NodeDatum).id === nodeHover ||
-                edgeHover === e.id
-              }
-              onClick={onEdgeOpen}
-              onMouseEnter={setEdgeHover}
-              onMouseLeave={clearEdgeHover}
-            />
-          ))}
-          {nodes.map(n => (
-            <Node
-              key={n.id}
-              node={n}
-              onMouseEnter={setNodeHover}
-              onMouseLeave={clearNodeHover}
-              onClick={onNodeOpen}
-              hovering={nodeHover === n.id}
-            />
-          ))}
-          {/*We split the labels from edges so that thay are shown on top of everything else*/}
-          {edges.map((e, index) => (
-            <EdgeLabel
-              key={e.id}
-              edge={e}
-              hovering={
-                (e.source as NodeDatum).id === nodeHover ||
-                (e.target as NodeDatum).id === nodeHover ||
-                edgeHover === e.id
-              }
-            />
-          ))}
+          <Edges
+            edges={edges}
+            nodeHoveringId={nodeHover}
+            edgeHoveringId={edgeHover}
+            onClick={onEdgeOpen}
+            onMouseEnter={setEdgeHover}
+            onMouseLeave={clearEdgeHover}
+          />
+          <Nodes
+            nodes={nodes}
+            onMouseEnter={setNodeHover}
+            onMouseLeave={clearNodeHover}
+            onClick={onNodeOpen}
+            hoveringId={nodeHover}
+          />
+          {/*We split the labels from edges so that they are shown on top of everything else*/}
+          <EdgeLabels edges={edges} nodeHoveringId={nodeHover} edgeHoveringId={edgeHover} />
         </g>
       </svg>
 
@@ -132,10 +141,93 @@ export function NodeGraph({ getLinks, dataFrames }: Props) {
         />
       </div>
 
+      {hiddenNodesCount > 0 && (
+        <div
+          className={styles.alert}
+          style={{ position: 'absolute', top: 0, right: 0, background: theme.palette.warn, color: 'white' }}
+        >
+          <Icon size="sm" name={'info-circle'} /> {hiddenNodesCount} nodes are hidden for performance reasons.
+        </div>
+      )}
+
       {MenuComponent}
     </div>
   );
 }
+
+// These 3 components are here as a perf optimisation to prevent going through all nodes and edges on every pan/zoom.
+
+interface NodesProps {
+  nodes: NodeDatum[];
+  onMouseEnter: (id: string) => void;
+  onMouseLeave: (id: string) => void;
+  onClick: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
+  hoveringId?: string;
+}
+const Nodes = memo(function Nodes(props: NodesProps) {
+  return (
+    <>
+      {props.nodes.map(n => (
+        <Node
+          key={n.id}
+          node={n}
+          onMouseEnter={props.onMouseEnter}
+          onMouseLeave={props.onMouseLeave}
+          onClick={props.onClick}
+          hovering={props.hoveringId === n.id}
+        />
+      ))}
+    </>
+  );
+});
+
+interface EdgesProps {
+  edges: EdgeDatum[];
+  nodeHoveringId?: string;
+  edgeHoveringId?: string;
+  onClick: (event: MouseEvent<SVGElement>, link: EdgeDatum) => void;
+  onMouseEnter: (id: string) => void;
+  onMouseLeave: (id: string) => void;
+}
+const Edges = memo(function Edges(props: EdgesProps) {
+  return (
+    <>
+      {props.edges.map(e => (
+        <Edge
+          key={e.id}
+          edge={e}
+          hovering={
+            (e.source as NodeDatum).id === props.nodeHoveringId ||
+            (e.target as NodeDatum).id === props.nodeHoveringId ||
+            props.edgeHoveringId === e.id
+          }
+          onClick={props.onClick}
+          onMouseEnter={props.onMouseEnter}
+          onMouseLeave={props.onMouseLeave}
+        />
+      ))}
+    </>
+  );
+});
+
+interface EdgeLabelsProps {
+  edges: EdgeDatum[];
+  nodeHoveringId?: string;
+  edgeHoveringId?: string;
+}
+const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
+  return (
+    <>
+      {props.edges.map((e, index) => {
+        const shouldShow =
+          (e.source as NodeDatum).id === props.nodeHoveringId ||
+          (e.target as NodeDatum).id === props.nodeHoveringId ||
+          props.edgeHoveringId === e.id;
+        return shouldShow && <EdgeLabel key={e.id} edge={e} />;
+      })}
+    </>
+  );
+});
 
 function usePanAndZoom(bounds: Bounds) {
   const { scale, onStepDown, onStepUp, ref } = useZoom();
@@ -145,67 +237,4 @@ function usePanAndZoom(bounds: Bounds) {
   });
   const { position, isPanning } = panningState;
   return { zoomRef: ref, panRef, position, isPanning, scale, onStepDown, onStepUp };
-}
-
-/**
- * Transform nodes and edges dataframes into array of objects that the layout code can then work with.
- */
-function processServices(nodes: DataFrame, edges: DataFrame): { nodes: NodeDatum[]; links: EdgeDatum[] } {
-  const nodeFields = getNodeFields(nodes);
-
-  const servicesMap =
-    nodeFields.id?.values.toArray().reduce<{ [id: string]: NodeDatum }>((acc, id, index) => {
-      acc[id] = {
-        id: id,
-        title: nodeFields.title.values.get(index),
-        subTitle: nodeFields.subTitle ? nodeFields.subTitle.values.get(index) : '',
-        dataFrameRowIndex: index,
-        incoming: 0,
-        mainStat: nodeFields.mainStat ? statToString(nodeFields.mainStat, index) : '',
-        secondaryStat: nodeFields.secondaryStat ? statToString(nodeFields.secondaryStat, index) : '',
-        arcSections: nodeFields.arc.map(f => {
-          return {
-            value: f.values.get(index),
-            color: f.config.color?.fixedColor || '',
-          };
-        }),
-      };
-      return acc;
-    }, {}) || {};
-
-  const edgeFields = getEdgeFields(edges);
-  const edgesMapped = edgeFields.id?.values.toArray().map((id, index) => {
-    const target = edgeFields.target?.values.get(index);
-    const source = edgeFields.source?.values.get(index);
-    // We are adding incoming edges count so we can later on find out which nodes are the roots
-    servicesMap[target].incoming++;
-
-    return {
-      id,
-      dataFrameRowIndex: index,
-      source,
-      target,
-      mainStat: edgeFields.mainStat ? statToString(edgeFields.mainStat, index) : '',
-      secondaryStat: edgeFields.secondaryStat ? statToString(edgeFields.secondaryStat, index) : '',
-    } as EdgeDatum;
-  });
-
-  return {
-    nodes: Object.values(servicesMap),
-    links: edgesMapped || [],
-  };
-}
-
-function statToString(field: Field, index: number) {
-  if (field.type === FieldType.string) {
-    return field.values.get(index);
-  } else {
-    const decimals = field.config.decimals || 2;
-    const val = field.values.get(index);
-    if (Number.isFinite(val)) {
-      return field.values.get(index).toFixed(decimals) + (field.config.unit ? ' ' + field.config.unit : '');
-    } else {
-      return '';
-    }
-  }
 }

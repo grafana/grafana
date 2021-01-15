@@ -1,4 +1,4 @@
-import React, { MouseEvent } from 'react';
+import React, { MouseEvent, memo } from 'react';
 import { NodeDatum } from './types';
 import { stylesFactory, useTheme } from '../../themes';
 import { getColorForTheme, GrafanaTheme } from '@grafana/data';
@@ -38,7 +38,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme) => ({
   `,
 }));
 
-export function Node(props: {
+export const Node = memo(function Node(props: {
   node: NodeDatum;
   onMouseEnter: (id: string) => void;
   onMouseLeave: (id: string) => void;
@@ -66,14 +66,7 @@ export function Node(props: {
       }}
     >
       <circle className={styles.mainCircle} r={nodeR} cx={node.x} cy={node.y} />
-      <circle
-        className={styles.hoverCircle}
-        style={{ display: hovering ? 'initial' : 'none' }}
-        r={nodeR - 3}
-        cx={node.x}
-        cy={node.y}
-        strokeWidth={2}
-      />
+      {hovering && <circle className={styles.hoverCircle} r={nodeR - 3} cx={node.x} cy={node.y} strokeWidth={2} />}
       <ResponseTypeCircle node={node} />
       <g className={styles.text}>
         <text x={node.x} y={node.y - 5} textAnchor={'middle'}>
@@ -92,7 +85,7 @@ export function Node(props: {
       </g>
     </g>
   );
-}
+});
 
 /**
  * Shows the outer segmented circle with different color for each response type.
