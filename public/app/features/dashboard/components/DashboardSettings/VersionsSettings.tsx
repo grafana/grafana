@@ -27,13 +27,15 @@ export type DecoratedRevisionModel = RevisionsModel & {
   checked: boolean;
 };
 
+export const VERSIONS_FETCH_LIMIT = 10;
+
 export class VersionsSettings extends PureComponent<Props, State> {
   limit: number;
   start: number;
 
   constructor(props: Props) {
     super(props);
-    this.limit = 10;
+    this.limit = VERSIONS_FETCH_LIMIT;
     this.start = 0;
     this.state = {
       delta: {
