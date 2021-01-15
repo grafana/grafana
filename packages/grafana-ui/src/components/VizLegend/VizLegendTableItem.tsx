@@ -35,7 +35,6 @@ export const LegendTableItem: React.FunctionComponent<Props> = ({
                 onSeriesColorChange(item.label, color);
               }
             }}
-            yAxis={item.yAxis}
           />
           <div
             onClick={event => {
