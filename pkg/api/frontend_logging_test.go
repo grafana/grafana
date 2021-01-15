@@ -5,10 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/api/routing"
-
 	"github.com/getsentry/sentry-go"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/models"
 	log "github.com/inconshreveable/log15"
 
