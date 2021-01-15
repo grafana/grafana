@@ -106,6 +106,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
     // X is the first field in the alligned frame
     const xField = alignedFrame.fields[0];
+
     if (xField.type === FieldType.time) {
       builder.addScale({
         scaleKey: 'x',
@@ -115,6 +116,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
           return [r.from.valueOf(), r.to.valueOf()];
         },
       });
+
       builder.addAxis({
         scaleKey: 'x',
         isTime: true,
@@ -127,6 +129,7 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       builder.addScale({
         scaleKey: 'x',
       });
+
       builder.addAxis({
         scaleKey: 'x',
         placement: AxisPlacement.Bottom,

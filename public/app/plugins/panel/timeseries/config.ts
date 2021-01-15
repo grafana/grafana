@@ -29,8 +29,8 @@ export function getGraphFieldConfig(cfg: GraphFieldConfig): SetFieldConfigOption
     standardOptions: {
       [FieldConfigProperty.Color]: {
         settings: {
-          byValueSupport: true,
-          bySeriesSupport: true,
+          byValueSupport: false,
+          bySeriesSupport: false,
         },
         defaultValue: {
           mode: FieldColorModeId.PaletteClassic,
