@@ -21,6 +21,7 @@ import {
   TimeZone,
   FieldColor,
   FieldColorConfigSettings,
+  StatsPickerConfigSettings,
 } from '@grafana/data';
 
 import { Switch } from '../components/Switch/Switch';
@@ -139,7 +140,6 @@ export const getStandardFieldConfigs = () => {
     id: 'thresholds',
     path: 'thresholds',
     name: 'Thresholds',
-
     editor: standardEditorsRegistry.get('thresholds').editor as any,
     override: standardEditorsRegistry.get('thresholds').editor as any,
     process: thresholdsOverrideProcessor,
@@ -324,7 +324,7 @@ export const getStandardOptionEditors = () => {
     editor: DataLinksValueEditor as any,
   };
 
-  const statsPicker: StandardEditorsRegistryItem<string[]> = {
+  const statsPicker: StandardEditorsRegistryItem<string[], StatsPickerConfigSettings> = {
     id: 'stats-picker',
     name: 'Stats Picker',
     editor: StatsPickerEditor as any,

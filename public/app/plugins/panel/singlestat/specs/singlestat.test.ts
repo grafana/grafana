@@ -257,7 +257,7 @@ describe('SingleStatCtrl', () => {
       });
 
       it('should set formatted value', () => {
-        expect(ctx.data.display!.text).toBe('100');
+        expect(ctx.data.display!.text).toBe('100.0');
       });
     }
   );
@@ -373,7 +373,7 @@ describe('SingleStatCtrl', () => {
         });
 
         it('should set formatted falue', () => {
-          expect(ctx.data.display!.text).toBe('100');
+          expect(ctx.data.display!.text).toBe('100.0');
         });
       }
     );

@@ -427,6 +427,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 		AppTitle:                "Grafana",
 		NavTree:                 navTree,
 		Sentry:                  &hs.Cfg.Sentry,
+		Nonce:                   c.RequestNonce,
 	}
 
 	if setting.DisableGravatar {

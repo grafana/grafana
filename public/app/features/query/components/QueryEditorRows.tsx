@@ -30,8 +30,6 @@ export class QueryEditorRows extends PureComponent<Props> {
 
     const old = queries[index];
 
-    // ensure refId & datasource are maintained
-    query.refId = old.refId;
     if (old.datasource) {
       query.datasource = old.datasource;
     }
@@ -87,6 +85,7 @@ export class QueryEditorRows extends PureComponent<Props> {
                     onRemoveQuery={this.onRemoveQuery}
                     onAddQuery={this.props.onAddQuery}
                     onRunQuery={this.props.onRunQueries}
+                    queries={queries}
                   />
                 ))}
                 {provided.placeholder}

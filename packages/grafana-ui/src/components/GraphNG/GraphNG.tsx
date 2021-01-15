@@ -2,24 +2,28 @@ import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import {
   compareDataFrameStructures,
   DataFrame,
+  DisplayValue,
   FieldConfig,
   FieldMatcher,
+  fieldReducers,
   FieldType,
   formattedValueToString,
   getFieldDisplayName,
+  reduceField,
   TimeRange,
 } from '@grafana/data';
 import { alignDataFrames } from './utils';
+import { useTheme } from '../../themes';
 import { UPlotChart } from '../uPlot/Plot';
 import { PlotProps } from '../uPlot/types';
 import { AxisPlacement, DrawStyle, GraphFieldConfig, PointVisibility } from '../uPlot/config';
-import { useTheme } from '../../themes';
 import { VizLayout } from '../VizLayout/VizLayout';
-import { LegendDisplayMode, LegendItem, LegendOptions } from '../Legend/Legend';
-import { GraphLegend } from '../Graph/GraphLegend';
+import { LegendDisplayMode, VizLegendItem, VizLegendOptions } from '../VizLegend/types';
+import { VizLegend } from '../VizLegend/VizLegend';
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 import { useRevision } from '../uPlot/hooks';
-import { getFieldColorModeForField, getFieldSeriesColor } from '@grafana/data/src/field/fieldColor';
+import { getFieldColorModeForField, getFieldSeriesColor } from '@grafana/data';
+import { GraphNGLegendEvent, GraphNGLegendEventMode } from './types';
 
 const defaultFormatter = (v: any) => (v == null ? '-' : v.toFixed(1));
 
@@ -27,11 +31,12 @@ export interface XYFieldMatchers {
   x: FieldMatcher;
   y: FieldMatcher;
 }
-
 export interface GraphNGProps extends Omit<PlotProps, 'data' | 'config'> {
   data: DataFrame[];
-  legend?: LegendOptions;
+  legend: VizLegendOptions;
   fields?: XYFieldMatchers; // default will assume timeseries data
+  onLegendClick?: (event: GraphNGLegendEvent) => void;
+  onSeriesColorChange?: (label: string, color: string) => void;
 }
 
 const defaultConfig: GraphFieldConfig = {
@@ -49,13 +54,16 @@ export const GraphNG: React.FC<GraphNGProps> = ({
   legend,
   timeRange,
   timeZone,
+  onLegendClick,
+  onSeriesColorChange,
   ...plotProps
 }) => {
-  const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
   const theme = useTheme();
-  const legendItemsRef = useRef<LegendItem[]>([]);
   const hasLegend = useRef(legend && legend.displayMode !== LegendDisplayMode.Hidden);
+
+  const alignedFrameWithGapTest = useMemo(() => alignDataFrames(data, fields), [data, fields]);
   const alignedFrame = alignedFrameWithGapTest?.frame;
+  const getDataFrameFieldIndex = alignedFrameWithGapTest?.getDataFrameFieldIndex;
 
   const compareFrames = useCallback((a?: DataFrame | null, b?: DataFrame | null) => {
     if (a && b) {
@@ -64,8 +72,25 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     return false;
   }, []);
 
+  const onLabelClick = useCallback(
+    (legend: VizLegendItem, event: React.MouseEvent) => {
+      const { fieldIndex } = legend;
+
+      if (!onLegendClick || !fieldIndex) {
+        return;
+      }
+
+      onLegendClick({
+        fieldIndex,
+        mode: mapMouseEventToMode(event),
+      });
+    },
+    [onLegendClick, data]
+  );
+
   // reference change will not triger re-render
   const currentTimeRange = useRef<TimeRange>(timeRange);
+
   useLayoutEffect(() => {
     currentTimeRange.current = timeRange;
   }, [timeRange]);
@@ -109,9 +134,6 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       });
     }
 
-    let seriesIdx = 0;
-    const legendItems: LegendItem[] = [];
-
     for (let i = 0; i < alignedFrame.fields.length; i++) {
       const field = alignedFrame.fields[i];
       const config = field.config as FieldConfig<GraphFieldConfig>;
@@ -126,6 +148,9 @@ export const GraphNG: React.FC<GraphNGProps> = ({
 
       const fmt = field.display ?? defaultFormatter;
       const scaleKey = config.unit || '__fixed';
+      const colorMode = getFieldColorModeForField(field);
+      const scaleColor = getFieldSeriesColor(field, theme);
+      const seriesColor = scaleColor.color;
 
       if (customConfig.axisPlacement !== AxisPlacement.Hidden) {
         // The builder will manage unique scaleKeys and combine where appropriate
@@ -147,44 +172,32 @@ export const GraphNG: React.FC<GraphNGProps> = ({
         });
       }
 
-      // need to update field state here because we use a transform to merge framesP
-      field.state = { ...field.state, seriesIndex: seriesIdx };
-
-      const colorMode = getFieldColorModeForField(field);
-      const scaleColor = getFieldSeriesColor(field, theme);
-      const seriesColor = scaleColor.color;
       const showPoints = customConfig.drawStyle === DrawStyle.Points ? PointVisibility.Always : customConfig.showPoints;
+      const dataFrameFieldIndex = getDataFrameFieldIndex ? getDataFrameFieldIndex(i) : undefined;
 
       builder.addSeries({
         scaleKey,
+        showPoints,
+        colorMode,
         drawStyle: customConfig.drawStyle!,
         lineColor: customConfig.lineColor ?? seriesColor,
         lineWidth: customConfig.lineWidth,
         lineInterpolation: customConfig.lineInterpolation,
-        showPoints,
+        lineStyle: customConfig.lineStyle,
         pointSize: customConfig.pointSize,
         pointColor: customConfig.pointColor ?? seriesColor,
         fillOpacity: customConfig.fillOpacity,
         spanNulls: customConfig.spanNulls || false,
+        show: !customConfig.hideFrom?.graph,
         gradientMode: customConfig.gradientMode,
         thresholds: config.thresholds,
-        colorMode: colorMode,
+
+        // The following properties are not used in the uPlot config, but are utilized as transport for legend config
+        dataFrameFieldIndex,
+        fieldName: getFieldDisplayName(field, alignedFrame),
+        hideInLegend: customConfig.hideFrom?.legend,
       });
-
-      if (hasLegend.current) {
-        const axisPlacement = builder.getAxisPlacement(scaleKey);
-
-        legendItems.push({
-          color: seriesColor,
-          label: getFieldDisplayName(field, alignedFrame),
-          yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
-        });
-      }
-
-      seriesIdx++;
     }
-
-    legendItemsRef.current = legendItems;
     return builder;
   }, [configRev, timeZone]);
 
@@ -196,12 +209,60 @@ export const GraphNG: React.FC<GraphNGProps> = ({
     );
   }
 
+  const legendItems = configBuilder
+    .getSeries()
+    .map<VizLegendItem | undefined>(s => {
+      const seriesConfig = s.props;
+      const fieldIndex = seriesConfig.dataFrameFieldIndex;
+      const axisPlacement = configBuilder.getAxisPlacement(s.props.scaleKey);
+
+      if (seriesConfig.hideInLegend || !fieldIndex) {
+        return undefined;
+      }
+
+      const field = data[fieldIndex.frameIndex]?.fields[fieldIndex.fieldIndex];
+
+      // Hackish: when the data prop and config builder are not in sync yet
+      if (!field) {
+        return undefined;
+      }
+
+      return {
+        disabled: !seriesConfig.show ?? false,
+        fieldIndex,
+        color: seriesConfig.lineColor!,
+        label: seriesConfig.fieldName,
+        yAxis: axisPlacement === AxisPlacement.Left ? 1 : 2,
+        getDisplayValues: () => {
+          const fmt = field.display ?? defaultFormatter;
+          const fieldCalcs = reduceField({
+            field,
+            reducers: legend.calcs,
+          });
+
+          return legend.calcs.map<DisplayValue>(reducer => {
+            return {
+              ...fmt(fieldCalcs[reducer]),
+              title: fieldReducers.get(reducer).name,
+            };
+          });
+        },
+      };
+    })
+    .filter(i => i !== undefined) as VizLegendItem[];
+
   let legendElement: React.ReactElement | undefined;
 
-  if (hasLegend && legendItemsRef.current.length > 0) {
+  if (hasLegend && legendItems.length > 0) {
     legendElement = (
-      <VizLayout.Legend position={legend!.placement} maxHeight="35%" maxWidth="60%">
-        <GraphLegend placement={legend!.placement} items={legendItemsRef.current} displayMode={legend!.displayMode} />
+      <VizLayout.Legend position={legend.placement} maxHeight="35%" maxWidth="60%">
+        <VizLegend
+          onLabelClick={onLabelClick}
+          placement={legend.placement}
+          items={legendItems}
+          displayMode={legend.displayMode}
+          onSeriesColorChange={onSeriesColorChange}
+        />
       </VizLayout.Legend>
     );
   }
@@ -223,4 +284,11 @@ export const GraphNG: React.FC<GraphNGProps> = ({
       )}
     </VizLayout>
   );
+};
+
+const mapMouseEventToMode = (event: React.MouseEvent): GraphNGLegendEventMode => {
+  if (event.ctrlKey || event.metaKey || event.shiftKey) {
+    return GraphNGLegendEventMode.AppendToSelection;
+  }
+  return GraphNGLegendEventMode.ToggleSelection;
 };

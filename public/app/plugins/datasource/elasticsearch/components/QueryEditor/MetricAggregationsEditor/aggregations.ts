@@ -4,6 +4,7 @@ export type PipelineMetricAggregationType =
   | 'moving_avg'
   | 'moving_fn'
   | 'derivative'
+  | 'serial_diff'
   | 'cumulative_sum'
   | 'bucket_script';
 
@@ -113,7 +114,7 @@ export interface ExtendedStats extends MetricAggregationWithField, MetricAggrega
   };
 }
 
-interface Percentiles extends MetricAggregationWithField, MetricAggregationWithInlineScript {
+export interface Percentiles extends MetricAggregationWithField, MetricAggregationWithInlineScript {
   type: 'percentiles';
   settings?: {
     percents?: string[];
@@ -150,6 +151,7 @@ interface Logs extends BaseMetricAggregation {
 
 export interface BasePipelineMetricAggregation extends MetricAggregationWithField {
   type: PipelineMetricAggregationType;
+  pipelineAgg?: string;
 }
 
 interface PipelineMetricAggregationWithMultipleBucketPaths extends BaseMetricAggregation {
@@ -246,6 +248,13 @@ export interface Derivative extends BasePipelineMetricAggregation {
   };
 }
 
+export interface SerialDiff extends BasePipelineMetricAggregation {
+  type: 'serial_diff';
+  settings?: {
+    lag?: number;
+  };
+}
+
 interface CumulativeSum extends BasePipelineMetricAggregation {
   type: 'cumulative_sum';
   settings?: {
@@ -266,6 +275,7 @@ export type MetricAggregationWithSettings =
   | BucketScript
   | CumulativeSum
   | Derivative
+  | SerialDiff
   | RawData
   | RawDocument
   | UniqueCount
@@ -335,6 +345,7 @@ export const METRIC_AGGREGATION_TYPES = [
   'moving_avg',
   'moving_fn',
   'derivative',
+  'serial_diff',
   'cumulative_sum',
   'bucket_script',
 ];

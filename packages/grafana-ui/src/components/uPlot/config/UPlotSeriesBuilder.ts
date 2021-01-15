@@ -1,4 +1,4 @@
-import { FALLBACK_COLOR, FieldColorMode, getColorForTheme, Threshold, ThresholdsConfig } from '@grafana/data';
+import { FALLBACK_COLOR, FieldColorMode, getColorForTheme, ThresholdsConfig } from '@grafana/data';
 import tinycolor from 'tinycolor2';
 import uPlot, { Series } from 'uplot';
 import darkTheme from '../../../themes/dark';
@@ -6,22 +6,27 @@ import { getCanvasContext } from '../../../utils/measureText';
 import {
   DrawStyle,
   LineConfig,
-  AreaConfig,
+  FillConfig,
   PointsConfig,
   PointVisibility,
   LineInterpolation,
   GraphGradientMode,
 } from '../config';
 import { PlotConfigBuilder } from '../types';
+import { DataFrameFieldIndex } from '@grafana/data';
 
-export interface SeriesProps extends LineConfig, AreaConfig, PointsConfig {
-  drawStyle: DrawStyle;
+export interface SeriesProps extends LineConfig, FillConfig, PointsConfig {
   scaleKey: string;
   gradientMode?: GraphGradientMode;
   /** Used when gradientMode is set to Scheme */
   thresholds?: ThresholdsConfig;
   /** Used when gradientMode is set to Scheme  */
   colorMode?: FieldColorMode;
+  fieldName: string;
+  drawStyle: DrawStyle;
+  show?: boolean;
+  dataFrameFieldIndex?: DataFrameFieldIndex;
+  hideInLegend?: boolean;
 }
 
 export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
@@ -30,11 +35,13 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
       drawStyle,
       lineInterpolation,
       lineWidth,
+      lineStyle,
       showPoints,
       pointColor,
       pointSize,
       scaleKey,
       spanNulls,
+      show = true,
     } = this.props;
 
     let lineConfig: Partial<Series> = {};
@@ -44,6 +51,12 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     } else {
       lineConfig.stroke = this.getLineColor();
       lineConfig.width = lineWidth;
+      if (lineStyle && lineStyle.fill !== 'solid') {
+        if (lineStyle.fill === 'dot') {
+          lineConfig.cap = 'round';
+        }
+        lineConfig.dash = lineStyle.dash ?? [10, 10];
+      }
       lineConfig.paths = (self: uPlot, seriesIdx: number, idx0: number, idx1: number) => {
         let pathsBuilder = mapDrawStyleToPathBuilder(drawStyle, lineInterpolation);
         return pathsBuilder(self, seriesIdx, idx0, idx1);
@@ -59,19 +72,24 @@ export class UPlotSeriesBuilder extends PlotConfigBuilder<SeriesProps, Series> {
     };
 
     // we cannot set points.show property above (even to undefined) as that will clear uPlot's default auto behavior
-    if (showPoints === PointVisibility.Auto) {
-      if (drawStyle === DrawStyle.Bars) {
-        pointsConfig.points!.show = false;
-      }
-    } else if (showPoints === PointVisibility.Never) {
-      pointsConfig.points!.show = false;
-    } else if (showPoints === PointVisibility.Always) {
+    if (drawStyle === DrawStyle.Points) {
       pointsConfig.points!.show = true;
+    } else {
+      if (showPoints === PointVisibility.Auto) {
+        if (drawStyle === DrawStyle.Bars) {
+          pointsConfig.points!.show = false;
+        }
+      } else if (showPoints === PointVisibility.Never) {
+        pointsConfig.points!.show = false;
+      } else if (showPoints === PointVisibility.Always) {
+        pointsConfig.points!.show = true;
+      }
     }
 
     return {
       scale: scaleKey,
       spanGaps: spanNulls,
+      show,
       fill: this.getFill(),
       ...lineConfig,
       ...pointsConfig,

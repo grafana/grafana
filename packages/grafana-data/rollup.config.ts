@@ -28,22 +28,6 @@ const buildCjsPackage = ({ env }) => {
       }),
       commonjs({
         include: /node_modules/,
-        namedExports: {
-          '../../node_modules/lodash/lodash.js': [
-            'flatten',
-            'find',
-            'upperFirst',
-            'debounce',
-            'isNil',
-            'isNumber',
-            'flattenDeep',
-            'map',
-            'chunk',
-            'sortBy',
-            'uniqueId',
-            'zip',
-          ],
-        },
       }),
       resolve(),
       sourceMaps(),

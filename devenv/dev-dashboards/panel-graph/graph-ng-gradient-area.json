@@ -15,7 +15,13 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "links": [],
+  "links": [
+    {
+      "icon": "external link",
+      "tags": ["gdev", "graph-ng"],
+      "type": "dashboards"
+    }
+  ],
   "panels": [
     {
       "datasource": null,
@@ -103,7 +109,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Req/s",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -192,7 +198,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Req/s",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -281,7 +287,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Req/s",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -369,7 +375,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Memory",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -458,7 +464,7 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Hue gradient mode",
-      "type": "graph3"
+      "type": "timeseries"
     },
     {
       "datasource": null,
@@ -547,12 +553,12 @@
       "timeFrom": null,
       "timeShift": null,
       "title": "Hue gradient mode",
-      "type": "graph3"
+      "type": "timeseries"
     }
   ],
   "schemaVersion": 27,
   "style": "dark",
-  "tags": ["gdev", "panel-tests"],
+  "tags": ["gdev", "panel-tests", "graph-ng"],
   "templating": {
     "list": []
   },

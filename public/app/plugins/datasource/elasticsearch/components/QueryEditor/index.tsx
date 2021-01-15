@@ -12,8 +12,13 @@ import { useNextId } from '../../hooks/useNextId';
 
 export type ElasticQueryEditorProps = QueryEditorProps<ElasticDatasource, ElasticsearchQuery, ElasticsearchOptions>;
 
-export const QueryEditor: FunctionComponent<ElasticQueryEditorProps> = ({ query, onChange, datasource }) => (
-  <ElasticsearchProvider datasource={datasource} onChange={onChange} query={query}>
+export const QueryEditor: FunctionComponent<ElasticQueryEditorProps> = ({
+  query,
+  onChange,
+  onRunQuery,
+  datasource,
+}) => (
+  <ElasticsearchProvider datasource={datasource} onChange={onChange} onRunQuery={onRunQuery} query={query}>
     <QueryEditorForm value={query} />
   </ElasticsearchProvider>
 );

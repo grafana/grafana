@@ -18,6 +18,7 @@ export const Components = {
       title: (title: string) => `Panel header title item ${title}`,
       headerItems: (item: string) => `Panel header item ${item}`,
       containerByTitle: (title: string) => `Panel container title ${title}`,
+      headerCornerInfo: (mode: string) => `Panel header ${mode}`,
     },
     Visualization: {
       Graph: {
@@ -63,6 +64,9 @@ export const Components = {
     // not sure about the naming *DataPane*
     DataPane: {
       content: 'Panel editor data pane content',
+    },
+    FieldOptions: {
+      propertyEditor: (type: string) => `${type} field property editor`,
     },
   },
   PanelInspector: {
@@ -151,6 +155,7 @@ export const Components = {
   },
   QueryField: { container: 'Query field' },
   ValuePicker: {
+    button: 'Value picker add button',
     select: (name: string) => `Value picker select ${name}`,
   },
   Search: {

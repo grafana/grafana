@@ -3059,7 +3059,7 @@ Licensed under the MIT license.
             if (!e.cancelable) {
                 return;
             }
-        
+
             if (!eventHolder.is(e.target) && eventHolder.has(e.target).length === 0) {
                 triggerClickHoverEvent("plotleave", e, function (s) { false; });
                 return;
@@ -3080,7 +3080,7 @@ Licensed under the MIT license.
             }
 
             var original = e.originalEvent;
-            
+
             if (original.changedTouches.length === 0) {
                 return e;
             }

@@ -63,7 +63,7 @@ After lots of testing and user feedback, we removed the beta label from the conf
 
 ### Added table column filters
 
-You can now dynamically apply value filters to any table column. This option is can be enabled for all columns or one specific column using an override rule.
+You can now dynamically apply value filters to any table column. This option can be enabled for all columns or one specific column using an override rule.
 
 {{< docs-imagebox img="/img/docs/v72/table_column_filters.png" max-width="800px" caption="Table column filters" >}}
 
